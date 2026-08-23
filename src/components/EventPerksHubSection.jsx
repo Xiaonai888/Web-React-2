@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const EVENT_PERKS_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const fallbackEventPerksData = [
   {
@@ -59,39 +67,86 @@ export default function EventPerksHubSection() {
   const dragMovedRef = useRef(false)
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchEventPerks() {
-      try {
+  async function loadEventPerks() {
+    const cacheKey = getHomeCacheKey({
+      section: 'slides',
+      params: {
+        home_section: 'event-perks',
+        section_key: 'event_perks_hub',
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: EVENT_PERKS_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedItems = Array.isArray(cached?.data)
+
+    if (hasCachedItems && !ignore) {
+      setItems(cached.data)
+      setActiveIndex(0)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedItems) {
+      return
+    }
+
+    try {
+      if (!hasCachedItems && !ignore) {
         setLoading(true)
+      }
 
-        const response = await fetch(`${API_BASE_URL}/api/slides?section_key=event_perks_hub`)
-        const data = await response.json().catch(() => ({}))
+      const response = await fetch(
+        `${API_BASE_URL}/api/slides?section_key=event_perks_hub`
+      )
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to fetch event perks')
-        }
+      const data = await response.json().catch(() => ({}))
 
-        if (ignore) return
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to fetch event perks'
+        )
+      }
 
-        setItems((data.slides || []).map(normalizeSlide))
-      } catch (error) {
-        console.error('EventPerksHubSection fetch error:', error)
+      const nextItems = Array.isArray(data.slides)
+        ? data.slides.map(normalizeSlide)
+        : []
 
-        if (!ignore) {
-          setItems([])
-        }
-      } finally {
-        if (!ignore) setLoading(false)
+      if (ignore) return
+
+      setItems(nextItems)
+      setActiveIndex(0)
+
+      await saveHomeCache(cacheKey, nextItems, {
+        maxAgeMs: EVENT_PERKS_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error(
+        'EventPerksHubSection fetch error:',
+        error
+      )
+
+      if (!ignore && !hasCachedItems) {
+        setItems([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchEventPerks()
+  loadEventPerks()
 
-    return () => {
-      ignore = true
-    }
-  }, [])
+  return () => {
+    ignore = true
+  }
+}, [])
 
   const displayItems = items.length ? items : fallbackEventPerksData
 
