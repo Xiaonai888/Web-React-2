@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const UPDATE_TODAY_PAGE_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const dayTabs = [
   { key: 1, label: 'MON' },
@@ -108,11 +111,6 @@ function getBestAvailableDay(stories, preferredDay) {
   return preferredDay
 }
 
-function wait(milliseconds) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, milliseconds)
-  })
-}
 
 const updateMarkerUI = {
   width: 42,
@@ -221,72 +219,116 @@ export default function UpdateTodayPage() {
   const [requestVersion, setRequestVersion] = useState(0)
 
   useEffect(() => {
-    const controller = new AbortController()
-    let ignore = false
+  const controller = new AbortController()
+  let ignore = false
 
-    async function fetchStories() {
-      setLoading(true)
-      setErrorMessage('')
+  function applyStories(sourceStories) {
+    if (ignore || controller.signal.aborted) return
 
-      let lastError = null
+    const normalizedStories = (
+      Array.isArray(sourceStories) ? sourceStories : []
+    ).map(normalizeStory)
 
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        try {
-          const response = await fetch(
-            addStoryLanguageParam(
-              `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated`
-            ),
-            {
-              signal: controller.signal,
-              cache: 'no-store',
-            }
-          )
+    setStories(normalizedStories)
+    setActiveDay((currentDay) =>
+      getBestAvailableDay(normalizedStories, currentDay)
+    )
+  }
 
-          const data = await response.json().catch(() => ({}))
+  async function fetchStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'update-today',
+        sort: 'episode_updated',
+        limit: 100,
+        window: '7-days',
+        schema: 1,
+      },
+    })
 
-          if (!response.ok || data.ok === false) {
-            throw new Error(
-              data.message || 'Failed to load update today stories'
-            )
-          }
+    let hasCachedStories = false
 
-          if (ignore) return
+    if (requestVersion === 0) {
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: UPDATE_TODAY_PAGE_CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
 
-          const normalizedStories = (data.stories || []).map(normalizeStory)
+      if (ignore || controller.signal.aborted) return
 
-          setStories(normalizedStories)
-          setActiveDay((currentDay) =>
-            getBestAvailableDay(normalizedStories, currentDay)
-          )
-          setLoading(false)
-          return
-        } catch (error) {
-          if (error.name === 'AbortError') return
+      hasCachedStories = Array.isArray(cached?.data)
 
-          lastError = error
-
-          if (attempt < 2) {
-            await wait(700 * (attempt + 1))
-          }
-        }
+      if (hasCachedStories) {
+        applyStories(cached.data)
+        setLoading(false)
+        setErrorMessage('')
       }
 
-      if (!ignore) {
+      if (cached?.isFresh && hasCachedStories) {
+        return
+      }
+    }
+
+    try {
+      if (!hasCachedStories) {
+        setLoading(true)
+      }
+
+      setErrorMessage('')
+
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated`
+        ),
+        { signal: controller.signal }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load update today stories'
+        )
+      }
+
+      const nextStories = Array.isArray(data.stories)
+        ? data.stories
+        : []
+
+      if (ignore || controller.signal.aborted) return
+
+      applyStories(nextStories)
+
+      await saveHomeCache(cacheKey, nextStories, {
+        maxAgeMs: UPDATE_TODAY_PAGE_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      if (!ignore && !hasCachedStories) {
         setStories([])
         setErrorMessage(
-          lastError?.message || 'Cannot load updates. Please try again.'
+          error?.message ||
+            'Cannot load updates. Please try again.'
         )
+      }
+    } finally {
+      if (!ignore && !controller.signal.aborted) {
         setLoading(false)
       }
     }
+  }
 
-    fetchStories()
+  fetchStories()
 
-    return () => {
-      ignore = true
-      controller.abort()
-    }
-  }, [requestVersion])
+  return () => {
+    ignore = true
+    controller.abort()
+  }
+}, [requestVersion])
+
 
   const filteredStories = useMemo(() => {
     return stories
