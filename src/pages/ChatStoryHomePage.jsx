@@ -329,90 +329,110 @@ export default function ChatStoryHomePage() {
   ] = useState('')
 
   useEffect(() => {
-    const controller =
-      new AbortController()
+  const controller = new AbortController()
 
-    async function loadChatStories() {
-      try {
+  async function loadChatStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'chat-story-home',
+        story_type: 'chat_story',
+        sort: 'updated',
+        limit: 40,
+        schema: 1,
+      },
+    })
+
+    let hasCachedStories = false
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: CHAT_STORY_HOME_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (controller.signal.aborted) return
+
+    hasCachedStories = Array.isArray(cached?.data)
+
+    if (hasCachedStories) {
+      setChatStories(cached.data)
+      setLoadingStories(false)
+      setStoriesError('')
+    }
+
+    if (cached?.isFresh && hasCachedStories) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories) {
         setLoadingStories(true)
-        setStoriesError('')
+      }
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/public/stories?story_type=chat_story&sort=updated&limit=40`,
-          {
-            signal:
-              controller.signal,
-          }
-        )
+      setStoriesError('')
 
-        const data =
-          await response
-            .json()
-            .catch(() => ({}))
-
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              'Failed to load Chat Stories'
-          )
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?story_type=chat_story&sort=updated&limit=40`
+        ),
+        {
+          signal: controller.signal,
         }
+      )
 
-        const nextStories =
-          (
-            Array.isArray(
-              data.stories
-            )
-              ? data.stories
-              : []
-          )
-            .filter(
-  (story) =>
-    story?.id &&
-    String(
-      story.story_type || ''
-    )
-      .trim()
-      .toLowerCase() ===
-      'chat_story'
-)
-.map(mapApiStory)
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-        setChatStories(
-          nextStories
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load Chat Stories'
         )
-      } catch (error) {
-        if (
-          error.name ===
-          'AbortError'
-        ) {
-          return
-        }
+      }
 
+      const nextStories = (
+        Array.isArray(data.stories) ? data.stories : []
+      )
+        .filter(
+          (story) =>
+            story?.id &&
+            String(story.story_type || '')
+              .trim()
+              .toLowerCase() === 'chat_story'
+        )
+        .map(mapApiStory)
+
+      if (controller.signal.aborted) return
+
+      setChatStories(nextStories)
+
+      await saveHomeCache(cacheKey, nextStories, {
+        maxAgeMs: CHAT_STORY_HOME_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      if (!hasCachedStories) {
+        setChatStories([])
         setStoriesError(
-          error.message ||
-            'Failed to load Chat Stories'
+          error.message || 'Failed to load Chat Stories'
         )
-      } finally {
-        if (
-          !controller.signal
-            .aborted
-        ) {
-          setLoadingStories(
-            false
-          )
-        }
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setLoadingStories(false)
       }
     }
+  }
 
-    loadChatStories()
+  loadChatStories()
 
-    return () => {
-      controller.abort()
-    }
-  }, [])
+  return () => {
+    controller.abort()
+  }
+}, [])
+
 
   const hotPickStories =
     useMemo(
