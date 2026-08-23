@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+const SHADOW_EXCLUSIVE_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const featureCards = [
   { title: 'Ads-Free', subtitle: 'No interruptions while reading', iconText: '🚫' },
@@ -192,39 +202,100 @@ function ExclusiveSection({ section }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let ignore = false
+  const controller = new AbortController()
+  let ignore = false
 
-    async function fetchBooks() {
-      try {
+  async function fetchBooks() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'shadow-exclusive',
+        section: section.id,
+        url: section.url,
+        schema: 1,
+      },
+    })
+
+    let hasCachedBooks = false
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: SHADOW_EXCLUSIVE_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (ignore || controller.signal.aborted) return
+
+    hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks) {
+      setBooks(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
+    }
+
+    try {
+      if (!hasCachedBooks) {
         setLoading(true)
+      }
 
-        const response = await fetch(`${API_BASE_URL}${section.url}`)
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load Shadow Exclusive stories')
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}${section.url}`
+        ),
+        {
+          signal: controller.signal,
         }
+      )
+      const data = await response.json().catch(() => ({}))
 
-        if (!ignore) {
-          setBooks((data.stories || []).map(normalizeBook))
-        }
-      } catch (error) {
-        console.error(`ShadowExclusivePage ${section.id} error:`, error)
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
+            'Failed to load Shadow Exclusive stories'
+        )
+      }
 
-        if (!ignore) {
-          setBooks([])
-        }
-      } finally {
-        if (!ignore) setLoading(false)
+      const nextBooks = (
+        Array.isArray(data.stories) ? data.stories : []
+      ).map(normalizeBook)
+
+      if (ignore || controller.signal.aborted) return
+
+      setBooks(nextBooks)
+
+      await saveHomeCache(cacheKey, nextBooks, {
+        maxAgeMs: SHADOW_EXCLUSIVE_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      console.error(
+        `ShadowExclusivePage ${section.id} error:`,
+        error
+      )
+
+      if (!ignore && !hasCachedBooks) {
+        setBooks([])
+      }
+    } finally {
+      if (!ignore && !controller.signal.aborted) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchBooks()
+  fetchBooks()
 
-    return () => {
-      ignore = true
-    }
-  }, [section])
+  return () => {
+    ignore = true
+    controller.abort()
+  }
+}, [section])
+
 
   const isFeatured = section.layout === 'featured'
 
