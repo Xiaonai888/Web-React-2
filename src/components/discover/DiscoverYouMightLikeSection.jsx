@@ -54,6 +54,8 @@ export default function DiscoverYouMightLikeSection() {
   })
   const suppressClickRef = useRef(false)
   const [stories, setStories] = useState([])
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
   let alive = true
   const controller = new AbortController()
