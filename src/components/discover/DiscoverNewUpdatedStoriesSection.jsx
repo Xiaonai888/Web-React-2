@@ -5,9 +5,10 @@ import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeD
 import { getStoryBadge } from '../../utils/storyBadge'
 
 const API_BASE_URL =
-  const DISCOVER_NEW_UPDATED_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
+
+const DISCOVER_NEW_UPDATED_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 function getValidDate(value) {
   const date = value ? new Date(value) : null
