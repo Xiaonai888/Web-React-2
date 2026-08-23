@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { addStoryLanguageParam, getStoryLanguageLabel } from '../utils/storyLanguage'
+import { getStoryLanguageLabel } from '../utils/storyLanguage'
+import { loadHomeDailyPicksSource } from '../services/homeDailyPicksData'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -414,76 +415,59 @@ export default function DailyPicksPage() {
   }, [])
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchDailyPicks() {
-      try {
-        setLoading(true)
-        setLoadFailed(false)
+  function applySourceStories(sourceStories) {
+    if (ignore) return
 
-        const [discoverResponse, updatedResponse] =
-          await Promise.all([
-            fetch(
-              addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=48&sort=discover_more`
-              )
-            ),
-            fetch(
-              addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated`
-              )
-            ),
-          ])
+    const dailyStories = selectDailyStories(
+      sourceStories,
+      12,
+      rotationSeed
+    )
 
-        const [discoverData, updatedData] =
-          await Promise.all([
-            discoverResponse.json().catch(() => ({})),
-            updatedResponse.json().catch(() => ({})),
-          ])
+    setStories(dailyStories.map(normalizeStory))
+  }
 
-        if (
-          !discoverResponse.ok ||
-          discoverData.ok === false ||
-          !updatedResponse.ok ||
-          updatedData.ok === false
-        ) {
-          throw new Error('Failed to load daily picks')
-        }
+  async function fetchDailyPicks() {
+    try {
+      setLoading(true)
+      setLoadFailed(false)
 
-        if (!ignore) {
-          const sourceStories = [
-            ...(discoverData.stories || []),
-            ...(updatedData.stories || []),
-          ]
+      const sourceStories =
+        await loadHomeDailyPicksSource({
+          apiBaseUrl: API_BASE_URL,
+          onCachedStories: (cachedStories) => {
+            applySourceStories(cachedStories)
 
-          const dailyStories = selectDailyStories(
-            sourceStories,
-            12,
-            rotationSeed
-          )
+            if (!ignore) {
+              setLoading(false)
+            }
+          },
+        })
 
-          setStories(dailyStories.map(normalizeStory))
-        }
-      } catch (error) {
-        console.error('DailyPicksPage fetch error:', error)
+      applySourceStories(sourceStories)
+    } catch (error) {
+      console.error('DailyPicksPage fetch error:', error)
 
-        if (!ignore) {
-          setLoadFailed(true)
-          setStories([])
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
+      if (!ignore) {
+        setLoadFailed(true)
+        setStories([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchDailyPicks()
+  fetchDailyPicks()
 
-    return () => {
-      ignore = true
-    }
-  }, [rotationSeed])
+  return () => {
+    ignore = true
+  }
+}, [rotationSeed])
+
 
   const todayLabel = new Intl.DateTimeFormat('en-US', {
     month: 'long',
