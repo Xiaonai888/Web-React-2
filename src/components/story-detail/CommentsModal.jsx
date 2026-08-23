@@ -104,146 +104,126 @@ export default function CommentsModal({
     }
 
     let ignore = false
+
     const initialTotals = Object.fromEntries(
       episodeList.map((item) => [
         String(item.id || item.episode_id),
-        Math.max(0, Number(item.total_comments || item.comment_count || item.comments_count || 0)),
+        Math.max(
+          0,
+          Number(
+            item.total_comments ||
+              item.comment_count ||
+              item.comments_count ||
+              0
+          )
+        ),
       ])
     )
+
+    const episodeIds = episodeList
+      .map((item) =>
+        String(item.id || item.episode_id || '').trim()
+      )
+      .filter(Boolean)
 
     setEpisodeCommentTotals(initialTotals)
 
     async function loadEpisodeCommentTotals() {
-      useEffect(() => {
-  if (!open || targetType !== 'episode' || !episodeList.length) {
-    setEpisodeCommentTotals((current) =>
-      Object.keys(current).length
-        ? {}
-        : current
-    )
-    return undefined
-  }
+      const batches = []
 
-  let ignore = false
-
-  const initialTotals = Object.fromEntries(
-    episodeList.map((item) => [
-      String(item.id || item.episode_id),
-      Math.max(
-        0,
-        Number(
-          item.total_comments ||
-            item.comment_count ||
-            item.comments_count ||
-            0
-        )
-      ),
-    ])
-  )
-
-  const episodeIds = episodeList
-    .map((item) =>
-      String(item.id || item.episode_id || '').trim()
-    )
-    .filter(Boolean)
-
-  setEpisodeCommentTotals(initialTotals)
-
-  async function loadEpisodeCommentTotals() {
-    const batches = []
-
-    for (
-      let index = 0;
-      index < episodeIds.length;
-      index += 100
-    ) {
-      batches.push(
-        episodeIds.slice(index, index + 100)
-      )
-    }
-
-    const batchTotals = await Promise.all(
-      batches.map(async (ids) => {
-        try {
-          const response = await fetch(
-            `${API_BASE_URL}/api/comments/episode-totals?ids=${encodeURIComponent(
-              ids.join(',')
-            )}`,
-            { cache: 'no-store' }
-          )
-
-          const data = await response
-            .json()
-            .catch(() => ({}))
-
-          if (
-            !response.ok ||
-            data.ok === false ||
-            !data.totals ||
-            typeof data.totals !== 'object'
-          ) {
-            return {}
-          }
-
-          return data.totals
-        } catch {
-          return {}
-        }
-      })
-    )
-
-    if (ignore) return
-
-    const serverTotals =
-      Object.assign({}, ...batchTotals)
-
-    setEpisodeCommentTotals((current) => {
-      const next = { ...current }
-
-      for (const episodeId of episodeIds) {
-        if (
-          !Object.prototype.hasOwnProperty.call(
-            serverTotals,
-            episodeId
-          )
-        ) {
-          continue
-        }
-
-        const initialTotal = Math.max(
-          0,
-          Number(initialTotals[episodeId] || 0)
-        )
-        const currentTotal = Math.max(
-          0,
-          Number(
-            current[episodeId] ??
-              initialTotal
-          )
-        )
-
-        if (currentTotal !== initialTotal) {
-          continue
-        }
-
-        next[episodeId] = Math.max(
-          0,
-          Number(
-            serverTotals[episodeId] || 0
-          )
+      for (
+        let index = 0;
+        index < episodeIds.length;
+        index += 100
+      ) {
+        batches.push(
+          episodeIds.slice(index, index + 100)
         )
       }
 
-      return next
-    })
-  }
+      const batchTotals = await Promise.all(
+        batches.map(async (ids) => {
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/api/comments/episode-totals?ids=${encodeURIComponent(
+                ids.join(',')
+              )}`,
+              { cache: 'no-store' }
+            )
 
-  loadEpisodeCommentTotals()
+            const data = await response
+              .json()
+              .catch(() => ({}))
 
-  return () => {
-    ignore = true
-  }
-}, [episodeList, open, targetType])
+            if (
+              !response.ok ||
+              data.ok === false ||
+              !data.totals ||
+              typeof data.totals !== 'object'
+            ) {
+              return {}
+            }
+
+            return data.totals
+          } catch {
+            return {}
+          }
+        })
+      )
+
+      if (ignore) return
+
+      const serverTotals =
+        Object.assign({}, ...batchTotals)
+
+      setEpisodeCommentTotals((current) => {
+        const next = { ...current }
+
+        for (const episodeId of episodeIds) {
+          if (
+            !Object.prototype.hasOwnProperty.call(
+              serverTotals,
+              episodeId
+            )
+          ) {
+            continue
+          }
+
+          const initialTotal = Math.max(
+            0,
+            Number(initialTotals[episodeId] || 0)
+          )
+          const currentTotal = Math.max(
+            0,
+            Number(
+              current[episodeId] ??
+                initialTotal
+            )
+          )
+
+          if (currentTotal !== initialTotal) {
+            continue
+          }
+
+          next[episodeId] = Math.max(
+            0,
+            Number(
+              serverTotals[episodeId] || 0
+            )
+          )
+        }
+
+        return next
+      })
+    }
+
+    loadEpisodeCommentTotals()
+
+    return () => {
+      ignore = true
+    }
+  }, [episodeList, open, targetType])
+
 
 
   useEffect(() => {
