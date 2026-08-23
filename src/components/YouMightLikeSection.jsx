@@ -11,10 +11,12 @@ import {
 } from '../utils/homeDataCache'
 
 const API_BASE_URL =
-  const YOU_MIGHT_LIKE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const YOU_MIGHT_LIKE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 function getFallbackCover(index = 0) {
   return `/assets/YouMightLike/YouMightLike ${(index % 6) + 1}.jpg`
