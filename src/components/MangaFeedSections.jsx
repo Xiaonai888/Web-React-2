@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam, getStoryLanguageLabel } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+  getStoryLanguageLabel,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+const MANGA_FEED_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
@@ -126,46 +136,99 @@ export default function MangaFeedSections({ genre = 'today' }) {
   const storyLanguage = getStoryLanguageLabel()
 
   useEffect(() => {
-    let cancelled = false
+  const controller = new AbortController()
+  let cancelled = false
 
-    async function loadManga() {
-      try {
+  async function loadManga() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'manga-feed',
+        story_type: 'manga',
+        sort: 'latest',
+        limit: 100,
+        schema: 1,
+      },
+    })
+
+    let hasCachedStories = false
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: MANGA_FEED_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (cancelled || controller.signal.aborted) return
+
+    hasCachedStories = Array.isArray(cached?.data)
+
+    if (hasCachedStories) {
+      setStories(cached.data)
+      setLoading(false)
+      setError('')
+    }
+
+    if (cached?.isFresh && hasCachedStories) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories) {
         setLoading(true)
-        setError('')
+      }
 
-        const endpoint = addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=100&sort=latest&story_type=manga`
-        )
-        const response = await fetch(endpoint)
-        const data = await response.json().catch(() => ({}))
+      setError('')
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load manga')
-        }
+      const endpoint = addStoryLanguageParam(
+        `${API_BASE_URL}/api/public/stories?limit=100&sort=latest&story_type=manga`
+      )
 
-        if (cancelled) return
+      const response = await fetch(endpoint, {
+        signal: controller.signal,
+      })
+      const data = await response.json().catch(() => ({}))
 
-        const mangaStories = (data.stories || []).filter(
-          (story) => String(story.story_type || '').toLowerCase() === 'manga'
-        )
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load manga')
+      }
 
-        setStories(mangaStories)
-      } catch (loadError) {
-        if (!cancelled) {
-          setStories([])
-          setError(loadError.message || 'Failed to load manga')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
+      const mangaStories = (
+        Array.isArray(data.stories) ? data.stories : []
+      ).filter(
+        (story) =>
+          String(story.story_type || '').toLowerCase() === 'manga'
+      )
+
+      if (cancelled || controller.signal.aborted) return
+
+      setStories(mangaStories)
+
+      await saveHomeCache(cacheKey, mangaStories, {
+        maxAgeMs: MANGA_FEED_CACHE_MAX_AGE_MS,
+      })
+    } catch (loadError) {
+      if (loadError?.name === 'AbortError') return
+
+      if (!cancelled && !hasCachedStories) {
+        setStories([])
+        setError(loadError.message || 'Failed to load manga')
+      }
+    } finally {
+      if (!cancelled && !controller.signal.aborted) {
+        setLoading(false)
       }
     }
+  }
 
-    loadManga()
+  loadManga()
 
-    return () => {
-      cancelled = true
-    }
-  }, [storyLanguage])
+  return () => {
+    cancelled = true
+    controller.abort()
+  }
+}, [storyLanguage])
+
 
   const filteredStories = useMemo(() => {
     if (!genre || genre === 'today') return stories
