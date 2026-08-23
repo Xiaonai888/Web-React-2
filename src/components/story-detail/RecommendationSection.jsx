@@ -7,17 +7,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-function uniqueStories(stories) {
-  const map = new Map()
 
-  stories.forEach((story) => {
-    if (story?.id && !map.has(story.id)) {
-      map.set(story.id, story)
-    }
-  })
-
-  return Array.from(map.values())
-}
 
 function EmptyCard({ title, text, icon }) {
   return (
@@ -81,14 +71,11 @@ function StoryGrid({ stories, emptyTitle, emptyText, emptyIcon, onOpenStory }) {
   )
 }
 
-function getViewCount(story) {
-  return Number(story?.view_count || story?.views || story?.read_count || story?.total_views || 0)
-}
 
 export default function RecommendationSection({ story }) {
   const navigate = useNavigate()
   const [authorStories, setAuthorStories] = useState([])
-  const [topStories, setTopStories] = useState([])
+  
   const [similarStories, setSimilarStories] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -100,70 +87,85 @@ export default function RecommendationSection({ story }) {
     'Author'
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function loadRecommendations() {
-      if (!story?.id) return
+  async function loadRecommendations() {
+    if (!story?.id) return
 
-      setLoading(true)
+    setLoading(true)
 
-      try {
-        const authorUrl = story.author_id
-          ? `${API_BASE_URL}/api/public/stories?authorId=${encodeURIComponent(story.author_id)}&exclude=${encodeURIComponent(story.id)}&sort=popular&limit=12`
-          : ''
+    try {
+      const params = new URLSearchParams()
 
-        const similarUrl = story.main_genre
-          ? `${API_BASE_URL}/api/public/stories?genre=${encodeURIComponent(story.main_genre)}&exclude=${encodeURIComponent(story.id)}&sort=popular&limit=6`
-          : ''
+      if (story.author_id) {
+        params.set(
+          'authorId',
+          story.author_id
+        )
+      }
 
-        const topUrl = `${API_BASE_URL}/api/public/stories?sort=popular&exclude=${encodeURIComponent(story.id)}&limit=6`
+      if (story.main_genre) {
+        params.set(
+          'genre',
+          story.main_genre
+        )
+      }
 
-        const [authorResponse, similarResponse, topResponse] = await Promise.all([
-          authorUrl ? fetch(authorUrl) : Promise.resolve(null),
-          similarUrl ? fetch(similarUrl) : Promise.resolve(null),
-          fetch(topUrl),
-        ])
+      const response = await fetch(
+        `${API_BASE_URL}/api/public/stories/${encodeURIComponent(
+          story.id
+        )}/recommendations?${params.toString()}`
+      )
 
-        const authorData = authorResponse ? await authorResponse.json().catch(() => ({})) : {}
-        const similarData = similarResponse ? await similarResponse.json().catch(() => ({})) : {}
-        const topData = await topResponse.json().catch(() => ({}))
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-        const nextAuthorStories = Array.isArray(authorData.stories)
-          ? uniqueStories(authorData.stories)
-              .filter((item) => item.id !== story.id)
-              .sort((a, b) => getViewCount(b) - getViewCount(a))
-              .slice(0, 3)
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to load recommendations'
+        )
+      }
+
+      if (ignore) return
+
+      setAuthorStories(
+        Array.isArray(data.author_stories)
+          ? data.author_stories
           : []
+      )
 
-        const nextTopStories = Array.isArray(topData.stories) ? topData.stories : []
-        const sameGenreStories = Array.isArray(similarData.stories) ? similarData.stories : []
-        const authorStoryIds = new Set(nextAuthorStories.map((item) => item.id))
-        const filledSimilarStories = uniqueStories([...sameGenreStories, ...nextTopStories])
-          .filter((item) => !authorStoryIds.has(item.id))
-          .slice(0, 3)
+      setSimilarStories(
+        Array.isArray(data.similar_stories)
+          ? data.similar_stories
+          : []
+      )
+    } catch {
+      if (ignore) return
 
-        if (ignore) return
-
-        setAuthorStories(nextAuthorStories)
-        setTopStories(nextTopStories.slice(0, 3))
-        setSimilarStories(filledSimilarStories)
-      } catch {
-        if (ignore) return
-
-        setAuthorStories([])
-        setTopStories([])
-        setSimilarStories([])
-      } finally {
-        if (!ignore) setLoading(false)
+      setAuthorStories([])
+      setSimilarStories([])
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    loadRecommendations()
+  loadRecommendations()
 
-    return () => {
-      ignore = true
-    }
-  }, [story?.author_id, story?.id, story?.main_genre])
+  return () => {
+    ignore = true
+  }
+}, [
+  story?.author_id,
+  story?.id,
+  story?.main_genre,
+])
 
   const authorSectionStories = useMemo(() => {
     return authorStories
