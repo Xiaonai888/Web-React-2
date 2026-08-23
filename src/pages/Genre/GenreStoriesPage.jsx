@@ -218,9 +218,6 @@ export default function GenreStoriesPage({
   const [message, setMessage] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
 
-  useEffect(() => {
-    let ignore = false
-
     useEffect(() => {
   const controller = new AbortController()
   let ignore = false
