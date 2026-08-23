@@ -191,6 +191,42 @@ async function fetchRankingItems(
     throw error
   }
 }
+function RankBadge({ rank }) {
+  return (
+    <div
+      className={`absolute -left-px -top-px z-10 flex h-[24px] min-w-[28px] items-center justify-center rounded-tl-[8px] rounded-br-[9px] px-1.5 text-[10px] font-extrabold leading-none shadow-sm ${getRankBadgeClass(rank)}`}
+    >
+      {getRankLabel(rank)}
+    </div>
+  )
+}
+
+function SafeBookCover({ src, title, rank }) {
+  const [imageFailed, setImageFailed] = useState(false)
+  const hasImage =
+    typeof src === 'string' &&
+    src.trim() !== '' &&
+    !imageFailed
+
+  if (hasImage) {
+    return (
+      <img
+        src={src}
+        alt={title}
+        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+        loading="lazy"
+        decoding="async"
+        onError={() => setImageFailed(true)}
+      />
+    )
+  }
+
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#f3f4f6] to-[#d1d5db] text-[11px] font-extrabold text-gray-500">
+      #{rank}
+    </div>
+  )
+}
 
 function RankingBookCard({ item, onOpen }) {
   return (
@@ -280,9 +316,6 @@ export default function TopNovelSection({
 
   useEffect(() => {
     let ignore = false
-
-    useEffect(() => {
-  let ignore = false
 
   async function loadActiveRankingTab() {
     if (
