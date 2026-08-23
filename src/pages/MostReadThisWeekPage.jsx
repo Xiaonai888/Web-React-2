@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -10,6 +11,7 @@ const API_BASE_URL =
 
 const LOAD_STEP = 20
 const MAX_BOOKS = 100
+const MOST_READ_CACHE_MAX_AGE_MS = 60 * 60 * 1000
 
 const fallbackBooks = Array.from({ length: 20 }, (_, index) => ({
   id: `most-read-fallback-${index + 1}`,
@@ -118,37 +120,95 @@ export default function MostReadThisWeekPage() {
   const [visibleCount, setVisibleCount] = useState(LOAD_STEP)
 
   useEffect(() => {
-    let ignore = false
+  const controller = new AbortController()
+  let ignore = false
 
-    async function fetchMostReadBooks() {
-      try {
+  async function fetchMostReadBooks() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'most-read-this-week',
+        sort: 'popular',
+        limit: MAX_BOOKS,
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: MOST_READ_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (controller.signal.aborted || ignore) return
+
+    const hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks) {
+      setBooks(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
+    }
+
+    try {
+      if (!hasCachedBooks) {
         setLoading(true)
+      }
 
-        const response = await fetch(
-          addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=${MAX_BOOKS}&sort=popular`)
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=${MAX_BOOKS}&sort=popular`
+        ),
+        { signal: controller.signal }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load most read stories'
         )
-        const data = await response.json().catch(() => ({}))
+      }
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load most read stories')
-        }
+      const nextBooks = (
+        Array.isArray(data.stories) ? data.stories : []
+      )
+        .map(normalizeBook)
+        .slice(0, MAX_BOOKS)
 
-        if (!ignore) {
-          setBooks((data.stories || []).map(normalizeBook).slice(0, MAX_BOOKS))
-        }
-      } catch {
-        if (!ignore) setBooks([])
-      } finally {
-        if (!ignore) setLoading(false)
+      if (controller.signal.aborted || ignore) return
+
+      setBooks(nextBooks)
+
+      await saveHomeCache(cacheKey, nextBooks, {
+        maxAgeMs: MOST_READ_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (
+        error?.name !== 'AbortError' &&
+        !ignore &&
+        !hasCachedBooks
+      ) {
+        setBooks([])
+      }
+    } finally {
+      if (!ignore && !controller.signal.aborted) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchMostReadBooks()
+  fetchMostReadBooks()
 
-    return () => {
-      ignore = true
-    }
-  }, [])
+  return () => {
+    ignore = true
+    controller.abort()
+  }
+}, [])
+
 
   const sourceBooks = useMemo(() => (books.length ? books : fallbackBooks), [books])
   const visibleBooks = sourceBooks.slice(0, visibleCount)
