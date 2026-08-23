@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../../utils/homeDataCache'
 
 const API_BASE_URL =
+  const DISCOVER_COMPLETED_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
@@ -82,88 +91,99 @@ export default function DiscoverCompletedStoriesSection() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let alive = true
-    const controller = new AbortController()
+  let alive = true
+  const controller = new AbortController()
 
-    async function loadStories() {
-      try {
+  async function loadStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        discover_section: 'completed',
+        sort: 'popular',
+        limit: 10,
+        story_status: 'completed',
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: DISCOVER_COMPLETED_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedStories = Array.isArray(cached?.data)
+
+    if (hasCachedStories && alive) {
+      setStories(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedStories) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories && alive) {
         setLoading(true)
+      }
 
-        const [popularResponse, latestResponse] =
-          await Promise.all([
-            fetch(
-              addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=48&sort=popular`
-              ),
-              {
-                signal: controller.signal,
-                cache: 'no-store',
-              }
-            ),
-            fetch(
-              addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=48&sort=latest`
-              ),
-              {
-                signal: controller.signal,
-                cache: 'no-store',
-              }
-            ),
-          ])
-
-        const popularData = await popularResponse
-          .json()
-          .catch(() => ({}))
-        const latestData = await latestResponse
-          .json()
-          .catch(() => ({}))
-
-        if (
-          !popularResponse.ok ||
-          popularData.ok === false ||
-          !latestResponse.ok ||
-          latestData.ok === false
-        ) {
-          throw new Error('Failed to load completed stories')
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=10&sort=popular&story_status=Completed`
+        ),
+        {
+          signal: controller.signal,
         }
+      )
 
-        if (alive) {
-          const completedStories = mergeStories(
-            Array.isArray(popularData.stories)
-              ? popularData.stories
-              : [],
-            Array.isArray(latestData.stories)
-              ? latestData.stories
-              : []
-          )
-            .filter(
-              (story) =>
-                isCompletedStory(story) &&
-                Number(story.total_episodes || 0) > 0
-            )
-            .map(normalizeStory)
-            .slice(0, 10)
+      const data = await response.json().catch(() => ({}))
 
-          setStories(completedStories)
-        }
-      } catch (error) {
-        if (alive && error.name !== 'AbortError') {
-          setStories([])
-        }
-      } finally {
-        if (alive) {
-          setLoading(false)
-        }
+      if (!response.ok || data.ok === false) {
+        throw new Error('Failed to load completed stories')
+      }
+
+      const completedStories = (
+        Array.isArray(data.stories) ? data.stories : []
+      )
+        .filter(
+          (story) =>
+            isCompletedStory(story) &&
+            Number(story.total_episodes || 0) > 0
+        )
+        .map(normalizeStory)
+        .slice(0, 10)
+
+      if (!alive) return
+
+      setStories(completedStories)
+
+      await saveHomeCache(cacheKey, completedStories, {
+        maxAgeMs: DISCOVER_COMPLETED_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (
+        alive &&
+        error.name !== 'AbortError' &&
+        !hasCachedStories
+      ) {
+        setStories([])
+      }
+    } finally {
+      if (alive) {
+        setLoading(false)
       }
     }
+  }
 
-    loadStories()
+  loadStories()
 
-    return () => {
-      alive = false
-      controller.abort()
-    }
-  }, [])
+  return () => {
+    alive = false
+    controller.abort()
+  }
+}, [])
+
 
   function startDrag(event) {
     if (event.pointerType !== 'mouse' || event.button !== 0) {
