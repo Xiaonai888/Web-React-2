@@ -114,50 +114,137 @@ export default function CommentsModal({
     setEpisodeCommentTotals(initialTotals)
 
     async function loadEpisodeCommentTotals() {
-      const pendingEpisodes = [...episodeList]
+      useEffect(() => {
+  if (!open || targetType !== 'episode' || !episodeList.length) {
+    setEpisodeCommentTotals((current) =>
+      Object.keys(current).length
+        ? {}
+        : current
+    )
+    return undefined
+  }
 
-      async function loadNext() {
-        while (pendingEpisodes.length) {
-          const item = pendingEpisodes.shift()
-          const itemId = item?.id || item?.episode_id
+  let ignore = false
 
-          if (!itemId) continue
+  const initialTotals = Object.fromEntries(
+    episodeList.map((item) => [
+      String(item.id || item.episode_id),
+      Math.max(
+        0,
+        Number(
+          item.total_comments ||
+            item.comment_count ||
+            item.comments_count ||
+            0
+        )
+      ),
+    ])
+  )
 
-          try {
-            const response = await fetch(
-              `${API_BASE_URL}/api/comments/episode/${itemId}?page=1&limit=1&sort=top`,
-              { cache: 'no-store' }
-            )
-            const data = await response.json().catch(() => ({}))
+  const episodeIds = episodeList
+    .map((item) =>
+      String(item.id || item.episode_id || '').trim()
+    )
+    .filter(Boolean)
 
-            if (!response.ok || data.ok === false || ignore) continue
+  setEpisodeCommentTotals(initialTotals)
 
-            const total = Math.max(
-              0,
-              Number(data.total ?? data.total_comments ?? data.count ?? 0)
-            )
+  async function loadEpisodeCommentTotals() {
+    const batches = []
 
-            setEpisodeCommentTotals((current) =>
-              current[String(itemId)] === total
-                ? current
-                : { ...current, [String(itemId)]: total }
-            )
-          } catch {
-          }
-        }
-      }
-
-      await Promise.all(
-        Array.from({ length: Math.min(4, pendingEpisodes.length) }, loadNext)
+    for (
+      let index = 0;
+      index < episodeIds.length;
+      index += 100
+    ) {
+      batches.push(
+        episodeIds.slice(index, index + 100)
       )
     }
 
-    loadEpisodeCommentTotals()
+    const batchTotals = await Promise.all(
+      batches.map(async (ids) => {
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/api/comments/episode-totals?ids=${encodeURIComponent(
+              ids.join(',')
+            )}`,
+            { cache: 'no-store' }
+          )
 
-    return () => {
-      ignore = true
-    }
-  }, [episodeList, open, targetType])
+          const data = await response
+            .json()
+            .catch(() => ({}))
+
+          if (
+            !response.ok ||
+            data.ok === false ||
+            !data.totals ||
+            typeof data.totals !== 'object'
+          ) {
+            return {}
+          }
+
+          return data.totals
+        } catch {
+          return {}
+        }
+      })
+    )
+
+    if (ignore) return
+
+    const serverTotals =
+      Object.assign({}, ...batchTotals)
+
+    setEpisodeCommentTotals((current) => {
+      const next = { ...current }
+
+      for (const episodeId of episodeIds) {
+        if (
+          !Object.prototype.hasOwnProperty.call(
+            serverTotals,
+            episodeId
+          )
+        ) {
+          continue
+        }
+
+        const initialTotal = Math.max(
+          0,
+          Number(initialTotals[episodeId] || 0)
+        )
+        const currentTotal = Math.max(
+          0,
+          Number(
+            current[episodeId] ??
+              initialTotal
+          )
+        )
+
+        if (currentTotal !== initialTotal) {
+          continue
+        }
+
+        next[episodeId] = Math.max(
+          0,
+          Number(
+            serverTotals[episodeId] || 0
+          )
+        )
+      }
+
+      return next
+    })
+  }
+
+  loadEpisodeCommentTotals()
+
+  return () => {
+    ignore = true
+  }
+}, [episodeList, open, targetType])
+
 
   useEffect(() => {
     if (!open || targetType !== 'episode' || !activeEpisodeId) {
