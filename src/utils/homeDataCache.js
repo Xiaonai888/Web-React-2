@@ -396,39 +396,34 @@ export async function pruneHomeCache({
     Date.now() -
     Math.max(0, Number(olderThanMs || 0))
 
+  let storedKeys = []
+
   try {
-    await runHomeCacheTransaction(
-      'readwrite',
-      (store) => {
-        const index =
-          store.index('updatedAt')
-        const range =
-          IDBKeyRange.upperBound(cutoff)
-        const request =
-          index.openCursor(range)
-
-        request.onsuccess = () => {
-          const cursor = request.result
-
-          if (!cursor) return
-
-          memoryFallback.delete(
-            String(cursor.primaryKey)
-          )
-          cursor.delete()
-          cursor.continue()
-        }
-
-        return request
-      }
-    )
+    storedKeys =
+      (await runHomeCacheTransaction(
+        'readonly',
+        (store) =>
+          store
+            .index('updatedAt')
+            .getAllKeys(
+              IDBKeyRange.upperBound(cutoff)
+            )
+      )) || []
   } catch {
-    for (const [key, value] of memoryFallback) {
-      if (
-        Number(value?.updatedAt || 0) <= cutoff
-      ) {
-        memoryFallback.delete(key)
-      }
+    storedKeys = []
+  }
+
+  await Promise.all(
+    storedKeys.map((key) =>
+      deleteHomeCache(String(key))
+    )
+  )
+
+  for (const [key, value] of memoryFallback) {
+    if (
+      Number(value?.updatedAt || 0) <= cutoff
+    ) {
+      memoryFallback.delete(key)
     }
   }
 }
