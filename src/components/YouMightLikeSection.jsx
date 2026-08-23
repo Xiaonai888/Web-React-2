@@ -22,7 +22,7 @@ function getFirstDifferentTag(mainGenre, tags = []) {
   )
 }
 
-const fallbackBooks = Array.from({ length: 30 }).map((_, index) => ({
+const fallbackBooks = Array.from({ length: 12 }).map((_, index) => ({
   id: 900 + index,
   title: 'Name Book',
   cover: getFallbackCover(index),
@@ -131,7 +131,7 @@ export default function YouMightLikeSection({
 
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=30&sort=popular${storyTypeQuery}`
+            `${API_BASE_URL}/api/public/stories?limit=12&sort=popular${storyTypeQuery}`
           )
         )
 
