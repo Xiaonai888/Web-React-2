@@ -22,7 +22,14 @@ const ONE_HOUR_MS = 60 * 60 * 1000
 const THIRTY_MINUTES_MS = 30 * 60 * 1000
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000
 
+const HOME_BATCH_SLIDE_SECTIONS = new Set([
+  'shadow_spotlight',
+  'editor_weekly_picks',
+  'event_perks_hub',
+])
+
 const inflightRequests = new Map()
+let homeSlidesBatchRequest = null
 
 function isHomeSurface() {
   return window.location.pathname === '/'
@@ -52,7 +59,11 @@ function tokenFingerprint() {
 
   let hash = 2166136261
 
-  for (let index = 0; index < token.length; index += 1) {
+  for (
+    let index = 0;
+    index < token.length;
+    index += 1
+  ) {
     hash ^= token.charCodeAt(index)
     hash = Math.imul(hash, 16777619)
   }
@@ -63,7 +74,8 @@ function tokenFingerprint() {
 function stableSearchParams(url) {
   return Object.fromEntries(
     [...url.searchParams.entries()].sort(
-      ([left], [right]) => left.localeCompare(right)
+      ([left], [right]) =>
+        left.localeCompare(right)
     )
   )
 }
@@ -90,7 +102,10 @@ function storyCacheAge(url) {
   }
 
   if (
-    ['episode_updated', 'weekly_updates'].includes(sort)
+    [
+      'episode_updated',
+      'weekly_updates',
+    ].includes(sort)
   ) {
     return THIRTY_MINUTES_MS
   }
@@ -115,8 +130,10 @@ function getCacheRule(url) {
 
   if (url.pathname === '/api/slides') {
     if (
-      url.searchParams.get('include_inactive') === 'true' ||
-      url.searchParams.get('includeInactive') === 'true'
+      url.searchParams.get('include_inactive') ===
+        'true' ||
+      url.searchParams.get('includeInactive') ===
+        'true'
     ) {
       return null
     }
@@ -137,10 +154,15 @@ function getCacheRule(url) {
     }
   }
 
-  if (url.pathname === '/api/genres/featured-tabs') {
+  if (
+    url.pathname ===
+    '/api/genres/featured-tabs'
+  ) {
     if (
-      url.searchParams.get('include_inactive') === 'true' ||
-      url.searchParams.get('includeInactive') === 'true'
+      url.searchParams.get('include_inactive') ===
+        'true' ||
+      url.searchParams.get('includeInactive') ===
+        'true'
     ) {
       return null
     }
@@ -153,11 +175,14 @@ function getCacheRule(url) {
     }
   }
 
-  if (url.pathname === '/api/public/stories') {
+  if (
+    url.pathname === '/api/public/stories'
+  ) {
     return {
       section: 'stories',
       language:
-        url.searchParams.get('language') || 'all',
+        url.searchParams.get('language') ||
+        'all',
       scope: tokenFingerprint(),
       maxAgeMs: storyCacheAge(url),
     }
@@ -166,7 +191,22 @@ function getCacheRule(url) {
   return null
 }
 
-function cachedJsonResponse(data, state = 'HIT') {
+function getCacheKey(url, rule) {
+  return getHomeCacheKey({
+    section: rule.section,
+    language: rule.language,
+    scope: rule.scope,
+    params: {
+      path: url.pathname,
+      ...stableSearchParams(url),
+    },
+  })
+}
+
+function cachedJsonResponse(
+  data,
+  state = 'HIT'
+) {
   return new Response(JSON.stringify(data), {
     status: 200,
     headers: {
@@ -179,33 +219,162 @@ function cachedJsonResponse(data, state = 'HIT') {
 function hasCachedData(cached) {
   return Boolean(
     cached &&
-      Object.prototype.hasOwnProperty.call(cached, 'data')
+      Object.prototype.hasOwnProperty.call(
+        cached,
+        'data'
+      )
   )
+}
+
+function getBatchSlideSection(url) {
+  if (url.pathname !== '/api/slides') {
+    return ''
+  }
+
+  if (
+    url.searchParams.get('include_inactive') ===
+      'true' ||
+    url.searchParams.get('includeInactive') ===
+      'true'
+  ) {
+    return ''
+  }
+
+  const sectionKey =
+    url.searchParams.get('section_key') || ''
+
+  return HOME_BATCH_SLIDE_SECTIONS.has(
+    sectionKey
+  )
+    ? sectionKey
+    : ''
+}
+
+function getSlideSectionUrl(sectionKey) {
+  const url = new URL(
+    '/api/slides',
+    API_BASE_URL
+  )
+
+  url.searchParams.set(
+    'section_key',
+    sectionKey
+  )
+
+  return url
+}
+
+async function saveBatchSlideSections(
+  sections
+) {
+  await Promise.all(
+    [...HOME_BATCH_SLIDE_SECTIONS].map(
+      async (sectionKey) => {
+        const url =
+          getSlideSectionUrl(sectionKey)
+        const rule = getCacheRule(url)
+
+        if (!rule) return
+
+        const payload = {
+          ok: true,
+          include_inactive: false,
+          slides: Array.isArray(
+            sections?.[sectionKey]
+          )
+            ? sections[sectionKey]
+            : [],
+        }
+
+        await saveHomeCache(
+          getCacheKey(url, rule),
+          payload,
+          {
+            maxAgeMs: SIX_HOURS_MS,
+          }
+        )
+      }
+    )
+  )
+}
+
+async function loadHomeSlidesBatch(apiFetch) {
+  if (homeSlidesBatchRequest) {
+    return homeSlidesBatchRequest
+  }
+
+  homeSlidesBatchRequest = (async () => {
+    const response = await apiFetch(
+      `${API_BASE_URL}/api/slides/home-batch`
+    )
+
+    const data = await response
+      .json()
+      .catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message ||
+          'Failed to load home slides batch'
+      )
+    }
+
+    const sections = data.sections || {}
+
+    await saveBatchSlideSections(sections)
+
+    return sections
+  })()
+
+  try {
+    return await homeSlidesBatchRequest
+  } finally {
+    homeSlidesBatchRequest = null
+  }
 }
 
 function deleteLegacyCacheDatabase() {
   try {
-    if (typeof indexedDB === 'undefined') return
-    indexedDB.deleteDatabase('shadow-public-content-cache')
+    if (
+      typeof indexedDB === 'undefined'
+    ) {
+      return
+    }
+
+    indexedDB.deleteDatabase(
+      'shadow-public-content-cache'
+    )
   } catch {
     return
   }
 }
 
 export function installHomePublicCacheFetch() {
-  if (window.__shadowHomePublicCacheFetchInstalled) return
+  if (
+    window.__shadowHomePublicCacheFetchInstalled
+  ) {
+    return
+  }
 
-  window.__shadowHomePublicCacheFetchInstalled = true
+  window.__shadowHomePublicCacheFetchInstalled =
+    true
+
   deleteLegacyCacheDatabase()
 
-  const apiFetch = window.fetch.bind(window)
+  const apiFetch =
+    window.fetch.bind(window)
 
-  window.fetch = async (input, init = {}) => {
+  window.fetch = async (
+    input,
+    init = {}
+  ) => {
     if (!isHomeSurface()) {
       return apiFetch(input, init)
     }
 
-    if (requestMethod(input, init) !== 'GET') {
+    if (
+      requestMethod(input, init) !== 'GET'
+    ) {
       return apiFetch(input, init)
     }
 
@@ -226,73 +395,145 @@ export function installHomePublicCacheFetch() {
       return apiFetch(input, init)
     }
 
-    const cacheKey = getHomeCacheKey({
-      section: rule.section,
-      language: rule.language,
-      scope: rule.scope,
-      params: {
-        path: url.pathname,
-        ...stableSearchParams(url),
-      },
-    })
+    const cacheKey = getCacheKey(
+      url,
+      rule
+    )
 
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: rule.maxAgeMs,
-      allowExpired: true,
-    })
+    const cached = await loadHomeCache(
+      cacheKey,
+      {
+        maxAgeMs: rule.maxAgeMs,
+        allowExpired: true,
+      }
+    )
 
-    if (cached?.isFresh && hasCachedData(cached)) {
-      return cachedJsonResponse(cached.data)
+    if (
+      cached?.isFresh &&
+      hasCachedData(cached)
+    ) {
+      return cachedJsonResponse(
+        cached.data
+      )
     }
 
-    if (inflightRequests.has(cacheKey)) {
+    if (
+      inflightRequests.has(cacheKey)
+    ) {
       try {
-        const response = await inflightRequests.get(cacheKey)
+        const response =
+          await inflightRequests.get(
+            cacheKey
+          )
+
         return response.clone()
       } catch (error) {
         if (hasCachedData(cached)) {
-          return cachedJsonResponse(cached.data, 'STALE')
+          return cachedJsonResponse(
+            cached.data,
+            'STALE'
+          )
         }
+
         throw error
       }
     }
 
-    const requestPromise = (async () => {
-      const response = await apiFetch(input, init)
+    const batchSlideSection =
+      getBatchSlideSection(url)
 
-      if (!response.ok) {
-        if (hasCachedData(cached)) {
-          return cachedJsonResponse(cached.data, 'STALE')
+    const requestPromise = (
+      async () => {
+        if (batchSlideSection) {
+          try {
+            const sections =
+              await loadHomeSlidesBatch(
+                apiFetch
+              )
+
+            return cachedJsonResponse(
+              {
+                ok: true,
+                include_inactive: false,
+                slides: Array.isArray(
+                  sections?.[
+                    batchSlideSection
+                  ]
+                )
+                  ? sections[
+                      batchSlideSection
+                    ]
+                  : [],
+              },
+              'BATCH'
+            )
+          } catch (error) {
+            if (hasCachedData(cached)) {
+              return cachedJsonResponse(
+                cached.data,
+                'STALE'
+              )
+            }
+
+            throw error
+          }
+        }
+
+        const response = await apiFetch(
+          input,
+          init
+        )
+
+        if (!response.ok) {
+          if (hasCachedData(cached)) {
+            return cachedJsonResponse(
+              cached.data,
+              'STALE'
+            )
+          }
+
+          return response
+        }
+
+        const data = await response
+          .clone()
+          .json()
+          .catch(() => null)
+
+        if (
+          data !== null &&
+          data?.ok !== false
+        ) {
+          await saveHomeCache(
+            cacheKey,
+            data,
+            {
+              maxAgeMs:
+                rule.maxAgeMs,
+            }
+          )
         }
 
         return response
       }
+    )()
 
-      const data = await response
-        .clone()
-        .json()
-        .catch(() => null)
-
-      if (
-        data !== null &&
-        data?.ok !== false
-      ) {
-        await saveHomeCache(cacheKey, data, {
-          maxAgeMs: rule.maxAgeMs,
-        })
-      }
-
-      return response
-    })()
-
-    inflightRequests.set(cacheKey, requestPromise)
+    inflightRequests.set(
+      cacheKey,
+      requestPromise
+    )
 
     try {
-      const response = await requestPromise
+      const response =
+        await requestPromise
+
       return response.clone()
     } catch (error) {
       if (hasCachedData(cached)) {
-        return cachedJsonResponse(cached.data, 'STALE')
+        return cachedJsonResponse(
+          cached.data,
+          'STALE'
+        )
       }
 
       throw error
