@@ -3635,6 +3635,13 @@ setSuccessOpen(true)
       isManga ? 'manga-red-theme' : ''
     }`}
   >
+    {isManga && mangaUploadPending ? (
+  <MangaUploadProgressModal
+    pages={mangaPages.filter((page) => mangaUploadBatchIds.includes(page.id))}
+    onCancel={() => mangaUploadAbortRef.current?.abort()}
+  />
+) : null}
+    
     <style>{`
   .rich-episode-editor:empty::before {
     content: attr(data-placeholder);
