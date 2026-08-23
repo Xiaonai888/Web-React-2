@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import SubscriptionsSection from '../components/library/SubscriptionsSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
@@ -343,58 +343,146 @@ export default function Library() {
   const [message, setMessage] = useState('')
 
   const isLoggedIn = Boolean(getReaderToken())
+  const loadedTabsRef = useRef(new Set())
+  const inFlightTabsRef = useRef(new Set())
+  const activeTabRef = useRef(activeTab)
 
-  const loadLibrary = async () => {
+  const loadLibrary = async (
+    tab = activeTab,
+    { force = false } = {}
+  ) => {
     if (!isLoggedIn) {
+      loadedTabsRef.current.clear()
+      inFlightTabsRef.current.clear()
       setLibraryItems([])
       setSubscriptionItems([])
       setDownloadItems([])
       setLoading(false)
+      setMessage('')
       return
     }
 
-    setLoading(true)
-    setMessage('')
+    if (
+      !force &&
+      loadedTabsRef.current.has(tab)
+    ) {
+      if (activeTabRef.current === tab) {
+        setLoading(false)
+        setMessage('')
+      }
+      return
+    }
+
+    if (
+      inFlightTabsRef.current.has(tab)
+    ) {
+      return
+    }
+
+    inFlightTabsRef.current.add(tab)
+
+    if (activeTabRef.current === tab) {
+      setLoading(true)
+      setMessage('')
+    }
 
     try {
-      const [libraryResponse, subscriptionsResponse, downloadsResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/reader/library`, { headers: getHeaders() }),
-        fetch(`${API_BASE_URL}/api/reader/subscriptions`, { headers: getHeaders() }),
-        fetch(`${API_BASE_URL}/api/author-store/downloads/my`, { headers: getHeaders() }),
-      ])
+      if (tab === 'Subscribed') {
+        const response = await fetch(
+          `${API_BASE_URL}/api/reader/subscriptions`,
+          { headers: getHeaders() }
+        )
+        const data = await response
+          .json()
+          .catch(() => ({}))
 
-      const libraryData = await libraryResponse.json().catch(() => ({}))
-      const subscriptionsData = await subscriptionsResponse.json().catch(() => ({}))
-      const downloadsData = await downloadsResponse.json().catch(() => ({}))
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
+          throw new Error(
+            data.message ||
+              'Failed to load subscriptions'
+          )
+        }
 
-      if (!libraryResponse.ok || libraryData.ok === false) {
-        throw new Error(libraryData.message || 'Failed to load library')
+        setSubscriptionItems(
+          Array.isArray(data.items)
+            ? data.items
+            : []
+        )
+      } else if (tab === 'Downloads') {
+        const response = await fetch(
+          `${API_BASE_URL}/api/author-store/downloads/my`,
+          { headers: getHeaders() }
+        )
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
+          throw new Error(
+            data.message ||
+              'Failed to load downloads'
+          )
+        }
+
+        setDownloadItems(
+          formatDownloadItems(
+            data.downloads
+          )
+        )
+      } else {
+        const response = await fetch(
+          `${API_BASE_URL}/api/reader/library`,
+          { headers: getHeaders() }
+        )
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
+          throw new Error(
+            data.message ||
+              'Failed to load library'
+          )
+        }
+
+        setLibraryItems(
+          Array.isArray(data.items)
+            ? data.items
+            : []
+        )
       }
 
-      if (!subscriptionsResponse.ok || subscriptionsData.ok === false) {
-        throw new Error(subscriptionsData.message || 'Failed to load subscriptions')
-      }
-
-      if (!downloadsResponse.ok || downloadsData.ok === false) {
-        throw new Error(downloadsData.message || 'Failed to load downloads')
-      }
-
-      setLibraryItems(Array.isArray(libraryData.items) ? libraryData.items : [])
-      setSubscriptionItems(Array.isArray(subscriptionsData.items) ? subscriptionsData.items : [])
-      setDownloadItems(formatDownloadItems(downloadsData.downloads))
+      loadedTabsRef.current.add(tab)
     } catch (error) {
-      setLibraryItems([])
-      setSubscriptionItems([])
-      setDownloadItems([])
-      setMessage(error.message || 'Failed to load library')
+      if (activeTabRef.current === tab) {
+        setMessage(
+          error.message ||
+            'Failed to load library'
+        )
+      }
     } finally {
-      setLoading(false)
+      inFlightTabsRef.current.delete(tab)
+
+      if (activeTabRef.current === tab) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
-    loadLibrary()
-  }, [isLoggedIn])
+    activeTabRef.current = activeTab
+    loadLibrary(activeTab)
+  }, [activeTab, isLoggedIn])
+
 
   const currentItems = useMemo(() => {
     if (activeTab === 'Subscribed') return subscriptionItems
@@ -434,7 +522,8 @@ export default function Library() {
         )
       )
 
-      await loadLibrary()
+      setLibraryItems([])
+loadedTabsRef.current.add('Recents')
     } catch {
       setMessage('Failed to clear library')
     }
