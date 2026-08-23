@@ -354,6 +354,58 @@ async function fetchShadowMallPromotions() {
     : []
 }
 
+async function fetchShadowMallStorySaleStatuses(
+  token,
+  promotions
+) {
+  const ids = [
+    ...new Set(
+      (promotions || [])
+        .filter(
+          (item) =>
+            item?.promotion_type ===
+              'story_sale' &&
+            item?.story_id &&
+            item?.id
+        )
+        .map((item) =>
+          String(item.id)
+        )
+    ),
+  ].slice(0, 100)
+
+  if (!token || !ids.length) {
+    return null
+  }
+
+  const params = new URLSearchParams({
+    ids: ids.join(','),
+  })
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/shadow-mall/promotions/story-sale/statuses?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    }
+  )
+
+  const data = await response
+    .json()
+    .catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(
+      data.message ||
+        'Failed to load story sale statuses'
+    )
+  }
+
+  return data.statuses || {}
+}
+
 
 async function setFollowedPostReaction(
   token,
@@ -1098,8 +1150,14 @@ function AdsCard({ item, onMore, onHide }) {
 
   const [captionExpanded, setCaptionExpanded] =
     useState(false)
-  const [saleStatus, setSaleStatus] =
-    useState(null)
+  const saleStatusLoaded = Boolean(
+  item?.story_sale_status_loaded
+)
+
+const [saleStatus, setSaleStatus] =
+  useState(
+    item?.story_sale_status || null
+  )
   const [statusLoading, setStatusLoading] =
     useState(false)
   const [purchaseBusy, setPurchaseBusy] =
@@ -1147,6 +1205,13 @@ function AdsCard({ item, onMore, onHide }) {
       : 0
 
   useEffect(() => {
+    if (saleStatusLoaded) {
+  setSaleStatus(
+    item?.story_sale_status || null
+  )
+  setStatusLoading(false)
+  return undefined
+}
     if (!isStorySale || !token || !item?.id) {
       setSaleStatus(null)
       setStatusLoading(false)
@@ -1211,10 +1276,12 @@ function AdsCard({ item, onMore, onHide }) {
       controller.abort()
     }
   }, [
-    isStorySale,
-    item?.id,
-    token,
-  ])
+  isStorySale,
+  item?.id,
+  item?.story_sale_status,
+  saleStatusLoaded,
+  token,
+])
 
   useEffect(() => {
     if (!confirmOpen) return undefined
@@ -1877,32 +1944,74 @@ export default function DiscoverPage() {
     let alive = true
 
     async function loadShadowMallPromotions() {
-      try {
-        const promotions =
-          await fetchShadowMallPromotions()
+  try {
+    const promotions =
+      await fetchShadowMallPromotions()
 
-        if (alive) {
-          setShadowMallPromotions(
-            promotions.filter(
-              (promotion) =>
-                promotion?.is_active !== false &&
-                !isShadowMallAdHidden(promotion)
-            )
+    const visiblePromotions =
+      promotions.filter(
+        (promotion) =>
+          promotion?.is_active !== false &&
+          !isShadowMallAdHidden(
+            promotion
           )
-        }
+      )
+
+    let statuses = null
+
+    if (token) {
+      try {
+        statuses =
+          await fetchShadowMallStorySaleStatuses(
+            token,
+            visiblePromotions
+          )
       } catch {
-        if (alive) {
-          setShadowMallPromotions([])
-        }
+        statuses = null
       }
     }
+
+    if (!alive) return
+
+    setShadowMallPromotions(
+      visiblePromotions.map(
+        (promotion) => {
+          const key = String(
+            promotion?.id || ''
+          )
+
+          const hasStatus =
+            statuses &&
+            Object.prototype.hasOwnProperty.call(
+              statuses,
+              key
+            )
+
+          return hasStatus
+            ? {
+                ...promotion,
+                story_sale_status:
+                  statuses[key],
+                story_sale_status_loaded:
+                  true,
+              }
+            : promotion
+        }
+      )
+    )
+  } catch {
+    if (alive) {
+      setShadowMallPromotions([])
+    }
+  }
+}
 
     loadShadowMallPromotions()
 
     return () => {
       alive = false
     }
-  }, [])
+  }, [token])
 
   useEffect(() => {
     let alive = true
