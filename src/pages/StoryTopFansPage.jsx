@@ -397,11 +397,11 @@ const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
             <img
               src={cover}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-35 blur-[1px]"
+              className="absolute inset-0 h-full w-full object-cover blur-[1px]"
             />
           ) : null}
 
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/65" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/40 to-black/50" />
         </div>
 
         <div className="relative z-10 mx-auto flex h-full max-w-3xl flex-col px-3 pt-4 sm:px-4 sm:pt-5">
