@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -9,6 +10,7 @@ const API_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const RANKING_LIMIT = 24
+const RANKING_CACHE_MAX_AGE_MS = 60 * 60 * 1000
 
 const rankingTabs = [
   { key: 'bestseller', label: 'Bestseller', icon: 'fa-solid fa-trophy', sort: 'views' },
@@ -580,91 +582,157 @@ export default function RankingPage() {
   }, [])
 
   useEffect(() => {
-    let ignore = false
+  const controller = new AbortController()
+  let ignore = false
 
-    async function fetchRankingStories() {
-      try {
+  async function fetchRankingStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'ranking',
+        tab: activeTab,
+        genre: activeGenre,
+        sort: activeConfig.sort,
+        limit: RANKING_LIMIT,
+        ranking: 1,
+        schema: 1,
+      },
+    })
+
+    let hasCachedStories = false
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: RANKING_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (ignore || controller.signal.aborted) return
+
+    hasCachedStories = Array.isArray(cached?.data)
+
+    if (hasCachedStories) {
+      setStories(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedStories) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories) {
         setLoading(true)
+      }
 
-        const params = new URLSearchParams({
-          limit: String(RANKING_LIMIT),
-          ranking: '1',
-          sort: activeConfig.sort,
-        })
+      const params = new URLSearchParams({
+        limit: String(RANKING_LIMIT),
+        ranking: '1',
+        sort: activeConfig.sort,
+      })
 
-        if (activeTab === 'completed') {
-          params.set('story_status', 'Completed')
-        }
+      if (activeTab === 'completed') {
+        params.set('story_status', 'Completed')
+      }
 
-        if (activeGenre !== 'All') {
-          params.set('genre', activeGenre)
-        }
+      if (activeGenre !== 'All') {
+        params.set('genre', activeGenre)
+      }
 
-        const publicUrl = addStoryLanguageParam(
-          `${API_URL}/api/public/stories?${params.toString()}`
-        )
+      const publicUrl = addStoryLanguageParam(
+        `${API_URL}/api/public/stories?${params.toString()}`
+      )
 
-        const exclusiveUrl = addStoryLanguageParam(
-          `${API_URL}/api/public/shadow-exclusive/stories?${params.toString()}`
-        )
+      const exclusiveUrl = addStoryLanguageParam(
+        `${API_URL}/api/public/shadow-exclusive/stories?${params.toString()}`
+      )
 
-        const [publicResult, exclusiveResult] = await Promise.allSettled([
-          fetch(publicUrl),
-          fetch(exclusiveUrl),
+      const [publicResult, exclusiveResult] =
+        await Promise.allSettled([
+          fetch(publicUrl, {
+            signal: controller.signal,
+          }),
+          fetch(exclusiveUrl, {
+            signal: controller.signal,
+          }),
         ])
 
-        async function readStories(result) {
-          if (result.status !== 'fulfilled') return []
+      async function readStories(result) {
+        if (result.status !== 'fulfilled') return []
 
-          const response = result.value
-          const data = await response.json().catch(() => ({}))
+        const response = result.value
+        const data = await response.json().catch(() => ({}))
 
-          if (!response.ok || data.ok === false) return []
+        if (!response.ok || data.ok === false) return []
 
-          return Array.isArray(data.stories) ? data.stories : []
+        return Array.isArray(data.stories)
+          ? data.stories
+          : []
+      }
+
+      const publicStories = await readStories(publicResult)
+      const exclusiveStories = await readStories(exclusiveResult)
+
+      if (ignore || controller.signal.aborted) return
+
+      const storyMap = new Map()
+
+      for (const story of [
+        ...publicStories,
+        ...exclusiveStories,
+      ]) {
+        if (story?.id && !storyMap.has(story.id)) {
+          storyMap.set(story.id, story)
         }
+      }
 
-        const publicStories = await readStories(publicResult)
-        const exclusiveStories = await readStories(exclusiveResult)
-        const storyMap = new Map()
+      let nextStories = Array.from(
+        storyMap.values()
+      ).map(normalizeStory)
 
-        for (const story of [...publicStories, ...exclusiveStories]) {
-          if (story?.id && !storyMap.has(story.id)) {
-            storyMap.set(story.id, story)
-          }
-        }
-
-        let nextStories = Array.from(storyMap.values()).map(normalizeStory)
-
-        if (activeTab === 'rising') {
-          nextStories = nextStories.filter((story) => story.weeklyUpdates > 0)
-        }
-
-        if (activeTab === 'completed') {
-          nextStories = nextStories.filter((story) => story.status === 'Completed')
-        }
-
-        nextStories = sortRankingStories(nextStories, activeTab).slice(
-          0,
-          RANKING_LIMIT
+      if (activeTab === 'rising') {
+        nextStories = nextStories.filter(
+          (story) => story.weeklyUpdates > 0
         )
+      }
 
-        if (!ignore) {
-          setStories(nextStories)
-        }
-      } catch {
-        if (!ignore) setStories([])
-      } finally {
-        if (!ignore) setLoading(false)
+      if (activeTab === 'completed') {
+        nextStories = nextStories.filter(
+          (story) => story.status === 'Completed'
+        )
+      }
+
+      nextStories = sortRankingStories(
+        nextStories,
+        activeTab
+      ).slice(0, RANKING_LIMIT)
+
+      setStories(nextStories)
+
+      await saveHomeCache(cacheKey, nextStories, {
+        maxAgeMs: RANKING_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      if (!ignore && !hasCachedStories) {
+        setStories([])
+      }
+    } finally {
+      if (!ignore && !controller.signal.aborted) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchRankingStories()
+  fetchRankingStories()
 
-    return () => {
-      ignore = true
-    }
-  }, [activeTab, activeGenre, activeConfig.sort])
+  return () => {
+    ignore = true
+    controller.abort()
+  }
+}, [activeTab, activeGenre, activeConfig.sort])
+
 
   const myAuthorRank = useMemo(() => {
     if (!myAuthor) return null
