@@ -1308,6 +1308,8 @@ function LockedEpisodeCard({
   const voucherRequired = Number(voucherAccess?.amount || 0)
   const coinCanAccess = Boolean(coinAccess?.available) && (coinRequired <= 0 || coinBalance >= coinRequired)
   const voucherCanAccess = Boolean(voucherAccess?.available) && (voucherRequired <= 0 || voucherBalance >= voucherRequired)
+  const coinWaitRequired = Number(coinAccess?.wait_seconds || 0) > 0
+  const voucherWaitRequired = Number(voucherAccess?.wait_seconds || 0) > 0
 
   const singleOption =
     packageOptions.find((option) => option.key === 'single') || {
@@ -1629,7 +1631,7 @@ function LockedEpisodeCard({
 }
         title={`Coins — ${formatNumber(coinBalance)} remaining`}
         subtitle={`Access lasts ${Number(coinAccess?.access_days || 7)} days.`}
-        buttonText={coinCanAccess ? 'Access' : 'Not enough'}
+        buttonText={coinWaitRequired ? 'Available later' : coinCanAccess ? 'Access' : 'Not enough'}
         disabled={unlocking || !coinCanAccess}
         onClick={onCoinUnlock}
       />
@@ -1646,7 +1648,7 @@ function LockedEpisodeCard({
 }
         title={`Vouchers — ${formatNumber(voucherBalance)} remaining`}
         subtitle="Permanent unlock for this episode."
-        buttonText={voucherCanAccess ? 'Access' : 'Not enough'}
+        buttonText={voucherWaitRequired ? 'Available later' : voucherCanAccess ? 'Access' : 'Not enough'}
         disabled={unlocking || !voucherCanAccess}
         onClick={onVoucherUnlock}
       />
