@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
-import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
+import { addStoryLanguageParam } from '../utils/storyLanguage'
 import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
-
-const UPDATE_TODAY_PAGE_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const dayTabs = [
   { key: 1, label: 'MON' },
@@ -27,70 +25,51 @@ const badgeConfig = {
   end: 'bg-[#16A34A] text-white',
 }
 
-function formatCompactNumber(value) {
-  const number = Number(value || 0)
+function getDayKeyFromDateKey(value) {
+  const match = String(value || '')
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})$/)
 
-  if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) {
-    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  }
-  if (number >= 1000) {
-    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
-  }
+  if (!match) return null
 
-  return String(number)
-}
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
 
-function getStoryDate(story) {
-  const value = story.last_episode_published_at
-  const date = value ? new Date(value) : null
-
-  return date && !Number.isNaN(date.getTime()) ? date : null
-}
-
-function isWithinLastSevenDays(date) {
-  if (!date) return false
-
-  const now = new Date()
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  )
-  const oldestAllowed = new Date(startOfToday)
-
-  oldestAllowed.setDate(startOfToday.getDate() - 6)
-
-  return date >= oldestAllowed && date <= now
+  return new Date(
+    Date.UTC(year, month - 1, day)
+  ).getUTCDay()
 }
 
 function normalizeStory(story, index = 0) {
-  const updateDate = getStoryDate(story)
-
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
     author:
-      story.author_page?.page_name ||
-      story.author_page?.page_username ||
       story.author_name ||
       'Shadow Author',
     cover:
       story.cover_url ||
       `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
-    views: formatCompactNumber(story.total_views),
-    episodes: `Ep ${Number(story.total_episodes || 0)}`,
-updateCount: Math.max(0, Number(story.daily_update_count || 0)),
-badge: getStoryBadge(story),
-    updateDate,
-    dayKey: updateDate ? updateDate.getDay() : null,
+    updateCount: Math.max(
+      0,
+      Number(story.daily_update_count || 0)
+    ),
+    badge: getStoryBadge(story),
+    updateDateKey: String(
+      story.update_date || ''
+    ).trim(),
+    lastEpisodePublishedAt:
+      story.last_episode_published_at || null,
+    dayKey: getDayKeyFromDateKey(
+      story.update_date
+    ),
   }
 }
 
 function getBestAvailableDay(stories, preferredDay) {
   const availableDays = new Set(
     stories
-      .filter((story) => isWithinLastSevenDays(story.updateDate))
       .map((story) => story.dayKey)
       .filter((day) => day !== null)
   )
@@ -99,10 +78,15 @@ function getBestAvailableDay(stories, preferredDay) {
     return preferredDay
   }
 
-  const today = new Date().getDay()
+  const startDay =
+    Number.isInteger(preferredDay)
+      ? preferredDay
+      : 0
 
   for (let offset = 0; offset < 7; offset += 1) {
-    const day = (today - offset + 7) % 7
+    const day =
+      (startDay - offset + 7) % 7
+
     if (availableDays.has(day)) {
       return day
     }
@@ -110,7 +94,6 @@ function getBestAvailableDay(stories, preferredDay) {
 
   return preferredDay
 }
-
 
 const updateMarkerUI = {
   width: 42,
@@ -125,12 +108,27 @@ const updateMarkerUI = {
 
 function BookCard({ book }) {
   const badgeText =
-    book.badge === 'end' ? 'END' : book.badge === 'up' ? 'UP' : 'NEW'
-  const updateCount = Math.max(0, Number(book.updateCount || 0))
-  const updateCountText = updateCount >= 10 ? '9+' : `+${updateCount}`
+    book.badge === 'end'
+      ? 'END'
+      : book.badge === 'up'
+        ? 'UP'
+        : 'NEW'
+
+  const updateCount = Math.max(
+    0,
+    Number(book.updateCount || 0)
+  )
+
+  const updateCountText =
+    updateCount >= 10
+      ? '9+'
+      : `+${updateCount}`
 
   return (
-    <Link to={`/story/${book.id}`} className="group block min-w-0">
+    <Link
+      to={`/story/${book.id}`}
+      className="group block min-w-0"
+    >
       <div className="relative aspect-[2/3]">
         <div className="relative h-full overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
           <img
@@ -144,11 +142,13 @@ function BookCard({ book }) {
             }}
           />
 
-         {book.badge ? (
-  <div className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${badgeConfig[book.badge]}`}>
-    {badgeText}
-  </div>
-) : null}
+          {book.badge ? (
+            <div
+              className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${badgeConfig[book.badge]}`}
+            >
+              {badgeText}
+            </div>
+          ) : null}
 
           {updateCount >= 2 ? (
             <div
@@ -195,17 +195,18 @@ function BookCard({ book }) {
   )
 }
 
-
 function LoadingGrid() {
   return (
     <div className="grid grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-6 md:gap-x-5 md:gap-y-9">
-      {Array.from({ length: 12 }).map((_, index) => (
-        <div key={index}>
-          <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[#f3f4f6]" />
-          <div className="mt-3 h-4 animate-pulse rounded-full bg-[#f3f4f6]" />
-          <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[#f3f4f6]" />
-        </div>
-      ))}
+      {Array.from({ length: 12 }).map(
+        (_, index) => (
+          <div key={index}>
+            <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[#f3f4f6]" />
+            <div className="mt-3 h-4 animate-pulse rounded-full bg-[#f3f4f6]" />
+            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[#f3f4f6]" />
+          </div>
+        )
+      )}
     </div>
   )
 }
@@ -215,128 +216,134 @@ export default function UpdateTodayPage() {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
-  const [activeDay, setActiveDay] = useState(new Date().getDay())
+  const [activeDay, setActiveDay] = useState(null)
   const [requestVersion, setRequestVersion] = useState(0)
 
   useEffect(() => {
-  const controller = new AbortController()
-  let ignore = false
+    const controller = new AbortController()
+    let ignore = false
 
-  function applyStories(sourceStories) {
-    if (ignore || controller.signal.aborted) return
-
-    const normalizedStories = (
-      Array.isArray(sourceStories) ? sourceStories : []
-    ).map(normalizeStory)
-
-    setStories(normalizedStories)
-    setActiveDay((currentDay) =>
-      getBestAvailableDay(normalizedStories, currentDay)
-    )
-  }
-
-  async function fetchStories() {
-    const cacheKey = getHomeCacheKey({
-      section: 'stories',
-      language: getStoryLanguageId(),
-      params: {
-        page: 'update-today',
-        sort: 'episode_updated',
-        limit: 100,
-        window: '7-days',
-        schema: 1,
-      },
-    })
-
-    let hasCachedStories = false
-
-    if (requestVersion === 0) {
-      const cached = await loadHomeCache(cacheKey, {
-        maxAgeMs: UPDATE_TODAY_PAGE_CACHE_MAX_AGE_MS,
-        allowExpired: true,
-      })
-
-      if (ignore || controller.signal.aborted) return
-
-      hasCachedStories = Array.isArray(cached?.data)
-
-      if (hasCachedStories) {
-        applyStories(cached.data)
-        setLoading(false)
-        setErrorMessage('')
-      }
-
-      if (cached?.isFresh && hasCachedStories) {
+    function applyStories(
+      sourceStories,
+      todayDateKey
+    ) {
+      if (
+        ignore ||
+        controller.signal.aborted
+      ) {
         return
       }
+
+      const normalizedStories = (
+        Array.isArray(sourceStories)
+          ? sourceStories
+          : []
+      ).map(normalizeStory)
+
+      const serverTodayDay =
+        getDayKeyFromDateKey(
+          todayDateKey
+        )
+
+      setStories(normalizedStories)
+
+      setActiveDay((currentDay) =>
+        getBestAvailableDay(
+          normalizedStories,
+          serverTodayDay ??
+            currentDay ??
+            0
+        )
+      )
     }
 
-    try {
-      if (!hasCachedStories) {
-        setLoading(true)
-      }
-
+    async function fetchStories() {
+      setLoading(true)
       setErrorMessage('')
 
-      const response = await fetch(
-        addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated`
-        ),
-        { signal: controller.signal }
-      )
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(
-          data.message || 'Failed to load update today stories'
+      try {
+        const response = await fetch(
+          addStoryLanguageParam(
+            `${API_BASE_URL}/api/public/story-updates?days=7&limit_per_day=100`
+          ),
+          {
+            signal: controller.signal,
+            cache: 'no-store',
+          }
         )
-      }
 
-      const nextStories = Array.isArray(data.stories)
-        ? data.stories
-        : []
+        const data = await response
+          .json()
+          .catch(() => ({}))
 
-      if (ignore || controller.signal.aborted) return
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
+          throw new Error(
+            data.message ||
+              'Failed to load update today stories'
+          )
+        }
 
-      applyStories(nextStories)
+        if (
+          ignore ||
+          controller.signal.aborted
+        ) {
+          return
+        }
 
-      await saveHomeCache(cacheKey, nextStories, {
-        maxAgeMs: UPDATE_TODAY_PAGE_CACHE_MAX_AGE_MS,
-      })
-    } catch (error) {
-      if (error?.name === 'AbortError') return
-
-      if (!ignore && !hasCachedStories) {
-        setStories([])
-        setErrorMessage(
-          error?.message ||
-            'Cannot load updates. Please try again.'
+        applyStories(
+          data.stories,
+          data.today
         )
-      }
-    } finally {
-      if (!ignore && !controller.signal.aborted) {
-        setLoading(false)
+      } catch (error) {
+        if (
+          error?.name === 'AbortError'
+        ) {
+          return
+        }
+
+        if (!ignore) {
+          setStories([])
+          setErrorMessage(
+            error?.message ||
+              'Cannot load updates. Please try again.'
+          )
+        }
+      } finally {
+        if (
+          !ignore &&
+          !controller.signal.aborted
+        ) {
+          setLoading(false)
+        }
       }
     }
-  }
 
-  fetchStories()
+    fetchStories()
 
-  return () => {
-    ignore = true
-    controller.abort()
-  }
-}, [requestVersion])
-
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [requestVersion])
 
   const filteredStories = useMemo(() => {
     return stories
-      .filter((story) => story.dayKey === activeDay)
-      .filter((story) => isWithinLastSevenDays(story.updateDate))
+      .filter(
+        (story) =>
+          story.dayKey === activeDay
+      )
       .sort((a, b) => {
-        const aTime = a.updateDate?.getTime() || 0
-        const bTime = b.updateDate?.getTime() || 0
+        const aTime = new Date(
+          a.lastEpisodePublishedAt || 0
+        ).getTime()
+
+        const bTime = new Date(
+          b.lastEpisodePublishedAt || 0
+        ).getTime()
+
         return bTime - aTime
       })
   }, [activeDay, stories])
@@ -359,25 +366,28 @@ export default function UpdateTodayPage() {
           </h1>
 
           <Link
-  to="/search"
-  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7]"
-  aria-label="Search"
->
-  <i className="fas fa-search text-[18px]" />
-</Link>
+            to="/search"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7]"
+            aria-label="Search"
+          >
+            <i className="fas fa-search text-[18px]" />
+          </Link>
         </div>
       </header>
 
       <div className="sticky top-14 z-30 border-b border-[#f0f1f3] bg-white">
         <div className="mx-auto grid h-[58px] max-w-[1180px] grid-cols-7 px-2 sm:px-4 lg:px-6">
           {dayTabs.map((day) => {
-            const active = activeDay === day.key
+            const active =
+              activeDay === day.key
 
             return (
               <button
                 key={day.key}
                 type="button"
-                onClick={() => setActiveDay(day.key)}
+                onClick={() =>
+                  setActiveDay(day.key)
+                }
                 className={`relative flex items-center justify-center text-[12px] transition-colors sm:text-[13px] ${
                   active
                     ? 'font-extrabold text-[#111827]'
@@ -387,12 +397,12 @@ export default function UpdateTodayPage() {
                 {day.label}
 
                 <span
-  className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 rounded-[10px] transition-all ${
-    active
-      ? 'w-7 bg-[#F6B800]'
-      : 'w-0 bg-transparent'
-  }`}
-/>
+                  className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 rounded-[10px] transition-all ${
+                    active
+                      ? 'w-7 bg-[#F6B800]'
+                      : 'w-0 bg-transparent'
+                  }`}
+                />
               </button>
             )
           })}
@@ -408,7 +418,11 @@ export default function UpdateTodayPage() {
 
             <button
               type="button"
-              onClick={() => setRequestVersion((value) => value + 1)}
+              onClick={() =>
+                setRequestVersion(
+                  (value) => value + 1
+                )
+              }
               className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[13px] font-bold text-white"
             >
               Try Again
@@ -418,9 +432,14 @@ export default function UpdateTodayPage() {
           <LoadingGrid />
         ) : filteredStories.length ? (
           <div className="grid grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-6 md:gap-x-5 md:gap-y-9">
-            {filteredStories.map((book) => (
-              <BookCard key={book.id} book={book} />
-            ))}
+            {filteredStories.map(
+              (book) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                />
+              )
+            )}
           </div>
         ) : (
           <div className="px-5 py-16 text-center">
