@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import {
   useEffect,
   useLayoutEffect,
@@ -9,6 +10,7 @@ import {
 } from './reactionConfig'
 
 export default function ReactionPicker({
+  anchorRef,
   open,
   activeType = '',
   previewType = '',
@@ -30,7 +32,7 @@ export default function ReactionPicker({
       setHoverType('')
       setPickerPosition(null)
     }
-  }, [open])
+  }, [open, anchorRef])
 
   useLayoutEffect(() => {
     if (!open) return undefined
@@ -42,20 +44,12 @@ export default function ReactionPicker({
 
       frame = requestAnimationFrame(() => {
         const picker = pickerRef.current
-        const parent = picker?.parentElement
+const anchor = anchorRef?.current
 
-        if (!picker || !parent) return
+if (!picker || !anchor) return
 
-        const anchor = Array.from(parent.children).find(
-          (element) =>
-            element.tagName === 'BUTTON' &&
-            element.getAttribute('aria-label') !== 'Close reactions'
-        )
-
-        if (!anchor) return
-
-        const anchorRect = anchor.getBoundingClientRect()
-        const post = parent.closest('article')
+const anchorRect = anchor.getBoundingClientRect()
+const post = anchor.closest('article')
         const postRect = post?.getBoundingClientRect()
         const isDesktop = window.innerWidth >= 768
 
@@ -108,7 +102,7 @@ setPickerPosition({
         true
       )
     }
-  }, [open])
+  }, [open, anchorRef])
 
   if (!open) return null
 
