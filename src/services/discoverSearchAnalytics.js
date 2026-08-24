@@ -78,6 +78,15 @@ function markRecent(key, signature) {
   writeCache(key, cache)
 }
 
+function clearRecent(key, signature) {
+  const cache = pruneCache(readCache(key))
+
+  if (Object.prototype.hasOwnProperty.call(cache, signature)) {
+    delete cache[signature]
+    writeCache(key, cache)
+  }
+}
+
 function clearPendingTimer() {
   if (pendingTimer) {
     window.clearTimeout(pendingTimer)
@@ -140,6 +149,11 @@ async function sendSearchAnalytics(snapshot) {
       if (data.ok === false) return false
 
       markRecent(SEARCH_CACHE_KEY, signature)
+
+      if (data.counted === true) {
+        clearRecent(CLICK_CACHE_KEY, signature)
+      }
+
       return true
     })
     .catch(() => false)
@@ -241,12 +255,6 @@ export function trackDiscoverSearchResultClick({
     return
   }
 
-  const canTrack =
-    activeSignature === signature ||
-    hasRecent(SEARCH_CACHE_KEY, signature)
-
-  if (!canTrack) return
-
   const sendClick = () => {
     if (hasRecent(CLICK_CACHE_KEY, signature)) return
 
@@ -273,6 +281,21 @@ export function trackDiscoverSearchResultClick({
         keepalive: true,
       }
     ).catch(() => {})
+  }
+
+  if (
+    pendingSnapshot &&
+    getSignature(
+      pendingSnapshot.query,
+      pendingSnapshot.type
+    ) === signature
+  ) {
+    const snapshot = pendingSnapshot
+
+    void sendSearchAnalytics(snapshot).then((ok) => {
+      if (ok) sendClick()
+    })
+    return
   }
 
   if (
