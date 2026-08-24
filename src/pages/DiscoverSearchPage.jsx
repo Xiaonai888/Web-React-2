@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  cancelDiscoverSearchAnalytics,
+  requestImmediateDiscoverSearchAnalytics,
+  scheduleDiscoverSearchAnalytics,
+  trackDiscoverSearchResultClick,
+} from '../services/discoverSearchAnalytics'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -487,7 +493,20 @@ export default function DiscoverSearchPage() {
           ...EMPTY_SECTIONS,
           ...(data.sections || {}),
         })
-        setShownCounts(data.shown_counts || {})
+        const responseCounts = data.shown_counts || {}
+
+setShownCounts(responseCounts)
+
+scheduleDiscoverSearchAnalytics({
+  apiBaseUrl: API_BASE_URL,
+  query: keyword,
+  type: activeType,
+  resultCount:
+    activeType === 'all'
+      ? Number(responseCounts.all || 0)
+      : Number(responseCounts[activeType] || 0),
+  token,
+})
       } catch (error) {
         if (error.name === 'AbortError') return
 
@@ -514,36 +533,33 @@ export default function DiscoverSearchPage() {
   }, [sections])
 
   function submitSearch(event) {
-    event.preventDefault()
-    setActiveQuery(searchText.trim())
-  }
+  event.preventDefault()
 
-  function changeType(type) {
+  const keyword = searchText.trim()
+
+  requestImmediateDiscoverSearchAnalytics(
+    keyword,
+    activeType
+  )
+
+  setActiveQuery(keyword)
+}
+
+function changeType(type) {
+  cancelDiscoverSearchAnalytics()
   setActiveType(type)
   setActiveQuery(searchText.trim())
 }
 
 function trackSearchClick(resultType, resultId) {
-  const keyword = activeQuery.trim()
-
-  if (!keyword || !resultId) return
-
-  const token = getReaderToken()
-
-  void fetch(`${API_BASE_URL}/api/discover-search/click`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({
-      query: keyword,
-      type: activeType,
-      result_type: resultType,
-      result_id: String(resultId),
-    }),
-    keepalive: true,
-  }).catch(() => {})
+  trackDiscoverSearchResultClick({
+    apiBaseUrl: API_BASE_URL,
+    query: activeQuery,
+    type: activeType,
+    resultType,
+    resultId,
+    token: getReaderToken(),
+  })
 }
 
 function openReader(reader, shouldTrack = true) {
@@ -673,7 +689,10 @@ const sectionConfig = [
             <input
               type="search"
               value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
+              onChange={(event) => {
+  cancelDiscoverSearchAnalytics()
+  setSearchText(event.target.value)
+}}
               autoFocus
               placeholder="Search Shadow..."
               className="h-11 w-full rounded-full border border-[#e2e4e8] bg-[#f7f7f8] pl-11 pr-11 text-[14px] font-semibold text-[#16181d] outline-none transition placeholder:font-medium placeholder:text-[#9aa0aa] focus:border-[#25262b] focus:bg-white"
@@ -682,6 +701,7 @@ const sectionConfig = [
               <button
                 type="button"
                 onClick={() => {
+                  cancelDiscoverSearchAnalytics()
                   setSearchText('')
                   setActiveQuery('')
                 }}
