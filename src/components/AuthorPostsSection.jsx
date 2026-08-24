@@ -4,6 +4,7 @@ import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReactionAction from './social/reactions/ReactionAction'
+import { getReactionMeta } from './social/reactions/reactionConfig'
 import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
 import AuthorDiscoverPostText from './author-posts/AuthorDiscoverPostText'
@@ -110,6 +111,7 @@ function sortAuthorPosts(posts) {
 async function fetchAuthorPosts(pageUsername, before = '') {
   if (!pageUsername) return []
 
+  const token = getAuthToken()
   const params = new URLSearchParams({ limit: '30' })
 
   if (before) {
@@ -117,8 +119,14 @@ async function fetchAuthorPosts(pageUsername, before = '') {
   }
 
   const response = await fetch(
-    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`
+    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`,
+    {
+      headers: token
+        ? { Authorization: `Bearer ${token}` }
+        : {},
+    }
   )
+
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
@@ -425,6 +433,13 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
   const reactionBusy = reactionBusyId === post.id
   const [echoCount, setEchoCount] = useState(Number(post.echo_count || 0))
+  const reactionSummary = Array.isArray(post.reaction_summary)
+  ? post.reaction_summary
+      .filter((item) => Number(item?.count || 0) > 0 && getReactionMeta(item?.type))
+      .slice(0, 3)
+  : []
+
+const totalReactions = Math.max(0, Number(post.like_count || 0))
 
 useEffect(() => {
   setEchoCount(Number(post.echo_count || 0))
@@ -500,38 +515,58 @@ useEffect(() => {
       <PostImageGrid images={postImages} onView={onViewImage} />
 
 {isOwner ? (
-  <button
-    type="button"
-    onClick={() => onMessage?.('Insights and Ads coming soon.')}
-    className="flex w-full border-b border-[#eef0f4] px-4 py-2 text-left active:bg-[#f3f4f6]"
-  >
-    <span className="text-[13px] font-medium leading-5 text-[#64748B]">
-      See insights<br />
-      and ads
-    </span>
-  </button>
+  <div className="flex items-center gap-3 border-b border-[#eef0f4] px-4 py-2">
+    <button type="button" onClick={() => onMessage?.('Insights and Ads coming soon.')} className="shrink-0 text-left active:opacity-60">
+      <span className="text-[13px] font-medium leading-5 text-[#64748B]">See insights<br />and ads</span>
+    </button>
+    <button type="button" onClick={() => onMessage?.('Boost post coming soon.')} className="ml-auto flex h-10 flex-1 items-center justify-center rounded-[8px] bg-black px-4 text-[14px] font-semibold text-white active:opacity-80">
+      Boost post
+    </button>
+  </div>
 ) : null}
 
-<div className="mt-2 border-b border-[#eef0f4] px-4 pb-1">
+<div className="mt-2 px-4 pb-1">
   <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b]">
-    <button
-      type="button"
-      onClick={() =>
-        navigate(`/interactions/author_post/${post.id}/likes`, {
-          state: { sourceName: 'Author Post' },
-        })
-      }
-      className="flex items-center"
-    >
-      <img
-        src="/assets/React/Love.svg"
-        alt=""
-        className="h-[17px] w-[17px]"
-      />
-      <span className="ml-1.5">
-        {formatCompactNumber(post.like_count)}
-      </span>
-    </button>
+    {reactionSummary.length > 0 && totalReactions > 0 ? (
+      <button
+        type="button"
+        onClick={() =>
+          navigate(`/interactions/author_post/${post.id}/likes`, {
+            state: { sourceName: 'Author Post' },
+          })
+        }
+        className="flex min-w-0 items-center active:opacity-60"
+      >
+        <span className="flex items-center">
+          {reactionSummary.map((item, index) => {
+            const reaction = getReactionMeta(item.type)
+
+            if (!reaction) return null
+
+            return (
+              <img
+                key={item.type}
+                src={reaction.src}
+                alt=""
+                className={`h-[18px] w-[18px] rounded-full ring-2 ring-white ${
+                  index > 0 ? '-ml-1.5' : ''
+                }`}
+              />
+            )
+          })}
+        </span>
+
+        <span className="ml-2 truncate">
+          {post.my_reaction
+            ? totalReactions > 1
+              ? `You + ${formatCompactNumber(totalReactions - 1)}`
+              : 'You'
+            : formatCompactNumber(totalReactions)}
+        </span>
+      </button>
+    ) : (
+      <span />
+    )}
 
     <div className="flex items-center gap-4">
       <button
@@ -548,6 +583,43 @@ useEffect(() => {
     </div>
   </div>
 
+  <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
+    <div className="flex items-center justify-center py-2">
+      <ReactionAction
+        reactionType={post.my_reaction}
+        count={post.like_count}
+        busy={reactionBusy}
+        onReact={(reactionType) =>
+          onReact(post, reactionType)
+        }
+        showCount={false}
+        idleLabel="Like"
+        className="w-full justify-center"
+        buttonClassName="w-full justify-center gap-2 after:content-['Like'] [&>i]:!text-[20px] [&>img]:!h-[20px] [&>img]:!w-[20px]"
+      />
+    </div>
+
+    <button
+      type="button"
+      onClick={() => onComment(post)}
+      className="flex w-full items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+    >
+      <i className="fa-regular fa-comment text-[20px]" />
+      <span>Comment</span>
+    </button>
+
+    <div className="flex items-center justify-center py-2">
+      <AuthorPostEchoAction
+        post={post}
+        author={author}
+        onCountChange={(_, total) =>
+          setEchoCount(Number(total || 0))
+        }
+        className="w-full justify-center gap-2 [&>span]:hidden after:content-['Echo'] [&>img]:!h-[20px] [&>img]:!w-[20px]"
+      />
+    </div>
+  </div>
+</div>
   <div className="grid grid-cols-3 items-center border-t border-[#eef0f4] py-1.5 text-[14px] font-normal text-[#65676b]">
     <div className="flex items-center justify-center py-2">
       <ReactionAction
@@ -1403,10 +1475,13 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       if (item.id !== post.id) return item
 
       return {
-        ...item,
-        like_count: Number(data.like_count || 0),
-        my_reaction: data.reacted ? data.reaction_type || reactionType : null,
-      }
+  ...item,
+  like_count: Number(data.like_count || 0),
+  my_reaction: data.reacted ? data.reaction_type || reactionType : null,
+  reaction_summary: Array.isArray(data.reaction_summary)
+    ? data.reaction_summary
+    : [],
+}
     }))
   } catch (error) {
     const message = error.message || 'Failed to update reaction'
