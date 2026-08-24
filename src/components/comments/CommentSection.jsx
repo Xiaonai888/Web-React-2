@@ -2459,8 +2459,13 @@ const nextComments =
       const admin =
         currentUser.is_admin
 
-      return comments.filter(
-        if (
+      return comments.filter((comment) => {
+  if (
+    targetType === 'episode' &&
+    comment.is_deleted
+  ) {
+    return false
+  }
   targetType === 'episode' &&
   comment.is_deleted
 ) {
