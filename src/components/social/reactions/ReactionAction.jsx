@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import ReactionPicker from './ReactionPicker'
 import {
   DEFAULT_REACTION_TYPE,
@@ -24,6 +25,7 @@ export default function ReactionAction({
   pickerClassName = '',
   idleLabel = 'Like',
 }) {
+  const anchorRef = useRef(null)
   const activeReaction =
     getReactionMeta(reactionType)
 
@@ -115,6 +117,7 @@ export default function ReactionAction({
       }}
     >
       <ReactionPicker
+        anchorRef={anchorRef}
         open={
           interaction.reactionPickerOpen
         }
@@ -140,7 +143,8 @@ export default function ReactionAction({
       />
 
       <button
-        type="button"
+  ref={anchorRef}
+  type="button"
         disabled={
           busy || disabled
         }
