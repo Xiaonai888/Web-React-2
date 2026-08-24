@@ -683,10 +683,7 @@ export default function ReaderPostCreatePage() {
             `Only images are allowed, with a maximum of ${MAX_POST_PHOTOS} photos.`
           )
         }
-        disabled={
-          uploading ||
-          remainingPhotos <= 0
-        }
+        disabled
         multiple
         maxFiles={Math.max(
           1,
@@ -797,10 +794,7 @@ export default function ReaderPostCreatePage() {
 
             <button
               type="button"
-              disabled={
-                uploading ||
-                remainingPhotos <= 0
-              }
+              disabled
               onClick={() =>
                 fileInputRef.current?.click()
               }
