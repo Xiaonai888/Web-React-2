@@ -1304,6 +1304,7 @@ function LockedEpisodeCard({
   const backgroundImage = episode?.cover_url || story?.cover_url || ''
   const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
   const voucherBalance = Number(wallet?.voucher_balance || 0)
+  const walletLoaded = Boolean(wallet)
   const coinRequired = Number(coinAccess?.amount || 0)
   const voucherRequired = Number(voucherAccess?.amount || 0)
   const coinCanAccess = Boolean(coinAccess?.available) && (coinRequired <= 0 || coinBalance >= coinRequired)
@@ -1629,7 +1630,7 @@ function LockedEpisodeCard({
     decoding="async"
   />
 }
-        title={`Coins — ${formatNumber(coinBalance)} remaining`}
+        title={walletLoaded ? `Coins — ${formatNumber(coinBalance)} remaining` : 'Coins — Unable to load'}
         subtitle={`Access lasts ${Number(coinAccess?.access_days || 7)} days.`}
         buttonText={coinWaitRequired ? 'Available later' : coinCanAccess ? 'Access' : 'Not enough'}
         disabled={unlocking || !coinCanAccess}
@@ -1646,7 +1647,7 @@ function LockedEpisodeCard({
     decoding="async"
   />
 }
-        title={`Vouchers — ${formatNumber(voucherBalance)} remaining`}
+        title={walletLoaded ? `Vouchers — ${formatNumber(voucherBalance)} remaining` : 'Vouchers — Unable to load'}
         subtitle="Permanent unlock for this episode."
         buttonText={voucherWaitRequired ? 'Available later' : voucherCanAccess ? 'Access' : 'Not enough'}
         disabled={unlocking || !voucherCanAccess}
