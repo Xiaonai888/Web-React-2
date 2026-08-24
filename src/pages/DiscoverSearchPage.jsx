@@ -519,43 +519,35 @@ export default function DiscoverSearchPage() {
   }
 
   function changeType(type) {
-    setActiveType(type)
-    setActiveQuery(searchText.trim())
-  }
+  setActiveType(type)
+  setActiveQuery(searchText.trim())
+}
 
-  function openReader(reader) {
-    if (!reader?.username) return
-    navigate(`/profile?username=${encodeURIComponent(reader.username)}`)
-  }
+function trackSearchClick(resultType, resultId) {
+  const keyword = activeQuery.trim()
 
-  function openPage(page) {
-    if (!page?.page_username) return
-    navigate(`/author/page/${encodeURIComponent(page.page_username)}`)
-  }
+  if (!keyword || !resultId) return
 
-  function openStory(story) {
-    if (!story?.id) return
-    navigate(`/story/${encodeURIComponent(story.id)}`)
-  }
+  const token = getReaderToken()
 
-  function openPdf(product) {
-    const pageUsername = product?.author_page?.page_username
+  void fetch(`${API_BASE_URL}/api/discover-search/click`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      query: keyword,
+      type: activeType,
+      result_type: resultType,
+      result_id: String(resultId),
+    }),
+    keepalive: true,
+  }).catch(() => {})
+}
 
-    if (!pageUsername || !product?.id) return
+  navigate(`/profile?username=${encodeURIComponent(reader.username)}`)
 
-    navigate(
-      `/author/page/${encodeURIComponent(pageUsername)}/store/product/${encodeURIComponent(product.id)}`
-    )
-  }
-
-  function openPost(post) {
-    if (post?.post_source === 'author') {
-      openPage(post.owner)
-      return
-    }
-
-    openReader(post.owner)
-  }
 
   const sectionConfig = [
     {
