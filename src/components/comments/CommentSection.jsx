@@ -2450,50 +2450,16 @@ const nextComments =
 
   const isBanned = false
 
-  const visibleComments = useMemo(
-    () => {
-      const author = isStoryAuthor(
-        currentUser,
-        story
-      )
-      const admin =
-        currentUser.is_admin
-
-      return comments.filter((comment) => {
-  if (
-    targetType === 'episode' &&
-    comment.is_deleted
-  ) {
-    return false
-  }
-  targetType === 'episode' &&
-  comment.is_deleted
-) {
-  return false
-}
-        (comment) => {
-          if (!comment.is_hidden) {
-            return true
-          }
-
-          const owner =
-            comment.user_id &&
-            currentUser.id &&
-            String(
-              comment.user_id
-            ) ===
-              String(currentUser.id)
-
-          return (
-            owner ||
-            author ||
-            admin
-          )
-        }
-      )
-    },
-    [comments, currentUser, story, targetType]
-  )
+  const visibleComments = useMemo(() => {
+  const author = isStoryAuthor(currentUser, story)
+  const admin = currentUser.is_admin
+  return comments.filter((comment) => {
+    if (targetType === 'episode' && comment.is_deleted) return false
+    if (!comment.is_hidden) return true
+    const owner = comment.user_id && currentUser.id && String(comment.user_id) === String(currentUser.id)
+    return owner || author || admin
+  })
+}, [comments, currentUser, story, targetType])
 
   const sortedComments = useMemo(
     () => [...visibleComments],
