@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  addStoryLanguageParam,
-  getStoryLanguageId,
-} from '../utils/storyLanguage'
-import {
-  getHomeCacheKey,
-  loadHomeCache,
-  saveHomeCache,
-} from '../utils/homeDataCache'
+import { addStoryLanguageParam } from '../utils/storyLanguage'
 import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
@@ -16,8 +8,6 @@ const API_BASE_URL =
   window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
-
-const UPDATE_TODAY_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const badgeConfig = {
   new: {
@@ -32,31 +22,6 @@ const badgeConfig = {
     text: 'END',
     className: 'bg-[#16A34A] text-white',
   },
-}
-
-function getTodayCacheKey() {
-  const now = new Date()
-
-  return [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0'),
-  ].join('-')
-}
-
-function isToday(value) {
-  if (!value) return false
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return false
-
-  const now = new Date()
-
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  )
 }
 
 function getFirstDifferentTag(mainGenre, tags = []) {
@@ -174,115 +139,83 @@ export default function UpdateTodaySection({
     .toLowerCase()
 
   useEffect(() => {
-  let ignore = false
+    const controller = new AbortController()
+    let ignore = false
 
-  async function loadPublishedStories() {
-    const cacheKey = getHomeCacheKey({
-      section: 'stories',
-      language: getStoryLanguageId(),
-      params: {
-        home_section: 'update-today',
-        date: getTodayCacheKey(),
-        sort: 'episode_updated',
-        limit: 7,
-        story_type: normalizedStoryType || 'all',
-        schema: 1,
-      },
-    })
+    async function loadPublishedStories() {
+      setLoading(true)
 
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: UPDATE_TODAY_CACHE_MAX_AGE_MS,
-      allowExpired: true,
-    })
+      try {
+        const storyTypeQuery = normalizedStoryType
+          ? `&story_type=${encodeURIComponent(normalizedStoryType)}`
+          : ''
 
-    const hasCachedStories = Array.isArray(cached?.data)
-
-    if (hasCachedStories && !ignore) {
-      setStories(cached.data)
-      setLoading(false)
-    }
-
-    if (cached?.isFresh && hasCachedStories) {
-      return
-    }
-
-    try {
-      if (!hasCachedStories && !ignore) {
-        setLoading(true)
-      }
-
-      const storyTypeQuery = normalizedStoryType
-        ? `&story_type=${encodeURIComponent(
-            normalizedStoryType
-          )}`
-        : ''
-
-      const response = await fetch(
-        addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=7&sort=episode_updated${storyTypeQuery}`
+        const response = await fetch(
+          addStoryLanguageParam(
+            `${API_BASE_URL}/api/public/story-updates?days=1&limit_per_day=100${storyTypeQuery}`
+          ),
+          {
+            signal: controller.signal,
+            cache: 'no-store',
+          }
         )
-      )
 
-      const data = await response.json().catch(() => ({}))
+        const data = await response.json().catch(() => ({}))
 
-      if (!response.ok || data.ok === false) {
-        throw new Error(
-          data.message ||
-            'Failed to load published stories'
+        if (!response.ok || data.ok === false) {
+          throw new Error(
+            data.message || 'Failed to load update today stories'
+          )
+        }
+
+        const today = String(data.today || '').trim()
+
+        const nextStories = (Array.isArray(data.stories) ? data.stories : [])
+          .filter(
+            (story) =>
+              !today ||
+              String(story?.update_date || '').trim() === today
+          )
+          .sort(
+            (a, b) =>
+              new Date(
+                b.last_episode_published_at || 0
+              ).getTime() -
+              new Date(
+                a.last_episode_published_at || 0
+              ).getTime()
+          )
+          .map(normalizeStory)
+
+        if (ignore || controller.signal.aborted) return
+
+        setStories(nextStories)
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+
+        console.error(
+          'UpdateTodaySection fetch error:',
+          error
         )
-      }
 
-      const nextStories = (data.stories || [])
-        .filter(
-          (story) =>
-            !normalizedStoryType ||
-            String(story?.story_type || '')
-              .trim()
-              .toLowerCase() === normalizedStoryType
-        )
-        .filter((story) =>
-          isToday(story.last_episode_published_at)
-        )
-        .sort(
-          (a, b) =>
-            new Date(
-              b.last_episode_published_at
-            ).getTime() -
-            new Date(
-              a.last_episode_published_at
-            ).getTime()
-        )
-        .map(normalizeStory)
-
-      if (ignore) return
-
-      setStories(nextStories)
-
-      await saveHomeCache(cacheKey, nextStories, {
-        maxAgeMs: UPDATE_TODAY_CACHE_MAX_AGE_MS,
-      })
-    } catch (error) {
-      console.error(
-        'UpdateTodaySection fetch error:',
-        error
-      )
-
-      if (!ignore && !hasCachedStories) {
-        setStories([])
-      }
-    } finally {
-      if (!ignore) {
-        setLoading(false)
+        if (!ignore) {
+          setStories([])
+        }
+      } finally {
+        if (!ignore && !controller.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
-  }
 
-  loadPublishedStories()
+    loadPublishedStories()
 
-  return () => {
-    ignore = true
-  }
-}, [normalizedStoryType])
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [normalizedStoryType])
+
   const updateBooks = useMemo(
     () => stories.slice(0, 6),
     [stories]
