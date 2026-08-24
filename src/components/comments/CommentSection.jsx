@@ -2460,6 +2460,12 @@ const nextComments =
         currentUser.is_admin
 
       return comments.filter(
+        if (
+  targetType === 'episode' &&
+  comment.is_deleted
+) {
+  return false
+}
         (comment) => {
           if (!comment.is_hidden) {
             return true
@@ -2481,7 +2487,7 @@ const nextComments =
         }
       )
     },
-    [comments, currentUser, story]
+    [comments, currentUser, story, targetType]
   )
 
   const sortedComments = useMemo(
@@ -3277,10 +3283,9 @@ updateComments(
         }
 
         const nextComments =
-          applyDeletedCommentTree(
-            comments,
-            comment.id
-          )
+  targetType === 'episode'
+    ? removeCommentTree(comments, comment.id)
+    : applyDeletedCommentTree(comments, comment.id)
 
         updateComments(nextComments)
         updateTotal(
