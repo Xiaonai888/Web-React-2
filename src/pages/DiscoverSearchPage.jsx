@@ -546,10 +546,59 @@ function trackSearchClick(resultType, resultId) {
   }).catch(() => {})
 }
 
+function openReader(reader, shouldTrack = true) {
+  if (!reader?.username) return
+
+  if (shouldTrack) {
+    trackSearchClick('readers', reader.id || reader.username)
+  }
+
   navigate(`/profile?username=${encodeURIComponent(reader.username)}`)
+}
 
+function openPage(page, shouldTrack = true) {
+  if (!page?.page_username) return
 
-  const sectionConfig = [
+  if (shouldTrack) {
+    trackSearchClick('pages', page.id || page.page_username)
+  }
+
+  navigate(`/author/page/${encodeURIComponent(page.page_username)}`)
+}
+
+function openStory(story) {
+  if (!story?.id) return
+
+  trackSearchClick('stories', story.id)
+  navigate(`/story/${encodeURIComponent(story.id)}`)
+}
+
+function openPdf(product) {
+  const pageUsername = product?.author_page?.page_username
+
+  if (!pageUsername || !product?.id) return
+
+  trackSearchClick('pdfs', product.id)
+
+  navigate(
+    `/author/page/${encodeURIComponent(pageUsername)}/store/product/${encodeURIComponent(product.id)}`
+  )
+}
+
+function openPost(post) {
+  if (!post?.id) return
+
+  trackSearchClick('posts', post.id)
+
+  if (post?.post_source === 'author') {
+    openPage(post.owner, false)
+    return
+  }
+
+  openReader(post.owner, false)
+}
+
+const sectionConfig = [
     {
       key: 'readers',
       title: 'Readers',
