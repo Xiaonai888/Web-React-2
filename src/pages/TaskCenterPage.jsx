@@ -987,7 +987,7 @@ function startSmartRefreshCycle() {
       }
 
       setReminderEnabled(Boolean(data.enabled))
-      setToast(data.enabled ? 'Check-in reminder set for 9:00 AM' : 'Check-in reminder turned off')
+      setToast(data.enabled ? 'Check-in reminder set for 7:00 AM' : 'Check-in reminder turned off')
     } catch (error) {
       setToast(error.message || 'Failed to update reminder')
     } finally {
