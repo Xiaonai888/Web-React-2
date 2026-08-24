@@ -3423,14 +3423,15 @@ updateComments(
       }
 
       if (action === 'delete') {
-        const nextComments =
-          applyDeletedCommentTree(
-            comments,
-            comment.id
-          )
-        updateComments(nextComments)
-        updateTotal(
-          totalComments - 1
+        const removedCount = 1 + Math.max(
+  Number(comment.reply_total || 0),
+  countCommentTree(comment.replies || [])
+)
+const nextComments = targetType === 'episode'
+  ? removeCommentTree(comments, comment.id)
+  : applyDeletedCommentTree(comments, comment.id)
+updateComments(nextComments)
+updateTotal(totalComments - removedCount)
         )
         showToast(
           'Comment moved to Trash.'
