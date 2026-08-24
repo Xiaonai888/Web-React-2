@@ -1301,6 +1301,11 @@ function LockedEpisodeCard({
   const [showAutoHint, setShowAutoHint] = useState(false)
   const [activeTab, setActiveTab] = useState('instant')
   const [freeAccessView, setFreeAccessView] = useState('wallet')
+  const [waitNotice, setWaitNotice] = useState(false)
+const showWaitNotice = () => {
+  setWaitNotice(true)
+  window.setTimeout(() => setWaitNotice(false), 2500)
+}
   const backgroundImage = episode?.cover_url || story?.cover_url || ''
   const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
   const voucherBalance = Number(wallet?.voucher_balance || 0)
@@ -1618,6 +1623,11 @@ function LockedEpisodeCard({
               </>
             ) : (
        <div className="space-y-2.5 px-3 py-4">
+         {waitNotice ? (
+  <div className="fixed bottom-6 left-1/2 z-[120] -translate-x-1/2 rounded-full bg-[#111827] px-4 py-2 text-[11px] font-bold text-white shadow-xl">
+    Free unlocks are available 7 days after release.
+  </div>
+) : null}
   {freeAccessView === 'wallet' ? (
     <>
       <FreeAccessOption
@@ -1633,8 +1643,8 @@ function LockedEpisodeCard({
         title={walletLoaded ? `Coins — ${formatNumber(coinBalance)} remaining` : 'Coins — Unable to load'}
         subtitle={`Access lasts ${Number(coinAccess?.access_days || 7)} days.`}
         buttonText={coinWaitRequired ? 'Available later' : coinCanAccess ? 'Access' : 'Not enough'}
-        disabled={unlocking || !coinCanAccess}
-        onClick={onCoinUnlock}
+        disabled={unlocking || (!coinWaitRequired && !coinCanAccess)}
+        onClick={coinWaitRequired ? showWaitNotice : onCoinUnlock}
       />
 
       <FreeAccessOption
@@ -1650,8 +1660,8 @@ function LockedEpisodeCard({
         title={walletLoaded ? `Vouchers — ${formatNumber(voucherBalance)} remaining` : 'Vouchers — Unable to load'}
         subtitle="Permanent unlock for this episode."
         buttonText={voucherWaitRequired ? 'Available later' : voucherCanAccess ? 'Access' : 'Not enough'}
-        disabled={unlocking || !voucherCanAccess}
-        onClick={onVoucherUnlock}
+        disabled={unlocking || (!voucherWaitRequired && !voucherCanAccess)}
+        onClick={voucherWaitRequired ? showWaitNotice : onVoucherUnlock}
       />
 
       <button
