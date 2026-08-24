@@ -666,10 +666,7 @@ export default function ReaderPostCreatePage() {
         type="file"
         accept="image/*"
         multiple
-        disabled={
-          uploading ||
-          remainingPhotos <= 0
-        }
+        disabled
         className="hidden"
         onChange={(event) => {
           handlePickImages(
@@ -838,12 +835,7 @@ export default function ReaderPostCreatePage() {
               </svg>
 
               <span className="text-[14px] font-normal">
-                {uploading
-                  ? 'Uploading'
-                  : remainingPhotos <=
-                      0
-                    ? '5 photos'
-                    : 'Gallery'}
+                Coming soon
               </span>
             </button>
           </div>
