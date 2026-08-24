@@ -3253,11 +3253,11 @@ updateComments(
           )
         }
 
-        const nextComments =
-  targetType === 'episode'
-    ? removeCommentTree(comments, comment.id)
-    : applyDeletedCommentTree(comments, comment.id)
-
+       const nextComments =
+  applyDeletedCommentTree(
+    comments,
+    comment.id
+  )
         updateComments(nextComments)
         updateTotal(
           totalComments - 1
