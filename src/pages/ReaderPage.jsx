@@ -1255,7 +1255,7 @@ function ReaderEndPanel({
                 </span>
 
                 <span className="flex items-center gap-1">
-                  <i className="fa-regular fa-thumbs-up text-[13px]" />
+                  <i className="fa-regular fa-heart text-[13px]" />
                   {formatCompactNumber(hotLikes)}
                 </span>
               </span>
