@@ -46,10 +46,13 @@ export default function LoginPage() {
       storage.setItem('shadow_reader_token', data.token)
       storage.setItem('shadow_reader_user', JSON.stringify(data.user))
 
-      if (!rememberMe) {
-        localStorage.removeItem('shadow_reader_token')
-        localStorage.removeItem('shadow_reader_user')
-      }
+      if (rememberMe) {
+  sessionStorage.removeItem('shadow_reader_token')
+  sessionStorage.removeItem('shadow_reader_user')
+} else {
+  localStorage.removeItem('shadow_reader_token')
+  localStorage.removeItem('shadow_reader_user')
+}
 
       
       const returnTo = location.state?.returnTo || '/me'
