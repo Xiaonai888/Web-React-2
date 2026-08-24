@@ -620,42 +620,7 @@ useEffect(() => {
     </div>
   </div>
 </div>
-  <div className="grid grid-cols-3 items-center border-t border-[#eef0f4] py-1.5 text-[14px] font-normal text-[#65676b]">
-    <div className="flex items-center justify-center py-2">
-      <ReactionAction
-        reactionType={post.my_reaction}
-        count={post.like_count}
-        busy={reactionBusy}
-        onReact={(reactionType) =>
-          onReact(post, reactionType)
-        }
-        showCount={false}
-        idleLabel="Like"
-        buttonClassName="gap-2 after:content-['Like'] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
-      />
-    </div>
 
-    <button
-      type="button"
-      onClick={() => onComment(post)}
-      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
-    >
-      <i className="fa-regular fa-comment text-[18px]" />
-      <span>Comment</span>
-    </button>
-
-    <div className="flex items-center justify-center py-2">
-      <AuthorPostEchoAction
-        post={post}
-        author={author}
-        onCountChange={(_, total) =>
-          setEchoCount(Number(total || 0))
-        }
-        className="gap-2 [&>span]:hidden after:content-['Echo'] [&>img]:!h-[18px] [&>img]:!w-[18px]"
-      />
-    </div>
-  </div>
-</div>
     </article>
   )
 }
