@@ -203,6 +203,16 @@ const hasChanged = changedKeys.length > 0
     }
   }, [])
 
+    useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        checkCurrentPageVersion({ force: true })
+      }
+    }, MIN_CHECK_INTERVAL_MS)
+
+    return () => window.clearInterval(timer)
+  }, [])
+
   return (
     <SmartRefreshContext.Provider value={value}>
       {children}
