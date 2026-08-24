@@ -1140,7 +1140,7 @@ function ReaderEndPanel({
     getReactionMeta(reactionType)
 
   return (
-    <section className="mt-8 bg-white px-4 pb-8 pt-2">
+    <article className="mt-8 bg-white px-4 pb-8 pt-2">
       <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
        <div className="flex flex-col items-center justify-center gap-1">
   <ReactionAction
@@ -1277,7 +1277,7 @@ function ReaderEndPanel({
           </span>
         </button>
       </div>
-    </section>
+    </article>
   )
 }
 
