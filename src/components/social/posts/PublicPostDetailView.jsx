@@ -1,3 +1,4 @@
+import SharedReactionSummary from '../reactions/ReactionSummary'
 import {
   Globe2,
   LoaderCircle,
@@ -240,6 +241,7 @@ export default function PublicPostDetailView({
   reactionControl = null,
   echoControl = null,
   reactionSummary = [],
+  myReaction = null,
   likeCount = 0,
   commentCount = 0,
   echoCount = 0,
@@ -532,14 +534,11 @@ export default function PublicPostDetailView({
                     }
                     ariaLabel="View reactions"
                   >
-                    <ReactionSummary
-                      reactions={
-                        reactionSummary
-                      }
-                      count={
-                        likeCount
-                      }
-                    />
+                    <SharedReactionSummary
+  summary={reactionSummary}
+  likeCount={likeCount}
+  myReaction={myReaction}
+/>
                   </StatControl>
 
                   <div className="flex items-center gap-4">
