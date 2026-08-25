@@ -691,6 +691,47 @@ function mangaPartsPatch(page) {
     : {}
 }
 
+function getTemporaryMangaPartUrls(pages = []) {
+  return [
+    ...new Set(
+      (Array.isArray(pages) ? pages : [])
+        .flatMap((page) =>
+          Array.isArray(page?.parts) ? page.parts : []
+        )
+        .map((part) =>
+          String(part?.image_url || part?.imageUrl || '').trim()
+        )
+        .filter((url) => url && url.includes('/manga-v2/'))
+    ),
+  ]
+}
+
+async function cleanupTemporaryMangaPages(pages = []) {
+  const token = getAuthToken()
+  const urls = getTemporaryMangaPartUrls(pages)
+
+  if (!token || !urls.length) return
+
+  for (let index = 0; index < urls.length; index += 10) {
+    const chunk = urls.slice(index, index + 10)
+
+    try {
+      await fetch(
+        `${API_BASE_URL}/api/story-media/cleanup-manga-page-v2`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ urls: chunk }),
+        }
+      )
+    } catch {
+    }
+  }
+}
+
 function Step({ number, title, active }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -3773,6 +3814,14 @@ return true
       return
     }
 
+    const previousPage = mangaPages.find(
+  (page) => page.id === pageId
+)
+
+await cleanupTemporaryMangaPages(
+  previousPage ? [previousPage] : []
+)
+
     const entry = {
       id: pageId,
       previewUrl: URL.createObjectURL(file),
@@ -3812,14 +3861,20 @@ return true
     await processMangaPages([page])
   }
 
-  const handleDeleteMangaPage = (pageId) => {
-    setMangaPages((current) => {
-      const page = current.find((item) => item.id === pageId)
-      if (String(page?.previewUrl || '').startsWith('blob:')) URL.revokeObjectURL(page.previewUrl)
-      return current.filter((item) => item.id !== pageId)
-    })
-    markUnsaved()
-  }
+  const handleDeleteMangaPage = async (pageId) => {
+  const page = mangaPages.find((item) => item.id === pageId)
+
+  setMangaPages((current) => {
+    if (String(page?.previewUrl || '').startsWith('blob:')) {
+      URL.revokeObjectURL(page.previewUrl)
+    }
+
+    return current.filter((item) => item.id !== pageId)
+  })
+
+  markUnsaved()
+  await cleanupTemporaryMangaPages(page ? [page] : [])
+}
 
   const handleMoveMangaPage = (fromIndex, toIndex) => {
     if (toIndex < 0 || toIndex >= mangaPages.length || fromIndex === toIndex) return
