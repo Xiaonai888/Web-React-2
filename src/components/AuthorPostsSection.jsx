@@ -5,7 +5,7 @@ import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReactionAction from './social/reactions/ReactionAction'
 import ReactionSummary from './social/reactions/ReactionSummary'
-import { getReactionMeta } from './social/reactions/reactionConfig'
+
 import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
 import AuthorDiscoverPostText from './author-posts/AuthorDiscoverPostText'
@@ -434,13 +434,7 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
   const reactionBusy = reactionBusyId === post.id
   const [echoCount, setEchoCount] = useState(Number(post.echo_count || 0))
-  const reactionSummary = Array.isArray(post.reaction_summary)
-  ? post.reaction_summary
-      .filter((item) => Number(item?.count || 0) > 0 && getReactionMeta(item?.type))
-      .slice(0, 3)
-  : []
-
-const totalReactions = Math.max(0, Number(post.like_count || 0))
+  
 
 useEffect(() => {
   setEchoCount(Number(post.echo_count || 0))
