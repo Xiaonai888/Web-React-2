@@ -1106,12 +1106,13 @@ function ReaderEndPanel({
           Number(data.total_likes || 0)
         )
       )
-    } catch {
-      setReactionType(previousType)
-      setLikeCount(previousCount)
-    } finally {
-      setLikeBusy(false)
-    }
+   } catch (error) {
+  window.alert(error?.message || 'Episode reaction failed')
+  setReactionType(previousType)
+  setLikeCount(previousCount)
+} finally {
+  setLikeBusy(false)
+}
   }
 
   const commentSummaryMatchesEpisode =
