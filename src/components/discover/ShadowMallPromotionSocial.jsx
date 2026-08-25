@@ -1969,7 +1969,7 @@ const echoStateLoaded = Boolean(
 
   return (
     <>
-      <div className="mt-2 border-b border-[#eef0f4] px-4 pb-1 dark:border-white/10">
+      <div className="mt-2 px-4 pb-1">
   <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b] dark:text-[#b0b3b8]">
     <div className="flex items-center">
       <img
@@ -1997,7 +1997,7 @@ const echoStateLoaded = Boolean(
     </div>
   </div>
 
-  <div className="grid grid-cols-3 items-center border-t border-[#eef0f4] py-1.5 text-[14px] font-normal text-[#65676b] dark:border-white/10 dark:text-[#b0b3b8]">
+  <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b] dark:text-[#b0b3b8]">
     <div className="flex items-center justify-center py-2">
       <ReactionAction
         reactionType={reactionType}
