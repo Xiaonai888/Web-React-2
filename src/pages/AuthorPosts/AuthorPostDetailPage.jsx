@@ -1531,15 +1531,16 @@ const selectedPhotoAltText = String(
     ) : null
   }
   reactionSummary={
-    Array.isArray(
-      post?.reaction_summary
-    )
-      ? post.reaction_summary
-      : []
-  }
-  likeCount={
-    Number(post?.like_count || 0)
-  }
+  Array.isArray(
+    post?.reaction_summary
+  )
+    ? post.reaction_summary
+    : []
+}
+myReaction={post?.my_reaction || null}
+likeCount={
+  Number(post?.like_count || 0)
+}
   commentCount={
     Number(
       post?.comment_count || 0
