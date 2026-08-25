@@ -731,7 +731,14 @@ function MangaEpisodePages({
 }) {
   const orderedPages = useMemo(() => {
     return (Array.isArray(pages) ? pages : [])
-      .filter((page) => page?.image_url)
+      .filter(
+        (page) =>
+          page?.image_url ||
+          (
+            Array.isArray(page?.parts) &&
+            page.parts.some((part) => part?.image_url)
+          )
+      )
       .sort(
         (first, second) =>
           Number(first?.sort_order || 0) -
@@ -749,22 +756,65 @@ function MangaEpisodePages({
 
   return (
     <div className="w-full overflow-hidden bg-white">
-      {orderedPages.map((page, index) => {
-        const width = Number(page.width || 0)
-        const height = Number(page.height || 0)
+      {orderedPages.map((page, pageIndex) => {
+        const orderedParts = (
+          Array.isArray(page?.parts) ? page.parts : []
+        )
+          .filter((part) => part?.image_url)
+          .sort(
+            (first, second) =>
+              Number(first?.part_index || 0) -
+              Number(second?.part_index || 0)
+          )
+
+        const images = orderedParts.length
+          ? orderedParts
+          : [
+              {
+                id: page.id,
+                image_url: page.image_url,
+                width: page.width,
+                height: page.height,
+                part_index: 0,
+              },
+            ]
 
         return (
-          <img
-            key={page.id || `${page.image_url}-${index}`}
-            src={page.image_url}
-            alt={`${title} — Page ${index + 1}`}
-            width={width > 0 ? width : undefined}
-            height={height > 0 ? height : undefined}
-            loading={index === 0 ? 'eager' : 'lazy'}
-            decoding="async"
-            draggable={false}
-            className="block h-auto w-full"
-          />
+          <div
+            key={page.id || page.image_url || `page-${pageIndex}`}
+            className="block w-full"
+            data-manga-page={pageIndex + 1}
+          >
+            {images.map((image, partIndex) => {
+              const width = Number(image.width || 0)
+              const height = Number(image.height || 0)
+
+              return (
+                <img
+                  key={
+                    image.id ||
+                    `${image.image_url}-${pageIndex}-${partIndex}`
+                  }
+                  src={image.image_url}
+                  alt={
+                    images.length > 1
+                      ? `${title} — Page ${pageIndex + 1}, Part ${partIndex + 1}`
+                      : `${title} — Page ${pageIndex + 1}`
+                  }
+                  width={width > 0 ? width : undefined}
+                  height={height > 0 ? height : undefined}
+                  loading={
+                    pageIndex === 0 && partIndex === 0
+                      ? 'eager'
+                      : 'lazy'
+                  }
+                  decoding="async"
+                  draggable={false}
+                  className="m-0 block h-auto w-full p-0"
+                />
+              )
+            })}
+          </div>
         )
       })}
     </div>
