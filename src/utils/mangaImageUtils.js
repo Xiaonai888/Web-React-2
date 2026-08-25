@@ -267,7 +267,13 @@ export async function optimizeMangaImage(file) {
   }
 }
 
-export async function uploadMangaPageFile({ token, file, onProgress, signal }) {
+export async function uploadMangaPageFile({
+  token,
+  file,
+  onProgress,
+  signal,
+  useV2 = false,
+}) {
   if (!file) {
     throw new Error('Choose a manga page first.')
   }
@@ -320,7 +326,11 @@ export async function uploadMangaPageFile({ token, file, onProgress, signal }) {
       xhr.abort()
     }
 
-    xhr.open('POST', `${apiBaseUrl}/api/story-media/upload-manga-page`, true)
+    const uploadPath = useV2
+  ? '/api/story-media/upload-manga-page-v2'
+  : '/api/story-media/upload-manga-page'
+
+xhr.open('POST', `${apiBaseUrl}${uploadPath}`, true)
     xhr.setRequestHeader('Authorization', `Bearer ${token}`)
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
 
@@ -379,10 +389,22 @@ export async function uploadMangaPageFile({ token, file, onProgress, signal }) {
       }
 
       cleanup()
-      resolve({
-        imageUrl,
-        storagePath: data.path || null,
-      })
+      const page = data.page || {}
+const parts = Array.isArray(page.parts)
+  ? page.parts
+  : Array.isArray(data.parts)
+    ? data.parts
+    : null
+
+resolve({
+  imageUrl,
+  storagePath: data.path || page.storage_path || null,
+  width: Number(page.width || data.width || 0) || null,
+  height: Number(page.height || data.height || 0) || null,
+  fileSize: Number(page.file_size || data.file_size || 0) || null,
+  mimeType: page.mime_type || data.mime_type || null,
+  ...(parts ? { parts } : {}),
+})
     }
 
     if (signal) signal.addEventListener('abort', handleAbortSignal, { once: true })
