@@ -247,7 +247,7 @@ export async function optimizeMangaImage(file) {
     loaded.height > MANGA_MAX_HEIGHT ||
     loaded.width * loaded.height > MANGA_MAX_PIXELS
   ) {
-    URL.revokeObjectURL(loaded.url)
+
     throw new Error('Manga image is too large. Max: 8000×30000px and 120MP.')
   }
     if (!heic) {
