@@ -3108,10 +3108,9 @@ const safeSelectedPhotoIndex =
         <span>Echo</span>
       </button>
     }
-    reactionSummary={
-      reactionSummary
-    }
-    likeCount={reactionCount}
+    reactionSummary={reactionSummary}
+myReaction={reactionType}
+likeCount={reactionCount}
     commentCount={commentCount}
     echoCount={echoCount}
     comments={
