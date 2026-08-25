@@ -3453,13 +3453,11 @@ const safeSelectedPhotoIndex =
     </div>
   </div>
 ) : (
-  <div className="flex items-center gap-5 border-t border-gray-100 px-4 py-3 text-[11px] font-normal text-gray-500">
-    <ReactionAction
-      reactionType={reactionType}
-      count={reactionCount}
-      busy={reactionBusy}
-      onReact={updateReaction}
-      onCountClick={() =>
+  <div className="mt-2 px-4 pb-1">
+  <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b]">
+    <button
+      type="button"
+      onClick={() =>
         navigate(
           `/interactions/reader_post/${post.id}/likes`,
           {
@@ -3471,38 +3469,71 @@ const safeSelectedPhotoIndex =
           }
         )
       }
-      formatCount={formatCompactNumber}
-      idleLabel="React"
-    />
+      className="flex items-center active:opacity-60"
+    >
+      <img
+        src="/assets/React/Love.svg"
+        alt=""
+        className="h-[17px] w-[17px]"
+      />
+      <span className="ml-1.5">
+        {formatCompactNumber(reactionCount)}
+      </span>
+    </button>
+
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        onClick={() => setCommentOpen(true)}
+        className="active:opacity-60"
+      >
+        {formatCompactNumber(commentCount)} comments
+      </button>
+
+      <span>
+        {formatCompactNumber(echoCount)} echoes
+      </span>
+    </div>
+  </div>
+
+  <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
+    <div className="flex items-center justify-center py-2">
+      <ReactionAction
+        reactionType={reactionType}
+        count={reactionCount}
+        busy={reactionBusy}
+        onReact={updateReaction}
+        showCount={false}
+        idleLabel="Like"
+        buttonClassName="gap-2 after:content-['Like'] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
+      />
+    </div>
 
     <button
       type="button"
       onClick={() => setCommentOpen(true)}
-      className="inline-flex items-center gap-1.5 active:scale-95"
-      aria-label="Open comments"
+      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
     >
-      <i className="fa-regular fa-comment text-[15px]" />
-      {formatCompactNumber(commentCount)}
+      <i className="fa-regular fa-comment text-[18px]" />
+      <span>Comment</span>
     </button>
 
     <button
       type="button"
       onClick={() => setEchoOpen(true)}
-      className="inline-flex items-center gap-1.5 active:scale-95"
-      aria-label="Echo this post"
+      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
     >
       <img
         src="/assets/Icons/echo.svg"
         alt=""
         aria-hidden="true"
-        className="h-[15px] w-[15px] object-contain opacity-70"
+        className="h-[18px] w-[18px] object-contain opacity-75"
       />
-
-      <span>
-        {formatCompactNumber(echoCount)}
-      </span>
+      <span>Echo</span>
     </button>
   </div>
+</div>
+
 )}
       </article>
       )}
