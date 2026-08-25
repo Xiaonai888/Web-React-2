@@ -1368,6 +1368,14 @@ function StandardReaderPostCard({
     Number(post?.like_count || 0)
   )
   const [
+    reactionSummary,
+    setReactionSummary,
+  ] = useState(
+    Array.isArray(post?.reaction_summary)
+      ? post.reaction_summary
+      : []
+  )
+  const [
     reactionMessage,
     setReactionMessage,
   ] = useState('')
@@ -1551,6 +1559,14 @@ const safeSelectedPhotoIndex =
       Number(post?.like_count || 0)
     )
   }, [post?.like_count])
+
+  useEffect(() => {
+    setReactionSummary(
+      Array.isArray(post?.reaction_summary)
+        ? post.reaction_summary
+        : []
+    )
+  }, [post?.reaction_summary])
 
   useEffect(() => {
     setReactionType(
@@ -1786,6 +1802,11 @@ const safeSelectedPhotoIndex =
         setReactionCount(
           Number(data.like_count || 0)
         )
+        setReactionSummary(
+          Array.isArray(data.reaction_summary)
+            ? data.reaction_summary
+            : []
+        )
       } catch {
         return
       }
@@ -1977,6 +1998,11 @@ const safeSelectedPhotoIndex =
 
       setReactionType(nextType)
       setReactionCount(nextCount)
+      setReactionSummary(
+        Array.isArray(data.reaction_summary)
+          ? data.reaction_summary
+          : []
+      )
 
       onUpdated?.({
         ...post,
@@ -3083,11 +3109,7 @@ const safeSelectedPhotoIndex =
       </button>
     }
     reactionSummary={
-      Array.isArray(
-        post?.reaction_summary
-      )
-        ? post.reaction_summary
-        : []
+      reactionSummary
     }
     likeCount={reactionCount}
     commentCount={commentCount}
@@ -3391,14 +3413,11 @@ const safeSelectedPhotoIndex =
         }
         className="flex items-center active:opacity-60"
       >
-        <img
-          src="/assets/React/Love.svg"
-          alt=""
-          className="h-[17px] w-[17px]"
+        <ReactionSummary
+          summary={reactionSummary}
+          likeCount={reactionCount}
+          myReaction={reactionType}
         />
-        <span className="ml-1.5">
-          {formatCompactNumber(reactionCount)}
-        </span>
       </button>
 
       <div className="flex items-center gap-4">
@@ -3472,14 +3491,11 @@ const safeSelectedPhotoIndex =
       }
       className="flex items-center active:opacity-60"
     >
-      <img
-        src="/assets/React/Love.svg"
-        alt=""
-        className="h-[17px] w-[17px]"
+      <ReactionSummary
+        summary={reactionSummary}
+        likeCount={reactionCount}
+        myReaction={reactionType}
       />
-      <span className="ml-1.5">
-        {formatCompactNumber(reactionCount)}
-      </span>
     </button>
 
     <div className="flex items-center gap-4">
