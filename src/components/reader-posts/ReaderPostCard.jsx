@@ -14,6 +14,7 @@ import ReaderPostCommentsModal from './ReaderPostCommentsModal'
 import ReaderPostCommentsSection from './ReaderPostCommentsSection'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
 import ReactionAction from '../social/reactions/ReactionAction'
+import ReactionSummary from '../social/reactions/ReactionSummary'
 import {
   ProfessionalSinglePostImage,
 } from '../common/ProfessionalPostContent'
