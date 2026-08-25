@@ -3340,6 +3340,11 @@ return true
         await localSavePromiseRef.current.catch(() => {})
       }
       localSavedRevisionRef.current = localDraftRevisionRef.current
+      await cleanupTemporaryMangaPages(
+        draft.storyType === 'manga'
+          ? draft.mangaPages || []
+          : []
+      )
       await deleteEpisodeLocalDraft(localDraftKeyRef.current)
       setLocalRecoveryOpen(false)
       setLocalRecoveryDraft(null)
@@ -3837,6 +3842,7 @@ await cleanupTemporaryMangaPages(
           ...entry,
           imageUrl: '',
           storagePath: null,
+          parts: [],
           fileSize: file.size,
           mimeType: file.type,
           status: 'queued',
@@ -4179,6 +4185,7 @@ await cleanupTemporaryMangaPages(
     }
 
     localSavedRevisionRef.current = localDraftRevisionRef.current
+    await cleanupTemporaryMangaPages(mangaPages)
     await deleteEpisodeLocalDraft(localDraftKeyRef.current)
 
     if (searchParams.get('fromPublishSuccess') === '1' || searchParams.get('fromPublishWarning') === '1') {
