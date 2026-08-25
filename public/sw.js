@@ -111,6 +111,27 @@ function parseEpisodeApiUrl(url) {
   }
 }
 
+function isMangaImageRequestUrl(url) {
+  const pathname = String(url?.pathname || '')
+
+  return /\/episode-content\/[^/]+\/manga(?:-v2)?\//.test(
+    pathname
+  )
+}
+
+function fallbackImageResponse() {
+  return new Response(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>',
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-store',
+      },
+    }
+  )
+}
+
 function parseReaderClientUrl(value) {
   try {
     const url = new URL(value)
@@ -1573,14 +1594,31 @@ self.addEventListener(
         )
 
       event.respondWith(
-  work
-    .then((result) => result.response)
-    .catch(() =>
-      fetch(request).catch(() =>
-        new Response('', { status: 504 })
+        networkPromise
+          .then(
+            (result) => result.response
+          )
+          .catch(
+            () =>
+              new Response(
+                JSON.stringify({
+                  ok: false,
+                  code: 'NETWORK_UNAVAILABLE',
+                  message:
+                    'Network unavailable. Please try again.',
+                }),
+                {
+                  status: 503,
+                  headers: {
+                    'Content-Type':
+                      'application/json',
+                    'Cache-Control':
+                      'no-store',
+                  },
+                }
+              )
+          )
       )
-    )
-)
 
       event.waitUntil(
         networkPromise
@@ -1599,7 +1637,8 @@ self.addEventListener(
     }
 
     if (
-      request.destination !== 'image'
+      request.destination !== 'image' ||
+      !isMangaImageRequestUrl(url)
     ) {
       return
     }
@@ -1610,9 +1649,24 @@ self.addEventListener(
       )
 
     event.respondWith(
-      work.then(
-        (result) => result.response
-      )
+      work
+        .then(
+          (result) => result.response
+        )
+        .catch(async () => {
+          try {
+            const cached =
+              await caches.match(request)
+
+            if (cached) {
+              return cached
+            }
+
+            return await fetch(request)
+          } catch {
+            return fallbackImageResponse()
+          }
+        })
     )
 
     event.waitUntil(
