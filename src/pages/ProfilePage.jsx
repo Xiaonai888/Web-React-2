@@ -595,7 +595,7 @@ export default function ProfilePage() {
   const [readerPostCount, setReaderPostCount] = useState(0)
   const [profileTabMessage, setProfileTabMessage] = useState('')
   const [discoverPeopleOpen, setDiscoverPeopleOpen] = useState(false)
-  const [user, setUser] = useState(storedUser)
+    const [user, setUser] = useState(() => (isOwnProfile ? storedUser : null))
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [rawAvatarImage, setRawAvatarImage] = useState('')
@@ -609,71 +609,149 @@ export default function ProfilePage() {
   const [profileMessage, setProfileMessage] = useState('')
   const [followLoading, setFollowLoading] = useState(false)
   const [editForm, setEditForm] = useState({
-  name: user?.name || '',
-  username: user?.username || '',
-  bio: user?.bio || '',
-  work: user?.work || '',
-  location: user?.location || '',
-  social_links: Array.isArray(user?.social_links) ? user.social_links.map((item) => ({ type: item?.type || 'link', url: item?.url || '' })).slice(0, 5) : [],
-})
+    name: user?.name || '',
+    username: user?.username || '',
+    bio: user?.bio || '',
+    work: user?.work || '',
+    location: user?.location || '',
+    social_links: Array.isArray(user?.social_links)
+      ? user.social_links
+          .map((item) => ({
+            type: item?.type || 'link',
+            url: item?.url || '',
+          }))
+          .slice(0, 5)
+      : [],
+  })
+
+  const viewedUser = useMemo(() => {
+    if (isOwnProfile) return user
+
+    const targetUsername = requestedUsername.trim().toLowerCase()
+    const loadedUsername = String(user?.username || '')
+      .trim()
+      .replace(/^@+/, '')
+      .toLowerCase()
+
+    return targetUsername && loadedUsername === targetUsername ? user : null
+  }, [isOwnProfile, requestedUsername, user])
+
+  const profilePostsUsername = isOwnProfile
+    ? String(user?.username || storedUser?.username || '').replace(/^@+/, '')
+    : requestedUsername
 
   function showProfileTabComingSoon(label) {
-  setProfileTabMessage(`${label} is coming soon.`)
-  window.setTimeout(() => setProfileTabMessage(''), 2200)
-}
+    setProfileTabMessage(`${label} is coming soon.`)
+    window.setTimeout(() => setProfileTabMessage(''), 2200)
+  }
 
   function handleSuggestionFollowed() {
-  setUser((current) => {
-    if (!current) return current
-    const nextUser = { ...current, following_count: Number(current.following_count || 0) + 1 }
-    saveStoredUser(nextUser)
-    return nextUser
-  })
-}
-  
+    setUser((current) => {
+      if (!current) return current
 
-useEffect(() => {
-  let ignore = false
+      const nextUser = {
+        ...current,
+        following_count: Number(current.following_count || 0) + 1,
+      }
 
-  async function loadProfileStats() {
-    try {
-      const targetUsername = requestedUsername || storedUser?.username
+      saveStoredUser(nextUser)
+      return nextUser
+    })
+  }
 
+  useEffect(() => {
+    let ignore = false
+    const targetUsername = String(
+      requestedUsername || storedUser?.username || ''
+    ).replace(/^@+/, '')
+
+    setReaderPostCount(0)
+    setProfileOptionsOpen(false)
+    setMessageRequestOpen(false)
+    setDiscoverPeopleOpen(false)
+    setProfileTabMessage('')
+    setAvatarModalOpen(false)
+    setEditProfileOpen(false)
+    setRawAvatarImage('')
+    setAvatarPreview('')
+
+    if (!isOwnProfile) {
+      setUser(null)
+    }
+
+    async function loadProfileStats() {
       if (!targetUsername) return
 
-      const freshUser = await fetchPublicUserProfile(targetUsername)
+      try {
+        const freshUser = await fetchPublicUserProfile(targetUsername)
 
-      if (!ignore && freshUser) {
-        if (isOwnProfile) saveStoredUser(freshUser)
+        if (ignore || !freshUser) return
+
+        const returnedUsername = String(freshUser.username || '')
+          .trim()
+          .replace(/^@+/, '')
+          .toLowerCase()
+
+        if (returnedUsername !== targetUsername.toLowerCase()) {
+          throw new Error('Profile mismatch')
+        }
+
+        if (isOwnProfile) {
+          saveStoredUser(freshUser)
+        }
+
         setUser(freshUser)
+      } catch (error) {
+        if (ignore) return
+
+        console.error('Fetch reader profile stats error:', error)
+
+        if (!isOwnProfile) {
+          setUser(null)
+        }
       }
-    } catch (error) {
-      console.error('Fetch reader profile stats error:', error)
     }
-  }
 
-  loadProfileStats()
+    loadProfileStats()
 
-  return () => {
-    ignore = true
-  }
-}, [isOwnProfile, requestedUsername, storedUser?.username])
+    return () => {
+      ignore = true
+    }
+  }, [isOwnProfile, requestedUsername, storedUser?.username])
+
   const profile = useMemo(() => {
+    const fallbackUsername = isOwnProfile
+      ? String(storedUser?.username || '').replace(/^@+/, '')
+      : requestedUsername
+
     return {
-      name: user?.name || 'Reader Name',
-      username: user?.username || 'username',
-      avatarLetter: (user?.name || 'R').charAt(0).toUpperCase(),
-      avatarUrl: avatarPreview || user?.avatar_url || '',
-      posts: String(readerPostCount),
-followers: String(user?.followers_count || 0),
-following: String(user?.following_count || 0),
-      bioTitle: user?.work || 'Add your work / job',
-      bio: user?.bio || 'Add your bio',
-      location: user?.location || 'Add your location',
-      isPremium: Boolean(user?.is_premium),
-      socialLinks: Array.isArray(user?.social_links) ? user.social_links.filter((item) => item?.url).slice(0, 5) : [],
+      name: viewedUser?.name || 'Reader Name',
+      username: viewedUser?.username || fallbackUsername || 'username',
+      avatarLetter: (viewedUser?.name || 'R').charAt(0).toUpperCase(),
+      avatarUrl:
+        (isOwnProfile ? avatarPreview : '') ||
+        viewedUser?.avatar_url ||
+        '',
+      posts: viewedUser ? String(readerPostCount) : '0',
+      followers: String(viewedUser?.followers_count || 0),
+      following: String(viewedUser?.following_count || 0),
+      bioTitle: viewedUser?.work || 'Add your work / job',
+      bio: viewedUser?.bio || 'Add your bio',
+      location: viewedUser?.location || 'Add your location',
+      isPremium: Boolean(viewedUser?.is_premium),
+      socialLinks: Array.isArray(viewedUser?.social_links)
+        ? viewedUser.social_links.filter((item) => item?.url).slice(0, 5)
+        : [],
     }
-  }, [avatarPreview, readerPostCount, user])
+  }, [
+    avatarPreview,
+    isOwnProfile,
+    readerPostCount,
+    requestedUsername,
+    storedUser?.username,
+    viewedUser,
+  ])
+
 
 async function handleProfileFollow() {
   if (!profile.username || followLoading) return
@@ -1260,7 +1338,8 @@ async function handleOtherProfileOption(action) {
         ) : null}
 
         <ReaderProfilePostsPanel
-  username={profile.username}
+  key={profilePostsUsername || 'reader-profile'}
+  username={profilePostsUsername}
   isOwnProfile={isOwnProfile}
   profileUser={user}
   onEditAvatar={openAvatarEditor}
