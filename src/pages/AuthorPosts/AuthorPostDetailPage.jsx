@@ -1800,10 +1800,11 @@ likeCount={
       </button>
 
       <div className="flex items-center justify-between border-b border-white/15 px-4 pb-2 text-[11px] text-white/75">
-        <span>
-          {Number(post?.like_count || 0)} reactions
-        </span>
-
+        <ReactionSummary
+  summary={post?.reaction_summary}
+  likeCount={post?.like_count}
+  myReaction={post?.my_reaction}
+/>
         <div className="flex items-center gap-4">
           <span>
             {Number(post?.comment_count || 0)} comments
