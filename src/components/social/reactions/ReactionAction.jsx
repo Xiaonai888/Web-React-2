@@ -24,6 +24,7 @@ export default function ReactionAction({
   countClassName = '',
   pickerClassName = '',
   idleLabel = 'Like',
+  idleIcon = null,
 }) {
   const anchorRef = useRef(null)
   const activeReaction =
@@ -97,7 +98,7 @@ export default function ReactionAction({
           className="h-[17px] w-[17px] select-none object-contain"
         />
       ) : (
-        <i className="fa-regular fa-heart text-[15px]" />
+        idleIcon || <i className="fa-regular fa-heart text-[15px]" />
       )}
 
       {showCount &&
