@@ -1573,10 +1573,14 @@ self.addEventListener(
         )
 
       event.respondWith(
-        networkPromise.then(
-          (result) => result.response
-        )
+  work
+    .then((result) => result.response)
+    .catch(() =>
+      fetch(request).catch(() =>
+        new Response('', { status: 504 })
       )
+    )
+)
 
       event.waitUntil(
         networkPromise
