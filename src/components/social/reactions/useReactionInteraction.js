@@ -31,8 +31,10 @@ export default function useReactionInteraction({
   ] = useState(false)
 
   const pressTimerRef = useRef(null)
-  const longPressOpenedRef =
-    useRef(false)
+const selectingReactionRef =
+  useRef(false)
+const longPressOpenedRef =
+  useRef(false)
   const pickerOpenRef = useRef(false)
   const activePointerIdRef =
     useRef(null)
@@ -148,9 +150,12 @@ export default function useReactionInteraction({
   const selectReaction =
     useCallback(
       async (reactionType) => {
-        if (blocked) {
-          return false
-        }
+        if (
+  blocked ||
+  selectingReactionRef.current
+) {
+  return false
+}
 
         const safeType =
           isReactionType(reactionType)
@@ -171,8 +176,14 @@ export default function useReactionInteraction({
           return false
         }
 
-        await onReact(safeType)
-        return true
+        selectingReactionRef.current = true
+
+try {
+  await onReact(safeType)
+  return true
+} finally {
+  selectingReactionRef.current = false
+}
       },
       [
         blocked,
