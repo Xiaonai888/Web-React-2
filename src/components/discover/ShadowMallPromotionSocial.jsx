@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom'
 import ReportModal from '../ReportModal'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
 import ReactionAction from '../social/reactions/ReactionAction'
+import ReactionSummary from '../social/reactions/ReactionSummary'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -1660,6 +1661,12 @@ export default function ShadowMallPromotionSocial({
     useState(
       Number(promotion?.like_count || 0)
     )
+  const [reactionSummary, setReactionSummary] =
+    useState(
+      Array.isArray(promotion?.reaction_summary)
+        ? promotion.reaction_summary
+        : []
+    )
   const [commentCount, setCommentCount] =
     useState(
       Number(
@@ -1699,6 +1706,14 @@ const echoStateLoaded = Boolean(
       Number(promotion?.like_count || 0)
     )
   }, [promotion?.like_count])
+
+  useEffect(() => {
+    setReactionSummary(
+      Array.isArray(promotion?.reaction_summary)
+        ? promotion.reaction_summary
+        : []
+    )
+  }, [promotion?.reaction_summary])
 
   useEffect(() => {
     setCommentCount(
@@ -1869,6 +1884,11 @@ const echoStateLoaded = Boolean(
         setReactionCount(
           Number(data.like_count || 0)
         )
+        setReactionSummary(
+          Array.isArray(data.reaction_summary)
+            ? data.reaction_summary
+            : []
+        )
       } catch {
         return
       }
@@ -1957,6 +1977,11 @@ const echoStateLoaded = Boolean(
       setReactionCount(
         Number(data.like_count || 0)
       )
+      setReactionSummary(
+        Array.isArray(data.reaction_summary)
+          ? data.reaction_summary
+          : []
+      )
     } catch (error) {
       showMessage(
         error.message ||
@@ -1972,14 +1997,11 @@ const echoStateLoaded = Boolean(
       <div className="mt-2 px-4 pb-1">
   <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b] dark:text-[#b0b3b8]">
     <div className="flex items-center">
-      <img
-        src="/assets/React/Love.svg"
-        alt=""
-        className="h-[17px] w-[17px]"
+      <ReactionSummary
+        summary={reactionSummary}
+        likeCount={reactionCount}
+        myReaction={reactionType}
       />
-      <span className="ml-1.5">
-        {formatCompactNumber(reactionCount)}
-      </span>
     </div>
 
     <div className="flex items-center gap-4">
