@@ -810,34 +810,25 @@ setPickerPosition({
                 )
               }}
               onPointerUp={(event) => {
-                event.stopPropagation()
-                if (busy || disabled) return
+  event.stopPropagation()
+  if (busy || disabled) return
 
-                const pointedType =
-                  getReactionTypeAtPoint(
-                    event.clientX,
-                    event.clientY
-                  )
+  if (
+    event.currentTarget
+      .hasPointerCapture?.(
+        event.pointerId
+      )
+  ) {
+    event.currentTarget
+      .releasePointerCapture?.(
+        event.pointerId
+      )
+  }
 
-                if (
-                  event.currentTarget
-                    .hasPointerCapture?.(
-                      event.pointerId
-                    )
-                ) {
-                  event.currentTarget
-                    .releasePointerCapture?.(
-                      event.pointerId
-                    )
-                }
-
-                setPressedType('')
-                setHoverType('')
-
-                if (pointedType) {
-                  onSelect?.(pointedType)
-                }
-              }}
+  setPressedType('')
+  setHoverType('')
+  onSelect?.(reaction.type)
+}}
               onPointerCancel={(
                 event
               ) => {
