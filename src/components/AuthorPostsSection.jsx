@@ -4,6 +4,7 @@ import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReactionAction from './social/reactions/ReactionAction'
+import ReactionSummary from './social/reactions/ReactionSummary'
 import { getReactionMeta } from './social/reactions/reactionConfig'
 import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
@@ -527,46 +528,21 @@ useEffect(() => {
 
 <div className="mt-2 px-4 pb-1">
   <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b]">
-    {reactionSummary.length > 0 && totalReactions > 0 ? (
-      <button
-        type="button"
-        onClick={() =>
-          navigate(`/interactions/author_post/${post.id}/likes`, {
-            state: { sourceName: 'Author Post' },
-          })
-        }
-        className="flex min-w-0 items-center active:opacity-60"
-      >
-        <span className="flex items-center">
-          {reactionSummary.map((item, index) => {
-            const reaction = getReactionMeta(item.type)
-
-            if (!reaction) return null
-
-            return (
-              <img
-                key={item.type}
-                src={reaction.src}
-                alt=""
-                className={`h-[18px] w-[18px] rounded-full ring-2 ring-white ${
-                  index > 0 ? '-ml-1.5' : ''
-                }`}
-              />
-            )
-          })}
-        </span>
-
-        <span className="ml-2 truncate">
-          {post.my_reaction
-            ? totalReactions > 1
-              ? `You + ${formatCompactNumber(totalReactions - 1)}`
-              : 'You'
-            : formatCompactNumber(totalReactions)}
-        </span>
-      </button>
-    ) : (
-      <span />
-    )}
+    <button
+  type="button"
+  onClick={() =>
+    navigate(`/interactions/author_post/${post.id}/likes`, {
+      state: { sourceName: 'Author Post' },
+    })
+  }
+  className="flex min-w-0 items-center active:opacity-60"
+>
+  <ReactionSummary
+    summary={post.reaction_summary}
+    likeCount={post.like_count}
+    myReaction={post.my_reaction}
+  />
+</button>
 
     <div className="flex items-center gap-4">
       <button
