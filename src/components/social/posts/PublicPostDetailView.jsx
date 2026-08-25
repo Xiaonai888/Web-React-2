@@ -11,15 +11,6 @@ import {
   useState,
 } from 'react'
 
-const REACTION_ICON_BY_TYPE = {
-  love: '/assets/React/Love.svg',
-  haha: '/assets/React/Haha.svg',
-  wow: '/assets/React/Wow.svg',
-  sad: '/assets/React/Sad.svg',
-  angry: '/assets/React/Angry.svg',
-  support: '/assets/React/Support.svg',
-  touched: '/assets/React/Touched.svg',
-}
 
 function formatCompactNumber(value) {
   const number = Math.max(
@@ -140,69 +131,6 @@ function VisibilityIcon({
   }
 
   return <Globe2 size={13} />
-}
-
-function ReactionSummary({
-  reactions,
-  count,
-}) {
-  const safeCount = Math.max(
-    0,
-    Number(count || 0)
-  )
-  const summary = Array.isArray(
-    reactions
-  )
-    ? reactions.slice(0, 3)
-    : []
-
-  if (!safeCount) {
-    return <span>0</span>
-  }
-
-  const visibleSummary =
-    summary.length
-      ? summary
-      : [{ type: 'love' }]
-
-  return (
-    <span className="flex min-w-0 items-center">
-      <span className="flex items-center -space-x-1">
-        {visibleSummary.map(
-          (reaction, index) => {
-            const type =
-              typeof reaction ===
-              'string'
-                ? reaction
-                : reaction?.type ||
-                  'love'
-            const src =
-              REACTION_ICON_BY_TYPE[
-                type
-              ] ||
-              REACTION_ICON_BY_TYPE
-                .love
-
-            return (
-              <img
-                key={`${type}-${index}`}
-                src={src}
-                alt=""
-                aria-hidden="true"
-                className="h-[17px] w-[17px] rounded-full bg-white ring-1 ring-white"
-              />
-            )
-          }
-        )}
-      </span>
-
-      <span className="ml-1.5">
-        {formatCompactNumber(
-          safeCount
-        )}
-      </span>
-    </span>
-  )
 }
 
 function StatControl({
