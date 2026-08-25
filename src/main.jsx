@@ -8,6 +8,7 @@ import { installPaidContentRequirementFetch } from './utils/installPaidContentRe
 import { installHomePublicCacheFetch } from './utils/installHomePublicCacheFetch'
 import { installReaderEpisodeCacheFetch } from './utils/installReaderEpisodeCacheFetch'
 import { installReaderPresenceTracking } from './utils/installReaderPresenceTracking'
+import { loadReaderEpisodeCache } from './utils/readerEpisodeCache'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
@@ -72,28 +73,152 @@ async function checkForAppUpdate({ force = false } = {}) {
   }
 }
 
-const LEGACY_SW_RESET_VERSION = '20260818-1'
+const MANGA_CACHE_SW_VERSION = '20260825-1'
+
+function getReaderTokenForCacheScope() {
+  return (
+    sessionStorage.getItem('shadow_reader_token') ||
+    localStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function fingerprintReaderToken(token) {
+  const value = String(token || '').trim()
+  if (!value) return 'public'
+
+  let hash = 2166136261
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return `reader-${(hash >>> 0).toString(36)}`
+}
+
+function getReaderRouteContext() {
+  const match = window.location.pathname.match(
+    /^\/story\/([^/]+)\/episode\/([^/]+)/
+  )
+
+  if (!match) return null
+
+  try {
+    return {
+      storyId: decodeURIComponent(match[1]),
+      episodeId: decodeURIComponent(match[2]),
+    }
+  } catch {
+    return {
+      storyId: match[1],
+      episodeId: match[2],
+    }
+  }
+}
+
+async function notifyMangaCacheReaderContext() {
+  if (!('serviceWorker' in navigator)) return
+
+  const route = getReaderRouteContext()
+  if (!route) return
+
+  const worker = navigator.serviceWorker.controller
+  if (!worker) return
+
+  const scope = fingerprintReaderToken(
+    getReaderTokenForCacheScope()
+  )
+
+  worker.postMessage({
+    type: 'SHADOW_READER_CONTEXT',
+    scope,
+    storyId: route.storyId,
+    episodeId: route.episodeId,
+  })
+
+  let payload = await loadReaderEpisodeCache({
+    storyType: 'manga',
+    storyId: route.storyId,
+    episodeId: route.episodeId,
+    privateAccess: false,
+    scope: 'public',
+  })
+
+  if (!payload && scope !== 'public') {
+    payload = await loadReaderEpisodeCache({
+      storyType: 'manga',
+      storyId: route.storyId,
+      episodeId: route.episodeId,
+      privateAccess: true,
+      scope,
+    })
+  }
+
+  if (
+    payload?.story?.story_type !== 'manga' &&
+    payload?.episode?.story_type !== 'manga'
+  ) {
+    return
+  }
+
+  worker.postMessage({
+    type: 'SHADOW_MANGA_EPISODE_PAYLOAD',
+    scope,
+    storyId: route.storyId,
+    episodeId: route.episodeId,
+    payload,
+  })
+}
+
+function installReaderRouteContextTracking() {
+  if (window.__shadowReaderRouteContextTrackingInstalled) return
+
+  window.__shadowReaderRouteContextTrackingInstalled = true
+
+  for (const methodName of ['pushState', 'replaceState']) {
+    const original = window.history[methodName]
+
+    window.history[methodName] = function shadowHistoryMethod(...args) {
+      const result = original.apply(this, args)
+      window.dispatchEvent(new Event('shadow-reader-route-change'))
+      return result
+    }
+  }
+
+  window.addEventListener('popstate', () => {
+    window.dispatchEvent(new Event('shadow-reader-route-change'))
+  })
+
+  window.addEventListener(
+    'shadow-reader-route-change',
+    notifyMangaCacheReaderContext
+  )
+}
+
+installReaderRouteContextTracking()
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
-    .getRegistrations()
-    .then(async (registrations) => {
-      if (!registrations.length) return
-
-      const registration = await navigator.serviceWorker.register(
-        `/sw.js?v=${LEGACY_SW_RESET_VERSION}`,
-        {
-          scope: '/',
-          updateViaCache: 'none',
-        }
-      )
-
+    .register(`/sw.js?v=${MANGA_CACHE_SW_VERSION}`, {
+      scope: '/',
+      updateViaCache: 'none',
+    })
+    .then(async (registration) => {
       await registration.update()
+      notifyMangaCacheReaderContext()
     })
     .catch(() => {})
+
+  navigator.serviceWorker.addEventListener(
+    'controllerchange',
+    notifyMangaCacheReaderContext
+  )
 }
 
 window.addEventListener('load', () => {
+  notifyMangaCacheReaderContext()
+
   window.setTimeout(
     () => checkForAppUpdate({ force: true }),
     1200
@@ -101,15 +226,18 @@ window.addEventListener('load', () => {
 })
 
 window.addEventListener('focus', () => {
+  notifyMangaCacheReaderContext()
   checkForAppUpdate()
 })
 
 window.addEventListener('online', () => {
+  notifyMangaCacheReaderContext()
   checkForAppUpdate({ force: true })
 })
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
+    notifyMangaCacheReaderContext()
     checkForAppUpdate()
   }
 })
