@@ -2,7 +2,9 @@ export const MANGA_MAX_PAGES = 100
 export const MANGA_MIN_PUBLISH_PAGES = 10
 export const MANGA_MAX_FILES_PER_PICK = 30
 export const MANGA_INPUT_MAX_BYTES = 5 * 1024 * 1024
-
+export const MANGA_MAX_WIDTH = 8000
+export const MANGA_MAX_HEIGHT = 30000
+export const MANGA_MAX_PIXELS = 120_000_000
 const TARGET_MAX_BYTES = 600 * 1024
 const HARD_MAX_BYTES = 800 * 1024
 const MAX_WIDTH = 1600
@@ -240,6 +242,14 @@ export async function optimizeMangaImage(file) {
   }
 
   try {
+      if (
+    loaded.width > MANGA_MAX_WIDTH ||
+    loaded.height > MANGA_MAX_HEIGHT ||
+    loaded.width * loaded.height > MANGA_MAX_PIXELS
+  ) {
+    URL.revokeObjectURL(loaded.url)
+    throw new Error('Manga image is too large. Max: 8000×30000px and 120MP.')
+  }
     if (!heic) {
       return {
         file,
