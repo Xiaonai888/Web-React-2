@@ -1700,7 +1700,7 @@ const [saleStatus, setSaleStatus] =
             ) : null}
           </div>
         ) : (
-          <div className="flex min-h-[58px] items-center justify-between gap-4 border-b border-gray-100 px-4 py-2.5">
+          <div className="flex min-h-[58px] items-center justify-between gap-4 px-4 py-2.5">
             <div className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#111827]">
               {item.sponsor || 'Shadow Mall'}
             </div>
