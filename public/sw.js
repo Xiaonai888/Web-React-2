@@ -429,6 +429,204 @@ async function deleteCachedEpisode(record) {
   )
 }
 
+async function getStorageSnapshot() {
+  let quota = 0
+  let usage = 0
+  let persistent = false
+
+  try {
+    const estimate =
+      await self.navigator.storage.estimate()
+
+    quota = normalizeBytes(
+      estimate?.quota
+    )
+
+    usage = normalizeBytes(
+      estimate?.usage
+    )
+  } catch {
+  }
+
+  try {
+    if (
+      self.navigator.storage?.persisted
+    ) {
+      persistent = Boolean(
+        await self.navigator.storage.persisted()
+      )
+    }
+  } catch {
+    persistent = false
+  }
+
+  return {
+    quota,
+    usage,
+    persistent,
+  }
+}
+
+async function getMangaCacheStats(
+  requestedScope = ''
+) {
+  const scope =
+    normalizeText(requestedScope)
+
+  const records =
+    await getAllEpisodeRecords()
+
+  const visibleRecords =
+    scope && scope !== 'public'
+      ? records.filter(
+          (record) =>
+            record.scope === scope ||
+            record.scope === 'public'
+        )
+      : records.filter(
+          (record) =>
+            record.scope === 'public'
+        )
+
+  const storage =
+    await getStorageSnapshot()
+
+  const budget =
+    await getStorageBudget()
+
+  const cachedBytes =
+    visibleRecords.reduce(
+      (sum, record) =>
+        sum +
+        normalizeBytes(
+          record.cachedBytes
+        ),
+      0
+    )
+
+  const imageCount =
+    visibleRecords.reduce(
+      (sum, record) =>
+        sum +
+        (
+          Array.isArray(
+            record.cachedUrls
+          )
+            ? record.cachedUrls.length
+            : 0
+        ),
+      0
+    )
+
+  return {
+    ok: true,
+    scope:
+      scope || 'public',
+    episodeCount:
+      visibleRecords.length,
+    imageCount,
+    cachedBytes,
+    cachedMegabytes:
+      Number(
+        (
+          cachedBytes /
+          (1024 * 1024)
+        ).toFixed(2)
+      ),
+    cachedGigabytes:
+      Number(
+        (
+          cachedBytes /
+          (1024 * 1024 * 1024)
+        ).toFixed(3)
+      ),
+    maxEpisodes:
+      MAX_MANGA_EPISODES,
+    hardMaxBytes:
+      HARD_MAX_BYTES,
+    budgetBytes:
+      normalizeBytes(
+        budget.budgetBytes
+      ),
+    quotaBytes:
+      storage.quota,
+    usageBytes:
+      storage.usage,
+    persistent:
+      storage.persistent,
+  }
+}
+
+async function clearMangaCache({
+  requestedScope = '',
+  all = false,
+  includePublic = true,
+} = {}) {
+  const scope =
+    normalizeText(requestedScope)
+
+  const records =
+    await getAllEpisodeRecords()
+
+  const targets = all
+    ? records
+    : records.filter(
+        (record) => {
+          if (
+            scope &&
+            record.scope === scope
+          ) {
+            return true
+          }
+
+          return Boolean(
+            includePublic &&
+            record.scope === 'public'
+          )
+        }
+      )
+
+  await Promise.all(
+    targets.map((record) =>
+      deleteCachedEpisode(record)
+    )
+  )
+
+  if (all) {
+    const names =
+      await caches.keys()
+
+    await Promise.all(
+      names
+        .filter((name) =>
+          name.startsWith(
+            MANGA_CACHE_PREFIX
+          )
+        )
+        .map((name) =>
+          caches.delete(name)
+        )
+    )
+  }
+
+  return {
+    ok: true,
+    clearedEpisodes:
+      targets.length,
+  }
+}
+
+function replyToMessage(
+  event,
+  payload
+) {
+  const port =
+    event.ports?.[0]
+
+  if (!port) return
+  port.postMessage(payload)
+}
+
 async function getStorageBudget() {
   let quota = 0
   let usage = 0
@@ -1197,6 +1395,68 @@ self.addEventListener(
   'message',
   (event) => {
     const data = event.data
+
+    if (
+      data?.type ===
+      'SHADOW_MANGA_CACHE_STATS'
+    ) {
+      event.waitUntil(
+        getMangaCacheStats(
+          data.scope
+        )
+          .then((result) =>
+            replyToMessage(
+              event,
+              result
+            )
+          )
+          .catch(() =>
+            replyToMessage(
+              event,
+              {
+                ok: false,
+                code:
+                  'MANGA_CACHE_STATS_FAILED',
+              }
+            )
+          )
+      )
+      return
+    }
+
+    if (
+      data?.type ===
+      'SHADOW_MANGA_CACHE_CLEAR'
+    ) {
+      event.waitUntil(
+        clearMangaCache({
+          requestedScope:
+            data.scope,
+          all:
+            data.all === true,
+          includePublic:
+            data.includePublic !== false,
+        })
+          .then((result) =>
+            replyToMessage(
+              event,
+              result
+            )
+          )
+          .catch(() =>
+            replyToMessage(
+              event,
+              {
+                ok: false,
+                code:
+                  'MANGA_CACHE_CLEAR_FAILED',
+              }
+            )
+          )
+      )
+      return
+    }
+
     const clientId =
       event.source?.id
 
