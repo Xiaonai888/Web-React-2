@@ -9,12 +9,14 @@ import { installHomePublicCacheFetch } from './utils/installHomePublicCacheFetch
 import { installReaderEpisodeCacheFetch } from './utils/installReaderEpisodeCacheFetch'
 import { installReaderPresenceTracking } from './utils/installReaderPresenceTracking'
 import { loadReaderEpisodeCache } from './utils/readerEpisodeCache'
+import { installMangaImageCacheControl } from './utils/mangaImageCacheControl'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
 installHomePublicCacheFetch()
 installReaderEpisodeCacheFetch()
 installReaderPresenceTracking()
+installMangaImageCacheControl()
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault()
