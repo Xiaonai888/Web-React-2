@@ -25,6 +25,7 @@ import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
 import ShadowMallPromotionSocial from '../components/discover/ShadowMallPromotionSocial'
 import AuthorPostEchoAction from '../components/author-posts/AuthorPostEchoAction'
 import ReactionAction from '../components/social/reactions/ReactionAction'
+import ReactionSummary from '../components/social/reactions/ReactionSummary'
 import AuthorDiscoverPostText from '../components/author-posts/AuthorDiscoverPostText'
 import {
   CollapsiblePostText,
@@ -994,10 +995,11 @@ const isOwner = Boolean(
       }
       className="active:opacity-60"
     >
-      <RealReactionSummary
-        summary={post.reaction_summary}
-        likeCount={post.like_count}
-      />
+      <ReactionSummary
+  summary={post.reaction_summary}
+  likeCount={post.like_count}
+  myReaction={post.my_reaction}
+/>
     </button>
 
     <div className="flex items-center gap-4">
