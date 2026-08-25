@@ -74,6 +74,66 @@ async function checkForAppUpdate({ force = false } = {}) {
 }
 
 const MANGA_CACHE_SW_VERSION = '20260825-1'
+const MANGA_PERSIST_ATTEMPT_KEY =
+  'shadow_manga_persist_attempt_v1'
+const MANGA_PERSIST_RETRY_MS =
+  30 * 24 * 60 * 60 * 1000
+
+let mangaPersistRequest = null
+
+async function requestMangaPersistentStorage() {
+  if (
+    !navigator.storage?.persist ||
+    !navigator.storage?.persisted
+  ) {
+    return false
+  }
+
+  try {
+    if (await navigator.storage.persisted()) {
+      return true
+    }
+
+    const lastAttempt = Number(
+      localStorage.getItem(
+        MANGA_PERSIST_ATTEMPT_KEY
+      ) || 0
+    )
+
+    if (
+      lastAttempt > 0 &&
+      Date.now() - lastAttempt <
+        MANGA_PERSIST_RETRY_MS
+    ) {
+      return false
+    }
+
+    if (mangaPersistRequest) {
+      return mangaPersistRequest
+    }
+
+    mangaPersistRequest = (async () => {
+      try {
+        localStorage.setItem(
+          MANGA_PERSIST_ATTEMPT_KEY,
+          String(Date.now())
+        )
+
+        return Boolean(
+          await navigator.storage.persist()
+        )
+      } catch {
+        return false
+      } finally {
+        mangaPersistRequest = null
+      }
+    })()
+
+    return await mangaPersistRequest
+  } catch {
+    return false
+  }
+}
 
 function getReaderTokenForCacheScope() {
   return (
@@ -161,6 +221,8 @@ async function notifyMangaCacheReaderContext() {
   ) {
     return
   }
+
+  requestMangaPersistentStorage()
 
   worker.postMessage({
     type: 'SHADOW_MANGA_EPISODE_PAYLOAD',
