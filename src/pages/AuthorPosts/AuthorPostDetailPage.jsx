@@ -17,6 +17,7 @@ import CommentsModal from '../../components/story-detail/CommentsModal'
 import AuthorPostEchoAction from '../../components/author-posts/AuthorPostEchoAction'
 import AuthorPageShareSheet from '../../components/AuthorPageShareSheet'
 import ReactionAction from '../../components/social/reactions/ReactionAction'
+import ReactionSummary from '../../components/social/reactions/ReactionSummary'
 import { ProfessionalSinglePostImage } from '../../components/common/ProfessionalPostContent'
 
 const API_BASE_URL =
