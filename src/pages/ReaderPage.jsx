@@ -1153,7 +1153,7 @@ function ReaderEndPanel({
   idleLabel="Like"
   idleIcon={
   <svg viewBox="0 0 24 24" className="h-[28px] w-[28px]" fill="none">
-    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 }
   buttonClassName="relative h-[44px] w-[44px] justify-center [&>img]:!h-[32px] [&>img]:!w-[32px] [&>i]:!text-[28px]"
