@@ -3645,11 +3645,11 @@ likeCount={reactionCount}
   >
     <div className="mx-auto flex max-w-[620px] items-center justify-between px-5 pb-1 text-[11px] font-normal text-white/70">
       <span>
-        {formatCompactNumber(
-          reactionCount
-        )}{' '}
-        reactions
-      </span>
+      <ReactionSummary
+  summary={reactionSummary}
+  likeCount={reactionCount}
+  myReaction={reactionType}
+/>
 
       <span>
         {formatCompactNumber(
