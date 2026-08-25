@@ -1151,11 +1151,11 @@ function ReaderEndPanel({
   onReact={handleEpisodeReaction}
   showCount={false}
   idleLabel="Like"
-  buttonClassName="relative h-[44px] w-[44px] justify-center [&>img]:!h-[32px] [&>img]:!w-[32px] [&>i]:!text-[32px] after:absolute after:left-1/2 after:top-[34px] after:h-[26px] after:w-[74px] after:-translate-x-1/2 after:content-['']"
+  buttonClassName="relative h-[44px] w-[44px] justify-center [&>img]:!h-[32px] [&>img]:!w-[32px] [&>i]:!text-[27px] after:absolute after:left-1/2 after:top-[34px] after:h-[26px] after:w-[74px] after:-translate-x-1/2 after:content-['']"
 />
 
 <span
-  className="pointer-events-none relative -top-[10px] text-[13px] font-normal"
+  className="pointer-events-none relative -top-[10px] w-[74px] text-center text-[13px] font-normal leading-none"
     style={{
       color:
         activeEpisodeReaction?.text ||
