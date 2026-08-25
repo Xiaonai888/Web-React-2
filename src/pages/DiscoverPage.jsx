@@ -695,46 +695,7 @@ function RealPostImageGrid({
   )
 }
 
-function RealReactionSummary({ summary, likeCount }) {
-  const icons = {
-    love: '/assets/React/Love.svg',
-    haha: '/assets/React/Haha.svg',
-    wow: '/assets/React/Wow.svg',
-    sad: '/assets/React/Sad.svg',
-    angry: '/assets/React/Angry.svg',
-    support: '/assets/React/Support.svg',
-    touched: '/assets/React/Touched.svg',
-  }
 
-  const count = Number(likeCount || 0)
-  const items =
-    Array.isArray(summary) && summary.length
-      ? summary.slice(0, 3)
-      : count > 0
-        ? [{ type: 'love' }]
-        : []
-
-  return (
-    <div className="flex items-center">
-      {items.length ? (
-        <div className="flex items-center -space-x-1">
-          {items.map((item, index) => (
-            <img
-              key={`${item.type}-${index}`}
-              src={icons[item.type] || icons.love}
-              alt=""
-              className="h-[17px] w-[17px] rounded-full bg-white ring-1 ring-white"
-            />
-          ))}
-        </div>
-      ) : null}
-
-      <span className={items.length ? 'ml-1.5' : ''}>
-        {count}
-      </span>
-    </div>
-  )
-}
 
 function RealFollowedPostCard({
   post,
