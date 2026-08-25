@@ -2975,7 +2975,7 @@ return true
   mangaUploadAbortRef.current = controller
   setMangaUploadBatchIds(entries.map((entry) => entry.id))
 
-  await runWithConcurrency(entries, 2, async (entry) => {
+  await runWithConcurrency(entries, 1, async (entry) => {
     try {
       if (controller.signal.aborted) throw new Error('Upload canceled.')
 
@@ -3004,11 +3004,12 @@ return true
       })
 
       const uploaded = await uploadMangaPageFile({
-        token,
-        file: optimized.file,
-        storyId,
-        pageId: entry.id,
-        signal: controller.signal,
+  token,
+  file: optimized.file,
+  storyId,
+  pageId: entry.id,
+  signal: controller.signal,
+  useV2: true,
         onProgress: ({ loaded, total, percent, speedBytesPerSecond }) => {
           updateMangaPage(entry.id, {
             progress: percent,
@@ -3020,19 +3021,20 @@ return true
       })
 
       updateMangaPage(entry.id, {
-        status: 'done',
-        progress: 100,
-        imageUrl: uploaded.imageUrl,
-        storagePath: uploaded.storagePath,
-        width: optimized.width,
-        height: optimized.height,
-        fileSize: optimized.fileSize,
-        mimeType: optimized.mimeType,
-        uploadedBytes: optimized.fileSize,
-        uploadTotalBytes: optimized.fileSize,
-        uploadSpeed: 0,
-        error: '',
-      })
+  status: 'done',
+  progress: 100,
+  imageUrl: uploaded.imageUrl,
+  storagePath: uploaded.storagePath,
+  width: uploaded.width || optimized.width,
+  height: uploaded.height || optimized.height,
+  fileSize: uploaded.fileSize || optimized.fileSize,
+  mimeType: uploaded.mimeType || optimized.mimeType,
+  parts: Array.isArray(uploaded.parts) ? uploaded.parts : [],
+  uploadedBytes: optimized.fileSize,
+  uploadTotalBytes: optimized.fileSize,
+  uploadSpeed: 0,
+  error: '',
+})
     } catch (error) {
       updateMangaPage(entry.id, {
         status: 'error',
