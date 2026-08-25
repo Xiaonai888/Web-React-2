@@ -3122,7 +3122,7 @@ return true
             width: page.width || null,
             height: page.height || null,
             fileSize: page.file_size || null,
-            mimeType: page.mime_type || 'image/webp',.
+            mimeType: page.mime_type || 'image/webp',
             ...mangaPartsPatch(page),
             sourceFile: null,
             status: 'done',
