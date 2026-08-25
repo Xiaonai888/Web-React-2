@@ -6,11 +6,13 @@ import AppErrorBoundary from './components/AppErrorBoundary.jsx'
 import { installApiAuthFetch } from './utils/installApiAuthFetch'
 import { installPaidContentRequirementFetch } from './utils/installPaidContentRequirementFetch'
 import { installHomePublicCacheFetch } from './utils/installHomePublicCacheFetch'
+import { installReaderEpisodeCacheFetch } from './utils/installReaderEpisodeCacheFetch'
 import { installReaderPresenceTracking } from './utils/installReaderPresenceTracking'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
 installHomePublicCacheFetch()
+installReaderEpisodeCacheFetch()
 installReaderPresenceTracking()
 
 window.addEventListener('beforeinstallprompt', (event) => {
