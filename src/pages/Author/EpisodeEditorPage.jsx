@@ -685,6 +685,12 @@ function makeLocalId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
+function mangaPartsPatch(page) {
+  return Object.prototype.hasOwnProperty.call(page || {}, 'parts')
+    ? { parts: Array.isArray(page.parts) ? page.parts : [] }
+    : {}
+}
+
 function Step({ number, title, active }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -2894,6 +2900,7 @@ export default function EpisodeEditorPage() {
               height: page.height || null,
               fileSize: page.fileSize || null,
               mimeType: page.mimeType || 'image/webp',
+              ...mangaPartsPatch(page),
             }))
         : []
 
@@ -3115,7 +3122,8 @@ return true
             width: page.width || null,
             height: page.height || null,
             fileSize: page.file_size || null,
-            mimeType: page.mime_type || 'image/webp',
+            mimeType: page.mime_type || 'image/webp',.
+            ...mangaPartsPatch(page),
             sourceFile: null,
             status: 'done',
             progress: 100,
@@ -3169,6 +3177,7 @@ return true
                   height: page.height || null,
                   fileSize: page.fileSize || null,
                   mimeType: page.mimeType || 'image/webp',
+                  ...mangaPartsPatch(page),
                 }))
             : []
 
@@ -3181,6 +3190,7 @@ return true
                 height: page.height || null,
                 fileSize: page.fileSize || null,
                 mimeType: page.mimeType || 'image/webp',
+              ...mangaPartsPatch(page),
               }))
             : []
 
@@ -3254,6 +3264,7 @@ return true
             height: page.height || null,
             fileSize: page.fileSize || null,
             mimeType: page.mimeType || 'image/webp',
+            ...mangaPartsPatch(page),
             sourceFile: null,
             status: 'done',
             progress: 100,
@@ -3897,6 +3908,7 @@ return true
       height: page.height,
       file_size: page.fileSize,
       mime_type: page.mimeType || 'image/webp',
+      ...mangaPartsPatch(page),
     }))
 
     const targetEpisodeId = currentEpisodeId || editEpisodeId || ''
