@@ -1,7 +1,7 @@
 export const MANGA_MAX_PAGES = 100
 export const MANGA_MIN_PUBLISH_PAGES = 10
 export const MANGA_MAX_FILES_PER_PICK = 30
-export const MANGA_INPUT_MAX_BYTES = 2 * 1024 * 1024
+export const MANGA_INPUT_MAX_BYTES = 5 * 1024 * 1024
 
 const TARGET_MAX_BYTES = 600 * 1024
 const HARD_MAX_BYTES = 800 * 1024
@@ -110,7 +110,7 @@ export function validateMangaFile(file) {
   }
 
   if (file.size > MANGA_INPUT_MAX_BYTES) {
-    return `${file.name || 'Image'} is larger than 2 MB.`
+    return `${file.name || 'Image'} is larger than 5 MB.`
   }
 
   return ''
