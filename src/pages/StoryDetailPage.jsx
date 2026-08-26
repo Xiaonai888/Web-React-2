@@ -50,7 +50,7 @@ function authHeaders() {
 
 function LoadingBlock() {
   return (
-    <div className="min-h-screen bg-white pb-[130px] sm:bg-[#f5f3fa]">
+    <div className="story-detail-page min-h-screen bg-white pb-[130px] sm:bg-[#f5f3fa]">
       <section className="relative bg-[#f5f3fa]">
         <div className="fixed left-0 right-0 top-0 z-50 px-4 py-3">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
@@ -725,14 +725,14 @@ export default function StoryDetailPage() {
 
   if (message || !story) {
     return (
-      <div className="min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
+      <div className="story-detail-page min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
         <ErrorBlock message={message} onBack={() => navigate(-1)} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[95px] sm:bg-[#f5f3fa] sm:pb-[120px]">
+    <div className="story-detail-page min-h-screen bg-white pb-[95px] sm:bg-[#f5f3fa] sm:pb-[120px]">
       <StoryHeroSection
         story={story}
         onBack={() => navigate(-1)}
