@@ -236,6 +236,7 @@ function getDiscoverRecommendationScore(
   discoveryBoost +
   ownerBoost
 )
+}
 
 function buildDiscoverTimeline(
   authorPosts,
