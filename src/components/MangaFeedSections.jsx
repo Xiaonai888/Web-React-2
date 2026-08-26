@@ -49,7 +49,10 @@ function getGenreTitle(genre) {
 function MangaCard({ story, onOpen }) {
   return (
     <button type="button" onClick={onOpen} className="group block w-full text-left">
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[10px] bg-[#f1f2f4] shadow-sm">
+      <div
+        className="relative aspect-[2/3] w-full overflow-hidden rounded-[10px] shadow-sm"
+        style={{ background: 'var(--shadow-bg-soft)' }}
+      >
         <img
           src={story.cover_url || '/assets/New Arrival/New Arrival 1.jpg'}
           alt={story.title || 'Manga cover'}
@@ -62,19 +65,34 @@ function MangaCard({ story, onOpen }) {
         />
 
         {story.is_adult ? (
-          <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-1 text-[9px] font-extrabold text-[#e5484d] shadow-sm">
+          <span
+            className="absolute bottom-2 left-2 rounded-full px-2 py-1 text-[9px] font-extrabold shadow-sm"
+            style={{
+              background: 'var(--shadow-bg-surface)',
+              color: 'var(--shadow-danger)',
+            }}
+          >
             18+
           </span>
         ) : null}
       </div>
 
-      <h3 className="mt-2 truncate text-[13.5px] font-[680] leading-5 text-[#111827]">
+      <h3
+        className="mt-2 truncate text-[13.5px] font-[680] leading-5"
+        style={{ color: 'var(--shadow-text-primary)' }}
+      >
         {story.title || 'Untitled Manga'}
       </h3>
-      <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#8d94a1]">
+      <p
+        className="mt-0.5 truncate text-[10.5px] font-medium"
+        style={{ color: 'var(--shadow-text-secondary)' }}
+      >
         {getAuthorName(story)}
       </p>
-      <div className="mt-1 flex items-center gap-2 text-[10px] font-semibold text-[#667085]">
+      <div
+        className="mt-1 flex items-center gap-2 text-[10px] font-semibold"
+        style={{ color: 'var(--shadow-text-tertiary)' }}
+      >
         <span>{story.main_genre || 'Manga'}</span>
         <span>•</span>
         <span>{formatCompactNumber(story.total_views)} views</span>
@@ -89,10 +107,19 @@ function MangaRow({ title, stories, onOpen }) {
   return (
     <section className="my-7 px-4 sm:px-5 lg:px-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-[18px] font-extrabold tracking-tight text-[#111827] lg:text-[19px]">
+        <h2
+          className="text-[18px] font-extrabold tracking-tight lg:text-[19px]"
+          style={{ color: 'var(--shadow-text-primary)' }}
+        >
           {title}
         </h2>
-        <span className="rounded-full bg-[#fff8d8] px-3 py-1 text-[10px] font-extrabold text-[#8a6500]">
+        <span
+          className="rounded-full px-3 py-1 text-[10px] font-extrabold"
+          style={{
+            background: 'var(--shadow-bg-soft)',
+            color: 'var(--shadow-text-secondary)',
+          }}
+        >
           {stories.length}
         </span>
       </div>
@@ -114,13 +141,25 @@ function MangaRow({ title, stories, onOpen }) {
 function LoadingRows() {
   return (
     <div className="px-4 py-6 sm:px-5 lg:px-6">
-      <div className="mb-4 h-6 w-36 animate-pulse rounded-full bg-[#f1f2f4]" />
+      <div
+        className="mb-4 h-6 w-36 animate-pulse rounded-full"
+        style={{ background: 'var(--shadow-bg-soft)' }}
+      />
       <div className="grid grid-cols-3 gap-3 lg:grid-cols-6">
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index}>
-            <div className="aspect-[2/3] animate-pulse rounded-[10px] bg-[#f1f2f4]" />
-            <div className="mt-2 h-4 animate-pulse rounded-full bg-[#f1f2f4]" />
-            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[#f1f2f4]" />
+            <div
+              className="aspect-[2/3] animate-pulse rounded-[10px]"
+              style={{ background: 'var(--shadow-bg-soft)' }}
+            />
+            <div
+              className="mt-2 h-4 animate-pulse rounded-full"
+              style={{ background: 'var(--shadow-bg-soft)' }}
+            />
+            <div
+              className="mt-2 h-3 w-2/3 animate-pulse rounded-full"
+              style={{ background: 'var(--shadow-bg-soft)' }}
+            />
           </div>
         ))}
       </div>
@@ -136,99 +175,98 @@ export default function MangaFeedSections({ genre = 'today' }) {
   const storyLanguage = getStoryLanguageLabel()
 
   useEffect(() => {
-  const controller = new AbortController()
-  let cancelled = false
+    const controller = new AbortController()
+    let cancelled = false
 
-  async function loadManga() {
-    const cacheKey = getHomeCacheKey({
-      section: 'stories',
-      language: getStoryLanguageId(),
-      params: {
-        page: 'manga-feed',
-        story_type: 'manga',
-        sort: 'latest',
-        limit: 100,
-        schema: 1,
-      },
-    })
-
-    let hasCachedStories = false
-
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: MANGA_FEED_CACHE_MAX_AGE_MS,
-      allowExpired: true,
-    })
-
-    if (cancelled || controller.signal.aborted) return
-
-    hasCachedStories = Array.isArray(cached?.data)
-
-    if (hasCachedStories) {
-      setStories(cached.data)
-      setLoading(false)
-      setError('')
-    }
-
-    if (cached?.isFresh && hasCachedStories) {
-      return
-    }
-
-    try {
-      if (!hasCachedStories) {
-        setLoading(true)
-      }
-
-      setError('')
-
-      const endpoint = addStoryLanguageParam(
-        `${API_BASE_URL}/api/public/stories?limit=100&sort=latest&story_type=manga`
-      )
-
-      const response = await fetch(endpoint, {
-        signal: controller.signal,
+    async function loadManga() {
+      const cacheKey = getHomeCacheKey({
+        section: 'stories',
+        language: getStoryLanguageId(),
+        params: {
+          page: 'manga-feed',
+          story_type: 'manga',
+          sort: 'latest',
+          limit: 100,
+          schema: 1,
+        },
       })
-      const data = await response.json().catch(() => ({}))
 
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load manga')
-      }
+      let hasCachedStories = false
 
-      const mangaStories = (
-        Array.isArray(data.stories) ? data.stories : []
-      ).filter(
-        (story) =>
-          String(story.story_type || '').toLowerCase() === 'manga'
-      )
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: MANGA_FEED_CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
 
       if (cancelled || controller.signal.aborted) return
 
-      setStories(mangaStories)
+      hasCachedStories = Array.isArray(cached?.data)
 
-      await saveHomeCache(cacheKey, mangaStories, {
-        maxAgeMs: MANGA_FEED_CACHE_MAX_AGE_MS,
-      })
-    } catch (loadError) {
-      if (loadError?.name === 'AbortError') return
-
-      if (!cancelled && !hasCachedStories) {
-        setStories([])
-        setError(loadError.message || 'Failed to load manga')
-      }
-    } finally {
-      if (!cancelled && !controller.signal.aborted) {
+      if (hasCachedStories) {
+        setStories(cached.data)
         setLoading(false)
+        setError('')
+      }
+
+      if (cached?.isFresh && hasCachedStories) {
+        return
+      }
+
+      try {
+        if (!hasCachedStories) {
+          setLoading(true)
+        }
+
+        setError('')
+
+        const endpoint = addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=100&sort=latest&story_type=manga`
+        )
+
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        })
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load manga')
+        }
+
+        const mangaStories = (
+          Array.isArray(data.stories) ? data.stories : []
+        ).filter(
+          (story) =>
+            String(story.story_type || '').toLowerCase() === 'manga'
+        )
+
+        if (cancelled || controller.signal.aborted) return
+
+        setStories(mangaStories)
+
+        await saveHomeCache(cacheKey, mangaStories, {
+          maxAgeMs: MANGA_FEED_CACHE_MAX_AGE_MS,
+        })
+      } catch (loadError) {
+        if (loadError?.name === 'AbortError') return
+
+        if (!cancelled && !hasCachedStories) {
+          setStories([])
+          setError(loadError.message || 'Failed to load manga')
+        }
+      } finally {
+        if (!cancelled && !controller.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
-  }
 
-  loadManga()
+    loadManga()
 
-  return () => {
-    cancelled = true
-    controller.abort()
-  }
-}, [storyLanguage])
-
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [storyLanguage])
 
   const filteredStories = useMemo(() => {
     if (!genre || genre === 'today') return stories
@@ -274,9 +312,25 @@ export default function MangaFeedSections({ genre = 'today' }) {
   if (error) {
     return (
       <div className="px-4 py-8 sm:px-5 lg:px-6">
-        <div className="rounded-[22px] bg-[#fff1f1] px-5 py-7 text-center">
-          <div className="text-[14px] font-extrabold text-[#e5484d]">Could not load Manga</div>
-          <div className="mt-1 text-[12px] text-[#a35a5a]">{error}</div>
+        <div
+          className="rounded-[22px] px-5 py-7 text-center"
+          style={{
+            background: 'rgba(229, 72, 77, 0.10)',
+            border: '1px solid rgba(229, 72, 77, 0.18)',
+          }}
+        >
+          <div
+            className="text-[14px] font-extrabold"
+            style={{ color: 'var(--shadow-danger)' }}
+          >
+            Could not load Manga
+          </div>
+          <div
+            className="mt-1 text-[12px]"
+            style={{ color: 'var(--shadow-text-secondary)' }}
+          >
+            {error}
+          </div>
         </div>
       </div>
     )
@@ -285,14 +339,32 @@ export default function MangaFeedSections({ genre = 'today' }) {
   if (!filteredStories.length) {
     return (
       <div className="px-4 py-8 sm:px-5 lg:px-6">
-        <div className="rounded-[22px] bg-[#f8f8fb] px-5 py-9 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-[24px] shadow-sm ring-1 ring-black/5">
+        <div
+          className="rounded-[22px] px-5 py-9 text-center"
+          style={{
+            background: 'var(--shadow-bg-elevated)',
+            border: '1px solid var(--shadow-border)',
+          }}
+        >
+          <div
+            className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-[24px] shadow-sm"
+            style={{
+              background: 'var(--shadow-bg-surface)',
+              border: '1px solid var(--shadow-border)',
+            }}
+          >
             📚
           </div>
-          <div className="mt-4 text-[15px] font-extrabold text-[#111827]">
+          <div
+            className="mt-4 text-[15px] font-extrabold"
+            style={{ color: 'var(--shadow-text-primary)' }}
+          >
             No {genre === 'today' ? storyLanguage : genre} Manga yet
           </div>
-          <div className="mt-1 text-[12px] leading-5 text-[#8d94a1]">
+          <div
+            className="mt-1 text-[12px] leading-5"
+            style={{ color: 'var(--shadow-text-secondary)' }}
+          >
             Published Manga will appear here automatically.
           </div>
         </div>
