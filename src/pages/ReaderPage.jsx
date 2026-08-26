@@ -6121,7 +6121,7 @@ const readerControlsVisible =
 
 
 return (
-  <div className={`min-h-screen ${theme.page} pb-[110px]`}>
+  <div className={`reader-page min-h-screen ${theme.page} pb-[110px]`}>
     {brightnessOpacity > 0 ? (
       <div className="pointer-events-none fixed inset-0 z-[140] bg-black"
         style={{ opacity: brightnessOpacity }} />
