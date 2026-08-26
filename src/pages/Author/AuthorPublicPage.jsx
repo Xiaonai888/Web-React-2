@@ -679,7 +679,7 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
 }
 
 
-function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, onOwnAccount, onManageAccount }) {
+function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, readerNotificationCount, onPage, onOwnAccount, onManageAccount }) {
   if (!open) return null
 
   const pageName = author?.page_name || 'Author Page'
@@ -688,6 +688,7 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
   const readerName = readerUser?.name || 'Reader'
   const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
+  const showReaderBadge = Number(readerNotificationCount || 0) > 0
 
   return (
     <div className="fixed inset-0 z-[230]">
@@ -726,10 +727,12 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
               </div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{readerName}</div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1]">
-                  <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-                  <span>0 notifications</span>
-                </div>
+                {showReaderBadge ? (
+  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1]">
+    <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
+    <span>{`${readerNotificationCount} notification${Number(readerNotificationCount) === 1 ? '' : 's'}`}</span>
+  </div>
+) : null}
               </div>
             </div>
             <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
@@ -753,6 +756,7 @@ function AuthorOwnerMenuSheet({
   onClose,
   author,
   readerUser,
+  readerNotificationCount,
   onPage,
   onOwnAccount,
   onManageAccount,
@@ -770,6 +774,7 @@ function AuthorOwnerMenuSheet({
   const readerName = readerUser?.name || 'Reader'
   const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
+  const showReaderBadge = Number(readerNotificationCount || 0) > 0
 
   return (
     <div className="fixed inset-0 z-[235]">
@@ -1175,6 +1180,49 @@ useEffect(() => {
 
     window.addEventListener('storage', syncAuthorCartCount)
     window.addEventListener('shadow-author-cart-updated', syncAuthorCartCount)
+    useEffect(() => {
+  if (!ownerResolved || !author?.is_owner) {
+    setReaderNotificationCount(0)
+    return
+  }
+
+  const token = getAuthToken()
+
+  if (!token) {
+    setReaderNotificationCount(0)
+    return
+  }
+
+  let ignore = false
+
+  async function loadReaderNotificationCount() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/me/summary`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false || ignore) return
+
+      setReaderNotificationCount(
+        Math.max(0, Number(data.inbox_unread_count || 0))
+      )
+    } catch {}
+  }
+
+  loadReaderNotificationCount()
+
+  return () => {
+    ignore = true
+  }
+}, [ownerResolved, author?.is_owner])
 
     return () => {
       window.removeEventListener('storage', syncAuthorCartCount)
@@ -1891,6 +1939,7 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
 />
 
       <AuthorPageSwitcherSheet
+        readerNotificationCount={readerNotificationCount}
   open={pageSwitcherOpen}
   author={displayAuthor}
   readerUser={readerUser}
@@ -1904,6 +1953,7 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
 />
 
       <AuthorOwnerMenuSheet
+        readerNotificationCount={readerNotificationCount}
   open={authorMenuOpen}
   author={displayAuthor}
   readerUser={readerUser}
