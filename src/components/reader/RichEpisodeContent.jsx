@@ -101,6 +101,7 @@ function renderNode(node, context, key) {
         alt={String(element.getAttribute('alt') || 'Episode image').slice(0, 200)}
         loading="lazy"
         decoding="async"
+        style={{ filter: 'contrast(1.08) brightness(1.01)' }}
         className="my-5 block h-auto max-h-[72vh] w-full rounded-[12px] object-contain"
       />
     )
