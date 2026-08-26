@@ -221,6 +221,12 @@ const REPORT_CONFIG = {
   },
 }
 
+REPORT_CONFIG.reader_post = {
+  ...REPORT_CONFIG.author_post,
+  title: 'Report this Reader Post',
+  typeLabel: 'Reader Post',
+}
+
 const PHOTO_REPORT_CONFIG = {
   title: 'Report this photo',
   typeLabel: 'Photo',
@@ -291,7 +297,7 @@ export default function ReportPage() {
   const { reportType = '', targetId = '' } = useParams()
 
   const isPhotoReport =
-  reportType === 'author_post' &&
+  ['author_post', 'reader_post'].includes(reportType) &&
   location.state?.reportContext === 'photo'
 
 const config = isPhotoReport
