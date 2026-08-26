@@ -273,54 +273,6 @@ function CommentOptionsSheet({
   )
 }
 
-function ReplyComposer({
-  value,
-  onChange,
-  onCancel,
-  onSend,
-  sending,
-}) {
-  return (
-    <div className="mt-3 flex items-end gap-2">
-      <div className="flex min-w-0 flex-1 items-center rounded-[20px] bg-[#f3f4f6] px-3 py-2">
-        <input
-          value={value}
-          maxLength={COMMENT_LIMIT}
-          onChange={(event) =>
-            onChange(event.target.value)
-          }
-          placeholder="Write a reply..."
-          className="min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[#111827] outline-none placeholder:text-[#98a2b3]"
-        />
-      </div>
-
-      <button
-        type="button"
-        onClick={onCancel}
-        className="mb-1 text-[12px] font-normal text-[#98a2b3]"
-      >
-        Cancel
-      </button>
-
-      <button
-        type="button"
-        onClick={onSend}
-        disabled={!value.trim() || sending}
-        className="mb-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
-        aria-label="Send reply"
-      >
-        <i
-          className={`fa-solid ${
-            sending
-              ? 'fa-spinner animate-spin'
-              : 'fa-paper-plane'
-          } text-[12px]`}
-        />
-      </button>
-    </div>
-  )
-}
-
 function ReplyItem({ reply, onLike }) {
   return (
     <div className="flex gap-2">
@@ -374,20 +326,16 @@ function CommentItem({
   comment,
   currentUserId,
   onLike,
-  onReply,
+  onStartReply,
   onCopy,
   onEdit,
   onDelete,
   onHide,
   onReport,
-  sendingReply,
 }) {
   const [menuOpen, setMenuOpen] =
     useState(false)
-  const [replyOpen, setReplyOpen] =
-    useState(false)
-  const [replyText, setReplyText] =
-    useState('')
+  
   const [repliesShown, setRepliesShown] =
     useState(false)
 
@@ -398,24 +346,12 @@ function CommentItem({
     : []
 
   const openReplyComposer = () => {
-    setReplyOpen(true)
-    setRepliesShown(true)
-  }
-
-  const sendReply = async () => {
-    if (!replyText.trim()) return
-
-    const created = await onReply(
-      comment.id,
-      replyText.trim()
-    )
-
-    if (created) {
-      setReplyText('')
-      setReplyOpen(false)
-      setRepliesShown(true)
-    }
-  }
+  setRepliesShown(true)
+  onStartReply?.(
+    comment.id,
+    comment.user?.name || 'Reader'
+  )
+}
 
   return (
     <article className="px-4 py-4">
@@ -525,18 +461,7 @@ function CommentItem({
             </div>
           ) : null}
 
-          {replyOpen ? (
-            <ReplyComposer
-              value={replyText}
-              onChange={setReplyText}
-              onCancel={() => {
-                setReplyOpen(false)
-                setReplyText('')
-              }}
-              onSend={sendReply}
-              sending={sendingReply}
-            />
-          ) : null}
+          
         </div>
       </div>
 
@@ -657,6 +582,10 @@ export default function ReaderPostCommentsModal({
   const [loadingMore, setLoadingMore] =
     useState(false)
   const [text, setText] = useState('')
+  const [replyText, setReplyText] =
+  useState('')
+const [replyTarget, setReplyTarget] =
+  useState(null)
   const [sending, setSending] =
     useState(false)
   const [sendingReply, setSendingReply] =
@@ -694,6 +623,13 @@ export default function ReaderPostCommentsModal({
   )
 
   const commentingDisabled =
+    const composerText = replyTarget
+  ? replyText
+  : text
+
+const composerSending = replyTarget
+  ? sendingReply
+  : sending
     commentsPermission === 'no_one' &&
     String(currentUserId) !==
       String(postOwnerId || '')
@@ -817,10 +753,12 @@ export default function ReaderPostCommentsModal({
     if (!open || !postId) return
 
     setComments([])
-    setPage(1)
-    setHasMore(false)
-    setHiddenIds(new Set())
-    fetchComments(1, false)
+setPage(1)
+setHasMore(false)
+setHiddenIds(new Set())
+setReplyTarget(null)
+setReplyText('')
+fetchComments(1, false)
   }, [open, postId, sort])
 
   const updateCommentLocal = (
@@ -852,14 +790,43 @@ export default function ReaderPostCommentsModal({
     )
   }
 
+  const handleStartReply = (
+  parentId,
+  name
+) => {
+  setReplyText('')
+  setReplyTarget({
+    parentId,
+    name: String(name || 'Reader').trim(),
+  })
+
+  requestAnimationFrame(() => {
+    composerRef.current?.focus()
+  })
+}
+
   async function sendComment() {
-    if (
-      !text.trim() ||
-      sending ||
-      commentingDisabled
-    ) {
-      return
-    }
+   if (
+  !composerText.trim() ||
+  composerSending ||
+  commentingDisabled
+) {
+  return
+}
+
+if (replyTarget) {
+  const created = await sendReply(
+    replyTarget.parentId,
+    replyText.trim()
+  )
+
+  if (created) {
+    setReplyText('')
+    setReplyTarget(null)
+  }
+
+  return
+}
 
     const token = getAuthToken()
 
