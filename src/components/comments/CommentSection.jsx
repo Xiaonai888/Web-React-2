@@ -1702,6 +1702,8 @@ function CommentComposer({
   value,
   onChange,
   onSend,
+  onCancelReply,
+  replyTarget,
   isModal,
   isBanned,
   sending,
@@ -1711,6 +1713,9 @@ function CommentComposer({
   const textareaRef = useRef(null)
   const showSend =
     focused || Boolean(value.trim())
+  const replyTargetName = String(
+  replyTarget?.name || ''
+).trim()
 
   useEffect(() => {
     const textarea =
@@ -1735,6 +1740,25 @@ function CommentComposer({
           : 'fixed bottom-0 left-0 right-0'
       } z-50 border-t border-[#eef1f5] bg-white px-3 py-3`}
     >
+
+      {replyTarget ? (
+  <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[#667085]">
+    <span>
+      Replying to{' '}
+      <span className="font-semibold text-[#111827]">
+        {replyTargetName || 'Reader'}
+      </span>
+    </span>
+    <span>·</span>
+    <button
+      type="button"
+      onClick={onCancelReply}
+      className="font-medium text-[#1877f2]"
+    >
+      Cancel
+    </button>
+  </div>
+) : null}
       <div className="mx-auto flex max-w-3xl items-end gap-2">
         <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[#f3f4f6] px-4 py-2">
           <textarea
@@ -1766,7 +1790,9 @@ function CommentComposer({
             placeholder={
               isBanned
                 ? 'You cannot comment on this story.'
-                : 'Write a comment...'
+                : replyTarget
+  ? 'Write a reply...'
+  : 'Write a comment...'
             }
             className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
           />
@@ -1785,7 +1811,11 @@ function CommentComposer({
               sending
             }
             className="mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 disabled:bg-[#d0d5dd]"
-            aria-label="Send comment"
+            aria-label={
+  replyTarget
+    ? 'Send reply'
+    : 'Send comment'
+}
           >
             <i
               className={`fa-solid ${
@@ -3753,9 +3783,13 @@ onSpoiler={(
       />
 
       <CommentComposer
-        value={text}
-        onChange={setText}
-        onSend={handleSend}
+  value={text}
+  onChange={setText}
+  onSend={handleSend}
+  replyTarget={replyTarget}
+  onCancelReply={() =>
+    setReplyTarget(null)
+  }
         isModal={isModal}
         isBanned={isBanned}
         sending={sending}
