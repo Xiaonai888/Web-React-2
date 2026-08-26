@@ -1231,7 +1231,12 @@ useEffect(() => {
   return () => {
     ignore = true
   }
-}, [ownerResolved, author?.is_owner])
+}, [
+  ownerResolved,
+  author?.is_owner,
+  pageSwitcherOpen,
+  authorMenuOpen,
+])
 
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
