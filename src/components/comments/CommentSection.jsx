@@ -1717,6 +1717,16 @@ function CommentComposer({
   replyTarget?.name || ''
 ).trim()
 
+  const composerMaxLength = replyTarget
+  ? Math.max(
+      1,
+      COMMENT_LIMIT -
+        (replyTargetName
+          ? replyTargetName.length + 2
+          : 0)
+    )
+  : COMMENT_LIMIT
+
   useEffect(() => {
     const textarea =
       textareaRef.current
@@ -1765,7 +1775,7 @@ function CommentComposer({
             ref={textareaRef}
             id="shadow-comment-input"
             value={value}
-            maxLength={COMMENT_LIMIT}
+            maxLength={composerMaxLength}
             onChange={(event) =>
               onChange(event.target.value)
             }
@@ -1870,7 +1880,7 @@ function EditCommentSheet({
 
         <textarea
           value={value}
-          maxLength={COMMENT_LIMIT}
+          maxLength={composerMaxLength}
           onChange={(event) =>
             onChange(event.target.value)
           }
