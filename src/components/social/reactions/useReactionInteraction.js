@@ -275,20 +275,22 @@ try {
       }
 
       if (longPressOpenedRef.current) {
-        const selectedType =
-          previewReactionTypeRef.current
+  const selectedType =
+    previewReactionTypeRef.current
 
-        longPressOpenedRef.current = false
+  longPressOpenedRef.current = false
 
-        if (selectedType) {
-          void selectReaction(
-            selectedType
-          )
-          return
-        }
+  if (selectedType) {
+    void selectReaction(
+      selectedType
+    )
+    return
+  }
 
-        closeReactionPicker()
-      }
+  activePointerIdRef.current = null
+  setPreviewType('')
+  setSliding(false)
+}
     }, [
       blocked,
       clearPressTimer,
@@ -489,17 +491,15 @@ try {
         previewReactionTypeRef.current
 
       activePointerIdRef.current = null
-      longPressOpenedRef.current = false
-      setSliding(false)
+longPressOpenedRef.current = false
+setPreviewType('')
+setSliding(false)
 
-      if (reactionType) {
-        void selectReaction(
-          reactionType
-        )
-        return
-      }
-
-      closeReactionPicker()
+if (reactionType) {
+  void selectReaction(
+    reactionType
+  )
+}
     }
 
     function handlePointerCancel(event) {
