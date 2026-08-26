@@ -59,7 +59,9 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      await navigator.clipboard.writeText(
+  `${window.location.origin}/story/${story.id}`
+)
       setMenuOpen(false)
     } catch {
       setMenuOpen(false)
