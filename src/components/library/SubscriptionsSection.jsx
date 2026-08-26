@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom'
 function SubscriptionBookCard({ book }) {
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
-      <div className="overflow-hidden rounded-2xl bg-[#efefef] shadow-sm">
+      <div
+        className="overflow-hidden rounded-2xl shadow-sm"
+        style={{ background: 'var(--shadow-bg-soft)' }}
+      >
         <div className="aspect-[2/3] overflow-hidden">
           <img
             src={book.image}
@@ -17,10 +20,16 @@ function SubscriptionBookCard({ book }) {
       </div>
 
       <div className="pt-2.5">
-        <h4 className="line-clamp-1 text-[12px] font-extrabold tracking-tight text-[#111] sm:text-[13px]">
+        <h4
+          className="line-clamp-1 text-[12px] font-extrabold tracking-tight sm:text-[13px]"
+          style={{ color: 'var(--shadow-text-primary)' }}
+        >
           {book.title}
         </h4>
-        <p className="mt-1 text-[10px] font-medium text-[#8d8d8d] sm:text-[11px]">
+        <p
+          className="mt-1 text-[10px] font-medium sm:text-[11px]"
+          style={{ color: 'var(--shadow-text-secondary)' }}
+        >
           {book.info}
         </p>
       </div>
@@ -38,7 +47,10 @@ export default function SubscriptionsSection({
   return (
     <section className="pt-7">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-[18px] font-extrabold tracking-tight text-[#111]">
+        <h3
+          className="text-[18px] font-extrabold tracking-tight"
+          style={{ color: 'var(--shadow-text-primary)' }}
+        >
           {title}
         </h3>
 
