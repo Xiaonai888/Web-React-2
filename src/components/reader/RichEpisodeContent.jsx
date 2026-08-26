@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useId, useMemo } from 'react'
 
 const RICH_TAG_PATTERN = /<(?:p|div|br|strong|b|em|i|img)\b/i
 
