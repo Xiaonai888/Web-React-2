@@ -243,6 +243,12 @@ function buildDiscoverTimeline(
   readerPosts
 ) {
   const snapshotTime = Date.now()
+  const newestPostId = [authorPosts?.[0], readerPosts?.[0]]
+  .filter(Boolean)
+  .sort((a, b) =>
+    new Date(b.publish_at || b.created_at || 0) -
+    new Date(a.publish_at || a.created_at || 0)
+  )[0]?.id
 
   const items = [
     ...(Array.isArray(authorPosts)
@@ -258,6 +264,8 @@ function buildDiscoverTimeline(
         }))
       : []),
   ].sort((left, right) => {
+    if (left.post?.id === newestPostId) return -1
+if (right.post?.id === newestPostId) return 1
     const leftScore =
       getDiscoverRecommendationScore(
         left,
