@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
+import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import { resolveAuthorPostActivityRoute } from '../../utils/authorPostActivityRoute'
 
 const API_BASE_URL =
@@ -320,7 +321,7 @@ async function fetchPageNotifications(
       ? data.notifications.map(
           normalizeNotification
         )
-      : [],
+      : [setAuthorUnreadCount],
     unreadCount: Number(
       data.unread_count || 0
     ),
@@ -927,6 +928,11 @@ function OptionsSheet({
 
 export default function AuthorPageNotificationsPage() {
   const navigate = useNavigate()
+  const {
+    authorUnreadCount: unreadCount,
+    setAuthorUnreadCount,
+    adjustAuthorUnreadCount,
+  } = useAuthorPageNotifications()
   const [activeFilter, setActiveFilter] =
     useState('All')
   const [message, setMessage] =
@@ -951,10 +957,7 @@ export default function AuthorPageNotificationsPage() {
     nextCursor,
     setNextCursor,
   ] = useState('')
-  const [
-    unreadCount,
-    setUnreadCount,
-  ] = useState(0)
+ 
   const [
     selectedNotification,
     setSelectedNotification,
@@ -1008,9 +1011,9 @@ export default function AuthorPageNotificationsPage() {
             }
           )
 
-          setUnreadCount(
-            data.unreadCount
-          )
+          setAuthorUnreadCount(
+  data.unreadCount
+)
           setPreferences(
             data.preferences
           )
@@ -1022,7 +1025,7 @@ export default function AuthorPageNotificationsPage() {
           if (!append) {
             setNotifications([])
             setPreferences({})
-            setUnreadCount(0)
+
             setHasMore(false)
             setNextCursor('')
           }
@@ -1109,9 +1112,7 @@ export default function AuthorPageNotificationsPage() {
       )
     )
 
-    setUnreadCount((current) =>
-      Math.max(0, current - 1)
-    )
+    adjustAuthorUnreadCount(-1)
 
     markNotificationRead(
       notification.id
@@ -1204,14 +1205,9 @@ export default function AuthorPageNotificationsPage() {
         )
       )
 
-      setUnreadCount((current) =>
-        selectedNotification.unread
-          ? Math.max(
-              0,
-              current - 1
-            )
-          : current + 1
-      )
+      adjustAuthorUnreadCount(
+  selectedNotification.unread ? -1 : 1
+)
 
       setSelectedNotification(null)
     } catch (error) {
@@ -1368,13 +1364,7 @@ export default function AuthorPageNotificationsPage() {
       if (
         selectedNotification.unread
       ) {
-        setUnreadCount((current) =>
-          Math.max(
-            0,
-            current - 1
-          )
-        )
-      }
+        adjustAuthorUnreadCount(-1)
 
       setSelectedNotification(null)
     } catch (error) {
@@ -1400,7 +1390,7 @@ export default function AuthorPageNotificationsPage() {
         }))
       )
 
-      setUnreadCount(0)
+      setAuthorUnreadCount(0)
     } catch (error) {
       setMessage(
         error.message ||
