@@ -624,17 +624,25 @@ export default function ProfilePage() {
       : [],
   })
 
-  const viewedUser = useMemo(() => {
-    if (isOwnProfile) return user
+    const viewedUser = useMemo(() => {
+    const targetUsername = String(
+      isOwnProfile ? storedUser?.username || '' : requestedUsername
+    )
+      .trim()
+      .replace(/^@+/, '')
+      .toLowerCase()
 
-    const targetUsername = requestedUsername.trim().toLowerCase()
     const loadedUsername = String(user?.username || '')
       .trim()
       .replace(/^@+/, '')
       .toLowerCase()
 
-    return targetUsername && loadedUsername === targetUsername ? user : null
-  }, [isOwnProfile, requestedUsername, user])
+    if (!targetUsername) return null
+    if (loadedUsername === targetUsername) return user
+
+    return isOwnProfile ? storedUser : null
+  }, [isOwnProfile, requestedUsername, storedUser, user])
+
 
   const profilePostsUsername = isOwnProfile
     ? String(user?.username || storedUser?.username || '').replace(/^@+/, '')
@@ -675,9 +683,11 @@ export default function ProfilePage() {
     setRawAvatarImage('')
     setAvatarPreview('')
 
-    if (!isOwnProfile) {
-      setUser(null)
-    }
+    if (isOwnProfile) {
+  setUser(storedUser || null)
+} else {
+  setUser(null)
+}
 
     async function loadProfileStats() {
       if (!targetUsername) return
