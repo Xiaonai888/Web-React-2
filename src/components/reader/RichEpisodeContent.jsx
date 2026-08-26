@@ -92,6 +92,7 @@ function renderNode(node, context, key) {
 
   if (tagName === 'img') {
     const source = safeImageUrl(element.getAttribute('src'))
+    if (!source) return null
     return (
   <img
     key={key}
@@ -188,3 +189,4 @@ export default function RichEpisodeContent({
     </div>
   </>
 )
+}
