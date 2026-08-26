@@ -97,9 +97,19 @@ function PeriodTab({ label, active, onClick }) {
 }
 
 function TransactionRow({ record }) {
-  const episodeText = Number(record.episode_number || 0) > 0
-    ? `Episode ${record.episode_number}`
-    : record.episode_title || 'Episode unlock'
+  const isGift =
+    record.earning_type === 'gift' ||
+    record.source_type === 'diamond_gift'
+  const quantity = Math.max(1, Number(record.gift_quantity || 1))
+  const episodeText =
+    Number(record.episode_number || 0) > 0
+      ? `Episode ${record.episode_number}`
+      : record.episode_title || 'Episode unlock'
+  const actionText = isGift
+    ? quantity > 1
+      ? `sent ${quantity} × ${record.gift_name || 'Diamond Gift'}`
+      : `sent ${record.gift_name || 'Diamond Gift'}`
+    : `unlocked ${episodeText}`
 
   return (
     <div className="flex items-center gap-3 border-b border-[#f1f1f2] px-4 py-3.5 last:border-b-0">
@@ -108,12 +118,11 @@ function TransactionRow({ record }) {
       <div className="min-w-0 flex-1">
         <div className="line-clamp-1 text-[13px] font-semibold text-[#111827]">
           <span className="font-black">{record.reader_name || 'Reader'}</span>
-          <span className="font-medium text-[#667085]"> unlocked </span>
-          {episodeText}
+          <span className="font-medium text-[#667085]"> {actionText}</span>
         </div>
 
         <div className="mt-1 line-clamp-1 text-[11.5px] font-semibold text-[#ff3b5f]">
-          {record.story_title || 'Story'}
+          {isGift ? 'Diamond Gift' : 'Paid Unlock'} · {record.story_title || 'Story'}
         </div>
 
         <div className="mt-1 text-[10.5px] font-medium text-[#98a2b3]">
