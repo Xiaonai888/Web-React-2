@@ -2110,6 +2110,8 @@ export default function CommentSection({
     useState([])
   const [sort, setSort] = useState('top')
   const [text, setText] = useState('')
+const [replyText, setReplyText] =
+  useState('')
 const [replyTarget, setReplyTarget] =
   useState(null)
 const [toast, setToast] = useState('')
@@ -2210,6 +2212,10 @@ const [toast, setToast] = useState('')
   }, [])
 
   async function fetchComments(
+    useEffect(() => {
+  setReplyTarget(null)
+  setReplyText('')
+}, [targetType, targetId])
     nextPage = 1,
     append = false
   ) {
@@ -2379,10 +2385,11 @@ const nextComments =
   commentId,
   name
 ) => {
-  setReplyTarget({
-    parentId: commentId,
-    name: String(name || 'Reader').trim(),
-  })
+  setReplyText('')
+setReplyTarget({
+  parentId: commentId,
+  name: String(name || 'Reader').trim(),
+})
 
   requestAnimationFrame(() => {
     document
@@ -2392,19 +2399,43 @@ const nextComments =
 }
 
   const handleSend = async () => {
-    if (
-      !text.trim() ||
-      sending
-    ) {
-      return
-    }
+   const activeText = replyTarget
+  ? replyText
+  : text
 
-    if (!token) {
-      showToast(
-        'Please login to comment.'
-      )
-      return
+if (!activeText.trim() || sending) {
+  return
+}
+
+if (!token) {
+  showToast(
+    replyTarget
+      ? 'Please login to reply.'
+      : 'Please login to comment.'
+  )
+  return
+}
+
+if (replyTarget) {
+  try {
+    setSending(true)
+
+    const success = await handleReply(
+      replyTarget.parentId,
+      replyText.trim(),
+      replyTarget.name
+    )
+
+    if (success) {
+      setReplyText('')
+      setReplyTarget(null)
     }
+  } finally {
+    setSending(false)
+  }
+
+  return
+}
 
     try {
       setSending(true)
@@ -3783,13 +3814,16 @@ onSpoiler={(
       />
 
       <CommentComposer
-  value={text}
-  onChange={setText}
+  value={replyTarget ? replyText : text}
+onChange={
+  replyTarget ? setReplyText : setText
+}
   onSend={handleSend}
   replyTarget={replyTarget}
-  onCancelReply={() =>
-    setReplyTarget(null)
-  }
+  onCancelReply={() => {
+  setReplyTarget(null)
+  setReplyText('')
+}}
         isModal={isModal}
         isBanned={isBanned}
         sending={sending}
