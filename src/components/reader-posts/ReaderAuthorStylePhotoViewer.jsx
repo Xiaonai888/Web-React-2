@@ -925,22 +925,6 @@ export default function ReaderAuthorStylePhotoViewer({
                 </div>
               </div>
 
-              {isOwner ? (
-                <div className="px-4 pt-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setActionMessage(
-                        'Boost Post is coming soon.'
-                      )
-                    }
-                    className="h-10 w-full rounded-[10px] bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-[14px] font-semibold text-white shadow-[0_6px_16px_rgba(139,92,246,0.28)] active:scale-[0.99]"
-                  >
-                    Boost Post
-                  </button>
-                </div>
-              ) : null}
-
               <div className="flex items-center px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-1">
                 <ReactionAction
                   reactionType={
