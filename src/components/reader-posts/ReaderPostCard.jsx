@@ -1316,6 +1316,7 @@ function StandardReaderPostCard({
   selectedPhotoIndex = 0,
 }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const reactionMessageTimerRef =
     useRef(null)
   const editFileInputRef =
@@ -3605,13 +3606,16 @@ likeCount={reactionCount}
           setCommentOpen(true)
         }}
         onClose={() => {
-          setFullscreenPhotoOpen(false)
-          setFullscreenControlsVisible(true)
+  if (location.state?.backgroundLocation?.pathname === '/discover') {
+    navigate(-1)
+    return
+  }
 
-          if (photoPostView) {
-            onFullPostClose?.()
-          }
-        }}
+  setFullscreenPhotoOpen(false)
+  setFullscreenControlsVisible(true)
+
+  if (photoPostView) onFullPostClose?.()
+}}
       />
 
       {LEGACY_PHOTO_VIEWER_ENABLED &&
