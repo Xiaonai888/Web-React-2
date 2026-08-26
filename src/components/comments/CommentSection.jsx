@@ -1775,7 +1775,7 @@ function CommentComposer({
             ref={textareaRef}
             id="shadow-comment-input"
             value={value}
-            maxLength={composerMaxLength}
+            maxLength={COMMENT_LIMIT}
             onChange={(event) =>
               onChange(event.target.value)
             }
@@ -1880,7 +1880,7 @@ function EditCommentSheet({
 
         <textarea
           value={value}
-          maxLength={composerMaxLength}
+          maxLength={COMMENT_LIMIT}
           onChange={(event) =>
             onChange(event.target.value)
           }
