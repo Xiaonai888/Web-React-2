@@ -1022,9 +1022,7 @@ export default function AuthorPageNotificationsPage() {
             }
           )
 
-          setAuthorUnreadCount(
-  data.unreadCount
-)
+          
           setPreferences(
             data.preferences
           )
@@ -1052,8 +1050,8 @@ export default function AuthorPageNotificationsPage() {
             setLoading(false)
           }
         }
-      },
-      [setAuthorUnreadCount]
+            },
+      []
     )
 
   useEffect(() => {
