@@ -1,4 +1,4 @@
-import React, { useId, useMemo } from 'react'
+import React, { useMemo } from 'react'
 
 const RICH_TAG_PATTERN = /<(?:p|div|br|strong|b|em|i|img)\b/i
 
@@ -100,7 +100,6 @@ function renderNode(node, context, key) {
     alt={String(element.getAttribute('alt') || 'Episode image').slice(0, 200)}
     loading="lazy"
     decoding="async"
-    style={{ filter: `url(#${context.sharpenFilterId}) contrast(1.08) brightness(1.01)` }}
     className="my-5 block h-auto w-full rounded-[12px] object-contain"
   />
 )
@@ -132,8 +131,6 @@ export default function RichEpisodeContent({
   lineSpacing,
   theme,
 }) {
-  const sharpenFilterId = `manga-reader-sharpen-${useId().replace(/:/g, '')}`
-
   const lineHeightClass =
     lineSpacing === 'compact'
       ? 'leading-[1.85]'
@@ -165,11 +162,11 @@ export default function RichEpisodeContent({
     const root = parsed.body.firstElementChild
     if (!root) return []
 
-    const context = { fontSizePx, fontFamily, lineHeightClass, theme, sharpenFilterId }
+    const context = { fontSizePx, fontFamily, lineHeightClass, theme }
     return Array.from(root.childNodes).map((node, index) =>
       renderNode(node, context, `episode-node-${index}`)
     )
-  }, [content, fontFamily, fontSizePx, lineHeightClass, theme, sharpenFilterId])
+  }, [content, fontFamily, fontSizePx, lineHeightClass, theme])
 
   if (!renderedContent.length) {
     return (
@@ -180,15 +177,8 @@ export default function RichEpisodeContent({
   }
 
   return (
-  <>
-    <svg className="absolute h-0 w-0" aria-hidden="true">
-      <filter id={sharpenFilterId} x="-10%" y="-10%" width="120%" height="120%" colorInterpolationFilters="sRGB">
-        <feConvolveMatrix order="3" kernelMatrix="0 -0.15 0 -0.15 1.6 -0.15 0 -0.15 0" edgeMode="duplicate" preserveAlpha="true" />
-      </filter>
-    </svg>
     <div className={lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}>
       {renderedContent}
     </div>
-  </>
-)
+  )
 }
