@@ -230,9 +230,12 @@ function getDiscoverRecommendationScore(
   const ownerBoost =
     post.is_owner ? 1 : 0
 
-  return Number.isFinite(postTime)
-  ? postTime
-  : 0
+  return (
+  engagementScore +
+  recencyScore +
+  discoveryBoost +
+  ownerBoost
+)
 
 function buildDiscoverTimeline(
   authorPosts,
