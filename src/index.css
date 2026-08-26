@@ -550,3 +550,185 @@ html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100p
   background: rgba(24, 119, 242, 0.1) !important;
 }
 
+html.dark .story-detail-page {
+  background: var(--shadow-bg-page) !important;
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark .story-detail-page :where(section, article, header, main, div)[class~="bg-white"],
+html.dark .story-detail-page :where(section, article, header, main, div)[class~="bg-white/95"],
+html.dark .story-detail-page button[class~="bg-white"]:not([class~="h-1.5"]) {
+  background: var(--shadow-bg-surface) !important;
+}
+
+html.dark .story-detail-page :where(div, section, article, button)[class~="bg-white/55"],
+html.dark .story-detail-page :where(div, section, article, button)[class~="bg-white/65"],
+html.dark .story-detail-page :where(div, section, article, button)[class~="bg-white/75"] {
+  background: var(--shadow-bg-elevated) !important;
+}
+
+html.dark .story-detail-page [class~="bg-[#f5f3fa]"] {
+  background: var(--shadow-bg-page) !important;
+}
+
+html.dark .story-detail-page button[class~="bg-[#f5f3fa]"] {
+  background: var(--shadow-bg-soft) !important;
+}
+
+html.dark .story-detail-page [class~="bg-[#f8fafc]"],
+html.dark .story-detail-page [class~="bg-[#F8FAFC]"],
+html.dark .story-detail-page [class~="bg-[#f8f8fb]"],
+html.dark .story-detail-page [class~="bg-[#F8F8F8]"],
+html.dark .story-detail-page [class~="bg-[#f5f5f5]"],
+html.dark .story-detail-page [class~="bg-[#f3f4f6]"],
+html.dark .story-detail-page [class~="bg-[#F3F4F6]"],
+html.dark .story-detail-page [class~="bg-[#f2f3f6]"],
+html.dark .story-detail-page [class~="bg-[#f0f2f5]"],
+html.dark .story-detail-page [class~="bg-[#eef1f5]"],
+html.dark .story-detail-page [class~="bg-[#eef0f4]"],
+html.dark .story-detail-page [class~="bg-[#e5e7eb]"],
+html.dark .story-detail-page [class~="bg-gray-50"],
+html.dark .story-detail-page [class~="bg-gray-100"],
+html.dark .story-detail-page [class~="bg-gray-200"] {
+  background: var(--shadow-bg-soft) !important;
+}
+
+html.dark .story-detail-page [class~="bg-[#fff1f1]"],
+html.dark .story-detail-page [class~="bg-red-50"] {
+  background: rgba(229, 72, 77, 0.1) !important;
+}
+
+html.dark .story-detail-page [class~="bg-[#fff4cf]"],
+html.dark .story-detail-page [class~="bg-[#fff7d8]"],
+html.dark .story-detail-page [class~="bg-[#fff7df]"] {
+  background: rgba(246, 184, 0, 0.12) !important;
+}
+
+html.dark .story-detail-page [class~="bg-[#EFF6FF]"],
+html.dark .story-detail-page [class~="bg-[#eef4ff]"],
+html.dark .story-detail-page [class~="bg-blue-50"] {
+  background: rgba(37, 99, 235, 0.12) !important;
+}
+
+html.dark .story-detail-page [class~="text-[#111827]"],
+html.dark .story-detail-page [class~="text-[#111111]"],
+html.dark .story-detail-page [class~="text-gray-900"],
+html.dark .story-detail-page [class~="text-gray-800"],
+html.dark .story-detail-page [class~="text-gray-700"] {
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark .story-detail-page [class~="text-[#555b66]"],
+html.dark .story-detail-page [class~="text-[#555B66]"],
+html.dark .story-detail-page [class~="text-[#667085]"],
+html.dark .story-detail-page [class~="text-[#6b7280]"],
+html.dark .story-detail-page [class~="text-[#6B7280]"],
+html.dark .story-detail-page [class~="text-gray-600"],
+html.dark .story-detail-page [class~="text-gray-500"] {
+  color: var(--shadow-text-secondary) !important;
+}
+
+html.dark .story-detail-page [class~="text-[#98a2b3]"],
+html.dark .story-detail-page [class~="text-[#8d94a1]"],
+html.dark .story-detail-page [class~="text-[#8D94A1]"],
+html.dark .story-detail-page [class~="text-[#9ca3af]"],
+html.dark .story-detail-page [class~="text-[#9CA3AF]"],
+html.dark .story-detail-page [class~="text-[#a0a6b0]"],
+html.dark .story-detail-page [class~="text-[#aeb5c2]"],
+html.dark .story-detail-page [class~="text-[#B8BDC7]"],
+html.dark .story-detail-page [class~="text-[#C1C5CC]"],
+html.dark .story-detail-page [class~="text-[#c6c9d1]"],
+html.dark .story-detail-page [class~="text-gray-400"] {
+  color: var(--shadow-text-tertiary) !important;
+}
+
+html.dark .story-detail-page [class~="border-[#eef0f4]"],
+html.dark .story-detail-page [class~="border-[#eef1f5]"],
+html.dark .story-detail-page [class~="border-[#E5E7EB]"],
+html.dark .story-detail-page [class~="border-[#e5e7eb]"],
+html.dark .story-detail-page [class~="border-[#dfe3ea]"],
+html.dark .story-detail-page [class~="border-gray-100"],
+html.dark .story-detail-page [class~="border-gray-200"] {
+  border-color: var(--shadow-border) !important;
+}
+
+html.dark .story-detail-page [class~="ring-black/5"],
+html.dark .story-detail-page [class~="ring-black/10"],
+html.dark .story-detail-page [class~="ring-gray-100"],
+html.dark .story-detail-page [class~="ring-gray-200"] {
+  --tw-ring-color: var(--shadow-border) !important;
+}
+
+html.dark .story-detail-page input,
+html.dark .story-detail-page textarea,
+html.dark .story-detail-page select {
+  background: var(--shadow-input-bg) !important;
+  border-color: var(--shadow-border) !important;
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark .story-detail-page input::placeholder,
+html.dark .story-detail-page textarea::placeholder {
+  color: var(--shadow-placeholder) !important;
+}
+
+html.dark .story-detail-page [class~="hover:bg-[#f5f3fa]"]:hover,
+html.dark .story-detail-page [class~="hover:bg-gray-50"]:hover,
+html.dark .story-detail-page [class~="hover:bg-gray-100"]:hover {
+  background: var(--shadow-bg-hover) !important;
+}
+
+html.dark .story-detail-page [class~="divide-[#eef1f5]"] > :not([hidden]) ~ :not([hidden]),
+html.dark .story-detail-page [class~="divide-[#eef0f4]"] > :not([hidden]) ~ :not([hidden]),
+html.dark .story-detail-page [class~="divide-gray-100"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--shadow-border) !important;
+}
+
+html.dark .story-detail-page [class~="from-[#f5f3fa]"] {
+  --tw-gradient-from: var(--shadow-bg-page) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(13 15 22 / 0) var(--tw-gradient-to-position) !important;
+}
+
+html.dark .story-detail-page [class*="before:bg-[linear-gradient"]::before {
+  background: linear-gradient(
+    to top,
+    var(--shadow-bg-surface) 0%,
+    rgba(23, 25, 35, 0.96) 45%,
+    rgba(23, 25, 35, 0.55) 72%,
+    rgba(23, 25, 35, 0) 100%
+  ) !important;
+}
+
+html.dark .story-detail-page [class*="after:bg-white"]::after {
+  background: var(--shadow-bg-surface) !important;
+}
+
+html.dark .story-detail-page img[class~="brightness-0"] {
+  filter: brightness(0) invert(1) !important;
+}
+
+html.dark .story-detail-page img[src*="/Revers.svg"] {
+  filter: brightness(0) invert(1) !important;
+}
+
+html.dark .story-detail-page [class~="bg-[#F5C542]"],
+html.dark .story-detail-page [class~="bg-[#F5C542]"] *,
+html.dark .story-detail-page [class~="bg-[#f6b800]"],
+html.dark .story-detail-page [class~="bg-[#f6b800]"] *,
+html.dark .story-detail-page [class~="bg-[#ffd600]"],
+html.dark .story-detail-page [class~="bg-[#ffd600]"] * {
+  color: #111827 !important;
+}
+
+html.dark .story-detail-page [class~="bg-[#111827]"][class~="text-white"],
+html.dark .story-detail-page [class~="bg-[#111111]"][class~="text-white"] {
+  background: var(--shadow-text-primary) !important;
+  color: var(--shadow-bg-page) !important;
+}
+
+html.dark .story-detail-page [class~="shadow-sm"],
+html.dark .story-detail-page [class~="shadow-lg"],
+html.dark .story-detail-page [class~="shadow-xl"],
+html.dark .story-detail-page [class~="shadow-2xl"] {
+  --tw-shadow-color: rgba(0, 0, 0, 0.32);
+}
