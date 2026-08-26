@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuthorPageNotifications } from '../providers/AuthorPageNotificationProvider'
 
 function PageIcon({ active }) {
   return (
@@ -57,6 +58,7 @@ function NotificationIcon({ active }) {
 
 function AuthorPageFooter({ active = 'Page' }) {
   const navigate = useNavigate()
+  const { hasAuthorUnread } = useAuthorPageNotifications()
 
   const items = [
     {
@@ -99,7 +101,14 @@ function AuthorPageFooter({ active = 'Page' }) {
                   : 'text-[#9aa1ad] dark:text-white/45'
               }`}
             >
-              <Icon active={isActive} />
+              <span className="relative flex">
+  <Icon active={isActive} />
+
+  {item.label === 'Notifications' &&
+  hasAuthorUnread ? (
+    <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#ef4444] ring-2 ring-white dark:ring-[#0d0f16]" />
+  ) : null}
+</span>
               <span>{item.label}</span>
             </button>
           )
