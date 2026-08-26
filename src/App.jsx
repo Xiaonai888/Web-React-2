@@ -169,6 +169,10 @@ const ReaderAccountSecurityPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderAccountSecurityPage')
 )
 
+const ReaderChangePasswordPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderChangePasswordPage')
+)
+
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
 const AuthorPageSearchPage = lazy(() => import('./pages/Author/AuthorPageSearchPage'))
@@ -1028,6 +1032,11 @@ const shouldShowOpeningAds =
         <Route
   path="/reader/post/review"
   element={<LazyPage><ReaderPostReviewPage /></LazyPage>}
+/>
+
+  <Route
+  path="/profile/settings/account-security/change-password"
+  element={<LazyPage><ReaderChangePasswordPage /></LazyPage>}
 />
         
 <Route
