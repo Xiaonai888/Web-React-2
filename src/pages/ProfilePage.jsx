@@ -764,7 +764,7 @@ export default function ProfilePage() {
 
 
 async function handleProfileFollow() {
-  if (!profile.username || followLoading) return
+  if (isOwnProfile || !profile.username || followLoading) return
 
   const token = getAuthToken()
 
@@ -829,6 +829,8 @@ async function handleProfileFollow() {
 
 
   function handleOpenReaderMessage() {
+  if (isOwnProfile) return
+
   const targetReady =
     user?.id &&
     String(user?.username || '').toLowerCase() ===
@@ -847,6 +849,8 @@ async function handleProfileFollow() {
 }
   
 async function handleOtherProfileOption(action) {
+  if (isOwnProfile) return
+
   const profileUrl = `${window.location.origin}/profile?username=${encodeURIComponent(profile.username)}`
 
   setProfileOptionsOpen(false)
@@ -907,10 +911,13 @@ async function handleOtherProfileOption(action) {
   
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
+    if (!isOwnProfile) return
     setCroppedAreaPixels(croppedPixels)
-  }, [])
+  }, [isOwnProfile])
 
   const openAvatarEditor = () => {
+    if (!isOwnProfile) return
+
     setAvatarMessage('')
     setAvatarPreview('')
     setRawAvatarImage('')
@@ -921,6 +928,8 @@ async function handleOtherProfileOption(action) {
   }
 
   const openEditProfile = () => {
+    if (!isOwnProfile) return
+
     setProfileMessage('')
     setEditForm({
   name: user?.name || '',
@@ -934,7 +943,7 @@ async function handleOtherProfileOption(action) {
   }
 
   const handleAvatarFileChange = (file) => {
-    if (!file) return
+    if (!isOwnProfile || !file) return
 
     if (!file.type.startsWith('image/')) {
       setAvatarMessage('Please select an image file')
@@ -956,6 +965,8 @@ async function handleOtherProfileOption(action) {
   }
 
   const handleSaveAvatarCrop = async (pixels) => {
+    if (!isOwnProfile) return
+
     if (!rawAvatarImage || !pixels) {
       setAvatarMessage('Please adjust the photo first')
       return
@@ -972,6 +983,8 @@ async function handleOtherProfileOption(action) {
   }
 
   const handleSaveProfileAvatar = async () => {
+    if (!isOwnProfile) return
+
     const token = getAuthToken()
 
     if (!token) {
@@ -1025,6 +1038,8 @@ async function handleOtherProfileOption(action) {
   }
 
   const handleSaveProfileInfo = async () => {
+    if (!isOwnProfile) return
+
     const token = getAuthToken()
 
     if (!token) {
@@ -1090,7 +1105,7 @@ async function handleOtherProfileOption(action) {
   return (
     <div className="min-h-screen bg-white pb-[92px]">
       <AvatarCropModal
-        open={avatarModalOpen}
+        open={isOwnProfile && avatarModalOpen}
         profile={profile}
         image={rawAvatarImage}
         preview={avatarPreview}
@@ -1109,7 +1124,7 @@ async function handleOtherProfileOption(action) {
       />
 
       <EditProfileModal
-        open={editProfileOpen}
+        open={isOwnProfile && editProfileOpen}
         profile={profile}
         form={editForm}
         loading={savingProfile}
@@ -1179,14 +1194,18 @@ async function handleOtherProfileOption(action) {
           <section className="px-4 pb-4 pt-5">
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-  <button
-    type="button"
-    onClick={openAvatarEditor}
-    className="rounded-full active:scale-[0.98]"
-    aria-label="Edit profile photo"
-  >
+  {isOwnProfile ? (
+    <button
+      type="button"
+      onClick={openAvatarEditor}
+      className="rounded-full active:scale-[0.98]"
+      aria-label="Edit profile photo"
+    >
+      <AvatarImage profile={profile} />
+    </button>
+  ) : (
     <AvatarImage profile={profile} />
-  </button>
+  )}
 
   {isOwnProfile ? (
     <button
@@ -1352,7 +1371,7 @@ async function handleOtherProfileOption(action) {
   username={profilePostsUsername}
   isOwnProfile={isOwnProfile}
   profileUser={user}
-  onEditAvatar={openAvatarEditor}
+  onEditAvatar={isOwnProfile ? openAvatarEditor : undefined}
   onCountChange={setReaderPostCount}
 />
 
