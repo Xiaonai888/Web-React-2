@@ -101,10 +101,19 @@ function ReaderAvatar({ item }) {
 }
 
 function DiamondHistoryRow({ item }) {
+  const isGift =
+    item.earning_type === 'gift' ||
+    item.source_type === 'diamond_gift'
+  const quantity = Math.max(1, Number(item.gift_quantity || 1))
   const episodeText =
     Number(item.episode_number || 0) > 0
       ? `Episode ${item.episode_number}`
       : item.episode_title || 'Episode unlock'
+  const sourceText = isGift
+    ? quantity > 1
+      ? `Gift · ${quantity} × ${item.gift_name || 'Diamond Gift'}`
+      : `Gift · ${item.gift_name || 'Diamond Gift'}`
+    : `Unlock · ${episodeText}`
 
   return (
     <div className="mx-2 mb-2 flex items-center gap-3 rounded-[14px] bg-[#f7fbff] px-3 py-3.5 last:mb-0">
@@ -116,11 +125,11 @@ function DiamondHistoryRow({ item }) {
         </div>
 
         <div className="mt-1 line-clamp-1 text-[11.5px] font-semibold text-[#4386d8]">
-          {item.story_title || 'Story'} · {episodeText}
+          {sourceText}
         </div>
 
-        <div className="mt-1 text-[10.5px] font-medium text-[#98a2b3]">
-          {formatHistoryTime(item.created_at)}
+        <div className="mt-1 line-clamp-1 text-[10.5px] font-medium text-[#98a2b3]">
+          {item.story_title || 'Story'} · {formatHistoryTime(item.created_at)}
         </div>
       </div>
 
@@ -178,8 +187,10 @@ function DiamondHintPopup({ open, onClose }) {
           </h2>
 
           <p className="mt-2 text-[12.5px] font-medium leading-6 text-[#65758b]">
-            Diamonds are added when readers unlock your paid episodes. Their
-            USD value is also added to your monthly income immediately.
+            Diamonds can come from paid episode unlocks and Diamond Gifts.
+            Diamond Gifts go 100% to you. The USD amount is the equivalent
+            value of the same earnings, not separate income. Coin Gifts are
+            support only and do not add author earnings.
           </p>
 
           <button
