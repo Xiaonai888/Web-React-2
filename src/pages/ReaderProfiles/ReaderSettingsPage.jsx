@@ -17,6 +17,7 @@ const SETTINGS_GROUPS = [
         title: 'Account & security',
         subtitle: 'Password, email, and account access.',
         icon: 'fa-solid fa-shield-halved',
+        route: '/profile/settings/account-security',
       },
       {
         key: 'privacy',
