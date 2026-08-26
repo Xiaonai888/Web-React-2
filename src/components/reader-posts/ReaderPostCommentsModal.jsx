@@ -346,12 +346,12 @@ function CommentItem({
     : []
 
   const openReplyComposer = () => {
-  setRepliesShown(true)
-  onStartReply?.(
-    comment.id,
-    comment.user?.name || 'Reader'
-  )
-}
+    setRepliesShown(true)
+    onStartReply?.(
+      comment.id,
+      comment.user?.name || 'Reader'
+    )
+  }
 
   return (
     <article className="px-4 py-4">
@@ -583,9 +583,9 @@ export default function ReaderPostCommentsModal({
     useState(false)
   const [text, setText] = useState('')
   const [replyText, setReplyText] =
-  useState('')
-const [replyTarget, setReplyTarget] =
-  useState(null)
+    useState('')
+  const [replyTarget, setReplyTarget] =
+    useState(null)
   const [sending, setSending] =
     useState(false)
   const [sendingReply, setSendingReply] =
@@ -623,16 +623,17 @@ const [replyTarget, setReplyTarget] =
   )
 
   const commentingDisabled =
-    const composerText = replyTarget
-  ? replyText
-  : text
-
-const composerSending = replyTarget
-  ? sendingReply
-  : sending
     commentsPermission === 'no_one' &&
     String(currentUserId) !==
       String(postOwnerId || '')
+
+  const composerText = replyTarget
+    ? replyText
+    : text
+
+  const composerSending = replyTarget
+    ? sendingReply
+    : sending
 
   useEffect(() => {
     setTotal(Number(commentCount || 0))
@@ -753,12 +754,12 @@ const composerSending = replyTarget
     if (!open || !postId) return
 
     setComments([])
-setPage(1)
-setHasMore(false)
-setHiddenIds(new Set())
-setReplyTarget(null)
-setReplyText('')
-fetchComments(1, false)
+    setPage(1)
+    setHasMore(false)
+    setHiddenIds(new Set())
+    setReplyTarget(null)
+    setReplyText('')
+    fetchComments(1, false)
   }, [open, postId, sort])
 
   const updateCommentLocal = (
@@ -791,42 +792,42 @@ fetchComments(1, false)
   }
 
   const handleStartReply = (
-  parentId,
-  name
-) => {
-  setReplyText('')
-  setReplyTarget({
     parentId,
-    name: String(name || 'Reader').trim(),
-  })
-
-  requestAnimationFrame(() => {
-    composerRef.current?.focus()
-  })
-}
-
-  async function sendComment() {
-   if (
-  !composerText.trim() ||
-  composerSending ||
-  commentingDisabled
-) {
-  return
-}
-
-if (replyTarget) {
-  const created = await sendReply(
-    replyTarget.parentId,
-    replyText.trim()
-  )
-
-  if (created) {
+    name
+  ) => {
     setReplyText('')
-    setReplyTarget(null)
+    setReplyTarget({
+      parentId,
+      name: String(name || 'Reader').trim(),
+    })
+
+    requestAnimationFrame(() => {
+      composerRef.current?.focus()
+    })
   }
 
-  return
-}
+  async function sendComment() {
+    if (
+      !composerText.trim() ||
+      composerSending ||
+      commentingDisabled
+    ) {
+      return
+    }
+
+    if (replyTarget) {
+      const created = await sendReply(
+        replyTarget.parentId,
+        replyText.trim()
+      )
+
+      if (created) {
+        setReplyText('')
+        setReplyTarget(null)
+      }
+
+      return
+    }
 
     const token = getAuthToken()
 
@@ -1406,7 +1407,9 @@ if (replyTarget) {
                       currentUserId
                     }
                     onLike={toggleLike}
-                    onReply={sendReply}
+                    onStartReply={
+                      handleStartReply
+                    }
                     onCopy={copyComment}
                     onEdit={(selected) => {
                       setEditComment(selected)
@@ -1417,9 +1420,6 @@ if (replyTarget) {
                     onDelete={deleteComment}
                     onHide={hideComment}
                     onReport={setReportComment}
-                    sendingReply={
-                      sendingReply
-                    }
                   />
                 )
               )}
@@ -1471,26 +1471,62 @@ if (replyTarget) {
         </div>
 
         <div className="shrink-0 border-t border-[#eef1f5] bg-white px-3 py-3">
+          {replyTarget ? (
+            <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[#667085]">
+              <span>
+                Replying to{' '}
+                <span className="font-semibold text-[#111827]">
+                  {replyTarget.name || 'Reader'}
+                </span>
+              </span>
+              <span>·</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setReplyTarget(null)
+                  setReplyText('')
+                }}
+                className="font-medium text-[#1877f2]"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : null}
+
           <div className="mx-auto flex max-w-3xl items-end gap-2">
             <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[#f3f4f6] px-4 py-2">
               <textarea
                 ref={composerRef}
-                value={text}
+                value={composerText}
                 maxLength={COMMENT_LIMIT}
                 disabled={
                   commentingDisabled ||
-                  sending
+                  composerSending
                 }
-                onChange={(event) =>
-                  setText(event.target.value)
-                }
+                onChange={(event) => {
+                  const textarea = event.currentTarget
+
+                  if (replyTarget) {
+                    setReplyText(textarea.value)
+                  } else {
+                    setText(textarea.value)
+                  }
+
+                  textarea.style.height = 'auto'
+                  textarea.style.height = `${Math.min(
+                    textarea.scrollHeight,
+                    118
+                  )}px`
+                }}
                 rows={1}
                 placeholder={
                   commentingDisabled
                     ? 'Comments are turned off for this post.'
-                    : 'Write a comment...'
+                    : replyTarget
+                      ? 'Write a reply...'
+                      : 'Write a comment...'
                 }
-                className="max-h-[118px] min-h-[24px] w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
+                className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
               />
             </div>
 
@@ -1498,16 +1534,20 @@ if (replyTarget) {
               type="button"
               onClick={sendComment}
               disabled={
-                !text.trim() ||
-                sending ||
+                !composerText.trim() ||
+                composerSending ||
                 commentingDisabled
               }
               className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 disabled:bg-[#d0d5dd]"
-              aria-label="Send comment"
+              aria-label={
+                replyTarget
+                  ? 'Send reply'
+                  : 'Send comment'
+              }
             >
               <i
                 className={`fa-solid ${
-                  sending
+                  composerSending
                     ? 'fa-spinner animate-spin'
                     : 'fa-paper-plane'
                 } text-[13px]`}
