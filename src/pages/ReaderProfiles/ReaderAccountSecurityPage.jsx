@@ -326,23 +326,23 @@ export default function ReaderAccountSecurityPage() {
 
           <div className="overflow-hidden rounded-[18px] border border-[#eceef2] bg-white">
             <button
-              type="button"
-              disabled
-              className="flex w-full items-center gap-4 px-4 py-4 text-left opacity-60"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#5f4b8b]">
-                <i className="fa-solid fa-key text-[16px]" />
-              </span>
+  type="button"
+  onClick={() => navigate('/profile/settings/account-security/change-password')}
+  className="flex w-full items-center gap-4 px-4 py-4 text-left active:bg-[#f7f7f9]"
+>
+  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#5f4b8b]">
+    <i className="fa-solid fa-key text-[16px]" />
+  </span>
 
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold">Change password</span>
-                <span className="mt-1 block text-[12px] text-[#8d94a1]">
-                  Current password required
-                </span>
-              </span>
+  <span className="min-w-0 flex-1">
+    <span className="block text-[15px] font-semibold">Change password</span>
+    <span className="mt-1 block text-[12px] text-[#8d94a1]">
+      Current password required
+    </span>
+  </span>
 
-              <span className="text-[11px] font-semibold text-[#a6abb4]">Next</span>
-            </button>
+  <i className="fa-solid fa-chevron-right text-[12px] text-[#a6abb4]" />
+</button>
           </div>
         </section>
       </div>
