@@ -12,6 +12,7 @@ import ReaderPostOptionsSheet, {
 } from './ReaderPostOptionsSheet'
 import ReaderPostCommentsModal from './ReaderPostCommentsModal'
 import ReaderPostCommentsSection from './ReaderPostCommentsSection'
+import ReaderAuthorStylePhotoViewer from './ReaderAuthorStylePhotoViewer'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
 import ReactionAction from '../social/reactions/ReactionAction'
 import ReactionSummary from '../social/reactions/ReactionSummary'
@@ -41,6 +42,7 @@ const HARD_MAX_IMAGE_BYTES = 220 * 1024
 const MAX_IMAGE_WIDTH = 1080
 const MAX_IMAGE_HEIGHT = 1350
 const TARGET_IMAGE_BYTES = 150 * 1024
+const LEGACY_PHOTO_VIEWER_ENABLED = false
 
 function getAuthToken() {
   return (
@@ -1536,6 +1538,17 @@ const safeSelectedPhotoIndex =
         ''
     )
 
+  useEffect(() => {
+  if (!photoPostView || !selectedPhotoUrl) return
+
+  setFullscreenPhotoIndex(safeSelectedPhotoIndex)
+  setFullscreenPhotoOpen(true)
+}, [
+  photoPostView,
+  safeSelectedPhotoIndex,
+  selectedPhotoUrl,
+])
+
   const echoShareSource = useMemo(
     () =>
       resolveReaderPostEchoSource(
@@ -1835,7 +1848,10 @@ const safeSelectedPhotoIndex =
   }, [])
 
   useEffect(() => {
-    if (!fullscreenPhotoOpen) {
+    if (
+      !LEGACY_PHOTO_VIEWER_ENABLED ||
+      !fullscreenPhotoOpen
+    ) {
       return undefined
     }
 
@@ -3551,10 +3567,55 @@ likeCount={reactionCount}
 </div>
 
 )}
-      </article>
+            </article>
       )}
 
-      {fullscreenPhotoOpen &&
+      <ReaderAuthorStylePhotoViewer
+        open={
+          fullscreenPhotoOpen &&
+          imageUrls.length > 0
+        }
+        post={post}
+        imageUrls={imageUrls}
+        selectedPhotoIndex={
+          safeSelectedPhotoIndex
+        }
+        isOwner={isOwner}
+        reactionType={reactionType}
+        reactionCount={reactionCount}
+        reactionSummary={reactionSummary}
+        reactionBusy={reactionBusy}
+        commentCount={commentCount}
+        shareCount={echoCount}
+        routePhotoMode={photoPostView}
+        onReact={updateReaction}
+        onUpdated={onUpdated}
+        onShareCountChange={(total) => {
+          setEchoCount(total)
+
+          if (!isEchoPost) {
+            onUpdated?.({
+              ...post,
+              echo_count: total,
+            })
+          }
+        }}
+        onComment={() => {
+          setFullscreenPhotoOpen(false)
+          setCommentOpen(true)
+        }}
+        onClose={() => {
+          setFullscreenPhotoOpen(false)
+          setFullscreenControlsVisible(true)
+
+          if (photoPostView) {
+            onFullPostClose?.()
+          }
+        }}
+      />
+
+      {LEGACY_PHOTO_VIEWER_ENABLED &&
+      fullscreenPhotoOpen &&
       imageUrls.length ? (
         <div
           className="fixed inset-0 z-[1000000] bg-black"
