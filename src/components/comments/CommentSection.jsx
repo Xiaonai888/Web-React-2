@@ -998,94 +998,6 @@ function renderReplyTextWithMention(
   return value
 }
 
-function ReplyComposer({
-  value,
-  onChange,
-  onCancel,
-  onSend,
-  sending,
-  story,
-  mentionName,
-}) {
-  const composerUser =
-    getReplyComposerUser(story)
-  const cleanMentionName = String(
-    mentionName || ''
-  ).trim()
-  const replyMaxLength = Math.max(
-    1,
-    COMMENT_LIMIT -
-      (cleanMentionName
-        ? cleanMentionName.length + 2
-        : 0)
-  )
-
-  return (
-    <div className="mt-3 flex gap-2">
-      <Avatar
-        user={composerUser}
-        size="h-8 w-8"
-        textSize="text-[12px]"
-      />
-
-      <div className="flex min-w-0 flex-1 items-center gap-1 rounded-[20px] bg-[#f3f4f6] px-3 py-2">
-        {cleanMentionName ? (
-          <span
-            title={cleanMentionName}
-            className="max-w-[42%] shrink-0 truncate text-[13px] font-semibold text-[#1877f2]"
-          >
-            @{cleanMentionName}
-          </span>
-        ) : null}
-
-        <textarea
-          value={value}
-          maxLength={replyMaxLength}
-          rows={1}
-          onChange={(event) =>
-            onChange(event.target.value)
-          }
-          onInput={(event) => {
-            const textarea = event.currentTarget
-            textarea.style.height = 'auto'
-            textarea.style.height = `${Math.min(
-              textarea.scrollHeight,
-              118
-            )}px`
-          }}
-          placeholder="Write a reply..."
-          className="max-h-[118px] min-h-[24px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[13px] font-normal leading-5 text-[#111827] outline-none placeholder:text-[#98a2b3]"
-        />
-
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-[12px] font-normal text-[#98a2b3]"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={onSend}
-          disabled={
-            sending || !value.trim()
-          }
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
-          aria-label="Send reply"
-        >
-          <i
-            className={`fa-solid ${
-              sending
-                ? 'fa-spinner animate-spin'
-                : 'fa-paper-plane'
-            } text-[12px]`}
-          />
-        </button>
-      </div>
-    </div>
-  )
-}
 
 function ReplyItem({
   reply,
@@ -1262,7 +1174,7 @@ function CommentItem({
   targetType,
   focusCommentId = '',
   onLike,
-  onReply,
+  onStartReply,
   onLoadMoreReplies,
   loadingReplies,
   onCopy,
@@ -1279,14 +1191,6 @@ function CommentItem({
 }) {
   const [menuOpen, setMenuOpen] =
     useState(false)
-  const [replyOpen, setReplyOpen] =
-    useState(false)
-  const [replyText, setReplyText] =
-    useState('')
-  const [
-    replyTargetName,
-    setReplyTargetName,
-  ] = useState('')
   const focusedReplyPresent =
   Array.isArray(comment?.replies) &&
   comment.replies.some(
@@ -1304,10 +1208,6 @@ const [repliesShown, setRepliesShown] =
 }, [focusedReplyPresent])
   const [spoilerOpen, setSpoilerOpen] =
     useState(false)
-  const [
-    replySending,
-    setReplySending,
-  ] = useState(false)
   const menuPressTimerRef = useRef(null)
   const ignoreNextTapRef = useRef(false)
 
@@ -1409,43 +1309,11 @@ const [repliesShown, setRepliesShown] =
   const openReplyComposer = (
     name
   ) => {
-    setReplyTargetName(
-      String(name || '').trim()
-    )
-    setReplyText('')
-    setReplyOpen(true)
     setRepliesShown(true)
-  }
-
-  const closeReplyComposer = () => {
-    setReplyOpen(false)
-    setReplyText('')
-    setReplyTargetName('')
-  }
-
-  const handleSendReply = async () => {
-    if (
-      !replyText.trim() ||
-      replySending
-    ) {
-      return
-    }
-
-    try {
-      setReplySending(true)
-      const success = await onReply(
-        comment.id,
-        replyText.trim(),
-        replyTargetName
-      )
-
-      if (success !== false) {
-        closeReplyComposer()
-        setRepliesShown(true)
-      }
-    } finally {
-      setReplySending(false)
-    }
+    onStartReply?.(
+      comment.id,
+      String(name || displayName).trim()
+    )
   }
 
   if (comment.is_deleted) {
@@ -1543,23 +1411,7 @@ const [repliesShown, setRepliesShown] =
               </div>
             ) : null}
 
-            {replyOpen ? (
-              <ReplyComposer
-                value={replyText}
-                onChange={setReplyText}
-                onCancel={
-                  closeReplyComposer
-                }
-                onSend={
-                  handleSendReply
-                }
-                sending={replySending}
-                story={story}
-                mentionName={
-                  replyTargetName
-                }
-              />
-            ) : null}
+            
           </div>
         </div>
       </article>
@@ -1839,21 +1691,7 @@ const [repliesShown, setRepliesShown] =
             </div>
           ) : null}
 
-          {replyOpen ? (
-            <ReplyComposer
-              value={replyText}
-              onChange={setReplyText}
-              onCancel={
-                closeReplyComposer
-              }
-              onSend={handleSendReply}
-              sending={replySending}
-              story={story}
-              mentionName={
-                replyTargetName
-              }
-            />
-          ) : null}
+          
         </div>
       </div>
     </article>
