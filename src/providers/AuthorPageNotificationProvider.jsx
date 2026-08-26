@@ -239,14 +239,29 @@ export function AuthorPageNotificationProvider({
       )
     }
 
-    const handleVisible = () => {
+    let lastVisibleSyncAt = 0
+
+const handleVisible = () => {
   if (
-    document.visibilityState ===
+    document.visibilityState !==
     'visible'
   ) {
-    refreshSessionToken()
-    syncAuthorUnreadCount()
+    return
   }
+
+  refreshSessionToken()
+
+  const now = Date.now()
+
+  if (
+    now - lastVisibleSyncAt <
+    1000
+  ) {
+    return
+  }
+
+  lastVisibleSyncAt = now
+  syncAuthorUnreadCount()
 }
 
     window.addEventListener(
