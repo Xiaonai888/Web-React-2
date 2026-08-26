@@ -101,7 +101,7 @@ function renderNode(node, context, key) {
     loading="lazy"
     decoding="async"
     style={{ filter: 'url(#manga-reader-sharpen) contrast(1.08) brightness(1.01)' }}
-    className="my-5 block h-auto max-h-[72vh] w-full rounded-[12px] object-contain"
+    className="my-5 block h-auto w-full rounded-[12px] object-contain"
   />
 )
 }
