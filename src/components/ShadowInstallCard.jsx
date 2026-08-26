@@ -14,9 +14,11 @@ function isStandalone() {
 
 function isIOS() {
   const userAgent = window.navigator.userAgent || ''
+
   return (
     /iPad|iPhone|iPod/i.test(userAgent) ||
-    (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1)
+    (window.navigator.platform === 'MacIntel' &&
+      window.navigator.maxTouchPoints > 1)
   )
 }
 
@@ -86,7 +88,10 @@ export default function ShadowInstallCard() {
         return
       }
 
-      localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS))
+      localStorage.setItem(
+        SNOOZE_KEY,
+        String(Date.now() + SNOOZE_MS)
+      )
       setVisible(false)
     } catch {
       setVisible(false)
@@ -96,9 +101,15 @@ export default function ShadowInstallCard() {
   if (!visible) return null
 
   return (
-    <section className="mt-3 rounded-[18px] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.06]">
+    <section
+      className="app-card mt-3 rounded-[18px] border p-4"
+      style={{ boxShadow: 'var(--shadow-shadow)' }}
+    >
       <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[#f5f5f5]">
+        <div
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px]"
+          style={{ background: 'var(--shadow-bg-soft)' }}
+        >
           <img
             src="/assets/Icons/Shadow%20Logo.svg"
             alt="Shadow"
@@ -107,10 +118,19 @@ export default function ShadowInstallCard() {
         </div>
 
         <div className="min-w-0 flex-1 pt-0.5">
-          <h2 className="text-[15px] font-extrabold leading-5 text-[#111111]">
-            {showIOSHelp ? 'Add Shadow to your Home Screen' : 'Bring Shadow closer'}
+          <h2
+            className="text-[15px] font-extrabold leading-5"
+            style={{ color: 'var(--shadow-text-primary)' }}
+          >
+            {showIOSHelp
+              ? 'Add Shadow to your Home Screen'
+              : 'Bring Shadow closer'}
           </h2>
-          <p className="mt-1 text-[11.5px] leading-[17px] text-[#7b8190]">
+
+          <p
+            className="mt-1 text-[11.5px] leading-[17px]"
+            style={{ color: 'var(--shadow-text-secondary)' }}
+          >
             {showIOSHelp
               ? 'Tap Share in your browser, then choose Add to Home Screen.'
               : 'Add Shadow to your device for faster access and a smoother reading experience.'}
@@ -121,7 +141,8 @@ export default function ShadowInstallCard() {
           type="button"
           onClick={handleDismiss}
           aria-label="Close install suggestion"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-black active:scale-95"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full active:scale-95"
+          style={{ color: 'var(--shadow-icon)' }}
         >
           <i className="fa-solid fa-xmark text-[16px]" />
         </button>
@@ -130,9 +151,17 @@ export default function ShadowInstallCard() {
       <button
         type="button"
         onClick={showIOSHelp ? handleDismiss : handleInstall}
-        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[12px] bg-black px-4 text-[12px] font-bold text-white active:scale-[0.99]"
+        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[12px] px-4 text-[12px] font-bold active:scale-[0.99]"
+        style={{
+          background: 'var(--shadow-text-primary)',
+          color: 'var(--shadow-bg-page)',
+        }}
       >
-        <i className={`fa-solid ${showIOSHelp ? 'fa-check' : 'fa-arrow-down'} text-[11px]`} />
+        <i
+          className={`fa-solid ${
+            showIOSHelp ? 'fa-check' : 'fa-arrow-down'
+          } text-[11px]`}
+        />
         <span>{showIOSHelp ? 'Got it' : 'Install Shadow'}</span>
       </button>
     </section>
