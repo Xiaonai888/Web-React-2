@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getDisplayText, setDisplayLanguageId } from '../../utils/displayLanguage'
+import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
@@ -539,10 +540,12 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
               </div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827] dark:text-white">{pageName}</div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1] dark:text-white/50">
-                  <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-                  <span>{`${authorNotificationCount} notification${Number(authorNotificationCount) === 1 ? '' : 's'}`}</span>
-                </div>
+                {showAuthorBadge ? (
+  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1] dark:text-white/50">
+    <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
+    <span>{`${authorNotificationCount} notification${Number(authorNotificationCount) === 1 ? '' : 's'}`}</span>
+  </div>
+) : null}
               </div>
             </div>
             <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1] dark:text-white/35" />
@@ -567,6 +570,7 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
 
 export default function Me() {
   const navigate = useNavigate()
+  const { authorUnreadCount } = useAuthorPageNotifications()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
@@ -594,7 +598,7 @@ export default function Me() {
   const authorPageName = authorPage?.page_name || authorPage?.name || 'Author Page'
   const authorPageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || authorPage?.logo_url || ''
   const hasAuthorPage = Boolean(authorPage?.page_username)
-  const authorPageNotificationCount = Number(authorPage?.notification_count || authorPage?.unread_count || 0)
+  const authorPageNotificationCount = authorUnreadCount
 
   useEffect(() => {
     document.body.classList.toggle(
