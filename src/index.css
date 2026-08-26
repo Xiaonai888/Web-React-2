@@ -411,3 +411,142 @@ html.dark .shadow-checkin-modal-in [class~="bg-[#fff1f3]"] {
   background: rgba(225, 29, 72, 0.12) !important;
 }
 
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) {
+  background: var(--shadow-bg-page) !important;
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-white"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-white/95"] {
+  background: var(--shadow-bg-surface) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-[#f5f3fa]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-[#f8fafc]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-[#f8f9fb]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-[#faf9fc]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-[#f3f4f6]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-[#f2f2f2]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-[#f1edfb]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-gray-50"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-gray-100"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-gray-200"] {
+  background: var(--shadow-bg-soft) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-[#111827]"] {
+  background: var(--shadow-bg-elevated) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#111111]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#111827]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#1f2329]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#20242b]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#22252b]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-gray-900"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-gray-800"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-gray-700"] {
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#374151]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#4b5563]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#4B5563]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#65676b]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#667085]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#737985]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#777e89]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-gray-600"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-gray-500"] {
+  color: var(--shadow-text-secondary) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#969ba5]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#98a2b3]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#9aa0aa]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#9ca3af]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#a0a4ad]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-[#a4a8b0]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="text-gray-400"] {
+  color: var(--shadow-text-tertiary) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="border-gray-50"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="border-gray-100"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="border-gray-200"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="border-[#ececf1]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="border-[#eef0f3]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="border-[#d7dbe2]"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="border-[#d0d5dd]"] {
+  border-color: var(--shadow-border) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="ring-gray-50"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="ring-gray-100"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="ring-gray-200"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="ring-black/5"] {
+  --tw-ring-color: var(--shadow-border) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) input,
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) textarea,
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) select {
+  background: var(--shadow-input-bg) !important;
+  border-color: var(--shadow-border) !important;
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) input::placeholder,
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) textarea::placeholder {
+  color: var(--shadow-placeholder) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) header {
+  background: var(--shadow-nav-bg) !important;
+  border-color: var(--shadow-border) !important;
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) header svg {
+  color: var(--shadow-icon) !important;
+  stroke: var(--shadow-icon) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="active:bg-gray-50"]:active,
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="active:bg-gray-100"]:active,
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="active:bg-[#f2f2f2]"]:active,
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="active:bg-[#faf9fc]"]:active {
+  background: var(--shadow-bg-hover) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="divide-[#eef0f3]"] > :not([hidden]) ~ :not([hidden]),
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="divide-gray-100"] > :not([hidden]) ~ :not([hidden]),
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="divide-gray-200"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--shadow-border) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="shadow-sm"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="shadow-lg"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="shadow-xl"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="shadow-2xl"] {
+  --tw-shadow-color: rgba(0, 0, 0, 0.34);
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-red-50"] {
+  background: rgba(229, 72, 77, 0.1) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="border-red-100"],
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="ring-red-100"] {
+  border-color: rgba(229, 72, 77, 0.22) !important;
+  --tw-ring-color: rgba(229, 72, 77, 0.22) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-green-50"] {
+  background: rgba(22, 163, 74, 0.1) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) [class~="bg-blue-50"] {
+  background: rgba(24, 119, 242, 0.1) !important;
+}
+
