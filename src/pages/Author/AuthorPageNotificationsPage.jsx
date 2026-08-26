@@ -932,6 +932,7 @@ export default function AuthorPageNotificationsPage() {
   authorUnreadCount: unreadCount,
   setAuthorUnreadCount,
   adjustAuthorUnreadCount,
+  syncAuthorUnreadCount,
   lastCreatedNotification,
 } = useAuthorPageNotifications()
   const [activeFilter, setActiveFilter] =
@@ -1149,8 +1150,18 @@ export default function AuthorPageNotificationsPage() {
     adjustAuthorUnreadCount(-1)
 
     markNotificationRead(
-      notification.id
-    ).catch(() => null)
+  notification.id
+).catch(() => {
+  setNotifications((current) =>
+    current.map((item) =>
+      item.id === notification.id
+        ? { ...item, unread: true }
+        : item
+    )
+  )
+
+  syncAuthorUnreadCount()
+})
   }
 
   const postActivityTypes = [
