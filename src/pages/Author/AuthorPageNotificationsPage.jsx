@@ -321,7 +321,7 @@ async function fetchPageNotifications(
       ? data.notifications.map(
           normalizeNotification
         )
-      : [setAuthorUnreadCount],
+      : [],
     unreadCount: Number(
       data.unread_count || 0
     ),
@@ -1179,10 +1179,13 @@ export default function AuthorPageNotificationsPage() {
       setOptionsLoading(true)
 
       if (
-        selectedNotification.unread
-      ) {
-        await markNotificationRead(
-          selectedNotification.id
+      if (
+  selectedNotification.unread
+) {
+  adjustAuthorUnreadCount(-1)
+}
+
+setSelectedNotification(null)
         )
       } else {
         await markNotificationUnread(
