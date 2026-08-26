@@ -273,96 +273,6 @@ function CommentOptionsSheet({
   )
 }
 
-function AutoGrowTextarea({
-  value,
-  onChange,
-  ...props
-}) {
-  const textareaRef = useRef(null)
-
-  useEffect(() => {
-    const textarea =
-      textareaRef.current
-
-    if (!textarea) return
-
-    textarea.style.height = 'auto'
-    textarea.style.height = `${Math.min(
-      textarea.scrollHeight,
-      118
-    )}px`
-  }, [value])
-
-  return (
-    <textarea
-      {...props}
-      ref={textareaRef}
-      value={value}
-      onChange={(event) =>
-        onChange(event.target.value)
-      }
-      onInput={(event) => {
-        const textarea =
-          event.currentTarget
-        textarea.style.height = 'auto'
-        textarea.style.height = `${Math.min(
-          textarea.scrollHeight,
-          118
-        )}px`
-      }}
-    />
-  )
-}
-
-function ReplyComposer({
-  value,
-  onChange,
-  onCancel,
-  onSend,
-  sending,
-}) {
-  return (
-    <div className="mt-3 flex items-end gap-2">
-      <div className="flex min-w-0 flex-1 items-center rounded-[20px] bg-[#f3f4f6] px-3 py-2">
-        <AutoGrowTextarea
-          value={value}
-          onChange={onChange}
-          maxLength={COMMENT_LIMIT}
-          rows={1}
-          placeholder="Write a reply..."
-          className="max-h-[118px] min-h-[24px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[13px] font-normal leading-5 text-[#111827] outline-none placeholder:text-[#98a2b3]"
-        />
-      </div>
-
-      <button
-        type="button"
-        onClick={onCancel}
-        className="mb-1 text-[12px] font-normal text-[#98a2b3]"
-      >
-        Cancel
-      </button>
-
-      <button
-        type="button"
-        onClick={onSend}
-        disabled={
-          !value.trim() || sending
-        }
-        className="mb-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
-        aria-label="Send reply"
-      >
-        <i
-          className={`fa-solid ${
-            sending
-              ? 'fa-spinner animate-spin'
-              : 'fa-paper-plane'
-          } text-[12px]`}
-        />
-      </button>
-    </div>
-  )
-}
-
 function ReplyItem({
   reply,
   onLike,
@@ -426,20 +336,15 @@ function CommentItem({
   comment,
   currentUserId,
   onLike,
-  onReply,
+  onStartReply,
   onCopy,
   onEdit,
   onDelete,
   onHide,
   onReport,
-  sendingReply,
 }) {
   const [menuOpen, setMenuOpen] =
     useState(false)
-  const [replyOpen, setReplyOpen] =
-    useState(false)
-  const [replyText, setReplyText] =
-    useState('')
   const [
     repliesShown,
     setRepliesShown,
@@ -452,23 +357,11 @@ function CommentItem({
     : []
 
   const openReplyComposer = () => {
-    setReplyOpen(true)
     setRepliesShown(true)
-  }
-
-  const sendReply = async () => {
-    if (!replyText.trim()) return
-
-    const created = await onReply(
+    onStartReply?.(
       comment.id,
-      replyText.trim()
+      comment.user?.name || 'Reader'
     )
-
-    if (created) {
-      setReplyText('')
-      setReplyOpen(false)
-      setRepliesShown(true)
-    }
   }
 
   return (
@@ -587,18 +480,6 @@ function CommentItem({
             </div>
           ) : null}
 
-          {replyOpen ? (
-            <ReplyComposer
-              value={replyText}
-              onChange={setReplyText}
-              onCancel={() => {
-                setReplyOpen(false)
-                setReplyText('')
-              }}
-              onSend={sendReply}
-              sending={sendingReply}
-            />
-          ) : null}
         </div>
       </div>
 
@@ -805,6 +686,10 @@ export default function ReaderPostCommentsSection({
   ] = useState(false)
   const [text, setText] =
     useState('')
+  const [replyText, setReplyText] =
+    useState('')
+  const [replyTarget, setReplyTarget] =
+    useState(null)
   const [sending, setSending] =
     useState(false)
   const [
@@ -857,6 +742,14 @@ export default function ReaderPostCommentsSection({
       'no_one' &&
     String(currentUserId) !==
       String(postOwnerId || '')
+
+  const composerText = replyTarget
+    ? replyText
+    : text
+
+  const composerSending = replyTarget
+    ? sendingReply
+    : sending
 
   useEffect(() => {
     setTotal(
@@ -997,6 +890,8 @@ export default function ReaderPostCommentsSection({
     setPage(1)
     setHasMore(false)
     setHiddenIds(new Set())
+    setReplyTarget(null)
+    setReplyText('')
     fetchComments(1, false)
   }, [postId, sort])
 
@@ -1039,12 +934,43 @@ export default function ReaderPostCommentsSection({
     )
   }
 
+  const handleStartReply = (
+    parentId,
+    name
+  ) => {
+    setReplyText('')
+    setReplyTarget({
+      parentId,
+      name: String(
+        name || 'Reader'
+      ).trim(),
+    })
+
+    requestAnimationFrame(() => {
+      composerRef.current?.focus()
+    })
+  }
+
   async function sendComment() {
     if (
-      !text.trim() ||
-      sending ||
+      !composerText.trim() ||
+      composerSending ||
       commentingDisabled
     ) {
+      return
+    }
+
+    if (replyTarget) {
+      const created = await sendReply(
+        replyTarget.parentId,
+        replyText.trim()
+      )
+
+      if (created) {
+        setReplyText('')
+        setReplyTarget(null)
+      }
+
       return
     }
 
@@ -1540,8 +1466,8 @@ export default function ReaderPostCommentsSection({
                 onLike={
                   toggleLike
                 }
-                onReply={
-                  sendReply
+                onStartReply={
+                  handleStartReply
                 }
                 onCopy={
                   copyComment
@@ -1565,9 +1491,6 @@ export default function ReaderPostCommentsSection({
                 }
                 onReport={
                   setReportComment
-                }
-                sendingReply={
-                  sendingReply
                 }
               />
             )
@@ -1624,27 +1547,55 @@ export default function ReaderPostCommentsSection({
       )}
 
       <div className="sticky bottom-0 z-40 border-t border-[#eef1f5] bg-white px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+        {replyTarget ? (
+          <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[#667085]">
+            <span>
+              Replying to{' '}
+              <span className="font-semibold text-[#111827]">
+                {replyTarget.name || 'Reader'}
+              </span>
+            </span>
+
+            <span>·</span>
+
+            <button
+              type="button"
+              onClick={() => {
+                setReplyTarget(null)
+                setReplyText('')
+              }}
+              className="font-medium text-[#1877f2]"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : null}
+
         <div className="mx-auto flex max-w-3xl items-end gap-2">
           <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[#f3f4f6] px-4 py-2">
             <textarea
               ref={composerRef}
               id="reader-post-comment-input"
-              value={text}
-              maxLength={
-                COMMENT_LIMIT
-              }
+              value={composerText}
+              maxLength={COMMENT_LIMIT}
               disabled={
                 commentingDisabled ||
-                sending
+                composerSending
               }
-              onChange={(
-                event
-              ) => {
+              onChange={(event) => {
                 const textarea =
                   event.currentTarget
-                setText(
-                  textarea.value
-                )
+
+                if (replyTarget) {
+                  setReplyText(
+                    textarea.value
+                  )
+                } else {
+                  setText(
+                    textarea.value
+                  )
+                }
+
                 textarea.style.height =
                   'auto'
                 textarea.style.height =
@@ -1657,7 +1608,9 @@ export default function ReaderPostCommentsSection({
               placeholder={
                 commentingDisabled
                   ? 'Comments are turned off for this post.'
-                  : 'Write a comment...'
+                  : replyTarget
+                    ? 'Write a reply...'
+                    : 'Write a comment...'
               }
               className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
             />
@@ -1665,20 +1618,22 @@ export default function ReaderPostCommentsSection({
 
           <button
             type="button"
-            onClick={
-              sendComment
-            }
+            onClick={sendComment}
             disabled={
-              !text.trim() ||
-              sending ||
+              !composerText.trim() ||
+              composerSending ||
               commentingDisabled
             }
             className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 disabled:bg-[#d0d5dd]"
-            aria-label="Send comment"
+            aria-label={
+              replyTarget
+                ? 'Send reply'
+                : 'Send comment'
+            }
           >
             <i
               className={`fa-solid ${
-                sending
+                composerSending
                   ? 'fa-spinner animate-spin'
                   : 'fa-paper-plane'
               } text-[13px]`}
