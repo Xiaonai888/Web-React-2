@@ -2080,7 +2080,9 @@ export default function CommentSection({
     useState([])
   const [sort, setSort] = useState('top')
   const [text, setText] = useState('')
-  const [toast, setToast] = useState('')
+const [replyTarget, setReplyTarget] =
+  useState(null)
+const [toast, setToast] = useState('')
   const [warningDialog, setWarningDialog] =
     useState(null)
   const [editComment, setEditComment] =
@@ -2342,6 +2344,22 @@ const nextComments =
       'COMMENT_AUTO_HIDDEN' ||
     data?.code ===
       'READER_COMMENT_BLOCKED'
+
+  const handleStartReply = (
+  commentId,
+  name
+) => {
+  setReplyTarget({
+    parentId: commentId,
+    name: String(name || 'Reader').trim(),
+  })
+
+  requestAnimationFrame(() => {
+    document
+      .getElementById('shadow-comment-input')
+      ?.focus()
+  })
+}
 
   const handleSend = async () => {
     if (
@@ -3480,9 +3498,9 @@ updateComments(
   }
   focusCommentId={focusCommentId}
   onLike={handleLike}
-                    onReply={
-                      handleReply
-                    }
+                    onStartReply={
+  handleStartReply
+}
                     onLoadMoreReplies={
                       handleLoadMoreReplies
                     }
