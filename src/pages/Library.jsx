@@ -109,15 +109,35 @@ function formatDownloadItems(downloads) {
 
 function EmptyState({ title, text, actionText, onAction }) {
   return (
-    <div className="rounded-3xl border border-[#ececec] bg-[#fafafa] px-5 py-10 text-center">
-      <h3 className="text-[16px] font-extrabold text-[#111]">{title}</h3>
-      <p className="mx-auto mt-2 max-w-[300px] text-[13px] leading-5 text-[#7a7a7a]">{text}</p>
+    <div
+      className="rounded-3xl border px-5 py-10 text-center"
+      style={{
+        background: 'var(--shadow-bg-elevated)',
+        borderColor: 'var(--shadow-border)',
+      }}
+    >
+      <h3
+        className="text-[16px] font-extrabold"
+        style={{ color: 'var(--shadow-text-primary)' }}
+      >
+        {title}
+      </h3>
+      <p
+        className="mx-auto mt-2 max-w-[300px] text-[13px] leading-5"
+        style={{ color: 'var(--shadow-text-secondary)' }}
+      >
+        {text}
+      </p>
 
       {actionText ? (
         <button
           type="button"
           onClick={onAction}
-          className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
+          className="mt-5 rounded-full px-5 py-2.5 text-[12px] font-extrabold active:scale-95"
+          style={{
+            background: 'var(--shadow-text-primary)',
+            color: 'var(--shadow-bg-page)',
+          }}
         >
           {actionText}
         </button>
@@ -144,7 +164,10 @@ function PdfBadge() {
 
 function StoryCover({ story, className = '' }) {
   return (
-    <div className={`overflow-hidden bg-[#efefef] ${className}`}>
+    <div
+      className={`overflow-hidden ${className}`}
+      style={{ background: 'var(--shadow-bg-soft)' }}
+    >
       {story?.cover_url ? (
         <img
           src={story.cover_url}
@@ -165,7 +188,13 @@ function PdfActionButtons({ story, compact = false }) {
 
   if (!pdfUrl) {
     return (
-      <div className="rounded-xl bg-[#fff7ed] px-3 py-2 text-[10px] font-extrabold text-[#9a3412]">
+      <div
+        className="rounded-xl px-3 py-2 text-[10px] font-extrabold"
+        style={{
+          background: 'rgba(245, 158, 11, 0.12)',
+          color: 'var(--shadow-warning)',
+        }}
+      >
         PDF file is not ready.
       </div>
     )
@@ -178,7 +207,11 @@ function PdfActionButtons({ story, compact = false }) {
           href={pdfUrl}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center justify-center rounded-xl bg-[#111827] px-3 py-2 text-[10px] font-extrabold text-white active:scale-95"
+          className="inline-flex items-center justify-center rounded-xl px-3 py-2 text-[10px] font-extrabold active:scale-95"
+          style={{
+            background: 'var(--shadow-text-primary)',
+            color: 'var(--shadow-bg-page)',
+          }}
         >
           Read
         </a>
@@ -190,7 +223,12 @@ function PdfActionButtons({ story, compact = false }) {
           download={fileName}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center justify-center rounded-xl bg-[#eef2ff] px-3 py-2 text-[10px] font-extrabold text-[#111827] active:scale-95"
+          className="inline-flex items-center justify-center rounded-xl border px-3 py-2 text-[10px] font-extrabold active:scale-95"
+          style={{
+            background: 'var(--shadow-bg-soft)',
+            borderColor: 'var(--shadow-border)',
+            color: 'var(--shadow-text-primary)',
+          }}
         >
           Download
         </a>
@@ -206,7 +244,10 @@ function LibraryBookCard({ item, tab }) {
   if (tab === 'Downloads' || item.kind === 'pdf') {
     return (
       <article className="group block min-w-0">
-        <div className="relative overflow-hidden rounded-2xl bg-[#efefef] shadow-sm">
+        <div
+          className="relative overflow-hidden rounded-2xl shadow-sm"
+          style={{ background: 'var(--shadow-bg-soft)' }}
+        >
           <div className="aspect-[2/3] overflow-hidden">
             <StoryCover story={story} className="h-full w-full" />
           </div>
@@ -215,10 +256,16 @@ function LibraryBookCard({ item, tab }) {
         </div>
 
         <div className="pt-2.5">
-          <h4 className="line-clamp-1 text-[12px] font-extrabold tracking-tight text-[#111] sm:text-[13px]">
+          <h4
+            className="line-clamp-1 text-[12px] font-extrabold tracking-tight sm:text-[13px]"
+            style={{ color: 'var(--shadow-text-primary)' }}
+          >
             {story.title || 'Untitled PDF'}
           </h4>
-          <p className="mt-1 line-clamp-1 text-[10px] font-medium text-[#8d8d8d] sm:text-[11px]">
+          <p
+            className="mt-1 line-clamp-1 text-[10px] font-medium sm:text-[11px]"
+            style={{ color: 'var(--shadow-text-secondary)' }}
+          >
             {formatInfo(tab, story)}
           </p>
 
@@ -232,7 +279,10 @@ function LibraryBookCard({ item, tab }) {
 
   return (
     <Link to={`/story/${story.id}`} className="group block min-w-0">
-      <div className="relative overflow-hidden rounded-2xl bg-[#efefef] shadow-sm">
+      <div
+        className="relative overflow-hidden rounded-2xl shadow-sm"
+        style={{ background: 'var(--shadow-bg-soft)' }}
+      >
         <div className="aspect-[2/3] overflow-hidden">
           <StoryCover story={story} className="h-full w-full" />
         </div>
@@ -241,10 +291,16 @@ function LibraryBookCard({ item, tab }) {
       </div>
 
       <div className="pt-2.5">
-        <h4 className="line-clamp-1 text-[12px] font-extrabold tracking-tight text-[#111] sm:text-[13px]">
+        <h4
+          className="line-clamp-1 text-[12px] font-extrabold tracking-tight sm:text-[13px]"
+          style={{ color: 'var(--shadow-text-primary)' }}
+        >
           {story.title || 'Untitled Story'}
         </h4>
-        <p className="mt-1 text-[10px] font-medium text-[#8d8d8d] sm:text-[11px]">
+        <p
+          className="mt-1 text-[10px] font-medium sm:text-[11px]"
+          style={{ color: 'var(--shadow-text-secondary)' }}
+        >
           {formatInfo(tab, story)}
         </p>
       </div>
@@ -259,28 +315,53 @@ function ContextCard({ item, tab }) {
   if (tab === 'Downloads' || item.kind === 'pdf') {
     return (
       <section className="pt-5">
-        <div className="rounded-[24px] border border-[#efefef] bg-[#fafafa] p-4">
+        <div
+          className="rounded-[24px] border p-4"
+          style={{
+            background: 'var(--shadow-bg-elevated)',
+            borderColor: 'var(--shadow-border)',
+          }}
+        >
           <div className="flex items-center gap-4">
-            <div className="w-[82px] shrink-0 overflow-hidden rounded-2xl bg-[#ececec] shadow-sm sm:w-[90px]">
+            <div
+              className="w-[82px] shrink-0 overflow-hidden rounded-2xl shadow-sm sm:w-[90px]"
+              style={{ background: 'var(--shadow-bg-soft)' }}
+            >
               <div className="aspect-[2/3] overflow-hidden">
                 <StoryCover story={story} className="h-full w-full" />
               </div>
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#111827] shadow-sm">
+              <div
+                className="mb-2 inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] shadow-sm"
+                style={{
+                  background: 'var(--shadow-bg-surface)',
+                  borderColor: 'var(--shadow-border)',
+                  color: 'var(--shadow-text-primary)',
+                }}
+              >
                 PDF Download
               </div>
 
-              <h3 className="line-clamp-1 text-[15px] font-extrabold tracking-tight text-[#111] sm:text-[17px]">
+              <h3
+                className="line-clamp-1 text-[15px] font-extrabold tracking-tight sm:text-[17px]"
+                style={{ color: 'var(--shadow-text-primary)' }}
+              >
                 {story.title || 'Untitled PDF'}
               </h3>
 
-              <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[#6f6f78] sm:text-[13px]">
+              <p
+                className="mt-1 line-clamp-2 text-[12px] leading-5 sm:text-[13px]"
+                style={{ color: 'var(--shadow-text-secondary)' }}
+              >
                 {story.description || 'Purchased PDF book'}
               </p>
 
-              <p className="mt-2 text-[11px] font-extrabold text-[#111827] sm:text-[12px]">
+              <p
+                className="mt-2 text-[11px] font-extrabold sm:text-[12px]"
+                style={{ color: 'var(--shadow-text-primary)' }}
+              >
                 {formatInfo(tab, story)}
               </p>
 
@@ -298,34 +379,60 @@ function ContextCard({ item, tab }) {
     <section className="pt-5">
       <Link
         to={`/story/${story.id}`}
-        className="group block rounded-[24px] border border-[#efefef] bg-[#fafafa] p-4 transition hover:bg-[#f7f7f7]"
+        className="group block rounded-[24px] border p-4 transition"
+        style={{
+          background: 'var(--shadow-bg-elevated)',
+          borderColor: 'var(--shadow-border)',
+        }}
       >
         <div className="flex items-center gap-4">
-          <div className="w-[82px] shrink-0 overflow-hidden rounded-2xl bg-[#ececec] shadow-sm sm:w-[90px]">
+          <div
+            className="w-[82px] shrink-0 overflow-hidden rounded-2xl shadow-sm sm:w-[90px]"
+            style={{ background: 'var(--shadow-bg-soft)' }}
+          >
             <div className="aspect-[2/3] overflow-hidden">
               <StoryCover story={story} className="h-full w-full" />
             </div>
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#111827] shadow-sm">
+            <div
+              className="mb-2 inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] shadow-sm"
+              style={{
+                background: 'var(--shadow-bg-surface)',
+                borderColor: 'var(--shadow-border)',
+                color: 'var(--shadow-text-primary)',
+              }}
+            >
               {tab === 'Subscribed' ? 'Latest Update' : tab === 'Downloads' ? 'Downloaded' : 'In Library'}
             </div>
 
-            <h3 className="line-clamp-1 text-[15px] font-extrabold tracking-tight text-[#111] sm:text-[17px]">
+            <h3
+              className="line-clamp-1 text-[15px] font-extrabold tracking-tight sm:text-[17px]"
+              style={{ color: 'var(--shadow-text-primary)' }}
+            >
               {story.title || 'Untitled Story'}
             </h3>
 
-            <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[#6f6f78] sm:text-[13px]">
+            <p
+              className="mt-1 line-clamp-2 text-[12px] leading-5 sm:text-[13px]"
+              style={{ color: 'var(--shadow-text-secondary)' }}
+            >
               {story.description || `${story.main_genre || 'Story'} • ${story.total_episodes || 0} episodes`}
             </p>
 
-            <p className="mt-2 text-[11px] font-extrabold text-[#111827] sm:text-[12px]">
+            <p
+              className="mt-2 text-[11px] font-extrabold sm:text-[12px]"
+              style={{ color: 'var(--shadow-text-primary)' }}
+            >
               {formatInfo(tab, story)}
             </p>
           </div>
 
-          <i className="fa-solid fa-chevron-right text-[#c0c0ca] transition group-hover:translate-x-1 group-hover:text-[#111]" />
+          <i
+            className="fa-solid fa-chevron-right transition group-hover:translate-x-1"
+            style={{ color: 'var(--shadow-text-tertiary)' }}
+          />
         </div>
       </Link>
     </section>
@@ -483,7 +590,6 @@ export default function Library() {
     loadLibrary(activeTab)
   }, [activeTab, isLoggedIn])
 
-
   const currentItems = useMemo(() => {
     if (activeTab === 'Subscribed') return subscriptionItems
     if (activeTab === 'Downloads') return downloadItems
@@ -523,7 +629,7 @@ export default function Library() {
       )
 
       setLibraryItems([])
-loadedTabsRef.current.add('Recents')
+      loadedTabsRef.current.add('Recents')
     } catch {
       setMessage('Failed to clear library')
     }
@@ -532,10 +638,6 @@ loadedTabsRef.current.add('Recents')
   return (
     <>
       <style>{`
-        body {
-          background: #ffffff;
-          font-family: 'Inter', 'Kantumruy Pro', sans-serif;
-        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .tab-active-lib::after {
@@ -547,12 +649,12 @@ loadedTabsRef.current.add('Recents')
           width: 22px;
           height: 4px;
           border-radius: 9999px;
-          background: #111827;
+          background: var(--shadow-text-primary);
         }
       `}</style>
 
-      <div className="pb-[88px]">
-        <header className="sticky top-0 z-[60] border-b border-[#f3f3f3] bg-white/95 backdrop-blur-sm">
+      <div className="app-page min-h-screen pb-[88px]">
+        <header className="app-nav sticky top-0 z-[60] border-b backdrop-blur-sm">
           <div className="px-4 pt-5 sm:px-5">
             <div className="flex items-end justify-between gap-4">
               <div className="flex min-w-0 items-end gap-5 overflow-x-auto no-scrollbar">
@@ -567,8 +669,13 @@ loadedTabsRef.current.add('Recents')
                         setActiveType('All')
                       }}
                       className={`relative shrink-0 pb-3 text-[13px] font-bold transition-colors sm:text-[14px] ${
-                        active ? 'tab-active-lib text-[#111]' : 'text-[#a1a1aa]'
+                        active ? 'tab-active-lib' : ''
                       }`}
+                      style={{
+                        color: active
+                          ? 'var(--shadow-text-primary)'
+                          : 'var(--shadow-text-tertiary)',
+                      }}
                     >
                       {tab}
                     </button>
@@ -579,13 +686,17 @@ loadedTabsRef.current.add('Recents')
               <button
                 type="button"
                 onClick={handleAction}
-                className="shrink-0 pb-3 text-[13px] font-semibold text-[#5f5f68] transition hover:text-[#111]"
+                className="shrink-0 pb-3 text-[13px] font-semibold transition"
+                style={{ color: 'var(--shadow-text-secondary)' }}
               >
                 {actionText}
               </button>
             </div>
 
-            <p className="pb-4 pt-2 text-[12px] text-[#8b8b95] sm:text-[13px]">
+            <p
+              className="pb-4 pt-2 text-[12px] sm:text-[13px]"
+              style={{ color: 'var(--shadow-text-secondary)' }}
+            >
               {subtitle}
             </p>
 
@@ -597,11 +708,21 @@ loadedTabsRef.current.add('Recents')
                   <button
                     key={type}
                     onClick={() => setActiveType(type)}
-                    className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
-                      active
-                        ? 'bg-[#111827] text-white shadow-[0_8px_18px_rgba(17,24,39,0.18)]'
-                        : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef]'
-                    }`}
+                    className="shrink-0 rounded-full border px-4 py-1.5 text-[12px] font-bold transition-colors"
+                    style={{
+                      background: active
+                        ? 'var(--shadow-text-primary)'
+                        : 'var(--shadow-bg-soft)',
+                      borderColor: active
+                        ? 'var(--shadow-text-primary)'
+                        : 'var(--shadow-border)',
+                      color: active
+                        ? 'var(--shadow-bg-page)'
+                        : 'var(--shadow-text-secondary)',
+                      boxShadow: active
+                        ? 'var(--shadow-shadow)'
+                        : 'none',
+                    }}
                   >
                     {type}
                   </button>
@@ -613,14 +734,28 @@ loadedTabsRef.current.add('Recents')
 
         <main className="px-4 sm:px-5">
           {message ? (
-            <div className="mt-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+            <div
+              className="mt-4 rounded-[18px] border px-4 py-3 text-[12px] font-bold"
+              style={{
+                background: 'rgba(229, 72, 77, 0.10)',
+                borderColor: 'rgba(229, 72, 77, 0.18)',
+                color: 'var(--shadow-danger)',
+              }}
+            >
               {message}
             </div>
           ) : null}
 
           {loading ? (
             <div className="pt-5">
-              <div className="rounded-[24px] border border-[#efefef] bg-[#fafafa] px-5 py-10 text-center text-[13px] font-bold text-[#8b8b95]">
+              <div
+                className="rounded-[24px] border px-5 py-10 text-center text-[13px] font-bold"
+                style={{
+                  background: 'var(--shadow-bg-elevated)',
+                  borderColor: 'var(--shadow-border)',
+                  color: 'var(--shadow-text-secondary)',
+                }}
+              >
                 Loading library...
               </div>
             </div>
@@ -639,7 +774,10 @@ loadedTabsRef.current.add('Recents')
 
               <section className="pt-7">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-[20px] font-extrabold tracking-tight text-[#111]">
+                  <h2
+                    className="text-[20px] font-extrabold tracking-tight"
+                    style={{ color: 'var(--shadow-text-primary)' }}
+                  >
                     {activeTab === 'Subscribed'
                       ? 'Your Subscriptions'
                       : activeTab === 'Downloads'
@@ -648,7 +786,10 @@ loadedTabsRef.current.add('Recents')
                   </h2>
 
                   {activeTab === 'Subscribed' ? (
-                    <button className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#111827]">
+                    <button
+                      className="text-[11px] font-extrabold uppercase tracking-[0.12em]"
+                      style={{ color: 'var(--shadow-text-primary)' }}
+                    >
                       See All
                     </button>
                   ) : null}
@@ -656,7 +797,11 @@ loadedTabsRef.current.add('Recents')
 
                 <div className="grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                   {filteredItems.map((item) => (
-                    <LibraryBookCard key={item.id || item.story_id} item={item} tab={activeTab} />
+                    <LibraryBookCard
+                      key={item.id || item.story_id}
+                      item={item}
+                      tab={activeTab}
+                    />
                   ))}
                 </div>
               </section>
@@ -689,7 +834,8 @@ loadedTabsRef.current.add('Recents')
           <SubscriptionsSection items={subscriptionItems} />
         ) : null}
       </div>
-            <ReaderProfileFooter />
+
+      <ReaderProfileFooter />
     </>
   )
 }
