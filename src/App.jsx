@@ -173,6 +173,10 @@ const ReaderChangePasswordPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderChangePasswordPage')
 )
 
+const ReaderChangeEmailPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderChangeEmailPage')
+)
+
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
 const AuthorPageSearchPage = lazy(() => import('./pages/Author/AuthorPageSearchPage'))
@@ -825,6 +829,11 @@ const shouldShowOpeningAds =
 <Route
   path="/echoes/received"
   element={<LazyPage><ReceivedEchoesPage /></LazyPage>}
+/>
+
+  <Route
+  path="/profile/settings/account-security/change-email"
+  element={<LazyPage><ReaderChangeEmailPage /></LazyPage>}
 />
 
         <Route
