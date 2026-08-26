@@ -1207,7 +1207,7 @@ useEffect(() => {
   async function loadReaderNotificationCount() {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/users/me/summary`,
+        `${API_BASE_URL}/api/notifications/unread-count`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1221,8 +1221,8 @@ useEffect(() => {
       if (!response.ok || data.ok === false || ignore) return
 
       setReaderNotificationCount(
-        Math.max(0, Number(data.inbox_unread_count || 0))
-      )
+  Math.max(0, Number(data.unread_count || 0))
+)
     } catch {}
   }
 
