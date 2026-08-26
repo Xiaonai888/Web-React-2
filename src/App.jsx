@@ -165,6 +165,9 @@ const ReaderSettingsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderSettingsPage')
 )
 
+const ReaderAccountSecurityPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderAccountSecurityPage')
+)
 
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
@@ -1232,6 +1235,11 @@ const shouldShowOpeningAds =
       <ReaderSettingsPage />
     </LazyPage>
   }
+/>
+
+  <Route
+  path="/profile/settings/account-security"
+  element={<LazyPage><ReaderAccountSecurityPage /></LazyPage>}
 />
 
         <Route
