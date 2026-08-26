@@ -218,3 +218,196 @@ body::-webkit-scrollbar,
     overflow-x: auto !important;
   }
 }
+
+html.dark .for-you-top-bars {
+  background: var(--shadow-nav-bg) !important;
+  border-color: var(--shadow-border) !important;
+}
+
+html.dark .for-you-top-bars [class~="bg-white"] {
+  background: var(--shadow-nav-bg) !important;
+}
+
+html.dark .for-you-top-bars [class~="border-gray-50"],
+html.dark .for-you-top-bars [class~="border-gray-100"] {
+  border-color: var(--shadow-border) !important;
+}
+
+html.dark .for-you-top-bars svg {
+  color: var(--shadow-icon);
+  stroke: var(--shadow-icon);
+}
+
+html.dark .for-you-top-bars .tab-item.active {
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark .for-you-top-bars .tab-item[class~="text-gray-400"] {
+  color: var(--shadow-text-secondary) !important;
+}
+
+html.dark .for-you-top-bars .no-scrollbar [class~="text-[#111827]"] {
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark .for-you-top-bars .no-scrollbar [class~="text-[#9ca3af]"] {
+  color: var(--shadow-text-secondary) !important;
+}
+
+html.dark .for-you-top-bars .no-scrollbar [class~="bg-[#f1f2f4]"] {
+  background: var(--shadow-bg-hover) !important;
+}
+
+html.dark #tab-content-root {
+  background: var(--shadow-bg-page);
+  color: var(--shadow-text-primary);
+}
+
+html.dark #tab-content-root [class~="bg-white"],
+html.dark #tab-content-root [class~="bg-white/95"] {
+  background: var(--shadow-bg-surface) !important;
+}
+
+html.dark #tab-content-root > [class~="bg-white"] {
+  background: var(--shadow-bg-page) !important;
+}
+
+html.dark #tab-content-root [class~="bg-gray-50"],
+html.dark #tab-content-root [class~="bg-gray-100"],
+html.dark #tab-content-root [class~="bg-[#eef1f5]"],
+html.dark #tab-content-root [class~="bg-[#f1f2f4]"],
+html.dark #tab-content-root [class~="bg-[#f3f4f6]"],
+html.dark #tab-content-root [class~="bg-[#F3F4F6]"],
+html.dark #tab-content-root [class~="bg-[#f8f8fb]"] {
+  background: var(--shadow-bg-soft) !important;
+}
+
+html.dark #tab-content-root [class~="text-neutral-900"],
+html.dark #tab-content-root [class~="text-gray-900"],
+html.dark #tab-content-root [class~="text-gray-800"],
+html.dark #tab-content-root [class~="text-gray-700"],
+html.dark #tab-content-root [class~="text-[#111111]"],
+html.dark #tab-content-root [class~="text-[#111827]"]:not([class~="bg-[#f6b800]"]):not([class~="bg-[#F6B800]"]):not([class~="bg-[#facc15]"]) {
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark #tab-content-root [class~="text-gray-600"],
+html.dark #tab-content-root [class~="text-gray-500"],
+html.dark #tab-content-root [class~="text-gray-400"],
+html.dark #tab-content-root [class~="text-[#8d94a1]"],
+html.dark #tab-content-root [class~="text-[#9ca3af]"],
+html.dark #tab-content-root [class~="text-[#4B5563]"],
+html.dark #tab-content-root [class~="text-[#6B7280]"],
+html.dark #tab-content-root [class~="text-[#6b7280]"] {
+  color: var(--shadow-text-secondary) !important;
+}
+
+html.dark #tab-content-root [class~="border-gray-50"],
+html.dark #tab-content-root [class~="border-gray-100"],
+html.dark #tab-content-root [class~="border-gray-200"],
+html.dark #tab-content-root [class~="border-[#E5E7EB]"] {
+  border-color: var(--shadow-border) !important;
+}
+
+html.dark #tab-content-root [class~="ring-gray-100"] {
+  --tw-ring-color: var(--shadow-border) !important;
+}
+
+html.dark #tab-content-root [class~="hover:bg-gray-100"]:hover {
+  background: var(--shadow-bg-hover) !important;
+}
+
+html.dark #tab-content-root [class~="bg-black"] {
+  background: var(--shadow-text-primary) !important;
+}
+
+html.dark #tab-content-root [class~="bg-neutral-300"] {
+  background: var(--shadow-text-tertiary) !important;
+}
+
+html.dark #tab-content-root [class~="hover:bg-neutral-400"]:hover {
+  background: var(--shadow-text-secondary) !important;
+}
+
+html.dark #tab-content-root [class~="bg-[#111827]"] {
+  background: var(--shadow-text-primary) !important;
+  color: var(--shadow-bg-page) !important;
+}
+
+html.dark #tab-content-root .shadow-spotlight-pagination .swiper-pagination-bullet-active,
+html.dark .mySwiper .swiper-pagination-bullet-active {
+  background: var(--shadow-text-primary) !important;
+}
+
+@media (min-width: 768px) {
+  html.dark .mySwiper .swiper-pagination-bullet {
+    background: var(--shadow-text-primary) !important;
+    opacity: 0.3;
+  }
+
+  html.dark .mySwiper .swiper-pagination-bullet-active {
+    opacity: 1;
+  }
+}
+
+html.dark body.shadow-notification-open [class~="bg-[#F6F7FB]"] {
+  background: var(--shadow-bg-page) !important;
+}
+
+html.dark body.shadow-notification-open [class~="bg-white"] {
+  background: var(--shadow-bg-surface) !important;
+}
+
+html.dark body.shadow-notification-open [class~="bg-[#F3F4F6]"] {
+  background: var(--shadow-bg-soft) !important;
+}
+
+html.dark body.shadow-notification-open [class~="bg-[#FFFBEA]"] {
+  background: rgba(246, 184, 0, 0.08) !important;
+}
+
+html.dark body.shadow-notification-open [class~="bg-[#FFF1F1]"] {
+  background: rgba(229, 72, 77, 0.1) !important;
+}
+
+html.dark body.shadow-notification-open [class~="bg-[#F1F0FF]"] {
+  background: rgba(79, 70, 229, 0.16) !important;
+}
+
+html.dark body.shadow-notification-open [class~="bg-[#FFF7D6]"] {
+  background: rgba(246, 184, 0, 0.14) !important;
+}
+
+html.dark body.shadow-notification-open [class~="text-[#111111]"],
+html.dark body.shadow-notification-open [class~="text-[#111827]"] {
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark body.shadow-notification-open [class~="text-gray-600"],
+html.dark body.shadow-notification-open [class~="text-[#606773]"],
+html.dark body.shadow-notification-open [class~="text-[#7B8190]"],
+html.dark body.shadow-notification-open [class~="text-[#9CA3AF]"] {
+  color: var(--shadow-text-secondary) !important;
+}
+
+html.dark body.shadow-notification-open [class~="border-gray-200"],
+html.dark body.shadow-notification-open [class~="border-[#E5E7EB]"] {
+  border-color: var(--shadow-border) !important;
+}
+
+html.dark .shadow-checkin-modal-in [class~="bg-white"] {
+  background: var(--shadow-bg-surface) !important;
+}
+
+html.dark .shadow-checkin-modal-in [class~="text-[#111827]"] {
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark .shadow-checkin-modal-in [class~="text-[#9ca3af]"] {
+  color: var(--shadow-text-secondary) !important;
+}
+
+html.dark .shadow-checkin-modal-in [class~="bg-[#fff1f3]"] {
+  background: rgba(225, 29, 72, 0.12) !important;
+}
+
