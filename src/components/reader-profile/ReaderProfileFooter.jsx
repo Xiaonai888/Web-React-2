@@ -18,7 +18,6 @@ import {
   getChatConversations,
   hasReaderSession,
 } from '../../services/chatApi'
-
 import {
   playChatNotificationTone,
   primeChatNotificationSound,
@@ -91,11 +90,21 @@ function ProfileIcon({
 
   return (
     <span
-      className={`flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full text-[9px] font-bold text-white ring-1 ${
-        active
-          ? 'bg-[#7c3aed] ring-[#7c3aed]'
-          : 'bg-[#111827] ring-transparent'
-      }`}
+      className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full text-[9px] font-bold ring-1"
+      style={{
+        background: active
+          ? '#7c3aed'
+          : 'var(--shadow-bg-elevated)',
+        color: active
+          ? '#ffffff'
+          : 'var(--shadow-text-primary)',
+        borderColor: active
+          ? '#7c3aed'
+          : 'var(--shadow-border)',
+        '--tw-ring-color': active
+          ? '#7c3aed'
+          : 'var(--shadow-border)',
+      }}
     >
       {avatarUrl && !imageFailed ? (
         <img
@@ -261,7 +270,6 @@ export default function ReaderProfileFooter({
     }
   }, [])
 
-
   useEffect(() => {
     const primeSound = () => {
       primeChatNotificationSound()
@@ -422,13 +430,21 @@ export default function ReaderProfileFooter({
   return (
     <>
       {message ? (
-        <div className="fixed bottom-[82px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white">
+        <div
+          className="fixed bottom-[82px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full px-4 py-2 text-[12px] font-semibold"
+          style={{
+            background: 'var(--shadow-bg-elevated)',
+            color: 'var(--shadow-text-primary)',
+            boxShadow: 'var(--shadow-shadow)',
+            border: '1px solid var(--shadow-border)',
+          }}
+        >
           {message}
         </div>
       ) : null}
 
       <footer
-        className="fixed bottom-0 left-0 right-0 z-[90] bg-white/95 backdrop-blur-xl"
+        className="app-nav fixed bottom-0 left-0 right-0 z-[90] border-t backdrop-blur-xl"
         style={{
           paddingBottom:
             'env(safe-area-inset-bottom, 0px)',
@@ -460,17 +476,23 @@ export default function ReaderProfileFooter({
                     ? 'page'
                     : undefined
                 }
-                className={`relative flex h-11 w-11 items-center justify-center rounded-full bg-transparent shadow-none transition active:scale-90 ${
-                  active
-                    ? 'text-[#7c3aed]'
-                    : 'text-[#111827] hover:text-[#7c3aed]'
-                }`}
+                className="relative flex h-11 w-11 items-center justify-center rounded-full bg-transparent shadow-none transition active:scale-90"
+                style={{
+                  color: active
+                    ? '#7c3aed'
+                    : 'var(--shadow-icon)',
+                }}
               >
                 {renderIcon(item.key, active)}
 
                 {isChat &&
                 chatBadgeCount > 0 ? (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-[#ef4444] px-1 text-[8px] font-bold leading-none text-white">
+                  <span
+                    className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 bg-[#ef4444] px-1 text-[8px] font-bold leading-none text-white"
+                    style={{
+                      borderColor: 'var(--shadow-nav-bg)',
+                    }}
+                  >
                     {chatBadgeCount > 99
                       ? '99+'
                       : chatBadgeCount}
