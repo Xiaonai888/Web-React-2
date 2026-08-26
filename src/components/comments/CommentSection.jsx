@@ -2211,14 +2211,15 @@ const [toast, setToast] = useState('')
     }
   }, [])
 
-  async function fetchComments(
-    useEffect(() => {
+  useEffect(() => {
   setReplyTarget(null)
   setReplyText('')
 }, [targetType, targetId])
-    nextPage = 1,
-    append = false
-  ) {
+
+async function fetchComments(
+  nextPage = 1,
+  append = false
+) {
     if (!targetId) return
 
     try {
