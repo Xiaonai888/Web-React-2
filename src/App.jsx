@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
+import { AuthorPageNotificationProvider } from './providers/AuthorPageNotificationProvider'
 import Footer from './components/Footer'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
@@ -1382,9 +1383,11 @@ const shouldShowOpeningAds =
 export default function App() {
   return (
     <Router>
-      <SmartRefreshProvider>
-        <AppShell />
-      </SmartRefreshProvider>
-    </Router>
+  <AuthorPageNotificationProvider>
+    <SmartRefreshProvider>
+      <AppShell />
+    </SmartRefreshProvider>
+  </AuthorPageNotificationProvider>
+</Router>
   )
 }
