@@ -89,109 +89,108 @@ export default function MangaPage() {
   }
 
   useEffect(() => {
-  const controller = new AbortController()
-  let cancelled = false
+    const controller = new AbortController()
+    let cancelled = false
 
-  function normalizeTabs(rawTabs) {
-    return (Array.isArray(rawTabs) ? rawTabs : [])
-      .map((tab) => ({
-        label: tab.label || tab.genre?.name || 'Genre',
-        slug:
-          tab.slug ||
-          tab.genre?.slug ||
-          String(tab.label || '').toLowerCase(),
-      }))
-      .filter((tab) => tab.label && tab.slug)
-      .slice(0, 12)
-  }
-
-  function applyTabs(tabs) {
-    if (cancelled || controller.signal.aborted) return
-
-    if (!tabs.length) {
-      setGenreTabs(fallbackGenreTabs)
-      return
+    function normalizeTabs(rawTabs) {
+      return (Array.isArray(rawTabs) ? rawTabs : [])
+        .map((tab) => ({
+          label: tab.label || tab.genre?.name || 'Genre',
+          slug:
+            tab.slug ||
+            tab.genre?.slug ||
+            String(tab.label || '').toLowerCase(),
+        }))
+        .filter((tab) => tab.label && tab.slug)
+        .slice(0, 12)
     }
 
-    const today = tabs.find((tab) => tab.slug === 'today')
-    const otherTabs = tabs.filter((tab) => tab.slug !== 'today')
+    function applyTabs(tabs) {
+      if (cancelled || controller.signal.aborted) return
 
-    setGenreTabs(
-      today
-        ? [today, ...otherTabs]
-        : [{ label: 'Today', slug: 'today' }, ...otherTabs].slice(0, 12)
-    )
-  }
-
-  async function loadGenres() {
-    const cacheKey = getHomeCacheKey({
-      section: 'genres',
-      language: 'all',
-      params: {
-        page: 'manga',
-        list: 'featured-tabs',
-        schema: 1,
-      },
-    })
-
-    let hasCachedTabs = false
-
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: MANGA_PUBLIC_CACHE_MAX_AGE_MS,
-      allowExpired: true,
-    })
-
-    if (cancelled || controller.signal.aborted) return
-
-    hasCachedTabs = Array.isArray(cached?.data)
-
-    if (hasCachedTabs) {
-      applyTabs(cached.data)
-    }
-
-    if (cached?.isFresh && hasCachedTabs) {
-      return
-    }
-
-    try {
-      const response = await fetch(
-        `${API_URL}/api/genres/featured-tabs`,
-        { signal: controller.signal }
-      )
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error('Failed to load genres')
+      if (!tabs.length) {
+        setGenreTabs(fallbackGenreTabs)
+        return
       }
 
-      const tabs = normalizeTabs(data.tabs)
+      const today = tabs.find((tab) => tab.slug === 'today')
+      const otherTabs = tabs.filter((tab) => tab.slug !== 'today')
+
+      setGenreTabs(
+        today
+          ? [today, ...otherTabs]
+          : [{ label: 'Today', slug: 'today' }, ...otherTabs].slice(0, 12)
+      )
+    }
+
+    async function loadGenres() {
+      const cacheKey = getHomeCacheKey({
+        section: 'genres',
+        language: 'all',
+        params: {
+          page: 'manga',
+          list: 'featured-tabs',
+          schema: 1,
+        },
+      })
+
+      let hasCachedTabs = false
+
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: MANGA_PUBLIC_CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
 
       if (cancelled || controller.signal.aborted) return
 
-      applyTabs(tabs)
+      hasCachedTabs = Array.isArray(cached?.data)
 
-      await saveHomeCache(cacheKey, tabs, {
-        maxAgeMs: MANGA_PUBLIC_CACHE_MAX_AGE_MS,
-      })
-    } catch (error) {
-      if (
-        error?.name !== 'AbortError' &&
-        !cancelled &&
-        !hasCachedTabs
-      ) {
-        setGenreTabs(fallbackGenreTabs)
+      if (hasCachedTabs) {
+        applyTabs(cached.data)
+      }
+
+      if (cached?.isFresh && hasCachedTabs) {
+        return
+      }
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/genres/featured-tabs`,
+          { signal: controller.signal }
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error('Failed to load genres')
+        }
+
+        const tabs = normalizeTabs(data.tabs)
+
+        if (cancelled || controller.signal.aborted) return
+
+        applyTabs(tabs)
+
+        await saveHomeCache(cacheKey, tabs, {
+          maxAgeMs: MANGA_PUBLIC_CACHE_MAX_AGE_MS,
+        })
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError' &&
+          !cancelled &&
+          !hasCachedTabs
+        ) {
+          setGenreTabs(fallbackGenreTabs)
+        }
       }
     }
-  }
 
-  loadGenres()
+    loadGenres()
 
-  return () => {
-    cancelled = true
-    controller.abort()
-  }
-}, [])
-
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [])
 
   useEffect(() => {
     const requestedGenre = String(searchParams.get('genre') || '').trim().toLowerCase()
@@ -343,7 +342,7 @@ export default function MangaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[82px]">
+    <div className="app-page min-h-screen pb-[82px]">
       <style>{`
         body.manga-bars-hidden footer { transform: translateY(110%); }
         .manga-no-scrollbar::-webkit-scrollbar { display: none; }
@@ -351,7 +350,7 @@ export default function MangaPage() {
       `}</style>
 
       <div
-        className="fixed left-0 right-0 top-0 z-[100000] bg-white transition-transform duration-200"
+        className="app-nav fixed left-0 right-0 top-0 z-[100000] transition-transform duration-200"
         style={{ transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)' }}
       >
         <header className="flex items-center justify-between px-4 py-3">
@@ -363,11 +362,19 @@ export default function MangaPage() {
             />
           </div>
 
-          <div className="flex items-center gap-5">
-            <Link to="/genres" className="flex h-6 w-6 items-center justify-center" aria-label="Genres">
+          <div className="flex items-center gap-5" style={{ color: 'var(--shadow-icon)' }}>
+            <Link
+              to="/genres"
+              className="flex h-6 w-6 items-center justify-center"
+              aria-label="Genres"
+            >
               <Grid2X2 size={20} strokeWidth={1.8} />
             </Link>
-            <Link to="/search" className="flex h-6 w-6 items-center justify-center" aria-label="Search">
+            <Link
+              to="/search"
+              className="flex h-6 w-6 items-center justify-center"
+              aria-label="Search"
+            >
               <Search size={20} strokeWidth={1.8} />
             </Link>
             <button
@@ -386,7 +393,10 @@ export default function MangaPage() {
           </div>
         </header>
 
-        <nav className="manga-no-scrollbar flex gap-1.5 overflow-x-auto border-t border-[#f3f4f6] px-4 pb-2">
+        <nav
+          className="manga-no-scrollbar flex gap-1.5 overflow-x-auto border-t px-4 pb-2"
+          style={{ borderColor: 'var(--shadow-border)' }}
+        >
           {genreTabs.map((tab) => {
             const active = activeGenre === tab.slug
             const pressed = pressedGenre === tab.slug
@@ -397,8 +407,16 @@ export default function MangaPage() {
                 type="button"
                 onClick={() => handleGenreChange(tab)}
                 className={`relative shrink-0 rounded-full px-3 py-2 text-[12px] transition-colors ${
-                  active ? 'font-semibold text-[#111827]' : 'font-normal text-[#9ca3af]'
-                } ${pressed ? 'bg-[#f1f2f4]' : 'bg-transparent'}`}
+                  active ? 'font-semibold' : 'font-normal'
+                }`}
+                style={{
+                  color: active
+                    ? 'var(--shadow-text-primary)'
+                    : 'var(--shadow-text-secondary)',
+                  background: pressed
+                    ? 'var(--shadow-bg-hover)'
+                    : 'transparent',
+                }}
               >
                 {tab.label}
                 <span
@@ -414,137 +432,165 @@ export default function MangaPage() {
 
       <div className="h-[104px]" />
 
-      <section className="relative overflow-hidden bg-[#f3f4f6]">
-        <div
-          ref={sliderRef}
-          onScroll={handleSliderScroll}
-          className="manga-no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
+      <main id="tab-content-root">
+        <section
+          className="relative overflow-hidden"
+          style={{ background: 'var(--shadow-bg-soft)' }}
         >
-          {slidesLoading ? (
-            <div className="flex aspect-[16/9] w-full shrink-0 items-center justify-center bg-[#f1f2f4] text-[13px] font-semibold text-[#98a2b3]">
-              Loading Manga slides...
+          <div
+            ref={sliderRef}
+            onScroll={handleSliderScroll}
+            className="manga-no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
+          >
+            {slidesLoading ? (
+              <div
+                className="flex aspect-[16/9] w-full shrink-0 items-center justify-center text-[13px] font-semibold"
+                style={{
+                  background: 'var(--shadow-bg-soft)',
+                  color: 'var(--shadow-text-secondary)',
+                }}
+              >
+                Loading Manga slides...
+              </div>
+            ) : null}
+
+            {!slidesLoading && !slides.length ? (
+              <div
+                className="flex aspect-[16/9] w-full shrink-0 items-center justify-center text-[13px] font-semibold"
+                style={{
+                  background: 'var(--shadow-bg-soft)',
+                  color: 'var(--shadow-text-secondary)',
+                }}
+              >
+                No Manga slides yet
+              </div>
+            ) : null}
+
+            {!slidesLoading
+              ? slides.map((slide) => {
+                  const badge = getSlideBadge(slide)
+                  const title = getSlideTitle(slide)
+
+                  return (
+                    <button
+                      key={slide.id}
+                      type="button"
+                      onClick={() => slide.link_url && navigate(slide.link_url)}
+                      className="relative aspect-[16/9] w-full shrink-0 snap-center overflow-hidden text-left"
+                    >
+                      <img
+                        src={slide.image_url}
+                        alt={title || 'Manga slide'}
+                        className="h-full w-full object-cover"
+                      />
+                      {badge || title || slide.subtitle || slide.description ? (
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-4 pb-4 pt-14 text-white">
+                          {title ? (
+                            <h2 className="truncate text-[17px] font-black">
+                              {title}
+                            </h2>
+                          ) : null}
+                          {slide.subtitle || slide.description ? (
+                            <p className="mt-1 truncate text-[11px] font-semibold text-white/90">
+                              {slide.subtitle || slide.description}
+                            </p>
+                          ) : null}
+                          {badge ? (
+                            <span
+                              className={`mt-2 inline-flex rounded-[5px] px-2 py-1 text-[9px] font-black ${badgeClasses[badge]}`}
+                            >
+                              {badge}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </button>
+                  )
+                })
+              : null}
+          </div>
+
+          {slides.length > 1 ? (
+            <div className="absolute bottom-2 right-3 flex gap-1.5">
+              {slides.map((slide, index) => (
+                <span
+                  key={slide.id}
+                  className={`h-1.5 rounded-full bg-white transition-all ${
+                    activeSlide === index ? 'w-4 opacity-100' : 'w-1.5 opacity-60'
+                  }`}
+                />
+              ))}
             </div>
           ) : null}
+        </section>
 
-          {!slidesLoading && !slides.length ? (
-            <div className="flex aspect-[16/9] w-full shrink-0 items-center justify-center bg-[#f1f2f4] text-[13px] font-semibold text-[#98a2b3]">
-              No Manga slides yet
-            </div>
-          ) : null}
-
-          {!slidesLoading
-            ? slides.map((slide) => {
-                const badge = getSlideBadge(slide)
-                const title = getSlideTitle(slide)
-
-                return (
-                  <button
-                    key={slide.id}
-                    type="button"
-                    onClick={() => slide.link_url && navigate(slide.link_url)}
-                    className="relative aspect-[16/9] w-full shrink-0 snap-center overflow-hidden text-left"
-                  >
-                    <img
-                      src={slide.image_url}
-                      alt={title || 'Manga slide'}
-                      className="h-full w-full object-cover"
-                    />
-                    {badge || title || slide.subtitle || slide.description ? (
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-4 pb-4 pt-14 text-white">
-                        {title ? <h2 className="truncate text-[17px] font-black">{title}</h2> : null}
-                        {slide.subtitle || slide.description ? (
-                          <p className="mt-1 truncate text-[11px] font-semibold text-white/90">
-                            {slide.subtitle || slide.description}
-                          </p>
-                        ) : null}
-                        {badge ? (
-                          <span className={`mt-2 inline-flex rounded-[5px] px-2 py-1 text-[9px] font-black ${badgeClasses[badge]}`}>
-                            {badge}
-                          </span>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </button>
-                )
-              })
-            : null}
+        <div className="grid grid-cols-4 gap-4 px-4 py-4 text-center">
+          {[
+            { icon: '/assets/Shortcut/Store.svg', label: 'Shop', path: '/shop' },
+            { icon: '/assets/Shortcut/Task.svg', label: 'Tasks', path: '/tasks' },
+            { icon: '/assets/Shortcut/Ranking.svg', label: 'Ranking', path: '/ranking' },
+            { icon: '/assets/Shortcut/Event.svg', label: 'Event', path: '/event' },
+          ].map((item) => (
+            <button key={item.label} type="button" onClick={() => navigate(item.path)}>
+              <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center">
+                <img src={item.icon} alt={item.label} className="h-7 w-7 object-contain" />
+              </div>
+              <span
+                className="text-[10px] font-semibold"
+                style={{ color: 'var(--shadow-text-primary)' }}
+              >
+                {item.label}
+              </span>
+            </button>
+          ))}
         </div>
 
-        {slides.length > 1 ? (
-          <div className="absolute bottom-2 right-3 flex gap-1.5">
-            {slides.map((slide, index) => (
-              <span
-                key={slide.id}
-                className={`h-1.5 rounded-full bg-white transition-all ${
-                  activeSlide === index ? 'w-4 opacity-100' : 'w-1.5 opacity-60'
-                }`}
-              />
-            ))}
-          </div>
-        ) : null}
-      </section>
-
-      <div className="grid grid-cols-4 gap-4 px-4 py-4 text-center">
-        {[
-          { icon: '/assets/Shortcut/Store.svg', label: 'Shop', path: '/shop' },
-          { icon: '/assets/Shortcut/Task.svg', label: 'Tasks', path: '/tasks' },
-          { icon: '/assets/Shortcut/Ranking.svg', label: 'Ranking', path: '/ranking' },
-          { icon: '/assets/Shortcut/Event.svg', label: 'Event', path: '/event' },
-        ].map((item) => (
-          <button key={item.label} type="button" onClick={() => navigate(item.path)}>
-            <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center">
-              <img src={item.icon} alt={item.label} className="h-7 w-7 object-contain" />
+        {activeGenre === 'today' ? (
+          <>
+            <div className="my-6">
+              <ShadowSpotlight />
             </div>
-            <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
-          </button>
-        ))}
-      </div>
 
-      {activeGenre === 'today' ? (
-        <>
-          <div className="my-6">
-            <ShadowSpotlight />
-          </div>
+            <div className="my-6">
+              <ContinueReadingSection storyType="manga" />
+            </div>
 
-          <div className="my-6">
-            <ContinueReadingSection storyType="manga" />
-          </div>
+            <div className="my-6">
+              <DailyPicksSection storyType="manga" />
+            </div>
 
-          <div className="my-6">
-            <DailyPicksSection storyType="manga" />
-          </div>
+            <div className="my-6">
+              <TrendingNowSection storyType="manga" />
+            </div>
 
-          <div className="my-6">
-            <TrendingNowSection storyType="manga" />
-          </div>
+            <div className="my-6">
+              <UpdateTodaySection storyType="manga" />
+            </div>
 
-          <div className="my-6">
-            <UpdateTodaySection storyType="manga" />
-          </div>
+            <div className="my-6">
+              <EditorWeeklyPicksSection />
+            </div>
 
-          <div className="my-6">
-            <EditorWeeklyPicksSection />
-          </div>
+            <div className="my-6">
+              <NewArrivalsSection storyType="manga" />
+            </div>
 
-          <div className="my-6">
-            <NewArrivalsSection storyType="manga" />
-          </div>
+            <div className="my-6">
+              <TopNovelSection storyType="manga" />
+            </div>
 
-          <div className="my-6">
-            <TopNovelSection storyType="manga" />
-          </div>
+            <div className="my-6">
+              <EventPerksHubSection />
+            </div>
 
-          <div className="my-6">
-            <EventPerksHubSection />
-          </div>
-
-          <div className="my-6">
-            <YouMightLikeSection storyType="manga" />
-          </div>
-        </>
-      ) : (
-        <MangaFeedSections genre={activeGenre} />
-      )}
+            <div className="my-6">
+              <YouMightLikeSection storyType="manga" />
+            </div>
+          </>
+        ) : (
+          <MangaFeedSections genre={activeGenre} />
+        )}
+      </main>
 
       {showNotificationPopup ? (
         <NotificationPage
