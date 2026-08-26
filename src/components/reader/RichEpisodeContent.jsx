@@ -101,7 +101,7 @@ function renderNode(node, context, key) {
         alt={String(element.getAttribute('alt') || 'Episode image').slice(0, 200)}
         loading="lazy"
         decoding="async"
-        style={{ filter: 'contrast(1.08) brightness(1.01)' }}
+        style={{ filter: 'url(#manga-reader-sharpen) contrast(1.08) brightness(1.01)' }}
         className="my-5 block h-auto max-h-[72vh] w-full rounded-[12px] object-contain"
       />
     )
@@ -182,5 +182,10 @@ export default function RichEpisodeContent({
     <div className={lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}>
       {renderedContent}
     </div>
+    <svg className="absolute h-0 w-0" aria-hidden="true">
+  <filter id="manga-reader-sharpen" x="-10%" y="-10%" width="120%" height="120%" colorInterpolationFilters="sRGB">
+    <feConvolveMatrix order="3" kernelMatrix="0 -0.15 0 -0.15 1.6 -0.15 0 -0.15 0" edgeMode="duplicate" preserveAlpha="true" />
+  </filter>
+</svg>
   )
 }
