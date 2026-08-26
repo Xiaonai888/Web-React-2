@@ -929,10 +929,11 @@ function OptionsSheet({
 export default function AuthorPageNotificationsPage() {
   const navigate = useNavigate()
   const {
-    authorUnreadCount: unreadCount,
-    setAuthorUnreadCount,
-    adjustAuthorUnreadCount,
-  } = useAuthorPageNotifications()
+  authorUnreadCount: unreadCount,
+  setAuthorUnreadCount,
+  adjustAuthorUnreadCount,
+  lastCreatedNotification,
+} = useAuthorPageNotifications()
   const [activeFilter, setActiveFilter] =
     useState('All')
   const [message, setMessage] =
@@ -989,9 +990,19 @@ export default function AuthorPageNotificationsPage() {
           setNotifications(
             (current) => {
               if (!append) {
-                return data.notifications
-              }
+  const incomingIds = new Set(
+    data.notifications.map((item) => item.id)
+  )
 
+  const liveItems = current.filter(
+    (item) => !incomingIds.has(item.id)
+  )
+
+  return [
+    ...liveItems,
+    ...data.notifications,
+  ]
+}
               const currentIds =
                 new Set(
                   current.map(
@@ -1048,6 +1059,31 @@ export default function AuthorPageNotificationsPage() {
   useEffect(() => {
     loadNotifications()
   }, [loadNotifications])
+
+  useEffect(() => {
+  if (!lastCreatedNotification?.id) return
+
+  const notification =
+    normalizeNotification(
+      lastCreatedNotification
+    )
+
+  setNotifications((current) => {
+    if (
+      current.some(
+        (item) =>
+          item.id === notification.id
+      )
+    ) {
+      return current
+    }
+
+    return [
+      notification,
+      ...current,
+    ]
+  })
+}, [lastCreatedNotification])
 
   const filteredNotifications =
     useMemo(() => {
