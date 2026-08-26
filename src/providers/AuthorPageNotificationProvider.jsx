@@ -240,22 +240,23 @@ export function AuthorPageNotificationProvider({
     }
 
     const handleVisible = () => {
-      if (
-        document.visibilityState ===
-        'visible'
-      ) {
-        refreshSessionToken()
-      }
-    }
+  if (
+    document.visibilityState ===
+    'visible'
+  ) {
+    refreshSessionToken()
+    syncAuthorUnreadCount()
+  }
+}
 
     window.addEventListener(
       'storage',
       refreshSessionToken
     )
     window.addEventListener(
-      'focus',
-      refreshSessionToken
-    )
+  'focus',
+  handleVisible
+)
     document.addEventListener(
       'visibilitychange',
       handleVisible
@@ -267,15 +268,15 @@ export function AuthorPageNotificationProvider({
         refreshSessionToken
       )
       window.removeEventListener(
-        'focus',
-        refreshSessionToken
-      )
+  'focus',
+  handleVisible
+)
       document.removeEventListener(
         'visibilitychange',
         handleVisible
       )
     }
-  }, [])
+  }, [syncAuthorUnreadCount])
 
   useEffect(() => {
     if (!sessionToken) {
