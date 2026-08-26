@@ -343,6 +343,25 @@ export default function ReaderAccountSecurityPage() {
 
   <i className="fa-solid fa-chevron-right text-[12px] text-[#a6abb4]" />
 </button>
+
+<button
+  type="button"
+  onClick={() => navigate('/profile/settings/account-security/change-email')}
+  className="flex w-full items-center gap-4 border-t border-[#f0f1f3] px-4 py-4 text-left active:bg-[#f7f7f9]"
+>
+  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#5f4b8b]">
+    <i className="fa-solid fa-envelope text-[16px]" />
+  </span>
+
+  <span className="min-w-0 flex-1">
+    <span className="block text-[15px] font-semibold">Email</span>
+    <span className="mt-1 block truncate text-[12px] text-[#8d94a1]">
+      {user?.email || 'Manage login email'}
+    </span>
+  </span>
+
+  <i className="fa-solid fa-chevron-right text-[12px] text-[#a6abb4]" />
+</button>
           </div>
         </section>
       </div>
