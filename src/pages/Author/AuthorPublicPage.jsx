@@ -910,10 +910,12 @@ function AuthorOwnerMenuSheet({
 
                   <div className="min-w-0">
                     <div className="line-clamp-1 text-[15px] font-black text-[#111827]">{readerName}</div>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b93a1]">
-                      <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-                      <span>0 notifications</span>
-                    </div>
+                    {showReaderBadge ? (
+  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b93a1]">
+    <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
+    <span>{`${readerNotificationCount} notification${Number(readerNotificationCount) === 1 ? '' : 's'}`}</span>
+  </div>
+) : null}
                   </div>
                 </div>
 
@@ -1179,8 +1181,15 @@ useEffect(() => {
     syncAuthorCartCount()
 
     window.addEventListener('storage', syncAuthorCartCount)
-    window.addEventListener('shadow-author-cart-updated', syncAuthorCartCount)
-    useEffect(() => {
+window.addEventListener('shadow-author-cart-updated', syncAuthorCartCount)
+
+return () => {
+  window.removeEventListener('storage', syncAuthorCartCount)
+  window.removeEventListener('shadow-author-cart-updated', syncAuthorCartCount)
+}
+}, [])
+
+useEffect(() => {
   if (!ownerResolved || !author?.is_owner) {
     setReaderNotificationCount(0)
     return
@@ -1224,11 +1233,6 @@ useEffect(() => {
   }
 }, [ownerResolved, author?.is_owner])
 
-    return () => {
-      window.removeEventListener('storage', syncAuthorCartCount)
-      window.removeEventListener('shadow-author-cart-updated', syncAuthorCartCount)
-    }
-  }, [])
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
