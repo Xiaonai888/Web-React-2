@@ -1042,7 +1042,7 @@ export default function AuthorPageNotificationsPage() {
           }
         }
       },
-      []
+      [setAuthorUnreadCount]
     )
 
   useEffect(() => {
@@ -1179,13 +1179,10 @@ export default function AuthorPageNotificationsPage() {
       setOptionsLoading(true)
 
       if (
-      if (
-  selectedNotification.unread
-) {
-  adjustAuthorUnreadCount(-1)
-}
-
-setSelectedNotification(null)
+        selectedNotification.unread
+      ) {
+        await markNotificationRead(
+          selectedNotification.id
         )
       } else {
         await markNotificationUnread(
@@ -1368,6 +1365,7 @@ setSelectedNotification(null)
         selectedNotification.unread
       ) {
         adjustAuthorUnreadCount(-1)
+      }
 
       setSelectedNotification(null)
     } catch (error) {
