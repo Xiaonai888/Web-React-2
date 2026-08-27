@@ -154,7 +154,7 @@ export default function Author49DayEventCard({
 
   if (loading) {
     return (
-      <div className="mt-4 aspect-square w-full animate-pulse rounded-[24px] bg-[#FFF5D8]" />
+      <div className="mt-4 aspect-square w-full animate-pulse rounded-[24px] bg-[#FFF5D8] dark:bg-amber-500/10" />
     )
   }
 
