@@ -1982,8 +1982,153 @@ const [soundSettings, setSoundSettings] =
     visibleConversations.length > 0 || peopleResults.length > 0
 
   return (
-    <div className="min-h-screen bg-white pb-[92px]">
-      <style>{`.shadow-chat-scroll::-webkit-scrollbar{display:none}.shadow-chat-scroll{-ms-overflow-style:none;scrollbar-width:none}`}</style>
+    <div className="app-page chat-inbox-page min-h-screen pb-[92px]">
+      <style>{`
+        .shadow-chat-scroll::-webkit-scrollbar{display:none}
+        .shadow-chat-scroll{-ms-overflow-style:none;scrollbar-width:none}
+
+        html.dark .chat-inbox-page {
+          background: var(--shadow-bg-page);
+          color: var(--shadow-text-primary);
+        }
+
+        html.dark .chat-inbox-page [class~="bg-white"],
+        html.dark .chat-inbox-page [class~="bg-white/95"] {
+          background-color: var(--shadow-bg-surface) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="focus:bg-white"]:focus {
+          background-color: var(--shadow-input-bg) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="text-[#111827]"],
+        html.dark .chat-inbox-page [class~="text-[#33333b]"],
+        html.dark .chat-inbox-page [class~="text-[#33313a]"],
+        html.dark .chat-inbox-page [class~="text-[#34313a]"] {
+          color: var(--shadow-text-primary) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="text-[#55515e]"],
+        html.dark .chat-inbox-page [class~="text-[#555560]"],
+        html.dark .chat-inbox-page [class~="text-[#666970]"],
+        html.dark .chat-inbox-page [class~="text-[#756f7d]"],
+        html.dark .chat-inbox-page [class~="text-[#76727f]"],
+        html.dark .chat-inbox-page [class~="text-[#777480]"],
+        html.dark .chat-inbox-page [class~="text-[#85818c]"],
+        html.dark .chat-inbox-page [class~="text-[#85888e]"],
+        html.dark .chat-inbox-page [class~="text-[#87838f]"],
+        html.dark .chat-inbox-page [class~="text-[#8a8792]"],
+        html.dark .chat-inbox-page [class~="text-[#8a8a95]"],
+        html.dark .chat-inbox-page [class~="text-[#8b8793]"],
+        html.dark .chat-inbox-page [class~="text-[#8b8b94]"],
+        html.dark .chat-inbox-page [class~="text-[#8d94a1]"],
+        html.dark .chat-inbox-page [class~="text-[#8D94A1]"],
+        html.dark .chat-inbox-page [class~="text-[#8e8b96]"],
+        html.dark .chat-inbox-page [class~="text-[#8f8b96]"],
+        html.dark .chat-inbox-page [class~="text-[#92929b]"],
+        html.dark .chat-inbox-page [class~="text-[#94919b]"],
+        html.dark .chat-inbox-page [class~="text-[#96929d]"],
+        html.dark .chat-inbox-page [class~="text-[#98a2b3]"],
+        html.dark .chat-inbox-page [class~="text-[#9a96a2]"],
+        html.dark .chat-inbox-page [class~="text-[#a0a0aa]"],
+        html.dark .chat-inbox-page [class~="text-[#5d5868]"] {
+          color: var(--shadow-text-secondary) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="placeholder:text-[#8e8b96]"]::placeholder,
+        html.dark .chat-inbox-page [class~="placeholder:text-[#94919b]"]::placeholder,
+        html.dark .chat-inbox-page [class~="placeholder:text-[#9a96a2]"]::placeholder {
+          color: var(--shadow-placeholder) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="bg-[#efeff3]"],
+        html.dark .chat-inbox-page [class~="bg-[#e9e9ee]"],
+        html.dark .chat-inbox-page [class~="bg-[#eeeef2]"],
+        html.dark .chat-inbox-page [class~="bg-[#eeeeF2]"],
+        html.dark .chat-inbox-page [class~="bg-[#f0eff3]"],
+        html.dark .chat-inbox-page [class~="bg-[#f0f0f3]"],
+        html.dark .chat-inbox-page [class~="bg-[#f1f1f4]"],
+        html.dark .chat-inbox-page [class~="bg-[#f2f2f4]"],
+        html.dark .chat-inbox-page [class~="bg-[#f3f2f6]"],
+        html.dark .chat-inbox-page [class~="bg-[#f3f3f6]"],
+        html.dark .chat-inbox-page [class~="bg-[#f3f4f6]"],
+        html.dark .chat-inbox-page [class~="bg-[#f4f4f5]"],
+        html.dark .chat-inbox-page [class~="bg-[#f4f4f6]"],
+        html.dark .chat-inbox-page [class~="bg-[#f4f4f7]"],
+        html.dark .chat-inbox-page [class~="bg-[#f5f5f5]"],
+        html.dark .chat-inbox-page [class~="bg-[#f5f5f7]"],
+        html.dark .chat-inbox-page [class~="bg-[#f6f6f8]"],
+        html.dark .chat-inbox-page [class~="bg-[#faf9fc]"] {
+          background-color: var(--shadow-bg-soft) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="bg-[#f2edff]"],
+        html.dark .chat-inbox-page [class~="bg-[#f4f1fb]"],
+        html.dark .chat-inbox-page [class~="bg-[#f6f2ff]"],
+        html.dark .chat-inbox-page [class~="bg-[#f6f3fb]"] {
+          background-color: rgb(124 58 237 / 0.14) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="bg-[#eef8f0]"] {
+          background-color: rgb(34 197 94 / 0.12) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="bg-[#fff0f1]"],
+        html.dark .chat-inbox-page [class~="bg-[#fff1f1]"] {
+          background-color: rgb(229 72 77 / 0.12) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="text-[#c7353d]"],
+        html.dark .chat-inbox-page [class~="text-[#d13a42]"] {
+          color: #fca5a5 !important;
+        }
+
+        html.dark .chat-inbox-page [class~="border-white"] {
+          border-color: var(--shadow-bg-surface) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="border-[#e8e5ee]"],
+        html.dark .chat-inbox-page [class~="border-[#ececef]"],
+        html.dark .chat-inbox-page [class~="border-[#ececf0]"],
+        html.dark .chat-inbox-page [class~="border-[#eeeeF2]"],
+        html.dark .chat-inbox-page [class~="border-[#f0f0f3]"],
+        html.dark .chat-inbox-page [class~="border-[#f4f4f6]"],
+        html.dark .chat-inbox-page [class~="border-[#e4e4e8]"],
+        html.dark .chat-inbox-page [class~="border-[#ddd9e6]"],
+        html.dark .chat-inbox-page [class~="border-[#d8d6df]"],
+        html.dark .chat-inbox-page [class~="border-[#d6d4dc]"] {
+          border-color: var(--shadow-border) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="bg-[#d6d4dc]"],
+        html.dark .chat-inbox-page [class~="bg-[#d7d7dc]"] {
+          background-color: var(--shadow-border-strong) !important;
+        }
+
+        html.dark .chat-inbox-page [class~="active:bg-[#f2f2f4]"]:active,
+        html.dark .chat-inbox-page [class~="active:bg-[#f3f2f6]"]:active,
+        html.dark .chat-inbox-page [class~="active:bg-[#f3f4f6]"]:active,
+        html.dark .chat-inbox-page [class~="active:bg-[#f4f2f8]"]:active,
+        html.dark .chat-inbox-page [class~="active:bg-[#f4f4f5]"]:active,
+        html.dark .chat-inbox-page [class~="active:bg-[#f5f5f7]"]:active,
+        html.dark .chat-inbox-page [class~="active:bg-[#ececf0]"]:active,
+        html.dark .chat-inbox-page [class~="hover:bg-[#faf9fc]"]:hover {
+          background-color: var(--shadow-bg-hover) !important;
+        }
+
+        html.dark .chat-inbox-page input,
+        html.dark .chat-inbox-page textarea {
+          color: var(--shadow-text-primary);
+          caret-color: var(--shadow-text-primary);
+        }
+
+        html.dark .chat-inbox-page [class~="bg-[#f4f4f7]"][class*="input"],
+        html.dark .chat-inbox-page input[class~="bg-[#f4f4f7]"],
+        html.dark .chat-inbox-page textarea[class~="bg-[#faf9fc]"] {
+          background-color: var(--shadow-input-bg) !important;
+          border-color: var(--shadow-border) !important;
+        }
+      `}</style>
 
       <header className="sticky top-0 z-[70] bg-white/95 backdrop-blur-xl">
         <div
