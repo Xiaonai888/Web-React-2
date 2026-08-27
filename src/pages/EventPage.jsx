@@ -916,8 +916,9 @@ export default function EventPage() {
   const [eventNow, setEventNow] =
     useState(() => new Date())
   const [selectedActiveEvent, setSelectedActiveEvent] =
-    useState('')
-  const topAuthorsScrollRef = useRef(null)
+  useState('')
+const [managedEventCount, setManagedEventCount] = useState(0)
+const topAuthorsScrollRef = useRef(null)
   const topAuthorsDraggingRef = useRef(false)
   const topAuthorsDragMovedRef = useRef(false)
   const topAuthorsStartXRef = useRef(0)
@@ -1569,7 +1570,7 @@ const activeEvents = [
           <MonthlyVoteTab />
         ) : (
   <>
-    <ManagedEventsSection />
+    <ManagedEventsSection onCountChange={setManagedEventCount} />
 
     {selectedActiveEvent === 'writer-wednesday' ? (
     <WriterWednesdayEventCard />
@@ -1586,7 +1587,7 @@ const activeEvents = [
   />
 ) : null}
 
-{activeEvents.length === 0 ? (
+{activeEvents.length === 0 && managedEventCount === 0 ? (
   <div className="mt-4 flex aspect-square w-full items-center justify-center rounded-[24px] border border-[#ECE8F3] bg-[#F8F8FA] text-[14px] font-bold text-[#8B909B]">
     No event right now
   </div>
