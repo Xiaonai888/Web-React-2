@@ -4,6 +4,7 @@ import { addStoryLanguageParam } from '../utils/storyLanguage'
 import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 import Author49DayEventCard from '../components/events/Author49DayEventCard'
+import ManagedEventsSection from '../components/events/ManagedEventsSection'
 import MonthlyVoteTab from './Event/MonthlyVoteTab'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
@@ -1567,8 +1568,10 @@ const activeEvents = [
         ) : activeTab === 'vote' ? (
           <MonthlyVoteTab />
         ) : (
-          <>
-  {selectedActiveEvent === 'writer-wednesday' ? (
+  <>
+    <ManagedEventsSection />
+
+    {selectedActiveEvent === 'writer-wednesday' ? (
     <WriterWednesdayEventCard />
   ) : null}
 
