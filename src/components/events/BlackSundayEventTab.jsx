@@ -12,10 +12,10 @@ function getCambodiaDate(value = new Date()) {
 }
 
 const BENEFITS = [
-  { icon: 'fa-gem', label: 'Diamonds', color: 'text-[#7C3AED]', bg: 'bg-[#F1EAFE]' },
-  { icon: 'fa-coins', label: 'Coins', color: 'text-[#E9A400]', bg: 'bg-[#FFF6D8]' },
-  { icon: 'fa-tag', label: '10% Off', color: 'text-[#F05275]', bg: 'bg-[#FFE8EF]' },
-  { icon: 'fa-calendar-days', label: 'Every Sunday', color: 'text-[#4F86F7]', bg: 'bg-[#EAF1FF]' },
+  { icon: 'fa-gem', label: 'Diamonds', color: 'text-[#7C3AED] dark:text-violet-300', bg: 'bg-[#F1EAFE] dark:bg-violet-500/15' },
+  { icon: 'fa-coins', label: 'Coins', color: 'text-[#E9A400] dark:text-amber-300', bg: 'bg-[#FFF6D8] dark:bg-amber-500/15' },
+  { icon: 'fa-tag', label: '10% Off', color: 'text-[#F05275] dark:text-rose-300', bg: 'bg-[#FFE8EF] dark:bg-rose-500/15' },
+  { icon: 'fa-calendar-days', label: 'Every Sunday', color: 'text-[#4F86F7] dark:text-blue-300', bg: 'bg-[#EAF1FF] dark:bg-blue-500/15' },
 ]
 
 const RULES = [
@@ -116,7 +116,7 @@ function BenefitItem({ item }) {
       <span className={`mx-auto flex h-10 w-10 items-center justify-center rounded-[14px] ${item.bg} ${item.color}`}>
         <i className={`fa-solid ${item.icon} text-[18px]`} />
       </span>
-      <div className="mt-2 truncate text-[11px] font-semibold text-[#222536]">
+      <div className="mt-2 truncate text-[11px] font-semibold text-[var(--shadow-text-primary)]">
         {item.label}
       </div>
     </div>
@@ -127,7 +127,7 @@ function LiveEventCard({ now, onExplore }) {
   const countdown = getTimeParts(getEndOfToday(now), now)
 
   return (
-    <section className="overflow-hidden rounded-[26px] border border-[#DAD6E7] bg-white shadow-[0_18px_45px_rgba(41,29,76,0.12)]">
+    <section className="overflow-hidden rounded-[26px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_18px_45px_rgba(41,29,76,0.12)]">
       <div className="relative min-h-[350px] overflow-hidden bg-[linear-gradient(135deg,#19172E_0%,#22163E_58%,#060608_100%)] px-5 pb-6 pt-5 text-white">
         <div
           className="absolute right-0 top-0 h-full w-[45%] bg-black"
@@ -173,7 +173,7 @@ function LiveEventCard({ now, onExplore }) {
         </div>
       </div>
 
-      <div className="bg-white px-4 pb-4 pt-4">
+      <div className="bg-[var(--shadow-bg-surface)] px-4 pb-4 pt-4">
         <div className="grid grid-cols-4 gap-2">
           {BENEFITS.map((item) => (
             <BenefitItem key={item.label} item={item} />
@@ -225,10 +225,10 @@ function NoEventTodayCard({ nextEvent, countdown }) {
 
 function UpcomingEventCard({ eventDate, countdown }) {
   return (
-    <section className="rounded-[22px] border border-[#ECE8F3] bg-white p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]">
+    <section className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]">
       <div className="flex items-center gap-4">
         <div className="flex h-[112px] w-[112px] shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(145deg,#F5EFFF,#FFF8F0)]">
-          <div className="relative flex h-[78px] w-[70px] flex-col items-center rounded-[17px] bg-white pt-5 shadow-[0_10px_22px_rgba(124,58,237,0.16)] ring-1 ring-[#E7D9FF]">
+          <div className="relative flex h-[78px] w-[70px] flex-col items-center rounded-[17px] bg-[var(--shadow-bg-surface)] pt-5 shadow-[0_10px_22px_rgba(124,58,237,0.16)] ring-1 ring-[var(--shadow-border)]">
             <span className="absolute -top-2 left-3 h-4 w-2 rounded-full bg-[#7C3AED]" />
             <span className="absolute -top-2 right-3 h-4 w-2 rounded-full bg-[#7C3AED]" />
             <i className="fa-solid fa-star text-[27px] text-[#8B5CF6]" />
@@ -240,11 +240,11 @@ function UpcomingEventCard({ eventDate, countdown }) {
             Next Event
           </div>
 
-          <h3 className="mt-3 text-[18px] font-black text-[#17182A]">
+          <h3 className="mt-3 text-[18px] font-black text-[var(--shadow-text-primary)]">
             Next Black Sunday
           </h3>
 
-          <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-[#7D8290]">
+          <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
             <i className="fa-regular fa-calendar text-[#8B5CF6]" />
             <span>{formatEventDate(eventDate)}</span>
           </div>
@@ -265,7 +265,7 @@ function UpcomingEventCard({ eventDate, countdown }) {
 
 function HowItWorksCard() {
   return (
-    <section className="mt-4 rounded-[22px] border border-[#ECE8F3] bg-white p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]">
+    <section className="mt-4 rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]">
       <div className="flex items-center gap-4">
         <div className="flex h-[112px] w-[112px] shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(145deg,#FFF4EC,#F5EFFF)]">
           <span className="flex h-[70px] w-[70px] items-center justify-center rounded-[20px] bg-[#7C3AED] text-[30px] text-[#FFD85C] shadow-[0_12px_26px_rgba(124,58,237,0.22)]">
@@ -274,11 +274,11 @@ function HowItWorksCard() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-[18px] font-black text-[#17182A]">How it works</h3>
+          <h3 className="text-[18px] font-black text-[var(--shadow-text-primary)]">How it works</h3>
 
           <div className="mt-3 space-y-2">
             {RULES.map((rule) => (
-              <div key={rule} className="flex items-start gap-2 text-[11px] font-semibold leading-5 text-[#696F7C]">
+              <div key={rule} className="flex items-start gap-2 text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
                 <i className="fa-regular fa-circle-check mt-1 text-[12px] text-[#7C3AED]" />
                 <span>{rule}</span>
               </div>
@@ -376,7 +376,7 @@ export default function BlackSundayEventTab({
               <i className="fa-regular fa-calendar-days text-[14px]" />
             </span>
 
-            <h2 className="text-[21px] font-black text-[#17182A]">
+            <h2 className="text-[21px] font-black text-[var(--shadow-text-primary)]">
               Upcoming
             </h2>
 
@@ -394,7 +394,7 @@ export default function BlackSundayEventTab({
             <HowItWorksCard />
           </div>
 
-          <div className="mt-4 flex items-center gap-2 px-2 text-[10px] font-semibold text-[#8B909B]">
+          <div className="mt-4 flex items-center gap-2 px-2 text-[10px] font-semibold text-[var(--shadow-text-secondary)]">
             <i className="fa-solid fa-shield-halved text-[#22C55E]" />
             Discount is applied automatically when an eligible episode is unlocked.
           </div>
