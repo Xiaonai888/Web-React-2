@@ -168,7 +168,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
     <>
       <style>{`.reader-discover-scroll::-webkit-scrollbar{display:none}.reader-discover-scroll{-ms-overflow-style:none;scrollbar-width:none}`}</style>
 
-      <section className="mt-5 border-t border-[#f0eef6] pt-4">
+      <section className="mt-5 border-t border-[var(--shadow-border)] pt-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-[15px] font-semibold text-[#111827]">Discover people</h2>
 
