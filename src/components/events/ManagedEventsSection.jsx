@@ -18,7 +18,7 @@ function openEventLink(url, navigate) {
   navigate(target.startsWith('/') ? target : `/${target}`)
 }
 
-export default function ManagedEventsSection() {
+export default function ManagedEventsSection({ onCountChange }) {
   const navigate = useNavigate()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -36,20 +36,27 @@ export default function ManagedEventsSection() {
         }
 
         if (!ignore) {
-          setEvents(Array.isArray(data.events) ? data.events : [])
-        }
+  const list = Array.isArray(data.events) ? data.events : []
+  setEvents(list)
+  onCountChange?.(list.length)
+}
       } catch {
-        if (!ignore) setEvents([])
+  if (!ignore) {
+    setEvents([])
+    onCountChange?.(0)
+  }
       } finally {
         if (!ignore) setLoading(false)
       }
     }
 
     loadEvents()
+const timer = window.setInterval(loadEvents, 60000)
 
-    return () => {
-      ignore = true
-    }
+return () => {
+  ignore = true
+  window.clearInterval(timer)
+}
   }, [])
 
   if (loading) {
