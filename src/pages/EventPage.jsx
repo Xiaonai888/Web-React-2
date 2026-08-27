@@ -109,7 +109,7 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
       onKeyDown={(event) => {
         if (event.key === 'Enter') onOpen(author)
       }}
-      className="relative min-w-[132px] overflow-hidden rounded-[18px] border border-[#e9edf3] bg-white px-3 pb-4 pt-5 text-center shadow-sm active:scale-[0.98]"
+      className="relative min-w-[132px] overflow-hidden rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 pb-4 pt-5 text-center shadow-sm active:scale-[0.98]"
     >
       <div
         className={`absolute left-0 top-0 z-10 flex h-[48px] w-[30px] flex-col items-center justify-start pt-2 ${rankBadgeClasses[rank] || 'bg-[#A0A7B4] text-white'}`}
@@ -120,7 +120,7 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
       </div>
 
       <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center">
-        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#f4f5f7] text-[18px] font-black text-[#111827] ring-1 ring-[#e5e7eb]">
+        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[18px] font-black text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
           {avatarUrl ? (
             <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
           ) : (
@@ -129,10 +129,10 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
         </div>
       </div>
 
-      <div className="line-clamp-1 text-[12px] font-black text-[#111827]">{name}</div>
-      <div className="mt-1 line-clamp-1 text-[10px] font-bold text-[#8b93a1]">@{username}</div>
-      <div className="mt-2 text-[10px] font-extrabold text-[#111827]">{followers} followers</div>
-      <div className="mt-1 text-[10px] font-semibold text-[#6b7280]">{worksLabel}</div>
+      <div className="line-clamp-1 text-[12px] font-black text-[var(--shadow-text-primary)]">{name}</div>
+      <div className="mt-1 line-clamp-1 text-[10px] font-bold text-[var(--shadow-text-secondary)]">@{username}</div>
+      <div className="mt-2 text-[10px] font-extrabold text-[var(--shadow-text-primary)]">{followers} followers</div>
+      <div className="mt-1 text-[10px] font-semibold text-[var(--shadow-text-secondary)]">{worksLabel}</div>
 
       <button
         type="button"
@@ -148,7 +148,7 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
           onFollow(author)
         }}
         className={`mt-3 w-full rounded-full py-2 text-[10px] font-black active:scale-95 disabled:opacity-60 ${
-          author?.is_following ? 'bg-[#f3f4f6] text-[#111827]' : 'bg-black text-white'
+          author?.is_following ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]' : 'bg-black text-white dark:bg-white dark:text-[#111827]'
         }`}
       >
         {loading ? '...' : buttonLabel}
@@ -229,11 +229,11 @@ function MostReadBookCard({ book, rank, onOpen }) {
         </div>
       </div>
 
-      <h3 className="mt-2 block w-full overflow-hidden whitespace-nowrap text-ellipsis text-[13px] font-extrabold leading-[19px] text-[#111827]">
+      <h3 className="mt-2 block w-full overflow-hidden whitespace-nowrap text-ellipsis text-[13px] font-extrabold leading-[19px] text-[var(--shadow-text-primary)]">
         {book.title}
       </h3>
 
-      <div className="mt-1 flex items-center gap-1 text-[12px] font-medium text-[#111827]">
+      <div className="mt-1 flex items-center gap-1 text-[12px] font-medium text-[var(--shadow-text-primary)]">
         <span className="text-[#EF4444]">
           <FireSolidIcon />
         </span>
@@ -330,12 +330,12 @@ function MostReadThisWeekSection() {
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between">
-        <h3 className="text-[19px] font-extrabold text-[#111827]">Most Read This Week</h3>
+        <h3 className="text-[19px] font-extrabold text-[var(--shadow-text-primary)]">Most Read This Week</h3>
 
         <button
           type="button"
           onClick={() => navigate('/most-read-this-week')}
-          className="flex h-7 w-7 items-center justify-center rounded-full text-[#9ca3af] active:scale-95"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--shadow-text-tertiary)] active:scale-95"
         >
           <i className="fas fa-chevron-right text-[15px]" />
         </button>
@@ -345,9 +345,9 @@ function MostReadThisWeekSection() {
         <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto pb-2">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index} className="w-[116px] shrink-0 sm:w-[130px]">
-              <div className="aspect-[2/3] animate-pulse rounded-[10px] bg-[#f3f4f6]" />
-              <div className="mt-2 h-4 animate-pulse rounded-full bg-[#f3f4f6]" />
-              <div className="mt-2 h-3 w-16 animate-pulse rounded-full bg-[#f3f4f6]" />
+              <div className="aspect-[2/3] animate-pulse rounded-[10px] bg-[var(--shadow-bg-soft)]" />
+              <div className="mt-2 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+              <div className="mt-2 h-3 w-16 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
             </div>
           ))}
         </div>
@@ -378,8 +378,8 @@ function MostReadThisWeekSection() {
 function SectionHeader({ title, onMore }) {
   return (
     <div className="mt-8 flex items-center justify-between">
-      <h3 className="text-[19px] font-extrabold text-[#111827]">{title}</h3>
-      <button type="button" onClick={onMore} className="flex h-7 w-7 items-center justify-center rounded-full text-[#9ca3af] active:scale-95">
+      <h3 className="text-[19px] font-extrabold text-[var(--shadow-text-primary)]">{title}</h3>
+      <button type="button" onClick={onMore} className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--shadow-text-tertiary)] active:scale-95">
         <i className="fas fa-chevron-right text-[15px]" />
       </button>
     </div>
@@ -470,7 +470,7 @@ function EventSlideBanner() {
   if (loading) {
     return (
       <div className="-mx-4 w-[calc(100%+2rem)] overflow-hidden md:mx-0 md:w-full">
-        <div className="flex aspect-[16/9] w-full items-center justify-center bg-[#f4f5f7] text-[14px] font-bold text-[#8d94a1] md:rounded-[20px]">
+        <div className="flex aspect-[16/9] w-full items-center justify-center bg-[var(--shadow-bg-soft)] text-[14px] font-bold text-[var(--shadow-text-secondary)] md:rounded-[20px]">
           Loading slides...
         </div>
       </div>
@@ -608,7 +608,7 @@ function AuthorCenterBannerSlider() {
 
   if (loading) {
     return (
-      <div className="mt-4 flex aspect-[3/1] w-full items-center justify-center rounded-[16px] bg-[#f4f5f7] text-[13px] font-bold text-[#8d94a1]">
+      <div className="mt-4 flex aspect-[3/1] w-full items-center justify-center rounded-[16px] bg-[var(--shadow-bg-soft)] text-[13px] font-bold text-[var(--shadow-text-secondary)]">
         Loading banners...
       </div>
     )
@@ -710,10 +710,10 @@ function ActiveEventPicker({
               key={event.id}
               type="button"
               onClick={() => onSelect(event.id)}
-              className={`w-[68%] shrink-0 snap-start overflow-hidden rounded-[18px] border bg-white p-3 text-left shadow-sm transition active:scale-[0.98] ${
+              className={`w-[68%] shrink-0 snap-start overflow-hidden rounded-[18px] border bg-[var(--shadow-bg-surface)] p-3 text-left shadow-sm transition active:scale-[0.98] ${
                 selected
                   ? 'border-[#F6B800] ring-2 ring-[#F6B800]/20'
-                  : 'border-[#E8EAF0]'
+                  : 'border-[var(--shadow-border)]'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -740,11 +740,11 @@ function ActiveEventPicker({
                     {event.label}
                   </div>
 
-                  <div className="mt-1 line-clamp-2 text-[15px] font-black leading-5 text-[#111827]">
+                  <div className="mt-1 line-clamp-2 text-[15px] font-black leading-5 text-[var(--shadow-text-primary)]">
                     {event.title}
                   </div>
 
-                  <div className="mt-1 text-[10px] font-semibold text-[#8B909B]">
+                  <div className="mt-1 text-[10px] font-semibold text-[var(--shadow-text-secondary)]">
                     {selected
                       ? 'Showing now'
                       : 'Tap to view'}
@@ -766,14 +766,14 @@ function ActiveEventPicker({
               aria-label={`View ${event.title}`}
               className={`h-1.5 rounded-full transition-all ${
                 event.id === selectedId
-                  ? 'w-5 bg-[#111827]'
-                  : 'w-1.5 bg-[#D8DBE2]'
+                  ? 'w-5 bg-[#111827] dark:bg-white'
+                  : 'w-1.5 bg-[var(--shadow-border-strong)]'
               }`}
             />
           ))}
         </div>
       ) : (
-        <div className="mt-2 text-center text-[11px] font-bold text-[#8B909B]">
+        <div className="mt-2 text-center text-[11px] font-bold text-[var(--shadow-text-secondary)]">
           {activeIndex + 1} / {events.length}
         </div>
       )}
@@ -833,7 +833,7 @@ function UpcomingEventsSection({ events, now }) {
           <i className="fa-regular fa-calendar-days text-[14px]" />
         </span>
 
-        <h2 className="text-[21px] font-black text-[#17182A]">
+        <h2 className="text-[21px] font-black text-[var(--shadow-text-primary)]">
           Upcoming
         </h2>
 
@@ -853,7 +853,7 @@ function UpcomingEventsSection({ events, now }) {
             return (
               <section
                 key={event.id}
-                className="rounded-[22px] border border-[#ECE8F3] bg-white p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]"
+                className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]"
               >
                 <div className="flex items-center gap-4">
                   <div
@@ -871,11 +871,11 @@ function UpcomingEventsSection({ events, now }) {
                       Next Event
                     </div>
 
-                    <h3 className="mt-2 text-[18px] font-black text-[#17182A]">
+                    <h3 className="mt-2 text-[18px] font-black text-[var(--shadow-text-primary)]">
                       {event.title}
                     </h3>
 
-                    <div className="mt-2 text-[11px] font-semibold text-[#7D8290]">
+                    <div className="mt-2 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
                       {formatUpcomingDate(event.startsAt)}
                     </div>
 
@@ -893,7 +893,7 @@ function UpcomingEventsSection({ events, now }) {
           })}
         </div>
       ) : (
-        <div className="mt-4 rounded-[22px] border border-[#ECE8F3] bg-white px-4 py-8 text-center text-[13px] font-bold text-[#8B909B]">
+        <div className="mt-4 rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-8 text-center text-[13px] font-bold text-[var(--shadow-text-secondary)]">
           No upcoming events
         </div>
       )}
@@ -1273,7 +1273,7 @@ const activeEvents = [
 }
   
   return (
-    <div className="min-h-screen bg-white pb-[92px]">
+    <div className="app-page min-h-screen pb-[92px]">
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -1384,14 +1384,30 @@ const activeEvents = [
           width: 22px;
           border-radius: 999px;
         }
+
+        html.dark .eventSwiper .swiper-pagination-bullet {
+          background: rgba(255, 255, 255, 0.45);
+        }
+
+        html.dark .eventSwiper .swiper-pagination-bullet-active {
+          background: #ffffff;
+        }
+
+        html.dark .author-center-pagination .swiper-pagination-bullet {
+          background: rgba(255, 255, 255, 0.28);
+        }
+
+        html.dark .author-center-pagination .swiper-pagination-bullet-active {
+          background: #ffffff;
+        }
       `}</style>
 
-      <header className="sticky top-0 z-40 border-b border-[#f0f0f0] bg-white px-4 py-3 text-[#111827]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 text-[var(--shadow-text-primary)]">
         <div className="mx-auto flex max-w-[760px] items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#111827] active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
             <i className="fas fa-chevron-left text-[16px]" />
@@ -1401,12 +1417,12 @@ const activeEvents = [
       </header>
 
       <main className="mx-auto max-w-[760px] px-4 py-5">
-        <section className="flex gap-7 border-b border-[#f1f1f1]">
+        <section className="flex gap-7 border-b border-[var(--shadow-border)]">
           <button
             type="button"
             onClick={() => setActiveTab('author')}
             className={`relative pb-3 text-[13px] font-extrabold ${
-              activeTab === 'author' ? 'text-[#111827]' : 'text-[#9ca3af]'
+              activeTab === 'author' ? 'text-[var(--shadow-text-primary)]' : 'text-[var(--shadow-text-tertiary)]'
             }`}
           >
             Author
@@ -1419,7 +1435,7 @@ const activeEvents = [
             type="button"
             onClick={() => setActiveTab('event')}
             className={`relative pb-3 text-[13px] font-extrabold ${
-              activeTab === 'event' ? 'text-[#111827]' : 'text-[#9ca3af]'
+              activeTab === 'event' ? 'text-[var(--shadow-text-primary)]' : 'text-[var(--shadow-text-tertiary)]'
             }`}
           >
             Event
@@ -1431,7 +1447,7 @@ const activeEvents = [
   type="button"
   onClick={() => setActiveTab('vote')}
   className={`relative pb-3 text-[13px] font-extrabold ${
-    activeTab === 'vote' ? 'text-[#111827]' : 'text-[#9ca3af]'
+    activeTab === 'vote' ? 'text-[var(--shadow-text-primary)]' : 'text-[var(--shadow-text-tertiary)]'
   }`}
 >
   Vote
@@ -1455,8 +1471,8 @@ const activeEvents = [
                     disabled={item.label !== 'Write'}
                     className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-extrabold active:scale-95 ${
                       item.type === 'primary'
-                        ? 'bg-black text-white'
-                        : 'border border-[#d8dbe3] bg-white text-[#9ca3af]'
+                        ? 'bg-black text-white dark:bg-white dark:text-[#111827]'
+                        : 'border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-tertiary)]'
                     } ${item.label !== 'Write' ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     <i className={`fas ${item.icon} text-[10px]`} />
@@ -1467,26 +1483,26 @@ const activeEvents = [
             </section>
 
             <section className="py-8 text-center">
-              <h2 className="text-[28px] font-extrabold text-[#111827]">Become A Writer</h2>
+              <h2 className="text-[28px] font-extrabold text-[var(--shadow-text-primary)]">Become A Writer</h2>
 
-              <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-7 text-[#4b5563]">
+              <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-7 text-[var(--shadow-text-secondary)]">
                 Share your stories, build your readers, and grow with Shadow.
               </p>
 
               <div className="mt-6 grid grid-cols-3 gap-3 text-left">
                 {benefitItems.map((item) => (
-                  <div key={item.title} className="rounded-[16px] border border-[#eceaf2] bg-white p-3 shadow-sm">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827]">
+                  <div key={item.title} className="rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 shadow-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
                       <i className={`fas ${item.icon} text-[12px]`} />
                     </div>
-                    <div className="mt-3 text-[12px] font-extrabold text-[#111827]">{item.title}</div>
-                    <div className="mt-1 text-[10px] leading-4 text-[#8d94a1]">{item.text}</div>
+                    <div className="mt-3 text-[12px] font-extrabold text-[var(--shadow-text-primary)]">{item.title}</div>
+                    <div className="mt-1 text-[10px] leading-4 text-[var(--shadow-text-secondary)]">{item.text}</div>
                   </div>
                 ))}
               </div>
 
               {message ? (
-                <div className="mx-auto mt-6 max-w-[520px] rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[13px] font-bold text-[#e5484d]">
+                <div className="mx-auto mt-6 max-w-[520px] rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[13px] font-bold text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
                   {message}
                 </div>
               ) : null}
@@ -1495,12 +1511,12 @@ const activeEvents = [
                 type="button"
                 onClick={handleStartYourWork}
                 aria-busy={loading}
-                className="mx-auto mt-7 flex h-11 w-[78%] max-w-[360px] items-center justify-center rounded-full bg-black text-[16px] font-bold text-white shadow-[0_12px_26px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:bg-[#1b1b1b] active:scale-[0.99]"
+                className="mx-auto mt-7 flex h-11 w-[78%] max-w-[360px] items-center justify-center rounded-full bg-black text-[16px] font-bold text-white shadow-[0_12px_26px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:bg-[#1b1b1b] active:scale-[0.99] dark:bg-white dark:text-[#111827] dark:hover:bg-white/90"
               >
                 Start your work
               </button>
 
-              <div className="mt-4 text-[14px] text-[#111827]">
+              <div className="mt-4 text-[14px] text-[var(--shadow-text-primary)]">
                 Need help?
                 <button type="button" onClick={() => navigate('/help')} className="ml-1 text-[#0b5cff]">
                   Help Center
@@ -1509,13 +1525,13 @@ const activeEvents = [
             </section>
 
             <section className="pb-8">
-              <h2 className="text-[19px] font-extrabold text-[#111827]">Author Center</h2>
+              <h2 className="text-[19px] font-extrabold text-[var(--shadow-text-primary)]">Author Center</h2>
 
               <AuthorCenterBannerSlider />
 
               <SectionHeader title="Top Authors This Week" onMore={() => navigate('/authors/top')} />
 
-              <p className="mt-2 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+              <p className="mt-2 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
                 Discover popular authors readers are following now.
               </p>
 
@@ -1524,12 +1540,12 @@ const activeEvents = [
                   {Array.from({ length: 6 }).map((_, index) => (
                     <div
                       key={index}
-                      className="min-w-[132px] rounded-[18px] border border-[#f3df9a] bg-[#fffdf7] px-3 py-4 text-center"
+                      className="min-w-[132px] rounded-[18px] border border-[#f3df9a] bg-[#fffdf7] px-3 py-4 text-center dark:border-amber-400/20 dark:bg-amber-500/5"
                     >
-                      <div className="mx-auto mb-3 h-16 w-16 animate-pulse rounded-full bg-[#f3f4f6]" />
-                      <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-[#f3f4f6]" />
-                      <div className="mx-auto mt-2 h-3 w-16 animate-pulse rounded-full bg-[#f3f4f6]" />
-                      <div className="mt-3 h-8 animate-pulse rounded-full bg-[#f3f4f6]" />
+                      <div className="mx-auto mb-3 h-16 w-16 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                      <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                      <div className="mx-auto mt-2 h-3 w-16 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                      <div className="mt-3 h-8 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                     </div>
                   ))}
                 </div>
@@ -1554,9 +1570,9 @@ const activeEvents = [
                   ))}
                 </div>
               ) : (
-                <div className="mt-5 rounded-[18px] border border-[#f3df9a] bg-[#fffdf7] px-4 py-6 text-center">
-                  <div className="text-[14px] font-black text-[#111827]">No top authors yet</div>
-                  <p className="mt-2 text-[12px] font-semibold text-[#8b93a1]">
+                <div className="mt-5 rounded-[18px] border border-[#f3df9a] bg-[#fffdf7] px-4 py-6 text-center dark:border-amber-400/20 dark:bg-amber-500/5">
+                  <div className="text-[14px] font-black text-[var(--shadow-text-primary)]">No top authors yet</div>
+                  <p className="mt-2 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
                     Authors will appear here when ranking data is available.
                   </p>
                 </div>
@@ -1588,7 +1604,7 @@ const activeEvents = [
 ) : null}
 
 {activeEvents.length === 0 && managedEventCount === 0 ? (
-  <div className="mt-4 flex aspect-square w-full items-center justify-center rounded-[24px] border border-[#ECE8F3] bg-[#F8F8FA] text-[14px] font-bold text-[#8B909B]">
+  <div className="mt-4 flex aspect-square w-full items-center justify-center rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] text-[14px] font-bold text-[var(--shadow-text-secondary)]">
     No event right now
   </div>
 ) : null}
