@@ -121,7 +121,7 @@ function ReaderProfileSetupSection({
         {items.map((item) => (
           <article
             key={item.key}
-            className="flex min-h-[250px] w-[218px] shrink-0 snap-start flex-col items-center rounded-[22px] border border-[#eeeaf5] bg-white px-4 pb-4 pt-5 text-center shadow-[0_12px_30px_rgba(76,29,149,0.09)]"
+            className="flex min-h-[250px] w-[218px] shrink-0 snap-start flex-col items-center rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 pb-4 pt-5 text-center shadow-[0_12px_30px_rgba(76,29,149,0.09)]"
           >
             <div className="relative flex h-[72px] w-[72px] items-center justify-center rounded-full border-2 border-[#7c3aed] text-[#7c3aed]">
               <i
