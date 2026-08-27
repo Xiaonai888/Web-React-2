@@ -252,7 +252,7 @@ try {
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate(new URLSearchParams(window.location.search).get('from') === 'me-settings' ? '/me?settings=1' : '/profile')}
               className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:scale-95"
               aria-label="Back to profile"
             >
