@@ -1,16 +1,86 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerProfileOptions', {
+  en: {
+    close: 'Close profile options',
+    restrict: 'Restrict',
+    block: 'Block',
+    report: 'Report',
+    about: 'About this reader',
+    activity: 'See shared activity',
+    hideStory: 'Hide your story',
+    removeFollower: 'Remove follower',
+    copyLink: 'Copy profile URL',
+    shareProfile: 'Share this profile',
+    qrCode: 'QR code',
+  },
+  km: {
+    close: 'បិទជម្រើសប្រវត្តិរូប',
+    restrict: 'ដាក់កម្រិត',
+    block: 'ទប់ស្កាត់',
+    report: 'រាយការណ៍',
+    about: 'អំពីអ្នកអាននេះ',
+    activity: 'មើលសកម្មភាពរួមគ្នា',
+    hideStory: 'លាក់រឿងរបស់អ្នក',
+    removeFollower: 'ដកអ្នកតាមដានចេញ',
+    copyLink: 'ចម្លង URL ប្រវត្តិរូប',
+    shareProfile: 'ចែករំលែកប្រវត្តិរូបនេះ',
+    qrCode: 'QR code',
+  },
+  zh: {
+    close: '关闭个人资料选项',
+    restrict: '限制',
+    block: '屏蔽',
+    report: '举报',
+    about: '关于此读者',
+    activity: '查看共同活动',
+    hideStory: '对其隐藏你的故事',
+    removeFollower: '移除关注者',
+    copyLink: '复制个人资料链接',
+    shareProfile: '分享此个人资料',
+    qrCode: '二维码',
+  },
+  ja: {
+    close: 'プロフィールオプションを閉じる',
+    restrict: '制限する',
+    block: 'ブロック',
+    report: '報告',
+    about: 'この読者について',
+    activity: '共通のアクティビティを見る',
+    hideStory: 'ストーリーを非表示にする',
+    removeFollower: 'フォロワーを削除',
+    copyLink: 'プロフィールURLをコピー',
+    shareProfile: 'このプロフィールを共有',
+    qrCode: 'QRコード',
+  },
+  ko: {
+    close: '프로필 옵션 닫기',
+    restrict: '제한',
+    block: '차단',
+    report: '신고',
+    about: '이 독자 정보',
+    activity: '공유 활동 보기',
+    hideStory: '내 스토리 숨기기',
+    removeFollower: '팔로워 삭제',
+    copyLink: '프로필 URL 복사',
+    shareProfile: '이 프로필 공유',
+    qrCode: 'QR 코드',
+  },
+})
 
 const OPTIONS = [
-  { key: 'restrict', label: 'Restrict' },
-  { key: 'block', label: 'Block' },
-  { key: 'report', label: 'Report', danger: true },
-  { key: 'about', label: 'About this reader' },
-  { key: 'activity', label: 'See shared activity' },
-  { key: 'hide-story', label: 'Hide your story' },
-  { key: 'remove-follower', label: 'Remove follower' },
-  { key: 'copy-link', label: 'Copy profile URL' },
-  { key: 'share-profile', label: 'Share this profile' },
-  { key: 'qr-code', label: 'QR code' },
+  { key: 'restrict', labelKey: 'restrict' },
+  { key: 'block', labelKey: 'block' },
+  { key: 'report', labelKey: 'report', danger: true },
+  { key: 'about', labelKey: 'about' },
+  { key: 'activity', labelKey: 'activity' },
+  { key: 'hide-story', labelKey: 'hideStory' },
+  { key: 'remove-follower', labelKey: 'removeFollower' },
+  { key: 'copy-link', labelKey: 'copyLink' },
+  { key: 'share-profile', labelKey: 'shareProfile' },
+  { key: 'qr-code', labelKey: 'qrCode' },
 ]
 
 export default function ReaderProfileOptionsSheet({
@@ -18,6 +88,7 @@ export default function ReaderProfileOptionsSheet({
   onClose,
   onSelect,
 }) {
+  const { t } = useDisplayTranslation()
   const dragRef = useRef({
     active: false,
     pointerId: null,
@@ -156,7 +227,7 @@ export default function ReaderProfileOptionsSheet({
         type="button"
         onClick={onClose}
         className="absolute inset-0 bg-black/35"
-        aria-label="Close profile options"
+        aria-label={t('readerProfileOptions.close')}
       />
 
       <section
@@ -197,7 +268,7 @@ export default function ReaderProfileOptionsSheet({
                   : 'text-[#111827]'
               }`}
             >
-              {option.label}
+              {t(`readerProfileOptions.${option.labelKey}`)}
             </button>
           ))}
         </div>
