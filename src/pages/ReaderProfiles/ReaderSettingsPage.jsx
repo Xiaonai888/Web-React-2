@@ -346,7 +346,7 @@ function SettingsRow({ item, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(item)}
-      className="flex min-h-[72px] w-full items-center gap-4 px-4 py-3 text-left transition active:bg-[#f7f7f9]"
+      className="flex min-h-[72px] w-full items-center gap-4 px-4 py-3 text-left transition active:bg-[var(--shadow-bg-hover)]"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827]">
   <ReaderSettingsIcon name={item.key} />
@@ -356,12 +356,12 @@ function SettingsRow({ item, onOpen }) {
         <span className="block text-[15px] font-normal text-[#111827]">
           {item.title}
         </span>
-        <span className="mt-1 block text-[12px] font-normal leading-5 text-[#8d94a1]">
+        <span className="mt-1 block text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
           {item.subtitle}
         </span>
       </span>
 
-      <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#a6abb4]" />
+      <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-tertiary)]" />
     </button>
   )
 }
@@ -394,13 +394,13 @@ export default function ReaderSettingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white pb-[calc(28px+env(safe-area-inset-bottom))] text-[#111827]">
-      <header className="sticky top-0 z-40 border-b border-[#eceef2] bg-white/95 backdrop-blur">
+    <main className="app-page min-h-screen pb-[calc(28px+env(safe-area-inset-bottom))] text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate(new URLSearchParams(window.location.search).get('from') === 'me-settings' ? '/me?settings=1' : '/profile', { replace: true })}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             aria-label="Back to profile"
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
@@ -416,9 +416,9 @@ export default function ReaderSettingsPage() {
         {groups.map((group, groupIndex) => (
           <section
             key={group.title}
-            className={groupIndex ? 'border-t-[8px] border-[#f1f2f4]' : ''}
+            className={groupIndex ? 'border-t-[8px] border-[var(--shadow-border)]' : ''}
           >
-            <div className="px-5 pb-2 pt-5 text-[12.5px] font-medium text-[#7d8490]">
+            <div className="px-5 pb-2 pt-5 text-[12.5px] font-medium text-[var(--shadow-text-secondary)]">
   {group.title}
 </div>
 
@@ -434,11 +434,11 @@ export default function ReaderSettingsPage() {
           </section>
         ))}
 
-        <section className="border-t-[8px] border-[#f1f2f4] px-4 py-5">
+        <section className="border-t-[8px] border-[var(--shadow-border)] px-4 py-5">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex min-h-14 w-full items-center gap-4 rounded-[14px] px-1 text-left text-[#dc2626] active:bg-[#fff5f5]"
+            className="flex min-h-14 w-full items-center gap-4 rounded-[14px] px-1 text-left text-[#dc2626] active:bg-[#dc2626]/10"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center">
               <i className="fa-solid fa-arrow-right-from-bracket text-[20px]" />
