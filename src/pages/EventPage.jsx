@@ -917,7 +917,7 @@ export default function EventPage() {
     useState(() => new Date())
   const [selectedActiveEvent, setSelectedActiveEvent] =
   useState('')
-const [managedEventCount, setManagedEventCount] = useState(0)
+const [managedEventCount, setManagedEventCount] = useState(null)
 const topAuthorsScrollRef = useRef(null)
   const topAuthorsDraggingRef = useRef(false)
   const topAuthorsDragMovedRef = useRef(false)
