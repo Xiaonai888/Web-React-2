@@ -1,6 +1,136 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReaderPostCard from './ReaderPostCard'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerProfilePosts', {
+  en: {
+    setupTitle: 'Build your reader space',
+    completed: '{{count}} of 4 completed',
+    nameTitle: 'Add your reader name',
+    nameDescription: 'Choose how readers will know you.',
+    addName: 'Add name',
+    editName: 'Edit name',
+    avatarTitle: 'Add a profile photo',
+    avatarDescription: 'Help people recognize your profile.',
+    addPhoto: 'Add photo',
+    changePhoto: 'Change photo',
+    bioTitle: 'Write your bio',
+    bioDescription: 'Tell readers a little about yourself.',
+    addBio: 'Add bio',
+    editBio: 'Edit bio',
+    followingTitle: 'Find your reading circle',
+    followingDescription: 'Follow readers and authors you enjoy.',
+    explorePeople: 'Explore people',
+    findMore: 'Find more',
+    loadFailed: 'Failed to load posts',
+    noPosts: 'No posts yet',
+    ownEmpty: 'Share your first thought and it will appear here.',
+    otherEmpty: 'This reader has not shared any posts yet.',
+    createPost: 'Create a post',
+  },
+  km: {
+    setupTitle: 'បង្កើតកន្លែងអ្នកអានរបស់អ្នក',
+    completed: 'បានបញ្ចប់ {{count}} ក្នុងចំណោម 4',
+    nameTitle: 'បន្ថែមឈ្មោះអ្នកអាន',
+    nameDescription: 'ជ្រើសឈ្មោះដែលអ្នកអានផ្សេងទៀតនឹងស្គាល់អ្នក។',
+    addName: 'បន្ថែមឈ្មោះ',
+    editName: 'កែឈ្មោះ',
+    avatarTitle: 'បន្ថែមរូបប្រវត្តិរូប',
+    avatarDescription: 'ជួយឱ្យអ្នកដទៃងាយស្គាល់ប្រវត្តិរូបរបស់អ្នក។',
+    addPhoto: 'បន្ថែមរូប',
+    changePhoto: 'ប្តូររូប',
+    bioTitle: 'សរសេរជីវប្រវត្តិខ្លី',
+    bioDescription: 'ប្រាប់អ្នកអានបន្តិចអំពីខ្លួនអ្នក។',
+    addBio: 'បន្ថែមជីវប្រវត្តិ',
+    editBio: 'កែជីវប្រវត្តិ',
+    followingTitle: 'ស្វែងរកសហគមន៍អានរបស់អ្នក',
+    followingDescription: 'តាមដានអ្នកអាន និងអ្នកនិពន្ធដែលអ្នកចូលចិត្ត។',
+    explorePeople: 'ស្វែងរកអ្នកអាន',
+    findMore: 'ស្វែងរកបន្ថែម',
+    loadFailed: 'មិនអាចផ្ទុក Post បានទេ',
+    noPosts: 'មិនទាន់មាន Post',
+    ownEmpty: 'ចែករំលែកគំនិតដំបូងរបស់អ្នក ហើយវានឹងបង្ហាញនៅទីនេះ។',
+    otherEmpty: 'អ្នកអាននេះមិនទាន់បានចែករំលែក Post ទេ។',
+    createPost: 'បង្កើត Post',
+  },
+  zh: {
+    setupTitle: '完善你的读者空间',
+    completed: '已完成 {{count}} / 4',
+    nameTitle: '添加读者名称',
+    nameDescription: '选择其他读者认识你的方式。',
+    addName: '添加名称',
+    editName: '编辑名称',
+    avatarTitle: '添加个人头像',
+    avatarDescription: '帮助其他人识别你的个人资料。',
+    addPhoto: '添加照片',
+    changePhoto: '更换照片',
+    bioTitle: '填写简介',
+    bioDescription: '向读者简单介绍一下自己。',
+    addBio: '添加简介',
+    editBio: '编辑简介',
+    followingTitle: '寻找你的阅读圈',
+    followingDescription: '关注你喜欢的读者和作者。',
+    explorePeople: '发现用户',
+    findMore: '查看更多',
+    loadFailed: '无法加载帖子',
+    noPosts: '暂无帖子',
+    ownEmpty: '分享你的第一个想法，它会显示在这里。',
+    otherEmpty: '该读者还没有分享任何帖子。',
+    createPost: '创建帖子',
+  },
+  ja: {
+    setupTitle: '読者スペースを完成させる',
+    completed: '4 件中 {{count}} 件完了',
+    nameTitle: '読者名を追加',
+    nameDescription: '他の読者に表示する名前を選びます。',
+    addName: '名前を追加',
+    editName: '名前を編集',
+    avatarTitle: 'プロフィール写真を追加',
+    avatarDescription: 'プロフィールを見つけやすくします。',
+    addPhoto: '写真を追加',
+    changePhoto: '写真を変更',
+    bioTitle: '自己紹介を書く',
+    bioDescription: '読者に自分のことを少し紹介しましょう。',
+    addBio: '自己紹介を追加',
+    editBio: '自己紹介を編集',
+    followingTitle: '読書仲間を見つける',
+    followingDescription: '好きな読者や作者をフォローしましょう。',
+    explorePeople: '読者を探す',
+    findMore: 'もっと探す',
+    loadFailed: '投稿を読み込めませんでした',
+    noPosts: 'まだ投稿はありません',
+    ownEmpty: '最初の投稿を共有すると、ここに表示されます。',
+    otherEmpty: 'この読者はまだ投稿していません。',
+    createPost: '投稿を作成',
+  },
+  ko: {
+    setupTitle: '독자 공간 완성하기',
+    completed: '4개 중 {{count}}개 완료',
+    nameTitle: '독자 이름 추가',
+    nameDescription: '다른 독자에게 표시될 이름을 선택하세요.',
+    addName: '이름 추가',
+    editName: '이름 수정',
+    avatarTitle: '프로필 사진 추가',
+    avatarDescription: '사람들이 내 프로필을 쉽게 알아볼 수 있게 하세요.',
+    addPhoto: '사진 추가',
+    changePhoto: '사진 변경',
+    bioTitle: '소개 작성',
+    bioDescription: '독자들에게 자신을 간단히 소개하세요.',
+    addBio: '소개 추가',
+    editBio: '소개 수정',
+    followingTitle: '독서 친구 찾기',
+    followingDescription: '좋아하는 독자와 작가를 팔로우하세요.',
+    explorePeople: '사람 찾기',
+    findMore: '더 찾기',
+    loadFailed: '게시물을 불러오지 못했습니다',
+    noPosts: '아직 게시물이 없습니다',
+    ownEmpty: '첫 생각을 공유하면 여기에 표시됩니다.',
+    otherEmpty: '이 독자는 아직 게시물을 공유하지 않았습니다.',
+    createPost: '게시물 만들기',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -26,6 +156,7 @@ function ReaderProfileSetupSection({
   onEditAvatar,
 }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
 
   const items = [
     {
@@ -34,11 +165,10 @@ function ReaderProfileSetupSection({
         String(user?.name || '').trim()
       ),
       icon: 'fa-regular fa-user',
-      title: 'Add your reader name',
-      description:
-        'Choose how readers will know you.',
-      pendingLabel: 'Add name',
-      completeLabel: 'Edit name',
+      title: t('readerProfilePosts.nameTitle'),
+      description: t('readerProfilePosts.nameDescription'),
+      pendingLabel: t('readerProfilePosts.addName'),
+      completeLabel: t('readerProfilePosts.editName'),
       action: () =>
         navigate('/profile/edit'),
     },
@@ -49,11 +179,10 @@ function ReaderProfileSetupSection({
       ),
       icon:
         'fa-regular fa-circle-user',
-      title: 'Add a profile photo',
-      description:
-        'Help people recognize your profile.',
-      pendingLabel: 'Add photo',
-      completeLabel: 'Change photo',
+      title: t('readerProfilePosts.avatarTitle'),
+      description: t('readerProfilePosts.avatarDescription'),
+      pendingLabel: t('readerProfilePosts.addPhoto'),
+      completeLabel: t('readerProfilePosts.changePhoto'),
       action: () => {
         if (onEditAvatar) {
           onEditAvatar()
@@ -69,11 +198,10 @@ function ReaderProfileSetupSection({
         String(user?.bio || '').trim()
       ),
       icon: 'fa-regular fa-comment',
-      title: 'Write your bio',
-      description:
-        'Tell readers a little about yourself.',
-      pendingLabel: 'Add bio',
-      completeLabel: 'Edit bio',
+      title: t('readerProfilePosts.bioTitle'),
+      description: t('readerProfilePosts.bioDescription'),
+      pendingLabel: t('readerProfilePosts.addBio'),
+      completeLabel: t('readerProfilePosts.editBio'),
       action: () =>
         navigate('/profile/edit'),
     },
@@ -85,11 +213,10 @@ function ReaderProfileSetupSection({
         ) > 0,
       icon:
         'fa-solid fa-user-group',
-      title: 'Find your reading circle',
-      description:
-        'Follow readers and authors you enjoy.',
-      pendingLabel: 'Explore people',
-      completeLabel: 'Find more',
+      title: t('readerProfilePosts.followingTitle'),
+      description: t('readerProfilePosts.followingDescription'),
+      pendingLabel: t('readerProfilePosts.explorePeople'),
+      completeLabel: t('readerProfilePosts.findMore'),
       action: () =>
         navigate(
           '/profile/discover-people'
@@ -106,14 +233,15 @@ function ReaderProfileSetupSection({
     <section className="mt-3 bg-white px-4 pb-7 pt-5 md:rounded-[24px]">
       <div className="mb-4">
         <h2 className="text-[17px] font-semibold text-[#111827]">
-          Build your reader space
+          {t('readerProfilePosts.setupTitle')}
         </h2>
 
         <div className="mt-1 text-[12px] font-normal text-[#8d94a1]">
           <span className="font-semibold text-[#111827]">
-            {completedCount} of 4
-          </span>{' '}
-          completed
+            {t('readerProfilePosts.completed', {
+              count: completedCount,
+            })}
+          </span>
         </div>
       </div>
 
@@ -171,6 +299,7 @@ export default function ReaderProfilePostsPanel({
   onCountChange,
 }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [posts, setPosts] =
     useState([])
   const [loading, setLoading] =
@@ -235,7 +364,7 @@ export default function ReaderProfilePostsPanel({
         ) {
           throw new Error(
             data.message ||
-              'Failed to load posts'
+              t('readerProfilePosts.loadFailed')
           )
         }
 
@@ -257,7 +386,7 @@ export default function ReaderProfilePostsPanel({
         onCountChange?.(0)
         setMessage(
           error.message ||
-            'Failed to load posts'
+            t('readerProfilePosts.loadFailed')
         )
       } finally {
         if (alive) {
@@ -275,6 +404,7 @@ export default function ReaderProfilePostsPanel({
     isOwnProfile,
     navigate,
     onCountChange,
+    t,
     username,
   ])
 
@@ -334,13 +464,13 @@ export default function ReaderProfilePostsPanel({
           </div>
 
           <h2 className="mt-3 text-[15px] font-semibold text-[#111827]">
-            No posts yet
+            {t('readerProfilePosts.noPosts')}
           </h2>
 
           <p className="mx-auto mt-1 max-w-[280px] text-[12px] font-normal leading-5 text-[#8d94a1]">
             {isOwnProfile
-              ? 'Share your first thought and it will appear here.'
-              : 'This reader has not shared any posts yet.'}
+              ? t('readerProfilePosts.ownEmpty')
+              : t('readerProfilePosts.otherEmpty')}
           </p>
 
           {isOwnProfile ? (
@@ -353,7 +483,7 @@ export default function ReaderProfilePostsPanel({
               }
               className="mt-5 h-10 rounded-[12px] bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] px-5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(124,58,237,0.24)]"
             >
-              Create a post
+              {t('readerProfilePosts.createPost')}
             </button>
           ) : null}
         </section>
