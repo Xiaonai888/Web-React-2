@@ -35,14 +35,14 @@ function EmptyState({ type }) {
 
   return (
     <section className="px-4 py-6">
-      <div className="rounded-[24px] bg-white px-5 py-8 text-center ring-1 ring-[#f0eef6]">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff8df] text-[#d49a00] ring-1 ring-[#f6d56b]/50">
+      <div className="rounded-[24px] bg-[var(--shadow-bg-surface)] px-5 py-8 text-center ring-1 ring-[var(--shadow-border)]">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff8df] text-[#d49a00] dark:bg-[#f6b800]/10 dark:text-[#f6d56b] ring-1 ring-[#f6d56b]/50">
           <i className="fa-regular fa-user text-[24px]" />
         </div>
-        <h2 className="mt-4 text-[17px] font-black text-[#111827]">
+        <h2 className="mt-4 text-[17px] font-black text-[var(--shadow-text-primary)]">
           {isFollowers ? 'No followers yet' : 'Not following anyone yet'}
         </h2>
-        <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
+        <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">
           {isFollowers ? 'When people follow this reader, they will appear here.' : 'Accounts this reader follows will appear here.'}
         </p>
       </div>
@@ -68,12 +68,12 @@ function UserRow({ user, type, isOwnList, onOpen, onToggleFollow }) {
   }
 
   return (
-    <button type="button" onClick={() => onOpen(user)} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-[#f7f7fb]">
+    <button type="button" onClick={() => onOpen(user)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-[var(--shadow-bg-hover)]">
       <Avatar item={user} />
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{user.name || user.username}</div>
-        <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">@{user.username}</div>
-        <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#6b7280]">
+        <div className="line-clamp-1 text-[14px] font-black text-[var(--shadow-text-primary)]">{user.name || user.username}</div>
+        <div className="line-clamp-1 text-[12px] font-bold text-[var(--shadow-text-secondary)]">@{user.username}</div>
+        <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
           {user.bio || (user.is_author ? 'Author account' : 'Reader account')}
         </div>
       </div>
@@ -82,7 +82,7 @@ function UserRow({ user, type, isOwnList, onOpen, onToggleFollow }) {
         onClick={handleClick}
         disabled={loading}
         className={`h-9 min-w-[96px] rounded-full px-4 text-[12px] font-black active:scale-[0.98] disabled:opacity-60 ${
-          isFollowing ? 'bg-[#f3f4f6] text-[#111827]' : isFollowBack ? 'bg-[#fff8df] text-[#9a6b00] ring-1 ring-[#f6b800]/45' : 'bg-[#111827] text-white'
+          isFollowing ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]' : isFollowBack ? 'bg-[#fff8df] text-[#9a6b00] ring-1 ring-[#f6b800]/45 dark:bg-[#f6b800]/10 dark:text-[#f6d56b]' : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
         }`}
       >
         {loading ? '...' : label}
@@ -106,18 +106,18 @@ function SuggestedRow({ user, onHide, onOpen, onToggleFollow }) {
   }
 
   return (
-    <button type="button" onClick={() => onOpen(user)} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-[#f7f7fb]">
+    <button type="button" onClick={() => onOpen(user)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-[var(--shadow-bg-hover)]">
       <Avatar item={user} />
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{user.name || user.username}</div>
-        <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">@{user.username}</div>
-        <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#6b7280]">{user.is_author ? 'Suggested author' : 'Suggested reader'}</div>
+        <div className="line-clamp-1 text-[14px] font-black text-[var(--shadow-text-primary)]">{user.name || user.username}</div>
+        <div className="line-clamp-1 text-[12px] font-bold text-[var(--shadow-text-secondary)]">@{user.username}</div>
+        <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">{user.is_author ? 'Suggested author' : 'Suggested reader'}</div>
       </div>
       <button
         type="button"
         onClick={handleFollow}
         disabled={loading}
-        className="h-9 min-w-[86px] rounded-full bg-[#111827] px-4 text-[12px] font-black text-white active:scale-[0.98] disabled:opacity-60"
+        className="h-9 min-w-[86px] rounded-full bg-[#111827] px-4 text-[12px] font-black text-white transition active:scale-[0.98] disabled:opacity-60 dark:bg-white dark:text-[#111827]"
       >
         {loading ? '...' : 'Follow'}
       </button>
@@ -127,7 +127,7 @@ function SuggestedRow({ user, onHide, onOpen, onToggleFollow }) {
           event.stopPropagation()
           onHide(user.id)
         }}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#9ca3af] active:bg-[#f3f4f6]"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-tertiary)] transition active:bg-[var(--shadow-bg-hover)]"
         aria-label="Hide suggestion"
       >
         <i className="fa-solid fa-xmark text-[13px]" />
@@ -142,31 +142,31 @@ function AuthorActionSheet({ author, loading, onClose, onMessage, onMute, onUnfo
   return (
     <div className="fixed inset-0 z-[220] flex items-end justify-center bg-black/35">
       <button type="button" className="absolute inset-0 h-full w-full cursor-default" onClick={onClose} aria-label="Close author menu" />
-      <div className="relative w-full overflow-hidden rounded-t-[24px] bg-white pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-2xl md:max-w-[560px]">
-        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+      <div className="relative w-full overflow-hidden rounded-t-[24px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-2xl md:max-w-[560px]">
+        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)]" />
         <div className="flex items-center gap-3 px-5 py-4">
           <Avatar item={author} />
           <div className="min-w-0 flex-1">
-            <div className="line-clamp-1 text-[15px] font-black text-[#111827]">{author.page_name}</div>
-            <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">@{author.page_username}</div>
+            <div className="line-clamp-1 text-[15px] font-black text-[var(--shadow-text-primary)]">{author.page_name}</div>
+            <div className="line-clamp-1 text-[12px] font-bold text-[var(--shadow-text-secondary)]">@{author.page_username}</div>
           </div>
         </div>
-        <div className="border-t border-[#f0eef6]">
-          <button type="button" onClick={onMessage} className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6]"><i className="fa-regular fa-comment text-[15px]" /></span>
-            <span className="text-[15px] font-bold text-[#111827]">Message Author</span>
+        <div className="border-t border-[var(--shadow-border)]">
+          <button type="button" onClick={onMessage} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]"><i className="fa-regular fa-comment text-[15px]" /></span>
+            <span className="text-[15px] font-bold text-[var(--shadow-text-primary)]">Message Author</span>
           </button>
-          <button type="button" onClick={onMute} className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6]"><i className="fa-regular fa-bell-slash text-[15px]" /></span>
-            <span className="text-[15px] font-bold text-[#111827]">Mute updates</span>
+          <button type="button" onClick={onMute} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]"><i className="fa-regular fa-bell-slash text-[15px]" /></span>
+            <span className="text-[15px] font-bold text-[var(--shadow-text-primary)]">Mute updates</span>
           </button>
-          <button type="button" onClick={onUnfollow} disabled={loading} className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#fff1f1] disabled:opacity-60">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]"><i className="fa-solid fa-user-minus text-[14px]" /></span>
+          <button type="button" onClick={onUnfollow} disabled={loading} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-[#e5484d]/10 disabled:opacity-60">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] dark:bg-[#e5484d]/10"><i className="fa-solid fa-user-minus text-[14px]" /></span>
             <span className="text-[15px] font-bold text-[#e5484d]">{loading ? 'Unfollowing...' : `Unfollow ${author.page_name}`}</span>
           </button>
-          <button type="button" onClick={onReport} className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#fff8df]">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff8df] text-[#9a6b00]"><i className="fa-regular fa-flag text-[15px]" /></span>
-            <span className="text-[15px] font-bold text-[#9a6b00]">Report Page</span>
+          <button type="button" onClick={onReport} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-[#f6b800]/10">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff8df] text-[#9a6b00] dark:bg-[#f6b800]/10 dark:text-[#f6d56b]"><i className="fa-regular fa-flag text-[15px]" /></span>
+            <span className="text-[15px] font-bold text-[#9a6b00] dark:text-[#f6d56b]">Report Page</span>
           </button>
         </div>
       </div>
@@ -177,12 +177,12 @@ function AuthorActionSheet({ author, loading, onClose, onMessage, onMute, onUnfo
 function FollowedAuthorsEmpty() {
   return (
     <section className="px-4 py-8">
-      <div className="rounded-[24px] bg-white px-5 py-10 text-center ring-1 ring-[#f0eef6]">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff8df] text-[#d49a00] ring-1 ring-[#f6d56b]/50">
+      <div className="rounded-[24px] bg-[var(--shadow-bg-surface)] px-5 py-10 text-center ring-1 ring-[var(--shadow-border)]">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff8df] text-[#d49a00] dark:bg-[#f6b800]/10 dark:text-[#f6d56b] ring-1 ring-[#f6d56b]/50">
           <i className="fa-solid fa-feather-pointed text-[23px]" />
         </div>
-        <h2 className="mt-4 text-[17px] font-black text-[#111827]">No followed authors yet</h2>
-        <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-semibold leading-6 text-[#8b93a1]">Author pages you follow will appear here.</p>
+        <h2 className="mt-4 text-[17px] font-black text-[var(--shadow-text-primary)]">No followed authors yet</h2>
+        <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">Author pages you follow will appear here.</p>
       </div>
     </section>
   )
@@ -190,14 +190,14 @@ function FollowedAuthorsEmpty() {
 
 function FollowedAuthorRow({ author, onOpen, onMenu }) {
   return (
-    <button type="button" onClick={() => onOpen(author)} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-[#f7f7fb]">
+    <button type="button" onClick={() => onOpen(author)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-[var(--shadow-bg-hover)]">
       <Avatar item={author} />
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{author.page_name}</div>
-        <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">
+        <div className="line-clamp-1 text-[14px] font-black text-[var(--shadow-text-primary)]">{author.page_name}</div>
+        <div className="line-clamp-1 text-[12px] font-bold text-[var(--shadow-text-secondary)]">
           @{author.page_username} · {Number(author.total_followers || 0).toLocaleString()} {Number(author.total_followers || 0) === 1 ? 'follower' : 'followers'}
         </div>
-        <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#6b7280]">{Number(author.total_stories || 0).toLocaleString()} works</div>
+        <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">{Number(author.total_stories || 0).toLocaleString()} works</div>
       </div>
       <button
         type="button"
@@ -205,7 +205,7 @@ function FollowedAuthorRow({ author, onOpen, onMenu }) {
           event.stopPropagation()
           onMenu(author)
         }}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] transition active:bg-[var(--shadow-bg-hover)]"
         aria-label="Author actions"
       >
         <i className="fa-solid fa-ellipsis text-[16px]" />
@@ -217,32 +217,32 @@ function FollowedAuthorRow({ author, onOpen, onMenu }) {
 function FollowedAuthorsTab({ authors, total, sort, loading, message, selectedAuthor, actionLoading, onSortChange, onOpenAuthor, onOpenMenu, onCloseMenu, onMessage, onMute, onUnfollow, onReport }) {
   return (
     <section>
-      <div className="flex items-center justify-between border-b border-[#f0eef6] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[var(--shadow-border)] px-4 py-3">
         <div>
-          <div className="text-[13px] font-black text-[#111827]">{sort === 'popular' ? 'Popular' : sort === 'updated' ? 'Most Updated' : 'Recent'}</div>
-          <div className="text-[11px] font-bold text-[#9ca3af]">{Number(total || 0).toLocaleString()} followed authors</div>
+          <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">{sort === 'popular' ? 'Popular' : sort === 'updated' ? 'Most Updated' : 'Recent'}</div>
+          <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{Number(total || 0).toLocaleString()} followed authors</div>
         </div>
-        <select value={sort} onChange={(event) => onSortChange(event.target.value)} className="h-9 rounded-full bg-[#f5f3fa] px-3 text-[12px] font-black text-[#111827] outline-none">
+        <select value={sort} onChange={(event) => onSortChange(event.target.value)} className="h-9 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-black text-[var(--shadow-text-primary)] outline-none">
           <option value="recent">Recent</option>
           <option value="popular">Popular</option>
           <option value="updated">Most Updated</option>
         </select>
       </div>
-      {message ? <div className="mx-4 mt-4 rounded-[16px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">{message}</div> : null}
+      {message ? <div className="mx-4 mt-4 rounded-[16px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d] dark:bg-[#e5484d]/10">{message}</div> : null}
       {loading ? (
         <div className="space-y-3 px-4 py-5">
           {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="flex items-center gap-3">
-              <div className="h-12 w-12 animate-pulse rounded-full bg-[#f3f4f6]" />
+              <div className="h-12 w-12 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
               <div className="min-w-0 flex-1">
-                <div className="h-4 w-32 animate-pulse rounded-full bg-[#f3f4f6]" />
-                <div className="mt-2 h-3 w-24 animate-pulse rounded-full bg-[#f3f4f6]" />
+                <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                <div className="mt-2 h-3 w-24 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
               </div>
             </div>
           ))}
         </div>
       ) : authors.length ? (
-        <div className="divide-y divide-[#f0eef6]">
+        <div className="divide-y divide-[var(--shadow-border)]">
           {authors.map((author) => (
             <FollowedAuthorRow key={author.id} author={author} onOpen={onOpenAuthor} onMenu={onOpenMenu} />
           ))}
@@ -483,27 +483,27 @@ export default function ProfileFollowListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[92px]">
+    <div className="app-page min-h-screen pb-[92px]">
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
-      <main className="mx-auto min-h-screen w-full bg-white md:max-w-[560px] md:border-x md:border-[#eceaf2]">
-        <header className="sticky top-0 z-30 border-b border-[#f0eef6] bg-white/95 backdrop-blur">
+      <main className="mx-auto min-h-screen w-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] md:max-w-[560px] md:border-x md:border-[var(--shadow-border)]">
+        <header className="sticky top-0 z-30 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
           <div className="flex items-center gap-3 px-4 py-3">
-            <button type="button" onClick={handleBackToProfile} className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:scale-95" aria-label="Go back">
+            <button type="button" onClick={handleBackToProfile} className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]" aria-label="Go back">
               <i className="fas fa-chevron-left text-[16px]" />
             </button>
             <div className="min-w-0 flex-1">
-              <h1 className="line-clamp-1 text-[17px] font-black text-[#111827]">@{username}</h1>
-              <p className="mt-0.5 text-[11px] font-bold text-[#9ca3af]">Reader connections</p>
+              <h1 className="line-clamp-1 text-[17px] font-black text-[var(--shadow-text-primary)]">@{username}</h1>
+              <p className="mt-0.5 text-[11px] font-bold text-[var(--shadow-text-tertiary)]">Reader connections</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 border-t border-[#f7f7fb] text-center text-[12px] font-black text-[#111827]">
+          <div className="grid grid-cols-3 border-t border-[var(--shadow-border)] text-center text-[12px] font-black text-[var(--shadow-text-primary)]">
   {tabs.map((tab) => (
     <button
       key={tab.key}
       type="button"
       onClick={() => handleTabChange(tab.key)}
       className={`relative py-3 transition ${
-        safeType === tab.key ? 'text-[#111827]' : 'text-[#9ca3af]'
+        safeType === tab.key ? 'text-[var(--shadow-text-primary)]' : 'text-[var(--shadow-text-tertiary)]'
       }`}
     >
       <span className="line-clamp-1">{tab.label}</span>
@@ -514,13 +514,13 @@ export default function ProfileFollowListPage() {
   ))}
 </div>
           <div className="px-4 pb-3">
-            <div className="flex h-11 items-center gap-2 rounded-full bg-[#f5f3fa] px-4">
-              <i className="fas fa-search text-[13px] text-[#8b93a1]" />
+            <div className="flex h-11 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-4">
+              <i className="fas fa-search text-[13px] text-[var(--shadow-text-secondary)]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={isAuthorTab ? 'Search authors' : 'Search readers'}
-                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
+                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)]"
               />
             </div>
           </div>
@@ -546,28 +546,28 @@ export default function ProfileFollowListPage() {
           />
         ) : (
           <>
-            <div className="flex items-center justify-between border-b border-[#f0eef6] px-4 py-3">
+            <div className="flex items-center justify-between border-b border-[var(--shadow-border)] px-4 py-3">
               <div>
-                <div className="text-[13px] font-black text-[#111827]">{order === 'desc' ? 'Recent' : 'Oldest'}</div>
-                <div className="text-[11px] font-bold text-[#9ca3af]">{visibleUsers.length} readers</div>
+                <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">{order === 'desc' ? 'Recent' : 'Oldest'}</div>
+                <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{visibleUsers.length} readers</div>
               </div>
-              <button type="button" onClick={() => setOrder((current) => (current === 'desc' ? 'asc' : 'desc'))} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95" aria-label="Reverse order">
+              <button type="button" onClick={() => setOrder((current) => (current === 'desc' ? 'asc' : 'desc'))} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]" aria-label="Reverse order">
                 <img
   src="/assets/Icons/Revers.svg"
   alt="Reverse"
-  className="h-4 w-4"
+  className="h-4 w-4 dark:invert"
 />
               </button>
             </div>
-            {message ? <button type="button" onClick={() => setMessage('')} className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]">{message}</button> : null}
+            {message ? <button type="button" onClick={() => setMessage('')} className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d] dark:bg-[#e5484d]/10">{message}</button> : null}
             {loading ? (
               <div className="space-y-3 px-4 py-5">
                 {Array.from({ length: 8 }).map((_, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="h-12 w-12 animate-pulse rounded-full bg-[#f3f4f6]" />
+                    <div className="h-12 w-12 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                     <div className="min-w-0 flex-1">
-                      <div className="h-4 w-32 animate-pulse rounded-full bg-[#f3f4f6]" />
-                      <div className="mt-2 h-3 w-24 animate-pulse rounded-full bg-[#f3f4f6]" />
+                      <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                      <div className="mt-2 h-3 w-24 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                     </div>
                   </div>
                 ))}
@@ -575,7 +575,7 @@ export default function ProfileFollowListPage() {
             ) : (
               <>
                 {visibleUsers.length ? (
-                  <div className="divide-y divide-[#f0eef6]">
+                  <div className="divide-y divide-[var(--shadow-border)]">
                     {visibleUsers.map((user) => (
                       <UserRow key={user.id} user={user} type={safeType} isOwnList={isOwnList} onOpen={handleOpenUser} onToggleFollow={handleToggleFollow} />
                     ))}
@@ -583,13 +583,13 @@ export default function ProfileFollowListPage() {
                 ) : (
                   <EmptyState type={safeType} />
                 )}
-                <section className="border-t border-[#f0eef6] py-5">
+                <section className="border-t border-[var(--shadow-border)] py-5">
                   <div className="px-4 pb-3">
-                    <div className="text-[15px] font-black text-[#111827]">Readers you may know</div>
-                    <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">Discover readers and authors from the Shadow community.</p>
+                    <div className="text-[15px] font-black text-[var(--shadow-text-primary)]">Readers you may know</div>
+                    <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">Discover readers and authors from the Shadow community.</p>
                   </div>
                   {visibleSuggestions.length ? (
-                    <div className="divide-y divide-[#f0eef6]">
+                    <div className="divide-y divide-[var(--shadow-border)]">
                       {visibleSuggestions.map((user) => (
                         <SuggestedRow key={user.id} user={user} onOpen={handleOpenUser} onToggleFollow={handleToggleFollow} onHide={(id) => setHiddenSuggestionIds((current) => [...current, id])} />
                       ))}
