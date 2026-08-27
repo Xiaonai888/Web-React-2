@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+
+const GROUP_KEYS = ['account', 'activity', 'interaction', 'appSupport']
 
 const SETTINGS_GROUPS = [
   {
@@ -341,7 +344,7 @@ function ReaderSettingsIcon({ name }) {
   }
 }
 
-function SettingsRow({ item, onOpen }) {
+function SettingsRow({ item, onOpen, t }) {
   return (
     <button
       type="button"
@@ -354,10 +357,10 @@ function SettingsRow({ item, onOpen }) {
 
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-normal text-[var(--shadow-text-primary)]">
-          {item.title}
+          {t(`readerSettings.items.${item.key}.title`, { defaultValue: item.title })}
         </span>
         <span className="mt-1 block text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
-          {item.subtitle}
+          {t(`readerSettings.items.${item.key}.subtitle`, { defaultValue: item.subtitle })}
         </span>
       </span>
 
@@ -368,11 +371,13 @@ function SettingsRow({ item, onOpen }) {
 
 export default function ReaderSettingsPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [message, setMessage] = useState('')
   const groups = useMemo(() => SETTINGS_GROUPS, [])
 
-  function showComingSoon(title) {
-    setMessage(`${title} is coming soon.`)
+  function showComingSoon(item) {
+  const title = t(`readerSettings.items.${item.key}.title`, { defaultValue: item.title })
+  setMessage(t('readerSettings.comingSoon', { title, defaultValue: `${title} is coming soon.` }))
     window.clearTimeout(showComingSoon.timer)
     showComingSoon.timer = window.setTimeout(() => {
       setMessage('')
@@ -385,7 +390,7 @@ export default function ReaderSettingsPage() {
       return
     }
 
-    showComingSoon(item.title)
+    showComingSoon(item)
   }
 
   function handleLogout() {
@@ -401,13 +406,13 @@ export default function ReaderSettingsPage() {
             type="button"
             onClick={() => navigate(new URLSearchParams(window.location.search).get('from') === 'me-settings' ? '/me?settings=1' : '/profile', { replace: true })}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
-            aria-label="Back to profile"
+            aria-label={t('readerSettings.backToProfile')}
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
           </button>
 
           <h1 className="min-w-0 flex-1 truncate text-[18px] font-semibold">
-  Settings and activity
+  {t('readerSettings.title')}
 </h1>
         </div>
       </header>
@@ -415,16 +420,17 @@ export default function ReaderSettingsPage() {
       <div className="mx-auto w-full max-w-[560px]">
         {groups.map((group, groupIndex) => (
           <section
-            key={group.title}
+            key={t(`readerSettings.groups.${GROUP_KEYS[groupIndex]}`, { defaultValue: group.title })}
             className={groupIndex ? 'border-t-[8px] border-[var(--shadow-border)]' : ''}
           >
             <div className="px-5 pb-2 pt-5 text-[12.5px] font-medium text-[var(--shadow-text-secondary)]">
-  {group.title}
+  {t(`readerSettings.groups.${GROUP_KEYS[groupIndex]}`, { defaultValue: group.title })}
 </div>
 
             <div>
               {group.items.map((item) => (
                 <SettingsRow
+                  t={t}
                   key={item.key}
                   item={item}
                   onOpen={handleOpen}
@@ -445,7 +451,7 @@ export default function ReaderSettingsPage() {
             </span>
 
             <span className="text-[16px] font-normal">
-              Log out
+              {t('readerSettings.logout')}
             </span>
           </button>
         </section>
