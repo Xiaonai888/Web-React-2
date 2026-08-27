@@ -348,12 +348,12 @@ function SettingsRow({ item, onOpen }) {
       onClick={() => onOpen(item)}
       className="flex min-h-[72px] w-full items-center gap-4 px-4 py-3 text-left transition active:bg-[var(--shadow-bg-hover)]"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
   <ReaderSettingsIcon name={item.key} />
 </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-normal text-[#111827]">
+        <span className="block text-[15px] font-normal text-[var(--shadow-text-primary)]">
           {item.title}
         </span>
         <span className="mt-1 block text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
