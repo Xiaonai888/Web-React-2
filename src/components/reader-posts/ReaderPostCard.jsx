@@ -415,7 +415,7 @@ function ReaderAvatar({ user }) {
   const name = user?.name || 'Reader'
 
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-semibold text-white">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] text-[14px] font-semibold text-white">
       {user?.avatar_url ? (
         <img
           src={user.avatar_url}
@@ -504,7 +504,7 @@ function ReaderPostImages({
             safeSelectedIndex
           )
         }
-        className="block w-full bg-[#f3f4f6]"
+        className="block w-full bg-[#f3f4f6] dark:bg-[#202331]"
         aria-label="Open photo fullscreen"
       >
         <img
@@ -539,7 +539,7 @@ function ReaderPostImages({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-1 overflow-hidden bg-white">
+    <div className="grid grid-cols-2 gap-1 overflow-hidden bg-white dark:bg-[#171923]">
       {images.map(
         (imageUrl, index) => {
           const isWideLastImage =
@@ -556,8 +556,8 @@ function ReaderPostImages({
               }
               className={
                 isWideLastImage
-                  ? 'col-span-2 aspect-[2/1] bg-[#f3f4f6]'
-                  : 'aspect-square bg-[#f3f4f6]'
+                  ? 'col-span-2 aspect-[2/1] bg-[#f3f4f6] dark:bg-[#202331]'
+                  : 'aspect-square bg-[#f3f4f6] dark:bg-[#202331]'
               }
               aria-label={`Open photo ${
                 index + 1
@@ -599,7 +599,7 @@ function EchoPostPreviewImages({
 
   if (!images.length) {
     return (
-      <div className="flex min-h-0 items-center justify-center bg-[#f3f4f6] text-[#98a2b3]">
+      <div className="flex min-h-0 items-center justify-center bg-[#f3f4f6] dark:bg-[#202331] text-[#98a2b3] dark:text-white/40">
         <i className="fa-regular fa-image text-[28px]" />
       </div>
     )
@@ -607,7 +607,7 @@ function EchoPostPreviewImages({
 
   if (images.length === 1) {
     return (
-      <div className="min-h-0 overflow-hidden bg-[#f3f4f6]">
+      <div className="min-h-0 overflow-hidden bg-[#f3f4f6] dark:bg-[#202331]">
         <img
           src={images[0]}
           alt={alt}
@@ -621,7 +621,7 @@ function EchoPostPreviewImages({
 
   if (images.length === 2) {
     return (
-      <div className="grid min-h-0 grid-cols-2 gap-[2px] bg-white">
+      <div className="grid min-h-0 grid-cols-2 gap-[2px] bg-white dark:bg-[#171923]">
         {images.map((imageUrl) => (
           <img
             key={imageUrl}
@@ -638,7 +638,7 @@ function EchoPostPreviewImages({
 
   if (images.length === 3) {
     return (
-      <div className="grid min-h-0 grid-cols-2 gap-[2px] bg-white">
+      <div className="grid min-h-0 grid-cols-2 gap-[2px] bg-white dark:bg-[#171923]">
         <img
           src={images[0]}
           alt={alt}
@@ -672,7 +672,7 @@ function EchoPostPreviewImages({
   )
 
   return (
-    <div className="grid min-h-0 grid-cols-2 grid-rows-2 gap-[2px] bg-white">
+    <div className="grid min-h-0 grid-cols-2 grid-rows-2 gap-[2px] bg-white dark:bg-[#171923]">
       {visibleImages.map(
         (imageUrl, index) => (
           <div
@@ -713,13 +713,13 @@ function ReaderEchoMenuItem({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left active:bg-black/[0.04]"
+      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left active:bg-black/[0.04] dark:active:bg-white/[0.06]"
     >
       <span
         className={`flex h-9 w-9 shrink-0 items-center justify-center ${
           danger
             ? 'text-[#e5484d]'
-            : 'text-[#111827]'
+            : 'text-[#111827] dark:text-[#f8fafc]'
         }`}
       >
         <i className={`${icon} text-[17px]`} />
@@ -729,7 +729,7 @@ function ReaderEchoMenuItem({
         className={`text-[14px] font-normal ${
           danger
             ? 'text-[#e5484d]'
-            : 'text-[#111827]'
+            : 'text-[#111827] dark:text-[#f8fafc]'
         }`}
       >
         {title}
@@ -973,10 +973,10 @@ function ReaderEchoSourceBlock({ post }) {
         type="button"
         onClick={openSource}
         disabled={!sourceUrl}
-        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] bg-[#f7f7fa] text-left ring-1 ring-black/10 active:scale-[0.995] disabled:cursor-default"
+        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] bg-[#f7f7fa] dark:bg-[#1c1f2b] text-left ring-1 ring-black/10 dark:ring-white/10 active:scale-[0.995] disabled:cursor-default"
       >
         {coverUrl ? (
-          <div className="aspect-video w-full overflow-hidden bg-[#eceef2]">
+          <div className="aspect-video w-full overflow-hidden bg-[#eceef2] dark:bg-[#1c1f2b]">
             <img
               src={coverUrl}
               alt={sourceTitle}
@@ -995,29 +995,29 @@ function ReaderEchoSourceBlock({ post }) {
 
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3] dark:text-white/40">
               {sourceLabel}
             </div>
 
-            <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
+            <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827] dark:text-[#f8fafc]">
               {sourceTitle}
             </div>
 
             {sourceSummary ? (
-              <div className="mt-1 line-clamp-2 text-[12px] font-normal leading-5 text-[#667085]">
+              <div className="mt-1 line-clamp-2 text-[12px] font-normal leading-5 text-[#667085] dark:text-white/60">
                 {sourceSummary}
               </div>
             ) : null}
 
             {sourceDetail &&
             sourceDetail !== sourceSummary ? (
-              <div className="mt-1 text-[11px] font-normal text-[#98a2b3]">
+              <div className="mt-1 text-[11px] font-normal text-[#98a2b3] dark:text-white/40">
                 {sourceDetail}
               </div>
             ) : null}
           </div>
 
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-[#171923] text-[#111827] dark:text-[#f8fafc] shadow-sm ring-1 ring-black/5 dark:ring-white/10">
             <i className="fa-solid fa-chevron-right text-[12px]" />
           </div>
         </div>
@@ -1055,10 +1055,10 @@ function ReaderEchoSourceBlock({ post }) {
         type="button"
         onClick={openSource}
         disabled={!sourceUrl}
-        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white text-left active:scale-[0.995] disabled:cursor-default"
+        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] border border-[#e5e7eb] dark:border-white/10 bg-white dark:bg-[#171923] text-left active:scale-[0.995] disabled:cursor-default"
       >
         {imageUrl ? (
-          <div className="aspect-video w-full overflow-hidden bg-[#f3f4f6]">
+          <div className="aspect-video w-full overflow-hidden bg-[#f3f4f6] dark:bg-[#202331]">
             <img
               src={imageUrl}
               alt={title}
@@ -1074,16 +1074,16 @@ function ReaderEchoSourceBlock({ post }) {
             Shadow Mall promotion
           </div>
 
-          <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-[#667085]">
+          <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-[#667085] dark:text-white/60">
             {sponsor}
           </div>
 
-          <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
+          <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827] dark:text-[#f8fafc]">
             {title}
           </div>
 
           {description ? (
-            <p className="mt-2 line-clamp-3 text-[12px] font-normal leading-5 text-[#667085]">
+            <p className="mt-2 line-clamp-3 text-[12px] font-normal leading-5 text-[#667085] dark:text-white/60">
               {description}
             </p>
           ) : null}
@@ -1174,18 +1174,18 @@ function ReaderEchoSourceBlock({ post }) {
       tabIndex={sourceUrl ? 0 : -1}
       onClick={openSource}
       onKeyDown={handleKeyDown}
-      className="mx-4 mb-4 grid aspect-square w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white text-left active:scale-[0.995]"
+      className="mx-4 mb-4 grid aspect-square w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[10px] border border-[#e5e7eb] dark:border-white/10 bg-white dark:bg-[#171923] text-left active:scale-[0.995]"
     >
-      <div className="min-w-0 bg-white">
+      <div className="min-w-0 bg-white dark:bg-[#171923]">
         <div className="flex items-start gap-2.5 px-3.5 pb-2.5 pt-3.5">
           <ReaderAvatar user={previewUser} />
 
           <div className="min-w-0 flex-1">
-            <div className="line-clamp-1 text-[14px] font-semibold text-[#111827]">
+            <div className="line-clamp-1 text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc]">
               {previewUser.name || 'Post'}
             </div>
 
-            <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+            <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400 dark:text-white/40">
               <span>
                 {formatPostTime(previewTime)}
               </span>
@@ -1199,7 +1199,7 @@ function ReaderEchoSourceBlock({ post }) {
 
         {previewText ? (
           <div className="px-3.5 pb-3">
-            <p className="line-clamp-3 whitespace-pre-wrap break-words text-[14px] font-normal leading-5 text-[#111827]">
+            <p className="line-clamp-3 whitespace-pre-wrap break-words text-[14px] font-normal leading-5 text-[#111827] dark:text-[#f8fafc]">
               {renderPostTextWithLinks(
                 previewText
               )}
@@ -1222,7 +1222,7 @@ function EditorAvatar({ user }) {
   const name = user?.name || 'Reader'
 
   return (
-    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5">
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] dark:bg-[#202331] ring-1 ring-black/5 dark:ring-white/10">
       {user?.avatar_url ? (
         <img
           src={user.avatar_url}
@@ -1230,7 +1230,7 @@ function EditorAvatar({ user }) {
           className="h-full w-full object-cover"
         />
       ) : (
-        <span className="text-[16px] font-semibold text-[#111827]">
+        <span className="text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
           {name
             .slice(0, 1)
             .toUpperCase()}
@@ -1250,8 +1250,8 @@ function EditImagePreview({
 
   if (imageUrls.length === 1) {
     return (
-      <div className="mx-[-16px] mt-4 bg-white">
-        <div className="relative flex min-h-[260px] items-center justify-center bg-white">
+      <div className="mx-[-16px] mt-4 bg-white dark:bg-[#171923]">
+        <div className="relative flex min-h-[260px] items-center justify-center bg-white dark:bg-[#171923]">
           <img
             src={imageUrls[0]}
             alt=""
@@ -1279,7 +1279,7 @@ function EditImagePreview({
         (imageUrl, index) => (
           <div
             key={`${imageUrl}-${index}`}
-            className="relative aspect-square bg-[#f3f4f6]"
+            className="relative aspect-square bg-[#f3f4f6] dark:bg-[#202331]"
           >
             <img
               src={imageUrl}
@@ -3091,7 +3091,7 @@ const safeSelectedPhotoIndex =
           onReact={updateReaction}
           showCount={false}
           idleLabel="Like"
-          buttonClassName="text-[#65676b]"
+          buttonClassName="text-[#65676b] dark:text-white/60"
         />
 
         <button
@@ -3102,7 +3102,7 @@ const safeSelectedPhotoIndex =
             )
           }
           disabled={reactionBusy}
-          className="text-[14px] font-normal text-[#65676b] disabled:opacity-60"
+          className="text-[14px] font-normal text-[#65676b] dark:text-white/60 disabled:opacity-60"
         >
           Like
         </button>
@@ -3114,13 +3114,13 @@ const safeSelectedPhotoIndex =
         onClick={() =>
           setEchoOpen(true)
         }
-        className="inline-flex items-center gap-2 text-[14px] font-normal text-[#65676b] active:opacity-70"
+        className="inline-flex items-center gap-2 text-[14px] font-normal text-[#65676b] dark:text-white/60 active:opacity-70"
       >
         <img
           src="/assets/Icons/echo.svg"
           alt=""
           aria-hidden="true"
-          className="h-[18px] w-[18px] object-contain opacity-70"
+          className="h-[18px] w-[18px] object-contain opacity-70 dark:brightness-0 dark:invert"
         />
         <span>Echo</span>
       </button>
@@ -3252,7 +3252,7 @@ likeCount={reactionCount}
 
       <article
         id={`reader-post-${post.id}`}
-        className="bg-white sm:rounded-[12px]"
+        className="bg-white dark:bg-[#171923] sm:rounded-[12px]"
       >
         <div
           onClick={
@@ -3289,8 +3289,8 @@ likeCount={reactionCount}
             onClick={viewReaderProfile}
             className={
               isDiscoverView
-                ? 'max-w-full whitespace-normal break-words text-left text-[14px] font-semibold leading-5 text-[#111827] active:opacity-70'
-                : 'block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70'
+                ? 'max-w-full whitespace-normal break-words text-left text-[14px] font-semibold leading-5 text-[#111827] dark:text-[#f8fafc] active:opacity-70'
+                : 'block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc] active:opacity-70'
             }
           >
             {user.name || 'Reader'}
@@ -3298,7 +3298,7 @@ likeCount={reactionCount}
 
           {showFollow ? (
             <>
-              <span className="text-[14px] font-normal text-[#65676b]">
+              <span className="text-[14px] font-normal text-[#65676b] dark:text-white/60">
                 ·
               </span>
 
@@ -3314,7 +3314,7 @@ likeCount={reactionCount}
           ) : null}
         </div>
 
-        <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+        <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400 dark:text-white/40">
           <span>
             {formatPostTime(
               post.created_at
@@ -3344,7 +3344,7 @@ likeCount={reactionCount}
           event.stopPropagation()
           setMenuOpen(true)
         }}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 dark:text-white/40 active:bg-gray-100 dark:active:bg-[#242836]"
         aria-label="Post options"
       >
         <i className="fa-solid fa-ellipsis text-[14px]" />
@@ -3361,10 +3361,10 @@ likeCount={reactionCount}
                 renderText={
                   renderPostTextWithLinks
                 }
-                className="text-[14px] font-normal leading-6 text-[#111827]"
+                className="text-[14px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc]"
               />
             ) : fullPostView ? (
-              <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
+              <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc]">
                 {renderPostTextWithLinks(
                   postText
                 )}
@@ -3375,13 +3375,13 @@ likeCount={reactionCount}
                 renderText={
                   renderPostTextWithLinks
                 }
-                className="text-[14px] font-normal leading-6 text-[#111827]"
+                className="text-[14px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc]"
               />
             ) : (
               <ReaderDiscoverPostText
   text={postText}
   renderText={renderPostTextWithLinks}
-  className="text-[14px] font-normal leading-6 text-[#111827]"
+  className="text-[14px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc]"
 />
             )}
           </div>
@@ -3412,7 +3412,7 @@ likeCount={reactionCount}
 
         {isEchoPost ? (
   <div className="mt-2 px-4 pb-1">
-    <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b]">
+    <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b] dark:text-white/60">
       <button
         type="button"
         onClick={() =>
@@ -3451,7 +3451,7 @@ likeCount={reactionCount}
       </div>
     </div>
 
-    <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
+    <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b] dark:text-white/60">
       <div className="flex items-center justify-center py-2">
         <ReactionAction
           reactionType={reactionType}
@@ -3467,7 +3467,7 @@ likeCount={reactionCount}
       <button
         type="button"
         onClick={() => setCommentOpen(true)}
-        className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+        className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
       >
         <i className="fa-regular fa-comment text-[18px]" />
         <span>Comment</span>
@@ -3476,13 +3476,13 @@ likeCount={reactionCount}
       <button
         type="button"
         onClick={() => setEchoOpen(true)}
-        className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+        className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
       >
         <img
           src="/assets/Icons/echo.svg"
           alt=""
           aria-hidden="true"
-          className="h-[18px] w-[18px] object-contain opacity-75"
+          className="h-[18px] w-[18px] object-contain opacity-75 dark:brightness-0 dark:invert"
         />
         <span>Echo</span>
       </button>
@@ -3490,7 +3490,7 @@ likeCount={reactionCount}
   </div>
 ) : (
   <div className="mt-2 px-4 pb-1">
-  <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b]">
+  <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b] dark:text-white/60">
     <button
       type="button"
       onClick={() =>
@@ -3529,7 +3529,7 @@ likeCount={reactionCount}
     </div>
   </div>
 
-  <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
+  <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b] dark:text-white/60">
     <div className="flex items-center justify-center py-2">
       <ReactionAction
         reactionType={reactionType}
@@ -3545,7 +3545,7 @@ likeCount={reactionCount}
     <button
       type="button"
       onClick={() => setCommentOpen(true)}
-      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
     >
       <i className="fa-regular fa-comment text-[18px]" />
       <span>Comment</span>
@@ -3554,13 +3554,13 @@ likeCount={reactionCount}
     <button
       type="button"
       onClick={() => setEchoOpen(true)}
-      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
     >
       <img
         src="/assets/Icons/echo.svg"
         alt=""
         aria-hidden="true"
-        className="h-[18px] w-[18px] object-contain opacity-75"
+        className="h-[18px] w-[18px] object-contain opacity-75 dark:brightness-0 dark:invert"
       />
       <span>Echo</span>
     </button>
@@ -3800,7 +3800,7 @@ likeCount={reactionCount}
           ) : null}
 
           {photoActionMessage ? (
-            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+94px)] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-4 py-2 text-[12px] font-medium text-[#111827] shadow-xl">
+            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+94px)] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 dark:bg-[#202331]/95 px-4 py-2 text-[12px] font-medium text-[#111827] dark:text-[#f8fafc] shadow-xl">
               {photoActionMessage}
             </div>
           ) : null}
@@ -3816,12 +3816,12 @@ likeCount={reactionCount}
               }}
             >
               <div
-                className="w-full rounded-t-[22px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+                className="w-full rounded-t-[22px] bg-white dark:bg-[#171923] px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl"
                 onClick={(event) =>
                   event.stopPropagation()
                 }
               >
-                <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#d1d5db]" />
+                <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#d1d5db] dark:bg-white/25" />
 
                 {isOwner ? (
   <button
@@ -3829,13 +3829,13 @@ likeCount={reactionCount}
     onClick={
       openPhotoCaptionEditor
     }
-    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6] dark:active:bg-[#242836]"
   >
-    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563] dark:text-white/60">
       <i className="fa-solid fa-pencil text-[19px]" />
     </span>
 
-    <span className="text-[15px] font-normal text-[#111827]">
+    <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
       Edit caption
     </span>
   </button>
@@ -3854,13 +3854,13 @@ likeCount={reactionCount}
         true
       )
     }}
-    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6] dark:active:bg-[#242836]"
   >
-    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563] dark:text-white/60">
       <i className="fa-regular fa-trash-can text-[20px]" />
     </span>
 
-    <span className="text-[15px] font-normal text-[#111827]">
+    <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
       Delete photo
     </span>
   </button>
@@ -3869,13 +3869,13 @@ likeCount={reactionCount}
 <button
   type="button"
   onClick={saveSelectedPhoto}
-  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6] dark:active:bg-[#242836]"
 >
-  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563] dark:text-white/60">
     <i className="fa-solid fa-arrow-down text-[19px]" />
   </span>
 
-  <span className="text-[15px] font-normal text-[#111827]">
+  <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
     Save to phone
   </span>
 </button>
@@ -3883,13 +3883,13 @@ likeCount={reactionCount}
 <button
   type="button"
   onClick={shareSelectedPhoto}
-  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6] dark:active:bg-[#242836]"
 >
-  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563] dark:text-white/60">
     <i className="fa-solid fa-share text-[19px]" />
   </span>
 
-  <span className="text-[15px] font-normal text-[#111827]">
+  <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
     Share external
   </span>
 </button>
@@ -3900,15 +3900,15 @@ likeCount={reactionCount}
     onClick={
       openPhotoAltEditor
     }
-    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6] dark:active:bg-[#242836]"
   >
     <span className="flex h-9 w-9 items-center justify-center">
-      <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border-2 border-[#6b7280] text-[14px] font-semibold leading-none text-[#4b5563]">
+      <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border-2 border-[#6b7280] dark:border-white/40 text-[14px] font-semibold leading-none text-[#4b5563] dark:text-white/60">
         A
       </span>
     </span>
 
-    <span className="text-[15px] font-normal text-[#111827]">
+    <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
       Edit alt text
     </span>
   </button>
@@ -3932,24 +3932,24 @@ likeCount={reactionCount}
               }}
             >
               <div
-                className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+                className="w-full rounded-t-[22px] bg-white dark:bg-[#171923] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
                 onClick={(event) =>
                   event.stopPropagation()
                 }
               >
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db] dark:bg-white/25" />
 
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-[16px] font-semibold text-[#111827]">
+                    <div className="text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
                       Edit alt text
                     </div>
-                    <p className="mt-1 text-[12px] font-normal leading-5 text-[#667085]">
+                    <p className="mt-1 text-[12px] font-normal leading-5 text-[#667085] dark:text-white/60">
                       Describe what is shown in this photo for accessibility.
                     </p>
                   </div>
 
-                  <span className="shrink-0 text-[11px] font-normal text-[#98a2b3]">
+                  <span className="shrink-0 text-[11px] font-normal text-[#98a2b3] dark:text-white/40">
                     {photoAltText.length} / {MAX_PHOTO_ALT_TEXT_LENGTH}
                   </span>
                 </div>
@@ -3969,7 +3969,7 @@ likeCount={reactionCount}
                     )
                   }
                   placeholder="Describe this photo..."
-                  className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] outline-none focus:border-[#111827]"
+                  className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] dark:border-white/10 bg-[#f9fafb] dark:bg-[#171923] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] dark:text-[#f8fafc] outline-none focus:border-[#111827] dark:focus:border-white/50"
                 />
 
                 <div className="mt-4 flex gap-3">
@@ -3981,7 +3981,7 @@ likeCount={reactionCount}
                         false
                       )
                     }
-                    className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                    className="h-11 flex-1 rounded-full bg-[#eef0f4] dark:bg-[#202331] text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc] disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -3990,7 +3990,7 @@ likeCount={reactionCount}
                     type="button"
                     disabled={photoAltSaving}
                     onClick={savePhotoAltText}
-                    className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white disabled:opacity-50"
+                    className="h-11 flex-1 rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] text-[14px] font-semibold text-white disabled:opacity-50"
                   >
                     {photoAltSaving
                       ? 'Saving...'
@@ -4015,24 +4015,24 @@ likeCount={reactionCount}
               }}
             >
               <div
-                className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+                className="w-full rounded-t-[22px] bg-white dark:bg-[#171923] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
                 onClick={(event) =>
                   event.stopPropagation()
                 }
               >
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db] dark:bg-white/25" />
 
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-[16px] font-semibold text-[#111827]">
+                    <div className="text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
                       Edit caption
                     </div>
-                    <div className="mt-1 text-[12px] font-normal text-[#98a2b3]">
+                    <div className="mt-1 text-[12px] font-normal text-[#98a2b3] dark:text-white/40">
                       Photo {safeSelectedPhotoIndex + 1}
                     </div>
                   </div>
 
-                  <span className="text-[11px] font-normal text-[#98a2b3]">
+                  <span className="text-[11px] font-normal text-[#98a2b3] dark:text-white/40">
                     {photoCaption.length} / {MAX_PHOTO_CAPTION_LENGTH}
                   </span>
                 </div>
@@ -4052,7 +4052,7 @@ likeCount={reactionCount}
                     )
                   }
                   placeholder="Write a caption for this photo..."
-                  className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] outline-none focus:border-[#111827]"
+                  className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] dark:border-white/10 bg-[#f9fafb] dark:bg-[#171923] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] dark:text-[#f8fafc] outline-none focus:border-[#111827] dark:focus:border-white/50"
                 />
 
                 <div className="mt-4 flex gap-3">
@@ -4066,7 +4066,7 @@ likeCount={reactionCount}
                         false
                       )
                     }
-                    className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                    className="h-11 flex-1 rounded-full bg-[#eef0f4] dark:bg-[#202331] text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc] disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -4077,7 +4077,7 @@ likeCount={reactionCount}
                       photoCaptionSaving
                     }
                     onClick={savePhotoCaption}
-                    className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white disabled:opacity-50"
+                    className="h-11 flex-1 rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] text-[14px] font-semibold text-white disabled:opacity-50"
                   >
                     {photoCaptionSaving
                       ? 'Saving...'
@@ -4102,18 +4102,18 @@ likeCount={reactionCount}
               }}
             >
               <div
-                className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+                className="w-full rounded-t-[22px] bg-white dark:bg-[#171923] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
                 onClick={(event) =>
                   event.stopPropagation()
                 }
               >
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db] dark:bg-white/25" />
 
-                <div className="text-[16px] font-semibold text-[#111827]">
+                <div className="text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
                   Delete this photo?
                 </div>
 
-                <p className="mt-1.5 text-[13px] font-normal leading-5 text-[#667085]">
+                <p className="mt-1.5 text-[13px] font-normal leading-5 text-[#667085] dark:text-white/60">
                   This photo will be removed from this Reader post.
                 </p>
 
@@ -4126,7 +4126,7 @@ likeCount={reactionCount}
                         false
                       )
                     }
-                    className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                    className="h-11 flex-1 rounded-full bg-[#eef0f4] dark:bg-[#202331] text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc] disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -4149,7 +4149,7 @@ likeCount={reactionCount}
       ) : null}
 
       {reactionMessage ? (
-        <div className="fixed left-1/2 top-20 z-[300] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
+        <div className="fixed left-1/2 top-20 z-[300] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
           {reactionMessage}
         </div>
       ) : null}
@@ -4315,10 +4315,10 @@ likeCount={reactionCount}
               editRemainingPhotos
             )}
             accept="image/*"
-            className="fixed inset-0 z-[200000] overflow-y-auto bg-white"
+            className="fixed inset-0 z-[200000] overflow-y-auto bg-white dark:bg-[#0d0f16]"
             label="Drop photos here"
           >
-            <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white">
+            <header className="sticky top-0 z-20 border-b border-[#eef0f4] dark:border-white/10 bg-white dark:bg-[#171923]">
               <div className="mx-auto flex h-14 max-w-[620px] items-center justify-between px-4">
                 <button
                   type="button"
@@ -4334,13 +4334,13 @@ likeCount={reactionCount}
                     saving ||
                     uploadingImages
                   }
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-50"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] dark:text-[#f8fafc] active:bg-[#f3f4f6] dark:active:bg-[#242836] disabled:opacity-50"
                   aria-label="Close editor"
                 >
                   <i className="fa-solid fa-xmark text-[22px]" />
                 </button>
 
-                <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827]">
+                <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
                   Edit Reader Post
                 </div>
 
@@ -4352,7 +4352,7 @@ likeCount={reactionCount}
                     uploadingImages ||
                     !canSaveEdit
                   }
-                  className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
+                  className="h-9 rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] dark:disabled:bg-white/10 disabled:text-[#9ca3af] dark:disabled:text-white/30"
                 >
                   {saving
                     ? 'Saving'
@@ -4363,7 +4363,7 @@ likeCount={reactionCount}
               </div>
             </header>
 
-            <main className="mx-auto flex min-h-[calc(100vh-56px)] max-w-[620px] flex-col bg-white">
+            <main className="mx-auto flex min-h-[calc(100vh-56px)] max-w-[620px] flex-col bg-white dark:bg-[#0d0f16]">
               <div className="flex-1 px-4 pt-5">
                 <div className="mb-5 flex items-center gap-3">
                   <EditorAvatar
@@ -4371,12 +4371,12 @@ likeCount={reactionCount}
                   />
 
                   <div className="min-w-0">
-                    <div className="line-clamp-1 text-[15px] font-semibold text-[#111827]">
+                    <div className="line-clamp-1 text-[15px] font-semibold text-[#111827] dark:text-[#f8fafc]">
                       {user?.name ||
                         'Reader'}
                     </div>
 
-                    <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#eef0f4] px-2.5 py-1 text-[11px] font-normal text-[#374151]">
+                    <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#eef0f4] dark:bg-[#202331] px-2.5 py-1 text-[11px] font-normal text-[#374151] dark:text-white/60">
                       <i
                         className={`${getVisibilityIcon(
                           post.visibility
@@ -4411,7 +4411,7 @@ likeCount={reactionCount}
                     )
                   }
                   placeholder="Share your thoughts..."
-                  className="min-h-[210px] w-full resize-none border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
+                  className="min-h-[210px] w-full resize-none border-0 bg-white dark:bg-[#171923] p-0 text-[16px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc] outline-none placeholder:text-[#9ca3af] dark:placeholder:text-white/40"
                 />
 
                 <EditImagePreview
@@ -4424,13 +4424,13 @@ likeCount={reactionCount}
                 />
 
                 {message ? (
-                  <div className="mt-3 rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412]">
+                  <div className="mt-3 rounded-[12px] bg-[#fff7ed] dark:bg-amber-500/10 px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412] dark:text-amber-300">
                     {message}
                   </div>
                 ) : null}
               </div>
 
-              <div className="border-t border-[#eef0f4] bg-white px-4 py-4">
+              <div className="border-t border-[#eef0f4] dark:border-white/10 bg-white dark:bg-[#171923] px-4 py-4">
                 <div
                   className={`mb-3 text-right text-[11px] font-normal ${
                     content.length >=
@@ -4440,7 +4440,7 @@ likeCount={reactionCount}
                           MAX_POST_LENGTH -
                             500
                         ? 'text-[#d97706]'
-                        : 'text-[#9ca3af]'
+                        : 'text-[#9ca3af] dark:text-white/40'
                   }`}
                 >
                   {content.length.toLocaleString()}{' '}
@@ -4458,7 +4458,7 @@ likeCount={reactionCount}
                   onClick={() =>
                     editFileInputRef.current?.click()
                   }
-                  className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white text-[#111827] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] dark:border-white/10 bg-white dark:bg-[#171923] text-[#111827] dark:text-[#f8fafc] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label="Open Gallery"
                 >
                   <svg
