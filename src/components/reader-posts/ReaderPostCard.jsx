@@ -1321,6 +1321,8 @@ function StandardReaderPostCard({
     useRef(null)
   const editFileInputRef =
     useRef(null)
+  const profileNavigationLockRef =
+    useRef(false)
 
   const storedUser = useMemo(
     () => getStoredUser(),
@@ -2898,11 +2900,61 @@ const safeSelectedPhotoIndex =
 
     setMenuOpen(false)
 
-    if (username) {
-      navigate(
-        `/profile?username=${encodeURIComponent(username)}`
-      )
+    if (
+      !username ||
+      profileNavigationLockRef.current
+    ) {
+      return
     }
+
+    const currentProfileUsername =
+      location.pathname === '/profile'
+        ? String(
+            new URLSearchParams(
+              location.search
+            ).get('username') ||
+              storedUser?.username ||
+              ''
+          )
+            .trim()
+            .replace(/^@+/, '')
+            .toLowerCase()
+        : ''
+
+    const targetUsername = username
+      .replace(/^@+/, '')
+      .toLowerCase()
+
+    if (
+      currentProfileUsername &&
+      currentProfileUsername ===
+        targetUsername
+    ) {
+      return
+    }
+
+    profileNavigationLockRef.current =
+      true
+
+    const returnTo =
+      `${location.pathname}${location.search}${location.hash}`
+
+    navigate(
+      `/profile?username=${encodeURIComponent(
+        username
+      )}`,
+      {
+        state: {
+          returnTo,
+          profilePreview: user,
+        },
+      }
+    )
+
+    window.setTimeout(() => {
+      profileNavigationLockRef.current =
+        false
+    }, 600)
   }
 
   async function followReaderFromPost(event) {
