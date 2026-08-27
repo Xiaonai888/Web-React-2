@@ -93,14 +93,16 @@ function renderNode(node, context, key) {
   if (tagName === 'img') {
     const source = safeImageUrl(element.getAttribute('src'))
     if (!source) return null
-    return (
+   const isMangaSlice = source.includes('/manga-v2/')
+
+return (
   <img
     key={key}
     src={source}
     alt={String(element.getAttribute('alt') || 'Episode image').slice(0, 200)}
     loading="lazy"
     decoding="async"
-    className="my-5 block h-auto w-full rounded-[12px] object-contain"
+    className={isMangaSlice ? '!my-0 !mt-0 !mb-0 block h-auto w-full !rounded-none object-contain' : 'my-5 block h-auto w-full rounded-[12px] object-contain'}
   />
 )
 }
