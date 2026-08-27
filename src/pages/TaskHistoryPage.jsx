@@ -74,8 +74,8 @@ function getSignedAmount(value) {
 function SummaryItem({ label, value }) {
   return (
     <div className="min-w-0 px-2 py-4 text-center sm:px-4">
-      <div className="text-[11px] font-bold text-[#8b93a1] sm:text-[12px]">{label}</div>
-      <div className="mt-2 flex items-center justify-center gap-1 text-[18px] font-black text-[#111827] sm:text-[20px]">
+      <div className="text-[11px] font-bold text-[var(--shadow-text-secondary)] sm:text-[12px]">{label}</div>
+      <div className="mt-2 flex items-center justify-center gap-1 text-[18px] font-black text-[var(--shadow-text-primary)] sm:text-[20px]">
         <CoinIcon className="h-4 w-4 sm:h-5 sm:w-5" />
         <span className="truncate">{formatNumber(value)}</span>
       </div>
@@ -131,50 +131,54 @@ export default function TaskHistoryPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[100px]">
-      <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
+    <div className="app-page min-h-screen pb-[100px]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[760px] items-center justify-between px-4">
-         <button
-  type="button"
-  onClick={() => navigate(-1)}
-  className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
-  aria-label="Go back"
->
-  <i className="fa-solid fa-chevron-left text-[15px] font-black" />
-</button>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center bg-transparent text-[var(--shadow-text-primary)] active:scale-95"
+            aria-label="Go back"
+          >
+            <i className="fa-solid fa-chevron-left text-[15px] font-black" />
+          </button>
 
-          <h1 className="text-[17px] font-black tracking-[-0.01em] text-[#111827]">Reward History</h1>
+          <h1 className="text-[17px] font-black tracking-[-0.01em] text-[var(--shadow-text-primary)]">
+            Reward History
+          </h1>
 
           <button
-  type="button"
-  onClick={() => setMessage('Reward details and coin rules will be added later.')}
-  className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
-  aria-label="Hint"
->
-  <span className="flex h-[19px] w-[19px] items-center justify-center rounded-full border-2 border-[#111827] text-[12px] font-black leading-none">
-    i
-  </span>
-</button>
+            type="button"
+            onClick={() => setMessage('Reward details and coin rules will be added later.')}
+            className="flex h-10 w-10 items-center justify-center bg-transparent text-[var(--shadow-text-primary)] active:scale-95"
+            aria-label="Hint"
+          >
+            <span className="flex h-[19px] w-[19px] items-center justify-center rounded-full border-2 border-[var(--shadow-text-primary)] text-[12px] font-black leading-none">
+              i
+            </span>
+          </button>
         </div>
       </header>
 
       <main className="mx-auto max-w-[760px] px-0 pt-0 sm:px-4 sm:pt-4">
-        <section className="grid grid-cols-3 overflow-hidden bg-white shadow-sm sm:rounded-[26px] sm:ring-1 sm:ring-black/5">
+        <section className="grid grid-cols-3 overflow-hidden bg-[var(--shadow-bg-surface)] shadow-sm sm:rounded-[26px] sm:ring-1 sm:ring-[var(--shadow-border)]">
           <SummaryItem label="Today" value={summary.today} />
           <SummaryItem label="This Week" value={summary.this_week} />
           <SummaryItem label="This Month" value={summary.this_month} />
         </section>
 
-        <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:p-5 sm:ring-1 sm:ring-black/5">
+        <section className="mt-2 bg-[var(--shadow-bg-surface)] p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:p-5 sm:ring-1 sm:ring-[var(--shadow-border)]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-[18px] font-black text-[#111827] sm:text-[20px]">History</h2>
-              <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">
+              <h2 className="text-[18px] font-black text-[var(--shadow-text-primary)] sm:text-[20px]">
+                History
+              </h2>
+              <p className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
                 Your latest coin activity.
               </p>
             </div>
 
-            <span className="rounded-full bg-[#fff7d6] px-3 py-1 text-[11px] font-black text-[#d97706]">
+            <span className="rounded-full bg-[#fff7d6] px-3 py-1 text-[11px] font-black text-[#d97706] dark:bg-amber-500/10 dark:text-amber-300">
               All
             </span>
           </div>
@@ -183,7 +187,7 @@ export default function TaskHistoryPage() {
             <button
               type="button"
               onClick={() => setMessage('')}
-              className="mt-4 w-full rounded-[18px] bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#111827]"
+              className="mt-4 w-full rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[var(--shadow-text-primary)]"
             >
               {message}
             </button>
@@ -191,26 +195,26 @@ export default function TaskHistoryPage() {
 
           {loading ? (
             <div className="mt-5 space-y-1">
-              <div className="h-16 animate-pulse rounded-[18px] bg-[#f8fafc]" />
-              <div className="h-16 animate-pulse rounded-[18px] bg-[#f8fafc]" />
-              <div className="h-16 animate-pulse rounded-[18px] bg-[#f8fafc]" />
+              <div className="h-16 animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]" />
+              <div className="h-16 animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]" />
+              <div className="h-16 animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]" />
             </div>
           ) : null}
 
           {!loading && history.length === 0 ? (
-            <div className="mt-5 rounded-[22px] bg-[#f8fafc] p-8 text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white">
+            <div className="mt-5 rounded-[22px] bg-[var(--shadow-bg-soft)] p-8 text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] ring-1 ring-[var(--shadow-border)]">
                 <CoinIcon className="h-8 w-8" />
               </div>
-              <div className="text-[15px] font-black text-[#111827]">No history yet</div>
-              <div className="mt-1 text-[12px] font-bold text-[#8b93a1]">
+              <div className="text-[15px] font-black text-[var(--shadow-text-primary)]">No history yet</div>
+              <div className="mt-1 text-[12px] font-bold text-[var(--shadow-text-secondary)]">
                 Claim rewards to create your first coin record.
               </div>
             </div>
           ) : null}
 
           {!loading && history.length > 0 ? (
-            <div className="mt-5 divide-y divide-[#f1f2f6]">
+            <div className="mt-5 divide-y divide-[var(--shadow-border)]">
               {history.map((item) => {
                 const amount = Number(item.amount_gems || 0)
                 const isNegative = amount < 0
@@ -218,17 +222,23 @@ export default function TaskHistoryPage() {
                 return (
                   <div key={item.id} className="flex items-center justify-between gap-4 py-4">
                     <div className="min-w-0">
-                      <div className="truncate text-[15px] font-semibold text-[#333843]">
+                      <div className="truncate text-[15px] font-semibold text-[var(--shadow-text-primary)]">
                         {getHistoryTitle(item)}
                       </div>
-                      <div className="mt-1 text-[12px] font-medium text-[#9aa1ad]">
+                      <div className="mt-1 text-[12px] font-medium text-[var(--shadow-text-tertiary)]">
                         {formatDateTime(item.created_at)}
                       </div>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-1 text-right">
                       <CoinIcon className={`h-5 w-5 ${isNegative ? 'grayscale opacity-70' : ''}`} />
-                      <span className={`text-[15px] font-black ${isNegative ? 'text-[#333843]' : 'text-[#111827]'}`}>
+                      <span
+                        className={`text-[15px] font-black ${
+                          isNegative
+                            ? 'text-[var(--shadow-text-secondary)]'
+                            : 'text-[var(--shadow-text-primary)]'
+                        }`}
+                      >
                         {getSignedAmount(amount)}
                       </span>
                     </div>
