@@ -1,5 +1,70 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerDiscoverPeople', {
+  en: {
+    title: 'Discover people',
+    seeAll: 'See all',
+    reader: 'Reader',
+    hide: 'Hide {{name}}',
+    follow: 'Follow',
+    following: 'Following',
+    followingBusy: 'Following...',
+    empty: 'No new people to discover.',
+    loadFailed: 'Failed to load people',
+    followFailed: 'Failed to follow reader',
+  },
+  km: {
+    title: 'ស្វែងរកអ្នកអានថ្មី',
+    seeAll: 'មើលទាំងអស់',
+    reader: 'អ្នកអាន',
+    hide: 'លាក់ {{name}}',
+    follow: 'តាមដាន',
+    following: 'កំពុងតាមដាន',
+    followingBusy: 'កំពុងតាមដាន...',
+    empty: 'មិនមានអ្នកអានថ្មីសម្រាប់ស្វែងរកទេ។',
+    loadFailed: 'មិនអាចផ្ទុកអ្នកអានបានទេ',
+    followFailed: 'មិនអាចតាមដានអ្នកអានបានទេ',
+  },
+  zh: {
+    title: '发现更多读者',
+    seeAll: '查看全部',
+    reader: '读者',
+    hide: '隐藏 {{name}}',
+    follow: '关注',
+    following: '已关注',
+    followingBusy: '关注中...',
+    empty: '暂无新的读者可发现。',
+    loadFailed: '无法加载读者',
+    followFailed: '无法关注该读者',
+  },
+  ja: {
+    title: '読者を見つける',
+    seeAll: 'すべて見る',
+    reader: '読者',
+    hide: '{{name}} を非表示',
+    follow: 'フォロー',
+    following: 'フォロー中',
+    followingBusy: 'フォロー中...',
+    empty: '新しく見つけられる読者はいません。',
+    loadFailed: '読者を読み込めませんでした',
+    followFailed: '読者をフォローできませんでした',
+  },
+  ko: {
+    title: '새 독자 찾기',
+    seeAll: '모두 보기',
+    reader: '독자',
+    hide: '{{name}} 숨기기',
+    follow: '팔로우',
+    following: '팔로잉',
+    followingBusy: '팔로우 중...',
+    empty: '새로 추천할 독자가 없습니다.',
+    loadFailed: '독자를 불러오지 못했습니다',
+    followFailed: '독자를 팔로우하지 못했습니다',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -32,8 +97,8 @@ function readHiddenSuggestions() {
   }
 }
 
-function ReaderAvatar({ user }) {
-  const name = user?.name || user?.username || 'Reader'
+function ReaderAvatar({ user, fallbackName }) {
+  const name = user?.name || user?.username || fallbackName
 
   return (
     <div className="mx-auto flex h-[78px] w-[78px] items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[24px] font-bold text-[#6b7280] ring-1 ring-black/10">
@@ -48,6 +113,7 @@ function ReaderAvatar({ user }) {
 
 export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [users, setUsers] = useState([])
   const [hiddenSuggestions, setHiddenSuggestions] = useState(readHiddenSuggestions)
   const [loading, setLoading] = useState(false)
@@ -80,7 +146,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load people')
+          throw new Error(data.message || t('readerDiscoverPeople.loadFailed'))
         }
 
         if (!ignore) {
@@ -90,7 +156,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
       } catch (error) {
         if (!ignore) {
           setUsers([])
-          setMessage(error.message || 'Failed to load people')
+          setMessage(error.message || t('readerDiscoverPeople.loadFailed'))
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -102,7 +168,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
     return () => {
       ignore = true
     }
-  }, [navigate, open])
+  }, [navigate, open, t])
 
   const visibleUsers = useMemo(() => {
     const hiddenIds = new Set(Object.keys(hiddenSuggestions))
@@ -146,7 +212,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to follow reader')
+        throw new Error(data.message || t('readerDiscoverPeople.followFailed'))
       }
 
       setUsers((current) =>
@@ -156,7 +222,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
       )
       onFollowed?.(user)
     } catch (error) {
-      setMessage(error.message || 'Failed to follow reader')
+      setMessage(error.message || t('readerDiscoverPeople.followFailed'))
     } finally {
       setActionId('')
     }
@@ -170,14 +236,16 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
 
       <section className="mt-5 border-t border-[var(--shadow-border)] pt-4">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-[15px] font-semibold text-[#111827]">Discover people</h2>
+          <h2 className="text-[15px] font-semibold text-[#111827]">
+            {t('readerDiscoverPeople.title')}
+          </h2>
 
           <button
             type="button"
             onClick={() => navigate('/profile/discover-people')}
             className="text-[13px] font-semibold text-[#7c3aed] active:opacity-70"
           >
-            See all
+            {t('readerDiscoverPeople.seeAll')}
           </button>
         </div>
 
@@ -205,13 +273,20 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
             {visibleUsers.map((user) => {
               const following = Boolean(user.is_following)
               const busy = actionId === user.id
+              const displayName =
+                user.name ||
+                user.username ||
+                t('readerDiscoverPeople.reader')
 
               return (
                 <article
                   key={user.id}
                   className="relative w-[166px] shrink-0 rounded-[16px] border border-[#e5e7eb] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
-                  <ReaderAvatar user={user} />
+                  <ReaderAvatar
+                    user={user}
+                    fallbackName={t('readerDiscoverPeople.reader')}
+                  />
 
                   <div className="mt-3 line-clamp-1 text-center text-[14px] font-semibold text-[#111827]">
                     {user.name || user.username}
@@ -225,7 +300,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
                     type="button"
                     onClick={() => hideSuggestion(user.id)}
                     className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-[#6b7280] shadow-sm ring-1 ring-black/5 active:scale-95"
-                    aria-label={`Hide ${user.name || user.username}`}
+                    aria-label={t('readerDiscoverPeople.hide', { name: displayName })}
                   >
                     <i className="fa-solid fa-xmark text-[12px]" />
                   </button>
@@ -240,7 +315,11 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
                         : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-sm'
                     }`}
                   >
-                    {busy ? 'Following...' : following ? 'Following' : 'Follow'}
+                    {busy
+                      ? t('readerDiscoverPeople.followingBusy')
+                      : following
+                        ? t('readerDiscoverPeople.following')
+                        : t('readerDiscoverPeople.follow')}
                   </button>
                 </article>
               )
@@ -248,7 +327,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
           </div>
         ) : (
           <div className="rounded-[14px] bg-[#f8fafc] px-4 py-5 text-center text-[12px] font-normal text-[#6b7280]">
-            No new people to discover.
+            {t('readerDiscoverPeople.empty')}
           </div>
         )}
       </section>
