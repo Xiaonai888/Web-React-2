@@ -1,4 +1,69 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerPostReactionButton', {
+  en: {
+    love: 'Love',
+    haha: 'Haha',
+    wow: 'Wow',
+    sad: 'Sad',
+    angry: 'Angry',
+    support: 'Support',
+    touched: 'Touched',
+    react: 'React',
+    loginFirst: 'Please login first.',
+    updateFailed: 'Failed to update reaction',
+  },
+  km: {
+    love: 'ស្រឡាញ់',
+    haha: 'សើច',
+    wow: 'ភ្ញាក់ផ្អើល',
+    sad: 'សោកសៅ',
+    angry: 'ខឹង',
+    support: 'គាំទ្រ',
+    touched: 'រំភើបចិត្ត',
+    react: 'ប្រតិកម្ម',
+    loginFirst: 'សូមចូលគណនីជាមុនសិន។',
+    updateFailed: 'មិនអាចកែប្រែប្រតិកម្មបានទេ',
+  },
+  zh: {
+    love: '爱心',
+    haha: '哈哈',
+    wow: '哇',
+    sad: '难过',
+    angry: '生气',
+    support: '支持',
+    touched: '感动',
+    react: '回应',
+    loginFirst: '请先登录。',
+    updateFailed: '无法更新反应',
+  },
+  ja: {
+    love: '大好き',
+    haha: '笑',
+    wow: 'すごい',
+    sad: '悲しい',
+    angry: '怒り',
+    support: '応援',
+    touched: '感動',
+    react: 'リアクション',
+    loginFirst: '先にログインしてください。',
+    updateFailed: 'リアクションを更新できませんでした',
+  },
+  ko: {
+    love: '사랑해요',
+    haha: '웃겨요',
+    wow: '놀라워요',
+    sad: '슬퍼요',
+    angry: '화나요',
+    support: '응원해요',
+    touched: '감동이에요',
+    react: '반응',
+    loginFirst: '먼저 로그인해 주세요.',
+    updateFailed: '반응을 업데이트하지 못했습니다',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -7,13 +72,13 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const REACTIONS = [
-  { type: 'love', label: 'Love', src: '/assets/React/Love.svg', text: '#ff2f5f' },
-  { type: 'haha', label: 'Haha', src: '/assets/React/Haha.svg', text: '#f59e0b' },
-  { type: 'wow', label: 'Wow', src: '/assets/React/Wow.svg', text: '#f59e0b' },
-  { type: 'sad', label: 'Sad', src: '/assets/React/Sad.svg', text: '#3b82f6' },
-  { type: 'angry', label: 'Angry', src: '/assets/React/Angry.svg', text: '#ef4444' },
-  { type: 'support', label: 'Support', src: '/assets/React/Support.svg', text: '#16a34a' },
-  { type: 'touched', label: 'Touched', src: '/assets/React/Touched.svg', text: '#8b5cf6' },
+  { type: 'love', src: '/assets/React/Love.svg', text: '#ff2f5f' },
+  { type: 'haha', src: '/assets/React/Haha.svg', text: '#f59e0b' },
+  { type: 'wow', src: '/assets/React/Wow.svg', text: '#f59e0b' },
+  { type: 'sad', src: '/assets/React/Sad.svg', text: '#3b82f6' },
+  { type: 'angry', src: '/assets/React/Angry.svg', text: '#ef4444' },
+  { type: 'support', src: '/assets/React/Support.svg', text: '#16a34a' },
+  { type: 'touched', src: '/assets/React/Touched.svg', text: '#8b5cf6' },
 ]
 
 function getAuthToken() {
@@ -40,6 +105,7 @@ export default function ReaderPostReactionButton({
   initialReaction = null,
   onChanged,
 }) {
+  const { t } = useDisplayTranslation()
   const pressTimerRef = useRef(null)
   const longPressOpenedRef = useRef(false)
   const [reactionType, setReactionType] = useState(initialReaction || null)
@@ -104,7 +170,7 @@ export default function ReaderPostReactionButton({
     const token = getAuthToken()
 
     if (!token) {
-      showMessage('Please login first.')
+      showMessage(t('readerPostReactionButton.loginFirst'))
       return
     }
 
@@ -128,7 +194,10 @@ export default function ReaderPostReactionButton({
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to update reaction')
+        throw new Error(
+          data.message ||
+            t('readerPostReactionButton.updateFailed')
+        )
       }
 
       const nextType = data.reacted ? data.reaction_type || nextReactionType : null
@@ -147,7 +216,10 @@ export default function ReaderPostReactionButton({
           : [],
       })
     } catch (error) {
-      showMessage(error.message || 'Failed to update reaction.')
+      showMessage(
+        error.message ||
+          t('readerPostReactionButton.updateFailed')
+      )
     } finally {
       setBusy(false)
     }
@@ -191,22 +263,28 @@ export default function ReaderPostReactionButton({
     <div className="relative">
       {pickerOpen ? (
         <div className="absolute bottom-8 left-0 z-40 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
-          {REACTIONS.map((reaction) => (
-            <button
-              key={reaction.type}
-              type="button"
-              disabled={busy}
-              onClick={() => setReaction(reaction.type)}
-              className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90 disabled:opacity-60"
-              aria-label={reaction.label}
-            >
-              <img
-                src={reaction.src}
-                alt={reaction.label}
-                className="h-8 w-8 object-contain"
-              />
-            </button>
-          ))}
+          {REACTIONS.map((reaction) => {
+            const label = t(
+              `readerPostReactionButton.${reaction.type}`
+            )
+
+            return (
+              <button
+                key={reaction.type}
+                type="button"
+                disabled={busy}
+                onClick={() => setReaction(reaction.type)}
+                className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90 disabled:opacity-60"
+                aria-label={label}
+              >
+                <img
+                  src={reaction.src}
+                  alt={label}
+                  className="h-8 w-8 object-contain"
+                />
+              </button>
+            )
+          })}
         </div>
       ) : null}
 
@@ -220,7 +298,11 @@ export default function ReaderPostReactionButton({
         onContextMenu={(event) => event.preventDefault()}
         className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
         style={{ color: activeReaction?.text || undefined }}
-        aria-label={activeReaction ? activeReaction.label : 'React'}
+        aria-label={
+          activeReaction
+            ? t(`readerPostReactionButton.${activeReaction.type}`)
+            : t('readerPostReactionButton.react')
+        }
       >
         {activeReaction ? (
           <img
