@@ -4,6 +4,26 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerDiscoverPostText', {
+  en: {
+    more: '... more',
+  },
+  km: {
+    more: '... បន្ថែម',
+  },
+  zh: {
+    more: '... 更多',
+  },
+  ja: {
+    more: '... もっと見る',
+  },
+  ko: {
+    more: '... 더 보기',
+  },
+})
 
 function splitGraphemes(value) {
   const text = String(value || '')
@@ -52,6 +72,7 @@ export default function ReaderDiscoverPostText({
   renderText,
   className = '',
 }) {
+  const { t } = useDisplayTranslation()
   const containerRef = useRef(null)
   const probeRef = useRef(null)
   const probeTextRef = useRef(null)
@@ -196,7 +217,7 @@ export default function ReaderDiscoverPostText({
         measure
       )
     }
-  }, [expanded, text])
+  }, [expanded, text, t])
 
   const renderValue = (value) =>
     typeof renderText === 'function'
@@ -219,9 +240,16 @@ export default function ReaderDiscoverPostText({
         </p>
       ) : (
         <p
-  onClick={() => overflowing && setExpanded(true)}
-  className={`whitespace-pre-wrap break-words ${overflowing ? 'cursor-pointer' : ''} ${className}`}
->
+          onClick={() =>
+            overflowing &&
+            setExpanded(true)
+          }
+          className={`whitespace-pre-wrap break-words ${
+            overflowing
+              ? 'cursor-pointer'
+              : ''
+          } ${className}`}
+        >
           {renderValue(
             overflowing
               ? collapsedText
@@ -239,7 +267,9 @@ export default function ReaderDiscoverPostText({
                 }}
                 className="inline font-semibold text-[#65676b] active:opacity-70"
               >
-                ... more
+                {t(
+                  'readerDiscoverPostText.more'
+                )}
               </button>
             </>
           ) : null}
@@ -265,7 +295,9 @@ export default function ReaderDiscoverPostText({
           className="font-semibold text-[#65676b]"
         >
           {' '}
-          ... more
+          {t(
+            'readerDiscoverPostText.more'
+          )}
         </span>
       </p>
     </div>
