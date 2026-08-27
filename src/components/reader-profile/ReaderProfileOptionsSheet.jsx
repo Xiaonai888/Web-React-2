@@ -180,7 +180,7 @@ export default function ReaderProfileOptionsSheet({
           }
           className="flex h-14 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
         >
-          <div className="h-1.5 w-12 rounded-full bg-[#cfd3dc]" />
+          <div className="h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)]" />
         </div>
 
         <div className="max-h-[calc(88vh-56px)] overflow-y-auto px-5 pb-[calc(22px+env(safe-area-inset-bottom))]">
@@ -191,7 +191,7 @@ export default function ReaderProfileOptionsSheet({
               onClick={() =>
                 onSelect?.(option.key)
               }
-              className={`flex min-h-16 w-full items-center text-left text-[17px] font-normal active:bg-[#f7f7f9] ${
+              className={`flex min-h-16 w-full items-center text-left text-[17px] font-normal active:bg-[var(--shadow-bg-hover)] ${
                 option.danger
                   ? 'text-[#dc2626]'
                   : 'text-[#111827]'
