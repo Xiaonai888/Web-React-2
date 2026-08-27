@@ -2,6 +2,8 @@ import { lazy, Suspense, useCallback, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import { AuthorPageNotificationProvider } from './providers/AuthorPageNotificationProvider'
+import { useDisplayTranslation } from './utils/displayLanguage'
+import './i18n/appTranslations'
 import Footer from './components/Footer'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
@@ -221,13 +223,17 @@ const AuthorPostCommentFocusPage = lazy(() => import('./pages/AuthorChat/AuthorP
 const AuthorPostActivityPage = lazy(() => import('./pages/Author/AuthorPostActivityPage'))
 
 
-function ComingSoon({ title }) {
+function ComingSoon({ titleKey }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-10">
       <div className="mx-auto max-w-[560px] rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-        <h1 className="text-[22px] font-extrabold text-[#111827]">{title}</h1>
+        <h1 className="text-[22px] font-extrabold text-[#111827]">
+          {t(`app.routes.${titleKey}`)}
+        </h1>
         <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
-          This page is ready for a future update.
+          {t('app.comingSoonDescription')}
         </p>
       </div>
     </div>
@@ -235,11 +241,15 @@ function ComingSoon({ title }) {
 }
 
 function PageLoading() {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="min-h-screen bg-[#f5f3fa] px-4 pt-16">
       <div className="mx-auto max-w-[420px] rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
         <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-        <div className="text-[14px] font-extrabold text-[#111827]">Loading...</div>
+        <div className="text-[14px] font-extrabold text-[#111827]">
+          {t('app.loading')}
+        </div>
       </div>
     </div>
   )
@@ -357,13 +367,13 @@ const shouldShowOpeningAds =
   return (
     <>
       <VisitorTracker />
-<Routes location={backgroundLocation || location}>
+        <Routes location={backgroundLocation || location}>
         <Route path="/" element={<ForYou onReady={finishShadowSplash} />} />
         <Route path="/manga" element={<MangaPage />} />
         <Route path="/chat-story" element={<ChatStoryHomePage />} />
-        <Route path="/fast" element={<ComingSoon title="Fast / Reels" />} />
-        <Route path="/library" element={<Library />} />
-        <Route path="/me" element={<Me />} />
+        <Route path="/fast" element={<ComingSoon titleKey="fastReels" />} />
+        <Route path="/check-in" element={<ComingSoon titleKey="checkIn" />} />
+        <Route path="/settings" element={<ComingSoon titleKey="settings" />} />
 
         <Route
   path="/game"
