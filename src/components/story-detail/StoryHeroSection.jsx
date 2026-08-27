@@ -74,10 +74,10 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
   }
 
   return (
-    <section className="relative bg-[#f5f3fa]">
+    <section className="relative bg-[var(--shadow-bg-page)]">
       <div
   className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 transition-all duration-300 ${
-    showTitleBar ? 'bg-white shadow-sm' : 'bg-transparent'
+    showTitleBar ? 'bg-[var(--shadow-nav-bg)] shadow-sm backdrop-blur' : 'bg-transparent'
   }`}
 >
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
@@ -86,7 +86,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
             onClick={onBack}
             className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${
   showTitleBar
-    ? 'bg-transparent text-[#111827]'
+    ? 'bg-transparent text-[var(--shadow-text-primary)]'
     : 'bg-transparent text-white'
 }`}
             aria-label="Go back"
@@ -96,7 +96,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
 
           <h1
   className={`min-w-0 flex-1 truncate text-left text-[18px] font-extrabold transition-opacity duration-300 ${
-    showTitleBar ? 'text-[#111827] opacity-100' : 'text-white opacity-0'
+    showTitleBar ? 'text-[var(--shadow-text-primary)] opacity-100' : 'text-white opacity-0'
   }`}
 >
             {story?.title || 'Story'}
@@ -108,7 +108,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
               onClick={onToggleBookmark}
               className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${
   showTitleBar
-    ? 'bg-transparent text-[#111827]'
+    ? 'bg-transparent text-[var(--shadow-text-primary)]'
     : 'bg-transparent text-white'
 }`}
               aria-label="Add to library"
@@ -122,7 +122,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
                 onClick={() => setMenuOpen((current) => !current)}
                className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${
   showTitleBar
-    ? 'bg-transparent text-[#111827]'
+    ? 'bg-transparent text-[var(--shadow-text-primary)]'
     : 'bg-transparent text-white'
 }`}
                 aria-label="More"
@@ -131,37 +131,37 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
               </button>
 
               {menuOpen ? (
-                <div className="absolute right-0 top-12 z-[80] w-44 overflow-hidden rounded-[18px] bg-white text-[#111827] shadow-[0_18px_46px_rgba(17,24,39,0.22)] ring-1 ring-black/5">
+                <div className="absolute right-0 top-12 z-[80] w-44 overflow-hidden rounded-[18px] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-[0_18px_46px_rgba(17,24,39,0.22)] ring-1 ring-[var(--shadow-border)]">
                   <button
   type="button"
   onClick={() => {
     setMenuOpen(false)
     setReportOpen(true)
   }}
-  className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[#f5f3fa]"
+  className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[var(--shadow-bg-hover)]"
 >
-  <i className="fa-regular fa-flag w-4 text-[#111827]" />
+  <i className="fa-regular fa-flag w-4 text-[var(--shadow-text-primary)]" />
   Report
 </button>
                   <button
                     type="button"
                     onClick={handleCopyLink}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[#f5f3fa]"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[var(--shadow-bg-hover)]"
                   >
-                    <i className="fa-solid fa-link w-4 text-[#111827]" />
+                    <i className="fa-solid fa-link w-4 text-[var(--shadow-text-primary)]" />
                     Copy link
                   </button>
 
                   <button
                     type="button"
                     onClick={handleEcho}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[#f5f3fa]"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[var(--shadow-bg-hover)]"
                   >
                     <img
   src="/assets/Icons/echo.svg"
   alt="Echo"
-    className="h-4 w-4 brightness-0"
-/>
+    className="h-4 w-4 brightness-0 dark:invert"
+ />
                     Echo
                   </button>
                 </div>
@@ -185,7 +185,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
           )}
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/58 via-black/18 to-black/25" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f5f3fa] to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[var(--shadow-bg-page)] to-transparent" />
         </div>
 
         <div className="relative mx-auto flex h-full max-w-5xl flex-col justify-end px-4 pb-14 sm:pb-14">
