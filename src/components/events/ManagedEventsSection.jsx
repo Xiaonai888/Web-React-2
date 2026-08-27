@@ -65,7 +65,7 @@ return () => {
         {[0, 1].map((item) => (
           <div
             key={item}
-            className="aspect-square animate-pulse rounded-[20px] bg-[#f1f2f5]"
+            className="aspect-square animate-pulse rounded-[20px] bg-[var(--shadow-bg-soft)]"
           />
         ))}
       </div>
@@ -93,7 +93,7 @@ return () => {
                   openEventLink(item.button_url, navigate)
                 }
               }}
-              className={`group relative aspect-square overflow-hidden rounded-[20px] bg-[#e9eaf0] shadow-sm ring-1 ring-black/5 ${
+              className={`group relative aspect-square overflow-hidden rounded-[20px] bg-[var(--shadow-bg-soft)] shadow-sm ring-1 ring-black/5 ${
                 hasLink ? 'cursor-pointer active:scale-[0.98]' : ''
               }`}
             >
