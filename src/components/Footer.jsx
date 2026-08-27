@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
 
 function StoriesIcon({ active }) {
   return (
@@ -101,14 +102,16 @@ function ChatStoryIcon({ active }) {
 }
 
 const NAV = [
-  { to: '/', label: 'Stories', Icon: StoriesIcon },
-  { to: '/manga', label: 'Manga', Icon: MangaIcon },
-  { to: '/chat-story', label: 'Chat Story', Icon: ChatStoryIcon },
-  { to: '/discover', label: 'Discover', Icon: CompassIcon },
-  { to: '/me', label: 'Mine', Icon: SmileIcon },
+  { to: '/', labelKey: 'navStories', Icon: StoriesIcon },
+  { to: '/manga', labelKey: 'navManga', Icon: MangaIcon },
+  { to: '/chat-story', labelKey: 'navChatStory', Icon: ChatStoryIcon },
+  { to: '/discover', labelKey: 'navDiscover', Icon: CompassIcon },
+  { to: '/me', labelKey: 'navMine', Icon: SmileIcon },
 ]
 
 export default function Footer() {
+  const { t } = useDisplayTranslation()
+
   return (
     <footer
       className="app-nav"
@@ -139,7 +142,7 @@ export default function Footer() {
           padding: '0 8px',
         }}
       >
-        {NAV.map(({ to, label, Icon }) => (
+        {NAV.map(({ to, labelKey, Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -169,7 +172,7 @@ export default function Footer() {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {label}
+                  {t(labelKey)}
                 </span>
               </>
             )}
