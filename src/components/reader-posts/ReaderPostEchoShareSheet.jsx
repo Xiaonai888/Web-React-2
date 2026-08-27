@@ -5,6 +5,221 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerPostEchoShare', {
+  en: {
+    reader: 'Reader',
+    destinationFeedTitle: 'Echo to Feed',
+    destinationFeedSubtitle: 'Show this echo in your Shadow feed and profile.',
+    destinationShadowTitle: 'Add to My Shadow',
+    destinationShadowSubtitle: 'Keep this echo on your own Shadow space.',
+    destinationReaderTitle: 'Send to Reader',
+    destinationReaderSubtitle: 'Share this reader post with selected readers.',
+    destinationCircleTitle: 'Echo to Circle',
+    destinationCircleSubtitle: 'Share this echo with your reading circle.',
+    audiencePublicTitle: 'Public',
+    audiencePublicSubtitle: 'Anyone on Shadow can view this echo.',
+    audienceFollowersTitle: 'Followers',
+    audienceFollowersSubtitle: 'Only people who follow you can view this echo.',
+    audienceCloseReadersTitle: 'Close readers',
+    audienceCloseReadersSubtitle: 'Only your selected close readers can view it.',
+    audienceOnlyMeTitle: 'Only me',
+    audienceOnlyMeSubtitle: 'Keep this echo private.',
+    followersLoadFailed: 'Failed to load followers',
+    linkCopied: 'Link copied.',
+    readerPostTitle: "{{name}}'s reader post",
+    tagReaderSelected: 'Tag reader is selected for the next update.',
+    tagReader: 'Tag reader',
+    postNotReady: 'Reader post is not ready yet.',
+    loginBeforeEcho: 'Please log in before echoing.',
+    echoFailed: 'Failed to echo reader post',
+    readerPost: 'Reader post',
+    readerPostGenre: 'Reader Post',
+    closeShare: 'Close echo share',
+    saySomething: 'Say something...',
+    echoing: 'Echoing...',
+    echoNow: 'Echo now',
+    readers: 'Readers',
+    noFollowers: 'No followers yet.',
+    shareOutside: 'Share outside Shadow',
+    copyLink: 'Copy link',
+    destinationTitle: 'Echo destination',
+    destinationSubtitle: 'Choose where this echo should appear on Shadow.',
+    audienceTitle: 'Who can view this echo?',
+    audienceSubtitle: 'Choose who can see your echo on Shadow.',
+    back: 'Back',
+  },
+  km: {
+    reader: 'អ្នកអាន',
+    destinationFeedTitle: 'Echo ទៅ Feed',
+    destinationFeedSubtitle: 'បង្ហាញ Echo នេះក្នុង Shadow feed និងប្រវត្តិរូបរបស់អ្នក។',
+    destinationShadowTitle: 'បន្ថែមទៅ My Shadow',
+    destinationShadowSubtitle: 'រក្សា Echo នេះនៅក្នុងកន្លែង Shadow ផ្ទាល់ខ្លួនរបស់អ្នក។',
+    destinationReaderTitle: 'ផ្ញើទៅអ្នកអាន',
+    destinationReaderSubtitle: 'ចែករំលែក Reader Post នេះជាមួយអ្នកអានដែលបានជ្រើស។',
+    destinationCircleTitle: 'Echo ទៅ Circle',
+    destinationCircleSubtitle: 'ចែករំលែក Echo នេះជាមួយក្រុមអ្នកអានរបស់អ្នក។',
+    audiencePublicTitle: 'សាធារណៈ',
+    audiencePublicSubtitle: 'អ្នកគ្រប់គ្នានៅ Shadow អាចមើល Echo នេះបាន។',
+    audienceFollowersTitle: 'អ្នកតាមដាន',
+    audienceFollowersSubtitle: 'មានតែអ្នកដែលតាមដានអ្នកប៉ុណ្ណោះអាចមើល Echo នេះបាន។',
+    audienceCloseReadersTitle: 'អ្នកអានជិតស្និទ្ធ',
+    audienceCloseReadersSubtitle: 'មានតែអ្នកអានជិតស្និទ្ធដែលអ្នកបានជ្រើសប៉ុណ្ណោះអាចមើលបាន។',
+    audienceOnlyMeTitle: 'ខ្ញុំតែម្នាក់',
+    audienceOnlyMeSubtitle: 'រក្សា Echo នេះជាឯកជន។',
+    followersLoadFailed: 'មិនអាចផ្ទុកអ្នកតាមដានបានទេ',
+    linkCopied: 'បានចម្លងតំណ។',
+    readerPostTitle: 'Reader Post របស់ {{name}}',
+    tagReaderSelected: 'ការដាក់ Tag អ្នកអាននឹងមាននៅការអាប់ដេតបន្ទាប់។',
+    tagReader: 'ដាក់ Tag អ្នកអាន',
+    postNotReady: 'Reader Post មិនទាន់រួចរាល់ទេ។',
+    loginBeforeEcho: 'សូមចូលគណនីមុនពេល Echo។',
+    echoFailed: 'មិនអាច Echo Reader Post បានទេ',
+    readerPost: 'Reader Post',
+    readerPostGenre: 'Reader Post',
+    closeShare: 'បិទការចែករំលែក Echo',
+    saySomething: 'សរសេរអ្វីមួយ...',
+    echoing: 'កំពុង Echo...',
+    echoNow: 'Echo ឥឡូវនេះ',
+    readers: 'អ្នកអាន',
+    noFollowers: 'មិនទាន់មានអ្នកតាមដានទេ។',
+    shareOutside: 'ចែករំលែកក្រៅ Shadow',
+    copyLink: 'ចម្លងតំណ',
+    destinationTitle: 'ទីតាំង Echo',
+    destinationSubtitle: 'ជ្រើសកន្លែងដែល Echo នេះត្រូវបង្ហាញនៅលើ Shadow។',
+    audienceTitle: 'អ្នកណាអាចមើល Echo នេះ?',
+    audienceSubtitle: 'ជ្រើសអ្នកដែលអាចមើល Echo របស់អ្នកនៅលើ Shadow។',
+    back: 'ត្រឡប់ក្រោយ',
+  },
+  zh: {
+    reader: '读者',
+    destinationFeedTitle: 'Echo 到动态',
+    destinationFeedSubtitle: '在你的 Shadow 动态和个人资料中显示此 Echo。',
+    destinationShadowTitle: '添加到我的 Shadow',
+    destinationShadowSubtitle: '将此 Echo 保留在你自己的 Shadow 空间。',
+    destinationReaderTitle: '发送给读者',
+    destinationReaderSubtitle: '将此读者帖子分享给选中的读者。',
+    destinationCircleTitle: 'Echo 到圈子',
+    destinationCircleSubtitle: '将此 Echo 分享给你的阅读圈。',
+    audiencePublicTitle: '公开',
+    audiencePublicSubtitle: 'Shadow 上的任何人都可以查看此 Echo。',
+    audienceFollowersTitle: '关注者',
+    audienceFollowersSubtitle: '只有关注你的人可以查看此 Echo。',
+    audienceCloseReadersTitle: '亲近读者',
+    audienceCloseReadersSubtitle: '只有你选择的亲近读者可以查看。',
+    audienceOnlyMeTitle: '仅自己',
+    audienceOnlyMeSubtitle: '将此 Echo 设为私密。',
+    followersLoadFailed: '无法加载关注者',
+    linkCopied: '链接已复制。',
+    readerPostTitle: '{{name}} 的读者帖子',
+    tagReaderSelected: '标记读者功能将在下次更新中提供。',
+    tagReader: '标记读者',
+    postNotReady: '读者帖子尚未准备好。',
+    loginBeforeEcho: '请先登录再 Echo。',
+    echoFailed: '无法 Echo 读者帖子',
+    readerPost: '读者帖子',
+    readerPostGenre: '读者帖子',
+    closeShare: '关闭 Echo 分享',
+    saySomething: '说点什么...',
+    echoing: 'Echo 中...',
+    echoNow: '立即 Echo',
+    readers: '读者',
+    noFollowers: '还没有关注者。',
+    shareOutside: '分享到 Shadow 之外',
+    copyLink: '复制链接',
+    destinationTitle: 'Echo 位置',
+    destinationSubtitle: '选择此 Echo 在 Shadow 上显示的位置。',
+    audienceTitle: '谁可以查看此 Echo？',
+    audienceSubtitle: '选择谁可以在 Shadow 上查看你的 Echo。',
+    back: '返回',
+  },
+  ja: {
+    reader: '読者',
+    destinationFeedTitle: 'フィードに Echo',
+    destinationFeedSubtitle: 'この Echo を Shadow のフィードとプロフィールに表示します。',
+    destinationShadowTitle: 'My Shadow に追加',
+    destinationShadowSubtitle: 'この Echo を自分の Shadow スペースに保存します。',
+    destinationReaderTitle: '読者に送信',
+    destinationReaderSubtitle: 'この読者投稿を選択した読者と共有します。',
+    destinationCircleTitle: 'サークルに Echo',
+    destinationCircleSubtitle: 'この Echo を読書サークルと共有します。',
+    audiencePublicTitle: '公開',
+    audiencePublicSubtitle: 'Shadow の誰でもこの Echo を見ることができます。',
+    audienceFollowersTitle: 'フォロワー',
+    audienceFollowersSubtitle: 'あなたをフォローしている人だけがこの Echo を見られます。',
+    audienceCloseReadersTitle: '親しい読者',
+    audienceCloseReadersSubtitle: '選択した親しい読者だけが見ることができます。',
+    audienceOnlyMeTitle: '自分のみ',
+    audienceOnlyMeSubtitle: 'この Echo を非公開にします。',
+    followersLoadFailed: 'フォロワーを読み込めませんでした',
+    linkCopied: 'リンクをコピーしました。',
+    readerPostTitle: '{{name}} の読者投稿',
+    tagReaderSelected: '読者タグ機能は次回のアップデートで利用できます。',
+    tagReader: '読者をタグ付け',
+    postNotReady: '読者投稿はまだ準備できていません。',
+    loginBeforeEcho: 'Echo する前にログインしてください。',
+    echoFailed: '読者投稿を Echo できませんでした',
+    readerPost: '読者投稿',
+    readerPostGenre: '読者投稿',
+    closeShare: 'Echo 共有を閉じる',
+    saySomething: '何か書く...',
+    echoing: 'Echo 中...',
+    echoNow: '今すぐ Echo',
+    readers: '読者',
+    noFollowers: 'まだフォロワーはいません。',
+    shareOutside: 'Shadow の外へ共有',
+    copyLink: 'リンクをコピー',
+    destinationTitle: 'Echo の表示先',
+    destinationSubtitle: 'この Echo を Shadow のどこに表示するか選択します。',
+    audienceTitle: 'この Echo を見られる人は？',
+    audienceSubtitle: 'Shadow であなたの Echo を見られる人を選択します。',
+    back: '戻る',
+  },
+  ko: {
+    reader: '독자',
+    destinationFeedTitle: '피드에 Echo',
+    destinationFeedSubtitle: '이 Echo를 Shadow 피드와 프로필에 표시합니다.',
+    destinationShadowTitle: 'My Shadow에 추가',
+    destinationShadowSubtitle: '이 Echo를 내 Shadow 공간에 보관합니다.',
+    destinationReaderTitle: '독자에게 보내기',
+    destinationReaderSubtitle: '이 독자 게시물을 선택한 독자와 공유합니다.',
+    destinationCircleTitle: '서클에 Echo',
+    destinationCircleSubtitle: '이 Echo를 독서 서클과 공유합니다.',
+    audiencePublicTitle: '전체 공개',
+    audiencePublicSubtitle: 'Shadow의 누구나 이 Echo를 볼 수 있습니다.',
+    audienceFollowersTitle: '팔로워',
+    audienceFollowersSubtitle: '나를 팔로우하는 사람만 이 Echo를 볼 수 있습니다.',
+    audienceCloseReadersTitle: '친한 독자',
+    audienceCloseReadersSubtitle: '선택한 친한 독자만 볼 수 있습니다.',
+    audienceOnlyMeTitle: '나만 보기',
+    audienceOnlyMeSubtitle: '이 Echo를 비공개로 유지합니다.',
+    followersLoadFailed: '팔로워를 불러오지 못했습니다',
+    linkCopied: '링크를 복사했습니다.',
+    readerPostTitle: '{{name}}님의 독자 게시물',
+    tagReaderSelected: '독자 태그 기능은 다음 업데이트에서 제공됩니다.',
+    tagReader: '독자 태그',
+    postNotReady: '독자 게시물이 아직 준비되지 않았습니다.',
+    loginBeforeEcho: 'Echo하기 전에 로그인해 주세요.',
+    echoFailed: '독자 게시물을 Echo하지 못했습니다',
+    readerPost: '독자 게시물',
+    readerPostGenre: '독자 게시물',
+    closeShare: 'Echo 공유 닫기',
+    saySomething: '무언가 작성해 보세요...',
+    echoing: 'Echo 중...',
+    echoNow: '지금 Echo',
+    readers: '독자',
+    noFollowers: '아직 팔로워가 없습니다.',
+    shareOutside: 'Shadow 밖으로 공유',
+    copyLink: '링크 복사',
+    destinationTitle: 'Echo 위치',
+    destinationSubtitle: '이 Echo가 Shadow 어디에 표시될지 선택하세요.',
+    audienceTitle: '누가 이 Echo를 볼 수 있나요?',
+    audienceSubtitle: 'Shadow에서 내 Echo를 볼 수 있는 사람을 선택하세요.',
+    back: '뒤로',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -13,30 +228,26 @@ const API_BASE_URL =
 const DESTINATIONS = [
   {
     key: 'feed',
-    title: 'Echo to Feed',
-    subtitle:
-      'Show this echo in your Shadow feed and profile.',
+    titleKey: 'destinationFeedTitle',
+    subtitleKey: 'destinationFeedSubtitle',
     icon: 'fa-solid fa-newspaper',
   },
   {
     key: 'shadow',
-    title: 'Add to My Shadow',
-    subtitle:
-      'Keep this echo on your own Shadow space.',
+    titleKey: 'destinationShadowTitle',
+    subtitleKey: 'destinationShadowSubtitle',
     icon: 'fa-regular fa-circle-user',
   },
   {
     key: 'reader',
-    title: 'Send to Reader',
-    subtitle:
-      'Share this reader post with selected readers.',
+    titleKey: 'destinationReaderTitle',
+    subtitleKey: 'destinationReaderSubtitle',
     icon: 'fa-solid fa-user-group',
   },
   {
     key: 'circle',
-    title: 'Echo to Circle',
-    subtitle:
-      'Share this echo with your reading circle.',
+    titleKey: 'destinationCircleTitle',
+    subtitleKey: 'destinationCircleSubtitle',
     icon: 'fa-solid fa-users',
   },
 ]
@@ -44,29 +255,26 @@ const DESTINATIONS = [
 const AUDIENCES = [
   {
     key: 'public',
-    title: 'Public',
-    subtitle:
-      'Anyone on Shadow can view this echo.',
+    titleKey: 'audiencePublicTitle',
+    subtitleKey: 'audiencePublicSubtitle',
     icon: 'fa-solid fa-earth-americas',
   },
   {
     key: 'followers',
-    title: 'Followers',
-    subtitle:
-      'Only people who follow you can view this echo.',
+    titleKey: 'audienceFollowersTitle',
+    subtitleKey: 'audienceFollowersSubtitle',
     icon: 'fa-solid fa-user-check',
   },
   {
     key: 'close-readers',
-    title: 'Close readers',
-    subtitle:
-      'Only your selected close readers can view it.',
+    titleKey: 'audienceCloseReadersTitle',
+    subtitleKey: 'audienceCloseReadersSubtitle',
     icon: 'fa-solid fa-star',
   },
   {
     key: 'only-me',
-    title: 'Only me',
-    subtitle: 'Keep this echo private.',
+    titleKey: 'audienceOnlyMeTitle',
+    subtitleKey: 'audienceOnlyMeSubtitle',
     icon: 'fa-solid fa-lock',
   },
 ]
@@ -181,11 +389,12 @@ function ReaderCircle({
   reader,
   active,
   onClick,
+  fallbackName,
 }) {
   const name =
     reader?.name ||
     reader?.username ||
-    'Reader'
+    fallbackName
 
   return (
     <button
@@ -230,6 +439,7 @@ function ChoiceSheet({
   value,
   onChoose,
   onBack,
+  backLabel,
 }) {
   return (
     <div className="fixed inset-0 z-[200010] bg-white text-[#111827]">
@@ -237,6 +447,7 @@ function ChoiceSheet({
         <button
           type="button"
           onClick={onBack}
+          aria-label={backLabel}
           className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f5f3fa]"
         >
           <i className="fa-solid fa-chevron-left text-[18px]" />
@@ -307,6 +518,7 @@ export default function ReaderPostEchoShareSheet({
   onClose,
   onEchoed,
 }) {
+  const { t } = useDisplayTranslation()
   const sheetRef = useRef(null)
   const dragStartYRef = useRef(0)
   const dragOffsetRef = useRef(0)
@@ -342,6 +554,16 @@ export default function ReaderPostEchoShareSheet({
     () => getPostLink(post),
     [post]
   )
+  const destinationOptions = DESTINATIONS.map((item) => ({
+    ...item,
+    title: t(`readerPostEchoShare.${item.titleKey}`),
+    subtitle: t(`readerPostEchoShare.${item.subtitleKey}`),
+  }))
+  const audienceOptions = AUDIENCES.map((item) => ({
+    ...item,
+    title: t(`readerPostEchoShare.${item.titleKey}`),
+    subtitle: t(`readerPostEchoShare.${item.subtitleKey}`),
+  }))
 
   useEffect(() => {
     if (!open) return undefined
@@ -396,7 +618,7 @@ export default function ReaderPostEchoShareSheet({
         ) {
           throw new Error(
             data.message ||
-              'Failed to load followers'
+              t('readerPostEchoShare.followersLoadFailed')
           )
         }
 
@@ -412,7 +634,7 @@ export default function ReaderPostEchoShareSheet({
           setFollowers([])
           setFollowersError(
             error.message ||
-              'Failed to load followers.'
+              t('readerPostEchoShare.followersLoadFailed')
           )
         }
       } finally {
@@ -427,36 +649,36 @@ export default function ReaderPostEchoShareSheet({
     return () => {
       ignore = true
     }
-  }, [open, user?.username])
+  }, [open, t, user?.username])
 
   if (!open) return null
 
   const displayName =
     user?.name ||
     user?.username ||
-    'Reader'
+    t('readerPostEchoShare.reader')
   const avatarLetter = displayName
     .slice(0, 1)
     .toUpperCase()
   const sourceName =
     post?.user?.name ||
     post?.user?.username ||
-    'Reader'
+    t('readerPostEchoShare.reader')
   const destinationItem =
-    DESTINATIONS.find(
+    destinationOptions.find(
       (item) => item.key === destination
-    ) || DESTINATIONS[0]
+    ) || destinationOptions[0]
   const audienceItem =
-    AUDIENCES.find(
+    audienceOptions.find(
       (item) => item.key === audience
-    ) || AUDIENCES[0]
+    ) || audienceOptions[0]
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(
         postLink
       )
-      setMessage('Link copied.')
+      setMessage(t('readerPostEchoShare.linkCopied'))
     } catch {
       setMessage(postLink)
     }
@@ -467,7 +689,7 @@ export default function ReaderPostEchoShareSheet({
       `https://t.me/share/url?url=${encodeURIComponent(
         postLink
       )}&text=${encodeURIComponent(
-        `${sourceName}'s reader post`
+        t('readerPostEchoShare.readerPostTitle', { name: sourceName })
       )}`,
       '_blank',
       'noopener,noreferrer'
@@ -500,7 +722,7 @@ export default function ReaderPostEchoShareSheet({
 
   const handleTagClick = () => {
     setMessage(
-      'Tag reader is selected for the next update.'
+      t('readerPostEchoShare.tagReaderSelected')
     )
   }
 
@@ -543,7 +765,7 @@ export default function ReaderPostEchoShareSheet({
   const handleEchoNow = async () => {
     if (!post?.id) {
       setMessage(
-        'Reader post is not ready yet.'
+        t('readerPostEchoShare.postNotReady')
       )
       return
     }
@@ -552,7 +774,7 @@ export default function ReaderPostEchoShareSheet({
 
     if (!token) {
       setMessage(
-        'Please log in before echoing.'
+        t('readerPostEchoShare.loginBeforeEcho')
       )
       return
     }
@@ -593,7 +815,7 @@ export default function ReaderPostEchoShareSheet({
       ) {
         throw new Error(
           data.message ||
-            'Failed to echo reader post'
+            t('readerPostEchoShare.echoFailed')
         )
       }
 
@@ -610,9 +832,9 @@ export default function ReaderPostEchoShareSheet({
         source_content:
           post?.content || '',
         story_title:
-          `${sourceName}'s reader post`,
+          t('readerPostEchoShare.readerPostTitle', { name: sourceName }),
         story_author_name: sourceName,
-        story_genre: 'Reader Post',
+        story_genre: t('readerPostEchoShare.readerPostGenre'),
         story_cover_url:
           post?.user?.avatar_url || '',
         echo_text: postText.trim(),
@@ -634,7 +856,7 @@ export default function ReaderPostEchoShareSheet({
               name:
                 reader.name ||
                 reader.username ||
-                'Reader',
+                t('readerPostEchoShare.reader'),
               username:
                 reader.username || '',
               avatar_url:
@@ -658,7 +880,7 @@ export default function ReaderPostEchoShareSheet({
     } catch (error) {
       setMessage(
         error.message ||
-          'Failed to echo reader post.'
+          t('readerPostEchoShare.echoFailed')
       )
     } finally {
       setSending(false)
@@ -669,7 +891,7 @@ export default function ReaderPostEchoShareSheet({
   <div className="fixed inset-0 z-[200000] flex items-end justify-center">
     <button
       type="button"
-      aria-label="Close echo share"
+      aria-label={t('readerPostEchoShare.closeShare')}
       onClick={onClose}
       className="absolute inset-0 bg-black/60"
     />
@@ -765,7 +987,7 @@ export default function ReaderPostEchoShareSheet({
             }
             rows={2}
             maxLength={280}
-            placeholder="Say something..."
+            placeholder={t('readerPostEchoShare.saySomething')}
             className="mt-3 w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:font-normal placeholder:text-[#98a2b3]"
           />
 
@@ -793,7 +1015,7 @@ export default function ReaderPostEchoShareSheet({
                 </div>
                 <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-[12px] font-normal leading-5 text-[#667085]">
                   {post?.content ||
-                    'Reader post'}
+                    t('readerPostEchoShare.readerPost')}
                 </p>
               </div>
             </div>
@@ -803,6 +1025,7 @@ export default function ReaderPostEchoShareSheet({
             <button
               type="button"
               onClick={handleTagClick}
+              aria-label={t('readerPostEchoShare.tagReader')}
               className="flex h-10 w-10 items-center justify-center rounded-full text-[#667085] active:scale-95 active:bg-[#f2f3f5]"
             >
               <i className="fa-solid fa-user-tag text-[18px]" />
@@ -815,8 +1038,8 @@ export default function ReaderPostEchoShareSheet({
               className="h-9 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#8b5cf6] to-[#a855f7] px-5 text-[13px] font-normal text-white shadow-[0_6px_16px_rgba(139,92,246,0.24)] active:scale-95 disabled:opacity-60"
             >
               {sending
-                ? 'Echoing...'
-                : 'Echo now'}
+                ? t('readerPostEchoShare.echoing')
+                : t('readerPostEchoShare.echoNow')}
             </button>
           </div>
         </div>
@@ -829,7 +1052,7 @@ export default function ReaderPostEchoShareSheet({
 
         <div className="mt-5">
           <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
-            Readers
+            {t('readerPostEchoShare.readers')}
           </div>
           <div className="flex gap-4 overflow-x-auto pb-1">
             {followersLoading ? (
@@ -849,6 +1072,7 @@ export default function ReaderPostEchoShareSheet({
                 <ReaderCircle
                   key={reader.id}
                   reader={reader}
+                  fallbackName={t('readerPostEchoShare.reader')}
                   active={selectedReaders.includes(
                     String(reader.id)
                   )}
@@ -862,7 +1086,7 @@ export default function ReaderPostEchoShareSheet({
             ) : (
               <div className="py-3 text-[12px] font-normal text-[#98a2b3]">
                 {followersError ||
-                  'No followers yet.'}
+                  t('readerPostEchoShare.noFollowers')}
               </div>
             )}
           </div>
@@ -870,11 +1094,11 @@ export default function ReaderPostEchoShareSheet({
 
         <div className="mt-5">
           <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
-            Share outside Shadow
+            {t('readerPostEchoShare.shareOutside')}
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2">
             <ShareCircle
-  label="Copy link"
+  label={t('readerPostEchoShare.copyLink')}
   iconNode={
     <svg
       viewBox="0 0 24 24"
@@ -909,13 +1133,14 @@ export default function ReaderPostEchoShareSheet({
 
       {activePanel === 'destination' ? (
         <ChoiceSheet
-          title="Echo destination"
-          subtitle="Choose where this echo should appear on Shadow."
-          options={DESTINATIONS}
+          title={t('readerPostEchoShare.destinationTitle')}
+          subtitle={t('readerPostEchoShare.destinationSubtitle')}
+          options={destinationOptions}
           value={destination}
           onBack={() =>
             setActivePanel('')
           }
+          backLabel={t('readerPostEchoShare.back')}
           onChoose={(value) => {
             setDestination(value)
             setActivePanel('')
@@ -925,13 +1150,14 @@ export default function ReaderPostEchoShareSheet({
 
       {activePanel === 'audience' ? (
         <ChoiceSheet
-          title="Who can view this echo?"
-          subtitle="Choose who can see your echo on Shadow."
-          options={AUDIENCES}
+          title={t('readerPostEchoShare.audienceTitle')}
+          subtitle={t('readerPostEchoShare.audienceSubtitle')}
+          options={audienceOptions}
           value={audience}
           onBack={() =>
             setActivePanel('')
           }
+          backLabel={t('readerPostEchoShare.back')}
           onChoose={(value) => {
             setAudience(value)
             setActivePanel('')
