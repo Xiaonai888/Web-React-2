@@ -125,14 +125,14 @@ function InfoCard({
   label,
 }) {
   return (
-    <div className="rounded-[18px] border border-[#EDE9FE] bg-white px-3 py-4 text-center shadow-[0_8px_22px_rgba(124,58,237,0.05)]">
+    <div className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-4 text-center shadow-[0_8px_22px_rgba(124,58,237,0.05)]">
       <i
         className={`fa-solid ${icon} text-[16px] text-[#7C3AED]`}
       />
-      <div className="mt-2 text-[15px] font-black text-[#17182A]">
+      <div className="mt-2 text-[15px] font-black text-[var(--shadow-text-primary)]">
         {value}
       </div>
-      <div className="mt-1 text-[9px] font-semibold text-[#8B909B]">
+      <div className="mt-1 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">
         {label}
       </div>
     </div>
@@ -232,19 +232,19 @@ export default function WriterWednesdayEventPage() {
     countdown.hours
 
   return (
-    <div className="min-h-screen bg-[#F8F7FB] pb-10">
-      <header className="sticky top-0 z-30 border-b border-[#ECEAF2] bg-white/95 backdrop-blur">
+    <div className="app-page min-h-screen pb-10">
+      <header className="sticky top-0 z-30 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[560px] items-center px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[#17182A] transition active:bg-[#F3F4F6]"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition active:bg-[var(--shadow-bg-hover)]"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <div className="flex-1 text-center text-[16px] font-black text-[#17182A]">
+          <div className="flex-1 text-center text-[16px] font-black text-[var(--shadow-text-primary)]">
             Writer Wednesday
           </div>
 
@@ -253,26 +253,26 @@ export default function WriterWednesdayEventPage() {
       </header>
 
       <main className="mx-auto max-w-[560px] px-4 pt-4">
-        <div className="mb-4 flex border-b border-[#ECEAF2]">
+        <div className="mb-4 flex border-b border-[var(--shadow-border)]">
           <button
             type="button"
             onClick={() =>
               navigate('/event')
             }
-            className="px-3 pb-3 text-[12px] font-bold text-[#9CA3AF]"
+            className="px-3 pb-3 text-[12px] font-bold text-[var(--shadow-text-tertiary)]"
           >
             Author
           </button>
 
           <button
             type="button"
-            className="border-b-2 border-[#7C3AED] px-3 pb-3 text-[12px] font-black text-[#17182A]"
+            className="border-b-2 border-[#7C3AED] px-3 pb-3 text-[12px] font-black text-[var(--shadow-text-primary)]"
           >
             Event
           </button>
         </div>
 
-        <section className="overflow-hidden rounded-[24px] border border-[#E9E2F5] bg-white shadow-[0_14px_36px_rgba(124,58,237,0.08)]">
+        <section className="overflow-hidden rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_14px_36px_rgba(124,58,237,0.08)]">
           <img
             src="/assets/Icons/Event/Event 3.webp"
             alt="Writer Wednesday 70% Event"
@@ -281,7 +281,7 @@ export default function WriterWednesdayEventPage() {
 
           <div className="p-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#F1EAFE] px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#7C3AED]">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#F1EAFE] px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300">
                 <span
                   className={`h-2 w-2 rounded-full ${
                     eventState.active
@@ -294,13 +294,13 @@ export default function WriterWednesdayEventPage() {
                   : 'Weekly Event'}
               </div>
 
-              <div className="text-[10px] font-bold text-[#8B909B]">
+              <div className="text-[10px] font-bold text-[var(--shadow-text-secondary)]">
                 Cambodia Time
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-center gap-2 rounded-[20px] border border-[#E9E2F5] bg-[#FAF7FF] px-3 py-4">
-              <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[#17182A]">
+            <div className="mt-4 flex items-center justify-center gap-2 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-3 py-4">
+              <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[var(--shadow-text-primary)]">
                 {pad(displayHours)}
               </span>
 
@@ -308,7 +308,7 @@ export default function WriterWednesdayEventPage() {
                 :
               </span>
 
-              <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[#17182A]">
+              <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[var(--shadow-text-primary)]">
                 {pad(
                   countdown.minutes
                 )}
@@ -318,7 +318,7 @@ export default function WriterWednesdayEventPage() {
                 :
               </span>
 
-              <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[#17182A]">
+              <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[var(--shadow-text-primary)]">
                 {pad(
                   countdown.seconds
                 )}
@@ -326,23 +326,23 @@ export default function WriterWednesdayEventPage() {
             </div>
 
             {!eventState.active ? (
-              <div className="mt-3 text-center text-[11px] font-semibold leading-5 text-[#7D8290]">
+              <div className="mt-3 text-center text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
                 {nextWednesdayLabel}
               </div>
             ) : null}
           </div>
         </section>
 
-        <section className="mt-4 rounded-[24px] border border-[#ECE8F3] bg-white p-4 shadow-[0_10px_28px_rgba(31,24,55,0.06)]">
+        <section className="mt-4 rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_28px_rgba(31,24,55,0.06)]">
           <div className="text-[10px] font-black uppercase tracking-[0.14em] text-[#8B5CF6]">
             Writer Wednesday
           </div>
 
-          <h1 className="mt-2 text-[24px] font-black leading-[1.15] tracking-[-0.03em] text-[#17182A]">
+          <h1 className="mt-2 text-[24px] font-black leading-[1.15] tracking-[-0.03em] text-[var(--shadow-text-primary)]">
             Create more. Earn more.
           </h1>
 
-          <p className="mt-3 text-[13px] font-medium leading-6 text-[#6B7280]">
+          <p className="mt-3 text-[13px] font-medium leading-6 text-[var(--shadow-text-secondary)]">
             Every Wednesday, authors earn 70% from eligible Diamond episode unlocks automatically.
           </p>
 
@@ -365,49 +365,49 @@ export default function WriterWednesdayEventPage() {
           </div>
         </section>
 
-        <section className="mt-4 rounded-[24px] border border-[#ECE8F3] bg-white p-4 shadow-[0_10px_28px_rgba(31,24,55,0.06)]">
-          <h2 className="text-[17px] font-black text-[#17182A]">
+        <section className="mt-4 rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_28px_rgba(31,24,55,0.06)]">
+          <h2 className="text-[17px] font-black text-[var(--shadow-text-primary)]">
             How it works
           </h2>
 
           <div className="mt-4 space-y-3">
             <div className="flex gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300">
                 1
               </div>
               <div>
-                <div className="text-[13px] font-black text-[#17182A]">
+                <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">
                   Publish and keep writing
                 </div>
-                <div className="mt-1 text-[11px] font-medium leading-5 text-[#7D8290]">
+                <div className="mt-1 text-[11px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
                   The event runs every Wednesday in Cambodia time.
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300">
                 2
               </div>
               <div>
-                <div className="text-[13px] font-black text-[#17182A]">
+                <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">
                   Readers unlock with Diamonds
                 </div>
-                <div className="mt-1 text-[11px] font-medium leading-5 text-[#7D8290]">
+                <div className="mt-1 text-[11px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
                   Eligible Diamond episode unlocks are included automatically.
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300">
                 3
               </div>
               <div>
-                <div className="text-[13px] font-black text-[#17182A]">
+                <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">
                   Authors receive 70%
                 </div>
-                <div className="mt-1 text-[11px] font-medium leading-5 text-[#7D8290]">
+                <div className="mt-1 text-[11px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
                   No event code or manual activation is required.
                 </div>
               </div>
@@ -415,7 +415,7 @@ export default function WriterWednesdayEventPage() {
           </div>
         </section>
 
-        <div className="mt-4 rounded-[18px] bg-[#F3EDFF] px-4 py-3 text-center text-[11px] font-bold leading-5 text-[#6D28D9]">
+        <div className="mt-4 rounded-[18px] bg-[#F3EDFF] px-4 py-3 text-center text-[11px] font-bold leading-5 text-[#6D28D9] dark:bg-violet-500/15 dark:text-violet-300">
           Automatically applied to eligible Diamond episode unlocks.
         </div>
       </main>
