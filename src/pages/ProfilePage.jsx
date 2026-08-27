@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePostsPanel'
 import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
@@ -584,18 +584,41 @@ function EditProfileModal({
 
 export default function ProfilePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const storedUser = useMemo(() => getStoredUser(), [])
   const requestedUsername = String(searchParams.get('username') || '').replace(/^@+/, '')
   const isOwnProfile =
     !requestedUsername ||
     requestedUsername.toLowerCase() === String(storedUser?.username || '').toLowerCase()
+  const navigationPreview = useMemo(() => {
+    const preview = location.state?.profilePreview
+
+    if (!preview || isOwnProfile) {
+      return null
+    }
+
+    const previewUsername = String(preview?.username || '')
+      .trim()
+      .replace(/^@+/, '')
+      .toLowerCase()
+    const targetUsername = String(requestedUsername || '')
+      .trim()
+      .replace(/^@+/, '')
+      .toLowerCase()
+
+    return previewUsername && previewUsername === targetUsername
+      ? preview
+      : null
+  }, [isOwnProfile, location.state, requestedUsername])
   const [profileOptionsOpen, setProfileOptionsOpen] = useState(false)
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [readerPostCount, setReaderPostCount] = useState(0)
   const [profileTabMessage, setProfileTabMessage] = useState('')
   const [discoverPeopleOpen, setDiscoverPeopleOpen] = useState(false)
-    const [user, setUser] = useState(() => (isOwnProfile ? storedUser : null))
+  const [user, setUser] = useState(() =>
+    isOwnProfile ? storedUser : navigationPreview
+  )
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [rawAvatarImage, setRawAvatarImage] = useState('')
@@ -684,10 +707,10 @@ export default function ProfilePage() {
     setAvatarPreview('')
 
     if (isOwnProfile) {
-  setUser(storedUser || null)
-} else {
-  setUser(null)
-}
+      setUser(storedUser || null)
+    } else {
+      setUser(navigationPreview)
+    }
 
     async function loadProfileStats() {
       if (!targetUsername) return
@@ -716,7 +739,7 @@ export default function ProfilePage() {
 
         console.error('Fetch reader profile stats error:', error)
 
-        if (!isOwnProfile) {
+        if (!isOwnProfile && !navigationPreview) {
           setUser(null)
         }
       }
@@ -727,7 +750,12 @@ export default function ProfilePage() {
     return () => {
       ignore = true
     }
-  }, [isOwnProfile, requestedUsername, storedUser?.username])
+  }, [
+    isOwnProfile,
+    navigationPreview,
+    requestedUsername,
+    storedUser?.username,
+  ])
 
   const profile = useMemo(() => {
     const fallbackUsername = isOwnProfile
@@ -1102,6 +1130,39 @@ async function handleOtherProfileOption(action) {
     setCroppedAreaPixels(null)
   }
 
+  function handleProfileBack() {
+    const returnTo =
+      typeof location.state?.returnTo === 'string' &&
+      location.state.returnTo.startsWith('/')
+        ? location.state.returnTo
+        : ''
+
+    if (returnTo) {
+      if (
+        location.key !== 'default' &&
+        window.history.length > 1
+      ) {
+        navigate(-1)
+        return
+      }
+
+      navigate(returnTo, { replace: true })
+      return
+    }
+
+    if (isOwnProfile) {
+      navigate('/me', { replace: true })
+      return
+    }
+
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+
+    navigate('/discover', { replace: true })
+  }
+
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px] text-[var(--shadow-text-primary)]">
       <AvatarCropModal
@@ -1151,11 +1212,7 @@ async function handleOtherProfileOption(action) {
               <div className="flex min-w-0 items-center gap-3">
                <button
   type="button"
-  onClick={() =>
-    isOwnProfile
-      ? navigate('/me', { replace: true })
-      : navigate(-1)
-  }
+  onClick={handleProfileBack}
   className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition hover:bg-[var(--shadow-bg-hover)] active:scale-95"
   aria-label="Go back"
 >
