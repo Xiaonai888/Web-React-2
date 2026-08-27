@@ -8,6 +8,41 @@ import {
 import {
   REACTIONS,
 } from './reactionConfig'
+import { useDisplayTranslation } from '../../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../../i18n/registerTranslations'
+
+registerTranslationNamespace('reactionPicker', {
+  en: {
+    close: 'Close reactions',
+    choose: 'Choose reaction',
+    slide: 'Slide finger across',
+    tap: 'Tap to select',
+  },
+  km: {
+    close: 'បិទប្រតិកម្ម',
+    choose: 'ជ្រើសប្រតិកម្ម',
+    slide: 'អូសម្រាមដៃដើម្បីជ្រើស',
+    tap: 'ចុចដើម្បីជ្រើស',
+  },
+  zh: {
+    close: '关闭反应',
+    choose: '选择反应',
+    slide: '滑动手指选择',
+    tap: '点击选择',
+  },
+  ja: {
+    close: 'リアクションを閉じる',
+    choose: 'リアクションを選択',
+    slide: '指をスライドして選択',
+    tap: 'タップして選択',
+  },
+  ko: {
+    close: '반응 닫기',
+    choose: '반응 선택',
+    slide: '손가락을 움직여 선택',
+    tap: '탭하여 선택',
+  },
+})
 
 export default function ReactionPicker({
   anchorRef,
@@ -21,6 +56,7 @@ export default function ReactionPicker({
   onClose,
   className = '',
 }) {
+  const { t } = useDisplayTranslation()
   const [pressedType, setPressedType] = useState('')
   const [hoverType, setHoverType] = useState('')
   const [pickerPosition, setPickerPosition] = useState(null)
@@ -707,7 +743,7 @@ setPickerPosition({
 
       <button
         type="button"
-        aria-label="Close reactions"
+        aria-label={t('reactionPicker.close')}
         onPointerDown={(event) => {
           event.stopPropagation()
           onClose?.()
@@ -718,7 +754,7 @@ setPickerPosition({
       <div
         ref={pickerRef}
         role="menu"
-        aria-label="Choose reaction"
+        aria-label={t('reactionPicker.choose')}
         style={
           pickerPosition === null
             ? {
@@ -742,8 +778,12 @@ setPickerPosition({
           const active =
             reaction.type === activeType
           const emphasized =
-            reaction.type ===
-            emphasizedType
+  reaction.type ===
+  emphasizedType
+const reactionLabel = t(
+  `reactionAction.${reaction.type}`,
+  { defaultValue: reaction.label }
+)
 
           return (
             <button
@@ -867,14 +907,12 @@ setPickerPosition({
                     ? 'w-[37px]'
                     : 'w-[48px]'
               }`}
-              aria-label={
-                reaction.label
-              }
-              title={reaction.label}
+              aria-label={reactionLabel}
+title={reactionLabel}
             >
               {emphasized ? (
                 <span className="pointer-events-none absolute bottom-[114px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold leading-none text-white shadow-sm backdrop-blur-[2px]">
-                  {reaction.label}
+                  {reactionLabel}
                 </span>
               ) : null}
 
@@ -927,8 +965,8 @@ setPickerPosition({
           aria-hidden="true"
         >
           {isSliding
-            ? 'Slide finger across'
-            : 'Tap to select'}
+  ? t('reactionPicker.slide')
+  : t('reactionPicker.tap')}
         </div>
       </div>
     </>,
