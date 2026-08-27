@@ -48,6 +48,14 @@ const resources = {
       navChatStory: 'Chat Story',
       navDiscover: 'Discover',
       navMine: 'Mine',
+      maintenance: {
+        title: 'The website is under maintenance',
+        description: 'We are checking and improving the system to provide a better experience. We apologize for the inconvenience and ask you to try again shortly.',
+        status: 'Our team is working on it',
+        help: 'Need help? Contact us',
+        retry: 'Try again',
+        footer: 'Thank you for your patience and support',
+      },
     },
   },
   km: {
@@ -99,6 +107,14 @@ const resources = {
       navChatStory: 'រឿងជជែក',
       navDiscover: 'ស្វែងរក',
       navMine: 'ខ្ញុំ',
+      maintenance: {
+        title: 'វេបសាយកំពុងស្ថិតក្នុងការថែទាំ',
+        description: 'យើងកំពុងពិនិត្យ និងកែលម្អប្រព័ន្ធ ដើម្បីឱ្យការប្រើប្រាស់កាន់តែប្រសើរ។ សូមអភ័យទោសចំពោះការរអាក់រអួល និងសូមព្យាយាមចូលម្តងទៀតនៅពេលបន្តិចទៀត។',
+        status: 'ក្រុមការងារកំពុងដោះស្រាយ',
+        help: 'បើត្រូវការជំនួយ សូមទាក់ទងមកកាន់',
+        retry: 'ព្យាយាមចូលម្តងទៀត',
+        footer: 'សូមអរគុណសម្រាប់ការអត់ធ្មត់ និងការគាំទ្រ',
+      },
     },
   },
   zh: {
@@ -124,6 +140,14 @@ const resources = {
       navChatStory: '聊天故事',
       navDiscover: '发现',
       navMine: '我的',
+      maintenance: {
+        title: '网站正在维护中',
+        description: '我们正在检查并改进系统，以提供更好的使用体验。对于给您带来的不便，我们深表歉意，请稍后再试。',
+        status: '我们的团队正在处理中',
+        help: '如需帮助，请联系我们',
+        retry: '重试',
+        footer: '感谢您的耐心与支持',
+      },
     },
   },
   ja: {
@@ -149,6 +173,14 @@ const resources = {
       navChatStory: 'チャット',
       navDiscover: '見つける',
       navMine: 'マイ',
+      maintenance: {
+        title: 'ウェブサイトはメンテナンス中です',
+        description: 'より良いサービスを提供するため、システムの確認と改善を行っています。ご不便をおかけして申し訳ありません。しばらくしてからもう一度お試しください。',
+        status: '現在対応中です',
+        help: 'サポートが必要な場合はこちら',
+        retry: 'もう一度試す',
+        footer: 'ご理解とご支援ありがとうございます',
+      },
     },
   },
   ko: {
@@ -174,6 +206,14 @@ const resources = {
       navChatStory: '채팅 스토리',
       navDiscover: '찾기',
       navMine: '내 정보',
+      maintenance: {
+        title: '웹사이트 점검 중입니다',
+        description: '더 나은 이용 환경을 제공하기 위해 시스템을 점검하고 개선하고 있습니다. 불편을 드려 죄송하며 잠시 후 다시 시도해 주세요.',
+        status: '현재 문제를 해결하고 있습니다',
+        help: '도움이 필요하면 문의해 주세요',
+        retry: '다시 시도',
+        footer: '기다려 주시고 응원해 주셔서 감사합니다',
+      },
     },
   },
 }
