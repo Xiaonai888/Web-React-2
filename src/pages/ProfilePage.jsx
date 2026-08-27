@@ -158,7 +158,7 @@ async function getCroppedImage(imageSrc, pixelCrop) {
 function DropdownMenu({ items, align = 'right' }) {
   return (
     <div
-      className={`absolute top-9 z-40 w-44 overflow-hidden rounded-[16px] border border-[#eceaf2] bg-white shadow-[0_18px_40px_rgba(17,24,39,0.14)] ${
+      className={`absolute top-9 z-40 w-44 overflow-hidden rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_18px_40px_rgba(17,24,39,0.14)] ${
         align === 'right' ? 'right-0' : 'left-0'
       }`}
     >
@@ -166,10 +166,10 @@ function DropdownMenu({ items, align = 'right' }) {
         <button
           key={item}
           type="button"
-          className={`flex w-full items-center px-4 py-3 text-left text-[13px] font-bold transition hover:bg-[#f7f7fb] ${
+          className={`flex w-full items-center px-4 py-3 text-left text-[13px] font-bold transition hover:bg-[var(--shadow-bg-hover)] ${
             item === 'Delete' || item === 'Report' || item === 'Block'
               ? 'text-[#e5484d]'
-              : 'text-[#111827]'
+              : 'text-[var(--shadow-text-primary)]'
           }`}
         >
           {item}
@@ -182,8 +182,8 @@ function DropdownMenu({ items, align = 'right' }) {
 function StatItem({ value, label }) {
   return (
     <div className="min-w-0 text-center">
-      <div className="text-[15px] font-extrabold leading-none text-[#111827]">{value}</div>
-      <div className="mt-1 text-[11px] font-semibold text-[#111827]">{label}</div>
+      <div className="text-[15px] font-extrabold leading-none text-[var(--shadow-text-primary)]">{value}</div>
+      <div className="mt-1 text-[11px] font-semibold text-[var(--shadow-text-primary)]">{label}</div>
     </div>
   )
 }
@@ -247,17 +247,17 @@ function AvatarCropModal({
   return (
     <div className="fixed inset-0 z-[180] overflow-y-auto bg-black/50 px-4 pb-[150px] pt-4">
       <div className="mx-auto flex min-h-full w-full max-w-[520px] items-start justify-center">
-        <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
+        <div className="w-full rounded-[26px] bg-[var(--shadow-bg-surface)] p-4 shadow-2xl">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-[18px] font-extrabold text-[#111827]">Edit Profile Photo</h2>
-              <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">Upload, crop, then save your reader profile photo.</p>
+              <h2 className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Edit Profile Photo</h2>
+              <p className="mt-1 text-[11px] leading-4 text-[var(--shadow-text-secondary)]">Upload, crop, then save your reader profile photo.</p>
             </div>
 
             <button
               type="button"
               onClick={onCancel}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"
               aria-label="Close editor"
             >
               <i className="fa-solid fa-xmark text-[14px]" />
@@ -289,7 +289,7 @@ function AvatarCropModal({
               </div>
 
               <div className="mt-4">
-                <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
+                <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[var(--shadow-text-secondary)]">
                   <span>Zoom</span>
                   <span>{zoom.toFixed(1)}x</span>
                 </div>
@@ -301,40 +301,40 @@ function AvatarCropModal({
                   step="0.1"
                   value={zoom}
                   onChange={(event) => onZoomChange(Number(event.target.value))}
-                  className="w-full accent-[#111827]"
+                  className="w-full accent-[var(--shadow-accent)]"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={() => onSaveCrop(croppedAreaPixels)}
-                className="mt-4 h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+                className="mt-4 h-12 w-full rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-extrabold text-[var(--shadow-bg-page)] active:scale-[0.99]"
               >
                 Save Crop
               </button>
             </>
           ) : (
-            <div className="rounded-[22px] bg-[#fafafe] p-5 text-center ring-1 ring-[#eceaf2]">
+            <div className="rounded-[22px] bg-[var(--shadow-bg-elevated)] p-5 text-center ring-1 ring-[var(--shadow-border)]">
               <div className="mx-auto mb-4 flex justify-center">
                 <AvatarImage profile={{ ...profile, avatarUrl: preview || profile.avatarUrl }} sizeClass="h-[116px] w-[116px] text-[40px]" />
               </div>
 
-              <p className="mx-auto max-w-[280px] text-[12px] leading-5 text-[#8d94a1]">
+              <p className="mx-auto max-w-[280px] text-[12px] leading-5 text-[var(--shadow-text-secondary)]">
                 Tap upload to choose a photo. Your old photo will stay until you press Save.
               </p>
             </div>
           )}
 
           {preview && !image ? (
-            <div className="mt-4 rounded-[22px] bg-[#fafafe] p-4 text-center ring-1 ring-[#eceaf2]">
+            <div className="mt-4 rounded-[22px] bg-[var(--shadow-bg-elevated)] p-4 text-center ring-1 ring-[var(--shadow-border)]">
               <div className="mx-auto h-[116px] w-[116px] overflow-hidden rounded-full bg-[#111827] ring-2 ring-[#f6b800]">
                 <img src={preview} alt="Profile preview" className="h-full w-full object-cover" />
               </div>
-              <div className="mt-3 text-[12px] font-bold text-[#667085]">Preview ready</div>
+              <div className="mt-3 text-[12px] font-bold text-[var(--shadow-text-secondary)]">Preview ready</div>
             </div>
           ) : null}
 
-          <label className="mt-4 flex h-12 cursor-pointer items-center justify-center rounded-full border border-[#d0d5dd] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]">
+          <label className="mt-4 flex h-12 cursor-pointer items-center justify-center rounded-full border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] text-[13px] font-extrabold text-[var(--shadow-text-primary)] active:scale-[0.99]">
             <i className="fa-regular fa-image mr-2 text-[14px]" />
             Upload Photo
             <input
@@ -353,7 +353,7 @@ function AvatarCropModal({
               type="button"
               onClick={onCancel}
               disabled={loading}
-              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99] disabled:opacity-60"
+              className="h-12 rounded-full border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] text-[13px] font-extrabold text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-60"
             >
               Cancel
             </button>
@@ -362,7 +362,7 @@ function AvatarCropModal({
               type="button"
               onClick={onSaveProfile}
               disabled={loading || !preview}
-              className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
+              className="h-12 rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-extrabold text-[var(--shadow-bg-page)] active:scale-[0.99] disabled:bg-[var(--shadow-text-disabled)]"
             >
               {loading ? 'Saving...' : 'Save'}
             </button>
@@ -389,17 +389,17 @@ function EditProfileModal({
   return (
     <div className="fixed inset-0 z-[170] overflow-y-auto bg-black/50 px-4 pb-[150px] pt-4">
       <div className="mx-auto flex min-h-full w-full max-w-[520px] items-start justify-center">
-        <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
+        <div className="w-full rounded-[26px] bg-[var(--shadow-bg-surface)] p-4 shadow-2xl">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-[18px] font-extrabold text-[#111827]">Edit Profile</h2>
-              <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">Update your reader profile information.</p>
+              <h2 className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Edit Profile</h2>
+              <p className="mt-1 text-[11px] leading-4 text-[var(--shadow-text-secondary)]">Update your reader profile information.</p>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"
               aria-label="Close profile editor"
             >
               <i className="fa-solid fa-xmark text-[14px]" />
@@ -415,80 +415,80 @@ function EditProfileModal({
           <button
             type="button"
             onClick={onOpenAvatar}
-            className="mb-5 flex w-full items-center gap-4 rounded-[22px] bg-[#fafafe] p-4 text-left ring-1 ring-[#eceaf2] active:scale-[0.99]"
+            className="mb-5 flex w-full items-center gap-4 rounded-[22px] bg-[var(--shadow-bg-elevated)] p-4 text-left ring-1 ring-[var(--shadow-border)] active:scale-[0.99]"
           >
             <AvatarImage profile={profile} sizeClass="h-[70px] w-[70px] text-[28px]" />
             <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-extrabold text-[#111827]">Change Profile Photo</div>
-              <div className="mt-1 text-[11px] leading-4 text-[#8d94a1]">Upload and crop a new photo.</div>
+              <div className="text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Change Profile Photo</div>
+              <div className="mt-1 text-[11px] leading-4 text-[var(--shadow-text-secondary)]">Upload and crop a new photo.</div>
             </div>
-            <i className="fa-solid fa-chevron-right text-[12px] text-[#98a2b3]" />
+            <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
           </button>
 
           <div className="space-y-4">
             <div>
-  <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Display Name</label>
+  <label className="mb-2 block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Display Name</label>
   <input
     value={form.name}
     onChange={(event) => onChange('name', event.target.value)}
-    className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+    className="h-12 w-full rounded-[16px] border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-elevated)] px-4 text-[14px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
     placeholder="Your display name"
   />
-  <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">You can change display name once every 2 weeks.</div>
+  <div className="mt-1 text-[11px] font-bold text-[var(--shadow-text-tertiary)]">You can change display name once every 2 weeks.</div>
 </div>
 
 <div>
-  <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Username</label>
+  <label className="mb-2 block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Username</label>
   <input
     value={form.username}
     onChange={(event) => onChange('username', event.target.value)}
-    className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+    className="h-12 w-full rounded-[16px] border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-elevated)] px-4 text-[14px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
     placeholder="username"
   />
-  <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">You can change username once every 1 week.</div>
+  <div className="mt-1 text-[11px] font-bold text-[var(--shadow-text-tertiary)]">You can change username once every 1 week.</div>
 </div>
 
             <div>
-              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Work / Job</label>
+              <label className="mb-2 block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Work / Job</label>
               <input
                 value={form.work}
                 onChange={(event) => onChange('work', event.target.value)}
-                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                className="h-12 w-full rounded-[16px] border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-elevated)] px-4 text-[14px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
                 placeholder="Author and accountant"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Bio</label>
+              <label className="mb-2 block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Bio</label>
               <textarea
                 value={form.bio}
                 onChange={(event) => onChange('bio', event.target.value)}
-                className="min-h-[96px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                className="min-h-[96px] w-full resize-none rounded-[16px] border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-elevated)] px-4 py-3 text-[14px] leading-6 text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
                 placeholder="Turn the impossible into reality."
                 maxLength={180}
               />
-              <div className="mt-1 text-right text-[11px] font-bold text-[#98a2b3]">{form.bio.length}/180</div>
+              <div className="mt-1 text-right text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{form.bio.length}/180</div>
             </div>
 
             <div>
-              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Location</label>
+              <label className="mb-2 block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Location</label>
               <input
                 value={form.location}
                 onChange={(event) => onChange('location', event.target.value)}
-                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                className="h-12 w-full rounded-[16px] border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-elevated)] px-4 text-[14px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
                 placeholder="Based in KPS"
               />
             </div>
 
             <div>
               <div className="mb-2 flex items-center justify-between gap-3">
-                <label className="block text-[13px] font-extrabold text-[#111827]">Add link</label>
-                <div className="text-[11px] font-bold text-[#98a2b3]">{(form.social_links || []).length}/5</div>
+                <label className="block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Add link</label>
+                <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{(form.social_links || []).length}/5</div>
               </div>
             
               <div className="space-y-2">
                 {(form.social_links || []).map((link, index) => (
-                  <div key={index} className="rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] p-3">
+                  <div key={index} className="rounded-[16px] border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-elevated)] p-3">
                     <div className="mb-2 flex gap-2">
                       <select
                         value={link.type || 'link'}
@@ -500,7 +500,7 @@ function EditProfileModal({
                             )
                           )
                         }
-                        className="h-10 w-[130px] rounded-[12px] border border-[#e5e7eb] bg-white px-3 text-[12px] font-bold text-[#111827] outline-none"
+                        className="h-10 w-[130px] rounded-[12px] border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] px-3 text-[12px] font-bold text-[var(--shadow-text-primary)] outline-none"
                       >
                         {PROFILE_LINK_OPTIONS.map((option) => (
                           <option key={option.type} value={option.type}>
@@ -517,7 +517,7 @@ function EditProfileModal({
                             (form.social_links || []).filter((_, itemIndex) => itemIndex !== index)
                           )
                         }
-                        className="ml-auto h-10 w-10 rounded-full bg-white text-[#e5484d] ring-1 ring-[#e5e7eb]"
+                        className="ml-auto h-10 w-10 rounded-full bg-[var(--shadow-bg-surface)] text-[#e5484d] ring-1 ring-[var(--shadow-border-strong)]"
                       >
                         <i className="fa-solid fa-trash text-[12px]" />
                       </button>
@@ -533,7 +533,7 @@ function EditProfileModal({
                           )
                         )
                       }
-                      className="h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-white px-4 text-[13px] text-[#111827] outline-none focus:border-[#111827]"
+                      className="h-11 w-full rounded-[14px] border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] px-4 text-[13px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-text-primary)]"
                       placeholder="https://example.com"
                     />
                   </div>
@@ -546,7 +546,7 @@ function EditProfileModal({
                   onClick={() =>
                     onChange('social_links', [...(form.social_links || []), { type: 'website', url: '' }])
                   }
-                  className="mt-3 h-11 w-full rounded-[14px] border border-dashed border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827]"
+                  className="mt-3 h-11 w-full rounded-[14px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] text-[13px] font-extrabold text-[var(--shadow-text-primary)]"
                 >
                   <i className="fa-solid fa-plus mr-2 text-[12px]" />
                   Add link
@@ -560,7 +560,7 @@ function EditProfileModal({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99] disabled:opacity-60"
+              className="h-12 rounded-full border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] text-[13px] font-extrabold text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-60"
             >
               Cancel
             </button>
@@ -569,7 +569,7 @@ function EditProfileModal({
               type="button"
               onClick={onSave}
               disabled={loading}
-              className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
+              className="h-12 rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-extrabold text-[var(--shadow-bg-page)] active:scale-[0.99] disabled:bg-[var(--shadow-text-disabled)]"
             >
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
@@ -1103,7 +1103,7 @@ async function handleOtherProfileOption(action) {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[92px]">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px] text-[var(--shadow-text-primary)]">
       <AvatarCropModal
         open={isOwnProfile && avatarModalOpen}
         profile={profile}
@@ -1144,9 +1144,9 @@ async function handleOtherProfileOption(action) {
         onClose={() => setMessageRequestOpen(false)}
       />
 
-      <main className="mx-auto min-h-screen w-full bg-white md:max-w-[560px] md:py-4">
-        <div className="overflow-hidden bg-white md:rounded-[24px] md:border md:border-[#eceaf2] md:shadow-sm">
-          <header className="sticky top-0 z-30 border-b border-[#f0eef6] bg-white/95 px-4 py-3 backdrop-blur">
+      <main className="mx-auto min-h-screen w-full bg-[var(--shadow-bg-surface)] md:max-w-[560px] md:py-4">
+        <div className="overflow-hidden bg-[var(--shadow-bg-surface)] md:rounded-[24px] md:border md:border-[var(--shadow-border)] md:shadow-sm">
+          <header className="sticky top-0 z-30 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 backdrop-blur">
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 items-center gap-3">
                <button
@@ -1156,13 +1156,13 @@ async function handleOtherProfileOption(action) {
       ? navigate('/me', { replace: true })
       : navigate(-1)
   }
-  className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
+  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition hover:bg-[var(--shadow-bg-hover)] active:scale-95"
   aria-label="Go back"
 >
   <i className="fas fa-chevron-left text-[16px]" />
 </button>
 
-                <div className="min-w-0 text-[15px] font-extrabold text-[#111827]">
+                <div className="min-w-0 text-[15px] font-extrabold text-[var(--shadow-text-primary)]">
                   @{profile.username}
                 </div>
               </div>
@@ -1172,7 +1172,7 @@ async function handleOtherProfileOption(action) {
                   <button
   type="button"
   onClick={() => navigate('/profile/settings')}
-  className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
+  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition hover:bg-[var(--shadow-bg-hover)] active:scale-95"
   aria-label="Profile menu"
 >
                     <i className="fa-solid fa-bars text-[17px]" />
@@ -1181,7 +1181,7 @@ async function handleOtherProfileOption(action) {
                   <button
                     type="button"
                     onClick={() => setProfileOptionsOpen(true)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition hover:bg-[var(--shadow-bg-hover)] active:scale-95"
                     aria-label="Reader profile options"
                   >
                     <i className="fa-solid fa-ellipsis-vertical text-[16px]" />
@@ -1211,7 +1211,7 @@ async function handleOtherProfileOption(action) {
     <button
       type="button"
       onClick={() => navigate('/reader/story/create')}
-      className="absolute -bottom-1 -right-1 z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#111827] text-white shadow-sm active:scale-90"
+      className="absolute -bottom-1 -right-1 z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--shadow-bg-surface)] bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-page)] shadow-sm active:scale-90"
       aria-label="Add story"
     >
       <i className="fa-solid fa-plus text-[12px]" />
@@ -1221,7 +1221,7 @@ async function handleOtherProfileOption(action) {
 
               <div className="min-w-0 flex-1">
                 <div className="mb-4 flex items-center gap-2">
-                  <h1 className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">
+                  <h1 className="line-clamp-1 text-[17px] font-extrabold text-[var(--shadow-text-primary)]">
                     {profile.name}
                   </h1>
                   {profile.isPremium ? <i className="fas fa-crown text-[14px] text-[#f6b800]" /> : null}
@@ -1247,21 +1247,21 @@ async function handleOtherProfileOption(action) {
               </div>
             </div>
 
-            <div className="mt-4 text-[12px] leading-5 text-[#111827]">
+            <div className="mt-4 text-[12px] leading-5 text-[var(--shadow-text-primary)]">
               <div className="font-bold">{profile.bioTitle}</div>
               <div>{profile.bio}</div>
               <div>{profile.location}</div>
             </div>
 
             {profile.socialLinks.length ? (
-  <div className="mt-3 flex items-center gap-2 text-[#111827]">
+  <div className="mt-3 flex items-center gap-2 text-[var(--shadow-text-primary)]">
     {profile.socialLinks.map((link, index) => (
       <a
         key={`${link.type}-${index}`}
         href={normalizeProfileLinkUrl(link.url)}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] bg-white text-[11px] transition hover:bg-[#f7f7fb] active:scale-95"
+        className="flex h-6 w-6 items-center justify-center rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[11px] transition hover:bg-[var(--shadow-bg-hover)] active:scale-95"
       >
         <i className={getProfileLinkIcon(link.type)} />
       </a>
@@ -1274,7 +1274,7 @@ async function handleOtherProfileOption(action) {
     <button
       type="button"
       onClick={() => navigate('/profile/edit')}
-      className="h-10 flex-1 rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
+      className="h-10 flex-1 rounded-[12px] bg-[var(--shadow-bg-soft)] text-[13px] font-normal text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
     >
       Edit profile
     </button>
@@ -1282,7 +1282,7 @@ async function handleOtherProfileOption(action) {
    <button
   type="button"
   onClick={() => navigate('/profile/share')}
-  className="h-10 flex-1 rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
+  className="h-10 flex-1 rounded-[12px] bg-[var(--shadow-bg-soft)] text-[13px] font-normal text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
 >
   Share profile
 </button>
@@ -1290,7 +1290,7 @@ async function handleOtherProfileOption(action) {
     <button
   type="button"
   onClick={() => setDiscoverPeopleOpen((current) => !current)}
-  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
+  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
   aria-label="Discover people"
   aria-expanded={discoverPeopleOpen}
 >
@@ -1304,14 +1304,14 @@ async function handleOtherProfileOption(action) {
       onClick={handleProfileFollow}
       disabled={followLoading}
       aria-pressed={Boolean(user?.is_following)}
-      className="h-10 rounded-[14px] bg-[#111827] text-[13px] font-extrabold text-white transition active:scale-[0.98] disabled:opacity-60"
+      className="h-10 rounded-[14px] bg-[var(--shadow-text-primary)] text-[13px] font-extrabold text-[var(--shadow-bg-page)] transition active:scale-[0.98] disabled:opacity-60"
     >
       {followLoading ? 'Please wait...' : user?.is_following ? 'Following' : 'Follow'}
     </button>
     <button
       type="button"
       onClick={handleOpenReaderMessage}
-      className="h-10 rounded-[14px] border border-[#cfd3dc] text-[13px] font-extrabold text-[#111827] transition active:scale-[0.98]"
+      className="h-10 rounded-[14px] border border-[var(--shadow-border-strong)] text-[13px] font-extrabold text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
     >
       Message
     </button>
@@ -1329,16 +1329,16 @@ async function handleOtherProfileOption(action) {
 </section>
           
 
-          <section className="sticky top-[58px] z-20 border-y border-[#f0eef6] bg-white">
+          <section className="sticky top-[58px] z-20 border-y border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
   <div className="flex items-center gap-1.5 px-4 py-2.5 text-[12px]">
-    <button className="rounded-full bg-[#f1f2f4] px-4 py-2 font-semibold text-[#111827]">
+    <button className="rounded-full bg-[var(--shadow-bg-hover)] px-4 py-2 font-semibold text-[var(--shadow-text-primary)]">
       All
     </button>
 
     <button
       type="button"
       onClick={() => showProfileTabComingSoon('Reels')}
-      className="rounded-full px-4 py-2 font-normal text-[#6b7280]"
+      className="rounded-full px-4 py-2 font-normal text-[var(--shadow-text-secondary)]"
     >
       Reels
     </button>
@@ -1346,14 +1346,14 @@ async function handleOtherProfileOption(action) {
     <button
       type="button"
       onClick={() => showProfileTabComingSoon('Photo')}
-      className="rounded-full px-4 py-2 font-normal text-[#6b7280]"
+      className="rounded-full px-4 py-2 font-normal text-[var(--shadow-text-secondary)]"
     >
       Photo
     </button>
   </div>
 
   {profileTabMessage ? (
-    <div className="absolute left-4 top-[54px] z-30 rounded-[12px] bg-[#111827] px-3 py-2 text-[11px] font-normal text-white shadow-lg">
+    <div className="absolute left-4 top-[54px] z-30 rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-3 py-2 text-[11px] font-normal text-[var(--shadow-text-primary)] shadow-lg">
       {profileTabMessage}
     </div>
   ) : null}
