@@ -30,7 +30,7 @@ function getProductStatus(product) {
   if (status === 'sold_out') {
     return {
       label: 'SOLD OUT',
-      className: 'bg-[#f1f5f9] text-[#64748b]',
+      className: 'bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/15 dark:text-slate-300',
       disabled: true,
       coverClass: 'opacity-60',
     }
@@ -39,7 +39,7 @@ function getProductStatus(product) {
   if (status === 'pre_order') {
     return {
       label: 'PRE-ORDER',
-      className: 'bg-[#fff7d8] text-[#7a5600]',
+      className: 'bg-[#fff7d8] text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300',
       disabled: false,
       coverClass: '',
     }
@@ -47,7 +47,7 @@ function getProductStatus(product) {
 
   return {
     label: 'IN STOCK',
-    className: 'bg-[#dcfce7] text-[#166534]',
+    className: 'bg-[#dcfce7] text-[#166534] dark:bg-emerald-500/15 dark:text-emerald-300',
     disabled: false,
     coverClass: '',
   }
@@ -97,9 +97,9 @@ function ProductCard({ product, onOpen }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5">
+    <article className="overflow-hidden rounded-[22px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
       <button type="button" onClick={onOpen} className="block w-full text-left">
-        <div className="relative aspect-[2/3] overflow-hidden bg-[#f3f4f6]">
+        <div className="relative aspect-[2/3] overflow-hidden bg-[var(--shadow-bg-soft)]">
           {product.cover ? (
             <img
               src={product.cover}
@@ -110,7 +110,7 @@ function ProductCard({ product, onOpen }) {
               }}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
+            <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
               <i className="fa-solid fa-book-open text-[22px]" />
             </div>
           )}
@@ -121,8 +121,8 @@ function ProductCard({ product, onOpen }) {
 
           <button
             type="button"
-            className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm active:scale-95 ${
-              wishlisted ? 'text-[#e5484d]' : 'text-[#111827]'
+            className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm active:scale-95 dark:bg-black/70 ${
+              wishlisted ? 'text-[#e5484d] dark:text-red-300' : 'text-[#111827] dark:text-white'
             }`}
             aria-label={`${wishlisted ? 'Remove saved' : 'Save'} ${product.title}`}
             onClick={handleWishlistClick}
@@ -134,11 +134,11 @@ function ProductCard({ product, onOpen }) {
 
       <div className="p-3">
         <button type="button" onClick={onOpen} className="block w-full text-left">
-          <h3 className="line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[#111827]">
+          <h3 className="line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[var(--shadow-text-primary)]">
             {product.title}
           </h3>
 
-          <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">
+          <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
             {product.author}
           </p>
         </button>
@@ -150,7 +150,7 @@ function ProductCard({ product, onOpen }) {
             </div>
 
             {hasOldPrice ? (
-              <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">
+              <div className="mt-0.5 text-[10.5px] font-semibold text-[var(--shadow-text-tertiary)] line-through">
                 {product.oldPrice}
               </div>
             ) : null}
@@ -166,8 +166,8 @@ function ProductCard({ product, onOpen }) {
             }}
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full active:scale-95 ${
               status.disabled
-                ? 'bg-[#eef2f7] text-[#98a2b3]'
-                : 'bg-[#111827] text-white'
+                ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-disabled)]'
+                : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
             }`}
             aria-label={`Add ${product.title} to cart`}
           >
@@ -261,21 +261,21 @@ export default function ShadowMallNewBooksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
+    <div className="app-page min-h-screen pb-[110px]">
+      <header className="sticky top-0 z-50 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <button
             type="button"
             onClick={() => navigate('/shop')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">New Books</h1>
-            <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#8d94a1]">
+            <h1 className="line-clamp-1 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">New Books</h1>
+            <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
               {meta.total} books · Fresh copies and latest arrivals.
             </p>
           </div>
@@ -283,7 +283,7 @@ export default function ShadowMallNewBooksPage() {
           <button
             type="button"
             onClick={() => setSearchOpen((value) => !value)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Search New Books"
           >
             <i className="fa-solid fa-magnifying-glass text-[14px]" />
@@ -292,17 +292,17 @@ export default function ShadowMallNewBooksPage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pt-4">
-        <section className="mb-3 overflow-hidden rounded-[24px] bg-[#fff7d8] px-4 py-4 shadow-sm ring-1 ring-[#f6d56f]/40">
+        <section className="mb-3 overflow-hidden rounded-[24px] bg-[#fff7d8] px-4 py-4 shadow-sm ring-1 ring-[#f6d56f]/40 dark:bg-amber-500/10 dark:ring-amber-400/20">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-white/80 text-[#7a5600]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-white/80 text-[#7a5600] dark:bg-amber-400/10 dark:text-amber-300">
               <i className="fa-solid fa-book-open text-[18px]" />
             </div>
 
             <div className="min-w-0 flex-1">
-              <h2 className="text-[16px] font-extrabold text-[#111827]">
+              <h2 className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">
                 New arrivals this week
               </h2>
-              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#7a5600]/80">
+              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#7a5600]/80 dark:text-amber-200/80">
                 Fresh printed books added regularly. Find your next read before it sells out.
               </p>
             </div>
@@ -310,15 +310,15 @@ export default function ShadowMallNewBooksPage() {
         </section>
 
         {searchOpen ? (
-          <form onSubmit={handleSearchSubmit} className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-            <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
-              <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
+          <form onSubmit={handleSearchSubmit} className="rounded-[22px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
+            <div className="flex items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-3">
+              <i className="fa-solid fa-magnifying-glass text-[14px] text-[var(--shadow-text-secondary)]" />
               <input
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search new books or authors"
-                className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
+                className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)]"
               />
               {search ? (
                 <button
@@ -328,7 +328,7 @@ export default function ShadowMallNewBooksPage() {
                     setPage(1)
                     loadProducts({ page: 1, search: '' })
                   }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#8d94a1]"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)]"
                   aria-label="Clear search"
                 >
                   <i className="fa-solid fa-xmark text-[12px]" />
@@ -346,8 +346,8 @@ export default function ShadowMallNewBooksPage() {
               onClick={() => setSort(item.key)}
               className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${
                 sort === item.key
-                  ? 'bg-[#111827] text-white'
-                  : 'bg-white text-[#667085] ring-1 ring-black/5'
+                  ? 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
+                  : 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)] ring-1 ring-[var(--shadow-border)]'
               }`}
             >
               {item.label}
@@ -356,7 +356,7 @@ export default function ShadowMallNewBooksPage() {
         </div>
 
         {message ? (
-          <div className="mt-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-extrabold text-[#e5484d]">
+          <div className="mt-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-extrabold text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
             {message}
           </div>
         ) : null}
@@ -364,7 +364,7 @@ export default function ShadowMallNewBooksPage() {
         {loading && !products.length ? (
           <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {Array.from({ length: 12 }).map((_, index) => (
-              <div key={index} className="aspect-[2/3] animate-pulse rounded-[22px] bg-white shadow-sm ring-1 ring-black/5" />
+              <div key={index} className="aspect-[2/3] animate-pulse rounded-[22px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]" />
             ))}
           </section>
         ) : sortedProducts.length ? (
@@ -378,18 +378,18 @@ export default function ShadowMallNewBooksPage() {
             ))}
           </section>
         ) : (
-          <section className="mt-4 rounded-[26px] bg-white px-5 py-12 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+          <section className="mt-4 rounded-[26px] bg-[var(--shadow-bg-surface)] px-5 py-12 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
               <i className="fa-solid fa-book-open text-[22px]" />
             </div>
-            <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">No new books found</h2>
-            <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
+            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">No new books found</h2>
+            <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
               Try another search or check New Books again later.
             </p>
             <button
               type="button"
               onClick={() => navigate('/shop')}
-              className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
+              className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
               Back to Shadow Mall
             </button>
@@ -397,17 +397,17 @@ export default function ShadowMallNewBooksPage() {
         )}
 
         {sortedProducts.length ? (
-          <div className="mt-4 flex items-center justify-between gap-3 rounded-[22px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
             <button
               type="button"
               disabled={!meta.has_prev}
               onClick={() => setPage((value) => Math.max(value - 1, 1))}
-              className="rounded-full bg-[#f5f3fa] px-4 py-2 text-[12px] font-extrabold text-[#111827] disabled:text-[#a0a5b1]"
+              className="rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-extrabold text-[var(--shadow-text-primary)] disabled:text-[var(--shadow-text-disabled)]"
             >
               Previous
             </button>
 
-            <div className="text-[12px] font-extrabold text-[#667085]">
+            <div className="text-[12px] font-extrabold text-[var(--shadow-text-secondary)]">
               Page {page} / {meta.total_pages}
             </div>
 
@@ -415,7 +415,7 @@ export default function ShadowMallNewBooksPage() {
               type="button"
               disabled={!meta.has_next}
               onClick={() => setPage((value) => value + 1)}
-              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[#d1d5db]"
+              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)] dark:bg-white dark:text-[#111827]"
             >
               Next
             </button>
