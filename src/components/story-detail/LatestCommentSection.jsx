@@ -47,7 +47,7 @@ function Avatar({ comment }) {
   }
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[12px] font-black text-white">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[12px] font-black text-white dark:bg-white dark:text-[#111827]">
       {letter}
     </div>
   )
@@ -87,11 +87,11 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
   const user = getCommentUser(latestComment)
 
   return (
-    <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:ring-1 sm:ring-black/5 sm:p-5">
+    <section className="mt-2 bg-[var(--shadow-bg-surface)] p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:ring-1 sm:ring-[var(--shadow-border)] sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-bold text-[#111827]">Comments</h2>
-          <p className="mt-1 text-[12px] font-semibold text-[#98a2b3]">
+          <h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">Comments</h2>
+          <p className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
             {hasComment ? 'Latest reader comment' : 'Be the first to start the conversation'}
           </p>
         </div>
@@ -99,7 +99,7 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
         <button
   type="button"
   onClick={onOpenComments}
-  className="self-start pt-[2px] text-[12px] font-semibold text-[#98a2b3] active:scale-95"
+  className="self-start pt-[2px] text-[12px] font-semibold text-[var(--shadow-text-secondary)] active:scale-95"
 >
   View All
 </button>
@@ -108,7 +108,7 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
       <button
   type="button"
   onClick={onOpenComments}
-  className="flex w-full gap-3 rounded-[13px] bg-[#f8fafc] p-4 text-left active:scale-[0.995]"
+  className="flex w-full gap-3 rounded-[13px] bg-[var(--shadow-bg-soft)] p-4 text-left active:scale-[0.995]"
 >
         <div className="min-w-0 flex-1">
   {hasComment ? (
@@ -117,30 +117,30 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
         <Avatar comment={latestComment} />
 
         <div className="min-w-0">
-          <div className="truncate text-[13px] font-bold text-[#111827]">
+          <div className="truncate text-[13px] font-bold text-[var(--shadow-text-primary)]">
             {user.name || 'Reader'}
           </div>
-          <div className="text-[11px] font-semibold text-[#98a2b3]">
+          <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
             {formatTime(latestComment.created_at)}
           </div>
         </div>
       </div>
 
-      <p className="mt-2 line-clamp-2 text-[13px] font-medium leading-5 text-[#667085]">
+      <p className="mt-2 line-clamp-2 text-[13px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
         {latestComment.text || 'Sticker comment'}
       </p>
     </>
   ) : (
     <>
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-secondary)]">
           <i className="fa-regular fa-comments text-[14px]" />
         </div>
 
-        <div className="text-[13px] font-bold text-[#111827]">No comments yet</div>
+        <div className="text-[13px] font-bold text-[var(--shadow-text-primary)]">No comments yet</div>
       </div>
 
-      <p className="mt-2 line-clamp-2 text-[13px] font-medium leading-5 text-[#667085]">
+      <p className="mt-2 line-clamp-2 text-[13px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
         Share your thoughts, ask a question, or cheer for this story.
       </p>
     </>
