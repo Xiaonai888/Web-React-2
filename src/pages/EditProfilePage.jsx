@@ -108,7 +108,7 @@ async function fetchCurrentUser(token) {
 }
 
 function FieldLabel({ children }) {
-  return <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">{children}</label>
+  return <label className="mb-2 block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">{children}</label>
 }
 
 function getUsernameError(value) {
@@ -246,26 +246,26 @@ try {
   }
 
   return (
-    <div className="min-h-screen bg-white md:bg-[#f5f3fa] md:px-4 md:py-6">
-      <main className="mx-auto min-h-screen w-full bg-white md:min-h-0 md:max-w-[560px] md:overflow-hidden md:rounded-[26px] md:border md:border-[#eceaf2] md:shadow-sm">
-        <header className="sticky top-0 z-20 border-b border-[#f0eef6] bg-white/95 px-4 py-3 backdrop-blur md:rounded-t-[26px]">
+    <div className="app-page min-h-screen md:px-4 md:py-6">
+      <main className="mx-auto min-h-screen w-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] md:min-h-0 md:max-w-[560px] md:overflow-hidden md:rounded-[26px] md:border md:border-[var(--shadow-border)] md:shadow-sm">
+        <header className="sticky top-0 z-20 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 backdrop-blur md:rounded-t-[26px]">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => navigate(new URLSearchParams(window.location.search).get('from') === 'me-settings' ? '/me?settings=1' : '/profile')}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
               aria-label="Back to profile"
             >
               <i className="fa-solid fa-chevron-left text-[15px]" />
             </button>
 
-            <div className="min-w-0 flex-1 text-center text-[16px] font-extrabold text-[#111827]">Edit Profile</div>
+            <div className="min-w-0 flex-1 text-center text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Edit Profile</div>
 
             <button
               type="button"
               onClick={handleSave}
               disabled={saving || loading}
-              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[#9ca3af]"
+              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white transition active:scale-[0.98] disabled:bg-[var(--shadow-text-disabled)] dark:bg-white dark:text-[#111827]"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
@@ -274,18 +274,18 @@ try {
 
         <section className="px-4 pb-8 pt-5">
           {message ? (
-            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d] dark:bg-[#e5484d]/10">
               {message}
             </div>
           ) : null}
 
-          <div className="mb-5 flex items-center gap-4 rounded-[22px] bg-[#fafafe] p-4 ring-1 ring-[#eceaf2]">
+          <div className="mb-5 flex items-center gap-4 rounded-[22px] bg-[var(--shadow-bg-elevated)] p-4 ring-1 ring-[var(--shadow-border)]">
             <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[28px] font-extrabold text-white ring-2 ring-[#f6b800]">
               {user?.avatar_url ? <img src={user.avatar_url} alt={form.name || 'Profile'} className="h-full w-full object-cover" /> : avatarLetter}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-extrabold text-[#111827]">Profile information</div>
-              <div className="mt-1 text-[11px] leading-4 text-[#8d94a1]">Edit name, bio, location, and profile links.</div>
+              <div className="text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Profile information</div>
+              <div className="mt-1 text-[11px] leading-4 text-[var(--shadow-text-secondary)]">Edit name, bio, location, and profile links.</div>
             </div>
           </div>
 
@@ -295,10 +295,10 @@ try {
               <input
                 value={form.name}
                 onChange={(event) => updateField('name', event.target.value)}
-                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                className="app-input h-12 w-full rounded-[16px] border px-4 text-[14px] outline-none transition focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
                 placeholder="Your display name"
               />
-              <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">You can change display name once every 2 weeks.</div>
+              <div className="mt-1 text-[11px] font-bold text-[var(--shadow-text-tertiary)]">You can change display name once every 2 weeks.</div>
             </div>
 
           <div>
@@ -313,23 +313,23 @@ try {
     onBlur={() => setUsernameTouched(true)}
     maxLength={30}
     spellCheck={false}
-    className={`h-12 w-full rounded-[16px] border bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:bg-white ${
+    className={`app-input h-12 w-full rounded-[16px] border px-4 text-[14px] outline-none transition focus:bg-[var(--shadow-bg-surface)] ${
       usernameTouched && usernameError
         ? 'border-[#e5484d] focus:border-[#e5484d]'
-        : 'border-[#e5e7eb] focus:border-[#111827]'
+        : 'border-[var(--shadow-border)] focus:border-[var(--shadow-text-primary)]'
     }`}
     placeholder="Dara_123"
   />
   <div
     className={`mt-1 text-[11px] font-bold ${
-      usernameTouched && usernameError ? 'text-[#e5484d]' : 'text-[#98a2b3]'
+      usernameTouched && usernameError ? 'text-[#e5484d]' : 'text-[var(--shadow-text-tertiary)]'
     }`}
   >
     {usernameTouched && usernameError
       ? usernameError
       : 'Use 3–30 English letters, numbers, or underscores. No spaces.'}
   </div>
-  <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">
+  <div className="mt-1 text-[11px] font-bold text-[var(--shadow-text-tertiary)]">
     You can change your username once every 1 week.
   </div>
 </div>
@@ -339,7 +339,7 @@ try {
               <input
                 value={form.work}
                 onChange={(event) => updateField('work', event.target.value)}
-                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                className="app-input h-12 w-full rounded-[16px] border px-4 text-[14px] outline-none transition focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
                 placeholder="Author and accountant"
               />
             </div>
@@ -349,11 +349,11 @@ try {
               <textarea
                 value={form.bio}
                 onChange={(event) => updateField('bio', event.target.value)}
-                className="min-h-[96px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                className="app-input min-h-[96px] w-full resize-none rounded-[16px] border px-4 py-3 text-[14px] leading-6 outline-none transition focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
                 placeholder="Turn the impossible into reality."
                 maxLength={180}
               />
-              <div className="mt-1 text-right text-[11px] font-bold text-[#98a2b3]">{form.bio.length}/180</div>
+              <div className="mt-1 text-right text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{form.bio.length}/180</div>
             </div>
 
             <div>
@@ -361,7 +361,7 @@ try {
               <input
                 value={form.location}
                 onChange={(event) => updateField('location', event.target.value)}
-                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                className="app-input h-12 w-full rounded-[16px] border px-4 text-[14px] outline-none transition focus:border-[var(--shadow-text-primary)] focus:bg-[var(--shadow-bg-surface)]"
                 placeholder="Based in KPS"
               />
             </div>
@@ -369,33 +369,33 @@ try {
             <button
               type="button"
               onClick={() => navigate('/profile/edit/links')}
-              className="flex w-full items-center gap-3 rounded-[18px] border border-[#e5e7eb] bg-white p-4 text-left active:scale-[0.99]"
+              className="flex w-full items-center gap-3 rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 text-left transition active:scale-[0.99] active:bg-[var(--shadow-bg-hover)]"
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fafafe] text-[#111827] ring-1 ring-[#e5e7eb]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
                   <i className="fas fa-link text-[14px]" />
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <div className="text-[13px] font-extrabold text-[#111827]">Add link</div>
-                    <div className="text-[11px] font-bold text-[#98a2b3]">{activeLinks.length}/5</div>
+                    <div className="text-[13px] font-extrabold text-[var(--shadow-text-primary)]">Add link</div>
+                    <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{activeLinks.length}/5</div>
                   </div>
-                  <div className="mt-1 truncate text-[12px] font-semibold text-[#8d94a1]">{linkSummary}</div>
+                  <div className="mt-1 truncate text-[12px] font-semibold text-[var(--shadow-text-secondary)]">{linkSummary}</div>
                 </div>
               </div>
 
               {activeLinks.length ? (
                 <div className="hidden shrink-0 items-center -space-x-2 sm:flex">
                   {activeLinks.slice(0, 3).map((link, index) => (
-                    <div key={`${link.type}-${index}`} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[12px] text-[#111827] ring-1 ring-[#e5e7eb]">
+                    <div key={`${link.type}-${index}`} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[12px] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
                       <i className={getProfileLinkOption(link.type).icon} />
                     </div>
                   ))}
                 </div>
               ) : null}
 
-              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#98a2b3]" />
+              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-tertiary)]" />
             </button>
           </div>
         </section>
