@@ -11,12 +11,12 @@ const API_BASE_URL =
 
 function EmptyCard({ title, text, icon }) {
   return (
-    <div className="rounded-[22px] bg-[#f8fafc] p-4 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+    <div className="rounded-[22px] bg-[var(--shadow-bg-soft)] p-4 text-center">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
         <i className={`${icon} text-[18px]`} />
       </div>
-      <div className="mt-3 text-[14px] font-black text-[#111827]">{title}</div>
-      <div className="mt-1 text-[12px] font-semibold leading-5 text-[#98a2b3]">{text}</div>
+      <div className="mt-3 text-[14px] font-black text-[var(--shadow-text-primary)]">{title}</div>
+      <div className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">{text}</div>
     </div>
   )
 }
@@ -24,7 +24,7 @@ function EmptyCard({ title, text, icon }) {
 function BookCard({ story, onClick }) {
   return (
     <button type="button" onClick={onClick} className="min-w-0 text-left active:scale-[0.99]">
-      <div className="aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-[#eef1f5]">
+      <div className="aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)]">
         {story.cover_url ? (
           <img
             src={story.cover_url}
@@ -32,14 +32,14 @@ function BookCard({ story, onClick }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
+          <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-secondary)]">
             <i className="fa-regular fa-bookmark text-[20px]" />
           </div>
         )}
       </div>
 
       <h3
-         className="mt-2 h-8 max-w-full overflow-hidden text-[14px] font-bold leading-4 text-[#111827]"
+         className="mt-2 h-8 max-w-full overflow-hidden text-[14px] font-bold leading-4 text-[var(--shadow-text-primary)]"
         style={{
           display: '-webkit-box',
           WebkitLineClamp: 2,
@@ -50,7 +50,7 @@ function BookCard({ story, onClick }) {
         {story.title || 'Untitled Story'}
       </h3>
 
-      <p className="mt-0.5 line-clamp-1 text-[12px] font-semibold text-[#98a2b3]">
+      <p className="mt-0.5 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
         {story.main_genre || 'Story'}
       </p>
     </button>
@@ -75,7 +75,7 @@ function StoryGrid({ stories, emptyTitle, emptyText, emptyIcon, onOpenStory }) {
 export default function RecommendationSection({ story }) {
   const navigate = useNavigate()
   const [authorStories, setAuthorStories] = useState([])
-  
+
   const [similarStories, setSimilarStories] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -181,9 +181,9 @@ export default function RecommendationSection({ story }) {
   return (
     <section className="mt-2 space-y-0 sm:mt-4 sm:space-y-4">
       {loading || authorSectionStories.length ? (
-       <div className="bg-white px-4 pb-1 pt-3 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
+       <div className="bg-[var(--shadow-bg-surface)] px-4 pb-1 pt-3 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-[var(--shadow-border)]">
   <div className="mb-3">
-            <h2 className="text-[16px] font-bold text-[#111827]">More by {authorName}</h2>
+            <h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">More by {authorName}</h2>
           </div>
 
 
@@ -205,9 +205,9 @@ export default function RecommendationSection({ story }) {
         </div>
       ) : null}
 
-      <div className="bg-white px-4 pb-4 pt-[5px] sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
+      <div className="bg-[var(--shadow-bg-surface)] px-4 pb-4 pt-[5px] sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-[var(--shadow-border)]">
   <div className="mb-3">
-    <h2 className="text-[16px] font-bold text-[#111827]">You Might Like</h2>
+    <h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">You Might Like</h2>
   </div>
 
         {loading ? (
