@@ -217,9 +217,9 @@ function DiamondIcon({ className = 'h-5 w-5' }) {
 
 function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
   const styles = {
-    dark: 'bg-[#111827] text-white',
+    dark: 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]',
     gold: 'bg-[#ff3f62] text-white',
-    soft: 'bg-[#e5e7eb] text-[#8b93a1]',
+    soft: 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]',
     outline: 'bg-[#ff3f62] text-white',
   }
 
@@ -247,9 +247,9 @@ function BalanceBox({ label, value, type, onClick }) {
       </div>
 
       <div className="min-w-0">
-        <div className="flex items-center gap-1 text-[13px] font-semibold text-[#343a46]">
+        <div className="flex items-center gap-1 text-[13px] font-semibold text-[var(--shadow-text-primary)]">
           <span>{label}</span>
-          <i className="fa-solid fa-chevron-right text-[9px] text-[#6b7280]" />
+          <i className="fa-solid fa-chevron-right text-[9px] text-[var(--shadow-text-secondary)]" />
         </div>
         <div className="mt-1 text-[24px] font-bold leading-none text-[#ff3f62]">{formatNumber(value)}</div>
       </div>
@@ -285,11 +285,11 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
         )}
       </div>
 
-      <div className="mt-1 text-[10px] font-black text-[#111827] sm:mt-2 sm:text-[11px]">
+      <div className="mt-1 text-[10px] font-black text-[var(--shadow-text-primary)] sm:mt-2 sm:text-[11px]">
         {isGift ? 'Gift' : reward.coins || reward.gems}
       </div>
 
-      <div className={`mt-1 text-[10px] font-bold ${canTap ? 'text-[#d97706]' : isClaimed ? 'text-[#f59e0b]' : 'text-[#9ca3af]'}`}>
+      <div className={`mt-1 text-[10px] font-bold ${canTap ? 'text-[#d97706] dark:text-amber-300' : isClaimed ? 'text-[#f59e0b] dark:text-amber-300' : 'text-[var(--shadow-text-tertiary)]'}`}>
         {canTap ? 'Tap' : label}
       </div>
     </button>
@@ -301,10 +301,10 @@ function ProgressLine({ progress = 0, target = 1 }) {
 
   return (
     <div className="mt-3">
-      <div className="h-1.5 overflow-hidden rounded-full bg-[#edf0f5]">
+      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--shadow-bg-soft)]">
         <div className="h-full rounded-full bg-[#F6B800]" style={{ width: `${percent}%` }} />
       </div>
-      <div className="mt-1 text-[10px] font-semibold text-[#9ca3af]">
+      <div className="mt-1 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
         {progress}/{target}
       </div>
     </div>
@@ -317,11 +317,11 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
   const buttonText = alreadyDone ? 'Done' : task.action
   const buttonTone = alreadyDone ? 'soft' : task.status === 'claim' ? 'gold' : 'outline'
   const iconWrapClass = isCheckIn
-    ? 'bg-[#fff3df] text-[#ff9f1c] ring-1 ring-[#ff9f1c]/15'
-    : 'bg-[#f8fafc] text-[#111827] ring-1 ring-black/5'
+    ? 'bg-[#fff3df] text-[#ff9f1c] ring-1 ring-[#ff9f1c]/15 dark:bg-orange-500/10 dark:text-orange-300'
+    : 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]'
   
   return (
-    <div className="flex gap-3 border-b border-[#f1f2f5] py-4 last:border-b-0">
+    <div className="flex gap-3 border-b border-[var(--shadow-border)] py-4 last:border-b-0">
       <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconWrapClass}`}>
         <i className={`fa-solid ${task.icon} text-[15px]`} />
       </div>
@@ -329,10 +329,10 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="line-clamp-2 text-[14px] font-black leading-5 text-[#111827]">{task.title}</h3>
-            <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-[#8b93a1]">{task.subtitle}</p>
+            <h3 className="line-clamp-2 text-[14px] font-black leading-5 text-[var(--shadow-text-primary)]">{task.title}</h3>
+            <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">{task.subtitle}</p>
 
-            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706]">
+            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706] dark:text-amber-300">
               <CoinIcon className="h-4 w-4" />
               <span>+{task.reward}</span>
             </div>
@@ -393,8 +393,8 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
     : 'gold'
 
   return (
-    <div className="flex gap-3 border-b border-[#f1f2f5] py-5">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f4] text-[#ff3f62] ring-1 ring-[#ff3f62]/10">
+    <div className="flex gap-3 border-b border-[var(--shadow-border)] py-5">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f4] text-[#ff3f62] ring-1 ring-[#ff3f62]/10 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/15">
   <i className="fa-solid fa-ticket text-[15px]" />
 </div>
 
@@ -402,20 +402,20 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[14px] font-black leading-5 text-[#111827]">
+              <h3 className="text-[14px] font-black leading-5 text-[var(--shadow-text-primary)]">
                 Daily Mission Reward
               </h3>
 
-              <span className="rounded-full bg-[#fff4d8] px-2 py-0.5 text-[9px] font-black text-[#b7791f]">
+              <span className="rounded-full bg-[#fff4d8] px-2 py-0.5 text-[9px] font-black text-[#b7791f] dark:bg-amber-500/10 dark:text-amber-300">
                 Premium ×2
               </span>
             </div>
 
-            <p className="mt-1 text-[11px] font-semibold leading-4 text-[#8b93a1]">
+            <p className="mt-1 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">
               Complete all daily missions to earn 1 Vote.
             </p>
 
-            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706]">
+            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706] dark:text-amber-300">
   <img
     src="/assets/Icons/Voucher.svg"
     alt=""
@@ -441,7 +441,7 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
         </div>
 
         <div className="mt-3">
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#edf0f5]">
+          <div className="h-1.5 overflow-hidden rounded-full bg-[var(--shadow-bg-soft)]">
             <div
               className={`h-full rounded-full ${
   claimed
@@ -452,7 +452,7 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
             />
           </div>
 
-          <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-[#9ca3af]">
+          <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
             <span>
               {progress}/{totalMissions} Missions
             </span>
@@ -462,7 +462,7 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
                 Claimed
               </span>
             ) : claimable ? (
-              <span className="font-black text-[#2563EB]">
+              <span className="font-black text-[#2563EB] dark:text-blue-300">
   Ready
 </span>
             ) : (
@@ -494,20 +494,20 @@ function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
   const buttonText = claimableCoins > 0 ? `Claim +${claimableCoins}` : readingReward?.done_today ? 'Done' : 'Read now'
 
   return (
-    <div className="border-b border-[#f1f2f5] py-5">
+    <div className="border-b border-[var(--shadow-border)] py-5">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f4] text-[#ff3f62] ring-1 ring-[#ff3f62]/10">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f4] text-[#ff3f62] ring-1 ring-[#ff3f62]/10 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/15">
           <i className="fa-solid fa-book-open-reader text-[15px]" />
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="text-[15px] font-black leading-5 text-[#111827]">
-                <span className="text-[#ff8a00]">{formatNumber(earnedCoins)}</span> Coins Earned
+              <h3 className="text-[15px] font-black leading-5 text-[var(--shadow-text-primary)]">
+                <span className="text-[#ff8a00] dark:text-orange-300">{formatNumber(earnedCoins)}</span> Coins Earned
               </h3>
-              <p className="mt-1 text-[13px] font-black leading-5 text-[#111827]">Read & Earn</p>
-              <p className="mt-1 text-[11px] font-semibold leading-4 text-[#8b93a1]">
+              <p className="mt-1 text-[13px] font-black leading-5 text-[var(--shadow-text-primary)]">Read & Earn</p>
+              <p className="mt-1 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">
                 Read any story today and collect coins at each time goal.
               </p>
             </div>
@@ -522,7 +522,7 @@ function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
           </div>
 
           <div className="mt-4">
-            <div className="relative h-2 rounded-full bg-[#edf0f5]">
+            <div className="relative h-2 rounded-full bg-[var(--shadow-bg-soft)]">
               <div className="h-full rounded-full bg-[#ffd58a]" style={{ width: `${progressPercent}%` }} />
 
               {milestones.map((item) => {
@@ -531,8 +531,8 @@ function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
                 return (
                   <span
                     key={item.seconds}
-                    className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white ${
-                      item.claimed ? 'bg-[#ff3f62]' : item.completed ? 'bg-[#ffb800]' : 'bg-[#dbe1ea]'
+                    className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white dark:ring-[var(--shadow-bg-surface)] ${
+                      item.claimed ? 'bg-[#ff3f62]' : item.completed ? 'bg-[#ffb800]' : 'bg-[#dbe1ea] dark:bg-slate-600'
                     }`}
                     style={{ left: `${left}%` }}
                   />
@@ -547,7 +547,7 @@ function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
                 return (
                   <span
                     key={item.seconds}
-                    className="absolute -translate-x-1/2 text-[10px] font-bold text-[#8b93a1]"
+                    className="absolute -translate-x-1/2 text-[10px] font-bold text-[var(--shadow-text-secondary)]"
                     style={{ left: `${left}%` }}
                   >
                     {item.minutes}m
@@ -578,23 +578,23 @@ function AdminReadingMissionCard({ task, claimingMissionId = '', onGo, onClaim }
   const buttonTone = claimed ? 'soft' : 'gold'
 
   return (
-    <div className="flex gap-3 border-b border-[#f1f2f5] py-5">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed] ring-1 ring-[#7c3aed]/15">
+    <div className="flex gap-3 border-b border-[var(--shadow-border)] py-5">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed] ring-1 ring-[#7c3aed]/15 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/15">
         <i className={`${claimable ? 'fa-solid fa-coins' : 'fa-regular fa-clock'} text-[15px]`} />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="line-clamp-2 text-[14px] font-black leading-5 text-[#111827]">
+            <h3 className="line-clamp-2 text-[14px] font-black leading-5 text-[var(--shadow-text-primary)]">
               {task.title || `Read ${targetMinutes} minutes`}
             </h3>
 
-            <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-[#8b93a1]">
+            <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">
               {task.subtitle || 'Keep reading longer to earn more coins.'}
             </p>
 
-            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706]">
+            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706] dark:text-amber-300">
               <CoinIcon className="h-4 w-4" />
               <span>+{formatNumber(rewardCoins)}</span>
             </div>
@@ -610,13 +610,13 @@ function AdminReadingMissionCard({ task, claimingMissionId = '', onGo, onClaim }
         </div>
 
         <div className="mt-3">
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#edf0f5]">
+          <div className="h-1.5 overflow-hidden rounded-full bg-[var(--shadow-bg-soft)]">
             <div className={`h-full rounded-full ${claimed ? 'bg-[#22C55E]' : 'bg-[#F6B800]'}`} style={{ width: `${percent}%` }} />
           </div>
 
-          <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-[#9ca3af]">
+          <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
             <span>{progressMinutes}/{targetMinutes} min</span>
-            {claimed ? <span className="font-black text-[#22C55E]">Claimed</span> : claimable ? <span className="font-black text-[#d97706]">Ready</span> : null}
+            {claimed ? <span className="font-black text-[#22C55E]">Claimed</span> : claimable ? <span className="font-black text-[#d97706] dark:text-amber-300">Ready</span> : null}
           </div>
         </div>
       </div>
@@ -1405,7 +1405,7 @@ navigate(targetPath, {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white pb-[110px]">
+    <div className="app-page min-h-screen pb-[110px]">
       <style>
         {`
           @keyframes shadowToast {
@@ -1653,17 +1653,17 @@ navigate(targetPath, {
             onClick={() => setShowCheckInRules(false)}
           />
 
-          <div className="relative w-full max-w-[340px] rounded-[26px] bg-white px-6 py-7 text-center shadow-[0_18px_50px_rgba(17,24,39,0.22)]">
-            <h3 className="text-[20px] font-black leading-7 text-[#111827]">
+          <div className="relative w-full max-w-[340px] rounded-[26px] bg-[var(--shadow-bg-elevated)] px-6 py-7 text-center shadow-[0_18px_50px_rgba(17,24,39,0.22)] ring-1 ring-[var(--shadow-border)]">
+            <h3 className="text-[20px] font-black leading-7 text-[var(--shadow-text-primary)]">
               Check-in Rules
             </h3>
 
-            <p className="mt-4 text-[14px] font-semibold leading-6 text-[#4b5563]">
+            <p className="mt-4 text-[14px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">
               Check in every day to keep your streak and collect rewards.
               If you miss a day, your streak will reset.
             </p>
 
-            <p className="mt-3 text-[13px] font-semibold leading-5 text-[#8b93a1]">
+            <p className="mt-3 text-[13px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
               Premium readers can auto-claim daily rewards.
             </p>
 
@@ -1693,7 +1693,7 @@ navigate(targetPath, {
         onClick={claimRewardChest}
       />
 
-      <main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
+      <main className="mx-auto max-w-[760px] bg-[var(--shadow-bg-page)] pt-0">
         <div ref={coverRef} className="relative aspect-[16/9] overflow-hidden bg-[#ff6f86]">
           <img
             src={coverImageUrl}
@@ -1706,7 +1706,7 @@ navigate(targetPath, {
           <header
             className={`fixed left-1/2 top-0 z-50 flex h-14 w-full max-w-[760px] -translate-x-1/2 items-center justify-between px-4 transition-all duration-200 ${
               scrolledPastCover
-                ? 'border-b border-[#eef0f4] bg-white/95 text-[#111827] shadow-sm backdrop-blur'
+                ? 'border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] text-[var(--shadow-text-primary)] shadow-sm backdrop-blur'
                 : 'bg-transparent text-white'
             }`}
           >
@@ -1714,21 +1714,21 @@ navigate(targetPath, {
               type="button"
               onClick={() => navigate(-1)}
               className={`flex h-9 w-9 items-center justify-center rounded-full active:scale-95 ${
-                scrolledPastCover ? 'bg-transparent text-[#111827]' : 'bg-white/20 text-white shadow-sm'
+                scrolledPastCover ? 'bg-transparent text-[var(--shadow-text-primary)]' : 'bg-white/20 text-white shadow-sm'
               }`}
               aria-label="Go back"
             >
               <i className="fa-solid fa-chevron-left text-[14px]" />
             </button>
 
-            <h1 className={`text-[16px] font-bold ${scrolledPastCover ? 'text-[#111827]' : 'text-white drop-shadow'}`}>
+            <h1 className={`text-[16px] font-bold ${scrolledPastCover ? 'text-[var(--shadow-text-primary)]' : 'text-white drop-shadow'}`}>
               Task Center
             </h1>
 
             <button
               type="button"
               className={`flex h-9 w-9 items-center justify-center rounded-full active:scale-95 ${
-                scrolledPastCover ? 'bg-transparent text-[#111827]' : 'bg-white/20 text-white shadow-sm'
+                scrolledPastCover ? 'bg-transparent text-[var(--shadow-text-primary)]' : 'bg-white/20 text-white shadow-sm'
               }`}
               aria-label="More"
             >
@@ -1736,11 +1736,11 @@ navigate(targetPath, {
             </button>
           </header>
 
-          <div className="absolute inset-x-0 bottom-0 z-10 h-40 bg-gradient-to-t from-[#f5f3fa] via-[#f5f3fa]/75 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 z-10 h-40 bg-gradient-to-t from-[#f5f3fa] via-[#f5f3fa]/75 to-transparent dark:from-[#111318] dark:via-[#111318]/75" />
         </div>
 
         <section className="relative z-20 -mt-11">
-          <div className="overflow-hidden rounded-t-[28px] bg-white/95 shadow-[0_-6px_22px_rgba(17,24,39,0.08)] ring-1 ring-white/70 backdrop-blur">
+          <div className="overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] shadow-[0_-6px_22px_rgba(17,24,39,0.08)] ring-1 ring-[var(--shadow-border)] backdrop-blur">
             <div className="grid grid-cols-2">
               <BalanceBox
                 label="My Coins"
@@ -1756,25 +1756,25 @@ navigate(targetPath, {
               />
             </div>
 
-            <div className="bg-white px-5 pb-4 pt-0">
-              <p className="text-[12px] font-medium leading-5 text-[#7b8190]">
+            <div className="bg-[var(--shadow-bg-surface)] px-5 pb-4 pt-0">
+              <p className="text-[12px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
                 Use Coins to unlock and read any stories on Shadow.
               </p>
             </div>
           </div>
         </section>
 
-        <section className="mt-1.5 bg-white p-5 shadow-sm">
+        <section className="mt-1.5 bg-[var(--shadow-bg-surface)] p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
+                <h2 className="text-[17px] font-bold leading-6 text-[var(--shadow-text-primary)]">
                   <span className="text-[#ff3f62]">{streakCount || 0}</span>-Day Streak
                 </h2>
 
                 <button
                   type="button"
-                  className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[var(--shadow-text-tertiary)] active:scale-95"
                   aria-label="Check-in rules"
                   onClick={() => setShowCheckInRules(true)}
                 >
@@ -1785,7 +1785,7 @@ navigate(targetPath, {
 
             <button
               type="button"
-              className="group flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95 disabled:opacity-60"
+              className="group flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[var(--shadow-text-secondary)] active:scale-95 disabled:opacity-60"
               aria-label="Reminder"
               aria-pressed={reminderEnabled}
               disabled={reminderLoading}
@@ -1796,7 +1796,7 @@ navigate(targetPath, {
                 className={`relative h-[22px] w-[42px] rounded-full p-[2px] transition-all duration-300 ${
                   reminderEnabled
                     ? 'bg-[#F6B800] shadow-[0_0_0_4px_rgba(246,184,0,0.14),inset_0_1px_2px_rgba(255,255,255,0.35)]'
-                    : 'bg-[#d1d5db] shadow-inner'
+                    : 'bg-[#d1d5db] shadow-inner dark:bg-slate-600'
                 }`}
               >
                 <span
@@ -1812,7 +1812,7 @@ navigate(targetPath, {
             <button
               type="button"
               onClick={() => setMessage('')}
-              className="mt-4 w-full rounded-[18px] bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#111827]"
+              className="mt-4 w-full rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[var(--shadow-text-primary)]"
             >
               {message}
             </button>
@@ -1832,10 +1832,10 @@ navigate(targetPath, {
           </div>
         </section>
 
-        <section className="mt-1.5 bg-white p-5">
+        <section className="mt-1.5 bg-[var(--shadow-bg-surface)] p-5">
           <div className="flex items-center justify-between gap-3">
   <div>
-    <h2 className="text-[17px] font-bold text-[#111827]">
+    <h2 className="text-[17px] font-bold text-[var(--shadow-text-primary)]">
       More Rewards
     </h2>
   </div>
@@ -1878,12 +1878,12 @@ navigate(targetPath, {
           </div>
         </section>
 
-        <section className="mt-1.5 bg-white px-5 py-5">
-  <h3 className="text-[16px] font-black leading-6 text-[#111827]">
+        <section className="mt-1.5 bg-[var(--shadow-bg-surface)] px-5 py-5">
+  <h3 className="text-[16px] font-black leading-6 text-[var(--shadow-text-primary)]">
     Notes:
   </h3>
 
-  <ol className="mt-3 list-decimal space-y-2 pl-5 text-[13px] font-semibold leading-6 text-[#111827]">
+  <ol className="mt-3 list-decimal space-y-2 pl-5 text-[13px] font-semibold leading-6 text-[var(--shadow-text-primary)]">
     <li>
       Shadow may suspend or restrict users who are involved in fraud, abuse, or
       violations of the rules.
