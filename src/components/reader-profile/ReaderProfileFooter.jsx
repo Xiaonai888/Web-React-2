@@ -22,6 +22,56 @@ import {
   playChatNotificationTone,
   primeChatNotificationSound,
 } from '../../services/chatNotificationSound'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerProfileFooter', {
+  en: {
+    mall: 'Mall',
+    reel: 'Reel',
+    chat: 'Chat',
+    library: 'Library',
+    me: 'Me',
+    comingSoon: '{{label}} is coming soon.',
+    chatUnread: 'Chat, {{count}} unread',
+  },
+  km: {
+    mall: 'Mall',
+    reel: 'Reel',
+    chat: 'ជជែក',
+    library: 'បណ្ណាល័យ',
+    me: 'ខ្ញុំ',
+    comingSoon: '{{label}} នឹងមកដល់ឆាប់ៗនេះ។',
+    chatUnread: 'ជជែក, មិនទាន់អាន {{count}}',
+  },
+  zh: {
+    mall: '商城',
+    reel: '短视频',
+    chat: '聊天',
+    library: '书架',
+    me: '我的',
+    comingSoon: '{{label}} 即将推出。',
+    chatUnread: '聊天，{{count}} 条未读',
+  },
+  ja: {
+    mall: 'モール',
+    reel: 'リール',
+    chat: 'チャット',
+    library: 'ライブラリ',
+    me: 'マイ',
+    comingSoon: '{{label}} は近日公開予定です。',
+    chatUnread: 'チャット、未読 {{count}} 件',
+  },
+  ko: {
+    mall: '몰',
+    reel: '릴스',
+    chat: '채팅',
+    library: '라이브러리',
+    me: '내 정보',
+    comingSoon: '{{label}} 기능은 곧 제공됩니다.',
+    chatUnread: '채팅, 읽지 않음 {{count}}개',
+  },
+})
 
 function getStoredUser() {
   try {
@@ -123,11 +173,11 @@ function ProfileIcon({
 }
 
 const NAV_ITEMS = [
-  { key: 'mall', label: 'Mall' },
-  { key: 'reel', label: 'Reel' },
-  { key: 'chat', label: 'Chat' },
-  { key: 'library', label: 'Library' },
-  { key: 'me', label: 'Me' },
+  { key: 'mall', labelKey: 'mall' },
+  { key: 'reel', labelKey: 'reel' },
+  { key: 'chat', labelKey: 'chat' },
+  { key: 'library', labelKey: 'library' },
+  { key: 'me', labelKey: 'me' },
 ]
 
 export default function ReaderProfileFooter({
@@ -136,6 +186,7 @@ export default function ReaderProfileFooter({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useDisplayTranslation()
   const messageTimerRef = useRef(null)
   const chatSnapshotRef = useRef(new Map())
   const chatSnapshotReadyRef = useRef(false)
@@ -379,12 +430,20 @@ export default function ReaderProfileFooter({
 
   const handleClick = (key) => {
     if (key === 'mall') {
-      showMessage('Mall is coming soon.')
+      showMessage(
+        t('readerProfileFooter.comingSoon', {
+          label: t('readerProfileFooter.mall'),
+        })
+      )
       return
     }
 
     if (key === 'reel') {
-      showMessage('Reel is coming soon.')
+      showMessage(
+        t('readerProfileFooter.comingSoon', {
+          label: t('readerProfileFooter.reel'),
+        })
+      )
       return
     }
 
@@ -457,10 +516,16 @@ export default function ReaderProfileFooter({
               activeKey === item.key
             const isChat =
               item.key === 'chat'
+            const label = t(
+              `readerProfileFooter.${item.labelKey}`
+            )
             const accessibleLabel =
               isChat && chatBadgeCount > 0
-                ? `Chat, ${chatBadgeCount} unread`
-                : item.label
+                ? t(
+                    'readerProfileFooter.chatUnread',
+                    { count: chatBadgeCount }
+                  )
+                : label
 
             return (
               <button
@@ -470,7 +535,7 @@ export default function ReaderProfileFooter({
                   handleClick(item.key)
                 }
                 aria-label={accessibleLabel}
-                title={item.label}
+                title={label}
                 aria-current={
                   active
                     ? 'page'
