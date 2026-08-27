@@ -1,15 +1,15 @@
-import i18n from 'i18next'
-import { initReactI18next } from 'react-i18next'
+import { useSyncExternalStore } from 'react'
 import resources from './resources'
 
 const DISPLAY_LANGUAGE_STORAGE_KEY = 'shadow_display_language'
 const SUPPORTED_LANGUAGES = ['km', 'en', 'zh', 'ja', 'ko']
+const listeners = new Set()
 
-function normalizeLanguage(languageId) {
+export function normalizeLanguage(languageId) {
   return SUPPORTED_LANGUAGES.includes(languageId) ? languageId : 'en'
 }
 
-function getInitialLanguage() {
+function loadLanguage() {
   try {
     return normalizeLanguage(localStorage.getItem(DISPLAY_LANGUAGE_STORAGE_KEY))
   } catch {
@@ -17,31 +17,84 @@ function getInitialLanguage() {
   }
 }
 
-if (!i18n.isInitialized) {
-  i18n.use(initReactI18next).init({
-    resources,
-    lng: getInitialLanguage(),
-    fallbackLng: 'en',
-    supportedLngs: SUPPORTED_LANGUAGES,
-    interpolation: {
-      escapeValue: false,
-    },
-    returnNull: false,
+let currentLanguage = loadLanguage()
+
+function readTranslation(languageId, key) {
+  return String(key || '')
+    .split('.')
+    .reduce((value, part) => value?.[part], resources[languageId]?.translation)
+}
+
+function interpolate(value, options = {}) {
+  if (typeof value !== 'string') return value
+
+  return value.replace(/\{\{\s*([^{}\s]+)\s*\}\}/g, (_, name) => {
+    const replacement = options[name]
+    return replacement === undefined || replacement === null ? '' : String(replacement)
   })
 }
 
-i18n.on('languageChanged', (languageId) => {
-  const language = normalizeLanguage(languageId)
+export function getDisplayLanguage() {
+  return currentLanguage
+}
+
+export function translate(key, options = {}) {
+  const selected = readTranslation(currentLanguage, key)
+  const fallback = readTranslation('en', key)
+  const value = selected ?? fallback ?? options.defaultValue ?? key
+  return interpolate(value, options)
+}
+
+export function changeDisplayLanguage(languageId) {
+  const nextLanguage = normalizeLanguage(languageId)
+  currentLanguage = nextLanguage
 
   try {
-    localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, language)
+    localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, nextLanguage)
   } catch {}
 
-  document.documentElement.lang = language
+  document.documentElement.lang = nextLanguage
+
+  for (const listener of listeners) listener()
+
   window.dispatchEvent(new Event('shadow-display-language-change'))
-})
+}
 
-document.documentElement.lang = normalizeLanguage(i18n.resolvedLanguage || i18n.language)
+function subscribe(listener) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
 
-export { DISPLAY_LANGUAGE_STORAGE_KEY, SUPPORTED_LANGUAGES, normalizeLanguage }
+export function useDisplayTranslation() {
+  const language = useSyncExternalStore(
+    subscribe,
+    getDisplayLanguage,
+    getDisplayLanguage
+  )
+
+  return {
+    language,
+    t: translate,
+    changeLanguage: changeDisplayLanguage,
+  }
+}
+
+document.documentElement.lang = currentLanguage
+
+const i18n = {
+  get language() {
+    return currentLanguage
+  },
+  get resolvedLanguage() {
+    return currentLanguage
+  },
+  t: translate,
+  changeLanguage: changeDisplayLanguage,
+}
+
+export {
+  DISPLAY_LANGUAGE_STORAGE_KEY,
+  SUPPORTED_LANGUAGES,
+}
+
 export default i18n
