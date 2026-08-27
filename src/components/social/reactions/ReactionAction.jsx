@@ -6,6 +6,71 @@ import {
   getReactionMeta,
 } from './reactionConfig'
 import useReactionInteraction from './useReactionInteraction'
+import { useDisplayTranslation } from '../../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../../i18n/registerTranslations'
+
+registerTranslationNamespace('reactionAction', {
+  en: {
+    like: 'Like',
+    love: 'Love',
+    haha: 'Haha',
+    wow: 'Wow',
+    sad: 'Sad',
+    angry: 'Angry',
+    support: 'Support',
+    touched: 'Touched',
+    reactionAria: '{{label}} reaction',
+    viewReacted: 'View people who reacted',
+  },
+  km: {
+    like: 'ចូលចិត្ត',
+    love: 'ស្រឡាញ់',
+    haha: 'សើច',
+    wow: 'ភ្ញាក់ផ្អើល',
+    sad: 'សោកសៅ',
+    angry: 'ខឹង',
+    support: 'គាំទ្រ',
+    touched: 'រំភើបចិត្ត',
+    reactionAria: 'ប្រតិកម្ម {{label}}',
+    viewReacted: 'មើលអ្នកដែលបានបញ្ចេញប្រតិកម្ម',
+  },
+  zh: {
+    like: '赞',
+    love: '爱心',
+    haha: '哈哈',
+    wow: '哇',
+    sad: '难过',
+    angry: '生气',
+    support: '支持',
+    touched: '感动',
+    reactionAria: '{{label}} 反应',
+    viewReacted: '查看已回应的人',
+  },
+  ja: {
+    like: 'いいね',
+    love: '大好き',
+    haha: '笑',
+    wow: 'すごい',
+    sad: '悲しい',
+    angry: '怒り',
+    support: '応援',
+    touched: '感動',
+    reactionAria: '{{label}} リアクション',
+    viewReacted: 'リアクションした人を見る',
+  },
+  ko: {
+    like: '좋아요',
+    love: '사랑해요',
+    haha: '웃겨요',
+    wow: '놀라워요',
+    sad: '슬퍼요',
+    angry: '화나요',
+    support: '응원해요',
+    touched: '감동이에요',
+    reactionAria: '{{label}} 반응',
+    viewReacted: '반응한 사람 보기',
+  },
+})
 
 export default function ReactionAction({
   reactionType = '',
@@ -26,6 +91,7 @@ export default function ReactionAction({
   idleLabel = 'Like',
   idleIcon = null,
 }) {
+  const { t } = useDisplayTranslation()
   const anchorRef = useRef(null)
   const activeReaction =
     getReactionMeta(reactionType)
@@ -43,6 +109,22 @@ export default function ReactionAction({
     typeof formatCount === 'function'
       ? formatCount(count)
       : String(count || 0)
+
+  const translatedIdleLabel =
+    idleLabel === 'Like'
+      ? t('reactionAction.like')
+      : idleLabel
+
+  const translatedReactionLabel =
+    activeReaction
+      ? t(
+          `reactionAction.${activeReaction.type}`,
+          {
+            defaultValue:
+              activeReaction.label,
+          }
+        )
+      : ''
 
   function stopEvent(event) {
     event?.stopPropagation?.()
@@ -144,8 +226,8 @@ export default function ReactionAction({
       />
 
       <button
-  ref={anchorRef}
-  type="button"
+        ref={anchorRef}
+        type="button"
         disabled={
           busy || disabled
         }
@@ -167,8 +249,14 @@ export default function ReactionAction({
         className={`touch-none inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60 ${buttonClassName}`}
         aria-label={
           activeReaction
-            ? `${activeReaction.label} reaction`
-            : idleLabel
+            ? t(
+                'reactionAction.reactionAria',
+                {
+                  label:
+                    translatedReactionLabel,
+                }
+              )
+            : translatedIdleLabel
         }
       >
         {actionContent}
@@ -185,7 +273,9 @@ export default function ReactionAction({
               onCountClick()
             }}
             className={`active:scale-95 ${countClassName}`}
-            aria-label="View people who reacted"
+            aria-label={t(
+              'reactionAction.viewReacted'
+            )}
           >
             {displayCount}
           </button>
