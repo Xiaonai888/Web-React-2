@@ -135,7 +135,7 @@ function formatUsd(value) {
 
 function FieldLabel({ children, required = false }) {
   return (
-    <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+    <label className="mb-2 block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">
       {children}
       {required ? <span className="ml-1 text-[#e5484d]">*</span> : null}
     </label>
@@ -146,7 +146,7 @@ function TextInput(props) {
   return (
     <input
       {...props}
-      className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] font-semibold text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)] disabled:bg-[#f4f5f7] disabled:text-[#667085]"
+      className="app-input h-12 w-full rounded-[16px] border px-4 text-[14px] font-semibold outline-none transition focus:border-[#8a70b5] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
     />
   )
 }
@@ -156,9 +156,9 @@ function SelectInput(props) {
     <div className="relative">
       <select
         {...props}
-        className="h-12 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 pr-10 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+        className="app-input h-12 w-full appearance-none rounded-[16px] border px-4 pr-10 text-[14px] font-semibold outline-none transition focus:border-[#8a70b5]"
       />
-      <i className="fa-solid fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-[#98a2b3]" />
+      <i className="fa-solid fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-[var(--shadow-text-tertiary)]" />
     </div>
   )
 }
@@ -175,7 +175,7 @@ function DeliveryLogo({ company }) {
           event.currentTarget.nextElementSibling.style.display = 'flex'
         }}
       />
-      <span className="hidden h-full w-full items-center justify-center bg-[#f5f3fa] text-[11px] font-extrabold text-[#111827]">
+      <span className="hidden h-full w-full items-center justify-center bg-[var(--shadow-bg-soft)] text-[11px] font-extrabold text-[var(--shadow-text-primary)]">
         {company.shortName}
       </span>
     </div>
@@ -207,13 +207,13 @@ function BuyerProfileSheet({
         className="absolute inset-0 bg-black/40"
       />
 
-      <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[28px] bg-white shadow-2xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-[520px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[26px]">
-        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#e5e7eb] md:hidden" />
+      <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-[520px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[26px]">
+        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)] md:hidden" />
 
-        <div className="flex items-center justify-between gap-3 border-b border-[#f0eef6] px-5 pb-4 pt-5">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--shadow-border)] px-5 pb-4 pt-5">
           <div>
-            <div className="text-[18px] font-extrabold text-[#111827]">Buyer Profile</div>
-            <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+            <div className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Buyer Profile</div>
+            <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
               Required for printed book delivery.
             </div>
           </div>
@@ -221,7 +221,7 @@ function BuyerProfileSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f5f7] text-[#555b66]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] transition active:bg-[var(--shadow-bg-hover)]"
           >
             <i className="fa-solid fa-xmark text-[13px]" />
           </button>
@@ -229,7 +229,7 @@ function BuyerProfileSheet({
 
         <div className="max-h-[70vh] overflow-y-auto px-5 pb-5 pt-4">
           {profileLoading ? (
-            <div className="mb-4 rounded-[16px] bg-[#eef2ff] px-4 py-3 text-[12px] font-extrabold text-[#4f46e5]">
+            <div className="mb-4 rounded-[16px] bg-[#eef2ff] px-4 py-3 text-[12px] font-extrabold text-[#4f46e5] dark:bg-indigo-500/15 dark:text-indigo-300">
               Loading buyer profile...
             </div>
           ) : null}
@@ -242,7 +242,7 @@ function BuyerProfileSheet({
                 disabled
                 readOnly
               />
-              <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8d94a1]">
+              <p className="mt-2 text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
                 Name comes from your reader account. To change it, update your main profile.
               </p>
             </div>
@@ -272,7 +272,7 @@ function BuyerProfileSheet({
                 value={address}
                 onChange={(event) => setAddress(event.target.value)}
                 placeholder="House number, street, village, commune, district..."
-                className="min-h-[120px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] font-semibold leading-6 text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+                className="app-input min-h-[120px] w-full resize-none rounded-[16px] border px-4 py-3 text-[14px] font-semibold leading-6 outline-none transition focus:border-[#8a70b5]"
               />
             </div>
 
@@ -280,7 +280,7 @@ function BuyerProfileSheet({
               type="button"
               disabled={saving}
               onClick={onSave}
-              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#aeb6c4]"
+              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)] dark:bg-white dark:text-[#111827]"
             >
               {saving ? 'Saving...' : 'Save Information'}
             </button>
@@ -293,8 +293,8 @@ function BuyerProfileSheet({
 
 function CheckoutItem({ item }) {
   return (
-    <div className="flex gap-3 border-b border-[#f0eef6] py-3 last:border-b-0">
-      <div className="h-[76px] w-[52px] shrink-0 overflow-hidden rounded-[12px] bg-[#eef0f4]">
+    <div className="flex gap-3 border-b border-[var(--shadow-border)] py-3 last:border-b-0">
+      <div className="h-[76px] w-[52px] shrink-0 overflow-hidden rounded-[12px] bg-[var(--shadow-bg-soft)]">
         {item.cover ? (
           <img
             src={item.cover}
@@ -305,17 +305,17 @@ function CheckoutItem({ item }) {
             }}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
+          <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
             <i className="fa-solid fa-book-open text-[15px]" />
           </div>
         )}
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-2 text-[13px] font-extrabold leading-5 text-[#111827]">{item.title}</div>
-        <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">{item.author}</div>
+        <div className="line-clamp-2 text-[13px] font-extrabold leading-5 text-[var(--shadow-text-primary)]">{item.title}</div>
+        <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">{item.author}</div>
         <div className="mt-2 flex items-center justify-between gap-3">
-          <span className="text-[12px] font-bold text-[#8d94a1]">Qty: {item.quantity}</span>
+          <span className="text-[12px] font-bold text-[var(--shadow-text-secondary)]">Qty: {item.quantity}</span>
           <span className="text-[13px] font-extrabold text-[#e5484d]">
             {formatUsd(item.price * item.quantity)}
           </span>
@@ -578,7 +578,7 @@ export default function ShadowMallCheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
+    <div className="app-page min-h-screen pb-[120px]">
       <BuyerProfileSheet
         open={buyerProfileOpen}
         onClose={() => setBuyerProfileOpen(false)}
@@ -594,30 +594,30 @@ export default function ShadowMallCheckoutPage() {
         onSave={saveBuyerProfileOnly}
       />
 
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
             onClick={() => navigate('/shop/mall/cart')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[#111827]">
+          <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[var(--shadow-text-primary)]">
             Checkout
           </h1>
 
           <button
             type="button"
             onClick={() => setBuyerProfileOpen(true)}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Open Buyer Profile"
           >
             <i className="fa-solid fa-user text-[14px]" />
             {!profileComplete ? (
-              <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-[#e5484d] ring-2 ring-white" />
+              <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-[#e5484d] ring-2 ring-[var(--shadow-nav-bg)]" />
             ) : null}
           </button>
         </div>
@@ -625,21 +625,21 @@ export default function ShadowMallCheckoutPage() {
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         {message ? (
-          <div className="mb-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-extrabold text-[#e5484d]">
+          <div className="mb-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-extrabold text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
             {message}
           </div>
         ) : null}
 
-        <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <section className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-[16px] font-extrabold text-[#111827]">Delivery Company</div>
-              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">
+              <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Delivery Company</div>
+              <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
                 Choose the company for printed book delivery.
               </p>
             </div>
 
-            <div className="rounded-full bg-[#fff7d8] px-3 py-1 text-[11px] font-extrabold text-[#7a5600]">
+            <div className="rounded-full bg-[#fff7d8] px-3 py-1 text-[11px] font-extrabold text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300">
               {formatUsd(DELIVERY_FEE)}
             </div>
           </div>
@@ -655,15 +655,15 @@ export default function ShadowMallCheckoutPage() {
                   onClick={() => setDeliveryCompany(company.key)}
                   className={`flex items-center gap-3 rounded-[18px] border-2 p-3 text-left transition active:scale-[0.99] ${
                     selected
-                      ? 'border-[#d4af37] bg-[#fffaf0] shadow-[0_10px_24px_rgba(212,175,55,0.18)]'
-                      : 'border-[#eceaf2] bg-[#fafafe]'
+                      ? 'border-[#d4af37] bg-[#fffaf0] shadow-[0_10px_24px_rgba(212,175,55,0.18)] dark:bg-amber-500/10'
+                      : 'border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)]'
                   }`}
                 >
                   <DeliveryLogo company={company} />
 
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-extrabold text-[#111827]">{company.shortName}</div>
-                    <div className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#8d94a1]">
+                    <div className="text-[13px] font-extrabold text-[var(--shadow-text-primary)]">{company.shortName}</div>
+                    <div className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
                       {company.name}
                     </div>
                   </div>
@@ -684,24 +684,24 @@ export default function ShadowMallCheckoutPage() {
               value={note}
               onChange={(event) => setNote(event.target.value)}
               placeholder="Optional note for admin or delivery..."
-              className="min-h-[90px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] font-semibold leading-6 text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+              className="app-input min-h-[90px] w-full resize-none rounded-[16px] border px-4 py-3 text-[14px] font-semibold leading-6 outline-none transition focus:border-[#8a70b5]"
             />
           </div>
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+        <section className="mt-4 overflow-hidden rounded-[24px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
           <button
             type="button"
             onClick={() => setShowOrderItems((value) => !value)}
             className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
           >
             <div>
-              <div className="text-[16px] font-extrabold text-[#111827]">Order Items</div>
-              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+              <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Order Items</div>
+              <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
                 {itemCount} books in this order
               </div>
             </div>
-            <i className={`fa-solid fa-chevron-down text-[12px] text-[#98a2b3] transition ${showOrderItems ? 'rotate-180' : ''}`} />
+            <i className={`fa-solid fa-chevron-down text-[12px] text-[var(--shadow-text-tertiary)] transition ${showOrderItems ? 'rotate-180' : ''}`} />
           </button>
 
           {showOrderItems ? (
@@ -711,7 +711,7 @@ export default function ShadowMallCheckoutPage() {
                   <CheckoutItem key={item.id} item={item} />
                 ))
               ) : (
-                <div className="py-8 text-center text-[13px] font-extrabold text-[#98a2b3]">
+                <div className="py-8 text-center text-[13px] font-extrabold text-[var(--shadow-text-tertiary)]">
                   No books in cart.
                 </div>
               )}
@@ -719,28 +719,28 @@ export default function ShadowMallCheckoutPage() {
           ) : null}
         </section>
 
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="text-[16px] font-extrabold text-[#111827]">Payment Summary</div>
+        <section className="mt-4 rounded-[24px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
+          <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Payment Summary</div>
 
           <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
+            <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
               <span>Subtotal</span>
-              <span className="font-extrabold text-[#111827]">{formatUsd(subtotal)}</span>
+              <span className="font-extrabold text-[var(--shadow-text-primary)]">{formatUsd(subtotal)}</span>
             </div>
 
-            <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
+            <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
               <span>Delivery Fee</span>
-              <span className="font-extrabold text-[#111827]">{formatUsd(DELIVERY_FEE)}</span>
+              <span className="font-extrabold text-[var(--shadow-text-primary)]">{formatUsd(DELIVERY_FEE)}</span>
             </div>
 
-            <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
+            <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
               <span>Delivery Company</span>
-              <span className="font-extrabold text-[#111827]">{selectedDeliveryCompany.shortName}</span>
+              <span className="font-extrabold text-[var(--shadow-text-primary)]">{selectedDeliveryCompany.shortName}</span>
             </div>
 
-            <div className="border-t border-[#f0eef6] pt-3">
+            <div className="border-t border-[var(--shadow-border)] pt-3">
               <div className="flex items-center justify-between">
-                <span className="text-[14px] font-extrabold text-[#111827]">Total</span>
+                <span className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Total</span>
                 <span className="text-[20px] font-extrabold text-[#e5484d]">{formatUsd(total)}</span>
               </div>
             </div>
@@ -748,10 +748,10 @@ export default function ShadowMallCheckoutPage() {
         </section>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eceaf2] bg-white/95 px-4 py-3 backdrop-blur">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold text-[#8d94a1]">Total</div>
+            <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">Total</div>
             <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(total)}</div>
           </div>
 
@@ -760,7 +760,7 @@ export default function ShadowMallCheckoutPage() {
               type="button"
               disabled={!canContinue}
               onClick={handleContinue}
-              className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[#aeb6c4] disabled:shadow-none"
+              className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)] disabled:shadow-none dark:bg-white dark:text-[#111827]"
             >
               {saving ? 'Opening PayWay...' : 'Continue to Payment'}
             </button>
@@ -768,7 +768,7 @@ export default function ShadowMallCheckoutPage() {
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99]"
+              className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] dark:bg-white dark:text-[#111827]"
             >
               Login to Checkout
             </button>
