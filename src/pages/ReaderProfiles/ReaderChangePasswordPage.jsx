@@ -25,7 +25,7 @@ function PasswordField({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-[12px] font-bold text-[#555d6b]">
+      <span className="mb-2 block text-[12px] font-bold text-[var(--shadow-text-secondary)]">
         {label}
       </span>
 
@@ -35,13 +35,13 @@ function PasswordField({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           autoComplete={autoComplete}
-          className="h-12 w-full rounded-[12px] border border-[#dfe2e7] bg-white px-3 pr-12 text-[14px] outline-none focus:border-[#8a70b5]"
+          className="app-input h-12 w-full rounded-[12px] border px-3 pr-12 text-[14px] outline-none transition focus:border-[#8a70b5]"
         />
 
         <button
           type="button"
           onClick={onToggle}
-          className="absolute right-0 top-0 flex h-12 w-12 items-center justify-center text-[#8d94a1]"
+          className="absolute right-0 top-0 flex h-12 w-12 items-center justify-center text-[var(--shadow-text-secondary)] transition active:bg-[var(--shadow-bg-hover)]"
           aria-label={visible ? 'Hide password' : 'Show password'}
         >
           <i className={`fa-regular ${visible ? 'fa-eye-slash' : 'fa-eye'} text-[15px]`} />
@@ -135,13 +135,13 @@ export default function ReaderChangePasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f9] pb-10 text-[#111827]">
-      <header className="sticky top-0 z-40 border-b border-[#eceef2] bg-white/95 backdrop-blur">
+    <main className="app-page min-h-screen pb-10 text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate('/profile/settings/account-security')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:bg-[var(--shadow-bg-hover)]"
             aria-label="Back to account security"
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
@@ -149,7 +149,7 @@ export default function ReaderChangePasswordPage() {
 
           <div>
             <h1 className="text-[18px] font-extrabold">Change password</h1>
-            <p className="text-[11px] text-[#8d94a1]">
+            <p className="text-[11px] text-[var(--shadow-text-secondary)]">
               Confirm your current password first
             </p>
           </div>
@@ -161,8 +161,8 @@ export default function ReaderChangePasswordPage() {
           <div
             className={`mb-4 rounded-[14px] border px-4 py-3 text-[12px] font-medium ${
               success
-                ? 'border-[#d9eadc] bg-[#f4faf5] text-[#4e7d56]'
-                : 'border-[#f0d8d8] bg-[#fff7f7] text-[#a94c4c]'
+                ? 'border-[#d9eadc] bg-[#f4faf5] text-[#4e7d56] dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
+                : 'border-[#f0d8d8] bg-[#fff7f7] text-[#a94c4c] dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300'
             }`}
           >
             {message}
@@ -171,7 +171,7 @@ export default function ReaderChangePasswordPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-[18px] border border-[#eceef2] bg-white p-4"
+          className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4"
         >
           <div className="space-y-4">
             <PasswordField
@@ -202,14 +202,14 @@ export default function ReaderChangePasswordPage() {
             />
           </div>
 
-          <p className="mt-3 text-[11px] leading-5 text-[#8d94a1]">
+          <p className="mt-3 text-[11px] leading-5 text-[var(--shadow-text-secondary)]">
             Your new password must contain at least 6 characters.
           </p>
 
           <button
             type="submit"
             disabled={saving}
-            className="mt-5 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white disabled:opacity-50"
+            className="mt-5 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white disabled:opacity-50 dark:bg-white dark:text-[#111827]"
           >
             {saving ? 'Changing...' : 'Change password'}
           </button>
