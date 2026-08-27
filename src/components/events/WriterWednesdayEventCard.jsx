@@ -165,7 +165,7 @@ export default function WriterWednesdayEventCard() {
       onClick={() =>
         navigate('/event/writer-wednesday')
       }
-      className="mt-4 block w-full overflow-hidden rounded-[24px] border border-[#E9E2F5] bg-white text-left shadow-[0_14px_36px_rgba(124,58,237,0.10)] transition active:scale-[0.99]"
+      className="mt-4 block w-full overflow-hidden rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-left shadow-[0_14px_36px_rgba(124,58,237,0.10)] transition active:scale-[0.99]"
     >
       <img
         src="/assets/Icons/Event/Event 3.webp"
@@ -175,8 +175,8 @@ export default function WriterWednesdayEventCard() {
 
       {isLive ? (
         <div className="px-4 pb-5 pt-4">
-          <div className="flex items-center justify-center gap-2 rounded-[20px] border border-[#E9E2F5] bg-[#FAF7FF] px-3 py-4">
-            <span className="min-w-[52px] text-center text-[34px] font-black tabular-nums tracking-[-0.04em] text-[#17182A]">
+          <div className="flex items-center justify-center gap-2 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-3 py-4">
+            <span className="min-w-[52px] text-center text-[34px] font-black tabular-nums tracking-[-0.04em] text-[var(--shadow-text-primary)]">
               {String(countdown.hours).padStart(2, '0')}
             </span>
 
@@ -184,7 +184,7 @@ export default function WriterWednesdayEventCard() {
               :
             </span>
 
-            <span className="min-w-[52px] text-center text-[34px] font-black tabular-nums tracking-[-0.04em] text-[#17182A]">
+            <span className="min-w-[52px] text-center text-[34px] font-black tabular-nums tracking-[-0.04em] text-[var(--shadow-text-primary)]">
               {String(countdown.minutes).padStart(2, '0')}
             </span>
 
@@ -192,18 +192,18 @@ export default function WriterWednesdayEventCard() {
               :
             </span>
 
-            <span className="min-w-[52px] text-center text-[34px] font-black tabular-nums tracking-[-0.04em] text-[#17182A]">
+            <span className="min-w-[52px] text-center text-[34px] font-black tabular-nums tracking-[-0.04em] text-[var(--shadow-text-primary)]">
               {String(countdown.seconds).padStart(2, '0')}
             </span>
           </div>
         </div>
       ) : (
         <div className="px-4 pb-5 pt-4">
-          <div className="rounded-[18px] border border-[#E9E2F5] bg-[#FAF7FF] px-4 py-3 text-center">
+          <div className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-4 py-3 text-center">
             <div className="text-[11px] font-black uppercase tracking-[0.12em] text-[#8B5CF6]">
               Next Writer Wednesday
             </div>
-            <div className="mt-1 text-[13px] font-bold text-[#17182A]">
+            <div className="mt-1 text-[13px] font-bold text-[var(--shadow-text-primary)]">
               {formatEventDate(eventDate)}
             </div>
           </div>
