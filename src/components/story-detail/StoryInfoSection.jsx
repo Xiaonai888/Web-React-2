@@ -24,7 +24,7 @@ export default function StoryInfoSection({ story }) {
   const description = story?.description || 'No description yet.'
 
   return (
-    <section className="mt-2 bg-white px-4 py-4 sm:mt-4 sm:rounded-[18px] sm:px-5 sm:py-5 sm:shadow-sm">
+    <section className="mt-2 bg-[var(--shadow-bg-surface)] px-4 py-4 sm:mt-4 sm:rounded-[18px] sm:px-5 sm:py-5 sm:shadow-sm sm:ring-1 sm:ring-[var(--shadow-border)]">
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
@@ -32,19 +32,19 @@ export default function StoryInfoSection({ story }) {
       >
         <div className="mb-2 flex items-center justify-between gap-4">
           {updateLabel ? (
-            <div className="min-w-0 truncate text-[12px] font-extrabold text-[#98a2b3]">
+            <div className="min-w-0 truncate text-[12px] font-extrabold text-[var(--shadow-text-secondary)]">
               {updateLabel}
             </div>
           ) : (
             <div />
           )}
 
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
             <i className={`fa-solid fa-chevron-${expanded ? 'up' : 'down'} text-[12px]`} />
           </span>
         </div>
 
-        <p className={`text-[13.5px] font-medium leading-7 text-[#555b66] ${expanded ? '' : 'line-clamp-4'}`}>
+        <p className={`text-[13.5px] font-medium leading-7 text-[var(--shadow-text-secondary)] ${expanded ? '' : 'line-clamp-4'}`}>
           {description}
         </p>
       </button>
@@ -55,7 +55,7 @@ export default function StoryInfoSection({ story }) {
       {tags.map((tag) => (
         <span
   key={tag}
-  className="shrink-0 rounded-full bg-[#f3f4f6] px-4 py-2 text-[12px] font-medium text-[#111827]"
+  className="shrink-0 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-medium text-[var(--shadow-text-primary)]"
 >
   {tag}
 </span>
