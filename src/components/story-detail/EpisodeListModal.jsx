@@ -96,15 +96,15 @@ const handleClick = () => {
     <button
       type="button"
       onClick={handleClick}
-      className={`flex w-full gap-3 border-b border-[#eef0f4] px-4 py-3.5 text-left transition active:scale-[0.995] sm:gap-4 sm:px-5 ${
-        hasRead ? 'bg-[#f5f5f5]' : 'bg-white'
+      className={`flex w-full gap-3 border-b border-[var(--shadow-border)] px-4 py-3.5 text-left transition active:scale-[0.995] sm:gap-4 sm:px-5 ${
+        hasRead ? 'bg-[var(--shadow-bg-soft)]' : 'bg-[var(--shadow-bg-surface)]'
       }`}
     >
-      <div className="relative h-[76px] w-[108px] shrink-0 overflow-hidden rounded-[14px] bg-[#f0f2f5] sm:h-[86px] sm:w-[128px]">
+      <div className="relative h-[76px] w-[108px] shrink-0 overflow-hidden rounded-[14px] bg-[var(--shadow-bg-soft)] sm:h-[86px] sm:w-[128px]">
         {cover ? (
           <img src={cover} alt={episode.title || 'Episode cover'} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-[#98a2b3]">
+          <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-[var(--shadow-text-secondary)]">
             Cover
           </div>
         )}
@@ -134,13 +134,13 @@ const handleClick = () => {
       <div className="min-w-0 flex-1 py-1">
         <h3
           className={`line-clamp-2 text-[14px] font-bold leading-5 ${
-            hasRead ? 'text-[#a0a6b0]' : 'text-[#111827]'
+            hasRead ? 'text-[var(--shadow-text-tertiary)]' : 'text-[var(--shadow-text-primary)]'
           }`}
         >
           {episode.title || 'Untitled Episode'}
         </h3>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11.5px] font-medium text-[#8d94a1]">
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11.5px] font-medium text-[var(--shadow-text-secondary)]">
           {date ? <span>{date}</span> : null}
 
           <span className="inline-flex items-center gap-1.5">
@@ -170,23 +170,23 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
   const updateText = formatUpdateDays(story?.update_days)
 
   return (
-    <div className="fixed inset-0 z-[140] bg-black/35 sm:flex sm:items-center sm:justify-center sm:px-6">
-      <section className="absolute bottom-0 left-0 right-0 top-[64px] overflow-hidden rounded-t-[28px] bg-white text-[#111827] shadow-2xl sm:relative sm:left-auto sm:right-auto sm:top-auto sm:h-[82vh] sm:w-full sm:max-w-[720px] sm:rounded-[30px]">
-        <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white/95 px-4 py-4 backdrop-blur sm:px-5">
+    <div className="fixed inset-0 z-[140] bg-black/45 sm:flex sm:items-center sm:justify-center sm:px-6">
+      <section className="absolute bottom-0 left-0 right-0 top-[64px] overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl sm:relative sm:left-auto sm:right-auto sm:top-auto sm:h-[82vh] sm:w-full sm:max-w-[720px] sm:rounded-[30px]">
+        <header className="sticky top-0 z-20 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-4 backdrop-blur sm:px-5">
           <div className="flex items-center justify-between gap-3">
             <div className="h-10 w-10" />
 
-            <h2 className="line-clamp-1 text-center text-[18px] font-bold text-[#111827]">
+            <h2 className="line-clamp-1 text-center text-[18px] font-bold text-[var(--shadow-text-primary)]">
               Episodes
             </h2>
 
             <button
               type="button"
               onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:scale-95"
               aria-label="Close"
             >
-              <span className="text-[26px] leading-none text-[#111827]" style={{ fontWeight: 300 }}>
+              <span className="text-[26px] leading-none text-[var(--shadow-text-primary)]" style={{ fontWeight: 300 }}>
                 ×
               </span>
             </button>
@@ -207,29 +207,29 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
     Premium
   </span>
 
-  <span className="min-w-0 text-[13px] font-semibold text-[#8D94A1]">
+  <span className="min-w-0 text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
     Early Access
   </span>
 
-  <i className="fa-solid fa-chevron-right text-[12px] text-[#9CA3AF]" />
+  <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
 </button>
         </header>
 
-        <div className="flex items-center justify-between gap-4 border-b border-[#eef0f4] px-4 py-4 sm:px-5">
-          <div className="font-['Roboto'] text-[14px] font-medium text-[#111827]">
+        <div className="flex items-center justify-between gap-4 border-b border-[var(--shadow-border)] px-4 py-4 sm:px-5">
+          <div className="font-['Roboto'] text-[14px] font-medium text-[var(--shadow-text-primary)]">
   {status}, {updateText}
 </div>
 
           <button
             type="button"
             onClick={() => setNewestFirst((value) => !value)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Reverse episodes"
           >
            <img
   src="/assets/Icons/Revers.svg"
   alt="Reverse episodes"
-  className="h-3.5 w-3.5 object-contain opacity-75"
+  className="h-3.5 w-3.5 object-contain opacity-75 dark:invert"
 />
           </button>
         </div>
@@ -246,9 +246,9 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
             ))
           ) : (
             <div className="px-5 py-14 text-center">
-              <i className="fa-regular fa-file-lines text-[34px] text-[#98a2b3]" />
-              <div className="mt-4 text-[16px] font-black text-[#111827]">No episodes yet</div>
-              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+              <i className="fa-regular fa-file-lines text-[34px] text-[var(--shadow-text-secondary)]" />
+              <div className="mt-4 text-[16px] font-black text-[var(--shadow-text-primary)]">No episodes yet</div>
+              <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
                 Published episodes will appear here.
               </div>
             </div>
