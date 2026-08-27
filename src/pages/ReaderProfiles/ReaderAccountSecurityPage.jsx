@@ -200,13 +200,13 @@ export default function ReaderAccountSecurityPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f9] pb-10 text-[#111827]">
-      <header className="sticky top-0 z-40 border-b border-[#eceef2] bg-white/95 backdrop-blur">
+    <main className="app-page min-h-screen pb-10 text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate('/profile/settings')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:bg-[var(--shadow-bg-hover)]"
             aria-label="Back to settings"
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
@@ -214,26 +214,26 @@ export default function ReaderAccountSecurityPage() {
 
           <div>
             <h1 className="text-[18px] font-extrabold">Account & security</h1>
-            <p className="text-[11px] text-[#8d94a1]">Personal information and account protection</p>
+            <p className="text-[11px] text-[var(--shadow-text-secondary)]">Personal information and account protection</p>
           </div>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-[560px] px-4 py-5">
         {message ? (
-          <div className="mb-4 rounded-[14px] border border-[#eceef2] bg-white px-4 py-3 text-[12px] font-medium text-[#555d6b]">
+          <div className="mb-4 rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[12px] font-medium text-[var(--shadow-text-secondary)]">
             {message}
           </div>
         ) : null}
 
         <section>
-          <h2 className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[0.08em] text-[#8d94a1]">
+          <h2 className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--shadow-text-secondary)]">
             Personal information
           </h2>
 
-          <div className="overflow-hidden rounded-[18px] border border-[#eceef2] bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
             {loading ? (
-              <div className="px-4 py-6 text-[13px] text-[#8d94a1]">Loading...</div>
+              <div className="px-4 py-6 text-[13px] text-[var(--shadow-text-secondary)]">Loading...</div>
             ) : (
               <>
                 <button
@@ -244,15 +244,15 @@ export default function ReaderAccountSecurityPage() {
                       setMessage('')
                     }
                   }}
-                  className="flex w-full items-center gap-4 px-4 py-4 text-left active:bg-[#f7f7f9]"
+                  className="flex w-full items-center gap-4 px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#5f4b8b]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
                     <i className="fa-regular fa-calendar text-[17px]" />
                   </span>
 
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-semibold">Date of birth</span>
-                    <span className="mt-1 block text-[12px] text-[#8d94a1]">
+                    <span className="mt-1 block text-[12px] text-[var(--shadow-text-secondary)]">
                       {formatDate(user?.date_of_birth)}
                       {age !== null ? ` · Age ${age}` : ''}
                     </span>
@@ -261,12 +261,12 @@ export default function ReaderAccountSecurityPage() {
                   <i
                     className={`fa-solid ${
                       cooldown.locked ? 'fa-lock' : 'fa-chevron-right'
-                    } text-[12px] text-[#a6abb4]`}
+                    } text-[12px] text-[var(--shadow-text-tertiary)]`}
                   />
                 </button>
 
-                <div className="border-t border-[#f0f1f3] px-4 py-3">
-                  <p className="text-[11px] leading-5 text-[#8d94a1]">
+                <div className="border-t border-[var(--shadow-border)] px-4 py-3">
+                  <p className="text-[11px] leading-5 text-[var(--shadow-text-secondary)]">
                     Your birthday is private and is used to determine access to age-restricted content.
                   </p>
                   <p className={`mt-1 text-[11px] font-semibold ${
@@ -277,8 +277,8 @@ export default function ReaderAccountSecurityPage() {
                 </div>
 
                 {editingBirthDate && !cooldown.locked ? (
-                  <div className="border-t border-[#f0f1f3] px-4 py-4">
-                    <label className="mb-2 block text-[12px] font-bold text-[#555d6b]">
+                  <div className="border-t border-[var(--shadow-border)] px-4 py-4">
+                    <label className="mb-2 block text-[12px] font-bold text-[var(--shadow-text-secondary)]">
                       Select date of birth
                     </label>
 
@@ -287,7 +287,7 @@ export default function ReaderAccountSecurityPage() {
                       value={dateOfBirth}
                       max={new Date().toISOString().slice(0, 10)}
                       onChange={(event) => setDateOfBirth(event.target.value)}
-                      className="h-12 w-full rounded-[12px] border border-[#dfe2e7] bg-white px-3 text-[14px] outline-none focus:border-[#8a70b5]"
+                      className="app-input h-12 w-full rounded-[12px] border px-3 text-[14px] outline-none transition focus:border-[#8a70b5]"
                     />
 
                     <div className="mt-3 flex gap-2">
@@ -298,7 +298,7 @@ export default function ReaderAccountSecurityPage() {
                           setDateOfBirth(user?.date_of_birth || '')
                           setMessage('')
                         }}
-                        className="h-11 flex-1 rounded-[12px] border border-[#dfe2e7] bg-white text-[13px] font-bold"
+                        className="h-11 flex-1 rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[13px] font-bold text-[var(--shadow-text-primary)] transition active:bg-[var(--shadow-bg-hover)]"
                       >
                         Cancel
                       </button>
@@ -307,7 +307,7 @@ export default function ReaderAccountSecurityPage() {
                         type="button"
                         onClick={handleSaveBirthDate}
                         disabled={saving}
-                        className="h-11 flex-1 rounded-[12px] bg-[#111827] text-[13px] font-bold text-white disabled:opacity-50"
+                        className="h-11 flex-1 rounded-[12px] bg-[#111827] text-[13px] font-bold text-white disabled:opacity-50 dark:bg-white dark:text-[#111827]"
                       >
                         {saving ? 'Saving...' : 'Save'}
                       </button>
@@ -320,47 +320,47 @@ export default function ReaderAccountSecurityPage() {
         </section>
 
         <section className="mt-6">
-          <h2 className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[0.08em] text-[#8d94a1]">
+          <h2 className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--shadow-text-secondary)]">
             Security
           </h2>
 
-          <div className="overflow-hidden rounded-[18px] border border-[#eceef2] bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
             <button
   type="button"
   onClick={() => navigate('/profile/settings/account-security/change-password')}
-  className="flex w-full items-center gap-4 px-4 py-4 text-left active:bg-[#f7f7f9]"
+  className="flex w-full items-center gap-4 px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
 >
-  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#5f4b8b]">
+  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
     <i className="fa-solid fa-key text-[16px]" />
   </span>
 
   <span className="min-w-0 flex-1">
     <span className="block text-[15px] font-semibold">Change password</span>
-    <span className="mt-1 block text-[12px] text-[#8d94a1]">
+    <span className="mt-1 block text-[12px] text-[var(--shadow-text-secondary)]">
       Current password required
     </span>
   </span>
 
-  <i className="fa-solid fa-chevron-right text-[12px] text-[#a6abb4]" />
+  <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
 </button>
 
 <button
   type="button"
   onClick={() => navigate('/profile/settings/account-security/change-email')}
-  className="flex w-full items-center gap-4 border-t border-[#f0f1f3] px-4 py-4 text-left active:bg-[#f7f7f9]"
+  className="flex w-full items-center gap-4 border-t border-[var(--shadow-border)] px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
 >
-  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#5f4b8b]">
+  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
     <i className="fa-solid fa-envelope text-[16px]" />
   </span>
 
   <span className="min-w-0 flex-1">
     <span className="block text-[15px] font-semibold">Email</span>
-    <span className="mt-1 block truncate text-[12px] text-[#8d94a1]">
+    <span className="mt-1 block truncate text-[12px] text-[var(--shadow-text-secondary)]">
       {user?.email || 'Manage login email'}
     </span>
   </span>
 
-  <i className="fa-solid fa-chevron-right text-[12px] text-[#a6abb4]" />
+  <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
 </button>
           </div>
         </section>
