@@ -234,13 +234,13 @@ export default function ReaderChangeEmailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f9] pb-10 text-[#111827]">
-      <header className="sticky top-0 z-40 border-b border-[#eceef2] bg-white/95 backdrop-blur">
+    <main className="app-page min-h-screen pb-10 text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate('/profile/settings/account-security')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:bg-[var(--shadow-bg-hover)]"
             aria-label="Back to account security"
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
@@ -248,7 +248,7 @@ export default function ReaderChangeEmailPage() {
 
           <div>
             <h1 className="text-[18px] font-extrabold">Email</h1>
-            <p className="text-[11px] text-[#8d94a1]">
+            <p className="text-[11px] text-[var(--shadow-text-secondary)]">
               Change and verify your login email
             </p>
           </div>
@@ -260,16 +260,16 @@ export default function ReaderChangeEmailPage() {
           <div
             className={`mb-4 rounded-[14px] border px-4 py-3 text-[12px] font-medium ${
               success
-                ? 'border-[#d9eadc] bg-[#f4faf5] text-[#4e7d56]'
-                : 'border-[#f0d8d8] bg-[#fff7f7] text-[#a94c4c]'
+                ? 'border-[#d9eadc] bg-[#f4faf5] text-[#4e7d56] dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
+                : 'border-[#f0d8d8] bg-[#fff7f7] text-[#a94c4c] dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300'
             }`}
           >
             {message}
           </div>
         ) : null}
 
-        <section className="rounded-[18px] border border-[#eceef2] bg-white p-4">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#8d94a1]">
+        <section className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4">
+          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--shadow-text-secondary)]">
             Current email
           </span>
 
@@ -280,7 +280,9 @@ export default function ReaderChangeEmailPage() {
           {!loading ? (
             <p
               className={`mt-2 text-[11px] font-semibold ${
-                cooldown.locked ? 'text-[#b26a28]' : 'text-[#5b8a61]'
+                cooldown.locked
+                  ? 'text-[#b26a28] dark:text-amber-300'
+                  : 'text-[#5b8a61] dark:text-emerald-300'
               }`}
             >
               {cooldown.text}
@@ -291,10 +293,10 @@ export default function ReaderChangeEmailPage() {
         {!loading && !cooldown.locked && step === 'request' ? (
           <form
             onSubmit={handleRequestCode}
-            className="mt-4 rounded-[18px] border border-[#eceef2] bg-white p-4"
+            className="mt-4 rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4"
           >
             <label className="block">
-              <span className="mb-2 block text-[12px] font-bold text-[#555d6b]">
+              <span className="mb-2 block text-[12px] font-bold text-[var(--shadow-text-secondary)]">
                 New email
               </span>
               <input
@@ -302,12 +304,12 @@ export default function ReaderChangeEmailPage() {
                 value={newEmail}
                 onChange={(event) => setNewEmail(event.target.value)}
                 autoComplete="email"
-                className="h-12 w-full rounded-[12px] border border-[#dfe2e7] bg-white px-3 text-[14px] outline-none focus:border-[#8a70b5]"
+                className="app-input h-12 w-full rounded-[12px] border px-3 text-[14px] outline-none transition focus:border-[#8a70b5]"
               />
             </label>
 
             <label className="mt-4 block">
-              <span className="mb-2 block text-[12px] font-bold text-[#555d6b]">
+              <span className="mb-2 block text-[12px] font-bold text-[var(--shadow-text-secondary)]">
                 Current password
               </span>
               <input
@@ -315,18 +317,18 @@ export default function ReaderChangeEmailPage() {
                 value={currentPassword}
                 onChange={(event) => setCurrentPassword(event.target.value)}
                 autoComplete="current-password"
-                className="h-12 w-full rounded-[12px] border border-[#dfe2e7] bg-white px-3 text-[14px] outline-none focus:border-[#8a70b5]"
+                className="app-input h-12 w-full rounded-[12px] border px-3 text-[14px] outline-none transition focus:border-[#8a70b5]"
               />
             </label>
 
-            <p className="mt-3 text-[11px] leading-5 text-[#8d94a1]">
+            <p className="mt-3 text-[11px] leading-5 text-[var(--shadow-text-secondary)]">
               A 6-digit verification code will be sent to your new email.
             </p>
 
             <button
               type="submit"
               disabled={saving}
-              className="mt-5 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white disabled:opacity-50"
+              className="mt-5 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white disabled:opacity-50 dark:bg-white dark:text-[#111827]"
             >
               {saving ? 'Sending...' : 'Send verification code'}
             </button>
@@ -336,14 +338,14 @@ export default function ReaderChangeEmailPage() {
         {!loading && step === 'confirm' ? (
           <form
             onSubmit={handleConfirmCode}
-            className="mt-4 rounded-[18px] border border-[#eceef2] bg-white p-4"
+            className="mt-4 rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4"
           >
-            <p className="text-[12px] leading-5 text-[#555d6b]">
+            <p className="text-[12px] leading-5 text-[var(--shadow-text-secondary)]">
               Enter the code sent to <strong>{newEmail}</strong>.
             </p>
 
             <label className="mt-4 block">
-              <span className="mb-2 block text-[12px] font-bold text-[#555d6b]">
+              <span className="mb-2 block text-[12px] font-bold text-[var(--shadow-text-secondary)]">
                 Verification code
               </span>
               <input
@@ -355,14 +357,14 @@ export default function ReaderChangeEmailPage() {
                   setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
                 }
                 autoComplete="one-time-code"
-                className="h-12 w-full rounded-[12px] border border-[#dfe2e7] bg-white px-3 text-center text-[18px] font-bold tracking-[0.25em] outline-none focus:border-[#8a70b5]"
+                className="app-input h-12 w-full rounded-[12px] border px-3 text-center text-[18px] font-bold tracking-[0.25em] outline-none transition focus:border-[#8a70b5]"
               />
             </label>
 
             <button
               type="submit"
               disabled={saving}
-              className="mt-5 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white disabled:opacity-50"
+              className="mt-5 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white disabled:opacity-50 dark:bg-white dark:text-[#111827]"
             >
               {saving ? 'Verifying...' : 'Verify & change email'}
             </button>
@@ -376,7 +378,7 @@ export default function ReaderChangeEmailPage() {
                 setMessage('')
                 setSuccess(false)
               }}
-              className="mt-2 h-11 w-full rounded-[12px] border border-[#dfe2e7] bg-white text-[13px] font-bold disabled:opacity-50"
+              className="mt-2 h-11 w-full rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[13px] font-bold text-[var(--shadow-text-primary)] transition active:bg-[var(--shadow-bg-hover)] disabled:opacity-50"
             >
               Use a different email
             </button>
@@ -387,7 +389,7 @@ export default function ReaderChangeEmailPage() {
           <button
             type="button"
             onClick={() => navigate('/profile/settings/account-security')}
-            className="mt-4 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white"
+            className="mt-4 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white dark:bg-white dark:text-[#111827]"
           >
             Back to account & security
           </button>
