@@ -1052,3 +1052,32 @@ html.dark .story-detail-page [class~="shadow-xl"],
 html.dark .story-detail-page [class~="shadow-2xl"] {
   --tw-shadow-color: rgba(0, 0, 0, 0.32);
 }
+
+html.dark body {
+  background: var(--shadow-bg-page) !important;
+}
+
+html.dark .for-you-top-bars,
+html.dark .for-you-top-bars > header,
+html.dark .for-you-top-bars > nav,
+html.dark .for-you-top-bars > div {
+  background: var(--shadow-nav-bg) !important;
+  border-color: var(--shadow-border) !important;
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark #tab-content-root {
+  background: var(--shadow-bg-page) !important;
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) {
+  background: var(--shadow-bg-page) !important;
+  color: var(--shadow-text-primary) !important;
+}
+
+html.dark :where([class~="min-h-screen"][class~="bg-[#f5f3fa]"][class~="pb-[100px]"]) > header {
+  background: var(--shadow-nav-bg) !important;
+  border-color: var(--shadow-border) !important;
+  color: var(--shadow-text-primary) !important;
+}
