@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-
-const DISPLAY_LANGUAGE_STORAGE_KEY = 'shadow_display_language'
+import { useDisplayTranslation } from '../utils/displayLanguage'
 
 const LANGUAGES = [
   { id: 'km', label: 'ខ្មែរ' },
@@ -9,63 +8,6 @@ const LANGUAGES = [
   { id: 'ja', label: '日本語' },
   { id: 'ko', label: '한국어' },
 ]
-
-const TEXT = {
-  km: {
-    title: 'វេបសាយកំពុងស្ថិតក្នុងការថែទាំ',
-    description:
-      'យើងកំពុងពិនិត្យ និងកែលម្អប្រព័ន្ធ ដើម្បីឱ្យការប្រើប្រាស់កាន់តែប្រសើរ។ សូមអភ័យទោសចំពោះការរអាក់រអួល និងសូមព្យាយាមចូលម្តងទៀតនៅពេលបន្តិចទៀត។',
-    status: 'ក្រុមការងារកំពុងដោះស្រាយ',
-    help: 'បើត្រូវការជំនួយ សូមទាក់ទងមកកាន់',
-    retry: 'ព្យាយាមចូលម្តងទៀត',
-    footer: 'សូមអរគុណសម្រាប់ការអត់ធ្មត់ និងការគាំទ្រ',
-  },
-  en: {
-    title: 'The website is under maintenance',
-    description:
-      'We are checking and improving the system to provide a better experience. We apologize for the inconvenience and ask you to try again shortly.',
-    status: 'Our team is working on it',
-    help: 'Need help? Contact us',
-    retry: 'Try again',
-    footer: 'Thank you for your patience and support',
-  },
-  zh: {
-    title: '网站正在维护中',
-    description:
-      '我们正在检查并改进系统，以提供更好的使用体验。对于给您带来的不便，我们深表歉意，请稍后再试。',
-    status: '我们的团队正在处理中',
-    help: '如需帮助，请联系我们',
-    retry: '重试',
-    footer: '感谢您的耐心与支持',
-  },
-  ja: {
-    title: 'ウェブサイトはメンテナンス中です',
-    description:
-      'より良いサービスを提供するため、システムの確認と改善を行っています。ご不便をおかけして申し訳ありません。しばらくしてからもう一度お試しください。',
-    status: '現在対応中です',
-    help: 'サポートが必要な場合はこちら',
-    retry: 'もう一度試す',
-    footer: 'ご理解とご支援ありがとうございます',
-  },
-  ko: {
-    title: '웹사이트 점검 중입니다',
-    description:
-      '더 나은 이용 환경을 제공하기 위해 시스템을 점검하고 개선하고 있습니다. 불편을 드려 죄송하며 잠시 후 다시 시도해 주세요.',
-    status: '현재 문제를 해결하고 있습니다',
-    help: '도움이 필요하면 문의해 주세요',
-    retry: '다시 시도',
-    footer: '기다려 주시고 응원해 주셔서 감사합니다',
-  },
-}
-
-function getInitialLanguage() {
-  try {
-    const saved = localStorage.getItem(DISPLAY_LANGUAGE_STORAGE_KEY)
-    return LANGUAGES.some((item) => item.id === saved) ? saved : 'km'
-  } catch {
-    return 'km'
-  }
-}
 
 function GlobeIcon() {
   return (
@@ -146,11 +88,10 @@ function TelegramIcon() {
 }
 
 export default function MaintenancePage() {
-  const [language, setLanguage] = useState(getInitialLanguage)
+  const { t, language, changeLanguage } = useDisplayTranslation()
   const [languageOpen, setLanguageOpen] = useState(false)
   const languageRef = useRef(null)
 
-  const tx = TEXT[language] || TEXT.km
   const currentLanguage = LANGUAGES.find((item) => item.id === language) || LANGUAGES[0]
 
   useEffect(() => {
@@ -164,14 +105,9 @@ export default function MaintenancePage() {
     return () => document.removeEventListener('pointerdown', closeLanguageMenu)
   }, [])
 
-  const changeLanguage = (languageId) => {
-    setLanguage(languageId)
+  const handleLanguageChange = (languageId) => {
+    changeLanguage(languageId)
     setLanguageOpen(false)
-
-    try {
-      localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, languageId)
-      window.dispatchEvent(new Event('shadow-display-language-change'))
-    } catch {}
   }
 
   return (
@@ -533,14 +469,13 @@ export default function MaintenancePage() {
 
       <div className="maintenance-shell">
         <div className="maintenance-topbar">
-          
           <div className="language-wrap" ref={languageRef}>
             <button
               type="button"
               className="language-button"
               onClick={() => setLanguageOpen((value) => !value)}
               aria-expanded={languageOpen}
-              aria-label="Language"
+              aria-label={t('language')}
             >
               <GlobeIcon />
               <span className="language-label">{currentLanguage.label}</span>
@@ -554,7 +489,7 @@ export default function MaintenancePage() {
                     key={item.id}
                     type="button"
                     className={`language-option ${item.id === language ? 'active' : ''}`}
-                    onClick={() => changeLanguage(item.id)}
+                    onClick={() => handleLanguageChange(item.id)}
                   >
                     <span>{item.label}</span>
                     {item.id === language ? <span>✓</span> : null}
@@ -577,20 +512,20 @@ export default function MaintenancePage() {
               language === 'km' ? 'khmer' : language === 'en' ? 'english' : 'other'
             }`}
           >
-            {tx.title}
+            {t('maintenance.title')}
           </h1>
 
-          <p className="maintenance-description">{tx.description}</p>
+          <p className="maintenance-description">{t('maintenance.description')}</p>
 
           <div className="status-box">
             <span className="status-icon">
               <ToolFixIcon />
             </span>
-            <span>{tx.status}</span>
+            <span>{t('maintenance.status')}</span>
           </div>
 
           <div className="contact-section">
-            <p className="contact-title">{tx.help}</p>
+            <p className="contact-title">{t('maintenance.help')}</p>
 
             <div className="contact-grid">
               <a
@@ -636,10 +571,10 @@ export default function MaintenancePage() {
             type="button"
             onClick={() => window.location.reload()}
           >
-            {tx.retry}
+            {t('maintenance.retry')}
           </button>
 
-          <p className="maintenance-footer">{tx.footer}</p>
+          <p className="maintenance-footer">{t('maintenance.footer')}</p>
         </section>
       </div>
     </main>
