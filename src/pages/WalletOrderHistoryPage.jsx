@@ -106,39 +106,39 @@ function StatusBadge({ status }) {
   const config = {
     success: {
       label: 'Success',
-      tone: 'bg-[#ECFDF3] text-[#16A34A] ring-[#BBF7D0]',
+      tone: 'bg-[#ECFDF3] text-[#16A34A] ring-[#BBF7D0] dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/20',
       icon: 'success',
     },
     waiting_payment: {
       label: 'Waiting',
-      tone: 'bg-[#FFF8EB] text-[#E98200] ring-[#FED7AA]',
+      tone: 'bg-[#FFF8EB] text-[#E98200] ring-[#FED7AA] dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/20',
       icon: 'waiting_payment',
     },
     pending_review: {
       label: 'Review',
-      tone: 'bg-[#EFF6FF] text-[#2563EB] ring-[#BFDBFE]',
+      tone: 'bg-[#EFF6FF] text-[#2563EB] ring-[#BFDBFE] dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-400/20',
       icon: 'pending_review',
     },
     expired: {
       label: 'Expired',
-      tone: 'bg-[#FFF1F2] text-[#EF4444] ring-[#FECACA]',
+      tone: 'bg-[#FFF1F2] text-[#EF4444] ring-[#FECACA] dark:bg-red-500/10 dark:text-red-300 dark:ring-red-400/20',
       icon: 'rejected',
     },
     cancelled: {
       label: 'Cancelled',
-      tone: 'bg-[#FFF1F2] text-[#EF4444] ring-[#FECACA]',
+      tone: 'bg-[#FFF1F2] text-[#EF4444] ring-[#FECACA] dark:bg-red-500/10 dark:text-red-300 dark:ring-red-400/20',
       icon: 'rejected',
     },
     rejected: {
       label: 'Rejected',
-      tone: 'bg-[#FFF1F2] text-[#EF4444] ring-[#FECACA]',
+      tone: 'bg-[#FFF1F2] text-[#EF4444] ring-[#FECACA] dark:bg-red-500/10 dark:text-red-300 dark:ring-red-400/20',
       icon: 'rejected',
     },
   }
 
   const current = config[value] || {
     label: value || 'Unknown',
-    tone: 'bg-[#F8FAFC] text-[#64748B] ring-[#E2E8F0]',
+    tone: 'bg-[#F8FAFC] text-[#64748B] ring-[#E2E8F0] dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-400/20',
     icon: 'pending_review',
   }
 
@@ -190,19 +190,19 @@ function OrderCard({ item }) {
   const transactionId = item.aba_trx_id || item.aba_transaction_id || '-'
 
   return (
-    <article className="rounded-[20px] border border-[#E7E9F0] bg-white p-4">
+    <article className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4">
       <div className="flex items-start gap-3">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#EAF5FF]">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#EAF5FF] dark:bg-blue-500/10">
           <img src="/assets/Icons/Diamond.svg" alt="" className="h-9 w-9 object-contain" />
         </span>
 
         <div className="min-w-0 flex-1 pt-0.5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
+              <h2 className="text-[17px] font-bold leading-6 text-[var(--shadow-text-primary)]">
                 {formatNumber(item.diamonds)} Diamonds
               </h2>
-              <p className="mt-0.5 text-[12px] font-normal text-[#667085]">
+              <p className="mt-0.5 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
                 {formatMoney(item.amount_usd)} <span className="px-1">·</span> Bonus {formatNumber(item.bonus_gems)} Gems
               </p>
             </div>
@@ -212,33 +212,33 @@ function OrderCard({ item }) {
         </div>
       </div>
 
-      <div className="my-4 border-t border-dashed border-[#E4E7EC]" />
+      <div className="my-4 border-t border-dashed border-[var(--shadow-border)]" />
 
-      <div className="grid grid-cols-[1.25fr_0.85fr_1fr] divide-x divide-[#E4E7EC]">
+      <div className="grid grid-cols-[1.25fr_0.85fr_1fr] divide-x divide-[var(--shadow-border)]">
         <div className="min-w-0 pr-3">
-          <p className="text-[11px] font-normal text-[#667085]">Order ID</p>
-          <p className="mt-1 break-all text-[10px] font-medium leading-4 text-[#344054]">
+          <p className="text-[11px] font-normal text-[var(--shadow-text-secondary)]">Order ID</p>
+          <p className="mt-1 break-all text-[10px] font-medium leading-4 text-[var(--shadow-text-primary)]">
             {item.order_id || '-'}
           </p>
         </div>
 
         <div className="min-w-0 px-3">
-          <p className="text-[11px] font-normal text-[#667085]">Trx ID</p>
-          <p className="mt-1 break-all text-[10px] font-medium leading-4 text-[#344054]">
+          <p className="text-[11px] font-normal text-[var(--shadow-text-secondary)]">Trx ID</p>
+          <p className="mt-1 break-all text-[10px] font-medium leading-4 text-[var(--shadow-text-primary)]">
             {transactionId}
           </p>
         </div>
 
         <div className="min-w-0 pl-3">
-          <p className="flex items-center gap-1 text-[11px] font-normal text-[#98A2B3]">
+          <p className="flex items-center gap-1 text-[11px] font-normal text-[var(--shadow-text-tertiary)]">
             <CalendarIcon />
             Created
           </p>
-          <p className="mt-1 text-[10px] font-medium leading-4 text-[#667085]">
+          <p className="mt-1 text-[10px] font-medium leading-4 text-[var(--shadow-text-secondary)]">
             {created.date}
           </p>
           {created.time ? (
-            <p className="text-[10px] font-medium leading-4 text-[#667085]">
+            <p className="text-[10px] font-medium leading-4 text-[var(--shadow-text-secondary)]">
               {created.time}
             </p>
           ) : null}
@@ -246,7 +246,7 @@ function OrderCard({ item }) {
       </div>
 
       {item.match_reason ? (
-        <p className="mt-4 rounded-[12px] bg-[#F8FAFC] px-3 py-2 text-[11px] font-normal leading-5 text-[#667085]">
+        <p className="mt-4 rounded-[12px] bg-[var(--shadow-bg-soft)] px-3 py-2 text-[11px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
           {item.match_reason}
         </p>
       ) : null}
@@ -345,26 +345,26 @@ export default function WalletOrderHistoryPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white pb-8">
-      <header className="sticky top-0 z-40 border-b border-[#EEF0F4] bg-white">
+    <div className="app-page min-h-screen pb-8">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex h-14 max-w-[760px] items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full active:bg-[#F4F4F5]"
+            className="flex h-9 w-9 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             aria-label="Go back"
           >
-            <i className="fas fa-chevron-left text-[18px] text-[#111827]" />
+            <i className="fas fa-chevron-left text-[18px] text-[var(--shadow-text-primary)]" />
           </button>
 
-          <h1 className="text-[18px] font-bold tracking-tight text-[#111827]">
+          <h1 className="text-[18px] font-bold tracking-tight text-[var(--shadow-text-primary)]">
             Order History
           </h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-[760px] px-4 pb-4 pt-5">
-        <div className="mb-5 flex items-center gap-3 text-[#667085]">
+        <div className="mb-5 flex items-center gap-3 text-[var(--shadow-text-secondary)]">
           <span className="text-[#6366F1]">
             <ShieldIcon />
           </span>
@@ -373,7 +373,7 @@ export default function WalletOrderHistoryPage() {
           </p>
         </div>
 
-        <section className="mb-5 grid grid-cols-5 rounded-[20px] border border-[#E7E9F0] bg-white p-2">
+        <section className="mb-5 grid grid-cols-5 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-2">
           {FILTER_TABS.map(([key, label]) => {
             const active = status === key
             const tone =
@@ -393,13 +393,13 @@ export default function WalletOrderHistoryPage() {
                 type="button"
                 onClick={() => changeStatus(key)}
                 className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[15px] px-1 py-2.5 active:scale-[0.98] ${
-                  active ? 'bg-[#F0EEFF]' : 'bg-white'
+                  active ? 'bg-[#F0EEFF] dark:bg-violet-500/15' : 'bg-transparent'
                 }`}
               >
                 <span className={tone}>
                   <FilterIcon type={key} />
                 </span>
-                <span className={`text-[11px] font-medium ${active ? 'text-[#5B4FD8]' : 'text-[#667085]'}`}>
+                <span className={`text-[11px] font-medium ${active ? 'text-[#5B4FD8] dark:text-violet-300' : 'text-[var(--shadow-text-secondary)]'}`}>
                   {label}
                 </span>
               </button>
@@ -408,19 +408,19 @@ export default function WalletOrderHistoryPage() {
         </section>
 
         <form onSubmit={submitSearch} className="mb-5 flex gap-2">
-          <div className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-[16px] border border-[#E4E7EC] bg-white px-4 text-[#98A2B3]">
+          <div className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 text-[var(--shadow-text-tertiary)]">
             <SearchIcon />
             <input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               placeholder="Search by Order ID or Trx ID"
-              className="min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[#111827] outline-none placeholder:text-[#98A2B3]"
+              className="min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)]"
             />
             {searchInput ? (
               <button
                 type="button"
                 onClick={clearSearch}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F2F4F7] text-[#667085]"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]"
                 aria-label="Clear search"
               >
                 <i className="fas fa-times text-[11px]" />
@@ -430,7 +430,7 @@ export default function WalletOrderHistoryPage() {
 
           <button
             type="submit"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-[#E4E7EC] bg-white text-[#344054] active:scale-[0.98]"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] active:scale-[0.98]"
             aria-label="Search orders"
           >
             <SubmitFilterIcon />
@@ -438,14 +438,14 @@ export default function WalletOrderHistoryPage() {
         </form>
 
         {message ? (
-          <p className="mb-4 rounded-[16px] bg-[#FFF1F2] p-3 text-center text-[12px] font-medium text-[#DC2626]">
+          <p className="mb-4 rounded-[16px] bg-[#FFF1F2] p-3 text-center text-[12px] font-medium text-[#DC2626] dark:bg-red-500/10 dark:text-red-300">
             {message}
           </p>
         ) : null}
 
         <div className="space-y-3">
           {loading ? (
-            <p className="rounded-[20px] bg-[#F8FAFC] p-5 text-center text-[12px] font-medium text-[#667085]">
+            <p className="rounded-[20px] bg-[var(--shadow-bg-soft)] p-5 text-center text-[12px] font-medium text-[var(--shadow-text-secondary)]">
               Loading order history...
             </p>
           ) : orders.length ? (
@@ -453,7 +453,7 @@ export default function WalletOrderHistoryPage() {
               <OrderCard key={item.id || item.order_id} item={item} />
             ))
           ) : (
-            <p className="rounded-[20px] bg-[#F8FAFC] p-5 text-center text-[12px] font-medium text-[#667085]">
+            <p className="rounded-[20px] bg-[var(--shadow-bg-soft)] p-5 text-center text-[12px] font-medium text-[var(--shadow-text-secondary)]">
               No order history found.
             </p>
           )}
@@ -464,13 +464,13 @@ export default function WalletOrderHistoryPage() {
             type="button"
             disabled={!hasPrev || loading}
             onClick={() => goPage(page - 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#F5F3FF] text-[#6D28D9] disabled:opacity-35"
+            className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#F5F3FF] text-[#6D28D9] disabled:opacity-35 dark:bg-violet-500/15 dark:text-violet-300"
             aria-label="Previous page"
           >
             <i className="fas fa-chevron-left text-[13px]" />
           </button>
 
-          <p className="text-[12px] font-medium text-[#667085]">
+          <p className="text-[12px] font-medium text-[var(--shadow-text-secondary)]">
             Page {page} of {totalPages}
             {total ? ` · ${total} total` : ''}
           </p>
@@ -479,14 +479,14 @@ export default function WalletOrderHistoryPage() {
             type="button"
             disabled={!hasNext || loading}
             onClick={() => goPage(page + 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#F5F3FF] text-[#6D28D9] disabled:opacity-35"
+            className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#F5F3FF] text-[#6D28D9] disabled:opacity-35 dark:bg-violet-500/15 dark:text-violet-300"
             aria-label="Next page"
           >
             <i className="fas fa-chevron-right text-[13px]" />
           </button>
         </div>
 
-        <div className="mt-5 flex items-center justify-center gap-2 text-[#98A2B3]">
+        <div className="mt-5 flex items-center justify-center gap-2 text-[var(--shadow-text-tertiary)]">
           <i className="fas fa-lock text-[10px]" />
           <p className="text-[11px] font-normal">
             History is kept for 1 year.
