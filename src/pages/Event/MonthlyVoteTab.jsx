@@ -173,10 +173,10 @@ function PodiumCard({ candidate, rank, onOpen }) {
   if (!candidate) return <div className="min-w-0 flex-1" />
   const isFirst = rank === 1
   const tone = rank === 1
-    ? ['text-[#f6b800]', 'border-[#f6c94f] dark:border-amber-400/30', 'bg-[#f6b800] text-white', 'bg-[#fffaf0] dark:bg-amber-500/8']
+    ? ['text-[#f6b800]', 'border-[#f6c94f] dark:border-amber-400/30', 'bg-[#f6b800] text-white', 'bg-[#fffaf0] dark:bg-amber-500/10']
     : rank === 2
-      ? ['text-[#aab3c2]', 'border-[#d5dbe5] dark:border-slate-400/30', 'bg-[#aab3c2] text-white', 'bg-[#fbfcff] dark:bg-slate-500/8']
-      : ['text-[#d9823b]', 'border-[#edc19e] dark:border-orange-400/30', 'bg-[#d9823b] text-white', 'bg-[#fffaf7] dark:bg-orange-500/8']
+      ? ['text-[#aab3c2]', 'border-[#d5dbe5] dark:border-slate-400/30', 'bg-[#aab3c2] text-white', 'bg-[#fbfcff] dark:bg-slate-500/10']
+      : ['text-[#d9823b]', 'border-[#edc19e] dark:border-orange-400/30', 'bg-[#d9823b] text-white', 'bg-[#fffaf7] dark:bg-orange-500/10']
 
   return (
     <button type="button" onClick={() => onOpen(candidate)} className={`relative min-w-0 flex-1 rounded-[18px] border px-2 pb-3 pt-6 text-center shadow-[0_8px_22px_rgba(31,41,55,0.06)] active:scale-[0.98] ${tone[1]} ${tone[3]} ${isFirst ? '-mt-3' : 'mt-3'}`}>
@@ -222,7 +222,7 @@ function QuickLink({ icon, title, subtitle, onClick }) {
   return (
     <button type="button" onClick={onClick} className="min-w-0 rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 text-left shadow-[0_6px_18px_rgba(31,41,55,0.04)] active:scale-[0.98]">
       <div className="flex items-start gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300 dark:bg-rose-500/10 dark:text-rose-300">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300">
           <i className={`fa-solid ${icon} text-[12px]`} />
         </span>
         <span className="min-w-0">
