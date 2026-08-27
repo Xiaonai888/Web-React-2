@@ -399,7 +399,7 @@ export default function ReaderSettingsPage() {
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
-            onClick={() => navigate('/profile', { replace: true })}
+            onClick={() => navigate(new URLSearchParams(window.location.search).get('from') === 'me-settings' ? '/me?settings=1' : '/profile', { replace: true })}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f3f4f6]"
             aria-label="Back to profile"
           >
