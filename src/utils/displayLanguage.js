@@ -1,25 +1,20 @@
 import i18n, {
-  DISPLAY_LANGUAGE_STORAGE_KEY,
+  changeDisplayLanguage,
+  getDisplayLanguage,
   normalizeLanguage,
+  useDisplayTranslation,
 } from '../i18n'
 
 export function getDisplayLanguageId() {
-  return normalizeLanguage(i18n.resolvedLanguage || i18n.language || 'en')
+  return getDisplayLanguage()
 }
 
 export function setDisplayLanguageId(languageId) {
-  const language = normalizeLanguage(languageId)
-
-  try {
-    localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, language)
-  } catch {}
-
-  void i18n.changeLanguage(language)
+  changeDisplayLanguage(normalizeLanguage(languageId))
 }
 
 export function getDisplayText(key, options) {
-  return i18n.t(key, {
-    defaultValue: key,
-    ...options,
-  })
+  return i18n.t(key, options)
 }
+
+export { useDisplayTranslation }
