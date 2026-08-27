@@ -227,26 +227,26 @@ export default function EditProfileLinksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white md:bg-[#f5f3fa] md:px-4 md:py-6">
-      <main className="mx-auto min-h-screen w-full bg-white md:min-h-0 md:max-w-[560px] md:overflow-hidden md:rounded-[26px] md:border md:border-[#eceaf2] md:shadow-sm">
-        <header className="sticky top-0 z-20 border-b border-[#f0eef6] bg-white/95 px-4 py-3 backdrop-blur md:rounded-t-[26px]">
+    <div className="app-page min-h-screen md:px-4 md:py-6">
+      <main className="mx-auto min-h-screen w-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] md:min-h-0 md:max-w-[560px] md:overflow-hidden md:rounded-[26px] md:border md:border-[var(--shadow-border)] md:shadow-sm">
+        <header className="sticky top-0 z-20 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 backdrop-blur md:rounded-t-[26px]">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => navigate('/profile/edit')}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
               aria-label="Back to edit profile"
             >
               <i className="fa-solid fa-chevron-left text-[15px]" />
             </button>
 
-            <div className="min-w-0 flex-1 text-center text-[16px] font-extrabold text-[#111827]">Profile Links</div>
+            <div className="min-w-0 flex-1 text-center text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Profile Links</div>
 
             <button
               type="button"
               onClick={handleSave}
               disabled={saving || loading}
-              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[#9ca3af]"
+              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white transition active:scale-[0.98] disabled:bg-[var(--shadow-text-disabled)] dark:bg-white dark:text-[#111827]"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
@@ -255,17 +255,17 @@ export default function EditProfileLinksPage() {
 
         <section className="px-4 pb-8 pt-5">
           {message ? (
-            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d] dark:bg-[#e5484d]/10">
               {message}
             </div>
           ) : null}
 
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h1 className="text-[18px] font-extrabold text-[#111827]">Add link</h1>
-              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">Choose an icon and add a link to show on your timeline profile.</p>
+              <h1 className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Add link</h1>
+              <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">Choose an icon and add a link to show on your timeline profile.</p>
             </div>
-            <div className="shrink-0 text-[12px] font-extrabold text-[#98a2b3]">{form.social_links.length}/5</div>
+            <div className="shrink-0 text-[12px] font-extrabold text-[var(--shadow-text-tertiary)]">{form.social_links.length}/5</div>
           </div>
 
           <div className="space-y-3">
@@ -273,16 +273,16 @@ export default function EditProfileLinksPage() {
               const option = getProfileLinkOption(link.type)
 
               return (
-                <div key={index} className="rounded-[20px] border border-[#e5e7eb] bg-[#fafafe] p-3">
+                <div key={index} className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[16px] text-[#111827] ring-1 ring-[#e5e7eb]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[16px] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
                       <i className={option.icon} />
                     </div>
 
                     <select
                       value={link.type}
                       onChange={(event) => updateLink(index, { type: event.target.value })}
-                      className="h-11 min-w-0 flex-1 rounded-[14px] border border-[#e5e7eb] bg-white px-3 text-[13px] font-extrabold text-[#111827] outline-none focus:border-[#111827]"
+                      className="app-input h-11 min-w-0 flex-1 rounded-[14px] border px-3 text-[13px] font-extrabold outline-none transition focus:border-[var(--shadow-text-primary)]"
                     >
                       {PROFILE_LINK_OPTIONS.map((item) => (
                         <option key={item.type} value={item.type}>
@@ -294,7 +294,7 @@ export default function EditProfileLinksPage() {
                     <button
                       type="button"
                       onClick={() => removeLink(index)}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#e5484d] ring-1 ring-[#e5e7eb] active:scale-95"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[#e5484d] ring-1 ring-[var(--shadow-border)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
                       aria-label="Remove link"
                     >
                       <i className="fa-solid fa-trash text-[12px]" />
@@ -304,7 +304,7 @@ export default function EditProfileLinksPage() {
                   <input
                     value={link.url}
                     onChange={(event) => updateLink(index, { url: event.target.value })}
-                    className="mt-2 h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-white px-4 text-[13px] text-[#111827] outline-none focus:border-[#111827]"
+                    className="app-input mt-2 h-11 w-full rounded-[14px] border px-4 text-[13px] outline-none transition focus:border-[var(--shadow-text-primary)]"
                     placeholder="https://example.com"
                   />
                 </div>
@@ -316,7 +316,7 @@ export default function EditProfileLinksPage() {
             <button
               type="button"
               onClick={addLink}
-              className="mt-4 h-12 w-full rounded-[16px] border border-dashed border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+              className="mt-4 h-12 w-full rounded-[16px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] text-[13px] font-extrabold text-[var(--shadow-text-primary)] transition active:scale-[0.99] active:bg-[var(--shadow-bg-hover)]"
             >
               <i className="fa-solid fa-plus mr-2 text-[12px]" />
               Add link
