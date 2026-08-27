@@ -188,20 +188,20 @@ export default function ReaderReaderMessageRequestModal({
       />
 
       <section className="relative w-full rounded-t-[28px] bg-white px-4 pb-[calc(20px+env(safe-area-inset-bottom,0px))] pt-3 shadow-2xl md:max-w-[430px] md:rounded-[26px] md:px-5 md:pb-5">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d6d4dc] md:hidden" />
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)] md:hidden" />
 
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <ReaderAvatar reader={reader} />
 
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-[#8a8792]">
+              <div className="text-[11px] font-bold text-[var(--shadow-text-secondary)]">
                 Message request
               </div>
               <h2 className="mt-0.5 truncate text-[17px] font-extrabold text-[#111827]">
                 {readerName}
               </h2>
-              <div className="mt-0.5 truncate text-[11px] font-semibold text-[#8a8792]">
+              <div className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
                 {reader?.username
                   ? `@${reader.username}`
                   : 'Reader profile'}
@@ -213,7 +213,7 @@ export default function ReaderReaderMessageRequestModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f2f6] text-[#55515e] transition active:scale-90"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] transition active:scale-90"
           >
             <X size={20} />
           </button>
@@ -228,7 +228,7 @@ export default function ReaderReaderMessageRequestModal({
           </div>
         ) : (
           <>
-            <div className="mt-5 rounded-[16px] bg-[#f6f2ff] px-4 py-3 text-[11px] font-semibold leading-5 text-[#6d5a91]">
+            <div className="mt-5 rounded-[16px] bg-[#f6f2ff] px-4 py-3 text-[11px] font-semibold leading-5 text-[#6d5a91] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]">
               You can send one message request. More messages become available after this reader accepts it.
             </div>
 
