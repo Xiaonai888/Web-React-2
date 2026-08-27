@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getDisplayText, setDisplayLanguageId } from '../../utils/displayLanguage'
+import { setDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const THEME_STORAGE_KEY = 'shadow_theme'
 const STORY_LANGUAGE_STORAGE_KEY = 'shadow_story_language'
-const DISPLAY_LANGUAGE_STORAGE_KEY = 'shadow_display_language'
 
 const LANGUAGES = [
   { id: 'km', label: 'Khmer', flagCode: 'kh' },
@@ -45,9 +44,6 @@ function getStoredStoryLanguage() {
   return localStorage.getItem(STORY_LANGUAGE_STORAGE_KEY) || 'km'
 }
 
-function getStoredDisplayLanguage() {
-  return localStorage.getItem(DISPLAY_LANGUAGE_STORAGE_KEY) || 'en'
-}
 
 function getLanguageLabel(languageId) {
   return LANGUAGES.find((language) => language.id === languageId)?.label || 'Khmer'
@@ -412,25 +408,11 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
   const [darkMode, setDarkMode] = useState(() => getStoredTheme() === 'dark')
   const [languageOpen, setLanguageOpen] = useState(false)
   const [storyLanguage, setStoryLanguage] = useState(() => getStoredStoryLanguage())
-  const [displayLanguage, setDisplayLanguage] = useState(() => getStoredDisplayLanguage())
-  const [displayTextVersion, setDisplayTextVersion] = useState(0)
-const tx = (key) => getDisplayText(key)
+  const { t: tx, language: displayLanguage } = useDisplayTranslation()
 
   useEffect(() => {
     applyTheme(darkMode ? 'dark' : 'light')
   }, [darkMode])
-
-  useEffect(() => {
-  const handleDisplayLanguageChange = () => {
-    setDisplayTextVersion((value) => value + 1)
-  }
-
-  window.addEventListener('shadow-display-language-change', handleDisplayLanguageChange)
-
-  return () => {
-    window.removeEventListener('shadow-display-language-change', handleDisplayLanguageChange)
-  }
-}, [])
 
   const handleStoryLanguageChange = (languageId) => {
     localStorage.setItem(STORY_LANGUAGE_STORAGE_KEY, languageId)
@@ -438,9 +420,8 @@ const tx = (key) => getDisplayText(key)
   }
 
   const handleDisplayLanguageChange = (languageId) => {
-  setDisplayLanguageId(languageId)
-  setDisplayLanguage(languageId)
-}
+    setDisplayLanguageId(languageId)
+  }
 
   if (!open) return null
 
@@ -457,7 +438,6 @@ const tx = (key) => getDisplayText(key)
         onDisplayLanguageChange={handleDisplayLanguageChange}
         tx={tx}
       />
-      
 
       <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[320px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
         <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
@@ -476,7 +456,7 @@ const tx = (key) => getDisplayText(key)
           <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white dark:border-white/10 dark:bg-[#171923]">
             <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
               <MenuRow to={isLoggedIn ? '/profile/edit?from=me-settings' : '/login'} icon="far fa-user" title={tx('editProfile')} subtitle={tx('editProfileSub')} />
-<MenuRow to={isLoggedIn ? '/profile/settings?from=me-settings' : '/login'} icon="fa-solid fa-shield-alt" title={tx('accountSettings')} subtitle={tx('accountSettingsSub')} />
+              <MenuRow to={isLoggedIn ? '/profile/settings?from=me-settings' : '/login'} icon="fa-solid fa-shield-alt" title={tx('accountSettings')} subtitle={tx('accountSettingsSub')} />
               <ThemeSwitchRow darkMode={darkMode} onChange={() => setDarkMode((value) => !value)} tx={tx} />
               <LanguageSummaryRow
                 storyLanguage={storyLanguage}
@@ -491,7 +471,6 @@ const tx = (key) => getDisplayText(key)
     </div>
   )
 }
-
 
 function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLetter, authorPage, authorNotificationCount, onOwnAccount, onAuthorPage, onManageAccount }) {
   if (!open) return null
@@ -570,6 +549,7 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
 
 export default function Me() {
   const navigate = useNavigate()
+  const { t: tx } = useDisplayTranslation()
   const { authorUnreadCount } = useAuthorPageNotifications()
   const [settingsOpen, setSettingsOpen] = useState(() => new URLSearchParams(window.location.search).get('settings') === '1')
   const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
@@ -590,7 +570,6 @@ export default function Me() {
   const token = getReaderToken()
   const isLoggedIn = Boolean(token)
   const isPremium = false
-  const tx = (key) => getDisplayText(key)
 
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
