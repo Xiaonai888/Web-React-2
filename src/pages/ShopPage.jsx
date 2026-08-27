@@ -51,10 +51,12 @@ export default function ShopPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="app-page min-h-screen pb-24">
 <header
   className={`sticky top-0 z-40 ${
-    isPurchaseMode ? 'bg-[#FFE66A]' : 'bg-white'
+    isPurchaseMode
+      ? 'bg-[#FFE66A] text-[#111827]'
+      : 'border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] text-[var(--shadow-text-primary)]'
   }`}
 >
   <div className="flex h-14 items-center gap-3 px-4">
@@ -73,13 +75,13 @@ export default function ShopPage() {
 
   navigate('/')
 }}
-      className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+      className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${isPurchaseMode ? 'hover:bg-black/5' : 'hover:bg-[var(--shadow-bg-hover)]'}`}
       aria-label="Go back"
     >
-      <i className="fas fa-chevron-left text-[18px] text-gray-700" />
+      <i className={`fas fa-chevron-left text-[18px] ${isPurchaseMode ? 'text-[#374151]' : 'text-[var(--shadow-text-primary)]'}`} />
     </button>
 
-    <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+    <h1 className={`text-[18px] font-extrabold tracking-tight ${isPurchaseMode ? 'text-[#111827]' : 'text-[var(--shadow-text-primary)]'}`}>
       {isPurchaseMode ? 'Purchase' : 'Shadow Mall'}
     </h1>
 
@@ -88,7 +90,7 @@ export default function ShopPage() {
         <button
           type="button"
           onClick={() => setMallSearchOpen((value) => !value)}
-          className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
+          className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
           aria-label="Search books"
         >
           <i className="fa-solid fa-magnifying-glass text-[15px]" />
@@ -97,7 +99,7 @@ export default function ShopPage() {
         <button
           type="button"
           onClick={() => navigate('/shop/mall/wishlist')}
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[#111827] active:scale-95"
+          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
           aria-label="Open wishlist"
         >
           <i className="fa-regular fa-heart text-[20px]" />
@@ -111,7 +113,7 @@ export default function ShopPage() {
         <button
           type="button"
           onClick={() => navigate('/shop/mall/cart')}
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[#111827] active:scale-95"
+          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
           aria-label="Open cart"
         >
           <i className="fa-solid fa-cart-shopping text-[20px]" />
@@ -129,8 +131,8 @@ export default function ShopPage() {
       <main
   className={`px-4 pt-4 ${
     isPurchaseMode
-      ? 'bg-gradient-to-b from-[#FFE66A] to-[#F5F5F5]'
-      : 'bg-white'
+      ? 'bg-[#FFE66A]'
+      : 'bg-[var(--shadow-bg-page)]'
   }`}
 >
         {activeTab === 'Plans' && <PlanSection />}
