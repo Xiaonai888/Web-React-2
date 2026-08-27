@@ -712,7 +712,7 @@ setPickerPosition({
           event.stopPropagation()
           onClose?.()
         }}
-        className="fixed inset-0 z-[190] cursor-default bg-transparent"
+        className="fixed inset-0 z-[2147483000] cursor-default bg-transparent"
       />
 
       <div
@@ -729,7 +729,7 @@ setPickerPosition({
                 left: `${pickerPosition.left}px`,
               }
         }
-        className={`shadow-reaction-picker-in fixed z-[200] flex h-[56px] w-[360px] max-w-[calc(100vw-16px)] touch-none items-end justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] ${
+        className={`shadow-reaction-picker-in fixed z-[2147483001] flex h-[56px] w-[360px] max-w-[calc(100vw-16px)] touch-none items-end justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] ${
           pickerPosition?.isDesktop
             ? 'translate-x-0'
             : '-translate-x-1/2'
