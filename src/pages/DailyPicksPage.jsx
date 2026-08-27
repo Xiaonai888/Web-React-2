@@ -2,6 +2,66 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { getStoryLanguageLabel } from '../utils/storyLanguage'
 import { loadHomeDailyPicksSource } from '../services/homeDailyPicksData'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('dailyPicksPage', {
+  en: {
+    untitledStory: 'Untitled Story',
+    goBack: 'Go back',
+    search: 'Search',
+    title: 'Daily Picks',
+    today: 'Today',
+    subtitle: 'Fresh picks selected every day',
+    loadFailed: 'Could not load Daily Picks',
+    noPicks: 'No {{language}} picks available today',
+    checkLater: 'Please check again later.',
+  },
+  km: {
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    goBack: 'ត្រឡប់ក្រោយ',
+    search: 'ស្វែងរក',
+    title: 'រឿងណែនាំប្រចាំថ្ងៃ',
+    today: 'ថ្ងៃនេះ',
+    subtitle: 'រឿងថ្មីៗដែលបានជ្រើសរើសជូនរាល់ថ្ងៃ',
+    loadFailed: 'មិនអាចផ្ទុករឿងណែនាំប្រចាំថ្ងៃបានទេ',
+    noPicks: 'ថ្ងៃនេះមិនទាន់មានរឿង {{language}} សម្រាប់ណែនាំទេ',
+    checkLater: 'សូមពិនិត្យម្តងទៀតនៅពេលក្រោយ។',
+  },
+  zh: {
+    untitledStory: '无标题故事',
+    goBack: '返回',
+    search: '搜索',
+    title: '每日精选',
+    today: '今天',
+    subtitle: '每天为你精选新鲜内容',
+    loadFailed: '无法加载每日精选',
+    noPicks: '今天暂无 {{language}} 精选',
+    checkLater: '请稍后再来查看。',
+  },
+  ja: {
+    untitledStory: '無題のストーリー',
+    goBack: '戻る',
+    search: '検索',
+    title: 'デイリーピック',
+    today: '今日',
+    subtitle: '毎日新しいおすすめを厳選',
+    loadFailed: 'デイリーピックを読み込めませんでした',
+    noPicks: '今日は {{language}} のおすすめがありません',
+    checkLater: 'しばらくしてからもう一度確認してください。',
+  },
+  ko: {
+    untitledStory: '제목 없는 스토리',
+    goBack: '뒤로 가기',
+    search: '검색',
+    title: '오늘의 추천',
+    today: '오늘',
+    subtitle: '매일 새로운 추천 작품을 만나보세요',
+    loadFailed: '오늘의 추천을 불러오지 못했습니다',
+    noPicks: '오늘은 {{language}} 추천 작품이 없습니다',
+    checkLater: '나중에 다시 확인해 주세요.',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -9,6 +69,14 @@ const API_BASE_URL =
   window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
@@ -307,7 +375,7 @@ function selectDailyStories(
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     image:
       story.landscape_thumbnail_url ||
       story.cover_url ||
@@ -338,12 +406,16 @@ function FireOutlineIcon() {
 }
 
 function DailyPickCard({ book }) {
+  const { t } = useDisplayTranslation()
+  const title =
+    book.title || t('dailyPicksPage.untitledStory')
+
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
       <div className="relative aspect-[1.42/1] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
         <img
           src={book.image}
-          alt={book.title}
+          alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           loading="lazy"
           decoding="async"
@@ -361,7 +433,7 @@ function DailyPickCard({ book }) {
 
       <div className="mt-2 min-w-0">
         <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-          {book.title}
+          {title}
         </h3>
 
         <div className="mt-1.5 flex min-h-[22px] items-center gap-2">
@@ -399,6 +471,7 @@ function LoadingGrid() {
 
 export default function DailyPicksPage() {
   const navigate = useNavigate()
+  const { language, t } = useDisplayTranslation()
   const storyLanguage = getStoryLanguageLabel()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -415,64 +488,66 @@ export default function DailyPicksPage() {
   }, [])
 
   useEffect(() => {
-  let ignore = false
+    let ignore = false
 
-  function applySourceStories(sourceStories) {
-    if (ignore) return
+    function applySourceStories(sourceStories) {
+      if (ignore) return
 
-    const dailyStories = selectDailyStories(
-      sourceStories,
-      12,
-      rotationSeed
-    )
+      const dailyStories = selectDailyStories(
+        sourceStories,
+        12,
+        rotationSeed
+      )
 
-    setStories(dailyStories.map(normalizeStory))
-  }
+      setStories(dailyStories.map(normalizeStory))
+    }
 
-  async function fetchDailyPicks() {
-    try {
-      setLoading(true)
-      setLoadFailed(false)
+    async function fetchDailyPicks() {
+      try {
+        setLoading(true)
+        setLoadFailed(false)
 
-      const sourceStories =
-        await loadHomeDailyPicksSource({
-          apiBaseUrl: API_BASE_URL,
-          onCachedStories: (cachedStories) => {
-            applySourceStories(cachedStories)
+        const sourceStories =
+          await loadHomeDailyPicksSource({
+            apiBaseUrl: API_BASE_URL,
+            onCachedStories: (cachedStories) => {
+              applySourceStories(cachedStories)
 
-            if (!ignore) {
-              setLoading(false)
-            }
-          },
-        })
+              if (!ignore) {
+                setLoading(false)
+              }
+            },
+          })
 
-      applySourceStories(sourceStories)
-    } catch (error) {
-      console.error('DailyPicksPage fetch error:', error)
+        applySourceStories(sourceStories)
+      } catch (error) {
+        console.error('DailyPicksPage fetch error:', error)
 
-      if (!ignore) {
-        setLoadFailed(true)
-        setStories([])
-      }
-    } finally {
-      if (!ignore) {
-        setLoading(false)
+        if (!ignore) {
+          setLoadFailed(true)
+          setStories([])
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
-  }
 
-  fetchDailyPicks()
+    fetchDailyPicks()
 
-  return () => {
-    ignore = true
-  }
-}, [rotationSeed])
+    return () => {
+      ignore = true
+    }
+  }, [rotationSeed])
 
-
-  const todayLabel = new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date())
+  const todayLabel = new Intl.DateTimeFormat(
+    DISPLAY_LOCALES[language] || DISPLAY_LOCALES.en,
+    {
+      month: 'long',
+      day: 'numeric',
+    }
+  ).format(new Date())
 
   return (
     <main className="min-h-screen bg-white">
@@ -482,19 +557,19 @@ export default function DailyPicksPage() {
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-9 w-9 items-center justify-start rounded-full text-[#111827] transition-colors hover:bg-gray-100"
-            aria-label="Go back"
+            aria-label={t('dailyPicksPage.goBack')}
           >
             <i className="fas fa-chevron-left text-[17px]" />
           </button>
 
           <h1 className="text-[17px] font-bold text-[#111827]">
-            Daily Picks
+            {t('dailyPicksPage.title')}
           </h1>
 
           <Link
             to="/search"
             className="flex h-9 w-9 items-center justify-end rounded-full text-[#111827] transition-colors hover:bg-gray-100"
-            aria-label="Search"
+            aria-label={t('dailyPicksPage.search')}
           >
             <i className="fas fa-search text-[18px]" />
           </Link>
@@ -504,10 +579,10 @@ export default function DailyPicksPage() {
       <section className="mx-auto max-w-7xl px-3 pb-10 pt-4 sm:px-4">
         <div className="mb-5">
           <h2 className="text-[18px] font-extrabold text-[#111827]">
-            Today · {todayLabel}
+            {t('dailyPicksPage.today')} · {todayLabel}
           </h2>
           <p className="mt-1 text-[12px] font-medium text-[#8D94A1]">
-            Fresh picks selected every day
+            {t('dailyPicksPage.subtitle')}
           </p>
         </div>
 
@@ -525,11 +600,13 @@ export default function DailyPicksPage() {
           <div className="rounded-[18px] bg-[#F8F8FB] px-4 py-8 text-center">
             <div className="text-[14px] font-bold text-[#111827]">
               {loadFailed
-                ? 'Could not load Daily Picks'
-                : `No ${storyLanguage} picks available today`}
+                ? t('dailyPicksPage.loadFailed')
+                : t('dailyPicksPage.noPicks', {
+                    language: storyLanguage,
+                  })}
             </div>
             <p className="mt-1 text-[12px] text-[#8D94A1]">
-              Please check again later.
+              {t('dailyPicksPage.checkLater')}
             </p>
           </div>
         ) : null}
