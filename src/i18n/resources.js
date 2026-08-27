@@ -48,6 +48,96 @@ const resources = {
       navChatStory: 'Chat Story',
       navDiscover: 'Discover',
       navMine: 'Mine',
+      readerSettings: {
+        title: 'Settings and activity',
+        backToProfile: 'Back to profile',
+        logout: 'Log out',
+        comingSoon: '{{title}} is coming soon.',
+        groups: {
+          account: 'Your account',
+          activity: 'Your activity',
+          interaction: 'How readers interact with you',
+          appSupport: 'App and support',
+        },
+        items: {
+          'edit-profile': {
+            title: 'Edit profile',
+            subtitle: 'Update your name, photo, bio, and profile links.',
+          },
+          'account-security': {
+            title: 'Account & security',
+            subtitle: 'Password, email, and account access.',
+          },
+          privacy: {
+            title: 'Privacy',
+            subtitle: 'Control who can see your reader space.',
+          },
+          'blocked-readers': {
+            title: 'Blocked readers',
+            subtitle: 'Review readers you have blocked.',
+          },
+          'saved-posts': {
+            title: 'Saved posts',
+            subtitle: 'View posts you saved for later.',
+          },
+          'my-comments': {
+            title: 'My comments',
+            subtitle: 'Review your comments and replies.',
+          },
+          notifications: {
+            title: 'Notifications',
+            subtitle: 'See updates from readers, authors, and stories.',
+          },
+          'reading-history': {
+            title: 'Reading history',
+            subtitle: 'Find stories and episodes you viewed.',
+          },
+          'echo-sharing': {
+            title: 'Echo and sharing',
+            subtitle: 'Manage echoed posts and sharing activity.',
+          },
+          'messages-replies': {
+            title: 'Messages and replies',
+            subtitle: 'Control who can contact and reply to you.',
+          },
+          'tags-mentions': {
+            title: 'Tags and mentions',
+            subtitle: 'Choose who can tag or mention you.',
+          },
+          'comment-settings': {
+            title: 'Comment settings',
+            subtitle: 'Manage comments on your reader posts.',
+          },
+          'hidden-words': {
+            title: 'Hidden words',
+            subtitle: 'Hide words and phrases you do not want to see.',
+          },
+          'restricted-readers': {
+            title: 'Restricted readers',
+            subtitle: 'Review readers with limited interaction.',
+          },
+          language: {
+            title: 'Language',
+            subtitle: 'Choose your app and reading language.',
+          },
+          accessibility: {
+            title: 'Accessibility',
+            subtitle: 'Adjust reading and display assistance.',
+          },
+          'help-center': {
+            title: 'Help Center',
+            subtitle: 'Find answers and guides for using Shadow.',
+          },
+          'feedback-support': {
+            title: 'Feedback & Support',
+            subtitle: 'Send feedback or request help.',
+          },
+          'about-shadow': {
+            title: 'About Shadow',
+            subtitle: 'Learn more about Shadow and its purpose.',
+          },
+        },
+      },
       maintenance: {
         title: 'The website is under maintenance',
         description: 'We are checking and improving the system to provide a better experience. We apologize for the inconvenience and ask you to try again shortly.',
@@ -107,6 +197,96 @@ const resources = {
       navChatStory: 'រឿងជជែក',
       navDiscover: 'ស្វែងរក',
       navMine: 'ខ្ញុំ',
+      readerSettings: {
+        title: 'ការកំណត់ និងសកម្មភាព',
+        backToProfile: 'ត្រឡប់ទៅប្រវត្តិរូប',
+        logout: 'ចាកចេញ',
+        comingSoon: '{{title}} នឹងមកដល់ឆាប់ៗនេះ។',
+        groups: {
+          account: 'គណនីរបស់អ្នក',
+          activity: 'សកម្មភាពរបស់អ្នក',
+          interaction: 'របៀបដែលអ្នកអានអាចទាក់ទងជាមួយអ្នក',
+          appSupport: 'កម្មវិធី និងជំនួយ',
+        },
+        items: {
+          'edit-profile': {
+            title: 'កែប្រវត្តិរូប',
+            subtitle: 'កែឈ្មោះ រូបភាព ជីវប្រវត្តិ និងតំណប្រវត្តិរូប។',
+          },
+          'account-security': {
+            title: 'គណនី និងសុវត្ថិភាព',
+            subtitle: 'ពាក្យសម្ងាត់ អ៊ីមែល និងការចូលប្រើគណនី។',
+          },
+          privacy: {
+            title: 'ឯកជនភាព',
+            subtitle: 'កំណត់អ្នកដែលអាចមើលកន្លែងអ្នកអានរបស់អ្នក។',
+          },
+          'blocked-readers': {
+            title: 'អ្នកអានដែលបានទប់ស្កាត់',
+            subtitle: 'ពិនិត្យអ្នកអានដែលអ្នកបានទប់ស្កាត់។',
+          },
+          'saved-posts': {
+            title: 'Post ដែលបានរក្សាទុក',
+            subtitle: 'មើល Post ដែលអ្នករក្សាទុកសម្រាប់ពេលក្រោយ។',
+          },
+          'my-comments': {
+            title: 'មតិយោបល់របស់ខ្ញុំ',
+            subtitle: 'ពិនិត្យមតិយោបល់ និងការឆ្លើយតបរបស់អ្នក។',
+          },
+          notifications: {
+            title: 'ការជូនដំណឹង',
+            subtitle: 'មើលបច្ចុប្បន្នភាពពីអ្នកអាន អ្នកនិពន្ធ និងរឿង។',
+          },
+          'reading-history': {
+            title: 'ប្រវត្តិការអាន',
+            subtitle: 'ស្វែងរករឿង និងភាគដែលអ្នកបានមើល។',
+          },
+          'echo-sharing': {
+            title: 'Echo និងការចែករំលែក',
+            subtitle: 'គ្រប់គ្រង Post ដែលបាន Echo និងសកម្មភាពចែករំលែក។',
+          },
+          'messages-replies': {
+            title: 'សារ និងការឆ្លើយតប',
+            subtitle: 'កំណត់អ្នកដែលអាចទាក់ទង និងឆ្លើយតបអ្នក។',
+          },
+          'tags-mentions': {
+            title: 'Tag និង Mention',
+            subtitle: 'ជ្រើសអ្នកដែលអាច Tag ឬ Mention អ្នក។',
+          },
+          'comment-settings': {
+            title: 'ការកំណត់មតិយោបល់',
+            subtitle: 'គ្រប់គ្រងមតិយោបល់លើ Reader Post របស់អ្នក។',
+          },
+          'hidden-words': {
+            title: 'ពាក្យដែលបានលាក់',
+            subtitle: 'លាក់ពាក្យ និងឃ្លាដែលអ្នកមិនចង់ឃើញ។',
+          },
+          'restricted-readers': {
+            title: 'អ្នកអានដែលបានដាក់កម្រិត',
+            subtitle: 'ពិនិត្យអ្នកអានដែលមានការទាក់ទងកម្រិត។',
+          },
+          language: {
+            title: 'ភាសា',
+            subtitle: 'ជ្រើសភាសាកម្មវិធី និងភាសាអាន។',
+          },
+          accessibility: {
+            title: 'ភាពងាយស្រួលប្រើប្រាស់',
+            subtitle: 'កែការជំនួយសម្រាប់ការអាន និងការបង្ហាញ។',
+          },
+          'help-center': {
+            title: 'មជ្ឈមណ្ឌលជំនួយ',
+            subtitle: 'ស្វែងរកចម្លើយ និងការណែនាំសម្រាប់ប្រើ Shadow។',
+          },
+          'feedback-support': {
+            title: 'មតិកែលម្អ និងជំនួយ',
+            subtitle: 'ផ្ញើមតិកែលម្អ ឬស្នើសុំជំនួយ។',
+          },
+          'about-shadow': {
+            title: 'អំពី Shadow',
+            subtitle: 'ស្វែងយល់បន្ថែមអំពី Shadow និងគោលបំណងរបស់វា។',
+          },
+        },
+      },
       maintenance: {
         title: 'វេបសាយកំពុងស្ថិតក្នុងការថែទាំ',
         description: 'យើងកំពុងពិនិត្យ និងកែលម្អប្រព័ន្ធ ដើម្បីឱ្យការប្រើប្រាស់កាន់តែប្រសើរ។ សូមអភ័យទោសចំពោះការរអាក់រអួល និងសូមព្យាយាមចូលម្តងទៀតនៅពេលបន្តិចទៀត។',
@@ -140,6 +320,39 @@ const resources = {
       navChatStory: '聊天故事',
       navDiscover: '发现',
       navMine: '我的',
+      readerSettings: {
+        title: '设置和活动',
+        backToProfile: '返回个人资料',
+        logout: '退出登录',
+        comingSoon: '{{title}} 即将推出。',
+        groups: {
+          account: '你的账号',
+          activity: '你的活动',
+          interaction: '读者与你互动的方式',
+          appSupport: '应用和支持',
+        },
+        items: {
+          'edit-profile': { title: '编辑个人资料', subtitle: '更新姓名、头像、简介和个人资料链接。' },
+          'account-security': { title: '账号与安全', subtitle: '密码、邮箱和账号访问。' },
+          privacy: { title: '隐私', subtitle: '控制谁可以查看你的读者空间。' },
+          'blocked-readers': { title: '已屏蔽的读者', subtitle: '查看你已屏蔽的读者。' },
+          'saved-posts': { title: '已保存的帖子', subtitle: '查看你保存以便稍后阅读的帖子。' },
+          'my-comments': { title: '我的评论', subtitle: '查看你的评论和回复。' },
+          notifications: { title: '通知', subtitle: '查看来自读者、作者和故事的更新。' },
+          'reading-history': { title: '阅读历史', subtitle: '查找你浏览过的故事和章节。' },
+          'echo-sharing': { title: 'Echo 和分享', subtitle: '管理 Echo 帖子和分享活动。' },
+          'messages-replies': { title: '消息和回复', subtitle: '控制谁可以联系和回复你。' },
+          'tags-mentions': { title: '标签和提及', subtitle: '选择谁可以标记或提及你。' },
+          'comment-settings': { title: '评论设置', subtitle: '管理你的读者帖子上的评论。' },
+          'hidden-words': { title: '隐藏词语', subtitle: '隐藏你不想看到的词语和短语。' },
+          'restricted-readers': { title: '受限读者', subtitle: '查看互动受到限制的读者。' },
+          language: { title: '语言', subtitle: '选择应用和阅读语言。' },
+          accessibility: { title: '辅助功能', subtitle: '调整阅读和显示辅助选项。' },
+          'help-center': { title: '帮助中心', subtitle: '查找使用 Shadow 的答案和指南。' },
+          'feedback-support': { title: '反馈与支持', subtitle: '发送反馈或请求帮助。' },
+          'about-shadow': { title: '关于 Shadow', subtitle: '了解更多关于 Shadow 及其用途。' },
+        },
+      },
       maintenance: {
         title: '网站正在维护中',
         description: '我们正在检查并改进系统，以提供更好的使用体验。对于给您带来的不便，我们深表歉意，请稍后再试。',
@@ -173,6 +386,39 @@ const resources = {
       navChatStory: 'チャット',
       navDiscover: '見つける',
       navMine: 'マイ',
+      readerSettings: {
+        title: '設定とアクティビティ',
+        backToProfile: 'プロフィールに戻る',
+        logout: 'ログアウト',
+        comingSoon: '{{title}} は近日公開予定です。',
+        groups: {
+          account: 'アカウント',
+          activity: 'アクティビティ',
+          interaction: '読者とのやり取り',
+          appSupport: 'アプリとサポート',
+        },
+        items: {
+          'edit-profile': { title: 'プロフィール編集', subtitle: '名前、写真、自己紹介、プロフィールリンクを更新します。' },
+          'account-security': { title: 'アカウントとセキュリティ', subtitle: 'パスワード、メール、アカウントアクセスを管理します。' },
+          privacy: { title: 'プライバシー', subtitle: '読者スペースを閲覧できる人を管理します。' },
+          'blocked-readers': { title: 'ブロックした読者', subtitle: 'ブロックした読者を確認します。' },
+          'saved-posts': { title: '保存した投稿', subtitle: '後で見るために保存した投稿を表示します。' },
+          'my-comments': { title: '自分のコメント', subtitle: 'コメントと返信を確認します。' },
+          notifications: { title: '通知', subtitle: '読者、作者、ストーリーからの更新を確認します。' },
+          'reading-history': { title: '閲覧履歴', subtitle: '閲覧したストーリーやエピソードを探します。' },
+          'echo-sharing': { title: 'Echo と共有', subtitle: 'Echo した投稿と共有アクティビティを管理します。' },
+          'messages-replies': { title: 'メッセージと返信', subtitle: '連絡や返信ができる人を管理します。' },
+          'tags-mentions': { title: 'タグとメンション', subtitle: 'タグ付けやメンションできる人を選択します。' },
+          'comment-settings': { title: 'コメント設定', subtitle: '読者投稿へのコメントを管理します。' },
+          'hidden-words': { title: '非表示の言葉', subtitle: '表示したくない言葉やフレーズを非表示にします。' },
+          'restricted-readers': { title: '制限した読者', subtitle: '交流を制限した読者を確認します。' },
+          language: { title: '言語', subtitle: 'アプリと読書の言語を選択します。' },
+          accessibility: { title: 'アクセシビリティ', subtitle: '読書と表示の補助設定を調整します。' },
+          'help-center': { title: 'ヘルプセンター', subtitle: 'Shadow の使い方に関する回答やガイドを確認します。' },
+          'feedback-support': { title: 'フィードバックとサポート', subtitle: 'フィードバックを送信したり、サポートを依頼します。' },
+          'about-shadow': { title: 'Shadow について', subtitle: 'Shadow とその目的について詳しく確認します。' },
+        },
+      },
       maintenance: {
         title: 'ウェブサイトはメンテナンス中です',
         description: 'より良いサービスを提供するため、システムの確認と改善を行っています。ご不便をおかけして申し訳ありません。しばらくしてからもう一度お試しください。',
@@ -206,6 +452,39 @@ const resources = {
       navChatStory: '채팅 스토리',
       navDiscover: '찾기',
       navMine: '내 정보',
+      readerSettings: {
+        title: '설정 및 활동',
+        backToProfile: '프로필로 돌아가기',
+        logout: '로그아웃',
+        comingSoon: '{{title}} 기능은 곧 제공됩니다.',
+        groups: {
+          account: '내 계정',
+          activity: '내 활동',
+          interaction: '독자와의 상호작용',
+          appSupport: '앱 및 지원',
+        },
+        items: {
+          'edit-profile': { title: '프로필 수정', subtitle: '이름, 사진, 소개, 프로필 링크를 업데이트합니다.' },
+          'account-security': { title: '계정 및 보안', subtitle: '비밀번호, 이메일, 계정 접근을 관리합니다.' },
+          privacy: { title: '개인정보 보호', subtitle: '내 리더 공간을 볼 수 있는 사람을 관리합니다.' },
+          'blocked-readers': { title: '차단한 독자', subtitle: '차단한 독자를 확인합니다.' },
+          'saved-posts': { title: '저장한 게시물', subtitle: '나중에 보려고 저장한 게시물을 확인합니다.' },
+          'my-comments': { title: '내 댓글', subtitle: '내 댓글과 답글을 확인합니다.' },
+          notifications: { title: '알림', subtitle: '독자, 작가, 스토리의 업데이트를 확인합니다.' },
+          'reading-history': { title: '읽기 기록', subtitle: '열어본 스토리와 에피소드를 찾습니다.' },
+          'echo-sharing': { title: 'Echo 및 공유', subtitle: 'Echo한 게시물과 공유 활동을 관리합니다.' },
+          'messages-replies': { title: '메시지 및 답글', subtitle: '나에게 연락하거나 답글을 달 수 있는 사람을 관리합니다.' },
+          'tags-mentions': { title: '태그 및 멘션', subtitle: '나를 태그하거나 언급할 수 있는 사람을 선택합니다.' },
+          'comment-settings': { title: '댓글 설정', subtitle: '내 리더 게시물의 댓글을 관리합니다.' },
+          'hidden-words': { title: '숨긴 단어', subtitle: '보고 싶지 않은 단어나 문구를 숨깁니다.' },
+          'restricted-readers': { title: '제한한 독자', subtitle: '상호작용이 제한된 독자를 확인합니다.' },
+          language: { title: '언어', subtitle: '앱과 읽기 언어를 선택합니다.' },
+          accessibility: { title: '접근성', subtitle: '읽기 및 표시 지원 설정을 조정합니다.' },
+          'help-center': { title: '도움말 센터', subtitle: 'Shadow 사용 방법과 안내를 확인합니다.' },
+          'feedback-support': { title: '피드백 및 지원', subtitle: '피드백을 보내거나 도움을 요청합니다.' },
+          'about-shadow': { title: 'Shadow 소개', subtitle: 'Shadow와 그 목적에 대해 알아봅니다.' },
+        },
+      },
       maintenance: {
         title: '웹사이트 점검 중입니다',
         description: '더 나은 이용 환경을 제공하기 위해 시스템을 점검하고 개선하고 있습니다. 불편을 드려 죄송하며 잠시 후 다시 시도해 주세요.',
