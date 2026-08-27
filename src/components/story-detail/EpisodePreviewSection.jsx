@@ -30,13 +30,13 @@ function EpisodeRow({ episode, story, onOpenEpisode }) {
     <button
       type="button"
       onClick={() => onOpenEpisode(episode)}
-      className="flex w-full items-center gap-3 bg-white px-0 py-3 text-left active:scale-[0.995]"
+      className="flex w-full items-center gap-3 bg-[var(--shadow-bg-surface)] px-0 py-3 text-left active:scale-[0.995]"
     >
-      <div className="relative flex h-[76px] w-[104px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#e5e7eb]">
+      <div className="relative flex h-[76px] w-[104px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[var(--shadow-bg-soft)]">
         {cover ? (
           <img src={cover} alt={episode.title || 'Episode cover'} className="h-full w-full object-cover" />
         ) : (
-          <span className="text-[11px] font-bold text-[#98a2b3]">Cover</span>
+          <span className="text-[11px] font-bold text-[var(--shadow-text-secondary)]">Cover</span>
         )}
 
         {locked ? (
@@ -47,11 +47,11 @@ function EpisodeRow({ episode, story, onOpenEpisode }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 text-[14px] font-semibold leading-5 text-[#111827]">
+        <h3 className="line-clamp-2 text-[14px] font-semibold leading-5 text-[var(--shadow-text-primary)]">
           {episode.title || 'Untitled Episode'}
         </h3>
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] font-medium text-[#98a2b3]">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] font-medium text-[var(--shadow-text-secondary)]">
           {date ? <span>{date}</span> : null}
 
           <span className="inline-flex items-center gap-1">
@@ -71,14 +71,14 @@ function EpisodeRow({ episode, story, onOpenEpisode }) {
 
 function EpisodeSkeletonList() {
   return (
-    <div className="divide-y divide-[#eef1f5]">
+    <div className="divide-y divide-[var(--shadow-border)]">
       {[0, 1, 2].map((item) => (
-        <div key={item} className="flex w-full items-center gap-3 bg-white px-0 py-3">
-          <div className="h-[76px] w-[104px] shrink-0 animate-pulse rounded-[12px] bg-[#eef1f5]" />
+        <div key={item} className="flex w-full items-center gap-3 bg-[var(--shadow-bg-surface)] px-0 py-3">
+          <div className="h-[76px] w-[104px] shrink-0 animate-pulse rounded-[12px] bg-[var(--shadow-bg-soft)]" />
 
           <div className="min-w-0 flex-1">
-            <div className="h-4 w-28 animate-pulse rounded-full bg-[#eef1f5]" />
-            <div className="mt-3 h-3 w-40 animate-pulse rounded-full bg-[#eef1f5]" />
+            <div className="h-4 w-28 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-3 h-3 w-40 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
           </div>
         </div>
       ))}
@@ -95,15 +95,15 @@ export default function EpisodePreviewSection({
   onOpenAll,
 }) {
   return (
-    <section className="mt-0 bg-white px-4 py-4 sm:mt-4 sm:rounded-[18px] sm:px-5 sm:py-5 sm:shadow-sm">
+    <section className="mt-0 bg-[var(--shadow-bg-surface)] px-4 py-4 sm:mt-4 sm:rounded-[18px] sm:px-5 sm:py-5 sm:shadow-sm sm:ring-1 sm:ring-[var(--shadow-border)]">
       <div className="mb-3">
-        <h2 className="text-[16px] font-bold text-[#111827]">Episodes</h2>
+        <h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">Episodes</h2>
       </div>
 
       {loading ? (
         <EpisodeSkeletonList />
       ) : episodes.length ? (
-        <div className="divide-y divide-[#eef1f5]">
+        <div className="divide-y divide-[var(--shadow-border)]">
           {episodes.map((episode) => (
             <EpisodeRow
               key={episode.id}
@@ -114,10 +114,10 @@ export default function EpisodePreviewSection({
           ))}
         </div>
       ) : (
-        <div className="bg-[#f8fafc] px-5 py-8 text-center">
-          <i className="fa-regular fa-file-lines text-[28px] text-[#98a2b3]" />
-          <div className="mt-3 text-[14px] font-black text-[#111827]">No episodes yet</div>
-          <div className="mt-1 text-[12px] font-semibold text-[#98a2b3]">Published episodes will appear here.</div>
+        <div className="bg-[var(--shadow-bg-soft)] px-5 py-8 text-center">
+          <i className="fa-regular fa-file-lines text-[28px] text-[var(--shadow-text-secondary)]" />
+          <div className="mt-3 text-[14px] font-black text-[var(--shadow-text-primary)]">No episodes yet</div>
+          <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">Published episodes will appear here.</div>
         </div>
       )}
 
@@ -125,7 +125,7 @@ export default function EpisodePreviewSection({
         <button
           type="button"
           onClick={onOpenAll}
-          className="mt-4 flex h-12 w-full items-center justify-center gap-3 border-t border-[#eef1f5] pt-4 text-[13px] font-semibold text-[#98a2b3] active:scale-[0.99]"
+          className="mt-4 flex h-12 w-full items-center justify-center gap-3 border-t border-[var(--shadow-border)] pt-4 text-[13px] font-semibold text-[var(--shadow-text-secondary)] active:scale-[0.99]"
         >
           <i className="fa-solid fa-sort text-[12px]" />
           <span>Up to Ep. {totalEpisodes}</span>
