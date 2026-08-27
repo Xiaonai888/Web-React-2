@@ -116,24 +116,24 @@ function GemIcon({ size = 'h-12 w-12' }) {
 
 function VoucherIcon({ size = 'h-12 w-12' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-[12px] border border-[#DBEAFE] bg-[#EFF6FF] ${size}`}>
-      <i className="fa-solid fa-ticket text-[20px] text-[#0B5CFF]" />
+    <span className={`flex shrink-0 items-center justify-center rounded-[12px] border border-[#DBEAFE] bg-[#EFF6FF] dark:border-blue-400/20 dark:bg-blue-500/10 ${size}`}>
+      <i className="fa-solid fa-ticket text-[20px] text-[#0B5CFF] dark:text-blue-300" />
     </span>
   )
 }
 
 function StoryCardIcon({ size = 'h-12 w-12' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-[12px] border border-[#E5E7EB] bg-[#F8F8F8] ${size}`}>
-      <i className="fa-regular fa-address-card text-[21px] text-[#111111]" />
+    <span className={`flex shrink-0 items-center justify-center rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] ${size}`}>
+      <i className="fa-regular fa-address-card text-[21px] text-[var(--shadow-text-primary)]" />
     </span>
   )
 }
 
 function VideoIcon({ size = 'h-12 w-12' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-[12px] border border-[#DBEAFE] bg-[#EFF6FF] ${size}`}>
-      <i className="fa-solid fa-play text-[18px] text-[#0B5CFF]" />
+    <span className={`flex shrink-0 items-center justify-center rounded-[12px] border border-[#DBEAFE] bg-[#EFF6FF] dark:border-blue-400/20 dark:bg-blue-500/10 ${size}`}>
+      <i className="fa-solid fa-play text-[18px] text-[#0B5CFF] dark:text-blue-300" />
     </span>
   )
 }
@@ -144,7 +144,7 @@ function TabButton({ active, children, onClick }) {
       type="button"
       onClick={onClick}
       className={`relative h-12 flex-1 text-[15px] font-medium transition ${
-        active ? 'text-[#111111]' : 'text-[#B8BDC7]'
+        active ? 'text-[var(--shadow-text-primary)]' : 'text-[var(--shadow-text-tertiary)]'
       }`}
     >
       {children}
@@ -161,8 +161,8 @@ function InstantOption({ option, active, onClick }) {
       type="button"
       disabled={!option.enabled}
       onClick={onClick}
-      className={`relative min-h-[88px] rounded-[18px] border bg-white px-4 py-3 text-left transition active:scale-[0.99] ${
-        active ? 'border-[#C59B2D] shadow-[0_14px_30px_rgba(197,155,45,0.16)]' : 'border-[#E5E7EB]'
+      className={`relative min-h-[88px] rounded-[18px] border bg-[var(--shadow-bg-surface)] px-4 py-3 text-left transition active:scale-[0.99] ${
+        active ? 'border-[#C59B2D] shadow-[0_14px_30px_rgba(197,155,45,0.16)]' : 'border-[var(--shadow-border)]'
       } ${!option.enabled ? 'opacity-55' : ''}`}
       title={option.disabled_reason || ''}
     >
@@ -173,18 +173,18 @@ function InstantOption({ option, active, onClick }) {
       ) : null}
 
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 text-[14px] font-black leading-5 text-[#111111]">
+        <div className="min-w-0 text-[14px] font-black leading-5 text-[var(--shadow-text-primary)]">
           {option.label}
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
           {Number(option.original_price || 0) > Number(option.price || 0) ? (
-            <span className="text-[13px] font-medium text-[#C1C5CC] line-through">
+            <span className="text-[13px] font-medium text-[var(--shadow-text-tertiary)] line-through">
               {formatNumber(option.original_price)}
             </span>
           ) : null}
           <DiamondIcon selected={active} size="h-7 w-7" />
-          <span className="text-[15px] font-black text-[#111111]">{formatNumber(option.price)}</span>
+          <span className="text-[15px] font-black text-[var(--shadow-text-primary)]">{formatNumber(option.price)}</span>
         </div>
       </div>
     </button>
@@ -200,19 +200,19 @@ function FreeAccessRow({ iconType, title, subtitle, disabled, buttonText = 'Acce
   }
 
   return (
-    <div className="flex min-h-[92px] items-center gap-4 rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3">
+    <div className="flex min-h-[92px] items-center gap-4 rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3">
       {iconMap[iconType] || <GemIcon />}
 
       <div className="min-w-0 flex-1">
-        <div className="text-[14px] font-medium text-[#111111]">{title}</div>
-        <div className="mt-1 text-[12px] font-medium leading-4 text-[#555B66]">{subtitle}</div>
+        <div className="text-[14px] font-medium text-[var(--shadow-text-primary)]">{title}</div>
+        <div className="mt-1 text-[12px] font-medium leading-4 text-[var(--shadow-text-secondary)]">{subtitle}</div>
       </div>
 
       <button
         type="button"
         disabled={disabled}
         onClick={onClick}
-        className="h-8 shrink-0 rounded-full bg-[#111111] px-4 text-[12px] font-medium text-white disabled:bg-[#C9CBD1] disabled:opacity-75"
+        className="h-8 shrink-0 rounded-full bg-[#111111] px-4 text-[12px] font-medium text-white disabled:bg-[#C9CBD1] disabled:opacity-75 dark:bg-white dark:text-[#111827] dark:disabled:bg-slate-600 dark:disabled:text-slate-300"
       >
         {buttonText}
       </button>
@@ -408,25 +408,25 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
 }
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/45 px-0 pb-0 sm:items-center sm:px-6 sm:pb-0">
+    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/55 px-0 pb-0 sm:items-center sm:px-6 sm:pb-0">
       <button type="button" onClick={onClose} className="absolute inset-0" aria-label="Close" />
 
-      <section className="relative w-screen max-w-none overflow-hidden rounded-t-[28px] rounded-b-none bg-white shadow-2xl sm:w-full sm:max-w-[680px] sm:rounded-[30px]">
+      <section className="relative w-screen max-w-none overflow-hidden rounded-t-[28px] rounded-b-none bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl sm:w-full sm:max-w-[680px] sm:rounded-[30px]">
         <header className="relative px-5 pt-5">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Close"
           >
             <i className="fa-solid fa-xmark text-[18px]" />
           </button>
 
-          <h2 className="pr-12 text-center text-[21px] font-medium text-[#111111]">
+          <h2 className="pr-12 text-center text-[21px] font-medium text-[var(--shadow-text-primary)]">
             Unlock Episode
           </h2>
 
-          <div className="mt-4 flex border-b border-[#E5E7EB]">
+          <div className="mt-4 flex border-b border-[var(--shadow-border)]">
             <TabButton active={activeTab === 'instant'} onClick={() => setActiveTab('instant')}>
               Instant Access
             </TabButton>
@@ -441,16 +441,16 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
             <>
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-[18px] bg-white text-left active:scale-[0.99]"
+                className="flex w-full items-center gap-3 rounded-[18px] bg-[var(--shadow-bg-elevated)] text-left active:scale-[0.99]"
               >
                 <span className="inline-flex items-center rounded-full bg-[#111111] px-3 py-2 text-[13px] font-black text-white">
                   <i className="fa-solid fa-crown mr-1.5 text-[#F5C542]" />
                   Premium
                 </span>
-                <span className="min-w-0 flex-1 text-[13px] font-medium text-[#8D94A1]">
+                <span className="min-w-0 flex-1 text-[13px] font-medium text-[var(--shadow-text-secondary)]">
                   Enjoy 10% off every episode you unlock.
                 </span>
-                <i className="fa-solid fa-chevron-right text-[13px] text-[#8D94A1]" />
+                <i className="fa-solid fa-chevron-right text-[13px] text-[var(--shadow-text-secondary)]" />
               </button>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
@@ -470,8 +470,8 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                   type="button"
                   disabled={!option.enabled}
                   onClick={() => setSelectedPackage(option.key)}
-                  className={`mt-3 flex min-h-[88px] w-full items-center justify-between rounded-[18px] border bg-white px-4 py-3 text-left ${
-                    selectedPackage === option.key ? 'border-[#C59B2D]' : 'border-[#E5E7EB]'
+                  className={`mt-3 flex min-h-[88px] w-full items-center justify-between rounded-[18px] border bg-[var(--shadow-bg-surface)] px-4 py-3 text-left ${
+                    selectedPackage === option.key ? 'border-[#C59B2D]' : 'border-[var(--shadow-border)]'
                   } ${!option.enabled ? 'opacity-55' : ''}`}
                   title={option.disabled_reason || ''}
                 >
@@ -479,31 +479,31 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                     <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
                       {option.discount_percent}% Off
                     </span>
-                    <div className="text-[14px] font-black text-[#111111]">{option.label}</div>
+                    <div className="text-[14px] font-black text-[var(--shadow-text-primary)]">{option.label}</div>
                   </div>
 
                   <div className="flex items-center gap-1.5">
                     {Number(option.original_price || 0) > Number(option.price || 0) ? (
-                      <span className="text-[13px] font-medium text-[#C1C5CC] line-through">
+                      <span className="text-[13px] font-medium text-[var(--shadow-text-tertiary)] line-through">
                         {formatNumber(option.original_price)}
                       </span>
                     ) : null}
                     <DiamondIcon selected={selectedPackage === option.key} size="h-7 w-7" />
-                    <span className="text-[15px] font-black text-[#111111]">{formatNumber(option.price)}</span>
+                    <span className="text-[15px] font-black text-[var(--shadow-text-primary)]">{formatNumber(option.price)}</span>
                   </div>
                 </button>
               ))}
 
               <div className="mt-5 flex items-center justify-between gap-4">
-                <div className="text-[14px] font-medium text-[#B8BDC7]">
+                <div className="text-[14px] font-medium text-[var(--shadow-text-tertiary)]">
                   Balance: {loading ? 'Checking...' : `${formatNumber(diamondBalance)} Diamonds`}
                 </div>
 
-                <div className="relative flex items-center gap-2 text-[14px] font-medium text-[#B8BDC7]">
+                <div className="relative flex items-center gap-2 text-[14px] font-medium text-[var(--shadow-text-tertiary)]">
                   <button
                     type="button"
                     onClick={() => setShowAutoHint((value) => !value)}
-                    className="flex h-5 w-5 items-center justify-center rounded-full border border-[#CFD4DF] text-[12px]"
+                    className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--shadow-border-strong)] text-[12px]"
                     aria-label="Auto unlock info"
                   >
                     ?
@@ -525,8 +525,8 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                     className="flex items-center gap-2"
                   >
                     Auto Unlock
-                    <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111111]' : 'bg-[#D0D5DD]'}`}>
-                      <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
+                    <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111111] dark:bg-white' : 'bg-[#D0D5DD] dark:bg-slate-600'}`}>
+                      <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7 dark:bg-[#111827]' : 'left-1'}`} />
                     </span>
                   </button>
                 </div>
@@ -536,14 +536,14 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                 <button
                   type="button"
                   onClick={() => setMessage('')}
-                  className="mt-4 w-full rounded-[16px] bg-[#FFF1F1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#E5484D]"
+                  className="mt-4 w-full rounded-[16px] bg-[#FFF1F1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#E5484D] dark:bg-red-500/10 dark:text-red-300"
                 >
                   {message}
                 </button>
               ) : null}
 
               {!hasEnoughDiamonds && getReaderToken() ? (
-                <div className="mt-3 text-center text-[12px] font-medium text-[#8D94A1]">
+                <div className="mt-3 text-center text-[12px] font-medium text-[var(--shadow-text-secondary)]">
                   Need {needDiamonds} more Diamonds to unlock this package.
                 </div>
               ) : null}
@@ -552,7 +552,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                 type="button"
                 onClick={handlePurchase}
                 disabled={loading || unlocking || !selectedOption?.enabled}
-                className="mt-5 h-[56px] w-full rounded-full bg-[#111111] text-[16px] font-medium text-white shadow-[0_16px_32px_rgba(17,24,39,0.22)] active:scale-[0.99] disabled:bg-[#9CA3AF]"
+                className="mt-5 h-[56px] w-full rounded-full bg-[#111111] text-[16px] font-medium text-white shadow-[0_16px_32px_rgba(17,24,39,0.22)] active:scale-[0.99] disabled:bg-[#9CA3AF] dark:bg-white dark:text-[#111827] dark:disabled:bg-slate-600 dark:disabled:text-slate-300"
               >
                 {purchaseText}
               </button>
@@ -564,13 +564,13 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                 onClick={handleComingSoon}
                 className="flex w-full items-center gap-3 text-left active:scale-[0.99]"
               >
-                <span className="rounded-[14px] bg-[#111111] px-4 py-3 text-[14px] font-medium text-white">
+                <span className="rounded-[14px] bg-[#111111] px-4 py-3 text-[14px] font-medium text-white dark:bg-white dark:text-[#111827]">
                   Free Unlock
                 </span>
-                <span className="min-w-0 flex-1 text-[13px] font-medium text-[#8D94A1]">
+                <span className="min-w-0 flex-1 text-[13px] font-medium text-[var(--shadow-text-secondary)]">
                   Earn more from tasks & events
                 </span>
-                <i className="fa-solid fa-chevron-right text-[13px] text-[#8D94A1]" />
+                <i className="fa-solid fa-chevron-right text-[13px] text-[var(--shadow-text-secondary)]" />
               </button>
 
               <div className="mt-5 space-y-3">
@@ -607,7 +607,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                 <button
                   type="button"
                   onClick={() => setMessage('')}
-                  className="mt-4 w-full rounded-[16px] bg-[#FFF1F1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#E5484D]"
+                  className="mt-4 w-full rounded-[16px] bg-[#FFF1F1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#E5484D] dark:bg-red-500/10 dark:text-red-300"
                 >
                   {message}
                 </button>
@@ -616,7 +616,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
               <button
                 type="button"
                 onClick={() => setActiveTab('instant')}
-                className="mt-5 h-[52px] w-full rounded-full bg-[#111111] text-[15px] font-medium text-white active:scale-[0.99]"
+                className="mt-5 h-[52px] w-full rounded-full bg-[#111111] text-[15px] font-medium text-white active:scale-[0.99] dark:bg-white dark:text-[#111827]"
               >
                 Use Diamonds Instead
               </button>
