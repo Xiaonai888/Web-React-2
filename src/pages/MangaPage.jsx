@@ -65,26 +65,6 @@ export default function MangaPage() {
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0)
   const [showNotificationPopup, setShowNotificationPopup] = useState(false)
 
-  useEffect(() => {
-  if (slides.length <= 1) return
-
-  const timer = window.setInterval(() => {
-    const slider = sliderRef.current
-    if (!slider || !slider.clientWidth) return
-
-    const currentIndex = Math.round(slider.scrollLeft / slider.clientWidth)
-    const nextIndex = (currentIndex + 1) % slides.length
-
-    slider.scrollTo({
-      left: nextIndex * slider.clientWidth,
-      behavior: 'smooth',
-    })
-  }, 5000)
-
-  return () => window.clearInterval(timer)
-}, [slides.length])
-
-
   async function refreshNotificationUnreadCount() {
     const token =
       sessionStorage.getItem('shadow_reader_token') ||
@@ -303,6 +283,26 @@ export default function MangaPage() {
       controller.abort()
     }
   }, [])
+
+  useEffect(() => {
+    if (slides.length <= 1) return undefined
+
+    const timer = window.setInterval(() => {
+      const slider = sliderRef.current
+      if (!slider || !slider.clientWidth) return
+
+      const currentIndex = Math.round(slider.scrollLeft / slider.clientWidth)
+      const nextIndex = (currentIndex + 1) % slides.length
+
+      slider.scrollTo({
+        left: nextIndex * slider.clientWidth,
+        behavior: 'smooth',
+      })
+      setActiveSlide(nextIndex)
+    }, 5000)
+
+    return () => window.clearInterval(timer)
+  }, [slides.length])
 
   useEffect(() => {
     refreshNotificationUnreadCount()
