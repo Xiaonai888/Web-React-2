@@ -60,7 +60,7 @@ function ReaderAvatar({ user }) {
   const name = user?.name || user?.username || 'Reader'
 
   return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[20px] font-bold text-[#6b7280] ring-1 ring-black/10">
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[20px] font-bold text-[var(--shadow-text-secondary)] ring-1 ring-[var(--shadow-border)]">
       {user?.avatar_url ? (
         <img src={user.avatar_url} alt={name} className="h-full w-full object-cover" />
       ) : (
@@ -78,11 +78,11 @@ function PersonRow({ user, followBack, busy, onFollow, onHide }) {
       <ReaderAvatar user={user} />
 
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[15px] font-semibold text-[#111827]">
+        <div className="line-clamp-1 text-[15px] font-semibold text-[var(--shadow-text-primary)]">
           {user.name || user.username}
         </div>
 
-        <div className="mt-0.5 line-clamp-1 text-[12px] font-normal text-[#6b7280]">
+        <div className="mt-0.5 line-clamp-1 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
           {followBack ? 'Follows you' : 'Suggested for you'}
         </div>
       </div>
@@ -93,7 +93,7 @@ function PersonRow({ user, followBack, busy, onFollow, onHide }) {
         disabled={following || busy}
         className={`h-8 min-w-[96px] rounded-[8px] px-3 text-[12px] font-semibold transition active:scale-[0.98] disabled:cursor-default ${
           following
-            ? 'bg-[#f3f4f6] text-[#111827]'
+            ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
             : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-sm'
         }`}
       >
@@ -103,7 +103,7 @@ function PersonRow({ user, followBack, busy, onFollow, onHide }) {
       <button
         type="button"
         onClick={() => onHide(user.id)}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] transition active:bg-[var(--shadow-bg-hover)]"
         aria-label={`Hide ${user.name || user.username}`}
       >
         <i className="fa-solid fa-xmark text-[16px]" />
@@ -117,7 +117,7 @@ function PeopleSection({ title, users, followBack, actionId, onFollow, onHide })
 
   return (
     <section>
-      <h2 className="px-4 pb-2 pt-5 text-[17px] font-semibold text-[#111827]">
+      <h2 className="px-4 pb-2 pt-5 text-[17px] font-semibold text-[var(--shadow-text-primary)]">
         {title}
       </h2>
 
@@ -314,19 +314,19 @@ export default function ReaderDiscoverPeoplePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <main className="mx-auto min-h-screen w-full bg-white md:max-w-[560px] md:border-x md:border-[#eceaf2]">
-        <header className="sticky top-0 z-30 flex h-[58px] items-center border-b border-[#f0eef6] bg-white/95 px-3 backdrop-blur">
+    <div className="app-page min-h-screen">
+      <main className="mx-auto min-h-screen w-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] md:max-w-[560px] md:border-x md:border-[var(--shadow-border)]">
+        <header className="sticky top-0 z-30 flex h-[58px] items-center border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-3 backdrop-blur">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition active:bg-[var(--shadow-bg-hover)]"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
           </button>
 
-          <h1 className="ml-2 text-[20px] font-semibold text-[#111827]">
+          <h1 className="ml-2 text-[20px] font-semibold text-[var(--shadow-text-primary)]">
             Discover people
           </h1>
         </header>
@@ -335,7 +335,7 @@ export default function ReaderDiscoverPeoplePage() {
           <button
             type="button"
             onClick={() => setMessage('')}
-            className="mx-4 mt-4 w-[calc(100%_-_2rem)] rounded-[14px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-semibold text-[#e5484d]"
+            className="mx-4 mt-4 w-[calc(100%_-_2rem)] rounded-[14px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-semibold text-[#e5484d] dark:bg-[#e5484d]/10"
           >
             {message}
           </button>
@@ -345,12 +345,12 @@ export default function ReaderDiscoverPeoplePage() {
           <div className="space-y-4 px-4 py-5">
             {Array.from({ length: 8 }).map((_, index) => (
               <div key={index} className="flex items-center gap-3">
-                <div className="h-16 w-16 animate-pulse rounded-full bg-[#f3f4f6]" />
+                <div className="h-16 w-16 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                 <div className="min-w-0 flex-1">
-                  <div className="h-4 w-36 animate-pulse rounded-full bg-[#f3f4f6]" />
-                  <div className="mt-2 h-3 w-24 animate-pulse rounded-full bg-[#f3f4f6]" />
+                  <div className="h-4 w-36 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                  <div className="mt-2 h-3 w-24 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                 </div>
-                <div className="h-10 w-[116px] animate-pulse rounded-[10px] bg-[#f3f4f6]" />
+                <div className="h-10 w-[116px] animate-pulse rounded-[10px] bg-[var(--shadow-bg-soft)]" />
               </div>
             ))}
           </div>
@@ -381,21 +381,21 @@ export default function ReaderDiscoverPeoplePage() {
               onHide={hideSuggestion}
             />
 
-            <div className="px-4 pt-5 text-center text-[11px] font-normal text-[#9ca3af]">
+            <div className="px-4 pt-5 text-center text-[11px] font-normal text-[var(--shadow-text-tertiary)]">
               Showing up to {MAX_VISIBLE_PEOPLE} people
             </div>
           </div>
         ) : (
           <div className="px-5 py-16 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[#6b7280]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]">
               <i className="fa-solid fa-user-group text-[22px]" />
             </div>
 
-            <h2 className="mt-4 text-[17px] font-semibold text-[#111827]">
+            <h2 className="mt-4 text-[17px] font-semibold text-[var(--shadow-text-primary)]">
               No suggestions right now
             </h2>
 
-            <p className="mx-auto mt-2 max-w-[300px] text-[13px] font-normal leading-5 text-[#6b7280]">
+            <p className="mx-auto mt-2 max-w-[300px] text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
               New people may appear later as the Shadow community grows.
             </p>
           </div>
