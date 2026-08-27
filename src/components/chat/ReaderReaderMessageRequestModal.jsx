@@ -12,13 +12,86 @@ import {
   createReaderReaderMessageRequest,
   getChatConversations,
 } from '../../services/chatApi'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
-function ReaderAvatar({ reader }) {
+registerTranslationNamespace('readerMessageRequest', {
+  en: {
+    reader: 'Reader',
+    checkFailed: 'Failed to check conversation',
+    conversationNotCreated: 'Conversation was not created',
+    sendFailed: 'Failed to send message request',
+    closeRequest: 'Close message request',
+    title: 'Message request',
+    readerProfile: 'Reader profile',
+    close: 'Close',
+    helper: 'You can send one message request. More messages become available after this reader accepts it.',
+    placeholder: 'Write a message to {{name}}...',
+    sendRequest: 'Send request',
+  },
+  km: {
+    reader: 'អ្នកអាន',
+    checkFailed: 'មិនអាចពិនិត្យការសន្ទនាបានទេ',
+    conversationNotCreated: 'មិនអាចបង្កើតការសន្ទនាបានទេ',
+    sendFailed: 'មិនអាចផ្ញើសំណើសារបានទេ',
+    closeRequest: 'បិទសំណើសារ',
+    title: 'សំណើសារ',
+    readerProfile: 'ប្រវត្តិរូបអ្នកអាន',
+    close: 'បិទ',
+    helper: 'អ្នកអាចផ្ញើសំណើសារបានមួយ។ អ្នកអាចផ្ញើសារបន្ថែមបាន បន្ទាប់ពីអ្នកអាននេះទទួលយកសំណើ។',
+    placeholder: 'សរសេរសារទៅ {{name}}...',
+    sendRequest: 'ផ្ញើសំណើ',
+  },
+  zh: {
+    reader: '读者',
+    checkFailed: '无法检查会话',
+    conversationNotCreated: '未能创建会话',
+    sendFailed: '无法发送消息请求',
+    closeRequest: '关闭消息请求',
+    title: '消息请求',
+    readerProfile: '读者资料',
+    close: '关闭',
+    helper: '你可以发送一条消息请求。对方接受后即可发送更多消息。',
+    placeholder: '给 {{name}} 写消息...',
+    sendRequest: '发送请求',
+  },
+  ja: {
+    reader: '読者',
+    checkFailed: '会話を確認できませんでした',
+    conversationNotCreated: '会話を作成できませんでした',
+    sendFailed: 'メッセージリクエストを送信できませんでした',
+    closeRequest: 'メッセージリクエストを閉じる',
+    title: 'メッセージリクエスト',
+    readerProfile: '読者プロフィール',
+    close: '閉じる',
+    helper: 'メッセージリクエストを1件送信できます。この読者が承認すると、さらにメッセージを送れるようになります。',
+    placeholder: '{{name}} にメッセージを書く...',
+    sendRequest: 'リクエストを送信',
+  },
+  ko: {
+    reader: '독자',
+    checkFailed: '대화를 확인하지 못했습니다',
+    conversationNotCreated: '대화를 만들지 못했습니다',
+    sendFailed: '메시지 요청을 보내지 못했습니다',
+    closeRequest: '메시지 요청 닫기',
+    title: '메시지 요청',
+    readerProfile: '독자 프로필',
+    close: '닫기',
+    helper: '메시지 요청을 한 번 보낼 수 있습니다. 이 독자가 요청을 수락하면 더 많은 메시지를 보낼 수 있습니다.',
+    placeholder: '{{name}}님에게 메시지 쓰기...',
+    sendRequest: '요청 보내기',
+  },
+})
+
+function ReaderAvatar({
+  reader,
+  fallbackName,
+}) {
   const [failed, setFailed] = useState(false)
   const name =
     reader?.name ||
     reader?.username ||
-    'Reader'
+    fallbackName
   const letter =
     String(name).trim().charAt(0).toUpperCase() ||
     'R'
@@ -49,6 +122,7 @@ export default function ReaderReaderMessageRequestModal({
   onClose,
 }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [message, setMessage] = useState('')
   const [checking, setChecking] = useState(false)
   const [sending, setSending] = useState(false)
@@ -108,7 +182,7 @@ export default function ReaderReaderMessageRequestModal({
         if (!ignore) {
           setError(
             checkError.message ||
-              'Failed to check conversation'
+              t('readerMessageRequest.checkFailed')
           )
         }
       } finally {
@@ -123,14 +197,20 @@ export default function ReaderReaderMessageRequestModal({
     return () => {
       ignore = true
     }
-  }, [navigate, onClose, open, reader?.id])
+  }, [
+    navigate,
+    onClose,
+    open,
+    reader?.id,
+    t,
+  ])
 
   if (!open) return null
 
   const readerName =
     reader?.name ||
     reader?.username ||
-    'Reader'
+    t('readerMessageRequest.reader')
 
   const handleSubmit = async () => {
     const text = message.trim()
@@ -159,7 +239,9 @@ export default function ReaderReaderMessageRequestModal({
 
       if (!conversationId) {
         throw new Error(
-          'Conversation was not created'
+          t(
+            'readerMessageRequest.conversationNotCreated'
+          )
         )
       }
 
@@ -171,7 +253,7 @@ export default function ReaderReaderMessageRequestModal({
     } catch (sendError) {
       setError(
         sendError.message ||
-          'Failed to send message request'
+          t('readerMessageRequest.sendFailed')
       )
     } finally {
       setSending(false)
@@ -182,7 +264,9 @@ export default function ReaderReaderMessageRequestModal({
     <div className="fixed inset-0 z-[320] flex items-end justify-center md:items-center md:px-4">
       <button
         type="button"
-        aria-label="Close message request"
+        aria-label={t(
+          'readerMessageRequest.closeRequest'
+        )}
         onClick={onClose}
         className="absolute inset-0 bg-black/40"
       />
@@ -192,11 +276,16 @@ export default function ReaderReaderMessageRequestModal({
 
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <ReaderAvatar reader={reader} />
+            <ReaderAvatar
+              reader={reader}
+              fallbackName={t(
+                'readerMessageRequest.reader'
+              )}
+            />
 
             <div className="min-w-0">
               <div className="text-[11px] font-bold text-[var(--shadow-text-secondary)]">
-                Message request
+                {t('readerMessageRequest.title')}
               </div>
               <h2 className="mt-0.5 truncate text-[17px] font-extrabold text-[#111827]">
                 {readerName}
@@ -204,7 +293,9 @@ export default function ReaderReaderMessageRequestModal({
               <div className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
                 {reader?.username
                   ? `@${reader.username}`
-                  : 'Reader profile'}
+                  : t(
+                      'readerMessageRequest.readerProfile'
+                    )}
               </div>
             </div>
           </div>
@@ -212,7 +303,9 @@ export default function ReaderReaderMessageRequestModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t(
+              'readerMessageRequest.close'
+            )}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] transition active:scale-90"
           >
             <X size={20} />
@@ -229,7 +322,7 @@ export default function ReaderReaderMessageRequestModal({
         ) : (
           <>
             <div className="mt-5 rounded-[16px] bg-[#f6f2ff] px-4 py-3 text-[11px] font-semibold leading-5 text-[#6d5a91] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]">
-              You can send one message request. More messages become available after this reader accepts it.
+              {t('readerMessageRequest.helper')}
             </div>
 
             {error ? (
@@ -251,7 +344,10 @@ export default function ReaderReaderMessageRequestModal({
                 }
                 rows={5}
                 autoFocus
-                placeholder={`Write a message to ${readerName}...`}
+                placeholder={t(
+                  'readerMessageRequest.placeholder',
+                  { name: readerName }
+                )}
                 className="min-h-[130px] w-full resize-none rounded-[18px] border border-[#ddd9e6] bg-[#faf9fc] px-4 py-3 text-[13px] leading-6 text-[#111827] outline-none transition placeholder:text-[#9a96a2] focus:border-[#9b7be8] focus:bg-white"
               />
 
@@ -277,7 +373,7 @@ export default function ReaderReaderMessageRequestModal({
                   strokeWidth={2.2}
                 />
               )}
-              Send request
+              {t('readerMessageRequest.sendRequest')}
             </button>
           </>
         )}
