@@ -112,7 +112,7 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
   if (loading) {
     return (
       <div className="shadow-mall-swiper-container">
-        <div className="mx-auto flex aspect-[16/9] w-[85%] items-center justify-center rounded-[20px] bg-[#f4f5f7] text-[13px] font-extrabold text-[#98a2b3] md:w-[58%]">
+        <div className="mx-auto flex aspect-[16/9] w-[85%] items-center justify-center rounded-[20px] bg-[var(--shadow-bg-soft)] text-[13px] font-extrabold text-[var(--shadow-text-tertiary)] md:w-[58%]">
           Loading mall slides...
         </div>
       </div>
@@ -122,7 +122,7 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
   if (!slides.length) {
     return (
       <div className="shadow-mall-swiper-container">
-        <div className="mx-auto flex aspect-[16/9] w-[85%] items-center justify-center rounded-[20px] bg-[#f4f5f7] text-center text-[13px] font-extrabold text-[#98a2b3] md:w-[58%]">
+        <div className="mx-auto flex aspect-[16/9] w-[85%] items-center justify-center rounded-[20px] bg-[var(--shadow-bg-soft)] text-center text-[13px] font-extrabold text-[var(--shadow-text-tertiary)] md:w-[58%]">
           No Mall Slide yet
         </div>
       </div>
@@ -169,7 +169,7 @@ function getProductStatus(product) {
   if (status === 'sold_out') {
     return {
       label: 'SOLD OUT',
-      className: 'bg-[#f1f5f9] text-[#64748b]',
+      className: 'bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/15 dark:text-slate-300',
       disabled: true,
       coverClass: 'opacity-60',
     }
@@ -178,7 +178,7 @@ function getProductStatus(product) {
   if (status === 'pre_order') {
     return {
       label: 'PRE-ORDER',
-      className: 'bg-[#fff7d8] text-[#7a5600]',
+      className: 'bg-[#fff7d8] text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300',
       disabled: false,
       coverClass: '',
     }
@@ -186,7 +186,7 @@ function getProductStatus(product) {
 
   return {
     label: 'IN STOCK',
-    className: 'bg-[#dcfce7] text-[#166534]',
+    className: 'bg-[#dcfce7] text-[#166534] dark:bg-emerald-500/15 dark:text-emerald-300',
     disabled: false,
     coverClass: '',
   }
@@ -241,9 +241,9 @@ function ProductCard({ product, onOpen }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5">
+    <article className="overflow-hidden rounded-[22px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
       <button type="button" onClick={onOpen} className="block w-full text-left">
-        <div className="relative aspect-[2/3] overflow-hidden bg-[#f3f4f6]">
+        <div className="relative aspect-[2/3] overflow-hidden bg-[var(--shadow-bg-soft)]">
           {product.cover ? (
             <img
               src={product.cover}
@@ -274,11 +274,11 @@ function ProductCard({ product, onOpen }) {
 
       <div className="p-3">
         <button type="button" onClick={onOpen} className="block w-full text-left">
-          <h3 className="line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[#111827]">
+          <h3 className="line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[var(--shadow-text-primary)]">
             {product.title}
           </h3>
 
-          <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">
+          <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
             {product.author}
           </p>
         </button>
@@ -290,7 +290,7 @@ function ProductCard({ product, onOpen }) {
             </div>
 
             {hasOldPrice ? (
-              <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">
+              <div className="mt-0.5 text-[10.5px] font-semibold text-[var(--shadow-text-tertiary)] line-through">
                 {product.oldPrice}
               </div>
             ) : null}
@@ -306,8 +306,8 @@ function ProductCard({ product, onOpen }) {
             }}
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full active:scale-95 ${
               status.disabled
-                ? 'bg-[#eef2f7] text-[#98a2b3]'
-                : 'bg-[#111827] text-white'
+                ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]'
+                : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
             }`}
             aria-label={`Add ${product.title} to cart`}
           >
@@ -336,13 +336,13 @@ function MallShortcutRow({ setActiveTab }) {
               if (item.type === 'route') navigate(item.path)
               if (item.type === 'tab') setActiveTab?.(item.tab)
             }}
-            className={`rounded-[20px] bg-white px-2 py-3 text-center active:scale-[0.98] ${disabled ? 'opacity-45' : ''}`}
+            className={`rounded-[20px] bg-[var(--shadow-bg-surface)] px-2 py-3 text-center transition active:scale-[0.98] active:bg-[var(--shadow-bg-hover)] ${disabled ? 'opacity-45' : ''}`}
           >
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827]">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
               <i className={`fa-solid ${item.icon} text-[14px]`} />
             </div>
-            <div className="mt-2 text-[11px] font-extrabold text-[#111827]">{item.label}</div>
-            {disabled ? <div className="mt-0.5 text-[9px] font-bold text-[#98a2b3]">Soon</div> : null}
+            <div className="mt-2 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">{item.label}</div>
+            {disabled ? <div className="mt-0.5 text-[9px] font-bold text-[var(--shadow-text-tertiary)]">Soon</div> : null}
           </button>
         )
       })}
@@ -354,47 +354,47 @@ function PreOrderFeature({ products, onOpen }) {
   const firstProduct = products[0]
 
   return (
-    <section className="overflow-hidden rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+    <section className="overflow-hidden rounded-[26px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="inline-flex rounded-full bg-[#fff7d8] px-3 py-1 text-[10px] font-extrabold text-[#7a5600]">
+          <div className="inline-flex rounded-full bg-[#fff7d8] px-3 py-1 text-[10px] font-extrabold text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300">
             PRE-ORDER OPEN
           </div>
 
-          <h3 className="mt-3 text-[20px] font-extrabold leading-7 text-[#111827]">
+          <h3 className="mt-3 text-[20px] font-extrabold leading-7 text-[var(--shadow-text-primary)]">
             Reserve upcoming books before release
           </h3>
 
-          <p className="mt-2 text-[12px] font-semibold leading-5 text-[#8d94a1]">
+          <p className="mt-2 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
             Pre-order books are not ready stock. Check release date and reserve early before closing.
           </p>
         </div>
 
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[#f4f5f7] text-[#111827]">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
           <i className="fa-solid fa-calendar-check text-[22px]" />
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <div className="rounded-[16px] bg-[#f8f8f8] px-3 py-2">
-          <div className="text-[9px] font-bold text-[#98a2b3]">STATUS</div>
-          <div className="mt-1 text-[11px] font-extrabold text-[#111827]">{firstProduct ? 'Open' : 'Soon'}</div>
+        <div className="rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-2">
+          <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">STATUS</div>
+          <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">{firstProduct ? 'Open' : 'Soon'}</div>
         </div>
 
-        <div className="rounded-[16px] bg-[#f8f8f8] px-3 py-2">
-          <div className="text-[9px] font-bold text-[#98a2b3]">TYPE</div>
-          <div className="mt-1 text-[11px] font-extrabold text-[#111827]">Reserve</div>
+        <div className="rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-2">
+          <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">TYPE</div>
+          <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">Reserve</div>
         </div>
 
-        <div className="rounded-[16px] bg-[#f8f8f8] px-3 py-2">
-          <div className="text-[9px] font-bold text-[#98a2b3]">STOCK</div>
-          <div className="mt-1 text-[11px] font-extrabold text-[#111827]">Limited</div>
+        <div className="rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-2">
+          <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">STOCK</div>
+          <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">Limited</div>
         </div>
       </div>
 
       <button
         type="button"
-        className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+        className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] dark:bg-white dark:text-[#111827]"
         onClick={() => {
           if (firstProduct) onOpen(firstProduct)
         }}
@@ -410,12 +410,12 @@ function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey, 
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-[17px] font-extrabold text-[#111827]">{title}</h3>
-          {subtitle ? <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#98a2b3]">{subtitle}</p> : null}
+          <h3 className="text-[17px] font-extrabold text-[var(--shadow-text-primary)]">{title}</h3>
+          {subtitle ? <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[var(--shadow-text-tertiary)]">{subtitle}</p> : null}
         </div>
         <button
   type="button"
-  className="shrink-0 text-[12px] font-extrabold text-[#8d94a1]"
+  className="shrink-0 text-[12px] font-extrabold text-[var(--shadow-text-secondary)]"
   onClick={onMore}
 >
   More &gt;
@@ -425,7 +425,7 @@ function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey, 
       {loading ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[1, 2, 3, 4, 5, 6].map((item) => (
-            <div key={item} className="aspect-[2/3] animate-pulse rounded-[22px] bg-[#eef2f7]" />
+            <div key={item} className="aspect-[2/3] animate-pulse rounded-[22px] bg-[var(--shadow-bg-soft)]" />
           ))}
         </div>
       ) : books.length ? (
@@ -435,8 +435,8 @@ function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey, 
           ))}
         </div>
       ) : (
-        <div className="rounded-[22px] bg-white px-4 py-7 text-center shadow-sm ring-1 ring-black/5">
-          <div className="text-[13px] font-extrabold text-[#98a2b3]">Coming soon</div>
+        <div className="rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-7 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+          <div className="text-[13px] font-extrabold text-[var(--shadow-text-tertiary)]">Coming soon</div>
         </div>
       )}
     </section>
@@ -639,13 +639,13 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
     width: 8px;
     height: 8px;
     margin: 0 4px !important;
-    background: #111827;
+    background: var(--shadow-text-primary);
     opacity: 0.2;
   }
 
   .shadow-mall-pagination .swiper-pagination-bullet-active {
     width: 20px;
-    background: #111827;
+    background: var(--shadow-text-primary);
     border-radius: 5px;
     opacity: 1;
   }
@@ -656,11 +656,11 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
   <button
     type="button"
     onClick={() => navigate('/shop/mall/search')}
-    className="w-full rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+    className="w-full rounded-2xl bg-[var(--shadow-bg-surface)] p-3 text-left shadow-sm ring-1 ring-[var(--shadow-border)] active:scale-[0.99]"
   >
-    <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
-      <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
-      <span className="min-w-0 flex-1 text-[14px] font-semibold text-[#9ca3af]">
+    <div className="flex items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-3">
+      <i className="fa-solid fa-magnifying-glass text-[14px] text-[var(--shadow-text-secondary)]" />
+      <span className="min-w-0 flex-1 text-[14px] font-semibold text-[var(--shadow-placeholder)]">
         Search books or authors
       </span>
     </div>
