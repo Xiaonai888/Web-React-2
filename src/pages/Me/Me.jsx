@@ -475,8 +475,8 @@ const tx = (key) => getDisplayText(key)
         <div className="max-h-[62vh] overflow-y-auto pb-2">
           <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white dark:border-white/10 dark:bg-[#171923]">
             <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
-              <MenuRow to={isLoggedIn ? '/profile' : '/login'} icon="far fa-user" title={tx('editProfile')} subtitle={tx('editProfileSub')} />
-<MenuRow to="/settings" icon="fa-solid fa-shield-alt" title={tx('accountSettings')} subtitle={tx('accountSettingsSub')} />
+              <MenuRow to={isLoggedIn ? '/profile/edit' : '/login'} icon="far fa-user" title={tx('editProfile')} subtitle={tx('editProfileSub')} />
+              <MenuRow to={isLoggedIn ? '/profile/settings' : '/login'} icon="fa-solid fa-shield-alt" title={tx('accountSettings')} subtitle={tx('accountSettingsSub')} />
               <ThemeSwitchRow darkMode={darkMode} onChange={() => setDarkMode((value) => !value)} tx={tx} />
               <LanguageSummaryRow
                 storyLanguage={storyLanguage}
