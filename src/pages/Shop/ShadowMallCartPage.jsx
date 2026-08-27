@@ -38,9 +38,9 @@ function normalizeItem(item) {
 
 function CartItem({ item, onIncrease, onDecrease, onRemove }) {
   return (
-    <article className="rounded-[24px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+    <article className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
       <div className="flex gap-3">
-        <div className="h-[116px] w-[78px] shrink-0 overflow-hidden rounded-[16px] bg-[#eef0f4]">
+        <div className="h-[116px] w-[78px] shrink-0 overflow-hidden rounded-[16px] bg-[var(--shadow-bg-soft)]">
           {item.cover ? (
             <img
               src={item.cover}
@@ -51,7 +51,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
               }}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
+            <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
               <i className="fa-solid fa-book-open text-[18px]" />
             </div>
           )}
@@ -60,10 +60,10 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="line-clamp-2 text-[14px] font-extrabold leading-5 text-[#111827]">
+              <h3 className="line-clamp-2 text-[14px] font-extrabold leading-5 text-[var(--shadow-text-primary)]">
                 {item.title}
               </h3>
-              <p className="mt-1 line-clamp-1 text-[11.5px] font-semibold text-[#8d94a1]">
+              <p className="mt-1 line-clamp-1 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
                 {item.author}
               </p>
             </div>
@@ -71,7 +71,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
             <button
               type="button"
               onClick={onRemove}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] active:scale-95"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] active:scale-95 dark:bg-red-500/10 dark:text-red-300"
               aria-label={`Remove ${item.title}`}
             >
               <i className="fa-solid fa-trash text-[11px]" />
@@ -82,26 +82,26 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
             <div>
               <div className="text-[14px] font-extrabold text-[#e5484d]">{formatUsd(item.price)}</div>
               {item.oldPrice ? (
-                <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">
+                <div className="mt-0.5 text-[10.5px] font-semibold text-[var(--shadow-text-tertiary)] line-through">
                   {formatUsd(item.oldPrice)}
                 </div>
               ) : null}
             </div>
 
-            <div className="flex items-center rounded-full bg-[#f5f3fa] p-1">
+            <div className="flex items-center rounded-full bg-[var(--shadow-bg-soft)] p-1">
               <button
                 type="button"
                 onClick={onDecrease}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#111827] active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] active:scale-95"
                 aria-label={`Decrease ${item.title}`}
               >
                 <i className="fa-solid fa-minus text-[10px]" />
               </button>
-              <div className="w-9 text-center text-[13px] font-extrabold text-[#111827]">{item.quantity}</div>
+              <div className="w-9 text-center text-[13px] font-extrabold text-[var(--shadow-text-primary)]">{item.quantity}</div>
               <button
                 type="button"
                 onClick={onIncrease}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 dark:bg-white dark:text-[#111827]"
                 aria-label={`Increase ${item.title}`}
               >
                 <i className="fa-solid fa-plus text-[10px]" />
@@ -158,26 +158,26 @@ export default function ShadowMallCartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
+    <div className="app-page min-h-screen pb-[120px]">
+      <header className="sticky top-0 z-50 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
             onClick={() => navigate('/shop')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[#111827]">
+          <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[var(--shadow-text-primary)]">
             My Cart
           </h1>
 
           <button
             type="button"
             onClick={() => navigate('/shop/mall/cart')}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[#111827] active:scale-95"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Cart items"
           >
             <i className="fa-solid fa-cart-shopping text-[20px]" />
@@ -193,9 +193,9 @@ export default function ShadowMallCartPage() {
       <main className="mx-auto max-w-5xl px-4 pt-4">
         {items.length ? (
           <>
-            <section className="rounded-[22px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
-              <div className="text-[14px] font-extrabold text-[#111827]">Selected Books</div>
-              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+            <section className="rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
+              <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Selected Books</div>
+              <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
                 Check your books and quantity before checkout.
               </div>
             </section>
@@ -203,20 +203,20 @@ export default function ShadowMallCartPage() {
             <button
               type="button"
               onClick={() => navigate('/shop/mall/orders')}
-              className="mt-3 flex w-full items-center gap-3 rounded-[22px] bg-white px-4 py-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+              className="mt-3 flex w-full items-center gap-3 rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-3 text-left shadow-sm ring-1 ring-[var(--shadow-border)] active:scale-[0.99]"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300">
                 <i className="fa-solid fa-clock-rotate-left text-[15px]" />
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-extrabold text-[#111827]">Order History</div>
-                <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#8d94a1]">
+                <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Order History</div>
+                <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
                   View your previous Shadow Mall orders.
                 </div>
               </div>
 
-              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#98a2b3]" />
+              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-tertiary)]" />
             </button>
 
             <section className="mt-3 space-y-3">
@@ -231,26 +231,26 @@ export default function ShadowMallCartPage() {
               ))}
             </section>
 
-            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-              <div className="text-[15px] font-extrabold text-[#111827]">Order Summary</div>
+            <section className="mt-4 rounded-[24px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
+              <div className="text-[15px] font-extrabold text-[var(--shadow-text-primary)]">Order Summary</div>
 
               <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
+                <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
                   <span>Subtotal</span>
-                  <span className="font-extrabold text-[#111827]">{formatUsd(subtotal)}</span>
+                  <span className="font-extrabold text-[var(--shadow-text-primary)]">{formatUsd(subtotal)}</span>
                 </div>
 
-                <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
+                <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
                   <span>Delivery fee</span>
-                  <span className="font-extrabold text-[#111827]">Calculate later</span>
+                  <span className="font-extrabold text-[var(--shadow-text-primary)]">Calculate later</span>
                 </div>
 
-                <div className="border-t border-[#f0eef6] pt-3">
+                <div className="border-t border-[var(--shadow-border)] pt-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[14px] font-extrabold text-[#111827]">Total</span>
+                    <span className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Total</span>
                     <span className="text-[18px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</span>
                   </div>
-                  <p className="mt-1 text-[11px] font-medium text-[#8d94a1]">
+                  <p className="mt-1 text-[11px] font-medium text-[var(--shadow-text-secondary)]">
                     Delivery fee will be added after address information.
                   </p>
                 </div>
@@ -262,34 +262,34 @@ export default function ShadowMallCartPage() {
             <button
               type="button"
               onClick={() => navigate('/shop/mall/orders')}
-              className="mb-4 flex w-full items-center gap-3 rounded-[22px] bg-white px-4 py-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+              className="mb-4 flex w-full items-center gap-3 rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-3 text-left shadow-sm ring-1 ring-[var(--shadow-border)] active:scale-[0.99]"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300">
                 <i className="fa-solid fa-clock-rotate-left text-[15px]" />
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-extrabold text-[#111827]">Order History</div>
-                <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#8d94a1]">
+                <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Order History</div>
+                <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
                   View your previous Shadow Mall orders.
                 </div>
               </div>
 
-              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#98a2b3]" />
+              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-tertiary)]" />
             </button>
 
-            <section className="rounded-[26px] bg-white px-5 py-12 text-center shadow-sm ring-1 ring-black/5">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+            <section className="rounded-[26px] bg-[var(--shadow-bg-surface)] px-5 py-12 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
                 <i className="fa-solid fa-cart-shopping text-[22px]" />
               </div>
-              <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">Your cart is empty</h2>
-              <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
+              <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Your cart is empty</h2>
+              <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
                 Add real books from Shadow Mall before checkout.
               </p>
               <button
                 type="button"
                 onClick={() => navigate('/shop')}
-                className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
+                className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
               >
                 Back to Shop
               </button>
@@ -299,17 +299,17 @@ export default function ShadowMallCartPage() {
       </main>
 
       {items.length ? (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eceaf2] bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-5xl items-center gap-3">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold text-[#8d94a1]">Total</div>
+              <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">Total</div>
               <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</div>
             </div>
 
             <button
               type="button"
               onClick={() => navigate('/shop/mall/checkout')}
-              className="flex h-[52px] min-w-[160px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99]"
+              className="flex h-[52px] min-w-[160px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] dark:bg-white dark:text-[#111827]"
             >
               Checkout
             </button>
