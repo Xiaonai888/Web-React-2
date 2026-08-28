@@ -22,9 +22,207 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../utils/homeDataCache'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('forYouPage', {
+  en: {
+    genres: 'Genres',
+    search: 'Search',
+    notifications: 'Notifications',
+    novel: 'Novel',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    today: 'Today',
+    romance: 'Romance',
+    fantasy: 'Fantasy',
+    action: 'Action',
+    comedy: 'Comedy',
+    drama: 'Drama',
+    genre: 'Genre',
+    comingSoon: 'This section is coming soon. Novel is available now.',
+    loadingSlides: 'Loading slides...',
+    noSlides: 'No slides yet',
+    slide: 'Slide {{count}}',
+    new: 'NEW',
+    hot: 'HOT',
+    top: 'TOP',
+    shop: 'Shop',
+    tasks: 'Tasks',
+    ranking: 'Ranking',
+    event: 'Event',
+    shadowSpotlight: 'Shadow Spotlight',
+    continueReading: 'Continue Reading',
+    dailyPicks: 'Daily Picks',
+    trendingNow: 'Trending Now',
+    updateToday: 'Update Today',
+    editorWeeklyPicks: "Editor's Weekly Picks",
+    newArrivals: 'New Arrivals',
+    topNovel: 'Top Novel',
+    eventPerksHub: 'Event & Perks Hub',
+    youMightLike: 'You Might Like',
+  },
+  km: {
+    genres: 'ប្រភេទរឿង',
+    search: 'ស្វែងរក',
+    notifications: 'ការជូនដំណឹង',
+    novel: 'Novel',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    today: 'ថ្ងៃនេះ',
+    romance: 'មនោសញ្ចេតនា',
+    fantasy: 'Fantasy',
+    action: 'សកម្មភាព',
+    comedy: 'កំប្លែង',
+    drama: 'Drama',
+    genre: 'ប្រភេទរឿង',
+    comingSoon: 'ផ្នែកនេះនឹងមកដល់ឆាប់ៗនេះ។ ឥឡូវនេះ Novel អាចប្រើបាន។',
+    loadingSlides: 'កំពុងផ្ទុក Slides...',
+    noSlides: 'មិនទាន់មាន Slides',
+    slide: 'Slide {{count}}',
+    new: 'ថ្មី',
+    hot: 'កំពុងពេញនិយម',
+    top: 'កំពូល',
+    shop: 'ហាង',
+    tasks: 'បេសកកម្ម',
+    ranking: 'ចំណាត់ថ្នាក់',
+    event: 'ព្រឹត្តិការណ៍',
+    shadowSpotlight: 'Shadow Spotlight',
+    continueReading: 'បន្តអាន',
+    dailyPicks: 'ជម្រើសប្រចាំថ្ងៃ',
+    trendingNow: 'កំពុងពេញនិយម',
+    updateToday: 'Update ថ្ងៃនេះ',
+    editorWeeklyPicks: 'ជម្រើសប្រចាំសប្តាហ៍របស់ Editor',
+    newArrivals: 'មកដល់ថ្មី',
+    topNovel: 'Novel កំពូល',
+    eventPerksHub: 'មជ្ឈមណ្ឌល Event & Perks',
+    youMightLike: 'អ្នកអាចចូលចិត្ត',
+  },
+  zh: {
+    genres: '类型',
+    search: '搜索',
+    notifications: '通知',
+    novel: '小说',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    today: '今天',
+    romance: '爱情',
+    fantasy: '奇幻',
+    action: '动作',
+    comedy: '喜剧',
+    drama: '剧情',
+    genre: '类型',
+    comingSoon: '此版块即将上线。目前 Novel 已可使用。',
+    loadingSlides: '正在加载轮播...',
+    noSlides: '暂无轮播',
+    slide: '轮播 {{count}}',
+    new: '新',
+    hot: '热门',
+    top: '榜首',
+    shop: '商店',
+    tasks: '任务',
+    ranking: '排行榜',
+    event: '活动',
+    shadowSpotlight: 'Shadow 精选',
+    continueReading: '继续阅读',
+    dailyPicks: '每日精选',
+    trendingNow: '当前热门',
+    updateToday: '今日更新',
+    editorWeeklyPicks: '编辑每周精选',
+    newArrivals: '最新上架',
+    topNovel: '热门小说',
+    eventPerksHub: '活动与福利中心',
+    youMightLike: '猜你喜欢',
+  },
+  ja: {
+    genres: 'ジャンル',
+    search: '検索',
+    notifications: '通知',
+    novel: '小説',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    today: '今日',
+    romance: 'ロマンス',
+    fantasy: 'ファンタジー',
+    action: 'アクション',
+    comedy: 'コメディ',
+    drama: 'ドラマ',
+    genre: 'ジャンル',
+    comingSoon: 'このセクションは近日公開予定です。現在は Novel を利用できます。',
+    loadingSlides: 'スライドを読み込み中...',
+    noSlides: 'スライドはまだありません',
+    slide: 'スライド {{count}}',
+    new: '新着',
+    hot: '人気',
+    top: 'トップ',
+    shop: 'ショップ',
+    tasks: 'タスク',
+    ranking: 'ランキング',
+    event: 'イベント',
+    shadowSpotlight: 'Shadow Spotlight',
+    continueReading: '続きを読む',
+    dailyPicks: 'デイリーピック',
+    trendingNow: 'トレンド',
+    updateToday: '本日の更新',
+    editorWeeklyPicks: '編集部の週間ピック',
+    newArrivals: '新着',
+    topNovel: 'トップ小説',
+    eventPerksHub: 'イベント＆特典',
+    youMightLike: 'おすすめ',
+  },
+  ko: {
+    genres: '장르',
+    search: '검색',
+    notifications: '알림',
+    novel: '소설',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    today: '오늘',
+    romance: '로맨스',
+    fantasy: '판타지',
+    action: '액션',
+    comedy: '코미디',
+    drama: '드라마',
+    genre: '장르',
+    comingSoon: '이 섹션은 곧 제공됩니다. 현재 Novel을 이용할 수 있습니다.',
+    loadingSlides: '슬라이드를 불러오는 중...',
+    noSlides: '아직 슬라이드가 없습니다',
+    slide: '슬라이드 {{count}}',
+    new: '신규',
+    hot: '인기',
+    top: 'TOP',
+    shop: '상점',
+    tasks: '미션',
+    ranking: '랭킹',
+    event: '이벤트',
+    shadowSpotlight: 'Shadow Spotlight',
+    continueReading: '계속 읽기',
+    dailyPicks: '오늘의 추천',
+    trendingNow: '지금 인기',
+    updateToday: '오늘 업데이트',
+    editorWeeklyPicks: '에디터 주간 추천',
+    newArrivals: '신규 작품',
+    topNovel: '인기 소설',
+    eventPerksHub: '이벤트 & 혜택',
+    youMightLike: '추천 작품',
+  },
+})
 
 const SHOW_SHADOW_EXCLUSIVE = false
 const STORY_SECTION_TITLES = ['Shadow Spotlight', 'Continue Reading', 'Daily Picks', 'Trending Now', 'Update Today', "Editor's Weekly Picks", 'New Arrivals', 'Top Novel', 'Event & Perks Hub', 'You Might Like']
+
+const STORY_SECTION_TITLE_KEYS = {
+  'Shadow Spotlight': 'shadowSpotlight',
+  'Continue Reading': 'continueReading',
+  'Daily Picks': 'dailyPicks',
+  'Trending Now': 'trendingNow',
+  'Update Today': 'updateToday',
+  "Editor's Weekly Picks": 'editorWeeklyPicks',
+  'New Arrivals': 'newArrivals',
+  'Top Novel': 'topNovel',
+  'Event & Perks Hub': 'eventPerksHub',
+  'You Might Like': 'youMightLike',
+}
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -43,10 +241,38 @@ const fallbackGenreTabs = [
   { label: 'Drama', slug: 'drama' },
 ]
 
+const BUILT_IN_GENRE_LABELS = {
+  today: { label: 'Today', key: 'today' },
+  romance: { label: 'Romance', key: 'romance' },
+  fantasy: { label: 'Fantasy', key: 'fantasy' },
+  action: { label: 'Action', key: 'action' },
+  comedy: { label: 'Comedy', key: 'comedy' },
+  drama: { label: 'Drama', key: 'drama' },
+}
+
 const slideBadgeColors = {
   NEW: 'bg-[#ff2f55] text-white',
   HOT: 'bg-[#ff7a00] text-white',
   TOP: 'bg-[#f6b800] text-[#111827]',
+}
+
+const SLIDE_BADGE_LABEL_KEYS = {
+  NEW: 'new',
+  HOT: 'hot',
+  TOP: 'top',
+}
+
+const STORY_TYPE_LABEL_KEYS = {
+  novel: 'novel',
+  chat: 'chatStory',
+  manga: 'manga',
+}
+
+const SHORTCUT_LABEL_KEYS = {
+  Shop: 'shop',
+  Tasks: 'tasks',
+  Ranking: 'ranking',
+  Event: 'event',
 }
 
 function getSlideBadge(slide) {
@@ -69,10 +295,27 @@ function getSlideGenre(slide) {
   return String(slide.genre_label || slide.genre || slide.genre_name || slide.category || '').trim()
 }
 
-
-
 function getSlideBadgeClass(badge) {
   return slideBadgeColors[badge] || 'bg-[#ff2f55] text-white'
+}
+
+function getGenreDisplayLabel(tab, t) {
+  if (tab?.label === 'Genre') {
+    return t('forYouPage.genre')
+  }
+
+  const builtIn = BUILT_IN_GENRE_LABELS[tab?.slug]
+
+  if (builtIn && tab?.label === builtIn.label) {
+    return t(`forYouPage.${builtIn.key}`)
+  }
+
+  return tab?.label || ''
+}
+
+function getStorySectionTitle(title, t) {
+  const key = STORY_SECTION_TITLE_KEYS[title]
+  return key ? t(`forYouPage.${key}`) : title
 }
 
 function GridHeaderIcon() {
@@ -133,6 +376,8 @@ function BellHeaderIcon() {
 }
 
 function ComingSoonPanel({ title }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="px-4 py-8">
       <div className="rounded-[24px] bg-white p-8 text-center shadow-sm ring-1 ring-gray-100">
@@ -141,7 +386,7 @@ function ComingSoonPanel({ title }) {
         </div>
         <h2 className="text-lg font-extrabold text-gray-900">{title}</h2>
         <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
-          This section is coming soon. Novel is available now.
+          {t('forYouPage.comingSoon')}
         </p>
       </div>
     </div>
@@ -155,6 +400,7 @@ export default function ForYou({
   titleOnlySections = false,
   onReady = null,
 }) {
+  const { t } = useDisplayTranslation()
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
@@ -223,7 +469,7 @@ useEffect(() => {
 
   handleGenreChange(foundTab)
 }, [searchParams, genreTabs, activeGenre])
-  
+
   function isSwipeBlockedTarget(target) {
     const element =
       typeof Element !== 'undefined' && target instanceof Element
@@ -779,7 +1025,7 @@ useEffect(() => {
   <Link
     to="/genres"
     className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
-    aria-label="Genres"
+    aria-label={t('forYouPage.genres')}
   >
     <GridHeaderIcon />
   </Link>
@@ -787,7 +1033,7 @@ useEffect(() => {
   <Link
     to="/search"
     className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
-    aria-label="Search"
+    aria-label={t('forYouPage.search')}
   >
     <SearchHeaderIcon />
   </Link>
@@ -796,7 +1042,7 @@ useEffect(() => {
     type="button"
     onClick={() => setShowNotificationPopup(true)}
     className="relative flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
-    aria-label="Notifications"
+    aria-label={t('forYouPage.notifications')}
   >
     <BellHeaderIcon />
 
@@ -819,7 +1065,7 @@ useEffect(() => {
         }`}
         onClick={() => setActiveTab(tab)}
       >
-        {tab === 'novel' ? 'Novel' : tab === 'chat' ? 'Chat Story' : 'Manga'}
+        {t(`forYouPage.${STORY_TYPE_LABEL_KEYS[tab]}`)}
       </div>
     ))}
   </nav>
@@ -847,7 +1093,7 @@ useEffect(() => {
                     }`}
                   >
                     <span className="relative z-10">
-                      {tab.label}
+                      {getGenreDisplayLabel(tab, t)}
                     </span>
 
                     <span
@@ -867,7 +1113,13 @@ useEffect(() => {
         <div style={{ height: activeTab === 'novel' ? '104px' : SHOW_STORY_TYPE_TABS ? '96px' : '58px' }} />
 
         {activeTab !== 'novel' ? (
-          <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
+          <ComingSoonPanel
+            title={t(
+              activeTab === 'chat'
+                ? 'forYouPage.chatStory'
+                : 'forYouPage.manga'
+            )}
+          />
         ) : (
          <div
            id="tab-content-root"
@@ -887,13 +1139,17 @@ useEffect(() => {
               <div className="swiper-wrapper">
                 {slidesLoading && (
                   <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-gray-400">Loading slides...</span>
+                    <span className="text-sm font-semibold text-gray-400">
+                      {t('forYouPage.loadingSlides')}
+                    </span>
                   </div>
                 )}
 
                 {!slidesLoading && slides.length === 0 && (
                   <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-gray-400">No slides yet</span>
+                    <span className="text-sm font-semibold text-gray-400">
+                      {t('forYouPage.noSlides')}
+                    </span>
                   </div>
                 )}
 
@@ -914,7 +1170,12 @@ useEffect(() => {
                       <img
                         src={slide.image_url}
                         className="h-full w-full object-cover"
-                        alt={slideTitle || `Slide ${slide.order_index}`}
+                        alt={
+                          slideTitle ||
+                          t('forYouPage.slide', {
+                            count: slide.order_index,
+                          })
+                        }
                         loading="lazy"
                         decoding="async"
                       />
@@ -937,7 +1198,7 @@ useEffect(() => {
       <div className="mt-2 flex items-center gap-2">
         {slideBadge ? (
           <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[9px] font-black uppercase leading-none ${getSlideBadgeClass(slideBadge)}`}>
-            {slideBadge}
+            {t(`forYouPage.${SLIDE_BADGE_LABEL_KEYS[slideBadge]}`)}
           </span>
         ) : null}
 
@@ -963,34 +1224,42 @@ useEffect(() => {
     { icon: '/assets/Shortcut/Task.svg', label: 'Tasks', path: '/tasks' },
     { icon: '/assets/Shortcut/Ranking.svg', label: 'Ranking', path: '/ranking' },
     { icon: '/assets/Shortcut/Event.svg', label: 'Event', path: '/event' },
-  ].map((item) => (
-    <button
-      key={item.label}
-      type="button"
-      className="group cursor-pointer"
-      onClick={() => item.path && navigate(item.path)}
-    >
-      <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center transition-all">
-        <img
-          src={item.icon}
-          alt={item.label}
-          className="h-7 w-7 object-contain"
-          loading="lazy"
-          decoding="async"
-        />
-      </div>
+  ].map((item) => {
+    const displayLabel = t(
+      `forYouPage.${SHORTCUT_LABEL_KEYS[item.label]}`
+    )
 
-      <span className="text-[10px] font-semibold text-[#111827]">
-        {item.label}
-      </span>
-    </button>
-  ))}
+    return (
+      <button
+        key={item.label}
+        type="button"
+        className="group cursor-pointer"
+        onClick={() => item.path && navigate(item.path)}
+      >
+        <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center transition-all">
+          <img
+            src={item.icon}
+            alt={displayLabel}
+            className="h-7 w-7 object-contain"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+
+        <span className="text-[10px] font-semibold text-[#111827]">
+          {displayLabel}
+        </span>
+      </button>
+    )
+  })}
 </div>
     {titleOnlySections ? (
   <div className="px-4 py-2">
     {STORY_SECTION_TITLES.map((title) => (
       <div key={title} className="my-8">
-        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">{title}</h2>
+        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+          {getStorySectionTitle(title, t)}
+        </h2>
       </div>
     ))}
   </div>
@@ -1000,7 +1269,7 @@ useEffect(() => {
             <div className="my-6">
               <ShadowSpotlight />
             </div>
-             
+
             {SHOW_SHADOW_EXCLUSIVE ? (
   <div className="my-6">
     <ShadowExclusiveSection />
@@ -1040,7 +1309,7 @@ useEffect(() => {
               <TopNovelSection />
             </div>
 
-            
+
 
             <div className="my-6">
               <EventPerksHubSection />
