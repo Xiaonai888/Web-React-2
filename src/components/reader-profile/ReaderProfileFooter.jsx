@@ -212,7 +212,10 @@ export default function ReaderProfileFooter({
     storedUser?.username ||
     'Me'
 
-    location.pathname.startsWith('/chat')
+  const activeKey =
+    location.pathname.startsWith('/store')
+      ? 'mall'
+      : location.pathname.startsWith('/chat')
       ? 'chat'
       : location.pathname.startsWith('/library')
         ? 'library'
