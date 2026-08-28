@@ -1,5 +1,95 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('notificationPage', {
+  en: {
+    all: 'All',
+    unread: 'Unread',
+    comments: 'Comments',
+    announcements: 'Announcements',
+    notification: 'Notification',
+    older: 'OLDER',
+    loadFailed: 'Failed to load notifications',
+    dragToClose: 'Drag down to close notifications',
+    title: 'Shadow Notification',
+    markAllRead: 'Mark all as read',
+    loading: 'Loading notifications...',
+    noNotifications: 'No notifications',
+    caughtUp: 'You are all caught up for now.',
+    backToNotifications: 'Back to notifications',
+    openLink: 'Open link',
+  },
+  km: {
+    all: 'ទាំងអស់',
+    unread: 'មិនទាន់អាន',
+    comments: 'មតិយោបល់',
+    announcements: 'សេចក្តីប្រកាស',
+    notification: 'ការជូនដំណឹង',
+    older: 'ចាស់ជាងនេះ',
+    loadFailed: 'មិនអាចផ្ទុកការជូនដំណឹងបានទេ',
+    dragToClose: 'អូសចុះក្រោមដើម្បីបិទការជូនដំណឹង',
+    title: 'ការជូនដំណឹង Shadow',
+    markAllRead: 'សម្គាល់ទាំងអស់ថាបានអាន',
+    loading: 'កំពុងផ្ទុកការជូនដំណឹង...',
+    noNotifications: 'មិនមានការជូនដំណឹង',
+    caughtUp: 'ឥឡូវនេះអ្នកបានមើលអស់ហើយ។',
+    backToNotifications: 'ត្រឡប់ទៅការជូនដំណឹង',
+    openLink: 'បើកតំណ',
+  },
+  zh: {
+    all: '全部',
+    unread: '未读',
+    comments: '评论',
+    announcements: '公告',
+    notification: '通知',
+    older: '更早',
+    loadFailed: '无法加载通知',
+    dragToClose: '向下拖动以关闭通知',
+    title: 'Shadow 通知',
+    markAllRead: '全部标为已读',
+    loading: '正在加载通知...',
+    noNotifications: '暂无通知',
+    caughtUp: '目前没有新的通知。',
+    backToNotifications: '返回通知',
+    openLink: '打开链接',
+  },
+  ja: {
+    all: 'すべて',
+    unread: '未読',
+    comments: 'コメント',
+    announcements: 'お知らせ',
+    notification: '通知',
+    older: '以前',
+    loadFailed: '通知を読み込めませんでした',
+    dragToClose: '下にドラッグして通知を閉じる',
+    title: 'Shadow 通知',
+    markAllRead: 'すべて既読にする',
+    loading: '通知を読み込み中...',
+    noNotifications: '通知はありません',
+    caughtUp: '現在、新しい通知はありません。',
+    backToNotifications: '通知に戻る',
+    openLink: 'リンクを開く',
+  },
+  ko: {
+    all: '전체',
+    unread: '읽지 않음',
+    comments: '댓글',
+    announcements: '공지',
+    notification: '알림',
+    older: '이전',
+    loadFailed: '알림을 불러오지 못했습니다',
+    dragToClose: '아래로 드래그하여 알림 닫기',
+    title: 'Shadow 알림',
+    markAllRead: '모두 읽음으로 표시',
+    loading: '알림을 불러오는 중...',
+    noNotifications: '알림이 없습니다',
+    caughtUp: '현재 새 알림이 없습니다.',
+    backToNotifications: '알림으로 돌아가기',
+    openLink: '링크 열기',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -13,6 +103,21 @@ const TABS = [
   { key: 'community', label: 'Comments' },
   { key: 'announcements', label: 'Announcements' },
 ]
+
+const TAB_LABEL_KEYS = {
+  all: 'all',
+  unread: 'unread',
+  community: 'comments',
+  announcements: 'announcements',
+}
+
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-GB',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
 
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
@@ -38,6 +143,11 @@ function getNotificationTypeLabel(type) {
   return 'Announcements'
 }
 
+function getDisplayNotificationTypeLabel(type, t) {
+  if (type === 'community') return t('notificationPage.comments')
+  return t('notificationPage.announcements')
+}
+
 function formatCount(count) {
   if (count > 99) return '99+'
   return String(count)
@@ -59,6 +169,25 @@ function formatDateGroup(value) {
     .toUpperCase()
 }
 
+function formatDisplayDateGroup(value, language) {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date
+    .toLocaleDateString(
+      DISPLAY_LOCALES[language] || DISPLAY_LOCALES.en,
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }
+    )
+    .toUpperCase()
+}
+
 function formatNotificationTime(value) {
   if (!value) return ''
 
@@ -72,6 +201,22 @@ function formatNotificationTime(value) {
   })
 }
 
+function formatDisplayNotificationTime(value, language) {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleTimeString(
+    DISPLAY_LOCALES[language] || DISPLAY_LOCALES.en,
+    {
+      hour: 'numeric',
+      minute: '2-digit',
+    }
+  )
+}
+
 function mapNotification(item) {
   return {
     id: item.id,
@@ -83,6 +228,8 @@ function mapNotification(item) {
     link: item.link || '',
     imageUrl: item.image_url || '',
     isRead: Boolean(item.is_read),
+    createdAt: item.created_at || '',
+    hasTitle: Boolean(item.title),
   }
 }
 
@@ -131,8 +278,27 @@ function groupNotificationsByDate(items) {
   return groups
 }
 
+function getDisplayNotificationTitle(notification, t) {
+  if (!notification?.hasTitle) {
+    return t('notificationPage.notification')
+  }
+
+  return notification.title
+}
+
+function getDisplayGroupLabel(group, language, t) {
+  const createdAt = group?.items?.[0]?.createdAt
+  const formatted = formatDisplayDateGroup(createdAt, language)
+
+  if (formatted) return formatted
+  if (group?.label === 'OLDER') return t('notificationPage.older')
+
+  return group?.label || ''
+}
+
 export default function NotificationPage({ isOpen = true, onClose }) {
   const navigate = useNavigate()
+  const { language, t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState('all')
   const [notifications, setNotifications] = useState([])
   const [counts, setCounts] = useState(emptyCounts)
@@ -155,69 +321,69 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   const groupedNotifications = useMemo(() => groupNotificationsByDate(filteredNotifications), [filteredNotifications])
 
   async function loadNotifications() {
-  const token = getReaderToken()
+    const token = getReaderToken()
 
-  if (!token) {
-    navigate('/login')
-    return
-  }
-
-  try {
-    setLoading(true)
-    setMessage('')
-
-    const response = await fetch(`${API_BASE_URL}/api/notifications`, {
-      headers: getHeaders(),
-    })
-
-    const data = await response.json().catch(() => ({}))
-
-    if (response.status === 401 || response.status === 403) {
+    if (!token) {
       navigate('/login')
       return
     }
 
-    if (!response.ok || !data.ok) {
-      throw new Error(data.message || 'Failed to load notifications')
+    try {
+      setLoading(true)
+      setMessage('')
+
+      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+        headers: getHeaders(),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.status === 401 || response.status === 403) {
+        navigate('/login')
+        return
+      }
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || t('notificationPage.loadFailed'))
+      }
+
+      setNotifications((data.notifications || []).map(mapNotification))
+      setCounts(data.counts || emptyCounts())
+    } catch (error) {
+      setMessage(error.message || t('notificationPage.loadFailed'))
+      setNotifications([])
+      setCounts(emptyCounts())
+    } finally {
+      setLoading(false)
     }
-
-    setNotifications((data.notifications || []).map(mapNotification))
-    setCounts(data.counts || emptyCounts())
-  } catch (error) {
-    setMessage(error.message || 'Failed to load notifications')
-    setNotifications([])
-    setCounts(emptyCounts())
-  } finally {
-    setLoading(false)
   }
-}
-
-useEffect(() => {
-  loadNotifications()
-}, [])
 
   useEffect(() => {
-  const scrollY = window.scrollY
-  const previousPosition = document.body.style.position
-  const previousTop = document.body.style.top
-  const previousWidth = document.body.style.width
-  const previousOverflow = document.body.style.overflow
+    loadNotifications()
+  }, [])
 
-  document.body.classList.add('shadow-notification-open')
-  document.body.style.position = 'fixed'
-  document.body.style.top = `-${scrollY}px`
-  document.body.style.width = '100%'
-  document.body.style.overflow = 'hidden'
+  useEffect(() => {
+    const scrollY = window.scrollY
+    const previousPosition = document.body.style.position
+    const previousTop = document.body.style.top
+    const previousWidth = document.body.style.width
+    const previousOverflow = document.body.style.overflow
 
-  return () => {
-    document.body.classList.remove('shadow-notification-open')
-    document.body.style.position = previousPosition
-    document.body.style.top = previousTop
-    document.body.style.width = previousWidth
-    document.body.style.overflow = previousOverflow
-    window.scrollTo(0, scrollY)
-  }
-}, [])
+    document.body.classList.add('shadow-notification-open')
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.classList.remove('shadow-notification-open')
+      document.body.style.position = previousPosition
+      document.body.style.top = previousTop
+      document.body.style.width = previousWidth
+      document.body.style.overflow = previousOverflow
+      window.scrollTo(0, scrollY)
+    }
+  }, [])
 
   async function markAllAsRead() {
     setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
@@ -250,47 +416,47 @@ useEffect(() => {
     }
   }
 
- async function openNotification(notification) {
-  await markNotificationAsRead(notification)
+  async function openNotification(notification) {
+    await markNotificationAsRead(notification)
 
-  if (notification.type === 'announcements') {
-    setSelectedAnnouncement({ ...notification, isRead: true })
-    return
-  }
+    if (notification.type === 'announcements') {
+      setSelectedAnnouncement({ ...notification, isRead: true })
+      return
+    }
 
-  if (notification.link) {
-    navigate(notification.link)
+    if (notification.link) {
+      navigate(notification.link)
+    }
   }
-}
 
   function handleSheetDragStart(event) {
-  dragStartYRef.current = event.clientY
-  sheetDragYRef.current = 0
-  setSheetDragY(0)
-  event.currentTarget.setPointerCapture?.(event.pointerId)
-}
-
-function handleSheetDragMove(event) {
-  if (dragStartYRef.current === null) return
-
-  const nextY = Math.max(0, event.clientY - dragStartYRef.current)
-  sheetDragYRef.current = nextY
-  setSheetDragY(nextY)
-}
-
-function handleSheetDragEnd() {
-  const shouldClose = sheetDragYRef.current > 90
-
-  dragStartYRef.current = null
-  sheetDragYRef.current = 0
-  setSheetDragY(0)
-
-  if (shouldClose) {
-    onClose?.()
+    dragStartYRef.current = event.clientY
+    sheetDragYRef.current = 0
+    setSheetDragY(0)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
   }
-}
 
-const freezeForYouHeaderStyle = `
+  function handleSheetDragMove(event) {
+    if (dragStartYRef.current === null) return
+
+    const nextY = Math.max(0, event.clientY - dragStartYRef.current)
+    sheetDragYRef.current = nextY
+    setSheetDragY(nextY)
+  }
+
+  function handleSheetDragEnd() {
+    const shouldClose = sheetDragYRef.current > 90
+
+    dragStartYRef.current = null
+    sheetDragYRef.current = 0
+    setSheetDragY(0)
+
+    if (shouldClose) {
+      onClose?.()
+    }
+  }
+
+  const freezeForYouHeaderStyle = `
   body.shadow-notification-open .for-you-top-bars {
     transform: translateY(0) !important;
     opacity: 1 !important;
@@ -304,222 +470,250 @@ const freezeForYouHeaderStyle = `
 }
 `
 
-return (
-  <>
-    <style>{freezeForYouHeaderStyle}</style>
+  return (
+    <>
+      <style>{freezeForYouHeaderStyle}</style>
 
-    <div
-      className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/45"
-      onClick={onClose}
-      
-    >
       <div
-  className="flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
-  style={{
-    transform: `translateY(${sheetDragY}px)`,
-    transition: dragStartYRef.current === null ? 'transform 0.18s ease-out' : 'none',
-  }}
-  onClick={(event) => event.stopPropagation()}
->
-        <button
-  type="button"
-  aria-label="Drag down to close notifications"
-  className="flex w-full shrink-0 cursor-grab touch-none justify-center pb-1 pt-2 active:cursor-grabbing"
-  onPointerDown={handleSheetDragStart}
-  onPointerMove={handleSheetDragMove}
-  onPointerUp={handleSheetDragEnd}
-  onPointerCancel={handleSheetDragEnd}
->
-  <span className="h-1.5 w-12 rounded-full bg-[#B8BDC7]" />
-</button>
+        className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/45"
+        onClick={onClose}
+      >
+        <div
+          className="flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
+          style={{
+            transform: `translateY(${sheetDragY}px)`,
+            transition: dragStartYRef.current === null ? 'transform 0.18s ease-out' : 'none',
+          }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            aria-label={t('notificationPage.dragToClose')}
+            className="flex w-full shrink-0 cursor-grab touch-none justify-center pb-1 pt-2 active:cursor-grabbing"
+            onPointerDown={handleSheetDragStart}
+            onPointerMove={handleSheetDragMove}
+            onPointerUp={handleSheetDragEnd}
+            onPointerCancel={handleSheetDragEnd}
+          >
+            <span className="h-1.5 w-12 rounded-full bg-[#B8BDC7]" />
+          </button>
 
-        <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate text-[24px] font-black leading-7 text-[#111111]">Shadow Notification</h1>
+          <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h1 className="truncate text-[24px] font-black leading-7 text-[#111111]">
+                  {t('notificationPage.title')}
+                </h1>
+              </div>
+
+              <button
+                type="button"
+                onClick={markAllAsRead}
+                aria-label={t('notificationPage.markAllRead')}
+                disabled={!counts.unread}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111111] shadow-sm active:scale-95 disabled:opacity-40"
+              >
+                <i className="fa-solid fa-check-double text-[14px]" />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={markAllAsRead}
-              aria-label="Mark all as read"
-              disabled={!counts.unread}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111111] shadow-sm active:scale-95 disabled:opacity-40"
-            >
-              <i className="fa-solid fa-check-double text-[14px]" />
-            </button>
           </div>
+
+          <div className="shrink-0 border-y border-[#E5E7EB] bg-[#F6F7FB] px-5 py-3">
+            <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.key
+                const count = counts[tab.key] || 0
+                const showCount = tab.key !== 'all' && count > 0
+
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`relative shrink-0 rounded-full px-5 py-1.5 text-xs transition active:scale-95 ${
+                      isActive ? 'bg-[#111827] text-white font-bold shadow-sm' : 'border border-gray-200 bg-white text-gray-600 font-semibold'
+                    }`}
+                  >
+                    <span>{t(`notificationPage.${TAB_LABEL_KEYS[tab.key]}`)}</span>
+                    {showCount ? (
+                      <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black leading-none text-[#111111] shadow-sm">
+                        {formatCount(count)}
+                      </span>
+                    ) : null}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4">
+            {loading ? (
+              <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
+                <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
+                <p className="text-[13px] font-bold text-[#7B8190]">
+                  {t('notificationPage.loading')}
+                </p>
+              </div>
+            ) : null}
+
+            {!loading && message ? (
+              <div className="rounded-[22px] border border-[#FECACA] bg-[#FFF1F1] p-4 text-[13px] font-bold text-[#E5484D]">
+                {message}
+              </div>
+            ) : null}
+
+            {!loading && !message && groupedNotifications.length ? (
+              <div className="space-y-6">
+                {groupedNotifications.map((group) => (
+                  <section key={group.label}>
+                    <h2 className="mb-3 text-[15px] font-black tracking-wide text-[#111827]">
+                      {getDisplayGroupLabel(group, language, t)}
+                    </h2>
+
+                    <div className="space-y-3">
+                      {group.items.map((notification) => {
+                        const showTypePill = activeTab === 'all' || activeTab === 'unread'
+                        const canOpen = notification.type === 'announcements' || Boolean(notification.link)
+                        const displayTime = formatDisplayNotificationTime(
+                          notification.createdAt,
+                          language
+                        )
+
+                        return (
+                          <button
+                            key={notification.id}
+                            type="button"
+                            onClick={() => openNotification(notification)}
+                            className={`w-full overflow-hidden rounded-[22px] border text-left shadow-sm active:scale-[0.99] ${
+                              canOpen ? 'cursor-pointer' : 'cursor-default'
+                            } ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'}`}
+                          >
+                            {notification.imageUrl ? (
+                              <div className="aspect-[16/9] w-full bg-[#F3F4F6]">
+                                <img
+                                  src={notification.imageUrl}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ) : null}
+
+                            <div className="p-4">
+                              <div className="flex gap-3">
+                                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
+                                  <i className={`${getNotificationIcon(notification.type)} text-[15px]`} />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <h3 className="text-[14px] font-black text-[#111111]">
+                                      {getDisplayNotificationTitle(notification, t)}
+                                    </h3>
+                                    <div className="flex shrink-0 items-center gap-2">
+                                      <span className="text-[11px] font-bold text-[#9CA3AF]">
+                                        {displayTime}
+                                      </span>
+                                      {!notification.isRead ? (
+                                        <span className="h-2.5 w-2.5 rounded-full bg-[#F6B800]" />
+                                      ) : null}
+                                    </div>
+                                  </div>
+
+                                  <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">
+                                    {notification.message}
+                                  </p>
+
+                                  {showTypePill ? (
+                                    <span className="mt-3 inline-flex rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
+                                      {getDisplayNotificationTypeLabel(notification.type, t)}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : null}
+
+            {!loading && !message && !filteredNotifications.length ? (
+              <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF7D6] text-[#B77900]">
+                  <i className="fas fa-bell-slash text-[22px]" />
+                </div>
+                <h2 className="mt-4 text-[18px] font-black text-[#111111]">
+                  {t('notificationPage.noNotifications')}
+                </h2>
+                <p className="mt-2 text-[13px] font-semibold leading-6 text-[#7B8190]">
+                  {t('notificationPage.caughtUp')}
+                </p>
+              </div>
+            ) : null}
+          </main>
         </div>
 
-        <div className="shrink-0 border-y border-[#E5E7EB] bg-[#F6F7FB] px-5 py-3">
-          <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.key
-              const count = counts[tab.key] || 0
-              const showCount = tab.key !== 'all' && count > 0
+        {selectedAnnouncement ? (
+          <div className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white">
+            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 py-3">
+              <button
+                type="button"
+                onClick={() => setSelectedAnnouncement(null)}
+                aria-label={t('notificationPage.backToNotifications')}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+              >
+                <i className="fas fa-arrow-left text-[14px]" />
+              </button>
 
-              return (
+              <div className="min-w-0">
+                <div className="truncate text-[15px] font-black text-[#111111]">
+                  {t('notificationPage.notification')}
+                </div>
+              </div>
+            </div>
+
+            <article className="mx-auto w-full max-w-[720px] px-5 pb-10 pt-6">
+              <div className="mb-3 text-[12px] font-black uppercase tracking-wide text-[#6B7280]">
+                {getDisplayNotificationTypeLabel(selectedAnnouncement.type, t)} ·{' '}
+                {formatDisplayDateGroup(selectedAnnouncement.createdAt, language) ||
+                  t('notificationPage.older')}{' '}
+                · {formatDisplayNotificationTime(selectedAnnouncement.createdAt, language)}
+              </div>
+
+              {selectedAnnouncement.imageUrl ? (
+                <div className="mb-5 overflow-hidden rounded-[24px] bg-[#F3F4F6] shadow-sm">
+                  <img
+                    src={selectedAnnouncement.imageUrl}
+                    alt=""
+                    className="aspect-[16/9] w-full object-cover"
+                  />
+                </div>
+              ) : null}
+
+              <h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111]">
+                {getDisplayNotificationTitle(selectedAnnouncement, t)}
+              </h1>
+
+              <p className="mt-6 whitespace-pre-wrap text-[16px] font-semibold leading-8 text-[#4B5563]">
+                {selectedAnnouncement.message}
+              </p>
+
+              {selectedAnnouncement.link ? (
                 <button
-                  key={tab.key}
                   type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`relative shrink-0 rounded-full px-5 py-1.5 text-xs transition active:scale-95 ${
-                    isActive ? 'bg-[#111827] text-white font-bold shadow-sm' : 'border border-gray-200 bg-white text-gray-600 font-semibold'
-                  }`}
+                  onClick={() => navigate(selectedAnnouncement.link)}
+                  className="mt-8 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95"
                 >
-                  <span>{tab.label}</span>
-                  {showCount ? (
-                    <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black leading-none text-[#111111] shadow-sm">
-                      {formatCount(count)}
-                    </span>
-                  ) : null}
+                  {t('notificationPage.openLink')}
                 </button>
-              )
-            })}
+              ) : null}
+            </article>
           </div>
-        </div>
-
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4">
-          {loading ? (
-            <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
-              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
-              <p className="text-[13px] font-bold text-[#7B8190]">Loading notifications...</p>
-            </div>
-          ) : null}
-
-          {!loading && message ? (
-            <div className="rounded-[22px] border border-[#FECACA] bg-[#FFF1F1] p-4 text-[13px] font-bold text-[#E5484D]">
-              {message}
-            </div>
-          ) : null}
-
-          {!loading && !message && groupedNotifications.length ? (
-            <div className="space-y-6">
-              {groupedNotifications.map((group) => (
-                <section key={group.label}>
-                  <h2 className="mb-3 text-[15px] font-black tracking-wide text-[#111827]">{group.label}</h2>
-
-                  <div className="space-y-3">
-                    {group.items.map((notification) => {
-                      const showTypePill = activeTab === 'all' || activeTab === 'unread'
-                      const canOpen = notification.type === 'announcements' || Boolean(notification.link)
-
-                      return (
-                        <button
-  key={notification.id}
-  type="button"
-  onClick={() => openNotification(notification)}
-  className={`w-full overflow-hidden rounded-[22px] border text-left shadow-sm active:scale-[0.99] ${
-    canOpen ? 'cursor-pointer' : 'cursor-default'
-  } ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'}`}
->
-  {notification.imageUrl ? (
-    <div className="aspect-[16/9] w-full bg-[#F3F4F6]">
-      <img
-        src={notification.imageUrl}
-        alt=""
-        className="h-full w-full object-cover"
-      />
-    </div>
-  ) : null}
-
-  <div className="p-4">
-    <div className="flex gap-3">
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
-        <i className={`${getNotificationIcon(notification.type)} text-[15px]`} />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-[14px] font-black text-[#111111]">{notification.title}</h3>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="text-[11px] font-bold text-[#9CA3AF]">{notification.time}</span>
-            {!notification.isRead ? <span className="h-2.5 w-2.5 rounded-full bg-[#F6B800]" /> : null}
-          </div>
-        </div>
-
-        <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
-
-        {showTypePill ? (
-          <span className="mt-3 inline-flex rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
-            {getNotificationTypeLabel(notification.type)}
-          </span>
         ) : null}
       </div>
-    </div>
-  </div>
-</button>
-                      )
-                    })}
-                  </div>
-                </section>
-              ))}
-            </div>
-          ) : null}
-
-          {!loading && !message && !filteredNotifications.length ? (
-            <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF7D6] text-[#B77900]">
-                <i className="fas fa-bell-slash text-[22px]" />
-              </div>
-              <h2 className="mt-4 text-[18px] font-black text-[#111111]">No notifications</h2>
-              <p className="mt-2 text-[13px] font-semibold leading-6 text-[#7B8190]">You are all caught up for now.</p>
-            </div>
-          ) : null}
-        </main>
-      </div>
-
-     {selectedAnnouncement ? (
-  <div className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white">
-    <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 py-3">
-      <button
-        type="button"
-        onClick={() => setSelectedAnnouncement(null)}
-        aria-label="Back to notifications"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
-      >
-        <i className="fas fa-arrow-left text-[14px]" />
-      </button>
-
-      <div className="min-w-0">
-        <div className="truncate text-[15px] font-black text-[#111111]">Notification</div>
-      </div>
-    </div>
-
-    <article className="mx-auto w-full max-w-[720px] px-5 pb-10 pt-6">
-      <div className="mb-3 text-[12px] font-black uppercase tracking-wide text-[#6B7280]">
-        {getNotificationTypeLabel(selectedAnnouncement.type)} · {selectedAnnouncement.dateGroup} · {selectedAnnouncement.time}
-      </div>
-
-      {selectedAnnouncement.imageUrl ? (
-        <div className="mb-5 overflow-hidden rounded-[24px] bg-[#F3F4F6] shadow-sm">
-          <img
-            src={selectedAnnouncement.imageUrl}
-            alt=""
-            className="aspect-[16/9] w-full object-cover"
-          />
-        </div>
-      ) : null}
-
-      <h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111]">{selectedAnnouncement.title}</h1>
-
-      <p className="mt-6 whitespace-pre-wrap text-[16px] font-semibold leading-8 text-[#4B5563]">
-        {selectedAnnouncement.message}
-      </p>
-
-      {selectedAnnouncement.link ? (
-        <button
-          type="button"
-          onClick={() => navigate(selectedAnnouncement.link)}
-          className="mt-8 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95"
-        >
-          Open link
-        </button>
-      ) : null}
-    </article>
-  </div>
-) : null}
-    </div>
-  </>
+    </>
   )
 }
