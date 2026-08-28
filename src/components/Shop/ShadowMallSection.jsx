@@ -460,6 +460,10 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
 
   useEffect(() => {
     let ignore = false
+        if (sliderOnly) {
+      setProductsLoading(false)
+      return
+    }
 
     async function fetchMallSlides() {
       try {
@@ -481,7 +485,7 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
     return () => {
       ignore = true
     }
-  }, [])
+  }, [sliderOnly])
 
   useEffect(() => {
     let ignore = false
@@ -672,7 +676,7 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
 
       {!sliderOnly ? <PreOrderFeature products={filteredSections.pre_order || []} onOpen={() => navigate('/shop/mall/pre-order')} /> : null}
 
-      {mallSections.map((section) => (
+      {!sliderOnly && mallSections.map((section) => (
         <MallBookSection
           key={section.key}
           title={section.title}
