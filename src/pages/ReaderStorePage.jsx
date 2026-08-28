@@ -1,9 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { addShadowMallCartItem, getShadowMallCartCount } from '../utils/shadowMallCart'
+import {
+  getShadowMallWishlistCount,
+  isShadowMallWishlisted,
+  toggleShadowMallWishlist,
+} from '../utils/shadowMallWishlist'
 
 registerTranslationNamespace('readerStore', {
   en: {
@@ -148,14 +154,14 @@ const DEMO_AUTHORS = [
 ]
 
 const DEMO_BOOKS = [
-  { id: 1, title: 'After the Rain', author: 'Luna Writes', price: '$6.50', category: 'romance', type: 'book', badge: 'new', cover: '/assets/New%20Arrival/New%20Arrival%207.jpg' },
-  { id: 2, title: 'Midnight Letters', author: 'InkbyJ', price: '$6.25', category: 'bl', type: 'pdf', badge: 'trending', cover: '/assets/New%20Arrival/New%20Arrival%208.jpg' },
-  { id: 3, title: 'The Quiet Playground', author: 'PaperHearts', price: '$5.75', category: 'romance', type: 'book', badge: 'new', cover: '/assets/New%20Arrival/New%20Arrival%209.jpg' },
-  { id: 4, title: 'Crown Without a King', author: 'Northwind', price: '$7.20', category: 'fantasy', type: 'book', badge: 'trending', cover: '/assets/New%20Arrival/New%20Arrival%2010.jpg' },
-  { id: 5, title: 'Blue Hour', author: 'Daydreamer', price: '$4.90', category: 'romance', type: 'pdf', badge: 'new', cover: '/assets/New%20Arrival/New%20Arrival%2011.jpg' },
-  { id: 6, title: 'Between Two Names', author: 'Mellow Ink', price: '$6.80', category: 'bl', type: 'book', badge: 'trending', cover: '/assets/New%20Arrival/New%20Arrival%2012.jpg' },
-  { id: 7, title: 'The Last Moon Garden', author: 'Luna Writes', price: '$7.45', category: 'fantasy', type: 'pdf', badge: 'new', cover: '/assets/New%20Arrival/New%20Arrival%2013.jpg' },
-  { id: 8, title: 'A Place We Almost Stayed', author: 'InkbyJ', price: '$6.10', category: 'romance', type: 'book', badge: 'trending', cover: '/assets/New%20Arrival/New%20Arrival%2014.jpg' },
+  { id: 'reader-demo-1', title: 'After the Rain', author: 'Luna Writes', price: '$6.50', category: 'romance', type: 'book', badge: 'new', cover: '/assets/New%20Arrival/New%20Arrival%207.jpg' },
+  { id: 'reader-demo-2', title: 'Midnight Letters', author: 'InkbyJ', price: '$6.25', category: 'bl', type: 'pdf', badge: 'trending', cover: '/assets/New%20Arrival/New%20Arrival%208.jpg' },
+  { id: 'reader-demo-3', title: 'The Quiet Playground', author: 'PaperHearts', price: '$5.75', category: 'romance', type: 'book', badge: 'new', cover: '/assets/New%20Arrival/New%20Arrival%209.jpg' },
+  { id: 'reader-demo-4', title: 'Crown Without a King', author: 'Northwind', price: '$7.20', category: 'fantasy', type: 'book', badge: 'trending', cover: '/assets/New%20Arrival/New%20Arrival%2010.jpg' },
+  { id: 'reader-demo-5', title: 'Blue Hour', author: 'Daydreamer', price: '$4.90', category: 'romance', type: 'pdf', badge: 'new', cover: '/assets/New%20Arrival/New%20Arrival%2011.jpg' },
+  { id: 'reader-demo-6', title: 'Between Two Names', author: 'Mellow Ink', price: '$6.80', category: 'bl', type: 'book', badge: 'trending', cover: '/assets/New%20Arrival/New%20Arrival%2012.jpg' },
+  { id: 'reader-demo-7', title: 'The Last Moon Garden', author: 'Luna Writes', price: '$7.45', category: 'fantasy', type: 'pdf', badge: 'new', cover: '/assets/New%20Arrival/New%20Arrival%2013.jpg' },
+  { id: 'reader-demo-8', title: 'A Place We Almost Stayed', author: 'InkbyJ', price: '$6.10', category: 'romance', type: 'book', badge: 'trending', cover: '/assets/New%20Arrival/New%20Arrival%2014.jpg' },
 ]
 
 const FILTERS = ['all', 'romance', 'bl', 'fantasy', 'pdf']
@@ -181,6 +187,17 @@ function SectionHeader({ title, subtitle, action, onAction }) {
 function DemoBookCard({ book, t }) {
   const badgeLabel = book.badge === 'trending' ? t('readerStore.trendingLabel') : t('readerStore.newLabel')
   const typeLabel = book.type === 'pdf' ? t('readerStore.pdf') : t('readerStore.book')
+  const [wishlisted, setWishlisted] = useState(() => isShadowMallWishlisted(book.id))
+
+  useEffect(() => {
+    const refreshWishlist = () => setWishlisted(isShadowMallWishlisted(book.id))
+    window.addEventListener('shadow-mall-wishlist-change', refreshWishlist)
+    window.addEventListener('storage', refreshWishlist)
+    return () => {
+      window.removeEventListener('shadow-mall-wishlist-change', refreshWishlist)
+      window.removeEventListener('storage', refreshWishlist)
+    }
+  }, [book.id])
 
   return (
     <article className="overflow-hidden rounded-[20px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
@@ -190,8 +207,16 @@ function DemoBookCard({ book, t }) {
         <span className={`absolute left-2 top-2 rounded-full px-2.5 py-1 text-[9px] font-extrabold shadow-sm ${book.badge === 'trending' ? 'bg-[#dff7f3] text-[#0f766e]' : 'bg-[#ede9fe] text-[#6d28d9]'}`}>
           {badgeLabel}
         </span>
-        <button type="button" aria-label={t('readerStore.saveBook')} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-[#111827] shadow-sm active:scale-95">
-          <i className="fa-regular fa-heart text-[13px]" />
+        <button
+          type="button"
+          onClick={() => {
+            const result = toggleShadowMallWishlist(book)
+            setWishlisted(result.wishlisted)
+          }}
+          aria-label={t('readerStore.saveBook')}
+          className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm active:scale-95 ${wishlisted ? 'text-[#e5484d]' : 'text-[#111827]'}`}
+        >
+          <i className={`${wishlisted ? 'fa-solid' : 'fa-regular'} fa-heart text-[13px]`} />
         </button>
       </div>
 
@@ -208,7 +233,12 @@ function DemoBookCard({ book, t }) {
 
         <div className="mt-3 flex items-center justify-between gap-2">
           <span className="text-[13px] font-extrabold text-[#7c3aed]">{book.price}</span>
-          <button type="button" aria-label={t('readerStore.addToCart')} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 dark:bg-white dark:text-[#111827]">
+          <button
+            type="button"
+            onClick={() => addShadowMallCartItem(book, 1)}
+            aria-label={t('readerStore.addToCart')}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 dark:bg-white dark:text-[#111827]"
+          >
             <i className="fa-solid fa-bag-shopping text-[11px]" />
           </button>
         </div>
@@ -221,6 +251,23 @@ export default function ReaderStorePage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [activeFilter, setActiveFilter] = useState('all')
+  const [cartCount, setCartCount] = useState(() => getShadowMallCartCount())
+  const [wishlistCount, setWishlistCount] = useState(() => getShadowMallWishlistCount())
+
+  useEffect(() => {
+    const refreshCart = () => setCartCount(getShadowMallCartCount())
+    const refreshWishlist = () => setWishlistCount(getShadowMallWishlistCount())
+    window.addEventListener('shadow-mall-cart-change', refreshCart)
+    window.addEventListener('shadow-mall-wishlist-change', refreshWishlist)
+    window.addEventListener('storage', refreshCart)
+    window.addEventListener('storage', refreshWishlist)
+    return () => {
+      window.removeEventListener('shadow-mall-cart-change', refreshCart)
+      window.removeEventListener('shadow-mall-wishlist-change', refreshWishlist)
+      window.removeEventListener('storage', refreshCart)
+      window.removeEventListener('storage', refreshWishlist)
+    }
+  }, [])
 
   const filteredBooks = useMemo(() => {
     if (activeFilter === 'all') return DEMO_BOOKS
@@ -247,11 +294,17 @@ export default function ReaderStorePage() {
             <button type="button" onClick={() => navigate('/shop/mall/search')} aria-label={t('readerStore.searchBooks')} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
               <i className="fa-solid fa-magnifying-glass text-[17px]" />
             </button>
-            <button type="button" onClick={() => navigate('/shop/mall/wishlist')} aria-label={t('readerStore.openWishlist')} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
+            <button type="button" onClick={() => navigate('/shop/mall/wishlist')} aria-label={t('readerStore.openWishlist')} className="relative flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
               <i className="fa-regular fa-heart text-[20px]" />
+              {wishlistCount > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#ef4444] px-1 text-[8px] font-extrabold text-white">{wishlistCount > 99 ? '99+' : wishlistCount}</span>
+              ) : null}
             </button>
-            <button type="button" onClick={() => navigate('/shop/mall/cart')} aria-label={t('readerStore.openCart')} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
+            <button type="button" onClick={() => navigate('/shop/mall/cart')} aria-label={t('readerStore.openCart')} className="relative flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
               <i className="fa-solid fa-cart-shopping text-[19px]" />
+              {cartCount > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#ef4444] px-1 text-[8px] font-extrabold text-white">{cartCount > 99 ? '99+' : cartCount}</span>
+              ) : null}
             </button>
           </div>
         </div>
