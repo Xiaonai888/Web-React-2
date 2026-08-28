@@ -2476,7 +2476,160 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f7f9]">
+    <div className="app-page chat-room-page min-h-screen">
+
+      <style>{`
+        html.dark .chat-room-page {
+          background: var(--shadow-bg-page);
+          color: var(--shadow-text-primary);
+        }
+
+        html.dark .chat-room-page [class~="bg-white"],
+        html.dark .chat-room-page [class~="bg-white/95"] {
+          background-color: var(--shadow-bg-surface) !important;
+        }
+
+        html.dark .chat-room-page [class~="text-[#111827]"],
+        html.dark .chat-room-page [class~="text-[#22222b]"],
+        html.dark .chat-room-page [class~="text-[#24242c]"],
+        html.dark .chat-room-page [class~="text-[#282832]"],
+        html.dark .chat-room-page [class~="text-[#2a2a33]"],
+        html.dark .chat-room-page [class~="text-[#33333c]"],
+        html.dark .chat-room-page [class~="text-[#34343d]"],
+        html.dark .chat-room-page [class~="text-[#3a3a43]"],
+        html.dark .chat-room-page [class~="text-[#4a4655]"],
+        html.dark .chat-room-page [class~="text-[#4f4f59]"] {
+          color: var(--shadow-text-primary) !important;
+        }
+
+        html.dark .chat-room-page [class~="text-[#555560]"],
+        html.dark .chat-room-page [class~="text-[#5c5c65]"],
+        html.dark .chat-room-page [class~="text-[#5d5d67]"],
+        html.dark .chat-room-page [class~="text-[#6c6875]"],
+        html.dark .chat-room-page [class~="text-[#6f6b78]"],
+        html.dark .chat-room-page [class~="text-[#746b85]"],
+        html.dark .chat-room-page [class~="text-[#777781]"],
+        html.dark .chat-room-page [class~="text-[#8c8c96]"],
+        html.dark .chat-room-page [class~="text-[#8e8e98]"],
+        html.dark .chat-room-page [class~="text-[#8e8e97]"],
+        html.dark .chat-room-page [class~="text-[#91919b]"],
+        html.dark .chat-room-page [class~="text-[#92929c]"],
+        html.dark .chat-room-page [class~="text-[#9696a0]"],
+        html.dark .chat-room-page [class~="text-[#9898a2]"],
+        html.dark .chat-room-page [class~="text-[#9b9ba4]"] {
+          color: var(--shadow-text-secondary) !important;
+        }
+
+        html.dark .chat-room-page [class~="bg-[#f4f4f6]"],
+        html.dark .chat-room-page [class~="bg-[#f5f5f7]"],
+        html.dark .chat-room-page [class~="bg-[#f7f7f9]"],
+        html.dark .chat-room-page [class~="bg-[#f2f2f4]"] {
+          background-color: var(--shadow-bg-soft) !important;
+        }
+
+        html.dark .chat-room-page [class~="bg-[#f7f3ff]"],
+        html.dark .chat-room-page [class~="bg-[#f4efff]"],
+        html.dark .chat-room-page [class~="bg-[#f5f1ff]"],
+        html.dark .chat-room-page [class~="bg-[#f8f5ff]"],
+        html.dark .chat-room-page [class~="bg-[#e9e0ff]"],
+        html.dark .chat-room-page [class~="bg-[#faf8ff]/95"] {
+          background-color: rgb(124 58 237 / 0.14) !important;
+        }
+
+        html.dark .chat-room-page [class~="bg-[#fff0a8]"] {
+          background-color: rgb(245 158 11 / 0.18) !important;
+        }
+
+        html.dark .chat-room-page [class~="bg-[#fff0f1]"],
+        html.dark .chat-room-page [class~="bg-[#fff1f1]"] {
+          background-color: rgb(229 72 77 / 0.13) !important;
+        }
+
+        html.dark .chat-room-page [class~="text-[#c7353d]"],
+        html.dark .chat-room-page [class~="text-[#c1353b]"],
+        html.dark .chat-room-page [class~="text-[#bd3038]"],
+        html.dark .chat-room-page [class~="text-[#a64a50]"],
+        html.dark .chat-room-page [class~="text-[#a8787c]"] {
+          color: #fca5a5 !important;
+        }
+
+        html.dark .chat-room-page [class~="border-[#ececf0]"],
+        html.dark .chat-room-page [class~="border-[#eceaf2]"],
+        html.dark .chat-room-page [class~="border-[#e9e7ef]"],
+        html.dark .chat-room-page [class~="border-[#e9e9ed]"],
+        html.dark .chat-room-page [class~="border-[#ededf1]"],
+        html.dark .chat-room-page [class~="border-[#e4e4e8]"],
+        html.dark .chat-room-page [class~="border-[#dedee4]"],
+        html.dark .chat-room-page [class~="border-[#d7d7dc]"],
+        html.dark .chat-room-page [class~="border-[#ded9ea]"],
+        html.dark .chat-room-page [class~="border-[#e6e6ea]"],
+        html.dark .chat-room-page [class~="border-[#e6e0f5]"],
+        html.dark .chat-room-page [class~="border-[#bbb9c2]"] {
+          border-color: var(--shadow-border) !important;
+        }
+
+        html.dark .chat-room-page [class~="border-[#ded4fa]"],
+        html.dark .chat-room-page [class~="border-[#e9e4f7]"] {
+          border-color: rgb(124 58 237 / 0.28) !important;
+        }
+
+        html.dark .chat-room-page [class~="border-[#f0c8ca]"],
+        html.dark .chat-room-page [class~="border-[#f1d5d7]"] {
+          border-color: rgb(248 113 113 / 0.28) !important;
+        }
+
+        html.dark .chat-room-page [class~="hover:bg-[#f4f4f6]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#f7f5fb]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#f5f5f7]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#f6f4f9]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#f6f3fb]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#f7f7f9]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#f3effc]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#f4f2f7]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-white"]:hover {
+          background-color: var(--shadow-bg-hover) !important;
+        }
+
+        html.dark .chat-room-page [class~="active:bg-[#ededf0]"]:active,
+        html.dark .chat-room-page [class~="active:bg-[#f1edf8]"]:active,
+        html.dark .chat-room-page [class~="active:bg-[#eee8f8]"]:active {
+          background-color: var(--shadow-bg-hover) !important;
+        }
+
+        html.dark .chat-room-page [class~="hover:bg-[#fff1f1]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#fff3f4]"]:hover,
+        html.dark .chat-room-page [class~="active:bg-[#ffe8e9]"]:active {
+          background-color: rgb(229 72 77 / 0.16) !important;
+        }
+
+        html.dark .chat-room-page [class~="hover:bg-[#eee8ff]"]:hover,
+        html.dark .chat-room-page [class~="hover:bg-[#ece6fa]"]:hover {
+          background-color: rgb(124 58 237 / 0.18) !important;
+        }
+
+        html.dark .chat-room-page input,
+        html.dark .chat-room-page textarea,
+        html.dark .chat-room-page select {
+          color: var(--shadow-text-primary);
+          caret-color: var(--shadow-text-primary);
+        }
+
+        html.dark .chat-room-page textarea[class~="bg-[#f7f7f9]"],
+        html.dark .chat-room-page select[class~="bg-white"],
+        html.dark .chat-room-page textarea[class~="bg-white"] {
+          background-color: var(--shadow-input-bg) !important;
+          border-color: var(--shadow-border) !important;
+        }
+
+        html.dark .chat-room-page [class~="focus:bg-white"]:focus {
+          background-color: var(--shadow-input-bg) !important;
+        }
+
+        html.dark .chat-room-page option {
+          background: var(--shadow-bg-elevated);
+          color: var(--shadow-text-primary);
+        }
+      `}</style>
       <header className="sticky top-0 z-[80] border-b border-[#e9e9ed] bg-white/95 backdrop-blur-xl">
         <div className="relative mx-auto flex h-[64px] max-w-[620px] items-center gap-3 px-3">
           {selectionMode ? (
