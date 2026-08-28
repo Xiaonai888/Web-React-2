@@ -1,5 +1,96 @@
 import { useEffect, useMemo, useState } from 'react'
 import ReportModal from '../ReportModal'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('storyHeroSection', {
+  en: {
+    goBack: 'Go back',
+    addToLibrary: 'Add to library',
+    more: 'More',
+    report: 'Report',
+    copyLink: 'Copy link',
+    echo: 'Echo',
+    story: 'Story',
+    storySlide: 'Story slide',
+    untitledStory: 'Untitled Story',
+    novel: 'Novel',
+    new: 'New',
+    ongoing: 'Ongoing',
+    completed: 'Completed',
+    showSlide: 'Show slide {{count}}',
+  },
+  km: {
+    goBack: 'ត្រឡប់ក្រោយ',
+    addToLibrary: 'បន្ថែមទៅ Library',
+    more: 'បន្ថែម',
+    report: 'រាយការណ៍',
+    copyLink: 'ចម្លងតំណ',
+    echo: 'Echo',
+    story: 'រឿង',
+    storySlide: 'Slide រឿង',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    novel: 'Novel',
+    new: 'ថ្មី',
+    ongoing: 'កំពុងបន្ត',
+    completed: 'បានបញ្ចប់',
+    showSlide: 'បង្ហាញ Slide {{count}}',
+  },
+  zh: {
+    goBack: '返回',
+    addToLibrary: '添加到 Library',
+    more: '更多',
+    report: '举报',
+    copyLink: '复制链接',
+    echo: 'Echo',
+    story: '故事',
+    storySlide: '故事轮播图',
+    untitledStory: '无标题故事',
+    novel: '小说',
+    new: '新作',
+    ongoing: '连载中',
+    completed: '已完结',
+    showSlide: '显示轮播图 {{count}}',
+  },
+  ja: {
+    goBack: '戻る',
+    addToLibrary: 'Library に追加',
+    more: 'その他',
+    report: '報告',
+    copyLink: 'リンクをコピー',
+    echo: 'Echo',
+    story: 'ストーリー',
+    storySlide: 'ストーリースライド',
+    untitledStory: '無題のストーリー',
+    novel: '小説',
+    new: '新着',
+    ongoing: '連載中',
+    completed: '完結',
+    showSlide: 'スライド {{count}} を表示',
+  },
+  ko: {
+    goBack: '뒤로 가기',
+    addToLibrary: 'Library에 추가',
+    more: '더보기',
+    report: '신고',
+    copyLink: '링크 복사',
+    echo: 'Echo',
+    story: '스토리',
+    storySlide: '스토리 슬라이드',
+    untitledStory: '제목 없는 스토리',
+    novel: '소설',
+    new: '신규',
+    ongoing: '연재 중',
+    completed: '완결',
+    showSlide: '슬라이드 {{count}} 보기',
+  },
+})
+
+const STATUS_LABEL_KEYS = {
+  New: 'new',
+  Ongoing: 'ongoing',
+  Completed: 'completed',
+}
 
 function normalizeSlides(story) {
   const slides = Array.isArray(story?.slides)
@@ -22,15 +113,25 @@ function getStoryStatus(story) {
   return story?.story_status || story?.storyStatus || 'New'
 }
 
+function getDisplayStoryStatus(status, t) {
+  const key = STATUS_LABEL_KEYS[status]
+  return key ? t(`storyHeroSection.${key}`) : status
+}
+
 export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBookmark, onEcho }) {
+  const { t } = useDisplayTranslation()
   const slides = useMemo(() => normalizeSlides(story), [story])
-  const [activeIndex, setActiveIndex] = useState(0)  
+  const [activeIndex, setActiveIndex] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [showTitleBar, setShowTitleBar] = useState(false)
   const activeSlide = slides[activeIndex] || slides[0] || null
   const storyStatus = getStoryStatus(story)
-  const infoLine = `${story?.main_genre || 'Novel'} / ${storyStatus}`
+  const displayGenre = story?.main_genre || t('storyHeroSection.novel')
+  const displayStatus = getDisplayStoryStatus(storyStatus, t)
+  const infoLine = `${displayGenre} / ${displayStatus}`
+  const titleBarTitle = story?.title || t('storyHeroSection.story')
+  const heroTitle = story?.title || t('storyHeroSection.untitledStory')
 
   useEffect(() => {
     setActiveIndex(0)
@@ -89,7 +190,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
     ? 'bg-transparent text-[var(--shadow-text-primary)]'
     : 'bg-transparent text-white'
 }`}
-            aria-label="Go back"
+            aria-label={t('storyHeroSection.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
@@ -99,7 +200,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
     showTitleBar ? 'text-[var(--shadow-text-primary)] opacity-100' : 'text-white opacity-0'
   }`}
 >
-            {story?.title || 'Story'}
+            {titleBarTitle}
           </h1>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -111,7 +212,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
     ? 'bg-transparent text-[var(--shadow-text-primary)]'
     : 'bg-transparent text-white'
 }`}
-              aria-label="Add to library"
+              aria-label={t('storyHeroSection.addToLibrary')}
             >
               <i className={`${bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark text-[15px]`} />
             </button>
@@ -125,7 +226,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
     ? 'bg-transparent text-[var(--shadow-text-primary)]'
     : 'bg-transparent text-white'
 }`}
-                aria-label="More"
+                aria-label={t('storyHeroSection.more')}
               >
                 <i className="fa-solid fa-ellipsis text-[16px]" />
               </button>
@@ -141,7 +242,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
   className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[var(--shadow-bg-hover)]"
 >
   <i className="fa-regular fa-flag w-4 text-[var(--shadow-text-primary)]" />
-  Report
+  {t('storyHeroSection.report')}
 </button>
                   <button
                     type="button"
@@ -149,7 +250,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[var(--shadow-bg-hover)]"
                   >
                     <i className="fa-solid fa-link w-4 text-[var(--shadow-text-primary)]" />
-                    Copy link
+                    {t('storyHeroSection.copyLink')}
                   </button>
 
                   <button
@@ -159,10 +260,10 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
                   >
                     <img
   src="/assets/Icons/echo.svg"
-  alt="Echo"
+  alt={t('storyHeroSection.echo')}
     className="h-4 w-4 brightness-0 dark:invert"
  />
-                    Echo
+                    {t('storyHeroSection.echo')}
                   </button>
                 </div>
               ) : null}
@@ -177,7 +278,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
             <img
               key={activeSlide.image_url}
               src={activeSlide.image_url}
-              alt={story?.title || 'Story slide'}
+              alt={story?.title || t('storyHeroSection.storySlide')}
               className="h-full w-full object-cover transition-opacity duration-700"
             />
           ) : (
@@ -192,7 +293,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0 flex-1 text-left">
               <h2 className="whitespace-normal break-words [overflow-wrap:anywhere] text-[22px] font-bold leading-[32px] text-white drop-shadow sm:text-[32px] sm:leading-[42px]">
-                {story?.title || 'Untitled Story'}
+                {heroTitle}
               </h2>
 
               <div className="mt-2 text-[13px] font-extrabold text-white/90 drop-shadow sm:text-[15px]">
@@ -210,7 +311,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
         className={`h-1.5 rounded-full transition-all ${
           activeIndex === index ? 'w-4 bg-white' : 'w-1.5 bg-white/55'
         }`}
-        aria-label={`Show slide ${index + 1}`}
+        aria-label={t('storyHeroSection.showSlide', { count: index + 1 })}
       />
     ))}
   </div>
