@@ -344,20 +344,20 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f3fa] px-4 py-8">
-      <section className="mx-auto max-w-[430px] rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5">
+    <main className="app-page min-h-screen bg-[#f5f3fa] px-4 py-8 dark:bg-[var(--shadow-bg-page)]">
+      <section className="mx-auto max-w-[430px] rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
         <div className="mb-7 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white dark:bg-[#7c3aed]">
             <i className="fa-solid fa-key text-[20px]" />
           </div>
 
-          <h1 className="text-[25px] font-extrabold tracking-tight text-[#111827]">
+          <h1 className="text-[25px] font-extrabold tracking-tight text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {step === 'email'
               ? t('forgotPasswordPage.forgotPassword')
               : t('forgotPasswordPage.enterResetCode')}
           </h1>
 
-          <p className="mx-auto mt-2 max-w-[310px] text-[13px] leading-5 text-[#8d94a1]">
+          <p className="mx-auto mt-2 max-w-[310px] text-[13px] leading-5 text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
             {step === 'email'
               ? t('forgotPasswordPage.emailSubtitle')
               : t('forgotPasswordPage.resetSubtitle')}
@@ -365,13 +365,13 @@ export default function ForgotPasswordPage() {
         </div>
 
         {error ? (
-          <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
+          <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
             {error}
           </div>
         ) : null}
 
         {message ? (
-          <div className="mb-4 rounded-[14px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold leading-5 text-[#067647]">
+          <div className="mb-4 rounded-[14px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold leading-5 text-[#067647] dark:bg-emerald-500/10 dark:text-emerald-300">
             {message}
           </div>
         ) : null}
@@ -379,7 +379,7 @@ export default function ForgotPasswordPage() {
         {step === 'email' ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('forgotPasswordPage.gmail')}
               </span>
               <input
@@ -388,14 +388,14 @@ export default function ForgotPasswordPage() {
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="yourname@gmail.com"
                 autoComplete="email"
-                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af] focus:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[#a78bfa]"
               />
             </label>
 
             <button
               type="submit"
               disabled={loading}
-              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
+              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] dark:bg-gradient-to-r dark:from-[#7c3aed] dark:to-[#a78bfa] dark:disabled:from-[#5b5567] dark:disabled:to-[#5b5567]"
             >
               {loading
                 ? t('forgotPasswordPage.sending')
@@ -405,7 +405,7 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleResetPassword} className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('forgotPasswordPage.gmail')}
               </span>
               <input
@@ -414,12 +414,12 @@ export default function ForgotPasswordPage() {
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="yourname@gmail.com"
                 autoComplete="email"
-                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af] focus:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[#a78bfa]"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('forgotPasswordPage.otpCode')}
               </span>
               <div className="grid grid-cols-6 gap-2">
@@ -444,17 +444,17 @@ export default function ForgotPasswordPage() {
                       'forgotPasswordPage.otpDigit',
                       { number: index + 1 }
                     )}
-                    className="h-12 rounded-[14px] border border-[#d9dce3] bg-white text-center text-[20px] font-extrabold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-[#fafafe] focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+                    className="h-12 rounded-[14px] border border-[#d9dce3] bg-white text-center text-[20px] font-extrabold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-[#fafafe] focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:focus:border-[#a78bfa] dark:focus:bg-[var(--shadow-input-bg)] dark:focus:shadow-[0_0_0_4px_rgba(167,139,250,0.08)]"
                   />
                 ))}
               </div>
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('forgotPasswordPage.newPassword')}
               </span>
-              <div className="flex h-12 items-center rounded-[16px] border border-[#d9dce3] bg-white px-4 focus-within:border-[#111827]">
+              <div className="flex h-12 items-center rounded-[16px] border border-[#d9dce3] bg-white px-4 focus-within:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:focus-within:border-[#a78bfa]">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -463,12 +463,12 @@ export default function ForgotPasswordPage() {
                     'forgotPasswordPage.newPasswordPlaceholder'
                   )}
                   autoComplete="new-password"
-                  className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
-                  className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8d94a1]"
+                  className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8d94a1] dark:text-[var(--shadow-text-secondary)] dark:hover:bg-[var(--shadow-bg-hover)]"
                   aria-label={
                     showPassword
                       ? t('forgotPasswordPage.hidePassword')
@@ -485,7 +485,7 @@ export default function ForgotPasswordPage() {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('forgotPasswordPage.confirmPassword')}
               </span>
               <input
@@ -496,14 +496,14 @@ export default function ForgotPasswordPage() {
                   'forgotPasswordPage.confirmPasswordPlaceholder'
                 )}
                 autoComplete="new-password"
-                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af] focus:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[#a78bfa]"
               />
             </label>
 
             <button
               type="submit"
               disabled={loading}
-              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
+              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] dark:bg-gradient-to-r dark:from-[#7c3aed] dark:to-[#a78bfa] dark:disabled:from-[#5b5567] dark:disabled:to-[#5b5567]"
             >
               {loading
                 ? t('forgotPasswordPage.changing')
@@ -514,16 +514,19 @@ export default function ForgotPasswordPage() {
               type="button"
               onClick={handleSendOtp}
               disabled={loading}
-              className="h-11 w-full rounded-[16px] border border-[#d9dce3] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 w-full rounded-[16px] border border-[#d9dce3] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
             >
               {t('forgotPasswordPage.resendCode')}
             </button>
           </form>
         )}
 
-        <div className="mt-5 text-center text-[13px] font-bold text-[#8d94a1]">
+        <div className="mt-5 text-center text-[13px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
           {t('forgotPasswordPage.rememberPassword')}{' '}
-          <Link to="/login" className="text-[#111827]">
+          <Link
+            to="/login"
+            className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
+          >
             {t('forgotPasswordPage.login')}
           </Link>
         </div>
