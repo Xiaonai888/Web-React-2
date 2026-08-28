@@ -231,13 +231,13 @@ function LoadingList() {
     <div className="space-y-6">
       {Array.from({ length: 8 }).map((_, index) => (
         <div key={index} className="flex w-full items-start gap-4">
-          <div className="mt-5 h-16 w-16 shrink-0 animate-pulse rounded-full bg-neutral-200" />
-          <div className="h-[132px] w-[92px] shrink-0 animate-pulse rounded-xl bg-neutral-200" />
+          <div className="mt-5 h-16 w-16 shrink-0 animate-pulse rounded-full bg-neutral-200 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="h-[132px] w-[92px] shrink-0 animate-pulse rounded-xl bg-neutral-200 dark:bg-[var(--shadow-bg-elevated)]" />
           <div className="min-w-0 flex-1 pt-1">
-            <div className="h-6 w-3/4 animate-pulse rounded-full bg-neutral-200" />
-            <div className="mt-2 h-4 w-1/3 animate-pulse rounded-full bg-neutral-200" />
-            <div className="mt-3 h-4 w-1/2 animate-pulse rounded-full bg-neutral-200" />
-            <div className="mt-3 h-16 w-full animate-pulse rounded-xl bg-neutral-200" />
+            <div className="h-6 w-3/4 animate-pulse rounded-full bg-neutral-200 dark:bg-[var(--shadow-bg-elevated)]" />
+            <div className="mt-2 h-4 w-1/3 animate-pulse rounded-full bg-neutral-200 dark:bg-[var(--shadow-bg-elevated)]" />
+            <div className="mt-3 h-4 w-1/2 animate-pulse rounded-full bg-neutral-200 dark:bg-[var(--shadow-bg-elevated)]" />
+            <div className="mt-3 h-16 w-full animate-pulse rounded-xl bg-neutral-200 dark:bg-[var(--shadow-bg-elevated)]" />
           </div>
         </div>
       ))}
@@ -249,23 +249,23 @@ function EmptyState({ onRefresh }) {
   const { t } = useDisplayTranslation()
 
   return (
-    <div className="rounded-[24px] bg-white px-5 py-12 text-center shadow-sm ring-1 ring-black/5">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 text-neutral-500">
+    <div className="rounded-[24px] bg-white px-5 py-12 text-center shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)] dark:shadow-none">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
         <i className="fa-solid fa-trophy text-[24px]" />
       </div>
 
-      <h2 className="mt-4 text-[18px] font-extrabold text-neutral-900">
+      <h2 className="mt-4 text-[18px] font-extrabold text-neutral-900 dark:text-[var(--shadow-text-primary)]">
         {t('topNovelPage.noTopNovels')}
       </h2>
 
-      <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-neutral-500">
+      <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-neutral-500 dark:text-[var(--shadow-text-secondary)]">
         {t('topNovelPage.emptyBody')}
       </p>
 
       <button
         type="button"
         onClick={onRefresh}
-        className="mt-5 rounded-full bg-neutral-950 px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
+        className="mt-5 rounded-full bg-neutral-950 px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
       >
         {t('topNovelPage.refresh')}
       </button>
@@ -434,13 +434,13 @@ export default function TopNovelPage() {
   }, [activeCategory, dataByCategory, message])
 
   return (
-    <main className="min-h-screen bg-[#f7f7f8] pb-24">
-      <div className="sticky top-0 z-20 border-b border-neutral-200 bg-white/95 backdrop-blur-md">
+    <main className="app-page min-h-screen bg-[#f7f7f8] pb-24 dark:bg-[var(--shadow-bg-page)]">
+      <div className="sticky top-0 z-20 border-b border-neutral-200 bg-white/95 backdrop-blur-md dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="flex items-center gap-3 px-4 py-4 sm:px-5 lg:px-6">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)]"
             aria-label={t('topNovelPage.goBack')}
           >
             <svg
@@ -459,7 +459,7 @@ export default function TopNovelPage() {
 
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="text-[22px]">🏆</span>
-            <h1 className="line-clamp-1 text-[22px] font-extrabold tracking-tight text-neutral-900">
+            <h1 className="line-clamp-1 text-[22px] font-extrabold tracking-tight text-neutral-900 dark:text-[var(--shadow-text-primary)]">
               {t('topNovelPage.title')}
             </h1>
           </div>
@@ -467,7 +467,7 @@ export default function TopNovelPage() {
           <button
             type="button"
             onClick={() => fetchTopNovelPageData({ force: true })}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)]"
             aria-label={t('topNovelPage.refresh')}
           >
             <i className="fa-solid fa-rotate-right text-[15px]" />
@@ -488,7 +488,7 @@ export default function TopNovelPage() {
                 className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
                   isActive
                     ? 'border-blue-600 bg-blue-600 text-white'
-                    : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50'
+                    : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:hover:bg-[var(--shadow-bg-hover)]'
                 }`}
               >
                 {getDisplayCategory(category, t)}
@@ -501,7 +501,7 @@ export default function TopNovelPage() {
           <button
             type="button"
             onClick={() => setMessage('')}
-            className="mb-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+            className="mb-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d] dark:bg-red-400/10 dark:text-red-300 dark:ring-1 dark:ring-red-400/20"
           >
             {message}
           </button>
@@ -522,7 +522,7 @@ export default function TopNovelPage() {
                   <RankBadge rank={item.rank} />
                 </div>
 
-                <div className="relative h-[132px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 shadow-sm">
+                <div className="relative h-[132px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 shadow-sm dark:bg-[var(--shadow-bg-elevated)]">
                   <img
                     src={item.image}
                     alt={getDisplayTitle(item.title, t)}
@@ -534,40 +534,40 @@ export default function TopNovelPage() {
                   />
 
                   {item.isAdult ? (
-                    <div className="absolute bottom-1.5 left-1.5 rounded-full bg-[#fff1f1] px-2 py-0.5 text-[9px] font-extrabold text-[#e5484d]">
+                    <div className="absolute bottom-1.5 left-1.5 rounded-full bg-[#fff1f1] px-2 py-0.5 text-[9px] font-extrabold text-[#e5484d] dark:bg-red-400/15 dark:text-red-300">
                       18+
                     </div>
                   ) : null}
                 </div>
 
                 <div className="min-w-0 flex-1 pt-1">
-                  <h2 className="line-clamp-1 text-[22px] font-extrabold leading-tight text-[#6b1028]">
+                  <h2 className="line-clamp-1 text-[22px] font-extrabold leading-tight text-[#6b1028] dark:text-[#f59ab0]">
                     {getDisplayTitle(item.title, t)}
                   </h2>
 
-                  <p className="mt-1 line-clamp-1 text-[16px] font-bold text-neutral-900">
+                  <p className="mt-1 line-clamp-1 text-[16px] font-bold text-neutral-900 dark:text-[var(--shadow-text-primary)]">
                     {getDisplayAuthor(item.author, t)}
                   </p>
 
                   <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1.5 text-blue-700">
+                    <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
                       <span>👁️</span>
                       <span className="font-semibold">{item.views}</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-red-600">
+                    <div className="flex items-center gap-1.5 text-red-600 dark:text-red-300">
                       <span>❤️</span>
                       <span className="font-semibold">{item.likes}</span>
                     </div>
 
                     {item.genre ? (
-                      <div className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-neutral-500">
+                      <div className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-neutral-500 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                         {item.genre}
                       </div>
                     ) : null}
                   </div>
 
-                  <p className="mt-2 line-clamp-4 text-[14px] leading-7 text-neutral-800">
+                  <p className="mt-2 line-clamp-4 text-[14px] leading-7 text-neutral-800 dark:text-[var(--shadow-text-secondary)]">
                     {getDisplayDescription(item.description, t)}
                   </p>
                 </div>
