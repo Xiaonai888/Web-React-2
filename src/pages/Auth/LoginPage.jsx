@@ -169,18 +169,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] px-4 py-6">
+    <div className="app-page min-h-screen bg-[#f5f3fa] px-4 py-6 dark:bg-[var(--shadow-bg-page)]">
       <div className="mx-auto max-w-[430px]">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 transition hover:-translate-x-0.5 hover:bg-[#f7f7fb] active:scale-95"
+          className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 transition hover:-translate-x-0.5 hover:bg-[#f7f7fb] active:scale-95 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-white/10 dark:hover:bg-[var(--shadow-bg-hover)]"
           aria-label={t('loginPage.goBack')}
         >
           <i className="fas fa-chevron-left text-[14px]" />
         </button>
 
-        <section className="rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5">
+        <section className="rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
           <div className="mb-7 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_14px_28px_rgba(17,24,39,0.18)] ring-1 ring-black/5">
               <img
@@ -190,23 +190,23 @@ export default function LoginPage() {
               />
             </div>
 
-            <h1 className="text-[26px] font-extrabold tracking-tight text-[#111827]">
+            <h1 className="text-[26px] font-extrabold tracking-tight text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('loginPage.welcomeBack')}
             </h1>
 
-            <p className="mt-2 text-[13px] leading-5 text-[#8d94a1]">
+            <p className="mt-2 text-[13px] leading-5 text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
               {t('loginPage.subtitle')}
             </p>
           </div>
 
           {message ? (
-            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
               {message}
             </div>
           ) : null}
 
           <form onSubmit={handleSubmit}>
-            <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+            <label className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('loginPage.email')}
             </label>
             <input
@@ -214,25 +214,25 @@ export default function LoginPage() {
               placeholder={t('loginPage.emailPlaceholder')}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+              className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition placeholder:text-[#9ca3af] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[var(--shadow-border-strong)] dark:focus:bg-[var(--shadow-input-bg)] dark:focus:shadow-[0_0_0_4px_rgba(255,255,255,0.05)]"
             />
 
-            <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+            <label className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('loginPage.password')}
             </label>
-            <div className="mb-3 flex h-12 items-center rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 transition focus-within:border-[#111827] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]">
+            <div className="mb-3 flex h-12 items-center rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 transition focus-within:border-[#111827] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(17,24,39,0.06)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:focus-within:border-[var(--shadow-border-strong)] dark:focus-within:bg-[var(--shadow-input-bg)] dark:focus-within:shadow-[0_0_0_4px_rgba(255,255,255,0.05)]">
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder={t('loginPage.password')}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none"
+                className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none placeholder:text-[#9ca3af] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)]"
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
-                className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8d94a1] transition hover:bg-[#f0f1f5] hover:text-[#111827] active:scale-95"
+                className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8d94a1] transition hover:bg-[#f0f1f5] hover:text-[#111827] active:scale-95 dark:text-[var(--shadow-text-secondary)] dark:hover:bg-[var(--shadow-bg-hover)] dark:hover:text-[var(--shadow-text-primary)]"
                 aria-label={
                   showPassword
                     ? t('loginPage.hidePassword')
@@ -244,19 +244,19 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-5 flex items-center justify-between">
-              <label className="flex items-center gap-2 text-[12px] font-semibold text-[#8d94a1]">
+              <label className="flex items-center gap-2 text-[12px] font-semibold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(event) => setRememberMe(event.target.checked)}
-                  className="h-4 w-4 rounded border-[#d1d5db] accent-[#111827]"
+                  className="h-4 w-4 rounded border-[#d1d5db] accent-[#111827] dark:border-[var(--shadow-border-strong)] dark:accent-[#a78bfa]"
                 />
                 {t('loginPage.rememberMe')}
               </label>
 
               <Link
                 to="/forgot-password"
-                className="text-[12px] font-extrabold text-[#111827] transition hover:text-[#f6b800]"
+                className="text-[12px] font-extrabold text-[#111827] transition hover:text-[#f6b800] dark:text-[var(--shadow-text-primary)] dark:hover:text-[#c4b5fd]"
               >
                 {t('loginPage.forgotPassword')}
               </Link>
@@ -265,7 +265,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b2233] hover:shadow-[0_18px_34px_rgba(17,24,39,0.24)] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b2233] hover:shadow-[0_18px_34px_rgba(17,24,39,0.24)] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gradient-to-r dark:from-[#7c3aed] dark:to-[#a78bfa] dark:shadow-[0_12px_28px_rgba(124,58,237,0.2)]"
             >
               {loading
                 ? t('loginPage.loggingIn')
@@ -273,11 +273,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-[13px] text-[#8d94a1]">
+          <div className="mt-6 text-center text-[13px] text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
             {t('loginPage.noAccount')}{' '}
             <Link
               to="/register"
-              className="font-extrabold text-[#111827] transition hover:text-[#f6b800]"
+              className="font-extrabold text-[#111827] transition hover:text-[#f6b800] dark:text-[var(--shadow-text-primary)] dark:hover:text-[#c4b5fd]"
             >
               {t('loginPage.signUp')}
             </Link>
