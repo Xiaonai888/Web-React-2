@@ -386,7 +386,7 @@ const shouldShowOpeningAds =
   }
 />
 
-
+        <Route path="/store" element={<ReaderStorePage />} />
         <Route path="/shop" element={<ShopPage />} />
         <Route
           path="/shop/mall/product/:productId"
