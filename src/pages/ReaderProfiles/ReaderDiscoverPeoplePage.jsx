@@ -1,5 +1,100 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerDiscoverPeoplePage', {
+  en: {
+    reader: 'Reader',
+    followsYou: 'Follows you',
+    suggestedForYou: 'Suggested for you',
+    followingProgress: 'Following...',
+    following: 'Following',
+    followBack: 'Follow back',
+    follow: 'Follow',
+    hidePerson: 'Hide {{name}}',
+    loadFailed: 'Failed to load people',
+    followFailed: 'Failed to follow reader',
+    goBack: 'Go back',
+    title: 'Discover people',
+    moreSuggestions: 'More suggestions',
+    showingUpTo: 'Showing up to {{count}} people',
+    noSuggestions: 'No suggestions right now',
+    emptyBody: 'New people may appear later as the Shadow community grows.',
+  },
+  km: {
+    reader: 'អ្នកអាន',
+    followsYou: 'កំពុង Follow អ្នក',
+    suggestedForYou: 'បានណែនាំសម្រាប់អ្នក',
+    followingProgress: 'កំពុង Follow...',
+    following: 'កំពុង Follow',
+    followBack: 'Follow តប',
+    follow: 'Follow',
+    hidePerson: 'លាក់ {{name}}',
+    loadFailed: 'មិនអាចផ្ទុកអ្នកអានបានទេ',
+    followFailed: 'មិនអាច Follow អ្នកអានបានទេ',
+    goBack: 'ត្រឡប់ក្រោយ',
+    title: 'ស្វែងរកអ្នកអាន',
+    moreSuggestions: 'ការណែនាំបន្ថែម',
+    showingUpTo: 'បង្ហាញអ្នកអានរហូតដល់ {{count}} នាក់',
+    noSuggestions: 'មិនមានការណែនាំនៅពេលនេះទេ',
+    emptyBody: 'អ្នកថ្មីអាចបង្ហាញនៅពេលក្រោយ នៅពេលសហគមន៍ Shadow កាន់តែរីកចម្រើន។',
+  },
+  zh: {
+    reader: '读者',
+    followsYou: '关注了你',
+    suggestedForYou: '为你推荐',
+    followingProgress: '关注中...',
+    following: '已关注',
+    followBack: '回关',
+    follow: '关注',
+    hidePerson: '隐藏 {{name}}',
+    loadFailed: '无法加载用户',
+    followFailed: '无法关注读者',
+    goBack: '返回',
+    title: '发现用户',
+    moreSuggestions: '更多推荐',
+    showingUpTo: '最多显示 {{count}} 位用户',
+    noSuggestions: '当前暂无推荐',
+    emptyBody: '随着 Shadow 社区不断发展，稍后可能会出现新的用户推荐。',
+  },
+  ja: {
+    reader: '読者',
+    followsYou: 'あなたをフォロー中',
+    suggestedForYou: 'おすすめ',
+    followingProgress: 'フォロー中...',
+    following: 'フォロー中',
+    followBack: 'フォローバック',
+    follow: 'フォロー',
+    hidePerson: '{{name}}を非表示',
+    loadFailed: 'ユーザーを読み込めませんでした',
+    followFailed: '読者をフォローできませんでした',
+    goBack: '戻る',
+    title: 'ユーザーを見つける',
+    moreSuggestions: 'その他のおすすめ',
+    showingUpTo: '最大 {{count}} 人を表示',
+    noSuggestions: '現在おすすめはありません',
+    emptyBody: 'Shadow コミュニティの成長に合わせて、新しいユーザーが後から表示されることがあります。',
+  },
+  ko: {
+    reader: '독자',
+    followsYou: '회원님을 팔로우함',
+    suggestedForYou: '추천 사용자',
+    followingProgress: '팔로우 중...',
+    following: '팔로잉',
+    followBack: '맞팔로우',
+    follow: '팔로우',
+    hidePerson: '{{name}} 숨기기',
+    loadFailed: '사용자를 불러오지 못했습니다',
+    followFailed: '독자를 팔로우하지 못했습니다',
+    goBack: '뒤로 가기',
+    title: '사용자 찾기',
+    moreSuggestions: '추천 더 보기',
+    showingUpTo: '최대 {{count}}명 표시',
+    noSuggestions: '현재 추천 사용자가 없습니다',
+    emptyBody: 'Shadow 커뮤니티가 성장하면 새로운 사용자가 나중에 표시될 수 있습니다.',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -45,11 +140,18 @@ function saveStoredUser(user) {
 function readHiddenSuggestions() {
   try {
     const now = Date.now()
-    const stored = JSON.parse(localStorage.getItem(HIDDEN_SUGGESTIONS_KEY) || '{}')
-    const active = Object.fromEntries(
-      Object.entries(stored).filter(([, expiresAt]) => Number(expiresAt) > now)
+    const stored = JSON.parse(
+      localStorage.getItem(HIDDEN_SUGGESTIONS_KEY) || '{}'
     )
-    localStorage.setItem(HIDDEN_SUGGESTIONS_KEY, JSON.stringify(active))
+    const active = Object.fromEntries(
+      Object.entries(stored).filter(
+        ([, expiresAt]) => Number(expiresAt) > now
+      )
+    )
+    localStorage.setItem(
+      HIDDEN_SUGGESTIONS_KEY,
+      JSON.stringify(active)
+    )
     return active
   } catch {
     return {}
@@ -57,12 +159,20 @@ function readHiddenSuggestions() {
 }
 
 function ReaderAvatar({ user }) {
-  const name = user?.name || user?.username || 'Reader'
+  const { t } = useDisplayTranslation()
+  const name =
+    user?.name ||
+    user?.username ||
+    t('readerDiscoverPeoplePage.reader')
 
   return (
     <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[20px] font-bold text-[var(--shadow-text-secondary)] ring-1 ring-[var(--shadow-border)]">
       {user?.avatar_url ? (
-        <img src={user.avatar_url} alt={name} className="h-full w-full object-cover" />
+        <img
+          src={user.avatar_url}
+          alt={name}
+          className="h-full w-full object-cover"
+        />
       ) : (
         String(name).slice(0, 1).toUpperCase()
       )}
@@ -70,8 +180,19 @@ function ReaderAvatar({ user }) {
   )
 }
 
-function PersonRow({ user, followBack, busy, onFollow, onHide }) {
+function PersonRow({
+  user,
+  followBack,
+  busy,
+  onFollow,
+  onHide,
+}) {
+  const { t } = useDisplayTranslation()
   const following = Boolean(user.is_following)
+  const displayName =
+    user.name ||
+    user.username ||
+    t('readerDiscoverPeoplePage.reader')
 
   return (
     <article className="flex items-center gap-3 px-4 py-3">
@@ -83,7 +204,9 @@ function PersonRow({ user, followBack, busy, onFollow, onHide }) {
         </div>
 
         <div className="mt-0.5 line-clamp-1 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
-          {followBack ? 'Follows you' : 'Suggested for you'}
+          {followBack
+            ? t('readerDiscoverPeoplePage.followsYou')
+            : t('readerDiscoverPeoplePage.suggestedForYou')}
         </div>
       </div>
 
@@ -97,14 +220,22 @@ function PersonRow({ user, followBack, busy, onFollow, onHide }) {
             : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-sm'
         }`}
       >
-        {busy ? 'Following...' : following ? 'Following' : followBack ? 'Follow back' : 'Follow'}
+        {busy
+          ? t('readerDiscoverPeoplePage.followingProgress')
+          : following
+            ? t('readerDiscoverPeoplePage.following')
+            : followBack
+              ? t('readerDiscoverPeoplePage.followBack')
+              : t('readerDiscoverPeoplePage.follow')}
       </button>
 
       <button
         type="button"
         onClick={() => onHide(user.id)}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] transition active:bg-[var(--shadow-bg-hover)]"
-        aria-label={`Hide ${user.name || user.username}`}
+        aria-label={t('readerDiscoverPeoplePage.hidePerson', {
+          name: displayName,
+        })}
       >
         <i className="fa-solid fa-xmark text-[16px]" />
       </button>
@@ -112,7 +243,14 @@ function PersonRow({ user, followBack, busy, onFollow, onHide }) {
   )
 }
 
-function PeopleSection({ title, users, followBack, actionId, onFollow, onHide }) {
+function PeopleSection({
+  title,
+  users,
+  followBack,
+  actionId,
+  onFollow,
+  onHide,
+}) {
   if (!users.length) return null
 
   return (
@@ -139,10 +277,13 @@ function PeopleSection({ title, users, followBack, actionId, onFollow, onHide })
 
 export default function ReaderDiscoverPeoplePage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const storedUser = getStoredUser()
   const [suggestedUsers, setSuggestedUsers] = useState([])
   const [followBackUsers, setFollowBackUsers] = useState([])
-  const [hiddenSuggestions, setHiddenSuggestions] = useState(readHiddenSuggestions)
+  const [hiddenSuggestions, setHiddenSuggestions] = useState(
+    readHiddenSuggestions
+  )
   const [loading, setLoading] = useState(true)
   const [actionId, setActionId] = useState('')
   const [message, setMessage] = useState('')
@@ -163,36 +304,58 @@ export default function ReaderDiscoverPeoplePage() {
         setLoading(true)
         setMessage('')
 
-        const [suggestionsResponse, followersResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/users/suggestions?page=1&limit=50`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-          fetch(
-            `${API_BASE_URL}/api/users/${encodeURIComponent(username)}/followers?page=1&limit=50`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          ),
-        ])
+        const [suggestionsResponse, followersResponse] =
+          await Promise.all([
+            fetch(
+              `${API_BASE_URL}/api/users/suggestions?page=1&limit=50`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            ),
+            fetch(
+              `${API_BASE_URL}/api/users/${encodeURIComponent(
+                username
+              )}/followers?page=1&limit=50`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            ),
+          ])
 
-        const suggestionsData = await suggestionsResponse.json().catch(() => ({}))
-        const followersData = await followersResponse.json().catch(() => ({}))
+        const suggestionsData = await suggestionsResponse
+          .json()
+          .catch(() => ({}))
+        const followersData = await followersResponse
+          .json()
+          .catch(() => ({}))
 
-        if (!suggestionsResponse.ok || suggestionsData.ok === false) {
-          throw new Error(suggestionsData.message || 'Failed to load people')
+        if (
+          !suggestionsResponse.ok ||
+          suggestionsData.ok === false
+        ) {
+          throw new Error(
+            suggestionsData.message ||
+              t('readerDiscoverPeoplePage.loadFailed')
+          )
         }
 
         if (!ignore) {
-          const suggestions = Array.isArray(suggestionsData.users)
+          const suggestions = Array.isArray(
+            suggestionsData.users
+          )
             ? suggestionsData.users
             : []
           const followers =
-            followersResponse.ok && followersData.ok !== false && Array.isArray(followersData.users)
-              ? followersData.users.filter((user) => !user.is_following)
+            followersResponse.ok &&
+            followersData.ok !== false &&
+            Array.isArray(followersData.users)
+              ? followersData.users.filter(
+                  (user) => !user.is_following
+                )
               : []
 
           setSuggestedUsers(suggestions)
@@ -203,7 +366,10 @@ export default function ReaderDiscoverPeoplePage() {
         if (!ignore) {
           setSuggestedUsers([])
           setFollowBackUsers([])
-          setMessage(error.message || 'Failed to load people')
+          setMessage(
+            error.message ||
+              t('readerDiscoverPeoplePage.loadFailed')
+          )
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -222,7 +388,9 @@ export default function ReaderDiscoverPeoplePage() {
     const visibleFollowBack = followBackUsers.filter(
       (user) => !hiddenIds.has(String(user.id))
     )
-    const followBackIds = new Set(visibleFollowBack.map((user) => user.id))
+    const followBackIds = new Set(
+      visibleFollowBack.map((user) => user.id)
+    )
     const visibleSuggestions = suggestedUsers.filter(
       (user) =>
         !hiddenIds.has(String(user.id)) &&
@@ -232,19 +400,27 @@ export default function ReaderDiscoverPeoplePage() {
     const suggestedForYou = visibleSuggestions.slice(0, 12)
     const followBack = visibleFollowBack.slice(
       0,
-      Math.min(10, MAX_VISIBLE_PEOPLE - suggestedForYou.length)
+      Math.min(
+        10,
+        MAX_VISIBLE_PEOPLE - suggestedForYou.length
+      )
     )
-    const usedCount = suggestedForYou.length + followBack.length
+    const usedCount =
+      suggestedForYou.length + followBack.length
     const moreSuggestions = visibleSuggestions.slice(
       suggestedForYou.length,
-      suggestedForYou.length + Math.max(0, MAX_VISIBLE_PEOPLE - usedCount)
+      suggestedForYou.length +
+        Math.max(0, MAX_VISIBLE_PEOPLE - usedCount)
     )
 
     return {
       suggestedForYou,
       followBack,
       moreSuggestions,
-      total: suggestedForYou.length + followBack.length + moreSuggestions.length,
+      total:
+        suggestedForYou.length +
+        followBack.length +
+        moreSuggestions.length,
     }
   }, [followBackUsers, hiddenSuggestions, suggestedUsers])
 
@@ -254,7 +430,10 @@ export default function ReaderDiscoverPeoplePage() {
       [String(userId)]: Date.now() + HIDDEN_DURATION_MS,
     }
 
-    localStorage.setItem(HIDDEN_SUGGESTIONS_KEY, JSON.stringify(next))
+    localStorage.setItem(
+      HIDDEN_SUGGESTIONS_KEY,
+      JSON.stringify(next)
+    )
     setHiddenSuggestions(next)
   }
 
@@ -264,12 +443,19 @@ export default function ReaderDiscoverPeoplePage() {
 
     saveStoredUser({
       ...current,
-      following_count: Number(current.following_count || 0) + 1,
+      following_count:
+        Number(current.following_count || 0) + 1,
     })
   }
 
   async function handleFollow(user) {
-    if (!user?.username || user.is_following || actionId) return
+    if (
+      !user?.username ||
+      user.is_following ||
+      actionId
+    ) {
+      return
+    }
 
     const token = getAuthToken()
 
@@ -283,7 +469,9 @@ export default function ReaderDiscoverPeoplePage() {
       setMessage('')
 
       const response = await fetch(
-        `${API_BASE_URL}/api/users/${encodeURIComponent(user.username)}/follow`,
+        `${API_BASE_URL}/api/users/${encodeURIComponent(
+          user.username
+        )}/follow`,
         {
           method: 'POST',
           headers: {
@@ -295,19 +483,27 @@ export default function ReaderDiscoverPeoplePage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to follow reader')
+        throw new Error(
+          data.message ||
+            t('readerDiscoverPeoplePage.followFailed')
+        )
       }
 
       const markFollowing = (items) =>
         items.map((item) =>
-          item.id === user.id ? { ...item, is_following: true } : item
+          item.id === user.id
+            ? { ...item, is_following: true }
+            : item
         )
 
       setSuggestedUsers(markFollowing)
       setFollowBackUsers(markFollowing)
       incrementStoredFollowingCount()
     } catch (error) {
-      setMessage(error.message || 'Failed to follow reader')
+      setMessage(
+        error.message ||
+          t('readerDiscoverPeoplePage.followFailed')
+      )
     } finally {
       setActionId('')
     }
@@ -321,13 +517,13 @@ export default function ReaderDiscoverPeoplePage() {
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition active:bg-[var(--shadow-bg-hover)]"
-            aria-label="Go back"
+            aria-label={t('readerDiscoverPeoplePage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
           </button>
 
           <h1 className="ml-2 text-[20px] font-semibold text-[var(--shadow-text-primary)]">
-            Discover people
+            {t('readerDiscoverPeoplePage.title')}
           </h1>
         </header>
 
@@ -344,7 +540,10 @@ export default function ReaderDiscoverPeoplePage() {
         {loading ? (
           <div className="space-y-4 px-4 py-5">
             {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="flex items-center gap-3">
+              <div
+                key={index}
+                className="flex items-center gap-3"
+              >
                 <div className="h-16 w-16 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                 <div className="min-w-0 flex-1">
                   <div className="h-4 w-36 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
@@ -357,7 +556,9 @@ export default function ReaderDiscoverPeoplePage() {
         ) : sections.total ? (
           <div className="pb-8">
             <PeopleSection
-              title="Suggested for you"
+              title={t(
+                'readerDiscoverPeoplePage.suggestedForYou'
+              )}
               users={sections.suggestedForYou}
               actionId={actionId}
               onFollow={handleFollow}
@@ -365,7 +566,7 @@ export default function ReaderDiscoverPeoplePage() {
             />
 
             <PeopleSection
-              title="Follow back"
+              title={t('readerDiscoverPeoplePage.followBack')}
               users={sections.followBack}
               followBack
               actionId={actionId}
@@ -374,7 +575,9 @@ export default function ReaderDiscoverPeoplePage() {
             />
 
             <PeopleSection
-              title="More suggestions"
+              title={t(
+                'readerDiscoverPeoplePage.moreSuggestions'
+              )}
               users={sections.moreSuggestions}
               actionId={actionId}
               onFollow={handleFollow}
@@ -382,7 +585,9 @@ export default function ReaderDiscoverPeoplePage() {
             />
 
             <div className="px-4 pt-5 text-center text-[11px] font-normal text-[var(--shadow-text-tertiary)]">
-              Showing up to {MAX_VISIBLE_PEOPLE} people
+              {t('readerDiscoverPeoplePage.showingUpTo', {
+                count: MAX_VISIBLE_PEOPLE,
+              })}
             </div>
           </div>
         ) : (
@@ -392,11 +597,11 @@ export default function ReaderDiscoverPeoplePage() {
             </div>
 
             <h2 className="mt-4 text-[17px] font-semibold text-[var(--shadow-text-primary)]">
-              No suggestions right now
+              {t('readerDiscoverPeoplePage.noSuggestions')}
             </h2>
 
             <p className="mx-auto mt-2 max-w-[300px] text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
-              New people may appear later as the Shadow community grows.
+              {t('readerDiscoverPeoplePage.emptyBody')}
             </p>
           </div>
         )}
