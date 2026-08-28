@@ -30,50 +30,50 @@ const topics = [
     title: 'Technical Problem',
     description: 'App errors, slow loading, images, or notifications.',
     icon: Wrench,
-    tone: 'bg-[#f0eaff] text-[#7458e8]',
+    tone: 'bg-[#f0eaff] text-[#7458e8] dark:bg-[#7458e8]/15 dark:text-[#b8a2ff]',
   },
   {
     id: 'account_profile',
     title: 'Account & Profile',
     description: 'Login, password, profile, or account access.',
     icon: CircleUserRound,
-    tone: 'bg-[#e6f8f4] text-[#20a58f]',
+    tone: 'bg-[#e6f8f4] text-[#20a58f] dark:bg-[#20a58f]/15 dark:text-[#65d7c4]',
   },
   {
     id: 'reading_library',
     title: 'Reading & Library',
     description: 'Stories, episodes, saved posts, or your Library.',
     icon: BookOpen,
-    tone: 'bg-[#eaf4ff] text-[#2f86cb]',
+    tone: 'bg-[#eaf4ff] text-[#2f86cb] dark:bg-[#2f86cb]/15 dark:text-[#82bff0]',
   },
   {
     id: 'wallet_payments',
     title: 'Wallet & Payments',
     description: 'Diamonds, purchases, payment, or transaction issues.',
     icon: WalletCards,
-    tone: 'bg-[#fff4df] text-[#e29416]',
+    tone: 'bg-[#fff4df] text-[#e29416] dark:bg-[#e29416]/15 dark:text-[#f3b54b]',
   },
   {
     id: 'authors_publishing',
     title: 'Authors & Publishing',
     description: 'Author Page, stories, publishing, or earnings.',
     icon: PenLine,
-    tone: 'bg-[#fdebf4] text-[#d95c9a]',
+    tone: 'bg-[#fdebf4] text-[#d95c9a] dark:bg-[#d95c9a]/15 dark:text-[#f38db0]',
   },
   {
     id: 'mall_orders',
     title: 'Shadow Mall & Orders',
     description: 'Products, orders, sellers, or purchased files.',
     icon: ShoppingBag,
-    tone: 'bg-[#f1ebff] text-[#7458e8]',
+    tone: 'bg-[#f1ebff] text-[#7458e8] dark:bg-[#7458e8]/15 dark:text-[#b8a2ff]',
   },
 ]
 
 const statusStyles = {
-  submitted: 'bg-[#f0eaff] text-[#7458e8]',
-  in_review: 'bg-[#fff4d9] text-[#b7791f]',
-  resolved: 'bg-[#e8f8ef] text-[#178a55]',
-  closed: 'bg-[#f1f2f4] text-[#69707d]',
+  submitted: 'bg-[#f0eaff] text-[#7458e8] dark:bg-[#7458e8]/15 dark:text-[#b8a2ff]',
+  in_review: 'bg-[#fff4d9] text-[#b7791f] dark:bg-amber-500/15 dark:text-amber-300',
+  resolved: 'bg-[#e8f8ef] text-[#178a55] dark:bg-emerald-500/15 dark:text-emerald-300',
+  closed: 'bg-[#f1f2f4] text-[#69707d] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]',
 }
 
 const statusLabels = {
@@ -197,7 +197,7 @@ function RequestsModal({
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#d4d2d8] sm:hidden" />
         <header className="flex min-h-[64px] items-center gap-3 bg-white px-4 py-3 dark:bg-[#171923]">
           {selectedRequest ? (
-            <button type="button" onClick={onBackToList} aria-label="Back to requests" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-transparent text-black active:scale-95 active:bg-transparent">
+            <button type="button" onClick={onBackToList} aria-label="Back to requests" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-transparent text-black active:scale-95 active:bg-transparent dark:text-[var(--shadow-text-primary)]">
               <ArrowLeft className="h-4 w-4" />
             </button>
           ) : null}
@@ -209,7 +209,7 @@ function RequestsModal({
               {selectedRequest ? selectedRequest.ticket_code : 'Track updates from Shadow support.'}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="-mt-1.5 flex h-9 w-9 shrink-0 self-start items-center justify-center rounded-none bg-transparent text-black active:scale-95 active:bg-transparent">
+          <button type="button" onClick={onClose} aria-label="Close" className="-mt-1.5 flex h-9 w-9 shrink-0 self-start items-center justify-center rounded-none bg-transparent text-black active:scale-95 active:bg-transparent dark:text-[var(--shadow-text-primary)]">
   <X className="h-4 w-4" />
 </button>
         </header>
@@ -572,7 +572,7 @@ export default function FeedbackSupportPage() {
 
   if (success) {
     return (
-      <main className="min-h-screen bg-[#f8f7fb] px-4 py-8 dark:bg-[#0d0f16]">
+      <main className="app-page min-h-screen px-4 py-8">
         <section className="mx-auto max-w-[520px] rounded-[22px] bg-white p-6 text-center shadow-[0_14px_38px_rgba(40,28,78,0.10)] dark:bg-[#171923]">
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e9f8ef] text-[#178a55]">
             <CircleCheck className="h-8 w-8" strokeWidth={1.9} />
@@ -611,7 +611,7 @@ export default function FeedbackSupportPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fafafa] pb-8 text-[#20202e] dark:bg-[#0d0f16] dark:text-white">
+    <main className="app-page min-h-screen pb-8 text-[#20202e] dark:text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-40 bg-white/95 shadow-[0_3px_16px_rgba(40,31,70,0.06)] backdrop-blur dark:bg-[#171923]/95">
         <div className="relative mx-auto flex h-12 max-w-[760px] items-center justify-center px-4">
           <button type="button" onClick={goBack} aria-label="Back" className="absolute left-4 flex h-10 w-10 items-center justify-start active:scale-95">
@@ -683,7 +683,7 @@ export default function FeedbackSupportPage() {
                       setMessage('')
                     }}
                     placeholder="Short summary of the problem"
-                    className="mt-2 h-12 w-full rounded-[14px] bg-[#f8f7fb] px-3.5 text-[13px] font-medium shadow-[inset_0_0_0_1px_rgba(116,88,232,0.08)] outline-none transition placeholder:text-[#aaa7b0] focus:bg-white focus:ring-4 focus:ring-[#7458e8]/10 dark:bg-white/5"
+                    className="mt-2 h-12 w-full rounded-[14px] bg-[#f8f7fb] px-3.5 text-[13px] font-medium shadow-[inset_0_0_0_1px_rgba(116,88,232,0.08)] outline-none transition placeholder:text-[#aaa7b0] focus:bg-white focus:ring-4 focus:ring-[#7458e8]/10 dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:bg-[var(--shadow-input-bg)]"
                   />
                 </label>
 
@@ -697,7 +697,7 @@ export default function FeedbackSupportPage() {
                       setMessage('')
                     }}
                     placeholder="Describe what happened and what you expected..."
-                    className="mt-2 min-h-[150px] w-full resize-none rounded-[14px] bg-[#f8f7fb] px-3.5 py-3 text-[13px] font-medium leading-6 shadow-[inset_0_0_0_1px_rgba(116,88,232,0.08)] outline-none transition placeholder:text-[#aaa7b0] focus:bg-white focus:ring-4 focus:ring-[#7458e8]/10 dark:bg-white/5"
+                    className="mt-2 min-h-[150px] w-full resize-none rounded-[14px] bg-[#f8f7fb] px-3.5 py-3 text-[13px] font-medium leading-6 shadow-[inset_0_0_0_1px_rgba(116,88,232,0.08)] outline-none transition placeholder:text-[#aaa7b0] focus:bg-white focus:ring-4 focus:ring-[#7458e8]/10 dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:bg-[var(--shadow-input-bg)]"
                   />
                   <span className="mt-1 block text-right text-[10px] font-semibold text-[#9d99a3]">{description.length}/3000</span>
                 </label>
@@ -724,7 +724,7 @@ export default function FeedbackSupportPage() {
                 </div>
               </div>
 
-              {message ? <div className="mt-4 rounded-[13px] bg-[#fff1f2] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52] shadow-[0_5px_15px_rgba(187,77,82,0.08)]">{message}</div> : null}
+              {message ? <div className="mt-4 rounded-[13px] bg-[#fff1f2] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52] shadow-[0_5px_15px_rgba(187,77,82,0.08)] dark:bg-red-500/10 dark:text-red-300">{message}</div> : null}
 
               <button type="button" onClick={openReview} className="mt-5 h-12 w-full rounded-[14px] bg-[#7458e8] text-[13px] font-normal text-white active:scale-[0.99]">
                 Continue to Review
@@ -764,7 +764,7 @@ export default function FeedbackSupportPage() {
                 Your request and attachment are private and visible only to Shadow support administrators.
               </div>
 
-              {message ? <div className="mt-4 rounded-[13px] bg-[#fff1f2] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52] shadow-[0_5px_15px_rgba(187,77,82,0.08)]">{message}</div> : null}
+              {message ? <div className="mt-4 rounded-[13px] bg-[#fff1f2] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52] shadow-[0_5px_15px_rgba(187,77,82,0.08)] dark:bg-red-500/10 dark:text-red-300">{message}</div> : null}
 
               <div className="mt-5 grid grid-cols-[0.8fr_1.2fr] gap-2.5">
                 <button type="button" onClick={() => setStep(2)} className="h-12 rounded-[14px] bg-[#f2eff8] text-[12.5px] font-normal text-[#5c5865] active:scale-[0.99] dark:bg-white/5 dark:text-white/70">
