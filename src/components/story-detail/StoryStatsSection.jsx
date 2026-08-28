@@ -1,3 +1,39 @@
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('storyStatsSection', {
+  en: {
+    rank: 'No.{{rank}}',
+    likes: 'Likes',
+    views: 'Views',
+    rate: 'Rate',
+  },
+  km: {
+    rank: 'លេខ {{rank}}',
+    likes: 'ចូលចិត្ត',
+    views: 'ការមើល',
+    rate: 'ពិន្ទុ',
+  },
+  zh: {
+    rank: '第 {{rank}} 名',
+    likes: '喜欢',
+    views: '浏览',
+    rate: '评分',
+  },
+  ja: {
+    rank: '第{{rank}}位',
+    likes: 'いいね',
+    views: '閲覧',
+    rate: '評価',
+  },
+  ko: {
+    rank: '{{rank}}위',
+    likes: '좋아요',
+    views: '조회',
+    rate: '평점',
+  },
+})
+
 function formatShortNumber(value) {
   const number = Number(value || 0)
 
@@ -30,6 +66,7 @@ function StatItem({ label, value, icon, onClick }) {
 }
 
 export default function StoryStatsSection({ story, episodes, onOpenLikes, onOpenRating, onOpenRanking }) {
+  const { t } = useDisplayTranslation()
   const rank = Number(story?.rank_by_views || 0)
   const rating = Number(story?.rating_average || story?.rating || 0)
   const showRank = rank > 0 && rank <= 100
@@ -51,7 +88,7 @@ export default function StoryStatsSection({ story, episodes, onOpenLikes, onOpen
           className="h-[23px] w-[23px] object-contain"
         />
         <span className="text-[14px] font-bold text-[#f6a800] dark:text-amber-300">
-          No.{rank}
+          {t('storyStatsSection.rank', { rank })}
         </span>
       </div>
 
@@ -62,20 +99,20 @@ export default function StoryStatsSection({ story, episodes, onOpenLikes, onOpen
 
         <div className="grid grid-cols-3 gap-2 px-5 py-5">
           <StatItem
-  label="Likes"
+  label={t('storyStatsSection.likes')}
   value={formatShortNumber(story?.total_likes)}
   icon="fa-regular fa-heart"
   onClick={onOpenLikes}
 />
 
           <StatItem
-            label="Views"
+            label={t('storyStatsSection.views')}
             value={formatShortNumber(story?.total_views)}
             icon="fa-regular fa-eye"
           />
 
           <StatItem
-            label="Rate"
+            label={t('storyStatsSection.rate')}
             value={rating.toFixed(1)}
             icon="fa-solid fa-star"
             onClick={onOpenRating}
