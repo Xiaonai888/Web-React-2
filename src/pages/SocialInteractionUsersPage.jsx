@@ -733,7 +733,7 @@ export default function SocialInteractionUsersPage() {
                     <span>{tab.label}</span>
                     <span>{tab.count.toLocaleString()}</span>
                     {active ? (
-                      <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#111827]" />
+                      <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#111827] dark:bg-[#a78bfa]" />
                     ) : null}
                   </button>
                 )
@@ -803,7 +803,7 @@ export default function SocialInteractionUsersPage() {
             <button
               type="button"
               onClick={() => loadPage(1)}
-              className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-bold text-white active:scale-95"
+              className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-bold text-white active:scale-95 dark:bg-[#7c3aed]"
             >
               Try again
             </button>
