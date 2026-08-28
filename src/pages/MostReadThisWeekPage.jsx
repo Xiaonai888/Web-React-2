@@ -2,6 +2,76 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('mostReadThisWeekPage', {
+  en: {
+    loadFailed: 'Failed to load most read stories',
+    goBack: 'Go back',
+    title: 'Most Read This Week',
+    top100: 'Top 100 Books',
+    helper: 'The most liked stories readers are following now.',
+    loading: 'Loading',
+    noBooks: 'No books found.',
+    loadMore: 'Load More',
+    reached100: 'You’ve reached the first 100 books.',
+    untitledStory: 'Untitled Story',
+    mostReadStory: 'Most Read Story',
+  },
+  km: {
+    loadFailed: 'មិនអាចផ្ទុករឿងដែលមានអ្នកអានច្រើនបំផុតបានទេ',
+    goBack: 'ត្រឡប់ក្រោយ',
+    title: 'រឿងដែលមានអ្នកអានច្រើនសប្តាហ៍នេះ',
+    top100: 'សៀវភៅ Top 100',
+    helper: 'រឿងដែលទទួលបានការចូលចិត្តច្រើន និងអ្នកអានកំពុងតាមដានឥឡូវនេះ។',
+    loading: 'កំពុងផ្ទុក',
+    noBooks: 'រកមិនឃើញសៀវភៅទេ។',
+    loadMore: 'បង្ហាញបន្ថែម',
+    reached100: 'អ្នកបានមើលដល់សៀវភៅ 100 ដំបូងហើយ។',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    mostReadStory: 'រឿងដែលមានអ្នកអានច្រើន',
+  },
+  zh: {
+    loadFailed: '无法加载本周热门阅读故事',
+    goBack: '返回',
+    title: '本周阅读最多',
+    top100: 'Top 100 书籍',
+    helper: '读者目前正在关注的最受欢迎故事。',
+    loading: '加载中',
+    noBooks: '未找到书籍。',
+    loadMore: '加载更多',
+    reached100: '你已浏览完前 100 本书。',
+    untitledStory: '无标题故事',
+    mostReadStory: '热门阅读故事',
+  },
+  ja: {
+    loadFailed: '今週よく読まれたストーリーを読み込めませんでした',
+    goBack: '戻る',
+    title: '今週よく読まれた作品',
+    top100: 'Top 100 作品',
+    helper: '読者が今注目している、いいね数の多いストーリーです。',
+    loading: '読み込み中',
+    noBooks: '作品が見つかりません。',
+    loadMore: 'さらに読み込む',
+    reached100: '最初の100作品まで表示しました。',
+    untitledStory: '無題のストーリー',
+    mostReadStory: 'よく読まれているストーリー',
+  },
+  ko: {
+    loadFailed: '이번 주 많이 읽힌 스토리를 불러오지 못했습니다',
+    goBack: '뒤로 가기',
+    title: '이번 주 많이 읽힌 작품',
+    top100: 'Top 100 도서',
+    helper: '독자들이 지금 팔로우하고 있는 가장 많은 좋아요를 받은 스토리입니다.',
+    loading: '불러오는 중',
+    noBooks: '도서를 찾을 수 없습니다.',
+    loadMore: '더 보기',
+    reached100: '상위 100개 도서를 모두 확인했습니다.',
+    untitledStory: '제목 없는 스토리',
+    mostReadStory: '많이 읽힌 스토리',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -23,8 +93,13 @@ const fallbackBooks = Array.from({ length: 20 }, (_, index) => ({
 function formatCompactNumber(value) {
   const number = Number(value || 0)
 
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+  if (number >= 1000000) {
+    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  }
+
+  if (number >= 1000) {
+    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+  }
 
   return String(number)
 }
@@ -68,7 +143,9 @@ function RankBadge({ rank }) {
   return (
     <div
       className={`absolute right-2 top-0 flex h-[36px] w-[30px] items-center justify-center text-[14px] font-bold shadow-[0_6px_12px_rgba(0,0,0,0.16)] ${rankBadgeClasses[rank] || rankBadgeClasses[5]}`}
-      style={{ clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)' }}
+      style={{
+        clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)',
+      }}
     >
       {rank}
     </div>
@@ -76,6 +153,14 @@ function RankBadge({ rank }) {
 }
 
 function BookCard({ book, rank, onOpen }) {
+  const { t } = useDisplayTranslation()
+  const title =
+    !book.title || book.title === 'Untitled Story'
+      ? t('mostReadThisWeekPage.untitledStory')
+      : book.title === 'Most Read Story'
+        ? t('mostReadThisWeekPage.mostReadStory')
+        : book.title
+
   return (
     <button
       type="button"
@@ -85,7 +170,7 @@ function BookCard({ book, rank, onOpen }) {
       <div className="relative aspect-[2/3] overflow-hidden rounded-[10px] bg-[#202124] shadow-sm">
         <img
           src={book.image}
-          alt={book.title}
+          alt={title}
           className="pointer-events-none h-full w-full select-none object-cover"
           loading="lazy"
           decoding="async"
@@ -100,7 +185,7 @@ function BookCard({ book, rank, onOpen }) {
       </div>
 
       <h3 className="mt-2 block w-full overflow-hidden whitespace-nowrap text-ellipsis text-[13px] font-extrabold leading-[19px] text-[#111827]">
-        {book.title}
+        {title}
       </h3>
 
       <div className="mt-1 flex items-center gap-1 text-[12px] font-medium text-[#111827]">
@@ -115,104 +200,108 @@ function BookCard({ book, rank, onOpen }) {
 
 export default function MostReadThisWeekPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [visibleCount, setVisibleCount] = useState(LOAD_STEP)
 
   useEffect(() => {
-  const controller = new AbortController()
-  let ignore = false
+    const controller = new AbortController()
+    let ignore = false
 
-  async function fetchMostReadBooks() {
-    const cacheKey = getHomeCacheKey({
-      section: 'stories',
-      language: getStoryLanguageId(),
-      params: {
-        page: 'most-read-this-week',
-        sort: 'popular',
-        limit: MAX_BOOKS,
-        schema: 1,
-      },
-    })
+    async function fetchMostReadBooks() {
+      const cacheKey = getHomeCacheKey({
+        section: 'stories',
+        language: getStoryLanguageId(),
+        params: {
+          page: 'most-read-this-week',
+          sort: 'popular',
+          limit: MAX_BOOKS,
+          schema: 1,
+        },
+      })
 
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: MOST_READ_CACHE_MAX_AGE_MS,
-      allowExpired: true,
-    })
-
-    if (controller.signal.aborted || ignore) return
-
-    const hasCachedBooks = Array.isArray(cached?.data)
-
-    if (hasCachedBooks) {
-      setBooks(cached.data)
-      setLoading(false)
-    }
-
-    if (cached?.isFresh && hasCachedBooks) {
-      return
-    }
-
-    try {
-      if (!hasCachedBooks) {
-        setLoading(true)
-      }
-
-      const response = await fetch(
-        addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=${MAX_BOOKS}&sort=popular`
-        ),
-        { signal: controller.signal }
-      )
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(
-          data.message || 'Failed to load most read stories'
-        )
-      }
-
-      const nextBooks = (
-        Array.isArray(data.stories) ? data.stories : []
-      )
-        .map(normalizeBook)
-        .slice(0, MAX_BOOKS)
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: MOST_READ_CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
 
       if (controller.signal.aborted || ignore) return
 
-      setBooks(nextBooks)
+      const hasCachedBooks = Array.isArray(cached?.data)
 
-      await saveHomeCache(cacheKey, nextBooks, {
-        maxAgeMs: MOST_READ_CACHE_MAX_AGE_MS,
-      })
-    } catch (error) {
-      if (
-        error?.name !== 'AbortError' &&
-        !ignore &&
-        !hasCachedBooks
-      ) {
-        setBooks([])
-      }
-    } finally {
-      if (!ignore && !controller.signal.aborted) {
+      if (hasCachedBooks) {
+        setBooks(cached.data)
         setLoading(false)
       }
+
+      if (cached?.isFresh && hasCachedBooks) {
+        return
+      }
+
+      try {
+        if (!hasCachedBooks) {
+          setLoading(true)
+        }
+
+        const response = await fetch(
+          addStoryLanguageParam(
+            `${API_BASE_URL}/api/public/stories?limit=${MAX_BOOKS}&sort=popular`
+          ),
+          { signal: controller.signal }
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(
+            data.message || t('mostReadThisWeekPage.loadFailed')
+          )
+        }
+
+        const nextBooks = (
+          Array.isArray(data.stories) ? data.stories : []
+        )
+          .map(normalizeBook)
+          .slice(0, MAX_BOOKS)
+
+        if (controller.signal.aborted || ignore) return
+
+        setBooks(nextBooks)
+
+        await saveHomeCache(cacheKey, nextBooks, {
+          maxAgeMs: MOST_READ_CACHE_MAX_AGE_MS,
+        })
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError' &&
+          !ignore &&
+          !hasCachedBooks
+        ) {
+          setBooks([])
+        }
+      } finally {
+        if (!ignore && !controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
     }
-  }
 
-  fetchMostReadBooks()
+    fetchMostReadBooks()
 
-  return () => {
-    ignore = true
-    controller.abort()
-  }
-}, [])
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [t])
 
-
-  const sourceBooks = useMemo(() => (books.length ? books : fallbackBooks), [books])
+  const sourceBooks = useMemo(
+    () => (books.length ? books : fallbackBooks),
+    [books]
+  )
   const visibleBooks = sourceBooks.slice(0, visibleCount)
-  const canLoadMore = visibleCount < Math.min(sourceBooks.length, MAX_BOOKS)
+  const canLoadMore =
+    visibleCount < Math.min(sourceBooks.length, MAX_BOOKS)
 
   return (
     <div className="min-h-screen bg-white pb-16">
@@ -222,25 +311,32 @@ export default function MostReadThisWeekPage() {
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-8 w-8 items-center justify-center rounded-full text-[#111827] active:scale-95"
-            aria-label="Go back"
+            aria-label={t('mostReadThisWeekPage.goBack')}
           >
             <i className="fas fa-chevron-left text-[16px]" />
           </button>
-          <h1 className="text-[18px] font-extrabold">Most Read This Week</h1>
+
+          <h1 className="text-[18px] font-extrabold">
+            {t('mostReadThisWeekPage.title')}
+          </h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-[960px] px-4 py-5">
         <div className="mb-5 flex items-end justify-between">
           <div>
-            <h2 className="text-[19px] font-extrabold text-[#111827]">Top 100 Books</h2>
+            <h2 className="text-[19px] font-extrabold text-[#111827]">
+              {t('mostReadThisWeekPage.top100')}
+            </h2>
             <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">
-              The most liked stories readers are following now.
+              {t('mostReadThisWeekPage.helper')}
             </p>
           </div>
 
           <div className="text-[12px] font-bold text-[#9ca3af]">
-            {loading ? 'Loading' : `${visibleBooks.length}/${Math.min(sourceBooks.length, MAX_BOOKS)}`}
+            {loading
+              ? t('mostReadThisWeekPage.loading')
+              : `${visibleBooks.length}/${Math.min(sourceBooks.length, MAX_BOOKS)}`}
           </div>
         </div>
 
@@ -269,23 +365,27 @@ export default function MostReadThisWeekPage() {
 
         {!loading && !visibleBooks.length ? (
           <div className="mt-8 rounded-[20px] bg-[#f8fafc] p-8 text-center text-[13px] font-bold text-[#9ca3af]">
-            No books found.
+            {t('mostReadThisWeekPage.noBooks')}
           </div>
         ) : null}
 
         {!loading && canLoadMore ? (
           <button
             type="button"
-            onClick={() => setVisibleCount((count) => Math.min(count + LOAD_STEP, MAX_BOOKS))}
+            onClick={() =>
+              setVisibleCount((count) =>
+                Math.min(count + LOAD_STEP, MAX_BOOKS)
+              )
+            }
             className="mx-auto mt-8 flex h-10 min-w-[150px] items-center justify-center rounded-full bg-[#111827] px-6 text-[13px] font-black text-white active:scale-95"
           >
-            Load More
+            {t('mostReadThisWeekPage.loadMore')}
           </button>
         ) : null}
 
         {!loading && sourceBooks.length >= MAX_BOOKS && !canLoadMore ? (
           <div className="mt-6 text-center text-[12px] font-bold text-[#a0a6b2]">
-            You’ve reached the first 100 books.
+            {t('mostReadThisWeekPage.reached100')}
           </div>
         ) : null}
       </main>
