@@ -496,7 +496,7 @@ async function setFollowedPostReaction(
 
 function GridHeaderIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
       <rect x="4" y="4" width="6" height="6" rx="1" />
       <rect x="14" y="4" width="6" height="6" rx="1" />
       <rect x="4" y="14" width="6" height="6" rx="1" />
@@ -507,7 +507,7 @@ function GridHeaderIcon() {
 
 function SearchHeaderIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
       <circle cx="10.5" cy="10.5" r="6.5" />
       <path d="m15.5 15.5 4 4" />
     </svg>
@@ -523,7 +523,7 @@ function ChatHeaderIcon() {
 function Header({ hidden }) {
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-[100000] border-b border-gray-50 bg-white transition-transform duration-200 ease-out"
+      className="fixed left-0 right-0 top-0 z-[100000] border-b border-gray-50 bg-white transition-transform duration-200 ease-out dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]"
       style={{ transform: hidden ? 'translateY(-100%)' : 'translateY(0)' }}
     >
       <div className="mx-auto flex h-[58px] w-full max-w-[620px] items-center justify-between px-4">
@@ -531,7 +531,7 @@ function Header({ hidden }) {
           <img
             src="/assets/Icons/Logo Shadow 2.svg"
             alt="Shadow"
-            className="h-full w-full object-contain object-left"
+            className="h-full w-full object-contain object-left dark:brightness-0 dark:invert"
             loading="eager"
             decoding="async"
           />
@@ -540,7 +540,7 @@ function Header({ hidden }) {
         <div className="flex items-center gap-5">
           <Link
             to="/genres"
-            className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+            className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
             aria-label="Genres"
           >
             <GridHeaderIcon />
@@ -548,7 +548,7 @@ function Header({ hidden }) {
 
           <Link
             to="/discover/search"
-            className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+            className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
             aria-label="Search"
           >
             <SearchHeaderIcon />
@@ -557,7 +557,7 @@ function Header({ hidden }) {
           <Link
   to="/chat"
   state={{ hideReaderFooter: true, fromDiscover: true }}
-  className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95"
+  className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
   aria-label="Chat"
 >
   <ChatHeaderIcon />
@@ -996,13 +996,13 @@ const isOwner = Boolean(
       onReact={chooseReaction}
       idleLabel="Like"
       className="h-full w-full"
-      buttonClassName="h-full w-full justify-center gap-2 text-[#65676b] active:bg-[#f2f2f2] after:content-['Like']"
+      buttonClassName="h-full w-full justify-center gap-2 text-[#65676b] active:bg-[#f2f2f2] dark:text-[var(--shadow-text-secondary)] dark:active:bg-[var(--shadow-bg-hover)] after:content-['Like']"
     />
 
     <button
       type="button"
       onClick={() => onComment?.(post)}
-      className="flex h-full w-full items-center justify-center gap-2 active:bg-[#f2f2f2]"
+      className="flex h-full w-full items-center justify-center gap-2 active:bg-[#f2f2f2] dark:active:bg-[var(--shadow-bg-hover)]"
     >
       <i className="fa-regular fa-comment text-[18px]" />
       <span>Comment</span>
@@ -1011,7 +1011,7 @@ const isOwner = Boolean(
     <AuthorPostEchoAction
       post={post}
       author={author}
-      className="h-full w-full justify-center gap-2 active:bg-[#f2f2f2] [&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
+      className="h-full w-full justify-center gap-2 active:bg-[#f2f2f2] dark:active:bg-[var(--shadow-bg-hover)] [&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b] dark:after:text-[var(--shadow-text-secondary)]"
     />
   </div>
 </div>
@@ -2470,7 +2470,7 @@ function handleReaderFollowChanged(
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[100px]">
+    <div className="app-page min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[var(--shadow-bg-page)]">
       <style>{`
         body.discover-bars-hidden footer {
           transform: translateY(110%);
