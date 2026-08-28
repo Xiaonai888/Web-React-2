@@ -10,6 +10,7 @@ import MangaPage from './pages/MangaPage'
 import ChatStoryHomePage from './pages/ChatStoryHomePage'
 import Library from './pages/Library'
 import ShopPage from './pages/ShopPage'
+import ReaderStorePage from './pages/ReaderStorePage'
 import WalletPage from './pages/WalletPage'
 import WalletOrderHistoryPage from './pages/WalletOrderHistoryPage'
 import EventPage from './pages/EventPage'
@@ -329,6 +330,7 @@ function AppShell() {
     '/genre/romance/latest',
     '/genre/romance/updates',
     '/genre/romance/completed',
+    '/store',
 
 
   ]
@@ -1360,6 +1362,7 @@ const shouldShowOpeningAds =
         <Route path="/genre/:genreSlug/completed" element={<LazyPage><GenreStoriesPage tab="completed" /></LazyPage>} />
         <Route path="/author/page/:pageUsername/invite" element={<LazyPage><AuthorPageInviteFriendsPage /></LazyPage>} />
         <Route path="/author/page/:pageUsername/help" element={<LazyPage><AuthorPageHelpPage /></LazyPage>} />
+        <Route path="/store" element={<ReaderStorePage />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
