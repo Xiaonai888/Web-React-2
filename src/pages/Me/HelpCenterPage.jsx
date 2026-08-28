@@ -34,12 +34,42 @@ const categoryIcons = {
 }
 
 const categoryTones = {
-  'account-and-profile': { background: '#EAF2FF', foreground: '#4F7DDC' },
-  'reading-and-library': { background: '#F0EAFE', foreground: '#7658CE' },
-  'wallet-and-payments': { background: '#FFF2D9', foreground: '#D58B1D' },
-  'authors-and-publishing': { background: '#FDEBF2', foreground: '#D65C88' },
-  'shadow-mall-and-orders': { background: '#E8F7EF', foreground: '#379468' },
-  'technical-problems': { background: '#FCEAE8', foreground: '#D35C51' },
+  'account-and-profile': {
+    background: '#EAF2FF',
+    foreground: '#4F7DDC',
+    darkBackground: '#1D2A40',
+    darkForeground: '#8AB4FF',
+  },
+  'reading-and-library': {
+    background: '#F0EAFE',
+    foreground: '#7658CE',
+    darkBackground: '#28223A',
+    darkForeground: '#B8A2FF',
+  },
+  'wallet-and-payments': {
+    background: '#FFF2D9',
+    foreground: '#D58B1D',
+    darkBackground: '#332917',
+    darkForeground: '#F3B54B',
+  },
+  'authors-and-publishing': {
+    background: '#FDEBF2',
+    foreground: '#D65C88',
+    darkBackground: '#38212C',
+    darkForeground: '#F38DB0',
+  },
+  'shadow-mall-and-orders': {
+    background: '#E8F7EF',
+    foreground: '#379468',
+    darkBackground: '#1B3028',
+    darkForeground: '#6FD4A4',
+  },
+  'technical-problems': {
+    background: '#FCEAE8',
+    foreground: '#D35C51',
+    darkBackground: '#382321',
+    darkForeground: '#F28A80',
+  },
 }
 
 function normalize(value) {
@@ -54,11 +84,13 @@ function CategoryIcon({ category, size = 20 }) {
 function SectionTitle({ title, subtitle }) {
   return (
     <div>
-      <h2 className="text-[17px] font-black tracking-[-0.025em] text-[#17172e] dark:text-white">
+      <h2 className="text-[17px] font-black tracking-[-0.025em] text-[#17172e] dark:text-[var(--shadow-text-primary)]">
         {title}
       </h2>
       {subtitle ? (
-        <p className="mt-1 text-[12px] leading-5 text-[#8a8fa0] dark:text-white/50">{subtitle}</p>
+        <p className="mt-1 text-[12px] leading-5 text-[#8a8fa0] dark:text-[var(--shadow-text-secondary)]">
+          {subtitle}
+        </p>
       ) : null}
     </div>
   )
@@ -139,18 +171,30 @@ export default function HelpCenterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] pb-12 text-[#17172e] dark:bg-[#0d0f16] dark:text-white">
-      <header className="sticky top-0 z-40 border-b border-[#eceaf3] bg-white/95 backdrop-blur dark:border-white/10 dark:bg-[#171923]/95">
+    <div className="app-page help-center-page min-h-screen pb-12 text-[#17172e]">
+      <style>{`
+        .help-center-page .help-category-tone {
+          background-color: var(--tone-bg);
+          color: var(--tone-fg);
+        }
+
+        html.dark .help-center-page .help-category-tone {
+          background-color: var(--tone-bg-dark);
+          color: var(--tone-fg-dark);
+        }
+      `}</style>
+
+      <header className="sticky top-0 z-40 border-b border-[#eceaf3] bg-white/95 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="relative mx-auto flex h-12 max-w-[760px] items-center justify-center px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
             aria-label="Back"
-            className="absolute left-4 flex h-10 w-10 items-center justify-start text-[#111827] active:scale-95 dark:text-white"
+            className="absolute left-4 flex h-10 w-10 items-center justify-start text-[#111827] active:scale-95 dark:text-[var(--shadow-text-primary)]"
           >
             <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
           </button>
-          <h1 className="text-[16px] font-bold tracking-[-0.02em] text-[#111827] dark:text-white">
+          <h1 className="text-[16px] font-bold tracking-[-0.02em] text-[#111827] dark:text-[var(--shadow-text-primary)]">
             Help Center
           </h1>
         </div>
@@ -168,7 +212,10 @@ export default function HelpCenterPage() {
             </p>
 
             <div className="relative mt-5">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-[#8c82ac]" strokeWidth={2} />
+              <Search
+                className="pointer-events-none absolute left-3.5 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-[#8c82ac] dark:text-[var(--shadow-text-tertiary)]"
+                strokeWidth={2}
+              />
               <input
                 value={query}
                 onChange={(event) => {
@@ -177,14 +224,14 @@ export default function HelpCenterPage() {
                 }}
                 type="search"
                 placeholder="Search for help..."
-                className="h-12 w-full rounded-[14px] border-0 bg-white pl-11 pr-11 text-[13px] font-medium text-[#22223b] outline-none ring-1 ring-white/30 placeholder:text-[#aaa5b8] focus:ring-4 focus:ring-white/25"
+                className="h-12 w-full rounded-[14px] border-0 bg-white pl-11 pr-11 text-[13px] font-medium text-[#22223b] outline-none ring-1 ring-white/30 placeholder:text-[#aaa5b8] focus:ring-4 focus:ring-white/25 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)] dark:ring-white/10 dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:ring-white/15"
               />
               {query ? (
                 <button
                   type="button"
                   onClick={() => setQuery('')}
                   aria-label="Clear search"
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9992ac] active:scale-95"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9992ac] active:scale-95 dark:text-[var(--shadow-text-tertiary)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -209,14 +256,14 @@ export default function HelpCenterPage() {
 
         {loading ? (
           <div className="flex min-h-[360px] items-center justify-center">
-            <LoaderCircle className="h-7 w-7 animate-spin text-[#7458e8]" />
+            <LoaderCircle className="h-7 w-7 animate-spin text-[#7458e8] dark:text-[#a78bfa]" />
           </div>
         ) : !error ? (
           <>
             {visiblePopular.length ? (
               <section className="mt-7">
                 <SectionTitle title="Popular Help" subtitle="Quick answers to common questions." />
-                <div className="mt-3 overflow-hidden rounded-[16px] border border-[#eceaf3] bg-white shadow-[0_5px_18px_rgba(25,20,55,0.04)] dark:border-white/10 dark:bg-[#171923]">
+                <div className="mt-3 overflow-hidden rounded-[16px] border border-[#eceaf3] bg-white shadow-[0_5px_18px_rgba(25,20,55,0.04)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)]">
                   {visiblePopular.slice(0, 5).map((article, index) => (
                     <button
                       key={article.id}
@@ -224,16 +271,21 @@ export default function HelpCenterPage() {
                       onClick={() => {
                         setSelectedCategory('')
                         setOpenArticle(article.id)
-                        requestAnimationFrame(() => document.getElementById('help-faq')?.scrollIntoView({ behavior: 'smooth' }))
+                        requestAnimationFrame(() =>
+                          document.getElementById('help-faq')?.scrollIntoView({ behavior: 'smooth' }),
+                        )
                       }}
-                      className={`flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:bg-[#f8f6ff] dark:active:bg-white/5 ${
-                        index ? 'border-t border-[#f0eef5] dark:border-white/10' : ''
+                      className={`flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:bg-[#f8f6ff] dark:active:bg-[var(--shadow-bg-hover)] ${
+                        index ? 'border-t border-[#f0eef5] dark:border-[var(--shadow-border)]' : ''
                       }`}
                     >
-                      <span className="line-clamp-2 text-[13px] font-bold leading-5 text-[#29283e] dark:text-white">
+                      <span className="line-clamp-2 text-[13px] font-bold leading-5 text-[#29283e] dark:text-[var(--shadow-text-primary)]">
                         {article.question}
                       </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-[#b2adbd]" strokeWidth={1.8} />
+                      <ChevronRight
+                        className="h-4 w-4 shrink-0 text-[#b2adbd] dark:text-[var(--shadow-text-tertiary)]"
+                        strokeWidth={1.8}
+                      />
                     </button>
                   ))}
                 </div>
@@ -248,6 +300,8 @@ export default function HelpCenterPage() {
                   const tone = categoryTones[category.slug] || {
                     background: category.color || '#EEE9FF',
                     foreground: '#7458E8',
+                    darkBackground: '#28233A',
+                    darkForeground: '#B8A2FF',
                   }
 
                   return (
@@ -255,22 +309,27 @@ export default function HelpCenterPage() {
                       key={category.id}
                       type="button"
                       onClick={() => chooseCategory(category.id)}
-                      className={`min-h-[122px] rounded-[16px] border bg-white p-3.5 text-left shadow-[0_4px_16px_rgba(25,20,55,0.035)] transition active:scale-[0.98] dark:bg-[#171923] ${
+                      className={`min-h-[122px] rounded-[16px] border bg-white p-3.5 text-left shadow-[0_4px_16px_rgba(25,20,55,0.035)] transition active:scale-[0.98] dark:bg-[var(--shadow-bg-surface)] dark:shadow-none ${
                         selected
-                          ? 'border-[#7458e8] ring-2 ring-[#7458e8]/10 dark:border-[#9c88ef]'
-                          : 'border-[#eceaf3] dark:border-white/10'
+                          ? 'border-[#7458e8] ring-2 ring-[#7458e8]/10 dark:border-[#9c88ef] dark:ring-[#7458e8]/20'
+                          : 'border-[#eceaf3] dark:border-[var(--shadow-border)]'
                       }`}
                     >
                       <span
-                        className="flex h-10 w-10 items-center justify-center rounded-[13px]"
-                        style={{ backgroundColor: tone.background, color: tone.foreground }}
+                        className="help-category-tone flex h-10 w-10 items-center justify-center rounded-[13px]"
+                        style={{
+                          '--tone-bg': tone.background,
+                          '--tone-fg': tone.foreground,
+                          '--tone-bg-dark': tone.darkBackground,
+                          '--tone-fg-dark': tone.darkForeground,
+                        }}
                       >
                         <CategoryIcon category={category} />
                       </span>
-                      <span className="mt-3 block text-[12.5px] font-black leading-[18px] text-[#2a293e] dark:text-white">
+                      <span className="mt-3 block text-[12.5px] font-black leading-[18px] text-[#2a293e] dark:text-[var(--shadow-text-primary)]">
                         {category.name}
                       </span>
-                      <span className="mt-1 block text-[10.5px] font-medium text-[#9a96a5] dark:text-white/40">
+                      <span className="mt-1 block text-[10.5px] font-medium text-[#9a96a5] dark:text-[var(--shadow-text-tertiary)]">
                         {category.article_count} {Number(category.article_count) === 1 ? 'article' : 'articles'}
                       </span>
                     </button>
@@ -283,7 +342,11 @@ export default function HelpCenterPage() {
               <div className="flex items-end justify-between gap-4">
                 <SectionTitle
                   title="Frequently Asked Questions"
-                  subtitle={selectedCategory ? 'Showing questions from the selected category.' : 'Tap a question to view its answer.'}
+                  subtitle={
+                    selectedCategory
+                      ? 'Showing questions from the selected category.'
+                      : 'Tap a question to view its answer.'
+                  }
                 />
                 {selectedCategory ? (
                   <button
@@ -292,7 +355,7 @@ export default function HelpCenterPage() {
                       setSelectedCategory('')
                       setOpenArticle('')
                     }}
-                    className="shrink-0 text-[11px] font-extrabold text-[#7458e8]"
+                    className="shrink-0 text-[11px] font-extrabold text-[#7458e8] dark:text-[#a78bfa]"
                   >
                     View all
                   </button>
@@ -307,30 +370,36 @@ export default function HelpCenterPage() {
                     return (
                       <article
                         key={article.id}
-                        className={`overflow-hidden rounded-[16px] border bg-white transition dark:bg-[#171923] ${
+                        className={`overflow-hidden rounded-[16px] border bg-white transition dark:bg-[var(--shadow-bg-surface)] ${
                           open
-                            ? 'border-[#cfc4f8] shadow-[0_8px_24px_rgba(116,88,232,0.08)] dark:border-[#7458e8]/60'
-                            : 'border-[#eceaf3] dark:border-white/10'
+                            ? 'border-[#cfc4f8] shadow-[0_8px_24px_rgba(116,88,232,0.08)] dark:border-[#7458e8]/60 dark:shadow-none'
+                            : 'border-[#eceaf3] dark:border-[var(--shadow-border)]'
                         }`}
                       >
                         <button
                           type="button"
                           onClick={() => setOpenArticle(open ? '' : article.id)}
                           aria-expanded={open}
-                          className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left"
+                          className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left dark:active:bg-[var(--shadow-bg-hover)]"
                         >
-                          <span className="text-[13px] font-black leading-5 text-[#29283e] dark:text-white">
+                          <span className="text-[13px] font-black leading-5 text-[#29283e] dark:text-[var(--shadow-text-primary)]">
                             {article.question}
                           </span>
-                          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${open ? 'rotate-180 bg-[#eee9ff] text-[#7458e8] dark:bg-[#7458e8]/20' : 'bg-[#f6f5f8] text-[#9995a4] dark:bg-white/10'}`}>
+                          <span
+                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
+                              open
+                                ? 'rotate-180 bg-[#eee9ff] text-[#7458e8] dark:bg-[#7458e8]/20 dark:text-[#b8a2ff]'
+                                : 'bg-[#f6f5f8] text-[#9995a4] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-tertiary)]'
+                            }`}
+                          >
                             <ChevronDown className="h-4 w-4" strokeWidth={2} />
                           </span>
                         </button>
                         {open ? (
-                          <div className="border-t border-[#f0eef5] px-4 py-4 text-[12.5px] leading-6 text-[#5f5b70] dark:border-white/10 dark:text-white/65">
+                          <div className="border-t border-[#f0eef5] px-4 py-4 text-[12.5px] leading-6 text-[#5f5b70] dark:border-[var(--shadow-border)] dark:text-[var(--shadow-text-secondary)]">
                             <p className="whitespace-pre-line">{article.answer}</p>
                             {article.category?.name ? (
-                              <div className="mt-3 text-[10.5px] font-bold text-[#8c79dc]">
+                              <div className="mt-3 text-[10.5px] font-bold text-[#8c79dc] dark:text-[#b8a2ff]">
                                 {article.category.name}
                               </div>
                             ) : null}
@@ -341,20 +410,26 @@ export default function HelpCenterPage() {
                   })}
                 </div>
               ) : (
-                <div className="mt-3 rounded-[16px] border border-[#eceaf3] bg-white px-5 py-9 text-center dark:border-white/10 dark:bg-[#171923]">
-                  <Search className="mx-auto h-6 w-6 text-[#aaa5b6]" />
-                  <h3 className="mt-3 text-[14px] font-black text-[#29283e] dark:text-white">No answers found</h3>
-                  <p className="mt-1 text-[12px] text-[#92909d] dark:text-white/45">Try another search or category.</p>
+                <div className="mt-3 rounded-[16px] border border-[#eceaf3] bg-white px-5 py-9 text-center dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
+                  <Search className="mx-auto h-6 w-6 text-[#aaa5b6] dark:text-[var(--shadow-text-tertiary)]" />
+                  <h3 className="mt-3 text-[14px] font-black text-[#29283e] dark:text-[var(--shadow-text-primary)]">
+                    No answers found
+                  </h3>
+                  <p className="mt-1 text-[12px] text-[#92909d] dark:text-[var(--shadow-text-secondary)]">
+                    Try another search or category.
+                  </p>
                 </div>
               )}
             </section>
 
             <section className="mt-7 rounded-[18px] border border-[#e6e0fb] bg-[#f5f1ff] px-5 py-6 text-center dark:border-[#7458e8]/25 dark:bg-[#7458e8]/10">
-              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-[14px] bg-white text-[#7458e8] shadow-sm dark:bg-white/10 dark:text-[#b7a8f5]">
+              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-[14px] bg-white text-[#7458e8] shadow-sm dark:bg-[#7458e8]/15 dark:text-[#b7a8f5] dark:shadow-none">
                 <MessageCircle className="h-5 w-5" strokeWidth={1.9} />
               </span>
-              <h2 className="mt-3 text-[17px] font-black text-[#28263e] dark:text-white">Still need help?</h2>
-              <p className="mx-auto mt-1 max-w-[360px] text-[12px] leading-5 text-[#777287] dark:text-white/55">
+              <h2 className="mt-3 text-[17px] font-black text-[#28263e] dark:text-[var(--shadow-text-primary)]">
+                Still need help?
+              </h2>
+              <p className="mx-auto mt-1 max-w-[360px] text-[12px] leading-5 text-[#777287] dark:text-[var(--shadow-text-secondary)]">
                 Send us your question or report a problem and our team will review it.
               </p>
               <button
