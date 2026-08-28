@@ -280,6 +280,134 @@ function Sheet({ title, children, onClose }) {
   )
 }
 
+
+function ChatInfoThemeBridge() {
+  return (
+    <style>{`
+      html.dark .chat-info-page {
+        background: var(--shadow-bg-page);
+        color: var(--shadow-text-primary);
+      }
+
+      html.dark .chat-info-page [class~="bg-white"],
+      html.dark .chat-info-page [class~="bg-white/95"] {
+        background-color: var(--shadow-bg-surface) !important;
+      }
+
+      html.dark .chat-info-page [class~="text-[#111827]"],
+      html.dark .chat-info-page [class~="text-[#22222b]"],
+      html.dark .chat-info-page [class~="text-[#2f2f37]"],
+      html.dark .chat-info-page [class~="text-[#4b4b54]"] {
+        color: var(--shadow-text-primary) !important;
+      }
+
+      html.dark .chat-info-page [class~="text-[#55515e]"],
+      html.dark .chat-info-page [class~="text-[#6b7280]"],
+      html.dark .chat-info-page [class~="text-[#777480]"],
+      html.dark .chat-info-page [class~="text-[#777781]"],
+      html.dark .chat-info-page [class~="text-[#7b7b85]"],
+      html.dark .chat-info-page [class~="text-[#85858f]"],
+      html.dark .chat-info-page [class~="text-[#868690]"],
+      html.dark .chat-info-page [class~="text-[#888892]"],
+      html.dark .chat-info-page [class~="text-[#8a8792]"],
+      html.dark .chat-info-page [class~="text-[#8a8a95]"],
+      html.dark .chat-info-page [class~="text-[#8b8b95]"],
+      html.dark .chat-info-page [class~="text-[#92929b]"],
+      html.dark .chat-info-page [class~="text-[#94919b]"],
+      html.dark .chat-info-page [class~="text-[#9999a2]"] {
+        color: var(--shadow-text-secondary) !important;
+      }
+
+      html.dark .chat-info-page [class~="placeholder:text-[#92929b]"]::placeholder,
+      html.dark .chat-info-page [class~="placeholder:text-[#94919b]"]::placeholder {
+        color: var(--shadow-placeholder) !important;
+      }
+
+      html.dark .chat-info-page [class~="bg-[#f1f1f4]"],
+      html.dark .chat-info-page [class~="bg-[#f2f2f5]"],
+      html.dark .chat-info-page [class~="bg-[#f2f3f5]"],
+      html.dark .chat-info-page [class~="bg-[#f3f2f6]"],
+      html.dark .chat-info-page [class~="bg-[#f3f3f6]"],
+      html.dark .chat-info-page [class~="bg-[#f4f4f6]"],
+      html.dark .chat-info-page [class~="bg-[#f4f4f7]"],
+      html.dark .chat-info-page [class~="bg-[#f5f5f7]"],
+      html.dark .chat-info-page [class~="bg-[#f6f6f8]"],
+      html.dark .chat-info-page [class~="bg-[#f7f7f9]"] {
+        background-color: var(--shadow-bg-soft) !important;
+      }
+
+      html.dark .chat-info-page [class~="bg-[#f2edff]"] {
+        background-color: rgb(124 58 237 / 0.14) !important;
+      }
+
+      html.dark .chat-info-page [class~="bg-[#fff0f1]"] {
+        background-color: rgb(229 72 77 / 0.13) !important;
+      }
+
+      html.dark .chat-info-page [class~="text-[#d13a42]"],
+      html.dark .chat-info-page [class~="text-[#c7353d]"] {
+        color: #fca5a5 !important;
+      }
+
+      html.dark .chat-info-page [class~="border-[#ececf0]"],
+      html.dark .chat-info-page [class~="border-[#dedee4]"],
+      html.dark .chat-info-page [class~="border-[#e8e8ec]"],
+      html.dark .chat-info-page [class~="border-[#efeff2]"],
+      html.dark .chat-info-page [class~="border-[#f0f0f3]"],
+      html.dark .chat-info-page [class~="border-[#f4f4f6]"],
+      html.dark .chat-info-page [class~="border-[#d8d6df]"] {
+        border-color: var(--shadow-border) !important;
+      }
+
+      html.dark .chat-info-page [class~="divide-[#efeff2]"] > :not([hidden]) ~ :not([hidden]) {
+        border-color: var(--shadow-border) !important;
+      }
+
+      html.dark .chat-info-page [class~="border-white"] {
+        border-color: var(--shadow-border) !important;
+      }
+
+      html.dark .chat-info-page [class~="bg-[#d6d4dc]"] {
+        background-color: var(--shadow-border-strong) !important;
+      }
+
+      html.dark .chat-info-page [class~="active:bg-[#f3f4f6]"]:active,
+      html.dark .chat-info-page [class~="active:bg-[#dedee4]"]:active,
+      html.dark .chat-info-page [class~="active:bg-[#f7f7f9]"]:active,
+      html.dark .chat-info-page [class~="active:bg-[#f4f4f6]"]:active,
+      html.dark .chat-info-page [class~="active:bg-[#ececf0]"]:active {
+        background-color: var(--shadow-bg-hover) !important;
+      }
+
+      html.dark .chat-info-page [class~="active:bg-[#ece7f8]"]:active {
+        background-color: rgb(124 58 237 / 0.18) !important;
+      }
+
+      html.dark .chat-info-page [class~="active:bg-[#fff1f2]"]:active {
+        background-color: rgb(229 72 77 / 0.16) !important;
+      }
+
+      html.dark .chat-info-page [class~="focus:bg-[#eeeeF2]"]:focus {
+        background-color: var(--shadow-input-bg) !important;
+      }
+
+      html.dark .chat-info-page input,
+      html.dark .chat-info-page textarea,
+      html.dark .chat-info-page select {
+        background-color: var(--shadow-input-bg);
+        border-color: var(--shadow-border);
+        color: var(--shadow-text-primary);
+        caret-color: var(--shadow-text-primary);
+      }
+
+      html.dark .chat-info-page option {
+        background: var(--shadow-bg-elevated);
+        color: var(--shadow-text-primary);
+      }
+    `}</style>
+  )
+}
+
 export default function ChatInfoPage() {
   const navigate = useNavigate()
   const { conversationId } = useParams()
@@ -1047,7 +1175,8 @@ setAutoDeleteStatus({
 
   if (searchOpen) {
     return (
-      <div className="min-h-screen bg-white text-[#111827]">
+      <div className="app-page chat-info-page min-h-screen">
+        <ChatInfoThemeBridge />
         <header className="sticky top-0 z-40 border-b border-[#ececf0] bg-white/95 backdrop-blur">
           <div className="mx-auto flex h-[58px] max-w-[560px] items-center gap-2 px-3">
             <button
@@ -1178,14 +1307,16 @@ setAutoDeleteStatus({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-[#7c3aed]">
+      <div className="app-page chat-info-page flex min-h-screen items-center justify-center text-[#7c3aed]">
+        <ChatInfoThemeBridge />
         <LoaderCircle size={28} className="animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#111827]">
+    <div className="app-page chat-info-page min-h-screen">
+      <ChatInfoThemeBridge />
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-[58px] max-w-[560px] items-center justify-between px-3">
           <button
