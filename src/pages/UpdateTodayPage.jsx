@@ -2,6 +2,121 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 import { getStoryBadge } from '../utils/storyBadge'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('updateTodayPage', {
+  en: {
+    mon: 'MON',
+    tue: 'TUE',
+    wed: 'WED',
+    thu: 'THU',
+    fri: 'FRI',
+    sat: 'SAT',
+    sun: 'SUN',
+    new: 'NEW',
+    up: 'UP',
+    end: 'END',
+    untitledStory: 'Untitled Story',
+    shadowAuthor: 'Shadow Author',
+    loadFailed: 'Failed to load update today stories',
+    cannotLoad: 'Cannot load updates. Please try again.',
+    goBack: 'Go back',
+    title: 'Update Today',
+    search: 'Search',
+    tryAgain: 'Try Again',
+    noUpdates: 'No updates for this day',
+    selectAnotherDay: 'Select another day to see recent updates.',
+  },
+  km: {
+    mon: 'ចន្ទ',
+    tue: 'អង្គារ',
+    wed: 'ពុធ',
+    thu: 'ព្រហ',
+    fri: 'សុក្រ',
+    sat: 'សៅរ៍',
+    sun: 'អាទិត្យ',
+    new: 'ថ្មី',
+    up: 'អាប់ដេត',
+    end: 'ចប់',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    shadowAuthor: 'អ្នកនិពន្ធ Shadow',
+    loadFailed: 'មិនអាចផ្ទុករឿងដែលអាប់ដេតថ្ងៃនេះបានទេ',
+    cannotLoad: 'មិនអាចផ្ទុកការអាប់ដេតបានទេ។ សូមព្យាយាមម្តងទៀត។',
+    goBack: 'ត្រឡប់ក្រោយ',
+    title: 'អាប់ដេតថ្ងៃនេះ',
+    search: 'ស្វែងរក',
+    tryAgain: 'ព្យាយាមម្តងទៀត',
+    noUpdates: 'មិនមានការអាប់ដេតសម្រាប់ថ្ងៃនេះទេ',
+    selectAnotherDay: 'ជ្រើសរើសថ្ងៃផ្សេង ដើម្បីមើលការអាប់ដេតថ្មីៗ។',
+  },
+  zh: {
+    mon: '周一',
+    tue: '周二',
+    wed: '周三',
+    thu: '周四',
+    fri: '周五',
+    sat: '周六',
+    sun: '周日',
+    new: '新',
+    up: '更新',
+    end: '完结',
+    untitledStory: '无标题故事',
+    shadowAuthor: 'Shadow 作者',
+    loadFailed: '无法加载今日更新故事',
+    cannotLoad: '无法加载更新，请重试。',
+    goBack: '返回',
+    title: '今日更新',
+    search: '搜索',
+    tryAgain: '重试',
+    noUpdates: '这一天没有更新',
+    selectAnotherDay: '请选择其他日期查看最近更新。',
+  },
+  ja: {
+    mon: '月',
+    tue: '火',
+    wed: '水',
+    thu: '木',
+    fri: '金',
+    sat: '土',
+    sun: '日',
+    new: '新着',
+    up: '更新',
+    end: '完結',
+    untitledStory: '無題のストーリー',
+    shadowAuthor: 'Shadow 作者',
+    loadFailed: '今日更新されたストーリーを読み込めませんでした',
+    cannotLoad: '更新を読み込めませんでした。もう一度お試しください。',
+    goBack: '戻る',
+    title: '今日の更新',
+    search: '検索',
+    tryAgain: '再試行',
+    noUpdates: 'この日の更新はありません',
+    selectAnotherDay: '別の日を選択して最近の更新を確認してください。',
+  },
+  ko: {
+    mon: '월',
+    tue: '화',
+    wed: '수',
+    thu: '목',
+    fri: '금',
+    sat: '토',
+    sun: '일',
+    new: '신규',
+    up: '업데이트',
+    end: '완결',
+    untitledStory: '제목 없는 스토리',
+    shadowAuthor: 'Shadow 작가',
+    loadFailed: '오늘 업데이트된 스토리를 불러오지 못했습니다',
+    cannotLoad: '업데이트를 불러오지 못했습니다. 다시 시도해 주세요.',
+    goBack: '뒤로 가기',
+    title: '오늘 업데이트',
+    search: '검색',
+    tryAgain: '다시 시도',
+    noUpdates: '이 날짜에는 업데이트가 없습니다',
+    selectAnotherDay: '다른 날짜를 선택해 최근 업데이트를 확인하세요.',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -18,6 +133,16 @@ const dayTabs = [
   { key: 6, label: 'SAT' },
   { key: 0, label: 'SUN' },
 ]
+
+const DAY_LABEL_KEYS = {
+  MON: 'mon',
+  TUE: 'tue',
+  WED: 'wed',
+  THU: 'thu',
+  FRI: 'fri',
+  SAT: 'sat',
+  SUN: 'sun',
+}
 
 const badgeConfig = {
   new: 'bg-[#FF4D6D] text-white',
@@ -107,12 +232,14 @@ const updateMarkerUI = {
 }
 
 function BookCard({ book }) {
+  const { t } = useDisplayTranslation()
+
   const badgeText =
     book.badge === 'end'
-      ? 'END'
+      ? t('updateTodayPage.end')
       : book.badge === 'up'
-        ? 'UP'
-        : 'NEW'
+        ? t('updateTodayPage.up')
+        : t('updateTodayPage.new')
 
   const updateCount = Math.max(
     0,
@@ -124,6 +251,18 @@ function BookCard({ book }) {
       ? '9+'
       : `+${updateCount}`
 
+  const title =
+    !book.title ||
+    book.title === 'Untitled Story'
+      ? t('updateTodayPage.untitledStory')
+      : book.title
+
+  const author =
+    !book.author ||
+    book.author === 'Shadow Author'
+      ? t('updateTodayPage.shadowAuthor')
+      : book.author
+
   return (
     <Link
       to={`/story/${book.id}`}
@@ -133,7 +272,7 @@ function BookCard({ book }) {
         <div className="relative h-full overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
           <img
             src={book.cover}
-            alt={book.title}
+            alt={title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
             onError={(event) => {
@@ -184,11 +323,11 @@ function BookCard({ book }) {
 
       <div className="mt-2.5 min-w-0">
         <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-          {book.title}
+          {title}
         </h3>
 
         <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
-          {book.author}
+          {author}
         </p>
       </div>
     </Link>
@@ -213,6 +352,7 @@ function LoadingGrid() {
 
 export default function UpdateTodayPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -282,7 +422,7 @@ export default function UpdateTodayPage() {
         ) {
           throw new Error(
             data.message ||
-              'Failed to load update today stories'
+              t('updateTodayPage.loadFailed')
           )
         }
 
@@ -308,7 +448,7 @@ export default function UpdateTodayPage() {
           setStories([])
           setErrorMessage(
             error?.message ||
-              'Cannot load updates. Please try again.'
+              t('updateTodayPage.cannotLoad')
           )
         }
       } finally {
@@ -356,19 +496,19 @@ export default function UpdateTodayPage() {
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7]"
-            aria-label="Go back"
+            aria-label={t('updateTodayPage.goBack')}
           >
             <i className="fas fa-chevron-left text-[17px]" />
           </button>
 
           <h1 className="min-w-0 flex-1 text-center text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-            Update Today
+            {t('updateTodayPage.title')}
           </h1>
 
           <Link
             to="/search"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7]"
-            aria-label="Search"
+            aria-label={t('updateTodayPage.search')}
           >
             <i className="fas fa-search text-[18px]" />
           </Link>
@@ -394,7 +534,9 @@ export default function UpdateTodayPage() {
                     : 'font-medium text-[#6b7280] hover:text-[#111827]'
                 }`}
               >
-                {day.label}
+                {t(
+                  `updateTodayPage.${DAY_LABEL_KEYS[day.label]}`
+                )}
 
                 <span
                   className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 rounded-[10px] transition-all ${
@@ -425,7 +567,7 @@ export default function UpdateTodayPage() {
               }
               className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[13px] font-bold text-white"
             >
-              Try Again
+              {t('updateTodayPage.tryAgain')}
             </button>
           </div>
         ) : loading ? (
@@ -448,11 +590,11 @@ export default function UpdateTodayPage() {
             </div>
 
             <h2 className="mt-4 text-[16px] font-bold text-[#111827]">
-              No updates for this day
+              {t('updateTodayPage.noUpdates')}
             </h2>
 
             <p className="mt-1 text-[12px] text-[#8b93a1]">
-              Select another day to see recent updates.
+              {t('updateTodayPage.selectAnotherDay')}
             </p>
           </div>
         )}
