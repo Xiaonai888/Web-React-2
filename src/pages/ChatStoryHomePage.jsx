@@ -6,6 +6,171 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('chatStoryHomePage', {
+  en: {
+    chat: 'Chat',
+    search: 'Search',
+    genres: 'Genres',
+    hotPicks: 'Hot Picks',
+    recentFeatures: 'Recent Features',
+    featuredCategories: 'Featured Categories',
+    newUpdated: 'New & Updated',
+    recommendedForYou: 'Recommended for You',
+    seeAll: 'See all',
+    loadingStories: 'Loading Chat Stories...',
+    loadFailed: 'Failed to load Chat Stories',
+    noPublishedStories: 'No published Chat Stories yet.',
+    untitledStory: 'Untitled Story',
+    chatStory: 'Chat Story',
+    comments: '{{count}} comments',
+    recently: 'recently',
+    justNow: 'just now',
+    minutesAgo: '{{count}} min ago',
+    hoursAgo: '{{count}}h ago',
+    yesterday: 'yesterday',
+    daysAgo: '{{count}}d ago',
+    updatedEpisode: 'EP {{count}} · Updated {{time}}',
+    conversationWaiting: 'A new conversation is waiting for you.',
+    hotBadge: 'HOT',
+    newBadge: 'NEW',
+    endBadge: 'END',
+    feature1Title: 'What’s it like to date a villain?',
+    feature1Subtitle: 'New writing event',
+    feature2Title: 'Chat Story Creator Week',
+    feature2Subtitle: 'Join the challenge',
+  },
+  km: {
+    chat: 'Chat',
+    search: 'ស្វែងរក',
+    genres: 'ប្រភេទរឿង',
+    hotPicks: 'រឿងពេញនិយម',
+    recentFeatures: 'មុខងារថ្មីៗ',
+    featuredCategories: 'ប្រភេទរឿងណែនាំ',
+    newUpdated: 'ថ្មី និងទើបអាប់ដេត',
+    recommendedForYou: 'ណែនាំសម្រាប់អ្នក',
+    seeAll: 'មើលទាំងអស់',
+    loadingStories: 'កំពុងផ្ទុក Chat Story...',
+    loadFailed: 'មិនអាចផ្ទុក Chat Story បានទេ',
+    noPublishedStories: 'មិនទាន់មាន Chat Story ដែលបានបោះពុម្ពទេ។',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    chatStory: 'Chat Story',
+    comments: '{{count}} មតិ',
+    recently: 'ថ្មីៗនេះ',
+    justNow: 'ទើបតែឥឡូវនេះ',
+    minutesAgo: '{{count}} នាទីមុន',
+    hoursAgo: '{{count}} ម៉ោងមុន',
+    yesterday: 'ម្សិលមិញ',
+    daysAgo: '{{count}} ថ្ងៃមុន',
+    updatedEpisode: 'ភាគ {{count}} · អាប់ដេត {{time}}',
+    conversationWaiting: 'មានការសន្ទនាថ្មីមួយកំពុងរង់ចាំអ្នក។',
+    hotBadge: 'ពេញនិយម',
+    newBadge: 'ថ្មី',
+    endBadge: 'ចប់',
+    feature1Title: 'ការណាត់ជួបជាមួយតួអាក្រក់មានអារម្មណ៍យ៉ាងណា?',
+    feature1Subtitle: 'កម្មវិធីសរសេរថ្មី',
+    feature2Title: 'សប្តាហ៍អ្នកបង្កើត Chat Story',
+    feature2Subtitle: 'ចូលរួមការប្រកួតប្រជែង',
+  },
+  zh: {
+    chat: '聊天',
+    search: '搜索',
+    genres: '分类',
+    hotPicks: '热门精选',
+    recentFeatures: '最新活动',
+    featuredCategories: '精选分类',
+    newUpdated: '最新与更新',
+    recommendedForYou: '为你推荐',
+    seeAll: '查看全部',
+    loadingStories: '正在加载 Chat Story...',
+    loadFailed: '无法加载 Chat Story',
+    noPublishedStories: '暂无已发布的 Chat Story。',
+    untitledStory: '无标题故事',
+    chatStory: 'Chat Story',
+    comments: '{{count}} 条评论',
+    recently: '最近',
+    justNow: '刚刚',
+    minutesAgo: '{{count}} 分钟前',
+    hoursAgo: '{{count}} 小时前',
+    yesterday: '昨天',
+    daysAgo: '{{count}} 天前',
+    updatedEpisode: '第 {{count}} 集 · 更新于 {{time}}',
+    conversationWaiting: '一段新的对话正在等你。',
+    hotBadge: '热门',
+    newBadge: '新',
+    endBadge: '完结',
+    feature1Title: '和反派约会是什么体验？',
+    feature1Subtitle: '全新写作活动',
+    feature2Title: 'Chat Story 创作者周',
+    feature2Subtitle: '加入挑战',
+  },
+  ja: {
+    chat: 'チャット',
+    search: '検索',
+    genres: 'ジャンル',
+    hotPicks: '人気ピック',
+    recentFeatures: '最新特集',
+    featuredCategories: '注目カテゴリー',
+    newUpdated: '新着・更新',
+    recommendedForYou: 'あなたへのおすすめ',
+    seeAll: 'すべて見る',
+    loadingStories: 'Chat Story を読み込み中...',
+    loadFailed: 'Chat Story を読み込めませんでした',
+    noPublishedStories: '公開済みの Chat Story はまだありません。',
+    untitledStory: '無題のストーリー',
+    chatStory: 'Chat Story',
+    comments: 'コメント {{count}}件',
+    recently: '最近',
+    justNow: 'たった今',
+    minutesAgo: '{{count}}分前',
+    hoursAgo: '{{count}}時間前',
+    yesterday: '昨日',
+    daysAgo: '{{count}}日前',
+    updatedEpisode: 'EP {{count}} · {{time}}に更新',
+    conversationWaiting: '新しい会話があなたを待っています。',
+    hotBadge: '人気',
+    newBadge: '新着',
+    endBadge: '完結',
+    feature1Title: '悪役とデートするってどんな感じ？',
+    feature1Subtitle: '新しい執筆イベント',
+    feature2Title: 'Chat Story クリエイターウィーク',
+    feature2Subtitle: 'チャレンジに参加',
+  },
+  ko: {
+    chat: '채팅',
+    search: '검색',
+    genres: '장르',
+    hotPicks: '인기 추천',
+    recentFeatures: '최근 특집',
+    featuredCategories: '추천 카테고리',
+    newUpdated: '신작 및 업데이트',
+    recommendedForYou: '회원님을 위한 추천',
+    seeAll: '모두 보기',
+    loadingStories: 'Chat Story를 불러오는 중...',
+    loadFailed: 'Chat Story를 불러오지 못했습니다',
+    noPublishedStories: '아직 공개된 Chat Story가 없습니다.',
+    untitledStory: '제목 없는 스토리',
+    chatStory: 'Chat Story',
+    comments: '댓글 {{count}}개',
+    recently: '최근',
+    justNow: '방금',
+    minutesAgo: '{{count}}분 전',
+    hoursAgo: '{{count}}시간 전',
+    yesterday: '어제',
+    daysAgo: '{{count}}일 전',
+    updatedEpisode: 'EP {{count}} · {{time}} 업데이트',
+    conversationWaiting: '새로운 대화가 회원님을 기다리고 있습니다.',
+    hotBadge: '인기',
+    newBadge: '신규',
+    endBadge: '완결',
+    feature1Title: '악당과 데이트하면 어떤 느낌일까요?',
+    feature1Subtitle: '새로운 글쓰기 이벤트',
+    feature2Title: 'Chat Story 크리에이터 위크',
+    feature2Subtitle: '챌린지 참여하기',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -68,6 +233,29 @@ const categories = [
   { title: 'Action / Adventure / Horror', icon: '⚔️', className: 'from-[#ffc06f] to-[#8db8ef]' },
 ]
 
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-GB',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+const featureBanners = [
+  {
+    id: 'feature-1',
+    titleKey: 'feature1Title',
+    subtitleKey: 'feature1Subtitle',
+    className: 'from-[#ffd8e8] via-[#fff0f6] to-[#f8d7e9]',
+  },
+  {
+    id: 'feature-2',
+    titleKey: 'feature2Title',
+    subtitleKey: 'feature2Subtitle',
+    className: 'from-[#b9ecff] via-[#d8f2ff] to-[#b8c8ff]',
+  },
+]
+
 function formatCompactNumber(value) {
   const number = Number(value || 0)
 
@@ -90,41 +278,49 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function formatUpdatedTime(value) {
+function formatUpdatedTime(value, language, t) {
   const updatedTime = value ? new Date(value).getTime() : 0
 
   if (!updatedTime || Number.isNaN(updatedTime)) {
-    return 'recently'
+    return t('chatStoryHomePage.recently')
   }
 
   const difference = Date.now() - updatedTime
   const minutes = Math.max(0, Math.floor(difference / 60000))
 
   if (minutes < 1) {
-    return 'just now'
+    return t('chatStoryHomePage.justNow')
   }
 
   if (minutes < 60) {
-    return `${minutes} min ago`
+    return t('chatStoryHomePage.minutesAgo', {
+      count: minutes,
+    })
   }
 
   const hours = Math.floor(minutes / 60)
 
   if (hours < 24) {
-    return `${hours}h ago`
+    return t('chatStoryHomePage.hoursAgo', {
+      count: hours,
+    })
   }
 
   const days = Math.floor(hours / 24)
 
   if (days === 1) {
-    return 'yesterday'
+    return t('chatStoryHomePage.yesterday')
   }
 
   if (days < 30) {
-    return `${days}d ago`
+    return t('chatStoryHomePage.daysAgo', {
+      count: days,
+    })
   }
 
-  return new Date(updatedTime).toLocaleDateString('en-GB')
+  return new Date(updatedTime).toLocaleDateString(
+    DISPLAY_LOCALES[language] || DISPLAY_LOCALES.en
+  )
 }
 
 function mapApiStory(story) {
@@ -181,6 +377,32 @@ function storyMatchesSection(story, sectionKey) {
   return false
 }
 
+function getStoryTitle(story, t) {
+  if (!story?.title || story.title === 'Untitled Story') {
+    return t('chatStoryHomePage.untitledStory')
+  }
+
+  return story.title
+}
+
+function getStoryGenre(story, t) {
+  if (!story?.genre || story.genre === 'Chat Story') {
+    return t('chatStoryHomePage.chatStory')
+  }
+
+  return story.genre
+}
+
+function getBadgeLabel(badge, t) {
+  const key = String(badge || '').toUpperCase()
+
+  if (key === 'HOT') return t('chatStoryHomePage.hotBadge')
+  if (key === 'NEW') return t('chatStoryHomePage.newBadge')
+  if (key === 'END') return t('chatStoryHomePage.endBadge')
+
+  return badge
+}
+
 function CoverFallback({ title }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#efe8ff] via-[#fde8f2] to-[#e7f5ff] p-2 text-center">
@@ -192,6 +414,10 @@ function CoverFallback({ title }) {
 }
 
 function StoryCover({ story, onOpen }) {
+  const { t } = useDisplayTranslation()
+  const title = getStoryTitle(story, t)
+  const genre = getStoryGenre(story, t)
+
   return (
     <button
       type="button"
@@ -205,7 +431,7 @@ function StoryCover({ story, onOpen }) {
         {story.cover ? (
           <img
             src={story.cover}
-            alt={story.title}
+            alt={title}
             className="h-full w-full object-cover"
             loading="lazy"
             onError={(event) => {
@@ -213,12 +439,12 @@ function StoryCover({ story, onOpen }) {
             }}
           />
         ) : (
-          <CoverFallback title={story.title} />
+          <CoverFallback title={title} />
         )}
 
         {story.badge ? (
           <span className="absolute left-1.5 top-1.5 rounded-full bg-[#7c3aed] px-2 py-1 text-[8px] font-black text-white">
-            {story.badge}
+            {getBadgeLabel(story.badge, t)}
           </span>
         ) : null}
       </div>
@@ -227,7 +453,7 @@ function StoryCover({ story, onOpen }) {
         className="mt-2 line-clamp-2 min-h-[34px] text-[12px] font-extrabold leading-[17px]"
         style={{ color: 'var(--shadow-text-primary)' }}
       >
-        {story.title}
+        {title}
       </div>
 
       <div
@@ -242,13 +468,19 @@ function StoryCover({ story, onOpen }) {
         className="mt-0.5 line-clamp-1 text-[10px] font-semibold"
         style={{ color: 'var(--shadow-text-tertiary)' }}
       >
-        {story.genre || `${story.comments || 0} comments`}
+        {story.genre
+          ? genre
+          : t('chatStoryHomePage.comments', {
+              count: story.comments || 0,
+            })}
       </div>
     </button>
   )
 }
 
 function SectionHeader({ icon, title, onMore }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="mb-3 flex items-center justify-between gap-3 px-4">
       <div className="flex min-w-0 items-center gap-2">
@@ -267,7 +499,8 @@ function SectionHeader({ icon, title, onMore }) {
         className="shrink-0 text-[11px] font-bold active:text-[#6d42db]"
         style={{ color: 'var(--shadow-text-secondary)' }}
       >
-        See all <i className="fa-solid fa-chevron-right ml-1 text-[8px]" />
+        {t('chatStoryHomePage.seeAll')}{' '}
+        <i className="fa-solid fa-chevron-right ml-1 text-[8px]" />
       </button>
     </div>
   )
@@ -275,6 +508,7 @@ function SectionHeader({ icon, title, onMore }) {
 
 export default function ChatStoryHomePage() {
   const navigate = useNavigate()
+  const { language, t } = useDisplayTranslation()
   const [chatStories, setChatStories] = useState([])
   const [loadingStories, setLoadingStories] = useState(true)
   const [storiesError, setStoriesError] = useState('')
@@ -338,7 +572,7 @@ export default function ChatStoryHomePage() {
 
         if (!response.ok || data.ok === false) {
           throw new Error(
-            data.message || 'Failed to load Chat Stories'
+            data.message || t('chatStoryHomePage.loadFailed')
           )
         }
 
@@ -367,7 +601,7 @@ export default function ChatStoryHomePage() {
         if (!hasCachedStories) {
           setChatStories([])
           setStoriesError(
-            error.message || 'Failed to load Chat Stories'
+            error.message || t('chatStoryHomePage.loadFailed')
           )
         }
       } finally {
@@ -382,7 +616,7 @@ export default function ChatStoryHomePage() {
     return () => {
       controller.abort()
     }
-  }, [])
+  }, [t])
 
   const hotPickStories = useMemo(
     () =>
@@ -429,24 +663,6 @@ export default function ChatStoryHomePage() {
     newUpdatedStories[0] ||
     null
 
-  const featureBanners = useMemo(
-    () => [
-      {
-        id: 'feature-1',
-        title: 'What’s it like to date a villain?',
-        subtitle: 'New writing event',
-        className: 'from-[#ffd8e8] via-[#fff0f6] to-[#f8d7e9]',
-      },
-      {
-        id: 'feature-2',
-        title: 'Chat Story Creator Week',
-        subtitle: 'Join the challenge',
-        className: 'from-[#b9ecff] via-[#d8f2ff] to-[#b8c8ff]',
-      },
-    ],
-    []
-  )
-
   const openStory = (story) => {
     navigate(`/story/${story.id}`)
   }
@@ -465,7 +681,7 @@ export default function ChatStoryHomePage() {
             className="text-[17px] font-bold tracking-[-0.01em]"
             style={{ color: 'var(--shadow-text-primary)' }}
           >
-            Chat
+            {t('chatStoryHomePage.chat')}
           </h1>
 
           <div
@@ -477,7 +693,7 @@ export default function ChatStoryHomePage() {
               onClick={() => navigate('/search')}
               className="flex h-10 w-10 items-center justify-center rounded-full active:scale-95"
               style={{ color: 'var(--shadow-icon)' }}
-              aria-label="Search"
+              aria-label={t('chatStoryHomePage.search')}
             >
               <i className="fa-solid fa-magnifying-glass text-[19px]" />
             </button>
@@ -487,7 +703,7 @@ export default function ChatStoryHomePage() {
               onClick={() => navigate('/chat-stories/categories')}
               className="flex h-10 w-10 items-center justify-center rounded-full active:scale-95"
               style={{ color: 'var(--shadow-icon)' }}
-              aria-label="Genres"
+              aria-label={t('chatStoryHomePage.genres')}
             >
               <svg
                 width="19"
@@ -511,7 +727,7 @@ export default function ChatStoryHomePage() {
         <section className="pt-2">
           <SectionHeader
             icon="💎"
-            title="Hot Picks"
+            title={t('chatStoryHomePage.hotPicks')}
             onMore={() => openCollection('hot-picks')}
           />
 
@@ -521,7 +737,7 @@ export default function ChatStoryHomePage() {
                 className="flex h-[188px] w-full items-center justify-center text-[12px] font-semibold"
                 style={{ color: 'var(--shadow-text-secondary)' }}
               >
-                Loading Chat Stories...
+                {t('chatStoryHomePage.loadingStories')}
               </div>
             ) : storiesError ? (
               <div
@@ -543,7 +759,7 @@ export default function ChatStoryHomePage() {
                 className="flex h-[100px] w-full items-center justify-center text-[12px] font-semibold"
                 style={{ color: 'var(--shadow-text-secondary)' }}
               >
-                No published Chat Stories yet.
+                {t('chatStoryHomePage.noPublishedStories')}
               </div>
             )}
 
@@ -554,7 +770,7 @@ export default function ChatStoryHomePage() {
         <section className="mt-7">
           <SectionHeader
             icon="🎀"
-            title="Recent Features"
+            title={t('chatStoryHomePage.recentFeatures')}
             onMore={() => openCollection('features')}
           />
 
@@ -570,10 +786,10 @@ export default function ChatStoryHomePage() {
                 <div className="absolute -bottom-10 right-16 h-24 w-24 rounded-full bg-white/30" />
                 <div className="relative z-10 max-w-[70%]">
                   <div className="text-[11px] font-black uppercase tracking-[0.08em] text-[#8d5c79]">
-                    {feature.subtitle}
+                    {t(`chatStoryHomePage.${feature.subtitleKey}`)}
                   </div>
                   <div className="mt-2 text-[18px] font-black leading-6 text-[#5d3b50]">
-                    {feature.title}
+                    {t(`chatStoryHomePage.${feature.titleKey}`)}
                   </div>
                 </div>
               </button>
@@ -606,7 +822,7 @@ export default function ChatStoryHomePage() {
         <section className="mt-8 px-4">
           <SectionHeader
             icon="💖"
-            title="Featured Categories"
+            title={t('chatStoryHomePage.featuredCategories')}
             onMore={() => navigate('/chat-stories/categories')}
           />
 
@@ -634,7 +850,7 @@ export default function ChatStoryHomePage() {
         <section className="mt-8 px-4">
           <SectionHeader
             icon="✨"
-            title="New & Updated"
+            title={t('chatStoryHomePage.newUpdated')}
             onMore={() => openCollection('new-updated')}
           />
 
@@ -644,53 +860,65 @@ export default function ChatStoryHomePage() {
           >
             {newUpdatedStories
               .slice(0, 6)
-              .map((story) => (
-                <button
-                  key={`updated-${story.id}`}
-                  type="button"
-                  onClick={() => openStory(story)}
-                  className="flex w-full items-center gap-3 py-3 text-left active:scale-[0.995]"
-                >
-                  <div
-                    className="h-[68px] w-[54px] shrink-0 overflow-hidden rounded-[10px]"
-                    style={{ background: 'var(--shadow-bg-soft)' }}
+              .map((story) => {
+                const title = getStoryTitle(story, t)
+                const updatedTime = formatUpdatedTime(
+                  story.updatedAt,
+                  language,
+                  t
+                )
+
+                return (
+                  <button
+                    key={`updated-${story.id}`}
+                    type="button"
+                    onClick={() => openStory(story)}
+                    className="flex w-full items-center gap-3 py-3 text-left active:scale-[0.995]"
                   >
-                    {story.cover ? (
-                      <img
-                        src={story.cover}
-                        alt={story.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <CoverFallback title={story.title} />
-                    )}
-                  </div>
+                    <div
+                      className="h-[68px] w-[54px] shrink-0 overflow-hidden rounded-[10px]"
+                      style={{ background: 'var(--shadow-bg-soft)' }}
+                    >
+                      {story.cover ? (
+                        <img
+                          src={story.cover}
+                          alt={title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <CoverFallback title={title} />
+                      )}
+                    </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div
-                      className="line-clamp-1 text-[14px] font-extrabold"
-                      style={{ color: 'var(--shadow-text-primary)' }}
-                    >
-                      {story.title}
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="line-clamp-1 text-[14px] font-extrabold"
+                        style={{ color: 'var(--shadow-text-primary)' }}
+                      >
+                        {title}
+                      </div>
+                      <div
+                        className="mt-1 text-[11px] font-semibold"
+                        style={{ color: 'var(--shadow-text-secondary)' }}
+                      >
+                        {t('chatStoryHomePage.updatedEpisode', {
+                          count: story.totalEpisodes,
+                          time: updatedTime,
+                        })}
+                      </div>
+                      <div
+                        className="mt-1 line-clamp-1 text-[11px]"
+                        style={{ color: 'var(--shadow-text-tertiary)' }}
+                      >
+                        {story.description ||
+                          t('chatStoryHomePage.conversationWaiting')}
+                      </div>
                     </div>
-                    <div
-                      className="mt-1 text-[11px] font-semibold"
-                      style={{ color: 'var(--shadow-text-secondary)' }}
-                    >
-                      EP {story.totalEpisodes} · Updated {formatUpdatedTime(story.updatedAt)}
-                    </div>
-                    <div
-                      className="mt-1 line-clamp-1 text-[11px]"
-                      style={{ color: 'var(--shadow-text-tertiary)' }}
-                    >
-                      {story.description ||
-                        'A new conversation is waiting for you.'}
-                    </div>
-                  </div>
 
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-[#7c3aed]" />
-                </button>
-              ))}
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-[#7c3aed]" />
+                  </button>
+                )
+              })}
           </div>
         </section>
 
@@ -698,7 +926,7 @@ export default function ChatStoryHomePage() {
           <section className="mt-8 px-4">
             <SectionHeader
               icon="⭐"
-              title="Recommended for You"
+              title={t('chatStoryHomePage.recommendedForYou')}
               onMore={() => openCollection('recommended')}
             />
 
@@ -715,12 +943,14 @@ export default function ChatStoryHomePage() {
                 {recommendedStory.cover ? (
                   <img
                     src={recommendedStory.cover}
-                    alt={recommendedStory.title}
+                    alt={getStoryTitle(recommendedStory, t)}
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />
                 ) : (
-                  <CoverFallback title={recommendedStory.title} />
+                  <CoverFallback
+                    title={getStoryTitle(recommendedStory, t)}
+                  />
                 )}
               </div>
 
@@ -729,7 +959,7 @@ export default function ChatStoryHomePage() {
                   className="line-clamp-2 text-[16px] font-black leading-5"
                   style={{ color: 'var(--shadow-text-primary)' }}
                 >
-                  {recommendedStory.title}
+                  {getStoryTitle(recommendedStory, t)}
                 </div>
 
                 <div
@@ -737,7 +967,7 @@ export default function ChatStoryHomePage() {
                   style={{ color: 'var(--shadow-text-secondary)' }}
                 >
                   {recommendedStory.description ||
-                    'A new conversation is waiting for you.'}
+                    t('chatStoryHomePage.conversationWaiting')}
                 </div>
 
                 <div
@@ -749,7 +979,7 @@ export default function ChatStoryHomePage() {
                     {recommendedStory.views}
                   </span>
 
-                  <span>{recommendedStory.genre}</span>
+                  <span>{getStoryGenre(recommendedStory, t)}</span>
                 </div>
               </div>
 
