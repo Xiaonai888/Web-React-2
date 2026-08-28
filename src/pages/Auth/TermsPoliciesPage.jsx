@@ -256,7 +256,7 @@ export default function TermsPoliciesPage() {
 
   return (
     <div
-      className="min-h-screen overflow-x-hidden bg-white pb-10 text-[#141414]"
+      className="app-page min-h-screen overflow-x-hidden bg-white pb-10 text-[#141414] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]"
       style={{ fontFamily: "'Roboto', Arial, sans-serif" }}
     >
       <header className="sticky top-0 z-50 bg-[#ff2b2b] px-4 py-3 text-white shadow-sm sm:py-4">
