@@ -240,7 +240,7 @@ function StarRow({ value, size = 'text-[18px]' }) {
           className={`fa-solid fa-star ${
             Number(value || 0) >= star
               ? 'text-[#ff8a3d]'
-              : 'text-[#d0d5dd]'
+              : 'text-[#d0d5dd] dark:text-white/20'
           }`}
         />
       ))}
@@ -253,22 +253,22 @@ function EmptyReviewState({ onWriteReview }) {
 
   return (
     <div className="px-4 py-10 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]">
         <i className="fa-regular fa-star text-[22px]" />
       </div>
 
-      <h3 className="mt-4 text-[17px] font-extrabold text-[#111827]">
+      <h3 className="mt-4 text-[17px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
         {t('ratingPage.noReviewsYet')}
       </h3>
 
-      <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6 text-[#667085]">
+      <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6 text-[#667085] dark:text-[var(--shadow-text-secondary)]">
         {t('ratingPage.emptyBody')}
       </p>
 
       <button
         type="button"
         onClick={onWriteReview}
-        className="mt-5 h-11 rounded-full bg-[#111827] px-5 text-[13px] font-normal text-white active:scale-95"
+        className="mt-5 h-11 rounded-full bg-[#111827] px-5 text-[13px] font-normal text-white active:scale-95 dark:bg-[#7c3aed]"
       >
         {t('ratingPage.writeFirstReview')}
       </button>
@@ -293,39 +293,39 @@ function ReviewCard({ review }) {
   const name = review.name || t('ratingPage.reader')
 
   return (
-    <article className="border-b border-[#eef1f5] px-4 py-5 last:border-b-0 sm:px-0">
+    <article className="border-b border-[#eef1f5] px-4 py-5 last:border-b-0 dark:border-[var(--shadow-border)] sm:px-0">
       <div className="flex gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[15px] font-black text-white">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[15px] font-black text-white dark:bg-[#7c3aed]">
           {(name || 'R').slice(0, 1).toUpperCase()}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h3 className="text-[14px] font-black text-[#111827]">
+            <h3 className="text-[14px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {name}
             </h3>
             <StarRow value={review.rating} size="text-[13px]" />
-            <span className="text-[12px] font-semibold text-[#667085]">
+            <span className="text-[12px] font-semibold text-[#667085] dark:text-[var(--shadow-text-secondary)]">
               {getReviewLabel(review.label, t)}
             </span>
           </div>
 
           {review.text ? (
-            <p className="mt-3 line-clamp-4 text-[13.5px] font-medium leading-6 text-[#4b5563]">
+            <p className="mt-3 line-clamp-4 text-[13.5px] font-medium leading-6 text-[#4b5563] dark:text-[var(--shadow-text-secondary)]">
               {review.text}
             </p>
           ) : null}
 
-          <div className="mt-3 text-[12px] font-semibold text-[#98a2b3]">
+          <div className="mt-3 text-[12px] font-semibold text-[#98a2b3] dark:text-[var(--shadow-text-tertiary)]">
             {formatDate(review.created_at, language, t)}
           </div>
 
           {review.author_reply ? (
-            <div className="mt-3 rounded-[18px] bg-[#f8fafc] px-4 py-3">
-              <div className="text-[12px] font-black text-[#111827]">
+            <div className="mt-3 rounded-[18px] bg-[#f8fafc] px-4 py-3 dark:bg-[var(--shadow-bg-elevated)]">
+              <div className="text-[12px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('ratingPage.authorReplied')}
               </div>
-              <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#667085]">
+              <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#667085] dark:text-[var(--shadow-text-secondary)]">
                 {review.author_reply}
               </p>
             </div>
@@ -353,16 +353,16 @@ function ReviewGateModal({
 
   return (
     <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 px-4">
-      <section className="w-full max-w-[420px] rounded-[26px] bg-white p-6 text-center shadow-2xl">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff7d6] text-[#f59e0b]">
+      <section className="w-full max-w-[420px] rounded-[26px] bg-white p-6 text-center shadow-2xl dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)]">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff7d6] text-[#f59e0b] dark:bg-amber-500/10 dark:text-amber-300">
           <i className="fa-solid fa-book-open-reader text-[25px]" />
         </div>
 
-        <h2 className="mt-4 text-[20px] font-black text-[#111827]">
+        <h2 className="mt-4 text-[20px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
           {t('ratingPage.readMoreBeforeReviewing')}
         </h2>
 
-        <p className="mt-3 text-[13px] font-semibold leading-6 text-[#667085]">
+        <p className="mt-3 text-[13px] font-semibold leading-6 text-[#667085] dark:text-[var(--shadow-text-secondary)]">
           {t('ratingPage.gateBody', {
             required: REVIEW_REQUIRED_READ_EPISODES,
             read: Number(readCount || 0),
@@ -374,7 +374,7 @@ function ReviewGateModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-black text-[#111827] active:scale-95"
+            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-black text-[#111827] active:scale-95 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
           >
             {t('ratingPage.notNow')}
           </button>
@@ -382,7 +382,7 @@ function ReviewGateModal({
           <button
             type="button"
             onClick={onStartReading}
-            className="h-12 rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95"
+            className="h-12 rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95 dark:bg-[#7c3aed]"
           >
             {t('ratingPage.startReading')}
           </button>
@@ -525,7 +525,7 @@ function ReviewBottomSheet({
       />
 
       <section
-        className="relative w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-6 pt-3 shadow-2xl"
+        className="relative w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-6 pt-3 shadow-2xl dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)]"
         style={{
           transform: `translateY(${dragOffset}px)`,
           transition: dragging
@@ -544,7 +544,7 @@ function ReviewBottomSheet({
           className="flex min-h-12 cursor-grab touch-none items-center justify-between gap-3 active:cursor-grabbing"
         >
           <h2
-            className="text-[18px] font-bold text-[#111827]"
+            className="text-[18px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]"
             style={{ fontWeight: 700 }}
           >
             {t('ratingPage.leaveReview')}
@@ -553,7 +553,7 @@ function ReviewBottomSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
             aria-label={t('ratingPage.close')}
           >
             <i className="fa-solid fa-xmark text-[14px]" />
@@ -569,7 +569,7 @@ function ReviewBottomSheet({
               className={`text-[36px] active:scale-95 ${
                 rating >= star
                   ? 'text-[#ff8a3d]'
-                  : 'text-[#d9d9d9]'
+                  : 'text-[#d9d9d9] dark:text-white/20'
               }`}
               aria-label={t('ratingPage.rateStar', { star })}
             >
@@ -585,10 +585,10 @@ function ReviewBottomSheet({
           }
           rows={5}
           placeholder={t('ratingPage.placeholder')}
-          className="mt-5 w-full resize-none rounded-[20px] bg-[#f3f4f6] px-4 py-4 text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/15"
+          className="mt-5 w-full resize-none rounded-[20px] bg-[#f3f4f6] px-4 py-4 text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/15 dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:ring-[#a78bfa]/25"
         />
 
-        <p className="mt-3 text-[12px] font-semibold leading-5 text-[#98a2b3]">
+        <p className="mt-3 text-[12px] font-semibold leading-5 text-[#98a2b3] dark:text-[var(--shadow-text-tertiary)]">
           {t('ratingPage.helper')}
         </p>
 
@@ -596,7 +596,7 @@ function ReviewBottomSheet({
           type="button"
           onClick={onSubmit}
           disabled={!rating}
-          className="mt-5 h-12 w-full rounded-full bg-[#111827] text-[14px] font-black text-white active:scale-95 disabled:bg-[#d0d5dd]"
+          className="mt-5 h-12 w-full rounded-full bg-[#111827] text-[14px] font-black text-white active:scale-95 disabled:bg-[#d0d5dd] dark:bg-[#7c3aed] dark:disabled:bg-[var(--shadow-bg-elevated)] dark:disabled:text-[var(--shadow-text-disabled)]"
         >
           {t('ratingPage.submitReview')}
         </button>
@@ -772,7 +772,7 @@ export default function RatingPage() {
     story?.title || t('ratingPage.untitledStory')
 
   return (
-    <main className="min-h-screen bg-white pb-24 text-[#111827]">
+    <main className="app-page min-h-screen pb-24 text-[#111827] dark:text-[var(--shadow-text-primary)]">
       <section className="mx-auto max-w-3xl">
         <div className="overflow-hidden rounded-none bg-[#111827] text-white shadow-sm">
           <div className="relative min-h-[220px] px-5 pb-5 pt-16">
@@ -838,9 +838,9 @@ export default function RatingPage() {
         </div>
       </section>
 
-      <section className="relative z-10 mx-auto -mt-2 max-w-3xl rounded-t-[14px] bg-white pt-5">
+      <section className="relative z-10 mx-auto -mt-2 max-w-3xl rounded-t-[14px] bg-white pt-5 dark:bg-[var(--shadow-bg-surface)]">
         <div className="flex items-center justify-between px-5">
-          <h2 className="text-[14px] font-semibold text-[#111827]">
+          <h2 className="text-[14px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {t('ratingPage.reviewCenter')}
           </h2>
 
@@ -851,13 +851,13 @@ export default function RatingPage() {
               className={
                 sort === 'hot'
                   ? 'text-[#e85d75]'
-                  : 'text-[#98a2b3]'
+                  : 'text-[#98a2b3] dark:text-[var(--shadow-text-tertiary)]'
               }
             >
               {t('ratingPage.hot')}
             </button>
 
-            <span className="mx-3 h-4 w-px bg-[#e4e7ec]" />
+            <span className="mx-3 h-4 w-px bg-[#e4e7ec] dark:bg-[var(--shadow-border)]" />
 
             <button
               type="button"
@@ -865,7 +865,7 @@ export default function RatingPage() {
               className={
                 sort === 'newest'
                   ? 'text-[#e85d75]'
-                  : 'text-[#98a2b3]'
+                  : 'text-[#98a2b3] dark:text-[var(--shadow-text-tertiary)]'
               }
             >
               {t('ratingPage.new')}
@@ -873,7 +873,7 @@ export default function RatingPage() {
           </div>
         </div>
 
-        <div className="mt-2 bg-white">
+        <div className="mt-2 bg-white dark:bg-[var(--shadow-bg-surface)]">
           {sortedReviews.length ? (
             sortedReviews.map((review) => (
               <ReviewCard
