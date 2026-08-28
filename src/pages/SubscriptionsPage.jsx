@@ -1,7 +1,109 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('subscriptionsPage', {
+  en: {
+    all: 'All',
+    novel: 'Novel',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    backToLibrary: 'Back to library',
+    title: 'Subscriptions',
+    subtitle: 'Track new chapters from stories you follow.',
+    recentUpdates: 'Recent Updates',
+    allSubscribedStories: 'All Subscribed Stories',
+    updatedHoursAgo: 'Updated {{hours}}h ago',
+    updatedToday: 'Updated today',
+    updatedYesterday: 'Updated yesterday',
+    episodeReleased: 'Ep. {{count}} released',
+    chatReleased: 'Chat {{count}} released',
+    newEpisode: 'New Ep. {{count}}',
+    newChat: 'New Chat {{count}}',
+  },
+  km: {
+    all: 'ទាំងអស់',
+    novel: 'ប្រលោមលោក',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    backToLibrary: 'ត្រឡប់ទៅបណ្ណាល័យ',
+    title: 'ការតាមដាន',
+    subtitle: 'តាមដានភាគថ្មីពីរឿងដែលអ្នកកំពុង Follow។',
+    recentUpdates: 'អាប់ដេតថ្មីៗ',
+    allSubscribedStories: 'រឿងដែលបាន Follow ទាំងអស់',
+    updatedHoursAgo: 'បានអាប់ដេត {{hours}} ម៉ោងមុន',
+    updatedToday: 'បានអាប់ដេតថ្ងៃនេះ',
+    updatedYesterday: 'បានអាប់ដេតម្សិលមិញ',
+    episodeReleased: 'ភាគ {{count}} បានចេញហើយ',
+    chatReleased: 'Chat {{count}} បានចេញហើយ',
+    newEpisode: 'ភាគថ្មី {{count}}',
+    newChat: 'Chat ថ្មី {{count}}',
+  },
+  zh: {
+    all: '全部',
+    novel: '小说',
+    chatStory: '聊天故事',
+    manga: '漫画',
+    backToLibrary: '返回书库',
+    title: '订阅',
+    subtitle: '跟踪你关注故事的新章节。',
+    recentUpdates: '最近更新',
+    allSubscribedStories: '全部订阅故事',
+    updatedHoursAgo: '{{hours}} 小时前更新',
+    updatedToday: '今天更新',
+    updatedYesterday: '昨天更新',
+    episodeReleased: '第 {{count}} 集已发布',
+    chatReleased: '聊天 {{count}} 已发布',
+    newEpisode: '新章节 {{count}}',
+    newChat: '新聊天 {{count}}',
+  },
+  ja: {
+    all: 'すべて',
+    novel: '小説',
+    chatStory: 'チャットストーリー',
+    manga: 'マンガ',
+    backToLibrary: 'ライブラリに戻る',
+    title: '購読',
+    subtitle: 'フォロー中のストーリーの新しいエピソードを確認できます。',
+    recentUpdates: '最近の更新',
+    allSubscribedStories: '購読中のすべてのストーリー',
+    updatedHoursAgo: '{{hours}}時間前に更新',
+    updatedToday: '今日更新',
+    updatedYesterday: '昨日更新',
+    episodeReleased: '第{{count}}話公開',
+    chatReleased: 'チャット{{count}}公開',
+    newEpisode: '新着 第{{count}}話',
+    newChat: '新着 チャット{{count}}',
+  },
+  ko: {
+    all: '전체',
+    novel: '소설',
+    chatStory: '채팅 스토리',
+    manga: '만화',
+    backToLibrary: '라이브러리로 돌아가기',
+    title: '구독',
+    subtitle: '팔로우한 스토리의 새 에피소드를 확인하세요.',
+    recentUpdates: '최근 업데이트',
+    allSubscribedStories: '구독한 모든 스토리',
+    updatedHoursAgo: '{{hours}}시간 전에 업데이트',
+    updatedToday: '오늘 업데이트',
+    updatedYesterday: '어제 업데이트',
+    episodeReleased: '{{count}}화 공개',
+    chatReleased: '채팅 {{count}} 공개',
+    newEpisode: '새 에피소드 {{count}}',
+    newChat: '새 채팅 {{count}}',
+  },
+})
 
 const typeTabs = ['All', 'Novel', 'Chat Story', 'Manga']
+
+const TAB_LABEL_KEYS = {
+  All: 'all',
+  Novel: 'novel',
+  'Chat Story': 'chatStory',
+  Manga: 'manga',
+}
 
 const subscribedFeed = [
   {
@@ -45,7 +147,70 @@ const subscribedBooks = [
   { id: 512, title: 'Unread Feelings', type: 'Chat Story', info: 'New Chat 7', image: '/assets/Trending%20Now/Trending%2012.jpg' },
 ]
 
+function getFeedUpdateLabel(value, t) {
+  const text = String(value || '')
+  const hoursMatch = text.match(/^Updated (\d+)h ago$/)
+
+  if (hoursMatch) {
+    return t('subscriptionsPage.updatedHoursAgo', {
+      hours: Number(hoursMatch[1]),
+    })
+  }
+
+  if (text === 'Updated today') {
+    return t('subscriptionsPage.updatedToday')
+  }
+
+  if (text === 'Updated yesterday') {
+    return t('subscriptionsPage.updatedYesterday')
+  }
+
+  return value
+}
+
+function getFeedEpisodeLabel(value, t) {
+  const text = String(value || '')
+  const episodeMatch = text.match(/^Ep\. (\d+) released$/)
+  const chatMatch = text.match(/^Chat (\d+) released$/)
+
+  if (episodeMatch) {
+    return t('subscriptionsPage.episodeReleased', {
+      count: Number(episodeMatch[1]),
+    })
+  }
+
+  if (chatMatch) {
+    return t('subscriptionsPage.chatReleased', {
+      count: Number(chatMatch[1]),
+    })
+  }
+
+  return value
+}
+
+function getBookInfoLabel(value, t) {
+  const text = String(value || '')
+  const episodeMatch = text.match(/^New Ep\. (\d+)$/)
+  const chatMatch = text.match(/^New Chat (\d+)$/)
+
+  if (episodeMatch) {
+    return t('subscriptionsPage.newEpisode', {
+      count: Number(episodeMatch[1]),
+    })
+  }
+
+  if (chatMatch) {
+    return t('subscriptionsPage.newChat', {
+      count: Number(chatMatch[1]),
+    })
+  }
+
+  return value
+}
+
 function SubscriptionGridCard({ book }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
       <div className="overflow-hidden rounded-2xl bg-[#efefef] shadow-sm">
@@ -66,7 +231,7 @@ function SubscriptionGridCard({ book }) {
           {book.title}
         </h4>
         <p className="mt-1 text-[10px] font-medium text-[#8d8d8d] sm:text-[11px]">
-          {book.info}
+          {getBookInfoLabel(book.info, t)}
         </p>
       </div>
     </Link>
@@ -74,18 +239,25 @@ function SubscriptionGridCard({ book }) {
 }
 
 export default function SubscriptionsPage() {
+  const { t } = useDisplayTranslation()
   const [activeType, setActiveType] = useState('All')
 
   const filteredFeed = useMemo(() => {
     if (activeType === 'All') return subscribedFeed
 
-    const typeMap = Object.fromEntries(subscribedBooks.map((book) => [book.id, book.type]))
-    return subscribedFeed.filter((item) => typeMap[item.id] === activeType)
+    const typeMap = Object.fromEntries(
+      subscribedBooks.map((book) => [book.id, book.type])
+    )
+    return subscribedFeed.filter(
+      (item) => typeMap[item.id] === activeType
+    )
   }, [activeType])
 
   const filteredBooks = useMemo(() => {
     if (activeType === 'All') return subscribedBooks
-    return subscribedBooks.filter((book) => book.type === activeType)
+    return subscribedBooks.filter(
+      (book) => book.type === activeType
+    )
   }, [activeType])
 
   return (
@@ -97,17 +269,17 @@ export default function SubscriptionsPage() {
               <Link
                 to="/library"
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#111] transition hover:bg-black/5"
-                aria-label="Back to library"
+                aria-label={t('subscriptionsPage.backToLibrary')}
               >
                 <i className="fas fa-chevron-left text-[14px]" />
               </Link>
 
               <div>
                 <h1 className="text-[20px] font-extrabold tracking-tight text-[#111]">
-                  Subscriptions
+                  {t('subscriptionsPage.title')}
                 </h1>
                 <p className="mt-1 text-[12px] text-[#8b8b95] sm:text-[13px]">
-                  Track new chapters from stories you follow.
+                  {t('subscriptionsPage.subtitle')}
                 </p>
               </div>
             </div>
@@ -116,6 +288,7 @@ export default function SubscriptionsPage() {
           <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar">
             {typeTabs.map((type) => {
               const active = type === activeType
+
               return (
                 <button
                   key={type}
@@ -126,7 +299,9 @@ export default function SubscriptionsPage() {
                       : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef]'
                   }`}
                 >
-                  {type}
+                  {t(
+                    `subscriptionsPage.${TAB_LABEL_KEYS[type]}`
+                  )}
                 </button>
               )
             })}
@@ -138,7 +313,7 @@ export default function SubscriptionsPage() {
         <section className="pt-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-[18px] font-extrabold tracking-tight text-[#111]">
-              Recent Updates
+              {t('subscriptionsPage.recentUpdates')}
             </h2>
           </div>
 
@@ -170,12 +345,12 @@ export default function SubscriptionsPage() {
                     {item.author}
                   </p>
                   <p className="mt-1 text-[11px] font-semibold text-[#5f78ff]">
-                    {item.episode}
+                    {getFeedEpisodeLabel(item.episode, t)}
                   </p>
                 </div>
 
                 <div className="shrink-0 text-[11px] font-medium text-[#a0a0a8]">
-                  {item.update}
+                  {getFeedUpdateLabel(item.update, t)}
                 </div>
               </Link>
             ))}
@@ -185,13 +360,16 @@ export default function SubscriptionsPage() {
         <section className="pt-10">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-[18px] font-extrabold tracking-tight text-[#111]">
-              All Subscribed Stories
+              {t('subscriptionsPage.allSubscribedStories')}
             </h2>
           </div>
 
           <div className="grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-4 md:gap-y-0">
             {filteredBooks.map((book) => (
-              <SubscriptionGridCard key={book.id} book={book} />
+              <SubscriptionGridCard
+                key={book.id}
+                book={book}
+              />
             ))}
           </div>
         </section>
