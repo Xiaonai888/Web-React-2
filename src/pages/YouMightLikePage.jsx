@@ -94,7 +94,7 @@ function BookCard({ book }) {
 
   return (
     <Link to={`/story/${book.id}`} className="group block">
-      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-gray-100 shadow-sm dark:bg-[var(--shadow-bg-elevated)]">
         <img
           src={book.cover}
           alt={title}
@@ -105,17 +105,17 @@ function BookCard({ book }) {
           }}
         />
         {book.isAdult ? (
-          <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+          <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d] dark:bg-red-400/15 dark:text-red-300">
             18+
           </div>
         ) : null}
       </div>
 
-      <h3 className="mt-3 line-clamp-2 min-h-[42px] text-[15px] font-bold leading-[21px] tracking-tight text-neutral-900">
+      <h3 className="mt-3 line-clamp-2 min-h-[42px] text-[15px] font-bold leading-[21px] tracking-tight text-neutral-900 dark:text-[var(--shadow-text-primary)]">
         {title}
       </h3>
 
-      <div className="mt-2 flex items-center gap-3 text-[13px] text-gray-600">
+      <div className="mt-2 flex items-center gap-3 text-[13px] text-gray-600 dark:text-[var(--shadow-text-secondary)]">
         <div className="flex items-center gap-1">
           <i className="fas fa-heart text-[12px] text-red-500" />
           <span className="font-medium">{book.likes}</span>
@@ -136,9 +136,9 @@ function LoadingGrid() {
     <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
       {Array.from({ length: 18 }).map((_, index) => (
         <div key={index}>
-          <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
-          <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
-          <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+          <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
         </div>
       ))}
     </div>
@@ -254,21 +254,21 @@ export default function YouMightLikePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white pb-24">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
+    <div className="app-page min-h-screen bg-white pb-24 dark:bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)] dark:shadow-none">
         <div className="flex h-14 items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('youMightLikePage.goBack')}
           >
-            <i className="fas fa-chevron-left text-[18px] text-gray-700" />
+            <i className="fas fa-chevron-left text-[18px] text-gray-700 dark:text-[var(--shadow-text-primary)]" />
           </button>
 
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="text-[20px] lg:text-[21px]">🙂</span>
-            <h1 className="line-clamp-1 text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+            <h1 className="line-clamp-1 text-[18px] font-extrabold tracking-tight text-neutral-900 dark:text-[var(--shadow-text-primary)] lg:text-[19px]">
               {t('youMightLikePage.title')}
             </h1>
           </div>
@@ -276,7 +276,7 @@ export default function YouMightLikePage() {
           <button
             type="button"
             onClick={() => fetchBooks({ force: true })}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100 dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('youMightLikePage.refresh')}
           >
             <i className="fa-solid fa-rotate-right text-[15px]" />
@@ -286,7 +286,7 @@ export default function YouMightLikePage() {
 
       <main className="px-4 pt-4 sm:px-5 lg:px-6">
         {message ? (
-          <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600">
+          <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600 dark:bg-red-400/10 dark:text-red-300">
             {message}
           </div>
         ) : null}
@@ -300,14 +300,14 @@ export default function YouMightLikePage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl bg-gray-50 px-5 py-12 text-center">
-            <div className="text-[16px] font-bold text-neutral-900">
+          <div className="rounded-2xl bg-gray-50 px-5 py-12 text-center dark:bg-[var(--shadow-bg-surface)] dark:ring-1 dark:ring-[var(--shadow-border)]">
+            <div className="text-[16px] font-bold text-neutral-900 dark:text-[var(--shadow-text-primary)]">
               {t('youMightLikePage.noRecommendations')}
             </div>
             <button
               type="button"
               onClick={() => fetchBooks({ force: true })}
-              className="mt-4 rounded-full bg-neutral-950 px-5 py-2.5 text-[13px] font-bold text-white"
+              className="mt-4 rounded-full bg-neutral-950 px-5 py-2.5 text-[13px] font-bold text-white dark:bg-white dark:text-[#111827]"
             >
               {t('youMightLikePage.refresh')}
             </button>
