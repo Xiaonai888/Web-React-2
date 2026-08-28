@@ -322,11 +322,11 @@ function BookCard({ book }) {
       </div>
 
       <div className="mt-2.5 min-w-0">
-        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
+        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900 dark:text-[var(--shadow-text-primary)]">
           {title}
         </h3>
 
-        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
+        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500 dark:text-[var(--shadow-text-secondary)]">
           {author}
         </p>
       </div>
@@ -340,9 +340,9 @@ function LoadingGrid() {
       {Array.from({ length: 12 }).map(
         (_, index) => (
           <div key={index}>
-            <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[#f3f4f6]" />
-            <div className="mt-3 h-4 animate-pulse rounded-full bg-[#f3f4f6]" />
-            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[#f3f4f6]" />
+            <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[#f3f4f6] dark:bg-[var(--shadow-bg-elevated)]" />
+            <div className="mt-3 h-4 animate-pulse rounded-full bg-[#f3f4f6] dark:bg-[var(--shadow-bg-elevated)]" />
+            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[#f3f4f6] dark:bg-[var(--shadow-bg-elevated)]" />
           </div>
         )
       )}
@@ -489,13 +489,13 @@ export default function UpdateTodayPage() {
   }, [activeDay, stories])
 
   return (
-    <div className="min-h-screen bg-white pb-16">
-      <header className="sticky top-0 z-40 border-b border-[#eceef2] bg-white/95 backdrop-blur">
+    <div className="app-page min-h-screen bg-white pb-16 dark:bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-[#eceef2] bg-white/95 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex h-14 max-w-[1180px] items-center px-4 sm:px-5 lg:px-6">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('updateTodayPage.goBack')}
           >
             <i className="fas fa-chevron-left text-[17px]" />
@@ -507,7 +507,7 @@ export default function UpdateTodayPage() {
 
           <Link
             to="/search"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('updateTodayPage.search')}
           >
             <i className="fas fa-search text-[18px]" />
@@ -515,7 +515,7 @@ export default function UpdateTodayPage() {
         </div>
       </header>
 
-      <div className="sticky top-14 z-30 border-b border-[#f0f1f3] bg-white">
+      <div className="sticky top-14 z-30 border-b border-[#f0f1f3] bg-white dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
         <div className="mx-auto grid h-[58px] max-w-[1180px] grid-cols-7 px-2 sm:px-4 lg:px-6">
           {dayTabs.map((day) => {
             const active =
@@ -530,8 +530,8 @@ export default function UpdateTodayPage() {
                 }
                 className={`relative flex items-center justify-center text-[12px] transition-colors sm:text-[13px] ${
                   active
-                    ? 'font-extrabold text-[#111827]'
-                    : 'font-medium text-[#6b7280] hover:text-[#111827]'
+                    ? 'font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]'
+                    : 'font-medium text-[#6b7280] hover:text-[#111827] dark:text-[var(--shadow-text-secondary)] dark:hover:text-[var(--shadow-text-primary)]'
                 }`}
               >
                 {t(
@@ -553,8 +553,8 @@ export default function UpdateTodayPage() {
 
       <main className="mx-auto max-w-[1180px] px-4 pt-6 sm:px-5 lg:px-6">
         {errorMessage ? (
-          <div className="rounded-[20px] bg-[#fff1f2] px-5 py-10 text-center">
-            <p className="text-[13px] font-medium text-[#be123c]">
+          <div className="rounded-[20px] bg-[#fff1f2] px-5 py-10 text-center dark:bg-red-400/10 dark:ring-1 dark:ring-red-400/20">
+            <p className="text-[13px] font-medium text-[#be123c] dark:text-red-300">
               {errorMessage}
             </p>
 
@@ -565,7 +565,7 @@ export default function UpdateTodayPage() {
                   (value) => value + 1
                 )
               }
-              className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[13px] font-bold text-white"
+              className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[13px] font-bold text-white dark:bg-white dark:text-[#111827]"
             >
               {t('updateTodayPage.tryAgain')}
             </button>
@@ -585,15 +585,15 @@ export default function UpdateTodayPage() {
           </div>
         ) : (
           <div className="px-5 py-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f6f8] text-[#9ca3af]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f6f8] text-[#9ca3af] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
               <i className="fa-regular fa-calendar text-[22px]" />
             </div>
 
-            <h2 className="mt-4 text-[16px] font-bold text-[#111827]">
+            <h2 className="mt-4 text-[16px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('updateTodayPage.noUpdates')}
             </h2>
 
-            <p className="mt-1 text-[12px] text-[#8b93a1]">
+            <p className="mt-1 text-[12px] text-[#8b93a1] dark:text-[var(--shadow-text-secondary)]">
               {t('updateTodayPage.selectAnotherDay')}
             </p>
           </div>
