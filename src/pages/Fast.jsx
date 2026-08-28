@@ -14,6 +14,121 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('fastPage', {
+  en: {
+    trending: 'Trending',
+    new: 'New',
+    premium: 'Premium',
+    free: 'Free',
+    openVideo: 'Open {{title}}',
+    views: 'views',
+    watch: 'Watch',
+    fastHome: 'Fast home',
+    searchPlaceholder: 'Search videos, creators...',
+    create: 'Create',
+    openProfileMenu: 'Open profile menu',
+    viewAccount: 'View account',
+    studio: 'Studio',
+    linkVideo: 'Link Video',
+    playVideo: 'Play {{title}}',
+    videosForYou: 'Videos for you',
+    videosForYouSub: 'Watch linked videos or unlock premium content.',
+    videosCount: '{{count}} videos',
+    noVideosFound: 'No videos found',
+    tryAnother: 'Try another search or category.',
+  },
+  km: {
+    trending: 'កំពុងពេញនិយម',
+    new: 'ថ្មី',
+    premium: 'Premium',
+    free: 'ឥតគិតថ្លៃ',
+    openVideo: 'បើក {{title}}',
+    views: 'ការមើល',
+    watch: 'មើល',
+    fastHome: 'ទំព័រដើម Fast',
+    searchPlaceholder: 'ស្វែងរកវីដេអូ ឬអ្នកបង្កើត...',
+    create: 'បង្កើត',
+    openProfileMenu: 'បើកម៉ឺនុយ Profile',
+    viewAccount: 'មើលគណនី',
+    studio: 'Studio',
+    linkVideo: 'ភ្ជាប់វីដេអូ',
+    playVideo: 'ចាក់ {{title}}',
+    videosForYou: 'វីដេអូសម្រាប់អ្នក',
+    videosForYouSub: 'មើលវីដេអូដែលបានភ្ជាប់ ឬដោះសោមាតិកា Premium។',
+    videosCount: '{{count}} វីដេអូ',
+    noVideosFound: 'រកមិនឃើញវីដេអូ',
+    tryAnother: 'សាកស្វែងរក ឬជ្រើសប្រភេទផ្សេង។',
+  },
+  zh: {
+    trending: '热门',
+    new: '最新',
+    premium: 'Premium',
+    free: '免费',
+    openVideo: '打开 {{title}}',
+    views: '次观看',
+    watch: '观看',
+    fastHome: 'Fast 首页',
+    searchPlaceholder: '搜索视频、创作者...',
+    create: '创建',
+    openProfileMenu: '打开个人资料菜单',
+    viewAccount: '查看账号',
+    studio: '工作室',
+    linkVideo: '链接视频',
+    playVideo: '播放 {{title}}',
+    videosForYou: '为你推荐的视频',
+    videosForYouSub: '观看链接视频或解锁 Premium 内容。',
+    videosCount: '{{count}} 个视频',
+    noVideosFound: '未找到视频',
+    tryAnother: '尝试其他搜索或分类。',
+  },
+  ja: {
+    trending: 'トレンド',
+    new: '新着',
+    premium: 'Premium',
+    free: '無料',
+    openVideo: '{{title}} を開く',
+    views: '回視聴',
+    watch: '見る',
+    fastHome: 'Fast ホーム',
+    searchPlaceholder: '動画・クリエイターを検索...',
+    create: '作成',
+    openProfileMenu: 'プロフィールメニューを開く',
+    viewAccount: 'アカウントを見る',
+    studio: 'スタジオ',
+    linkVideo: '動画をリンク',
+    playVideo: '{{title}} を再生',
+    videosForYou: 'あなたへの動画',
+    videosForYouSub: 'リンク動画を視聴するか、Premium コンテンツを解除できます。',
+    videosCount: '{{count}} 本の動画',
+    noVideosFound: '動画が見つかりません',
+    tryAnother: '別の検索語またはカテゴリを試してください。',
+  },
+  ko: {
+    trending: '인기',
+    new: '신규',
+    premium: 'Premium',
+    free: '무료',
+    openVideo: '{{title}} 열기',
+    views: '회 조회',
+    watch: '보기',
+    fastHome: 'Fast 홈',
+    searchPlaceholder: '동영상, 크리에이터 검색...',
+    create: '만들기',
+    openProfileMenu: '프로필 메뉴 열기',
+    viewAccount: '계정 보기',
+    studio: '스튜디오',
+    linkVideo: '동영상 연결',
+    playVideo: '{{title}} 재생',
+    videosForYou: '추천 동영상',
+    videosForYouSub: '연결된 동영상을 보거나 Premium 콘텐츠를 잠금 해제하세요.',
+    videosCount: '동영상 {{count}}개',
+    noVideosFound: '동영상을 찾을 수 없습니다',
+    tryAnother: '다른 검색어나 카테고리를 시도하세요.',
+  },
+})
 
 const FEATURED_VIDEO = {
   title: 'Cinematic Travel Film',
@@ -98,6 +213,13 @@ const FILTERS = [
   { key: 'free', label: 'Free', Icon: Gift },
 ]
 
+const FILTER_LABEL_KEYS = {
+  trending: 'trending',
+  new: 'new',
+  premium: 'premium',
+  free: 'free',
+}
+
 function getStoredUser() {
   try {
     return JSON.parse(
@@ -111,6 +233,7 @@ function getStoredUser() {
 }
 
 function VideoCard({ video, onOpen }) {
+  const { t } = useDisplayTranslation()
   const isPremium = video.access === 'premium'
 
   return (
@@ -120,7 +243,7 @@ function VideoCard({ video, onOpen }) {
           type="button"
           onClick={() => onOpen(video)}
           className="relative h-[112px] overflow-hidden rounded-[16px] bg-[#eee9fb] sm:h-[126px]"
-          aria-label={`Open ${video.title}`}
+          aria-label={t('fastPage.openVideo', { title: video.title })}
         >
           <img
             src={video.thumbnail}
@@ -161,7 +284,7 @@ function VideoCard({ video, onOpen }) {
 
           <div className="mt-2 flex items-center gap-1.5 text-[10px] font-medium text-[#918a9e] sm:text-[11px]">
             <Eye size={13} />
-            <span>{video.views} views</span>
+            <span>{video.views} {t('fastPage.views')}</span>
             <span>•</span>
             <span className="truncate">{video.age}</span>
           </div>
@@ -174,7 +297,7 @@ function VideoCard({ video, onOpen }) {
                   : 'bg-[#eafaf1] text-[#168653]'
               }`}
             >
-              {isPremium ? 'Premium' : 'Free'}
+              {isPremium ? t('fastPage.premium') : t('fastPage.free')}
             </span>
 
             <button
@@ -187,7 +310,7 @@ function VideoCard({ video, onOpen }) {
               }`}
             >
               {isPremium ? <LockKeyhole size={13} /> : <Play size={13} fill="currentColor" />}
-              {isPremium ? video.price : 'Watch'}
+              {isPremium ? video.price : t('fastPage.watch')}
             </button>
           </div>
         </div>
@@ -197,6 +320,7 @@ function VideoCard({ video, onOpen }) {
 }
 
 export default function Fast() {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const profileMenuRef = useRef(null)
   const [activeFilter, setActiveFilter] = useState('trending')
@@ -276,7 +400,7 @@ export default function Fast() {
               type="button"
               onClick={() => navigate('/fast')}
               className="flex shrink-0 items-center gap-2 rounded-[14px] px-1 py-1 text-[#171329] transition active:scale-95"
-              aria-label="Fast home"
+              aria-label={t('fastPage.fastHome')}
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-gradient-to-br from-[#8b55ef] to-[#5f35d6] text-white shadow-[0_10px_20px_rgba(108,62,221,0.25)]">
                 <Play size={17} fill="currentColor" />
@@ -295,7 +419,7 @@ export default function Fast() {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search videos, creators..."
+                placeholder={t('fastPage.searchPlaceholder')}
                 className="h-10 min-w-0 flex-1 bg-transparent px-2 text-[12px] font-medium text-[#171329] outline-none placeholder:text-[#9993a4] sm:text-[13px]"
               />
             </form>
@@ -304,10 +428,10 @@ export default function Fast() {
               type="button"
               onClick={() => navigate('/fast/studio/create')}
               className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#7846e7] bg-white px-3 text-[#6738d9] transition hover:bg-[#f6f1ff] active:scale-95"
-              aria-label="Create"
+              aria-label={t('fastPage.create')}
             >
               <Plus size={17} strokeWidth={2.3} />
-              <span className="hidden text-[12px] font-extrabold sm:inline">Create</span>
+              <span className="hidden text-[12px] font-extrabold sm:inline">{t('fastPage.create')}</span>
             </button>
 
             <div ref={profileMenuRef} className="relative shrink-0">
@@ -315,7 +439,7 @@ export default function Fast() {
                 type="button"
                 onClick={() => setProfileOpen((value) => !value)}
                 className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#8d56ef] to-[#5b32cf] text-[14px] font-black text-white ring-2 ring-[#e8ddff] transition active:scale-95"
-                aria-label="Open profile menu"
+                aria-label={t('fastPage.openProfileMenu')}
                 aria-expanded={profileOpen}
               >
                 {avatarUrl ? (
@@ -333,7 +457,7 @@ export default function Fast() {
                     className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-bold text-[#292238] transition hover:bg-[#f6f2ff]"
                   >
                     <UserRound size={18} className="text-[#7250bd]" />
-                    View account
+                    {t('fastPage.viewAccount')}
                   </button>
                   <button
                     type="button"
@@ -341,7 +465,7 @@ export default function Fast() {
                     className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-bold text-[#292238] transition hover:bg-[#f6f2ff]"
                   >
                     <Clapperboard size={18} className="text-[#7250bd]" />
-                    Studio
+                    {t('fastPage.studio')}
                   </button>
                 </div>
               ) : null}
@@ -360,7 +484,7 @@ export default function Fast() {
 
           <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-[#21133f]/78 px-3 py-2 text-[11px] font-extrabold text-[#d8c3ff] backdrop-blur sm:left-4 sm:top-4 sm:text-[12px]">
             <Link2 size={14} />
-            Link Video
+            {t('fastPage.linkVideo')}
           </div>
 
           <div className="absolute right-3 top-3 rounded-[10px] bg-[#171126]/78 px-2.5 py-1.5 text-[11px] font-bold text-white backdrop-blur sm:right-4 sm:top-4 sm:text-[12px]">
@@ -371,7 +495,7 @@ export default function Fast() {
             type="button"
             onClick={() => openVideo({ ...FEATURED_VIDEO, access: 'free' })}
             className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/92 text-[#7141df] shadow-[0_16px_36px_rgba(34,20,67,0.28)] backdrop-blur transition hover:scale-105 active:scale-95 sm:h-20 sm:w-20"
-            aria-label={`Play ${FEATURED_VIDEO.title}`}
+            aria-label={t('fastPage.playVideo', { title: FEATURED_VIDEO.title })}
           >
             <Play size={27} fill="currentColor" className="ml-1 sm:h-8 sm:w-8" />
           </button>
@@ -434,7 +558,7 @@ export default function Fast() {
                 }`}
               >
                 <Icon size={16} fill={key === 'premium' && active ? 'currentColor' : 'none'} />
-                {label}
+                {t(`fastPage.${FILTER_LABEL_KEYS[key]}`)}
               </button>
             )
           })}
@@ -444,14 +568,14 @@ export default function Fast() {
           <div className="mb-3 flex items-end justify-between gap-3 px-1">
             <div>
               <h2 className="text-[18px] font-black tracking-[-0.02em] text-[#171329] sm:text-[20px]">
-                Videos for you
+                {t('fastPage.videosForYou')}
               </h2>
               <p className="mt-0.5 text-[11px] font-medium text-[#918a9e] sm:text-[12px]">
-                Watch linked videos or unlock premium content.
+                {t('fastPage.videosForYouSub')}
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-[#eee8fb] px-3 py-1.5 text-[10px] font-extrabold text-[#6c3fd7] sm:text-[11px]">
-              {filteredVideos.length} videos
+              {t('fastPage.videosCount', { count: filteredVideos.length })}
             </span>
           </div>
 
@@ -464,8 +588,8 @@ export default function Fast() {
           ) : (
             <div className="rounded-[22px] border border-dashed border-[#d8d0e8] bg-white px-5 py-12 text-center shadow-sm">
               <Search className="mx-auto text-[#8b6bd0]" size={28} />
-              <h3 className="mt-3 text-[15px] font-extrabold text-[#211a30]">No videos found</h3>
-              <p className="mt-1 text-[12px] text-[#918a9e]">Try another search or category.</p>
+              <h3 className="mt-3 text-[15px] font-extrabold text-[#211a30]">{t('fastPage.noVideosFound')}</h3>
+              <p className="mt-1 text-[12px] text-[#918a9e]">{t('fastPage.tryAnother')}</p>
             </div>
           )}
         </section>
