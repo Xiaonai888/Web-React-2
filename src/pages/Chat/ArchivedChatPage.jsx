@@ -172,8 +172,8 @@ export default function ArchivedChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f7f9]">
-      <header className="sticky top-0 z-40 border-b border-[#eceaf0] bg-white/95 backdrop-blur-xl">
+    <div className="app-page min-h-screen bg-[#f7f7f9] dark:bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-[#eceaf0] bg-white/95 backdrop-blur-xl dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto max-w-[620px] px-4 pt-[max(10px,env(safe-area-inset-top))]">
           <div className="flex h-[52px] items-center gap-3">
             <button
@@ -186,7 +186,7 @@ export default function ArchivedChatPage() {
                 }
                 navigate('/chat')
               }}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] dark:text-[var(--shadow-text-primary)] dark:active:bg-[var(--shadow-bg-hover)]"
             >
               <ChevronLeft size={27} />
             </button>
@@ -195,7 +195,7 @@ export default function ArchivedChatPage() {
               <div className="relative min-w-0 flex-1">
                 <Search
                   size={18}
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777a80]"
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777a80] dark:text-[var(--shadow-text-secondary)]"
                 />
                 <input
                   autoFocus
@@ -206,19 +206,19 @@ export default function ArchivedChatPage() {
                     )
                   }
                   placeholder="Search archived chats"
-                  className="h-10 w-full rounded-full bg-[#f1f2f4] pl-11 pr-4 text-[14px] outline-none"
+                  className="h-10 w-full rounded-full bg-[#f1f2f4] pl-11 pr-4 text-[14px] text-[#111827] outline-none placeholder:text-[#92929b] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)]"
                 />
               </div>
             ) : (
               <>
-                <h1 className="min-w-0 flex-1 text-[20px] font-bold leading-none text-[#111827]">
+                <h1 className="min-w-0 flex-1 text-[20px] font-bold leading-none text-[#111827] dark:text-[var(--shadow-text-primary)]">
                   Archived chats
                 </h1>
 
                 <button
                   type="button"
                   onClick={() => setSearchOpen(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f2f2f3]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f2f2f3] dark:text-[var(--shadow-text-primary)] dark:active:bg-[var(--shadow-bg-hover)]"
                   aria-label="Search archived chats"
                 >
                   <Search size={24} strokeWidth={2.2} />
@@ -234,7 +234,7 @@ export default function ArchivedChatPage() {
           <button
             type="button"
             onClick={() => setError('')}
-            className="mb-3 w-full rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[12px] font-semibold text-[#c7353d]"
+            className="mb-3 w-full rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[12px] font-semibold text-[#c7353d] dark:bg-red-500/10 dark:text-red-300"
           >
             {error}
           </button>
@@ -255,7 +255,7 @@ export default function ArchivedChatPage() {
               return (
                 <section
                   key={conversation.id}
-                  className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5"
+                  className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:ring-white/10"
                 >
                   <button
                     type="button"
@@ -269,10 +269,10 @@ export default function ArchivedChatPage() {
                     <Avatar person={person} />
 
                     <span className="min-w-0 flex-1">
-                      <strong className="block truncate text-[15px] font-bold text-[#111827]">
+                      <strong className="block truncate text-[15px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                         {person.name || 'Shadow User'}
                       </strong>
-                      <span className="mt-1 block truncate text-[12px] text-[#85818c]">
+                      <span className="mt-1 block truncate text-[12px] text-[#85818c] dark:text-[var(--shadow-text-secondary)]">
                         {conversation.latest_message
                           ?.body ||
                           'Open this conversation'}
@@ -280,14 +280,14 @@ export default function ArchivedChatPage() {
                     </span>
                   </button>
 
-                  <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#f0eef3] pt-3">
+                  <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#f0eef3] pt-3 dark:border-[var(--shadow-border)]">
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() =>
                         restore(conversation.id)
                       }
-                      className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#f2edff] text-[11px] font-bold text-[#6f52b5] disabled:opacity-50"
+                      className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#f2edff] text-[11px] font-bold text-[#6f52b5] disabled:opacity-50 dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]"
                     >
                       {busy ? (
                         <LoaderCircle
@@ -306,7 +306,7 @@ export default function ArchivedChatPage() {
                       onClick={() =>
                         remove(conversation.id)
                       }
-                      className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#fff0f1] text-[11px] font-bold text-[#c7353d] disabled:opacity-50"
+                      className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#fff0f1] text-[11px] font-bold text-[#c7353d] disabled:opacity-50 dark:bg-red-500/10 dark:text-red-300"
                     >
                       <Trash2 size={16} />
                       Delete
@@ -318,10 +318,10 @@ export default function ArchivedChatPage() {
           </div>
         ) : (
           <div className="py-20 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed] dark:bg-[#7c3aed]/15">
               <Archive size={30} />
             </div>
-            <h2 className="mt-5 text-[18px] font-bold text-[#111827]">
+            <h2 className="mt-5 text-[18px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               No archived messages
             </h2>
           </div>
