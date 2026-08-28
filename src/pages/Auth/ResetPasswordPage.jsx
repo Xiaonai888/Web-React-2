@@ -181,23 +181,23 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f3fa] px-4 py-8">
-      <section className="mx-auto max-w-[430px] rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5">
+    <main className="app-page min-h-screen bg-[#f5f3fa] px-4 py-8 dark:bg-[var(--shadow-bg-page)]">
+      <section className="mx-auto max-w-[430px] rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
         <div className="mb-7 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white dark:bg-[#7c3aed]">
             <i className="fa-solid fa-lock text-[20px]" />
           </div>
-          <h1 className="text-[25px] font-extrabold tracking-tight text-[#111827]">
+          <h1 className="text-[25px] font-extrabold tracking-tight text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {t('resetPasswordPage.title')}
           </h1>
-          <p className="mx-auto mt-2 max-w-[310px] text-[13px] leading-5 text-[#8d94a1]">
+          <p className="mx-auto mt-2 max-w-[310px] text-[13px] leading-5 text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
             {t('resetPasswordPage.subtitle')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+            <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('resetPasswordPage.newPassword')}
             </span>
             <div className="relative">
@@ -207,7 +207,7 @@ export default function ResetPasswordPage() {
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder={t('resetPasswordPage.newPasswordPlaceholder')}
                 autoComplete="new-password"
-                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 pr-12 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 pr-12 text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af] focus:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[#a78bfa]"
               />
               <button
                 type="button"
@@ -217,7 +217,7 @@ export default function ResetPasswordPage() {
                     ? t('resetPasswordPage.hidePassword')
                     : t('resetPasswordPage.showPassword')
                 }
-                className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#f5f3fa] text-[13px] text-[#111827]"
+                className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#f5f3fa] text-[13px] text-[#111827] dark:bg-[var(--shadow-bg-hover)] dark:text-[var(--shadow-text-primary)]"
               >
                 <i
                   className={
@@ -231,7 +231,7 @@ export default function ResetPasswordPage() {
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+            <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('resetPasswordPage.confirmPassword')}
             </span>
             <input
@@ -240,18 +240,18 @@ export default function ResetPasswordPage() {
               onChange={(event) => setConfirmPassword(event.target.value)}
               placeholder={t('resetPasswordPage.confirmPasswordPlaceholder')}
               autoComplete="new-password"
-              className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+              className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af] focus:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[#a78bfa]"
             />
           </label>
 
           {error ? (
-            <div className="rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+            <div className="rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
               {error}
             </div>
           ) : null}
 
           {message ? (
-            <div className="rounded-[14px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold text-[#067647]">
+            <div className="rounded-[14px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold text-[#067647] dark:bg-emerald-500/10 dark:text-emerald-300">
               {message}
             </div>
           ) : null}
@@ -259,7 +259,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
+            className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] dark:bg-gradient-to-r dark:from-[#7c3aed] dark:to-[#a78bfa] dark:disabled:from-[#5b5567] dark:disabled:to-[#5b5567]"
           >
             {loading
               ? t('resetPasswordPage.resetting')
@@ -267,9 +267,12 @@ export default function ResetPasswordPage() {
           </button>
         </form>
 
-        <div className="mt-5 text-center text-[13px] font-bold text-[#8d94a1]">
+        <div className="mt-5 text-center text-[13px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
           {t('resetPasswordPage.backTo')}{' '}
-          <Link to="/login" className="text-[#111827]">
+          <Link
+            to="/login"
+            className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
+          >
             {t('resetPasswordPage.login')}
           </Link>
         </div>
