@@ -458,13 +458,9 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
   })
   const [productsLoading, setProductsLoading] = useState(true)
 
+
   useEffect(() => {
     let ignore = false
-    if (sliderOnly) {
-  setProductsLoading(false)
-  return
-}
-        
 
     async function fetchMallSlides() {
       try {
@@ -486,10 +482,15 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
     return () => {
       ignore = true
     }
-  }, [sliderOnly])
+  }, [])
 
   useEffect(() => {
     let ignore = false
+
+    if (sliderOnly) {
+      setProductsLoading(false)
+      return
+    }
 
     async function fetchShadowMallHome() {
       try {
@@ -535,7 +536,7 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
     return () => {
       ignore = true
     }
-  }, [])
+  }, [sliderOnly])
 
   const filteredSections = useMemo(() => {
     const keyword = search.trim().toLowerCase()
