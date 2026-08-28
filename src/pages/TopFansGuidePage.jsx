@@ -296,7 +296,7 @@ export default function TopFansGuidePage() {
   const storyTitle = story?.title || t('topFansGuidePage.thisStory')
 
   return (
-    <main className="min-h-screen bg-[#f7f7f9]">
+    <main className="app-page min-h-screen">
       <header className="sticky top-0 z-30 border-b border-[#eef1f5] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-3xl items-center px-3">
           <button
