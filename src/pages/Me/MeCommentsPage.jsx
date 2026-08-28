@@ -134,7 +134,7 @@ setCounts(data.counts || {})
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[96px] dark:bg-[#0d0f16]">
+    <div className="app-page min-h-screen pb-[96px]">
       <header className="sticky top-0 z-30 border-b border-[#eceaf2] bg-white px-4 pb-3 pt-4 shadow-sm dark:border-white/10 dark:bg-[#171923]">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
   <div className="flex min-w-0 items-center gap-3">
@@ -183,7 +183,7 @@ setCounts(data.counts || {})
 
       <main className="mx-auto max-w-3xl px-4 pt-4">
         {error ? (
-          <div className="mb-3 rounded-2xl bg-[#fff1f1] px-4 py-3 text-[13px] font-bold text-[#e5484d]">
+          <div className="mb-3 rounded-2xl bg-[#fff1f1] px-4 py-3 text-[13px] font-bold text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
             {error}
           </div>
         ) : null}
