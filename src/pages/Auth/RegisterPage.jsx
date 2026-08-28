@@ -430,6 +430,110 @@ async function getCroppedImage(imageSrc, pixelCrop) {
   return canvas.toDataURL('image/jpeg', 0.92)
 }
 
+
+function RegisterThemeBridge() {
+  return (
+    <style>{`
+      html.dark .auth-register-page {
+        background: var(--shadow-bg-page);
+        color: var(--shadow-text-primary);
+      }
+
+      html.dark .auth-register-page [class~="bg-white"] {
+        background-color: var(--shadow-bg-surface) !important;
+      }
+
+      html.dark .auth-register-page [class~="bg-[#fafafe]"],
+      html.dark .auth-register-page [class~="bg-[#fafefe]"] {
+        background-color: var(--shadow-input-bg) !important;
+      }
+
+      html.dark .auth-register-page [class~="bg-[#d0d5dd]"] {
+        background-color: var(--shadow-border-strong) !important;
+      }
+
+      html.dark .auth-register-page [class~="bg-[#fff1f1]"] {
+        background-color: rgb(229 72 77 / 0.12) !important;
+      }
+
+      html.dark .auth-register-page [class~="text-[#111827]"] {
+        color: var(--shadow-text-primary) !important;
+      }
+
+      html.dark .auth-register-page [class~="text-[#8d94a1]"],
+      html.dark .auth-register-page [class~="text-[#555b66]"] {
+        color: var(--shadow-text-secondary) !important;
+      }
+
+      html.dark .auth-register-page [class~="text-[#e5484d]"] {
+        color: #fca5a5 !important;
+      }
+
+      html.dark .auth-register-page [class~="border-[#e5e7eb]"],
+      html.dark .auth-register-page [class~="border-[#d0d5dd]"],
+      html.dark .auth-register-page [class~="border-[#e4e7ec]"],
+      html.dark .auth-register-page [class~="border-[#d1d5db]"],
+      html.dark .auth-register-page [class~="border-[#b9bec8]"] {
+        border-color: var(--shadow-border) !important;
+      }
+
+      html.dark .auth-register-page [class~="ring-black/5"] {
+        --tw-ring-color: rgb(255 255 255 / 0.10) !important;
+      }
+
+      html.dark .auth-register-page [class~="focus:bg-white"]:focus,
+      html.dark .auth-register-page [class~="focus-within:bg-white"]:focus-within {
+        background-color: var(--shadow-input-bg) !important;
+      }
+
+      html.dark .auth-register-page [class~="focus:border-[#111827]"]:focus,
+      html.dark .auth-register-page [class~="focus-within:border-[#111827]"]:focus-within {
+        border-color: #a78bfa !important;
+      }
+
+      html.dark .auth-register-page [class~="hover:bg-[#f7f7fb]"]:hover,
+      html.dark .auth-register-page [class~="hover:bg-[#f0f1f5]"]:hover {
+        background-color: var(--shadow-bg-hover) !important;
+      }
+
+      html.dark .auth-register-page [class~="hover:text-[#111827]"]:hover {
+        color: var(--shadow-text-primary) !important;
+      }
+
+      html.dark .auth-register-page [class~="hover:text-[#f6b800]"]:hover {
+        color: #c4b5fd !important;
+      }
+
+      html.dark .auth-register-page button[class~="bg-[#111827]"] {
+        background-color: #7c3aed !important;
+        border-color: #7c3aed !important;
+      }
+
+      html.dark .auth-register-page button[class~="border-[#111827]"] {
+        border-color: #7c3aed !important;
+      }
+
+      html.dark .auth-register-page input[class~="accent-[#111827]"] {
+        accent-color: #a78bfa !important;
+      }
+
+      html.dark .auth-register-page input:not([type="range"]):not([type="checkbox"]),
+      html.dark .auth-register-page select {
+        border-color: var(--shadow-border);
+      }
+
+      html.dark .auth-register-page input::placeholder {
+        color: var(--shadow-placeholder);
+      }
+
+      html.dark .auth-register-page option {
+        background: var(--shadow-bg-elevated);
+        color: var(--shadow-text-primary);
+      }
+    `}</style>
+  )
+}
+
 function AddProfileStep({
   name,
   avatarPreview,
@@ -451,7 +555,8 @@ function AddProfileStep({
   const avatarLetter = (name || 'R').charAt(0).toUpperCase()
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] px-4 py-6 pb-[120px]">
+    <div className="app-page auth-register-page min-h-screen bg-[#f5f3fa] px-4 py-6 pb-[120px]">
+      <RegisterThemeBridge />
       <div className="mx-auto max-w-[430px]">
         <section className="rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5">
           <div className="mb-6 flex items-center justify-center gap-2">
@@ -811,7 +916,8 @@ export default function RegisterPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] px-4 py-6">
+    <div className="app-page auth-register-page min-h-screen bg-[#f5f3fa] px-4 py-6">
+      <RegisterThemeBridge />
       <div className="mx-auto max-w-[430px]">
         <button
           type="button"
