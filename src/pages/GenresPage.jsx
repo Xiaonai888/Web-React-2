@@ -2,6 +2,321 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('genresPage', {
+  en: {
+    all: 'All',
+    romance: 'Romance',
+    fantasy: 'Fantasy',
+    action: 'Action',
+    adventure: 'Adventure',
+    comedy: 'Comedy',
+    drama: 'Drama',
+    schoolLife: 'School Life',
+    historical: 'Historical',
+    mystery: 'Mystery',
+    horror: 'Horror',
+    thriller: 'Thriller',
+    sciFi: 'Sci-Fi',
+    system: 'System',
+    isekai: 'Isekai',
+    supernatural: 'Supernatural',
+    martialArts: 'Martial Arts',
+    revenge: 'Revenge',
+    ceo: 'CEO',
+    slowBurn: 'Slow Burn',
+    enemiesToLovers: 'Enemies to Lovers',
+    timeTravel: 'Time Travel',
+    strongFemaleLead: 'Strong Female Lead',
+    hiddenIdentity: 'Hidden Identity',
+    royalty: 'Royalty',
+    magic: 'Magic',
+    secondChance: 'Second Chance',
+    coldMaleLead: 'Cold Male Lead',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+    waitFree: 'Wait Free',
+    freeEp: 'Free Ep',
+    completed: 'Completed',
+    paid: 'Paid',
+    premiumEarlyAccess: 'Premium Early Access',
+    original: 'Original',
+    translated: 'Translated',
+    fanContribution: 'Fan Contribution',
+    ongoing: 'Ongoing',
+    closeFilters: 'Close filters',
+    refineStories: 'Refine Stories',
+    storyAccess: 'Story Access',
+    storyType: 'Story Type',
+    progress: 'Progress',
+    clear: 'Clear',
+    applyFilters: 'Apply Filters',
+    untitledStory: 'Untitled Story',
+    loadFailed: 'Failed to load stories',
+    cannotConnect: 'Cannot connect to server.',
+    back: 'Back',
+    searchGenres: 'Search genres',
+    genres: 'Genres',
+    noGenreFound: 'No genre found',
+    tryAnotherKeyword: 'Try another keyword.',
+    showFewerGenres: 'Show fewer genres',
+    showMoreGenres: 'Show more genres',
+    filters: 'Filters',
+    noStoriesFound: 'No stories found',
+    tryAnotherGenreFilter: 'Try another genre or filter.',
+  },
+  km: {
+    all: 'ទាំងអស់',
+    romance: 'មនោសញ្ចេតនា',
+    fantasy: 'Fantasy',
+    action: 'សកម្មភាព',
+    adventure: 'ផ្សងព្រេង',
+    comedy: 'កំប្លែង',
+    drama: 'Drama',
+    schoolLife: 'ជីវិតសាលារៀន',
+    historical: 'ប្រវត្តិសាស្ត្រ',
+    mystery: 'អាថ៌កំបាំង',
+    horror: 'រន្ធត់',
+    thriller: 'Thriller',
+    sciFi: 'វិទ្យាសាស្ត្រប្រឌិត',
+    system: 'System',
+    isekai: 'Isekai',
+    supernatural: 'អរូបី',
+    martialArts: 'ក្បាច់គុន',
+    revenge: 'សងសឹក',
+    ceo: 'CEO',
+    slowBurn: 'ស្នេហាយឺតៗ',
+    enemiesToLovers: 'ពីសត្រូវទៅជាគូស្នេហ៍',
+    timeTravel: 'ឆ្លងពេលវេលា',
+    strongFemaleLead: 'តួស្រីខ្លាំង',
+    hiddenIdentity: 'អត្តសញ្ញាណលាក់បាំង',
+    royalty: 'រាជវង្ស',
+    magic: 'វេទមន្ត',
+    secondChance: 'ឱកាសទីពីរ',
+    coldMaleLead: 'តួប្រុសត្រជាក់',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+    waitFree: 'រង់ចាំអាន Free',
+    freeEp: 'ភាគ Free',
+    completed: 'បានបញ្ចប់',
+    paid: 'បង់ប្រាក់',
+    premiumEarlyAccess: 'Premium Early Access',
+    original: 'ស្នាដៃដើម',
+    translated: 'បកប្រែ',
+    fanContribution: 'ស្នាដៃពី Fan',
+    ongoing: 'កំពុងបន្ត',
+    closeFilters: 'បិទ Filter',
+    refineStories: 'កំណត់រឿងឱ្យច្បាស់',
+    storyAccess: 'ការចូលអានរឿង',
+    storyType: 'ប្រភេទស្នាដៃ',
+    progress: 'ស្ថានភាពរឿង',
+    clear: 'សម្អាត',
+    applyFilters: 'អនុវត្ត Filter',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    loadFailed: 'មិនអាចផ្ទុករឿងបានទេ',
+    cannotConnect: 'មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។',
+    back: 'ត្រឡប់ក្រោយ',
+    searchGenres: 'ស្វែងរកប្រភេទរឿង',
+    genres: 'ប្រភេទរឿង',
+    noGenreFound: 'រកមិនឃើញប្រភេទរឿង',
+    tryAnotherKeyword: 'សាកពាក្យស្វែងរកផ្សេងទៀត។',
+    showFewerGenres: 'បង្ហាញប្រភេទរឿងតិចជាងនេះ',
+    showMoreGenres: 'បង្ហាញប្រភេទរឿងច្រើនទៀត',
+    filters: 'Filter',
+    noStoriesFound: 'រកមិនឃើញរឿង',
+    tryAnotherGenreFilter: 'សាកប្រភេទរឿង ឬ Filter ផ្សេងទៀត។',
+  },
+  zh: {
+    all: '全部',
+    romance: '爱情',
+    fantasy: '奇幻',
+    action: '动作',
+    adventure: '冒险',
+    comedy: '喜剧',
+    drama: '剧情',
+    schoolLife: '校园生活',
+    historical: '历史',
+    mystery: '悬疑',
+    horror: '恐怖',
+    thriller: '惊悚',
+    sciFi: '科幻',
+    system: '系统',
+    isekai: '异世界',
+    supernatural: '超自然',
+    martialArts: '武侠',
+    revenge: '复仇',
+    ceo: 'CEO',
+    slowBurn: '慢热',
+    enemiesToLovers: '欢喜冤家',
+    timeTravel: '时间旅行',
+    strongFemaleLead: '强势女主',
+    hiddenIdentity: '隐藏身份',
+    royalty: '王室',
+    magic: '魔法',
+    secondChance: '第二次机会',
+    coldMaleLead: '高冷男主',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+    waitFree: '等待免费',
+    freeEp: '免费章节',
+    completed: '已完结',
+    paid: '付费',
+    premiumEarlyAccess: 'Premium 抢先阅读',
+    original: '原创',
+    translated: '翻译',
+    fanContribution: '粉丝投稿',
+    ongoing: '连载中',
+    closeFilters: '关闭筛选',
+    refineStories: '筛选故事',
+    storyAccess: '阅读方式',
+    storyType: '故事类型',
+    progress: '进度',
+    clear: '清除',
+    applyFilters: '应用筛选',
+    untitledStory: '无标题故事',
+    loadFailed: '无法加载故事',
+    cannotConnect: '无法连接服务器。',
+    back: '返回',
+    searchGenres: '搜索类型',
+    genres: '类型',
+    noGenreFound: '未找到类型',
+    tryAnotherKeyword: '请尝试其他关键词。',
+    showFewerGenres: '显示更少类型',
+    showMoreGenres: '显示更多类型',
+    filters: '筛选',
+    noStoriesFound: '未找到故事',
+    tryAnotherGenreFilter: '请尝试其他类型或筛选条件。',
+  },
+  ja: {
+    all: 'すべて',
+    romance: 'ロマンス',
+    fantasy: 'ファンタジー',
+    action: 'アクション',
+    adventure: '冒険',
+    comedy: 'コメディ',
+    drama: 'ドラマ',
+    schoolLife: '学園生活',
+    historical: '歴史',
+    mystery: 'ミステリー',
+    horror: 'ホラー',
+    thriller: 'スリラー',
+    sciFi: 'SF',
+    system: 'システム',
+    isekai: '異世界',
+    supernatural: '超自然',
+    martialArts: '武術',
+    revenge: '復讐',
+    ceo: 'CEO',
+    slowBurn: 'スローバーン',
+    enemiesToLovers: '敵から恋人へ',
+    timeTravel: 'タイムトラベル',
+    strongFemaleLead: '強い女性主人公',
+    hiddenIdentity: '隠された正体',
+    royalty: '王族',
+    magic: '魔法',
+    secondChance: 'セカンドチャンス',
+    coldMaleLead: 'クールな男性主人公',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+    waitFree: '待てば無料',
+    freeEp: '無料エピソード',
+    completed: '完結',
+    paid: '有料',
+    premiumEarlyAccess: 'Premium 先行アクセス',
+    original: 'オリジナル',
+    translated: '翻訳',
+    fanContribution: 'ファン投稿',
+    ongoing: '連載中',
+    closeFilters: 'フィルターを閉じる',
+    refineStories: 'ストーリーを絞り込む',
+    storyAccess: '閲覧方法',
+    storyType: 'ストーリータイプ',
+    progress: '進行状況',
+    clear: 'クリア',
+    applyFilters: 'フィルターを適用',
+    untitledStory: '無題のストーリー',
+    loadFailed: 'ストーリーを読み込めませんでした',
+    cannotConnect: 'サーバーに接続できません。',
+    back: '戻る',
+    searchGenres: 'ジャンルを検索',
+    genres: 'ジャンル',
+    noGenreFound: 'ジャンルが見つかりません',
+    tryAnotherKeyword: '別のキーワードをお試しください。',
+    showFewerGenres: '表示するジャンルを減らす',
+    showMoreGenres: 'ジャンルをもっと表示',
+    filters: 'フィルター',
+    noStoriesFound: 'ストーリーが見つかりません',
+    tryAnotherGenreFilter: '別のジャンルまたはフィルターをお試しください。',
+  },
+  ko: {
+    all: '전체',
+    romance: '로맨스',
+    fantasy: '판타지',
+    action: '액션',
+    adventure: '모험',
+    comedy: '코미디',
+    drama: '드라마',
+    schoolLife: '학교생활',
+    historical: '역사',
+    mystery: '미스터리',
+    horror: '호러',
+    thriller: '스릴러',
+    sciFi: 'SF',
+    system: '시스템',
+    isekai: '이세계',
+    supernatural: '초자연',
+    martialArts: '무협',
+    revenge: '복수',
+    ceo: 'CEO',
+    slowBurn: '슬로우 번',
+    enemiesToLovers: '적에서 연인으로',
+    timeTravel: '시간 여행',
+    strongFemaleLead: '강한 여주인공',
+    hiddenIdentity: '숨겨진 정체',
+    royalty: '왕족',
+    magic: '마법',
+    secondChance: '두 번째 기회',
+    coldMaleLead: '차가운 남주인공',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+    waitFree: '기다리면 무료',
+    freeEp: '무료 에피소드',
+    completed: '완결',
+    paid: '유료',
+    premiumEarlyAccess: 'Premium 선공개',
+    original: '오리지널',
+    translated: '번역',
+    fanContribution: '팬 기여',
+    ongoing: '연재 중',
+    closeFilters: '필터 닫기',
+    refineStories: '스토리 상세 필터',
+    storyAccess: '읽기 방식',
+    storyType: '스토리 유형',
+    progress: '진행 상태',
+    clear: '지우기',
+    applyFilters: '필터 적용',
+    untitledStory: '제목 없는 스토리',
+    loadFailed: '스토리를 불러오지 못했습니다',
+    cannotConnect: '서버에 연결할 수 없습니다.',
+    back: '뒤로 가기',
+    searchGenres: '장르 검색',
+    genres: '장르',
+    noGenreFound: '장르를 찾을 수 없습니다',
+    tryAnotherKeyword: '다른 키워드를 사용해 보세요.',
+    showFewerGenres: '장르 적게 보기',
+    showMoreGenres: '장르 더 보기',
+    filters: '필터',
+    noStoriesFound: '스토리를 찾을 수 없습니다',
+    tryAnotherGenreFilter: '다른 장르나 필터를 사용해 보세요.',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -43,8 +358,42 @@ const genres = [
   { label: 'LGBTQ+', slug: 'lgbtq' },
 ]
 
+const GENRE_LABEL_KEYS = {
+  'All': 'all',
+  'Romance': 'romance',
+  'Fantasy': 'fantasy',
+  'Action': 'action',
+  'Adventure': 'adventure',
+  'Comedy': 'comedy',
+  'Drama': 'drama',
+  'School Life': 'schoolLife',
+  'Historical': 'historical',
+  'Mystery': 'mystery',
+  'Horror': 'horror',
+  'Thriller': 'thriller',
+  'Sci-Fi': 'sciFi',
+  'System': 'system',
+  'Isekai': 'isekai',
+  'Supernatural': 'supernatural',
+  'Martial Arts': 'martialArts',
+  'Revenge': 'revenge',
+  'CEO': 'ceo',
+  'Slow Burn': 'slowBurn',
+  'Enemies to Lovers': 'enemiesToLovers',
+  'Time Travel': 'timeTravel',
+  'Strong Female Lead': 'strongFemaleLead',
+  'Hidden Identity': 'hiddenIdentity',
+  'Royalty': 'royalty',
+  'Magic': 'magic',
+  'Second Chance': 'secondChance',
+  'Cold Male Lead': 'coldMaleLead',
+  'BL': 'bl',
+  'GL': 'gl',
+  'LGBTQ+': 'lgbtq',
+}
+
 const quickFilters = [
-    { label: 'Wait Free', value: 'wait_free' },
+  { label: 'Wait Free', value: 'wait_free' },
   { label: 'Free Ep', value: 'free' },
   { label: 'Completed', value: 'completed' },
 ]
@@ -69,6 +418,19 @@ const progressFilters = [
   { label: 'Ongoing', value: 'ongoing' },
   { label: 'Completed', value: 'completed' },
 ]
+
+const FILTER_LABEL_KEYS = {
+  all: 'all',
+  wait_free: 'waitFree',
+  free: 'freeEp',
+  completed: 'completed',
+  paid: 'paid',
+  premium: 'premiumEarlyAccess',
+  original: 'original',
+  translated: 'translated',
+  fan: 'fanContribution',
+  ongoing: 'ongoing',
+}
 
 function getFirstDifferentTag(mainGenre, tags = []) {
   const genre = String(mainGenre || '').trim().toLowerCase()
@@ -138,6 +500,16 @@ function isBookMatchedAdvancedFilters(book, access, type, progress) {
   return true
 }
 
+function getGenreLabel(label, t) {
+  const key = GENRE_LABEL_KEYS[label]
+  return key ? t(`genresPage.${key}`) : label
+}
+
+function getFilterLabel(value, fallbackLabel, t) {
+  const key = FILTER_LABEL_KEYS[value]
+  return key ? t(`genresPage.${key}`) : fallbackLabel
+}
+
 function FilterChip({ active, children, onClick }) {
   return (
     <button
@@ -162,13 +534,15 @@ function FilterSheet({
   progress,
   setProgress,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[1000000]">
       <button
         type="button"
-        aria-label="Close filters"
+        aria-label={t('genresPage.closeFilters')}
         onClick={onClose}
         className="absolute inset-0 bg-black/45"
       />
@@ -176,12 +550,14 @@ function FilterSheet({
       <section className="absolute bottom-0 left-0 right-0 max-h-[calc(100vh-72px)] overflow-hidden rounded-t-[30px] bg-white shadow-2xl sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[520px] sm:-translate-x-1/2 sm:rounded-[30px]">
         <div className="max-h-[calc(100vh-72px)] overflow-y-auto px-5 pb-5 pt-5">
           <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-[22px] font-black text-[#111827]">Refine Stories</h2>
+            <h2 className="text-[22px] font-black text-[#111827]">
+              {t('genresPage.refineStories')}
+            </h2>
             <button
               type="button"
               onClick={onClose}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-              aria-label="Close filters"
+              aria-label={t('genresPage.closeFilters')}
             >
               <i className="fa-solid fa-xmark text-[15px]" />
             </button>
@@ -189,33 +565,39 @@ function FilterSheet({
 
           <div className="space-y-6">
             <section>
-              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">Story Access</h3>
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">
+                {t('genresPage.storyAccess')}
+              </h3>
               <div className="flex flex-wrap gap-2.5">
                 {accessFilters.map((item) => (
                   <FilterChip key={item.value} active={access === item.value} onClick={() => setAccess(item.value)}>
-                    {item.label}
+                    {getFilterLabel(item.value, item.label, t)}
                   </FilterChip>
                 ))}
               </div>
             </section>
 
             <section>
-              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">Story Type</h3>
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">
+                {t('genresPage.storyType')}
+              </h3>
               <div className="flex flex-wrap gap-2.5">
                 {typeFilters.map((item) => (
                   <FilterChip key={item.value} active={type === item.value} onClick={() => setType(item.value)}>
-                    {item.label}
+                    {getFilterLabel(item.value, item.label, t)}
                   </FilterChip>
                 ))}
               </div>
             </section>
 
             <section>
-              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">Progress</h3>
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">
+                {t('genresPage.progress')}
+              </h3>
               <div className="flex flex-wrap gap-2.5">
                 {progressFilters.map((item) => (
                   <FilterChip key={item.value} active={progress === item.value} onClick={() => setProgress(item.value)}>
-                    {item.label}
+                    {getFilterLabel(item.value, item.label, t)}
                   </FilterChip>
                 ))}
               </div>
@@ -232,7 +614,7 @@ function FilterSheet({
               }}
               className="h-12 rounded-full bg-[#f5f3fa] text-[13px] font-semibold text-[#111827] active:scale-[0.99]"
             >
-              Clear
+              {t('genresPage.clear')}
             </button>
 
             <button
@@ -240,7 +622,7 @@ function FilterSheet({
               onClick={onClose}
               className="h-12 rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99]"
             >
-              Apply Filters
+              {t('genresPage.applyFilters')}
             </button>
           </div>
         </div>
@@ -250,6 +632,12 @@ function FilterSheet({
 }
 
 function BookCard({ book, onOpen }) {
+  const { t } = useDisplayTranslation()
+  const title =
+    book.title === 'Untitled Story'
+      ? t('genresPage.untitledStory')
+      : book.title
+
   return (
     <button
       type="button"
@@ -260,7 +648,7 @@ function BookCard({ book, onOpen }) {
         <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
             src={book.cover}
-            alt={book.title}
+            alt={title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             onError={(event) => {
               event.currentTarget.src = '/assets/Update Today/Update Today 1.jpg'
@@ -271,7 +659,7 @@ function BookCard({ book, onOpen }) {
 
       <div className="pt-2.5 sm:pt-3">
         <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900">
-          {book.title}
+          {title}
         </h3>
 
         <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
@@ -284,6 +672,7 @@ function BookCard({ book, onOpen }) {
 
 export default function GenresPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [query, setQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [genresExpanded, setGenresExpanded] = useState(false)
@@ -361,7 +750,7 @@ export default function GenresPage() {
 
       if (!response.ok || data.ok === false) {
         throw new Error(
-          data.message || 'Failed to load stories'
+          data.message || t('genresPage.loadFailed')
         )
       }
 
@@ -385,8 +774,8 @@ export default function GenresPage() {
         setBooks([])
         setMessage(
           error.message === 'Failed to fetch'
-            ? 'Cannot connect to server.'
-            : error.message || 'Failed to load stories'
+            ? t('genresPage.cannotConnect')
+            : error.message || t('genresPage.loadFailed')
         )
       }
     } finally {
@@ -404,13 +793,19 @@ export default function GenresPage() {
   }
 }, [])
 
-
   const filteredGenres = useMemo(() => {
     const keyword = query.trim().toLowerCase()
 
     if (!keyword) return genres
 
-    return genres.filter((genre) => genre.label.toLowerCase().includes(keyword))
+    return genres.filter((genre) => {
+      const displayLabel = getGenreLabel(genre.label, t).toLowerCase()
+
+      return (
+        genre.label.toLowerCase().includes(keyword) ||
+        displayLabel.includes(keyword)
+      )
+    })
   }, [query])
 
   const selectedGenreSlug = useMemo(() => {
@@ -446,7 +841,7 @@ export default function GenresPage() {
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Back"
+            aria-label={t('genresPage.back')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
@@ -461,12 +856,14 @@ export default function GenresPage() {
                   setQuery(event.target.value)
                   setGenresExpanded(true)
                 }}
-                placeholder="Search genres"
+                placeholder={t('genresPage.searchGenres')}
                 className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-bold text-[#111827] outline-none placeholder:text-[#8d94a1]"
               />
             </div>
           ) : (
-            <h1 className="text-[22px] font-black tracking-tight text-[#111827]">Genres</h1>
+            <h1 className="text-[22px] font-black tracking-tight text-[#111827]">
+              {t('genresPage.genres')}
+            </h1>
           )}
 
           <button
@@ -480,7 +877,7 @@ export default function GenresPage() {
               setSearchOpen((current) => !current)
             }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Search genres"
+            aria-label={t('genresPage.searchGenres')}
           >
             <i className={`fa-solid ${searchOpen ? 'fa-xmark' : 'fa-magnifying-glass'} text-[14px]`} />
           </button>
@@ -502,7 +899,7 @@ export default function GenresPage() {
           : 'bg-white font-medium text-[#111827] ring-1 ring-[#e4e7ec]'
       }`}
     >
-      {genre.label}
+      {getGenreLabel(genre.label, t)}
     </button>
   ))}
 </div>
@@ -517,8 +914,12 @@ export default function GenresPage() {
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1]">
                 <i className="fa-solid fa-layer-group text-[22px]" />
               </div>
-              <h3 className="mt-4 text-[16px] font-black text-[#111827]">No genre found</h3>
-              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">Try another keyword.</p>
+              <h3 className="mt-4 text-[16px] font-black text-[#111827]">
+                {t('genresPage.noGenreFound')}
+              </h3>
+              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+                {t('genresPage.tryAnotherKeyword')}
+              </p>
             </div>
           ) : null}
 
@@ -528,7 +929,11 @@ export default function GenresPage() {
                 type="button"
                 onClick={() => setGenresExpanded((current) => !current)}
                 className="flex h-8 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-                aria-label={genresExpanded ? 'Show fewer genres' : 'Show more genres'}
+                aria-label={
+                  genresExpanded
+                    ? t('genresPage.showFewerGenres')
+                    : t('genresPage.showMoreGenres')
+                }
               >
                 <i className={`fa-solid ${genresExpanded ? 'fa-chevron-up' : 'fa-chevron-down'} text-[12px]`} />
               </button>
@@ -549,7 +954,7 @@ export default function GenresPage() {
     : 'bg-[#f5f3fa] font-medium text-[#8d94a1]'
 }`}
               >
-                {item.label}
+                {getFilterLabel(item.value, item.label, t)}
               </button>
             ))}
 
@@ -560,7 +965,7 @@ export default function GenresPage() {
               onClick={() => setFiltersOpen(true)}
               className="shrink-0 px-2 py-1 text-[12.5px] font-semibold leading-[18px] text-[#111827] active:scale-[0.98]"
             >
-              Filters
+              {t('genresPage.filters')}
               <i className="fa-solid fa-chevron-down ml-2 text-[10px]" />
             </button>
           </div>
@@ -598,8 +1003,12 @@ export default function GenresPage() {
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1]">
                 <i className="fa-solid fa-book-open text-[22px]" />
               </div>
-              <h3 className="mt-4 text-[16px] font-black text-[#111827]">No stories found</h3>
-              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">Try another genre or filter.</p>
+              <h3 className="mt-4 text-[16px] font-black text-[#111827]">
+                {t('genresPage.noStoriesFound')}
+              </h3>
+              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+                {t('genresPage.tryAnotherGenreFilter')}
+              </p>
             </div>
           ) : null}
         </section>
