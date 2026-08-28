@@ -383,7 +383,7 @@ const title = story?.title || 'Top Fans'
 const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
 
   return (
-    <main className="min-h-screen bg-[#f7f7f9] pb-[92px]">
+    <main className="app-page min-h-screen pb-[92px]">
   <div className="mx-auto min-h-screen w-full max-w-3xl overflow-hidden bg-white">
       <div className="relative h-[220px] overflow-hidden bg-white text-white">
         <div
@@ -451,7 +451,7 @@ const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
       </div>
 
       <section className="bg-white px-4 pt-8">
-        <div className="rounded-[22px] bg-gradient-to-r from-[#fff1f5] to-[#f4efff] px-4 py-4">
+        <div className="rounded-[22px] bg-gradient-to-r from-[#fff1f5] to-[#f4efff] px-4 py-4 dark:from-[#2b1d28] dark:to-[#28213a]">
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#ff3b5f] shadow-sm">
               <i className="fa-solid fa-gem text-[22px]" />
