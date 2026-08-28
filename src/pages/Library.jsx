@@ -2,6 +2,291 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import SubscriptionsSection from '../components/library/SubscriptionsSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('libraryPage', {
+  en: {
+    recents: 'Recents',
+    subscribed: 'Subscribed',
+    downloads: 'Downloads',
+    all: 'All',
+    novel: 'Novel',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    pdf: 'PDF',
+    clear: 'Clear',
+    manage: 'Manage',
+    edit: 'Edit',
+    recentsSubtitle: 'Stories you added to your library.',
+    subscribedSubtitle: 'Follow the latest updates from stories you love.',
+    downloadsSubtitle: 'Purchased PDFs and downloads from Author Store.',
+    newEpisode: 'New Ep. {{count}}',
+    readOnlineOnly: '{{file}} • Read online only',
+    downloadAndRead: '{{file}} • Download + Read',
+    downloadOnly: '{{file}} • Download',
+    savedEpisode: 'Saved • Ep. {{count}}',
+    untitledPdf: 'Untitled PDF',
+    pdfBook: 'PDF book',
+    end: 'END',
+    storyCover: 'Story cover',
+    pdfNotReady: 'PDF file is not ready.',
+    read: 'Read',
+    download: 'Download',
+    untitledStory: 'Untitled Story',
+    pdfDownload: 'PDF Download',
+    purchasedPdfBook: 'Purchased PDF book',
+    latestUpdate: 'Latest Update',
+    downloaded: 'Downloaded',
+    inLibrary: 'In Library',
+    story: 'Story',
+    episodeCount: '{{genre}} • {{count}} episodes',
+    loadSubscriptionsFailed: 'Failed to load subscriptions',
+    loadDownloadsFailed: 'Failed to load downloads',
+    loadLibraryFailed: 'Failed to load library',
+    clearConfirm: 'Clear all saved stories from your library?',
+    clearFailed: 'Failed to clear library',
+    loadingLibrary: 'Loading library...',
+    loginLibrary: 'Login to use your library',
+    loginLibraryText: 'Save stories, subscribe to updates, and keep your reading list synced.',
+    login: 'Login',
+    yourSubscriptions: 'Your Subscriptions',
+    yourDownloads: 'Your Downloads',
+    yourLibrary: 'Your Library',
+    seeAll: 'See All',
+    noSubscriptions: 'No subscriptions yet',
+    noDownloads: 'No downloads yet',
+    noSavedStories: 'No saved stories yet',
+    noSubscriptionsText: 'Tap the heart button on a story to follow its updates.',
+    noDownloadsText: 'Purchased PDFs will appear here after payment.',
+    noSavedStoriesText: 'Tap the bookmark button on a story to add it to your library.',
+    browseStories: 'Browse Stories',
+  },
+  km: {
+    recents: 'ថ្មីៗ',
+    subscribed: 'បានតាមដាន',
+    downloads: 'បានទាញយក',
+    all: 'ទាំងអស់',
+    novel: 'Novel',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    pdf: 'PDF',
+    clear: 'សម្អាត',
+    manage: 'គ្រប់គ្រង',
+    edit: 'កែសម្រួល',
+    recentsSubtitle: 'រឿងដែលអ្នកបានបន្ថែមទៅ Library។',
+    subscribedSubtitle: 'តាមដាន Update ថ្មីៗពីរឿងដែលអ្នកចូលចិត្ត។',
+    downloadsSubtitle: 'PDF ដែលបានទិញ និងការទាញយកពី Author Store។',
+    newEpisode: 'ភាគថ្មី {{count}}',
+    readOnlineOnly: '{{file}} • អាន Online ប៉ុណ្ណោះ',
+    downloadAndRead: '{{file}} • ទាញយក + អាន',
+    downloadOnly: '{{file}} • ទាញយក',
+    savedEpisode: 'បានរក្សាទុក • ភាគ {{count}}',
+    untitledPdf: 'PDF គ្មានចំណងជើង',
+    pdfBook: 'សៀវភៅ PDF',
+    end: 'ចប់',
+    storyCover: 'គម្របរឿង',
+    pdfNotReady: 'ឯកសារ PDF មិនទាន់រួចរាល់។',
+    read: 'អាន',
+    download: 'ទាញយក',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    pdfDownload: 'ទាញយក PDF',
+    purchasedPdfBook: 'សៀវភៅ PDF ដែលបានទិញ',
+    latestUpdate: 'Update ចុងក្រោយ',
+    downloaded: 'បានទាញយក',
+    inLibrary: 'នៅក្នុង Library',
+    story: 'រឿង',
+    episodeCount: '{{genre}} • {{count}} ភាគ',
+    loadSubscriptionsFailed: 'មិនអាចផ្ទុកការតាមដានបានទេ',
+    loadDownloadsFailed: 'មិនអាចផ្ទុកការទាញយកបានទេ',
+    loadLibraryFailed: 'មិនអាចផ្ទុក Library បានទេ',
+    clearConfirm: 'លុបរឿងដែលបានរក្សាទុកទាំងអស់ចេញពី Library?',
+    clearFailed: 'មិនអាចសម្អាត Library បានទេ',
+    loadingLibrary: 'កំពុងផ្ទុក Library...',
+    loginLibrary: 'Login ដើម្បីប្រើ Library',
+    loginLibraryText: 'រក្សាទុករឿង តាមដាន Update និងរក្សាបញ្ជីអានរបស់អ្នកឱ្យ Sync។',
+    login: 'Login',
+    yourSubscriptions: 'ការតាមដានរបស់អ្នក',
+    yourDownloads: 'ការទាញយករបស់អ្នក',
+    yourLibrary: 'Library របស់អ្នក',
+    seeAll: 'មើលទាំងអស់',
+    noSubscriptions: 'មិនទាន់មានការតាមដាន',
+    noDownloads: 'មិនទាន់មានការទាញយក',
+    noSavedStories: 'មិនទាន់មានរឿងដែលបានរក្សាទុក',
+    noSubscriptionsText: 'ចុចប៊ូតុងបេះដូងលើរឿង ដើម្បីតាមដាន Update។',
+    noDownloadsText: 'PDF ដែលបានទិញនឹងបង្ហាញនៅទីនេះបន្ទាប់ពីការទូទាត់។',
+    noSavedStoriesText: 'ចុចប៊ូតុង Bookmark លើរឿង ដើម្បីបន្ថែមទៅ Library។',
+    browseStories: 'រកមើលរឿង',
+  },
+  zh: {
+    recents: '最近',
+    subscribed: '已订阅',
+    downloads: '下载',
+    all: '全部',
+    novel: '小说',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    pdf: 'PDF',
+    clear: '清除',
+    manage: '管理',
+    edit: '编辑',
+    recentsSubtitle: '你添加到 Library 的故事。',
+    subscribedSubtitle: '关注你喜欢的故事的最新更新。',
+    downloadsSubtitle: '从 Author Store 购买的 PDF 和下载内容。',
+    newEpisode: '新章节 {{count}}',
+    readOnlineOnly: '{{file}} • 仅在线阅读',
+    downloadAndRead: '{{file}} • 下载 + 阅读',
+    downloadOnly: '{{file}} • 下载',
+    savedEpisode: '已保存 • 第 {{count}} 集',
+    untitledPdf: '无标题 PDF',
+    pdfBook: 'PDF 图书',
+    end: '完结',
+    storyCover: '故事封面',
+    pdfNotReady: 'PDF 文件尚未准备好。',
+    read: '阅读',
+    download: '下载',
+    untitledStory: '无标题故事',
+    pdfDownload: 'PDF 下载',
+    purchasedPdfBook: '已购买的 PDF 图书',
+    latestUpdate: '最新更新',
+    downloaded: '已下载',
+    inLibrary: '在 Library 中',
+    story: '故事',
+    episodeCount: '{{genre}} • {{count}} 集',
+    loadSubscriptionsFailed: '无法加载订阅',
+    loadDownloadsFailed: '无法加载下载内容',
+    loadLibraryFailed: '无法加载 Library',
+    clearConfirm: '清除 Library 中所有已保存的故事？',
+    clearFailed: '无法清除 Library',
+    loadingLibrary: '正在加载 Library...',
+    loginLibrary: '登录后使用 Library',
+    loginLibraryText: '保存故事、订阅更新并同步你的阅读列表。',
+    login: '登录',
+    yourSubscriptions: '你的订阅',
+    yourDownloads: '你的下载',
+    yourLibrary: '你的 Library',
+    seeAll: '查看全部',
+    noSubscriptions: '暂无订阅',
+    noDownloads: '暂无下载',
+    noSavedStories: '暂无已保存故事',
+    noSubscriptionsText: '点击故事上的心形按钮即可关注更新。',
+    noDownloadsText: '购买的 PDF 会在付款后显示在这里。',
+    noSavedStoriesText: '点击故事上的书签按钮即可添加到 Library。',
+    browseStories: '浏览故事',
+  },
+  ja: {
+    recents: '最近',
+    subscribed: '購読中',
+    downloads: 'ダウンロード',
+    all: 'すべて',
+    novel: '小説',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    pdf: 'PDF',
+    clear: 'クリア',
+    manage: '管理',
+    edit: '編集',
+    recentsSubtitle: 'Library に追加したストーリーです。',
+    subscribedSubtitle: 'お気に入りのストーリーの最新更新をフォローします。',
+    downloadsSubtitle: 'Author Store で購入した PDF とダウンロードです。',
+    newEpisode: '新着 Ep. {{count}}',
+    readOnlineOnly: '{{file}} • オンライン閲覧のみ',
+    downloadAndRead: '{{file}} • ダウンロード + 閲覧',
+    downloadOnly: '{{file}} • ダウンロード',
+    savedEpisode: '保存済み • Ep. {{count}}',
+    untitledPdf: '無題の PDF',
+    pdfBook: 'PDF ブック',
+    end: '完結',
+    storyCover: 'ストーリーの表紙',
+    pdfNotReady: 'PDF ファイルはまだ準備できていません。',
+    read: '読む',
+    download: 'ダウンロード',
+    untitledStory: '無題のストーリー',
+    pdfDownload: 'PDF ダウンロード',
+    purchasedPdfBook: '購入済み PDF ブック',
+    latestUpdate: '最新更新',
+    downloaded: 'ダウンロード済み',
+    inLibrary: 'Library に保存済み',
+    story: 'ストーリー',
+    episodeCount: '{{genre}} • {{count}} エピソード',
+    loadSubscriptionsFailed: '購読を読み込めませんでした',
+    loadDownloadsFailed: 'ダウンロードを読み込めませんでした',
+    loadLibraryFailed: 'Library を読み込めませんでした',
+    clearConfirm: 'Library の保存済みストーリーをすべて削除しますか？',
+    clearFailed: 'Library をクリアできませんでした',
+    loadingLibrary: 'Library を読み込み中...',
+    loginLibrary: 'ログインして Library を利用',
+    loginLibraryText: 'ストーリーを保存し、更新を購読して、読書リストを同期できます。',
+    login: 'ログイン',
+    yourSubscriptions: '購読中のストーリー',
+    yourDownloads: 'ダウンロード',
+    yourLibrary: 'あなたの Library',
+    seeAll: 'すべて見る',
+    noSubscriptions: '購読はまだありません',
+    noDownloads: 'ダウンロードはまだありません',
+    noSavedStories: '保存済みストーリーはまだありません',
+    noSubscriptionsText: 'ストーリーのハートボタンを押して更新をフォローできます。',
+    noDownloadsText: '購入した PDF は支払い後にここへ表示されます。',
+    noSavedStoriesText: 'ストーリーのブックマークボタンを押して Library に追加できます。',
+    browseStories: 'ストーリーを見る',
+  },
+  ko: {
+    recents: '최근',
+    subscribed: '구독',
+    downloads: '다운로드',
+    all: '전체',
+    novel: '소설',
+    chatStory: 'Chat Story',
+    manga: 'Manga',
+    pdf: 'PDF',
+    clear: '지우기',
+    manage: '관리',
+    edit: '편집',
+    recentsSubtitle: 'Library에 추가한 스토리입니다.',
+    subscribedSubtitle: '좋아하는 스토리의 최신 업데이트를 확인하세요.',
+    downloadsSubtitle: 'Author Store에서 구매한 PDF와 다운로드입니다.',
+    newEpisode: '신규 Ep. {{count}}',
+    readOnlineOnly: '{{file}} • 온라인 읽기만 가능',
+    downloadAndRead: '{{file}} • 다운로드 + 읽기',
+    downloadOnly: '{{file}} • 다운로드',
+    savedEpisode: '저장됨 • Ep. {{count}}',
+    untitledPdf: '제목 없는 PDF',
+    pdfBook: 'PDF 도서',
+    end: '완결',
+    storyCover: '스토리 표지',
+    pdfNotReady: 'PDF 파일이 아직 준비되지 않았습니다.',
+    read: '읽기',
+    download: '다운로드',
+    untitledStory: '제목 없는 스토리',
+    pdfDownload: 'PDF 다운로드',
+    purchasedPdfBook: '구매한 PDF 도서',
+    latestUpdate: '최신 업데이트',
+    downloaded: '다운로드됨',
+    inLibrary: 'Library에 저장됨',
+    story: '스토리',
+    episodeCount: '{{genre}} • {{count}} 에피소드',
+    loadSubscriptionsFailed: '구독을 불러오지 못했습니다',
+    loadDownloadsFailed: '다운로드를 불러오지 못했습니다',
+    loadLibraryFailed: 'Library를 불러오지 못했습니다',
+    clearConfirm: 'Library에 저장된 모든 스토리를 지울까요?',
+    clearFailed: 'Library를 지우지 못했습니다',
+    loadingLibrary: 'Library를 불러오는 중...',
+    loginLibrary: '로그인하여 Library 사용',
+    loginLibraryText: '스토리를 저장하고 업데이트를 구독하며 읽기 목록을 동기화하세요.',
+    login: '로그인',
+    yourSubscriptions: '내 구독',
+    yourDownloads: '내 다운로드',
+    yourLibrary: '내 Library',
+    seeAll: '전체 보기',
+    noSubscriptions: '아직 구독이 없습니다',
+    noDownloads: '아직 다운로드가 없습니다',
+    noSavedStories: '아직 저장된 스토리가 없습니다',
+    noSubscriptionsText: '스토리의 하트 버튼을 눌러 업데이트를 구독하세요.',
+    noDownloadsText: '구매한 PDF는 결제 후 여기에 표시됩니다.',
+    noSavedStoriesText: '스토리의 북마크 버튼을 눌러 Library에 추가하세요.',
+    browseStories: '스토리 둘러보기',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -12,6 +297,20 @@ const API_BASE_URL =
 const topTabs = ['Recents', 'Subscribed', 'Downloads']
 const storyTypeTabs = ['All', 'Novel', 'Chat Story', 'Manga']
 const downloadTypeTabs = ['All', 'PDF']
+
+const TOP_TAB_LABEL_KEYS = {
+  Recents: 'recents',
+  Subscribed: 'subscribed',
+  Downloads: 'downloads',
+}
+
+const TYPE_LABEL_KEYS = {
+  All: 'all',
+  Novel: 'novel',
+  'Chat Story': 'chatStory',
+  Manga: 'manga',
+  PDF: 'pdf',
+}
 
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
@@ -54,33 +353,41 @@ function getStoryType(story) {
   return 'Novel'
 }
 
-function getActionText(tab) {
-  if (tab === 'Recents') return 'Clear'
-  if (tab === 'Subscribed') return 'Manage'
-  return 'Edit'
+function getActionText(tab, t) {
+  if (tab === 'Recents') return t('libraryPage.clear')
+  if (tab === 'Subscribed') return t('libraryPage.manage')
+  return t('libraryPage.edit')
 }
 
-function getSubtitle(tab) {
-  if (tab === 'Recents') return 'Stories you added to your library.'
-  if (tab === 'Subscribed') return 'Follow the latest updates from stories you love.'
-  return 'Purchased PDFs and downloads from Author Store.'
+function getSubtitle(tab, t) {
+  if (tab === 'Recents') return t('libraryPage.recentsSubtitle')
+  if (tab === 'Subscribed') return t('libraryPage.subscribedSubtitle')
+  return t('libraryPage.downloadsSubtitle')
 }
 
-function formatInfo(tab, story) {
+function formatInfo(tab, story, t) {
   if (tab === 'Subscribed') {
-    return `New Ep. ${story?.total_episodes || 0}`
+    return t('libraryPage.newEpisode', {
+      count: story?.total_episodes || 0,
+    })
   }
 
   if (tab === 'Downloads') {
     const fileName = story?.pdf_file_name || 'PDF'
     const rule = normalizeAccessRule(story?.access_rule)
 
-    if (rule === 'read_only') return `${fileName} • Read online only`
-    if (rule === 'download_and_read') return `${fileName} • Download + Read`
-    return `${fileName} • Download`
+    if (rule === 'read_only') {
+      return t('libraryPage.readOnlineOnly', { file: fileName })
+    }
+    if (rule === 'download_and_read') {
+      return t('libraryPage.downloadAndRead', { file: fileName })
+    }
+    return t('libraryPage.downloadOnly', { file: fileName })
   }
 
-  return `Saved • Ep. ${story?.total_episodes || 0}`
+  return t('libraryPage.savedEpisode', {
+    count: story?.total_episodes || 0,
+  })
 }
 
 function formatDownloadItems(downloads) {
@@ -147,9 +454,11 @@ function EmptyState({ title, text, actionText, onAction }) {
 }
 
 function EndBadge() {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="absolute left-2 top-2 rounded-full bg-gradient-to-r from-[#ff9a44] to-[#fc6076] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm">
-      END
+      {t('libraryPage.end')}
     </div>
   )
 }
@@ -163,6 +472,14 @@ function PdfBadge() {
 }
 
 function StoryCover({ story, className = '' }) {
+  const { t } = useDisplayTranslation()
+  const title =
+    story?.title === 'Untitled Story'
+      ? t('libraryPage.untitledStory')
+      : story?.title === 'Untitled PDF'
+        ? t('libraryPage.untitledPdf')
+        : story?.title || t('libraryPage.storyCover')
+
   return (
     <div
       className={`overflow-hidden ${className}`}
@@ -171,7 +488,7 @@ function StoryCover({ story, className = '' }) {
       {story?.cover_url ? (
         <img
           src={story.cover_url}
-          alt={story.title || 'Story cover'}
+          alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           onError={(event) => {
             event.currentTarget.style.display = 'none'
@@ -183,6 +500,7 @@ function StoryCover({ story, className = '' }) {
 }
 
 function PdfActionButtons({ story, compact = false }) {
+  const { t } = useDisplayTranslation()
   const pdfUrl = story?.pdf_file_url || ''
   const fileName = story?.pdf_file_name || `${story?.title || 'download'}.pdf`
 
@@ -195,7 +513,7 @@ function PdfActionButtons({ story, compact = false }) {
           color: 'var(--shadow-warning)',
         }}
       >
-        PDF file is not ready.
+        {t('libraryPage.pdfNotReady')}
       </div>
     )
   }
@@ -213,7 +531,7 @@ function PdfActionButtons({ story, compact = false }) {
             color: 'var(--shadow-bg-page)',
           }}
         >
-          Read
+          {t('libraryPage.read')}
         </a>
       ) : null}
 
@@ -230,7 +548,7 @@ function PdfActionButtons({ story, compact = false }) {
             color: 'var(--shadow-text-primary)',
           }}
         >
-          Download
+          {t('libraryPage.download')}
         </a>
       ) : null}
     </div>
@@ -238,8 +556,16 @@ function PdfActionButtons({ story, compact = false }) {
 }
 
 function LibraryBookCard({ item, tab }) {
+  const { t } = useDisplayTranslation()
   const story = item.story
   if (!story) return null
+
+  const displayTitle =
+    story.title === 'Untitled PDF'
+      ? t('libraryPage.untitledPdf')
+      : story.title === 'Untitled Story'
+        ? t('libraryPage.untitledStory')
+        : story.title
 
   if (tab === 'Downloads' || item.kind === 'pdf') {
     return (
@@ -260,13 +586,13 @@ function LibraryBookCard({ item, tab }) {
             className="line-clamp-1 text-[12px] font-extrabold tracking-tight sm:text-[13px]"
             style={{ color: 'var(--shadow-text-primary)' }}
           >
-            {story.title || 'Untitled PDF'}
+            {displayTitle || t('libraryPage.untitledPdf')}
           </h4>
           <p
             className="mt-1 line-clamp-1 text-[10px] font-medium sm:text-[11px]"
             style={{ color: 'var(--shadow-text-secondary)' }}
           >
-            {formatInfo(tab, story)}
+            {formatInfo(tab, story, t)}
           </p>
 
           <div className="mt-2">
@@ -295,13 +621,13 @@ function LibraryBookCard({ item, tab }) {
           className="line-clamp-1 text-[12px] font-extrabold tracking-tight sm:text-[13px]"
           style={{ color: 'var(--shadow-text-primary)' }}
         >
-          {story.title || 'Untitled Story'}
+          {displayTitle || t('libraryPage.untitledStory')}
         </h4>
         <p
           className="mt-1 text-[10px] font-medium sm:text-[11px]"
           style={{ color: 'var(--shadow-text-secondary)' }}
         >
-          {formatInfo(tab, story)}
+          {formatInfo(tab, story, t)}
         </p>
       </div>
     </Link>
@@ -309,8 +635,22 @@ function LibraryBookCard({ item, tab }) {
 }
 
 function ContextCard({ item, tab }) {
+  const { t } = useDisplayTranslation()
   const story = item?.story
   if (!story) return null
+
+  const displayTitle =
+    story.title === 'Untitled PDF'
+      ? t('libraryPage.untitledPdf')
+      : story.title === 'Untitled Story'
+        ? t('libraryPage.untitledStory')
+        : story.title
+  const displayDescription =
+    story.description === 'PDF book'
+      ? t('libraryPage.pdfBook')
+      : story.description
+  const genreFallback =
+    story.main_genre || t('libraryPage.story')
 
   if (tab === 'Downloads' || item.kind === 'pdf') {
     return (
@@ -341,28 +681,28 @@ function ContextCard({ item, tab }) {
                   color: 'var(--shadow-text-primary)',
                 }}
               >
-                PDF Download
+                {t('libraryPage.pdfDownload')}
               </div>
 
               <h3
                 className="line-clamp-1 text-[15px] font-extrabold tracking-tight sm:text-[17px]"
                 style={{ color: 'var(--shadow-text-primary)' }}
               >
-                {story.title || 'Untitled PDF'}
+                {displayTitle || t('libraryPage.untitledPdf')}
               </h3>
 
               <p
                 className="mt-1 line-clamp-2 text-[12px] leading-5 sm:text-[13px]"
                 style={{ color: 'var(--shadow-text-secondary)' }}
               >
-                {story.description || 'Purchased PDF book'}
+                {displayDescription || t('libraryPage.purchasedPdfBook')}
               </p>
 
               <p
                 className="mt-2 text-[11px] font-extrabold sm:text-[12px]"
                 style={{ color: 'var(--shadow-text-primary)' }}
               >
-                {formatInfo(tab, story)}
+                {formatInfo(tab, story, t)}
               </p>
 
               <div className="mt-3">
@@ -404,28 +744,36 @@ function ContextCard({ item, tab }) {
                 color: 'var(--shadow-text-primary)',
               }}
             >
-              {tab === 'Subscribed' ? 'Latest Update' : tab === 'Downloads' ? 'Downloaded' : 'In Library'}
+              {tab === 'Subscribed'
+                ? t('libraryPage.latestUpdate')
+                : tab === 'Downloads'
+                  ? t('libraryPage.downloaded')
+                  : t('libraryPage.inLibrary')}
             </div>
 
             <h3
               className="line-clamp-1 text-[15px] font-extrabold tracking-tight sm:text-[17px]"
               style={{ color: 'var(--shadow-text-primary)' }}
             >
-              {story.title || 'Untitled Story'}
+              {displayTitle || t('libraryPage.untitledStory')}
             </h3>
 
             <p
               className="mt-1 line-clamp-2 text-[12px] leading-5 sm:text-[13px]"
               style={{ color: 'var(--shadow-text-secondary)' }}
             >
-              {story.description || `${story.main_genre || 'Story'} • ${story.total_episodes || 0} episodes`}
+              {story.description ||
+                t('libraryPage.episodeCount', {
+                  genre: genreFallback,
+                  count: story.total_episodes || 0,
+                })}
             </p>
 
             <p
               className="mt-2 text-[11px] font-extrabold sm:text-[12px]"
               style={{ color: 'var(--shadow-text-primary)' }}
             >
-              {formatInfo(tab, story)}
+              {formatInfo(tab, story, t)}
             </p>
           </div>
 
@@ -441,6 +789,7 @@ function ContextCard({ item, tab }) {
 
 export default function Library() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState('Subscribed')
   const [activeType, setActiveType] = useState('All')
   const [libraryItems, setLibraryItems] = useState([])
@@ -509,7 +858,7 @@ export default function Library() {
         ) {
           throw new Error(
             data.message ||
-              'Failed to load subscriptions'
+              t('libraryPage.loadSubscriptionsFailed')
           )
         }
 
@@ -533,7 +882,7 @@ export default function Library() {
         ) {
           throw new Error(
             data.message ||
-              'Failed to load downloads'
+              t('libraryPage.loadDownloadsFailed')
           )
         }
 
@@ -557,7 +906,7 @@ export default function Library() {
         ) {
           throw new Error(
             data.message ||
-              'Failed to load library'
+              t('libraryPage.loadLibraryFailed')
           )
         }
 
@@ -573,7 +922,7 @@ export default function Library() {
       if (activeTabRef.current === tab) {
         setMessage(
           error.message ||
-            'Failed to load library'
+            t('libraryPage.loadLibraryFailed')
         )
       }
     } finally {
@@ -603,8 +952,8 @@ export default function Library() {
     return currentItems.filter((item) => getStoryType(item.story) === activeType)
   }, [currentItems, activeType])
 
-  const actionText = getActionText(activeTab)
-  const subtitle = getSubtitle(activeTab)
+  const actionText = getActionText(activeTab, t)
+  const subtitle = getSubtitle(activeTab, t)
   const firstItem = filteredItems[0] || null
 
   const handleAction = async () => {
@@ -615,7 +964,7 @@ export default function Library() {
 
     if (activeTab !== 'Recents' || !libraryItems.length) return
 
-    const confirmed = window.confirm('Clear all saved stories from your library?')
+    const confirmed = window.confirm(t('libraryPage.clearConfirm'))
     if (!confirmed) return
 
     try {
@@ -631,7 +980,7 @@ export default function Library() {
       setLibraryItems([])
       loadedTabsRef.current.add('Recents')
     } catch {
-      setMessage('Failed to clear library')
+      setMessage(t('libraryPage.clearFailed'))
     }
   }
 
@@ -677,7 +1026,7 @@ export default function Library() {
                           : 'var(--shadow-text-tertiary)',
                       }}
                     >
-                      {tab}
+                      {t(`libraryPage.${TOP_TAB_LABEL_KEYS[tab]}`)}
                     </button>
                   )
                 })}
@@ -724,7 +1073,7 @@ export default function Library() {
                         : 'none',
                     }}
                   >
-                    {type}
+                    {t(`libraryPage.${TYPE_LABEL_KEYS[type]}`)}
                   </button>
                 )
               })}
@@ -756,15 +1105,15 @@ export default function Library() {
                   color: 'var(--shadow-text-secondary)',
                 }}
               >
-                Loading library...
+                {t('libraryPage.loadingLibrary')}
               </div>
             </div>
           ) : !isLoggedIn ? (
             <div className="pt-5">
               <EmptyState
-                title="Login to use your library"
-                text="Save stories, subscribe to updates, and keep your reading list synced."
-                actionText="Login"
+                title={t('libraryPage.loginLibrary')}
+                text={t('libraryPage.loginLibraryText')}
+                actionText={t('libraryPage.login')}
                 onAction={() => navigate('/login')}
               />
             </div>
@@ -779,10 +1128,10 @@ export default function Library() {
                     style={{ color: 'var(--shadow-text-primary)' }}
                   >
                     {activeTab === 'Subscribed'
-                      ? 'Your Subscriptions'
+                      ? t('libraryPage.yourSubscriptions')
                       : activeTab === 'Downloads'
-                        ? 'Your Downloads'
-                        : 'Your Library'}
+                        ? t('libraryPage.yourDownloads')
+                        : t('libraryPage.yourLibrary')}
                   </h2>
 
                   {activeTab === 'Subscribed' ? (
@@ -790,7 +1139,7 @@ export default function Library() {
                       className="text-[11px] font-extrabold uppercase tracking-[0.12em]"
                       style={{ color: 'var(--shadow-text-primary)' }}
                     >
-                      See All
+                      {t('libraryPage.seeAll')}
                     </button>
                   ) : null}
                 </div>
@@ -811,19 +1160,19 @@ export default function Library() {
               <EmptyState
                 title={
                   activeTab === 'Subscribed'
-                    ? 'No subscriptions yet'
+                    ? t('libraryPage.noSubscriptions')
                     : activeTab === 'Downloads'
-                      ? 'No downloads yet'
-                      : 'No saved stories yet'
+                      ? t('libraryPage.noDownloads')
+                      : t('libraryPage.noSavedStories')
                 }
                 text={
                   activeTab === 'Subscribed'
-                    ? 'Tap the heart button on a story to follow its updates.'
+                    ? t('libraryPage.noSubscriptionsText')
                     : activeTab === 'Downloads'
-                      ? 'Purchased PDFs will appear here after payment.'
-                      : 'Tap the bookmark button on a story to add it to your library.'
+                      ? t('libraryPage.noDownloadsText')
+                      : t('libraryPage.noSavedStoriesText')
                 }
-                actionText="Browse Stories"
+                actionText={t('libraryPage.browseStories')}
                 onAction={() => navigate('/')}
               />
             </div>
