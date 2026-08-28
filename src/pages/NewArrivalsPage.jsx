@@ -214,7 +214,7 @@ function BookCard({ book }) {
   return (
     <Link to={book.link} className="group block">
       <div className="flex flex-col items-start">
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm dark:bg-[var(--shadow-bg-elevated)]">
           <img
             src={book.cover}
             alt={title}
@@ -234,30 +234,30 @@ function BookCard({ book }) {
           ) : null}
 
           {book.isAdult ? (
-            <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+            <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d] dark:bg-red-400/15 dark:text-red-300">
               18+
             </div>
           ) : null}
         </div>
 
         <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 min-h-[44px] text-[16px] font-extrabold leading-[22px] tracking-tight text-neutral-900">
+          <h3 className="line-clamp-2 min-h-[44px] text-[16px] font-extrabold leading-[22px] tracking-tight text-neutral-900 dark:text-[var(--shadow-text-primary)]">
             {title}
           </h3>
 
-          <p className="mt-1 line-clamp-1 text-[13px] font-medium text-gray-500">
+          <p className="mt-1 line-clamp-1 text-[13px] font-medium text-gray-500 dark:text-[var(--shadow-text-secondary)]">
             {author}
           </p>
 
           {book.genre ? (
             <div className="mt-2">
-              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-bold text-gray-500">
+              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-bold text-gray-500 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                 {book.genre}
               </span>
             </div>
           ) : null}
 
-          <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-500">
+          <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
             <span className="flex items-center gap-1">
               <i className="fas fa-heart text-[10px] text-red-500" /> {book.likes}
             </span>
@@ -279,9 +279,9 @@ function LoadingGrid() {
     <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
       {Array.from({ length: 18 }).map((_, index) => (
         <div key={index}>
-          <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
-          <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
-          <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+          <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
         </div>
       ))}
     </div>
@@ -292,16 +292,16 @@ function EmptyState({ onRefresh }) {
   const { t } = useDisplayTranslation()
 
   return (
-    <div className="rounded-2xl bg-white px-5 py-12 text-center shadow-sm ring-1 ring-gray-100">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+    <div className="rounded-2xl bg-white px-5 py-12 text-center shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)] dark:shadow-none">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
         <i className="fa-regular fa-file-lines text-[22px]" />
       </div>
 
-      <h2 className="mt-4 text-[17px] font-extrabold text-neutral-900">
+      <h2 className="mt-4 text-[17px] font-extrabold text-neutral-900 dark:text-[var(--shadow-text-primary)]">
         {t('newArrivalsPage.emptyTitle')}
       </h2>
 
-      <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-gray-500">
+      <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-gray-500 dark:text-[var(--shadow-text-secondary)]">
         {t('newArrivalsPage.emptyBody')}
       </p>
 
@@ -478,19 +478,19 @@ export default function NewArrivalsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-white pb-32">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
+    <div className="app-page min-h-screen bg-white pb-32 dark:bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)] dark:shadow-none">
         <div className="grid h-14 grid-cols-[36px_1fr_36px] items-center px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('newArrivalsPage.goBack')}
           >
-            <i className="fas fa-chevron-left text-[18px] text-gray-700" />
+            <i className="fas fa-chevron-left text-[18px] text-gray-700 dark:text-[var(--shadow-text-primary)]" />
           </button>
 
-          <h1 className="text-center text-[18px] font-extrabold tracking-tight text-neutral-900">
+          <h1 className="text-center text-[18px] font-extrabold tracking-tight text-neutral-900 dark:text-[var(--shadow-text-primary)]">
             {t('newArrivalsPage.title')}
           </h1>
 
@@ -510,8 +510,8 @@ export default function NewArrivalsPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
                   isActive
-                    ? 'border-black bg-black text-white'
-                    : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50'
+                    ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-[#111827]'
+                    : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:hover:bg-[var(--shadow-bg-hover)]'
                 }`}
               >
                 {t(`newArrivalsPage.${TAB_LABEL_KEYS[tab]}`)}
@@ -524,7 +524,7 @@ export default function NewArrivalsPage() {
           <button
             type="button"
             onClick={() => setMessage('')}
-            className="mb-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+            className="mb-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d] dark:bg-red-400/10 dark:text-red-300"
           >
             {message}
           </button>
