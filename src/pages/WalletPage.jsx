@@ -1,5 +1,150 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('walletPage', {
+  en: {
+    diamond: 'Diamond',
+    coin: 'Coin',
+    paymentProfile: 'Payment Profile',
+    paymentProfileHelp: 'Use the same name as your payment account.',
+    example: 'Example: KEO DARIYA / DARIYA KEO',
+    paymentAccountName: 'Payment account name',
+    saving: 'Saving...',
+    save: 'Save',
+    cancel: 'Cancel',
+    loadFailed: 'Failed to load wallet.',
+    saveProfileFailed: 'Failed to save payment profile.',
+    profileSaved: 'Payment profile saved.',
+    goBack: 'Go back',
+    wallet: 'Wallet',
+    diamonds: 'Diamonds',
+    coins: 'Coins',
+    earn: 'Earn',
+    topUp: 'Top-Up',
+    readingBenefits: 'Reading Benefits',
+    readingVouchers: 'Reading Vouchers',
+    voucherHelp: 'Unlock 1 episode permanently',
+    freeBookPass: 'Free Book Pass',
+    bookPassHelp: 'Unlock 1 completed story permanently',
+    bookPassNextStep: 'Free Book Pass selection will be connected in the next step.',
+    useNow: 'Use Now',
+    orderHistory: 'Order History',
+  },
+  km: {
+    diamond: 'Diamond',
+    coin: 'Coin',
+    paymentProfile: 'ព័ត៌មានការទូទាត់',
+    paymentProfileHelp: 'ប្រើឈ្មោះដូចគ្នានឹងគណនីទទួលការទូទាត់របស់អ្នក។',
+    example: 'ឧទាហរណ៍៖ KEO DARIYA / DARIYA KEO',
+    paymentAccountName: 'ឈ្មោះគណនីទទួលការទូទាត់',
+    saving: 'កំពុងរក្សាទុក...',
+    save: 'រក្សាទុក',
+    cancel: 'បោះបង់',
+    loadFailed: 'មិនអាចផ្ទុក Wallet បានទេ។',
+    saveProfileFailed: 'មិនអាចរក្សាទុកព័ត៌មានការទូទាត់បានទេ។',
+    profileSaved: 'បានរក្សាទុកព័ត៌មានការទូទាត់។',
+    goBack: 'ត្រឡប់ក្រោយ',
+    wallet: 'Wallet',
+    diamonds: 'Diamonds',
+    coins: 'Coins',
+    earn: 'រក Coin',
+    topUp: 'បញ្ចូលបន្ថែម',
+    readingBenefits: 'អត្ថប្រយោជន៍សម្រាប់ការអាន',
+    readingVouchers: 'Voucher សម្រាប់អាន',
+    voucherHelp: 'ដោះសោ 1 ភាគជាអចិន្ត្រៃយ៍',
+    freeBookPass: 'Free Book Pass',
+    bookPassHelp: 'ដោះសោរឿងដែលបានបញ្ចប់ 1 រឿងជាអចិន្ត្រៃយ៍',
+    bookPassNextStep: 'ការជ្រើសរើស Free Book Pass នឹងត្រូវភ្ជាប់នៅដំណាក់កាលបន្ទាប់។',
+    useNow: 'ប្រើឥឡូវនេះ',
+    orderHistory: 'ប្រវត្តិការបញ្ជាទិញ',
+  },
+  zh: {
+    diamond: 'Diamond',
+    coin: 'Coin',
+    paymentProfile: '付款资料',
+    paymentProfileHelp: '请使用与你的收款账户相同的姓名。',
+    example: '示例：KEO DARIYA / DARIYA KEO',
+    paymentAccountName: '收款账户姓名',
+    saving: '保存中...',
+    save: '保存',
+    cancel: '取消',
+    loadFailed: '无法加载 Wallet。',
+    saveProfileFailed: '无法保存付款资料。',
+    profileSaved: '付款资料已保存。',
+    goBack: '返回',
+    wallet: 'Wallet',
+    diamonds: 'Diamonds',
+    coins: 'Coins',
+    earn: '赚取',
+    topUp: '充值',
+    readingBenefits: '阅读权益',
+    readingVouchers: '阅读 Voucher',
+    voucherHelp: '永久解锁 1 集',
+    freeBookPass: 'Free Book Pass',
+    bookPassHelp: '永久解锁 1 个已完结故事',
+    bookPassNextStep: 'Free Book Pass 的选择功能将在下一步连接。',
+    useNow: '立即使用',
+    orderHistory: '订单历史',
+  },
+  ja: {
+    diamond: 'Diamond',
+    coin: 'Coin',
+    paymentProfile: '支払いプロフィール',
+    paymentProfileHelp: '受取口座と同じ名前を使用してください。',
+    example: '例：KEO DARIYA / DARIYA KEO',
+    paymentAccountName: '受取口座名',
+    saving: '保存中...',
+    save: '保存',
+    cancel: 'キャンセル',
+    loadFailed: 'Walletを読み込めませんでした。',
+    saveProfileFailed: '支払いプロフィールを保存できませんでした。',
+    profileSaved: '支払いプロフィールを保存しました。',
+    goBack: '戻る',
+    wallet: 'Wallet',
+    diamonds: 'Diamonds',
+    coins: 'Coins',
+    earn: '獲得',
+    topUp: 'チャージ',
+    readingBenefits: '読書特典',
+    readingVouchers: '読書 Voucher',
+    voucherHelp: '1エピソードを永久にアンロック',
+    freeBookPass: 'Free Book Pass',
+    bookPassHelp: '完結ストーリー1作品を永久にアンロック',
+    bookPassNextStep: 'Free Book Pass の選択機能は次のステップで接続されます。',
+    useNow: '今すぐ使う',
+    orderHistory: '注文履歴',
+  },
+  ko: {
+    diamond: 'Diamond',
+    coin: 'Coin',
+    paymentProfile: '결제 프로필',
+    paymentProfileHelp: '지급 계정과 동일한 이름을 사용하세요.',
+    example: '예: KEO DARIYA / DARIYA KEO',
+    paymentAccountName: '지급 계정 이름',
+    saving: '저장 중...',
+    save: '저장',
+    cancel: '취소',
+    loadFailed: 'Wallet을 불러오지 못했습니다.',
+    saveProfileFailed: '결제 프로필을 저장하지 못했습니다.',
+    profileSaved: '결제 프로필을 저장했습니다.',
+    goBack: '뒤로 가기',
+    wallet: 'Wallet',
+    diamonds: 'Diamonds',
+    coins: 'Coins',
+    earn: '적립',
+    topUp: '충전',
+    readingBenefits: '읽기 혜택',
+    readingVouchers: '읽기 Voucher',
+    voucherHelp: '에피소드 1개 영구 잠금 해제',
+    freeBookPass: 'Free Book Pass',
+    bookPassHelp: '완결 스토리 1개 영구 잠금 해제',
+    bookPassNextStep: 'Free Book Pass 선택 기능은 다음 단계에서 연결됩니다.',
+    useNow: '지금 사용',
+    orderHistory: '주문 내역',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -21,11 +166,27 @@ function formatNumber(value) {
 }
 
 function DiamondIcon() {
-  return <img src="/assets/Icons/Diamond.svg" alt="Diamond" className="h-8 w-8 object-contain" />
+  const { t } = useDisplayTranslation()
+
+  return (
+    <img
+      src="/assets/Icons/Diamond.svg"
+      alt={t('walletPage.diamond')}
+      className="h-8 w-8 object-contain"
+    />
+  )
 }
 
 function CoinIcon() {
-  return <img src="/assets/Icons/Shadow Coin.svg" alt="Coin" className="h-8 w-8 object-contain" />
+  const { t } = useDisplayTranslation()
+
+  return (
+    <img
+      src="/assets/Icons/Shadow Coin.svg"
+      alt={t('walletPage.coin')}
+      className="h-8 w-8 object-contain"
+    />
+  )
 }
 
 function VoucherIcon() {
@@ -80,24 +241,60 @@ function TopUpIcon() {
 }
 
 function PaymentProfileModal({ value, saving, message, onChange, onClose, onSave }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 dark:bg-black/70 sm:items-center sm:px-4">
       <div className="app-card w-full rounded-t-[28px] p-5 shadow-2xl sm:max-w-[430px] sm:rounded-[28px]">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h3 className="app-title text-[20px] font-bold">Payment Profile</h3>
-            <p className="app-muted mt-1 text-[12px] font-semibold leading-5">Use the same name as your payment account.</p>
-            <p className="app-tertiary mt-1 text-[11px] font-semibold">Example: KEO DARIYA / DARIYA KEO</p>
+            <h3 className="app-title text-[20px] font-bold">
+              {t('walletPage.paymentProfile')}
+            </h3>
+            <p className="app-muted mt-1 text-[12px] font-semibold leading-5">
+              {t('walletPage.paymentProfileHelp')}
+            </p>
+            <p className="app-tertiary mt-1 text-[11px] font-semibold">
+              {t('walletPage.example')}
+            </p>
           </div>
-          <button type="button" onClick={onClose} className="app-soft flex h-9 w-9 items-center justify-center rounded-full active:scale-95">
+          <button
+            type="button"
+            onClick={onClose}
+            className="app-soft flex h-9 w-9 items-center justify-center rounded-full active:scale-95"
+          >
             <i className="fas fa-times text-[14px]" />
           </button>
         </div>
-        <label className="app-muted text-[11px] font-normal uppercase tracking-[0.1em]">Payment account name</label>
-        <input value={value} onChange={(event) => onChange(event.target.value)} placeholder="KEO DARIYA" className="app-input mt-2 h-12 w-full rounded-[16px] border px-4 text-[14px] font-normal uppercase outline-none focus:border-[var(--shadow-border-strong)]" />
-        {message ? <p className="app-title mt-3 text-center text-[12px] font-bold">{message}</p> : null}
-        <button type="button" onClick={onSave} disabled={saving} className="mt-4 h-12 w-full rounded-[18px] bg-[#111111] text-[14px] font-normal text-white active:scale-[0.99] disabled:opacity-60 dark:bg-white dark:text-[#111111]">{saving ? 'Saving...' : 'Save'}</button>
-        <button type="button" onClick={onClose} className="app-card mt-3 h-12 w-full rounded-[18px] border text-[14px] font-normal active:scale-[0.99]">Cancel</button>
+        <label className="app-muted text-[11px] font-normal uppercase tracking-[0.1em]">
+          {t('walletPage.paymentAccountName')}
+        </label>
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="KEO DARIYA"
+          className="app-input mt-2 h-12 w-full rounded-[16px] border px-4 text-[14px] font-normal uppercase outline-none focus:border-[var(--shadow-border-strong)]"
+        />
+        {message ? (
+          <p className="app-title mt-3 text-center text-[12px] font-bold">
+            {message}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={saving}
+          className="mt-4 h-12 w-full rounded-[18px] bg-[#111111] text-[14px] font-normal text-white active:scale-[0.99] disabled:opacity-60 dark:bg-white dark:text-[#111111]"
+        >
+          {saving ? t('walletPage.saving') : t('walletPage.save')}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="app-card mt-3 h-12 w-full rounded-[18px] border text-[14px] font-normal active:scale-[0.99]"
+        >
+          {t('walletPage.cancel')}
+        </button>
       </div>
     </div>
   )
@@ -105,6 +302,7 @@ function PaymentProfileModal({ value, saving, message, onChange, onClose, onSave
 
 export default function WalletPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [wallet, setWallet] = useState(null)
   const [paymentName, setPaymentName] = useState('')
   const [draftPaymentName, setDraftPaymentName] = useState('')
@@ -136,7 +334,7 @@ export default function WalletPage() {
         setDraftPaymentName(nextName)
       }
     } catch {
-      setMessage('Failed to load wallet.')
+      setMessage(t('walletPage.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -159,14 +357,20 @@ export default function WalletPage() {
         body: JSON.stringify({ payment_account_name: draftPaymentName }),
       })
       const data = await response.json().catch(() => ({}))
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to save payment profile.')
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message || t('walletPage.saveProfileFailed')
+        )
+      }
       const nextName = data.user?.payment_account_name || ''
       setPaymentName(nextName)
       setDraftPaymentName(nextName)
       setShowPaymentProfileModal(false)
-      setMessage('Payment profile saved.')
+      setMessage(t('walletPage.profileSaved'))
     } catch (error) {
-      setProfileMessage(error.message || 'Failed to save payment profile.')
+      setProfileMessage(
+        error.message || t('walletPage.saveProfileFailed')
+      )
     } finally {
       setSaving(false)
     }
@@ -183,13 +387,27 @@ export default function WalletPage() {
     <div className="app-page min-h-screen pb-8">
       <header className="app-nav sticky top-0 z-40 border-b shadow-sm">
         <div className="flex h-14 items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate('/me', { replace: true })} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]" aria-label="Go back">
+          <button
+            type="button"
+            onClick={() => navigate('/me', { replace: true })}
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]"
+            aria-label={t('walletPage.goBack')}
+          >
             <i className="fas fa-chevron-left text-[18px] text-[var(--shadow-text-primary)]" />
           </button>
-          <h1 className="app-title flex-1 text-[18px] font-bold tracking-tight">Wallet</h1>
-          <button type="button" onClick={openPaymentProfileModal} className="app-card app-muted relative flex h-9 w-9 items-center justify-center rounded-full border active:scale-95" aria-label="Payment profile">
+          <h1 className="app-title flex-1 text-[18px] font-bold tracking-tight">
+            {t('walletPage.wallet')}
+          </h1>
+          <button
+            type="button"
+            onClick={openPaymentProfileModal}
+            className="app-card app-muted relative flex h-9 w-9 items-center justify-center rounded-full border active:scale-95"
+            aria-label={t('walletPage.paymentProfile')}
+          >
             <i className="fas fa-user text-[14px]" />
-            {!paymentName ? <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border border-[var(--shadow-bg-surface)] bg-[#F59E0B]" /> : null}
+            {!paymentName ? (
+              <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border border-[var(--shadow-bg-surface)] bg-[#F59E0B]" />
+            ) : null}
           </button>
         </div>
       </header>
@@ -198,78 +416,158 @@ export default function WalletPage() {
         <section className="rounded-[20px] bg-[#F3EEFF] p-3 dark:bg-violet-500/10">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-3 px-1 py-2">
-              <span className="app-card flex h-12 w-12 shrink-0 items-center justify-center rounded-full"><DiamondIcon /></span>
+              <span className="app-card flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
+                <DiamondIcon />
+              </span>
               <div className="min-w-0">
-                <p className="app-title text-[12px] font-bold">Diamonds</p>
-                <p className="app-title mt-1 text-[24px] font-bold leading-none">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
+                <p className="app-title text-[12px] font-bold">
+                  {t('walletPage.diamonds')}
+                </p>
+                <p className="app-title mt-1 text-[24px] font-bold leading-none">
+                  {loading ? '...' : formatNumber(wallet?.diamond_balance)}
+                </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 px-1 py-2">
-              <span className="app-card flex h-12 w-12 shrink-0 items-center justify-center rounded-full"><CoinIcon /></span>
+              <span className="app-card flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
+                <CoinIcon />
+              </span>
               <div className="min-w-0">
-                <p className="app-title text-[12px] font-bold">Coins</p>
-                <p className="app-title mt-1 text-[24px] font-bold leading-none">{loading ? '...' : formatNumber(wallet?.coin_balance ?? wallet?.gem_balance)}</p>
+                <p className="app-title text-[12px] font-bold">
+                  {t('walletPage.coins')}
+                </p>
+                <p className="app-title mt-1 text-[24px] font-bold leading-none">
+                  {loading
+                    ? '...'
+                    : formatNumber(
+                        wallet?.coin_balance ?? wallet?.gem_balance
+                      )}
+                </p>
               </div>
             </div>
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => navigate('/tasks')} className="app-card flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[13px] font-semibold active:scale-[0.98]">
+            <button
+              type="button"
+              onClick={() => navigate('/tasks')}
+              className="app-card flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[13px] font-semibold active:scale-[0.98]"
+            >
               <EarnIcon />
-              <span>Earn</span>
+              <span>{t('walletPage.earn')}</span>
             </button>
-            <button type="button" onClick={() => navigate('/shop/mall/purchase', { state: { returnTo: '/wallet' } })} className="app-card flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[13px] font-semibold active:scale-[0.98]">
+            <button
+              type="button"
+              onClick={() =>
+                navigate('/shop/mall/purchase', {
+                  state: { returnTo: '/wallet' },
+                })
+              }
+              className="app-card flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[13px] font-semibold active:scale-[0.98]"
+            >
               <TopUpIcon />
-              <span>Top-Up</span>
+              <span>{t('walletPage.topUp')}</span>
             </button>
           </div>
         </section>
 
         <section>
-          <h2 className="app-title mb-3 text-[17px] font-bold">Reading Benefits</h2>
+          <h2 className="app-title mb-3 text-[17px] font-bold">
+            {t('walletPage.readingBenefits')}
+          </h2>
 
-          <button type="button" onClick={() => navigate('/tasks')} className="app-soft flex w-full items-center gap-3 rounded-[18px] p-4 text-left active:scale-[0.99]">
+          <button
+            type="button"
+            onClick={() => navigate('/tasks')}
+            className="app-soft flex w-full items-center gap-3 rounded-[18px] p-4 text-left active:scale-[0.99]"
+          >
             <VoucherIcon />
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline gap-1.5">
-                <p className="app-title text-[14px] font-normal">Reading Vouchers</p>
-                <span className="text-[15px] font-bold text-[#6D28D9] dark:text-violet-300">{loading ? '...' : formatNumber(voucherBalance)}</span>
+                <p className="app-title text-[14px] font-normal">
+                  {t('walletPage.readingVouchers')}
+                </p>
+                <span className="text-[15px] font-bold text-[#6D28D9] dark:text-violet-300">
+                  {loading ? '...' : formatNumber(voucherBalance)}
+                </span>
               </div>
-              <p className="app-muted mt-1 text-[11px] font-medium">Unlock 1 episode permanently</p>
+              <p className="app-muted mt-1 text-[11px] font-medium">
+                {t('walletPage.voucherHelp')}
+              </p>
             </div>
             <i className="fas fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
           </button>
 
           <div className="relative mt-4 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#FFF9F7] via-[#FFF0EA] to-[#FFE8E4] p-4 dark:from-rose-500/10 dark:via-orange-500/10 dark:to-pink-500/10">
-            <img src="/assets/Icons/Openbook.webp" alt="" className="pointer-events-none absolute -bottom-5 -right-2 w-[125px] select-none object-contain opacity-35" />
-            <div className="absolute right-10 top-5 text-[12px] text-[#8B5CF6]">✦</div>
-            <div className="absolute right-5 top-4 text-[13px] text-[#FF5B5B]">✦</div>
+            <img
+              src="/assets/Icons/Openbook.webp"
+              alt=""
+              className="pointer-events-none absolute -bottom-5 -right-2 w-[125px] select-none object-contain opacity-35"
+            />
+            <div className="absolute right-10 top-5 text-[12px] text-[#8B5CF6]">
+              ✦
+            </div>
+            <div className="absolute right-5 top-4 text-[13px] text-[#FF5B5B]">
+              ✦
+            </div>
             <div className="relative flex items-start gap-3">
               <BookPassIcon />
               <div className="min-w-0 flex-1 pt-1">
                 <div className="flex items-baseline gap-1.5">
-                  <p className="app-title text-[18px] font-bold">Free Book Pass</p>
-                  <span className="text-[16px] font-bold text-[#FF4D5F] dark:text-rose-300">{loading ? '...' : formatNumber(bookPassBalance)}</span>
+                  <p className="app-title text-[18px] font-bold">
+                    {t('walletPage.freeBookPass')}
+                  </p>
+                  <span className="text-[16px] font-bold text-[#FF4D5F] dark:text-rose-300">
+                    {loading ? '...' : formatNumber(bookPassBalance)}
+                  </span>
                 </div>
-                <p className="app-muted mt-1 text-[11px] font-medium leading-5">Unlock 1 completed story permanently</p>
+                <p className="app-muted mt-1 text-[11px] font-medium leading-5">
+                  {t('walletPage.bookPassHelp')}
+                </p>
               </div>
             </div>
-            <button type="button" disabled={bookPassBalance < 1} onClick={() => setMessage('Free Book Pass selection will be connected in the next step.')} className="relative mt-4 h-11 w-full rounded-full bg-gradient-to-r from-[#FF6B57] to-[#FF3F7D] text-[14px] font-bold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45">Use Now</button>
+            <button
+              type="button"
+              disabled={bookPassBalance < 1}
+              onClick={() =>
+                setMessage(t('walletPage.bookPassNextStep'))
+              }
+              className="relative mt-4 h-11 w-full rounded-full bg-gradient-to-r from-[#FF6B57] to-[#FF3F7D] text-[14px] font-bold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {t('walletPage.useNow')}
+            </button>
           </div>
         </section>
 
-        <button type="button" onClick={() => navigate('/wallet/orders')} className="app-soft flex h-[62px] w-full items-center gap-3 rounded-[18px] px-4 text-left active:scale-[0.99]">
+        <button
+          type="button"
+          onClick={() => navigate('/wallet/orders')}
+          className="app-soft flex h-[62px] w-full items-center gap-3 rounded-[18px] px-4 text-left active:scale-[0.99]"
+        >
           <OrderHistoryIcon />
-          <span className="app-title flex-1 text-[14px] font-normal">Order History</span>
+          <span className="app-title flex-1 text-[14px] font-normal">
+            {t('walletPage.orderHistory')}
+          </span>
           <i className="fas fa-chevron-right text-[13px] text-[#6D28D9] dark:text-violet-300" />
         </button>
 
-        {message ? <p className="app-title text-center text-[12px] font-bold">{message}</p> : null}
+        {message ? (
+          <p className="app-title text-center text-[12px] font-bold">
+            {message}
+          </p>
+        ) : null}
       </main>
 
       {showPaymentProfileModal ? (
-        <PaymentProfileModal value={draftPaymentName} saving={saving} message={profileMessage} onChange={setDraftPaymentName} onClose={() => setShowPaymentProfileModal(false)} onSave={savePaymentProfile} />
+        <PaymentProfileModal
+          value={draftPaymentName}
+          saving={saving}
+          message={profileMessage}
+          onChange={setDraftPaymentName}
+          onClose={() => setShowPaymentProfileModal(false)}
+          onSave={savePaymentProfile}
+        />
       ) : null}
     </div>
   )
