@@ -1,12 +1,68 @@
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerQrScannerSheet', {
+  en: {
+    pointCamera: 'Point your camera at a Shadow profile QR code.',
+    cameraUnavailable: 'Camera is unavailable. You can choose a QR image instead.',
+    readingImage: 'Reading QR image...',
+    noQrFound: 'No QR code was found in this image.',
+    closeScanner: 'Close scanner',
+    scanProfileQr: 'Scan profile QR',
+    chooseQrImage: 'Choose QR image',
+    tryCameraAgain: 'Try camera again',
+  },
+  km: {
+    pointCamera: 'តម្រង់កាមេរ៉ាទៅកាន់ QR Code របស់ Shadow Profile។',
+    cameraUnavailable: 'មិនអាចប្រើកាមេរ៉ាបានទេ។ អ្នកអាចជ្រើសរើសរូបភាព QR ជំនួសបាន។',
+    readingImage: 'កំពុងអានរូបភាព QR...',
+    noQrFound: 'រកមិនឃើញ QR Code ក្នុងរូបភាពនេះទេ។',
+    closeScanner: 'បិទ Scanner',
+    scanProfileQr: 'ស្កេន QR របស់ Profile',
+    chooseQrImage: 'ជ្រើសរើសរូបភាព QR',
+    tryCameraAgain: 'សាកកាមេរ៉ាម្តងទៀត',
+  },
+  zh: {
+    pointCamera: '将摄像头对准 Shadow 个人资料二维码。',
+    cameraUnavailable: '摄像头不可用。你可以改为选择二维码图片。',
+    readingImage: '正在读取二维码图片...',
+    noQrFound: '此图片中未找到二维码。',
+    closeScanner: '关闭扫描器',
+    scanProfileQr: '扫描个人资料二维码',
+    chooseQrImage: '选择二维码图片',
+    tryCameraAgain: '再次尝试摄像头',
+  },
+  ja: {
+    pointCamera: 'Shadow プロフィールのQRコードにカメラを向けてください。',
+    cameraUnavailable: 'カメラを利用できません。代わりにQR画像を選択できます。',
+    readingImage: 'QR画像を読み取り中...',
+    noQrFound: 'この画像にQRコードが見つかりませんでした。',
+    closeScanner: 'スキャナーを閉じる',
+    scanProfileQr: 'プロフィールQRをスキャン',
+    chooseQrImage: 'QR画像を選択',
+    tryCameraAgain: 'カメラを再試行',
+  },
+  ko: {
+    pointCamera: '카메라를 Shadow 프로필 QR 코드에 맞춰 주세요.',
+    cameraUnavailable: '카메라를 사용할 수 없습니다. 대신 QR 이미지를 선택할 수 있습니다.',
+    readingImage: 'QR 이미지를 읽는 중...',
+    noQrFound: '이 이미지에서 QR 코드를 찾을 수 없습니다.',
+    closeScanner: '스캐너 닫기',
+    scanProfileQr: '프로필 QR 스캔',
+    chooseQrImage: 'QR 이미지 선택',
+    tryCameraAgain: '카메라 다시 시도',
+  },
+})
 
 const SCANNER_ELEMENT_ID = 'shadow-reader-qr-scanner'
 
 export default function ReaderQrScannerSheet({ open, onClose, onResult }) {
+  const { t } = useDisplayTranslation()
   const scannerRef = useRef(null)
   const handledRef = useRef(false)
-  const [message, setMessage] = useState('Point your camera at a Shadow profile QR code.')
+  const [message, setMessage] = useState(() => t('readerQrScannerSheet.pointCamera'))
   const [starting, setStarting] = useState(false)
   const [cameraActive, setCameraActive] = useState(false)
 
@@ -43,7 +99,7 @@ export default function ReaderQrScannerSheet({ open, onClose, onResult }) {
 
     let cancelled = false
     handledRef.current = false
-    setMessage('Point your camera at a Shadow profile QR code.')
+    setMessage(t('readerQrScannerSheet.pointCamera'))
     setStarting(true)
     setCameraActive(false)
 
@@ -73,7 +129,7 @@ export default function ReaderQrScannerSheet({ open, onClose, onResult }) {
         if (!cancelled) {
           setStarting(false)
           setCameraActive(false)
-          setMessage(error?.message || 'Camera is unavailable. You can choose a QR image instead.')
+          setMessage(error?.message || t('readerQrScannerSheet.cameraUnavailable'))
         }
       })
 
@@ -88,7 +144,7 @@ export default function ReaderQrScannerSheet({ open, onClose, onResult }) {
     if (!file) return
 
     try {
-      setMessage('Reading QR image...')
+      setMessage(t('readerQrScannerSheet.readingImage'))
       await stopScanner()
 
       const scanner = new Html5Qrcode(SCANNER_ELEMENT_ID)
@@ -97,7 +153,7 @@ export default function ReaderQrScannerSheet({ open, onClose, onResult }) {
       await finishScan(decodedText)
     } catch (error) {
       handledRef.current = false
-      setMessage(error?.message || 'No QR code was found in this image.')
+      setMessage(error?.message || t('readerQrScannerSheet.noQrFound'))
     }
   }
 
@@ -116,12 +172,14 @@ export default function ReaderQrScannerSheet({ open, onClose, onResult }) {
             type="button"
             onClick={handleClose}
             className="flex h-10 w-10 items-center justify-center rounded-full active:bg-white/10"
-            aria-label="Close scanner"
+            aria-label={t('readerQrScannerSheet.closeScanner')}
           >
             <i className="fa-solid fa-xmark text-[22px]" />
           </button>
 
-          <h1 className="text-[17px] font-semibold">Scan profile QR</h1>
+          <h1 className="text-[17px] font-semibold">
+            {t('readerQrScannerSheet.scanProfileQr')}
+          </h1>
 
           <div className="h-10 w-10" />
         </header>
@@ -147,7 +205,7 @@ export default function ReaderQrScannerSheet({ open, onClose, onResult }) {
 
           <label className="mx-auto mt-6 flex h-12 w-full max-w-[360px] cursor-pointer items-center justify-center rounded-[14px] bg-white text-[14px] font-semibold text-[#111827] active:scale-[0.99]">
             <i className="fa-regular fa-image mr-2 text-[16px]" />
-            Choose QR image
+            {t('readerQrScannerSheet.chooseQrImage')}
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
@@ -165,7 +223,7 @@ export default function ReaderQrScannerSheet({ open, onClose, onResult }) {
               onClick={() => window.location.reload()}
               className="mx-auto mt-3 h-11 w-full max-w-[360px] rounded-[14px] border border-white/20 text-[13px] font-semibold text-white active:bg-white/10"
             >
-              Try camera again
+              {t('readerQrScannerSheet.tryCameraAgain')}
             </button>
           ) : null}
         </main>
