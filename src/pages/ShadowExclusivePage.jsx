@@ -326,7 +326,7 @@ function CrownBadge() {
   const { t } = useDisplayTranslation()
 
   return (
-    <div className="absolute right-2 top-2 z-10 rounded-full border border-white/10 bg-[#23182d]/90 px-1.5 py-1 shadow-md">
+    <div className="absolute right-2 top-2 z-10 rounded-full border border-[#e7d8f1] bg-white/90 px-1.5 py-1 shadow-md dark:border-white/10 dark:bg-[#23182d]/90">
       <div className="flex items-center gap-1">
         <svg className="h-2.5 w-2.5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
           <path d="M3 18h18l-1.6-9-4.9 3.4L12 6 9.5 12.4 4.6 9 3 18z" />
@@ -344,19 +344,19 @@ function PlaceholderCover({ featured = false }) {
 
   return (
     <div
-      className={`relative flex items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/70 bg-[#2a2036] shadow-[0_0_10px_rgba(250,204,21,0.22)] ${
+      className={`relative flex items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/70 bg-[#f7f2fb] shadow-[0_0_10px_rgba(250,204,21,0.16)] dark:bg-[#2a2036] dark:shadow-[0_0_10px_rgba(250,204,21,0.22)] ${
         featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
       }`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#6f3ca6]/[0.06] via-transparent to-transparent dark:from-white/[0.06]" />
       <div className="px-3 text-center">
-        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5">
-          <svg className="h-5 w-5 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border border-[#e7d8f1] bg-white dark:border-white/10 dark:bg-white/5">
+          <svg className="h-5 w-5 text-[#8c739f] dark:text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4z" />
             <path d="M8 4v13a3 3 0 003 3" />
           </svg>
         </div>
-        <div className="text-[11px] font-bold uppercase tracking-wider text-white/35">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-[#8c739f] dark:text-white/35">
           {t('shadowExclusivePage.noCover')}
         </div>
       </div>
@@ -411,7 +411,7 @@ function BookCard({ book, featured = false }) {
     <button type="button" onClick={() => navigate(book.link)} className="group min-w-0 cursor-pointer text-left">
       {hasImage ? (
         <div
-          className={`relative overflow-hidden rounded-2xl border border-yellow-400/70 bg-[#2a2036] shadow-[0_0_10px_rgba(250,204,21,0.22)] ${
+          className={`relative overflow-hidden rounded-2xl border border-yellow-400/70 bg-[#f7f2fb] shadow-[0_0_10px_rgba(250,204,21,0.16)] dark:bg-[#2a2036] dark:shadow-[0_0_10px_rgba(250,204,21,0.22)] ${
             featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
           }`}
         >
@@ -431,8 +431,8 @@ function BookCard({ book, featured = false }) {
       )}
 
       <div className="mt-2 min-w-0 px-0.5">
-        <h3 className="truncate text-[12px] font-bold text-white">{title}</h3>
-        <p className="mt-1 truncate text-[10px] text-white/55">
+        <h3 className="truncate text-[12px] font-bold text-[#25142f] dark:text-white">{title}</h3>
+        <p className="mt-1 truncate text-[10px] text-[#8c739f] dark:text-white/55">
           {getEpisodeLabel(book.episode, t)}
         </p>
       </div>
@@ -446,10 +446,10 @@ function SectionHeader({ title, subtitle }) {
   return (
     <div className="mb-4 flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-[15px] font-extrabold tracking-tight text-white">{title}</h2>
-        <p className="mt-0.5 text-[11px] text-white/55">{subtitle}</p>
+        <h2 className="text-[15px] font-extrabold tracking-tight text-[#25142f] dark:text-white">{title}</h2>
+        <p className="mt-0.5 text-[11px] text-[#8c739f] dark:text-white/55">{subtitle}</p>
       </div>
-      <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-white/50">
+      <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-[#8c739f] dark:text-white/50">
         {t('shadowExclusivePage.premium')}
       </span>
     </div>
@@ -461,9 +461,9 @@ function LoadingBooks({ featured }) {
     <div className={featured ? 'grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-6' : 'grid grid-cols-3 gap-x-3 gap-y-5 md:grid-cols-6'}>
       {Array.from({ length: 6 }).map((_, index) => (
         <div key={index}>
-          <div className={`${featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'} animate-pulse rounded-2xl bg-white/10`} />
-          <div className="mt-2 h-3 animate-pulse rounded-full bg-white/10" />
-          <div className="mt-2 h-2 w-2/3 animate-pulse rounded-full bg-white/10" />
+          <div className={`${featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'} animate-pulse rounded-2xl bg-[#ece3f3] dark:bg-white/10`} />
+          <div className="mt-2 h-3 animate-pulse rounded-full bg-[#ece3f3] dark:bg-white/10" />
+          <div className="mt-2 h-2 w-2/3 animate-pulse rounded-full bg-[#ece3f3] dark:bg-white/10" />
         </div>
       ))}
     </div>
@@ -475,7 +475,7 @@ function EmptySection({ featured }) {
 
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-6 text-center text-[11px] font-semibold text-white/50 ${
+      className={`rounded-2xl border border-[#eadff1] bg-white px-4 py-6 text-center text-[11px] font-semibold text-[#8c739f] dark:border-white/10 dark:bg-white/[0.04] dark:text-white/50 ${
         featured ? '' : ''
       }`}
     >
@@ -620,10 +620,10 @@ export default function ShadowExclusivePage() {
   const displaySections = useMemo(() => sectionConfigs, [])
 
   return (
-    <div className="min-h-screen bg-[#17091f] pb-32 text-white md:pb-24">
-      <header className="sticky top-0 z-40 bg-[#17091f]/95 backdrop-blur-md">
+    <div className="app-page min-h-screen bg-[#fbf8fd] pb-32 text-[#25142f] dark:bg-[#17091f] dark:text-white md:pb-24">
+      <header className="sticky top-0 z-40 border-b border-[#eee4f3] bg-white/95 backdrop-blur-md dark:border-white/5 dark:bg-[#17091f]/95">
         <div className="flex h-14 items-center justify-center px-4">
-          <h1 className="text-[18px] font-extrabold tracking-tight">
+          <h1 className="text-[18px] font-extrabold tracking-tight text-[#25142f] dark:text-white">
             {t('shadowExclusivePage.title')}
           </h1>
         </div>
@@ -664,16 +664,16 @@ export default function ShadowExclusivePage() {
               const keys = FEATURE_LABEL_KEYS[item.title] || []
 
               return (
-                <div key={item.title} className="rounded-[22px] border border-white/8 bg-[#2a1536] px-3 py-4 text-center shadow-md">
-                  <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#3d2250] text-[18px] text-yellow-300">
+                <div key={item.title} className="rounded-[22px] border border-[#eadff1] bg-white px-3 py-4 text-center shadow-sm dark:border-white/8 dark:bg-[#2a1536] dark:shadow-md">
+                  <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#efe4f7] text-[18px] text-[#6f3ca6] dark:bg-[#3d2250] dark:text-yellow-300">
                     {item.iconText}
                   </div>
-                  <div className="text-[10px] font-black uppercase leading-tight tracking-tight text-white">
+                  <div className="text-[10px] font-black uppercase leading-tight tracking-tight text-[#25142f] dark:text-white">
                     {keys[0]
                       ? t(`shadowExclusivePage.${keys[0]}`)
                       : item.title}
                   </div>
-                  <div className="mt-1 text-[9px] font-semibold text-white/55">
+                  <div className="mt-1 text-[9px] font-semibold text-[#8c739f] dark:text-white/55">
                     {keys[1]
                       ? t(`shadowExclusivePage.${keys[1]}`)
                       : item.subtitle}
@@ -685,13 +685,13 @@ export default function ShadowExclusivePage() {
         </section>
 
         <section className="mt-6">
-          <div className="no-scrollbar flex gap-2 overflow-x-auto rounded-full bg-[#25142f] p-1.5">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto rounded-full border border-[#eadff1] bg-white p-1.5 dark:border-transparent dark:bg-[#25142f]">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`min-w-fit rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-wider transition-all ${
-                  activeTab === tab ? 'bg-[#ffd34d] text-[#1d1027]' : 'text-white/45'
+                  activeTab === tab ? 'bg-[#ffd34d] text-[#1d1027]' : 'text-[#8c739f] dark:text-white/45'
                 }`}
               >
                 {t(`shadowExclusivePage.${TAB_LABEL_KEYS[tab]}`)}
@@ -707,18 +707,18 @@ export default function ShadowExclusivePage() {
         </section>
 
         <section className="mt-8">
-          <div className="rounded-[24px] border border-white/8 bg-[#201129] px-4 py-5 shadow-lg md:px-5 md:py-6">
+          <div className="rounded-[24px] border border-[#eadff1] bg-white px-4 py-5 shadow-sm dark:border-white/8 dark:bg-[#201129] dark:shadow-lg md:px-5 md:py-6">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0 pr-2">
-                <h3 className="text-[13px] font-extrabold text-white">
+                <h3 className="text-[13px] font-extrabold text-[#25142f] dark:text-white">
                   {t('shadowExclusivePage.contactTitle')}
                 </h3>
-                <p className="mt-1 break-words text-[10px] leading-4 text-white/50">
+                <p className="mt-1 break-words text-[10px] leading-4 text-[#8c739f] dark:text-white/50">
                   {t('shadowExclusivePage.contactSubtitle')}
                 </p>
               </div>
 
-              <button className="shrink-0 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white">
+              <button className="shrink-0 rounded-full border border-[#e7d8f1] bg-[#f7f2fb] px-4 py-2 text-[10px] font-black uppercase tracking-wider text-[#25142f] dark:border-white/10 dark:bg-white/5 dark:text-white">
                 {t('shadowExclusivePage.support')}
               </button>
             </div>
