@@ -1,5 +1,105 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('searchPage', {
+  en: {
+    trendingNow: 'Trending Now',
+    popular: 'Popular',
+    newReleases: 'New Releases',
+    authorName: 'Author Name',
+    loadFailed: 'Failed to load stories',
+    searchPlaceholder: 'Search Shadow...',
+    cancel: 'Cancel',
+    recentSearches: 'Recent Searches',
+    clearAllHistory: 'Clear all search history',
+    removeHistory: 'Remove {{keyword}}',
+    noRecentSearches: 'No recent searches yet.',
+    searchFor: 'Search: {{keyword}}',
+    clear: 'Clear',
+    storyCover: 'Story cover',
+    untitledStory: 'Untitled Story',
+    byAuthor: 'by {{author}}',
+    noStories: 'No stories found.',
+  },
+  km: {
+    trendingNow: 'កំពុងពេញនិយម',
+    popular: 'ពេញនិយម',
+    newReleases: 'ចេញថ្មី',
+    authorName: 'ឈ្មោះអ្នកនិពន្ធ',
+    loadFailed: 'មិនអាចផ្ទុករឿងបានទេ',
+    searchPlaceholder: 'ស្វែងរកក្នុង Shadow...',
+    cancel: 'បោះបង់',
+    recentSearches: 'ការស្វែងរកថ្មីៗ',
+    clearAllHistory: 'លុបប្រវត្តិស្វែងរកទាំងអស់',
+    removeHistory: 'លុប {{keyword}}',
+    noRecentSearches: 'មិនទាន់មានការស្វែងរកថ្មីៗទេ។',
+    searchFor: 'ស្វែងរក៖ {{keyword}}',
+    clear: 'សម្អាត',
+    storyCover: 'គម្របរឿង',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    byAuthor: 'ដោយ {{author}}',
+    noStories: 'រកមិនឃើញរឿងទេ។',
+  },
+  zh: {
+    trendingNow: '当前热门',
+    popular: '热门',
+    newReleases: '最新发布',
+    authorName: '作者姓名',
+    loadFailed: '无法加载故事',
+    searchPlaceholder: '搜索 Shadow...',
+    cancel: '取消',
+    recentSearches: '最近搜索',
+    clearAllHistory: '清除全部搜索记录',
+    removeHistory: '移除 {{keyword}}',
+    noRecentSearches: '暂无最近搜索。',
+    searchFor: '搜索：{{keyword}}',
+    clear: '清除',
+    storyCover: '故事封面',
+    untitledStory: '无标题故事',
+    byAuthor: '作者：{{author}}',
+    noStories: '未找到故事。',
+  },
+  ja: {
+    trendingNow: 'トレンド',
+    popular: '人気',
+    newReleases: '新着',
+    authorName: '作者名',
+    loadFailed: 'ストーリーを読み込めませんでした',
+    searchPlaceholder: 'Shadow を検索...',
+    cancel: 'キャンセル',
+    recentSearches: '最近の検索',
+    clearAllHistory: '検索履歴をすべて削除',
+    removeHistory: '{{keyword}} を削除',
+    noRecentSearches: '最近の検索はまだありません。',
+    searchFor: '検索：{{keyword}}',
+    clear: 'クリア',
+    storyCover: 'ストーリーの表紙',
+    untitledStory: '無題のストーリー',
+    byAuthor: '{{author}} 著',
+    noStories: 'ストーリーが見つかりません。',
+  },
+  ko: {
+    trendingNow: '지금 인기',
+    popular: '인기',
+    newReleases: '신규 출시',
+    authorName: '작가 이름',
+    loadFailed: '스토리를 불러오지 못했습니다',
+    searchPlaceholder: 'Shadow 검색...',
+    cancel: '취소',
+    recentSearches: '최근 검색',
+    clearAllHistory: '검색 기록 모두 지우기',
+    removeHistory: '{{keyword}} 삭제',
+    noRecentSearches: '아직 최근 검색이 없습니다.',
+    searchFor: '검색: {{keyword}}',
+    clear: '지우기',
+    storyCover: '스토리 표지',
+    untitledStory: '제목 없는 스토리',
+    byAuthor: '{{author}} 작가',
+    noStories: '스토리를 찾을 수 없습니다.',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -12,6 +112,12 @@ const TABS = [
   { label: 'Popular', sort: 'popular' },
   { label: 'New Releases', sort: 'new' },
 ]
+
+const TAB_LABEL_KEYS = {
+  'Trending Now': 'trendingNow',
+  Popular: 'popular',
+  'New Releases': 'newReleases',
+}
 
 const SEARCH_HISTORY_KEY = 'shadow_search_history'
 
@@ -51,17 +157,23 @@ function formatCount(value) {
   return String(number)
 }
 
-function getAuthorName(story) {
+function getAuthorName(story, t) {
   return (
     story?.author_page?.page_name ||
     story?.authorPage?.page_name ||
     story?.author?.page_name ||
     story?.author_name ||
-    'Author Name'
+    t('searchPage.authorName')
   )
 }
 
+function getTabLabel(tabLabel, t) {
+  const key = TAB_LABEL_KEYS[tabLabel]
+  return key ? t(`searchPage.${key}`) : tabLabel
+}
+
 export default function Search() {
+  const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState(TABS[0].label)
   const [searchText, setSearchText] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
@@ -101,7 +213,7 @@ export default function Search() {
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load stories')
+          throw new Error(data.message || t('searchPage.loadFailed'))
         }
 
         if (ignore) return
@@ -111,7 +223,7 @@ export default function Search() {
         if (ignore) return
 
         setStories([])
-        setMessage(error.message || 'Failed to load stories')
+        setMessage(error.message || t('searchPage.loadFailed'))
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -199,7 +311,7 @@ export default function Search() {
                 value={searchText}
                 onFocus={() => setIsSearchMode(true)}
                 onChange={(event) => setSearchText(event.target.value)}
-                placeholder="Search Shadow..."
+                placeholder={t('searchPage.searchPlaceholder')}
                 className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-10 shadow-sm outline-none focus:border-[#111827]"
               />
               {searchText ? (
@@ -219,7 +331,7 @@ export default function Search() {
                 onClick={handleCancelSearch}
                 className="shrink-0 text-[13px] font-extrabold text-[#111827]"
               >
-                Cancel
+                {t('searchPage.cancel')}
               </button>
             ) : null}
           </form>
@@ -228,14 +340,16 @@ export default function Search() {
         {isSearchMode ? (
           <main className="mx-auto max-w-3xl px-4 pt-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-[15px] font-extrabold text-[#111827]">Recent Searches</h2>
+              <h2 className="text-[15px] font-extrabold text-[#111827]">
+                {t('searchPage.recentSearches')}
+              </h2>
 
               {searchHistory.length ? (
                 <button
                   type="button"
                   onClick={handleClearHistory}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-95"
-                  aria-label="Clear all search history"
+                  aria-label={t('searchPage.clearAllHistory')}
                 >
                   <i className="fa-regular fa-trash-can text-[14px]" />
                 </button>
@@ -262,7 +376,9 @@ export default function Search() {
                       type="button"
                       onClick={() => handleRemoveHistory(keyword)}
                       className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#111827]"
-                      aria-label={`Remove ${keyword}`}
+                      aria-label={t('searchPage.removeHistory', {
+                        keyword,
+                      })}
                     >
                       <i className="fa-solid fa-xmark text-[14px]" />
                     </button>
@@ -271,7 +387,7 @@ export default function Search() {
               </div>
             ) : (
               <div className="mt-5 rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100">
-                No recent searches yet.
+                {t('searchPage.noRecentSearches')}
               </div>
             )}
           </main>
@@ -291,7 +407,7 @@ export default function Search() {
                     activeTab === tab.label ? 'border-b-[3px] border-[#111827] font-black text-[#111827]' : ''
                   }`}
                 >
-                  {tab.label}
+                  {getTabLabel(tab.label, t)}
                 </button>
               ))}
             </nav>
@@ -301,7 +417,11 @@ export default function Search() {
                 <div className="flex min-w-0 items-center space-x-3">
                   <div className="h-6 w-1.5 shrink-0 rounded-full bg-[#111827]" />
                   <h2 className="truncate text-xl font-extrabold">
-                    {activeSearch ? `Search: ${activeSearch}` : activeTab}
+                    {activeSearch
+                      ? t('searchPage.searchFor', {
+                          keyword: activeSearch,
+                        })
+                      : getTabLabel(activeTab, t)}
                   </h2>
                 </div>
 
@@ -311,7 +431,7 @@ export default function Search() {
                     onClick={handleClearActiveSearch}
                     className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#111827] shadow-sm ring-1 ring-gray-100"
                   >
-                    Clear
+                    {t('searchPage.clear')}
                   </button>
                 ) : null}
               </div>
@@ -333,6 +453,9 @@ export default function Search() {
                 ) : stories.length ? (
                   stories.map((story, index) => {
                     const rank = index + 1
+                    const authorName = getAuthorName(story, t)
+                    const storyTitle =
+                      story.title || t('searchPage.untitledStory')
 
                     return (
                       <button
@@ -359,7 +482,7 @@ export default function Search() {
                             <img
                               src={story.cover_url}
                               className="h-full w-full object-cover"
-                              alt={story.title || 'Story cover'}
+                              alt={story.title || t('searchPage.storyCover')}
                               onError={(event) => {
                                 event.currentTarget.style.display = 'none'
                               }}
@@ -369,9 +492,13 @@ export default function Search() {
 
                         <div className="min-w-0 flex-1">
                           <h3 className={`${rank <= 3 ? 'font-extrabold' : 'font-bold'} truncate text-gray-900`}>
-                            {story.title || 'Untitled Story'}
+                            {storyTitle}
                           </h3>
-                          <p className="text-sm text-gray-400">by {getAuthorName(story)}</p>
+                          <p className="text-sm text-gray-400">
+                            {t('searchPage.byAuthor', {
+                              author: authorName,
+                            })}
+                          </p>
                           <div className="mt-4 flex items-center space-x-4 text-[12px] font-bold">
                             <span className="inline-flex items-center text-[#111827]">
                               <i className="fa-solid fa-heart mr-1 text-[#ef4444]" />
@@ -388,7 +515,7 @@ export default function Search() {
                   })
                 ) : (
                   <div className="rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100">
-                    {message || 'No stories found.'}
+                    {message || t('searchPage.noStories')}
                   </div>
                 )}
               </div>
