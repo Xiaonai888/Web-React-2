@@ -1,5 +1,130 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('reactionPage', {
+  en: {
+    love: 'Love',
+    haha: 'Haha',
+    wow: 'Wow',
+    sad: 'Sad',
+    angry: 'Angry',
+    support: 'Support',
+    touched: 'Touched',
+    loadFailed: 'Failed to load story',
+    goBack: 'Go back',
+    title: 'Reaction',
+    subtitle: 'Animated story reactions',
+    storyCover: 'Story cover',
+    story: 'Story',
+    loadingStory: 'Loading story...',
+    untitledStory: 'Untitled Story',
+    author: 'Author',
+    reacted: 'You reacted {{reaction}}',
+    chooseReaction: 'Choose your reaction',
+    removeReaction: 'Remove {{reaction}} reaction',
+    addReaction: 'Add {{reaction}} reaction',
+    storyPage: 'Story Page',
+    done: 'Done',
+  },
+  km: {
+    love: 'ស្រឡាញ់',
+    haha: 'សើច',
+    wow: 'ភ្ញាក់ផ្អើល',
+    sad: 'សោកសៅ',
+    angry: 'ខឹង',
+    support: 'គាំទ្រ',
+    touched: 'រំភើបចិត្ត',
+    loadFailed: 'មិនអាចផ្ទុករឿងបានទេ',
+    goBack: 'ត្រឡប់ក្រោយ',
+    title: 'ប្រតិកម្ម',
+    subtitle: 'ប្រតិកម្មមានចលនាសម្រាប់រឿង',
+    storyCover: 'គម្របរឿង',
+    story: 'រឿង',
+    loadingStory: 'កំពុងផ្ទុករឿង...',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    author: 'អ្នកនិពន្ធ',
+    reacted: 'អ្នកបានប្រតិកម្ម {{reaction}}',
+    chooseReaction: 'ជ្រើសរើសប្រតិកម្មរបស់អ្នក',
+    removeReaction: 'ដកប្រតិកម្ម {{reaction}}',
+    addReaction: 'បន្ថែមប្រតិកម្ម {{reaction}}',
+    storyPage: 'ទំព័ររឿង',
+    done: 'រួចរាល់',
+  },
+  zh: {
+    love: '喜欢',
+    haha: '哈哈',
+    wow: '惊讶',
+    sad: '难过',
+    angry: '生气',
+    support: '支持',
+    touched: '感动',
+    loadFailed: '无法加载故事',
+    goBack: '返回',
+    title: '表情反应',
+    subtitle: '动态故事表情反应',
+    storyCover: '故事封面',
+    story: '故事',
+    loadingStory: '正在加载故事...',
+    untitledStory: '无标题故事',
+    author: '作者',
+    reacted: '你选择了 {{reaction}}',
+    chooseReaction: '选择你的反应',
+    removeReaction: '移除 {{reaction}} 反应',
+    addReaction: '添加 {{reaction}} 反应',
+    storyPage: '故事页面',
+    done: '完成',
+  },
+  ja: {
+    love: 'ラブ',
+    haha: '笑い',
+    wow: 'びっくり',
+    sad: '悲しい',
+    angry: '怒り',
+    support: '応援',
+    touched: '感動',
+    loadFailed: 'ストーリーを読み込めませんでした',
+    goBack: '戻る',
+    title: 'リアクション',
+    subtitle: 'アニメーション付きストーリーリアクション',
+    storyCover: 'ストーリーの表紙',
+    story: 'ストーリー',
+    loadingStory: 'ストーリーを読み込み中...',
+    untitledStory: '無題のストーリー',
+    author: '作者',
+    reacted: '{{reaction}}でリアクションしました',
+    chooseReaction: 'リアクションを選択',
+    removeReaction: '{{reaction}}のリアクションを削除',
+    addReaction: '{{reaction}}のリアクションを追加',
+    storyPage: 'ストーリーページ',
+    done: '完了',
+  },
+  ko: {
+    love: '좋아요',
+    haha: '웃겨요',
+    wow: '놀라워요',
+    sad: '슬퍼요',
+    angry: '화나요',
+    support: '응원해요',
+    touched: '감동이에요',
+    loadFailed: '스토리를 불러오지 못했습니다',
+    goBack: '뒤로 가기',
+    title: '반응',
+    subtitle: '애니메이션 스토리 반응',
+    storyCover: '스토리 표지',
+    story: '스토리',
+    loadingStory: '스토리를 불러오는 중...',
+    untitledStory: '제목 없는 스토리',
+    author: '작가',
+    reacted: '{{reaction}} 반응을 남겼습니다',
+    chooseReaction: '반응을 선택하세요',
+    removeReaction: '{{reaction}} 반응 삭제',
+    addReaction: '{{reaction}} 반응 추가',
+    storyPage: '스토리 페이지',
+    done: '완료',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -83,15 +208,29 @@ function formatNumber(value) {
   const number = Number(value || 0)
 
   if (!Number.isFinite(number) || number <= 0) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1).replace(/\.0$/, '')}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1).replace(/\.0$/, '')}K`
+  if (number >= 1000000) {
+    return `${(number / 1000000)
+      .toFixed(number >= 10000000 ? 0 : 1)
+      .replace(/\.0$/, '')}M`
+  }
+  if (number >= 1000) {
+    return `${(number / 1000)
+      .toFixed(number >= 10000 ? 0 : 1)
+      .replace(/\.0$/, '')}K`
+  }
 
   return String(number)
+}
+
+function getReactionDisplayLabel(reaction, t) {
+  if (!reaction?.type) return ''
+  return t(`reactionPage.${reaction.type}`)
 }
 
 export default function ReactionPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
+  const { t } = useDisplayTranslation()
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -100,11 +239,17 @@ export default function ReactionPage() {
   const [activePop, setActivePop] = useState('')
 
   const baseCount = useMemo(() => {
-    return Number(story?.like_count || story?.likes_count || story?.reaction_count || 0)
+    return Number(
+      story?.like_count ||
+        story?.likes_count ||
+        story?.reaction_count ||
+        0
+    )
   }, [story])
 
   const totalReactions = baseCount + localCount
-  const activeReaction = REACTIONS.find((item) => item.type === selectedReaction) || null
+  const activeReaction =
+    REACTIONS.find((item) => item.type === selectedReaction) || null
 
   useEffect(() => {
     const saved = readReaction(storyId)
@@ -126,16 +271,24 @@ export default function ReactionPage() {
       setMessage('')
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/public/stories/${storyId}`)
+        const response = await fetch(
+          `${API_BASE_URL}/api/public/stories/${storyId}`
+        )
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load story')
+          throw new Error(
+            data.message || t('reactionPage.loadFailed')
+          )
         }
 
         if (!ignore) setStory(data.story || null)
       } catch (error) {
-        if (!ignore) setMessage(error.message || 'Failed to load story')
+        if (!ignore) {
+          setMessage(
+            error.message || t('reactionPage.loadFailed')
+          )
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -227,14 +380,18 @@ export default function ReactionPage() {
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Go back"
+            aria-label={t('reactionPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[17px] font-black">Reaction</h1>
-            <p className="text-[11.5px] font-semibold text-[#8d94a1]">Animated story reactions</p>
+            <h1 className="truncate text-[17px] font-black">
+              {t('reactionPage.title')}
+            </h1>
+            <p className="text-[11.5px] font-semibold text-[#8d94a1]">
+              {t('reactionPage.subtitle')}
+            </p>
           </div>
         </div>
       </header>
@@ -250,7 +407,14 @@ export default function ReactionPage() {
           <div className="flex gap-3">
             <div className="h-24 w-20 shrink-0 overflow-hidden rounded-[16px] bg-[#eef1f5]">
               {story?.cover_url ? (
-                <img src={story.cover_url} alt={story.title || 'Story cover'} className="h-full w-full object-cover" />
+                <img
+                  src={story.cover_url}
+                  alt={
+                    story.title ||
+                    t('reactionPage.storyCover')
+                  }
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
                   <i className="fa-regular fa-bookmark text-[22px]" />
@@ -259,19 +423,25 @@ export default function ReactionPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="text-[10.5px] font-black uppercase tracking-[0.08em] text-[#f6a800]">Story</div>
+              <div className="text-[10.5px] font-black uppercase tracking-[0.08em] text-[#f6a800]">
+                {t('reactionPage.story')}
+              </div>
               <h2 className="mt-1 line-clamp-2 text-[18px] font-black leading-6">
-                {loading ? 'Loading story...' : story?.title || 'Untitled Story'}
+                {loading
+                  ? t('reactionPage.loadingStory')
+                  : story?.title ||
+                    t('reactionPage.untitledStory')}
               </h2>
               <p className="mt-2 line-clamp-1 text-[12px] font-bold text-[#8d94a1]">
                 {story?.author_page?.page_name ||
                   story?.authorPage?.page_name ||
                   story?.author?.page_name ||
                   story?.author_name ||
-                  'Author'}
+                  t('reactionPage.author')}
               </p>
               <p className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#98a2b3]">
-                {story?.main_genre || 'Story'}
+                {story?.main_genre ||
+                  t('reactionPage.story')}
               </p>
             </div>
           </div>
@@ -280,56 +450,107 @@ export default function ReactionPage() {
             <div
               className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5"
               style={{
-                backgroundColor: activeReaction?.bg || '#ffffff',
-                color: activeReaction?.text || '#111827',
+                backgroundColor:
+                  activeReaction?.bg || '#ffffff',
+                color:
+                  activeReaction?.text || '#111827',
               }}
             >
               {activeReaction ? (
                 <img
                   src={activeReaction.src}
-                  alt={activeReaction.label}
-                  className={`h-16 w-16 object-contain ${activePop === activeReaction.type ? 'shadow-reaction-pop' : 'shadow-reaction-float'}`}
+                  alt={getReactionDisplayLabel(
+                    activeReaction,
+                    t
+                  )}
+                  className={`h-16 w-16 object-contain ${
+                    activePop === activeReaction.type
+                      ? 'shadow-reaction-pop'
+                      : 'shadow-reaction-float'
+                  }`}
                 />
               ) : (
                 <i className="fa-regular fa-face-smile text-[34px] text-[#98a2b3]" />
               )}
             </div>
 
-            <div className="mt-4 text-[24px] font-black">{formatNumber(totalReactions)}</div>
+            <div className="mt-4 text-[24px] font-black">
+              {formatNumber(totalReactions)}
+            </div>
             <div className="mt-1 text-[12px] font-bold text-[#8d94a1]">
-              {activeReaction ? `You reacted ${activeReaction.label}` : 'Choose your reaction'}
+              {activeReaction
+                ? t('reactionPage.reacted', {
+                    reaction:
+                      getReactionDisplayLabel(
+                        activeReaction,
+                        t
+                      ),
+                  })
+                : t('reactionPage.chooseReaction')}
             </div>
 
             <div className="mt-5 flex justify-center">
               <div className="flex max-w-full gap-2 overflow-x-auto rounded-full bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
                 {REACTIONS.map((reaction) => {
-                  const isActive = selectedReaction === reaction.type
-                  const isPopping = activePop === reaction.type
+                  const isActive =
+                    selectedReaction === reaction.type
+                  const isPopping =
+                    activePop === reaction.type
+                  const displayLabel =
+                    getReactionDisplayLabel(
+                      reaction,
+                      t
+                    )
 
                   return (
                     <button
                       key={reaction.type}
                       type="button"
-                      onClick={() => handleSelectReaction(reaction)}
+                      onClick={() =>
+                        handleSelectReaction(reaction)
+                      }
                       disabled={loading}
                       className={`shadow-reaction-button relative flex h-[54px] w-[50px] shrink-0 flex-col items-center justify-center rounded-full transition duration-200 active:scale-95 disabled:opacity-60 ${
-                        isActive ? 'scale-110 shadow-sm ring-2 ring-white' : 'hover:bg-[#f8f8fb]'
-                      } ${isPopping ? 'shadow-reaction-glow' : ''}`}
+                        isActive
+                          ? 'scale-110 shadow-sm ring-2 ring-white'
+                          : 'hover:bg-[#f8f8fb]'
+                      } ${
+                        isPopping
+                          ? 'shadow-reaction-glow'
+                          : ''
+                      }`}
                       style={{
-                        backgroundColor: isActive ? reaction.bg : 'transparent',
+                        backgroundColor: isActive
+                          ? reaction.bg
+                          : 'transparent',
                         color: reaction.text,
                       }}
-                      aria-label={`${isActive ? 'Remove' : 'Add'} ${reaction.label} reaction`}
+                      aria-label={t(
+                        isActive
+                          ? 'reactionPage.removeReaction'
+                          : 'reactionPage.addReaction',
+                        {
+                          reaction: displayLabel,
+                        }
+                      )}
                     >
                       <img
                         src={reaction.src}
                         alt=""
                         className={`shadow-reaction-icon h-8 w-8 object-contain transition duration-200 ${
-                          isPopping ? 'shadow-reaction-pop' : ''
+                          isPopping
+                            ? 'shadow-reaction-pop'
+                            : ''
                         }`}
                       />
-                      <span className={`mt-0.5 text-[9px] font-black ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-                        {reaction.label}
+                      <span
+                        className={`mt-0.5 text-[9px] font-black ${
+                          isActive
+                            ? 'opacity-100'
+                            : 'opacity-0'
+                        }`}
+                      >
+                        {displayLabel}
                       </span>
                     </button>
                   )
@@ -341,10 +562,12 @@ export default function ReactionPage() {
           <div className="mt-5 grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => navigate(`/story/${storyId}`)}
+              onClick={() =>
+                navigate(`/story/${storyId}`)
+              }
               className="flex h-12 items-center justify-center rounded-full border border-[#eceaf2] bg-white text-[13px] font-black text-[#111827] active:scale-95"
             >
-              Story Page
+              {t('reactionPage.storyPage')}
             </button>
 
             <button
@@ -352,7 +575,7 @@ export default function ReactionPage() {
               onClick={() => navigate(-1)}
               className="flex h-12 items-center justify-center rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95"
             >
-              Done
+              {t('reactionPage.done')}
             </button>
           </div>
         </div>
