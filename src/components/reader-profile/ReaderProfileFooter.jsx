@@ -212,7 +212,6 @@ export default function ReaderProfileFooter({
     storedUser?.username ||
     'Me'
 
-  const activeKey =
     location.pathname.startsWith('/chat')
       ? 'chat'
       : location.pathname.startsWith('/library')
@@ -430,13 +429,9 @@ export default function ReaderProfileFooter({
 
   const handleClick = (key) => {
     if (key === 'mall') {
-      showMessage(
-        t('readerProfileFooter.comingSoon', {
-          label: t('readerProfileFooter.mall'),
-        })
-      )
-      return
-    }
+  navigate('/store')
+  return
+}
 
     if (key === 'reel') {
       showMessage(
