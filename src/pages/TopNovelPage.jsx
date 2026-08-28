@@ -9,6 +9,101 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../utils/homeDataCache'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('topNovelPage', {
+  en: {
+    romance: 'Romance',
+    fantasy: 'Fantasy',
+    investigation: 'Investigation',
+    completed: 'Completed',
+    recentlyCompleted: 'Recently Completed',
+    untitledStory: 'Untitled Story',
+    shadowAuthor: 'Shadow Author',
+    noDescription: 'No description yet.',
+    noTopNovels: 'No top novels yet',
+    emptyBody: 'Published stories will appear here after authors publish episodes.',
+    refresh: 'Refresh',
+    failedCategory: 'Failed to load {{category}}',
+    cannotConnect: 'Cannot connect to server. Please try again later.',
+    loadFailed: 'Failed to load top novels',
+    goBack: 'Go back',
+    title: 'Top Novel',
+  },
+  km: {
+    romance: 'មនោសញ្ចេតនា',
+    fantasy: 'Fantasy',
+    investigation: 'ស៊ើបអង្កេត',
+    completed: 'បានបញ្ចប់',
+    recentlyCompleted: 'ទើបបញ្ចប់ថ្មីៗ',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    shadowAuthor: 'អ្នកនិពន្ធ Shadow',
+    noDescription: 'មិនទាន់មានការពិពណ៌នា។',
+    noTopNovels: 'មិនទាន់មានរឿងកំពូលទេ',
+    emptyBody: 'រឿងដែលបានផ្សាយ នឹងបង្ហាញនៅទីនេះ បន្ទាប់ពីអ្នកនិពន្ធផ្សាយភាគ។',
+    refresh: 'ផ្ទុកឡើងវិញ',
+    failedCategory: 'មិនអាចផ្ទុក {{category}} បានទេ',
+    cannotConnect: 'មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។',
+    loadFailed: 'មិនអាចផ្ទុករឿងកំពូលបានទេ',
+    goBack: 'ត្រឡប់ក្រោយ',
+    title: 'រឿងកំពូល',
+  },
+  zh: {
+    romance: '爱情',
+    fantasy: '奇幻',
+    investigation: '调查',
+    completed: '已完结',
+    recentlyCompleted: '最近完结',
+    untitledStory: '无标题故事',
+    shadowAuthor: 'Shadow 作者',
+    noDescription: '暂无简介。',
+    noTopNovels: '暂无热门小说',
+    emptyBody: '作者发布章节后，已发布的故事会显示在这里。',
+    refresh: '刷新',
+    failedCategory: '无法加载{{category}}',
+    cannotConnect: '无法连接服务器，请稍后重试。',
+    loadFailed: '无法加载热门小说',
+    goBack: '返回',
+    title: '热门小说',
+  },
+  ja: {
+    romance: 'ロマンス',
+    fantasy: 'ファンタジー',
+    investigation: '捜査',
+    completed: '完結',
+    recentlyCompleted: '最近完結',
+    untitledStory: '無題のストーリー',
+    shadowAuthor: 'Shadow 作者',
+    noDescription: '説明はまだありません。',
+    noTopNovels: 'トップ小説はまだありません',
+    emptyBody: '作者がエピソードを公開すると、公開済みのストーリーがここに表示されます。',
+    refresh: '更新',
+    failedCategory: '{{category}}を読み込めませんでした',
+    cannotConnect: 'サーバーに接続できません。しばらくしてからもう一度お試しください。',
+    loadFailed: 'トップ小説を読み込めませんでした',
+    goBack: '戻る',
+    title: 'トップ小説',
+  },
+  ko: {
+    romance: '로맨스',
+    fantasy: '판타지',
+    investigation: '수사',
+    completed: '완결',
+    recentlyCompleted: '최근 완결',
+    untitledStory: '제목 없는 스토리',
+    shadowAuthor: 'Shadow 작가',
+    noDescription: '아직 설명이 없습니다.',
+    noTopNovels: '아직 인기 소설이 없습니다',
+    emptyBody: '작가가 에피소드를 게시하면 공개된 스토리가 여기에 표시됩니다.',
+    refresh: '새로고침',
+    failedCategory: '{{category}}을(를) 불러오지 못했습니다',
+    cannotConnect: '서버에 연결할 수 없습니다. 나중에 다시 시도해 주세요.',
+    loadFailed: '인기 소설을 불러오지 못했습니다',
+    goBack: '뒤로 가기',
+    title: '인기 소설',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -23,6 +118,14 @@ const topNovelCategories = [
   'Completed',
   'Recently Completed',
 ]
+
+const CATEGORY_LABEL_KEYS = {
+  Romance: 'romance',
+  Fantasy: 'fantasy',
+  Investigation: 'investigation',
+  Completed: 'completed',
+  'Recently Completed': 'recentlyCompleted',
+}
 
 const queryByCategory = {
   Romance: '/api/public/stories?limit=30&sort=likes&genre=Romance',
@@ -143,6 +246,8 @@ function LoadingList() {
 }
 
 function EmptyState({ onRefresh }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="rounded-[24px] bg-white px-5 py-12 text-center shadow-sm ring-1 ring-black/5">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 text-neutral-500">
@@ -150,11 +255,11 @@ function EmptyState({ onRefresh }) {
       </div>
 
       <h2 className="mt-4 text-[18px] font-extrabold text-neutral-900">
-        No top novels yet
+        {t('topNovelPage.noTopNovels')}
       </h2>
 
       <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-neutral-500">
-        Published stories will appear here after authors publish episodes.
+        {t('topNovelPage.emptyBody')}
       </p>
 
       <button
@@ -162,138 +267,164 @@ function EmptyState({ onRefresh }) {
         onClick={onRefresh}
         className="mt-5 rounded-full bg-neutral-950 px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
       >
-        Refresh
+        {t('topNovelPage.refresh')}
       </button>
     </div>
   )
 }
 
+function getDisplayCategory(category, t) {
+  const key = CATEGORY_LABEL_KEYS[category]
+  return key ? t(`topNovelPage.${key}`) : category
+}
+
+function getDisplayTitle(title, t) {
+  return title === 'Untitled Story'
+    ? t('topNovelPage.untitledStory')
+    : title
+}
+
+function getDisplayAuthor(author, t) {
+  return author === 'Shadow Author'
+    ? t('topNovelPage.shadowAuthor')
+    : author
+}
+
+function getDisplayDescription(description, t) {
+  return description === 'No description yet.'
+    ? t('topNovelPage.noDescription')
+    : description
+}
+
 export default function TopNovelPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [activeCategory, setActiveCategory] = useState('Romance')
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [dataByCategory, setDataByCategory] = useState({})
 
   async function fetchTopNovelPageData({
-  category = activeCategory,
-  force = false,
-  signal,
-} = {}) {
-  const endpoint =
-    queryByCategory[category] ||
-    '/api/public/stories?limit=30&sort=popular'
+    category = activeCategory,
+    force = false,
+    signal,
+  } = {}) {
+    const endpoint =
+      queryByCategory[category] ||
+      '/api/public/stories?limit=30&sort=popular'
 
-  const cacheKey = getHomeCacheKey({
-    section: 'stories',
-    language: getStoryLanguageId(),
-    params: {
-      page: 'top-novel',
-      category,
-      endpoint,
-      schema: 1,
-    },
-  })
-
-  let hasCachedData = false
-
-  if (!force) {
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: TOP_NOVEL_PAGE_CACHE_MAX_AGE_MS,
-      allowExpired: true,
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'top-novel',
+        category,
+        endpoint,
+        schema: 1,
+      },
     })
 
-    if (signal?.aborted) return
+    let hasCachedData = false
 
-    hasCachedData = Array.isArray(cached?.data)
+    if (!force) {
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: TOP_NOVEL_PAGE_CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
 
-    if (hasCachedData) {
-      setDataByCategory((current) => ({
-        ...current,
-        [category]: cached.data,
-      }))
-      setLoading(false)
+      if (signal?.aborted) return
+
+      hasCachedData = Array.isArray(cached?.data)
+
+      if (hasCachedData) {
+        setDataByCategory((current) => ({
+          ...current,
+          [category]: cached.data,
+        }))
+        setLoading(false)
+        setMessage('')
+      }
+
+      if (cached?.isFresh && hasCachedData) {
+        return
+      }
+    }
+
+    try {
+      if (!hasCachedData) {
+        setLoading(true)
+      }
+
       setMessage('')
-    }
 
-    if (cached?.isFresh && hasCachedData) {
-      return
-    }
-  }
-
-  try {
-    if (!hasCachedData) {
-      setLoading(true)
-    }
-
-    setMessage('')
-
-    const response = await fetch(
-      addStoryLanguageParam(
-        `${API_BASE_URL}${endpoint}`
-      ),
-      { signal }
-    )
-    const data = await response
-      .json()
-      .catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(
-        data.message || `Failed to load ${category}`
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}${endpoint}`
+        ),
+        { signal }
       )
-    }
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-    const items = (
-      Array.isArray(data.stories) ? data.stories : []
-    ).map((story, index) =>
-      normalizeStory(story, index, category)
-    )
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
+            t('topNovelPage.failedCategory', {
+              category: getDisplayCategory(category, t),
+            })
+        )
+      }
 
-    if (signal?.aborted) return
+      const items = (
+        Array.isArray(data.stories) ? data.stories : []
+      ).map((story, index) =>
+        normalizeStory(story, index, category)
+      )
 
-    setDataByCategory((current) => ({
-      ...current,
-      [category]: items,
-    }))
+      if (signal?.aborted) return
 
-    await saveHomeCache(cacheKey, items, {
-      maxAgeMs: TOP_NOVEL_PAGE_CACHE_MAX_AGE_MS,
-    })
-  } catch (error) {
-    if (error?.name === 'AbortError') return
-
-    if (!hasCachedData) {
       setDataByCategory((current) => ({
         ...current,
-        [category]: [],
+        [category]: items,
       }))
-      setMessage(
-        error.message === 'Failed to fetch'
-          ? 'Cannot connect to server. Please try again later.'
-          : error.message || 'Failed to load top novels'
-      )
-    }
-  } finally {
-    if (!signal?.aborted) {
-      setLoading(false)
+
+      await saveHomeCache(cacheKey, items, {
+        maxAgeMs: TOP_NOVEL_PAGE_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      if (!hasCachedData) {
+        setDataByCategory((current) => ({
+          ...current,
+          [category]: [],
+        }))
+        setMessage(
+          error.message === 'Failed to fetch'
+            ? t('topNovelPage.cannotConnect')
+            : error.message || t('topNovelPage.loadFailed')
+        )
+      }
+    } finally {
+      if (!signal?.aborted) {
+        setLoading(false)
+      }
     }
   }
-}
 
-useEffect(() => {
-  const controller = new AbortController()
+  useEffect(() => {
+    const controller = new AbortController()
 
-  fetchTopNovelPageData({
-    category: activeCategory,
-    signal: controller.signal,
-  })
+    fetchTopNovelPageData({
+      category: activeCategory,
+      signal: controller.signal,
+    })
 
-  return () => {
-    controller.abort()
-  }
-}, [activeCategory])
-
+    return () => {
+      controller.abort()
+    }
+  }, [activeCategory])
 
   const filteredData = useMemo(() => {
     const realList = dataByCategory[activeCategory]
@@ -310,7 +441,7 @@ useEffect(() => {
             type="button"
             onClick={() => navigate(-1)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800"
-            aria-label="Go back"
+            aria-label={t('topNovelPage.goBack')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -329,7 +460,7 @@ useEffect(() => {
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="text-[22px]">🏆</span>
             <h1 className="line-clamp-1 text-[22px] font-extrabold tracking-tight text-neutral-900">
-              Top Novel
+              {t('topNovelPage.title')}
             </h1>
           </div>
 
@@ -337,7 +468,7 @@ useEffect(() => {
             type="button"
             onClick={() => fetchTopNovelPageData({ force: true })}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800"
-            aria-label="Refresh"
+            aria-label={t('topNovelPage.refresh')}
           >
             <i className="fa-solid fa-rotate-right text-[15px]" />
           </button>
@@ -360,7 +491,7 @@ useEffect(() => {
                     : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50'
                 }`}
               >
-                {category}
+                {getDisplayCategory(category, t)}
               </button>
             )
           })}
@@ -394,7 +525,7 @@ useEffect(() => {
                 <div className="relative h-[132px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 shadow-sm">
                   <img
                     src={item.image}
-                    alt={item.title}
+                    alt={getDisplayTitle(item.title, t)}
                     className="h-full w-full object-cover"
                     loading="lazy"
                     onError={(event) => {
@@ -411,11 +542,11 @@ useEffect(() => {
 
                 <div className="min-w-0 flex-1 pt-1">
                   <h2 className="line-clamp-1 text-[22px] font-extrabold leading-tight text-[#6b1028]">
-                    {item.title}
+                    {getDisplayTitle(item.title, t)}
                   </h2>
 
                   <p className="mt-1 line-clamp-1 text-[16px] font-bold text-neutral-900">
-                    {item.author}
+                    {getDisplayAuthor(item.author, t)}
                   </p>
 
                   <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
@@ -437,7 +568,7 @@ useEffect(() => {
                   </div>
 
                   <p className="mt-2 line-clamp-4 text-[14px] leading-7 text-neutral-800">
-                    {item.description}
+                    {getDisplayDescription(item.description, t)}
                   </p>
                 </div>
               </button>
@@ -445,8 +576,8 @@ useEffect(() => {
           </div>
         ) : (
           <EmptyState
-  onRefresh={() => fetchTopNovelPageData({ force: true })}
-/>
+            onRefresh={() => fetchTopNovelPageData({ force: true })}
+          />
         )}
       </section>
     </main>
