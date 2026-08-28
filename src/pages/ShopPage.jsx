@@ -5,12 +5,53 @@ import { getShadowMallWishlistCount } from '../utils/shadowMallWishlist'
 import PlanSection from '../components/Shop/PlanSection'
 import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('shopPage', {
+  en: {
+    goBack: 'Go back',
+    purchase: 'Purchase',
+    searchBooks: 'Search books',
+    openWishlist: 'Open wishlist',
+    openCart: 'Open cart',
+  },
+  km: {
+    goBack: 'ត្រឡប់ក្រោយ',
+    purchase: 'ទិញ',
+    searchBooks: 'ស្វែងរកសៀវភៅ',
+    openWishlist: 'បើកបញ្ជីចង់បាន',
+    openCart: 'បើកកន្ត្រក',
+  },
+  zh: {
+    goBack: '返回',
+    purchase: '购买',
+    searchBooks: '搜索书籍',
+    openWishlist: '打开愿望清单',
+    openCart: '打开购物车',
+  },
+  ja: {
+    goBack: '戻る',
+    purchase: '購入',
+    searchBooks: '本を検索',
+    openWishlist: 'ほしい物リストを開く',
+    openCart: 'カートを開く',
+  },
+  ko: {
+    goBack: '뒤로 가기',
+    purchase: '구매',
+    searchBooks: '도서 검색',
+    openWishlist: '위시리스트 열기',
+    openCart: '장바구니 열기',
+  },
+})
 
 const tabs = ['Shadow Mall', 'Plans']
 
 export default function ShopPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Shadow Mall')
   const purchaseReturnTo = location.state?.returnTo || location.state?.from || ''
   const isPurchaseMode = activeTab === 'Purchase'
@@ -19,10 +60,10 @@ export default function ShopPage() {
   const [wishlistCount, setWishlistCount] = useState(() => getShadowMallWishlistCount())
 
   useEffect(() => {
-  if (location.state?.activeTab) {
-    setActiveTab(location.state.activeTab)
-  }
-}, [location.state])
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab)
+    }
+  }, [location.state])
 
   useEffect(() => {
     const refreshCartCount = () => {
@@ -52,89 +93,105 @@ export default function ShopPage() {
 
   return (
     <div className="app-page min-h-screen pb-24">
-<header
-  className={`sticky top-0 z-40 ${
-    isPurchaseMode
-      ? 'bg-[#FFE66A] text-[#111827]'
-      : 'border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] text-[var(--shadow-text-primary)]'
-  }`}
->
-  <div className="flex h-14 items-center gap-3 px-4">
-    <button
-      type="button"
-      onClick={() => {
-  if (isPurchaseMode && purchaseReturnTo) {
-    navigate(purchaseReturnTo, { replace: true })
-    return
-  }
+      <header
+        className={`sticky top-0 z-40 ${
+          isPurchaseMode
+            ? 'bg-[#FFE66A] text-[#111827]'
+            : 'border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] text-[var(--shadow-text-primary)]'
+        }`}
+      >
+        <div className="flex h-14 items-center gap-3 px-4">
+          <button
+            type="button"
+            onClick={() => {
+              if (isPurchaseMode && purchaseReturnTo) {
+                navigate(purchaseReturnTo, { replace: true })
+                return
+              }
 
-  if (activeTab !== 'Shadow Mall') {
-    setActiveTab('Shadow Mall')
-    return
-  }
+              if (activeTab !== 'Shadow Mall') {
+                setActiveTab('Shadow Mall')
+                return
+              }
 
-  navigate('/')
-}}
-      className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${isPurchaseMode ? 'hover:bg-black/5' : 'hover:bg-[var(--shadow-bg-hover)]'}`}
-      aria-label="Go back"
-    >
-      <i className={`fas fa-chevron-left text-[18px] ${isPurchaseMode ? 'text-[#374151]' : 'text-[var(--shadow-text-primary)]'}`} />
-    </button>
+              navigate('/')
+            }}
+            className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
+              isPurchaseMode
+                ? 'hover:bg-black/5'
+                : 'hover:bg-[var(--shadow-bg-hover)]'
+            }`}
+            aria-label={t('shopPage.goBack')}
+          >
+            <i
+              className={`fas fa-chevron-left text-[18px] ${
+                isPurchaseMode
+                  ? 'text-[#374151]'
+                  : 'text-[var(--shadow-text-primary)]'
+              }`}
+            />
+          </button>
 
-    <h1 className={`text-[18px] font-extrabold tracking-tight ${isPurchaseMode ? 'text-[#111827]' : 'text-[var(--shadow-text-primary)]'}`}>
-      {isPurchaseMode ? 'Purchase' : 'Shadow Mall'}
-    </h1>
+          <h1
+            className={`text-[18px] font-extrabold tracking-tight ${
+              isPurchaseMode
+                ? 'text-[#111827]'
+                : 'text-[var(--shadow-text-primary)]'
+            }`}
+          >
+            {isPurchaseMode ? t('shopPage.purchase') : 'Shadow Mall'}
+          </h1>
 
-    {!isPurchaseMode ? (
-      <>
-        <button
-          type="button"
-          onClick={() => setMallSearchOpen((value) => !value)}
-          className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
-          aria-label="Search books"
-        >
-          <i className="fa-solid fa-magnifying-glass text-[15px]" />
-        </button>
+          {!isPurchaseMode ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setMallSearchOpen((value) => !value)}
+                className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
+                aria-label={t('shopPage.searchBooks')}
+              >
+                <i className="fa-solid fa-magnifying-glass text-[15px]" />
+              </button>
 
-        <button
-          type="button"
-          onClick={() => navigate('/shop/mall/wishlist')}
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
-          aria-label="Open wishlist"
-        >
-          <i className="fa-regular fa-heart text-[20px]" />
-          {wishlistCount > 0 ? (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-              {wishlistCount}
-            </span>
+              <button
+                type="button"
+                onClick={() => navigate('/shop/mall/wishlist')}
+                className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
+                aria-label={t('shopPage.openWishlist')}
+              >
+                <i className="fa-regular fa-heart text-[20px]" />
+                {wishlistCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
+                    {wishlistCount}
+                  </span>
+                ) : null}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/shop/mall/cart')}
+                className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
+                aria-label={t('shopPage.openCart')}
+              >
+                <i className="fa-solid fa-cart-shopping text-[20px]" />
+                {cartCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
+                    {cartCount}
+                  </span>
+                ) : null}
+              </button>
+            </>
           ) : null}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate('/shop/mall/cart')}
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
-          aria-label="Open cart"
-        >
-          <i className="fa-solid fa-cart-shopping text-[20px]" />
-          {cartCount > 0 ? (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-              {cartCount}
-            </span>
-          ) : null}
-        </button>
-      </>
-    ) : null}
-  </div>
-</header>
+        </div>
+      </header>
 
       <main
-  className={`px-4 pt-4 ${
-    isPurchaseMode
-      ? 'bg-[#FFE66A]'
-      : 'bg-[var(--shadow-bg-page)]'
-  }`}
->
+        className={`px-4 pt-4 ${
+          isPurchaseMode
+            ? 'bg-[#FFE66A]'
+            : 'bg-[var(--shadow-bg-page)]'
+        }`}
+      >
         {activeTab === 'Plans' && <PlanSection />}
         {activeTab === 'Purchase' && <PurchaseSection />}
         {activeTab === 'Shadow Mall' && (
