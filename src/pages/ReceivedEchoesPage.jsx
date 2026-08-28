@@ -3,6 +3,116 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('receivedEchoesPage', {
+  en: {
+    justNow: 'Just now',
+    minutes: '{{count}}m',
+    hours: '{{count}}h',
+    days: '{{count}}d',
+    reader: 'Reader',
+    sharedContent: 'Shared content',
+    echoSource: 'Echo source',
+    circle: 'Circle',
+    sentToYou: 'Sent to you',
+    echo: 'Echo',
+    loadFailed: 'Failed to load received echoes',
+    loadMoreFailed: 'Failed to load more echoes',
+    back: 'Back',
+    title: 'Received Echoes',
+    couldNotLoad: 'Could not load Echoes',
+    emptyTitle: 'No received Echoes yet',
+    emptyBody: 'Echoes sent directly to you or your circle will appear here.',
+    loading: 'Loading...',
+    loadMore: 'Load more',
+  },
+  km: {
+    justNow: 'ទើបតែឥឡូវនេះ',
+    minutes: '{{count}} នាទី',
+    hours: '{{count}} ម៉ោង',
+    days: '{{count}} ថ្ងៃ',
+    reader: 'អ្នកអាន',
+    sharedContent: 'មាតិកាដែលបានចែករំលែក',
+    echoSource: 'ប្រភព Echo',
+    circle: 'Circle',
+    sentToYou: 'បានផ្ញើមកអ្នក',
+    echo: 'Echo',
+    loadFailed: 'មិនអាចផ្ទុក Echo ដែលបានទទួលបានទេ',
+    loadMoreFailed: 'មិនអាចផ្ទុក Echo បន្ថែមបានទេ',
+    back: 'ត្រឡប់ក្រោយ',
+    title: 'Echo ដែលបានទទួល',
+    couldNotLoad: 'មិនអាចផ្ទុក Echo បានទេ',
+    emptyTitle: 'មិនទាន់មាន Echo ដែលបានទទួលទេ',
+    emptyBody: 'Echo ដែលផ្ញើមកអ្នកដោយផ្ទាល់ ឬទៅ Circle របស់អ្នក នឹងបង្ហាញនៅទីនេះ។',
+    loading: 'កំពុងផ្ទុក...',
+    loadMore: 'បង្ហាញបន្ថែម',
+  },
+  zh: {
+    justNow: '刚刚',
+    minutes: '{{count}} 分钟',
+    hours: '{{count}} 小时',
+    days: '{{count}} 天',
+    reader: '读者',
+    sharedContent: '分享的内容',
+    echoSource: 'Echo 来源',
+    circle: '圈子',
+    sentToYou: '发送给你',
+    echo: 'Echo',
+    loadFailed: '无法加载收到的 Echo',
+    loadMoreFailed: '无法加载更多 Echo',
+    back: '返回',
+    title: '收到的 Echo',
+    couldNotLoad: '无法加载 Echo',
+    emptyTitle: '还没有收到 Echo',
+    emptyBody: '直接发送给你或你的圈子的 Echo 会显示在这里。',
+    loading: '加载中...',
+    loadMore: '加载更多',
+  },
+  ja: {
+    justNow: 'たった今',
+    minutes: '{{count}}分',
+    hours: '{{count}}時間',
+    days: '{{count}}日',
+    reader: '読者',
+    sharedContent: '共有コンテンツ',
+    echoSource: 'Echo のソース',
+    circle: 'サークル',
+    sentToYou: 'あなた宛て',
+    echo: 'Echo',
+    loadFailed: '受信した Echo を読み込めませんでした',
+    loadMoreFailed: 'Echo をさらに読み込めませんでした',
+    back: '戻る',
+    title: '受信した Echo',
+    couldNotLoad: 'Echo を読み込めませんでした',
+    emptyTitle: '受信した Echo はまだありません',
+    emptyBody: 'あなた宛て、またはサークル宛てに送られた Echo がここに表示されます。',
+    loading: '読み込み中...',
+    loadMore: 'さらに読み込む',
+  },
+  ko: {
+    justNow: '방금',
+    minutes: '{{count}}분',
+    hours: '{{count}}시간',
+    days: '{{count}}일',
+    reader: '독자',
+    sharedContent: '공유 콘텐츠',
+    echoSource: 'Echo 출처',
+    circle: 'Circle',
+    sentToYou: '회원님에게 전송됨',
+    echo: 'Echo',
+    loadFailed: '받은 Echo를 불러오지 못했습니다',
+    loadMoreFailed: 'Echo를 더 불러오지 못했습니다',
+    back: '뒤로 가기',
+    title: '받은 Echo',
+    couldNotLoad: 'Echo를 불러오지 못했습니다',
+    emptyTitle: '아직 받은 Echo가 없습니다',
+    emptyBody: '회원님에게 직접 또는 Circle로 전송된 Echo가 여기에 표시됩니다.',
+    loading: '불러오는 중...',
+    loadMore: '더 보기',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -14,6 +124,14 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const PAGE_LIMIT = 20
+
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
 
 function getAuthToken() {
   return (
@@ -27,12 +145,20 @@ function getAuthToken() {
   )
 }
 
-function formatTime(value) {
+function formatTime(
+  value,
+  language,
+  t
+) {
   const timestamp = new Date(
     value || 0
   ).getTime()
 
-  if (!timestamp) return 'Just now'
+  if (!timestamp) {
+    return t(
+      'receivedEchoesPage.justNow'
+    )
+  }
 
   const difference = Math.max(
     0,
@@ -48,19 +174,33 @@ function formatTime(value) {
     hours / 24
   )
 
-  if (minutes < 1) return 'Just now'
+  if (minutes < 1) {
+    return t(
+      'receivedEchoesPage.justNow'
+    )
+  }
   if (minutes < 60) {
-    return `${minutes}m`
+    return t(
+      'receivedEchoesPage.minutes',
+      { count: minutes }
+    )
   }
   if (hours < 24) {
-    return `${hours}h`
+    return t(
+      'receivedEchoesPage.hours',
+      { count: hours }
+    )
   }
   if (days < 7) {
-    return `${days}d`
+    return t(
+      'receivedEchoesPage.days',
+      { count: days }
+    )
   }
 
   return new Intl.DateTimeFormat(
-    undefined,
+    DISPLAY_LOCALES[language] ||
+      DISPLAY_LOCALES.en,
     {
       month: 'short',
       day: 'numeric',
@@ -86,10 +226,12 @@ function mergeUnique(
 }
 
 function ReaderAvatar({ user }) {
+  const { t } =
+    useDisplayTranslation()
   const name =
     user?.name ||
     user?.username ||
-    'Reader'
+    t('receivedEchoesPage.reader')
   const avatar =
     user?.avatar_url || ''
 
@@ -114,6 +256,9 @@ function SourcePreview({
   source,
   onOpen,
 }) {
+  const { t } =
+    useDisplayTranslation()
+
   if (!source) return null
 
   const image =
@@ -123,7 +268,9 @@ function SourcePreview({
   const title =
     source.name ||
     source.label ||
-    'Shared content'
+    t(
+      'receivedEchoesPage.sharedContent'
+    )
   const content = String(
     source.content || ''
   ).trim()
@@ -154,7 +301,9 @@ function SourcePreview({
         <div className="mt-1 text-[11px] font-normal uppercase tracking-[0.06em] text-[#8d94a1] dark:text-white/45">
           {source.label ||
             source.type ||
-            'Echo source'}
+            t(
+              'receivedEchoesPage.echoSource'
+            )}
         </div>
 
         {content ? (
@@ -173,11 +322,19 @@ function ReceivedEchoCard({
   echo,
   onOpenSource,
 }) {
+  const {
+    language,
+    t,
+  } = useDisplayTranslation()
   const user = echo?.user || {}
   const destination =
     echo?.destination === 'circle'
-      ? 'Circle'
-      : 'Sent to you'
+      ? t(
+          'receivedEchoesPage.circle'
+        )
+      : t(
+          'receivedEchoesPage.sentToYou'
+        )
   const text = String(
     echo?.echo_text || ''
   ).trim()
@@ -193,7 +350,9 @@ function ReceivedEchoCard({
               <div className="line-clamp-1 text-[14px] font-semibold text-[#111827] dark:text-white">
                 {user.name ||
                   user.username ||
-                  'Reader'}
+                  t(
+                    'receivedEchoesPage.reader'
+                  )}
               </div>
 
               <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#98a2b3] dark:text-white/45">
@@ -202,14 +361,18 @@ function ReceivedEchoCard({
                 <span>
                   {formatTime(
                     echo.updated_at ||
-                      echo.created_at
+                      echo.created_at,
+                    language,
+                    t
                   )}
                 </span>
               </div>
             </div>
 
             <span className="rounded-full bg-[#f1ecff] px-2.5 py-1 text-[10.5px] font-semibold text-[#7c3aed] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]">
-              Echo
+              {t(
+                'receivedEchoesPage.echo'
+              )}
             </span>
           </div>
 
@@ -235,6 +398,8 @@ function ReceivedEchoCard({
 
 export default function ReceivedEchoesPage() {
   const navigate = useNavigate()
+  const { t } =
+    useDisplayTranslation()
   const [echoes, setEchoes] =
     useState([])
   const [page, setPage] =
@@ -283,7 +448,9 @@ export default function ReceivedEchoesPage() {
     ) {
       throw new Error(
         data.message ||
-          'Failed to load received echoes'
+          t(
+            'receivedEchoesPage.loadFailed'
+          )
       )
     }
 
@@ -327,7 +494,9 @@ export default function ReceivedEchoesPage() {
         ) {
           setError(
             loadError.message ||
-              'Failed to load received echoes'
+              t(
+                'receivedEchoesPage.loadFailed'
+              )
           )
         }
       })
@@ -358,7 +527,9 @@ export default function ReceivedEchoesPage() {
     } catch (loadError) {
       setError(
         loadError.message ||
-          'Failed to load more echoes'
+          t(
+            'receivedEchoesPage.loadMoreFailed'
+          )
       )
     } finally {
       setLoadingMore(false)
@@ -395,14 +566,18 @@ export default function ReceivedEchoesPage() {
             onClick={() =>
               navigate(-1)
             }
-            aria-label="Back"
+            aria-label={t(
+              'receivedEchoesPage.back'
+            )}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f4f4f6] dark:text-white dark:active:bg-white/10"
           >
             <i className="fa-solid fa-chevron-left text-[16px]" />
           </button>
 
           <h1 className="ml-1 text-[18px] font-semibold text-[#111827] dark:text-white">
-            Received Echoes
+            {t(
+              'receivedEchoesPage.title'
+            )}
           </h1>
         </div>
       </header>
@@ -416,7 +591,9 @@ export default function ReceivedEchoesPage() {
           !echoes.length ? (
           <div className="px-6 py-16 text-center">
             <div className="text-[14px] font-semibold text-[#111827] dark:text-white">
-              Could not load Echoes
+              {t(
+                'receivedEchoesPage.couldNotLoad'
+              )}
             </div>
             <div className="mt-2 text-[12.5px] leading-5 text-[#8d94a1] dark:text-white/50">
               {error}
@@ -428,10 +605,14 @@ export default function ReceivedEchoesPage() {
               <i className="fa-solid fa-wave-square text-[20px]" />
             </div>
             <div className="mt-4 text-[15px] font-semibold text-[#111827] dark:text-white">
-              No received Echoes yet
+              {t(
+                'receivedEchoesPage.emptyTitle'
+              )}
             </div>
             <div className="mt-1.5 text-[12.5px] leading-5 text-[#8d94a1] dark:text-white/50">
-              Echoes sent directly to you or your circle will appear here.
+              {t(
+                'receivedEchoesPage.emptyBody'
+              )}
             </div>
           </div>
         ) : (
@@ -465,8 +646,12 @@ export default function ReceivedEchoesPage() {
                   className="h-11 w-full rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99] disabled:opacity-60 dark:bg-white dark:text-[#111827]"
                 >
                   {loadingMore
-                    ? 'Loading...'
-                    : 'Load more'}
+                    ? t(
+                        'receivedEchoesPage.loading'
+                      )
+                    : t(
+                        'receivedEchoesPage.loadMore'
+                      )}
                 </button>
               </div>
             ) : null}
