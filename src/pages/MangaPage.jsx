@@ -15,6 +15,121 @@ import YouMightLikeSection from '../components/YouMightLikeSection'
 import StoriesDailyCheckIn from '../components/StoriesDailyCheckIn'
 import NotificationPage from './NotificationPage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('mangaPage', {
+  en: {
+    today: 'Today',
+    romance: 'Romance',
+    fantasy: 'Fantasy',
+    action: 'Action',
+    comedy: 'Comedy',
+    drama: 'Drama',
+    genre: 'Genre',
+    genres: 'Genres',
+    search: 'Search',
+    notifications: 'Notifications',
+    loadingSlides: 'Loading Manga slides...',
+    noSlides: 'No Manga slides yet',
+    mangaSlide: 'Manga slide',
+    new: 'NEW',
+    hot: 'HOT',
+    top: 'TOP',
+    shop: 'Shop',
+    tasks: 'Tasks',
+    ranking: 'Ranking',
+    event: 'Event',
+  },
+  km: {
+    today: 'ថ្ងៃនេះ',
+    romance: 'មនោសញ្ចេតនា',
+    fantasy: 'Fantasy',
+    action: 'សកម្មភាព',
+    comedy: 'កំប្លែង',
+    drama: 'Drama',
+    genre: 'ប្រភេទរឿង',
+    genres: 'ប្រភេទរឿង',
+    search: 'ស្វែងរក',
+    notifications: 'ការជូនដំណឹង',
+    loadingSlides: 'កំពុងផ្ទុក Manga slides...',
+    noSlides: 'មិនទាន់មាន Manga slides ទេ',
+    mangaSlide: 'Manga slide',
+    new: 'ថ្មី',
+    hot: 'កំពុងពេញនិយម',
+    top: 'កំពូល',
+    shop: 'ហាង',
+    tasks: 'បេសកកម្ម',
+    ranking: 'ចំណាត់ថ្នាក់',
+    event: 'ព្រឹត្តិការណ៍',
+  },
+  zh: {
+    today: '今天',
+    romance: '爱情',
+    fantasy: '奇幻',
+    action: '动作',
+    comedy: '喜剧',
+    drama: '剧情',
+    genre: '类型',
+    genres: '类型',
+    search: '搜索',
+    notifications: '通知',
+    loadingSlides: '正在加载 Manga 轮播...',
+    noSlides: '暂无 Manga 轮播',
+    mangaSlide: 'Manga 轮播',
+    new: '新',
+    hot: '热门',
+    top: '榜首',
+    shop: '商店',
+    tasks: '任务',
+    ranking: '排行榜',
+    event: '活动',
+  },
+  ja: {
+    today: '今日',
+    romance: 'ロマンス',
+    fantasy: 'ファンタジー',
+    action: 'アクション',
+    comedy: 'コメディ',
+    drama: 'ドラマ',
+    genre: 'ジャンル',
+    genres: 'ジャンル',
+    search: '検索',
+    notifications: '通知',
+    loadingSlides: 'Manga スライドを読み込み中...',
+    noSlides: 'Manga スライドはまだありません',
+    mangaSlide: 'Manga スライド',
+    new: '新着',
+    hot: '人気',
+    top: 'トップ',
+    shop: 'ショップ',
+    tasks: 'タスク',
+    ranking: 'ランキング',
+    event: 'イベント',
+  },
+  ko: {
+    today: '오늘',
+    romance: '로맨스',
+    fantasy: '판타지',
+    action: '액션',
+    comedy: '코미디',
+    drama: '드라마',
+    genre: '장르',
+    genres: '장르',
+    search: '검색',
+    notifications: '알림',
+    loadingSlides: 'Manga 슬라이드를 불러오는 중...',
+    noSlides: '아직 Manga 슬라이드가 없습니다',
+    mangaSlide: 'Manga 슬라이드',
+    new: '신규',
+    hot: '인기',
+    top: 'TOP',
+    shop: '상점',
+    tasks: '미션',
+    ranking: '랭킹',
+    event: '이벤트',
+  },
+})
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -32,10 +147,32 @@ const fallbackGenreTabs = [
   { label: 'Drama', slug: 'drama' },
 ]
 
+const BUILT_IN_GENRE_LABEL_KEYS = {
+  today: 'today',
+  romance: 'romance',
+  fantasy: 'fantasy',
+  action: 'action',
+  comedy: 'comedy',
+  drama: 'drama',
+}
+
 const badgeClasses = {
   NEW: 'bg-[#ff2f55] text-white',
   HOT: 'bg-[#ff7a00] text-white',
   TOP: 'bg-[#F6B800] text-[#111827]',
+}
+
+const BADGE_LABEL_KEYS = {
+  NEW: 'new',
+  HOT: 'hot',
+  TOP: 'top',
+}
+
+const SHORTCUT_LABEL_KEYS = {
+  Shop: 'shop',
+  Tasks: 'tasks',
+  Ranking: 'ranking',
+  Event: 'event',
 }
 
 function getSlideBadge(slide) {
@@ -50,8 +187,37 @@ function getSlideTitle(slide) {
   return String(slide.title || '').replace(/^\s*\[(HOT|NEW|TOP)\]\s*/i, '').trim()
 }
 
+function getGenreDisplayLabel(tab, t) {
+  if (tab?.label === 'Genre') {
+    return t('mangaPage.genre')
+  }
+
+  const key = BUILT_IN_GENRE_LABEL_KEYS[tab?.slug]
+  const expectedLabel =
+    tab?.slug === 'today'
+      ? 'Today'
+      : tab?.slug === 'romance'
+        ? 'Romance'
+        : tab?.slug === 'fantasy'
+          ? 'Fantasy'
+          : tab?.slug === 'action'
+            ? 'Action'
+            : tab?.slug === 'comedy'
+              ? 'Comedy'
+              : tab?.slug === 'drama'
+                ? 'Drama'
+                : ''
+
+  if (key && tab?.label === expectedLabel) {
+    return t(`mangaPage.${key}`)
+  }
+
+  return tab?.label || ''
+}
+
 export default function MangaPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [searchParams] = useSearchParams()
   const sliderRef = useRef(null)
   const lastScrollYRef = useRef(0)
@@ -386,14 +552,14 @@ export default function MangaPage() {
             <Link
               to="/genres"
               className="flex h-6 w-6 items-center justify-center"
-              aria-label="Genres"
+              aria-label={t('mangaPage.genres')}
             >
               <Grid2X2 size={20} strokeWidth={1.8} />
             </Link>
             <Link
               to="/search"
               className="flex h-6 w-6 items-center justify-center"
-              aria-label="Search"
+              aria-label={t('mangaPage.search')}
             >
               <Search size={20} strokeWidth={1.8} />
             </Link>
@@ -401,7 +567,7 @@ export default function MangaPage() {
               type="button"
               onClick={() => setShowNotificationPopup(true)}
               className="relative flex h-6 w-6 items-center justify-center"
-              aria-label="Notifications"
+              aria-label={t('mangaPage.notifications')}
             >
               <Bell size={20} strokeWidth={1.8} />
               {notificationUnreadCount > 0 ? (
@@ -438,7 +604,7 @@ export default function MangaPage() {
                     : 'transparent',
                 }}
               >
-                {tab.label}
+                {getGenreDisplayLabel(tab, t)}
                 <span
                   className={`absolute bottom-[3px] left-1/2 h-[3px] -translate-x-1/2 rounded-full bg-[#F6B800] transition-all ${
                     active ? 'w-[62%] opacity-100' : 'w-0 opacity-0'
@@ -470,7 +636,7 @@ export default function MangaPage() {
                   color: 'var(--shadow-text-secondary)',
                 }}
               >
-                Loading Manga slides...
+                {t('mangaPage.loadingSlides')}
               </div>
             ) : null}
 
@@ -482,7 +648,7 @@ export default function MangaPage() {
                   color: 'var(--shadow-text-secondary)',
                 }}
               >
-                No Manga slides yet
+                {t('mangaPage.noSlides')}
               </div>
             ) : null}
 
@@ -500,7 +666,7 @@ export default function MangaPage() {
                     >
                       <img
                         src={slide.image_url}
-                        alt={title || 'Manga slide'}
+                        alt={title || t('mangaPage.mangaSlide')}
                         className="h-full w-full object-cover"
                       />
                       {badge || title || slide.subtitle || slide.description ? (
@@ -519,7 +685,7 @@ export default function MangaPage() {
                             <span
                               className={`mt-2 inline-flex rounded-[5px] px-2 py-1 text-[9px] font-black ${badgeClasses[badge]}`}
                             >
-                              {badge}
+                              {t(`mangaPage.${BADGE_LABEL_KEYS[badge]}`)}
                             </span>
                           ) : null}
                         </div>
@@ -550,19 +716,25 @@ export default function MangaPage() {
             { icon: '/assets/Shortcut/Task.svg', label: 'Tasks', path: '/tasks' },
             { icon: '/assets/Shortcut/Ranking.svg', label: 'Ranking', path: '/ranking' },
             { icon: '/assets/Shortcut/Event.svg', label: 'Event', path: '/event' },
-          ].map((item) => (
-            <button key={item.label} type="button" onClick={() => navigate(item.path)}>
-              <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center">
-                <img src={item.icon} alt={item.label} className="h-7 w-7 object-contain" />
-              </div>
-              <span
-                className="text-[10px] font-semibold"
-                style={{ color: 'var(--shadow-text-primary)' }}
-              >
-                {item.label}
-              </span>
-            </button>
-          ))}
+          ].map((item) => {
+            const displayLabel = t(
+              `mangaPage.${SHORTCUT_LABEL_KEYS[item.label]}`
+            )
+
+            return (
+              <button key={item.label} type="button" onClick={() => navigate(item.path)}>
+                <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center">
+                  <img src={item.icon} alt={displayLabel} className="h-7 w-7 object-contain" />
+                </div>
+                <span
+                  className="text-[10px] font-semibold"
+                  style={{ color: 'var(--shadow-text-primary)' }}
+                >
+                  {displayLabel}
+                </span>
+              </button>
+            )
+          })}
         </div>
 
         {activeGenre === 'today' ? (
