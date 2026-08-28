@@ -3,6 +3,145 @@ import { Link, useNavigate } from 'react-router-dom'
 import { setDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('mePage', {
+  en: {
+    khmerLanguage: 'Khmer',
+    englishLanguage: 'English',
+    chineseLanguage: 'Chinese',
+    japaneseLanguage: 'Japanese',
+    koreanLanguage: 'Korean',
+    languageFlag: '{{language}} flag',
+    closeLanguage: 'Close language',
+    closeSettings: 'Close settings',
+    closeProfileSwitcher: 'Close profile switcher',
+    authorPage: 'Author Page',
+    notification: '{{count}} notification',
+    notifications: '{{count}} notifications',
+    manageAccount: 'Manage Account',
+    reader: 'Reader',
+    switchingTo: 'Switching to',
+    inbox: 'Inbox',
+    switchProfile: 'Switch Profile',
+    coin: 'Coin',
+    premiumPerks: 'Premium Perks',
+    go: 'Go',
+    shadowMall: 'Shadow Mall',
+    library: 'Library',
+    game: 'Game',
+    savedPosts: 'Saved Posts',
+    authorDashboardShortcut: 'Author Dashboard shortcut',
+  },
+  km: {
+    khmerLanguage: 'ខ្មែរ',
+    englishLanguage: 'អង់គ្លេស',
+    chineseLanguage: 'ចិន',
+    japaneseLanguage: 'ជប៉ុន',
+    koreanLanguage: 'កូរ៉េ',
+    languageFlag: 'ទង់ជាតិ {{language}}',
+    closeLanguage: 'បិទភាសា',
+    closeSettings: 'បិទការកំណត់',
+    closeProfileSwitcher: 'បិទការប្តូរ Profile',
+    authorPage: 'ទំព័រអ្នកនិពន្ធ',
+    notification: '{{count}} ការជូនដំណឹង',
+    notifications: '{{count}} ការជូនដំណឹង',
+    manageAccount: 'គ្រប់គ្រងគណនី',
+    reader: 'អ្នកអាន',
+    switchingTo: 'កំពុងប្តូរទៅ',
+    inbox: 'ប្រអប់សារ',
+    switchProfile: 'ប្តូរ Profile',
+    coin: 'Coin',
+    premiumPerks: 'អត្ថប្រយោជន៍ Premium',
+    go: 'ទៅ',
+    shadowMall: 'Shadow Mall',
+    library: 'បណ្ណាល័យ',
+    game: 'ហ្គេម',
+    savedPosts: 'Post ដែលបានរក្សាទុក',
+    authorDashboardShortcut: 'ផ្លូវកាត់ Author Dashboard',
+  },
+  zh: {
+    khmerLanguage: '高棉语',
+    englishLanguage: '英语',
+    chineseLanguage: '中文',
+    japaneseLanguage: '日语',
+    koreanLanguage: '韩语',
+    languageFlag: '{{language}}旗帜',
+    closeLanguage: '关闭语言设置',
+    closeSettings: '关闭设置',
+    closeProfileSwitcher: '关闭个人资料切换',
+    authorPage: '作者页面',
+    notification: '{{count}} 条通知',
+    notifications: '{{count}} 条通知',
+    manageAccount: '管理账号',
+    reader: '读者',
+    switchingTo: '正在切换到',
+    inbox: '收件箱',
+    switchProfile: '切换个人资料',
+    coin: 'Coin',
+    premiumPerks: 'Premium 权益',
+    go: '前往',
+    shadowMall: 'Shadow Mall',
+    library: '书库',
+    game: '游戏',
+    savedPosts: '已保存帖子',
+    authorDashboardShortcut: '作者控制台快捷方式',
+  },
+  ja: {
+    khmerLanguage: 'クメール語',
+    englishLanguage: '英語',
+    chineseLanguage: '中国語',
+    japaneseLanguage: '日本語',
+    koreanLanguage: '韓国語',
+    languageFlag: '{{language}}の旗',
+    closeLanguage: '言語設定を閉じる',
+    closeSettings: '設定を閉じる',
+    closeProfileSwitcher: 'プロフィール切替を閉じる',
+    authorPage: '作者ページ',
+    notification: '{{count}} 件の通知',
+    notifications: '{{count}} 件の通知',
+    manageAccount: 'アカウント管理',
+    reader: '読者',
+    switchingTo: '切り替え先',
+    inbox: '受信箱',
+    switchProfile: 'プロフィール切替',
+    coin: 'Coin',
+    premiumPerks: 'Premium 特典',
+    go: '開く',
+    shadowMall: 'Shadow Mall',
+    library: 'ライブラリ',
+    game: 'ゲーム',
+    savedPosts: '保存した投稿',
+    authorDashboardShortcut: '作者ダッシュボードのショートカット',
+  },
+  ko: {
+    khmerLanguage: '크메르어',
+    englishLanguage: '영어',
+    chineseLanguage: '중국어',
+    japaneseLanguage: '일본어',
+    koreanLanguage: '한국어',
+    languageFlag: '{{language}} 국기',
+    closeLanguage: '언어 설정 닫기',
+    closeSettings: '설정 닫기',
+    closeProfileSwitcher: '프로필 전환 닫기',
+    authorPage: '작가 페이지',
+    notification: '알림 {{count}}개',
+    notifications: '알림 {{count}}개',
+    manageAccount: '계정 관리',
+    reader: '독자',
+    switchingTo: '전환 중',
+    inbox: '받은편지함',
+    switchProfile: '프로필 전환',
+    coin: 'Coin',
+    premiumPerks: 'Premium 혜택',
+    go: '이동',
+    shadowMall: 'Shadow Mall',
+    library: '라이브러리',
+    game: '게임',
+    savedPosts: '저장한 게시물',
+    authorDashboardShortcut: '작가 대시보드 바로가기',
+  },
+})
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const THEME_STORAGE_KEY = 'shadow_theme'
@@ -15,6 +154,14 @@ const LANGUAGES = [
   { id: 'ja', label: 'Japanese', flagCode: 'jp' },
   { id: 'ko', label: 'Korean', flagCode: 'kr' },
 ]
+
+const LANGUAGE_LABEL_KEYS = {
+  km: 'khmerLanguage',
+  en: 'englishLanguage',
+  zh: 'chineseLanguage',
+  ja: 'japaneseLanguage',
+  ko: 'koreanLanguage',
+}
 
 function getReaderToken() {
   return (
@@ -44,9 +191,15 @@ function getStoredStoryLanguage() {
   return localStorage.getItem(STORY_LANGUAGE_STORAGE_KEY) || 'km'
 }
 
+function getLanguageLabel(languageId, tx) {
+  const language = LANGUAGES.find((item) => item.id === languageId)
+  const key = LANGUAGE_LABEL_KEYS[language?.id]
 
-function getLanguageLabel(languageId) {
-  return LANGUAGES.find((language) => language.id === languageId)?.label || 'Khmer'
+  if (key) {
+    return tx(`mePage.${key}`)
+  }
+
+  return language?.label || tx('mePage.khmerLanguage')
 }
 
 function applyTheme(theme) {
@@ -250,7 +403,7 @@ function LanguageSummaryRow({ storyLanguage, displayLanguage, onClick, tx }) {
         <div className="min-w-0">
           <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{tx('language')}</div>
           <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
-            {tx('storyLanguage')}: {getLanguageLabel(storyLanguage)} • {tx('displayLanguage')}: {getLanguageLabel(displayLanguage)}
+            {tx('storyLanguage')}: {getLanguageLabel(storyLanguage, tx)} • {tx('displayLanguage')}: {getLanguageLabel(displayLanguage, tx)}
           </div>
         </div>
       </div>
@@ -269,7 +422,9 @@ function LanguageOption({
   selectedTextClassName = 'text-[#d99a00]',
   selectedIconClassName = 'text-[#d99a00]',
 }) {
+  const { t: tx } = useDisplayTranslation()
   const countryCode = language.flagCode?.toUpperCase() || ''
+  const displayLabel = getLanguageLabel(language.id, tx)
 
   return (
     <button
@@ -287,7 +442,7 @@ function LanguageOption({
             <>
               <img
                 src={`https://flagcdn.com/w40/${language.flagCode}.png`}
-                alt={`${language.label} flag`}
+                alt={tx('mePage.languageFlag', { language: displayLabel })}
                 className="h-full w-full object-cover"
                 onError={(event) => {
                   event.currentTarget.style.display = 'none'
@@ -301,7 +456,7 @@ function LanguageOption({
           )}
         </span>
         <div className="min-w-0">
-          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{language.label}</div>
+          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{displayLabel}</div>
           {selected ? (
             <div className={`mt-0.5 text-[11px] font-semibold ${selectedTextClassName}`}>{selectedLabel}</div>
           ) : null}
@@ -333,7 +488,7 @@ function LanguageSheet({
 
   return (
     <div className="fixed inset-0 z-[140]">
-      <button type="button" aria-label="Close language" onClick={onClose} className="absolute inset-0 bg-black/40" />
+      <button type="button" aria-label={tx('mePage.closeLanguage')} onClick={onClose} className="absolute inset-0 bg-black/40" />
 
       <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[340px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
         <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
@@ -381,7 +536,7 @@ function LanguageSheet({
   selected={selectedLanguage === language.id}
   isDisplayLanguage={!isStoryTab}
   selectedLabel={tx('selected')}
-              
+
   onClick={() => {
     if (isStoryTab) {
       onStoryLanguageChange(language.id)
@@ -427,7 +582,7 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
 
   return (
     <div className="fixed inset-0 z-[120]">
-      <button type="button" aria-label="Close settings" onClick={onClose} className="absolute inset-0 bg-black/35" />
+      <button type="button" aria-label={tx('mePage.closeSettings')} onClick={onClose} className="absolute inset-0 bg-black/35" />
 
       <LanguageSheet
         open={languageOpen}
@@ -473,9 +628,11 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
 }
 
 function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLetter, authorPage, authorNotificationCount, onOwnAccount, onAuthorPage, onManageAccount }) {
+  const { t: tx } = useDisplayTranslation()
+
   if (!open) return null
 
-  const pageName = authorPage?.page_name || authorPage?.name || 'Author Page'
+  const pageName = authorPage?.page_name || authorPage?.name || tx('mePage.authorPage')
   const pageUsername = authorPage?.page_username || authorPage?.username || ''
   const pageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || ''
   const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
@@ -483,7 +640,7 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
 
   return (
     <div className="fixed inset-0 z-[130]">
-      <button type="button" aria-label="Close profile switcher" onClick={onClose} className="absolute inset-0 bg-black/35" />
+      <button type="button" aria-label={tx('mePage.closeProfileSwitcher')} onClick={onClose} className="absolute inset-0 bg-black/35" />
 
       <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-white px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px] dark:bg-[#12141d]">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
@@ -500,7 +657,7 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
               </div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827] dark:text-white">{displayName}</div>
-                
+
               </div>
             </div>
            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white dark:bg-[#f6b800] dark:text-[#111827]">
@@ -522,7 +679,14 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
                 {showAuthorBadge ? (
   <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1] dark:text-white/50">
     <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-    <span>{`${authorNotificationCount} notification${Number(authorNotificationCount) === 1 ? '' : 's'}`}</span>
+    <span>
+      {tx(
+        Number(authorNotificationCount) === 1
+          ? 'mePage.notification'
+          : 'mePage.notifications',
+        { count: Number(authorNotificationCount) }
+      )}
+    </span>
   </div>
 ) : null}
               </div>
@@ -532,9 +696,9 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
         </div>
 
        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99] dark:border-white/10 dark:bg-[#171923] dark:text-white">
-  Manage Account
+  {tx('mePage.manageAccount')}
 </button>
-        
+
 <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
   <img
     src="/assets/Icons/Logo Shadow 2.svg"
@@ -571,10 +735,10 @@ export default function Me() {
   const isLoggedIn = Boolean(token)
   const isPremium = false
 
-  const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
+  const displayName = storedUser?.name || (isLoggedIn ? tx('mePage.reader') : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
   const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
-  const authorPageName = authorPage?.page_name || authorPage?.name || 'Author Page'
+  const authorPageName = authorPage?.page_name || authorPage?.name || tx('mePage.authorPage')
   const authorPageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || authorPage?.logo_url || ''
   const hasAuthorPage = Boolean(authorPage?.page_username)
   const authorPageNotificationCount = authorUnreadCount
@@ -852,7 +1016,7 @@ const handleOpenProfileSwitcher = (event) => {
     </div>
 
     <div className="mt-5 text-[18px] font-medium text-[#111827] dark:text-white">
-      Switching to
+      {tx('mePage.switchingTo')}
     </div>
     <div className="mt-1 line-clamp-2 max-w-[280px] text-[18px] font-semibold text-[#111827] dark:text-white">
       {authorPageName}
@@ -883,7 +1047,7 @@ const handleOpenProfileSwitcher = (event) => {
           <div className="flex justify-end gap-2">
   <HeaderIcon
     to="/inbox"
-    label="Inbox"
+    label={tx('mePage.inbox')}
     badgeCount={inboxUnreadCount}
     customIcon={
       <svg
@@ -903,7 +1067,7 @@ const handleOpenProfileSwitcher = (event) => {
   />
 
   <HeaderIcon
-    label="Settings"
+    label={tx('settings')}
     onClick={() => setSettingsOpen(true)}
     customIcon={
       <svg
@@ -968,7 +1132,7 @@ const handleOpenProfileSwitcher = (event) => {
     onClick={handleOpenProfileSwitcher}
     className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#8d94a1] dark:text-white/50 active:scale-[0.99]"
   >
-    <span>Switch Profile</span>
+    <span>{tx('mePage.switchProfile')}</span>
     <i className="fa-solid fa-chevron-down text-[9px]" />
   </button>
 ) : (
@@ -986,10 +1150,10 @@ const handleOpenProfileSwitcher = (event) => {
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#f3f3f3] px-2 py-1 dark:divide-white/10">
             <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} to="/shop" state={{ activeTab: 'Purchase', from: '/me' }} />
-            <BalanceItem value={walletBalance.gems} label="Coin" to="/tasks" />
+            <BalanceItem value={walletBalance.gems} label={tx('mePage.coin')} to="/tasks" />
             <BalanceItem value={walletBalance.vouchers} label={tx('voucher')} />
           </div>
-          
+
         </section>
 
         <section className="mt-2 overflow-hidden rounded-[14px] bg-white dark:bg-[#171923]">
@@ -1040,10 +1204,10 @@ const handleOpenProfileSwitcher = (event) => {
 
   <div className="relative z-10 flex items-center gap-2">
     <span className="whitespace-nowrap text-[10px] font-semibold text-[#f6d445]">
-      Premium Perks
+      {tx('mePage.premiumPerks')}
     </span>
     <span className="flex h-7 min-w-[48px] items-center justify-center rounded-[6px] bg-[#ffd600] px-2.5 text-[12px] font-bold text-[#202020]">
-      Go
+      {tx('mePage.go')}
     </span>
   </div>
 </Link>
@@ -1051,18 +1215,18 @@ const handleOpenProfileSwitcher = (event) => {
 <MenuRow
   to="/shop"
   customIcon={<svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2 11h10l2-8H6" /><circle cx="9" cy="19" r="1" /><circle cx="17" cy="19" r="1" /></svg>}
-  title="Shadow Mall"
+  title={tx('mePage.shadowMall')}
   divider
 />
             <MenuRow to="/comments" icon="far fa-comment-dots" title={tx('myComments')} divider />
-            <MenuRow to="/library" customIcon={<img src="/assets/Icons/Library.svg" alt="" className="h-[16px] w-[16px] object-contain" />} title="Library" divider />
+            <MenuRow to="/library" customIcon={<img src="/assets/Icons/Library.svg" alt="" className="h-[16px] w-[16px] object-contain" />} title={tx('mePage.library')} divider />
             <MenuRow
   to="/game"
   icon="fa-solid fa-gamepad"
-  title="Game"
+  title={tx('mePage.game')}
   divider
 />
-            <MenuRow to="/saved-posts" icon="far fa-bookmark" title="Saved Posts" divider />
+            <MenuRow to="/saved-posts" icon="far fa-bookmark" title={tx('mePage.savedPosts')} divider />
             <MenuRow to="/feedback" icon="far fa-pen-to-square" title={tx('feedback')} divider />
             <MenuRow to="/help" icon="far fa-circle-question" title={tx('helpCenter')} divider />
             <MenuRow
@@ -1073,7 +1237,7 @@ const handleOpenProfileSwitcher = (event) => {
                 </span>
               }
               title={tx('aboutUs')}
-              
+
             />
           </div>
         </section>
@@ -1095,7 +1259,7 @@ const handleOpenProfileSwitcher = (event) => {
       <button
         type="button"
         onClick={handleAuthorDashboard}
-        aria-label="Author Dashboard shortcut"
+        aria-label={tx('mePage.authorDashboardShortcut')}
         className="fixed bottom-[92px] right-5 z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-[#f6b800] text-[17px] text-[#111827] active:scale-95 dark:text-[#111827]"
       >
         <i className="fa-solid fa-pen-nib" />
