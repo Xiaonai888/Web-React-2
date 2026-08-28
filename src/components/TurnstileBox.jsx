@@ -44,7 +44,7 @@ export default function TurnstileBox({ siteKey, refreshKey, onVerify, onExpire, 
       callback: (token) => callbacksRef.current.onVerify?.(token),
       'expired-callback': () => callbacksRef.current.onExpire?.(),
       'error-callback': () => callbacksRef.current.onError?.(),
-      theme: 'light',
+      theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
     })
 
     return () => {
