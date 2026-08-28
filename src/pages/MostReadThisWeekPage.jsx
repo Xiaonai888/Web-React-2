@@ -304,8 +304,8 @@ export default function MostReadThisWeekPage() {
     visibleCount < Math.min(sourceBooks.length, MAX_BOOKS)
 
   return (
-    <div className="min-h-screen bg-white pb-16">
-      <header className="sticky top-0 z-40 border-b border-[#f0f0f0] bg-white px-4 py-3 text-[#111827]">
+    <div className="app-page min-h-screen bg-white pb-16 dark:bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-[#f0f0f0] bg-white px-4 py-3 text-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)] dark:text-[var(--shadow-text-primary)]">
         <div className="mx-auto flex max-w-[960px] items-center gap-3">
           <button
             type="button"
