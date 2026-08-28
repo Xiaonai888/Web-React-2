@@ -460,10 +460,11 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
 
   useEffect(() => {
     let ignore = false
-        if (sliderOnly) {
-      setProductsLoading(false)
-      return
-    }
+    if (sliderOnly) {
+  setProductsLoading(false)
+  return
+}
+        
 
     async function fetchMallSlides() {
       try {
