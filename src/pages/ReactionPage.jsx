@@ -327,7 +327,7 @@ export default function ReactionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f3fa] pb-10 text-[#111827]">
+    <main className="app-page min-h-screen pb-10 text-[#111827] dark:text-[var(--shadow-text-primary)]">
       <style>
         {`
           @keyframes shadowReactionPop {
@@ -374,22 +374,22 @@ export default function ReactionPage() {
         `}
       </style>
 
-      <header className="sticky top-0 z-30 border-b border-[#eceaf2] bg-white/95 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-[#eceaf2] bg-white/95 px-4 py-3 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex max-w-[560px] items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
             aria-label={t('reactionPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[17px] font-black">
+            <h1 className="truncate text-[17px] font-black dark:text-[var(--shadow-text-primary)]">
               {t('reactionPage.title')}
             </h1>
-            <p className="text-[11.5px] font-semibold text-[#8d94a1]">
+            <p className="text-[11.5px] font-semibold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
               {t('reactionPage.subtitle')}
             </p>
           </div>
@@ -398,14 +398,14 @@ export default function ReactionPage() {
 
       <section className="mx-auto max-w-[560px] px-4 pt-5">
         {message ? (
-          <div className="mb-4 rounded-[20px] bg-white px-4 py-3 text-[12px] font-bold text-[#667085] shadow-sm ring-1 ring-black/5">
+          <div className="mb-4 rounded-[20px] bg-white px-4 py-3 text-[12px] font-bold text-[#667085] shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
             {message}
           </div>
         ) : null}
 
-        <div className="rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
           <div className="flex gap-3">
-            <div className="h-24 w-20 shrink-0 overflow-hidden rounded-[16px] bg-[#eef1f5]">
+            <div className="h-24 w-20 shrink-0 overflow-hidden rounded-[16px] bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]">
               {story?.cover_url ? (
                 <img
                   src={story.cover_url}
@@ -416,7 +416,7 @@ export default function ReactionPage() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
+                <div className="flex h-full w-full items-center justify-center text-[#98a2b3] dark:text-[var(--shadow-text-tertiary)]">
                   <i className="fa-regular fa-bookmark text-[22px]" />
                 </div>
               )}
@@ -426,34 +426,34 @@ export default function ReactionPage() {
               <div className="text-[10.5px] font-black uppercase tracking-[0.08em] text-[#f6a800]">
                 {t('reactionPage.story')}
               </div>
-              <h2 className="mt-1 line-clamp-2 text-[18px] font-black leading-6">
+              <h2 className="mt-1 line-clamp-2 text-[18px] font-black leading-6 dark:text-[var(--shadow-text-primary)]">
                 {loading
                   ? t('reactionPage.loadingStory')
                   : story?.title ||
                     t('reactionPage.untitledStory')}
               </h2>
-              <p className="mt-2 line-clamp-1 text-[12px] font-bold text-[#8d94a1]">
+              <p className="mt-2 line-clamp-1 text-[12px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 {story?.author_page?.page_name ||
                   story?.authorPage?.page_name ||
                   story?.author?.page_name ||
                   story?.author_name ||
                   t('reactionPage.author')}
               </p>
-              <p className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#98a2b3]">
+              <p className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#98a2b3] dark:text-[var(--shadow-text-tertiary)]">
                 {story?.main_genre ||
                   t('reactionPage.story')}
               </p>
             </div>
           </div>
 
-          <div className="mt-6 rounded-[26px] bg-[#f8f8fb] p-5 text-center">
+          <div className="mt-6 rounded-[26px] bg-[#f8f8fb] p-5 text-center dark:bg-[var(--shadow-bg-elevated)]">
             <div
-              className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5"
+              className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5 dark:ring-white/10"
               style={{
                 backgroundColor:
-                  activeReaction?.bg || '#ffffff',
+                  activeReaction?.bg || undefined,
                 color:
-                  activeReaction?.text || '#111827',
+                  activeReaction?.text || undefined,
               }}
             >
               {activeReaction ? (
@@ -470,14 +470,14 @@ export default function ReactionPage() {
                   }`}
                 />
               ) : (
-                <i className="fa-regular fa-face-smile text-[34px] text-[#98a2b3]" />
+                <i className="fa-regular fa-face-smile text-[34px] text-[#98a2b3] dark:text-[var(--shadow-text-tertiary)]" />
               )}
             </div>
 
-            <div className="mt-4 text-[24px] font-black">
+            <div className="mt-4 text-[24px] font-black dark:text-[var(--shadow-text-primary)]">
               {formatNumber(totalReactions)}
             </div>
-            <div className="mt-1 text-[12px] font-bold text-[#8d94a1]">
+            <div className="mt-1 text-[12px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
               {activeReaction
                 ? t('reactionPage.reacted', {
                     reaction:
@@ -490,7 +490,7 @@ export default function ReactionPage() {
             </div>
 
             <div className="mt-5 flex justify-center">
-              <div className="flex max-w-full gap-2 overflow-x-auto rounded-full bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
+              <div className="flex max-w-full gap-2 overflow-x-auto rounded-full bg-white px-3 py-2 shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-none dark:ring-white/10">
                 {REACTIONS.map((reaction) => {
                   const isActive =
                     selectedReaction === reaction.type
@@ -512,8 +512,8 @@ export default function ReactionPage() {
                       disabled={loading}
                       className={`shadow-reaction-button relative flex h-[54px] w-[50px] shrink-0 flex-col items-center justify-center rounded-full transition duration-200 active:scale-95 disabled:opacity-60 ${
                         isActive
-                          ? 'scale-110 shadow-sm ring-2 ring-white'
-                          : 'hover:bg-[#f8f8fb]'
+                          ? 'scale-110 shadow-sm ring-2 ring-white dark:ring-white/25'
+                          : 'hover:bg-[#f8f8fb] dark:hover:bg-[var(--shadow-bg-hover)]'
                       } ${
                         isPopping
                           ? 'shadow-reaction-glow'
@@ -565,7 +565,7 @@ export default function ReactionPage() {
               onClick={() =>
                 navigate(`/story/${storyId}`)
               }
-              className="flex h-12 items-center justify-center rounded-full border border-[#eceaf2] bg-white text-[13px] font-black text-[#111827] active:scale-95"
+              className="flex h-12 items-center justify-center rounded-full border border-[#eceaf2] bg-white text-[13px] font-black text-[#111827] active:scale-95 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
             >
               {t('reactionPage.storyPage')}
             </button>
@@ -573,7 +573,7 @@ export default function ReactionPage() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex h-12 items-center justify-center rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95"
+              className="flex h-12 items-center justify-center rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95 dark:bg-[#7c3aed]"
             >
               {t('reactionPage.done')}
             </button>
