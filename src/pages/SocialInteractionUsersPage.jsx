@@ -1,5 +1,275 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('socialInteractionUsersPage', {
+  en: {
+    love: 'Love',
+    haha: 'Haha',
+    wow: 'Wow',
+    sad: 'Sad',
+    angry: 'Angry',
+    support: 'Support',
+    touched: 'Touched',
+    episode: 'Episode',
+    story: 'Story',
+    authorPost: 'Author post',
+    readerPost: 'Reader post',
+    shadowMallPromotion: 'Shadow Mall promotion',
+    reader: 'Reader',
+    content: 'Content',
+    followers: 'Followers',
+    friends: 'Friends',
+    closeReaders: 'Close readers',
+    onlyMe: 'Only me',
+    public: 'Public',
+    justNow: 'Just now',
+    minutes: '{{count}}m',
+    hours: '{{count}}h',
+    days: '{{count}}d',
+    openProfile: 'Open {{name}} profile',
+    echoesCount: '{{count}} echoes',
+    openEchoedPost: 'Open echoed post',
+    echoedThis: 'Echoed this',
+    reactionOne: '{{count}} reaction',
+    reactionsMany: '{{count}} reactions',
+    commentOne: '{{count}} comment',
+    commentsMany: '{{count}} comments',
+    echoOne: '{{count}} echo',
+    echoesMany: '{{count}} echoes',
+    readersWhoEchoed: 'Readers who echoed this',
+    peopleWhoReacted: 'People who reacted',
+    unavailable: 'This interaction page is not available.',
+    loadFailed: 'Failed to load people',
+    cannotConnect: 'Cannot connect to backend.',
+    all: 'All',
+    goBack: 'Go back',
+    reactionTotalOne: '{{count}} reaction',
+    reactionTotalMany: '{{count}} reactions',
+    echoTotalOne: '{{count}} Echo',
+    echoTotalMany: '{{count}} Echoes',
+    tryAgain: 'Try again',
+    loading: 'Loading...',
+    loadMore: 'Load more',
+    noEchoes: 'No echoes yet',
+    noReactions: 'No reactions yet',
+    firstEcho: 'Be the first to echo this.',
+    firstReact: 'Be the first to react to this post.',
+  },
+  km: {
+    love: 'ស្រឡាញ់',
+    haha: 'ហាហា',
+    wow: 'ភ្ញាក់ផ្អើល',
+    sad: 'សោកសៅ',
+    angry: 'ខឹង',
+    support: 'គាំទ្រ',
+    touched: 'រំភើបចិត្ត',
+    episode: 'ភាគ',
+    story: 'រឿង',
+    authorPost: 'Post របស់អ្នកនិពន្ធ',
+    readerPost: 'Post របស់អ្នកអាន',
+    shadowMallPromotion: 'ការផ្សព្វផ្សាយ Shadow Mall',
+    reader: 'អ្នកអាន',
+    content: 'ខ្លឹមសារ',
+    followers: 'អ្នកតាមដាន',
+    friends: 'មិត្តភក្តិ',
+    closeReaders: 'អ្នកអានជិតស្និទ្ធ',
+    onlyMe: 'ខ្ញុំតែប៉ុណ្ណោះ',
+    public: 'សាធារណៈ',
+    justNow: 'មុននេះបន្តិច',
+    minutes: '{{count}} នាទី',
+    hours: '{{count}} ម៉ោង',
+    days: '{{count}} ថ្ងៃ',
+    openProfile: 'បើក Profile របស់ {{name}}',
+    echoesCount: '{{count}} Echoes',
+    openEchoedPost: 'បើក Post ដែលបាន Echo',
+    echoedThis: 'បាន Echo វា',
+    reactionOne: '{{count}} Reaction',
+    reactionsMany: '{{count}} Reactions',
+    commentOne: '{{count}} មតិយោបល់',
+    commentsMany: '{{count}} មតិយោបល់',
+    echoOne: '{{count}} Echo',
+    echoesMany: '{{count}} Echoes',
+    readersWhoEchoed: 'អ្នកអានដែលបាន Echo',
+    peopleWhoReacted: 'អ្នកដែលបាន React',
+    unavailable: 'ទំព័រអន្តរកម្មនេះមិនអាចប្រើបានទេ។',
+    loadFailed: 'មិនអាចផ្ទុកអ្នកប្រើបានទេ',
+    cannotConnect: 'មិនអាចភ្ជាប់ទៅ Backend បានទេ។',
+    all: 'ទាំងអស់',
+    goBack: 'ត្រឡប់ក្រោយ',
+    reactionTotalOne: '{{count}} Reaction',
+    reactionTotalMany: '{{count}} Reactions',
+    echoTotalOne: '{{count}} Echo',
+    echoTotalMany: '{{count}} Echoes',
+    tryAgain: 'សាកម្តងទៀត',
+    loading: 'កំពុងផ្ទុក...',
+    loadMore: 'ផ្ទុកបន្ថែម',
+    noEchoes: 'មិនទាន់មាន Echo',
+    noReactions: 'មិនទាន់មាន Reaction',
+    firstEcho: 'ក្លាយជាអ្នកដំបូងដែល Echo វា។',
+    firstReact: 'ក្លាយជាអ្នកដំបូងដែល React ទៅ Post នេះ។',
+  },
+  zh: {
+    love: '喜欢',
+    haha: '哈哈',
+    wow: '惊讶',
+    sad: '难过',
+    angry: '生气',
+    support: '支持',
+    touched: '感动',
+    episode: '章节',
+    story: '故事',
+    authorPost: '作者帖子',
+    readerPost: '读者帖子',
+    shadowMallPromotion: 'Shadow Mall 推广',
+    reader: '读者',
+    content: '内容',
+    followers: '关注者',
+    friends: '朋友',
+    closeReaders: '亲密读者',
+    onlyMe: '仅自己',
+    public: '公开',
+    justNow: '刚刚',
+    minutes: '{{count}} 分钟',
+    hours: '{{count}} 小时',
+    days: '{{count}} 天',
+    openProfile: '打开 {{name}} 的个人资料',
+    echoesCount: '{{count}} 次 Echo',
+    openEchoedPost: '打开 Echo 的帖子',
+    echoedThis: 'Echo 了此内容',
+    reactionOne: '{{count}} 个 Reaction',
+    reactionsMany: '{{count}} 个 Reactions',
+    commentOne: '{{count}} 条评论',
+    commentsMany: '{{count}} 条评论',
+    echoOne: '{{count}} 次 Echo',
+    echoesMany: '{{count}} 次 Echo',
+    readersWhoEchoed: 'Echo 此内容的读者',
+    peopleWhoReacted: '做出 Reaction 的人',
+    unavailable: '此互动页面不可用。',
+    loadFailed: '无法加载用户',
+    cannotConnect: '无法连接 Backend。',
+    all: '全部',
+    goBack: '返回',
+    reactionTotalOne: '{{count}} 个 Reaction',
+    reactionTotalMany: '{{count}} 个 Reactions',
+    echoTotalOne: '{{count}} 次 Echo',
+    echoTotalMany: '{{count}} 次 Echo',
+    tryAgain: '重试',
+    loading: '加载中...',
+    loadMore: '加载更多',
+    noEchoes: '暂无 Echo',
+    noReactions: '暂无 Reaction',
+    firstEcho: '成为第一个 Echo 此内容的人。',
+    firstReact: '成为第一个对该帖子做出 Reaction 的人。',
+  },
+  ja: {
+    love: 'Love',
+    haha: 'Haha',
+    wow: 'Wow',
+    sad: 'Sad',
+    angry: 'Angry',
+    support: 'Support',
+    touched: 'Touched',
+    episode: 'エピソード',
+    story: 'ストーリー',
+    authorPost: '作者の投稿',
+    readerPost: '読者の投稿',
+    shadowMallPromotion: 'Shadow Mall プロモーション',
+    reader: '読者',
+    content: 'コンテンツ',
+    followers: 'フォロワー',
+    friends: '友達',
+    closeReaders: '親しい読者',
+    onlyMe: '自分のみ',
+    public: '公開',
+    justNow: 'たった今',
+    minutes: '{{count}}分',
+    hours: '{{count}}時間',
+    days: '{{count}}日',
+    openProfile: '{{name}} のプロフィールを開く',
+    echoesCount: '{{count}} Echo',
+    openEchoedPost: 'Echo された投稿を開く',
+    echoedThis: 'これを Echo しました',
+    reactionOne: '{{count}} Reaction',
+    reactionsMany: '{{count}} Reactions',
+    commentOne: '{{count}} コメント',
+    commentsMany: '{{count}} コメント',
+    echoOne: '{{count}} Echo',
+    echoesMany: '{{count}} Echo',
+    readersWhoEchoed: 'Echo した読者',
+    peopleWhoReacted: 'Reaction した人',
+    unavailable: 'このインタラクションページは利用できません。',
+    loadFailed: 'ユーザーを読み込めませんでした',
+    cannotConnect: 'Backend に接続できません。',
+    all: 'すべて',
+    goBack: '戻る',
+    reactionTotalOne: '{{count}} Reaction',
+    reactionTotalMany: '{{count}} Reactions',
+    echoTotalOne: '{{count}} Echo',
+    echoTotalMany: '{{count}} Echo',
+    tryAgain: '再試行',
+    loading: '読み込み中...',
+    loadMore: 'さらに読み込む',
+    noEchoes: 'Echo はまだありません',
+    noReactions: 'Reaction はまだありません',
+    firstEcho: '最初に Echo してみましょう。',
+    firstReact: '最初にこの投稿へ Reaction してみましょう。',
+  },
+  ko: {
+    love: '좋아요',
+    haha: '하하',
+    wow: '놀라워요',
+    sad: '슬퍼요',
+    angry: '화나요',
+    support: '응원해요',
+    touched: '감동이에요',
+    episode: '에피소드',
+    story: '스토리',
+    authorPost: '작가 게시물',
+    readerPost: '독자 게시물',
+    shadowMallPromotion: 'Shadow Mall 프로모션',
+    reader: '독자',
+    content: '콘텐츠',
+    followers: '팔로워',
+    friends: '친구',
+    closeReaders: '친한 독자',
+    onlyMe: '나만 보기',
+    public: '공개',
+    justNow: '방금',
+    minutes: '{{count}}분',
+    hours: '{{count}}시간',
+    days: '{{count}}일',
+    openProfile: '{{name}} 프로필 열기',
+    echoesCount: '{{count}} Echo',
+    openEchoedPost: 'Echo된 게시물 열기',
+    echoedThis: '이 콘텐츠를 Echo했습니다',
+    reactionOne: '{{count}} Reaction',
+    reactionsMany: '{{count}} Reactions',
+    commentOne: '{{count}} 댓글',
+    commentsMany: '{{count}} 댓글',
+    echoOne: '{{count}} Echo',
+    echoesMany: '{{count}} Echo',
+    readersWhoEchoed: 'Echo한 독자',
+    peopleWhoReacted: 'Reaction한 사람',
+    unavailable: '이 상호작용 페이지를 사용할 수 없습니다.',
+    loadFailed: '사용자를 불러오지 못했습니다',
+    cannotConnect: 'Backend에 연결할 수 없습니다.',
+    all: '전체',
+    goBack: '뒤로 가기',
+    reactionTotalOne: '{{count}} Reaction',
+    reactionTotalMany: '{{count}} Reactions',
+    echoTotalOne: '{{count}} Echo',
+    echoTotalMany: '{{count}} Echo',
+    tryAgain: '다시 시도',
+    loading: '불러오는 중...',
+    loadMore: '더 불러오기',
+    noEchoes: '아직 Echo가 없습니다',
+    noReactions: '아직 Reaction이 없습니다',
+    firstEcho: '첫 번째로 Echo해 보세요.',
+    firstReact: '이 게시물에 첫 Reaction을 남겨보세요.',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -18,12 +288,38 @@ const REACTION_META = {
   touched: { label: 'Touched', src: '/assets/React/Touched.svg' },
 }
 
+const REACTION_LABEL_KEYS = {
+  love: 'love',
+  haha: 'haha',
+  wow: 'wow',
+  sad: 'sad',
+  angry: 'angry',
+  support: 'support',
+  touched: 'touched',
+}
+
 const SOURCE_LABELS = {
   episode: 'Episode',
   story: 'Story',
   author_post: 'Author post',
   reader_post: 'Reader post',
   shadow_mall_promotion: 'Shadow Mall promotion',
+}
+
+const SOURCE_LABEL_KEYS = {
+  episode: 'episode',
+  story: 'story',
+  author_post: 'authorPost',
+  reader_post: 'readerPost',
+  shadow_mall_promotion: 'shadowMallPromotion',
+}
+
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-GB',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
 }
 
 function getReaderToken() {
@@ -182,7 +478,7 @@ function mergeUnique(current, incoming) {
   return result
 }
 
-function formatInteractionTime(value) {
+function formatInteractionTime(value, language, t) {
   const date = value ? new Date(value) : null
 
   if (!date || Number.isNaN(date.getTime())) return ''
@@ -192,27 +488,67 @@ function formatInteractionTime(value) {
     Math.floor((Date.now() - date.getTime()) / 1000)
   )
 
-  if (seconds < 60) return 'Just now'
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`
+  if (seconds < 60) return t('socialInteractionUsersPage.justNow')
+  if (seconds < 3600) {
+    return t('socialInteractionUsersPage.minutes', {
+      count: Math.floor(seconds / 60),
+    })
+  }
+  if (seconds < 86400) {
+    return t('socialInteractionUsersPage.hours', {
+      count: Math.floor(seconds / 3600),
+    })
+  }
+  if (seconds < 604800) {
+    return t('socialInteractionUsersPage.days', {
+      count: Math.floor(seconds / 86400),
+    })
+  }
 
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year:
-      date.getFullYear() === new Date().getFullYear()
-        ? undefined
-        : 'numeric',
-  })
+  return date.toLocaleDateString(
+    DISPLAY_LOCALES[language] || DISPLAY_LOCALES.en,
+    {
+      day: '2-digit',
+      month: 'short',
+      year:
+        date.getFullYear() === new Date().getFullYear()
+          ? undefined
+          : 'numeric',
+    }
+  )
+}
+
+function getDisplayUserName(user, t) {
+  return user.name === 'Reader'
+    ? t('socialInteractionUsersPage.reader')
+    : user.name
+}
+
+function getDisplaySourceLabel(sourceType, fallback, t) {
+  const key = SOURCE_LABEL_KEYS[sourceType]
+
+  return key
+    ? t(`socialInteractionUsersPage.${key}`)
+    : fallback
+}
+
+function getDisplayReactionLabel(type, fallback, t) {
+  const key = REACTION_LABEL_KEYS[type]
+
+  return key
+    ? t(`socialInteractionUsersPage.${key}`)
+    : fallback
 }
 
 function Avatar({ user }) {
+  const { t } = useDisplayTranslation()
+  const displayName = getDisplayUserName(user, t)
+
   if (user.avatar_url) {
     return (
       <img
         src={user.avatar_url}
-        alt={user.name}
+        alt={displayName}
         className="h-12 w-12 rounded-full object-cover ring-1 ring-black/5"
       />
     )
@@ -220,7 +556,7 @@ function Avatar({ user }) {
 
   return (
     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#111827] text-[15px] font-bold text-white">
-      {user.name.slice(0, 1).toUpperCase()}
+      {displayName.slice(0, 1).toUpperCase()}
     </div>
   )
 }
@@ -229,6 +565,8 @@ function EchoSourcePreview({
   source,
   onOpen,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!source) return null
 
   const imageUrl =
@@ -246,6 +584,16 @@ function EchoSourcePreview({
     SOURCE_LABELS[source.type] ||
     source.label ||
     'Content'
+  const displayLabel =
+    SOURCE_LABELS[source.type]
+      ? getDisplaySourceLabel(
+          source.type,
+          label,
+          t
+        )
+      : label === 'Content'
+        ? t('socialInteractionUsersPage.content')
+        : label
 
   return (
     <button
@@ -267,11 +615,11 @@ function EchoSourcePreview({
 
       <div className="min-w-0 flex-1">
         <div className="truncate text-[14px] font-semibold text-[#111827]">
-          {source.name || label}
+          {source.name || displayLabel}
         </div>
 
         <div className="mt-1 truncate text-[11px] font-medium text-[#98a2b3]">
-          {label}
+          {displayLabel}
           {ownerName
             ? ` · ${ownerName}`
             : ''}
@@ -289,22 +637,21 @@ function EchoSourcePreview({
   )
 }
 
-
-function getEchoVisibilityMeta(value) {
+function getEchoVisibilityMeta(value, t) {
   const visibility = String(value || 'public')
     .trim()
     .toLowerCase()
 
   if (visibility === 'followers') {
     return {
-      label: 'Followers',
+      label: t('socialInteractionUsersPage.followers'),
       icon: 'fa-user-group',
     }
   }
 
   if (visibility === 'friends') {
     return {
-      label: 'Friends',
+      label: t('socialInteractionUsersPage.friends'),
       icon: 'fa-user-group',
     }
   }
@@ -314,7 +661,7 @@ function getEchoVisibilityMeta(value) {
     visibility === 'close_readers'
   ) {
     return {
-      label: 'Close readers',
+      label: t('socialInteractionUsersPage.closeReaders'),
       icon: 'fa-star',
     }
   }
@@ -324,13 +671,13 @@ function getEchoVisibilityMeta(value) {
     visibility === 'private'
   ) {
     return {
-      label: 'Only me',
+      label: t('socialInteractionUsersPage.onlyMe'),
       icon: 'fa-lock',
     }
   }
 
   return {
-    label: 'Public',
+    label: t('socialInteractionUsersPage.public'),
     icon: 'fa-earth-americas',
   }
 }
@@ -340,13 +687,17 @@ function EchoPostCard({
   onOpenProfile,
   onOpenPost,
 }) {
+  const { language, t } = useDisplayTranslation()
   const time =
     formatInteractionTime(
-      item.created_at
+      item.created_at,
+      language,
+      t
     )
   const visibility =
     getEchoVisibilityMeta(
-      item.visibility
+      item.visibility,
+      t
     )
   const canOpenProfile =
     Boolean(item.user?.username)
@@ -354,6 +705,7 @@ function EchoPostCard({
     item.like_count > 0 ||
     item.comment_count > 0 ||
     item.echo_count > 0
+  const displayName = getDisplayUserName(item.user, t)
 
   return (
     <article className="border-b border-[#eef1f5] py-4">
@@ -363,7 +715,9 @@ function EchoPostCard({
           onClick={onOpenProfile}
           disabled={!canOpenProfile}
           className="shrink-0 rounded-full disabled:cursor-default"
-          aria-label={`Open ${item.user.name} profile`}
+          aria-label={t('socialInteractionUsersPage.openProfile', {
+            name: displayName,
+          })}
         >
           <Avatar user={item.user} />
         </button>
@@ -375,7 +729,7 @@ function EchoPostCard({
             disabled={!canOpenProfile}
             className="block max-w-full truncate text-left text-[15px] font-semibold text-[#111827] disabled:cursor-default"
           >
-            {item.user.name}
+            {displayName}
           </button>
 
           <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-[#98a2b3]">
@@ -389,7 +743,9 @@ function EchoPostCard({
               <>
                 <span>·</span>
                 <span>
-                  {item.share_count.toLocaleString()} echoes
+                  {t('socialInteractionUsersPage.echoesCount', {
+                    count: item.share_count.toLocaleString(),
+                  })}
                 </span>
               </>
             ) : null}
@@ -400,7 +756,7 @@ function EchoPostCard({
           type="button"
           onClick={onOpenPost}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#98a2b3] active:bg-[#f3f4f6]"
-          aria-label="Open echoed post"
+          aria-label={t('socialInteractionUsersPage.openEchoedPost')}
         >
           <i className="fa-solid fa-chevron-right text-[11px]" />
         </button>
@@ -417,7 +773,7 @@ function EchoPostCard({
           </p>
         ) : (
           <p className="text-[13px] font-medium text-[#667085]">
-            Echoed this
+            {t('socialInteractionUsersPage.echoedThis')}
           </p>
         )}
       </button>
@@ -426,28 +782,40 @@ function EchoPostCard({
         <div className="mt-3 flex items-center gap-3 border-t border-[#f2f4f7] pt-2.5 text-[11px] font-medium text-[#98a2b3]">
           {item.like_count > 0 ? (
             <span>
-              {item.like_count.toLocaleString()}{' '}
-              {item.like_count === 1
-                ? 'reaction'
-                : 'reactions'}
+              {t(
+                item.like_count === 1
+                  ? 'socialInteractionUsersPage.reactionOne'
+                  : 'socialInteractionUsersPage.reactionsMany',
+                {
+                  count: item.like_count.toLocaleString(),
+                }
+              )}
             </span>
           ) : null}
 
           {item.comment_count > 0 ? (
             <span>
-              {item.comment_count.toLocaleString()}{' '}
-              {item.comment_count === 1
-                ? 'comment'
-                : 'comments'}
+              {t(
+                item.comment_count === 1
+                  ? 'socialInteractionUsersPage.commentOne'
+                  : 'socialInteractionUsersPage.commentsMany',
+                {
+                  count: item.comment_count.toLocaleString(),
+                }
+              )}
             </span>
           ) : null}
 
           {item.echo_count > 0 ? (
             <span>
-              {item.echo_count.toLocaleString()}{' '}
-              {item.echo_count === 1
-                ? 'echo'
-                : 'echoes'}
+              {t(
+                item.echo_count === 1
+                  ? 'socialInteractionUsersPage.echoOne'
+                  : 'socialInteractionUsersPage.echoesMany',
+                {
+                  count: item.echo_count.toLocaleString(),
+                }
+              )}
             </span>
           ) : null}
         </div>
@@ -460,6 +828,7 @@ export default function SocialInteractionUsersPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const params = useParams()
+  const { t } = useDisplayTranslation()
   const sourceType = normalizeSourceType(params.sourceType)
   const interactionType = normalizeInteractionType(params.interactionType)
   const sourceId = String(params.sourceId || '').trim()
@@ -482,10 +851,18 @@ export default function SocialInteractionUsersPage() {
 
   const title =
     interactionType === 'echo'
-      ? 'Readers who echoed this'
-      : 'People who reacted'
+      ? t('socialInteractionUsersPage.readersWhoEchoed')
+      : t('socialInteractionUsersPage.peopleWhoReacted')
 
   const sourceLabel = SOURCE_LABELS[sourceType] || 'Content'
+  const displaySourceLabel =
+    SOURCE_LABELS[sourceType]
+      ? getDisplaySourceLabel(
+          sourceType,
+          sourceLabel,
+          t
+        )
+      : t('socialInteractionUsersPage.content')
   const sourceName =
     location.state?.sourceName ||
     location.state?.title ||
@@ -496,7 +873,7 @@ export default function SocialInteractionUsersPage() {
       if (!endpoint) {
         setItems([])
         setLoading(false)
-        setMessage('This interaction page is not available.')
+        setMessage(t('socialInteractionUsersPage.unavailable'))
         return
       }
 
@@ -519,7 +896,10 @@ export default function SocialInteractionUsersPage() {
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load people')
+          throw new Error(
+            data.message ||
+              t('socialInteractionUsersPage.loadFailed')
+          )
         }
 
         const nextItems = extractItems(data, interactionType)
@@ -570,8 +950,9 @@ export default function SocialInteractionUsersPage() {
         if (!append) setItems([])
         setMessage(
           error.message === 'Failed to fetch'
-            ? 'Cannot connect to backend.'
-            : error.message || 'Failed to load people'
+            ? t('socialInteractionUsersPage.cannotConnect')
+            : error.message ||
+                t('socialInteractionUsersPage.loadFailed')
         )
       } finally {
         setLoading(false)
@@ -686,7 +1067,7 @@ export default function SocialInteractionUsersPage() {
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f3f4f6]"
-            aria-label="Go back"
+            aria-label={t('socialInteractionUsersPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[19px]" />
           </button>
@@ -698,7 +1079,7 @@ export default function SocialInteractionUsersPage() {
 
   {interactionType !== 'echo' ? (
     <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
-      {sourceName || sourceLabel}
+      {sourceName || displaySourceLabel}
     </p>
   ) : null}
 </div>
@@ -711,6 +1092,14 @@ export default function SocialInteractionUsersPage() {
             <div className="mx-auto flex min-w-max max-w-3xl px-3">
               {reactionTabs.map((tab) => {
                 const active = activeReaction === tab.type
+                const tabLabel =
+                  tab.type === 'all'
+                    ? t('socialInteractionUsersPage.all')
+                    : getDisplayReactionLabel(
+                        tab.type,
+                        tab.label,
+                        t
+                      )
 
                 return (
                   <button
@@ -730,7 +1119,7 @@ export default function SocialInteractionUsersPage() {
                         className="h-5 w-5 object-contain"
                       />
                     ) : null}
-                    <span>{tab.label}</span>
+                    <span>{tabLabel}</span>
                     <span>{tab.count.toLocaleString()}</span>
                     {active ? (
                       <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#111827] dark:bg-[#a78bfa]" />
@@ -754,25 +1143,34 @@ export default function SocialInteractionUsersPage() {
   </section>
 ) : null}
 
-
       {interactionType === 'like' ? (
   <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
     <div className="text-[15px] font-bold text-[#111827]">
-      {total.toLocaleString()}{' '}
-      {total === 1 ? 'reaction' : 'reactions'}
+      {t(
+        total === 1
+          ? 'socialInteractionUsersPage.reactionTotalOne'
+          : 'socialInteractionUsersPage.reactionTotalMany',
+        {
+          count: total.toLocaleString(),
+        }
+      )}
     </div>
   </section>
 ) : null}
-      
+
 {interactionType === 'echo' ? (
   <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
     <div className="text-[15px] font-bold text-[#111827]">
-  {shareTotal.toLocaleString()}{' '}
-  {shareTotal === 1
-    ? 'Echo'
-    : 'Echoes'}
+  {t(
+    shareTotal === 1
+      ? 'socialInteractionUsersPage.echoTotalOne'
+      : 'socialInteractionUsersPage.echoTotalMany',
+    {
+      count: shareTotal.toLocaleString(),
+    }
+  )}
 </div>
-  
+
   </section>
 ) : null}
 
@@ -805,7 +1203,7 @@ export default function SocialInteractionUsersPage() {
               onClick={() => loadPage(1)}
               className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-bold text-white active:scale-95 dark:bg-[#7c3aed]"
             >
-              Try again
+              {t('socialInteractionUsersPage.tryAgain')}
             </button>
           </div>
         ) : visibleItems.length ? (
@@ -831,6 +1229,14 @@ export default function SocialInteractionUsersPage() {
                 REACTION_META.love
               const canOpenProfile =
                 Boolean(item.user.username)
+              const displayName =
+                getDisplayUserName(item.user, t)
+              const reactionLabel =
+                getDisplayReactionLabel(
+                  item.reaction_type,
+                  meta.label,
+                  t
+                )
 
               return (
                 <button
@@ -847,7 +1253,7 @@ export default function SocialInteractionUsersPage() {
                     <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
                       <img
                         src={meta.src}
-                        alt={meta.label}
+                        alt={reactionLabel}
                         className="h-5 w-5 object-contain"
                       />
                     </span>
@@ -855,7 +1261,7 @@ export default function SocialInteractionUsersPage() {
 
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[15px] font-semibold">
-                      {item.user.name}
+                      {displayName}
                     </div>
 
                     {item.user.username ? (
@@ -879,7 +1285,9 @@ export default function SocialInteractionUsersPage() {
                 disabled={loadingMore}
                 className="mt-4 h-11 w-full rounded-full bg-[#f3f4f6] text-[13px] font-semibold text-[#111827] active:scale-[0.99] disabled:opacity-60"
               >
-                {loadingMore ? 'Loading...' : 'Load more'}
+                {loadingMore
+                  ? t('socialInteractionUsersPage.loading')
+                  : t('socialInteractionUsersPage.loadMore')}
               </button>
             ) : null}
 
@@ -897,14 +1305,14 @@ export default function SocialInteractionUsersPage() {
             </div>
             <div className="mt-4 text-[16px] font-semibold">
   {interactionType === 'echo'
-    ? 'No echoes yet'
-    : 'No reactions yet'}
+    ? t('socialInteractionUsersPage.noEchoes')
+    : t('socialInteractionUsersPage.noReactions')}
 </div>
 
 <p className="mx-auto mt-2 max-w-[280px] text-[13px] leading-5 text-[#98a2b3]">
   {interactionType === 'echo'
-    ? 'Be the first to echo this.'
-    : 'Be the first to react to this post.'}
+    ? t('socialInteractionUsersPage.firstEcho')
+    : t('socialInteractionUsersPage.firstReact')}
 </p>
           </div>
         )}
