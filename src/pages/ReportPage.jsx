@@ -297,12 +297,12 @@ export default function ReportPage() {
   const { reportType = '', targetId = '' } = useParams()
 
   const isPhotoReport =
-  ['author_post', 'reader_post'].includes(reportType) &&
-  location.state?.reportContext === 'photo'
+    ['author_post', 'reader_post'].includes(reportType) &&
+    location.state?.reportContext === 'photo'
 
-const config = isPhotoReport
-  ? PHOTO_REPORT_CONFIG
-  : REPORT_CONFIG[reportType] || null
+  const config = isPhotoReport
+    ? PHOTO_REPORT_CONFIG
+    : REPORT_CONFIG[reportType] || null
   const targetTitle = String(location.state?.targetTitle || '').trim()
   const sourceUrl = String(
     location.state?.sourceUrl ||
@@ -320,8 +320,6 @@ const config = isPhotoReport
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
-
-  
 
   const handleBack = () => {
     if (returnTo) {
@@ -421,21 +419,21 @@ const config = isPhotoReport
 
   if (!config || !isUuid(targetId)) {
     return (
-      <main className="min-h-screen bg-[#f5f3fa] px-4 py-8">
-        <section className="mx-auto max-w-[620px] rounded-[26px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#d9363e]">
+      <main className="app-page min-h-screen px-4 py-8">
+        <section className="mx-auto max-w-[620px] rounded-[26px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#d9363e] dark:bg-red-500/10 dark:text-red-300">
             <i className="fa-solid fa-triangle-exclamation text-[20px]" />
           </div>
-          <h1 className="mt-4 text-[20px] font-bold text-[#111827]">
+          <h1 className="mt-4 text-[20px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
             Invalid report
           </h1>
-          <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085]">
+          <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085] dark:text-[var(--shadow-text-secondary)]">
             The report type or reported content ID is invalid.
           </p>
           <button
             type="button"
             onClick={handleBack}
-            className="mt-5 h-11 rounded-full bg-[#111827] px-6 text-[13px] font-bold text-white"
+            className="mt-5 h-11 rounded-full bg-[#111827] px-6 text-[13px] font-bold text-white dark:bg-[#7c3aed]"
           >
             Go Back
           </button>
@@ -446,28 +444,28 @@ const config = isPhotoReport
 
   if (success) {
     return (
-      <main className="min-h-screen bg-[#f5f3fa] px-4 py-8">
-        <section className="mx-auto max-w-[620px] rounded-[28px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#eafaf1] text-[#0f9f62]">
+      <main className="app-page min-h-screen px-4 py-8">
+        <section className="mx-auto max-w-[620px] rounded-[28px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#eafaf1] text-[#0f9f62] dark:bg-emerald-500/10 dark:text-emerald-300">
             <i className="fa-solid fa-check text-[24px]" />
           </div>
 
-          <h1 className="mt-5 text-[22px] font-bold text-[#111827]">
+          <h1 className="mt-5 text-[22px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
             Report received
           </h1>
 
-          <p className="mx-auto mt-2 max-w-[430px] text-[13px] font-medium leading-6 text-[#667085]">
+          <p className="mx-auto mt-2 max-w-[430px] text-[13px] font-medium leading-6 text-[#667085] dark:text-[var(--shadow-text-secondary)]">
             {message}
           </p>
 
-          <div className="mt-5 rounded-[18px] bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold leading-5 text-[#667085]">
+          <div className="mt-5 rounded-[18px] bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold leading-5 text-[#667085] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
             The author or commenter will not be told who submitted this report.
           </div>
 
           <button
             type="button"
             onClick={handleBack}
-            className="mt-6 h-12 w-full rounded-full bg-[#111827] text-[14px] font-bold text-white active:scale-[0.99]"
+            className="mt-6 h-12 w-full rounded-full bg-[#111827] text-[14px] font-bold text-white active:scale-[0.99] dark:bg-[#7c3aed]"
           >
             Done
           </button>
@@ -477,41 +475,41 @@ const config = isPhotoReport
   }
 
   return (
-    <main className="min-h-screen bg-[#faf9f7] pb-6 text-[#171a21]">
-      <header className="sticky top-0 z-30 border-b border-[#e8e7e3] bg-white/95 backdrop-blur">
+    <main className="app-page min-h-screen pb-6 text-[#171a21] dark:text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-30 border-b border-[#e8e7e3] bg-white/95 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="relative mx-auto flex h-[58px] max-w-[680px] items-center justify-center px-14">
           <button
             type="button"
             onClick={handleBack}
-            className="absolute left-3 flex h-10 w-10 items-center justify-center rounded-full text-[#242830] transition active:bg-[#f1f1ef]"
+            className="absolute left-3 flex h-10 w-10 items-center justify-center rounded-full text-[#242830] transition active:bg-[#f1f1ef] dark:text-[var(--shadow-text-primary)] dark:active:bg-[var(--shadow-bg-hover)]"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="truncate text-center text-[17px] font-bold text-[#171a21]">
+          <h1 className="truncate text-center text-[17px] font-bold text-[#171a21] dark:text-[var(--shadow-text-primary)]">
             {config.title}
           </h1>
         </div>
       </header>
 
       <div className="mx-auto max-w-[680px] px-4 pt-5">
-        <section className="rounded-[18px] border border-[#e4e3df] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(24,28,36,0.045)]">
+        <section className="rounded-[18px] border border-[#e4e3df] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(24,28,36,0.045)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)]">
           <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[#fff1f5] text-[#ff3b5f]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[#fff1f5] text-[#ff3b5f] dark:bg-[#ff3b5f]/10">
               <i className="fa-regular fa-flag text-[18px]" />
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="text-[10.5px] font-bold uppercase tracking-[0.65px] text-[#8a8f98]">
+              <div className="text-[10.5px] font-bold uppercase tracking-[0.65px] text-[#8a8f98] dark:text-[var(--shadow-text-tertiary)]">
                 {config.typeLabel}
               </div>
 
-              <h2 className="mt-1 line-clamp-2 text-[15px] font-bold leading-6 text-[#171a21]">
+              <h2 className="mt-1 line-clamp-2 text-[15px] font-bold leading-6 text-[#171a21] dark:text-[var(--shadow-text-primary)]">
                 {targetTitle || `Reported ${config.typeLabel}`}
               </h2>
 
-              <p className="mt-1 text-[12px] font-medium leading-5 text-[#767c86]">
+              <p className="mt-1 text-[12px] font-medium leading-5 text-[#767c86] dark:text-[var(--shadow-text-secondary)]">
                 {config.subtitle}
               </p>
             </div>
@@ -520,22 +518,22 @@ const config = isPhotoReport
 
         <section className="mt-5">
           <div className="flex items-start gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff1f5] text-[11px] font-bold text-[#ff3b5f]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff1f5] text-[11px] font-bold text-[#ff3b5f] dark:bg-[#ff3b5f]/10">
               1
             </span>
 
             <div className="min-w-0">
-              <h3 className="text-[15.5px] font-bold leading-6 text-[#171a21]">
+              <h3 className="text-[15.5px] font-bold leading-6 text-[#171a21] dark:text-[var(--shadow-text-primary)]">
                 Why are you reporting this?
               </h3>
 
-              <p className="mt-0.5 text-[11.5px] font-medium leading-5 text-[#858a93]">
+              <p className="mt-0.5 text-[11.5px] font-medium leading-5 text-[#858a93] dark:text-[var(--shadow-text-secondary)]">
                 Select one reason. Shadow will review the reported content.
               </p>
             </div>
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-[18px] border border-[#e1e2e4] bg-white shadow-[0_8px_24px_rgba(24,28,36,0.035)]">
+          <div className="mt-4 overflow-hidden rounded-[18px] border border-[#e1e2e4] bg-white shadow-[0_8px_24px_rgba(24,28,36,0.035)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:shadow-none">
             {config.options.map((option, index) => {
               const selected = option.value === reasonCode
               const isLast = index === config.options.length - 1
@@ -544,7 +542,7 @@ const config = isPhotoReport
                 <div
                   key={option.value}
                   className={`px-2 py-1 ${
-                    isLast ? '' : 'border-b border-[#ececea]'
+                    isLast ? '' : 'border-b border-[#ececea] dark:border-[var(--shadow-border)]'
                   }`}
                 >
                   <button
@@ -555,26 +553,26 @@ const config = isPhotoReport
                     }}
                     className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left transition ${
                       selected
-  ? 'bg-[#fff1f5] ring-1 ring-inset ring-[#ff3b5f]/35'
-  : 'bg-white hover:bg-[#fff8fa]'
+                        ? 'bg-[#fff1f5] ring-1 ring-inset ring-[#ff3b5f]/35 dark:bg-[#ff3b5f]/10'
+                        : 'bg-white hover:bg-[#fff8fa] dark:bg-[var(--shadow-bg-surface)] dark:hover:bg-[var(--shadow-bg-hover)]'
                     }`}
                   >
                     <span
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${
                         selected
-  ? 'bg-white text-[#ff3b5f] shadow-sm'
-  : 'bg-[#f3f4f6] text-[#98a2b3] group-hover:bg-[#fff1f5] group-hover:text-[#ff3b5f]'
+                          ? 'bg-white text-[#ff3b5f] shadow-sm dark:bg-[var(--shadow-bg-elevated)]'
+                          : 'bg-[#f3f4f6] text-[#98a2b3] group-hover:bg-[#fff1f5] group-hover:text-[#ff3b5f] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-tertiary)] dark:group-hover:bg-[#ff3b5f]/10 dark:group-hover:text-[#ff6b87]'
                       }`}
                     >
                       <i className={`${option.icon} text-[14px]`} />
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[13.5px] font-bold leading-5 text-[#171a21]">
+                      <span className="block text-[13.5px] font-bold leading-5 text-[#171a21] dark:text-[var(--shadow-text-primary)]">
                         {option.label}
                       </span>
 
-                      <span className="mt-0.5 block text-[11.5px] font-medium leading-[18px] text-[#7d838d]">
+                      <span className="mt-0.5 block text-[11.5px] font-medium leading-[18px] text-[#7d838d] dark:text-[var(--shadow-text-secondary)]">
                         {option.description}
                       </span>
                     </span>
@@ -582,8 +580,8 @@ const config = isPhotoReport
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${
                         selected
-  ? 'border-[#ff3b5f] bg-white'
-  : 'border-[#cfd4dc] bg-white group-hover:border-[#ff9bb0]'
+                          ? 'border-[#ff3b5f] bg-white dark:bg-[var(--shadow-bg-elevated)]'
+                          : 'border-[#cfd4dc] bg-white group-hover:border-[#ff9bb0] dark:border-[var(--shadow-border-strong)] dark:bg-[var(--shadow-bg-elevated)]'
                       }`}
                       aria-hidden="true"
                     >
@@ -600,22 +598,22 @@ const config = isPhotoReport
 
         <section className="mt-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f1f1ef] text-[11px] font-bold text-[#5f646d]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f1f1ef] text-[11px] font-bold text-[#5f646d] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
               2
             </span>
 
             <label
               htmlFor="shadow-report-details"
-              className="text-[14.5px] font-bold text-[#171a21]"
+              className="text-[14.5px] font-bold text-[#171a21] dark:text-[var(--shadow-text-primary)]"
             >
               Tell us more
-              <span className="ml-1 text-[12px] font-semibold text-[#92969d]">
+              <span className="ml-1 text-[12px] font-semibold text-[#92969d] dark:text-[var(--shadow-text-tertiary)]">
                 {reasonCode === 'other' ? '(required)' : '(optional)'}
               </span>
             </label>
           </div>
 
-          <div className="mt-3 rounded-[18px] border border-[#e1e2e4] bg-white p-3 shadow-[0_8px_24px_rgba(24,28,36,0.03)]">
+          <div className="mt-3 rounded-[18px] border border-[#e1e2e4] bg-white p-3 shadow-[0_8px_24px_rgba(24,28,36,0.03)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:shadow-none">
             <textarea
               id="shadow-report-details"
               value={reasonText}
@@ -629,43 +627,43 @@ const config = isPhotoReport
                   ? 'Please explain what happened...'
                   : 'Add any details that may help us review this report...'
               }
-              className="min-h-[112px] w-full resize-none rounded-[13px] border border-[#dfe1e4] bg-[#fbfbfa] px-3.5 py-3 text-[13px] font-medium leading-6 text-[#171a21] outline-none transition placeholder:text-[#a0a4ab] focus:border-[#ff3b5f] focus:bg-white focus:shadow-[0_0_0_3px_rgba(255,59,95,0.10)]"
+              className="min-h-[112px] w-full resize-none rounded-[13px] border border-[#dfe1e4] bg-[#fbfbfa] px-3.5 py-3 text-[13px] font-medium leading-6 text-[#171a21] outline-none transition placeholder:text-[#a0a4ab] focus:border-[#ff3b5f] focus:bg-white focus:shadow-[0_0_0_3px_rgba(255,59,95,0.10)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[#ff5c79] dark:focus:bg-[var(--shadow-input-bg)]"
             />
 
-            <div className="mt-1 text-right text-[10.5px] font-semibold text-[#9b9fa6]">
+            <div className="mt-1 text-right text-[10.5px] font-semibold text-[#9b9fa6] dark:text-[var(--shadow-text-tertiary)]">
               {reasonText.length}/1000
             </div>
           </div>
         </section>
 
         {message ? (
-          <div className="mt-4 rounded-[14px] border border-[#f1c5c2] bg-[#fff1f0] px-4 py-3 text-[12px] font-bold leading-5 text-[#b84f4b]">
+          <div className="mt-4 rounded-[14px] border border-[#f1c5c2] bg-[#fff1f0] px-4 py-3 text-[12px] font-bold leading-5 text-[#b84f4b] dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-300">
             {message}
           </div>
         ) : null}
 
-        <div className="mt-4 flex items-start gap-3 rounded-[15px] border border-[#e5e7eb] bg-[#f8f9fa] px-4 py-3">
-  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#fff3d6] text-[#b7791f]">
-    <i className="fa-solid fa-lock text-[12px]" />
-  </span>
+        <div className="mt-4 flex items-start gap-3 rounded-[15px] border border-[#e5e7eb] bg-[#f8f9fa] px-4 py-3 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#fff3d6] text-[#b7791f] dark:bg-amber-500/10 dark:text-amber-300">
+            <i className="fa-solid fa-lock text-[12px]" />
+          </span>
 
-  <div className="min-w-0">
-    <div className="text-[11.5px] font-bold leading-5 text-[#374151]">
-      Your report is confidential.
-    </div>
+          <div className="min-w-0">
+            <div className="text-[11.5px] font-bold leading-5 text-[#374151] dark:text-[var(--shadow-text-primary)]">
+              Your report is confidential.
+            </div>
 
-    <div className="text-[11px] font-medium leading-5 text-[#6b7280]">
-      The reported person will not see your identity.
-    </div>
-  </div>
-</div>
+            <div className="text-[11px] font-medium leading-5 text-[#6b7280] dark:text-[var(--shadow-text-secondary)]">
+              The reported person will not see your identity.
+            </div>
+          </div>
+        </div>
 
-        <div className="sticky bottom-0 z-20 -mx-4 mt-4 border-t border-[#eceae6] bg-[#faf9f7]/95 px-4 pb-3 pt-3 backdrop-blur">
+        <div className="sticky bottom-0 z-20 -mx-4 mt-4 border-t border-[#eceae6] bg-[#faf9f7]/95 px-4 pb-3 pt-3 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-page)]/95">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={submitting || !reasonCode}
-            className="h-12 w-full rounded-[14px] bg-[#ff3b5f] text-[14px] font-bold text-white shadow-[0_8px_18px_rgba(255,59,95,0.22)] transition hover:bg-[#e93254] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#c9c9c6] disabled:text-white disabled:shadow-none"
+            className="h-12 w-full rounded-[14px] bg-[#ff3b5f] text-[14px] font-bold text-white shadow-[0_8px_18px_rgba(255,59,95,0.22)] transition hover:bg-[#e93254] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#c9c9c6] disabled:text-white disabled:shadow-none dark:disabled:bg-[var(--shadow-bg-elevated)] dark:disabled:text-[var(--shadow-text-disabled)]"
           >
             {submitting ? 'Submitting...' : 'Submit Report'}
           </button>
