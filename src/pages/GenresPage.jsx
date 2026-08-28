@@ -516,7 +516,7 @@ function FilterChip({ active, children, onClick }) {
       type="button"
       onClick={onClick}
       className={`shrink-0 rounded-full px-4 py-2.5 text-[12px] font-medium active:scale-[0.98] ${
-  active ? 'bg-[#111827] text-white' : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
+  active ? 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]' : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:ring-[var(--shadow-border)]'
 }`}
     >
       {children}
@@ -547,16 +547,16 @@ function FilterSheet({
         className="absolute inset-0 bg-black/45"
       />
 
-      <section className="absolute bottom-0 left-0 right-0 max-h-[calc(100vh-72px)] overflow-hidden rounded-t-[30px] bg-white shadow-2xl sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[520px] sm:-translate-x-1/2 sm:rounded-[30px]">
+      <section className="absolute bottom-0 left-0 right-0 max-h-[calc(100vh-72px)] overflow-hidden rounded-t-[30px] bg-white shadow-2xl dark:bg-[var(--shadow-bg-surface)] sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[520px] sm:-translate-x-1/2 sm:rounded-[30px]">
         <div className="max-h-[calc(100vh-72px)] overflow-y-auto px-5 pb-5 pt-5">
           <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-[22px] font-black text-[#111827]">
+            <h2 className="text-[22px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('genresPage.refineStories')}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
               aria-label={t('genresPage.closeFilters')}
             >
               <i className="fa-solid fa-xmark text-[15px]" />
@@ -565,7 +565,7 @@ function FilterSheet({
 
           <div className="space-y-6">
             <section>
-              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 {t('genresPage.storyAccess')}
               </h3>
               <div className="flex flex-wrap gap-2.5">
@@ -578,7 +578,7 @@ function FilterSheet({
             </section>
 
             <section>
-              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 {t('genresPage.storyType')}
               </h3>
               <div className="flex flex-wrap gap-2.5">
@@ -591,7 +591,7 @@ function FilterSheet({
             </section>
 
             <section>
-              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 {t('genresPage.progress')}
               </h3>
               <div className="flex flex-wrap gap-2.5">
@@ -612,7 +612,7 @@ function FilterSheet({
                 setType('all')
                 setProgress('all')
               }}
-              className="h-12 rounded-full bg-[#f5f3fa] text-[13px] font-semibold text-[#111827] active:scale-[0.99]"
+              className="h-12 rounded-full bg-[#f5f3fa] text-[13px] font-semibold text-[#111827] active:scale-[0.99] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
             >
               {t('genresPage.clear')}
             </button>
@@ -620,7 +620,7 @@ function FilterSheet({
             <button
               type="button"
               onClick={onClose}
-              className="h-12 rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99]"
+              className="h-12 rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99] dark:bg-white dark:text-[#111827]"
             >
               {t('genresPage.applyFilters')}
             </button>
@@ -658,11 +658,11 @@ function BookCard({ book, onOpen }) {
       </div>
 
       <div className="pt-2.5 sm:pt-3">
-        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900">
+        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900 dark:text-[var(--shadow-text-primary)]">
           {title}
         </h3>
 
-        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
+        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
           {[book.genre, book.firstTag].filter(Boolean).join(' / ')}
         </p>
       </div>
@@ -828,27 +828,27 @@ export default function GenresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[110px]">
+    <div className="app-page min-h-screen bg-white pb-[110px] dark:bg-[var(--shadow-bg-page)]">
       <style>{`
         body.genres-filter-open footer {
           display: none !important;
         }
       `}</style>
 
-      <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 px-4 py-3 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
             aria-label={t('genresPage.back')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           {searchOpen ? (
-            <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full bg-[#f5f3fa] px-4">
-              <i className="fa-solid fa-magnifying-glass text-[13px] text-[#8d94a1]" />
+            <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full bg-[#f5f3fa] px-4 dark:bg-[var(--shadow-bg-elevated)]">
+              <i className="fa-solid fa-magnifying-glass text-[13px] text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]" />
               <input
                 autoFocus
                 value={query}
@@ -857,11 +857,11 @@ export default function GenresPage() {
                   setGenresExpanded(true)
                 }}
                 placeholder={t('genresPage.searchGenres')}
-                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-bold text-[#111827] outline-none placeholder:text-[#8d94a1]"
+                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-bold text-[#111827] outline-none placeholder:text-[#8d94a1] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-text-tertiary)]"
               />
             </div>
           ) : (
-            <h1 className="text-[22px] font-black tracking-tight text-[#111827]">
+            <h1 className="text-[22px] font-black tracking-tight text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('genresPage.genres')}
             </h1>
           )}
@@ -876,7 +876,7 @@ export default function GenresPage() {
 
               setSearchOpen((current) => !current)
             }}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
             aria-label={t('genresPage.searchGenres')}
           >
             <i className={`fa-solid ${searchOpen ? 'fa-xmark' : 'fa-magnifying-glass'} text-[14px]`} />
@@ -896,7 +896,7 @@ export default function GenresPage() {
       className={`rounded-full px-3 py-1 text-[12.5px] leading-[18px] active:scale-[0.98] ${
         activeGenre === genre.label
           ? 'bg-[#facc15] font-semibold text-[#111827]'
-          : 'bg-white font-medium text-[#111827] ring-1 ring-[#e4e7ec]'
+          : 'bg-white font-medium text-[#111827] ring-1 ring-[#e4e7ec] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:ring-[var(--shadow-border)]'
       }`}
     >
       {getGenreLabel(genre.label, t)}
@@ -905,19 +905,19 @@ export default function GenresPage() {
 </div>
 
             {!genresExpanded && !query ? (
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent" />
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent dark:from-[var(--shadow-bg-page)]" />
             ) : null}
           </div>
 
           {!filteredGenres.length ? (
             <div className="py-10 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                 <i className="fa-solid fa-layer-group text-[22px]" />
               </div>
-              <h3 className="mt-4 text-[16px] font-black text-[#111827]">
+              <h3 className="mt-4 text-[16px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('genresPage.noGenreFound')}
               </h3>
-              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 {t('genresPage.tryAnotherKeyword')}
               </p>
             </div>
@@ -928,7 +928,7 @@ export default function GenresPage() {
               <button
                 type="button"
                 onClick={() => setGenresExpanded((current) => !current)}
-                className="flex h-8 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+                className="flex h-8 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
                 aria-label={
                   genresExpanded
                     ? t('genresPage.showFewerGenres')
@@ -941,7 +941,7 @@ export default function GenresPage() {
           ) : null}
         </section>
 
-        <section className="sticky top-[65px] z-30 mt-3 border-y border-[#eef0f4] bg-white/95 py-3 backdrop-blur">
+        <section className="sticky top-[65px] z-30 mt-3 border-y border-[#eef0f4] bg-white/95 py-3 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             {quickFilters.map((item) => (
               <button
@@ -950,20 +950,20 @@ export default function GenresPage() {
                 onClick={() => setActiveQuickFilter((current) => (current === item.value ? '' : item.value))}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12.5px] leading-[18px] active:scale-[0.98] ${
   activeQuickFilter === item.value
-    ? 'bg-[#111827] font-semibold text-white'
-    : 'bg-[#f5f3fa] font-medium text-[#8d94a1]'
+    ? 'bg-[#111827] font-semibold text-white dark:bg-white dark:text-[#111827]'
+    : 'bg-[#f5f3fa] font-medium text-[#8d94a1] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]'
 }`}
               >
                 {getFilterLabel(item.value, item.label, t)}
               </button>
             ))}
 
-            <span className="mx-1 h-7 w-px shrink-0 bg-[#e4e7ec]" />
+            <span className="mx-1 h-7 w-px shrink-0 bg-[#e4e7ec] dark:bg-[var(--shadow-border)]" />
 
             <button
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="shrink-0 px-2 py-1 text-[12.5px] font-semibold leading-[18px] text-[#111827] active:scale-[0.98]"
+              className="shrink-0 px-2 py-1 text-[12.5px] font-semibold leading-[18px] text-[#111827] active:scale-[0.98] dark:text-[var(--shadow-text-primary)]"
             >
               {t('genresPage.filters')}
               <i className="fa-solid fa-chevron-down ml-2 text-[10px]" />
@@ -976,16 +976,16 @@ export default function GenresPage() {
             <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
               {Array.from({ length: 12 }).map((_, index) => (
                 <div key={index}>
-                  <div className="aspect-[2/3] animate-pulse rounded-[16px] bg-[#eef0f4]" />
-                  <div className="mt-2 h-4 animate-pulse rounded-full bg-[#eef0f4]" />
-                  <div className="mt-1 h-4 w-2/3 animate-pulse rounded-full bg-[#eef0f4]" />
+                  <div className="aspect-[2/3] animate-pulse rounded-[16px] bg-[#eef0f4] dark:bg-[var(--shadow-bg-elevated)]" />
+                  <div className="mt-2 h-4 animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-elevated)]" />
+                  <div className="mt-1 h-4 w-2/3 animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-elevated)]" />
                 </div>
               ))}
             </div>
           ) : null}
 
           {!loading && message ? (
-            <div className="rounded-[20px] bg-[#fff1f1] px-4 py-4 text-center text-[13px] font-black text-[#e5484d]">
+            <div className="rounded-[20px] bg-[#fff1f1] px-4 py-4 text-center text-[13px] font-black text-[#e5484d] dark:bg-red-400/10 dark:text-red-300 dark:ring-1 dark:ring-red-400/20">
               {message}
             </div>
           ) : null}
@@ -1000,13 +1000,13 @@ export default function GenresPage() {
 
           {!loading && !message && !filteredBooks.length ? (
             <div className="py-14 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                 <i className="fa-solid fa-book-open text-[22px]" />
               </div>
-              <h3 className="mt-4 text-[16px] font-black text-[#111827]">
+              <h3 className="mt-4 text-[16px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('genresPage.noStoriesFound')}
               </h3>
-              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 {t('genresPage.tryAnotherGenreFilter')}
               </p>
             </div>
