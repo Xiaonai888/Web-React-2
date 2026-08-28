@@ -425,25 +425,25 @@ function DailyPickCard({ book }) {
         />
 
         {book.isAdult ? (
-          <div className="absolute left-2 top-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+          <div className="absolute left-2 top-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d] dark:bg-red-400/15 dark:text-red-300">
             18+
           </div>
         ) : null}
       </div>
 
       <div className="mt-2 min-w-0">
-        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
+        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900 dark:text-[var(--shadow-text-primary)]">
           {title}
         </h3>
 
         <div className="mt-1.5 flex min-h-[22px] items-center gap-2">
           {book.genre ? (
-            <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#FFF4BF] px-2 py-1 text-[10px] font-medium leading-none text-[#9A6700]">
+            <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#FFF4BF] px-2 py-1 text-[10px] font-medium leading-none text-[#9A6700] dark:bg-amber-400/15 dark:text-amber-300">
               {book.genre}
             </span>
           ) : null}
 
-          <div className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-[#4B5563]">
+          <div className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-[#4B5563] dark:text-[var(--shadow-text-secondary)]">
             <span className="text-[#EF4444]">
               <FireOutlineIcon />
             </span>
@@ -460,9 +460,9 @@ function LoadingGrid() {
     <div className="grid grid-cols-2 gap-x-2 gap-y-4 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-3 lg:gap-y-5">
       {Array.from({ length: 12 }).map((_, index) => (
         <div key={index}>
-          <div className="aspect-[1.42/1] animate-pulse rounded-[8px] bg-gray-100" />
-          <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100" />
-          <div className="mt-2 h-4 w-24 animate-pulse rounded-[4px] bg-gray-100" />
+          <div className="aspect-[1.42/1] animate-pulse rounded-[8px] bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-2 h-4 w-24 animate-pulse rounded-[4px] bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
         </div>
       ))}
     </div>
@@ -550,25 +550,25 @@ export default function DailyPicksPage() {
   ).format(new Date())
 
   return (
-    <main className="min-h-screen bg-white">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur">
+    <main className="app-page min-h-screen bg-white dark:bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex h-[52px] max-w-7xl items-center justify-between px-3 sm:px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-start rounded-full text-[#111827] transition-colors hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-start rounded-full text-[#111827] transition-colors hover:bg-gray-100 dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('dailyPicksPage.goBack')}
           >
             <i className="fas fa-chevron-left text-[17px]" />
           </button>
 
-          <h1 className="text-[17px] font-bold text-[#111827]">
+          <h1 className="text-[17px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {t('dailyPicksPage.title')}
           </h1>
 
           <Link
             to="/search"
-            className="flex h-9 w-9 items-center justify-end rounded-full text-[#111827] transition-colors hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-end rounded-full text-[#111827] transition-colors hover:bg-gray-100 dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('dailyPicksPage.search')}
           >
             <i className="fas fa-search text-[18px]" />
@@ -578,10 +578,10 @@ export default function DailyPicksPage() {
 
       <section className="mx-auto max-w-7xl px-3 pb-10 pt-4 sm:px-4">
         <div className="mb-5">
-          <h2 className="text-[18px] font-extrabold text-[#111827]">
+          <h2 className="text-[18px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {t('dailyPicksPage.today')} · {todayLabel}
           </h2>
-          <p className="mt-1 text-[12px] font-medium text-[#8D94A1]">
+          <p className="mt-1 text-[12px] font-medium text-[#8D94A1] dark:text-[var(--shadow-text-secondary)]">
             {t('dailyPicksPage.subtitle')}
           </p>
         </div>
@@ -597,15 +597,15 @@ export default function DailyPicksPage() {
         ) : null}
 
         {!loading && !stories.length ? (
-          <div className="rounded-[18px] bg-[#F8F8FB] px-4 py-8 text-center">
-            <div className="text-[14px] font-bold text-[#111827]">
+          <div className="rounded-[18px] bg-[#F8F8FB] px-4 py-8 text-center dark:bg-[var(--shadow-bg-surface)] dark:ring-1 dark:ring-[var(--shadow-border)]">
+            <div className="text-[14px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {loadFailed
                 ? t('dailyPicksPage.loadFailed')
                 : t('dailyPicksPage.noPicks', {
                     language: storyLanguage,
                   })}
             </div>
-            <p className="mt-1 text-[12px] text-[#8D94A1]">
+            <p className="mt-1 text-[12px] text-[#8D94A1] dark:text-[var(--shadow-text-secondary)]">
               {t('dailyPicksPage.checkLater')}
             </p>
           </div>
