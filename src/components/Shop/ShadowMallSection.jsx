@@ -443,7 +443,7 @@ function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey, 
   )
 }
 
-export default function ShadowMallSection({ setActiveTab, showSearch = false }) {
+export default function ShadowMallSection({ setActiveTab, showSearch = false, sliderOnly = false }) {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [mallSlides, setMallSlides] = useState([])
@@ -668,9 +668,9 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
 ) : null}
 
       <ShadowMallSwiperSlide slides={mallSlides} loading={slidesLoading} onSlideClick={handleSlideClick} />
-      <MallShortcutRow setActiveTab={setActiveTab} />
+      {!sliderOnly ? <MallShortcutRow setActiveTab={setActiveTab} /> : null}
 
-      <PreOrderFeature products={filteredSections.pre_order || []} onOpen={() => navigate('/shop/mall/pre-order')} />
+      {!sliderOnly ? <PreOrderFeature products={filteredSections.pre_order || []} onOpen={() => navigate('/shop/mall/pre-order')} /> : null}
 
       {mallSections.map((section) => (
         <MallBookSection
