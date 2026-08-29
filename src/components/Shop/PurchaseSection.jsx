@@ -105,7 +105,7 @@ function StatusBadge({ status }) {
         ? 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/25'
         : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/25'
 
-  return <span className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${tone}`}>{labelMap[value] || value || 'Unknown'}</span>
+  return <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${tone}`}>{labelMap[value] || value || 'Unknown'}</span>
 }
 
 function PackageCard({ item, onPurchase }) {
