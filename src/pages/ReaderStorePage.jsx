@@ -38,6 +38,9 @@ registerTranslationNamespace('readerStore', {
     book: 'Book',
     newLabel: 'NEW',
     trendingLabel: 'TRENDING',
+    soldOut: 'SOLD OUT',
+    untitledBook: 'Untitled book',
+    unknownAuthor: 'Unknown author',
     loading: 'Loading author stores...',
     loadFailed: 'Could not load author stores.',
     retry: 'Retry',
@@ -67,6 +70,9 @@ registerTranslationNamespace('readerStore', {
     book: 'សៀវភៅ',
     newLabel: 'ថ្មី',
     trendingLabel: 'កំពុងពេញនិយម',
+    soldOut: 'លក់អស់',
+    untitledBook: 'សៀវភៅគ្មានចំណងជើង',
+    unknownAuthor: 'មិនស្គាល់អ្នកនិពន្ធ',
     loading: 'កំពុងទាញហាងអ្នកនិពន្ធ...',
     loadFailed: 'មិនអាចទាញហាងអ្នកនិពន្ធបាន។',
     retry: 'សាកម្តងទៀត',
@@ -96,6 +102,9 @@ registerTranslationNamespace('readerStore', {
     book: '书籍',
     newLabel: '新品',
     trendingLabel: '热门',
+    soldOut: '已售罄',
+    untitledBook: '未命名书籍',
+    unknownAuthor: '未知作者',
     loading: '正在加载作者商店...',
     loadFailed: '无法加载作者商店。',
     retry: '重试',
@@ -125,6 +134,9 @@ registerTranslationNamespace('readerStore', {
     book: '本',
     newLabel: 'NEW',
     trendingLabel: 'トレンド',
+    soldOut: '売り切れ',
+    untitledBook: '無題の本',
+    unknownAuthor: '不明な作家',
     loading: '作家ストアを読み込み中...',
     loadFailed: '作家ストアを読み込めませんでした。',
     retry: '再試行',
@@ -154,6 +166,9 @@ registerTranslationNamespace('readerStore', {
     book: '도서',
     newLabel: 'NEW',
     trendingLabel: '인기',
+    soldOut: '품절',
+    untitledBook: '제목 없는 도서',
+    unknownAuthor: '알 수 없는 작가',
     loading: '작가 스토어 불러오는 중...',
     loadFailed: '작가 스토어를 불러오지 못했습니다.',
     retry: '다시 시도',
@@ -179,8 +194,8 @@ function normalizeProduct(product) {
     pageName: product.page_name || '',
     pageUsername: product.page_username || '',
     authorAvatar: product.author_avatar_url || '',
-    title: product.title || 'Untitled book',
-    author: product.author_name || product.page_name || 'Unknown author',
+    title: product.title || '',
+    author: product.author_name || product.page_name || '',
     publisher: product.publisher || '',
     category: product.category || '',
     genre: product.genre || '',
@@ -198,12 +213,12 @@ function normalizeProduct(product) {
   }
 }
 
-async function fetchReaderStoreHome() {
+async function fetchReaderStoreHome(fallbackMessage) {
   const response = await fetch(`${API_BASE_URL}/api/author-store/store/home?limit=24`)
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load Reader Store')
+    throw new Error(data.message || fallbackMessage)
   }
 
   return {
@@ -250,6 +265,8 @@ function StoreBookCard({ book, t, onOpen }) {
   const typeLabel =
     book.type === 'pdf' ? t('readerStore.pdf') : t('readerStore.book')
   const soldOut = book.stockStatus === 'sold_out'
+  const displayTitle = book.title || t('readerStore.untitledBook')
+  const displayAuthor = book.author || t('readerStore.unknownAuthor')
 
   return (
     <article className="overflow-hidden rounded-[20px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
@@ -262,7 +279,7 @@ function StoreBookCard({ book, t, onOpen }) {
           {book.cover ? (
             <img
               src={book.cover}
-              alt={book.title}
+              alt={displayTitle}
               className={`h-full w-full object-cover ${soldOut ? 'opacity-60' : ''}`}
               onError={(event) => {
                 event.currentTarget.style.display = 'none'
@@ -283,7 +300,7 @@ function StoreBookCard({ book, t, onOpen }) {
                   : 'bg-[#ede9fe] text-[#6d28d9]'
             }`}
           >
-            {soldOut ? 'SOLD OUT' : badgeLabel}
+            {soldOut ? t('readerStore.soldOut') : badgeLabel}
           </span>
         </div>
 
@@ -300,12 +317,12 @@ function StoreBookCard({ book, t, onOpen }) {
                   }}
                 />
               ) : (
-                book.author.charAt(0).toUpperCase()
+                displayAuthor.charAt(0).toUpperCase()
               )}
             </span>
 
             <span className="min-w-0 flex-1 truncate text-[10.5px] font-bold text-[var(--shadow-text-secondary)]">
-              {book.author}
+              {displayAuthor}
             </span>
 
             <span className="rounded-full bg-[var(--shadow-bg-soft)] px-2 py-1 text-[9px] font-extrabold text-[var(--shadow-text-secondary)]">
@@ -314,7 +331,7 @@ function StoreBookCard({ book, t, onOpen }) {
           </div>
 
           <h3 className="mt-2 line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[var(--shadow-text-primary)]">
-            {book.title}
+            {displayTitle}
           </h3>
 
           <div className="mt-3 flex items-end justify-between gap-2">
@@ -366,7 +383,7 @@ export default function ReaderStorePage() {
       try {
         setLoading(true)
         setLoadError('')
-        const data = await fetchReaderStoreHome()
+        const data = await fetchReaderStoreHome(t('readerStore.loadFailed'))
 
         if (!ignore) {
           setProducts(data.products)
