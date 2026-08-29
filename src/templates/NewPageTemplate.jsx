@@ -1,4 +1,12 @@
 import { useNavigate } from 'react-router-dom'
+import {
+  PageShell,
+  PageHeader,
+  SurfaceCard,
+  PageLoadingState,
+  PageErrorState,
+  PageEmptyState,
+} from '../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -55,50 +63,6 @@ registerTranslationNamespace('newPageTemplate', {
   },
 })
 
-function LoadingState({ t }) {
-  return (
-    <div className="space-y-3">
-      <div className="h-20 animate-pulse rounded-[18px] bg-[var(--shadow-bg-elevated)]" />
-      <div className="h-20 animate-pulse rounded-[18px] bg-[var(--shadow-bg-elevated)]" />
-      <div className="text-center text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
-        {t('newPageTemplate.loading')}
-      </div>
-    </div>
-  )
-}
-
-function ErrorState({ t, onRetry }) {
-  return (
-    <div className="app-card rounded-[20px] border p-6 text-center">
-      <div className="text-[15px] font-extrabold text-red-500 dark:text-red-300">
-        {t('newPageTemplate.error')}
-      </div>
-
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-4 rounded-full bg-[var(--shadow-text-primary)] px-5 py-2.5 text-[12px] font-extrabold text-[var(--shadow-bg-surface)] active:scale-95"
-      >
-        {t('newPageTemplate.retry')}
-      </button>
-    </div>
-  )
-}
-
-function EmptyState({ t }) {
-  return (
-    <div className="app-card rounded-[20px] border p-7 text-center">
-      <div className="app-title text-[17px] font-extrabold">
-        {t('newPageTemplate.emptyTitle')}
-      </div>
-
-      <div className="app-muted mx-auto mt-2 max-w-[320px] text-[12px] leading-5">
-        {t('newPageTemplate.emptyBody')}
-      </div>
-    </div>
-  )
-}
-
 export default function NewPageTemplate() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
@@ -108,25 +72,12 @@ export default function NewPageTemplate() {
   const items = []
 
   return (
-    <div className="app-page min-h-screen pb-20">
-      <header className="app-nav sticky top-0 z-40 border-b">
-        <div className="mx-auto flex h-14 max-w-[960px] items-center gap-3 px-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
-            aria-label={t('newPageTemplate.goBack')}
-          >
-            <i className="fas fa-chevron-left text-[15px]" />
-          </button>
-
-          <div className="min-w-0">
-            <h1 className="app-title truncate text-[18px] font-extrabold">
-              {t('newPageTemplate.title')}
-            </h1>
-          </div>
-        </div>
-      </header>
+    <PageShell className="pb-20">
+      <PageHeader
+        title={t('newPageTemplate.title')}
+        onBack={() => navigate(-1)}
+        backLabel={t('newPageTemplate.goBack')}
+      />
 
       <main className="mx-auto max-w-[960px] px-4 py-5">
         <section className="mb-5">
@@ -139,31 +90,37 @@ export default function NewPageTemplate() {
           </p>
         </section>
 
-        {loading ? <LoadingState t={t} /> : null}
+        {loading ? (
+          <PageLoadingState label={t('newPageTemplate.loading')} />
+        ) : null}
 
         {!loading && error ? (
-          <ErrorState t={t} onRetry={() => window.location.reload()} />
+          <PageErrorState
+            title={t('newPageTemplate.error')}
+            actionLabel={t('newPageTemplate.retry')}
+            onAction={() => window.location.reload()}
+          />
         ) : null}
 
         {!loading && !error && !items.length ? (
-          <EmptyState t={t} />
+          <PageEmptyState
+            title={t('newPageTemplate.emptyTitle')}
+            body={t('newPageTemplate.emptyBody')}
+          />
         ) : null}
 
         {!loading && !error && items.length ? (
           <section className="grid gap-3">
             {items.map((item) => (
-              <article
-                key={item.id}
-                className="app-card rounded-[18px] border p-4"
-              >
+              <SurfaceCard key={item.id} as="article" className="p-4">
                 <div className="app-title text-[14px] font-extrabold">
                   {item.title}
                 </div>
-              </article>
+              </SurfaceCard>
             ))}
           </section>
         ) : null}
       </main>
-    </div>
+    </PageShell>
   )
 }
