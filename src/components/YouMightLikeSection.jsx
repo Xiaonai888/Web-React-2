@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import {
   addStoryLanguageParam,
   getStoryLanguageId,
@@ -214,7 +215,11 @@ function buildHourlySelection(pool, rotationSlot, storyType = '') {
 
 function BookCard({ book }) {
   return (
-    <Link to={`/story/${book.id}`} className="group block min-w-0">
+    <Link
+  to={`/story/${book.id}`}
+  onClick={() => void trackSectionQualifiedView('you_might_like', book.id)}
+  className="group block min-w-0"
+>
       <div className="overflow-hidden rounded-[8px] bg-[#1e1e22] shadow-sm">
         <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
