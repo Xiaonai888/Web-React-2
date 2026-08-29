@@ -680,7 +680,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
       if (!response.ok || data.ok === false) {
         if (data.code === 'INSUFFICIENT_GEMS') {
           setWallet(data.wallet || wallet)
-          setMessage(error.message === 'Failed to fetch' ? t('lockedEpisodeModal.cannotConnect') : error.message || t('lockedEpisodeModal.unlockCoinsFailed'))
+          setMessage(data.message || t('lockedEpisodeModal.unlockCoinsFailed'))
           return
         }
 
