@@ -281,14 +281,14 @@ function Avatar({
       <img
         src={avatar}
         alt={name}
-        className={`${size} rounded-full object-cover ring-1 ring-black/5`}
+        className={`${size} rounded-full object-cover ring-1 ring-black/5 dark:ring-white/10`}
       />
     )
   }
 
   return (
     <div
-      className={`${size} flex items-center justify-center rounded-full bg-[#17131f] text-[15px] font-black text-white`}
+      className={`${size} flex items-center justify-center rounded-full bg-[#17131f] text-[15px] font-black text-white dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]`}
     >
       {name.slice(0, 1).toUpperCase()}
     </div>
@@ -319,7 +319,7 @@ function AudienceBadge({ audience }) {
     items[audience] || items.public
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f1edf9] px-2.5 py-1 text-[10px] font-bold text-[#7658a6]">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f1edf9] px-2.5 py-1 text-[10px] font-bold text-[#7658a6] dark:bg-[#7658a6]/15 dark:text-[#bca7df]">
       <i className={`${icon} text-[9px]`} />
       {label}
     </span>
@@ -343,13 +343,13 @@ function SourceCard({
   const echoCount = Number(total || 0)
 
   return (
-    <section className="border-b border-[#ece8f3] bg-white px-4 pb-5 pt-3">
+    <section className="border-b border-[#ece8f3] bg-white px-4 pb-5 pt-3 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
       <button
         type="button"
         onClick={onOpen}
         className="flex w-full items-start gap-3 text-left active:scale-[0.995]"
       >
-        <div className="h-[78px] w-[58px] shrink-0 overflow-hidden rounded-[12px] bg-[#eeeaf5] ring-1 ring-black/5">
+        <div className="h-[78px] w-[58px] shrink-0 overflow-hidden rounded-[12px] bg-[#eeeaf5] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-elevated)] dark:ring-white/10">
           {cover ? (
             <img
               src={cover}
@@ -360,18 +360,18 @@ function SourceCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[#9b91aa]">
+            <div className="flex h-full w-full items-center justify-center text-[#9b91aa] dark:text-[var(--shadow-text-tertiary)]">
               <i className="fa-regular fa-bookmark text-[20px]" />
             </div>
           )}
         </div>
 
         <div className="min-w-0 flex-1 pt-0.5">
-          <div className="line-clamp-1 text-[15px] font-black text-[#17131f]">
+          <div className="line-clamp-1 text-[15px] font-black text-[#17131f] dark:text-[var(--shadow-text-primary)]">
             {story?.title ||
               t('episodeEchoes.untitledStory')}
           </div>
-          <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-[#766f80]">
+          <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-[#766f80] dark:text-[var(--shadow-text-secondary)]">
             {episode?.episode_number
               ? `${t(
                   'episodeEchoes.episodeNumber',
@@ -384,7 +384,7 @@ function SourceCard({
             {episode?.title ||
               t('episodeEchoes.episode')}
           </div>
-          <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-[#9b93a5]">
+          <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-[#9b93a5] dark:text-[var(--shadow-text-secondary)]">
             <span>
               {author?.page_name ||
                 author?.name ||
@@ -392,7 +392,7 @@ function SourceCard({
                   'episodeEchoes.shadowAuthor'
                 )}
             </span>
-            <span className="h-1 w-1 rounded-full bg-[#c8c1d1]" />
+            <span className="h-1 w-1 rounded-full bg-[#c8c1d1] dark:bg-[var(--shadow-border-strong)]" />
             <span>
               {echoCount.toLocaleString(
                 LANGUAGE_LOCALES[language] ||
@@ -405,7 +405,7 @@ function SourceCard({
           </div>
         </div>
 
-        <i className="fa-solid fa-chevron-right mt-7 text-[11px] text-[#a79fb2]" />
+        <i className="fa-solid fa-chevron-right mt-7 text-[11px] text-[#a79fb2] dark:text-[var(--shadow-text-tertiary)]" />
       </button>
     </section>
   )
@@ -436,7 +436,7 @@ function EchoCard({
   ).replaceAll('-', ' ')
 
   return (
-    <article className="rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgba(45,35,64,0.06)] ring-1 ring-[#ebe6f2]">
+    <article className="rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgba(45,35,64,0.06)] ring-1 ring-[#ebe6f2] dark:bg-[var(--shadow-bg-surface)] dark:shadow-none dark:ring-[var(--shadow-border)]">
       <div className="flex items-start gap-3">
         <Link
           to={profileLink}
@@ -456,10 +456,10 @@ function EchoCard({
               to={profileLink}
               className="min-w-0 cursor-pointer text-left transition hover:opacity-80 active:opacity-70"
             >
-              <div className="line-clamp-1 text-[15px] font-black text-[#17131f]">
+              <div className="line-clamp-1 text-[15px] font-black text-[#17131f] dark:text-[var(--shadow-text-primary)]">
                 {name}
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-[10.5px] font-semibold text-[#9b93a5]">
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-[10.5px] font-semibold text-[#9b93a5] dark:text-[var(--shadow-text-secondary)]">
                 <span>
                   {formatDate(
                     echo.updated_at ||
@@ -468,13 +468,13 @@ function EchoCard({
                     t
                   )}
                 </span>
-                <span className="h-1 w-1 rounded-full bg-[#cbc4d4]" />
+                <span className="h-1 w-1 rounded-full bg-[#cbc4d4] dark:bg-[var(--shadow-border-strong)]" />
                 <AudienceBadge
                   audience={echo.audience}
                 />
                 {shareCount > 1 ? (
                   <>
-                    <span className="h-1 w-1 rounded-full bg-[#cbc4d4]" />
+                    <span className="h-1 w-1 rounded-full bg-[#cbc4d4] dark:bg-[var(--shadow-border-strong)]" />
                     <span>
                       {shareCount}{' '}
                       {t(
@@ -489,7 +489,7 @@ function EchoCard({
             <button
               type="button"
               onClick={onCopy}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#8f879a] active:bg-[#f5f2f9]"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#8f879a] active:bg-[#f5f2f9] dark:text-[var(--shadow-text-secondary)] dark:active:bg-[var(--shadow-bg-hover)]"
               aria-label={t(
                 'episodeEchoes.copyEpisodeLink'
               )}
@@ -501,47 +501,47 @@ function EchoCard({
       </div>
 
       {echo.echo_text ? (
-        <p className="mt-4 whitespace-pre-wrap break-words text-[14px] font-medium leading-6 text-[#38313f]">
+        <p className="mt-4 whitespace-pre-wrap break-words text-[14px] font-medium leading-6 text-[#38313f] dark:text-[var(--shadow-text-primary)]">
           {echo.echo_text}
         </p>
       ) : (
-        <p className="mt-4 text-[13px] font-semibold italic text-[#9a92a4]">
+        <p className="mt-4 text-[13px] font-semibold italic text-[#9a92a4] dark:text-[var(--shadow-text-secondary)]">
           {t(
             'episodeEchoes.sharedWithoutMessage'
           )}
         </p>
       )}
 
-      <div className="mt-4 overflow-hidden rounded-[17px] bg-[#f7f4fa] ring-1 ring-[#ebe6f2]">
+      <div className="mt-4 overflow-hidden rounded-[17px] bg-[#f7f4fa] ring-1 ring-[#ebe6f2] dark:bg-[var(--shadow-bg-elevated)] dark:ring-[var(--shadow-border)]">
         <button
           type="button"
           onClick={onOpenEpisode}
-          className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-[#f0ebf6]"
+          className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-[#f0ebf6] dark:active:bg-[var(--shadow-bg-hover)]"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#17131f] text-white">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#17131f] text-white dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]">
             <i className="fa-solid fa-book-open text-[14px]" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="line-clamp-1 text-[12px] font-black text-[#17131f]">
+            <div className="line-clamp-1 text-[12px] font-black text-[#17131f] dark:text-[var(--shadow-text-primary)]">
               {t(
                 'episodeEchoes.openOriginalEpisode'
               )}
             </div>
-            <div className="mt-0.5 line-clamp-1 text-[10.5px] font-semibold text-[#91889b]">
+            <div className="mt-0.5 line-clamp-1 text-[10.5px] font-semibold text-[#91889b] dark:text-[var(--shadow-text-secondary)]">
               {t('episodeEchoes.echoedTo', {
                 destination,
               })}
             </div>
           </div>
-          <i className="fa-solid fa-chevron-right text-[10px] text-[#a79fb2]" />
+          <i className="fa-solid fa-chevron-right text-[10px] text-[#a79fb2] dark:text-[var(--shadow-text-tertiary)]" />
         </button>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#f0ecf4] pt-3">
+      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#f0ecf4] pt-3 dark:border-[var(--shadow-border)]">
         <button
           type="button"
           onClick={onOpenEpisode}
-          className="flex h-10 items-center justify-center gap-2 rounded-[13px] text-[12px] font-bold text-[#5e5568] active:bg-[#f5f2f8]"
+          className="flex h-10 items-center justify-center gap-2 rounded-[13px] text-[12px] font-bold text-[#5e5568] active:bg-[#f5f2f8] dark:text-[var(--shadow-text-secondary)] dark:active:bg-[var(--shadow-bg-hover)]"
         >
           <i className="fa-regular fa-bookmark text-[13px]" />
           {t('episodeEchoes.read')}
@@ -549,7 +549,7 @@ function EchoCard({
         <button
           type="button"
           onClick={onShare}
-          className="flex h-10 items-center justify-center gap-2 rounded-[13px] text-[12px] font-bold text-[#7658a6] active:bg-[#f1edf9]"
+          className="flex h-10 items-center justify-center gap-2 rounded-[13px] text-[12px] font-bold text-[#7658a6] active:bg-[#f1edf9] dark:text-[#bca7df] dark:active:bg-[#7658a6]/15"
         >
           <i className="fa-solid fa-arrow-up-from-bracket text-[12px]" />
           {t('episodeEchoes.share')}
@@ -771,13 +771,13 @@ export default function EpisodeEchoesPage() {
   }, [notice])
 
   return (
-    <main className="min-h-screen bg-[#f6f3f9] pb-[calc(24px+env(safe-area-inset-bottom))] text-[#17131f]">
-      <header className="sticky top-0 z-40 border-b border-[#ece8f3] bg-white/95 backdrop-blur">
+    <main className="app-page min-h-screen bg-[#f6f3f9] pb-[calc(24px+env(safe-area-inset-bottom))] text-[#17131f] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-[#ece8f3] bg-white/95 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto grid h-16 max-w-3xl grid-cols-[44px_1fr_44px] items-center px-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f5f2f8]"
+            className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f5f2f8] dark:active:bg-[var(--shadow-bg-hover)]"
             aria-label={t(
               'episodeEchoes.goBack'
             )}
@@ -796,7 +796,7 @@ export default function EpisodeEchoesPage() {
             onClick={() =>
               setShareOpen(true)
             }
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#7658a6] active:bg-[#f1edf9]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[#7658a6] active:bg-[#f1edf9] dark:text-[#bca7df] dark:active:bg-[#7658a6]/15"
             aria-label={t(
               'episodeEchoes.shareEpisode'
             )}
@@ -835,27 +835,27 @@ export default function EpisodeEchoesPage() {
               }).map((_, index) => (
                 <div
                   key={index}
-                  className="animate-pulse rounded-[22px] bg-white p-4 ring-1 ring-[#ebe6f2]"
+                  className="animate-pulse rounded-[22px] bg-white p-4 ring-1 ring-[#ebe6f2] dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)]"
                 >
                   <div className="flex gap-3">
-                    <div className="h-12 w-12 rounded-full bg-[#eeeaf3]" />
+                    <div className="h-12 w-12 rounded-full bg-[#eeeaf3] dark:bg-[var(--shadow-bg-elevated)]" />
                     <div className="flex-1 pt-1">
-                      <div className="h-3 w-32 rounded-full bg-[#eeeaf3]" />
-                      <div className="mt-3 h-2.5 w-20 rounded-full bg-[#f2eef6]" />
+                      <div className="h-3 w-32 rounded-full bg-[#eeeaf3] dark:bg-[var(--shadow-bg-elevated)]" />
+                      <div className="mt-3 h-2.5 w-20 rounded-full bg-[#f2eef6] dark:bg-[var(--shadow-bg-soft)]" />
                     </div>
                   </div>
-                  <div className="mt-5 h-3 w-full rounded-full bg-[#eeeaf3]" />
-                  <div className="mt-2 h-3 w-4/5 rounded-full bg-[#f2eef6]" />
-                  <div className="mt-4 h-16 rounded-[16px] bg-[#f5f2f8]" />
+                  <div className="mt-5 h-3 w-full rounded-full bg-[#eeeaf3] dark:bg-[var(--shadow-bg-elevated)]" />
+                  <div className="mt-2 h-3 w-4/5 rounded-full bg-[#f2eef6] dark:bg-[var(--shadow-bg-soft)]" />
+                  <div className="mt-4 h-16 rounded-[16px] bg-[#f5f2f8] dark:bg-[var(--shadow-bg-elevated)]" />
                 </div>
               ))}
             </div>
           ) : message ? (
-            <div className="rounded-[22px] bg-white px-5 py-12 text-center ring-1 ring-[#ebe6f2]">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff0f1] text-[#e5484d]">
+            <div className="rounded-[22px] bg-white px-5 py-12 text-center ring-1 ring-[#ebe6f2] dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff0f1] text-[#e5484d] dark:bg-[#e5484d]/10">
                 <i className="fa-solid fa-triangle-exclamation text-[21px]" />
               </div>
-              <p className="mt-4 text-[13px] font-bold text-[#665d70]">
+              <p className="mt-4 text-[13px] font-bold text-[#665d70] dark:text-[var(--shadow-text-secondary)]">
                 {message}
               </p>
               <button
@@ -863,7 +863,7 @@ export default function EpisodeEchoesPage() {
                 onClick={() =>
                   loadEchoes(1)
                 }
-                className="mt-5 h-11 rounded-full bg-[#17131f] px-6 text-[12px] font-black text-white active:scale-95"
+                className="mt-5 h-11 rounded-full bg-[#17131f] px-6 text-[12px] font-black text-white active:scale-95 dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]"
               >
                 {t(
                   'episodeEchoes.tryAgain'
@@ -896,7 +896,7 @@ export default function EpisodeEchoesPage() {
                     )
                   }
                   disabled={loadingMore}
-                  className="h-12 w-full rounded-[16px] bg-white text-[12px] font-black text-[#7658a6] ring-1 ring-[#e7e0ef] active:scale-[0.995] disabled:opacity-60"
+                  className="h-12 w-full rounded-[16px] bg-white text-[12px] font-black text-[#7658a6] ring-1 ring-[#e7e0ef] active:scale-[0.995] disabled:opacity-60 dark:bg-[var(--shadow-bg-surface)] dark:text-[#bca7df] dark:ring-[var(--shadow-border)]"
                 >
                   {loadingMore
                     ? t(
@@ -909,8 +909,8 @@ export default function EpisodeEchoesPage() {
               ) : null}
             </div>
           ) : (
-            <div className="rounded-[22px] bg-white px-5 py-16 text-center ring-1 ring-[#ebe6f2]">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f1edf9] text-[#7658a6]">
+            <div className="rounded-[22px] bg-white px-5 py-16 text-center ring-1 ring-[#ebe6f2] dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)]">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f1edf9] text-[#7658a6] dark:bg-[#7658a6]/15 dark:text-[#bca7df]">
                 <i className="fa-solid fa-rotate text-[23px]" />
               </div>
               <h2 className="mt-4 text-[16px] font-black">
@@ -918,7 +918,7 @@ export default function EpisodeEchoesPage() {
                   'episodeEchoes.noEchoes'
                 )}
               </h2>
-              <p className="mx-auto mt-2 max-w-[280px] text-[12px] font-semibold leading-5 text-[#958d9f]">
+              <p className="mx-auto mt-2 max-w-[280px] text-[12px] font-semibold leading-5 text-[#958d9f] dark:text-[var(--shadow-text-secondary)]">
                 {t(
                   'episodeEchoes.emptyText'
                 )}
@@ -930,7 +930,7 @@ export default function EpisodeEchoesPage() {
                     `/story/${storyId}/episode/${episodeId}`
                   )
                 }
-                className="mt-6 h-11 rounded-full bg-[#17131f] px-6 text-[12px] font-black text-white active:scale-95"
+                className="mt-6 h-11 rounded-full bg-[#17131f] px-6 text-[12px] font-black text-white active:scale-95 dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]"
               >
                 {t(
                   'episodeEchoes.returnEpisode'
