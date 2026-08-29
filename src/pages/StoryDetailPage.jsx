@@ -11,12 +11,43 @@ import RecommendationSection from '../components/story-detail/RecommendationSect
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('storyDetailPage', {
+  en: {
+    adultRestrictedTitle: '18+ content',
+    adultRestrictedMessage: 'This story is for readers aged 18 or older. Your account is not allowed to view this story.',
+    adultRestrictedBack: 'Go back',
+  },
+  km: {
+    adultRestrictedTitle: 'មាតិកា 18+',
+    adultRestrictedMessage: 'រឿងនេះសម្រាប់អ្នកអានដែលមានអាយុចាប់ពី 18 ឆ្នាំឡើងទៅ។ គណនីរបស់អ្នកមិនអាចចូលមើលរឿងនេះបានទេ។',
+    adultRestrictedBack: 'ត្រឡប់ក្រោយ',
+  },
+  zh: {
+    adultRestrictedTitle: '18+ 内容',
+    adultRestrictedMessage: '本故事仅限年满18岁的读者阅读。您的账户目前无法查看此故事。',
+    adultRestrictedBack: '返回',
+  },
+  ja: {
+    adultRestrictedTitle: '18歳以上向けコンテンツ',
+    adultRestrictedMessage: 'この作品は18歳以上の読者のみ閲覧できます。現在のアカウントでは閲覧できません。',
+    adultRestrictedBack: '戻る',
+  },
+  ko: {
+    adultRestrictedTitle: '18세 이상 콘텐츠',
+    adultRestrictedMessage: '이 작품은 만 18세 이상 독자만 볼 수 있습니다. 현재 계정으로는 이 작품을 볼 수 없습니다.',
+    adultRestrictedBack: '돌아가기',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
 
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
