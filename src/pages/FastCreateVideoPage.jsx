@@ -60,7 +60,7 @@ registerTranslationNamespace('fastCreateVideoPage', {
     saving: 'Saving...',
     saveDraft: 'Save draft',
     uploading: 'Uploading...',
-    publishing: t('fastCreateVideoPage.publishing'),
+    publishing: 'Publishing...',
     publish: 'Publish',
     previewInFast: 'Preview in Fast',
     previewHelp: 'How your video will appear.',
