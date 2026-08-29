@@ -437,25 +437,6 @@ export default function PurchaseSection() {
   setShowPaymentMethods(true)
 }
 
-
-  async function cancelPurchase() {
-    if (!manualPayment?.order_id || checking) return
-
-    try {
-      setChecking(true)
-      await fetch(`${API_BASE_URL}/api/purchase/manual/cancel/${encodeURIComponent(manualPayment.order_id)}`, {
-        method: 'POST',
-        headers: getHeaders(),
-      })
-    } finally {
-      clearSavedPendingPayment()
-      setManualPayment(null)
-      setToast('')
-      setChecking(false)
-      loadPurchaseData()
-    }
-  }
-
   useEffect(() => {
     loadPurchaseData()
     restorePendingPayment()
@@ -600,7 +581,7 @@ export default function PurchaseSection() {
         secondsLeft={secondsLeft}
         checking={checking}
         message={toast}
-        onCancel={cancelPurchase}
+        onClose={() => setManualPayment(null)}
         onClose={() => setManualPayment(null)}
         onRefresh={() => refreshPaymentStatus(manualPayment.order_id)}
       />
