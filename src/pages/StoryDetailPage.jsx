@@ -311,6 +311,7 @@ export default function StoryDetailPage() {
   const [episodesLoading, setEpisodesLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [errorCode, setErrorCode] = useState('')
   const [episodeListOpen, setEpisodeListOpen] = useState(
     () => Boolean(location.state?.reopenEpisodeList)
   )
@@ -405,6 +406,7 @@ export default function StoryDetailPage() {
       setLoading(true)
       setEpisodesLoading(true)
       setMessage('')
+      setErrorCode('')
       setStory(null)
       setEpisodes([])
       setAuthorFollowing(false)
@@ -433,8 +435,10 @@ export default function StoryDetailPage() {
         const storyData = await storyResponse.json().catch(() => ({}))
 
         if (!storyResponse.ok || storyData.ok === false) {
-          throw new Error(storyData.message || 'Story not found')
-        }
+  const error = new Error(storyData.message || 'Story not found')
+  error.code = storyData.code || ''
+  throw error
+}
 
         if (ignore) return
 
@@ -476,7 +480,8 @@ export default function StoryDetailPage() {
       } catch (error) {
         if (ignore) return
 
-        setMessage(
+setErrorCode(error.code || '')
+setMessage(
           error.message === 'Failed to fetch'
             ? 'Cannot connect to server. Please check API settings.'
             : error.message || 'Failed to load story'
