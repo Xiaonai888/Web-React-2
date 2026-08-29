@@ -1,5 +1,90 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('meCommentsPage', {
+  en: {
+    all: 'All',
+    myComments: 'My Comments',
+    replies: 'Replies',
+    mentions: 'Mentions',
+    back: 'Back',
+    comments: 'Comments',
+    markAsRead: 'Mark as read',
+    youCommented: 'You commented',
+    someoneReplied: 'Someone replied',
+    youWereMentioned: 'You were mentioned',
+    commentActivity: 'Comment activity',
+    failedLoadComments: 'Failed to load comments',
+    noCommentsYet: 'No comments yet',
+    noCommentActivity: 'No comment activity found.',
+  },
+  km: {
+    all: 'ទាំងអស់',
+    myComments: 'មតិយោបល់របស់ខ្ញុំ',
+    replies: 'ការឆ្លើយតប',
+    mentions: 'ការលើកឈ្មោះ',
+    back: 'ត្រឡប់ក្រោយ',
+    comments: 'មតិយោបល់',
+    markAsRead: 'សម្គាល់ថាបានអាន',
+    youCommented: 'អ្នកបានបញ្ចេញមតិ',
+    someoneReplied: 'មានអ្នកឆ្លើយតប',
+    youWereMentioned: 'មានគេលើកឈ្មោះអ្នក',
+    commentActivity: 'សកម្មភាពមតិយោបល់',
+    failedLoadComments: 'មិនអាចផ្ទុកមតិយោបល់បាន',
+    noCommentsYet: 'មិនទាន់មានមតិយោបល់',
+    noCommentActivity: 'រកមិនឃើញសកម្មភាពមតិយោបល់។',
+  },
+  zh: {
+    all: '全部',
+    myComments: '我的评论',
+    replies: '回复',
+    mentions: '提及',
+    back: '返回',
+    comments: '评论',
+    markAsRead: '标记为已读',
+    youCommented: '你发表了评论',
+    someoneReplied: '有人回复了你',
+    youWereMentioned: '有人提到了你',
+    commentActivity: '评论动态',
+    failedLoadComments: '无法加载评论',
+    noCommentsYet: '暂无评论',
+    noCommentActivity: '未找到评论动态。',
+  },
+  ja: {
+    all: 'すべて',
+    myComments: '自分のコメント',
+    replies: '返信',
+    mentions: 'メンション',
+    back: '戻る',
+    comments: 'コメント',
+    markAsRead: '既読にする',
+    youCommented: 'コメントしました',
+    someoneReplied: '返信がありました',
+    youWereMentioned: 'メンションされました',
+    commentActivity: 'コメントアクティビティ',
+    failedLoadComments: 'コメントを読み込めませんでした',
+    noCommentsYet: 'コメントはまだありません',
+    noCommentActivity: 'コメントアクティビティはありません。',
+  },
+  ko: {
+    all: '전체',
+    myComments: '내 댓글',
+    replies: '답글',
+    mentions: '멘션',
+    back: '뒤로 가기',
+    comments: '댓글',
+    markAsRead: '읽음으로 표시',
+    youCommented: '댓글을 남겼습니다',
+    someoneReplied: '누군가 답글을 남겼습니다',
+    youWereMentioned: '회원님이 언급되었습니다',
+    commentActivity: '댓글 활동',
+    failedLoadComments: '댓글을 불러오지 못했습니다',
+    noCommentsYet: '아직 댓글이 없습니다',
+    noCommentActivity: '댓글 활동을 찾을 수 없습니다.',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -14,14 +99,29 @@ const tabs = [
   { key: 'mentions', label: 'Mentions' },
 ]
 
+const TAB_LABEL_KEYS = {
+  all: 'all',
+  mine: 'myComments',
+  replies: 'replies',
+  mentions: 'mentions',
+}
+
+const LANGUAGE_LOCALES = {
+  en: 'en-US',
+  km: 'km-KH',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
 function getReaderToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
 }
 
-function formatTime(value) {
+function formatTime(value, language) {
   if (!value) return ''
 
-  return new Date(value).toLocaleString('en-US', {
+  return new Date(value).toLocaleString(LANGUAGE_LOCALES[language] || 'en-US', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -29,12 +129,12 @@ function formatTime(value) {
   })
 }
 
-function getActivityTitle(item) {
-  if (item.activity_type === 'mine') return 'You commented'
-  if (item.activity_type === 'reply') return 'Someone replied'
-  if (item.activity_type === 'mention') return 'You were mentioned'
+function getActivityTitle(item, t) {
+  if (item.activity_type === 'mine') return t('meCommentsPage.youCommented')
+  if (item.activity_type === 'reply') return t('meCommentsPage.someoneReplied')
+  if (item.activity_type === 'mention') return t('meCommentsPage.youWereMentioned')
 
-  return item.title || 'Comment activity'
+  return item.title || t('meCommentsPage.commentActivity')
 }
 
 function getActivityText(item) {
@@ -46,6 +146,7 @@ function getActivityStoryTitle(item) {
 }
 
 export default function MeCommentsPage() {
+  const { language, t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all')
   const [items, setItems] = useState([])
@@ -82,7 +183,7 @@ export default function MeCommentsPage() {
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load comments')
+          throw new Error(data.message || t('meCommentsPage.failedLoadComments'))
         }
 
         if (ignore) return
@@ -91,7 +192,7 @@ export default function MeCommentsPage() {
 setCounts(data.counts || {})
       } catch (err) {
         if (!ignore) {
-          setError(err.message || 'Failed to load comments')
+          setError(err.message || t('meCommentsPage.failedLoadComments'))
           setItems([])
         }
       } finally {
@@ -142,18 +243,20 @@ setCounts(data.counts || {})
       type="button"
       onClick={() => navigate(-1)}
       className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] ring-1 ring-black/5 active:scale-95 dark:bg-white/10 dark:text-white dark:ring-white/10"
-      aria-label="Back"
+      aria-label={t('meCommentsPage.back')}
     >
       <i className="fa-solid fa-chevron-left text-[13px]" />
     </button>
 
-    <h1 className="text-[22px] font-black leading-tight text-[#111827] dark:text-white">Comments</h1>
+    <h1 className="text-[22px] font-black leading-tight text-[#111827] dark:text-white">
+      {t('meCommentsPage.comments')}
+    </h1>
   </div>
 
   <button
     type="button"
     className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] ring-1 ring-black/5 active:scale-95 dark:bg-white/10 dark:text-white dark:ring-white/10"
-    aria-label="Mark as read"
+    aria-label={t('meCommentsPage.markAsRead')}
   >
     <i className="fa-solid fa-check-double text-[13px]" />
   </button>
@@ -174,7 +277,7 @@ setCounts(data.counts || {})
       : 'bg-[#f8f8fb] font-medium text-[#6b7280] ring-1 ring-black/5 dark:bg-white/10 dark:text-white/65 dark:ring-white/10'
   }`}
 >
-  {tab.label}
+  {t(`meCommentsPage.${TAB_LABEL_KEYS[tab.key]}`)}
 </button>
             )
           })}
@@ -215,10 +318,10 @@ setCounts(data.counts || {})
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div className="line-clamp-1 text-[14px] font-black text-[#111827] dark:text-white">
-                        {getActivityTitle(item)}
+                        {getActivityTitle(item, t)}
                       </div>
                       <div className="shrink-0 text-[10.5px] font-semibold text-[#9aa1ad]">
-                        {formatTime(item.created_at)}
+                        {formatTime(item.created_at, language)}
                       </div>
                     </div>
 
@@ -245,8 +348,12 @@ setCounts(data.counts || {})
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] dark:bg-white/10 dark:text-white">
               <i className="far fa-comment-dots text-[22px]" />
             </div>
-            <h2 className="mt-4 text-[17px] font-black text-[#111827] dark:text-white">No comments yet</h2>
-            <p className="mt-2 text-[13px] leading-6 text-[#8d94a1] dark:text-white/50">No comment activity found.</p>
+            <h2 className="mt-4 text-[17px] font-black text-[#111827] dark:text-white">
+              {t('meCommentsPage.noCommentsYet')}
+            </h2>
+            <p className="mt-2 text-[13px] leading-6 text-[#8d94a1] dark:text-white/50">
+              {t('meCommentsPage.noCommentActivity')}
+            </p>
           </div>
         )}
       </main>
