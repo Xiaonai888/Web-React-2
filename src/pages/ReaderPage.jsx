@@ -4950,7 +4950,12 @@ useEffect(() => {
         const episodeData = await episodeResponse.json().catch(() => ({}))
         const episodesData = await episodesResponse.json().catch(() => ({}))
 
-        if (!episodesResponse.ok || episodesData.ok === false) {
+if (episodeData.code === 'ADULT_RESTRICTED' || episodesData.code === 'ADULT_RESTRICTED') {
+  navigate(`/story/${storyId}`, { replace: true })
+  return
+}
+
+if (!episodesResponse.ok || episodesData.ok === false) {
           throw new Error(episodesData.message || 'Episode list not found')
         }
 
