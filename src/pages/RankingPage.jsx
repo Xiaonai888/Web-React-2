@@ -526,7 +526,7 @@ function AuthorRankItem({ author, rank, onOpen }) {
 />
 
         <div
-          className={`flex ${avatarSize} items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[20px] font-bold text-[#111827] ring-[3px] ${ring} ring-offset-2 ring-offset-white`}
+          className={`flex ${avatarSize} items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[20px] font-bold text-[#111827] ring-[3px] ${ring} ring-offset-2 ring-offset-white dark:bg-[var(--shadow-bg-soft)] dark:text-[var(--shadow-text-primary)] dark:ring-offset-[var(--shadow-bg-surface)]`}
         >
           {author.avatar_url ? (
             <img
@@ -542,19 +542,19 @@ function AuthorRankItem({ author, rank, onOpen }) {
         </div>
 
         <div
-          className={`absolute -bottom-3 left-1/2 flex h-7 min-w-7 -translate-x-1/2 items-center justify-center rounded-full px-2 text-[12px] font-bold shadow-sm ring-2 ring-white ${badge}`}
+          className={`absolute -bottom-3 left-1/2 flex h-7 min-w-7 -translate-x-1/2 items-center justify-center rounded-full px-2 text-[12px] font-bold shadow-sm ring-2 ring-white dark:ring-[var(--shadow-bg-surface)] ${badge}`}
         >
           {rank}
         </div>
       </div>
 
       <div
-        className={`${isFirst ? 'mt-6' : 'mt-5'} truncate px-1 text-[12px] font-bold text-[#111827]`}
+        className={`${isFirst ? 'mt-6' : 'mt-5'} truncate px-1 text-[12px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]`}
       >
         {authorName}
       </div>
 
-      <div className="mt-0.5 truncate px-1 text-[10px] font-medium text-[#9ca3af]">
+      <div className="mt-0.5 truncate px-1 text-[10px] font-medium text-[#9ca3af] dark:text-[var(--shadow-text-secondary)]">
         {t('rankingPage.followers', {
           count: formatNumber(author.total_followers),
         })}
@@ -570,16 +570,16 @@ function TopAuthorsSection({ authors, loading, onOpen, onViewAll }) {
   const third = authors[2]
 
   return (
-    <section className="bg-white px-4 pb-5 pt-4">
+    <section className="bg-white px-4 pb-5 pt-4 dark:bg-[var(--shadow-bg-surface)]">
       <div className="mb-7 flex items-center justify-between">
-        <h2 className="text-[16px] font-bold text-[#111827]">
+        <h2 className="text-[16px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
           {t('rankingPage.topAuthors')}
         </h2>
 
         <button
           type="button"
           onClick={onViewAll}
-          className="text-[12px] font-semibold text-[#8b93a1] active:opacity-60"
+          className="text-[12px] font-semibold text-[#8b93a1] active:opacity-60 dark:text-[var(--shadow-text-secondary)]"
         >
           {t('rankingPage.seeAll')}
         </button>
@@ -592,10 +592,10 @@ function TopAuthorsSection({ authors, loading, onOpen, onViewAll }) {
               <div
                 className={`${
                   item === 1 ? 'h-[82px] w-[82px]' : 'h-[68px] w-[68px]'
-                } animate-pulse rounded-full bg-[#eef0f4]`}
+                } animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-soft)]`}
               />
-              <div className="mt-4 h-3 w-16 animate-pulse rounded-full bg-[#eef0f4]" />
-              <div className="mt-2 h-2.5 w-12 animate-pulse rounded-full bg-[#eef0f4]" />
+              <div className="mt-4 h-3 w-16 animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-soft)]" />
+              <div className="mt-2 h-2.5 w-12 animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-soft)]" />
             </div>
           ))}
         </div>
@@ -606,7 +606,7 @@ function TopAuthorsSection({ authors, loading, onOpen, onViewAll }) {
           <AuthorRankItem author={third} rank={3} onOpen={onOpen} />
         </div>
       ) : (
-        <div className="py-5 text-center text-[12px] font-medium text-[#9ca3af]">
+        <div className="py-5 text-center text-[12px] font-medium text-[#9ca3af] dark:text-[var(--shadow-text-secondary)]">
           {t('rankingPage.noAuthorRanking')}
         </div>
       )}
@@ -657,7 +657,7 @@ function GenreScroller({ genres, activeGenre, onChange }) {
   }
 
   return (
-    <section className="bg-white px-3 py-3">
+    <section className="bg-white px-3 py-3 dark:bg-[var(--shadow-bg-surface)]">
       <div
         ref={scrollRef}
         onMouseDown={startDrag}
@@ -680,7 +680,7 @@ function GenreScroller({ genres, activeGenre, onChange }) {
               className={`shrink-0 rounded-full px-3 py-1 text-[12.5px] leading-[18px] transition-colors active:scale-[0.98] ${
                 active
                   ? 'bg-[#facc15] font-semibold text-[#111827]'
-                  : 'bg-white font-medium text-[#111827] ring-1 ring-[#e4e7ec] hover:bg-[#facc15] hover:text-[#111827]'
+                  : 'bg-white font-medium text-[#111827] ring-1 ring-[#e4e7ec] hover:bg-[#facc15] hover:text-[#111827] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)]'
               }`}
             >
               {getDisplayGenreLabel(genre, t)}
@@ -696,7 +696,7 @@ function SideRankingTabs({ activeTab, onChange }) {
   const { t } = useDisplayTranslation()
 
   return (
-    <aside className="w-[74px] shrink-0 bg-white">
+    <aside className="w-[74px] shrink-0 bg-white dark:bg-[var(--shadow-bg-surface)]">
       <div className="sticky top-[57px] py-2">
         {rankingTabs.map((tab) => {
           const active = activeTab === tab.key
@@ -710,11 +710,11 @@ function SideRankingTabs({ activeTab, onChange }) {
             >
               <i
                 className={`${tab.icon} text-[18px] transition-colors ${
-                  active ? 'text-[#facc15]' : 'text-[#cfd2d8]'
+                  active ? 'text-[#facc15]' : 'text-[#cfd2d8] dark:text-[var(--shadow-text-tertiary)]'
                 }`}
               />
 
-              <span className="text-[9.5px] font-medium leading-tight text-[#111827]">
+              <span className="text-[9.5px] font-medium leading-tight text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t(`rankingPage.${RANKING_TAB_LABEL_KEYS[tab.key]}`)}
               </span>
             </button>
@@ -727,13 +727,13 @@ function SideRankingTabs({ activeTab, onChange }) {
 
 function LoadingStoryRow() {
   return (
-    <div className="flex min-h-[118px] items-center gap-2.5 border-b border-[#f1f1f1] py-3">
-      <div className="h-5 w-5 shrink-0 animate-pulse rounded bg-[#eef0f4]" />
-      <div className="h-[96px] w-[68px] shrink-0 animate-pulse rounded-[10px] bg-[#eef0f4]" />
+    <div className="flex min-h-[118px] items-center gap-2.5 border-b border-[#f1f1f1] py-3 dark:border-[var(--shadow-border)]">
+      <div className="h-5 w-5 shrink-0 animate-pulse rounded bg-[#eef0f4] dark:bg-[var(--shadow-bg-soft)]" />
+      <div className="h-[96px] w-[68px] shrink-0 animate-pulse rounded-[10px] bg-[#eef0f4] dark:bg-[var(--shadow-bg-soft)]" />
 
       <div className="min-w-0 flex-1">
-        <div className="h-4 w-4/5 animate-pulse rounded-full bg-[#eef0f4]" />
-        <div className="mt-3 h-3 w-2/3 animate-pulse rounded-full bg-[#eef0f4]" />
+        <div className="h-4 w-4/5 animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-soft)]" />
+        <div className="mt-3 h-3 w-2/3 animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-soft)]" />
       </div>
     </div>
   )
@@ -752,7 +752,7 @@ function RankedStoryRow({ story, rank, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(story.id)}
-      className="flex min-h-[118px] w-full items-center gap-2.5 border-b border-[#f1f1f1] py-3 text-left active:bg-[#fafafa]"
+      className="flex min-h-[118px] w-full items-center gap-2.5 border-b border-[#f1f1f1] py-3 text-left active:bg-[#fafafa] dark:border-[var(--shadow-border)] dark:active:bg-[var(--shadow-bg-hover)]"
     >
       <div
         className={`w-5 shrink-0 text-center text-[20px] font-bold ${
@@ -762,13 +762,13 @@ function RankedStoryRow({ story, rank, onOpen }) {
               ? 'text-[#8d99aa]'
               : rank === 3
                 ? 'text-[#be762f]'
-                : 'text-[#555b66]'
+                : 'text-[#555b66] dark:text-[var(--shadow-text-secondary)]'
         }`}
       >
         {rank}
       </div>
 
-      <div className="h-[96px] w-[68px] shrink-0 overflow-hidden rounded-[10px] bg-[#eef0f4]">
+      <div className="h-[96px] w-[68px] shrink-0 overflow-hidden rounded-[10px] bg-[#eef0f4] dark:bg-[var(--shadow-bg-soft)]">
         {story.cover ? (
           <img
             src={story.cover}
@@ -785,11 +785,11 @@ function RankedStoryRow({ story, rank, onOpen }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 text-[14px] font-bold leading-5 text-[#111827]">
+        <h3 className="line-clamp-2 text-[14px] font-bold leading-5 text-[#111827] dark:text-[var(--shadow-text-primary)]">
           {title}
         </h3>
 
-        <div className="mt-2 truncate text-[11px] font-normal text-[#7b8190]">
+        <div className="mt-2 truncate text-[11px] font-normal text-[#7b8190] dark:text-[var(--shadow-text-secondary)]">
           {genreText}
         </div>
       </div>
@@ -802,10 +802,10 @@ function EmptyState() {
 
   return (
     <div className="px-3 py-16 text-center">
-      <div className="text-[14px] font-bold text-[#111827]">
+      <div className="text-[14px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
         {t('rankingPage.noRanking')}
       </div>
-      <div className="mt-1 text-[11px] font-medium text-[#9ca3af]">
+      <div className="mt-1 text-[11px] font-medium text-[#9ca3af] dark:text-[var(--shadow-text-secondary)]">
         {t('rankingPage.noRankingBody')}
       </div>
     </div>
@@ -823,9 +823,9 @@ function MyAuthorRankCard({ author, rank, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(author)}
-      className="my-4 flex w-full items-center gap-2.5 rounded-[16px] border border-[#eee4ff] bg-[#fbf9ff] p-3 text-left active:scale-[0.99]"
+      className="my-4 flex w-full items-center gap-2.5 rounded-[16px] border border-[#eee4ff] bg-[#fbf9ff] p-3 text-left active:scale-[0.99] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)]"
     >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eeeaf7] text-[15px] font-bold text-[#111827]">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eeeaf7] text-[15px] font-bold text-[#111827] dark:bg-[var(--shadow-bg-soft)] dark:text-[var(--shadow-text-primary)]">
         {author.avatar_url ? (
           <img
             src={author.avatar_url}
@@ -841,7 +841,7 @@ function MyAuthorRankCard({ author, rank, onOpen }) {
         <div className="text-[10px] font-bold text-[#8b5cf6]">
           {t('rankingPage.yourRank')}
         </div>
-        <div className="mt-0.5 truncate text-[12px] font-bold text-[#111827]">
+        <div className="mt-0.5 truncate text-[12px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
           {authorName}
         </div>
       </div>
@@ -850,7 +850,7 @@ function MyAuthorRankCard({ author, rank, onOpen }) {
         <div className="text-[22px] font-black text-[#7c3aed]">
           {rank ? `#${rank}` : '—'}
         </div>
-        <div className="text-[9px] font-medium text-[#9ca3af]">
+        <div className="text-[9px] font-medium text-[#9ca3af] dark:text-[var(--shadow-text-secondary)]">
           {t('rankingPage.author')}
         </div>
       </div>
@@ -1113,26 +1113,26 @@ export default function RankingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[100px]">
-      <header className="sticky top-0 z-50 border-b border-[#f1f1f1] bg-white/95 px-4 py-3 backdrop-blur">
+    <div className="app-page min-h-screen bg-white pb-[100px] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-50 border-b border-[#f1f1f1] bg-white/95 px-4 py-3 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex max-w-[640px] items-center justify-between">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-8 w-8 items-center justify-start text-[#111827] active:opacity-50"
+            className="flex h-8 w-8 items-center justify-start text-[#111827] active:opacity-50 dark:text-[var(--shadow-text-primary)]"
             aria-label={t('rankingPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[20px]" />
           </button>
 
-          <h1 className="text-[18px] font-bold text-[#111827]">
+          <h1 className="text-[18px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {t('rankingPage.ranking')}
           </h1>
 
           <button
             type="button"
             onClick={() => navigate('/search')}
-            className="flex h-8 w-8 items-center justify-end text-[#111827] active:opacity-50"
+            className="flex h-8 w-8 items-center justify-end text-[#111827] active:opacity-50 dark:text-[var(--shadow-text-primary)]"
             aria-label={t('rankingPage.search')}
           >
             <i className="fa-solid fa-magnifying-glass text-[19px]" />
@@ -1140,7 +1140,7 @@ export default function RankingPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[640px] bg-white">
+      <main className="mx-auto max-w-[640px] bg-white dark:bg-[var(--shadow-bg-surface)]">
         <TopAuthorsSection
           authors={authors.slice(0, 3)}
           loading={authorsLoading}
