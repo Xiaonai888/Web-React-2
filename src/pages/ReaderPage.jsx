@@ -15,6 +15,7 @@ import ReportModal from '../components/ReportModal'
 import RichEpisodeContent, {
   episodeContentToPlainText,
 } from '../components/reader/RichEpisodeContent'
+import { trackSectionQualifiedRead } from '../services/storySectionRankTracking'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -4394,11 +4395,16 @@ const pagingPages = useMemo(() => {
 ])
 
   useReadingProgressSync({
-    storyId,
-    episodeId,
-    readingPercent: readingProgress,
-    enabled: Boolean(episode) && !loading && !lockedEpisode && adultAccepted,
-  })
+  storyId,
+  episodeId,
+  readingPercent: readingProgress,
+  enabled: Boolean(episode) && !loading && !lockedEpisode && adultAccepted,
+})
+
+useEffect(() => {
+  if (!storyId || !episode || loading || lockedEpisode || !adultAccepted) return
+  void trackSectionQualifiedRead(storyId)
+}, [adultAccepted, episode, loading, lockedEpisode, storyId])
 
   useEffect(() => {
     let ignore = false
