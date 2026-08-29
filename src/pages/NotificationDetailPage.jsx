@@ -153,23 +153,23 @@ export default function NotificationDetailPage() {
   }, [notificationId])
 
   return (
-    <div className="min-h-screen bg-[#F6F7FB] pb-10">
-      <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 px-4 py-4 backdrop-blur">
+    <div className="app-page min-h-screen bg-[#F6F7FB] pb-10 dark:bg-[var(--shadow-bg-page)]">
+      <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 px-4 py-4 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex max-w-[560px] items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
             aria-label={t('notificationDetailPage.back')}
           >
             <i className="fas fa-chevron-left text-[14px]" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[20px] font-black text-[#111111]">
+            <h1 className="truncate text-[20px] font-black text-[#111111] dark:text-[var(--shadow-text-primary)]">
               {t('notificationDetailPage.announcement')}
             </h1>
-            <p className="mt-0.5 text-[12px] font-bold text-[#8A8F98]">
+            <p className="mt-0.5 text-[12px] font-bold text-[#8A8F98] dark:text-[var(--shadow-text-secondary)]">
               {t('notificationDetailPage.officialMessage')}
             </p>
           </div>
@@ -178,38 +178,38 @@ export default function NotificationDetailPage() {
 
       <main className="mx-auto max-w-[560px] px-4 pt-4">
         {loading ? (
-          <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
-            <p className="text-[13px] font-bold text-[#7B8190]">
+          <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111] dark:border-[var(--shadow-border-strong)] dark:border-t-[var(--shadow-text-primary)]" />
+            <p className="text-[13px] font-bold text-[#7B8190] dark:text-[var(--shadow-text-secondary)]">
               {t('notificationDetailPage.loading')}
             </p>
           </div>
         ) : null}
 
         {!loading && message ? (
-          <div className="rounded-[22px] border border-[#FECACA] bg-[#FFF1F1] p-4 text-[13px] font-bold text-[#E5484D]">
+          <div className="rounded-[22px] border border-[#FECACA] bg-[#FFF1F1] p-4 text-[13px] font-bold text-[#E5484D] dark:border-[#e5484d]/30 dark:bg-[#e5484d]/10">
             {message}
           </div>
         ) : null}
 
         {!loading && !message && notification ? (
-          <article className="rounded-[28px] border border-[#E5E7EB] bg-white p-5 shadow-sm">
+          <article className="rounded-[28px] border border-[#E5E7EB] bg-white p-5 shadow-sm dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
             <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFF7D6] text-[#B77900]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFF7D6] text-[#B77900] dark:bg-[#f59e0b]/15 dark:text-[#fbbf24]">
                 <i className="fas fa-bullhorn text-[16px]" />
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-black uppercase tracking-wide text-[#9CA3AF]">
+                <div className="text-[11px] font-black uppercase tracking-wide text-[#9CA3AF] dark:text-[var(--shadow-text-tertiary)]">
                   {createdAt}
                 </div>
-                <h2 className="mt-2 text-[22px] font-black leading-7 text-[#111111]">
+                <h2 className="mt-2 text-[22px] font-black leading-7 text-[#111111] dark:text-[var(--shadow-text-primary)]">
                   {notification.title || t('notificationDetailPage.announcement')}
                 </h2>
               </div>
             </div>
 
-            <p className="mt-5 whitespace-pre-wrap text-[15px] font-semibold leading-8 text-[#4B5563]">
+            <p className="mt-5 whitespace-pre-wrap text-[15px] font-semibold leading-8 text-[#4B5563] dark:text-[var(--shadow-text-secondary)]">
               {notification.message || ''}
             </p>
 
@@ -217,7 +217,7 @@ export default function NotificationDetailPage() {
               <button
                 type="button"
                 onClick={() => navigate(notification.link)}
-                className="mt-6 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95"
+                className="mt-6 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95 dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]"
               >
                 {t('notificationDetailPage.openLink')}
               </button>
