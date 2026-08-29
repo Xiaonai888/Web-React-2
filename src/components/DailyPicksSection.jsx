@@ -334,7 +334,11 @@ function FireSolidIcon() {
 
 function DailyPickCard({ book }) {
   return (
-    <Link to={`/story/${book.id}`} className="group block min-w-0">
+    <Link
+  to={`/story/${book.id}`}
+  onClick={() => void trackSectionQualifiedView('daily_picks', book.id)}
+  className="group block min-w-0"
+>
       <div className="relative aspect-[1.42/1] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
         <img
           src={book.image}
