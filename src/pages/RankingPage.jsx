@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { useDisplayTranslation } from '../utils/displayLanguage'
+import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('rankingPage', {
@@ -1099,8 +1100,10 @@ export default function RankingPage() {
   }, [authors, myAuthor])
 
   function openStory(storyId) {
-    if (storyId) navigate(`/story/${storyId}`)
-  }
+  if (!storyId) return
+  void trackSectionQualifiedView('ranking', storyId)
+  navigate(`/story/${storyId}`)
+}
 
   function openAuthor(author) {
     if (author?.page_username) {
