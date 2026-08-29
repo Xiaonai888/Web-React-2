@@ -483,7 +483,7 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
   )
 }
 
-function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel, onClose, onRefresh, t }) {
+function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, onRefresh, t }) {
   useEffect(() => {
     const bodyOverflow = document.body.style.overflow
     const htmlOverflow = document.documentElement.style.overflow
@@ -550,7 +550,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
             <button type="button" onClick={onRefresh} disabled={checking} className="rounded-[18px] bg-[#111111] py-4 text-[14px] font-normal text-white active:scale-[0.99] disabled:opacity-50 dark:bg-white dark:text-[#111827]">
               {checking ? t('purchaseSection.checking') : t('purchaseSection.checkStatus')}
             </button>
-            <button type="button" onClick={onCancel} disabled={checking} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-4 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-50">
+            <button type="button" onClick={onClose} disabled={checking} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-4 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-50">
               {t('purchaseSection.cancel')}
             </button>
           </div>
@@ -711,24 +711,6 @@ export default function PurchaseSection() {
 
   setShowPaymentMethods(true)
 }
-
-  async function cancelPurchase() {
-    if (!manualPayment?.order_id || checking) return
-
-    try {
-      setChecking(true)
-      await fetch(`${API_BASE_URL}/api/purchase/manual/cancel/${encodeURIComponent(manualPayment.order_id)}`, {
-        method: 'POST',
-        headers: getHeaders(),
-      })
-    } finally {
-      clearSavedPendingPayment()
-      setManualPayment(null)
-      setToast('')
-      setChecking(false)
-      loadPurchaseData()
-    }
-  }
 
   useEffect(() => {
     loadPurchaseData()
