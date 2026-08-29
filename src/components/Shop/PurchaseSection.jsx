@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import PaymentProfileModal from '../Wallet/PaymentProfileModal'
 
 const API_BASE_URL =
@@ -153,10 +154,21 @@ function PackageCard({ item, onPurchase }) {
 }
 
 function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManualPayment }) {
+  useEffect(() => {
+    const bodyOverflow = document.body.style.overflow
+    const htmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      document.documentElement.style.overflow = htmlOverflow
+    }
+  }, [])
+
   if (!selectedPackage) return null
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center sm:px-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 sm:items-center sm:px-4">
       <div className="w-full rounded-t-[28px] bg-[var(--shadow-bg-elevated)] p-5 text-[var(--shadow-text-primary)] shadow-2xl sm:max-w-[430px] sm:rounded-[28px]">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -196,7 +208,8 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
           Cancel
         </button>
       </div>
-    </div>
+        </div>,
+    document.body
   )
 }
 
