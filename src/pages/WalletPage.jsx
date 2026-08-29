@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import PaymentProfileModal from '../components/Wallet/PaymentProfileModal'
 
 registerTranslationNamespace('walletPage', {
   en: {
@@ -240,77 +241,15 @@ function TopUpIcon() {
   )
 }
 
-function PaymentProfileModal({ value, saving, message, onChange, onClose, onSave }) {
-  const { t } = useDisplayTranslation()
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 dark:bg-black/70 sm:items-center sm:px-4">
-      <div className="app-card w-full rounded-t-[28px] p-5 shadow-2xl sm:max-w-[430px] sm:rounded-[28px]">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h3 className="app-title text-[20px] font-bold">
-              {t('walletPage.paymentProfile')}
-            </h3>
-            <p className="app-muted mt-1 text-[12px] font-semibold leading-5">
-              {t('walletPage.paymentProfileHelp')}
-            </p>
-            <p className="app-tertiary mt-1 text-[11px] font-semibold">
-              {t('walletPage.example')}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="app-soft flex h-9 w-9 items-center justify-center rounded-full active:scale-95"
-          >
-            <i className="fas fa-times text-[14px]" />
-          </button>
-        </div>
-        <label className="app-muted text-[11px] font-normal uppercase tracking-[0.1em]">
-          {t('walletPage.paymentAccountName')}
-        </label>
-        <input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="KEO DARIYA"
-          className="app-input mt-2 h-12 w-full rounded-[16px] border px-4 text-[14px] font-normal uppercase outline-none focus:border-[var(--shadow-border-strong)]"
-        />
-        {message ? (
-          <p className="app-title mt-3 text-center text-[12px] font-bold">
-            {message}
-          </p>
-        ) : null}
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className="mt-4 h-12 w-full rounded-[18px] bg-[#111111] text-[14px] font-normal text-white active:scale-[0.99] disabled:opacity-60 dark:bg-white dark:text-[#111111]"
-        >
-          {saving ? t('walletPage.saving') : t('walletPage.save')}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="app-card mt-3 h-12 w-full rounded-[18px] border text-[14px] font-normal active:scale-[0.99]"
-        >
-          {t('walletPage.cancel')}
-        </button>
-      </div>
-    </div>
-  )
-}
 
 export default function WalletPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [wallet, setWallet] = useState(null)
   const [paymentName, setPaymentName] = useState('')
-  const [draftPaymentName, setDraftPaymentName] = useState('')
   const [showPaymentProfileModal, setShowPaymentProfileModal] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [profileMessage, setProfileMessage] = useState('')
 
   async function loadWallet() {
     if (!getReaderToken()) {
@@ -329,10 +268,9 @@ export default function WalletPage() {
       const userData = await userResponse.json().catch(() => ({}))
       if (walletData.ok) setWallet(walletData.wallet)
       if (userData.ok && userData.user) {
-        const nextName = userData.user.payment_account_name || ''
-        setPaymentName(nextName)
-        setDraftPaymentName(nextName)
-      }
+  const nextName = userData.user.payment_account_name || ''
+  setPaymentName(nextName)
+}
     } catch {
       setMessage(t('walletPage.loadFailed'))
     } finally {
@@ -341,40 +279,10 @@ export default function WalletPage() {
   }
 
   function openPaymentProfileModal() {
-    setDraftPaymentName(paymentName)
-    setProfileMessage('')
-    setShowPaymentProfileModal(true)
-  }
+  setShowPaymentProfileModal(true)
+}
 
-  async function savePaymentProfile() {
-    if (saving) return
-    try {
-      setSaving(true)
-      setProfileMessage('')
-      const response = await fetch(`${API_BASE_URL}/api/users/payment-profile`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ payment_account_name: draftPaymentName }),
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || !data.ok) {
-        throw new Error(
-          data.message || t('walletPage.saveProfileFailed')
-        )
-      }
-      const nextName = data.user?.payment_account_name || ''
-      setPaymentName(nextName)
-      setDraftPaymentName(nextName)
-      setShowPaymentProfileModal(false)
-      setMessage(t('walletPage.profileSaved'))
-    } catch (error) {
-      setProfileMessage(
-        error.message || t('walletPage.saveProfileFailed')
-      )
-    } finally {
-      setSaving(false)
-    }
-  }
+
 
   useEffect(() => {
     loadWallet()
@@ -560,15 +468,17 @@ export default function WalletPage() {
       </main>
 
       {showPaymentProfileModal ? (
-        <PaymentProfileModal
-          value={draftPaymentName}
-          saving={saving}
-          message={profileMessage}
-          onChange={setDraftPaymentName}
-          onClose={() => setShowPaymentProfileModal(false)}
-          onSave={savePaymentProfile}
-        />
-      ) : null}
+  <PaymentProfileModal
+    initialValue={paymentName}
+    onClose={() => setShowPaymentProfileModal(false)}
+    onSaved={(savedUser) => {
+      const nextName = String(savedUser?.payment_account_name || '').trim()
+      setPaymentName(nextName)
+      setShowPaymentProfileModal(false)
+      setMessage(t('walletPage.profileSaved'))
+    }}
+  />
+) : null}
     </div>
   )
 }
