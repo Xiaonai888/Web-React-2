@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import {
   addStoryLanguageParam,
   getStoryLanguageId,
@@ -261,13 +262,14 @@ export default function TrendingNowSection({
   }
 
   const handleBookOpen = (bookId) => {
-    if (dragMovedRef.current) {
-      dragMovedRef.current = false
-      return
-    }
-
-    navigate(`/story/${bookId}`)
+  if (dragMovedRef.current) {
+    dragMovedRef.current = false
+    return
   }
+
+  void trackSectionQualifiedView('trending_now', bookId)
+  navigate(`/story/${bookId}`)
+}
 
   if (loading) {
     return <LoadingGrid />
