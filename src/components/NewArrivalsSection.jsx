@@ -11,7 +11,7 @@ import {
   saveHomeCache,
 } from '../utils/homeDataCache'
 import { getStoryBadge } from '../utils/storyBadge'
-import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
+
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -292,8 +292,9 @@ export default function NewArrivalsSection({
               <BookCard
                 book={book}
                 onClick={() => {
-  void trackSectionQualifiedView('new_arrivals', book.id)
-  navigate(book.link)
+  navigate(book.link, {
+    state: { sectionRank: 'new_arrivals' },
+  })
 }}
               />
             </div>
