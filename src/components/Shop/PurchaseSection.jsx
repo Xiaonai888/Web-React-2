@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createPortal } from 'react-dom'
+import PaymentProfileModal from '../Wallet/PaymentProfileModal'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -149,59 +149,6 @@ function PackageCard({ item, onPurchase }) {
         {formatMoney(item.package_usd)}
       </button>
     </div>
-  )
-}
-
-
-
-function PaymentProfileRequiredModal({ onClose, onGoWallet }) {
-  useEffect(() => {
-    const bodyOverflow = document.body.style.overflow
-    const htmlOverflow = document.documentElement.style.overflow
-
-    document.body.style.overflow = 'hidden'
-    document.documentElement.style.overflow = 'hidden'
-
-    return () => {
-      document.body.style.overflow = bodyOverflow
-      document.documentElement.style.overflow = htmlOverflow
-    }
-  }, [])
-
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 sm:items-center sm:px-4">
-      <div className="w-full rounded-t-[28px] bg-[var(--shadow-bg-elevated)] p-5 text-[var(--shadow-text-primary)] shadow-2xl sm:max-w-[430px] sm:rounded-[28px]">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-[20px] font-black text-[var(--shadow-text-primary)]">Set Payment Profile</h3>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
-              Please add your payment account name before your first purchase.
-            </p>
-          </div>
-          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95">
-            <i className="fas fa-times text-[14px]" />
-          </button>
-        </div>
-
-        <div className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] p-4">
-          <p className="text-[12px] font-bold leading-5 text-[var(--shadow-text-secondary)]">
-            Use the same name as your payment account.
-          </p>
-          <p className="mt-2 text-[12px] font-black text-[var(--shadow-text-primary)]">
-            Example: KEO DARIYA / DARIYA KEO
-          </p>
-        </div>
-
-        <button type="button" onClick={onGoWallet} className="mt-4 h-12 w-full rounded-2xl bg-[#111111] text-[14px] font-black text-white active:scale-[0.99] dark:bg-white dark:text-[#111827]">
-          Go to Wallet
-        </button>
-
-        <button type="button" onClick={onClose} className="mt-3 h-12 w-full rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-black text-[var(--shadow-text-primary)] active:scale-[0.99]">
-          Not Now
-        </button>
-      </div>
-    </div>,
-    document.body
   )
 }
 
@@ -602,14 +549,16 @@ export default function PurchaseSection() {
 </div>
 
     {showPaymentProfileRequired ? (
-      <PaymentProfileRequiredModal
-        onClose={() => setShowPaymentProfileRequired(false)}
-        onGoWallet={() => {
-          setShowPaymentProfileRequired(false)
-          navigate('/wallet')
-        }}
-      />
-    ) : null}
+  <PaymentProfileModal
+    initialValue={user?.payment_account_name || ''}
+    onClose={() => setShowPaymentProfileRequired(false)}
+    onSaved={(savedUser) => {
+      setUser((current) => ({ ...(current || {}), ...savedUser }))
+      setShowPaymentProfileRequired(false)
+      setShowPaymentMethods(true)
+    }}
+  />
+) : null}
 
     {showPaymentMethods ? (
       <PaymentMethodModal
