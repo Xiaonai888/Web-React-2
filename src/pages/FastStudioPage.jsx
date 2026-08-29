@@ -211,17 +211,17 @@ function getStoredUser() {
 
 function StatCard({ label, value, Icon }) {
   return (
-    <div className="rounded-[20px] border border-[#ece8f5] bg-white p-4 shadow-[0_12px_28px_rgba(77,51,125,0.06)]">
+    <div className="rounded-[20px] border border-[#ece8f5] bg-white p-4 shadow-[0_12px_28px_rgba(77,51,125,0.06)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)]">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-[11px] font-semibold text-[#928b9f]">
+          <p className="truncate text-[11px] font-semibold text-[#928b9f] dark:text-[var(--shadow-text-secondary)]">
             {label}
           </p>
-          <p className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#171329]">
+          <p className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#171329] dark:text-[var(--shadow-text-primary)]">
             {value}
           </p>
         </div>
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[#f0eaff] text-[#7041de]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[#f0eaff] text-[#7041de] dark:bg-violet-500/15 dark:text-violet-300">
           <Icon size={20} />
         </div>
       </div>
@@ -286,8 +286,8 @@ export default function FastStudioPage() {
   }, [activeTab, query])
 
   return (
-    <div className="min-h-screen bg-[#f7f5fb] pb-10 text-[#171329]">
-      <header className="sticky top-0 z-50 border-b border-[#ece8f5] bg-white/95 backdrop-blur-xl">
+    <div className="app-page min-h-screen bg-[#f7f5fb] pb-10 text-[#171329] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-50 border-b border-[#ece8f5] bg-white/95 backdrop-blur-xl dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex w-full max-w-[1040px] items-center gap-3 px-3 py-3 sm:px-5">
           <button
             type="button"
@@ -298,25 +298,25 @@ export default function FastStudioPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#8b55ef] to-[#5f35d6] text-white shadow-[0_10px_20px_rgba(108,62,221,0.22)]">
               <Play size={18} fill="currentColor" />
             </span>
-            <span className="hidden text-[20px] font-black tracking-[-0.03em] sm:inline">
+            <span className="hidden text-[20px] font-black tracking-[-0.03em] text-[#171329] sm:inline dark:text-[var(--shadow-text-primary)]">
               {t('fastStudioPage.fastStudio')}
             </span>
           </button>
 
           <form
             onSubmit={(event) => event.preventDefault()}
-            className="ml-auto hidden h-10 min-w-0 max-w-[360px] flex-1 items-center rounded-full border border-[#ddd7e8] bg-[#faf9fd] px-3 focus-within:border-[#7443e5] focus-within:bg-white md:flex"
+            className="ml-auto hidden h-10 min-w-0 max-w-[360px] flex-1 items-center rounded-full border border-[#ddd7e8] bg-[#faf9fd] px-3 focus-within:border-[#7443e5] focus-within:bg-white md:flex dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:focus-within:bg-[var(--shadow-input-bg)]"
           >
             <Search
               size={16}
-              className="shrink-0 text-[#81788f]"
+              className="shrink-0 text-[#81788f] dark:text-[var(--shadow-text-tertiary)]"
             />
             <input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t('fastStudioPage.searchVideos')}
-              className="h-full min-w-0 flex-1 bg-transparent px-2 text-[12px] outline-none placeholder:text-[#aaa3b4]"
+              className="h-full min-w-0 flex-1 bg-transparent px-2 text-[12px] text-[#171329] outline-none placeholder:text-[#aaa3b4] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)]"
             />
           </form>
 
@@ -338,7 +338,7 @@ export default function FastStudioPage() {
               onClick={() =>
                 setProfileOpen((value) => !value)
               }
-              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#8d56ef] to-[#5b32cf] text-[14px] font-black text-white ring-2 ring-[#e8ddff]"
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#8d56ef] to-[#5b32cf] text-[14px] font-black text-white ring-2 ring-[#e8ddff] dark:ring-[var(--shadow-border-strong)]"
               aria-label={t('fastStudioPage.openProfileMenu')}
             >
               {avatarUrl ? (
@@ -353,11 +353,11 @@ export default function FastStudioPage() {
             </button>
 
             {profileOpen ? (
-              <div className="absolute right-0 top-12 z-[90] w-[190px] overflow-hidden rounded-[18px] border border-[#e8e4f1] bg-white p-1.5 shadow-[0_20px_50px_rgba(38,24,68,0.18)]">
+              <div className="absolute right-0 top-12 z-[90] w-[190px] overflow-hidden rounded-[18px] border border-[#e8e4f1] bg-white p-1.5 shadow-[0_20px_50px_rgba(38,24,68,0.18)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)] dark:shadow-[var(--shadow-shadow)]">
                 <button
                   type="button"
                   onClick={() => navigate('/profile')}
-                  className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-bold text-[#292238] transition hover:bg-[#f6f2ff]"
+                  className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-bold text-[#292238] transition hover:bg-[#f6f2ff] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
                 >
                   <UserRound
                     size={18}
@@ -367,7 +367,7 @@ export default function FastStudioPage() {
                 </button>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-3 rounded-[13px] bg-[#f3edff] px-3 py-3 text-left text-[13px] font-bold text-[#6738d9]"
+                  className="flex w-full items-center gap-3 rounded-[13px] bg-[#f3edff] px-3 py-3 text-left text-[13px] font-bold text-[#6738d9] dark:bg-violet-500/15 dark:text-violet-300"
                 >
                   <Video size={18} />
                   {t('fastStudioPage.studio')}
@@ -407,21 +407,21 @@ export default function FastStudioPage() {
           />
         </section>
 
-        <section className="mt-5 rounded-[24px] border border-[#ece8f5] bg-white p-4 shadow-[0_16px_38px_rgba(77,51,125,0.07)] sm:p-5">
+        <section className="mt-5 rounded-[24px] border border-[#ece8f5] bg-white p-4 shadow-[0_16px_38px_rgba(77,51,125,0.07)] sm:p-5 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)]">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-[20px] font-black tracking-[-0.03em] text-[#171329]">
+              <h1 className="text-[20px] font-black tracking-[-0.03em] text-[#171329] dark:text-[var(--shadow-text-primary)]">
                 {t('fastStudioPage.yourVideos')}
               </h1>
-              <p className="mt-1 text-[12px] text-[#918a9e]">
+              <p className="mt-1 text-[12px] text-[#918a9e] dark:text-[var(--shadow-text-secondary)]">
                 {t('fastStudioPage.manageVideos')}
               </p>
             </div>
 
-            <div className="flex h-10 items-center rounded-full border border-[#ddd7e8] bg-[#faf9fd] px-3 md:hidden">
+            <div className="flex h-10 items-center rounded-full border border-[#ddd7e8] bg-[#faf9fd] px-3 md:hidden dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)]">
               <Search
                 size={16}
-                className="shrink-0 text-[#81788f]"
+                className="shrink-0 text-[#81788f] dark:text-[var(--shadow-text-tertiary)]"
               />
               <input
                 type="search"
@@ -430,7 +430,7 @@ export default function FastStudioPage() {
                   setQuery(event.target.value)
                 }
                 placeholder={t('fastStudioPage.searchVideos')}
-                className="h-full min-w-0 flex-1 bg-transparent px-2 text-[12px] outline-none placeholder:text-[#aaa3b4]"
+                className="h-full min-w-0 flex-1 bg-transparent px-2 text-[12px] text-[#171329] outline-none placeholder:text-[#aaa3b4] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)]"
               />
             </div>
           </div>
@@ -444,7 +444,7 @@ export default function FastStudioPage() {
                 className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-extrabold transition ${
                   activeTab === tab.key
                     ? 'bg-[#7443e5] text-white'
-                    : 'border border-[#e4dfea] bg-white text-[#6f667d] hover:bg-[#f8f5ff]'
+                    : 'border border-[#e4dfea] bg-white text-[#6f667d] hover:bg-[#f8f5ff] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:hover:bg-[var(--shadow-bg-hover)]'
                 }`}
               >
                 {t(
@@ -458,9 +458,9 @@ export default function FastStudioPage() {
             {filteredVideos.map((video) => (
               <article
                 key={video.id}
-                className="grid grid-cols-[104px_minmax(0,1fr)_auto] items-center gap-3 rounded-[18px] border border-[#ece8f5] p-3 sm:grid-cols-[148px_minmax(0,1fr)_auto]"
+                className="grid grid-cols-[104px_minmax(0,1fr)_auto] items-center gap-3 rounded-[18px] border border-[#ece8f5] p-3 sm:grid-cols-[148px_minmax(0,1fr)_auto] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)]"
               >
-                <div className="relative h-[76px] overflow-hidden rounded-[13px] bg-[#eee9f7] sm:h-[86px]">
+                <div className="relative h-[76px] overflow-hidden rounded-[13px] bg-[#eee9f7] sm:h-[86px] dark:bg-[var(--shadow-bg-soft)]">
                   <img
                     src={video.thumbnail}
                     alt={video.title}
@@ -472,13 +472,13 @@ export default function FastStudioPage() {
                 </div>
 
                 <div className="min-w-0">
-                  <h2 className="line-clamp-2 text-[12px] font-extrabold leading-5 text-[#211a30] sm:text-[14px]">
+                  <h2 className="line-clamp-2 text-[12px] font-extrabold leading-5 text-[#211a30] sm:text-[14px] dark:text-[var(--shadow-text-primary)]">
                     {video.title}
                   </h2>
 
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold text-[#918a9e]">
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold text-[#918a9e] dark:text-[var(--shadow-text-secondary)]">
                     {video.access === 'paid' ? (
-                      <span className="inline-flex items-center gap-1 text-[#7041de]">
+                      <span className="inline-flex items-center gap-1 text-[#7041de] dark:text-violet-300">
                         <Gem
                           size={12}
                           fill="currentColor"
@@ -488,7 +488,7 @@ export default function FastStudioPage() {
                         })}
                       </span>
                     ) : (
-                      <span className="text-[#168653]">
+                      <span className="text-[#168653] dark:text-emerald-300">
                         {t('fastStudioPage.free')}
                       </span>
                     )}
@@ -503,8 +503,8 @@ export default function FastStudioPage() {
                   <span
                     className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[9px] font-extrabold ${
                       video.status === 'published'
-                        ? 'bg-[#eafaf1] text-[#168653]'
-                        : 'bg-[#fff4dd] text-[#aa7200]'
+                        ? 'bg-[#eafaf1] text-[#168653] dark:bg-emerald-500/10 dark:text-emerald-300'
+                        : 'bg-[#fff4dd] text-[#aa7200] dark:bg-amber-500/10 dark:text-amber-300'
                     }`}
                   >
                     {video.status === 'published'
@@ -515,7 +515,7 @@ export default function FastStudioPage() {
 
                 <button
                   type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e2ddea] text-[#6f667d] transition hover:bg-[#f7f3ff] hover:text-[#7041de]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e2ddea] text-[#6f667d] transition hover:bg-[#f7f3ff] hover:text-[#7041de] dark:border-[var(--shadow-border)] dark:text-[var(--shadow-text-secondary)] dark:hover:bg-[var(--shadow-bg-hover)] dark:hover:text-violet-300"
                   aria-label={t('fastStudioPage.openOptions', {
                     title: video.title,
                   })}
@@ -526,12 +526,12 @@ export default function FastStudioPage() {
             ))}
 
             {!filteredVideos.length ? (
-              <div className="rounded-[18px] border border-dashed border-[#d8d0e8] px-5 py-12 text-center">
+              <div className="rounded-[18px] border border-dashed border-[#d8d0e8] px-5 py-12 text-center dark:border-[var(--shadow-border-strong)] dark:bg-[var(--shadow-bg-soft)]">
                 <Search
                   className="mx-auto text-[#8b6bd0]"
                   size={27}
                 />
-                <p className="mt-3 text-[13px] font-extrabold text-[#211a30]">
+                <p className="mt-3 text-[13px] font-extrabold text-[#211a30] dark:text-[var(--shadow-text-primary)]">
                   {t('fastStudioPage.noVideosFound')}
                 </p>
               </div>
