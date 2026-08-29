@@ -150,13 +150,13 @@ export default function LeaveReviewPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white pb-24 text-[#111827]">
-      <header className="sticky top-0 z-40 border-b border-[#eef1f5] bg-white/95 px-4 py-3 backdrop-blur">
+    <main className="app-page min-h-screen bg-white pb-24 text-[#111827] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-[#eef1f5] bg-white/95 px-4 py-3 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto grid max-w-3xl grid-cols-[44px_1fr_92px] items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[#111827] active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-[#111827] active:scale-95 dark:text-[var(--shadow-text-primary)]"
             aria-label={t('leaveReviewPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
@@ -166,7 +166,7 @@ export default function LeaveReviewPage() {
             <h1 className="truncate text-[18px] font-black">
               {t('leaveReviewPage.title')}
             </h1>
-            <p className="mt-0.5 truncate text-[11px] font-semibold text-[#98a2b3]">
+            <p className="mt-0.5 truncate text-[11px] font-semibold text-[#98a2b3] dark:text-[var(--shadow-text-secondary)]">
               {story?.title
                 ? t('leaveReviewPage.reviewingStory', { title: story.title })
                 : t('leaveReviewPage.reviewThisStory')}
@@ -177,7 +177,7 @@ export default function LeaveReviewPage() {
             type="button"
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="h-10 rounded-full bg-[#111827] px-4 text-[13px] font-black text-white active:scale-95 disabled:bg-[#d0d5dd]"
+            className="h-10 rounded-full bg-[#111827] px-4 text-[13px] font-black text-white active:scale-95 disabled:bg-[#d0d5dd] dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)] dark:disabled:bg-[var(--shadow-bg-elevated)] dark:disabled:text-[var(--shadow-text-disabled)]"
           >
             {t('leaveReviewPage.submit')}
           </button>
@@ -197,7 +197,7 @@ export default function LeaveReviewPage() {
                 type="button"
                 onClick={() => setRating(star)}
                 className={`text-[42px] active:scale-95 ${
-                  rating >= star ? 'text-[#ff8a3d]' : 'text-[#d9d9d9]'
+                  rating >= star ? 'text-[#ff8a3d]' : 'text-[#d9d9d9] dark:text-[var(--shadow-text-disabled)]'
                 }`}
                 aria-label={t('leaveReviewPage.rateStar', { star })}
               >
@@ -208,7 +208,7 @@ export default function LeaveReviewPage() {
         </div>
 
         <label className="mt-8 block">
-          <div className="mb-2 text-[13px] font-black text-[#111827]">
+          <div className="mb-2 text-[13px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {t('leaveReviewPage.yourReview')}
           </div>
 
@@ -217,16 +217,16 @@ export default function LeaveReviewPage() {
             onChange={(event) => setText(event.target.value)}
             rows={6}
             placeholder={t('leaveReviewPage.reviewPlaceholder')}
-            className="w-full resize-none rounded-[22px] bg-[#f3f4f6] px-4 py-4 text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/15"
+            className="w-full resize-none rounded-[22px] bg-[#f3f4f6] px-4 py-4 text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/15 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:ring-white/10"
           />
         </label>
 
-        <div className="mt-6 rounded-[22px] bg-[#f8fafc] px-4 py-4">
-          <p className="text-[14px] font-semibold leading-6 text-[#4b5563]">
+        <div className="mt-6 rounded-[22px] bg-[#f8fafc] px-4 py-4 dark:bg-[var(--shadow-bg-surface)]">
+          <p className="text-[14px] font-semibold leading-6 text-[#4b5563] dark:text-[var(--shadow-text-secondary)]">
             {t('leaveReviewPage.helper')}
           </p>
 
-          <ul className="mt-4 space-y-2 text-[13px] font-semibold leading-6 text-[#667085]">
+          <ul className="mt-4 space-y-2 text-[13px] font-semibold leading-6 text-[#667085] dark:text-[var(--shadow-text-secondary)]">
             <li>• {t('leaveReviewPage.characters')}</li>
             <li>• {t('leaveReviewPage.favoriteMoment')}</li>
             <li>• {t('leaveReviewPage.feeling')}</li>
