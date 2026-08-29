@@ -51,6 +51,7 @@ export default function AuthorHashtagSuggestions({
   textareaRef,
   draft,
   onDraftChange,
+  onHashtagSelected,
   maxLength = 10000,
 }) {
   const requestIdRef = useRef(0)
@@ -165,6 +166,11 @@ export default function AuthorHashtagSuggestions({
     )
 
     onDraftChange(nextDraft)
+    onHashtagSelected?.({
+      tag,
+      start: activeHashtag.start,
+      end: activeHashtag.start + tag.length,
+    })
     setSuggestions([])
     setActiveHashtag(null)
 
