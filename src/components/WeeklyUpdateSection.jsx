@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import {
   addStoryLanguageParam,
   getStoryLanguageId,
@@ -365,9 +366,10 @@ export default function WeeklyUpdateSection() {
             <WeeklyCard
               book={book}
               onOpen={() => {
-                if (dragRef.current.moved) return
-                navigate(`/story/${book.id}`)
-              }}
+  if (dragRef.current.moved) return
+  void trackSectionQualifiedView('weekly_update', book.id)
+  navigate(`/story/${book.id}`)
+}}
             />
           </div>
         ))}
