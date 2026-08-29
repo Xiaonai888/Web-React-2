@@ -213,7 +213,7 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
   )
 }
 
-function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel, onClose, onRefresh }) {
+function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, onRefresh }) {
   useEffect(() => {
     const bodyOverflow = document.body.style.overflow
     const htmlOverflow = document.documentElement.style.overflow
@@ -276,9 +276,9 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
             <button type="button" onClick={onRefresh} disabled={checking} className="rounded-[18px] bg-[#111111] py-4 text-[14px] font-normal text-white active:scale-[0.99] disabled:opacity-50 dark:bg-white dark:text-[#111827]">
               {checking ? 'Checking...' : 'Check Status'}
             </button>
-            <button type="button" onClick={onCancel} disabled={checking} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-4 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-50">
-              Cancel
-            </button>
+            <button type="button" onClick={onClose} disabled={checking} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-4 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-50">
+  Close
+</button>
           </div>
         ) : (
           <button type="button" onClick={onClose} className="mt-4 w-full rounded-[18px] bg-[#111111] py-4 text-[14px] font-normal text-white active:scale-[0.99] dark:bg-white dark:text-[#111827]">
@@ -581,7 +581,6 @@ export default function PurchaseSection() {
         secondsLeft={secondsLeft}
         checking={checking}
         message={toast}
-        onClose={() => setManualPayment(null)}
         onClose={() => setManualPayment(null)}
         onRefresh={() => refreshPaymentStatus(manualPayment.order_id)}
       />
