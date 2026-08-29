@@ -214,6 +214,17 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
 }
 
 function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel, onClose, onRefresh }) {
+  useEffect(() => {
+    const bodyOverflow = document.body.style.overflow
+    const htmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      document.documentElement.style.overflow = htmlOverflow
+    }
+  }, [])
+
   if (!payment) return null
 
   const status = String(payment.status || '').toLowerCase()
@@ -221,8 +232,8 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
   const isReview = status === 'pending_review'
   const isWaiting = status === 'waiting_payment'
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
+  return createPortal(
+  <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 px-4 pb-4 sm:items-center sm:pb-0">
       <div className="w-full max-w-[460px] rounded-[28px] bg-[var(--shadow-bg-elevated)] p-5 text-[var(--shadow-text-primary)] shadow-2xl">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -275,7 +286,8 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
           </button>
         )}
       </div>
-    </div>
+        </div>,
+    document.body
   )
 }
 
