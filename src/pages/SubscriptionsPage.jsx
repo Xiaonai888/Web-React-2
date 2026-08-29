@@ -213,7 +213,7 @@ function SubscriptionGridCard({ book }) {
 
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
-      <div className="overflow-hidden rounded-2xl bg-[#efefef] shadow-sm">
+      <div className="overflow-hidden rounded-2xl bg-[#efefef] shadow-sm dark:bg-[var(--shadow-bg-elevated)]">
         <div className="aspect-[2/3] overflow-hidden">
           <img
             src={book.image}
@@ -227,10 +227,10 @@ function SubscriptionGridCard({ book }) {
       </div>
 
       <div className="pt-2.5">
-        <h4 className="line-clamp-1 text-[12px] font-extrabold tracking-tight text-[#111] sm:text-[13px]">
+        <h4 className="line-clamp-1 text-[12px] font-extrabold tracking-tight text-[#111] sm:text-[13px] dark:text-[var(--shadow-text-primary)]">
           {book.title}
         </h4>
-        <p className="mt-1 text-[10px] font-medium text-[#8d8d8d] sm:text-[11px]">
+        <p className="mt-1 text-[10px] font-medium text-[#8d8d8d] sm:text-[11px] dark:text-[var(--shadow-text-secondary)]">
           {getBookInfoLabel(book.info, t)}
         </p>
       </div>
@@ -261,24 +261,24 @@ export default function SubscriptionsPage() {
   }, [activeType])
 
   return (
-    <div className="min-h-screen bg-white pb-[88px]">
-      <header className="sticky top-0 z-[60] border-b border-[#f3f3f3] bg-white/95 backdrop-blur-sm">
+    <div className="app-page min-h-screen bg-white pb-[88px] dark:bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-[60] border-b border-[#f3f3f3] bg-white/95 backdrop-blur-sm dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="px-4 py-5 sm:px-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Link
                 to="/library"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#111] transition hover:bg-black/5"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#111] transition hover:bg-black/5 dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
                 aria-label={t('subscriptionsPage.backToLibrary')}
               >
                 <i className="fas fa-chevron-left text-[14px]" />
               </Link>
 
               <div>
-                <h1 className="text-[20px] font-extrabold tracking-tight text-[#111]">
+                <h1 className="text-[20px] font-extrabold tracking-tight text-[#111] dark:text-[var(--shadow-text-primary)]">
                   {t('subscriptionsPage.title')}
                 </h1>
-                <p className="mt-1 text-[12px] text-[#8b8b95] sm:text-[13px]">
+                <p className="mt-1 text-[12px] text-[#8b8b95] sm:text-[13px] dark:text-[var(--shadow-text-secondary)]">
                   {t('subscriptionsPage.subtitle')}
                 </p>
               </div>
@@ -296,7 +296,7 @@ export default function SubscriptionsPage() {
                   className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
                     active
                       ? 'bg-[#ff3b5c] text-white shadow-[0_8px_18px_rgba(255,59,92,0.18)]'
-                      : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef]'
+                      : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)] dark:hover:bg-[var(--shadow-bg-hover)]'
                   }`}
                 >
                   {t(
@@ -312,7 +312,7 @@ export default function SubscriptionsPage() {
       <main className="px-4 sm:px-5">
         <section className="pt-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[18px] font-extrabold tracking-tight text-[#111]">
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[#111] dark:text-[var(--shadow-text-primary)]">
               {t('subscriptionsPage.recentUpdates')}
             </h2>
           </div>
@@ -322,9 +322,9 @@ export default function SubscriptionsPage() {
               <Link
                 key={item.id}
                 to={`/story/${item.id}`}
-                className="flex items-start gap-4 rounded-2xl border border-[#f1f1f1] bg-white p-4 transition hover:bg-[#fafafa]"
+                className="flex items-start gap-4 rounded-2xl border border-[#f1f1f1] bg-white p-4 transition hover:bg-[#fafafa] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:hover:bg-[var(--shadow-bg-hover)]"
               >
-                <div className="w-[64px] shrink-0 overflow-hidden rounded-xl bg-[#efefef]">
+                <div className="w-[64px] shrink-0 overflow-hidden rounded-xl bg-[#efefef] dark:bg-[var(--shadow-bg-elevated)]">
                   <div className="aspect-[2/3] overflow-hidden">
                     <img
                       src={item.image}
@@ -338,10 +338,10 @@ export default function SubscriptionsPage() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="line-clamp-1 text-[14px] font-extrabold text-[#111]">
+                  <h3 className="line-clamp-1 text-[14px] font-extrabold text-[#111] dark:text-[var(--shadow-text-primary)]">
                     {item.title}
                   </h3>
-                  <p className="mt-1 text-[11px] text-[#8d8d95]">
+                  <p className="mt-1 text-[11px] text-[#8d8d95] dark:text-[var(--shadow-text-secondary)]">
                     {item.author}
                   </p>
                   <p className="mt-1 text-[11px] font-semibold text-[#5f78ff]">
@@ -349,7 +349,7 @@ export default function SubscriptionsPage() {
                   </p>
                 </div>
 
-                <div className="shrink-0 text-[11px] font-medium text-[#a0a0a8]">
+                <div className="shrink-0 text-[11px] font-medium text-[#a0a0a8] dark:text-[var(--shadow-text-tertiary)]">
                   {getFeedUpdateLabel(item.update, t)}
                 </div>
               </Link>
@@ -359,7 +359,7 @@ export default function SubscriptionsPage() {
 
         <section className="pt-10">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[18px] font-extrabold tracking-tight text-[#111]">
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[#111] dark:text-[var(--shadow-text-primary)]">
               {t('subscriptionsPage.allSubscribedStories')}
             </h2>
           </div>
