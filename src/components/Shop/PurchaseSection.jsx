@@ -718,16 +718,93 @@ export default function PurchaseSection() {
   }, [])
 
   useEffect(() => {
-    if (!manualPayment?.order_id || manualPayment.status !== 'waiting_payment') return undefined
+  if (!manualPayment?.order_id || manualPayment.status !== 'waiting_payment') return undefined
 
-    const timer = window.setInterval(() => {
-      const next = getSecondsLeft(manualPayment.proof_expires_at || manualPayment.expires_at || manualPayment.expired_at)
-      setSecondsLeft(next)
-      refreshPaymentStatus(manualPayment.order_id, true)
-    }, 5000)
+  const controller = new AbortController()
+  const token = getReaderToken()
+  let buffer = ''
 
-    return () => window.clearInterval(timer)
-  }, [manualPayment?.order_id, manualPayment?.status])
+  const timer = window.setInterval(() => {
+    setSecondsLeft(
+      getSecondsLeft(
+        manualPayment.proof_expires_at ||
+        manualPayment.expires_at ||
+        manualPayment.expired_at
+      )
+    )
+  }, 1000)
+
+  async function connectPaymentStream() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/purchase/manual/events/${encodeURIComponent(manualPayment.order_id)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        }
+      )
+
+      if (!response.ok || !response.body) return
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      while (!controller.signal.aborted) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const blocks = buffer.split('\n\n')
+        buffer = blocks.pop() || ''
+
+        for (const block of blocks) {
+          if (!block.includes('event: payment_status')) continue
+
+          const dataLine = block
+            .split('\n')
+            .find((line) => line.startsWith('data: '))
+
+          if (!dataLine) continue
+
+          const payment = JSON.parse(dataLine.slice(6))
+
+          setManualPayment((current) => ({
+            ...(current || {}),
+            ...payment,
+          }))
+
+          if (payment.status === 'success') {
+            clearSavedPendingPayment()
+            setToast(
+              t('purchaseSection.diamondsAddedToast', {
+                count: formatNumber(payment.diamonds),
+              })
+            )
+            loadPurchaseData()
+          } else if (payment.status === 'pending_review') {
+            clearSavedPendingPayment()
+            setToast(t('purchaseSection.paymentWaitingReview'))
+          } else if (
+            ['expired', 'cancelled', 'rejected'].includes(payment.status)
+          ) {
+            clearSavedPendingPayment()
+          }
+        }
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error('PAYMENT SSE ERROR:', error)
+      }
+    }
+  }
+
+  connectPaymentStream()
+
+  return () => {
+    controller.abort()
+    window.clearInterval(timer)
+  }
+}, [manualPayment?.order_id, manualPayment?.status])
 
   if (!getReaderToken()) {
     return (
