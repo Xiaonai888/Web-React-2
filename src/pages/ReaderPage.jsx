@@ -4936,8 +4936,9 @@ useEffect(() => {
             }
           ),
           fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes`, {
-            cache: 'no-store',
-          }),
+  headers: readerAuthHeaders(),
+  cache: 'no-store',
+}),
         ])
 
         const episodeData = await episodeResponse.json().catch(() => ({}))
