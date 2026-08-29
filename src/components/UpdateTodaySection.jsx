@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 import { getStoryBadge } from '../utils/storyBadge'
+import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -63,7 +64,11 @@ function StatusBadge({ type }) {
 
 function SmallBookCard({ book }) {
   return (
-    <Link to={`/story/${book.id}`} className="group block min-w-0">
+    <Link
+  to={`/story/${book.id}`}
+  onClick={() => void trackSectionQualifiedView('update_today', book.id)}
+  className="group block min-w-0"
+>
       <div className="overflow-hidden rounded-[8px] bg-[#1e1e22] shadow-sm">
         <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
