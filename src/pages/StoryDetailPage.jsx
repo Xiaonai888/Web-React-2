@@ -410,7 +410,10 @@ export default function StoryDetailPage() {
       setAuthorFollowing(false)
       setAuthorFollowerCount(0)
       setAuthorIsOwnerPage(false)
-      const episodesPromise = fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}/episodes`)
+      const episodesPromise = fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}/episodes`, {
+  headers: authHeaders(),
+  cache: 'no-store',
+})
         .then(async (response) => {
           const data = await response.json().catch(() => ({}))
 
@@ -423,7 +426,10 @@ export default function StoryDetailPage() {
         .catch((error) => ({ error }))
 
       try {
-        const storyResponse = await fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}`)
+        const storyResponse = await fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}`, {
+  headers: authHeaders(),
+  cache: 'no-store',
+})
         const storyData = await storyResponse.json().catch(() => ({}))
 
         if (!storyResponse.ok || storyData.ok === false) {
