@@ -325,7 +325,8 @@ function GridHeaderIcon() {
       width="20"
       height="20"
       fill="none"
-      stroke="#111827"
+      className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
+      stroke="currentColor"
       strokeWidth="1.8"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -345,7 +346,8 @@ function SearchHeaderIcon() {
       width="20"
       height="20"
       fill="none"
-      stroke="#111827"
+      className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
+      stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
       aria-hidden="true"
@@ -363,7 +365,8 @@ function BellHeaderIcon() {
       width="20"
       height="20"
       fill="none"
-      stroke="#111827"
+      className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
+      stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -380,12 +383,12 @@ function ComingSoonPanel({ title }) {
 
   return (
     <div className="px-4 py-8">
-      <div className="rounded-[24px] bg-white p-8 text-center shadow-sm ring-1 ring-gray-100">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+      <div className="rounded-[24px] bg-white p-8 text-center shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-[var(--shadow-border)]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
           <i className="fa-solid fa-clock text-xl" />
         </div>
-        <h2 className="text-lg font-extrabold text-gray-900">{title}</h2>
-        <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
+        <h2 className="text-lg font-extrabold text-gray-900 dark:text-[var(--shadow-text-primary)]">{title}</h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-gray-500 dark:text-[var(--shadow-text-secondary)]">
           {t('forYouPage.comingSoon')}
         </p>
       </div>
@@ -867,7 +870,7 @@ useEffect(() => {
         html, body {
           margin: 0;
           padding: 0;
-          background: #fff;
+          background: var(--shadow-bg-page);
           font-family: 'Roboto', Arial, sans-serif;
           overflow-x: hidden;
         }
@@ -878,7 +881,7 @@ useEffect(() => {
           left: 0;
           right: 0;
           z-index: 100000;
-          background: #fff;
+          background: var(--shadow-nav-bg);
           transition: transform 0.2s ease-out;
           will-change: transform;
         }
@@ -963,13 +966,13 @@ useEffect(() => {
     width: 8px;
     height: 8px;
     margin: 0 4px !important;
-    background: #111827;
+    background: var(--shadow-text-primary);
     opacity: 0.2;
   }
 
   .mySwiper .swiper-pagination-bullet-active {
     width: 20px;
-    background: #111827;
+    background: var(--shadow-text-primary);
     border-radius: 5px;
     opacity: 1;
   }
@@ -987,7 +990,7 @@ useEffect(() => {
         }
 
         .tab-item.active {
-          color: #111827;
+          color: var(--shadow-text-primary);
           font-weight: 700;
         }
 
@@ -1003,12 +1006,12 @@ useEffect(() => {
         }
       `}</style>
 
-      <div style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
+      <div className="app-page min-h-screen" style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
         <div
           className="for-you-top-bars"
           style={{ transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)' }}
         >
-          <header className="flex items-center justify-between bg-white px-4 py-3">
+          <header className="flex items-center justify-between bg-white px-4 py-3 text-[var(--shadow-text-primary)] dark:bg-[var(--shadow-nav-bg)]">
             <div className="flex items-center space-x-2">
              <div className="flex h-9 w-[92px] items-center overflow-visible">
   <img
@@ -1024,7 +1027,7 @@ useEffect(() => {
             <div className="flex items-center gap-5">
   <Link
     to="/genres"
-    className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+    className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
     aria-label={t('forYouPage.genres')}
   >
     <GridHeaderIcon />
@@ -1032,7 +1035,7 @@ useEffect(() => {
 
   <Link
     to="/search"
-    className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+    className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
     aria-label={t('forYouPage.search')}
   >
     <SearchHeaderIcon />
@@ -1041,7 +1044,7 @@ useEffect(() => {
   <button
     type="button"
     onClick={() => setShowNotificationPopup(true)}
-    className="relative flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+    className="relative flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
     aria-label={t('forYouPage.notifications')}
   >
     <BellHeaderIcon />
@@ -1056,12 +1059,12 @@ useEffect(() => {
           </header>
 
           {SHOW_STORY_TYPE_TABS ? (
-  <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white pt-2">
+  <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white pt-2 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
     {['novel', 'chat', 'manga'].map((tab) => (
       <div
         key={tab}
         className={`tab-item text-sm capitalize ${
-          activeTab === tab ? 'active' : 'text-gray-400 font-semibold'
+          activeTab === tab ? 'active' : 'text-gray-400 font-semibold dark:text-[var(--shadow-text-secondary)]'
         }`}
         onClick={() => setActiveTab(tab)}
       >
@@ -1072,7 +1075,7 @@ useEffect(() => {
 ) : null}
 
           {activeTab === 'novel' ? (
-            <div className="flex gap-1.5 overflow-x-auto border-t border-gray-50 bg-white px-4 pb-2 pt-0 no-scrollbar">
+            <div className="flex gap-1.5 overflow-x-auto border-t border-gray-50 bg-white px-4 pb-2 pt-0 no-scrollbar dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
               {genreTabs.map((tab) => {
                 const active = activeGenre === tab.slug
                 const pressed = pressedGenre === tab.slug
@@ -1084,11 +1087,11 @@ useEffect(() => {
                     onClick={() => handleGenreChange(tab)}
                     className={`relative shrink-0 rounded-full px-3 py-2 text-[12px] transition-colors duration-200 ${
                       active
-                        ? 'font-semibold text-[#111827]'
-                        : 'font-normal text-[#9ca3af]'
+                        ? 'font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]'
+                        : 'font-normal text-[#9ca3af] dark:text-[var(--shadow-text-secondary)]'
                     } ${
                       pressed
-                        ? 'bg-[#f1f2f4]'
+                        ? 'bg-[#f1f2f4] dark:bg-[var(--shadow-bg-hover)]'
                         : 'bg-transparent'
                     }`}
                   >
@@ -1138,16 +1141,16 @@ useEffect(() => {
             <div className="swiper-container mySwiper">
               <div className="swiper-wrapper">
                 {slidesLoading && (
-                  <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-gray-400">
+                  <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center dark:bg-[var(--shadow-bg-soft)]">
+                    <span className="text-sm font-semibold text-gray-400 dark:text-[var(--shadow-text-secondary)]">
                       {t('forYouPage.loadingSlides')}
                     </span>
                   </div>
                 )}
 
                 {!slidesLoading && slides.length === 0 && (
-                  <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-gray-400">
+                  <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center dark:bg-[var(--shadow-bg-soft)]">
+                    <span className="text-sm font-semibold text-gray-400 dark:text-[var(--shadow-text-secondary)]">
                       {t('forYouPage.noSlides')}
                     </span>
                   </div>
@@ -1246,7 +1249,7 @@ useEffect(() => {
           />
         </div>
 
-        <span className="text-[10px] font-semibold text-[#111827]">
+        <span className="text-[10px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
           {displayLabel}
         </span>
       </button>
@@ -1257,7 +1260,7 @@ useEffect(() => {
   <div className="px-4 py-2">
     {STORY_SECTION_TITLES.map((title) => (
       <div key={title} className="my-8">
-        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 dark:text-[var(--shadow-text-primary)]">
           {getStorySectionTitle(title, t)}
         </h2>
       </div>
