@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import ImageDropZone from './common/ImageDropZone'
-
+import AuthorHashtagSuggestions from './author-posts/AuthorHashtagSuggestions'
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
