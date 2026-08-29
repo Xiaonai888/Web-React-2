@@ -12,6 +12,7 @@ import StoryBottomBar from '../components/story-detail/StoryBottomBar'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
+import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('storyDetailPage', {
@@ -415,6 +416,7 @@ export default function StoryDetailPage() {
   const location = useLocation()
   const { id, storyId } = useParams()
   const realStoryId = storyId || id
+  const sectionRankSource = String(location.state?.sectionRank || '').trim()
   const { t } = useDisplayTranslation()
 
   const [story, setStory] = useState(null)
@@ -609,7 +611,14 @@ setMessage(
     }
   }, [realStoryId])
 
-  useEffect(() => {
+useEffect(() => {
+  if (!story?.id || !sectionRankSource) return
+  if (String(story.id) !== String(realStoryId)) return
+
+  void trackSectionQualifiedView(sectionRankSource, realStoryId)
+}, [realStoryId, sectionRankSource, story?.id])
+
+useEffect(() => {
   let ignore = false
 
   async function loadReaderStatus() {
