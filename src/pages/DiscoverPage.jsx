@@ -494,13 +494,10 @@ async function setFollowedPostReaction(
 
 
 
-function GridHeaderIcon() {
+function MusicHeaderIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
-      <rect x="4" y="4" width="6" height="6" rx="1" />
-      <rect x="14" y="4" width="6" height="6" rx="1" />
-      <rect x="4" y="14" width="6" height="6" rx="1" />
-      <rect x="14" y="14" width="6" height="6" rx="1" />
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 18V5l10-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" />
     </svg>
   )
 }
@@ -539,12 +536,12 @@ function Header({ hidden }) {
 
         <div className="flex items-center gap-5">
           <Link
-            to="/genres"
-            className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
-            aria-label="Genres"
-          >
-            <GridHeaderIcon />
-          </Link>
+  to="/music"
+  className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
+  aria-label="Music"
+>
+  <MusicHeaderIcon />
+</Link>
 
           <Link
             to="/discover/search"
