@@ -9,8 +9,10 @@ import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
 import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisodeListDrawer'
+import StoryTranslateButton from '../components/reader/StoryTranslateButton'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
 import useContinuousEpisodeReader from '../hooks/useContinuousEpisodeReader'
+import useEpisodeTranslation from '../hooks/useEpisodeTranslation'
 import ReportModal from '../components/ReportModal'
 import RichEpisodeContent, {
   episodeContentToPlainText,
@@ -3995,6 +3997,7 @@ function ContinuousEpisodeBlock({
   entry,
   index,
   active,
+  contentOverride,
   theme,
   story,
   commentSummary,
@@ -4126,8 +4129,12 @@ function ContinuousEpisodeBlock({
 
     <article className="px-4 pb-5 sm:px-8 sm:pb-8">
       <ReadingText
-        content={episode.content}
-        fontSizePx={fontSizePx}
+  content={
+    active && contentOverride != null
+      ? contentOverride
+      : episode.content
+  }
+  fontSizePx={fontSizePx}
         fontFamily={fontFamily}
         lineSpacing={lineSpacing}
         theme={theme}
@@ -4378,16 +4385,27 @@ const effectiveReadingMode =
     ? 'scroll'
     : readingMode
 
+const {
+  activeLanguage: storyTranslationLanguage,
+  displayContent: storyDisplayContent,
+  loading: storyTranslationLoading,
+  errorCode: storyTranslationErrorCode,
+  translateTo: translateStoryTo,
+} = useEpisodeTranslation({
+  episodeId,
+  content: episode?.content || '',
+})
+
 const pagingPages = useMemo(() => {
   if (isMangaStory || isChatStory) return []
 
   return createPagingPages(
-    episode?.content || '',
-    lineSpacing,
-    fontSizePx
-  )
+  storyDisplayContent,
+  lineSpacing,
+  fontSizePx
+)
 }, [
-  episode?.content,
+  storyDisplayContent,
   fontSizePx,
   isChatStory,
   isMangaStory,
@@ -6099,6 +6117,14 @@ const lockedHeaderActive =
   showFullLockedEpisode || showContinuousLockedEpisode
 const activeCommentsEpisode = commentEpisode || episode
 
+const canTranslateStory =
+  !lockedHeaderActive &&
+  !isMangaStory &&
+  !isChatStory &&
+  adultAccepted &&
+  !shouldBlockReaderContent &&
+  Boolean(String(episode?.content || '').trim())
+
 const readerControlsVisible =
   readerHeaderVisible &&
   bottomActionsVisible &&
@@ -6469,6 +6495,18 @@ className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
         </>
       ) : null}
 
+            {canTranslateStory ? (
+        <StoryTranslateButton
+          activeLanguage={storyTranslationLanguage}
+          loading={storyTranslationLoading}
+          errorCode={storyTranslationErrorCode}
+          onSelectLanguage={async (language) => {
+            setReaderMoreOpen(false)
+            return translateStoryTo(language)
+          }}
+        />
+      ) : null}
+
       <div className="relative">
         <ReaderIconButton
           icon="fa-solid fa-ellipsis-vertical"
@@ -6654,11 +6692,16 @@ effectiveReadingMode === 'scroll' ? (
           <div>
             {continuousReader.entries.map((entry, index) => (
               <ContinuousEpisodeBlock
-                key={entry.id}
-                entry={entry}
-                index={index}
-                active={String(entry.id) === String(episodeId)}
-                theme={theme}
+  key={entry.id}
+  entry={entry}
+  index={index}
+  active={String(entry.id) === String(episodeId)}
+  contentOverride={
+    String(entry.id) === String(episodeId)
+      ? storyDisplayContent
+      : null
+  }
+  theme={theme}
                 story={story}
                 commentSummary={
                   String(entry.id) === String(episodeId)
@@ -6797,10 +6840,10 @@ adultAccepted &&
     }}
   />
 ) : (
-  <ReadingText
-    content={episode.content}
-    fontSizePx={fontSizePx}
-    fontFamily={activeFont.family}
+  <<ReadingText
+  content={storyDisplayContent}
+  fontSizePx={fontSizePx}
+  fontFamily={activeFont.family}
     lineSpacing={lineSpacing}
     theme={theme}
   />
