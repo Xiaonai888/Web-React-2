@@ -1,6 +1,51 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CommentSection from '../comments/CommentSection'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('commentsModal', {
+  en: {
+    closeComments: 'Close comments',
+    commentsCount: '{{count}} comments',
+    viewReacted: 'View people who reacted',
+    viewEchoed: 'View people who echoed',
+    echoCount: '{{count}} echo',
+    post: 'Post',
+  },
+  km: {
+    closeComments: 'បិទមតិយោបល់',
+    commentsCount: '{{count}} មតិយោបល់',
+    viewReacted: 'មើលអ្នកដែលបាន Reaction',
+    viewEchoed: 'មើលអ្នកដែលបាន Echo',
+    echoCount: '{{count}} Echo',
+    post: 'Post',
+  },
+  zh: {
+    closeComments: '关闭评论',
+    commentsCount: '{{count}} 条评论',
+    viewReacted: '查看作出反应的人',
+    viewEchoed: '查看 Echo 的人',
+    echoCount: '{{count}} 个 Echo',
+    post: '帖子',
+  },
+  ja: {
+    closeComments: 'コメントを閉じる',
+    commentsCount: '{{count}} 件のコメント',
+    viewReacted: 'リアクションした人を見る',
+    viewEchoed: 'Echo した人を見る',
+    echoCount: '{{count}} Echo',
+    post: '投稿',
+  },
+  ko: {
+    closeComments: '댓글 닫기',
+    commentsCount: '댓글 {{count}}개',
+    viewReacted: '반응한 사람 보기',
+    viewEchoed: 'Echo한 사람 보기',
+    echoCount: 'Echo {{count}}개',
+    post: '게시물',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -26,6 +71,7 @@ export default function CommentsModal({
   onClose,
   onCommentChanged,
 }) {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const sheetRef = useRef(null)
   const startYRef = useRef(0)
@@ -357,7 +403,7 @@ export default function CommentsModal({
   if (targetType === 'author_post' || targetType === 'reader_post') {
     onClose()
     navigate(`/interactions/${targetType}/${activeEpisodeId}/likes`, {
-      state: { sourceName: title || 'Post' },
+      state: { sourceName: title || t('commentsModal.post') },
     })
   }
 }
@@ -381,7 +427,7 @@ export default function CommentsModal({
   if (targetType === 'author_post' || targetType === 'reader_post') {
     onClose()
     navigate(`/interactions/${targetType}/${activeEpisodeId}/echoes`, {
-      state: { sourceName: title || 'Post' },
+      state: { sourceName: title || t('commentsModal.post') },
     })
   }
 }
@@ -451,7 +497,7 @@ export default function CommentsModal({
         type="button"
         onClick={onClose}
         className="absolute inset-0 bg-black/60"
-        aria-label="Close comments"
+        aria-label={t('commentsModal.closeComments')}
       />
 
       <section
@@ -478,7 +524,9 @@ export default function CommentsModal({
   >
     <div className="flex justify-center">
       <div className="rounded-full bg-[#f5f3fa] px-5 py-2 text-[14px] font-normal text-[#111827]">
-        {totalComments.toLocaleString()} comments
+        {t('commentsModal.commentsCount', {
+          count: totalComments.toLocaleString(),
+        })}
       </div>
     </div>
   </header>
@@ -501,14 +549,16 @@ export default function CommentsModal({
   }
   onClick={handleOpenReactions}
         className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
-        aria-label="View people who reacted"
+        aria-label={t('commentsModal.viewReacted')}
       >
         <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
         <span>{totalLikes.toLocaleString()}</span>
       </button>
 
       <div className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[14px] font-normal text-[#111827]">
-        {totalComments.toLocaleString()} comments
+        {t('commentsModal.commentsCount', {
+          count: totalComments.toLocaleString(),
+        })}
       </div>
 
       <button
@@ -518,9 +568,11 @@ export default function CommentsModal({
   }
   onClick={handleOpenEchoes}
         className="text-[14px] font-normal text-[#111827] active:scale-95"
-        aria-label="View people who echoed"
+        aria-label={t('commentsModal.viewEchoed')}
       >
-        {totalEcho.toLocaleString()} echo
+        {t('commentsModal.echoCount', {
+          count: totalEcho.toLocaleString(),
+        })}
       </button>
     </div>
   </header>
