@@ -4269,6 +4269,7 @@ const [adultWarningOpen, setAdultWarningOpen] =
   useState(false)
   const [adultAccepted, setAdultAccepted] = useState(false)
   const [adultConsentGranted, setAdultConsentGranted] = useState(false)
+  const adultConsentGrantedRef = useRef(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [readerMoreOpen, setReaderMoreOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
