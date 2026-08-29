@@ -284,41 +284,41 @@ export default function Search() {
   return (
     <>
       <style>{`
-        body { background:#f8fafc; font-family:'Plus Jakarta Sans','Kantumruy Pro',sans-serif; }
+        body { background:var(--shadow-bg-page); color:var(--shadow-text-primary); font-family:'Plus Jakarta Sans','Kantumruy Pro',sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display:none; }
         .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
-        .book-card { transition:all 0.3s ease; border:1px solid #f1f5f9; }
-        .book-card:hover { transform:translateY(-4px); box-shadow:0 12px 24px -8px rgba(0,0,0,0.08); }
+        .book-card { transition:all 0.3s ease; border:1px solid var(--shadow-border); }
+        .book-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-shadow); }
       `}</style>
 
-      <div style={{ paddingBottom: '80px' }}>
-        <header className="sticky top-0 z-[100] border-b border-gray-100 bg-white/90 px-4 py-4 backdrop-blur-lg">
+      <div className="app-page min-h-screen" style={{ paddingBottom: '80px' }}>
+        <header className="sticky top-0 z-[100] border-b border-gray-100 bg-white/90 px-4 py-4 backdrop-blur-lg dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
           <form onSubmit={handleSearchSubmit} className="mx-auto flex max-w-3xl items-center space-x-3">
             {!isSearchMode ? (
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] hover:bg-gray-100 dark:hover:bg-[var(--shadow-bg-hover)]"
               >
                 <i className="fa-solid fa-chevron-left text-lg" />
               </button>
             ) : null}
 
             <div className="relative flex-1">
-              <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[var(--shadow-text-tertiary)]" />
               <input
                 type="text"
                 value={searchText}
                 onFocus={() => setIsSearchMode(true)}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder={t('searchPage.searchPlaceholder')}
-                className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-10 shadow-sm outline-none focus:border-[#111827]"
+                className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-10 text-[#111827] shadow-sm outline-none placeholder:text-gray-400 focus:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[var(--shadow-border-strong)]"
               />
               {searchText ? (
                 <button
                   type="button"
                   onClick={() => setSearchText('')}
-                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#111827]"
+                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#111827] dark:text-[var(--shadow-text-tertiary)] dark:hover:bg-[var(--shadow-bg-hover)] dark:hover:text-[var(--shadow-text-primary)]"
                 >
                   <i className="fa-solid fa-xmark text-[13px]" />
                 </button>
@@ -329,7 +329,7 @@ export default function Search() {
               <button
                 type="button"
                 onClick={handleCancelSearch}
-                className="shrink-0 text-[13px] font-extrabold text-[#111827]"
+                className="shrink-0 text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]"
               >
                 {t('searchPage.cancel')}
               </button>
@@ -340,7 +340,7 @@ export default function Search() {
         {isSearchMode ? (
           <main className="mx-auto max-w-3xl px-4 pt-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-[15px] font-extrabold text-[#111827]">
+              <h2 className="text-[15px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('searchPage.recentSearches')}
               </h2>
 
@@ -348,7 +348,7 @@ export default function Search() {
                 <button
                   type="button"
                   onClick={handleClearHistory}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-95"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-95 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)]"
                   aria-label={t('searchPage.clearAllHistory')}
                 >
                   <i className="fa-regular fa-trash-can text-[14px]" />
@@ -361,21 +361,21 @@ export default function Search() {
                 {searchHistory.map((keyword) => (
                   <div
                     key={keyword}
-                    className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
+                    className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)]"
                   >
                     <button
                       type="button"
                       onClick={() => handleUseHistory(keyword)}
                       className="flex min-w-0 flex-1 items-center gap-3 text-left"
                     >
-                      <i className="fa-solid fa-clock-rotate-left shrink-0 text-[14px] text-gray-400" />
-                      <span className="truncate text-[13px] font-bold text-[#111827]">{keyword}</span>
+                      <i className="fa-solid fa-clock-rotate-left shrink-0 text-[14px] text-gray-400 dark:text-[var(--shadow-text-tertiary)]" />
+                      <span className="truncate text-[13px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">{keyword}</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleRemoveHistory(keyword)}
-                      className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#111827]"
+                      className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#111827] dark:text-[var(--shadow-text-tertiary)] dark:hover:bg-[var(--shadow-bg-hover)] dark:hover:text-[var(--shadow-text-primary)]"
                       aria-label={t('searchPage.removeHistory', {
                         keyword,
                       })}
@@ -386,14 +386,14 @@ export default function Search() {
                 ))}
               </div>
             ) : (
-              <div className="mt-5 rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100">
+              <div className="mt-5 rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:ring-[var(--shadow-border)]">
                 {t('searchPage.noRecentSearches')}
               </div>
             )}
           </main>
         ) : (
           <main className="mx-auto mt-6 max-w-3xl px-4">
-            <nav className="no-scrollbar mb-8 flex space-x-8 overflow-x-auto border-b border-gray-100">
+            <nav className="no-scrollbar mb-8 flex space-x-8 overflow-x-auto border-b border-gray-100 dark:border-[var(--shadow-border)]">
               {TABS.map((tab) => (
                 <button
                   key={tab.label}
@@ -403,8 +403,8 @@ export default function Search() {
                     setActiveSearch('')
                     setSearchText('')
                   }}
-                  className={`whitespace-nowrap pb-3 text-sm font-semibold text-gray-400 transition-all ${
-                    activeTab === tab.label ? 'border-b-[3px] border-[#111827] font-black text-[#111827]' : ''
+                  className={`whitespace-nowrap pb-3 text-sm font-semibold text-gray-400 transition-all dark:text-[var(--shadow-text-secondary)] ${
+                    activeTab === tab.label ? 'border-b-[3px] border-[#111827] font-black text-[#111827] dark:border-[var(--shadow-text-primary)] dark:text-[var(--shadow-text-primary)]' : ''
                   }`}
                 >
                   {getTabLabel(tab.label, t)}
@@ -415,8 +415,8 @@ export default function Search() {
             <div>
               <div className="mb-6 flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center space-x-3">
-                  <div className="h-6 w-1.5 shrink-0 rounded-full bg-[#111827]" />
-                  <h2 className="truncate text-xl font-extrabold">
+                  <div className="h-6 w-1.5 shrink-0 rounded-full bg-[#111827] dark:bg-[var(--shadow-text-primary)]" />
+                  <h2 className="truncate text-xl font-extrabold text-[var(--shadow-text-primary)]">
                     {activeSearch
                       ? t('searchPage.searchFor', {
                           keyword: activeSearch,
@@ -429,7 +429,7 @@ export default function Search() {
                   <button
                     type="button"
                     onClick={handleClearActiveSearch}
-                    className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#111827] shadow-sm ring-1 ring-gray-100"
+                    className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#111827] shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)]"
                   >
                     {t('searchPage.clear')}
                   </button>
@@ -439,13 +439,13 @@ export default function Search() {
               <div className="space-y-4">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, index) => (
-                    <div key={index} className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                    <div key={index} className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)]">
                       <div className="flex items-center gap-4">
-                        <div className="h-28 w-20 rounded-xl bg-gray-100" />
+                        <div className="h-28 w-20 rounded-xl bg-gray-100 dark:bg-[var(--shadow-bg-soft)]" />
                         <div className="flex-1">
-                          <div className="h-4 w-2/3 rounded-full bg-gray-100" />
-                          <div className="mt-3 h-3 w-1/3 rounded-full bg-gray-100" />
-                          <div className="mt-6 h-3 w-1/2 rounded-full bg-gray-100" />
+                          <div className="h-4 w-2/3 rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-soft)]" />
+                          <div className="mt-3 h-3 w-1/3 rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-soft)]" />
+                          <div className="mt-6 h-3 w-1/2 rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-soft)]" />
                         </div>
                       </div>
                     </div>
@@ -462,7 +462,7 @@ export default function Search() {
                         key={story.id}
                         type="button"
                         onClick={() => navigate(`/story/${story.id}`)}
-                        className="book-card relative flex w-full items-center space-x-4 overflow-hidden rounded-3xl bg-white p-4 text-left"
+                        className="book-card relative flex w-full items-center space-x-4 overflow-hidden rounded-3xl bg-white p-4 text-left dark:bg-[var(--shadow-bg-surface)]"
                       >
                         {rank <= 3 ? (
                           <div
@@ -472,12 +472,12 @@ export default function Search() {
                             {rank}
                           </div>
                         ) : (
-                          <div className="w-10 text-center text-xl font-black italic text-gray-300">
+                          <div className="w-10 text-center text-xl font-black italic text-gray-300 dark:text-[var(--shadow-text-disabled)]">
                             {rank}
                           </div>
                         )}
 
-                        <div className={`h-28 w-20 overflow-hidden rounded-xl bg-gray-100 shadow-inner ${rank <= 3 ? 'ml-4' : ''}`}>
+                        <div className={`h-28 w-20 overflow-hidden rounded-xl bg-gray-100 shadow-inner dark:bg-[var(--shadow-bg-soft)] ${rank <= 3 ? 'ml-4' : ''}`}>
                           {story.cover_url ? (
                             <img
                               src={story.cover_url}
@@ -491,21 +491,21 @@ export default function Search() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <h3 className={`${rank <= 3 ? 'font-extrabold' : 'font-bold'} truncate text-gray-900`}>
+                          <h3 className={`${rank <= 3 ? 'font-extrabold' : 'font-bold'} truncate text-gray-900 dark:text-[var(--shadow-text-primary)]`}>
                             {storyTitle}
                           </h3>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-gray-400 dark:text-[var(--shadow-text-secondary)]">
                             {t('searchPage.byAuthor', {
                               author: authorName,
                             })}
                           </p>
                           <div className="mt-4 flex items-center space-x-4 text-[12px] font-bold">
-                            <span className="inline-flex items-center text-[#111827]">
+                            <span className="inline-flex items-center text-[#111827] dark:text-[var(--shadow-text-primary)]">
                               <i className="fa-solid fa-heart mr-1 text-[#ef4444]" />
                               {formatCount(story.total_likes)}
                             </span>
-                            <span className="inline-flex items-center text-[#111827]">
-                              <i className="fa-solid fa-eye mr-1 text-[#111827]" />
+                            <span className="inline-flex items-center text-[#111827] dark:text-[var(--shadow-text-primary)]">
+                              <i className="fa-solid fa-eye mr-1 text-[#111827] dark:text-[var(--shadow-text-primary)]" />
                               {formatCount(story.total_views)}
                             </span>
                           </div>
@@ -514,7 +514,7 @@ export default function Search() {
                     )
                   })
                 ) : (
-                  <div className="rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100">
+                  <div className="rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:ring-[var(--shadow-border)]">
                     {message || t('searchPage.noStories')}
                   </div>
                 )}
