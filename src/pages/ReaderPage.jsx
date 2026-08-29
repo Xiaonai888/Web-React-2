@@ -6840,7 +6840,7 @@ adultAccepted &&
     }}
   />
 ) : (
-  <<ReadingText
+<ReadingText
   content={storyDisplayContent}
   fontSizePx={fontSizePx}
   fontFamily={activeFont.family}
