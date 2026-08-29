@@ -19,8 +19,9 @@ import RichEpisodeContent, {
 } from '../components/reader/RichEpisodeContent'
 import { trackSectionQualifiedRead } from '../services/storySectionRankTracking'
 
+const STORY_TRANSLATION_ENABLED = false
+
 const API_BASE_URL =
-  const STORY_TRANSLATION_ENABLED = false
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
