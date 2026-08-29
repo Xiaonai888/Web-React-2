@@ -19,26 +19,96 @@ registerTranslationNamespace('storyDetailPage', {
     adultRestrictedTitle: '18+ content',
     adultRestrictedMessage: 'This story is for readers aged 18 or older. Your account is not allowed to view this story.',
     adultRestrictedBack: 'Go back',
+    cannotLoadStory: 'Cannot load story',
+    tryAgainLater: 'Please try again later.',
+    goBack: 'Go Back',
+    followers: '{{count}} followers',
+    authorPage: 'Author Page',
+    managePage: 'Manage Page',
+    viewPage: 'View Page',
+    topFans: 'Top Fans',
+    peopleInTotal: '{{count}} people in total',
+    fan: 'Fan',
+    story: 'Story',
+    storyNotFound: 'Story not found',
+    cannotConnectServer: 'Cannot connect to server. Please check API settings.',
+    failedLoadStory: 'Failed to load story',
   },
   km: {
     adultRestrictedTitle: 'មាតិកា 18+',
     adultRestrictedMessage: 'រឿងនេះសម្រាប់អ្នកអានដែលមានអាយុចាប់ពី 18 ឆ្នាំឡើងទៅ។ គណនីរបស់អ្នកមិនអាចចូលមើលរឿងនេះបានទេ។',
     adultRestrictedBack: 'ត្រឡប់ក្រោយ',
+    cannotLoadStory: 'មិនអាចផ្ទុករឿងបាន',
+    tryAgainLater: 'សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។',
+    goBack: 'ត្រឡប់ក្រោយ',
+    followers: '{{count}} អ្នកតាមដាន',
+    authorPage: 'ទំព័រអ្នកនិពន្ធ',
+    managePage: 'គ្រប់គ្រងទំព័រ',
+    viewPage: 'មើលទំព័រ',
+    topFans: 'Top Fans',
+    peopleInTotal: 'សរុប {{count}} នាក់',
+    fan: 'Fan',
+    story: 'រឿង',
+    storyNotFound: 'រកមិនឃើញរឿង',
+    cannotConnectServer: 'មិនអាចភ្ជាប់ទៅ Server បាន។ សូមពិនិត្យការកំណត់ API។',
+    failedLoadStory: 'មិនអាចផ្ទុករឿងបាន',
   },
   zh: {
     adultRestrictedTitle: '18+ 内容',
     adultRestrictedMessage: '本故事仅限年满18岁的读者阅读。您的账户目前无法查看此故事。',
     adultRestrictedBack: '返回',
+    cannotLoadStory: '无法加载故事',
+    tryAgainLater: '请稍后再试。',
+    goBack: '返回',
+    followers: '{{count}} 位关注者',
+    authorPage: '作者主页',
+    managePage: '管理主页',
+    viewPage: '查看主页',
+    topFans: 'Top Fans',
+    peopleInTotal: '共 {{count}} 人',
+    fan: '粉丝',
+    story: '故事',
+    storyNotFound: '未找到故事',
+    cannotConnectServer: '无法连接服务器。请检查 API 设置。',
+    failedLoadStory: '加载故事失败',
   },
   ja: {
     adultRestrictedTitle: '18歳以上向けコンテンツ',
     adultRestrictedMessage: 'この作品は18歳以上の読者のみ閲覧できます。現在のアカウントでは閲覧できません。',
     adultRestrictedBack: '戻る',
+    cannotLoadStory: 'ストーリーを読み込めません',
+    tryAgainLater: 'しばらくしてからもう一度お試しください。',
+    goBack: '戻る',
+    followers: 'フォロワー {{count}}人',
+    authorPage: '作者ページ',
+    managePage: 'ページを管理',
+    viewPage: 'ページを見る',
+    topFans: 'Top Fans',
+    peopleInTotal: '合計 {{count}}人',
+    fan: 'ファン',
+    story: 'ストーリー',
+    storyNotFound: 'ストーリーが見つかりません',
+    cannotConnectServer: 'サーバーに接続できません。API設定を確認してください。',
+    failedLoadStory: 'ストーリーの読み込みに失敗しました',
   },
   ko: {
     adultRestrictedTitle: '18세 이상 콘텐츠',
     adultRestrictedMessage: '이 작품은 만 18세 이상 독자만 볼 수 있습니다. 현재 계정으로는 이 작품을 볼 수 없습니다.',
     adultRestrictedBack: '돌아가기',
+    cannotLoadStory: '스토리를 불러올 수 없습니다',
+    tryAgainLater: '나중에 다시 시도해 주세요.',
+    goBack: '뒤로 가기',
+    followers: '팔로워 {{count}}명',
+    authorPage: '작가 페이지',
+    managePage: '페이지 관리',
+    viewPage: '페이지 보기',
+    topFans: 'Top Fans',
+    peopleInTotal: '총 {{count}}명',
+    fan: '팬',
+    story: '스토리',
+    storyNotFound: '스토리를 찾을 수 없습니다',
+    cannotConnectServer: '서버에 연결할 수 없습니다. API 설정을 확인해 주세요.',
+    failedLoadStory: '스토리를 불러오지 못했습니다',
   },
 })
 
@@ -176,21 +246,25 @@ function LoadingBlock() {
 }
 
 function ErrorBlock({ message, onBack }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
         <i className="fa-solid fa-triangle-exclamation text-[22px]" />
       </div>
-      <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">Cannot load story</h2>
+      <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">
+        {t('storyDetailPage.cannotLoadStory')}
+      </h2>
       <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6 text-[#667085]">
-        {message || 'Please try again later.'}
+        {message || t('storyDetailPage.tryAgainLater')}
       </p>
       <button
         type="button"
         onClick={onBack}
         className="mt-5 h-12 rounded-full bg-[#111827] px-6 text-[13px] font-extrabold text-white active:scale-95"
       >
-        Go Back
+        {t('storyDetailPage.goBack')}
       </button>
     </div>
   )
@@ -208,13 +282,18 @@ function StoryAuthorMiniCard({
   onOpenTopFans,
   onFollow,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!authorPage) return null
 
   const followers = Number(followerCount || authorPage.total_followers || 0)
-  const followerText =
+  const followerCountText =
     followers >= 1000
-      ? `${(followers / 1000).toFixed(followers >= 10000 ? 0 : 1).replace(/\.0$/, '')}k followers`
-      : `${followers} followers`
+      ? `${(followers / 1000).toFixed(followers >= 10000 ? 0 : 1).replace(/\.0$/, '')}k`
+      : `${followers}`
+  const followerText = t('storyDetailPage.followers', {
+    count: followerCountText,
+  })
 
   const displayTopFans = Array.isArray(giftTopFans)
     ? giftTopFans.slice(0, 3)
@@ -251,7 +330,7 @@ function StoryAuthorMiniCard({
 
           <div className="min-w-0 flex-1">
             <div className="line-clamp-1 text-[14px] font-bold leading-5 text-[#111827]">
-              {authorPage.page_name || 'Author Page'}
+              {authorPage.page_name || t('storyDetailPage.authorPage')}
             </div>
             <div className="mt-0.5 line-clamp-1 text-[11px] font-medium text-[#98a2b3]">
               {followerText}
@@ -273,7 +352,7 @@ function StoryAuthorMiniCard({
   }}
   className="shrink-0 pt-0 text-[12px] font-semibold text-[#98a2b3] active:scale-95"
 >
-  {isOwnerPage ? 'Manage Page' : 'View Page'}{' '}
+  {isOwnerPage ? t('storyDetailPage.managePage') : t('storyDetailPage.viewPage')}{' '}
   <i className="fa-solid fa-chevron-right ml-1 text-[9px]" />
 </button>
       </div>
@@ -285,9 +364,9 @@ function StoryAuthorMiniCard({
 >
     <div className="min-w-0 flex-1 pt-1">
       <div className="flex items-center gap-1.5 text-[14px] font-normal text-[#111827]">
-        <span>Top Fans</span>
+        <span>{t('storyDetailPage.topFans')}</span>
         <span className="text-[#d99a00]">
-          {`${topFanCount} people in total`}
+          {t('storyDetailPage.peopleInTotal', { count: topFanCount })}
         </span>
         <i className="fa-solid fa-chevron-right text-[9px] text-[#d99a00]" />
       </div>
@@ -295,7 +374,7 @@ function StoryAuthorMiniCard({
       <div className="mt-3 flex items-center gap-1.5">
         {displayTopFans.map((fan, index) => {
           const avatar = fan.avatar_url || fan.avatar || fan.photo_url || ''
-          const name = fan.name || fan.username || 'Fan'
+          const name = fan.name || fan.username || t('storyDetailPage.fan')
 
           return (
             <div
@@ -337,7 +416,7 @@ export default function StoryDetailPage() {
   const { id, storyId } = useParams()
   const realStoryId = storyId || id
   const { t } = useDisplayTranslation()
-  
+
   const [story, setStory] = useState(null)
   const [episodes, setEpisodes] = useState([])
   const [episodesLoading, setEpisodesLoading] = useState(true)
@@ -467,7 +546,7 @@ export default function StoryDetailPage() {
         const storyData = await storyResponse.json().catch(() => ({}))
 
         if (!storyResponse.ok || storyData.ok === false) {
-  const error = new Error(storyData.message || 'Story not found')
+  const error = new Error(storyData.message || t('storyDetailPage.storyNotFound'))
   error.code = storyData.code || ''
   throw error
 }
@@ -508,15 +587,15 @@ export default function StoryDetailPage() {
 
         setEpisodesLoading(false)
 
-        
+
       } catch (error) {
         if (ignore) return
 
 setErrorCode(error.code || '')
 setMessage(
           error.message === 'Failed to fetch'
-            ? 'Cannot connect to server. Please check API settings.'
-            : error.message || 'Failed to load story'
+            ? t('storyDetailPage.cannotConnectServer')
+            : error.message || t('storyDetailPage.failedLoadStory')
         )
         setLoading(false)
         setEpisodesLoading(false)
@@ -816,7 +895,7 @@ if (message || !story) {
           episodes={episodes}
           onOpenLikes={() =>
   navigate(`/interactions/story/${realStoryId}/likes`, {
-    state: { sourceName: story.title || 'Story' },
+    state: { sourceName: story.title || t('storyDetailPage.story') },
   })
 }
           onOpenRating={() => navigate(`/story/${realStoryId}/rating`)}
@@ -893,7 +972,7 @@ if (message || !story) {
   open={echoShareOpen}
   sourceType="story"
   sourceId={story?.id || realStoryId}
-  sourceName={story?.title || 'Story'}
+  sourceName={story?.title || t('storyDetailPage.story')}
   sourceAvatarUrl={story?.author_page?.avatar_url || ''}
   sourceImageUrl={story?.landscape_thumbnail_url || story?.cover_url || ''}
   sourceLabel="story"
