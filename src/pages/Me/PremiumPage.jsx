@@ -222,14 +222,14 @@ export default function PremiumPage() {
     ''
 
   return (
-    <main className="min-h-screen bg-[#ededed] text-[#202124]">
-      <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#ededed] shadow-[0_0_30px_rgba(17,24,39,0.08)]">
-        <header className="sticky top-0 z-50 bg-white">
+    <main className="min-h-screen bg-[#ededed] text-[#202124] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
+      <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#ededed] shadow-[0_0_30px_rgba(17,24,39,0.08)] dark:bg-[var(--shadow-bg-page)] dark:shadow-[0_0_30px_rgba(0,0,0,0.24)]">
+        <header className="sticky top-0 z-50 bg-white dark:bg-[var(--shadow-nav-bg)]">
           <div className="grid h-16 grid-cols-[44px_1fr_44px] items-center px-4">
             <Link
               to="/me"
               aria-label={t('premiumPage.back')}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#202124] active:bg-black/5"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#202124] active:bg-black/5 dark:text-[var(--shadow-text-primary)] dark:active:bg-white/5"
             >
               <i className="fa-solid fa-arrow-left text-[20px]" />
             </Link>
@@ -242,14 +242,14 @@ export default function PremiumPage() {
               type="button"
               aria-label={t('premiumPage.premiumHelp')}
               onClick={() => setHelpOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#202124] active:bg-black/5"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#202124] active:bg-black/5 dark:text-[var(--shadow-text-primary)] dark:active:bg-white/5"
             >
               <i className="fa-regular fa-circle-question text-[19px]" />
             </button>
           </div>
         </header>
 
-        <section className="bg-white px-6 pb-5 pt-2">
+        <section className="bg-white px-6 pb-5 pt-2 dark:bg-[var(--shadow-bg-surface)]">
           <div className="flex items-center gap-4">
             {avatar ? (
               <img
@@ -265,14 +265,14 @@ export default function PremiumPage() {
 
             <div className="min-w-0 flex-1">
               <div className="truncate text-[19px] font-semibold">{displayName}</div>
-              <div className="mt-1 text-[13px] text-[#70757a]">
+              <div className="mt-1 text-[13px] text-[#70757a] dark:text-[var(--shadow-text-secondary)]">
                 {t('premiumPage.premiumPrivileges')}
               </div>
             </div>
           </div>
         </section>
 
-        <div className="relative h-[82px] overflow-hidden bg-white text-white">
+        <div className="relative h-[82px] overflow-hidden bg-white text-white dark:bg-[var(--shadow-bg-surface)]">
           <div
             className="absolute left-1/2 top-0 h-full w-[124%] -translate-x-1/2 overflow-hidden bg-gradient-to-r from-[#454851] via-[#24262c] to-[#101115]"
             style={{
@@ -295,12 +295,12 @@ export default function PremiumPage() {
           </div>
         </div>
 
-        <section className="rounded-b-[26px] bg-white px-5 pb-6 pt-1">
+        <section className="rounded-b-[26px] bg-white px-5 pb-6 pt-1 dark:bg-[var(--shadow-bg-surface)]">
           <div className="flex items-center justify-between">
             <h2 className="text-[21px] font-bold">{t('premiumPage.privileges')}</h2>
             <a
               href="#premium-details"
-              className="flex items-center gap-1 text-[14px] text-[#a5a5a5]"
+              className="flex items-center gap-1 text-[14px] text-[#a5a5a5] dark:text-[var(--shadow-text-tertiary)]"
             >
               {t('premiumPage.more')}
               <i className="fa-solid fa-chevron-right text-[10px]" />
@@ -308,11 +308,11 @@ export default function PremiumPage() {
           </div>
 
           <div className="relative mt-5 grid grid-cols-2 gap-4">
-            <div className="min-h-[92px] rounded-[12px] bg-gradient-to-r from-[#f4f9ff] to-[#f9fbff] px-4 py-3">
+            <div className="min-h-[92px] rounded-[12px] bg-gradient-to-r from-[#f4f9ff] to-[#f9fbff] px-4 py-3 dark:from-[var(--shadow-bg-elevated)] dark:to-[var(--shadow-bg-soft)]">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="text-[17px] font-bold">180 Diamonds</div>
-                  <div className="mt-1 text-[13px] text-[#9aa0a6]">
+                  <div className="mt-1 text-[13px] text-[#9aa0a6] dark:text-[var(--shadow-text-secondary)]">
                     {t('premiumPage.bonusDiamonds')}
                   </div>
                 </div>
@@ -324,11 +324,11 @@ export default function PremiumPage() {
               </span>
             </div>
 
-            <div className="min-h-[92px] rounded-[12px] bg-gradient-to-r from-[#f4f9ff] to-[#f9fbff] px-4 py-3">
+            <div className="min-h-[92px] rounded-[12px] bg-gradient-to-r from-[#f4f9ff] to-[#f9fbff] px-4 py-3 dark:from-[var(--shadow-bg-elevated)] dark:to-[var(--shadow-bg-soft)]">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="text-[17px] font-bold">{t('premiumPage.checkInReward')}</div>
-                  <div className="mt-1 text-[13px] text-[#9aa0a6]">
+                  <div className="mt-1 text-[13px] text-[#9aa0a6] dark:text-[var(--shadow-text-secondary)]">
                     {t('premiumPage.fiveDiamondsWeek')}
                   </div>
                 </div>
@@ -336,21 +336,21 @@ export default function PremiumPage() {
               </div>
             </div>
 
-            <span className="pointer-events-none absolute left-1/2 top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[22px] font-bold text-[#c5c8cc]">
+            <span className="pointer-events-none absolute left-1/2 top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[22px] font-bold text-[#c5c8cc] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-tertiary)]">
               +
             </span>
           </div>
 
-          <div className="mt-5 divide-y divide-[#ececec]">
+          <div className="mt-5 divide-y divide-[#ececec] dark:divide-[var(--shadow-border)]">
             <div className="flex min-h-[58px] items-center gap-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff8e2] text-[#f5a400]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff8e2] text-[#f5a400] dark:bg-amber-500/10 dark:text-amber-300">
                 <i className="fa-solid fa-clock text-[16px]" />
               </span>
               <span className="text-[16px]">{t('premiumPage.earlyAccess')}</span>
             </div>
 
             <div className="flex min-h-[58px] items-center gap-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f7f7f7] text-[#f5a400]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f7f7f7] text-[#f5a400] dark:bg-[var(--shadow-bg-elevated)] dark:text-amber-300">
                 <i className="fa-solid fa-lock-open text-[15px]" />
               </span>
               <span className="text-[16px]">{t('premiumPage.freeEpisodeAccess')}</span>
@@ -358,7 +358,7 @@ export default function PremiumPage() {
           </div>
         </section>
 
-        <section className="mt-4 rounded-t-[26px] bg-white px-5 pb-7 pt-7">
+        <section className="mt-4 rounded-t-[26px] bg-white px-5 pb-7 pt-7 dark:bg-[var(--shadow-bg-surface)]">
           <div className="grid grid-cols-3 gap-3">
             {PLANS.map((plan) => {
               const selected = selectedPlan === plan.id
@@ -370,8 +370,8 @@ export default function PremiumPage() {
                   onClick={() => setSelectedPlan(plan.id)}
                   className={`relative min-h-[192px] rounded-[12px] px-2 py-6 text-center transition active:scale-[0.98] ${
                     selected
-                      ? 'bg-white ring-2 ring-[#202124]'
-                      : 'bg-[#f7f7f7] ring-1 ring-transparent'
+                      ? 'bg-white ring-2 ring-[#202124] dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-text-primary)]'
+                      : 'bg-[#f7f7f7] ring-1 ring-transparent dark:bg-[var(--shadow-bg-elevated)]'
                   }`}
                 >
                   {plan.badge ? (
@@ -380,7 +380,7 @@ export default function PremiumPage() {
                         ? 'bg-[#202124] text-[#ffd100]'
                         : plan.id === '12'
                           ? 'bg-[#ffb000] text-[#202124]'
-                          : 'bg-[#ececec] text-[#616161]'
+                          : 'bg-[#ececec] text-[#616161] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]'
                     }`}>
                       {t(`premiumPage.${PLAN_BADGE_KEYS[plan.badge]}`)}
                     </span>
@@ -391,7 +391,7 @@ export default function PremiumPage() {
                   </div>
                   <div className="mt-5 text-[27px] font-semibold">{plan.price}</div>
 
-                  <div className="mt-5 flex items-center justify-center gap-1.5 text-[12px] text-[#777]">
+                  <div className="mt-5 flex items-center justify-center gap-1.5 text-[12px] text-[#777] dark:text-[var(--shadow-text-secondary)]">
                     <DiamondMark className="h-5 w-5 text-[9px]" />
                     <span>{plan.diamonds}</span>
                   </div>
@@ -407,34 +407,34 @@ export default function PremiumPage() {
             {t('premiumPage.subscribe')}
           </button>
 
-          <p className="mt-4 text-center text-[12px] leading-5 text-[#a0a0a0]">
+          <p className="mt-4 text-center text-[12px] leading-5 text-[#a0a0a0] dark:text-[var(--shadow-text-secondary)]">
             {t('premiumPage.extraDiamonds')}
             <br />
             {t('premiumPage.autoRenewal')}
           </p>
 
-          <div id="premium-details" className="mt-5 border-t border-[#e5e5e5] pt-5">
-            <h3 className="text-[14px] font-semibold text-[#9a9a9a]">
+          <div id="premium-details" className="mt-5 border-t border-[#e5e5e5] pt-5 dark:border-[var(--shadow-border)]">
+            <h3 className="text-[14px] font-semibold text-[#9a9a9a] dark:text-[var(--shadow-text-secondary)]">
               {t('premiumPage.premiumDetails')}
             </h3>
 
-            <div className="mt-4 space-y-4 text-[12px] leading-5 text-[#8f8f8f]">
+            <div className="mt-4 space-y-4 text-[12px] leading-5 text-[#8f8f8f] dark:text-[var(--shadow-text-secondary)]">
               <div>
-                <div className="font-semibold text-[#777]">{t('premiumPage.giftPackTitle')}</div>
+                <div className="font-semibold text-[#777] dark:text-[var(--shadow-text-primary)]">{t('premiumPage.giftPackTitle')}</div>
                 <p className="mt-1">
                   {t('premiumPage.giftPackText')}
                 </p>
               </div>
 
               <div>
-                <div className="font-semibold text-[#777]">{t('premiumPage.subscriptionTitle')}</div>
+                <div className="font-semibold text-[#777] dark:text-[var(--shadow-text-primary)]">{t('premiumPage.subscriptionTitle')}</div>
                 <p className="mt-1">
                   {t('premiumPage.subscriptionText')}
                 </p>
               </div>
 
               <div>
-                <div className="font-semibold text-[#777]">{t('premiumPage.benefitsTitle')}</div>
+                <div className="font-semibold text-[#777] dark:text-[var(--shadow-text-primary)]">{t('premiumPage.benefitsTitle')}</div>
                 <p className="mt-1">
                   {t('premiumPage.benefitsText')}
                 </p>
