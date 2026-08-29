@@ -1363,6 +1363,7 @@ const shouldShowOpeningAds =
         <Route path="/author/page/:pageUsername/invite" element={<LazyPage><AuthorPageInviteFriendsPage /></LazyPage>} />
         <Route path="/author/page/:pageUsername/help" element={<LazyPage><AuthorPageHelpPage /></LazyPage>} />
         <Route path="/store" element={<ReaderStorePage />} />
+        <Route path="/me" element={<Me />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
