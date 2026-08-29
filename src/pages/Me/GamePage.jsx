@@ -1,19 +1,60 @@
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('gamePage', {
+  en: {
+    back: 'Back',
+    game: 'Game',
+    spin: 'Spin',
+    test: 'Test',
+    comingSoon: 'Coming soon',
+  },
+  km: {
+    back: 'ត្រឡប់ក្រោយ',
+    game: 'ហ្គេម',
+    spin: 'បង្វិល',
+    test: 'សាកល្បង',
+    comingSoon: 'មកដល់ឆាប់ៗ',
+  },
+  zh: {
+    back: '返回',
+    game: '游戏',
+    spin: '转盘',
+    test: '测试',
+    comingSoon: '即将推出',
+  },
+  ja: {
+    back: '戻る',
+    game: 'ゲーム',
+    spin: 'スピン',
+    test: 'テスト',
+    comingSoon: '近日公開',
+  },
+  ko: {
+    back: '뒤로 가기',
+    game: '게임',
+    spin: '스핀',
+    test: '테스트',
+    comingSoon: '출시 예정',
+  },
+})
 
 const games = [
   {
     id: 'spin',
-    name: 'Spin',
+    nameKey: 'spin',
     icon: 'fa-solid fa-dharmachakra',
   },
   {
     id: 'test',
-    name: 'Test',
+    nameKey: 'test',
     icon: 'fa-solid fa-flask',
   },
 ]
 
 export default function GamePage() {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
 
   return (
@@ -24,13 +65,13 @@ export default function GamePage() {
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 dark:text-white"
-            aria-label="Back"
+            aria-label={t('gamePage.back')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <h1 className="text-center text-[16px] font-semibold text-[#111827] dark:text-white">
-            Game
+            {t('gamePage.game')}
           </h1>
 
           <div className="h-10 w-10" />
@@ -50,11 +91,11 @@ export default function GamePage() {
                 </div>
 
                 <div className="mt-3 text-[14px] font-semibold text-[#111827] dark:text-white">
-                  {game.name}
+                  {t(`gamePage.${game.nameKey}`)}
                 </div>
 
                 <div className="mt-1 text-[11px] font-normal text-[#9aa1ad] dark:text-white/45">
-                  Coming soon
+                  {t('gamePage.comingSoon')}
                 </div>
               </div>
             </div>
