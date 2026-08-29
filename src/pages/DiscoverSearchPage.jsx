@@ -261,7 +261,7 @@ function Avatar({
 
   return (
     <div
-      className={`shrink-0 overflow-hidden bg-[#eceef2] text-[#5f6673] ring-1 ring-black/5 ${
+      className={`shrink-0 overflow-hidden bg-[#eceef2] text-[#5f6673] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)] dark:ring-white/10 ${
         rounded
           ? 'rounded-full'
           : 'rounded-[12px]'
@@ -297,7 +297,7 @@ function SearchTabs({
   const { t } = useDisplayTranslation()
 
   return (
-    <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-[#eceef2] bg-white px-4 py-3">
+    <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-[#eceef2] bg-white dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] px-4 py-3">
       {SEARCH_TYPES.map((item) => {
         const active =
           activeType === item.key
@@ -311,8 +311,8 @@ function SearchTabs({
             }
             className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold transition active:scale-[0.97] ${
               active
-                ? 'bg-[#25262b] text-white shadow-sm'
-                : 'bg-[#f3f4f6] text-[#6b7280]'
+                ? 'bg-[#25262b] text-white shadow-sm dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]'
+                : 'bg-[#f3f4f6] text-[#6b7280] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]'
             }`}
           >
             {t(
@@ -344,7 +344,7 @@ function ReaderResult({
     <button
       type="button"
       onClick={() => onOpen(reader)}
-      className="flex w-full items-center gap-3 bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8]"
+      className="flex w-full items-center gap-3 bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8] dark:bg-[var(--shadow-bg-surface)] dark:active:bg-[var(--shadow-bg-hover)]"
     >
       <Avatar
         src={reader.avatar_url}
@@ -353,18 +353,18 @@ function ReaderResult({
       />
 
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[15px] font-extrabold text-[#16181d]">
+        <div className="truncate text-[15px] font-extrabold text-[#16181d] dark:text-[var(--shadow-text-primary)]">
           {name}
         </div>
-        <div className="mt-0.5 truncate text-[12px] font-semibold text-[#8a909c]">
+        <div className="mt-0.5 truncate text-[12px] font-semibold text-[#8a909c] dark:text-[var(--shadow-text-secondary)]">
           @{reader.username || 'reader'}
         </div>
-        <div className="mt-1 line-clamp-1 text-[12px] leading-5 text-[#68707d]">
+        <div className="mt-1 line-clamp-1 text-[12px] leading-5 text-[#68707d] dark:text-[var(--shadow-text-secondary)]">
           {meta}
         </div>
       </div>
 
-      <i className="fa-solid fa-chevron-right text-[12px] text-[#c0c4cc]" />
+      <i className="fa-solid fa-chevron-right text-[12px] text-[#c0c4cc] dark:text-[var(--shadow-text-tertiary)]" />
     </button>
   )
 }
@@ -383,7 +383,7 @@ function PageResult({
     <button
       type="button"
       onClick={() => onOpen(page)}
-      className="flex w-full items-center gap-3 bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8]"
+      className="flex w-full items-center gap-3 bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8] dark:bg-[var(--shadow-bg-surface)] dark:active:bg-[var(--shadow-bg-hover)]"
     >
       <Avatar
         src={page.avatar_url}
@@ -392,13 +392,13 @@ function PageResult({
       />
 
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[15px] font-extrabold text-[#16181d]">
+        <div className="truncate text-[15px] font-extrabold text-[#16181d] dark:text-[var(--shadow-text-primary)]">
           {name}
         </div>
-        <div className="mt-0.5 truncate text-[12px] font-semibold text-[#8a909c]">
+        <div className="mt-0.5 truncate text-[12px] font-semibold text-[#8a909c] dark:text-[var(--shadow-text-secondary)]">
           @{page.page_username || 'author'}
         </div>
-        <div className="mt-1 flex items-center gap-3 text-[11px] font-bold text-[#68707d]">
+        <div className="mt-1 flex items-center gap-3 text-[11px] font-bold text-[#68707d] dark:text-[var(--shadow-text-secondary)]">
           <span>
             {t(
               'discoverSearchPage.followers',
@@ -419,7 +419,7 @@ function PageResult({
         </div>
       </div>
 
-      <i className="fa-solid fa-chevron-right text-[12px] text-[#c0c4cc]" />
+      <i className="fa-solid fa-chevron-right text-[12px] text-[#c0c4cc] dark:text-[var(--shadow-text-tertiary)]" />
     </button>
   )
 }
@@ -441,9 +441,9 @@ function StoryResult({
     <button
       type="button"
       onClick={() => onOpen(story)}
-      className="flex w-full gap-3 bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8]"
+      className="flex w-full gap-3 bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8] dark:bg-[var(--shadow-bg-surface)] dark:active:bg-[var(--shadow-bg-hover)]"
     >
-      <div className="h-[92px] w-[64px] shrink-0 overflow-hidden rounded-[10px] bg-[#eceef2] ring-1 ring-black/5">
+      <div className="h-[92px] w-[64px] shrink-0 overflow-hidden rounded-[10px] bg-[#eceef2] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-elevated)] dark:ring-white/10">
         {story.cover_url ? (
           <img
             src={story.cover_url}
@@ -461,23 +461,23 @@ function StoryResult({
       </div>
 
       <div className="min-w-0 flex-1 py-0.5">
-        <div className="line-clamp-2 text-[15px] font-extrabold leading-5 text-[#16181d]">
+        <div className="line-clamp-2 text-[15px] font-extrabold leading-5 text-[#16181d] dark:text-[var(--shadow-text-primary)]">
           {storyTitle}
         </div>
-        <div className="mt-1 truncate text-[12px] font-semibold text-[#8a909c]">
+        <div className="mt-1 truncate text-[12px] font-semibold text-[#8a909c] dark:text-[var(--shadow-text-secondary)]">
           {t(
             'discoverSearchPage.byAuthor',
             { author: authorName }
           )}
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-[#68707d]">
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-[#68707d] dark:text-[var(--shadow-text-secondary)]">
           {story.main_genre ? (
-            <span className="rounded-full bg-[#f3f4f6] px-2 py-1">
+            <span className="rounded-full bg-[#f3f4f6] px-2 py-1 dark:bg-[var(--shadow-bg-elevated)]">
               {story.main_genre}
             </span>
           ) : null}
           <span>
-            <i className="fa-solid fa-eye mr-1 text-[#8a909c]" />
+            <i className="fa-solid fa-eye mr-1 text-[#8a909c] dark:text-[var(--shadow-text-secondary)]" />
             {formatCount(
               story.total_views
             )}
@@ -491,7 +491,7 @@ function StoryResult({
         </div>
       </div>
 
-      <i className="fa-solid fa-chevron-right mt-10 text-[12px] text-[#c0c4cc]" />
+      <i className="fa-solid fa-chevron-right mt-10 text-[12px] text-[#c0c4cc] dark:text-[var(--shadow-text-tertiary)]" />
     </button>
   )
 }
@@ -520,9 +520,9 @@ function PdfResult({
     <button
       type="button"
       onClick={() => onOpen(product)}
-      className="flex w-full gap-3 bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8]"
+      className="flex w-full gap-3 bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8] dark:bg-[var(--shadow-bg-surface)] dark:active:bg-[var(--shadow-bg-hover)]"
     >
-      <div className="h-[92px] w-[64px] shrink-0 overflow-hidden rounded-[10px] bg-[#eceef2] ring-1 ring-black/5">
+      <div className="h-[92px] w-[64px] shrink-0 overflow-hidden rounded-[10px] bg-[#eceef2] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-elevated)] dark:ring-white/10">
         {product.cover_url ? (
           <img
             src={product.cover_url}
@@ -540,32 +540,32 @@ function PdfResult({
       </div>
 
       <div className="min-w-0 flex-1 py-0.5">
-        <div className="line-clamp-2 text-[15px] font-extrabold leading-5 text-[#16181d]">
+        <div className="line-clamp-2 text-[15px] font-extrabold leading-5 text-[#16181d] dark:text-[var(--shadow-text-primary)]">
           {title}
         </div>
-        <div className="mt-1 truncate text-[12px] font-semibold text-[#8a909c]">
+        <div className="mt-1 truncate text-[12px] font-semibold text-[#8a909c] dark:text-[var(--shadow-text-secondary)]">
           {t(
             'discoverSearchPage.byAuthor',
             { author: authorName }
           )}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-[#25262b] px-2.5 py-1 text-[11px] font-extrabold text-white">
+          <span className="rounded-full bg-[#25262b] px-2.5 py-1 text-[11px] font-extrabold text-white dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]">
             PDF
           </span>
-          <span className="text-[13px] font-black text-[#16181d]">
+          <span className="text-[13px] font-black text-[#16181d] dark:text-[var(--shadow-text-primary)]">
             {formatPrice(price)}
           </span>
           {originalPrice > price &&
           originalPrice > 0 ? (
-            <span className="text-[11px] font-semibold text-[#a0a5af] line-through">
+            <span className="text-[11px] font-semibold text-[#a0a5af] dark:text-[var(--shadow-text-tertiary)] line-through">
               {formatPrice(
                 originalPrice
               )}
             </span>
           ) : null}
           {product.page_count ? (
-            <span className="text-[11px] font-bold text-[#68707d]">
+            <span className="text-[11px] font-bold text-[#68707d] dark:text-[var(--shadow-text-secondary)]">
               {t(
                 'discoverSearchPage.pageCount',
                 {
@@ -578,7 +578,7 @@ function PdfResult({
         </div>
       </div>
 
-      <i className="fa-solid fa-chevron-right mt-10 text-[12px] text-[#c0c4cc]" />
+      <i className="fa-solid fa-chevron-right mt-10 text-[12px] text-[#c0c4cc] dark:text-[var(--shadow-text-tertiary)]" />
     </button>
   )
 }
@@ -613,7 +613,7 @@ function PostResult({
     <button
       type="button"
       onClick={() => onOpen(post)}
-      className="w-full bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8]"
+      className="w-full bg-white px-4 py-3 text-left transition active:bg-[#f7f7f8] dark:bg-[var(--shadow-bg-surface)] dark:active:bg-[var(--shadow-bg-hover)]"
     >
       <div className="flex items-center gap-3">
         <Avatar
@@ -623,14 +623,14 @@ function PostResult({
         />
 
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[14px] font-extrabold text-[#16181d]">
+          <div className="truncate text-[14px] font-extrabold text-[#16181d] dark:text-[var(--shadow-text-primary)]">
             {ownerName}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-[11px] font-semibold text-[#8a909c]">
+          <div className="mt-0.5 flex items-center gap-2 text-[11px] font-semibold text-[#8a909c] dark:text-[var(--shadow-text-secondary)]">
             <span className="truncate">
               @{ownerUsername || 'shadow'}
             </span>
-            <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[10px] font-extrabold text-[#68707d]">
+            <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[10px] font-extrabold text-[#68707d] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
               {isAuthor
                 ? t(
                     'discoverSearchPage.pagePost'
@@ -642,17 +642,17 @@ function PostResult({
           </div>
         </div>
 
-        <i className="fa-solid fa-chevron-right text-[12px] text-[#c0c4cc]" />
+        <i className="fa-solid fa-chevron-right text-[12px] text-[#c0c4cc] dark:text-[var(--shadow-text-tertiary)]" />
       </div>
 
       {post.content ? (
-        <div className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-5 text-[#343942]">
+        <div className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-5 text-[#343942] dark:text-[var(--shadow-text-primary)]">
           {post.content}
         </div>
       ) : null}
 
       {firstImage ? (
-        <div className="mt-3 h-[150px] overflow-hidden rounded-[12px] bg-[#eceef2]">
+        <div className="mt-3 h-[150px] overflow-hidden rounded-[12px] bg-[#eceef2] dark:bg-[var(--shadow-bg-elevated)]">
           <img
             src={firstImage}
             alt={t(
@@ -666,7 +666,7 @@ function PostResult({
         </div>
       ) : null}
 
-      <div className="mt-3 flex items-center gap-4 text-[11px] font-bold text-[#7b828e]">
+      <div className="mt-3 flex items-center gap-4 text-[11px] font-bold text-[#7b828e] dark:text-[var(--shadow-text-secondary)]">
         <span>
           <i className="fa-solid fa-heart mr-1 text-[#ef476f]" />
           {formatCount(
@@ -700,13 +700,13 @@ function SectionShell({
   const { t } = useDisplayTranslation()
 
   return (
-    <section className="overflow-hidden border-y border-[#eceef2] bg-white sm:rounded-[16px] sm:border">
-      <div className="flex items-center justify-between gap-3 border-b border-[#f0f1f3] px-4 py-3">
+    <section className="overflow-hidden border-y border-[#eceef2] bg-white sm:rounded-[16px] sm:border dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[#f0f1f3] dark:border-[var(--shadow-border)] px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
-          <h2 className="truncate text-[15px] font-extrabold text-[#16181d]">
+          <h2 className="truncate text-[15px] font-extrabold text-[#16181d] dark:text-[var(--shadow-text-primary)]">
             {title}
           </h2>
-          <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[10px] font-extrabold text-[#7b828e]">
+          <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[10px] font-extrabold text-[#7b828e] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
             {count}
           </span>
         </div>
@@ -715,7 +715,7 @@ function SectionShell({
           <button
             type="button"
             onClick={onShowAll}
-            className="shrink-0 text-[12px] font-extrabold text-[#25262b] active:opacity-60"
+            className="shrink-0 text-[12px] font-extrabold text-[#25262b] dark:text-[var(--shadow-text-primary)] active:opacity-60"
           >
             {t(
               'discoverSearchPage.seeAll'
@@ -724,7 +724,7 @@ function SectionShell({
         ) : null}
       </div>
 
-      <div className="divide-y divide-[#f0f1f3]">
+      <div className="divide-y divide-[#f0f1f3] dark:divide-[var(--shadow-border)]">
         {children}
       </div>
     </section>
@@ -738,13 +738,13 @@ function LoadingState() {
         (_, index) => (
           <div
             key={index}
-            className="flex items-center gap-3 rounded-[16px] bg-white p-3 ring-1 ring-black/5"
+            className="flex items-center gap-3 rounded-[16px] bg-white p-3 ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:ring-white/10"
           >
-            <div className="h-14 w-14 animate-pulse rounded-full bg-[#eceef2]" />
+            <div className="h-14 w-14 animate-pulse rounded-full bg-[#eceef2] dark:bg-[var(--shadow-bg-elevated)]" />
             <div className="flex-1">
-              <div className="h-4 w-2/3 animate-pulse rounded-full bg-[#eceef2]" />
-              <div className="mt-2 h-3 w-1/3 animate-pulse rounded-full bg-[#f1f2f4]" />
-              <div className="mt-2 h-3 w-4/5 animate-pulse rounded-full bg-[#f1f2f4]" />
+              <div className="h-4 w-2/3 animate-pulse rounded-full bg-[#eceef2] dark:bg-[var(--shadow-bg-elevated)]" />
+              <div className="mt-2 h-3 w-1/3 animate-pulse rounded-full bg-[#f1f2f4] dark:bg-[var(--shadow-bg-elevated)]" />
+              <div className="mt-2 h-3 w-4/5 animate-pulse rounded-full bg-[#f1f2f4] dark:bg-[var(--shadow-bg-elevated)]" />
             </div>
           </div>
         )
@@ -761,7 +761,7 @@ function EmptyState({
 
   return (
     <div className="px-4 py-12 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#8a909c] shadow-sm ring-1 ring-black/5">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#8a909c] shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:ring-white/10">
         <i
           className={`fa-solid ${
             searched
@@ -770,7 +770,7 @@ function EmptyState({
           } text-[22px]`}
         />
       </div>
-      <h2 className="mt-4 text-[16px] font-extrabold text-[#16181d]">
+      <h2 className="mt-4 text-[16px] font-extrabold text-[#16181d] dark:text-[var(--shadow-text-primary)]">
         {searched
           ? t(
               'discoverSearchPage.noResults'
@@ -779,7 +779,7 @@ function EmptyState({
               'discoverSearchPage.searchEverything'
             )}
       </h2>
-      <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#7b828e]">
+      <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#7b828e] dark:text-[var(--shadow-text-secondary)]">
         {message ||
           (searched
             ? t(
@@ -1181,14 +1181,15 @@ export default function DiscoverSearchPage() {
         )
 
   return (
-    <div className="min-h-screen bg-[#f6f7f8] pb-10 text-[#16181d]">
+    <div className="min-h-screen bg-[#f6f7f8] pb-10 text-[#16181d] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
       <style>{`
         body { background:#f6f7f8; font-family:'Plus Jakarta Sans','Kantumruy Pro',sans-serif; }
+        html.dark body { background:var(--shadow-bg-page); }
         .no-scrollbar::-webkit-scrollbar { display:none; }
         .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
       `}</style>
 
-      <header className="sticky top-0 z-[1000] bg-white shadow-[0_1px_0_rgba(17,24,39,0.08)]">
+      <header className="sticky top-0 z-[1000] bg-white shadow-[0_1px_0_rgba(17,24,39,0.08)] dark:bg-[var(--shadow-nav-bg)] dark:shadow-[0_1px_0_var(--shadow-border)]">
         <form
           onSubmit={submitSearch}
           className="mx-auto flex h-[62px] w-full max-w-[620px] items-center gap-3 px-4"
@@ -1198,7 +1199,7 @@ export default function DiscoverSearchPage() {
             onClick={() =>
               navigate(-1)
             }
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#25262b] active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#25262b] active:bg-[#f3f4f6] dark:text-[var(--shadow-text-primary)] dark:active:bg-[var(--shadow-bg-hover)]"
             aria-label={t(
               'discoverSearchPage.goBack'
             )}
@@ -1207,7 +1208,7 @@ export default function DiscoverSearchPage() {
           </button>
 
           <div className="relative min-w-0 flex-1">
-            <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[14px] text-[#9298a3]" />
+            <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[14px] text-[#9298a3] dark:text-[var(--shadow-text-secondary)]" />
             <input
               type="search"
               value={searchText}
@@ -1221,7 +1222,7 @@ export default function DiscoverSearchPage() {
               placeholder={t(
                 'discoverSearchPage.searchPlaceholder'
               )}
-              className="h-11 w-full rounded-full border border-[#e2e4e8] bg-[#f7f7f8] pl-11 pr-11 text-[14px] font-semibold text-[#16181d] outline-none transition placeholder:font-medium placeholder:text-[#9aa0aa] focus:border-[#25262b] focus:bg-white"
+              className="h-11 w-full rounded-full border border-[#e2e4e8] bg-[#f7f7f8] pl-11 pr-11 text-[14px] font-semibold text-[#16181d] dark:text-[var(--shadow-text-primary)] outline-none transition placeholder:font-medium placeholder:text-[#9aa0aa] focus:border-[#25262b] focus:bg-white"
             />
             {searchText ? (
               <button
@@ -1231,7 +1232,7 @@ export default function DiscoverSearchPage() {
                   setSearchText('')
                   setActiveQuery('')
                 }}
-                className="absolute right-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-[#e5e7eb] text-[#68707d] active:scale-95"
+                className="absolute right-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-[#e5e7eb] text-[#68707d] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)] active:scale-95"
                 aria-label={t(
                   'discoverSearchPage.clearSearch'
                 )}
@@ -1252,7 +1253,7 @@ export default function DiscoverSearchPage() {
 
       <main className="mx-auto w-full max-w-[620px]">
         {activeQuery ? (
-          <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] font-bold text-[#7b828e]">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] font-bold text-[#7b828e] dark:text-[var(--shadow-text-secondary)]">
             <span className="truncate">
               {t(
                 'discoverSearchPage.resultsFor',
