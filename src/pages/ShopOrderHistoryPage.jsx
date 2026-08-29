@@ -185,12 +185,12 @@ function StatusBadge({ status }) {
   }
 
   const tone = value === 'success'
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20'
     : value === 'pending_review'
-      ? 'bg-amber-50 text-amber-700 border-amber-200'
+      ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20'
       : value === 'waiting_payment'
-        ? 'bg-slate-50 text-slate-700 border-slate-200'
-        : 'bg-red-50 text-red-700 border-red-200'
+        ? 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-white/5 dark:text-[var(--shadow-text-secondary)] dark:border-[var(--shadow-border)]'
+        : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20'
 
   const labelKey = labelKeyMap[value]
 
@@ -264,31 +264,31 @@ export default function ShopOrderHistoryPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white pb-8">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
+    <div className="app-page min-h-screen bg-white pb-8 dark:bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="flex h-14 items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('shopOrderHistoryPage.goBack')}
           >
-            <i className="fas fa-chevron-left text-[18px] text-gray-700" />
+            <i className="fas fa-chevron-left text-[18px] text-gray-700 dark:text-[var(--shadow-text-primary)]" />
           </button>
 
-          <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+          <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900 dark:text-[var(--shadow-text-primary)]">
             {t('shopOrderHistoryPage.orderHistory')}
           </h1>
         </div>
       </header>
 
       <main className="px-4 pt-4">
-        <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
+        <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
           <div className="mb-4">
-            <h2 className="text-[20px] font-black text-[#111111]">
+            <h2 className="text-[20px] font-black text-[#111111] dark:text-[var(--shadow-text-primary)]">
               {t('shopOrderHistoryPage.purchaseRecords')}
             </h2>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280] dark:text-[var(--shadow-text-secondary)]">
               {t('shopOrderHistoryPage.supportHelper')}
             </p>
           </div>
@@ -297,7 +297,7 @@ export default function ShopOrderHistoryPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={t('shopOrderHistoryPage.searchPlaceholder')}
-            className="mb-3 h-11 w-full rounded-[16px] border border-[#E5E7EB] bg-[#F8F8F8] px-4 text-[13px] font-bold text-[#111111] outline-none focus:border-[#111111]"
+            className="mb-3 h-11 w-full rounded-[16px] border border-[#E5E7EB] bg-[#F8F8F8] px-4 text-[13px] font-bold text-[#111111] outline-none focus:border-[#111111] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[var(--shadow-border-strong)]"
           />
 
           <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -308,8 +308,8 @@ export default function ShopOrderHistoryPage() {
                 onClick={() => setStatus(key)}
                 className={`shrink-0 rounded-full border px-3.5 py-2 text-[12px] font-black ${
                   status === key
-                    ? 'border-[#111111] bg-[#111111] text-white'
-                    : 'border-[#E5E7EB] bg-white text-[#6B7280]'
+                    ? 'border-[#111111] bg-[#111111] text-white dark:border-[var(--shadow-text-primary)] dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]'
+                    : 'border-[#E5E7EB] bg-white text-[#6B7280] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]'
                 }`}
               >
                 {t(`shopOrderHistoryPage.${labelKey}`)}
@@ -318,30 +318,30 @@ export default function ShopOrderHistoryPage() {
           </div>
 
           {message ? (
-            <p className="mb-3 rounded-[16px] bg-red-50 p-3 text-center text-[12px] font-bold text-red-700">
+            <p className="mb-3 rounded-[16px] bg-red-50 p-3 text-center text-[12px] font-bold text-red-700 dark:bg-red-500/10 dark:text-red-300">
               {message}
             </p>
           ) : null}
 
           <div className="space-y-3">
             {loading ? (
-              <p className="rounded-[18px] bg-[#F8F8F8] p-4 text-center text-[12px] font-bold text-[#6B7280]">
+              <p className="rounded-[18px] bg-[#F8F8F8] p-4 text-center text-[12px] font-bold text-[#6B7280] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                 {t('shopOrderHistoryPage.loading')}
               </p>
             ) : filteredOrders.length ? (
               filteredOrders.map((item) => (
                 <div
                   key={item.id || item.order_id}
-                  className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4"
+                  className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-black text-[#111111]">
+                      <p className="text-[15px] font-black text-[#111111] dark:text-[var(--shadow-text-primary)]">
                         {t('shopOrderHistoryPage.diamonds', {
                           count: formatNumber(item.diamonds, language),
                         })}
                       </p>
-                      <p className="mt-1 text-[12px] font-bold text-[#6B7280]">
+                      <p className="mt-1 text-[12px] font-bold text-[#6B7280] dark:text-[var(--shadow-text-secondary)]">
                         {t('shopOrderHistoryPage.amountBonus', {
                           amount: formatMoney(item.amount_usd),
                           count: formatNumber(item.bonus_gems, language),
@@ -352,7 +352,7 @@ export default function ShopOrderHistoryPage() {
                     <StatusBadge status={item.status} />
                   </div>
 
-                  <div className="mt-3 space-y-1 text-[11px] font-bold leading-5 text-[#6B7280]">
+                  <div className="mt-3 space-y-1 text-[11px] font-bold leading-5 text-[#6B7280] dark:text-[var(--shadow-text-secondary)]">
                     <p className="break-all">
                       {t('shopOrderHistoryPage.orderId', {
                         value: item.order_id || '-',
@@ -373,7 +373,7 @@ export default function ShopOrderHistoryPage() {
                 </div>
               ))
             ) : (
-              <p className="rounded-[18px] bg-[#F8F8F8] p-4 text-center text-[12px] font-bold text-[#6B7280]">
+              <p className="rounded-[18px] bg-[#F8F8F8] p-4 text-center text-[12px] font-bold text-[#6B7280] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                 {t('shopOrderHistoryPage.empty')}
               </p>
             )}
