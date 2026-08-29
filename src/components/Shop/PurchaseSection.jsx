@@ -26,6 +26,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: 'Pay exactly {{amount}}',
     nonRefundable: 'Completed payments are non-refundable.',
     cancel: 'Cancel',
+    close: 'Close',
     paymentSuccessful: 'Payment Successful',
     waitingForReview: 'Waiting for Review',
     paymentConfirmation: 'Payment Confirmation',
@@ -78,6 +79,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: 'ទូទាត់ចំនួន {{amount}}',
     nonRefundable: 'ការទូទាត់ដែលបានបញ្ចប់ មិនអាចសងប្រាក់វិញបានទេ។',
     cancel: 'បោះបង់',
+    close: 'បិទ',
     paymentSuccessful: 'ការទូទាត់ជោគជ័យ',
     waitingForReview: 'កំពុងរង់ចាំការពិនិត្យ',
     paymentConfirmation: 'ការបញ្ជាក់ការទូទាត់',
@@ -130,6 +132,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: '支付 {{amount}}',
     nonRefundable: '已完成的付款不可退款。',
     cancel: '取消',
+    close: '关闭',
     paymentSuccessful: '付款成功',
     waitingForReview: '等待审核',
     paymentConfirmation: '付款确认',
@@ -182,6 +185,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: '{{amount}} を支払う',
     nonRefundable: '完了した支払いは返金できません。',
     cancel: 'キャンセル',
+    close: '閉じる',
     paymentSuccessful: '支払い成功',
     waitingForReview: '確認待ち',
     paymentConfirmation: '支払い確認',
@@ -234,6 +238,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: '{{amount}} 결제',
     nonRefundable: '완료된 결제는 환불되지 않습니다.',
     cancel: '취소',
+    close: '닫기',
     paymentSuccessful: '결제 성공',
     waitingForReview: '검토 대기 중',
     paymentConfirmation: '결제 확인',
@@ -551,7 +556,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, 
               {checking ? t('purchaseSection.checking') : t('purchaseSection.checkStatus')}
             </button>
             <button type="button" onClick={onClose} disabled={checking} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-4 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-50">
-              {t('purchaseSection.cancel')}
+              {t('purchaseSection.close')}
             </button>
           </div>
         ) : (
@@ -623,16 +628,32 @@ export default function PurchaseSection() {
     }
   }
 
+  async function refreshWalletData() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/purchase/wallet`, {
+        headers: getHeaders(),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (response.ok && data.ok) setWallet(data.wallet)
+    } catch {}
+  }
+
   async function refreshPaymentStatus(orderId, silent = false) {
     if (!orderId || !getReaderToken()) return null
 
     try {
       setChecking(true)
-      const response = await fetch(`${API_BASE_URL}/api/purchase/manual/status/${encodeURIComponent(orderId)}`, { headers: getHeaders() })
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/purchase/manual/status/${encodeURIComponent(orderId)}`,
+        { headers: getHeaders() }
+      )
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || !data.ok) {
-        if (!silent) setToast(data.message || t('purchaseSection.paymentNotConfirmed'))
+        if (!silent) {
+          setToast(data.message || t('purchaseSection.paymentNotConfirmed'))
+        }
         return null
       }
 
@@ -641,28 +662,36 @@ export default function PurchaseSection() {
 
       if (payment.status === 'success') {
         clearSavedPendingPayment()
-        setToast(t('purchaseSection.diamondsAddedToast', { count: formatNumber(payment.diamonds) }))
-        loadPurchaseData()
+        setToast(
+          t('purchaseSection.diamondsAddedToast', {
+            count: formatNumber(payment.diamonds),
+          })
+        )
+        void refreshWalletData()
       } else if (payment.status === 'pending_review') {
-        clearSavedPendingPayment()
+        savePendingPayment(payment)
         setToast(t('purchaseSection.paymentWaitingReview'))
-        loadPurchaseData()
-      } else if (['expired', 'cancelled', 'rejected'].includes(payment.status)) {
+      } else if (payment.status === 'waiting_payment') {
+        savePendingPayment(payment)
+      } else if (
+        ['expired', 'cancelled', 'rejected'].includes(payment.status)
+      ) {
         clearSavedPendingPayment()
-        loadPurchaseData()
       }
 
       return payment
+    } catch {
+      if (!silent) setToast(t('purchaseSection.paymentNotConfirmed'))
+      return null
     } finally {
       setChecking(false)
     }
   }
 
-  async function restorePendingPayment() {
+  function restorePendingPayment() {
     const saved = getSavedPendingPayment()
     if (!saved?.order_id || !getReaderToken()) return
-    const payment = await refreshPaymentStatus(saved.order_id, true)
-    if (payment && payment.status === 'waiting_payment') openStatusModal(payment)
+    openStatusModal(saved)
   }
 
   async function createManualPayment() {
@@ -718,93 +747,183 @@ export default function PurchaseSection() {
   }, [])
 
   useEffect(() => {
-  if (!manualPayment?.order_id || manualPayment.status !== 'waiting_payment') return undefined
+    const orderId = manualPayment?.order_id
+    const status = String(manualPayment?.status || '').toLowerCase()
 
-  const controller = new AbortController()
-  const token = getReaderToken()
-  let buffer = ''
+    if (
+      !orderId ||
+      !['waiting_payment', 'pending_review'].includes(status)
+    ) {
+      return undefined
+    }
 
-  const timer = window.setInterval(() => {
-    setSecondsLeft(
-      getSecondsLeft(
-        manualPayment.proof_expires_at ||
-        manualPayment.expires_at ||
-        manualPayment.expired_at
-      )
-    )
-  }, 1000)
+    const token = getReaderToken()
+    if (!token) return undefined
 
-  async function connectPaymentStream() {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/purchase/manual/events/${encodeURIComponent(manualPayment.order_id)}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
+    const controller = new AbortController()
+    let countdownTimer = null
+    let reconnectTimer = null
+    let reconnectDelay = 3000
+    let expiryChecked = false
+    let latestPayment = manualPayment
+    let reconnectAllowed = true
+
+    if (status === 'waiting_payment') {
+      const updateCountdown = () => {
+        const next = getSecondsLeft(
+          latestPayment?.proof_expires_at ||
+          latestPayment?.expires_at ||
+          latestPayment?.expired_at
+        )
+
+        setSecondsLeft(next)
+
+        if (next <= 0 && !expiryChecked) {
+          expiryChecked = true
+          void refreshPaymentStatus(orderId, true)
         }
-      )
+      }
 
-      if (!response.ok || !response.body) return
+      updateCountdown()
+      countdownTimer = window.setInterval(updateCountdown, 1000)
+    } else {
+      setSecondsLeft(0)
+    }
 
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
+    async function connectPaymentStream() {
+      if (controller.signal.aborted) return
 
-      while (!controller.signal.aborted) {
-        const { done, value } = await reader.read()
-        if (done) break
+      let buffer = ''
 
-        buffer += decoder.decode(value, { stream: true })
-        const blocks = buffer.split('\n\n')
-        buffer = blocks.pop() || ''
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/purchase/manual/events/${encodeURIComponent(orderId)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'text/event-stream',
+            },
+            signal: controller.signal,
+          }
+        )
 
-        for (const block of blocks) {
-          if (!block.includes('event: payment_status')) continue
+        if (response.status === 401 || response.status === 403) {
+          reconnectAllowed = false
+          return
+        }
 
-          const dataLine = block
-            .split('\n')
-            .find((line) => line.startsWith('data: '))
+        if (!response.ok || !response.body) {
+          throw new Error('Payment stream unavailable')
+        }
 
-          if (!dataLine) continue
+        reconnectDelay = 3000
 
-          const payment = JSON.parse(dataLine.slice(6))
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
 
-          setManualPayment((current) => ({
-            ...(current || {}),
-            ...payment,
-          }))
+        while (!controller.signal.aborted) {
+          const { done, value } = await reader.read()
+          if (done) break
 
-          if (payment.status === 'success') {
-            clearSavedPendingPayment()
-            setToast(
-              t('purchaseSection.diamondsAddedToast', {
-                count: formatNumber(payment.diamonds),
-              })
+          buffer += decoder.decode(value, { stream: true })
+
+          const blocks = buffer.split('\n\n')
+          buffer = blocks.pop() || ''
+
+          for (const block of blocks) {
+            const lines = block.split('\n')
+            const eventLine = lines.find((line) =>
+              line.startsWith('event:')
             )
-            loadPurchaseData()
-          } else if (payment.status === 'pending_review') {
-            clearSavedPendingPayment()
-            setToast(t('purchaseSection.paymentWaitingReview'))
-          } else if (
-            ['expired', 'cancelled', 'rejected'].includes(payment.status)
-          ) {
-            clearSavedPendingPayment()
+            const dataLine = lines.find((line) =>
+              line.startsWith('data:')
+            )
+
+            const eventName = eventLine
+              ? eventLine.slice(6).trim()
+              : ''
+
+            if (eventName === 'connected') {
+              void refreshPaymentStatus(orderId, true)
+              continue
+            }
+
+            if (eventName !== 'payment_status' || !dataLine) continue
+
+            let payment
+
+            try {
+              payment = JSON.parse(dataLine.slice(5).trim())
+            } catch {
+              continue
+            }
+
+            const mergedPayment = {
+              ...(latestPayment || {}),
+              ...payment,
+            }
+
+            latestPayment = mergedPayment
+            setManualPayment(mergedPayment)
+
+            const nextStatus = String(payment.status || '').toLowerCase()
+
+            if (nextStatus === 'success') {
+              clearSavedPendingPayment()
+              setToast(
+                t('purchaseSection.diamondsAddedToast', {
+                  count: formatNumber(payment.diamonds),
+                })
+              )
+              void refreshWalletData()
+            } else if (nextStatus === 'pending_review') {
+              savePendingPayment(mergedPayment)
+              setToast(t('purchaseSection.paymentWaitingReview'))
+            } else if (nextStatus === 'waiting_payment') {
+              savePendingPayment(mergedPayment)
+            } else if (
+              ['expired', 'cancelled', 'rejected'].includes(nextStatus)
+            ) {
+              clearSavedPendingPayment()
+            }
           }
         }
-      }
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        console.error('PAYMENT SSE ERROR:', error)
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error('PAYMENT SSE ERROR:', error)
+        }
+      } finally {
+        if (!controller.signal.aborted && reconnectAllowed) {
+          const delay = reconnectDelay
+          reconnectDelay = Math.min(reconnectDelay * 2, 30000)
+          reconnectTimer = window.setTimeout(
+            connectPaymentStream,
+            delay
+          )
+        }
       }
     }
-  }
 
-  connectPaymentStream()
+    void connectPaymentStream()
 
-  return () => {
-    controller.abort()
-    window.clearInterval(timer)
-  }
-}, [manualPayment?.order_id, manualPayment?.status])
+    return () => {
+      controller.abort()
+
+      if (countdownTimer) {
+        window.clearInterval(countdownTimer)
+      }
+
+      if (reconnectTimer) {
+        window.clearTimeout(reconnectTimer)
+      }
+    }
+  }, [
+    manualPayment?.order_id,
+    manualPayment?.status,
+    manualPayment?.proof_expires_at,
+    manualPayment?.expires_at,
+    manualPayment?.expired_at,
+  ])
 
   if (!getReaderToken()) {
     return (
@@ -935,7 +1054,6 @@ export default function PurchaseSection() {
         secondsLeft={secondsLeft}
         checking={checking}
         message={toast}
-        onCancel={cancelPurchase}
         onClose={() => setManualPayment(null)}
         onRefresh={() => refreshPaymentStatus(manualPayment.order_id)}
         t={t}
