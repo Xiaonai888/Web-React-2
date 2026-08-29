@@ -237,7 +237,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
       <div className="w-full max-w-[460px] rounded-[28px] bg-[var(--shadow-bg-elevated)] p-5 text-[var(--shadow-text-primary)] shadow-2xl">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-[20px] font-black text-[var(--shadow-text-primary)]">{isSuccess ? 'Payment Successful' : isReview ? 'Waiting for Review' : 'Payment Confirmation'}</h3>
+            <h3 className="text-[20px] font-bold text-[var(--shadow-text-primary)]">{isSuccess ? 'Payment Successful' : isReview ? 'Waiting for Review' : 'Payment Confirmation'}</h3>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
               {isSuccess ? `${formatNumber(payment.diamonds)} Diamonds were added to your wallet.` : isReview ? 'We received your payment but it needs manual review.' : 'Return here after payment. We will confirm it automatically.'}
             </p>
@@ -250,19 +250,19 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
         <div className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[var(--shadow-text-secondary)]">Amount</p>
-              <p className="mt-1 text-[26px] font-black text-[var(--shadow-text-primary)]">{formatMoney(payment.amount_usd)}</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--shadow-text-secondary)]">Amount</p>
+              <p className="mt-1 text-[26px] font-bold text-[var(--shadow-text-primary)]">{formatMoney(payment.amount_usd)}</p>
             </div>
             <StatusBadge status={payment.status} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.08em] text-[var(--shadow-text-tertiary)]">Diamonds</p>
-              <p className="mt-1 text-[15px] font-black text-[var(--shadow-text-primary)]">{formatNumber(payment.diamonds)}</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--shadow-text-tertiary)]">Diamonds</p>
+              <p className="mt-1 text-[15px] font-bold text-[var(--shadow-text-primary)]">{formatNumber(payment.diamonds)}</p>
             </div>
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.08em] text-[var(--shadow-text-tertiary)]">Time left</p>
-              <p className="mt-1 text-[15px] font-black text-[var(--shadow-text-primary)]">{isWaiting ? formatCountdown(secondsLeft) : '-'}</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--shadow-text-tertiary)]">Time left</p>
+              <p className="mt-1 text-[15px] font-bold text-[var(--shadow-text-primary)]">{isWaiting ? formatCountdown(secondsLeft) : '-'}</p>
             </div>
           </div>
           <p className="mt-4 break-all text-[11px] font-bold text-[var(--shadow-text-secondary)]">Order ID: {payment.order_id}</p>
@@ -273,15 +273,15 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
 
         {isWaiting ? (
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <button type="button" onClick={onRefresh} disabled={checking} className="rounded-[18px] bg-[#111111] py-4 text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-50 dark:bg-white dark:text-[#111827]">
+            <button type="button" onClick={onRefresh} disabled={checking} className="rounded-[18px] bg-[#111111] py-4 text-[14px] font-normal text-white active:scale-[0.99] disabled:opacity-50 dark:bg-white dark:text-[#111827]">
               {checking ? 'Checking...' : 'Check Status'}
             </button>
-            <button type="button" onClick={onCancel} disabled={checking} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-4 text-[14px] font-black text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-50">
+            <button type="button" onClick={onCancel} disabled={checking} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-4 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-50">
               Cancel
             </button>
           </div>
         ) : (
-          <button type="button" onClick={onClose} className="mt-4 w-full rounded-[18px] bg-[#111111] py-4 text-[14px] font-black text-white active:scale-[0.99] dark:bg-white dark:text-[#111827]">
+          <button type="button" onClick={onClose} className="mt-4 w-full rounded-[18px] bg-[#111111] py-4 text-[14px] font-normal text-white active:scale-[0.99] dark:bg-white dark:text-[#111827]">
             Done
           </button>
         )}
