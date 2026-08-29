@@ -129,6 +129,106 @@ function getImageUrls(images) {
     .filter(Boolean)
 }
 
+function reconcileSelectedHashtags(previousText, nextText, ranges) {
+  if (!Array.isArray(ranges) || !ranges.length) return []
+
+  let prefix = 0
+  const prefixLimit = Math.min(previousText.length, nextText.length)
+
+  while (
+    prefix < prefixLimit &&
+    previousText[prefix] === nextText[prefix]
+  ) {
+    prefix += 1
+  }
+
+  let oldSuffix = previousText.length
+  let newSuffix = nextText.length
+
+  while (
+    oldSuffix > prefix &&
+    newSuffix > prefix &&
+    previousText[oldSuffix - 1] === nextText[newSuffix - 1]
+  ) {
+    oldSuffix -= 1
+    newSuffix -= 1
+  }
+
+  const delta = newSuffix - oldSuffix
+
+  return ranges
+    .map((range) => {
+      if (range.end <= prefix) {
+        return range
+      }
+
+      if (range.start >= oldSuffix) {
+        return {
+          ...range,
+          start: range.start + delta,
+          end: range.end + delta,
+        }
+      }
+
+      return null
+    })
+    .filter(Boolean)
+}
+
+function renderComposerDraft(text, ranges) {
+  if (!ranges.length) return text
+
+  const validRanges = [...ranges]
+    .filter(
+      (range) =>
+        Number.isInteger(range.start) &&
+        Number.isInteger(range.end) &&
+        range.start >= 0 &&
+        range.end > range.start &&
+        range.end <= text.length &&
+        text.slice(range.start, range.end) === range.tag
+    )
+    .sort((a, b) => a.start - b.start)
+
+  if (!validRanges.length) return text
+
+  const parts = []
+  let cursor = 0
+
+  validRanges.forEach((range, index) => {
+    if (range.start < cursor) return
+
+    if (range.start > cursor) {
+      parts.push(
+        <span key={`text-${index}-${cursor}`}>
+          {text.slice(cursor, range.start)}
+        </span>
+      )
+    }
+
+    parts.push(
+      <span
+        key={`tag-${range.start}-${range.end}-${range.tag}`}
+        className="rounded-[3px] bg-[#e4e6eb]"
+      >
+        {text.slice(range.start, range.end)}
+      </span>
+    )
+
+    cursor = range.end
+  })
+
+  if (cursor < text.length) {
+    parts.push(
+      <span key={`text-end-${cursor}`}>
+        {text.slice(cursor)}
+      </span>
+    )
+  }
+
+  return parts
+}
+
 async function uploadAuthorPostImage(file) {
   const token = getAuthToken()
 
@@ -314,6 +414,7 @@ export default function AuthorPostComposerSheet({
   const editorKeyRef = useRef('')
   const [screen, setScreen] = useState('compose')
   const [draft, setDraft] = useState('')
+  const [selectedHashtags, setSelectedHashtags] = useState([])
   const [selectedImages, setSelectedImages] = useState([])
   const [imageError, setImageError] = useState('')
   const [leaveSheetOpen, setLeaveSheetOpen] = useState(false)
@@ -373,6 +474,7 @@ export default function AuthorPostComposerSheet({
       : []
 
     setDraft(initialDraft)
+    setSelectedHashtags([])
     setSelectedImages(initialImages)
     setScreen('compose')
     setLeaveSheetOpen(false)
@@ -404,6 +506,7 @@ export default function AuthorPostComposerSheet({
   function discardPost() {
     clearImages()
     setDraft('')
+    setSelectedHashtags([])
     setImageError('')
     setLeaveSheetOpen(false)
     setScreen('compose')
@@ -434,6 +537,45 @@ export default function AuthorPostComposerSheet({
     }
 
     onClose?.()
+  }
+
+  function updateDraft(nextValue) {
+    const nextDraft = String(nextValue || '').slice(
+      0,
+      MAX_POST_LENGTH
+    )
+
+    setSelectedHashtags((current) =>
+      reconcileSelectedHashtags(
+        draft,
+        nextDraft,
+        current
+      )
+    )
+    setDraft(nextDraft)
+  }
+
+  function markSelectedHashtag(range) {
+    if (
+      !range?.tag ||
+      !Number.isInteger(range.start) ||
+      !Number.isInteger(range.end)
+    ) {
+      return
+    }
+
+    setSelectedHashtags((current) => [
+      ...current.filter(
+        (item) =>
+          item.end <= range.start ||
+          item.start >= range.end
+      ),
+      {
+        tag: range.tag,
+        start: range.start,
+        end: range.end,
+      },
+    ])
   }
 
   async function handlePickImages(fileList) {
@@ -522,6 +664,7 @@ export default function AuthorPostComposerSheet({
       if (ok) {
         clearImages()
         setDraft('')
+        setSelectedHashtags([])
         setImageError('')
         setScreen('compose')
         initialDraftRef.current = ''
@@ -610,26 +753,40 @@ export default function AuthorPostComposerSheet({
                   </div>
                 </div>
 
-                <textarea
-                  ref={textareaRef}
-                  value={draft}
-                  onChange={(event) =>
-                    setDraft(
-                      event.target.value.slice(
-                        0,
-                        MAX_POST_LENGTH
-                      )
-                    )
-                  }
-                  placeholder="Share an update..."
-                  maxLength={MAX_POST_LENGTH}
-                  className="min-h-[calc(100dvh-270px)] w-full resize-none overflow-hidden border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
-                />
+                <div className="relative">
+                  {selectedHashtags.length ? (
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 z-0 min-h-[calc(100dvh-270px)] whitespace-pre-wrap break-words text-[16px] font-normal leading-6 text-[#111827]"
+                    >
+                      {renderComposerDraft(
+                        draft,
+                        selectedHashtags
+                      )}
+                    </div>
+                  ) : null}
+
+                  <textarea
+                    ref={textareaRef}
+                    value={draft}
+                    onChange={(event) =>
+                      updateDraft(event.target.value)
+                    }
+                    placeholder="Share an update..."
+                    maxLength={MAX_POST_LENGTH}
+                    className={`relative z-10 min-h-[calc(100dvh-270px)] w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[16px] font-normal leading-6 outline-none placeholder:text-[#9ca3af] ${
+                      selectedHashtags.length
+                        ? 'text-transparent caret-[#111827]'
+                        : 'text-[#111827]'
+                    }`}
+                  />
+                </div>
 
                 <AuthorHashtagSuggestions
                   textareaRef={textareaRef}
                   draft={draft}
-                  onDraftChange={setDraft}
+                  onDraftChange={updateDraft}
+                  onHashtagSelected={markSelectedHashtag}
                   maxLength={MAX_POST_LENGTH}
                 />
 
