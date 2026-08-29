@@ -404,6 +404,52 @@ export default function MaintenancePage() {
           text-align: center;
         }
 
+        .dark .maintenance-page {
+          background-color: var(--shadow-bg-page);
+          background-image:
+            linear-gradient(180deg, rgba(13,15,22,0) 0%, rgba(13,15,22,0.22) 38%, rgba(13,15,22,0.78) 76%, var(--shadow-bg-page) 100%),
+            linear-gradient(90deg, #19152b 0%, #2a2112 100%);
+        }
+
+        .dark .language-button,
+        .dark .language-menu,
+        .dark .status-box,
+        .dark .contact-card {
+          border-color: var(--shadow-border);
+          background: var(--shadow-bg-surface);
+          color: var(--shadow-text-primary);
+        }
+
+        .dark .language-option {
+          color: var(--shadow-text-primary);
+        }
+
+        .dark .language-option:hover,
+        .dark .language-option.active {
+          background: var(--shadow-bg-hover);
+        }
+
+        .dark .maintenance-title,
+        .dark .contact-name {
+          color: var(--shadow-text-primary);
+        }
+
+        .dark .maintenance-description,
+        .dark .contact-title {
+          color: var(--shadow-text-secondary);
+        }
+
+        .dark .contact-type,
+        .dark .contact-arrow,
+        .dark .maintenance-footer {
+          color: var(--shadow-text-tertiary);
+        }
+
+        .dark .retry-button {
+          background: var(--shadow-text-primary);
+          color: var(--shadow-bg-page);
+        }
+
         @media (max-width: 620px) {
           .maintenance-content {
             padding-top: 22px;
