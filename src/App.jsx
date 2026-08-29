@@ -93,6 +93,7 @@ const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrde
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesdayEventPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
+const MusicPage = lazy(() => import('./pages/MusicPage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
 const GenreStoriesPage = lazy(() => import('./pages/Genre/GenreStoriesPage'))
@@ -331,7 +332,7 @@ function AppShell() {
     '/genre/romance/updates',
     '/genre/romance/completed',
     '/store',
-
+    '/music',
 
   ]
 
@@ -1364,6 +1365,7 @@ const shouldShowOpeningAds =
         <Route path="/author/page/:pageUsername/help" element={<LazyPage><AuthorPageHelpPage /></LazyPage>} />
         <Route path="/store" element={<ReaderStorePage />} />
         <Route path="/me" element={<Me />} />
+        <Route path="/music" element={<LazyPage><MusicPage /></LazyPage>} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
