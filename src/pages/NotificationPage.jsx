@@ -134,8 +134,8 @@ function getNotificationIcon(type) {
 }
 
 function getNotificationColor(type) {
-  if (type === 'community') return 'bg-[#F1F0FF] text-[#4F46E5]'
-  return 'bg-[#FFF7D6] text-[#B77900]'
+  if (type === 'community') return 'bg-[#F1F0FF] text-[#4F46E5] dark:bg-[#4F46E5]/15 dark:text-[#9f9aff]'
+  return 'bg-[#FFF7D6] text-[#B77900] dark:bg-[#f59e0b]/15 dark:text-[#fbbf24]'
 }
 
 function getNotificationTypeLabel(type) {
@@ -479,7 +479,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
         onClick={onClose}
       >
         <div
-          className="flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
+          className="flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl dark:bg-[var(--shadow-bg-page)]"
           style={{
             transform: `translateY(${sheetDragY}px)`,
             transition: dragStartYRef.current === null ? 'transform 0.18s ease-out' : 'none',
@@ -495,13 +495,13 @@ export default function NotificationPage({ isOpen = true, onClose }) {
             onPointerUp={handleSheetDragEnd}
             onPointerCancel={handleSheetDragEnd}
           >
-            <span className="h-1.5 w-12 rounded-full bg-[#B8BDC7]" />
+            <span className="h-1.5 w-12 rounded-full bg-[#B8BDC7] dark:bg-[var(--shadow-border-strong)]" />
           </button>
 
-          <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5">
+          <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5 dark:bg-[var(--shadow-bg-page)]">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <h1 className="truncate text-[24px] font-black leading-7 text-[#111111]">
+                <h1 className="truncate text-[24px] font-black leading-7 text-[#111111] dark:text-[var(--shadow-text-primary)]">
                   {t('notificationPage.title')}
                 </h1>
               </div>
@@ -511,14 +511,14 @@ export default function NotificationPage({ isOpen = true, onClose }) {
                 onClick={markAllAsRead}
                 aria-label={t('notificationPage.markAllRead')}
                 disabled={!counts.unread}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111111] shadow-sm active:scale-95 disabled:opacity-40"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111111] shadow-sm active:scale-95 disabled:opacity-40 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)]"
               >
                 <i className="fa-solid fa-check-double text-[14px]" />
               </button>
             </div>
           </div>
 
-          <div className="shrink-0 border-y border-[#E5E7EB] bg-[#F6F7FB] px-5 py-3">
+          <div className="shrink-0 border-y border-[#E5E7EB] bg-[#F6F7FB] px-5 py-3 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-page)]">
             <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key
@@ -531,7 +531,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
                     type="button"
                     onClick={() => setActiveTab(tab.key)}
                     className={`relative shrink-0 rounded-full px-5 py-1.5 text-xs transition active:scale-95 ${
-                      isActive ? 'bg-[#111827] text-white font-bold shadow-sm' : 'border border-gray-200 bg-white text-gray-600 font-semibold'
+                      isActive ? 'bg-[#111827] text-white font-bold shadow-sm dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]' : 'border border-gray-200 bg-white text-gray-600 font-semibold dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)]'
                     }`}
                   >
                     <span>{t(`notificationPage.${TAB_LABEL_KEYS[tab.key]}`)}</span>
@@ -548,16 +548,16 @@ export default function NotificationPage({ isOpen = true, onClose }) {
 
           <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4">
             {loading ? (
-              <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
-                <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
-                <p className="text-[13px] font-bold text-[#7B8190]">
+              <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
+                <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111] dark:border-[var(--shadow-border-strong)] dark:border-t-[var(--shadow-text-primary)]" />
+                <p className="text-[13px] font-bold text-[#7B8190] dark:text-[var(--shadow-text-secondary)]">
                   {t('notificationPage.loading')}
                 </p>
               </div>
             ) : null}
 
             {!loading && message ? (
-              <div className="rounded-[22px] border border-[#FECACA] bg-[#FFF1F1] p-4 text-[13px] font-bold text-[#E5484D]">
+              <div className="rounded-[22px] border border-[#FECACA] bg-[#FFF1F1] p-4 text-[13px] font-bold text-[#E5484D] dark:border-[#e5484d]/30 dark:bg-[#e5484d]/10">
                 {message}
               </div>
             ) : null}
@@ -566,7 +566,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
               <div className="space-y-6">
                 {groupedNotifications.map((group) => (
                   <section key={group.label}>
-                    <h2 className="mb-3 text-[15px] font-black tracking-wide text-[#111827]">
+                    <h2 className="mb-3 text-[15px] font-black tracking-wide text-[#111827] dark:text-[var(--shadow-text-primary)]">
                       {getDisplayGroupLabel(group, language, t)}
                     </h2>
 
@@ -586,10 +586,10 @@ export default function NotificationPage({ isOpen = true, onClose }) {
                             onClick={() => openNotification(notification)}
                             className={`w-full overflow-hidden rounded-[22px] border text-left shadow-sm active:scale-[0.99] ${
                               canOpen ? 'cursor-pointer' : 'cursor-default'
-                            } ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'}`}
+                            } ${notification.isRead ? 'border-[#E5E7EB] bg-white dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]' : 'border-[#FDE68A] bg-[#FFFBEA] dark:border-[#f6b800]/35 dark:bg-[#f6b800]/10'}`}
                           >
                             {notification.imageUrl ? (
-                              <div className="aspect-[16/9] w-full bg-[#F3F4F6]">
+                              <div className="aspect-[16/9] w-full bg-[#F3F4F6] dark:bg-[var(--shadow-bg-elevated)]">
                                 <img
                                   src={notification.imageUrl}
                                   alt=""
@@ -606,11 +606,11 @@ export default function NotificationPage({ isOpen = true, onClose }) {
 
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-start justify-between gap-3">
-                                    <h3 className="text-[14px] font-black text-[#111111]">
+                                    <h3 className="text-[14px] font-black text-[#111111] dark:text-[var(--shadow-text-primary)]">
                                       {getDisplayNotificationTitle(notification, t)}
                                     </h3>
                                     <div className="flex shrink-0 items-center gap-2">
-                                      <span className="text-[11px] font-bold text-[#9CA3AF]">
+                                      <span className="text-[11px] font-bold text-[#9CA3AF] dark:text-[var(--shadow-text-tertiary)]">
                                         {displayTime}
                                       </span>
                                       {!notification.isRead ? (
@@ -619,12 +619,12 @@ export default function NotificationPage({ isOpen = true, onClose }) {
                                     </div>
                                   </div>
 
-                                  <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">
+                                  <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773] dark:text-[var(--shadow-text-secondary)]">
                                     {notification.message}
                                   </p>
 
                                   {showTypePill ? (
-                                    <span className="mt-3 inline-flex rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
+                                    <span className="mt-3 inline-flex rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                                       {getDisplayNotificationTypeLabel(notification.type, t)}
                                     </span>
                                   ) : null}
@@ -641,14 +641,14 @@ export default function NotificationPage({ isOpen = true, onClose }) {
             ) : null}
 
             {!loading && !message && !filteredNotifications.length ? (
-              <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF7D6] text-[#B77900]">
+              <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF7D6] text-[#B77900] dark:bg-[#f59e0b]/15 dark:text-[#fbbf24]">
                   <i className="fas fa-bell-slash text-[22px]" />
                 </div>
-                <h2 className="mt-4 text-[18px] font-black text-[#111111]">
+                <h2 className="mt-4 text-[18px] font-black text-[#111111] dark:text-[var(--shadow-text-primary)]">
                   {t('notificationPage.noNotifications')}
                 </h2>
-                <p className="mt-2 text-[13px] font-semibold leading-6 text-[#7B8190]">
+                <p className="mt-2 text-[13px] font-semibold leading-6 text-[#7B8190] dark:text-[var(--shadow-text-secondary)]">
                   {t('notificationPage.caughtUp')}
                 </p>
               </div>
@@ -657,26 +657,26 @@ export default function NotificationPage({ isOpen = true, onClose }) {
         </div>
 
         {selectedAnnouncement ? (
-          <div className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white">
-            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 py-3">
+          <div className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white dark:bg-[var(--shadow-bg-page)]">
+            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 py-3 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
               <button
                 type="button"
                 onClick={() => setSelectedAnnouncement(null)}
                 aria-label={t('notificationPage.backToNotifications')}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
               >
                 <i className="fas fa-arrow-left text-[14px]" />
               </button>
 
               <div className="min-w-0">
-                <div className="truncate text-[15px] font-black text-[#111111]">
+                <div className="truncate text-[15px] font-black text-[#111111] dark:text-[var(--shadow-text-primary)]">
                   {t('notificationPage.notification')}
                 </div>
               </div>
             </div>
 
             <article className="mx-auto w-full max-w-[720px] px-5 pb-10 pt-6">
-              <div className="mb-3 text-[12px] font-black uppercase tracking-wide text-[#6B7280]">
+              <div className="mb-3 text-[12px] font-black uppercase tracking-wide text-[#6B7280] dark:text-[var(--shadow-text-secondary)]">
                 {getDisplayNotificationTypeLabel(selectedAnnouncement.type, t)} ·{' '}
                 {formatDisplayDateGroup(selectedAnnouncement.createdAt, language) ||
                   t('notificationPage.older')}{' '}
@@ -684,7 +684,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
               </div>
 
               {selectedAnnouncement.imageUrl ? (
-                <div className="mb-5 overflow-hidden rounded-[24px] bg-[#F3F4F6] shadow-sm">
+                <div className="mb-5 overflow-hidden rounded-[24px] bg-[#F3F4F6] shadow-sm dark:bg-[var(--shadow-bg-elevated)]">
                   <img
                     src={selectedAnnouncement.imageUrl}
                     alt=""
@@ -693,11 +693,11 @@ export default function NotificationPage({ isOpen = true, onClose }) {
                 </div>
               ) : null}
 
-              <h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111]">
+              <h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111] dark:text-[var(--shadow-text-primary)]">
                 {getDisplayNotificationTitle(selectedAnnouncement, t)}
               </h1>
 
-              <p className="mt-6 whitespace-pre-wrap text-[16px] font-semibold leading-8 text-[#4B5563]">
+              <p className="mt-6 whitespace-pre-wrap text-[16px] font-semibold leading-8 text-[#4B5563] dark:text-[var(--shadow-text-secondary)]">
                 {selectedAnnouncement.message}
               </p>
 
@@ -705,7 +705,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
                 <button
                   type="button"
                   onClick={() => navigate(selectedAnnouncement.link)}
-                  className="mt-8 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95"
+                  className="mt-8 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95 dark:bg-[var(--shadow-text-primary)] dark:text-[var(--shadow-bg-page)]"
                 >
                   {t('notificationPage.openLink')}
                 </button>
