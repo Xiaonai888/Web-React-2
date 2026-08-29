@@ -204,19 +204,19 @@ export default function GiftGuidePage() {
   }
 
   return (
-    <main className="min-h-screen bg-white pb-8 text-[#111827]">
-      <header className="sticky top-0 z-20 border-b border-[#eef1f5] bg-white/95 backdrop-blur">
+    <main className="app-page min-h-screen bg-white pb-8 text-[#111827] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-20 border-b border-[#eef1f5] bg-white/95 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex h-14 max-w-[620px] items-center px-4">
           <button
             type="button"
             onClick={goBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:scale-95 dark:text-[var(--shadow-text-primary)]"
             aria-label={t('giftGuidePage.back')}
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
           </button>
 
-          <h1 className="min-w-0 flex-1 pr-10 text-center text-[18px] font-bold text-[#111827]">
+          <h1 className="min-w-0 flex-1 pr-10 text-center text-[18px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {t('giftGuidePage.title')}
           </h1>
         </div>
@@ -226,11 +226,11 @@ export default function GiftGuidePage() {
         <div className="space-y-7">
           {GUIDE_SECTIONS.map((section) => (
             <article key={section.titleKey}>
-              <h2 className="text-[16px] font-bold leading-6 text-[#111827]">
+              <h2 className="text-[16px] font-bold leading-6 text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t(`giftGuidePage.${section.titleKey}`)}
               </h2>
 
-              <div className="mt-2 space-y-2 text-[15px] font-normal leading-7 text-[#111827]">
+              <div className="mt-2 space-y-2 text-[15px] font-normal leading-7 text-[#111827] dark:text-[var(--shadow-text-secondary)]">
                 {section.bodyKeys.map((bodyKey) => (
                   <p key={bodyKey}>
                     {t(`giftGuidePage.${bodyKey}`)}
