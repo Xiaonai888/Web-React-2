@@ -260,8 +260,8 @@ export default function EpisodeReactionsPage() {
     LANGUAGE_LOCALES.en
 
   return (
-    <main className="min-h-screen bg-white text-[#111827]">
-      <header className="sticky top-0 z-30 border-b border-[#e5e7eb] bg-white">
+    <main className="app-page min-h-screen bg-white text-[#111827] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-30 border-b border-[#e5e7eb] bg-white dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex h-16 max-w-3xl items-center px-4">
           <button
             type="button"
@@ -296,8 +296,8 @@ export default function EpisodeReactionsPage() {
                   }
                   className={`relative flex h-14 items-center gap-2 px-4 text-[15px] font-medium ${
                     active
-                      ? 'text-[#1976d2]'
-                      : 'text-[#667085]'
+                      ? 'text-[#1976d2] dark:text-[#6fb4ff]'
+                      : 'text-[#667085] dark:text-[var(--shadow-text-secondary)]'
                   }`}
                 >
                   {tab.src ? (
@@ -335,13 +335,13 @@ export default function EpisodeReactionsPage() {
                 key={index}
                 className="flex animate-pulse items-center gap-4 py-2"
               >
-                <div className="h-12 w-12 rounded-full bg-[#eef1f5]" />
-                <div className="h-4 w-40 rounded-full bg-[#eef1f5]" />
+                <div className="h-12 w-12 rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+                <div className="h-4 w-40 rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
               </div>
             ))}
           </div>
         ) : message ? (
-          <div className="py-12 text-center text-[14px] font-medium text-[#667085]">
+          <div className="py-12 text-center text-[14px] font-medium text-[#667085] dark:text-[var(--shadow-text-secondary)]">
             {message}
           </div>
         ) : visibleReactions.length ? (
@@ -366,7 +366,7 @@ export default function EpisodeReactionsPage() {
                       reaction.user
                         ?.username || ''
                     )}`}
-                    className="flex w-full cursor-pointer items-center gap-4 rounded-xl py-3 text-left transition hover:bg-[#f8fafc] active:opacity-70"
+                    className="flex w-full cursor-pointer items-center gap-4 rounded-xl py-3 text-left transition hover:bg-[#f8fafc] active:opacity-70 dark:hover:bg-[var(--shadow-bg-hover)]"
                   >
                     <div className="relative shrink-0">
                       <Avatar
@@ -375,7 +375,7 @@ export default function EpisodeReactionsPage() {
                           'episodeReactions.reader'
                         )}
                       />
-                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
+                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)]">
                         <img
                           src={meta.src}
                           alt={reactionLabel}
@@ -399,7 +399,7 @@ export default function EpisodeReactionsPage() {
           </div>
         ) : (
           <div className="py-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-tertiary)]">
               <i className="fa-regular fa-heart text-[22px]" />
             </div>
             <div className="mt-4 text-[16px] font-semibold">
