@@ -336,7 +336,8 @@ export default function StoryDetailPage() {
   const location = useLocation()
   const { id, storyId } = useParams()
   const realStoryId = storyId || id
-
+  const { t } = useDisplayTranslation()
+  
   const [story, setStory] = useState(null)
   const [episodes, setEpisodes] = useState([])
   const [episodesLoading, setEpisodesLoading] = useState(true)
@@ -765,13 +766,39 @@ setMessage(
     return <LoadingBlock />
   }
 
-  if (message || !story) {
-    return (
-      <div className="story-detail-page min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
-        <ErrorBlock message={message} onBack={() => navigate(-1)} />
+  if (errorCode === 'ADULT_RESTRICTED') {
+  return (
+    <div className="story-detail-page app-page min-h-screen px-4 py-8">
+      <div className="app-card app-shadow mx-auto mt-8 max-w-md rounded-[28px] border p-6 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-[20px] font-black text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          18+
+        </div>
+        <h2 className="app-title mt-4 text-[20px] font-extrabold">
+          {t('storyDetailPage.adultRestrictedTitle')}
+        </h2>
+        <p className="app-muted mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6">
+          {t('storyDetailPage.adultRestrictedMessage')}
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mt-5 h-12 rounded-full bg-[#111827] px-6 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
+        >
+          {t('storyDetailPage.adultRestrictedBack')}
+        </button>
       </div>
-    )
-  }
+    </div>
+  )
+}
+
+if (message || !story) {
+  return (
+    <div className="story-detail-page min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
+      <ErrorBlock message={message} onBack={() => navigate(-1)} />
+    </div>
+  )
+}
+
 
   return (
     <div className="story-detail-page min-h-screen bg-white pb-[95px] sm:bg-[#f5f3fa] sm:pb-[120px]">
