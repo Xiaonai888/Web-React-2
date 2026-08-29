@@ -237,12 +237,12 @@ function VideoCard({ video, onOpen }) {
   const isPremium = video.access === 'premium'
 
   return (
-    <article className="rounded-[22px] border border-[#ece9f5] bg-white p-3 shadow-[0_14px_34px_rgba(73,51,120,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(73,51,120,0.12)]">
+    <article className="rounded-[22px] border border-[#ece9f5] bg-white p-3 shadow-[0_14px_34px_rgba(73,51,120,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(73,51,120,0.12)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)]">
       <div className="grid grid-cols-[118px_minmax(0,1fr)] gap-3 sm:grid-cols-[185px_minmax(0,1fr)]">
         <button
           type="button"
           onClick={() => onOpen(video)}
-          className="relative h-[112px] overflow-hidden rounded-[16px] bg-[#eee9fb] sm:h-[126px]"
+          className="relative h-[112px] overflow-hidden rounded-[16px] bg-[#eee9fb] sm:h-[126px] dark:bg-[var(--shadow-bg-soft)]"
           aria-label={t('fastPage.openVideo', { title: video.title })}
         >
           <img
@@ -264,7 +264,7 @@ function VideoCard({ video, onOpen }) {
         </button>
 
         <div className="flex min-w-0 flex-col">
-          <h3 className="line-clamp-2 text-[14px] font-extrabold leading-5 text-[#171329] sm:text-[16px] sm:leading-6">
+          <h3 className="line-clamp-2 text-[14px] font-extrabold leading-5 text-[#171329] sm:text-[16px] sm:leading-6 dark:text-[var(--shadow-text-primary)]">
             {video.title}
           </h3>
 
@@ -272,9 +272,9 @@ function VideoCard({ video, onOpen }) {
             <img
               src={video.avatar}
               alt={video.creator}
-              className="h-6 w-6 shrink-0 rounded-full border border-[#ece9f5] object-cover"
+              className="h-6 w-6 shrink-0 rounded-full border border-[#ece9f5] object-cover dark:border-[var(--shadow-border)]"
             />
-            <span className="truncate text-[11px] font-semibold text-[#686276] sm:text-[12px]">
+            <span className="truncate text-[11px] font-semibold text-[#686276] sm:text-[12px] dark:text-[var(--shadow-text-secondary)]">
               {video.creator}
             </span>
             <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#7042e8] text-[8px] font-black text-white">
@@ -282,7 +282,7 @@ function VideoCard({ video, onOpen }) {
             </span>
           </div>
 
-          <div className="mt-2 flex items-center gap-1.5 text-[10px] font-medium text-[#918a9e] sm:text-[11px]">
+          <div className="mt-2 flex items-center gap-1.5 text-[10px] font-medium text-[#918a9e] sm:text-[11px] dark:text-[var(--shadow-text-tertiary)]">
             <Eye size={13} />
             <span>{video.views} {t('fastPage.views')}</span>
             <span>•</span>
@@ -293,8 +293,8 @@ function VideoCard({ video, onOpen }) {
             <span
               className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold sm:text-[11px] ${
                 isPremium
-                  ? 'bg-[#fff7df] text-[#b87900]'
-                  : 'bg-[#eafaf1] text-[#168653]'
+                  ? 'bg-[#fff7df] text-[#b87900] dark:bg-amber-500/10 dark:text-amber-300'
+                  : 'bg-[#eafaf1] text-[#168653] dark:bg-emerald-500/10 dark:text-emerald-300'
               }`}
             >
               {isPremium ? t('fastPage.premium') : t('fastPage.free')}
@@ -306,7 +306,7 @@ function VideoCard({ video, onOpen }) {
               className={`flex min-w-[78px] items-center justify-center gap-1.5 rounded-[12px] px-3 py-2 text-[11px] font-extrabold transition active:scale-95 sm:min-w-[96px] sm:text-[12px] ${
                 isPremium
                   ? 'bg-gradient-to-r from-[#7a45ea] to-[#5e35d5] text-white shadow-[0_10px_22px_rgba(104,61,220,0.25)]'
-                  : 'border border-[#7445e8] bg-white text-[#6739db] hover:bg-[#f6f1ff]'
+                  : 'border border-[#7445e8] bg-white text-[#6739db] hover:bg-[#f6f1ff] dark:bg-[var(--shadow-bg-surface)] dark:text-violet-300 dark:hover:bg-[var(--shadow-bg-hover)]'
               }`}
             >
               {isPremium ? <LockKeyhole size={13} /> : <Play size={13} fill="currentColor" />}
@@ -392,14 +392,14 @@ export default function Fast() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f5fb] text-[#171329]">
+    <div className="app-page min-h-screen bg-[#f7f5fb] text-[#171329] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
       <div className="mx-auto w-full max-w-[980px] px-3 pb-[96px] pt-3 sm:px-5 sm:pt-4">
-        <header className="sticky top-0 z-[70] mb-4 rounded-[22px] border border-[#ece9f5] bg-white/95 px-3 py-3 shadow-[0_12px_32px_rgba(60,42,96,0.08)] backdrop-blur-xl">
+        <header className="sticky top-0 z-[70] mb-4 rounded-[22px] border border-[#ece9f5] bg-white/95 px-3 py-3 shadow-[0_12px_32px_rgba(60,42,96,0.08)] backdrop-blur-xl dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)] dark:shadow-[var(--shadow-shadow)]">
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => navigate('/fast')}
-              className="flex shrink-0 items-center gap-2 rounded-[14px] px-1 py-1 text-[#171329] transition active:scale-95"
+              className="flex shrink-0 items-center gap-2 rounded-[14px] px-1 py-1 text-[#171329] transition active:scale-95 dark:text-[var(--shadow-text-primary)]"
               aria-label={t('fastPage.fastHome')}
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-gradient-to-br from-[#8b55ef] to-[#5f35d6] text-white shadow-[0_10px_20px_rgba(108,62,221,0.25)]">
@@ -412,22 +412,22 @@ export default function Fast() {
 
             <form
               onSubmit={(event) => event.preventDefault()}
-              className="flex min-w-0 flex-1 items-center rounded-full border border-[#ddd8e9] bg-[#faf9fd] px-3 transition focus-within:border-[#8150e9] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(125,75,231,0.09)]"
+              className="flex min-w-0 flex-1 items-center rounded-full border border-[#ddd8e9] bg-[#faf9fd] px-3 transition focus-within:border-[#8150e9] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(125,75,231,0.09)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:focus-within:border-violet-400 dark:focus-within:bg-[var(--shadow-input-bg)]"
             >
-              <Search size={17} className="shrink-0 text-[#767080]" />
+              <Search size={17} className="shrink-0 text-[#767080] dark:text-[var(--shadow-text-tertiary)]" />
               <input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('fastPage.searchPlaceholder')}
-                className="h-10 min-w-0 flex-1 bg-transparent px-2 text-[12px] font-medium text-[#171329] outline-none placeholder:text-[#9993a4] sm:text-[13px]"
+                className="h-10 min-w-0 flex-1 bg-transparent px-2 text-[12px] font-medium text-[#171329] outline-none placeholder:text-[#9993a4] sm:text-[13px] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)]"
               />
             </form>
 
             <button
               type="button"
               onClick={() => navigate('/fast/studio/create')}
-              className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#7846e7] bg-white px-3 text-[#6738d9] transition hover:bg-[#f6f1ff] active:scale-95"
+              className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#7846e7] bg-white px-3 text-[#6738d9] transition hover:bg-[#f6f1ff] active:scale-95 dark:bg-[var(--shadow-bg-surface)] dark:text-violet-300 dark:hover:bg-[var(--shadow-bg-hover)]"
               aria-label={t('fastPage.create')}
             >
               <Plus size={17} strokeWidth={2.3} />
@@ -438,7 +438,7 @@ export default function Fast() {
               <button
                 type="button"
                 onClick={() => setProfileOpen((value) => !value)}
-                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#8d56ef] to-[#5b32cf] text-[14px] font-black text-white ring-2 ring-[#e8ddff] transition active:scale-95"
+                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#8d56ef] to-[#5b32cf] text-[14px] font-black text-white ring-2 ring-[#e8ddff] transition active:scale-95 dark:ring-[var(--shadow-border-strong)]"
                 aria-label={t('fastPage.openProfileMenu')}
                 aria-expanded={profileOpen}
               >
@@ -450,11 +450,11 @@ export default function Fast() {
               </button>
 
               {profileOpen ? (
-                <div className="absolute right-0 top-12 z-[90] w-[190px] overflow-hidden rounded-[18px] border border-[#e8e4f1] bg-white p-1.5 shadow-[0_20px_50px_rgba(38,24,68,0.18)]">
+                <div className="absolute right-0 top-12 z-[90] w-[190px] overflow-hidden rounded-[18px] border border-[#e8e4f1] bg-white p-1.5 shadow-[0_20px_50px_rgba(38,24,68,0.18)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)] dark:shadow-[var(--shadow-shadow)]">
                   <button
                     type="button"
                     onClick={() => goTo('/profile')}
-                    className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-bold text-[#292238] transition hover:bg-[#f6f2ff]"
+                    className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-bold text-[#292238] transition hover:bg-[#f6f2ff] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
                   >
                     <UserRound size={18} className="text-[#7250bd]" />
                     {t('fastPage.viewAccount')}
@@ -462,7 +462,7 @@ export default function Fast() {
                   <button
                     type="button"
                     onClick={() => goTo('/fast/studio')}
-                    className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-bold text-[#292238] transition hover:bg-[#f6f2ff]"
+                    className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-bold text-[#292238] transition hover:bg-[#f6f2ff] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
                   >
                     <Clapperboard size={18} className="text-[#7250bd]" />
                     {t('fastPage.studio')}
@@ -534,9 +534,9 @@ export default function Fast() {
 
         <div className="my-3 flex items-center justify-center gap-2">
           <span className="h-2 w-2 rounded-full bg-[#7444e2]" />
-          <span className="h-2 w-2 rounded-full bg-[#dcd5ea]" />
-          <span className="h-2 w-2 rounded-full bg-[#dcd5ea]" />
-          <span className="h-2 w-2 rounded-full bg-[#dcd5ea]" />
+          <span className="h-2 w-2 rounded-full bg-[#dcd5ea] dark:bg-[var(--shadow-text-disabled)]" />
+          <span className="h-2 w-2 rounded-full bg-[#dcd5ea] dark:bg-[var(--shadow-text-disabled)]" />
+          <span className="h-2 w-2 rounded-full bg-[#dcd5ea] dark:bg-[var(--shadow-text-disabled)]" />
         </div>
 
         <div
@@ -554,7 +554,7 @@ export default function Fast() {
                 className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-[12px] font-extrabold transition active:scale-95 sm:px-5 sm:text-[13px] ${
                   active
                     ? 'border-[#7443e5] bg-[#7443e5] text-white shadow-[0_10px_22px_rgba(116,67,229,0.22)]'
-                    : 'border-[#e3dfec] bg-white text-[#4d4658] hover:border-[#bfa8ee] hover:bg-[#faf7ff]'
+                    : 'border-[#e3dfec] bg-white text-[#4d4658] hover:border-[#bfa8ee] hover:bg-[#faf7ff] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-secondary)] dark:hover:border-violet-400/50 dark:hover:bg-[var(--shadow-bg-hover)]'
                 }`}
               >
                 <Icon size={16} fill={key === 'premium' && active ? 'currentColor' : 'none'} />
@@ -567,14 +567,14 @@ export default function Fast() {
         <section>
           <div className="mb-3 flex items-end justify-between gap-3 px-1">
             <div>
-              <h2 className="text-[18px] font-black tracking-[-0.02em] text-[#171329] sm:text-[20px]">
+              <h2 className="text-[18px] font-black tracking-[-0.02em] text-[#171329] sm:text-[20px] dark:text-[var(--shadow-text-primary)]">
                 {t('fastPage.videosForYou')}
               </h2>
-              <p className="mt-0.5 text-[11px] font-medium text-[#918a9e] sm:text-[12px]">
+              <p className="mt-0.5 text-[11px] font-medium text-[#918a9e] sm:text-[12px] dark:text-[var(--shadow-text-secondary)]">
                 {t('fastPage.videosForYouSub')}
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-[#eee8fb] px-3 py-1.5 text-[10px] font-extrabold text-[#6c3fd7] sm:text-[11px]">
+            <span className="shrink-0 rounded-full bg-[#eee8fb] px-3 py-1.5 text-[10px] font-extrabold text-[#6c3fd7] sm:text-[11px] dark:bg-violet-500/15 dark:text-violet-300">
               {t('fastPage.videosCount', { count: filteredVideos.length })}
             </span>
           </div>
@@ -586,10 +586,10 @@ export default function Fast() {
               ))}
             </div>
           ) : (
-            <div className="rounded-[22px] border border-dashed border-[#d8d0e8] bg-white px-5 py-12 text-center shadow-sm">
+            <div className="rounded-[22px] border border-dashed border-[#d8d0e8] bg-white px-5 py-12 text-center shadow-sm dark:border-[var(--shadow-border-strong)] dark:bg-[var(--shadow-bg-surface)]">
               <Search className="mx-auto text-[#8b6bd0]" size={28} />
-              <h3 className="mt-3 text-[15px] font-extrabold text-[#211a30]">{t('fastPage.noVideosFound')}</h3>
-              <p className="mt-1 text-[12px] text-[#918a9e]">{t('fastPage.tryAnother')}</p>
+              <h3 className="mt-3 text-[15px] font-extrabold text-[#211a30] dark:text-[var(--shadow-text-primary)]">{t('fastPage.noVideosFound')}</h3>
+              <p className="mt-1 text-[12px] text-[#918a9e] dark:text-[var(--shadow-text-secondary)]">{t('fastPage.tryAnother')}</p>
             </div>
           )}
         </section>
