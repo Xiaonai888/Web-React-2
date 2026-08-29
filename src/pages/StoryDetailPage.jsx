@@ -152,8 +152,8 @@ function authHeaders() {
 
 function LoadingBlock() {
   return (
-    <div className="story-detail-page min-h-screen bg-white pb-[130px] sm:bg-[#f5f3fa]">
-      <section className="relative bg-[#f5f3fa]">
+    <div className="story-detail-page app-page min-h-screen bg-white pb-[130px] dark:bg-[var(--shadow-bg-page)] sm:bg-[#f5f3fa] sm:dark:bg-[var(--shadow-bg-page)]">
+      <section className="relative bg-[#f5f3fa] dark:bg-[var(--shadow-bg-page)]">
         <div className="fixed left-0 right-0 top-0 z-50 px-4 py-3">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
             <div className="h-10 w-10 rounded-full bg-white/55" />
@@ -164,9 +164,9 @@ function LoadingBlock() {
           </div>
         </div>
 
-        <div className="relative h-[56.25vw] min-h-[200px] max-h-[520px] w-full animate-pulse overflow-hidden bg-[#dfe5ec]">
+        <div className="relative h-[56.25vw] min-h-[200px] max-h-[520px] w-full animate-pulse overflow-hidden bg-[#dfe5ec] dark:bg-[var(--shadow-bg-elevated)]">
           <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f5f3fa] to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f5f3fa] to-transparent dark:from-[var(--shadow-bg-page)]" />
 
           <div className="relative mx-auto flex h-full max-w-5xl flex-col justify-end px-4 pb-14">
             <div className="h-7 w-3/4 rounded-full bg-white/75" />
@@ -183,62 +183,62 @@ function LoadingBlock() {
 
       <main className="mx-auto max-w-5xl px-0 sm:px-4">
         <section className="-mt-8 px-4">
-          <div className="h-14 animate-pulse rounded-full bg-[#fff4cf]" />
+          <div className="h-14 animate-pulse rounded-full bg-[#fff4cf] dark:bg-amber-500/10" />
         </section>
 
-        <section className="bg-white px-4 py-4">
+        <section className="bg-white px-4 py-4 dark:bg-[var(--shadow-bg-surface)]">
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center">
-              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5]" />
-              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5]" />
+              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
             </div>
             <div className="text-center">
-              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5]" />
-              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5]" />
+              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
             </div>
             <div className="text-center">
-              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5]" />
-              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5]" />
+              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
             </div>
           </div>
         </section>
 
-        <section className="mt-2 bg-white px-4 py-5">
-          <div className="mb-4 h-4 w-20 animate-pulse rounded-full bg-[#eef1f5]" />
+        <section className="mt-2 bg-white px-4 py-5 dark:bg-[var(--shadow-bg-surface)]">
+          <div className="mb-4 h-4 w-20 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
           <div className="space-y-2">
-            <div className="h-4 w-full animate-pulse rounded-full bg-[#eef1f5]" />
-            <div className="h-4 w-11/12 animate-pulse rounded-full bg-[#eef1f5]" />
-            <div className="h-4 w-5/6 animate-pulse rounded-full bg-[#eef1f5]" />
-            <div className="h-4 w-3/4 animate-pulse rounded-full bg-[#eef1f5]" />
+            <div className="h-4 w-full animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+            <div className="h-4 w-11/12 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+            <div className="h-4 w-5/6 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+            <div className="h-4 w-3/4 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
           </div>
         </section>
 
-        <section className="mt-2 bg-white px-4 py-5">
-          <div className="mb-4 h-5 w-24 animate-pulse rounded-full bg-[#eef1f5]" />
+        <section className="mt-2 bg-white px-4 py-5 dark:bg-[var(--shadow-bg-surface)]">
+          <div className="mb-4 h-5 w-24 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
 
           <div className="space-y-4">
             <div className="flex gap-3">
-              <div className="h-[58px] w-[76px] shrink-0 animate-pulse rounded-[10px] bg-[#eef1f5]" />
+              <div className="h-[58px] w-[76px] shrink-0 animate-pulse rounded-[10px] bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
               <div className="flex-1 pt-1">
-                <div className="h-4 w-28 animate-pulse rounded-full bg-[#eef1f5]" />
-                <div className="mt-3 h-3 w-24 animate-pulse rounded-full bg-[#eef1f5]" />
+                <div className="h-4 w-28 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+                <div className="mt-3 h-3 w-24 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
               </div>
             </div>
 
             <div className="flex gap-3">
-              <div className="h-[58px] w-[76px] shrink-0 animate-pulse rounded-[10px] bg-[#eef1f5]" />
+              <div className="h-[58px] w-[76px] shrink-0 animate-pulse rounded-[10px] bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
               <div className="flex-1 pt-1">
-                <div className="h-4 w-28 animate-pulse rounded-full bg-[#eef1f5]" />
-                <div className="mt-3 h-3 w-24 animate-pulse rounded-full bg-[#eef1f5]" />
+                <div className="h-4 w-28 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
+                <div className="mt-3 h-3 w-24 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
               </div>
             </div>
           </div>
         </section>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white px-4 pb-4 pt-3">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white px-4 pb-4 pt-3 dark:bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto grid max-w-5xl grid-cols-[48px_1fr] gap-2">
-          <div className="h-12 animate-pulse rounded-full bg-[#eef1f5]" />
+          <div className="h-12 animate-pulse rounded-full bg-[#eef1f5] dark:bg-[var(--shadow-bg-elevated)]" />
           <div className="h-12 animate-pulse rounded-full bg-[#111827]/20" />
         </div>
       </div>
@@ -250,20 +250,20 @@ function ErrorBlock({ message, onBack }) {
   const { t } = useDisplayTranslation()
 
   return (
-    <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+    <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] dark:bg-red-500/10 dark:text-red-400">
         <i className="fa-solid fa-triangle-exclamation text-[22px]" />
       </div>
-      <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">
+      <h2 className="mt-4 text-[18px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
         {t('storyDetailPage.cannotLoadStory')}
       </h2>
-      <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6 text-[#667085]">
+      <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6 text-[#667085] dark:text-[var(--shadow-text-secondary)]">
         {message || t('storyDetailPage.tryAgainLater')}
       </p>
       <button
         type="button"
         onClick={onBack}
-        className="mt-5 h-12 rounded-full bg-[#111827] px-6 text-[13px] font-extrabold text-white active:scale-95"
+        className="mt-5 h-12 rounded-full bg-[#111827] px-6 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
       >
         {t('storyDetailPage.goBack')}
       </button>
@@ -314,14 +314,14 @@ function StoryAuthorMiniCard({
   }
 
   return (
-    <section className="mt-2 bg-white px-4 py-5 shadow-sm sm:mt-4 sm:rounded-[22px] sm:px-5 sm:py-6 sm:ring-1 sm:ring-black/5">
+    <section className="mt-2 bg-white px-4 py-5 shadow-sm dark:bg-[var(--shadow-bg-surface)] sm:mt-4 sm:rounded-[22px] sm:px-5 sm:py-6 sm:ring-1 sm:ring-black/5 sm:dark:ring-[var(--shadow-border)]">
       <div className="flex items-start gap-3">
         <button
           type="button"
           onClick={handleOpenPage}
           className="flex min-w-0 flex-1 items-center gap-3 text-left active:scale-[0.995]"
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f5f3fa] text-[14px] font-bold text-[#111827] ring-1 ring-black/5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f5f3fa] text-[14px] font-bold text-[#111827] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)]">
             {authorPage.avatar_url ? (
               <img src={authorPage.avatar_url} alt={authorPage.page_name} className="h-full w-full object-cover" />
             ) : (
@@ -330,10 +330,10 @@ function StoryAuthorMiniCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="line-clamp-1 text-[14px] font-bold leading-5 text-[#111827]">
+            <div className="line-clamp-1 text-[14px] font-bold leading-5 text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {authorPage.page_name || t('storyDetailPage.authorPage')}
             </div>
-            <div className="mt-0.5 line-clamp-1 text-[11px] font-medium text-[#98a2b3]">
+            <div className="mt-0.5 line-clamp-1 text-[11px] font-medium text-[#98a2b3] dark:text-[var(--shadow-text-secondary)]">
               {followerText}
             </div>
           </div>
@@ -351,7 +351,7 @@ function StoryAuthorMiniCard({
 
     handleOpenPage()
   }}
-  className="shrink-0 pt-0 text-[12px] font-semibold text-[#98a2b3] active:scale-95"
+  className="shrink-0 pt-0 text-[12px] font-semibold text-[#98a2b3] active:scale-95 dark:text-[var(--shadow-text-secondary)]"
 >
   {isOwnerPage ? t('storyDetailPage.managePage') : t('storyDetailPage.viewPage')}{' '}
   <i className="fa-solid fa-chevron-right ml-1 text-[9px]" />
@@ -361,10 +361,10 @@ function StoryAuthorMiniCard({
      {displayTopFans.length ? (
   <div
   onClick={onOpenTopFans}
-  className="mt-5 -mx-1 flex min-h-[112px] cursor-pointer items-start gap-3 rounded-[13px] bg-[#f8fafc] px-4 py-4 active:scale-[0.995]"
+  className="mt-5 -mx-1 flex min-h-[112px] cursor-pointer items-start gap-3 rounded-[13px] bg-[#f8fafc] px-4 py-4 active:scale-[0.995] dark:bg-[var(--shadow-bg-elevated)]"
 >
     <div className="min-w-0 flex-1 pt-1">
-      <div className="flex items-center gap-1.5 text-[14px] font-normal text-[#111827]">
+      <div className="flex items-center gap-1.5 text-[14px] font-normal text-[#111827] dark:text-[var(--shadow-text-primary)]">
         <span>{t('storyDetailPage.topFans')}</span>
         <span className="text-[#d99a00]">
           {t('storyDetailPage.peopleInTotal', { count: topFanCount })}
@@ -380,7 +380,7 @@ function StoryAuthorMiniCard({
           return (
             <div
               key={fan.id || fan.user_id || name || index}
-              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#f2f3f6] text-[#aeb5c2] ring-1 ring-[#dfe3ea]"
+              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#f2f3f6] text-[#aeb5c2] ring-1 ring-[#dfe3ea] dark:bg-[var(--shadow-bg-soft)] dark:text-[var(--shadow-text-tertiary)] dark:ring-[var(--shadow-border-strong)]"
             >
               {avatar ? (
                 <img src={avatar} alt={name} className="h-full w-full object-cover" />
@@ -881,7 +881,7 @@ useEffect(() => {
 
 if (message || !story) {
   return (
-    <div className="story-detail-page min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
+    <div className="story-detail-page app-page min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4 dark:bg-[var(--shadow-bg-page)]">
       <ErrorBlock message={message} onBack={() => navigate(-1)} />
     </div>
   )
@@ -889,7 +889,7 @@ if (message || !story) {
 
 
   return (
-    <div className="story-detail-page min-h-screen bg-white pb-[95px] sm:bg-[#f5f3fa] sm:pb-[120px]">
+    <div className="story-detail-page app-page min-h-screen bg-white pb-[95px] dark:bg-[var(--shadow-bg-page)] sm:bg-[#f5f3fa] sm:pb-[120px] sm:dark:bg-[var(--shadow-bg-page)]">
       <StoryHeroSection
         story={story}
         onBack={() => navigate(-1)}
