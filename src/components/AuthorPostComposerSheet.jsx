@@ -626,6 +626,13 @@ export default function AuthorPostComposerSheet({
                   className="min-h-[calc(100dvh-270px)] w-full resize-none overflow-hidden border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
                 />
 
+                <AuthorHashtagSuggestions
+                  textareaRef={textareaRef}
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  maxLength={MAX_POST_LENGTH}
+                />
+
                 <SelectedImagePreview images={selectedImages} onRemove={removeImage} />
 
                 {imageError ? (
