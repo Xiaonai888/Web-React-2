@@ -4335,6 +4335,7 @@ const [savingSubscribe, setSavingSubscribe] = useState(false)
   }, [activeReadingTarget])
 
   useEffect(() => {
+    adultConsentGrantedRef.current = false
     setAdultConsentGranted(false)
   }, [storyId])
 
@@ -4908,7 +4909,7 @@ const continuousReader = useContinuousEpisodeReader({
       }
     }
 
-    if (entry.episode.is_adult && !adultConsentGranted) {
+    if (entry.episode.is_adult && !adultConsentGrantedRef.current) {
       setAdultAccepted(false)
       setAdultWarningOpen(true)
     } else {
@@ -5055,7 +5056,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           adFinished: !requiresAd,
         })
 
-        if (episodeData.episode?.is_adult && !adultConsentGranted) {
+        if (episodeData.episode?.is_adult && !adultConsentGrantedRef.current) {
           setAdultAccepted(false)
           setAdultWarningOpen(true)
         } else {
@@ -6196,6 +6197,7 @@ autoScrollEnabled ? (
         open={adultWarningOpen}
         onCancel={() => navigate(`/story/${storyId}`, { replace: true })}
         onContinue={() => {
+          adultConsentGrantedRef.current = true
           setAdultConsentGranted(true)
           setAdultAccepted(true)
           setAdultWarningOpen(false)
