@@ -1097,12 +1097,12 @@ export default function DiscoverSearchPage() {
       post.id
     )
 
-    if (
-      if (post?.post_source === 'author') {
-  navigate(`/author/post/${encodeURIComponent(post.id)}?source=search`)
+   if (post?.post_source === 'author') {
+  navigate(
+    `/author/post/${encodeURIComponent(post.id)}?source=search`
+  )
   return
 }
-
     openReader(post.owner, false)
   }
 
