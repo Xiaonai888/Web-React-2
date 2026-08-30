@@ -57,6 +57,11 @@
 "src/pages/UpdateTodayPage.jsx",
 "src/pages/YouMightLikePage.jsx",
 "src/pages/GenresPage.jsx",
-"src/pages/ShadowExclusivePage.jsx"
+"src/pages/ShadowExclusivePage.jsx",
+"src/pages/Search.jsx",
+"src/pages/MostReadThisWeekPage.jsx",
+"src/pages/RankingPage.jsx",
+"src/pages/WalletPage.jsx",
+"src/components/Wallet/PaymentProfileModal.jsx"
   ]
 }
