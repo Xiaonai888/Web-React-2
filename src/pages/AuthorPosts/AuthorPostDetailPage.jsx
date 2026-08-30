@@ -115,7 +115,10 @@ function renderPostTextWithLinks(text, postId) {
             href={part}
             target="_blank"
             rel="noopener noreferrer"
-            className="break-all text-[#1877f2]"
+onClick={() => {
+  void recordAuthorPostClick(postId, part)
+}}
+className="break-all text-[#1877f2]"
           >
             {part}
           </a>
@@ -1477,7 +1480,8 @@ const selectedPhotoAltText = String(
     post?.content ? (
       <span>
         {renderPostTextWithLinks(
-  post.content
+  post.content,
+  post.id
 )}
       </span>
     ) : null
