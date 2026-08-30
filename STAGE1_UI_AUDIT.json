@@ -31,3 +31,21 @@
   "blocks": {},
   "files": {}
 }
+
+
+{
+  "stage": "STAGE_1_UI_AUDIT",
+  "purpose": "Single source of truth for Stage 1 Hybrid Dark Mode + 5 Languages audit.",
+  "rules": {
+    "read_this_file_first": true,
+    "audit_only_user_visible_ui": true,
+    "skip_non_ui_files": true,
+    "locked_files": "DO NOT audit or modify these files again during Stage 1 unless the user explicitly asks or a new UI-relevant change is verified.",
+    "reader_page_last": true,
+    "stage_2_locked_until_stage_1_complete": true
+  },
+  "locked_files": [
+    "src/pages/RatingPage.jsx",
+    "src/pages/ReactionPage.jsx"
+  ]
+}
