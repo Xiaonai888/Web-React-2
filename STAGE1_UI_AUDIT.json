@@ -37,6 +37,11 @@
     "src/pages/ReaderProfiles/ReaderAccountSecurityPage.jsx",
     "src/pages/ReaderProfiles/ReaderChangePasswordPage.jsx",
     "src/pages/ReaderProfiles/ReaderChangeEmailPage.jsx",
-    "src/pages/Me/MeCommentsPage.jsx"
+    "src/pages/Me/MeCommentsPage.jsx",
+"src/pages/TaskHistoryPage.jsx",
+"src/pages/GiftGuidePage.jsx",
+"src/pages/ReceivedEchoesPage.jsx",
+"src/pages/ReaderProfiles/ReaderDiscoverPeoplePage.jsx",
+"src/pages/ReaderPosts/ReaderPostReviewPage.jsx"
   ]
 }
