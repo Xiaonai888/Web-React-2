@@ -518,7 +518,7 @@ useEffect(() => {
 
 {isOwner ? (
   <div className="flex items-center gap-3 border-b border-[#eef0f4] px-4 py-2">
-    <button type="button" onClick={() => onMessage?.('Insights and Ads coming soon.')} className="shrink-0 text-left active:opacity-60">
+    <button type="button" navigate(`/author/page/posts/${encodeURIComponent(post.id)}/insights`) className="shrink-0 text-left active:opacity-60">
       <span className="text-[13px] font-medium leading-5 text-[#64748B]">See insights<br />and ads</span>
     </button>
     <button type="button" onClick={() => onMessage?.('Boost post coming soon.')} className="ml-auto flex h-10 flex-1 items-center justify-center rounded-[8px] bg-black px-4 text-[14px] font-semibold text-white active:opacity-80">
@@ -1019,7 +1019,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const photoIndex = Math.max(0, images.indexOf(imageUrl))
 
   navigate(
-    `/author/post/${encodeURIComponent(post.id)}?photo=${photoIndex}`,
+    `/author/post/${encodeURIComponent(post.id)}?photo=${photoIndex}&source=author_page`,
     { state: { fromAuthorPage: true } }
   )
 }
