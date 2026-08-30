@@ -2293,3 +2293,7 @@ likeCount={
     </div>
   )
 }
+
+onClick={() => {
+  void recordAuthorPostClick(postId, part)
+}}
