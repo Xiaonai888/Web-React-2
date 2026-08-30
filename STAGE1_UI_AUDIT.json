@@ -47,6 +47,11 @@
 "src/pages/FastStudioPage.jsx",
 "src/pages/EpisodeReactionsPage.jsx",
 "src/pages/ReportPage.jsx",
-"src/pages/EditProfileLinksPage.jsx"
+"src/pages/EditProfileLinksPage.jsx",
+"src/pages/Chat/ArchivedChatPage.jsx",
+"src/pages/NotificationPage.jsx",
+"src/pages/InboxPage.jsx",
+"src/pages/DailyPicksPage.jsx",
+"src/pages/CompletedPage.jsx"
   ]
 }
