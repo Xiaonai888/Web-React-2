@@ -72,6 +72,11 @@
 "src/components/AuthorPageShareSheet.jsx",
 "src/components/reader-profile/ReaderQrScannerSheet.jsx",
 "src/components/DailyGiftRewardPopup.jsx",
-"src/components/reader-profile/ReaderDiscoverPeoplePanel.jsx"
+"src/components/reader-profile/ReaderDiscoverPeoplePanel.jsx",
+"src/components/reader-profile/ReaderProfileFooter.jsx",
+"src/components/reader-profile/ReaderProfileOptionsSheet.jsx",
+"src/pages/Auth/LoginPage.jsx",
+"src/pages/Auth/ResetPasswordPage.jsx",
+"src/pages/Auth/ForgotPasswordPage.jsx"
   ]
 }
