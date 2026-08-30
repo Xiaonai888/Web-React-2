@@ -236,7 +236,7 @@ function ReaderAvatar({ user }) {
     user?.avatar_url || ''
 
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eceaf2] text-[15px] font-semibold text-[#111827]">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eceaf2] text-[15px] font-semibold text-[#111827] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]">
       {avatar ? (
         <img
           src={avatar}
