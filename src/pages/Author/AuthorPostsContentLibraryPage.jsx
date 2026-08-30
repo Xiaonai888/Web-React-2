@@ -8,9 +8,9 @@ const API_BASE_URL =
 
 const FILTER_OPTIONS = {
   status: [
-  { value: 'all', label: 'All posts' },
-  { value: 'published', label: 'Published' },
-],
+    { value: 'all', label: 'All posts' },
+    { value: 'published', label: 'Published' },
+  ],
   date: [
     { value: 'today', label: 'Today' },
     { value: '7d', label: 'Last 7 days' },
@@ -369,39 +369,16 @@ function FilterSheet({
         <div className="mx-auto h-1 w-14 rounded-full bg-[#8b8d93]" />
 
         <div
-          className={`relative flex min-h-[58px] items-center justify-center ${
-            section === 'date' ? 'border-b border-[#d9dde4]' : ''
+          className={`flex min-h-[58px] items-center justify-center ${
+            section !== 'menu' ? 'border-b border-[#d9dde4]' : ''
           }`}
         >
-          {section !== 'menu' && section !== 'date' ? (
-            <button
-              type="button"
-              onClick={() => onSectionChange('menu')}
-              className="absolute left-0 flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#e5e7eb]"
-              aria-label="Back"
-            >
-              <i className="fa-solid fa-chevron-left text-[18px]" />
-            </button>
-          ) : null}
-
           <h2 className="text-center text-[20px] font-bold text-[#111827]">
             {section === 'menu'
               ? 'Filters'
               : rows.find((item) => item.key === section)?.label || 'Filters'}
           </h2>
-
-          {section !== 'date' ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute right-0 flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#e5e7eb]"
-              aria-label="Close"
-            >
-              <i className="fa-solid fa-xmark text-[18px]" />
-            </button>
-          ) : null}
         </div>
-
         {section === 'menu' ? (
           <div className="overflow-hidden rounded-[18px] bg-white">
             {rows.map((item) => (
@@ -463,11 +440,8 @@ function FilterSheet({
 
 export default function AuthorPostsContentLibraryPage() {
   const navigate = useNavigate()
-  const [authorPage, setAuthorPage] = useState(null)
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
   const [message, setMessage] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterSection, setFilterSection] = useState('menu')
@@ -502,9 +476,7 @@ export default function AuthorPostsContentLibraryPage() {
       const page = await fetchMyAuthorPage()
       const nextPosts = await fetchAllAuthorPosts(page.page_username)
 
-      setAuthorPage(page)
       setPosts(nextPosts)
-      setHasMore(false)
     } catch (error) {
       setMessage(error.message || 'Failed to load Content Library')
     } finally {
@@ -519,8 +491,10 @@ export default function AuthorPostsContentLibraryPage() {
   const visiblePosts = useMemo(() => {
     let nextPosts = [...posts]
 
-    if (statusFilter === 'pinned') {
-      nextPosts = nextPosts.filter((post) => post?.is_pinned)
+    if (statusFilter === 'published') {
+      nextPosts = nextPosts.filter(
+        (post) => String(post?.status || '').toLowerCase() === 'active'
+      )
     }
 
     const cutoff = getDateCutoff(dateRange)
@@ -561,41 +535,6 @@ export default function AuthorPostsContentLibraryPage() {
 
     return nextPosts
   }, [dateRange, metricMode, placementFilter, posts, statusFilter, typeFilter])
-
-  async function loadMorePosts() {
-    if (!authorPage?.page_username || loadingMore || !hasMore || !posts.length) {
-      return
-    }
-
-    const oldestPost = [...posts].sort(
-      (a, b) =>
-        new Date(a.created_at || 0).getTime() -
-        new Date(b.created_at || 0).getTime()
-    )[0]
-    const before = String(oldestPost?.created_at || '').slice(0, 10)
-
-    if (!before) return
-
-    try {
-      setLoadingMore(true)
-      setMessage('')
-
-      const nextPosts = await fetchAuthorPostsPage(authorPage.page_username, before)
-
-      setPosts((current) => {
-        const postMap = new Map(current.map((post) => [post.id, post]))
-
-        nextPosts.forEach((post) => postMap.set(post.id, post))
-
-        return [...postMap.values()]
-      })
-      setHasMore(nextPosts.length === 30)
-    } catch (error) {
-      setMessage(error.message || 'Failed to load more posts')
-    } finally {
-      setLoadingMore(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -669,22 +608,35 @@ export default function AuthorPostsContentLibraryPage() {
             </button>
 
             <button
-  type="button"
-  onClick={() => openFilter('metrics')}
-  className="flex h-11 items-center gap-2 rounded-[12px] bg-[#dbeeff] px-4 text-[14px] font-semibold text-[#1674c4]"
->
-  {getOptionLabel('metrics', metricMode)}
-  <i className="fa-solid fa-caret-down text-[12px]" />
-</button>
+              type="button"
+              onClick={() => openFilter('metrics')}
+              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#dbeeff] px-4 text-[14px] font-semibold text-[#1674c4]"
+            >
+              {getOptionLabel('metrics', metricMode)}
+              <i className="fa-solid fa-caret-down text-[12px]" />
+            </button>
 
             <button
-  type="button"
-  onClick={() => openFilter('status')}
-  className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
->
-  Post status
-  <i className="fa-solid fa-caret-down text-[12px]" />
-</button>
+              type="button"
+              onClick={() => openFilter('status')}
+              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
+            >
+              Post status
+              <i className="fa-solid fa-caret-down text-[12px]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => openFilter('placement')}
+              className={`flex h-11 items-center gap-2 rounded-[12px] px-4 text-[14px] font-semibold ${
+                placementFilter === 'all'
+                  ? 'bg-[#eef0f4] text-[#111827]'
+                  : 'bg-[#dbeeff] text-[#1674c4]'
+              }`}
+            >
+              {getOptionLabel('placement', placementFilter)}
+              <i className="fa-solid fa-caret-down text-[12px]" />
+            </button>
           </div>
         </div>
       </header>
@@ -722,18 +674,6 @@ export default function AuthorPostsContentLibraryPage() {
           </div>
         )}
 
-        {hasMore && !loading ? (
-          <div className="px-4 py-5">
-            <button
-              type="button"
-              disabled={loadingMore}
-              onClick={loadMorePosts}
-              className="h-11 w-full rounded-[12px] bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:text-[#9ca3af]"
-            >
-              {loadingMore ? 'Loading...' : 'Load more posts'}
-            </button>
-          </div>
-        ) : null}
       </main>
 
       <FilterSheet
