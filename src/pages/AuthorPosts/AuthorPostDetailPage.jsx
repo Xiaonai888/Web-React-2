@@ -1,3 +1,4 @@
+import { recordAuthorPostClick } from '../../services/authorPostInsightsApi'
 import CommentSection from '../../components/comments/CommentSection'
 import PublicPostDetailView from '../../components/social/posts/PublicPostDetailView'
 import {
@@ -101,7 +102,7 @@ function formatPhotoViewerDateTime(value) {
   }).format(date)
 }
 
-function renderPostTextWithLinks(text) {
+function renderPostTextWithLinks(text, postId) {
   return String(text || '')
     .split(POST_TOKEN_PATTERN)
     .map((part, index) => {
@@ -1476,8 +1477,8 @@ const selectedPhotoAltText = String(
     post?.content ? (
       <span>
         {renderPostTextWithLinks(
-          post.content
-        )}
+  post.content
+)}
       </span>
     ) : null
   }
