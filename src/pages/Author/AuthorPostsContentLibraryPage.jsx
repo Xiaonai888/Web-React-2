@@ -319,7 +319,6 @@ export default function AuthorPostsContentLibraryPage() {
               }`}
             >
               <i className="fa-solid fa-sliders text-[13px]" />
-              {pinnedOnly ? '(1)' : 'Filter'}
             </button>
 
             <button
