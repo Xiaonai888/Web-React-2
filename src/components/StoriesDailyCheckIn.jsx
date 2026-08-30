@@ -327,28 +327,8 @@ export default function StoriesDailyCheckIn() {
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        @keyframes shadowCheckInRewardPop {
-          0% { transform: scale(.45) rotate(-12deg); opacity: 0; }
-          62% { transform: scale(1.12) rotate(5deg); opacity: 1; }
-          100% { transform: scale(1) rotate(0); opacity: 1; }
-        }
-
-        @keyframes shadowCheckInSpark {
-          0% { opacity: 0; transform: translateY(10px) scale(.3); }
-          45% { opacity: 1; }
-          100% { opacity: 0; transform: translateY(-24px) scale(1.25); }
-        }
-
         .shadow-checkin-modal-in {
           animation: shadowCheckInModalIn .28s cubic-bezier(.22,1,.36,1) both;
-        }
-
-        .shadow-checkin-reward-pop {
-          animation: shadowCheckInRewardPop .68s cubic-bezier(.22,1,.36,1) both;
-        }
-
-        .shadow-checkin-spark {
-          animation: shadowCheckInSpark 1.1s ease-out infinite;
         }
       `}</style>
 
