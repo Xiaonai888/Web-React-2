@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import DailyGiftRewardPopup from '../components/DailyGiftRewardPopup'
 
 registerTranslationNamespace('taskCenterPage', {
   "en": {
@@ -2000,70 +2001,13 @@ navigate(targetPath, {
       ) : null}
 
       {giftReward ? (
-  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/65 px-6">
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <span className="shadowFirework shadowFireworkLeft" />
-      <span className="shadowFirework shadowFireworkRight" />
-      <span className="shadowFirework shadowFireworkTop" />
-      <CoinIcon className="shadowCoinBurst shadowCoinBurstOne absolute left-[18%] top-[30%] h-9 w-9" />
-      <CoinIcon className="shadowCoinBurst shadowCoinBurstTwo absolute right-[19%] top-[29%] h-8 w-8" />
-
-      <span className="absolute left-[16%] top-[38%] h-2 w-2 animate-ping rounded-full bg-[#F6B800]" />
-      <span className="absolute right-[18%] top-[42%] h-2 w-2 animate-ping rounded-full bg-white" />
-      <span className="absolute left-[35%] top-[24%] h-1.5 w-1.5 animate-pulse rounded-full bg-[#fff1a8]" />
-      <span className="absolute right-[35%] bottom-[28%] h-1.5 w-1.5 animate-pulse rounded-full bg-[#fff1a8]" />
-      <span className="absolute left-[22%] bottom-[34%] h-2 w-2 animate-bounce rounded-full bg-[#ff3f62]" />
-      <span className="absolute right-[23%] bottom-[35%] h-2 w-2 animate-bounce rounded-full bg-[#F6B800]" />
-    </div>
-
-    <div className="relative z-10 flex w-full max-w-[390px] flex-col items-center text-center">
-      <h3 className="text-[25px] font-black leading-8 text-[#ffcc32] drop-shadow-[0_3px_0_rgba(108,65,0,0.35)]">
-        {t('taskCenterPage.surpriseGot')}
-      </h3>
-
-      <div className="shadowRewardPop mt-3 flex items-center justify-center gap-5">
-        <div className="flex items-center gap-2">
-          <CoinIcon className="h-10 w-10" />
-          <span className="text-[28px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
-  +{formatNumber(giftReward.coins)}
-</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <img
-  src="/assets/Icons/Voucher.svg"
-  alt={t('taskCenterPage.voucher')}
-  className="h-[46px] w-[64px] object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)]"
-/>
-          <span className="text-[28px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
-  +{formatNumber(giftReward.vouchers)}
-</span>
-        </div>
-      </div>
-
-      <div className="relative mt-5 flex h-[245px] w-full items-center justify-center">
-        <span className="shadowPopupGlow absolute h-[220px] w-[220px] rounded-full bg-[#ffbd28]/35 blur-3xl" />
-        <span className="absolute h-[270px] w-[270px] rounded-full bg-[radial-gradient(circle,rgba(255,230,115,0.35)_0%,rgba(255,184,0,0.12)_42%,rgba(255,184,0,0)_70%)]" />
-
-        <img
-          src="/assets/Task%20Center/gift-open.png?v=1"
-          alt={t('taskCenterPage.openedGift')}
-          className="shadowGiftOpen relative z-10 h-[230px] w-[300px] object-contain drop-shadow-[0_20px_28px_rgba(0,0,0,0.38)]"
-        />
-      </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          setGiftReward(null)
-          setToast(t('taskCenterPage.rewardAddedWallet'))
-        }}
-        className="mt-5 flex h-12 w-[260px] items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_12px_26px_rgba(255,63,98,0.34)] active:scale-[0.98]"
-      >
-        {t('taskCenterPage.claim')}
-      </button>
-    </div>
-  </div>
+  <DailyGiftRewardPopup
+    reward={giftReward}
+    onClose={() => {
+      setGiftReward(null)
+      setToast(t('taskCenterPage.rewardAddedWallet'))
+    }}
+  />
 ) : null}
 
       {showCheckInRules ? (
