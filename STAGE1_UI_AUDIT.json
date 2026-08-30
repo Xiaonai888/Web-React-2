@@ -52,6 +52,11 @@
 "src/pages/NotificationPage.jsx",
 "src/pages/InboxPage.jsx",
 "src/pages/DailyPicksPage.jsx",
-"src/pages/CompletedPage.jsx"
+"src/pages/CompletedPage.jsx",
+"src/pages/NewArrivalsPage.jsx",
+"src/pages/UpdateTodayPage.jsx",
+"src/pages/YouMightLikePage.jsx",
+"src/pages/GenresPage.jsx",
+"src/pages/ShadowExclusivePage.jsx"
   ]
 }
