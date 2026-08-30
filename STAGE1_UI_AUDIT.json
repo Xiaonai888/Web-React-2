@@ -33,5 +33,10 @@
   "locked_files": [
     "src/pages/RatingPage.jsx",
     "src/pages/ReactionPage.jsx"
+    "src/pages/ReaderProfiles/ReaderSettingsPage.jsx",
+    "src/pages/ReaderProfiles/ReaderAccountSecurityPage.jsx",
+    "src/pages/ReaderProfiles/ReaderChangePasswordPage.jsx",
+    "src/pages/ReaderProfiles/ReaderChangeEmailPage.jsx",
+    "src/pages/Me/MeCommentsPage.jsx"
   ]
 }
