@@ -1,6 +1,6 @@
 {
   "stage": "STAGE_1_UI_AUDIT",
-  "purpose": "Single source of truth for Stage 1 Language and Dark Mode audit.",
+  "purpose": "Single source of truth for Stage 1 Hybrid Dark Mode + 5 Languages audit.",
   "rules": {
     "read_this_file_first": true,
     "audit_only_user_visible_ui": true,
@@ -17,8 +17,10 @@
     ],
     "language_rule": "Check only static user-visible UI text. Do not translate backend data, user-created content, story titles, usernames, post content, or other dynamic data.",
     "dark_mode_rule": "Check only files that render visible UI surfaces. Respect the existing global compatibility layer and semantic theme variables before marking a Dark Mode issue.",
-    "locked_rule": "If a file or block is marked locked=true, do not re-audit or modify Language/Dark Mode during Stage 1 unless the user explicitly asks or the recorded SHA changed in a UI-relevant way.",
-    "sha_rule": "A changed SHA does not automatically mean Language/Dark Mode must be edited. Inspect whether the change affects visible UI first."
+    "locked_rule": "If a file is listed in locked_files, do not re-audit or modify Language/Dark Mode during Stage 1 unless the user explicitly asks or a new UI-relevant change is verified.",
+    "sha_rule": "A changed SHA does not automatically mean Language/Dark Mode must be edited. Inspect whether the change affects visible UI first.",
+    "reader_page_last": true,
+    "stage_2_locked_until_stage_1_complete": true
   },
   "status_values": {
     "LANGUAGE_ONLY": "Visible UI needs Display Language work only.",
@@ -27,22 +29,6 @@
     "DONE": "Verified complete for Stage 1.",
     "SKIP_NON_UI": "No user-visible UI; skip Language and Dark Mode.",
     "LOCKED": "Verified and frozen for Stage 1."
-  },
-  "blocks": {},
-  "files": {}
-}
-
-
-{
-  "stage": "STAGE_1_UI_AUDIT",
-  "purpose": "Single source of truth for Stage 1 Hybrid Dark Mode + 5 Languages audit.",
-  "rules": {
-    "read_this_file_first": true,
-    "audit_only_user_visible_ui": true,
-    "skip_non_ui_files": true,
-    "locked_files": "DO NOT audit or modify these files again during Stage 1 unless the user explicitly asks or a new UI-relevant change is verified.",
-    "reader_page_last": true,
-    "stage_2_locked_until_stage_1_complete": true
   },
   "locked_files": [
     "src/pages/RatingPage.jsx",
