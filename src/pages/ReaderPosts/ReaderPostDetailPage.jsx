@@ -8,6 +8,56 @@ import {
   useSearchParams,
 } from 'react-router-dom'
 import ReaderPostCard from '../../components/reader-posts/ReaderPostCard'
+import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerPostDetailPage', {
+  en: {
+    postNotFound: 'Post not found',
+    failedLoadPost: 'Failed to load post',
+    back: 'Back',
+    photo: 'Photo',
+    post: 'Post',
+    loading: 'Loading...',
+    goBack: 'Go back',
+  },
+  km: {
+    postNotFound: 'រកមិនឃើញ Post',
+    failedLoadPost: 'មិនអាចផ្ទុក Post បានទេ',
+    back: 'ត្រឡប់ក្រោយ',
+    photo: 'រូបភាព',
+    post: 'Post',
+    loading: 'កំពុងផ្ទុក...',
+    goBack: 'ត្រឡប់ក្រោយ',
+  },
+  zh: {
+    postNotFound: '未找到帖子',
+    failedLoadPost: '无法加载帖子',
+    back: '返回',
+    photo: '图片',
+    post: '帖子',
+    loading: '加载中...',
+    goBack: '返回',
+  },
+  ja: {
+    postNotFound: '投稿が見つかりません',
+    failedLoadPost: '投稿を読み込めませんでした',
+    back: '戻る',
+    photo: '写真',
+    post: '投稿',
+    loading: '読み込み中...',
+    goBack: '戻る',
+  },
+  ko: {
+    postNotFound: '게시물을 찾을 수 없습니다',
+    failedLoadPost: '게시물을 불러오지 못했습니다',
+    back: '뒤로 가기',
+    photo: '사진',
+    post: '게시물',
+    loading: '불러오는 중...',
+    goBack: '뒤로 가기',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -30,6 +80,7 @@ function getAuthToken() {
 
 export default function ReaderPostDetailPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const { postId } = useParams()
   const [searchParams] = useSearchParams()
   const rawPhotoIndex =
@@ -97,7 +148,7 @@ export default function ReaderPostDetailPage() {
         ) {
           throw new Error(
             data.message ||
-              'Post not found'
+              getDisplayText('readerPostDetailPage.postNotFound')
           )
         }
 
@@ -112,7 +163,7 @@ export default function ReaderPostDetailPage() {
         ) {
           setError(
             loadError.message ||
-              'Failed to load post'
+              getDisplayText('readerPostDetailPage.failedLoadPost')
           )
         }
       } finally {
@@ -172,23 +223,23 @@ export default function ReaderPostDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa]">
+    <div className="app-page min-h-screen">
       {(photoPostView || loading || error) ? (
-        <header className="sticky top-0 z-50 border-b border-[#eef0f4] bg-white">
+        <header className="sticky top-0 z-50 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
           <div className="mx-auto flex h-14 w-full max-w-[620px] items-center px-2">
             <button
               type="button"
               onClick={goBack}
-              className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-60"
-              aria-label="Back"
+              className="flex h-10 w-10 items-center justify-center text-[var(--shadow-text-primary)] active:opacity-60"
+              aria-label={t('readerPostDetailPage.back')}
             >
               <i className="fa-solid fa-arrow-left text-[18px]" />
             </button>
 
-            <div className="ml-1 text-[17px] font-semibold text-[#111827]">
+            <div className="ml-1 text-[17px] font-semibold text-[var(--shadow-text-primary)]">
               {photoPostView
-                ? 'Photo'
-                : 'Post'}
+                ? t('readerPostDetailPage.photo')
+                : t('readerPostDetailPage.post')}
             </div>
           </div>
         </header>
@@ -202,23 +253,23 @@ export default function ReaderPostDetailPage() {
         }
       >
         {loading ? (
-          <div className="bg-white px-4 py-8 text-center text-[13px] text-[#8b93a1] sm:rounded-[12px]">
-            Loading...
+          <div className="bg-[var(--shadow-bg-surface)] px-4 py-8 text-center text-[13px] text-[var(--shadow-text-secondary)] sm:rounded-[12px]">
+            {t('readerPostDetailPage.loading')}
           </div>
         ) : null}
 
         {!loading && error ? (
-          <div className="bg-white px-4 py-8 text-center sm:rounded-[12px]">
-            <div className="text-[14px] font-semibold text-[#111827]">
+          <div className="bg-[var(--shadow-bg-surface)] px-4 py-8 text-center sm:rounded-[12px]">
+            <div className="text-[14px] font-semibold text-[var(--shadow-text-primary)]">
               {error}
             </div>
 
             <button
               type="button"
               onClick={goBack}
-              className="mt-4 text-[13px] font-semibold text-[#0866ff]"
+              className="mt-4 text-[13px] font-semibold text-[#0866ff] dark:text-[#6ea8ff]"
             >
-              Go back
+              {t('readerPostDetailPage.goBack')}
             </button>
           </div>
         ) : null}
