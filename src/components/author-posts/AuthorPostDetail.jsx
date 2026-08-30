@@ -176,7 +176,7 @@ export default function AuthorPostDetail({
       <div className="mt-3 flex items-center justify-between gap-3 px-4 py-3">
         <button
           type="button"
-          onClick={() => window.alert('Insights and Ads coming soon.')}
+          onClick={() => navigate(`/author/page/posts/${encodeURIComponent(post.id)}/insights`)}
           className="text-left text-[14px] font-medium text-[#1877f2] active:opacity-70"
         >
           See insights and ads
