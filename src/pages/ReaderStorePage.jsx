@@ -362,6 +362,61 @@ function StoreBookCard({ book, t, onOpen }) {
   )
 }
 
+function EditorPickCard({ book, t, onOpen }) {
+  const soldOut = book.stockStatus === 'sold_out'
+  const displayTitle = book.title || t('readerStore.untitledBook')
+  const badgeLabel =
+    soldOut
+      ? t('readerStore.soldOut')
+      : book.badge === 'trending'
+        ? t('readerStore.trendingLabel')
+        : t('readerStore.newLabel')
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="w-[118px] shrink-0 text-left transition active:scale-[0.98]"
+    >
+      <div className="relative aspect-[3/4] overflow-hidden rounded-[14px] bg-[var(--shadow-bg-soft)] shadow-sm ring-1 ring-[var(--shadow-border)]">
+        {book.cover ? (
+          <img
+            src={book.cover}
+            alt={displayTitle}
+            className={`h-full w-full object-cover ${soldOut ? 'opacity-60' : ''}`}
+            onError={(event) => {
+              event.currentTarget.style.display = 'none'
+            }}
+          />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
+            <i className="fa-regular fa-image text-[22px]" />
+          </span>
+        )}
+
+        <span
+          className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[8px] font-extrabold shadow-sm ${
+            soldOut
+              ? 'bg-[#f1f5f9] text-[#64748b]'
+              : book.badge === 'trending'
+                ? 'bg-[#dff7f3] text-[#0f766e]'
+                : 'bg-[#ede9fe] text-[#6d28d9]'
+          }`}
+        >
+          {badgeLabel}
+        </span>
+      </div>
+
+      <h3 className="mt-2 line-clamp-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">
+        {displayTitle}
+      </h3>
+      <div className="mt-0.5 text-[10.5px] font-extrabold text-[#7c3aed]">
+        {book.price}
+      </div>
+    </button>
+  )
+}
+
 export default function ReaderStorePage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
@@ -449,7 +504,7 @@ export default function ReaderStorePage() {
   )
 
   const filteredEditorsPicks = useMemo(
-    () => editorsPicks.filter(matchesFilter).slice(0, 4),
+    () => editorsPicks.filter(matchesFilter).slice(0, 8),
     [editorsPicks, activeFilter, keyword]
   )
 
@@ -661,19 +716,14 @@ export default function ReaderStorePage() {
 
               {visibleProducts.length ? (
                 <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-  {visibleProducts.map((book) => (
-    <div key={`author-${book.id}`} className="w-[155px] shrink-0">
-      <StoreBookCard book={book} t={t} onOpen={() => openProduct(book)} />
-    </div>
-  ))}
-</div>
                   {visibleProducts.map((book) => (
-                    <StoreBookCard
-                      key={`author-${book.id}`}
-                      book={book}
-                      t={t}
-                      onOpen={() => openProduct(book)}
-                    />
+                    <div key={`author-${book.id}`} className="w-[155px] shrink-0">
+                      <StoreBookCard
+                        book={book}
+                        t={t}
+                        onOpen={() => openProduct(book)}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -690,9 +740,9 @@ export default function ReaderStorePage() {
                   subtitle={t('readerStore.editorsPicksSubtitle')}
                 />
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {filteredEditorsPicks.map((book) => (
-                    <StoreBookCard
+                    <EditorPickCard
                       key={`editor-${book.id}`}
                       book={book}
                       t={t}
