@@ -166,21 +166,14 @@ export default function AuthorPostEchoAction({
   ])
 
   const shareUrl = useMemo(() => {
-    const username = String(
-      author?.page_username || ''
-    ).trim()
-    const path = username
-      ? `/author/page/${encodeURIComponent(
-          username
-        )}?post=${encodeURIComponent(
-          post?.id || ''
-        )}`
-      : `/author/page?post=${encodeURIComponent(
-          post?.id || ''
-        )}`
+  const postId = String(post?.id || '').trim()
 
-    return `${window.location.origin}${path}`
-  }, [author?.page_username, post?.id])
+  if (!postId) return window.location.origin
+
+  return `${window.location.origin}/author/post/${encodeURIComponent(
+    postId
+  )}?source=share`
+}, [post?.id])
 
   const handleEchoed = (
     echo,
