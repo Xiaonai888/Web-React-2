@@ -60,7 +60,13 @@ function renderPostTextWithLinks(text) {
         <a
           key={`${part}-${index}`}
           href={tagUrl}
-          onClick={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation()
+            void recordAuthorHashtagInterest(
+              part,
+              'hashtag_click'
+            )
+          }}
           className="text-[#1877f2]"
         >
           {part}
