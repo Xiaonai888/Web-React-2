@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import { AuthorPageNotificationProvider } from './providers/AuthorPageNotificationProvider'
@@ -271,8 +271,13 @@ function AppShell() {
       ? location.state.backgroundLocation
       : null
   const [adStep, setAdStep] = useState('splash')
-  const [showShadowSplash, setShowShadowSplash] = useState(location.pathname === '/')
-  const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
+  const [showShadowSplash, setShowShadowSplash] = useState(
+  location.pathname === '/' && sessionStorage.getItem('shadow_splash_shown') !== '1'
+)
+useEffect(() => {
+  if (showShadowSplash) sessionStorage.setItem('shadow_splash_shown', '1')
+}, [showShadowSplash])
+const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
   const hideFooterPaths = [
     '/login',
     '/register',
