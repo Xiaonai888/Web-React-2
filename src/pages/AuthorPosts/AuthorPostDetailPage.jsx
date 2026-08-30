@@ -1986,8 +1986,10 @@ likeCount={
             targetTitle: `${authorName} photo`,
             sourceUrl: selectedPhotoUrl,
             returnTo: `/author/post/${encodeURIComponent(
-              post.id
-            )}?photo=${safeSelectedPhotoIndex}`,
+  post.id
+)}?photo=${safeSelectedPhotoIndex}&source=${encodeURIComponent(
+  postSource
+)}`,
           },
         }
       )
@@ -2236,7 +2238,13 @@ likeCount={
 <AuthorPageShareSheet
   open={photoShareOpen}
   pageName={`${authorName} photo`}
-  pageLink={selectedPhotoUrl}
+  pageLink={
+  post?.id
+    ? `${window.location.origin}/author/post/${encodeURIComponent(
+        post.id
+      )}?photo=${safeSelectedPhotoIndex}&source=share`
+    : selectedPhotoUrl
+}
   sheetTitle="Share Photo"
   shareText={`View this photo from ${authorName} on Shadow.`}
   zClassName="z-[200000]"
