@@ -12,10 +12,12 @@ const FILTER_OPTIONS = {
     { value: 'pinned', label: 'Pinned posts' },
   ],
   date: [
-    { value: 'lifetime', label: 'Lifetime' },
+    { value: 'today', label: 'Today' },
     { value: '7d', label: 'Last 7 days' },
+    { value: '14d', label: 'Last 14 days' },
     { value: '28d', label: 'Last 28 days' },
     { value: '90d', label: 'Last 90 days' },
+    { value: 'lifetime', label: 'Lifetime' },
   ],
   type: [
     { value: 'all', label: 'All posts' },
@@ -73,16 +75,21 @@ function getOptionLabel(group, value) {
 }
 
 function getDateCutoff(value) {
-  const days = {
-    '7d': 7,
-    '28d': 28,
-    '90d': 90,
+  const cutoff = new Date()
+  cutoff.setHours(0, 0, 0, 0)
+
+  if (value === 'today') return cutoff.getTime()
+
+  const daysBack = {
+    '7d': 6,
+    '14d': 13,
+    '28d': 27,
+    '90d': 89,
   }[value]
 
-  if (!days) return null
+  if (daysBack === undefined) return null
 
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
+  cutoff.setDate(cutoff.getDate() - daysBack)
   return cutoff.getTime()
 }
 
@@ -282,7 +289,7 @@ function FilterSheet({
 
   function chooseOption(value) {
     setters[section]?.(value)
-    onSectionChange('menu')
+    onClose()
   }
 
   return (
@@ -297,8 +304,12 @@ function FilterSheet({
       <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[760px] rounded-t-[26px] bg-[#f5f6fa] px-4 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-3 shadow-2xl">
         <div className="mx-auto h-1 w-14 rounded-full bg-[#8b8d93]" />
 
-        <div className="relative flex min-h-[58px] items-center justify-center">
-          {section !== 'menu' ? (
+        <div
+          className={`relative flex min-h-[58px] items-center justify-center ${
+            section === 'date' ? 'border-b border-[#d9dde4]' : ''
+          }`}
+        >
+          {section !== 'menu' && section !== 'date' ? (
             <button
               type="button"
               onClick={() => onSectionChange('menu')}
@@ -315,14 +326,16 @@ function FilterSheet({
               : rows.find((item) => item.key === section)?.label || 'Filters'}
           </h2>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-0 flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#e5e7eb]"
-            aria-label="Close"
-          >
-            <i className="fa-solid fa-xmark text-[18px]" />
-          </button>
+          {section !== 'date' ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-0 flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#e5e7eb]"
+              aria-label="Close"
+            >
+              <i className="fa-solid fa-xmark text-[18px]" />
+            </button>
+          ) : null}
         </div>
 
         {section === 'menu' ? (
@@ -366,11 +379,13 @@ function FilterSheet({
                   <span
                     className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
                       selected
-                        ? 'border-[#1674c4] bg-[#1674c4] text-white'
-                        : 'border-[#c7cbd1] text-transparent'
+                        ? 'border-[#1685f8]'
+                        : 'border-[#6b7280]'
                     }`}
                   >
-                    <i className="fa-solid fa-check text-[11px]" />
+                    {selected ? (
+                      <span className="h-3 w-3 rounded-full bg-[#1685f8]" />
+                    ) : null}
                   </span>
                 </button>
               )
