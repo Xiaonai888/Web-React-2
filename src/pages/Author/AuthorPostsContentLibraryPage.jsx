@@ -20,10 +20,10 @@ const FILTER_OPTIONS = {
     { value: 'lifetime', label: 'Lifetime' },
   ],
   type: [
-    { value: 'all', label: 'All posts' },
-    { value: 'photo', label: 'Photo posts' },
-    { value: 'text', label: 'Text posts' },
-  ],
+  { value: 'all', label: 'All posts' },
+  { value: 'photo', label: 'Photos' },
+  { value: 'text', label: 'Text' },
+],
   placement: [{ value: 'feed', label: 'Feed' }],
   metrics: [
     { value: 'views', label: 'Views' },
