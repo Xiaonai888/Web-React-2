@@ -1,3 +1,4 @@
+import { recordAuthorPostClick } from '../services/authorPostInsightsApi'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Send } from 'lucide-react'
 import {
@@ -49,7 +50,7 @@ function getAuthToken() {
 const POST_TOKEN_PATTERN = /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
 const POST_URL_ONLY_PATTERN = /^https?:\/\/[^\s]+$/i
 const POST_HASHTAG_ONLY_PATTERN = /^#[\p{L}\p{N}\p{M}_]+$/u
-function renderPostTextWithLinks(text) {
+function renderPostTextWithLinks(text, postId) {
   return String(text || '').split(POST_TOKEN_PATTERN).map((part, index) => {
     if (POST_URL_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={part} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="break-all text-[#1877f2]">{part}</a>
     if (POST_HASHTAG_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={`/discover/search?q=${encodeURIComponent(part)}&type=posts`} onClick={(e) => e.stopPropagation()} className="text-[#1877f2]">{part}</a>
@@ -859,9 +860,10 @@ const isOwner = Boolean(
 >
         <Link
   to={pageUrl}
-  onClick={(event) =>
-    event.stopPropagation()
-  }
+  onClick={(event) => {
+  event.stopPropagation()
+  void recordAuthorPostClick(postId, part)
+}}
   className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
           aria-label={`Open ${authorName}`}
         >
@@ -938,7 +940,9 @@ const isOwner = Boolean(
   <div className="px-4 pb-3">
     <AuthorDiscoverPostText
       text={post.content}
-      renderText={renderPostTextWithLinks}
+      renderText={(value) =>
+  renderPostTextWithLinks(value, post.id)
+}
       className="text-[14px] font-normal leading-6 text-[#111827]"
     />
   </div>
