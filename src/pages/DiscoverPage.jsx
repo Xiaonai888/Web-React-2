@@ -727,7 +727,7 @@ function RealFollowedPostCard({
   navigate(
     `/author/post/${encodeURIComponent(
       post.id
-    )}`,
+    )}?source=${postSource}`,
     {
       state: {
         backgroundLocation: location,
@@ -742,7 +742,7 @@ function openPhotoPost(index) {
   navigate(
     `/author/post/${encodeURIComponent(
       post.id
-    )}?photo=${index}`,
+    )}?photo=${index}&source=${postSource}`,
     {
       state: {
         backgroundLocation: location,
@@ -760,6 +760,9 @@ const isFollowing = Boolean(
   post.is_following ??
     author.is_following
 )
+
+const postSource =
+  isFollowing ? 'follower_feed' : 'suggested'
 
 const isOwner = Boolean(
   post.is_owner ??
