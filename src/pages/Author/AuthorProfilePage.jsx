@@ -453,7 +453,7 @@ export default function AuthorProfilePage() {
 
                 <button
                   type="button"
-                  onClick={() => navigate('/author/income')}
+                  onClick={() => navigate('/author/earnings')}
                   className="min-w-0 active:scale-[0.98]"
                   aria-label="Open income records"
                 >
