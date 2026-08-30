@@ -1,6 +1,460 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerSettings', {
+  "en": {
+    "title": "Settings",
+    "backToProfile": "Back to profile",
+    "logout": "Log out",
+    "comingSoon": "{{title}} is coming soon.",
+    "groups": {
+      "account": "Your account",
+      "activity": "Your activity",
+      "interaction": "How readers interact with you",
+      "appSupport": "App and support"
+    },
+    "items": {
+      "edit-profile": {
+        "title": "Edit profile",
+        "subtitle": "Update your name, photo, bio, and profile links."
+      },
+      "account-security": {
+        "title": "Account & security",
+        "subtitle": "Password, email, and account access."
+      },
+      "privacy": {
+        "title": "Privacy",
+        "subtitle": "Control who can see your reader space."
+      },
+      "blocked-readers": {
+        "title": "Blocked readers",
+        "subtitle": "Review readers you have blocked."
+      },
+      "saved-posts": {
+        "title": "Saved posts",
+        "subtitle": "View posts you saved for later."
+      },
+      "my-comments": {
+        "title": "My comments",
+        "subtitle": "Review your comments and replies."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "subtitle": "See updates from readers, authors, and stories."
+      },
+      "reading-history": {
+        "title": "Reading history",
+        "subtitle": "Find stories and episodes you viewed."
+      },
+      "echo-sharing": {
+        "title": "Echo and sharing",
+        "subtitle": "Manage echoed posts and sharing activity."
+      },
+      "messages-replies": {
+        "title": "Messages and replies",
+        "subtitle": "Control who can contact and reply to you."
+      },
+      "tags-mentions": {
+        "title": "Tags and mentions",
+        "subtitle": "Choose who can tag or mention you."
+      },
+      "comment-settings": {
+        "title": "Comment settings",
+        "subtitle": "Manage comments on your reader posts."
+      },
+      "hidden-words": {
+        "title": "Hidden words",
+        "subtitle": "Hide words and phrases you do not want to see."
+      },
+      "restricted-readers": {
+        "title": "Restricted readers",
+        "subtitle": "Review readers with limited interaction."
+      },
+      "language": {
+        "title": "Language",
+        "subtitle": "Choose your app and reading language."
+      },
+      "accessibility": {
+        "title": "Accessibility",
+        "subtitle": "Adjust reading and display assistance."
+      },
+      "help-center": {
+        "title": "Help Center",
+        "subtitle": "Find answers and guides for using Shadow."
+      },
+      "feedback-support": {
+        "title": "Feedback & Support",
+        "subtitle": "Send feedback or request help."
+      },
+      "about-shadow": {
+        "title": "About Shadow",
+        "subtitle": "Learn more about Shadow and its purpose."
+      }
+    }
+  },
+  "km": {
+    "title": "ការកំណត់",
+    "backToProfile": "ត្រឡប់ទៅ Profile",
+    "logout": "ចាកចេញ",
+    "comingSoon": "{{title}} នឹងមកដល់ឆាប់ៗនេះ។",
+    "groups": {
+      "account": "គណនីរបស់អ្នក",
+      "activity": "សកម្មភាពរបស់អ្នក",
+      "interaction": "របៀបដែលអ្នកអានធ្វើអន្តរកម្មជាមួយអ្នក",
+      "appSupport": "កម្មវិធី និងជំនួយ"
+    },
+    "items": {
+      "edit-profile": {
+        "title": "កែ Profile",
+        "subtitle": "កែឈ្មោះ រូបថត Bio និង Profile links របស់អ្នក។"
+      },
+      "account-security": {
+        "title": "គណនី និងសុវត្ថិភាព",
+        "subtitle": "Password, Email និងការចូលប្រើគណនី។"
+      },
+      "privacy": {
+        "title": "ឯកជនភាព",
+        "subtitle": "គ្រប់គ្រងអ្នកដែលអាចមើលឃើញ Reader space របស់អ្នក។"
+      },
+      "blocked-readers": {
+        "title": "អ្នកអានដែលបាន Block",
+        "subtitle": "ពិនិត្យអ្នកអានដែលអ្នកបាន Block។"
+      },
+      "saved-posts": {
+        "title": "Posts ដែលបានរក្សាទុក",
+        "subtitle": "មើល Posts ដែលអ្នកបានរក្សាទុកសម្រាប់ពេលក្រោយ។"
+      },
+      "my-comments": {
+        "title": "មតិយោបល់របស់ខ្ញុំ",
+        "subtitle": "ពិនិត្យមតិយោបល់ និងការឆ្លើយតបរបស់អ្នក។"
+      },
+      "notifications": {
+        "title": "ការជូនដំណឹង",
+        "subtitle": "មើល Update ពីអ្នកអាន អ្នកនិពន្ធ និងរឿង។"
+      },
+      "reading-history": {
+        "title": "ប្រវត្តិការអាន",
+        "subtitle": "រករឿង និងភាគដែលអ្នកបានមើល។"
+      },
+      "echo-sharing": {
+        "title": "Echo និងការចែករំលែក",
+        "subtitle": "គ្រប់គ្រង Posts ដែលបាន Echo និងសកម្មភាពចែករំលែក។"
+      },
+      "messages-replies": {
+        "title": "សារ និងការឆ្លើយតប",
+        "subtitle": "គ្រប់គ្រងអ្នកដែលអាចទាក់ទង និងឆ្លើយតបទៅអ្នក។"
+      },
+      "tags-mentions": {
+        "title": "Tags និង Mentions",
+        "subtitle": "ជ្រើសរើសអ្នកដែលអាច Tag ឬ Mention អ្នក។"
+      },
+      "comment-settings": {
+        "title": "ការកំណត់មតិយោបល់",
+        "subtitle": "គ្រប់គ្រងមតិយោបល់លើ Reader posts របស់អ្នក។"
+      },
+      "hidden-words": {
+        "title": "ពាក្យដែលបានលាក់",
+        "subtitle": "លាក់ពាក្យ និងឃ្លាដែលអ្នកមិនចង់ឃើញ។"
+      },
+      "restricted-readers": {
+        "title": "អ្នកអានដែលបានដាក់កម្រិត",
+        "subtitle": "ពិនិត្យអ្នកអានដែលមានអន្តរកម្មកំណត់។"
+      },
+      "language": {
+        "title": "ភាសា",
+        "subtitle": "ជ្រើសរើសភាសាកម្មវិធី និងភាសាអាន។"
+      },
+      "accessibility": {
+        "title": "ភាពងាយស្រួលប្រើប្រាស់",
+        "subtitle": "កែការជួយអាន និងការបង្ហាញ។"
+      },
+      "help-center": {
+        "title": "មជ្ឈមណ្ឌលជំនួយ",
+        "subtitle": "រកចម្លើយ និងការណែនាំសម្រាប់ការប្រើ Shadow។"
+      },
+      "feedback-support": {
+        "title": "មតិកែលម្អ និងជំនួយ",
+        "subtitle": "ផ្ញើមតិកែលម្អ ឬស្នើសុំជំនួយ។"
+      },
+      "about-shadow": {
+        "title": "អំពី Shadow",
+        "subtitle": "ស្វែងយល់បន្ថែមអំពី Shadow និងគោលបំណងរបស់វា។"
+      }
+    }
+  },
+  "zh": {
+    "title": "设置",
+    "backToProfile": "返回个人资料",
+    "logout": "退出登录",
+    "comingSoon": "{{title}} 即将推出。",
+    "groups": {
+      "account": "你的账号",
+      "activity": "你的活动",
+      "interaction": "读者与你的互动",
+      "appSupport": "应用与支持"
+    },
+    "items": {
+      "edit-profile": {
+        "title": "编辑个人资料",
+        "subtitle": "更新姓名、头像、简介和个人资料链接。"
+      },
+      "account-security": {
+        "title": "账号与安全",
+        "subtitle": "管理密码、邮箱和账号访问。"
+      },
+      "privacy": {
+        "title": "隐私",
+        "subtitle": "控制谁可以查看你的读者空间。"
+      },
+      "blocked-readers": {
+        "title": "已屏蔽读者",
+        "subtitle": "查看你已屏蔽的读者。"
+      },
+      "saved-posts": {
+        "title": "已保存帖子",
+        "subtitle": "查看你保存以便稍后阅读的帖子。"
+      },
+      "my-comments": {
+        "title": "我的评论",
+        "subtitle": "查看你的评论和回复。"
+      },
+      "notifications": {
+        "title": "通知",
+        "subtitle": "查看来自读者、作者和故事的更新。"
+      },
+      "reading-history": {
+        "title": "阅读历史",
+        "subtitle": "查找你浏览过的故事和章节。"
+      },
+      "echo-sharing": {
+        "title": "Echo 与分享",
+        "subtitle": "管理 Echo 帖子和分享活动。"
+      },
+      "messages-replies": {
+        "title": "消息与回复",
+        "subtitle": "控制谁可以联系或回复你。"
+      },
+      "tags-mentions": {
+        "title": "标签与提及",
+        "subtitle": "选择谁可以标记或提及你。"
+      },
+      "comment-settings": {
+        "title": "评论设置",
+        "subtitle": "管理读者帖子上的评论。"
+      },
+      "hidden-words": {
+        "title": "隐藏词语",
+        "subtitle": "隐藏你不想看到的词语和短语。"
+      },
+      "restricted-readers": {
+        "title": "受限读者",
+        "subtitle": "查看互动受限的读者。"
+      },
+      "language": {
+        "title": "语言",
+        "subtitle": "选择应用和阅读语言。"
+      },
+      "accessibility": {
+        "title": "辅助功能",
+        "subtitle": "调整阅读和显示辅助功能。"
+      },
+      "help-center": {
+        "title": "帮助中心",
+        "subtitle": "查找使用 Shadow 的答案和指南。"
+      },
+      "feedback-support": {
+        "title": "反馈与支持",
+        "subtitle": "发送反馈或请求帮助。"
+      },
+      "about-shadow": {
+        "title": "关于 Shadow",
+        "subtitle": "进一步了解 Shadow 及其用途。"
+      }
+    }
+  },
+  "ja": {
+    "title": "設定",
+    "backToProfile": "プロフィールに戻る",
+    "logout": "ログアウト",
+    "comingSoon": "{{title}} は近日公開予定です。",
+    "groups": {
+      "account": "アカウント",
+      "activity": "アクティビティ",
+      "interaction": "読者とのやり取り",
+      "appSupport": "アプリとサポート"
+    },
+    "items": {
+      "edit-profile": {
+        "title": "プロフィールを編集",
+        "subtitle": "名前、写真、自己紹介、プロフィールリンクを更新します。"
+      },
+      "account-security": {
+        "title": "アカウントとセキュリティ",
+        "subtitle": "パスワード、メール、アカウントアクセスを管理します。"
+      },
+      "privacy": {
+        "title": "プライバシー",
+        "subtitle": "読者スペースを見られる相手を管理します。"
+      },
+      "blocked-readers": {
+        "title": "ブロックした読者",
+        "subtitle": "ブロックした読者を確認します。"
+      },
+      "saved-posts": {
+        "title": "保存した投稿",
+        "subtitle": "後で見るために保存した投稿を表示します。"
+      },
+      "my-comments": {
+        "title": "自分のコメント",
+        "subtitle": "自分のコメントと返信を確認します。"
+      },
+      "notifications": {
+        "title": "通知",
+        "subtitle": "読者、作者、ストーリーからの更新を確認します。"
+      },
+      "reading-history": {
+        "title": "閲覧履歴",
+        "subtitle": "閲覧したストーリーやエピソードを探します。"
+      },
+      "echo-sharing": {
+        "title": "Echo と共有",
+        "subtitle": "Echo した投稿と共有アクティビティを管理します。"
+      },
+      "messages-replies": {
+        "title": "メッセージと返信",
+        "subtitle": "連絡や返信ができる相手を管理します。"
+      },
+      "tags-mentions": {
+        "title": "タグとメンション",
+        "subtitle": "タグ付けやメンションできる相手を選びます。"
+      },
+      "comment-settings": {
+        "title": "コメント設定",
+        "subtitle": "読者投稿へのコメントを管理します。"
+      },
+      "hidden-words": {
+        "title": "非表示ワード",
+        "subtitle": "見たくない単語やフレーズを非表示にします。"
+      },
+      "restricted-readers": {
+        "title": "制限した読者",
+        "subtitle": "交流を制限した読者を確認します。"
+      },
+      "language": {
+        "title": "言語",
+        "subtitle": "アプリと読書の言語を選びます。"
+      },
+      "accessibility": {
+        "title": "アクセシビリティ",
+        "subtitle": "読書と表示の補助機能を調整します。"
+      },
+      "help-center": {
+        "title": "ヘルプセンター",
+        "subtitle": "Shadow の使い方に関する回答やガイドを探します。"
+      },
+      "feedback-support": {
+        "title": "フィードバックとサポート",
+        "subtitle": "フィードバックを送るか、サポートを依頼します。"
+      },
+      "about-shadow": {
+        "title": "Shadow について",
+        "subtitle": "Shadow とその目的について詳しく知ることができます。"
+      }
+    }
+  },
+  "ko": {
+    "title": "설정",
+    "backToProfile": "프로필로 돌아가기",
+    "logout": "로그아웃",
+    "comingSoon": "{{title}} 기능은 곧 제공됩니다.",
+    "groups": {
+      "account": "내 계정",
+      "activity": "내 활동",
+      "interaction": "독자와의 상호작용",
+      "appSupport": "앱 및 지원"
+    },
+    "items": {
+      "edit-profile": {
+        "title": "프로필 수정",
+        "subtitle": "이름, 사진, 소개 및 프로필 링크를 업데이트합니다."
+      },
+      "account-security": {
+        "title": "계정 및 보안",
+        "subtitle": "비밀번호, 이메일 및 계정 접근을 관리합니다."
+      },
+      "privacy": {
+        "title": "개인정보",
+        "subtitle": "내 독자 공간을 볼 수 있는 사람을 관리합니다."
+      },
+      "blocked-readers": {
+        "title": "차단한 독자",
+        "subtitle": "차단한 독자를 확인합니다."
+      },
+      "saved-posts": {
+        "title": "저장한 게시물",
+        "subtitle": "나중에 보기 위해 저장한 게시물을 확인합니다."
+      },
+      "my-comments": {
+        "title": "내 댓글",
+        "subtitle": "내 댓글과 답글을 확인합니다."
+      },
+      "notifications": {
+        "title": "알림",
+        "subtitle": "독자, 작가 및 스토리의 업데이트를 확인합니다."
+      },
+      "reading-history": {
+        "title": "읽기 기록",
+        "subtitle": "본 스토리와 에피소드를 찾아봅니다."
+      },
+      "echo-sharing": {
+        "title": "Echo 및 공유",
+        "subtitle": "Echo한 게시물과 공유 활동을 관리합니다."
+      },
+      "messages-replies": {
+        "title": "메시지 및 답글",
+        "subtitle": "연락하거나 답글을 보낼 수 있는 사람을 관리합니다."
+      },
+      "tags-mentions": {
+        "title": "태그 및 멘션",
+        "subtitle": "나를 태그하거나 언급할 수 있는 사람을 선택합니다."
+      },
+      "comment-settings": {
+        "title": "댓글 설정",
+        "subtitle": "독자 게시물의 댓글을 관리합니다."
+      },
+      "hidden-words": {
+        "title": "숨긴 단어",
+        "subtitle": "보고 싶지 않은 단어나 문구를 숨깁니다."
+      },
+      "restricted-readers": {
+        "title": "제한된 독자",
+        "subtitle": "상호작용이 제한된 독자를 확인합니다."
+      },
+      "language": {
+        "title": "언어",
+        "subtitle": "앱 및 읽기 언어를 선택합니다."
+      },
+      "accessibility": {
+        "title": "접근성",
+        "subtitle": "읽기 및 화면 보조 기능을 조정합니다."
+      },
+      "help-center": {
+        "title": "도움말 센터",
+        "subtitle": "Shadow 사용에 관한 답변과 안내를 확인합니다."
+      },
+      "feedback-support": {
+        "title": "피드백 및 지원",
+        "subtitle": "피드백을 보내거나 도움을 요청합니다."
+      },
+      "about-shadow": {
+        "title": "Shadow 정보",
+        "subtitle": "Shadow와 그 목적에 대해 자세히 알아봅니다."
+      }
+    }
+  }
+})
 
 const GROUP_KEYS = ['account', 'activity', 'interaction', 'appSupport']
 
