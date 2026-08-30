@@ -62,6 +62,11 @@
 "src/pages/MostReadThisWeekPage.jsx",
 "src/pages/RankingPage.jsx",
 "src/pages/WalletPage.jsx",
-"src/components/Wallet/PaymentProfileModal.jsx"
+"src/components/Wallet/PaymentProfileModal.jsx",
+"src/pages/EditProfilePage.jsx",
+"src/pages/TaskCenterPage.jsx",
+"src/pages/Me/GamePage.jsx",
+"src/pages/EpisodeEchoesPage.jsx",
+"src/pages/ReaderPosts/ReaderPostCreatePage.jsx"
   ]
 }
