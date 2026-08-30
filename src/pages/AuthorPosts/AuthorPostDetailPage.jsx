@@ -513,7 +513,7 @@ const [photoAltSaving, setPhotoAltSaving] = useState(false)
         const response = await fetch(
           `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(
   postId || ''
-)}?source=${encodeURIComponent(postSource)}`
+)}?source=${encodeURIComponent(postSource)}`,
           {
             headers: token
               ? {
@@ -657,7 +657,7 @@ const [photoAltSaving, setPhotoAltSaving] = useState(false)
   navigate(
     `/author/post/${encodeURIComponent(
       post.id
-    )}?photo=${index}`
+    )}?photo=${index}&source=${encodeURIComponent(postSource)}`
   )
 }
 
@@ -1008,7 +1008,7 @@ async function savePhotoAltText(event) {
       navigate(
         `/author/post/${encodeURIComponent(
           post.id
-        )}`,
+        )}?source=${encodeURIComponent(postSource)}`,
         {
           replace: true,
         }
@@ -1029,7 +1029,7 @@ async function savePhotoAltText(event) {
     navigate(
       `/author/post/${encodeURIComponent(
         post.id
-      )}?photo=${nextPhotoIndex}`,
+      )}?photo=${nextPhotoIndex}&source=${encodeURIComponent(postSource)}`,
       {
         replace: true,
       }
