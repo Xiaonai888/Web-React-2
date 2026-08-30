@@ -1,3 +1,4 @@
+import { recordAuthorHashtagInterest } from '../services/authorHashtagsApi'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -973,6 +974,11 @@ export default function DiscoverSearchPage() {
       activeType
     )
 
+    void recordAuthorHashtagInterest(
+  keyword,
+  'search'
+)
+
     setActiveQuery(keyword)
   }
 
@@ -986,6 +992,12 @@ export default function DiscoverSearchPage() {
     resultType,
     resultId
   ) {
+
+    void recordAuthorHashtagInterest(
+  activeQuery,
+  'search'
+)
+    
     trackDiscoverSearchResultClick({
       apiBaseUrl: API_BASE_URL,
       query: activeQuery,
