@@ -77,6 +77,11 @@
 "src/components/reader-profile/ReaderProfileOptionsSheet.jsx",
 "src/pages/Auth/LoginPage.jsx",
 "src/pages/Auth/ResetPasswordPage.jsx",
-"src/pages/Auth/ForgotPasswordPage.jsx"
+"src/pages/Auth/ForgotPasswordPage.jsx",
+"src/pages/Auth/TermsPoliciesPage.jsx",
+"src/pages/TopFansGuidePage.jsx",
+"src/components/reader-posts/ReaderPostReactionButton.jsx",
+"src/components/reader-posts/ReaderPostComposer.jsx",
+"src/components/reader-posts/ReaderDiscoverPostText.jsx"
   ]
 }
