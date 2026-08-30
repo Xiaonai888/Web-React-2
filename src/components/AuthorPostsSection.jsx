@@ -1,3 +1,4 @@
+import { recordAuthorPostClick } from '../services/authorPostInsightsApi'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
@@ -36,7 +37,7 @@ const POST_TOKEN_PATTERN = /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
 const POST_URL_ONLY_PATTERN = /^https?:\/\/[^\s]+$/i
 const POST_HASHTAG_ONLY_PATTERN = /^#[\p{L}\p{N}\p{M}_]+$/u
 
-function renderPostTextWithLinks(text) {
+function renderPostTextWithLinks(text, postId) {
   return String(text || '').split(POST_TOKEN_PATTERN).map((part, index) => {
     if (POST_URL_ONLY_PATTERN.test(part)) {
       return (
@@ -45,7 +46,10 @@ function renderPostTextWithLinks(text) {
           href={part}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={(event) => event.stopPropagation()}
+          onClick={(event) => {
+  event.stopPropagation()
+  void recordAuthorPostClick(postId, part)
+}}
           className="break-all text-[#1877f2]"
         >
           {part}
@@ -507,7 +511,9 @@ useEffect(() => {
         <div className="mt-2 px-4 pb-3">
           <AuthorDiscoverPostText
   text={postText}
-  renderText={renderPostTextWithLinks}
+  renderText={(value) =>
+  renderPostTextWithLinks(value, post.id)
+}
   className="text-[16px] font-normal leading-7 text-[#111827]"
 />
         </div>
