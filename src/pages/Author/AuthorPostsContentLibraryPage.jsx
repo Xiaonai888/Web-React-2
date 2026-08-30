@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AuthorContentLibraryFilterSheet from './AuthorContentLibraryFilterSheet'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -28,6 +29,7 @@ function formatPostDate(value) {
   if (!value) return 'Just now'
 
   const date = new Date(value)
+  const [filterOpen, setFilterOpen] = useState(false)
 
   if (Number.isNaN(date.getTime())) return 'Just now'
 
