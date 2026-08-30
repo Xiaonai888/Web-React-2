@@ -91,12 +91,12 @@ function PostThumbnail({ post }) {
   const imageUrl = Array.isArray(post?.image_urls) ? post.image_urls[0] : ''
 
   return (
-    <span className="flex h-[86px] w-[86px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#e5e7eb]">
+    <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-[#e5e7eb]">
       {imageUrl ? (
         <img src={imageUrl} alt="" className="h-full w-full object-cover" />
       ) : (
-        <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-white/80 text-[#9ca3af]">
-          <i className="fa-solid fa-a text-[18px]" />
+        <span className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-white/80 text-[#9ca3af]">
+          <i className="fa-solid fa-a text-[16px]" />
         </span>
       )}
     </span>
@@ -105,23 +105,28 @@ function PostThumbnail({ post }) {
 
 function PostListRow({ post, onOpen }) {
   const postType = getPostType(post)
-  const metric = getPostMetric(post)
-  const title = String(post?.content || '').replace(/\s+/g, ' ').trim() || 'Photo update'
+  const hasViews = Number.isFinite(Number(post?.view_count))
+  const metric = hasViews ? Number(post.view_count) : getPostMetric(post)
+  const title =
+    String(post?.content || '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find(Boolean) || 'Photo update'
 
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center gap-4 px-4 py-3 text-left active:bg-[#f8fafc]"
+      className="flex w-full items-center gap-3 px-4 py-2.5 text-left active:bg-[#f8fafc]"
     >
       <PostThumbnail post={post} />
 
       <span className="min-w-0 flex-1">
-        <span className="line-clamp-2 block text-[15px] font-semibold leading-6 text-[#111827]">
+        <span className="block truncate text-[15px] font-normal leading-5 text-[#111827]">
           {title}
         </span>
 
-        <span className="mt-1 flex items-center gap-1.5 text-[12px] font-medium text-[#6b7280]">
+        <span className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#6b7280]">
           <i
             className={`${postType === 'Photo' ? 'fa-regular fa-image' : 'fa-solid fa-font'} text-[12px]`}
           />
@@ -129,21 +134,14 @@ function PostListRow({ post, onOpen }) {
           <span>·</span>
           <span>{formatPostDate(post.created_at)}</span>
         </span>
-
-        {post?.is_pinned ? (
-          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[#f1eafe] px-2 py-1 text-[9px] font-bold text-[#7c3aed]">
-            <i className="fa-solid fa-thumbtack text-[8px]" />
-            Pinned
-          </span>
-        ) : null}
       </span>
 
-      <span className="w-[72px] shrink-0 text-right">
-        <span className="block text-[18px] font-semibold text-[#111827]">
+      <span className="w-[62px] shrink-0 text-right">
+        <span className="block text-[16px] font-medium text-[#111827]">
           {formatCompactNumber(metric)}
         </span>
-        <span className="mt-1 block text-[9px] font-semibold text-[#9ca3af]">
-          Engagement
+        <span className="mt-0.5 block text-[9px] font-normal text-[#9ca3af]">
+          {hasViews ? 'Views' : 'Engagement'}
         </span>
       </span>
     </button>
@@ -280,7 +278,7 @@ export default function AuthorPostsContentLibraryPage() {
       ) : null}
 
       <header className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex min-h-[72px] max-w-[760px] items-center gap-3 px-4">
+        <div className="mx-auto flex min-h-[60px] max-w-[760px] items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -291,10 +289,10 @@ export default function AuthorPostsContentLibraryPage() {
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[20px] font-black leading-6 text-[#111827]">
+            <h1 className="truncate text-[17px] font-bold leading-5 text-[#111827]">
               Professional Dashboard
             </h1>
-            <p className="mt-0.5 text-[16px] font-medium text-[#6b7280]">
+            <p className="mt-0.5 text-[14px] font-normal text-[#6b7280]">
               Content Library
             </p>
           </div>
@@ -302,10 +300,10 @@ export default function AuthorPostsContentLibraryPage() {
           <button
             type="button"
             onClick={() => navigate('/author/page/dashboard')}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border-2 border-[#111827] text-[#111827] active:scale-95"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#111827] text-[#111827] active:scale-95"
             aria-label="Page Dashboard"
           >
-            <i className="fa-solid fa-chart-simple text-[20px]" />
+            <i className="fa-solid fa-chart-simple text-[17px]" />
           </button>
         </div>
 
