@@ -1,11 +1,33 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AuthorContentLibraryFilterSheet from './AuthorContentLibraryFilterSheet'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const FILTER_OPTIONS = {
+  status: [
+    { value: 'all', label: 'All posts' },
+    { value: 'pinned', label: 'Pinned posts' },
+  ],
+  date: [
+    { value: 'lifetime', label: 'Lifetime' },
+    { value: '7d', label: 'Last 7 days' },
+    { value: '28d', label: 'Last 28 days' },
+    { value: '90d', label: 'Last 90 days' },
+  ],
+  type: [
+    { value: 'all', label: 'All posts' },
+    { value: 'photo', label: 'Photo posts' },
+    { value: 'text', label: 'Text posts' },
+  ],
+  placement: [{ value: 'feed', label: 'Feed' }],
+  metrics: [
+    { value: 'views', label: 'Views' },
+    { value: 'engagement', label: 'Engagement' },
+  ],
+}
 
 function getAuthToken() {
   return (
@@ -19,8 +41,12 @@ function formatCompactNumber(value) {
   const number = Number(value || 0)
 
   if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}K`
+  if (number >= 1000000) {
+    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  }
+  if (number >= 1000) {
+    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}K`
+  }
 
   return String(number)
 }
@@ -29,7 +55,6 @@ function formatPostDate(value) {
   if (!value) return 'Just now'
 
   const date = new Date(value)
-  const [filterOpen, setFilterOpen] = useState(false)
 
   if (Number.isNaN(date.getTime())) return 'Just now'
 
@@ -39,6 +64,26 @@ function formatPostDate(value) {
     hour: 'numeric',
     minute: '2-digit',
   })
+}
+
+function getOptionLabel(group, value) {
+  return (
+    FILTER_OPTIONS[group]?.find((item) => item.value === value)?.label || ''
+  )
+}
+
+function getDateCutoff(value) {
+  const days = {
+    '7d': 7,
+    '28d': 28,
+    '90d': 90,
+  }[value]
+
+  if (!days) return null
+
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  return cutoff.getTime()
 }
 
 async function fetchMyAuthorPage() {
@@ -81,12 +126,18 @@ function getPostType(post) {
   return Array.isArray(post?.image_urls) && post.image_urls.length ? 'Photo' : 'Post'
 }
 
-function getPostMetric(post) {
+function getPostEngagement(post) {
   return (
     Number(post?.like_count || 0) +
     Number(post?.comment_count || 0) +
     Number(post?.echo_count || 0)
   )
+}
+
+function getPostMetric(post, metricMode) {
+  return metricMode === 'engagement'
+    ? getPostEngagement(post)
+    : Number(post?.view_count || 0)
 }
 
 function PostThumbnail({ post }) {
@@ -105,10 +156,9 @@ function PostThumbnail({ post }) {
   )
 }
 
-function PostListRow({ post, onOpen }) {
+function PostListRow({ post, metricMode, onOpen }) {
   const postType = getPostType(post)
-  const hasViews = Number.isFinite(Number(post?.view_count))
-  const metric = hasViews ? Number(post.view_count) : getPostMetric(post)
+  const metric = getPostMetric(post, metricMode)
   const title =
     String(post?.content || '')
       .split(/\r?\n/)
@@ -143,10 +193,192 @@ function PostListRow({ post, onOpen }) {
           {formatCompactNumber(metric)}
         </span>
         <span className="mt-0.5 block text-[9px] font-normal text-[#9ca3af]">
-          {hasViews ? 'Views' : 'Engagement'}
+          {metricMode === 'engagement' ? 'Engagement' : 'Views'}
         </span>
       </span>
     </button>
+  )
+}
+
+function FilterSheet({
+  open,
+  section,
+  onClose,
+  onSectionChange,
+  statusFilter,
+  dateRange,
+  typeFilter,
+  placementFilter,
+  metricMode,
+  onStatusChange,
+  onDateChange,
+  onTypeChange,
+  onPlacementChange,
+  onMetricChange,
+}) {
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') onClose()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open, onClose])
+
+  if (!open) return null
+
+  const selectedValues = {
+    status: statusFilter,
+    date: dateRange,
+    type: typeFilter,
+    placement: placementFilter,
+    metrics: metricMode,
+  }
+
+  const rows = [
+    {
+      key: 'status',
+      label: 'Post status',
+      value: getOptionLabel('status', statusFilter),
+    },
+    {
+      key: 'date',
+      label: 'Date ranges',
+      value: getOptionLabel('date', dateRange),
+    },
+    {
+      key: 'type',
+      label: 'Post type',
+      value: getOptionLabel('type', typeFilter),
+    },
+    {
+      key: 'placement',
+      label: 'Placement',
+      value: getOptionLabel('placement', placementFilter),
+    },
+    {
+      key: 'metrics',
+      label: 'Metrics',
+      value: getOptionLabel('metrics', metricMode),
+    },
+  ]
+
+  const setters = {
+    status: onStatusChange,
+    date: onDateChange,
+    type: onTypeChange,
+    placement: onPlacementChange,
+    metrics: onMetricChange,
+  }
+
+  function chooseOption(value) {
+    setters[section]?.(value)
+    onSectionChange('menu')
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200]">
+      <button
+        type="button"
+        aria-label="Close filters"
+        onClick={onClose}
+        className="absolute inset-0 h-full w-full bg-black/40"
+      />
+
+      <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[760px] rounded-t-[26px] bg-[#f5f6fa] px-4 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-3 shadow-2xl">
+        <div className="mx-auto h-1 w-14 rounded-full bg-[#8b8d93]" />
+
+        <div className="relative flex min-h-[58px] items-center justify-center">
+          {section !== 'menu' ? (
+            <button
+              type="button"
+              onClick={() => onSectionChange('menu')}
+              className="absolute left-0 flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#e5e7eb]"
+              aria-label="Back"
+            >
+              <i className="fa-solid fa-chevron-left text-[18px]" />
+            </button>
+          ) : null}
+
+          <h2 className="text-center text-[20px] font-bold text-[#111827]">
+            {section === 'menu'
+              ? 'Filters'
+              : rows.find((item) => item.key === section)?.label || 'Filters'}
+          </h2>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-0 flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#e5e7eb]"
+            aria-label="Close"
+          >
+            <i className="fa-solid fa-xmark text-[18px]" />
+          </button>
+        </div>
+
+        {section === 'menu' ? (
+          <div className="overflow-hidden rounded-[18px] bg-white">
+            {rows.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => onSectionChange(item.key)}
+                className="flex w-full items-center gap-4 px-4 py-3 text-left active:bg-[#f3f4f6]"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[17px] font-medium leading-5 text-[#111827]">
+                    {item.label}
+                  </span>
+                  <span className="mt-1 block text-[15px] font-normal leading-5 text-[#6b7280]">
+                    {item.value}
+                  </span>
+                </span>
+
+                <i className="fa-solid fa-chevron-right text-[20px] text-[#6b7280]" />
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-[18px] bg-white">
+            {(FILTER_OPTIONS[section] || []).map((item) => {
+              const selected = selectedValues[section] === item.value
+
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => chooseOption(item.value)}
+                  className="flex w-full items-center gap-4 px-4 py-4 text-left active:bg-[#f3f4f6]"
+                >
+                  <span className="min-w-0 flex-1 text-[16px] font-medium text-[#111827]">
+                    {item.label}
+                  </span>
+
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                      selected
+                        ? 'border-[#1674c4] bg-[#1674c4] text-white'
+                        : 'border-[#c7cbd1] text-transparent'
+                    }`}
+                  >
+                    <i className="fa-solid fa-check text-[11px]" />
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -158,9 +390,23 @@ export default function AuthorPostsContentLibraryPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [message, setMessage] = useState('')
-  const [pinnedOnly, setPinnedOnly] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterSection, setFilterSection] = useState('menu')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [dateRange, setDateRange] = useState('lifetime')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [sortMode, setSortMode] = useState('engagement')
+  const [placementFilter, setPlacementFilter] = useState('feed')
+  const [metricMode, setMetricMode] = useState('views')
+
+  const openFilter = useCallback((section = 'menu') => {
+    setFilterSection(section)
+    setFilterOpen(true)
+  }, [])
+
+  const closeFilter = useCallback(() => {
+    setFilterOpen(false)
+    setFilterSection('menu')
+  }, [])
 
   const loadFirstPage = useCallback(async () => {
     const token = getAuthToken()
@@ -194,8 +440,17 @@ export default function AuthorPostsContentLibraryPage() {
   const visiblePosts = useMemo(() => {
     let nextPosts = [...posts]
 
-    if (pinnedOnly) {
+    if (statusFilter === 'pinned') {
       nextPosts = nextPosts.filter((post) => post?.is_pinned)
+    }
+
+    const cutoff = getDateCutoff(dateRange)
+
+    if (cutoff) {
+      nextPosts = nextPosts.filter((post) => {
+        const createdAt = new Date(post?.created_at || 0).getTime()
+        return Number.isFinite(createdAt) && createdAt >= cutoff
+      })
     }
 
     if (typeFilter === 'photo') {
@@ -210,37 +465,25 @@ export default function AuthorPostsContentLibraryPage() {
       )
     }
 
-    if (sortMode === 'engagement') {
-      nextPosts.sort(
-        (a, b) =>
-          getPostMetric(b) - getPostMetric(a) ||
-          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-      )
-    }
-
-    if (sortMode === 'newest') {
-      nextPosts.sort(
-        (a, b) =>
-          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-      )
-    }
-
-    if (sortMode === 'oldest') {
-      nextPosts.sort(
-        (a, b) =>
-          new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-      )
-    }
+    nextPosts.sort(
+      (a, b) =>
+        getPostMetric(b, metricMode) - getPostMetric(a, metricMode) ||
+        new Date(b.created_at || 0).getTime() -
+          new Date(a.created_at || 0).getTime()
+    )
 
     return nextPosts
-  }, [pinnedOnly, posts, sortMode, typeFilter])
+  }, [dateRange, metricMode, posts, statusFilter, typeFilter])
 
   async function loadMorePosts() {
-    if (!authorPage?.page_username || loadingMore || !hasMore || !posts.length) return
+    if (!authorPage?.page_username || loadingMore || !hasMore || !posts.length) {
+      return
+    }
 
     const oldestPost = [...posts].sort(
       (a, b) =>
-        new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+        new Date(a.created_at || 0).getTime() -
+        new Date(b.created_at || 0).getTime()
     )[0]
     const before = String(oldestPost?.created_at || '').slice(0, 10)
 
@@ -313,49 +556,39 @@ export default function AuthorPostsContentLibraryPage() {
           <div className="flex min-w-max gap-2">
             <button
               type="button"
-              onClick={() => setPinnedOnly((current) => !current)}
-              className={`flex h-11 items-center gap-2 rounded-[12px] px-4 text-[14px] font-semibold ${
-                pinnedOnly
-                  ? 'bg-[#dbeeff] text-[#1674c4]'
-                  : 'bg-[#eef0f4] text-[#111827]'
-              }`}
+              onClick={() => openFilter('menu')}
+              className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#eef0f4] text-[#111827]"
+              aria-label="Filters"
             >
               <i className="fa-solid fa-sliders text-[13px]" />
             </button>
 
             <button
               type="button"
+              onClick={() => openFilter('date')}
               className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
             >
-              Lifetime
+              {getOptionLabel('date', dateRange)}
               <i className="fa-solid fa-caret-down text-[12px]" />
             </button>
 
-            <label className="relative">
-              <select
-                value={typeFilter}
-                onChange={(event) => setTypeFilter(event.target.value)}
-                className="h-11 appearance-none rounded-[12px] bg-[#eef0f4] pl-4 pr-9 text-[14px] font-semibold text-[#111827] outline-none"
-              >
-                <option value="all">All posts</option>
-                <option value="photo">Photo posts</option>
-                <option value="text">Text posts</option>
-              </select>
-              <i className="fa-solid fa-caret-down pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-[#111827]" />
-            </label>
+            <button
+              type="button"
+              onClick={() => openFilter('type')}
+              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
+            >
+              {getOptionLabel('type', typeFilter)}
+              <i className="fa-solid fa-caret-down text-[12px]" />
+            </button>
 
-            <label className="relative">
-              <select
-                value={sortMode}
-                onChange={(event) => setSortMode(event.target.value)}
-                className="h-11 appearance-none rounded-[12px] bg-[#dbeeff] pl-4 pr-9 text-[14px] font-semibold text-[#1674c4] outline-none"
-              >
-                <option value="engagement">Engagement</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-              </select>
-              <i className="fa-solid fa-caret-down pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-[#1674c4]" />
-            </label>
+            <button
+              type="button"
+              onClick={() => openFilter('metrics')}
+              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#dbeeff] px-4 text-[14px] font-semibold text-[#1674c4]"
+            >
+              {getOptionLabel('metrics', metricMode)}
+              <i className="fa-solid fa-caret-down text-[12px]" />
+            </button>
           </div>
         </div>
       </header>
@@ -374,6 +607,7 @@ export default function AuthorPostsContentLibraryPage() {
               <PostListRow
                 key={post.id}
                 post={post}
+                metricMode={metricMode}
                 onOpen={() => navigate(`/author/page?post=${post.id}`)}
               />
             ))}
@@ -405,6 +639,23 @@ export default function AuthorPostsContentLibraryPage() {
           </div>
         ) : null}
       </main>
+
+      <FilterSheet
+        open={filterOpen}
+        section={filterSection}
+        onClose={closeFilter}
+        onSectionChange={setFilterSection}
+        statusFilter={statusFilter}
+        dateRange={dateRange}
+        typeFilter={typeFilter}
+        placementFilter={placementFilter}
+        metricMode={metricMode}
+        onStatusChange={setStatusFilter}
+        onDateChange={setDateRange}
+        onTypeChange={setTypeFilter}
+        onPlacementChange={setPlacementFilter}
+        onMetricChange={setMetricMode}
+      />
     </div>
   )
 }
