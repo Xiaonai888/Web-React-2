@@ -67,6 +67,11 @@
 "src/pages/TaskCenterPage.jsx",
 "src/pages/Me/GamePage.jsx",
 "src/pages/EpisodeEchoesPage.jsx",
-"src/pages/ReaderPosts/ReaderPostCreatePage.jsx"
+"src/pages/ReaderPosts/ReaderPostCreatePage.jsx",
+"src/pages/DiscoverSearchPage.jsx",
+"src/components/AuthorPageShareSheet.jsx",
+"src/components/reader-profile/ReaderQrScannerSheet.jsx",
+"src/components/DailyGiftRewardPopup.jsx",
+"src/components/reader-profile/ReaderDiscoverPeoplePanel.jsx"
   ]
 }
