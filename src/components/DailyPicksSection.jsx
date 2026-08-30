@@ -1,6 +1,36 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { loadHomeDailyPicksSource } from '../services/homeDailyPicksData'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('dailyPicksSection', {
+  en: {
+    untitledStory: 'Untitled Story',
+    title: 'Daily Picks',
+    viewAll: 'View all Daily Picks',
+  },
+  km: {
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    title: 'រឿងណែនាំប្រចាំថ្ងៃ',
+    viewAll: 'មើលរឿងណែនាំប្រចាំថ្ងៃទាំងអស់',
+  },
+  zh: {
+    untitledStory: '无标题故事',
+    title: '每日精选',
+    viewAll: '查看全部每日精选',
+  },
+  ja: {
+    untitledStory: '無題のストーリー',
+    title: 'デイリーピック',
+    viewAll: 'デイリーピックをすべて見る',
+  },
+  ko: {
+    untitledStory: '제목 없는 스토리',
+    title: '오늘의 추천',
+    viewAll: '오늘의 추천 모두 보기',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -306,7 +336,7 @@ function selectDailyStories(
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     image:
       story.landscape_thumbnail_url ||
       story.cover_url ||
@@ -332,7 +362,9 @@ function FireSolidIcon() {
   )
 }
 
-function DailyPickCard({ book }) {
+function DailyPickCard({ book, t }) {
+  const displayTitle = book.title || t('dailyPicksSection.untitledStory')
+
   return (
     <Link
   to={`/story/${book.id}`}
@@ -342,7 +374,7 @@ function DailyPickCard({ book }) {
       <div className="relative aspect-[1.42/1] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
         <img
           src={book.image}
-          alt={book.title}
+          alt={displayTitle}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           loading="lazy"
           decoding="async"
@@ -360,7 +392,7 @@ function DailyPickCard({ book }) {
 
       <div className="mt-2 min-w-0">
         <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-          {book.title}
+          {displayTitle}
         </h3>
 
         <div className="mt-1.5 flex min-h-[22px] items-center gap-2">
@@ -407,6 +439,7 @@ function LoadingGrid() {
 export default function DailyPicksSection({
   storyType = '',
 }) {
+  const { t } = useDisplayTranslation()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [rotationSeed, setRotationSeed] =
@@ -500,14 +533,14 @@ export default function DailyPicksSection({
           </span>
 
           <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-            Daily Picks
+            {t('dailyPicksSection.title')}
           </h2>
         </div>
 
         <Link
           to="/daily-picks"
           className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-          aria-label="View all Daily Picks"
+          aria-label={t('dailyPicksSection.viewAll')}
         >
           <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
         </Link>
@@ -518,6 +551,7 @@ export default function DailyPicksSection({
           <DailyPickCard
             key={book.id}
             book={book}
+            t={t}
           />
         ))}
       </div>
