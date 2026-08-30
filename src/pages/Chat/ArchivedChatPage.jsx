@@ -13,6 +13,8 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
   deleteChatConversation,
   getManagedChatConversations,
@@ -20,10 +22,79 @@ import {
   unarchiveChatConversation,
 } from '../../services/chatApi'
 
-function Avatar({ person }) {
+
+registerTranslationNamespace('archivedChatPage', {
+  en: {
+    shadowUser: 'Shadow User',
+    failedLoadArchivedMessages: 'Failed to load archived messages',
+    failedRestoreConversation: 'Failed to restore conversation',
+    deleteConversationConfirm: 'Delete this conversation from your inbox?',
+    failedDeleteConversation: 'Failed to delete conversation',
+    searchArchivedChats: 'Search archived chats',
+    archivedChats: 'Archived chats',
+    openConversation: 'Open this conversation',
+    restore: 'Restore',
+    delete: 'Delete',
+    noArchivedMessages: 'No archived messages',
+  },
+  km: {
+    shadowUser: 'អ្នកប្រើ Shadow',
+    failedLoadArchivedMessages: 'មិនអាចផ្ទុកការសន្ទនាដែលបានដាក់ក្នុងប័ណ្ណសារបានទេ',
+    failedRestoreConversation: 'មិនអាចស្ដារការសន្ទនាបានទេ',
+    deleteConversationConfirm: 'លុបការសន្ទនានេះចេញពីប្រអប់សាររបស់អ្នកមែនទេ?',
+    failedDeleteConversation: 'មិនអាចលុបការសន្ទនាបានទេ',
+    searchArchivedChats: 'ស្វែងរកការសន្ទនាដែលបានដាក់ក្នុងប័ណ្ណសារ',
+    archivedChats: 'ការសន្ទនាដែលបានដាក់ក្នុងប័ណ្ណសារ',
+    openConversation: 'បើកការសន្ទនានេះ',
+    restore: 'ស្ដារ',
+    delete: 'លុប',
+    noArchivedMessages: 'មិនមានការសន្ទនាដែលបានដាក់ក្នុងប័ណ្ណសារទេ',
+  },
+  zh: {
+    shadowUser: 'Shadow 用户',
+    failedLoadArchivedMessages: '无法加载已归档聊天',
+    failedRestoreConversation: '无法恢复聊天',
+    deleteConversationConfirm: '要从收件箱中删除此聊天吗？',
+    failedDeleteConversation: '无法删除聊天',
+    searchArchivedChats: '搜索已归档聊天',
+    archivedChats: '已归档聊天',
+    openConversation: '打开此聊天',
+    restore: '恢复',
+    delete: '删除',
+    noArchivedMessages: '暂无已归档聊天',
+  },
+  ja: {
+    shadowUser: 'Shadow ユーザー',
+    failedLoadArchivedMessages: 'アーカイブ済みチャットを読み込めませんでした',
+    failedRestoreConversation: 'チャットを復元できませんでした',
+    deleteConversationConfirm: 'このチャットを受信トレイから削除しますか？',
+    failedDeleteConversation: 'チャットを削除できませんでした',
+    searchArchivedChats: 'アーカイブ済みチャットを検索',
+    archivedChats: 'アーカイブ済みチャット',
+    openConversation: 'このチャットを開く',
+    restore: '復元',
+    delete: '削除',
+    noArchivedMessages: 'アーカイブ済みチャットはありません',
+  },
+  ko: {
+    shadowUser: 'Shadow 사용자',
+    failedLoadArchivedMessages: '보관된 채팅을 불러오지 못했습니다',
+    failedRestoreConversation: '채팅을 복원하지 못했습니다',
+    deleteConversationConfirm: '받은편지함에서 이 채팅을 삭제하시겠습니까?',
+    failedDeleteConversation: '채팅을 삭제하지 못했습니다',
+    searchArchivedChats: '보관된 채팅 검색',
+    archivedChats: '보관된 채팅',
+    openConversation: '이 채팅 열기',
+    restore: '복원',
+    delete: '삭제',
+    noArchivedMessages: '보관된 채팅이 없습니다',
+  },
+})
+
+function Avatar({ person, t }) {
   const [failed, setFailed] = useState(false)
   const name = String(
-    person?.name || person?.username || 'Shadow User'
+    person?.name || person?.username || t('archivedChatPage.shadowUser')
   ).trim()
   const letter = name.charAt(0).toUpperCase() || 'S'
 
@@ -45,6 +116,7 @@ function Avatar({ person }) {
 
 export default function ArchivedChatPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [conversations, setConversations] = useState([])
   const [query, setQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -78,13 +150,13 @@ export default function ArchivedChatPage() {
 
         setError(
           loadError.message ||
-            'Failed to load archived messages'
+            t('archivedChatPage.failedLoadArchivedMessages')
         )
       } finally {
         if (!silent) setLoading(false)
       }
     },
-    [navigate]
+    [navigate, t]
   )
 
   useEffect(() => {
@@ -136,7 +208,7 @@ export default function ArchivedChatPage() {
     } catch (restoreError) {
       setError(
         restoreError.message ||
-          'Failed to restore conversation'
+          t('archivedChatPage.failedRestoreConversation')
       )
     } finally {
       setBusyId('')
@@ -148,7 +220,7 @@ export default function ArchivedChatPage() {
 
     if (
       !window.confirm(
-        'Delete this conversation from your inbox?'
+        t('archivedChatPage.deleteConversationConfirm')
       )
     ) {
       return
@@ -164,7 +236,7 @@ export default function ArchivedChatPage() {
     } catch (deleteError) {
       setError(
         deleteError.message ||
-          'Failed to delete conversation'
+          t('archivedChatPage.failedDeleteConversation')
       )
     } finally {
       setBusyId('')
@@ -205,21 +277,21 @@ export default function ArchivedChatPage() {
                       event.target.value.slice(0, 60)
                     )
                   }
-                  placeholder="Search archived chats"
+                  placeholder={t('archivedChatPage.searchArchivedChats')}
                   className="h-10 w-full rounded-full bg-[#f1f2f4] pl-11 pr-4 text-[14px] text-[#111827] outline-none placeholder:text-[#92929b] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)]"
                 />
               </div>
             ) : (
               <>
                 <h1 className="min-w-0 flex-1 text-[20px] font-bold leading-none text-[#111827] dark:text-[var(--shadow-text-primary)]">
-                  Archived chats
+                  {t('archivedChatPage.archivedChats')}
                 </h1>
 
                 <button
                   type="button"
                   onClick={() => setSearchOpen(true)}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f2f2f3] dark:text-[var(--shadow-text-primary)] dark:active:bg-[var(--shadow-bg-hover)]"
-                  aria-label="Search archived chats"
+                  aria-label={t('archivedChatPage.searchArchivedChats')}
                 >
                   <Search size={24} strokeWidth={2.2} />
                 </button>
@@ -266,16 +338,16 @@ export default function ArchivedChatPage() {
                     }
                     className="flex w-full items-center gap-3 text-left"
                   >
-                    <Avatar person={person} />
+                    <Avatar person={person} t={t} />
 
                     <span className="min-w-0 flex-1">
                       <strong className="block truncate text-[15px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
-                        {person.name || 'Shadow User'}
+                        {person.name || t('archivedChatPage.shadowUser')}
                       </strong>
                       <span className="mt-1 block truncate text-[12px] text-[#85818c] dark:text-[var(--shadow-text-secondary)]">
                         {conversation.latest_message
                           ?.body ||
-                          'Open this conversation'}
+                          t('archivedChatPage.openConversation')}
                       </span>
                     </span>
                   </button>
@@ -297,7 +369,7 @@ export default function ArchivedChatPage() {
                       ) : (
                         <RotateCcw size={16} />
                       )}
-                      Restore
+                      {t('archivedChatPage.restore')}
                     </button>
 
                     <button
@@ -309,7 +381,7 @@ export default function ArchivedChatPage() {
                       className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#fff0f1] text-[11px] font-bold text-[#c7353d] disabled:opacity-50 dark:bg-red-500/10 dark:text-red-300"
                     >
                       <Trash2 size={16} />
-                      Delete
+                      {t('archivedChatPage.delete')}
                     </button>
                   </div>
                 </section>
@@ -322,7 +394,7 @@ export default function ArchivedChatPage() {
               <Archive size={30} />
             </div>
             <h2 className="mt-5 text-[18px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
-              No archived messages
+              {t('archivedChatPage.noArchivedMessages')}
             </h2>
           </div>
         )}
