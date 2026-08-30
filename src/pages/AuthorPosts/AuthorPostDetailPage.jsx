@@ -400,6 +400,8 @@ const navigate = useNavigate()
 const location = useLocation()
 const { postId } = useParams()
 const [searchParams] = useSearchParams()
+const postSource =
+  searchParams.get('source') || 'direct'
 
 const rawPhotoIndex =
   searchParams.get('photo')
@@ -510,8 +512,8 @@ const [photoAltSaving, setPhotoAltSaving] = useState(false)
           getAuthToken()
         const response = await fetch(
           `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(
-            postId || ''
-          )}`,
+  postId || ''
+)}?source=${encodeURIComponent(postSource)}`
           {
             headers: token
               ? {
@@ -567,7 +569,7 @@ const [photoAltSaving, setPhotoAltSaving] = useState(false)
   ignore = true
   controller.abort()
 }
-  }, [postId])
+  }, [postId, postSource])
   useEffect(() => {
   if (!fullscreenPhotoOpen) {
     return undefined
