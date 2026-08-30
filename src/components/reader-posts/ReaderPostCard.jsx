@@ -6,6 +6,12 @@ import {
   useState,
 } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  getDisplayLanguageId,
+  getDisplayText,
+  useDisplayTranslation,
+} from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import ImageDropZone from '../common/ImageDropZone'
 import ReaderPostOptionsSheet, {
   ReaderPostDeleteConfirmSheet,
@@ -26,6 +32,495 @@ import {
   saveSavedPost,
 } from '../../services/savedPostsApi'
 
+
+registerTranslationNamespace('readerPostCard', {
+  "en": {
+    "failedLoadImage": "Failed to load image",
+    "couldNotPrepareImage": "Could not prepare this image",
+    "photoTooLargeAfterCompression": "Photo is still too large after compression. Selected: {{selected}} / Limit: {{limit}}.",
+    "pleaseLoginFirst": "Please login first",
+    "failedUploadPhoto": "Failed to upload photo",
+    "uploadNoImageUrl": "Upload completed without an image URL",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m",
+    "hoursAgo": "{{count}}h",
+    "daysAgo": "{{count}}d",
+    "reader": "Reader",
+    "openPhotoFullscreen": "Open photo fullscreen",
+    "openPhotoNumber": "Open photo {{count}}",
+    "readerPost": "Reader Post",
+    "readerPostLower": "reader post",
+    "sharedContent": "Shared content",
+    "story": "Story",
+    "episode": "Episode",
+    "episodeNumber": "Episode {{count}}",
+    "shadowMall": "Shadow Mall",
+    "promotion": "Promotion",
+    "shadowMallPromotion": "Shadow Mall promotion",
+    "authorPage": "Author Page",
+    "authorPost": "Author post",
+    "post": "Post",
+    "removePhoto": "Remove photo",
+    "failedUpdateReaction": "Failed to update reaction",
+    "onlyImageFiles": "Only image files can be uploaded.",
+    "maxPhotos": "You can add up to {{count}} photos per post.",
+    "preparingPhotos": "Preparing photos...",
+    "photosTooLarge": "Photos are too large. Selected: {{selected}} / Limit: {{limit}}.",
+    "couldNotUploadPhotos": "Could not upload these photos.",
+    "postTextOrImageRequired": "Post text or image is required.",
+    "failedUpdatePost": "Failed to update post",
+    "failedDeletePost": "Failed to delete post",
+    "legacyEchoEdit": "Delete this old Echo and Echo it again to edit it as a normal post.",
+    "failedSaveCaption": "Failed to save caption",
+    "captionSaved": "Caption saved.",
+    "captionRemoved": "Caption removed.",
+    "failedSaveAltText": "Failed to save alt text",
+    "altTextSaved": "Alt text saved.",
+    "altTextRemoved": "Alt text removed.",
+    "postNeedsContentDeleteInstead": "This post needs text or a photo. Delete the post instead.",
+    "failedDeletePhoto": "Failed to delete photo",
+    "photoDeleted": "Photo deleted.",
+    "couldNotDownloadPhoto": "Could not download photo",
+    "photoSaved": "Photo saved.",
+    "photoOpenedForSaving": "Photo opened for saving.",
+    "readerPhoto": "{{name}} photo",
+    "photoLinkCopied": "Photo link copied.",
+    "failedFollowReader": "Failed to follow reader",
+    "removedFromSaved": "Removed from saved.",
+    "postSaved": "Post saved.",
+    "failedUpdateSavedPost": "Failed to update saved post.",
+    "like": "Like",
+    "echo": "Echo",
+    "follow": "Follow",
+    "edited": "Edited",
+    "postOptions": "Post options",
+    "commentsCount": "{{count}} comments",
+    "echoesCount": "{{count}} echoes",
+    "sharesCount": "{{count}} shares",
+    "comment": "Comment",
+    "share": "Share",
+    "closeFullscreenPhoto": "Close fullscreen photo",
+    "photoOptions": "Photo options",
+    "editCaption": "Edit caption",
+    "deletePhoto": "Delete photo",
+    "saveToPhone": "Save to phone",
+    "shareExternal": "Share external",
+    "editAltText": "Edit alt text",
+    "altTextHelp": "Describe what is shown in this photo for accessibility.",
+    "describePhotoPlaceholder": "Describe this photo...",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "save": "Save",
+    "photoNumber": "Photo {{count}}",
+    "captionPlaceholder": "Write a caption for this photo...",
+    "deleteThisPhoto": "Delete this photo?",
+    "photoDeleteDescription": "This photo will be removed from this Reader post.",
+    "deleting": "Deleting...",
+    "onlyImagesAllowed": "Only images are allowed, with a maximum of {{count}} photos.",
+    "dropPhotosHere": "Drop photos here",
+    "closeEditor": "Close editor",
+    "editReaderPost": "Edit Reader Post",
+    "uploading": "Uploading",
+    "onlyMe": "Only me",
+    "friends": "Friends",
+    "followers": "Followers",
+    "public": "Public",
+    "shareThoughts": "Share your thoughts...",
+    "openGallery": "Open Gallery",
+    "photosCount": "{{count}} photos",
+    "gallery": "Gallery",
+    "delete": "Delete"
+  },
+  "km": {
+    "failedLoadImage": "មិនអាចផ្ទុករូបភាពបានទេ",
+    "couldNotPrepareImage": "មិនអាចរៀបចំរូបភាពនេះបានទេ",
+    "photoTooLargeAfterCompression": "រូបភាពនៅតែធំពេកបន្ទាប់ពីបង្ហាប់។ បានជ្រើស: {{selected}} / កំណត់: {{limit}}។",
+    "pleaseLoginFirst": "សូមចូលគណនីជាមុន",
+    "failedUploadPhoto": "មិនអាច Upload រូបភាពបានទេ",
+    "uploadNoImageUrl": "Upload រួច ប៉ុន្តែមិនទទួលបាន Image URL",
+    "justNow": "ឥឡូវនេះ",
+    "minutesAgo": "{{count}} នាទី",
+    "hoursAgo": "{{count}} ម៉ោង",
+    "daysAgo": "{{count}} ថ្ងៃ",
+    "reader": "អ្នកអាន",
+    "openPhotoFullscreen": "បើករូបភាពពេញអេក្រង់",
+    "openPhotoNumber": "បើករូបភាពទី {{count}}",
+    "readerPost": "Reader Post",
+    "readerPostLower": "Reader post",
+    "sharedContent": "មាតិកាដែលបានចែករំលែក",
+    "story": "រឿង",
+    "episode": "ភាគ",
+    "episodeNumber": "ភាគ {{count}}",
+    "shadowMall": "Shadow Mall",
+    "promotion": "ប្រម៉ូសិន",
+    "shadowMallPromotion": "ប្រម៉ូសិន Shadow Mall",
+    "authorPage": "ទំព័រអ្នកនិពន្ធ",
+    "authorPost": "Post អ្នកនិពន្ធ",
+    "post": "Post",
+    "removePhoto": "ដករូបភាព",
+    "failedUpdateReaction": "មិនអាច Update Reaction បានទេ",
+    "onlyImageFiles": "អាច Upload បានតែឯកសាររូបភាពប៉ុណ្ណោះ។",
+    "maxPhotos": "អ្នកអាចបន្ថែមរូបបានអតិបរមា {{count}} សន្លឹកក្នុងមួយ Post។",
+    "preparingPhotos": "កំពុងរៀបចំរូបភាព...",
+    "photosTooLarge": "រូបភាពធំពេក។ បានជ្រើស: {{selected}} / កំណត់: {{limit}}។",
+    "couldNotUploadPhotos": "មិនអាច Upload រូបភាពទាំងនេះបានទេ។",
+    "postTextOrImageRequired": "Post ត្រូវមានអត្ថបទ ឬរូបភាព។",
+    "failedUpdatePost": "មិនអាច Update Post បានទេ",
+    "failedDeletePost": "មិនអាចលុប Post បានទេ",
+    "legacyEchoEdit": "សូមលុប Echo ចាស់នេះ ហើយ Echo ម្តងទៀត ដើម្បីកែវាជា Post ធម្មតា។",
+    "failedSaveCaption": "មិនអាចរក្សាទុក Caption បានទេ",
+    "captionSaved": "បានរក្សាទុក Caption។",
+    "captionRemoved": "បានដក Caption។",
+    "failedSaveAltText": "មិនអាចរក្សាទុក Alt text បានទេ",
+    "altTextSaved": "បានរក្សាទុក Alt text។",
+    "altTextRemoved": "បានដក Alt text។",
+    "postNeedsContentDeleteInstead": "Post នេះត្រូវមានអត្ថបទ ឬរូបភាព។ សូមលុប Post ជំនួសវិញ។",
+    "failedDeletePhoto": "មិនអាចលុបរូបភាពបានទេ",
+    "photoDeleted": "បានលុបរូបភាព។",
+    "couldNotDownloadPhoto": "មិនអាចទាញយករូបភាពបានទេ",
+    "photoSaved": "បានរក្សាទុករូបភាព។",
+    "photoOpenedForSaving": "បានបើករូបភាពសម្រាប់រក្សាទុក។",
+    "readerPhoto": "រូបភាពរបស់ {{name}}",
+    "photoLinkCopied": "បានចម្លង Link រូបភាព។",
+    "failedFollowReader": "មិនអាច Follow អ្នកអានបានទេ",
+    "removedFromSaved": "បានដកចេញពី Saved។",
+    "postSaved": "បានរក្សាទុក Post។",
+    "failedUpdateSavedPost": "មិនអាច Update Saved Post បានទេ។",
+    "like": "ចូលចិត្ត",
+    "echo": "Echo",
+    "follow": "Follow",
+    "edited": "បានកែ",
+    "postOptions": "ជម្រើស Post",
+    "commentsCount": "មតិយោបល់ {{count}}",
+    "echoesCount": "Echo {{count}}",
+    "sharesCount": "ចែករំលែក {{count}}",
+    "comment": "មតិយោបល់",
+    "share": "ចែករំលែក",
+    "closeFullscreenPhoto": "បិទរូបភាពពេញអេក្រង់",
+    "photoOptions": "ជម្រើសរូបភាព",
+    "editCaption": "កែ Caption",
+    "deletePhoto": "លុបរូបភាព",
+    "saveToPhone": "រក្សាទុកក្នុងទូរស័ព្ទ",
+    "shareExternal": "ចែករំលែកខាងក្រៅ",
+    "editAltText": "កែ Alt text",
+    "altTextHelp": "ពិពណ៌នាអ្វីដែលមានក្នុងរូបភាពនេះសម្រាប់ Accessibility។",
+    "describePhotoPlaceholder": "ពិពណ៌នារូបភាពនេះ...",
+    "cancel": "បោះបង់",
+    "saving": "កំពុងរក្សាទុក...",
+    "save": "រក្សាទុក",
+    "photoNumber": "រូបភាពទី {{count}}",
+    "captionPlaceholder": "សរសេរ Caption សម្រាប់រូបភាពនេះ...",
+    "deleteThisPhoto": "លុបរូបភាពនេះ?",
+    "photoDeleteDescription": "រូបភាពនេះនឹងត្រូវដកចេញពី Reader post នេះ។",
+    "deleting": "កំពុងលុប...",
+    "onlyImagesAllowed": "អនុញ្ញាតតែរូបភាព និងអតិបរមា {{count}} សន្លឹក។",
+    "dropPhotosHere": "ទម្លាក់រូបភាពនៅទីនេះ",
+    "closeEditor": "បិទ Editor",
+    "editReaderPost": "កែ Reader Post",
+    "uploading": "កំពុង Upload",
+    "onlyMe": "ខ្ញុំប៉ុណ្ណោះ",
+    "friends": "មិត្តភក្តិ",
+    "followers": "អ្នក Follow",
+    "public": "សាធារណៈ",
+    "shareThoughts": "ចែករំលែកគំនិតរបស់អ្នក...",
+    "openGallery": "បើក Gallery",
+    "photosCount": "រូប {{count}} សន្លឹក",
+    "gallery": "Gallery",
+    "delete": "លុប"
+  },
+  "zh": {
+    "failedLoadImage": "无法加载图片",
+    "couldNotPrepareImage": "无法处理此图片",
+    "photoTooLargeAfterCompression": "图片压缩后仍然过大。已选择：{{selected}} / 限制：{{limit}}。",
+    "pleaseLoginFirst": "请先登录",
+    "failedUploadPhoto": "图片上传失败",
+    "uploadNoImageUrl": "上传完成，但未返回图片 URL",
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}} 分钟",
+    "hoursAgo": "{{count}} 小时",
+    "daysAgo": "{{count}} 天",
+    "reader": "读者",
+    "openPhotoFullscreen": "全屏打开图片",
+    "openPhotoNumber": "打开第 {{count}} 张图片",
+    "readerPost": "读者帖子",
+    "readerPostLower": "读者帖子",
+    "sharedContent": "分享的内容",
+    "story": "故事",
+    "episode": "章节",
+    "episodeNumber": "第 {{count}} 章",
+    "shadowMall": "Shadow Mall",
+    "promotion": "推广",
+    "shadowMallPromotion": "Shadow Mall 推广",
+    "authorPage": "作者主页",
+    "authorPost": "作者帖子",
+    "post": "帖子",
+    "removePhoto": "移除图片",
+    "failedUpdateReaction": "无法更新反应",
+    "onlyImageFiles": "只能上传图片文件。",
+    "maxPhotos": "每篇帖子最多可添加 {{count}} 张图片。",
+    "preparingPhotos": "正在处理图片...",
+    "photosTooLarge": "图片过大。已选择：{{selected}} / 限制：{{limit}}。",
+    "couldNotUploadPhotos": "无法上传这些图片。",
+    "postTextOrImageRequired": "帖子需要文字或图片。",
+    "failedUpdatePost": "无法更新帖子",
+    "failedDeletePost": "无法删除帖子",
+    "legacyEchoEdit": "请删除这个旧 Echo，然后重新 Echo，才能像普通帖子一样编辑。",
+    "failedSaveCaption": "无法保存说明文字",
+    "captionSaved": "说明文字已保存。",
+    "captionRemoved": "说明文字已移除。",
+    "failedSaveAltText": "无法保存替代文本",
+    "altTextSaved": "替代文本已保存。",
+    "altTextRemoved": "替代文本已移除。",
+    "postNeedsContentDeleteInstead": "帖子需要文字或图片。请改为删除帖子。",
+    "failedDeletePhoto": "无法删除图片",
+    "photoDeleted": "图片已删除。",
+    "couldNotDownloadPhoto": "无法下载图片",
+    "photoSaved": "图片已保存。",
+    "photoOpenedForSaving": "图片已打开，可进行保存。",
+    "readerPhoto": "{{name}} 的图片",
+    "photoLinkCopied": "图片链接已复制。",
+    "failedFollowReader": "无法关注读者",
+    "removedFromSaved": "已从收藏中移除。",
+    "postSaved": "帖子已收藏。",
+    "failedUpdateSavedPost": "无法更新收藏状态。",
+    "like": "赞",
+    "echo": "Echo",
+    "follow": "关注",
+    "edited": "已编辑",
+    "postOptions": "帖子选项",
+    "commentsCount": "{{count}} 条评论",
+    "echoesCount": "{{count}} 个 Echo",
+    "sharesCount": "{{count}} 次分享",
+    "comment": "评论",
+    "share": "分享",
+    "closeFullscreenPhoto": "关闭全屏图片",
+    "photoOptions": "图片选项",
+    "editCaption": "编辑说明文字",
+    "deletePhoto": "删除图片",
+    "saveToPhone": "保存到手机",
+    "shareExternal": "外部分享",
+    "editAltText": "编辑替代文本",
+    "altTextHelp": "为无障碍功能描述此图片中显示的内容。",
+    "describePhotoPlaceholder": "描述这张图片...",
+    "cancel": "取消",
+    "saving": "保存中...",
+    "save": "保存",
+    "photoNumber": "图片 {{count}}",
+    "captionPlaceholder": "为这张图片写说明文字...",
+    "deleteThisPhoto": "删除这张图片？",
+    "photoDeleteDescription": "此图片将从这篇读者帖子中移除。",
+    "deleting": "删除中...",
+    "onlyImagesAllowed": "仅允许图片，最多 {{count}} 张。",
+    "dropPhotosHere": "将图片拖放到这里",
+    "closeEditor": "关闭编辑器",
+    "editReaderPost": "编辑读者帖子",
+    "uploading": "上传中",
+    "onlyMe": "仅自己",
+    "friends": "好友",
+    "followers": "关注者",
+    "public": "公开",
+    "shareThoughts": "分享你的想法...",
+    "openGallery": "打开相册",
+    "photosCount": "{{count}} 张图片",
+    "gallery": "相册",
+    "delete": "删除"
+  },
+  "ja": {
+    "failedLoadImage": "画像を読み込めませんでした",
+    "couldNotPrepareImage": "この画像を処理できませんでした",
+    "photoTooLargeAfterCompression": "圧縮後も画像サイズが大きすぎます。選択：{{selected}} / 上限：{{limit}}。",
+    "pleaseLoginFirst": "先にログインしてください",
+    "failedUploadPhoto": "画像をアップロードできませんでした",
+    "uploadNoImageUrl": "アップロードは完了しましたが、画像 URL が返されませんでした",
+    "justNow": "たった今",
+    "minutesAgo": "{{count}}分",
+    "hoursAgo": "{{count}}時間",
+    "daysAgo": "{{count}}日",
+    "reader": "読者",
+    "openPhotoFullscreen": "画像を全画面で開く",
+    "openPhotoNumber": "画像 {{count}} を開く",
+    "readerPost": "読者投稿",
+    "readerPostLower": "読者投稿",
+    "sharedContent": "共有コンテンツ",
+    "story": "ストーリー",
+    "episode": "エピソード",
+    "episodeNumber": "エピソード {{count}}",
+    "shadowMall": "Shadow Mall",
+    "promotion": "プロモーション",
+    "shadowMallPromotion": "Shadow Mall プロモーション",
+    "authorPage": "作者ページ",
+    "authorPost": "作者投稿",
+    "post": "投稿",
+    "removePhoto": "画像を削除",
+    "failedUpdateReaction": "リアクションを更新できませんでした",
+    "onlyImageFiles": "画像ファイルのみアップロードできます。",
+    "maxPhotos": "1つの投稿に最大 {{count}} 枚の画像を追加できます。",
+    "preparingPhotos": "画像を準備中...",
+    "photosTooLarge": "画像サイズが大きすぎます。選択：{{selected}} / 上限：{{limit}}。",
+    "couldNotUploadPhotos": "これらの画像をアップロードできませんでした。",
+    "postTextOrImageRequired": "投稿にはテキストまたは画像が必要です。",
+    "failedUpdatePost": "投稿を更新できませんでした",
+    "failedDeletePost": "投稿を削除できませんでした",
+    "legacyEchoEdit": "この古い Echo を削除してから再度 Echo すると、通常の投稿として編集できます。",
+    "failedSaveCaption": "キャプションを保存できませんでした",
+    "captionSaved": "キャプションを保存しました。",
+    "captionRemoved": "キャプションを削除しました。",
+    "failedSaveAltText": "代替テキストを保存できませんでした",
+    "altTextSaved": "代替テキストを保存しました。",
+    "altTextRemoved": "代替テキストを削除しました。",
+    "postNeedsContentDeleteInstead": "投稿にはテキストまたは画像が必要です。代わりに投稿を削除してください。",
+    "failedDeletePhoto": "画像を削除できませんでした",
+    "photoDeleted": "画像を削除しました。",
+    "couldNotDownloadPhoto": "画像をダウンロードできませんでした",
+    "photoSaved": "画像を保存しました。",
+    "photoOpenedForSaving": "保存用に画像を開きました。",
+    "readerPhoto": "{{name}} の画像",
+    "photoLinkCopied": "画像リンクをコピーしました。",
+    "failedFollowReader": "読者をフォローできませんでした",
+    "removedFromSaved": "保存済みから削除しました。",
+    "postSaved": "投稿を保存しました。",
+    "failedUpdateSavedPost": "保存済み投稿を更新できませんでした。",
+    "like": "いいね",
+    "echo": "Echo",
+    "follow": "フォロー",
+    "edited": "編集済み",
+    "postOptions": "投稿オプション",
+    "commentsCount": "コメント {{count}} 件",
+    "echoesCount": "Echo {{count}} 件",
+    "sharesCount": "シェア {{count}} 件",
+    "comment": "コメント",
+    "share": "シェア",
+    "closeFullscreenPhoto": "全画面画像を閉じる",
+    "photoOptions": "画像オプション",
+    "editCaption": "キャプションを編集",
+    "deletePhoto": "画像を削除",
+    "saveToPhone": "端末に保存",
+    "shareExternal": "外部に共有",
+    "editAltText": "代替テキストを編集",
+    "altTextHelp": "アクセシビリティのため、この画像に写っている内容を説明してください。",
+    "describePhotoPlaceholder": "この画像を説明...",
+    "cancel": "キャンセル",
+    "saving": "保存中...",
+    "save": "保存",
+    "photoNumber": "画像 {{count}}",
+    "captionPlaceholder": "この画像のキャプションを書く...",
+    "deleteThisPhoto": "この画像を削除しますか？",
+    "photoDeleteDescription": "この画像は読者投稿から削除されます。",
+    "deleting": "削除中...",
+    "onlyImagesAllowed": "画像のみ許可されています。最大 {{count}} 枚です。",
+    "dropPhotosHere": "ここに画像をドロップ",
+    "closeEditor": "エディターを閉じる",
+    "editReaderPost": "読者投稿を編集",
+    "uploading": "アップロード中",
+    "onlyMe": "自分のみ",
+    "friends": "友達",
+    "followers": "フォロワー",
+    "public": "公開",
+    "shareThoughts": "あなたの考えを共有...",
+    "openGallery": "ギャラリーを開く",
+    "photosCount": "{{count}}枚の画像",
+    "gallery": "ギャラリー",
+    "delete": "削除"
+  },
+  "ko": {
+    "failedLoadImage": "이미지를 불러오지 못했습니다",
+    "couldNotPrepareImage": "이 이미지를 처리할 수 없습니다",
+    "photoTooLargeAfterCompression": "압축 후에도 이미지가 너무 큽니다. 선택: {{selected}} / 제한: {{limit}}.",
+    "pleaseLoginFirst": "먼저 로그인해 주세요",
+    "failedUploadPhoto": "이미지를 업로드하지 못했습니다",
+    "uploadNoImageUrl": "업로드는 완료되었지만 이미지 URL이 없습니다",
+    "justNow": "방금",
+    "minutesAgo": "{{count}}분",
+    "hoursAgo": "{{count}}시간",
+    "daysAgo": "{{count}}일",
+    "reader": "독자",
+    "openPhotoFullscreen": "사진 전체 화면으로 열기",
+    "openPhotoNumber": "사진 {{count}} 열기",
+    "readerPost": "독자 게시물",
+    "readerPostLower": "독자 게시물",
+    "sharedContent": "공유 콘텐츠",
+    "story": "스토리",
+    "episode": "에피소드",
+    "episodeNumber": "에피소드 {{count}}",
+    "shadowMall": "Shadow Mall",
+    "promotion": "프로모션",
+    "shadowMallPromotion": "Shadow Mall 프로모션",
+    "authorPage": "작가 페이지",
+    "authorPost": "작가 게시물",
+    "post": "게시물",
+    "removePhoto": "사진 삭제",
+    "failedUpdateReaction": "반응을 업데이트하지 못했습니다",
+    "onlyImageFiles": "이미지 파일만 업로드할 수 있습니다.",
+    "maxPhotos": "게시물당 최대 {{count}}장의 이미지를 추가할 수 있습니다.",
+    "preparingPhotos": "이미지 준비 중...",
+    "photosTooLarge": "이미지가 너무 큽니다. 선택: {{selected}} / 제한: {{limit}}.",
+    "couldNotUploadPhotos": "이 이미지들을 업로드하지 못했습니다.",
+    "postTextOrImageRequired": "게시물에는 텍스트나 이미지가 필요합니다.",
+    "failedUpdatePost": "게시물을 업데이트하지 못했습니다",
+    "failedDeletePost": "게시물을 삭제하지 못했습니다",
+    "legacyEchoEdit": "이 오래된 Echo를 삭제한 뒤 다시 Echo하면 일반 게시물처럼 편집할 수 있습니다.",
+    "failedSaveCaption": "캡션을 저장하지 못했습니다",
+    "captionSaved": "캡션을 저장했습니다.",
+    "captionRemoved": "캡션을 삭제했습니다.",
+    "failedSaveAltText": "대체 텍스트를 저장하지 못했습니다",
+    "altTextSaved": "대체 텍스트를 저장했습니다.",
+    "altTextRemoved": "대체 텍스트를 삭제했습니다.",
+    "postNeedsContentDeleteInstead": "게시물에는 텍스트나 사진이 필요합니다. 대신 게시물을 삭제해 주세요.",
+    "failedDeletePhoto": "사진을 삭제하지 못했습니다",
+    "photoDeleted": "사진이 삭제되었습니다.",
+    "couldNotDownloadPhoto": "사진을 다운로드하지 못했습니다",
+    "photoSaved": "사진이 저장되었습니다.",
+    "photoOpenedForSaving": "저장을 위해 사진을 열었습니다.",
+    "readerPhoto": "{{name}}님의 사진",
+    "photoLinkCopied": "사진 링크가 복사되었습니다.",
+    "failedFollowReader": "독자를 팔로우하지 못했습니다",
+    "removedFromSaved": "저장됨에서 삭제했습니다.",
+    "postSaved": "게시물을 저장했습니다.",
+    "failedUpdateSavedPost": "저장된 게시물을 업데이트하지 못했습니다.",
+    "like": "좋아요",
+    "echo": "Echo",
+    "follow": "팔로우",
+    "edited": "수정됨",
+    "postOptions": "게시물 옵션",
+    "commentsCount": "댓글 {{count}}개",
+    "echoesCount": "Echo {{count}}개",
+    "sharesCount": "공유 {{count}}회",
+    "comment": "댓글",
+    "share": "공유",
+    "closeFullscreenPhoto": "전체 화면 사진 닫기",
+    "photoOptions": "사진 옵션",
+    "editCaption": "캡션 편집",
+    "deletePhoto": "사진 삭제",
+    "saveToPhone": "휴대폰에 저장",
+    "shareExternal": "외부 공유",
+    "editAltText": "대체 텍스트 편집",
+    "altTextHelp": "접근성을 위해 이 사진에 무엇이 보이는지 설명해 주세요.",
+    "describePhotoPlaceholder": "이 사진을 설명하세요...",
+    "cancel": "취소",
+    "saving": "저장 중...",
+    "save": "저장",
+    "photoNumber": "사진 {{count}}",
+    "captionPlaceholder": "이 사진의 캡션을 작성하세요...",
+    "deleteThisPhoto": "이 사진을 삭제할까요?",
+    "photoDeleteDescription": "이 사진은 독자 게시물에서 제거됩니다.",
+    "deleting": "삭제 중...",
+    "onlyImagesAllowed": "이미지만 허용되며 최대 {{count}}장입니다.",
+    "dropPhotosHere": "여기에 사진을 놓으세요",
+    "closeEditor": "편집기 닫기",
+    "editReaderPost": "독자 게시물 편집",
+    "uploading": "업로드 중",
+    "onlyMe": "나만 보기",
+    "friends": "친구",
+    "followers": "팔로워",
+    "public": "전체 공개",
+    "shareThoughts": "생각을 공유해 보세요...",
+    "openGallery": "갤러리 열기",
+    "photosCount": "사진 {{count}}장",
+    "gallery": "갤러리",
+    "delete": "삭제"
+  }
+})
+
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' ||
@@ -43,6 +538,13 @@ const MAX_IMAGE_WIDTH = 1080
 const MAX_IMAGE_HEIGHT = 1350
 const TARGET_IMAGE_BYTES = 150 * 1024
 const LEGACY_PHOTO_VIEWER_ENABLED = false
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
 
 function getAuthToken() {
   return (
@@ -96,7 +598,7 @@ function loadImageFromFile(file) {
         URL.revokeObjectURL(url)
         reject(
           new Error(
-            'Failed to load image'
+            getDisplayText('readerPostCard.failedLoadImage')
           )
         )
       }
@@ -162,7 +664,7 @@ async function compressImageFile(file) {
 
     if (!context) {
       throw new Error(
-        'Could not prepare this image'
+        getDisplayText('readerPostCard.couldNotPrepareImage')
       )
     }
 
@@ -221,11 +723,15 @@ async function compressImageFile(file) {
     HARD_MAX_IMAGE_BYTES
   ) {
     throw new Error(
-      `Photo is still too large after compression. Selected: ${formatBytes(
-        blob.size
-      )} / Limit: ${formatBytes(
-        HARD_MAX_IMAGE_BYTES
-      )}.`
+      getDisplayText(
+        'readerPostCard.photoTooLargeAfterCompression',
+        {
+          selected: formatBytes(blob.size),
+          limit: formatBytes(
+            HARD_MAX_IMAGE_BYTES
+          ),
+        }
+      )
     )
   }
 
@@ -249,7 +755,7 @@ async function uploadReaderPostImage(
 
   if (!token) {
     throw new Error(
-      'Please login first'
+      getDisplayText('readerPostCard.pleaseLoginFirst')
     )
   }
 
@@ -282,7 +788,7 @@ async function uploadReaderPostImage(
   ) {
     throw new Error(
       data.message ||
-        'Failed to upload photo'
+        getDisplayText('readerPostCard.failedUploadPhoto')
     )
   }
 
@@ -293,7 +799,7 @@ async function uploadReaderPostImage(
 
   if (!imageUrl) {
     throw new Error(
-      'Upload completed without an image URL'
+      getDisplayText('readerPostCard.uploadNoImageUrl')
     )
   }
 
@@ -357,7 +863,11 @@ function formatPostTime(value) {
   const timestamp =
     new Date(value || 0).getTime()
 
-  if (!timestamp) return 'Just now'
+  if (!timestamp) {
+    return getDisplayText(
+      'readerPostCard.justNow'
+    )
+  }
 
   const difference = Math.max(
     0,
@@ -373,13 +883,36 @@ function formatPostTime(value) {
     hours / 24
   )
 
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m`
-  if (hours < 24) return `${hours}h`
-  if (days < 7) return `${days}d`
+  if (minutes < 1) {
+    return getDisplayText(
+      'readerPostCard.justNow'
+    )
+  }
+  if (minutes < 60) {
+    return getDisplayText(
+      'readerPostCard.minutesAgo',
+      { count: minutes }
+    )
+  }
+  if (hours < 24) {
+    return getDisplayText(
+      'readerPostCard.hoursAgo',
+      { count: hours }
+    )
+  }
+  if (days < 7) {
+    return getDisplayText(
+      'readerPostCard.daysAgo',
+      { count: days }
+    )
+  }
+
+  const language =
+    getDisplayLanguageId()
 
   return new Intl.DateTimeFormat(
-    undefined,
+    DISPLAY_LOCALES[language] ||
+      DISPLAY_LOCALES.en,
     {
       month: 'short',
       day: 'numeric',
@@ -412,7 +945,7 @@ function getVisibilityIcon(value) {
 }
 
 function ReaderAvatar({ user }) {
-  const name = user?.name || 'Reader'
+  const name = user?.name || getDisplayText('readerPostCard.reader')
 
   return (
     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] text-[14px] font-semibold text-white">
@@ -505,7 +1038,7 @@ function ReaderPostImages({
           )
         }
         className="block w-full bg-[#f3f4f6] dark:bg-[#202331]"
-        aria-label="Open photo fullscreen"
+        aria-label={getDisplayText('readerPostCard.openPhotoFullscreen')}
       >
         <img
           src={selectedImage}
@@ -559,9 +1092,10 @@ function ReaderPostImages({
                   ? 'col-span-2 aspect-[2/1] bg-[#f3f4f6] dark:bg-[#202331]'
                   : 'aspect-square bg-[#f3f4f6] dark:bg-[#202331]'
               }
-              aria-label={`Open photo ${
-                index + 1
-              }`}
+              aria-label={getDisplayText(
+                'readerPostCard.openPhotoNumber',
+                { count: index + 1 }
+              )}
             >
               <img
                 src={imageUrl}
@@ -772,19 +1306,19 @@ function resolveReaderPostEchoSource(
       name:
         user?.name ||
         username ||
-        'Reader',
+        getDisplayText('readerPostCard.reader'),
       avatarUrl:
         user?.avatar_url || '',
       content:
         post?.content ||
-        'Reader post',
+        getDisplayText('readerPostCard.readerPost'),
       imageUrl:
         Array.isArray(
           post?.image_urls
         )
           ? post.image_urls[0] || ''
           : '',
-      label: 'reader post',
+      label: getDisplayText('readerPostCard.readerPostLower'),
       shareUrl:
         `${window.location.origin}${
           username
@@ -810,7 +1344,7 @@ function resolveReaderPostEchoSource(
     post?.source_episode?.title ||
     owner?.page_name ||
     owner?.name ||
-    'Shared content'
+    getDisplayText('readerPostCard.sharedContent')
 
   const sourcePath = String(
     post?.source_url ||
@@ -854,7 +1388,26 @@ function resolveReaderPostEchoSource(
       '',
     label:
       source?.label ||
-      sourceType.replaceAll('_', ' '),
+      (sourceType === 'reader_post'
+        ? getDisplayText(
+            'readerPostCard.readerPostLower'
+          )
+        : sourceType === 'author_post'
+          ? getDisplayText(
+              'readerPostCard.authorPost'
+            )
+          : sourceType === 'story'
+            ? getDisplayText(
+                'readerPostCard.story'
+              )
+            : sourceType === 'episode'
+              ? getDisplayText(
+                  'readerPostCard.episode'
+                )
+              : sourceType.replaceAll(
+                  '_',
+                  ' '
+                )),
     shareUrl,
   }
 }
@@ -862,6 +1415,8 @@ function resolveReaderPostEchoSource(
 function ReaderEchoSourceBlock({ post }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { language, t } =
+    useDisplayTranslation()
   const source = post?.source || {}
   const story = post?.source_story || {}
   const episode = post?.source_episode || {}
@@ -940,8 +1495,12 @@ function ReaderEchoSourceBlock({ post }) {
     const coverUrl = imageCandidates[0] || ''
     const sourceLabel =
       sourceType === 'episode'
-        ? 'episode'
-        : 'story'
+        ? getDisplayText(
+            'readerPostCard.episode'
+          )
+        : getDisplayText(
+            'readerPostCard.story'
+          )
     const placeholderIcon =
       sourceType === 'episode'
         ? 'fa-solid fa-book-open-reader'
@@ -949,18 +1508,23 @@ function ReaderEchoSourceBlock({ post }) {
     const sourceTitle =
       story?.title ||
       source?.name ||
-      'Story'
+      getDisplayText('readerPostCard.story')
     const sourceSummary =
       sourceType === 'episode'
         ? episode?.title ||
           source?.content ||
-          `Episode ${Number(
-            episode?.episode_number || 0
-          )}`
+          getDisplayText(
+            'readerPostCard.episodeNumber',
+            {
+              count: Number(
+                episode?.episode_number || 0
+              ),
+            }
+          )
         : sourceOwner?.page_name ||
           sourceOwner?.name ||
           story?.main_genre ||
-          'Story'
+          getDisplayText('readerPostCard.story')
     const sourceDetail =
       sourceType === 'episode'
         ? sourceOwner?.page_name ||
@@ -1040,11 +1604,11 @@ function ReaderEchoSourceBlock({ post }) {
       promotion.sponsor ||
       source?.owner?.name ||
       source?.name ||
-      'Shadow Mall'
+      getDisplayText('readerPostCard.shadowMall')
     const title =
       promotion.title ||
       source?.name ||
-      'Promotion'
+      getDisplayText('readerPostCard.promotion')
     const description =
       promotion.description ||
       source?.content ||
@@ -1071,7 +1635,7 @@ function ReaderEchoSourceBlock({ post }) {
 
         <div className="px-4 py-3">
           <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8b5cf6]">
-            Shadow Mall promotion
+            {getDisplayText('readerPostCard.shadowMallPromotion')}
           </div>
 
           <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-[#667085] dark:text-white/60">
@@ -1099,7 +1663,7 @@ function ReaderEchoSourceBlock({ post }) {
             authorPost?.author_page
               ?.page_name ||
             source?.name ||
-            'Author Page',
+            getDisplayText('readerPostCard.authorPage'),
           avatar_url:
             authorPost?.author_page
               ?.avatar_url ||
@@ -1116,7 +1680,7 @@ function ReaderEchoSourceBlock({ post }) {
             readerPost?.user?.name ||
             readerPost?.user?.username ||
             source?.name ||
-            'Reader',
+            getDisplayText('readerPostCard.reader'),
           avatar_url:
             readerPost?.user
               ?.avatar_url || '',
@@ -1182,7 +1746,7 @@ function ReaderEchoSourceBlock({ post }) {
 
           <div className="min-w-0 flex-1">
             <div className="line-clamp-1 text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc]">
-              {previewUser.name || 'Post'}
+              {previewUser.name || getDisplayText('readerPostCard.post')}
             </div>
 
             <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400 dark:text-white/40">
@@ -1210,7 +1774,7 @@ function ReaderEchoSourceBlock({ post }) {
 
       <EchoPostPreviewImages
         imageUrls={previewImages}
-        alt={previewUser.name || 'Post'}
+        alt={previewUser.name || getDisplayText('readerPostCard.post')}
       />
     </div>
   )
@@ -1219,7 +1783,7 @@ function ReaderEchoSourceBlock({ post }) {
 
 
 function EditorAvatar({ user }) {
-  const name = user?.name || 'Reader'
+  const name = user?.name || getDisplayText('readerPostCard.reader')
 
   return (
     <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] dark:bg-[#202331] ring-1 ring-black/5 dark:ring-white/10">
@@ -1264,7 +1828,7 @@ function EditImagePreview({
               onRemove(imageUrls[0])
             }
             className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/65 text-white"
-            aria-label="Remove photo"
+            aria-label={getDisplayText('readerPostCard.removePhoto')}
           >
             <i className="fa-solid fa-xmark text-[12px]" />
           </button>
@@ -1293,7 +1857,7 @@ function EditImagePreview({
                 onRemove(imageUrl)
               }
               className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-white"
-              aria-label="Remove photo"
+              aria-label={getDisplayText('readerPostCard.removePhoto')}
             >
               <i className="fa-solid fa-xmark text-[11px]" />
             </button>
@@ -1558,7 +2122,7 @@ const safeSelectedPhotoIndex =
         post,
         user
       ),
-    [post, user]
+    [language, post, user]
   )
 
   const editRemainingPhotos =
@@ -1968,7 +2532,7 @@ const safeSelectedPhotoIndex =
 
     if (!token) {
       showReactionMessage(
-        'Please login first.'
+        t('readerPostCard.pleaseLoginFirst')
       )
       return
     }
@@ -2003,7 +2567,7 @@ const safeSelectedPhotoIndex =
       ) {
         throw new Error(
           data.message ||
-            'Failed to update reaction'
+            t('readerPostCard.failedUpdateReaction')
         )
       }
 
@@ -2037,7 +2601,7 @@ const safeSelectedPhotoIndex =
     } catch (error) {
       showReactionMessage(
         error.message ||
-          'Failed to update reaction.'
+          t('readerPostCard.failedUpdateReaction')
       )
     } finally {
       setReactionBusy(false)
@@ -2059,7 +2623,7 @@ const safeSelectedPhotoIndex =
 
     if (!imageFiles.length) {
       setMessage(
-        'Only image files can be uploaded.'
+        t('readerPostCard.onlyImageFiles')
       )
       return
     }
@@ -2069,7 +2633,9 @@ const safeSelectedPhotoIndex =
       editRemainingPhotos
     ) {
       setMessage(
-        `You can add up to ${MAX_POST_PHOTOS} photos per post.`
+        t('readerPostCard.maxPhotos', {
+          count: MAX_POST_PHOTOS,
+        })
       )
       return
     }
@@ -2077,7 +2643,7 @@ const safeSelectedPhotoIndex =
     try {
       setUploadingImages(true)
       setMessage(
-        'Preparing photos...'
+        t('readerPostCard.preparingPhotos')
       )
 
       const compressedFiles =
@@ -2102,11 +2668,12 @@ const safeSelectedPhotoIndex =
         MAX_POST_IMAGE_BYTES
       ) {
         throw new Error(
-          `Photos are too large. Selected: ${formatBytes(
-            totalSize
-          )} / Limit: ${formatBytes(
-            MAX_POST_IMAGE_BYTES
-          )}.`
+          t('readerPostCard.photosTooLarge', {
+            selected: formatBytes(totalSize),
+            limit: formatBytes(
+              MAX_POST_IMAGE_BYTES
+            ),
+          })
         )
       }
 
@@ -2132,7 +2699,7 @@ const safeSelectedPhotoIndex =
     } catch (error) {
       setMessage(
         error.message ||
-          'Could not upload these photos.'
+          t('readerPostCard.couldNotUploadPhotos')
       )
     } finally {
       setUploadingImages(false)
@@ -2154,7 +2721,7 @@ const safeSelectedPhotoIndex =
 
     if (!canSaveEdit) {
       setMessage(
-        'Post text or image is required.'
+        t('readerPostCard.postTextOrImageRequired')
       )
       return
     }
@@ -2191,7 +2758,7 @@ const safeSelectedPhotoIndex =
       ) {
         throw new Error(
           data.message ||
-            'Failed to update post'
+            t('readerPostCard.failedUpdatePost')
         )
       }
 
@@ -2204,7 +2771,7 @@ const safeSelectedPhotoIndex =
     } catch (error) {
       setMessage(
         error.message ||
-          'Failed to update post'
+          t('readerPostCard.failedUpdatePost')
       )
     } finally {
       setSaving(false)
@@ -2245,7 +2812,7 @@ const safeSelectedPhotoIndex =
       ) {
         throw new Error(
           data.message ||
-            'Failed to delete post'
+            t('readerPostCard.failedDeletePost')
         )
       }
 
@@ -2254,7 +2821,7 @@ const safeSelectedPhotoIndex =
     } catch (error) {
       window.alert(
         error.message ||
-          'Failed to delete post'
+          t('readerPostCard.failedDeletePost')
       )
     } finally {
       setDeleting(false)
@@ -2265,7 +2832,7 @@ const safeSelectedPhotoIndex =
   function openEditor() {
     if (isLegacyEcho) {
       window.alert(
-        'Delete this old Echo and Echo it again to edit it as a normal post.'
+        t('readerPostCard.legacyEchoEdit')
       )
       setMenuOpen(false)
       return
@@ -2453,7 +3020,7 @@ const safeSelectedPhotoIndex =
       ) {
         throw new Error(
           data.message ||
-            'Failed to save caption'
+            t('readerPostCard.failedSaveCaption')
         )
       }
 
@@ -2470,13 +3037,13 @@ const safeSelectedPhotoIndex =
       setPhotoCaptionEditorOpen(false)
       setPhotoActionMessage(
         nextCaption
-          ? 'Caption saved.'
-          : 'Caption removed.'
+          ? t('readerPostCard.captionSaved')
+          : t('readerPostCard.captionRemoved')
       )
     } catch (error) {
       setPhotoActionMessage(
         error.message ||
-          'Failed to save caption.'
+          t('readerPostCard.failedSaveCaption')
       )
     } finally {
       setPhotoCaptionSaving(false)
@@ -2596,7 +3163,7 @@ const safeSelectedPhotoIndex =
       ) {
         throw new Error(
           data.message ||
-            'Failed to save alt text'
+            t('readerPostCard.failedSaveAltText')
         )
       }
 
@@ -2613,13 +3180,13 @@ const safeSelectedPhotoIndex =
       setPhotoAltEditorOpen(false)
       setPhotoActionMessage(
         nextAltText
-          ? 'Alt text saved.'
-          : 'Alt text removed.'
+          ? t('readerPostCard.altTextSaved')
+          : t('readerPostCard.altTextRemoved')
       )
     } catch (error) {
       setPhotoActionMessage(
         error.message ||
-          'Failed to save alt text.'
+          t('readerPostCard.failedSaveAltText')
       )
     } finally {
       setPhotoAltSaving(false)
@@ -2653,7 +3220,7 @@ const safeSelectedPhotoIndex =
       setPhotoDeleteConfirmOpen(false)
       setFullscreenPhotoMenuOpen(false)
       setPhotoActionMessage(
-        'This post needs text or a photo. Delete the post instead.'
+        t('readerPostCard.postNeedsContentDeleteInstead')
       )
       return
     }
@@ -2701,7 +3268,7 @@ const safeSelectedPhotoIndex =
       ) {
         throw new Error(
           data.message ||
-            'Failed to delete photo'
+            t('readerPostCard.failedDeletePhoto')
         )
       }
 
@@ -2743,7 +3310,7 @@ const safeSelectedPhotoIndex =
         )
 
       setPhotoActionMessage(
-        'Photo deleted.'
+        t('readerPostCard.photoDeleted')
       )
 
       if (photoPostView) {
@@ -2765,7 +3332,7 @@ const safeSelectedPhotoIndex =
       setFullscreenPhotoMenuOpen(false)
       setPhotoActionMessage(
         error.message ||
-          'Failed to delete photo.'
+          t('readerPostCard.failedDeletePhoto')
       )
     } finally {
       setPhotoDeleteBusy(false)
@@ -2789,7 +3356,7 @@ const safeSelectedPhotoIndex =
 
       if (!response.ok) {
         throw new Error(
-          'Could not download photo'
+          t('readerPostCard.couldNotDownloadPhoto')
         )
       }
 
@@ -2819,7 +3386,7 @@ const safeSelectedPhotoIndex =
 
       setFullscreenPhotoMenuOpen(false)
       setPhotoActionMessage(
-        'Photo saved.'
+        t('readerPostCard.photoSaved')
       )
     } catch {
       const link =
@@ -2836,7 +3403,7 @@ const safeSelectedPhotoIndex =
 
       setFullscreenPhotoMenuOpen(false)
       setPhotoActionMessage(
-        'Photo opened for saving.'
+        t('readerPostCard.photoOpenedForSaving')
       )
     }
   }
@@ -2850,7 +3417,11 @@ const safeSelectedPhotoIndex =
 
     const shareData = {
       title:
-        `${user?.name || 'Reader'} photo`,
+        t('readerPostCard.readerPhoto', {
+          name:
+            user?.name ||
+            t('readerPostCard.reader'),
+        }),
       url: selectedPhotoUrl,
     }
 
@@ -2875,7 +3446,7 @@ const safeSelectedPhotoIndex =
         )
         setFullscreenPhotoMenuOpen(false)
         setPhotoActionMessage(
-          'Photo link copied.'
+          t('readerPostCard.photoLinkCopied')
         )
         return
       } catch {
@@ -3001,7 +3572,7 @@ const safeSelectedPhotoIndex =
       ) {
         throw new Error(
           data.message ||
-            'Failed to follow reader'
+            t('readerPostCard.failedFollowReader')
         )
       }
 
@@ -3012,7 +3583,7 @@ const safeSelectedPhotoIndex =
     } catch (error) {
       showReactionMessage(
         error.message ||
-          'Failed to follow reader.'
+          t('readerPostCard.failedFollowReader')
       )
     } finally {
       setFollowBusy(false)
@@ -3039,7 +3610,7 @@ const safeSelectedPhotoIndex =
 
         setIsSaved(false)
         showReactionMessage(
-          'Removed from saved.'
+          t('readerPostCard.removedFromSaved')
         )
       } else {
         await saveSavedPost({
@@ -3051,7 +3622,7 @@ const safeSelectedPhotoIndex =
           snapshot_data: {
             content: post.content || '',
             author_name:
-              user?.name || 'Reader',
+              user?.name || getDisplayText('readerPostCard.reader'),
             username:
               user?.username || '',
             avatar_url:
@@ -3062,14 +3633,14 @@ const safeSelectedPhotoIndex =
         })
 
         setIsSaved(true)
-        showReactionMessage('Post saved.')
+        showReactionMessage(t('readerPostCard.postSaved'))
       }
 
       setMenuOpen(false)
     } catch (error) {
       showReactionMessage(
         error.message ||
-          'Failed to update saved post.'
+          t('readerPostCard.failedUpdateSavedPost')
       )
     } finally {
       setSaveBusy(false)
@@ -3085,7 +3656,7 @@ const safeSelectedPhotoIndex =
     pageName={
       user?.name ||
       user?.username ||
-      'Reader'
+      getDisplayText('readerPostCard.reader')
     }
     pageAvatarUrl={
       user?.avatar_url || ''
@@ -3093,7 +3664,7 @@ const safeSelectedPhotoIndex =
     authorName={
       user?.name ||
       user?.username ||
-      'Reader'
+      getDisplayText('readerPostCard.reader')
     }
     authorAvatarUrl={
       user?.avatar_url || ''
@@ -3156,7 +3727,7 @@ const safeSelectedPhotoIndex =
           disabled={reactionBusy}
           className="text-[14px] font-normal text-[#65676b] dark:text-white/60 disabled:opacity-60"
         >
-          Like
+          {t('readerPostCard.like')}
         </button>
       </div>
     }
@@ -3174,7 +3745,7 @@ const safeSelectedPhotoIndex =
           aria-hidden="true"
           className="h-[18px] w-[18px] object-contain opacity-70 dark:brightness-0 dark:invert"
         />
-        <span>Echo</span>
+        <span>{t('readerPostCard.echo')}</span>
       </button>
     }
     reactionSummary={reactionSummary}
@@ -3246,7 +3817,7 @@ likeCount={reactionCount}
             sourceName:
               user?.name ||
               user?.username ||
-              'Reader Post',
+              t('readerPostCard.readerPost'),
           },
         }
       )
@@ -3294,7 +3865,7 @@ likeCount={reactionCount}
             sourceName:
               echoShareSource.name ||
               user?.name ||
-              'Reader Post',
+              t('readerPostCard.readerPost'),
           },
         }
       )
@@ -3345,7 +3916,7 @@ likeCount={reactionCount}
                 : 'block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc] active:opacity-70'
             }
           >
-            {user.name || 'Reader'}
+            {user.name || getDisplayText('readerPostCard.reader')}
           </button>
 
           {showFollow ? (
@@ -3360,7 +3931,7 @@ likeCount={reactionCount}
                 onClick={followReaderFromPost}
                 className="text-[14px] font-semibold text-[#0866ff] active:opacity-70 disabled:opacity-50"
               >
-                Follow
+                {t('readerPostCard.follow')}
               </button>
             </>
           ) : null}
@@ -3376,7 +3947,7 @@ likeCount={reactionCount}
           {post.is_edited ? (
             <>
               <span>·</span>
-              <span>Edited</span>
+              <span>{t('readerPostCard.edited')}</span>
             </>
           ) : null}
 
@@ -3397,7 +3968,7 @@ likeCount={reactionCount}
           setMenuOpen(true)
         }}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 dark:text-white/40 active:bg-gray-100 dark:active:bg-[#242836]"
-        aria-label="Post options"
+        aria-label={t('readerPostCard.postOptions')}
       >
         <i className="fa-solid fa-ellipsis text-[14px]" />
       </button>
@@ -3474,7 +4045,7 @@ likeCount={reactionCount}
               state: {
                 sourceName:
                   user?.name ||
-                  'Reader Post',
+                  t('readerPostCard.readerPost'),
               },
             }
           )
@@ -3494,11 +4065,15 @@ likeCount={reactionCount}
           onClick={() => setCommentOpen(true)}
           className="active:opacity-60"
         >
-          {formatCompactNumber(commentCount)} comments
+          {t('readerPostCard.commentsCount', {
+          count: formatCompactNumber(commentCount),
+        })}
         </button>
 
         <span>
-          {formatCompactNumber(echoCount)} echoes
+          {t('readerPostCard.echoesCount', {
+          count: formatCompactNumber(echoCount),
+        })}
         </span>
       </div>
     </div>
@@ -3512,7 +4087,7 @@ likeCount={reactionCount}
           onReact={updateReaction}
           showCount={false}
           idleLabel="Like"
-          buttonClassName="gap-2 after:content-['Like'] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
+          buttonClassName="gap-2 after:content-[attr(aria-label)] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
         />
       </div>
 
@@ -3522,7 +4097,7 @@ likeCount={reactionCount}
         className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
       >
         <i className="fa-regular fa-comment text-[18px]" />
-        <span>Comment</span>
+        <span>{t('readerPostCard.comment')}</span>
       </button>
 
       <button
@@ -3536,7 +4111,7 @@ likeCount={reactionCount}
           aria-hidden="true"
           className="h-[18px] w-[18px] object-contain opacity-75 dark:brightness-0 dark:invert"
         />
-        <span>Echo</span>
+        <span>{t('readerPostCard.echo')}</span>
       </button>
     </div>
   </div>
@@ -3552,7 +4127,7 @@ likeCount={reactionCount}
             state: {
               sourceName:
                 user?.name ||
-                'Reader Post',
+                t('readerPostCard.readerPost'),
             },
           }
         )
@@ -3572,11 +4147,15 @@ likeCount={reactionCount}
         onClick={() => setCommentOpen(true)}
         className="active:opacity-60"
       >
-        {formatCompactNumber(commentCount)} comments
+        {t('readerPostCard.commentsCount', {
+          count: formatCompactNumber(commentCount),
+        })}
       </button>
 
       <span>
-        {formatCompactNumber(echoCount)} echoes
+        {t('readerPostCard.echoesCount', {
+          count: formatCompactNumber(echoCount),
+        })}
       </span>
     </div>
   </div>
@@ -3590,7 +4169,7 @@ likeCount={reactionCount}
         onReact={updateReaction}
         showCount={false}
         idleLabel="Like"
-        buttonClassName="gap-2 after:content-['Like'] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
+        buttonClassName="gap-2 after:content-[attr(aria-label)] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
       />
     </div>
 
@@ -3600,7 +4179,7 @@ likeCount={reactionCount}
       className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
     >
       <i className="fa-regular fa-comment text-[18px]" />
-      <span>Comment</span>
+      <span>{t('readerPostCard.comment')}</span>
     </button>
 
     <button
@@ -3614,7 +4193,7 @@ likeCount={reactionCount}
         aria-hidden="true"
         className="h-[18px] w-[18px] object-contain opacity-75 dark:brightness-0 dark:invert"
       />
-      <span>Echo</span>
+      <span>{t('readerPostCard.echo')}</span>
     </button>
   </div>
 </div>
@@ -3717,7 +4296,7 @@ likeCount={reactionCount}
                   setPhotoActionMessage('')
                 }}
                 className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
-                aria-label="Close fullscreen photo"
+                aria-label={t('readerPostCard.closeFullscreenPhoto')}
               >
                 <i className="fa-solid fa-xmark text-[20px]" />
               </button>
@@ -3731,7 +4310,7 @@ likeCount={reactionCount}
                   )
                 }}
                 className="absolute right-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
-                aria-label="Photo options"
+                aria-label={t('readerPostCard.photoOptions')}
               >
                 <i className="fa-solid fa-ellipsis text-[18px]" />
               </button>
@@ -3768,14 +4347,17 @@ likeCount={reactionCount}
 />
 
 <span>
-  {formatCompactNumber(commentCount)} comments
+  {t('readerPostCard.commentsCount', {
+          count: formatCompactNumber(commentCount),
+        })}
 </span>
 
       <span>
-        {formatCompactNumber(
-          echoCount
-        )}{' '}
-        shares
+        {t('readerPostCard.sharesCount', {
+          count: formatCompactNumber(
+            echoCount
+          ),
+        })}
       </span>
     </div>
 
@@ -3788,7 +4370,7 @@ likeCount={reactionCount}
         showCount={false}
         idleLabel="Like"
         className="flex-1 justify-center"
-        buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
+        buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-[attr(aria-label)] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
       />
 
       <button
@@ -3810,7 +4392,7 @@ likeCount={reactionCount}
         className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
       >
         <i className="fa-regular fa-comment text-[20px]" />
-        <span>Comment</span>
+        <span>{t('readerPostCard.comment')}</span>
       </button>
 
       <button
@@ -3832,7 +4414,7 @@ likeCount={reactionCount}
         className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
       >
         <i className="fa-solid fa-share text-[19px]" />
-        <span>Share</span>
+        <span>{t('readerPostCard.share')}</span>
       </button>
     </div>
   </div>
@@ -3888,7 +4470,7 @@ likeCount={reactionCount}
     </span>
 
     <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
-      Edit caption
+      {t('readerPostCard.editCaption')}
     </span>
   </button>
 ) : null}
@@ -3913,7 +4495,7 @@ likeCount={reactionCount}
     </span>
 
     <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
-      Delete photo
+      {t('readerPostCard.deletePhoto')}
     </span>
   </button>
 ) : null}
@@ -3928,7 +4510,7 @@ likeCount={reactionCount}
   </span>
 
   <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
-    Save to phone
+    {t('readerPostCard.saveToPhone')}
   </span>
 </button>
 
@@ -3942,7 +4524,7 @@ likeCount={reactionCount}
   </span>
 
   <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
-    Share external
+    {t('readerPostCard.shareExternal')}
   </span>
 </button>
 
@@ -3961,7 +4543,7 @@ likeCount={reactionCount}
     </span>
 
     <span className="text-[15px] font-normal text-[#111827] dark:text-[#f8fafc]">
-      Edit alt text
+      {t('readerPostCard.editAltText')}
     </span>
   </button>
 ) : null}
@@ -3994,10 +4576,10 @@ likeCount={reactionCount}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
-                      Edit alt text
+                      {t('readerPostCard.editAltText')}
                     </div>
                     <p className="mt-1 text-[12px] font-normal leading-5 text-[#667085] dark:text-white/60">
-                      Describe what is shown in this photo for accessibility.
+                      {t('readerPostCard.altTextHelp')}
                     </p>
                   </div>
 
@@ -4020,7 +4602,7 @@ likeCount={reactionCount}
                       )
                     )
                   }
-                  placeholder="Describe this photo..."
+                  placeholder={t('readerPostCard.describePhotoPlaceholder')}
                   className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] dark:border-white/10 bg-[#f9fafb] dark:bg-[#171923] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] dark:text-[#f8fafc] outline-none focus:border-[#111827] dark:focus:border-white/50"
                 />
 
@@ -4035,7 +4617,7 @@ likeCount={reactionCount}
                     }
                     className="h-11 flex-1 rounded-full bg-[#eef0f4] dark:bg-[#202331] text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc] disabled:opacity-50"
                   >
-                    Cancel
+                    {t('readerPostCard.cancel')}
                   </button>
 
                   <button
@@ -4045,8 +4627,8 @@ likeCount={reactionCount}
                     className="h-11 flex-1 rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] text-[14px] font-semibold text-white disabled:opacity-50"
                   >
                     {photoAltSaving
-                      ? 'Saving...'
-                      : 'Save'}
+                      ? t('readerPostCard.saving')
+                      : t('readerPostCard.save')}
                   </button>
                 </div>
               </div>
@@ -4077,10 +4659,13 @@ likeCount={reactionCount}
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
-                      Edit caption
+                      {t('readerPostCard.editCaption')}
                     </div>
                     <div className="mt-1 text-[12px] font-normal text-[#98a2b3] dark:text-white/40">
-                      Photo {safeSelectedPhotoIndex + 1}
+                      {t('readerPostCard.photoNumber', {
+                        count:
+                          safeSelectedPhotoIndex + 1,
+                      })}
                     </div>
                   </div>
 
@@ -4103,7 +4688,7 @@ likeCount={reactionCount}
                       )
                     )
                   }
-                  placeholder="Write a caption for this photo..."
+                  placeholder={t('readerPostCard.captionPlaceholder')}
                   className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] dark:border-white/10 bg-[#f9fafb] dark:bg-[#171923] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] dark:text-[#f8fafc] outline-none focus:border-[#111827] dark:focus:border-white/50"
                 />
 
@@ -4120,7 +4705,7 @@ likeCount={reactionCount}
                     }
                     className="h-11 flex-1 rounded-full bg-[#eef0f4] dark:bg-[#202331] text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc] disabled:opacity-50"
                   >
-                    Cancel
+                    {t('readerPostCard.cancel')}
                   </button>
 
                   <button
@@ -4132,8 +4717,8 @@ likeCount={reactionCount}
                     className="h-11 flex-1 rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] text-[14px] font-semibold text-white disabled:opacity-50"
                   >
                     {photoCaptionSaving
-                      ? 'Saving...'
-                      : 'Save'}
+                      ? t('readerPostCard.saving')
+                      : t('readerPostCard.save')}
                   </button>
                 </div>
               </div>
@@ -4162,11 +4747,11 @@ likeCount={reactionCount}
                 <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db] dark:bg-white/25" />
 
                 <div className="text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
-                  Delete this photo?
+                  {t('readerPostCard.deleteThisPhoto')}
                 </div>
 
                 <p className="mt-1.5 text-[13px] font-normal leading-5 text-[#667085] dark:text-white/60">
-                  This photo will be removed from this Reader post.
+                  {t('readerPostCard.photoDeleteDescription')}
                 </p>
 
                 <div className="mt-5 flex gap-3">
@@ -4180,7 +4765,7 @@ likeCount={reactionCount}
                     }
                     className="h-11 flex-1 rounded-full bg-[#eef0f4] dark:bg-[#202331] text-[14px] font-semibold text-[#111827] dark:text-[#f8fafc] disabled:opacity-50"
                   >
-                    Cancel
+                    {t('readerPostCard.cancel')}
                   </button>
 
                   <button
@@ -4190,8 +4775,8 @@ likeCount={reactionCount}
                     className="h-11 flex-1 rounded-full bg-[#e5484d] text-[14px] font-semibold text-white disabled:opacity-50"
                   >
                     {photoDeleteBusy
-                      ? 'Deleting...'
-                      : 'Delete'}
+                      ? t('readerPostCard.deleting')
+                      : t('readerPostCard.delete')}
                   </button>
                 </div>
               </div>
@@ -4212,7 +4797,7 @@ likeCount={reactionCount}
         postName={
           user?.name ||
           user?.username ||
-          'Reader Post'
+          t('readerPostCard.readerPost')
         }
         echoSourceType={
           echoShareSource.type
@@ -4353,7 +4938,9 @@ likeCount={reactionCount}
             }
             onRejectedFiles={() =>
               setMessage(
-                `Only images are allowed, with a maximum of ${MAX_POST_PHOTOS} photos.`
+                t('readerPostCard.onlyImagesAllowed', {
+                  count: MAX_POST_PHOTOS,
+                })
               )
             }
             disabled={
@@ -4368,7 +4955,7 @@ likeCount={reactionCount}
             )}
             accept="image/*"
             className="fixed inset-0 z-[200000] overflow-y-auto bg-white dark:bg-[#0d0f16]"
-            label="Drop photos here"
+            label={t('readerPostCard.dropPhotosHere')}
           >
             <header className="sticky top-0 z-20 border-b border-[#eef0f4] dark:border-white/10 bg-white dark:bg-[#171923]">
               <div className="mx-auto flex h-14 max-w-[620px] items-center justify-between px-4">
@@ -4387,13 +4974,13 @@ likeCount={reactionCount}
                     uploadingImages
                   }
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] dark:text-[#f8fafc] active:bg-[#f3f4f6] dark:active:bg-[#242836] disabled:opacity-50"
-                  aria-label="Close editor"
+                  aria-label={t('readerPostCard.closeEditor')}
                 >
                   <i className="fa-solid fa-xmark text-[22px]" />
                 </button>
 
                 <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827] dark:text-[#f8fafc]">
-                  Edit Reader Post
+                  {t('readerPostCard.editReaderPost')}
                 </div>
 
                 <button
@@ -4407,10 +4994,10 @@ likeCount={reactionCount}
                   className="h-9 rounded-full bg-[#111827] dark:bg-[#f8fafc] dark:text-[#0d0f16] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] dark:disabled:bg-white/10 disabled:text-[#9ca3af] dark:disabled:text-white/30"
                 >
                   {saving
-                    ? 'Saving'
+                    ? t('readerPostCard.saving')
                     : uploadingImages
-                      ? 'Uploading'
-                      : 'Save'}
+                      ? t('readerPostCard.uploading')
+                      : t('readerPostCard.save')}
                 </button>
               </div>
             </header>
@@ -4425,7 +5012,7 @@ likeCount={reactionCount}
                   <div className="min-w-0">
                     <div className="line-clamp-1 text-[15px] font-semibold text-[#111827] dark:text-[#f8fafc]">
                       {user?.name ||
-                        'Reader'}
+                        getDisplayText('readerPostCard.reader')}
                     </div>
 
                     <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#eef0f4] dark:bg-[#202331] px-2.5 py-1 text-[11px] font-normal text-[#374151] dark:text-white/60">
@@ -4436,14 +5023,14 @@ likeCount={reactionCount}
                       />
                       {post.visibility ===
                       'only_me'
-                        ? 'Only me'
+                        ? t('readerPostCard.onlyMe')
                         : post.visibility ===
                             'friends'
-                          ? 'Friends'
+                          ? t('readerPostCard.friends')
                           : post.visibility ===
                               'followers'
-                            ? 'Followers'
-                            : 'Public'}
+                            ? t('readerPostCard.followers')
+                            : t('readerPostCard.public')}
                     </div>
                   </div>
                 </div>
@@ -4462,7 +5049,7 @@ likeCount={reactionCount}
                       )
                     )
                   }
-                  placeholder="Share your thoughts..."
+                  placeholder={t('readerPostCard.shareThoughts')}
                   className="min-h-[210px] w-full resize-none border-0 bg-white dark:bg-[#171923] p-0 text-[16px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc] outline-none placeholder:text-[#9ca3af] dark:placeholder:text-white/40"
                 />
 
@@ -4511,7 +5098,7 @@ likeCount={reactionCount}
                     editFileInputRef.current?.click()
                   }
                   className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] dark:border-white/10 bg-white dark:bg-[#171923] text-[#111827] dark:text-[#f8fafc] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-label="Open Gallery"
+                  aria-label={t('readerPostCard.openGallery')}
                 >
                   <svg
                     className="h-[27px] w-[27px]"
@@ -4542,11 +5129,11 @@ likeCount={reactionCount}
 
                   <span className="text-[14px] font-normal">
                     {uploadingImages
-                      ? 'Uploading'
+                      ? t('readerPostCard.uploading')
                       : editRemainingPhotos <=
                           0
-                        ? '5 photos'
-                        : 'Gallery'}
+                        ? t('readerPostCard.photosCount', { count: MAX_POST_PHOTOS })
+                        : t('readerPostCard.gallery')}
                   </span>
                 </button>
               </div>
