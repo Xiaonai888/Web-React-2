@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import DailyGiftRewardPopup from './DailyGiftRewardPopup'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -375,6 +376,13 @@ export default function StoriesDailyCheckIn() {
           </span>
         </button>
       ) : null}
+
+      {successReward && isGiftReward(successReward) ? (
+  <DailyGiftRewardPopup
+    reward={successReward}
+    onClose={() => closeModal()}
+  />
+) : null}
 
       {modalOpen ? (
         <div className="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden overscroll-none bg-[#111827]/65 px-4 py-7 backdrop-blur-[3px]">
