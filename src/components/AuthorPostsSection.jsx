@@ -5,6 +5,7 @@ import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReactionAction from './social/reactions/ReactionAction'
 import ReactionSummary from './social/reactions/ReactionSummary'
+import { recordAuthorHashtagInterest } from '../services/authorHashtagsApi'
 
 import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
