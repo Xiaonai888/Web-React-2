@@ -5,12 +5,173 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import {
   clearReaderPostDraft,
   readReaderPostDraft,
   writeReaderPostDraft,
 } from '../../features/reader-posts/readerPostDraft'
+
+
+registerTranslationNamespace('readerPostCreatePage', {
+  "en": {
+    "failedLoadImage": "Failed to load image",
+    "couldNotPrepareImage": "Could not prepare this image",
+    "photoTooLargeAfterCompression": "Photo is still too large after compression. Selected: {{selected}} / Limit: {{limit}}.",
+    "pleaseLoginFirst": "Please login first",
+    "failedUploadPhoto": "Failed to upload photo",
+    "missingEnv": " Missing: {{values}}",
+    "uploadNoImageUrl": "Upload completed without an image URL",
+    "reader": "Reader",
+    "removePhoto": "Remove photo",
+    "closeLeaveOptions": "Close leave options",
+    "leaveThisPost": "Leave this post?",
+    "saveForLater": "Save for later",
+    "discard": "Discard",
+    "continueWriting": "Continue writing",
+    "onlyImageFiles": "Only image files can be uploaded.",
+    "maxPhotos": "You can add up to {{count}} photos per post.",
+    "preparingPhotos": "Preparing photos...",
+    "photosTooLarge": "Photos are too large. Selected: {{selected}} / Limit: {{limit}}.",
+    "couldNotUploadPhotos": "Could not upload these photos.",
+    "onlyImagesAllowed": "Only images are allowed, with a maximum of {{count}} photos.",
+    "dropPhotosHere": "Drop photos here",
+    "closeComposer": "Close composer",
+    "newReaderPost": "New Reader Post",
+    "uploading": "Uploading",
+    "next": "Next",
+    "public": "Public",
+    "shareThoughts": "Share your thoughts...",
+    "openGallery": "Open Gallery",
+    "comingSoon": "Coming soon"
+  },
+  "km": {
+    "failedLoadImage": "មិនអាចផ្ទុករូបភាពបានទេ",
+    "couldNotPrepareImage": "មិនអាចរៀបចំរូបភាពនេះបានទេ",
+    "photoTooLargeAfterCompression": "រូបភាពនៅតែធំពេកបន្ទាប់ពីបង្ហាប់។ បានជ្រើស: {{selected}} / កំណត់: {{limit}}។",
+    "pleaseLoginFirst": "សូមចូលគណនីជាមុន",
+    "failedUploadPhoto": "មិនអាច Upload រូបភាពបានទេ",
+    "missingEnv": " ខ្វះ: {{values}}",
+    "uploadNoImageUrl": "Upload រួច ប៉ុន្តែមិនទទួលបាន Image URL",
+    "reader": "អ្នកអាន",
+    "removePhoto": "ដករូបភាព",
+    "closeLeaveOptions": "បិទជម្រើសចាកចេញ",
+    "leaveThisPost": "ចាកចេញពី Post នេះ?",
+    "saveForLater": "រក្សាទុកសម្រាប់ពេលក្រោយ",
+    "discard": "បោះបង់ Post",
+    "continueWriting": "បន្តសរសេរ",
+    "onlyImageFiles": "អាច Upload បានតែឯកសាររូបភាពប៉ុណ្ណោះ។",
+    "maxPhotos": "អ្នកអាចបន្ថែមរូបបានអតិបរមា {{count}} សន្លឹកក្នុងមួយ Post។",
+    "preparingPhotos": "កំពុងរៀបចំរូបភាព...",
+    "photosTooLarge": "រូបភាពធំពេក។ បានជ្រើស: {{selected}} / កំណត់: {{limit}}។",
+    "couldNotUploadPhotos": "មិនអាច Upload រូបភាពទាំងនេះបានទេ។",
+    "onlyImagesAllowed": "អនុញ្ញាតតែរូបភាព និងអតិបរមា {{count}} សន្លឹក។",
+    "dropPhotosHere": "ទម្លាក់រូបភាពនៅទីនេះ",
+    "closeComposer": "បិទការសរសេរ Post",
+    "newReaderPost": "Post អ្នកអានថ្មី",
+    "uploading": "កំពុង Upload",
+    "next": "បន្ទាប់",
+    "public": "សាធារណៈ",
+    "shareThoughts": "ចែករំលែកគំនិតរបស់អ្នក...",
+    "openGallery": "បើក Gallery",
+    "comingSoon": "មកដល់ឆាប់ៗនេះ"
+  },
+  "zh": {
+    "failedLoadImage": "无法加载图片",
+    "couldNotPrepareImage": "无法处理此图片",
+    "photoTooLargeAfterCompression": "图片压缩后仍然过大。已选择：{{selected}} / 限制：{{limit}}。",
+    "pleaseLoginFirst": "请先登录",
+    "failedUploadPhoto": "图片上传失败",
+    "missingEnv": " 缺少：{{values}}",
+    "uploadNoImageUrl": "上传完成，但未返回图片 URL",
+    "reader": "读者",
+    "removePhoto": "移除图片",
+    "closeLeaveOptions": "关闭离开选项",
+    "leaveThisPost": "离开这篇帖子？",
+    "saveForLater": "保存以便稍后继续",
+    "discard": "放弃",
+    "continueWriting": "继续编辑",
+    "onlyImageFiles": "只能上传图片文件。",
+    "maxPhotos": "每篇帖子最多可添加 {{count}} 张图片。",
+    "preparingPhotos": "正在处理图片...",
+    "photosTooLarge": "图片过大。已选择：{{selected}} / 限制：{{limit}}。",
+    "couldNotUploadPhotos": "无法上传这些图片。",
+    "onlyImagesAllowed": "仅允许图片，最多 {{count}} 张。",
+    "dropPhotosHere": "将图片拖放到这里",
+    "closeComposer": "关闭编辑器",
+    "newReaderPost": "新建读者帖子",
+    "uploading": "上传中",
+    "next": "下一步",
+    "public": "公开",
+    "shareThoughts": "分享你的想法...",
+    "openGallery": "打开相册",
+    "comingSoon": "即将推出"
+  },
+  "ja": {
+    "failedLoadImage": "画像を読み込めませんでした",
+    "couldNotPrepareImage": "この画像を処理できませんでした",
+    "photoTooLargeAfterCompression": "圧縮後も画像サイズが大きすぎます。選択：{{selected}} / 上限：{{limit}}。",
+    "pleaseLoginFirst": "先にログインしてください",
+    "failedUploadPhoto": "画像をアップロードできませんでした",
+    "missingEnv": " 不足：{{values}}",
+    "uploadNoImageUrl": "アップロードは完了しましたが、画像 URL が返されませんでした",
+    "reader": "読者",
+    "removePhoto": "画像を削除",
+    "closeLeaveOptions": "終了オプションを閉じる",
+    "leaveThisPost": "この投稿を離れますか？",
+    "saveForLater": "後で続けるため保存",
+    "discard": "破棄",
+    "continueWriting": "編集を続ける",
+    "onlyImageFiles": "画像ファイルのみアップロードできます。",
+    "maxPhotos": "1つの投稿に最大 {{count}} 枚の画像を追加できます。",
+    "preparingPhotos": "画像を準備中...",
+    "photosTooLarge": "画像サイズが大きすぎます。選択：{{selected}} / 上限：{{limit}}。",
+    "couldNotUploadPhotos": "これらの画像をアップロードできませんでした。",
+    "onlyImagesAllowed": "画像のみ許可されています。最大 {{count}} 枚です。",
+    "dropPhotosHere": "ここに画像をドロップ",
+    "closeComposer": "投稿作成を閉じる",
+    "newReaderPost": "新しい読者投稿",
+    "uploading": "アップロード中",
+    "next": "次へ",
+    "public": "公開",
+    "shareThoughts": "あなたの考えを共有...",
+    "openGallery": "ギャラリーを開く",
+    "comingSoon": "近日公開"
+  },
+  "ko": {
+    "failedLoadImage": "이미지를 불러오지 못했습니다",
+    "couldNotPrepareImage": "이 이미지를 처리할 수 없습니다",
+    "photoTooLargeAfterCompression": "압축 후에도 이미지가 너무 큽니다. 선택: {{selected}} / 제한: {{limit}}.",
+    "pleaseLoginFirst": "먼저 로그인해 주세요",
+    "failedUploadPhoto": "이미지를 업로드하지 못했습니다",
+    "missingEnv": " 누락: {{values}}",
+    "uploadNoImageUrl": "업로드는 완료되었지만 이미지 URL이 없습니다",
+    "reader": "독자",
+    "removePhoto": "이미지 삭제",
+    "closeLeaveOptions": "나가기 옵션 닫기",
+    "leaveThisPost": "이 게시물 작성을 나가시겠어요?",
+    "saveForLater": "나중을 위해 저장",
+    "discard": "삭제",
+    "continueWriting": "계속 작성",
+    "onlyImageFiles": "이미지 파일만 업로드할 수 있습니다.",
+    "maxPhotos": "게시물당 최대 {{count}}장의 이미지를 추가할 수 있습니다.",
+    "preparingPhotos": "이미지 준비 중...",
+    "photosTooLarge": "이미지가 너무 큽니다. 선택: {{selected}} / 제한: {{limit}}.",
+    "couldNotUploadPhotos": "이 이미지들을 업로드하지 못했습니다.",
+    "onlyImagesAllowed": "이미지만 허용되며 최대 {{count}}장까지 가능합니다.",
+    "dropPhotosHere": "여기에 이미지 놓기",
+    "closeComposer": "작성 화면 닫기",
+    "newReaderPost": "새 독자 게시물",
+    "uploading": "업로드 중",
+    "next": "다음",
+    "public": "공개",
+    "shareThoughts": "생각을 공유해 보세요...",
+    "openGallery": "갤러리 열기",
+    "comingSoon": "곧 출시"
+  }
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -95,7 +256,9 @@ function loadImageFromFile(file) {
         URL.revokeObjectURL(url)
         reject(
           new Error(
-            'Failed to load image'
+            getDisplayText(
+              'readerPostCreatePage.failedLoadImage'
+            )
           )
         )
       }
@@ -161,7 +324,9 @@ async function compressImageFile(file) {
 
     if (!context) {
       throw new Error(
-        'Could not prepare this image'
+        getDisplayText(
+          'readerPostCreatePage.couldNotPrepareImage'
+        )
       )
     }
 
@@ -220,11 +385,17 @@ async function compressImageFile(file) {
     HARD_MAX_IMAGE_BYTES
   ) {
     throw new Error(
-      `Photo is still too large after compression. Selected: ${formatBytes(
-        blob.size
-      )} / Limit: ${formatBytes(
-        HARD_MAX_IMAGE_BYTES
-      )}.`
+      getDisplayText(
+        'readerPostCreatePage.photoTooLargeAfterCompression',
+        {
+          selected: formatBytes(
+            blob.size
+          ),
+          limit: formatBytes(
+            HARD_MAX_IMAGE_BYTES
+          ),
+        }
+      )
     )
   }
 
@@ -248,7 +419,9 @@ async function uploadReaderPostImage(
 
   if (!token) {
     throw new Error(
-      'Please login first'
+      getDisplayText(
+        'readerPostCreatePage.pleaseLoginFirst'
+      )
     )
   }
 
@@ -284,13 +457,20 @@ async function uploadReaderPostImage(
         data.missing_env
       ) &&
       data.missing_env.length
-        ? ` Missing: ${data.missing_env.join(
-            ', '
-          )}`
+        ? getDisplayText(
+            'readerPostCreatePage.missingEnv',
+            {
+              values: data.missing_env.join(
+                ', '
+              ),
+            }
+          )
         : ''
 
     throw new Error(
-      `${data.message || 'Failed to upload photo'}${missingEnvText}`
+      `${data.message || getDisplayText(
+        'readerPostCreatePage.failedUploadPhoto'
+      )}${missingEnvText}`
     )
   }
 
@@ -301,7 +481,9 @@ async function uploadReaderPostImage(
 
   if (!imageUrl) {
     throw new Error(
-      'Upload completed without an image URL'
+      getDisplayText(
+        'readerPostCreatePage.uploadNoImageUrl'
+      )
     )
   }
 
@@ -309,11 +491,13 @@ async function uploadReaderPostImage(
 }
 
 function Avatar({ user }) {
+  const { t } = useDisplayTranslation()
   const name =
-    user?.name || 'Reader'
+    user?.name ||
+    t('readerPostCreatePage.reader')
 
   return (
-    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5">
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-elevated)] dark:ring-[var(--shadow-border)]">
       {user?.avatar_url ? (
         <img
           src={user.avatar_url}
@@ -321,7 +505,7 @@ function Avatar({ user }) {
           className="h-full w-full object-cover"
         />
       ) : (
-        <span className="text-[16px] font-semibold text-[#111827]">
+        <span className="text-[16px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
           {name
             .slice(0, 1)
             .toUpperCase()}
@@ -335,14 +519,16 @@ function SelectedImagePreview({
   imageUrls,
   onRemove,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!imageUrls.length) {
     return null
   }
 
   if (imageUrls.length === 1) {
     return (
-      <div className="mx-[-16px] mt-4 bg-white">
-        <div className="relative flex min-h-[260px] items-center justify-center bg-white">
+      <div className="mx-[-16px] mt-4 bg-white dark:bg-[var(--shadow-bg-surface)]">
+        <div className="relative flex min-h-[260px] items-center justify-center bg-white dark:bg-[var(--shadow-bg-surface)]">
           <img
             src={imageUrls[0]}
             alt=""
@@ -355,7 +541,7 @@ function SelectedImagePreview({
               onRemove(imageUrls[0])
             }
             className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/65 text-white"
-            aria-label="Remove photo"
+            aria-label={t('readerPostCreatePage.removePhoto')}
           >
             <i className="fa-solid fa-xmark text-[12px]" />
           </button>
@@ -370,7 +556,7 @@ function SelectedImagePreview({
         (imageUrl, index) => (
           <div
             key={`${imageUrl}-${index}`}
-            className="relative aspect-square bg-[#f3f4f6]"
+            className="relative aspect-square bg-[#f3f4f6] dark:bg-[var(--shadow-bg-elevated)]"
           >
             <img
               src={imageUrl}
@@ -384,7 +570,7 @@ function SelectedImagePreview({
                 onRemove(imageUrl)
               }
               className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-white"
-              aria-label="Remove photo"
+              aria-label={t('readerPostCreatePage.removePhoto')}
             >
               <i className="fa-solid fa-xmark text-[11px]" />
             </button>
@@ -401,61 +587,63 @@ function LeavePostSheet({
   onDiscard,
   onContinue,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[280]">
       <button
         type="button"
-        aria-label="Close leave options"
+        aria-label={t('readerPostCreatePage.closeLeaveOptions')}
         onClick={onContinue}
         className="absolute inset-0 bg-black/35"
       />
 
-      <div className="absolute bottom-0 left-0 right-0 rounded-t-[26px] bg-white px-4 pb-7 pt-4 shadow-2xl">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#d1d5db]" />
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[26px] bg-white px-4 pb-7 pt-4 shadow-2xl dark:bg-[var(--shadow-bg-surface)]">
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#d1d5db] dark:bg-[var(--shadow-border-strong)]" />
 
-        <h3 className="mb-3 text-[15px] font-semibold text-[#111827]">
-          Leave this post?
+        <h3 className="mb-3 text-[15px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
+          {t('readerPostCreatePage.leaveThisPost')}
         </h3>
 
         <div className="space-y-1">
           <button
             type="button"
             onClick={onSave}
-            className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+            className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6] dark:active:bg-[var(--shadow-bg-hover)]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]">
               <i className="fa-regular fa-bookmark text-[15px]" />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">
-              Save for later
+            <span className="text-[15px] font-normal text-[#111827] dark:text-[var(--shadow-text-primary)]">
+              {t('readerPostCreatePage.saveForLater')}
             </span>
           </button>
 
           <button
             type="button"
             onClick={onDiscard}
-            className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+            className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6] dark:active:bg-[var(--shadow-bg-hover)]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]">
               <i className="fa-regular fa-trash-can text-[15px]" />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">
-              Discard
+            <span className="text-[15px] font-normal text-[#111827] dark:text-[var(--shadow-text-primary)]">
+              {t('readerPostCreatePage.discard')}
             </span>
           </button>
 
           <button
             type="button"
             onClick={onContinue}
-            className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+            className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6] dark:active:bg-[var(--shadow-bg-hover)]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]">
               <i className="fa-solid fa-pen text-[14px]" />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">
-              Continue writing
+            <span className="text-[15px] font-normal text-[#111827] dark:text-[var(--shadow-text-primary)]">
+              {t('readerPostCreatePage.continueWriting')}
             </span>
           </button>
         </div>
@@ -466,6 +654,7 @@ function LeavePostSheet({
 
 export default function ReaderPostCreatePage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const fileInputRef =
     useRef(null)
   const user = useMemo(
@@ -571,7 +760,7 @@ export default function ReaderPostCreatePage() {
 
     if (!imageFiles.length) {
       setImageError(
-        'Only image files can be uploaded.'
+        t('readerPostCreatePage.onlyImageFiles')
       )
       return
     }
@@ -581,7 +770,9 @@ export default function ReaderPostCreatePage() {
       remainingPhotos
     ) {
       setImageError(
-        `You can add up to ${MAX_POST_PHOTOS} photos per post.`
+        t('readerPostCreatePage.maxPhotos', {
+          count: MAX_POST_PHOTOS,
+        })
       )
       return
     }
@@ -589,7 +780,7 @@ export default function ReaderPostCreatePage() {
     try {
       setUploading(true)
       setImageError(
-        'Preparing photos...'
+        t('readerPostCreatePage.preparingPhotos')
       )
 
       const compressedFiles =
@@ -614,11 +805,14 @@ export default function ReaderPostCreatePage() {
         MAX_POST_IMAGE_BYTES
       ) {
         throw new Error(
-          `Photos are too large. Selected: ${formatBytes(
-            totalSize
-          )} / Limit: ${formatBytes(
-            MAX_POST_IMAGE_BYTES
-          )}.`
+          t('readerPostCreatePage.photosTooLarge', {
+            selected: formatBytes(
+              totalSize
+            ),
+            limit: formatBytes(
+              MAX_POST_IMAGE_BYTES
+            ),
+          })
         )
       }
 
@@ -642,7 +836,7 @@ export default function ReaderPostCreatePage() {
     } catch (error) {
       setImageError(
         error.message ||
-          'Could not upload these photos.'
+          t('readerPostCreatePage.couldNotUploadPhotos')
       )
     } finally {
       setUploading(false)
@@ -680,7 +874,9 @@ export default function ReaderPostCreatePage() {
         onFiles={handlePickImages}
         onRejectedFiles={() =>
           setImageError(
-            `Only images are allowed, with a maximum of ${MAX_POST_PHOTOS} photos.`
+            t('readerPostCreatePage.onlyImagesAllowed', {
+              count: MAX_POST_PHOTOS,
+            })
           )
         }
         disabled
@@ -690,22 +886,22 @@ export default function ReaderPostCreatePage() {
           remainingPhotos
         )}
         accept="image/*"
-        className="min-h-screen bg-white"
-        label="Drop photos here"
+        className="min-h-screen bg-white dark:bg-[var(--shadow-bg-page)]"
+        label={t('readerPostCreatePage.dropPhotosHere')}
       >
-        <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white">
+        <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
           <div className="mx-auto flex h-14 max-w-[620px] items-center justify-between px-4">
             <button
               type="button"
               onClick={requestClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-              aria-label="Close composer"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] dark:text-[var(--shadow-text-primary)] dark:active:bg-[var(--shadow-bg-hover)]"
+              aria-label={t('readerPostCreatePage.closeComposer')}
             >
               <i className="fa-solid fa-xmark text-[22px]" />
             </button>
 
-            <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827]">
-              New Reader Post
+            <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
+              {t('readerPostCreatePage.newReaderPost')}
             </div>
 
             <button
@@ -717,29 +913,29 @@ export default function ReaderPostCreatePage() {
               onClick={
                 continueToReview
               }
-              className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
+              className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af] dark:bg-white dark:text-[#111827] dark:disabled:bg-white/10 dark:disabled:text-white/30"
             >
               {uploading
-                ? 'Uploading'
-                : 'Next'}
+                ? t('readerPostCreatePage.uploading')
+                : t('readerPostCreatePage.next')}
             </button>
           </div>
         </header>
 
-        <main className="mx-auto flex min-h-[calc(100vh-56px)] max-w-[620px] flex-col bg-white">
+        <main className="mx-auto flex min-h-[calc(100vh-56px)] max-w-[620px] flex-col bg-white dark:bg-[var(--shadow-bg-surface)]">
           <div className="flex-1 px-4 pt-5">
             <div className="mb-5 flex items-center gap-3">
               <Avatar user={user} />
 
               <div className="min-w-0">
-                <div className="line-clamp-1 text-[15px] font-semibold text-[#111827]">
+                <div className="line-clamp-1 text-[15px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                   {user?.name ||
-                    'Reader'}
+                    t('readerPostCreatePage.reader')}
                 </div>
 
-                <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#eef0f4] px-2.5 py-1 text-[11px] font-normal text-[#374151]">
+                <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#eef0f4] px-2.5 py-1 text-[11px] font-normal text-[#374151] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                   <i className="fa-solid fa-earth-americas text-[10px]" />
-                  Public
+                  {t('readerPostCreatePage.public')}
                 </div>
               </div>
             </div>
@@ -755,11 +951,11 @@ export default function ReaderPostCreatePage() {
                   )
                 )
               }
-              placeholder="Share your thoughts..."
+              placeholder={t('readerPostCreatePage.shareThoughts')}
               maxLength={
                 MAX_POST_LENGTH
               }
-              className="min-h-[210px] w-full resize-none border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
+              className="min-h-[210px] w-full resize-none border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)]"
             />
 
             <SelectedImagePreview
@@ -768,23 +964,23 @@ export default function ReaderPostCreatePage() {
             />
 
             {imageError ? (
-              <div className="mt-3 rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412]">
+              <div className="mt-3 rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412] dark:bg-amber-500/10 dark:text-amber-300">
                 {imageError}
               </div>
             ) : null}
           </div>
 
-          <div className="border-t border-[#eef0f4] bg-white px-4 py-4">
+          <div className="border-t border-[#eef0f4] bg-white px-4 py-4 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)]">
             <div
               className={`mb-3 text-right text-[11px] font-normal ${
                 content.length >=
                 MAX_POST_LENGTH
-                  ? 'text-[#dc2626]'
+                  ? 'text-[#dc2626] dark:text-red-400'
                   : content.length >=
                       MAX_POST_LENGTH -
                         500
-                    ? 'text-[#d97706]'
-                    : 'text-[#9ca3af]'
+                    ? 'text-[#d97706] dark:text-amber-400'
+                     : 'text-[#9ca3af] dark:text-[var(--shadow-text-tertiary)]'
               }`}
             >
               {content.length.toLocaleString()}{' '}
@@ -798,8 +994,8 @@ export default function ReaderPostCreatePage() {
               onClick={() =>
                 fileInputRef.current?.click()
               }
-              className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white text-[#111827] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Open Gallery"
+              className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white text-[#111827] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)] dark:shadow-none"
+              aria-label={t('readerPostCreatePage.openGallery')}
             >
               <svg
                 className="h-[27px] w-[27px]"
@@ -829,7 +1025,7 @@ export default function ReaderPostCreatePage() {
               </svg>
 
               <span className="text-[14px] font-normal">
-                Coming soon
+                {t('readerPostCreatePage.comingSoon')}
               </span>
             </button>
           </div>
