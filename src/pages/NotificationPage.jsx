@@ -425,8 +425,25 @@ export default function NotificationPage({ isOpen = true, onClose }) {
     }
 
     if (notification.link) {
-      navigate(notification.link)
-    }
+  let link = notification.link
+
+  if (link.includes('/author/post/')) {
+    const url = new URL(
+      link,
+      window.location.origin
+    )
+
+    url.searchParams.set(
+      'source',
+      'notification'
+    )
+
+    link =
+      `${url.pathname}${url.search}${url.hash}`
+  }
+
+  navigate(link)
+}
   }
 
   function handleSheetDragStart(event) {
