@@ -54,3 +54,41 @@ export async function fetchAuthorHashtagSuggestions(
     ? data.suggestions
     : []
 }
+
+export async function recordAuthorHashtagInterest(
+  tag,
+  signal = 'hashtag_click'
+) {
+  const token = getReaderToken()
+
+  if (!token) {
+    return false
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/hashtags/interest`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tag: String(tag || '').trim(),
+          signal,
+        }),
+        keepalive: true,
+      }
+    )
+
+    if (!response.ok) {
+      return false
+    }
+
+    const data = await response.json().catch(() => ({}))
+    return data.ok !== false
+  } catch {
+    return false
+  }
+}
