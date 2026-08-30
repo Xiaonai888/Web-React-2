@@ -73,6 +73,7 @@ import AuthorHiddenCommentsPage from './pages/Author/AuthorHiddenCommentsPage'
 import AuthorBlockedReadersPage from './pages/Author/AuthorBlockedReadersPage'
 import AuthorModerationHistoryPage from './pages/Author/AuthorModerationHistoryPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
+import AuthorIncomeOldPage from './pages/Author/AuthorIncomeOldPage'
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
@@ -341,6 +342,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/genre/romance/completed',
     '/store',
     '/music',
+    '/author/earnings',
 
   ]
 
@@ -1352,6 +1354,8 @@ const shouldShowOpeningAds =
         <Route path="/search" element={<Search />} />
         <Route path="/discover/search" element={<DiscoverSearchPage />} />
         <Route path="/author/income" element={<AuthorIncomePage />} />
+        <Route path="/author/income" element={<AuthorIncomeOldPage />} />
+        <Route path="/author/earnings" element={<AuthorIncomePage />} />
         <Route path="/author/diamonds" element={<AuthorDiamondPage />} />
         <Route path="/author/gifts" element={<AuthorGiftPage />} />
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
