@@ -793,12 +793,14 @@ const isOwner = Boolean(
       `${API_BASE_URL}/api/authors/page/${encodeURIComponent(
         pageUsername
       )}/follow`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+    {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({ source_post_id: post.id }),
+}
     )
 
     const data = await response
