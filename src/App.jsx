@@ -1353,7 +1353,6 @@ const shouldShowOpeningAds =
         <Route path="/authors/top" element={<TopAuthorsPage />} />
         <Route path="/search" element={<Search />} />
         <Route path="/discover/search" element={<DiscoverSearchPage />} />
-        <Route path="/author/income" element={<AuthorIncomePage />} />
         <Route path="/author/income" element={<AuthorIncomeOldPage />} />
         <Route path="/author/earnings" element={<AuthorIncomePage />} />
         <Route path="/author/diamonds" element={<AuthorDiamondPage />} />
