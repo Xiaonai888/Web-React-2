@@ -660,7 +660,13 @@ export default function ReaderStorePage() {
               />
 
               {visibleProducts.length ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+  {visibleProducts.map((book) => (
+    <div key={`author-${book.id}`} className="w-[155px] shrink-0">
+      <StoreBookCard book={book} t={t} onOpen={() => openProduct(book)} />
+    </div>
+  ))}
+</div>
                   {visibleProducts.map((book) => (
                     <StoreBookCard
                       key={`author-${book.id}`}
