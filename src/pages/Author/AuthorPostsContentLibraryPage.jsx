@@ -20,14 +20,29 @@ const FILTER_OPTIONS = {
     { value: 'lifetime', label: 'Lifetime' },
   ],
   type: [
-  { value: 'all', label: 'All posts' },
-  { value: 'photo', label: 'Photos' },
-  { value: 'text', label: 'Text' },
-],
-  placement: [{ value: 'feed', label: 'Feed' }],
+    { value: 'all', label: 'All posts' },
+    { value: 'photo', label: 'Photos' },
+    { value: 'text', label: 'Text' },
+  ],
+  placement: [
+    { value: 'all', label: 'All placements' },
+    { value: 'feed', label: 'Feed' },
+    { value: 'suggested', label: 'Suggested' },
+    { value: 'follower_feed', label: 'Following feed' },
+    { value: 'author_page', label: 'Author page' },
+    { value: 'discover', label: 'Discover' },
+    { value: 'search', label: 'Search' },
+    { value: 'share', label: 'Share' },
+    { value: 'notification', label: 'Notification' },
+    { value: 'direct', label: 'Direct' },
+    { value: 'other', label: 'Other' },
+  ],
   metrics: [
     { value: 'views', label: 'Views' },
     { value: 'engagement', label: 'Engagement' },
+    { value: 'reactions', label: 'Reactions' },
+    { value: 'comments', label: 'Comments' },
+    { value: 'shares', label: 'Shares' },
   ],
 }
 
@@ -112,13 +127,22 @@ async function fetchMyAuthorPage() {
   return data.author_page
 }
 
-async function fetchAuthorPosts(pageUsername, before = '') {
-  const params = new URLSearchParams({ limit: '30' })
+async function fetchAuthorPostsPage(pageUsername, before = '') {
+  const token = getAuthToken()
+  const params = new URLSearchParams({
+    limit: '100',
+    content_library: '1',
+  })
 
   if (before) params.set('before', before)
 
   const response = await fetch(
-    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`
+    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`,
+    {
+      headers: token
+        ? { Authorization: `Bearer ${token}` }
+        : {},
+    }
   )
   const data = await response.json().catch(() => ({}))
 
@@ -129,22 +153,62 @@ async function fetchAuthorPosts(pageUsername, before = '') {
   return Array.isArray(data.posts) ? data.posts : []
 }
 
+async function fetchAllAuthorPosts(pageUsername) {
+  const postMap = new Map()
+  let before = ''
+
+  for (let pageIndex = 0; pageIndex < 100; pageIndex += 1) {
+    const batch = await fetchAuthorPostsPage(pageUsername, before)
+
+    if (!batch.length) break
+
+    const previousSize = postMap.size
+
+    batch.forEach((post) => {
+      if (post?.id) postMap.set(String(post.id), post)
+    })
+
+    if (batch.length < 100 || postMap.size === previousSize) break
+
+    const oldestCreatedAt = batch
+      .map((post) => post?.created_at)
+      .filter(Boolean)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0]
+
+    if (!oldestCreatedAt || oldestCreatedAt === before) break
+
+    before = oldestCreatedAt
+  }
+
+  return [...postMap.values()]
+}
+
 function getPostType(post) {
   return Array.isArray(post?.image_urls) && post.image_urls.length ? 'Photo' : 'Post'
 }
 
-function getPostEngagement(post) {
-  return (
-    Number(post?.like_count || 0) +
-    Number(post?.comment_count || 0) +
-    Number(post?.echo_count || 0)
-  )
-}
-
 function getPostMetric(post, metricMode) {
-  return metricMode === 'engagement'
-    ? getPostEngagement(post)
-    : Number(post?.view_count || 0)
+  if (metricMode === 'engagement') {
+    return (
+      Number(post?.like_count || 0) +
+      Number(post?.comment_count || 0) +
+      Number(post?.echo_count || 0)
+    )
+  }
+
+  if (metricMode === 'reactions') {
+    return Number(post?.like_count || 0)
+  }
+
+  if (metricMode === 'comments') {
+    return Number(post?.comment_count || 0)
+  }
+
+  if (metricMode === 'shares') {
+    return Number(post?.echo_count || 0)
+  }
+
+  return Number(post?.view_count || 0)
 }
 
 function PostThumbnail({ post }) {
@@ -200,7 +264,7 @@ function PostListRow({ post, metricMode, onOpen }) {
           {formatCompactNumber(metric)}
         </span>
         <span className="mt-0.5 block text-[9px] font-normal text-[#9ca3af]">
-          {metricMode === 'engagement' ? 'Engagement' : 'Views'}
+          {getOptionLabel('metrics', metricMode)}
         </span>
       </span>
     </button>
@@ -361,7 +425,7 @@ function FilterSheet({
             ))}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[18px] bg-white">
+          <div className="max-h-[64vh] overflow-y-auto rounded-[18px] bg-white">
             {(FILTER_OPTIONS[section] || []).map((item) => {
               const selected = selectedValues[section] === item.value
 
@@ -410,7 +474,7 @@ export default function AuthorPostsContentLibraryPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateRange, setDateRange] = useState('lifetime')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [placementFilter, setPlacementFilter] = useState('feed')
+  const [placementFilter, setPlacementFilter] = useState('all')
   const [metricMode, setMetricMode] = useState('views')
 
   const openFilter = useCallback((section = 'menu') => {
@@ -436,11 +500,11 @@ export default function AuthorPostsContentLibraryPage() {
       setMessage('')
 
       const page = await fetchMyAuthorPage()
-      const nextPosts = await fetchAuthorPosts(page.page_username)
+      const nextPosts = await fetchAllAuthorPosts(page.page_username)
 
       setAuthorPage(page)
       setPosts(nextPosts)
-      setHasMore(nextPosts.length === 30)
+      setHasMore(false)
     } catch (error) {
       setMessage(error.message || 'Failed to load Content Library')
     } finally {
@@ -480,6 +544,14 @@ export default function AuthorPostsContentLibraryPage() {
       )
     }
 
+    if (placementFilter !== 'all') {
+      nextPosts = nextPosts.filter(
+        (post) =>
+          Array.isArray(post?.view_sources) &&
+          post.view_sources.includes(placementFilter)
+      )
+    }
+
     nextPosts.sort(
       (a, b) =>
         getPostMetric(b, metricMode) - getPostMetric(a, metricMode) ||
@@ -488,7 +560,7 @@ export default function AuthorPostsContentLibraryPage() {
     )
 
     return nextPosts
-  }, [dateRange, metricMode, posts, statusFilter, typeFilter])
+  }, [dateRange, metricMode, placementFilter, posts, statusFilter, typeFilter])
 
   async function loadMorePosts() {
     if (!authorPage?.page_username || loadingMore || !hasMore || !posts.length) {
@@ -508,7 +580,7 @@ export default function AuthorPostsContentLibraryPage() {
       setLoadingMore(true)
       setMessage('')
 
-      const nextPosts = await fetchAuthorPosts(authorPage.page_username, before)
+      const nextPosts = await fetchAuthorPostsPage(authorPage.page_username, before)
 
       setPosts((current) => {
         const postMap = new Map(current.map((post) => [post.id, post]))
