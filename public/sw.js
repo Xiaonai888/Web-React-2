@@ -13,6 +13,48 @@ const STORAGE_PRESSURE_RATIO = 0.85
 
 const clientContexts = new Map()
 
+const SPLASH_CACHE_NAME = 'shadow-splash-assets-v1'
+const SPLASH_ASSETS = [
+  '/assets/Icons/Splash%20Screen/Background.webp',
+  '/assets/Icons/Splash%20Screen/Moon.webp',
+  '/assets/Icons/Splash%20Screen/Purple%20smoke%20flying.webp',
+  '/assets/Icons/Splash%20Screen/Reaper.webp',
+  '/assets/Icons/Splash%20Screen/Lamp.webp',
+  '/assets/Icons/Splash%20Screen/Butterfly.webp',
+  '/assets/Icons/Splash%20Screen/Wing.webp',
+  '/assets/Icons/Splash%20Screen/Paper1.webp',
+  '/assets/Icons/Splash%20Screen/Papper2.webp',
+  '/assets/Icons/Splash%20Screen/Papper3.webp',
+  '/assets/Icons/Splash%20Screen/Light%20Spark.webp',
+]
+
+const SPLASH_ASSET_PATHS = new Set(SPLASH_ASSETS)
+
+async function precacheSplashAssets() {
+  const cache = await caches.open(SPLASH_CACHE_NAME)
+
+  await Promise.allSettled(
+    SPLASH_ASSETS.map(async (path) => {
+      const request = new Request(
+        new URL(path, self.location.origin).href,
+        { cache: 'reload' }
+      )
+      const response = await fetch(request)
+
+      if (response.ok) {
+        await cache.put(request, response)
+      }
+    })
+  )
+}
+
+function isSplashAssetRequest(url) {
+  return (
+    url.origin === self.location.origin &&
+    SPLASH_ASSET_PATHS.has(url.pathname)
+  )
+}
+
 function normalizeText(value) {
   return String(value ?? '').trim()
 }
@@ -1527,8 +1569,13 @@ self.addEventListener(
 
 self.addEventListener(
   'install',
-  () => {
-    self.skipWaiting()
+  (event) => {
+    event.waitUntil(
+      (async () => {
+        await precacheSplashAssets()
+        await self.skipWaiting()
+      })()
+    )
   }
 )
 
@@ -1579,6 +1626,37 @@ self.addEventListener(
     } catch {
       return
     }
+
+    if (isSplashAssetRequest(url)) {
+  const cachePromise = caches.open(SPLASH_CACHE_NAME)
+
+  const cachedPromise = cachePromise.then((cache) =>
+    cache.match(request, { ignoreSearch: true })
+  )
+
+  const refreshPromise = cachePromise
+    .then(async (cache) => {
+      const response = await fetch(request, { cache: 'no-cache' })
+
+      if (response.ok) {
+        await cache.put(request, response.clone())
+      }
+
+      return response
+    })
+    .catch(() => null)
+
+  event.waitUntil(refreshPromise)
+
+  event.respondWith(
+    cachedPromise.then(async (cached) => {
+      if (cached) return cached
+      return (await refreshPromise) || fallbackImageResponse()
+    })
+  )
+
+  return
+}
 
     const episodeRoute =
       parseEpisodeApiUrl(url)
