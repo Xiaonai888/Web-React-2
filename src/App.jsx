@@ -145,10 +145,10 @@ const AuthorPageWithdrawalPage = lazy(() => import('./pages/Author/AuthorPageWit
 const ShadowMallPurchasePage = lazy(() => import('./pages/Shop/ShadowMallPurchasePage'))
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
 const ReaderPostCreatePage = lazy(() =>
+  import('./pages/ReaderPosts/ReaderPostCreatePage')
+)
 const AuthorPostInsightsPage = lazy(() =>
   import('./pages/Author/AuthorPostInsightsPage')
-)
-  import('./pages/ReaderPosts/ReaderPostCreatePage')
 )
 const ReaderPostReviewPage = lazy(() =>
   import('./pages/ReaderPosts/ReaderPostReviewPage')
