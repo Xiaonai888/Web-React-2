@@ -42,6 +42,11 @@
 "src/pages/GiftGuidePage.jsx",
 "src/pages/ReceivedEchoesPage.jsx",
 "src/pages/ReaderProfiles/ReaderDiscoverPeoplePage.jsx",
-"src/pages/ReaderPosts/ReaderPostReviewPage.jsx"
+"src/pages/ReaderPosts/ReaderPostReviewPage.jsx",
+"src/pages/WalletOrderHistoryPage.jsx",
+"src/pages/FastStudioPage.jsx",
+"src/pages/EpisodeReactionsPage.jsx",
+"src/pages/ReportPage.jsx",
+"src/pages/EditProfileLinksPage.jsx"
   ]
 }
