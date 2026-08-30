@@ -82,6 +82,10 @@
 "src/pages/TopFansGuidePage.jsx",
 "src/components/reader-posts/ReaderPostReactionButton.jsx",
 "src/components/reader-posts/ReaderPostComposer.jsx",
-"src/components/reader-posts/ReaderDiscoverPostText.jsx"
+"src/components/reader-posts/ReaderDiscoverPostText.jsx",
+"src/pages/MaintenancePage.jsx",
+"src/components/Footer.jsx",
+"src/components/Shop/PurchaseSection.jsx",
+"src/components/Shop/ShadowMallSection.jsx"
   ]
 }
