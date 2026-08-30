@@ -8,9 +8,9 @@ const API_BASE_URL =
 
 const FILTER_OPTIONS = {
   status: [
-    { value: 'all', label: 'All posts' },
-    { value: 'pinned', label: 'Pinned posts' },
-  ],
+  { value: 'all', label: 'All posts' },
+  { value: 'published', label: 'Published' },
+],
   date: [
     { value: 'today', label: 'Today' },
     { value: '7d', label: 'Last 7 days' },
