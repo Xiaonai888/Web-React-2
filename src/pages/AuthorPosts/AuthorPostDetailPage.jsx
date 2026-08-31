@@ -115,9 +115,7 @@ function renderPostTextWithLinks(text, postId) {
             href={part}
             target="_blank"
             rel="noopener noreferrer"
-onClick={() => {
-  void recordAuthorPostClick(postId, part)
-}}
+
 className="break-all text-[#1877f2]"
           >
             {part}
