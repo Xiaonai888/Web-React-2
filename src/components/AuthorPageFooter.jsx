@@ -1,5 +1,40 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthorPageNotifications } from '../providers/AuthorPageNotificationProvider'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('authorPageFooter', {
+  en: {
+    page: 'Page',
+    dashboard: 'Dashboard',
+    store: 'Store',
+    notifications: 'Notifications',
+  },
+  km: {
+    page: 'ទំព័រ',
+    dashboard: 'ផ្ទាំងគ្រប់គ្រង',
+    store: 'ហាង',
+    notifications: 'ការជូនដំណឹង',
+  },
+  zh: {
+    page: '主页',
+    dashboard: '仪表板',
+    store: '商店',
+    notifications: '通知',
+  },
+  ja: {
+    page: 'ページ',
+    dashboard: 'ダッシュボード',
+    store: 'ストア',
+    notifications: '通知',
+  },
+  ko: {
+    page: '페이지',
+    dashboard: '대시보드',
+    store: '스토어',
+    notifications: '알림',
+  },
+})
 
 function PageIcon({ active }) {
   return (
@@ -58,26 +93,31 @@ function NotificationIcon({ active }) {
 
 function AuthorPageFooter({ active = 'Page' }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const { hasAuthorUnread } = useAuthorPageNotifications()
 
   const items = [
     {
-      label: 'Page',
+      key: 'Page',
+      label: t('authorPageFooter.page'),
       Icon: PageIcon,
       action: () => navigate('/author/page'),
     },
     {
-      label: 'Dashboard',
+      key: 'Dashboard',
+      label: t('authorPageFooter.dashboard'),
       Icon: DashboardIcon,
       action: () => navigate('/author/page/dashboard'),
     },
     {
-      label: 'Store',
+      key: 'Store',
+      label: t('authorPageFooter.store'),
       Icon: StoreIcon,
       action: () => navigate('/author/page/store'),
     },
     {
-      label: 'Notifications',
+      key: 'Notifications',
+      label: t('authorPageFooter.notifications'),
       Icon: NotificationIcon,
       action: () => navigate('/author/page/notifications'),
     },
@@ -87,12 +127,12 @@ function AuthorPageFooter({ active = 'Page' }) {
     <nav className="fixed bottom-0 left-0 right-0 z-[80] border-t border-[#eef0f4] bg-white/95 shadow-[0_-8px_24px_rgba(17,24,39,0.06)] backdrop-blur dark:border-white/10 dark:bg-[#0d0f16]/95">
       <div className="mx-auto grid h-[66px] max-w-5xl grid-cols-4">
         {items.map((item) => {
-          const isActive = active === item.label
+          const isActive = active === item.key
           const Icon = item.Icon
 
           return (
             <button
-              key={item.label}
+              key={item.key}
               type="button"
               onClick={item.action}
               className={`flex flex-col items-center justify-center gap-1 text-[10px] font-extrabold transition active:scale-95 ${
@@ -104,7 +144,7 @@ function AuthorPageFooter({ active = 'Page' }) {
               <span className="relative flex">
   <Icon active={isActive} />
 
-  {item.label === 'Notifications' &&
+  {item.key === 'Notifications' &&
   hasAuthorUnread ? (
     <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#ef4444] ring-2 ring-white dark:ring-[#0d0f16]" />
   ) : null}
