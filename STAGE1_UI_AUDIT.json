@@ -103,5 +103,9 @@
 "src/components/author-posts/AuthorPostFilterSheet.jsx",
 "src/components/author-posts/AuthorDiscoverPostText.jsx",
 "src/components/social/reactions/ReactionSummary.jsx"
+"src/components/social/reactions/ReactionPicker.jsx",
+"src/components/reader-posts/ReaderPostOptionsSheet.jsx",
+"src/components/common/ProfessionalPostContent.jsx",
+"src/components/social/SocialEchoShareSheetV2.jsx"
   ]
 }
