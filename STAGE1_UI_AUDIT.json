@@ -95,5 +95,7 @@
 "src/components/AuthorPublicStoreSection.jsx",
 "src/components/AuthorStoreTab.jsx",
 "src/components/AuthorPageFooter.jsx"
+"src/components/AuthorPostComposerSheet.jsx",
+"src/components/AuthorPostsSection.jsx"
   ]
 }
