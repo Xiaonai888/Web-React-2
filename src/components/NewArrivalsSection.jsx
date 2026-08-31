@@ -11,7 +11,82 @@ import {
   saveHomeCache,
 } from '../utils/homeDataCache'
 import { getStoryBadge } from '../utils/storyBadge'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
+
+registerTranslationNamespace('newArrivalsSection', {
+  en: {
+    title: 'New Arrivals',
+    viewAll: 'Go to New Arrivals page',
+    untitledStory: 'Untitled Story',
+    shadowAuthor: 'Shadow Author',
+    badgeNew: 'NEW',
+    badgeUp: 'UP',
+    badgeEnd: 'END',
+    newArrival: 'New Arrival',
+    loadFailed: 'Could not load new arrivals',
+    noManga: 'No Manga new arrivals yet',
+    noLanguageStories: 'No {{language}} new stories yet',
+    publishedOnly: 'Only published stories with at least one episode are shown.',
+  },
+  km: {
+    title: 'រឿងថ្មី',
+    viewAll: 'ទៅកាន់ទំព័ររឿងថ្មី',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    shadowAuthor: 'អ្នកនិពន្ធ Shadow',
+    badgeNew: 'ថ្មី',
+    badgeUp: 'អាប់ដេត',
+    badgeEnd: 'ចប់',
+    newArrival: 'រឿងថ្មី',
+    loadFailed: 'មិនអាចផ្ទុករឿងថ្មីបានទេ',
+    noManga: 'មិនទាន់មាន Manga ថ្មីទេ',
+    noLanguageStories: 'មិនទាន់មានរឿង {{language}} ថ្មីទេ',
+    publishedOnly: 'បង្ហាញតែរឿងដែលបានបោះពុម្ព និងមានយ៉ាងហោចណាស់ 1 ភាគប៉ុណ្ណោះ។',
+  },
+  zh: {
+    title: '新作品',
+    viewAll: '前往新作品页面',
+    untitledStory: '无标题故事',
+    shadowAuthor: 'Shadow 作者',
+    badgeNew: '新',
+    badgeUp: '更新',
+    badgeEnd: '完结',
+    newArrival: '新作品',
+    loadFailed: '无法加载新作品',
+    noManga: '暂无新的 Manga 作品',
+    noLanguageStories: '暂无新的 {{language}} 故事',
+    publishedOnly: '这里只显示至少已发布一集的故事。',
+  },
+  ja: {
+    title: '新着作品',
+    viewAll: '新着作品ページへ移動',
+    untitledStory: '無題のストーリー',
+    shadowAuthor: 'Shadow 作者',
+    badgeNew: '新着',
+    badgeUp: '更新',
+    badgeEnd: '完結',
+    newArrival: '新着作品',
+    loadFailed: '新着作品を読み込めませんでした',
+    noManga: 'Manga の新着作品はまだありません',
+    noLanguageStories: '{{language}} の新着ストーリーはまだありません',
+    publishedOnly: '少なくとも1話公開されているストーリーのみ表示されます。',
+  },
+  ko: {
+    title: '신작',
+    viewAll: '신작 페이지로 이동',
+    untitledStory: '제목 없는 스토리',
+    shadowAuthor: 'Shadow 작가',
+    badgeNew: '신규',
+    badgeUp: '업데이트',
+    badgeEnd: '완결',
+    newArrival: '신작',
+    loadFailed: '새 작품을 불러오지 못했습니다',
+    noManga: '아직 새로운 Manga 작품이 없습니다',
+    noLanguageStories: '아직 새로운 {{language}} 스토리가 없습니다',
+    publishedOnly: '최소 1개 에피소드가 공개된 스토리만 표시됩니다.',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -22,6 +97,12 @@ const NEW_ARRIVALS_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 const badgeStyles = {
   new: 'bg-[#FF4D6D] text-white',
   up: 'bg-[#F6B800] text-[#111827]',
+}
+
+const badgeLabelKeys = {
+  new: 'badgeNew',
+  up: 'badgeUp',
+  end: 'badgeEnd',
 }
 
 function formatCompactNumber(value) {
@@ -43,12 +124,12 @@ function normalizeStory(story, index = 0) {
 
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     author:
       story.author_page?.page_name ||
       story.author_page?.page_username ||
       story.author_name ||
-      'Shadow Author',
+      '',
     badge: badge ? badge.toUpperCase() : '',
     badgeColor: badge,
     likes: formatCompactNumber(story.total_likes),
@@ -62,17 +143,23 @@ function normalizeStory(story, index = 0) {
   }
 }
 
-function BookCard({ book, onClick }) {
+function BookCard({ book, onClick, t }) {
+  const displayTitle =
+    book.title || t('newArrivalsSection.untitledStory')
+  const displayGenre =
+    book.genre || t('newArrivalsSection.newArrival')
+  const badgeLabelKey = badgeLabelKeys[book.badgeColor]
+
   return (
     <button
       type="button"
       onClick={onClick}
       className="group block h-full w-full shrink-0 text-left"
     >
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)] shadow-sm">
         <img
           src={book.cover}
-          alt={book.title}
+          alt={displayTitle}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           loading="lazy"
           onError={(event) => {
@@ -86,7 +173,7 @@ function BookCard({ book, onClick }) {
               badgeStyles[book.badgeColor] || badgeStyles.new
             }`}
           >
-            {book.badge}
+            {badgeLabelKey ? t(`newArrivalsSection.${badgeLabelKey}`) : book.badge}
           </div>
         ) : null}
 
@@ -97,12 +184,12 @@ function BookCard({ book, onClick }) {
         ) : null}
       </div>
 
-      <h3 className="mt-2 block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-        {book.title}
+      <h3 className="mt-2 block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-[var(--shadow-text-primary)]">
+        {displayTitle}
       </h3>
 
-      <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
-        {book.genre || 'New Arrival'}
+      <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-[var(--shadow-text-secondary)]">
+        {displayGenre}
       </p>
     </button>
   )
@@ -112,16 +199,16 @@ function LoadingGrid() {
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4 flex items-center justify-between">
-        <div className="h-6 w-44 animate-pulse rounded-full bg-gray-100" />
-        <div className="h-8 w-8 animate-pulse rounded-full bg-gray-100" />
+        <div className="h-6 w-44 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+        <div className="h-8 w-8 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
       </div>
 
       <div className="grid grid-cols-3 gap-x-2 gap-y-6 lg:grid-cols-5 lg:gap-x-3">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index}>
-            <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
-            <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
-            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+            <div className="aspect-[2/3] animate-pulse rounded-2xl bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-3 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
           </div>
         ))}
       </div>
@@ -132,6 +219,7 @@ function LoadingGrid() {
 export default function NewArrivalsSection({
   storyType = '',
 }) {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -267,18 +355,18 @@ export default function NewArrivalsSection({
             🚀
           </span>
 
-          <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-            New Arrivals
+          <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+            {t('newArrivalsSection.title')}
           </h2>
         </div>
 
         <button
           type="button"
           onClick={() => navigate('/new-arrivals')}
-          className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-          aria-label="Go to New Arrivals page"
+          className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]"
+          aria-label={t('newArrivalsSection.viewAll')}
         >
-          <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+          <i className="fas fa-chevron-right text-[15px] text-[var(--shadow-text-secondary)] lg:text-[16px]" />
         </button>
       </div>
 
@@ -296,22 +384,25 @@ export default function NewArrivalsSection({
     state: { sectionRank: 'new_arrivals' },
   })
 }}
+                t={t}
               />
             </div>
           ))}
         </div>
       ) : (
-        <div className="rounded-[22px] bg-[#f8f8fb] px-4 py-6 text-center">
-          <div className="text-[14px] font-extrabold text-[#111827]">
+        <div className="rounded-[22px] bg-[var(--shadow-bg-soft)] px-4 py-6 text-center">
+          <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">
             {loadFailed
-              ? 'Could not load new arrivals'
+              ? t('newArrivalsSection.loadFailed')
               : normalizedStoryType === 'manga'
-                ? 'No Manga new arrivals yet'
-                : `No ${storyLanguage} new stories yet`}
+                ? t('newArrivalsSection.noManga')
+                : t('newArrivalsSection.noLanguageStories', {
+                    language: storyLanguage,
+                  })}
           </div>
 
-          <div className="mt-1 text-[12px] text-[#8d94a1]">
-            Only published stories with at least one episode are shown.
+          <div className="mt-1 text-[12px] text-[var(--shadow-text-tertiary)]">
+            {t('newArrivalsSection.publishedOnly')}
           </div>
         </div>
       )}
