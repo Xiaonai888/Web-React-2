@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
@@ -734,7 +734,7 @@ function MangaEpisodePages({
   pages = [],
   title = 'Manga episode',
 }) {
-  const sharpenFilterId = `manga-page-sharpen-${useId().replace(/:/g, '')}`
+
   const orderedPages = useMemo(() => {
     return (Array.isArray(pages) ? pages : [])
       .filter(
@@ -762,7 +762,7 @@ function MangaEpisodePages({
 
   return (
     <div className="w-full overflow-hidden bg-white">
-      <svg className="absolute h-0 w-0" aria-hidden="true"><filter id={sharpenFilterId} x="-10%" y="-10%" width="120%" height="120%" colorInterpolationFilters="sRGB"><feConvolveMatrix order="3" kernelMatrix="0 -0.15 0 -0.15 1.6 -0.15 0 -0.15 0" edgeMode="duplicate" preserveAlpha="true" /></filter></svg>
+      
       {orderedPages.map((page, pageIndex) => {
         const orderedParts = (
           Array.isArray(page?.parts) ? page.parts : []
@@ -817,7 +817,7 @@ function MangaEpisodePages({
                   }
                   decoding="async"
                   draggable={false}
-                  style={{ filter: `url(#${sharpenFilterId}) contrast(1.08) brightness(1.01)` }}
+                  
                   className="m-0 block h-auto w-full p-0"
                 />
               )
