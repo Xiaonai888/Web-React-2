@@ -2296,6 +2296,4 @@ likeCount={
   )
 }
 
-onClick={() => {
-  void recordAuthorPostClick(postId, part)
-}}
+
