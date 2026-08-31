@@ -3,6 +3,31 @@ import {
   formatReactionCount,
   getReactionMeta,
 } from './reactionConfig'
+import { useDisplayTranslation } from '../../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../../i18n/registerTranslations'
+
+registerTranslationNamespace('reactionSummary', {
+  en: {
+    you: 'You',
+    youPlus: 'You + {{count}}',
+  },
+  km: {
+    you: 'អ្នក',
+    youPlus: 'អ្នក + {{count}}',
+  },
+  zh: {
+    you: '你',
+    youPlus: '你 + {{count}}',
+  },
+  ja: {
+    you: 'あなた',
+    youPlus: 'あなた + {{count}}',
+  },
+  ko: {
+    you: '나',
+    youPlus: '나 + {{count}}',
+  },
+})
 
 export default function ReactionSummary({
   summary = [],
@@ -13,6 +38,7 @@ export default function ReactionSummary({
   iconClassName = 'h-[17px] w-[17px]',
   textClassName = 'ml-1.5 truncate',
 }) {
+  const { t } = useDisplayTranslation()
   const count = Math.max(0, Number(likeCount || 0))
 
   const items = Array.isArray(summary)
@@ -63,8 +89,10 @@ export default function ReactionSummary({
 
   const label = myReaction
     ? count > 1
-      ? `You + ${formatReactionCount(count - 1)}`
-      : 'You'
+      ? t('reactionSummary.youPlus', {
+          count: formatReactionCount(count - 1),
+        })
+      : t('reactionSummary.you')
     : formatReactionCount(count)
 
   return (
