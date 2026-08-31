@@ -107,5 +107,6 @@
 "src/components/reader-posts/ReaderPostOptionsSheet.jsx",
 "src/components/common/ProfessionalPostContent.jsx",
 "src/components/social/SocialEchoShareSheetV2.jsx"
+"src/components/reader-posts/ReaderPostEchoShareSheet.jsx"
   ]
 }
