@@ -92,5 +92,8 @@
 "src/components/UpdateTodaySection.jsx",
 "src/components/NewArrivalsSection.jsx",
 "src/components/YouMightLikeSection.jsx"
+"src/components/AuthorPublicStoreSection.jsx",
+"src/components/AuthorStoreTab.jsx",
+"src/components/AuthorPageFooter.jsx"
   ]
 }
