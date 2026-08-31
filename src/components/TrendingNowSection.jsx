@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import {
   addStoryLanguageParam,
   getStoryLanguageId,
@@ -9,6 +11,44 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../utils/homeDataCache'
+
+registerTranslationNamespace('trendingNowSection', {
+  en: {
+    title: 'Trending Now',
+    trendingStory: 'Trending Story',
+    untitledStory: 'Untitled Story',
+    romance: 'Romance',
+    fantasy: 'Fantasy',
+  },
+  km: {
+    title: 'កំពុងពេញនិយម',
+    trendingStory: 'រឿងកំពុងពេញនិយម',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    romance: 'មនោសញ្ចេតនា',
+    fantasy: 'រឿងស្រមើស្រមៃ',
+  },
+  zh: {
+    title: '热门趋势',
+    trendingStory: '热门故事',
+    untitledStory: '无标题故事',
+    romance: '爱情',
+    fantasy: '奇幻',
+  },
+  ja: {
+    title: 'トレンド',
+    trendingStory: 'トレンド作品',
+    untitledStory: '無題のストーリー',
+    romance: 'ロマンス',
+    fantasy: 'ファンタジー',
+  },
+  ko: {
+    title: '인기 급상승',
+    trendingStory: '인기 스토리',
+    untitledStory: '제목 없는 스토리',
+    romance: '로맨스',
+    fantasy: '판타지',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -21,16 +61,18 @@ const HOME_STORY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const fallbackTrendingStories = Array.from({ length: 9 }).map((_, index) => ({
   id: 201 + index,
-  title: 'Trending Story',
+  title: '',
+  titleKey: 'trendingStory',
   image: `/assets/New Arrival/New Arrival ${index + 1}.jpg`,
-  genre: index % 2 === 0 ? 'Romance' : 'Fantasy',
+  genre: '',
+  genreKey: index % 2 === 0 ? 'romance' : 'fantasy',
   isAdult: false,
 }))
 
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     image:
       story.cover_url ||
       story.landscape_thumbnail_url ||
@@ -40,7 +82,18 @@ function normalizeStory(story, index = 0) {
   }
 }
 
-function TrendingBookCard({ book, onOpen }) {
+function TrendingBookCard({ book, onOpen, t }) {
+  const displayTitle =
+    book.title ||
+    t(
+      `trendingNowSection.${book.titleKey || 'untitledStory'}`
+    )
+  const displayGenre =
+    book.genre ||
+    (book.genreKey
+      ? t(`trendingNowSection.${book.genreKey}`)
+      : '')
+
   return (
     <button
       type="button"
@@ -50,7 +103,7 @@ function TrendingBookCard({ book, onOpen }) {
       <div className="relative aspect-[2/3] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
         <img
           src={book.image}
-          alt={book.title}
+          alt={displayTitle}
           className="pointer-events-none h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           loading="lazy"
           decoding="async"
@@ -67,14 +120,14 @@ function TrendingBookCard({ book, onOpen }) {
         ) : null}
       </div>
 
-      <h3 className="mt-2 block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-        {book.title}
+      <h3 className="mt-2 block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-[var(--shadow-text-primary)]">
+        {displayTitle}
       </h3>
 
       <div className="mt-1 min-h-[18px]">
-        {book.genre ? (
-          <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#F3F4F6] px-2 py-1 text-[10px] font-medium leading-none text-[#6B7280]">
-            {book.genre}
+        {displayGenre ? (
+          <span className="inline-flex max-w-full truncate rounded-[4px] bg-[var(--shadow-bg-soft)] px-2 py-1 text-[10px] font-medium leading-none text-[var(--shadow-text-secondary)]">
+            {displayGenre}
           </span>
         ) : null}
       </div>
@@ -87,7 +140,7 @@ function LoadingGrid() {
     <section className="px-3 pb-2 pt-0 md:px-4 md:pt-0">
       <div className="flex items-center gap-2">
         <span className="text-[24px] leading-none">🔥</span>
-        <div className="h-6 w-36 animate-pulse rounded-full bg-gray-100" />
+        <div className="h-6 w-36 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-x-2 gap-y-4 md:flex md:gap-3 md:overflow-hidden">
@@ -96,9 +149,9 @@ function LoadingGrid() {
             key={index}
             className="min-w-0 md:w-[calc((100%_-_60px)/6)] md:shrink-0"
           >
-            <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
-            <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100" />
-            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+            <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-2 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
           </div>
         ))}
       </div>
@@ -109,6 +162,7 @@ function LoadingGrid() {
 export default function TrendingNowSection({
   storyType = '',
 }) {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const scrollRef = useRef(null)
   const isDraggingRef = useRef(false)
@@ -292,8 +346,8 @@ export default function TrendingNowSection({
           🔥
         </span>
 
-        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-          Trending Now
+        <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+          {t('trendingNowSection.title')}
         </h2>
       </div>
 
@@ -319,6 +373,7 @@ export default function TrendingNowSection({
               onOpen={() =>
                 handleBookOpen(book.id)
               }
+              t={t}
             />
           </div>
         ))}
