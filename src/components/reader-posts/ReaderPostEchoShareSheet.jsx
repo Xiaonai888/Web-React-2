@@ -361,8 +361,8 @@ function ShareCircle({
   icon,
   iconNode,
   label,
-  bg = 'bg-white',
-  color = 'text-[#111827]',
+  bg = 'bg-[var(--shadow-bg-elevated)]',
+  color = 'text-[var(--shadow-text-primary)]',
   onClick,
 }) {
   return (
@@ -372,13 +372,13 @@ function ShareCircle({
       className="w-[82px] shrink-0 text-center active:scale-95"
     >
       <div
-        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 ${bg} ${color}`}
+        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full shadow-sm ring-1 ring-[var(--shadow-border)] ${bg} ${color}`}
       >
         {iconNode || (
   <i className={`${icon} text-[22px]`} />
 )}
       </div>
-      <div className="mt-2 text-[12px] font-normal leading-4 text-[#111827]">
+      <div className="mt-2 text-[12px] font-normal leading-4 text-[var(--shadow-text-primary)]">
         {label}
       </div>
     </button>
@@ -403,7 +403,7 @@ function ReaderCircle({
       className="w-[76px] shrink-0 text-center active:scale-95"
     >
       <div
-        className={`mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[17px] font-semibold text-white ring-2 ${
+        className={`mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[17px] font-semibold text-white ring-2 ${
           active
             ? 'ring-[#8b5cf6]'
             : 'ring-transparent'
@@ -423,7 +423,7 @@ function ReaderCircle({
         className={`mt-2 line-clamp-2 text-[11.5px] font-semibold leading-4 ${
           active
             ? 'text-[#6d28d9]'
-            : 'text-[#667085]'
+            : 'text-[var(--shadow-text-secondary)]'
         }`}
       >
         {name}
@@ -442,13 +442,13 @@ function ChoiceSheet({
   backLabel,
 }) {
   return (
-    <div className="fixed inset-0 z-[200010] bg-white text-[#111827]">
-      <div className="flex items-center gap-3 border-b border-[#eceaf2] px-4 py-4">
+    <div className="fixed inset-0 z-[200010] bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">
+      <div className="flex items-center gap-3 border-b border-[var(--shadow-border)] px-4 py-4">
         <button
           type="button"
           onClick={onBack}
           aria-label={backLabel}
-          className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f5f3fa]"
+          className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-page)]"
         >
           <i className="fa-solid fa-chevron-left text-[18px]" />
         </button>
@@ -458,7 +458,7 @@ function ChoiceSheet({
             {title}
           </h2>
           {subtitle ? (
-            <p className="mt-1 text-[12px] font-normal leading-5 text-[#8d94a1]">
+            <p className="mt-1 text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
               {subtitle}
             </p>
           ) : null}
@@ -476,19 +476,19 @@ function ChoiceSheet({
               onClick={() =>
                 onChoose(item.key)
               }
-              className="flex w-full items-center gap-4 rounded-[20px] px-2 py-4 text-left active:bg-[#f5f3fa]"
+              className="flex w-full items-center gap-4 rounded-[20px] px-2 py-4 text-left active:bg-[var(--shadow-bg-page)]"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">
                 <i
                   className={`${item.icon} text-[18px]`}
                 />
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[16px] font-normal text-[#111827]">
+                <div className="text-[16px] font-normal text-[var(--shadow-text-primary)]">
                   {item.title}
                 </div>
-                <div className="mt-0.5 text-[12.5px] font-normal leading-5 text-[#8d94a1]">
+                <div className="mt-0.5 text-[12.5px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
                   {item.subtitle}
                 </div>
               </div>
@@ -496,12 +496,12 @@ function ChoiceSheet({
               <div
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
                   active
-                    ? 'border-[#111827] bg-[#111827]'
-                    : 'border-[#98a2b3]'
+                    ? 'border-[var(--shadow-text-primary)] bg-[var(--shadow-text-primary)]'
+                    : 'border-[var(--shadow-border-strong)]'
                 }`}
               >
                 {active ? (
-                  <i className="fa-solid fa-check text-[10px] text-white" />
+                  <i className="fa-solid fa-check text-[10px] text-[var(--shadow-bg-page)]" />
                 ) : null}
               </div>
             </button>
@@ -898,7 +898,7 @@ export default function ReaderPostEchoShareSheet({
 
       <section
         ref={sheetRef}
-        className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-[30px] bg-[#f5f3fa] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl md:mb-5 md:max-w-[520px] md:rounded-[30px]"
+        className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-[30px] bg-[var(--shadow-bg-page)] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl md:mb-5 md:max-w-[520px] md:rounded-[30px]"
         style={{
           transform: `translateY(${dragOffset}px)`,
           transition: draggingRef.current
@@ -912,13 +912,13 @@ export default function ReaderPostEchoShareSheet({
           onPointerMove={moveDrag}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
-          className="sticky top-0 z-20 mx-auto mb-4 flex h-5 w-20 cursor-grab items-start justify-center bg-[#f5f3fa]"
+          className="sticky top-0 z-20 mx-auto mb-4 flex h-5 w-20 cursor-grab items-start justify-center bg-[var(--shadow-bg-page)]"
           style={{ touchAction: 'none' }}
         >
-          <div className="h-1.5 w-14 rounded-full bg-[#9ca3af]" />
+          <div className="h-1.5 w-14 rounded-full bg-[var(--shadow-text-tertiary)]" />
         </div>
 
-        <div className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="rounded-[22px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <div className="flex items-start gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[18px] font-semibold text-white">
               {user?.avatarUrl ||
@@ -937,7 +937,7 @@ export default function ReaderPostEchoShareSheet({
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="line-clamp-1 text-[16px] font-semibold text-[#111827]">
+              <div className="line-clamp-1 text-[16px] font-semibold text-[var(--shadow-text-primary)]">
                 {displayName}
               </div>
 
@@ -949,7 +949,7 @@ export default function ReaderPostEchoShareSheet({
                       'destination'
                     )
                   }
-                  className="flex h-8 items-center gap-2 rounded-full bg-[#eef0f4] px-3 text-[12px] font-normal text-[#111827] active:scale-95"
+                  className="flex h-8 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
                 >
                   <span>
                     {destinationItem.title}
@@ -964,7 +964,7 @@ export default function ReaderPostEchoShareSheet({
                       'audience'
                     )
                   }
-                  className="flex h-8 items-center gap-2 rounded-full bg-[#eef0f4] px-3 text-[12px] font-normal text-[#111827] active:scale-95"
+                  className="flex h-8 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
                 >
                   <i
                     className={`${audienceItem.icon} text-[12px]`}
@@ -988,10 +988,10 @@ export default function ReaderPostEchoShareSheet({
             rows={2}
             maxLength={280}
             placeholder={t('readerPostEchoShare.saySomething')}
-            className="mt-3 w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:font-normal placeholder:text-[#98a2b3]"
+            className="mt-3 w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none placeholder:font-normal placeholder:text-[var(--shadow-text-tertiary)]"
           />
 
-          <div className="mt-3 rounded-[16px] bg-[#f7f7fa] px-3 py-3 ring-1 ring-black/5">
+          <div className="mt-3 rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-3 ring-1 ring-[var(--shadow-border)]">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[13px] font-semibold text-white">
                 {post?.user?.avatar_url ? (
@@ -1010,10 +1010,10 @@ export default function ReaderPostEchoShareSheet({
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="line-clamp-1 text-[13px] font-semibold text-[#111827]">
+                <div className="line-clamp-1 text-[13px] font-semibold text-[var(--shadow-text-primary)]">
                   {sourceName}
                 </div>
-                <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-[12px] font-normal leading-5 text-[#667085]">
+                <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
                   {post?.content ||
                     t('readerPostEchoShare.readerPost')}
                 </p>
@@ -1026,7 +1026,7 @@ export default function ReaderPostEchoShareSheet({
               type="button"
               onClick={handleTagClick}
               aria-label={t('readerPostEchoShare.tagReader')}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#667085] active:scale-95 active:bg-[#f2f3f5]"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] active:scale-95 active:bg-[var(--shadow-bg-hover)]"
             >
               <i className="fa-solid fa-user-tag text-[18px]" />
             </button>
@@ -1045,13 +1045,13 @@ export default function ReaderPostEchoShareSheet({
         </div>
 
         {message ? (
-          <div className="mt-3 rounded-[16px] bg-white px-4 py-3 text-[12px] font-normal text-[#667085] ring-1 ring-black/5">
+          <div className="mt-3 rounded-[16px] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[12px] font-normal text-[var(--shadow-text-secondary)] ring-1 ring-[var(--shadow-border)]">
             {message}
           </div>
         ) : null}
 
         <div className="mt-5">
-          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
+          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[var(--shadow-text-tertiary)]">
             {t('readerPostEchoShare.readers')}
           </div>
           <div className="flex gap-4 overflow-x-auto pb-1">
@@ -1062,8 +1062,8 @@ export default function ReaderPostEchoShareSheet({
                     key={index}
                     className="w-[76px] shrink-0"
                   >
-                    <div className="mx-auto h-14 w-14 animate-pulse rounded-full bg-[#e5e7eb]" />
-                    <div className="mx-auto mt-2 h-3 w-12 animate-pulse rounded-full bg-[#e5e7eb]" />
+                    <div className="mx-auto h-14 w-14 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                    <div className="mx-auto mt-2 h-3 w-12 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                   </div>
                 )
               )
@@ -1084,7 +1084,7 @@ export default function ReaderPostEchoShareSheet({
                 />
               ))
             ) : (
-              <div className="py-3 text-[12px] font-normal text-[#98a2b3]">
+              <div className="py-3 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
                 {followersError ||
                   t('readerPostEchoShare.noFollowers')}
               </div>
@@ -1093,7 +1093,7 @@ export default function ReaderPostEchoShareSheet({
         </div>
 
         <div className="mt-5">
-          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
+          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[var(--shadow-text-tertiary)]">
             {t('readerPostEchoShare.shareOutside')}
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2">
