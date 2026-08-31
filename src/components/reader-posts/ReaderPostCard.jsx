@@ -1415,7 +1415,7 @@ function resolveReaderPostEchoSource(
 function ReaderEchoSourceBlock({ post }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { language, t } = useDisplayTranslation()
+  useDisplayTranslation()
   const source = post?.source || {}
   const story = post?.source_story || {}
   const episode = post?.source_episode || {}
@@ -1880,6 +1880,7 @@ function StandardReaderPostCard({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { language, t } = useDisplayTranslation()
   const reactionMessageTimerRef =
     useRef(null)
   const editFileInputRef =
@@ -2345,6 +2346,7 @@ const safeSelectedPhotoIndex =
 
     let ignore = false
     const token = getAuthToken()
+    const controller = new AbortController()
 
     if (!post?.id || !token) {
       return undefined
@@ -2360,6 +2362,7 @@ const safeSelectedPhotoIndex =
                 `Bearer ${token}`,
             },
             cache: 'no-store',
+            signal: controller.signal,
           }
         )
 
@@ -2386,8 +2389,10 @@ const safeSelectedPhotoIndex =
             ? data.reaction_summary
             : []
         )
-      } catch {
-        return
+      } catch (error) {
+        if (error?.name !== 'AbortError') {
+          return
+        }
       }
     }
 
@@ -2395,6 +2400,7 @@ const safeSelectedPhotoIndex =
 
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [
     post?.id,
@@ -2645,15 +2651,20 @@ const safeSelectedPhotoIndex =
         t('readerPostCard.preparingPhotos')
       )
 
-      const compressedFiles =
-        await Promise.all(
-          imageFiles.map((file) =>
-            compressImageFile(file)
-          )
-        )
+      const compressedFiles = []
 
-      const validFiles =
-        compressedFiles.filter(Boolean)
+      for (const file of imageFiles) {
+        const compressedFile =
+          await compressImageFile(file)
+
+        if (compressedFile) {
+          compressedFiles.push(
+            compressedFile
+          )
+        }
+      }
+
+      const validFiles = compressedFiles
       const totalSize =
         validFiles.reduce(
           (sum, file) =>
