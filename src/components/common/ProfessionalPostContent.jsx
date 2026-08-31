@@ -1,4 +1,34 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('professionalPostContent', {
+  en: {
+    more: 'more',
+    seeMore: 'See more',
+    seeLess: 'See less',
+  },
+  km: {
+    more: 'បន្ថែម',
+    seeMore: 'មើលបន្ថែម',
+    seeLess: 'មើលតិច',
+  },
+  zh: {
+    more: '更多',
+    seeMore: '查看更多',
+    seeLess: '收起',
+  },
+  ja: {
+    more: 'もっと見る',
+    seeMore: 'さらに表示',
+    seeLess: '閉じる',
+  },
+  ko: {
+    more: '더보기',
+    seeMore: '더 보기',
+    seeLess: '접기',
+  },
+})
 
 export function CollapsiblePostText({
   text,
@@ -8,6 +38,7 @@ export function CollapsiblePostText({
   discoverStyle = false,
   toggleOnTextClick = false,
 }) {
+  const { t } = useDisplayTranslation()
   const textRef = useRef(null)
   const [expanded, setExpanded] = useState(false)
   const [overflowing, setOverflowing] = useState(false)
@@ -75,11 +106,13 @@ export function CollapsiblePostText({
           onClick={() => setExpanded(true)}
           className={
             discoverStyle
-              ? 'absolute bottom-0 right-0 bg-white pl-1 text-[13px] font-semibold leading-[inherit] text-[#65676b] active:opacity-70'
-              : 'absolute bottom-0 right-0 bg-gradient-to-l from-white via-white to-white/80 pl-5 text-[13px] font-semibold leading-[inherit] text-[#475569] active:opacity-70'
+              ? 'absolute bottom-0 right-0 bg-[var(--shadow-bg-surface)] pl-1 text-[13px] font-semibold leading-[inherit] text-[var(--shadow-text-secondary)] active:opacity-70'
+              : 'absolute bottom-0 right-0 bg-[var(--shadow-bg-surface)] pl-5 text-[13px] font-semibold leading-[inherit] text-[var(--shadow-text-secondary)] active:opacity-70'
           }
         >
-          {discoverStyle ? '... more' : '… See more'}
+          {discoverStyle
+            ? `... ${t('professionalPostContent.more')}`
+            : `… ${t('professionalPostContent.seeMore')}`}
         </button>
       ) : null}
 
@@ -87,9 +120,9 @@ export function CollapsiblePostText({
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="mt-1 text-[13px] font-semibold text-[#475569] active:opacity-70"
+          className="mt-1 text-[13px] font-semibold text-[var(--shadow-text-secondary)] active:opacity-70"
         >
-          See less
+          {t('professionalPostContent.seeLess')}
         </button>
       ) : null}
     </div>
@@ -109,7 +142,7 @@ export function ProfessionalSinglePostImage({
     <Wrapper
       type={onClick ? 'button' : undefined}
       onClick={onClick}
-      className={`block w-full overflow-hidden bg-[#f3f4f6] text-left ${className}`}
+      className={`block w-full overflow-hidden bg-[var(--shadow-bg-soft)] text-left ${className}`}
     >
       <img
         src={src}
