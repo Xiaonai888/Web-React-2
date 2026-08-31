@@ -373,7 +373,7 @@ function FilterSheet({
             section !== 'menu' ? 'border-b border-[#d9dde4]' : ''
           }`}
         >
-          <h2 className="text-center text-[20px] font-bold text-[#111827]">
+          <h2 className="text-center text-[17px] font-bold text-[#111827]">
             {section === 'menu'
               ? 'Filters'
               : rows.find((item) => item.key === section)?.label || 'Filters'}
