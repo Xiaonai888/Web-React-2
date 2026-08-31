@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import ImageDropZone from './common/ImageDropZone'
 import AuthorHashtagSuggestions from './author-posts/AuthorHashtagSuggestions'
-import AuthorHashtagSuggestions from './author-posts/AuthorHashtagSuggestions'
+import AuthorPostSchedulePicker from './author-posts/AuthorPostSchedulePicker'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 registerTranslationNamespace('authorPostComposerSheet', {
@@ -765,12 +765,17 @@ export default function AuthorPostComposerSheet({
 
   useEffect(() => {
     if (!open) {
-      setScreen('compose')
-      setLeaveSheetOpen(false)
-      setImageError('')
-      setUploading(false)
-      return
-    }
+  setScreen('compose')
+  setLeaveSheetOpen(false)
+  setImageError('')
+  setUploading(false)
+  setPublishMode('now')
+  setPublishTimeOpen(false)
+  setSchedulePickerOpen(false)
+  setScheduleDate('')
+  setScheduleTime('')
+  return
+}
 
     if (editorKeyRef.current === editorKey) return
 
