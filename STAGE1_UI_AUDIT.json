@@ -97,5 +97,6 @@
 "src/components/AuthorPageFooter.jsx"
 "src/components/AuthorPostComposerSheet.jsx",
 "src/components/AuthorPostsSection.jsx"
+"src/components/author-posts/AuthorPostEchoAction.jsx"
   ]
 }
