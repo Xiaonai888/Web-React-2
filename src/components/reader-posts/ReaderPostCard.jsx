@@ -1415,6 +1415,7 @@ function resolveReaderPostEchoSource(
 function ReaderEchoSourceBlock({ post }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { language, t } = useDisplayTranslation()
   const { language, t } =
     useDisplayTranslation()
   const source = post?.source || {}
