@@ -508,7 +508,11 @@ async function fetchAuthorPosts(pageUsername, before = '') {
   return Array.isArray(data.posts) ? data.posts : []
 }
 
-async function createAuthorPost(content, imageUrls = []) {
+async function createAuthorPost(
+  content,
+  imageUrls = [],
+  publishOptions = {}
+) {
   const token = getAuthToken()
 
   if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
@@ -523,6 +527,8 @@ async function createAuthorPost(content, imageUrls = []) {
       post_type: 'article',
       content,
       image_urls: Array.isArray(imageUrls) ? imageUrls : [],
+      status: publishOptions.status || 'active',
+scheduled_at: publishOptions.scheduled_at || null,
     }),
   })
 
@@ -1538,7 +1544,11 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     }
   }, [author?.page_username, onCountChange, postFilterDate])
 
-  async function handleCreatePost(content, imageUrls = []) {
+  async function handleCreatePost(
+  content,
+  imageUrls = [],
+  publishOptions = {}
+) {
     const nextContent = String(content || '').trim()
     const nextImageUrls = Array.isArray(imageUrls) ? imageUrls : []
 
@@ -1548,14 +1558,19 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       setSaving(true)
       setLocalError('')
 
-      const post = await createAuthorPost(nextContent, nextImageUrls)
-
+      const post = await createAuthorPost(
+  nextContent,
+  nextImageUrls,
+  publishOptions
+)
       if (post) {
-        setPosts((current) => {
-          const nextPosts = sortAuthorPosts([post, ...current])
-          onCountChange?.(nextPosts.length)
-          return nextPosts
-        })
+        if (post.status === 'active') {
+  setPosts((current) => {
+    const nextPosts = sortAuthorPosts([post, ...current])
+    onCountChange?.(nextPosts.length)
+    return nextPosts
+  })
+}
         return true
       }
 
