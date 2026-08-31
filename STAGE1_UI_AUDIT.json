@@ -98,5 +98,10 @@
 "src/components/AuthorPostComposerSheet.jsx",
 "src/components/AuthorPostsSection.jsx"
 "src/components/author-posts/AuthorPostEchoAction.jsx"
+"src/components/author-posts/AuthorPostEchoAction.jsx",
+"src/components/author-posts/AuthorHashtagSuggestions.jsx",
+"src/components/author-posts/AuthorPostFilterSheet.jsx",
+"src/components/author-posts/AuthorDiscoverPostText.jsx",
+"src/components/social/reactions/ReactionSummary.jsx"
   ]
 }
