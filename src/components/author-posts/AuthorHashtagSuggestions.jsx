@@ -5,6 +5,36 @@ import {
   useState,
 } from 'react'
 import { fetchAuthorHashtagSuggestions } from '../../services/authorHashtagsApi'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorHashtagSuggestions', {
+  en: {
+    searchingTags: 'Searching tags...',
+    post: '{{count}} post',
+    posts: '{{count}} posts',
+  },
+  km: {
+    searchingTags: 'កំពុងស្វែងរក Hashtag...',
+    post: '{{count}} ប្រកាស',
+    posts: '{{count}} ប្រកាស',
+  },
+  zh: {
+    searchingTags: '正在搜索标签...',
+    post: '{{count}} 条帖子',
+    posts: '{{count}} 条帖子',
+  },
+  ja: {
+    searchingTags: 'タグを検索中...',
+    post: '{{count}} 件の投稿',
+    posts: '{{count}} 件の投稿',
+  },
+  ko: {
+    searchingTags: '태그 검색 중...',
+    post: '게시물 {{count}}개',
+    posts: '게시물 {{count}}개',
+  },
+})
 
 function getActiveHashtag(text, caret) {
   const safeText = String(text || '')
@@ -29,22 +59,37 @@ function getActiveHashtag(text, caret) {
   }
 }
 
-function formatPostCount(value) {
+function formatPostCount(value, t) {
   const count = Math.max(0, Number(value) || 0)
 
   if (count >= 1000000) {
-    return `${(count / 1000000).toFixed(
+    const display = `${(count / 1000000).toFixed(
       count >= 10000000 ? 0 : 1
-    )}M posts`
+    )}M`
+
+    return t('authorHashtagSuggestions.posts', {
+      count: display,
+    })
   }
 
   if (count >= 1000) {
-    return `${(count / 1000).toFixed(
+    const display = `${(count / 1000).toFixed(
       count >= 10000 ? 0 : 1
-    )}K posts`
+    )}K`
+
+    return t('authorHashtagSuggestions.posts', {
+      count: display,
+    })
   }
 
-  return `${count.toLocaleString()} ${count === 1 ? 'post' : 'posts'}`
+  return t(
+    count === 1
+      ? 'authorHashtagSuggestions.post'
+      : 'authorHashtagSuggestions.posts',
+    {
+      count: count.toLocaleString(),
+    }
+  )
 }
 
 export default function AuthorHashtagSuggestions({
@@ -54,6 +99,7 @@ export default function AuthorHashtagSuggestions({
   onHashtagSelected,
   maxLength = 10000,
 }) {
+  const { t } = useDisplayTranslation()
   const requestIdRef = useRef(0)
   const [activeHashtag, setActiveHashtag] = useState(null)
   const [suggestions, setSuggestions] = useState([])
@@ -191,10 +237,10 @@ export default function AuthorHashtagSuggestions({
   }
 
   return (
-    <div className="relative z-20 mt-2 overflow-hidden rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_10px_30px_rgba(17,24,39,0.12)]">
+    <div className="relative z-20 mt-2 overflow-hidden rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] shadow-[0_10px_30px_rgba(17,24,39,0.12)]">
       {loading && !suggestions.length ? (
-        <div className="px-4 py-3 text-[13px] text-[#9ca3af]">
-          Searching tags...
+        <div className="px-4 py-3 text-[13px] text-[var(--shadow-text-tertiary)]">
+          {t('authorHashtagSuggestions.searchingTags')}
         </div>
       ) : (
         suggestions.map((item) => (
@@ -203,14 +249,14 @@ export default function AuthorHashtagSuggestions({
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => selectSuggestion(item)}
-            className="flex w-full items-center justify-between gap-4 border-b border-[#f1f3f5] px-4 py-3 text-left last:border-b-0 active:bg-[#f3f4f6]"
+            className="flex w-full items-center justify-between gap-4 border-b border-[var(--shadow-border)] px-4 py-3 text-left last:border-b-0 active:bg-[var(--shadow-bg-hover)]"
           >
-            <span className="min-w-0 flex-1 truncate text-[15px] font-normal text-[#111827]">
+            <span className="min-w-0 flex-1 truncate text-[15px] font-normal text-[var(--shadow-text-primary)]">
               {item.tag}
             </span>
 
-            <span className="shrink-0 text-[12px] font-normal text-[#8b93a1]">
-              {formatPostCount(item.post_count)}
+            <span className="shrink-0 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
+              {formatPostCount(item.post_count, t)}
             </span>
           </button>
         ))
