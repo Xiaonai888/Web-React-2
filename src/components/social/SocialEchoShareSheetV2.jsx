@@ -5,6 +5,216 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('socialEchoShareV2', {
+  en: {
+    reader: 'Reader',
+    post: 'post',
+    destinationFeedTitle: 'Echo to Feed',
+    destinationFeedSubtitle: 'Show this echo in your Shadow feed and profile.',
+    destinationShadowTitle: 'Add to My Shadow',
+    destinationShadowSubtitle: 'Keep this echo on your own Shadow space.',
+    destinationReaderTitle: 'Send to Reader',
+    destinationReaderSubtitle: 'Share this post with selected readers.',
+    destinationCircleTitle: 'Echo to Circle',
+    destinationCircleSubtitle: 'Share this echo with your reading circle.',
+    audiencePublicTitle: 'Public',
+    audiencePublicSubtitle: 'Anyone on Shadow can view this echo.',
+    audienceFollowersTitle: 'Followers',
+    audienceFollowersSubtitle: 'Only people who follow you can view this echo.',
+    audienceCloseReadersTitle: 'Close readers',
+    audienceCloseReadersSubtitle: 'Only your selected close readers can view it.',
+    audienceOnlyMeTitle: 'Only me',
+    audienceOnlyMeSubtitle: 'Keep this echo private.',
+    followersLoadFailed: 'Failed to load followers',
+    linkCopied: 'Link copied.',
+    contentNotReady: 'This content is not ready yet.',
+    selectReader: 'Select at least one reader.',
+    echoNotConnected: 'Echo V2 is not connected yet.',
+    echoFailed: 'Failed to echo content',
+    closeShare: 'Close echo share',
+    saySomething: 'Say something...',
+    tagReaderSelected: 'Tag reader is selected for the next update.',
+    tagReader: 'Tag reader',
+    echoing: 'Echoing...',
+    echoNow: 'Echo now',
+    readers: 'Readers',
+    noFollowers: 'No followers yet.',
+    shareOutside: 'Share outside Shadow',
+    copyLink: 'Copy link',
+    destinationTitle: 'Echo destination',
+    destinationSubtitle: 'Choose where this echo should appear on Shadow.',
+    audienceTitle: 'Who can view this echo?',
+    audienceSubtitle: 'Choose who can see your echo on Shadow.',
+    back: 'Back',
+  },
+  km: {
+    reader: 'អ្នកអាន',
+    post: 'ប្រកាស',
+    destinationFeedTitle: 'Echo ទៅ Feed',
+    destinationFeedSubtitle: 'បង្ហាញ Echo នេះក្នុង Shadow feed និងប្រវត្តិរូបរបស់អ្នក។',
+    destinationShadowTitle: 'បន្ថែមទៅ My Shadow',
+    destinationShadowSubtitle: 'រក្សា Echo នេះនៅក្នុងកន្លែង Shadow ផ្ទាល់ខ្លួនរបស់អ្នក។',
+    destinationReaderTitle: 'ផ្ញើទៅអ្នកអាន',
+    destinationReaderSubtitle: 'ចែករំលែកប្រកាសនេះជាមួយអ្នកអានដែលបានជ្រើស។',
+    destinationCircleTitle: 'Echo ទៅ Circle',
+    destinationCircleSubtitle: 'ចែករំលែក Echo នេះជាមួយក្រុមអ្នកអានរបស់អ្នក។',
+    audiencePublicTitle: 'សាធារណៈ',
+    audiencePublicSubtitle: 'អ្នកគ្រប់គ្នានៅ Shadow អាចមើល Echo នេះបាន។',
+    audienceFollowersTitle: 'អ្នកតាមដាន',
+    audienceFollowersSubtitle: 'មានតែអ្នកដែលតាមដានអ្នកប៉ុណ្ណោះអាចមើល Echo នេះបាន។',
+    audienceCloseReadersTitle: 'អ្នកអានជិតស្និទ្ធ',
+    audienceCloseReadersSubtitle: 'មានតែអ្នកអានជិតស្និទ្ធដែលអ្នកបានជ្រើសប៉ុណ្ណោះអាចមើលបាន។',
+    audienceOnlyMeTitle: 'ខ្ញុំតែម្នាក់',
+    audienceOnlyMeSubtitle: 'រក្សា Echo នេះជាឯកជន។',
+    followersLoadFailed: 'មិនអាចផ្ទុកអ្នកតាមដានបានទេ',
+    linkCopied: 'បានចម្លងតំណ។',
+    contentNotReady: 'មាតិកានេះមិនទាន់រួចរាល់ទេ។',
+    selectReader: 'សូមជ្រើសអ្នកអានយ៉ាងហោចណាស់ម្នាក់។',
+    echoNotConnected: 'Echo V2 មិនទាន់ត្រូវបានភ្ជាប់ទេ។',
+    echoFailed: 'មិនអាច Echo មាតិកាបានទេ',
+    closeShare: 'បិទការចែករំលែក Echo',
+    saySomething: 'សរសេរអ្វីមួយ...',
+    tagReaderSelected: 'ការដាក់ Tag អ្នកអាននឹងមាននៅការអាប់ដេតបន្ទាប់។',
+    tagReader: 'ដាក់ Tag អ្នកអាន',
+    echoing: 'កំពុង Echo...',
+    echoNow: 'Echo ឥឡូវនេះ',
+    readers: 'អ្នកអាន',
+    noFollowers: 'មិនទាន់មានអ្នកតាមដានទេ។',
+    shareOutside: 'ចែករំលែកក្រៅ Shadow',
+    copyLink: 'ចម្លងតំណ',
+    destinationTitle: 'ទីតាំង Echo',
+    destinationSubtitle: 'ជ្រើសកន្លែងដែល Echo នេះត្រូវបង្ហាញនៅលើ Shadow។',
+    audienceTitle: 'អ្នកណាអាចមើល Echo នេះ?',
+    audienceSubtitle: 'ជ្រើសអ្នកដែលអាចមើល Echo របស់អ្នកនៅលើ Shadow។',
+    back: 'ត្រឡប់ក្រោយ',
+  },
+  zh: {
+    reader: '读者',
+    post: '帖子',
+    destinationFeedTitle: 'Echo 到动态',
+    destinationFeedSubtitle: '在你的 Shadow 动态和个人资料中显示此 Echo。',
+    destinationShadowTitle: '添加到我的 Shadow',
+    destinationShadowSubtitle: '将此 Echo 保留在你自己的 Shadow 空间。',
+    destinationReaderTitle: '发送给读者',
+    destinationReaderSubtitle: '将此帖子分享给选中的读者。',
+    destinationCircleTitle: 'Echo 到圈子',
+    destinationCircleSubtitle: '将此 Echo 分享给你的阅读圈。',
+    audiencePublicTitle: '公开',
+    audiencePublicSubtitle: 'Shadow 上的任何人都可以查看此 Echo。',
+    audienceFollowersTitle: '关注者',
+    audienceFollowersSubtitle: '只有关注你的人可以查看此 Echo。',
+    audienceCloseReadersTitle: '亲近读者',
+    audienceCloseReadersSubtitle: '只有你选择的亲近读者可以查看。',
+    audienceOnlyMeTitle: '仅自己',
+    audienceOnlyMeSubtitle: '将此 Echo 设为私密。',
+    followersLoadFailed: '无法加载关注者',
+    linkCopied: '链接已复制。',
+    contentNotReady: '此内容尚未准备好。',
+    selectReader: '请至少选择一位读者。',
+    echoNotConnected: 'Echo V2 尚未连接。',
+    echoFailed: '无法 Echo 内容',
+    closeShare: '关闭 Echo 分享',
+    saySomething: '说点什么...',
+    tagReaderSelected: '标记读者功能将在下次更新中提供。',
+    tagReader: '标记读者',
+    echoing: 'Echo 中...',
+    echoNow: '立即 Echo',
+    readers: '读者',
+    noFollowers: '还没有关注者。',
+    shareOutside: '分享到 Shadow 之外',
+    copyLink: '复制链接',
+    destinationTitle: 'Echo 位置',
+    destinationSubtitle: '选择此 Echo 在 Shadow 上显示的位置。',
+    audienceTitle: '谁可以查看此 Echo？',
+    audienceSubtitle: '选择谁可以在 Shadow 上查看你的 Echo。',
+    back: '返回',
+  },
+  ja: {
+    reader: '読者',
+    post: '投稿',
+    destinationFeedTitle: 'フィードに Echo',
+    destinationFeedSubtitle: 'この Echo を Shadow のフィードとプロフィールに表示します。',
+    destinationShadowTitle: 'My Shadow に追加',
+    destinationShadowSubtitle: 'この Echo を自分の Shadow スペースに保存します。',
+    destinationReaderTitle: '読者に送信',
+    destinationReaderSubtitle: 'この投稿を選択した読者と共有します。',
+    destinationCircleTitle: 'サークルに Echo',
+    destinationCircleSubtitle: 'この Echo を読書サークルと共有します。',
+    audiencePublicTitle: '公開',
+    audiencePublicSubtitle: 'Shadow の誰でもこの Echo を見ることができます。',
+    audienceFollowersTitle: 'フォロワー',
+    audienceFollowersSubtitle: 'あなたをフォローしている人だけがこの Echo を見られます。',
+    audienceCloseReadersTitle: '親しい読者',
+    audienceCloseReadersSubtitle: '選択した親しい読者だけが見ることができます。',
+    audienceOnlyMeTitle: '自分のみ',
+    audienceOnlyMeSubtitle: 'この Echo を非公開にします。',
+    followersLoadFailed: 'フォロワーを読み込めませんでした',
+    linkCopied: 'リンクをコピーしました。',
+    contentNotReady: 'このコンテンツはまだ準備できていません。',
+    selectReader: '少なくとも1人の読者を選択してください。',
+    echoNotConnected: 'Echo V2 はまだ接続されていません。',
+    echoFailed: 'コンテンツを Echo できませんでした',
+    closeShare: 'Echo 共有を閉じる',
+    saySomething: '何か書く...',
+    tagReaderSelected: '読者タグ機能は次回のアップデートで利用できます。',
+    tagReader: '読者をタグ付け',
+    echoing: 'Echo 中...',
+    echoNow: '今すぐ Echo',
+    readers: '読者',
+    noFollowers: 'まだフォロワーはいません。',
+    shareOutside: 'Shadow の外へ共有',
+    copyLink: 'リンクをコピー',
+    destinationTitle: 'Echo の表示先',
+    destinationSubtitle: 'この Echo を Shadow のどこに表示するか選択します。',
+    audienceTitle: 'この Echo を見られる人は？',
+    audienceSubtitle: 'Shadow であなたの Echo を見られる人を選択します。',
+    back: '戻る',
+  },
+  ko: {
+    reader: '독자',
+    post: '게시물',
+    destinationFeedTitle: '피드에 Echo',
+    destinationFeedSubtitle: '이 Echo를 Shadow 피드와 프로필에 표시합니다.',
+    destinationShadowTitle: 'My Shadow에 추가',
+    destinationShadowSubtitle: '이 Echo를 내 Shadow 공간에 보관합니다.',
+    destinationReaderTitle: '독자에게 보내기',
+    destinationReaderSubtitle: '이 게시물을 선택한 독자와 공유합니다.',
+    destinationCircleTitle: '서클에 Echo',
+    destinationCircleSubtitle: '이 Echo를 독서 서클과 공유합니다.',
+    audiencePublicTitle: '전체 공개',
+    audiencePublicSubtitle: 'Shadow의 누구나 이 Echo를 볼 수 있습니다.',
+    audienceFollowersTitle: '팔로워',
+    audienceFollowersSubtitle: '나를 팔로우하는 사람만 이 Echo를 볼 수 있습니다.',
+    audienceCloseReadersTitle: '친한 독자',
+    audienceCloseReadersSubtitle: '선택한 친한 독자만 볼 수 있습니다.',
+    audienceOnlyMeTitle: '나만 보기',
+    audienceOnlyMeSubtitle: '이 Echo를 비공개로 유지합니다.',
+    followersLoadFailed: '팔로워를 불러오지 못했습니다',
+    linkCopied: '링크를 복사했습니다.',
+    contentNotReady: '이 콘텐츠는 아직 준비되지 않았습니다.',
+    selectReader: '독자를 한 명 이상 선택하세요.',
+    echoNotConnected: 'Echo V2가 아직 연결되지 않았습니다.',
+    echoFailed: '콘텐츠를 Echo하지 못했습니다',
+    closeShare: 'Echo 공유 닫기',
+    saySomething: '내용을 입력하세요...',
+    tagReaderSelected: '독자 태그 기능은 다음 업데이트에서 제공됩니다.',
+    tagReader: '독자 태그',
+    echoing: 'Echo 중...',
+    echoNow: '지금 Echo',
+    readers: '독자',
+    noFollowers: '아직 팔로워가 없습니다.',
+    shareOutside: 'Shadow 외부로 공유',
+    copyLink: '링크 복사',
+    destinationTitle: 'Echo 위치',
+    destinationSubtitle: '이 Echo를 Shadow의 어디에 표시할지 선택하세요.',
+    audienceTitle: '이 Echo를 볼 수 있는 사람은?',
+    audienceSubtitle: 'Shadow에서 내 Echo를 볼 수 있는 사람을 선택하세요.',
+    back: '뒤로',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -13,30 +223,26 @@ const API_BASE_URL =
 const DESTINATIONS = [
   {
     key: 'feed',
-    title: 'Echo to Feed',
-    subtitle:
-      'Show this echo in your Shadow feed and profile.',
+    titleKey: 'destinationFeedTitle',
+    subtitleKey: 'destinationFeedSubtitle',
     icon: 'fa-solid fa-newspaper',
   },
   {
     key: 'shadow',
-    title: 'Add to My Shadow',
-    subtitle:
-      'Keep this echo on your own Shadow space.',
+    titleKey: 'destinationShadowTitle',
+    subtitleKey: 'destinationShadowSubtitle',
     icon: 'fa-regular fa-circle-user',
   },
   {
     key: 'reader',
-    title: 'Send to Reader',
-    subtitle:
-      'Share this post with selected readers.',
+    titleKey: 'destinationReaderTitle',
+    subtitleKey: 'destinationReaderSubtitle',
     icon: 'fa-solid fa-user-group',
   },
   {
     key: 'circle',
-    title: 'Echo to Circle',
-    subtitle:
-      'Share this echo with your reading circle.',
+    titleKey: 'destinationCircleTitle',
+    subtitleKey: 'destinationCircleSubtitle',
     icon: 'fa-solid fa-users',
   },
 ]
@@ -44,29 +250,26 @@ const DESTINATIONS = [
 const AUDIENCES = [
   {
     key: 'public',
-    title: 'Public',
-    subtitle:
-      'Anyone on Shadow can view this echo.',
+    titleKey: 'audiencePublicTitle',
+    subtitleKey: 'audiencePublicSubtitle',
     icon: 'fa-solid fa-earth-americas',
   },
   {
     key: 'followers',
-    title: 'Followers',
-    subtitle:
-      'Only people who follow you can view this echo.',
+    titleKey: 'audienceFollowersTitle',
+    subtitleKey: 'audienceFollowersSubtitle',
     icon: 'fa-solid fa-user-check',
   },
   {
     key: 'close-readers',
-    title: 'Close readers',
-    subtitle:
-      'Only your selected close readers can view it.',
+    titleKey: 'audienceCloseReadersTitle',
+    subtitleKey: 'audienceCloseReadersSubtitle',
     icon: 'fa-solid fa-star',
   },
   {
     key: 'only-me',
-    title: 'Only me',
-    subtitle: 'Keep this echo private.',
+    titleKey: 'audienceOnlyMeTitle',
+    subtitleKey: 'audienceOnlyMeSubtitle',
     icon: 'fa-solid fa-lock',
   },
 ]
@@ -103,8 +306,8 @@ function ShareCircle({
   icon,
   iconNode,
   label,
-  bg = 'bg-white',
-  color = 'text-[#111827]',
+  bg = 'bg-[var(--shadow-bg-elevated)]',
+  color = 'text-[var(--shadow-text-primary)]',
   onClick,
 }) {
   return (
@@ -123,7 +326,7 @@ function ShareCircle({
         )}
       </div>
 
-      <div className="mt-2 text-[12px] font-normal leading-4 text-[#111827]">
+      <div className="mt-2 text-[12px] font-normal leading-4 text-[var(--shadow-text-primary)]">
         {label}
       </div>
     </button>
@@ -134,11 +337,12 @@ function ReaderCircle({
   reader,
   active,
   onClick,
+  fallbackName,
 }) {
   const name =
     reader?.name ||
     reader?.username ||
-    'Reader'
+    fallbackName
 
   return (
     <button
@@ -147,7 +351,7 @@ function ReaderCircle({
       className="w-[76px] shrink-0 text-center active:scale-95"
     >
       <div
-        className={`mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[17px] font-semibold text-white ring-2 ${
+        className={`mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[17px] font-semibold text-[var(--shadow-text-primary)] ring-2 ${
           active
             ? 'ring-[#8b5cf6]'
             : 'ring-transparent'
@@ -168,7 +372,7 @@ function ReaderCircle({
         className={`mt-2 line-clamp-2 text-[11.5px] font-semibold leading-4 ${
           active
             ? 'text-[#6d28d9]'
-            : 'text-[#667085]'
+            : 'text-[var(--shadow-text-secondary)]'
         }`}
       >
         {name}
@@ -184,15 +388,16 @@ function ChoiceSheet({
   value,
   onChoose,
   onBack,
+  backLabel,
 }) {
   return (
-    <div className="fixed inset-0 z-[200010] bg-white text-[#111827]">
-      <div className="flex items-center gap-3 border-b border-[#eceaf2] px-4 py-4">
+    <div className="fixed inset-0 z-[200010] bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">
+      <div className="flex items-center gap-3 border-b border-[var(--shadow-border)] px-4 py-4">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f5f3fa]"
-          aria-label="Back"
+          className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
+          aria-label={backLabel}
         >
           <i className="fa-solid fa-chevron-left text-[18px]" />
         </button>
@@ -203,7 +408,7 @@ function ChoiceSheet({
           </h2>
 
           {subtitle ? (
-            <p className="mt-1 text-[12px] font-normal leading-5 text-[#8d94a1]">
+            <p className="mt-1 text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
               {subtitle}
             </p>
           ) : null}
@@ -221,20 +426,20 @@ function ChoiceSheet({
               onClick={() =>
                 onChoose(item.key)
               }
-              className="flex w-full items-center gap-4 rounded-[20px] px-2 py-4 text-left active:bg-[#f5f3fa]"
+              className="flex w-full items-center gap-4 rounded-[20px] px-2 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
                 <i
                   className={`${item.icon} text-[18px]`}
                 />
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[16px] font-normal text-[#111827]">
+                <div className="text-[16px] font-normal text-[var(--shadow-text-primary)]">
                   {item.title}
                 </div>
 
-                <div className="mt-0.5 text-[12.5px] font-normal leading-5 text-[#8d94a1]">
+                <div className="mt-0.5 text-[12.5px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
                   {item.subtitle}
                 </div>
               </div>
@@ -242,12 +447,12 @@ function ChoiceSheet({
               <div
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
                   active
-                    ? 'border-[#111827] bg-[#111827]'
-                    : 'border-[#98a2b3]'
+                    ? 'border-[var(--shadow-text-primary)] bg-[var(--shadow-text-primary)]'
+                    : 'border-[var(--shadow-border-strong)]'
                 }`}
               >
                 {active ? (
-                  <i className="fa-solid fa-check text-[10px] text-white" />
+                  <i className="fa-solid fa-check text-[10px] text-[var(--shadow-bg-page)]" />
                 ) : null}
               </div>
             </button>
@@ -266,12 +471,13 @@ export default function SocialEchoShareSheetV2({
   sourceAvatarUrl = '',
   sourceContent = '',
   sourceImageUrl = '',
-  sourceLabel = 'post',
+  sourceLabel = '',
   shareUrl,
   onClose,
   onEchoed,
   onSubmit,
 }) {
+  const { t } = useDisplayTranslation()
   const sheetRef = useRef(null)
   const dragStartYRef = useRef(0)
   const dragOffsetRef = useRef(0)
@@ -314,6 +520,20 @@ export default function SocialEchoShareSheetV2({
       ),
     [shareUrl]
   )
+
+  const destinationOptions = DESTINATIONS.map((item) => ({
+    ...item,
+    title: t(`socialEchoShareV2.${item.titleKey}`),
+    subtitle: t(`socialEchoShareV2.${item.subtitleKey}`),
+  }))
+  const audienceOptions = AUDIENCES.map((item) => ({
+    ...item,
+    title: t(`socialEchoShareV2.${item.titleKey}`),
+    subtitle: t(`socialEchoShareV2.${item.subtitleKey}`),
+  }))
+  const resolvedSourceLabel =
+    String(sourceLabel || '').trim() ||
+    t('socialEchoShareV2.post')
 
   const showToast = (value) => {
     const text = String(value || '').trim()
@@ -452,7 +672,7 @@ export default function SocialEchoShareSheetV2({
         ) {
           throw new Error(
             data.message ||
-              'Failed to load followers'
+              t('socialEchoShareV2.followersLoadFailed')
           )
         }
 
@@ -468,7 +688,7 @@ export default function SocialEchoShareSheetV2({
           setFollowers([])
           setFollowersError(
             error.message ||
-              'Failed to load followers.'
+              t('socialEchoShareV2.followersLoadFailed')
           )
         }
       } finally {
@@ -490,7 +710,7 @@ export default function SocialEchoShareSheetV2({
   const displayName =
     user?.name ||
     user?.username ||
-    'Reader'
+    t('socialEchoShareV2.reader')
   const avatarLetter = displayName
     .slice(0, 1)
     .toUpperCase()
@@ -500,20 +720,20 @@ export default function SocialEchoShareSheetV2({
     .slice(0, 1)
     .toUpperCase()
   const destinationItem =
-    DESTINATIONS.find(
+    destinationOptions.find(
       (item) => item.key === destination
-    ) || DESTINATIONS[0]
+    ) || destinationOptions[0]
   const audienceItem =
-    AUDIENCES.find(
+    audienceOptions.find(
       (item) => item.key === audience
-    ) || AUDIENCES[0]
+    ) || audienceOptions[0]
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(
         resolvedShareUrl
       )
-      showToast('Link copied.')
+      showToast(t('socialEchoShareV2.linkCopied'))
     } catch {
       showToast(resolvedShareUrl)
     }
@@ -524,7 +744,7 @@ export default function SocialEchoShareSheetV2({
       `https://t.me/share/url?url=${encodeURIComponent(
         resolvedShareUrl
       )}&text=${encodeURIComponent(
-        `${sourceName} ${sourceLabel}`
+        `${sourceName} ${resolvedSourceLabel}`
       )}`,
       '_blank',
       'noopener,noreferrer'
@@ -617,7 +837,7 @@ export default function SocialEchoShareSheetV2({
       !normalizedSourceId
     ) {
       showToast(
-        'This content is not ready yet.'
+        t('socialEchoShareV2.contentNotReady')
       )
       return
     }
@@ -629,14 +849,14 @@ export default function SocialEchoShareSheetV2({
       !selectedReaders.length
     ) {
       showToast(
-        'Select at least one reader.'
+        t('socialEchoShareV2.selectReader')
       )
       return
     }
 
     if (typeof onSubmit !== 'function') {
       showToast(
-        'Echo V2 is not connected yet.'
+        t('socialEchoShareV2.echoNotConnected')
       )
       return
     }
@@ -657,7 +877,7 @@ export default function SocialEchoShareSheetV2({
       if (data?.ok === false) {
         throw new Error(
           data.message ||
-            'Failed to echo content'
+            t('socialEchoShareV2.echoFailed')
         )
       }
 
@@ -672,7 +892,7 @@ export default function SocialEchoShareSheetV2({
     } catch (error) {
       showToast(
         error?.message ||
-          'Failed to echo content.'
+          t('socialEchoShareV2.echoFailed')
       )
     } finally {
       setSending(false)
@@ -683,14 +903,14 @@ export default function SocialEchoShareSheetV2({
     <div className="fixed inset-0 z-[200000] flex items-end justify-center">
       <button
         type="button"
-        aria-label="Close echo share"
+        aria-label={t('socialEchoShareV2.closeShare')}
         onClick={() => onClose?.()}
         className="absolute inset-0 bg-black/60"
       />
 
       <section
         ref={sheetRef}
-        className="relative max-h-[92dvh] w-screen max-w-none overflow-y-auto rounded-t-[30px] bg-[#f5f3fa] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl lg:mb-5 lg:w-full lg:max-w-[520px] lg:rounded-[30px]"
+        className="relative max-h-[92dvh] w-screen max-w-none overflow-y-auto rounded-t-[30px] bg-[var(--shadow-bg-page)] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl lg:mb-5 lg:w-full lg:max-w-[520px] lg:rounded-[30px]"
         style={{
           transform:
             `translateY(${dragOffset}px)`,
@@ -706,15 +926,15 @@ export default function SocialEchoShareSheetV2({
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onLostPointerCapture={endDrag}
-          className="sticky top-0 z-20 mx-auto mb-4 flex h-5 w-20 cursor-grab items-start justify-center bg-[#f5f3fa]"
+          className="sticky top-0 z-20 mx-auto mb-4 flex h-5 w-20 cursor-grab items-start justify-center bg-[var(--shadow-bg-page)]"
           style={{ touchAction: 'none' }}
         >
-          <div className="h-1.5 w-14 rounded-full bg-[#9ca3af]" />
+          <div className="h-1.5 w-14 rounded-full bg-[var(--shadow-text-tertiary)]" />
         </div>
 
-        <div className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="rounded-[22px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[18px] font-semibold text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-text-primary)] text-[18px] font-semibold text-[var(--shadow-bg-page)]">
               {user?.avatarUrl ||
               user?.avatar_url ? (
                 <img
@@ -731,7 +951,7 @@ export default function SocialEchoShareSheetV2({
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="line-clamp-1 text-[16px] font-semibold text-[#111827]">
+              <div className="line-clamp-1 text-[16px] font-semibold text-[var(--shadow-text-primary)]">
                 {displayName}
               </div>
 
@@ -743,7 +963,7 @@ export default function SocialEchoShareSheetV2({
                       'destination'
                     )
                   }
-                  className="flex h-8 items-center gap-2 rounded-full bg-[#eef0f4] px-3 text-[12px] font-normal text-[#111827] active:scale-95"
+                  className="flex h-8 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
                 >
                   <span>
                     {destinationItem.title}
@@ -758,7 +978,7 @@ export default function SocialEchoShareSheetV2({
                       'audience'
                     )
                   }
-                  className="flex h-8 items-center gap-2 rounded-full bg-[#eef0f4] px-3 text-[12px] font-normal text-[#111827] active:scale-95"
+                  className="flex h-8 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
                 >
                   <i
                     className={`${audienceItem.icon} text-[12px]`}
@@ -781,13 +1001,13 @@ export default function SocialEchoShareSheetV2({
             }
             rows={2}
             maxLength={280}
-            placeholder="Say something..."
-            className="mt-3 w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:font-normal placeholder:text-[#98a2b3]"
+            placeholder={t('socialEchoShareV2.saySomething')}
+            className="mt-3 w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none placeholder:font-normal placeholder:text-[var(--shadow-placeholder)]"
           />
 
-          <div className="mt-3 rounded-[16px] bg-[#f7f7fa] px-3 py-3 ring-1 ring-black/5">
+          <div className="mt-3 rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-3 ring-1 ring-[var(--shadow-border)]">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[13px] font-semibold text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-semibold text-[var(--shadow-bg-page)]">
                 {sourceAvatarUrl ? (
                   <img
                     src={sourceAvatarUrl}
@@ -800,13 +1020,13 @@ export default function SocialEchoShareSheetV2({
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="line-clamp-1 text-[13px] font-semibold text-[#111827]">
+                <div className="line-clamp-1 text-[13px] font-semibold text-[var(--shadow-text-primary)]">
                   {sourceName}
                 </div>
 
-                <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-[12px] font-normal leading-5 text-[#667085]">
+                <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
                   {sourceContent ||
-                    sourceLabel}
+                    resolvedSourceLabel}
                 </p>
               </div>
 
@@ -825,11 +1045,11 @@ export default function SocialEchoShareSheetV2({
               type="button"
               onClick={() =>
                 showToast(
-                  'Tag reader is selected for the next update.'
+                  t('socialEchoShareV2.tagReaderSelected')
                 )
               }
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#667085] active:scale-95 active:bg-[#f2f3f5]"
-              aria-label="Tag reader"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] active:scale-95 active:bg-[var(--shadow-bg-hover)]"
+              aria-label={t('socialEchoShareV2.tagReader')}
             >
               <i className="fa-solid fa-user-tag text-[18px]" />
             </button>
@@ -841,15 +1061,15 @@ export default function SocialEchoShareSheetV2({
               className="h-9 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#8b5cf6] to-[#a855f7] px-5 text-[13px] font-normal text-white shadow-[0_6px_16px_rgba(139,92,246,0.24)] active:scale-95 disabled:opacity-60"
             >
               {sending
-                ? 'Echoing...'
-                : 'Echo now'}
+                ? t('socialEchoShareV2.echoing')
+                : t('socialEchoShareV2.echoNow')}
             </button>
           </div>
         </div>
 
         <div className="mt-5">
-          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
-            Readers
+          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[var(--shadow-text-tertiary)]">
+            {t('socialEchoShareV2.readers')}
           </div>
 
           <div className="flex gap-4 overflow-x-auto pb-1">
@@ -860,8 +1080,8 @@ export default function SocialEchoShareSheetV2({
                     key={index}
                     className="w-[76px] shrink-0"
                   >
-                    <div className="mx-auto h-14 w-14 animate-pulse rounded-full bg-[#e5e7eb]" />
-                    <div className="mx-auto mt-2 h-3 w-12 animate-pulse rounded-full bg-[#e5e7eb]" />
+                    <div className="mx-auto h-14 w-14 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                    <div className="mx-auto mt-2 h-3 w-12 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                   </div>
                 )
               )
@@ -881,22 +1101,22 @@ export default function SocialEchoShareSheetV2({
                 />
               ))
             ) : (
-              <div className="py-3 text-[12px] font-normal text-[#98a2b3]">
+              <div className="py-3 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
                 {followersError ||
-                  'No followers yet.'}
+                  t('socialEchoShareV2.noFollowers')}
               </div>
             )}
           </div>
         </div>
 
         <div className="mt-5">
-          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
-            Share outside Shadow
+          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[var(--shadow-text-tertiary)]">
+            {t('socialEchoShareV2.shareOutside')}
           </div>
 
           <div className="flex gap-4 overflow-x-auto pb-2">
             <ShareCircle
-              label="Copy link"
+              label={t('socialEchoShareV2.copyLink')}
               iconNode={
                 <svg
                   viewBox="0 0 24 24"
@@ -951,13 +1171,14 @@ export default function SocialEchoShareSheetV2({
 
       {activePanel === 'destination' ? (
         <ChoiceSheet
-          title="Echo destination"
-          subtitle="Choose where this echo should appear on Shadow."
-          options={DESTINATIONS}
+          title={t('socialEchoShareV2.destinationTitle')}
+          subtitle={t('socialEchoShareV2.destinationSubtitle')}
+          options={destinationOptions}
           value={destination}
           onBack={() =>
             setActivePanel('')
           }
+          backLabel={t('socialEchoShareV2.back')}
           onChoose={(value) => {
             setDestination(value)
             setActivePanel('')
@@ -967,13 +1188,14 @@ export default function SocialEchoShareSheetV2({
 
       {activePanel === 'audience' ? (
         <ChoiceSheet
-          title="Who can view this echo?"
-          subtitle="Choose who can see your echo on Shadow."
-          options={AUDIENCES}
+          title={t('socialEchoShareV2.audienceTitle')}
+          subtitle={t('socialEchoShareV2.audienceSubtitle')}
+          options={audienceOptions}
           value={audience}
           onBack={() =>
             setActivePanel('')
           }
+          backLabel={t('socialEchoShareV2.back')}
           onChoose={(value) => {
             setAudience(value)
             setActivePanel('')
