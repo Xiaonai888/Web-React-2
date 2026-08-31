@@ -1416,8 +1416,6 @@ function ReaderEchoSourceBlock({ post }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { language, t } = useDisplayTranslation()
-  const { language, t } =
-    useDisplayTranslation()
   const source = post?.source || {}
   const story = post?.source_story || {}
   const episode = post?.source_episode || {}
