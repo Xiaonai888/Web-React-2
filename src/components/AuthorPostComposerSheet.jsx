@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import ImageDropZone from './common/ImageDropZone'
 import AuthorHashtagSuggestions from './author-posts/AuthorHashtagSuggestions'
+import AuthorHashtagSuggestions from './author-posts/AuthorHashtagSuggestions'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 registerTranslationNamespace('authorPostComposerSheet', {
@@ -616,12 +617,13 @@ function LeavePostSheet({
   )
 }
 
-function ReviewOption({ icon, imageSrc, title, value }) {
+function ReviewOption({ icon, imageSrc, title, value, onClick }) {
   return (
     <button
-      type="button"
-      className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[var(--shadow-bg-hover)]"
-    >
+  type="button"
+  onClick={onClick}
+  className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[var(--shadow-bg-hover)]"
+>
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
         {imageSrc ? (
           <img src={imageSrc} alt="" className="h-5 w-5 object-contain" />
@@ -637,6 +639,62 @@ function ReviewOption({ icon, imageSrc, title, value }) {
 
       <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
     </button>
+  )
+}
+
+function PublishTimeSheet({
+  open,
+  mode,
+  onClose,
+  onNow,
+  onSchedule,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[310]">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
+
+      <div className="absolute inset-x-0 bottom-0 rounded-t-[26px] bg-white px-4 pb-7 pt-3 shadow-2xl">
+        <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-[#9ca3af]" />
+
+        <h2 className="mb-2 text-center text-[16px] font-bold text-[#111827]">
+          Publish time
+        </h2>
+
+        {[
+          ['now', 'Now', onNow],
+          ['schedule', 'Schedule', onSchedule],
+        ].map(([value, label, action]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={action}
+            className="flex w-full items-center px-2 py-4 text-left"
+          >
+            <span className="flex-1 text-[16px] font-medium text-[#111827]">
+              {label}
+            </span>
+
+            <span
+              className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                mode === value
+                  ? 'border-[#111827]'
+                  : 'border-[#6b7280]'
+              }`}
+            >
+              {mode === value ? (
+                <span className="h-3 w-3 rounded-full bg-[#111827]" />
+              ) : null}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -666,6 +724,11 @@ export default function AuthorPostComposerSheet({
   const [imageError, setImageError] = useState('')
   const [leaveSheetOpen, setLeaveSheetOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [publishMode, setPublishMode] = useState('now')
+  const [publishTimeOpen, setPublishTimeOpen] = useState(false)
+  const [schedulePickerOpen, setSchedulePickerOpen] = useState(false)
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTime, setScheduleTime] = useState('')
   useEffect(() => {
   const element = textareaRef.current
   if (!element || screen !== 'compose') return
@@ -904,9 +967,19 @@ export default function AuthorPostComposerSheet({
             imageUrls
           )
         : await onPublishText?.(
-            draft.trim(),
-            imageUrls
-          )
+    draft.trim(),
+    imageUrls,
+    publishMode === 'schedule'
+      ? {
+          status: 'scheduled',
+          scheduled_at: new Date(
+            `${scheduleDate}T${scheduleTime}:00`
+          ).toISOString(),
+        }
+      : {
+          status: 'active',
+        }
+  )
 
       if (ok) {
         clearImages()
@@ -1137,7 +1210,20 @@ export default function AuthorPostComposerSheet({
               <div className="space-y-1">
                 <ReviewOption icon="fa-solid fa-earth-asia" title={t('authorPostComposerSheet.whoCanSee')} value={t('authorPostComposerSheet.public')} />
                 <ReviewOption icon="fa-regular fa-comment" title={t('authorPostComposerSheet.readerComments')} value={t('authorPostComposerSheet.everyone')} />
-                <ReviewOption icon="fa-regular fa-clock" title={t('authorPostComposerSheet.publishTime')} value={t('authorPostComposerSheet.now')} />
+                <ReviewOption
+  icon="fa-regular fa-clock"
+  title={t('authorPostComposerSheet.publishTime')}
+  value={
+    publishMode === 'schedule'
+      ? `${scheduleDate} · ${scheduleTime}`
+      : t('authorPostComposerSheet.now')
+  }
+  onClick={
+    isEditing
+      ? undefined
+      : () => setPublishTimeOpen(true)
+  }
+/>
                 <ReviewOption imageSrc="/assets/Icons/Add Story.svg" title={t('authorPostComposerSheet.storySharing')} value={t('authorPostComposerSheet.off')} />
               </div>
             </main>
@@ -1154,6 +1240,34 @@ export default function AuthorPostComposerSheet({
         onContinue={() => setLeaveSheetOpen(false)}
         t={t}
       />
+      <PublishTimeSheet
+  open={publishTimeOpen}
+  mode={publishMode}
+  onClose={() => setPublishTimeOpen(false)}
+  onNow={() => {
+    setPublishMode('now')
+    setScheduleDate('')
+    setScheduleTime('')
+    setPublishTimeOpen(false)
+  }}
+  onSchedule={() => {
+    setPublishTimeOpen(false)
+    setSchedulePickerOpen(true)
+  }}
+/>
+
+<AuthorPostSchedulePicker
+  open={schedulePickerOpen}
+  date={scheduleDate}
+  time={scheduleTime}
+  onClose={() => setSchedulePickerOpen(false)}
+  onSave={(date, time) => {
+    setScheduleDate(date)
+    setScheduleTime(time)
+    setPublishMode('schedule')
+    setSchedulePickerOpen(false)
+  }}
+/>
     </>
   )
 }
