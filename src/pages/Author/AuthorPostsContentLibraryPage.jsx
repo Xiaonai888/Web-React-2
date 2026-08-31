@@ -259,7 +259,7 @@ function PostListRow({ post, metricMode, onOpen }) {
         </span>
       </span>
 
-      <span className="w-[62px] shrink-0 text-right">
+      <span className="mr-2 w-[62px] shrink-0 text-right">
         <span className="block text-[16px] font-medium text-[#111827]">
           {formatCompactNumber(metric)}
         </span>
