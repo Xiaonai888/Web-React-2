@@ -4,6 +4,26 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorDiscoverPostText', {
+  en: {
+    more: 'more',
+  },
+  km: {
+    more: 'បន្ថែម',
+  },
+  zh: {
+    more: '更多',
+  },
+  ja: {
+    more: 'もっと見る',
+  },
+  ko: {
+    more: '더보기',
+  },
+})
 
 function splitGraphemes(value) {
   const text = String(value || '')
@@ -52,6 +72,8 @@ export default function AuthorDiscoverPostText({
   renderText,
   className = '',
 }) {
+  const { t } = useDisplayTranslation()
+  const moreLabel = t('authorDiscoverPostText.more')
   const containerRef = useRef(null)
   const probeRef = useRef(null)
   const probeTextRef = useRef(null)
@@ -196,7 +218,7 @@ export default function AuthorDiscoverPostText({
         measure
       )
     }
-  }, [expanded, text])
+  }, [expanded, text, moreLabel])
 
   const renderValue = (value) =>
     typeof renderText === 'function'
@@ -241,9 +263,9 @@ export default function AuthorDiscoverPostText({
                   event.stopPropagation()
                   setExpanded(true)
                 }}
-                className="inline font-semibold text-[#65676b] active:opacity-70"
+                className="inline font-semibold text-[var(--shadow-text-secondary)] active:opacity-70"
               >
-                ... more
+                ... {moreLabel}
               </button>
             </>
           ) : null}
@@ -266,10 +288,10 @@ export default function AuthorDiscoverPostText({
         <span ref={probeTextRef} />
         <span
           ref={probeMoreRef}
-          className="font-semibold text-[#65676b]"
+          className="font-semibold text-[var(--shadow-text-secondary)]"
         >
           {' '}
-          ... more
+          ... {moreLabel}
         </span>
       </p>
     </div>
