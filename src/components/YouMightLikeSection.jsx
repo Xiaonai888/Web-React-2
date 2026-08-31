@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import {
   addStoryLanguageParam,
   getStoryLanguageId,
@@ -9,6 +11,44 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../utils/homeDataCache'
+
+registerTranslationNamespace('youMightLikeSection', {
+  en: {
+    title: 'You Might Like',
+    viewAll: 'View all You Might Like',
+    untitledStory: 'Untitled Story',
+    nameBook: 'Name Book',
+    recommended: 'Recommended',
+  },
+  km: {
+    title: 'រឿងដែលអ្នកអាចចូលចិត្ត',
+    viewAll: 'មើលរឿងដែលអ្នកអាចចូលចិត្តទាំងអស់',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    nameBook: 'សៀវភៅគ្មានឈ្មោះ',
+    recommended: 'ណែនាំសម្រាប់អ្នក',
+  },
+  zh: {
+    title: '猜你喜欢',
+    viewAll: '查看全部猜你喜欢',
+    untitledStory: '无标题故事',
+    nameBook: '未命名书籍',
+    recommended: '推荐',
+  },
+  ja: {
+    title: 'あなたへのおすすめ',
+    viewAll: 'おすすめをすべて見る',
+    untitledStory: '無題のストーリー',
+    nameBook: '無題の本',
+    recommended: 'おすすめ',
+  },
+  ko: {
+    title: '추천 작품',
+    viewAll: '추천 작품 모두 보기',
+    untitledStory: '제목 없는 스토리',
+    nameBook: '제목 없는 책',
+    recommended: '추천',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -85,9 +125,11 @@ function getRotationSlot() {
 
 const fallbackBooks = Array.from({ length: 12 }).map((_, index) => ({
   id: 900 + index,
-  title: 'Name Book',
+  title: '',
+  titleKey: 'nameBook',
   cover: getFallbackCover(index),
-  genre: 'Recommended',
+  genre: '',
+  genreKey: 'recommended',
   firstTag: '',
   totalViews: 0,
   totalLikes: 0,
@@ -99,7 +141,7 @@ const fallbackBooks = Array.from({ length: 12 }).map((_, index) => ({
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     cover: story.cover_url || getFallbackCover(index),
     genre: String(story.main_genre || '').trim(),
     firstTag: getFirstDifferentTag(story.main_genre, story.tags),
@@ -212,18 +254,30 @@ function buildHourlySelection(pool, rotationSlot, storyType = '') {
   )
 }
 
-function BookCard({ book }) {
+function BookCard({ book, t }) {
+  const displayTitle =
+    book.title ||
+    t(
+      `youMightLikeSection.${book.titleKey || 'untitledStory'}`
+    )
+  const fallbackGenre = book.genreKey
+    ? t(`youMightLikeSection.${book.genreKey}`)
+    : t('youMightLikeSection.recommended')
+  const displayMeta =
+    [book.genre, book.firstTag].filter(Boolean).join(' / ') ||
+    fallbackGenre
+
   return (
    <Link
   to={`/story/${book.id}`}
   state={{ sectionRank: 'you_might_like' }}
   className="group block min-w-0"
 >
-      <div className="overflow-hidden rounded-[8px] bg-[#1e1e22] shadow-sm">
+      <div className="overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)] shadow-sm">
         <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
             src={book.cover}
-            alt={book.title}
+            alt={displayTitle}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
             decoding="async"
@@ -236,46 +290,45 @@ function BookCard({ book }) {
       </div>
 
       <div className="pt-2.5 sm:pt-3">
-        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900">
-          {book.title}
+        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-[var(--shadow-text-primary)]">
+          {displayTitle}
         </h3>
 
-        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
-          {[book.genre, book.firstTag].filter(Boolean).join(' / ') ||
-            'Recommended'}
+        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-[var(--shadow-text-tertiary)]">
+          {displayMeta}
         </p>
       </div>
     </Link>
   )
 }
 
-function LoadingGrid() {
+function LoadingGrid({ t }) {
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[20px] lg:text-[21px]">🙂</span>
-            <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-              You Might Like
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+              {t('youMightLikeSection.title')}
             </h2>
           </div>
 
           <Link
             to="/you-might-like"
-            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-            aria-label="View all You Might Like"
+            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-hover)]"
+            aria-label={t('youMightLikeSection.viewAll')}
           >
-            <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+            <i className="fas fa-chevron-right text-[15px] text-[var(--shadow-text-secondary)] lg:text-[16px]" />
           </Link>
         </div>
 
         <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-x-3 lg:gap-y-6">
           {Array.from({ length: 12 }).map((_, index) => (
             <div key={index}>
-              <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
-              <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
-              <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+              <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[var(--shadow-bg-soft)]" />
+              <div className="mt-3 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+              <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
             </div>
           ))}
         </div>
@@ -287,6 +340,7 @@ function LoadingGrid() {
 export default function YouMightLikeSection({
   storyType = '',
 }) {
+  const { t } = useDisplayTranslation()
   const [realBooks, setRealBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [rotationSlot, setRotationSlot] = useState(getRotationSlot)
@@ -425,7 +479,7 @@ export default function YouMightLikeSection({
   ])
 
   if (loading) {
-    return <LoadingGrid />
+    return <LoadingGrid t={t} />
   }
 
   if (!books.length) {
@@ -441,17 +495,17 @@ export default function YouMightLikeSection({
               🙂
             </span>
 
-            <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-              You Might Like
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+              {t('youMightLikeSection.title')}
             </h2>
           </div>
 
           <Link
             to="/you-might-like"
-            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-            aria-label="View all You Might Like"
+            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]"
+            aria-label={t('youMightLikeSection.viewAll')}
           >
-            <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+            <i className="fas fa-chevron-right text-[15px] text-[var(--shadow-text-secondary)] lg:text-[16px]" />
           </Link>
         </div>
 
@@ -460,6 +514,7 @@ export default function YouMightLikeSection({
             <BookCard
               key={book.id}
               book={book}
+              t={t}
             />
           ))}
         </div>
