@@ -1,4 +1,49 @@
 import { useEffect, useState } from 'react'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowInstallCard', {
+  en: {
+    iosTitle: 'Add Shadow to your Home Screen',
+    title: 'Bring Shadow closer',
+    iosDescription: 'Tap Share in your browser, then choose Add to Home Screen.',
+    description: 'Add Shadow to your device for faster access and a smoother reading experience.',
+    gotIt: 'Got it',
+    install: 'Install Shadow',
+  },
+  km: {
+    iosTitle: 'បន្ថែម Shadow ទៅអេក្រង់ដើម',
+    title: 'នាំ Shadow មកកាន់តែជិតអ្នក',
+    iosDescription: 'ចុច Share ក្នុង browser របស់អ្នក បន្ទាប់មកជ្រើស Add to Home Screen។',
+    description: 'បន្ថែម Shadow ទៅឧបករណ៍របស់អ្នក ដើម្បីចូលប្រើបានលឿន និងអានបានរលូនជាងមុន។',
+    gotIt: 'យល់ហើយ',
+    install: 'ដំឡើង Shadow',
+  },
+  zh: {
+    iosTitle: '将 Shadow 添加到主屏幕',
+    title: '让 Shadow 离你更近',
+    iosDescription: '在浏览器中点击“分享”，然后选择“添加到主屏幕”。',
+    description: '将 Shadow 添加到你的设备，以便更快访问并获得更流畅的阅读体验。',
+    gotIt: '知道了',
+    install: '安装 Shadow',
+  },
+  ja: {
+    iosTitle: 'Shadow をホーム画面に追加',
+    title: 'Shadow をもっと身近に',
+    iosDescription: 'ブラウザで共有をタップし、「ホーム画面に追加」を選択してください。',
+    description: 'Shadow を端末に追加して、より速くアクセスし、快適に読書を楽しめます。',
+    gotIt: '了解',
+    install: 'Shadow をインストール',
+  },
+  ko: {
+    iosTitle: 'Shadow를 홈 화면에 추가',
+    title: 'Shadow를 더 가까이',
+    iosDescription: '브라우저에서 공유를 누른 다음 홈 화면에 추가를 선택하세요.',
+    description: 'Shadow를 기기에 추가해 더 빠르게 접속하고 더 부드럽게 읽어보세요.',
+    gotIt: '확인',
+    install: 'Shadow 설치',
+  },
+})
 
 const DISMISS_KEY = 'shadow_install_card_dismissed_at'
 const SNOOZE_KEY = 'shadow_install_card_snooze_until'
@@ -33,6 +78,7 @@ function isHiddenByPreference() {
 }
 
 export default function ShadowInstallCard() {
+  const { t } = useDisplayTranslation()
   const [visible, setVisible] = useState(false)
   const [showIOSHelp, setShowIOSHelp] = useState(false)
 
@@ -123,8 +169,8 @@ export default function ShadowInstallCard() {
             style={{ color: 'var(--shadow-text-primary)' }}
           >
             {showIOSHelp
-              ? 'Add Shadow to your Home Screen'
-              : 'Bring Shadow closer'}
+              ? t('shadowInstallCard.iosTitle')
+              : t('shadowInstallCard.title')}
           </h2>
 
           <p
@@ -132,8 +178,8 @@ export default function ShadowInstallCard() {
             style={{ color: 'var(--shadow-text-secondary)' }}
           >
             {showIOSHelp
-              ? 'Tap Share in your browser, then choose Add to Home Screen.'
-              : 'Add Shadow to your device for faster access and a smoother reading experience.'}
+              ? t('shadowInstallCard.iosDescription')
+              : t('shadowInstallCard.description')}
           </p>
         </div>
 
@@ -162,7 +208,11 @@ export default function ShadowInstallCard() {
             showIOSHelp ? 'fa-check' : 'fa-arrow-down'
           } text-[11px]`}
         />
-        <span>{showIOSHelp ? 'Got it' : 'Install Shadow'}</span>
+        <span>
+          {showIOSHelp
+            ? t('shadowInstallCard.gotIt')
+            : t('shadowInstallCard.install')}
+        </span>
       </button>
     </section>
   )
