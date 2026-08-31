@@ -48,6 +48,29 @@ registerTranslationNamespace('authorPostInsights', {
     notification: 'Notification',
     direct: 'Direct',
     other: 'Other',
+    performance: 'Performance',
+    performanceSub: 'Compared with your recent posts at the same age.',
+    aboveTypical: 'Above typical',
+    typical: 'Typical',
+    belowTypical: 'Below typical',
+    currentPost: 'Current post',
+    typicalPost: 'Typical post',
+    previousPosts: 'Based on {{count}} previous posts',
+    betterThanTypical: '{{percent}}% better than typical',
+    lowerThanTypical: '{{percent}}% below typical',
+    demographics: 'Audience demographics',
+    demographicsSub: 'Based on registered viewers only. Shown when at least 5 profiles are available.',
+    age: 'Age',
+    gender: 'Gender',
+    under18: 'Under 18',
+    age18_24: '18–24',
+    age25_34: '25–34',
+    age35_44: '35–44',
+    age45_54: '45–54',
+    age55Plus: '55+',
+    female: 'Female',
+    male: 'Male',
+    custom: 'Custom',
     love: 'Love',
     haha: 'Haha',
     wow: 'Wow',
@@ -100,6 +123,29 @@ registerTranslationNamespace('authorPostInsights', {
     notification: 'Notification',
     direct: 'Direct',
     other: 'ផ្សេងៗ',
+    performance: 'ប្រសិទ្ធភាពប្រកាស',
+    performanceSub: 'ប្រៀបធៀបជាមួយប្រកាសថ្មីៗរបស់អ្នកនៅអាយុកាលប្រកាសដូចគ្នា។',
+    aboveTypical: 'ល្អជាងធម្មតា',
+    typical: 'កម្រិតធម្មតា',
+    belowTypical: 'ទាបជាងធម្មតា',
+    currentPost: 'ប្រកាសនេះ',
+    typicalPost: 'ប្រកាសធម្មតា',
+    previousPosts: 'ផ្អែកលើប្រកាសមុន {{count}}',
+    betterThanTypical: 'ល្អជាងធម្មតា {{percent}}%',
+    lowerThanTypical: 'ទាបជាងធម្មតា {{percent}}%',
+    demographics: 'ព័ត៌មានទស្សនិកជន',
+    demographicsSub: 'ផ្អែកលើអ្នកមើលដែលមានគណនីប៉ុណ្ណោះ។ បង្ហាញនៅពេលមាន Profile យ៉ាងតិច 5។',
+    age: 'អាយុ',
+    gender: 'ភេទ',
+    under18: 'ក្រោម 18',
+    age18_24: '18–24',
+    age25_34: '25–34',
+    age35_44: '35–44',
+    age45_54: '45–54',
+    age55Plus: '55+',
+    female: 'ស្រី',
+    male: 'ប្រុស',
+    custom: 'ផ្សេងៗ',
     love: 'ស្រឡាញ់',
     haha: 'សើច',
     wow: 'ភ្ញាក់ផ្អើល',
@@ -152,6 +198,29 @@ registerTranslationNamespace('authorPostInsights', {
     notification: '通知',
     direct: '直接访问',
     other: '其他',
+    performance: '帖子表现',
+    performanceSub: '与同发布时间阶段的近期帖子进行比较。',
+    aboveTypical: '高于平常',
+    typical: '正常水平',
+    belowTypical: '低于平常',
+    currentPost: '当前帖子',
+    typicalPost: '典型帖子',
+    previousPosts: '基于之前 {{count}} 个帖子',
+    betterThanTypical: '比平常高 {{percent}}%',
+    lowerThanTypical: '比平常低 {{percent}}%',
+    demographics: '受众人口统计',
+    demographicsSub: '仅基于已注册浏览者。至少有 5 个可用资料时显示。',
+    age: '年龄',
+    gender: '性别',
+    under18: '18岁以下',
+    age18_24: '18–24',
+    age25_34: '25–34',
+    age35_44: '35–44',
+    age45_54: '45–54',
+    age55Plus: '55+',
+    female: '女性',
+    male: '男性',
+    custom: '其他',
     love: '喜欢',
     haha: '哈哈',
     wow: '惊讶',
@@ -204,6 +273,29 @@ registerTranslationNamespace('authorPostInsights', {
     notification: '通知',
     direct: '直接',
     other: 'その他',
+    performance: '投稿パフォーマンス',
+    performanceSub: '同じ公開後経過時間の最近の投稿と比較します。',
+    aboveTypical: '通常より上',
+    typical: '通常',
+    belowTypical: '通常より下',
+    currentPost: '現在の投稿',
+    typicalPost: '通常の投稿',
+    previousPosts: '過去 {{count}} 件の投稿を基準',
+    betterThanTypical: '通常より {{percent}}% 高い',
+    lowerThanTypical: '通常より {{percent}}% 低い',
+    demographics: 'オーディエンス属性',
+    demographicsSub: '登録済み閲覧者のみを対象に、5件以上のプロフィールがある場合に表示します。',
+    age: '年齢',
+    gender: '性別',
+    under18: '18歳未満',
+    age18_24: '18–24',
+    age25_34: '25–34',
+    age35_44: '35–44',
+    age45_54: '45–54',
+    age55Plus: '55+',
+    female: '女性',
+    male: '男性',
+    custom: 'その他',
     love: 'Love',
     haha: 'Haha',
     wow: 'Wow',
@@ -256,6 +348,29 @@ registerTranslationNamespace('authorPostInsights', {
     notification: '알림',
     direct: '직접',
     other: '기타',
+    performance: '게시물 성과',
+    performanceSub: '같은 게시 경과 시간의 최근 게시물과 비교합니다.',
+    aboveTypical: '평소보다 높음',
+    typical: '평소 수준',
+    belowTypical: '평소보다 낮음',
+    currentPost: '현재 게시물',
+    typicalPost: '평소 게시물',
+    previousPosts: '이전 게시물 {{count}}개 기준',
+    betterThanTypical: '평소보다 {{percent}}% 높음',
+    lowerThanTypical: '평소보다 {{percent}}% 낮음',
+    demographics: '오디언스 인구 통계',
+    demographicsSub: '가입된 조회자만 기준으로 하며 프로필이 5개 이상일 때 표시됩니다.',
+    age: '연령',
+    gender: '성별',
+    under18: '18세 미만',
+    age18_24: '18–24',
+    age25_34: '25–34',
+    age35_44: '35–44',
+    age45_54: '45–54',
+    age55Plus: '55+',
+    female: '여성',
+    male: '남성',
+    custom: '기타',
     love: 'Love',
     haha: 'Haha',
     wow: 'Wow',
@@ -642,6 +757,180 @@ function ReactionBreakdown({
   )
 }
 
+
+const AGE_LABEL_KEYS = {
+  under_18: 'under18',
+  '18_24': 'age18_24',
+  '25_34': 'age25_34',
+  '35_44': 'age35_44',
+  '45_54': 'age45_54',
+  '55_plus': 'age55Plus',
+}
+
+const GENDER_LABEL_KEYS = {
+  female: 'female',
+  male: 'male',
+  custom: 'custom',
+}
+
+function PerformanceSection({ performance, t, locale }) {
+  if (!performance?.available) return null
+
+  const statusKey =
+    performance.status === 'above_typical'
+      ? 'aboveTypical'
+      : performance.status === 'below_typical'
+        ? 'belowTypical'
+        : 'typical'
+
+  const percent = Number(performance.percent_vs_typical)
+  const hasPercent = Number.isFinite(percent)
+  const absolutePercent = hasPercent
+    ? Math.abs(percent).toLocaleString(locale, {
+        maximumFractionDigits: 1,
+      })
+    : ''
+
+  const comparisonText =
+    hasPercent && percent > 0
+      ? t('authorPostInsights.betterThanTypical', {
+          percent: absolutePercent,
+        })
+      : hasPercent && percent < 0
+        ? t('authorPostInsights.lowerThanTypical', {
+            percent: absolutePercent,
+          })
+        : t(`authorPostInsights.${statusKey}`)
+
+  return (
+    <Section
+      title={t('authorPostInsights.performance')}
+      subtitle={t('authorPostInsights.performanceSub')}
+    >
+      <div className="border-t border-[var(--shadow-border)] px-4 py-4 sm:px-5">
+        <div className="flex items-center justify-between gap-3 rounded-[14px] bg-[var(--shadow-bg-elevated)] p-3.5">
+          <div>
+            <div className="text-[12px] font-semibold">
+              {t(`authorPostInsights.${statusKey}`)}
+            </div>
+            <div className="mt-1 text-[10.5px] text-[var(--shadow-text-secondary)]">
+              {comparisonText}
+            </div>
+          </div>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f1ff] text-[#6d4aff] dark:bg-[#2b2542]">
+            <i className="fa-solid fa-chart-line text-[13px]" />
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="rounded-[14px] border border-[var(--shadow-border)] p-3">
+            <div className="text-[10.5px] text-[var(--shadow-text-secondary)]">
+              {t('authorPostInsights.currentPost')}
+            </div>
+            <div className="mt-1.5 text-[22px] font-bold">
+              {Number(performance.current_views || 0).toLocaleString(locale)}
+            </div>
+          </div>
+          <div className="rounded-[14px] border border-[var(--shadow-border)] p-3">
+            <div className="text-[10.5px] text-[var(--shadow-text-secondary)]">
+              {t('authorPostInsights.typicalPost')}
+            </div>
+            <div className="mt-1.5 text-[22px] font-bold">
+              {Number(performance.typical_views || 0).toLocaleString(locale)}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 text-[10px] text-[var(--shadow-text-tertiary)]">
+          {t('authorPostInsights.previousPosts', {
+            count: Number(performance.sample_size || 0).toLocaleString(locale),
+          })}
+        </div>
+      </div>
+    </Section>
+  )
+}
+
+function BreakdownList({ title, groups, labels, t, locale }) {
+  if (!Array.isArray(groups) || !groups.length) return null
+
+  return (
+    <div>
+      <div className="mb-2 text-[11px] font-semibold">{title}</div>
+      <div className="space-y-3">
+        {groups.map((item) => {
+          const percentage = Math.max(
+            0,
+            Math.min(100, Number(item.percentage || 0))
+          )
+          const labelKey = labels[item.key]
+
+          return (
+            <div key={item.key}>
+              <div className="flex items-center justify-between gap-3 text-[11px]">
+                <span>
+                  {labelKey
+                    ? t(`authorPostInsights.${labelKey}`)
+                    : item.key}
+                </span>
+                <span className="text-[var(--shadow-text-secondary)]">
+                  {Number(item.count || 0).toLocaleString(locale)} ·{' '}
+                  {percentage.toFixed(1)}%
+                </span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--shadow-bg-elevated)]">
+                <div
+                  className="h-full rounded-full bg-[#6d4aff]"
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function DemographicsSection({ demographics, t, locale }) {
+  if (!demographics?.available) return null
+
+  const ageGroups =
+    demographics?.age?.available
+      ? demographics.age.groups
+      : []
+  const genderGroups =
+    demographics?.gender?.available
+      ? demographics.gender.groups
+      : []
+
+  if (!ageGroups.length && !genderGroups.length) return null
+
+  return (
+    <Section
+      title={t('authorPostInsights.demographics')}
+      subtitle={t('authorPostInsights.demographicsSub')}
+    >
+      <div className="grid gap-5 border-t border-[var(--shadow-border)] px-4 py-4 sm:grid-cols-2 sm:px-5">
+        <BreakdownList
+          title={t('authorPostInsights.age')}
+          groups={ageGroups}
+          labels={AGE_LABEL_KEYS}
+          t={t}
+          locale={locale}
+        />
+        <BreakdownList
+          title={t('authorPostInsights.gender')}
+          groups={genderGroups}
+          labels={GENDER_LABEL_KEYS}
+          t={t}
+          locale={locale}
+        />
+      </div>
+    </Section>
+  )
+}
+
 export default function AuthorPostInsightsPage() {
   const navigate = useNavigate()
   const { postId } = useParams()
@@ -889,6 +1178,12 @@ export default function AuthorPostInsightsPage() {
               />
             </Section>
 
+            <PerformanceSection
+              performance={data.performance}
+              t={t}
+              locale={locale}
+            />
+
             <Section
               title={t(
                 'authorPostInsights.engagement'
@@ -961,6 +1256,12 @@ export default function AuthorPostInsightsPage() {
                 locale={locale}
               />
             </Section>
+
+            <DemographicsSection
+              demographics={data.demographics}
+              t={t}
+              locale={locale}
+            />
 
             <Section
               title={t('authorPostInsights.howFound')}
