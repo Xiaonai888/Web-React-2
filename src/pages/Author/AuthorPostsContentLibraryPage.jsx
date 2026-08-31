@@ -610,7 +610,7 @@ export default function AuthorPostsContentLibraryPage() {
             <button
               type="button"
               onClick={() => openFilter('metrics')}
-              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#dbeeff] px-4 text-[14px] font-semibold text-[#1674c4]"
+              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
             >
               {getOptionLabel('metrics', metricMode)}
               <i className="fa-solid fa-caret-down text-[12px]" />
