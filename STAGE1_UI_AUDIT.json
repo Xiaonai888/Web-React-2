@@ -108,5 +108,10 @@
 "src/components/common/ProfessionalPostContent.jsx",
 "src/components/social/SocialEchoShareSheetV2.jsx"
 "src/components/reader-posts/ReaderPostEchoShareSheet.jsx"
+"src/components/social/SocialEchoShareSheet.jsx",
+"src/components/ShadowInstallCard.jsx",
+"src/components/AuthorPageMoreMenu.jsx",
+"src/components/AuthorStudioBottomNav.jsx",
+"src/components/ContinueReadingSection.jsx"
   ]
 }
