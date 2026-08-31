@@ -24,19 +24,6 @@ const FILTER_OPTIONS = {
     { value: 'photo', label: 'Photos' },
     { value: 'text', label: 'Text' },
   ],
-  placement: [
-    { value: 'all', label: 'All placements' },
-    { value: 'feed', label: 'Feed' },
-    { value: 'suggested', label: 'Suggested' },
-    { value: 'follower_feed', label: 'Following feed' },
-    { value: 'author_page', label: 'Author page' },
-    { value: 'discover', label: 'Discover' },
-    { value: 'search', label: 'Search' },
-    { value: 'share', label: 'Share' },
-    { value: 'notification', label: 'Notification' },
-    { value: 'direct', label: 'Direct' },
-    { value: 'other', label: 'Other' },
-  ],
   metrics: [
     { value: 'views', label: 'Views' },
     { value: 'engagement', label: 'Engagement' },
@@ -279,12 +266,10 @@ function FilterSheet({
   statusFilter,
   dateRange,
   typeFilter,
-  placementFilter,
   metricMode,
   onStatusChange,
   onDateChange,
   onTypeChange,
-  onPlacementChange,
   onMetricChange,
 }) {
   useEffect(() => {
@@ -311,7 +296,6 @@ function FilterSheet({
     status: statusFilter,
     date: dateRange,
     type: typeFilter,
-    placement: placementFilter,
     metrics: metricMode,
   }
 
@@ -332,11 +316,6 @@ function FilterSheet({
       value: getOptionLabel('type', typeFilter),
     },
     {
-      key: 'placement',
-      label: 'Placement',
-      value: getOptionLabel('placement', placementFilter),
-    },
-    {
       key: 'metrics',
       label: 'Metrics',
       value: getOptionLabel('metrics', metricMode),
@@ -347,7 +326,6 @@ function FilterSheet({
     status: onStatusChange,
     date: onDateChange,
     type: onTypeChange,
-    placement: onPlacementChange,
     metrics: onMetricChange,
   }
 
@@ -448,7 +426,6 @@ export default function AuthorPostsContentLibraryPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateRange, setDateRange] = useState('lifetime')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [placementFilter, setPlacementFilter] = useState('all')
   const [metricMode, setMetricMode] = useState('views')
 
   const openFilter = useCallback((section = 'menu') => {
@@ -518,14 +495,6 @@ export default function AuthorPostsContentLibraryPage() {
       )
     }
 
-    if (placementFilter !== 'all') {
-      nextPosts = nextPosts.filter(
-        (post) =>
-          Array.isArray(post?.view_sources) &&
-          post.view_sources.includes(placementFilter)
-      )
-    }
-
     nextPosts.sort(
       (a, b) =>
         getPostMetric(b, metricMode) - getPostMetric(a, metricMode) ||
@@ -534,7 +503,7 @@ export default function AuthorPostsContentLibraryPage() {
     )
 
     return nextPosts
-  }, [dateRange, metricMode, placementFilter, posts, statusFilter, typeFilter])
+  }, [dateRange, metricMode, posts, statusFilter, typeFilter])
 
   return (
     <div className="min-h-screen bg-white">
@@ -625,18 +594,6 @@ export default function AuthorPostsContentLibraryPage() {
               <i className="fa-solid fa-caret-down text-[12px]" />
             </button>
 
-            <button
-              type="button"
-              onClick={() => openFilter('placement')}
-              className={`flex h-11 items-center gap-2 rounded-[12px] px-4 text-[14px] font-semibold ${
-                placementFilter === 'all'
-                  ? 'bg-[#eef0f4] text-[#111827]'
-                  : 'bg-[#dbeeff] text-[#1674c4]'
-              }`}
-            >
-              {getOptionLabel('placement', placementFilter)}
-              <i className="fa-solid fa-caret-down text-[12px]" />
-            </button>
           </div>
         </div>
       </header>
@@ -684,12 +641,10 @@ export default function AuthorPostsContentLibraryPage() {
         statusFilter={statusFilter}
         dateRange={dateRange}
         typeFilter={typeFilter}
-        placementFilter={placementFilter}
         metricMode={metricMode}
         onStatusChange={setStatusFilter}
         onDateChange={setDateRange}
         onTypeChange={setTypeFilter}
-        onPlacementChange={setPlacementFilter}
         onMetricChange={setMetricMode}
       />
     </div>
