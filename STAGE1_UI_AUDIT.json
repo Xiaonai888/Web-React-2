@@ -86,6 +86,11 @@
 "src/pages/MaintenancePage.jsx",
 "src/components/Footer.jsx",
 "src/components/Shop/PurchaseSection.jsx",
-"src/components/Shop/ShadowMallSection.jsx"
+"src/components/Shop/ShadowMallSection.jsx",
+"src/components/DailyPicksSection.jsx",
+"src/components/TrendingNowSection.jsx",
+"src/components/UpdateTodaySection.jsx",
+"src/components/NewArrivalsSection.jsx",
+"src/components/YouMightLikeSection.jsx"
   ]
 }
