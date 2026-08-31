@@ -2,7 +2,52 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 import { getStoryBadge } from '../utils/storyBadge'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
+
+registerTranslationNamespace('updateTodaySection', {
+  en: {
+    new: 'NEW',
+    up: 'UP',
+    end: 'END',
+    untitledStory: 'Untitled Story',
+    title: 'Update Today',
+    viewAll: 'View all update today',
+  },
+  km: {
+    new: 'ថ្មី',
+    up: 'អាប់ដេត',
+    end: 'ចប់',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    title: 'អាប់ដេតថ្ងៃនេះ',
+    viewAll: 'មើលការអាប់ដេតថ្ងៃនេះទាំងអស់',
+  },
+  zh: {
+    new: '新',
+    up: '更新',
+    end: '完结',
+    untitledStory: '无标题故事',
+    title: '今日更新',
+    viewAll: '查看今日全部更新',
+  },
+  ja: {
+    new: '新着',
+    up: '更新',
+    end: '完結',
+    untitledStory: '無題のストーリー',
+    title: '今日の更新',
+    viewAll: '今日の更新をすべて見る',
+  },
+  ko: {
+    new: '신규',
+    up: '업데이트',
+    end: '완결',
+    untitledStory: '제목 없는 스토리',
+    title: '오늘 업데이트',
+    viewAll: '오늘 업데이트 모두 보기',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -12,15 +57,15 @@ const API_BASE_URL =
 
 const badgeConfig = {
   new: {
-    text: 'NEW',
+    labelKey: 'new',
     className: 'bg-[#FF4D6D] text-white',
   },
   up: {
-    text: 'UP',
+    labelKey: 'up',
     className: 'bg-[#F6B800] text-[#111827]',
   },
   end: {
-    text: 'END',
+    labelKey: 'end',
     className: 'bg-[#16A34A] text-white',
   },
 }
@@ -39,7 +84,7 @@ function getFirstDifferentTag(mainGenre, tags = []) {
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     cover:
       story.cover_url ||
       `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
@@ -49,7 +94,7 @@ function normalizeStory(story, index = 0) {
   }
 }
 
-function StatusBadge({ type }) {
+function StatusBadge({ type, t }) {
   const badge = badgeConfig[type]
   if (!badge) return null
 
@@ -57,12 +102,14 @@ function StatusBadge({ type }) {
     <div
       className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${badge.className}`}
     >
-      {badge.text}
+      {t(`updateTodaySection.${badge.labelKey}`)}
     </div>
   )
 }
 
-function SmallBookCard({ book }) {
+function SmallBookCard({ book, t }) {
+  const displayTitle = book.title || t('updateTodaySection.untitledStory')
+
   return (
     <Link
   to={`/story/${book.id}`}
@@ -73,7 +120,7 @@ function SmallBookCard({ book }) {
         <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
             src={book.cover}
-            alt={book.title}
+            alt={displayTitle}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
             decoding="async"
@@ -81,16 +128,16 @@ function SmallBookCard({ book }) {
               event.currentTarget.src = '/assets/Update Today/Update Today 2.jpg'
             }}
           />
-          {book.badge ? <StatusBadge type={book.badge} /> : null}
+          {book.badge ? <StatusBadge type={book.badge} t={t} /> : null}
         </div>
       </div>
 
       <div className="pt-2.5 sm:pt-3">
-        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900">
-          {book.title}
+        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-[var(--shadow-text-primary)]">
+          {displayTitle}
         </h3>
 
-        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
+        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-[var(--shadow-text-tertiary)]">
           {[book.genre, book.firstTag].filter(Boolean).join(' / ')}
         </p>
       </div>
@@ -98,33 +145,33 @@ function SmallBookCard({ book }) {
   )
 }
 
-function LoadingSkeleton() {
+function LoadingSkeleton({ t }) {
   return (
     <section className="px-4 pb-8 pt-0 sm:px-5 lg:px-6">
       <div>
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[20px] lg:text-[21px]">🎉</span>
-            <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-              Update Today
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+              {t('updateTodaySection.title')}
             </h2>
           </div>
 
           <Link
             to="/update-today"
-            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-            aria-label="View all update today"
+            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-hover)]"
+            aria-label={t('updateTodaySection.viewAll')}
           >
-            <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+            <i className="fas fa-chevron-right text-[15px] text-[var(--shadow-text-secondary)] lg:text-[16px]" />
           </Link>
         </div>
 
         <div className="grid grid-cols-3 gap-x-2 gap-y-4 md:grid-cols-6 md:gap-x-3 md:gap-y-5">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index}>
-              <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
-              <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
-              <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+              <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[var(--shadow-bg-soft)]" />
+              <div className="mt-3 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+              <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
             </div>
           ))}
         </div>
@@ -136,6 +183,7 @@ function LoadingSkeleton() {
 export default function UpdateTodaySection({
   storyType = '',
 }) {
+  const { t } = useDisplayTranslation()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -227,7 +275,7 @@ export default function UpdateTodaySection({
   )
 
   if (loading) {
-    return <LoadingSkeleton />
+    return <LoadingSkeleton t={t} />
   }
 
   if (!updateBooks.length) {
@@ -243,17 +291,17 @@ export default function UpdateTodaySection({
               🎉
             </span>
 
-            <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-              Update Today
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+              {t('updateTodaySection.title')}
             </h2>
           </div>
 
           <Link
             to="/update-today"
-            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-            aria-label="View all update today"
+            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]"
+            aria-label={t('updateTodaySection.viewAll')}
           >
-            <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+            <i className="fas fa-chevron-right text-[15px] text-[var(--shadow-text-secondary)] lg:text-[16px]" />
           </Link>
         </div>
 
@@ -262,6 +310,7 @@ export default function UpdateTodaySection({
             <SmallBookCard
               key={book.id}
               book={book}
+              t={t}
             />
           ))}
         </div>
