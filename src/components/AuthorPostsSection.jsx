@@ -1,6 +1,12 @@
 import { recordAuthorPostClick } from '../services/authorPostInsightsApi'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getDisplayLanguageId,
+  getDisplayText,
+  useDisplayTranslation,
+} from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
@@ -19,6 +25,349 @@ import {
   fetchSavedPostStatus,
   saveSavedPost,
 } from '../services/savedPostsApi'
+
+registerTranslationNamespace('authorPostsSection', {
+  en: {
+    justNow: 'Just now',
+    failedLoadPosts: 'Failed to load posts',
+    loginFirst: getDisplayText('authorPostsSection.loginFirst'),
+    failedCreatePost: 'Failed to create post',
+    failedUpdatePost: 'Failed to update post',
+    failedMoveTrash: t('authorPostsSection.failedMoveTrash'),
+    failedUpdatePinned: 'Failed to update pinned post',
+    failedUpdateReaction: 'Failed to update reaction',
+    failedLoadNotification: 'Failed to load notification preference',
+    failedUpdateNotification: t('authorPostsSection.failedUpdateNotification'),
+    author: 'Author',
+    authorPosts: 'Author Posts',
+    filter: 'Filter',
+    shareUpdate: 'Share an update...',
+    managePosts: 'Manage posts',
+    pinned: 'Pinned',
+    postOptions: 'Post options',
+    seeInsightsAndAds: 'See insights\nand ads',
+    boostComingSoon: 'Boost post coming soon.',
+    boostPost: 'Boost post',
+    commentsCount: '{{count}} comments',
+    echoesCount: '{{count}} echoes',
+    like: 'Like',
+    comment: 'Comment',
+    echo: 'Echo',
+    authorPost: 'Author Post',
+    postLinkCopied: 'Post link copied.',
+    closePostOptions: 'Close post options',
+    unpinPost: 'Unpin post',
+    pinToTop: 'Pin to top',
+    removeFromTop: 'Remove this post from the top of your page',
+    showFirst: 'Show this post first on your page',
+    removeFromSaved: 'Remove from saved',
+    savePost: 'Save post',
+    removeSavedBody: 'Remove this post from your saved items.',
+    savePostBody: 'Add this post to your saved items.',
+    editPost: 'Edit post',
+    movingToTrash: 'Moving to trash...',
+    moveToTrash: 'Move to trash',
+    restoreWithin30Days: 'You can restore this post within 30 days.',
+    turnOffNotifications: 'Turn off notifications for this post',
+    turnOnNotifications: 'Turn on notifications for this post',
+    copyLink: 'Copy link',
+    hidePost: 'Hide post',
+    fewerPosts: 'See fewer posts like this.',
+    postHidden: t('authorPostsSection.postHidden'),
+    reportAuthorPost: 'Report Author Post',
+    reportBody: 'Tell us if this post violates platform rules.',
+    blockAuthor: 'Block author',
+    blockBody: 'Stop seeing this author in your experience.',
+    blockComingSoon: t('authorPostsSection.blockComingSoon'),
+    loadingPosts: 'Loading posts...',
+    loadingPostsBody: 'Please wait while author posts load.',
+    noPosts: 'No posts yet',
+    noPostsBody: 'Updates, notes, and announcements will appear here.',
+    postUpdated: 'Post updated.',
+    removedFromSaved: t('authorPostsSection.removedFromSaved'),
+    postSaved: 'Post saved.',
+    failedSavePost: t('authorPostsSection.failedSavePost'),
+    notificationsOn: 'Post notifications turned on.',
+    notificationsOff: 'Post notifications turned off.',
+    postMovedTrash: 'Post moved to trash.',
+    postPinnedTop: 'Post pinned to top.',
+    postRemovedTop: 'Post removed from top.',
+    authorPostFallback: 'Author post',
+    authorPostComments: 'Author post comments',
+  },
+  km: {
+    justNow: 'ឥឡូវនេះ',
+    failedLoadPosts: 'មិនអាចផ្ទុកប្រកាសបានទេ',
+    loginFirst: 'សូមចូលគណនីជាមុន',
+    failedCreatePost: 'មិនអាចបង្កើតប្រកាសបានទេ',
+    failedUpdatePost: 'មិនអាចកែប្រែប្រកាសបានទេ',
+    failedMoveTrash: 'មិនអាចផ្លាស់ទីប្រកាសទៅធុងសំរាមបានទេ',
+    failedUpdatePinned: 'មិនអាចកែស្ថានភាពខ្ទាស់ប្រកាសបានទេ',
+    failedUpdateReaction: 'មិនអាចកែប្រតិកម្មបានទេ',
+    failedLoadNotification: 'មិនអាចផ្ទុកការកំណត់ការជូនដំណឹងបានទេ',
+    failedUpdateNotification: 'មិនអាចកែការកំណត់ការជូនដំណឹងបានទេ',
+    author: 'អ្នកនិពន្ធ',
+    authorPosts: 'ប្រកាសអ្នកនិពន្ធ',
+    filter: 'តម្រង',
+    shareUpdate: 'ចែករំលែកអ្វីថ្មី...',
+    managePosts: 'គ្រប់គ្រងប្រកាស',
+    pinned: 'បានខ្ទាស់',
+    postOptions: 'ជម្រើសប្រកាស',
+    seeInsightsAndAds: 'មើលស្ថិតិ\nនិងការផ្សាយពាណិជ្ជកម្ម',
+    boostComingSoon: 'មុខងារ Boost post នឹងមកដល់ឆាប់ៗ។',
+    boostPost: 'Boost post',
+    commentsCount: '{{count}} មតិ',
+    echoesCount: '{{count}} Echo',
+    like: 'ចូលចិត្ត',
+    comment: 'មតិ',
+    echo: 'Echo',
+    authorPost: 'ប្រកាសអ្នកនិពន្ធ',
+    postLinkCopied: 'បានចម្លងតំណប្រកាស។',
+    closePostOptions: 'បិទជម្រើសប្រកាស',
+    unpinPost: 'ដកខ្ទាស់ប្រកាស',
+    pinToTop: 'ខ្ទាស់ទៅលើ',
+    removeFromTop: 'ដកប្រកាសនេះចេញពីផ្នែកខាងលើនៃទំព័រ',
+    showFirst: 'បង្ហាញប្រកាសនេះមុនគេនៅលើទំព័រ',
+    removeFromSaved: 'ដកចេញពីបានរក្សាទុក',
+    savePost: 'រក្សាទុកប្រកាស',
+    removeSavedBody: 'ដកប្រកាសនេះចេញពីបញ្ជីដែលបានរក្សាទុក។',
+    savePostBody: 'បន្ថែមប្រកាសនេះទៅបញ្ជីដែលបានរក្សាទុក។',
+    editPost: 'កែប្រកាស',
+    movingToTrash: 'កំពុងផ្លាស់ទីទៅធុងសំរាម...',
+    moveToTrash: 'ផ្លាស់ទីទៅធុងសំរាម',
+    restoreWithin30Days: 'អ្នកអាចស្តារប្រកាសនេះវិញក្នុងរយៈពេល 30 ថ្ងៃ។',
+    turnOffNotifications: 'បិទការជូនដំណឹងសម្រាប់ប្រកាសនេះ',
+    turnOnNotifications: 'បើកការជូនដំណឹងសម្រាប់ប្រកាសនេះ',
+    copyLink: 'ចម្លងតំណ',
+    hidePost: 'លាក់ប្រកាស',
+    fewerPosts: 'បង្ហាញប្រកាសប្រភេទនេះតិចជាងមុន។',
+    postHidden: 'បានលាក់ប្រកាស',
+    reportAuthorPost: 'រាយការណ៍ប្រកាសអ្នកនិពន្ធ',
+    reportBody: 'ប្រាប់យើង ប្រសិនបើប្រកាសនេះបំពានច្បាប់វេទិកា។',
+    blockAuthor: 'ប្លុកអ្នកនិពន្ធ',
+    blockBody: 'ឈប់ឃើញអ្នកនិពន្ធនេះក្នុងបទពិសោធន៍របស់អ្នក។',
+    blockComingSoon: 'មុខងារប្លុកអ្នកនិពន្ធនឹងមកដល់ឆាប់ៗ។',
+    loadingPosts: 'កំពុងផ្ទុកប្រកាស...',
+    loadingPostsBody: 'សូមរង់ចាំខណៈពេលកំពុងផ្ទុកប្រកាសអ្នកនិពន្ធ។',
+    noPosts: 'មិនទាន់មានប្រកាសទេ',
+    noPostsBody: 'បច្ចុប្បន្នភាព កំណត់ចំណាំ និងសេចក្តីជូនដំណឹងនឹងបង្ហាញនៅទីនេះ។',
+    postUpdated: 'បានកែប្រែប្រកាស។',
+    removedFromSaved: 'បានដកចេញពីបញ្ជីរក្សាទុក។',
+    postSaved: 'បានរក្សាទុកប្រកាស។',
+    failedSavePost: 'មិនអាចរក្សាទុកប្រកាសបានទេ',
+    notificationsOn: 'បានបើកការជូនដំណឹងប្រកាស។',
+    notificationsOff: 'បានបិទការជូនដំណឹងប្រកាស។',
+    postMovedTrash: 'បានផ្លាស់ទីប្រកាសទៅធុងសំរាម។',
+    postPinnedTop: 'បានខ្ទាស់ប្រកាសទៅលើ។',
+    postRemovedTop: 'បានដកប្រកាសចេញពីផ្នែកខាងលើ។',
+    authorPostFallback: 'ប្រកាសអ្នកនិពន្ធ',
+    authorPostComments: 'មតិលើប្រកាសអ្នកនិពន្ធ',
+  },
+  zh: {
+    justNow: '刚刚',
+    failedLoadPosts: '无法加载帖子',
+    loginFirst: '请先登录',
+    failedCreatePost: '无法创建帖子',
+    failedUpdatePost: '无法更新帖子',
+    failedMoveTrash: '无法将帖子移到回收站',
+    failedUpdatePinned: '无法更新置顶状态',
+    failedUpdateReaction: '无法更新回应',
+    failedLoadNotification: '无法加载通知设置',
+    failedUpdateNotification: '无法更新通知设置',
+    author: '作者',
+    authorPosts: '作者帖子',
+    filter: '筛选',
+    shareUpdate: '分享最新动态...',
+    managePosts: '管理帖子',
+    pinned: '已置顶',
+    postOptions: '帖子选项',
+    seeInsightsAndAds: '查看洞察\n和广告',
+    boostComingSoon: '推广帖子功能即将推出。',
+    boostPost: '推广帖子',
+    commentsCount: '{{count}} 条评论',
+    echoesCount: '{{count}} 次 Echo',
+    like: '赞',
+    comment: '评论',
+    echo: 'Echo',
+    authorPost: '作者帖子',
+    postLinkCopied: '帖子链接已复制。',
+    closePostOptions: '关闭帖子选项',
+    unpinPost: '取消置顶',
+    pinToTop: '置顶帖子',
+    removeFromTop: '将此帖子从主页顶部移除',
+    showFirst: '在主页最先显示此帖子',
+    removeFromSaved: '从收藏中移除',
+    savePost: '收藏帖子',
+    removeSavedBody: '从你的收藏中移除此帖子。',
+    savePostBody: '将此帖子添加到你的收藏。',
+    editPost: '编辑帖子',
+    movingToTrash: '正在移到回收站...',
+    moveToTrash: '移到回收站',
+    restoreWithin30Days: '你可以在 30 天内恢复此帖子。',
+    turnOffNotifications: '关闭此帖子的通知',
+    turnOnNotifications: '开启此帖子的通知',
+    copyLink: '复制链接',
+    hidePost: '隐藏帖子',
+    fewerPosts: '减少显示类似帖子。',
+    postHidden: '帖子已隐藏',
+    reportAuthorPost: '举报作者帖子',
+    reportBody: '如果此帖子违反平台规则，请告诉我们。',
+    blockAuthor: '屏蔽作者',
+    blockBody: '停止在你的体验中看到这位作者。',
+    blockComingSoon: '屏蔽作者功能即将推出。',
+    loadingPosts: '正在加载帖子...',
+    loadingPostsBody: '正在加载作者帖子，请稍候。',
+    noPosts: '暂无帖子',
+    noPostsBody: '动态、笔记和公告会显示在这里。',
+    postUpdated: '帖子已更新。',
+    removedFromSaved: '已从收藏中移除。',
+    postSaved: '帖子已收藏。',
+    failedSavePost: '无法收藏帖子',
+    notificationsOn: '已开启帖子通知。',
+    notificationsOff: '已关闭帖子通知。',
+    postMovedTrash: '帖子已移到回收站。',
+    postPinnedTop: '帖子已置顶。',
+    postRemovedTop: '帖子已取消置顶。',
+    authorPostFallback: '作者帖子',
+    authorPostComments: '作者帖子评论',
+  },
+  ja: {
+    justNow: 'たった今',
+    failedLoadPosts: '投稿を読み込めませんでした',
+    loginFirst: '先にログインしてください',
+    failedCreatePost: '投稿を作成できませんでした',
+    failedUpdatePost: '投稿を更新できませんでした',
+    failedMoveTrash: '投稿をゴミ箱へ移動できませんでした',
+    failedUpdatePinned: '固定状態を更新できませんでした',
+    failedUpdateReaction: 'リアクションを更新できませんでした',
+    failedLoadNotification: '通知設定を読み込めませんでした',
+    failedUpdateNotification: '通知設定を更新できませんでした',
+    author: '作者',
+    authorPosts: '作者の投稿',
+    filter: 'フィルター',
+    shareUpdate: '近況をシェア...',
+    managePosts: '投稿を管理',
+    pinned: '固定済み',
+    postOptions: '投稿オプション',
+    seeInsightsAndAds: 'インサイトを見る\n広告',
+    boostComingSoon: '投稿のブースト機能は近日公開です。',
+    boostPost: '投稿をブースト',
+    commentsCount: '{{count}} 件のコメント',
+    echoesCount: '{{count}} Echo',
+    like: 'いいね',
+    comment: 'コメント',
+    echo: 'Echo',
+    authorPost: '作者の投稿',
+    postLinkCopied: '投稿リンクをコピーしました。',
+    closePostOptions: '投稿オプションを閉じる',
+    unpinPost: '固定を解除',
+    pinToTop: '上部に固定',
+    removeFromTop: 'この投稿をページ上部から外します',
+    showFirst: 'この投稿をページの最初に表示します',
+    removeFromSaved: '保存済みから削除',
+    savePost: '投稿を保存',
+    removeSavedBody: '保存済みアイテムからこの投稿を削除します。',
+    savePostBody: 'この投稿を保存済みアイテムに追加します。',
+    editPost: '投稿を編集',
+    movingToTrash: 'ゴミ箱へ移動中...',
+    moveToTrash: 'ゴミ箱へ移動',
+    restoreWithin30Days: 'この投稿は30日以内に復元できます。',
+    turnOffNotifications: 'この投稿の通知をオフ',
+    turnOnNotifications: 'この投稿の通知をオン',
+    copyLink: 'リンクをコピー',
+    hidePost: '投稿を非表示',
+    fewerPosts: 'このような投稿の表示を減らします。',
+    postHidden: '投稿を非表示にしました',
+    reportAuthorPost: '作者の投稿を報告',
+    reportBody: 'この投稿がプラットフォーム規約に違反している場合はお知らせください。',
+    blockAuthor: '作者をブロック',
+    blockBody: 'この作者を表示しないようにします。',
+    blockComingSoon: '作者ブロック機能は近日公開です。',
+    loadingPosts: '投稿を読み込み中...',
+    loadingPostsBody: '作者の投稿を読み込んでいます。',
+    noPosts: '投稿はまだありません',
+    noPostsBody: '更新、メモ、お知らせがここに表示されます。',
+    postUpdated: '投稿を更新しました。',
+    removedFromSaved: '保存済みから削除しました。',
+    postSaved: '投稿を保存しました。',
+    failedSavePost: '投稿を保存できませんでした',
+    notificationsOn: '投稿通知をオンにしました。',
+    notificationsOff: '投稿通知をオフにしました。',
+    postMovedTrash: '投稿をゴミ箱へ移動しました。',
+    postPinnedTop: '投稿を上部に固定しました。',
+    postRemovedTop: '投稿の固定を解除しました。',
+    authorPostFallback: '作者の投稿',
+    authorPostComments: '作者投稿のコメント',
+  },
+  ko: {
+    justNow: '방금 전',
+    failedLoadPosts: '게시물을 불러오지 못했습니다',
+    loginFirst: '먼저 로그인해 주세요',
+    failedCreatePost: '게시물을 만들지 못했습니다',
+    failedUpdatePost: '게시물을 업데이트하지 못했습니다',
+    failedMoveTrash: '게시물을 휴지통으로 옮기지 못했습니다',
+    failedUpdatePinned: '고정 상태를 업데이트하지 못했습니다',
+    failedUpdateReaction: '반응을 업데이트하지 못했습니다',
+    failedLoadNotification: '알림 설정을 불러오지 못했습니다',
+    failedUpdateNotification: '알림 설정을 업데이트하지 못했습니다',
+    author: '작가',
+    authorPosts: '작가 게시물',
+    filter: '필터',
+    shareUpdate: '새 소식을 공유하세요...',
+    managePosts: '게시물 관리',
+    pinned: '고정됨',
+    postOptions: '게시물 옵션',
+    seeInsightsAndAds: '인사이트 보기\n및 광고',
+    boostComingSoon: '게시물 홍보 기능이 곧 제공됩니다.',
+    boostPost: '게시물 홍보',
+    commentsCount: '댓글 {{count}}개',
+    echoesCount: 'Echo {{count}}개',
+    like: '좋아요',
+    comment: '댓글',
+    echo: 'Echo',
+    authorPost: '작가 게시물',
+    postLinkCopied: '게시물 링크를 복사했습니다.',
+    closePostOptions: '게시물 옵션 닫기',
+    unpinPost: '게시물 고정 해제',
+    pinToTop: '상단에 고정',
+    removeFromTop: '페이지 상단에서 이 게시물을 제거합니다',
+    showFirst: '페이지에서 이 게시물을 먼저 표시합니다',
+    removeFromSaved: '저장 목록에서 제거',
+    savePost: '게시물 저장',
+    removeSavedBody: '저장한 항목에서 이 게시물을 제거합니다.',
+    savePostBody: '이 게시물을 저장한 항목에 추가합니다.',
+    editPost: '게시물 편집',
+    movingToTrash: '휴지통으로 이동 중...',
+    moveToTrash: '휴지통으로 이동',
+    restoreWithin30Days: '30일 이내에 이 게시물을 복원할 수 있습니다.',
+    turnOffNotifications: '이 게시물 알림 끄기',
+    turnOnNotifications: '이 게시물 알림 켜기',
+    copyLink: '링크 복사',
+    hidePost: '게시물 숨기기',
+    fewerPosts: '이와 비슷한 게시물을 덜 표시합니다.',
+    postHidden: '게시물을 숨겼습니다',
+    reportAuthorPost: '작가 게시물 신고',
+    reportBody: '이 게시물이 플랫폼 규칙을 위반했다면 알려주세요.',
+    blockAuthor: '작가 차단',
+    blockBody: '이 작가의 게시물이 더 이상 표시되지 않게 합니다.',
+    blockComingSoon: '작가 차단 기능이 곧 제공됩니다.',
+    loadingPosts: '게시물을 불러오는 중...',
+    loadingPostsBody: '작가 게시물을 불러오는 동안 기다려 주세요.',
+    noPosts: '아직 게시물이 없습니다',
+    noPostsBody: '업데이트, 메모, 공지가 여기에 표시됩니다.',
+    postUpdated: '게시물을 업데이트했습니다.',
+    removedFromSaved: '저장 목록에서 제거했습니다.',
+    postSaved: '게시물을 저장했습니다.',
+    failedSavePost: '게시물을 저장하지 못했습니다',
+    notificationsOn: '게시물 알림을 켰습니다.',
+    notificationsOff: '게시물 알림을 껐습니다.',
+    postMovedTrash: '게시물을 휴지통으로 옮겼습니다.',
+    postPinnedTop: '게시물을 상단에 고정했습니다.',
+    postRemovedTop: '게시물 고정을 해제했습니다.',
+    authorPostFallback: '작가 게시물',
+    authorPostComments: '작가 게시물 댓글',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -93,17 +442,28 @@ function formatCompactNumber(value) {
 }
 
 function formatPostDate(value) {
-  if (!value) return 'Just now'
+  if (!value) return getDisplayText('authorPostsSection.justNow')
 
   const date = new Date(value)
 
-  if (Number.isNaN(date.getTime())) return 'Just now'
+  if (Number.isNaN(date.getTime())) return getDisplayText('authorPostsSection.justNow')
 
-  return date.toLocaleDateString('en-GB', {
+  const localeMap = {
+    km: 'km-KH',
+    en: 'en-GB',
+    zh: 'zh-CN',
+    ja: 'ja-JP',
+    ko: 'ko-KR',
+  }
+
+  return date.toLocaleDateString(
+    localeMap[getDisplayLanguageId()] || 'en-GB',
+    {
     day: '2-digit',
     month: 'short',
-    year: 'numeric',
-  })
+      year: 'numeric',
+    }
+  )
 }
 
 function sortAuthorPosts(posts) {
@@ -142,7 +502,7 @@ async function fetchAuthorPosts(pageUsername, before = '') {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load posts')
+    throw new Error(data.message || getDisplayText('authorPostsSection.failedLoadPosts'))
   }
 
   return Array.isArray(data.posts) ? data.posts : []
@@ -151,7 +511,7 @@ async function fetchAuthorPosts(pageUsername, before = '') {
 async function createAuthorPost(content, imageUrls = []) {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
 
   const response = await fetch(`${API_BASE_URL}/api/authors/me/posts`, {
     method: 'POST',
@@ -169,7 +529,7 @@ async function createAuthorPost(content, imageUrls = []) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to create post')
+    throw new Error(data.message || getDisplayText('authorPostsSection.failedCreatePost'))
   }
 
   return data.post || null
@@ -178,7 +538,7 @@ async function createAuthorPost(content, imageUrls = []) {
 async function updateAuthorPost(postId, content, imageUrls = []) {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
 
   const response = await fetch(
     `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}`,
@@ -198,7 +558,7 @@ async function updateAuthorPost(postId, content, imageUrls = []) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to update post')
+    throw new Error(data.message || getDisplayText('authorPostsSection.failedUpdatePost'))
   }
 
   return data.post || null
@@ -207,7 +567,7 @@ async function updateAuthorPost(postId, content, imageUrls = []) {
 async function moveAuthorPostToTrash(postId) {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
 
   const response = await fetch(
     `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/trash`,
@@ -222,7 +582,7 @@ async function moveAuthorPostToTrash(postId) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to move post to trash')
+    throw new Error(data.message || getDisplayText('authorPostsSection.failedMoveTrash'))
   }
 
   return data.post || null
@@ -231,7 +591,7 @@ async function moveAuthorPostToTrash(postId) {
 async function setAuthorPostPinned(postId, isPinned) {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
 
   const response = await fetch(`${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/pin`, {
     method: 'PATCH',
@@ -247,7 +607,7 @@ async function setAuthorPostPinned(postId, isPinned) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to update pinned post')
+    throw new Error(data.message || getDisplayText('authorPostsSection.failedUpdatePinned'))
   }
 
   return data.post || null
@@ -256,7 +616,7 @@ async function setAuthorPostPinned(postId, isPinned) {
 async function setAuthorPostReaction(postId, reactionType = 'love') {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
 
   const response = await fetch(`${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/react`, {
     method: 'POST',
@@ -272,7 +632,7 @@ async function setAuthorPostReaction(postId, reactionType = 'love') {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to update reaction')
+    throw new Error(data.message || getDisplayText('authorPostsSection.failedUpdateReaction'))
   }
 
   return data
@@ -281,7 +641,7 @@ async function setAuthorPostReaction(postId, reactionType = 'love') {
 async function fetchAuthorPostNotificationPreference(postId, signal) {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
 
   const response = await fetch(
     `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/notification-preference`,
@@ -296,7 +656,7 @@ async function fetchAuthorPostNotificationPreference(postId, signal) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load notification preference')
+    throw new Error(data.message || getDisplayText('authorPostsSection.failedLoadNotification'))
   }
 
   return data.notifications_enabled !== false
@@ -305,7 +665,7 @@ async function fetchAuthorPostNotificationPreference(postId, signal) {
 async function updateAuthorPostNotificationPreference(postId, enabled) {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
 
   const response = await fetch(
     `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/notification-preference`,
@@ -324,45 +684,46 @@ async function updateAuthorPostNotificationPreference(postId, enabled) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to update notification preference')
+    throw new Error(data.message || getDisplayText('authorPostsSection.failedUpdateNotification'))
   }
 
   return data.preference?.notifications_enabled !== false
 }
 
 function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePosts }) {
+  const { t } = useDisplayTranslation()
   const avatarUrl = author?.avatar_url || ''
-  const pageName = author?.page_name || 'Author'
+  const pageName = author?.page_name || t('authorPostsSection.author')
 
   return (
-    <div className="border-b border-[#eef0f4] bg-white px-4 py-3">
+    <div className="border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-[16px] font-semibold text-[#111827]">Author Posts</h3>
+        <h3 className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPostsSection.authorPosts')}</h3>
 
         <button
   type="button"
   onClick={onOpenFilter}
-  className="text-[14px] font-medium text-[#374151] active:opacity-70"
+  className="text-[14px] font-medium text-[var(--shadow-text-secondary)] active:opacity-70"
 >
-  Filter
+  {t('authorPostsSection.filter')}
 </button>
       </div>
 
       <button
         type="button"
         onClick={onOpenComposer}
-        className="flex w-full items-center gap-3 py-2 text-left active:bg-[#f8fafc]"
+        className="flex w-full items-center gap-3 py-2 text-left active:bg-[var(--shadow-bg-hover)]"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
           {avatarUrl ? (
             <img src={avatarUrl} alt={pageName} className="h-full w-full object-cover" />
           ) : (
-            <i className="fa-solid fa-user text-[14px] text-[#9ca3af]" />
+            <i className="fa-solid fa-user text-[14px] text-[var(--shadow-text-tertiary)]" />
           )}
         </span>
 
-        <span className="min-w-0 flex-1 truncate text-[15px] font-normal text-[#111827]">
-          Share an update...
+        <span className="min-w-0 flex-1 truncate text-[15px] font-normal text-[var(--shadow-text-primary)]">
+          {t('authorPostsSection.shareUpdate')}
         </span>
 
        <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#31a84f]" aria-hidden="true">
@@ -393,10 +754,10 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
       <button
         type="button"
         onClick={onManagePosts}
-        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[10px] bg-[#eef0f4] text-[14px] font-medium text-[#111827] active:scale-[0.99]"
+        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[10px] bg-[var(--shadow-bg-soft)] text-[14px] font-medium text-[var(--shadow-text-primary)] active:scale-[0.99]"
       >
         <i className="fa-regular fa-rectangle-list text-[15px]" />
-        Manage posts
+        {t('authorPostsSection.managePosts')}
       </button>
     </div>
   )
@@ -417,13 +778,13 @@ function PostImageGrid({ images, onView }) {
   }
 
   return (
-    <div className="mt-3 grid w-full grid-cols-2 gap-1 bg-white">
+    <div className="mt-3 grid w-full grid-cols-2 gap-1 bg-[var(--shadow-bg-surface)]">
       {images.slice(0, 4).map((imageUrl, index) => (
         <button
           key={`${imageUrl}-${index}`}
           type="button"
           onClick={() => onView(imageUrl)}
-          className="relative aspect-square bg-[#f3f4f6]"
+          className="relative aspect-square bg-[var(--shadow-bg-soft)]"
         >
           <img src={imageUrl} alt="" className="h-full w-full object-cover" />
           {index === 3 && images.length > 4 ? (
@@ -439,8 +800,9 @@ function PostImageGrid({ images, onView }) {
 
 function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onViewImage, onMessage }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const avatarUrl = author?.avatar_url || ''
-  const pageName = author?.page_name || 'Author'
+  const pageName = author?.page_name || t('authorPostsSection.author')
   const isPinned = Boolean(post.is_pinned || post.pinned)
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
   const reactionBusy = reactionBusyId === post.id
@@ -459,32 +821,32 @@ useEffect(() => {
   
 
   return (
-    <article className="bg-white py-3">
+    <article className="bg-[var(--shadow-bg-surface)] py-3">
       <div className="flex items-start gap-3 px-4">
-        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5">
+        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
           {avatarUrl ? (
             <img src={avatarUrl} alt={pageName} className="h-full w-full object-cover" />
           ) : (
-            <i className="fa-solid fa-user text-[14px] text-[#9ca3af]" />
+            <i className="fa-solid fa-user text-[14px] text-[var(--shadow-text-tertiary)]" />
           )}
 
           {isPinned ? (
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#22c55e]" />
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[var(--shadow-bg-surface)] bg-[#22c55e]" />
           ) : null}
         </span>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="line-clamp-1 text-[14px] font-semibold text-[#111827]">
+              <div className="line-clamp-1 text-[14px] font-semibold text-[var(--shadow-text-primary)]">
                 {pageName}
               </div>
 
-              <div className="mt-0.5 flex items-center gap-1 text-[12px] font-normal text-[#6b7280]">
+              <div className="mt-0.5 flex items-center gap-1 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
                 {isPinned ? (
                   <>
                     <i className="fa-solid fa-thumbtack text-[10px]" />
-                    <span>Pinned</span>
+                    <span>{t('authorPostsSection.pinned')}</span>
                     <span>·</span>
                   </>
                 ) : null}
@@ -498,8 +860,8 @@ useEffect(() => {
             <button
               type="button"
               onClick={() => onOpenMenu(post)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
-              aria-label="Post options"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-hover)]"
+              aria-label={t('authorPostsSection.postOptions')}
             >
               <i className="fa-solid fa-ellipsis text-[14px]" />
             </button>
@@ -514,7 +876,7 @@ useEffect(() => {
   renderText={(value) =>
   renderPostTextWithLinks(value, post.id)
 }
-  className="text-[16px] font-normal leading-7 text-[#111827]"
+  className="text-[16px] font-normal leading-7 text-[var(--shadow-text-primary)]"
 />
         </div>
       ) : null}
@@ -523,23 +885,23 @@ useEffect(() => {
       <PostImageGrid images={postImages} onView={onViewImage} />
 
 {isOwner ? (
-  <div className="flex items-center gap-3 border-b border-[#eef0f4] px-4 py-2">
+  <div className="flex items-center gap-3 border-b border-[var(--shadow-border)] px-4 py-2">
     <button type="button" onClick={() => navigate(`/author/page/posts/${encodeURIComponent(post.id)}/insights`)} className="shrink-0 text-left active:opacity-60">
-      <span className="text-[13px] font-medium leading-5 text-[#64748B]">See insights<br />and ads</span>
+      <span className="whitespace-pre-line text-[13px] font-medium leading-5 text-[var(--shadow-text-secondary)]">{t('authorPostsSection.seeInsightsAndAds')}</span>
     </button>
-    <button type="button" onClick={() => onMessage?.('Boost post coming soon.')} className="ml-auto flex h-10 flex-1 items-center justify-center rounded-[8px] bg-black px-4 text-[14px] font-semibold text-white active:opacity-80">
-      Boost post
+    <button type="button" onClick={() => onMessage?.(t('authorPostsSection.boostComingSoon'))} className="ml-auto flex h-10 flex-1 items-center justify-center rounded-[8px] bg-[var(--shadow-text-primary)] px-4 text-[14px] font-semibold text-[var(--shadow-bg-page)] active:opacity-80">
+      {t('authorPostsSection.boostPost')}
     </button>
   </div>
 ) : null}
 
 <div className="mt-2 px-4 pb-1">
-  <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b]">
+  <div className="flex items-center justify-between pb-2 text-[12px] text-[var(--shadow-text-secondary)]">
     <button
   type="button"
   onClick={() =>
     navigate(`/interactions/author_post/${post.id}/likes`, {
-      state: { sourceName: 'Author Post' },
+      state: { sourceName: t('authorPostsSection.authorPost') },
     })
   }
   className="flex min-w-0 items-center active:opacity-60"
@@ -557,17 +919,17 @@ useEffect(() => {
         onClick={() => onComment(post)}
         className="active:opacity-60"
       >
-        {formatCompactNumber(post.comment_count)} comments
+        {t('authorPostsSection.commentsCount', { count: formatCompactNumber(post.comment_count) })}
       </button>
 
       <span>
-        {formatCompactNumber(echoCount)} echoes
+        {t('authorPostsSection.echoesCount', { count: formatCompactNumber(echoCount) })}
       </span>
     </div>
   </div>
 
-  <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
-    <div className="flex items-center justify-center py-2">
+  <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[var(--shadow-text-secondary)]">
+    <div className="relative flex items-center justify-center py-2">
       <ReactionAction
         reactionType={post.my_reaction}
         count={post.like_count}
@@ -576,30 +938,36 @@ useEffect(() => {
           onReact(post, reactionType)
         }
         showCount={false}
-        idleLabel="Like"
+        idleLabel={t('authorPostsSection.like')}
         className="w-full justify-center"
-        buttonClassName="w-full justify-center gap-2 after:content-['Like'] [&>i]:!text-[20px] [&>img]:!h-[20px] [&>img]:!w-[20px]"
+        buttonClassName="w-full justify-center gap-2 pr-[42px] [&>i]:!text-[20px] [&>img]:!h-[20px] [&>img]:!w-[20px]"
       />
+      <span className="pointer-events-none absolute left-1/2 ml-2.5 text-[14px]">
+        {t('authorPostsSection.like')}
+      </span>
     </div>
 
     <button
       type="button"
       onClick={() => onComment(post)}
-      className="flex w-full items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+      className="flex w-full items-center justify-center gap-2 py-2 active:bg-[var(--shadow-bg-hover)]"
     >
       <i className="fa-regular fa-comment text-[20px]" />
-      <span>Comment</span>
+      <span>{t('authorPostsSection.comment')}</span>
     </button>
 
-    <div className="flex items-center justify-center py-2">
+    <div className="relative flex items-center justify-center py-2">
       <AuthorPostEchoAction
         post={post}
         author={author}
         onCountChange={(_, total) =>
           setEchoCount(Number(total || 0))
         }
-        className="w-full justify-center gap-2 [&>span]:hidden after:content-['Echo'] [&>img]:!h-[20px] [&>img]:!w-[20px]"
+        className="w-full justify-center gap-2 pr-[42px] [&>span]:hidden [&>img]:!h-[20px] [&>img]:!w-[20px]"
       />
+      <span className="pointer-events-none absolute left-1/2 ml-2.5 text-[14px]">
+        {t('authorPostsSection.echo')}
+      </span>
     </div>
   </div>
 </div>
@@ -620,19 +988,19 @@ function SheetOption({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2.5 text-left active:bg-black/[0.04] disabled:opacity-50"
+      className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2.5 text-left active:bg-[var(--shadow-bg-hover)] disabled:opacity-50"
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
         <i className={`${icon} text-[16px]`} />
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-normal text-[#111827]">
+        <span className="block text-[14px] font-normal text-[var(--shadow-text-primary)]">
           {title}
         </span>
 
         {subtext ? (
-          <span className="mt-0.5 block text-[10px] font-normal leading-4 text-[#98a2b3]">
+          <span className="mt-0.5 block text-[10px] font-normal leading-4 text-[var(--shadow-text-tertiary)]">
             {subtext}
           </span>
         ) : null}
@@ -660,6 +1028,7 @@ function PostOptionsSheet({
   onReport,
   onMessage,
 }) {
+  const { t } = useDisplayTranslation()
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
   const [sheetOffset, setSheetOffset] =
@@ -766,7 +1135,7 @@ function PostOptionsSheet({
         )
 
         onMessage?.(
-          'Post link copied.'
+          t('authorPostsSection.postLinkCopied')
         )
 
         return
@@ -787,13 +1156,13 @@ function PostOptionsSheet({
     <div className="fixed inset-0 z-[230]">
       <button
         type="button"
-        aria-label="Close post options"
+        aria-label={t('authorPostsSection.closePostOptions')}
         onClick={onClose}
         className="absolute inset-0 bg-black/45"
       />
 
       <section
-        className={`absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[560px] rounded-t-[24px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl ${
+        className={`absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[560px] rounded-t-[24px] bg-[var(--shadow-bg-elevated)] px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl ${
           dragging
             ? ''
             : 'transition-transform duration-200 ease-out'
@@ -816,7 +1185,7 @@ function PostOptionsSheet({
         role="dialog"
         aria-modal="true"
       >
-        <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#b8bec8]" />
+        <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[var(--shadow-border)]" />
 
         <div className="space-y-0.5">
           {isOwner ? (
@@ -825,13 +1194,13 @@ function PostOptionsSheet({
                 icon="fa-solid fa-thumbtack"
                 title={
                   isPinned
-                    ? 'Unpin post'
-                    : 'Pin to top'
+                    ? t('authorPostsSection.unpinPost')
+                    : t('authorPostsSection.pinToTop')
                 }
                 subtext={
                   isPinned
-                    ? 'Remove this post from the top of your page'
-                    : 'Show this post first on your page'
+                    ? t('authorPostsSection.removeFromTop')
+                    : t('authorPostsSection.showFirst')
                 }
                 disabled={busy}
                 onClick={() =>
@@ -850,13 +1219,13 @@ function PostOptionsSheet({
   }
   title={
     isSaved
-      ? 'Remove from saved'
-      : 'Save post'
+      ? t('authorPostsSection.removeFromSaved')
+      : t('authorPostsSection.savePost')
   }
   subtext={
     isSaved
-      ? 'Remove this post from your saved items.'
-      : 'Add this post to your saved items.'
+      ? t('authorPostsSection.removeSavedBody')
+      : t('authorPostsSection.savePostBody')
   }
   disabled={saveBusy}
   onClick={() =>
@@ -866,7 +1235,7 @@ function PostOptionsSheet({
 
               <SheetOption
                 icon="fa-solid fa-pen"
-                title="Edit post"
+                title={t('authorPostsSection.editPost')}
                 onClick={() => onEdit?.(post)}
               />
 
@@ -874,10 +1243,10 @@ function PostOptionsSheet({
                 icon="fa-solid fa-trash-can"
                 title={
                   trashBusy
-                    ? 'Moving to trash...'
-                    : 'Move to trash'
+                    ? t('authorPostsSection.movingToTrash')
+                    : t('authorPostsSection.moveToTrash')
                 }
-                subtext="You can restore this post within 30 days."
+                subtext={t('authorPostsSection.restoreWithin30Days')}
                 disabled={trashBusy}
                 onClick={() =>
                   onMoveToTrash?.(post)
@@ -892,8 +1261,8 @@ function PostOptionsSheet({
                 }
                 title={
                   notificationsEnabled
-                    ? 'Turn off notifications for this post'
-                    : 'Turn on notifications for this post'
+                    ? t('authorPostsSection.turnOffNotifications')
+                    : t('authorPostsSection.turnOnNotifications')
                 }
                 disabled={notificationBusy}
                 onClick={() =>
@@ -903,7 +1272,7 @@ function PostOptionsSheet({
 
               <SheetOption
                 icon="fa-regular fa-copy"
-                title="Copy link"
+                title={t('authorPostsSection.copyLink')}
                 onClick={copyPostLink}
               />
             </>
@@ -917,13 +1286,13 @@ function PostOptionsSheet({
   }
   title={
     isSaved
-      ? 'Remove from saved'
-      : 'Save post'
+      ? t('authorPostsSection.removeFromSaved')
+      : t('authorPostsSection.savePost')
   }
   subtext={
     isSaved
-      ? 'Remove this post from your saved items.'
-      : 'Add this post to your saved items.'
+      ? t('authorPostsSection.removeSavedBody')
+      : t('authorPostsSection.savePostBody')
   }
   disabled={saveBusy}
   onClick={() =>
@@ -933,19 +1302,19 @@ function PostOptionsSheet({
 
               <SheetOption
                 icon="fa-regular fa-eye-slash"
-                title="Hide post"
-                subtext="See fewer posts like this."
+                title={t('authorPostsSection.hidePost')}
+                subtext={t('authorPostsSection.fewerPosts')}
                 onClick={() =>
                   handleComingSoon(
-                    'Post hidden'
+                    t('authorPostsSection.postHidden')
                   )
                 }
               />
 
               <SheetOption
                 icon="fa-regular fa-flag"
-                title="Report Author Post"
-                subtext="Tell us if this post violates platform rules."
+                title={t('authorPostsSection.reportAuthorPost')}
+                subtext={t('authorPostsSection.reportBody')}
                 onClick={() =>
                   onReport?.(post)
                 }
@@ -953,11 +1322,11 @@ function PostOptionsSheet({
 
               <SheetOption
                 icon="fa-solid fa-user-slash"
-                title="Block author"
-                subtext="Stop seeing this author in your experience."
+                title={t('authorPostsSection.blockAuthor')}
+                subtext={t('authorPostsSection.blockBody')}
                 onClick={() =>
                   handleComingSoon(
-                    'Block author is coming soon.'
+                    t('authorPostsSection.blockComingSoon')
                   )
                 }
               />
@@ -970,8 +1339,8 @@ function PostOptionsSheet({
                 }
                 title={
                   notificationsEnabled
-                    ? 'Turn off notifications for this post'
-                    : 'Turn on notifications for this post'
+                    ? t('authorPostsSection.turnOffNotifications')
+                    : t('authorPostsSection.turnOnNotifications')
                 }
                 disabled={notificationBusy}
                 onClick={() =>
@@ -981,7 +1350,7 @@ function PostOptionsSheet({
 
               <SheetOption
                 icon="fa-regular fa-copy"
-                title="Copy link"
+                title={t('authorPostsSection.copyLink')}
                 onClick={copyPostLink}
               />
             </>
@@ -999,14 +1368,14 @@ function PostOptionsSheet({
       
 function PostsEmpty({ title, text }) {
   return (
-    <div className="bg-white px-5 py-8 text-center">
-      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+    <div className="bg-[var(--shadow-bg-surface)] px-5 py-8 text-center">
+      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
         <i className="fa-regular fa-file-lines text-[16px]" />
       </div>
 
-      <h3 className="text-[14px] font-semibold text-[#111827]">{title}</h3>
+      <h3 className="text-[14px] font-semibold text-[var(--shadow-text-primary)]">{title}</h3>
 
-      <p className="mx-auto mt-1.5 max-w-[300px] text-[12px] font-normal leading-5 text-[#8b93a1]">
+      <p className="mx-auto mt-1.5 max-w-[300px] text-[12px] font-normal leading-5 text-[var(--shadow-text-tertiary)]">
         {text}
       </p>
     </div>
@@ -1015,6 +1384,7 @@ function PostsEmpty({ title, text }) {
 
 export default function AuthorPostsSection({ author, onCountChange, onMessage }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   function openAuthorPhoto(post, imageUrl) {
   if (!post?.id) return
 
@@ -1154,7 +1524,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         if (!ignore) {
           setPosts([])
           onCountChange?.(0)
-          setLocalError(error.message || 'Failed to load posts')
+          setLocalError(error.message || t('authorPostsSection.failedLoadPosts'))
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -1191,7 +1561,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
       return false
     } catch (error) {
-      const message = error.message || 'Failed to create post'
+      const message = error.message || t('authorPostsSection.failedCreatePost')
       setLocalError(message)
       onMessage?.(message)
       return false
@@ -1239,10 +1609,10 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         )
       )
 
-      onMessage?.('Post updated.')
+      onMessage?.(t('authorPostsSection.postUpdated'))
       return true
     } catch (error) {
-      const message = error.message || 'Failed to update post'
+      const message = error.message || t('authorPostsSection.failedUpdatePost')
       setLocalError(message)
       onMessage?.(message)
       return false
@@ -1266,7 +1636,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
       setSelectedPostSaved(false)
       onMessage?.(
-        'Removed from saved.'
+        t('authorPostsSection.removedFromSaved')
       )
       return
     }
@@ -1301,11 +1671,11 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     })
 
     setSelectedPostSaved(true)
-    onMessage?.('Post saved.')
+    onMessage?.(t('authorPostsSection.postSaved'))
   } catch (error) {
     const message =
       error.message ||
-      'Failed to save post'
+      t('authorPostsSection.failedSavePost')
 
     setLocalError(message)
     onMessage?.(message)
@@ -1336,13 +1706,13 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
       onMessage?.(
         enabled
-          ? 'Post notifications turned on.'
-          : 'Post notifications turned off.'
+          ? t('authorPostsSection.notificationsOn')
+          : t('authorPostsSection.notificationsOff')
       )
     } catch (error) {
       const message =
         error.message ||
-        'Failed to update notification preference'
+        t('authorPostsSection.failedUpdateNotification')
 
       setLocalError(message)
       onMessage?.(message)
@@ -1370,11 +1740,11 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       })
 
       setSelectedPost(null)
-      onMessage?.('Post moved to trash.')
+      onMessage?.(t('authorPostsSection.postMovedTrash'))
     } catch (error) {
       const message =
         error.message ||
-        'Failed to move post to trash'
+        t('authorPostsSection.failedMoveTrash')
 
       setLocalError(message)
       onMessage?.(message)
@@ -1401,9 +1771,9 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       setPosts(sortedPosts)
       onCountChange?.(sortedPosts.length)
       setSelectedPost(null)
-      onMessage?.(isPinned ? 'Post pinned to top.' : 'Post removed from top.')
+      onMessage?.(isPinned ? t('authorPostsSection.postPinnedTop') : t('authorPostsSection.postRemovedTop'))
     } catch (error) {
-      const message = error.message || 'Failed to update pinned post'
+      const message = error.message || t('authorPostsSection.failedUpdatePinned')
       setLocalError(message)
       onMessage?.(message)
     } finally {
@@ -1432,7 +1802,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 }
     }))
   } catch (error) {
-    const message = error.message || 'Failed to update reaction'
+    const message = error.message || t('authorPostsSection.failedUpdateReaction')
     setLocalError(message)
     onMessage?.(message)
   } finally {
@@ -1460,7 +1830,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
 
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(link)
-    onMessage?.('Post link copied.')
+    onMessage?.(t('authorPostsSection.postLinkCopied'))
     return
   }
 
@@ -1470,7 +1840,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
 
 
   return (
-    <div className="mx-[-16px] overflow-hidden bg-white sm:mx-0">
+    <div className="mx-[-16px] overflow-hidden bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)] sm:mx-0">
       {author?.is_owner ? (
         <AuthorPostComposer
           author={author}
@@ -1487,7 +1857,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         <button
           type="button"
           onClick={() => setLocalError('')}
-          className="m-4 w-[calc(100%-2rem)] rounded-[14px] bg-white px-3 py-2 text-left text-[12px] font-medium leading-5 text-[#111827] shadow-sm ring-1 ring-black/10"
+          className="m-4 w-[calc(100%-2rem)] rounded-[14px] bg-[var(--shadow-bg-elevated)] px-3 py-2 text-left text-[12px] font-medium leading-5 text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]"
         >
           {localError}
         </button>
@@ -1497,9 +1867,9 @@ function handleAuthorPostCommentChanged(nextComments = []) {
       
 
       {loading ? (
-        <PostsEmpty title="Loading posts..." text="Please wait while author posts load." />
+        <PostsEmpty title={t('authorPostsSection.loadingPosts')} text={t('authorPostsSection.loadingPostsBody')} />
       ) : posts.length ? (
-        <div className="space-y-2 bg-[#f3f4f6]">
+        <div className="space-y-2 bg-[var(--shadow-bg-soft)]">
           {posts.map((post) => (
             <AuthorPostCard
               key={post.id}
@@ -1519,8 +1889,8 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         </div>
       ) : (
         <PostsEmpty
-          title="No posts yet"
-          text="Updates, notes, and announcements will appear here."
+          title={t('authorPostsSection.noPosts')}
+          text={t('authorPostsSection.noPostsBody')}
         />
       )}
 
@@ -1580,7 +1950,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         targetId={reportPost?.id}
         targetTitle={
           reportPost
-            ? `${author?.page_name || 'Author'}: ${String(reportPost.content || 'Author post').slice(0, 80)}`
+            ? `${author?.page_name || t('authorPostsSection.author')}: ${String(reportPost.content || t('authorPostsSection.authorPostFallback')).slice(0, 80)}`
             : ''
         }
         onClose={() => setReportPost(null)}
@@ -1590,15 +1960,15 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   open={Boolean(commentPost)}
   targetType="author_post"
   targetId={commentPost?.id}
-  title="Author post comments"
+  title={t('authorPostsSection.authorPostComments')}
   story={{
     id: commentPost?.id,
-    title: 'Author post comments',
+    title: t('authorPostsSection.authorPostComments'),
     user_id: author?.user_id || author?.owner_id || author?.created_by || author?.id,
     author_user_id: author?.user_id || author?.owner_id || author?.created_by || author?.id,
     author_page: {
       user_id: author?.user_id || author?.owner_id || author?.created_by || author?.id,
-      page_name: author?.page_name || 'Author',
+      page_name: author?.page_name || t('authorPostsSection.author'),
       avatar_url: author?.avatar_url || '',
     },
   }}
