@@ -1,5 +1,35 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('continueReadingSection', {
+  en: {
+    title: 'Continue Reading',
+    readChapter: 'Read Ch. {{current}} / {{total}}',
+    untitledStory: 'Untitled Story',
+  },
+  km: {
+    title: 'បន្តការអាន',
+    readChapter: 'អានជំពូក {{current}} / {{total}}',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+  },
+  zh: {
+    title: '继续阅读',
+    readChapter: '阅读第 {{current}} / {{total}} 章',
+    untitledStory: '未命名故事',
+  },
+  ja: {
+    title: '続きを読む',
+    readChapter: '{{current}} / {{total}} 話を読む',
+    untitledStory: '無題のストーリー',
+  },
+  ko: {
+    title: '계속 읽기',
+    readChapter: '{{current}} / {{total}}화 읽기',
+    untitledStory: '제목 없는 작품',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -12,6 +42,7 @@ function getReaderToken() {
 }
 
 function ContinueReadingCard({ item }) {
+  const { t } = useDisplayTranslation()
   const story = item.story || {}
   const episode = item.episode || {}
   const image = story.landscape_thumbnail_url || story.cover_url || ''
@@ -23,7 +54,7 @@ function ContinueReadingCard({ item }) {
       to={`/story/${item.story_id}/episode/${item.episode_id}`}
       className="group block w-[112px] shrink-0 md:w-[150px]"
     >
-      <div className="relative aspect-[1.28/1] overflow-hidden rounded-[8px] bg-[#eef1f5]">
+      <div className="relative aspect-[1.28/1] overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)]">
         {image ? (
           <img
             src={image}
@@ -35,12 +66,15 @@ function ContinueReadingCard({ item }) {
         ) : null}
       </div>
 
-      <p className="mt-2 truncate text-[11px] font-medium text-[#8d94a1]">
-        Read Ch. {episodeNumber} / {totalEpisodes}
+      <p className="mt-2 truncate text-[11px] font-medium text-[var(--shadow-text-secondary)]">
+        {t('continueReadingSection.readChapter', {
+          current: episodeNumber,
+          total: totalEpisodes,
+        })}
       </p>
 
-      <h3 className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-[18px] text-[#111827]">
-        {story.title || 'Untitled Story'}
+      <h3 className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-[18px] text-[var(--shadow-text-primary)]">
+        {story.title || t('continueReadingSection.untitledStory')}
       </h3>
     </Link>
   )
@@ -49,6 +83,7 @@ function ContinueReadingCard({ item }) {
 export default function ContinueReadingSection({
   storyType = '',
 }) {
+  const { t } = useDisplayTranslation()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -203,8 +238,8 @@ export default function ContinueReadingSection({
           <i className="fa-solid fa-book-open text-[17px]" />
         </span>
 
-        <h2 className="text-[18px] font-extrabold tracking-tight text-[#111827] lg:text-[19px]">
-          Continue Reading
+        <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+          {t('continueReadingSection.title')}
         </h2>
       </div>
 
