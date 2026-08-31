@@ -178,21 +178,21 @@ function SheetItem({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2.5 text-left active:bg-black/[0.04]"
+      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2.5 text-left active:bg-[var(--shadow-bg-hover)]"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
         {iconNode || (
           <i className={`${icon} text-[17px] font-normal`} />
         )}
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-normal text-[#111827]">
+        <span className="block text-[14px] font-normal text-[var(--shadow-text-primary)]">
           {title}
         </span>
 
         {description ? (
-          <span className="mt-0.5 block text-[10px] font-normal leading-4 text-[#98a2b3]">
+          <span className="mt-0.5 block text-[10px] font-normal leading-4 text-[var(--shadow-text-tertiary)]">
             {description}
           </span>
         ) : null}
@@ -273,14 +273,14 @@ export default function ReaderPostOptionsSheet({
       />
 
       <section
-        className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[560px] rounded-t-[24px] bg-white px-2 pb-[max(20px,env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+        className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[560px] rounded-t-[24px] bg-[var(--shadow-bg-elevated)] px-2 pb-[max(20px,env(safe-area-inset-bottom))] pt-2 shadow-2xl"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#9ca3af]" />
+        <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[var(--shadow-text-tertiary)]" />
 
-        <div className="rounded-[16px] bg-[#f5f6f8] px-1 py-1">
+        <div className="rounded-[16px] bg-[var(--shadow-bg-soft)] px-1 py-1">
           {isOwner ? (
             <>
               <SheetItem
@@ -365,14 +365,14 @@ export function ReaderPostDeleteConfirmSheet({
         aria-label={t('readerPostOptions.cancelDelete')}
       />
 
-      <section className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[560px] rounded-t-[24px] bg-white px-4 pb-[max(22px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#9ca3af]" />
+      <section className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[560px] rounded-t-[24px] bg-[var(--shadow-bg-elevated)] px-4 pb-[max(22px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--shadow-text-tertiary)]" />
 
-        <h2 className="text-[16px] font-semibold text-[#111827]">
+        <h2 className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">
           {t('readerPostOptions.deleteConfirmTitle')}
         </h2>
 
-        <p className="mt-2 text-[12px] font-normal leading-5 text-[#667085]">
+        <p className="mt-2 text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
           {t('readerPostOptions.deleteConfirmDescription')}
         </p>
 
@@ -381,7 +381,7 @@ export function ReaderPostDeleteConfirmSheet({
             type="button"
             onClick={onCancel}
             disabled={deleting}
-            className="h-11 rounded-full border border-[#d0d5dd] bg-white text-[13px] font-normal text-[#111827] disabled:opacity-50"
+            className="h-11 rounded-full border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-soft)] text-[13px] font-normal text-[var(--shadow-text-primary)] disabled:opacity-50"
           >
             {t('readerPostOptions.cancel')}
           </button>
