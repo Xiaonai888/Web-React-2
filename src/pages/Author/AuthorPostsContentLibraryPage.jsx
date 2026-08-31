@@ -8,9 +8,11 @@ const API_BASE_URL =
 
 const FILTER_OPTIONS = {
   status: [
-    { value: 'all', label: 'All posts' },
-    { value: 'published', label: 'Published' },
-  ],
+  { value: 'all', label: 'All posts' },
+  { value: 'published', label: 'Published' },
+  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'uploaded', label: 'Uploaded' },
+],
   date: [
     { value: 'today', label: 'Today' },
     { value: '7d', label: 'Last 7 days' },
@@ -468,11 +470,16 @@ export default function AuthorPostsContentLibraryPage() {
   const visiblePosts = useMemo(() => {
     let nextPosts = [...posts]
 
-    if (statusFilter === 'published') {
-      nextPosts = nextPosts.filter(
-        (post) => String(post?.status || '').toLowerCase() === 'active'
-      )
-    }
+    if (statusFilter !== 'all') {
+  const expectedStatus = {
+    published: 'active',
+    scheduled: 'scheduled',
+    uploaded: 'uploaded',
+  }[statusFilter]
+  nextPosts = nextPosts.filter((post) =>
+    String(post?.status || '').toLowerCase() === expectedStatus
+  )
+}
 
     const cutoff = getDateCutoff(dateRange)
 
@@ -590,7 +597,7 @@ export default function AuthorPostsContentLibraryPage() {
               onClick={() => openFilter('status')}
               className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
             >
-              Post status
+              {getOptionLabel('status', statusFilter)}
               <i className="fa-solid fa-caret-down text-[12px]" />
             </button>
 
