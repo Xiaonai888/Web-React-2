@@ -420,12 +420,12 @@ function FilterSheet({
                   <span
                     className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
                       selected
-                        ? 'border-[#1685f8]'
-                        : 'border-[#6b7280]'
+                        ? 'border-[#111827]'
+: 'border-[#6b7280]'
                     }`}
                   >
                     {selected ? (
-                      <span className="h-3 w-3 rounded-full bg-[#1685f8]" />
+                      <span className="h-3 w-3 rounded-full bg-[#111827]" />
                     ) : null}
                   </span>
                 </button>
