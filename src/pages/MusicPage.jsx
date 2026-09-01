@@ -26,7 +26,7 @@ registerTranslationNamespace('musicPage', {
     back: 'Back',
     tracks: 'Tracks',
     play: 'Play',
-    totalListeners: 'Total Listeners',
+    totalListeners: 'Listener',
     noArtists: 'No artists yet',
     noPopular: 'No popular songs yet.',
     noAlbums: 'No albums yet.',
