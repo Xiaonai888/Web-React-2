@@ -1,5 +1,65 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('topNovelSection', {
+  en: {
+    title: 'Ranking',
+    bestSellers: 'Best Sellers',
+    mostReads: 'Most Reads',
+    risingStars: 'Rising Stars',
+    romance: 'Romance',
+    lgbtq: 'LGBTQ+',
+    completed: 'Completed',
+    untitledStory: 'Untitled Story',
+    rankingGenre: 'Ranking',
+  },
+  km: {
+    title: 'ចំណាត់ថ្នាក់',
+    bestSellers: 'លក់ដាច់បំផុត',
+    mostReads: 'អានច្រើនបំផុត',
+    risingStars: 'កំពុងពេញនិយម',
+    romance: 'មនោសញ្ចេតនា',
+    lgbtq: 'LGBTQ+',
+    completed: 'រឿងចប់',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    rankingGenre: 'ចំណាត់ថ្នាក់',
+  },
+  zh: {
+    title: '排行榜',
+    bestSellers: '畅销榜',
+    mostReads: '阅读最多',
+    risingStars: '新星榜',
+    romance: '浪漫',
+    lgbtq: 'LGBTQ+',
+    completed: '已完结',
+    untitledStory: '未命名故事',
+    rankingGenre: '排行榜',
+  },
+  ja: {
+    title: 'ランキング',
+    bestSellers: 'ベストセラー',
+    mostReads: '最多読者',
+    risingStars: '注目上昇中',
+    romance: 'ロマンス',
+    lgbtq: 'LGBTQ+',
+    completed: '完結',
+    untitledStory: '無題のストーリー',
+    rankingGenre: 'ランキング',
+  },
+  ko: {
+    title: '랭킹',
+    bestSellers: '베스트셀러',
+    mostReads: '최다 조회',
+    risingStars: '떠오르는 작품',
+    romance: '로맨스',
+    lgbtq: 'LGBTQ+',
+    completed: '완결',
+    untitledStory: '제목 없는 작품',
+    rankingGenre: '랭킹',
+  },
+})
 import {
   addStoryLanguageParam,
   getStoryLanguageId,
@@ -21,27 +81,33 @@ const TOP_NOVEL_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 const rankingTabs = [
   {
     label: 'Best Sellers',
+    labelKey: 'bestSellers',
     endpoint: '/api/public/stories?limit=6&sort=popular',
   },
   {
     label: 'Most Reads',
+    labelKey: 'mostReads',
     endpoint: '/api/public/stories?limit=6&sort=trending',
   },
   {
     label: 'Rising Stars',
+    labelKey: 'risingStars',
     endpoint: '/api/public/stories?limit=6&sort=updated',
   },
   {
     label: 'Romance',
+    labelKey: 'romance',
     endpoint: '/api/public/stories?limit=6&sort=popular&genre=Romance',
   },
   {
     label: 'LGBTQ+',
+    labelKey: 'lgbtq',
     endpoint: '/api/public/stories?limit=48&sort=popular',
     filter: isLgbtqStory,
   },
   {
     label: 'Completed',
+    labelKey: 'completed',
     endpoint: '/api/public/stories?limit=6&sort=popular&story_status=Completed',
     filter: isCompletedStory,
   },
@@ -93,10 +159,10 @@ function normalizeStory(story, index = 0) {
   return {
     id: story.id,
     rank: index + 1,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     image: story.cover_url || story.coverUrl || story.image_url || '',
     link: `/story/${story.id}`,
-    genre: story.main_genre || story.genre || 'Ranking',
+    genre: story.main_genre || story.genre || '',
     isFallback: false,
   }
 }
@@ -222,31 +288,33 @@ function SafeBookCover({ src, title, rank }) {
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#f3f4f6] to-[#d1d5db] text-[11px] font-extrabold text-gray-500">
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--shadow-bg-soft)] to-[var(--shadow-bg-hover)] text-[11px] font-extrabold text-[var(--shadow-text-secondary)]">
       #{rank}
     </div>
   )
 }
 
 function RankingBookCard({ item, onOpen }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <button
       type="button"
       onClick={onOpen}
       className="group flex h-[120px] w-full items-center gap-3 text-left md:h-[116px]"
     >
-      <div className="relative h-[120px] w-[82px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm md:h-[116px] md:w-[80px]">
-        <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
+      <div className="relative h-[120px] w-[82px] shrink-0 overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)] shadow-sm md:h-[116px] md:w-[80px]">
+        <SafeBookCover src={item.image} title={item.title || t('topNovelSection.untitledStory')} rank={item.rank} />
         <RankBadge rank={item.rank} />
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 whitespace-normal break-words text-[14px] font-[640] leading-[18px] text-neutral-900">
-          {item.title}
+        <h3 className="line-clamp-2 whitespace-normal break-words text-[14px] font-[640] leading-[18px] text-[var(--shadow-text-primary)]">
+          {item.title || t('topNovelSection.untitledStory')}
         </h3>
 
-        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
-          {item.genre || 'Ranking'}
+        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-[var(--shadow-text-secondary)]">
+          {item.genre || t('topNovelSection.rankingGenre')}
         </p>
       </div>
     </button>
@@ -254,23 +322,25 @@ function RankingBookCard({ item, onOpen }) {
 }
 
 function LoadingRanking() {
+  const { t } = useDisplayTranslation()
+
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[20px] lg:text-[21px]">🏆</span>
-            <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-              Ranking
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+              {t('topNovelSection.title')}
             </h2>
           </div>
 
-          <div className="h-8 w-8 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-8 w-8 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
         </div>
 
         <div className="mb-5 flex gap-4 overflow-hidden">
           {rankingTabs.slice(0, 4).map((tab) => (
-            <div key={tab.label} className="h-[34px] w-20 animate-pulse rounded-full bg-gray-100" />
+            <div key={tab.label} className="h-[34px] w-20 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
           ))}
         </div>
 
@@ -282,10 +352,10 @@ function LoadingRanking() {
             >
               {Array.from({ length: 3 }).map((_, index) => (
                 <div key={index} className="flex h-[108px] items-center gap-3 md:h-[112px]">
-                  <div className="h-[116px] w-[80px] shrink-0 animate-pulse rounded-[8px] bg-gray-100 md:h-[116px] md:w-[80px]" />
+                  <div className="h-[116px] w-[80px] shrink-0 animate-pulse rounded-[8px] bg-[var(--shadow-bg-soft)] md:h-[116px] md:w-[80px]" />
                   <div className="min-w-0 flex-1">
-                    <div className="h-4 w-4/5 animate-pulse rounded-full bg-gray-100" />
-                    <div className="mt-2 h-3 w-2/5 animate-pulse rounded-full bg-gray-100" />
+                    <div className="h-4 w-4/5 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                    <div className="mt-2 h-3 w-2/5 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                   </div>
                 </div>
               ))}
@@ -300,6 +370,7 @@ function LoadingRanking() {
 export default function TopNovelSection({
   storyType = '',
 }) {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState(
     rankingTabs[0].label
@@ -414,18 +485,18 @@ export default function TopNovelSection({
               🏆
             </span>
 
-            <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-              Ranking
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+              {t('topNovelSection.title')}
             </h2>
           </div>
 
           <button
             type="button"
             onClick={() => navigate('/ranking')}
-            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
+            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-hover)]"
             aria-label="Go to Ranking page"
           >
-            <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+            <i className="fas fa-chevron-right text-[15px] text-[var(--shadow-text-secondary)] lg:text-[16px]" />
           </button>
         </div>
 
@@ -443,11 +514,11 @@ export default function TopNovelSection({
                 }
                 className={`relative inline-flex h-[34px] shrink-0 items-center px-0.5 text-[13px] leading-none transition-colors active:scale-[0.98] ${
                   isActive
-                    ? 'font-extrabold text-[#111827]'
-                    : 'font-[560] text-[#6b7280]'
+                    ? 'font-extrabold text-[var(--shadow-text-primary)]'
+                    : 'font-[560] text-[var(--shadow-text-secondary)]'
                 }`}
               >
-                {tab.label}
+                {t(`topNovelSection.${tab.labelKey}`)}
 
                 <span
                   className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 rounded-full bg-[#facc15] transition-all duration-200 ${
