@@ -4,6 +4,237 @@ import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
 import ReactionAction from '../social/reactions/ReactionAction'
 import ReactionSummary from '../social/reactions/ReactionSummary'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerPhotoViewer', {
+  "en": {
+    "reader": "Reader",
+    "failedUpdatePhoto": "Failed to update photo",
+    "captionSaved": "Caption saved.",
+    "captionRemoved": "Caption removed.",
+    "failedSaveCaption": "Failed to save caption.",
+    "altSaved": "Alt text saved.",
+    "altRemoved": "Alt text removed.",
+    "failedSaveAlt": "Failed to save alt text.",
+    "postNeedsContent": "This post needs text or a photo. Delete the post instead.",
+    "failedDeletePhoto": "Failed to delete photo",
+    "photoDeleted": "Photo deleted.",
+    "couldNotDownload": "Could not download photo",
+    "photoSaved": "Photo saved.",
+    "photoOpened": "Photo opened for saving.",
+    "position": "{{current}} of {{total}}",
+    "commentsCount": "{{count}} comments",
+    "sharesCount": "{{count}} shares",
+    "like": "Like",
+    "comment": "Comment",
+    "share": "Share",
+    "editCaption": "Edit caption",
+    "deletePhoto": "Delete photo",
+    "saveToPhone": "Save to phone",
+    "shareExternal": "Share external",
+    "reportPhoto": "Report photo",
+    "editAltText": "Edit alt text",
+    "photoNumber": "Photo {{number}}",
+    "captionPlaceholder": "Write a caption for this photo...",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "save": "Save",
+    "altDescription": "Describe what is shown in this photo for accessibility.",
+    "altPlaceholder": "Describe this photo...",
+    "deleteTitle": "Delete this photo?",
+    "deleteDescription": "This photo will be removed from this Reader post.",
+    "deleting": "Deleting...",
+    "delete": "Delete",
+    "sharePhoto": "Share Photo",
+    "photoShareText": "View {{name}}'s photo on Shadow.",
+    "photoLinkCopied": "Photo link copied.",
+    "readerPost": "Reader post",
+    "readerPostLabel": "reader post",
+    "readerPhoto": "{{name}} photo"
+  },
+  "km": {
+    "reader": "អ្នកអាន",
+    "failedUpdatePhoto": "មិនអាចអាប់ដេតរូបបានទេ",
+    "captionSaved": "បានរក្សាទុក Caption។",
+    "captionRemoved": "បានលុប Caption។",
+    "failedSaveCaption": "មិនអាចរក្សាទុក Caption បានទេ។",
+    "altSaved": "បានរក្សាទុក Alt text។",
+    "altRemoved": "បានលុប Alt text។",
+    "failedSaveAlt": "មិនអាចរក្សាទុក Alt text បានទេ។",
+    "postNeedsContent": "ប្រកាសនេះត្រូវមានអត្ថបទ ឬរូបមួយ។ សូមលុបប្រកាសជំនួសវិញ។",
+    "failedDeletePhoto": "មិនអាចលុបរូបបានទេ",
+    "photoDeleted": "បានលុបរូប។",
+    "couldNotDownload": "មិនអាចទាញយករូបបានទេ",
+    "photoSaved": "បានរក្សាទុករូប។",
+    "photoOpened": "បានបើករូបសម្រាប់រក្សាទុក។",
+    "position": "{{current}} ក្នុង {{total}}",
+    "commentsCount": "{{count}} មតិយោបល់",
+    "sharesCount": "{{count}} ចែករំលែក",
+    "like": "ចូលចិត្ត",
+    "comment": "មតិយោបល់",
+    "share": "ចែករំលែក",
+    "editCaption": "កែ Caption",
+    "deletePhoto": "លុបរូប",
+    "saveToPhone": "រក្សាទុកក្នុងទូរស័ព្ទ",
+    "shareExternal": "ចែករំលែកទៅខាងក្រៅ",
+    "reportPhoto": "រាយការណ៍រូប",
+    "editAltText": "កែ Alt text",
+    "photoNumber": "រូបទី {{number}}",
+    "captionPlaceholder": "សរសេរ Caption សម្រាប់រូបនេះ...",
+    "cancel": "បោះបង់",
+    "saving": "កំពុងរក្សាទុក...",
+    "save": "រក្សាទុក",
+    "altDescription": "ពិពណ៌នាអ្វីដែលមានក្នុងរូបនេះសម្រាប់ភាពងាយស្រួលប្រើប្រាស់។",
+    "altPlaceholder": "ពិពណ៌នារូបនេះ...",
+    "deleteTitle": "លុបរូបនេះ?",
+    "deleteDescription": "រូបនេះនឹងត្រូវដកចេញពីប្រកាសអ្នកអាននេះ។",
+    "deleting": "កំពុងលុប...",
+    "delete": "លុប",
+    "sharePhoto": "ចែករំលែករូប",
+    "photoShareText": "មើលរូបរបស់ {{name}} នៅលើ Shadow។",
+    "photoLinkCopied": "បានចម្លងតំណរូប។",
+    "readerPost": "ប្រកាសអ្នកអាន",
+    "readerPostLabel": "ប្រកាសអ្នកអាន",
+    "readerPhoto": "រូបរបស់ {{name}}"
+  },
+  "zh": {
+    "reader": "读者",
+    "failedUpdatePhoto": "无法更新照片",
+    "captionSaved": "说明已保存。",
+    "captionRemoved": "说明已移除。",
+    "failedSaveCaption": "无法保存说明。",
+    "altSaved": "替代文本已保存。",
+    "altRemoved": "替代文本已移除。",
+    "failedSaveAlt": "无法保存替代文本。",
+    "postNeedsContent": "此帖子需要文字或照片，请改为删除帖子。",
+    "failedDeletePhoto": "无法删除照片",
+    "photoDeleted": "照片已删除。",
+    "couldNotDownload": "无法下载照片",
+    "photoSaved": "照片已保存。",
+    "photoOpened": "照片已打开以便保存。",
+    "position": "{{current}} / {{total}}",
+    "commentsCount": "{{count}} 条评论",
+    "sharesCount": "{{count}} 次分享",
+    "like": "赞",
+    "comment": "评论",
+    "share": "分享",
+    "editCaption": "编辑说明",
+    "deletePhoto": "删除照片",
+    "saveToPhone": "保存到手机",
+    "shareExternal": "外部分享",
+    "reportPhoto": "举报照片",
+    "editAltText": "编辑替代文本",
+    "photoNumber": "照片 {{number}}",
+    "captionPlaceholder": "为这张照片写说明...",
+    "cancel": "取消",
+    "saving": "保存中...",
+    "save": "保存",
+    "altDescription": "描述照片中显示的内容，以提升无障碍体验。",
+    "altPlaceholder": "描述这张照片...",
+    "deleteTitle": "删除这张照片？",
+    "deleteDescription": "这张照片将从此读者帖子中移除。",
+    "deleting": "删除中...",
+    "delete": "删除",
+    "sharePhoto": "分享照片",
+    "photoShareText": "在 Shadow 上查看 {{name}} 的照片。",
+    "photoLinkCopied": "照片链接已复制。",
+    "readerPost": "读者帖子",
+    "readerPostLabel": "读者帖子",
+    "readerPhoto": "{{name}} 的照片"
+  },
+  "ja": {
+    "reader": "読者",
+    "failedUpdatePhoto": "写真を更新できませんでした",
+    "captionSaved": "キャプションを保存しました。",
+    "captionRemoved": "キャプションを削除しました。",
+    "failedSaveCaption": "キャプションを保存できませんでした。",
+    "altSaved": "代替テキストを保存しました。",
+    "altRemoved": "代替テキストを削除しました。",
+    "failedSaveAlt": "代替テキストを保存できませんでした。",
+    "postNeedsContent": "この投稿にはテキストまたは写真が必要です。代わりに投稿を削除してください。",
+    "failedDeletePhoto": "写真を削除できませんでした",
+    "photoDeleted": "写真を削除しました。",
+    "couldNotDownload": "写真をダウンロードできませんでした",
+    "photoSaved": "写真を保存しました。",
+    "photoOpened": "保存するため写真を開きました。",
+    "position": "{{current}} / {{total}}",
+    "commentsCount": "コメント {{count}}件",
+    "sharesCount": "シェア {{count}}件",
+    "like": "いいね",
+    "comment": "コメント",
+    "share": "シェア",
+    "editCaption": "キャプションを編集",
+    "deletePhoto": "写真を削除",
+    "saveToPhone": "端末に保存",
+    "shareExternal": "外部にシェア",
+    "reportPhoto": "写真を報告",
+    "editAltText": "代替テキストを編集",
+    "photoNumber": "写真 {{number}}",
+    "captionPlaceholder": "この写真のキャプションを書く...",
+    "cancel": "キャンセル",
+    "saving": "保存中...",
+    "save": "保存",
+    "altDescription": "アクセシビリティのため、この写真に写っている内容を説明してください。",
+    "altPlaceholder": "この写真を説明...",
+    "deleteTitle": "この写真を削除しますか？",
+    "deleteDescription": "この写真は読者投稿から削除されます。",
+    "deleting": "削除中...",
+    "delete": "削除",
+    "sharePhoto": "写真をシェア",
+    "photoShareText": "Shadowで{{name}}の写真を見る。",
+    "photoLinkCopied": "写真のリンクをコピーしました。",
+    "readerPost": "読者投稿",
+    "readerPostLabel": "読者投稿",
+    "readerPhoto": "{{name}}の写真"
+  },
+  "ko": {
+    "reader": "독자",
+    "failedUpdatePhoto": "사진을 업데이트하지 못했습니다",
+    "captionSaved": "캡션을 저장했습니다.",
+    "captionRemoved": "캡션을 삭제했습니다.",
+    "failedSaveCaption": "캡션을 저장하지 못했습니다.",
+    "altSaved": "대체 텍스트를 저장했습니다.",
+    "altRemoved": "대체 텍스트를 삭제했습니다.",
+    "failedSaveAlt": "대체 텍스트를 저장하지 못했습니다.",
+    "postNeedsContent": "이 게시물에는 텍스트나 사진이 필요합니다. 대신 게시물을 삭제하세요.",
+    "failedDeletePhoto": "사진을 삭제하지 못했습니다",
+    "photoDeleted": "사진을 삭제했습니다.",
+    "couldNotDownload": "사진을 다운로드하지 못했습니다",
+    "photoSaved": "사진을 저장했습니다.",
+    "photoOpened": "저장할 수 있도록 사진을 열었습니다.",
+    "position": "{{current}} / {{total}}",
+    "commentsCount": "댓글 {{count}}개",
+    "sharesCount": "공유 {{count}}회",
+    "like": "좋아요",
+    "comment": "댓글",
+    "share": "공유",
+    "editCaption": "캡션 수정",
+    "deletePhoto": "사진 삭제",
+    "saveToPhone": "휴대폰에 저장",
+    "shareExternal": "외부 공유",
+    "reportPhoto": "사진 신고",
+    "editAltText": "대체 텍스트 수정",
+    "photoNumber": "사진 {{number}}",
+    "captionPlaceholder": "이 사진의 캡션을 작성하세요...",
+    "cancel": "취소",
+    "saving": "저장 중...",
+    "save": "저장",
+    "altDescription": "접근성을 위해 이 사진에 보이는 내용을 설명하세요.",
+    "altPlaceholder": "이 사진을 설명하세요...",
+    "deleteTitle": "이 사진을 삭제할까요?",
+    "deleteDescription": "이 사진은 독자 게시물에서 삭제됩니다.",
+    "deleting": "삭제 중...",
+    "delete": "삭제",
+    "sharePhoto": "사진 공유",
+    "photoShareText": "Shadow에서 {{name}}의 사진을 확인하세요.",
+    "photoLinkCopied": "사진 링크를 복사했습니다.",
+    "readerPost": "독자 게시물",
+    "readerPostLabel": "독자 게시물",
+    "readerPhoto": "{{name}}의 사진"
+  }
+})
+
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -32,7 +263,7 @@ function formatPhotoViewerDateTime(value) {
     return ''
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getDisplayLanguageId() || 'en', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -108,6 +339,7 @@ export default function ReaderAuthorStylePhotoViewer({
   onClose,
 }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [controlsVisible, setControlsVisible] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [captionEditorOpen, setCaptionEditorOpen] = useState(false)
@@ -173,7 +405,7 @@ export default function ReaderAuthorStylePhotoViewer({
   const readerName =
     user?.name ||
     user?.username ||
-    'Reader'
+    t('readerPhotoViewer.reader')
 
   const readerUsername = String(
     user?.username || ''
@@ -407,7 +639,7 @@ export default function ReaderAuthorStylePhotoViewer({
     ) {
       throw new Error(
         data.message ||
-          'Failed to update photo'
+          t('readerPhotoViewer.failedUpdatePhoto')
       )
     }
 
@@ -448,13 +680,13 @@ export default function ReaderAuthorStylePhotoViewer({
       setCaptionEditorOpen(false)
       setActionMessage(
         nextCaption
-          ? 'Caption saved.'
-          : 'Caption removed.'
+          ? t('readerPhotoViewer.captionSaved')
+          : t('readerPhotoViewer.captionRemoved')
       )
     } catch (error) {
       setActionMessage(
         error.message ||
-          'Failed to save caption.'
+          t('readerPhotoViewer.failedSaveCaption')
       )
     } finally {
       setCaptionSaving(false)
@@ -490,13 +722,13 @@ export default function ReaderAuthorStylePhotoViewer({
       setAltEditorOpen(false)
       setActionMessage(
         nextAltText
-          ? 'Alt text saved.'
-          : 'Alt text removed.'
+          ? t('readerPhotoViewer.altSaved')
+          : t('readerPhotoViewer.altRemoved')
       )
     } catch (error) {
       setActionMessage(
         error.message ||
-          'Failed to save alt text.'
+          t('readerPhotoViewer.failedSaveAlt')
       )
     } finally {
       setAltSaving(false)
@@ -531,7 +763,7 @@ export default function ReaderAuthorStylePhotoViewer({
     ) {
       setDeleteConfirmOpen(false)
       setActionMessage(
-        'This post needs text or a photo. Delete the post instead.'
+        t('readerPhotoViewer.postNeedsContent')
       )
       return
     }
@@ -578,7 +810,7 @@ export default function ReaderAuthorStylePhotoViewer({
       ) {
         throw new Error(
           data.message ||
-            'Failed to delete photo'
+            t('readerPhotoViewer.failedDeletePhoto')
         )
       }
 
@@ -618,7 +850,7 @@ export default function ReaderAuthorStylePhotoViewer({
 
       setActiveIndex(nextIndex)
       setActionMessage(
-        'Photo deleted.'
+        t('readerPhotoViewer.photoDeleted')
       )
 
       if (routePhotoMode) {
@@ -635,7 +867,7 @@ export default function ReaderAuthorStylePhotoViewer({
       setDeleteConfirmOpen(false)
       setActionMessage(
         error.message ||
-          'Failed to delete photo.'
+          t('readerPhotoViewer.failedDeletePhoto')
       )
     } finally {
       setDeleteBusy(false)
@@ -661,7 +893,7 @@ export default function ReaderAuthorStylePhotoViewer({
 
       if (!response.ok) {
         throw new Error(
-          'Could not download photo'
+          t('readerPhotoViewer.couldNotDownload')
         )
       }
 
@@ -699,7 +931,7 @@ export default function ReaderAuthorStylePhotoViewer({
 
       setMenuOpen(false)
       setActionMessage(
-        'Photo saved.'
+        t('readerPhotoViewer.photoSaved')
       )
     } catch {
       const link =
@@ -719,7 +951,7 @@ export default function ReaderAuthorStylePhotoViewer({
 
       setMenuOpen(false)
       setActionMessage(
-        'Photo opened for saving.'
+        t('readerPhotoViewer.photoOpened')
       )
     }
   }
@@ -813,8 +1045,10 @@ export default function ReaderAuthorStylePhotoViewer({
 
               {photos.length > 1 ? (
                 <div className="absolute left-1/2 -translate-x-1/2 text-[14px] font-semibold text-white">
-                  {safeIndex + 1} of{' '}
-                  {photos.length}
+                  {t('readerPhotoViewer.position', {
+                    current: safeIndex + 1,
+                    total: photos.length,
+                  })}
                 </div>
               ) : null}
 
@@ -910,17 +1144,15 @@ export default function ReaderAuthorStylePhotoViewer({
 
                 <div className="flex items-center gap-4">
                   <span>
-                    {Number(
-                      commentCount || 0
-                    )}{' '}
-                    comments
+                    {t('readerPhotoViewer.commentsCount', {
+                      count: Number(commentCount || 0),
+                    })}
                   </span>
 
                   <span>
-                    {Number(
-                      shareCount || 0
-                    )}{' '}
-                    shares
+                    {t('readerPhotoViewer.sharesCount', {
+                      count: Number(shareCount || 0),
+                    })}
                   </span>
                 </div>
               </div>
@@ -940,9 +1172,17 @@ export default function ReaderAuthorStylePhotoViewer({
                     onReact
                   }
                   showCount={false}
-                  idleLabel="Like"
+                  idleLabel={t('readerPhotoViewer.like')}
+                  idleIcon={
+                    <>
+                      <i className="fa-regular fa-heart text-[20px]" />
+                      <span className="text-[14px] font-medium">
+                        {t('readerPhotoViewer.like')}
+                      </span>
+                    </>
+                  }
                   className="flex-1 justify-center"
-                  buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
+                  buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
                 />
 
                 <button
@@ -954,7 +1194,7 @@ export default function ReaderAuthorStylePhotoViewer({
                 >
                   <i className="fa-regular fa-comment text-[20px]" />
                   <span>
-                    Comment
+                    {t('readerPhotoViewer.comment')}
                   </span>
                 </button>
 
@@ -972,7 +1212,7 @@ export default function ReaderAuthorStylePhotoViewer({
                     className="h-5 w-5 object-contain brightness-0 invert"
                   />
                   <span>
-                    Share
+                    {t('readerPhotoViewer.share')}
                   </span>
                 </button>
               </div>
@@ -994,7 +1234,7 @@ export default function ReaderAuthorStylePhotoViewer({
         ) : null}
 
         {actionMessage ? (
-          <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+94px)] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-4 py-2 text-[12px] font-medium text-[#111827] shadow-xl">
+          <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+94px)] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--shadow-bg-elevated)] px-4 py-2 text-[12px] font-medium text-[var(--shadow-text-primary)] shadow-xl">
             {actionMessage}
           </div>
         ) : null}
@@ -1008,7 +1248,7 @@ export default function ReaderAuthorStylePhotoViewer({
             }}
           >
             <div
-              className="w-full bg-white px-2 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+              className="w-full bg-[var(--shadow-bg-elevated)] px-2 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
               onClick={(event) =>
                 event.stopPropagation()
               }
@@ -1019,13 +1259,13 @@ export default function ReaderAuthorStylePhotoViewer({
                   onClick={
                     openCaptionEditor
                   }
-                  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+                  <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
                     <i className="fa-solid fa-pencil text-[19px]" />
                   </span>
-                  <span className="text-[15px] font-normal text-[#111827]">
-                    Edit caption
+                  <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                    {t('readerPhotoViewer.editCaption')}
                   </span>
                 </button>
               ) : null}
@@ -1040,13 +1280,13 @@ export default function ReaderAuthorStylePhotoViewer({
                       true
                     )
                   }}
-                  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+                  <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
                     <i className="fa-regular fa-trash-can text-[20px]" />
                   </span>
-                  <span className="text-[15px] font-normal text-[#111827]">
-                    Delete photo
+                  <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                    {t('readerPhotoViewer.deletePhoto')}
                   </span>
                 </button>
               ) : null}
@@ -1056,9 +1296,9 @@ export default function ReaderAuthorStylePhotoViewer({
                 onClick={
                   saveSelectedPhoto
                 }
-                className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
               >
-                <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+                <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
                   <svg
                     width="20"
                     height="20"
@@ -1087,8 +1327,8 @@ export default function ReaderAuthorStylePhotoViewer({
                     />
                   </svg>
                 </span>
-                <span className="text-[15px] font-normal text-[#111827]">
-                  Save to phone
+                <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                  {t('readerPhotoViewer.saveToPhone')}
                 </span>
               </button>
 
@@ -1101,19 +1341,13 @@ export default function ReaderAuthorStylePhotoViewer({
                     true
                   )
                 }}
-                className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
               >
-                <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
-                  <i
-                    className="fa-solid fa-share text-[19px] text-transparent"
-                    style={{
-                      WebkitTextStroke:
-                        '1.1px #4b5563',
-                    }}
-                  />
+                <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
+                  <i className="fa-solid fa-share text-[19px]" />
                 </span>
-                <span className="text-[15px] font-normal text-[#111827]">
-                  Share external
+                <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                  {t('readerPhotoViewer.shareExternal')}
                 </span>
               </button>
 
@@ -1123,16 +1357,16 @@ export default function ReaderAuthorStylePhotoViewer({
                   onClick={
                     reportSelectedPhoto
                   }
-                  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+                  <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
                     <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-current">
                       <i className="fa-solid fa-question text-[10px]" />
                     </span>
                   </span>
 
-                  <span className="text-[15px] font-normal text-[#111827]">
-                    Report photo
+                  <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                    {t('readerPhotoViewer.reportPhoto')}
                   </span>
                 </button>
               ) : null}
@@ -1143,15 +1377,15 @@ export default function ReaderAuthorStylePhotoViewer({
                   onClick={
                     openAltEditor
                   }
-                  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
                 >
                   <span className="flex h-9 w-9 items-center justify-center">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border-2 border-[#6b7280] text-[14px] font-semibold text-[#4b5563]">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border-2 border-[var(--shadow-border-strong)] text-[14px] font-semibold text-[var(--shadow-text-secondary)]">
                       A
                     </span>
                   </span>
-                  <span className="text-[15px] font-normal text-[#111827]">
-                    Edit alt text
+                  <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                    {t('readerPhotoViewer.editAltText')}
                   </span>
                 </button>
               ) : null}
@@ -1173,25 +1407,26 @@ export default function ReaderAuthorStylePhotoViewer({
             }}
           >
             <div
-              className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+              className="w-full rounded-t-[22px] bg-[var(--shadow-bg-elevated)] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
               onClick={(event) =>
                 event.stopPropagation()
               }
             >
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" />
 
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-[16px] font-semibold text-[#111827]">
-                    Edit caption
+                  <div className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">
+                    {t('readerPhotoViewer.editCaption')}
                   </div>
-                  <div className="mt-1 text-[12px] font-normal text-[#98a2b3]">
-                    Photo{' '}
-                    {safeIndex + 1}
+                  <div className="mt-1 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
+                    {t('readerPhotoViewer.photoNumber', {
+                      number: safeIndex + 1,
+                    })}
                   </div>
                 </div>
 
-                <span className="text-[11px] font-normal text-[#98a2b3]">
+                <span className="text-[11px] font-normal text-[var(--shadow-text-tertiary)]">
                   {caption.length} /{' '}
                   {
                     MAX_PHOTO_CAPTION_LENGTH
@@ -1213,8 +1448,8 @@ export default function ReaderAuthorStylePhotoViewer({
                     )
                   )
                 }
-                placeholder="Write a caption for this photo..."
-                className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] outline-none focus:border-[#111827]"
+                placeholder={t('readerPhotoViewer.captionPlaceholder')}
+                className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3.5 py-3 text-[14px] font-normal leading-5 text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-border-strong)]"
               />
 
               <div className="mt-4 flex gap-3">
@@ -1228,9 +1463,9 @@ export default function ReaderAuthorStylePhotoViewer({
                       false
                     )
                   }
-                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
                 >
-                  Cancel
+                  {t('readerPhotoViewer.cancel')}
                 </button>
 
                 <button
@@ -1241,11 +1476,11 @@ export default function ReaderAuthorStylePhotoViewer({
                   onClick={
                     saveCaption
                   }
-                  className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-[var(--shadow-text-primary)] text-[14px] font-semibold text-[var(--shadow-bg-surface)] disabled:opacity-50"
                 >
                   {captionSaving
-                    ? 'Saving...'
-                    : 'Save'}
+                    ? t('readerPhotoViewer.saving')
+                    : t('readerPhotoViewer.save')}
                 </button>
               </div>
             </div>
@@ -1264,26 +1499,24 @@ export default function ReaderAuthorStylePhotoViewer({
             }}
           >
             <div
-              className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+              className="w-full rounded-t-[22px] bg-[var(--shadow-bg-elevated)] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
               onClick={(event) =>
                 event.stopPropagation()
               }
             >
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" />
 
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-[16px] font-semibold text-[#111827]">
-                    Edit alt text
+                  <div className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">
+                    {t('readerPhotoViewer.editAltText')}
                   </div>
-                  <p className="mt-1 text-[12px] font-normal leading-5 text-[#667085]">
-                    Describe what is
-                    shown in this photo
-                    for accessibility.
+                  <p className="mt-1 text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+                    {t('readerPhotoViewer.altDescription')}
                   </p>
                 </div>
 
-                <span className="shrink-0 text-[11px] font-normal text-[#98a2b3]">
+                <span className="shrink-0 text-[11px] font-normal text-[var(--shadow-text-tertiary)]">
                   {altText.length} /{' '}
                   {
                     MAX_PHOTO_ALT_TEXT_LENGTH
@@ -1305,8 +1538,8 @@ export default function ReaderAuthorStylePhotoViewer({
                     )
                   )
                 }
-                placeholder="Describe this photo..."
-                className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] outline-none focus:border-[#111827]"
+                placeholder={t('readerPhotoViewer.altPlaceholder')}
+                className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3.5 py-3 text-[14px] font-normal leading-5 text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-border-strong)]"
               />
 
               <div className="mt-4 flex gap-3">
@@ -1318,9 +1551,9 @@ export default function ReaderAuthorStylePhotoViewer({
                       false
                     )
                   }
-                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
                 >
-                  Cancel
+                  {t('readerPhotoViewer.cancel')}
                 </button>
 
                 <button
@@ -1329,11 +1562,11 @@ export default function ReaderAuthorStylePhotoViewer({
                   onClick={
                     saveAltText
                   }
-                  className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-[var(--shadow-text-primary)] text-[14px] font-semibold text-[var(--shadow-bg-surface)] disabled:opacity-50"
                 >
                   {altSaving
-                    ? 'Saving...'
-                    : 'Save'}
+                    ? t('readerPhotoViewer.saving')
+                    : t('readerPhotoViewer.save')}
                 </button>
               </div>
             </div>
@@ -1354,21 +1587,19 @@ export default function ReaderAuthorStylePhotoViewer({
             }}
           >
             <div
-              className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+              className="w-full rounded-t-[22px] bg-[var(--shadow-bg-elevated)] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
               onClick={(event) =>
                 event.stopPropagation()
               }
             >
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" />
 
-              <div className="text-[16px] font-semibold text-[#111827]">
-                Delete this photo?
+              <div className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">
+                {t('readerPhotoViewer.deleteTitle')}
               </div>
 
-              <p className="mt-1.5 text-[13px] font-normal leading-5 text-[#667085]">
-                This photo will be
-                removed from this
-                Reader post.
+              <p className="mt-1.5 text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+                {t('readerPhotoViewer.deleteDescription')}
               </p>
 
               <div className="mt-5 flex gap-3">
@@ -1380,9 +1611,9 @@ export default function ReaderAuthorStylePhotoViewer({
                       false
                     )
                   }
-                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
                 >
-                  Cancel
+                  {t('readerPhotoViewer.cancel')}
                 </button>
 
                 <button
@@ -1394,8 +1625,8 @@ export default function ReaderAuthorStylePhotoViewer({
                   className="h-11 flex-1 rounded-full bg-[#e5484d] text-[14px] font-semibold text-white disabled:opacity-50"
                 >
                   {deleteBusy
-                    ? 'Deleting...'
-                    : 'Delete'}
+                    ? t('readerPhotoViewer.deleting')
+                    : t('readerPhotoViewer.delete')}
                 </button>
               </div>
             </div>
@@ -1405,17 +1636,17 @@ export default function ReaderAuthorStylePhotoViewer({
 
       <AuthorPageShareSheet
         open={externalShareOpen}
-        pageName={`${readerName} photo`}
+        pageName={t('readerPhotoViewer.readerPhoto', { name: readerName })}
         pageLink={selectedPhotoUrl}
-        sheetTitle="Share Photo"
-        shareText={`View ${readerName}'s photo on Shadow.`}
+        sheetTitle={t('readerPhotoViewer.sharePhoto')}
+        shareText={t('readerPhotoViewer.photoShareText', { name: readerName })}
         zClassName="z-[150100]"
         onClose={() =>
           setExternalShareOpen(false)
         }
         onCopied={() =>
           setActionMessage(
-            'Photo link copied.'
+            t('readerPhotoViewer.photoLinkCopied')
           )
         }
       />
@@ -1430,14 +1661,14 @@ export default function ReaderAuthorStylePhotoViewer({
         }
         sourceContent={
           post?.content ||
-          'Reader post'
+          t('readerPhotoViewer.readerPost')
         }
         sourceImageUrl={
           selectedPhotoUrl ||
           photos[0] ||
           ''
         }
-        sourceLabel="reader post"
+        sourceLabel={t('readerPhotoViewer.readerPostLabel')}
         shareUrl={
           readerPostShareUrl
         }
