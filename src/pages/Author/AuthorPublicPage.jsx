@@ -5,6 +5,7 @@ import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
+import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPopup'
 import Cropper from 'react-easy-crop'
 
 
@@ -1063,6 +1064,7 @@ const { pageUsername } = useParams()
   const [pageSwitcherOpen, setPageSwitcherOpen] = useState(false)
   const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
+  const [socialMediaOpen, setSocialMediaOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
   const readerName = readerUser?.name || 'Reader'
@@ -1080,7 +1082,13 @@ const { pageUsername } = useParams()
   ? { ...storedProfileDetails, ...databaseProfileDetails }
   : databaseProfileDetails
   
-
+const socialLinks = Array.isArray(profileDetails.social_links) ? profileDetails.social_links : []
+const legacySocialUrls = String(profileDetails.social_media || '').match(/https?:\/\/[^\s]+/gi) || []
+const firstSocial = socialLinks[0]
+const firstValue = String(firstSocial?.display_name || firstSocial?.value || '').trim()
+const socialBase = firstSocial ? (!/^https?:\/\//i.test(firstValue) ? firstValue.replace(/^@/, '') : String(firstSocial.platform || 'Social media').replace(/^./, (c) => c.toUpperCase())) : legacySocialUrls[0]?.includes('facebook.com') ? 'Facebook' : legacySocialUrls.length ? 'Social media' : ''
+const socialCount = socialLinks.length || legacySocialUrls.length
+const socialPreview = socialBase ? `${socialBase}${socialCount > 1 ? ` + ${socialCount - 1}` : ''}` : ''
 
   useEffect(() => {
     if (!message) {
@@ -1919,6 +1927,15 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
         author={displayAuthor}
         onClose={() => setMessageRequestOpen(false)}
       />
+
+      <AuthorSocialMediaPopup
+  open={socialMediaOpen}
+  links={profileDetails.social_links}
+  legacyValue={profileDetails.social_media}
+  isOwner={displayAuthor.is_owner}
+  onClose={() => setSocialMediaOpen(false)}
+  onEdit={() => navigate('/author/page/edit?section=contact&modal=social')}
+/>
 
       <CropImageModal
         open={cropModalOpen}
@@ -3007,12 +3024,12 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       </div>
 
       <div className="space-y-4 text-[14px] font-normal text-[#111827]">
-  {profileDetails.social_media ? (
-    <div className="flex items-center gap-4">
-      <i className="fa-solid fa-at w-8 text-center text-[18px]" />
-      <span>{profileDetails.social_media}</span>
-    </div>
-  ) : null}
+  {socialPreview ? (
+  <button type="button" onClick={() => setSocialMediaOpen(true)} className="flex w-full items-center gap-4 text-left">
+    <i className="fa-solid fa-at w-8 text-center text-[18px]" />
+    <span>{socialPreview}</span>
+  </button>
+) : null}
 
   {profileDetails.phone ? (
     <div className="flex items-center gap-4">
