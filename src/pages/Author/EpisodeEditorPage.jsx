@@ -2634,7 +2634,9 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
   const busy = ['queued', 'processing', 'uploading'].includes(page.status)
   const statusLabel =
     page.status === 'processing'
-      ? 'Compressing'
+  ? page.serverProcessing
+    ? 'Processing'
+    : 'Compressing'
       : page.status === 'uploading'
         ? 'Uploading'
         : page.status === 'error'
@@ -2702,7 +2704,7 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
               type="file"
               accept="image/*,.heic,.heif"
               className="hidden"
-              disabled={disabled}
+              disabled={busy || disabled}
               onChange={(event) => {
                 onReplace(page.id, event.target.files?.[0] || null)
                 event.target.value = ''
@@ -3051,14 +3053,22 @@ return true
   pageId: entry.id,
   signal: controller.signal,
   useV2: true,
-        onProgress: ({ loaded, total, percent, speedBytesPerSecond }) => {
-          updateMangaPage(entry.id, {
-            progress: percent,
-            uploadedBytes: loaded,
-            uploadTotalBytes: total,
-            uploadSpeed: speedBytesPerSecond,
-          })
-        },
+        onProgress: ({
+  loaded,
+  total,
+  percent,
+  speedBytesPerSecond,
+  processing = false,
+}) => {
+  updateMangaPage(entry.id, {
+    status: processing ? 'processing' : 'uploading',
+    serverProcessing: Boolean(processing),
+    progress: processing ? 100 : percent,
+    uploadedBytes: processing ? total : loaded,
+    uploadTotalBytes: total,
+    uploadSpeed: processing ? 0 : speedBytesPerSecond,
+  })
+},
       })
 
       updateMangaPage(entry.id, {
