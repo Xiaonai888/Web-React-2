@@ -1,5 +1,75 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('mangaFeedSections', {
+  en: {
+    shadowAuthor: 'Shadow Author',
+    latestManga: 'Latest Manga',
+    genreManga: '{{genre}} Manga',
+    untitledManga: 'Untitled Manga',
+    manga: 'Manga',
+    views: '{{count}} views',
+    loadFailed: 'Could not load Manga',
+    empty: 'No {{genre}} Manga yet',
+    emptyDescription: 'Published Manga will appear here automatically.',
+    popularManga: 'Popular Manga',
+    completedManga: 'Completed Manga',
+  },
+  km: {
+    shadowAuthor: 'អ្នកនិពន្ធ Shadow',
+    latestManga: 'Manga ថ្មីបំផុត',
+    genreManga: 'Manga {{genre}}',
+    untitledManga: 'Manga គ្មានចំណងជើង',
+    manga: 'Manga',
+    views: '{{count}} ដងមើល',
+    loadFailed: 'មិនអាចផ្ទុក Manga បានទេ',
+    empty: 'មិនទាន់មាន Manga {{genre}} ទេ',
+    emptyDescription: 'Manga ដែលបានបោះពុម្ពនឹងបង្ហាញនៅទីនេះដោយស្វ័យប្រវត្តិ។',
+    popularManga: 'Manga ពេញនិយម',
+    completedManga: 'Manga ចប់',
+  },
+  zh: {
+    shadowAuthor: 'Shadow 作者',
+    latestManga: '最新漫画',
+    genreManga: '{{genre}} 漫画',
+    untitledManga: '未命名漫画',
+    manga: '漫画',
+    views: '{{count}} 次浏览',
+    loadFailed: '无法加载漫画',
+    empty: '暂无 {{genre}} 漫画',
+    emptyDescription: '已发布的漫画会自动显示在这里。',
+    popularManga: '热门漫画',
+    completedManga: '已完结漫画',
+  },
+  ja: {
+    shadowAuthor: 'Shadow 作者',
+    latestManga: '最新マンガ',
+    genreManga: '{{genre}} マンガ',
+    untitledManga: '無題のマンガ',
+    manga: 'マンガ',
+    views: '{{count}} 回閲覧',
+    loadFailed: 'マンガを読み込めませんでした',
+    empty: '{{genre}} マンガはまだありません',
+    emptyDescription: '公開されたマンガはここに自動で表示されます。',
+    popularManga: '人気マンガ',
+    completedManga: '完結マンガ',
+  },
+  ko: {
+    shadowAuthor: 'Shadow 작가',
+    latestManga: '최신 만화',
+    genreManga: '{{genre}} 만화',
+    untitledManga: '제목 없는 만화',
+    manga: '만화',
+    views: '조회 {{count}}회',
+    loadFailed: '만화를 불러오지 못했습니다',
+    empty: '아직 {{genre}} 만화가 없습니다',
+    emptyDescription: '게시된 만화가 여기에 자동으로 표시됩니다.',
+    popularManga: '인기 만화',
+    completedManga: '완결 만화',
+  },
+})
 import {
   addStoryLanguageParam,
   getStoryLanguageId,
@@ -33,20 +103,28 @@ function getAuthorName(story) {
     story.author_page?.page_name ||
     story.author_page?.page_username ||
     story.author_name ||
-    'Shadow Author'
+    ''
   )
 }
 
-function getGenreTitle(genre) {
-  if (!genre || genre === 'today') return 'Latest Manga'
+function getGenreTitle(genre, t) {
+  if (!genre || genre === 'today') {
+    return t('mangaFeedSections.latestManga')
+  }
 
-  return `${genre
+  const genreLabel = genre
     .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')} Manga`
+    .join(' ')
+
+  return t('mangaFeedSections.genreManga', {
+    genre: genreLabel,
+  })
 }
 
 function MangaCard({ story, onOpen }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <button type="button" onClick={onOpen} className="group block w-full text-left">
       <div
@@ -81,21 +159,25 @@ function MangaCard({ story, onOpen }) {
         className="mt-2 truncate text-[13.5px] font-[680] leading-5"
         style={{ color: 'var(--shadow-text-primary)' }}
       >
-        {story.title || 'Untitled Manga'}
+        {story.title || t('mangaFeedSections.untitledManga')}
       </h3>
       <p
         className="mt-0.5 truncate text-[10.5px] font-medium"
         style={{ color: 'var(--shadow-text-secondary)' }}
       >
-        {getAuthorName(story)}
+        {getAuthorName(story) || t('mangaFeedSections.shadowAuthor')}
       </p>
       <div
         className="mt-1 flex items-center gap-2 text-[10px] font-semibold"
         style={{ color: 'var(--shadow-text-tertiary)' }}
       >
-        <span>{story.main_genre || 'Manga'}</span>
+        <span>{story.main_genre || t('mangaFeedSections.manga')}</span>
         <span>•</span>
-        <span>{formatCompactNumber(story.total_views)} views</span>
+        <span>
+          {t('mangaFeedSections.views', {
+            count: formatCompactNumber(story.total_views),
+          })}
+        </span>
       </div>
     </button>
   )
@@ -168,6 +250,7 @@ function LoadingRows() {
 }
 
 export default function MangaFeedSections({ genre = 'today' }) {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -229,7 +312,7 @@ export default function MangaFeedSections({ genre = 'today' }) {
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load manga')
+          throw new Error(data.message || t('mangaFeedSections.loadFailed'))
         }
 
         const mangaStories = (
@@ -251,7 +334,7 @@ export default function MangaFeedSections({ genre = 'today' }) {
 
         if (!cancelled && !hasCachedStories) {
           setStories([])
-          setError(loadError.message || 'Failed to load manga')
+          setError(loadError.message || t('mangaFeedSections.loadFailed'))
         }
       } finally {
         if (!cancelled && !controller.signal.aborted) {
@@ -266,7 +349,7 @@ export default function MangaFeedSections({ genre = 'today' }) {
       cancelled = true
       controller.abort()
     }
-  }, [storyLanguage])
+  }, [storyLanguage, t])
 
   const filteredStories = useMemo(() => {
     if (!genre || genre === 'today') return stories
@@ -323,7 +406,7 @@ export default function MangaFeedSections({ genre = 'today' }) {
             className="text-[14px] font-extrabold"
             style={{ color: 'var(--shadow-danger)' }}
           >
-            Could not load Manga
+            {t('mangaFeedSections.loadFailed')}
           </div>
           <div
             className="mt-1 text-[12px]"
@@ -359,13 +442,15 @@ export default function MangaFeedSections({ genre = 'today' }) {
             className="mt-4 text-[15px] font-extrabold"
             style={{ color: 'var(--shadow-text-primary)' }}
           >
-            No {genre === 'today' ? storyLanguage : genre} Manga yet
+            {t('mangaFeedSections.empty', {
+              genre: genre === 'today' ? storyLanguage : genre,
+            })}
           </div>
           <div
             className="mt-1 text-[12px] leading-5"
             style={{ color: 'var(--shadow-text-secondary)' }}
           >
-            Published Manga will appear here automatically.
+            {t('mangaFeedSections.emptyDescription')}
           </div>
         </div>
       </div>
@@ -376,9 +461,9 @@ export default function MangaFeedSections({ genre = 'today' }) {
 
   return (
     <div>
-      <MangaRow title={getGenreTitle(genre)} stories={latestStories} onOpen={openStory} />
-      <MangaRow title="Popular Manga" stories={popularStories} onOpen={openStory} />
-      <MangaRow title="Completed Manga" stories={completedStories} onOpen={openStory} />
+      <MangaRow title={getGenreTitle(genre, t)} stories={latestStories} onOpen={openStory} />
+      <MangaRow title={t('mangaFeedSections.popularManga')} stories={popularStories} onOpen={openStory} />
+      <MangaRow title={t('mangaFeedSections.completedManga')} stories={completedStories} onOpen={openStory} />
     </div>
   )
 }
