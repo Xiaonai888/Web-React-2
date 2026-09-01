@@ -4,6 +4,14 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onr
 
 let youtubeApiPromise = null
 
+function getReaderToken() {
+  return (
+    sessionStorage.getItem('shadow_reader_token') ||
+    localStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
 function loadYoutubeIframeApi() {
   if (window.YT?.Player) return Promise.resolve(window.YT)
   if (youtubeApiPromise) return youtubeApiPromise
@@ -99,6 +107,13 @@ export default function MusicYoutubePlayer({
     async function recordValidListen() {
       if (cancelled || listenRecordedRef.current) return
 
+      const token = getReaderToken()
+
+      if (!token) {
+        onAuthRequiredRef.current?.()
+        return
+      }
+
       listenRecordedRef.current = true
 
       try {
@@ -108,6 +123,7 @@ export default function MusicYoutubePlayer({
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
             },
           }
         )
