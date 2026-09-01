@@ -1,4 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorSocialMediaPopup', {
+  "en": {
+    "socialMedia": "Social media",
+    "edit": "Edit",
+    "noLinks": "No social media links yet"
+  },
+  "km": {
+    "socialMedia": "បណ្ដាញសង្គម",
+    "edit": "កែសម្រួល",
+    "noLinks": "មិនទាន់មានតំណបណ្ដាញសង្គមទេ"
+  },
+  "zh": {
+    "socialMedia": "社交媒体",
+    "edit": "编辑",
+    "noLinks": "暂无社交媒体链接"
+  },
+  "ja": {
+    "socialMedia": "ソーシャルメディア",
+    "edit": "編集",
+    "noLinks": "ソーシャルメディアのリンクはまだありません"
+  },
+  "ko": {
+    "socialMedia": "소셜 미디어",
+    "edit": "수정",
+    "noLinks": "아직 소셜 미디어 링크가 없습니다"
+  }
+})
+
 
 const PLATFORM_META = {
   facebook: { label: 'Facebook', icon: 'fa-brands fa-facebook-f' },
@@ -38,9 +69,9 @@ function detectPlatform(url = '') {
   return 'facebook'
 }
 
-function getPlatformMeta(platform) {
+function getPlatformMeta(platform, genericLabel = 'Social media') {
   return PLATFORM_META[platform] || {
-    label: 'Social media',
+    label: genericLabel,
     icon: 'fa-solid fa-at',
   }
 }
@@ -86,8 +117,8 @@ function getNameFromUrl(url = '', platform = '') {
   }
 }
 
-function makeDisplayName(item, platform) {
-  const meta = getPlatformMeta(platform)
+function makeDisplayName(item, platform, genericLabel) {
+  const meta = getPlatformMeta(platform, genericLabel)
   const savedName = String(item?.display_name || '').trim()
   const value = String(item?.value || '').trim()
   const url = String(item?.url || '').trim()
@@ -103,7 +134,7 @@ function makeDisplayName(item, platform) {
   return getNameFromUrl(url || value || savedName, platform) || meta.label
 }
 
-function normalizeLinks(value) {
+function normalizeLinks(value, genericLabel) {
   if (!Array.isArray(value)) return []
 
   return value
@@ -116,13 +147,13 @@ function normalizeLinks(value) {
         id: String(item.id || `social-${index}`),
         platform,
         url: normalizeUrl(url || item.value || ''),
-        displayName: makeDisplayName(item, platform),
+        displayName: makeDisplayName(item, platform, genericLabel),
       }
     })
     .filter((item) => item.url)
 }
 
-function normalizeLegacyLinks(value) {
+function normalizeLegacyLinks(value, genericLabel) {
   const urls = String(value || '').match(/https?:\/\/[^\s]+/gi) || []
 
   return urls.map((url, index) => {
@@ -132,7 +163,7 @@ function normalizeLegacyLinks(value) {
       id: `legacy-social-${index}`,
       platform,
       url,
-      displayName: getNameFromUrl(url, platform) || getPlatformMeta(platform).label,
+      displayName: getNameFromUrl(url, platform) || getPlatformMeta(platform, genericLabel).label,
     }
   })
 }
@@ -145,14 +176,18 @@ export default function AuthorSocialMediaPopup({
   onClose,
   onEdit,
 }) {
+  const { t } = useDisplayTranslation()
+  const genericSocialLabel = t('authorSocialMediaPopup.socialMedia')
   const dragStartRef = useRef(null)
   const dragCurrentRef = useRef(0)
   const [dragY, setDragY] = useState(0)
 
   const items = useMemo(() => {
-    const current = normalizeLinks(links)
-    return current.length ? current : normalizeLegacyLinks(legacyValue)
-  }, [links, legacyValue])
+    const current = normalizeLinks(links, genericSocialLabel)
+    return current.length
+      ? current
+      : normalizeLegacyLinks(legacyValue, genericSocialLabel)
+  }, [genericSocialLabel, links, legacyValue])
 
   useEffect(() => {
     if (!open) return undefined
@@ -234,7 +269,7 @@ export default function AuthorSocialMediaPopup({
         <div className="overflow-hidden rounded-[20px] bg-white px-4 pb-2 pt-4 dark:bg-[#242526]">
           <div className="mb-2 flex items-center justify-between gap-3 px-1">
             <h2 className="text-[18px] font-semibold text-[#111318] dark:text-white">
-              Social media
+              {t('authorSocialMediaPopup.socialMedia')}
             </h2>
 
             {isOwner ? (
@@ -243,7 +278,7 @@ export default function AuthorSocialMediaPopup({
                 onClick={onEdit}
                 className="shrink-0 text-[16px] font-normal text-[#1877f2] active:opacity-60"
               >
-                Edit
+                {t('authorSocialMediaPopup.edit')}
               </button>
             ) : null}
           </div>
@@ -252,7 +287,7 @@ export default function AuthorSocialMediaPopup({
             {items.length ? (
               <div>
                 {items.map((item) => {
-                  const meta = getPlatformMeta(item.platform)
+                  const meta = getPlatformMeta(item.platform, genericSocialLabel)
 
                   return (
                     <a
@@ -280,7 +315,7 @@ export default function AuthorSocialMediaPopup({
               </div>
             ) : (
               <div className="px-6 py-10 text-center text-[14px] font-normal text-[#65676b] dark:text-[#b0b3b8]">
-                No social media links yet
+                {t('authorSocialMediaPopup.noLinks')}
               </div>
             )}
           </div>
