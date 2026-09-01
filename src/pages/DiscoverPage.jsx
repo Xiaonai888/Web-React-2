@@ -1,4 +1,9 @@
 import { recordAuthorPostClick } from '../services/authorPostInsightsApi'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Send } from 'lucide-react'
 import {
@@ -35,8 +40,79 @@ import {
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
+const DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS =
+  5 * 60 * 1000
 
+const discoverFeedInflightRequests =
+  new Map()
 
+function getDiscoverFeedScope(token) {
+  if (!token) return 'anon'
+
+  let hash = 2166136261
+
+  for (
+    let index = 0;
+    index < token.length;
+    index += 1
+  ) {
+    hash ^= token.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return `reader-${(hash >>> 0).toString(36)}`
+}
+
+function getDiscoverFeedCacheKey(
+  token,
+  section,
+  limit
+) {
+  return getHomeCacheKey({
+    section,
+    scope: getDiscoverFeedScope(token),
+    params: {
+      limit,
+      schema: 1,
+    },
+  })
+}
+
+async function runDiscoverFeedRequest(
+  key,
+  request
+) {
+  if (
+    discoverFeedInflightRequests.has(key)
+  ) {
+    return discoverFeedInflightRequests.get(
+      key
+    )
+  }
+
+  const promise = Promise.resolve().then(
+    request
+  )
+
+  discoverFeedInflightRequests.set(
+    key,
+    promise
+  )
+
+  try {
+    return await promise
+  } finally {
+    if (
+      discoverFeedInflightRequests.get(
+        key
+      ) === promise
+    ) {
+      discoverFeedInflightRequests.delete(
+        key
+      )
+    }
+  }
+}
 
 
 function getAuthToken() {
@@ -2060,7 +2136,7 @@ return {
     }
   }, [token])
 
-  useEffect(() => {
+    useEffect(() => {
     let alive = true
 
     async function loadReaderPosts() {
@@ -2074,28 +2150,83 @@ return {
         return
       }
 
-      try {
-        setReaderPostsLoading(true)
-        setReaderPostsError('')
+      const cacheKey =
+        getDiscoverFeedCacheKey(
+          token,
+          'discover-reader-feed',
+          20
+        )
 
-        const data =
-          await fetchReaderPosts(token)
+      let hasCachedPayload = false
+
+      try {
+        const cached =
+          await loadHomeCache(cacheKey, {
+            maxAgeMs:
+              DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
+            allowExpired: true,
+          })
 
         if (!alive) return
 
-        setReaderPosts(
+        if (
+          Array.isArray(
+            cached?.data?.posts
+          )
+        ) {
+          hasCachedPayload = true
+
+          setReaderPosts(
+            cached.data.posts
+          )
+          setReaderPostsLoading(false)
+          setReaderPostsError('')
+
+          if (cached.isFresh) {
+            return
+          }
+        }
+
+        if (!hasCachedPayload) {
+          setReaderPostsLoading(true)
+        }
+
+        const data =
+          await runDiscoverFeedRequest(
+            `reader:${cacheKey}`,
+            () => fetchReaderPosts(token)
+          )
+
+        if (!alive) return
+
+        const nextPosts =
           Array.isArray(data.posts)
             ? data.posts
             : []
+
+        setReaderPosts(nextPosts)
+        setReaderPostsError('')
+
+        await saveHomeCache(
+          cacheKey,
+          {
+            posts: nextPosts,
+          },
+          {
+            maxAgeMs:
+              DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
+          }
         )
       } catch (error) {
         if (!alive) return
 
-        setReaderPosts([])
-        setReaderPostsError(
-          error.message ||
-            'Failed to load reader posts'
-        )
+        if (!hasCachedPayload) {
+          setReaderPosts([])
+          setReaderPostsError(
+            error.message ||
+              'Failed to load reader posts'
+          )
+        }
       } finally {
         if (alive) {
           setReaderPostsLoading(false)
@@ -2110,7 +2241,7 @@ return {
     }
   }, [token])
 
-  useEffect(() => {
+    useEffect(() => {
     let alive = true
 
     async function loadInitialPosts() {
@@ -2126,32 +2257,126 @@ return {
         return
       }
 
-      try {
-        setRealPostsLoading(true)
-        setRealPostsError('')
+      const cacheKey =
+        getDiscoverFeedCacheKey(
+          token,
+          'discover-author-feed',
+          10
+        )
 
-        const data = await fetchFollowedPosts(token)
+      let hasCachedPayload = false
+
+      try {
+        const cached =
+          await loadHomeCache(cacheKey, {
+            maxAgeMs:
+              DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
+            allowExpired: true,
+          })
 
         if (!alive) return
 
+        if (
+          Array.isArray(
+            cached?.data?.posts
+          )
+        ) {
+          hasCachedPayload = true
+
+          setRealPosts(
+            filterAuthorPostsByLocalPreferences(
+              cached.data.posts
+            )
+          )
+
+          setRealPostsCursor(
+            cached.data.next_cursor ||
+              null
+          )
+
+          setRealPostsHasMore(
+            Boolean(
+              cached.data.has_more &&
+                cached.data.next_cursor
+            )
+          )
+
+          setRealPostsLoading(false)
+          setRealPostsError('')
+
+          if (cached.isFresh) {
+            return
+          }
+        }
+
+        if (!hasCachedPayload) {
+          setRealPostsLoading(true)
+        }
+
+        const data =
+          await runDiscoverFeedRequest(
+            `author:${cacheKey}`,
+            () =>
+              fetchFollowedPosts(token)
+          )
+
+        if (!alive) return
+
+        const nextPosts =
+          Array.isArray(data.posts)
+            ? data.posts
+            : []
+
+        const nextCursor =
+          data.next_cursor || null
+
+        const nextHasMore = Boolean(
+          data.has_more &&
+            data.next_cursor
+        )
+
         setRealPosts(
           filterAuthorPostsByLocalPreferences(
-            Array.isArray(data.posts) ? data.posts : []
+            nextPosts
           )
         )
-        setRealPostsCursor(data.next_cursor || null)
+
+        setRealPostsCursor(
+          nextCursor
+        )
+
         setRealPostsHasMore(
-          Boolean(data.has_more && data.next_cursor)
+          nextHasMore
+        )
+
+        setRealPostsError('')
+
+        await saveHomeCache(
+          cacheKey,
+          {
+            posts: nextPosts,
+            next_cursor: nextCursor,
+            has_more: nextHasMore,
+            snapshot_at:
+              data.snapshot_at || null,
+          },
+          {
+            maxAgeMs:
+              DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
+          }
         )
       } catch (error) {
         if (!alive) return
 
-        setRealPosts([])
-        setRealPostsCursor(null)
-        setRealPostsHasMore(false)
-        setRealPostsError(
-          error.message || 'Failed to load followed posts'
-        )
+        if (!hasCachedPayload) {
+          setRealPosts([])
+          setRealPostsCursor(null)
+          setRealPostsHasMore(false)
+          setRealPostsError(
+            error.message ||
+              'Failed to load followed posts'
+          )
+        }
       } finally {
         if (alive) {
           setRealPostsLoading(false)
