@@ -263,6 +263,11 @@
 "src/components/Author/SmartFindReplacePanel.jsx",
 "src/components/SavedPosts/SavedPostCollectionEditor.jsx",
 "src/components/SavedPosts/SavedPostCollectionSheet.jsx"
+"src/components/SavedPosts/SavedPostCard.jsx",
+"src/components/Shop/PlanSection.jsx",
+"src/components/social/posts/PublicPostDetailView.jsx",
+"src/components/reader-posts/ReaderProfilePostsPanel.jsx",
+"src/components/reader-posts/ReaderAuthorStylePhotoViewer.jsx"
   ]
 }
   ]
