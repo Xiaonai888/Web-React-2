@@ -826,8 +826,68 @@ useEffect(() => {
   
   
 
+    const viewRef = useRef(null)
+
+  useEffect(() => {
+    const node = viewRef.current
+    const postId = post?.id
+
+    if (!node || !postId || isOwner) return undefined
+
+    let viewTimer = null
+    let recorded = false
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (recorded) return
+
+        if (entry?.isIntersecting && entry.intersectionRatio >= 0.5) {
+          if (viewTimer) return
+
+          viewTimer = window.setTimeout(() => {
+            recorded = true
+            viewTimer = null
+            observer.disconnect()
+
+            const token = getAuthToken()
+
+            fetch(
+              `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/views?source=author_page`,
+              {
+                method: 'POST',
+                headers: token
+                  ? { Authorization: `Bearer ${token}` }
+                  : {},
+                keepalive: true,
+              }
+            ).catch(() => {})
+          }, 1000)
+
+          return
+        }
+
+        if (viewTimer) {
+          window.clearTimeout(viewTimer)
+          viewTimer = null
+        }
+      },
+      { threshold: [0, 0.5, 1] }
+    )
+
+    observer.observe(node)
+
+    return () => {
+      observer.disconnect()
+      if (viewTimer) window.clearTimeout(viewTimer)
+    }
+  }, [isOwner, post?.id])
+
   return (
-    <article className="bg-[var(--shadow-bg-surface)] py-3">
+    <article
+      ref={viewRef}
+      className="bg-[var(--shadow-bg-surface)] py-3"
+    >
+
       <div className="flex items-start gap-3 px-4">
         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
           {avatarUrl ? (
