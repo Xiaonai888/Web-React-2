@@ -5,6 +5,7 @@ const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+const PAGE_SIZE = 30
 
 const FILTER_OPTIONS = {
   status: [
