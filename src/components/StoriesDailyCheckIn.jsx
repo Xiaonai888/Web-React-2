@@ -1,5 +1,90 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DailyGiftRewardPopup from './DailyGiftRewardPopup'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('storiesDailyCheckIn', {
+  en: {
+    gift: 'Gift',
+    claimed: 'Claimed',
+    today: 'Today',
+    day: 'Day {{day}}',
+    congratsGift: 'Congrats! Gift Received',
+    congratsCoins: 'Congrats! +{{amount}} Coins',
+    checkInGift: 'Check-in for Gift',
+    checkInCoins: 'Check-in for Coins',
+    get: 'Get',
+    claiming: 'Claiming...',
+    claimGift: 'Claim Gift',
+    claimCoins: 'Claim Coins',
+    rewardUnavailable: 'Reward is not available yet',
+    claimFailed: 'Failed to claim reward',
+  },
+  km: {
+    gift: 'កាដូ',
+    claimed: 'បានទទួល',
+    today: 'ថ្ងៃនេះ',
+    day: 'ថ្ងៃទី {{day}}',
+    congratsGift: 'អបអរសាទរ! បានទទួលកាដូ',
+    congratsCoins: 'អបអរសាទរ! +{{amount}} Coins',
+    checkInGift: 'Check-in ដើម្បីទទួលកាដូ',
+    checkInCoins: 'Check-in ដើម្បីទទួល Coins',
+    get: 'ទទួល',
+    claiming: 'កំពុងទទួល...',
+    claimGift: 'ទទួលកាដូ',
+    claimCoins: 'ទទួល Coins',
+    rewardUnavailable: 'រង្វាន់មិនទាន់អាចទទួលបានទេ',
+    claimFailed: 'មិនអាចទទួលរង្វាន់បានទេ',
+  },
+  zh: {
+    gift: '礼物',
+    claimed: '已领取',
+    today: '今天',
+    day: '第 {{day}} 天',
+    congratsGift: '恭喜！已获得礼物',
+    congratsCoins: '恭喜！+{{amount}} Coins',
+    checkInGift: '签到领取礼物',
+    checkInCoins: '签到领取 Coins',
+    get: '领取',
+    claiming: '领取中...',
+    claimGift: '领取礼物',
+    claimCoins: '领取 Coins',
+    rewardUnavailable: '奖励暂不可领取',
+    claimFailed: '领取奖励失败',
+  },
+  ja: {
+    gift: 'ギフト',
+    claimed: '受取済み',
+    today: '今日',
+    day: '{{day}}日目',
+    congratsGift: 'おめでとう！ギフトを受け取りました',
+    congratsCoins: 'おめでとう！+{{amount}} Coins',
+    checkInGift: 'チェックインでギフト獲得',
+    checkInCoins: 'チェックインで Coins 獲得',
+    get: '受け取る',
+    claiming: '受取中...',
+    claimGift: 'ギフトを受け取る',
+    claimCoins: 'Coins を受け取る',
+    rewardUnavailable: '報酬はまだ受け取れません',
+    claimFailed: '報酬を受け取れませんでした',
+  },
+  ko: {
+    gift: '선물',
+    claimed: '수령 완료',
+    today: '오늘',
+    day: '{{day}}일차',
+    congratsGift: '축하합니다! 선물을 받았습니다',
+    congratsCoins: '축하합니다! +{{amount}} Coins',
+    checkInGift: '체크인하고 선물 받기',
+    checkInCoins: '체크인하고 Coins 받기',
+    get: '받기',
+    claiming: '받는 중...',
+    claimGift: '선물 받기',
+    claimCoins: 'Coins 받기',
+    rewardUnavailable: '아직 보상을 받을 수 없습니다',
+    claimFailed: '보상을 받지 못했습니다',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -88,6 +173,7 @@ function normalizeRewards(checkIn) {
 }
 
 function RewardDay({ reward, currentDay, claimedToday }) {
+  const { t } = useDisplayTranslation()
   const day = Number(reward?.day || 0)
   const gift = isGiftReward(reward)
   const isPast = day < currentDay
@@ -108,8 +194,8 @@ function RewardDay({ reward, currentDay, claimedToday }) {
         />
       </div>
 
-      <div className="mt-1.5 truncate text-[10px] font-black text-[#111827]">
-        {gift ? 'Gift' : getRewardAmount(reward).toLocaleString()}
+      <div className="mt-1.5 truncate text-[10px] font-black text-[var(--shadow-text-primary)]">
+        {gift ? t('storiesDailyCheckIn.gift') : getRewardAmount(reward).toLocaleString()}
       </div>
 
       <div
@@ -118,16 +204,21 @@ function RewardDay({ reward, currentDay, claimedToday }) {
             ? 'text-[#ff3f62]'
             : isClaimed
               ? 'text-[#f59e0b]'
-              : 'text-[#9ca3af]'
+              : 'text-[var(--shadow-text-tertiary)]'
         }`}
       >
-        {isClaimed ? 'Claimed' : isToday ? 'Today' : `Day ${day}`}
+        {isClaimed
+          ? t('storiesDailyCheckIn.claimed')
+          : isToday
+            ? t('storiesDailyCheckIn.today')
+            : t('storiesDailyCheckIn.day', { day })}
       </div>
     </div>
   )
 }
 
 export default function StoriesDailyCheckIn() {
+  const { t } = useDisplayTranslation()
   const [checkIn, setCheckIn] = useState(null)
   const [visible, setVisible] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -145,11 +236,13 @@ export default function StoriesDailyCheckIn() {
   const rewardClaimed = claimedToday || Boolean(successReward)
   const titleText = successReward
     ? isGiftReward(successReward)
-      ? 'Congrats! Gift Received'
-      : `Congrats! +${getRewardAmount(successReward).toLocaleString()} Coins`
+      ? t('storiesDailyCheckIn.congratsGift')
+      : t('storiesDailyCheckIn.congratsCoins', {
+          amount: getRewardAmount(successReward).toLocaleString(),
+        })
     : gift
-      ? 'Check-in for Gift'
-      : 'Check-in for Coins'
+      ? t('storiesDailyCheckIn.checkInGift')
+      : t('storiesDailyCheckIn.checkInCoins')
 
   const loadCheckIn = useCallback(async () => {
     const token = getReaderToken()
@@ -289,7 +382,7 @@ export default function StoriesDailyCheckIn() {
       }
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Reward is not available yet')
+        throw new Error(data.message || t('storiesDailyCheckIn.rewardUnavailable'))
       }
 
       const claimedReward = data.reward || currentReward
@@ -303,7 +396,7 @@ export default function StoriesDailyCheckIn() {
       setSuccessReward(claimedReward)
       window.dispatchEvent(new CustomEvent('shadow:wallet-updated', { detail: data.wallet || null }))
     } catch (error) {
-      showMessage(error.message || 'Failed to claim reward')
+      showMessage(error.message || t('storiesDailyCheckIn.claimFailed'))
     } finally {
       setClaiming(false)
     }
@@ -350,7 +443,7 @@ export default function StoriesDailyCheckIn() {
           />
 
           <span className="absolute left-1/2 top-[45px] z-20 flex h-[24px] min-w-[68px] -translate-x-1/2 items-center justify-center gap-1 rounded-full border border-white bg-[#ff3f62] px-2 shadow-[0_4px_12px_rgba(17,24,39,0.18)]">
-            <span className="text-[10px] font-black leading-none text-white">Get</span>
+            <span className="text-[10px] font-black leading-none text-white">{t('storiesDailyCheckIn.get')}</span>
             <img src={gift ? GIFT_IMAGE : COIN_IMAGE} alt="" className="h-[14px] w-[14px] object-contain" />
             <span className="text-[10px] font-black leading-none text-white">{amount.toLocaleString()}</span>
           </span>
@@ -395,7 +488,7 @@ style={{
                     <h2 className="text-[25px] font-bold leading-tight text-white">{titleText}</h2>
                   </div>
 
-                  <div className="mt-3 rounded-[24px] bg-white px-3 pb-4 pt-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                  <div className="mt-3 rounded-[24px] bg-[var(--shadow-bg-surface)] px-3 pb-4 pt-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                     <div className="grid grid-cols-7 gap-1">
                       {rewards.map((reward) => (
                         <RewardDay
@@ -424,10 +517,10 @@ style={{
                       {claiming ? (
                         <>
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                          <span>Claiming...</span>
+                          <span>{t('storiesDailyCheckIn.claiming')}</span>
                         </>
                       ) : rewardClaimed ? (
-                        <span>Claimed</span>
+                        <span>{t('storiesDailyCheckIn.claimed')}</span>
                       ) : (
                         <>
                           <img
@@ -435,7 +528,11 @@ style={{
                             alt=""
                             className="h-5 w-5 object-contain"
                           />
-                          <span>{gift ? 'Claim Gift' : 'Claim Coins'}</span>
+                          <span>
+                            {gift
+                              ? t('storiesDailyCheckIn.claimGift')
+                              : t('storiesDailyCheckIn.claimCoins')}
+                          </span>
                         </>
                       )}
                     </button>
