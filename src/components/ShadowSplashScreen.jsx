@@ -1,5 +1,26 @@
 import { useEffect, useState } from 'react'
 import './ShadowSplashScreen.css'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowSplashScreen', {
+  "en": {
+    "loading": "LOADING..."
+  },
+  "km": {
+    "loading": "កំពុងផ្ទុក..."
+  },
+  "zh": {
+    "loading": "加载中..."
+  },
+  "ja": {
+    "loading": "読み込み中..."
+  },
+  "ko": {
+    "loading": "로딩 중..."
+  }
+})
+
 
 const ASSET_ROOT = '/assets/Icons/Splash%20Screen'
 const assetUrl = (fileName) => `${ASSET_ROOT}/${encodeURIComponent(fileName)}`
@@ -187,6 +208,7 @@ function SceneGlow({ item }) {
 }
 
 export default function ShadowSplashScreen({ onFinish, duration = 4200 }) {
+  const { t } = useDisplayTranslation()
   const [viewport, setViewport] = useState(getViewport)
 
   useEffect(() => {
@@ -267,7 +289,7 @@ export default function ShadowSplashScreen({ onFinish, duration = 4200 }) {
             <span />
           </div>
 
-          <p className="shadow-splash__loading">LOADING...</p>
+          <p className="shadow-splash__loading">{t('shadowSplashScreen.loading')}</p>
         </div>
       </div>
     </div>
