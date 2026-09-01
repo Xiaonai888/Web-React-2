@@ -1463,7 +1463,7 @@ export default function ReaderAuthorStylePhotoViewer({
                       false
                     )
                   }
-                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-[var(--shadow-bg-soft)] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
                 >
                   {t('readerPhotoViewer.cancel')}
                 </button>
@@ -1551,7 +1551,7 @@ export default function ReaderAuthorStylePhotoViewer({
                       false
                     )
                   }
-                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-[var(--shadow-bg-soft)] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
                 >
                   {t('readerPhotoViewer.cancel')}
                 </button>
@@ -1611,7 +1611,7 @@ export default function ReaderAuthorStylePhotoViewer({
                       false
                     )
                   }
-                  className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-[var(--shadow-bg-soft)] text-[14px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
                 >
                   {t('readerPhotoViewer.cancel')}
                 </button>
