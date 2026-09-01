@@ -1583,6 +1583,7 @@ export default function AuthorPageEditDetailsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const sectionFromUrl = useMemo(() => getSearchSection(location.search), [location.search])
+  const modalFromUrl = useMemo(() => new URLSearchParams(location.search).get('modal') || '', [location.search])
   const fileInputRef = useRef(null)
   const coverRef = useRef(null)
   const introRef = useRef(null)
@@ -1684,6 +1685,10 @@ writeStoredDetails(nextDetails)
       targetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 260)
   }, [sectionFromUrl, loading])
+
+  useEffect(() => {
+  if (!loading && modalFromUrl === 'social') setActiveModal('social')
+}, [modalFromUrl, loading])
 
  
 async function updateDetails(patch) {
