@@ -258,6 +258,11 @@
 "src/components/Author/AuthorDashboardCommunityTab.jsx",
 "src/components/Author/AuthorDashboardContentTab.jsx",
 "src/components/Author/AuthorDashboardPageToolsTab.jsx"
+"src/components/Author/AuthorSocialMediaPopup.jsx",
+"src/components/Author/RichFindReplacePanel.jsx",
+"src/components/Author/SmartFindReplacePanel.jsx",
+"src/components/SavedPosts/SavedPostCollectionEditor.jsx",
+"src/components/SavedPosts/SavedPostCollectionSheet.jsx"
   ]
 }
   ]
