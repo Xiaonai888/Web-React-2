@@ -8,6 +8,11 @@ import {
 import {
   useNavigate,
 } from 'react-router-dom'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../../utils/homeDataCache'
 
 const API_BASE_URL =
   window.location.hostname ===
@@ -16,6 +21,117 @@ const API_BASE_URL =
     '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const DISCOVER_STORY_CACHE_MAX_AGE_MS =
+  3 * 60 * 1000
+
+const discoverStoryInflightRequests =
+  new Map()
+
+function getDiscoverStoryCacheScope(token) {
+  if (!token) return 'anon'
+
+  let hash = 2166136261
+
+  for (
+    let index = 0;
+    index < token.length;
+    index += 1
+  ) {
+    hash ^= token.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return `reader-${(hash >>> 0).toString(36)}`
+}
+
+function getDiscoverStoryCacheKey(token) {
+  return getHomeCacheKey({
+    section: 'discover-story-feed',
+    scope:
+      getDiscoverStoryCacheScope(token),
+    params: {
+      limit: 20,
+      schema: 1,
+    },
+  })
+}
+
+function removeExpiredStoryGroups(
+  groups
+) {
+  const now = Date.now()
+
+  return (Array.isArray(groups)
+    ? groups
+    : []
+  )
+    .map((group) => {
+      const stories = (
+        Array.isArray(group?.stories)
+          ? group.stories
+          : []
+      ).filter((story) => {
+        const expiresAt = new Date(
+          story?.expires_at || 0
+        ).getTime()
+
+        return (
+          !expiresAt ||
+          !Number.isFinite(expiresAt) ||
+          expiresAt > now
+        )
+      })
+
+      if (!stories.length) {
+        return null
+      }
+
+      return {
+        ...group,
+        stories,
+        has_unseen: stories.some(
+          (story) => !story.has_viewed
+        ),
+      }
+    })
+    .filter(Boolean)
+}
+
+async function runDiscoverStoryRequest(
+  key,
+  request
+) {
+  if (
+    discoverStoryInflightRequests.has(key)
+  ) {
+    return discoverStoryInflightRequests.get(
+      key
+    )
+  }
+
+  const promise =
+    Promise.resolve().then(request)
+
+  discoverStoryInflightRequests.set(
+    key,
+    promise
+  )
+
+  try {
+    return await promise
+  } finally {
+    if (
+      discoverStoryInflightRequests.get(
+        key
+      ) === promise
+    ) {
+      discoverStoryInflightRequests.delete(
+        key
+      )
+    }
+  }
+}
 
 const CREATE_STORY_ITEM = {
   id: 'create',
@@ -803,61 +919,140 @@ export default function DiscoverStorySection() {
     setActiveGroup,
   ] = useState(null)
 
-  const requestHeaders = useMemo(
-    () => {
-      const token = getAuthToken()
+    const token = useMemo(
+    () => getAuthToken(),
+    []
+  )
 
-      return token
+  const requestHeaders = useMemo(
+    () =>
+      token
         ? {
             Authorization:
               `Bearer ${token}`,
           }
-        : {}
-    },
-    []
+        : {},
+    [token]
+  )
+
+  const storyCacheKey = useMemo(
+    () =>
+      getDiscoverStoryCacheKey(token),
+    [token]
   )
 
   useEffect(() => {
     let alive = true
 
     async function loadStories() {
+      let hasCachedGroups = false
+
       try {
-        setLoading(true)
+        const cached =
+          await loadHomeCache(
+            storyCacheKey,
+            {
+              maxAgeMs:
+                DISCOVER_STORY_CACHE_MAX_AGE_MS,
+              allowExpired: true,
+            }
+          )
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/discover-stories/feed?limit=20`,
-          {
-            headers:
-              requestHeaders,
-            cache: 'no-store',
-          }
-        )
-
-        const data = await response
-          .json()
-          .catch(() => ({}))
+        if (!alive) return
 
         if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              'Failed to load stories'
+          Array.isArray(
+            cached?.data?.groups
           )
+        ) {
+          hasCachedGroups = true
+
+          const cachedGroups =
+            removeExpiredStoryGroups(
+              cached.data.groups
+            )
+
+          setGroups(cachedGroups)
+          setLoading(false)
+
+          if (cached.isFresh) {
+            return
+          }
         }
 
-        if (alive) {
-          setGroups(
-            Array.isArray(
-              data.groups
-            )
-              ? data.groups
-              : []
-          )
+        if (!hasCachedGroups) {
+          setLoading(true)
         }
+
+        const data =
+          await runDiscoverStoryRequest(
+            storyCacheKey,
+            async () => {
+              const response =
+                await fetch(
+                  `${API_BASE_URL}/api/discover-stories/feed?limit=20`,
+                  {
+                    headers:
+                      requestHeaders,
+                    cache: 'no-store',
+                  }
+                )
+
+              const payload =
+                await response
+                  .json()
+                  .catch(() => ({}))
+
+              if (
+                !response.ok ||
+                payload.ok === false
+              ) {
+                throw new Error(
+                  payload.message ||
+                    'Failed to load stories'
+                )
+              }
+
+              return payload
+            }
+          )
+
+        if (!alive) return
+
+        const nextGroups =
+          removeExpiredStoryGroups(
+            data.groups
+          )
+
+        setGroups(nextGroups)
+
+        setActiveGroup((current) => {
+          if (!current) return current
+
+          return (
+            nextGroups.find(
+              (group) =>
+                group.key ===
+                current.key
+            ) || current
+          )
+        })
+
+        await saveHomeCache(
+          storyCacheKey,
+          {
+            groups: nextGroups,
+          },
+          {
+            maxAgeMs:
+              DISCOVER_STORY_CACHE_MAX_AGE_MS,
+          }
+        )
       } catch {
-        if (alive) {
+        if (
+          alive &&
+          !hasCachedGroups
+        ) {
           setGroups([])
         }
       } finally {
@@ -872,7 +1067,10 @@ export default function DiscoverStorySection() {
     return () => {
       alive = false
     }
-  }, [requestHeaders])
+  }, [
+    requestHeaders,
+    storyCacheKey,
+  ])
 
   const handleViewed = useCallback(
     (
