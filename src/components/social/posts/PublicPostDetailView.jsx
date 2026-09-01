@@ -11,6 +11,72 @@ import {
   useState,
 } from 'react'
 
+import { getDisplayLanguageId, useDisplayTranslation } from '../../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../../i18n/registerTranslations'
+
+registerTranslationNamespace('publicPostDetailView', {
+  "en": {
+    "post": "Post",
+    "postUnavailable": "Post unavailable",
+    "goBack": "Go back",
+    "pinned": "Pinned",
+    "edited": "Edited",
+    "like": "Like",
+    "comment": "Comment",
+    "echo": "Echo",
+    "commentsCount": "{{count}} comments",
+    "echoesCount": "{{count}} echoes"
+  },
+  "km": {
+    "post": "ប្រកាស",
+    "postUnavailable": "មិនអាចមើលប្រកាសបាន",
+    "goBack": "ត្រឡប់ក្រោយ",
+    "pinned": "បានខ្ទាស់",
+    "edited": "បានកែសម្រួល",
+    "like": "ចូលចិត្ត",
+    "comment": "មតិយោបល់",
+    "echo": "Echo",
+    "commentsCount": "{{count}} មតិយោបល់",
+    "echoesCount": "{{count}} Echo"
+  },
+  "zh": {
+    "post": "帖子",
+    "postUnavailable": "帖子不可用",
+    "goBack": "返回",
+    "pinned": "已置顶",
+    "edited": "已编辑",
+    "like": "赞",
+    "comment": "评论",
+    "echo": "Echo",
+    "commentsCount": "{{count}} 条评论",
+    "echoesCount": "{{count}} 次 Echo"
+  },
+  "ja": {
+    "post": "投稿",
+    "postUnavailable": "投稿を利用できません",
+    "goBack": "戻る",
+    "pinned": "固定済み",
+    "edited": "編集済み",
+    "like": "いいね",
+    "comment": "コメント",
+    "echo": "Echo",
+    "commentsCount": "コメント {{count}}件",
+    "echoesCount": "Echo {{count}}件"
+  },
+  "ko": {
+    "post": "게시물",
+    "postUnavailable": "게시물을 사용할 수 없습니다",
+    "goBack": "돌아가기",
+    "pinned": "고정됨",
+    "edited": "수정됨",
+    "like": "좋아요",
+    "comment": "댓글",
+    "echo": "Echo",
+    "commentsCount": "댓글 {{count}}개",
+    "echoesCount": "Echo {{count}}개"
+  }
+})
+
 
 function formatCompactNumber(value) {
   const number = Math.max(
@@ -51,7 +117,7 @@ function formatDate(value) {
   }
 
   return new Intl.DateTimeFormat(
-    undefined,
+    getDisplayLanguageId() || 'en',
     {
       month: 'short',
       day: 'numeric',
@@ -82,7 +148,7 @@ function Avatar({
 
   return (
     <span
-      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eceef1] ${textSize} font-bold text-[#111827] ring-1 ring-black/5`}
+      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ${textSize} font-bold text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]`}
     >
       {src && !failed ? (
         <img
@@ -155,7 +221,7 @@ function StatControl({
 }
 
 export default function PublicPostDetailView({
-  pageName = 'Post',
+  pageName = '',
   pageAvatarUrl = '',
   authorName = '',
   authorAvatarUrl = '',
@@ -186,24 +252,25 @@ export default function PublicPostDetailView({
   onOpenEchoes,
   onErrorBack,
 }) {
+  const { t } = useDisplayTranslation()
+  const displayPageName = pageName || t('publicPostDetailView.post')
   const displayAuthorName =
     authorName ||
-    pageName ||
-    'Post'
+    displayPageName
   const displayAuthorAvatar =
     authorAvatarUrl ||
     pageAvatarUrl ||
     ''
 
   return (
-    <div className="min-h-[100dvh] bg-[#f0f2f5] text-[#111827]">
-      <header className="sticky top-0 z-50 bg-white">
+    <div className="min-h-[100dvh] bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-50 bg-[var(--shadow-bg-surface)]">
         <div className="mx-auto flex h-[56px] max-w-[680px] items-center gap-2 px-3 pt-[env(safe-area-inset-top)]">
           <button
             type="button"
             onClick={onClose}
             disabled={!onClose}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f2f2f3] disabled:pointer-events-none disabled:opacity-0"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)] disabled:pointer-events-none disabled:opacity-0"
             aria-label="Close"
           >
             <X
@@ -220,14 +287,14 @@ export default function PublicPostDetailView({
             }
             className="min-w-0 flex-1 truncate text-center text-[17px] font-bold disabled:pointer-events-none"
           >
-            {pageName}
+            {displayPageName}
           </button>
 
           <button
             type="button"
             onClick={onSearch}
             disabled={!onSearch}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f2f2f3] disabled:pointer-events-none disabled:opacity-0"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)] disabled:pointer-events-none disabled:opacity-0"
             aria-label="Search"
           >
             <Search
@@ -247,7 +314,7 @@ export default function PublicPostDetailView({
           >
             <Avatar
               src={pageAvatarUrl}
-              name={pageName}
+              name={displayPageName}
               size="h-8 w-8"
               textSize="text-[12px]"
             />
@@ -257,7 +324,7 @@ export default function PublicPostDetailView({
 
       <main className="mx-auto w-full max-w-[680px]">
         {loading ? (
-          <div className="flex min-h-[60dvh] items-center justify-center bg-white text-[#7c3aed]">
+          <div className="flex min-h-[60dvh] items-center justify-center bg-[var(--shadow-bg-surface)] text-[#7c3aed]">
             <LoaderCircle
               size={30}
               className="animate-spin"
@@ -266,18 +333,18 @@ export default function PublicPostDetailView({
         ) : null}
 
         {!loading && error ? (
-          <div className="bg-white px-5 py-20 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f0e8ff] text-[#7c3aed]">
+          <div className="bg-[var(--shadow-bg-surface)] px-5 py-20 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f0e8ff] text-[#7c3aed] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]">
               <MessageCircle
                 size={26}
               />
             </div>
 
             <h1 className="mt-4 text-[16px] font-bold">
-              Post unavailable
+              {t('publicPostDetailView.postUnavailable')}
             </h1>
 
-            <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-5 text-[#73767c]">
+            <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-5 text-[var(--shadow-text-secondary)]">
               {error}
             </p>
 
@@ -285,9 +352,9 @@ export default function PublicPostDetailView({
               <button
                 type="button"
                 onClick={onErrorBack}
-                className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[13px] font-semibold text-white active:scale-95"
+                className="mt-5 rounded-full bg-[var(--shadow-text-primary)] px-5 py-2.5 text-[13px] font-semibold text-[var(--shadow-bg-surface)] active:scale-95"
               >
-                Go back
+                {t('publicPostDetailView.goBack')}
               </button>
             ) : null}
           </div>
@@ -295,7 +362,7 @@ export default function PublicPostDetailView({
 
         {!loading && !error ? (
           <>
-            <article className="bg-white pt-4">
+            <article className="bg-[var(--shadow-bg-surface)] pt-4">
               <div className="flex items-start gap-3 px-4">
                 <button
                   type="button"
@@ -338,12 +405,12 @@ export default function PublicPostDetailView({
                         }
                       </button>
 
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[12px] text-[#65676b]">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[12px] text-[var(--shadow-text-secondary)]">
                         {isPinned ? (
                           <>
                             <i className="fa-solid fa-thumbtack text-[10px]" />
                             <span>
-                              Pinned
+                              {t('publicPostDetailView.pinned')}
                             </span>
                             <span>·</span>
                           </>
@@ -359,7 +426,7 @@ export default function PublicPostDetailView({
                           <>
                             <span>·</span>
                             <span>
-                              Edited
+                              {t('publicPostDetailView.edited')}
                             </span>
                           </>
                         ) : null}
@@ -380,7 +447,7 @@ export default function PublicPostDetailView({
                       disabled={
                         !onOptions
                       }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#65676b] active:bg-[#f2f2f2] disabled:pointer-events-none disabled:opacity-0"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-hover)] disabled:pointer-events-none disabled:opacity-0"
                       aria-label="Post options"
                     >
                       <i className="fa-solid fa-ellipsis text-[15px]" />
@@ -400,7 +467,7 @@ export default function PublicPostDetailView({
               {media}
 
               <div className="mt-3 px-4 pb-1">
-                <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
+                <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[var(--shadow-text-secondary)]">
                   {reactionControl ? (
                     <div className="flex items-center justify-center py-2">
                       {
@@ -415,7 +482,7 @@ export default function PublicPostDetailView({
                     >
                       <i className="fa-regular fa-heart text-[18px]" />
                       <span>
-                        Like
+                        {t('publicPostDetailView.like')}
                       </span>
                     </button>
                   )}
@@ -424,11 +491,11 @@ export default function PublicPostDetailView({
                     type="button"
                     onClick={onComment}
                     disabled={!onComment}
-                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] disabled:pointer-events-none"
+                    className="flex items-center justify-center gap-2 py-2 active:bg-[var(--shadow-bg-hover)] disabled:pointer-events-none"
                   >
                     <i className="fa-regular fa-comment text-[18px]" />
                     <span>
-                      Comment
+                      {t('publicPostDetailView.comment')}
                     </span>
                   </button>
 
@@ -449,13 +516,13 @@ export default function PublicPostDetailView({
                         className="h-[18px] w-[18px] object-contain opacity-70"
                       />
                       <span>
-                        Echo
+                        {t('publicPostDetailView.echo')}
                       </span>
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b]">
+                <div className="flex items-center justify-between pb-2 text-[12px] text-[var(--shadow-text-secondary)]">
                   <StatControl
                     onClick={
                       onOpenReactions
@@ -476,10 +543,9 @@ export default function PublicPostDetailView({
                       }
                       ariaLabel="View comments"
                     >
-                      {formatCompactNumber(
-                        commentCount
-                      )}{' '}
-                      comments
+                      {t('publicPostDetailView.commentsCount', {
+                        count: formatCompactNumber(commentCount),
+                      })}
                     </StatControl>
 
                     <StatControl
@@ -488,10 +554,9 @@ export default function PublicPostDetailView({
                       }
                       ariaLabel="View echoes"
                     >
-                      {formatCompactNumber(
-                        echoCount
-                      )}{' '}
-                      echoes
+                      {t('publicPostDetailView.echoesCount', {
+                        count: formatCompactNumber(echoCount),
+                      })}
                     </StatControl>
                   </div>
                 </div>
@@ -499,7 +564,7 @@ export default function PublicPostDetailView({
             </article>
 
             {comments ? (
-  <section className="bg-white">
+  <section className="bg-[var(--shadow-bg-surface)]">
     {comments}
   </section>
 ) : null}
