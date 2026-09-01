@@ -15,7 +15,8 @@ registerTranslationNamespace('musicPage', {
     follow: 'Follow',
     popular: 'Popular',
     popularHint: 'Most played on Shadow',
-    albumsSingles: 'Albums & Singles',
+    albums: 'Albums',
+    singles: 'Singles',
     seeAll: 'See all',
     showLess: 'Show less',
     album: 'Album',
@@ -25,9 +26,11 @@ registerTranslationNamespace('musicPage', {
     back: 'Back',
     tracks: 'Tracks',
     play: 'Play',
+    totalListeners: 'Total Listeners',
     noArtists: 'No artists yet',
     noPopular: 'No popular songs yet.',
-    noReleases: 'No albums or singles yet.',
+    noAlbums: 'No albums yet.',
+    noSingles: 'No singles yet.',
     noTracks: 'No songs in this release yet.',
     loadFailed: 'Unable to load music right now.',
     retry: 'Retry',
@@ -43,7 +46,8 @@ registerTranslationNamespace('musicPage', {
     follow: 'តាមដាន',
     popular: 'ពេញនិយម',
     popularHint: 'បទដែលមានអ្នកស្តាប់ច្រើននៅ Shadow',
-    albumsSingles: 'Album & Single',
+    albums: 'Album',
+    singles: 'Single',
     seeAll: 'មើលទាំងអស់',
     showLess: 'បង្ហាញតិច',
     album: 'Album',
@@ -53,9 +57,11 @@ registerTranslationNamespace('musicPage', {
     back: 'ត្រឡប់ក្រោយ',
     tracks: 'បទចម្រៀង',
     play: 'ចាក់',
+    totalListeners: 'អ្នកស្តាប់សរុប',
     noArtists: 'មិនទាន់មានអ្នកចម្រៀង',
     noPopular: 'មិនទាន់មានបទពេញនិយមនៅឡើយទេ។',
-    noReleases: 'មិនទាន់មាន Album ឬ Single',
+    noAlbums: 'មិនទាន់មាន Album',
+    noSingles: 'មិនទាន់មាន Single',
     noTracks: 'មិនទាន់មានបទក្នុង Release នេះ',
     loadFailed: 'មិនអាចផ្ទុកតន្ត្រីបានទេ។',
     retry: 'សាកម្តងទៀត',
@@ -71,7 +77,8 @@ registerTranslationNamespace('musicPage', {
     follow: '关注',
     popular: '热门',
     popularHint: 'Shadow 上播放最多的歌曲',
-    albumsSingles: '专辑与单曲',
+    albums: '专辑',
+    singles: '单曲',
     seeAll: '查看全部',
     showLess: '收起',
     album: '专辑',
@@ -81,9 +88,11 @@ registerTranslationNamespace('musicPage', {
     back: '返回',
     tracks: '歌曲',
     play: '播放',
+    totalListeners: '总听众',
     noArtists: '暂无歌手',
     noPopular: '暂无热门歌曲。',
-    noReleases: '暂无专辑或单曲。',
+    noAlbums: '暂无专辑。',
+    noSingles: '暂无单曲。',
     noTracks: '此发行暂无歌曲。',
     loadFailed: '暂时无法加载音乐。',
     retry: '重试',
@@ -99,7 +108,8 @@ registerTranslationNamespace('musicPage', {
     follow: 'フォロー',
     popular: '人気',
     popularHint: 'Shadowでよく聴かれている曲',
-    albumsSingles: 'アルバム & シングル',
+    albums: 'アルバム',
+    singles: 'シングル',
     seeAll: 'すべて見る',
     showLess: '閉じる',
     album: 'アルバム',
@@ -109,9 +119,11 @@ registerTranslationNamespace('musicPage', {
     back: '戻る',
     tracks: '曲',
     play: '再生',
+    totalListeners: '総リスナー',
     noArtists: 'アーティストはまだいません',
     noPopular: '人気曲はまだありません。',
-    noReleases: 'アルバムやシングルはまだありません。',
+    noAlbums: 'アルバムはまだありません。',
+    noSingles: 'シングルはまだありません。',
     noTracks: 'このリリースにはまだ曲がありません。',
     loadFailed: '音楽を読み込めません。',
     retry: '再試行',
@@ -127,7 +139,8 @@ registerTranslationNamespace('musicPage', {
     follow: '팔로우',
     popular: '인기곡',
     popularHint: 'Shadow에서 가장 많이 재생된 곡',
-    albumsSingles: '앨범 & 싱글',
+    albums: '앨범',
+    singles: '싱글',
     seeAll: '모두 보기',
     showLess: '접기',
     album: '앨범',
@@ -137,9 +150,11 @@ registerTranslationNamespace('musicPage', {
     back: '뒤로',
     tracks: '트랙',
     play: '재생',
+    totalListeners: '총 청취자',
     noArtists: '아직 아티스트가 없습니다',
     noPopular: '아직 인기곡이 없습니다.',
-    noReleases: '아직 앨범이나 싱글이 없습니다.',
+    noAlbums: '아직 앨범이 없습니다.',
+    noSingles: '아직 싱글이 없습니다.',
     noTracks: '이 릴리스에는 아직 곡이 없습니다.',
     loadFailed: '음악을 불러올 수 없습니다.',
     retry: '다시 시도',
@@ -217,6 +232,10 @@ function formatViews(value) {
   return String(count)
 }
 
+function formatListeners(value) {
+  return Number(value || 0).toLocaleString()
+}
+
 function getYoutubeVideoId(song) {
   const direct = String(song?.youtube_video_id || '').trim()
   if (/^[A-Za-z0-9_-]{11}$/.test(direct)) return direct
@@ -280,7 +299,8 @@ export default function MusicPage() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [followingByArtist, setFollowingByArtist] = useState({})
-  const [showAllReleases, setShowAllReleases] = useState(false)
+  const [showAllSingles, setShowAllSingles] = useState(false)
+  const [showAllAlbums, setShowAllAlbums] = useState(false)
   const [selectedReleaseId, setSelectedReleaseId] = useState('')
   const [currentSong, setCurrentSong] = useState(null)
   const [playerNonce, setPlayerNonce] = useState(0)
@@ -332,7 +352,8 @@ export default function MusicPage() {
     async function loadArtist() {
       setLoadingArtist(true)
       setError('')
-      setShowAllReleases(false)
+      setShowAllSingles(false)
+      setShowAllAlbums(false)
       setSelectedReleaseId('')
       setCurrentSong(null)
 
@@ -368,6 +389,7 @@ export default function MusicPage() {
   const filteredArtists = useMemo(() => {
     const keyword = query.trim().toLowerCase()
     if (!keyword) return artists
+
     return artists.filter((artist) =>
       String(artist.name || '').toLowerCase().includes(keyword)
     )
@@ -382,8 +404,23 @@ export default function MusicPage() {
     ? artistData.releases
     : []
 
+  const singles = useMemo(
+    () => releases.filter((release) => release.release_type === 'single'),
+    [releases]
+  )
+
+  const albums = useMemo(
+    () => releases.filter((release) => release.release_type === 'album'),
+    [releases]
+  )
+
   const allSongs = useMemo(
     () => releases.flatMap((release) => release.songs || []),
+    [releases]
+  )
+
+  const releaseById = useMemo(
+    () => new Map(releases.map((release) => [release.id, release])),
     [releases]
   )
 
@@ -399,9 +436,8 @@ export default function MusicPage() {
     [allSongs]
   )
 
-  const visibleReleases = showAllReleases
-    ? releases
-    : releases.slice(0, 6)
+  const visibleSingles = showAllSingles ? singles : singles.slice(0, 6)
+  const visibleAlbums = showAllAlbums ? albums : albums.slice(0, 6)
 
   const selectedRelease =
     releases.find((release) => release.id === selectedReleaseId) ||
@@ -412,6 +448,9 @@ export default function MusicPage() {
   )
 
   const currentVideoId = getYoutubeVideoId(currentSong)
+  const currentSongRelease = currentSong
+    ? releaseById.get(currentSong.release_id) || null
+    : null
 
   function requireLogin() {
     setCurrentSong(null)
@@ -431,6 +470,7 @@ export default function MusicPage() {
 
   function toggleFollow() {
     if (!artist?.id) return
+
     setFollowingByArtist((current) => ({
       ...current,
       [artist.id]: !current[artist.id],
@@ -494,6 +534,103 @@ export default function MusicPage() {
             view_count: viewCount,
           }
         : current
+    )
+  }
+
+  function renderReleaseGrid(items, visibleItems, showAll, setShowAll, titleKey, emptyKey, toneOffset = 0) {
+    return (
+      <section className="px-4 pt-6 sm:px-5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[20px] font-black tracking-[-0.02em]">
+            {t(`musicPage.${titleKey}`)}
+          </h2>
+
+          {items.length > 6 ? (
+            <button
+              type="button"
+              onClick={() => setShowAll((value) => !value)}
+              className="shrink-0 text-[10px] font-bold text-white/55 transition hover:text-white"
+            >
+              {showAll
+                ? t('musicPage.showLess')
+                : t('musicPage.seeAll')}
+            </button>
+          ) : null}
+        </div>
+
+        {visibleItems.length ? (
+          <div className="mt-3 grid grid-cols-2 gap-x-2.5 gap-y-4 sm:grid-cols-3 sm:gap-x-3">
+            {visibleItems.map((release, index) => {
+              const firstSong = release.songs?.[0] || null
+              const tone = COVER_TONES[(index + toneOffset) % COVER_TONES.length]
+
+              return (
+                <article
+                  key={release.id}
+                  className="shadow-music-release min-w-0 rounded-xl"
+                >
+                  <div
+                    className={`shadow-music-cover relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br ${tone}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openRelease(release)}
+                      className="absolute inset-0 flex h-full w-full items-center justify-center overflow-hidden rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
+                      aria-label={`${release.title} ${t('musicPage.tracks')}`}
+                    >
+                      {release.cover_url ? (
+                        <img
+                          src={release.cover_url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <MusicIcon size={42} />
+                      )}
+                    </button>
+
+                    {firstSong ? (
+                      <button
+                        type="button"
+                        onClick={() => playSong(firstSong)}
+                        className="shadow-music-play absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#3b82f6] text-black shadow-[0_8px_18px_rgba(0,0,0,0.42)]"
+                        aria-label={`${t('musicPage.play')} ${release.title}`}
+                      >
+                        <PlayIcon size={17} />
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => openRelease(release)}
+                    className="mt-2 block w-full min-w-0 text-left"
+                  >
+                    <span className="block truncate text-[12px] font-extrabold leading-5">
+                      {release.title}
+                    </span>
+                    <span className="block text-[10px] text-white/50">
+                      {release.release_year || ''}
+                      {release.release_year ? ' • ' : ''}
+                      {t(
+                        `musicPage.${
+                          release.release_type === 'album'
+                            ? 'album'
+                            : 'single'
+                        }`
+                      )}
+                    </span>
+                  </button>
+                </article>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-6 text-center text-[10px] font-semibold text-white/40">
+            {t(`musicPage.${emptyKey}`)}
+          </div>
+        )}
+      </section>
     )
   }
 
@@ -708,8 +845,13 @@ export default function MusicPage() {
                       <h1 className="mt-1 truncate text-[31px] font-black leading-none tracking-[-0.04em] sm:text-[42px]">
                         {artist.name}
                       </h1>
-                      <div className="mt-2 truncate text-[11px] font-medium text-white/60">
-                        {artist.subtitle || 'Shadow Music Artist'}
+                      <div className="mt-2 flex items-baseline gap-1.5 text-white/70">
+                        <span className="text-[12px] font-extrabold text-white/90">
+                          {formatListeners(artist.total_listeners)}
+                        </span>
+                        <span className="text-[10px] font-medium">
+                          {t('musicPage.totalListeners')}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -756,8 +898,16 @@ export default function MusicPage() {
                       </div>
 
                       <div className="flex items-center gap-3 px-3 py-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.08]">
-                          <MusicIcon size={17} />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/[0.08]">
+                          {currentSongRelease?.cover_url ? (
+                            <img
+                              src={currentSongRelease.cover_url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <MusicIcon size={17} />
+                          )}
                         </div>
 
                         <div className="min-w-0 flex-1">
@@ -798,49 +948,62 @@ export default function MusicPage() {
 
                   <div className="mt-2">
                     {popularSongs.length ? (
-                      popularSongs.map((song, index) => (
-                        <button
-                          type="button"
-                          key={song.id}
-                          onClick={() => playSong(song)}
-                          className="group flex w-full items-center gap-3 rounded-lg px-1.5 py-2 text-left transition hover:bg-white/[0.055] active:bg-white/[0.08]"
-                        >
-                          <span className="w-4 shrink-0 text-center text-[11px] font-medium text-white/55">
-                            {index + 1}
-                          </span>
+                      popularSongs.map((song, index) => {
+                        const songRelease =
+                          releaseById.get(song.release_id) || null
 
-                          <span
-                            className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br ${
-                              COVER_TONES[index % COVER_TONES.length]
-                            } text-white`}
+                        return (
+                          <button
+                            type="button"
+                            key={song.id}
+                            onClick={() => playSong(song)}
+                            className="group flex w-full items-center gap-3 rounded-lg px-1.5 py-2 text-left transition hover:bg-white/[0.055] active:bg-white/[0.08]"
                           >
-                            <MusicIcon size={16} />
-                            <span className="absolute inset-0 hidden items-center justify-center bg-black/45 group-hover:flex">
-                              <PlayIcon size={14} />
+                            <span className="w-4 shrink-0 text-center text-[11px] font-medium text-white/55">
+                              {index + 1}
                             </span>
-                          </span>
 
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[12px] font-extrabold leading-5">
-                              {song.title}
-                            </span>
-                            <span className="block truncate text-[10px] text-white/50">
-                              {artist.name}
-                            </span>
-                          </span>
-
-                          <span className="flex shrink-0 items-center gap-2 text-[10px] font-medium text-white/50">
-                            <span>
-                              {formatViews(song.view_count)}
-                            </span>
-                            {durationText(song.duration_seconds) ? (
-                              <span className="hidden sm:inline">
-                                {durationText(song.duration_seconds)}
+                            <span
+                              className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br ${
+                                COVER_TONES[index % COVER_TONES.length]
+                              } text-white`}
+                            >
+                              {songRelease?.cover_url ? (
+                                <img
+                                  src={songRelease.cover_url}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <MusicIcon size={16} />
+                              )}
+                              <span className="absolute inset-0 hidden items-center justify-center bg-black/45 group-hover:flex">
+                                <PlayIcon size={14} />
                               </span>
-                            ) : null}
-                          </span>
-                        </button>
-                      ))
+                            </span>
+
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[12px] font-extrabold leading-5">
+                                {song.title}
+                              </span>
+                              <span className="block truncate text-[10px] text-white/50">
+                                {artist.name}
+                              </span>
+                            </span>
+
+                            <span className="flex shrink-0 items-center gap-2 text-[10px] font-medium text-white/50">
+                              <span>
+                                {formatViews(song.view_count)}
+                              </span>
+                              {durationText(song.duration_seconds) ? (
+                                <span className="hidden sm:inline">
+                                  {durationText(song.duration_seconds)}
+                                </span>
+                              ) : null}
+                            </span>
+                          </button>
+                        )
+                      })
                     ) : (
                       <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-5 text-center text-[10px] font-semibold text-white/40">
                         {t('musicPage.noPopular')}
@@ -849,107 +1012,29 @@ export default function MusicPage() {
                   </div>
                 </section>
 
-                <section className="px-4 pb-7 pt-6 sm:px-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-[20px] font-black tracking-[-0.02em]">
-                      {t('musicPage.albumsSingles')}
-                    </h2>
+                {renderReleaseGrid(
+                  singles,
+                  visibleSingles,
+                  showAllSingles,
+                  setShowAllSingles,
+                  'singles',
+                  'noSingles',
+                  0
+                )}
 
-                    {releases.length > 6 ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowAllReleases((value) => !value)
-                        }
-                        className="shrink-0 text-[10px] font-bold text-white/55 transition hover:text-white"
-                      >
-                        {showAllReleases
-                          ? t('musicPage.showLess')
-                          : t('musicPage.seeAll')}
-                      </button>
-                    ) : null}
-                  </div>
+                {renderReleaseGrid(
+                  albums,
+                  visibleAlbums,
+                  showAllAlbums,
+                  setShowAllAlbums,
+                  'albums',
+                  'noAlbums',
+                  2
+                )}
 
-                  {visibleReleases.length ? (
-                    <div className="mt-3 grid grid-cols-2 gap-x-2.5 gap-y-4 sm:grid-cols-3 sm:gap-x-3">
-                      {visibleReleases.map((release, index) => {
-                        const firstSong = release.songs?.[0] || null
-
-                        return (
-                          <article
-                            key={release.id}
-                            className="shadow-music-release min-w-0 rounded-xl"
-                          >
-                            <div
-                              className={`shadow-music-cover relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br ${
-                                COVER_TONES[index % COVER_TONES.length]
-                              }`}
-                            >
-                              <button
-                                type="button"
-                                onClick={() => openRelease(release)}
-                                className="absolute inset-0 flex h-full w-full items-center justify-center overflow-hidden rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
-                                aria-label={`${release.title} ${t(
-                                  'musicPage.tracks'
-                                )}`}
-                              >
-                                {release.cover_url ? (
-                                  <img
-                                    src={release.cover_url}
-                                    alt=""
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <MusicIcon size={42} />
-                                )}
-                              </button>
-
-                              {firstSong ? (
-                                <button
-                                  type="button"
-                                  onClick={() => playSong(firstSong)}
-                                  className="shadow-music-play absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#3b82f6] text-black shadow-[0_8px_18px_rgba(0,0,0,0.42)]"
-                                  aria-label={`${t(
-                                    'musicPage.play'
-                                  )} ${release.title}`}
-                                >
-                                  <PlayIcon size={17} />
-                                </button>
-                              ) : null}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => openRelease(release)}
-                              className="mt-2 block w-full min-w-0 text-left"
-                            >
-                              <span className="block truncate text-[12px] font-extrabold leading-5">
-                                {release.title}
-                              </span>
-                              <span className="block text-[10px] text-white/50">
-                                {release.release_year || ''}
-                                {release.release_year ? ' • ' : ''}
-                                {t(
-                                  `musicPage.${
-                                    release.release_type === 'album'
-                                      ? 'album'
-                                      : 'single'
-                                  }`
-                                )}
-                              </span>
-                            </button>
-                          </article>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="mt-3 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-6 text-center text-[10px] font-semibold text-white/40">
-                      {t('musicPage.noReleases')}
-                    </div>
-                  )}
-
-                  {selectedRelease ? (
-                    <div className="mt-5 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111113]">
+                {selectedRelease ? (
+                  <section className="px-4 pb-7 pt-5 sm:px-5">
+                    <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111113]">
                       <div className="flex items-center gap-3 border-b border-white/[0.07] p-3">
                         <div
                           className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${
@@ -1011,8 +1096,16 @@ export default function MusicPage() {
                                 {song.track_number || index + 1}
                               </span>
 
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.07]">
-                                <PlayIcon size={13} />
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/[0.07]">
+                                {selectedRelease.cover_url ? (
+                                  <img
+                                    src={selectedRelease.cover_url}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <PlayIcon size={13} />
+                                )}
                               </span>
 
                               <span className="min-w-0 flex-1">
@@ -1039,8 +1132,10 @@ export default function MusicPage() {
                         )}
                       </div>
                     </div>
-                  ) : null}
-                </section>
+                  </section>
+                ) : (
+                  <div className="pb-7" />
+                )}
               </>
             ) : null}
           </>
@@ -1057,9 +1152,17 @@ export default function MusicPage() {
                 block: 'center',
               })
             }
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#46464d] to-[#151518]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[#46464d] to-[#151518]"
           >
-            <PauseIcon size={16} />
+            {currentSongRelease?.cover_url ? (
+              <img
+                src={currentSongRelease.cover_url}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <PauseIcon size={16} />
+            )}
           </button>
 
           <button
