@@ -6,6 +6,311 @@ import {
 } from 'react'
 import ReportModal from '../ReportModal'
 import ReactionAction from '../social/reactions/ReactionAction'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerPostCommentsSection', {
+  "en": {
+    "hotComments": "Hot comments",
+    "hotCommentsDesc": "Show comments with the most likes first.",
+    "newest": "Newest",
+    "newestDesc": "Show the newest comments first.",
+    "allComments": "All comments",
+    "allCommentsDesc": "Show all comments.",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m",
+    "hoursAgo": "{{count}}h",
+    "daysAgo": "{{count}}d",
+    "reader": "Reader",
+    "reply": "Reply",
+    "copy": "Copy",
+    "edit": "Edit",
+    "delete": "Delete",
+    "reportComment": "Report comment",
+    "hideComment": "Hide this comment",
+    "like": "Like",
+    "hideReplies": "Hide replies",
+    "viewReplies": "View {{count}} replies",
+    "viewReply": "View {{count}} reply",
+    "editComment": "Edit comment",
+    "saving": "Saving...",
+    "saveComment": "Save comment",
+    "failedLoadComments": "Failed to load comments",
+    "failedLoadCommentsPeriod": "Failed to load comments.",
+    "pleaseLoginComment": "Please login to comment.",
+    "failedCreateComment": "Failed to create comment",
+    "failedCreateCommentPeriod": "Failed to create comment.",
+    "pleaseLoginReply": "Please login to reply.",
+    "failedCreateReply": "Failed to create reply",
+    "failedCreateReplyPeriod": "Failed to create reply.",
+    "pleaseLoginReact": "Please login to react.",
+    "failedUpdateReaction": "Failed to update reaction",
+    "failedUpdateReactionPeriod": "Failed to update reaction.",
+    "commentCopied": "Comment copied.",
+    "copyFailed": "Copy failed.",
+    "pleaseLoginAgain": "Please login again.",
+    "failedUpdateComment": "Failed to update comment",
+    "commentUpdated": "Comment updated.",
+    "failedUpdateCommentPeriod": "Failed to update comment.",
+    "failedDeleteComment": "Failed to delete comment",
+    "commentDeleted": "Comment deleted.",
+    "failedDeleteCommentPeriod": "Failed to delete comment.",
+    "commentHiddenDevice": "Comment hidden on your device.",
+    "commentsCount": "{{count}} comments",
+    "loading": "Loading...",
+    "loadMoreComments": "Load more comments",
+    "noCommentsYet": "No comments yet",
+    "noCommentsDesc": "Start the conversation and share what you think about this post.",
+    "writeCommentAction": "Write a comment",
+    "replyingTo": "Replying to {{name}}",
+    "cancel": "Cancel",
+    "commentsOff": "Comments are turned off for this post.",
+    "writeReply": "Write a reply...",
+    "writeComment": "Write a comment...",
+    "sendReply": "Send reply",
+    "sendComment": "Send comment"
+  },
+  "km": {
+    "hotComments": "មតិយោបល់ពេញនិយម",
+    "hotCommentsDesc": "បង្ហាញមតិយោបល់ដែលមានការចូលចិត្តច្រើនជាងគេមុន។",
+    "newest": "ថ្មីបំផុត",
+    "newestDesc": "បង្ហាញមតិយោបល់ថ្មីបំផុតមុន។",
+    "allComments": "មតិយោបល់ទាំងអស់",
+    "allCommentsDesc": "បង្ហាញមតិយោបល់ទាំងអស់។",
+    "justNow": "ឥឡូវនេះ",
+    "minutesAgo": "{{count}} នាទី",
+    "hoursAgo": "{{count}} ម៉ោង",
+    "daysAgo": "{{count}} ថ្ងៃ",
+    "reader": "អ្នកអាន",
+    "reply": "ឆ្លើយតប",
+    "copy": "ចម្លង",
+    "edit": "កែ",
+    "delete": "លុប",
+    "reportComment": "រាយការណ៍មតិយោបល់",
+    "hideComment": "លាក់មតិយោបល់នេះ",
+    "like": "ចូលចិត្ត",
+    "hideReplies": "លាក់ការឆ្លើយតប",
+    "viewReplies": "មើលការឆ្លើយតប {{count}}",
+    "viewReply": "មើលការឆ្លើយតប {{count}}",
+    "editComment": "កែមតិយោបល់",
+    "saving": "កំពុងរក្សាទុក...",
+    "saveComment": "រក្សាទុកមតិយោបល់",
+    "failedLoadComments": "មិនអាចផ្ទុកមតិយោបល់បានទេ",
+    "failedLoadCommentsPeriod": "មិនអាចផ្ទុកមតិយោបល់បានទេ។",
+    "pleaseLoginComment": "សូមចូលគណនីដើម្បីសរសេរមតិយោបល់។",
+    "failedCreateComment": "មិនអាចបង្កើតមតិយោបល់បានទេ",
+    "failedCreateCommentPeriod": "មិនអាចបង្កើតមតិយោបល់បានទេ។",
+    "pleaseLoginReply": "សូមចូលគណនីដើម្បីឆ្លើយតប។",
+    "failedCreateReply": "មិនអាចបង្កើតការឆ្លើយតបបានទេ",
+    "failedCreateReplyPeriod": "មិនអាចបង្កើតការឆ្លើយតបបានទេ។",
+    "pleaseLoginReact": "សូមចូលគណនីដើម្បីប្រតិកម្ម។",
+    "failedUpdateReaction": "មិនអាចកែប្រតិកម្មបានទេ",
+    "failedUpdateReactionPeriod": "មិនអាចកែប្រតិកម្មបានទេ។",
+    "commentCopied": "បានចម្លងមតិយោបល់។",
+    "copyFailed": "ចម្លងមិនបានទេ។",
+    "pleaseLoginAgain": "សូមចូលគណនីឡើងវិញ។",
+    "failedUpdateComment": "មិនអាចកែមតិយោបល់បានទេ",
+    "commentUpdated": "បានកែមតិយោបល់។",
+    "failedUpdateCommentPeriod": "មិនអាចកែមតិយោបល់បានទេ។",
+    "failedDeleteComment": "មិនអាចលុបមតិយោបល់បានទេ",
+    "commentDeleted": "បានលុបមតិយោបល់។",
+    "failedDeleteCommentPeriod": "មិនអាចលុបមតិយោបល់បានទេ។",
+    "commentHiddenDevice": "បានលាក់មតិយោបល់លើឧបករណ៍របស់អ្នក។",
+    "commentsCount": "{{count}} មតិយោបល់",
+    "loading": "កំពុងផ្ទុក...",
+    "loadMoreComments": "ផ្ទុកមតិយោបល់បន្ថែម",
+    "noCommentsYet": "មិនទាន់មានមតិយោបល់",
+    "noCommentsDesc": "ចាប់ផ្តើមការសន្ទនា និងចែករំលែកអ្វីដែលអ្នកគិតអំពីប្រកាសនេះ។",
+    "writeCommentAction": "សរសេរមតិយោបល់",
+    "replyingTo": "កំពុងឆ្លើយតបទៅ {{name}}",
+    "cancel": "បោះបង់",
+    "commentsOff": "មតិយោបល់ត្រូវបានបិទសម្រាប់ប្រកាសនេះ។",
+    "writeReply": "សរសេរការឆ្លើយតប...",
+    "writeComment": "សរសេរមតិយោបល់...",
+    "sendReply": "ផ្ញើការឆ្លើយតប",
+    "sendComment": "ផ្ញើមតិយោបល់"
+  },
+  "zh": {
+    "hotComments": "热门评论",
+    "hotCommentsDesc": "优先显示点赞最多的评论。",
+    "newest": "最新",
+    "newestDesc": "优先显示最新评论。",
+    "allComments": "全部评论",
+    "allCommentsDesc": "显示所有评论。",
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}}分钟",
+    "hoursAgo": "{{count}}小时",
+    "daysAgo": "{{count}}天",
+    "reader": "读者",
+    "reply": "回复",
+    "copy": "复制",
+    "edit": "编辑",
+    "delete": "删除",
+    "reportComment": "举报评论",
+    "hideComment": "隐藏此评论",
+    "like": "赞",
+    "hideReplies": "隐藏回复",
+    "viewReplies": "查看 {{count}} 条回复",
+    "viewReply": "查看 {{count}} 条回复",
+    "editComment": "编辑评论",
+    "saving": "保存中...",
+    "saveComment": "保存评论",
+    "failedLoadComments": "无法加载评论",
+    "failedLoadCommentsPeriod": "无法加载评论。",
+    "pleaseLoginComment": "请先登录再评论。",
+    "failedCreateComment": "无法创建评论",
+    "failedCreateCommentPeriod": "无法创建评论。",
+    "pleaseLoginReply": "请先登录再回复。",
+    "failedCreateReply": "无法创建回复",
+    "failedCreateReplyPeriod": "无法创建回复。",
+    "pleaseLoginReact": "请先登录再进行互动。",
+    "failedUpdateReaction": "无法更新互动",
+    "failedUpdateReactionPeriod": "无法更新互动。",
+    "commentCopied": "评论已复制。",
+    "copyFailed": "复制失败。",
+    "pleaseLoginAgain": "请重新登录。",
+    "failedUpdateComment": "无法更新评论",
+    "commentUpdated": "评论已更新。",
+    "failedUpdateCommentPeriod": "无法更新评论。",
+    "failedDeleteComment": "无法删除评论",
+    "commentDeleted": "评论已删除。",
+    "failedDeleteCommentPeriod": "无法删除评论。",
+    "commentHiddenDevice": "此评论已在你的设备上隐藏。",
+    "commentsCount": "{{count}} 条评论",
+    "loading": "加载中...",
+    "loadMoreComments": "加载更多评论",
+    "noCommentsYet": "暂无评论",
+    "noCommentsDesc": "开始对话，分享你对这条帖子的看法。",
+    "writeCommentAction": "写评论",
+    "replyingTo": "回复 {{name}}",
+    "cancel": "取消",
+    "commentsOff": "此帖已关闭评论。",
+    "writeReply": "写回复...",
+    "writeComment": "写评论...",
+    "sendReply": "发送回复",
+    "sendComment": "发送评论"
+  },
+  "ja": {
+    "hotComments": "人気のコメント",
+    "hotCommentsDesc": "いいねが多いコメントを先に表示します。",
+    "newest": "新しい順",
+    "newestDesc": "新しいコメントを先に表示します。",
+    "allComments": "すべてのコメント",
+    "allCommentsDesc": "すべてのコメントを表示します。",
+    "justNow": "たった今",
+    "minutesAgo": "{{count}}分",
+    "hoursAgo": "{{count}}時間",
+    "daysAgo": "{{count}}日",
+    "reader": "読者",
+    "reply": "返信",
+    "copy": "コピー",
+    "edit": "編集",
+    "delete": "削除",
+    "reportComment": "コメントを報告",
+    "hideComment": "このコメントを非表示",
+    "like": "いいね",
+    "hideReplies": "返信を隠す",
+    "viewReplies": "返信 {{count}}件を表示",
+    "viewReply": "返信 {{count}}件を表示",
+    "editComment": "コメントを編集",
+    "saving": "保存中...",
+    "saveComment": "コメントを保存",
+    "failedLoadComments": "コメントを読み込めませんでした",
+    "failedLoadCommentsPeriod": "コメントを読み込めませんでした。",
+    "pleaseLoginComment": "コメントするにはログインしてください。",
+    "failedCreateComment": "コメントを作成できませんでした",
+    "failedCreateCommentPeriod": "コメントを作成できませんでした。",
+    "pleaseLoginReply": "返信するにはログインしてください。",
+    "failedCreateReply": "返信を作成できませんでした",
+    "failedCreateReplyPeriod": "返信を作成できませんでした。",
+    "pleaseLoginReact": "リアクションするにはログインしてください。",
+    "failedUpdateReaction": "リアクションを更新できませんでした",
+    "failedUpdateReactionPeriod": "リアクションを更新できませんでした。",
+    "commentCopied": "コメントをコピーしました。",
+    "copyFailed": "コピーできませんでした。",
+    "pleaseLoginAgain": "もう一度ログインしてください。",
+    "failedUpdateComment": "コメントを更新できませんでした",
+    "commentUpdated": "コメントを更新しました。",
+    "failedUpdateCommentPeriod": "コメントを更新できませんでした。",
+    "failedDeleteComment": "コメントを削除できませんでした",
+    "commentDeleted": "コメントを削除しました。",
+    "failedDeleteCommentPeriod": "コメントを削除できませんでした。",
+    "commentHiddenDevice": "この端末でコメントを非表示にしました。",
+    "commentsCount": "コメント {{count}}件",
+    "loading": "読み込み中...",
+    "loadMoreComments": "さらにコメントを読み込む",
+    "noCommentsYet": "まだコメントはありません",
+    "noCommentsDesc": "会話を始めて、この投稿への感想を共有しましょう。",
+    "writeCommentAction": "コメントを書く",
+    "replyingTo": "{{name}}に返信中",
+    "cancel": "キャンセル",
+    "commentsOff": "この投稿ではコメントがオフになっています。",
+    "writeReply": "返信を書く...",
+    "writeComment": "コメントを書く...",
+    "sendReply": "返信を送信",
+    "sendComment": "コメントを送信"
+  },
+  "ko": {
+    "hotComments": "인기 댓글",
+    "hotCommentsDesc": "좋아요가 많은 댓글부터 표시합니다.",
+    "newest": "최신순",
+    "newestDesc": "최신 댓글부터 표시합니다.",
+    "allComments": "모든 댓글",
+    "allCommentsDesc": "모든 댓글을 표시합니다.",
+    "justNow": "방금",
+    "minutesAgo": "{{count}}분",
+    "hoursAgo": "{{count}}시간",
+    "daysAgo": "{{count}}일",
+    "reader": "독자",
+    "reply": "답글",
+    "copy": "복사",
+    "edit": "수정",
+    "delete": "삭제",
+    "reportComment": "댓글 신고",
+    "hideComment": "이 댓글 숨기기",
+    "like": "좋아요",
+    "hideReplies": "답글 숨기기",
+    "viewReplies": "답글 {{count}}개 보기",
+    "viewReply": "답글 {{count}}개 보기",
+    "editComment": "댓글 수정",
+    "saving": "저장 중...",
+    "saveComment": "댓글 저장",
+    "failedLoadComments": "댓글을 불러오지 못했습니다",
+    "failedLoadCommentsPeriod": "댓글을 불러오지 못했습니다.",
+    "pleaseLoginComment": "댓글을 작성하려면 로그인하세요.",
+    "failedCreateComment": "댓글을 작성하지 못했습니다",
+    "failedCreateCommentPeriod": "댓글을 작성하지 못했습니다.",
+    "pleaseLoginReply": "답글을 작성하려면 로그인하세요.",
+    "failedCreateReply": "답글을 작성하지 못했습니다",
+    "failedCreateReplyPeriod": "답글을 작성하지 못했습니다.",
+    "pleaseLoginReact": "반응하려면 로그인하세요.",
+    "failedUpdateReaction": "반응을 업데이트하지 못했습니다",
+    "failedUpdateReactionPeriod": "반응을 업데이트하지 못했습니다.",
+    "commentCopied": "댓글을 복사했습니다.",
+    "copyFailed": "복사하지 못했습니다.",
+    "pleaseLoginAgain": "다시 로그인하세요.",
+    "failedUpdateComment": "댓글을 수정하지 못했습니다",
+    "commentUpdated": "댓글을 수정했습니다.",
+    "failedUpdateCommentPeriod": "댓글을 수정하지 못했습니다.",
+    "failedDeleteComment": "댓글을 삭제하지 못했습니다",
+    "commentDeleted": "댓글을 삭제했습니다.",
+    "failedDeleteCommentPeriod": "댓글을 삭제하지 못했습니다.",
+    "commentHiddenDevice": "이 기기에서 댓글을 숨겼습니다.",
+    "commentsCount": "댓글 {{count}}개",
+    "loading": "불러오는 중...",
+    "loadMoreComments": "댓글 더 불러오기",
+    "noCommentsYet": "아직 댓글이 없습니다",
+    "noCommentsDesc": "대화를 시작하고 이 게시물에 대한 생각을 공유해 보세요.",
+    "writeCommentAction": "댓글 작성",
+    "replyingTo": "{{name}}에게 답글 작성 중",
+    "cancel": "취소",
+    "commentsOff": "이 게시물의 댓글이 꺼져 있습니다.",
+    "writeReply": "답글 작성...",
+    "writeComment": "댓글 작성...",
+    "sendReply": "답글 보내기",
+    "sendComment": "댓글 보내기"
+  }
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -15,21 +320,9 @@ const COMMENT_PAGE_SIZE = 20
 const COMMENT_LIMIT = 1000
 
 const SORT_OPTIONS = [
-  {
-    value: 'top',
-    label: 'Hot comments',
-    description: 'Show comments with the most likes first.',
-  },
-  {
-    value: 'newest',
-    label: 'Newest',
-    description: 'Show the newest comments first.',
-  },
-  {
-    value: 'all',
-    label: 'All comments',
-    description: 'Show all comments.',
-  },
+  { value: 'top', labelKey: 'hotComments', descriptionKey: 'hotCommentsDesc' },
+  { value: 'newest', labelKey: 'newest', descriptionKey: 'newestDesc' },
+  { value: 'all', labelKey: 'allComments', descriptionKey: 'allCommentsDesc' },
 ]
 
 function getAuthToken() {
@@ -54,31 +347,17 @@ function getStoredUser() {
 
 function formatTime(value) {
   const timestamp = new Date(value || 0).getTime()
-
-  if (!timestamp) return 'Just now'
-
-  const difference = Math.max(
-    0,
-    Date.now() - timestamp
-  )
-  const minutes = Math.floor(
-    difference / 60000
-  )
-  const hours = Math.floor(
-    minutes / 60
-  )
-  const days = Math.floor(
-    hours / 24
-  )
-
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m`
-  if (hours < 24) return `${hours}h`
-  if (days < 7) return `${days}d`
-
-  return new Date(timestamp).toLocaleDateString(
-    'en-GB'
-  )
+  const justNow = getDisplayText('readerPostCommentsSection.justNow')
+  if (!timestamp) return justNow
+  const difference = Math.max(0, Date.now() - timestamp)
+  const minutes = Math.floor(difference / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  if (minutes < 1) return justNow
+  if (minutes < 60) return getDisplayText('readerPostCommentsSection.minutesAgo', { count: minutes })
+  if (hours < 24) return getDisplayText('readerPostCommentsSection.hoursAgo', { count: hours })
+  if (days < 7) return getDisplayText('readerPostCommentsSection.daysAgo', { count: days })
+  return new Date(timestamp).toLocaleDateString(getDisplayLanguageId() || 'en')
 }
 
 function normalizeComment(comment) {
@@ -103,7 +382,7 @@ function normalizeComment(comment) {
       name:
         user.name ||
         user.username ||
-        'Reader',
+        getDisplayText('readerPostCommentsSection.reader'),
       username: user.username || '',
       avatar_url: user.avatar_url || '',
     },
@@ -122,7 +401,7 @@ function Avatar({
   small = false,
 }) {
   const name =
-    user?.name || 'Reader'
+    user?.name || getDisplayText('readerPostCommentsSection.reader')
   const size = small
     ? 'h-8 w-8 text-[11px]'
     : 'h-10 w-10 text-[13px]'
@@ -135,7 +414,7 @@ function Avatar({
     />
   ) : (
     <div
-      className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-[#111827] font-semibold text-white`}
+      className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] font-semibold text-[var(--shadow-text-primary)]`}
     >
       {name
         .slice(0, 1)
@@ -154,17 +433,17 @@ function MenuRow({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left active:bg-[#f3f4f6] ${
+      className={`flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left active:bg-[var(--shadow-bg-soft)] ${
         danger
           ? 'text-[#dc2626]'
-          : 'text-[#111827]'
+          : 'text-[var(--shadow-text-primary)]'
       }`}
     >
       <span
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
           danger
-            ? 'bg-[#fff1f2] text-[#dc2626]'
-            : 'bg-[#f3f4f6] text-[#111827]'
+            ? 'bg-[#fff1f2] text-[#dc2626] dark:bg-[#dc2626]/10'
+            : 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
         }`}
       >
         <i
@@ -190,6 +469,7 @@ function CommentOptionsSheet({
   onHide,
   onReport,
 }) {
+  const { t } = useDisplayTranslation()
   if (!comment) return null
 
   const ownsComment =
@@ -211,12 +491,12 @@ function CommentOptionsSheet({
         className="absolute inset-0 bg-black/40"
       />
 
-      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
+      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
         <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
         <MenuRow
           icon="fa-regular fa-comment"
-          label="Reply"
+          label={t('readerPostCommentsSection.reply')}
           onClick={() =>
             runAction(onReply)
           }
@@ -224,7 +504,7 @@ function CommentOptionsSheet({
 
         <MenuRow
           icon="fa-regular fa-copy"
-          label="Copy"
+          label={t('readerPostCommentsSection.copy')}
           onClick={() =>
             runAction(onCopy)
           }
@@ -234,7 +514,7 @@ function CommentOptionsSheet({
           <>
             <MenuRow
               icon="fa-regular fa-pen-to-square"
-              label="Edit"
+              label={t('readerPostCommentsSection.edit')}
               onClick={() =>
                 runAction(onEdit)
               }
@@ -242,7 +522,7 @@ function CommentOptionsSheet({
 
             <MenuRow
               icon="fa-regular fa-trash-can"
-              label="Delete"
+              label={t('readerPostCommentsSection.delete')}
               danger
               onClick={() =>
                 runAction(onDelete)
@@ -253,7 +533,7 @@ function CommentOptionsSheet({
           <>
             <MenuRow
               icon="fa-regular fa-flag"
-              label="Report comment"
+              label={t('readerPostCommentsSection.reportComment')}
               onClick={() =>
                 runAction(onReport)
               }
@@ -261,7 +541,7 @@ function CommentOptionsSheet({
 
             <MenuRow
               icon="fa-regular fa-eye-slash"
-              label="Hide this comment"
+              label={t('readerPostCommentsSection.hideComment')}
               onClick={() =>
                 runAction(onHide)
               }
@@ -277,6 +557,7 @@ function ReplyItem({
   reply,
   onLike,
 }) {
+  const { t } = useDisplayTranslation()
   return (
     <div className="flex gap-2">
       <Avatar
@@ -285,21 +566,21 @@ function ReplyItem({
       />
 
       <div className="min-w-0 flex-1">
-        <div className="inline-block max-w-full rounded-[16px] bg-[#f3f4f6] px-3 py-2">
+        <div className="inline-block max-w-full rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[12px] font-semibold text-[#111827]">
+            <span className="text-[12px] font-semibold text-[var(--shadow-text-primary)]">
               {reply.user?.name ||
-                'Reader'}
+                getDisplayText('readerPostCommentsSection.reader')}
             </span>
 
-            <span className="text-[10px] font-normal text-[#98a2b3]">
+            <span className="text-[10px] font-normal text-[var(--shadow-text-tertiary)]">
               {formatTime(
                 reply.created_at
               )}
             </span>
           </div>
 
-          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[#4b5563]">
+          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
             {reply.text}
           </p>
         </div>
@@ -321,9 +602,9 @@ function ReplyItem({
               reactionType
             )
           }
-          idleLabel="Like"
+          idleLabel={t('readerPostCommentsSection.like')}
           className="ml-3 mt-1"
-          buttonClassName="text-[11px] font-semibold after:ml-1 after:content-['Like']"
+          buttonClassName="text-[11px] font-semibold"
           countClassName="text-[11px] font-semibold"
           pickerAlign="left"
         />
@@ -343,6 +624,7 @@ function CommentItem({
   onHide,
   onReport,
 }) {
+  const { t } = useDisplayTranslation()
   const [menuOpen, setMenuOpen] =
     useState(false)
   const [
@@ -360,7 +642,7 @@ function CommentItem({
     setRepliesShown(true)
     onStartReply?.(
       comment.id,
-      comment.user?.name || 'Reader'
+      comment.user?.name || getDisplayText('readerPostCommentsSection.reader')
     )
   }
 
@@ -376,22 +658,22 @@ function CommentItem({
               onClick={() =>
                 setMenuOpen(true)
               }
-              className="inline-block max-w-full rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-left active:bg-[#ebeef2]"
+              className="inline-block max-w-full rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-left active:bg-[var(--shadow-bg-hover)]"
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[13px] font-semibold text-[#111827]">
+                <span className="text-[13px] font-semibold text-[var(--shadow-text-primary)]">
                   {comment.user?.name ||
-                    'Reader'}
+                    getDisplayText('readerPostCommentsSection.reader')}
                 </span>
 
-                <span className="text-[11px] font-normal text-[#98a2b3]">
+                <span className="text-[11px] font-normal text-[var(--shadow-text-tertiary)]">
                   {formatTime(
                     comment.created_at
                   )}
                 </span>
               </div>
 
-              <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] font-normal leading-6 text-[#4b5563]">
+              <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
                 {comment.text}
               </p>
             </button>
@@ -401,14 +683,14 @@ function CommentItem({
               onClick={() =>
                 setMenuOpen(true)
               }
-              className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full text-[#98a2b3] active:scale-95"
+              className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full text-[var(--shadow-text-tertiary)] active:scale-95"
               aria-label="Comment options"
             >
               <i className="fa-solid fa-ellipsis text-[14px]" />
             </button>
           </div>
 
-          <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-semibold text-[#98a2b3]">
+          <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">
                         <ReactionAction
               reactionType={
                 comment.reaction_type ||
@@ -428,8 +710,8 @@ function CommentItem({
                   reactionType
                 )
               }
-              idleLabel="Like"
-              buttonClassName="text-[12px] font-semibold after:ml-1 after:content-['Like']"
+              idleLabel={t('readerPostCommentsSection.like')}
+              buttonClassName="text-[12px] font-semibold"
               countClassName="text-[12px] font-semibold"
               pickerAlign="left"
             />
@@ -438,7 +720,7 @@ function CommentItem({
               type="button"
               onClick={openReplyComposer}
             >
-              Reply
+              {t('readerPostCommentsSection.reply')}
             </button>
 
             {replies.length ? (
@@ -450,22 +732,14 @@ function CommentItem({
                   )
                 }
               >
-                {repliesShown
-                  ? 'Hide replies'
-                  : `View ${
-                      replies.length
-                    } ${
-                      replies.length > 1
-                        ? 'replies'
-                        : 'reply'
-                    }`}
+                {repliesShown ? t('readerPostCommentsSection.hideReplies') : (replies.length > 1 ? t('readerPostCommentsSection.viewReplies', { count: replies.length }) : t('readerPostCommentsSection.viewReply', { count: replies.length }))}
               </button>
             ) : null}
           </div>
 
           {repliesShown &&
           replies.length ? (
-            <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
+            <div className="mt-3 space-y-3 border-l-2 border-[var(--shadow-border)] pl-3">
               {replies.map(
                 (reply) => (
                   <ReplyItem
@@ -524,22 +798,23 @@ function EditCommentSheet({
   onSave,
   saving,
 }) {
+  const { t } = useDisplayTranslation()
   if (!comment) return null
 
   return (
     <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/40 px-4">
-      <section className="w-full max-w-xl rounded-t-[26px] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:mb-6 sm:rounded-[26px]">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+      <section className="w-full max-w-xl rounded-t-[26px] bg-[var(--shadow-bg-surface)] px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:mb-6 sm:rounded-[26px]">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-bg-soft)]" />
 
         <div className="flex items-center justify-between">
-          <h3 className="text-[17px] font-semibold text-[#111827]">
-            Edit comment
+          <h3 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">
+            {t('readerPostCommentsSection.editComment')}
           </h3>
 
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa]"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]"
             aria-label="Close edit comment"
           >
             <i className="fa-solid fa-xmark text-[13px]" />
@@ -555,7 +830,7 @@ function EditCommentSheet({
             )
           }
           rows={5}
-          className="mt-4 w-full resize-none rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-[14px] font-normal leading-6 outline-none focus:ring-2 focus:ring-[#111827]/10"
+          className="mt-4 w-full resize-none rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[14px] font-normal leading-6 outline-none focus:ring-2 focus:ring-[#111827]/10"
         />
 
         <button
@@ -565,11 +840,11 @@ function EditCommentSheet({
             !value.trim() ||
             saving
           }
-          className="mt-4 h-11 w-full rounded-full bg-[#111827] text-[13px] font-semibold text-white disabled:bg-[#d0d5dd]"
+          className="mt-4 h-11 w-full rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-semibold text-[var(--shadow-bg-surface)] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
         >
           {saving
-            ? 'Saving...'
-            : 'Save comment'}
+            ? t('readerPostCommentsSection.saving')
+            : t('readerPostCommentsSection.saveComment')}
         </button>
       </section>
     </div>
@@ -582,6 +857,7 @@ function SortSheet({
   onChoose,
   onClose,
 }) {
+  const { t } = useDisplayTranslation()
   if (!open) return null
 
   return (
@@ -593,8 +869,8 @@ function SortSheet({
         aria-label="Close comment filter"
       />
 
-      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:mb-4 sm:rounded-[28px]">
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:mb-4 sm:rounded-[28px]">
+        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[var(--shadow-bg-soft)]" />
 
         {SORT_OPTIONS.map(
           (option) => {
@@ -610,14 +886,14 @@ function SortSheet({
                     option.value
                   )
                 }
-                className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-[#f8fafc]"
+                className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-[var(--shadow-bg-hover)]"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[16px] font-normal text-[#111827]">
-                    {option.label}
+                  <span className="block text-[16px] font-normal text-[var(--shadow-text-primary)]">
+                    {t(`readerPostCommentsSection.${option.labelKey}`)}
                   </span>
 
-                  <span className="mt-0.5 block text-[13px] font-normal leading-5 text-[#667085]">
+                  <span className="mt-0.5 block text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
                     {
                       option.description
                     }
@@ -627,12 +903,12 @@ function SortSheet({
                 <span
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
                     active
-                      ? 'border-[#111827] bg-[#111827]'
-                      : 'border-[#d0d5dd] bg-white'
+                      ? 'border-[var(--shadow-text-primary)] bg-[var(--shadow-text-primary)]'
+                      : 'border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)]'
                   }`}
                 >
                   {active ? (
-                    <i className="fa-solid fa-check text-[10px] text-white" />
+                    <i className="fa-solid fa-check text-[10px] text-[var(--shadow-bg-surface)]" />
                   ) : null}
                 </span>
               </button>
@@ -651,6 +927,7 @@ export default function ReaderPostCommentsSection({
   commentCount = 0,
   onTotalChange,
 }) {
+  const { t } = useDisplayTranslation()
   const composerRef =
     useRef(null)
 
@@ -833,7 +1110,7 @@ export default function ReaderPostCommentsSection({
       ) {
         throw new Error(
           data.message ||
-            'Failed to load comments'
+            t('readerPostCommentsSection.failedLoadComments')
         )
       }
 
@@ -874,7 +1151,7 @@ export default function ReaderPostCommentsSection({
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to load comments.'
+          t('readerPostCommentsSection.failedLoadCommentsPeriod')
       )
     } finally {
       append
@@ -942,7 +1219,7 @@ export default function ReaderPostCommentsSection({
     setReplyTarget({
       parentId,
       name: String(
-        name || 'Reader'
+        name || getDisplayText('readerPostCommentsSection.reader')
       ).trim(),
     })
 
@@ -979,7 +1256,7 @@ export default function ReaderPostCommentsSection({
 
     if (!token) {
       showToast(
-        'Please login to comment.'
+        t('readerPostCommentsSection.pleaseLoginComment')
       )
       return
     }
@@ -1017,7 +1294,7 @@ export default function ReaderPostCommentsSection({
       ) {
         throw new Error(
           data.message ||
-            'Failed to create comment'
+            t('readerPostCommentsSection.failedCreateComment')
         )
       }
 
@@ -1039,7 +1316,7 @@ export default function ReaderPostCommentsSection({
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to create comment.'
+          t('readerPostCommentsSection.failedCreateCommentPeriod')
       )
     } finally {
       setSending(false)
@@ -1055,7 +1332,7 @@ export default function ReaderPostCommentsSection({
 
     if (!token) {
       showToast(
-        'Please login to reply.'
+        t('readerPostCommentsSection.pleaseLoginReply')
       )
       return false
     }
@@ -1095,7 +1372,7 @@ export default function ReaderPostCommentsSection({
       ) {
         throw new Error(
           data.message ||
-            'Failed to create reply'
+            t('readerPostCommentsSection.failedCreateReply')
         )
       }
 
@@ -1131,7 +1408,7 @@ export default function ReaderPostCommentsSection({
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to create reply.'
+          t('readerPostCommentsSection.failedCreateReplyPeriod')
       )
       return false
     } finally {
@@ -1148,7 +1425,7 @@ export default function ReaderPostCommentsSection({
 
     if (!token) {
       showToast(
-        'Please login to react.'
+        t('readerPostCommentsSection.pleaseLoginReact')
       )
       return
     }
@@ -1191,7 +1468,7 @@ export default function ReaderPostCommentsSection({
       ) {
         throw new Error(
           data.message ||
-            'Failed to update reaction'
+            t('readerPostCommentsSection.failedUpdateReaction')
         )
       }
 
@@ -1211,7 +1488,7 @@ export default function ReaderPostCommentsSection({
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to update reaction.'
+          t('readerPostCommentsSection.failedUpdateReactionPeriod')
       )
     }
   }
@@ -1230,10 +1507,10 @@ export default function ReaderPostCommentsSection({
         value
       )
       showToast(
-        'Comment copied.'
+        t('readerPostCommentsSection.commentCopied')
       )
     } catch {
-      showToast('Copy failed.')
+      showToast(t('readerPostCommentsSection.copyFailed'))
     }
   }
 
@@ -1251,7 +1528,7 @@ export default function ReaderPostCommentsSection({
 
     if (!token) {
       showToast(
-        'Please login again.'
+        t('readerPostCommentsSection.pleaseLoginAgain')
       )
       return
     }
@@ -1290,7 +1567,7 @@ export default function ReaderPostCommentsSection({
       ) {
         throw new Error(
           data.message ||
-            'Failed to update comment'
+            t('readerPostCommentsSection.failedUpdateComment')
         )
       }
 
@@ -1304,12 +1581,12 @@ export default function ReaderPostCommentsSection({
       setEditComment(null)
       setEditText('')
       showToast(
-        'Comment updated.'
+        t('readerPostCommentsSection.commentUpdated')
       )
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to update comment.'
+          t('readerPostCommentsSection.failedUpdateCommentPeriod')
       )
     } finally {
       setSavingEdit(false)
@@ -1324,7 +1601,7 @@ export default function ReaderPostCommentsSection({
 
     if (!token) {
       showToast(
-        'Please login again.'
+        t('readerPostCommentsSection.pleaseLoginAgain')
       )
       return
     }
@@ -1355,7 +1632,7 @@ export default function ReaderPostCommentsSection({
       ) {
         throw new Error(
           data.message ||
-            'Failed to delete comment'
+            t('readerPostCommentsSection.failedDeleteComment')
         )
       }
 
@@ -1391,12 +1668,12 @@ export default function ReaderPostCommentsSection({
       )
 
       showToast(
-        'Comment deleted.'
+        t('readerPostCommentsSection.commentDeleted')
       )
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to delete comment.'
+          t('readerPostCommentsSection.failedDeleteCommentPeriod')
       )
     }
   }
@@ -1418,22 +1695,22 @@ export default function ReaderPostCommentsSection({
     )
 
     showToast(
-      'Comment hidden on your device.'
+      t('readerPostCommentsSection.commentHiddenDevice')
     )
   }
 
   return (
-    <section className="relative bg-white pb-[76px]">
-      <div className="sticky top-[56px] z-30 border-b border-[#eef0f4] bg-white px-4 py-3">
+    <section className="relative bg-[var(--shadow-bg-surface)] pb-[76px]">
+      <div className="sticky top-[56px] z-30 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3">
         <button
           type="button"
           onClick={() =>
             setSortOpen(true)
           }
-          className="flex items-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
+          className="flex items-center gap-1 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
         >
           <span>
-            {selectedSort.label}
+            {t(`readerPostCommentsSection.${selectedSort.labelKey}`)}
           </span>
           <i className="fa-solid fa-chevron-down text-[10px]" />
         </button>
@@ -1448,7 +1725,7 @@ export default function ReaderPostCommentsSection({
             (_, index) => (
               <div
                 key={index}
-                className="h-20 animate-pulse rounded-[18px] bg-[#f3f4f6]"
+                className="h-20 animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]"
               />
             )
           )}
@@ -1509,27 +1786,27 @@ export default function ReaderPostCommentsSection({
                 disabled={
                   loadingMore
                 }
-                className="h-11 w-full rounded-full bg-[#f5f3fa] text-[13px] font-normal text-[#111827] disabled:text-[#98a2b3]"
+                className="h-11 w-full rounded-full bg-[var(--shadow-bg-soft)] text-[13px] font-normal text-[var(--shadow-text-primary)] disabled:text-[var(--shadow-text-tertiary)]"
               >
                 {loadingMore
-                  ? 'Loading...'
-                  : 'Load more comments'}
+                  ? t('readerPostCommentsSection.loading')
+                  : t('readerPostCommentsSection.loadMoreComments')}
               </button>
             </div>
           ) : null}
         </>
       ) : (
         <div className="px-5 py-12 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
             <i className="fa-regular fa-comments text-[22px]" />
           </div>
 
-          <h3 className="mt-4 text-[17px] font-semibold text-[#111827]">
-            No comments yet
+          <h3 className="mt-4 text-[17px] font-semibold text-[var(--shadow-text-primary)]">
+            {t('readerPostCommentsSection.noCommentsYet')}
           </h3>
 
-          <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-normal leading-6 text-[#667085]">
-            Start the conversation and share what you think about this post.
+          <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
+            {t('readerPostCommentsSection.noCommentsDesc')}
           </p>
 
           {!commentingDisabled ? (
@@ -1538,23 +1815,18 @@ export default function ReaderPostCommentsSection({
               onClick={() =>
                 composerRef.current?.focus()
               }
-              className="mt-5 h-11 rounded-full bg-[#111827] px-5 text-[13px] font-normal text-white active:scale-95"
+              className="mt-5 h-11 rounded-full bg-[var(--shadow-text-primary)] px-5 text-[13px] font-normal text-[var(--shadow-bg-surface)] active:scale-95"
             >
-              Write a comment
+              {t('readerPostCommentsSection.writeCommentAction')}
             </button>
           ) : null}
         </div>
       )}
 
-      <div className="sticky bottom-0 z-40 border-t border-[#eef1f5] bg-white px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-0 z-40 border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
         {replyTarget ? (
-          <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[#667085]">
-            <span>
-              Replying to{' '}
-              <span className="font-semibold text-[#111827]">
-                {replyTarget.name || 'Reader'}
-              </span>
-            </span>
+          <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[var(--shadow-text-secondary)]">
+            <span>{t('readerPostCommentsSection.replyingTo', { name: replyTarget.name || getDisplayText('readerPostCommentsSection.reader') })}</span>
 
             <span>·</span>
 
@@ -1566,13 +1838,13 @@ export default function ReaderPostCommentsSection({
               }}
               className="font-medium text-[#1877f2]"
             >
-              Cancel
+              {t('readerPostCommentsSection.cancel')}
             </button>
           </div>
         ) : null}
 
         <div className="mx-auto flex max-w-3xl items-end gap-2">
-          <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[#f3f4f6] px-4 py-2">
+          <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[var(--shadow-bg-soft)] px-4 py-2">
             <textarea
               ref={composerRef}
               id="reader-post-comment-input"
@@ -1607,12 +1879,12 @@ export default function ReaderPostCommentsSection({
               rows={1}
               placeholder={
                 commentingDisabled
-                  ? 'Comments are turned off for this post.'
+                  ? t('readerPostCommentsSection.commentsOff')
                   : replyTarget
-                    ? 'Write a reply...'
-                    : 'Write a comment...'
+                    ? t('readerPostCommentsSection.writeReply')
+                    : t('readerPostCommentsSection.writeComment')
               }
-              className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
+              className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)] disabled:cursor-not-allowed"
             />
           </div>
 
@@ -1624,11 +1896,11 @@ export default function ReaderPostCommentsSection({
               composerSending ||
               commentingDisabled
             }
-            className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 disabled:bg-[#d0d5dd]"
+            className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
             aria-label={
               replyTarget
-                ? 'Send reply'
-                : 'Send comment'
+                ? t('readerPostCommentsSection.sendReply')
+                : t('readerPostCommentsSection.sendComment')
             }
           >
             <i
@@ -1643,7 +1915,7 @@ export default function ReaderPostCommentsSection({
       </div>
 
       {toast ? (
-        <div className="fixed bottom-[88px] left-1/2 z-[310] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-lg">
+        <div className="fixed bottom-[88px] left-1/2 z-[310] -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--shadow-text-primary)] px-4 py-2 text-[12px] font-normal text-[var(--shadow-bg-surface)] shadow-lg">
           {toast}
         </div>
       ) : null}
@@ -1691,7 +1963,7 @@ export default function ReaderPostCommentsSection({
             ? `${
                 reportComment
                   .user?.name ||
-                'Reader'
+                getDisplayText('readerPostCommentsSection.reader')
               }: ${String(
                 reportComment.text ||
                   ''
