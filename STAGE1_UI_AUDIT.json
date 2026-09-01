@@ -248,6 +248,11 @@
 "src/components/ShadowSpotlight.jsx",
 "src/components/StoriesDailyCheckIn.jsx",
 "src/components/MangaFeedSections.jsx"
+"src/components/chat/ChatGroupCreateSheet.jsx",
+"src/components/chat/ChatNewMessageSheet.jsx",
+"src/components/chat/ChatSuggestedPeople.jsx",
+"src/components/chat/ReaderAuthorMessageRequestModal.jsx",
+"src/components/chat/ReaderReaderMessageRequestModal.jsx"
   ]
 }
   ]
