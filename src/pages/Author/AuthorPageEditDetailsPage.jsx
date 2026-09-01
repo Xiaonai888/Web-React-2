@@ -19,6 +19,7 @@ const DEFAULT_DETAILS = {
   facebook_page_url: '',
   facebook_page_image_url: '',
   social_media: '',
+  social_links: [],
   email: '',
   phone: '',
   messenger: '',
@@ -98,9 +99,9 @@ function getPinnedDetailOptions(details) {
     {
       key: 'social',
       icon: 'fa-solid fa-at',
-      title: details.social_media || 'Social media',
+      title: getSocialMediaSummary(details.social_links, details.social_media) || 'Social media',
       text: 'Public',
-      display: details.social_media || '',
+      display: getSocialMediaSummary(details.social_links, details.social_media),
     },
     {
       key: 'address',
@@ -432,6 +433,424 @@ function TextEditModal({ open, title, label, value, multiline, placeholder, maxL
   </button>
 </div>
     </ModalShell>
+  )
+}
+
+const SOCIAL_PLATFORMS = [
+  { key: 'facebook', label: 'Facebook', icon: 'fa-brands fa-facebook-f' },
+  { key: 'instagram', label: 'Instagram', icon: 'fa-brands fa-instagram' },
+  { key: 'tiktok', label: 'TikTok', icon: 'fa-brands fa-tiktok' },
+  { key: 'youtube', label: 'YouTube', icon: 'fa-brands fa-youtube' },
+  { key: 'threads', label: 'Threads', icon: 'fa-solid fa-at' },
+  { key: 'x', label: 'X', icon: 'fa-brands fa-x-twitter' },
+  { key: 'snapchat', label: 'Snapchat', icon: 'fa-brands fa-snapchat' },
+  { key: 'twitch', label: 'Twitch', icon: 'fa-brands fa-twitch' },
+  { key: 'line', label: 'LINE', icon: 'fa-brands fa-line' },
+  { key: 'wechat', label: 'WeChat', icon: 'fa-brands fa-weixin' },
+  { key: 'kik', label: 'Kik', icon: 'fa-solid fa-comment-dots' },
+  { key: 'pinterest', label: 'Pinterest', icon: 'fa-brands fa-pinterest-p' },
+  { key: 'tumblr', label: 'Tumblr', icon: 'fa-brands fa-tumblr' },
+  { key: 'soundcloud', label: 'SoundCloud', icon: 'fa-brands fa-soundcloud' },
+]
+
+const SOCIAL_TEXT = {
+  en: {
+    title: 'Social media',
+    add: 'Add',
+    linksTitle: 'Social media links on your Page',
+    selectPlatform: 'Select platform',
+    addLink: 'Add link',
+    editLink: 'Edit link',
+    inputLabel: 'Username or link',
+    inputPlaceholder: '@username or https://...',
+    remove: 'Remove',
+    save: 'Save',
+    empty: 'No social media links yet',
+  },
+  km: {
+    title: 'បណ្ដាញសង្គម',
+    add: 'បន្ថែម',
+    linksTitle: 'តំណបណ្ដាញសង្គមនៅលើទំព័ររបស់អ្នក',
+    selectPlatform: 'ជ្រើសរើសបណ្ដាញ',
+    addLink: 'បន្ថែមតំណ',
+    editLink: 'កែតំណ',
+    inputLabel: 'ឈ្មោះអ្នកប្រើ ឬ តំណ',
+    inputPlaceholder: '@username ឬ https://...',
+    remove: 'លុប',
+    save: 'រក្សាទុក',
+    empty: 'មិនទាន់មានតំណបណ្ដាញសង្គម',
+  },
+}
+
+function getSocialLanguage() {
+  if (typeof document === 'undefined') return 'en'
+  const lang = String(document.documentElement.lang || '').toLowerCase()
+  return lang.startsWith('km') || lang.startsWith('kh') ? 'km' : 'en'
+}
+
+function socialText(key) {
+  const lang = getSocialLanguage()
+  return SOCIAL_TEXT[lang]?.[key] || SOCIAL_TEXT.en[key] || key
+}
+
+function getSocialPlatform(key) {
+  return SOCIAL_PLATFORMS.find((item) => item.key === key) || SOCIAL_PLATFORMS[0]
+}
+
+function createSocialLinkId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `social-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+function cleanSocialHandle(value) {
+  return String(value || '').trim().replace(/^@+/, '')
+}
+
+function buildSocialUrl(platform, value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^https?:\/\//i.test(raw)) return raw
+
+  const handle = cleanSocialHandle(raw)
+
+  switch (platform) {
+    case 'facebook':
+      return `https://www.facebook.com/${handle}`
+    case 'instagram':
+      return `https://www.instagram.com/${handle}/`
+    case 'tiktok':
+      return `https://www.tiktok.com/@${handle}`
+    case 'youtube':
+      return `https://www.youtube.com/@${handle}`
+    case 'threads':
+      return `https://www.threads.net/@${handle}`
+    case 'x':
+      return `https://x.com/${handle}`
+    case 'snapchat':
+      return `https://www.snapchat.com/add/${handle}`
+    case 'twitch':
+      return `https://www.twitch.tv/${handle}`
+    case 'line':
+      return `https://line.me/R/ti/p/@${handle}`
+    case 'wechat':
+      return ''
+    case 'kik':
+      return `https://kik.me/${handle}`
+    case 'pinterest':
+      return `https://www.pinterest.com/${handle}/`
+    case 'tumblr':
+      return `https://${handle}.tumblr.com`
+    case 'soundcloud':
+      return `https://soundcloud.com/${handle}`
+    default:
+      return raw
+  }
+}
+
+function detectSocialPlatform(url) {
+  const value = String(url || '').toLowerCase()
+  if (value.includes('facebook.com') || value.includes('fb.com')) return 'facebook'
+  if (value.includes('instagram.com')) return 'instagram'
+  if (value.includes('tiktok.com')) return 'tiktok'
+  if (value.includes('youtube.com') || value.includes('youtu.be')) return 'youtube'
+  if (value.includes('threads.net')) return 'threads'
+  if (value.includes('x.com') || value.includes('twitter.com')) return 'x'
+  if (value.includes('snapchat.com')) return 'snapchat'
+  if (value.includes('twitch.tv')) return 'twitch'
+  if (value.includes('line.me')) return 'line'
+  if (value.includes('wechat.com') || value.includes('weixin.qq.com')) return 'wechat'
+  if (value.includes('kik.me')) return 'kik'
+  if (value.includes('pinterest.com') || value.includes('pin.it')) return 'pinterest'
+  if (value.includes('tumblr.com')) return 'tumblr'
+  if (value.includes('soundcloud.com')) return 'soundcloud'
+  return 'facebook'
+}
+
+function normalizeSocialLinks(value) {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter((item) => item && typeof item === 'object' && item.platform)
+    .map((item, index) => {
+      const platform = String(item.platform || 'facebook')
+      const rawValue = String(item.value || item.url || item.display_name || '').trim()
+      return {
+        id: String(item.id || `social-${index}`),
+        platform,
+        value: rawValue,
+        display_name: String(item.display_name || rawValue).trim(),
+        url: String(item.url || buildSocialUrl(platform, rawValue)).trim(),
+      }
+    })
+    .filter((item) => item.value || item.display_name || item.url)
+}
+
+function extractLegacySocialLinks(value) {
+  const raw = String(value || '')
+  const urls = raw.match(/https?:\/\/[^\s]+/gi) || []
+
+  return urls.map((url, index) => {
+    const platform = detectSocialPlatform(url)
+    return {
+      id: `legacy-social-${index}`,
+      platform,
+      value: url,
+      display_name: url,
+      url,
+    }
+  })
+}
+
+function getSocialMediaSummary(value, legacyValue = '') {
+  const links = normalizeSocialLinks(value)
+  if (!links.length) return String(legacyValue || '').trim()
+
+  const first = links[0]
+  const platform = getSocialPlatform(first.platform)
+  const primary = first.display_name || first.value || platform.label
+  return `${primary}${links.length > 1 ? ` + ${links.length - 1}` : ''}`
+}
+
+function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) {
+  const [screen, setScreen] = useState('list')
+  const [chooserOpen, setChooserOpen] = useState(false)
+  const [editingId, setEditingId] = useState('')
+  const [selectedPlatform, setSelectedPlatform] = useState('facebook')
+  const [draft, setDraft] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    setScreen('list')
+    setChooserOpen(false)
+    setEditingId('')
+    setSelectedPlatform('facebook')
+    setDraft('')
+  }, [open])
+
+  if (!open) return null
+
+  const savedLinks = normalizeSocialLinks(value)
+  const links = savedLinks.length ? savedLinks : extractLegacySocialLinks(legacyValue)
+  const selected = getSocialPlatform(selectedPlatform)
+
+  const startAdd = (platformKey) => {
+    setSelectedPlatform(platformKey)
+    setEditingId('')
+    setDraft('')
+    setChooserOpen(false)
+    setScreen('edit')
+  }
+
+  const startEdit = (item) => {
+    setSelectedPlatform(item.platform)
+    setEditingId(item.id)
+    setDraft(item.value || item.url || item.display_name || '')
+    setChooserOpen(false)
+    setScreen('edit')
+  }
+
+  const closeEdit = () => {
+    setScreen('list')
+    setEditingId('')
+    setDraft('')
+  }
+
+  const saveDraft = () => {
+    const raw = draft.trim()
+    if (!raw) return
+
+    const nextItem = {
+      id: editingId || createSocialLinkId(),
+      platform: selectedPlatform,
+      value: raw,
+      display_name: /^https?:\/\//i.test(raw) ? raw : cleanSocialHandle(raw),
+      url: buildSocialUrl(selectedPlatform, raw),
+    }
+
+    const nextLinks = editingId
+      ? links.map((item) => (item.id === editingId ? nextItem : item))
+      : [...links, nextItem]
+
+    onChange(nextLinks)
+    closeEdit()
+  }
+
+  const removeLink = () => {
+    if (!editingId) return
+    onChange(links.filter((item) => item.id !== editingId))
+    closeEdit()
+  }
+
+  if (screen === 'edit') {
+    return (
+      <div className="fixed inset-0 z-[90] bg-white dark:bg-[#18191c]">
+        <div className="mx-auto flex h-[100dvh] w-full max-w-[560px] flex-col bg-white text-[#111318] dark:bg-[#18191c] dark:text-white">
+          <div className="relative flex h-16 shrink-0 items-center justify-center border-b border-black/5 px-4 dark:border-white/10">
+            <button
+              type="button"
+              onClick={closeEdit}
+              className="absolute left-4 flex h-10 w-10 items-center justify-center rounded-full text-2xl"
+              aria-label="Back"
+            >
+              <i className="fa-solid fa-chevron-left text-[20px]" />
+            </button>
+            <h2 className="text-[18px] font-bold">
+              {editingId ? socialText('editLink') : socialText('addLink')}
+            </h2>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 pb-28 pt-8">
+            <div className="mb-8 flex flex-col items-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-black/10 text-[34px] dark:border-white/15">
+                <i className={selected.icon} />
+              </div>
+              <div className="mt-3 text-[20px] font-bold">{selected.label}</div>
+            </div>
+
+            <label className="block">
+              <span className="mb-2 block text-[14px] font-medium text-[#65676b] dark:text-[#b0b3b8]">
+                {socialText('inputLabel')}
+              </span>
+              <input
+                type="text"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder={socialText('inputPlaceholder')}
+                autoFocus
+                className="h-12 w-full rounded-xl border border-black/10 bg-white px-4 text-[16px] outline-none placeholder:text-[#9ca3af] focus:border-[#1877f2] dark:border-white/15 dark:bg-[#242526] dark:text-white"
+              />
+            </label>
+
+            {editingId ? (
+              <button
+                type="button"
+                onClick={removeLink}
+                className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#e4e6eb] text-[16px] font-semibold text-[#111318] dark:bg-[#3a3b3c] dark:text-white"
+              >
+                <i className="fa-solid fa-trash" />
+                {socialText('remove')}
+              </button>
+            ) : null}
+          </div>
+
+          <div className="shrink-0 border-t border-black/5 bg-white p-4 dark:border-white/10 dark:bg-[#18191c]">
+            <button
+              type="button"
+              onClick={saveDraft}
+              disabled={!draft.trim()}
+              className="h-12 w-full rounded-lg bg-[#1877f2] text-[16px] font-semibold text-white disabled:bg-[#e4e6eb] disabled:text-[#a8abb0] dark:disabled:bg-[#3a3b3c] dark:disabled:text-[#777b80]"
+            >
+              {socialText('save')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-[90] bg-white dark:bg-[#18191c]">
+      <div className="mx-auto flex h-[100dvh] w-full max-w-[560px] flex-col bg-white text-[#111318] dark:bg-[#18191c] dark:text-white">
+        <div className="relative flex h-16 shrink-0 items-center justify-center border-b border-black/5 px-4 dark:border-white/10">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute left-4 flex h-10 w-10 items-center justify-center rounded-full"
+            aria-label="Close"
+          >
+            <i className="fa-solid fa-xmark text-[22px]" />
+          </button>
+          <h2 className="text-[18px] font-bold">{socialText('title')}</h2>
+        </div>
+
+        <div className="shrink-0 border-b border-black/5 px-4 pb-4 pt-3 dark:border-white/10">
+          <button
+            type="button"
+            onClick={() => setChooserOpen(true)}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#e4e6eb] text-[18px] font-semibold text-[#111318] dark:bg-[#3a3b3c] dark:text-white"
+          >
+            <i className="fa-solid fa-plus text-[18px]" />
+            {socialText('add')}
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 pb-8 pt-5">
+          <h3 className="mb-4 text-[20px] font-bold">{socialText('linksTitle')}</h3>
+
+          {links.length ? (
+            <div className="space-y-1">
+              {links.map((item) => {
+                const platform = getSocialPlatform(item.platform)
+                return (
+                  <div key={item.id} className="flex min-h-[72px] items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center text-[27px]">
+                      <i className={platform.icon} />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[17px] font-medium">
+                        {item.display_name || item.value || platform.label}
+                      </div>
+                      <div className="mt-0.5 text-[14px] text-[#65676b] dark:text-[#b0b3b8]">
+                        {platform.label}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => startEdit(item)}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#65676b] dark:text-[#b0b3b8]"
+                      aria-label={`Edit ${platform.label}`}
+                    >
+                      <i className="fa-solid fa-pen text-[18px]" />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="py-12 text-center text-[15px] text-[#65676b] dark:text-[#b0b3b8]">
+              {socialText('empty')}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {chooserOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-end bg-black/40" onClick={() => setChooserOpen(false)}>
+          <div
+            className="mx-auto max-h-[78dvh] w-full max-w-[560px] overflow-hidden rounded-t-[24px] bg-[#f0f2f5] text-[#111318] shadow-2xl dark:bg-[#242526] dark:text-white"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex justify-center pt-3">
+              <div className="h-1.5 w-12 rounded-full bg-[#8a8d91]" />
+            </div>
+
+            <div className="px-5 pb-3 pt-4 text-center text-[20px] font-bold">
+              {socialText('selectPlatform')}
+            </div>
+
+            <div className="max-h-[65dvh] overflow-y-auto bg-white px-4 py-2 dark:bg-[#18191c]">
+              {SOCIAL_PLATFORMS.map((platform) => (
+                <button
+                  key={platform.key}
+                  type="button"
+                  onClick={() => startAdd(platform.key)}
+                  className="flex h-16 w-full items-center gap-4 border-b border-black/5 text-left last:border-b-0 dark:border-white/10"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center text-[27px]">
+                    <i className={platform.icon} />
+                  </span>
+                  <span className="text-[17px] font-medium">{platform.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -1576,7 +1995,7 @@ profile_details: details,
             <FieldRow
               icon="fa-solid fa-at"
               title="Social media"
-              value={details.social_media}
+              value={getSocialMediaSummary(details.social_links, details.social_media)}
               placeholder="Add social media or public handle"
               onClick={() => setActiveModal('social')}
             />
@@ -1741,19 +2160,12 @@ updateDetails({
   }}
 />
       
-      <TextEditModal
+      <SocialMediaModal
         open={activeModal === 'social'}
-        title="Edit social media"
-        label="Social media"
-        value={details.social_media}
-        multiline
-        maxLength={220}
-        placeholder="Add public handles or social links"
+        value={details.social_links}
+        legacyValue={details.social_media}
         onClose={() => setActiveModal('')}
-        onSave={(value) => {
-          updateDetails({ social_media: value })
-          setActiveModal('')
-        }}
+        onChange={(links) => updateDetails({ social_links: links })}
       />
 
       <TextEditModal
