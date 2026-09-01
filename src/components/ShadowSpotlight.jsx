@@ -1,5 +1,35 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowSpotlight', {
+  en: {
+    title: 'Shadow Spotlight',
+    loading: 'Loading spotlight...',
+    empty: 'No spotlight yet',
+  },
+  km: {
+    title: 'Shadow Spotlight',
+    loading: 'កំពុងផ្ទុក Spotlight...',
+    empty: 'មិនទាន់មាន Spotlight ទេ',
+  },
+  zh: {
+    title: 'Shadow 聚光推荐',
+    loading: '正在加载推荐...',
+    empty: '暂无推荐内容',
+  },
+  ja: {
+    title: 'Shadow スポットライト',
+    loading: 'スポットライトを読み込み中...',
+    empty: 'スポットライトはまだありません',
+  },
+  ko: {
+    title: 'Shadow 스포트라이트',
+    loading: '스포트라이트 불러오는 중...',
+    empty: '아직 스포트라이트가 없습니다',
+  },
+})
 import {
   getHomeCacheKey,
   loadHomeCache,
@@ -43,6 +73,7 @@ function getBadgeClass(badge) {
 }
 
 export default function ShadowSpotlight() {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const swiperRef = useRef(null)
   const [spotlights, setSpotlights] = useState([])
@@ -158,8 +189,8 @@ export default function ShadowSpotlight() {
   return (
     <div className="w-full overflow-hidden">
       <div className="mb-3 flex items-center px-4">
-        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-  Shadow Spotlight
+        <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+  {t('shadowSpotlight.title')}
 </h2>
       </div>
 
@@ -167,16 +198,16 @@ export default function ShadowSpotlight() {
         <div className="swiper-wrapper">
           {loading ? (
             <div className="swiper-slide">
-              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm">
-                <span className="text-[12px] font-bold text-gray-400">Loading spotlight...</span>
+              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] shadow-sm">
+                <span className="text-[12px] font-bold text-[var(--shadow-text-tertiary)]">{t('shadowSpotlight.loading')}</span>
               </div>
             </div>
           ) : null}
 
           {!loading && spotlights.length === 0 ? (
             <div className="swiper-slide">
-              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-[12px] border border-dashed border-gray-200 bg-gray-50 shadow-sm">
-                <span className="text-[12px] font-bold text-gray-400">No spotlight yet</span>
+              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-[12px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-soft)] shadow-sm">
+                <span className="text-[12px] font-bold text-[var(--shadow-text-tertiary)]">{t('shadowSpotlight.empty')}</span>
               </div>
             </div>
           ) : null}
@@ -189,7 +220,7 @@ export default function ShadowSpotlight() {
   return (
     <div key={item.id} className="swiper-slide">
       <div
-        className="relative aspect-[3/1] w-full cursor-pointer overflow-hidden rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm"
+        className="relative aspect-[3/1] w-full cursor-pointer overflow-hidden rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] shadow-sm"
         onClick={() => {
           if (item.link_url) navigate(item.link_url)
         }}
@@ -231,7 +262,7 @@ export default function ShadowSpotlight() {
 })}
         </div>
 
-        <div className="shadow-spotlight-pagination mt-4 flex justify-center [&_.swiper-pagination-bullet-active]:!bg-black" />
+        <div className="shadow-spotlight-pagination mt-4 flex justify-center [&_.swiper-pagination-bullet-active]:!bg-[var(--shadow-text-primary)]" />
       </div>
     </div>
   )
