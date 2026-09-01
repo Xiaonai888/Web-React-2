@@ -25,6 +25,12 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     items.find((page) => page.status === 'processing') ||
     items.find((page) => page.status === 'queued') ||
     items[items.length - 1]
+  const serverProcessing = items.some(
+  (page) =>
+    page.status === 'processing' &&
+    page.serverProcessing
+)
+const canCancel = !serverProcessing
 
   const currentTotal = Number(
     current?.uploadTotalBytes || current?.fileSize || current?.sourceFile?.size || 0
@@ -37,7 +43,11 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     : 0
   const speed = items.reduce((sum, page) => sum + Number(page.uploadSpeed || 0), 0)
   const currentName = current?.sourceFile?.name || 'Manga page'
-  const currentLabel = current?.status === 'processing' ? 'Preparing' : 'Uploading'
+  const currentLabel = current?.serverProcessing
+  ? 'Processing'
+  : current?.status === 'processing'
+    ? 'Preparing'
+    : 'Uploading'
   const radius = 52
   const circumference = 2 * Math.PI * radius
   const dashOffset = circumference - (overallPercent / 100) * circumference
@@ -64,7 +74,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
             type="button"
             onClick={onCancel}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Cancel upload"
+            aria-label="{canCancel ? 'Cancel Upload' : 'Processing on server...'}"
           >
             <i className="fa-solid fa-xmark text-[15px]" />
           </button>
@@ -144,7 +154,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
           onClick={onCancel}
           className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99]"
         >
-          Cancel Upload
+          {canCancel ? 'Cancel Upload' : 'Processing on server...'}
         </button>
       </div>
     </div>
