@@ -1,5 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('weeklyUpdateSection', {
+  en: {
+    title: 'Weekly Update',
+    untitledStory: 'Untitled Story',
+  },
+  km: {
+    title: 'អាប់ដេតប្រចាំសប្ដាហ៍',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+  },
+  zh: {
+    title: '每周更新',
+    untitledStory: '未命名故事',
+  },
+  ja: {
+    title: '週間更新',
+    untitledStory: '無題のストーリー',
+  },
+  ko: {
+    title: '주간 업데이트',
+    untitledStory: '제목 없는 작품',
+  },
+})
 import {
   addStoryLanguageParam,
   getStoryLanguageId,
@@ -51,7 +76,7 @@ function getReaderCacheScope() {
 function normalizeStory(story) {
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     cover:
       story.landscape_thumbnail_url ||
       story.cover_url ||
@@ -64,6 +89,7 @@ function normalizeStory(story) {
 }
 
 function WeeklyCard({ book, onOpen }) {
+  const { t } = useDisplayTranslation()
   const updateCount = Math.max(
     0,
     Number(book.updateCount || 0)
@@ -122,8 +148,8 @@ function WeeklyCard({ book, onOpen }) {
         ) : null}
       </div>
 
-      <h3 className="mt-2 line-clamp-2 text-[13px] font-[650] leading-[18px] text-neutral-900">
-        {book.title}
+      <h3 className="mt-2 line-clamp-2 text-[13px] font-[650] leading-[18px] text-[var(--shadow-text-primary)]">
+        {book.title || t('weeklyUpdateSection.untitledStory')}
       </h3>
     </button>
   )
@@ -132,15 +158,15 @@ function WeeklyCard({ book, onOpen }) {
 function LoadingRow() {
   return (
     <section className="px-4 sm:px-5 lg:px-6">
-      <div className="mb-4 h-6 w-40 animate-pulse rounded-full bg-gray-100" />
+      <div className="mb-4 h-6 w-40 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
       <div className="flex gap-3 overflow-hidden">
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={index}
             className="w-[calc((100vw-56px)/2.5)] min-w-[calc((100vw-56px)/2.5)]"
           >
-            <div className="aspect-[16/9] animate-pulse rounded-[8px] bg-gray-100" />
-            <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100" />
+            <div className="aspect-[16/9] animate-pulse rounded-[8px] bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-2 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
           </div>
         ))}
       </div>
@@ -149,6 +175,7 @@ function LoadingRow() {
 }
 
 export default function WeeklyUpdateSection() {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -344,8 +371,8 @@ export default function WeeklyUpdateSection() {
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4">
-        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-          🤪 Weekly Update
+        <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+          🤪 {t('weeklyUpdateSection.title')}
         </h2>
       </div>
 
