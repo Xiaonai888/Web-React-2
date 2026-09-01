@@ -5,8 +5,14 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('authorPostInsights', {
   en: {
-    title: 'Post insights',
+    title: 'Post details',
     goBack: 'Go back',
+    managePost: 'Manage post',
+    moreOptions: 'More options',
+    public: 'Public',
+    moreDetails: 'More details',
+    basicDetails: 'Basic details',
+    viewPost: 'View post',
     loading: 'Loading post insights...',
     loadFailed: 'Could not load insights',
     cannotConnect: 'Cannot connect to backend.',
@@ -80,8 +86,14 @@ registerTranslationNamespace('authorPostInsights', {
     touched: 'Touched',
   },
   km: {
-    title: 'ស្ថិតិប្រកាស',
+    title: 'ព័ត៌មានប្រកាស',
     goBack: 'ត្រឡប់ក្រោយ',
+    managePost: 'គ្រប់គ្រងប្រកាស',
+    moreOptions: 'ជម្រើសបន្ថែម',
+    public: 'សាធារណៈ',
+    moreDetails: 'ព័ត៌មានបន្ថែម',
+    basicDetails: 'ព័ត៌មានមូលដ្ឋាន',
+    viewPost: 'មើលប្រកាស',
     loading: 'កំពុងផ្ទុកស្ថិតិប្រកាស...',
     loadFailed: 'មិនអាចផ្ទុកស្ថិតិបាន',
     cannotConnect: 'មិនអាចភ្ជាប់ទៅ Backend បាន។',
@@ -155,8 +167,14 @@ registerTranslationNamespace('authorPostInsights', {
     touched: 'រំភើប',
   },
   zh: {
-    title: '帖子数据',
+    title: '帖子详情',
     goBack: '返回',
+    managePost: '管理帖子',
+    moreOptions: '更多选项',
+    public: '公开',
+    moreDetails: '更多详情',
+    basicDetails: '基本详情',
+    viewPost: '查看帖子',
     loading: '正在加载帖子数据...',
     loadFailed: '无法加载数据',
     cannotConnect: '无法连接后端。',
@@ -230,8 +248,14 @@ registerTranslationNamespace('authorPostInsights', {
     touched: '感动',
   },
   ja: {
-    title: '投稿インサイト',
+    title: '投稿の詳細',
     goBack: '戻る',
+    managePost: '投稿を管理',
+    moreOptions: 'その他のオプション',
+    public: '公開',
+    moreDetails: '詳細を見る',
+    basicDetails: '基本情報',
+    viewPost: '投稿を見る',
     loading: '投稿インサイトを読み込み中...',
     loadFailed: 'インサイトを読み込めません',
     cannotConnect: 'バックエンドに接続できません。',
@@ -305,8 +329,14 @@ registerTranslationNamespace('authorPostInsights', {
     touched: 'Touched',
   },
   ko: {
-    title: '게시물 인사이트',
+    title: '게시물 상세',
     goBack: '뒤로',
+    managePost: '게시물 관리',
+    moreOptions: '더보기',
+    public: '공개',
+    moreDetails: '상세 정보',
+    basicDetails: '기본 정보',
+    viewPost: '게시물 보기',
     loading: '게시물 인사이트를 불러오는 중...',
     loadFailed: '인사이트를 불러올 수 없습니다',
     cannotConnect: '백엔드에 연결할 수 없습니다.',
@@ -938,6 +968,7 @@ export default function AuthorPostInsightsPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [moreDetailsOpen, setMoreDetailsOpen] = useState(false)
 
   const locale =
     {
@@ -1022,6 +1053,17 @@ export default function AuthorPostInsightsPage() {
     }
   }, [navigate, postId, t])
 
+  useEffect(() => {
+    if (!moreDetailsOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [moreDetailsOpen])
+
   const post = data?.post || {}
   const overview = data?.overview || {}
   const engagement = data?.engagement || {}
@@ -1047,20 +1089,42 @@ export default function AuthorPostInsightsPage() {
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur-xl">
-        <div className="mx-auto grid h-[58px] max-w-3xl grid-cols-[44px_1fr_44px] items-center px-2">
+        <div className="mx-auto grid h-[58px] max-w-3xl grid-cols-[44px_1fr_88px] items-center px-2">
           <button
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('authorPostInsights.goBack')}
           >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
+            <i className="fa-solid fa-chevron-left text-[17px]" />
           </button>
 
-          <h1 className="truncate text-center text-[15px] font-bold">
+          <h1 className="truncate text-center text-[16px] font-bold">
             {t('authorPostInsights.title')}
           </h1>
-          <div />
+
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => navigate('/author/page/posts')}
+              className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
+              aria-label={t('authorPostInsights.managePost')}
+            >
+              <span className="relative block h-[22px] w-[24px]" aria-hidden="true">
+                <span className="absolute left-[2px] top-[3px] h-[17px] w-[13px] rounded-[3px] border-2 border-[var(--shadow-text-primary)]" />
+                <span className="absolute right-[1px] top-0 h-[17px] w-[13px] rounded-[3px] border-2 border-[var(--shadow-text-primary)] bg-[var(--shadow-nav-bg)]" />
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMoreDetailsOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
+              aria-label={t('authorPostInsights.moreOptions')}
+            >
+              <i className="fa-solid fa-ellipsis text-[18px]" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -1090,33 +1154,63 @@ export default function AuthorPostInsightsPage() {
 
         {!loading && !error && data ? (
           <div className="space-y-3">
-            <section className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 sm:p-5">
-              <div className="flex items-center gap-3">
+            <section className="px-1 pb-2 pt-2 sm:pt-3">
+              <button
+                type="button"
+                onClick={() =>
+                  post?.id &&
+                  navigate(
+                    `/author/post/${encodeURIComponent(post.id)}`
+                  )
+                }
+                className="mx-auto block w-full max-w-[292px] overflow-hidden rounded-[18px] bg-[var(--shadow-bg-surface)] text-left shadow-[0_4px_18px_rgba(17,24,39,0.12)] ring-1 ring-[var(--shadow-border)] active:scale-[0.995]"
+              >
                 {firstImage ? (
-                  <img
-                    src={firstImage}
-                    alt=""
-                    className="h-[68px] w-[68px] shrink-0 rounded-[12px] bg-[var(--shadow-bg-elevated)] object-cover"
-                  />
+                  <div className="aspect-[4/5] w-full overflow-hidden bg-[var(--shadow-bg-elevated)]">
+                    <img
+                      src={firstImage}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 ) : (
-                  <div className="flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-[12px] bg-[var(--shadow-bg-elevated)] text-[#6d4aff]">
-                    <i className="fa-regular fa-file-lines text-[20px]" />
+                  <div className="flex min-h-[250px] items-center justify-center bg-[var(--shadow-bg-elevated)] px-6 text-center">
+                    <div>
+                      <i className="fa-regular fa-file-lines text-[28px] text-[#6d4aff]" />
+                      <div className="mt-4 line-clamp-6 whitespace-pre-wrap text-[15px] font-semibold leading-6">
+                        {post.content ||
+                          t('authorPostInsights.photoPost')}
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <div className="min-w-0 flex-1">
-                  <div className="line-clamp-2 whitespace-pre-wrap text-[13px] font-medium leading-5">
-                    {post.content ||
-                      t('authorPostInsights.photoPost')}
+                {firstImage && post.content ? (
+                  <div className="px-4 py-3">
+                    <div className="line-clamp-3 whitespace-pre-wrap text-[14px] font-medium leading-6">
+                      {post.content}
+                    </div>
                   </div>
-                  <div className="mt-1.5 text-[10.5px] text-[var(--shadow-text-tertiary)]">
-                    {t('authorPostInsights.posted', {
-                      date: formatDateTime(
-                        post.created_at
-                      ),
-                    })}
-                  </div>
-                </div>
+                ) : null}
+              </button>
+
+              <div className="mt-5 flex items-center justify-center gap-2 text-[12px] text-[var(--shadow-text-secondary)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <i className="fa-solid fa-earth-americas text-[12px]" />
+                  <span>{t('authorPostInsights.public')}</span>
+                </span>
+                <span>·</span>
+                <span>{formatDateTime(post.created_at)}</span>
+              </div>
+
+              <div className="mt-3 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setMoreDetailsOpen(true)}
+                  className="rounded-full border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] px-4 py-2 text-[12px] font-medium active:bg-[var(--shadow-bg-hover)]"
+                >
+                  {t('authorPostInsights.moreDetails')}
+                </button>
               </div>
             </section>
 
@@ -1278,6 +1372,76 @@ export default function AuthorPostInsightsPage() {
           </div>
         ) : null}
       </main>
+
+      {moreDetailsOpen ? (
+        <div className="fixed inset-0 z-[120]">
+          <button
+            type="button"
+            aria-label={t('authorPostInsights.goBack')}
+            onClick={() => setMoreDetailsOpen(false)}
+            className="absolute inset-0 bg-black/45"
+          />
+
+          <section className="absolute bottom-0 left-1/2 w-full max-w-[560px] -translate-x-1/2 rounded-t-[28px] border border-b-0 border-[var(--shadow-border)] bg-[var(--shadow-bg-page)] pb-[max(22px,env(safe-area-inset-bottom))] shadow-2xl">
+            <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)]" />
+
+            <div className="px-4 pb-2 pt-4 text-center">
+              <h2 className="text-[17px] font-bold">
+                {t('authorPostInsights.moreDetails')}
+              </h2>
+            </div>
+
+            <div className="px-4 pb-4 pt-2">
+              <div className="overflow-hidden rounded-[16px] bg-[var(--shadow-bg-surface)] ring-1 ring-[var(--shadow-border)]">
+                <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4">
+                  <div className="text-[15px] font-bold">
+                    {t('authorPostInsights.basicDetails')}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMoreDetailsOpen(false)
+                      if (post?.id) {
+                        navigate(
+                          `/author/post/${encodeURIComponent(post.id)}`
+                        )
+                      }
+                    }}
+                    className="text-[13px] font-semibold text-[#1877f2] active:opacity-60"
+                  >
+                    {t('authorPostInsights.viewPost')}
+                  </button>
+                </div>
+
+                <div className="flex items-start gap-3 px-4 pb-4">
+                  <div className="flex h-[56px] w-[56px] shrink-0 items-center justify-center overflow-hidden rounded-[9px] bg-[var(--shadow-bg-elevated)]">
+                    {firstImage ? (
+                      <img
+                        src={firstImage}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <i className="fa-regular fa-file-lines text-[18px] text-[var(--shadow-text-secondary)]" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="line-clamp-2 whitespace-pre-wrap text-[13px] font-medium leading-5">
+                      {post.content ||
+                        t('authorPostInsights.photoPost')}
+                    </div>
+                    <div className="mt-1 text-[11px] text-[var(--shadow-text-secondary)]">
+                      {formatDateTime(post.created_at)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
