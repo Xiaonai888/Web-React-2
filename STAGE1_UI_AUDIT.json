@@ -113,5 +113,10 @@
 "src/components/AuthorPageMoreMenu.jsx",
 "src/components/AuthorStudioBottomNav.jsx",
 "src/components/ContinueReadingSection.jsx"
+    "src/components/CompletedSection.jsx",
+"src/components/EditorWeeklyPicksSection.jsx",
+"src/components/EventPerksHubSection.jsx",
+"src/components/FanPicksSection.jsx",
+"src/components/TopNovelSection.jsx"
   ]
 }
