@@ -1,6 +1,66 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageLabel } from '../utils/storyLanguage'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowExclusiveSection', {
+  en: {
+    title: 'Shadow Exclusive',
+    seeAll: 'See All',
+    premium: 'Premium',
+    untitledStory: 'Untitled Story',
+    waitingApproval: 'Waiting for Approval',
+    premiumSoon: 'Premium Stories Soon',
+    episode: 'EP {{count}}',
+    empty: 'No {{language}} exclusive stories yet',
+    tryAnotherLanguage: 'Try another story language from Settings.',
+  },
+  km: {
+    title: 'Shadow Exclusive',
+    seeAll: 'មើលទាំងអស់',
+    premium: 'Premium',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    waitingApproval: 'កំពុងរង់ចាំការអនុម័ត',
+    premiumSoon: 'រឿង Premium នឹងមកដល់ឆាប់ៗ',
+    episode: 'ភាគ {{count}}',
+    empty: 'មិនទាន់មានរឿង Exclusive ជាភាសា {{language}} ទេ',
+    tryAnotherLanguage: 'សាកជ្រើសភាសារឿងផ្សេងពី Settings។',
+  },
+  zh: {
+    title: 'Shadow 独家',
+    seeAll: '查看全部',
+    premium: 'Premium',
+    untitledStory: '未命名故事',
+    waitingApproval: '等待审核',
+    premiumSoon: 'Premium 故事即将上线',
+    episode: '第 {{count}} 集',
+    empty: '暂无 {{language}} 独家故事',
+    tryAnotherLanguage: '请在设置中尝试其他故事语言。',
+  },
+  ja: {
+    title: 'Shadow 限定',
+    seeAll: 'すべて見る',
+    premium: 'Premium',
+    untitledStory: '無題のストーリー',
+    waitingApproval: '承認待ち',
+    premiumSoon: 'Premium 作品は近日公開',
+    episode: 'EP {{count}}',
+    empty: '{{language}} の限定作品はまだありません',
+    tryAnotherLanguage: '設定から別の作品言語をお試しください。',
+  },
+  ko: {
+    title: 'Shadow 독점',
+    seeAll: '전체 보기',
+    premium: 'Premium',
+    untitledStory: '제목 없는 작품',
+    waitingApproval: '승인 대기 중',
+    premiumSoon: 'Premium 작품이 곧 공개됩니다',
+    episode: 'EP {{count}}',
+    empty: '아직 {{language}} 독점 작품이 없습니다',
+    tryAnotherLanguage: '설정에서 다른 작품 언어를 선택해 보세요.',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -10,29 +70,29 @@ const API_BASE_URL =
 const fallbackSectionData = [
   {
     id: 'exclusive-empty-1',
-    title: 'Shadow Exclusive',
+    titleKey: 'title',
     image: '/assets/Must Read pic/Must Read 1.jpg',
-    genre: 'Premium',
+    genre: '',
     genreColor: 'amber',
-    episode: 'EP 0',
+    episodeCount: 0,
     link: '/shadow-exclusive',
   },
   {
     id: 'exclusive-empty-2',
-    title: 'Waiting for Approval',
+    titleKey: 'waitingApproval',
     image: '/assets/Must Read pic/Must Read 2.jpg',
-    genre: 'Premium',
+    genre: '',
     genreColor: 'amber',
-    episode: 'EP 0',
+    episodeCount: 0,
     link: '/shadow-exclusive',
   },
   {
     id: 'exclusive-empty-3',
-    title: 'Premium Stories Soon',
+    titleKey: 'premiumSoon',
     image: '/assets/Must Read pic/Must Read 3.jpg',
-    genre: 'Premium',
+    genre: '',
     genreColor: 'amber',
-    episode: 'EP 0',
+    episodeCount: 0,
     link: '/shadow-exclusive',
   },
 ]
@@ -49,15 +109,15 @@ function genreColorFor(genre) {
 }
 
 function normalizeStory(story, index = 0) {
-  const genre = story.main_genre || 'Premium'
+  const genre = story.main_genre || ''
 
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || '',
     image: story.cover_url || `/assets/Must Read pic/Must Read ${Math.min(index + 1, 6)}.jpg`,
     genre,
     genreColor: genreColorFor(genre),
-    episode: `EP ${Number(story.total_episodes || 0)}`,
+    episodeCount: Number(story.total_episodes || 0),
     link: `/story/${story.id}`,
     isAdult: Boolean(story.is_adult),
     isReal: true,
@@ -76,16 +136,16 @@ function LoadingShadowExclusive() {
   return (
     <div className="mb-10 px-4">
       <div className="mb-6 flex items-center justify-between">
-        <div className="h-6 w-52 animate-pulse rounded-full bg-amber-100" />
-        <div className="h-4 w-14 animate-pulse rounded-full bg-amber-100" />
+        <div className="h-6 w-52 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+        <div className="h-4 w-14 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
       </div>
 
       <div className="grid grid-cols-3 gap-x-4 gap-y-10 md:grid-cols-6">
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index}>
-            <div className="aspect-[2/3] animate-pulse rounded-2xl bg-amber-100/70" />
-            <div className="mt-3 h-3 animate-pulse rounded-full bg-amber-100" />
-            <div className="mt-2 h-2 w-2/3 animate-pulse rounded-full bg-amber-100" />
+            <div className="aspect-[2/3] animate-pulse rounded-2xl bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-3 h-3 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-2 h-2 w-2/3 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
           </div>
         ))}
       </div>
@@ -94,6 +154,7 @@ function LoadingShadowExclusive() {
 }
 
 export default function ShadowExclusiveSection() {
+  const { t } = useDisplayTranslation()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [fetchFailed, setFetchFailed] = useState(false)
@@ -151,82 +212,97 @@ export default function ShadowExclusiveSection() {
   return (
     <div className="mb-10 px-4">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="flex items-center text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-  <img
-    src="https://img.icons8.com/emoji/48/crown-emoji.png"
-    className="mr-2 h-5 w-5 lg:h-[21px] lg:w-[21px]"
-    alt="crown"
-  />
-  Shadow Exclusive
-</h3>
+        <h3 className="flex items-center text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
+          <img
+            src="https://img.icons8.com/emoji/48/crown-emoji.png"
+            className="mr-2 h-5 w-5 lg:h-[21px] lg:w-[21px]"
+            alt="crown"
+          />
+          {t('shadowExclusiveSection.title')}
+        </h3>
 
         <Link
           to="/shadow-exclusive"
           className="text-[11px] font-black uppercase tracking-widest text-amber-700 transition-all hover:text-amber-800 hover:underline"
         >
-          See All
+          {t('shadowExclusiveSection.seeAll')}
         </Link>
       </div>
 
       {sectionData.length ? (
         <div className="grid grid-cols-3 gap-x-4 gap-y-10 md:grid-cols-6">
-          {sectionData.map((item) => (
-            <Link
-              to={item.link || `/story/${item.id}`}
-              key={item.id}
-              className="group flex cursor-pointer flex-col"
-            >
-              <div className="relative mb-3 aspect-[2/3] overflow-hidden rounded-2xl border border-amber-200/70 bg-white shadow-[0_8px_24px_rgba(212,175,55,0.18)] transition-all duration-500 group-hover:shadow-[0_12px_30px_rgba(212,175,55,0.28)]">
-                <div className="pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 ring-inset ring-amber-300/80" />
+          {sectionData.map((item) => {
+            const title = item.title || (
+              item.titleKey
+                ? t(`shadowExclusiveSection.${item.titleKey}`)
+                : t('shadowExclusiveSection.untitledStory')
+            )
+            const genre = item.genre || t('shadowExclusiveSection.premium')
 
-                <img
-                  src={item.image}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  alt={item.title}
-                  loading="lazy"
-                  onError={(event) => {
-                    event.currentTarget.src = '/assets/Must Read pic/Must Read 1.jpg'
-                  }}
-                />
+            return (
+              <Link
+                to={item.link || `/story/${item.id}`}
+                key={item.id}
+                className="group flex cursor-pointer flex-col"
+              >
+                <div className="relative mb-3 aspect-[2/3] overflow-hidden rounded-2xl border border-amber-200/70 bg-[var(--shadow-bg-surface)] shadow-[0_8px_24px_rgba(212,175,55,0.18)] transition-all duration-500 group-hover:shadow-[0_12px_30px_rgba(212,175,55,0.28)]">
+                  <div className="pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 ring-inset ring-amber-300/80" />
 
-                <div className="absolute right-2 top-2 z-20 rounded-full border border-amber-100 bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.16em] text-amber-950 shadow-[0_6px_18px_rgba(212,175,55,0.35)]">
-                  Premium
-                </div>
+                  <img
+                    src={item.image}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    alt={title}
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.src = '/assets/Must Read pic/Must Read 1.jpg'
+                    }}
+                  />
 
-                {item.isAdult ? (
-                  <div className="absolute bottom-2 left-2 z-20 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[9px] font-extrabold text-[#e5484d]">
-                    18+
+                  <div className="absolute right-2 top-2 z-20 rounded-full border border-amber-100 bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.16em] text-amber-950 shadow-[0_6px_18px_rgba(212,175,55,0.35)]">
+                    {t('shadowExclusiveSection.premium')}
                   </div>
-                ) : null}
 
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" />
-              </div>
+                  {item.isAdult ? (
+                    <div className="absolute bottom-2 left-2 z-20 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[9px] font-extrabold text-[#e5484d]">
+                      18+
+                    </div>
+                  ) : null}
 
-              <div className="px-0.5">
-                <h4 className="mb-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-extrabold leading-tight text-gray-900 transition-colors group-hover:text-amber-700">
-                  {item.title}
-                </h4>
-
-                <div className="flex items-center gap-2 text-[9px] font-semibold">
-                  <span className={genreTextClass(item.genreColor)}>
-                    {item.genre}
-                  </span>
-
-                  <span className="text-gray-400">•</span>
-
-                  <span className="text-gray-500">{item.episode}</span>
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" />
                 </div>
-              </div>
-            </Link>
-          ))}
+
+                <div className="px-0.5">
+                  <h4 className="mb-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-extrabold leading-tight text-[var(--shadow-text-primary)] transition-colors group-hover:text-amber-700">
+                    {title}
+                  </h4>
+
+                  <div className="flex items-center gap-2 text-[9px] font-semibold">
+                    <span className={genreTextClass(item.genreColor)}>
+                      {genre}
+                    </span>
+
+                    <span className="text-[var(--shadow-text-tertiary)]">•</span>
+
+                    <span className="text-[var(--shadow-text-secondary)]">
+                      {t('shadowExclusiveSection.episode', {
+                        count: item.episodeCount,
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       ) : (
-        <div className="rounded-[22px] bg-[#fff7d8] px-4 py-6 text-center ring-1 ring-[#f6b800]/25">
-          <div className="text-[14px] font-extrabold text-[#111827]">
-            No {storyLanguage} exclusive stories yet
+        <div className="rounded-[22px] bg-[var(--shadow-bg-soft)] px-4 py-6 text-center ring-1 ring-[var(--shadow-border)]">
+          <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">
+            {t('shadowExclusiveSection.empty', {
+              language: storyLanguage,
+            })}
           </div>
-          <div className="mt-1 text-[12px] text-[#8d94a1]">
-            Try another story language from Settings.
+          <div className="mt-1 text-[12px] text-[var(--shadow-text-secondary)]">
+            {t('shadowExclusiveSection.tryAnotherLanguage')}
           </div>
         </div>
       )}
