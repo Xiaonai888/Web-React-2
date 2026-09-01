@@ -268,6 +268,11 @@
 "src/components/social/posts/PublicPostDetailView.jsx",
 "src/components/reader-posts/ReaderProfilePostsPanel.jsx",
 "src/components/reader-posts/ReaderAuthorStylePhotoViewer.jsx"
+"src/components/reader-posts/ReaderPostCommentsModal.jsx",
+"src/components/reader-posts/ReaderPostCommentsSection.jsx",
+"src/components/comments/CommentSection.jsx",
+"src/components/reader/GiftPopup.jsx",
+"src/components/reader/ReaderBottomActionBar.jsx"
   ]
 }
   ]
