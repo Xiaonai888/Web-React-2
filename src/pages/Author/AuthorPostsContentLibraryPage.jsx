@@ -9,11 +9,11 @@ const PAGE_SIZE = 30
 
 const FILTER_OPTIONS = {
   status: [
-    { value: 'all', label: 'All posts' },
-    { value: 'published', label: 'Published' },
-    { value: 'scheduled', label: 'Scheduled' },
-    { value: 'uploaded', label: 'Uploaded' },
-  ],
+  { value: 'all', label: 'All posts' },
+  { value: 'published', label: 'Published' },
+  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'uploaded', label: 'Uploaded' },
+],
   date: [
     { value: 'today', label: 'Today' },
     { value: '7d', label: 'Last 7 days' },
@@ -117,44 +117,17 @@ async function fetchMyAuthorPage() {
   return data.author_page
 }
 
-async function fetchAuthorPostsPage(
-  pageUsername,
-  {
-    before = '',
-    statusFilter = 'all',
-    dateRange = 'lifetime',
-  } = {}
-) {
+async function fetchAuthorPostsPage(pageUsername, before = '') {
   const token = getAuthToken()
   const params = new URLSearchParams({
-    limit: String(PAGE_SIZE),
+    limit: '100',
     content_library: '1',
   })
 
-  const statusMap = {
-    published: 'active',
-    scheduled: 'scheduled',
-    uploaded: 'uploaded',
-  }
-
-  if (statusMap[statusFilter]) {
-    params.set('status', statusMap[statusFilter])
-  }
-
-  const cutoff = getDateCutoff(dateRange)
-
-  if (cutoff) {
-    params.set('after', new Date(cutoff).toISOString())
-  }
-
-  if (before) {
-    params.set('before', before)
-  }
+  if (before) params.set('before', before)
 
   const response = await fetch(
-    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(
-      pageUsername
-    )}/posts?${params.toString()}`,
+    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`,
     {
       headers: token
         ? { Authorization: `Bearer ${token}` }
@@ -167,11 +140,37 @@ async function fetchAuthorPostsPage(
     throw new Error(data.message || 'Failed to load posts')
   }
 
-  return {
-    posts: Array.isArray(data.posts) ? data.posts : [],
-    hasMore: Boolean(data.has_more),
-    nextBefore: data.next_before || '',
+  return Array.isArray(data.posts) ? data.posts : []
+}
+
+async function fetchAllAuthorPosts(pageUsername) {
+  const postMap = new Map()
+  let before = ''
+
+  for (let pageIndex = 0; pageIndex < 100; pageIndex += 1) {
+    const batch = await fetchAuthorPostsPage(pageUsername, before)
+
+    if (!batch.length) break
+
+    const previousSize = postMap.size
+
+    batch.forEach((post) => {
+      if (post?.id) postMap.set(String(post.id), post)
+    })
+
+    if (batch.length < 100 || postMap.size === previousSize) break
+
+    const oldestCreatedAt = batch
+      .map((post) => post?.created_at)
+      .filter(Boolean)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0]
+
+    if (!oldestCreatedAt || oldestCreatedAt === before) break
+
+    before = oldestCreatedAt
   }
+
+  return [...postMap.values()]
 }
 
 function getPostType(post) {
@@ -250,11 +249,11 @@ function PostListRow({ post, metricMode, onOpen }) {
         </span>
       </span>
 
-      <span className="mr-2 w-[62px] shrink-0 text-right">
-        <span className="block text-[16px] font-medium text-[#111827]">
+      <span className="mr-1 flex w-[58px] shrink-0 flex-col items-center justify-center pr-1 text-center">
+        <span className="block text-[16px] font-medium leading-5 text-[#111827]">
           {formatCompactNumber(metric)}
         </span>
-        <span className="mt-0.5 block text-[9px] font-normal text-[#9ca3af]">
+        <span className="mt-0.5 block text-[9px] font-normal leading-3 text-[#9ca3af]">
           {getOptionLabel('metrics', metricMode)}
         </span>
       </span>
@@ -403,7 +402,7 @@ function FilterSheet({
                     className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
                       selected
                         ? 'border-[#111827]'
-                        : 'border-[#6b7280]'
+: 'border-[#6b7280]'
                     }`}
                   >
                     {selected ? (
@@ -424,10 +423,6 @@ export default function AuthorPostsContentLibraryPage() {
   const navigate = useNavigate()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [authorPageUsername, setAuthorPageUsername] = useState('')
-  const [nextBefore, setNextBefore] = useState('')
-  const [hasMore, setHasMore] = useState(false)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [message, setMessage] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterSection, setFilterSection] = useState('menu')
@@ -457,100 +452,35 @@ export default function AuthorPostsContentLibraryPage() {
     try {
       setLoading(true)
       setMessage('')
-      setHasMore(false)
-      setNextBefore('')
 
       const page = await fetchMyAuthorPage()
-      const result = await fetchAuthorPostsPage(
-        page.page_username,
-        {
-          statusFilter,
-          dateRange,
-        }
-      )
+      const nextPosts = await fetchAllAuthorPosts(page.page_username)
 
-      setAuthorPageUsername(page.page_username)
-      setPosts(result.posts)
-      setNextBefore(result.nextBefore)
-      setHasMore(result.hasMore)
+      setPosts(nextPosts)
     } catch (error) {
       setMessage(error.message || 'Failed to load Content Library')
     } finally {
       setLoading(false)
     }
-  }, [dateRange, navigate, statusFilter])
+  }, [navigate])
 
   useEffect(() => {
     loadFirstPage()
   }, [loadFirstPage])
 
-  const loadMore = useCallback(async () => {
-    if (
-      !authorPageUsername ||
-      !hasMore ||
-      loadingMore ||
-      !nextBefore
-    ) {
-      return
-    }
-
-    try {
-      setLoadingMore(true)
-
-      const result = await fetchAuthorPostsPage(
-        authorPageUsername,
-        {
-          before: nextBefore,
-          statusFilter,
-          dateRange,
-        }
-      )
-
-      setPosts((current) => {
-        const postMap = new Map(
-          current.map((post) => [String(post.id), post])
-        )
-
-        result.posts.forEach((post) => {
-          if (post?.id) {
-            postMap.set(String(post.id), post)
-          }
-        })
-
-        return [...postMap.values()]
-      })
-
-      setNextBefore(result.nextBefore)
-      setHasMore(result.hasMore)
-    } catch (error) {
-      setMessage(error.message || 'Failed to load more posts')
-    } finally {
-      setLoadingMore(false)
-    }
-  }, [
-    authorPageUsername,
-    dateRange,
-    hasMore,
-    loadingMore,
-    nextBefore,
-    statusFilter,
-  ])
-
   const visiblePosts = useMemo(() => {
     let nextPosts = [...posts]
 
     if (statusFilter !== 'all') {
-      const expectedStatus = {
-        published: 'active',
-        scheduled: 'scheduled',
-        uploaded: 'uploaded',
-      }[statusFilter]
-
-      nextPosts = nextPosts.filter(
-        (post) =>
-          String(post?.status || '').toLowerCase() === expectedStatus
-      )
-    }
+  const expectedStatus = {
+    published: 'active',
+    scheduled: 'scheduled',
+    uploaded: 'uploaded',
+  }[statusFilter]
+  nextPosts = nextPosts.filter((post) =>
+    String(post?.status || '').toLowerCase() === expectedStatus
+  )
+}
 
     const cutoff = getDateCutoff(dateRange)
 
@@ -596,21 +526,21 @@ export default function AuthorPostsContentLibraryPage() {
       ) : null}
 
       <header className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex min-h-[60px] max-w-[760px] items-center gap-3 px-4">
+        <div className="mx-auto flex min-h-[54px] max-w-[760px] items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back"
           >
             <i className="fa-solid fa-chevron-left text-[22px]" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[17px] font-bold leading-5 text-[#111827]">
+            <h1 className="truncate text-[16px] font-bold leading-5 text-[#111827]">
               Professional Dashboard
             </h1>
-            <p className="mt-0.5 text-[14px] font-normal text-[#6b7280]">
+            <p className="mt-0.5 text-[13px] font-normal text-[#6b7280]">
               Content Library
             </p>
           </div>
@@ -618,28 +548,28 @@ export default function AuthorPostsContentLibraryPage() {
           <button
             type="button"
             onClick={() => navigate('/author/page/dashboard')}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#111827] text-[#111827] active:scale-95"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-[#111827] text-[#111827] active:scale-95"
             aria-label="Page Dashboard"
           >
-            <i className="fa-solid fa-chart-simple text-[17px]" />
+            <i className="fa-solid fa-chart-simple text-[15px]" />
           </button>
         </div>
 
-        <div className="mx-auto max-w-[760px] overflow-x-auto px-4 pb-3">
+        <div className="mx-auto max-w-[760px] overflow-x-auto px-4 pb-2.5">
           <div className="flex min-w-max gap-2">
             <button
               type="button"
               onClick={() => openFilter('menu')}
-              className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#eef0f4] text-[#111827]"
+              className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-[#eef0f4] text-[#111827]"
               aria-label="Filters"
             >
-              <i className="fa-solid fa-sliders text-[13px]" />
+              <i className="fa-solid fa-sliders text-[12px]" />
             </button>
 
             <button
               type="button"
               onClick={() => openFilter('date')}
-              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
+              className="flex h-9 items-center gap-2 rounded-[11px] bg-[#eef0f4] px-3.5 text-[13px] font-semibold text-[#111827]"
             >
               {getOptionLabel('date', dateRange)}
               <i className="fa-solid fa-caret-down text-[12px]" />
@@ -648,7 +578,7 @@ export default function AuthorPostsContentLibraryPage() {
             <button
               type="button"
               onClick={() => openFilter('type')}
-              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
+              className="flex h-9 items-center gap-2 rounded-[11px] bg-[#eef0f4] px-3.5 text-[13px] font-semibold text-[#111827]"
             >
               {getOptionLabel('type', typeFilter)}
               <i className="fa-solid fa-caret-down text-[12px]" />
@@ -657,7 +587,7 @@ export default function AuthorPostsContentLibraryPage() {
             <button
               type="button"
               onClick={() => openFilter('metrics')}
-              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
+              className="flex h-9 items-center gap-2 rounded-[11px] bg-[#eef0f4] px-3.5 text-[13px] font-semibold text-[#111827]"
             >
               {getOptionLabel('metrics', metricMode)}
               <i className="fa-solid fa-caret-down text-[12px]" />
@@ -666,7 +596,7 @@ export default function AuthorPostsContentLibraryPage() {
             <button
               type="button"
               onClick={() => openFilter('status')}
-              className="flex h-11 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-4 text-[14px] font-semibold text-[#111827]"
+              className="flex h-9 items-center gap-2 rounded-[11px] bg-[#eef0f4] px-3.5 text-[13px] font-semibold text-[#111827]"
             >
               {getOptionLabel('status', statusFilter)}
               <i className="fa-solid fa-caret-down text-[12px]" />
@@ -684,32 +614,17 @@ export default function AuthorPostsContentLibraryPage() {
               Loading posts...
             </div>
           </div>
-        ) : visiblePosts.length || hasMore ? (
-          <>
-            <div className="divide-y divide-[#eef0f4]">
-              {visiblePosts.map((post) => (
-                <PostListRow
-                  key={post.id}
-                  post={post}
-                  metricMode={metricMode}
-                  onOpen={() => navigate(`/author/page?post=${post.id}`)}
-                />
-              ))}
-            </div>
-
-            {hasMore ? (
-              <div className="px-4 py-5">
-                <button
-                  type="button"
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="h-11 w-full rounded-[12px] bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-60"
-                >
-                  {loadingMore ? 'Loading...' : 'Load more'}
-                </button>
-              </div>
-            ) : null}
-          </>
+        ) : visiblePosts.length ? (
+          <div className="divide-y divide-[#eef0f4]">
+            {visiblePosts.map((post) => (
+              <PostListRow
+                key={post.id}
+                post={post}
+                metricMode={metricMode}
+                onOpen={() => navigate(`/author/page?post=${post.id}`)}
+              />
+            ))}
+          </div>
         ) : (
           <div className="flex min-h-[420px] flex-col items-center justify-center px-6 text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eef0f4] text-[#6b7280]">
