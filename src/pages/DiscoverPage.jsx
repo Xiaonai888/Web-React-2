@@ -42,6 +42,9 @@ const API_BASE_URL =
   'https://shadow-backend-kucw.onrender.com'
 const DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS =
   5 * 60 * 1000
+const DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS =
+  15 * 60 * 1000
+const DISCOVER_CACHE_WRITE_DELAY_MS = 120
 
 const discoverFeedInflightRequests =
   new Map()
@@ -76,6 +79,25 @@ function getDiscoverFeedCacheKey(
       schema: 1,
     },
   })
+}
+
+function getShadowMallPromotionsCacheKey() {
+  return getHomeCacheKey({
+    section: 'discover-promotions',
+    scope: 'public',
+    params: {
+      limit: 100,
+      schema: 1,
+    },
+  })
+}
+
+function createDiscoverCacheSignature(value) {
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return ''
+  }
 }
 
 async function runDiscoverFeedRequest(
@@ -419,9 +441,11 @@ if (right.post?.id === newestPostId) return 1
   })
 }
 
-async function fetchShadowMallPromotions() {
+async function fetchShadowMallPromotions(
+  limit = 100
+) {
   const response = await fetch(
-    `${API_BASE_URL}/api/shadow-mall/promotions?limit=100`,
+    `${API_BASE_URL}/api/shadow-mall/promotions?limit=${encodeURIComponent(limit)}`,
     {
       cache: 'no-store',
     }
@@ -1999,6 +2023,10 @@ export default function DiscoverPage() {
   const [readerPostsLoading, setReaderPostsLoading] = useState(true)
   const [readerPostsError, setReaderPostsError] = useState('')
   const [shadowMallPromotions, setShadowMallPromotions] = useState([])
+  const authorFeedCacheReadyRef = useRef(false)
+  const readerFeedCacheReadyRef = useRef(false)
+  const authorFeedCacheSignatureRef = useRef('')
+  const readerFeedCacheSignatureRef = useRef('')
 
   const uniqueShadowMallPromotions = useMemo(() => {
     const seenIds = new Set()
@@ -2040,94 +2068,132 @@ export default function DiscoverPage() {
     let alive = true
 
     async function loadShadowMallPromotions() {
-  try {
-    const promotions =
-      await fetchShadowMallPromotions()
+      const cacheKey =
+        getShadowMallPromotionsCacheKey()
 
-    const visiblePromotions =
-      promotions.filter(
-        (promotion) =>
-          promotion?.is_active !== false &&
-          !isShadowMallAdHidden(
-            promotion
-          )
-      )
+      try {
+        const cached = await loadHomeCache(
+          cacheKey,
+          {
+            maxAgeMs:
+              DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS,
+            allowExpired: true,
+          }
+        )
 
-    let statuses = null
-let socialStatuses = null
+        let promotions = Array.isArray(
+          cached?.data
+        )
+          ? cached.data
+          : null
 
-if (token) {
-  const [
-    storyResult,
-    socialResult,
-  ] = await Promise.allSettled([
-    fetchShadowMallStorySaleStatuses(
-      token,
-      visiblePromotions
-    ),
-    fetchShadowMallPromotionSocialStatuses(
-      token,
-      visiblePromotions
-    ),
-  ])
+        if (
+          !cached?.isFresh ||
+          !Array.isArray(promotions)
+        ) {
+          try {
+            promotions =
+              await fetchShadowMallPromotions(100)
 
-  statuses =
-    storyResult.status === 'fulfilled'
-      ? storyResult.value
-      : null
-
-  socialStatuses =
-    socialResult.status === 'fulfilled'
-      ? socialResult.value
-      : null
-}
-
-    if (!alive) return
-
-    setShadowMallPromotions(
-      visiblePromotions.map(
-        (promotion) => {
-          const key = String(
-            promotion?.id || ''
-          )
-
-          const hasStatus =
-  statuses &&
-  Object.prototype.hasOwnProperty.call(
-    statuses,
-    key
-  )
-
-const hasSocialStatus =
-  socialStatuses &&
-  Object.prototype.hasOwnProperty.call(
-    socialStatuses,
-    key
-  )
-
-return {
-  ...promotion,
-  ...(hasStatus
-    ? {
-        story_sale_status:
-          statuses[key],
-        story_sale_status_loaded:
-          true,
-      }
-    : {}),
-  ...(hasSocialStatus
-    ? socialStatuses[key]
-    : {}),
-}
+            await saveHomeCache(
+              cacheKey,
+              promotions,
+              {
+                maxAgeMs:
+                  DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS,
+              }
+            )
+          } catch (error) {
+            if (!Array.isArray(promotions)) {
+              throw error
+            }
+          }
         }
-      )
-    )
-  } catch {
-    if (alive) {
-      setShadowMallPromotions([])
+
+        const visiblePromotions =
+          (promotions || []).filter(
+            (promotion) =>
+              promotion?.is_active !== false &&
+              !isShadowMallAdHidden(
+                promotion
+              )
+          )
+
+        let statuses = null
+        let socialStatuses = null
+
+        if (token) {
+          const [
+            storyResult,
+            socialResult,
+          ] = await Promise.allSettled([
+            fetchShadowMallStorySaleStatuses(
+              token,
+              visiblePromotions
+            ),
+            fetchShadowMallPromotionSocialStatuses(
+              token,
+              visiblePromotions
+            ),
+          ])
+
+          statuses =
+            storyResult.status === 'fulfilled'
+              ? storyResult.value
+              : null
+
+          socialStatuses =
+            socialResult.status === 'fulfilled'
+              ? socialResult.value
+              : null
+        }
+
+        if (!alive) return
+
+        setShadowMallPromotions(
+          visiblePromotions.map(
+            (promotion) => {
+              const key = String(
+                promotion?.id || ''
+              )
+
+              const hasStatus =
+                statuses &&
+                Object.prototype.hasOwnProperty.call(
+                  statuses,
+                  key
+                )
+
+              const hasSocialStatus =
+                socialStatuses &&
+                Object.prototype.hasOwnProperty.call(
+                  socialStatuses,
+                  key
+                )
+
+              return {
+                ...promotion,
+                ...(hasStatus
+                  ? {
+                      story_sale_status:
+                        statuses[key],
+                      story_sale_status_loaded:
+                        true,
+                    }
+                  : {}),
+                ...(hasSocialStatus
+                  ? socialStatuses[key]
+                  : {}),
+              }
+            }
+          )
+        )
+      } catch {
+        if (alive) {
+          setShadowMallPromotions([])
+        }
+      }
     }
-  }
-}
 
     loadShadowMallPromotions()
 
@@ -2175,6 +2241,15 @@ return {
           )
         ) {
           hasCachedPayload = true
+          const cachedPayload = {
+            posts: cached.data.posts,
+          }
+          readerFeedCacheReadyRef.current =
+            true
+          readerFeedCacheSignatureRef.current =
+            createDiscoverCacheSignature(
+              cachedPayload
+            )
 
           setReaderPosts(
             cached.data.posts
@@ -2207,16 +2282,25 @@ return {
         setReaderPosts(nextPosts)
         setReaderPostsError('')
 
+        const nextPayload = {
+          posts: nextPosts,
+        }
+
         await saveHomeCache(
           cacheKey,
-          {
-            posts: nextPosts,
-          },
+          nextPayload,
           {
             maxAgeMs:
               DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
           }
         )
+
+        readerFeedCacheReadyRef.current =
+          true
+        readerFeedCacheSignatureRef.current =
+          createDiscoverCacheSignature(
+            nextPayload
+          )
       } catch (error) {
         if (!alive) return
 
@@ -2282,12 +2366,27 @@ return {
           )
         ) {
           hasCachedPayload = true
-
-          setRealPosts(
+          const cachedPosts =
             filterAuthorPostsByLocalPreferences(
               cached.data.posts
             )
-          )
+          const cachedPayload = {
+            posts: cachedPosts,
+            next_cursor:
+              cached.data.next_cursor || null,
+            has_more: Boolean(
+              cached.data.has_more &&
+                cached.data.next_cursor
+            ),
+          }
+          authorFeedCacheReadyRef.current =
+            true
+          authorFeedCacheSignatureRef.current =
+            createDiscoverCacheSignature(
+              cachedPayload
+            )
+
+          setRealPosts(cachedPosts)
 
           setRealPostsCursor(
             cached.data.next_cursor ||
@@ -2351,20 +2450,30 @@ return {
 
         setRealPostsError('')
 
+        const nextPayload = {
+          posts:
+            filterAuthorPostsByLocalPreferences(
+              nextPosts
+            ),
+          next_cursor: nextCursor,
+          has_more: nextHasMore,
+        }
+
         await saveHomeCache(
           cacheKey,
-          {
-            posts: nextPosts,
-            next_cursor: nextCursor,
-            has_more: nextHasMore,
-            snapshot_at:
-              data.snapshot_at || null,
-          },
+          nextPayload,
           {
             maxAgeMs:
               DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
           }
         )
+
+        authorFeedCacheReadyRef.current =
+          true
+        authorFeedCacheSignatureRef.current =
+          createDiscoverCacheSignature(
+            nextPayload
+          )
       } catch (error) {
         if (!alive) return
 
@@ -2390,6 +2499,116 @@ return {
       alive = false
     }
   }, [token])
+
+  useEffect(() => {
+    if (
+      !token ||
+      !readerFeedCacheReadyRef.current
+    ) {
+      return undefined
+    }
+
+    const payload = {
+      posts: readerPosts,
+    }
+    const signature =
+      createDiscoverCacheSignature(payload)
+
+    if (
+      !signature ||
+      signature ===
+        readerFeedCacheSignatureRef.current
+    ) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(
+      () => {
+        const cacheKey =
+          getDiscoverFeedCacheKey(
+            token,
+            'discover-reader-feed',
+            20
+          )
+
+        saveHomeCache(
+          cacheKey,
+          payload,
+          {
+            maxAgeMs:
+              DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
+          }
+        ).then(() => {
+          readerFeedCacheSignatureRef.current =
+            signature
+        })
+      },
+      DISCOVER_CACHE_WRITE_DELAY_MS
+    )
+
+    return () =>
+      window.clearTimeout(timer)
+  }, [token, readerPosts])
+
+  useEffect(() => {
+    if (
+      !token ||
+      !authorFeedCacheReadyRef.current
+    ) {
+      return undefined
+    }
+
+    const payload = {
+      posts: realPosts,
+      next_cursor: realPostsCursor,
+      has_more: Boolean(
+        realPostsHasMore &&
+          realPostsCursor
+      ),
+    }
+    const signature =
+      createDiscoverCacheSignature(payload)
+
+    if (
+      !signature ||
+      signature ===
+        authorFeedCacheSignatureRef.current
+    ) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(
+      () => {
+        const cacheKey =
+          getDiscoverFeedCacheKey(
+            token,
+            'discover-author-feed',
+            10
+          )
+
+        saveHomeCache(
+          cacheKey,
+          payload,
+          {
+            maxAgeMs:
+              DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
+          }
+        ).then(() => {
+          authorFeedCacheSignatureRef.current =
+            signature
+        })
+      },
+      DISCOVER_CACHE_WRITE_DELAY_MS
+    )
+
+    return () =>
+      window.clearTimeout(timer)
+  }, [
+    token,
+    realPosts,
+    realPostsCursor,
+    realPostsHasMore,
+  ])
 
   async function loadMoreRealPosts() {
     if (
@@ -2436,28 +2655,114 @@ return {
       setRealPostsLoading(true)
       setRealPostsError('')
 
-      const data = await fetchFollowedPosts(token)
-
-      setRealPosts(
+      const data = await fetchFollowedPosts(
+        token
+      )
+      const nextPosts =
         filterAuthorPostsByLocalPreferences(
-          Array.isArray(data.posts) ? data.posts : []
+          Array.isArray(data.posts)
+            ? data.posts
+            : []
         )
+      const nextCursor =
+        data.next_cursor || null
+      const nextHasMore = Boolean(
+        data.has_more &&
+          data.next_cursor
       )
-      setRealPostsCursor(data.next_cursor || null)
-      setRealPostsHasMore(
-        Boolean(data.has_more && data.next_cursor)
+      const payload = {
+        posts: nextPosts,
+        next_cursor: nextCursor,
+        has_more: nextHasMore,
+      }
+
+      setRealPosts(nextPosts)
+      setRealPostsCursor(nextCursor)
+      setRealPostsHasMore(nextHasMore)
+
+      await saveHomeCache(
+        getDiscoverFeedCacheKey(
+          token,
+          'discover-author-feed',
+          10
+        ),
+        payload,
+        {
+          maxAgeMs:
+            DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
+        }
       )
+
+      authorFeedCacheReadyRef.current =
+        true
+      authorFeedCacheSignatureRef.current =
+        createDiscoverCacheSignature(
+          payload
+        )
     } catch (error) {
-      setRealPosts([])
-      setRealPostsCursor(null)
-      setRealPostsHasMore(false)
       setRealPostsError(
-        error.message || 'Failed to load followed posts'
+        error.message ||
+          'Failed to load followed posts'
       )
     } finally {
       setRealPostsLoading(false)
     }
   }
+
+  async function retryReaderPosts() {
+    if (!token) return
+
+    try {
+      setReaderPostsLoading(true)
+      setReaderPostsError('')
+
+      const data = await fetchReaderPosts(token)
+      const nextPosts =
+        Array.isArray(data.posts)
+          ? data.posts
+          : []
+      const payload = {
+        posts: nextPosts,
+      }
+
+      setReaderPosts(nextPosts)
+
+      await saveHomeCache(
+        getDiscoverFeedCacheKey(
+          token,
+          'discover-reader-feed',
+          20
+        ),
+        payload,
+        {
+          maxAgeMs:
+            DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS,
+        }
+      )
+
+      readerFeedCacheReadyRef.current =
+        true
+      readerFeedCacheSignatureRef.current =
+        createDiscoverCacheSignature(
+          payload
+        )
+    } catch (error) {
+      setReaderPostsError(
+        error.message ||
+          'Failed to load reader posts'
+      )
+    } finally {
+      setReaderPostsLoading(false)
+    }
+  }
+
+  async function retryDiscoverFeed() {
+    await Promise.allSettled([
+      retryRealPosts(),
+      retryReaderPosts(),
+    ])
+  }
+
 
 
   const discoverTimeline = useMemo(
@@ -2745,10 +3050,7 @@ function handleReaderFollowChanged(
             (realPostsError ||
               readerPostsError) ? (
               <RealFeedErrorState
-                onRetry={() => {
-                  retryRealPosts()
-                  window.location.reload()
-                }}
+                onRetry={retryDiscoverFeed}
               />
             ) : null}
 
