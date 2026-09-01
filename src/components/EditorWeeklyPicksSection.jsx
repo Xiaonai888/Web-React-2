@@ -1,5 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('editorWeeklyPicksSection', {
+  en: {
+    title: "EDITOR'S WEEKLY PICKS",
+    fallbackTitle: 'Editor Weekly Pick {{number}}',
+  },
+  km: {
+    title: 'ជម្រើសប្រចាំសប្ដាហ៍របស់ក្រុមការងារ',
+    fallbackTitle: 'ជម្រើសប្រចាំសប្ដាហ៍ {{number}}',
+  },
+  zh: {
+    title: '编辑每周精选',
+    fallbackTitle: '编辑每周精选 {{number}}',
+  },
+  ja: {
+    title: '編集部の週間おすすめ',
+    fallbackTitle: '週間おすすめ {{number}}',
+  },
+  ko: {
+    title: '에디터 주간 추천',
+    fallbackTitle: '에디터 주간 추천 {{number}}',
+  },
+})
 import {
   getHomeCacheKey,
   loadHomeCache,
@@ -68,7 +93,7 @@ function normalizeSlide(slide, index = 0) {
 
   return {
     id: slide.id || `editor-slide-${index}`,
-    title: parsedTitle.title || `Editor Weekly Pick ${index + 1}`,
+    title: parsedTitle.title || '',
     subtitle: slide.subtitle || slide.description || '',
     image:
       slide.image_url ||
@@ -79,6 +104,7 @@ function normalizeSlide(slide, index = 0) {
 }
 
 export default function EditorWeeklyPicksSection() {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const scrollRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -239,8 +265,8 @@ export default function EditorWeeklyPicksSection() {
   return (
     <div className="w-full overflow-hidden">
       <div className="mb-3 px-4">
-        <h2 className="text-[18px] font-bold tracking-tight text-neutral-900">
-          💥 EDITOR’S WEEKLY PICKS
+        <h2 className="text-[18px] font-bold tracking-tight text-[var(--shadow-text-primary)]">
+          💥 {t('editorWeeklyPicksSection.title')}
         </h2>
       </div>
 
@@ -256,17 +282,17 @@ export default function EditorWeeklyPicksSection() {
       >
         {loading ? (
           <div className="mr-3 w-[88%] shrink-0 snap-start">
-            <div className="aspect-[3/1] w-full animate-pulse rounded-[12px] bg-gray-100" />
+            <div className="aspect-[3/1] w-full animate-pulse rounded-[12px] bg-[var(--shadow-bg-soft)]" />
           </div>
         ) : (
-          displayItems.map((item) => (
+          displayItems.map((item, index) => (
             <div key={item.id} className="mr-3 w-[88%] shrink-0 snap-start">
               <button
                 type="button"
                 onClick={(event) => handleCardClick(event, item.link)}
                 className="group block w-full border-0 bg-transparent p-0 text-left"
               >
-                <div className="relative aspect-[3/1] w-full overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
+                <div className="relative aspect-[3/1] w-full overflow-hidden rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] shadow-sm">
                   <img
                     src={item.image}
                     alt={item.title}
@@ -290,7 +316,10 @@ export default function EditorWeeklyPicksSection() {
 ) : null}
 
                       <h3 className="truncate text-[11px] font-bold text-white">
-                        {item.title}
+                        {item.title ||
+                          t('editorWeeklyPicksSection.fallbackTitle', {
+                            number: index + 1,
+                          })}
                       </h3>
                     </div>
                   </div>
@@ -314,8 +343,8 @@ export default function EditorWeeklyPicksSection() {
                 aria-label={`Go to slide ${index + 1}`}
                 className={`rounded-full transition-all duration-300 ${
                   isActive
-                    ? 'h-2.5 w-6 bg-black'
-                    : 'h-2.5 w-2.5 bg-neutral-300 hover:bg-neutral-400'
+                    ? 'h-2.5 w-6 bg-[var(--shadow-text-primary)]'
+                    : 'h-2.5 w-2.5 bg-[var(--shadow-border-strong)] hover:bg-[var(--shadow-text-tertiary)]'
                 }`}
               />
             )
