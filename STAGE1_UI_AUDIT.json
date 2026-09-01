@@ -118,5 +118,10 @@
 "src/components/EventPerksHubSection.jsx",
 "src/components/FanPicksSection.jsx",
 "src/components/TopNovelSection.jsx"
+    "src/components/WeeklyUpdateSection.jsx",
+"src/components/AdvertisementPopup.jsx",
+"src/components/ShadowSpotlight.jsx",
+"src/components/StoriesDailyCheckIn.jsx",
+"src/components/MangaFeedSections.jsx"
   ]
 }
