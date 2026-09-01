@@ -1,6 +1,471 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ReportModal from '../ReportModal'
 import ReactionAction from '../social/reactions/ReactionAction'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('commentSection', {
+  "en": {
+    "hotComments": "Hot comments",
+    "hotCommentsDesc": "Show comments with the most likes and replies first.",
+    "newest": "Newest",
+    "newestDesc": "Show the newest comments first.",
+    "allComments": "All comments",
+    "allCommentsDesc": "Show all comments.",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m",
+    "hoursAgo": "{{count}}h",
+    "reader": "Reader",
+    "author": "Author",
+    "commentDeleted": "Comment deleted",
+    "noCommentsYet": "No comments yet",
+    "noCommentsDesc": "Start the conversation. Share what you feel, ask a question, or cheer for this story.",
+    "writeCommentAction": "Write a comment",
+    "reply": "Reply",
+    "copy": "Copy",
+    "delete": "Delete",
+    "edit": "Edit",
+    "reportComment": "Report Comment",
+    "hideThisComment": "Hide this comment",
+    "unhide": "Unhide",
+    "hideComment": "Hide comment",
+    "unpinComment": "Unpin comment",
+    "pinComment": "Pin comment",
+    "banUser": "Ban user",
+    "removeSpoilerMark": "Remove spoiler mark",
+    "spoilerMark": "Spoiler mark",
+    "hide": "Hide",
+    "like": "Like",
+    "hideReplies": "Hide replies",
+    "viewReplies": "View {{count}} replies",
+    "viewReply": "View {{count}} reply",
+    "loading": "Loading...",
+    "viewMoreReplies": "View more replies",
+    "pinned": "Pinned",
+    "hidden": "Hidden",
+    "spoilerReveal": "This comment may contain spoilers. Tap to reveal.",
+    "replyingTo": "Replying to {{name}}",
+    "cancel": "Cancel",
+    "cannotComment": "You cannot comment on this story.",
+    "writeReply": "Write a reply...",
+    "writeComment": "Write a comment...",
+    "sendReply": "Send reply",
+    "sendComment": "Send comment",
+    "editComment": "Edit comment",
+    "saving": "Saving...",
+    "saveComment": "Save comment",
+    "episodeNumber": "Episode {{number}}",
+    "comment": "comment",
+    "comments": "comments",
+    "loadMoreComments": "Load more comments",
+    "commentingRestricted": "Commenting Restricted",
+    "commentHidden": "Comment Hidden",
+    "commentCouldNotPost": "Your comment could not be posted.",
+    "restrictedWords": "Restricted words found",
+    "until": "Until: {{date}}",
+    "understand": "I Understand",
+    "failedLoadComments": "Failed to load comments",
+    "failedLoadCommentsPeriod": "Failed to load comments.",
+    "pleaseLoginReply": "Please login to reply.",
+    "pleaseLoginComment": "Please login to comment.",
+    "failedCreateComment": "Failed to create comment",
+    "failedCreateCommentPeriod": "Failed to create comment.",
+    "pleaseLoginReact": "Please login to react.",
+    "failedUpdateReaction": "Failed to update reaction",
+    "failedUpdateReactionPeriod": "Failed to update reaction.",
+    "failedLoadReplies": "Failed to load replies",
+    "failedLoadRepliesPeriod": "Failed to load replies.",
+    "failedCreateReply": "Failed to create reply",
+    "failedCreateReplyPeriod": "Failed to create reply.",
+    "pleaseLoginAgain": "Please login again.",
+    "failedUpdateComment": "Failed to update comment",
+    "failedUpdateCommentPeriod": "Failed to update comment.",
+    "commentUpdated": "Comment updated.",
+    "commentCopied": "Comment copied.",
+    "copyFailed": "Copy failed.",
+    "trashConfirm": "Move this comment to Trash? It can be recovered for 30 days.",
+    "failedDeleteComment": "Failed to delete comment",
+    "failedDeleteCommentPeriod": "Failed to delete comment.",
+    "commentMovedTrash": "Comment moved to Trash.",
+    "failedVisibility": "Failed to update comment visibility",
+    "failedVisibilityPeriod": "Failed to update comment visibility.",
+    "commentHiddenPage": "Comment hidden by this Page.",
+    "commentUnhiddenPage": "Comment unhidden by this Page.",
+    "actionFailed": "Action failed",
+    "actionFailedPeriod": "Action failed.",
+    "userBanned": "User banned from commenting.",
+    "updated": "Updated.",
+    "commentHiddenDevice": "Comment hidden on your device."
+  },
+  "km": {
+    "hotComments": "មតិយោបល់ពេញនិយម",
+    "hotCommentsDesc": "បង្ហាញមតិយោបល់ដែលមានការចូលចិត្ត និងការឆ្លើយតបច្រើនជាងគេមុន។",
+    "newest": "ថ្មីបំផុត",
+    "newestDesc": "បង្ហាញមតិយោបល់ថ្មីបំផុតមុន។",
+    "allComments": "មតិយោបល់ទាំងអស់",
+    "allCommentsDesc": "បង្ហាញមតិយោបល់ទាំងអស់។",
+    "justNow": "ឥឡូវនេះ",
+    "minutesAgo": "{{count}} នាទី",
+    "hoursAgo": "{{count}} ម៉ោង",
+    "reader": "អ្នកអាន",
+    "author": "អ្នកនិពន្ធ",
+    "commentDeleted": "មតិយោបល់ត្រូវបានលុប",
+    "noCommentsYet": "មិនទាន់មានមតិយោបល់",
+    "noCommentsDesc": "ចាប់ផ្តើមការសន្ទនា។ ចែករំលែកអារម្មណ៍ សួរសំណួរ ឬលើកទឹកចិត្តរឿងនេះ។",
+    "writeCommentAction": "សរសេរមតិយោបល់",
+    "reply": "ឆ្លើយតប",
+    "copy": "ចម្លង",
+    "delete": "លុប",
+    "edit": "កែ",
+    "reportComment": "រាយការណ៍មតិយោបល់",
+    "hideThisComment": "លាក់មតិយោបល់នេះ",
+    "unhide": "បង្ហាញវិញ",
+    "hideComment": "លាក់មតិយោបល់",
+    "unpinComment": "ដោះខ្ទាស់មតិយោបល់",
+    "pinComment": "ខ្ទាស់មតិយោបល់",
+    "banUser": "ហាមអ្នកប្រើប្រាស់",
+    "removeSpoilerMark": "ដកសញ្ញា Spoiler",
+    "spoilerMark": "សម្គាល់ Spoiler",
+    "hide": "លាក់",
+    "like": "ចូលចិត្ត",
+    "hideReplies": "លាក់ការឆ្លើយតប",
+    "viewReplies": "មើលការឆ្លើយតប {{count}}",
+    "viewReply": "មើលការឆ្លើយតប {{count}}",
+    "loading": "កំពុងផ្ទុក...",
+    "viewMoreReplies": "មើលការឆ្លើយតបបន្ថែម",
+    "pinned": "បានខ្ទាស់",
+    "hidden": "បានលាក់",
+    "spoilerReveal": "មតិយោបល់នេះអាចមាន Spoiler។ ចុចដើម្បីបង្ហាញ។",
+    "replyingTo": "កំពុងឆ្លើយតបទៅ {{name}}",
+    "cancel": "បោះបង់",
+    "cannotComment": "អ្នកមិនអាចសរសេរមតិយោបល់លើរឿងនេះបានទេ។",
+    "writeReply": "សរសេរការឆ្លើយតប...",
+    "writeComment": "សរសេរមតិយោបល់...",
+    "sendReply": "ផ្ញើការឆ្លើយតប",
+    "sendComment": "ផ្ញើមតិយោបល់",
+    "editComment": "កែមតិយោបល់",
+    "saving": "កំពុងរក្សាទុក...",
+    "saveComment": "រក្សាទុកមតិយោបល់",
+    "episodeNumber": "ភាគ {{number}}",
+    "comment": "មតិយោបល់",
+    "comments": "មតិយោបល់",
+    "loadMoreComments": "ផ្ទុកមតិយោបល់បន្ថែម",
+    "commentingRestricted": "ការសរសេរមតិយោបល់ត្រូវបានកំណត់",
+    "commentHidden": "មតិយោបល់ត្រូវបានលាក់",
+    "commentCouldNotPost": "មតិយោបល់របស់អ្នកមិនអាចផ្ញើបានទេ។",
+    "restrictedWords": "រកឃើញពាក្យដែលត្រូវបានកំណត់",
+    "until": "រហូតដល់៖ {{date}}",
+    "understand": "ខ្ញុំយល់",
+    "failedLoadComments": "មិនអាចផ្ទុកមតិយោបល់បានទេ",
+    "failedLoadCommentsPeriod": "មិនអាចផ្ទុកមតិយោបល់បានទេ។",
+    "pleaseLoginReply": "សូមចូលគណនីដើម្បីឆ្លើយតប។",
+    "pleaseLoginComment": "សូមចូលគណនីដើម្បីសរសេរមតិយោបល់។",
+    "failedCreateComment": "មិនអាចបង្កើតមតិយោបល់បានទេ",
+    "failedCreateCommentPeriod": "មិនអាចបង្កើតមតិយោបល់បានទេ។",
+    "pleaseLoginReact": "សូមចូលគណនីដើម្បីប្រតិកម្ម។",
+    "failedUpdateReaction": "មិនអាចកែប្រតិកម្មបានទេ",
+    "failedUpdateReactionPeriod": "មិនអាចកែប្រតិកម្មបានទេ។",
+    "failedLoadReplies": "មិនអាចផ្ទុកការឆ្លើយតបបានទេ",
+    "failedLoadRepliesPeriod": "មិនអាចផ្ទុកការឆ្លើយតបបានទេ។",
+    "failedCreateReply": "មិនអាចបង្កើតការឆ្លើយតបបានទេ",
+    "failedCreateReplyPeriod": "មិនអាចបង្កើតការឆ្លើយតបបានទេ។",
+    "pleaseLoginAgain": "សូមចូលគណនីឡើងវិញ។",
+    "failedUpdateComment": "មិនអាចកែមតិយោបល់បានទេ",
+    "failedUpdateCommentPeriod": "មិនអាចកែមតិយោបល់បានទេ។",
+    "commentUpdated": "បានកែមតិយោបល់។",
+    "commentCopied": "បានចម្លងមតិយោបល់។",
+    "copyFailed": "ចម្លងមិនបានទេ។",
+    "trashConfirm": "ផ្លាស់ទីមតិយោបល់នេះទៅ Trash? អាចស្ដារវាវិញបានក្នុងរយៈពេល 30 ថ្ងៃ។",
+    "failedDeleteComment": "មិនអាចលុបមតិយោបល់បានទេ",
+    "failedDeleteCommentPeriod": "មិនអាចលុបមតិយោបល់បានទេ។",
+    "commentMovedTrash": "បានផ្លាស់ទីមតិយោបល់ទៅ Trash។",
+    "failedVisibility": "មិនអាចកែការបង្ហាញមតិយោបល់បានទេ",
+    "failedVisibilityPeriod": "មិនអាចកែការបង្ហាញមតិយោបល់បានទេ។",
+    "commentHiddenPage": "បានលាក់មតិយោបល់ដោយ Page នេះ។",
+    "commentUnhiddenPage": "បានបង្ហាញមតិយោបល់វិញដោយ Page នេះ។",
+    "actionFailed": "សកម្មភាពបរាជ័យ",
+    "actionFailedPeriod": "សកម្មភាពបរាជ័យ។",
+    "userBanned": "បានហាមអ្នកប្រើប្រាស់មិនឱ្យសរសេរមតិយោបល់។",
+    "updated": "បានអាប់ដេត។",
+    "commentHiddenDevice": "បានលាក់មតិយោបល់លើឧបករណ៍របស់អ្នក។"
+  },
+  "zh": {
+    "hotComments": "热门评论",
+    "hotCommentsDesc": "优先显示点赞和回复最多的评论。",
+    "newest": "最新",
+    "newestDesc": "优先显示最新评论。",
+    "allComments": "全部评论",
+    "allCommentsDesc": "显示所有评论。",
+    "justNow": "刚刚",
+    "minutesAgo": "操作失败。",
+    "hoursAgo": "操作失败。",
+    "reader": "读者",
+    "author": "作者",
+    "commentDeleted": "评论已删除",
+    "noCommentsYet": "暂无评论",
+    "noCommentsDesc": "开始对话，分享感受、提出问题或为这个故事加油。",
+    "writeCommentAction": "写评论",
+    "reply": "回复",
+    "copy": "复制",
+    "delete": "删除",
+    "edit": "编辑",
+    "reportComment": "举报评论",
+    "hideThisComment": "隐藏此评论",
+    "unhide": "取消隐藏",
+    "hideComment": "隐藏评论",
+    "unpinComment": "取消置顶",
+    "pinComment": "置顶评论",
+    "banUser": "禁言用户",
+    "removeSpoilerMark": "移除剧透标记",
+    "spoilerMark": "标记剧透",
+    "hide": "隐藏",
+    "like": "赞",
+    "hideReplies": "隐藏回复",
+    "viewReplies": "查看 {{count}} 条回复",
+    "viewReply": "查看 {{count}} 条回复",
+    "loading": "加载中...",
+    "viewMoreReplies": "查看更多回复",
+    "pinned": "已置顶",
+    "hidden": "已隐藏",
+    "spoilerReveal": "此评论可能包含剧透。点击查看。",
+    "replyingTo": "回复 {{name}}",
+    "cancel": "取消",
+    "cannotComment": "你无法在这个故事下评论。",
+    "writeReply": "写回复...",
+    "writeComment": "写评论...",
+    "sendReply": "发送回复",
+    "sendComment": "发送评论",
+    "editComment": "编辑评论",
+    "saving": "保存中...",
+    "saveComment": "保存评论",
+    "episodeNumber": "第 {{number}} 集",
+    "comment": "条评论",
+    "comments": "条评论",
+    "loadMoreComments": "加载更多评论",
+    "commentingRestricted": "评论受限",
+    "commentHidden": "评论已隐藏",
+    "commentCouldNotPost": "你的评论无法发布。",
+    "restrictedWords": "发现受限词语",
+    "until": "截至：{{date}}",
+    "understand": "我知道了",
+    "failedLoadComments": "操作失败。",
+    "failedLoadCommentsPeriod": "操作失败。",
+    "pleaseLoginReply": "请重新登录。",
+    "pleaseLoginComment": "请重新登录。",
+    "failedCreateComment": "操作失败。",
+    "failedCreateCommentPeriod": "操作失败。",
+    "pleaseLoginReact": "请重新登录。",
+    "failedUpdateReaction": "操作失败。",
+    "failedUpdateReactionPeriod": "操作失败。",
+    "failedLoadReplies": "操作失败。",
+    "failedLoadRepliesPeriod": "操作失败。",
+    "failedCreateReply": "操作失败。",
+    "failedCreateReplyPeriod": "操作失败。",
+    "pleaseLoginAgain": "请重新登录。",
+    "failedUpdateComment": "操作失败。",
+    "failedUpdateCommentPeriod": "操作失败。",
+    "commentUpdated": "评论已更新。",
+    "commentCopied": "评论已复制。",
+    "copyFailed": "复制失败。",
+    "trashConfirm": "将此评论移到回收站？30天内可恢复。",
+    "failedDeleteComment": "操作失败。",
+    "failedDeleteCommentPeriod": "操作失败。",
+    "commentMovedTrash": "评论已移至回收站。",
+    "failedVisibility": "操作失败。",
+    "failedVisibilityPeriod": "操作失败。",
+    "commentHiddenPage": "此评论已被该页面隐藏。",
+    "commentUnhiddenPage": "此评论已被该页面取消隐藏。",
+    "actionFailed": "操作失败。",
+    "actionFailedPeriod": "操作失败。",
+    "userBanned": "该用户已被禁止评论。",
+    "updated": "已更新。",
+    "commentHiddenDevice": "此评论已在你的设备上隐藏。"
+  },
+  "ja": {
+    "hotComments": "人気のコメント",
+    "hotCommentsDesc": "いいねと返信が多いコメントを先に表示します。",
+    "newest": "新しい順",
+    "newestDesc": "新しいコメントを先に表示します。",
+    "allComments": "すべてのコメント",
+    "allCommentsDesc": "すべてのコメントを表示します。",
+    "justNow": "たった今",
+    "minutesAgo": "操作に失敗しました。",
+    "hoursAgo": "操作に失敗しました。",
+    "reader": "読者",
+    "author": "作者",
+    "commentDeleted": "コメントは削除されました",
+    "noCommentsYet": "まだコメントはありません",
+    "noCommentsDesc": "会話を始めて、感想や質問、この作品への応援を共有しましょう。",
+    "writeCommentAction": "コメントを書く",
+    "reply": "返信",
+    "copy": "コピー",
+    "delete": "削除",
+    "edit": "編集",
+    "reportComment": "コメントを報告",
+    "hideThisComment": "このコメントを非表示",
+    "unhide": "再表示",
+    "hideComment": "コメントを非表示",
+    "unpinComment": "固定を解除",
+    "pinComment": "コメントを固定",
+    "banUser": "ユーザーを禁止",
+    "removeSpoilerMark": "ネタバレ表示を解除",
+    "spoilerMark": "ネタバレにする",
+    "hide": "非表示",
+    "like": "いいね",
+    "hideReplies": "返信を隠す",
+    "viewReplies": "返信 {{count}}件を表示",
+    "viewReply": "返信 {{count}}件を表示",
+    "loading": "読み込み中...",
+    "viewMoreReplies": "さらに返信を表示",
+    "pinned": "固定済み",
+    "hidden": "非表示",
+    "spoilerReveal": "このコメントにはネタバレが含まれる可能性があります。タップして表示。",
+    "replyingTo": "{{name}}に返信中",
+    "cancel": "キャンセル",
+    "cannotComment": "この作品にはコメントできません。",
+    "writeReply": "返信を書く...",
+    "writeComment": "コメントを書く...",
+    "sendReply": "返信を送信",
+    "sendComment": "コメントを送信",
+    "editComment": "コメントを編集",
+    "saving": "保存中...",
+    "saveComment": "コメントを保存",
+    "episodeNumber": "エピソード {{number}}",
+    "comment": "コメント",
+    "comments": "コメント",
+    "loadMoreComments": "さらにコメントを読み込む",
+    "commentingRestricted": "コメントが制限されています",
+    "commentHidden": "コメントは非表示です",
+    "commentCouldNotPost": "コメントを投稿できませんでした。",
+    "restrictedWords": "制限された語句が見つかりました",
+    "until": "期限：{{date}}",
+    "understand": "了解",
+    "failedLoadComments": "操作に失敗しました。",
+    "failedLoadCommentsPeriod": "操作に失敗しました。",
+    "pleaseLoginReply": "もう一度ログインしてください。",
+    "pleaseLoginComment": "もう一度ログインしてください。",
+    "failedCreateComment": "操作に失敗しました。",
+    "failedCreateCommentPeriod": "操作に失敗しました。",
+    "pleaseLoginReact": "もう一度ログインしてください。",
+    "failedUpdateReaction": "操作に失敗しました。",
+    "failedUpdateReactionPeriod": "操作に失敗しました。",
+    "failedLoadReplies": "操作に失敗しました。",
+    "failedLoadRepliesPeriod": "操作に失敗しました。",
+    "failedCreateReply": "操作に失敗しました。",
+    "failedCreateReplyPeriod": "操作に失敗しました。",
+    "pleaseLoginAgain": "もう一度ログインしてください。",
+    "failedUpdateComment": "操作に失敗しました。",
+    "failedUpdateCommentPeriod": "操作に失敗しました。",
+    "commentUpdated": "コメントを更新しました。",
+    "commentCopied": "コメントをコピーしました。",
+    "copyFailed": "コピーできませんでした。",
+    "trashConfirm": "このコメントをゴミ箱に移動しますか？30日間復元できます。",
+    "failedDeleteComment": "操作に失敗しました。",
+    "failedDeleteCommentPeriod": "操作に失敗しました。",
+    "commentMovedTrash": "コメントをゴミ箱に移動しました。",
+    "failedVisibility": "操作に失敗しました。",
+    "failedVisibilityPeriod": "操作に失敗しました。",
+    "commentHiddenPage": "このページでコメントを非表示にしました。",
+    "commentUnhiddenPage": "このページでコメントを再表示しました。",
+    "actionFailed": "操作に失敗しました。",
+    "actionFailedPeriod": "操作に失敗しました。",
+    "userBanned": "ユーザーのコメントを禁止しました。",
+    "updated": "更新しました。",
+    "commentHiddenDevice": "この端末でコメントを非表示にしました。"
+  },
+  "ko": {
+    "hotComments": "인기 댓글",
+    "hotCommentsDesc": "좋아요와 답글이 많은 댓글부터 표시합니다.",
+    "newest": "최신순",
+    "newestDesc": "최신 댓글부터 표시합니다.",
+    "allComments": "모든 댓글",
+    "allCommentsDesc": "모든 댓글을 표시합니다.",
+    "justNow": "방금",
+    "minutesAgo": "작업에 실패했습니다.",
+    "hoursAgo": "작업에 실패했습니다.",
+    "reader": "독자",
+    "author": "작가",
+    "commentDeleted": "댓글이 삭제되었습니다",
+    "noCommentsYet": "아직 댓글이 없습니다",
+    "noCommentsDesc": "대화를 시작하고 느낌, 질문 또는 이 이야기에 대한 응원을 공유해 보세요.",
+    "writeCommentAction": "댓글 작성",
+    "reply": "답글",
+    "copy": "복사",
+    "delete": "삭제",
+    "edit": "수정",
+    "reportComment": "댓글 신고",
+    "hideThisComment": "이 댓글 숨기기",
+    "unhide": "숨김 해제",
+    "hideComment": "댓글 숨기기",
+    "unpinComment": "고정 해제",
+    "pinComment": "댓글 고정",
+    "banUser": "사용자 차단",
+    "removeSpoilerMark": "스포일러 표시 해제",
+    "spoilerMark": "스포일러 표시",
+    "hide": "숨기기",
+    "like": "좋아요",
+    "hideReplies": "답글 숨기기",
+    "viewReplies": "답글 {{count}}개 보기",
+    "viewReply": "답글 {{count}}개 보기",
+    "loading": "불러오는 중...",
+    "viewMoreReplies": "답글 더 보기",
+    "pinned": "고정됨",
+    "hidden": "숨김",
+    "spoilerReveal": "이 댓글에는 스포일러가 포함될 수 있습니다. 탭하여 보기.",
+    "replyingTo": "{{name}}에게 답글 작성 중",
+    "cancel": "취소",
+    "cannotComment": "이 이야기에는 댓글을 작성할 수 없습니다.",
+    "writeReply": "답글 작성...",
+    "writeComment": "댓글 작성...",
+    "sendReply": "답글 보내기",
+    "sendComment": "댓글 보내기",
+    "editComment": "댓글 수정",
+    "saving": "저장 중...",
+    "saveComment": "댓글 저장",
+    "episodeNumber": "에피소드 {{number}}",
+    "comment": "댓글",
+    "comments": "댓글",
+    "loadMoreComments": "댓글 더 불러오기",
+    "commentingRestricted": "댓글 작성 제한",
+    "commentHidden": "댓글 숨김",
+    "commentCouldNotPost": "댓글을 게시할 수 없습니다.",
+    "restrictedWords": "제한된 단어가 발견되었습니다",
+    "until": "기한: {{date}}",
+    "understand": "확인",
+    "failedLoadComments": "작업에 실패했습니다.",
+    "failedLoadCommentsPeriod": "작업에 실패했습니다.",
+    "pleaseLoginReply": "다시 로그인하세요.",
+    "pleaseLoginComment": "다시 로그인하세요.",
+    "failedCreateComment": "작업에 실패했습니다.",
+    "failedCreateCommentPeriod": "작업에 실패했습니다.",
+    "pleaseLoginReact": "다시 로그인하세요.",
+    "failedUpdateReaction": "작업에 실패했습니다.",
+    "failedUpdateReactionPeriod": "작업에 실패했습니다.",
+    "failedLoadReplies": "작업에 실패했습니다.",
+    "failedLoadRepliesPeriod": "작업에 실패했습니다.",
+    "failedCreateReply": "작업에 실패했습니다.",
+    "failedCreateReplyPeriod": "작업에 실패했습니다.",
+    "pleaseLoginAgain": "다시 로그인하세요.",
+    "failedUpdateComment": "작업에 실패했습니다.",
+    "failedUpdateCommentPeriod": "작업에 실패했습니다.",
+    "commentUpdated": "댓글을 수정했습니다.",
+    "commentCopied": "댓글을 복사했습니다.",
+    "copyFailed": "복사하지 못했습니다.",
+    "trashConfirm": "이 댓글을 휴지통으로 이동할까요? 30일 동안 복구할 수 있습니다.",
+    "failedDeleteComment": "작업에 실패했습니다.",
+    "failedDeleteCommentPeriod": "작업에 실패했습니다.",
+    "commentMovedTrash": "댓글을 휴지통으로 이동했습니다.",
+    "failedVisibility": "작업에 실패했습니다.",
+    "failedVisibilityPeriod": "작업에 실패했습니다.",
+    "commentHiddenPage": "이 페이지에서 댓글을 숨겼습니다.",
+    "commentUnhiddenPage": "이 페이지에서 댓글 숨김을 해제했습니다.",
+    "actionFailed": "작업에 실패했습니다.",
+    "actionFailedPeriod": "작업에 실패했습니다.",
+    "userBanned": "사용자의 댓글 작성을 차단했습니다.",
+    "updated": "업데이트했습니다.",
+    "commentHiddenDevice": "이 기기에서 댓글을 숨겼습니다."
+  }
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -14,21 +479,9 @@ const REPLY_PAGE_SIZE = 10
 const COMMENT_LIMIT = 1000
 
 const COMMENT_SORT_OPTIONS = [
-  {
-    value: 'top',
-    label: 'Hot comments',
-    description: 'Show comments with the most likes and replies first.',
-  },
-  {
-    value: 'newest',
-    label: 'Newest',
-    description: 'Show the newest comments first.',
-  },
-  {
-    value: 'all',
-    label: 'All comments',
-    description: 'Show all comments.',
-  },
+  { value: 'top', labelKey: 'hotComments', descriptionKey: 'hotCommentsDesc' },
+  { value: 'newest', labelKey: 'newest', descriptionKey: 'newestDesc' },
+  { value: 'all', labelKey: 'allComments', descriptionKey: 'allCommentsDesc' },
 ]
 
 function getReaderToken() {
@@ -58,7 +511,7 @@ function getCurrentUser() {
   if (!user) {
     return {
       id: null,
-      name: 'Reader',
+      name: getDisplayText('commentSection.reader'),
       avatar_url: '',
       role: 'reader',
       is_admin: false,
@@ -77,7 +530,7 @@ function getCurrentUser() {
       user.username ||
       user.display_name ||
       emailName ||
-      'Reader',
+      getDisplayText('commentSection.reader'),
     avatar_url:
       user.avatar_url ||
       user.profile_image ||
@@ -198,42 +651,25 @@ function buildCommentDeleteUrl(commentId) {
 
 function formatDate(value) {
   if (!value) return ''
-
   const date = new Date(value)
-
   return Number.isNaN(date.getTime())
     ? ''
-    : date.toLocaleDateString('en-GB')
+    : date.toLocaleDateString(getDisplayLanguageId() || 'en')
 }
 
 function formatTime(value) {
-  if (!value) return 'Just now'
-
+  const justNow = getDisplayText('commentSection.justNow')
+  if (!value) return justNow
   const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return 'Just now'
-  }
-
-  const difference =
-    Date.now() - date.getTime()
+  if (Number.isNaN(date.getTime())) return justNow
+  const difference = Date.now() - date.getTime()
   const minute = 60 * 1000
   const hour = minute * 60
   const day = hour * 24
-
-  if (difference < minute) return 'Just now'
-  if (difference < hour) {
-    return `${Math.floor(
-      difference / minute
-    )}m`
-  }
-  if (difference < day) {
-    return `${Math.floor(
-      difference / hour
-    )}h`
-  }
-
-  return date.toLocaleDateString('en-GB')
+  if (difference < minute) return justNow
+  if (difference < hour) return getDisplayText('commentSection.minutesAgo', { count: Math.floor(difference / minute) })
+  if (difference < day) return getDisplayText('commentSection.hoursAgo', { count: Math.floor(difference / hour) })
+  return date.toLocaleDateString(getDisplayLanguageId() || 'en')
 }
 
 function normalizeApiComment(comment) {
@@ -273,7 +709,7 @@ function normalizeApiComment(comment) {
       user.name ||
       comment?.name ||
       user.username ||
-      'Reader',
+      getDisplayText('commentSection.reader'),
     avatar_url:
       user.avatar_url ||
       comment?.avatar_url ||
@@ -544,7 +980,7 @@ function applyDeletedCommentTree(
         {
           ...comment,
           user_id: null,
-          text: 'Comment deleted',
+          text: getDisplayText('commentSection.commentDeleted'),
           is_deleted: true,
           is_pinned: false,
           is_hidden: false,
@@ -552,7 +988,7 @@ function applyDeletedCommentTree(
           likes: 0,
           liked: false,
           reaction_type: null,
-          name: 'Reader',
+          name: getDisplayText('commentSection.reader'),
           avatar_url: '',
           replies,
         },
@@ -577,7 +1013,7 @@ function Avatar({
   textSize = 'text-[13px]',
 }) {
   const avatar = user?.avatar_url || ''
-  const name = user?.name || 'Reader'
+  const name = user?.name || getDisplayText('commentSection.reader')
 
   if (avatar) {
     return (
@@ -591,7 +1027,7 @@ function Avatar({
 
   return (
     <div
-      className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-[#111827] ${textSize} font-semibold text-white`}
+      className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] ${textSize} font-semibold text-[var(--shadow-text-primary)]`}
     >
       {name.slice(0, 1).toUpperCase()}
     </div>
@@ -599,26 +1035,27 @@ function Avatar({
 }
 
 function EmptyComments({ onFocus }) {
+  const { t } = useDisplayTranslation()
   return (
     <div className="px-5 py-12 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
         <i className="fa-regular fa-comments text-[22px]" />
       </div>
 
-      <h3 className="mt-4 text-[17px] font-semibold text-[#111827]">
-        No comments yet
+      <h3 className="mt-4 text-[17px] font-semibold text-[var(--shadow-text-primary)]">
+        {t('commentSection.noCommentsYet')}
       </h3>
 
-      <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-normal leading-6 text-[#667085]">
-        Start the conversation. Share what you feel, ask a question, or cheer for this story.
+      <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
+        {t('commentSection.noCommentsDesc')}
       </p>
 
       <button
         type="button"
         onClick={onFocus}
-        className="mt-5 h-11 rounded-full bg-[#111827] px-5 text-[13px] font-normal text-white active:scale-95"
+        className="mt-5 h-11 rounded-full bg-[var(--shadow-text-primary)] px-5 text-[13px] font-normal text-[var(--shadow-bg-surface)] active:scale-95"
       >
-        Write a comment
+        {t('commentSection.writeCommentAction')}
       </button>
     </div>
   )
@@ -634,17 +1071,17 @@ function MenuButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-12 w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left transition-colors active:bg-[#f3f4f6] ${
+      className={`flex min-h-12 w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left transition-colors active:bg-[var(--shadow-bg-soft)] ${
         danger
           ? 'text-[#dc2626]'
-          : 'text-[#111827]'
+          : 'text-[var(--shadow-text-primary)]'
       }`}
     >
       <i
         className={`${icon} w-5 shrink-0 text-center text-[17px] ${
           danger
             ? 'text-[#dc2626]'
-            : 'text-[#667085]'
+            : 'text-[var(--shadow-text-secondary)]'
         }`}
       />
       <span className="text-[15px] font-normal">
@@ -674,6 +1111,7 @@ function CommentMenu({
   onReport,
   onClose,
 }) {
+  const { t } = useDisplayTranslation()
   if (!isOpen) return null
 
   const isAuthorPost =
@@ -696,13 +1134,13 @@ function CommentMenu({
         className="absolute inset-0 bg-black/40"
       />
 
-      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-2 pb-[max(18px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
+      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-2 pb-[max(18px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
         <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
         {allowReply ? (
           <MenuButton
             icon="fa-regular fa-comment"
-            label="Reply"
+            label={t('commentSection.reply')}
             onClick={() =>
               runAction(onReply)
             }
@@ -711,7 +1149,7 @@ function CommentMenu({
 
         <MenuButton
           icon="fa-regular fa-copy"
-          label="Copy"
+          label={t('commentSection.copy')}
           onClick={() =>
             runAction(onCopy)
           }
@@ -721,7 +1159,7 @@ function CommentMenu({
           <>
             <MenuButton
               icon="fa-regular fa-trash-can"
-              label="Delete"
+              label={t('commentSection.delete')}
               danger
               onClick={() =>
                 runAction(onDelete)
@@ -730,7 +1168,7 @@ function CommentMenu({
 
             <MenuButton
               icon="fa-regular fa-pen-to-square"
-              label="Edit"
+              label={t('commentSection.edit')}
               onClick={() =>
                 runAction(onEdit)
               }
@@ -743,7 +1181,7 @@ function CommentMenu({
           <>
             <MenuButton
               icon="fa-regular fa-flag"
-              label="Report Comment"
+              label={t('commentSection.reportComment')}
               onClick={() =>
                 runAction(onReport)
               }
@@ -751,7 +1189,7 @@ function CommentMenu({
 
             <MenuButton
               icon="fa-regular fa-eye-slash"
-              label="Hide this comment"
+              label={t('commentSection.hideThisComment')}
               onClick={() =>
                 runAction(onHide)
               }
@@ -764,7 +1202,7 @@ permissions.isAuthor ? (
   <>
     <MenuButton
       icon="fa-regular fa-trash-can"
-      label="Delete"
+      label={t('commentSection.delete')}
       danger
       onClick={() =>
         runAction(onDelete)
@@ -780,8 +1218,8 @@ permissions.isAuthor ? (
         }
         label={
           comment.is_hidden
-            ? 'Unhide'
-            : 'Hide comment'
+            ? t('commentSection.unhide')
+            : t('commentSection.hideComment')
         }
         onClick={() =>
           runAction(
@@ -797,8 +1235,8 @@ permissions.isAuthor ? (
           icon="fa-solid fa-thumbtack"
           label={
             comment.is_pinned
-              ? 'Unpin comment'
-              : 'Pin comment'
+              ? t('commentSection.unpinComment')
+              : t('commentSection.pinComment')
           }
           onClick={() =>
             runAction(
@@ -811,7 +1249,7 @@ permissions.isAuthor ? (
 
         <MenuButton
           icon="fa-regular fa-eye-slash"
-          label="Hide comment"
+          label={t('commentSection.hideComment')}
           onClick={() =>
             runAction(onHide)
           }
@@ -819,7 +1257,7 @@ permissions.isAuthor ? (
 
         <MenuButton
           icon="fa-solid fa-ban"
-          label="Ban user"
+          label={t('commentSection.banUser')}
           danger
           onClick={() =>
             runAction(onBan)
@@ -834,8 +1272,8 @@ permissions.isAuthor ? (
           }
           label={
             comment.is_spoiler
-              ? 'Remove spoiler mark'
-              : 'Spoiler mark'
+              ? t('commentSection.removeSpoilerMark')
+              : t('commentSection.spoilerMark')
           }
           onClick={() =>
             runAction(
@@ -856,7 +1294,7 @@ permissions.isAuthor ? (
           <>
             <MenuButton
               icon="fa-regular fa-trash-can"
-              label="Delete"
+              label={t('commentSection.delete')}
               danger
               onClick={() =>
                 runAction(onDelete)
@@ -871,8 +1309,8 @@ permissions.isAuthor ? (
               }
               label={
                 comment.is_hidden
-                  ? 'Unhide'
-                  : 'Hide'
+                  ? t('commentSection.unhide')
+                  : t('commentSection.hide')
               }
               onClick={() =>
                 runAction(
@@ -885,7 +1323,7 @@ permissions.isAuthor ? (
 
             <MenuButton
               icon="fa-solid fa-ban"
-              label="Ban user"
+              label={t('commentSection.banUser')}
               danger
               onClick={() =>
                 runAction(onBan)
@@ -913,7 +1351,7 @@ function getCommentDisplayUser(comment, story) {
       name:
         story?.author_page?.page_name ||
         comment?.name ||
-        'Author',
+        getDisplayText('commentSection.author'),
       avatar_url:
         story?.author_page?.avatar_url ||
         comment?.avatar_url ||
@@ -922,7 +1360,7 @@ function getCommentDisplayUser(comment, story) {
   }
 
   return {
-    name: comment?.name || 'Reader',
+    name: comment?.name || getDisplayText('commentSection.reader'),
     avatar_url:
       comment?.avatar_url || '',
   }
@@ -947,7 +1385,7 @@ function getReplyComposerUser(story) {
     name:
       story?.author_page?.page_name ||
       currentUser.name ||
-      'Author',
+      getDisplayText('commentSection.author'),
     avatar_url:
       story?.author_page?.avatar_url ||
       currentUser.avatar_url ||
@@ -1018,6 +1456,7 @@ function ReplyItem({
   onBan,
   onReport,
 }) {
+  const { t } = useDisplayTranslation()
   const [menuOpen, setMenuOpen] =
     useState(false)
   const currentUser = getCurrentUser()
@@ -1064,21 +1503,21 @@ function ReplyItem({
           onClick={() =>
             setMenuOpen(true)
           }
-          className="inline-block max-w-full rounded-[16px] bg-[#f3f4f6] px-3 py-2 text-left active:bg-[#ebeef2]"
+          className="inline-block max-w-full rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-2 text-left active:bg-[var(--shadow-bg-hover)]"
         >
           <div className="flex items-center gap-2">
-            <span className="text-[12px] font-semibold text-[#111827]">
+            <span className="text-[12px] font-semibold text-[var(--shadow-text-primary)]">
               {displayUser.name}
             </span>
 
-            <span className="text-[10px] font-normal text-[#98a2b3]">
+            <span className="text-[10px] font-normal text-[var(--shadow-text-tertiary)]">
               {formatTime(
                 reply.created_at
               )}
             </span>
           </div>
 
-          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[#4b5563]">
+          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
             {renderReplyTextWithMention(
               reply.text,
               mentionCandidates
@@ -1091,13 +1530,13 @@ function ReplyItem({
           onClick={() =>
             setMenuOpen(true)
           }
-          className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[#98a2b3] active:scale-95"
+          className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
           aria-label="Reply options"
         >
           <i className="fa-solid fa-ellipsis text-[13px]" />
         </button>
 
-        <div className="mt-1 flex items-center gap-4 pl-3 text-[11.5px] font-normal text-[#98a2b3]">
+        <div className="mt-1 flex items-center gap-4 pl-3 text-[11.5px] font-normal text-[var(--shadow-text-tertiary)]">
                     <ReactionAction
             reactionType={
               reply.reaction_type ||
@@ -1115,8 +1554,8 @@ function ReplyItem({
                 reactionType
               )
             }
-            idleLabel="Like"
-            buttonClassName="text-[11.5px] font-normal after:ml-1 after:content-['Like']"
+            idleLabel={t('commentSection.like')}
+            buttonClassName="text-[11.5px] font-normal"
             countClassName="text-[11.5px] font-normal"
             pickerAlign="left"
           />
@@ -1125,7 +1564,7 @@ function ReplyItem({
             type="button"
             onClick={startReply}
           >
-            Reply
+            {t('commentSection.reply')}
           </button>
         </div>
 
@@ -1189,6 +1628,7 @@ function CommentItem({
   onBan,
   onReport,
 }) {
+  const { t } = useDisplayTranslation()
   const [menuOpen, setMenuOpen] =
     useState(false)
   const focusedReplyPresent =
@@ -1323,14 +1763,14 @@ const [repliesShown, setRepliesShown] =
         id={`comment-${comment.id}`}
       >
         <div className="flex gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#98a2b3]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
             <i className="fa-regular fa-comment-dots text-[15px]" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="inline-flex min-h-12 items-center rounded-[18px] bg-[#f3f4f6] px-4 py-3">
-              <span className="text-[13px] italic text-[#98a2b3]">
-                Comment deleted
+            <div className="inline-flex min-h-12 items-center rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3">
+              <span className="text-[13px] italic text-[var(--shadow-text-tertiary)]">
+                {t('commentSection.commentDeleted')}
               </span>
             </div>
 
@@ -1342,21 +1782,15 @@ const [repliesShown, setRepliesShown] =
                     (value) => !value
                   )
                 }
-                className="mt-2 block pl-3 text-[12px] text-[#667085]"
+                className="mt-2 block pl-3 text-[12px] text-[var(--shadow-text-secondary)]"
               >
-                {repliesShown
-                  ? 'Hide replies'
-                  : `View ${replyTotal} ${
-                      replyTotal > 1
-                        ? 'replies'
-                        : 'reply'
-                    }`}
+                {repliesShown ? t('commentSection.hideReplies') : (replyTotal  > 1 ? t('commentSection.viewReplies', { count: replyTotal }) : t('commentSection.viewReply', { count: replyTotal }))}
               </button>
             ) : null}
 
             {repliesShown &&
             replies.length ? (
-              <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
+              <div className="mt-3 space-y-3 border-l-2 border-[var(--shadow-border)] pl-3">
                 {replies.map((reply) => (
                   <ReplyItem
                     key={reply.id}
@@ -1401,11 +1835,11 @@ const [repliesShown, setRepliesShown] =
                       )
                     }
                     disabled={loadingReplies}
-                    className="ml-1 text-[12px] font-medium text-[#667085] disabled:text-[#98a2b3]"
+                    className="ml-1 text-[12px] font-medium text-[var(--shadow-text-secondary)] disabled:text-[var(--shadow-text-tertiary)]"
                   >
                     {loadingReplies
-                      ? 'Loading...'
-                      : 'View more replies'}
+                      ? t('commentSection.loading')
+                      : t('commentSection.viewMoreReplies')}
                   </button>
                 ) : null}
               </div>
@@ -1465,32 +1899,32 @@ const [repliesShown, setRepliesShown] =
                 clearMenuPress()
                 setMenuOpen(true)
               }}
-              className="inline-block max-w-full cursor-pointer select-none rounded-[18px] bg-[#f3f4f6] px-4 py-3 outline-none active:bg-[#ebeef2]"
+              className="inline-block max-w-full cursor-pointer select-none rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 outline-none active:bg-[var(--shadow-bg-hover)]"
               style={{
                 touchAction:
                   'manipulation',
               }}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[13px] font-semibold text-[#111827]">
+                <span className="text-[13px] font-semibold text-[var(--shadow-text-primary)]">
                   {displayName}
                 </span>
 
-                <span className="text-[11px] font-normal text-[#98a2b3]">
+                <span className="text-[11px] font-normal text-[var(--shadow-text-tertiary)]">
                   {formatTime(
                     comment.created_at
                   )}
                 </span>
 
                 {comment.is_pinned ? (
-                  <span className="rounded-full bg-[#fff7d6] px-2 py-0.5 text-[10px] font-normal text-[#b7791f]">
-                    Pinned
+                  <span className="rounded-full bg-[#fff7d6] dark:bg-[#b7791f]/15 px-2 py-0.5 text-[10px] font-normal text-[#b7791f]">
+                    {t('commentSection.pinned')}
                   </span>
                 ) : null}
 
                 {comment.is_hidden ? (
-                  <span className="rounded-full bg-[#eef2ff] px-2 py-0.5 text-[10px] font-normal text-[#4f46e5]">
-                    Hidden
+                  <span className="rounded-full bg-[#eef2ff] dark:bg-[#4f46e5]/15 px-2 py-0.5 text-[10px] font-normal text-[#4f46e5]">
+                    {t('commentSection.hidden')}
                   </span>
                 ) : null}
               </div>
@@ -1503,17 +1937,17 @@ const [repliesShown, setRepliesShown] =
                     event.stopPropagation()
                     setSpoilerOpen(true)
                   }}
-                  className="mt-2 rounded-[14px] bg-white px-3 py-2 text-left text-[12px] font-normal text-[#667085]"
+                  className="mt-2 rounded-[14px] bg-[var(--shadow-bg-surface)] px-3 py-2 text-left text-[12px] font-normal text-[var(--shadow-text-secondary)]"
                 >
-                  This comment may contain spoilers. Tap to reveal.
+                  {t('commentSection.spoilerReveal')}
                 </button>
               ) : comment.type ===
                 'sticker' ? (
-                <div className="mt-2 inline-flex h-20 w-20 items-center justify-center rounded-[18px] bg-white text-[#98a2b3]">
+                <div className="mt-2 inline-flex h-20 w-20 items-center justify-center rounded-[18px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-tertiary)]">
                   <i className="fa-regular fa-face-smile text-[30px]" />
                 </div>
               ) : (
-                <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] font-normal leading-6 text-[#4b5563]">
+                <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
                   {comment.text}
                 </p>
               )}
@@ -1524,7 +1958,7 @@ const [repliesShown, setRepliesShown] =
               onClick={() =>
                 setMenuOpen(true)
               }
-              className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[#98a2b3] active:scale-95"
+              className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
               aria-label="Comment options"
             >
               <i className="fa-solid fa-ellipsis text-[14px]" />
@@ -1579,7 +2013,7 @@ const [repliesShown, setRepliesShown] =
             />
           </div>
 
-          <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-normal text-[#98a2b3]">
+          <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
             <ReactionAction
               reactionType={
                 comment.reaction_type ||
@@ -1599,8 +2033,8 @@ const [repliesShown, setRepliesShown] =
                   reactionType
                 )
               }
-              idleLabel="Like"
-              buttonClassName="text-[12px] font-normal after:ml-1 after:content-['Like']"
+              idleLabel={t('commentSection.like')}
+              buttonClassName="text-[12px] font-normal"
               countClassName="text-[12px] font-normal"
               pickerAlign="left"
             />
@@ -1613,7 +2047,7 @@ const [repliesShown, setRepliesShown] =
                 )
               }
             >
-              Reply
+              {t('commentSection.reply')}
             </button>
 
             {replies.length ? (
@@ -1625,22 +2059,18 @@ const [repliesShown, setRepliesShown] =
                   )
                 }
               >
-                {repliesShown
-                  ? 'Hide replies'
-                  : `View ${
+                {repliesShown ? t('commentSection.hideReplies') : (replyTotal  > 1 ? t('commentSection.viewReplies', { count: 
                       replyTotal
-                    } ${
-                      replyTotal > 1
-                        ? 'replies'
-                        : 'reply'
-                    }`}
+                     }) : t('commentSection.viewReply', { count: 
+                      replyTotal
+                     }))}
               </button>
             ) : null}
           </div>
 
           {repliesShown &&
           replies.length ? (
-            <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
+            <div className="mt-3 space-y-3 border-l-2 border-[var(--shadow-border)] pl-3">
               {replies.map((reply) => (
                 <ReplyItem
                   key={reply.id}
@@ -1681,11 +2111,11 @@ const [repliesShown, setRepliesShown] =
                     )
                   }
                   disabled={loadingReplies}
-                  className="ml-1 text-[12px] font-medium text-[#667085] disabled:text-[#98a2b3]"
+                  className="ml-1 text-[12px] font-medium text-[var(--shadow-text-secondary)] disabled:text-[var(--shadow-text-tertiary)]"
                 >
                   {loadingReplies
-                    ? 'Loading...'
-                    : 'View more replies'}
+                    ? t('commentSection.loading')
+                    : t('commentSection.viewMoreReplies')}
                 </button>
               ) : null}
             </div>
@@ -1708,6 +2138,7 @@ function CommentComposer({
   isBanned,
   sending,
 }) {
+  const { t } = useDisplayTranslation()
   const [focused, setFocused] =
     useState(false)
   const textareaRef = useRef(null)
@@ -1748,29 +2179,24 @@ function CommentComposer({
         isModal
           ? 'shrink-0'
           : 'fixed bottom-0 left-0 right-0'
-      } z-50 border-t border-[#eef1f5] bg-white px-3 py-3`}
+      } z-50 border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-3`}
     >
 
       {replyTarget ? (
-  <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[#667085]">
-    <span>
-      Replying to{' '}
-      <span className="font-semibold text-[#111827]">
-        {replyTargetName || 'Reader'}
-      </span>
-    </span>
+  <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[var(--shadow-text-secondary)]">
+    <span>{t('commentSection.replyingTo', { name: replyTargetName || getDisplayText('commentSection.reader') })}</span>
     <span>·</span>
     <button
       type="button"
       onClick={onCancelReply}
       className="font-medium text-[#1877f2]"
     >
-      Cancel
+      {t('commentSection.cancel')}
     </button>
   </div>
 ) : null}
       <div className="mx-auto flex max-w-3xl items-end gap-2">
-        <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[#f3f4f6] px-4 py-2">
+        <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[var(--shadow-bg-soft)] px-4 py-2">
           <textarea
             ref={textareaRef}
             id="shadow-comment-input"
@@ -1799,12 +2225,12 @@ function CommentComposer({
             rows={1}
             placeholder={
               isBanned
-                ? 'You cannot comment on this story.'
+                ? t('commentSection.cannotComment')
                 : replyTarget
-  ? 'Write a reply...'
-  : 'Write a comment...'
+  ? t('commentSection.writeReply')
+   : t('commentSection.writeComment')
             }
-            className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
+            className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-text-tertiary)] disabled:cursor-not-allowed"
           />
         </div>
 
@@ -1820,11 +2246,11 @@ function CommentComposer({
               isBanned ||
               sending
             }
-            className="mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 disabled:bg-[#d0d5dd]"
+            className="mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
             aria-label={
   replyTarget
-    ? 'Send reply'
-    : 'Send comment'
+    ? t('commentSection.sendReply')
+    : t('commentSection.sendComment')
 }
           >
             <i
@@ -1849,6 +2275,7 @@ function EditCommentSheet({
   onSave,
   saving,
 }) {
+  const { t } = useDisplayTranslation()
   if (!comment) return null
 
   return (
@@ -1860,18 +2287,18 @@ function EditCommentSheet({
         aria-label="Close edit comment"
       />
 
-      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-bg-soft)]" />
 
         <div className="flex items-center justify-between">
-          <h3 className="text-[17px] font-normal text-[#111827]">
-            Edit comment
+          <h3 className="text-[17px] font-normal text-[var(--shadow-text-primary)]">
+            {t('commentSection.editComment')}
           </h3>
 
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-9 w-9 items-center justify-center text-[#667085] transition-colors active:bg-[#f3f4f6]"
+            className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)] transition-colors active:bg-[var(--shadow-bg-soft)]"
             aria-label="Close edit comment"
           >
             <i className="fa-solid fa-xmark text-[16px]" />
@@ -1886,7 +2313,7 @@ function EditCommentSheet({
           }
           rows={5}
           autoFocus
-          className="mt-4 min-h-[150px] w-full resize-none rounded-[18px] bg-[#f5f5f7] px-4 py-3 text-[14px] font-normal leading-6 text-[#111827] outline-none ring-1 ring-transparent transition focus:bg-white focus:ring-[#d0d5dd]"
+          className="mt-4 min-h-[150px] w-full resize-none rounded-[18px] bg-[var(--shadow-input-bg)] px-4 py-3 text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none ring-1 ring-transparent transition focus:bg-[var(--shadow-bg-surface)] focus:ring-[var(--shadow-border-strong)]"
         />
 
         <button
@@ -1895,11 +2322,11 @@ function EditCommentSheet({
           disabled={
             !value.trim() || saving
           }
-          className="mt-4 h-11 w-full rounded-full bg-[#111827] text-[14px] font-normal text-white transition active:scale-[0.99] disabled:bg-[#d0d5dd]"
+          className="mt-4 h-11 w-full rounded-full bg-[var(--shadow-text-primary)] text-[14px] font-normal text-[var(--shadow-bg-surface)] transition active:scale-[0.99] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
         >
           {saving
-            ? 'Saving...'
-            : 'Save comment'}
+            ? t('commentSection.saving')
+            : t('commentSection.saveComment')}
         </button>
       </section>
     </div>
@@ -1912,6 +2339,7 @@ function SortSheet({
   onChoose,
   onClose,
 }) {
+  const { t } = useDisplayTranslation()
   const dragRef = useRef({
     active: false,
     pointerId: null,
@@ -2025,7 +2453,7 @@ function SortSheet({
       />
 
       <section
-        className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-5 pb-5 pt-4 shadow-2xl sm:mb-4 sm:rounded-[28px]"
+        className="relative w-full max-w-3xl rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-5 pb-5 pt-4 shadow-2xl sm:mb-4 sm:rounded-[28px]"
         style={{
           transform: `translateY(${dragOffset}px)`,
           transition: dragging
@@ -2045,7 +2473,7 @@ function SortSheet({
           }
           className="-mx-5 -mt-4 flex h-14 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
         >
-          <div className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+          <div className="h-1.5 w-12 rounded-full bg-[var(--shadow-bg-soft)]" />
         </div>
 
         <div className="space-y-1">
@@ -2063,16 +2491,16 @@ function SortSheet({
                       option.value
                     )
                   }
-                  className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left active:bg-[#f7f7f9]"
+                  className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left active:bg-[var(--shadow-bg-hover)]"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[16px] font-normal text-[#111827]">
-                      {option.label}
+                    <span className="block text-[16px] font-normal text-[var(--shadow-text-primary)]">
+                      {t(`commentSection.${option.labelKey}`)}
                     </span>
 
-                    <span className="mt-0.5 block text-[13px] font-normal leading-5 text-[#667085]">
+                    <span className="mt-0.5 block text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
                       {
-                        option.description
+                        t(`commentSection.${option.descriptionKey}`)
                       }
                     </span>
                   </span>
@@ -2080,12 +2508,12 @@ function SortSheet({
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
                       active
-                        ? 'border-[#111827] bg-[#111827]'
-                        : 'border-[#d0d5dd] bg-white'
+                        ? 'border-[var(--shadow-text-primary)] bg-[var(--shadow-text-primary)]'
+                        : 'border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)]'
                     }`}
                   >
                     {active ? (
-                      <i className="fa-solid fa-check text-[10px] text-white" />
+                      <i className="fa-solid fa-check text-[10px] text-[var(--shadow-bg-surface)]" />
                     ) : null}
                   </span>
                 </button>
@@ -2112,6 +2540,7 @@ export default function CommentSection({
   onEpisodeChange,
   onCommentTotalChange,
 }) {
+  const { t } = useDisplayTranslation()
   const [sortMenuOpen, setSortMenuOpen] =
     useState(false)
   const [episodeMenuOpen, setEpisodeMenuOpen] =
@@ -2267,7 +2696,7 @@ async function fetchComments(
       ) {
         throw new Error(
           data.message ||
-            'Failed to load comments'
+            t('commentSection.failedLoadComments')
         )
       }
 
@@ -2311,7 +2740,7 @@ const nextComments =
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to load comments.'
+          t('commentSection.failedLoadCommentsPeriod')
       )
     } finally {
       if (append) {
@@ -2372,11 +2801,11 @@ const nextComments =
       title:
         data.code ===
         'READER_COMMENT_BLOCKED'
-          ? 'Commenting Restricted'
-          : 'Comment Hidden',
+          ? t('commentSection.commentingRestricted')
+          : t('commentSection.commentHidden'),
       message:
         data.message ||
-        'Your comment could not be posted.',
+        t('commentSection.commentCouldNotPost'),
       matchedWords,
       until:
         data.comment_block
@@ -2399,7 +2828,7 @@ const nextComments =
   setReplyText('')
 setReplyTarget({
   parentId: commentId,
-  name: String(name || 'Reader').trim(),
+  name: String(name || getDisplayText('commentSection.reader')).trim(),
 })
 
   requestAnimationFrame(() => {
@@ -2421,8 +2850,8 @@ if (!activeText.trim() || sending) {
 if (!token) {
   showToast(
     replyTarget
-      ? 'Please login to reply.'
-      : 'Please login to comment.'
+      ? t('commentSection.pleaseLoginReply')
+      : t('commentSection.pleaseLoginComment')
   )
   return
 }
@@ -2493,7 +2922,7 @@ if (replyTarget) {
       ) {
         throw new Error(
           data.message ||
-            'Failed to create comment'
+            t('commentSection.failedCreateComment')
         )
       }
 
@@ -2515,7 +2944,7 @@ if (replyTarget) {
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to create comment.'
+          t('commentSection.failedCreateCommentPeriod')
       )
     } finally {
       setSending(false)
@@ -2528,7 +2957,7 @@ if (replyTarget) {
   ) => {
     if (!token) {
       showToast(
-        'Please login to react.'
+        t('commentSection.pleaseLoginReact')
       )
       return
     }
@@ -2644,7 +3073,7 @@ if (replyTarget) {
       ) {
         throw new Error(
           data.message ||
-            'Failed to update reaction'
+            t('commentSection.failedUpdateReaction')
         )
       }
 
@@ -2676,7 +3105,7 @@ if (replyTarget) {
 
       showToast(
         error.message ||
-          'Failed to update reaction.'
+          t('commentSection.failedUpdateReactionPeriod')
       )
     }
   }
@@ -2736,7 +3165,7 @@ const nextPage =
       ) {
         throw new Error(
           data.message ||
-            'Failed to load replies'
+            t('commentSection.failedLoadReplies')
         )
       }
 
@@ -2791,7 +3220,7 @@ const nextPage =
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to load replies.'
+          t('commentSection.failedLoadRepliesPeriod')
       )
     } finally {
       setLoadingRepliesId(null)
@@ -2845,7 +3274,7 @@ const handleReply = async (
   ) => {
     if (!token) {
       showToast(
-        'Please login to reply.'
+        t('commentSection.pleaseLoginReply')
       )
       return false
     }
@@ -2905,7 +3334,7 @@ const handleReply = async (
       ) {
         throw new Error(
           data.message ||
-            'Failed to create reply'
+            t('commentSection.failedCreateReply')
         )
       }
 
@@ -2949,7 +3378,7 @@ const handleReply = async (
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to create reply.'
+          t('commentSection.failedCreateReplyPeriod')
       )
       return false
     }
@@ -2971,7 +3400,7 @@ const handleReply = async (
 
     if (!token) {
       showToast(
-        'Please login again.'
+        t('commentSection.pleaseLoginAgain')
       )
       return
     }
@@ -3032,7 +3461,7 @@ const handleReply = async (
       ) {
         throw new Error(
           data.message ||
-            'Failed to update comment'
+            t('commentSection.failedUpdateComment')
         )
       }
 
@@ -3074,12 +3503,12 @@ updateComments(
       setEditComment(null)
       setEditText('')
       showToast(
-        'Comment updated.'
+        t('commentSection.commentUpdated')
       )
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to update comment.'
+          t('commentSection.failedUpdateCommentPeriod')
       )
     } finally {
       setSaving(false)
@@ -3121,9 +3550,9 @@ updateComments(
         textarea.remove()
       }
 
-      showToast('Comment copied.')
+      showToast(t('commentSection.commentCopied'))
     } catch {
-      showToast('Copy failed.')
+      showToast(t('commentSection.copyFailed'))
     }
   }
 
@@ -3131,13 +3560,13 @@ updateComments(
     async (comment) => {
       if (!token) {
         showToast(
-          'Please login again.'
+          t('commentSection.pleaseLoginAgain')
         )
         return
       }
 
       const confirmed = window.confirm(
-        'Move this comment to Trash? It can be recovered for 30 days.'
+        t('commentSection.trashConfirm')
       )
 
       if (!confirmed) return
@@ -3177,7 +3606,7 @@ updateComments(
         ) {
           throw new Error(
             data.message ||
-              'Failed to delete comment'
+              t('commentSection.failedDeleteComment')
           )
         }
 
@@ -3191,12 +3620,12 @@ updateComments(
           totalComments - 1
         )
         showToast(
-          'Comment moved to Trash.'
+          t('commentSection.commentMovedTrash')
         )
       } catch (error) {
         showToast(
           error.message ||
-            'Failed to delete comment.'
+            t('commentSection.failedDeleteCommentPeriod')
         )
       }
     }
@@ -3206,7 +3635,7 @@ updateComments(
   isHidden
 ) => {
   if (!token) {
-    showToast('Please login again.')
+    showToast(t('commentSection.pleaseLoginAgain'))
     return
   }
 
@@ -3239,7 +3668,7 @@ updateComments(
     ) {
       throw new Error(
         data.message ||
-          'Failed to update comment visibility'
+          t('commentSection.failedVisibility')
       )
     }
 
@@ -3283,13 +3712,13 @@ updateComments(
 
     showToast(
       isHidden
-        ? 'Comment hidden by this Page.'
-        : 'Comment unhidden by this Page.'
+        ? t('commentSection.commentHiddenPage')
+        : t('commentSection.commentUnhiddenPage')
     )
   } catch (error) {
     showToast(
       error.message ||
-        'Failed to update comment visibility.'
+        t('commentSection.failedVisibilityPeriod')
     )
   }
 }
@@ -3300,7 +3729,7 @@ updateComments(
   ) => {
     if (!token) {
       showToast(
-        'Please login again.'
+        t('commentSection.pleaseLoginAgain')
       )
       return
     }
@@ -3346,7 +3775,7 @@ updateComments(
 
         throw new Error(
           data.message ||
-            'Action failed'
+            t('commentSection.actionFailed')
         )
       }
 
@@ -3357,13 +3786,13 @@ updateComments(
 
   updateComments(nextComments)
   updateTotal(totalComments - 1)
-  showToast('Comment moved to Trash.')
+  showToast(t('commentSection.commentMovedTrash'))
   return
 }
 
       if (action === 'ban') {
         showToast(
-          'User banned from commenting.'
+          t('commentSection.userBanned')
         )
         return
       }
@@ -3379,11 +3808,11 @@ updateComments(
           updatedComment
         )
       )
-      showToast('Updated.')
+      showToast(t('commentSection.updated'))
     } catch (error) {
       showToast(
         error.message ||
-          'Action failed.'
+          t('commentSection.actionFailedPeriod')
       )
     }
   }
@@ -3398,7 +3827,7 @@ updateComments(
       )
     )
     showToast(
-      'Comment hidden on your device.'
+      t('commentSection.commentHiddenDevice')
     )
   }
 
@@ -3417,21 +3846,21 @@ updateComments(
     <section
       className={
         isModal
-          ? 'relative flex h-full flex-col bg-white'
-          : 'min-h-screen bg-white pb-[84px]'
+          ? 'relative flex h-full flex-col bg-[var(--shadow-bg-surface)]'
+          : 'min-h-screen bg-[var(--shadow-bg-surface)] pb-[84px]'
       }
     >
-      <div className="relative z-10 shrink-0 bg-white px-4 pb-1 pt-0">
+      <div className="relative z-10 shrink-0 bg-[var(--shadow-bg-surface)] px-4 pb-1 pt-0">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
           <button
             type="button"
             onClick={() =>
               setSortMenuOpen(true)
             }
-            className="flex items-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
+            className="flex items-center gap-1 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
           >
             <span>
-              {selectedSort.label}
+              {t(`commentSection.${selectedSort.labelKey}`)}
             </span>
             <i className="fa-solid fa-chevron-down text-[11px]" />
           </button>
@@ -3444,13 +3873,12 @@ updateComments(
                   (value) => !value
                 )
               }
-              className="flex items-center gap-1 text-[14px] font-normal text-[#667085] active:scale-95"
+              className="flex items-center gap-1 text-[14px] font-normal text-[var(--shadow-text-secondary)] active:scale-95"
             >
               <span>
-                Episode{' '}
-                {selectedEpisode
+                {t('commentSection.episodeNumber', { number: selectedEpisode
                   ?.episode_number ||
-                  ''}
+                  '' })}
               </span>
               <i
                 className={`fa-solid fa-chevron-${
@@ -3464,7 +3892,7 @@ updateComments(
         </div>
 
         {episodeMenuOpen ? (
-          <div className="absolute right-4 top-8 z-[30] w-[220px] overflow-hidden rounded-[16px] border border-[#e5e7eb] bg-white py-1 shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
+          <div className="absolute right-4 top-8 z-[30] w-[220px] overflow-hidden rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-1 shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
             <div className="max-h-[260px] overflow-y-auto">
               {episodeOptions.map(
                 (item) => {
@@ -3498,23 +3926,21 @@ updateComments(
                           false
                         )
                       }}
-                      className={`flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left active:bg-[#f8fafc] ${
+                      className={`flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left active:bg-[var(--shadow-bg-hover)] ${
                         active
-                          ? 'bg-[#fff1f4] text-[#ff3b5f]'
-                          : 'text-[#111827]'
+                          ? 'bg-[#fff1f4] text-[#ff3b5f] dark:bg-[#ff3b5f]/10'
+                          : 'text-[var(--shadow-text-primary)]'
                       }`}
                     >
                       <span className="text-[14px] font-normal">
-                        Episode{' '}
-                        {item.episode_number ||
-                          ''}
+                        {t('commentSection.episodeNumber', { number: item.episode_number || '' })}
                       </span>
 
                       <span className="text-[12px] font-normal">
                         {total}{' '}
                         {total === 1
-                          ? 'comment'
-                          : 'comments'}
+                          ? t('commentSection.comment')
+                          : t('commentSection.comments')}
                       </span>
                     </button>
                   )
@@ -3553,7 +3979,7 @@ updateComments(
               }).map((_, index) => (
                 <div
                   key={index}
-                  className="mb-3 h-20 animate-pulse rounded-[18px] bg-[#f3f4f6]"
+                  className="mb-3 h-20 animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]"
                 />
               ))}
             </div>
@@ -3708,11 +4134,11 @@ onSpoiler={(
                     disabled={
                       loadingMore
                     }
-                    className="h-11 w-full rounded-full bg-[#f5f3fa] text-[13px] font-normal text-[#111827] disabled:text-[#98a2b3]"
+                    className="h-11 w-full rounded-full bg-[var(--shadow-bg-soft)] text-[13px] font-normal text-[var(--shadow-text-primary)] disabled:text-[var(--shadow-text-tertiary)]"
                   >
                     {loadingMore
-                      ? 'Loading...'
-                      : 'Load more comments'}
+                      ? t('commentSection.loading')
+                      : t('commentSection.loadMoreComments')}
                   </button>
                 </div>
               ) : null}
@@ -3737,7 +4163,7 @@ onSpoiler={(
       isModal
         ? 'absolute'
         : 'fixed'
-    } bottom-[88px] left-1/2 z-[310] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-lg`}
+    } bottom-[88px] left-1/2 z-[310] -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--shadow-text-primary)] px-4 py-2 text-[12px] font-normal text-[var(--shadow-bg-surface)] shadow-lg`}
   >
     {toast}
   </div>
@@ -3747,24 +4173,24 @@ onSpoiler={(
         <div
           className="fixed inset-0 z-[300] flex items-center justify-center bg-black/35 px-4"
         >
-          <div className="w-full max-w-[420px] rounded-[24px] bg-white p-5 shadow-2xl">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fee2e2] text-[#b91c1c]">
+          <div className="w-full max-w-[420px] rounded-[24px] bg-[var(--shadow-bg-surface)] p-5 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fee2e2] text-[#b91c1c] dark:bg-[#b91c1c]/15 dark:text-[#fca5a5]">
               <i className="fa-solid fa-triangle-exclamation text-[18px]" />
             </div>
 
-            <h3 className="mt-4 text-[20px] font-semibold text-[#111827]">
+            <h3 className="mt-4 text-[20px] font-semibold text-[var(--shadow-text-primary)]">
               {warningDialog.title}
             </h3>
 
-            <p className="mt-2 text-[13.5px] font-normal leading-6 text-[#667085]">
+            <p className="mt-2 text-[13.5px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
               {warningDialog.message}
             </p>
 
             {warningDialog
               .matchedWords.length ? (
-              <div className="mt-4 rounded-[18px] bg-[#fff7f7] p-3">
+              <div className="mt-4 rounded-[18px] bg-[#fff7f7] dark:bg-[#b91c1c]/10 p-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.4px] text-[#b91c1c]">
-                  Restricted words found
+                  {t('commentSection.restrictedWords')}
                 </div>
 
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -3772,7 +4198,7 @@ onSpoiler={(
                     (word) => (
                       <span
                         key={word}
-                        className="rounded-full bg-[#fee2e2] px-3 py-1 text-[11.5px] font-normal text-[#b91c1c]"
+                        className="rounded-full bg-[#fee2e2] px-3 py-1 dark:bg-[#b91c1c]/15 text-[11.5px] font-normal text-[#b91c1c]"
                       >
                         {word}
                       </span>
@@ -3783,11 +4209,8 @@ onSpoiler={(
             ) : null}
 
             {warningDialog.until ? (
-              <div className="mt-3 rounded-[16px] bg-[#f8fafc] px-3 py-2 text-[12px] font-normal text-[#667085]">
-                Until:{' '}
-                {formatDate(
-                  warningDialog.until
-                )}
+              <div className="mt-3 rounded-[16px] bg-[var(--shadow-bg-hover)] px-3 py-2 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
+{t('commentSection.until', { date: formatDate(warningDialog.until) })}
               </div>
             ) : null}
 
@@ -3796,9 +4219,9 @@ onSpoiler={(
               onClick={() =>
                 setWarningDialog(null)
               }
-              className="mt-5 h-11 w-full rounded-full bg-[#111827] text-[13px] font-normal text-white active:scale-95"
+              className="mt-5 h-11 w-full rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-normal text-[var(--shadow-bg-surface)] active:scale-95"
             >
-              I Understand
+              {t('commentSection.understand')}
             </button>
           </div>
         </div>
@@ -3812,7 +4235,7 @@ onSpoiler={(
           reportComment
             ? `${
                 reportComment.name ||
-                'Reader'
+                getDisplayText('commentSection.reader')
               }: ${String(
                 reportComment.text ||
                   ''
