@@ -9,11 +9,11 @@ const PAGE_SIZE = 30
 
 const FILTER_OPTIONS = {
   status: [
-  { value: 'all', label: 'All posts' },
-  { value: 'published', label: 'Published' },
-  { value: 'scheduled', label: 'Scheduled' },
-  { value: 'uploaded', label: 'Uploaded' },
-],
+    { value: 'all', label: 'All posts' },
+    { value: 'published', label: 'Published' },
+    { value: 'scheduled', label: 'Scheduled' },
+    { value: 'uploaded', label: 'Uploaded' },
+  ],
   date: [
     { value: 'today', label: 'Today' },
     { value: '7d', label: 'Last 7 days' },
@@ -117,17 +117,44 @@ async function fetchMyAuthorPage() {
   return data.author_page
 }
 
-async function fetchAuthorPostsPage(pageUsername, before = '') {
+async function fetchAuthorPostsPage(
+  pageUsername,
+  {
+    before = '',
+    statusFilter = 'all',
+    dateRange = 'lifetime',
+  } = {}
+) {
   const token = getAuthToken()
   const params = new URLSearchParams({
-    limit: '100',
+    limit: String(PAGE_SIZE),
     content_library: '1',
   })
 
-  if (before) params.set('before', before)
+  const statusMap = {
+    published: 'active',
+    scheduled: 'scheduled',
+    uploaded: 'uploaded',
+  }
+
+  if (statusMap[statusFilter]) {
+    params.set('status', statusMap[statusFilter])
+  }
+
+  const cutoff = getDateCutoff(dateRange)
+
+  if (cutoff) {
+    params.set('after', new Date(cutoff).toISOString())
+  }
+
+  if (before) {
+    params.set('before', before)
+  }
 
   const response = await fetch(
-    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`,
+    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(
+      pageUsername
+    )}/posts?${params.toString()}`,
     {
       headers: token
         ? { Authorization: `Bearer ${token}` }
@@ -140,37 +167,11 @@ async function fetchAuthorPostsPage(pageUsername, before = '') {
     throw new Error(data.message || 'Failed to load posts')
   }
 
-  return Array.isArray(data.posts) ? data.posts : []
-}
-
-async function fetchAllAuthorPosts(pageUsername) {
-  const postMap = new Map()
-  let before = ''
-
-  for (let pageIndex = 0; pageIndex < 100; pageIndex += 1) {
-    const batch = await fetchAuthorPostsPage(pageUsername, before)
-
-    if (!batch.length) break
-
-    const previousSize = postMap.size
-
-    batch.forEach((post) => {
-      if (post?.id) postMap.set(String(post.id), post)
-    })
-
-    if (batch.length < 100 || postMap.size === previousSize) break
-
-    const oldestCreatedAt = batch
-      .map((post) => post?.created_at)
-      .filter(Boolean)
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0]
-
-    if (!oldestCreatedAt || oldestCreatedAt === before) break
-
-    before = oldestCreatedAt
+  return {
+    posts: Array.isArray(data.posts) ? data.posts : [],
+    hasMore: Boolean(data.has_more),
+    nextBefore: data.next_before || '',
   }
-
-  return [...postMap.values()]
 }
 
 function getPostType(post) {
@@ -402,7 +403,7 @@ function FilterSheet({
                     className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
                       selected
                         ? 'border-[#111827]'
-: 'border-[#6b7280]'
+                        : 'border-[#6b7280]'
                     }`}
                   >
                     {selected ? (
@@ -423,6 +424,10 @@ export default function AuthorPostsContentLibraryPage() {
   const navigate = useNavigate()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [authorPageUsername, setAuthorPageUsername] = useState('')
+  const [nextBefore, setNextBefore] = useState('')
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [message, setMessage] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterSection, setFilterSection] = useState('menu')
@@ -452,35 +457,100 @@ export default function AuthorPostsContentLibraryPage() {
     try {
       setLoading(true)
       setMessage('')
+      setHasMore(false)
+      setNextBefore('')
 
       const page = await fetchMyAuthorPage()
-      const nextPosts = await fetchAllAuthorPosts(page.page_username)
+      const result = await fetchAuthorPostsPage(
+        page.page_username,
+        {
+          statusFilter,
+          dateRange,
+        }
+      )
 
-      setPosts(nextPosts)
+      setAuthorPageUsername(page.page_username)
+      setPosts(result.posts)
+      setNextBefore(result.nextBefore)
+      setHasMore(result.hasMore)
     } catch (error) {
       setMessage(error.message || 'Failed to load Content Library')
     } finally {
       setLoading(false)
     }
-  }, [navigate])
+  }, [dateRange, navigate, statusFilter])
 
   useEffect(() => {
     loadFirstPage()
   }, [loadFirstPage])
 
+  const loadMore = useCallback(async () => {
+    if (
+      !authorPageUsername ||
+      !hasMore ||
+      loadingMore ||
+      !nextBefore
+    ) {
+      return
+    }
+
+    try {
+      setLoadingMore(true)
+
+      const result = await fetchAuthorPostsPage(
+        authorPageUsername,
+        {
+          before: nextBefore,
+          statusFilter,
+          dateRange,
+        }
+      )
+
+      setPosts((current) => {
+        const postMap = new Map(
+          current.map((post) => [String(post.id), post])
+        )
+
+        result.posts.forEach((post) => {
+          if (post?.id) {
+            postMap.set(String(post.id), post)
+          }
+        })
+
+        return [...postMap.values()]
+      })
+
+      setNextBefore(result.nextBefore)
+      setHasMore(result.hasMore)
+    } catch (error) {
+      setMessage(error.message || 'Failed to load more posts')
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [
+    authorPageUsername,
+    dateRange,
+    hasMore,
+    loadingMore,
+    nextBefore,
+    statusFilter,
+  ])
+
   const visiblePosts = useMemo(() => {
     let nextPosts = [...posts]
 
     if (statusFilter !== 'all') {
-  const expectedStatus = {
-    published: 'active',
-    scheduled: 'scheduled',
-    uploaded: 'uploaded',
-  }[statusFilter]
-  nextPosts = nextPosts.filter((post) =>
-    String(post?.status || '').toLowerCase() === expectedStatus
-  )
-}
+      const expectedStatus = {
+        published: 'active',
+        scheduled: 'scheduled',
+        uploaded: 'uploaded',
+      }[statusFilter]
+
+      nextPosts = nextPosts.filter(
+        (post) =>
+          String(post?.status || '').toLowerCase() === expectedStatus
+      )
+    }
 
     const cutoff = getDateCutoff(dateRange)
 
@@ -614,17 +684,32 @@ export default function AuthorPostsContentLibraryPage() {
               Loading posts...
             </div>
           </div>
-        ) : visiblePosts.length ? (
-          <div className="divide-y divide-[#eef0f4]">
-            {visiblePosts.map((post) => (
-              <PostListRow
-                key={post.id}
-                post={post}
-                metricMode={metricMode}
-                onOpen={() => navigate(`/author/page?post=${post.id}`)}
-              />
-            ))}
-          </div>
+        ) : visiblePosts.length || hasMore ? (
+          <>
+            <div className="divide-y divide-[#eef0f4]">
+              {visiblePosts.map((post) => (
+                <PostListRow
+                  key={post.id}
+                  post={post}
+                  metricMode={metricMode}
+                  onOpen={() => navigate(`/author/page?post=${post.id}`)}
+                />
+              ))}
+            </div>
+
+            {hasMore ? (
+              <div className="px-4 py-5">
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="h-11 w-full rounded-[12px] bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-60"
+                >
+                  {loadingMore ? 'Loading...' : 'Load more'}
+                </button>
+              </div>
+            ) : null}
+          </>
         ) : (
           <div className="flex min-h-[420px] flex-col items-center justify-center px-6 text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eef0f4] text-[#6b7280]">
