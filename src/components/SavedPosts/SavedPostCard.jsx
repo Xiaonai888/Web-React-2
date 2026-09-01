@@ -11,7 +11,7 @@ registerTranslationNamespace('savedPostCard', {
     "savedAt": "Saved {{date}}",
     "savedPostLower": "Saved post",
     "previewUnavailable": "Preview is not available for this saved post.",
-    "originalUnavailable": "{t('savedPostCard.originalUnavailable')}"
+    "originalUnavailable": "Original post is unavailable. Your saved preview is still here."
   },
   "km": {
     "reader": "អ្នកអាន",
