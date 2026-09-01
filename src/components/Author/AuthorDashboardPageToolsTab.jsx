@@ -1,4 +1,130 @@
 import { useEffect, useMemo, useState } from 'react'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorDashboardPageTools', {
+  "en": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "pageActivityUpdated": "Page activity updated",
+    "authorPageReceivedUpdate": "Your Author Page received a new update.",
+    "pageToolsOverview": "Page Tools Overview",
+    "liveData": "Live data",
+    "activeTools": "Active Tools",
+    "customLinks": "Custom Links",
+    "pinnedItems": "Pinned Items",
+    "profileCompletion": "Profile Completion",
+    "quickAccess": "Quick Access",
+    "viewAll": "View All",
+    "editInfo": "Edit Info",
+    "theme": "Theme",
+    "links": "Links",
+    "pinnedPosts": "Pinned Posts",
+    "recentChanges": "Recent Changes",
+    "noRecentChanges": "No recent changes",
+    "pageUpdatesDescription": "Page updates will appear here.",
+    "managePageTools": "Manage Page Tools"
+  },
+  "km": {
+    "justNow": "ឥឡូវនេះ",
+    "minutesAgo": "{{count}} នាទីមុន",
+    "hoursAgo": "{{count}} ម៉ោងមុន",
+    "daysAgo": "{{count}} ថ្ងៃមុន",
+    "pageActivityUpdated": "សកម្មភាពទំព័របានអាប់ដេត",
+    "authorPageReceivedUpdate": "ទំព័រអ្នកនិពន្ធរបស់អ្នកមានការអាប់ដេតថ្មី។",
+    "pageToolsOverview": "ទិដ្ឋភាពឧបករណ៍ទំព័រ",
+    "liveData": "ទិន្នន័យផ្ទាល់",
+    "activeTools": "ឧបករណ៍សកម្ម",
+    "customLinks": "តំណផ្ទាល់ខ្លួន",
+    "pinnedItems": "ធាតុដែលបានខ្ទាស់",
+    "profileCompletion": "ភាពពេញលេញនៃប្រវត្តិរូប",
+    "quickAccess": "ចូលប្រើរហ័ស",
+    "viewAll": "មើលទាំងអស់",
+    "editInfo": "កែព័ត៌មាន",
+    "theme": "រចនាប័ទ្ម",
+    "links": "តំណ",
+    "pinnedPosts": "ប្រកាសដែលបានខ្ទាស់",
+    "recentChanges": "ការផ្លាស់ប្តូរថ្មីៗ",
+    "noRecentChanges": "មិនមានការផ្លាស់ប្តូរថ្មីៗ",
+    "pageUpdatesDescription": "ការអាប់ដេតទំព័រនឹងបង្ហាញនៅទីនេះ។",
+    "managePageTools": "គ្រប់គ្រងឧបករណ៍ទំព័រ"
+  },
+  "zh": {
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}}分钟前",
+    "hoursAgo": "{{count}}小时前",
+    "daysAgo": "{{count}}天前",
+    "pageActivityUpdated": "页面活动已更新",
+    "authorPageReceivedUpdate": "你的作者主页有新的更新。",
+    "pageToolsOverview": "页面工具概览",
+    "liveData": "实时数据",
+    "activeTools": "启用工具",
+    "customLinks": "自定义链接",
+    "pinnedItems": "置顶项目",
+    "profileCompletion": "资料完成度",
+    "quickAccess": "快捷入口",
+    "viewAll": "查看全部",
+    "editInfo": "编辑信息",
+    "theme": "主题",
+    "links": "链接",
+    "pinnedPosts": "置顶动态",
+    "recentChanges": "最近更改",
+    "noRecentChanges": "暂无最近更改",
+    "pageUpdatesDescription": "页面更新会显示在这里。",
+    "managePageTools": "管理页面工具"
+  },
+  "ja": {
+    "justNow": "たった今",
+    "minutesAgo": "{{count}}分前",
+    "hoursAgo": "{{count}}時間前",
+    "daysAgo": "{{count}}日前",
+    "pageActivityUpdated": "ページアクティビティが更新されました",
+    "authorPageReceivedUpdate": "作者ページに新しい更新がありました。",
+    "pageToolsOverview": "ページツール概要",
+    "liveData": "ライブデータ",
+    "activeTools": "有効なツール",
+    "customLinks": "カスタムリンク",
+    "pinnedItems": "固定アイテム",
+    "profileCompletion": "プロフィール完成度",
+    "quickAccess": "クイックアクセス",
+    "viewAll": "すべて見る",
+    "editInfo": "情報を編集",
+    "theme": "テーマ",
+    "links": "リンク",
+    "pinnedPosts": "固定投稿",
+    "recentChanges": "最近の変更",
+    "noRecentChanges": "最近の変更はありません",
+    "pageUpdatesDescription": "ページの更新がここに表示されます。",
+    "managePageTools": "ページツールを管理"
+  },
+  "ko": {
+    "justNow": "방금",
+    "minutesAgo": "{{count}}분 전",
+    "hoursAgo": "{{count}}시간 전",
+    "daysAgo": "{{count}}일 전",
+    "pageActivityUpdated": "페이지 활동이 업데이트되었습니다",
+    "authorPageReceivedUpdate": "작가 페이지에 새로운 업데이트가 있습니다.",
+    "pageToolsOverview": "페이지 도구 개요",
+    "liveData": "실시간 데이터",
+    "activeTools": "활성 도구",
+    "customLinks": "사용자 지정 링크",
+    "pinnedItems": "고정 항목",
+    "profileCompletion": "프로필 완성도",
+    "quickAccess": "빠른 실행",
+    "viewAll": "모두 보기",
+    "editInfo": "정보 수정",
+    "theme": "테마",
+    "links": "링크",
+    "pinnedPosts": "고정 게시물",
+    "recentChanges": "최근 변경",
+    "noRecentChanges": "최근 변경 사항이 없습니다",
+    "pageUpdatesDescription": "페이지 업데이트가 여기에 표시됩니다.",
+    "managePageTools": "페이지 도구 관리"
+  }
+})
+
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -15,22 +141,34 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function formatTimeAgo(value) {
-  if (!value) return 'Just now'
+function formatTimeAgo(value, t) {
+  if (!value) return t('authorDashboardPageTools.justNow')
 
   const date = new Date(value)
   const time = date.getTime()
 
-  if (Number.isNaN(time)) return 'Just now'
+  if (Number.isNaN(time)) return t('authorDashboardPageTools.justNow')
 
   const seconds = Math.max(1, Math.floor((Date.now() - time) / 1000))
 
-  if (seconds < 60) return 'Just now'
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
+  if (seconds < 60) return t('authorDashboardPageTools.justNow')
+  if (seconds < 3600) {
+    return t('authorDashboardPageTools.minutesAgo', {
+      count: Math.floor(seconds / 60),
+    })
+  }
+  if (seconds < 86400) {
+    return t('authorDashboardPageTools.hoursAgo', {
+      count: Math.floor(seconds / 3600),
+    })
+  }
+  if (seconds < 604800) {
+    return t('authorDashboardPageTools.daysAgo', {
+      count: Math.floor(seconds / 86400),
+    })
+  }
 
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(getDisplayLanguageId() || 'en', {
     month: 'short',
     day: 'numeric',
   })
@@ -85,10 +223,10 @@ function QuickTool({ icon, label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-[102px] flex-col items-center justify-center rounded-[17px] bg-white p-3 text-center shadow-sm ring-1 ring-[#ebe5f5] transition active:scale-[0.98]"
+      className="flex min-h-[102px] flex-col items-center justify-center rounded-[17px] bg-[var(--shadow-bg-surface)] p-3 text-center shadow-sm ring-1 ring-[var(--shadow-border)] transition active:scale-[0.98]"
     >
       <i className={`${icon} text-[24px] text-[#6d28d9]`} />
-      <span className="mt-3 text-[10px] font-black text-[#2d263e]">{label}</span>
+      <span className="mt-3 text-[10px] font-black text-[var(--shadow-text-primary)]">{label}</span>
     </button>
   )
 }
@@ -107,20 +245,27 @@ function getNotificationIcon(item) {
 }
 
 function RecentChangeRow({ item }) {
-  const title = item?.title || item?.message || 'Page activity updated'
-  const text = item?.title && item?.message ? item.message : 'Your Author Page received a new update.'
+  const { t } = useDisplayTranslation()
+  const title =
+    item?.title ||
+    item?.message ||
+    t('authorDashboardPageTools.pageActivityUpdated')
+  const text =
+    item?.title && item?.message
+      ? item.message
+      : t('authorDashboardPageTools.authorPageReceivedUpdate')
 
   return (
-    <div className="flex items-center gap-3 border-b border-[#eee9f7] px-3 py-3 last:border-b-0">
+    <div className="flex items-center gap-3 border-b border-[var(--shadow-border)] px-3 py-3 last:border-b-0">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-white">
         <i className={`${getNotificationIcon(item)} text-[12px]`} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="line-clamp-1 block text-[10.5px] font-black text-[#302a43]">{title}</span>
-        <span className="mt-1 line-clamp-1 block text-[8.5px] font-medium text-[#918a9e]">{text}</span>
+        <span className="line-clamp-1 block text-[10.5px] font-black text-[var(--shadow-text-primary)]">{title}</span>
+        <span className="mt-1 line-clamp-1 block text-[8.5px] font-medium text-[var(--shadow-text-secondary)]">{text}</span>
       </span>
-      <span className="shrink-0 text-[8px] font-semibold text-[#a19aaa]">
-        {formatTimeAgo(item?.created_at)}
+      <span className="shrink-0 text-[8px] font-semibold text-[var(--shadow-text-tertiary)]">
+        {formatTimeAgo(item?.created_at, t)}
       </span>
     </div>
   )
@@ -136,6 +281,7 @@ export default function AuthorDashboardPageToolsTab({
   onPinnedPosts,
   onManageTools,
 }) {
+  const { t } = useDisplayTranslation()
   const [pinnedPostCount, setPinnedPostCount] = useState(0)
   const [loadingPinnedPosts, setLoadingPinnedPosts] = useState(false)
 
@@ -177,62 +323,62 @@ export default function AuthorDashboardPageToolsTab({
     <div className="mx-auto max-w-[760px] space-y-4">
       <section className="overflow-hidden rounded-[22px] bg-gradient-to-br from-[#8b5cf6] via-[#7c3aed] to-[#6d28d9] p-4 text-white shadow-[0_16px_38px_rgba(109,40,217,0.24)]">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-[15px] font-black sm:text-[17px]">Page Tools Overview</h1>
+          <h1 className="text-[15px] font-black sm:text-[17px]">{t('authorDashboardPageTools.pageToolsOverview')}</h1>
           <span className="rounded-full bg-white/10 px-3 py-2 text-[9px] font-bold text-white ring-1 ring-white/15">
-            Live data
+            {t('authorDashboardPageTools.liveData')}
           </span>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2.5">
-          <ToolMetric icon="fa-solid fa-wrench" value="4" label="Active Tools" />
-          <ToolMetric icon="fa-solid fa-link" value={formatCompactNumber(customLinkCount)} label="Custom Links" />
+          <ToolMetric icon="fa-solid fa-wrench" value="4" label={t('authorDashboardPageTools.activeTools')} />
+          <ToolMetric icon="fa-solid fa-link" value={formatCompactNumber(customLinkCount)} label={t('authorDashboardPageTools.customLinks')} />
           <ToolMetric
             icon="fa-solid fa-thumbtack"
             value={loadingPinnedPosts ? '…' : formatCompactNumber(pinnedPostCount)}
-            label="Pinned Items"
+            label={t('authorDashboardPageTools.pinnedItems')}
           />
           <ToolMetric
             icon="fa-solid fa-circle-check"
             value={`${Math.max(0, Math.min(100, Number(profileCompletion || 0)))}%`}
-            label="Profile Completion"
+            label={t('authorDashboardPageTools.profileCompletion')}
           />
         </div>
       </section>
 
-      <section className="rounded-[22px] bg-white p-4 shadow-[0_10px_30px_rgba(105,82,160,0.08)] ring-1 ring-[#eee9f7]">
+      <section className="rounded-[22px] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_30px_rgba(105,82,160,0.08)] ring-1 ring-[var(--shadow-border)]">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-[14px] font-black text-[#2b253b] sm:text-[16px]">Quick Access</h2>
+          <h2 className="text-[14px] font-black text-[var(--shadow-text-primary)] sm:text-[16px]">{t('authorDashboardPageTools.quickAccess')}</h2>
           <button
             type="button"
             onClick={onManageTools}
             className="text-[10px] font-bold text-[#8b5cf6] active:opacity-70"
           >
-            View All
+            {t('authorDashboardPageTools.viewAll')}
           </button>
         </div>
 
         <div className="mt-3 grid grid-cols-4 gap-2.5">
-          <QuickTool icon="fa-solid fa-pencil" label="Edit Info" onClick={onEditInfo} />
-          <QuickTool icon="fa-solid fa-paint-roller" label="Theme" onClick={onTheme} />
-          <QuickTool icon="fa-solid fa-link" label="Links" onClick={onLinks} />
-          <QuickTool icon="fa-solid fa-thumbtack" label="Pinned Posts" onClick={onPinnedPosts} />
+          <QuickTool icon="fa-solid fa-pencil" label={t('authorDashboardPageTools.editInfo')} onClick={onEditInfo} />
+          <QuickTool icon="fa-solid fa-paint-roller" label={t('authorDashboardPageTools.theme')} onClick={onTheme} />
+          <QuickTool icon="fa-solid fa-link" label={t('authorDashboardPageTools.links')} onClick={onLinks} />
+          <QuickTool icon="fa-solid fa-thumbtack" label={t('authorDashboardPageTools.pinnedPosts')} onClick={onPinnedPosts} />
         </div>
       </section>
 
-      <section className="rounded-[22px] bg-white p-4 shadow-[0_10px_30px_rgba(105,82,160,0.08)] ring-1 ring-[#eee9f7]">
-        <h2 className="text-[14px] font-black text-[#2b253b] sm:text-[16px]">Recent Changes</h2>
+      <section className="rounded-[22px] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_30px_rgba(105,82,160,0.08)] ring-1 ring-[var(--shadow-border)]">
+        <h2 className="text-[14px] font-black text-[var(--shadow-text-primary)] sm:text-[16px]">{t('authorDashboardPageTools.recentChanges')}</h2>
 
-        <div className="mt-3 overflow-hidden rounded-[17px] ring-1 ring-[#eee9f7]">
+        <div className="mt-3 overflow-hidden rounded-[17px] ring-1 ring-[var(--shadow-border)]">
           {recentChanges.length ? (
             recentChanges.map((item) => <RecentChangeRow key={item.id} item={item} />)
           ) : (
             <div className="flex min-h-[170px] flex-col items-center justify-center px-5 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f2ecff] text-[#8b5cf6]">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f2ecff] text-[#8b5cf6] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]">
                 <i className="fa-regular fa-clock text-[18px]" />
               </span>
-              <div className="mt-3 text-[12px] font-bold text-[#302a43]">No recent changes</div>
-              <div className="mt-1 text-[10px] font-medium text-[#918a9e]">
-                Page updates will appear here.
+              <div className="mt-3 text-[12px] font-bold text-[var(--shadow-text-primary)]">{t('authorDashboardPageTools.noRecentChanges')}</div>
+              <div className="mt-1 text-[10px] font-medium text-[var(--shadow-text-secondary)]">
+                {t('authorDashboardPageTools.pageUpdatesDescription')}
               </div>
             </div>
           )}
@@ -245,7 +391,7 @@ export default function AuthorDashboardPageToolsTab({
         className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] bg-gradient-to-r from-[#8b5cf6] to-[#6d28d9] text-[12px] font-bold text-white shadow-[0_12px_28px_rgba(124,58,237,0.25)] active:scale-[0.99]"
       >
         <i className="fa-solid fa-screwdriver-wrench text-[13px]" />
-        Manage Page Tools
+        {t('authorDashboardPageTools.managePageTools')}
       </button>
     </div>
   )
