@@ -23,7 +23,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const DISCOVER_STORY_CACHE_MAX_AGE_MS =
-  3 * 60 * 1000
+  5 * 60 * 1000
 
 const discoverStoryInflightRequests =
   new Map()
