@@ -619,6 +619,9 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
   const [editingId, setEditingId] = useState('')
   const [selectedPlatform, setSelectedPlatform] = useState('facebook')
   const [draft, setDraft] = useState('')
+  const chooserDragStartRef = useRef(null)
+  const chooserDragCurrentRef = useRef(0)
+  const [chooserDragY, setChooserDragY] = useState(0)
 
   useEffect(() => {
     if (!open) return
@@ -627,7 +630,15 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
     setEditingId('')
     setSelectedPlatform('facebook')
     setDraft('')
+    setChooserDragY(0)
   }, [open])
+
+  useEffect(() => {
+    if (chooserOpen) return
+    chooserDragStartRef.current = null
+    chooserDragCurrentRef.current = 0
+    setChooserDragY(0)
+  }, [chooserOpen])
 
   if (!open) return null
 
@@ -635,11 +646,16 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
   const links = savedLinks.length ? savedLinks : extractLegacySocialLinks(legacyValue)
   const selected = getSocialPlatform(selectedPlatform)
 
+  const closeChooser = () => {
+    setChooserOpen(false)
+    setChooserDragY(0)
+  }
+
   const startAdd = (platformKey) => {
     setSelectedPlatform(platformKey)
     setEditingId('')
     setDraft('')
-    setChooserOpen(false)
+    closeChooser()
     setScreen('edit')
   }
 
@@ -647,7 +663,7 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
     setSelectedPlatform(item.platform)
     setEditingId(item.id)
     setDraft(item.value || item.url || item.display_name || '')
-    setChooserOpen(false)
+    closeChooser()
     setScreen('edit')
   }
 
@@ -683,34 +699,60 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
     closeEdit()
   }
 
+  const handleChooserPointerStart = (event) => {
+    chooserDragStartRef.current = event.clientY
+    chooserDragCurrentRef.current = 0
+  }
+
+  const handleChooserPointerMove = (event) => {
+    if (chooserDragStartRef.current === null) return
+    const delta = Math.max(0, event.clientY - chooserDragStartRef.current)
+    chooserDragCurrentRef.current = delta
+    setChooserDragY(delta)
+  }
+
+  const handleChooserPointerEnd = () => {
+    if (chooserDragStartRef.current === null) return
+    const delta = chooserDragCurrentRef.current
+    chooserDragStartRef.current = null
+    chooserDragCurrentRef.current = 0
+
+    if (delta > 90) {
+      closeChooser()
+      return
+    }
+
+    setChooserDragY(0)
+  }
+
   if (screen === 'edit') {
     return (
       <div className="fixed inset-0 z-[90] bg-white dark:bg-[#18191c]">
-        <div className="mx-auto flex h-[100dvh] w-full max-w-[560px] flex-col bg-white text-[#111318] dark:bg-[#18191c] dark:text-white">
-          <div className="relative flex h-16 shrink-0 items-center justify-center border-b border-black/5 px-4 dark:border-white/10">
+        <div className="mx-auto flex min-h-[100dvh] w-full max-w-[560px] flex-col bg-white text-[#111318] dark:bg-[#18191c] dark:text-white">
+          <div className="relative flex h-14 shrink-0 items-center justify-center px-4">
             <button
               type="button"
               onClick={closeEdit}
-              className="absolute left-4 flex h-10 w-10 items-center justify-center rounded-full text-2xl"
+              className="absolute left-3 flex h-9 w-9 items-center justify-center rounded-full text-[#111318] dark:text-white"
               aria-label="Back"
             >
-              <i className="fa-solid fa-chevron-left text-[20px]" />
+              <i className="fa-solid fa-chevron-left text-[18px]" />
             </button>
-            <h2 className="text-[18px] font-bold">
+            <h2 className="text-[16px] font-medium">
               {editingId ? socialText('editLink') : socialText('addLink')}
             </h2>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 pb-28 pt-8">
-            <div className="mb-8 flex flex-col items-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-black/10 text-[34px] dark:border-white/15">
+          <div className="flex-1 overflow-y-auto px-4 pb-24 pt-4">
+            <div className="mb-6 flex flex-col items-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[28px] dark:bg-[#2a2b2f]">
                 <i className={selected.icon} />
               </div>
-              <div className="mt-3 text-[20px] font-bold">{selected.label}</div>
+              <div className="mt-3 text-[18px] font-normal">{selected.label}</div>
             </div>
 
             <label className="block">
-              <span className="mb-2 block text-[14px] font-medium text-[#65676b] dark:text-[#b0b3b8]">
+              <span className="mb-2 block text-[13px] font-normal text-[#65676b] dark:text-[#b0b3b8]">
                 {socialText('inputLabel')}
               </span>
               <input
@@ -719,7 +761,7 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={socialText('inputPlaceholder')}
                 autoFocus
-                className="h-12 w-full rounded-xl border border-black/10 bg-white px-4 text-[16px] outline-none placeholder:text-[#9ca3af] focus:border-[#1877f2] dark:border-white/15 dark:bg-[#242526] dark:text-white"
+                className="h-11 w-full rounded-[14px] bg-[#f3f4f6] px-4 text-[15px] font-normal outline-none placeholder:text-[#9ca3af] focus:bg-white focus:ring-1 focus:ring-[#1877f2] dark:bg-[#242526] dark:text-white"
               />
             </label>
 
@@ -727,20 +769,20 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
               <button
                 type="button"
                 onClick={removeLink}
-                className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#e4e6eb] text-[16px] font-semibold text-[#111318] dark:bg-[#3a3b3c] dark:text-white"
+                className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-[#e4e6eb] text-[15px] font-normal text-[#111318] dark:bg-[#3a3b3c] dark:text-white"
               >
-                <i className="fa-solid fa-trash" />
+                <i className="fa-solid fa-trash text-[14px]" />
                 {socialText('remove')}
               </button>
             ) : null}
           </div>
 
-          <div className="shrink-0 border-t border-black/5 bg-white p-4 dark:border-white/10 dark:bg-[#18191c]">
+          <div className="shrink-0 bg-white px-4 pb-5 pt-3 dark:bg-[#18191c]">
             <button
               type="button"
               onClick={saveDraft}
               disabled={!draft.trim()}
-              className="h-12 w-full rounded-lg bg-[#1877f2] text-[16px] font-semibold text-white disabled:bg-[#e4e6eb] disabled:text-[#a8abb0] dark:disabled:bg-[#3a3b3c] dark:disabled:text-[#777b80]"
+              className="h-11 w-full rounded-[14px] bg-[#1877f2] text-[15px] font-medium text-white disabled:bg-[#e4e6eb] disabled:text-[#a8abb0] dark:disabled:bg-[#3a3b3c] dark:disabled:text-[#777b80]"
             >
               {socialText('save')}
             </button>
@@ -752,48 +794,48 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
 
   return (
     <div className="fixed inset-0 z-[90] bg-white dark:bg-[#18191c]">
-      <div className="mx-auto flex h-[100dvh] w-full max-w-[560px] flex-col bg-white text-[#111318] dark:bg-[#18191c] dark:text-white">
-        <div className="relative flex h-16 shrink-0 items-center justify-center border-b border-black/5 px-4 dark:border-white/10">
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[560px] flex-col bg-white text-[#111318] dark:bg-[#18191c] dark:text-white">
+        <div className="relative flex h-14 shrink-0 items-center justify-center px-4">
           <button
             type="button"
             onClick={onClose}
-            className="absolute left-4 flex h-10 w-10 items-center justify-center rounded-full"
+            className="absolute left-3 flex h-9 w-9 items-center justify-center rounded-full text-[#111318] dark:text-white"
             aria-label="Close"
           >
-            <i className="fa-solid fa-xmark text-[22px]" />
+            <i className="fa-solid fa-xmark text-[20px]" />
           </button>
-          <h2 className="text-[18px] font-bold">{socialText('title')}</h2>
+          <h2 className="text-[16px] font-medium">{socialText('title')}</h2>
         </div>
 
-        <div className="shrink-0 border-b border-black/5 px-4 pb-4 pt-3 dark:border-white/10">
+        <div className="shrink-0 px-4 pb-3 pt-2">
           <button
             type="button"
             onClick={() => setChooserOpen(true)}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#e4e6eb] text-[18px] font-semibold text-[#111318] dark:bg-[#3a3b3c] dark:text-white"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-[#e4e6eb] text-[16px] font-normal text-[#111318] dark:bg-[#3a3b3c] dark:text-white"
           >
-            <i className="fa-solid fa-plus text-[18px]" />
+            <i className="fa-solid fa-plus text-[16px]" />
             {socialText('add')}
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-8 pt-5">
-          <h3 className="mb-4 text-[20px] font-bold">{socialText('linksTitle')}</h3>
+        <div className="flex-1 overflow-y-auto px-4 pb-6 pt-2">
+          <h3 className="mb-3 text-[16px] font-medium">{socialText('linksTitle')}</h3>
 
           {links.length ? (
             <div className="space-y-1">
               {links.map((item) => {
                 const platform = getSocialPlatform(item.platform)
                 return (
-                  <div key={item.id} className="flex min-h-[72px] items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center text-[27px]">
+                  <div key={item.id} className="flex min-h-[64px] items-center gap-3 rounded-[14px] px-1">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center text-[23px]">
                       <i className={platform.icon} />
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[17px] font-medium">
+                      <div className="truncate text-[15px] font-normal text-[#111318] dark:text-white">
                         {item.display_name || item.value || platform.label}
                       </div>
-                      <div className="mt-0.5 text-[14px] text-[#65676b] dark:text-[#b0b3b8]">
+                      <div className="mt-0.5 text-[13px] font-normal text-[#65676b] dark:text-[#b0b3b8]">
                         {platform.label}
                       </div>
                     </div>
@@ -801,17 +843,17 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
                     <button
                       type="button"
                       onClick={() => startEdit(item)}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#65676b] dark:text-[#b0b3b8]"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center text-[#65676b] dark:text-[#b0b3b8]"
                       aria-label={`Edit ${platform.label}`}
                     >
-                      <i className="fa-solid fa-pen text-[18px]" />
+                      <i className="fa-solid fa-pen text-[15px]" />
                     </button>
                   </div>
                 )
               })}
             </div>
           ) : (
-            <div className="py-12 text-center text-[15px] text-[#65676b] dark:text-[#b0b3b8]">
+            <div className="py-10 text-center text-[14px] font-normal text-[#65676b] dark:text-[#b0b3b8]">
               {socialText('empty')}
             </div>
           )}
@@ -819,31 +861,43 @@ function SocialMediaModal({ open, value, legacyValue = '', onClose, onChange }) 
       </div>
 
       {chooserOpen ? (
-        <div className="fixed inset-0 z-[100] flex items-end bg-black/40" onClick={() => setChooserOpen(false)}>
+        <div className="fixed inset-0 z-[100] flex items-end bg-black/30" onClick={closeChooser}>
           <div
-            className="mx-auto max-h-[78dvh] w-full max-w-[560px] overflow-hidden rounded-t-[24px] bg-[#f0f2f5] text-[#111318] shadow-2xl dark:bg-[#242526] dark:text-white"
+            className="w-full rounded-t-[24px] bg-white px-4 pb-5 pt-2 text-[#111318] shadow-2xl dark:bg-[#242526] dark:text-white"
             onClick={(event) => event.stopPropagation()}
+            onPointerMove={handleChooserPointerMove}
+            onPointerUp={handleChooserPointerEnd}
+            onPointerCancel={handleChooserPointerEnd}
+            style={{
+              transform: `translateY(${chooserDragY}px)`,
+              transition: chooserDragStartRef.current === null ? 'transform 180ms ease' : 'none',
+            }}
           >
-            <div className="flex justify-center pt-3">
-              <div className="h-1.5 w-12 rounded-full bg-[#8a8d91]" />
-            </div>
+            <button
+              type="button"
+              onPointerDown={handleChooserPointerStart}
+              className="flex w-full touch-none justify-center pb-2 pt-1"
+              aria-label="Drag to close"
+            >
+              <span className="h-1.5 w-11 rounded-full bg-[#9aa0a6]" />
+            </button>
 
-            <div className="px-5 pb-3 pt-4 text-center text-[20px] font-bold">
+            <div className="pb-3 text-center text-[16px] font-medium">
               {socialText('selectPlatform')}
             </div>
 
-            <div className="max-h-[65dvh] overflow-y-auto bg-white px-4 py-2 dark:bg-[#18191c]">
+            <div className="max-h-[62dvh] overflow-y-auto pb-1">
               {SOCIAL_PLATFORMS.map((platform) => (
                 <button
                   key={platform.key}
                   type="button"
                   onClick={() => startAdd(platform.key)}
-                  className="flex h-16 w-full items-center gap-4 border-b border-black/5 text-left last:border-b-0 dark:border-white/10"
+                  className="flex min-h-[56px] w-full items-center gap-4 rounded-[14px] px-1 text-left active:bg-[#f5f6f7] dark:active:bg-[#3a3b3c]"
                 >
-                  <span className="flex h-10 w-10 items-center justify-center text-[27px]">
+                  <span className="flex h-9 w-9 items-center justify-center text-[23px]">
                     <i className={platform.icon} />
                   </span>
-                  <span className="text-[17px] font-medium">{platform.label}</span>
+                  <span className="text-[15px] font-normal">{platform.label}</span>
                 </button>
               ))}
             </div>
