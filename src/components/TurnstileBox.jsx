@@ -1,6 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('turnstileBox', {
+  "en": {
+    "missingSiteKey": "Turnstile site key is missing."
+  },
+  "km": {
+    "missingSiteKey": "មិនមាន Turnstile site key ទេ។"
+  },
+  "zh": {
+    "missingSiteKey": "缺少 Turnstile site key。"
+  },
+  "ja": {
+    "missingSiteKey": "Turnstile site key がありません。"
+  },
+  "ko": {
+    "missingSiteKey": "Turnstile site key가 없습니다."
+  }
+})
+
 
 export default function TurnstileBox({ siteKey, refreshKey, onVerify, onExpire, onError }) {
+  const { t } = useDisplayTranslation()
   const containerRef = useRef(null)
   const widgetRef = useRef(null)
   const callbacksRef = useRef({ onVerify, onExpire, onError })
@@ -58,7 +80,7 @@ export default function TurnstileBox({ siteKey, refreshKey, onVerify, onExpire, 
   if (!siteKey) {
     return (
       <div className="rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
-        Turnstile site key is missing.
+        {t('turnstileBox.missingSiteKey')}
       </div>
     )
   }
