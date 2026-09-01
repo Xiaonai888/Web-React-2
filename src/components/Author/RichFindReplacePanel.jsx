@@ -1,4 +1,60 @@
 import { useMemo, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('richFindReplacePanel', {
+  "en": {
+    "title": "Find & Replace",
+    "zeroFound": "0 found",
+    "find": "Find",
+    "replace": "Replace",
+    "matchCase": "Match case",
+    "replaceCurrent": "Replace current",
+    "replaceAll": "Replace all",
+    "moreOptions": "More options"
+  },
+  "km": {
+    "title": "ស្វែងរក និងជំនួស",
+    "zeroFound": "រកមិនឃើញ",
+    "find": "ស្វែងរក",
+    "replace": "ជំនួស",
+    "matchCase": "ផ្គូផ្គងអក្សរធំតូច",
+    "replaceCurrent": "ជំនួសមួយនេះ",
+    "replaceAll": "ជំនួសទាំងអស់",
+    "moreOptions": "ជម្រើសបន្ថែម"
+  },
+  "zh": {
+    "title": "查找和替换",
+    "zeroFound": "未找到",
+    "find": "查找",
+    "replace": "替换",
+    "matchCase": "区分大小写",
+    "replaceCurrent": "替换当前项",
+    "replaceAll": "全部替换",
+    "moreOptions": "更多选项"
+  },
+  "ja": {
+    "title": "検索と置換",
+    "zeroFound": "0件",
+    "find": "検索",
+    "replace": "置換",
+    "matchCase": "大文字小文字を区別",
+    "replaceCurrent": "現在を置換",
+    "replaceAll": "すべて置換",
+    "moreOptions": "その他のオプション"
+  },
+  "ko": {
+    "title": "찾기 및 바꾸기",
+    "zeroFound": "0개 찾음",
+    "find": "찾기",
+    "replace": "바꾸기",
+    "matchCase": "대소문자 구분",
+    "replaceCurrent": "현재 항목 바꾸기",
+    "replaceAll": "모두 바꾸기",
+    "moreOptions": "추가 옵션"
+  }
+})
+
 
 function getTextNodes(root) {
   if (!root || typeof document === 'undefined') return []
@@ -109,6 +165,7 @@ export default function RichFindReplacePanel({
   onChange,
   onMoreOptions,
 }) {
+  const { t } = useDisplayTranslation()
   const [findText, setFindText] = useState('')
   const [replaceText, setReplaceText] = useState('')
   const [matchCase, setMatchCase] = useState(false)
@@ -186,23 +243,23 @@ export default function RichFindReplacePanel({
 
   return (
     <div className="fixed inset-0 z-[170] flex items-end bg-black/35 sm:items-center sm:justify-center sm:px-4">
-      <div className="w-full rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:max-w-[520px] sm:rounded-[18px]">
+      <div className="w-full rounded-t-[18px] bg-[var(--shadow-bg-surface)] px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:max-w-[520px] sm:rounded-[18px]">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center text-[#111827] active:scale-95"
+            className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Close search"
           >
             <i className="fa-solid fa-xmark text-[14px]" />
           </button>
 
-          <h2 className="min-w-0 flex-1 text-[14px] font-bold text-[#111827]">
-            Find & Replace
+          <h2 className="min-w-0 flex-1 text-[14px] font-bold text-[var(--shadow-text-primary)]">
+            {t('richFindReplacePanel.title')}
           </h2>
 
-          <div className="text-[11px] font-bold text-[#8d94a1]">
-            {matches.length ? `${currentIndex + 1} / ${matches.length}` : '0 found'}
+          <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">
+            {matches.length ? `${currentIndex + 1} / ${matches.length}` : t('richFindReplacePanel.zeroFound')}
           </div>
         </div>
 
@@ -216,9 +273,9 @@ export default function RichFindReplacePanel({
               setFindText(event.currentTarget.value)
               setActiveIndex(0)
             }}
-            placeholder="Find"
+            placeholder={t('richFindReplacePanel.find')}
             autoFocus
-            className="h-11 rounded-[10px] bg-[#f7f7fa] px-3 text-[14px] text-[#111827] outline-none"
+            className="h-11 rounded-[10px] bg-[var(--shadow-input-bg)] px-3 text-[14px] text-[var(--shadow-text-primary)] outline-none"
           />
 
           <input
@@ -229,8 +286,8 @@ export default function RichFindReplacePanel({
               setIsReplaceComposing(false)
               setReplaceText(event.currentTarget.value)
             }}
-            placeholder="Replace"
-            className="h-11 rounded-[10px] bg-[#f7f7fa] px-3 text-[14px] text-[#111827] outline-none"
+            placeholder={t('richFindReplacePanel.replace')}
+            className="h-11 rounded-[10px] bg-[var(--shadow-input-bg)] px-3 text-[14px] text-[var(--shadow-text-primary)] outline-none"
           />
         </div>
 
@@ -240,11 +297,11 @@ export default function RichFindReplacePanel({
             onClick={handleMatchCase}
             className={`h-9 rounded-full px-3 text-[11px] font-bold active:scale-95 ${
               matchCase
-                ? 'bg-[#111827] text-white'
-                : 'bg-[#f2f4f7] text-[#555b66]'
+                ? 'bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]'
+                : 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]'
             }`}
           >
-            Match case
+            {t('richFindReplacePanel.matchCase')}
           </button>
 
           <div className="flex items-center gap-1">
@@ -252,7 +309,7 @@ export default function RichFindReplacePanel({
               type="button"
               onClick={() => goToMatch('previous')}
               disabled={!matches.length || isFindComposing || isReplaceComposing}
-              className="flex h-9 w-9 items-center justify-center text-[#111827] disabled:opacity-35"
+              className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-primary)] disabled:opacity-35"
               aria-label="Previous match"
             >
               <i className="fa-solid fa-chevron-up text-[12px]" />
@@ -262,7 +319,7 @@ export default function RichFindReplacePanel({
               type="button"
               onClick={() => goToMatch('next')}
               disabled={!matches.length || isFindComposing || isReplaceComposing}
-              className="flex h-9 w-9 items-center justify-center text-[#111827] disabled:opacity-35"
+              className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-primary)] disabled:opacity-35"
               aria-label="Next match"
             >
               <i className="fa-solid fa-chevron-down text-[12px]" />
@@ -275,18 +332,18 @@ export default function RichFindReplacePanel({
             type="button"
             onClick={replaceCurrent}
             disabled={replaceDisabled}
-            className="h-11 rounded-full bg-[#f2f4f7] text-[12px] font-bold text-[#111827] active:scale-95 disabled:opacity-40"
+            className="h-11 rounded-full bg-[var(--shadow-bg-soft)] text-[12px] font-bold text-[var(--shadow-text-primary)] active:scale-95 disabled:opacity-40"
           >
-            Replace current
+            {t('richFindReplacePanel.replaceCurrent')}
           </button>
 
           <button
             type="button"
             onClick={replaceAll}
             disabled={replaceDisabled}
-            className="h-11 rounded-full bg-[#111827] text-[12px] font-bold text-white active:scale-95 disabled:bg-[#9ca3af]"
+            className="h-11 rounded-full bg-[#111827] text-[12px] font-bold text-white active:scale-95 disabled:bg-[#9ca3af] dark:bg-white dark:text-[#111827] dark:disabled:bg-[#9ca3af]"
           >
-            Replace all
+            {t('richFindReplacePanel.replaceAll')}
           </button>
         </div>
 
@@ -294,9 +351,9 @@ export default function RichFindReplacePanel({
           type="button"
           onClick={() => onMoreOptions?.()}
           aria-disabled={!onMoreOptions}
-          className="mx-auto mt-4 block px-3 py-1 text-center text-[11px] font-semibold text-[#9aa1ad] active:opacity-60"
+          className="mx-auto mt-4 block px-3 py-1 text-center text-[11px] font-semibold text-[var(--shadow-text-tertiary)] active:opacity-60"
         >
-          More options
+          {t('richFindReplacePanel.moreOptions')}
         </button>
       </div>
     </div>
