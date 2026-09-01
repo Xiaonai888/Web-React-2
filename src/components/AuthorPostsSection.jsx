@@ -382,6 +382,249 @@ function getAuthToken() {
     ''
   )
 }
+
+const AUTHOR_POST_VIEW_CACHE_TTL_MS =
+  30 * 60 * 1000
+const AUTHOR_POST_VIEW_BATCH_DELAY_MS = 1500
+const AUTHOR_POST_VIEW_BATCH_SIZE = 10
+const AUTHOR_POST_VIEW_BATCH_LIMIT = 50
+
+const authorPostViewQueue = new Set()
+let authorPostViewBatchTimer = null
+let authorPostViewFlushInFlight = false
+let authorPostViewCacheScope = ''
+let authorPostViewCache = {}
+
+function getAuthorPostViewCacheScope() {
+  const token = getAuthToken()
+
+  if (!token) return 'anon'
+
+  let hash = 2166136261
+
+  for (
+    let index = 0;
+    index < token.length;
+    index += 1
+  ) {
+    hash ^= token.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return `user_${(hash >>> 0).toString(36)}`
+}
+
+function getAuthorPostViewCacheStorageKey() {
+  return `shadow_author_post_view_cache_v1:${getAuthorPostViewCacheScope()}`
+}
+
+function loadAuthorPostViewCache() {
+  const scope = getAuthorPostViewCacheScope()
+
+  if (authorPostViewCacheScope === scope) {
+    return authorPostViewCache
+  }
+
+  authorPostViewCacheScope = scope
+  authorPostViewCache = {}
+
+  try {
+    const raw = localStorage.getItem(
+      getAuthorPostViewCacheStorageKey()
+    )
+
+    const parsed = raw
+      ? JSON.parse(raw)
+      : {}
+
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed)
+    ) {
+      authorPostViewCache = parsed
+    }
+  } catch {
+    authorPostViewCache = {}
+  }
+
+  return authorPostViewCache
+}
+
+function saveAuthorPostViewCache() {
+  try {
+    const now = Date.now()
+
+    const entries = Object.entries(
+      authorPostViewCache
+    )
+      .filter(
+        ([, timestamp]) =>
+          now - Number(timestamp || 0) <
+          AUTHOR_POST_VIEW_CACHE_TTL_MS
+      )
+      .sort(
+        (a, b) =>
+          Number(b[1] || 0) -
+          Number(a[1] || 0)
+      )
+      .slice(0, 500)
+
+    authorPostViewCache =
+      Object.fromEntries(entries)
+
+    localStorage.setItem(
+      getAuthorPostViewCacheStorageKey(),
+      JSON.stringify(authorPostViewCache)
+    )
+  } catch {}
+}
+
+function hasRecentAuthorPostView(postId) {
+  const id = String(postId || '').trim()
+
+  if (!id) return true
+
+  const cache = loadAuthorPostViewCache()
+
+  const timestamp = Number(
+    cache[id] || 0
+  )
+
+  return (
+    timestamp > 0 &&
+    Date.now() - timestamp <
+      AUTHOR_POST_VIEW_CACHE_TTL_MS
+  )
+}
+
+function markAuthorPostViewsCached(postIds) {
+  const cache = loadAuthorPostViewCache()
+  const now = Date.now()
+
+  for (const postId of postIds) {
+    const id = String(postId || '').trim()
+
+    if (id) {
+      cache[id] = now
+    }
+  }
+
+  authorPostViewCache = cache
+  saveAuthorPostViewCache()
+}
+
+function scheduleAuthorPostViewFlush() {
+  if (authorPostViewBatchTimer) return
+
+  authorPostViewBatchTimer =
+    window.setTimeout(() => {
+      authorPostViewBatchTimer = null
+      void flushAuthorPostViews()
+    }, AUTHOR_POST_VIEW_BATCH_DELAY_MS)
+}
+
+async function flushAuthorPostViews() {
+  if (authorPostViewFlushInFlight) {
+    scheduleAuthorPostViewFlush()
+    return
+  }
+
+  const postIds = [
+    ...authorPostViewQueue,
+  ].slice(
+    0,
+    AUTHOR_POST_VIEW_BATCH_LIMIT
+  )
+
+  if (!postIds.length) return
+
+  for (const postId of postIds) {
+    authorPostViewQueue.delete(postId)
+  }
+
+  authorPostViewFlushInFlight = true
+
+  try {
+    const token = getAuthToken()
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/page/posts/views/batch`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'application/json',
+          ...(token
+            ? {
+                Authorization:
+                  `Bearer ${token}`,
+              }
+            : {}),
+        },
+        body: JSON.stringify({
+          post_ids: postIds,
+          source: 'author_page',
+        }),
+        keepalive: true,
+      }
+    )
+
+    const data = await response
+      .json()
+      .catch(() => ({}))
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.message ||
+          'Failed to record post views'
+      )
+    }
+
+    markAuthorPostViewsCached(postIds)
+  } catch {
+  } finally {
+    authorPostViewFlushInFlight = false
+
+    if (authorPostViewQueue.size) {
+      scheduleAuthorPostViewFlush()
+    }
+  }
+}
+
+function queueAuthorPostView(postId) {
+  const id = String(postId || '').trim()
+
+  if (
+    !id ||
+    hasRecentAuthorPostView(id)
+  ) {
+    return
+  }
+
+  authorPostViewQueue.add(id)
+
+  if (
+    authorPostViewQueue.size >=
+    AUTHOR_POST_VIEW_BATCH_SIZE
+  ) {
+    if (authorPostViewBatchTimer) {
+      window.clearTimeout(
+        authorPostViewBatchTimer
+      )
+      authorPostViewBatchTimer = null
+    }
+
+    void flushAuthorPostViews()
+    return
+  }
+
+  scheduleAuthorPostViewFlush()
+}
+
 const POST_TOKEN_PATTERN = /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
 const POST_URL_ONLY_PATTERN = /^https?:\/\/[^\s]+$/i
 const POST_HASHTAG_ONLY_PATTERN = /^#[\p{L}\p{N}\p{M}_]+$/u
@@ -828,40 +1071,53 @@ useEffect(() => {
 
     const viewRef = useRef(null)
 
-  useEffect(() => {
-    const node = viewRef.current
-    const postId = post?.id
+useEffect(() => {
+  const node = viewRef.current
 
-    if (!node || !postId || isOwner) return undefined
+  const postId = String(
+    post?.id || ''
+  ).trim()
 
-    let viewTimer = null
-    let recorded = false
+  if (
+    !node ||
+    !postId ||
+    isOwner ||
+    hasRecentAuthorPostView(postId)
+  ) {
+    return undefined
+  }
 
-    const observer = new IntersectionObserver(
+  let viewTimer = null
+  let queued = false
+
+  const observer =
+    new IntersectionObserver(
       ([entry]) => {
-        if (recorded) return
+        if (queued) return
 
-        if (entry?.isIntersecting && entry.intersectionRatio >= 0.5) {
+        if (
+          entry?.isIntersecting &&
+          entry.intersectionRatio >= 0.5
+        ) {
           if (viewTimer) return
 
-          viewTimer = window.setTimeout(() => {
-            recorded = true
-            viewTimer = null
-            observer.disconnect()
+          viewTimer =
+            window.setTimeout(() => {
+              viewTimer = null
 
-            const token = getAuthToken()
-
-            fetch(
-              `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/views?source=author_page`,
-              {
-                method: 'POST',
-                headers: token
-                  ? { Authorization: `Bearer ${token}` }
-                  : {},
-                keepalive: true,
+              if (
+                hasRecentAuthorPostView(
+                  postId
+                )
+              ) {
+                observer.disconnect()
+                return
               }
-            ).catch(() => {})
-          }, 1000)
+
+              queued = true
+              queueAuthorPostView(postId)
+              observer.disconnect()
+            }, 1000)
 
           return
         }
@@ -871,16 +1127,21 @@ useEffect(() => {
           viewTimer = null
         }
       },
-      { threshold: [0, 0.5, 1] }
+      {
+        threshold: [0, 0.5, 1],
+      }
     )
 
-    observer.observe(node)
+  observer.observe(node)
 
-    return () => {
-      observer.disconnect()
-      if (viewTimer) window.clearTimeout(viewTimer)
+  return () => {
+    observer.disconnect()
+
+    if (viewTimer) {
+      window.clearTimeout(viewTimer)
     }
-  }, [isOwner, post?.id])
+  }
+}, [isOwner, post?.id])
 
   return (
     <article
