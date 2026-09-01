@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const PLATFORM_META = {
   facebook: { label: 'Facebook', icon: 'fa-brands fa-facebook-f' },
@@ -145,6 +145,10 @@ export default function AuthorSocialMediaPopup({
   onClose,
   onEdit,
 }) {
+  const dragStartRef = useRef(null)
+  const dragCurrentRef = useRef(0)
+  const [dragY, setDragY] = useState(0)
+
   const items = useMemo(() => {
     const current = normalizeLinks(links)
     return current.length ? current : normalizeLegacyLinks(legacyValue)
@@ -155,6 +159,7 @@ export default function AuthorSocialMediaPopup({
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    setDragY(0)
 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose?.()
@@ -170,8 +175,36 @@ export default function AuthorSocialMediaPopup({
 
   if (!open) return null
 
+  const handlePointerDown = (event) => {
+    dragStartRef.current = event.clientY
+    dragCurrentRef.current = 0
+  }
+
+  const handlePointerMove = (event) => {
+    if (dragStartRef.current === null) return
+
+    const delta = Math.max(0, event.clientY - dragStartRef.current)
+    dragCurrentRef.current = delta
+    setDragY(delta)
+  }
+
+  const handlePointerEnd = () => {
+    if (dragStartRef.current === null) return
+
+    const delta = dragCurrentRef.current
+    dragStartRef.current = null
+    dragCurrentRef.current = 0
+
+    if (delta > 90) {
+      onClose?.()
+      return
+    }
+
+    setDragY(0)
+  }
+
   return (
-    <div className="fixed inset-0 z-[500] flex items-end justify-center bg-black/55 sm:items-center sm:px-4">
+    <div className="fixed inset-0 z-[500] flex items-end justify-center bg-black/30">
       <button
         type="button"
         aria-label="Close social media"
@@ -179,76 +212,78 @@ export default function AuthorSocialMediaPopup({
         className="absolute inset-0 cursor-default"
       />
 
-      <section className="relative z-10 w-full max-w-[500px] overflow-hidden rounded-t-[24px] bg-white shadow-2xl sm:rounded-[16px] dark:bg-[#242526]">
-        <header className="relative flex min-h-[58px] items-center justify-center border-b border-black/10 px-14 dark:border-white/10">
-          <h2 className="text-[18px] font-bold text-[#111318] dark:text-white">
-            Social media
-          </h2>
+      <section
+        className="relative z-10 w-full max-w-[520px] rounded-t-[28px] bg-[#e9eaed] px-3 pb-[max(14px,env(safe-area-inset-bottom))] pt-2 shadow-2xl dark:bg-[#18191c]"
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: dragStartRef.current === null ? 'transform 180ms ease' : 'none',
+        }}
+      >
+        <button
+          type="button"
+          onPointerDown={handlePointerDown}
+          className="flex w-full touch-none justify-center pb-3 pt-1"
+          aria-label="Drag down to close"
+        >
+          <span className="h-1.5 w-12 rounded-full bg-[#8a8d91]" />
+        </button>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute left-4 flex h-9 w-9 items-center justify-center rounded-full bg-[#e4e6eb] text-[#111318] active:scale-95 dark:bg-[#3a3b3c] dark:text-white"
-            aria-label="Close"
-          >
-            <i className="fa-solid fa-xmark text-[19px]" />
-          </button>
+        <div className="overflow-hidden rounded-[20px] bg-white px-4 pb-2 pt-4 dark:bg-[#242526]">
+          <div className="mb-2 flex items-center justify-between gap-3 px-1">
+            <h2 className="text-[18px] font-semibold text-[#111318] dark:text-white">
+              Social media
+            </h2>
 
-          {isOwner ? (
-            <button
-              type="button"
-              onClick={onEdit}
-              className="absolute right-4 text-[15px] font-semibold text-[#1877f2] active:opacity-60"
-            >
-              Edit
-            </button>
-          ) : null}
-        </header>
+            {isOwner ? (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="shrink-0 text-[16px] font-normal text-[#1877f2] active:opacity-60"
+              >
+                Edit
+              </button>
+            ) : null}
+          </div>
 
-        <div className="max-h-[70dvh] overflow-y-auto px-4 py-3">
-          {items.length ? (
-            <div>
-              {items.map((item) => {
-                const meta = getPlatformMeta(item.platform)
+          <div className="max-h-[62dvh] overflow-y-auto pb-2">
+            {items.length ? (
+              <div>
+                {items.map((item) => {
+                  const meta = getPlatformMeta(item.platform)
 
-                return (
-                  <a
-                    key={item.id}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex min-h-[70px] items-center gap-4 rounded-[12px] px-2 py-2 text-left active:bg-[#f0f2f5] dark:active:bg-[#3a3b3c]"
-                  >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center text-[27px] text-[#111318] dark:text-white">
-                      <i className={meta.icon} />
-                    </span>
-
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[16px] font-semibold text-[#111318] dark:text-white">
-                        {item.displayName}
+                  return (
+                    <a
+                      key={item.id}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-h-[68px] items-center gap-4 rounded-[14px] px-1 py-2 text-left active:bg-[#f0f2f5] dark:active:bg-[#3a3b3c]"
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center text-[27px] text-[#111318] dark:text-white">
+                        <i className={meta.icon} />
                       </span>
-                      <span className="mt-0.5 block text-[14px] text-[#65676b] dark:text-[#b0b3b8]">
-                        {meta.label}
-                      </span>
-                    </span>
 
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#65676b] dark:text-[#b0b3b8]">
-                      <i className="fa-solid fa-arrow-up-right-from-square text-[14px]" />
-                    </span>
-                  </a>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="px-6 py-12 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f0f2f5] text-[#65676b] dark:bg-[#3a3b3c] dark:text-[#b0b3b8]">
-                <i className="fa-solid fa-at text-[22px]" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block break-words text-[16px] font-normal leading-5 text-[#111318] dark:text-white">
+                          {item.displayName}
+                        </span>
+                        <span className="mt-1 block text-[14px] font-normal text-[#65676b] dark:text-[#b0b3b8]">
+                          {meta.label}
+                        </span>
+                      </span>
+                    </a>
+                  )
+                })}
               </div>
-              <p className="mt-4 text-[15px] text-[#65676b] dark:text-[#b0b3b8]">
+            ) : (
+              <div className="px-6 py-10 text-center text-[14px] font-normal text-[#65676b] dark:text-[#b0b3b8]">
                 No social media links yet
-              </p>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>
