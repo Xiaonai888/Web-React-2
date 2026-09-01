@@ -1084,8 +1084,7 @@ export default function DiscoverStorySection() {
         const nextStories =
           (group.stories || []).map(
             (story) =>
-              story.id ===
-                storyId &&
+              story.id === storyId &&
               story.source_type ===
                 sourceType
                 ? {
@@ -1108,45 +1107,52 @@ export default function DiscoverStorySection() {
         }
       }
 
-      setGroups((current) =>
-        current.map(updateGroup)
-      )
+      setGroups((current) => {
+        const next =
+          current.map(updateGroup)
+
+        void saveHomeCache(
+          storyCacheKey,
+          {
+            groups: next,
+          },
+          {
+            maxAgeMs:
+              DISCOVER_STORY_CACHE_MAX_AGE_MS,
+          }
+        )
+
+        return next
+      })
 
       setActiveGroup(
         (current) =>
           updateGroup(current)
       )
     },
-    []
+    [storyCacheKey]
   )
 
   const handleDeleted =
     useCallback(
       (storyId, groupKey) => {
-        let shouldClose = false
-
-        setGroups((current) =>
-          current
+        setGroups((current) => {
+          const next = current
             .map((group) => {
               if (
-                group.key !==
-                groupKey
+                group.key !== groupKey
               ) {
                 return group
               }
 
-              const stories =
-                (
-                  group.stories ||
-                  []
-                ).filter(
-                  (story) =>
-                    story.id !==
-                    storyId
-                )
+              const stories = (
+                group.stories || []
+              ).filter(
+                (story) =>
+                  story.id !== storyId
+              )
 
               if (!stories.length) {
-                shouldClose = true
                 return null
               }
 
@@ -1161,30 +1167,38 @@ export default function DiscoverStorySection() {
               }
             })
             .filter(Boolean)
-        )
+
+          void saveHomeCache(
+            storyCacheKey,
+            {
+              groups: next,
+            },
+            {
+              maxAgeMs:
+                DISCOVER_STORY_CACHE_MAX_AGE_MS,
+            }
+          )
+
+          return next
+        })
 
         setActiveGroup(
           (current) => {
             if (
               !current ||
-              current.key !==
-                groupKey
+              current.key !== groupKey
             ) {
               return current
             }
 
-            const stories =
-              (
-                current.stories ||
-                []
-              ).filter(
-                (story) =>
-                  story.id !==
-                  storyId
-              )
+            const stories = (
+              current.stories || []
+            ).filter(
+              (story) =>
+                story.id !== storyId
+            )
 
             if (!stories.length) {
-              shouldClose = true
               return null
             }
 
@@ -1199,12 +1213,8 @@ export default function DiscoverStorySection() {
             }
           }
         )
-
-        if (shouldClose) {
-          setActiveGroup(null)
-        }
       },
-      []
+      [storyCacheKey]
     )
 
   return (
