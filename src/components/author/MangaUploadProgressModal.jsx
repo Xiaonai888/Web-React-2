@@ -73,8 +73,9 @@ const canCancel = !serverProcessing
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="{canCancel ? 'Cancel Upload' : 'Processing on server...'}"
+disabled={!canCancel}
+className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-35"
+aria-label={canCancel ? 'Cancel Upload' : 'Processing on server'}
           >
             <i className="fa-solid fa-xmark text-[15px]" />
           </button>
@@ -152,7 +153,8 @@ const canCancel = !serverProcessing
         <button
           type="button"
           onClick={onCancel}
-          className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99]"
+disabled={!canCancel}
+className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99] disabled:opacity-55"
         >
           {canCancel ? 'Cancel Upload' : 'Processing on server...'}
         </button>
