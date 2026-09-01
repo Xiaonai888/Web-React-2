@@ -9,6 +9,8 @@ const TARGET_MAX_BYTES = 600 * 1024
 const HARD_MAX_BYTES = 800 * 1024
 const MAX_WIDTH = 1600
 const QUALITIES = [0.88, 0.86, 0.84, 0.82, 0.8]
+const MANGA_V2_JOB_POLL_MS = 2000
+const MANGA_V2_JOB_TIMEOUT_MS = 30 * 60 * 1000
 
 function createObjectUrl(file) {
   return URL.createObjectURL(file)
@@ -242,14 +244,16 @@ export async function optimizeMangaImage(file) {
   }
 
   try {
-      if (
-    loaded.width > MANGA_MAX_WIDTH ||
-    loaded.height > MANGA_MAX_HEIGHT ||
-    loaded.width * loaded.height > MANGA_MAX_PIXELS
-  ) {
+    if (
+      loaded.width > MANGA_MAX_WIDTH ||
+      loaded.height > MANGA_MAX_HEIGHT ||
+      loaded.width * loaded.height > MANGA_MAX_PIXELS
+    ) {
+      throw new Error(
+        'Manga image is too large. Max: 8000×30000px and 120MP.'
+      )
+    }
 
-    throw new Error('Manga image is too large. Max: 8000×30000px and 120MP.')
-  }
     if (!heic) {
       return {
         file,
@@ -265,6 +269,246 @@ export async function optimizeMangaImage(file) {
   } finally {
     URL.revokeObjectURL(loaded.url)
   }
+}
+
+function normalizeMangaUploadResult(data) {
+  const page =
+    data?.page &&
+    typeof data.page === 'object'
+      ? data.page
+      : {}
+
+  const imageUrl =
+    data?.image_url ||
+    data?.imageUrl ||
+    page.image_url ||
+    null
+
+  if (!imageUrl) {
+    throw new Error(
+      'The manga processing finished but the server did not return an image URL. [complete: IMAGE_URL_MISSING]'
+    )
+  }
+
+  const parts = Array.isArray(page.parts)
+    ? page.parts
+    : Array.isArray(data?.parts)
+      ? data.parts
+      : null
+
+  return {
+    imageUrl,
+    storagePath:
+      data?.path ||
+      page.storage_path ||
+      null,
+    width:
+      Number(
+        page.width ||
+        data?.width ||
+        0
+      ) || null,
+    height:
+      Number(
+        page.height ||
+        data?.height ||
+        0
+      ) || null,
+    fileSize:
+      Number(
+        page.file_size ||
+        data?.file_size ||
+        0
+      ) || null,
+    mimeType:
+      page.mime_type ||
+      data?.mime_type ||
+      null,
+    ...(parts ? { parts } : {}),
+  }
+}
+
+function waitForMangaPoll(ms, signal) {
+  if (signal?.aborted) {
+    return Promise.reject(
+      new Error('Upload canceled.')
+    )
+  }
+
+  return new Promise((resolve, reject) => {
+    let timer = null
+
+    const cleanup = () => {
+      if (timer) {
+        clearTimeout(timer)
+      }
+
+      signal?.removeEventListener(
+        'abort',
+        onAbort
+      )
+    }
+
+    const onAbort = () => {
+      cleanup()
+      reject(new Error('Upload canceled.'))
+    }
+
+    timer = setTimeout(() => {
+      cleanup()
+      resolve()
+    }, ms)
+
+    signal?.addEventListener(
+      'abort',
+      onAbort,
+      { once: true }
+    )
+  })
+}
+
+async function waitForMangaV2Job({
+  apiBaseUrl,
+  token,
+  jobId,
+  statusUrl,
+  signal,
+}) {
+  const safeJobId = String(jobId || '').trim()
+
+  if (!safeJobId) {
+    throw new Error(
+      'The server queued the manga page without a job ID. [queue: MANGA_JOB_ID_MISSING]'
+    )
+  }
+
+  const relativeStatusUrl =
+    String(statusUrl || '').trim() ||
+    `/api/story-media/manga-page-v2/jobs/${safeJobId}`
+
+  const requestUrl =
+    /^https?:\/\//i.test(relativeStatusUrl)
+      ? relativeStatusUrl
+      : `${apiBaseUrl}${relativeStatusUrl}`
+
+  const startedAt = Date.now()
+
+  while (
+    Date.now() - startedAt <
+    MANGA_V2_JOB_TIMEOUT_MS
+  ) {
+    if (signal?.aborted) {
+      throw new Error('Upload canceled.')
+    }
+
+    let response
+
+    try {
+      response = await fetch(requestUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: 'no-store',
+        signal,
+      })
+    } catch (error) {
+      if (signal?.aborted) {
+        throw new Error('Upload canceled.')
+      }
+
+      await waitForMangaPoll(
+        MANGA_V2_JOB_POLL_MS,
+        signal
+      )
+      continue
+    }
+
+    const data =
+      await response
+        .json()
+        .catch(() => ({}))
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      const stage = String(
+        data.stage || 'status'
+      )
+      const code = String(
+        data.code ||
+        `HTTP_${response.status}`
+      )
+      const message =
+        data.message ||
+        'Manga processing status could not be loaded.'
+
+      if (
+        response.status >= 500 &&
+        response.status < 600
+      ) {
+        await waitForMangaPoll(
+          MANGA_V2_JOB_POLL_MS,
+          signal
+        )
+        continue
+      }
+
+      throw new Error(
+        `${message} [${stage}: ${code}]`
+      )
+    }
+
+    const status =
+      String(
+        data.status ||
+        data.stage ||
+        ''
+      )
+        .trim()
+        .toLowerCase()
+
+    if (status === 'done') {
+      return normalizeMangaUploadResult(
+        data
+      )
+    }
+
+    if (
+      status === 'failed' ||
+      status === 'cancelled'
+    ) {
+      const errorData =
+        data.error &&
+        typeof data.error === 'object'
+          ? data.error
+          : {}
+      const code =
+        String(
+          errorData.code ||
+          data.code ||
+          'MANGA_PROCESSING_FAILED'
+        )
+      const message =
+        errorData.message ||
+        data.message ||
+        'The manga page could not be processed.'
+
+      throw new Error(
+        `${message} [process: ${code}]`
+      )
+    }
+
+    await waitForMangaPoll(
+      MANGA_V2_JOB_POLL_MS,
+      signal
+    )
+  }
+
+  throw new Error(
+    'Manga processing is taking longer than expected. Please try again later. [queue: MANGA_PROCESSING_TIMEOUT]'
+  )
 }
 
 export async function uploadMangaPageFile({
@@ -298,11 +542,15 @@ export async function uploadMangaPageFile({
   try {
     bytes = await file.arrayBuffer()
   } catch {
-    throw new Error('This device could not read the manga image. [read: IMAGE_FILE_READ_FAILED]')
+    throw new Error(
+      'This device could not read the manga image. [read: IMAGE_FILE_READ_FAILED]'
+    )
   }
 
   if (!bytes.byteLength) {
-    throw new Error('The selected manga image contains 0 bytes. [read: IMAGE_FILE_EMPTY]')
+    throw new Error(
+      'The selected manga image contains 0 bytes. [read: IMAGE_FILE_EMPTY]'
+    )
   }
 
   if (signal?.aborted) {
@@ -312,12 +560,25 @@ export async function uploadMangaPageFile({
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     const startedAt = performance.now()
+    let settled = false
 
     const cleanup = () => {
-      if (signal) signal.removeEventListener('abort', handleAbortSignal)
+      signal?.removeEventListener(
+        'abort',
+        handleAbortSignal
+      )
+    }
+
+    const finishResolve = (value) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(value)
     }
 
     const fail = (error) => {
+      if (settled) return
+      settled = true
       cleanup()
       reject(error)
     }
@@ -327,24 +588,48 @@ export async function uploadMangaPageFile({
     }
 
     const uploadPath = useV2
-  ? '/api/story-media/upload-manga-page-v2'
-  : '/api/story-media/upload-manga-page'
+      ? '/api/story-media/upload-manga-page-v2'
+      : '/api/story-media/upload-manga-page'
 
-xhr.open('POST', `${apiBaseUrl}${uploadPath}`, true)
-    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+    xhr.open(
+      'POST',
+      `${apiBaseUrl}${uploadPath}`,
+      true
+    )
+    xhr.setRequestHeader(
+      'Authorization',
+      `Bearer ${token}`
+    )
+    xhr.setRequestHeader(
+      'Content-Type',
+      file.type || 'application/octet-stream'
+    )
 
     xhr.upload.onprogress = (event) => {
-      const total = event.lengthComputable ? event.total : bytes.byteLength
-      const loaded = Math.min(event.loaded, total)
-      const elapsedSeconds = Math.max((performance.now() - startedAt) / 1000, 0.001)
-      const percent = total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 0
+      const total = event.lengthComputable
+        ? event.total
+        : bytes.byteLength
+      const loaded = Math.min(
+        event.loaded,
+        total
+      )
+      const elapsedSeconds = Math.max(
+        (performance.now() - startedAt) / 1000,
+        0.001
+      )
+      const percent = total > 0
+        ? Math.min(
+            100,
+            Math.round((loaded / total) * 100)
+          )
+        : 0
 
       onProgress?.({
         loaded,
         total,
         percent,
-        speedBytesPerSecond: loaded / elapsedSeconds,
+        speedBytesPerSecond:
+          loaded / elapsedSeconds,
       })
     }
 
@@ -360,54 +645,91 @@ xhr.open('POST', `${apiBaseUrl}${uploadPath}`, true)
       fail(new Error('Upload canceled.'))
     }
 
-    xhr.onload = () => {
+    xhr.onload = async () => {
       let data = {}
 
       try {
-        data = xhr.responseText ? JSON.parse(xhr.responseText) : {}
+        data = xhr.responseText
+          ? JSON.parse(xhr.responseText)
+          : {}
       } catch {
         data = {}
       }
 
-      if (xhr.status < 200 || xhr.status >= 300 || data.ok === false) {
-        const stage = String(data.stage || 'upload')
-        const code = String(data.code || `HTTP_${xhr.status}`)
-        const message = data.message || 'Manga page upload failed.'
-        fail(new Error(`${message} [${stage}: ${code}]`))
-        return
-      }
+      if (
+        xhr.status < 200 ||
+        xhr.status >= 300 ||
+        data.ok === false
+      ) {
+        const stage = String(
+          data.stage || 'upload'
+        )
+        const code = String(
+          data.code || `HTTP_${xhr.status}`
+        )
+        const message =
+          data.message ||
+          'Manga page upload failed.'
 
-      const imageUrl = data.image_url || data.imageUrl
-
-      if (!imageUrl) {
         fail(
           new Error(
-            'The upload finished but the server did not return an image URL. [complete: IMAGE_URL_MISSING]'
+            `${message} [${stage}: ${code}]`
           )
         )
         return
       }
 
-      cleanup()
-      const page = data.page || {}
-const parts = Array.isArray(page.parts)
-  ? page.parts
-  : Array.isArray(data.parts)
-    ? data.parts
-    : null
+      if (
+        useV2 &&
+        (
+          xhr.status === 202 ||
+          data.code ===
+            'MANGA_PAGE_V2_QUEUED' ||
+          data.status === 'queued'
+        )
+      ) {
+        cleanup()
 
-resolve({
-  imageUrl,
-  storagePath: data.path || page.storage_path || null,
-  width: Number(page.width || data.width || 0) || null,
-  height: Number(page.height || data.height || 0) || null,
-  fileSize: Number(page.file_size || data.file_size || 0) || null,
-  mimeType: page.mime_type || data.mime_type || null,
-  ...(parts ? { parts } : {}),
-})
+        onProgress?.({
+          loaded: bytes.byteLength,
+          total: bytes.byteLength,
+          percent: 100,
+          speedBytesPerSecond: 0,
+          processing: true,
+        })
+
+        try {
+          const result =
+            await waitForMangaV2Job({
+              apiBaseUrl,
+              token,
+              jobId: data.job_id,
+              statusUrl: data.status_url,
+              signal,
+            })
+
+          finishResolve(result)
+        } catch (error) {
+          fail(error)
+        }
+
+        return
+      }
+
+      try {
+        finishResolve(
+          normalizeMangaUploadResult(data)
+        )
+      } catch (error) {
+        fail(error)
+      }
     }
 
-    if (signal) signal.addEventListener('abort', handleAbortSignal, { once: true })
+    signal?.addEventListener(
+      'abort',
+      handleAbortSignal,
+      { once: true }
+    )
 
     onProgress?.({
       loaded: 0,
@@ -427,7 +749,12 @@ export async function runWithConcurrency(
 ) {
   const queue = [...items]
   const workers = Array.from(
-    { length: Math.min(concurrency, queue.length) },
+    {
+      length: Math.min(
+        concurrency,
+        queue.length
+      ),
+    },
     async () => {
       while (queue.length) {
         const item = queue.shift()
@@ -453,5 +780,8 @@ export function formatFileSize(bytes) {
     return `${Math.round(value / 1024)} KB`
   }
 
-  return `${(value / (1024 * 1024)).toFixed(1)} MB`
+  return `${(
+    value /
+    (1024 * 1024)
+  ).toFixed(1)} MB`
 }
