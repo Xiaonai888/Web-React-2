@@ -304,18 +304,18 @@ export default function PremiumHelpSheet({ open, onClose }) {
       onClick={onClose}
     >
       <div
-        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[88vh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-18px_50px_rgba(17,24,39,0.2)]"
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[88vh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] shadow-[0_-18px_50px_rgba(0,0,0,0.28)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="shrink-0 border-b border-[#eeeeee] bg-white px-5 pb-4 pt-3">
-          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#d6d6d6]" />
+        <div className="shrink-0 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-5 pb-4 pt-3">
+          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[var(--shadow-text-tertiary)]" />
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 id="premium-help-title" className="text-[20px] font-bold text-[#202124]">
+              <h2 id="premium-help-title" className="text-[20px] font-bold text-[var(--shadow-text-primary)]">
                 {t('premiumHelpSheet.aboutPremium')}
               </h2>
-              <p className="mt-1 text-[12px] leading-5 text-[#8a8a8a]">
+              <p className="mt-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">
                 {t('premiumHelpSheet.intro')}
               </p>
             </div>
@@ -324,7 +324,7 @@ export default function PremiumHelpSheet({ open, onClose }) {
               type="button"
               onClick={onClose}
               aria-label={t('premiumHelpSheet.close')}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f4f4] text-[#555] active:scale-95"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] active:scale-95"
             >
               <i className="fa-solid fa-xmark text-[15px]" />
             </button>
@@ -332,16 +332,16 @@ export default function PremiumHelpSheet({ open, onClose }) {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
-          <div className="divide-y divide-[#eeeeee]">
+          <div className="divide-y divide-[var(--shadow-border)]">
             {HELP_SECTIONS.map((section) => (
               <section key={section.title} className="py-5">
-                <h3 className="text-[15px] font-bold text-[#202124]">
+                <h3 className="text-[15px] font-bold text-[var(--shadow-text-primary)]">
                   {t(`premiumHelpSheet.${section.title}`)}
                 </h3>
 
                 <ul className="mt-3 space-y-2.5">
                   {section.items.map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-[13px] leading-6 text-[#6f6f6f]">
+                    <li key={item} className="flex items-start gap-2.5 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
                       <span className="mt-[10px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#ffb000]" />
                       <span>{t(`premiumHelpSheet.${item}`)}</span>
                     </li>
