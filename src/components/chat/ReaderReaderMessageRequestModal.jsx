@@ -271,7 +271,7 @@ export default function ReaderReaderMessageRequestModal({
         className="absolute inset-0 bg-black/40"
       />
 
-      <section className="relative w-full rounded-t-[28px] bg-white px-4 pb-[calc(20px+env(safe-area-inset-bottom,0px))] pt-3 shadow-2xl md:max-w-[430px] md:rounded-[26px] md:px-5 md:pb-5">
+      <section className="relative w-full rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-[calc(20px+env(safe-area-inset-bottom,0px))] pt-3 shadow-2xl md:max-w-[430px] md:rounded-[26px] md:px-5 md:pb-5">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)] md:hidden" />
 
         <div className="flex items-start justify-between gap-3">
@@ -287,7 +287,7 @@ export default function ReaderReaderMessageRequestModal({
               <div className="text-[11px] font-bold text-[var(--shadow-text-secondary)]">
                 {t('readerMessageRequest.title')}
               </div>
-              <h2 className="mt-0.5 truncate text-[17px] font-extrabold text-[#111827]">
+              <h2 className="mt-0.5 truncate text-[17px] font-extrabold text-[var(--shadow-text-primary)]">
                 {readerName}
               </h2>
               <div className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
@@ -321,12 +321,12 @@ export default function ReaderReaderMessageRequestModal({
           </div>
         ) : (
           <>
-            <div className="mt-5 rounded-[16px] bg-[#f6f2ff] px-4 py-3 text-[11px] font-semibold leading-5 text-[#6d5a91] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]">
+            <div className="mt-5 rounded-[16px] bg-[#f6f2ff] px-4 py-3 text-[11px] font-semibold leading-5 text-[#6d5a91] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]">
               {t('readerMessageRequest.helper')}
             </div>
 
             {error ? (
-              <div className="mt-3 rounded-[14px] bg-[#fff0f1] px-4 py-3 text-[11px] font-bold text-[#c7353d]">
+              <div className="mt-3 rounded-[14px] bg-[#fff0f1] px-4 py-3 text-[11px] font-bold text-[#c7353d] dark:bg-[#7f1d1d]/25 dark:text-[#fca5a5]">
                 {error}
               </div>
             ) : null}
@@ -348,10 +348,10 @@ export default function ReaderReaderMessageRequestModal({
                   'readerMessageRequest.placeholder',
                   { name: readerName }
                 )}
-                className="min-h-[130px] w-full resize-none rounded-[18px] border border-[#ddd9e6] bg-[#faf9fc] px-4 py-3 text-[13px] leading-6 text-[#111827] outline-none transition placeholder:text-[#9a96a2] focus:border-[#9b7be8] focus:bg-white"
+                className="min-h-[130px] w-full resize-none rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-4 py-3 text-[13px] leading-6 text-[var(--shadow-text-primary)] outline-none transition placeholder:text-[var(--shadow-placeholder)] focus:border-[#9b7be8] focus:bg-[var(--shadow-bg-surface)]"
               />
 
-              <div className="mt-1 text-right text-[10px] font-semibold text-[#9a96a2]">
+              <div className="mt-1 text-right text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
                 {message.length}/2000
               </div>
             </div>
