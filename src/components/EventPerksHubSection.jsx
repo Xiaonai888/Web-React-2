@@ -1,5 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('eventPerksHubSection', {
+  en: {
+    title: 'Event & Perks Hub',
+    fallbackTitle: 'Event Banner {{number}}',
+  },
+  km: {
+    title: 'មជ្ឈមណ្ឌលព្រឹត្តិការណ៍ និងរង្វាន់',
+    fallbackTitle: 'បដាព្រឹត្តិការណ៍ {{number}}',
+  },
+  zh: {
+    title: '活动与福利中心',
+    fallbackTitle: '活动横幅 {{number}}',
+  },
+  ja: {
+    title: 'イベント＆特典ハブ',
+    fallbackTitle: 'イベントバナー {{number}}',
+  },
+  ko: {
+    title: '이벤트 & 혜택 허브',
+    fallbackTitle: '이벤트 배너 {{number}}',
+  },
+})
 import {
   getHomeCacheKey,
   loadHomeCache,
@@ -17,7 +42,7 @@ const EVENT_PERKS_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 const fallbackEventPerksData = [
   {
     id: 'fallback-event-1',
-    title: 'Event Banner 1',
+    title: '',
     subtitle: 'Special event rewards and limited-time perks.',
     image: '/assets/EventPerksHubPage/EventPerksHubPage 1.jpg',
     link: '/event',
@@ -25,7 +50,7 @@ const fallbackEventPerksData = [
   },
   {
     id: 'fallback-event-2',
-    title: 'Event Banner 2',
+    title: '',
     subtitle: 'Join events and unlock exclusive bonuses.',
     image: '/assets/EventPerksHubPage/EventPerksHubPage 2.jpg',
     link: '/event',
@@ -33,7 +58,7 @@ const fallbackEventPerksData = [
   },
   {
     id: 'fallback-event-3',
-    title: 'Event Banner 3',
+    title: '',
     subtitle: 'Check the newest perks available this week.',
     image: '/assets/EventPerksHubPage/EventPerksHubPage 3.jpg',
     link: '/event',
@@ -46,7 +71,7 @@ function normalizeSlide(slide, index = 0) {
 
   return {
     id: slide.id || `event-slide-${index}`,
-    title: slide.title || `Event Banner ${index + 1}`,
+    title: slide.title || '',
     subtitle: slide.description || 'Special event rewards and limited-time perks.',
     image: slide.image_url || `/assets/EventPerksHubPage/EventPerksHubPage ${Math.min(index + 1, 3)}.jpg`,
     link: slide.link_url || '/event',
@@ -55,6 +80,7 @@ function normalizeSlide(slide, index = 0) {
 }
 
 export default function EventPerksHubSection() {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const scrollRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -217,8 +243,8 @@ export default function EventPerksHubSection() {
   return (
     <div className="w-full overflow-hidden">
       <div className="mb-3 px-4">
-        <h2 className="text-[18px] font-bold tracking-tight text-neutral-900">
-  🎉 Event & Perks Hub
+        <h2 className="text-[18px] font-bold tracking-tight text-[var(--shadow-text-primary)]">
+  🎉 {t('eventPerksHubSection.title')}
 </h2>
       </div>
 
@@ -234,17 +260,17 @@ export default function EventPerksHubSection() {
       >
         {loading ? (
           <div className="mr-3 w-[88%] shrink-0 snap-start">
-            <div className="aspect-[3/1] w-full animate-pulse rounded-[12px] bg-gray-100" />
+            <div className="aspect-[3/1] w-full animate-pulse rounded-[12px] bg-[var(--shadow-bg-soft)]" />
           </div>
         ) : (
-          displayItems.map((item) => (
+          displayItems.map((item, index) => (
             <div key={item.id} className="mr-3 w-[88%] shrink-0 snap-start">
               <button
                 type="button"
                 onClick={(event) => handleCardClick(event, item.link)}
                 className="group block w-full border-0 bg-transparent p-0 text-left"
               >
-                <div className="relative aspect-[3/1] w-full overflow-hidden rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm">
+                <div className="relative aspect-[3/1] w-full overflow-hidden rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] shadow-sm">
                   <img
                     src={item.image}
                     alt={item.title}
@@ -263,7 +289,10 @@ export default function EventPerksHubSection() {
                       </span>
 
                       <h3 className="truncate text-[11px] font-bold text-white">
-                        {item.title}
+                        {item.title ||
+                          t('eventPerksHubSection.fallbackTitle', {
+                            number: index + 1,
+                          })}
                       </h3>
                     </div>
                   </div>
@@ -287,8 +316,8 @@ export default function EventPerksHubSection() {
                 aria-label={`Go to slide ${index + 1}`}
                 className={`rounded-full transition-all duration-300 ${
                   isActive
-                    ? 'h-2.5 w-6 bg-black'
-                    : 'h-2.5 w-2.5 bg-neutral-300 hover:bg-neutral-400'
+                    ? 'h-2.5 w-6 bg-[var(--shadow-text-primary)]'
+                    : 'h-2.5 w-2.5 bg-[var(--shadow-border-strong)] hover:bg-[var(--shadow-text-tertiary)]'
                 }`}
               />
             )
