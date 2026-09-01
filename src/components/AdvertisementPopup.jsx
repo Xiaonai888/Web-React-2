@@ -1,5 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('advertisementPopup', {
+  en: {
+    skip: 'Skip',
+  },
+  km: {
+    skip: 'រំលង',
+  },
+  zh: {
+    skip: '跳过',
+  },
+  ja: {
+    skip: 'スキップ',
+  },
+  ko: {
+    skip: '건너뛰기',
+  },
+})
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -106,6 +126,7 @@ export default function AdvertisementPopup({
   blocking = false,
   advertisementOverride = null,
 }) {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
@@ -423,7 +444,7 @@ export default function AdvertisementPopup({
                 : 'cursor-not-allowed opacity-80'
             }`}
           >
-            Skip
+            {t('advertisementPopup.skip')}
           </button>
         </div>
       </div>
