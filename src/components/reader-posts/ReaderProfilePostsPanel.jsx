@@ -230,14 +230,14 @@ function ReaderProfileSetupSection({
     ).length
 
   return (
-    <section className="mt-3 bg-white px-4 pb-7 pt-5 md:rounded-[24px]">
+    <section className="mt-3 bg-[var(--shadow-bg-surface)] px-4 pb-7 pt-5 md:rounded-[24px]">
       <div className="mb-4">
-        <h2 className="text-[17px] font-semibold text-[#111827]">
+        <h2 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">
           {t('readerProfilePosts.setupTitle')}
         </h2>
 
-        <div className="mt-1 text-[12px] font-normal text-[#8d94a1]">
-          <span className="font-semibold text-[#111827]">
+        <div className="mt-1 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
+          <span className="font-semibold text-[var(--shadow-text-primary)]">
             {t('readerProfilePosts.completed', {
               count: completedCount,
             })}
@@ -257,17 +257,17 @@ function ReaderProfileSetupSection({
               />
 
               {item.complete ? (
-                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#16a36a] text-white shadow-sm">
+                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--shadow-bg-surface)] bg-[#16a36a] text-white shadow-sm">
                   <i className="fa-solid fa-check text-[12px]" />
                 </span>
               ) : null}
             </div>
 
-            <h3 className="mt-4 text-[15px] font-semibold leading-5 text-[#111827]">
+            <h3 className="mt-4 text-[15px] font-semibold leading-5 text-[var(--shadow-text-primary)]">
               {item.title}
             </h3>
 
-            <p className="mt-1 min-h-[40px] text-[12px] font-normal leading-5 text-[#8d94a1]">
+            <p className="mt-1 min-h-[40px] text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
               {item.description}
             </p>
 
@@ -276,7 +276,7 @@ function ReaderProfileSetupSection({
               onClick={item.action}
               className={`mt-auto min-h-10 rounded-[12px] px-5 text-[13px] font-normal transition active:scale-[0.98] ${
                 item.complete
-                  ? 'bg-[#f1f2f4] text-[#111827]'
+                  ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
                   : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-[0_8px_18px_rgba(124,58,237,0.24)]'
               }`}
             >
@@ -438,16 +438,16 @@ export default function ReaderProfilePostsPanel({
 
   if (loading) {
     return (
-      <section className="mt-2 space-y-1 bg-[#f5f3fa] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
-        <div className="h-[140px] animate-pulse bg-white sm:rounded-[12px]" />
-        <div className="h-[140px] animate-pulse bg-white sm:rounded-[12px]" />
+      <section className="mt-2 space-y-1 bg-[var(--shadow-bg-soft)] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
+        <div className="h-[140px] animate-pulse bg-[var(--shadow-bg-surface)] sm:rounded-[12px]" />
+        <div className="h-[140px] animate-pulse bg-[var(--shadow-bg-surface)] sm:rounded-[12px]" />
       </section>
     )
   }
 
   if (message) {
     return (
-      <section className="mt-2 bg-white px-5 py-8 text-center md:mt-3 md:rounded-[24px]">
+      <section className="mt-2 bg-[var(--shadow-bg-surface)] px-5 py-8 text-center md:mt-3 md:rounded-[24px]">
         <div className="text-[13px] font-normal text-[#e5484d]">
           {message}
         </div>
@@ -458,16 +458,16 @@ export default function ReaderProfilePostsPanel({
   if (!posts.length) {
     return (
       <>
-        <section className="mt-2 bg-white px-5 py-10 text-center md:mt-3 md:rounded-[24px]">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f1f2f4] text-[#111827]">
+        <section className="mt-2 bg-[var(--shadow-bg-surface)] px-5 py-10 text-center md:mt-3 md:rounded-[24px]">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
             <i className="fa-regular fa-pen-to-square text-[18px]" />
           </div>
 
-          <h2 className="mt-3 text-[15px] font-semibold text-[#111827]">
+          <h2 className="mt-3 text-[15px] font-semibold text-[var(--shadow-text-primary)]">
             {t('readerProfilePosts.noPosts')}
           </h2>
 
-          <p className="mx-auto mt-1 max-w-[280px] text-[12px] font-normal leading-5 text-[#8d94a1]">
+          <p className="mx-auto mt-1 max-w-[280px] text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
             {isOwnProfile
               ? t('readerProfilePosts.ownEmpty')
               : t('readerProfilePosts.otherEmpty')}
@@ -502,7 +502,7 @@ export default function ReaderProfilePostsPanel({
 
   return (
     <>
-      <section className="mt-2 space-y-1 bg-[#f5f3fa] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
+      <section className="mt-2 space-y-1 bg-[var(--shadow-bg-soft)] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
         {posts.map((post) => (
           <ReaderPostCard
             key={post.id}
