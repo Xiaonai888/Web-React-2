@@ -12,6 +12,61 @@ import {
   createReaderAuthorMessageRequest,
   getChatConversations,
 } from '../../services/chatApi'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerAuthorMessageRequest', {
+  en: {
+    author: 'Author',
+    authorPage: 'Author page',
+    checkFailed: 'Failed to check conversation',
+    conversationNotCreated: 'Conversation was not created',
+    sendFailed: 'Failed to send message',
+    message: 'Message',
+    placeholder: 'Write a message to {{name}}...',
+    sendMessage: 'Send message',
+  },
+  km: {
+    author: 'អ្នកនិពន្ធ',
+    authorPage: 'ទំព័រអ្នកនិពន្ធ',
+    checkFailed: 'មិនអាចពិនិត្យការសន្ទនាបានទេ',
+    conversationNotCreated: 'មិនអាចបង្កើតការសន្ទនាបានទេ',
+    sendFailed: 'មិនអាចផ្ញើសារបានទេ',
+    message: 'សារ',
+    placeholder: 'សរសេរសារទៅ {{name}}...',
+    sendMessage: 'ផ្ញើសារ',
+  },
+  zh: {
+    author: '作者',
+    authorPage: '作者主页',
+    checkFailed: '无法检查会话',
+    conversationNotCreated: '未能创建会话',
+    sendFailed: '无法发送消息',
+    message: '消息',
+    placeholder: '给 {{name}} 写消息...',
+    sendMessage: '发送消息',
+  },
+  ja: {
+    author: '作者',
+    authorPage: '作者ページ',
+    checkFailed: '会話を確認できませんでした',
+    conversationNotCreated: '会話を作成できませんでした',
+    sendFailed: 'メッセージを送信できませんでした',
+    message: 'メッセージ',
+    placeholder: '{{name}} にメッセージを書く...',
+    sendMessage: 'メッセージを送信',
+  },
+  ko: {
+    author: '작가',
+    authorPage: '작가 페이지',
+    checkFailed: '대화를 확인하지 못했습니다',
+    conversationNotCreated: '대화를 만들지 못했습니다',
+    sendFailed: '메시지를 보내지 못했습니다',
+    message: '메시지',
+    placeholder: '{{name}}님에게 메시지 쓰기...',
+    sendMessage: '메시지 보내기',
+  },
+})
 
 function AuthorAvatar({ author }) {
   const [failed, setFailed] = useState(false)
@@ -48,6 +103,7 @@ export default function ReaderAuthorMessageRequestModal({
   author,
   onClose,
 }) {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const [checking, setChecking] = useState(false)
@@ -107,7 +163,7 @@ export default function ReaderAuthorMessageRequestModal({
         if (!ignore) {
           setError(
             checkError.message ||
-              'Failed to check conversation'
+              t('readerAuthorMessageRequest.checkFailed')
           )
         }
       } finally {
@@ -129,7 +185,7 @@ export default function ReaderAuthorMessageRequestModal({
   const authorName =
     author?.page_name ||
     author?.name ||
-    'Author'
+    t('readerAuthorMessageRequest.author')
 
   const handleSubmit = async () => {
     const text = message.trim()
@@ -158,7 +214,7 @@ export default function ReaderAuthorMessageRequestModal({
 
       if (!conversationId) {
         throw new Error(
-          'Conversation was not created'
+          t('readerAuthorMessageRequest.conversationNotCreated')
         )
       }
 
@@ -167,7 +223,7 @@ export default function ReaderAuthorMessageRequestModal({
     } catch (sendError) {
       setError(
         sendError.message ||
-          'Failed to send message'
+          t('readerAuthorMessageRequest.sendFailed')
       )
     } finally {
       setSending(false)
@@ -183,24 +239,24 @@ export default function ReaderAuthorMessageRequestModal({
         className="absolute inset-0 bg-black/40"
       />
 
-      <section className="relative w-full rounded-t-[28px] bg-white px-4 pb-[calc(20px+env(safe-area-inset-bottom,0px))] pt-3 shadow-2xl md:max-w-[430px] md:rounded-[26px] md:px-5 md:pb-5">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d6d4dc] md:hidden" />
+      <section className="relative w-full rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-[calc(20px+env(safe-area-inset-bottom,0px))] pt-3 shadow-2xl md:max-w-[430px] md:rounded-[26px] md:px-5 md:pb-5">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)] md:hidden" />
 
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <AuthorAvatar author={author} />
 
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-[#8a8792]">
-                Message
+              <div className="text-[11px] font-bold text-[var(--shadow-text-secondary)]">
+                {t('readerAuthorMessageRequest.message')}
               </div>
-              <h2 className="mt-0.5 truncate text-[17px] font-extrabold text-[#111827]">
+              <h2 className="mt-0.5 truncate text-[17px] font-extrabold text-[var(--shadow-text-primary)]">
                 {authorName}
               </h2>
-              <div className="mt-0.5 truncate text-[11px] font-semibold text-[#8a8792]">
+              <div className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
                 {author?.page_username
                   ? `@${author.page_username}`
-                  : 'Author page'}
+                  : t('readerAuthorMessageRequest.authorPage')}
               </div>
             </div>
           </div>
@@ -209,7 +265,7 @@ export default function ReaderAuthorMessageRequestModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f2f6] text-[#55515e] transition active:scale-90"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] transition active:scale-90"
           >
             <X size={20} />
           </button>
@@ -225,7 +281,7 @@ export default function ReaderAuthorMessageRequestModal({
         ) : (
           <>
             {error ? (
-              <div className="mt-4 rounded-[14px] bg-[#fff0f1] px-4 py-3 text-[11px] font-bold text-[#c7353d]">
+              <div className="mt-4 rounded-[14px] bg-[#fff0f1] px-4 py-3 text-[11px] font-bold text-[#c7353d] dark:bg-[#7f1d1d]/25 dark:text-[#fca5a5]">
                 {error}
               </div>
             ) : null}
@@ -243,11 +299,11 @@ export default function ReaderAuthorMessageRequestModal({
                 }
                 rows={5}
                 autoFocus
-                placeholder={`Write a message to ${authorName}...`}
-                className="min-h-[130px] w-full resize-none rounded-[18px] border border-[#ddd9e6] bg-[#faf9fc] px-4 py-3 text-[13px] leading-6 text-[#111827] outline-none transition placeholder:text-[#9a96a2] focus:border-[#1877f2] focus:bg-white"
+                placeholder={t('readerAuthorMessageRequest.placeholder', { name: authorName })}
+                className="min-h-[130px] w-full resize-none rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-4 py-3 text-[13px] leading-6 text-[var(--shadow-text-primary)] outline-none transition placeholder:text-[var(--shadow-placeholder)] focus:border-[#1877f2] focus:bg-[var(--shadow-bg-surface)]"
               />
 
-              <div className="mt-1 text-right text-[10px] font-semibold text-[#9a96a2]">
+              <div className="mt-1 text-right text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
                 {message.length}/2000
               </div>
             </div>
@@ -269,7 +325,7 @@ export default function ReaderAuthorMessageRequestModal({
                   strokeWidth={2.2}
                 />
               )}
-              Send message
+              {t('readerAuthorMessageRequest.sendMessage')}
             </button>
           </>
         )}
