@@ -1,21 +1,44 @@
 import { useEffect, useMemo, useState } from 'react'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-]
-
-const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+registerTranslationNamespace('authorPostSchedulePicker', {
+  en: {
+    cancel: 'Cancel',
+    schedulePost: 'Schedule Post',
+    save: 'Save',
+    publishTime: 'Publish time',
+    futureDateTime: 'Choose a future date and time.',
+  },
+  km: {
+    cancel: 'បោះបង់',
+    schedulePost: 'កំណត់ពេលប្រកាស',
+    save: 'រក្សាទុក',
+    publishTime: 'ពេលវេលាបោះពុម្ព',
+    futureDateTime: 'សូមជ្រើសកាលបរិច្ឆេទ និងពេលវេលានាពេលអនាគត។',
+  },
+  zh: {
+    cancel: '取消',
+    schedulePost: '定时发布',
+    save: '保存',
+    publishTime: '发布时间',
+    futureDateTime: '请选择未来的日期和时间。',
+  },
+  ja: {
+    cancel: 'キャンセル',
+    schedulePost: '投稿を予約',
+    save: '保存',
+    publishTime: '公開時刻',
+    futureDateTime: '未来の日付と時刻を選択してください。',
+  },
+  ko: {
+    cancel: '취소',
+    schedulePost: '게시물 예약',
+    save: '저장',
+    publishTime: '게시 시간',
+    futureDateTime: '미래 날짜와 시간을 선택해 주세요.',
+  },
+})
 
 function pad(value) {
   return String(value).padStart(2, '0')
@@ -88,6 +111,8 @@ export default function AuthorPostSchedulePicker({
   onClose,
   onSave,
 }) {
+  const { t } = useDisplayTranslation()
+  const displayLanguage = getDisplayLanguageId() || 'en'
   const defaults = useMemo(() => getDefaultSchedule(), [])
   const [draftDate, setDraftDate] = useState(date || defaults.date)
   const [draftTime, setDraftTime] = useState(time || defaults.time)
@@ -98,6 +123,18 @@ export default function AuthorPostSchedulePicker({
 
   const selectedDate = parseDateValue(draftDate)
   const calendarDays = useMemo(() => buildCalendarDays(cursor), [cursor])
+  const weekDays = useMemo(() => {
+    const sunday = new Date(2024, 0, 7)
+    return Array.from({ length: 7 }, (_, index) => {
+      const day = new Date(sunday)
+      day.setDate(sunday.getDate() + index)
+      return new Intl.DateTimeFormat(displayLanguage, { weekday: 'short' }).format(day)
+    })
+  }, [displayLanguage])
+  const monthYearLabel = useMemo(
+    () => new Intl.DateTimeFormat(displayLanguage, { month: 'long', year: 'numeric' }).format(cursor),
+    [cursor, displayLanguage]
+  )
 
   useEffect(() => {
     if (!open) return
@@ -175,28 +212,28 @@ export default function AuthorPostSchedulePicker({
         className="absolute inset-0"
       />
 
-      <section className="relative z-10 w-full max-w-[390px] rounded-t-[26px] bg-white pb-[calc(env(safe-area-inset-bottom)+18px)] shadow-2xl sm:rounded-[22px] sm:pb-5">
-        <div className="mx-auto mt-3 h-1 w-11 rounded-full bg-[#9ca3af]" />
+      <section className="relative z-10 w-full max-w-[390px] rounded-t-[26px] bg-[var(--shadow-bg-elevated)] pb-[calc(env(safe-area-inset-bottom)+18px)] text-[var(--shadow-text-primary)] shadow-2xl sm:rounded-[22px] sm:pb-5">
+        <div className="mx-auto mt-3 h-1 w-11 rounded-full bg-[var(--shadow-text-tertiary)]" />
 
-        <header className="flex h-14 items-center justify-between border-b border-[#eef0f4] px-4">
+        <header className="flex h-14 items-center justify-between border-b border-[var(--shadow-border)] px-4">
           <button
             type="button"
             onClick={onClose}
-            className="text-[13px] font-medium text-[#6b7280]"
+            className="text-[13px] font-medium text-[var(--shadow-text-secondary)]"
           >
-            Cancel
+            {t('authorPostSchedulePicker.cancel')}
           </button>
 
-          <h2 className="text-[16px] font-bold text-[#111827]">
-            Schedule Post
+          <h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">
+            {t('authorPostSchedulePicker.schedulePost')}
           </h2>
 
           <button
             type="button"
             onClick={confirm}
-            className="text-[13px] font-semibold text-[#111827]"
+            className="text-[13px] font-semibold text-[var(--shadow-text-primary)]"
           >
-            Save
+            {t('authorPostSchedulePicker.save')}
           </button>
         </header>
 
@@ -205,29 +242,29 @@ export default function AuthorPostSchedulePicker({
             <button
               type="button"
               onClick={() => moveMonth(-1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[20px] text-[#4b5563] active:bg-[#f3f4f6]"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[20px] text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-hover)]"
             >
               ‹
             </button>
 
             <div className="text-[16px] font-semibold text-[#111827]">
-              {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
+              {monthYearLabel}
             </div>
 
             <button
               type="button"
               onClick={() => moveMonth(1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[20px] text-[#4b5563] active:bg-[#f3f4f6]"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[20px] text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-hover)]"
             >
               ›
             </button>
           </div>
 
           <div className="mt-2 grid grid-cols-7">
-            {WEEK_DAYS.map((day) => (
+            {weekDays.map((day) => (
               <div
                 key={day}
-                className="py-2 text-center text-[11px] font-medium text-[#9ca3af]"
+                className="py-2 text-center text-[11px] font-medium text-[var(--shadow-text-tertiary)]"
               >
                 {day}
               </div>
@@ -270,9 +307,9 @@ export default function AuthorPostSchedulePicker({
             })}
           </div>
 
-          <div className="mt-5 rounded-[16px] bg-[#f5f6f8] p-4">
-            <label className="block text-[12px] font-semibold text-[#6b7280]">
-              Publish time
+          <div className="mt-5 rounded-[16px] bg-[var(--shadow-bg-soft)] p-4">
+            <label className="block text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
+              {t('authorPostSchedulePicker.publishTime')}
             </label>
 
             <input
@@ -282,13 +319,13 @@ export default function AuthorPostSchedulePicker({
                 setDraftTime(event.target.value)
                 setInvalid(false)
               }}
-              className="mt-2 h-11 w-full rounded-[12px] border border-[#d9dde4] bg-white px-3 text-[15px] font-medium text-[#111827] outline-none focus:border-[#111827]"
+              className="mt-2 h-11 w-full rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 text-[15px] font-medium text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-border-strong)]"
             />
           </div>
 
           {invalid ? (
             <p className="mt-3 text-center text-[12px] font-medium text-[#dc2626]">
-              Choose a future date and time.
+              {t('authorPostSchedulePicker.futureDateTime')}
             </p>
           ) : null}
         </div>
