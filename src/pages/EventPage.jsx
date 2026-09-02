@@ -4,7 +4,7 @@ import { addStoryLanguageParam } from '../utils/storyLanguage'
 import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 import Author49DayEventCard from '../components/events/Author49DayEventCard'
-import ManagedEventsSection from '../components/events/ManagedEventsSection'
+import ManagedEventHeroCard from '../components/events/ManagedEventHeroCard'
 import MonthlyVoteTab from './Event/MonthlyVoteTab'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -1278,7 +1278,9 @@ export default function EventPage() {
     useState(() => new Date())
   const [selectedActiveEvent, setSelectedActiveEvent] =
   useState('')
-const [managedEventCount, setManagedEventCount] = useState(null)
+const [managedEvents, setManagedEvents] = useState([])
+const [managedEventsLoading, setManagedEventsLoading] = useState(true)
+const managedEventsFetchedAtRef = useRef(0)
 const topAuthorsScrollRef = useRef(null)
   const topAuthorsDraggingRef = useRef(false)
   const topAuthorsDragMovedRef = useRef(false)
@@ -1326,6 +1328,58 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
 
   useEffect(() => {
     let ignore = false
+
+    useEffect(() => {
+  if (activeTab !== 'event') return undefined
+
+  if (
+    managedEventsFetchedAtRef.current &&
+    Date.now() - managedEventsFetchedAtRef.current < 120000
+  ) {
+    setManagedEventsLoading(false)
+    return undefined
+  }
+
+  let ignore = false
+  const controller = new AbortController()
+
+  async function loadManagedEvents() {
+    setManagedEventsLoading(true)
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/events`,
+        { signal: controller.signal }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error('Failed to load events')
+      }
+
+      if (!ignore) {
+        setManagedEvents(
+          Array.isArray(data.events) ? data.events : []
+        )
+        managedEventsFetchedAtRef.current = Date.now()
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError' && !ignore) {
+        setManagedEvents([])
+      }
+    } finally {
+      if (!ignore) setManagedEventsLoading(false)
+    }
+  }
+
+  loadManagedEvents()
+
+  return () => {
+    ignore = true
+    controller.abort()
+  }
+}, [activeTab])
 
     async function loadActiveEventStatus() {
     const token = getReaderToken()
@@ -1444,7 +1498,19 @@ const upcomingEvents = [
       b.startsAt.getTime()
   )
 
+  const managedActiveEvents = managedEvents.map((item) => ({
+  id: `managed:${item.id}`,
+  title: item.title || t('eventPage.event'),
+  label: item.badge_text || t('eventPage.event'),
+  image: item.image_url || '',
+  icon: 'fa-calendar-days',
+  iconBg: 'bg-[var(--shadow-bg-soft)]',
+  iconColor: 'text-[#7C3AED]',
+  labelColor: 'text-[#7C3AED]',
+}))
+
 const activeEvents = [
+    ...managedActiveEvents,
     writerWednesdayLive
       ? {
           id: 'writer-wednesday',
@@ -1482,12 +1548,51 @@ const activeEvents = [
       : null,
   ].filter(Boolean)
 
+  const selectedManagedEvent =
+  managedEvents.find(
+    (item) =>
+      `managed:${item.id}` === selectedActiveEvent
+  ) || null
+
   const activeEventIds = activeEvents
     .map((event) => event.id)
     .join('|')
 
+  if (managedEventsLoading) return
+
   useEffect(() => {
     const eventIds = activeEventIds
+
+      useEffect(() => {
+  if (
+    activeTab !== 'event' ||
+    managedEventsLoading ||
+    !selectedActiveEvent
+  ) {
+    return undefined
+  }
+
+  const eventIds = activeEventIds
+    ? activeEventIds.split('|')
+    : []
+
+  if (eventIds.length <= 1) return undefined
+
+  const timer = window.setTimeout(() => {
+    const index = eventIds.indexOf(selectedActiveEvent)
+    const nextIndex =
+      index < 0 ? 0 : (index + 1) % eventIds.length
+
+    setSelectedActiveEvent(eventIds[nextIndex])
+  }, 5000)
+
+  return () => window.clearTimeout(timer)
+}, [
+  activeTab,
+  activeEventIds,
+  managedEventsLoading,
+  selectedActiveEvent,
+])
       ? activeEventIds.split('|')
       : []
 
@@ -1951,11 +2056,15 @@ const activeEvents = [
           <MonthlyVoteTab />
         ) : (
   <>
-    <ManagedEventsSection onCountChange={setManagedEventCount} />
+  {selectedManagedEvent ? (
+  <ManagedEventHeroCard event={selectedManagedEvent} />
+) : null}
 
-    {selectedActiveEvent === 'writer-wednesday' ? (
-    <WriterWednesdayEventCard />
-  ) : null}
+{selectedActiveEvent === 'writer-wednesday' ? (
+  <WriterWednesdayEventCard />
+) : null}
+
+    
 
   {selectedActiveEvent === 'black-sunday' ? (
   <BlackSundayEventTab mode="active-only" />
@@ -1968,7 +2077,7 @@ const activeEvents = [
   />
 ) : null}
 
-{activeEvents.length === 0 && managedEventCount === 0 ? (
+{!managedEventsLoading && activeEvents.length === 0 ? (
   <div className="mt-4 flex aspect-square w-full items-center justify-center rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] text-[14px] font-bold text-[var(--shadow-text-secondary)]">
     {t('eventPage.noEventRightNow')}
   </div>
