@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
 
@@ -67,20 +67,27 @@ function loadYoutubeIframeApi() {
   return youtubeApiPromise
 }
 
-export default function MusicYoutubePlayer({
-  songId,
-  videoId,
-  title,
-  playNonce = 0,
-  onListenRecorded,
-  onAuthRequired,
-}) {
+const MusicYoutubePlayer = forwardRef(function MusicYoutubePlayer(
+  {
+    songId,
+    videoId,
+    title,
+    playNonce = 0,
+    onListenRecorded,
+    onAuthRequired,
+    onEnded,
+    onPlaybackStateChange,
+  },
+  ref
+) {
   const iframeRef = useRef(null)
   const playerRef = useRef(null)
   const validListenTimerRef = useRef(null)
   const listenRecordedRef = useRef(false)
   const onListenRecordedRef = useRef(onListenRecorded)
   const onAuthRequiredRef = useRef(onAuthRequired)
+  const onEndedRef = useRef(onEnded)
+  const onPlaybackStateChangeRef = useRef(onPlaybackStateChange)
 
   useEffect(() => {
     onListenRecordedRef.current = onListenRecorded
@@ -89,6 +96,47 @@ export default function MusicYoutubePlayer({
   useEffect(() => {
     onAuthRequiredRef.current = onAuthRequired
   }, [onAuthRequired])
+
+  useEffect(() => {
+    onEndedRef.current = onEnded
+  }, [onEnded])
+
+  useEffect(() => {
+    onPlaybackStateChangeRef.current = onPlaybackStateChange
+  }, [onPlaybackStateChange])
+
+  useImperativeHandle(ref, () => ({
+    play() {
+      try {
+        playerRef.current?.playVideo?.()
+      } catch {
+        void 0
+      }
+    },
+    pause() {
+      try {
+        playerRef.current?.pauseVideo?.()
+      } catch {
+        void 0
+      }
+    },
+    toggle() {
+      try {
+        const state = playerRef.current?.getPlayerState?.()
+        if (state === window.YT?.PlayerState?.PLAYING) playerRef.current?.pauseVideo?.()
+        else playerRef.current?.playVideo?.()
+      } catch {
+        void 0
+      }
+    },
+    seekTo(seconds) {
+      try {
+        playerRef.current?.seekTo?.(Number(seconds || 0), true)
+      } catch {
+        void 0
+      }
+    },
+  }), [])
 
   useEffect(() => {
     listenRecordedRef.current = false
@@ -157,8 +205,24 @@ export default function MusicYoutubePlayer({
 
         playerRef.current = new YT.Player(iframeRef.current, {
           events: {
+            onReady() {
+              if (cancelled) return
+              try {
+                playerRef.current?.playVideo?.()
+              } catch {
+                void 0
+              }
+            },
             onStateChange(event) {
               clearValidListenTimer()
+
+              let state = 'idle'
+              if (event.data === YT.PlayerState.PLAYING) state = 'playing'
+              else if (event.data === YT.PlayerState.PAUSED) state = 'paused'
+              else if (event.data === YT.PlayerState.BUFFERING) state = 'buffering'
+              else if (event.data === YT.PlayerState.ENDED) state = 'ended'
+
+              onPlaybackStateChangeRef.current?.(state)
 
               if (
                 event.data === YT.PlayerState.PLAYING &&
@@ -167,6 +231,10 @@ export default function MusicYoutubePlayer({
                 validListenTimerRef.current = window.setTimeout(() => {
                   void recordValidListen()
                 }, 5000)
+              }
+
+              if (event.data === YT.PlayerState.ENDED) {
+                onEndedRef.current?.()
               }
             },
           },
@@ -205,4 +273,6 @@ export default function MusicYoutubePlayer({
       allowFullScreen
     />
   )
-}
+})
+
+export default MusicYoutubePlayer
