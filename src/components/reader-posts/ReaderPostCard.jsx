@@ -4097,7 +4097,7 @@ likeCount={reactionCount}
           onReact={updateReaction}
           showCount={false}
           idleLabel="Like"
-          buttonClassName="gap-2 after:content-[attr(aria-label)] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
+          buttonClassName="gap-2 after:content-['Like'] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
         />
       </div>
 
@@ -4179,7 +4179,7 @@ likeCount={reactionCount}
         onReact={updateReaction}
         showCount={false}
         idleLabel="Like"
-        buttonClassName="gap-2 after:content-[attr(aria-label)] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
+        buttonClassName="gap-2 after:content-['Like'] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
       />
     </div>
 
@@ -4380,7 +4380,7 @@ likeCount={reactionCount}
         showCount={false}
         idleLabel="Like"
         className="flex-1 justify-center"
-        buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-[attr(aria-label)] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
+        buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
       />
 
       <button
