@@ -1277,11 +1277,11 @@ export default function EventPage() {
   const [eventNow, setEventNow] =
     useState(() => new Date())
   const [selectedActiveEvent, setSelectedActiveEvent] =
-  useState('')
-const [managedEvents, setManagedEvents] = useState([])
-const [managedEventsLoading, setManagedEventsLoading] = useState(true)
-const managedEventsFetchedAtRef = useRef(0)
-const topAuthorsScrollRef = useRef(null)
+    useState('')
+  const [managedEvents, setManagedEvents] = useState([])
+  const [managedEventsLoading, setManagedEventsLoading] = useState(true)
+  const managedEventsFetchedAtRef = useRef(0)
+  const topAuthorsScrollRef = useRef(null)
   const topAuthorsDraggingRef = useRef(false)
   const topAuthorsDragMovedRef = useRef(false)
   const topAuthorsStartXRef = useRef(0)
@@ -1327,126 +1327,126 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
   }, [])
 
   useEffect(() => {
+    if (activeTab !== 'event') return undefined
+
+    if (
+      managedEventsFetchedAtRef.current &&
+      Date.now() - managedEventsFetchedAtRef.current < 120000
+    ) {
+      setManagedEventsLoading(false)
+      return undefined
+    }
+
+    let ignore = false
+    const controller = new AbortController()
+
+    async function loadManagedEvents() {
+      setManagedEventsLoading(true)
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/events`,
+          { signal: controller.signal }
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error('Failed to load events')
+        }
+
+        if (!ignore) {
+          setManagedEvents(
+            Array.isArray(data.events) ? data.events : []
+          )
+          managedEventsFetchedAtRef.current = Date.now()
+        }
+      } catch (error) {
+        if (error?.name !== 'AbortError' && !ignore) {
+          setManagedEvents([])
+        }
+      } finally {
+        if (!ignore) setManagedEventsLoading(false)
+      }
+    }
+
+    loadManagedEvents()
+
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [activeTab])
+
+  useEffect(() => {
     let ignore = false
 
-    useEffect(() => {
-  if (activeTab !== 'event') return undefined
-
-  if (
-    managedEventsFetchedAtRef.current &&
-    Date.now() - managedEventsFetchedAtRef.current < 120000
-  ) {
-    setManagedEventsLoading(false)
-    return undefined
-  }
-
-  let ignore = false
-  const controller = new AbortController()
-
-  async function loadManagedEvents() {
-    setManagedEventsLoading(true)
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/events`,
-        { signal: controller.signal }
-      )
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error('Failed to load events')
-      }
-
-      if (!ignore) {
-        setManagedEvents(
-          Array.isArray(data.events) ? data.events : []
-        )
-        managedEventsFetchedAtRef.current = Date.now()
-      }
-    } catch (error) {
-      if (error?.name !== 'AbortError' && !ignore) {
-        setManagedEvents([])
-      }
-    } finally {
-      if (!ignore) setManagedEventsLoading(false)
-    }
-  }
-
-  loadManagedEvents()
-
-  return () => {
-    ignore = true
-    controller.abort()
-  }
-}, [activeTab])
-
     async function loadActiveEventStatus() {
-    const token = getReaderToken()
+      const token = getReaderToken()
 
-    try {
-      const writerResponse = await fetch(
-        `${API_BASE_URL}/api/unlocks/events/writer-wednesday`
-      )
-
-      const writerData = await writerResponse
-        .json()
-        .catch(() => ({}))
-
-      if (!ignore) {
-        setWriterWednesdayLive(
-          Boolean(
-            writerResponse.ok &&
-            writerData.ok !== false &&
-            writerData.event?.active
-          )
+      try {
+        const writerResponse = await fetch(
+          `${API_BASE_URL}/api/unlocks/events/writer-wednesday`
         )
-      }
-    } catch {
-      if (!ignore) {
-        setWriterWednesdayLive(false)
-      }
-    }
 
-    if (!token) {
-      if (!ignore) {
-        setAuthor49Available(true)
-      }
-      return
-    }
+        const writerData = await writerResponse
+          .json()
+          .catch(() => ({}))
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/authors/me/49-day-event`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        if (!ignore) {
+          setWriterWednesdayLive(
+            Boolean(
+              writerResponse.ok &&
+              writerData.ok !== false &&
+              writerData.event?.active
+            )
+          )
         }
-      )
-
-      const data = await response
-        .json()
-        .catch(() => ({}))
-
-      const event = data.event
-
-      if (!ignore) {
-        setAuthor49Available(
-          Boolean(
-            response.ok &&
-            data.ok !== false &&
-            event?.visible &&
-            event.status !== 'finished'
-          )
-        )
+      } catch {
+        if (!ignore) {
+          setWriterWednesdayLive(false)
+        }
       }
-    } catch {
-      if (!ignore) {
-        setAuthor49Available(false)
+
+      if (!token) {
+        if (!ignore) {
+          setAuthor49Available(true)
+        }
+        return
+      }
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/authors/me/49-day-event`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        const event = data.event
+
+        if (!ignore) {
+          setAuthor49Available(
+            Boolean(
+              response.ok &&
+              data.ok !== false &&
+              event?.visible &&
+              event.status !== 'finished'
+            )
+          )
+        }
+      } catch {
+        if (!ignore) {
+          setAuthor49Available(false)
+        }
       }
     }
-  }
 
     loadActiveEventStatus()
 
@@ -1558,41 +1558,10 @@ const activeEvents = [
     .map((event) => event.id)
     .join('|')
 
-  if (managedEventsLoading) return
-
   useEffect(() => {
+    if (managedEventsLoading) return
+
     const eventIds = activeEventIds
-
-      useEffect(() => {
-  if (
-    activeTab !== 'event' ||
-    managedEventsLoading ||
-    !selectedActiveEvent
-  ) {
-    return undefined
-  }
-
-  const eventIds = activeEventIds
-    ? activeEventIds.split('|')
-    : []
-
-  if (eventIds.length <= 1) return undefined
-
-  const timer = window.setTimeout(() => {
-    const index = eventIds.indexOf(selectedActiveEvent)
-    const nextIndex =
-      index < 0 ? 0 : (index + 1) % eventIds.length
-
-    setSelectedActiveEvent(eventIds[nextIndex])
-  }, 5000)
-
-  return () => window.clearTimeout(timer)
-}, [
-  activeTab,
-  activeEventIds,
-  managedEventsLoading,
-  selectedActiveEvent,
-])
       ? activeEventIds.split('|')
       : []
 
@@ -1606,7 +1575,42 @@ const activeEvents = [
     if (!eventIds.includes(selectedActiveEvent)) {
       setSelectedActiveEvent(eventIds[0])
     }
-  }, [activeEventIds, selectedActiveEvent])
+  }, [
+    activeEventIds,
+    managedEventsLoading,
+    selectedActiveEvent,
+  ])
+
+  useEffect(() => {
+    if (
+      activeTab !== 'event' ||
+      managedEventsLoading ||
+      !selectedActiveEvent
+    ) {
+      return undefined
+    }
+
+    const eventIds = activeEventIds
+      ? activeEventIds.split('|')
+      : []
+
+    if (eventIds.length <= 1) return undefined
+
+    const timer = window.setTimeout(() => {
+      const index = eventIds.indexOf(selectedActiveEvent)
+      const nextIndex =
+        index < 0 ? 0 : (index + 1) % eventIds.length
+
+      setSelectedActiveEvent(eventIds[nextIndex])
+    }, 5000)
+
+    return () => window.clearTimeout(timer)
+  }, [
+    activeTab,
+    activeEventIds,
+    managedEventsLoading,
+    selectedActiveEvent,
+  ])
 
   const handleStartYourWork = async () => {
     if (loading) return
