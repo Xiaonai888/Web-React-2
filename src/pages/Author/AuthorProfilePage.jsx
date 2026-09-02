@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -292,6 +293,7 @@ export default function AuthorProfilePage() {
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadProfile() {
       if (AUTHOR_PREVIEW_ENABLED) return
@@ -310,34 +312,56 @@ export default function AuthorProfilePage() {
         const headers = {
           Authorization: `Bearer ${token}`,
         }
-        const [profileResponse, incomeResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/authors/me`, { headers }),
-          fetch(`${API_BASE_URL}/api/authors/me/income`, { headers }),
-        ])
-        const [profileData, incomeData] = await Promise.all([
-          profileResponse.json().catch(() => ({})),
-          incomeResponse.json().catch(() => ({})),
-        ])
 
-        if (!profileResponse.ok || profileData.ok === false || !profileData.author_page) {
-          throw new Error(profileData.message || 'Failed to load author profile')
+        const [profileData, incomeResponse] =
+          await Promise.all([
+            fetchMyAuthorPageCached({
+              apiBaseUrl: API_BASE_URL,
+              token,
+              signal: controller.signal,
+            }),
+            fetch(
+              `${API_BASE_URL}/api/authors/me/income`,
+              {
+                headers,
+                cache: 'no-store',
+                signal: controller.signal,
+              }
+            ),
+          ])
+
+        const incomeData = await incomeResponse
+          .json()
+          .catch(() => ({}))
+
+        if (!profileData.author_page) {
+          throw new Error(
+            profileData.message ||
+              'Failed to load author profile'
+          )
         }
 
         if (!incomeResponse.ok || incomeData.ok === false) {
-          throw new Error(incomeData.message || 'Failed to load author summary')
+          throw new Error(
+            incomeData.message ||
+              'Failed to load author summary'
+          )
         }
 
         if (!ignore) {
-          localStorage.setItem('shadow_author_page', JSON.stringify(profileData.author_page))
           setAuthorPage(profileData.author_page)
           setSummary(incomeData)
         }
       } catch (loadError) {
-        if (!ignore) {
+        if (
+          loadError?.name !== 'AbortError' &&
+          !ignore
+        ) {
           setError(
             loadError.message === 'Failed to fetch'
               ? 'Cannot connect to backend.'
-              : loadError.message || 'Failed to load author profile'
+              : loadError.message ||
+                  'Failed to load author profile'
           )
         }
       } finally {
@@ -349,6 +373,7 @@ export default function AuthorProfilePage() {
 
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [navigate])
 
