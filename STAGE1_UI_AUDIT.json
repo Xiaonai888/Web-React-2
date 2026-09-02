@@ -281,6 +281,7 @@
 "src/components/chat-story/ChatStoryReader.jsx",
 "src/components/common/ImageDropZone.jsx",
 "src/App.jsx"
+"src/components/author-posts/AuthorPostSchedulePicker.jsx"
   ]
 }
 
