@@ -273,6 +273,11 @@
 "src/components/comments/CommentSection.jsx",
 "src/components/reader/GiftPopup.jsx",
 "src/components/reader/ReaderBottomActionBar.jsx"
+"src/components/reader/EchoShareSheet.jsx",
+"src/components/reader/RichEpisodeContent.jsx",
+"src/components/reader/StoryTranslateButton.jsx",
+"src/components/chat-story/ChatStoryEditorGuide.jsx",
+"src/components/chat-story/ChatStoryEpisodeListDrawer.jsx"
   ]
 }
   ]
