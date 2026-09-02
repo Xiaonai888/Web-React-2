@@ -1,12 +1,25 @@
 import {
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../../utils/homeDataCache'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
+
+const AUTHOR_SUGGESTION_LIMIT = 12
+const AUTHOR_SUGGESTION_CACHE_MAX_AGE_MS =
+  10 * 60 * 1000
+
+const authorSuggestionInflightRequests =
+  new Map()
 
 function getReaderToken() {
   return (
@@ -17,6 +30,113 @@ function getReaderToken() {
       'shadow_reader_token'
     ) ||
     ''
+  )
+}
+
+function getSuggestionScope(token) {
+  if (!token) return 'anon'
+
+  let hash = 2166136261
+
+  for (
+    let index = 0;
+    index < token.length;
+    index += 1
+  ) {
+    hash ^= token.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return `reader-${(hash >>> 0).toString(36)}`
+}
+
+function getAuthorSuggestionCacheKey(token) {
+  return getHomeCacheKey({
+    section:
+      'discover-author-suggestions',
+    scope: getSuggestionScope(token),
+    params: {
+      limit: AUTHOR_SUGGESTION_LIMIT,
+      schema: 1,
+    },
+  })
+}
+
+async function runAuthorSuggestionRequest(
+  key,
+  request
+) {
+  if (
+    authorSuggestionInflightRequests.has(
+      key
+    )
+  ) {
+    return authorSuggestionInflightRequests.get(
+      key
+    )
+  }
+
+  const promise = Promise.resolve().then(
+    request
+  )
+
+  authorSuggestionInflightRequests.set(
+    key,
+    promise
+  )
+
+  try {
+    return await promise
+  } finally {
+    if (
+      authorSuggestionInflightRequests.get(
+        key
+      ) === promise
+    ) {
+      authorSuggestionInflightRequests.delete(
+        key
+      )
+    }
+  }
+}
+
+function normalizeVisibleAuthors(
+  suggestions,
+  hiddenIds = new Set()
+) {
+  return (suggestions || [])
+    .filter(
+      (author) =>
+        author?.id &&
+        author?.page_username &&
+        !author.is_owner &&
+        !author.is_following &&
+        !hiddenIds.has(
+          String(author.id)
+        )
+    )
+    .slice(
+      0,
+      AUTHOR_SUGGESTION_LIMIT
+    )
+}
+
+async function saveAuthorSuggestions(
+  token,
+  authors
+) {
+  const cacheKey =
+    getAuthorSuggestionCacheKey(token)
+
+  await saveHomeCache(
+    cacheKey,
+    {
+      authors,
+    },
+    {
+      maxAgeMs:
+        AUTHOR_SUGGESTION_CACHE_MAX_AGE_MS,
+    }
   )
 }
 
@@ -122,6 +242,8 @@ export default function DiscoverAuthorsYouMayLikeSection() {
     followLoadingId,
     setFollowLoadingId,
   ] = useState('')
+  const hiddenAuthorIdsRef =
+    useRef(new Set())
 
   useEffect(() => {
     let alive = true
@@ -129,18 +251,61 @@ export default function DiscoverAuthorsYouMayLikeSection() {
     async function loadSuggestions() {
       const token =
         getReaderToken()
+      const cacheKey =
+        getAuthorSuggestionCacheKey(
+          token
+        )
+      let hasCachedPayload = false
 
       try {
-        setLoading(true)
+        const cached =
+          await loadHomeCache(
+            cacheKey,
+            {
+              maxAgeMs:
+                AUTHOR_SUGGESTION_CACHE_MAX_AGE_MS,
+              allowExpired: true,
+            }
+          )
+
+        if (!alive) return
+
+        if (
+          Array.isArray(
+            cached?.data?.authors
+          )
+        ) {
+          hasCachedPayload = true
+          const visibleCached =
+            normalizeVisibleAuthors(
+              cached.data.authors,
+              hiddenAuthorIdsRef.current
+            )
+
+          setAuthors(visibleCached)
+          setLoading(false)
+
+          if (cached.isFresh) {
+            return
+          }
+        }
+
+        if (!hasCachedPayload) {
+          setLoading(true)
+        }
 
         let suggestions = []
 
         if (token) {
           try {
             suggestions =
-              await requestAuthors(
-                token,
-                '/api/authors/discover?limit=12'
+              await runAuthorSuggestionRequest(
+                `discover:${cacheKey}`,
+                () =>
+                  requestAuthors(
+                    token,
+                    `/api/authors/discover?limit=${AUTHOR_SUGGESTION_LIMIT}`
+                  )
               )
           } catch {
             suggestions = []
@@ -149,30 +314,35 @@ export default function DiscoverAuthorsYouMayLikeSection() {
 
         if (!suggestions.length) {
           suggestions =
-            await requestAuthors(
-              token,
-              '/api/authors/top?limit=20'
+            await runAuthorSuggestionRequest(
+              `top:${cacheKey}`,
+              () =>
+                requestAuthors(
+                  token,
+                  '/api/authors/top?limit=20'
+                )
             )
         }
 
         const visibleAuthors =
-          suggestions
-            .filter(
-              (author) =>
-                author?.id &&
-                author?.page_username &&
-                !author.is_owner &&
-                !author.is_following
-            )
-            .slice(0, 12)
-
-        if (alive) {
-          setAuthors(
-            visibleAuthors
+          normalizeVisibleAuthors(
+            suggestions,
+            hiddenAuthorIdsRef.current
           )
-        }
+
+        if (!alive) return
+
+        setAuthors(visibleAuthors)
+
+        await saveAuthorSuggestions(
+          token,
+          visibleAuthors
+        )
       } catch {
-        if (alive) {
+        if (
+          alive &&
+          !hasCachedPayload
+        ) {
           setAuthors([])
         }
       } finally {
@@ -204,12 +374,31 @@ export default function DiscoverAuthorsYouMayLikeSection() {
   }
 
   function dismissAuthor(authorId) {
-    setAuthors((current) =>
-      current.filter(
-        (author) =>
-          author.id !== authorId
-      )
+    const token =
+      getReaderToken()
+    const id = String(
+      authorId || ''
     )
+
+    if (id) {
+      hiddenAuthorIdsRef.current.add(
+        id
+      )
+    }
+
+    setAuthors((current) => {
+      const next = current.filter(
+        (author) =>
+          String(author.id) !== id
+      )
+
+      void saveAuthorSuggestions(
+        token,
+        next
+      )
+
+      return next
+    })
   }
 
   async function followAuthor(author) {
