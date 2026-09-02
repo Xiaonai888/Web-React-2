@@ -44,6 +44,10 @@ const DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS =
   5 * 60 * 1000
 const DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS =
   15 * 60 * 1000
+const DISCOVER_SHADOW_MALL_SALE_STATUS_CACHE_MAX_AGE_MS =
+  60 * 1000
+const DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS =
+  2 * 60 * 1000
 const DISCOVER_CACHE_WRITE_DELAY_MS = 120
 
 const discoverFeedInflightRequests =
@@ -87,6 +91,45 @@ function getShadowMallPromotionsCacheKey() {
     scope: 'public',
     params: {
       limit: 100,
+      schema: 1,
+    },
+  })
+}
+
+function getShadowMallPrivateStatusCacheKey(
+  token,
+  promotions,
+  section
+) {
+  if (!token) return ''
+
+  const promotionSignature = [
+    ...new Set(
+      (promotions || [])
+        .map((promotion) => {
+          const id = String(
+            promotion?.id || ''
+          ).trim()
+
+          if (!id) return ''
+
+          return `${id}:${Number(
+            promotion?.visibility_version || 1
+          )}`
+        })
+        .filter(Boolean)
+    ),
+  ]
+    .sort()
+    .join(',')
+
+  if (!promotionSignature) return ''
+
+  return getHomeCacheKey({
+    section,
+    scope: getDiscoverFeedScope(token),
+    params: {
+      promotions: promotionSignature,
       schema: 1,
     },
   })
@@ -559,6 +602,77 @@ async function fetchShadowMallPromotionSocialStatuses(
   }
 
   return data.statuses || {}
+}
+
+async function loadShadowMallPrivateStatuses({
+  token,
+  promotions,
+  section,
+  maxAgeMs,
+  fetcher,
+}) {
+  const cacheKey =
+    getShadowMallPrivateStatusCacheKey(
+      token,
+      promotions,
+      section
+    )
+
+  if (!cacheKey) return null
+
+  const cached = await loadHomeCache(
+    cacheKey,
+    {
+      maxAgeMs,
+      allowExpired: true,
+    }
+  )
+
+  const cachedStatuses =
+    cached?.data &&
+    typeof cached.data === 'object' &&
+    !Array.isArray(cached.data)
+      ? cached.data
+      : null
+
+  if (
+    cached?.isFresh &&
+    cachedStatuses
+  ) {
+    return cachedStatuses
+  }
+
+  try {
+    const statuses =
+      await runDiscoverFeedRequest(
+        `shadow-mall-private:${cacheKey}`,
+        () =>
+          fetcher(
+            token,
+            promotions
+          )
+      )
+
+    if (
+      statuses &&
+      typeof statuses === 'object' &&
+      !Array.isArray(statuses)
+    ) {
+      await saveHomeCache(
+        cacheKey,
+        statuses,
+        {
+          maxAgeMs,
+        }
+      )
+
+      return statuses
+    }
+  } catch {
+    return cachedStatuses
+  }
+
+  return cachedStatuses
 }
 
 async function setFollowedPostReaction(
@@ -2127,14 +2241,28 @@ export default function DiscoverPage() {
             storyResult,
             socialResult,
           ] = await Promise.allSettled([
-            fetchShadowMallStorySaleStatuses(
+            loadShadowMallPrivateStatuses({
               token,
-              visiblePromotions
-            ),
-            fetchShadowMallPromotionSocialStatuses(
+              promotions:
+                visiblePromotions,
+              section:
+                'discover-promotion-story-sale-statuses',
+              maxAgeMs:
+                DISCOVER_SHADOW_MALL_SALE_STATUS_CACHE_MAX_AGE_MS,
+              fetcher:
+                fetchShadowMallStorySaleStatuses,
+            }),
+            loadShadowMallPrivateStatuses({
               token,
-              visiblePromotions
-            ),
+              promotions:
+                visiblePromotions,
+              section:
+                'discover-promotion-social-statuses',
+              maxAgeMs:
+                DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS,
+              fetcher:
+                fetchShadowMallPromotionSocialStatuses,
+            }),
           ])
 
           statuses =
