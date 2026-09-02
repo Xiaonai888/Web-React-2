@@ -1,4 +1,14 @@
 import React, { useMemo } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('richEpisodeContent', {
+  en: { noContent: 'No episode content found.' },
+  km: { noContent: 'មិនមានមាតិកាភាគទេ។' },
+  zh: { noContent: '未找到章节内容。' },
+  ja: { noContent: 'エピソードの内容が見つかりません。' },
+  ko: { noContent: '에피소드 내용을 찾을 수 없습니다.' },
+})
 
 const RICH_TAG_PATTERN = /<(?:p|div|br|strong|b|em|i|img)\b/i
 
@@ -133,6 +143,7 @@ export default function RichEpisodeContent({
   lineSpacing,
   theme,
 }) {
+  const { t } = useDisplayTranslation()
   const lineHeightClass =
     lineSpacing === 'compact'
       ? 'leading-[1.85]'
@@ -173,7 +184,7 @@ export default function RichEpisodeContent({
   if (!renderedContent.length) {
     return (
       <p className={`text-[15px] font-semibold leading-8 ${theme.muted}`}>
-        No episode content found.
+        {t('richEpisodeContent.noContent')}
       </p>
     )
   }
