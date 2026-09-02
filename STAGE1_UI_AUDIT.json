@@ -278,7 +278,16 @@
 "src/components/reader/StoryTranslateButton.jsx",
 "src/components/chat-story/ChatStoryEditorGuide.jsx",
 "src/components/chat-story/ChatStoryEpisodeListDrawer.jsx"
+"src/components/chat-story/ChatStoryReader.jsx",
+"src/components/common/ImageDropZone.jsx",
+"src/App.jsx"
   ]
+}
+
+    {
+  "path": "src/components/author-posts/AuthorPostDetail.jsx",
+  "status": "skip",
+  "reason": "Not used by the current active Author Post Detail UI; AuthorPostDetailPage uses PublicPostDetailView instead."
 }
   ]
 }
