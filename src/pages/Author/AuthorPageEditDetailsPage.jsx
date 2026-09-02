@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  fetchMyAuthorPageCached,
+  invalidateMyAuthorPageClientCache,
+} from '../../services/myAuthorPageClientCache.js'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -1665,6 +1669,7 @@ const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadAuthorPage() {
       const token = getAuthToken()
@@ -1678,16 +1683,17 @@ const [loading, setLoading] = useState(true)
         setLoading(true)
         setMessage('')
 
-        const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const data = await fetchMyAuthorPageCached({
+          apiBaseUrl: API_BASE_URL,
+          token,
+          signal: controller.signal,
         })
 
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false || !data.has_author_page || !data.author_page) {
-          throw new Error(data.message || 'Author page not found')
+        if (
+          !data.has_author_page ||
+          !data.author_page
+        ) {
+          throw new Error('Author page not found')
         }
 
         if (ignore) return
@@ -1697,18 +1703,37 @@ const [loading, setLoading] = useState(true)
         setBio(data.author_page.bio || '')
         setAvatarUrl(data.author_page.avatar_url || '')
         setCoverUrl(data.author_page.cover_url || '')
-        const databaseDetails = data.author_page.profile_details || {}
-const storedDetails = readStoredDetails()
-const nextDetails = Object.keys(databaseDetails).length
-  ? { ...DEFAULT_DETAILS, ...databaseDetails }
-  : { ...DEFAULT_DETAILS, ...storedDetails }
 
-setDetails(nextDetails)
-writeStoredDetails(nextDetails)
+        const databaseDetails =
+          data.author_page.profile_details || {}
+        const storedDetails = readStoredDetails()
+        const nextDetails =
+          Object.keys(databaseDetails).length
+            ? {
+                ...DEFAULT_DETAILS,
+                ...databaseDetails,
+              }
+            : {
+                ...DEFAULT_DETAILS,
+                ...storedDetails,
+              }
 
-        localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+        setDetails(nextDetails)
+        writeStoredDetails(nextDetails)
+
+        localStorage.setItem(
+          'shadow_author_page',
+          JSON.stringify(data.author_page)
+        )
       } catch (error) {
-        if (!ignore) setMessage(error.message || 'Failed to load author page')
+        if (
+          error?.name !== 'AbortError' &&
+          !ignore
+        ) {
+          setMessage(
+            error.message || 'Failed to load author page'
+          )
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -1718,6 +1743,7 @@ writeStoredDetails(nextDetails)
 
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [navigate])
 
@@ -1733,11 +1759,16 @@ writeStoredDetails(nextDetails)
 
     const targetRef = refs[sectionFromUrl]
 
-    if (!targetRef?.current) return
+    if (!targetRef?.current) return undefined
 
-    window.setTimeout(() => {
-      targetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const timer = window.setTimeout(() => {
+      targetRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
     }, 260)
+
+    return () => window.clearTimeout(timer)
   }, [sectionFromUrl, loading])
 
   useEffect(() => {
@@ -1776,8 +1807,13 @@ async function updateDetails(patch) {
       throw new Error(data.message || 'Failed to save contact info')
     }
 
+    invalidateMyAuthorPageClientCache()
+
     if (data.author_page) {
-      localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+      localStorage.setItem(
+        'shadow_author_page',
+        JSON.stringify(data.author_page)
+      )
     }
 
     setMessage('Saved.')
@@ -1873,12 +1909,19 @@ profile_details: details,
         throw new Error(data.message || 'Failed to update author page')
       }
 
+      invalidateMyAuthorPageClientCache()
+
       if (data.author_page) {
-        localStorage.setItem('shadow_author_page', JSON.stringify({
-          ...data.author_page,
-          avatar_url: avatarUrl || data.author_page.avatar_url,
-          cover_url: coverUrl || data.author_page.cover_url,
-        }))
+        localStorage.setItem(
+          'shadow_author_page',
+          JSON.stringify({
+            ...data.author_page,
+            avatar_url:
+              avatarUrl || data.author_page.avatar_url,
+            cover_url:
+              coverUrl || data.author_page.cover_url,
+          })
+        )
       }
 
       writeStoredDetails(details)
