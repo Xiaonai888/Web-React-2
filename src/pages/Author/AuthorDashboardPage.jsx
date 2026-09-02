@@ -516,7 +516,7 @@ const stopStoriesDrag = () => {
     ? `/author/page/${encodeURIComponent(author.username)}`
     : '/author/page'
 
-  async function fetchMyAuthorPage() {
+  async function fetchMyAuthorPage({ signal } = {}) {
     if (AUTHOR_PREVIEW_ENABLED) {
       setAuthorPage(MOCK_AUTHOR_PAGE)
       return MOCK_AUTHOR_PAGE
@@ -529,11 +529,15 @@ const stopStoriesDrag = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal,
+        }
+      )
 
       const data = await response.json().catch(() => ({}))
 
@@ -541,80 +545,82 @@ const stopStoriesDrag = () => {
         return null
       }
 
-      localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+      localStorage.setItem(
+        'shadow_author_page',
+        JSON.stringify(data.author_page)
+      )
       setAuthorPage(data.author_page)
 
       return data.author_page
-    } catch {
+    } catch (error) {
+      if (error?.name === 'AbortError') return null
       return null
     }
   }
 
-    async function fetchDashboardBadges({
-  force = false,
-} = {}) {
-  if (AUTHOR_PREVIEW_ENABLED) return
+  async function fetchDashboardBadges({
+    force = false,
+    signal,
+  } = {}) {
+    if (AUTHOR_PREVIEW_ENABLED) return
 
-  const token = getAuthToken()
-if (!token) return
-if (!force && document.visibilityState !== 'visible') return
+    const token = getAuthToken()
+    if (!token) return
+    if (!force && document.visibilityState !== 'visible') return
 
-const now = Date.now()
+    const now = Date.now()
 
-  if (badgeRequestInFlightRef.current) {
-    return
-  }
-
-  if (
-    !force &&
-    now - lastBadgeRequestAtRef.current <
-      15000
-  ) {
-    return
-  }
-
-  badgeRequestInFlightRef.current = true
-  lastBadgeRequestAtRef.current = now
-
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/authors/me/dashboard-badges`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: 'no-store',
-      }
-    )
-
-    const data = await response
-      .json()
-      .catch(() => ({}))
+    if (badgeRequestInFlightRef.current) {
+      return
+    }
 
     if (
-      !response.ok ||
-      data.ok === false
+      !force &&
+      now - lastBadgeRequestAtRef.current < 15000
     ) {
       return
     }
 
-    setUnreadNotifications(
-      Number(
-        data.story_unread_count || 0
-      )
-    )
+    badgeRequestInFlightRef.current = true
+    lastBadgeRequestAtRef.current = now
 
-    setUnreadMails(
-      Number(
-        data.mail_unread_count || 0
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me/dashboard-badges`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+          signal,
+        }
       )
-    )
-  } finally {
-    badgeRequestInFlightRef.current = false
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        return
+      }
+
+      setUnreadNotifications(
+        Number(data.story_unread_count || 0)
+      )
+
+      setUnreadMails(
+        Number(data.mail_unread_count || 0)
+      )
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        return
+      }
+    } finally {
+      badgeRequestInFlightRef.current = false
+    }
   }
-}
 
-  async function fetchMyStories() {
+  async function fetchMyStories({ signal } = {}) {
     if (AUTHOR_PREVIEW_ENABLED) {
       setMessage('')
       setStories(MOCK_STORIES.map(normalizeStory))
@@ -633,20 +639,31 @@ const now = Date.now()
       setLoading(true)
       setMessage('')
 
-      const response = await fetch(`${API_BASE_URL}/api/stories/my`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/my`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+          signal,
+        }
+      )
 
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load stories')
+        throw new Error(
+          data.message || 'Failed to load stories'
+        )
       }
 
-      setStories((data.stories || []).map(normalizeStory))
+      setStories(
+        (data.stories || []).map(normalizeStory)
+      )
     } catch (error) {
+      if (error?.name === 'AbortError') return
+
       setStories([])
       setMessage(
         error.message === 'Failed to fetch'
@@ -654,36 +671,47 @@ const now = Date.now()
           : error.message || 'Failed to load stories'
       )
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) {
+        setLoading(false)
+      }
     }
   }
 
- useEffect(() => {
-  fetchMyAuthorPage()
-  fetchMyStories()
-  fetchDashboardBadges({
-    force: true,
-  })
+  useEffect(() => {
+    const controller = new AbortController()
+    const { signal } = controller
 
-  const intervalId = window.setInterval(
-  fetchDashboardBadges,
-  300000
-)
+    const refreshBadges = () => {
+      fetchDashboardBadges({ signal })
+    }
 
-  window.addEventListener(
-    'focus',
-    fetchDashboardBadges
-  )
+    fetchMyAuthorPage({ signal })
+    fetchMyStories({ signal })
+    fetchDashboardBadges({
+      force: true,
+      signal,
+    })
 
-  return () => {
-    window.clearInterval(intervalId)
-    window.removeEventListener(
-      'focus',
-      fetchDashboardBadges
+    const intervalId = window.setInterval(
+      refreshBadges,
+      300000
     )
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [])
+
+    window.addEventListener(
+      'focus',
+      refreshBadges
+    )
+
+    return () => {
+      controller.abort()
+      window.clearInterval(intervalId)
+      window.removeEventListener(
+        'focus',
+        refreshBadges
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const stats = useMemo(() => {
     const published = stories.filter((story) => story.rawStatus === 'published').length
