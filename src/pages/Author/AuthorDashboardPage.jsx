@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 import Author49DayDashboardCard from '../../components/events/Author49DayDashboardCard'
+import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -529,26 +530,16 @@ const stopStoriesDrag = () => {
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/authors/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          signal,
-        }
-      )
+      const data = await fetchMyAuthorPageCached({
+        apiBaseUrl: API_BASE_URL,
+        token,
+        signal,
+      })
 
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false || !data.author_page) {
+      if (!data.author_page) {
         return null
       }
 
-      localStorage.setItem(
-        'shadow_author_page',
-        JSON.stringify(data.author_page)
-      )
       setAuthorPage(data.author_page)
 
       return data.author_page
