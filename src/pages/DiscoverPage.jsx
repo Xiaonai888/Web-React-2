@@ -34,7 +34,6 @@ import ReactionAction from '../components/social/reactions/ReactionAction'
 import ReactionSummary from '../components/social/reactions/ReactionSummary'
 import AuthorDiscoverPostText from '../components/author-posts/AuthorDiscoverPostText'
 import {
-  CollapsiblePostText,
   ProfessionalSinglePostImage,
 } from '../components/common/ProfessionalPostContent'
 const API_BASE_URL =
@@ -385,12 +384,30 @@ function buildDiscoverTimeline(
   readerPosts
 ) {
   const snapshotTime = Date.now()
-  const newestPostId = [authorPosts?.[0], readerPosts?.[0]]
-  .filter(Boolean)
-  .sort((a, b) =>
-    new Date(b.publish_at || b.created_at || 0) -
-    new Date(a.publish_at || a.created_at || 0)
-  )[0]?.id
+  const newestPostId = [
+    ...(Array.isArray(authorPosts)
+      ? authorPosts
+      : []),
+    ...(Array.isArray(readerPosts)
+      ? readerPosts
+      : []),
+  ]
+    .filter(Boolean)
+    .sort(
+      (left, right) =>
+        new Date(
+          right.publish_at ||
+            right.updated_at ||
+            right.created_at ||
+            0
+        ).getTime() -
+        new Date(
+          left.publish_at ||
+            left.updated_at ||
+            left.created_at ||
+            0
+        ).getTime()
+    )[0]?.id
 
   const items = [
     ...(Array.isArray(authorPosts)
@@ -618,7 +635,12 @@ async function loadShadowMallPrivateStatuses({
       section
     )
 
-  if (!cacheKey) return null
+  if (!cacheKey) {
+    return {
+      statuses: null,
+      loaded: false,
+    }
+  }
 
   const cached = await loadHomeCache(
     cacheKey,
@@ -639,7 +661,10 @@ async function loadShadowMallPrivateStatuses({
     cached?.isFresh &&
     cachedStatuses
   ) {
-    return cachedStatuses
+    return {
+      statuses: cachedStatuses,
+      loaded: true,
+    }
   }
 
   try {
@@ -666,13 +691,78 @@ async function loadShadowMallPrivateStatuses({
         }
       )
 
-      return statuses
+      return {
+        statuses,
+        loaded: true,
+      }
     }
   } catch {
-    return cachedStatuses
+    return {
+      statuses: cachedStatuses,
+      loaded: Boolean(cachedStatuses),
+    }
   }
 
-  return cachedStatuses
+  return {
+    statuses: cachedStatuses,
+    loaded: Boolean(cachedStatuses),
+  }
+}
+
+async function patchShadowMallPrivateStatusCache({
+  token,
+  promotions,
+  section,
+  maxAgeMs,
+  promotionId,
+  changes,
+}) {
+  const cacheKey =
+    getShadowMallPrivateStatusCacheKey(
+      token,
+      promotions,
+      section
+    )
+
+  const id = String(
+    promotionId || ''
+  ).trim()
+
+  if (!cacheKey || !id) return
+
+  const cached = await loadHomeCache(
+    cacheKey,
+    {
+      maxAgeMs,
+      allowExpired: true,
+    }
+  )
+
+  if (
+    !cached?.isFresh ||
+    !cached?.data ||
+    typeof cached.data !== 'object' ||
+    Array.isArray(cached.data)
+  ) {
+    return
+  }
+
+  const statuses = {
+    ...cached.data,
+  }
+
+  statuses[id] = {
+    ...(statuses[id] || {}),
+    ...(changes || {}),
+  }
+
+  await saveHomeCache(
+    cacheKey,
+    statuses,
+    {
+      maxAgeMs,
+    }
+  )
 }
 
 async function setFollowedPostReaction(
@@ -1372,7 +1462,13 @@ function DiamondPrice({
   )
 }
 
-function AdsCard({ item, onMore, onHide }) {
+function AdsCard({
+  item,
+  onMore,
+  onHide,
+  onStorySaleStatusChanged,
+}) {
+  const navigate = useNavigate()
   const token = getAuthToken()
   const isStorySale =
     item?.promotion_type === 'story_sale' &&
@@ -1531,13 +1627,11 @@ const [saleStatus, setSaleStatus] =
   }, [confirmOpen])
 
   function openLogin() {
-    window.location.assign('/login')
+    navigate('/login')
   }
 
   function openTopUp() {
-    window.location.assign(
-      '/shop/mall/purchase'
-    )
+    navigate('/shop/mall/purchase')
   }
 
   function handleStoryAction() {
@@ -1550,7 +1644,7 @@ const [saleStatus, setSaleStatus] =
     }
 
     if (owned) {
-      window.location.assign(
+      navigate(
         saleStatus?.story_url || storyUrl
       )
       return
@@ -1634,14 +1728,15 @@ const [saleStatus, setSaleStatus] =
       }
 
       setConfirmOpen(false)
-      setSaleStatus((current) => ({
-        ...(current || {}),
+
+      const nextSaleStatus = {
+        ...(saleStatus || {}),
         owned: true,
         purchased: !data.already_owned,
         button_state: 'read',
         story_url:
           data.story_url ||
-          current?.story_url ||
+          saleStatus?.story_url ||
           storyUrl,
         purchase: {
           id: data.purchase_id || null,
@@ -1651,9 +1746,15 @@ const [saleStatus, setSaleStatus] =
         },
         wallet:
           data.wallet ||
-          current?.wallet ||
+          saleStatus?.wallet ||
           null,
-      }))
+      }
+
+      setSaleStatus(nextSaleStatus)
+      onStorySaleStatusChanged?.(
+        item.id,
+        nextSaleStatus
+      )
       setMessage(
         data.already_owned
           ? 'You already own this story.'
@@ -1999,115 +2100,126 @@ const [saleStatus, setSaleStatus] =
 }
 
 
-function TrendingCard({ item }) {
-  const coverColors = [
-    'from-[#111827] via-[#4f46e5] to-[#a78bfa]',
-    'from-[#7f1d1d] via-[#dc2626] to-[#f59e0b]',
-    'from-[#064e3b] via-[#0f766e] to-[#5eead4]',
-    'from-[#3b0764] via-[#9333ea] to-[#f0abfc]',
-    'from-[#7c2d12] via-[#ea580c] to-[#fed7aa]',
-  ]
 
-  return (
-    <article className="bg-white py-4 shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="mb-4 flex items-center justify-between px-4">
-        <div>
-          <div className="text-[18px] font-black text-[#111827]">{item.title}</div>
-          <div className="mt-1 text-[12px] font-bold text-gray-400">Popular books on Shadow now</div>
-        </div>
-        <button type="button" className="text-[12px] font-black text-[#1677ff]">See all</button>
-      </div>
+function applyAuthorPostLocalState(
+  posts,
+  postOverrides,
+  followOverrides
+) {
+  return filterAuthorPostsByLocalPreferences(
+    Array.isArray(posts) ? posts : []
+  ).map((post) => {
+    const postId = String(
+      post?.id || ''
+    )
 
-      <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
-        {item.items.map((novel, index) => (
-          <button key={novel.rank} type="button" className="w-[104px] shrink-0 text-left active:scale-[0.98]">
-            <div className={`relative h-[148px] overflow-hidden rounded-[14px] bg-gradient-to-br ${coverColors[index % coverColors.length]} shadow-sm`}>
-              <div className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-[12px] font-black text-[#111827]">
-                {novel.rank}
-              </div>
+    const override =
+      postOverrides.get(postId) || null
 
-              <div className="absolute inset-x-3 bottom-3">
-                <div className="rounded-[10px] bg-white/15 p-2 backdrop-blur">
-                  <div className="line-clamp-2 text-[11px] font-black leading-[14px] text-white">
-                    {novel.title}
-                  </div>
-                </div>
-              </div>
-            </div>
+    let nextPost = override
+      ? {
+          ...post,
+          ...override,
+          author_page: {
+            ...(post.author_page || {}),
+            ...(override.author_page || {}),
+          },
+        }
+      : post
 
-            <div className="mt-2 line-clamp-2 text-[12px] font-black leading-[15px] text-[#111827]">
-              {novel.title}
-            </div>
-            <div className="mt-1 truncate text-[10px] font-bold text-gray-400">
-              {novel.meta}
-            </div>
-          </button>
-        ))}
-      </div>
-    </article>
-  )
+    const authorId = String(
+      nextPost?.author_page?.id || ''
+    )
+
+    if (
+      authorId &&
+      followOverrides.has(authorId)
+    ) {
+      const isFollowing = Boolean(
+        followOverrides.get(authorId)
+      )
+
+      nextPost = {
+        ...nextPost,
+        is_following: isFollowing,
+        author_page: {
+          ...(nextPost.author_page || {}),
+          is_following: isFollowing,
+        },
+      }
+    }
+
+    return nextPost
+  })
 }
 
+function mergeReaderPostOverride(
+  post,
+  override
+) {
+  if (!override) return post
 
-function RecommendedAuthorsCard({ item }) {
-  return (
-    <article className="bg-white py-4 shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="mb-4 flex items-center justify-between px-4">
-        <div>
-          <div className="text-[18px] font-black text-[#111827]">{item.title}</div>
-          <div className="mt-1 text-[12px] font-bold text-gray-400">Swipe to discover new authors</div>
-        </div>
-        <button type="button" className="text-[12px] font-black text-[#1677ff]">More</button>
-      </div>
-
-      <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
-        {item.authors.map((author) => (
-          <div
-            key={author.name}
-            className="h-[190px] w-[132px] shrink-0 rounded-[20px] bg-[#f8fafc] p-3 text-center ring-1 ring-gray-100"
-          >
-            <div className="mx-auto flex h-[62px] w-[62px] items-center justify-center rounded-full bg-gradient-to-br from-[#111827] to-[#4f46e5] text-[16px] font-black text-white shadow-sm">
-              {author.avatar}
-            </div>
-
-            <div className="mt-3 truncate text-[14px] font-black text-[#111827]">{author.name}</div>
-            <div className="mt-1 line-clamp-2 h-[28px] text-[10px] font-bold leading-[14px] text-gray-400">
-              {author.meta}
-            </div>
-
-            <button
-              type="button"
-              className="mt-2 h-[32px] w-full rounded-full bg-[#111827] text-[12px] font-black text-white active:scale-[0.98]"
-            >
-              Follow
-            </button>
-          </div>
-        ))}
-      </div>
-    </article>
-  )
+  return {
+    ...(post || {}),
+    ...override,
+    user: {
+      ...(post?.user || {}),
+      ...(override?.user || {}),
+    },
+  }
 }
 
-function EmptyStateCard() {
-  return (
-    <article className="bg-white p-5 text-center shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-        <i className="fa-solid fa-user-plus text-lg" />
-      </div>
-      <div className="text-[16px] font-black text-[#111827]">Follow authors to improve Discover</div>
-      <div className="mx-auto mt-2 max-w-[260px] text-[13px] font-semibold leading-6 text-gray-500">
-        Real followed-page updates will replace this demo feed later.
-      </div>
-    </article>
-  )
-}
+function applyReaderPostLocalState(
+  posts,
+  postOverrides,
+  hiddenIds,
+  localOrder
+) {
+  const result = []
+  const seen = new Set()
 
-function FeedRenderer({ item }) {
-  if (item.kind === 'followed_post') return <FollowedPostCard post={item} />
-  if (item.kind === 'ad') return <AdsCard item={item} />
-  if (item.kind === 'trending') return <TrendingCard item={item} />
-  if (item.kind === 'recommended_authors') return <RecommendedAuthorsCard item={item} />
-  return null
+  function append(post) {
+    const id = String(
+      post?.id || ''
+    )
+
+    if (
+      !id ||
+      seen.has(id) ||
+      hiddenIds.has(id)
+    ) {
+      return
+    }
+
+    const override =
+      postOverrides.get(id) || null
+
+    result.push(
+      mergeReaderPostOverride(
+        post,
+        override
+      )
+    )
+    seen.add(id)
+  }
+
+  for (const id of localOrder) {
+    const override =
+      postOverrides.get(String(id))
+
+    if (override) {
+      append(override)
+    }
+  }
+
+  for (
+    const post of
+      Array.isArray(posts) ? posts : []
+  ) {
+    append(post)
+  }
+
+  return result
 }
 
 function countAuthorPostComments(comments = []) {
@@ -2193,10 +2305,27 @@ export default function DiscoverPage() {
   const [readerPostsLoading, setReaderPostsLoading] = useState(true)
   const [readerPostsError, setReaderPostsError] = useState('')
   const [shadowMallPromotions, setShadowMallPromotions] = useState([])
+  const shadowMallPromotionsRef =
+    useRef([])
   const authorFeedCacheReadyRef = useRef(false)
   const readerFeedCacheReadyRef = useRef(false)
   const authorFeedCacheSignatureRef = useRef('')
   const readerFeedCacheSignatureRef = useRef('')
+  const authorPostOverridesRef =
+    useRef(new Map())
+  const authorFollowOverridesRef =
+    useRef(new Map())
+  const readerPostOverridesRef =
+    useRef(new Map())
+  const hiddenReaderPostIdsRef =
+    useRef(new Set())
+  const localReaderPostOrderRef =
+    useRef([])
+
+  useEffect(() => {
+    shadowMallPromotionsRef.current =
+      shadowMallPromotions
+  }, [shadowMallPromotions])
 
   const uniqueShadowMallPromotions = useMemo(() => {
     const seenIds = new Set()
@@ -2292,8 +2421,14 @@ export default function DiscoverPage() {
               )
           )
 
-        let statuses = null
-        let socialStatuses = null
+        let storyStatusState = {
+          statuses: null,
+          loaded: false,
+        }
+        let socialStatusState = {
+          statuses: null,
+          loaded: false,
+        }
 
         if (token) {
           const [
@@ -2324,25 +2459,43 @@ export default function DiscoverPage() {
             }),
           ])
 
-          statuses =
-            storyResult.status === 'fulfilled'
-              ? storyResult.value
-              : null
+          if (
+            storyResult.status ===
+            'fulfilled'
+          ) {
+            storyStatusState =
+              storyResult.value
+          }
 
-          socialStatuses =
-            socialResult.status === 'fulfilled'
-              ? socialResult.value
-              : null
+          if (
+            socialResult.status ===
+            'fulfilled'
+          ) {
+            socialStatusState =
+              socialResult.value
+          }
         }
 
         if (!alive) return
 
-        setShadowMallPromotions(
+        const statuses =
+          storyStatusState.statuses
+        const socialStatuses =
+          socialStatusState.statuses
+
+        const nextPromotions =
           visiblePromotions.map(
             (promotion) => {
               const key = String(
                 promotion?.id || ''
               )
+
+              const isStorySale =
+                promotion?.promotion_type ===
+                  'story_sale' &&
+                Boolean(
+                  promotion?.story_id
+                )
 
               const hasStatus =
                 statuses &&
@@ -2364,6 +2517,12 @@ export default function DiscoverPage() {
                   ? {
                       story_sale_status:
                         statuses[key],
+                    }
+                  : {}),
+                ...(token &&
+                isStorySale &&
+                storyStatusState.loaded
+                  ? {
                       story_sale_status_loaded:
                         true,
                     }
@@ -2371,9 +2530,23 @@ export default function DiscoverPage() {
                 ...(hasSocialStatus
                   ? socialStatuses[key]
                   : {}),
+                ...(token &&
+                socialStatusState.loaded
+                  ? {
+                      reaction_state_loaded:
+                        true,
+                      echo_state_loaded:
+                        true,
+                    }
+                  : {}),
               }
             }
           )
+
+        shadowMallPromotionsRef.current =
+          nextPromotions
+        setShadowMallPromotions(
+          nextPromotions
         )
       } catch {
         if (alive) {
@@ -2428,8 +2601,16 @@ export default function DiscoverPage() {
           )
         ) {
           hasCachedPayload = true
+          const cachedPosts =
+            applyReaderPostLocalState(
+              cached.data.posts,
+              readerPostOverridesRef.current,
+              hiddenReaderPostIdsRef.current,
+              localReaderPostOrderRef.current
+            )
+
           const cachedPayload = {
-            posts: cached.data.posts,
+            posts: cachedPosts,
           }
           readerFeedCacheReadyRef.current =
             true
@@ -2439,7 +2620,7 @@ export default function DiscoverPage() {
             )
 
           setReaderPosts(
-            cached.data.posts
+            cachedPosts
           )
           setReaderPostsLoading(false)
           setReaderPostsError('')
@@ -2462,9 +2643,14 @@ export default function DiscoverPage() {
         if (!alive) return
 
         const nextPosts =
-          Array.isArray(data.posts)
-            ? data.posts
-            : []
+          applyReaderPostLocalState(
+            Array.isArray(data.posts)
+              ? data.posts
+              : [],
+            readerPostOverridesRef.current,
+            hiddenReaderPostIdsRef.current,
+            localReaderPostOrderRef.current
+          )
 
         setReaderPosts(nextPosts)
         setReaderPostsError('')
@@ -2554,8 +2740,10 @@ export default function DiscoverPage() {
         ) {
           hasCachedPayload = true
           const cachedPosts =
-            filterAuthorPostsByLocalPreferences(
-              cached.data.posts
+            applyAuthorPostLocalState(
+              cached.data.posts,
+              authorPostOverridesRef.current,
+              authorFollowOverridesRef.current
             )
           const cachedPayload = {
             posts: cachedPosts,
@@ -2609,9 +2797,13 @@ export default function DiscoverPage() {
         if (!alive) return
 
         const nextPosts =
-          Array.isArray(data.posts)
-            ? data.posts
-            : []
+          applyAuthorPostLocalState(
+            Array.isArray(data.posts)
+              ? data.posts
+              : [],
+            authorPostOverridesRef.current,
+            authorFollowOverridesRef.current
+          )
 
         const nextCursor =
           data.next_cursor || null
@@ -2621,11 +2813,7 @@ export default function DiscoverPage() {
             data.next_cursor
         )
 
-        setRealPosts(
-          filterAuthorPostsByLocalPreferences(
-            nextPosts
-          )
-        )
+        setRealPosts(nextPosts)
 
         setRealPostsCursor(
           nextCursor
@@ -2638,10 +2826,7 @@ export default function DiscoverPage() {
         setRealPostsError('')
 
         const nextPayload = {
-          posts:
-            filterAuthorPostsByLocalPreferences(
-              nextPosts
-            ),
+          posts: nextPosts,
           next_cursor: nextCursor,
           has_more: nextHasMore,
         }
@@ -2810,18 +2995,30 @@ export default function DiscoverPage() {
       setRealPostsLoadingMore(true)
       setRealPostsError('')
 
+      const cacheKey =
+        getDiscoverFeedCacheKey(
+          token,
+          'discover-author-feed',
+          10
+        )
+
       const data =
-  await runDiscoverFeedRequest(
-    `author-more:${token}:${realPostsCursor}`,
-    () =>
-      fetchFollowedPosts(
-        token,
-        realPostsCursor
-      )
-  )
+        await runDiscoverFeedRequest(
+          `author-more:${cacheKey}:${realPostsCursor}`,
+          () =>
+            fetchFollowedPosts(
+              token,
+              realPostsCursor
+            )
+        )
+
       const incomingPosts =
-        filterAuthorPostsByLocalPreferences(
-          Array.isArray(data.posts) ? data.posts : []
+        applyAuthorPostLocalState(
+          Array.isArray(data.posts)
+            ? data.posts
+            : [],
+          authorPostOverridesRef.current,
+          authorFollowOverridesRef.current
         )
 
       setRealPosts((current) =>
@@ -2843,21 +3040,32 @@ export default function DiscoverPage() {
   async function retryRealPosts() {
     if (!token) return
 
+    const cacheKey =
+      getDiscoverFeedCacheKey(
+        token,
+        'discover-author-feed',
+        10
+      )
+
     try {
       setRealPostsLoading(true)
       setRealPostsError('')
 
       const data =
-  await runDiscoverFeedRequest(
-    `author-retry:${token}`,
-    () => fetchFollowedPosts(token)
-  )
+        await runDiscoverFeedRequest(
+          `author:${cacheKey}`,
+          () => fetchFollowedPosts(token)
+        )
+
       const nextPosts =
-        filterAuthorPostsByLocalPreferences(
+        applyAuthorPostLocalState(
           Array.isArray(data.posts)
             ? data.posts
-            : []
+            : [],
+          authorPostOverridesRef.current,
+          authorFollowOverridesRef.current
         )
+
       const nextCursor =
         data.next_cursor || null
       const nextHasMore = Boolean(
@@ -2875,11 +3083,7 @@ export default function DiscoverPage() {
       setRealPostsHasMore(nextHasMore)
 
       await saveHomeCache(
-        getDiscoverFeedCacheKey(
-          token,
-          'discover-author-feed',
-          10
-        ),
+        cacheKey,
         payload,
         {
           maxAgeMs:
@@ -2906,19 +3110,33 @@ export default function DiscoverPage() {
   async function retryReaderPosts() {
     if (!token) return
 
+    const cacheKey =
+      getDiscoverFeedCacheKey(
+        token,
+        'discover-reader-feed',
+        20
+      )
+
     try {
       setReaderPostsLoading(true)
       setReaderPostsError('')
 
       const data =
-  await runDiscoverFeedRequest(
-    `reader-retry:${token}`,
-    () => fetchReaderPosts(token)
-  )
+        await runDiscoverFeedRequest(
+          `reader:${cacheKey}`,
+          () => fetchReaderPosts(token)
+        )
+
       const nextPosts =
-        Array.isArray(data.posts)
-          ? data.posts
-          : []
+        applyReaderPostLocalState(
+          Array.isArray(data.posts)
+            ? data.posts
+            : [],
+          readerPostOverridesRef.current,
+          hiddenReaderPostIdsRef.current,
+          localReaderPostOrderRef.current
+        )
+
       const payload = {
         posts: nextPosts,
       }
@@ -2926,11 +3144,7 @@ export default function DiscoverPage() {
       setReaderPosts(nextPosts)
 
       await saveHomeCache(
-        getDiscoverFeedCacheKey(
-          token,
-          'discover-reader-feed',
-          20
-        ),
+        cacheKey,
         payload,
         {
           maxAgeMs:
@@ -2981,54 +3195,121 @@ export default function DiscoverPage() {
   function handleReaderPostCreated(post) {
     if (!post?.id) return
 
+    const id = String(post.id)
+
+    hiddenReaderPostIdsRef.current.delete(
+      id
+    )
+    readerPostOverridesRef.current.set(
+      id,
+      post
+    )
+    localReaderPostOrderRef.current = [
+      id,
+      ...localReaderPostOrderRef.current.filter(
+        (itemId) =>
+          String(itemId) !== id
+      ),
+    ]
+
     setReaderPosts((current) => [
       post,
       ...current.filter(
-        (item) => item.id !== post.id
+        (item) =>
+          String(item.id) !== id
       ),
     ])
   }
 
   function handleReaderPostUpdated(post) {
-  if (!post?.id) return
+    if (!post?.id) return
 
-  setReaderPosts((current) =>
-    current.map((item) =>
-      item.id === post.id
-        ? post
-        : item
+    const id = String(post.id)
+
+    hiddenReaderPostIdsRef.current.delete(
+      id
     )
-  )
-}
-
-function handleReaderFollowChanged(
-  userId,
-  isFollowing
-) {
-  if (!userId) return
-
-  setReaderPosts((current) =>
-    current.map((post) =>
-      String(post?.user_id || '') ===
-      String(userId)
-        ? {
-            ...post,
-            user: {
-              ...(post.user || {}),
-              is_following:
-                Boolean(isFollowing),
-            },
-          }
-        : post
+    readerPostOverridesRef.current.set(
+      id,
+      post
     )
-  )
-}
 
+    setReaderPosts((current) =>
+      current.map((item) =>
+        String(item.id) === id
+          ? mergeReaderPostOverride(
+              item,
+              post
+            )
+          : item
+      )
+    )
+  }
+
+  function handleReaderFollowChanged(
+    userId,
+    isFollowing
+  ) {
+    const ownerId = String(
+      userId || ''
+    )
+
+    if (!ownerId) return
+
+    setReaderPosts((current) =>
+      current.map((post) => {
+        if (
+          String(
+            post?.user_id || ''
+          ) !== ownerId
+        ) {
+          return post
+        }
+
+        const nextPost = {
+          ...post,
+          user: {
+            ...(post.user || {}),
+            is_following:
+              Boolean(isFollowing),
+          },
+        }
+
+        if (post?.id) {
+          readerPostOverridesRef.current.set(
+            String(post.id),
+            nextPost
+          )
+        }
+
+        return nextPost
+      })
+    )
+  }
 
   function removeReaderPost(postId) {
+    const id = String(
+      postId || ''
+    )
+
+    if (!id) return
+
+    hiddenReaderPostIdsRef.current.add(
+      id
+    )
+    readerPostOverridesRef.current.delete(
+      id
+    )
+    localReaderPostOrderRef.current =
+      localReaderPostOrderRef.current.filter(
+        (itemId) =>
+          String(itemId) !== id
+      )
+
     setReaderPosts((current) =>
       current.filter(
-        (post) => post.id !== postId
+        (post) =>
+          String(post.id) !== id
       )
     )
   }
@@ -3074,6 +3355,19 @@ function handleReaderFollowChanged(
       base.serverCount + loadedCount - base.loadedCount
     )
 
+    const existingOverride =
+      authorPostOverridesRef.current.get(
+        String(activePostId)
+      ) || {}
+
+    authorPostOverridesRef.current.set(
+      String(activePostId),
+      {
+        ...existingOverride,
+        comment_count: nextCount,
+      }
+    )
+
     setRealPosts((current) =>
       current.map((post) =>
         post.id === activePostId
@@ -3095,32 +3389,111 @@ function handleReaderFollowChanged(
     )
   }
 
-  function handleRealPostReactionUpdated(postId, data) {
+  function handleRealPostReactionUpdated(
+    postId,
+    data
+  ) {
+    const id = String(
+      postId || ''
+    )
+
+    if (!id) return
+
     setRealPosts((current) =>
       current.map((post) => {
-        if (post.id !== postId) return post
+        if (
+          String(post.id) !== id
+        ) {
+          return post
+        }
 
-        const updatedPost = data.post || {}
+        const updatedPost =
+          data.post || {}
 
-        return {
+        const nextPost = {
           ...post,
           ...updatedPost,
-          author_page: post.author_page,
-          my_reaction: data.reaction_type || null,
+          author_page: {
+            ...(post.author_page || {}),
+            ...(updatedPost.author_page ||
+              {}),
+          },
+          my_reaction:
+            data.reaction_type || null,
           like_count: Number(
             data.like_count ??
               updatedPost.like_count ??
               post.like_count ??
               0
           ),
-          reaction_summary: Array.isArray(
-            data.reaction_summary
-          )
-            ? data.reaction_summary
-            : post.reaction_summary,
+          reaction_summary:
+            Array.isArray(
+              data.reaction_summary
+            )
+              ? data.reaction_summary
+              : post.reaction_summary,
         }
+
+        const existingOverride =
+          authorPostOverridesRef.current.get(
+            id
+          ) || {}
+
+        authorPostOverridesRef.current.set(
+          id,
+          {
+            ...existingOverride,
+            ...nextPost,
+          }
+        )
+
+        return nextPost
       })
     )
+  }
+
+  function handleShadowMallStorySaleStatusChanged(
+    promotionId,
+    status
+  ) {
+    const id = String(
+      promotionId || ''
+    )
+
+    if (!id || !status) return
+
+    const next =
+      shadowMallPromotionsRef.current.map(
+        (promotion) =>
+          String(
+            promotion?.id || ''
+          ) === id
+            ? {
+                ...promotion,
+                story_sale_status:
+                  status,
+                story_sale_status_loaded:
+                  true,
+              }
+            : promotion
+      )
+
+    shadowMallPromotionsRef.current =
+      next
+    setShadowMallPromotions(next)
+
+    if (token) {
+      void patchShadowMallPrivateStatusCache({
+        token,
+        promotions: next,
+        section:
+          'discover-promotion-story-sale-statuses',
+        maxAgeMs:
+          DISCOVER_SHADOW_MALL_SALE_STATUS_CACHE_MAX_AGE_MS,
+        promotionId: id,
+        changes: status,
+      })
+    }
   }
 
   function hideShadowMallPromotion(item) {
@@ -3128,13 +3501,21 @@ function handleReaderFollowChanged(
       hideShadowMallAdLocally(item)
     }
 
-    setShadowMallPromotions((current) =>
-      current.filter(
-        (promotion) =>
-          String(promotion?.id || '') !==
-          String(item?.id || '')
-      )
+    const hiddenId = String(
+      item?.id || ''
     )
+
+    const next =
+      shadowMallPromotionsRef.current.filter(
+        (promotion) =>
+          String(
+            promotion?.id || ''
+          ) !== hiddenId
+      )
+
+    shadowMallPromotionsRef.current =
+      next
+    setShadowMallPromotions(next)
     setAdOptionsItem(null)
   }
 
@@ -3154,25 +3535,121 @@ function handleReaderFollowChanged(
     setOptionsPost(null)
   }
 
-  function updateAuthorFollowState(authorId, isFollowing) {
-  setRealPosts((current) =>
-    current.map((post) =>
-      String(post.author_page?.id || '') ===
-      String(authorId)
-        ? {
-            ...post,
-            is_following:
-              Boolean(isFollowing),
-            author_page: {
-              ...post.author_page,
+  function updateAuthorFollowState(
+    authorId,
+    isFollowing
+  ) {
+    const id = String(
+      authorId || ''
+    )
+
+    if (!id) return
+
+    authorFollowOverridesRef.current.set(
+      id,
+      Boolean(isFollowing)
+    )
+
+    setRealPosts((current) =>
+      current.map((post) =>
+        String(
+          post.author_page?.id || ''
+        ) === id
+          ? {
+              ...post,
               is_following:
                 Boolean(isFollowing),
-            },
-          }
-        : post
+              author_page: {
+                ...post.author_page,
+                is_following:
+                  Boolean(isFollowing),
+              },
+            }
+          : post
+      )
     )
-  )
-}
+  }
+
+  useEffect(() => {
+    function handleShadowMallEchoUpdated(
+      event
+    ) {
+      const detail =
+        event?.detail || {}
+
+      if (
+        String(
+          detail.sourceType || ''
+        ) !==
+        'shadow_mall_promotion'
+      ) {
+        return
+      }
+
+      const id = String(
+        detail.sourceId || ''
+      )
+
+      if (!id) return
+
+      const echoCount = Math.max(
+        0,
+        Number(
+          detail.echoCount || 0
+        )
+      )
+
+      const next =
+        shadowMallPromotionsRef.current.map(
+          (promotion) =>
+            String(
+              promotion?.id || ''
+            ) === id
+              ? {
+                  ...promotion,
+                  echo_count:
+                    echoCount,
+                  echo_state_loaded:
+                    true,
+                }
+              : promotion
+        )
+
+      shadowMallPromotionsRef.current =
+        next
+      setShadowMallPromotions(next)
+
+      if (token) {
+        void patchShadowMallPrivateStatusCache({
+          token,
+          promotions: next,
+          section:
+            'discover-promotion-social-statuses',
+          maxAgeMs:
+            DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS,
+          promotionId: id,
+          changes: {
+            echo_count:
+              echoCount,
+            echo_state_loaded:
+              true,
+          },
+        })
+      }
+    }
+
+    window.addEventListener(
+      'shadow:echo-v2-updated',
+      handleShadowMallEchoUpdated
+    )
+
+    return () => {
+      window.removeEventListener(
+        'shadow:echo-v2-updated',
+        handleShadowMallEchoUpdated
+      )
+    }
+  }, [token])
 
   useEffect(() => {
     function handleScroll() {
@@ -3271,6 +3748,9 @@ function handleReaderFollowChanged(
         item={promotion}
         onMore={setAdOptionsItem}
         onHide={hideShadowMallPromotion}
+        onStorySaleStatusChanged={
+          handleShadowMallStorySaleStatusChanged
+        }
       />
     )
   )}
@@ -3346,6 +3826,9 @@ function handleReaderFollowChanged(
         item={firstShadowMallPromotion}
         onMore={setAdOptionsItem}
         onHide={hideShadowMallPromotion}
+        onStorySaleStatusChanged={
+          handleShadowMallStorySaleStatusChanged
+        }
       />
     ) : null}
 
@@ -3373,6 +3856,9 @@ discoverTimeline.length < 4 ? (
         item={firstShadowMallPromotion}
         onMore={setAdOptionsItem}
         onHide={hideShadowMallPromotion}
+        onStorySaleStatusChanged={
+          handleShadowMallStorySaleStatusChanged
+        }
       />
     ) : null}
 
@@ -3388,6 +3874,9 @@ discoverTimeline.length < 4 ? (
                       item={promotion}
                       onMore={setAdOptionsItem}
                       onHide={hideShadowMallPromotion}
+                      onStorySaleStatusChanged={
+                        handleShadowMallStorySaleStatusChanged
+                      }
                     />
                   )
                 )
