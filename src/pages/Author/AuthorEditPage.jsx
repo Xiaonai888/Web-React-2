@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  fetchMyAuthorPageCached,
+  invalidateMyAuthorPageClientCache,
+} from '../../services/myAuthorPageClientCache.js'
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -34,9 +38,11 @@ export default function AuthorEditPage() {
   const [pageName, setPageName] = useState('')
   const [pageUsername, setPageUsername] = useState('')
   const [bio, setBio] = useState('')
+  const redirectTimerRef = useRef(null)
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadAuthorPage() {
       const token = getAuthToken()
@@ -50,16 +56,17 @@ export default function AuthorEditPage() {
         setLoading(true)
         setMessage('')
 
-        const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const data = await fetchMyAuthorPageCached({
+          apiBaseUrl: API_BASE_URL,
+          token,
+          signal: controller.signal,
         })
 
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false || !data.has_author_page || !data.author_page) {
-          throw new Error(data.message || 'Author page not found')
+        if (
+          !data.has_author_page ||
+          !data.author_page
+        ) {
+          throw new Error('Author page not found')
         }
 
         if (ignore) return
@@ -68,7 +75,14 @@ export default function AuthorEditPage() {
         setPageUsername(data.author_page.page_username || '')
         setBio(data.author_page.bio || '')
       } catch (error) {
-        if (!ignore) setMessage(error.message || 'Failed to load author page')
+        if (
+          error?.name !== 'AbortError' &&
+          !ignore
+        ) {
+          setMessage(
+            error.message || 'Failed to load author page'
+          )
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -78,6 +92,13 @@ export default function AuthorEditPage() {
 
     return () => {
       ignore = true
+      controller.abort()
+
+      if (redirectTimerRef.current) {
+        window.clearTimeout(
+          redirectTimerRef.current
+        )
+      }
     }
   }, [navigate])
 
@@ -127,14 +148,27 @@ export default function AuthorEditPage() {
         throw new Error(data.message || 'Failed to update author page')
       }
 
+      invalidateMyAuthorPageClientCache()
+
       if (data.author_page) {
-        localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+        localStorage.setItem(
+          'shadow_author_page',
+          JSON.stringify(data.author_page)
+        )
       }
 
       setMessage('Author page updated.')
-      window.setTimeout(() => {
-        navigate(returnTo, { replace: true })
-      }, 700)
+
+      if (redirectTimerRef.current) {
+        window.clearTimeout(
+          redirectTimerRef.current
+        )
+      }
+
+      redirectTimerRef.current =
+        window.setTimeout(() => {
+          navigate(returnTo, { replace: true })
+        }, 700)
     } catch (error) {
       setMessage(error.message || 'Failed to update author page')
     } finally {
