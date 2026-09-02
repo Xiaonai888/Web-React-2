@@ -25,39 +25,59 @@ export default function ManagedEventsSection({ onCountChange }) {
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadEvents() {
       try {
-        const response = await fetch(`${API_URL}/api/events`)
-        const data = await response.json().catch(() => ({}))
+        const response = await fetch(
+          `${API_URL}/api/events`,
+          {
+            signal: controller.signal,
+          }
+        )
+        const data = await response
+          .json()
+          .catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load events')
+          throw new Error(
+            data.message ||
+              'Failed to load events'
+          )
         }
 
         if (!ignore) {
-  const list = Array.isArray(data.events) ? data.events : []
-  setEvents(list)
-  onCountChange?.(list.length)
-}
-      } catch {
-  if (!ignore) {
-    setEvents([])
-    onCountChange?.(0)
-  }
+          const list = Array.isArray(data.events)
+            ? data.events
+            : []
+
+          setEvents(list)
+          onCountChange?.(list.length)
+        }
+      } catch (error) {
+        if (
+          error?.name === 'AbortError' ||
+          ignore
+        ) {
+          return
+        }
+
+        setEvents([])
+        onCountChange?.(0)
       } finally {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
     loadEvents()
-const timer = window.setInterval(loadEvents, 60000)
 
-return () => {
-  ignore = true
-  window.clearInterval(timer)
-}
-  }, [])
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [onCountChange])
 
   if (loading) {
     return (
@@ -78,7 +98,9 @@ return () => {
     <section className="mt-5">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {events.map((item) => {
-          const hasLink = Boolean(String(item.button_url || '').trim())
+          const hasLink = Boolean(
+            String(item.button_url || '').trim()
+          )
 
           return (
             <article
@@ -86,15 +108,28 @@ return () => {
               role={hasLink ? 'button' : undefined}
               tabIndex={hasLink ? 0 : undefined}
               onClick={() => {
-                if (hasLink) openEventLink(item.button_url, navigate)
+                if (hasLink) {
+                  openEventLink(
+                    item.button_url,
+                    navigate
+                  )
+                }
               }}
               onKeyDown={(event) => {
-                if (hasLink && event.key === 'Enter') {
-                  openEventLink(item.button_url, navigate)
+                if (
+                  hasLink &&
+                  event.key === 'Enter'
+                ) {
+                  openEventLink(
+                    item.button_url,
+                    navigate
+                  )
                 }
               }}
               className={`group relative aspect-square overflow-hidden rounded-[20px] bg-[var(--shadow-bg-soft)] shadow-sm ring-1 ring-black/5 ${
-                hasLink ? 'cursor-pointer active:scale-[0.98]' : ''
+                hasLink
+                  ? 'cursor-pointer active:scale-[0.98]'
+                  : ''
               }`}
             >
               {item.image_url ? (
