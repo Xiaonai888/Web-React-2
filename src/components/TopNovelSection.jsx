@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -372,9 +372,11 @@ export default function TopNovelSection({
 }) {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
-  const [activeCategory, setActiveCategory] = useState(
-    rankingTabs[0].label
-  )
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeCategory =
+    rankingTabs.find(
+      (tab) => tab.labelKey === searchParams.get('ranking')
+    )?.label || rankingTabs[0].label
   const [realDataByCategory, setRealDataByCategory] =
     useState({})
   const [loading, setLoading] = useState(true)
@@ -494,7 +496,7 @@ export default function TopNovelSection({
             type="button"
             onClick={() => navigate('/ranking')}
             className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-hover)]"
-            aria-label="Go to Ranking page"
+            aria-label={t('topNovelSection.title')}
           >
             <i className="fas fa-chevron-right text-[15px] text-[var(--shadow-text-secondary)] lg:text-[16px]" />
           </button>
@@ -509,9 +511,11 @@ export default function TopNovelSection({
               <button
                 key={tab.label}
                 type="button"
-                onClick={() =>
-                  setActiveCategory(tab.label)
-                }
+                onClick={() => {
+                  const nextParams = new URLSearchParams(searchParams)
+                  nextParams.set('ranking', tab.labelKey)
+                  setSearchParams(nextParams, { replace: true })
+                }}
                 className={`relative inline-flex h-[34px] shrink-0 items-center px-0.5 text-[13px] leading-none transition-colors active:scale-[0.98] ${
                   isActive
                     ? 'font-extrabold text-[var(--shadow-text-primary)]'
