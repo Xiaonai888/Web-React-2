@@ -1,4 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('imageDropZone', {
+  en: { dropImageHere: 'Drop image here' },
+  km: { dropImageHere: 'ទម្លាក់រូបភាពនៅទីនេះ' },
+  zh: { dropImageHere: '将图片拖放到这里' },
+  ja: { dropImageHere: 'ここに画像をドロップ' },
+  ko: { dropImageHere: '여기에 이미지를 놓으세요' },
+})
 
 let mountedDropZones = 0
 
@@ -63,9 +73,11 @@ export default function ImageDropZone({
   maxFiles = null,
   accept = 'image/*',
   className = '',
-  label = 'Drop image here',
+  label = '',
 }) {
+  const { t } = useDisplayTranslation()
   const [dragging, setDragging] = useState(false)
+  const displayLabel = label || t('imageDropZone.dropImageHere')
   const dragDepth = useRef(0)
 
   useEffect(() => {
@@ -155,7 +167,7 @@ export default function ImageDropZone({
   return (
     <div
       className={`relative transition ${className} ${
-        dragging ? 'ring-2 ring-[#111827] ring-offset-2 ring-offset-white' : ''
+        dragging ? 'ring-2 ring-[var(--shadow-text-primary)] ring-offset-2 ring-offset-[var(--shadow-bg-surface)]' : ''
       }`}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
@@ -166,7 +178,7 @@ export default function ImageDropZone({
 
       {dragging ? (
         <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-[inherit] bg-[#111827]/82 px-4 text-center text-[13px] font-extrabold text-white backdrop-blur-sm">
-          {label}
+          {displayLabel}
         </div>
       ) : null}
     </div>
