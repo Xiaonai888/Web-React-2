@@ -247,7 +247,7 @@ export default function AuthorPostSchedulePicker({
               ‹
             </button>
 
-            <div className="text-[16px] font-semibold text-[#111827]">
+            <div className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">
               {monthYearLabel}
             </div>
 
