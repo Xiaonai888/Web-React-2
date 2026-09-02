@@ -1,15 +1,25 @@
 import {
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../../utils/homeDataCache'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
 const INITIAL_LIMIT = 12
+const READER_SUGGESTION_CACHE_MAX_AGE_MS =
+  5 * 60 * 1000
 
+const readerSuggestionInflightRequests =
+  new Map()
 
 function getReaderToken() {
   return (
@@ -20,6 +30,117 @@ function getReaderToken() {
       'shadow_reader_token'
     ) ||
     ''
+  )
+}
+
+function getSuggestionScope(token) {
+  if (!token) return 'anon'
+
+  let hash = 2166136261
+
+  for (
+    let index = 0;
+    index < token.length;
+    index += 1
+  ) {
+    hash ^= token.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return `reader-${(hash >>> 0).toString(36)}`
+}
+
+function getReaderSuggestionCacheKey(
+  token,
+  limit
+) {
+  return getHomeCacheKey({
+    section:
+      'discover-reader-suggestions',
+    scope: getSuggestionScope(token),
+    params: {
+      limit,
+      schema: 1,
+    },
+  })
+}
+
+async function runReaderSuggestionRequest(
+  key,
+  request
+) {
+  if (
+    readerSuggestionInflightRequests.has(
+      key
+    )
+  ) {
+    return readerSuggestionInflightRequests.get(
+      key
+    )
+  }
+
+  const promise = Promise.resolve().then(
+    request
+  )
+
+  readerSuggestionInflightRequests.set(
+    key,
+    promise
+  )
+
+  try {
+    return await promise
+  } finally {
+    if (
+      readerSuggestionInflightRequests.get(
+        key
+      ) === promise
+    ) {
+      readerSuggestionInflightRequests.delete(
+        key
+      )
+    }
+  }
+}
+
+function normalizeVisibleReaders(
+  users,
+  hiddenIds = new Set(),
+  limit = INITIAL_LIMIT
+) {
+  return (users || [])
+    .filter(
+      (reader) =>
+        reader?.id &&
+        reader?.username &&
+        !reader.is_following &&
+        !hiddenIds.has(
+          String(reader.id)
+        )
+    )
+    .slice(0, limit)
+}
+
+async function saveReaderSuggestions(
+  token,
+  readers,
+  limit = INITIAL_LIMIT
+) {
+  const cacheKey =
+    getReaderSuggestionCacheKey(
+      token,
+      limit
+    )
+
+  await saveHomeCache(
+    cacheKey,
+    {
+      readers,
+    },
+    {
+      maxAgeMs:
+        READER_SUGGESTION_CACHE_MAX_AGE_MS,
+    }
   )
 }
 
@@ -61,8 +182,8 @@ export default function DiscoverReadersYouMayLikeSection() {
     followLoadingId,
     setFollowLoadingId,
   ] = useState('')
-
-  
+  const hiddenReaderIdsRef =
+    useRef(new Set())
 
   async function loadSuggestions(
     limit = INITIAL_LIMIT
@@ -75,48 +196,104 @@ export default function DiscoverReadersYouMayLikeSection() {
       return
     }
 
-    try {
-      setLoading(true)
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/users/suggestions?limit=${limit}`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-          cache: 'no-store',
-        }
+    const cacheKey =
+      getReaderSuggestionCacheKey(
+        token,
+        limit
       )
+    let hasCachedPayload = false
 
-      const data = await response
-        .json()
-        .catch(() => ({}))
+    try {
+      const cached =
+        await loadHomeCache(
+          cacheKey,
+          {
+            maxAgeMs:
+              READER_SUGGESTION_CACHE_MAX_AGE_MS,
+            allowExpired: true,
+          }
+        )
 
       if (
-        !response.ok ||
-        data.ok === false
-      ) {
-        throw new Error(
-          data.message ||
-            'Failed to load readers'
+        Array.isArray(
+          cached?.data?.readers
         )
+      ) {
+        hasCachedPayload = true
+        const visibleCached =
+          normalizeVisibleReaders(
+            cached.data.readers,
+            hiddenReaderIdsRef.current,
+            limit
+          )
+
+        setReaders(visibleCached)
+        setLoading(false)
+
+        if (cached.isFresh) {
+          return
+        }
       }
 
-      setReaders(
-        Array.isArray(data.users)
-          ? data.users
-              .filter(
-                (reader) =>
-                  reader?.id &&
-                  reader?.username &&
-                  !reader.is_following
+      if (!hasCachedPayload) {
+        setLoading(true)
+      }
+
+      const data =
+        await runReaderSuggestionRequest(
+          cacheKey,
+          async () => {
+            const response =
+              await fetch(
+                `${API_BASE_URL}/api/users/suggestions?limit=${limit}`,
+                {
+                  headers: {
+                    Authorization:
+                      `Bearer ${token}`,
+                  },
+                  cache: 'no-store',
+                }
               )
-              .slice(0, limit)
-          : []
+
+            const payload =
+              await response
+                .json()
+                .catch(() => ({}))
+
+            if (
+              !response.ok ||
+              payload.ok === false
+            ) {
+              throw new Error(
+                payload.message ||
+                  'Failed to load readers'
+              )
+            }
+
+            return payload
+          }
+        )
+
+      const nextReaders =
+        normalizeVisibleReaders(
+          Array.isArray(data.users)
+            ? data.users
+            : [],
+          hiddenReaderIdsRef.current,
+          limit
+        )
+
+      setReaders(nextReaders)
+
+      await saveReaderSuggestions(
+        token,
+        nextReaders,
+        limit
       )
     } catch {
-      setReaders([])
+      if (!hasCachedPayload) {
+        setReaders([])
+      }
     } finally {
       setLoading(false)
     }
@@ -141,12 +318,31 @@ export default function DiscoverReadersYouMayLikeSection() {
   }
 
   function dismissReader(readerId) {
-    setReaders((current) =>
-      current.filter(
-        (reader) =>
-          reader.id !== readerId
-      )
+    const token =
+      getReaderToken()
+    const id = String(
+      readerId || ''
     )
+
+    if (id) {
+      hiddenReaderIdsRef.current.add(
+        id
+      )
+    }
+
+    setReaders((current) => {
+      const next = current.filter(
+        (reader) =>
+          String(reader.id) !== id
+      )
+
+      void saveReaderSuggestions(
+        token,
+        next
+      )
+
+      return next
+    })
   }
 
   async function followReader(reader) {
@@ -202,8 +398,6 @@ export default function DiscoverReadersYouMayLikeSection() {
     }
   }
 
-  
-
   if (
     !loading &&
     !readers.length
@@ -224,15 +418,15 @@ export default function DiscoverReadersYouMayLikeSection() {
           </p>
         </div>
 
-       <button
-  type="button"
-  onClick={() =>
-    navigate('/profile/discover-people')
-  }
-  className="shrink-0 text-[12px] font-semibold text-[#6d5dfc] active:opacity-70"
->
-  See all
-</button>
+        <button
+          type="button"
+          onClick={() =>
+            navigate('/profile/discover-people')
+          }
+          className="shrink-0 text-[12px] font-semibold text-[#6d5dfc] active:opacity-70"
+        >
+          See all
+        </button>
       </div>
 
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-1">
