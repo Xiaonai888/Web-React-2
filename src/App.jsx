@@ -233,12 +233,12 @@ function ComingSoon({ titleKey }) {
   const { t } = useDisplayTranslation()
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-10">
-      <div className="mx-auto max-w-[560px] rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-        <h1 className="text-[22px] font-extrabold text-[#111827]">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)] px-4 pb-[110px] pt-10">
+      <div className="mx-auto max-w-[560px] rounded-[24px] bg-[var(--shadow-bg-surface)] p-6 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+        <h1 className="text-[22px] font-extrabold text-[var(--shadow-text-primary)]">
           {t(`app.routes.${titleKey}`)}
         </h1>
-        <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
+        <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-tertiary)]">
           {t('app.comingSoonDescription')}
         </p>
       </div>
@@ -250,10 +250,10 @@ function PageLoading() {
   const { t } = useDisplayTranslation()
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] px-4 pt-16">
-      <div className="mx-auto max-w-[420px] rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-        <div className="text-[14px] font-extrabold text-[#111827]">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)] px-4 pt-16">
+      <div className="mx-auto max-w-[420px] rounded-[24px] bg-[var(--shadow-bg-surface)] p-6 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[var(--shadow-border)] border-t-[var(--shadow-text-primary)]" />
+        <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">
           {t('app.loading')}
         </div>
       </div>
