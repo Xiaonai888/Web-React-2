@@ -238,6 +238,15 @@ function clearReaderSession() {
   sessionStorage.removeItem('shadow_reader_user')
 }
 
+function isReaderAuthFailure(response, data) {
+  const code = String(data?.code || '')
+  return (
+    (response.status === 401 &&
+      ['TOKEN_REQUIRED', 'TOKEN_EXPIRED', 'TOKEN_INVALID'].includes(code)) ||
+    (response.status === 403 && code === 'WRONG_TOKEN_TYPE')
+  )
+}
+
 const iconBox = 'flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] dark:text-white'
 
 function HeaderIcon({ icon, customIcon = null, label, to, onClick, badgeCount = 0 }) {
@@ -804,10 +813,7 @@ export default function Me() {
           .json()
           .catch(() => ({}))
 
-        if (
-          response.status === 401 ||
-          response.status === 403
-        ) {
+        if (isReaderAuthFailure(response, data)) {
           clearReaderSession()
 
           if (!ignore) {
@@ -926,10 +932,7 @@ export default function Me() {
         .json()
         .catch(() => ({}))
 
-      if (
-        response.status === 401 ||
-        response.status === 403
-      ) {
+      if (isReaderAuthFailure(response, data)) {
         clearReaderSession()
         navigate('/login', { replace: true })
         return
