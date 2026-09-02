@@ -2122,6 +2122,62 @@ function countAuthorPostComments(comments = []) {
   )
 }
 
+function DeferredDiscoverSection({
+  children,
+}) {
+  const markerRef = useRef(null)
+  const [ready, setReady] =
+    useState(false)
+
+  useEffect(() => {
+    if (ready) return undefined
+
+    const element = markerRef.current
+
+    if (!element) return undefined
+
+    if (
+      typeof IntersectionObserver ===
+      'undefined'
+    ) {
+      setReady(true)
+      return undefined
+    }
+
+    const observer =
+      new IntersectionObserver(
+        (entries) => {
+          if (
+            entries.some(
+              (entry) =>
+                entry.isIntersecting
+            )
+          ) {
+            setReady(true)
+            observer.disconnect()
+          }
+        },
+        {
+          rootMargin: '500px 0px',
+          threshold: 0.01,
+        }
+      )
+
+    observer.observe(element)
+
+    return () => observer.disconnect()
+  }, [ready])
+
+  return (
+    <div
+      ref={markerRef}
+      className="min-h-px"
+    >
+      {ready ? children : null}
+    </div>
+  )
+}
+
 export default function DiscoverPage() {
   const [barsHidden, setBarsHidden] = useState(false)
   const lastScrollYRef = useRef(0)
@@ -3249,31 +3305,40 @@ function handleReaderFollowChanged(
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 0 ? (
-                  <DiscoverAuthorsYouMayLikeSection />
+                  <DeferredDiscoverSection>
+  <DiscoverAuthorsYouMayLikeSection />
+</DeferredDiscoverSection>
                 ) : null}
 
                 {entry.kind === 'reader_post' &&
                 entry.timelineIndex ===
                   firstReaderPostIndex ? (
-                  <DiscoverReadersYouMayLikeSection />
+                  <DeferredDiscoverSection>
+  <DiscoverReadersYouMayLikeSection />
+</DeferredDiscoverSection>
                 ) : null}
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 0 ? (
-                  <DiscoverTrendingStoriesSection />
+                  <DeferredDiscoverSection>
+  <DiscoverTrendingStoriesSection />
+</DeferredDiscoverSection>
                 ) : null}
 
                 
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 2 ? (
-                  <DiscoverNewUpdatedStoriesSection />
+                  <DeferredDiscoverSection>
+  <DiscoverNewUpdatedStoriesSection />
+</DeferredDiscoverSection>
                 ) : null}
 
                 {entry.timelineIndex === 3 ? (
   <>
-    <DiscoverYouMightLikeSection />
-
+    <DeferredDiscoverSection>
+  <DiscoverYouMightLikeSection />
+</DeferredDiscoverSection>
     {firstShadowMallPromotion ? (
       <AdsCard
         item={firstShadowMallPromotion}
@@ -3287,7 +3352,9 @@ function handleReaderFollowChanged(
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 4 ? (
-                  <DiscoverCompletedStoriesSection />
+                  <DeferredDiscoverSection>
+  <DiscoverCompletedStoriesSection />
+</DeferredDiscoverSection>
                 ) : null}
               </Fragment>
             ))}
