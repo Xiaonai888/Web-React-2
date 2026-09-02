@@ -178,7 +178,7 @@ export default function StoryTranslateButton({
         aria-expanded={open}
         className={`flex h-10 w-10 items-center justify-center bg-transparent transition active:scale-95 disabled:opacity-50 ${
           activeLanguage === 'original'
-            ? 'text-[#111827]'
+            ? 'text-[var(--shadow-text-primary)]'
             : 'text-[#0b5cff]'
         }`}
       >
@@ -192,14 +192,14 @@ export default function StoryTranslateButton({
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-10 z-[82] w-[190px] overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white py-1 shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
+        <div className="absolute right-0 top-10 z-[82] w-[190px] overflow-hidden rounded-[10px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] py-1 shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
           {LANGUAGE_OPTIONS.map((option) => (
             <button
               key={option.id}
               type="button"
               onClick={() => handleSelect(option.id)}
               disabled={loading}
-              className="flex h-10 w-full items-center justify-between gap-3 px-3 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f3f4f6] disabled:opacity-60"
+              className="flex h-10 w-full items-center justify-between gap-3 px-3 text-left text-[13px] font-semibold text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)] disabled:opacity-60"
             >
               <span>
                 {t(
@@ -214,13 +214,13 @@ export default function StoryTranslateButton({
           ))}
 
           {loading ? (
-            <div className="border-t border-[#eef0f4] px-3 py-2 text-[11px] font-medium text-[#667085]">
+            <div className="border-t border-[var(--shadow-border)] px-3 py-2 text-[11px] font-medium text-[var(--shadow-text-secondary)]">
               {t('storyTranslateButton.translating')}
             </div>
           ) : null}
 
           {!loading && errorKey ? (
-            <div className="border-t border-[#eef0f4] px-3 py-2 text-[11px] font-medium leading-5 text-[#e5484d]">
+            <div className="border-t border-[var(--shadow-border)] px-3 py-2 text-[11px] font-medium leading-5 text-[#e5484d]">
               {t(`storyTranslateButton.${errorKey}`)}
             </div>
           ) : null}
