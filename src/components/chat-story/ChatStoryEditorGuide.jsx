@@ -1,4 +1,44 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('chatStoryEditorGuide', {
+  en: {
+    quickGuide: 'Quick Guide',
+    skip: 'Skip',
+    back: 'Back',
+    startCreating: 'Start Creating',
+    next: 'Next',
+  },
+  km: {
+    quickGuide: 'ការណែនាំរហ័ស',
+    skip: 'រំលង',
+    back: 'ត្រឡប់ក្រោយ',
+    startCreating: 'ចាប់ផ្តើមបង្កើត',
+    next: 'បន្ទាប់',
+  },
+  zh: {
+    quickGuide: '快速指南',
+    skip: '跳过',
+    back: '返回',
+    startCreating: '开始创作',
+    next: '下一步',
+  },
+  ja: {
+    quickGuide: 'クイックガイド',
+    skip: 'スキップ',
+    back: '戻る',
+    startCreating: '作成を開始',
+    next: '次へ',
+  },
+  ko: {
+    quickGuide: '빠른 가이드',
+    skip: '건너뛰기',
+    back: '뒤로',
+    startCreating: '만들기 시작',
+    next: '다음',
+  },
+})
 
 const DEFAULT_STORAGE_KEY = 'shadow_chat_editor_guide_v1'
 
@@ -31,6 +71,7 @@ export default function ChatStoryEditorGuide({
 }) {
   const [stepIndex, setStepIndex] = useState(0)
   const [targetRect, setTargetRect] = useState(null)
+  const { t } = useDisplayTranslation()
 
   const currentStep = steps[stepIndex] || null
   const isLastStep = stepIndex === steps.length - 1
@@ -174,24 +215,24 @@ export default function ChatStoryEditorGuide({
       <div className="absolute inset-0" />
 
       <section
-        className="absolute rounded-[22px] bg-white p-5 shadow-2xl ring-1 ring-black/5"
+        className="absolute rounded-[22px] bg-[var(--shadow-bg-elevated)] p-5 shadow-2xl ring-1 ring-[var(--shadow-border)]"
         style={tooltipStyle}
       >
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full bg-[#f1ebff] px-3 py-1 text-[10px] font-semibold text-[#7c3aed]">
-            Quick Guide
+          <span className="rounded-full bg-[#f1ebff] px-3 py-1 text-[10px] font-semibold text-[#7c3aed] dark:bg-[#7c3aed]/15 dark:text-[#c4b5fd]">
+            {t('chatStoryEditorGuide.quickGuide')}
           </span>
 
-          <span className="text-[11px] font-medium text-[#98a2b3]">
+          <span className="text-[11px] font-medium text-[var(--shadow-text-tertiary)]">
             {stepIndex + 1}/{steps.length}
           </span>
         </div>
 
-        <h2 className="mt-4 text-[18px] font-bold leading-6 text-[#111827]">
+        <h2 className="mt-4 text-[18px] font-bold leading-6 text-[var(--shadow-text-primary)]">
           {currentStep.title}
         </h2>
 
-        <p className="mt-2 text-[12px] leading-5 text-[#667085]">
+        <p className="mt-2 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">
           {currentStep.description}
         </p>
 
@@ -204,7 +245,7 @@ export default function ChatStoryEditorGuide({
                   ? 'w-7 bg-[#7c3aed]'
                   : index < stepIndex
                     ? 'w-3 bg-[#c4b5fd]'
-                    : 'w-3 bg-[#e4e7ec]'
+                    : 'w-3 bg-[var(--shadow-border)]'
               }`}
             />
           ))}
@@ -214,9 +255,9 @@ export default function ChatStoryEditorGuide({
           <button
             type="button"
             onClick={closeGuide}
-            className="h-10 px-2 text-[12px] font-medium text-[#667085]"
+            className="h-10 px-2 text-[12px] font-medium text-[var(--shadow-text-secondary)]"
           >
-            Skip
+            {t('chatStoryEditorGuide.skip')}
           </button>
 
           <div className="flex items-center gap-2">
@@ -224,9 +265,9 @@ export default function ChatStoryEditorGuide({
               <button
                 type="button"
                 onClick={() => setStepIndex((current) => current - 1)}
-                className="h-10 rounded-full border border-[#e4e7ec] bg-white px-4 text-[12px] font-medium text-[#344054]"
+                className="h-10 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 text-[12px] font-medium text-[var(--shadow-text-primary)]"
               >
-                Back
+                {t('chatStoryEditorGuide.back')}
               </button>
             ) : null}
 
@@ -235,7 +276,7 @@ export default function ChatStoryEditorGuide({
               onClick={goNext}
               className="h-10 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-5 text-[12px] font-semibold text-white active:scale-[0.98]"
             >
-              {isLastStep ? 'Start Creating' : 'Next'}
+              {isLastStep ? t('chatStoryEditorGuide.startCreating') : t('chatStoryEditorGuide.next')}
             </button>
           </div>
         </div>
