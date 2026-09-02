@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 import Author49DayDashboardCard from '../../components/events/Author49DayDashboardCard'
+import AuthorManagedEventsSection from '../../components/events/AuthorManagedEventsSection'
 import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
 
 const API_BASE_URL =
@@ -902,6 +903,8 @@ return {
               : handleCreateStory('novel')
           }
         />
+
+        <AuthorManagedEventsSection />
 
         {latestStory ? (
           <section className="mt-5">
