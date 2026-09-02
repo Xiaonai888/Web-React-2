@@ -293,13 +293,13 @@ export default function AuthorPostSchedulePicker({
                   onClick={() => chooseDate(day)}
                   className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-[13px] ${
                     selected
-                      ? 'bg-[#111827] font-semibold text-white'
+                      ? 'bg-[var(--shadow-text-primary)] font-semibold text-[var(--shadow-bg-surface)]'
                       : outsideMonth
-                        ? 'text-[#c4c8ce]'
+                        ? 'text-[var(--shadow-text-disabled)]'
                         : today
-                          ? 'font-semibold text-[#111827] ring-1 ring-[#111827]'
-                          : 'text-[#111827]'
-                  } disabled:cursor-not-allowed disabled:text-[#d1d5db]`}
+                          ? 'font-semibold text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border-strong)]'
+                          : 'text-[var(--shadow-text-primary)]'
+                  } disabled:cursor-not-allowed disabled:text-[var(--shadow-text-disabled)]`}
                 >
                   {day.getDate()}
                 </button>
