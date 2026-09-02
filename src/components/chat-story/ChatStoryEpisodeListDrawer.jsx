@@ -1,4 +1,39 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('chatStoryEpisodeListDrawer', {
+  en: {
+    episodeCount: 'Up to {{count}} Episodes',
+    positive: 'Positive',
+    reverse: 'Reverse',
+    untitledEpisode: 'Untitled Episode',
+  },
+  km: {
+    episodeCount: 'មានរហូតដល់ {{count}} ភាគ',
+    positive: 'លំដាប់ដើម',
+    reverse: 'លំដាប់បញ្ច្រាស',
+    untitledEpisode: 'ភាគគ្មានចំណងជើង',
+  },
+  zh: {
+    episodeCount: '最多 {{count}} 集',
+    positive: '正序',
+    reverse: '倒序',
+    untitledEpisode: '未命名章节',
+  },
+  ja: {
+    episodeCount: '最大 {{count}} エピソード',
+    positive: '昇順',
+    reverse: '降順',
+    untitledEpisode: '無題のエピソード',
+  },
+  ko: {
+    episodeCount: '최대 {{count}}개 에피소드',
+    positive: '정순',
+    reverse: '역순',
+    untitledEpisode: '제목 없는 에피소드',
+  },
+})
 
 function formatEpisodeDate(value) {
   if (!value) return ''
@@ -6,7 +41,7 @@ function formatEpisodeDate(value) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
 
-  return date.toLocaleDateString('en-GB')
+  return date.toLocaleDateString(getDisplayLanguageId() || 'en')
 }
 
 function getEpisodeDate(episode) {
@@ -60,6 +95,7 @@ export default function ChatStoryEpisodeListDrawer({
   navigate,
 }) {
   const [newestFirst, setNewestFirst] = useState(false)
+  const { t } = useDisplayTranslation()
 const [dragY, setDragY] = useState(0)
 
 const activeEpisodeRef = useRef(null)
@@ -208,7 +244,7 @@ const endDrag = () => {
       />
 
       <section
-  className="absolute bottom-0 left-0 right-0 flex max-h-[82dvh] min-h-[58dvh] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl"
+  className="absolute bottom-0 left-0 right-0 flex max-h-[82dvh] min-h-[58dvh] flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] shadow-2xl"
   style={{
     transform: `translateY(${dragY}px)`,
     transition: draggingRef.current
@@ -216,7 +252,7 @@ const endDrag = () => {
       : 'transform 220ms ease',
   }}
 >
-  <div className="shrink-0 bg-white px-4 pb-3 pt-1">
+  <div className="shrink-0 bg-[var(--shadow-bg-surface)] px-4 pb-3 pt-1">
     <div
       onPointerDown={startDrag}
       onPointerMove={moveDrag}
@@ -229,8 +265,8 @@ const endDrag = () => {
     />
 
     <div className="flex items-center justify-between pt-1">
-      <span className="text-[11px] font-medium text-[#98a2b3]">
-        Up to {episodes.length} Episodes
+      <span className="text-[11px] font-medium text-[var(--shadow-text-tertiary)]">
+        {t('chatStoryEpisodeListDrawer.episodeCount', { count: episodes.length })}
       </span>
 
       <div className="flex items-center gap-5">
@@ -242,10 +278,10 @@ const endDrag = () => {
           className={`text-[12px] font-bold ${
             !newestFirst
               ? 'text-[#8b5cf6]'
-              : 'text-[#344054]'
+              : 'text-[var(--shadow-text-primary)]'
           }`}
         >
-          Positive
+          {t('chatStoryEpisodeListDrawer.positive')}
         </button>
 
         <button
@@ -256,10 +292,10 @@ const endDrag = () => {
           className={`text-[12px] font-bold ${
             newestFirst
               ? 'text-[#8b5cf6]'
-              : 'text-[#344054]'
+              : 'text-[var(--shadow-text-primary)]'
           }`}
         >
-          Reverse
+          {t('chatStoryEpisodeListDrawer.reverse')}
         </button>
       </div>
     </div>
@@ -280,43 +316,43 @@ const endDrag = () => {
                 ref={active ? activeEpisodeRef : null}
                 type="button"
                 onClick={() => openEpisode(episode)}
-                className={`flex min-h-[82px] w-full items-center gap-3 border-t border-[#f2f3f5] px-5 py-3 text-left transition active:bg-[#f7f4ff] ${
-                  active ? 'bg-[#faf7ff]' : 'bg-white'
+                className={`flex min-h-[82px] w-full items-center gap-3 border-t border-[var(--shadow-border)] px-5 py-3 text-left transition active:bg-[var(--shadow-bg-hover)] ${
+                  active ? 'bg-[var(--shadow-bg-soft)]' : 'bg-[var(--shadow-bg-surface)]'
                 }`}
               >
                 <div className="min-w-0 flex-1">
                   <div
                     className={`line-clamp-2 text-[14px] font-medium leading-6 ${
-                      active ? 'text-[#8b5cf6]' : 'text-[#20242b]'
+                      active ? 'text-[#8b5cf6]' : 'text-[var(--shadow-text-primary)]'
                     }`}
                   >
                     {episode.episode_number
                       ? `${episode.episode_number}. `
                       : ''}
-                    {episode.title || 'Untitled Episode'}
+                    {episode.title || t('chatStoryEpisodeListDrawer.untitledEpisode')}
                   </div>
 
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] font-medium text-[#98a2b3]">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] font-medium text-[var(--shadow-text-tertiary)]">
                     {episodeDate ? <span>{episodeDate}</span> : null}
 
                     {likeCount > 0 ? (
                       <span className="flex items-center gap-1">
                         <i className="fa-regular fa-thumbs-up text-[10px]" />
-                        {likeCount.toLocaleString('en-US')}
+                        {likeCount.toLocaleString(getDisplayLanguageId() || 'en')}
                       </span>
                     ) : null}
 
                     {commentCount > 0 ? (
                       <span className="flex items-center gap-1">
                         <i className="fa-regular fa-comment-dots text-[10px]" />
-                        {commentCount.toLocaleString('en-US')}
+                        {commentCount.toLocaleString(getDisplayLanguageId() || 'en')}
                       </span>
                     ) : null}
                   </div>
                 </div>
 
                 {locked ? (
-                  <i className="fa-solid fa-lock shrink-0 text-[11px] text-[#b6bcc6]" />
+                  <i className="fa-solid fa-lock shrink-0 text-[11px] text-[var(--shadow-text-disabled)]" />
                 ) : null}
               </button>
             )
