@@ -3260,7 +3260,9 @@ function handleReaderFollowChanged(
              <>
   <RealFeedEmptyState />
 
+  <DeferredDiscoverSection>
   <DiscoverYouMightLikeSection />
+</DeferredDiscoverSection>
 
   {uniqueShadowMallPromotions.map(
     (promotion) => (
@@ -3362,7 +3364,9 @@ function handleReaderFollowChanged(
             {discoverTimeline.length > 0 &&
 discoverTimeline.length < 4 ? (
   <>
-    <DiscoverYouMightLikeSection />
+   <DeferredDiscoverSection>
+  <DiscoverYouMightLikeSection />
+</DeferredDiscoverSection>
 
     {firstShadowMallPromotion ? (
       <AdsCard
