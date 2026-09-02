@@ -2207,7 +2207,10 @@ export default function DiscoverPage() {
         ) {
           try {
             promotions =
-              await fetchShadowMallPromotions(100)
+  await runDiscoverFeedRequest(
+    `shadow-mall-public:${cacheKey}`,
+    () => fetchShadowMallPromotions(100)
+  )
 
             await saveHomeCache(
               cacheKey,
@@ -2751,10 +2754,15 @@ export default function DiscoverPage() {
       setRealPostsLoadingMore(true)
       setRealPostsError('')
 
-      const data = await fetchFollowedPosts(
+      const data =
+  await runDiscoverFeedRequest(
+    `author-more:${token}:${realPostsCursor}`,
+    () =>
+      fetchFollowedPosts(
         token,
         realPostsCursor
       )
+  )
       const incomingPosts =
         filterAuthorPostsByLocalPreferences(
           Array.isArray(data.posts) ? data.posts : []
@@ -2783,9 +2791,11 @@ export default function DiscoverPage() {
       setRealPostsLoading(true)
       setRealPostsError('')
 
-      const data = await fetchFollowedPosts(
-        token
-      )
+      const data =
+  await runDiscoverFeedRequest(
+    `author-retry:${token}`,
+    () => fetchFollowedPosts(token)
+  )
       const nextPosts =
         filterAuthorPostsByLocalPreferences(
           Array.isArray(data.posts)
@@ -2844,7 +2854,11 @@ export default function DiscoverPage() {
       setReaderPostsLoading(true)
       setReaderPostsError('')
 
-      const data = await fetchReaderPosts(token)
+      const data =
+  await runDiscoverFeedRequest(
+    `reader-retry:${token}`,
+    () => fetchReaderPosts(token)
+  )
       const nextPosts =
         Array.isArray(data.posts)
           ? data.posts
