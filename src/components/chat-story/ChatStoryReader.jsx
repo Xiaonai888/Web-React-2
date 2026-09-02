@@ -1,4 +1,54 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('chatStoryReader', {
+  en: {
+    invalidStory: 'This episode is not a valid Chat Story.',
+    openFailed: 'Chat Story data could not be opened.',
+    unknown: 'Unknown',
+    authorNote: "Author's Note",
+    imageLoadFailed: 'Image could not be loaded.',
+    noMessages: 'No Chat Story messages found.',
+    tapToContinue: 'Tap to continue',
+  },
+  km: {
+    invalidStory: 'ភាគនេះមិនមែនជា Chat Story ត្រឹមត្រូវទេ។',
+    openFailed: 'មិនអាចបើកទិន្នន័យ Chat Story បានទេ។',
+    unknown: 'មិនស្គាល់',
+    authorNote: 'កំណត់សម្គាល់ពីអ្នកនិពន្ធ',
+    imageLoadFailed: 'មិនអាចផ្ទុករូបភាពបានទេ។',
+    noMessages: 'មិនមានសារ Chat Story ទេ។',
+    tapToContinue: 'ចុចដើម្បីបន្ត',
+  },
+  zh: {
+    invalidStory: '此章节不是有效的 Chat Story。',
+    openFailed: '无法打开 Chat Story 数据。',
+    unknown: '未知',
+    authorNote: '作者的话',
+    imageLoadFailed: '无法加载图片。',
+    noMessages: '未找到 Chat Story 消息。',
+    tapToContinue: '点击继续',
+  },
+  ja: {
+    invalidStory: 'このエピソードは有効な Chat Story ではありません。',
+    openFailed: 'Chat Story のデータを開けませんでした。',
+    unknown: '不明',
+    authorNote: '作者ノート',
+    imageLoadFailed: '画像を読み込めませんでした。',
+    noMessages: 'Chat Story のメッセージが見つかりません。',
+    tapToContinue: 'タップして続ける',
+  },
+  ko: {
+    invalidStory: '이 에피소드는 올바른 Chat Story가 아닙니다.',
+    openFailed: 'Chat Story 데이터를 열 수 없습니다.',
+    unknown: '알 수 없음',
+    authorNote: '작가의 말',
+    imageLoadFailed: '이미지를 불러올 수 없습니다.',
+    noMessages: 'Chat Story 메시지를 찾을 수 없습니다.',
+    tapToContinue: '탭하여 계속',
+  },
+})
 
 const CHAT_STORY_FORMAT = 'shadow_chat_story_v1'
 
@@ -15,7 +65,7 @@ function parseChatStoryContent(content) {
       !Array.isArray(parsed.messages)
     ) {
       return {
-        error: 'This episode is not a valid Chat Story.',
+        errorKey: 'invalidStory',
         characters: [],
         messages: [],
         leadCharacterId: '',
@@ -52,7 +102,7 @@ function parseChatStoryContent(content) {
       )
 
     return {
-      error: '',
+      errorKey: '',
       characters,
       messages,
       leadCharacterId:
@@ -62,7 +112,7 @@ function parseChatStoryContent(content) {
     }
   } catch {
     return {
-      error: 'Chat Story data could not be opened.',
+      errorKey: 'openFailed',
       characters: [],
       messages: [],
       leadCharacterId: '',
@@ -134,7 +184,7 @@ function isRightMessage(
 
 function CharacterAvatar({ character }) {
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] ring-1 ring-black/5">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
       {character?.avatar_url ? (
         <img
           src={character.avatar_url}
@@ -183,10 +233,10 @@ function CharacterName({
       className={`mb-1 px-1 text-[11px] font-medium ${
         isRight
           ? 'text-[#8c78b5]'
-          : 'text-[#7b8492]'
+          : 'text-[var(--shadow-text-secondary)]'
       }`}
     >
-      {character?.nickname || 'Unknown'}
+      {character?.nickname || getDisplayText('chatStoryReader.unknown')}
     </div>
   )
 }
@@ -194,7 +244,7 @@ function CharacterName({
 function AsideMessage({ message }) {
   return (
     <div className="mx-auto flex max-w-[88%] justify-center py-3">
-      <div className="rounded-[18px] bg-[#f1f2f4] px-5 py-3 text-center text-[15px] leading-7 text-[#5f6672]">
+      <div className="rounded-[18px] bg-[var(--shadow-bg-soft)] px-5 py-3 text-center text-[15px] leading-7 text-[var(--shadow-text-secondary)]">
         {message.text}
       </div>
     </div>
@@ -203,12 +253,12 @@ function AsideMessage({ message }) {
 
 function AuthorNoteMessage({ message }) {
   return (
-    <section className="mx-auto my-6 max-w-[560px] rounded-[20px] border border-[#ece7f5] bg-[#faf8ff] px-5 py-5">
+    <section className="mx-auto my-6 max-w-[560px] rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-5 py-5">
       <div className="text-center text-[10px] font-bold uppercase tracking-[0.18em] text-[#8c78b5]">
-        Author&apos;s Note
+        {getDisplayText('chatStoryReader.authorNote')}
       </div>
 
-      <p className="mt-3 whitespace-pre-wrap text-center text-[14px] leading-7 text-[#5f566b]">
+      <p className="mt-3 whitespace-pre-wrap text-center text-[14px] leading-7 text-[var(--shadow-text-secondary)]">
         {message.text}
       </p>
     </section>
@@ -227,10 +277,10 @@ function CenterImageMessage({ message }) {
   }, [imageUrl])
 
   return (
-    <div className="mx-auto my-4 max-w-[560px] overflow-hidden rounded-[18px] bg-[#f3f4f6] ring-1 ring-black/5">
+    <div className="mx-auto my-4 max-w-[560px] overflow-hidden rounded-[18px] bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
       {failed ? (
-        <div className="flex min-h-[150px] items-center justify-center px-5 text-center text-[13px] font-medium text-[#98a2b3]">
-          Image could not be loaded.
+        <div className="flex min-h-[150px] items-center justify-center px-5 text-center text-[13px] font-medium text-[var(--shadow-text-tertiary)]">
+          {getDisplayText('chatStoryReader.imageLoadFailed')}
         </div>
       ) : (
         <img
@@ -282,10 +332,10 @@ function CharacterImageMessage({
         visible={showName}
       />
 
-      <div className="overflow-hidden rounded-[18px] bg-[#f3f4f6] ring-1 ring-black/5">
+      <div className="overflow-hidden rounded-[18px] bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
         {failed ? (
-          <div className="flex min-h-[130px] min-w-[180px] items-center justify-center px-4 text-center text-[12px] font-medium text-[#98a2b3]">
-            Image could not be loaded.
+          <div className="flex min-h-[130px] min-w-[180px] items-center justify-center px-4 text-center text-[12px] font-medium text-[var(--shadow-text-tertiary)]">
+            {getDisplayText('chatStoryReader.imageLoadFailed')}
           </div>
         ) : (
           <img
@@ -382,7 +432,7 @@ function ChatMessage({
           className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-[20px] px-4 py-3 text-left text-[15px] leading-7 ${
             isRight
               ? 'rounded-br-[6px] bg-[#7c3aed] text-white'
-              : 'rounded-bl-[6px] bg-[#f1f2f4] text-[#344054]'
+              : 'rounded-bl-[6px] bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
           }`}
         >
           {message.text}
@@ -484,6 +534,7 @@ export default function ChatStoryReader({
   onProgress,
   onComplete,
 }) {
+  const { t } = useDisplayTranslation()
   const parsedContent = useMemo(
     () => parseChatStoryContent(content),
     [content]
@@ -703,18 +754,18 @@ useEffect(() => {
     revealNextMessage()
   }
 
-  if (parsedContent.error) {
+  if (parsedContent.errorKey) {
     return (
-      <section className="mx-4 my-6 rounded-[18px] bg-[#fff1f1] px-4 py-4 text-center text-[13px] font-semibold leading-6 text-[#d92d20]">
-        {parsedContent.error}
+      <section className="mx-4 my-6 rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-4 text-center text-[13px] font-semibold leading-6 text-[#d92d20] dark:text-[#ff7b72]">
+        {t(`chatStoryReader.${parsedContent.errorKey}`)}
       </section>
     )
   }
 
   if (!parsedContent.messages.length) {
     return (
-      <section className="mx-4 my-6 rounded-[18px] bg-[#f5f3fa] px-4 py-4 text-center text-[13px] font-semibold leading-6 text-[#7b6d91]">
-        No Chat Story messages found.
+      <section className="mx-4 my-6 rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-4 text-center text-[13px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">
+        {t('chatStoryReader.noMessages')}
       </section>
     )
   }
@@ -736,7 +787,7 @@ useEffect(() => {
   }
   onClick={handleReaderClick}
   onKeyDown={handleReaderKeyDown}
-  className={`min-h-[70vh] bg-white px-4 pb-12 pt-5 outline-none sm:px-8 ${
+  className={`min-h-[70vh] bg-[var(--shadow-bg-page)] px-4 pb-12 pt-5 text-[var(--shadow-text-primary)] outline-none sm:px-8 ${
     readMode === 'manual'
       ? 'cursor-pointer'
       : 'cursor-default'
@@ -815,7 +866,7 @@ useEffect(() => {
 readMode === 'manual' ? (
           <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#c4a8ff]">
             <span className="text-[14px] font-medium">
-              Tap to continue
+              {t('chatStoryReader.tapToContinue')}
             </span>
             <img
               src="/assets/Icons/Hand.svg"
