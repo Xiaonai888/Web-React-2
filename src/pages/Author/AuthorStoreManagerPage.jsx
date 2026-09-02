@@ -2509,9 +2509,10 @@ function GallerySlot({ image, index, onChoose, onRemove }) {
   )
 }
 
-function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
+function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNotify }) {
   const fileInputRef = useRef(null)
   const galleryInputRefs = useRef([])
+  const pdfInputRef = useRef(null)
   const [type, setType] = useState(productToEdit?.type || 'Book')
   const [title, setTitle] = useState(productToEdit?.title || '')
   const [category, setCategory] = useState(productToEdit?.category || '')
@@ -2527,7 +2528,6 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [salePrice, setSalePrice] = useState(productToEdit?.salePrice || '')
   const [active, setActive] = useState(productToEdit ? productToEdit.status === 'Active' : true)
   const [coverFile, setCoverFile] = useState(null)
-  const [coverFileName, setCoverFileName] = useState('')
   const [coverPreview, setCoverPreview] = useState(productToEdit?.coverUrl || '')
   const [galleryImages, setGalleryImages] = useState(() => {
   const savedImages = Array.isArray(productToEdit?.galleryImages)
@@ -2556,24 +2556,13 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [pdfFileUrl, setPdfFileUrl] = useState(productToEdit?.pdfFileUrl || '')
   const [pageCount, setPageCount] = useState(productToEdit?.pageCount || '')
   const [accessRule, setAccessRule] = useState('Read online only')
-  const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
-  useEffect(() => {
-  if (!formError) return
-  if (formError.includes('Uploading') || formError.includes('Saving')) return
-
-  const timer = window.setTimeout(() => {
-    setFormError('')
-  }, 2500)
-
-  return () => window.clearTimeout(timer)
-}, [formError])
 
   const selectCover = (file) => {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setFormError('Please upload a valid cover image.')
+      onNotify?.('Please upload a valid cover image.', 'error')
       return
     }
 
@@ -2582,9 +2571,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
     }
 
     setCoverFile(file)
-    setCoverFileName(file.name)
     setCoverPreview(URL.createObjectURL(file))
-    setFormError('')
   }
 
   const removeCover = () => {
@@ -2593,7 +2580,6 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
     }
 
     setCoverFile(null)
-    setCoverFileName('')
     setCoverPreview('')
 
     if (fileInputRef.current) {
@@ -2605,7 +2591,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   if (!file) return
 
   if (!file.type.startsWith('image/')) {
-    setFormError('Please upload a valid gallery image.')
+    onNotify?.('Please upload a valid gallery image.', 'error')
     return
   }
 
@@ -2626,7 +2612,6 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
     return next
   })
 
-  setFormError('')
 }
 
   const removeGalleryImage = (index) => {
@@ -2657,7 +2642,6 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
       if (!image?.url && !image?.file) continue
 
       if (image.file) {
-        setFormError('Saving product...')
         const imageUrl = await uploadGalleryImage(image.file)
 
         uploadedImages.push({
@@ -2682,42 +2666,41 @@ const stockNumber = Number(stock || 0)
     if (saving) return
 
     if (!title.trim()) {
-  setFormError('Book title is required.')
+  onNotify?.('Book title is required.', 'error')
   return
 }
 
 if (!authorName.trim()) {
-  setFormError('Author name is required.')
+  onNotify?.('Author name is required.', 'error')
   return
 }
 
 if (!category) {
-  setFormError('Category is required.')
+  onNotify?.('Category is required.', 'error')
   return
 }
 
 if (!salePrice || Number(salePrice) <= 0) {
-  setFormError('Sell price is required.')
+  onNotify?.('Sell price is required.', 'error')
   return
 }
 
    if (!coverFile && !coverPreview) {
-  setFormError('Book cover is required.')
+  onNotify?.('Book cover is required.', 'error')
   return
 }
 
    if (type === 'Book' && (Number.isNaN(stockNumber) || stockNumber < 0)) {
-  setFormError('Stock quantity cannot be negative.')
+  onNotify?.('Stock quantity cannot be negative.', 'error')
   return
 }
     if (type === 'Book' && condition === 'Second Hand' && (!qualityPercent || Number.isNaN(qualityNumber) || qualityNumber < 1 || qualityNumber > 100)) {
-      setFormError('Book quality must be between 1% and 100%.')
+      onNotify?.('Book quality must be between 1% and 100%.', 'error')
       return
     }
 
     try {
       setSaving(true)
-    setFormError('Saving product...')
 
 const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
 
@@ -2726,16 +2709,10 @@ const nextGalleryImages = await uploadBookGalleryImages()
 const hasExistingPdf = Boolean(pdfFileUrl || pdfFileName)
 
 if (type === 'PDF' && !pdfFile && !hasExistingPdf) {
-  setFormError('PDF file is required.')
+  onNotify?.('PDF file is required.', 'error')
   setSaving(false)
   return
 }
-
-setFormError(
-  type === 'PDF' && pdfFile
-    ? 'Uploading private PDF...'
-    : 'Saving product...'
-)
 
       await onSave({
         type,
@@ -2767,8 +2744,8 @@ pdfFileUrl,
 pageCount,
 accessRule: type === 'PDF' ? 'Read online only' : accessRule,
       })
-    } catch (error) {
-      setFormError(error.message || 'Failed to create product')
+    } catch {
+      onNotify?.(type === 'PDF' && pdfFile ? 'PDF upload failed. Please try again.' : 'Save failed. Please try again.', 'error')
     } finally {
       setSaving(false)
     }
@@ -2776,17 +2753,7 @@ accessRule: type === 'PDF' ? 'Read online only' : accessRule,
 
   return (
     <main className="mx-auto max-w-[1180px] px-4 py-4 pb-28">
-{formError ? (
-  <button
-    type="button"
-    onClick={() => setFormError('')}
-    className="fixed left-1/2 top-20 z-[300] w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 rounded-2xl bg-[#111827] px-4 py-3 text-left text-[12px] font-black text-white shadow-2xl active:scale-[0.98]"
-  >
-    {formError}
-  </button>
-) : null}
-      
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+<div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <AdminStyleCard title="Book Cover" text="Upload the vertical cover shown on product cards.">
           <FormDivider title="Main cover" />
 
@@ -2827,7 +2794,6 @@ accessRule: type === 'PDF' ? 'Read online only' : accessRule,
               </button>
             ) : null}
 
-            {coverFileName ? <p className="mt-2 w-full truncate text-center text-[11px] font-bold text-[#8b93a1]">{coverFileName}</p> : null}
           </div>
         </AdminStyleCard>
 
@@ -3029,42 +2995,52 @@ accessRule: type === 'PDF' ? 'Read online only' : accessRule,
               <div>
                 <FieldLabel>PDF file</FieldLabel>
                 <input
+                  ref={pdfInputRef}
                   type="file"
                   accept="application/pdf"
                   onChange={(event) => {
-  const file = event.target.files?.[0]
+                    const file = event.target.files?.[0]
 
-  if (!file) {
-    setPdfFile(null)
-    setPdfFileName('')
-    return
-  }
+                    if (!file) {
+                      setPdfFile(null)
+                      return
+                    }
 
-  const isPdf =
-    file.type === 'application/pdf' ||
-    file.name.toLowerCase().endsWith('.pdf')
+                    const isPdf =
+                      file.type === 'application/pdf' ||
+                      file.name.toLowerCase().endsWith('.pdf')
 
-  if (!isPdf) {
-    setFormError('Please upload a valid PDF file.')
-    setPdfFile(null)
-    setPdfFileName('')
-    return
-  }
+                    if (!isPdf) {
+                      onNotify?.('Please upload a valid PDF file.', 'error')
+                      setPdfFile(null)
+                      event.target.value = ''
+                      return
+                    }
 
-  if (file.size > 50 * 1024 * 1024) {
-    setFormError('PDF file must be 50 MB or smaller.')
-    setPdfFile(null)
-    setPdfFileName('')
-    return
-  }
+                    if (file.size > 50 * 1024 * 1024) {
+                      onNotify?.('PDF file must be 50 MB or smaller.', 'error')
+                      setPdfFile(null)
+                      event.target.value = ''
+                      return
+                    }
 
-  setPdfFile(file)
-  setPdfFileName(file.name)
-  setFormError('')
-}}
-                  className="block h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 py-2 text-[13px] font-bold text-[#111827]"
+                    setPdfFile(file)
+                    setPdfFileName(file.name)
+                  }}
+                  className="hidden"
                 />
-                {pdfFileName ? <div className="mt-2 text-[11px] font-bold text-[#6b7280]">{pdfFileName}</div> : null}
+                <button
+                  type="button"
+                  onClick={() => pdfInputRef.current?.click()}
+                  className="h-11 w-full rounded-2xl border border-dashed border-[#b8c2d6] bg-white px-3.5 text-[12px] font-black text-[#111827] active:scale-[0.98]"
+                >
+                  {pdfFile ? 'Replace PDF' : pdfFileName ? 'Replace attached PDF' : 'Choose PDF'}
+                </button>
+                {pdfFile ? (
+                  <div className="mt-2 text-[11px] font-bold text-[#027a48]">PDF selected</div>
+                ) : pdfFileName ? (
+                  <div className="mt-2 text-[11px] font-bold text-[#6b7280]">PDF attached</div>
+                ) : null}
               </div>
               <div>
                 <FieldLabel>Page count</FieldLabel>
@@ -3103,21 +3079,12 @@ accessRule: type === 'PDF' ? 'Read online only' : accessRule,
   </label>
 </div>
 
-{formError ? (
-  <button
-    type="button"
-    onClick={() => setFormError('')}
-    className="w-full rounded-2xl bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold text-[#9a3412]"
-  >
-    {formError}
-  </button>
-) : null}
-
 <div className="grid gap-3 sm:grid-cols-2">
   <button
     type="button"
     onClick={onBack}
-    className="h-12 rounded-2xl bg-[#f3f4f6] text-[13px] font-black text-[#111827] active:scale-[0.98]"
+    disabled={saving}
+    className="h-12 rounded-2xl bg-[#f3f4f6] text-[13px] font-black text-[#111827] active:scale-[0.98] disabled:opacity-50"
   >
     Cancel
   </button>
@@ -3128,7 +3095,12 @@ accessRule: type === 'PDF' ? 'Read online only' : accessRule,
     disabled={saving}
     className="h-12 rounded-2xl bg-[#111827] text-[13px] font-black text-white active:scale-[0.98] disabled:opacity-60"
   >
-    {saving ? 'Saving...' : productToEdit ? 'Save Product' : 'Create Product'}
+    {saving ? (
+      <span className="inline-flex items-center justify-center gap-2">
+        <i className="fa-solid fa-spinner fa-spin text-[12px]" />
+        Saving...
+      </span>
+    ) : productToEdit ? 'Save Product' : 'Create Product'}
   </button>
 </div>
         </div>
@@ -3155,6 +3127,35 @@ export default function AuthorStoreManagerPage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
+  const [storeToast, setStoreToast] = useState(null)
+  const [storeToastVisible, setStoreToastVisible] = useState(false)
+
+  useEffect(() => {
+    if (!storeToast) return undefined
+
+    setStoreToastVisible(true)
+
+    const visibleMs = storeToast.type === 'error' ? 2800 : 1800
+    const hideTimer = window.setTimeout(() => {
+      setStoreToastVisible(false)
+    }, visibleMs)
+    const clearTimer = window.setTimeout(() => {
+      setStoreToast(null)
+    }, visibleMs + 300)
+
+    return () => {
+      window.clearTimeout(hideTimer)
+      window.clearTimeout(clearTimer)
+    }
+  }, [storeToast])
+
+  const showStoreToast = useCallback((message, type = 'success') => {
+    setStoreToast({
+      message: String(message || ''),
+      type: type === 'error' ? 'error' : 'success',
+      id: Date.now(),
+    })
+  }, [])
 
   const [orderSummary, setOrderSummary] = useState({
     orders_count: 0,
@@ -3562,6 +3563,7 @@ const saveCategoryOrder = async () => {
         setCategories((current) => [...current, finalProduct.category])
       }
 
+      showStoreToast('Saved successfully')
       setEditingProduct(null)
       setMode('manager')
       setActiveTab('Records')
@@ -3635,6 +3637,22 @@ const saveCategoryOrder = async () => {
 
   return (
     <div className={`min-h-screen bg-[#f3f4f6] ${mode === 'form' ? 'pb-0' : 'pb-[92px]'}`}>
+      {storeToast ? (
+        <div
+          role="status"
+          className={`fixed left-1/2 top-20 z-[500] flex w-[calc(100%-2rem)] max-w-[360px] -translate-x-1/2 items-center gap-2.5 rounded-2xl px-4 py-3 text-[12px] font-black shadow-2xl transition-all duration-300 ${
+            storeToastVisible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+          } ${
+            storeToast.type === 'error'
+              ? 'bg-[#fff1f1] text-[#b42318] ring-1 ring-[#fecaca]'
+              : 'bg-[#ecfdf3] text-[#027a48] ring-1 ring-[#bbf7d0]'
+          }`}
+        >
+          <i className={`fa-solid ${storeToast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'} text-[14px]`} />
+          <span>{storeToast.message}</span>
+        </div>
+      ) : null}
+
 <AuthorStoreMenuSheet
   open={authorMenuOpen}
   onClose={() => setAuthorMenuOpen(false)}
@@ -3687,6 +3705,7 @@ const saveCategoryOrder = async () => {
           productToEdit={editingProduct}
           onBack={closeProductForm}
           onSave={saveProduct}
+          onNotify={showStoreToast}
         />
       ) : (
         <StoreManagerHome
