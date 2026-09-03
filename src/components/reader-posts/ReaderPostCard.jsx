@@ -2340,17 +2340,20 @@ const safeSelectedPhotoIndex =
   ])
 
   useEffect(() => {
-    if (reactionStateLoaded) {
-      return undefined
-    }
+  if (
+    reactionStateLoaded ||
+    isLegacyEcho
+  ) {
+    return undefined
+  }
 
-    let ignore = false
-    const token = getAuthToken()
-    const controller = new AbortController()
+  let ignore = false
+  const token = getAuthToken()
+  const controller = new AbortController()
 
-    if (!post?.id || !token) {
-      return undefined
-    }
+  if (!post?.id || !token) {
+    return undefined
+  }
 
     async function loadReactionStatus() {
       try {
@@ -2403,9 +2406,10 @@ const safeSelectedPhotoIndex =
       controller.abort()
     }
   }, [
-    post?.id,
-    reactionStateLoaded,
-  ])
+  post?.id,
+  reactionStateLoaded,
+  isLegacyEcho,
+])
 
   useEffect(() => {
     return () => {
@@ -2527,20 +2531,24 @@ const safeSelectedPhotoIndex =
   }
 
   async function updateReaction(
-    nextReactionType
+  nextReactionType
+) {
+  if (
+    !post?.id ||
+    reactionBusy ||
+    isLegacyEcho
   ) {
-    if (!post?.id || reactionBusy) {
-      return
-    }
+    return
+  }
 
-    const token = getAuthToken()
+  const token = getAuthToken()
 
-    if (!token) {
-      showReactionMessage(
-        t('readerPostCard.pleaseLoginFirst')
-      )
-      return
-    }
+  if (!token) {
+    showReactionMessage(
+      t('readerPostCard.pleaseLoginFirst')
+    )
+    return
+  }
 
     try {
       setReactionBusy(true)
