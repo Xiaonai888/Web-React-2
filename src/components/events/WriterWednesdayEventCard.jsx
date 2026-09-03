@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const API_BASE_URL =
-  'https://shadow-backend-kucw.onrender.com'
+import { requestWriterWednesdayEvent } from '../../services/writerWednesdayEventClientCache'
 const CAMBODIA_OFFSET_MS = 7 * 60 * 60 * 1000
 
 function getCambodiaDate(value = new Date()) {
@@ -78,38 +76,56 @@ export default function WriterWednesdayEventCard() {
 
   useEffect(() => {
     let ignore = false
+    let releaseRequest = () => {}
+    let requestInFlight = false
 
     async function syncEvent() {
+      if (requestInFlight) return
+
+      requestInFlight = true
+      releaseRequest()
+
+      const request =
+        requestWriterWednesdayEvent()
+
+      releaseRequest = request.release
+
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/unlocks/events/writer-wednesday`
-        )
-        const data = await response.json()
-
-        if (!response.ok || data.ok === false) {
-          throw new Error('Failed')
-        }
+        const event = await request.promise
 
         if (!ignore) {
-          setServerEvent(data.event)
+          setServerEvent(event)
         }
-      } catch {
-        if (!ignore) {
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError' &&
+          !ignore
+        ) {
           setServerEvent(null)
         }
+      } finally {
+        releaseRequest()
+        releaseRequest = () => {}
+        requestInFlight = false
+      }
+    }
+
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        syncEvent()
       }
     }
 
     syncEvent()
-
-    const timer = window.setInterval(
-      syncEvent,
-      60000
-    )
+    window.addEventListener('focus', handleFocus)
 
     return () => {
       ignore = true
-      window.clearInterval(timer)
+      releaseRequest()
+      window.removeEventListener(
+        'focus',
+        handleFocus
+      )
     }
   }, [])
 
