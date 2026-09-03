@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 
@@ -46,11 +46,13 @@ function formatDate(value) {
   })
 }
 
-async function requestJson(path, token) {
+async function requestJson(path, token, signal) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    cache: 'no-store',
+    signal,
   })
   const data = await response.json().catch(() => ({}))
 
@@ -191,6 +193,7 @@ export default function AuthorInsightsPage() {
   const [giftTotal, setGiftTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const requestControllerRef = useRef(null)
 
   const loadInsights = useCallback(async () => {
     const token = getAuthToken()
@@ -200,26 +203,56 @@ export default function AuthorInsightsPage() {
       return
     }
 
+    requestControllerRef.current?.abort()
+
+    const controller = new AbortController()
+    requestControllerRef.current = controller
+
     try {
       setLoading(true)
       setError('')
 
-      const [dashboardData, incomeData] = await Promise.all([
-        requestJson(`/api/authors/me/dashboard?period=${encodeURIComponent(period)}`, token),
-        requestJson('/api/authors/me/income', token).catch(() => null),
-      ])
+      const dashboardData = await requestJson(
+        `/api/authors/me/dashboard?period=${encodeURIComponent(period)}`,
+        token,
+        controller.signal
+      )
+
+      if (controller.signal.aborted) return
 
       setDashboard(dashboardData)
-      setGiftTotal(Number(incomeData?.gifts?.total_received || 0))
+      setGiftTotal(
+        Number(
+          dashboardData?.overview?.monthly_gifts ||
+            0
+        )
+      )
     } catch (loadError) {
-      setError(loadError.message || 'Failed to load insights')
+      if (loadError?.name === 'AbortError') return
+
+      setError(
+        loadError.message || 'Failed to load insights'
+      )
     } finally {
-      setLoading(false)
+      if (
+        requestControllerRef.current === controller
+      ) {
+        requestControllerRef.current = null
+
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
     }
   }, [navigate, period])
 
   useEffect(() => {
     loadInsights()
+
+    return () => {
+      requestControllerRef.current?.abort()
+      requestControllerRef.current = null
+    }
   }, [loadInsights])
 
   const totals = dashboard?.period_totals || {}
