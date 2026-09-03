@@ -44,6 +44,7 @@ async function apiRequest(path, options = {}) {
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     },
     ...(options.body ? { body: JSON.stringify(options.body) } : {}),
+    ...(options.signal ? { signal: options.signal } : {}),
   })
 
   const data = await response.json().catch(() => ({}))
@@ -75,18 +76,27 @@ function ensureAuthorConversation(conversation) {
   return conversation
 }
 
-export async function getAuthorInboxProfile() {
-  const data = await apiRequest('/api/authors/me')
+export async function getAuthorInboxProfile({
+  signal,
+} = {}) {
+  const data = await apiRequest(
+    '/api/authors/me',
+    { signal }
+  )
   return data.authorPage || data.page || data.author_page || data
 }
 
-export async function getAuthorInboxComments(limit = 50) {
+export async function getAuthorInboxComments(
+  limit = 50,
+  { signal } = {}
+) {
   const params = new URLSearchParams({
     limit: String(Math.min(50, Math.max(1, Number(limit) || 30))),
   })
 
   const data = await apiRequest(
-    `/api/authors/me/page-notifications?${params.toString()}`
+    `/api/authors/me/page-notifications?${params.toString()}`,
+    { signal }
   )
 
   const notifications = Array.isArray(data.notifications)
@@ -109,6 +119,7 @@ export async function getAuthorInboxComments(limit = 50) {
 export async function getAuthorChatConversations({
   status = 'all',
   view = 'active',
+  signal,
 } = {}) {
   const query = new URLSearchParams()
 
@@ -119,7 +130,8 @@ export async function getAuthorChatConversations({
   query.set('view', view)
 
   const data = await authorChatRequest(
-    `/conversations/managed?${query.toString()}`
+    `/conversations/managed?${query.toString()}`,
+    { signal }
   )
 
   return {
@@ -134,7 +146,12 @@ export async function getAuthorChatConversations({
 
 export async function getAuthorChatMessages(
   conversationId,
-  { before = '', after = '', limit = 50 } = {}
+  {
+    before = '',
+    after = '',
+    limit = 50,
+    signal,
+  } = {}
 ) {
   if (before && after) {
     throw new AuthorChatApiError(
@@ -158,7 +175,8 @@ export async function getAuthorChatMessages(
   const data = await authorChatRequest(
     `/conversations/${encodeURIComponent(
       conversationId
-    )}/messages?${query.toString()}`
+    )}/messages?${query.toString()}`,
+    { signal }
   )
 
   if (data.conversation) {
@@ -193,11 +211,15 @@ export async function decideAuthorChatRequest(conversationId, action) {
   return data
 }
 
-export function markAuthorChatRead(conversationId) {
+export function markAuthorChatRead(
+  conversationId,
+  { signal } = {}
+) {
   return authorChatRequest(
     `/conversations/${encodeURIComponent(conversationId)}/read`,
     {
       method: 'PATCH',
+      signal,
     }
   )
 }
