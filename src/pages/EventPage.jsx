@@ -4,6 +4,7 @@ import { addStoryLanguageParam } from '../utils/storyLanguage'
 import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 import Author49DayEventCard from '../components/events/Author49DayEventCard'
+import { requestAuthor49DayEvent } from '../services/author49DayEventClientCache'
 import ManagedEventHeroCard from '../components/events/ManagedEventHeroCard'
 import MonthlyVoteTab from './Event/MonthlyVoteTab'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -1380,13 +1381,18 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
 
   useEffect(() => {
     let ignore = false
+    let releaseAuthor49Request = () => {}
+    const writerController = new AbortController()
 
     async function loadActiveEventStatus() {
       const token = getReaderToken()
 
       try {
         const writerResponse = await fetch(
-          `${API_BASE_URL}/api/unlocks/events/writer-wednesday`
+          `${API_BASE_URL}/api/unlocks/events/writer-wednesday`,
+          {
+            signal: writerController.signal,
+          }
         )
 
         const writerData = await writerResponse
@@ -1402,8 +1408,11 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
             )
           )
         }
-      } catch {
-        if (!ignore) {
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError' &&
+          !ignore
+        ) {
           setWriterWednesdayLive(false)
         }
       }
@@ -1415,48 +1424,63 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
         return
       }
 
+      releaseAuthor49Request()
+
+      const request =
+        requestAuthor49DayEvent(token)
+
+      releaseAuthor49Request = request.release
+
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/authors/me/49-day-event`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-
-        const data = await response
-          .json()
-          .catch(() => ({}))
-
-        const event = data.event
+        const event = await request.promise
 
         if (!ignore) {
           setAuthor49Available(
             Boolean(
-              response.ok &&
-              data.ok !== false &&
               event?.visible &&
               event.status !== 'finished'
             )
           )
         }
-      } catch {
-        if (!ignore) {
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError' &&
+          !ignore
+        ) {
           setAuthor49Available(false)
         }
+      } finally {
+        releaseAuthor49Request()
+        releaseAuthor49Request = () => {}
+      }
+    }
+
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadActiveEventStatus()
       }
     }
 
     loadActiveEventStatus()
-
-    const timer = window.setInterval(() => {
-      setEventNow(new Date())
-      loadActiveEventStatus()
-    }, 60000)
+    window.addEventListener('focus', refreshOnFocus)
 
     return () => {
       ignore = true
+      writerController.abort()
+      releaseAuthor49Request()
+      window.removeEventListener(
+        'focus',
+        refreshOnFocus
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setEventNow(new Date())
+    }, 60000)
+
+    return () => {
       window.clearInterval(timer)
     }
   }, [])
