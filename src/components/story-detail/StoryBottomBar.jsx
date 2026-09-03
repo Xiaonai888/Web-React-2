@@ -9,7 +9,7 @@ registerTranslationNamespace('storyBottomBar', {
     noEpisode: 'No Episode',
   },
   km: {
-    subscribe: 'Subscribe',
+    subscribe: 'ជាវតាម',
     continueEpisode: 'បន្តអានភាគ {{count}}',
     readNow: 'អានឥឡូវនេះ',
     noEpisode: 'មិនមានភាគ',
