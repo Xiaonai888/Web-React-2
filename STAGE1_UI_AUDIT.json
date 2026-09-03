@@ -282,6 +282,11 @@
 "src/components/common/ImageDropZone.jsx",
 "src/App.jsx"
 "src/components/author-posts/AuthorPostSchedulePicker.jsx"
+"src/components/story-detail/CommentsModal.jsx",
+"src/components/story-detail/EpisodeListModal.jsx",
+"src/components/story-detail/EpisodePreviewSection.jsx",
+"src/components/story-detail/LatestCommentSection.jsx",
+"src/components/story-detail/StoryBottomBar.jsx"
   ]
 }
 
