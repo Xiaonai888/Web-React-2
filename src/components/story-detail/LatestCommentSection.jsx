@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('latestCommentSection', {
@@ -76,7 +76,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-function formatTime(value, t) {
+function formatTime(value, t, locale) {
   if (!value) return t('latestCommentSection.justNow')
 
   const date = new Date(value)
@@ -99,7 +99,11 @@ function formatTime(value, t) {
     })
   }
 
-  return date.toLocaleDateString('en-GB')
+  return new Intl.DateTimeFormat(locale || 'en', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(date)
 }
 
 function getCommentUser(comment, fallbackName) {
@@ -135,6 +139,7 @@ function Avatar({ comment }) {
 
 export default function LatestCommentSection({ story, refreshKey = 0, onOpenComments }) {
   const { t } = useDisplayTranslation()
+  const displayLanguage = getDisplayLanguageId() || 'en'
   const [latestComment, setLatestComment] = useState(null)
 
   useEffect(() => {
@@ -207,7 +212,7 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
                     {user.name || readerLabel}
                   </div>
                   <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
-                    {formatTime(latestComment.created_at, t)}
+                    {formatTime(latestComment.created_at, t, displayLanguage)}
                   </div>
                 </div>
               </div>
