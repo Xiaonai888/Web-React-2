@@ -125,6 +125,101 @@ Prefer:
 
 Do not add placeholder English text to these states. Pass translated values from the page.
 
+## Data Fetch / API Efficiency Standard
+
+This section is mandatory for every new or modified data-driven page, component, API endpoint, controller, service, feed, list, history, library, comments/replies view, notification view, search result, dashboard table, or other feature that can grow over time.
+
+Before writing or changing data-fetching UI, inspect the related frontend fetch code and the related backend route/controller/query when available. Do not review only Dark Mode and translations.
+
+### List and Growing Data Rules
+- Never design a growing list to fetch all rows by default.
+- Use pagination, cursor pagination, `.range()`, or `.limit()` for data that can grow.
+- Default page size should normally be about 30 items.
+- Backend must enforce a safe maximum page size, normally no more than 100 items per request unless the feature has a documented reason.
+- Frontend must load the first page only, then use Load More, infinite scroll, pagination controls, or another intentional continuation pattern.
+- Do not rely on frontend slicing after downloading the full dataset.
+
+### Database Query Rules
+- Do not use `select('*')` or nested `relation(*)` for list endpoints unless every returned column is genuinely required.
+- Select only fields used by the current UI or required business logic.
+- Large nested collections such as replies, episodes, comments, reactions, followers, logs, orders, or child records must have their own limit/pagination strategy.
+- Prefer database-side filtering, sorting, counting, and aggregation instead of loading rows into Node or the browser just to process them.
+- Counts should use a database count query when possible instead of fetching hundreds of rows and counting them in application code.
+
+### Request Rules
+- Do not send one HTTP request per item for a bulk user action when the backend can perform the operation in one request.
+- Bulk delete, bulk clear, bulk update, bulk approve, bulk archive, and similar actions should normally use one dedicated backend endpoint.
+- Avoid `Promise.all(items.map(() => fetch(...)))` for unbounded item collections.
+- Avoid duplicate fetches for the same resource during one page load when the result can be shared or reused.
+- GET endpoints should not perform unrelated cleanup/delete/update work on every read request.
+
+### Cache Rules
+- Consider cache for read-heavy data that does not need instant freshness.
+- Cache is optional for user-private, highly dynamic, or security-sensitive data and must not be added blindly.
+- Reuse existing cache helpers/patterns before creating a new cache system.
+- Cache TTL must match the freshness requirement of the feature.
+- Mutation endpoints must invalidate or bypass affected cached data when necessary.
+
+### Frontend Data State Rules
+Every data-driven page must explicitly handle:
+- initial loading
+- error
+- empty result
+- loaded content
+- loading more / next page when pagination is used
+- end of results when applicable
+
+Do not mark a data-driven page complete just because the first 20–30 records display correctly.
+
+### Cross-Repo Inspection Rule
+For frontend work that fetches Shadow API data:
+1. Inspect the frontend page/component making the request.
+2. Identify the exact API endpoint.
+3. Inspect the matching backend route.
+4. Inspect the matching controller/service/database query.
+5. Verify limit/pagination, selected fields, nested data size, count strategy, bulk actions, and cache behavior.
+6. If the endpoint can grow without a bound, treat it as incomplete even if the UI currently has little data.
+
+For backend work that returns collections:
+1. Identify every known frontend consumer when practical.
+2. Preserve response compatibility unless the task intentionally changes the API contract.
+3. Add pagination metadata or continuation state when pagination is introduced.
+4. Do not silently break existing consumers.
+
+### Data Efficiency Completion Checklist
+Before marking a new or modified data-driven feature DONE, verify:
+- Related frontend and backend files were inspected.
+- Growing lists do not fetch all rows by default.
+- A safe limit/pagination strategy exists.
+- Only required database fields are selected.
+- Nested growing collections are limited or paginated.
+- Counts are performed efficiently.
+- Bulk actions do not create unbounded N-request loops.
+- GET requests do not perform unnecessary cleanup mutations.
+- Cache was considered and used only when appropriate.
+- Loading More / next-page behavior works when applicable.
+- Existing API consumers remain compatible.
+- Production build/checks still pass.
+
+### AI Mandatory Workflow for Data-Driven Work
+When asked to create or modify a page, AI must first decide whether the feature reads or writes data that can grow.
+
+If YES, AI must inspect the related API/backend implementation before calling the task complete, even when the user's request appears to be frontend-only.
+
+AI must not limit its review to Dark Mode and display translations.
+
+For every data-driven feature, AI must explicitly check:
+1. Limit / pagination
+2. Selected database fields
+3. Nested collection size
+4. Request count
+5. Bulk action behavior
+6. Count/aggregation strategy
+7. Cache suitability
+8. Loading/error/empty/load-more states
+
+If an existing implementation violates these rules, do not copy the unsafe pattern into a new page. Reuse the UI pattern where appropriate, but use the safer data-access pattern.
+
 ## New Page Standard
 Before marking a new page DONE, verify all of the following:
 - `src/templates/NewPageTemplate.jsx` was inspected.
