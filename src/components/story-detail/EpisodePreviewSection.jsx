@@ -1,4 +1,4 @@
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('episodePreviewSection', {
@@ -56,25 +56,26 @@ function formatShortNumber(value) {
   return number.toLocaleString()
 }
 
-function formatDate(value) {
+function formatDate(value, locale) {
   if (!value) return ''
 
   const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) return ''
 
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-
-  return `${day}-${month}-${year}`
+  return new Intl.DateTimeFormat(locale || 'en', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(date)
 }
 
 function EpisodeRow({ episode, story, onOpenEpisode }) {
   const { t } = useDisplayTranslation()
+  const displayLanguage = getDisplayLanguageId() || 'en'
   const cover = episode.cover_url || story?.cover_url || ''
   const locked = episode.is_locked && Number(episode.episode_number || 0) > 5
-  const date = formatDate(episode.created_at || episode.published_at || episode.updated_at)
+  const date = formatDate(episode.created_at || episode.published_at || episode.updated_at, displayLanguage)
   const likes = formatShortNumber(episode.total_likes || episode.likes_count || episode.likes || 0)
   const comments = formatShortNumber(episode.total_comments || episode.comments_count || episode.comments || 0)
 
