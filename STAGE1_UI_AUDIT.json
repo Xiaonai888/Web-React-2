@@ -287,6 +287,10 @@
 "src/components/story-detail/EpisodePreviewSection.jsx",
 "src/components/story-detail/LatestCommentSection.jsx",
 "src/components/story-detail/StoryBottomBar.jsx"
+"src/pages/StoryTopFansPage.jsx",
+"src/pages/Author/CreateAuthorPage.jsx",
+"src/pages/Author/CreateStoryPage.jsx",
+"src/pages/Author/StoryTitleGuidePage.jsx",
   ]
 }
 
