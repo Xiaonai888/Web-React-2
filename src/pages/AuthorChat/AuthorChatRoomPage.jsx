@@ -120,14 +120,20 @@ export default function AuthorChatRoomPage() {
   const [error, setError] = useState('')
 
   const loadRoom = useCallback(
-    async ({ silent = false } = {}) => {
+    async ({
+      silent = false,
+      signal,
+    } = {}) => {
       if (!conversationId) return
       if (!silent) setLoading(true)
 
       try {
         const data = await getAuthorChatMessages(
           conversationId,
-          { limit: silent ? 20 : 50 }
+          {
+            limit: silent ? 20 : 50,
+            signal,
+          }
         )
 
         const incomingMessages =
@@ -186,10 +192,15 @@ export default function AuthorChatRoomPage() {
           document.visibilityState === 'visible'
         ) {
           markAuthorChatRead(
-            conversationId
+            conversationId,
+            { signal }
           ).catch(() => null)
         }
       } catch (loadError) {
+        if (loadError?.name === 'AbortError') {
+          return
+        }
+
         if (
           loadError.status === 401 ||
           loadError.code ===
@@ -208,14 +219,16 @@ export default function AuthorChatRoomPage() {
           )
         }
       } finally {
-        if (!silent) setLoading(false)
+        if (!silent && !signal?.aborted) {
+          setLoading(false)
+        }
       }
     },
     [conversationId, navigate]
   )
 
   const loadIncrementalMessages = useCallback(
-    async () => {
+    async ({ signal } = {}) => {
       if (
         !conversationId ||
         incrementalLoadingRef.current
@@ -238,6 +251,7 @@ export default function AuthorChatRoomPage() {
           {
             after,
             limit: 20,
+            signal,
           }
         )
 
@@ -279,10 +293,15 @@ export default function AuthorChatRoomPage() {
           document.visibilityState === 'visible'
         ) {
           markAuthorChatRead(
-            conversationId
+            conversationId,
+            { signal }
           ).catch(() => null)
         }
       } catch (loadError) {
+        if (loadError?.name === 'AbortError') {
+          return
+        }
+
         if (
           loadError.status === 401 ||
           loadError.code ===
@@ -309,12 +328,18 @@ export default function AuthorChatRoomPage() {
       return undefined
     }
 
+    const controller = new AbortController()
+
     knownMessageIdsRef.current = new Set()
     pollCursorRef.current = ''
     incrementalLoadingRef.current = false
-    loadRoom()
+    loadRoom({
+      signal: controller.signal,
+    })
 
-    return undefined
+    return () => {
+      controller.abort()
+    }
   }, [loadRoom, navigate])
 
   useEffect(() => {
@@ -325,14 +350,19 @@ export default function AuthorChatRoomPage() {
       return undefined
     }
 
+    const controller = new AbortController()
+
     const refreshRoom = () => {
       if (
-        document.visibilityState !== 'visible'
+        document.visibilityState !== 'visible' ||
+        controller.signal.aborted
       ) {
         return
       }
 
-      loadIncrementalMessages()
+      loadIncrementalMessages({
+        signal: controller.signal,
+      })
     }
 
     const intervalId = window.setInterval(
@@ -344,7 +374,10 @@ export default function AuthorChatRoomPage() {
       if (
         document.visibilityState === 'visible'
       ) {
-        loadRoom({ silent: true })
+        loadRoom({
+          silent: true,
+          signal: controller.signal,
+        })
       }
     }
 
@@ -354,6 +387,7 @@ export default function AuthorChatRoomPage() {
     )
 
     return () => {
+      controller.abort()
       window.clearInterval(intervalId)
       document.removeEventListener(
         'visibilitychange',
