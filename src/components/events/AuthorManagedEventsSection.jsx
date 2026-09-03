@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import ManagedEventHeroCard from './ManagedEventHeroCard'
+import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -7,7 +7,25 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+function openEventLink(url, navigate) {
+  const target = String(url || '').trim()
+
+  if (!target) return
+
+  if (/^https?:\/\//i.test(target)) {
+    window.location.assign(target)
+    return
+  }
+
+  navigate(
+    target.startsWith('/')
+      ? target
+      : `/${target}`
+  )
+}
+
 export default function AuthorManagedEventsSection() {
+  const navigate = useNavigate()
   const [events, setEvents] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [loading, setLoading] = useState(true)
@@ -109,6 +127,15 @@ export default function AuthorManagedEventsSection() {
     return null
   }
 
+  const displayImage =
+    selectedEvent.banner_url ||
+    selectedEvent.image_url ||
+    ''
+
+  const hasLink = Boolean(
+    String(selectedEvent.button_url || '').trim()
+  )
+
   return (
     <section className="mt-5">
       <div className="flex items-center justify-between gap-3">
@@ -128,13 +155,60 @@ export default function AuthorManagedEventsSection() {
         ) : null}
       </div>
 
-      <ManagedEventHeroCard event={selectedEvent} />
+      <article
+        role={hasLink ? 'button' : undefined}
+        tabIndex={hasLink ? 0 : undefined}
+        onClick={() =>
+          hasLink
+            ? openEventLink(
+                selectedEvent.button_url,
+                navigate
+              )
+            : undefined
+        }
+        onKeyDown={(event) => {
+          if (
+            hasLink &&
+            (event.key === 'Enter' ||
+              event.key === ' ')
+          ) {
+            event.preventDefault()
+            openEventLink(
+              selectedEvent.button_url,
+              navigate
+            )
+          }
+        }}
+        className={`relative mt-4 aspect-[16/9] w-full overflow-hidden rounded-[16px] border border-[#eceaf2] bg-[#f5f2fb] shadow-[0_10px_26px_rgba(31,24,55,0.10)] ${
+          hasLink
+            ? 'cursor-pointer transition active:scale-[0.99]'
+            : ''
+        }`}
+      >
+        {displayImage ? (
+          <img
+            src={displayImage}
+            alt={selectedEvent.title || 'Event'}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="eager"
+            decoding="async"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[#8050e8]">
+            <i className="fa-regular fa-calendar-days text-[28px]" />
+          </div>
+        )}
+      </article>
 
       {events.length > 1 ? (
         <div className="-mx-4 mt-3 flex gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {events.map((event) => {
             const active =
               String(event.id) === String(selectedEvent.id)
+            const thumbImage =
+              event.banner_url ||
+              event.image_url ||
+              ''
 
             return (
               <button
@@ -149,10 +223,10 @@ export default function AuthorManagedEventsSection() {
                     : 'border-[#eceaf2] bg-white'
                 }`}
               >
-                <div className="h-[50px] w-[64px] shrink-0 overflow-hidden rounded-[10px] bg-[#f0eaff]">
-                  {event.image_url ? (
+                <div className="h-[50px] w-[76px] shrink-0 overflow-hidden rounded-[10px] bg-[#f0eaff]">
+                  {thumbImage ? (
                     <img
-                      src={event.image_url}
+                      src={thumbImage}
                       alt=""
                       className="h-full w-full object-cover"
                       loading="lazy"
