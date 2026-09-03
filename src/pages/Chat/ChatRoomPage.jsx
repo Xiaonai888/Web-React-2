@@ -1349,6 +1349,7 @@ export default function ChatRoomPage() {
     async ({
       silent = false,
       includeMeta = true,
+      signal,
     } = {}) => {
       if (!conversationId) return
 
@@ -1359,6 +1360,7 @@ export default function ChatRoomPage() {
           conversationId,
           {
             limit: silent ? 20 : 50,
+            signal,
           }
         )
 
@@ -1389,10 +1391,12 @@ export default function ChatRoomPage() {
                     },
                   })
                 : getChatBlockStatus(
-                    conversationId
+                    conversationId,
+                    { signal }
                   ),
               getPinnedChatMessages(
-                conversationId
+                conversationId,
+                { signal }
               ),
             ])
 
@@ -1445,10 +1449,17 @@ export default function ChatRoomPage() {
             data.conversation?.unread_count || 0
           ) > 0
         ) {
-          await markChatRead(conversationId)
+          await markChatRead(
+            conversationId,
+            { signal }
+          )
           notifyChatUpdated()
         }
       } catch (loadError) {
+        if (loadError?.name === 'AbortError') {
+          return
+        }
+
         if (loadError.status === 401) {
           navigate('/login', {
             replace: true,
@@ -1477,7 +1488,9 @@ export default function ChatRoomPage() {
           )
         }
       } finally {
-        if (!silent) setLoading(false)
+        if (!silent && !signal?.aborted) {
+          setLoading(false)
+        }
       }
     },
     [
@@ -1488,7 +1501,7 @@ export default function ChatRoomPage() {
   )
 
   const loadIncrementalMessages = useCallback(
-    async () => {
+    async ({ signal } = {}) => {
       if (
         !conversationId ||
         incrementalLoadingRef.current
@@ -1514,6 +1527,7 @@ export default function ChatRoomPage() {
           {
             after,
             limit: 20,
+            signal,
           }
         )
 
@@ -1551,10 +1565,17 @@ export default function ChatRoomPage() {
           hasNewIncoming &&
           document.visibilityState === 'visible'
         ) {
-          await markChatRead(conversationId)
+          await markChatRead(
+            conversationId,
+            { signal }
+          )
           notifyChatUpdated()
         }
       } catch (loadError) {
+        if (loadError?.name === 'AbortError') {
+          return
+        }
+
         if (loadError.status === 401) {
           navigate('/login', {
             replace: true,
@@ -1588,11 +1609,17 @@ export default function ChatRoomPage() {
       return undefined
     }
 
+    const controller = new AbortController()
+
     pollCursorRef.current = ''
     incrementalLoadingRef.current = false
-    loadRoom()
+    loadRoom({
+      signal: controller.signal,
+    })
 
-    return undefined
+    return () => {
+      controller.abort()
+    }
   }, [loadRoom, navigate])
 
   useEffect(() => {
@@ -1610,21 +1637,27 @@ export default function ChatRoomPage() {
       return undefined
     }
 
+    const controller = new AbortController()
+
     const refreshMessages = () => {
       if (
-        document.visibilityState !== 'visible'
+        document.visibilityState !== 'visible' ||
+        controller.signal.aborted
       ) {
         return
       }
 
       if (status === 'accepted') {
-        loadIncrementalMessages()
+        loadIncrementalMessages({
+          signal: controller.signal,
+        })
         return
       }
 
       loadRoom({
         silent: true,
         includeMeta: false,
+        signal: controller.signal,
       })
     }
 
@@ -1640,6 +1673,7 @@ export default function ChatRoomPage() {
         loadRoom({
           silent: true,
           includeMeta: true,
+          signal: controller.signal,
         })
       }
     }
@@ -1650,6 +1684,7 @@ export default function ChatRoomPage() {
     )
 
     return () => {
+      controller.abort()
       window.clearInterval(intervalId)
       document.removeEventListener(
         'visibilitychange',
