@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('episodeListModal', {
@@ -24,6 +24,7 @@ registerTranslationNamespace('episodeListModal', {
     episodes: 'Episodes',
     close: 'Close',
     earlyAccess: 'Early Access',
+    premium: 'Premium',
     reverseEpisodes: 'Reverse episodes',
     noEpisodesYet: 'No episodes yet',
     publishedAppearHere: 'Published episodes will appear here.',
@@ -49,6 +50,7 @@ registerTranslationNamespace('episodeListModal', {
     episodes: 'ភាគ',
     close: 'បិទ',
     earlyAccess: 'ចូលអានមុន',
+    premium: 'ពិសេស',
     reverseEpisodes: 'បញ្ច្រាសលំដាប់ភាគ',
     noEpisodesYet: 'មិនទាន់មានភាគ',
     publishedAppearHere: 'ភាគដែលបានបោះពុម្ពនឹងបង្ហាញនៅទីនេះ។',
@@ -74,6 +76,7 @@ registerTranslationNamespace('episodeListModal', {
     episodes: '章节',
     close: '关闭',
     earlyAccess: '抢先阅读',
+    premium: '高级',
     reverseEpisodes: '反转章节顺序',
     noEpisodesYet: '暂无章节',
     publishedAppearHere: '已发布的章节会显示在这里。',
@@ -99,6 +102,7 @@ registerTranslationNamespace('episodeListModal', {
     episodes: 'エピソード',
     close: '閉じる',
     earlyAccess: '先行アクセス',
+    premium: 'プレミアム',
     reverseEpisodes: 'エピソード順を反転',
     noEpisodesYet: 'エピソードはまだありません',
     publishedAppearHere: '公開されたエピソードがここに表示されます。',
@@ -124,6 +128,7 @@ registerTranslationNamespace('episodeListModal', {
     episodes: '에피소드',
     close: '닫기',
     earlyAccess: '얼리 액세스',
+    premium: '프리미엄',
     reverseEpisodes: '에피소드 순서 뒤집기',
     noEpisodesYet: '아직 에피소드가 없습니다',
     publishedAppearHere: '게시된 에피소드가 여기에 표시됩니다.',
@@ -157,18 +162,18 @@ function formatShortNumber(value) {
   return number.toLocaleString()
 }
 
-function formatDate(value) {
+function formatDate(value, locale) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
 
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
+  return new Intl.DateTimeFormat(locale || 'en', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
 function isNewEpisode(episode) {
@@ -235,11 +240,12 @@ function ReverseIcon() {
 
 function EpisodeListItem({ episode, story, onOpenEpisode }) {
   const { t } = useDisplayTranslation()
+  const displayLanguage = getDisplayLanguageId() || 'en'
   const cover = episode.cover_url || story?.cover_url || ''
   const locked =
   Number(episode.episode_number || 0) > 5 &&
   Boolean(episode.is_locked)
-  const date = formatDate(episode.published_at || episode.created_at || episode.updated_at)
+  const date = formatDate(episode.published_at || episode.created_at || episode.updated_at, displayLanguage)
   const comments = formatShortNumber(episode.total_comments || episode.comments_count || episode.comments || 0)
   const newEpisode = isNewEpisode(episode)
 
@@ -376,7 +382,7 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
       loading="lazy"
       decoding="async"
     />
-    Premium
+    {t('episodeListModal.premium')}
   </span>
 
   <span className="min-w-0 text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
