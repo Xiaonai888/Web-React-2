@@ -448,7 +448,7 @@ export default function AuthorChatInboxPage() {
   const [error, setError] = useState('')
 
   const loadInbox = useCallback(
-    async () => {
+    async ({ signal } = {}) => {
       setLoading(true)
 
       try {
@@ -460,12 +460,17 @@ export default function AuthorChatInboxPage() {
         ] = await Promise.all([
           getAuthorChatConversations({
             view: 'active',
+            signal,
           }),
           getAuthorChatConversations({
             view: 'archived',
+            signal,
           }),
-          getAuthorInboxProfile(),
-          getAuthorInboxComments(50),
+          getAuthorInboxProfile({ signal }),
+          getAuthorInboxComments(
+            50,
+            { signal }
+          ),
         ])
 
         setConversations(
@@ -478,6 +483,10 @@ export default function AuthorChatInboxPage() {
         setComments(commentData || [])
         setError('')
       } catch (loadError) {
+        if (loadError?.name === 'AbortError') {
+          return
+        }
+
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
           return
@@ -488,26 +497,32 @@ export default function AuthorChatInboxPage() {
             'Failed to load Page Inbox'
         )
       } finally {
-        setLoading(false)
+        if (!signal?.aborted) {
+          setLoading(false)
+        }
       }
     },
     [navigate]
   )
 
   const refreshCurrentTab = useCallback(
-    async () => {
+    async ({ signal } = {}) => {
       if (document.hidden) return
 
       try {
         if (tab === 'comments') {
           const commentData =
-            await getAuthorInboxComments(50)
+            await getAuthorInboxComments(
+              50,
+              { signal }
+            )
 
           setComments(commentData || [])
         } else {
           const chatData =
             await getAuthorChatConversations({
               view: 'active',
+              signal,
             })
 
           setConversations(
@@ -517,6 +532,10 @@ export default function AuthorChatInboxPage() {
 
         setError('')
       } catch (loadError) {
+        if (loadError?.name === 'AbortError') {
+          return
+        }
+
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
         }
@@ -531,54 +550,83 @@ export default function AuthorChatInboxPage() {
       return undefined
     }
 
-    loadInbox()
-    return undefined
+    const controller = new AbortController()
+
+    loadInbox({
+      signal: controller.signal,
+    })
+
+    return () => {
+      controller.abort()
+    }
   }, [loadInbox, navigate])
 
   useEffect(() => {
     if (!hasAuthorChatSession()) return undefined
 
-    const hasData =
-      tab === 'comments'
-        ? comments.length > 0
-        : conversations.length > 0
+    let refreshInFlight = false
+    let lastRefreshAt = 0
+    const controller = new AbortController()
+
+    const refreshIfStale = async () => {
+      if (
+        refreshInFlight ||
+        controller.signal.aborted ||
+        document.visibilityState !== 'visible'
+      ) {
+        return
+      }
+
+      const now = Date.now()
+
+      if (
+        lastRefreshAt &&
+        now - lastRefreshAt < 30000
+      ) {
+        return
+      }
+
+      refreshInFlight = true
+      lastRefreshAt = now
+
+      try {
+        await refreshCurrentTab({
+          signal: controller.signal,
+        })
+      } finally {
+        refreshInFlight = false
+      }
+    }
 
     const handleVisible = () => {
       if (
         document.visibilityState === 'visible'
       ) {
-        refreshCurrentTab()
+        refreshIfStale()
       }
     }
 
+    window.addEventListener(
+      'focus',
+      refreshIfStale
+    )
     document.addEventListener(
       'visibilitychange',
       handleVisible
     )
 
-    const intervalId = hasData
-      ? window.setInterval(
-          refreshCurrentTab,
-          30000
-        )
-      : null
-
     return () => {
-      if (intervalId) {
-        window.clearInterval(intervalId)
-      }
-
+      controller.abort()
+      window.removeEventListener(
+        'focus',
+        refreshIfStale
+      )
       document.removeEventListener(
         'visibilitychange',
         handleVisible
       )
     }
-  }, [
-    comments.length,
-    conversations.length,
-    refreshCurrentTab,
-    tab,
-  ])
+  }, [refreshCurrentTab, tab])
 
   const normalizedQuery = useMemo(
     () => normalizeSearch(query),
