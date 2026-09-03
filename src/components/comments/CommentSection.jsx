@@ -475,7 +475,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const COMMENT_PAGE_SIZE = 10
-const REPLY_PAGE_SIZE = 10
+const REPLY_PAGE_SIZE = 5
 const COMMENT_LIMIT = 1000
 
 const COMMENT_SORT_OPTIONS = [
@@ -578,7 +578,7 @@ function buildCommentListUrl(
   if (targetType === 'episode') {
     return `${API_BASE_URL}/api/comments/episode/${encodeURIComponent(
       targetId
-    )}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}`
+    )}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}&reply_limit=${REPLY_PAGE_SIZE}`
   }
 
   if (targetType === 'author_post') {
@@ -589,7 +589,7 @@ function buildCommentListUrl(
 
   return `${API_BASE_URL}/api/comments/story/${encodeURIComponent(
     targetId
-  )}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}`
+  )}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}&reply_limit=${REPLY_PAGE_SIZE}`
 }
 
 function buildReplyListUrl(
@@ -598,11 +598,15 @@ function buildReplyListUrl(
   commentId,
   page
 ) {
-  if (targetType !== 'author_post') return ''
+  if (targetType === 'author_post') {
+    return `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(
+      targetId
+    )}/comments/${encodeURIComponent(
+      commentId
+    )}/replies?page=${page}&limit=${REPLY_PAGE_SIZE}`
+  }
 
-  return `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(
-    targetId
-  )}/comments/${encodeURIComponent(
+  return `${API_BASE_URL}/api/comments/${encodeURIComponent(
     commentId
   )}/replies?page=${page}&limit=${REPLY_PAGE_SIZE}`
 }
@@ -3112,7 +3116,6 @@ if (replyTarget) {
 
   const handleLoadMoreReplies = async (commentId) => {
     if (
-      targetType !== 'author_post' ||
       !commentId ||
       loadingRepliesId
     ) {
