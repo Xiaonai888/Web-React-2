@@ -701,21 +701,33 @@ const [soundSettings, setSoundSettings] =
     tone: 'default',
   })
 
-  const loadQuickContacts = useCallback(async () => {
-    try {
-      const data = await getChatQuickContacts(12)
-      setQuickContacts(
-        Array.isArray(data.contacts) ? data.contacts : []
-      )
-    } catch {
-      setQuickContacts([])
-    }
-  }, [])
+  const loadQuickContacts = useCallback(
+    async ({ signal } = {}) => {
+      try {
+        const data = await getChatQuickContacts(
+          12,
+          { signal }
+        )
+
+        setQuickContacts(
+          Array.isArray(data.contacts)
+            ? data.contacts
+            : []
+        )
+      } catch (error) {
+        if (error?.name !== 'AbortError') {
+          setQuickContacts([])
+        }
+      }
+    },
+    []
+  )
 
   const loadConversations = useCallback(
     async ({
       silent = false,
       includeArchived = true,
+      signal,
     } = {}) => {
       if (!silent) {
         setLoading(true)
@@ -724,10 +736,14 @@ const [soundSettings, setSoundSettings] =
       try {
         const [data, archivedData] =
           await Promise.all([
-            getChatConversations('all'),
+            getChatConversations(
+              'all',
+              { signal }
+            ),
             includeArchived
               ? getManagedChatConversations({
                   view: 'archived',
+                  signal,
                 })
               : Promise.resolve(null),
           ])
@@ -758,6 +774,10 @@ const [soundSettings, setSoundSettings] =
         setError('')
         return readerConversations.length
       } catch (loadError) {
+        if (loadError?.name === 'AbortError') {
+          return null
+        }
+
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
           return null
@@ -768,7 +788,7 @@ const [soundSettings, setSoundSettings] =
         )
         return null
       } finally {
-        if (!silent) {
+        if (!silent && !signal?.aborted) {
           setLoading(false)
         }
       }
@@ -783,25 +803,59 @@ const [soundSettings, setSoundSettings] =
     }
 
     let active = true
+    let refreshInFlight = false
+    let lastRefreshAt = 0
+    const controller = new AbortController()
 
     const refreshInbox = async ({
       initial = false,
+      force = false,
     } = {}) => {
-      const conversationCount =
-        await loadConversations({
-          silent: !initial,
-          includeArchived: true,
-        })
+      if (
+        refreshInFlight ||
+        controller.signal.aborted
+      ) {
+        return
+      }
+
+      const now = Date.now()
 
       if (
-        active &&
-        Number(conversationCount) > 0
+        !force &&
+        lastRefreshAt &&
+        now - lastRefreshAt < 30000
       ) {
-        await loadQuickContacts()
+        return
+      }
+
+      refreshInFlight = true
+      lastRefreshAt = now
+
+      try {
+        const conversationCount =
+          await loadConversations({
+            silent: !initial,
+            includeArchived: true,
+            signal: controller.signal,
+          })
+
+        if (
+          active &&
+          Number(conversationCount) > 0
+        ) {
+          await loadQuickContacts({
+            signal: controller.signal,
+          })
+        }
+      } finally {
+        refreshInFlight = false
       }
     }
 
-    refreshInbox({ initial: true })
+    refreshInbox({
+      initial: true,
+      force: true,
+    })
 
     const handleFocus = () => {
       if (!document.hidden) {
@@ -823,6 +877,7 @@ const [soundSettings, setSoundSettings] =
 
     return () => {
       active = false
+      controller.abort()
       window.removeEventListener(
         'focus',
         handleFocus
@@ -833,25 +888,6 @@ const [soundSettings, setSoundSettings] =
       )
     }
   }, [loadConversations, loadQuickContacts, navigate])
-
-  useEffect(() => {
-    if (!conversations.length) {
-      return undefined
-    }
-
-    const intervalId = window.setInterval(() => {
-      if (!document.hidden) {
-        loadConversations({
-          silent: true,
-          includeArchived: false,
-        })
-      }
-    }, 30000)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [conversations.length, loadConversations])
 
   const normalizedQuery = useMemo(
     () => normalizeSearchValue(query),
@@ -870,12 +906,18 @@ const [soundSettings, setSoundSettings] =
     const requestId = searchRequestRef.current + 1
     searchRequestRef.current = requestId
 
+    const controller = new AbortController()
+
     const timeoutId = window.setTimeout(async () => {
       try {
         setSearchLoading(true)
         setSearchError('')
 
-        const data = await searchChatUsers(normalizedQuery, 20)
+        const data = await searchChatUsers(
+          normalizedQuery,
+          20,
+          { signal: controller.signal }
+        )
 
         if (searchRequestRef.current !== requestId) {
           return
@@ -885,7 +927,10 @@ const [soundSettings, setSoundSettings] =
           Array.isArray(data.users) ? data.users : []
         )
       } catch (searchFailure) {
-        if (searchRequestRef.current !== requestId) {
+        if (
+          searchFailure?.name === 'AbortError' ||
+          searchRequestRef.current !== requestId
+        ) {
           return
         }
 
@@ -907,6 +952,7 @@ const [soundSettings, setSoundSettings] =
 
     return () => {
       window.clearTimeout(timeoutId)
+      controller.abort()
     }
   }, [navigate, normalizedQuery])
 
