@@ -291,6 +291,7 @@
 "src/pages/Author/CreateAuthorPage.jsx",
 "src/pages/Author/CreateStoryPage.jsx",
 "src/pages/Author/StoryTitleGuidePage.jsx",
+"src/pages/Author/AuthorProfilePage.jsx",
   ]
 }
 
