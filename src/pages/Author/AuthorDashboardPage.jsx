@@ -568,7 +568,7 @@ const stopStoriesDrag = () => {
 
     if (
       !force &&
-      now - lastBadgeRequestAtRef.current < 15000
+      now - lastBadgeRequestAtRef.current < 30000
     ) {
       return
     }
@@ -677,6 +677,12 @@ const stopStoriesDrag = () => {
       fetchDashboardBadges({ signal })
     }
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshBadges()
+      }
+    }
+
     fetchMyAuthorPage({ signal })
     fetchMyStories({ signal })
     fetchDashboardBadges({
@@ -684,22 +690,24 @@ const stopStoriesDrag = () => {
       signal,
     })
 
-    const intervalId = window.setInterval(
-      refreshBadges,
-      300000
-    )
-
     window.addEventListener(
       'focus',
       refreshBadges
     )
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
+    )
 
     return () => {
       controller.abort()
-      window.clearInterval(intervalId)
       window.removeEventListener(
         'focus',
         refreshBadges
+      )
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
       )
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
