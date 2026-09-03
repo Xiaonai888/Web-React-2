@@ -1253,7 +1253,7 @@ backgroundImage: isEditMode
                           </button>
 
                           <div className="border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-2">
-                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white active:scale-95">
+                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[11px] font-bold text-[var(--shadow-bg-surface)] active:scale-95">
                               {t('createStory.replace')}
                               <input
                                 type="file"
@@ -1270,7 +1270,7 @@ backgroundImage: isEditMode
                       ) : (
                         <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] text-center">
                           <div className="px-3">
-                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-black/5">
+                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
                               <i className="fa-solid fa-upload text-[14px]" />
                             </div>
                             <div className="mt-2 text-[12px] font-normal text-[var(--shadow-text-primary)]">{t('createStory.dropOrTapCover')}</div>
@@ -1318,7 +1318,7 @@ backgroundImage: isEditMode
                           </button>
 
                           <div className="border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-2">
-                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white active:scale-95">
+                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[11px] font-bold text-[var(--shadow-bg-surface)] active:scale-95">
                               {t('createStory.replace')}
                               <input
                                 type="file"
@@ -1335,7 +1335,7 @@ backgroundImage: isEditMode
                       ) : (
                         <label className="flex aspect-video cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] text-center">
                           <div className="px-3">
-                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-black/5">
+                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
                               <i className="fa-solid fa-image text-[14px]" />
                             </div>
                             <div className="mt-2 text-[12px] font-normal text-[var(--shadow-text-primary)]">{t('createStory.dropOrAddThumbnail')}</div>
@@ -1406,7 +1406,7 @@ backgroundImage: isEditMode
                       </div>
                     ) : (
                       <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] text-center">
-                        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-black/5">
+                        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
                           <i className="fa-solid fa-images text-[15px]" />
                         </div>
                         <div className="mt-3 text-[13px] font-bold text-[var(--shadow-text-primary)]">{t(isManga ? 'createStory.dropOrAddMangaSlide' : 'createStory.dropOrAddStorySlide')}</div>
@@ -1474,7 +1474,7 @@ backgroundImage: isEditMode
 
       <main className={`mx-auto max-w-5xl ${isEditMode ? 'px-0 pt-0 sm:px-4' : 'px-4 pt-4'}`}>
         {!isEditMode ? (
-  <section className="hidden rounded-[22px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-black/5 sm:block">
+  <section className="hidden rounded-[22px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)] sm:block">
     <div className={`grid gap-2 ${isChatStory ? 'grid-cols-4' : 'grid-cols-3'}`}>
       <Step number="1" title={t(isManga ? 'createStory.mangaInfo' : 'createStory.storyInfo')} active />
 
@@ -1498,8 +1498,8 @@ backgroundImage: isEditMode
 ) : null}
 
         {pageLoading ? (
-          <section className="mt-4 rounded-[24px] bg-[var(--shadow-bg-surface)] p-6 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[var(--shadow-border)] border-t-[#111827]" />
+          <section className="mt-4 rounded-[24px] bg-[var(--shadow-bg-surface)] p-6 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[var(--shadow-border)] border-t-[var(--shadow-text-primary)]" />
             <div className="text-[13px] font-bold text-[var(--shadow-text-secondary)]">{t('createStory.loadingOldStory')}</div>
           </section>
         ) : null}
@@ -1839,12 +1839,14 @@ backgroundImage: isEditMode
                 type="button"
                 onClick={handleSaveStory}
                 disabled={!canSave}
-                className={`flex h-14 w-full items-center justify-center rounded-full text-[14px] font-bold text-white active:scale-[0.99] ${
+                className={`flex h-14 w-full items-center justify-center rounded-full text-[14px] font-bold active:scale-[0.99] ${
   !canSave
-    ? 'cursor-not-allowed bg-[#9ca3af]'
+    ? 'cursor-not-allowed bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-disabled)]'
     : isChatStory
-      ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db] shadow-sm'
-      : 'bg-[#111827]'
+      ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-white shadow-sm'
+      : isManga
+        ? 'bg-[var(--shadow-text-primary)] text-white'
+        : 'bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]'
 }`}
               >
                 {loading
