@@ -371,16 +371,16 @@ export default function CreateAuthorPage() {
         <button
           type="button"
           onClick={() => (step === 2 ? setStep(1) : navigate('/event'))}
-          className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-black/5 active:scale-95"
+          className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)] active:scale-95"
           aria-label={t('createAuthor.goBack')}
         >
           <i className="fas fa-chevron-left text-[14px]" />
         </button>
 
-        <section className="rounded-[22px] bg-[var(--shadow-bg-surface)] px-5 py-7 shadow-sm ring-1 ring-black/5">
+        <section className="rounded-[22px] bg-[var(--shadow-bg-surface)] px-5 py-7 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <div className="mb-6 flex items-center justify-center gap-2">
-            <div className={`h-2.5 w-10 rounded-full ${step === 1 ? 'bg-[#111827]' : 'bg-[var(--shadow-bg-soft)]'}`} />
-            <div className={`h-2.5 w-10 rounded-full ${step === 2 ? 'bg-[#111827]' : 'bg-[var(--shadow-bg-soft)]'}`} />
+            <div className={`h-2.5 w-10 rounded-full ${step === 1 ? 'bg-[var(--shadow-text-primary)]' : 'bg-[var(--shadow-bg-soft)]'}`} />
+            <div className={`h-2.5 w-10 rounded-full ${step === 2 ? 'bg-[var(--shadow-text-primary)]' : 'bg-[var(--shadow-bg-soft)]'}`} />
           </div>
 
           {step === 1 ? (
