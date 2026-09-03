@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
-import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('authorProfile', {
@@ -101,13 +101,13 @@ function getStoredReaderUser() {
 }
 
 function formatNumber(value) {
-  return Number(value || 0).toLocaleString('en-US', {
+  return Number(value || 0).toLocaleString(getDisplayLanguageId(), {
     maximumFractionDigits: 2,
   })
 }
 
 function formatMoney(value) {
-  return Number(value || 0).toLocaleString('en-US', {
+  return Number(value || 0).toLocaleString(getDisplayLanguageId(), {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
