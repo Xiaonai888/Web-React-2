@@ -230,6 +230,7 @@ export default function AuthorDiamondPage() {
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadDiamonds() {
       const token = getAuthToken()
@@ -249,6 +250,8 @@ export default function AuthorDiamondPage() {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            cache: 'no-store',
+            signal: controller.signal,
           }
         )
 
@@ -262,7 +265,10 @@ export default function AuthorDiamondPage() {
           setData(result)
         }
       } catch (loadError) {
-        if (!ignore) {
+        if (
+          loadError?.name !== 'AbortError' &&
+          !ignore
+        ) {
           setError(
             loadError.message === 'Failed to fetch'
               ? 'Cannot connect to backend.'
@@ -278,6 +284,7 @@ export default function AuthorDiamondPage() {
 
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [navigate])
 
