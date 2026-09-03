@@ -5,6 +5,7 @@ import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 import Author49DayEventCard from '../components/events/Author49DayEventCard'
 import { requestAuthor49DayEvent } from '../services/author49DayEventClientCache'
+import { requestWriterWednesdayEvent } from '../services/writerWednesdayEventClientCache'
 import ManagedEventHeroCard from '../components/events/ManagedEventHeroCard'
 import MonthlyVoteTab from './Event/MonthlyVoteTab'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -1382,30 +1383,28 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
   useEffect(() => {
     let ignore = false
     let releaseAuthor49Request = () => {}
-    const writerController = new AbortController()
+    let releaseWriterRequest = () => {}
+    let refreshInFlight = false
 
     async function loadActiveEventStatus() {
+      if (refreshInFlight) return
+
+      refreshInFlight = true
       const token = getReaderToken()
 
-      try {
-        const writerResponse = await fetch(
-          `${API_BASE_URL}/api/unlocks/events/writer-wednesday`,
-          {
-            signal: writerController.signal,
-          }
-        )
+      releaseWriterRequest()
 
-        const writerData = await writerResponse
-          .json()
-          .catch(() => ({}))
+      const writerRequest =
+        requestWriterWednesdayEvent()
+
+      releaseWriterRequest = writerRequest.release
+
+      try {
+        const event = await writerRequest.promise
 
         if (!ignore) {
           setWriterWednesdayLive(
-            Boolean(
-              writerResponse.ok &&
-              writerData.ok !== false &&
-              writerData.event?.active
-            )
+            Boolean(event?.active)
           )
         }
       } catch (error) {
@@ -1415,12 +1414,21 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
         ) {
           setWriterWednesdayLive(false)
         }
+      } finally {
+        releaseWriterRequest()
+        releaseWriterRequest = () => {}
+      }
+
+      if (ignore) {
+        refreshInFlight = false
+        return
       }
 
       if (!token) {
         if (!ignore) {
           setAuthor49Available(true)
         }
+        refreshInFlight = false
         return
       }
 
@@ -1452,6 +1460,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
       } finally {
         releaseAuthor49Request()
         releaseAuthor49Request = () => {}
+        refreshInFlight = false
       }
     }
 
@@ -1466,7 +1475,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
 
     return () => {
       ignore = true
-      writerController.abort()
+      releaseWriterRequest()
       releaseAuthor49Request()
       window.removeEventListener(
         'focus',
