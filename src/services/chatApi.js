@@ -57,6 +57,9 @@ async function chatRequest(path, options = {}) {
               : JSON.stringify(options.body),
           }
         : {}),
+      ...(options.signal
+        ? { signal: options.signal }
+        : {}),
     }
   )
 
@@ -75,7 +78,10 @@ async function chatRequest(path, options = {}) {
   return data
 }
 
-export function getChatConversations(status = 'all') {
+export function getChatConversations(
+  status = 'all',
+  { signal } = {}
+) {
   const query = new URLSearchParams()
 
   if (status && status !== 'all') {
@@ -89,13 +95,15 @@ export function getChatConversations(status = 'all') {
     : ''
 
   return chatRequest(
-    `/conversations/managed${suffix}`
+    `/conversations/managed${suffix}`,
+    { signal }
   )
 }
 
 export function getManagedChatConversations({
   status = 'all',
   view = 'active',
+  signal,
 } = {}) {
   const query = new URLSearchParams()
 
@@ -106,16 +114,21 @@ export function getManagedChatConversations({
   query.set('view', view)
 
   return chatRequest(
-    `/conversations/managed?${query.toString()}`
+    `/conversations/managed?${query.toString()}`,
+    { signal }
   )
 }
 
-export function getChatQuickContacts(limit = 12) {
+export function getChatQuickContacts(
+  limit = 12,
+  { signal } = {}
+) {
   const query = new URLSearchParams()
   query.set('limit', String(limit))
 
   return chatRequest(
-    `/quick-contacts?${query.toString()}`
+    `/quick-contacts?${query.toString()}`,
+    { signal }
   )
 }
 
@@ -125,18 +138,30 @@ export function touchChatPresence() {
   })
 }
 
-export function searchChatUsers(search, limit = 12) {
+export function searchChatUsers(
+  search,
+  limit = 12,
+  { signal } = {}
+) {
   const query = new URLSearchParams()
 
   query.set('q', String(search || '').trim())
   query.set('limit', String(limit))
 
-  return chatRequest(`/users/search?${query.toString()}`)
+  return chatRequest(
+    `/users/search?${query.toString()}`,
+    { signal }
+  )
 }
 
 export function getChatMessages(
   conversationId,
-  { before = '', after = '', limit = 50 } = {}
+  {
+    before = '',
+    after = '',
+    limit = 50,
+    signal,
+  } = {}
 ) {
   if (before && after) {
     throw new ChatApiError(
@@ -161,7 +186,8 @@ export function getChatMessages(
   return chatRequest(
     `/conversations/${encodeURIComponent(
       conversationId
-    )}/messages?${query.toString()}`
+    )}/messages?${query.toString()}`,
+    { signal }
   )
 }
 
@@ -419,12 +445,14 @@ export function deleteChatConversationForBoth(
 }
 
 export function getChatBlockStatus(
-  conversationId
+  conversationId,
+  { signal } = {}
 ) {
   return chatRequest(
     `/conversations/${encodeURIComponent(
       conversationId
-    )}/block`
+    )}/block`,
+    { signal }
   )
 }
 
@@ -483,13 +511,17 @@ export function markChatUnread(conversationId) {
   )
 }
 
-export function markChatRead(conversationId) {
+export function markChatRead(
+  conversationId,
+  { signal } = {}
+) {
   return chatRequest(
     `/conversations/${encodeURIComponent(
       conversationId
     )}/read`,
     {
       method: 'PATCH',
+      signal,
     }
   )
 }
@@ -600,12 +632,14 @@ export function deleteChatMessage(
 }
 
 export function getPinnedChatMessages(
-  conversationId
+  conversationId,
+  { signal } = {}
 ) {
   return chatRequest(
     `/conversations/${encodeURIComponent(
       conversationId
-    )}/pins`
+    )}/pins`,
+    { signal }
   )
 }
 
