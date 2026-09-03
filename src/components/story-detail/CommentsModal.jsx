@@ -502,7 +502,7 @@ export default function CommentsModal({
 
       <section
         ref={sheetRef}
-        className="relative flex h-[calc(100dvh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[calc(100dvh-24px)] sm:rounded-[28px]"
+        className="relative flex h-[calc(100dvh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl sm:h-[calc(100dvh-24px)] sm:rounded-[28px]"
         style={{
           transform: `translateY(${dragOffset}px)`,
           transition: dragging
@@ -519,11 +519,11 @@ export default function CommentsModal({
     onPointerUp={handleDragEnd}
     onPointerCancel={handleDragEnd}
     onLostPointerCapture={handleDragEnd}
-    className="shrink-0 cursor-grab touch-none bg-white px-4 pb-3 pt-2.5 active:cursor-grabbing"
+    className="shrink-0 cursor-grab touch-none bg-[var(--shadow-bg-elevated)] px-4 pb-3 pt-2.5 active:cursor-grabbing"
     style={{ touchAction: 'none' }}
   >
     <div className="flex justify-center">
-      <div className="rounded-full bg-[#f5f3fa] px-5 py-2 text-[14px] font-normal text-[#111827]">
+      <div className="rounded-full bg-[var(--shadow-bg-soft)] px-5 py-2 text-[14px] font-normal text-[var(--shadow-text-primary)]">
         {t('commentsModal.commentsCount', {
           count: totalComments.toLocaleString(),
         })}
@@ -538,7 +538,7 @@ export default function CommentsModal({
     onPointerUp={handleDragEnd}
     onPointerCancel={handleDragEnd}
     onLostPointerCapture={handleDragEnd}
-    className="shrink-0 cursor-grab touch-none bg-white px-4 pb-3 pt-2.5 active:cursor-grabbing"
+    className="shrink-0 cursor-grab touch-none bg-[var(--shadow-bg-elevated)] px-4 pb-3 pt-2.5 active:cursor-grabbing"
     style={{ touchAction: 'none' }}
   >
     <div className="grid grid-cols-3 items-center gap-2 text-center">
@@ -548,14 +548,14 @@ export default function CommentsModal({
     event.stopPropagation()
   }
   onClick={handleOpenReactions}
-        className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
+        className="flex items-center justify-center gap-1 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
         aria-label={t('commentsModal.viewReacted')}
       >
         <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
         <span>{totalLikes.toLocaleString()}</span>
       </button>
 
-      <div className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[14px] font-normal text-[#111827]">
+      <div className="rounded-full bg-[var(--shadow-bg-soft)] px-3 py-2 text-[14px] font-normal text-[var(--shadow-text-primary)]">
         {t('commentsModal.commentsCount', {
           count: totalComments.toLocaleString(),
         })}
@@ -567,7 +567,7 @@ export default function CommentsModal({
     event.stopPropagation()
   }
   onClick={handleOpenEchoes}
-        className="text-[14px] font-normal text-[#111827] active:scale-95"
+        className="text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
         aria-label={t('commentsModal.viewEchoed')}
       >
         {t('commentsModal.echoCount', {
