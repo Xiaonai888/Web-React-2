@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-
-const API_BASE_URL =
-  'https://shadow-backend-kucw.onrender.com'
+import { requestAuthor49DayEvent } from '../../services/author49DayEventClientCache'
 
 function getReaderToken() {
   return (
@@ -36,6 +34,7 @@ export default function Author49DayEventCard({
 
   useEffect(() => {
     let ignore = false
+    let releaseRequest = () => {}
 
     async function loadEvent() {
       const token = getReaderToken()
@@ -53,32 +52,17 @@ export default function Author49DayEventCard({
         return
       }
 
+      releaseRequest()
+
+      const request =
+        requestAuthor49DayEvent(token)
+
+      releaseRequest = request.release
+
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/authors/me/49-day-event`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-
-        const data = await response
-          .json()
-          .catch(() => ({}))
-
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              'Failed to load event'
-          )
-        }
+        const nextEvent = await request.promise
 
         if (!ignore) {
-          const nextEvent = data.event || null
           setEvent(nextEvent)
 
           const serverNow = new Date(
@@ -91,28 +75,40 @@ export default function Author49DayEventCard({
               : 0
           )
         }
-      } catch {
-        if (!ignore) {
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError' &&
+          !ignore
+        ) {
           setEvent(null)
           setServerOffsetMs(0)
         }
       } finally {
+        releaseRequest()
+        releaseRequest = () => {}
+
         if (!ignore) {
           setLoading(false)
         }
       }
     }
 
-    loadEvent()
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadEvent()
+      }
+    }
 
-    const refreshTimer = window.setInterval(
-      loadEvent,
-      60000
-    )
+    loadEvent()
+    window.addEventListener('focus', refreshOnFocus)
 
     return () => {
       ignore = true
-      window.clearInterval(refreshTimer)
+      releaseRequest()
+      window.removeEventListener(
+        'focus',
+        refreshOnFocus
+      )
     }
   }, [])
 
