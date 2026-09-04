@@ -76,6 +76,7 @@ import UpdateTodayPage from './pages/UpdateTodayPage'
 import AuthorIncomeOldPage from './pages/Author/AuthorIncomeOldPage'
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
+const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
@@ -361,6 +362,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
   location.pathname.startsWith('/chat/') ||
   location.pathname.startsWith('/notifications/') ||
   location.pathname.startsWith('/interactions/')
+  location.pathname.startsWith('/game/') ||
   const readerToken =
   sessionStorage.getItem('shadow_reader_token') ||
   localStorage.getItem('shadow_reader_token') ||
@@ -894,6 +896,16 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+          
+<Route
+  path="/game/spin"
+  element={
+    <LazyPage>
+      <SpinPage />
+    </LazyPage>
+  }
+/>
+          
 <Route
   path="/author/page/:pageUsername/store/category/:categoryKey"
   element={
