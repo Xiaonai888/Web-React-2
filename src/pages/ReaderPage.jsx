@@ -761,7 +761,7 @@ function MangaEpisodePages({
   }
 
   return (
-    <div className="w-full overflow-hidden bg-white">
+    <div className="w-full overflow-hidden bg-white text-[0px] leading-none">
       
       {orderedPages.map((page, pageIndex) => {
         const orderedParts = (
@@ -789,7 +789,7 @@ function MangaEpisodePages({
         return (
           <div
             key={page.id || page.image_url || `page-${pageIndex}`}
-            className="block w-full"
+            className="block w-full overflow-hidden leading-none"
             data-manga-page={pageIndex + 1}
           >
             {images.map((image, partIndex) => {
@@ -817,8 +817,12 @@ function MangaEpisodePages({
                   }
                   decoding="async"
                   draggable={false}
-                  
-                  className="m-0 block h-auto w-full p-0"
+                  style={
+                    partIndex > 0
+                      ? { marginTop: '-1px' }
+                      : undefined
+                  }
+                  className="m-0 block h-auto w-full border-0 p-0 align-top"
                 />
               )
             })}
