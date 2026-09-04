@@ -302,6 +302,11 @@
 "src/pages/Author/AuthorGiftPage.jsx",
 "src/pages/Author/AuthorPaymentMethodPage.jsx",
 "src/pages/Author/AuthorBenefitsPage.jsx",
+"src/pages/Author/AuthorQuestPage.jsx",
+"src/pages/Author/AuthorDashboardPage.jsx",
+"src/pages/Author/AuthorInsightsPage.jsx",
+"src/pages/Author/AuthorStoriesPage.jsx",
+"src/pages/Author/AuthorTrashPage.jsx",
   ]
 }
 
