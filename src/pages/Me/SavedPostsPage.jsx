@@ -435,6 +435,8 @@ const SORT_OPTIONS = [
   { key: 'oldest', labelKey: 'oldestSaved' },
 ]
 
+const SAVED_POST_PAGE_SIZE = 30
+
 function getCollectionDisplayName(collection, t) {
   if (collection?.system_key === 'all') return t('savedPostsPage.allSaved')
   if (collection?.system_key === 'favorites') return t('savedPostsPage.favorites')
@@ -798,7 +800,7 @@ export default function SavedPostsPage() {
           collection_id: selectedCollectionId === 'all' ? '' : selectedCollectionId,
           q: searchedQuery,
           sort,
-          limit: 20,
+          limit: SAVED_POST_PAGE_SIZE,
         }, controller.signal)
 
         setItems(data.items || [])
@@ -836,7 +838,7 @@ export default function SavedPostsPage() {
         collection_id: selectedCollectionId === 'all' ? '' : selectedCollectionId,
         q: searchedQuery,
         sort,
-        limit: 20,
+        limit: SAVED_POST_PAGE_SIZE,
         cursor: nextCursor,
       })
 
