@@ -70,7 +70,10 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "writeReply": "Write a reply...",
     "writeComment": "Write a comment...",
     "sendReply": "Send reply",
-    "sendComment": "Send comment"
+    "sendComment": "Send comment",
+    "viewMoreReplies": "View more replies",
+    "loadingReplies": "Loading replies...",
+    "failedLoadRepliesPeriod": "Failed to load replies."
   },
   "km": {
     "hotComments": "មតិយោបល់ពេញនិយម",
@@ -130,7 +133,10 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "writeReply": "សរសេរការឆ្លើយតប...",
     "writeComment": "សរសេរមតិយោបល់...",
     "sendReply": "ផ្ញើការឆ្លើយតប",
-    "sendComment": "ផ្ញើមតិយោបល់"
+    "sendComment": "ផ្ញើមតិយោបល់",
+    "viewMoreReplies": "មើលការឆ្លើយតបបន្ថែម",
+    "loadingReplies": "កំពុងផ្ទុកការឆ្លើយតប...",
+    "failedLoadRepliesPeriod": "មិនអាចផ្ទុកការឆ្លើយតបបានទេ។"
   },
   "zh": {
     "hotComments": "热门评论",
@@ -190,7 +196,10 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "writeReply": "写回复...",
     "writeComment": "写评论...",
     "sendReply": "发送回复",
-    "sendComment": "发送评论"
+    "sendComment": "发送评论",
+    "viewMoreReplies": "查看更多回复",
+    "loadingReplies": "正在加载回复...",
+    "failedLoadRepliesPeriod": "无法加载回复。"
   },
   "ja": {
     "hotComments": "人気のコメント",
@@ -250,7 +259,10 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "writeReply": "返信を書く...",
     "writeComment": "コメントを書く...",
     "sendReply": "返信を送信",
-    "sendComment": "コメントを送信"
+    "sendComment": "コメントを送信",
+    "viewMoreReplies": "返信をさらに表示",
+    "loadingReplies": "返信を読み込み中...",
+    "failedLoadRepliesPeriod": "返信を読み込めませんでした。"
   },
   "ko": {
     "hotComments": "인기 댓글",
@@ -310,7 +322,10 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "writeReply": "답글 작성...",
     "writeComment": "댓글 작성...",
     "sendReply": "답글 보내기",
-    "sendComment": "댓글 보내기"
+    "sendComment": "댓글 보내기",
+    "viewMoreReplies": "답글 더 보기",
+    "loadingReplies": "답글 불러오는 중...",
+    "failedLoadRepliesPeriod": "답글을 불러오지 못했습니다."
   }
 })
 
@@ -319,6 +334,7 @@ const API_BASE_URL =
   'https://shadow-backend-kucw.onrender.com'
 
 const COMMENT_PAGE_SIZE = 20
+const REPLY_PAGE_SIZE = 5
 const COMMENT_LIMIT = 1000
 
 const SORT_OPTIONS = [
@@ -412,6 +428,23 @@ function normalizeComment(comment) {
       username: user.username || '',
       avatar_url: user.avatar_url || '',
     },
+    reply_total: Number(
+      comment?.reply_total ??
+        comment?.replies?.length ??
+        0
+    ),
+    reply_page:
+      Number(comment?.reply_page) === 0
+        ? 0
+        : Math.max(
+            1,
+            Number(
+              comment?.reply_page || 1
+            )
+          ),
+    reply_has_more: Boolean(
+      comment?.reply_has_more
+    ),
     replies: Array.isArray(comment?.replies)
       ? comment.replies.map(normalizeComment)
       : [],
@@ -611,6 +644,8 @@ function CommentItem({
   onDelete,
   onHide,
   onReport,
+  onLoadMoreReplies,
+  loadingRepliesId,
 }) {
   const { t } = useDisplayTranslation()
   const [menuOpen, setMenuOpen] =
@@ -624,9 +659,25 @@ function CommentItem({
   )
     ? comment.replies
     : []
+  const replyTotal = Math.max(
+    replies.length,
+    Number(comment.reply_total || 0)
+  )
+  const loadingReplies =
+    String(loadingRepliesId || '') ===
+    String(comment.id || '')
 
   const openReplyComposer = () => {
     setRepliesShown(true)
+
+    if (
+      replyTotal > 0 &&
+      replies.length === 0
+    ) {
+      onLoadMoreReplies?.(
+        comment.id
+      )
+    }
     onStartReply?.(
       comment.id,
       comment.user?.name || getDisplayText('readerPostCommentsModal.reader')
@@ -707,21 +758,36 @@ function CommentItem({
               {t('readerPostCommentsModal.reply')}
             </button>
 
-            {replies.length ? (
+            {replyTotal > 0 ? (
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  if (
+                    !repliesShown &&
+                    replies.length === 0
+                  ) {
+                    onLoadMoreReplies?.(
+                      comment.id
+                    )
+                  }
+
                   setRepliesShown(
                     (value) => !value
                   )
-                }
+                }}
               >
-                {repliesShown ? t('readerPostCommentsModal.hideReplies') : (replies.length > 1 ? t('readerPostCommentsModal.viewReplies', { count: replies.length }) : t('readerPostCommentsModal.viewReply', { count: replies.length }))}
+                {repliesShown
+                  ? t('readerPostCommentsModal.hideReplies')
+                  : replyTotal > 1
+                    ? t('readerPostCommentsModal.viewReplies', { count: replyTotal })
+                    : t('readerPostCommentsModal.viewReply', { count: replyTotal })}
               </button>
             ) : null}
           </div>
 
-          {repliesShown && replies.length ? (
+          {repliesShown &&
+          (replies.length ||
+            loadingReplies) ? (
             <div className="mt-3 space-y-3 border-l-2 border-[var(--shadow-border)] pl-3">
               {replies.map((reply) => (
                 <ReplyItem
@@ -730,6 +796,23 @@ function CommentItem({
                   onLike={onLike}
                 />
               ))}
+
+              {comment.reply_has_more ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onLoadMoreReplies?.(
+                      comment.id
+                    )
+                  }
+                  disabled={loadingReplies}
+                  className="text-[12px] font-semibold text-[var(--shadow-text-tertiary)] disabled:opacity-60"
+                >
+                  {loadingReplies
+                    ? t('readerPostCommentsModal.loadingReplies')
+                    : t('readerPostCommentsModal.viewMoreReplies')}
+                </button>
+              ) : null}
             </div>
           ) : null}
 
@@ -855,6 +938,10 @@ export default function ReaderPostCommentsModal({
     useState(false)
   const [loadingMore, setLoadingMore] =
     useState(false)
+  const [
+    loadingRepliesId,
+    setLoadingRepliesId,
+  ] = useState(null)
   const [text, setText] = useState('')
   const [replyText, setReplyText] =
     useState('')
@@ -951,7 +1038,7 @@ export default function ReaderPostCommentsModal({
     const sortValue =
       sort === 'all' ? 'newest' : sort
 
-    return `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(postId)}/comments?page=${nextPage}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}`
+    return `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(postId)}/comments?page=${nextPage}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}&reply_limit=${REPLY_PAGE_SIZE}`
   }
 
   async function fetchComments(
@@ -1063,6 +1150,127 @@ export default function ReaderPostCommentsModal({
         }
       })
     )
+  }
+
+  async function loadMoreReplies(
+    commentId
+  ) {
+    const parent = comments.find(
+      (comment) =>
+        String(comment.id) ===
+        String(commentId)
+    )
+
+    if (
+      !parent ||
+      String(loadingRepliesId || '') ===
+        String(commentId)
+    ) {
+      return
+    }
+
+    const nextPage = Math.max(
+      1,
+      Number(parent.reply_page || 0) + 1
+    )
+    const token = getAuthToken()
+
+    try {
+      setLoadingRepliesId(commentId)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-posts/comments/${encodeURIComponent(
+          commentId
+        )}/replies?page=${nextPage}&limit=${REPLY_PAGE_SIZE}`,
+        {
+          headers: token
+            ? {
+                Authorization:
+                  `Bearer ${token}`,
+              }
+            : {},
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            t('readerPostCommentsModal.failedLoadRepliesPeriod')
+        )
+      }
+
+      const incoming = Array.isArray(
+        data.replies
+      )
+        ? data.replies.map(
+            normalizeComment
+          )
+        : []
+
+      setComments((current) =>
+        current.map((comment) => {
+          if (
+            String(comment.id) !==
+            String(commentId)
+          ) {
+            return comment
+          }
+
+          const mergedById = new Map(
+            [
+              ...(comment.replies || []),
+              ...incoming,
+            ].map((reply) => [
+              String(reply.id),
+              reply,
+            ])
+          )
+
+          const mergedReplies = [
+            ...mergedById.values(),
+          ].sort(
+            (first, second) =>
+              new Date(
+                first.created_at || 0
+              ).getTime() -
+              new Date(
+                second.created_at || 0
+              ).getTime()
+          )
+
+          return {
+            ...comment,
+            replies: mergedReplies,
+            reply_total: Number(
+              data.total ??
+                comment.reply_total ??
+                mergedReplies.length
+            ),
+            reply_page: Number(
+              data.page || nextPage
+            ),
+            reply_has_more: Boolean(
+              data.has_more
+            ),
+          }
+        })
+      )
+    } catch (error) {
+      showToast(
+        error.message ||
+          t('readerPostCommentsModal.failedLoadRepliesPeriod')
+      )
+    } finally {
+      setLoadingRepliesId(null)
+    }
   }
 
   const handleStartReply = (
@@ -1219,6 +1427,18 @@ export default function ReaderPostCommentsModal({
                   ...(comment.replies || []),
                   createdReply,
                 ],
+                reply_total:
+                  Number(
+                    comment.reply_total ??
+                      comment.replies?.length ??
+                      0
+                  ) + 1,
+                reply_page: Math.max(
+                  1,
+                  Number(
+                    comment.reply_page || 0
+                  )
+                ),
               }
             : comment
         )
@@ -1429,15 +1649,44 @@ export default function ReaderPostCommentsModal({
             (item) =>
               item.id !== comment.id
           )
-          .map((item) => ({
-            ...item,
-            replies: (
+          .map((item) => {
+            const replies =
               item.replies || []
-            ).filter(
-              (reply) =>
-                reply.id !== comment.id
-            ),
-          }))
+            const hadReply =
+              replies.some(
+                (reply) =>
+                  reply.id === comment.id
+              )
+            const nextReplies =
+              replies.filter(
+                (reply) =>
+                  reply.id !== comment.id
+              )
+
+            if (!hadReply) {
+              return item
+            }
+
+            const replyTotal = Math.max(
+              nextReplies.length,
+              Number(
+                item.reply_total ??
+                  replies.length
+              ) - 1
+            )
+
+            return {
+              ...item,
+              replies: nextReplies,
+              reply_total: replyTotal,
+              reply_has_more:
+                Boolean(
+                  item.reply_has_more
+                ) &&
+                nextReplies.length <
+                  replyTotal,
+            }
+          })
       )
       applyTotal(
         data.comment_count ??
@@ -1693,6 +1942,12 @@ export default function ReaderPostCommentsModal({
                     onDelete={deleteComment}
                     onHide={hideComment}
                     onReport={setReportComment}
+                    onLoadMoreReplies={
+                      loadMoreReplies
+                    }
+                    loadingRepliesId={
+                      loadingRepliesId
+                    }
                   />
                 )
               )}
