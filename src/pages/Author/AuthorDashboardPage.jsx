@@ -4,6 +4,306 @@ import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 import Author49DayDashboardCard from '../../components/events/Author49DayDashboardCard'
 import AuthorManagedEventsSection from '../../components/events/AuthorManagedEventsSection'
 import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorDashboard', {
+  en: {
+    recently: 'Recently',
+    goodMorning: 'Good morning',
+    goodAfternoon: 'Good afternoon',
+    goodEvening: 'Good evening',
+    untitledStory: 'Untitled Story',
+    novel: 'Novel',
+    manga: 'Manga',
+    chatStory: 'Chat Story',
+    episodeNumber: 'Episode {{number}}',
+    storyInfo: 'Story Info',
+    closeMenu: 'Close menu',
+    authorTools: 'Author Tools',
+    closeAuthorTools: 'Close author tools',
+    myIncome: 'My Income',
+    incomeSubtitle: 'Earnings and payout details',
+    quest: 'Quest',
+    questSubtitle: 'Tasks and creator rewards',
+    authorBenefits: 'Author Benefits',
+    benefitsSubtitle: 'Creator programs and support',
+    commentProtection: 'Comment Protection',
+    commentProtectionSubtitle: 'Blocked words and hidden comments',
+    trash: 'Trash',
+    trashSubtitle: 'Restore deleted stories within 30 days',
+    selectStory: 'Select {{title}}',
+    published: 'Published',
+    reviewing: 'Reviewing',
+    draft: 'Draft',
+    views: 'Views',
+    likes: 'Likes',
+    comments: 'Comments',
+    episodes: 'Episodes',
+    addEpisode: 'Add Episode',
+    manage: 'Manage',
+    inbox: 'Inbox',
+    authorPageName: 'Author Page Name',
+    loadStoriesFailed: 'Failed to load stories',
+    cannotConnect: 'Cannot connect to backend. Please check backend deployment.',
+    authorPageMissing: 'Author page data is missing. Please refresh and try again.',
+    comingSoon: '{{type}} is coming soon. Novel publishing is available now.',
+    back: 'Go back',
+    title: 'Author Dashboard',
+    notifications: 'Notifications',
+    addToStory: 'Add to story',
+    keepWriting: 'Keep writing. Your story is waiting.',
+    drafts: 'Drafts',
+    continueWriting: 'Continue Writing',
+    view: 'View',
+    continueWritingStory: 'Continue writing {{title}}',
+    latestDraft: 'Latest draft',
+    updatedDate: 'Updated {{date}}',
+    continue: 'Continue',
+    stories: 'Stories',
+    loading: 'Loading...',
+    storyCount: '{{count}} stories',
+    noStories: 'No stories yet',
+    noStoriesBody: 'Create your first story to see it here.',
+    createStory: 'Create Story',
+  },
+  km: {
+    recently: 'ថ្មីៗនេះ',
+    goodMorning: 'អរុណសួស្តី',
+    goodAfternoon: 'សួស្តីពេលរសៀល',
+    goodEvening: 'សួស្តីពេលល្ងាច',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    novel: 'ប្រលោមលោក',
+    manga: 'Manga',
+    chatStory: 'Chat Story',
+    episodeNumber: 'ភាគ {{number}}',
+    storyInfo: 'ព័ត៌មានរឿង',
+    closeMenu: 'បិទម៉ឺនុយ',
+    authorTools: 'ឧបករណ៍អ្នកនិពន្ធ',
+    closeAuthorTools: 'បិទឧបករណ៍អ្នកនិពន្ធ',
+    myIncome: 'ចំណូលរបស់ខ្ញុំ',
+    incomeSubtitle: 'ចំណូល និងព័ត៌មានបង់ប្រាក់',
+    quest: 'Quest',
+    questSubtitle: 'បេសកកម្ម និងរង្វាន់អ្នកបង្កើត',
+    authorBenefits: 'អត្ថប្រយោជន៍អ្នកនិពន្ធ',
+    benefitsSubtitle: 'កម្មវិធី និងការគាំទ្រអ្នកបង្កើត',
+    commentProtection: 'ការការពារមតិយោបល់',
+    commentProtectionSubtitle: 'ពាក្យហាម និងមតិយោបល់ដែលបានលាក់',
+    trash: 'ធុងសំរាម',
+    trashSubtitle: 'ស្តាររឿងដែលបានលុបក្នុង 30 ថ្ងៃ',
+    selectStory: 'ជ្រើស {{title}}',
+    published: 'បានបោះពុម្ព',
+    reviewing: 'កំពុងពិនិត្យ',
+    draft: 'ព្រាង',
+    views: 'ទស្សនា',
+    likes: 'ចូលចិត្ត',
+    comments: 'មតិយោបល់',
+    episodes: 'ភាគ',
+    addEpisode: 'បន្ថែមភាគ',
+    manage: 'គ្រប់គ្រង',
+    inbox: 'ប្រអប់សារ',
+    authorPageName: 'ឈ្មោះទំព័រអ្នកនិពន្ធ',
+    loadStoriesFailed: 'មិនអាចផ្ទុករឿងបានទេ',
+    cannotConnect: 'មិនអាចភ្ជាប់ទៅ Backend បានទេ។ សូមពិនិត្យការដាក់ Server។',
+    authorPageMissing: 'មិនមានព័ត៌មានទំព័រអ្នកនិពន្ធ។ សូម Refresh ហើយសាកម្តងទៀត។',
+    comingSoon: '{{type}} នឹងមកដល់ឆាប់ៗ។ ឥឡូវនេះអាចបោះពុម្ព Novel បាន។',
+    back: 'ត្រឡប់ក្រោយ',
+    title: 'Dashboard អ្នកនិពន្ធ',
+    notifications: 'ការជូនដំណឹង',
+    addToStory: 'បន្ថែមទៅ Story',
+    keepWriting: 'បន្តសរសេរ។ រឿងរបស់អ្នកកំពុងរង់ចាំ។',
+    drafts: 'រឿងព្រាង',
+    continueWriting: 'បន្តសរសេរ',
+    view: 'មើល',
+    continueWritingStory: 'បន្តសរសេរ {{title}}',
+    latestDraft: 'ព្រាងថ្មីបំផុត',
+    updatedDate: 'បានកែ {{date}}',
+    continue: 'បន្ត',
+    stories: 'រឿង',
+    loading: 'កំពុងផ្ទុក...',
+    storyCount: '{{count}} រឿង',
+    noStories: 'មិនទាន់មានរឿង',
+    noStoriesBody: 'បង្កើតរឿងដំបូងរបស់អ្នក ដើម្បីឱ្យវាបង្ហាញនៅទីនេះ។',
+    createStory: 'បង្កើតរឿង',
+  },
+  zh: {
+    recently: '最近',
+    goodMorning: '早上好',
+    goodAfternoon: '下午好',
+    goodEvening: '晚上好',
+    untitledStory: '未命名故事',
+    novel: '小说',
+    manga: '漫画',
+    chatStory: '聊天故事',
+    episodeNumber: '第 {{number}} 章',
+    storyInfo: '故事信息',
+    closeMenu: '关闭菜单',
+    authorTools: '作者工具',
+    closeAuthorTools: '关闭作者工具',
+    myIncome: '我的收入',
+    incomeSubtitle: '收入和付款详情',
+    quest: '任务',
+    questSubtitle: '任务和创作者奖励',
+    authorBenefits: '作者权益',
+    benefitsSubtitle: '创作者计划和支持',
+    commentProtection: '评论保护',
+    commentProtectionSubtitle: '屏蔽词和隐藏评论',
+    trash: '回收站',
+    trashSubtitle: '30天内恢复已删除故事',
+    selectStory: '选择 {{title}}',
+    published: '已发布',
+    reviewing: '审核中',
+    draft: '草稿',
+    views: '浏览',
+    likes: '点赞',
+    comments: '评论',
+    episodes: '章节',
+    addEpisode: '添加章节',
+    manage: '管理',
+    inbox: '收件箱',
+    authorPageName: '作者主页名称',
+    loadStoriesFailed: '无法加载故事',
+    cannotConnect: '无法连接后端，请检查部署。',
+    authorPageMissing: '缺少作者主页数据，请刷新后重试。',
+    comingSoon: '{{type}} 即将推出。目前可发布小说。',
+    back: '返回',
+    title: '作者控制台',
+    notifications: '通知',
+    addToStory: '添加到 Story',
+    keepWriting: '继续创作，你的故事正在等待。',
+    drafts: '草稿',
+    continueWriting: '继续写作',
+    view: '查看',
+    continueWritingStory: '继续写 {{title}}',
+    latestDraft: '最新草稿',
+    updatedDate: '更新于 {{date}}',
+    continue: '继续',
+    stories: '故事',
+    loading: '加载中...',
+    storyCount: '{{count}} 个故事',
+    noStories: '暂无故事',
+    noStoriesBody: '创建你的第一个故事后会显示在这里。',
+    createStory: '创建故事',
+  },
+  ja: {
+    recently: '最近',
+    goodMorning: 'おはようございます',
+    goodAfternoon: 'こんにちは',
+    goodEvening: 'こんばんは',
+    untitledStory: '無題のストーリー',
+    novel: '小説',
+    manga: 'マンガ',
+    chatStory: 'チャットストーリー',
+    episodeNumber: 'エピソード {{number}}',
+    storyInfo: 'ストーリー情報',
+    closeMenu: 'メニューを閉じる',
+    authorTools: '作者ツール',
+    closeAuthorTools: '作者ツールを閉じる',
+    myIncome: '収益',
+    incomeSubtitle: '収益と支払いの詳細',
+    quest: 'クエスト',
+    questSubtitle: 'タスクとクリエイター報酬',
+    authorBenefits: '作者特典',
+    benefitsSubtitle: 'クリエイタープログラムとサポート',
+    commentProtection: 'コメント保護',
+    commentProtectionSubtitle: 'ブロック語句と非表示コメント',
+    trash: 'ゴミ箱',
+    trashSubtitle: '30日以内の削除済みストーリーを復元',
+    selectStory: '{{title}} を選択',
+    published: '公開済み',
+    reviewing: '審査中',
+    draft: '下書き',
+    views: '閲覧',
+    likes: 'いいね',
+    comments: 'コメント',
+    episodes: 'エピソード',
+    addEpisode: 'エピソード追加',
+    manage: '管理',
+    inbox: '受信箱',
+    authorPageName: '作者ページ名',
+    loadStoriesFailed: 'ストーリーを読み込めませんでした',
+    cannotConnect: 'バックエンドに接続できません。デプロイを確認してください。',
+    authorPageMissing: '作者ページのデータがありません。更新して再試行してください。',
+    comingSoon: '{{type}} は近日公開予定です。現在は小説を公開できます。',
+    back: '戻る',
+    title: '作者ダッシュボード',
+    notifications: '通知',
+    addToStory: 'Story に追加',
+    keepWriting: '書き続けましょう。ストーリーが待っています。',
+    drafts: '下書き',
+    continueWriting: '執筆を続ける',
+    view: '表示',
+    continueWritingStory: '{{title}} の執筆を続ける',
+    latestDraft: '最新の下書き',
+    updatedDate: '{{date}} 更新',
+    continue: '続ける',
+    stories: 'ストーリー',
+    loading: '読み込み中...',
+    storyCount: '{{count}} ストーリー',
+    noStories: 'ストーリーはまだありません',
+    noStoriesBody: '最初のストーリーを作成するとここに表示されます。',
+    createStory: 'ストーリーを作成',
+  },
+  ko: {
+    recently: '최근',
+    goodMorning: '좋은 아침입니다',
+    goodAfternoon: '안녕하세요',
+    goodEvening: '좋은 저녁입니다',
+    untitledStory: '제목 없는 스토리',
+    novel: '소설',
+    manga: '만화',
+    chatStory: '채팅 스토리',
+    episodeNumber: '에피소드 {{number}}',
+    storyInfo: '스토리 정보',
+    closeMenu: '메뉴 닫기',
+    authorTools: '작가 도구',
+    closeAuthorTools: '작가 도구 닫기',
+    myIncome: '내 수입',
+    incomeSubtitle: '수입 및 지급 정보',
+    quest: '퀘스트',
+    questSubtitle: '작업과 크리에이터 보상',
+    authorBenefits: '작가 혜택',
+    benefitsSubtitle: '크리에이터 프로그램과 지원',
+    commentProtection: '댓글 보호',
+    commentProtectionSubtitle: '차단 단어 및 숨긴 댓글',
+    trash: '휴지통',
+    trashSubtitle: '30일 이내 삭제된 스토리 복원',
+    selectStory: '{{title}} 선택',
+    published: '게시됨',
+    reviewing: '검토 중',
+    draft: '초안',
+    views: '조회',
+    likes: '좋아요',
+    comments: '댓글',
+    episodes: '에피소드',
+    addEpisode: '에피소드 추가',
+    manage: '관리',
+    inbox: '받은 편지함',
+    authorPageName: '작가 페이지 이름',
+    loadStoriesFailed: '스토리를 불러오지 못했습니다',
+    cannotConnect: '백엔드에 연결할 수 없습니다. 배포를 확인하세요.',
+    authorPageMissing: '작가 페이지 데이터가 없습니다. 새로고침 후 다시 시도하세요.',
+    comingSoon: '{{type}} 기능은 곧 제공됩니다. 현재는 소설을 게시할 수 있습니다.',
+    back: '뒤로',
+    title: '작가 대시보드',
+    notifications: '알림',
+    addToStory: 'Story에 추가',
+    keepWriting: '계속 써보세요. 스토리가 기다리고 있습니다.',
+    drafts: '초안',
+    continueWriting: '계속 쓰기',
+    view: '보기',
+    continueWritingStory: '{{title}} 계속 쓰기',
+    latestDraft: '최신 초안',
+    updatedDate: '{{date}} 업데이트',
+    continue: '계속',
+    stories: '스토리',
+    loading: '불러오는 중...',
+    storyCount: '스토리 {{count}}개',
+    noStories: '아직 스토리가 없습니다',
+    noStoriesBody: '첫 스토리를 만들면 여기에 표시됩니다.',
+    createStory: '스토리 만들기',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -109,28 +409,29 @@ function formatCompactNumber(value) {
   const number = Number(value || 0)
 
   if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
 
-  return String(number)
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(number)
 }
 
 function formatDate(value) {
-  if (!value) return 'Recently'
+  if (!value) return getDisplayText('authorDashboard.recently')
 
   const date = new Date(value)
 
-  if (Number.isNaN(date.getTime())) return 'Recently'
+  if (Number.isNaN(date.getTime())) return getDisplayText('authorDashboard.recently')
 
-  return date.toLocaleDateString('en-GB')
+  return date.toLocaleDateString(getDisplayLanguageId())
 }
 
 function getGreeting() {
   const hour = new Date().getHours()
 
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
+  if (hour < 12) return getDisplayText('authorDashboard.goodMorning')
+  if (hour < 18) return getDisplayText('authorDashboard.goodAfternoon')
+  return getDisplayText('authorDashboard.goodEvening')
 }
 
 function normalizeStory(story) {
@@ -142,12 +443,16 @@ function normalizeStory(story) {
 
   return {
     id: story.id,
-    title: story.title || 'Untitled Story',
+    title: story.title || getDisplayText('authorDashboard.untitledStory'),
     type: story.story_type === 'manga'
   ? 'Manga'
   : story.story_type === 'chat_story'
     ? 'Chat Story'
     : 'Novel',
+    rawType:
+      story.story_type === 'manga' || story.story_type === 'chat_story'
+        ? story.story_type
+        : 'novel',
     status,
     rawStatus: story.status || 'draft',
     updated: formatDate(story.updated_at || story.created_at),
@@ -157,11 +462,11 @@ function normalizeStory(story) {
     comments: formatCompactNumber(story.total_comments),
     episodes: Number(story.total_episodes || 0),
     cover: story.cover_url || '',
-    genre: story.main_genre || 'Novel',
+    genre: story.main_genre || getDisplayText('authorDashboard.novel'),
     language: story.story_language || 'Khmer',
     lastEdited: Number(story.total_episodes || 0) > 0
-      ? `Episode ${Number(story.total_episodes || 0)}`
-      : 'Story Info',
+      ? getDisplayText('authorDashboard.episodeNumber', { number: Number(story.total_episodes || 0) })
+      : getDisplayText('authorDashboard.storyInfo'),
     createdAt: story.created_at,
     updatedAt: story.updated_at || story.created_at,
   }
@@ -171,8 +476,8 @@ function StatItem({ icon, value, label, iconClass }) {
   return (
     <div className="flex min-w-0 flex-col items-center justify-center px-1 text-center">
       <i className={`${icon} ${iconClass} text-[17px]`} />
-      <div className="mt-1.5 text-[17px] font-black text-[#21143f]">{value}</div>
-      <div className="mt-0.5 max-w-full truncate text-[9px] font-bold uppercase tracking-[0.04em] text-[#958ba8]">{label}</div>
+      <div className="mt-1.5 text-[17px] font-black text-[var(--shadow-text-primary)]">{value}</div>
+      <div className="mt-0.5 max-w-full truncate text-[9px] font-bold uppercase tracking-[0.04em] text-[var(--shadow-text-tertiary)]">{label}</div>
     </div>
   )
 }
@@ -182,20 +487,21 @@ function ToolRow({ icon, title, subtitle, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-[14px] px-2 py-2.5 text-left active:bg-[#f4f5f7]"
+      className="flex w-full items-center gap-3 rounded-[14px] px-2 py-2.5 text-left active:bg-[var(--shadow-bg-hover)]"
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
         <i className={`${icon} text-[13px]`} />
       </div>
 
       <div className="min-w-0">
-        <div className="line-clamp-1 text-[13px] font-semibold text-[#111827]">{title}</div>
-        <div className="mt-0.5 line-clamp-1 text-[11px] font-normal text-[#8d94a1]">{subtitle}</div>
+        <div className="line-clamp-1 text-[13px] font-semibold text-[var(--shadow-text-primary)]">{title}</div>
+        <div className="mt-0.5 line-clamp-1 text-[11px] font-normal text-[var(--shadow-text-tertiary)]">{subtitle}</div>
       </div>
     </button>
   )
 }
 function PageMenu({ open, onClose, onSelect }) {
+  const { t } = useDisplayTranslation()
   useEffect(() => {
     if (!open) return undefined
 
@@ -217,34 +523,34 @@ function PageMenu({ open, onClose, onSelect }) {
     <div className="fixed inset-0 z-[120]">
       <button
         type="button"
-        aria-label="Close menu"
+        aria-label={t('authorDashboard.closeMenu')}
         onClick={onClose}
         className="absolute inset-0 bg-black/35"
       />
 
-      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-white px-4 pb-6 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[330px] md:rounded-[24px] md:pb-4">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden" />
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-[var(--shadow-bg-elevated)] px-4 pb-6 pt-4 shadow-2xl ring-1 ring-[var(--shadow-border)] md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[330px] md:rounded-[24px] md:pb-4">
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[var(--shadow-border-strong)] md:hidden" />
 
         <div className="mb-4 flex items-center justify-between">
-          <div className="text-[16px] font-semibold text-[#111827]">Author Tools</div>
+          <div className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">{t('authorDashboard.authorTools')}</div>
 
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7]"
-            aria-label="Close author tools"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]"
+            aria-label={t('authorDashboard.closeAuthorTools')}
           >
-            <i className="fa-solid fa-times text-[13px] text-[#555]" />
+            <i className="fa-solid fa-times text-[13px] text-[var(--shadow-text-secondary)]" />
           </button>
         </div>
 
         <div className="space-y-1">
 
-          <ToolRow icon="fa-solid fa-chart-line" title="My Income" subtitle="Earnings and payout details" onClick={() => onSelect('/author/income')} />
-          <ToolRow icon="fa-solid fa-gift" title="Quest" subtitle="Tasks and creator rewards" onClick={() => onSelect('/author/quest')} />
-          <ToolRow icon="fa-solid fa-crown" title="Author Benefits" subtitle="Creator programs and support" onClick={() => onSelect('/author/benefits')} />
-          <ToolRow icon="fa-solid fa-shield-halved" title="Comment Protection" subtitle="Blocked words and hidden comments" onClick={() => onSelect('/author/comment-protection')} />
-          <ToolRow icon="fa-regular fa-trash-can" title="Trash" subtitle="Restore deleted stories within 30 days" onClick={() => onSelect('/author/trash')} />
+          <ToolRow icon="fa-solid fa-chart-line" title={t('authorDashboard.myIncome')} subtitle={t('authorDashboard.incomeSubtitle')} onClick={() => onSelect('/author/income')} />
+          <ToolRow icon="fa-solid fa-gift" title={t('authorDashboard.quest')} subtitle={t('authorDashboard.questSubtitle')} onClick={() => onSelect('/author/quest')} />
+          <ToolRow icon="fa-solid fa-crown" title={t('authorDashboard.authorBenefits')} subtitle={t('authorDashboard.benefitsSubtitle')} onClick={() => onSelect('/author/benefits')} />
+          <ToolRow icon="fa-solid fa-shield-halved" title={t('authorDashboard.commentProtection')} subtitle={t('authorDashboard.commentProtectionSubtitle')} onClick={() => onSelect('/author/comment-protection')} />
+          <ToolRow icon="fa-regular fa-trash-can" title={t('authorDashboard.trash')} subtitle={t('authorDashboard.trashSubtitle')} onClick={() => onSelect('/author/trash')} />
         </div>
       </div>
     </div>
@@ -261,17 +567,17 @@ function StoriesLoadingState() {
             className="shrink-0"
             style={{ width: 'clamp(82px, calc((100vw - 56px) / 3), 126px)' }}
           >
-            <div className="aspect-[3/4] animate-pulse rounded-[18px] bg-[#e9e2f8]" />
+            <div className="aspect-[3/4] animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]" />
             <div className="mx-auto mt-2 h-1.5 w-1.5 rounded-full bg-[#d6c7f4]" />
           </div>
         ))}
       </div>
 
-      <div className="animate-pulse rounded-[22px] border border-[#e8def8] bg-white p-4 shadow-sm">
-        <div className="h-5 w-1/2 rounded-full bg-[#e9e2f8]" />
-        <div className="mt-3 h-4 w-2/3 rounded-full bg-[#f0ebf9]" />
-        <div className="mt-5 h-12 rounded-[14px] bg-[#f0ebf9]" />
-        <div className="mt-4 h-11 rounded-[14px] bg-[#e9e2f8]" />
+      <div className="animate-pulse rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-sm">
+        <div className="h-5 w-1/2 rounded-full bg-[var(--shadow-bg-soft)]" />
+        <div className="mt-3 h-4 w-2/3 rounded-full bg-[var(--shadow-bg-soft)]" />
+        <div className="mt-5 h-12 rounded-[14px] bg-[var(--shadow-bg-soft)]" />
+        <div className="mt-4 h-11 rounded-[14px] bg-[var(--shadow-bg-soft)]" />
       </div>
     </div>
   )
@@ -286,6 +592,7 @@ function EmptyCover({ title }) {
 }
 
 function StoryCoverButton({ story, active, onSelect }) {
+  const { t } = useDisplayTranslation()
   return (
     <button
       type="button"
@@ -293,12 +600,12 @@ function StoryCoverButton({ story, active, onSelect }) {
       className="shrink-0 text-left"
       style={{ width: 'clamp(82px, calc((100vw - 56px) / 3), 126px)' }}
       aria-pressed={active}
-      aria-label={`Select ${story.title}`}
+      aria-label={t('authorDashboard.selectStory', { title: story.title })}
     >
       <div
         className={`relative aspect-[3/4] overflow-hidden rounded-[10px] bg-[#2b174f] transition active:scale-[0.98] ${
           active
-            ? 'ring-2 ring-[#8050e8] ring-offset-2 ring-offset-[#f7f4ff] shadow-[0_10px_24px_rgba(109,66,219,0.35)]'
+            ? 'ring-2 ring-[#8050e8] ring-offset-2 ring-offset-[var(--shadow-bg-page)] shadow-[0_10px_24px_rgba(109,66,219,0.35)]'
             : 'shadow-[0_8px_20px_rgba(50,27,91,0.14)]'
         }`}
       >
@@ -315,7 +622,7 @@ function StoryCoverButton({ story, active, onSelect }) {
 
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1f103d]/95 to-transparent px-2 pb-2 pt-7 text-center">
           <span className="line-clamp-1 text-[9.5px] font-bold text-white/90">
-            {story.episodes > 0 ? `Episode ${story.episodes}` : 'Story Info'}
+            {story.episodes > 0 ? t('authorDashboard.episodeNumber', { number: story.episodes }) : t('authorDashboard.storyInfo')}
           </span>
         </div>
       </div>
@@ -330,6 +637,7 @@ function StoryCoverButton({ story, active, onSelect }) {
 }
 
 function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
+  const { t } = useDisplayTranslation()
   const statusClass =
     story.status === 'Published'
       ? 'bg-[#eafaf0] text-[#16803c]'
@@ -338,48 +646,48 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
         : 'bg-[#f0eaff] text-[#7040d8]'
 
   return (
-    <div className="rounded-[12px] border border-[#e7ddf8] bg-white p-4 shadow-[0_12px_30px_rgba(67,35,120,0.1)]">
-      <h3 className="line-clamp-1 text-[19px] font-black tracking-[-0.02em] text-[#21143f]">{story.title}</h3>
+    <div className="rounded-[12px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_12px_30px_rgba(67,35,120,0.1)]">
+      <h3 className="line-clamp-1 text-[19px] font-black tracking-[-0.02em] text-[var(--shadow-text-primary)]">{story.title}</h3>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <span className="rounded-full bg-[#f0eaff] px-2.5 py-1 text-[9.5px] font-extrabold text-[#7040d8]">{story.type}</span>
+        <span className="rounded-full bg-[#f0eaff] px-2.5 py-1 text-[9.5px] font-extrabold text-[#7040d8]">{t(`authorDashboard.${story.rawType === 'chat_story' ? 'chatStory' : story.rawType}`)}</span>
         <span className="rounded-full bg-[#f5f1ff] px-2.5 py-1 text-[9.5px] font-extrabold text-[#8a5ce6]">{story.genre}</span>
         <span className={`rounded-full px-2.5 py-1 text-[9.5px] font-extrabold ${statusClass}`}>
-          {story.status}
+          {t(`authorDashboard.${story.rawStatus === 'published' ? 'published' : story.rawStatus === 'reviewing' ? 'reviewing' : 'draft'}`)}
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-4 divide-x divide-[#eee8f7]">
-        <div className="flex flex-col items-center gap-1 text-[#665c76]">
-          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#35264f]">
+      <div className="mt-4 grid grid-cols-4 divide-x divide-[var(--shadow-border)]">
+        <div className="flex flex-col items-center gap-1 text-[var(--shadow-text-secondary)]">
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[var(--shadow-text-primary)]">
             <i className="fa-regular fa-eye text-[10px] text-[#8a5ce6]" />
             {story.views}
           </span>
-          <span className="text-[9px] font-semibold">Views</span>
+          <span className="text-[9px] font-semibold">{t('authorDashboard.views')}</span>
         </div>
 
-        <div className="flex flex-col items-center gap-1 text-[#665c76]">
-          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#35264f]">
+        <div className="flex flex-col items-center gap-1 text-[var(--shadow-text-secondary)]">
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[var(--shadow-text-primary)]">
             <i className="fa-solid fa-heart text-[10px] text-[#a86cf2]" />
             {story.likes}
           </span>
-          <span className="text-[9px] font-semibold">Likes</span>
+          <span className="text-[9px] font-semibold">{t('authorDashboard.likes')}</span>
         </div>
 
-        <div className="flex flex-col items-center gap-1 text-[#665c76]">
-          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#35264f]">
+        <div className="flex flex-col items-center gap-1 text-[var(--shadow-text-secondary)]">
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[var(--shadow-text-primary)]">
             <i className="fa-regular fa-comment text-[10px] text-[#8a5ce6]" />
             {story.comments}
           </span>
-          <span className="text-[9px] font-semibold">Comments</span>
+          <span className="text-[9px] font-semibold">{t('authorDashboard.comments')}</span>
         </div>
 
-        <div className="flex flex-col items-center gap-1 text-[#665c76]">
-          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#35264f]">
+        <div className="flex flex-col items-center gap-1 text-[var(--shadow-text-secondary)]">
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[var(--shadow-text-primary)]">
             <i className="fa-solid fa-list text-[9px] text-[#8a5ce6]" />
             {story.episodes}
           </span>
-          <span className="text-[9px] font-semibold">Episodes</span>
+          <span className="text-[9px] font-semibold">{t('authorDashboard.episodes')}</span>
         </div>
       </div>
 
@@ -390,16 +698,16 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
           className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-3 py-3 text-[11.5px] font-normal text-white shadow-[0_8px_18px_rgba(109,66,219,0.28)] active:scale-[0.98]"
         >
           <i className="fa-solid fa-plus text-[11px]" />
-          Add Episode
+          {t('authorDashboard.addEpisode')}
         </button>
 
         <button
           type="button"
           onClick={() => onEdit(story)}
-          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#d8c9f3] bg-white px-3 py-3 text-[11.5px] font-normal text-[#5c3cb2] active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-3 text-[11.5px] font-normal text-[#7c4dea] active:scale-[0.98]"
         >
           <i className="fa-solid fa-gear text-[11px]" />
-          Manage
+          {t('authorDashboard.manage')}
         </button>
       </div>
     </div>
@@ -410,12 +718,13 @@ function AuthorInboxButton({
   navigate,
   unreadCount = 0,
 }) {
+  const { t } = useDisplayTranslation()
   return (
     <button
       type="button"
       onClick={() => navigate('/inbox')}
       className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
-      aria-label="Inbox"
+      aria-label={t('authorDashboard.inbox')}
     >
       <svg
         viewBox="0 0 24 24"
@@ -451,6 +760,7 @@ function AuthorInboxButton({
 
 export default function AuthorDashboardPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const location = useLocation()
   const returnTo = location.state?.returnTo || '/me'
   const [menuOpen, setMenuOpen] = useState(false)
@@ -508,7 +818,7 @@ const stopStoriesDrag = () => {
   )
 
   const author = {
-  name: authorPage?.page_name || storedUser?.name || storedUser?.username || 'Author Page Name',
+  name: authorPage?.page_name || storedUser?.name || storedUser?.username || t('authorDashboard.authorPageName'),
   username: authorPage?.page_username || '',
   avatarUrl: authorPage?.avatar_url || '',
   avatarLetter: (authorPage?.page_name || storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
@@ -646,7 +956,7 @@ const stopStoriesDrag = () => {
 
       if (!response.ok || data.ok === false) {
         throw new Error(
-          data.message || 'Failed to load stories'
+          data.message || t('authorDashboard.loadStoriesFailed')
         )
       }
 
@@ -659,8 +969,8 @@ const stopStoriesDrag = () => {
       setStories([])
       setMessage(
         error.message === 'Failed to fetch'
-          ? 'Cannot connect to backend. Please check backend deployment.'
-          : error.message || 'Failed to load stories'
+          ? t('authorDashboard.cannotConnect')
+          : error.message || t('authorDashboard.loadStoriesFailed')
       )
     } finally {
       if (!signal?.aborted) {
@@ -744,7 +1054,7 @@ return {
       const latestAuthorPage = await fetchMyAuthorPage()
 
       if (!latestAuthorPage?.page_username) {
-        setMessage('Author page data is missing. Please refresh and try again.')
+        setMessage(t('authorDashboard.authorPageMissing'))
         return
       }
 
@@ -759,7 +1069,7 @@ return {
     navigate(`/author/create-story?type=${encodeURIComponent(type)}`)
   }
   const handleComingSoon = (type) => {
-    setMessage(`${type} is coming soon. Novel publishing is available now.`)
+    setMessage(t('authorDashboard.comingSoon', { type }))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -768,14 +1078,14 @@ return {
 }
 
   const handleAddEpisode = (story) => {
-  const path = story.type === 'Chat Story'
+  const path = story.rawType === 'chat_story'
   ? `/author/story/${story.id}/chat/characters?new=1&returnTo=${encodeURIComponent('/author/dashboard')}`
   : `/author/story/${story.id}/episode/create?first=0&returnTo=${encodeURIComponent('/author/dashboard')}`
   navigate(path)
 }
 
   return (
-    <div className="min-h-screen bg-[#f7f4ff] pb-[120px]">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[120px]">
       <PageMenu open={menuOpen} onClose={() => setMenuOpen(false)} onSelect={handleMenuSelect} />
 
 
@@ -799,13 +1109,13 @@ return {
             type="button"
             onClick={() => navigate(returnTo)}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
-            aria-label="Go back"
+            aria-label={t('authorDashboard.back')}
           >
             <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
 
           <h1 className="text-[15px] font-normal text-white">
-            Author Dashboard
+            {t('authorDashboard.title')}
           </h1>
 
           <div className="flex items-center gap-1">
@@ -813,7 +1123,7 @@ return {
               type="button"
               onClick={() => navigate('/author/notifications')}
               className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
-              aria-label="Notifications"
+              aria-label={t('authorDashboard.notifications')}
             >
               <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 21h4" strokeLinecap="round" /></svg>
 
@@ -849,7 +1159,7 @@ return {
   type="button"
   onClick={() => navigate('/author/page/story/create')}
   className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#7444df] shadow-md ring-2 ring-[#8352e9] active:scale-95"
-  aria-label="Add to story"
+  aria-label={t('authorDashboard.addToStory')}
 >
   <i className="fa-solid fa-plus text-[10px]" />
 </button>
@@ -865,42 +1175,42 @@ return {
             </div>
 
             <div className="mt-1 text-[11.5px] font-medium text-white/75">
-              Keep writing. Your story is waiting.
+              {t('authorDashboard.keepWriting')}
             </div>
           </div>
         </div>
 
       </section>
 
-      <div className="relative z-20 -mx-4 -mt-[28px] min-h-[calc(100vh-120px)] rounded-t-[20px] bg-white px-4 pb-[170px] pt-[34px]">
+      <div className="relative z-20 -mx-4 -mt-[28px] min-h-[calc(100vh-120px)] rounded-t-[20px] bg-[var(--shadow-bg-page)] px-4 pb-[170px] pt-[34px]">
   <div className="-translate-y-[50px]">
-    <div className="grid grid-cols-4 divide-x divide-[#eee8f7] rounded-[12px] bg-white px-1 py-3.5">
+    <div className="grid grid-cols-4 divide-x divide-[var(--shadow-border)] rounded-[12px] bg-[var(--shadow-bg-surface)] px-1 py-3.5">
           <StatItem
             icon="fa-solid fa-book-open"
             iconClass="text-[#7c4dea]"
             value={stats.published}
-            label="Published"
+            label={t('authorDashboard.published')}
           />
 
           <StatItem
             icon="fa-solid fa-file-lines"
             iconClass="text-[#a368f4]"
             value={stats.drafts}
-            label="Drafts"
+            label={t('authorDashboard.drafts')}
           />
 
           <StatItem
             icon="fa-regular fa-eye"
             iconClass="text-[#8b74ea]"
             value={stats.views}
-            label="Views"
+            label={t('authorDashboard.views')}
           />
 
           <StatItem
   icon="fa-solid fa-heart"
   iconClass="text-[#a368f4]"
   value={stats.likes}
-  label="Likes"
+  label={t('authorDashboard.likes')}
 />
                 </div>
 
@@ -921,7 +1231,7 @@ return {
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eee7ff] text-[#7c4dea]">
                   <i className="fa-solid fa-sparkles text-[11px]" />
                 </span>
-                <h2 className="text-[16px] font-extrabold text-[#21143f]">Continue Writing</h2>
+                <h2 className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{t('authorDashboard.continueWriting')}</h2>
               </div>
 
               <button
@@ -929,7 +1239,7 @@ return {
                 onClick={() => handleEditStory(latestStory)}
                 className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#7c4dea] active:scale-95"
               >
-                View
+                {t('authorDashboard.view')}
                 <i className="fa-solid fa-chevron-right text-[9px]" />
               </button>
             </div>
@@ -938,7 +1248,7 @@ return {
               type="button"
               onClick={() => handleEditStory(latestStory)}
               className="group relative mt-3 h-[220px] w-full overflow-hidden rounded-[12px] bg-gradient-to-br from-[#4d278f] via-[#7544d1] to-[#aa7bf5] text-left shadow-[0_16px_34px_rgba(86,46,155,0.24)] active:scale-[0.995] sm:h-[260px] md:h-[310px]"
-              aria-label={`Continue writing ${latestStory.title}`}
+              aria-label={t('authorDashboard.continueWritingStory', { title: latestStory.title })}
             >
               {latestStory.cover ? (
                 <img
@@ -955,7 +1265,7 @@ return {
 
               <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-extrabold text-[#6d42db] shadow-sm backdrop-blur">
                 <i className="fa-solid fa-pen-nib text-[9px]" />
-                Latest draft
+                {t('authorDashboard.latestDraft')}
               </div>
 
               <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 sm:p-5">
@@ -964,12 +1274,12 @@ return {
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-semibold text-white/75">
                     <span>{latestStory.lastEdited}</span>
                     <span className="h-1 w-1 rounded-full bg-[#d8c7ff]" />
-                    <span>Updated {latestStory.updated}</span>
+                    <span>{t('authorDashboard.updatedDate', { date: latestStory.updated })}</span>
                   </div>
                 </div>
 
                 <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#9a6af5] to-[#6d42db] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_8px_18px_rgba(36,15,77,0.3)] ring-1 ring-white/25">
-                  Continue
+                  {t('authorDashboard.continue')}
                   <i className="fa-solid fa-arrow-right text-[10px]" />
                 </span>
               </div>
@@ -1011,9 +1321,9 @@ return {
 
         <section id="author-stories" className="mt-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[18px] font-black tracking-[-0.02em] text-[#21143f]">Stories</h2>
-            <div className="text-[11px] font-bold text-[#958ba8]">
-              {loading ? 'Loading...' : `${stories.length} stories`}
+            <h2 className="text-[18px] font-black tracking-[-0.02em] text-[var(--shadow-text-primary)]">{t('authorDashboard.stories')}</h2>
+            <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">
+              {loading ? t('authorDashboard.loading') : t('authorDashboard.storyCount', { count: stories.length })}
             </div>
           </div>
 
@@ -1046,20 +1356,20 @@ return {
               />
             </>
           ) : (
-            <div className="mt-3 rounded-[14px] border border-dashed border-[#d8c9f3] bg-white px-5 py-10 text-center">
+            <div className="mt-3 rounded-[14px] border border-dashed border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-5 py-10 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f0eaff] text-[#7040d8]">
                 <i className="fa-solid fa-pen-nib text-[17px]" />
               </div>
 
-              <div className="mt-3 text-[14px] font-extrabold text-[#21143f]">No stories yet</div>
-              <div className="mt-1 text-[12px] text-[#958ba8]">Create your first story to see it here.</div>
+              <div className="mt-3 text-[14px] font-extrabold text-[var(--shadow-text-primary)]">{t('authorDashboard.noStories')}</div>
+              <div className="mt-1 text-[12px] text-[var(--shadow-text-tertiary)]">{t('authorDashboard.noStoriesBody')}</div>
 
               <button
                 type="button"
                 onClick={() => handleCreateStory('novel')}
                 className="mt-4 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-5 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
               >
-                Create Story
+                {t('authorDashboard.createStory')}
               </button>
             </div>
           )}
