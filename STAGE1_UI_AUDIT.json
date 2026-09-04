@@ -307,6 +307,11 @@
 "src/pages/Author/AuthorInsightsPage.jsx",
 "src/pages/Author/AuthorStoriesPage.jsx",
 "src/pages/Author/AuthorTrashPage.jsx",
+"src/pages/Author/AuthorCommentProtectionPage.jsx",
+"src/pages/Author/AuthorHiddenCommentsPage.jsx",
+"src/pages/Author/AuthorBlockedReadersPage.jsx",
+"src/pages/Author/AuthorModerationHistoryPage.jsx",
+"src/pages/Author/StoryNotificationsPage.jsx",
   ]
 }
 
