@@ -10,8 +10,8 @@ registerTranslationNamespace('loginPage', {
     goBack: 'Go back',
     welcomeBack: 'Welcome Back',
     subtitle: 'Login to continue reading and save your progress.',
-    email: 'Email',
-    emailPlaceholder: 'Email address',
+    email: 'Email or Username',
+    emailPlaceholder: 'Email, username, or @username',
     password: 'Password',
     hidePassword: 'Hide password',
     showPassword: 'Show password',
@@ -28,8 +28,8 @@ registerTranslationNamespace('loginPage', {
     goBack: 'ត្រឡប់ក្រោយ',
     welcomeBack: 'ស្វាគមន៍ការត្រឡប់មកវិញ',
     subtitle: 'ចូលគណនីដើម្បីបន្តអាន និងរក្សាទុកវឌ្ឍនភាពរបស់អ្នក។',
-    email: 'អ៊ីមែល',
-    emailPlaceholder: 'អាសយដ្ឋានអ៊ីមែល',
+    email: 'អ៊ីមែល ឬ Username',
+    emailPlaceholder: 'អ៊ីមែល, username ឬ @username',
     password: 'ពាក្យសម្ងាត់',
     hidePassword: 'លាក់ពាក្យសម្ងាត់',
     showPassword: 'បង្ហាញពាក្យសម្ងាត់',
@@ -46,8 +46,8 @@ registerTranslationNamespace('loginPage', {
     goBack: '返回',
     welcomeBack: '欢迎回来',
     subtitle: '登录以继续阅读并保存你的进度。',
-    email: '邮箱',
-    emailPlaceholder: '邮箱地址',
+    email: '邮箱或用户名',
+    emailPlaceholder: '邮箱、用户名或 @用户名',
     password: '密码',
     hidePassword: '隐藏密码',
     showPassword: '显示密码',
@@ -64,8 +64,8 @@ registerTranslationNamespace('loginPage', {
     goBack: '戻る',
     welcomeBack: 'おかえりなさい',
     subtitle: 'ログインして読書を続け、進捗を保存しましょう。',
-    email: 'メールアドレス',
-    emailPlaceholder: 'メールアドレス',
+    email: 'メールアドレスまたはユーザー名',
+    emailPlaceholder: 'メール、ユーザー名、または @ユーザー名',
     password: 'パスワード',
     hidePassword: 'パスワードを隠す',
     showPassword: 'パスワードを表示',
@@ -82,8 +82,8 @@ registerTranslationNamespace('loginPage', {
     goBack: '뒤로 가기',
     welcomeBack: '다시 오신 것을 환영합니다',
     subtitle: '로그인하여 계속 읽고 진행 상황을 저장하세요.',
-    email: '이메일',
-    emailPlaceholder: '이메일 주소',
+    email: '이메일 또는 사용자 이름',
+    emailPlaceholder: '이메일, 사용자 이름 또는 @사용자이름',
     password: '비밀번호',
     hidePassword: '비밀번호 숨기기',
     showPassword: '비밀번호 표시',
@@ -103,7 +103,7 @@ export default function LoginPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
 
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
 
@@ -124,7 +124,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email,
+          identifier,
           password,
         }),
       })
@@ -210,10 +210,13 @@ export default function LoginPage() {
               {t('loginPage.email')}
             </label>
             <input
-              type="email"
+              type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder={t('loginPage.emailPlaceholder')}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={identifier}
+              onChange={(event) => setIdentifier(event.target.value)}
               className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition placeholder:text-[#9ca3af] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[var(--shadow-border-strong)] dark:focus:bg-[var(--shadow-input-bg)] dark:focus:shadow-[0_0_0_4px_rgba(255,255,255,0.05)]"
             />
 
