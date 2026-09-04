@@ -20,6 +20,8 @@ registerTranslationNamespace('notificationPage', {
     caughtUp: 'You are all caught up for now.',
     backToNotifications: 'Back to notifications',
     openLink: 'Open link',
+    loadMore: 'Load more',
+    loadingMore: 'Loading more...',
   },
   km: {
     all: 'ទាំងអស់',
@@ -37,6 +39,8 @@ registerTranslationNamespace('notificationPage', {
     caughtUp: 'ឥឡូវនេះអ្នកបានមើលអស់ហើយ។',
     backToNotifications: 'ត្រឡប់ទៅការជូនដំណឹង',
     openLink: 'បើកតំណ',
+    loadMore: 'ផ្ទុកបន្ថែម',
+    loadingMore: 'កំពុងផ្ទុកបន្ថែម...',
   },
   zh: {
     all: '全部',
@@ -54,6 +58,8 @@ registerTranslationNamespace('notificationPage', {
     caughtUp: '目前没有新的通知。',
     backToNotifications: '返回通知',
     openLink: '打开链接',
+    loadMore: '加载更多',
+    loadingMore: '正在加载更多...',
   },
   ja: {
     all: 'すべて',
@@ -71,6 +77,8 @@ registerTranslationNamespace('notificationPage', {
     caughtUp: '現在、新しい通知はありません。',
     backToNotifications: '通知に戻る',
     openLink: 'リンクを開く',
+    loadMore: 'さらに読み込む',
+    loadingMore: 'さらに読み込み中...',
   },
   ko: {
     all: '전체',
@@ -88,6 +96,8 @@ registerTranslationNamespace('notificationPage', {
     caughtUp: '현재 새 알림이 없습니다.',
     backToNotifications: '알림으로 돌아가기',
     openLink: '링크 열기',
+    loadMore: '더 불러오기',
+    loadingMore: '더 불러오는 중...',
   },
 })
 
@@ -96,6 +106,8 @@ const API_BASE_URL =
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
+const NOTIFICATION_PAGE_SIZE = 30
 
 const TABS = [
   { key: 'all', label: 'All' },
@@ -303,11 +315,16 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   const [notifications, setNotifications] = useState([])
   const [counts, setCounts] = useState(emptyCounts)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
   const [message, setMessage] = useState('')
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
   const [sheetDragY, setSheetDragY] = useState(0)
   const dragStartYRef = useRef(null)
   const sheetDragYRef = useRef(0)
+  const requestIdRef = useRef(0)
+  const countsLoadedRef = useRef(false)
 
   if (!isOpen) return null
 
@@ -320,7 +337,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
 
   const groupedNotifications = useMemo(() => groupNotificationsByDate(filteredNotifications), [filteredNotifications])
 
-  async function loadNotifications() {
+  async function loadNotifications(requestedPage = 1, append = false) {
     const token = getReaderToken()
 
     if (!token) {
@@ -328,15 +345,38 @@ export default function NotificationPage({ isOpen = true, onClose }) {
       return
     }
 
-    try {
-      setLoading(true)
-      setMessage('')
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
 
-      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
-        headers: getHeaders(),
+    try {
+      if (append) {
+        setLoadingMore(true)
+      } else {
+        setLoadingMore(false)
+        setLoading(true)
+        setMessage('')
+      }
+
+      const params = new URLSearchParams({
+        type: activeTab,
+        page: String(requestedPage),
+        limit: String(NOTIFICATION_PAGE_SIZE),
+        include_counts:
+          append || countsLoadedRef.current ? '0' : '1',
       })
 
+      const response = await fetch(
+        `${API_BASE_URL}/api/notifications?${params.toString()}`,
+        {
+          headers: getHeaders(),
+        }
+      )
+
       const data = await response.json().catch(() => ({}))
+
+      if (requestId !== requestIdRef.current) {
+        return
+      }
 
       if (response.status === 401 || response.status === 403) {
         navigate('/login')
@@ -347,20 +387,54 @@ export default function NotificationPage({ isOpen = true, onClose }) {
         throw new Error(data.message || t('notificationPage.loadFailed'))
       }
 
-      setNotifications((data.notifications || []).map(mapNotification))
-      setCounts(data.counts || emptyCounts())
+      const incoming = (data.notifications || []).map(mapNotification)
+
+      if (append) {
+        setNotifications((current) => {
+          const merged = new Map(
+            [...current, ...incoming].map((item) => [String(item.id), item])
+          )
+          return [...merged.values()]
+        })
+      } else {
+        setNotifications(incoming)
+      }
+
+      if (data.counts) {
+        setCounts(data.counts)
+        countsLoadedRef.current = true
+      }
+
+      setPage(Number(data.page || requestedPage))
+      setHasMore(Boolean(data.has_more))
     } catch (error) {
-      setMessage(error.message || t('notificationPage.loadFailed'))
-      setNotifications([])
-      setCounts(emptyCounts())
+      if (
+        requestId === requestIdRef.current &&
+        !append
+      ) {
+        setMessage(error.message || t('notificationPage.loadFailed'))
+        setNotifications([])
+        setHasMore(false)
+      }
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) {
+        if (append) {
+          setLoadingMore(false)
+        } else {
+          setLoading(false)
+        }
+      }
     }
   }
 
+  function loadMoreNotifications() {
+    if (loadingMore || !hasMore) return
+    loadNotifications(page + 1, true)
+  }
+
   useEffect(() => {
-    loadNotifications()
-  }, [])
+    loadNotifications(1, false)
+  }, [activeTab])
 
   useEffect(() => {
     const scrollY = window.scrollY
@@ -387,6 +461,9 @@ export default function NotificationPage({ isOpen = true, onClose }) {
 
   async function markAllAsRead() {
     setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
+    if (activeTab === 'unread') {
+      setHasMore(false)
+    }
     setCounts((current) => ({
       ...current,
       unread: 0,
@@ -654,6 +731,21 @@ export default function NotificationPage({ isOpen = true, onClose }) {
                     </div>
                   </section>
                 ))}
+              </div>
+            ) : null}
+
+            {!loading && !message && groupedNotifications.length && hasMore ? (
+              <div className="mt-5 flex justify-center">
+                <button
+                  type="button"
+                  onClick={loadMoreNotifications}
+                  disabled={loadingMore}
+                  className="rounded-full border border-[#E5E7EB] bg-white px-5 py-2.5 text-[12px] font-black text-[#111827] shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)]"
+                >
+                  {loadingMore
+                    ? t('notificationPage.loadingMore')
+                    : t('notificationPage.loadMore')}
+                </button>
               </div>
             ) : null}
 
