@@ -1,6 +1,241 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('storyNotifications', {
+  "en": {
+    "all": "All",
+    "unread": "Unread",
+    "comments": "Comments",
+    "likes": "Likes",
+    "echoes": "Echoes",
+    "income": "Income",
+    "system": "System",
+    "now": "Now",
+    "minutesShort": "{{count}}m",
+    "hoursShort": "{{count}}h",
+    "daysShort": "{{count}}d",
+    "notification": "Notification",
+    "loginFirst": "Please login first",
+    "requestFailed": "Request failed",
+    "notificationOptions": "Notification options",
+    "emptyTitle": "No {{filter}} notifications",
+    "emptyBody": "Story comments, likes, echoes, Diamond unlocks, gifts, income, and publishing notices will appear here.",
+    "closeOptions": "Close notification options",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "turnOffType": "Turn off {{type}} notifications",
+    "turnOnType": "Turn on {{type}} notifications",
+    "deleteNotification": "Delete this notification",
+    "reportIssue": "Report issue to Notifications Team",
+    "loadFailed": "Failed to load notifications",
+    "noTarget": "This notification does not have a target page yet.",
+    "updateFailed": "Failed to update notification",
+    "morePreference": "You will see more {{type}} notifications.",
+    "lessPreference": "You will see fewer {{type}} notifications.",
+    "preferenceFailed": "Failed to update notification preference",
+    "typeOn": "{{type}} notifications are turned on.",
+    "typeOff": "{{type}} notifications are turned off.",
+    "deleteFailed": "Failed to delete notification",
+    "allMarkedRead": "All notifications marked as read.",
+    "markAllFailed": "Failed to mark notifications as read",
+    "backDashboard": "Back to author dashboard",
+    "title": "Story Notifications",
+    "markAllRead": "Mark all as read",
+    "new": "New",
+    "earlier": "Earlier",
+    "loading": "Loading...",
+    "loadMore": "Load more notifications"
+  },
+  "km": {
+    "all": "ទាំងអស់",
+    "unread": "មិនទាន់អាន",
+    "comments": "មតិយោបល់",
+    "likes": "ចូលចិត្ត",
+    "echoes": "Echoes",
+    "income": "ចំណូល",
+    "system": "ប្រព័ន្ធ",
+    "now": "ឥឡូវ",
+    "minutesShort": "{{count}}នាទី",
+    "hoursShort": "{{count}}ម៉ោង",
+    "daysShort": "{{count}}ថ្ងៃ",
+    "notification": "ការជូនដំណឹង",
+    "loginFirst": "សូមចូលគណនីជាមុន",
+    "requestFailed": "សំណើបរាជ័យ",
+    "notificationOptions": "ជម្រើសការជូនដំណឹង",
+    "emptyTitle": "មិនមានការជូនដំណឹង {{filter}}",
+    "emptyBody": "មតិយោបល់ ចូលចិត្ត Echoes ការដោះសោ Diamond អំណោយ ចំណូល និងការជូនដំណឹងបោះពុម្ពនឹងបង្ហាញនៅទីនេះ។",
+    "closeOptions": "បិទជម្រើសការជូនដំណឹង",
+    "showMore": "បង្ហាញច្រើនជាងនេះ",
+    "showLess": "បង្ហាញតិចជាងនេះ",
+    "markRead": "សម្គាល់ថាបានអាន",
+    "markUnread": "សម្គាល់ថាមិនទាន់អាន",
+    "turnOffType": "បិទការជូនដំណឹង {{type}}",
+    "turnOnType": "បើកការជូនដំណឹង {{type}}",
+    "deleteNotification": "លុបការជូនដំណឹងនេះ",
+    "reportIssue": "រាយការណ៍បញ្ហាទៅក្រុម Notifications",
+    "loadFailed": "មិនអាចផ្ទុកការជូនដំណឹងបានទេ",
+    "noTarget": "ការជូនដំណឹងនេះមិនទាន់មានទំព័រគោលដៅទេ។",
+    "updateFailed": "មិនអាចកែការជូនដំណឹងបានទេ",
+    "morePreference": "អ្នកនឹងឃើញការជូនដំណឹង {{type}} ច្រើនជាងមុន។",
+    "lessPreference": "អ្នកនឹងឃើញការជូនដំណឹង {{type}} តិចជាងមុន។",
+    "preferenceFailed": "មិនអាចកែចំណូលចិត្តការជូនដំណឹងបានទេ",
+    "typeOn": "ការជូនដំណឹង {{type}} ត្រូវបានបើក។",
+    "typeOff": "ការជូនដំណឹង {{type}} ត្រូវបានបិទ។",
+    "deleteFailed": "មិនអាចលុបការជូនដំណឹងបានទេ",
+    "allMarkedRead": "បានសម្គាល់ការជូនដំណឹងទាំងអស់ថាបានអាន។",
+    "markAllFailed": "មិនអាចសម្គាល់ការជូនដំណឹងថាបានអានបានទេ",
+    "backDashboard": "ត្រឡប់ទៅ Dashboard អ្នកនិពន្ធ",
+    "title": "ការជូនដំណឹងរឿង",
+    "markAllRead": "សម្គាល់ទាំងអស់ថាបានអាន",
+    "new": "ថ្មី",
+    "earlier": "មុននេះ",
+    "loading": "កំពុងផ្ទុក...",
+    "loadMore": "ផ្ទុកការជូនដំណឹងបន្ថែម"
+  },
+  "zh": {
+    "all": "全部",
+    "unread": "未读",
+    "comments": "评论",
+    "likes": "点赞",
+    "echoes": "转发",
+    "income": "收入",
+    "system": "系统",
+    "now": "现在",
+    "minutesShort": "{{count}}分钟",
+    "hoursShort": "{{count}}小时",
+    "daysShort": "{{count}}天",
+    "notification": "通知",
+    "loginFirst": "请先登录",
+    "requestFailed": "请求失败",
+    "notificationOptions": "通知选项",
+    "emptyTitle": "没有{{filter}}通知",
+    "emptyBody": "故事评论、点赞、转发、Diamond 解锁、礼物、收入和发布通知会显示在这里。",
+    "closeOptions": "关闭通知选项",
+    "showMore": "显示更多",
+    "showLess": "显示更少",
+    "markRead": "标记为已读",
+    "markUnread": "标记为未读",
+    "turnOffType": "关闭{{type}}通知",
+    "turnOnType": "开启{{type}}通知",
+    "deleteNotification": "删除此通知",
+    "reportIssue": "向通知团队报告问题",
+    "loadFailed": "无法加载通知",
+    "noTarget": "此通知暂时没有目标页面。",
+    "updateFailed": "无法更新通知",
+    "morePreference": "你将看到更多{{type}}通知。",
+    "lessPreference": "你将看到更少{{type}}通知。",
+    "preferenceFailed": "无法更新通知偏好",
+    "typeOn": "{{type}}通知已开启。",
+    "typeOff": "{{type}}通知已关闭。",
+    "deleteFailed": "无法删除通知",
+    "allMarkedRead": "所有通知已标记为已读。",
+    "markAllFailed": "无法将通知标记为已读",
+    "backDashboard": "返回作者控制台",
+    "title": "故事通知",
+    "markAllRead": "全部标记为已读",
+    "new": "新通知",
+    "earlier": "更早",
+    "loading": "加载中...",
+    "loadMore": "加载更多通知"
+  },
+  "ja": {
+    "all": "すべて",
+    "unread": "未読",
+    "comments": "コメント",
+    "likes": "いいね",
+    "echoes": "エコー",
+    "income": "収益",
+    "system": "システム",
+    "now": "今",
+    "minutesShort": "{{count}}分",
+    "hoursShort": "{{count}}時間",
+    "daysShort": "{{count}}日",
+    "notification": "通知",
+    "loginFirst": "先にログインしてください",
+    "requestFailed": "リクエストに失敗しました",
+    "notificationOptions": "通知オプション",
+    "emptyTitle": "{{filter}}の通知はありません",
+    "emptyBody": "ストーリーのコメント、いいね、エコー、Diamond解除、ギフト、収益、公開通知がここに表示されます。",
+    "closeOptions": "通知オプションを閉じる",
+    "showMore": "もっと表示",
+    "showLess": "表示を減らす",
+    "markRead": "既読にする",
+    "markUnread": "未読にする",
+    "turnOffType": "{{type}}通知をオフ",
+    "turnOnType": "{{type}}通知をオン",
+    "deleteNotification": "この通知を削除",
+    "reportIssue": "通知チームに問題を報告",
+    "loadFailed": "通知を読み込めませんでした",
+    "noTarget": "この通知にはまだ移動先ページがありません。",
+    "updateFailed": "通知を更新できませんでした",
+    "morePreference": "{{type}}通知をより多く表示します。",
+    "lessPreference": "{{type}}通知をより少なく表示します。",
+    "preferenceFailed": "通知設定を更新できませんでした",
+    "typeOn": "{{type}}通知をオンにしました。",
+    "typeOff": "{{type}}通知をオフにしました。",
+    "deleteFailed": "通知を削除できませんでした",
+    "allMarkedRead": "すべての通知を既読にしました。",
+    "markAllFailed": "通知を既読にできませんでした",
+    "backDashboard": "作者ダッシュボードに戻る",
+    "title": "ストーリー通知",
+    "markAllRead": "すべて既読にする",
+    "new": "新着",
+    "earlier": "以前",
+    "loading": "読み込み中...",
+    "loadMore": "通知をさらに読み込む"
+  },
+  "ko": {
+    "all": "전체",
+    "unread": "읽지 않음",
+    "comments": "댓글",
+    "likes": "좋아요",
+    "echoes": "에코",
+    "income": "수익",
+    "system": "시스템",
+    "now": "지금",
+    "minutesShort": "{{count}}분",
+    "hoursShort": "{{count}}시간",
+    "daysShort": "{{count}}일",
+    "notification": "알림",
+    "loginFirst": "먼저 로그인해 주세요",
+    "requestFailed": "요청 실패",
+    "notificationOptions": "알림 옵션",
+    "emptyTitle": "{{filter}} 알림이 없습니다",
+    "emptyBody": "스토리 댓글, 좋아요, 에코, Diamond 잠금 해제, 선물, 수익 및 게시 알림이 여기에 표시됩니다.",
+    "closeOptions": "알림 옵션 닫기",
+    "showMore": "더 보기",
+    "showLess": "덜 보기",
+    "markRead": "읽음으로 표시",
+    "markUnread": "읽지 않음으로 표시",
+    "turnOffType": "{{type}} 알림 끄기",
+    "turnOnType": "{{type}} 알림 켜기",
+    "deleteNotification": "이 알림 삭제",
+    "reportIssue": "알림 팀에 문제 신고",
+    "loadFailed": "알림을 불러오지 못했습니다",
+    "noTarget": "이 알림에는 아직 이동할 페이지가 없습니다.",
+    "updateFailed": "알림을 업데이트하지 못했습니다",
+    "morePreference": "{{type}} 알림을 더 많이 표시합니다.",
+    "lessPreference": "{{type}} 알림을 더 적게 표시합니다.",
+    "preferenceFailed": "알림 설정을 업데이트하지 못했습니다",
+    "typeOn": "{{type}} 알림이 켜졌습니다.",
+    "typeOff": "{{type}} 알림이 꺼졌습니다.",
+    "deleteFailed": "알림을 삭제하지 못했습니다",
+    "allMarkedRead": "모든 알림을 읽음으로 표시했습니다.",
+    "markAllFailed": "알림을 읽음으로 표시하지 못했습니다",
+    "backDashboard": "작가 대시보드로 돌아가기",
+    "title": "스토리 알림",
+    "markAllRead": "모두 읽음으로 표시",
+    "new": "새 알림",
+    "earlier": "이전",
+    "loading": "불러오는 중...",
+    "loadMore": "알림 더 불러오기"
+  }
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -9,20 +244,27 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const PAGE_SIZE = 30
-const filters = ['All', 'Unread', 'Comments', 'Likes', 'Echoes', 'Income']
+const filters = [
+  { value: 'all', labelKey: 'all' },
+  { value: 'unread', labelKey: 'unread' },
+  { value: 'comments', labelKey: 'comments' },
+  { value: 'likes', labelKey: 'likes' },
+  { value: 'echoes', labelKey: 'echoes' },
+  { value: 'income', labelKey: 'income' },
+]
 
 const typeMap = {
-  comments: 'Comments',
-  comment: 'Comments',
-  like: 'Likes',
-  echo: 'Echoes',
-  gift: 'Income',
-  unlock: 'Income',
-  income: 'Income',
-  withdrawal: 'Income',
-  payout: 'Income',
-  system: 'System',
-  admin: 'System',
+  comments: 'comments',
+  comment: 'comments',
+  like: 'likes',
+  echo: 'echoes',
+  gift: 'income',
+  unlock: 'income',
+  income: 'income',
+  withdrawal: 'income',
+  payout: 'income',
+  system: 'system',
+  admin: 'system',
 }
 
 const actionMap = {
@@ -80,8 +322,8 @@ function getAuthToken() {
   )
 }
 
-function getNotificationTypeLabel(type) {
-  return typeMap[String(type || '').toLowerCase()] || 'System'
+function getNotificationTypeKey(type) {
+  return typeMap[String(type || '').toLowerCase()] || 'system'
 }
 
 function getAction(type) {
@@ -94,30 +336,17 @@ function getAction(type) {
 }
 
 function formatTime(value) {
-  if (!value) return 'Now'
-
+  if (!value) return getDisplayText('storyNotifications.now')
   const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) return 'Now'
-
-  const diffMs = Date.now() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / 60000)
-
-  if (diffMinutes < 1) return 'Now'
-  if (diffMinutes < 60) return `${diffMinutes}m`
-
+  if (Number.isNaN(date.getTime())) return getDisplayText('storyNotifications.now')
+  const diffMinutes = Math.floor((Date.now() - date.getTime()) / 60000)
+  if (diffMinutes < 1) return getDisplayText('storyNotifications.now')
+  if (diffMinutes < 60) return getDisplayText('storyNotifications.minutesShort', { count: diffMinutes })
   const diffHours = Math.floor(diffMinutes / 60)
-
-  if (diffHours < 24) return `${diffHours}h`
-
+  if (diffHours < 24) return getDisplayText('storyNotifications.hoursShort', { count: diffHours })
   const diffDays = Math.floor(diffHours / 24)
-
-  if (diffDays < 7) return `${diffDays}d`
-
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-  })
+  if (diffDays < 7) return getDisplayText('storyNotifications.daysShort', { count: diffDays })
+  return date.toLocaleDateString(getDisplayLanguageId(), { day: '2-digit', month: 'short' })
 }
 
 function normalizeNotification(item) {
@@ -135,8 +364,8 @@ function normalizeNotification(item) {
   return {
     id: item.id,
     type: item.type || 'system',
-    typeLabel: getNotificationTypeLabel(item.type),
-    title: item.title || 'Notification',
+    typeKey: getNotificationTypeKey(item.type),
+    title: item.title || getDisplayText('storyNotifications.notification'),
     message: item.message || '',
     targetUrl: item.target_url || item.targetUrl || '',
     metadata,
@@ -155,7 +384,7 @@ function normalizeNotification(item) {
 async function apiRequest(path, options = {}) {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) throw new Error(getDisplayText('storyNotifications.loginFirst'))
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -171,7 +400,7 @@ async function apiRequest(path, options = {}) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Request failed')
+    throw new Error(data.message || getDisplayText('storyNotifications.requestFailed'))
   }
 
   return data
@@ -261,10 +490,11 @@ function markAllNotificationsRead() {
 }
 
 function NotificationAvatar({ notification }) {
+  const { t } = useDisplayTranslation()
   const action = getAction(notification.type)
   const fallbackText = String(
     notification.readerName ||
-      notification.typeLabel ||
+      t(`storyNotifications.${notification.typeKey}`) ||
       'N'
   )
     .trim()
@@ -277,16 +507,16 @@ function NotificationAvatar({ notification }) {
         <img
           src={notification.readerAvatar}
           alt=""
-          className="h-14 w-14 rounded-full object-cover ring-1 ring-black/5"
+          className="h-14 w-14 rounded-full object-cover ring-1 ring-[var(--shadow-border)]"
         />
       ) : (
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e5e7eb] text-[18px] font-bold text-[#4b5563]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[18px] font-bold text-[var(--shadow-text-secondary)]">
           {fallbackText}
         </div>
       )}
 
       <span
-        className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white ${action.badge}`}
+        className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--shadow-bg-surface)] ${action.badge}`}
       >
         <i className={`${action.icon} text-[10px]`} />
       </span>
@@ -299,12 +529,13 @@ function NotificationItem({
   onOpen,
   onOptions,
 }) {
+  const { t } = useDisplayTranslation()
   return (
     <div
       className={`flex w-full items-start gap-3 px-4 py-3 transition ${
         notification.unread
-          ? 'bg-[#eef6ff]'
-          : 'bg-white'
+          ? 'bg-[var(--shadow-bg-soft)]'
+          : 'bg-[var(--shadow-bg-surface)]'
       }`}
     >
       <button
@@ -318,7 +549,7 @@ function NotificationItem({
 
         <div className="min-w-0 flex-1 pt-0.5">
           <p
-            className={`line-clamp-3 text-[14px] leading-5 text-[#111827] ${
+            className={`line-clamp-3 text-[14px] leading-5 text-[var(--shadow-text-primary)] ${
               notification.unread
                 ? 'font-bold'
                 : 'font-semibold'
@@ -326,7 +557,7 @@ function NotificationItem({
           >
             {notification.title}
             {notification.message ? (
-              <span className="font-medium text-[#4b5563]">
+              <span className="font-medium text-[var(--shadow-text-secondary)]">
                 {' '}
                 · {notification.message}
               </span>
@@ -338,14 +569,14 @@ function NotificationItem({
               className={`text-[12px] ${
                 notification.unread
                   ? 'font-bold text-[#1877f2]'
-                  : 'font-semibold text-[#8b93a1]'
+                  : 'font-semibold text-[var(--shadow-text-tertiary)]'
               }`}
             >
               {notification.time}
             </span>
-            <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
-            <span className="text-[12px] font-semibold text-[#8b93a1]">
-              {notification.typeLabel}
+            <span className="h-1 w-1 rounded-full bg-[var(--shadow-border-strong)]" />
+            <span className="text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">
+              {t(`storyNotifications.${notification.typeKey}`)}
             </span>
           </div>
         </div>
@@ -359,8 +590,8 @@ function NotificationItem({
         <button
           type="button"
           onClick={() => onOptions(notification)}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:bg-[#eef0f4]"
-          aria-label="Notification options"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
+          aria-label={t('storyNotifications.notificationOptions')}
         >
           <i className="fa-solid fa-ellipsis text-[15px]" />
         </button>
@@ -378,12 +609,12 @@ function NotificationGroup({
   if (!notifications.length) return null
 
   return (
-    <section className="bg-white">
-      <h2 className="px-4 pb-2 pt-4 text-[15px] font-bold text-[#111827]">
+    <section className="bg-[var(--shadow-bg-surface)]">
+      <h2 className="px-4 pb-2 pt-4 text-[15px] font-bold text-[var(--shadow-text-primary)]">
         {title}
       </h2>
 
-      <div className="bg-white">
+      <div className="bg-[var(--shadow-bg-surface)]">
         {notifications.map((notification) => (
           <NotificationItem
             key={notification.id}
@@ -405,10 +636,10 @@ function LoadingState() {
           key={index}
           className="mb-3 flex animate-pulse gap-3 py-2"
         >
-          <div className="h-14 w-14 shrink-0 rounded-full bg-[#eef0f4]" />
+          <div className="h-14 w-14 shrink-0 rounded-full bg-[var(--shadow-bg-soft)]" />
           <div className="min-w-0 flex-1 pt-1">
-            <div className="h-4 w-4/5 rounded bg-[#eef0f4]" />
-            <div className="mt-2 h-3 w-2/5 rounded bg-[#f3f4f6]" />
+            <div className="h-4 w-4/5 rounded bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-2 h-3 w-2/5 rounded bg-[var(--shadow-bg-soft)]" />
           </div>
         </div>
       ))}
@@ -416,19 +647,18 @@ function LoadingState() {
   )
 }
 
-function EmptyState({ filter }) {
+function EmptyState({ filterKey }) {
+  const { t } = useDisplayTranslation()
   return (
-    <div className="bg-white px-6 py-16 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+    <div className="bg-[var(--shadow-bg-surface)] px-6 py-16 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
         <i className="fa-regular fa-bell text-[20px]" />
       </div>
-      <h2 className="text-[17px] font-bold text-[#111827]">
-        No {filter.toLowerCase()} notifications
+      <h2 className="text-[17px] font-bold text-[var(--shadow-text-primary)]">
+        {t('storyNotifications.emptyTitle', { filter: t(`storyNotifications.${filterKey}`) })}
       </h2>
-      <p className="mx-auto mt-2 max-w-[340px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        Story comments, likes, echoes, Diamond
-        unlocks, gifts, income, and publishing
-        notices will appear here.
+      <p className="mx-auto mt-2 max-w-[340px] text-[13px] font-semibold leading-6 text-[var(--shadow-text-tertiary)]">
+        {t('storyNotifications.emptyBody')}
       </p>
     </div>
   )
@@ -447,6 +677,7 @@ function OptionsSheet({
   onDelete,
   onReport,
 }) {
+  const { t } = useDisplayTranslation()
   const [dragging, setDragging] = useState(false)
   const [dragY, setDragY] = useState(0)
   const dragStartRef = useRef(0)
@@ -487,7 +718,7 @@ function OptionsSheet({
 
   const fallbackText = String(
     notification.readerName ||
-      notification.typeLabel ||
+      t(`storyNotifications.${notification.typeKey}`) ||
       'N'
   )
     .trim()
@@ -538,24 +769,24 @@ function OptionsSheet({
   }
 
   const actionClass =
-    'flex min-h-12 w-full items-center gap-4 rounded-[12px] px-2 py-3 text-left text-[15px] font-normal transition hover:bg-black/[0.055] active:bg-black/[0.09] disabled:opacity-40'
+    'flex min-h-12 w-full items-center gap-4 rounded-[12px] px-2 py-3 text-left text-[15px] font-normal transition hover:bg-[var(--shadow-bg-hover)] active:bg-[var(--shadow-bg-hover)] disabled:opacity-40'
 
   return (
     <div
       className="fixed inset-0 z-[120]"
       role="dialog"
       aria-modal="true"
-      aria-label="Notification options"
+      aria-label={t('storyNotifications.notificationOptions')}
     >
       <button
         type="button"
         onClick={closeSheet}
         className="absolute inset-0 bg-black/45"
-        aria-label="Close notification options"
+        aria-label={t('storyNotifications.closeOptions')}
       />
 
       <section
-        className={`absolute inset-x-0 bottom-0 mx-auto max-h-[88vh] w-full max-w-[520px] overflow-y-auto rounded-t-[24px] bg-white pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
+        className={`absolute inset-x-0 bottom-0 mx-auto max-h-[88vh] w-full max-w-[520px] overflow-y-auto rounded-t-[24px] bg-[var(--shadow-bg-elevated)] pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
           dragging
             ? ''
             : 'transition-transform duration-200 ease-out'
@@ -571,7 +802,7 @@ function OptionsSheet({
           onPointerUp={handleDragEnd}
           onPointerCancel={handleDragEnd}
         >
-          <div className="mx-auto h-1.5 w-11 rounded-full bg-[#cfd3da]" />
+          <div className="mx-auto h-1.5 w-11 rounded-full bg-[var(--shadow-border-strong)]" />
         </div>
 
         <div className="px-5 pb-3 text-center">
@@ -579,16 +810,16 @@ function OptionsSheet({
             <img
               src={notification.readerAvatar}
               alt=""
-              className="mx-auto h-12 w-12 rounded-full object-cover ring-1 ring-black/5"
+              className="mx-auto h-12 w-12 rounded-full object-cover ring-1 ring-[var(--shadow-border)]"
             />
           ) : (
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#e5e7eb] text-[16px] font-semibold text-[#4b5563]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[16px] font-semibold text-[var(--shadow-text-secondary)]">
               {fallbackText}
             </div>
           )}
 
-          <p className="mx-auto mt-3 max-w-[330px] text-[13px] font-normal leading-5 text-[#4b5563]">
-            <span className="text-[#111827]">
+          <p className="mx-auto mt-3 max-w-[330px] text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+            <span className="text-[var(--shadow-text-primary)]">
               {notification.title}
             </span>
             {notification.message
@@ -604,13 +835,13 @@ function OptionsSheet({
             onClick={onShowMore}
             className={`${actionClass} ${
               frequencyLevel === 'more'
-                ? 'bg-black/[0.055] text-black'
-                : 'text-[#5f6368]'
+                ? 'bg-[var(--shadow-bg-hover)] text-[var(--shadow-text-primary)]'
+                : 'text-[var(--shadow-text-secondary)]'
             }`}
           >
             <i className="fa-solid fa-plus w-5 text-center text-[16px]" />
             <span className="flex-1">
-              Show more
+              {t('storyNotifications.showMore')}
             </span>
             {frequencyLevel === 'more' ? (
               <i className="fa-solid fa-check text-[12px]" />
@@ -623,13 +854,13 @@ function OptionsSheet({
             onClick={onShowLess}
             className={`${actionClass} ${
               frequencyLevel === 'less'
-                ? 'bg-black/[0.055] text-black'
-                : 'text-[#5f6368]'
+                ? 'bg-[var(--shadow-bg-hover)] text-[var(--shadow-text-primary)]'
+                : 'text-[var(--shadow-text-secondary)]'
             }`}
           >
             <i className="fa-solid fa-minus w-5 text-center text-[16px]" />
             <span className="flex-1">
-              Show less
+              {t('storyNotifications.showLess')}
             </span>
             {frequencyLevel === 'less' ? (
               <i className="fa-solid fa-check text-[12px]" />
@@ -640,7 +871,7 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onToggleRead}
-            className={`${actionClass} text-black`}
+            className={`${actionClass} text-[var(--shadow-text-primary)]`}
           >
             <i
               className={`w-5 text-center text-[16px] fa-solid ${
@@ -651,8 +882,8 @@ function OptionsSheet({
             />
             <span>
               {notification.unread
-                ? 'Mark as read'
-                : 'Mark as unread'}
+                ? t('storyNotifications.markRead')
+                : t('storyNotifications.markUnread')}
             </span>
           </button>
 
@@ -660,7 +891,7 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onToggleType}
-            className={`${actionClass} text-black`}
+            className={`${actionClass} text-[var(--shadow-text-primary)]`}
           >
             <i
               className={`fa-solid ${
@@ -670,12 +901,9 @@ function OptionsSheet({
               } w-5 text-center text-[16px]`}
             />
             <span>
-              Turn{' '}
               {notificationEnabled
-                ? 'off'
-                : 'on'}{' '}
-              {notification.typeLabel.toLowerCase()}{' '}
-              notifications
+                ? t('storyNotifications.turnOffType', { type: t(`storyNotifications.${notification.typeKey}`) })
+                : t('storyNotifications.turnOnType', { type: t(`storyNotifications.${notification.typeKey}`) })}
             </span>
           </button>
 
@@ -683,11 +911,11 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onDelete}
-            className={`${actionClass} text-black`}
+            className={`${actionClass} text-[var(--shadow-text-primary)]`}
           >
             <i className="fa-regular fa-trash-can w-5 text-center text-[16px]" />
             <span>
-              Delete this notification
+              {t('storyNotifications.deleteNotification')}
             </span>
           </button>
 
@@ -695,11 +923,11 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onReport}
-            className={`${actionClass} text-black`}
+            className={`${actionClass} text-[var(--shadow-text-primary)]`}
           >
             <i className="fa-solid fa-triangle-exclamation w-5 text-center text-[16px]" />
             <span>
-              Report issue to Notifications Team
+              {t('storyNotifications.reportIssue')}
             </span>
           </button>
         </div>
@@ -710,8 +938,9 @@ function OptionsSheet({
 
 export default function StoryNotificationsPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [activeFilter, setActiveFilter] =
-    useState('All')
+    useState('all')
   const [notifications, setNotifications] =
     useState([])
   const [preferences, setPreferences] =
@@ -817,7 +1046,7 @@ export default function StoryNotificationsPage() {
 
         showToast(
           error.message ||
-            'Failed to load notifications'
+            t('storyNotifications.loadFailed')
         )
       } finally {
         if (append) {
@@ -827,7 +1056,7 @@ export default function StoryNotificationsPage() {
         }
       }
     },
-    [showToast]
+    [showToast, t]
   )
 
   useEffect(() => {
@@ -835,11 +1064,11 @@ export default function StoryNotificationsPage() {
   }, [loadNotifications])
 
   const filteredNotifications = useMemo(() => {
-    if (activeFilter === 'All') {
+    if (activeFilter === 'all') {
       return notifications
     }
 
-    if (activeFilter === 'Unread') {
+    if (activeFilter === 'unread') {
       return notifications.filter(
         (item) => item.unread
       )
@@ -847,7 +1076,7 @@ export default function StoryNotificationsPage() {
 
     return notifications.filter(
       (item) =>
-        item.typeLabel === activeFilter
+        item.typeKey === activeFilter
     )
   }, [activeFilter, notifications])
 
@@ -901,7 +1130,7 @@ export default function StoryNotificationsPage() {
 }
 
     showToast(
-      'This notification does not have a target page yet.'
+      t('storyNotifications.noTarget')
     )
   }
 
@@ -945,7 +1174,7 @@ export default function StoryNotificationsPage() {
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to update notification'
+          t('storyNotifications.updateFailed')
       )
     } finally {
       setActionLoading(false)
@@ -958,7 +1187,7 @@ export default function StoryNotificationsPage() {
     const notificationType =
       selectedNotification.type
     const notificationLabel =
-      selectedNotification.typeLabel.toLowerCase()
+      t(`storyNotifications.${selectedNotification.typeKey}`)
 
     try {
       setActionLoading(true)
@@ -992,13 +1221,13 @@ export default function StoryNotificationsPage() {
 
       showToast(
         level === 'more'
-          ? `You will see more ${notificationLabel} notifications.`
-          : `You will see fewer ${notificationLabel} notifications.`
+          ? t('storyNotifications.morePreference', { type: notificationLabel })
+          : t('storyNotifications.lessPreference', { type: notificationLabel })
       )
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to update notification preference'
+          t('storyNotifications.preferenceFailed')
       )
     } finally {
       setActionLoading(false)
@@ -1011,7 +1240,7 @@ export default function StoryNotificationsPage() {
     const notificationType =
       selectedNotification.type
     const notificationLabel =
-      selectedNotification.typeLabel
+      t(`storyNotifications.${selectedNotification.typeKey}`)
     const currentPreference =
       preferences[notificationType] || {
         is_enabled: true,
@@ -1055,16 +1284,14 @@ export default function StoryNotificationsPage() {
       setSelectedNotification(null)
 
       showToast(
-        `${notificationLabel} notifications are turned ${
-          preference.is_enabled !== false
-            ? 'on'
-            : 'off'
-        }.`
+        preference.is_enabled !== false
+          ? t('storyNotifications.typeOn', { type: notificationLabel })
+          : t('storyNotifications.typeOff', { type: notificationLabel })
       )
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to update notification preference'
+          t('storyNotifications.preferenceFailed')
       )
     } finally {
       setActionLoading(false)
@@ -1099,7 +1326,7 @@ export default function StoryNotificationsPage() {
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to delete notification'
+          t('storyNotifications.deleteFailed')
       )
     } finally {
       setActionLoading(false)
@@ -1121,12 +1348,12 @@ export default function StoryNotificationsPage() {
 
       setUnreadCount(0)
       showToast(
-        'All notifications marked as read.'
+        t('storyNotifications.allMarkedRead')
       )
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to mark notifications as read'
+          t('storyNotifications.markAllFailed')
       )
     }
   }
@@ -1147,9 +1374,9 @@ export default function StoryNotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[92px]">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px]">
       <div
-        className={`sticky top-0 z-40 bg-white ${
+        className={`sticky top-0 z-40 bg-[var(--shadow-bg-surface)] ${
           selectedNotification
             ? 'invisible'
             : ''
@@ -1161,51 +1388,51 @@ export default function StoryNotificationsPage() {
             onClick={() =>
               navigate('/author/dashboard')
             }
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Back to author dashboard"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
+            aria-label={t('storyNotifications.backDashboard')}
           >
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <div className="text-[18px] font-bold text-[#111827]">
-            Story Notifications
+          <div className="text-[18px] font-bold text-[var(--shadow-text-primary)]">
+            {t('storyNotifications.title')}
           </div>
 
           <button
             type="button"
             onClick={handleMarkAllRead}
             disabled={!unreadCount}
-            className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 disabled:opacity-30"
-            aria-label="Mark all as read"
-            title="Mark all as read"
+            className="flex h-10 w-10 items-center justify-center text-[var(--shadow-text-primary)] active:scale-95 disabled:opacity-30"
+            aria-label={t('storyNotifications.markAllRead')}
+            title={t('storyNotifications.markAllRead')}
           >
             <i className="fa-solid fa-broom text-[17px]" />
           </button>
         </div>
       </div>
 
-      <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-white">
-        <section className="sticky top-14 z-30 bg-white">
+      <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-[var(--shadow-bg-surface)]">
+        <section className="sticky top-14 z-30 bg-[var(--shadow-bg-surface)]">
           <div className="flex gap-2 overflow-x-auto px-4 py-2">
             {filters.map((filter) => {
               const active =
-                activeFilter === filter
+                activeFilter === filter.value
 
               return (
                 <button
-                  key={filter}
+                  key={filter.value}
                   type="button"
                   onClick={() =>
-                    setActiveFilter(filter)
+                    setActiveFilter(filter.value)
                   }
-                  className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition hover:bg-black/[0.045] active:scale-[0.98] ${
+                  className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition hover:bg-[var(--shadow-bg-hover)] active:scale-[0.98] ${
                     active
-                      ? 'bg-black/[0.065] font-semibold text-[#111827]'
-                      : 'bg-transparent font-normal text-[#9ca3af]'
+                      ? 'bg-[var(--shadow-bg-hover)] font-semibold text-[var(--shadow-text-primary)]'
+                      : 'bg-transparent font-normal text-[var(--shadow-text-disabled)]'
                   }`}
                 >
-                  {filter}
-                  {filter === 'Unread' &&
+                  {t(`storyNotifications.${filter.labelKey}`)}
+                  {filter.value === 'unread' &&
                   unreadCount > 0 ? (
                     <span className="ml-1.5 text-[11px] font-bold">
                       {unreadCount}
@@ -1220,9 +1447,9 @@ export default function StoryNotificationsPage() {
         {loading ? (
           <LoadingState />
         ) : filteredNotifications.length ? (
-          <div className="bg-white">
+          <div className="bg-[var(--shadow-bg-surface)]">
             <NotificationGroup
-              title="New"
+              title={t('storyNotifications.new')}
               notifications={newNotifications}
               onOpen={handleOpen}
               onOptions={
@@ -1231,7 +1458,7 @@ export default function StoryNotificationsPage() {
             />
 
             <NotificationGroup
-              title="Earlier"
+              title={t('storyNotifications.earlier')}
               notifications={
                 earlierNotifications
               }
@@ -1247,18 +1474,18 @@ export default function StoryNotificationsPage() {
                   type="button"
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="h-11 w-full rounded-full bg-[#f3f4f6] text-[13px] font-semibold text-[#111827] active:scale-[0.99] disabled:text-[#9ca3af]"
+                  className="h-11 w-full rounded-full bg-[var(--shadow-bg-soft)] text-[13px] font-semibold text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:text-[var(--shadow-text-disabled)]"
                 >
                   {loadingMore
-                    ? 'Loading...'
-                    : 'Load more notifications'}
+                    ? t('storyNotifications.loading')
+                    : t('storyNotifications.loadMore')}
                 </button>
               </div>
             ) : null}
           </div>
         ) : (
           <EmptyState
-            filter={activeFilter}
+            filterKey={activeFilter}
           />
         )}
       </main>
@@ -1312,7 +1539,7 @@ export default function StoryNotificationsPage() {
           role="status"
           aria-live="polite"
         >
-          <div className="flex items-center gap-3 rounded-[16px] bg-white px-4 py-3 text-[13px] font-medium leading-5 text-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.05]">
+          <div className="flex items-center gap-3 rounded-[16px] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[13px] font-medium leading-5 text-[var(--shadow-text-primary)] shadow-[0_10px_30px_rgba(0,0,0,0.18)] ring-1 ring-[var(--shadow-border)]">
             <i className="fa-solid fa-check text-[13px]" />
             <span className="min-w-0 flex-1">
               {toast}
