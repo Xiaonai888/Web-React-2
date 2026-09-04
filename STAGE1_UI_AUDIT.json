@@ -312,6 +312,11 @@
 "src/pages/Author/AuthorBlockedReadersPage.jsx",
 "src/pages/Author/AuthorModerationHistoryPage.jsx",
 "src/pages/Author/StoryNotificationsPage.jsx",
+"src/pages/Author/StoryDescriptionGuidePage.jsx",
+"src/pages/Author/StoryPerformancePage.jsx",
+"src/pages/Author/PublishBlockedWarningPage.jsx",
+"src/pages/Author/AuthorPageDashboardPage.jsx",
+"src/pages/Author/AuthorStoreManagerPage.jsx",
   ]
 }
 
