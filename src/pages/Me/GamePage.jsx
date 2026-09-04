@@ -8,6 +8,7 @@ registerTranslationNamespace('gamePage', {
     game: 'Game',
     spin: 'Spin',
     test: 'Test',
+    open: 'Open',
     comingSoon: 'Coming soon',
   },
   km: {
@@ -15,6 +16,7 @@ registerTranslationNamespace('gamePage', {
     game: 'ហ្គេម',
     spin: 'បង្វិល',
     test: 'សាកល្បង',
+    open: 'បើក',
     comingSoon: 'មកដល់ឆាប់ៗ',
   },
   zh: {
@@ -22,6 +24,7 @@ registerTranslationNamespace('gamePage', {
     game: '游戏',
     spin: '转盘',
     test: '测试',
+    open: '打开',
     comingSoon: '即将推出',
   },
   ja: {
@@ -29,6 +32,7 @@ registerTranslationNamespace('gamePage', {
     game: 'ゲーム',
     spin: 'スピン',
     test: 'テスト',
+    open: '開く',
     comingSoon: '近日公開',
   },
   ko: {
@@ -36,6 +40,7 @@ registerTranslationNamespace('gamePage', {
     game: '게임',
     spin: '스핀',
     test: '테스트',
+    open: '열기',
     comingSoon: '출시 예정',
   },
 })
@@ -45,11 +50,13 @@ const games = [
     id: 'spin',
     nameKey: 'spin',
     icon: 'fa-solid fa-dharmachakra',
+    path: '/game/spin',
   },
   {
     id: 'test',
     nameKey: 'test',
     icon: 'fa-solid fa-flask',
+    path: '',
   },
 ]
 
@@ -81,9 +88,13 @@ export default function GamePage() {
       <main className="mx-auto max-w-5xl px-4 py-5">
         <div className="grid grid-cols-2 gap-3">
           {games.map((game) => (
-            <div
+            <button
+              type="button"
               key={game.id}
-              className="aspect-square rounded-[14px] bg-white p-4 ring-1 ring-black/[0.04] dark:bg-[#171923] dark:ring-white/10"
+              onClick={() => game.path && navigate(game.path)}
+              disabled={!game.path}
+              className="aspect-square rounded-[14px] bg-white p-4 text-center ring-1 ring-black/[0.04] transition active:scale-[0.98] disabled:cursor-default disabled:active:scale-100 dark:bg-[#171923] dark:ring-white/10"
+              aria-label={t(`gamePage.${game.nameKey}`)}
             >
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <div className="flex h-12 w-12 items-center justify-center rounded-[13px] bg-[#f5f5f7] text-[#111827] dark:bg-white/10 dark:text-white">
@@ -95,10 +106,10 @@ export default function GamePage() {
                 </div>
 
                 <div className="mt-1 text-[11px] font-normal text-[#9aa1ad] dark:text-white/45">
-                  {t('gamePage.comingSoon')}
+                  {t(game.path ? 'gamePage.open' : 'gamePage.comingSoon')}
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </main>
