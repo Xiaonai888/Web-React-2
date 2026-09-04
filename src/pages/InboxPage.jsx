@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -28,6 +28,8 @@ registerTranslationNamespace('inboxPage', {
     inbox: 'Inbox',
     subtitle: 'Messages, rewards, and admin mail',
     loadingMails: 'Loading mails...',
+    loadMore: 'Load more',
+    loadingMore: 'Loading...',
     noMail: 'No mail yet',
     noMailBody: 'Admin messages, rewards, and important account mail will appear here.',
   },
@@ -55,6 +57,8 @@ registerTranslationNamespace('inboxPage', {
     inbox: 'ប្រអប់សារ',
     subtitle: 'សារ រង្វាន់ និងសារពី Admin',
     loadingMails: 'កំពុងផ្ទុកសារ...',
+    loadMore: 'បង្ហាញបន្ថែម',
+    loadingMore: 'កំពុងផ្ទុក...',
     noMail: 'មិនទាន់មានសារ',
     noMailBody: 'សារពី Admin រង្វាន់ និងសារសំខាន់ៗអំពីគណនី នឹងបង្ហាញនៅទីនេះ។',
   },
@@ -82,6 +86,8 @@ registerTranslationNamespace('inboxPage', {
     inbox: '收件箱',
     subtitle: '消息、奖励和 Admin 邮件',
     loadingMails: '正在加载邮件...',
+    loadMore: '加载更多',
+    loadingMore: '加载中...',
     noMail: '暂无邮件',
     noMailBody: 'Admin 消息、奖励和重要账户邮件会显示在这里。',
   },
@@ -109,6 +115,8 @@ registerTranslationNamespace('inboxPage', {
     inbox: '受信トレイ',
     subtitle: 'メッセージ、報酬、Admin メール',
     loadingMails: 'メールを読み込み中...',
+    loadMore: 'さらに読み込む',
+    loadingMore: '読み込み中...',
     noMail: 'メールはまだありません',
     noMailBody: 'Admin メッセージ、報酬、重要なアカウントメールがここに表示されます。',
   },
@@ -136,12 +144,15 @@ registerTranslationNamespace('inboxPage', {
     inbox: '받은 편지함',
     subtitle: '메시지, 보상 및 Admin 메일',
     loadingMails: '메일을 불러오는 중...',
+    loadMore: '더 보기',
+    loadingMore: '불러오는 중...',
     noMail: '아직 메일이 없습니다',
     noMailBody: 'Admin 메시지, 보상 및 중요한 계정 메일이 여기에 표시됩니다.',
   },
 })
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+const MAIL_PAGE_SIZE = 30
 
 const TABS = [
   { key: 'all', label: 'All', apiType: 'all' },
@@ -203,7 +214,9 @@ function getMailIcon(mail) {
   if (type === 'event') return 'fa-solid fa-bullhorn'
   if (type === 'system') return 'fa-solid fa-gear'
 
-  return mail.sender_type === 'admin' ? 'fa-solid fa-user-shield' : 'fa-solid fa-envelope'
+  return mail.sender_type === 'admin'
+    ? 'fa-solid fa-user-shield'
+    : 'fa-solid fa-envelope'
 }
 
 function getSenderLabel(senderType) {
@@ -214,7 +227,6 @@ function formatMailTime(value) {
   if (!value) return ''
 
   const date = new Date(value)
-
   if (Number.isNaN(date.getTime())) return ''
 
   const now = new Date()
@@ -240,7 +252,6 @@ function formatDisplayMailTime(value, language, t) {
   if (!value) return ''
 
   const date = new Date(value)
-
   if (Number.isNaN(date.getTime())) return ''
 
   const now = new Date()
@@ -286,6 +297,19 @@ function normalizeMail(mail) {
     claimed: Boolean(mail.claimed_at),
     raw: mail,
   }
+}
+
+function mergeUniqueMails(current, incoming) {
+  const seen = new Set()
+  const merged = []
+
+  for (const mail of [...current, ...incoming]) {
+    if (!mail?.id || seen.has(mail.id)) continue
+    seen.add(mail.id)
+    merged.push(mail)
+  }
+
+  return merged
 }
 
 function getDisplayMailType(type, t) {
@@ -451,13 +475,18 @@ function MailDetailSheet({ mail, onClose, onClaim }) {
 export default function InboxPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
+  const requestIdRef = useRef(0)
   const [activeTab, setActiveTab] = useState('all')
   const [mails, setMails] = useState([])
   const [selectedMailId, setSelectedMailId] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
   const [errorText, setErrorText] = useState('')
 
-  const selectedMail = mails.find((mail) => mail.id === selectedMailId) || null
+  const selectedMail =
+    mails.find((mail) => mail.id === selectedMailId) || null
 
   const activeApiType = useMemo(() => {
     return TABS.find((tab) => tab.key === activeTab)?.apiType || 'all'
@@ -465,6 +494,8 @@ export default function InboxPage() {
 
   useEffect(() => {
     let ignore = false
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
 
     async function loadMails() {
       const token = getReaderToken()
@@ -476,13 +507,28 @@ export default function InboxPage() {
 
       try {
         setLoading(true)
+        setLoadingMore(false)
         setErrorText('')
+        setSelectedMailId(null)
+        setPage(1)
+        setHasMore(false)
 
-        const response = await fetch(`${API_BASE_URL}/api/mails?type=${activeApiType}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const params = new URLSearchParams({
+          type: activeApiType,
+          page: '1',
+          limit: String(MAIL_PAGE_SIZE),
+          include_counts: 'false',
         })
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/mails?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+          }
+        )
 
         const data = await response.json().catch(() => ({}))
 
@@ -495,16 +541,26 @@ export default function InboxPage() {
           throw new Error(data.message || t('inboxPage.loadFailed'))
         }
 
-        if (!ignore) {
-          setMails((data.mails || []).map(normalizeMail))
+        if (!ignore && requestIdRef.current === requestId) {
+          const nextMails = (data.mails || []).map(normalizeMail)
+          setMails(nextMails)
+          setPage(Number(data.page || 1))
+          setHasMore(
+            typeof data.has_more === 'boolean'
+              ? data.has_more
+              : nextMails.length === MAIL_PAGE_SIZE
+          )
         }
       } catch (error) {
-        if (!ignore) {
+        if (!ignore && requestIdRef.current === requestId) {
           setErrorText(error.message || t('inboxPage.loadFailed'))
           setMails([])
+          setHasMore(false)
         }
       } finally {
-        if (!ignore) setLoading(false)
+        if (!ignore && requestIdRef.current === requestId) {
+          setLoading(false)
+        }
       }
     }
 
@@ -515,28 +571,99 @@ export default function InboxPage() {
     }
   }, [activeApiType, navigate])
 
+  const handleLoadMore = async () => {
+    if (loading || loadingMore || !hasMore) return
+
+    const token = getReaderToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    const requestId = requestIdRef.current
+    const nextPage = page + 1
+
+    try {
+      setLoadingMore(true)
+      setErrorText('')
+
+      const params = new URLSearchParams({
+        type: activeApiType,
+        page: String(nextPage),
+        limit: String(MAIL_PAGE_SIZE),
+        include_counts: 'false',
+      })
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/mails?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.status === 401 || response.status === 403) {
+        navigate('/login', { replace: true })
+        return
+      }
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || t('inboxPage.loadFailed'))
+      }
+
+      if (requestIdRef.current !== requestId) return
+
+      const incoming = (data.mails || []).map(normalizeMail)
+      setMails((items) => mergeUniqueMails(items, incoming))
+      setPage(Number(data.page || nextPage))
+      setHasMore(
+        typeof data.has_more === 'boolean'
+          ? data.has_more
+          : incoming.length === MAIL_PAGE_SIZE
+      )
+    } catch (error) {
+      if (requestIdRef.current === requestId) {
+        setErrorText(error.message || t('inboxPage.loadFailed'))
+      }
+    } finally {
+      if (requestIdRef.current === requestId) {
+        setLoadingMore(false)
+      }
+    }
+  }
+
   const updateMail = (mailId, nextRawMail) => {
-    setMails((items) => items.map((mail) => (mail.id === mailId ? normalizeMail(nextRawMail) : mail)))
+    setMails((items) =>
+      items.map((mail) =>
+        mail.id === mailId ? normalizeMail(nextRawMail) : mail
+      )
+    )
   }
 
   const handleOpenMail = async (mailId) => {
     setSelectedMailId(mailId)
 
     const currentMail = mails.find((mail) => mail.id === mailId)
-
     if (!currentMail || !currentMail.unread) return
 
     const token = getReaderToken()
-
     if (!token) return
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/mails/${mailId}/read`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetch(
+        `${API_BASE_URL}/api/mails/${mailId}/read`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
 
       const data = await response.json().catch(() => ({}))
 
@@ -544,13 +671,16 @@ export default function InboxPage() {
         updateMail(mailId, data.mail)
       }
     } catch {
-      setMails((items) => items.map((mail) => (mail.id === mailId ? { ...mail, unread: false } : mail)))
+      setMails((items) =>
+        items.map((mail) =>
+          mail.id === mailId ? { ...mail, unread: false } : mail
+        )
+      )
     }
   }
 
   const handleClaim = async (mailId) => {
     const currentMail = mails.find((mail) => mail.id === mailId)
-
     if (!currentMail || currentMail.claimed) return
 
     const token = getReaderToken()
@@ -561,12 +691,15 @@ export default function InboxPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/mails/${mailId}/claim`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetch(
+        `${API_BASE_URL}/api/mails/${mailId}/claim`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
 
       const data = await response.json().catch(() => ({}))
 
@@ -652,6 +785,19 @@ export default function InboxPage() {
                 onClaim={handleClaim}
               />
             ))}
+
+            {hasMore ? (
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="flex h-12 w-full items-center justify-center rounded-[18px] bg-white text-[12px] font-extrabold text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-[0.99] disabled:opacity-60 dark:bg-[#171923] dark:text-white dark:ring-white/10"
+              >
+                {loadingMore
+                  ? t('inboxPage.loadingMore')
+                  : t('inboxPage.loadMore')}
+              </button>
+            ) : null}
           </section>
         ) : (
           <section className="rounded-[24px] bg-white px-5 py-10 text-center shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
