@@ -361,9 +361,10 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
   location.pathname.startsWith('/profile/') ||
   location.pathname.startsWith('/chat/') ||
   location.pathname.startsWith('/notifications/') ||
-  location.pathname.startsWith('/interactions/')
-  location.pathname.startsWith('/game/') ||
-  const readerToken =
+  location.pathname.startsWith('/interactions/') ||
+  location.pathname.startsWith('/game/')
+
+const readerToken =
   sessionStorage.getItem('shadow_reader_token') ||
   localStorage.getItem('shadow_reader_token') ||
   ''
@@ -395,6 +396,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <GamePage />
+    </LazyPage>
+  }
+/>
+
+          <Route
+  path="/game/spin"
+  element={
+    <LazyPage>
+      <SpinPage />
     </LazyPage>
   }
 />
