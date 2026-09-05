@@ -6,6 +6,231 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorPageNotifications', {
+  "en": {
+    "all": "All",
+    "unread": "Unread",
+    "comments": "Comments",
+    "activity": "Activity",
+    "orders": "Orders",
+    "income": "Income",
+    "system": "System",
+    "notification": "Notification",
+    "now": "Now",
+    "minutes": "{{count}}m",
+    "hours": "{{count}}h",
+    "days": "{{count}}d",
+    "pleaseLogin": "Please login first",
+    "requestFailed": "Request failed",
+    "options": "Notification options",
+    "closeOptions": "Close notification options",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "turnOffType": "Turn off {{type}} notifications",
+    "turnOnType": "Turn on {{type}} notifications",
+    "deleteNotification": "Delete this notification",
+    "reportTeam": "Report issue to Notifications Team",
+    "noFilterNotifications": "No {{filter}} notifications",
+    "emptyHelp": "Comments, reactions, echoes, followers, reviews, orders, income, and admin notices will appear here.",
+    "loadFailed": "Failed to load notifications",
+    "noTarget": "This notification does not have a target page yet.",
+    "updateFailed": "Failed to update notification",
+    "preferenceFailed": "Failed to update notification preference",
+    "deleteFailed": "Failed to delete notification",
+    "markAllFailed": "Failed to mark notifications as read",
+    "backPage": "Back to page",
+    "pageNotifications": "Page Notifications",
+    "openMessages": "Open Page messages",
+    "markAllRead": "Mark all as read",
+    "new": "New",
+    "earlier": "Earlier",
+    "loading": "Loading...",
+    "loadMore": "Load more notifications",
+    "footerNotifications": "Notifications"
+  },
+  "km": {
+    "all": "ទាំងអស់",
+    "unread": "មិនទាន់អាន",
+    "comments": "មតិយោបល់",
+    "activity": "សកម្មភាព",
+    "orders": "ការបញ្ជាទិញ",
+    "income": "ចំណូល",
+    "system": "ប្រព័ន្ធ",
+    "notification": "ការជូនដំណឹង",
+    "now": "ឥឡូវនេះ",
+    "minutes": "{{count}}នាទី",
+    "hours": "{{count}}ម៉ោង",
+    "days": "{{count}}ថ្ងៃ",
+    "pleaseLogin": "សូមចូលគណនីជាមុន",
+    "requestFailed": "សំណើបានបរាជ័យ",
+    "options": "ជម្រើសការជូនដំណឹង",
+    "closeOptions": "បិទជម្រើសការជូនដំណឹង",
+    "showMore": "បង្ហាញច្រើនជាងនេះ",
+    "showLess": "បង្ហាញតិចជាងនេះ",
+    "markRead": "សម្គាល់ថាបានអាន",
+    "markUnread": "សម្គាល់ថាមិនទាន់អាន",
+    "turnOffType": "បិទការជូនដំណឹង {{type}}",
+    "turnOnType": "បើកការជូនដំណឹង {{type}}",
+    "deleteNotification": "លុបការជូនដំណឹងនេះ",
+    "reportTeam": "រាយការណ៍បញ្ហាទៅក្រុម Notifications",
+    "noFilterNotifications": "មិនមានការជូនដំណឹង {{filter}}",
+    "emptyHelp": "មតិយោបល់ ប្រតិកម្ម Echo អ្នក Follow Review ការបញ្ជាទិញ ចំណូល និងសេចក្តីជូនដំណឹងពី Admin នឹងបង្ហាញនៅទីនេះ។",
+    "loadFailed": "មិនអាចផ្ទុកការជូនដំណឹងបានទេ",
+    "noTarget": "ការជូនដំណឹងនេះមិនទាន់មានទំព័រគោលដៅទេ។",
+    "updateFailed": "មិនអាចកែការជូនដំណឹងបានទេ",
+    "preferenceFailed": "មិនអាចកែការកំណត់ការជូនដំណឹងបានទេ",
+    "deleteFailed": "មិនអាចលុបការជូនដំណឹងបានទេ",
+    "markAllFailed": "មិនអាចសម្គាល់ការជូនដំណឹងថាបានអានបានទេ",
+    "backPage": "ត្រឡប់ទៅទំព័រ",
+    "pageNotifications": "ការជូនដំណឹងទំព័រ",
+    "openMessages": "បើកសារទំព័រ",
+    "markAllRead": "សម្គាល់ទាំងអស់ថាបានអាន",
+    "new": "ថ្មី",
+    "earlier": "មុននេះ",
+    "loading": "កំពុងផ្ទុក...",
+    "loadMore": "ផ្ទុកការជូនដំណឹងបន្ថែម",
+    "footerNotifications": "ការជូនដំណឹង"
+  },
+  "zh": {
+    "all": "全部",
+    "unread": "未读",
+    "comments": "评论",
+    "activity": "动态",
+    "orders": "订单",
+    "income": "收入",
+    "system": "系统",
+    "notification": "通知",
+    "now": "刚刚",
+    "minutes": "{{count}}分钟",
+    "hours": "{{count}}小时",
+    "days": "{{count}}天",
+    "pleaseLogin": "请先登录",
+    "requestFailed": "请求失败",
+    "options": "通知选项",
+    "closeOptions": "关闭通知选项",
+    "showMore": "显示更多",
+    "showLess": "显示更少",
+    "markRead": "标记为已读",
+    "markUnread": "标记为未读",
+    "turnOffType": "关闭{{type}}通知",
+    "turnOnType": "开启{{type}}通知",
+    "deleteNotification": "删除此通知",
+    "reportTeam": "向通知团队报告问题",
+    "noFilterNotifications": "没有{{filter}}通知",
+    "emptyHelp": "评论、反应、Echo、关注、评价、订单、收入和管理员通知会显示在这里。",
+    "loadFailed": "无法加载通知",
+    "noTarget": "此通知暂时没有目标页面。",
+    "updateFailed": "无法更新通知",
+    "preferenceFailed": "无法更新通知偏好",
+    "deleteFailed": "无法删除通知",
+    "markAllFailed": "无法将通知标记为已读",
+    "backPage": "返回页面",
+    "pageNotifications": "页面通知",
+    "openMessages": "打开页面消息",
+    "markAllRead": "全部标记为已读",
+    "new": "新通知",
+    "earlier": "较早",
+    "loading": "加载中...",
+    "loadMore": "加载更多通知",
+    "footerNotifications": "通知"
+  },
+  "ja": {
+    "all": "すべて",
+    "unread": "未読",
+    "comments": "コメント",
+    "activity": "アクティビティ",
+    "orders": "注文",
+    "income": "収益",
+    "system": "システム",
+    "notification": "通知",
+    "now": "今",
+    "minutes": "{{count}}分",
+    "hours": "{{count}}時間",
+    "days": "{{count}}日",
+    "pleaseLogin": "先にログインしてください",
+    "requestFailed": "リクエストに失敗しました",
+    "options": "通知オプション",
+    "closeOptions": "通知オプションを閉じる",
+    "showMore": "表示を増やす",
+    "showLess": "表示を減らす",
+    "markRead": "既読にする",
+    "markUnread": "未読にする",
+    "turnOffType": "{{type}}通知をオフにする",
+    "turnOnType": "{{type}}通知をオンにする",
+    "deleteNotification": "この通知を削除",
+    "reportTeam": "通知チームに問題を報告",
+    "noFilterNotifications": "{{filter}}通知はありません",
+    "emptyHelp": "コメント、リアクション、Echo、フォロワー、レビュー、注文、収益、管理者通知がここに表示されます。",
+    "loadFailed": "通知を読み込めませんでした",
+    "noTarget": "この通知にはまだ移動先ページがありません。",
+    "updateFailed": "通知を更新できませんでした",
+    "preferenceFailed": "通知設定を更新できませんでした",
+    "deleteFailed": "通知を削除できませんでした",
+    "markAllFailed": "通知を既読にできませんでした",
+    "backPage": "ページに戻る",
+    "pageNotifications": "ページ通知",
+    "openMessages": "ページメッセージを開く",
+    "markAllRead": "すべて既読にする",
+    "new": "新着",
+    "earlier": "以前",
+    "loading": "読み込み中...",
+    "loadMore": "通知をさらに読み込む",
+    "footerNotifications": "通知"
+  },
+  "ko": {
+    "all": "전체",
+    "unread": "읽지 않음",
+    "comments": "댓글",
+    "activity": "활동",
+    "orders": "주문",
+    "income": "수입",
+    "system": "시스템",
+    "notification": "알림",
+    "now": "지금",
+    "minutes": "{{count}}분",
+    "hours": "{{count}}시간",
+    "days": "{{count}}일",
+    "pleaseLogin": "먼저 로그인해 주세요",
+    "requestFailed": "요청에 실패했습니다",
+    "options": "알림 옵션",
+    "closeOptions": "알림 옵션 닫기",
+    "showMore": "더 많이 보기",
+    "showLess": "덜 보기",
+    "markRead": "읽음으로 표시",
+    "markUnread": "읽지 않음으로 표시",
+    "turnOffType": "{{type}} 알림 끄기",
+    "turnOnType": "{{type}} 알림 켜기",
+    "deleteNotification": "이 알림 삭제",
+    "reportTeam": "알림 팀에 문제 신고",
+    "noFilterNotifications": "{{filter}} 알림이 없습니다",
+    "emptyHelp": "댓글, 반응, Echo, 팔로워, 리뷰, 주문, 수입 및 관리자 알림이 여기에 표시됩니다.",
+    "loadFailed": "알림을 불러오지 못했습니다",
+    "noTarget": "이 알림에는 아직 이동할 페이지가 없습니다.",
+    "updateFailed": "알림을 업데이트하지 못했습니다",
+    "preferenceFailed": "알림 설정을 업데이트하지 못했습니다",
+    "deleteFailed": "알림을 삭제하지 못했습니다",
+    "markAllFailed": "알림을 읽음으로 표시하지 못했습니다",
+    "backPage": "페이지로 돌아가기",
+    "pageNotifications": "페이지 알림",
+    "openMessages": "페이지 메시지 열기",
+    "markAllRead": "모두 읽음으로 표시",
+    "new": "새 알림",
+    "earlier": "이전",
+    "loading": "로딩 중...",
+    "loadMore": "알림 더 보기",
+    "footerNotifications": "알림"
+  }
+})
+
+function pageNotificationText(key, options) {
+  return getDisplayText(`authorPageNotifications.${key}`, options)
+}
+
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import { resolveAuthorPostActivityRoute } from '../../utils/authorPostActivityRoute'
@@ -19,32 +244,32 @@ const API_BASE_URL =
 const PAGE_SIZE = 30
 
 const filters = [
-  'All',
-  'Unread',
-  'Comments',
-  'Activity',
-  'Orders',
-  'Income',
+  { value: 'all', labelKey: 'all' },
+  { value: 'unread', labelKey: 'unread' },
+  { value: 'comments', labelKey: 'comments' },
+  { value: 'activity', labelKey: 'activity' },
+  { value: 'orders', labelKey: 'orders' },
+  { value: 'income', labelKey: 'income' },
 ]
 
 const typeMap = {
-  comments: 'Comments',
-  comment: 'Comments',
-  mention: 'Comments',
-  mentions: 'Comments',
-  reaction: 'Activity',
-  echo: 'Activity',
-  follower: 'Activity',
-  review: 'Activity',
-  post: 'Activity',
-  posts: 'Activity',
-  orders: 'Orders',
-  order: 'Orders',
-  income: 'Income',
-  withdrawal: 'Income',
-  payout: 'Income',
-  system: 'System',
-  admin: 'System',
+  comments: 'comments',
+  comment: 'comments',
+  mention: 'comments',
+  mentions: 'comments',
+  reaction: 'activity',
+  echo: 'activity',
+  follower: 'activity',
+  review: 'activity',
+  post: 'activity',
+  posts: 'activity',
+  orders: 'orders',
+  order: 'orders',
+  income: 'income',
+  withdrawal: 'income',
+  payout: 'income',
+  system: 'system',
+  admin: 'system',
 }
 
 const actionMap = {
@@ -126,12 +351,16 @@ function getAuthToken() {
   )
 }
 
-function getNotificationTypeLabel(type) {
+function getNotificationTypeKey(type) {
   return (
     typeMap[
       String(type || '').toLowerCase()
-    ] || 'System'
+    ] || 'system'
   )
+}
+
+function getNotificationTypeLabel(type) {
+  return getNotificationTypeKey(type)
 }
 
 function getAction(type) {
@@ -146,12 +375,12 @@ function getAction(type) {
 }
 
 function formatTime(value) {
-  if (!value) return 'Now'
+  if (!value) return pageNotificationText('now')
 
   const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) {
-    return 'Now'
+    return pageNotificationText('now')
   }
 
   const diffMs = Date.now() - date.getTime()
@@ -159,9 +388,9 @@ function formatTime(value) {
     diffMs / 60000
   )
 
-  if (diffMinutes < 1) return 'Now'
+  if (diffMinutes < 1) return pageNotificationText('now')
   if (diffMinutes < 60) {
-    return `${diffMinutes}m`
+    return pageNotificationText('minutes', { count: diffMinutes })
   }
 
   const diffHours = Math.floor(
@@ -169,7 +398,7 @@ function formatTime(value) {
   )
 
   if (diffHours < 24) {
-    return `${diffHours}h`
+    return pageNotificationText('hours', { count: diffHours })
   }
 
   const diffDays = Math.floor(
@@ -177,11 +406,11 @@ function formatTime(value) {
   )
 
   if (diffDays < 7) {
-    return `${diffDays}d`
+    return pageNotificationText('days', { count: diffDays })
   }
 
   return date.toLocaleDateString(
-    'en-GB',
+    getDisplayLanguageId(),
     {
       day: '2-digit',
       month: 'short',
@@ -228,12 +457,12 @@ function normalizeNotification(item) {
   return {
     id: item.id,
     type: effectiveType,
-    typeLabel:
-      getNotificationTypeLabel(
+    typeKey:
+      getNotificationTypeKey(
         effectiveType
       ),
     title:
-      item.title || 'Notification',
+      item.title || pageNotificationText('notification'),
     message: item.message || '',
     targetUrl:
       item.target_url ||
@@ -261,7 +490,7 @@ async function apiRequest(
 
   if (!token) {
     throw new Error(
-      'Please login first'
+      pageNotificationText('pleaseLogin')
     )
   }
 
@@ -292,7 +521,7 @@ async function apiRequest(
   ) {
     throw new Error(
       data.message ||
-        'Request failed'
+        pageNotificationText('requestFailed')
     )
   }
 
@@ -413,7 +642,7 @@ function NotificationAvatar({
   )
   const fallbackText = String(
     notification.actorName ||
-      notification.typeLabel ||
+      pageNotificationText(notification.typeKey || 'system') ||
       'N'
   )
     .trim()
@@ -428,16 +657,16 @@ function NotificationAvatar({
             notification.actorAvatarUrl
           }
           alt=""
-          className="h-14 w-14 rounded-full object-cover ring-1 ring-black/5"
+          className="h-14 w-14 rounded-full object-cover ring-1 ring-[var(--shadow-border)]"
         />
       ) : (
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e5e7eb] text-[18px] font-bold text-[#4b5563]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[18px] font-bold text-[var(--shadow-text-secondary)]">
           {fallbackText}
         </div>
       )}
 
       <span
-        className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white ${action.badge}`}
+        className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--shadow-bg-surface)] ${action.badge}`}
       >
         <i
           className={`${action.icon} text-[10px]`}
@@ -457,7 +686,7 @@ function NotificationItem({
       className={`flex w-full items-start gap-3 px-4 py-3 transition ${
         notification.unread
           ? 'bg-[#eef6ff]'
-          : 'bg-white'
+          : 'bg-[var(--shadow-bg-surface)]'
       }`}
     >
       <button
@@ -473,7 +702,7 @@ function NotificationItem({
 
         <div className="min-w-0 flex-1 pt-0.5">
           <p
-            className={`line-clamp-3 text-[14px] leading-5 text-[#111827] ${
+            className={`line-clamp-3 text-[14px] leading-5 text-[var(--shadow-text-primary)] ${
               notification.unread
                 ? 'font-bold'
                 : 'font-semibold'
@@ -481,7 +710,7 @@ function NotificationItem({
           >
             {notification.title}
             {notification.message ? (
-              <span className="font-medium text-[#4b5563]">
+              <span className="font-medium text-[var(--shadow-text-secondary)]">
                 {' '}
                 ·{' '}
                 {
@@ -496,17 +725,17 @@ function NotificationItem({
               className={`text-[12px] ${
                 notification.unread
                   ? 'font-bold text-[#1877f2]'
-                  : 'font-semibold text-[#8b93a1]'
+                  : 'font-semibold text-[var(--shadow-text-tertiary)]'
               }`}
             >
               {notification.time}
             </span>
 
-            <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
+            <span className="h-1 w-1 rounded-full bg-[var(--shadow-border-strong)]" />
 
-            <span className="text-[12px] font-semibold text-[#8b93a1]">
+            <span className="text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">
               {
-                notification.typeLabel
+                pageNotificationText(notification.typeKey || 'system')
               }
             </span>
           </div>
@@ -523,8 +752,8 @@ function NotificationItem({
           onClick={() =>
             onOptions(notification)
           }
-          className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:bg-[#eef0f4]"
-          aria-label="Notification options"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
+          aria-label={pageNotificationText('options')}
         >
           <i className="fa-solid fa-ellipsis text-[15px]" />
         </button>
@@ -544,12 +773,12 @@ function NotificationGroup({
   }
 
   return (
-    <section className="bg-white">
-      <h2 className="px-4 pb-2 pt-4 text-[15px] font-bold text-[#111827]">
+    <section className="bg-[var(--shadow-bg-surface)]">
+      <h2 className="px-4 pb-2 pt-4 text-[15px] font-bold text-[var(--shadow-text-primary)]">
         {title}
       </h2>
 
-      <div className="bg-white">
+      <div className="bg-[var(--shadow-bg-surface)]">
         {notifications.map(
           (notification) => (
             <NotificationItem
@@ -577,11 +806,11 @@ function LoadingState() {
           key={index}
           className="mb-3 flex animate-pulse gap-3 py-2"
         >
-          <div className="h-14 w-14 shrink-0 rounded-full bg-[#eef0f4]" />
+          <div className="h-14 w-14 shrink-0 rounded-full bg-[var(--shadow-bg-soft)]" />
 
           <div className="min-w-0 flex-1 pt-1">
-            <div className="h-4 w-4/5 rounded bg-[#eef0f4]" />
-            <div className="mt-2 h-3 w-2/5 rounded bg-[#f3f4f6]" />
+            <div className="h-4 w-4/5 rounded bg-[var(--shadow-bg-soft)]" />
+            <div className="mt-2 h-3 w-2/5 rounded bg-[var(--shadow-bg-hover)]" />
           </div>
         </div>
       ))}
@@ -591,22 +820,19 @@ function LoadingState() {
 
 function EmptyState({ filter }) {
   return (
-    <div className="bg-white px-6 py-16 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+    <div className="bg-[var(--shadow-bg-surface)] px-6 py-16 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-hover)] text-[var(--shadow-text-primary)]">
         <i className="fa-regular fa-bell text-[20px]" />
       </div>
 
-      <h2 className="text-[17px] font-bold text-[#111827]">
-        No{' '}
-        {filter.toLowerCase()}{' '}
-        notifications
+      <h2 className="text-[17px] font-bold text-[var(--shadow-text-primary)]">
+        {pageNotificationText('noFilterNotifications', {
+          filter: pageNotificationText(filter || 'all'),
+        })}
       </h2>
 
-      <p className="mx-auto mt-2 max-w-[340px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        Comments, reactions,
-        echoes, followers, reviews,
-        orders, income, and admin
-        notices will appear here.
+      <p className="mx-auto mt-2 max-w-[340px] text-[13px] font-semibold leading-6 text-[var(--shadow-text-tertiary)]">
+        {pageNotificationText('emptyHelp')}
       </p>
     </div>
   )
@@ -677,7 +903,7 @@ function OptionsSheet({
 
   const fallbackText = String(
     notification.actorName ||
-      notification.typeLabel ||
+      pageNotificationText(notification.typeKey || 'system') ||
       'N'
   )
     .trim()
@@ -741,17 +967,17 @@ function OptionsSheet({
       className="fixed inset-0 z-[120]"
       role="dialog"
       aria-modal="true"
-      aria-label="Notification options"
+      aria-label={pageNotificationText('options')}
     >
       <button
         type="button"
         onClick={closeSheet}
         className="absolute inset-0 bg-black/45"
-        aria-label="Close notification options"
+        aria-label={pageNotificationText('closeOptions')}
       />
 
       <section
-        className={`absolute inset-x-0 bottom-0 mx-auto max-h-[88vh] w-full max-w-[520px] overflow-y-auto rounded-t-[24px] bg-white pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
+        className={`absolute inset-x-0 bottom-0 mx-auto max-h-[88vh] w-full max-w-[520px] overflow-y-auto rounded-t-[24px] bg-[var(--shadow-bg-surface)] pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
           dragging
             ? ''
             : 'transition-transform duration-200 ease-out'
@@ -775,7 +1001,7 @@ function OptionsSheet({
             handleDragEnd
           }
         >
-          <div className="mx-auto h-1.5 w-11 rounded-full bg-[#cfd3da]" />
+          <div className="mx-auto h-1.5 w-11 rounded-full bg-[var(--shadow-border-strong)]" />
         </div>
 
         <div className="px-5 pb-3 text-center">
@@ -785,16 +1011,16 @@ function OptionsSheet({
                 notification.actorAvatarUrl
               }
               alt=""
-              className="mx-auto h-12 w-12 rounded-full object-cover ring-1 ring-black/5"
+              className="mx-auto h-12 w-12 rounded-full object-cover ring-1 ring-[var(--shadow-border)]"
             />
           ) : (
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#e5e7eb] text-[16px] font-semibold text-[#4b5563]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[16px] font-semibold text-[var(--shadow-text-secondary)]">
               {fallbackText}
             </div>
           )}
 
-          <p className="mx-auto mt-3 max-w-[330px] text-[13px] font-normal leading-5 text-[#4b5563]">
-            <span className="text-[#111827]">
+          <p className="mx-auto mt-3 max-w-[330px] text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+            <span className="text-[var(--shadow-text-primary)]">
               {notification.title}
             </span>
 
@@ -811,14 +1037,14 @@ function OptionsSheet({
             onClick={onShowMore}
             className={`${actionClass} ${
               frequencyLevel === 'more'
-                ? 'bg-black/[0.055] text-black'
-                : 'text-[#5f6368]'
+                ? 'bg-black/[0.055] text-[var(--shadow-text-primary)]'
+                : 'text-[var(--shadow-text-secondary)]'
             }`}
           >
             <i className="fa-solid fa-plus w-5 text-center text-[16px]" />
 
             <span className="flex-1">
-              Show more
+              {pageNotificationText('showMore')}
             </span>
 
             {frequencyLevel ===
@@ -833,14 +1059,14 @@ function OptionsSheet({
             onClick={onShowLess}
             className={`${actionClass} ${
               frequencyLevel === 'less'
-                ? 'bg-black/[0.055] text-black'
-                : 'text-[#5f6368]'
+                ? 'bg-black/[0.055] text-[var(--shadow-text-primary)]'
+                : 'text-[var(--shadow-text-secondary)]'
             }`}
           >
             <i className="fa-solid fa-minus w-5 text-center text-[16px]" />
 
             <span className="flex-1">
-              Show less
+              {pageNotificationText('showLess')}
             </span>
 
             {frequencyLevel ===
@@ -853,7 +1079,7 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onToggleRead}
-            className={`${actionClass} text-black`}
+            className={`${actionClass} text-[var(--shadow-text-primary)]`}
           >
             <i
               className={`w-5 text-center text-[16px] ${
@@ -865,8 +1091,8 @@ function OptionsSheet({
 
             <span>
               {notification.unread
-                ? 'Mark as read'
-                : 'Mark as unread'}
+                ? pageNotificationText('markRead')
+                : pageNotificationText('markUnread')}
             </span>
           </button>
 
@@ -874,7 +1100,7 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onToggleType}
-            className={`${actionClass} text-black`}
+            className={`${actionClass} text-[var(--shadow-text-primary)]`}
           >
             <i
               className={`fa-solid ${
@@ -885,12 +1111,12 @@ function OptionsSheet({
             />
 
             <span>
-              Turn{' '}
-              {notificationEnabled
-                ? 'off'
-                : 'on'}{' '}
-              {notification.typeLabel.toLowerCase()}{' '}
-              notifications
+              {
+              pageNotificationText(
+                notificationEnabled ? 'turnOffType' : 'turnOnType',
+                { type: pageNotificationText(notification.typeKey || 'system') }
+              )
+            }
             </span>
           </button>
 
@@ -898,12 +1124,12 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onDelete}
-            className={`${actionClass} text-black`}
+            className={`${actionClass} text-[var(--shadow-text-primary)]`}
           >
             <i className="fa-regular fa-trash-can w-5 text-center text-[16px]" />
 
             <span>
-              Delete this notification
+              {pageNotificationText('deleteNotification')}
             </span>
           </button>
 
@@ -911,13 +1137,12 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onReport}
-            className={`${actionClass} text-black`}
+            className={`${actionClass} text-[var(--shadow-text-primary)]`}
           >
             <i className="fa-solid fa-triangle-exclamation w-5 text-center text-[16px]" />
 
             <span>
-              Report issue to
-              Notifications Team
+              {pageNotificationText('reportTeam')}
             </span>
           </button>
         </div>
@@ -927,6 +1152,7 @@ function OptionsSheet({
 }
 
 export default function AuthorPageNotificationsPage() {
+  useDisplayTranslation()
   const navigate = useNavigate()
   const {
   authorUnreadCount: unreadCount,
@@ -936,7 +1162,7 @@ export default function AuthorPageNotificationsPage() {
   lastCreatedNotification,
 } = useAuthorPageNotifications()
   const [activeFilter, setActiveFilter] =
-    useState('All')
+    useState('all')
   const [message, setMessage] =
     useState('')
   const [
@@ -1042,7 +1268,7 @@ export default function AuthorPageNotificationsPage() {
 
           setMessage(
             error.message ||
-              'Failed to load notifications'
+              pageNotificationText('loadFailed')
           )
         } finally {
           if (append) {
@@ -1086,12 +1312,12 @@ export default function AuthorPageNotificationsPage() {
 
   const filteredNotifications =
     useMemo(() => {
-      if (activeFilter === 'All') {
+      if (activeFilter === 'all') {
         return notifications
       }
 
       if (
-        activeFilter === 'Unread'
+        activeFilter === 'unread'
       ) {
         return notifications.filter(
           (item) => item.unread
@@ -1100,7 +1326,7 @@ export default function AuthorPageNotificationsPage() {
 
       return notifications.filter(
         (item) =>
-          item.typeLabel ===
+          item.typeKey ===
           activeFilter
       )
     }, [
@@ -1199,7 +1425,7 @@ export default function AuthorPageNotificationsPage() {
   }
 
   setMessage(
-    'This notification does not have a target page yet.'
+    pageNotificationText('noTarget')
   )
 }
 
@@ -1258,7 +1484,7 @@ export default function AuthorPageNotificationsPage() {
     } catch (error) {
       setMessage(
         error.message ||
-          'Failed to update notification'
+          pageNotificationText('updateFailed')
       )
     } finally {
       setOptionsLoading(false)
@@ -1311,7 +1537,7 @@ export default function AuthorPageNotificationsPage() {
     } catch (error) {
       setMessage(
         error.message ||
-          'Failed to update notification preference'
+          pageNotificationText('preferenceFailed')
       )
     } finally {
       setOptionsLoading(false)
@@ -1376,7 +1602,7 @@ export default function AuthorPageNotificationsPage() {
     } catch (error) {
       setMessage(
         error.message ||
-          'Failed to update notification preference'
+          pageNotificationText('preferenceFailed')
       )
     } finally {
       setOptionsLoading(false)
@@ -1416,7 +1642,7 @@ export default function AuthorPageNotificationsPage() {
     } catch (error) {
       setMessage(
         error.message ||
-          'Failed to delete notification'
+          pageNotificationText('deleteFailed')
       )
     } finally {
       setOptionsLoading(false)
@@ -1440,7 +1666,7 @@ export default function AuthorPageNotificationsPage() {
     } catch (error) {
       setMessage(
         error.message ||
-          'Failed to mark notifications as read'
+          pageNotificationText('markAllFailed')
       )
     }
   }
@@ -1461,9 +1687,9 @@ export default function AuthorPageNotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[92px]">
+    <div className="min-h-screen bg-[var(--shadow-bg-surface)] pb-[92px]">
       <div
-        className={`sticky top-0 z-40 bg-white ${
+        className={`sticky top-0 z-40 bg-[var(--shadow-bg-surface)] ${
           selectedNotification
             ? 'invisible'
             : ''
@@ -1475,14 +1701,14 @@ export default function AuthorPageNotificationsPage() {
             onClick={() =>
               navigate('/author/page')
             }
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Back to page"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
+            aria-label={pageNotificationText('backPage')}
           >
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <div className="text-[18px] font-bold text-[#111827]">
-            Page Notifications
+          <div className="text-[18px] font-bold text-[var(--shadow-text-primary)]">
+            {pageNotificationText('pageNotifications')}
           </div>
 
           <div className="flex items-center gap-1">
@@ -1491,8 +1717,8 @@ export default function AuthorPageNotificationsPage() {
     onClick={() =>
       navigate('/author/page/chat')
     }
-    className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] active:scale-95"
-    aria-label="Open Page messages"
+    className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)] active:scale-95"
+    aria-label={pageNotificationText('openMessages')}
   >
     <i className="fa-regular fa-paper-plane text-[18px]" />
   </button>
@@ -1503,8 +1729,8 @@ export default function AuthorPageNotificationsPage() {
       handleMarkAllRead
     }
     disabled={!unreadCount}
-    className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 disabled:opacity-30"
-    aria-label="Mark all as read"
+    className="flex h-10 w-10 items-center justify-center text-[var(--shadow-text-primary)] active:scale-95 disabled:opacity-30"
+    aria-label={pageNotificationText('markAllRead')}
   >
     <i className="fa-solid fa-broom text-[17px]" />
   </button>
@@ -1512,7 +1738,7 @@ export default function AuthorPageNotificationsPage() {
         </div>
       </div>
 
-      <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-white">
+      <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-[var(--shadow-bg-surface)]">
         {message ? (
           <button
             type="button"
@@ -1525,31 +1751,31 @@ export default function AuthorPageNotificationsPage() {
           </button>
         ) : null}
 
-        <section className="sticky top-14 z-30 bg-white">
+        <section className="sticky top-14 z-30 bg-[var(--shadow-bg-surface)]">
           <div className="flex gap-2 overflow-x-auto px-4 py-2">
             {filters.map((filter) => {
               const active =
-                activeFilter === filter
+                activeFilter === filter.value
 
               return (
                 <button
-                  key={filter}
+                  key={filter.value}
                   type="button"
                   onClick={() =>
                     setActiveFilter(
-                      filter
+                      filter.value
                     )
                   }
                   className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition hover:bg-black/[0.045] active:scale-[0.98] ${
                     active
-                      ? 'bg-black/[0.065] font-semibold text-[#111827]'
-                      : 'bg-transparent font-normal text-[#9ca3af]'
+                      ? 'bg-black/[0.065] font-semibold text-[var(--shadow-text-primary)]'
+                      : 'bg-transparent font-normal text-[var(--shadow-text-tertiary)]'
                   }`}
                 >
-                  {filter}
+                  {pageNotificationText(filter.labelKey)}
 
-                  {filter ===
-                    'Unread' &&
+                  {filter.value ===
+                    'unread' &&
                   unreadCount > 0 ? (
                     <span className="ml-1.5 text-[11px] font-bold">
                       {unreadCount}
@@ -1564,9 +1790,9 @@ export default function AuthorPageNotificationsPage() {
         {loading ? (
           <LoadingState />
         ) : filteredNotifications.length ? (
-          <div className="bg-white">
+          <div className="bg-[var(--shadow-bg-surface)]">
             <NotificationGroup
-              title="New"
+              title={pageNotificationText('new')}
               notifications={
                 newNotifications
               }
@@ -1577,7 +1803,7 @@ export default function AuthorPageNotificationsPage() {
             />
 
             <NotificationGroup
-              title="Earlier"
+              title={pageNotificationText('earlier')}
               notifications={
                 earlierNotifications
               }
@@ -1597,11 +1823,11 @@ export default function AuthorPageNotificationsPage() {
                   disabled={
                     loadingMore
                   }
-                  className="h-11 w-full rounded-full bg-[#f3f4f6] text-[13px] font-semibold text-[#111827] active:scale-[0.99] disabled:text-[#9ca3af]"
+                  className="h-11 w-full rounded-full bg-[var(--shadow-bg-hover)] text-[13px] font-semibold text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:text-[var(--shadow-text-tertiary)]"
                 >
                   {loadingMore
-                    ? 'Loading...'
-                    : 'Load more notifications'}
+                    ? pageNotificationText('loading')
+                    : pageNotificationText('loadMore')}
                 </button>
               </div>
             ) : null}
