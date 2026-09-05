@@ -317,6 +317,11 @@
 "src/pages/Author/PublishBlockedWarningPage.jsx",
 "src/pages/Author/AuthorPageDashboardPage.jsx",
 "src/pages/Author/AuthorStoreManagerPage.jsx",
+"src/pages/Author/AuthorPageEditDetailsPage.jsx",
+"src/pages/Author/AuthorEditPage.jsx",
+"src/pages/Author/AuthorPageNotificationsPage.jsx",
+"src/pages/Author/AuthorPostsContentLibraryPage.jsx",
+"src/pages/Author/AuthorPageSettingsPage.jsx",
   ]
 }
 
