@@ -2653,9 +2653,11 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
       <div className="overflow-hidden rounded-[20px] border border-[#e5e7eb] bg-white shadow-sm">
         <div className="relative aspect-[2/3] overflow-hidden bg-[#f2f4f7]">
         <img src={page.previewUrl || page.imageUrl} alt={`Manga page ${index + 1}`} className="h-full w-full object-contain" />
-        <div className="absolute left-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-full bg-black/75 px-2 text-[11px] font-black text-white">
-          {index + 1}
-        </div>
+        {page.status === 'processing' && page.serverProcessing ? (
+  <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10">
+    <i className="fa-solid fa-spinner animate-spin text-[28px] text-white drop-shadow-lg" />
+  </div>
+) : null}
         {page.status === 'error' ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/45 px-4 text-center text-[12px] font-bold leading-5 text-white">
             {page.error || 'Upload failed'}
