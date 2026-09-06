@@ -65,26 +65,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
       ? 'Preparing'
       : 'Uploading'
 
-  if (batchAccepted) {
-    return (
-      <div className="pointer-events-none fixed inset-x-0 bottom-[max(16px,env(safe-area-inset-bottom))] z-[260] px-4">
-        <div className="mx-auto flex w-full max-w-[430px] items-center gap-3 rounded-[18px] border border-[#e5e7eb] bg-white px-4 py-3 shadow-[0_16px_44px_rgba(17,24,39,0.18)]">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f3] text-[#FE526E]">
-            <i className="fa-solid fa-spinner animate-spin text-[15px]" />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="text-[12.5px] font-extrabold text-[#111827]">
-              Manga is continuing in background
-            </div>
-            <div className="mt-1 text-[10.5px] font-medium leading-4 text-[#667085]">
-              You can keep editing while we finish processing. {completedCount}/{items.length} ready.
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (batchAccepted) return null
 
   const radius = 52
   const circumference = 2 * Math.PI * radius
