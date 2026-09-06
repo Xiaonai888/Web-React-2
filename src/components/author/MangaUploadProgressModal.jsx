@@ -25,29 +25,67 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     items.find((page) => page.status === 'processing') ||
     items.find((page) => page.status === 'queued') ||
     items[items.length - 1]
+
   const serverProcessing = items.some(
-  (page) =>
-    page.status === 'processing' &&
-    page.serverProcessing
-)
-const canCancel = !serverProcessing
+    (page) =>
+      page.status === 'processing' &&
+      page.serverProcessing
+  )
+
+  const batchAccepted = items.some(
+    (page) =>
+      Boolean(page.serverProcessing) &&
+      (page.status === 'processing' || page.status === 'done')
+  )
+
+  const canCancel = !serverProcessing
 
   const currentTotal = Number(
     current?.uploadTotalBytes || current?.fileSize || current?.sourceFile?.size || 0
   )
+
   const currentLoaded = current?.status === 'done'
     ? currentTotal
     : Math.min(Number(current?.uploadedBytes || 0), currentTotal)
+
   const currentPercent = currentTotal > 0
     ? Math.min(100, Math.round((currentLoaded / currentTotal) * 100))
     : 0
-  const speed = items.reduce((sum, page) => sum + Number(page.uploadSpeed || 0), 0)
+
+  const speed = items.reduce(
+    (sum, page) => sum + Number(page.uploadSpeed || 0),
+    0
+  )
+
   const currentName = current?.sourceFile?.name || 'Manga page'
+
   const currentLabel = current?.serverProcessing
-  ? 'Processing'
-  : current?.status === 'processing'
-    ? 'Preparing'
-    : 'Uploading'
+    ? 'Processing'
+    : current?.status === 'processing'
+      ? 'Preparing'
+      : 'Uploading'
+
+  if (batchAccepted) {
+    return (
+      <div className="pointer-events-none fixed inset-x-0 bottom-[max(16px,env(safe-area-inset-bottom))] z-[260] px-4">
+        <div className="mx-auto flex w-full max-w-[430px] items-center gap-3 rounded-[18px] border border-[#e5e7eb] bg-white px-4 py-3 shadow-[0_16px_44px_rgba(17,24,39,0.18)]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f3] text-[#FE526E]">
+            <i className="fa-solid fa-spinner animate-spin text-[15px]" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="text-[12.5px] font-extrabold text-[#111827]">
+              Manga is continuing in background
+            </div>
+            <div className="mt-1 text-[10.5px] font-medium leading-4 text-[#667085]">
+              You can keep editing while we finish processing. {completedCount}/{items.length} ready.
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const radius = 52
   const circumference = 2 * Math.PI * radius
   const dashOffset = circumference - (overallPercent / 100) * circumference
@@ -60,6 +98,7 @@ const canCancel = !serverProcessing
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef4ff] text-[#0b5cff]">
               <i className="fa-solid fa-cloud-arrow-up text-[16px]" />
             </div>
+
             <div className="min-w-0">
               <h2 className="truncate text-[16px] font-extrabold text-[#111827]">
                 Uploading Manga Pages
@@ -73,9 +112,9 @@ const canCancel = !serverProcessing
           <button
             type="button"
             onClick={onCancel}
-disabled={!canCancel}
-className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-35"
-aria-label={canCancel ? 'Cancel Upload' : 'Processing on server'}
+            disabled={!canCancel}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-35"
+            aria-label={canCancel ? 'Cancel Upload' : 'Processing on server'}
           >
             <i className="fa-solid fa-xmark text-[15px]" />
           </button>
@@ -83,7 +122,11 @@ aria-label={canCancel ? 'Cancel Upload' : 'Processing on server'}
 
         <div className="mt-5 flex justify-center">
           <div className="relative h-[142px] w-[142px]">
-            <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
+            <svg
+              className="h-full w-full -rotate-90"
+              viewBox="0 0 120 120"
+              aria-hidden="true"
+            >
               <circle
                 cx="60"
                 cy="60"
@@ -153,8 +196,8 @@ aria-label={canCancel ? 'Cancel Upload' : 'Processing on server'}
         <button
           type="button"
           onClick={onCancel}
-disabled={!canCancel}
-className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99] disabled:opacity-55"
+          disabled={!canCancel}
+          className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99] disabled:opacity-55"
         >
           {canCancel ? 'Cancel Upload' : 'Processing on server...'}
         </button>
