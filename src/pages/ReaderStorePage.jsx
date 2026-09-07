@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
@@ -230,6 +230,126 @@ async function fetchReaderStoreHome(fallbackMessage) {
   }
 }
 
+function ResilientImage({ src, alt, className, fallback }) {
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    setFailed(false)
+  }, [src])
+
+  if (!src || failed) return fallback
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      draggable="false"
+      className={className}
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
+function HorizontalScrollRow({ children, className = '' }) {
+  const rowRef = useRef(null)
+  const dragRef = useRef({
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    startLeft: 0,
+    dragging: false,
+    cancelled: false,
+    suppressClick: false,
+  })
+
+  const finishPointer = (event) => {
+    const row = rowRef.current
+    const drag = dragRef.current
+
+    if (drag.pointerId !== event.pointerId) return
+
+    if (drag.dragging) {
+      drag.suppressClick = true
+      window.setTimeout(() => {
+        drag.suppressClick = false
+      }, 120)
+    }
+
+    if (row?.hasPointerCapture?.(event.pointerId)) {
+      row.releasePointerCapture(event.pointerId)
+    }
+
+    drag.pointerId = null
+    drag.dragging = false
+    drag.cancelled = false
+  }
+
+  return (
+    <div
+      ref={rowRef}
+      className={`select-none overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}
+      style={{ touchAction: 'pan-y pinch-zoom' }}
+      onPointerDown={(event) => {
+        if (event.button !== undefined && event.button !== 0) return
+
+        const row = rowRef.current
+        if (!row) return
+
+        dragRef.current.pointerId = event.pointerId
+        dragRef.current.startX = event.clientX
+        dragRef.current.startY = event.clientY
+        dragRef.current.startLeft = row.scrollLeft
+        dragRef.current.dragging = false
+        dragRef.current.cancelled = false
+      }}
+      onPointerMove={(event) => {
+        const row = rowRef.current
+        const drag = dragRef.current
+
+        if (!row || drag.pointerId !== event.pointerId || drag.cancelled) return
+
+        const deltaX = event.clientX - drag.startX
+        const deltaY = event.clientY - drag.startY
+
+        if (!drag.dragging) {
+          if (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return
+
+          if (Math.abs(deltaY) > Math.abs(deltaX)) {
+            drag.cancelled = true
+            return
+          }
+
+          drag.dragging = true
+
+          if (!row.hasPointerCapture?.(event.pointerId)) {
+            row.setPointerCapture?.(event.pointerId)
+          }
+        }
+
+        row.scrollLeft = drag.startLeft - deltaX
+        event.preventDefault()
+      }}
+      onPointerUp={finishPointer}
+      onPointerCancel={finishPointer}
+      onLostPointerCapture={(event) => {
+        if (dragRef.current.pointerId === event.pointerId) {
+          dragRef.current.pointerId = null
+          dragRef.current.dragging = false
+          dragRef.current.cancelled = false
+        }
+      }}
+      onClickCapture={(event) => {
+        if (!dragRef.current.suppressClick) return
+        event.preventDefault()
+        event.stopPropagation()
+      }}
+      onDragStart={(event) => event.preventDefault()}
+    >
+      {children}
+    </div>
+  )
+}
+
 function SectionHeader({ title, subtitle, action, onAction }) {
   return (
     <div className="flex items-end justify-between gap-3">
@@ -267,6 +387,7 @@ function StoreBookCard({ book, t, onOpen }) {
   const soldOut = book.stockStatus === 'sold_out'
   const displayTitle = book.title || t('readerStore.untitledBook')
   const displayAuthor = book.author || t('readerStore.unknownAuthor')
+  const authorInitial = displayAuthor.charAt(0).toUpperCase() || 'A'
 
   return (
     <article className="overflow-hidden rounded-[20px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
@@ -276,20 +397,16 @@ function StoreBookCard({ book, t, onOpen }) {
         className="block w-full text-left"
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-[var(--shadow-bg-soft)]">
-          {book.cover ? (
-            <img
-              src={book.cover}
-              alt={displayTitle}
-              className={`h-full w-full object-cover ${soldOut ? 'opacity-60' : ''}`}
-              onError={(event) => {
-                event.currentTarget.style.display = 'none'
-              }}
-            />
-          ) : (
-            <span className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
-              <i className="fa-regular fa-image text-[22px]" />
-            </span>
-          )}
+          <ResilientImage
+            src={book.cover}
+            alt={displayTitle}
+            className={`h-full w-full object-cover ${soldOut ? 'opacity-60' : ''}`}
+            fallback={
+              <span className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
+                <i className="fa-regular fa-image text-[22px]" />
+              </span>
+            }
+          />
 
           <span
             className={`absolute left-2 top-2 rounded-full px-2.5 py-1 text-[9px] font-extrabold shadow-sm ${
@@ -307,18 +424,12 @@ function StoreBookCard({ book, t, onOpen }) {
         <div className="p-3">
           <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#ede9fe] text-[9px] font-black text-[#6d28d9]">
-              {book.authorAvatar ? (
-                <img
-                  src={book.authorAvatar}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  onError={(event) => {
-                    event.currentTarget.style.display = 'none'
-                  }}
-                />
-              ) : (
-                displayAuthor.charAt(0).toUpperCase()
-              )}
+              <ResilientImage
+                src={book.authorAvatar}
+                alt=""
+                className="h-full w-full object-cover"
+                fallback={authorInitial}
+              />
             </span>
 
             <span className="min-w-0 flex-1 truncate text-[10.5px] font-bold text-[var(--shadow-text-secondary)]">
@@ -379,20 +490,16 @@ function EditorPickCard({ book, t, onOpen }) {
       className="w-[118px] shrink-0 text-left transition active:scale-[0.98]"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-[14px] bg-[var(--shadow-bg-soft)] shadow-sm ring-1 ring-[var(--shadow-border)]">
-        {book.cover ? (
-          <img
-            src={book.cover}
-            alt={displayTitle}
-            className={`h-full w-full object-cover ${soldOut ? 'opacity-60' : ''}`}
-            onError={(event) => {
-              event.currentTarget.style.display = 'none'
-            }}
-          />
-        ) : (
-          <span className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
-            <i className="fa-regular fa-image text-[22px]" />
-          </span>
-        )}
+        <ResilientImage
+          src={book.cover}
+          alt={displayTitle}
+          className={`h-full w-full object-cover ${soldOut ? 'opacity-60' : ''}`}
+          fallback={
+            <span className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
+              <i className="fa-regular fa-image text-[22px]" />
+            </span>
+          }
+        />
 
         <span
           className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[8px] font-extrabold shadow-sm ${
@@ -557,7 +664,6 @@ export default function ReaderStorePage() {
             >
               <i className="fa-solid fa-magnifying-glass text-[17px]" />
             </button>
-
             <button
               type="button"
               onClick={() => navigate('/author/cart')}
@@ -596,10 +702,10 @@ export default function ReaderStorePage() {
       <main className="mx-auto w-full max-w-[560px] px-4 pt-4">
         <section className="space-y-3">
           <SectionHeader title={t('readerStore.shadowMall')} />
-          <ShadowMallSection sliderOnly />
+          <ShadowMallSection />
         </section>
 
-        <div className="-mx-1 mt-5 flex gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <HorizontalScrollRow className="-mx-1 mt-5 flex gap-2 px-1 pb-2">
           {FILTERS.map((filter) => {
             const active = activeFilter === filter
 
@@ -618,7 +724,7 @@ export default function ReaderStorePage() {
               </button>
             )
           })}
-        </div>
+        </HorizontalScrollRow>
 
         {loading ? (
           <div className="mt-5 rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-8 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
@@ -653,50 +759,47 @@ export default function ReaderStorePage() {
                   subtitle={t('readerStore.featuredAuthorsSubtitle')}
                 />
 
-                <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {visibleAuthors.map((author) => (
-                    <button
-                      key={author.author_page_id}
-                      type="button"
-                      onClick={() =>
-                        author.page_username
-                          ? navigate(
-                              `/author/page/${encodeURIComponent(author.page_username)}`
-                            )
-                          : null
-                      }
-                      className="w-[72px] shrink-0 text-center active:scale-95"
-                    >
-                      <span className="relative mx-auto block h-[58px] w-[58px] rounded-full bg-gradient-to-br from-[#7c3aed] via-[#c084fc] to-[#22d3ee] p-[2px]">
-                        <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-surface)] p-[2px] text-[16px] font-extrabold text-[#7c3aed]">
-                          {author.avatar_url ? (
-                            <img
+                <HorizontalScrollRow className="-mx-1 flex gap-4 px-1 pb-2">
+                  {visibleAuthors.map((author) => {
+                    const authorName = author.page_name || author.page_username || 'A'
+                    const authorInitial = String(authorName).charAt(0).toUpperCase()
+
+                    return (
+                      <button
+                        key={author.author_page_id}
+                        type="button"
+                        onClick={() =>
+                          author.page_username
+                            ? navigate(
+                                `/author/page/${encodeURIComponent(author.page_username)}`
+                              )
+                            : null
+                        }
+                        className="w-[72px] shrink-0 text-center active:scale-95"
+                      >
+                        <span className="relative mx-auto block h-[58px] w-[58px] rounded-full bg-gradient-to-br from-[#7c3aed] via-[#c084fc] to-[#22d3ee] p-[2px]">
+                          <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-surface)] p-[2px] text-[16px] font-extrabold text-[#7c3aed]">
+                            <ResilientImage
                               src={author.avatar_url}
                               alt={author.page_name || ''}
                               className="h-full w-full rounded-full object-cover"
-                              onError={(event) => {
-                                event.currentTarget.style.display = 'none'
-                              }}
+                              fallback={authorInitial}
                             />
-                          ) : (
-                            String(author.page_name || 'A')
-                              .charAt(0)
-                              .toUpperCase()
-                          )}
+                          </span>
+                          <span className="absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#7c3aed] text-white ring-2 ring-[var(--shadow-bg-page)]">
+                            <i className="fa-solid fa-check text-[8px]" />
+                          </span>
                         </span>
-                        <span className="absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#7c3aed] text-white ring-2 ring-[var(--shadow-bg-page)]">
-                          <i className="fa-solid fa-check text-[8px]" />
+                        <span className="mt-2 block truncate text-[10.5px] font-extrabold text-[var(--shadow-text-primary)]">
+                          {author.page_name || author.page_username}
                         </span>
-                      </span>
-                      <span className="mt-2 block truncate text-[10.5px] font-extrabold text-[var(--shadow-text-primary)]">
-                        {author.page_name || author.page_username}
-                      </span>
-                      <span className="mt-0.5 block text-[9.5px] font-semibold text-[var(--shadow-text-tertiary)]">
-                        {author.product_count || 0} {t('readerStore.books')}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                        <span className="mt-0.5 block text-[9.5px] font-semibold text-[var(--shadow-text-tertiary)]">
+                          {author.product_count || 0} {t('readerStore.books')}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </HorizontalScrollRow>
               </section>
             ) : null}
 
@@ -715,7 +818,7 @@ export default function ReaderStorePage() {
               />
 
               {visibleProducts.length ? (
-                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <HorizontalScrollRow className="-mx-1 flex gap-3 px-1 pb-2">
                   {visibleProducts.map((book) => (
                     <div key={`author-${book.id}`} className="w-[155px] shrink-0">
                       <StoreBookCard
@@ -725,7 +828,7 @@ export default function ReaderStorePage() {
                       />
                     </div>
                   ))}
-                </div>
+                </HorizontalScrollRow>
               ) : (
                 <div className="rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-7 text-center text-[12px] font-extrabold text-[var(--shadow-text-tertiary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
                   {t('readerStore.noProducts')}
@@ -740,7 +843,7 @@ export default function ReaderStorePage() {
                   subtitle={t('readerStore.editorsPicksSubtitle')}
                 />
 
-                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <HorizontalScrollRow className="-mx-1 flex gap-3 px-1 pb-2">
                   {filteredEditorsPicks.map((book) => (
                     <EditorPickCard
                       key={`editor-${book.id}`}
@@ -749,7 +852,7 @@ export default function ReaderStorePage() {
                       onOpen={() => openProduct(book)}
                     />
                   ))}
-                </div>
+                </HorizontalScrollRow>
               </section>
             ) : null}
           </>
