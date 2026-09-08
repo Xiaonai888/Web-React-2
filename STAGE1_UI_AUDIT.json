@@ -322,6 +322,11 @@
 "src/pages/Author/AuthorPageNotificationsPage.jsx",
 "src/pages/Author/AuthorPostsContentLibraryPage.jsx",
 "src/pages/Author/AuthorPageSettingsPage.jsx",
+"src/pages/Author/AuthorCartPage.jsx",
+"src/pages/Author/AuthorCheckoutPage.jsx",
+"src/pages/Author/AuthorOrderHistoryPage.jsx",
+"src/pages/Author/AuthorStoreCategoryPage.jsx",
+"src/pages/Author/AuthorStoreProductDetailPage.jsx",
   ]
 }
 
