@@ -9,6 +9,17 @@ import {
 } from '../../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import {
+  cleanupSpinLocalStorage,
+  clearSpinResults,
+  deleteSpinResult,
+  deleteSpinWheel,
+  listSpinResults,
+  listSpinWheels,
+  saveSpinMedia,
+  saveSpinResult,
+  saveSpinWheel,
+} from '../../services/spinLocalStore'
 
 const translations = {
   en: {
@@ -32,7 +43,7 @@ const translations = {
     noRepeatHelp: 'A winner will be skipped until the round resets.',
     resetRound: 'Reset round',
     background: 'Wheel background',
-    backgroundHelp: 'JPG, PNG or WebP • max 2 MB • replacing deletes the old R2 image.',
+    backgroundHelp: 'JPG, PNG or WebP • max 2 MB • stored only on this device.',
     uploadBackground: 'Add background',
     replaceBackground: 'Replace background',
     removeBackground: 'Remove',
@@ -98,7 +109,7 @@ const translations = {
     spinAgain: 'Spin again',
     resultSaved: 'Result saved to history.',
     resultNotSaved: 'The spin worked, but history could not be saved.',
-    saveLogin: 'Sign in to save wheels, history and R2 images.',
+    saveLogin: 'Spin data is saved locally on this device.',
     savedSuccess: 'Wheel saved.',
     saveFailed: 'Could not save the wheel.',
     saveNeedsEntries: 'Add at least 2 entries before saving.',
@@ -107,13 +118,13 @@ const translations = {
     delete: 'Delete',
     current: 'Current',
     savedEmpty: 'No saved wheels yet.',
-    savedLimitHelp: 'Up to 10 saved wheels per account.',
+    savedLimitHelp: 'Up to 10 saved wheels on this device.',
     historyEmpty: 'No spin results yet.',
     historyHelp: 'Keeps the latest 50 results for up to 30 days.',
     clearHistory: 'Clear history',
     clearHistoryConfirm: 'Clear all spin history?',
     deleteWheelConfirm: 'Delete this saved wheel?',
-    deleteGiftConfirm: 'Delete this custom gift and its R2 image?',
+    deleteGiftConfirm: 'Delete this custom gift from the wheel?',
     deleteBackgroundConfirm: 'Delete this background image?',
     deleteFailed: 'Delete failed.',
     close: 'Close',
@@ -164,7 +175,7 @@ const translations = {
     noRepeatHelp: 'អ្នកឈ្នះនឹងត្រូវរំលងរហូតដល់ Reset ជុំថ្មី។',
     resetRound: 'Reset ជុំ',
     background: 'ផ្ទៃខាងក្រោយកង់',
-    backgroundHelp: 'JPG, PNG ឬ WebP • អតិបរមា 2 MB • Replace នឹងលុបរូបចាស់ពី R2។',
+    backgroundHelp: 'JPG, PNG ឬ WebP • អតិបរមា 2 MB • រក្សាទុកតែក្នុងឧបករណ៍នេះ។',
     uploadBackground: 'ដាក់ Background',
     replaceBackground: 'ប្តូរ Background',
     removeBackground: 'លុប',
@@ -230,7 +241,7 @@ const translations = {
     spinAgain: 'បង្វិលម្ដងទៀត',
     resultSaved: 'បានរក្សាលទ្ធផលក្នុងប្រវត្តិ។',
     resultNotSaved: 'បង្វិលបាន ប៉ុន្តែមិនអាចរក្សាប្រវត្តិបាន។',
-    saveLogin: 'ត្រូវ Login ដើម្បី Save កង់ ប្រវត្តិ និងរូប R2។',
+    saveLogin: 'ទិន្នន័យ Spin ត្រូវរក្សាទុកក្នុងឧបករណ៍នេះ។',
     savedSuccess: 'បានរក្សាទុកកង់។',
     saveFailed: 'មិនអាចរក្សាទុកកង់បាន។',
     saveNeedsEntries: 'ដាក់អ្នកចូលរួមយ៉ាងហោចណាស់ 2 មុន Save។',
@@ -239,13 +250,13 @@ const translations = {
     delete: 'លុប',
     current: 'កំពុងប្រើ',
     savedEmpty: 'មិនទាន់មានកង់ដែលបាន Save។',
-    savedLimitHelp: 'Account មួយ Save កង់បានអតិបរមា 10។',
+    savedLimitHelp: 'អាច Save បានអតិបរមា 10 កង់ក្នុងឧបករណ៍នេះ។',
     historyEmpty: 'មិនទាន់មានលទ្ធផល Spin។',
     historyHelp: 'រក្សា 50 លទ្ធផលចុងក្រោយ និងអតិបរមា 30 ថ្ងៃ។',
     clearHistory: 'លុបប្រវត្តិទាំងអស់',
     clearHistoryConfirm: 'ចង់លុបប្រវត្តិ Spin ទាំងអស់មែនទេ?',
     deleteWheelConfirm: 'ចង់លុបកង់ដែលបាន Save នេះមែនទេ?',
-    deleteGiftConfirm: 'ចង់លុប Custom Gift និងរូប R2 របស់វាមែនទេ?',
+    deleteGiftConfirm: 'ចង់លុប Custom Gift នេះចេញពីកង់មែនទេ?',
     deleteBackgroundConfirm: 'ចង់លុប Background នេះមែនទេ?',
     deleteFailed: 'លុបមិនបាន។',
     close: 'បិទ',
@@ -296,7 +307,7 @@ const translations = {
     noRepeatHelp: '本轮已中奖者会被跳过，直到重置。',
     resetRound: '重置本轮',
     background: '转盘背景',
-    backgroundHelp: 'JPG、PNG 或 WebP • 最大 2 MB • 替换时会删除旧 R2 图片。',
+    backgroundHelp: 'JPG、PNG 或 WebP • 最大 2 MB • 仅保存在此设备。',
     uploadBackground: '添加背景',
     replaceBackground: '替换背景',
     removeBackground: '删除',
@@ -362,7 +373,7 @@ const translations = {
     spinAgain: '再转一次',
     resultSaved: '结果已保存到历史记录。',
     resultNotSaved: '转盘成功，但历史记录未保存。',
-    saveLogin: '登录后才能保存转盘、历史记录和 R2 图片。',
+    saveLogin: 'Spin 数据仅保存在此设备。',
     savedSuccess: '转盘已保存。',
     saveFailed: '无法保存转盘。',
     saveNeedsEntries: '保存前至少添加 2 个选项。',
@@ -371,13 +382,13 @@ const translations = {
     delete: '删除',
     current: '当前',
     savedEmpty: '还没有保存的转盘。',
-    savedLimitHelp: '每个账号最多保存 10 个转盘。',
+    savedLimitHelp: '此设备最多保存 10 个转盘。',
     historyEmpty: '还没有转盘结果。',
     historyHelp: '最多保留最近 50 条结果和 30 天。',
     clearHistory: '清空历史',
     clearHistoryConfirm: '确定清空所有转盘历史吗？',
     deleteWheelConfirm: '确定删除这个已保存转盘吗？',
-    deleteGiftConfirm: '确定删除此自定义奖品及其 R2 图片吗？',
+    deleteGiftConfirm: '确定从转盘中删除此自定义奖品吗？',
     deleteBackgroundConfirm: '确定删除此背景图片吗？',
     deleteFailed: '删除失败。',
     close: '关闭',
@@ -428,7 +439,7 @@ const translations = {
     noRepeatHelp: '当選者はラウンドをリセットするまで除外されます。',
     resetRound: 'ラウンドをリセット',
     background: 'ホイール背景',
-    backgroundHelp: 'JPG、PNG、WebP • 最大 2 MB • 置換すると古い R2 画像を削除します。',
+    backgroundHelp: 'JPG、PNG、WebP • 最大 2 MB • この端末だけに保存されます。',
     uploadBackground: '背景を追加',
     replaceBackground: '背景を変更',
     removeBackground: '削除',
@@ -494,7 +505,7 @@ const translations = {
     spinAgain: 'もう一度スピン',
     resultSaved: '結果を履歴に保存しました。',
     resultNotSaved: 'スピンは成功しましたが履歴を保存できませんでした。',
-    saveLogin: 'ホイール、履歴、R2画像の保存にはログインが必要です。',
+    saveLogin: 'Spin データはこの端末にローカル保存されます。',
     savedSuccess: 'ホイールを保存しました。',
     saveFailed: 'ホイールを保存できませんでした。',
     saveNeedsEntries: '保存前に2件以上追加してください。',
@@ -503,13 +514,13 @@ const translations = {
     delete: '削除',
     current: '現在',
     savedEmpty: '保存したホイールはありません。',
-    savedLimitHelp: '1アカウントにつき最大10個保存できます。',
+    savedLimitHelp: 'この端末に最大10個保存できます。',
     historyEmpty: 'スピン結果はまだありません。',
     historyHelp: '最新50件を最大30日間保存します。',
     clearHistory: '履歴を消去',
     clearHistoryConfirm: 'すべてのスピン履歴を消去しますか？',
     deleteWheelConfirm: 'この保存済みホイールを削除しますか？',
-    deleteGiftConfirm: 'このカスタム賞品と R2 画像を削除しますか？',
+    deleteGiftConfirm: 'このカスタム賞品をホイールから削除しますか？',
     deleteBackgroundConfirm: 'この背景画像を削除しますか？',
     deleteFailed: '削除できませんでした。',
     close: '閉じる',
@@ -560,7 +571,7 @@ const translations = {
     noRepeatHelp: '당첨자는 라운드를 초기화할 때까지 제외됩니다.',
     resetRound: '라운드 초기화',
     background: '휠 배경',
-    backgroundHelp: 'JPG, PNG 또는 WebP • 최대 2 MB • 교체 시 기존 R2 이미지가 삭제됩니다.',
+    backgroundHelp: 'JPG, PNG 또는 WebP • 최대 2 MB • 이 기기에만 저장됩니다.',
     uploadBackground: '배경 추가',
     replaceBackground: '배경 교체',
     removeBackground: '삭제',
@@ -626,7 +637,7 @@ const translations = {
     spinAgain: '다시 돌리기',
     resultSaved: '결과를 기록에 저장했습니다.',
     resultNotSaved: '스핀은 성공했지만 기록을 저장하지 못했습니다.',
-    saveLogin: '휠, 기록, R2 이미지를 저장하려면 로그인하세요.',
+    saveLogin: 'Spin 데이터는 이 기기에 로컬로 저장됩니다.',
     savedSuccess: '휠을 저장했습니다.',
     saveFailed: '휠을 저장하지 못했습니다.',
     saveNeedsEntries: '저장하기 전에 최소 2개 항목을 추가하세요.',
@@ -635,13 +646,13 @@ const translations = {
     delete: '삭제',
     current: '현재',
     savedEmpty: '저장된 휠이 없습니다.',
-    savedLimitHelp: '계정당 최대 10개의 휠을 저장할 수 있습니다.',
+    savedLimitHelp: '이 기기에 최대 10개의 휠을 저장할 수 있습니다.',
     historyEmpty: '아직 스핀 결과가 없습니다.',
     historyHelp: '최근 50개 결과를 최대 30일간 보관합니다.',
     clearHistory: '기록 지우기',
     clearHistoryConfirm: '모든 스핀 기록을 지울까요?',
     deleteWheelConfirm: '이 저장된 휠을 삭제할까요?',
-    deleteGiftConfirm: '이 커스텀 상품과 R2 이미지를 삭제할까요?',
+    deleteGiftConfirm: '이 커스텀 상품을 휠에서 삭제할까요?',
     deleteBackgroundConfirm: '이 배경 이미지를 삭제할까요?',
     deleteFailed: '삭제에 실패했습니다.',
     close: '닫기',
@@ -710,45 +721,6 @@ function getReaderToken() {
     sessionStorage.getItem('shadow_reader_token') ||
     ''
   )
-}
-
-function storeRenewedReaderToken(response) {
-  const renewed = response.headers.get('X-Reader-Token')
-  if (!renewed) return
-
-  sessionStorage.setItem('shadow_reader_token', renewed)
-
-  if (localStorage.getItem('shadow_reader_token')) {
-    localStorage.setItem('shadow_reader_token', renewed)
-  }
-}
-
-async function apiRequest(path, options = {}) {
-  const token = getReaderToken()
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      ...(options.body instanceof FormData
-        ? {}
-        : { 'Content-Type': 'application/json' }),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-    cache: 'no-store',
-  })
-
-  storeRenewedReaderToken(response)
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    const error = new Error(data.message || 'Request failed')
-    error.code = data.code || ''
-    error.status = response.status
-    throw error
-  }
-
-  return data
 }
 
 function createLocalId(prefix = 'entry') {
@@ -1453,6 +1425,7 @@ export default function SpinPage() {
   const [giftFile, setGiftFile] = useState(null)
   const [giftPreview, setGiftPreview] = useState('')
   const [backgroundUrl, setBackgroundUrl] = useState('')
+  const [backgroundMediaKey, setBackgroundMediaKey] = useState('')
   const [backgroundBusy, setBackgroundBusy] = useState(false)
   const [giftBusy, setGiftBusy] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -1496,12 +1469,8 @@ export default function SpinPage() {
       if (spinTimerRef.current) {
         window.clearTimeout(spinTimerRef.current)
       }
-
-      if (giftPreview?.startsWith('blob:')) {
-        URL.revokeObjectURL(giftPreview)
-      }
     }
-  }, [giftPreview])
+  }, [])
 
   useEffect(() => {
     if (!toast) return undefined
@@ -1510,19 +1479,34 @@ export default function SpinPage() {
   }, [toast])
 
   useEffect(() => {
-    if (!getReaderToken()) return
-    void loadSavedWheels()
-    void loadHistory()
+    let active = true
+
+    async function loadLocalSpinData() {
+      try {
+        await cleanupSpinLocalStorage()
+        if (!active) return
+        await Promise.all([loadSavedWheels(), loadHistory()])
+      } catch (error) {
+        if (!active) return
+        const message = error.message || t('spinPage.unexpected')
+        setSavedError(message)
+        setHistoryError(message)
+      }
+    }
+
+    void loadLocalSpinData()
+
+    return () => {
+      active = false
+    }
   }, [])
 
   async function loadSavedWheels() {
-    if (!getReaderToken()) return
-
     try {
       setSavedLoading(true)
       setSavedError('')
-      const data = await apiRequest('/api/spin/wheels?limit=10')
-      setSavedWheels(Array.isArray(data.items) ? data.items : [])
+      const items = await listSpinWheels(10)
+      setSavedWheels(items)
     } catch (error) {
       setSavedError(error.message || t('spinPage.unexpected'))
     } finally {
@@ -1531,13 +1515,11 @@ export default function SpinPage() {
   }
 
   async function loadHistory() {
-    if (!getReaderToken()) return
-
     try {
       setHistoryLoading(true)
       setHistoryError('')
-      const data = await apiRequest('/api/spin/results?limit=50')
-      setHistory(Array.isArray(data.items) ? data.items : [])
+      const items = await listSpinResults(50)
+      setHistory(items)
     } catch (error) {
       setHistoryError(error.message || t('spinPage.unexpected'))
     } finally {
@@ -1667,26 +1649,20 @@ export default function SpinPage() {
   }
 
   async function persistResult(result) {
-    if (!getReaderToken()) return
-
     try {
-      const data = await apiRequest('/api/spin/results', {
-        method: 'POST',
-        body: JSON.stringify({
-          wheel_id: currentWheelId,
-          wheel_title: wheelTitle.trim() || t('spinPage.title'),
-          mode,
-          winner: result.winner,
-          prize: result.prize,
-        }),
+      const item = await saveSpinResult({
+        wheel_id: currentWheelId,
+        wheel_title: wheelTitle.trim() || t('spinPage.title'),
+        mode,
+        winner: result.winner,
+        prize: result.prize,
+        created_at: result.created_at,
       })
 
-      if (data.item) {
-        setHistory((current) => [
-          data.item,
-          ...current.filter((item) => item.id !== data.item.id),
-        ].slice(0, 50))
-      }
+      setHistory((current) => [
+        item,
+        ...current.filter((row) => row.id !== item.id),
+      ].slice(0, 50))
     } catch {
       setToast(t('spinPage.resultNotSaved'))
     }
@@ -1699,6 +1675,7 @@ export default function SpinPage() {
       entries,
       prizes: mode === 'shadow' ? activePrizes : [],
       background_url: backgroundUrl || null,
+      background_media_key: backgroundMediaKey || null,
       options: {
         no_repeat: noRepeat,
       },
@@ -1711,29 +1688,18 @@ export default function SpinPage() {
       return
     }
 
-    if (!getReaderToken()) {
-      setToast(t('spinPage.saveLogin'))
-      return
-    }
-
     try {
       setSaving(true)
-      const data = await apiRequest(
-        currentWheelId ? `/api/spin/wheels/${currentWheelId}` : '/api/spin/wheels',
-        {
-          method: currentWheelId ? 'PUT' : 'POST',
-          body: JSON.stringify(getWheelPayload()),
-        }
-      )
+      const item = await saveSpinWheel(getWheelPayload(), currentWheelId)
 
-      if (data.item) {
-        setCurrentWheelId(data.item.id)
-        setWheelTitle(data.item.title || '')
-        setSavedWheels((current) => {
-          const rest = current.filter((item) => item.id !== data.item.id)
-          return [data.item, ...rest].slice(0, 10)
-        })
-      }
+      setCurrentWheelId(item.id)
+      setWheelTitle(item.title || '')
+      setBackgroundUrl(item.background_url || '')
+      setBackgroundMediaKey(item.background_media_key || '')
+      setSavedWheels((current) => {
+        const rest = current.filter((wheel) => wheel.id !== item.id)
+        return [item, ...rest].slice(0, 10)
+      })
 
       setToast(t('spinPage.savedSuccess'))
     } catch (error) {
@@ -1753,6 +1719,7 @@ export default function SpinPage() {
     setMode(item.mode === 'shadow' ? 'shadow' : 'normal')
     setEntries(Array.isArray(item.entries) ? item.entries : [])
     setBackgroundUrl(item.background_url || '')
+    setBackgroundMediaKey(item.background_media_key || '')
     setNoRepeat(Boolean(item.options?.no_repeat))
     setBlockedIds([])
     setWinnerResult(null)
@@ -1788,6 +1755,7 @@ export default function SpinPage() {
     setMode('normal')
     setEntries([])
     setBackgroundUrl('')
+    setBackgroundMediaKey('')
     setNoRepeat(false)
     setBlockedIds([])
     setWinnerResult(null)
@@ -1802,10 +1770,7 @@ export default function SpinPage() {
     if (!window.confirm(t('spinPage.deleteWheelConfirm'))) return
 
     try {
-      await apiRequest(`/api/spin/wheels/${item.id}`, {
-        method: 'DELETE',
-      })
-
+      await deleteSpinWheel(item.id)
       setSavedWheels((current) => current.filter((wheel) => wheel.id !== item.id))
 
       if (currentWheelId === item.id) {
@@ -1823,7 +1788,7 @@ export default function SpinPage() {
     }
 
     closeGiftForm()
-    setGiftForm({ mode: 'new', id: null, old_url: '' })
+    setGiftForm({ mode: 'new', id: null, old_url: '', old_key: '' })
     setGiftName('')
   }
 
@@ -1833,13 +1798,14 @@ export default function SpinPage() {
       mode: 'edit',
       id: gift.id,
       old_url: gift.image_url || '',
+      old_key: gift.media_key || '',
     })
     setGiftName(gift.name || '')
     setGiftPreview(gift.image_url || '')
   }
 
   function closeGiftForm() {
-    if (giftPreview?.startsWith('blob:')) {
+    if (giftFile && giftPreview?.startsWith('blob:')) {
       URL.revokeObjectURL(giftPreview)
     }
     setGiftForm(null)
@@ -1857,30 +1823,12 @@ export default function SpinPage() {
       return
     }
 
-    if (giftPreview?.startsWith('blob:')) {
+    if (giftFile && giftPreview?.startsWith('blob:')) {
       URL.revokeObjectURL(giftPreview)
     }
 
     setGiftFile(file)
     setGiftPreview(file ? URL.createObjectURL(file) : giftForm?.old_url || '')
-  }
-
-  async function uploadMedia(file, kind, oldUrl = '') {
-    if (!getReaderToken()) {
-      throw new Error(t('spinPage.saveLogin'))
-    }
-
-    const form = new FormData()
-    form.append('image', file)
-    form.append('kind', kind)
-    if (oldUrl) form.append('old_url', oldUrl)
-
-    const data = await apiRequest('/api/spin/media', {
-      method: 'POST',
-      body: form,
-    })
-
-    return data.image_url || data.imageUrl || ''
   }
 
   async function saveGift() {
@@ -1895,9 +1843,12 @@ export default function SpinPage() {
     try {
       setGiftBusy(true)
       let imageUrl = giftForm.old_url || ''
+      let mediaKey = giftForm.old_key || ''
 
       if (giftFile) {
-        imageUrl = await uploadMedia(giftFile, 'gift', giftForm.old_url)
+        const stored = await saveSpinMedia(giftFile)
+        imageUrl = stored.url
+        mediaKey = stored.key
       }
 
       const gift = {
@@ -1906,6 +1857,7 @@ export default function SpinPage() {
         name: name.slice(0, 120),
         amount: 0,
         image_url: imageUrl || null,
+        media_key: mediaKey || null,
       }
 
       setCustomGifts((current) => {
@@ -1925,23 +1877,12 @@ export default function SpinPage() {
     }
   }
 
-  async function deleteGift(gift) {
+  function deleteGift(gift) {
     if (!window.confirm(t('spinPage.deleteGiftConfirm'))) return
 
-    try {
-      if (gift.image_url) {
-        await apiRequest('/api/spin/media', {
-          method: 'DELETE',
-          body: JSON.stringify({ url: gift.image_url }),
-        })
-      }
-
-      setCustomGifts((current) => current.filter((item) => item.id !== gift.id))
-      if (giftForm?.id === gift.id) closeGiftForm()
-      setToast(t('spinPage.giftRemoved'))
-    } catch (error) {
-      setToast(error.message || t('spinPage.deleteFailed'))
-    }
+    setCustomGifts((current) => current.filter((item) => item.id !== gift.id))
+    if (giftForm?.id === gift.id) closeGiftForm()
+    setToast(t('spinPage.giftRemoved'))
   }
 
   async function chooseBackground(file) {
@@ -1955,8 +1896,9 @@ export default function SpinPage() {
 
     try {
       setBackgroundBusy(true)
-      const url = await uploadMedia(file, 'background', backgroundUrl)
-      setBackgroundUrl(url)
+      const stored = await saveSpinMedia(file)
+      setBackgroundUrl(stored.url)
+      setBackgroundMediaKey(stored.key)
       setToast(t('spinPage.backgroundUploaded'))
     } catch (error) {
       setToast(error.message || t('spinPage.uploadFailed'))
@@ -1966,29 +1908,17 @@ export default function SpinPage() {
     }
   }
 
-  async function removeBackground() {
+  function removeBackground() {
     if (!backgroundUrl || !window.confirm(t('spinPage.deleteBackgroundConfirm'))) return
 
-    try {
-      setBackgroundBusy(true)
-      await apiRequest('/api/spin/media', {
-        method: 'DELETE',
-        body: JSON.stringify({ url: backgroundUrl }),
-      })
-      setBackgroundUrl('')
-      setToast(t('spinPage.backgroundRemoved'))
-    } catch (error) {
-      setToast(error.message || t('spinPage.deleteFailed'))
-    } finally {
-      setBackgroundBusy(false)
-    }
+    setBackgroundUrl('')
+    setBackgroundMediaKey('')
+    setToast(t('spinPage.backgroundRemoved'))
   }
 
   async function deleteHistoryItem(item) {
     try {
-      await apiRequest(`/api/spin/results/${item.id}`, {
-        method: 'DELETE',
-      })
+      await deleteSpinResult(item.id)
       setHistory((current) => current.filter((row) => row.id !== item.id))
     } catch (error) {
       setToast(error.message || t('spinPage.deleteFailed'))
@@ -1999,9 +1929,7 @@ export default function SpinPage() {
     if (!window.confirm(t('spinPage.clearHistoryConfirm'))) return
 
     try {
-      await apiRequest('/api/spin/results', {
-        method: 'DELETE',
-      })
+      await clearSpinResults()
       setHistory([])
     } catch (error) {
       setToast(error.message || t('spinPage.deleteFailed'))
