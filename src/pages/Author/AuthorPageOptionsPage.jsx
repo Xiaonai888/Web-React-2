@@ -1,5 +1,106 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorPageOptions', {
+  "en": {
+    "back": "Back",
+    "pageSettings": "Page Settings",
+    "manage": "Manage",
+    "basicPageInfo": "Basic Page Info",
+    "pageStatus": "Page status",
+    "activityLog": "Activity log",
+    "share": "Share",
+    "sharePage": "Share Page",
+    "copyPageLink": "Copy Page link",
+    "view": "View",
+    "viewAsReader": "View as reader",
+    "trash": "Trash",
+    "pageLinkCopied": "Page link copied.",
+    "shareCancelled": "Share cancelled.",
+    "authorPage": "Author Page",
+    "pageStatusSoon": "Page status is coming soon.",
+    "activityLogSoon": "Activity log is coming soon."
+  },
+  "km": {
+    "back": "ត្រឡប់ក្រោយ",
+    "pageSettings": "ការកំណត់ទំព័រ",
+    "manage": "គ្រប់គ្រង",
+    "basicPageInfo": "ព័ត៌មានមូលដ្ឋានទំព័រ",
+    "pageStatus": "ស្ថានភាពទំព័រ",
+    "activityLog": "កំណត់ត្រាសកម្មភាព",
+    "share": "ចែករំលែក",
+    "sharePage": "ចែករំលែកទំព័រ",
+    "copyPageLink": "ចម្លងតំណទំព័រ",
+    "view": "មើល",
+    "viewAsReader": "មើលជាអ្នកអាន",
+    "trash": "ធុងសំរាម",
+    "pageLinkCopied": "បានចម្លងតំណទំព័រ។",
+    "shareCancelled": "បានបោះបង់ការចែករំលែក។",
+    "authorPage": "ទំព័រអ្នកនិពន្ធ",
+    "pageStatusSoon": "ស្ថានភាពទំព័រនឹងមានឆាប់ៗនេះ។",
+    "activityLogSoon": "កំណត់ត្រាសកម្មភាពនឹងមានឆាប់ៗនេះ។"
+  },
+  "zh": {
+    "back": "返回",
+    "pageSettings": "主页设置",
+    "manage": "管理",
+    "basicPageInfo": "基本主页信息",
+    "pageStatus": "主页状态",
+    "activityLog": "活动记录",
+    "share": "分享",
+    "sharePage": "分享主页",
+    "copyPageLink": "复制主页链接",
+    "view": "查看",
+    "viewAsReader": "以读者身份查看",
+    "trash": "回收站",
+    "pageLinkCopied": "主页链接已复制。",
+    "shareCancelled": "已取消分享。",
+    "authorPage": "作者主页",
+    "pageStatusSoon": "主页状态功能即将推出。",
+    "activityLogSoon": "活动记录功能即将推出。"
+  },
+  "ja": {
+    "back": "戻る",
+    "pageSettings": "ページ設定",
+    "manage": "管理",
+    "basicPageInfo": "基本ページ情報",
+    "pageStatus": "ページ状態",
+    "activityLog": "アクティビティログ",
+    "share": "共有",
+    "sharePage": "ページを共有",
+    "copyPageLink": "ページリンクをコピー",
+    "view": "表示",
+    "viewAsReader": "読者として表示",
+    "trash": "ゴミ箱",
+    "pageLinkCopied": "ページリンクをコピーしました。",
+    "shareCancelled": "共有をキャンセルしました。",
+    "authorPage": "著者ページ",
+    "pageStatusSoon": "ページ状態は近日公開予定です。",
+    "activityLogSoon": "アクティビティログは近日公開予定です。"
+  },
+  "ko": {
+    "back": "뒤로",
+    "pageSettings": "페이지 설정",
+    "manage": "관리",
+    "basicPageInfo": "기본 페이지 정보",
+    "pageStatus": "페이지 상태",
+    "activityLog": "활동 기록",
+    "share": "공유",
+    "sharePage": "페이지 공유",
+    "copyPageLink": "페이지 링크 복사",
+    "view": "보기",
+    "viewAsReader": "독자로 보기",
+    "trash": "휴지통",
+    "pageLinkCopied": "페이지 링크를 복사했습니다.",
+    "shareCancelled": "공유를 취소했습니다.",
+    "authorPage": "작가 페이지",
+    "pageStatusSoon": "페이지 상태 기능이 곧 제공됩니다.",
+    "activityLogSoon": "활동 기록 기능이 곧 제공됩니다."
+  }
+})
+
 
 function getStoredAuthorPage() {
   try {
@@ -14,24 +115,25 @@ function ToolRow({ icon, label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-[14px] px-1 py-2.5 text-left active:bg-[#f3f4f6]"
+      className="flex w-full items-center gap-3 rounded-[14px] px-1 py-2.5 text-left active:bg-[var(--shadow-bg-soft)]"
     >
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[#111827]">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
         <i className={`${icon} text-[15px] font-normal`} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-normal text-[#111827]">{label}</span>
+        <span className="block text-[14px] font-normal text-[var(--shadow-text-primary)]">{label}</span>
       </span>
     </button>
   )
 }
 
 function SectionTitle({ children }) {
-  return <h2 className="px-1 pt-5 text-[17px] font-semibold text-[#111827]">{children}</h2>
+  return <h2 className="px-1 pt-5 text-[17px] font-semibold text-[var(--shadow-text-primary)]">{children}</h2>
 }
 
 export default function AuthorPageOptionsPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [message, setMessage] = useState('')
   const authorPage = useMemo(() => getStoredAuthorPage(), [])
 const pageUsername = authorPage?.page_username || ''
@@ -46,7 +148,7 @@ function copyPageLink() {
 
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(link)
-      setMessage('Page link copied.')
+      setMessage(t('authorPageOptions.pageLinkCopied'))
       return
     }
 
@@ -60,18 +162,18 @@ function copyPageLink() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: authorPage?.page_name || 'Author Page',
+          title: authorPage?.page_name || t('authorPageOptions.authorPage'),
           url: link,
         })
       } catch {
-        setMessage('Share cancelled.')
+        setMessage(t('authorPageOptions.shareCancelled'))
       }
       return
     }
 
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(link)
-      setMessage('Page link copied.')
+      setMessage(t('authorPageOptions.pageLinkCopied'))
       return
     }
 
@@ -88,19 +190,19 @@ function copyPageLink() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-10">
-      <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-10">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[720px] items-center justify-between px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Back"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
+            aria-label={t('authorPageOptions.back')}
           >
             <i className="fa-solid fa-chevron-left text-[22px]" />
           </button>
 
-          <h1 className="text-[16px] font-semibold text-[#111827]">Page Settings</h1>
+          <h1 className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPageOptions.pageSettings')}</h1>
 
           <div className="h-10 w-10" />
         </div>
@@ -111,35 +213,35 @@ function copyPageLink() {
           <button
             type="button"
             onClick={() => setMessage('')}
-            className="mt-4 w-full rounded-[16px] bg-[#f3f4f6] px-4 py-3 text-left text-[13px] font-normal text-[#111827]"
+            className="mt-4 w-full rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-left text-[13px] font-normal text-[var(--shadow-text-primary)]"
           >
             {message}
           </button>
         ) : null}
 
-        <SectionTitle>Manage</SectionTitle>
+        <SectionTitle>{t('authorPageOptions.manage')}</SectionTitle>
         <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-regular fa-pen-to-square" label="Basic Page Info" onClick={() => navigate('/author/edit-page?from=settings')} />
-          <ToolRow icon="fa-regular fa-circle-check" label="Page status" onClick={() => setMessage('Page status is coming soon.')} />
-          <ToolRow icon="fa-regular fa-rectangle-list" label="Activity log" onClick={() => setMessage('Activity log is coming soon.')} />
+          <ToolRow icon="fa-regular fa-pen-to-square" label={t('authorPageOptions.basicPageInfo')} onClick={() => navigate('/author/edit-page?from=settings')} />
+          <ToolRow icon="fa-regular fa-circle-check" label={t('authorPageOptions.pageStatus')} onClick={() => setMessage(t('authorPageOptions.pageStatusSoon'))} />
+          <ToolRow icon="fa-regular fa-rectangle-list" label={t('authorPageOptions.activityLog')} onClick={() => setMessage(t('authorPageOptions.activityLogSoon'))} />
         </div>
 
-        <SectionTitle>Share</SectionTitle>
+        <SectionTitle>{t('authorPageOptions.share')}</SectionTitle>
         <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-regular fa-paper-plane" label="Share Page" onClick={sharePage} />
-          <ToolRow icon="fa-regular fa-copy" label="Copy Page link" onClick={copyPageLink} />
+          <ToolRow icon="fa-regular fa-paper-plane" label={t('authorPageOptions.sharePage')} onClick={sharePage} />
+          <ToolRow icon="fa-regular fa-copy" label={t('authorPageOptions.copyPageLink')} onClick={copyPageLink} />
         </div>
 
-        <SectionTitle>View</SectionTitle>
+        <SectionTitle>{t('authorPageOptions.view')}</SectionTitle>
         <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-regular fa-eye" label="View as reader" onClick={viewAsReader} />
+          <ToolRow icon="fa-regular fa-eye" label={t('authorPageOptions.viewAsReader')} onClick={viewAsReader} />
         </div>
 
-        <SectionTitle>Trash</SectionTitle>
+        <SectionTitle>{t('authorPageOptions.trash')}</SectionTitle>
         <div className="mt-3 space-y-1">
           <ToolRow
             icon="fa-regular fa-trash-can"
-            label="Trash"
+            label={t('authorPageOptions.trash')}
             onClick={() => navigate('/author/trash')}
           />
         </div>
