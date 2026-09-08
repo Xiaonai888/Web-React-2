@@ -314,6 +314,16 @@ const actionMap = {
   },
 }
 
+const reactionActionMap = {
+  love: { emoji: '❤️' },
+  haha: { emoji: '😂' },
+  wow: { emoji: '😮' },
+  sad: { emoji: '😢' },
+  angry: { emoji: '😡' },
+  support: { emoji: '🤝' },
+  touched: { emoji: '🥹' },
+}
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -326,9 +336,29 @@ function getNotificationTypeKey(type) {
   return typeMap[String(type || '').toLowerCase()] || 'system'
 }
 
-function getAction(type) {
+function getAction(type, metadata = {}) {
+  const notificationType = String(
+    type || ''
+  ).toLowerCase()
+
+  if (notificationType === 'like') {
+    const reactionType = String(
+      metadata.reaction_type || 'love'
+    ).toLowerCase()
+    const reaction =
+      reactionActionMap[reactionType]
+
+    if (reaction) {
+      return {
+        ...reaction,
+        badge:
+          'bg-[var(--shadow-bg-surface)]',
+      }
+    }
+  }
+
   return (
-    actionMap[String(type || '').toLowerCase()] || {
+    actionMap[notificationType] || {
       icon: 'fa-solid fa-bell',
       badge: 'bg-[#111827] text-white',
     }
@@ -491,7 +521,7 @@ function markAllNotificationsRead() {
 
 function NotificationAvatar({ notification }) {
   const { t } = useDisplayTranslation()
-  const action = getAction(notification.type)
+  const action = getAction(notification.type, notification.metadata)
   const fallbackText = String(
     notification.readerName ||
       t(`storyNotifications.${notification.typeKey}`) ||
@@ -518,7 +548,13 @@ function NotificationAvatar({ notification }) {
       <span
         className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--shadow-bg-surface)] ${action.badge}`}
       >
-        <i className={`${action.icon} text-[10px]`} />
+        {action.emoji ? (
+          <span className="text-[15px] leading-none">
+            {action.emoji}
+          </span>
+        ) : (
+          <i className={`${action.icon} text-[10px]`} />
+        )}
       </span>
     </div>
   )
@@ -1117,17 +1153,39 @@ export default function StoryNotificationsPage() {
         Math.max(0, current - 1)
       )
 
-      markNotificationRead(
-        notification.id
-      ).catch(() => null)
+      try {
+        await markNotificationRead(
+          notification.id
+        )
+      } catch (error) {
+        setNotifications((current) =>
+          current.map((item) =>
+            item.id === notification.id
+              ? { ...item, unread: true }
+              : item
+          )
+        )
+
+        setUnreadCount(
+          (current) => current + 1
+        )
+
+        showToast(
+          error.message ||
+            t('storyNotifications.updateFailed')
+        )
+        return
+      }
     }
 
     if (notification.targetUrl) {
-  navigate(notification.targetUrl, {
-    state: { returnTo: '/author/notifications' },
-  })
-  return
-}
+      navigate(notification.targetUrl, {
+        state: {
+          returnTo: '/author/notifications',
+        },
+      })
+      return
+    }
 
     showToast(
       t('storyNotifications.noTarget')
