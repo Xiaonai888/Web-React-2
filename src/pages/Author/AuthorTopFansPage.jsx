@@ -1,5 +1,86 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorTopFans', {
+  "en": {
+    "reader": "Reader",
+    "back": "Back",
+    "topFans": "Top fans",
+    "noTopFanYet": "No Top Fan yet",
+    "noTopFanHelp": "{t('authorTopFans.noTopFanHelp')}",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "openActions": "Open {{name}} actions",
+    "removeTopFanBadge": "Remove Top Fan Badge",
+    "removeTopFanBadgeSoon": "Remove Top Fan Badge for {{name}} is coming soon.",
+    "cancel": "Cancel",
+    "failedLoadTopFans": "Failed to load top fans",
+    "failedLoadMoreTopFans": "Failed to load more top fans"
+  },
+  "km": {
+    "reader": "អ្នកអាន",
+    "back": "ត្រឡប់ក្រោយ",
+    "topFans": "អ្នកគាំទ្រកំពូល",
+    "noTopFanYet": "មិនទាន់មានអ្នកគាំទ្រកំពូល",
+    "noTopFanHelp": "អ្នកគាំទ្រកំពូលនឹងបង្ហាញនៅទីនេះ បន្ទាប់ពីអ្នកអានមានសកម្មភាពច្រើនលើទំព័រនេះ។",
+    "loading": "កំពុងផ្ទុក...",
+    "loadMore": "ផ្ទុកបន្ថែម",
+    "openActions": "បើកសកម្មភាពរបស់ {{name}}",
+    "removeTopFanBadge": "ដកស្លាកអ្នកគាំទ្រកំពូល",
+    "removeTopFanBadgeSoon": "មុខងារដកស្លាកអ្នកគាំទ្រកំពូលពី {{name}} នឹងមានឆាប់ៗនេះ។",
+    "cancel": "បោះបង់",
+    "failedLoadTopFans": "មិនអាចផ្ទុកអ្នកគាំទ្រកំពូលបានទេ",
+    "failedLoadMoreTopFans": "មិនអាចផ្ទុកអ្នកគាំទ្រកំពូលបន្ថែមបានទេ"
+  },
+  "zh": {
+    "reader": "读者",
+    "back": "返回",
+    "topFans": "顶级粉丝",
+    "noTopFanYet": "暂无顶级粉丝",
+    "noTopFanHelp": "当读者在此主页上更活跃后，顶级粉丝会显示在这里。",
+    "loading": "加载中...",
+    "loadMore": "加载更多",
+    "openActions": "打开 {{name}} 的操作",
+    "removeTopFanBadge": "移除顶级粉丝徽章",
+    "removeTopFanBadgeSoon": "移除 {{name}} 顶级粉丝徽章的功能即将推出。",
+    "cancel": "取消",
+    "failedLoadTopFans": "无法加载顶级粉丝",
+    "failedLoadMoreTopFans": "无法加载更多顶级粉丝"
+  },
+  "ja": {
+    "reader": "読者",
+    "back": "戻る",
+    "topFans": "トップファン",
+    "noTopFanYet": "まだトップファンはいません",
+    "noTopFanHelp": "読者がこのページでもっと活動すると、トップファンがここに表示されます。",
+    "loading": "読み込み中...",
+    "loadMore": "さらに読み込む",
+    "openActions": "{{name}} の操作を開く",
+    "removeTopFanBadge": "トップファンバッジを削除",
+    "removeTopFanBadgeSoon": "{{name}} のトップファンバッジ削除機能は近日公開予定です。",
+    "cancel": "キャンセル",
+    "failedLoadTopFans": "トップファンを読み込めませんでした",
+    "failedLoadMoreTopFans": "トップファンを追加で読み込めませんでした"
+  },
+  "ko": {
+    "reader": "독자",
+    "back": "뒤로",
+    "topFans": "톱 팬",
+    "noTopFanYet": "아직 톱 팬이 없습니다",
+    "noTopFanHelp": "독자가 이 페이지에서 더 활발해지면 톱 팬이 여기에 표시됩니다.",
+    "loading": "불러오는 중...",
+    "loadMore": "더 보기",
+    "openActions": "{{name}} 작업 열기",
+    "removeTopFanBadge": "톱 팬 배지 제거",
+    "removeTopFanBadgeSoon": "{{name}}의 톱 팬 배지 제거 기능은 곧 제공됩니다.",
+    "cancel": "취소",
+    "failedLoadTopFans": "톱 팬을 불러오지 못했습니다",
+    "failedLoadMoreTopFans": "톱 팬을 더 불러오지 못했습니다"
+  }
+})
+
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -22,7 +103,7 @@ function getHeaders() {
 }
 
 function getFanName(user) {
-  return user?.name || user?.display_name || user?.username || 'Reader'
+  return user?.name || user?.display_name || user?.username || getDisplayText('authorTopFans.reader')
 }
 
 function getFanId(user) {
@@ -38,7 +119,7 @@ function Avatar({ user }) {
   }
 
   return (
-    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e5e7eb] text-[16px] font-black text-[#6b7280]">
+    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[16px] font-black text-[var(--shadow-text-secondary)]">
       {name.slice(0, 1).toUpperCase()}
     </div>
   )
@@ -46,6 +127,7 @@ function Avatar({ user }) {
 
 export default function AuthorTopFansPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const { pageUsername } = useParams()
 
   const [topFans, setTopFans] = useState([])
@@ -65,7 +147,7 @@ export default function AuthorTopFansPage() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to load top fans')
+      throw new Error(data.message || getDisplayText('authorTopFans.failedLoadTopFans'))
     }
 
     return data
@@ -82,7 +164,7 @@ export default function AuthorTopFansPage() {
       setHasMore(Boolean(data.has_more))
       setIsOwner(Boolean(data.is_owner))
     } catch (error) {
-      setMessage(error.message || 'Failed to load top fans')
+      setMessage(error.message || t('authorTopFans.failedLoadTopFans'))
     } finally {
       setLoading(false)
     }
@@ -99,7 +181,7 @@ export default function AuthorTopFansPage() {
       setTopFans((current) => [...current, ...(data.followers || [])])
       setHasMore(Boolean(data.has_more))
     } catch (error) {
-      setMessage(error.message || 'Failed to load more top fans')
+      setMessage(error.message || t('authorTopFans.failedLoadMoreTopFans'))
     } finally {
       setLoadingMore(false)
     }
@@ -111,19 +193,19 @@ export default function AuthorTopFansPage() {
   }, [pageUsername])
 
   return (
-    <div className="min-h-screen bg-white pb-10">
-      <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-10">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
         <div className="mx-auto flex h-14 max-w-[720px] items-center justify-between px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Back"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
+            aria-label={t('authorTopFans.back')}
           >
             <i className="fa-solid fa-chevron-left text-[20px]" />
           </button>
 
-          <h1 className="text-[17px] font-bold text-[#111827]">Top fans</h1>
+          <h1 className="text-[17px] font-bold text-[var(--shadow-text-primary)]">{t('authorTopFans.topFans')}</h1>
 
           <div className="h-10 w-10" />
         </div>
@@ -133,7 +215,7 @@ export default function AuthorTopFansPage() {
         <button
           type="button"
           onClick={() => setMessage('')}
-          className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[14px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold text-[#e5484d]"
+          className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[14px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-left text-[12px] font-bold text-[#e5484d]"
         >
           {message}
         </button>
@@ -144,8 +226,8 @@ export default function AuthorTopFansPage() {
           <div className="space-y-5 px-6 pt-4">
             {Array.from({ length: 10 }).map((_, index) => (
               <div key={index} className="flex items-center gap-4">
-                <div className="h-12 w-12 animate-pulse rounded-full bg-[#eef0f4]" />
-                <div className="h-5 flex-1 animate-pulse rounded-full bg-[#eef0f4]" />
+                <div className="h-12 w-12 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+                <div className="h-5 flex-1 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
               </div>
             ))}
           </div>
@@ -153,12 +235,12 @@ export default function AuthorTopFansPage() {
 
         {!loading && topFans.length === 0 ? (
           <div className="px-6 py-20 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#eef6ff] text-[28px]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[28px]">
               💎
             </div>
-            <div className="mt-4 text-[18px] font-black text-[#111827]">No Top Fan yet</div>
-            <div className="mx-auto mt-2 max-w-[280px] text-[13px] font-medium leading-6 text-[#8b93a1]">
-              Top fans will appear here after readers become more active on this page.
+            <div className="mt-4 text-[18px] font-black text-[var(--shadow-text-primary)]">{t('authorTopFans.noTopFanYet')}</div>
+            <div className="mx-auto mt-2 max-w-[280px] text-[13px] font-medium leading-6 text-[var(--shadow-text-tertiary)]">
+              {t('authorTopFans.noTopFanHelp')}
             </div>
           </div>
         ) : null}
@@ -173,7 +255,7 @@ export default function AuthorTopFansPage() {
     <Avatar user={fan} />
 
     <div className="min-w-0 flex-1">
-      <div className="truncate text-[16px] font-normal text-[#111827]">
+      <div className="truncate text-[16px] font-normal text-[var(--shadow-text-primary)]">
         {getFanName(fan)}
       </div>
     </div>
@@ -182,8 +264,8 @@ export default function AuthorTopFansPage() {
       <button
         type="button"
         onClick={() => setSelectedTopFan(fan)}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
-        aria-label={`Open ${getFanName(fan)} actions`}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-soft)]"
+        aria-label={t('authorTopFans.openActions', { name: getFanName(fan) })}
       >
         <i className="fa-solid fa-ellipsis text-[16px]" />
       </button>
@@ -197,9 +279,9 @@ export default function AuthorTopFansPage() {
                   type="button"
                   onClick={loadMoreTopFans}
                   disabled={loadingMore}
-                  className="h-11 w-full rounded-[12px] bg-[#f3f4f6] text-[14px] font-bold text-[#111827] disabled:opacity-60"
+                  className="h-11 w-full rounded-[12px] bg-[var(--shadow-bg-soft)] text-[14px] font-bold text-[var(--shadow-text-primary)] disabled:opacity-60"
                 >
-                  {loadingMore ? 'Loading...' : 'Load more'}
+                  {loadingMore ? t('authorTopFans.loading') : t('authorTopFans.loadMore')}
                 </button>
               </div>
             ) : null}
@@ -210,12 +292,12 @@ export default function AuthorTopFansPage() {
       {isOwner && selectedTopFan ? (
         <div className="fixed inset-0 z-[300] bg-black/35" onClick={() => setSelectedTopFan(null)}>
           <div
-            className="absolute bottom-0 left-0 right-0 rounded-t-[24px] bg-white px-5 pb-7 pt-3 shadow-[0_-12px_40px_rgba(15,23,42,0.18)]"
+            className="absolute bottom-0 left-0 right-0 rounded-t-[24px] bg-[var(--shadow-bg-surface)] px-5 pb-7 pt-3 shadow-[0_-12px_40px_rgba(15,23,42,0.18)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#c7ccd5]" />
+            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)]" />
 
-            <div className="mb-4 truncate text-[18px] font-semibold text-[#111827]">
+            <div className="mb-4 truncate text-[18px] font-semibold text-[var(--shadow-text-primary)]">
               {getFanName(selectedTopFan)}
             </div>
 
@@ -224,24 +306,24 @@ export default function AuthorTopFansPage() {
               onClick={() => {
                 const name = getFanName(selectedTopFan)
                 setSelectedTopFan(null)
-                setMessage(`Remove Top Fan Badge for ${name} is coming soon.`)
+                setMessage(t('authorTopFans.removeTopFanBadgeSoon', { name }))
               }}
-              className="flex h-12 w-full items-center gap-4 rounded-[14px] text-left active:bg-[#f3f4f6]"
+              className="flex h-12 w-full items-center gap-4 rounded-[14px] text-left active:bg-[var(--shadow-bg-soft)]"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-[#111827] text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]">
                 <i className="fa-solid fa-xmark text-[15px]" />
               </span>
-              <span className="text-[15px] font-medium text-[#111827]">
-                Remove Top Fan Badge
+              <span className="text-[15px] font-medium text-[var(--shadow-text-primary)]">
+                {t('authorTopFans.removeTopFanBadge')}
               </span>
             </button>
 
             <button
               type="button"
               onClick={() => setSelectedTopFan(null)}
-              className="mt-2 h-11 text-[15px] font-normal text-[#111827] active:opacity-70"
+              className="mt-2 h-11 text-[15px] font-normal text-[var(--shadow-text-primary)] active:opacity-70"
             >
-              Cancel
+              {t('authorTopFans.cancel')}
             </button>
           </div>
         </div>
