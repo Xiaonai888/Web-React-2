@@ -51,13 +51,38 @@ const translations = {
     spinning: 'Spinning...',
     needTwoEntries: 'Add at least 2 entries to spin.',
     addEntries: 'Add entries',
-    entriesCount: '{{count}} / 50',
+    entriesCount: '{{count}} / 10,000',
     manual: 'Manual',
     reader: 'Reader',
     author: 'Author',
     book: 'Book',
     manualHelp: 'Add a name without a profile image.',
     manualPlaceholder: 'Enter a name',
+    manageNames: 'Manage names',
+    manualSummary: '{{count}} manual names',
+    bulkHelp: 'Paste up to 1,000 names at once. One name per line.',
+    manageManualTitle: 'Manage Manual Names',
+    bulkPlaceholder: 'Paste names here\nSokha\nDara\nLina',
+    batchCount: '{{count}} / 1,000 detected',
+    addBatch: 'Add {{count}} names',
+    batchTooLarge: 'Only the first 1,000 names in this batch were added.',
+    totalLimitReached: 'The wheel can contain up to 10,000 entries.',
+    searchNames: 'Search names...',
+    allNames: 'All',
+    duplicates: 'Duplicates',
+    duplicateGroups: '{{count}} duplicate groups',
+    duplicateHelp: 'Duplicate names are separate entries and each entry gets its own chance.',
+    duplicateBadge: 'Duplicate',
+    removeDuplicates: 'Remove duplicates',
+    removeSelected: 'Remove selected',
+    saveChanges: 'Save changes',
+    unsavedChanges: 'Unsaved changes',
+    discardChanges: 'Discard unsaved changes?',
+    noManualNames: 'No manual names yet.',
+    noDuplicates: 'No duplicate names found.',
+    bulkAdded: '{{count}} names added to the draft.',
+    changesSaved: 'Manual names updated.',
+    showingNames: 'Showing {{shown}} of {{total}}',
     add: 'Add',
     searchReader: 'Search readers',
     searchAuthor: 'Search authors',
@@ -69,7 +94,7 @@ const translations = {
     noSearchResults: 'No matching results.',
     added: 'Added',
     entryExists: 'This Shadow item is already in the wheel.',
-    entryLimit: 'The wheel can contain up to 50 entries.',
+    entryLimit: 'The wheel can contain up to 10,000 entries.',
     entryAdded: 'Added to the wheel.',
     removeEntry: 'Remove entry',
     entries: 'Entries',
@@ -183,13 +208,38 @@ const translations = {
     spinning: 'កំពុងបង្វិល...',
     needTwoEntries: 'ដាក់អ្នកចូលរួមយ៉ាងហោចណាស់ 2 ទើបអាចបង្វិលបាន។',
     addEntries: 'បន្ថែមអ្នកចូលរួម',
-    entriesCount: '{{count}} / 50',
+    entriesCount: '{{count}} / 10,000',
     manual: 'ឈ្មោះធម្មតា',
     reader: 'អ្នកអាន',
     author: 'អ្នកនិពន្ធ',
     book: 'សៀវភៅ',
     manualHelp: 'ដាក់ឈ្មោះដោយដៃ មិនចាំបាច់មានរូប Profile។',
     manualPlaceholder: 'បញ្ចូលឈ្មោះ',
+    manageNames: 'គ្រប់គ្រងឈ្មោះ',
+    manualSummary: 'ឈ្មោះធម្មតា {{count}}',
+    bulkHelp: 'Paste បានអតិបរមា 1,000 ឈ្មោះម្តង។ មួយបន្ទាត់មួយឈ្មោះ។',
+    manageManualTitle: 'គ្រប់គ្រងឈ្មោះធម្មតា',
+    bulkPlaceholder: 'Paste ឈ្មោះនៅទីនេះ\nSokha\nDara\nLina',
+    batchCount: 'រកឃើញ {{count}} / 1,000',
+    addBatch: 'បន្ថែម {{count}} ឈ្មោះ',
+    batchTooLarge: 'Batch នេះបានបន្ថែមតែ 1,000 ឈ្មោះដំបូង។',
+    totalLimitReached: 'កង់អាចមានអ្នកចូលរួមអតិបរមា 10,000។',
+    searchNames: 'ស្វែងរកឈ្មោះ...',
+    allNames: 'ទាំងអស់',
+    duplicates: 'ឈ្មោះជាន់គ្នា',
+    duplicateGroups: 'មាន {{count}} ក្រុមឈ្មោះជាន់គ្នា',
+    duplicateHelp: 'ឈ្មោះជាន់គ្នាគឺជា Entry ដាច់ដោយឡែក ហើយ Entry នីមួយៗមានឱកាសឈ្នះរបស់ខ្លួន។',
+    duplicateBadge: 'ជាន់គ្នា',
+    removeDuplicates: 'លុបឈ្មោះជាន់គ្នា',
+    removeSelected: 'លុបដែលបានជ្រើស',
+    saveChanges: 'រក្សាការកែប្រែ',
+    unsavedChanges: 'មានការកែប្រែមិនទាន់ Save',
+    discardChanges: 'បោះបង់ការកែប្រែដែលមិនទាន់ Save?',
+    noManualNames: 'មិនទាន់មានឈ្មោះធម្មតា។',
+    noDuplicates: 'មិនមានឈ្មោះជាន់គ្នា។',
+    bulkAdded: 'បានបន្ថែម {{count}} ឈ្មោះទៅ Draft។',
+    changesSaved: 'បានកែឈ្មោះរួច។',
+    showingNames: 'បង្ហាញ {{shown}} ក្នុងចំណោម {{total}}',
     add: 'បន្ថែម',
     searchReader: 'ស្វែងរកអ្នកអាន',
     searchAuthor: 'ស្វែងរកអ្នកនិពន្ធ',
@@ -201,7 +251,7 @@ const translations = {
     noSearchResults: 'រកមិនឃើញលទ្ធផល។',
     added: 'បានបន្ថែម',
     entryExists: 'របស់ Shadow នេះមានក្នុងកង់រួចហើយ។',
-    entryLimit: 'កង់អាចមានអ្នកចូលរួមអតិបរមា 50។',
+    entryLimit: 'កង់អាចមានអ្នកចូលរួមអតិបរមា 10,000។',
     entryAdded: 'បានបន្ថែមចូលកង់។',
     removeEntry: 'ដកចេញពីកង់',
     entries: 'អ្នកចូលរួម',
@@ -315,13 +365,38 @@ const translations = {
     spinning: '转动中...',
     needTwoEntries: '至少添加 2 个选项才能转动。',
     addEntries: '添加选项',
-    entriesCount: '{{count}} / 50',
+    entriesCount: '{{count}} / 10,000',
     manual: '手动',
     reader: '读者',
     author: '作者',
     book: '书籍',
     manualHelp: '手动添加名称，无需头像。',
     manualPlaceholder: '输入名称',
+    manageNames: '管理名称',
+    manualSummary: '{{count}} 个手动名称',
+    bulkHelp: '一次最多粘贴 1,000 个名称，每行一个。',
+    manageManualTitle: '管理手动名称',
+    bulkPlaceholder: '在这里粘贴名称\nSokha\nDara\nLina',
+    batchCount: '检测到 {{count}} / 1,000',
+    addBatch: '添加 {{count}} 个名称',
+    batchTooLarge: '本批次只添加前 1,000 个名称。',
+    totalLimitReached: '转盘最多可包含 10,000 个选项。',
+    searchNames: '搜索名称...',
+    allNames: '全部',
+    duplicates: '重复名称',
+    duplicateGroups: '{{count}} 组重复名称',
+    duplicateHelp: '重复名称会作为独立选项，每个选项都有自己的中奖机会。',
+    duplicateBadge: '重复',
+    removeDuplicates: '删除重复项',
+    removeSelected: '删除所选',
+    saveChanges: '保存更改',
+    unsavedChanges: '有未保存的更改',
+    discardChanges: '放弃未保存的更改？',
+    noManualNames: '还没有手动名称。',
+    noDuplicates: '没有发现重复名称。',
+    bulkAdded: '已将 {{count}} 个名称加入草稿。',
+    changesSaved: '手动名称已更新。',
+    showingNames: '显示 {{shown}} / {{total}}',
     add: '添加',
     searchReader: '搜索读者',
     searchAuthor: '搜索作者',
@@ -333,7 +408,7 @@ const translations = {
     noSearchResults: '没有匹配结果。',
     added: '已添加',
     entryExists: '此 Shadow 项目已在转盘中。',
-    entryLimit: '转盘最多可有 50 个选项。',
+    entryLimit: '转盘最多可有 10,000 个选项。',
     entryAdded: '已添加到转盘。',
     removeEntry: '移除选项',
     entries: '选项',
@@ -447,13 +522,38 @@ const translations = {
     spinning: 'スピン中...',
     needTwoEntries: 'スピンには少なくとも 2 件必要です。',
     addEntries: 'エントリーを追加',
-    entriesCount: '{{count}} / 50',
+    entriesCount: '{{count}} / 10,000',
     manual: '手動',
     reader: '読者',
     author: '作者',
     book: '本',
     manualHelp: 'プロフィール画像なしで名前を追加します。',
     manualPlaceholder: '名前を入力',
+    manageNames: '名前を管理',
+    manualSummary: '手動名 {{count}}件',
+    bulkHelp: '1回につき最大1,000件、1行に1つの名前を貼り付けできます。',
+    manageManualTitle: '手動名を管理',
+    bulkPlaceholder: 'ここに名前を貼り付け\nSokha\nDara\nLina',
+    batchCount: '{{count}} / 1,000 件を検出',
+    addBatch: '{{count}}件を追加',
+    batchTooLarge: 'このバッチでは最初の1,000件のみ追加しました。',
+    totalLimitReached: 'ホイールには最大10,000件まで追加できます。',
+    searchNames: '名前を検索...',
+    allNames: 'すべて',
+    duplicates: '重複',
+    duplicateGroups: '重複グループ {{count}}件',
+    duplicateHelp: '同じ名前でも別エントリーとして扱われ、それぞれに当選チャンスがあります。',
+    duplicateBadge: '重複',
+    removeDuplicates: '重複を削除',
+    removeSelected: '選択を削除',
+    saveChanges: '変更を保存',
+    unsavedChanges: '未保存の変更があります',
+    discardChanges: '未保存の変更を破棄しますか？',
+    noManualNames: '手動名はまだありません。',
+    noDuplicates: '重複名はありません。',
+    bulkAdded: '{{count}}件を下書きに追加しました。',
+    changesSaved: '手動名を更新しました。',
+    showingNames: '{{total}}件中 {{shown}}件を表示',
     add: '追加',
     searchReader: '読者を検索',
     searchAuthor: '作者を検索',
@@ -465,7 +565,7 @@ const translations = {
     noSearchResults: '結果がありません。',
     added: '追加済み',
     entryExists: 'この Shadow 項目はすでにホイールにあります。',
-    entryLimit: '最大 50 件まで追加できます。',
+    entryLimit: '最大 10,000 件まで追加できます。',
     entryAdded: 'ホイールに追加しました。',
     removeEntry: '削除',
     entries: 'エントリー',
@@ -579,13 +679,38 @@ const translations = {
     spinning: '돌리는 중...',
     needTwoEntries: '최소 2개 항목을 추가해야 돌릴 수 있습니다.',
     addEntries: '항목 추가',
-    entriesCount: '{{count}} / 50',
+    entriesCount: '{{count}} / 10,000',
     manual: '직접 입력',
     reader: '독자',
     author: '작가',
     book: '책',
     manualHelp: '프로필 이미지 없이 이름을 추가합니다.',
     manualPlaceholder: '이름 입력',
+    manageNames: '이름 관리',
+    manualSummary: '직접 입력 이름 {{count}}개',
+    bulkHelp: '한 번에 최대 1,000개 이름을 붙여넣을 수 있습니다. 한 줄에 하나씩 입력하세요.',
+    manageManualTitle: '직접 입력 이름 관리',
+    bulkPlaceholder: '여기에 이름 붙여넣기\nSokha\nDara\nLina',
+    batchCount: '{{count}} / 1,000 감지',
+    addBatch: '{{count}}개 이름 추가',
+    batchTooLarge: '이 배치에서는 처음 1,000개 이름만 추가했습니다.',
+    totalLimitReached: '휠에는 최대 10,000개 항목을 넣을 수 있습니다.',
+    searchNames: '이름 검색...',
+    allNames: '전체',
+    duplicates: '중복 이름',
+    duplicateGroups: '중복 그룹 {{count}}개',
+    duplicateHelp: '중복 이름은 각각 별도 항목이며 각 항목마다 당첨 기회가 있습니다.',
+    duplicateBadge: '중복',
+    removeDuplicates: '중복 제거',
+    removeSelected: '선택 삭제',
+    saveChanges: '변경 저장',
+    unsavedChanges: '저장되지 않은 변경 사항',
+    discardChanges: '저장되지 않은 변경을 버릴까요?',
+    noManualNames: '직접 입력 이름이 아직 없습니다.',
+    noDuplicates: '중복 이름이 없습니다.',
+    bulkAdded: '{{count}}개 이름을 초안에 추가했습니다.',
+    changesSaved: '직접 입력 이름을 업데이트했습니다.',
+    showingNames: '{{total}}개 중 {{shown}}개 표시',
     add: '추가',
     searchReader: '독자 검색',
     searchAuthor: '작가 검색',
@@ -597,7 +722,7 @@ const translations = {
     noSearchResults: '검색 결과가 없습니다.',
     added: '추가됨',
     entryExists: '이 Shadow 항목은 이미 휠에 있습니다.',
-    entryLimit: '휠에는 최대 50개 항목을 넣을 수 있습니다.',
+    entryLimit: '휠에는 최대 10,000개 항목을 넣을 수 있습니다.',
     entryAdded: '휠에 추가했습니다.',
     removeEntry: '항목 삭제',
     entries: '항목',
@@ -693,7 +818,11 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const MAX_ENTRIES = 50
+const MAX_ENTRIES = 10000
+const MAX_BULK_NAMES = 1000
+const MANUAL_ROW_HEIGHT = 56
+const MANUAL_VIEWPORT_HEIGHT = 420
+const MANUAL_OVERSCAN = 6
 const MAX_CUSTOM_GIFTS = 10
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 const SEARCH_LIMIT = 20
@@ -751,14 +880,53 @@ function getRandomIndex(length) {
   return Math.floor(Math.random() * length)
 }
 
+function normalizeManualName(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase()
+}
+
+function cleanManualInputName(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 120)
+}
+
+function getManualDuplicateInfo(entries) {
+  const counts = new Map()
+
+  for (const entry of entries || []) {
+    const key = normalizeManualName(entry?.name)
+    if (!key) continue
+    counts.set(key, (counts.get(key) || 0) + 1)
+  }
+
+  const duplicateKeys = new Set(
+    [...counts.entries()]
+      .filter(([, count]) => count > 1)
+      .map(([key]) => key)
+  )
+
+  return {
+    counts,
+    duplicateKeys,
+    groupCount: duplicateKeys.size,
+  }
+}
+
 function buildWheelGradient(entries) {
   if (!entries.length) {
     return 'conic-gradient(#8b5cf6 0deg 60deg, #f472b6 60deg 120deg, #60a5fa 120deg 180deg, #fbbf24 180deg 240deg, #34d399 240deg 300deg, #a78bfa 300deg 360deg)'
   }
 
-  const segment = 360 / entries.length
+  const visualSegments = Math.min(entries.length, 240)
+  const segment = 360 / visualSegments
 
-  return `conic-gradient(${entries
+  return `conic-gradient(${Array.from({ length: visualSegments })
     .map((_, index) => {
       const start = index * segment
       const end = start + segment
@@ -1131,6 +1299,500 @@ function SearchBlock({
   )
 }
 
+function EntriesVirtualList({
+  entries,
+  blockedIds,
+  onRemove,
+  isSpinning,
+  t,
+}) {
+  const [scrollTop, setScrollTop] = useState(0)
+  const rowHeight = 58
+  const viewportHeight = 430
+  const overscan = 6
+  const visibleCount = Math.ceil(viewportHeight / rowHeight)
+  const startIndex = Math.max(
+    0,
+    Math.floor(scrollTop / rowHeight) - overscan
+  )
+  const endIndex = Math.min(
+    entries.length,
+    startIndex + visibleCount + overscan * 2
+  )
+  const visibleEntries = entries.slice(startIndex, endIndex)
+
+  useEffect(() => {
+    setScrollTop(0)
+  }, [entries.length])
+
+  return (
+    <div
+      className="relative overflow-y-auto border-t border-[var(--shadow-border)]"
+      style={{ height: viewportHeight }}
+      onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+    >
+      <div
+        className="relative"
+        style={{ height: entries.length * rowHeight }}
+      >
+        {visibleEntries.map((entry, visibleIndex) => {
+          const absoluteIndex = startIndex + visibleIndex
+
+          return (
+            <div
+              key={entry.id}
+              className="absolute left-0 right-0 flex items-center gap-3 border-b border-[var(--shadow-border)] px-4"
+              style={{
+                height: rowHeight,
+                top: absoluteIndex * rowHeight,
+              }}
+            >
+              <div className="app-muted w-7 shrink-0 text-right text-[9px] font-bold">
+                {absoluteIndex + 1}
+              </div>
+              <Avatar
+                src={entry.image_url}
+                name={entry.name}
+                square={entry.source_type === 'book'}
+                size={39}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="app-title truncate text-[11.5px] font-extrabold">
+                  {entry.name}
+                </div>
+                <div className="app-muted mt-0.5 flex items-center gap-1.5 truncate text-[9.5px]">
+                  <span>{sourceLabel(entry.source_type, t)}</span>
+                  {entry.secondary ? <span>• {entry.secondary}</span> : null}
+                  {blockedIds.includes(entry.id) ? (
+                    <span className="ml-1 rounded-full bg-fuchsia-500/10 px-1.5 py-0.5 text-[8px] font-black text-fuchsia-500">
+                      {t('spinPage.noRepeat')}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onRemove(entry.id)}
+                disabled={isSpinning}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-red-500 active:bg-red-500/10 disabled:opacity-40"
+                aria-label={t('spinPage.removeEntry')}
+              >
+                <i className="fa-solid fa-xmark text-[12px]" />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ManualManager({
+  open,
+  draftEntries,
+  setDraftEntries,
+  nonManualCount,
+  dirty,
+  setDirty,
+  onClose,
+  onSave,
+  onMessage,
+  t,
+}) {
+  const [bulkText, setBulkText] = useState('')
+  const [searchText, setSearchText] = useState('')
+  const [filter, setFilter] = useState('all')
+  const [selectedIds, setSelectedIds] = useState([])
+  const [scrollTop, setScrollTop] = useState(0)
+
+  useEffect(() => {
+    if (!open) return
+    setBulkText('')
+    setSearchText('')
+    setFilter('all')
+    setSelectedIds([])
+    setScrollTop(0)
+  }, [open])
+
+  const duplicateInfo = useMemo(
+    () => getManualDuplicateInfo(draftEntries),
+    [draftEntries]
+  )
+
+  const parsedBatch = useMemo(
+    () =>
+      String(bulkText || '')
+        .split(/\r?\n/)
+        .map(cleanManualInputName)
+        .filter(Boolean),
+    [bulkText]
+  )
+
+  const filteredEntries = useMemo(() => {
+    const keyword = normalizeManualName(searchText)
+
+    return draftEntries.filter((entry) => {
+      const key = normalizeManualName(entry.name)
+      const matchesSearch = !keyword || key.includes(keyword)
+      const matchesFilter =
+        filter === 'all' || duplicateInfo.duplicateKeys.has(key)
+
+      return matchesSearch && matchesFilter
+    })
+  }, [draftEntries, duplicateInfo.duplicateKeys, filter, searchText])
+
+  const visibleCount = Math.ceil(MANUAL_VIEWPORT_HEIGHT / MANUAL_ROW_HEIGHT)
+  const startIndex = Math.max(
+    0,
+    Math.floor(scrollTop / MANUAL_ROW_HEIGHT) - MANUAL_OVERSCAN
+  )
+  const endIndex = Math.min(
+    filteredEntries.length,
+    startIndex + visibleCount + MANUAL_OVERSCAN * 2
+  )
+  const visibleEntries = filteredEntries.slice(startIndex, endIndex)
+  const remainingCapacity = Math.max(
+    0,
+    MAX_ENTRIES - nonManualCount - draftEntries.length
+  )
+  const batchCount = Math.min(
+    MAX_BULK_NAMES,
+    remainingCapacity,
+    parsedBatch.length
+  )
+
+  function addBulkNames() {
+    if (!parsedBatch.length || remainingCapacity <= 0) {
+      if (remainingCapacity <= 0) {
+        onMessage(t('spinPage.totalLimitReached'))
+      }
+      return
+    }
+
+    const names = parsedBatch.slice(0, batchCount)
+
+    setDraftEntries((current) => [
+      ...current,
+      ...names.map((name) => ({
+        id: createLocalId('manual'),
+        source_type: 'manual',
+        source_id: null,
+        name,
+        secondary: '',
+        image_url: null,
+      })),
+    ])
+    setDirty(true)
+    setBulkText('')
+    onMessage(t('spinPage.bulkAdded', { count: names.length }))
+
+    if (parsedBatch.length > MAX_BULK_NAMES) {
+      window.setTimeout(
+        () => onMessage(t('spinPage.batchTooLarge')),
+        50
+      )
+    }
+  }
+
+  function updateEntry(entryId, value) {
+    setDraftEntries((current) =>
+      current.map((entry) =>
+        entry.id === entryId
+          ? { ...entry, name: String(value || '').slice(0, 120) }
+          : entry
+      )
+    )
+    setDirty(true)
+  }
+
+  function removeEntryFromDraft(entryId) {
+    setDraftEntries((current) =>
+      current.filter((entry) => entry.id !== entryId)
+    )
+    setSelectedIds((current) => current.filter((id) => id !== entryId))
+    setDirty(true)
+  }
+
+  function toggleSelected(entryId) {
+    setSelectedIds((current) =>
+      current.includes(entryId)
+        ? current.filter((id) => id !== entryId)
+        : [...current, entryId]
+    )
+  }
+
+  function removeSelected() {
+    if (!selectedIds.length) return
+    const selected = new Set(selectedIds)
+    setDraftEntries((current) =>
+      current.filter((entry) => !selected.has(entry.id))
+    )
+    setSelectedIds([])
+    setDirty(true)
+  }
+
+  function removeDuplicates() {
+    const seen = new Set()
+    let changed = false
+
+    setDraftEntries((current) =>
+      current.filter((entry) => {
+        const key = normalizeManualName(entry.name)
+        if (!key) return true
+
+        if (seen.has(key)) {
+          changed = true
+          return false
+        }
+
+        seen.add(key)
+        return true
+      })
+    )
+
+    if (changed) {
+      setSelectedIds([])
+      setDirty(true)
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      title={t('spinPage.manageManualTitle')}
+      onClose={onClose}
+      closeLabel={t('spinPage.close')}
+      right={
+        <div className="text-right">
+          <div className="app-title text-[10px] font-black">
+            {draftEntries.length + nonManualCount} / {formatNumber(MAX_ENTRIES)}
+          </div>
+          {dirty ? (
+            <div className="mt-0.5 text-[8.5px] font-bold text-amber-500">
+              {t('spinPage.unsavedChanges')}
+            </div>
+          ) : null}
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        <SurfaceCard className="p-3.5">
+          <div className="app-title text-[12px] font-black">
+            {t('spinPage.bulkHelp')}
+          </div>
+
+          <textarea
+            value={bulkText}
+            onChange={(event) => setBulkText(event.target.value)}
+            placeholder={t('spinPage.bulkPlaceholder')}
+            rows={7}
+            className="app-input mt-3 w-full resize-y rounded-[14px] border px-3 py-3 text-[12px] leading-6 outline-none focus:border-violet-500"
+          />
+
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="app-muted text-[10px] font-bold">
+              {t('spinPage.batchCount', {
+                count: Math.min(parsedBatch.length, MAX_BULK_NAMES),
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={addBulkNames}
+              disabled={!batchCount}
+              className="rounded-[12px] bg-violet-600 px-4 py-2.5 text-[10px] font-extrabold text-white active:scale-95 disabled:opacity-45"
+            >
+              <i className="fa-solid fa-plus mr-1.5" />
+              {t('spinPage.addBatch', { count: batchCount })}
+            </button>
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="overflow-hidden">
+          <div className="border-b border-[var(--shadow-border)] p-3.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[190px] flex-1">
+                <i className="fa-solid fa-magnifying-glass app-tertiary absolute left-3 top-1/2 -translate-y-1/2 text-[11px]" />
+                <input
+                  value={searchText}
+                  onChange={(event) => {
+                    setSearchText(event.target.value)
+                    setScrollTop(0)
+                  }}
+                  placeholder={t('spinPage.searchNames')}
+                  className="app-input w-full rounded-[12px] border py-2.5 pl-8 pr-3 text-[11px] outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFilter('all')
+                  setScrollTop(0)
+                }}
+                className={`rounded-full px-3 py-2 text-[9.5px] font-extrabold ${
+                  filter === 'all'
+                    ? 'bg-violet-600 text-white'
+                    : 'app-elevated app-muted'
+                }`}
+              >
+                {t('spinPage.allNames')} {draftEntries.length}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFilter('duplicates')
+                  setScrollTop(0)
+                }}
+                className={`rounded-full px-3 py-2 text-[9.5px] font-extrabold ${
+                  filter === 'duplicates'
+                    ? 'bg-amber-500 text-white'
+                    : 'app-elevated app-muted'
+                }`}
+              >
+                {t('spinPage.duplicates')} {duplicateInfo.groupCount}
+              </button>
+            </div>
+
+            <div className="mt-2 rounded-[11px] bg-amber-500/10 px-3 py-2 text-[9.5px] leading-4 text-amber-700 dark:text-amber-300">
+              {t('spinPage.duplicateHelp')}
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="app-muted text-[9.5px]">
+                {t('spinPage.duplicateGroups', {
+                  count: duplicateInfo.groupCount,
+                })}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={removeSelected}
+                  disabled={!selectedIds.length}
+                  className="rounded-full bg-red-500/10 px-3 py-1.5 text-[9px] font-extrabold text-red-500 disabled:opacity-40"
+                >
+                  {t('spinPage.removeSelected')} {selectedIds.length || ''}
+                </button>
+                <button
+                  type="button"
+                  onClick={removeDuplicates}
+                  disabled={!duplicateInfo.groupCount}
+                  className="rounded-full bg-amber-500/10 px-3 py-1.5 text-[9px] font-extrabold text-amber-600 disabled:opacity-40 dark:text-amber-300"
+                >
+                  {t('spinPage.removeDuplicates')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {filteredEntries.length ? (
+            <>
+              <div
+                className="relative overflow-y-auto"
+                style={{ height: MANUAL_VIEWPORT_HEIGHT }}
+                onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+              >
+                <div
+                  className="relative"
+                  style={{
+                    height: filteredEntries.length * MANUAL_ROW_HEIGHT,
+                  }}
+                >
+                  {visibleEntries.map((entry, visibleIndex) => {
+                    const absoluteIndex = startIndex + visibleIndex
+                    const duplicate = duplicateInfo.duplicateKeys.has(
+                      normalizeManualName(entry.name)
+                    )
+
+                    return (
+                      <div
+                        key={entry.id}
+                        className="absolute left-0 right-0 flex items-center gap-2 border-b border-[var(--shadow-border)] px-3"
+                        style={{
+                          height: MANUAL_ROW_HEIGHT,
+                          top: absoluteIndex * MANUAL_ROW_HEIGHT,
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(entry.id)}
+                          onChange={() => toggleSelected(entry.id)}
+                          className="h-4 w-4 shrink-0"
+                          aria-label={t('spinPage.removeSelected')}
+                        />
+
+                        <div className="app-muted w-8 shrink-0 text-right text-[9px] font-bold">
+                          {absoluteIndex + 1}
+                        </div>
+
+                        <input
+                          value={entry.name}
+                          onChange={(event) =>
+                            updateEntry(entry.id, event.target.value)
+                          }
+                          maxLength={120}
+                          className="app-input min-w-0 flex-1 rounded-[10px] border px-2.5 py-2 text-[11px] font-semibold outline-none focus:border-violet-500"
+                        />
+
+                        {duplicate ? (
+                          <span className="hidden shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-600 sm:inline dark:text-amber-300">
+                            {t('spinPage.duplicateBadge')}
+                          </span>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          onClick={() => removeEntryFromDraft(entry.id)}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-red-500 active:bg-red-500/10"
+                          aria-label={t('spinPage.removeEntry')}
+                        >
+                          <i className="fa-solid fa-xmark text-[11px]" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="app-muted border-t border-[var(--shadow-border)] px-3 py-2 text-center text-[9px]">
+                {t('spinPage.showingNames', {
+                  shown: filteredEntries.length,
+                  total: draftEntries.length,
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="app-muted p-8 text-center text-[11px]">
+              {filter === 'duplicates'
+                ? t('spinPage.noDuplicates')
+                : t('spinPage.noManualNames')}
+            </div>
+          )}
+        </SurfaceCard>
+
+        <div className="sticky bottom-0 z-10 -mx-4 flex gap-2 border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 pb-1 pt-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="app-elevated flex-1 rounded-[13px] px-4 py-3 text-[11px] font-extrabold"
+          >
+            {t('spinPage.cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={!dirty}
+            className="flex-1 rounded-[13px] bg-gradient-to-r from-violet-600 to-pink-500 px-4 py-3 text-[11px] font-extrabold text-white disabled:opacity-45"
+          >
+            <i className="fa-solid fa-floppy-disk mr-1.5" />
+            {t('spinPage.saveChanges')}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 function Wheel({
   entries,
   rotation,
@@ -1415,6 +2077,9 @@ export default function SpinPage() {
   const [noRepeat, setNoRepeat] = useState(false)
   const [blockedIds, setBlockedIds] = useState([])
   const [manualName, setManualName] = useState('')
+  const [showManualManager, setShowManualManager] = useState(false)
+  const [manualDraftEntries, setManualDraftEntries] = useState([])
+  const [manualDirty, setManualDirty] = useState(false)
   const [readerQuery, setReaderQuery] = useState('')
   const [authorQuery, setAuthorQuery] = useState('')
   const [bookQuery, setBookQuery] = useState('')
@@ -1462,7 +2127,19 @@ export default function SpinPage() {
     return [...builtIns, ...customGifts]
   }, [customGifts, rewardConfig, t])
 
-  const chanceText = entries.length ? `${(100 / entries.length).toFixed(entries.length > 20 ? 2 : 1)}%` : '0%'
+  const manualEntries = useMemo(
+    () => entries.filter((entry) => entry.source_type === 'manual'),
+    [entries]
+  )
+  const manualDuplicateCount = useMemo(
+    () => getManualDuplicateInfo(manualEntries).groupCount,
+    [manualEntries]
+  )
+  const nonManualCount = entries.length - manualEntries.length
+  const chanceDecimals = entries.length > 1000 ? 4 : entries.length > 20 ? 2 : 1
+  const chanceText = entries.length
+    ? `${(100 / entries.length).toFixed(chanceDecimals)}%`
+    : '0%'
 
   useEffect(() => {
     return () => {
@@ -1527,6 +2204,76 @@ export default function SpinPage() {
     }
   }
 
+  function openManualManager() {
+    if (isSpinning) return
+    setManualDraftEntries(
+      manualEntries.map((entry) => ({ ...entry }))
+    )
+    setManualDirty(false)
+    setShowManualManager(true)
+  }
+
+  function closeManualManager() {
+    if (
+      manualDirty &&
+      !window.confirm(t('spinPage.discardChanges'))
+    ) {
+      return
+    }
+
+    setShowManualManager(false)
+    setManualDraftEntries([])
+    setManualDirty(false)
+  }
+
+  function saveManualChanges() {
+    const cleanedDraft = manualDraftEntries
+      .map((entry) => ({
+        ...entry,
+        name: cleanManualInputName(entry.name),
+      }))
+      .filter((entry) => entry.name)
+
+    if (nonManualCount + cleanedDraft.length > MAX_ENTRIES) {
+      setToast(t('spinPage.totalLimitReached'))
+      return
+    }
+
+    const draftMap = new Map(
+      cleanedDraft.map((entry) => [entry.id, entry])
+    )
+    const existingManualIds = new Set(
+      manualEntries.map((entry) => entry.id)
+    )
+    const merged = []
+
+    for (const entry of entries) {
+      if (entry.source_type !== 'manual') {
+        merged.push(entry)
+        continue
+      }
+
+      const updated = draftMap.get(entry.id)
+      if (updated) merged.push(updated)
+    }
+
+    for (const entry of cleanedDraft) {
+      if (!existingManualIds.has(entry.id)) {
+        merged.push(entry)
+      }
+    }
+
+    const validIds = new Set(merged.map((entry) => entry.id))
+    setEntries(merged)
+    setBlockedIds((current) =>
+      current.filter((id) => validIds.has(id))
+    )
+    setShowManualManager(false)
+    setManualDraftEntries([])
+    setManualDirty(false)
+    setToast(t('spinPage.changesSaved'))
+  }
+
   function addEntry(entry) {
     if (isSpinning) return
 
@@ -1553,7 +2300,7 @@ export default function SpinPage() {
   }
 
   function addManualEntry() {
-    const name = manualName.trim()
+    const name = cleanManualInputName(manualName)
     if (!name) return
 
     addEntry({
@@ -2272,14 +3019,27 @@ export default function SpinPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-amber-500/10 text-amber-500">
                       <i className="fa-solid fa-keyboard text-[15px]" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <h3 className="app-title text-[14px] font-black">
                         {t('spinPage.manual')}
                       </h3>
                       <p className="app-muted mt-0.5 text-[10.5px]">
-                        {t('spinPage.manualHelp')}
+                        {t('spinPage.manualSummary', {
+                          count: formatNumber(manualEntries.length),
+                        })}
                       </p>
                     </div>
+                    {manualDuplicateCount ? (
+                      <button
+                        type="button"
+                        onClick={openManualManager}
+                        disabled={isSpinning}
+                        className="shrink-0 rounded-full bg-amber-500/10 px-2.5 py-1.5 text-[9px] font-extrabold text-amber-600 dark:text-amber-300"
+                      >
+                        <i className="fa-solid fa-triangle-exclamation mr-1" />
+                        {manualDuplicateCount}
+                      </button>
+                    ) : null}
                   </div>
 
                   <div className="mt-4 flex gap-2">
@@ -2303,6 +3063,19 @@ export default function SpinPage() {
                       {t('spinPage.add')}
                     </button>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={openManualManager}
+                    disabled={isSpinning}
+                    className="app-elevated mt-3 flex w-full items-center justify-center gap-2 rounded-[13px] px-4 py-3 text-[10.5px] font-extrabold disabled:opacity-45"
+                  >
+                    <i className="fa-solid fa-list-check text-violet-500" />
+                    {t('spinPage.manageNames')}
+                    <span className="app-muted">
+                      • {formatNumber(manualEntries.length)}
+                    </span>
+                  </button>
                 </SurfaceCard>
 
                 <SearchBlock
@@ -2364,44 +3137,13 @@ export default function SpinPage() {
               </div>
 
               {entries.length ? (
-                <div className="max-h-[430px] divide-y divide-[var(--shadow-border)] overflow-y-auto border-t border-[var(--shadow-border)]">
-                  {entries.map((entry, index) => (
-                    <div key={entry.id} className="flex items-center gap-3 px-4 py-2.5">
-                      <div className="app-muted w-5 shrink-0 text-center text-[9px] font-bold">
-                        {index + 1}
-                      </div>
-                      <Avatar
-                        src={entry.image_url}
-                        name={entry.name}
-                        square={entry.source_type === 'book'}
-                        size={39}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="app-title truncate text-[11.5px] font-extrabold">
-                          {entry.name}
-                        </div>
-                        <div className="app-muted mt-0.5 flex items-center gap-1.5 truncate text-[9.5px]">
-                          <span>{sourceLabel(entry.source_type, t)}</span>
-                          {entry.secondary ? <span>• {entry.secondary}</span> : null}
-                          {blockedIds.includes(entry.id) ? (
-                            <span className="ml-1 rounded-full bg-fuchsia-500/10 px-1.5 py-0.5 text-[8px] font-black text-fuchsia-500">
-                              {t('spinPage.noRepeat')}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeEntry(entry.id)}
-                        disabled={isSpinning}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-red-500 active:bg-red-500/10 disabled:opacity-40"
-                        aria-label={t('spinPage.removeEntry')}
-                      >
-                        <i className="fa-solid fa-xmark text-[12px]" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <EntriesVirtualList
+                  entries={entries}
+                  blockedIds={blockedIds}
+                  onRemove={removeEntry}
+                  isSpinning={isSpinning}
+                  t={t}
+                />
               ) : (
                 <div className="border-t border-[var(--shadow-border)] p-3">
                   <PageEmptyState
@@ -2647,6 +3389,19 @@ export default function SpinPage() {
           </div>
         </div>
       </main>
+
+      <ManualManager
+        open={showManualManager}
+        draftEntries={manualDraftEntries}
+        setDraftEntries={setManualDraftEntries}
+        nonManualCount={nonManualCount}
+        dirty={manualDirty}
+        setDirty={setManualDirty}
+        onClose={closeManualManager}
+        onSave={saveManualChanges}
+        onMessage={setToast}
+        t={t}
+      />
 
       <Modal
         open={Boolean(winnerResult)}
