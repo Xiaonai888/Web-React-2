@@ -827,7 +827,9 @@ const MAX_CUSTOM_GIFTS = 10
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 const SEARCH_LIMIT = 20
 const SEARCH_DELAY_MS = 400
+const SEARCH_CACHE_MAX = 60
 const SPIN_DURATION_MS = 5600
+const SPIN_SEARCH_CACHE = new Map()
 const WHEEL_COLORS = [
   '#8b5cf6',
   '#f472b6',
@@ -850,6 +852,39 @@ function getReaderToken() {
     sessionStorage.getItem('shadow_reader_token') ||
     ''
   )
+}
+
+function getSpinSearchCacheKey(type, keyword) {
+  const normalized = String(keyword || '')
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase()
+  const sessionKey = getReaderToken() ? 'reader' : 'guest'
+  return `${sessionKey}:${type}:${normalized}`
+}
+
+function getCachedSpinSearch(key) {
+  if (!SPIN_SEARCH_CACHE.has(key)) return null
+
+  const value = SPIN_SEARCH_CACHE.get(key)
+  SPIN_SEARCH_CACHE.delete(key)
+  SPIN_SEARCH_CACHE.set(key, value)
+  return value
+}
+
+function setCachedSpinSearch(key, items) {
+  if (SPIN_SEARCH_CACHE.has(key)) {
+    SPIN_SEARCH_CACHE.delete(key)
+  }
+
+  SPIN_SEARCH_CACHE.set(key, items)
+
+  while (SPIN_SEARCH_CACHE.size > SEARCH_CACHE_MAX) {
+    const oldestKey = SPIN_SEARCH_CACHE.keys().next().value
+    if (!oldestKey) break
+    SPIN_SEARCH_CACHE.delete(oldestKey)
+  }
 }
 
 function createLocalId(prefix = 'entry') {
@@ -999,6 +1034,16 @@ function useSpinSearch(type, query, t) {
       return undefined
     }
 
+    const cacheKey = getSpinSearchCacheKey(type, keyword)
+    const cached = getCachedSpinSearch(cacheKey)
+
+    if (cached) {
+      setItems(cached)
+      setLoading(false)
+      setError('')
+      return undefined
+    }
+
     const controller = new AbortController()
     const timer = window.setTimeout(async () => {
       try {
@@ -1025,7 +1070,12 @@ function useSpinSearch(type, query, t) {
           throw new Error(data.message || t('spinPage.searchFailed'))
         }
 
-        setItems(Array.isArray(data.results) ? data.results.slice(0, SEARCH_LIMIT) : [])
+        const nextItems = Array.isArray(data.results)
+          ? data.results.slice(0, SEARCH_LIMIT)
+          : []
+
+        setCachedSpinSearch(cacheKey, nextItems)
+        setItems(nextItems)
       } catch (searchError) {
         if (searchError.name === 'AbortError') return
         setItems([])
@@ -1147,7 +1197,7 @@ function SearchBlock({
   setQuery,
   search,
   type,
-  entries,
+  entryKeys,
   onAdd,
   disabled,
   t,
@@ -1244,11 +1294,11 @@ function SearchBlock({
               {search.items.map((item) => {
                 const entry = normalizeResult(item)
                 const isBook = entry.source_type === 'book'
-                const alreadyAdded = entries.some(
-                  (savedEntry) =>
-                    savedEntry.source_type === entry.source_type &&
-                    savedEntry.source_id &&
-                    savedEntry.source_id === entry.source_id
+                const alreadyAdded = Boolean(
+                  entry.source_id &&
+                    entryKeys.has(
+                      `${entry.source_type}:${entry.source_id}`
+                    )
                 )
 
                 return (
@@ -1320,6 +1370,14 @@ function EntriesVirtualList({
     startIndex + visibleCount + overscan * 2
   )
   const visibleEntries = entries.slice(startIndex, endIndex)
+  const blockedSet = useMemo(
+    () => new Set(blockedIds),
+    [blockedIds]
+  )
+  const listHeight = Math.min(
+    viewportHeight,
+    Math.max(rowHeight, entries.length * rowHeight)
+  )
 
   useEffect(() => {
     setScrollTop(0)
@@ -1328,7 +1386,7 @@ function EntriesVirtualList({
   return (
     <div
       className="relative overflow-y-auto border-t border-[var(--shadow-border)]"
-      style={{ height: viewportHeight }}
+      style={{ height: listHeight }}
       onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
     >
       <div
@@ -1363,7 +1421,7 @@ function EntriesVirtualList({
                 <div className="app-muted mt-0.5 flex items-center gap-1.5 truncate text-[9.5px]">
                   <span>{sourceLabel(entry.source_type, t)}</span>
                   {entry.secondary ? <span>• {entry.secondary}</span> : null}
-                  {blockedIds.includes(entry.id) ? (
+                  {blockedSet.has(entry.id) ? (
                     <span className="ml-1 rounded-full bg-fuchsia-500/10 px-1.5 py-0.5 text-[8px] font-black text-fuchsia-500">
                       {t('spinPage.noRepeat')}
                     </span>
@@ -2136,6 +2194,22 @@ export default function SpinPage() {
     [manualEntries]
   )
   const nonManualCount = entries.length - manualEntries.length
+  const existingEntryKeys = useMemo(
+    () =>
+      new Set(
+        entries
+          .filter(
+            (entry) =>
+              entry.source_type !== 'manual' &&
+              entry.source_id
+          )
+          .map(
+            (entry) =>
+              `${entry.source_type}:${entry.source_id}`
+          )
+      ),
+    [entries]
+  )
   const chanceDecimals = entries.length > 1000 ? 4 : entries.length > 20 ? 2 : 1
   const chanceText = entries.length
     ? `${(100 / entries.length).toFixed(chanceDecimals)}%`
@@ -3085,7 +3159,7 @@ export default function SpinPage() {
                   setQuery={setReaderQuery}
                   search={readerSearch}
                   type="readers"
-                  entries={entries}
+                  entryKeys={existingEntryKeys}
                   onAdd={addEntry}
                   disabled={isSpinning || entries.length >= MAX_ENTRIES}
                   t={t}
@@ -3098,7 +3172,7 @@ export default function SpinPage() {
                   setQuery={setAuthorQuery}
                   search={authorSearch}
                   type="pages"
-                  entries={entries}
+                  entryKeys={existingEntryKeys}
                   onAdd={addEntry}
                   disabled={isSpinning || entries.length >= MAX_ENTRIES}
                   t={t}
@@ -3111,7 +3185,7 @@ export default function SpinPage() {
                   setQuery={setBookQuery}
                   search={bookSearch}
                   type="stories"
-                  entries={entries}
+                  entryKeys={existingEntryKeys}
                   onAdd={addEntry}
                   disabled={isSpinning || entries.length >= MAX_ENTRIES}
                   t={t}
