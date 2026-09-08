@@ -701,7 +701,6 @@ export default function ReaderStorePage() {
 
       <main className="mx-auto w-full max-w-[560px] px-4 pt-4">
         <section className="space-y-3">
-          <SectionHeader title={t('readerStore.shadowMall')} />
           <ShadowMallSection />
         </section>
 
