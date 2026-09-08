@@ -1335,6 +1335,7 @@ const shouldShowOpeningAds =
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/library" element={<Library />} />
         <Route path="/profile/edit" element={<EditProfilePage />} />
         <Route path="/profile/edit/links" element={<EditProfileLinksPage />} />
         <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
