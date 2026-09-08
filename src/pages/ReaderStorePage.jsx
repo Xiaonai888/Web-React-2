@@ -4,6 +4,11 @@ import ShadowMallSection from '../components/Shop/ShadowMallSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import ReaderMallWishlistPage from './ReaderMallWishlistPage'
+import {
+  isReaderMallWishlisted,
+  toggleReaderMallWishlist,
+} from '../utils/readerMallWishlist'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -11,7 +16,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const FILTERS = ['all', 'romance', 'bl', 'fantasy', 'pdf']
+const FILTERS = ['all', 'book', 'pdf']
 
 registerTranslationNamespace('readerStore', {
   en: {
@@ -20,6 +25,9 @@ registerTranslationNamespace('readerStore', {
     searchBooks: 'Search books',
     searchPlaceholder: 'Search books or authors',
     openCart: 'Open cart',
+    openWaitlist: 'Open waitlist',
+    addToWaitlist: 'Add to waitlist',
+    removeFromWaitlist: 'Remove from waitlist',
     shadowMall: 'Shadow Mall',
     seeMore: 'See more',
     seeLess: 'See less',
@@ -52,6 +60,9 @@ registerTranslationNamespace('readerStore', {
     searchBooks: 'ស្វែងរកសៀវភៅ',
     searchPlaceholder: 'ស្វែងរកសៀវភៅ ឬអ្នកនិពន្ធ',
     openCart: 'បើកកន្ត្រក',
+    openWaitlist: 'បើក Waitlist',
+    addToWaitlist: 'បន្ថែមទៅ Waitlist',
+    removeFromWaitlist: 'ដកចេញពី Waitlist',
     shadowMall: 'Shadow Mall',
     seeMore: 'មើលបន្ថែម',
     seeLess: 'បង្ហាញតិច',
@@ -84,6 +95,9 @@ registerTranslationNamespace('readerStore', {
     searchBooks: '搜索书籍',
     searchPlaceholder: '搜索书籍或作者',
     openCart: '打开购物车',
+    openWaitlist: '打开心愿单',
+    addToWaitlist: '加入心愿单',
+    removeFromWaitlist: '从心愿单移除',
     shadowMall: 'Shadow Mall',
     seeMore: '查看更多',
     seeLess: '收起',
@@ -116,6 +130,9 @@ registerTranslationNamespace('readerStore', {
     searchBooks: '本を検索',
     searchPlaceholder: '本または作家を検索',
     openCart: 'カートを開く',
+    openWaitlist: 'ウェイトリストを開く',
+    addToWaitlist: 'ウェイトリストに追加',
+    removeFromWaitlist: 'ウェイトリストから削除',
     shadowMall: 'Shadow Mall',
     seeMore: 'もっと見る',
     seeLess: '閉じる',
@@ -148,6 +165,9 @@ registerTranslationNamespace('readerStore', {
     searchBooks: '도서 검색',
     searchPlaceholder: '도서 또는 작가 검색',
     openCart: '장바구니 열기',
+    openWaitlist: '위시리스트 열기',
+    addToWaitlist: '위시리스트에 추가',
+    removeFromWaitlist: '위시리스트에서 삭제',
     shadowMall: 'Shadow Mall',
     seeMore: '더 보기',
     seeLess: '접기',
@@ -377,6 +397,72 @@ function SectionHeader({ title, subtitle, action, onAction }) {
   )
 }
 
+function toReaderMallWaitlistItem(book) {
+  return {
+    source: 'author',
+    sellerId: book.authorPageId,
+    productId: book.id,
+    id: book.id,
+    title: book.title,
+    author: book.author,
+    cover: book.cover,
+    price: book.price,
+    oldPrice: book.oldPrice,
+    type: book.type,
+    status: book.stockStatus,
+    pageName: book.pageName,
+    pageUsername: book.pageUsername,
+    authorAvatar: book.authorAvatar,
+  }
+}
+
+function WaitlistHeartButton({ book, t, compact = false }) {
+  const item = useMemo(() => toReaderMallWaitlistItem(book), [book])
+  const [wishlisted, setWishlisted] = useState(() => isReaderMallWishlisted(item))
+
+  useEffect(() => {
+    const refresh = () => setWishlisted(isReaderMallWishlisted(item))
+
+    window.addEventListener('reader-mall-wishlist-change', refresh)
+    window.addEventListener('storage', refresh)
+    window.addEventListener('focus', refresh)
+
+    return () => {
+      window.removeEventListener('reader-mall-wishlist-change', refresh)
+      window.removeEventListener('storage', refresh)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [item])
+
+  const handleClick = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    const result = toggleReaderMallWishlist(item)
+    setWishlisted(result.wishlisted)
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-label={
+        wishlisted
+          ? t('readerStore.removeFromWaitlist')
+          : t('readerStore.addToWaitlist')
+      }
+      className={`absolute right-2 top-2 z-10 flex items-center justify-center rounded-full bg-white/95 shadow-sm active:scale-95 ${
+        compact ? 'h-7 w-7' : 'h-8 w-8'
+      } ${wishlisted ? 'text-[#e5484d]' : 'text-[#111827]'}`}
+    >
+      <i
+        className={`${wishlisted ? 'fa-solid' : 'fa-regular'} fa-heart ${
+          compact ? 'text-[11px]' : 'text-[13px]'
+        }`}
+      />
+    </button>
+  )
+}
+
 function StoreBookCard({ book, t, onOpen }) {
   const badgeLabel =
     book.badge === 'trending'
@@ -390,13 +476,13 @@ function StoreBookCard({ book, t, onOpen }) {
   const authorInitial = displayAuthor.charAt(0).toUpperCase() || 'A'
 
   return (
-    <article className="overflow-hidden rounded-[20px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
-      <button
-        type="button"
-        onClick={onOpen}
-        className="block w-full text-left"
-      >
-        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--shadow-bg-soft)]">
+    <article className="overflow-hidden rounded-[14px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[var(--shadow-bg-soft)]">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="block h-full w-full text-left"
+        >
           <ResilientImage
             src={book.cover}
             alt={displayTitle}
@@ -407,66 +493,72 @@ function StoreBookCard({ book, t, onOpen }) {
               </span>
             }
           />
+        </button>
 
-          <span
-            className={`absolute left-2 top-2 rounded-full px-2.5 py-1 text-[9px] font-extrabold shadow-sm ${
-              soldOut
-                ? 'bg-[#f1f5f9] text-[#64748b]'
-                : book.badge === 'trending'
-                  ? 'bg-[#dff7f3] text-[#0f766e]'
-                  : 'bg-[#ede9fe] text-[#6d28d9]'
-            }`}
-          >
-            {soldOut ? t('readerStore.soldOut') : badgeLabel}
+        <span
+          className={`pointer-events-none absolute left-2 top-2 rounded-full px-2.5 py-1 text-[9px] font-extrabold shadow-sm ${
+            soldOut
+              ? 'bg-[#f1f5f9] text-[#64748b]'
+              : book.badge === 'trending'
+                ? 'bg-[#dff7f3] text-[#0f766e]'
+                : 'bg-[#ede9fe] text-[#6d28d9]'
+          }`}
+        >
+          {soldOut ? t('readerStore.soldOut') : badgeLabel}
+        </span>
+
+        <WaitlistHeartButton book={book} t={t} />
+      </div>
+
+      <button
+        type="button"
+        onClick={onOpen}
+        className="block w-full p-3 text-left"
+      >
+        <div className="flex items-center gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#ede9fe] text-[9px] font-black text-[#6d28d9]">
+            <ResilientImage
+              src={book.authorAvatar}
+              alt=""
+              className="h-full w-full object-cover"
+              fallback={authorInitial}
+            />
+          </span>
+
+          <span className="min-w-0 flex-1 truncate text-[10.5px] font-bold text-[var(--shadow-text-secondary)]">
+            {displayAuthor}
+          </span>
+
+          <span className="rounded-full bg-[var(--shadow-bg-soft)] px-2 py-1 text-[9px] font-extrabold text-[var(--shadow-text-secondary)]">
+            {typeLabel}
           </span>
         </div>
 
-        <div className="p-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#ede9fe] text-[9px] font-black text-[#6d28d9]">
-              <ResilientImage
-                src={book.authorAvatar}
-                alt=""
-                className="h-full w-full object-cover"
-                fallback={authorInitial}
-              />
-            </span>
+        <h3 className="mt-2 line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[var(--shadow-text-primary)]">
+          {displayTitle}
+        </h3>
 
-            <span className="min-w-0 flex-1 truncate text-[10.5px] font-bold text-[var(--shadow-text-secondary)]">
-              {displayAuthor}
-            </span>
-
-            <span className="rounded-full bg-[var(--shadow-bg-soft)] px-2 py-1 text-[9px] font-extrabold text-[var(--shadow-text-secondary)]">
-              {typeLabel}
-            </span>
-          </div>
-
-          <h3 className="mt-2 line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[var(--shadow-text-primary)]">
-            {displayTitle}
-          </h3>
-
-          <div className="mt-3 flex items-end justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-[13px] font-extrabold text-[#7c3aed]">
-                {book.price}
-              </div>
-              {book.oldPrice ? (
-                <div className="mt-0.5 text-[10px] font-semibold text-[var(--shadow-text-tertiary)] line-through">
-                  {book.oldPrice}
-                </div>
-              ) : null}
+        <div className="mt-3 flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-[13px] font-extrabold text-[#7c3aed]">
+              {book.price}
             </div>
-
-            <span
-              className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                soldOut
-                  ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]'
-                  : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
-              }`}
-            >
-              <i className="fa-solid fa-bag-shopping text-[11px]" />
-            </span>
+            {book.oldPrice ? (
+              <div className="mt-0.5 text-[10px] font-semibold text-[var(--shadow-text-tertiary)] line-through">
+                {book.oldPrice}
+              </div>
+            ) : null}
           </div>
+
+          <span
+            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+              soldOut
+                ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]'
+                : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
+            }`}
+          >
+            <i className="fa-solid fa-bag-shopping text-[11px]" />
+          </span>
         </div>
       </button>
     </article>
@@ -484,25 +576,27 @@ function EditorPickCard({ book, t, onOpen }) {
         : t('readerStore.newLabel')
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="w-[118px] shrink-0 text-left transition active:scale-[0.98]"
-    >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-[14px] bg-[var(--shadow-bg-soft)] shadow-sm ring-1 ring-[var(--shadow-border)]">
-        <ResilientImage
-          src={book.cover}
-          alt={displayTitle}
-          className={`h-full w-full object-cover ${soldOut ? 'opacity-60' : ''}`}
-          fallback={
-            <span className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
-              <i className="fa-regular fa-image text-[22px]" />
-            </span>
-          }
-        />
+    <article className="w-[118px] shrink-0">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-[10px] bg-[var(--shadow-bg-soft)] shadow-sm ring-1 ring-[var(--shadow-border)]">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="block h-full w-full text-left transition active:scale-[0.98]"
+        >
+          <ResilientImage
+            src={book.cover}
+            alt={displayTitle}
+            className={`h-full w-full object-cover ${soldOut ? 'opacity-60' : ''}`}
+            fallback={
+              <span className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
+                <i className="fa-regular fa-image text-[22px]" />
+              </span>
+            }
+          />
+        </button>
 
         <span
-          className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[8px] font-extrabold shadow-sm ${
+          className={`pointer-events-none absolute left-2 top-2 rounded-full px-2 py-1 text-[8px] font-extrabold shadow-sm ${
             soldOut
               ? 'bg-[#f1f5f9] text-[#64748b]'
               : book.badge === 'trending'
@@ -512,15 +606,23 @@ function EditorPickCard({ book, t, onOpen }) {
         >
           {badgeLabel}
         </span>
+
+        <WaitlistHeartButton book={book} t={t} compact />
       </div>
 
-      <h3 className="mt-2 line-clamp-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">
-        {displayTitle}
-      </h3>
-      <div className="mt-0.5 text-[10.5px] font-extrabold text-[#7c3aed]">
-        {book.price}
-      </div>
-    </button>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="block w-full text-left transition active:scale-[0.98]"
+      >
+        <h3 className="mt-2 line-clamp-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">
+          {displayTitle}
+        </h3>
+        <div className="mt-0.5 text-[10.5px] font-extrabold text-[#7c3aed]">
+          {book.price}
+        </div>
+      </button>
+    </article>
   )
 }
 
@@ -537,6 +639,7 @@ export default function ReaderStorePage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [retryKey, setRetryKey] = useState(0)
+  const [waitlistOpen, setWaitlistOpen] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -574,19 +677,8 @@ export default function ReaderStorePage() {
   const keyword = searchQuery.trim().toLowerCase()
 
   const matchesFilter = (book) => {
+    if (activeFilter === 'book' && book.type !== 'book') return false
     if (activeFilter === 'pdf' && book.type !== 'pdf') return false
-
-    const categoryText = `${book.category} ${book.genre}`.toLowerCase()
-
-    if (activeFilter === 'romance' && !categoryText.includes('romance')) return false
-    if (
-      activeFilter === 'bl' &&
-      !categoryText.includes('bl') &&
-      !categoryText.includes('boys love')
-    ) {
-      return false
-    }
-    if (activeFilter === 'fantasy' && !categoryText.includes('fantasy')) return false
 
     if (!keyword) return true
 
@@ -638,6 +730,10 @@ export default function ReaderStorePage() {
 
   const filterLabel = (filter) => t(`readerStore.${filter}`)
 
+  if (waitlistOpen) {
+    return <ReaderMallWishlistPage onBack={() => setWaitlistOpen(false)} />
+  }
+
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px] text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur-xl">
@@ -663,6 +759,14 @@ export default function ReaderStorePage() {
               className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             >
               <i className="fa-solid fa-magnifying-glass text-[17px]" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setWaitlistOpen(true)}
+              aria-label={t('readerStore.openWaitlist')}
+              className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
+            >
+              <i className="fa-regular fa-heart text-[18px]" />
             </button>
             <button
               type="button"
@@ -784,9 +888,6 @@ export default function ReaderStorePage() {
                               className="h-full w-full rounded-full object-cover"
                               fallback={authorInitial}
                             />
-                          </span>
-                          <span className="absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#7c3aed] text-white ring-2 ring-[var(--shadow-bg-page)]">
-                            <i className="fa-solid fa-check text-[8px]" />
                           </span>
                         </span>
                         <span className="mt-2 block truncate text-[10.5px] font-extrabold text-[var(--shadow-text-primary)]">
