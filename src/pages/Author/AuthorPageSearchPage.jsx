@@ -1,5 +1,146 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorPageSearch', {
+  "en": {
+    "authorPage": "Author Page",
+    "back": "Back",
+    "searchName": "Search {{name}}",
+    "clearSearch": "Clear search",
+    "allCount": "All {{count}}",
+    "postsCount": "Posts {{count}}",
+    "worksCount": "Works {{count}}",
+    "storeCount": "Store {{count}}",
+    "loadingPageSearch": "{t('authorPageSearch.loadingPageSearch')}",
+    "searchThisPage": "Search this Page",
+    "searchHelp": "Search posts, works, and store items from {{name}} only.",
+    "noResults": "No results found",
+    "tryAnother": "{t('authorPageSearch.tryAnother')}",
+    "posts": "Posts",
+    "works": "Works",
+    "store": "Store",
+    "post": "Post",
+    "photoPost": "Photo post",
+    "work": "Work",
+    "untitledStory": "Untitled Story",
+    "storeItem": "Store item",
+    "authorPageNotFound": "Author page not found",
+    "failedLoadPosts": "Failed to load posts",
+    "failedLoadStoreProducts": "Failed to load store products",
+    "failedLoadPageSearch": "Failed to load Page search"
+  },
+  "km": {
+    "authorPage": "ទំព័រអ្នកនិពន្ធ",
+    "back": "ត្រឡប់ក្រោយ",
+    "searchName": "ស្វែងរកក្នុង {{name}}",
+    "clearSearch": "សម្អាតការស្វែងរក",
+    "allCount": "ទាំងអស់ {{count}}",
+    "postsCount": "ប្រកាស {{count}}",
+    "worksCount": "ស្នាដៃ {{count}}",
+    "storeCount": "ហាង {{count}}",
+    "loadingPageSearch": "កំពុងផ្ទុកការស្វែងរកក្នុងទំព័រ...",
+    "searchThisPage": "ស្វែងរកក្នុងទំព័រនេះ",
+    "searchHelp": "ស្វែងរកប្រកាស ស្នាដៃ និងទំនិញក្នុងហាងរបស់ {{name}} ប៉ុណ្ណោះ។",
+    "noResults": "រកមិនឃើញលទ្ធផល",
+    "tryAnother": "សាកល្បងពាក្យ ឬឃ្លាផ្សេង។",
+    "posts": "ប្រកាស",
+    "works": "ស្នាដៃ",
+    "store": "ហាង",
+    "post": "ប្រកាស",
+    "photoPost": "ប្រកាសរូបភាព",
+    "work": "ស្នាដៃ",
+    "untitledStory": "រឿងគ្មានចំណងជើង",
+    "storeItem": "ទំនិញក្នុងហាង",
+    "authorPageNotFound": "រកមិនឃើញទំព័រអ្នកនិពន្ធ",
+    "failedLoadPosts": "មិនអាចផ្ទុកប្រកាសបានទេ",
+    "failedLoadStoreProducts": "មិនអាចផ្ទុកទំនិញក្នុងហាងបានទេ",
+    "failedLoadPageSearch": "មិនអាចផ្ទុកការស្វែងរកក្នុងទំព័របានទេ"
+  },
+  "zh": {
+    "authorPage": "作者主页",
+    "back": "返回",
+    "searchName": "搜索 {{name}}",
+    "clearSearch": "清除搜索",
+    "allCount": "全部 {{count}}",
+    "postsCount": "帖子 {{count}}",
+    "worksCount": "作品 {{count}}",
+    "storeCount": "商店 {{count}}",
+    "loadingPageSearch": "正在加载主页搜索...",
+    "searchThisPage": "搜索此主页",
+    "searchHelp": "仅搜索 {{name}} 的帖子、作品和商店商品。",
+    "noResults": "未找到结果",
+    "tryAnother": "请尝试其他词语或短语。",
+    "posts": "帖子",
+    "works": "作品",
+    "store": "商店",
+    "post": "帖子",
+    "photoPost": "图片帖子",
+    "work": "作品",
+    "untitledStory": "未命名故事",
+    "storeItem": "商店商品",
+    "authorPageNotFound": "未找到作者主页",
+    "failedLoadPosts": "无法加载帖子",
+    "failedLoadStoreProducts": "无法加载商店商品",
+    "failedLoadPageSearch": "无法加载主页搜索"
+  },
+  "ja": {
+    "authorPage": "著者ページ",
+    "back": "戻る",
+    "searchName": "{{name}} を検索",
+    "clearSearch": "検索をクリア",
+    "allCount": "すべて {{count}}",
+    "postsCount": "投稿 {{count}}",
+    "worksCount": "作品 {{count}}",
+    "storeCount": "ストア {{count}}",
+    "loadingPageSearch": "ページ検索を読み込み中...",
+    "searchThisPage": "このページを検索",
+    "searchHelp": "{{name}} の投稿、作品、ストア商品だけを検索します。",
+    "noResults": "結果が見つかりません",
+    "tryAnother": "別の単語やフレーズを試してください。",
+    "posts": "投稿",
+    "works": "作品",
+    "store": "ストア",
+    "post": "投稿",
+    "photoPost": "写真投稿",
+    "work": "作品",
+    "untitledStory": "無題のストーリー",
+    "storeItem": "ストア商品",
+    "authorPageNotFound": "著者ページが見つかりません",
+    "failedLoadPosts": "投稿を読み込めませんでした",
+    "failedLoadStoreProducts": "ストア商品を読み込めませんでした",
+    "failedLoadPageSearch": "ページ検索を読み込めませんでした"
+  },
+  "ko": {
+    "authorPage": "작가 페이지",
+    "back": "뒤로",
+    "searchName": "{{name}} 검색",
+    "clearSearch": "검색 지우기",
+    "allCount": "전체 {{count}}",
+    "postsCount": "게시물 {{count}}",
+    "worksCount": "작품 {{count}}",
+    "storeCount": "스토어 {{count}}",
+    "loadingPageSearch": "페이지 검색을 불러오는 중...",
+    "searchThisPage": "이 페이지 검색",
+    "searchHelp": "{{name}}의 게시물, 작품, 스토어 상품만 검색합니다.",
+    "noResults": "검색 결과가 없습니다",
+    "tryAnother": "다른 단어나 문구를 입력해 보세요.",
+    "posts": "게시물",
+    "works": "작품",
+    "store": "스토어",
+    "post": "게시물",
+    "photoPost": "사진 게시물",
+    "work": "작품",
+    "untitledStory": "제목 없는 이야기",
+    "storeItem": "스토어 상품",
+    "authorPageNotFound": "작가 페이지를 찾을 수 없습니다",
+    "failedLoadPosts": "게시물을 불러오지 못했습니다",
+    "failedLoadStoreProducts": "스토어 상품을 불러오지 못했습니다",
+    "failedLoadPageSearch": "페이지 검색을 불러오지 못했습니다"
+  }
+})
+
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -31,7 +172,7 @@ function formatDate(value) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
 
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(getDisplayLanguageId(), {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -43,7 +184,12 @@ function formatPrice(product) {
   const original = Number(product?.original_price || 0)
   const price = sale || original
 
-  return `$${price.toFixed(2)}`
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(price)
 }
 
 async function fetchAuthorPage(pageUsername, signal) {
@@ -58,7 +204,7 @@ async function fetchAuthorPage(pageUsername, signal) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Author page not found')
+    throw new Error(data.message || getDisplayText('authorPageSearch.authorPageNotFound'))
   }
 
   return {
@@ -87,7 +233,7 @@ async function fetchAllAuthorPosts(pageUsername, signal) {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to load posts')
+      throw new Error(data.message || getDisplayText('authorPageSearch.failedLoadPosts'))
     }
 
     const rows = Array.isArray(data.posts) ? data.posts : []
@@ -129,7 +275,7 @@ async function fetchAuthorProducts(pageUsername, signal) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load store products')
+    throw new Error(data.message || getDisplayText('authorPageSearch.failedLoadStoreProducts'))
   }
 
   return Array.isArray(data.products) ? data.products : []
@@ -142,8 +288,8 @@ function FilterButton({ active, label, onClick }) {
       onClick={onClick}
       className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-medium ${
         active
-          ? 'bg-[#111827] text-white'
-          : 'bg-white text-[#4b5563] ring-1 ring-[#e5e7eb]'
+          ? 'bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]'
+          : 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)] ring-1 ring-[var(--shadow-border)]'
       }`}
     >
       {label}
@@ -152,11 +298,12 @@ function FilterButton({ active, label, onClick }) {
 }
 
 function PostResult({ post }) {
+  const { t } = useDisplayTranslation()
   const images = Array.isArray(post?.image_urls) ? post.image_urls.filter(Boolean) : []
   const content = String(post?.content || '').trim()
 
   return (
-    <article className="bg-white px-4 py-4">
+    <article className="bg-[var(--shadow-bg-surface)] px-4 py-4">
       <div className="flex gap-3">
         {images[0] ? (
           <img
@@ -165,18 +312,18 @@ function PostResult({ post }) {
             className="h-[68px] w-[68px] shrink-0 rounded-[10px] object-cover"
           />
         ) : (
-          <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[#f1f3f5] text-[#111827]">
+          <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
             <i className="fa-regular fa-file-lines text-[18px]" />
           </div>
         )}
 
         <div className="min-w-0 flex-1">
-          <div className="text-[12px] font-medium text-[#6b7280]">Post</div>
-          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-[14px] font-normal leading-5 text-[#111827]">
-            {content || 'Photo post'}
+          <div className="text-[12px] font-medium text-[var(--shadow-text-secondary)]">{t('authorPageSearch.post')}</div>
+          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-[14px] font-normal leading-5 text-[var(--shadow-text-primary)]">
+            {content || t('authorPageSearch.photoPost')}
           </p>
           {post?.created_at ? (
-            <div className="mt-2 text-[11px] font-normal text-[#9ca3af]">
+            <div className="mt-2 text-[11px] font-normal text-[var(--shadow-text-tertiary)]">
               {formatDate(post.created_at)}
             </div>
           ) : null}
@@ -187,13 +334,15 @@ function PostResult({ post }) {
 }
 
 function WorkResult({ work, onOpen }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full gap-3 bg-white px-4 py-4 text-left active:bg-[#f8fafc]"
+      className="flex w-full gap-3 bg-[var(--shadow-bg-surface)] px-4 py-4 text-left active:bg-[var(--shadow-bg-soft)]"
     >
-      <div className="h-[78px] w-[56px] shrink-0 overflow-hidden rounded-[8px] bg-[#f1f3f5]">
+      <div className="h-[78px] w-[56px] shrink-0 overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)]">
         {work?.cover_url ? (
           <img
             src={work.cover_url}
@@ -201,35 +350,37 @@ function WorkResult({ work, onOpen }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[#9ca3af]">
+          <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
             <i className="fa-regular fa-bookmark text-[18px]" />
           </div>
         )}
       </div>
 
       <div className="min-w-0 flex-1 py-1">
-        <div className="text-[12px] font-medium text-[#6b7280]">Work</div>
-        <h3 className="mt-1 line-clamp-2 text-[14px] font-bold leading-5 text-[#111827]">
-          {work?.title || 'Untitled Story'}
+        <div className="text-[12px] font-medium text-[var(--shadow-text-secondary)]">{t('authorPageSearch.work')}</div>
+        <h3 className="mt-1 line-clamp-2 text-[14px] font-bold leading-5 text-[var(--shadow-text-primary)]">
+          {work?.title || t('authorPageSearch.untitledStory')}
         </h3>
-        <div className="mt-2 line-clamp-1 text-[12px] font-normal text-[#6b7280]">
+        <div className="mt-2 line-clamp-1 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
           {[work?.main_genre, work?.story_status].filter(Boolean).join(' · ')}
         </div>
       </div>
 
-      <i className="fa-solid fa-chevron-right mt-7 text-[11px] text-[#9ca3af]" />
+      <i className="fa-solid fa-chevron-right mt-7 text-[11px] text-[var(--shadow-text-tertiary)]" />
     </button>
   )
 }
 
 function StoreResult({ product, onOpen }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full gap-3 bg-white px-4 py-4 text-left active:bg-[#f8fafc]"
+      className="flex w-full gap-3 bg-[var(--shadow-bg-surface)] px-4 py-4 text-left active:bg-[var(--shadow-bg-soft)]"
     >
-      <div className="h-[78px] w-[58px] shrink-0 overflow-hidden rounded-[8px] bg-[#f1f3f5]">
+      <div className="h-[78px] w-[58px] shrink-0 overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)]">
         {product?.cover_url ? (
           <img
             src={product.cover_url}
@@ -237,30 +388,31 @@ function StoreResult({ product, onOpen }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[#9ca3af]">
+          <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
             <i className="fa-solid fa-bag-shopping text-[17px]" />
           </div>
         )}
       </div>
 
       <div className="min-w-0 flex-1 py-1">
-        <div className="text-[12px] font-medium text-[#6b7280]">Store</div>
-        <h3 className="mt-1 line-clamp-2 text-[14px] font-bold leading-5 text-[#111827]">
-          {product?.title || 'Store item'}
+        <div className="text-[12px] font-medium text-[var(--shadow-text-secondary)]">{t('authorPageSearch.store')}</div>
+        <h3 className="mt-1 line-clamp-2 text-[14px] font-bold leading-5 text-[var(--shadow-text-primary)]">
+          {product?.title || t('authorPageSearch.storeItem')}
         </h3>
-        <div className="mt-2 flex items-center gap-2 text-[12px] font-normal text-[#6b7280]">
+        <div className="mt-2 flex items-center gap-2 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
           <span>{formatPrice(product)}</span>
           {product?.category ? <span>· {product.category}</span> : null}
         </div>
       </div>
 
-      <i className="fa-solid fa-chevron-right mt-7 text-[11px] text-[#9ca3af]" />
+      <i className="fa-solid fa-chevron-right mt-7 text-[11px] text-[var(--shadow-text-tertiary)]" />
     </button>
   )
 }
 
 export default function AuthorPageSearchPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const { pageUsername } = useParams()
   const inputRef = useRef(null)
   const [page, setPage] = useState(null)
@@ -272,7 +424,7 @@ export default function AuthorPageSearchPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const pageName = page?.page_name || page?.name || 'Author Page'
+  const pageName = page?.page_name || page?.name || t('authorPageSearch.authorPage')
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -280,7 +432,7 @@ export default function AuthorPageSearchPage() {
 
   useEffect(() => {
     if (!pageUsername) {
-      setError('Author page not found')
+      setError(t('authorPageSearch.authorPageNotFound'))
       setLoading(false)
       return undefined
     }
@@ -311,7 +463,7 @@ export default function AuthorPageSearchPage() {
         }
       } catch (loadError) {
         if (!ignore && loadError?.name !== 'AbortError') {
-          setError(loadError.message || 'Failed to load Page search')
+          setError(loadError.message || t('authorPageSearch.failedLoadPageSearch'))
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -403,33 +555,33 @@ export default function AuthorPageSearchPage() {
       : []
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6]">
-      <header className="sticky top-0 z-40 bg-white">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 bg-[var(--shadow-bg-surface)]">
         <div className="mx-auto flex h-[58px] max-w-[720px] items-center gap-2 px-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Back"
+            className="flex h-10 w-10 shrink-0 items-center justify-center text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
+            aria-label={t('authorPageSearch.back')}
           >
             <i className="fa-solid fa-chevron-left text-[19px]" />
           </button>
 
-          <div className="flex h-[40px] min-w-0 flex-1 items-center rounded-full bg-[#f0f2f5] px-3">
-            <i className="fa-solid fa-magnifying-glass mr-2 text-[15px] text-[#6b7280]" />
+          <div className="flex h-[40px] min-w-0 flex-1 items-center rounded-full bg-[var(--shadow-bg-soft)] px-3">
+            <i className="fa-solid fa-magnifying-glass mr-2 text-[15px] text-[var(--shadow-text-secondary)]" />
             <input
               ref={inputRef}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={`Search ${pageName}`}
-              className="min-w-0 flex-1 bg-transparent text-[14px] font-normal text-[#111827] outline-none placeholder:text-[#8b93a1]"
+              placeholder={t('authorPageSearch.searchName', { name: pageName })}
+              className="min-w-0 flex-1 bg-transparent text-[14px] font-normal text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-text-tertiary)]"
             />
             {query ? (
               <button
                 type="button"
                 onClick={() => setQuery('')}
-                className="ml-2 flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] active:bg-[#e5e7eb]"
-                aria-label="Clear search"
+                className="ml-2 flex h-7 w-7 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-soft)]"
+                aria-label={t('authorPageSearch.clearSearch')}
               >
                 <i className="fa-solid fa-xmark text-[13px]" />
               </button>
@@ -442,22 +594,22 @@ export default function AuthorPageSearchPage() {
             <div className="flex gap-2">
               <FilterButton
                 active={activeFilter === 'All'}
-                label={`All ${totalResults}`}
+                label={t('authorPageSearch.allCount', { count: totalResults.toLocaleString(getDisplayLanguageId()) })}
                 onClick={() => setActiveFilter('All')}
               />
               <FilterButton
                 active={activeFilter === 'Posts'}
-                label={`Posts ${results.posts.length}`}
+                label={t('authorPageSearch.postsCount', { count: results.posts.length.toLocaleString(getDisplayLanguageId()) })}
                 onClick={() => setActiveFilter('Posts')}
               />
               <FilterButton
                 active={activeFilter === 'Works'}
-                label={`Works ${results.works.length}`}
+                label={t('authorPageSearch.worksCount', { count: results.works.length.toLocaleString(getDisplayLanguageId()) })}
                 onClick={() => setActiveFilter('Works')}
               />
               <FilterButton
                 active={activeFilter === 'Store'}
-                label={`Store ${results.products.length}`}
+                label={t('authorPageSearch.storeCount', { count: results.products.length.toLocaleString(getDisplayLanguageId()) })}
                 onClick={() => setActiveFilter('Store')}
               />
             </div>
@@ -468,46 +620,46 @@ export default function AuthorPageSearchPage() {
       <main className="mx-auto max-w-[720px] pb-10">
         {loading ? (
           <div className="flex min-h-[260px] items-center justify-center">
-            <div className="text-center text-[#6b7280]">
-              <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[#d1d5db] border-t-[#111827]" />
-              <p className="mt-3 text-[13px] font-normal">Loading Page search...</p>
+            <div className="text-center text-[var(--shadow-text-secondary)]">
+              <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[var(--shadow-border-strong)] border-t-[var(--shadow-text-primary)]" />
+              <p className="mt-3 text-[13px] font-normal">{t('authorPageSearch.loadingPageSearch')}</p>
             </div>
           </div>
         ) : error ? (
           <div className="px-5 py-14 text-center">
-            <i className="fa-solid fa-circle-exclamation text-[28px] text-[#9ca3af]" />
-            <p className="mt-3 text-[14px] font-normal text-[#4b5563]">{error}</p>
+            <i className="fa-solid fa-circle-exclamation text-[28px] text-[var(--shadow-text-tertiary)]" />
+            <p className="mt-3 text-[14px] font-normal text-[var(--shadow-text-secondary)]">{error}</p>
           </div>
         ) : !query.trim() ? (
           <div className="px-6 py-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#111827]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)]">
               <i className="fa-solid fa-magnifying-glass text-[21px]" />
             </div>
-            <h1 className="mt-4 text-[16px] font-bold text-[#111827]">
-              Search this Page
+            <h1 className="mt-4 text-[16px] font-bold text-[var(--shadow-text-primary)]">
+              {t('authorPageSearch.searchThisPage')}
             </h1>
-            <p className="mx-auto mt-2 max-w-[300px] text-[13px] font-normal leading-5 text-[#6b7280]">
-              Search posts, works, and store items from {pageName} only.
+            <p className="mx-auto mt-2 max-w-[300px] text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+              {t('authorPageSearch.searchHelp', { name: pageName })}
             </p>
           </div>
         ) : totalResults === 0 ? (
           <div className="px-6 py-16 text-center">
-            <i className="fa-regular fa-face-frown text-[30px] text-[#9ca3af]" />
-            <h2 className="mt-4 text-[15px] font-bold text-[#111827]">
-              No results found
+            <i className="fa-regular fa-face-frown text-[30px] text-[var(--shadow-text-tertiary)]" />
+            <h2 className="mt-4 text-[15px] font-bold text-[var(--shadow-text-primary)]">
+              {t('authorPageSearch.noResults')}
             </h2>
-            <p className="mt-2 text-[13px] font-normal text-[#6b7280]">
-              Try another word or phrase.
+            <p className="mt-2 text-[13px] font-normal text-[var(--shadow-text-secondary)]">
+              {t('authorPageSearch.tryAnother')}
             </p>
           </div>
         ) : (
           <div className="space-y-3 pt-3">
             {visiblePosts.length ? (
               <section>
-                <div className="bg-white px-4 pb-2 pt-4 text-[14px] font-bold text-[#111827]">
-                  Posts
+                <div className="bg-[var(--shadow-bg-surface)] px-4 pb-2 pt-4 text-[14px] font-bold text-[var(--shadow-text-primary)]">
+                  {t('authorPageSearch.posts')}
                 </div>
-                <div className="divide-y divide-[#eef0f3]">
+                <div className="divide-y divide-[var(--shadow-border)]">
                   {visiblePosts.map((post) => (
                     <PostResult key={post.id} post={post} />
                   ))}
@@ -517,10 +669,10 @@ export default function AuthorPageSearchPage() {
 
             {visibleWorks.length ? (
               <section>
-                <div className="bg-white px-4 pb-2 pt-4 text-[14px] font-bold text-[#111827]">
-                  Works
+                <div className="bg-[var(--shadow-bg-surface)] px-4 pb-2 pt-4 text-[14px] font-bold text-[var(--shadow-text-primary)]">
+                  {t('authorPageSearch.works')}
                 </div>
-                <div className="divide-y divide-[#eef0f3]">
+                <div className="divide-y divide-[var(--shadow-border)]">
                   {visibleWorks.map((work) => (
                     <WorkResult
                       key={work.id}
@@ -534,10 +686,10 @@ export default function AuthorPageSearchPage() {
 
             {visibleProducts.length ? (
               <section>
-                <div className="bg-white px-4 pb-2 pt-4 text-[14px] font-bold text-[#111827]">
-                  Store
+                <div className="bg-[var(--shadow-bg-surface)] px-4 pb-2 pt-4 text-[14px] font-bold text-[var(--shadow-text-primary)]">
+                  {t('authorPageSearch.store')}
                 </div>
-                <div className="divide-y divide-[#eef0f3]">
+                <div className="divide-y divide-[var(--shadow-border)]">
                   {visibleProducts.map((product) => (
                     <StoreResult
                       key={product.id}
