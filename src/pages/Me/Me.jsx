@@ -1216,7 +1216,7 @@ const handleOpenProfileSwitcher = (event) => {
 </Link>
 
 <MenuRow
-  to="/shop"
+  onClick={() => navigate('/shop', { state: { returnTo: '/me' } })}
   customIcon={<svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2 11h10l2-8H6" /><circle cx="9" cy="19" r="1" /><circle cx="17" cy="19" r="1" /></svg>}
   title={tx('mePage.shadowMall')}
   divider
