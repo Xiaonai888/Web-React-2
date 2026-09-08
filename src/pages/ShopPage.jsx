@@ -114,7 +114,7 @@ export default function ShopPage() {
                 return
               }
 
-              navigate('/')
+              navigate(location.state?.returnTo || '/')
             }}
             className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
               isPurchaseMode
