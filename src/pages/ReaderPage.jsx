@@ -4199,6 +4199,7 @@ export default function ReaderPage() {
   const readingActivityReadyAtRef = useRef(0)
   const previousReadingPageRef = useRef(null)
   const readingHeartbeatBusyRef = useRef(false)
+  const weeklyReadingTrackedEpisodeRef = useRef('')
   const activeReadingTargetRef = useRef(null)
   const rewardAnimationTimerRef = useRef(null)
 
@@ -5395,12 +5396,13 @@ if (!episodesResponse.ok || episodesData.ok === false) {
   }, [adultAccepted, episodeId, loading, lockedEpisode, storyId])
 
   useEffect(() => {
-    lastReadingActivityRef.current = 0
-    readingActivityReadyAtRef.current = Date.now() + 1000
-    previousReadingPageRef.current = null
-    readingHeartbeatBusyRef.current = false
-    setReadingRewardAnimation(null)
-  }, [episodeId, storyId])
+  lastReadingActivityRef.current = 0
+  readingActivityReadyAtRef.current = Date.now() + 1000
+  previousReadingPageRef.current = null
+  readingHeartbeatBusyRef.current = false
+  weeklyReadingTrackedEpisodeRef.current = ''
+  setReadingRewardAnimation(null)
+}, [episodeId, storyId])
 
   useEffect(() => {
     activeReadingTargetRef.current = null
@@ -5453,11 +5455,14 @@ if (!episodesResponse.ok || episodesData.ok === false) {
             ...readerAuthHeaders(),
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
+         body: JSON.stringify({
   story_id: storyId,
   episode_id: episodeId,
   seconds: READING_PROGRESS_STEP_SECONDS,
-  reading_percent: readingProgressRef.current,
+  reading_percent:
+    weeklyReadingTrackedEpisodeRef.current === String(episodeId)
+      ? 0
+      : readingProgressRef.current,
 }),
         }
       )
@@ -5465,6 +5470,9 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       const progressData = await progressResponse.json().catch(() => ({}))
 
       if (!progressResponse.ok || progressData.ok === false) return
+      if (progressData.weekly_reading) {
+  weeklyReadingTrackedEpisodeRef.current = String(episodeId)
+}
 
       const missionIds = Array.isArray(progressData.claimable?.mission_ids)
         ? progressData.claimable.mission_ids.filter(Boolean)
