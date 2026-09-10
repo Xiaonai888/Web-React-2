@@ -5455,10 +5455,11 @@ if (!episodesResponse.ok || episodesData.ok === false) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            story_id: storyId,
-            episode_id: episodeId,
-            seconds: READING_PROGRESS_STEP_SECONDS,
-          }),
+  story_id: storyId,
+  episode_id: episodeId,
+  seconds: READING_PROGRESS_STEP_SECONDS,
+  reading_percent: readingProgressRef.current,
+}),
         }
       )
 
