@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import { getAuthorSellerKey, getSavedReaderMallSellerKey, setReaderMallActiveSellerKey } from '../../utils/readerMallCartHub'
 
 registerTranslationNamespace('authorCheckout', {
   "en": {
