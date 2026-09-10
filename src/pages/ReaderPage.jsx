@@ -5441,7 +5441,6 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       Date.now() - lastReadingActivityRef.current <= READING_ACTIVITY_GRACE_MS
 
     if (!recentlyActive && !autoScrollEnabled) return
-    if (!activeReadingTargetRef.current?.id) return
 
     readingHeartbeatBusyRef.current = true
 
