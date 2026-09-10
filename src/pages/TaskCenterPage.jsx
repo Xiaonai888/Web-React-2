@@ -81,7 +81,15 @@ registerTranslationNamespace('taskCenterPage', {
     "noteFraud": "Shadow may suspend or restrict users who are involved in fraud, abuse, or violations of the rules.",
     "noteEvents": "All events are organized, promoted, and managed by Shadow only. Shadow reserves the right to make the final decision on all event-related matters.",
     "noteContact": "If you have any questions, please contact us via",
-    "minuteMarker": "{{count}}m"
+    "minuteMarker": "{{count}}m",
+    "weeklyReading": "Weekly Reading",
+    "weeklyReadingHelp": "Read 10 EP = 1 Voucher • Up to 10 Vouchers each week",
+    "premiumWeeklyAutoClaim": "Premium Auto Claim",
+    "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
+    "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
+    "weeklyVoucherAdded": "+1 Voucher added",
+    "loadWeeklyReadingFailed": "Failed to load Weekly Reading",
+    "weeklyReadingClaimFailed": "Failed to claim Weekly Reading reward"
   },
   "km": {
     "dailyCheckIn": "ចូលប្រចាំថ្ងៃ",
@@ -159,7 +167,15 @@ registerTranslationNamespace('taskCenterPage', {
     "noteFraud": "Shadow អាចផ្អាក ឬដាក់កម្រិតអ្នកប្រើដែលពាក់ព័ន្ធនឹងការក្លែងបន្លំ ការបំពាន ឬការរំលោភច្បាប់។",
     "noteEvents": "Event ទាំងអស់ត្រូវបានរៀបចំ ផ្សព្វផ្សាយ និងគ្រប់គ្រងដោយ Shadow តែប៉ុណ្ណោះ។ Shadow រក្សាសិទ្ធិក្នុងការសម្រេចចុងក្រោយលើបញ្ហាទាំងអស់ដែលពាក់ព័ន្ធនឹង Event។",
     "noteContact": "បើអ្នកមានសំណួរ សូមទាក់ទងមកយើងតាម",
-    "minuteMarker": "{{count}}ន"
+    "minuteMarker": "{{count}}ន",
+    "weeklyReading": "ការអានប្រចាំសប្តាហ៍",
+    "weeklyReadingHelp": "អាន 10 EP = 1 Voucher • អាចទទួលបានរហូតដល់ 10 Vouchers ក្នុងមួយសប្តាហ៍",
+    "premiumWeeklyAutoClaim": "Premium ទទួលដោយស្វ័យប្រវត្តិ",
+    "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
+    "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
+    "weeklyVoucherAdded": "បានបន្ថែម +1 Voucher",
+    "loadWeeklyReadingFailed": "មិនអាចផ្ទុក Weekly Reading បានទេ",
+    "weeklyReadingClaimFailed": "មិនអាចទទួលរង្វាន់ Weekly Reading បានទេ"
   },
   "zh": {
     "dailyCheckIn": "每日签到",
@@ -237,7 +253,15 @@ registerTranslationNamespace('taskCenterPage', {
     "noteFraud": "Shadow 可能暂停或限制涉及欺诈、滥用或违反规则的用户。",
     "noteEvents": "所有活动仅由 Shadow 组织、推广和管理。Shadow 保留对所有活动相关事项作出最终决定的权利。",
     "noteContact": "如有任何问题，请通过以下方式联系我们",
-    "minuteMarker": "{{count}}分"
+    "minuteMarker": "{{count}}分",
+    "weeklyReading": "每周阅读",
+    "weeklyReadingHelp": "阅读 10 EP = 1 Voucher • 每周最多可获得 10 Vouchers",
+    "premiumWeeklyAutoClaim": "Premium 自动领取",
+    "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
+    "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
+    "weeklyVoucherAdded": "已添加 +1 Voucher",
+    "loadWeeklyReadingFailed": "无法加载每周阅读",
+    "weeklyReadingClaimFailed": "无法领取每周阅读奖励"
   },
   "ja": {
     "dailyCheckIn": "デイリーチェックイン",
@@ -315,7 +339,15 @@ registerTranslationNamespace('taskCenterPage', {
     "noteFraud": "詐欺、不正利用、ルール違反に関与したユーザーは、Shadow により停止または制限される場合があります。",
     "noteEvents": "すべてのイベントは Shadow のみが企画、宣伝、管理します。イベントに関するすべての事項について、Shadow が最終決定権を有します。",
     "noteContact": "ご質問がある場合は、こちらからお問い合わせください",
-    "minuteMarker": "{{count}}分"
+    "minuteMarker": "{{count}}分",
+    "weeklyReading": "週間読書",
+    "weeklyReadingHelp": "10 EP 読むと Voucher 1枚 • 1週間に最大10枚",
+    "premiumWeeklyAutoClaim": "Premium 自動受取",
+    "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
+    "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
+    "weeklyVoucherAdded": "+1 Voucher を追加しました",
+    "loadWeeklyReadingFailed": "週間読書を読み込めませんでした",
+    "weeklyReadingClaimFailed": "週間読書の報酬を受け取れませんでした"
   },
   "ko": {
     "dailyCheckIn": "일일 체크인",
@@ -393,7 +425,15 @@ registerTranslationNamespace('taskCenterPage', {
     "noteFraud": "사기, 악용 또는 규칙 위반에 연루된 사용자는 Shadow에 의해 정지되거나 제한될 수 있습니다.",
     "noteEvents": "모든 이벤트는 Shadow에서만 기획, 홍보 및 관리합니다. 이벤트 관련 모든 사항에 대한 최종 결정권은 Shadow에 있습니다.",
     "noteContact": "문의 사항이 있으면 다음을 통해 연락해 주세요",
-    "minuteMarker": "{{count}}분"
+    "minuteMarker": "{{count}}분",
+    "weeklyReading": "주간 읽기",
+    "weeklyReadingHelp": "10 EP 읽기 = Voucher 1개 • 매주 최대 10 Vouchers",
+    "premiumWeeklyAutoClaim": "Premium 자동 받기",
+    "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
+    "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
+    "weeklyVoucherAdded": "+1 Voucher가 추가되었습니다",
+    "loadWeeklyReadingFailed": "주간 읽기를 불러오지 못했습니다",
+    "weeklyReadingClaimFailed": "주간 읽기 보상을 받지 못했습니다"
   }
 })
 
@@ -943,18 +983,18 @@ function WeeklyReadingCard({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-[15px] font-black leading-5 text-[var(--shadow-text-primary)]">
-                  Weekly Reading
+                  {t('taskCenterPage.weeklyReading')}
                 </h3>
 
                 {premiumAutoClaim ? (
                   <span className="rounded-full bg-[#fff4d8] px-2 py-0.5 text-[9px] font-black text-[#b7791f] dark:bg-amber-500/10 dark:text-amber-300">
-                    Premium Auto Claim
+                    {t('taskCenterPage.premiumWeeklyAutoClaim')}
                   </span>
                 ) : null}
               </div>
 
               <p className="mt-1 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">
-                Read 10 EP = 1 Voucher • Up to 10 Vouchers each week
+                {t('taskCenterPage.weeklyReadingHelp')}
               </p>
 
               <div className="mt-2 flex items-center gap-1.5 text-[12px] font-black text-[#d97706] dark:text-amber-300">
@@ -965,7 +1005,7 @@ function WeeklyReadingCard({
                   loading="lazy"
                   decoding="async"
                 />
-                <span>+1 Voucher</span>
+                <span>+1 {t('taskCenterPage.voucher')}</span>
               </div>
             </div>
 
@@ -1008,12 +1048,37 @@ function WeeklyReadingCard({
               })}
             </div>
 
-            <div className="mt-2 flex items-center justify-between gap-3 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
+            <div className="relative mt-2 h-4">
+              {milestones.map((item) => {
+                const target = Math.max(0, Number(item.episodes || 0))
+                const left = Math.min(100, (target / targetEpisodes) * 100)
+
+                return (
+                  <span
+                    key={`weekly-label-${target}`}
+                    className={`absolute text-[9px] font-bold text-[var(--shadow-text-tertiary)] ${
+                      target >= targetEpisodes ? '-translate-x-full' : '-translate-x-1/2'
+                    }`}
+                    style={{ left: `${left}%` }}
+                  >
+                    {target}
+                  </span>
+                )
+              })}
+            </div>
+
+            <div className="mt-1 flex items-center justify-between gap-3 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
               <span>
-                {episodesRead}/{targetEpisodes} EP
+                {t('taskCenterPage.weeklyEpisodesProgress', {
+                  progress: episodesRead,
+                  target: targetEpisodes,
+                })}
               </span>
               <span>
-                {claimedCount}/{milestones.length || 10} Vouchers
+                {t('taskCenterPage.weeklyVouchersProgress', {
+                  claimed: claimedCount,
+                  total: milestones.length || 10,
+                })}
               </span>
             </div>
           </div>
@@ -1416,7 +1481,7 @@ export default function TaskCenterPage() {
 
       if (!response.ok || data.ok === false) {
         throw new Error(
-          data.message || 'Failed to load Weekly Reading'
+          data.message || t('taskCenterPage.loadWeeklyReadingFailed')
         )
       }
 
@@ -1855,7 +1920,7 @@ function startSmartRefreshCycle() {
         }
 
         throw new Error(
-          data.message || 'Failed to claim Weekly Reading reward'
+          data.message || t('taskCenterPage.weeklyReadingClaimFailed')
         )
       }
 
@@ -1864,10 +1929,10 @@ function startSmartRefreshCycle() {
       }
 
       await loadTaskCenter({ silent: true })
-      setToast('+1 Voucher added')
+      setToast(t('taskCenterPage.weeklyVoucherAdded'))
     } catch (error) {
       setToast(
-        error.message || 'Failed to claim Weekly Reading reward'
+        error.message || t('taskCenterPage.weeklyReadingClaimFailed')
       )
     } finally {
       setWeeklyReadingClaiming(false)
