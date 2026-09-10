@@ -878,6 +878,151 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
 }
 
 
+
+function WeeklyReadingCard({
+  weeklyReading,
+  claiming = false,
+  onRead,
+  onClaim,
+}) {
+  const { t } = useDisplayTranslation()
+
+  if (!weeklyReading) return null
+
+  const episodesRead = Math.max(
+    0,
+    Number(weeklyReading.episodes_read || 0)
+  )
+  const targetEpisodes = Math.max(
+    1,
+    Number(weeklyReading.target_episodes || 100)
+  )
+  const milestones = Array.isArray(weeklyReading.milestones)
+    ? weeklyReading.milestones
+    : []
+  const claimable = milestones.some((item) => item.claimable)
+  const claimedCount = milestones.filter((item) => item.claimed).length
+  const premiumAutoClaim = Boolean(weeklyReading.premium_auto_claim)
+  const allRewardsClaimed =
+    Boolean(weeklyReading.all_rewards_claimed) ||
+    (milestones.length > 0 && milestones.every((item) => item.claimed))
+  const progressPercent = Math.min(
+    100,
+    Math.max(
+      0,
+      Number(
+        weeklyReading.progress_percent ??
+          (episodesRead / targetEpisodes) * 100
+      )
+    )
+  )
+
+  const buttonText = claiming
+    ? t('taskCenterPage.claiming')
+    : allRewardsClaimed
+      ? t('taskCenterPage.done')
+      : claimable
+        ? t('taskCenterPage.claim')
+        : t('taskCenterPage.readNow')
+
+  return (
+    <div className="border-b border-[var(--shadow-border)] py-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f4] ring-1 ring-[#ff3f62]/10 dark:bg-rose-500/10 dark:ring-rose-400/15">
+          <img
+            src="/assets/Icons/Voucher.svg"
+            alt=""
+            className="h-5 w-5 object-contain"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-[15px] font-black leading-5 text-[var(--shadow-text-primary)]">
+                  Weekly Reading
+                </h3>
+
+                {premiumAutoClaim ? (
+                  <span className="rounded-full bg-[#fff4d8] px-2 py-0.5 text-[9px] font-black text-[#b7791f] dark:bg-amber-500/10 dark:text-amber-300">
+                    Premium Auto Claim
+                  </span>
+                ) : null}
+              </div>
+
+              <p className="mt-1 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">
+                Read 10 EP = 1 Voucher • Up to 10 Vouchers each week
+              </p>
+
+              <div className="mt-2 flex items-center gap-1.5 text-[12px] font-black text-[#d97706] dark:text-amber-300">
+                <img
+                  src="/assets/Icons/Voucher.svg"
+                  alt=""
+                  className="h-4 w-4 shrink-0 object-contain"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span>+1 Voucher</span>
+              </div>
+            </div>
+
+            <RewardButton
+              tone={claimable ? 'gold' : allRewardsClaimed ? 'soft' : 'outline'}
+              disabled={claiming || allRewardsClaimed}
+              onClick={claimable ? onClaim : onRead}
+            >
+              {buttonText}
+            </RewardButton>
+          </div>
+
+          <div className="mt-4">
+            <div className="relative h-2 rounded-full bg-[var(--shadow-bg-soft)]">
+              <div
+                className="h-full rounded-full bg-[#ffd58a]"
+                style={{ width: `${progressPercent}%` }}
+              />
+
+              {milestones.map((item) => {
+                const target = Math.max(0, Number(item.episodes || 0))
+                const left = Math.min(
+                  100,
+                  (target / targetEpisodes) * 100
+                )
+
+                return (
+                  <span
+                    key={target}
+                    className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white dark:ring-[var(--shadow-bg-surface)] ${
+                      item.claimed
+                        ? 'bg-[#ff3f62]'
+                        : item.completed
+                          ? 'bg-[#ffb800]'
+                          : 'bg-[#dbe1ea] dark:bg-slate-600'
+                    }`}
+                    style={{ left: `${left}%` }}
+                  />
+                )
+              })}
+            </div>
+
+            <div className="mt-2 flex items-center justify-between gap-3 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
+              <span>
+                {episodesRead}/{targetEpisodes} EP
+              </span>
+              <span>
+                {claimedCount}/{milestones.length || 10} Vouchers
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
   const { t } = useDisplayTranslation()
   const fallbackMilestones = [
@@ -1156,6 +1301,8 @@ export default function TaskCenterPage() {
   const [chestClaiming, setChestClaiming] = useState(false)
   const [readingReward, setReadingReward] = useState(null)
   const [readingClaiming, setReadingClaiming] = useState(false)
+  const [weeklyReading, setWeeklyReading] = useState(null)
+  const [weeklyReadingClaiming, setWeeklyReadingClaiming] = useState(false)
   const [dailyVoteReward, setDailyVoteReward] = useState(null)
   const [voteClaiming, setVoteClaiming] = useState(false)
   const [chestTick, setChestTick] = useState(Date.now())
@@ -1243,6 +1390,53 @@ export default function TaskCenterPage() {
     }
   }
 
+
+  async function loadWeeklyReading() {
+    if (!token) {
+      setWeeklyReading(null)
+      return { authFailed: false }
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/tasks/weekly-reading`,
+        {
+          headers: getHeaders(),
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.status === 401 || response.status === 403) {
+        clearReaderSession()
+        setToast(t('taskCenterPage.pleaseLoginAgain'))
+        navigate('/login')
+        return { authFailed: true }
+      }
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load Weekly Reading'
+        )
+      }
+
+      setWeeklyReading(data.weekly_reading || null)
+
+      return {
+        authFailed: false,
+        weeklyReading: data.weekly_reading || null,
+      }
+    } catch (error) {
+      console.error('LOAD WEEKLY READING ERROR:', error)
+      setWeeklyReading(null)
+
+      return {
+        authFailed: false,
+        error,
+      }
+    }
+  }
+
   async function loadTaskCenter(options = {}) {
   const silent = Boolean(options.silent)
 
@@ -1252,6 +1446,7 @@ export default function TaskCenterPage() {
     setCheckIn(null)
     setRewardChest(null)
     setReadingReward(null)
+    setWeeklyReading(null)
     setReadingMissions([])
     setDailyVoteReward(null)
     return
@@ -1260,6 +1455,12 @@ export default function TaskCenterPage() {
   try {
     if (!silent) setLoading(true)
     setMessage('')
+
+    const weeklyResult = await loadWeeklyReading()
+
+    if (weeklyResult?.authFailed) {
+      return
+    }
 
     const response = await fetch(`${API_BASE_URL}/api/tasks/overview`, {
       headers: getHeaders(),
@@ -1607,6 +1808,69 @@ function startSmartRefreshCycle() {
       setToast(error.message || t('taskCenterPage.readingRewardClaimFailed'))
     } finally {
       setReadingClaiming(false)
+    }
+  }
+
+
+  async function claimWeeklyReadingReward() {
+    if (!isLoggedIn) {
+      navigate('/login')
+      return
+    }
+
+    if (weeklyReadingClaiming) return
+
+    const hasClaimableReward = Array.isArray(weeklyReading?.milestones)
+      ? weeklyReading.milestones.some((item) => item.claimable)
+      : false
+
+    if (!hasClaimableReward) {
+      navigate('/')
+      return
+    }
+
+    try {
+      setWeeklyReadingClaiming(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/tasks/weekly-reading/claim`,
+        {
+          method: 'POST',
+          headers: getHeaders(),
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.status === 401 || response.status === 403) {
+        clearReaderSession()
+        setToast(t('taskCenterPage.pleaseLoginAgain'))
+        navigate('/login')
+        return
+      }
+
+      if (!response.ok || data.ok === false) {
+        if (data.weekly_reading) {
+          setWeeklyReading(data.weekly_reading)
+        }
+
+        throw new Error(
+          data.message || 'Failed to claim Weekly Reading reward'
+        )
+      }
+
+      if (data.weekly_reading) {
+        setWeeklyReading(data.weekly_reading)
+      }
+
+      await loadTaskCenter({ silent: true })
+      setToast('+1 Voucher added')
+    } catch (error) {
+      setToast(
+        error.message || 'Failed to claim Weekly Reading reward'
+      )
+    } finally {
+      setWeeklyReadingClaiming(false)
     }
   }
 
@@ -2148,6 +2412,13 @@ navigate(targetPath, {
 />
 
 <div className="mt-2">
+            <WeeklyReadingCard
+              weeklyReading={weeklyReading}
+              claiming={weeklyReadingClaiming}
+              onRead={() => navigate('/')}
+              onClaim={claimWeeklyReadingReward}
+            />
+
             {moreRewards.map((task) => (
               <TaskRow
                 key={task.id}
