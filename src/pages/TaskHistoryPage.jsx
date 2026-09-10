@@ -14,19 +14,21 @@ registerTranslationNamespace('taskHistoryPage', {
     taskRewards: 'Task Rewards',
     dailyCheckIn: 'Daily Check-in',
     coinReward: 'Coin Reward',
+    weeklyReading: 'Weekly Reading',
+    voucher: 'Voucher',
     loadFailed: 'Failed to load history',
     goBack: 'Go back',
     rewardHistory: 'Reward History',
-    rewardHint: 'Reward details and coin rules will be added later.',
+    rewardHint: 'Reward details for Coins and Vouchers.',
     hint: 'Hint',
     today: 'Today',
     thisWeek: 'This Week',
     thisMonth: 'This Month',
     history: 'History',
-    latestActivity: 'Your latest coin activity.',
+    latestActivity: 'Your latest reward activity.',
     all: 'All',
     noHistory: 'No history yet',
-    noHistoryBody: 'Claim rewards to create your first coin record.',
+    noHistoryBody: 'Claim rewards to create your first reward record.',
   },
   km: {
     coin: 'Coin',
@@ -38,19 +40,21 @@ registerTranslationNamespace('taskHistoryPage', {
     taskRewards: 'រង្វាន់ Task',
     dailyCheckIn: 'Check-in ប្រចាំថ្ងៃ',
     coinReward: 'រង្វាន់ Coin',
+    weeklyReading: 'ការអានប្រចាំសប្តាហ៍',
+    voucher: 'Voucher',
     loadFailed: 'មិនអាចផ្ទុកប្រវត្តិបានទេ',
     goBack: 'ត្រឡប់ក្រោយ',
     rewardHistory: 'ប្រវត្តិរង្វាន់',
-    rewardHint: 'ព័ត៌មានលម្អិតអំពីរង្វាន់ និងច្បាប់ Coin នឹងត្រូវបន្ថែមនៅពេលក្រោយ។',
+    rewardHint: 'ព័ត៌មានលម្អិតអំពីរង្វាន់ Coins និង Vouchers។',
     hint: 'ព័ត៌មាន',
     today: 'ថ្ងៃនេះ',
     thisWeek: 'សប្តាហ៍នេះ',
     thisMonth: 'ខែនេះ',
     history: 'ប្រវត្តិ',
-    latestActivity: 'សកម្មភាព Coin ថ្មីៗរបស់អ្នក។',
+    latestActivity: 'សកម្មភាពរង្វាន់ថ្មីៗរបស់អ្នក។',
     all: 'ទាំងអស់',
     noHistory: 'មិនទាន់មានប្រវត្តិទេ',
-    noHistoryBody: 'ទទួលរង្វាន់ ដើម្បីបង្កើតកំណត់ត្រា Coin ដំបូងរបស់អ្នក។',
+    noHistoryBody: 'ទទួលរង្វាន់ ដើម្បីបង្កើតកំណត់ត្រារង្វាន់ដំបូងរបស់អ្នក។',
   },
   zh: {
     coin: 'Coin',
@@ -62,19 +66,21 @@ registerTranslationNamespace('taskHistoryPage', {
     taskRewards: '任务奖励',
     dailyCheckIn: '每日签到',
     coinReward: 'Coin 奖励',
+    weeklyReading: '每周阅读',
+    voucher: 'Voucher',
     loadFailed: '无法加载历史记录',
     goBack: '返回',
     rewardHistory: '奖励记录',
-    rewardHint: '奖励详情和 Coin 规则将在之后添加。',
+    rewardHint: 'Coins 和 Vouchers 的奖励详情。',
     hint: '提示',
     today: '今天',
     thisWeek: '本周',
     thisMonth: '本月',
     history: '历史记录',
-    latestActivity: '你最近的 Coin 活动。',
+    latestActivity: '你最近的奖励活动。',
     all: '全部',
     noHistory: '暂无记录',
-    noHistoryBody: '领取奖励后，你的第一条 Coin 记录会显示在这里。',
+    noHistoryBody: '领取奖励后，你的第一条奖励记录会显示在这里。',
   },
   ja: {
     coin: 'Coin',
@@ -86,19 +92,21 @@ registerTranslationNamespace('taskHistoryPage', {
     taskRewards: 'タスク報酬',
     dailyCheckIn: 'デイリーチェックイン',
     coinReward: 'Coin 報酬',
+    weeklyReading: '週間読書',
+    voucher: 'Voucher',
     loadFailed: '履歴を読み込めませんでした',
     goBack: '戻る',
     rewardHistory: '報酬履歴',
-    rewardHint: '報酬の詳細と Coin のルールは後で追加されます。',
+    rewardHint: 'Coins と Vouchers の報酬詳細です。',
     hint: 'ヒント',
     today: '今日',
     thisWeek: '今週',
     thisMonth: '今月',
     history: '履歴',
-    latestActivity: '最近の Coin アクティビティです。',
+    latestActivity: '最近の報酬アクティビティです。',
     all: 'すべて',
     noHistory: '履歴はまだありません',
-    noHistoryBody: '報酬を受け取ると、最初の Coin 記録が作成されます。',
+    noHistoryBody: '報酬を受け取ると、最初の報酬記録が作成されます。',
   },
   ko: {
     coin: 'Coin',
@@ -110,19 +118,21 @@ registerTranslationNamespace('taskHistoryPage', {
     taskRewards: 'Task 보상',
     dailyCheckIn: '일일 체크인',
     coinReward: 'Coin 보상',
+    weeklyReading: '주간 읽기',
+    voucher: 'Voucher',
     loadFailed: '기록을 불러오지 못했습니다',
     goBack: '뒤로 가기',
     rewardHistory: '보상 기록',
-    rewardHint: '보상 세부 정보와 Coin 규칙은 나중에 추가됩니다.',
+    rewardHint: 'Coins와 Vouchers 보상 세부 정보입니다.',
     hint: '안내',
     today: '오늘',
     thisWeek: '이번 주',
     thisMonth: '이번 달',
     history: '기록',
-    latestActivity: '최근 Coin 활동입니다.',
+    latestActivity: '최근 보상 활동입니다.',
     all: '전체',
     noHistory: '아직 기록이 없습니다',
-    noHistoryBody: '보상을 받으면 첫 Coin 기록이 생성됩니다.',
+    noHistoryBody: '보상을 받으면 첫 보상 기록이 생성됩니다.',
   },
 })
 
@@ -181,12 +191,30 @@ function CoinIcon({ className = 'h-5 w-5' }) {
   )
 }
 
+
+function VoucherIcon({ className = 'h-5 w-5' }) {
+  const { t } = useDisplayTranslation()
+
+  return (
+    <img
+      src="/assets/Icons/Voucher.svg"
+      alt={t('taskHistoryPage.voucher')}
+      className={`inline-flex shrink-0 object-contain ${className}`}
+    />
+  )
+}
+
 function getHistoryTitle(item, t) {
+  const sourceKey = String(item.source_key || '').trim().toLowerCase()
   const raw = String(
     item.source_title || item.source || item.type || ''
   )
     .trim()
     .toLowerCase()
+
+  if (sourceKey === 'weekly_reading' || raw === 'weekly reading') {
+    return t('taskHistoryPage.weeklyReading')
+  }
 
   if (raw.includes('read')) {
     return t('taskHistoryPage.readingTimeRewards')
@@ -218,6 +246,44 @@ function getSignedAmount(value) {
   const sign = amount < 0 ? '-' : '+'
 
   return `${sign}${formatNumber(Math.abs(amount))}`
+}
+
+
+function HistoryRewardAmount({ item }) {
+  const coinAmount = Number(item.amount_gems || 0)
+  const voucherAmount = Number(item.amount_vouchers || 0)
+
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      {coinAmount !== 0 || voucherAmount === 0 ? (
+        <div className="flex items-center gap-1">
+          <CoinIcon
+            className={`h-5 w-5 ${
+              coinAmount < 0 ? 'grayscale opacity-70' : ''
+            }`}
+          />
+          <span
+            className={`text-[15px] font-black ${
+              coinAmount < 0
+                ? 'text-[var(--shadow-text-secondary)]'
+                : 'text-[var(--shadow-text-primary)]'
+            }`}
+          >
+            {getSignedAmount(coinAmount)}
+          </span>
+        </div>
+      ) : null}
+
+      {voucherAmount !== 0 ? (
+        <div className="flex items-center gap-1">
+          <VoucherIcon className="h-5 w-5" />
+          <span className="text-[15px] font-black text-[var(--shadow-text-primary)]">
+            {getSignedAmount(voucherAmount)}
+          </span>
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function SummaryItem({ label, value }) {
@@ -388,9 +454,6 @@ export default function TaskHistoryPage() {
           {!loading && history.length > 0 ? (
             <div className="mt-5 divide-y divide-[var(--shadow-border)]">
               {history.map((item) => {
-                const amount = Number(item.amount_gems || 0)
-                const isNegative = amount < 0
-
                 return (
                   <div
                     key={item.id}
@@ -405,24 +468,7 @@ export default function TaskHistoryPage() {
                       </div>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-1 text-right">
-                      <CoinIcon
-                        className={`h-5 w-5 ${
-                          isNegative
-                            ? 'grayscale opacity-70'
-                            : ''
-                        }`}
-                      />
-                      <span
-                        className={`text-[15px] font-black ${
-                          isNegative
-                            ? 'text-[var(--shadow-text-secondary)]'
-                            : 'text-[var(--shadow-text-primary)]'
-                        }`}
-                      >
-                        {getSignedAmount(amount)}
-                      </span>
-                    </div>
+                    <HistoryRewardAmount item={item} />
                   </div>
                 )
               })}
