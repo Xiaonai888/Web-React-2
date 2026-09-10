@@ -97,6 +97,7 @@ const tabs = [
   { key: 'mine', label: 'My Comments' },
   { key: 'replies', label: 'Replies' },
   { key: 'mentions', label: 'Mentions' },
+  { key: 'story', label: 'Story Comment', authorOnly: true },
 ]
 
 const TAB_LABEL_KEYS = {
@@ -149,6 +150,7 @@ export default function MeCommentsPage() {
   const { language, t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all')
+  const [hasAuthorPage, setHasAuthorPage] = useState(false)
   const [items, setItems] = useState([])
   const [counts, setCounts] = useState({})
   const [loading, setLoading] = useState(true)
@@ -165,6 +167,49 @@ export default function MeCommentsPage() {
   useEffect(() => {
     let ignore = false
 
+    async function checkAuthorPage() {
+      if (!token) return
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/me/summary`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!ignore) {
+          setHasAuthorPage(
+            Boolean(
+              response.ok &&
+                data.ok !== false &&
+                data.has_author_page &&
+                data.author_page?.page_username
+            )
+          )
+        }
+      } catch {
+        if (!ignore) setHasAuthorPage(false)
+      }
+    }
+
+    checkAuthorPage()
+
+    return () => {
+      ignore = true
+    }
+  }, [token])
+
+  const visibleTabs = useMemo(
+    () => tabs.filter((tab) => !tab.authorOnly || hasAuthorPage),
+    [hasAuthorPage]
+  )
+
+  useEffect(() => {
+    let ignore = false
+
     async function loadItems() {
       if (!token) return
 
@@ -172,7 +217,10 @@ export default function MeCommentsPage() {
         setLoading(true)
         setError('')
 
-        const endpoint = `${API_BASE_URL}/api/comments/me/activities?filter=${activeTab}`
+        const isStoryTab = activeTab === 'story'
+        const endpoint = isStoryTab
+          ? `${API_BASE_URL}/api/authors/me/story-notifications?type=comment&limit=30`
+          : `${API_BASE_URL}/api/comments/me/activities?filter=${activeTab}`
 
         const response = await fetch(endpoint, {
           headers: {
@@ -188,8 +236,26 @@ export default function MeCommentsPage() {
 
         if (ignore) return
 
-        setItems(data.activities || [])
-setCounts(data.counts || {})
+        if (isStoryTab) {
+          const notifications = Array.isArray(data.notifications) ? data.notifications : []
+
+          setItems(
+            notifications.map((item) => ({
+              id: item.id,
+              activity_type: 'story',
+              title: item.title || 'Story Comment',
+              text: item.message || '',
+              story_title: item.metadata?.story_title || item.metadata?.story_name || '',
+              created_at: item.created_at,
+              is_read: Boolean(item.is_read),
+              link: item.target_url || '',
+              metadata: item.metadata || {},
+            }))
+          )
+        } else {
+          setItems(data.activities || [])
+          setCounts(data.counts || {})
+        }
       } catch (err) {
         if (!ignore) {
           setError(err.message || t('meCommentsPage.failedLoadComments'))
@@ -217,6 +283,8 @@ setCounts(data.counts || {})
   }, [activeTab, counts, items.length])
 
   async function openItem(item) {
+    if (activeTab === 'story') return
+
     if (activeTab === 'all' && item.id && !item.is_read) {
       try {
         await fetch(`${API_BASE_URL}/api/notifications/${item.id}/read`, {
@@ -263,7 +331,7 @@ setCounts(data.counts || {})
 </div>
 
         <div className="mx-auto mt-4 flex max-w-3xl gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {tabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const active = activeTab === tab.key
 
             return (
@@ -277,7 +345,7 @@ setCounts(data.counts || {})
       : 'bg-[#f8f8fb] font-medium text-[#6b7280] ring-1 ring-black/5 dark:bg-white/10 dark:text-white/65 dark:ring-white/10'
   }`}
 >
-  {t(`meCommentsPage.${TAB_LABEL_KEYS[tab.key]}`)}
+  {tab.key === 'story' ? tab.label : t(`meCommentsPage.${TAB_LABEL_KEYS[tab.key]}`)}
 </button>
             )
           })}
