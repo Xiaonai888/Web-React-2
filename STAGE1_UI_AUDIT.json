@@ -337,6 +337,11 @@
 "src/pages/Author/AuthorPageSearchPage.jsx",
 "src/pages/Author/AuthorPageInviteFriendsPage.jsx",
 "src/pages/Author/AuthorPageHelpPage.jsx",
+"src/pages/Author/ChatStoryCharactersPage.jsx",
+"src/pages/Author/ShadowGalleryPage.jsx",
+"src/pages/Author/ChatStoryCharacterProfilePage.jsx",
+"src/pages/Author/ChatStoryEditorPage.jsx",
+"src/pages/Author/StoryManagerPage.jsx",
   ]
 }
 
