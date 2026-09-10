@@ -200,6 +200,7 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
   const views = episode.total_views || episode.views || 0
   const likes = episode.total_likes || episode.likes || 0
   const comments = episode.total_comments || episode.comments || 0
+  const earnings = Number(episode.total_earnings_usd || 0)
   const wordCount = Number(episode.word_count || 0)
   const isFree = Boolean(episode.is_free_published)
 
@@ -234,6 +235,10 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
         <EpisodeMetric icon="fa-regular fa-eye" value={views} />
         <EpisodeMetric icon="fa-regular fa-heart" value={likes} />
         <EpisodeMetric icon="fa-regular fa-comment" value={comments} />
+        <span className="inline-flex min-w-[58px] items-center justify-center gap-1 text-[11px] text-[#667085]">
+  <i className="fa-solid fa-dollar-sign text-[11px] text-[#111827]" />
+  {earnings.toFixed(2)}
+</span>
       </div>
 
       <button
