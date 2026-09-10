@@ -27,7 +27,7 @@ registerTranslationNamespace('authorPageHelp', {
     "blockName": "Block {{name}}",
     "blockHelp": "You won’t be able to see or contact each other.",
     "submittedReview": "Submitted to Shadow for Review",
-    "sentToAdmin": "{t('authorPageHelp.sentToAdmin')}",
+    "sentToAdmin": "Your report has been sent to Admin.",
     "done": "Done",
     "selfHarmLabel": "Suicide or self-injury",
     "selfHarmDesc": "The Page may show signs of suicide, self-harm, or immediate danger.",
