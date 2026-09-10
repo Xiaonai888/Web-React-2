@@ -585,6 +585,27 @@ function addToAuthorCart(product, quantity) {
     author_page_username: product.author_page_username || '',
   }
 
+  function addToAuthorCart(product, quantity) {
+  const current = getCartItems()
+  const item = {
+    id: product.id,
+    title: product.title,
+    type: product.type,
+    cover_url: product.cover_url,
+    price_value: Number(product.price || 0),
+    quantity,
+    author_page_id: product.author_page_id || '',
+    author_page_name: product.author || '',
+    author_page_username: product.author_page_username || '',
+  }
+
+  sessionStorage.setItem(
+    'reader_mall_active_seller',
+    String(item.author_page_id || item.author_page_username || item.author_page_name || 'author-store')
+  )
+
+  const existing = current.find((cartItem) => String(cartItem.id) === String(product.id))
+
   const existing = current.find((cartItem) => String(cartItem.id) === String(product.id))
   const next = existing
     ? current.map((cartItem) => (
