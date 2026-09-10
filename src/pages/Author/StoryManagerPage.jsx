@@ -1260,7 +1260,7 @@ const handleSavePublishSettings = async () => {
       <main className="mx-auto max-w-5xl px-0 py-0 sm:px-5 sm:py-4">
         {loading ? (
           <section className="rounded-[14px] bg-[var(--shadow-bg-surface)] p-8 text-center">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[var(--shadow-border)] border-t-[#111827]" />
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[var(--shadow-border)] border-t-[var(--shadow-text-primary)]" />
             <div className="text-[12px] font-normal text-[var(--shadow-text-secondary)]">{getDisplayText('storyManager.loadingManager')}</div>
           </section>
         ) : null}
