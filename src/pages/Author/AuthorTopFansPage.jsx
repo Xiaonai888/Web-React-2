@@ -9,7 +9,7 @@ registerTranslationNamespace('authorTopFans', {
     "back": "Back",
     "topFans": "Top fans",
     "noTopFanYet": "No Top Fan yet",
-    "noTopFanHelp": "{t('authorTopFans.noTopFanHelp')}",
+    "noTopFanHelp": "Top fans will appear here after readers become more active on this page.",
     "loading": "Loading...",
     "loadMore": "Load more",
     "openActions": "Open {{name}} actions",
