@@ -235,7 +235,7 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
         <EpisodeMetric icon="fa-regular fa-eye" value={views} />
         <EpisodeMetric icon="fa-regular fa-heart" value={likes} />
         <EpisodeMetric icon="fa-regular fa-comment" value={comments} />
-        <span className="inline-flex min-w-[58px] items-center justify-center gap-1 text-[11px] text-[#667085]">
+        <span className="hidden min-w-[58px] items-center justify-center gap-1 text-[11px] text-[#667085] lg:inline-flex">
   <i className="fa-solid fa-dollar-sign text-[11px] text-[#111827]" />
   {earnings.toFixed(2)}
 </span>
