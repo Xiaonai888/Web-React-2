@@ -332,6 +332,11 @@
 "src/pages/Author/AuthorPageWithdrawalPage.jsx",
 "src/pages/Author/AuthorPageOptionsPage.jsx",
 "src/pages/Author/AuthorReaderPageOptionsPage.jsx",
+"src/pages/Author/AuthorFollowersPage.jsx",
+"src/pages/Author/AuthorTopFansPage.jsx",
+"src/pages/Author/AuthorPageSearchPage.jsx",
+"src/pages/Author/AuthorPageInviteFriendsPage.jsx",
+"src/pages/Author/AuthorPageHelpPage.jsx",
   ]
 }
 
