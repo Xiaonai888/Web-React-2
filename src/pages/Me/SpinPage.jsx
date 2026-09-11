@@ -178,6 +178,7 @@ const translations = {
     entriesSection: 'Your wheel',
     removeBlocked: 'This winner is already excluded for the current No Repeat round.',
     unexpected: 'Something went wrong.',
+    checkingAccess: 'Checking game access...',
   },
   km: {
     title: 'បង្វិល',
@@ -335,6 +336,7 @@ const translations = {
     entriesSection: 'កង់របស់អ្នក',
     removeBlocked: 'អ្នកឈ្នះនេះត្រូវបានរំលងរួចក្នុងជុំ No Repeat បច្ចុប្បន្ន។',
     unexpected: 'មានបញ្ហាអ្វីមួយកើតឡើង។',
+    checkingAccess: 'កំពុងពិនិត្យសិទ្ធិចូលហ្គេម...',
   },
   zh: {
     title: '转盘',
@@ -492,6 +494,7 @@ const translations = {
     entriesSection: '你的转盘',
     removeBlocked: '此获胜者已在当前不重复轮次中被排除。',
     unexpected: '出现了问题。',
+    checkingAccess: '正在检查游戏访问权限...',
   },
   ja: {
     title: 'スピン',
@@ -649,6 +652,7 @@ const translations = {
     entriesSection: 'あなたのホイール',
     removeBlocked: 'この当選者は現在の重複なしラウンドですでに除外されています。',
     unexpected: '問題が発生しました。',
+    checkingAccess: 'ゲームのアクセスを確認中...',
   },
   ko: {
     title: '스핀',
@@ -806,6 +810,7 @@ const translations = {
     entriesSection: '나의 휠',
     removeBlocked: '이 당첨자는 현재 중복 없음 라운드에서 이미 제외되었습니다.',
     unexpected: '문제가 발생했습니다.',
+    checkingAccess: '게임 접근 권한 확인 중...',
   },
 }
 
@@ -2161,6 +2166,7 @@ export default function SpinPage() {
   const [showSaved, setShowSaved] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [toast, setToast] = useState('')
+  const [gameAccessState, setGameAccessState] = useState('checking')
 
   const readerSearch = useSpinSearch('readers', readerQuery, t)
   const authorSearch = useSpinSearch('pages', authorQuery, t)
@@ -2216,6 +2222,66 @@ export default function SpinPage() {
     : '0%'
 
   useEffect(() => {
+    let active = true
+    let controller = null
+
+    async function checkGameAccess() {
+      controller?.abort()
+      controller = new AbortController()
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/games/spin`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        const data = await response.json().catch(() => ({}))
+        const game = data?.game
+
+        if (
+          !response.ok ||
+          data?.ok === false ||
+          game?.gameKey !== 'spin' ||
+          game?.hidden ||
+          game?.disabled
+        ) {
+          if (active) {
+            setGameAccessState('blocked')
+            navigate('/game', { replace: true })
+          }
+          return
+        }
+
+        if (active) {
+          setGameAccessState('allowed')
+        }
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+
+        if (active) {
+          setGameAccessState('blocked')
+          navigate('/game', { replace: true })
+        }
+      }
+    }
+
+    const recheckGameAccess = () => {
+      if (document.visibilityState === 'hidden') return
+      void checkGameAccess()
+    }
+
+    void checkGameAccess()
+    window.addEventListener('focus', recheckGameAccess)
+    document.addEventListener('visibilitychange', recheckGameAccess)
+
+    return () => {
+      active = false
+      controller?.abort()
+      window.removeEventListener('focus', recheckGameAccess)
+      document.removeEventListener('visibilitychange', recheckGameAccess)
+    }
+  }, [navigate])
+
+  useEffect(() => {
     return () => {
       if (spinTimerRef.current) {
         window.clearTimeout(spinTimerRef.current)
@@ -2230,6 +2296,8 @@ export default function SpinPage() {
   }, [toast])
 
   useEffect(() => {
+    if (gameAccessState !== 'allowed') return undefined
+
     let active = true
 
     async function loadLocalSpinData() {
@@ -2250,7 +2318,7 @@ export default function SpinPage() {
     return () => {
       active = false
     }
-  }, [])
+  }, [gameAccessState])
 
   async function loadSavedWheels() {
     try {
@@ -2840,6 +2908,24 @@ export default function SpinPage() {
       URL.revokeObjectURL(url)
       setToast(t('spinPage.downloadReady'))
     }, 'image/png')
+  }
+
+  if (gameAccessState !== 'allowed') {
+    return (
+      <PageShell className="pb-12">
+        <PageHeader
+          title={t('spinPage.title')}
+          onBack={() => navigate('/game')}
+          backLabel={t('spinPage.back')}
+        />
+        <div className="px-4 py-6">
+          <PageLoadingState
+            label={t('spinPage.checkingAccess')}
+            rows={3}
+          />
+        </div>
+      </PageShell>
+    )
   }
 
   return (
