@@ -137,6 +137,7 @@ const AuthorPostsContentLibraryPage = lazy(() =>
 const AuthorPageNotificationsPage = lazy(() => import('./pages/Author/AuthorPageNotificationsPage'))
 const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
 const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
+const ReaderMallCartPage = lazy(() => import('./pages/ReaderMallCartPage'))
 const AuthorCheckoutPage = lazy(() => import('./pages/Author/AuthorCheckoutPage'))
 const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
 const AuthorStoreProductDetailPage = lazy(() => import('./pages/Author/AuthorStoreProductDetailPage'))
@@ -358,6 +359,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
   location.pathname === '/author/page' ||
   location.pathname.startsWith('/author/page/') ||
   location.pathname.startsWith('/shop/mall/') ||
+  location.pathname.startsWith('/reader-mall/') ||
   location.pathname.startsWith('/profile/') ||
   location.pathname.startsWith('/chat/') ||
   location.pathname.startsWith('/notifications/') ||
@@ -410,6 +412,7 @@ const shouldShowOpeningAds =
 />
 
         <Route path="/store" element={<ReaderStorePage />} />
+        <Route path="/reader-mall/cart" element={<LazyPage><ReaderMallCartPage /></LazyPage>} />
         <Route path="/shop" element={<ShopPage />} />
         <Route
           path="/shop/mall/product/:productId"
