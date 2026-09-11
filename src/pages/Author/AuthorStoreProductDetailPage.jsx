@@ -585,11 +585,6 @@ function addToAuthorCart(product, quantity) {
     author_page_username: product.author_page_username || '',
   }
 
-  sessionStorage.setItem(
-    'reader_mall_active_seller',
-    String(item.author_page_id || item.author_page_username || item.author_page_name || 'author-store')
-  )
-
   const existing = current.find((cartItem) => String(cartItem.id) === String(product.id))
   const next = existing
     ? current.map((cartItem) => (
