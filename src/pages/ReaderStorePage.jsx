@@ -770,7 +770,7 @@ export default function ReaderStorePage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/author/cart')}
+              onClick={() => navigate('/reader-mall/cart')}
               aria-label={t('readerStore.openCart')}
               className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             >
