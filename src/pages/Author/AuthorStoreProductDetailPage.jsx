@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -600,6 +600,7 @@ function addToAuthorCart(product, quantity) {
 
 export default function AuthorStoreProductDetailPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const { pageUsername, productId } = useParams()
   const [quantity, setQuantity] = useState(1)
@@ -675,13 +676,17 @@ export default function AuthorStoreProductDetailPage() {
   const handleAddToCart = () => {
     if (isSoldOut) return
     addToAuthorCart(product, quantity)
-    navigate('/author/cart')
+    navigate('/author/cart', {
+  state: { from: location.pathname + location.search + location.hash },
+})
   }
 
   const handleBuyNow = () => {
     if (isSoldOut) return
     addToAuthorCart(product, quantity)
-    navigate('/author/checkout')
+    navigate('/author/checkout', {
+  state: { from: location.pathname + location.search + location.hash },
+})
   }
 
   return (
@@ -696,7 +701,11 @@ export default function AuthorStoreProductDetailPage() {
 
           <h1 className="text-[17px] font-black text-[var(--shadow-text-primary)]">{t('authorStoreProductDetail.bookDetail')}</h1>
 
-          <button type="button" aria-label={t('authorStoreProductDetail.openCart')} onClick={() => navigate('/author/cart')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95">
+          <button type="button" aria-label={t('authorStoreProductDetail.openCart')} onClick={() =>
+  navigate('/author/cart', {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95">
             <i className="fa-solid fa-cart-shopping text-[14px]" />
           </button>
         </div>
