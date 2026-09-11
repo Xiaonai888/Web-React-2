@@ -217,10 +217,8 @@ export default function MeCommentsPage() {
         setLoading(true)
         setError('')
 
-        const isStoryTab = activeTab === 'story'
-        const endpoint = isStoryTab
-          ? `${API_BASE_URL}/api/authors/me/story-notifications?type=comment&limit=30`
-          : `${API_BASE_URL}/api/comments/me/activities?filter=${activeTab}`
+        const endpoint =
+          `${API_BASE_URL}/api/comments/me/activities?filter=${activeTab}`
 
         const response = await fetch(endpoint, {
           headers: {
@@ -236,26 +234,8 @@ export default function MeCommentsPage() {
 
         if (ignore) return
 
-        if (isStoryTab) {
-          const notifications = Array.isArray(data.notifications) ? data.notifications : []
-
-          setItems(
-            notifications.map((item) => ({
-              id: item.id,
-              activity_type: 'story',
-              title: item.title || 'Story Comment',
-              text: item.message || '',
-              story_title: item.metadata?.story_title || item.metadata?.story_name || '',
-              created_at: item.created_at,
-              is_read: Boolean(item.is_read),
-              link: item.target_url || '',
-              metadata: item.metadata || {},
-            }))
-          )
-        } else {
-          setItems(data.activities || [])
-          setCounts(data.counts || {})
-        }
+        setItems(data.activities || [])
+        setCounts(data.counts || {})
       } catch (err) {
         if (!ignore) {
           setError(err.message || t('meCommentsPage.failedLoadComments'))
