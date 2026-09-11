@@ -342,6 +342,11 @@
 "src/pages/Author/ChatStoryCharacterProfilePage.jsx",
 "src/pages/Author/ChatStoryEditorPage.jsx",
 "src/pages/Author/StoryManagerPage.jsx",
+"src/pages/AuthorChat/AuthorChatInboxPage.jsx",
+"src/pages/AuthorChat/AuthorArchivedChatPage.jsx",
+"src/pages/AuthorChat/AuthorChatRoomPage.jsx",
+"src/pages/AuthorChat/AuthorChatInfoPage.jsx",
+"src/pages/AuthorChat/AuthorPostCommentFocusPage.jsx",
   ]
 }
 
