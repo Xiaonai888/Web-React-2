@@ -58,8 +58,6 @@ export function addShadowMallCartItem(product, quantity = 1) {
     items.push(nextItem)
   }
 
-  sessionStorage.setItem('reader_mall_active_seller', 'shadow-mall')
-
   saveShadowMallCartItems(items)
   return items
 }
