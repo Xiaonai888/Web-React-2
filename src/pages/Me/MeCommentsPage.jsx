@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import AuthorCommentThreadSheet from '../../components/AuthorCommentThreadSheet'
 
 registerTranslationNamespace('meCommentsPage', {
   en: {
@@ -150,6 +151,7 @@ export default function MeCommentsPage() {
   const { language, t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all')
+  const [selectedStoryComment, setSelectedStoryComment] = useState(null)
   const [hasAuthorPage, setHasAuthorPage] = useState(false)
   const [items, setItems] = useState([])
   const [counts, setCounts] = useState({})
@@ -263,7 +265,10 @@ export default function MeCommentsPage() {
   }, [activeTab, counts, items.length])
 
   async function openItem(item) {
-    if (activeTab === 'story') return
+    if (activeTab === 'story') {
+  setSelectedStoryComment(item)
+  return
+}
 
     if (activeTab === 'all' && item.id && !item.is_read) {
       try {
