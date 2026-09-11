@@ -1,21 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import {
-  buildReaderMallSellers,
-  getAuthorCartItems,
-  getAuthorSellerKey,
-  resolveReaderMallSellerKey,
-  saveAuthorCartItems,
-  setReaderMallActiveSellerKey,
-  SHADOW_MALL_SELLER_KEY,
-} from '../../utils/readerMallCartHub'
-import {
-  getShadowMallCartItems,
-  saveShadowMallCartItems,
-} from '../../utils/shadowMallCart'
-
 registerTranslationNamespace('authorCart', {
   en: {
     myCart: 'My Cart',
@@ -124,6 +110,20 @@ registerTranslationNamespace('authorCart', {
   },
 })
 
+function getAuthorCartItems() {
+  try {
+    const items = JSON.parse(localStorage.getItem('shadow_author_cart_items') || '[]')
+    return Array.isArray(items) ? items : []
+  } catch {
+    return []
+  }
+}
+
+function saveAuthorCartItems(items) {
+  localStorage.setItem('shadow_author_cart_items', JSON.stringify(items))
+  window.dispatchEvent(new Event('shadow-author-cart-updated'))
+}
+
 function money(value) {
   return Number(value || 0).toLocaleString(getDisplayLanguageId(), {
     style: 'currency',
@@ -137,16 +137,15 @@ function number(value) {
   return Number(value || 0).toLocaleString(getDisplayLanguageId())
 }
 
-function getItemPrice(item, isShadowMall) {
-  return Number(isShadowMall ? item.price || 0 : item.price_value || 0)
+function getItemPrice(item) {
+  return Number(item.price_value || 0)
 }
 
-function getItemCover(item, isShadowMall) {
-  return isShadowMall ? item.cover || '' : item.cover_url || ''
+function getItemCover(item) {
+  return item.cover_url || ''
 }
 
-function getItemType(item, isShadowMall, t) {
-  if (isShadowMall) return t('authorCart.book')
+function getItemType(item, t) {
   return item.type === 'Book' ? t('authorCart.book') : item.type || t('authorCart.book')
 }
 
@@ -154,119 +153,42 @@ export default function AuthorCartPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [authorItems, setAuthorItems] = useState(getAuthorCartItems)
-  const [shadowItems, setShadowItems] = useState(getShadowMallCartItems)
-  const [activeSellerKey, setActiveSellerKey] = useState('')
-
-  const sellers = useMemo(
-    () => buildReaderMallSellers(authorItems, shadowItems),
-    [authorItems, shadowItems]
-  )
-
-  useEffect(() => {
-    const nextKey = resolveReaderMallSellerKey(sellers, activeSellerKey)
-
-    if (nextKey !== activeSellerKey) {
-      setActiveSellerKey(nextKey)
-    }
-
-    if (nextKey) {
-      setReaderMallActiveSellerKey(nextKey)
-    }
-  }, [sellers, activeSellerKey])
-
-  useEffect(() => {
-    const refresh = () => {
-      setAuthorItems(getAuthorCartItems())
-      setShadowItems(getShadowMallCartItems())
-    }
-
-    window.addEventListener('shadow-author-cart-updated', refresh)
-    window.addEventListener('shadow-mall-cart-change', refresh)
-    window.addEventListener('storage', refresh)
-    window.addEventListener('focus', refresh)
-
-    return () => {
-      window.removeEventListener('shadow-author-cart-updated', refresh)
-      window.removeEventListener('shadow-mall-cart-change', refresh)
-      window.removeEventListener('storage', refresh)
-      window.removeEventListener('focus', refresh)
-    }
-  }, [])
-
-  const activeSeller = sellers.find((seller) => seller.key === activeSellerKey) || null
-  const isShadowMall = activeSeller?.key === SHADOW_MALL_SELLER_KEY
-  const items = activeSeller?.items || []
-  const totalCartCount = sellers.reduce((sum, seller) => sum + seller.count, 0)
+  const items = authorItems
+  const totalCartCount = items.length
 
   const subtotal = useMemo(
     () =>
       items.reduce(
         (sum, item) =>
-          sum + getItemPrice(item, isShadowMall) * Math.max(1, Number(item.quantity || 1)),
+          sum + getItemPrice(item) * Math.max(1, Number(item.quantity || 1)),
         0
       ),
-    [items, isShadowMall]
+    [items]
   )
-
-  function chooseSeller(key) {
-    setActiveSellerKey(key)
-    setReaderMallActiveSellerKey(key)
-  }
 
   function updateQuantity(id, nextQuantity) {
     const quantity = Math.max(1, Math.min(99, Number(nextQuantity || 1)))
-
-    if (isShadowMall) {
-      const nextItems = shadowItems.map((item) =>
-        String(item.id) === String(id) ? { ...item, quantity } : item
-      )
-      setShadowItems(nextItems)
-      saveShadowMallCartItems(nextItems)
-      return
-    }
-
     const nextItems = authorItems.map((item) =>
-      getAuthorSellerKey(item) === activeSellerKey && String(item.id) === String(id)
-        ? { ...item, quantity }
-        : item
+      String(item.id) === String(id) ? { ...item, quantity } : item
     )
+
     setAuthorItems(nextItems)
     saveAuthorCartItems(nextItems)
   }
 
   function removeItem(id) {
-    if (isShadowMall) {
-      const nextItems = shadowItems.filter((item) => String(item.id) !== String(id))
-      setShadowItems(nextItems)
-      saveShadowMallCartItems(nextItems)
-      return
-    }
-
-    const nextItems = authorItems.filter(
-      (item) =>
-        !(
-          getAuthorSellerKey(item) === activeSellerKey &&
-          String(item.id) === String(id)
-        )
-    )
+    const nextItems = authorItems.filter((item) => String(item.id) !== String(id))
     setAuthorItems(nextItems)
     saveAuthorCartItems(nextItems)
   }
 
   function openOrderHistory() {
-    navigate(isShadowMall ? '/shop/mall/orders' : '/author/orders')
+    navigate('/author/orders')
   }
 
   function openCheckout() {
-    if (!items.length || !activeSeller) return
-
-    if (isShadowMall) {
-      navigate('/shop/mall/checkout')
-      return
-    }
-
-    setReaderMallActiveSellerKey(activeSellerKey)
-    navigate(`/author/checkout?seller=${encodeURIComponent(activeSellerKey)}`)
+    if (!items.length) return
+    navigate('/author/checkout')
   }
 
   return (
@@ -311,12 +233,12 @@ export default function AuthorCartPage() {
 
         <section className="mt-3 space-y-3">
           {items.length ? items.map((item) => {
-            const cover = getItemCover(item, isShadowMall)
-            const itemType = getItemType(item, isShadowMall, t)
-            const itemTotal = getItemPrice(item, isShadowMall) * Math.max(1, Number(item.quantity || 1))
+            const cover = getItemCover(item)
+            const itemType = getItemType(item, t)
+            const itemTotal = getItemPrice(item) * Math.max(1, Number(item.quantity || 1))
 
             return (
-              <article key={`${activeSellerKey}-${item.id}`} className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
+              <article key={item.id} className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
                 <div className="flex gap-3">
                   <div className="h-[96px] w-[70px] shrink-0 overflow-hidden rounded-[14px] bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
                     {cover ? (
