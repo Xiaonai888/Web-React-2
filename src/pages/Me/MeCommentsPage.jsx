@@ -410,6 +410,11 @@ export default function MeCommentsPage() {
           </div>
         )}
       </main>
+
+      <AuthorCommentThreadSheet
+        item={selectedStoryComment}
+        onClose={() => setSelectedStoryComment(null)}
+      />
     </div>
   )
 }
