@@ -289,31 +289,7 @@ export default function AuthorCartPage() {
       </header>
 
       <main className="mx-auto max-w-[980px] px-4 py-4">
-        {sellers.length > 1 ? (
-          <div className="mb-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {sellers.map((seller) => {
-              const active = seller.key === activeSellerKey
-
-              return (
-                <button
-                  key={seller.key}
-                  type="button"
-                  onClick={() => chooseSeller(seller.key)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-black transition active:scale-95 ${
-                    active
-                      ? 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
-                      : 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)] ring-1 ring-[var(--shadow-border)]'
-                  }`}
-                >
-                  {seller.label}
-                  <span className={`ml-1.5 ${active ? 'opacity-80' : 'text-[var(--shadow-text-tertiary)]'}`}>
-                    {number(seller.count)}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        ) : null}
+        
 
         <section className="rounded-[24px] bg-[var(--shadow-bg-surface)] px-4 py-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <h1 className="text-[15px] font-black text-[var(--shadow-text-primary)]">{t('authorCart.selectedBooks')}</h1>
