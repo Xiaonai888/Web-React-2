@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const CART_KEY = 'shadow_mall_cart'
 
@@ -116,6 +116,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 
 export default function ShadowMallCartPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [items, setItems] = useState([])
 
   useEffect(() => {
@@ -163,7 +164,14 @@ export default function ShadowMallCartPage() {
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/shop')}
+            onClick={() => {
+  if (location.state?.from) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop', { replace: true })
+}}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
@@ -308,7 +316,11 @@ export default function ShadowMallCartPage() {
 
             <button
               type="button"
-              onClick={() => navigate('/shop/mall/checkout')}
+              onClick={() =>
+  navigate('/shop/mall/checkout', {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               className="flex h-[52px] min-w-[160px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] dark:bg-white dark:text-[#111827]"
             >
               Checkout
