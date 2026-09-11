@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -385,6 +385,7 @@ function addToLocalCart(product, quantity) {
 
 export default function ShadowMallProductDetailPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { productId } = useParams()
   const [quantity, setQuantity] = useState(1)
   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -467,13 +468,17 @@ export default function ShadowMallProductDetailPage() {
   const handleAddToCart = () => {
     if (isSoldOut) return
     addToLocalCart(product, quantity)
-    navigate('/shop/mall/cart')
+    navigate('/shop/mall/cart', {
+  state: { from: location.pathname + location.search + location.hash },
+})
   }
 
   const handleBuyNow = () => {
     if (isSoldOut) return
     addToLocalCart(product, quantity)
-    navigate('/shop/mall/checkout')
+    navigate('/shop/mall/checkout', {
+  state: { from: location.pathname + location.search + location.hash },
+})
   }
 
   return (
@@ -488,7 +493,11 @@ export default function ShadowMallProductDetailPage() {
 
           <h1 className="text-[17px] font-extrabold text-[var(--shadow-text-primary)]">Book Detail</h1>
 
-          <button type="button" onClick={() => navigate('/shop/mall/cart')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 dark:bg-white dark:text-[#111827]">
+          <button type="button" onClick={() =>
+  navigate('/shop/mall/cart', {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 dark:bg-white dark:text-[#111827]">
             <i className="fa-solid fa-cart-shopping text-[14px]" />
           </button>
         </div>
