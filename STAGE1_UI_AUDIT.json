@@ -347,6 +347,11 @@
 "src/pages/AuthorChat/AuthorChatRoomPage.jsx",
 "src/pages/AuthorChat/AuthorChatInfoPage.jsx",
 "src/pages/AuthorChat/AuthorPostCommentFocusPage.jsx",
+"src/components/author/ProfessionalEpisodeActionSheet.jsx",
+"src/pages/Author/EpisodeEditorPage.jsx",
+"src/pages/Author/PublishEpisodePage.jsx",
+"src/components/author/StoryPublishAgreementModal.jsx",
+"src/components/author/ScheduleReleasePicker.jsx",
   ]
 }
 
