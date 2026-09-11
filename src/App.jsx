@@ -402,14 +402,7 @@ const shouldShowOpeningAds =
   }
 />
 
-          <Route
-  path="/game/spin"
-  element={
-    <LazyPage>
-      <SpinPage />
-    </LazyPage>
-  }
-/>
+          
 
         <Route path="/store" element={<ReaderStorePage />} />
         <Route path="/reader-mall/cart" element={<LazyPage><ReaderMallCartPage /></LazyPage>} />
