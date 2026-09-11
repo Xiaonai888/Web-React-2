@@ -24,16 +24,96 @@ import {
   markAuthorChatRead,
   sendAuthorChatMessage,
 } from '../../services/authorChatApi'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorChatRoom', {
+  "en": {
+    "shadowReader": "Shadow Reader",
+    "failedLoadConversation": "Failed to load Page conversation",
+    "failedSendMessage": "Failed to send message",
+    "failedUpdateRequest": "Failed to update request",
+    "pageMessage": "Page message",
+    "profilePage": "Profile page",
+    "messageRequest": "Message request",
+    "requestHelp": "Accept this request before replying.",
+    "decline": "Decline",
+    "accept": "Accept",
+    "noMessages": "No messages yet.",
+    "messagePlaceholder": "Message...",
+    "acceptToReply": "Accept the request to reply"
+  },
+  "km": {
+    "shadowReader": "អ្នកអាន Shadow",
+    "failedLoadConversation": "មិនអាចផ្ទុកការសន្ទនា Page បានទេ",
+    "failedSendMessage": "មិនអាចផ្ញើសារបានទេ",
+    "failedUpdateRequest": "មិនអាចអាប់ដេតសំណើបានទេ",
+    "pageMessage": "សារ Page",
+    "profilePage": "ទំព័រ Profile",
+    "messageRequest": "សំណើសារ",
+    "requestHelp": "ទទួលយកសំណើនេះមុនពេលឆ្លើយតប។",
+    "decline": "បដិសេធ",
+    "accept": "ទទួលយក",
+    "noMessages": "មិនទាន់មានសារ។",
+    "messagePlaceholder": "សារ...",
+    "acceptToReply": "ទទួលយកសំណើដើម្បីឆ្លើយតប"
+  },
+  "zh": {
+    "shadowReader": "Shadow 读者",
+    "failedLoadConversation": "无法加载 Page 对话",
+    "failedSendMessage": "无法发送消息",
+    "failedUpdateRequest": "无法更新请求",
+    "pageMessage": "Page 消息",
+    "profilePage": "个人主页",
+    "messageRequest": "消息请求",
+    "requestHelp": "回复前请先接受此请求。",
+    "decline": "拒绝",
+    "accept": "接受",
+    "noMessages": "暂无消息。",
+    "messagePlaceholder": "消息...",
+    "acceptToReply": "接受请求后即可回复"
+  },
+  "ja": {
+    "shadowReader": "Shadow 読者",
+    "failedLoadConversation": "Page の会話を読み込めませんでした",
+    "failedSendMessage": "メッセージを送信できませんでした",
+    "failedUpdateRequest": "リクエストを更新できませんでした",
+    "pageMessage": "Page メッセージ",
+    "profilePage": "プロフィールページ",
+    "messageRequest": "メッセージリクエスト",
+    "requestHelp": "返信する前にこのリクエストを承認してください。",
+    "decline": "拒否",
+    "accept": "承認",
+    "noMessages": "メッセージはまだありません。",
+    "messagePlaceholder": "メッセージ...",
+    "acceptToReply": "返信するにはリクエストを承認してください"
+  },
+  "ko": {
+    "shadowReader": "Shadow 독자",
+    "failedLoadConversation": "Page 대화를 불러오지 못했습니다",
+    "failedSendMessage": "메시지를 보내지 못했습니다",
+    "failedUpdateRequest": "요청을 업데이트하지 못했습니다",
+    "pageMessage": "Page 메시지",
+    "profilePage": "프로필 페이지",
+    "messageRequest": "메시지 요청",
+    "requestHelp": "답장하기 전에 이 요청을 수락하세요.",
+    "decline": "거절",
+    "accept": "수락",
+    "noMessages": "아직 메시지가 없습니다.",
+    "messagePlaceholder": "메시지...",
+    "acceptToReply": "답장하려면 요청을 수락하세요"
+  }
+})
 
 function Avatar({ person }) {
   const [failed, setFailed] = useState(false)
   const name = String(
-    person?.name || person?.username || 'Shadow Reader'
+    person?.name || person?.username || getDisplayText('authorChatRoom.shadowReader')
   ).trim()
   const letter = name.charAt(0).toUpperCase() || 'S'
 
   return (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[13px] font-bold text-white">
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-bold text-[var(--shadow-bg-surface)]">
       {person?.avatar_url && !failed ? (
         <img
           src={person.avatar_url}
@@ -53,7 +133,7 @@ function formatTime(value) {
 
   if (Number.isNaN(date.getTime())) return ''
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date)
@@ -105,6 +185,7 @@ function getLatestMessageCursor(
 }
 
 export default function AuthorChatRoomPage() {
+  useDisplayTranslation()
   const { conversationId } = useParams()
   const navigate = useNavigate()
   const bottomRef = useRef(null)
@@ -215,7 +296,7 @@ export default function AuthorChatRoomPage() {
         if (!silent) {
           setError(
             loadError.message ||
-              'Failed to load Page conversation'
+              getDisplayText('authorChatRoom.failedLoadConversation')
           )
         }
       } finally {
@@ -458,7 +539,7 @@ export default function AuthorChatRoomPage() {
     } catch (sendError) {
       setDraft(message)
       setError(
-        sendError.message || 'Failed to send message'
+        sendError.message || getDisplayText('authorChatRoom.failedSendMessage')
       )
     } finally {
       setSending(false)
@@ -488,7 +569,7 @@ export default function AuthorChatRoomPage() {
     } catch (decisionError) {
       setError(
         decisionError.message ||
-          'Failed to update request'
+          getDisplayText('authorChatRoom.failedUpdateRequest')
       )
     } finally {
       setBusyRequest('')
@@ -496,15 +577,15 @@ export default function AuthorChatRoomPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#f5f5f7]">
-      <header className="sticky top-0 z-40 border-b border-[#ececf0] bg-white/95 backdrop-blur-xl">
+    <div className="flex min-h-[100dvh] flex-col bg-[var(--shadow-bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur-xl">
         <div className="mx-auto flex h-[64px] max-w-[720px] items-center gap-2 px-3 pt-[env(safe-area-inset-top)]">
           <button
             type="button"
             onClick={() =>
               navigate('/author/page/chat')
             }
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
           >
             <ChevronLeft size={26} />
           </button>
@@ -512,22 +593,22 @@ export default function AuthorChatRoomPage() {
           <Avatar person={counterpart} />
 
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[14px] font-bold text-[#111827]">
-              {counterpart.name || 'Shadow Reader'}
+            <div className="truncate text-[14px] font-bold text-[var(--shadow-text-primary)]">
+              {counterpart.name || getDisplayText('authorChatRoom.shadowReader')}
             </div>
-            <div className="truncate text-[10px] font-semibold text-[#8d8994]">
+            <div className="truncate text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
               {counterpart.username
                 ? `@${counterpart.username}`
-                : 'Page message'}
+                : getDisplayText('authorChatRoom.pageMessage')}
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => navigate('/author/page')}
-            className="rounded-full bg-[#f2edff] px-3 py-2 text-[10px] font-bold text-[#6d46bf]"
+            className="rounded-full bg-[var(--shadow-bg-soft)] px-3 py-2 text-[10px] font-bold text-[#7c3aed]"
           >
-            Profile page
+            {getDisplayText('authorChatRoom.profilePage')}
           </button>
 
           <button
@@ -537,7 +618,7 @@ export default function AuthorChatRoomPage() {
                 `/author/page/chat/${conversationId}/info`
               )
             }
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
           >
             <Info size={21} />
           </button>
@@ -557,12 +638,12 @@ export default function AuthorChatRoomPage() {
       {conversation?.request_status ===
         'pending' &&
       conversation?.can_decide ? (
-        <section className="mx-auto mt-3 w-[calc(100%-2rem)] max-w-[680px] rounded-[18px] bg-[#f2edff] p-4">
-          <div className="text-[13px] font-bold text-[#111827]">
-            Message request
+        <section className="mx-auto mt-3 w-[calc(100%-2rem)] max-w-[680px] rounded-[18px] bg-[var(--shadow-bg-elevated)] p-4 ring-1 ring-[var(--shadow-border)]">
+          <div className="text-[13px] font-bold text-[var(--shadow-text-primary)]">
+            {getDisplayText('authorChatRoom.messageRequest')}
           </div>
-          <div className="mt-1 text-[11px] leading-5 text-[#756b84]">
-            Accept this request before replying.
+          <div className="mt-1 text-[11px] leading-5 text-[var(--shadow-text-secondary)]">
+            {getDisplayText('authorChatRoom.requestHelp')}
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -570,7 +651,7 @@ export default function AuthorChatRoomPage() {
               type="button"
               disabled={Boolean(busyRequest)}
               onClick={() => decide('decline')}
-              className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-white text-[12px] font-bold text-[#55515d] disabled:opacity-50"
+              className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[var(--shadow-bg-surface)] text-[12px] font-bold text-[var(--shadow-text-secondary)] disabled:opacity-50"
             >
               {busyRequest === 'decline' ? (
                 <LoaderCircle
@@ -580,7 +661,7 @@ export default function AuthorChatRoomPage() {
               ) : (
                 <X size={16} />
               )}
-              Decline
+              {getDisplayText('authorChatRoom.decline')}
             </button>
 
             <button
@@ -597,7 +678,7 @@ export default function AuthorChatRoomPage() {
               ) : (
                 <Check size={16} />
               )}
-              Accept
+              {getDisplayText('authorChatRoom.accept')}
             </button>
           </div>
         </section>
@@ -626,7 +707,7 @@ export default function AuthorChatRoomPage() {
                   className={`max-w-[82%] rounded-[18px] px-4 py-2.5 ${
                     message.is_mine
                       ? 'rounded-br-[6px] bg-[#7c3aed] text-white'
-                      : 'rounded-bl-[6px] bg-white text-[#22222b] shadow-sm ring-1 ring-black/5'
+                      : 'rounded-bl-[6px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]'
                   }`}
                 >
                   <div className="whitespace-pre-wrap break-words text-[13px] leading-5">
@@ -636,7 +717,7 @@ export default function AuthorChatRoomPage() {
                     className={`mt-1 text-right text-[9px] ${
                       message.is_mine
                         ? 'text-white/70'
-                        : 'text-[#9a97a1]'
+                        : 'text-[var(--shadow-text-tertiary)]'
                     }`}
                   >
                     {formatTime(message.created_at)}
@@ -647,13 +728,13 @@ export default function AuthorChatRoomPage() {
             <div ref={bottomRef} />
           </div>
         ) : (
-          <div className="flex flex-1 items-center justify-center py-20 text-center text-[12px] font-semibold text-[#96929d]">
-            No messages yet.
+          <div className="flex flex-1 items-center justify-center py-20 text-center text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">
+            {getDisplayText('authorChatRoom.noMessages')}
           </div>
         )}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#ececf0] bg-white px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2">
         <div className="mx-auto flex max-w-[720px] items-end gap-2">
           <textarea
             value={draft}
@@ -675,10 +756,10 @@ export default function AuthorChatRoomPage() {
             rows={1}
             placeholder={
               canSend
-                ? 'Message...'
-                : 'Accept the request to reply'
+                ? getDisplayText('authorChatRoom.messagePlaceholder')
+                : getDisplayText('authorChatRoom.acceptToReply')
             }
-            className="max-h-28 min-h-[44px] flex-1 resize-none rounded-[20px] bg-[#f2f2f5] px-4 py-3 text-[13px] leading-5 text-[#111827] outline-none disabled:opacity-60"
+            className="max-h-28 min-h-[44px] flex-1 resize-none rounded-[20px] bg-[var(--shadow-input-bg)] px-4 py-3 text-[13px] leading-5 text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)] disabled:opacity-60"
           />
 
           <button
