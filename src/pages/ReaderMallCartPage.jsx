@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -68,6 +68,7 @@ function readCount(key) {
 
 export default function ReaderMallCartPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [active, setActive] = useState('shadow')
   const [counts, setCounts] = useState(() => ({
@@ -160,7 +161,11 @@ export default function ReaderMallCartPage() {
             </span>
             <button
               type="button"
-              onClick={() => navigate(path)}
+              onClick={() =>
+  navigate(path, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               className="h-10 rounded-full bg-[var(--shadow-text-primary)] px-5 text-[12px] font-black text-[var(--shadow-bg-surface)] active:scale-95"
             >
               {t('readerMallCart.openCart')}
