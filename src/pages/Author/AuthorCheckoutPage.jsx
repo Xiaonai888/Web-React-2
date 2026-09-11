@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -412,6 +412,7 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
 
 export default function AuthorCheckoutPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [items, setItems] = useState(getCartItems)
   const [buyerProfile, setBuyerProfile] = useState(getBuyerProfile)
@@ -559,7 +560,14 @@ export default function AuthorCheckoutPage() {
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px]">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
-          <button type="button" aria-label={t('authorCheckout.goBack')} onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95">
+          <button type="button" aria-label={t('authorCheckout.goBack')} onClick={() => {
+  if (location.state?.from) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/author/cart', { replace: true })
+}} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95">
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
           <div className="min-w-0 flex-1 px-3 text-[18px] font-black text-[var(--shadow-text-primary)]">{t('authorCheckout.checkout')}</div>
