@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -349,6 +349,7 @@ function CheckoutItem({ item, onIncrease, onDecrease, onRemove }) {
 
 export default function ShadowMallCheckoutPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [items, setItems] = useState([])
   const [readerUser, setReaderUser] = useState(null)
   const [phone, setPhone] = useState('')
@@ -661,7 +662,14 @@ export default function ShadowMallCheckoutPage() {
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/shop/mall/cart')}
+            onClick={() => {
+  if (location.state?.from) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop/mall/cart', { replace: true })
+}}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
