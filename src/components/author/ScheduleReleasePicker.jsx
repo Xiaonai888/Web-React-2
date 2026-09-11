@@ -1,21 +1,109 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-]
+registerTranslationNamespace('scheduleReleasePicker', {
+  en: {
+    selectDate: "Select date",
+    at: "at",
+    cancel: "Cancel",
+    scheduleRelease: "Schedule Release",
+    ok: "OK",
+    futureDateTime: "Choose a future date and time.",
+    selectTime: "Select Time",
+    hour: "Hour",
+    minute: "Minute",
+    timeHint: "Scroll, swipe, tap, or type the time directly.",
+    show: "Show",
+    close: "Close",
+  },
+  km: {
+    selectDate: "ជ្រើសកាលបរិច្ឆេទ",
+    at: "ម៉ោង",
+    cancel: "បោះបង់",
+    scheduleRelease: "កំណត់ពេលបោះផ្សាយ",
+    ok: "យល់ព្រម",
+    futureDateTime: "សូមជ្រើសកាលបរិច្ឆេទ និងម៉ោងនាពេលអនាគត។",
+    selectTime: "ជ្រើសម៉ោង",
+    hour: "ម៉ោង",
+    minute: "នាទី",
+    timeHint: "អូស ប៉ះ ឬវាយម៉ោងដោយផ្ទាល់។",
+    show: "បង្ហាញ",
+    close: "បិទ",
+  },
+  zh: {
+    selectDate: "选择日期",
+    at: "时间",
+    cancel: "取消",
+    scheduleRelease: "定时发布",
+    ok: "确定",
+    futureDateTime: "请选择未来的日期和时间。",
+    selectTime: "选择时间",
+    hour: "小时",
+    minute: "分钟",
+    timeHint: "可滚动、滑动、点击或直接输入时间。",
+    show: "显示",
+    close: "关闭",
+  },
+  ja: {
+    selectDate: "日付を選択",
+    at: "時刻",
+    cancel: "キャンセル",
+    scheduleRelease: "公開予約",
+    ok: "OK",
+    futureDateTime: "未来の日付と時刻を選択してください。",
+    selectTime: "時刻を選択",
+    hour: "時",
+    minute: "分",
+    timeHint: "スクロール、スワイプ、タップ、または直接入力できます。",
+    show: "表示",
+    close: "閉じる",
+  },
+  ko: {
+    selectDate: "날짜 선택",
+    at: "시간",
+    cancel: "취소",
+    scheduleRelease: "게시 예약",
+    ok: "확인",
+    futureDateTime: "미래 날짜와 시간을 선택해 주세요.",
+    selectTime: "시간 선택",
+    hour: "시",
+    minute: "분",
+    timeHint: "스크롤, 스와이프, 탭 또는 직접 입력할 수 있습니다.",
+    show: "표시",
+    close: "닫기",
+  },
+})
 
-const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTH_INDEXES = Array.from({ length: 12 }, (_, index) => index)
+const WEEK_DAY_INDEXES = Array.from({ length: 7 }, (_, index) => index)
+
+function formatMonthName(month, year = 2024) {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
+    month: 'long',
+  }).format(new Date(year, month, 1))
+}
+
+function formatMonthYear(date) {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
+}
+
+function formatMonthDay(date) {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
+    month: 'long',
+    day: 'numeric',
+  }).format(date)
+}
+
+function formatWeekDay(index) {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
+    weekday: 'short',
+  }).format(new Date(2024, 0, 7 + index))
+}
+
 
 function pad(value) {
   return String(value).padStart(2, '0')
@@ -142,14 +230,14 @@ function LoopingTimeColumn({ value, max, label, onChange }) {
         move(start > end ? 1 : -1)
       }}
     >
-      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#98a2b3]">
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--shadow-text-tertiary)]">
         {label}
       </div>
 
       <button
         type="button"
         onClick={() => move(-1)}
-        className="h-10 w-full text-[15px] text-[#98a2b3]"
+        className="h-10 w-full text-[15px] text-[var(--shadow-text-tertiary)]"
       >
         {pad(wrap(value - 1, max))}
       </button>
@@ -186,14 +274,14 @@ function LoopingTimeColumn({ value, max, label, onChange }) {
 
             if (event.key === 'Enter') event.currentTarget.blur()
           }}
-          className="h-10 w-full bg-transparent text-center text-[22px] font-semibold text-[#111827] outline-none"
+          className="h-10 w-full bg-transparent text-center text-[22px] font-semibold text-[var(--shadow-text-primary)] outline-none"
         />
       </div>
 
       <button
         type="button"
         onClick={() => move(1)}
-        className="h-10 w-full text-[15px] text-[#98a2b3]"
+        className="h-10 w-full text-[15px] text-[var(--shadow-text-tertiary)]"
       >
         {pad(wrap(value + 1, max))}
       </button>
@@ -211,6 +299,7 @@ export default function ScheduleReleasePicker({
   onSave,
   hideTrigger = false,
 }) {
+  useDisplayTranslation()
   const defaultSchedule = useMemo(() => getDefaultSchedule(), [])
   const initialDate = date || defaultSchedule.date
   const initialTime = time || defaultSchedule.time
@@ -298,8 +387,8 @@ export default function ScheduleReleasePicker({
   }, [pickerMonth, pickerYear, view])
 
   const displayDate = selectedDate
-    ? `${MONTHS[selectedDate.getMonth()]} ${selectedDate.getDate()}`
-    : 'Select date'
+    ? formatMonthDay(selectedDate)
+    : getDisplayText('scheduleReleasePicker.selectDate')
 
   const updateDraftTime = (hour, minute) => {
     setDraftTime(`${pad(hour)}:${pad(minute)}`)
@@ -387,13 +476,13 @@ export default function ScheduleReleasePicker({
         <button
           type="button"
           onClick={openPicker}
-          className="mx-auto flex w-full max-w-[330px] items-end justify-center gap-7 rounded-[18px] bg-white px-4 py-5 text-[#111827] active:scale-[0.99]"
+          className="mx-auto flex w-full max-w-[330px] items-end justify-center gap-7 rounded-[18px] bg-[var(--shadow-bg-surface)] px-4 py-5 text-[var(--shadow-text-primary)] active:scale-[0.99]"
         >
-          <span className="min-w-[112px] border-b border-[#d7dce3] pb-2 text-center text-[14px] font-semibold">
+          <span className="min-w-[112px] border-b border-[var(--shadow-border)] pb-2 text-center text-[14px] font-semibold">
             {displayDate}
           </span>
 
-          <span className="pb-2 text-[13px] font-medium">at</span>
+          <span className="pb-2 text-[13px] font-medium">{getDisplayText('scheduleReleasePicker.at')}</span>
 
           <span className="min-w-[82px] border-b-2 border-[#2d9cdb] pb-2 text-center text-[14px] font-semibold">
             {time || defaultSchedule.time}
@@ -403,20 +492,20 @@ export default function ScheduleReleasePicker({
 
       {open ? (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-3">
-          <div className="w-full max-w-[365px] overflow-hidden rounded-[18px] bg-white shadow-2xl">
+          <div className="w-full max-w-[365px] overflow-hidden rounded-[18px] bg-[var(--shadow-bg-surface)] shadow-2xl">
             {view === 'main' ? (
               <>
-                <div className="flex h-14 items-center justify-between border-b border-[#f1f2f4] px-4">
+                <div className="flex h-14 items-center justify-between border-b border-[var(--shadow-border)] px-4">
                   <button
                     type="button"
                     onClick={closePicker}
-                    className="text-[12px] font-medium text-[#667085]"
+                    className="text-[12px] font-medium text-[var(--shadow-text-secondary)]"
                   >
-                    Cancel
+                    {getDisplayText('scheduleReleasePicker.cancel')}
                   </button>
 
-                  <div className="text-[14px] font-bold text-[#111827]">
-                    Schedule Release
+                  <div className="text-[14px] font-bold text-[var(--shadow-text-primary)]">
+                    {getDisplayText('scheduleReleasePicker.scheduleRelease')}
                   </div>
 
                   <button
@@ -424,7 +513,7 @@ export default function ScheduleReleasePicker({
                     onClick={confirmPicker}
                     className="text-[12px] font-semibold text-[#2d9cdb]"
                   >
-                    OK
+                    {getDisplayText('scheduleReleasePicker.ok')}
                   </button>
                 </div>
 
@@ -433,19 +522,19 @@ export default function ScheduleReleasePicker({
                     <button
                       type="button"
                       onClick={() => setView('calendar')}
-                      className="min-w-[128px] border-b border-[#d7dce3] pb-2 text-center text-[15px] font-medium text-[#111827]"
+                      className="min-w-[128px] border-b border-[var(--shadow-border)] pb-2 text-center text-[15px] font-medium text-[var(--shadow-text-primary)]"
                     >
                       {draftSelectedDate
-                        ? `${MONTHS[draftSelectedDate.getMonth()]} ${draftSelectedDate.getDate()}`
-                        : 'Select date'}
+                        ? formatMonthDay(draftSelectedDate)
+                        : getDisplayText('scheduleReleasePicker.selectDate')}
                     </button>
 
-                    <span className="pb-2 text-[13px] text-[#111827]">at</span>
+                    <span className="pb-2 text-[13px] text-[var(--shadow-text-primary)]">{getDisplayText('scheduleReleasePicker.at')}</span>
 
                     <button
                       type="button"
                       onClick={openTimePicker}
-                      className="w-[92px] border-b-2 border-[#2d9cdb] bg-transparent pb-2 text-center text-[15px] font-medium text-[#111827]"
+                      className="w-[92px] border-b-2 border-[#2d9cdb] bg-transparent pb-2 text-center text-[15px] font-medium text-[var(--shadow-text-primary)]"
                     >
                       {draftTime}
                     </button>
@@ -453,7 +542,7 @@ export default function ScheduleReleasePicker({
 
                   {invalid ? (
                     <div className="mt-5 text-center text-[11px] font-semibold text-[#e5484d]">
-                      Choose a future date and time.
+                      {getDisplayText('scheduleReleasePicker.futureDateTime')}
                     </div>
                   ) : null}
                 </div>
@@ -463,8 +552,8 @@ export default function ScheduleReleasePicker({
             {view === 'time' ? (
               <>
                 <div className="px-5 pb-2 pt-5">
-                  <div className="text-[17px] font-semibold text-[#252b36]">
-                    Select Time
+                  <div className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">
+                    {getDisplayText('scheduleReleasePicker.selectTime')}
                   </div>
                 </div>
 
@@ -472,22 +561,22 @@ export default function ScheduleReleasePicker({
                   <LoopingTimeColumn
                     value={draftTimeParts.hour}
                     max={23}
-                    label="Hour"
+                    label={getDisplayText('scheduleReleasePicker.hour')}
                     onChange={(hour) => updateDraftTime(hour, draftTimeParts.minute)}
                   />
 
-                  <div className="pt-5 text-[24px] font-semibold text-[#111827]">:</div>
+                  <div className="pt-5 text-[24px] font-semibold text-[var(--shadow-text-primary)]">:</div>
 
                   <LoopingTimeColumn
                     value={draftTimeParts.minute}
                     max={59}
-                    label="Minute"
+                    label={getDisplayText('scheduleReleasePicker.minute')}
                     onChange={(minute) => updateDraftTime(draftTimeParts.hour, minute)}
                   />
                 </div>
 
-                <div className="px-6 text-center text-[11px] leading-5 text-[#98a2b3]">
-                  Scroll, swipe, tap, or type the time directly.
+                <div className="px-6 text-center text-[11px] leading-5 text-[var(--shadow-text-tertiary)]">
+                  {getDisplayText('scheduleReleasePicker.timeHint')}
                 </div>
 
                 <div className="flex justify-end gap-8 px-6 pb-5 pt-5">
@@ -496,7 +585,7 @@ export default function ScheduleReleasePicker({
                     onClick={cancelTimePicker}
                     className="text-[14px] font-medium text-[#168fd0]"
                   >
-                    Cancel
+                    {getDisplayText('scheduleReleasePicker.cancel')}
                   </button>
 
                   <button
@@ -504,7 +593,7 @@ export default function ScheduleReleasePicker({
                     onClick={() => setView('main')}
                     className="text-[14px] font-medium text-[#168fd0]"
                   >
-                    Show
+                    {getDisplayText('scheduleReleasePicker.show')}
                   </button>
                 </div>
               </>
@@ -516,11 +605,11 @@ export default function ScheduleReleasePicker({
                   <button
                     type="button"
                     onClick={openMonthYear}
-                    className="flex items-center gap-2 text-[17px] font-semibold text-[#252b36]"
+                    className="flex items-center gap-2 text-[17px] font-semibold text-[var(--shadow-text-primary)]"
                   >
-                    <span className="text-[10px] text-[#8d94a1]">›</span>
+                    <span className="text-[10px] text-[var(--shadow-text-tertiary)]">›</span>
                     <span>
-                      {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
+                      {formatMonthYear(cursor)}
                     </span>
                   </button>
 
@@ -528,7 +617,7 @@ export default function ScheduleReleasePicker({
                     <button
                       type="button"
                       onClick={() => moveMonth(-1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-[22px] text-[#667085] active:bg-[#f2f4f7]"
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-[22px] text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-soft)]"
                     >
                       ‹
                     </button>
@@ -536,7 +625,7 @@ export default function ScheduleReleasePicker({
                     <button
                       type="button"
                       onClick={() => moveMonth(1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-[22px] text-[#667085] active:bg-[#f2f4f7]"
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-[22px] text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-soft)]"
                     >
                       ›
                     </button>
@@ -544,12 +633,12 @@ export default function ScheduleReleasePicker({
                 </div>
 
                 <div className="grid grid-cols-7 px-4 pb-2">
-                  {WEEK_DAYS.map((day) => (
+                  {WEEK_DAY_INDEXES.map((dayIndex) => (
                     <div
-                      key={day}
-                      className="py-2 text-center text-[12px] font-medium text-[#8d94a1]"
+                      key={dayIndex}
+                      className="py-2 text-center text-[12px] font-medium text-[var(--shadow-text-tertiary)]"
                     >
-                      {day}
+                      {formatWeekDay(dayIndex)}
                     </div>
                   ))}
                 </div>
@@ -571,11 +660,11 @@ export default function ScheduleReleasePicker({
                           selected
                             ? 'bg-[#3fa4dc] font-semibold text-white'
                             : outsideMonth
-                              ? 'text-[#b2b8c2]'
+                              ? 'text-[var(--shadow-text-disabled)]'
                               : today
                                 ? 'font-semibold text-[#168fd0] ring-1 ring-[#7cc8ef]'
-                                : 'text-[#111827]'
-                        } disabled:cursor-not-allowed disabled:text-[#d0d5dd]`}
+                                : 'text-[var(--shadow-text-primary)]'
+                        } disabled:cursor-not-allowed disabled:text-[var(--shadow-text-disabled)]`}
                       >
                         {day.getDate()}
                       </button>
@@ -589,7 +678,7 @@ export default function ScheduleReleasePicker({
                     onClick={() => setView('main')}
                     className="text-[14px] font-medium text-[#168fd0]"
                   >
-                    Close
+                    {getDisplayText('scheduleReleasePicker.close')}
                   </button>
                 </div>
               </>
@@ -598,10 +687,10 @@ export default function ScheduleReleasePicker({
             {view === 'monthYear' ? (
               <>
                 <div className="px-5 pb-2 pt-5">
-                  <div className="flex items-center gap-2 text-[17px] font-semibold text-[#252b36]">
-                    <span className="text-[10px] text-[#8d94a1]">›</span>
+                  <div className="flex items-center gap-2 text-[17px] font-semibold text-[var(--shadow-text-primary)]">
+                    <span className="text-[10px] text-[var(--shadow-text-tertiary)]">›</span>
                     <span>
-                      {MONTHS[pickerMonth]} {pickerYear}
+                      {formatMonthYear(new Date(pickerYear, pickerMonth, 1))}
                     </span>
                   </div>
                 </div>
@@ -611,19 +700,19 @@ export default function ScheduleReleasePicker({
                     ref={monthListRef}
                     className="h-[190px] overflow-y-auto border-y border-[#2d9cdb] py-[70px]"
                   >
-                    {MONTHS.map((month, index) => (
+                    {MONTH_INDEXES.map((index) => (
                       <button
                         type="button"
                         data-month={index}
-                        key={month}
+                        key={index}
                         onClick={() => setPickerMonth(index)}
                         className={`flex h-10 w-full items-center justify-center text-[14px] ${
                           pickerMonth === index
-                            ? 'font-medium text-[#111827]'
-                            : 'text-[#8d94a1]'
+                            ? 'font-medium text-[var(--shadow-text-primary)]'
+                            : 'text-[var(--shadow-text-tertiary)]'
                         }`}
                       >
-                        {month}
+                        {formatMonthName(index, pickerYear)}
                       </button>
                     ))}
                   </div>
@@ -640,8 +729,8 @@ export default function ScheduleReleasePicker({
                         onClick={() => setPickerYear(year)}
                         className={`flex h-10 w-full items-center justify-center text-[14px] ${
                           pickerYear === year
-                            ? 'font-medium text-[#111827]'
-                            : 'text-[#8d94a1]'
+                            ? 'font-medium text-[var(--shadow-text-primary)]'
+                            : 'text-[var(--shadow-text-tertiary)]'
                         }`}
                       >
                         {year}
@@ -656,7 +745,7 @@ export default function ScheduleReleasePicker({
                     onClick={() => setView('calendar')}
                     className="text-[14px] font-medium text-[#168fd0]"
                   >
-                    Cancel
+                    {getDisplayText('scheduleReleasePicker.cancel')}
                   </button>
 
                   <button
@@ -664,7 +753,7 @@ export default function ScheduleReleasePicker({
                     onClick={showSelectedMonth}
                     className="text-[14px] font-medium text-[#168fd0]"
                   >
-                    Show
+                    {getDisplayText('scheduleReleasePicker.show')}
                   </button>
                 </div>
               </>
