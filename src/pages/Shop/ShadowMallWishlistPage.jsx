@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   getShadowMallWishlist,
@@ -121,6 +122,7 @@ function WishlistItem({ item, onRemove, onAddToCart, onOpen }) {
 
 export default function ShadowMallWishlistPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [items, setItems] = useState([])
 
   useEffect(() => {
@@ -134,7 +136,9 @@ export default function ShadowMallWishlistPage() {
 
   function handleAddToCart(item) {
     addToCart(item)
-    navigate('/shop/mall/cart')
+    navigate('/shop/mall/cart', {
+  state: { from: location.pathname + location.search + location.hash },
+})
   }
 
   function handleClearAll() {
