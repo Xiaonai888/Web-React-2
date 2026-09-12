@@ -210,7 +210,11 @@ export default function ShadowMallCartPage() {
 
             <button
               type="button"
-              onClick={() => navigate('/shop/mall/orders')}
+              onClick={() =>
+  navigate('/shop/mall/orders', {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               className="mt-3 flex w-full items-center gap-3 rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-3 text-left shadow-sm ring-1 ring-[var(--shadow-border)] active:scale-[0.99]"
             >
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300">
