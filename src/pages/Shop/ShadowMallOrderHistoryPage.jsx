@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -152,6 +152,7 @@ function OrderCard({ order }) {
 
 export default function ShadowMallOrderHistoryPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [orders, setOrders] = useState([])
   const [status, setStatus] = useState('all')
   const [search, setSearch] = useState('')
@@ -259,7 +260,14 @@ export default function ShadowMallOrderHistoryPage() {
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/shop/mall/cart')}
+            onClick={() => {
+  if (location.state?.from) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop/mall/cart', { replace: true })
+}}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
