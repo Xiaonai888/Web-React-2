@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useNavigate } from 'react-router-dom'
 import {
   getShadowMallWishlist,
   removeShadowMallWishlist,
@@ -154,7 +153,10 @@ export default function ShadowMallWishlistPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+  if (location.state?.from) return navigate(-1)
+  navigate('/shop', { replace: true })
+}}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
@@ -200,7 +202,11 @@ export default function ShadowMallWishlistPage() {
                   item={item}
                   onRemove={() => handleRemove(item.id)}
                   onAddToCart={() => handleAddToCart(item)}
-                  onOpen={() => navigate(`/shop/mall/product/${item.id}`)}
+                  onOpen={() =>
+  navigate(`/shop/mall/product/${item.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
                 />
               ))}
             </section>
@@ -216,7 +222,10 @@ export default function ShadowMallWishlistPage() {
             </p>
             <button
               type="button"
-              onClick={() => navigate('/shop')}
+              onClick={() => {
+  if (location.state?.from) return navigate(-1)
+  navigate('/shop', { replace: true })
+}}
               className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
               Back to Shop
