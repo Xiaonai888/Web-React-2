@@ -155,6 +155,9 @@ export default function MeCommentsPage() {
   const [hasAuthorPage, setHasAuthorPage] = useState(false)
   const [items, setItems] = useState([])
   const [counts, setCounts] = useState({})
+  const [storyPage, setStoryPage] = useState(1)
+  const [storyHasMore, setStoryHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -220,7 +223,9 @@ export default function MeCommentsPage() {
         setError('')
 
         const endpoint =
-          `${API_BASE_URL}/api/comments/me/activities?filter=${activeTab}`
+          activeTab === 'story'
+            ? `${API_BASE_URL}/api/comments/me/activities?filter=story&page=1&limit=20`
+            : `${API_BASE_URL}/api/comments/me/activities?filter=${activeTab}`
 
         const response = await fetch(endpoint, {
           headers: {
@@ -238,6 +243,18 @@ export default function MeCommentsPage() {
 
         setItems(data.activities || [])
         setCounts(data.counts || {})
+
+        if (activeTab === 'story') {
+          setStoryPage(
+            Number(data.page || 1)
+          )
+          setStoryHasMore(
+            Boolean(data.has_more)
+          )
+        } else {
+          setStoryPage(1)
+          setStoryHasMore(false)
+        }
       } catch (err) {
         if (!ignore) {
           setError(err.message || t('meCommentsPage.failedLoadComments'))
@@ -266,9 +283,9 @@ export default function MeCommentsPage() {
 
   async function openItem(item) {
     if (activeTab === 'story') {
-  setSelectedStoryComment(item)
-  return
-}
+      setSelectedStoryComment(item)
+      return
+    }
 
     if (activeTab === 'all' && item.id && !item.is_read) {
       try {
@@ -285,6 +302,73 @@ export default function MeCommentsPage() {
 
     const link = item.link || (item.story_id ? `/story/${item.story_id}` : '')
     if (link) navigate(link)
+  }
+
+  async function loadMoreStoryComments() {
+    if (
+      activeTab !== 'story' ||
+      loadingMore ||
+      !storyHasMore
+    ) {
+      return
+    }
+
+    const nextPage = storyPage + 1
+
+    try {
+      setLoadingMore(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/comments/me/activities?filter=story&page=${nextPage}&limit=20`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || t('meCommentsPage.failedLoadComments'))
+      }
+
+      const nextItems = data.activities || []
+
+      setItems((current) => {
+        const existingIds =
+          new Set(
+            current.map((row) =>
+              String(row.id)
+            )
+          )
+
+        return [
+          ...current,
+          ...nextItems.filter(
+            (row) =>
+              !existingIds.has(
+                String(row.id)
+              )
+          ),
+        ]
+      })
+
+      setStoryPage(
+        Number(data.page || nextPage)
+      )
+      setStoryHasMore(
+        Boolean(data.has_more)
+      )
+    } catch (err) {
+      setError(
+        err.message ||
+          t('meCommentsPage.failedLoadComments')
+      )
+    } finally {
+      setLoadingMore(false)
+    }
   }
 
   return (
@@ -395,6 +479,17 @@ export default function MeCommentsPage() {
                 </div>
               </button>
             ))}
+
+            {activeTab === 'story' && storyHasMore ? (
+              <button
+                type="button"
+                onClick={loadMoreStoryComments}
+                disabled={loadingMore}
+                className="w-full rounded-2xl bg-white px-4 py-3 text-[13px] font-black text-[#111827] shadow-sm ring-1 ring-black/5 disabled:opacity-60 dark:bg-[#171923] dark:text-white dark:ring-white/10"
+              >
+                {loadingMore ? 'Loading...' : 'Load more'}
+              </button>
+            ) : null}
           </div>
         ) : (
           <div className="mt-8 rounded-[24px] bg-white px-6 py-10 text-center shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
