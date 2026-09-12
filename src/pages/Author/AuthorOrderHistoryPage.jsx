@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -230,6 +230,7 @@ function formatDate(value) {
 
 export default function AuthorOrderHistoryPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
@@ -249,7 +250,10 @@ export default function AuthorOrderHistoryPage() {
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-10">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
-          <button type="button" aria-label={t('authorOrderHistory.goBack')} onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95">
+          <button type="button" aria-label={t('authorOrderHistory.goBack')} onClick={() => {
+  if (location.state?.from) return navigate(-1)
+  navigate('/author/cart', { replace: true })
+}} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95">
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
