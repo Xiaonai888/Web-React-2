@@ -501,7 +501,14 @@ export default function ShadowMallPreOrderPage() {
             </p>
             <button
               type="button"
-              onClick={() => navigate('/shop')}
+              onClick={() => {
+  if (location.state?.returnTo) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop', { replace: true })
+}}
               className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
               Back to Shadow Mall
