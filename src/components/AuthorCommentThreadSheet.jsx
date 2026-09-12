@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import CommentSection from './comments/CommentSection'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -181,6 +182,30 @@ export default function AuthorCommentThreadSheet({ item, onClose }) {
   const replies = Array.isArray(rootComment?.replies) ? rootComment.replies : []
   const storyTitle =
     thread?.story?.title || item.story?.title || item.story_title || 'Story Comment'
+  const episodeId =
+    rootComment?.episode_id ||
+    thread?.episode_id ||
+    item?.episode_id ||
+    ''
+  const storyId =
+    rootComment?.story_id ||
+    thread?.story?.id ||
+    item?.story_id ||
+    ''
+  const targetType =
+    episodeId ? 'episode' : 'story'
+  const targetId =
+    episodeId || storyId
+  const story =
+    thread?.story
+      ? {
+          ...thread.story,
+          id: storyId || thread.story.id,
+        }
+      : {
+          id: storyId,
+          title: storyTitle,
+        }
 
   return (
     <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950">
@@ -205,7 +230,13 @@ export default function AuthorCommentThreadSheet({ item, onClose }) {
           </button>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto p-4">
+        <main
+          className={`min-h-0 flex-1 ${
+            rootComment && targetId && !loading && !error
+              ? 'overflow-hidden'
+              : 'overflow-y-auto p-4'
+          }`}
+        >
           {loading ? (
             <div className="space-y-3">
               <div className="h-24 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-900" />
@@ -215,6 +246,15 @@ export default function AuthorCommentThreadSheet({ item, onClose }) {
             <div className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-300">
               {error}
             </div>
+          ) : rootComment && targetId ? (
+            <CommentSection
+              targetType={targetType}
+              targetId={targetId}
+              story={story}
+              variant="modal"
+              focusCommentId={thread?.target_comment_id || item.id}
+              threadComment={rootComment}
+            />
           ) : rootComment ? (
             <div className="space-y-3">
               <CommentCard comment={rootComment} />
