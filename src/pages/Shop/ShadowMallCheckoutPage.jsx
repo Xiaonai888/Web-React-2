@@ -795,7 +795,14 @@ export default function ShadowMallCheckoutPage() {
                   <div className="mt-3 text-[14px] font-extrabold text-[var(--shadow-text-primary)]">No books in cart</div>
                   <button
                     type="button"
-                    onClick={() => navigate('/shop')}
+                    onClick={() => {
+  if (location.state?.from) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop/mall/cart', { replace: true })
+}}
                     className="mt-4 rounded-full bg-[#111827] px-5 py-3 text-[12px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
                   >
                     Back to Shop
