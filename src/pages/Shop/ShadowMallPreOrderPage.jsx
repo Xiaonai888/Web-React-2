@@ -431,7 +431,11 @@ export default function ShadowMallPreOrderPage() {
           <div className="mt-4">
             <FeaturedPreOrder
               product={featuredProduct}
-              onOpen={() => navigate(`/shop/mall/product/${featuredProduct.id}`)}
+              onOpen={() =>
+  navigate(`/shop/mall/product/${featuredProduct.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
             />
           </div>
         ) : null}
@@ -486,7 +490,11 @@ export default function ShadowMallPreOrderPage() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onOpen={() => navigate(`/shop/mall/product/${product.id}`)}
+                onOpen={() =>
+  navigate(`/shop/mall/product/${product.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               />
             ))}
           </section>
