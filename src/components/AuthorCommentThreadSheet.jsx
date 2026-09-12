@@ -29,6 +29,7 @@ function CommentCard({ comment, reply = false }) {
 export default function AuthorCommentThreadSheet({ item, onClose }) {
   const [thread, setThread] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [loadingMoreReplies, setLoadingMoreReplies] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -79,6 +80,101 @@ export default function AuthorCommentThreadSheet({ item, onClose }) {
     }
   }, [item?.id])
 
+  async function loadMoreReplies() {
+    const rootComment = thread?.root_comment
+
+    if (
+      !rootComment?.id ||
+      loadingMoreReplies ||
+      !rootComment.reply_has_more
+    ) {
+      return
+    }
+
+    const nextPage =
+      Math.max(
+        1,
+        Number(rootComment.reply_page || 1)
+      ) + 1
+
+    try {
+      setLoadingMoreReplies(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/comments/${rootComment.id}/replies?page=${nextPage}&limit=20`,
+        {
+          headers: {
+            Authorization: `Bearer ${getReaderToken()}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load more replies')
+      }
+
+      setThread((current) => {
+        const currentRoot =
+          current?.root_comment
+
+        if (!currentRoot) {
+          return current
+        }
+
+        const currentReplies =
+          Array.isArray(currentRoot.replies)
+            ? currentRoot.replies
+            : []
+        const existingIds =
+          new Set(
+            currentReplies.map((reply) =>
+              String(reply.id)
+            )
+          )
+        const nextReplies =
+          Array.isArray(data.replies)
+            ? data.replies.filter(
+                (reply) =>
+                  !existingIds.has(
+                    String(reply.id)
+                  )
+              )
+            : []
+
+        return {
+          ...current,
+          root_comment: {
+            ...currentRoot,
+            replies: [
+              ...currentReplies,
+              ...nextReplies,
+            ],
+            reply_page:
+              Number(data.page || nextPage),
+            reply_total:
+              Number(
+                data.total ||
+                currentRoot.reply_total ||
+                0
+              ),
+            reply_has_more:
+              Boolean(data.has_more),
+          },
+        }
+      })
+    } catch (err) {
+      setError(
+        err.message ||
+          'Failed to load more replies'
+      )
+    } finally {
+      setLoadingMoreReplies(false)
+    }
+  }
+
   if (!item) return null
 
   const rootComment = thread?.root_comment || null
@@ -125,6 +221,19 @@ export default function AuthorCommentThreadSheet({ item, onClose }) {
               {replies.map((reply) => (
                 <CommentCard key={reply.id} comment={reply} reply />
               ))}
+
+              {rootComment.reply_has_more ? (
+                <button
+                  type="button"
+                  onClick={loadMoreReplies}
+                  disabled={loadingMoreReplies}
+                  className="ml-6 w-[calc(100%-1.5rem)] rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 disabled:opacity-60 dark:border-slate-800 dark:text-slate-200"
+                >
+                  {loadingMoreReplies
+                    ? 'Loading...'
+                    : 'Load more replies'}
+                </button>
+              ) : null}
             </div>
           ) : null}
         </main>
