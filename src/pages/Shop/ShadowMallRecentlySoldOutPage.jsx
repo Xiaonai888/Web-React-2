@@ -233,7 +233,14 @@ export default function ShadowMallRecentlySoldOutPage() {
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/shop')}
+            onClick={() => {
+  if (location.state?.returnTo) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop', { replace: true })
+}}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
@@ -340,7 +347,11 @@ export default function ShadowMallRecentlySoldOutPage() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onOpen={() => navigate(`/shop/mall/product/${product.id}`)}
+                onOpen={() =>
+  navigate(`/shop/mall/product/${product.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               />
             ))}
           </section>
@@ -355,7 +366,14 @@ export default function ShadowMallRecentlySoldOutPage() {
             </p>
             <button
               type="button"
-              onClick={() => navigate('/shop')}
+              onClick={() => {
+  if (location.state?.returnTo) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop', { replace: true })
+}}
               className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
               Back to Shadow Mall
