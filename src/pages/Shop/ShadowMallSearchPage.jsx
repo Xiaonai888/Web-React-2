@@ -5,6 +5,16 @@ import {
   isShadowMallWishlisted,
   toggleShadowMallWishlist,
 } from '../../utils/shadowMallWishlist'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowMallSearchPage', {
+  en: { untitledBook: 'Untitled book', unknownAuthor: 'Unknown author', removeSaved: 'Remove saved', save: 'Save', addToCart: 'Add {{title}} to cart', book: '{{count}} book', books: '{{count}} books', failedPublishers: 'Failed to load publishers', failedSearch: 'Failed to search books', publisherBooks: '{{publisher}} books', searchHint: 'Search by title, author, or browse by publisher.', searching: 'Searching...', resultOne: '{{count}} result found', resultMany: '{{count}} results found', noResults: 'No results found', goBack: 'Go back', title: 'Search Books', searchPlaceholder: 'Search books or authors', clearSearch: 'Clear search', browsePublisher: 'Browse by Publisher', choosePublisher: 'Choose a publisher to view their books.', noPublishers: 'No publishers yet', noPublishersBody: 'Publishers will appear here after admin creates them.', selectedPublisher: 'Selected publisher', clear: 'Clear', noBooks: 'No books found', noBooksBody: 'Try another title, author, or publisher.' },
+  km: { untitledBook: 'សៀវភៅគ្មានចំណងជើង', unknownAuthor: 'មិនស្គាល់អ្នកនិពន្ធ', removeSaved: 'ដកចេញពីការរក្សាទុក', save: 'រក្សាទុក', addToCart: 'បន្ថែម {{title}} ទៅកន្ត្រក', book: '{{count}} សៀវភៅ', books: '{{count}} សៀវភៅ', failedPublishers: 'មិនអាចផ្ទុកអ្នកបោះពុម្ពបានទេ', failedSearch: 'មិនអាចស្វែងរកសៀវភៅបានទេ', publisherBooks: 'សៀវភៅរបស់ {{publisher}}', searchHint: 'ស្វែងរកតាមចំណងជើង អ្នកនិពន្ធ ឬមើលតាមអ្នកបោះពុម្ព។', searching: 'កំពុងស្វែងរក...', resultOne: 'រកឃើញ {{count}} លទ្ធផល', resultMany: 'រកឃើញ {{count}} លទ្ធផល', noResults: 'រកមិនឃើញលទ្ធផល', goBack: 'ត្រឡប់ក្រោយ', title: 'ស្វែងរកសៀវភៅ', searchPlaceholder: 'ស្វែងរកសៀវភៅ ឬអ្នកនិពន្ធ', clearSearch: 'សម្អាតការស្វែងរក', browsePublisher: 'មើលតាមអ្នកបោះពុម្ព', choosePublisher: 'ជ្រើសអ្នកបោះពុម្ពដើម្បីមើលសៀវភៅរបស់ពួកគេ។', noPublishers: 'មិនទាន់មានអ្នកបោះពុម្ព', noPublishersBody: 'អ្នកបោះពុម្ពនឹងបង្ហាញនៅទីនេះបន្ទាប់ពី Admin បង្កើត។', selectedPublisher: 'អ្នកបោះពុម្ពដែលបានជ្រើស', clear: 'សម្អាត', noBooks: 'រកមិនឃើញសៀវភៅ', noBooksBody: 'សាកចំណងជើង អ្នកនិពន្ធ ឬអ្នកបោះពុម្ពផ្សេង។' },
+  zh: { untitledBook: '无标题图书', unknownAuthor: '未知作者', removeSaved: '取消收藏', save: '收藏', addToCart: '将 {{title}} 加入购物车', book: '{{count}} 本书', books: '{{count}} 本书', failedPublishers: '无法加载出版社', failedSearch: '无法搜索图书', publisherBooks: '{{publisher}} 的图书', searchHint: '按书名、作者搜索，或按出版社浏览。', searching: '搜索中...', resultOne: '找到 {{count}} 个结果', resultMany: '找到 {{count}} 个结果', noResults: '未找到结果', goBack: '返回', title: '搜索图书', searchPlaceholder: '搜索图书或作者', clearSearch: '清除搜索', browsePublisher: '按出版社浏览', choosePublisher: '选择出版社查看其图书。', noPublishers: '暂无出版社', noPublishersBody: '管理员创建出版社后会显示在这里。', selectedPublisher: '已选出版社', clear: '清除', noBooks: '未找到图书', noBooksBody: '请尝试其他书名、作者或出版社。' },
+  ja: { untitledBook: '無題の本', unknownAuthor: '不明な作者', removeSaved: '保存を解除', save: '保存', addToCart: '{{title}}をカートに追加', book: '{{count}}冊', books: '{{count}}冊', failedPublishers: '出版社を読み込めませんでした', failedSearch: '本を検索できませんでした', publisherBooks: '{{publisher}}の本', searchHint: 'タイトルや作者で検索するか、出版社から探せます。', searching: '検索中...', resultOne: '{{count}}件の結果', resultMany: '{{count}}件の結果', noResults: '結果が見つかりません', goBack: '戻る', title: '本を検索', searchPlaceholder: '本または作者を検索', clearSearch: '検索をクリア', browsePublisher: '出版社から探す', choosePublisher: '出版社を選んで本を表示します。', noPublishers: '出版社はまだありません', noPublishersBody: '管理者が出版社を作成するとここに表示されます。', selectedPublisher: '選択した出版社', clear: 'クリア', noBooks: '本が見つかりません', noBooksBody: '別のタイトル、作者、出版社を試してください。' },
+  ko: { untitledBook: '제목 없는 도서', unknownAuthor: '알 수 없는 작가', removeSaved: '저장 취소', save: '저장', addToCart: '{{title}} 장바구니에 추가', book: '{{count}}권', books: '{{count}}권', failedPublishers: '출판사를 불러오지 못했습니다', failedSearch: '도서를 검색하지 못했습니다', publisherBooks: '{{publisher}} 도서', searchHint: '제목이나 작가로 검색하거나 출판사별로 둘러보세요.', searching: '검색 중...', resultOne: '{{count}}개 결과', resultMany: '{{count}}개 결과', noResults: '검색 결과가 없습니다', goBack: '뒤로', title: '도서 검색', searchPlaceholder: '도서 또는 작가 검색', clearSearch: '검색 지우기', browsePublisher: '출판사별 보기', choosePublisher: '출판사를 선택해 해당 도서를 확인하세요.', noPublishers: '아직 출판사가 없습니다', noPublishersBody: '관리자가 출판사를 만들면 여기에 표시됩니다.', selectedPublisher: '선택한 출판사', clear: '지우기', noBooks: '도서를 찾을 수 없습니다', noBooksBody: '다른 제목, 작가 또는 출판사를 시도해 보세요.' },
+})
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -14,15 +24,15 @@ const API_URL =
 
 function formatUsd(value) {
   const number = Number(value || 0)
-  if (!Number.isFinite(number)) return '$0.00'
-  return `$${number.toFixed(2)}`
+  if (!Number.isFinite(number)) return new Intl.NumberFormat(getDisplayLanguageId(), { style: 'currency', currency: 'USD' }).format(0)
+  return new Intl.NumberFormat(getDisplayLanguageId(), { style: 'currency', currency: 'USD' }).format(number)
 }
 
 function normalizeProduct(product) {
   return {
     id: product.id,
-    title: product.title || 'Untitled book',
-    author: product.author_name || 'Unknown author',
+    title: product.title || getDisplayText('shadowMallSearchPage.untitledBook'),
+    author: product.author_name || getDisplayText('shadowMallSearchPage.unknownAuthor'),
     publisher: product.publisher || '',
     cover: product.cover_url || '',
     price: formatUsd(product.price_usd),
@@ -36,6 +46,7 @@ function isSoldOut(product) {
 }
 
 function SearchResultItem({ product, onOpen }) {
+  const { t } = useDisplayTranslation()
   const soldOut = isSoldOut(product)
   const [wishlisted, setWishlisted] = useState(() => isShadowMallWishlisted(product.id))
 
@@ -107,7 +118,7 @@ function SearchResultItem({ product, onOpen }) {
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] active:scale-95 ${
                 wishlisted ? 'text-[#e5484d] dark:text-red-300' : 'text-[var(--shadow-text-primary)]'
               }`}
-              aria-label={`${wishlisted ? 'Remove saved' : 'Save'} ${product.title}`}
+              aria-label={`${t(`shadowMallSearchPage.${wishlisted ? 'removeSaved' : 'save'}`)} ${product.title}`}
             >
               <i className={`${wishlisted ? 'fa-solid' : 'fa-regular'} fa-heart text-[12px]`} />
             </button>
@@ -133,7 +144,7 @@ function SearchResultItem({ product, onOpen }) {
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:scale-95 ${
                 soldOut ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-disabled)]' : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
               }`}
-              aria-label={`Add ${product.title} to cart`}
+              aria-label={t('shadowMallSearchPage.addToCart', { title: product.title })}
             >
               <i className="fa-solid fa-cart-shopping text-[12px]" />
             </button>
@@ -145,6 +156,7 @@ function SearchResultItem({ product, onOpen }) {
 }
 
 function PublisherCard({ publisher, selected, onClick }) {
+  const { t } = useDisplayTranslation()
   const bookCount = Number(publisher.book_count || 0)
 
   return (
@@ -187,7 +199,7 @@ function PublisherCard({ publisher, selected, onClick }) {
               selected ? 'text-white/65 dark:text-[#111827]/60' : 'text-[var(--shadow-text-secondary)]'
             }`}
           >
-            {bookCount} {bookCount === 1 ? 'book' : 'books'}
+            {t(`shadowMallSearchPage.${bookCount === 1 ? 'book' : 'books'}`, { count: bookCount.toLocaleString(getDisplayLanguageId()) })}
           </div>
         </div>
       </div>
@@ -197,6 +209,7 @@ function PublisherCard({ publisher, selected, onClick }) {
 
 export default function ShadowMallSearchPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [query, setQuery] = useState('')
   const [products, setProducts] = useState([])
   const [publishers, setPublishers] = useState([])
@@ -213,7 +226,7 @@ export default function ShadowMallSearchPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load publishers')
+        throw new Error(data.message || t('shadowMallSearchPage.failedPublishers'))
       }
 
       setPublishers(data.publishers || [])
@@ -252,13 +265,13 @@ export default function ShadowMallSearchPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to search books')
+        throw new Error(data.message || t('shadowMallSearchPage.failedSearch'))
       }
 
       setProducts((data.products || []).map(normalizeProduct))
     } catch (error) {
       setProducts([])
-      setMessage(error.message || 'Failed to search books')
+      setMessage(error.message || t('shadowMallSearchPage.failedSearch'))
     } finally {
       setLoading(false)
     }
@@ -281,12 +294,15 @@ export default function ShadowMallSearchPage() {
   const showPublishers = !hasQuery && !hasPublisher
 
   const helperText = useMemo(() => {
-    if (hasPublisher) return `${selectedPublisher} books`
-    if (!hasQuery) return 'Search by title, author, or browse by publisher.'
-    if (loading) return 'Searching...'
-    if (products.length) return `${products.length} result${products.length > 1 ? 's' : ''} found`
-    return 'No results found'
-  }, [hasQuery, hasPublisher, selectedPublisher, loading, products.length])
+    if (hasPublisher) return t('shadowMallSearchPage.publisherBooks', { publisher: selectedPublisher })
+    if (!hasQuery) return t('shadowMallSearchPage.searchHint')
+    if (loading) return t('shadowMallSearchPage.searching')
+    if (products.length) {
+      const count = products.length.toLocaleString(getDisplayLanguageId())
+      return t(`shadowMallSearchPage.${products.length === 1 ? 'resultOne' : 'resultMany'}`, { count })
+    }
+    return t('shadowMallSearchPage.noResults')
+  }, [hasQuery, hasPublisher, selectedPublisher, loading, products.length, t])
 
   function clearAll() {
     setQuery('')
@@ -303,14 +319,14 @@ export default function ShadowMallSearchPage() {
             type="button"
             onClick={() => navigate('/shop')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Go back"
+            aria-label={t('shadowMallSearchPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <div className="min-w-0 flex-1">
             <h1 className="line-clamp-1 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">
-              Search Books
+              {t('shadowMallSearchPage.title')}
             </h1>
             <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
               {helperText}
@@ -330,7 +346,7 @@ export default function ShadowMallSearchPage() {
                 if (selectedPublisher) setSelectedPublisher('')
               }}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search books or authors"
+              placeholder={t('shadowMallSearchPage.searchPlaceholder')}
               className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)]"
             />
             {query || selectedPublisher ? (
@@ -338,7 +354,7 @@ export default function ShadowMallSearchPage() {
                 type="button"
                 onClick={clearAll}
                 className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)]"
-                aria-label="Clear search"
+                aria-label={t('shadowMallSearchPage.clearSearch')}
               >
                 <i className="fa-solid fa-xmark text-[12px]" />
               </button>
@@ -350,9 +366,9 @@ export default function ShadowMallSearchPage() {
           <section className="mt-4">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
-                <h2 className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Browse by Publisher</h2>
+                <h2 className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallSearchPage.browsePublisher')}</h2>
                 <p className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
-                  Choose a publisher to view their books.
+                  {t('shadowMallSearchPage.choosePublisher')}
                 </p>
               </div>
             </div>
@@ -382,9 +398,9 @@ export default function ShadowMallSearchPage() {
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300">
                   <i className="fa-solid fa-building text-[22px]" />
                 </div>
-                <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">No publishers yet</h2>
+                <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallSearchPage.noPublishers')}</h2>
                 <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
-                  Publishers will appear here after admin creates them.
+                  {t('shadowMallSearchPage.noPublishersBody')}
                 </p>
               </div>
             )}
@@ -394,7 +410,7 @@ export default function ShadowMallSearchPage() {
         {selectedPublisher ? (
           <section className="mt-4 flex items-center justify-between gap-3 rounded-[20px] bg-[#111827] px-4 py-3 text-white shadow-sm dark:bg-white dark:text-[#111827]">
             <div className="min-w-0">
-              <div className="text-[11px] font-semibold text-white/60 dark:text-[#111827]/60">Selected publisher</div>
+              <div className="text-[11px] font-semibold text-white/60 dark:text-[#111827]/60">{t('shadowMallSearchPage.selectedPublisher')}</div>
               <div className="line-clamp-1 text-[14px] font-extrabold">{selectedPublisher}</div>
             </div>
             <button
@@ -402,7 +418,7 @@ export default function ShadowMallSearchPage() {
               onClick={clearAll}
               className="rounded-full bg-white/12 px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 dark:bg-black/10 dark:text-[#111827]"
             >
-              Clear
+              {t('shadowMallSearchPage.clear')}
             </button>
           </section>
         ) : null}
@@ -434,9 +450,9 @@ export default function ShadowMallSearchPage() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
               <i className="fa-solid fa-book-open text-[22px]" />
             </div>
-            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">No books found</h2>
+            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallSearchPage.noBooks')}</h2>
             <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
-              Try another title, author, or publisher.
+              {t('shadowMallSearchPage.noBooksBody')}
             </p>
           </section>
         ) : null}
