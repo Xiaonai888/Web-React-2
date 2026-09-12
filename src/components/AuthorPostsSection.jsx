@@ -1756,6 +1756,8 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     setSelectedPostNotificationsEnabled,
   ] = useState(true)
   const [reactionBusyId, setReactionBusyId] = useState('')
+  const reactionTimersRef = useRef(new Map())
+  const reactionSavedRef = useRef(new Map())
 
   useEffect(() => {
     if (!localError) return undefined
@@ -2123,34 +2125,126 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     }
   }
 
- async function handlePostReaction(post, reactionType = 'love') {
-  if (!post?.id || reactionBusyId) return
+ function handlePostReaction(post, reactionType = 'love') {
+  const postId = String(post?.id || '').trim()
+  if (!postId || reactionBusyId) return
 
-  try {
-    setReactionBusyId(post.id)
+  const currentReaction = post.my_reaction || null
+  const nextReaction =
+    currentReaction === reactionType ? null : reactionType
 
-    const data = await setAuthorPostReaction(post.id, reactionType)
-
-    setPosts((current) => current.map((item) => {
-      if (item.id !== post.id) return item
-
-      return {
-  ...item,
-  like_count: Number(data.like_count || 0),
-  my_reaction: data.reacted ? data.reaction_type || reactionType : null,
-  reaction_summary: Array.isArray(data.reaction_summary)
-    ? data.reaction_summary
-    : [],
-}
-    }))
-  } catch (error) {
-    const message = error.message || t('authorPostsSection.failedUpdateReaction')
-    setLocalError(message)
-    onMessage?.(message)
-  } finally {
-    setReactionBusyId('')
+  if (!reactionSavedRef.current.has(postId)) {
+    reactionSavedRef.current.set(postId, {
+      reaction: currentReaction,
+      like_count: Number(post.like_count || 0),
+      reaction_summary: Array.isArray(post.reaction_summary)
+        ? post.reaction_summary
+        : [],
+    })
   }
+
+  setPosts((current) =>
+    current.map((item) =>
+      item.id === post.id
+        ? {
+            ...item,
+            my_reaction: nextReaction,
+            like_count: Math.max(
+              0,
+              Number(item.like_count || 0) +
+                (!currentReaction && nextReaction ? 1 : 0) -
+                (currentReaction && !nextReaction ? 1 : 0)
+            ),
+          }
+        : item
+    )
+  )
+
+  const oldTimer = reactionTimersRef.current.get(postId)
+  if (oldTimer) {
+    window.clearTimeout(oldTimer)
+  }
+
+  const timer = window.setTimeout(async () => {
+    reactionTimersRef.current.delete(postId)
+
+    const saved = reactionSavedRef.current.get(postId)
+    const savedReaction = saved?.reaction || null
+
+    if (nextReaction === savedReaction) return
+
+    const requestType = nextReaction || savedReaction
+    if (!requestType) return
+
+    try {
+      setReactionBusyId(postId)
+
+      const data = await setAuthorPostReaction(
+        postId,
+        requestType
+      )
+
+      const serverReaction = data.reacted
+        ? data.reaction_type || requestType
+        : null
+
+      const serverSummary =
+        Array.isArray(data.reaction_summary)
+          ? data.reaction_summary
+          : []
+
+      reactionSavedRef.current.set(postId, {
+        reaction: serverReaction,
+        like_count: Number(data.like_count || 0),
+        reaction_summary: serverSummary,
+      })
+
+      setPosts((current) =>
+        current.map((item) =>
+          item.id === post.id
+            ? {
+                ...item,
+                like_count: Number(data.like_count || 0),
+                my_reaction: serverReaction,
+                reaction_summary: serverSummary,
+              }
+            : item
+        )
+      )
+    } catch (error) {
+      const rollback =
+        reactionSavedRef.current.get(postId)
+
+      if (rollback) {
+        setPosts((current) =>
+          current.map((item) =>
+            item.id === post.id
+              ? {
+                  ...item,
+                  like_count: rollback.like_count,
+                  my_reaction: rollback.reaction,
+                  reaction_summary:
+                    rollback.reaction_summary,
+                }
+              : item
+          )
+        )
+      }
+
+      const message =
+        error.message ||
+        t('authorPostsSection.failedUpdateReaction')
+
+      setLocalError(message)
+      onMessage?.(message)
+    } finally {
+      setReactionBusyId('')
+    }
+  }, 500)
+
+  reactionTimersRef.current.set(postId, timer)
 }
+
 
 function handleAuthorPostCommentChanged(nextComments = []) {
   if (!commentPost?.id) return
