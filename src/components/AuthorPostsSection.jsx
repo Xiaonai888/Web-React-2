@@ -729,32 +729,91 @@ function sortAuthorPosts(posts) {
   })
 }
 
+const AUTHOR_POSTS_CACHE_TTL_MS = 3 * 60 * 1000
+const authorPostsListCache = new Map()
+const authorPostsListInFlight = new Map()
+let authorPostsListCacheVersion = 0
+
+function getAuthorPostsListCacheKey(pageUsername, before = '') {
+  const page = String(pageUsername || '').trim().toLowerCase()
+  const filter = String(before || '').trim()
+
+  return `${getAuthorPostViewCacheScope()}:${page}:${filter}`
+}
+
+function clearAuthorPostsListCache() {
+  authorPostsListCache.clear()
+  authorPostsListCacheVersion += 1
+}
+
 async function fetchAuthorPosts(pageUsername, before = '') {
   if (!pageUsername) return []
 
-  const token = getAuthToken()
-  const params = new URLSearchParams({ limit: '30' })
+  const cacheKey = getAuthorPostsListCacheKey(pageUsername, before)
+  const cached = authorPostsListCache.get(cacheKey)
 
-  if (before) {
-    params.set('before', before)
+  if (
+    cached &&
+    Date.now() - cached.cachedAt < AUTHOR_POSTS_CACHE_TTL_MS
+  ) {
+    return cached.posts
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`,
-    {
-      headers: token
-        ? { Authorization: `Bearer ${token}` }
-        : {},
+  const inFlight = authorPostsListInFlight.get(cacheKey)
+
+  if (inFlight) {
+    return inFlight
+  }
+
+  const cacheVersion = authorPostsListCacheVersion
+
+  const request = (async () => {
+    const token = getAuthToken()
+    const params = new URLSearchParams({ limit: '30' })
+
+    if (before) {
+      params.set('before', before)
     }
-  )
 
-  const data = await response.json().catch(() => ({}))
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`,
+      {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : {},
+      }
+    )
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || getDisplayText('authorPostsSection.failedLoadPosts'))
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message ||
+          getDisplayText('authorPostsSection.failedLoadPosts')
+      )
+    }
+
+    const posts = Array.isArray(data.posts) ? data.posts : []
+
+    if (cacheVersion === authorPostsListCacheVersion) {
+      authorPostsListCache.set(cacheKey, {
+        posts,
+        cachedAt: Date.now(),
+      })
+    }
+
+    return posts
+  })()
+
+  authorPostsListInFlight.set(cacheKey, request)
+
+  try {
+    return await request
+  } finally {
+    if (authorPostsListInFlight.get(cacheKey) === request) {
+      authorPostsListInFlight.delete(cacheKey)
+    }
   }
-
-  return Array.isArray(data.posts) ? data.posts : []
 }
 
 async function createAuthorPost(
@@ -1293,9 +1352,10 @@ useEffect(() => {
       <AuthorPostEchoAction
         post={post}
         author={author}
-        onCountChange={(_, total) =>
+        onCountChange={(_, total) => {
+          clearAuthorPostsListCache()
           setEchoCount(Number(total || 0))
-        }
+        }}
         className="w-full justify-center gap-2 pr-[42px] [&>span]:hidden [&>img]:!h-[20px] [&>img]:!w-[20px]"
       />
       <span className="pointer-events-none absolute left-1/2 ml-2.5 text-[14px]">
@@ -1893,6 +1953,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   publishOptions
 )
       if (post) {
+        clearAuthorPostsListCache()
         if (post.status === 'active') {
   setPosts((current) => {
     const nextPosts = sortAuthorPosts([post, ...current])
@@ -1933,6 +1994,8 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       )
 
       if (!updatedPost) return false
+
+      clearAuthorPostsListCache()
 
       setPosts((current) =>
         sortAuthorPosts(
@@ -2073,6 +2136,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       setLocalError('')
 
       await moveAuthorPostToTrash(post.id)
+      clearAuthorPostsListCache()
 
       setPosts((current) => {
         const nextPosts = current.filter(
@@ -2105,6 +2169,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       setLocalError('')
 
       await setAuthorPostPinned(post.id, isPinned)
+      clearAuthorPostsListCache()
 
       const nextPosts = await fetchAuthorPosts(
         author?.page_username || '',
@@ -2184,6 +2249,8 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         requestType
       )
 
+      clearAuthorPostsListCache()
+
       const serverReaction = data.reacted
         ? data.reaction_type || requestType
         : null
@@ -2248,6 +2315,8 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
 function handleAuthorPostCommentChanged(nextComments = []) {
   if (!commentPost?.id) return
+
+  clearAuthorPostsListCache()
 
   setPosts((current) => current.map((post) => {
     if (post.id !== commentPost.id) return post
