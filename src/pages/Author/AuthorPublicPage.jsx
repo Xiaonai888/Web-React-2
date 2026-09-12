@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
@@ -1012,11 +1012,14 @@ function CoverOptionsSheet({ open, savingSlide, onClose, onSeeCover, onUploadCov
 }
 
 export default function AuthorPublicPage() {
- const navigate = useNavigate()
-const { pageUsername } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { pageUsername } = useParams()
 
   const [author, setAuthor] = useState(null)
-  const [activeTab, setActiveTab] = useState('Posts')
+  const [activeTab, setActiveTab] = useState(
+  tabs.includes(location.state?.activeTab) ? location.state.activeTab : 'Posts'
+)
   const [tabsFrozen, setTabsFrozen] = useState(false)
   const [readerCartCount, setReaderCartCount] = useState(() => getAuthorCartCount())
   const [readerNotificationCount, setReaderNotificationCount] = useState(0)
