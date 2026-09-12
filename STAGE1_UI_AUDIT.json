@@ -362,6 +362,11 @@
 "src/pages/Me/AboutUsPage.jsx",
 "src/pages/Me/HelpCenterPage.jsx",
 "src/pages/Me/FeedbackSupportPage.jsx",
+"src/pages/Chat/ChatRoomPage.jsx",
+"src/components/stories/StoryComposer.jsx",
+"src/pages/TopNovelPage.jsx",
+"src/pages/Shop/ShadowMallProductDetailPage.jsx",
+"src/pages/Shop/ShadowMallCartPage.jsx",
   ]
 }
 
