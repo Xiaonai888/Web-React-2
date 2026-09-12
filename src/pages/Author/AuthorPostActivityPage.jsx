@@ -14,6 +14,36 @@ import AuthorPostEchoAction from '../../components/author-posts/AuthorPostEchoAc
 import ReactionAction from '../../components/social/reactions/ReactionAction'
 import PublicPostDetailView from '../../components/social/posts/PublicPostDetailView'
 import { getAuthorChatToken } from '../../services/authorChatApi'
+import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorPostActivityPage', {
+  en: {
+    pleaseLoginFirst: 'Please login first', failedUpdateReaction: 'Failed to update reaction', author: 'Author', authorPage: 'Author Page',
+    postAlt: '{{author}} post', postMissing: 'Post is missing.', failedLoadPost: 'Failed to load post', failedLoadComment: 'Failed to load comment', failedOpenPost: 'Failed to open this post',
+    like: 'Like', echo: 'Echo',
+  },
+  km: {
+    pleaseLoginFirst: 'សូមចូលគណនីជាមុន', failedUpdateReaction: 'មិនអាចធ្វើបច្ចុប្បន្នភាពប្រតិកម្មបានទេ', author: 'អ្នកនិពន្ធ', authorPage: 'ទំព័រអ្នកនិពន្ធ',
+    postAlt: 'ប្រកាសរបស់ {{author}}', postMissing: 'រកមិនឃើញប្រកាសទេ។', failedLoadPost: 'មិនអាចផ្ទុកប្រកាសបានទេ', failedLoadComment: 'មិនអាចផ្ទុកមតិយោបល់បានទេ', failedOpenPost: 'មិនអាចបើកប្រកាសនេះបានទេ',
+    like: 'ចូលចិត្ត', echo: 'Echo',
+  },
+  zh: {
+    pleaseLoginFirst: '请先登录', failedUpdateReaction: '无法更新回应', author: '作者', authorPage: '作者主页',
+    postAlt: '{{author}} 的帖子', postMissing: '帖子不存在。', failedLoadPost: '无法加载帖子', failedLoadComment: '无法加载评论', failedOpenPost: '无法打开此帖子',
+    like: '赞', echo: '转发',
+  },
+  ja: {
+    pleaseLoginFirst: '先にログインしてください', failedUpdateReaction: 'リアクションを更新できませんでした', author: '作者', authorPage: '作者ページ',
+    postAlt: '{{author}}の投稿', postMissing: '投稿が見つかりません。', failedLoadPost: '投稿を読み込めませんでした', failedLoadComment: 'コメントを読み込めませんでした', failedOpenPost: 'この投稿を開けませんでした',
+    like: 'いいね', echo: 'Echo',
+  },
+  ko: {
+    pleaseLoginFirst: '먼저 로그인해 주세요', failedUpdateReaction: '반응을 업데이트하지 못했습니다', author: '작가', authorPage: '작가 페이지',
+    postAlt: '{{author}}님의 게시물', postMissing: '게시물이 없습니다.', failedLoadPost: '게시물을 불러오지 못했습니다', failedLoadComment: '댓글을 불러오지 못했습니다', failedOpenPost: '이 게시물을 열 수 없습니다',
+    like: '좋아요', echo: 'Echo',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -28,7 +58,7 @@ async function setAuthorPostReaction(
   reactionType
 ) {
   if (!token) {
-    throw new Error('Please login first')
+    throw new Error(getDisplayText('authorPostActivityPage.pleaseLoginFirst'))
   }
 
   const response = await fetch(
@@ -60,7 +90,7 @@ async function setAuthorPostReaction(
   ) {
     throw new Error(
       data.message ||
-        'Failed to update reaction'
+        getDisplayText('authorPostActivityPage.failedUpdateReaction')
     )
   }
 
@@ -77,14 +107,16 @@ function PostImages({
 
   if (!urls.length) return null
 
-  const alt = `${authorName || 'Author'} post`
+  const alt = getDisplayText('authorPostActivityPage.postAlt', {
+    author: authorName || getDisplayText('authorPostActivityPage.author'),
+  })
 
   if (urls.length === 1) {
     return (
       <img
         src={urls[0]}
         alt={alt}
-        className="mt-3 max-h-[560px] w-full bg-[#f3f4f6] object-contain"
+        className="mt-3 max-h-[560px] w-full bg-[var(--shadow-bg-soft)] object-contain"
       />
     )
   }
@@ -96,7 +128,7 @@ function PostImages({
   )
 
   return (
-    <div className="mt-3 grid grid-cols-2 gap-[2px] bg-[#f3f4f6]">
+    <div className="mt-3 grid grid-cols-2 gap-[2px] bg-[var(--shadow-bg-soft)]">
       {visible.map((url, index) => (
         <div
           key={`${url}-${index}`}
@@ -122,6 +154,7 @@ function PostImages({
 
 export default function AuthorPostActivityPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const {
     postId,
     commentId: routeCommentId,
@@ -165,7 +198,7 @@ export default function AuthorPostActivityPage() {
 
     async function load() {
       if (!postId) {
-        setError('Post is missing.')
+        setError(t('authorPostActivityPage.postMissing'))
         setLoading(false)
         return
       }
@@ -232,7 +265,7 @@ export default function AuthorPostActivityPage() {
         ) {
           throw new Error(
             postData.message ||
-              'Failed to load post'
+              t('authorPostActivityPage.failedLoadPost')
           )
         }
 
@@ -243,7 +276,7 @@ export default function AuthorPostActivityPage() {
         ) {
           throw new Error(
             commentData?.message ||
-              'Failed to load comment'
+              t('authorPostActivityPage.failedLoadComment')
           )
         }
 
@@ -264,7 +297,7 @@ export default function AuthorPostActivityPage() {
         if (!ignore) {
           setError(
             loadError.message ||
-              'Failed to open this post'
+              t('authorPostActivityPage.failedOpenPost')
           )
         }
       } finally {
@@ -279,7 +312,7 @@ export default function AuthorPostActivityPage() {
     return () => {
       ignore = true
     }
-  }, [focusCommentId, postId])
+  }, [focusCommentId, postId, t])
 
   useEffect(() => {
     if (!comment?.id) return
@@ -357,7 +390,7 @@ export default function AuthorPostActivityPage() {
     } catch (reactionError) {
       setActionError(
         reactionError.message ||
-          'Failed to update reaction'
+          t('authorPostActivityPage.failedUpdateReaction')
       )
     } finally {
       setReactionBusy(false)
@@ -406,7 +439,7 @@ export default function AuthorPostActivityPage() {
   const pageName =
     page.page_name ||
     page.page_username ||
-    'Author Page'
+    t('authorPostActivityPage.authorPage')
 
   const pageUsername =
     page.page_username || ''
@@ -514,8 +547,8 @@ export default function AuthorPostActivityPage() {
                 onReact={
                   chooseReaction
                 }
-                idleLabel="Like"
-                buttonClassName="text-[#65676b]"
+                idleLabel={t('authorPostActivityPage.like')}
+                buttonClassName="text-[var(--shadow-text-secondary)]"
               />
 
               <button
@@ -529,23 +562,28 @@ export default function AuthorPostActivityPage() {
                 disabled={
                   reactionBusy
                 }
-                className="text-[14px] font-normal text-[#65676b] disabled:opacity-60"
+                className="text-[14px] font-normal text-[var(--shadow-text-secondary)] disabled:opacity-60"
               >
-                Like
+                {t('authorPostActivityPage.like')}
               </button>
             </div>
           ) : null
         }
         echoControl={
           post ? (
-            <AuthorPostEchoAction
-              post={post}
-              author={page}
-              className="[&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
-              onCountChange={
-                handleEchoCountChange
-              }
-            />
+            <span className="relative inline-flex min-w-[54px]">
+              <AuthorPostEchoAction
+                post={post}
+                author={page}
+                className="w-full text-transparent [&>img]:opacity-70 [&>span]:invisible"
+                onCountChange={
+                  handleEchoCountChange
+                }
+              />
+              <span className="pointer-events-none absolute inset-y-0 left-[22px] flex items-center text-[14px] font-normal text-[var(--shadow-text-secondary)]">
+                {t('authorPostActivityPage.echo')}
+              </span>
+            </span>
           ) : null
         }
         reactionSummary={
