@@ -1636,11 +1636,15 @@ function CommentItem({
   const [menuOpen, setMenuOpen] =
     useState(false)
   const focusedReplyPresent =
-  Array.isArray(comment?.replies) &&
-  comment.replies.some(
-    (reply) =>
-      String(reply.id) ===
-      String(focusCommentId)
+  String(comment?.id || '') ===
+    String(focusCommentId || '') ||
+  (
+    Array.isArray(comment?.replies) &&
+    comment.replies.some(
+      (reply) =>
+        String(reply.id) ===
+        String(focusCommentId)
+    )
   )
 
 const [repliesShown, setRepliesShown] =
@@ -2667,10 +2671,25 @@ async function fetchComments(
     if (!targetId) return
 
     if (threadComment?.id) {
-      const nextComments = [
+      const normalizedThread =
         normalizeApiComment(
           threadComment
-        ),
+        )
+      normalizedThread.reply_page =
+        Math.max(
+          1,
+          Math.ceil(
+            Math.min(
+              Number(
+                normalizedThread.reply_total || 0
+              ),
+              20
+            ) / REPLY_PAGE_SIZE
+          )
+        )
+
+      const nextComments = [
+        normalizedThread,
       ]
 
       setComments(nextComments)
@@ -4273,21 +4292,23 @@ onSpoiler={(
         }
       />
 
-      <CommentComposer
-  value={replyTarget ? replyText : text}
-onChange={
-  replyTarget ? setReplyText : setText
-}
-  onSend={handleSend}
-  replyTarget={replyTarget}
-  onCancelReply={() => {
-  setReplyTarget(null)
-  setReplyText('')
-}}
-        isModal={isModal}
-        isBanned={isBanned}
-        sending={sending}
-      />
+      {!threadComment?.id || replyTarget ? (
+        <CommentComposer
+          value={replyTarget ? replyText : text}
+          onChange={
+            replyTarget ? setReplyText : setText
+          }
+          onSend={handleSend}
+          replyTarget={replyTarget}
+          onCancelReply={() => {
+            setReplyTarget(null)
+            setReplyText('')
+          }}
+          isModal={isModal}
+          isBanned={isBanned}
+          sending={sending}
+        />
+      ) : null}
 
       <EditCommentSheet
         comment={editComment}
