@@ -32,6 +32,551 @@ import ChatNewMessageSheet from '../../components/chat/ChatNewMessageSheet'
 import ChatGroupCreateSheet from '../../components/chat/ChatGroupCreateSheet'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderMessageRequestModal'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('chatInboxPage', {
+  en: {
+    toneDefault: "Default",
+    toneChime: "Chime",
+    tonePop: "Pop",
+    toneBell: "Bell",
+    mute1Hour: "1 hour",
+    mute8Hours: "8 hours",
+    mute1Day: "1 day",
+    mute7Days: "7 days",
+    muteUntilOn: "Until I turn it back on",
+    yesterday: "Yesterday",
+    shadowUser: "Shadow User",
+    noMessagesYet: "No messages yet",
+    conversationsAppearHere: "Your conversations with readers and authors will appear here.",
+    noMessageRequests: "No message requests",
+    newRequestsAppearHere: "New requests sent to you will appear here.",
+    noResultsFound: "No results found",
+    noSearchMatch: "No reader, author, name, or username matched “{{query}}”.",
+    sentMessageRequest: "Sent you a message request",
+    messageRequest: "Message request",
+    decline: "Decline",
+    accept: "Accept",
+    request: "Request",
+    pending: "Pending",
+    openConversation: "Open this conversation",
+    author: "Author",
+    reader: "Reader",
+    message: "Message",
+    failedLoadMessages: "Failed to load messages",
+    failedSearchPeople: "Failed to search people",
+    failedUpdateRequest: "Failed to update request",
+    readerProfileUnavailable: "Reader profile is not available",
+    shadowReader: "Shadow Reader",
+    failedLoadSoundSettings: "Failed to load sound settings",
+    failedUpdateSound: "Failed to update sound",
+    failedUpdateTone: "Failed to update tone",
+    failedLoadFolders: "Failed to load folders",
+    failedUpdateFolder: "Failed to update folder",
+    newFolderName: "New folder name",
+    folderNameRequired: "Folder name is required",
+    failedCreateFolder: "Failed to create folder",
+    clearHistoryConfirm: "Clear all message history for this chat?",
+    chatHistoryCleared: "Chat history cleared",
+    failedClearHistory: "Failed to clear chat history",
+    markedUnread: "Marked as unread",
+    failedMarkUnread: "Failed to mark as unread",
+    chatUnpinned: "Chat unpinned",
+    chatPinned: "Chat pinned",
+    failedUpdatePin: "Failed to update pin",
+    chatArchived: "Chat archived",
+    failedArchiveChat: "Failed to archive chat",
+    notificationsMuted: "Notifications muted",
+    failedMuteChat: "Failed to mute chat",
+    notificationsUnmuted: "Notifications unmuted",
+    failedUnmuteChat: "Failed to unmute chat",
+    deleteChatConfirm: "Delete this chat from your inbox?",
+    failedDeleteChat: "Failed to delete chat",
+    chatMuted: "Chat muted",
+    chatsMuted: "{{count}} chats muted",
+    failedMuteSelected: "Failed to mute selected chats",
+    chatUnmuted: "Chat unmuted",
+    chatsUnmuted: "{{count}} chats unmuted",
+    failedUnmuteSelected: "Failed to unmute selected chats",
+    failedArchiveSelected: "Failed to archive selected chats",
+    deleteSelectedOneConfirm: "Delete 1 chat from your inbox?",
+    deleteSelectedManyConfirm: "Delete {{count}} chats from your inbox?",
+    failedDeleteSelected: "Failed to delete selected chats",
+    exitSelection: "Exit selection",
+    unmuteSelected: "Unmute selected chats",
+    muteSelected: "Mute selected chats",
+    archiveSelected: "Archive selected chats",
+    deleteSelected: "Delete selected chats",
+    moreSelectedActions: "More selected chat actions",
+    closeSelectionMenu: "Close selection menu",
+    savedMessagesComingSoon: "Saved Messages is coming soon.",
+    savedMessages: "Saved Messages",
+    newGroup: "New Group",
+    messages: "Messages",
+    unreadCount: "{{count}} unread",
+    newMessage: "New message",
+    searchByName: "Search by name or username",
+    closeMuteOptions: "Close mute options",
+    muteNotifications: "Mute notifications",
+    chooseMuteSelected: "Choose how long to mute the selected chat.",
+    cancel: "Cancel",
+    closeChatMenu: "Close chat menu",
+    archive: "Archive",
+    unpin: "Unpin",
+    pin: "Pin",
+    unmuteNotifications: "Unmute notifications",
+    markUnread: "Mark as unread",
+    addToFolder: "Add to folder",
+    clearHistory: "Clear history",
+    deleteChat: "Delete chat",
+    selectTone: "Select tone",
+    disableSound: "Disable sound",
+    enableSound: "Enable sound",
+    muteFor: "Mute for...",
+    muteForever: "Mute forever",
+    noFoldersYet: "No folders yet",
+    createNewFolder: "Create new folder",
+    archivedChats: "Archived chats",
+    archivedCount: "{{count}} archived",
+    viewMoreRequests: "View {{count}} more requests",
+    conversations: "Conversations",
+    searchMinChars: "Enter at least 2 characters to search all readers and authors by name or username.",
+    readersAndAuthors: "Readers and Authors",
+  },
+  km: {
+    toneDefault: "លំនាំដើម",
+    toneChime: "សំឡេង Chime",
+    tonePop: "សំឡេង Pop",
+    toneBell: "សំឡេងកណ្ដឹង",
+    mute1Hour: "1 ម៉ោង",
+    mute8Hours: "8 ម៉ោង",
+    mute1Day: "1 ថ្ងៃ",
+    mute7Days: "7 ថ្ងៃ",
+    muteUntilOn: "រហូតដល់ខ្ញុំបើកវិញ",
+    yesterday: "ម្សិលមិញ",
+    shadowUser: "អ្នកប្រើ Shadow",
+    noMessagesYet: "មិនទាន់មានសារទេ",
+    conversationsAppearHere: "ការសន្ទនារបស់អ្នកជាមួយអ្នកអាន និងអ្នកនិពន្ធនឹងបង្ហាញនៅទីនេះ។",
+    noMessageRequests: "មិនមានសំណើសារ",
+    newRequestsAppearHere: "សំណើថ្មីដែលផ្ញើមកអ្នកនឹងបង្ហាញនៅទីនេះ។",
+    noResultsFound: "រកមិនឃើញលទ្ធផល",
+    noSearchMatch: "មិនមានអ្នកអាន អ្នកនិពន្ធ ឈ្មោះ ឬ username ណាត្រូវនឹង “{{query}}” ទេ។",
+    sentMessageRequest: "បានផ្ញើសំណើសារមកអ្នក",
+    messageRequest: "សំណើសារ",
+    decline: "បដិសេធ",
+    accept: "យល់ព្រម",
+    request: "សំណើ",
+    pending: "កំពុងរង់ចាំ",
+    openConversation: "បើកការសន្ទនានេះ",
+    author: "អ្នកនិពន្ធ",
+    reader: "អ្នកអាន",
+    message: "ផ្ញើសារ",
+    failedLoadMessages: "មិនអាចផ្ទុកសារបានទេ",
+    failedSearchPeople: "មិនអាចស្វែងរកមនុស្សបានទេ",
+    failedUpdateRequest: "មិនអាចធ្វើបច្ចុប្បន្នភាពសំណើបានទេ",
+    readerProfileUnavailable: "ប្រវត្តិរូបអ្នកអានមិនអាចប្រើបានទេ",
+    shadowReader: "អ្នកអាន Shadow",
+    failedLoadSoundSettings: "មិនអាចផ្ទុកការកំណត់សំឡេងបានទេ",
+    failedUpdateSound: "មិនអាចធ្វើបច្ចុប្បន្នភាពសំឡេងបានទេ",
+    failedUpdateTone: "មិនអាចធ្វើបច្ចុប្បន្នភាព tone បានទេ",
+    failedLoadFolders: "មិនអាចផ្ទុកថតបានទេ",
+    failedUpdateFolder: "មិនអាចធ្វើបច្ចុប្បន្នភាពថតបានទេ",
+    newFolderName: "ឈ្មោះថតថ្មី",
+    folderNameRequired: "ត្រូវបញ្ចូលឈ្មោះថត",
+    failedCreateFolder: "មិនអាចបង្កើតថតបានទេ",
+    clearHistoryConfirm: "លុបប្រវត្តិសារទាំងអស់ក្នុង chat នេះមែនទេ?",
+    chatHistoryCleared: "បានលុបប្រវត្តិ chat",
+    failedClearHistory: "មិនអាចលុបប្រវត្តិ chat បានទេ",
+    markedUnread: "បានសម្គាល់ថាមិនទាន់អាន",
+    failedMarkUnread: "មិនអាចសម្គាល់ថាមិនទាន់អានបានទេ",
+    chatUnpinned: "បានដក pin chat",
+    chatPinned: "បាន pin chat",
+    failedUpdatePin: "មិនអាចធ្វើបច្ចុប្បន្នភាព pin បានទេ",
+    chatArchived: "បានដាក់ chat ក្នុងប័ណ្ណសារ",
+    failedArchiveChat: "មិនអាចដាក់ chat ក្នុងប័ណ្ណសារបានទេ",
+    notificationsMuted: "បានបិទសំឡេងជូនដំណឹង",
+    failedMuteChat: "មិនអាចបិទសំឡេង chat បានទេ",
+    notificationsUnmuted: "បានបើកសំឡេងជូនដំណឹង",
+    failedUnmuteChat: "មិនអាចបើកសំឡេង chat បានទេ",
+    deleteChatConfirm: "លុប chat នេះចេញពីប្រអប់សាររបស់អ្នកមែនទេ?",
+    failedDeleteChat: "មិនអាចលុប chat បានទេ",
+    chatMuted: "បានបិទសំឡេង chat",
+    chatsMuted: "បានបិទសំឡេង chat {{count}}",
+    failedMuteSelected: "មិនអាចបិទសំឡេង chat ដែលបានជ្រើសបានទេ",
+    chatUnmuted: "បានបើកសំឡេង chat",
+    chatsUnmuted: "បានបើកសំឡេង chat {{count}}",
+    failedUnmuteSelected: "មិនអាចបើកសំឡេង chat ដែលបានជ្រើសបានទេ",
+    failedArchiveSelected: "មិនអាចដាក់ chat ដែលបានជ្រើសក្នុងប័ណ្ណសារបានទេ",
+    deleteSelectedOneConfirm: "លុប chat 1 ចេញពីប្រអប់សាររបស់អ្នកមែនទេ?",
+    deleteSelectedManyConfirm: "លុប chat {{count}} ចេញពីប្រអប់សាររបស់អ្នកមែនទេ?",
+    failedDeleteSelected: "មិនអាចលុប chat ដែលបានជ្រើសបានទេ",
+    exitSelection: "ចាកចេញពីការជ្រើស",
+    unmuteSelected: "បើកសំឡេង chat ដែលបានជ្រើស",
+    muteSelected: "បិទសំឡេង chat ដែលបានជ្រើស",
+    archiveSelected: "ដាក់ chat ដែលបានជ្រើសក្នុងប័ណ្ណសារ",
+    deleteSelected: "លុប chat ដែលបានជ្រើស",
+    moreSelectedActions: "សកម្មភាពបន្ថែមសម្រាប់ chat ដែលបានជ្រើស",
+    closeSelectionMenu: "បិទម៉ឺនុយជ្រើស",
+    savedMessagesComingSoon: "Saved Messages នឹងមកដល់ឆាប់ៗនេះ។",
+    savedMessages: "សារដែលបានរក្សាទុក",
+    newGroup: "ក្រុមថ្មី",
+    messages: "សារ",
+    unreadCount: "មិនទាន់អាន {{count}}",
+    newMessage: "សារថ្មី",
+    searchByName: "ស្វែងរកតាមឈ្មោះ ឬ username",
+    closeMuteOptions: "បិទជម្រើសបិទសំឡេង",
+    muteNotifications: "បិទសំឡេងជូនដំណឹង",
+    chooseMuteSelected: "ជ្រើសរយៈពេលបិទសំឡេង chat ដែលបានជ្រើស។",
+    cancel: "បោះបង់",
+    closeChatMenu: "បិទម៉ឺនុយ chat",
+    archive: "ប័ណ្ណសារ",
+    unpin: "ដក pin",
+    pin: "Pin",
+    unmuteNotifications: "បើកសំឡេងជូនដំណឹង",
+    markUnread: "សម្គាល់ថាមិនទាន់អាន",
+    addToFolder: "បន្ថែមទៅថត",
+    clearHistory: "លុបប្រវត្តិ",
+    deleteChat: "លុប chat",
+    selectTone: "ជ្រើស tone",
+    disableSound: "បិទសំឡេង",
+    enableSound: "បើកសំឡេង",
+    muteFor: "បិទសំឡេងរយៈពេល...",
+    muteForever: "បិទសំឡេងជានិច្ច",
+    noFoldersYet: "មិនទាន់មានថតទេ",
+    createNewFolder: "បង្កើតថតថ្មី",
+    archivedChats: "Chat ក្នុងប័ណ្ណសារ",
+    archivedCount: "ក្នុងប័ណ្ណសារ {{count}}",
+    viewMoreRequests: "មើលសំណើបន្ថែម {{count}}",
+    conversations: "ការសន្ទនា",
+    searchMinChars: "បញ្ចូលយ៉ាងហោចណាស់ 2 តួអក្សរ ដើម្បីស្វែងរកអ្នកអាន និងអ្នកនិពន្ធតាមឈ្មោះ ឬ username។",
+    readersAndAuthors: "អ្នកអាន និងអ្នកនិពន្ធ",
+  },
+  zh: {
+    toneDefault: "默认",
+    toneChime: "清脆声",
+    tonePop: "弹出声",
+    toneBell: "铃声",
+    mute1Hour: "1 小时",
+    mute8Hours: "8 小时",
+    mute1Day: "1 天",
+    mute7Days: "7 天",
+    muteUntilOn: "直到我重新开启",
+    yesterday: "昨天",
+    shadowUser: "Shadow 用户",
+    noMessagesYet: "暂无消息",
+    conversationsAppearHere: "你与读者和作者的聊天会显示在这里。",
+    noMessageRequests: "暂无消息请求",
+    newRequestsAppearHere: "发送给你的新请求会显示在这里。",
+    noResultsFound: "未找到结果",
+    noSearchMatch: "没有读者、作者、姓名或用户名匹配“{{query}}”。",
+    sentMessageRequest: "向你发送了消息请求",
+    messageRequest: "消息请求",
+    decline: "拒绝",
+    accept: "接受",
+    request: "请求",
+    pending: "待处理",
+    openConversation: "打开此聊天",
+    author: "作者",
+    reader: "读者",
+    message: "发消息",
+    failedLoadMessages: "无法加载消息",
+    failedSearchPeople: "无法搜索用户",
+    failedUpdateRequest: "无法更新请求",
+    readerProfileUnavailable: "读者资料不可用",
+    shadowReader: "Shadow 读者",
+    failedLoadSoundSettings: "无法加载声音设置",
+    failedUpdateSound: "无法更新声音",
+    failedUpdateTone: "无法更新提示音",
+    failedLoadFolders: "无法加载文件夹",
+    failedUpdateFolder: "无法更新文件夹",
+    newFolderName: "新文件夹名称",
+    folderNameRequired: "必须输入文件夹名称",
+    failedCreateFolder: "无法创建文件夹",
+    clearHistoryConfirm: "清除此聊天的所有消息记录？",
+    chatHistoryCleared: "聊天记录已清除",
+    failedClearHistory: "无法清除聊天记录",
+    markedUnread: "已标记为未读",
+    failedMarkUnread: "无法标记为未读",
+    chatUnpinned: "已取消置顶聊天",
+    chatPinned: "已置顶聊天",
+    failedUpdatePin: "无法更新置顶状态",
+    chatArchived: "聊天已归档",
+    failedArchiveChat: "无法归档聊天",
+    notificationsMuted: "通知已静音",
+    failedMuteChat: "无法静音聊天",
+    notificationsUnmuted: "通知已恢复",
+    failedUnmuteChat: "无法恢复聊天声音",
+    deleteChatConfirm: "从收件箱中删除此聊天？",
+    failedDeleteChat: "无法删除聊天",
+    chatMuted: "聊天已静音",
+    chatsMuted: "已静音 {{count}} 个聊天",
+    failedMuteSelected: "无法静音所选聊天",
+    chatUnmuted: "聊天已恢复声音",
+    chatsUnmuted: "已恢复 {{count}} 个聊天的声音",
+    failedUnmuteSelected: "无法恢复所选聊天声音",
+    failedArchiveSelected: "无法归档所选聊天",
+    deleteSelectedOneConfirm: "从收件箱删除 1 个聊天？",
+    deleteSelectedManyConfirm: "从收件箱删除 {{count}} 个聊天？",
+    failedDeleteSelected: "无法删除所选聊天",
+    exitSelection: "退出选择",
+    unmuteSelected: "恢复所选聊天声音",
+    muteSelected: "静音所选聊天",
+    archiveSelected: "归档所选聊天",
+    deleteSelected: "删除所选聊天",
+    moreSelectedActions: "更多所选聊天操作",
+    closeSelectionMenu: "关闭选择菜单",
+    savedMessagesComingSoon: "“已保存消息”即将推出。",
+    savedMessages: "已保存消息",
+    newGroup: "新建群聊",
+    messages: "消息",
+    unreadCount: "{{count}} 条未读",
+    newMessage: "新消息",
+    searchByName: "按姓名或用户名搜索",
+    closeMuteOptions: "关闭静音选项",
+    muteNotifications: "静音通知",
+    chooseMuteSelected: "选择所选聊天的静音时长。",
+    cancel: "取消",
+    closeChatMenu: "关闭聊天菜单",
+    archive: "归档",
+    unpin: "取消置顶",
+    pin: "置顶",
+    unmuteNotifications: "恢复通知",
+    markUnread: "标记为未读",
+    addToFolder: "添加到文件夹",
+    clearHistory: "清除记录",
+    deleteChat: "删除聊天",
+    selectTone: "选择提示音",
+    disableSound: "关闭声音",
+    enableSound: "开启声音",
+    muteFor: "静音时长...",
+    muteForever: "永久静音",
+    noFoldersYet: "暂无文件夹",
+    createNewFolder: "新建文件夹",
+    archivedChats: "已归档聊天",
+    archivedCount: "已归档 {{count}}",
+    viewMoreRequests: "查看另外 {{count}} 个请求",
+    conversations: "聊天",
+    searchMinChars: "至少输入 2 个字符，以按姓名或用户名搜索所有读者和作者。",
+    readersAndAuthors: "读者和作者",
+  },
+  ja: {
+    toneDefault: "デフォルト",
+    toneChime: "チャイム",
+    tonePop: "ポップ",
+    toneBell: "ベル",
+    mute1Hour: "1時間",
+    mute8Hours: "8時間",
+    mute1Day: "1日",
+    mute7Days: "7日",
+    muteUntilOn: "再びオンにするまで",
+    yesterday: "昨日",
+    shadowUser: "Shadow ユーザー",
+    noMessagesYet: "メッセージはまだありません",
+    conversationsAppearHere: "読者や作者との会話がここに表示されます。",
+    noMessageRequests: "メッセージリクエストはありません",
+    newRequestsAppearHere: "新しいリクエストがここに表示されます。",
+    noResultsFound: "結果が見つかりません",
+    noSearchMatch: "“{{query}}”に一致する読者、作者、名前、ユーザー名はありません。",
+    sentMessageRequest: "メッセージリクエストが届きました",
+    messageRequest: "メッセージリクエスト",
+    decline: "拒否",
+    accept: "承認",
+    request: "リクエスト",
+    pending: "保留中",
+    openConversation: "この会話を開く",
+    author: "作者",
+    reader: "読者",
+    message: "メッセージ",
+    failedLoadMessages: "メッセージを読み込めませんでした",
+    failedSearchPeople: "ユーザーを検索できませんでした",
+    failedUpdateRequest: "リクエストを更新できませんでした",
+    readerProfileUnavailable: "読者プロフィールを利用できません",
+    shadowReader: "Shadow 読者",
+    failedLoadSoundSettings: "サウンド設定を読み込めませんでした",
+    failedUpdateSound: "サウンドを更新できませんでした",
+    failedUpdateTone: "通知音を更新できませんでした",
+    failedLoadFolders: "フォルダーを読み込めませんでした",
+    failedUpdateFolder: "フォルダーを更新できませんでした",
+    newFolderName: "新しいフォルダー名",
+    folderNameRequired: "フォルダー名を入力してください",
+    failedCreateFolder: "フォルダーを作成できませんでした",
+    clearHistoryConfirm: "このチャットのメッセージ履歴をすべて消去しますか？",
+    chatHistoryCleared: "チャット履歴を消去しました",
+    failedClearHistory: "チャット履歴を消去できませんでした",
+    markedUnread: "未読にしました",
+    failedMarkUnread: "未読にできませんでした",
+    chatUnpinned: "チャットの固定を解除しました",
+    chatPinned: "チャットを固定しました",
+    failedUpdatePin: "固定状態を更新できませんでした",
+    chatArchived: "チャットをアーカイブしました",
+    failedArchiveChat: "チャットをアーカイブできませんでした",
+    notificationsMuted: "通知をミュートしました",
+    failedMuteChat: "チャットをミュートできませんでした",
+    notificationsUnmuted: "通知のミュートを解除しました",
+    failedUnmuteChat: "チャットのミュートを解除できませんでした",
+    deleteChatConfirm: "このチャットを受信トレイから削除しますか？",
+    failedDeleteChat: "チャットを削除できませんでした",
+    chatMuted: "チャットをミュートしました",
+    chatsMuted: "{{count}}件のチャットをミュートしました",
+    failedMuteSelected: "選択したチャットをミュートできませんでした",
+    chatUnmuted: "チャットのミュートを解除しました",
+    chatsUnmuted: "{{count}}件のチャットのミュートを解除しました",
+    failedUnmuteSelected: "選択したチャットのミュートを解除できませんでした",
+    failedArchiveSelected: "選択したチャットをアーカイブできませんでした",
+    deleteSelectedOneConfirm: "受信トレイから1件のチャットを削除しますか？",
+    deleteSelectedManyConfirm: "受信トレイから{{count}}件のチャットを削除しますか？",
+    failedDeleteSelected: "選択したチャットを削除できませんでした",
+    exitSelection: "選択を終了",
+    unmuteSelected: "選択したチャットのミュートを解除",
+    muteSelected: "選択したチャットをミュート",
+    archiveSelected: "選択したチャットをアーカイブ",
+    deleteSelected: "選択したチャットを削除",
+    moreSelectedActions: "選択したチャットのその他の操作",
+    closeSelectionMenu: "選択メニューを閉じる",
+    savedMessagesComingSoon: "保存済みメッセージは近日公開予定です。",
+    savedMessages: "保存済みメッセージ",
+    newGroup: "新しいグループ",
+    messages: "メッセージ",
+    unreadCount: "未読 {{count}}",
+    newMessage: "新しいメッセージ",
+    searchByName: "名前またはユーザー名で検索",
+    closeMuteOptions: "ミュートオプションを閉じる",
+    muteNotifications: "通知をミュート",
+    chooseMuteSelected: "選択したチャットをミュートする時間を選択してください。",
+    cancel: "キャンセル",
+    closeChatMenu: "チャットメニューを閉じる",
+    archive: "アーカイブ",
+    unpin: "固定を解除",
+    pin: "固定",
+    unmuteNotifications: "通知のミュートを解除",
+    markUnread: "未読にする",
+    addToFolder: "フォルダーに追加",
+    clearHistory: "履歴を消去",
+    deleteChat: "チャットを削除",
+    selectTone: "通知音を選択",
+    disableSound: "サウンドを無効化",
+    enableSound: "サウンドを有効化",
+    muteFor: "ミュート時間...",
+    muteForever: "ずっとミュート",
+    noFoldersYet: "フォルダーはまだありません",
+    createNewFolder: "新しいフォルダーを作成",
+    archivedChats: "アーカイブ済みチャット",
+    archivedCount: "アーカイブ {{count}}",
+    viewMoreRequests: "さらに{{count}}件のリクエストを表示",
+    conversations: "会話",
+    searchMinChars: "名前またはユーザー名で読者と作者を検索するには、2文字以上入力してください。",
+    readersAndAuthors: "読者と作者",
+  },
+  ko: {
+    toneDefault: "기본",
+    toneChime: "차임",
+    tonePop: "팝",
+    toneBell: "벨",
+    mute1Hour: "1시간",
+    mute8Hours: "8시간",
+    mute1Day: "1일",
+    mute7Days: "7일",
+    muteUntilOn: "다시 켤 때까지",
+    yesterday: "어제",
+    shadowUser: "Shadow 사용자",
+    noMessagesYet: "아직 메시지가 없습니다",
+    conversationsAppearHere: "독자 및 작가와의 대화가 여기에 표시됩니다.",
+    noMessageRequests: "메시지 요청이 없습니다",
+    newRequestsAppearHere: "새 요청이 여기에 표시됩니다.",
+    noResultsFound: "검색 결과가 없습니다",
+    noSearchMatch: "“{{query}}”와 일치하는 독자, 작가, 이름 또는 사용자 이름이 없습니다.",
+    sentMessageRequest: "메시지 요청을 보냈습니다",
+    messageRequest: "메시지 요청",
+    decline: "거절",
+    accept: "수락",
+    request: "요청",
+    pending: "대기 중",
+    openConversation: "이 대화 열기",
+    author: "작가",
+    reader: "독자",
+    message: "메시지",
+    failedLoadMessages: "메시지를 불러오지 못했습니다",
+    failedSearchPeople: "사용자를 검색하지 못했습니다",
+    failedUpdateRequest: "요청을 업데이트하지 못했습니다",
+    readerProfileUnavailable: "독자 프로필을 사용할 수 없습니다",
+    shadowReader: "Shadow 독자",
+    failedLoadSoundSettings: "소리 설정을 불러오지 못했습니다",
+    failedUpdateSound: "소리를 업데이트하지 못했습니다",
+    failedUpdateTone: "알림음을 업데이트하지 못했습니다",
+    failedLoadFolders: "폴더를 불러오지 못했습니다",
+    failedUpdateFolder: "폴더를 업데이트하지 못했습니다",
+    newFolderName: "새 폴더 이름",
+    folderNameRequired: "폴더 이름을 입력해 주세요",
+    failedCreateFolder: "폴더를 만들지 못했습니다",
+    clearHistoryConfirm: "이 채팅의 모든 메시지 기록을 지울까요?",
+    chatHistoryCleared: "채팅 기록을 지웠습니다",
+    failedClearHistory: "채팅 기록을 지우지 못했습니다",
+    markedUnread: "읽지 않음으로 표시했습니다",
+    failedMarkUnread: "읽지 않음으로 표시하지 못했습니다",
+    chatUnpinned: "채팅 고정을 해제했습니다",
+    chatPinned: "채팅을 고정했습니다",
+    failedUpdatePin: "고정 상태를 업데이트하지 못했습니다",
+    chatArchived: "채팅을 보관했습니다",
+    failedArchiveChat: "채팅을 보관하지 못했습니다",
+    notificationsMuted: "알림을 음소거했습니다",
+    failedMuteChat: "채팅을 음소거하지 못했습니다",
+    notificationsUnmuted: "알림 음소거를 해제했습니다",
+    failedUnmuteChat: "채팅 음소거를 해제하지 못했습니다",
+    deleteChatConfirm: "받은편지함에서 이 채팅을 삭제할까요?",
+    failedDeleteChat: "채팅을 삭제하지 못했습니다",
+    chatMuted: "채팅을 음소거했습니다",
+    chatsMuted: "채팅 {{count}}개를 음소거했습니다",
+    failedMuteSelected: "선택한 채팅을 음소거하지 못했습니다",
+    chatUnmuted: "채팅 음소거를 해제했습니다",
+    chatsUnmuted: "채팅 {{count}}개의 음소거를 해제했습니다",
+    failedUnmuteSelected: "선택한 채팅의 음소거를 해제하지 못했습니다",
+    failedArchiveSelected: "선택한 채팅을 보관하지 못했습니다",
+    deleteSelectedOneConfirm: "받은편지함에서 채팅 1개를 삭제할까요?",
+    deleteSelectedManyConfirm: "받은편지함에서 채팅 {{count}}개를 삭제할까요?",
+    failedDeleteSelected: "선택한 채팅을 삭제하지 못했습니다",
+    exitSelection: "선택 종료",
+    unmuteSelected: "선택한 채팅 음소거 해제",
+    muteSelected: "선택한 채팅 음소거",
+    archiveSelected: "선택한 채팅 보관",
+    deleteSelected: "선택한 채팅 삭제",
+    moreSelectedActions: "선택한 채팅 추가 작업",
+    closeSelectionMenu: "선택 메뉴 닫기",
+    savedMessagesComingSoon: "저장된 메시지 기능이 곧 제공됩니다.",
+    savedMessages: "저장된 메시지",
+    newGroup: "새 그룹",
+    messages: "메시지",
+    unreadCount: "읽지 않음 {{count}}개",
+    newMessage: "새 메시지",
+    searchByName: "이름 또는 사용자 이름으로 검색",
+    closeMuteOptions: "음소거 옵션 닫기",
+    muteNotifications: "알림 음소거",
+    chooseMuteSelected: "선택한 채팅의 음소거 시간을 선택하세요.",
+    cancel: "취소",
+    closeChatMenu: "채팅 메뉴 닫기",
+    archive: "보관",
+    unpin: "고정 해제",
+    pin: "고정",
+    unmuteNotifications: "알림 음소거 해제",
+    markUnread: "읽지 않음으로 표시",
+    addToFolder: "폴더에 추가",
+    clearHistory: "기록 지우기",
+    deleteChat: "채팅 삭제",
+    selectTone: "알림음 선택",
+    disableSound: "소리 끄기",
+    enableSound: "소리 켜기",
+    muteFor: "음소거 시간...",
+    muteForever: "계속 음소거",
+    noFoldersYet: "아직 폴더가 없습니다",
+    createNewFolder: "새 폴더 만들기",
+    archivedChats: "보관된 채팅",
+    archivedCount: "보관됨 {{count}}",
+    viewMoreRequests: "요청 {{count}}개 더 보기",
+    conversations: "대화",
+    searchMinChars: "모든 독자와 작가를 이름 또는 사용자 이름으로 검색하려면 2자 이상 입력하세요.",
+    readersAndAuthors: "독자와 작가",
+  },
+})
 import {
   addChatConversationToFolder,
   archiveChatConversation,
@@ -127,18 +672,18 @@ function getSmartSearchScore(query, values) {
 }
 
 const CHAT_TONE_OPTIONS = [
-  ['default', 'Default'],
-  ['chime', 'Chime'],
-  ['pop', 'Pop'],
-  ['bell', 'Bell'],
+  ['default', 'toneDefault'],
+  ['chime', 'toneChime'],
+  ['pop', 'tonePop'],
+  ['bell', 'toneBell'],
 ]
 
 const MUTE_OPTIONS = [
-  ['1h', '1 hour'],
-  ['8h', '8 hours'],
-  ['1d', '1 day'],
-  ['7d', '7 days'],
-  ['forever', 'Until I turn it back on'],
+  ['1h', 'mute1Hour'],
+  ['8h', 'mute8Hours'],
+  ['1d', 'mute1Day'],
+  ['7d', 'mute7Days'],
+  ['forever', 'muteUntilOn'],
 ]
 
 function clampConversationMenuPosition(x, y) {
@@ -207,7 +752,7 @@ function formatConversationTime(value) {
     date.getDate() === now.getDate()
 
   if (sameDay) {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(getDisplayLanguageId(), {
       hour: 'numeric',
       minute: '2-digit',
     }).format(date)
@@ -222,10 +767,10 @@ function formatConversationTime(value) {
     date.getDate() === yesterday.getDate()
 
   if (wasYesterday) {
-    return 'Yesterday'
+    return getDisplayText('chatInboxPage.yesterday')
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
     month: 'short',
     day: 'numeric',
   }).format(date)
@@ -298,7 +843,9 @@ function QuickCircle({
 
         {count > 0 ? (
           <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white bg-[#7c3aed] px-1 text-[10px] font-bold text-white">
-            {count > 99 ? '99+' : count}
+            {count > 99
+              ? '99+'
+              : Number(count).toLocaleString(getDisplayLanguageId())}
           </span>
         ) : null}
       </span>
@@ -331,48 +878,54 @@ function LoadingInbox() {
 }
 
 function EmptyInbox() {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="px-5 py-16 text-center">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
         <MessageCircle size={30} strokeWidth={1.9} />
       </div>
       <h2 className="mt-5 text-[18px] font-bold text-[#111827]">
-        No messages yet
+        {t('chatInboxPage.noMessagesYet')}
       </h2>
       <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-bold leading-6 text-[#8a8a95]">
-        Your conversations with readers and authors will appear here.
+        {t('chatInboxPage.conversationsAppearHere')}
       </p>
     </div>
   )
 }
 
 function EmptyRequests() {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="px-5 py-16 text-center">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
         <MessageCircle size={30} strokeWidth={1.9} />
       </div>
       <h2 className="mt-5 text-[18px] font-bold text-[#111827]">
-        No message requests
+        {t('chatInboxPage.noMessageRequests')}
       </h2>
       <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-bold leading-6 text-[#8a8a95]">
-        New requests sent to you will appear here.
+        {t('chatInboxPage.newRequestsAppearHere')}
       </p>
     </div>
   )
 }
 
 function EmptySearch({ query }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="px-5 py-14 text-center">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f4f4f7] text-[#777480]">
         <Search size={28} strokeWidth={1.9} />
       </div>
       <h2 className="mt-5 text-[17px] font-bold text-[#111827]">
-        No results found
+        {t('chatInboxPage.noResultsFound')}
       </h2>
       <p className="mx-auto mt-2 max-w-[290px] text-[12px] font-bold leading-5 text-[#8a8a95]">
-        No reader, author, name, or username matched “{query}”.
+        {t('chatInboxPage.noSearchMatch', { query })}
       </p>
     </div>
   )
@@ -384,10 +937,11 @@ function IncomingRequestCard({
   onDecision,
   onOpen,
 }) {
+  const { t } = useDisplayTranslation()
   const person = conversation?.counterpart || {}
   const preview =
     conversation?.latest_message?.body ||
-    'Sent you a message request'
+    t('chatInboxPage.sentMessageRequest')
 
   return (
     <section className="mx-4 mt-4 rounded-[20px] border border-[#e8e5ee] bg-white p-4 shadow-[0_8px_24px_rgba(17,24,39,0.07)]">
@@ -410,10 +964,10 @@ function IncomingRequestCard({
           className="min-w-0 flex-1 text-left"
         >
           <div className="text-[10px] font-bold text-[#8b8793]">
-            Message request
+            {t('chatInboxPage.messageRequest')}
           </div>
           <div className="mt-0.5 truncate text-[14px] font-bold text-[#111827]">
-            {person.name || 'Shadow User'}
+            {person.name || t('chatInboxPage.shadowUser')}
           </div>
           <div className="mt-1 truncate text-[12px] font-bold text-[#76727f]">
             {preview}
@@ -433,7 +987,7 @@ function IncomingRequestCard({
           ) : (
             <X size={16} />
           )}
-          Decline
+          {t('chatInboxPage.decline')}
         </button>
 
         <button
@@ -447,7 +1001,7 @@ function IncomingRequestCard({
           ) : (
             <Check size={16} />
           )}
-          Accept
+          {t('chatInboxPage.accept')}
         </button>
       </div>
     </section>
@@ -462,6 +1016,7 @@ function ConversationRow({
   onOpenContextMenu,
   onToggleSelection,
 }) {
+  const { t } = useDisplayTranslation()
   const longPressRef = useRef(null)
   const pointerStartRef = useRef(null)
   const suppressClickRef = useRef(false)
@@ -575,12 +1130,12 @@ function ConversationRow({
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
           <strong className="truncate text-[15px] font-bold text-[#111827]">
-            {person.name || 'Shadow User'}
+            {person.name || t('chatInboxPage.shadowUser')}
           </strong>
 
           {pending ? (
             <span className="shrink-0 rounded-full bg-[#f2edff] px-2 py-1 text-[9px] font-bold text-[#7c3aed]">
-              {canDecideRequest ? 'Request' : 'Pending'}
+              {canDecideRequest ? t('chatInboxPage.request') : t('chatInboxPage.pending')}
             </span>
           ) : null}
 
@@ -598,7 +1153,7 @@ function ConversationRow({
             unread > 0 ? 'text-[#34313a]' : 'text-[#87838f]'
           }`}
         >
-          {latest?.body || 'Open this conversation'}
+          {latest?.body || t('chatInboxPage.openConversation')}
         </span>
       </span>
 
@@ -618,12 +1173,13 @@ function ConversationRow({
 }
 
 function SearchPersonRow({ user, onOpen }) {
+  const { t } = useDisplayTranslation()
   const resultType =
     user?.result_type === 'author' || user?.author_page_id
       ? 'author'
       : 'reader'
   const name =
-    user?.name || user?.page_name || user?.username || 'Shadow User'
+    user?.name || user?.page_name || user?.username || t('chatInboxPage.shadowUser')
   const username = user?.username || user?.page_username || ''
 
   return (
@@ -640,17 +1196,17 @@ function SearchPersonRow({ user, onOpen }) {
             {name}
           </strong>
           <span className="shrink-0 rounded-full bg-[#f2edff] px-2 py-1 text-[9px] font-bold text-[#7c3aed]">
-            {resultType === 'author' ? 'Author' : 'Reader'}
+            {resultType === 'author' ? t('chatInboxPage.author') : t('chatInboxPage.reader')}
           </span>
         </span>
 
         <span className="mt-1 block truncate text-[12px] font-bold text-[#87838f]">
-          {username ? `@${username}` : resultType === 'author' ? 'Author' : 'Reader'}
+          {username ? `@${username}` : resultType === 'author' ? t('chatInboxPage.author') : t('chatInboxPage.reader')}
         </span>
       </span>
 
       <span className="shrink-0 text-[11px] font-bold text-[#7c3aed]">
-        Message
+        {t('chatInboxPage.message')}
       </span>
     </button>
   )
@@ -658,6 +1214,7 @@ function SearchPersonRow({ user, onOpen }) {
 
 export default function ChatInboxPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const location = useLocation()
   const hideReaderFooter = location.state?.hideReaderFooter === true
   const searchRequestRef = useRef(0)
@@ -784,7 +1341,7 @@ const [soundSettings, setSoundSettings] =
         }
 
         setError(
-          loadError.message || 'Failed to load messages'
+          loadError.message || t('chatInboxPage.failedLoadMessages')
         )
         return null
       } finally {
@@ -793,7 +1350,7 @@ const [soundSettings, setSoundSettings] =
         }
       }
     },
-    [navigate]
+    [navigate, t]
   )
 
   useEffect(() => {
@@ -941,7 +1498,7 @@ const [soundSettings, setSoundSettings] =
 
         setSearchUsers([])
         setSearchError(
-          searchFailure.message || 'Failed to search people'
+          searchFailure.message || t('chatInboxPage.failedSearchPeople')
         )
       } finally {
         if (searchRequestRef.current === requestId) {
@@ -954,7 +1511,7 @@ const [soundSettings, setSoundSettings] =
       window.clearTimeout(timeoutId)
       controller.abort()
     }
-  }, [navigate, normalizedQuery])
+  }, [navigate, normalizedQuery, t])
 
   const unreadTotal = useMemo(
     () =>
@@ -1215,7 +1772,7 @@ const [soundSettings, setSoundSettings] =
       setError('')
     } catch (decisionError) {
       setError(
-        decisionError.message || 'Failed to update request'
+        decisionError.message || t('chatInboxPage.failedUpdateRequest')
       )
     } finally {
       setBusyRequest(null)
@@ -1290,7 +1847,7 @@ const [soundSettings, setSoundSettings] =
       setSelectedSearchAuthor({
         id: authorPageId,
         page_name:
-          user.page_name || user.name || 'Author',
+          user.page_name || user.name || t('chatInboxPage.author'),
         page_username:
           user.page_username || user.username || '',
         avatar_url: user.avatar_url || null,
@@ -1299,7 +1856,7 @@ const [soundSettings, setSoundSettings] =
     }
 
     if (!userId) {
-      setError('Reader profile is not available')
+      setError(t('chatInboxPage.readerProfileUnavailable'))
       return
     }
 
@@ -1309,7 +1866,7 @@ const [soundSettings, setSoundSettings] =
       name:
         user.name ||
         user.page_name ||
-        'Shadow Reader',
+        t('chatInboxPage.shadowReader'),
       username:
         user.username || user.page_username || '',
     })
@@ -1434,7 +1991,7 @@ const [soundSettings, setSoundSettings] =
     } catch (actionError) {
       showConversationMenuNotice(
         actionError.message ||
-          'Failed to load sound settings'
+          t('chatInboxPage.failedLoadSoundSettings')
       )
     } finally {
       setSoundLoading(false)
@@ -1470,7 +2027,7 @@ const [soundSettings, setSoundSettings] =
     } catch (actionError) {
       showConversationMenuNotice(
         actionError.message ||
-          'Failed to update sound'
+          t('chatInboxPage.failedUpdateSound')
       )
     } finally {
       setSelectionBusy('')
@@ -1502,7 +2059,7 @@ const [soundSettings, setSoundSettings] =
     } catch (actionError) {
       showConversationMenuNotice(
         actionError.message ||
-          'Failed to update tone'
+          t('chatInboxPage.failedUpdateTone')
       )
     } finally {
       setSelectionBusy('')
@@ -1529,7 +2086,7 @@ const [soundSettings, setSoundSettings] =
     } catch (actionError) {
       showConversationMenuNotice(
         actionError.message ||
-          'Failed to load folders'
+          t('chatInboxPage.failedLoadFolders')
       )
     } finally {
       setFolderLoading(false)
@@ -1572,7 +2129,7 @@ const [soundSettings, setSoundSettings] =
     } catch (actionError) {
       showConversationMenuNotice(
         actionError.message ||
-          'Failed to update folder'
+          t('chatInboxPage.failedUpdateFolder')
       )
     } finally {
       setSelectionBusy('')
@@ -1583,7 +2140,7 @@ const [soundSettings, setSoundSettings] =
     if (selectionBusy) return
 
     const name = window.prompt(
-      'New folder name'
+      t('chatInboxPage.newFolderName')
     )
 
     if (name === null) return
@@ -1592,7 +2149,7 @@ const [soundSettings, setSoundSettings] =
 
     if (!safeName) {
       showConversationMenuNotice(
-        'Folder name is required'
+        t('chatInboxPage.folderNameRequired')
       )
       return
     }
@@ -1614,7 +2171,7 @@ const [soundSettings, setSoundSettings] =
     } catch (actionError) {
       showConversationMenuNotice(
         actionError.message ||
-          'Failed to create folder'
+          t('chatInboxPage.failedCreateFolder')
       )
     } finally {
       setSelectionBusy('')
@@ -1629,7 +2186,7 @@ const [soundSettings, setSoundSettings] =
 
     if (
       !window.confirm(
-        'Clear all message history for this chat?'
+        t('chatInboxPage.clearHistoryConfirm')
       )
     ) {
       return
@@ -1646,12 +2203,12 @@ const [soundSettings, setSoundSettings] =
       window.dispatchEvent(
         new CustomEvent('shadow-chat-updated')
       )
-      showSelectionNotice('Chat history cleared')
+      showSelectionNotice(t('chatInboxPage.chatHistoryCleared'))
     } catch (actionError) {
       closeConversationMenu()
       showSelectionNotice(
         actionError.message ||
-          'Failed to clear chat history'
+          t('chatInboxPage.failedClearHistory')
       )
     } finally {
       setSelectionBusy('')
@@ -1675,12 +2232,12 @@ const [soundSettings, setSoundSettings] =
       window.dispatchEvent(
         new CustomEvent('shadow-chat-updated')
       )
-      showSelectionNotice('Marked as unread')
+      showSelectionNotice(t('chatInboxPage.markedUnread'))
     } catch (actionError) {
       closeConversationMenu()
       showSelectionNotice(
         actionError.message ||
-          'Failed to mark as unread'
+          t('chatInboxPage.failedMarkUnread')
       )
     } finally {
       setSelectionBusy('')
@@ -1713,13 +2270,13 @@ const [soundSettings, setSoundSettings] =
         new CustomEvent('shadow-chat-updated')
       )
       showSelectionNotice(
-        unpinning ? 'Chat unpinned' : 'Chat pinned'
+        unpinning ? t('chatInboxPage.chatUnpinned') : t('chatInboxPage.chatPinned')
       )
     } catch (actionError) {
       closeConversationMenu()
       showSelectionNotice(
         actionError.message ||
-          'Failed to update pin'
+          t('chatInboxPage.failedUpdatePin')
       )
     } finally {
       setSelectionBusy('')
@@ -1744,11 +2301,11 @@ const [soundSettings, setSoundSettings] =
       window.dispatchEvent(
         new CustomEvent('shadow-chat-updated')
       )
-      showSelectionNotice('Chat archived')
+      showSelectionNotice(t('chatInboxPage.chatArchived'))
     } catch (actionError) {
       setError(
         actionError.message ||
-          'Failed to archive chat'
+          t('chatInboxPage.failedArchiveChat')
       )
     } finally {
       setSelectionBusy('')
@@ -1778,12 +2335,12 @@ const [soundSettings, setSoundSettings] =
         new CustomEvent('shadow-chat-updated')
       )
       showSelectionNotice(
-        'Notifications muted'
+        t('chatInboxPage.notificationsMuted')
       )
     } catch (actionError) {
       setError(
         actionError.message ||
-          'Failed to mute chat'
+          t('chatInboxPage.failedMuteChat')
       )
     } finally {
       setSelectionBusy('')
@@ -1808,12 +2365,12 @@ const [soundSettings, setSoundSettings] =
         new CustomEvent('shadow-chat-updated')
       )
       showSelectionNotice(
-        'Notifications unmuted'
+        t('chatInboxPage.notificationsUnmuted')
       )
     } catch (actionError) {
       setError(
         actionError.message ||
-          'Failed to unmute chat'
+          t('chatInboxPage.failedUnmuteChat')
       )
     } finally {
       setSelectionBusy('')
@@ -1828,7 +2385,7 @@ const [soundSettings, setSoundSettings] =
 
     if (
       !window.confirm(
-        'Delete this chat from your inbox?'
+        t('chatInboxPage.deleteChatConfirm')
       )
     ) {
       return
@@ -1852,7 +2409,7 @@ const [soundSettings, setSoundSettings] =
     } catch (actionError) {
       setError(
         actionError.message ||
-          'Failed to delete chat'
+          t('chatInboxPage.failedDeleteChat')
       )
     } finally {
       setSelectionBusy('')
@@ -1885,13 +2442,13 @@ const [soundSettings, setSoundSettings] =
       )
       showSelectionNotice(
         ids.length === 1
-          ? 'Chat muted'
-          : `${ids.length} chats muted`
+          ? t('chatInboxPage.chatMuted')
+          : t('chatInboxPage.chatsMuted', { count: ids.length.toLocaleString(getDisplayLanguageId()) })
       )
     } catch (muteError) {
       setError(
         muteError.message ||
-          'Failed to mute selected chats'
+          t('chatInboxPage.failedMuteSelected')
       )
       await loadConversations({ silent: true })
     } finally {
@@ -1924,13 +2481,13 @@ const [soundSettings, setSoundSettings] =
       )
       showSelectionNotice(
         ids.length === 1
-          ? 'Chat unmuted'
-          : `${ids.length} chats unmuted`
+          ? t('chatInboxPage.chatUnmuted')
+          : t('chatInboxPage.chatsUnmuted', { count: ids.length.toLocaleString(getDisplayLanguageId()) })
       )
     } catch (muteError) {
       setError(
         muteError.message ||
-          'Failed to unmute selected chats'
+          t('chatInboxPage.failedUnmuteSelected')
       )
       await loadConversations({ silent: true })
     } finally {
@@ -1964,7 +2521,7 @@ const [soundSettings, setSoundSettings] =
     } catch (archiveError) {
       setError(
         archiveError.message ||
-          'Failed to archive selected chats'
+          t('chatInboxPage.failedArchiveSelected')
       )
       await loadConversations({ silent: true })
       clearConversationSelection()
@@ -1985,9 +2542,11 @@ const [soundSettings, setSoundSettings] =
 
     if (
       !window.confirm(
-        `Delete ${count} chat${
-          count === 1 ? '' : 's'
-        } from your inbox?`
+        count === 1
+          ? t('chatInboxPage.deleteSelectedOneConfirm')
+          : t('chatInboxPage.deleteSelectedManyConfirm', {
+              count: count.toLocaleString(getDisplayLanguageId()),
+            })
       )
     ) {
       return
@@ -2014,7 +2573,7 @@ const [soundSettings, setSoundSettings] =
     } catch (deleteError) {
       setError(
         deleteError.message ||
-          'Failed to delete selected chats'
+          t('chatInboxPage.failedDeleteSelected')
       )
       await loadConversations({ silent: true })
       clearConversationSelection()
@@ -2087,6 +2646,8 @@ const [soundSettings, setSoundSettings] =
           color: var(--shadow-placeholder) !important;
         }
 
+        html.dark .chat-inbox-page [class~="bg-[#e5e5e7]"],
+        html.dark .chat-inbox-page [class~="bg-[#ececef]"],
         html.dark .chat-inbox-page [class~="bg-[#efeff3]"],
         html.dark .chat-inbox-page [class~="bg-[#e9e9ee]"],
         html.dark .chat-inbox-page [class~="bg-[#eeeef2]"],
@@ -2187,14 +2748,14 @@ const [soundSettings, setSoundSettings] =
               <button
                 type="button"
                 onClick={clearConversationSelection}
-                aria-label="Exit selection"
+                aria-label={t('chatInboxPage.exitSelection')}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
               >
                 <X size={25} />
               </button>
 
               <div className="min-w-[36px] text-[20px] font-semibold text-[#111827]">
-                {selectedConversationIds.size}
+                {selectedConversationIds.size.toLocaleString(getDisplayLanguageId())}
               </div>
 
               <div className="ml-auto flex items-center gap-1">
@@ -2211,8 +2772,8 @@ const [soundSettings, setSoundSettings] =
                   disabled={Boolean(selectionBusy)}
                   aria-label={
                     allSelectedMuted
-                      ? 'Unmute selected chats'
-                      : 'Mute selected chats'
+                      ? t('chatInboxPage.unmuteSelected')
+                      : t('chatInboxPage.muteSelected')
                   }
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-40"
                 >
@@ -2231,7 +2792,7 @@ const [soundSettings, setSoundSettings] =
                   type="button"
                   onClick={handleArchiveSelected}
                   disabled={Boolean(selectionBusy)}
-                  aria-label="Archive selected chats"
+                  aria-label={t('chatInboxPage.archiveSelected')}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-40"
                 >
                   {selectionBusy === 'archive' ? (
@@ -2248,7 +2809,7 @@ const [soundSettings, setSoundSettings] =
                   type="button"
                   onClick={handleDeleteSelected}
                   disabled={Boolean(selectionBusy)}
-                  aria-label="Delete selected chats"
+                  aria-label={t('chatInboxPage.deleteSelected')}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-40"
                 >
                   {selectionBusy === 'delete' ? (
@@ -2268,7 +2829,7 @@ const [soundSettings, setSoundSettings] =
                       (current) => !current
                     )
                   }
-                  aria-label="More selected chat actions"
+                  aria-label={t('chatInboxPage.moreSelectedActions')}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
                 >
                   <EllipsisVertical size={22} />
@@ -2279,7 +2840,7 @@ const [soundSettings, setSoundSettings] =
                 <>
                   <button
                     type="button"
-                    aria-label="Close selection menu"
+                    aria-label={t('chatInboxPage.closeSelectionMenu')}
                     onClick={() =>
                       setSelectionMenuOpen(false)
                     }
@@ -2291,13 +2852,13 @@ const [soundSettings, setSoundSettings] =
                       type="button"
                       onClick={() =>
                         showSelectionNotice(
-                          'Saved Messages is coming soon.'
+                          t('chatInboxPage.savedMessagesComingSoon')
                         )
                       }
                       className="flex h-12 w-full items-center gap-3 px-4 text-left text-[14px] font-normal text-[#111827] active:bg-[#f5f5f7]"
                     >
                       <Bookmark size={20} />
-                      Saved Messages
+                      {t('chatInboxPage.savedMessages')}
                     </button>
 
                     <button
@@ -2310,7 +2871,7 @@ const [soundSettings, setSoundSettings] =
   className="flex h-12 w-full items-center gap-3 px-4 text-left text-[14px] font-normal text-[#111827] active:bg-[#f5f5f7]"
 >
   <UsersRound size={20} />
-  New Group
+  {t('chatInboxPage.newGroup')}
 </button>
                   </div>
                 </>
@@ -2321,12 +2882,12 @@ const [soundSettings, setSoundSettings] =
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h1 className="text-[25px] font-bold tracking-[-0.03em] text-[#111827]">
-                    Messages
+                    {t('chatInboxPage.messages')}
                   </h1>
 
                   <div className="mt-1 flex items-center gap-2 text-[11px] font-bold text-[#8a8792]">
                     <span className="h-2 w-2 rounded-full bg-[#7c3aed]" />
-                    {unreadTotal} unread
+                    {t('chatInboxPage.unreadCount', { count: unreadTotal.toLocaleString(getDisplayLanguageId()) })}
                   </div>
                 </div>
 
@@ -2335,7 +2896,7 @@ const [soundSettings, setSoundSettings] =
                   onClick={() =>
                     setNewMessageOpen(true)
                   }
-                  aria-label="New message"
+                  aria-label={t('chatInboxPage.newMessage')}
                   className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f1fb] text-[#7c3aed] transition active:scale-90"
                 >
                   <SquarePen
@@ -2361,14 +2922,14 @@ const [soundSettings, setSoundSettings] =
                       )
                     )
                   }
-                  placeholder="Search by name or username"
+                  placeholder={t('chatInboxPage.searchByName')}
                   className="h-[46px] w-full rounded-full border border-transparent bg-[#f4f4f7] pl-11 pr-4 text-[14px] font-normal text-[#111827] outline-none transition placeholder:font-normal placeholder:text-[#8e8b96] focus:border-[#d9cdf8] focus:bg-white"
                 />
               </div>
 
               <div className="shadow-chat-scroll -mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1">
                 <QuickCircle
-                  label="Request"
+                  label={t('chatInboxPage.request')}
                   count={incomingRequests.length}
                   onClick={chooseRequestFilter}
                   fallback={
@@ -2436,7 +2997,7 @@ const [soundSettings, setSoundSettings] =
         <>
           <button
             type="button"
-            aria-label="Close mute options"
+            aria-label={t('chatInboxPage.closeMuteOptions')}
             onClick={() => setMuteSheetOpen(false)}
             className="fixed inset-0 z-[118] bg-black/30"
           />
@@ -2444,14 +3005,14 @@ const [soundSettings, setSoundSettings] =
           <section className="fixed inset-x-0 bottom-0 z-[119] mx-auto w-full max-w-[620px] rounded-t-[24px] bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+18px)] pt-4 shadow-[0_-14px_36px_rgba(17,24,39,0.14)]">
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d7d7dc]" />
             <h2 className="px-1 text-[16px] font-semibold text-[#111827]">
-              Mute notifications
+              {t('chatInboxPage.muteNotifications')}
             </h2>
             <p className="mt-1 px-1 text-[11px] font-normal text-[#85818c]">
-              Choose how long to mute the selected chat.
+              {t('chatInboxPage.chooseMuteSelected')}
             </p>
 
             <div className="mt-3 overflow-hidden rounded-[16px] bg-[#f6f6f8]">
-              {MUTE_OPTIONS.map(([value, label]) => (
+              {MUTE_OPTIONS.map(([value, labelKey]) => (
                 <button
                   key={value}
                   type="button"
@@ -2462,7 +3023,7 @@ const [soundSettings, setSoundSettings] =
                   className="flex h-12 w-full items-center gap-3 border-b border-white px-4 text-left text-[14px] font-normal text-[#111827] last:border-b-0 active:bg-[#ececf0] disabled:opacity-50"
                 >
                   <VolumeX size={19} />
-                  {label}
+                  {t(`chatInboxPage.${labelKey}`)}
                 </button>
               ))}
             </div>
@@ -2472,7 +3033,7 @@ const [soundSettings, setSoundSettings] =
               onClick={() => setMuteSheetOpen(false)}
               className="mt-3 h-11 w-full rounded-[14px] bg-[#f0f0f3] text-[13px] font-semibold text-[#555560]"
             >
-              Cancel
+              {t('chatInboxPage.cancel')}
             </button>
           </section>
         </>
@@ -2482,7 +3043,7 @@ const [soundSettings, setSoundSettings] =
         <>
           <button
             type="button"
-            aria-label="Close chat menu"
+            aria-label={t('chatInboxPage.closeChatMenu')}
             onClick={closeConversationMenu}
             className="fixed inset-0 z-[124]"
           />
@@ -2499,7 +3060,7 @@ const [soundSettings, setSoundSettings] =
               <>
                 <ConversationMenuRow
                   icon={Archive}
-                  label="Archive"
+                  label={t('chatInboxPage.archive')}
                   disabled={Boolean(
                     selectionBusy
                   )}
@@ -2510,8 +3071,8 @@ const [soundSettings, setSoundSettings] =
   icon={Pin}
   label={
     conversationMenu.conversation?.is_pinned
-      ? 'Unpin'
-      : 'Pin'
+      ? t('chatInboxPage.unpin')
+      : t('chatInboxPage.pin')
   }
   disabled={Boolean(selectionBusy)}
   onClick={handleMenuPinToggle}
@@ -2523,8 +3084,8 @@ const [soundSettings, setSoundSettings] =
     conversationMenu
       .conversation
       ?.is_muted
-      ? 'Unmute notifications'
-      : 'Mute notifications'
+      ? t('chatInboxPage.unmuteNotifications')
+      : t('chatInboxPage.muteNotifications')
   }
   arrow={
     !conversationMenu
@@ -2536,20 +3097,20 @@ const [soundSettings, setSoundSettings] =
 
                 <ConversationMenuRow
   icon={Circle}
-  label="Mark as unread"
+  label={t('chatInboxPage.markUnread')}
   disabled={Boolean(selectionBusy)}
   onClick={handleMenuMarkUnread}
 />
                 <ConversationMenuRow
   icon={Folder}
-  label="Add to folder"
+  label={t('chatInboxPage.addToFolder')}
   arrow
   onClick={handleOpenFolderMenu}
 />
 
                 <ConversationMenuRow
   icon={X}
-  label="Clear history"
+  label={t('chatInboxPage.clearHistory')}
   disabled={Boolean(selectionBusy)}
   onClick={handleMenuClearHistory}
 />
@@ -2558,7 +3119,7 @@ const [soundSettings, setSoundSettings] =
 
                 <ConversationMenuRow
                   icon={Trash2}
-                  label="Delete chat"
+                  label={t('chatInboxPage.deleteChat')}
                   danger
                   disabled={Boolean(
                     selectionBusy
@@ -2573,7 +3134,7 @@ const [soundSettings, setSoundSettings] =
               <>
                 <ConversationMenuRow
                   icon={ChevronLeft}
-                  label="Select tone"
+                  label={t('chatInboxPage.selectTone')}
                   onClick={() =>
                     setConversationMenuView(
                       'mute'
@@ -2584,7 +3145,7 @@ const [soundSettings, setSoundSettings] =
                 <div className="my-1 h-px bg-[#ececef]" />
 
                 {CHAT_TONE_OPTIONS.map(
-                  ([value, label]) => (
+                  ([value, labelKey]) => (
                     <ConversationMenuRow
                       key={value}
                       icon={
@@ -2593,7 +3154,7 @@ const [soundSettings, setSoundSettings] =
                           ? Check
                           : Circle
                       }
-                      label={label}
+                      label={t(`chatInboxPage.${labelKey}`)}
                       disabled={Boolean(
                         selectionBusy
                       )}
@@ -2614,7 +3175,7 @@ const [soundSettings, setSoundSettings] =
               <>
                 <ConversationMenuRow
                   icon={ChevronLeft}
-                  label="Mute notifications"
+                  label={t('chatInboxPage.muteNotifications')}
                   onClick={() =>
                     setConversationMenuView(
                       'main'
@@ -2636,7 +3197,7 @@ const [soundSettings, setSoundSettings] =
                   <>
                     <ConversationMenuRow
                       icon={Circle}
-                      label="Select tone"
+                      label={t('chatInboxPage.selectTone')}
                       arrow
                       onClick={() =>
                         setConversationMenuView(
@@ -2649,8 +3210,8 @@ const [soundSettings, setSoundSettings] =
                       icon={VolumeX}
                       label={
                         soundSettings.sound_enabled
-                          ? 'Disable sound'
-                          : 'Enable sound'
+                          ? t('chatInboxPage.disableSound')
+                          : t('chatInboxPage.enableSound')
                       }
                       disabled={Boolean(
                         selectionBusy
@@ -2662,7 +3223,7 @@ const [soundSettings, setSoundSettings] =
 
                     <ConversationMenuRow
                       icon={VolumeX}
-                      label="Mute for..."
+                      label={t('chatInboxPage.muteFor')}
                       arrow
                       onClick={() =>
                         setConversationMenuView(
@@ -2673,7 +3234,7 @@ const [soundSettings, setSoundSettings] =
 
                     <ConversationMenuRow
                       icon={VolumeX}
-                      label="Mute forever"
+                      label={t('chatInboxPage.muteForever')}
                       danger
                       disabled={Boolean(
                         selectionBusy
@@ -2696,7 +3257,7 @@ const [soundSettings, setSoundSettings] =
               <>
                 <ConversationMenuRow
                   icon={ChevronLeft}
-                  label="Mute for..."
+                  label={t('chatInboxPage.muteFor')}
                   onClick={() =>
                     setConversationMenuView(
                       'mute'
@@ -2710,11 +3271,11 @@ const [soundSettings, setSoundSettings] =
                   ([value]) =>
                     value !== 'forever'
                 ).map(
-                  ([value, label]) => (
+                  ([value, labelKey]) => (
                     <ConversationMenuRow
                       key={value}
                       icon={VolumeX}
-                      label={label}
+                      label={t(`chatInboxPage.${labelKey}`)}
                       disabled={Boolean(
                         selectionBusy
                       )}
@@ -2734,7 +3295,7 @@ const [soundSettings, setSoundSettings] =
               <>
                 <ConversationMenuRow
                   icon={ChevronLeft}
-                  label="Add to folder"
+                  label={t('chatInboxPage.addToFolder')}
                   onClick={() =>
                     setConversationMenuView(
                       'main'
@@ -2770,13 +3331,13 @@ const [soundSettings, setSoundSettings] =
                   ))
                 ) : (
                   <div className="px-4 py-3 text-[11px] text-[#92929b]">
-                    No folders yet
+                    {t('chatInboxPage.noFoldersYet')}
                   </div>
                 )}
 
                 <ConversationMenuRow
                   icon={Folder}
-                  label="Create new folder"
+                  label={t('chatInboxPage.createNewFolder')}
                   disabled={Boolean(selectionBusy)}
                   onClick={handleCreateFolder}
                 />
@@ -2813,10 +3374,10 @@ activeFilter === 'all' ? (
 
     <span className="min-w-0 flex-1">
       <strong className="block text-[14px] font-semibold text-[#111827]">
-        Archived chats
+        {t('chatInboxPage.archivedChats')}
       </strong>
       <span className="mt-0.5 block text-[11px] text-[#85888e]">
-        {archivedCount} archived
+        {t('chatInboxPage.archivedCount', { count: archivedCount.toLocaleString(getDisplayLanguageId()) })}
       </span>
     </span>
   </button>
@@ -2850,7 +3411,7 @@ activeFilter === 'all' ? (
             onClick={() => setActiveFilter('pending')}
             className="mx-4 mt-3 text-[11px] font-bold text-[#7c3aed]"
           >
-            View {incomingRequests.length - 1} more requests
+            {t('chatInboxPage.viewMoreRequests', { count: (incomingRequests.length - 1).toLocaleString(getDisplayLanguageId()) })}
           </button>
         ) : null}
 
@@ -2861,7 +3422,7 @@ activeFilter === 'all' ? (
             {visibleConversations.length ? (
               <section>
                 <h2 className="px-2 pb-2 pt-1 text-[13px] font-bold text-[#111827]">
-                  Conversations
+                  {t('chatInboxPage.conversations')}
                 </h2>
                 {visibleConversations.map((conversation) => (
                   <ConversationRow
@@ -2893,7 +3454,7 @@ activeFilter === 'all' ? (
 
             {normalizedQuery.length < 2 ? (
               <div className="mx-2 mt-3 rounded-[16px] bg-[#f6f3fb] px-4 py-4 text-center text-[12px] font-bold leading-5 text-[#756f7d]">
-                Enter at least 2 characters to search all readers and authors by name or username.
+                {t('chatInboxPage.searchMinChars')}
               </div>
             ) : searchLoading ? (
               <div className="flex min-h-[180px] items-center justify-center text-[#7c3aed]">
@@ -2906,7 +3467,7 @@ activeFilter === 'all' ? (
             ) : peopleResults.length ? (
               <section className={visibleConversations.length ? 'mt-3' : ''}>
                 <h2 className="px-2 pb-2 pt-1 text-[13px] font-bold text-[#111827]">
-                  Readers and Authors
+                  {t('chatInboxPage.readersAndAuthors')}
                 </h2>
                 {peopleResults.map((user) => (
                   <SearchPersonRow
