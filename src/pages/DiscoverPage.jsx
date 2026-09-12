@@ -36,6 +36,22 @@ import AuthorDiscoverPostText from '../components/author-posts/AuthorDiscoverPos
 import {
   ProfessionalSinglePostImage,
 } from '../components/common/ProfessionalPostContent'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('discoverPage', {
+  en: { justNow: 'Just now', minutesAgo: '{{count}}m', hoursAgo: '{{count}}h', daysAgo: '{{count}}d', author: 'Author', authorPost: '{{author}} post', music: 'Music', search: 'Search', chat: 'Chat', openAuthor: 'Open {{name}}', failedAuthorPosts: 'Failed to load author posts', failedReaderPosts: 'Failed to load reader posts', loginFirst: 'Please login first', failedReaction: 'Failed to update reaction', failedFollow: 'Failed to follow author', following: 'Following...', follow: 'Follow', more: 'More', comments: '{{count}} comments', echoes: '{{count}} echoes', like: 'Like', comment: 'Comment', noPosts: 'No posts yet', noPostsText: 'Follow authors to see their latest posts here.', findAuthors: 'Find authors', couldNotLoad: 'Could not load posts', connectionRetry: 'Check your connection and try again.', retry: 'Retry', failedPromotions: 'Failed to load Shadow Mall promotions', failedSaleStatus: 'Failed to load story sale statuses', failedSocialStatus: 'Failed to load promotion social statuses', failedPurchaseStatus: 'Failed to check purchase status', failedPurchase: 'Failed to purchase story', alreadyOwned: 'You already own this story.', purchaseSuccess: 'Story purchased successfully.', ad: 'Ad', sponsoredOptions: 'More sponsored options', hidePromotion: 'Hide sponsored promotion', promotionAlt: 'Shadow Mall promotion', moreCaption: 'more', off: 'OFF', checking: 'Checking...', readStory: 'Read Story', topUp: 'Top up', buyNow: 'Buy now', shopNow: 'Shop now', confirmStoryPurchase: 'Confirm story purchase', closePurchase: 'Close purchase confirmation', confirmPurchase: 'Confirm purchase', thisStory: 'this story', purchasePrefix: 'Purchase', purchaseSuffix: 'and permanently unlock all current and future episodes.', price: 'Price', balance: 'Your balance', cancel: 'Cancel', purchasing: 'Purchasing...', confirm: 'Confirm', loading: 'Loading', loadMorePosts: 'Load more posts', authorPostComments: 'Author post comments' },
+  km: { justNow: 'ទើបតែឥឡូវនេះ', minutesAgo: '{{count}}នាទី', hoursAgo: '{{count}}ម៉ោង', daysAgo: '{{count}}ថ្ងៃ', author: 'អ្នកនិពន្ធ', authorPost: 'Post របស់ {{author}}', music: 'តន្ត្រី', search: 'ស្វែងរក', chat: 'Chat', openAuthor: 'បើក {{name}}', failedAuthorPosts: 'មិនអាចផ្ទុក Post អ្នកនិពន្ធបានទេ', failedReaderPosts: 'មិនអាចផ្ទុក Post អ្នកអានបានទេ', loginFirst: 'សូម Login ជាមុន', failedReaction: 'មិនអាច Update Reaction បានទេ', failedFollow: 'មិនអាច Follow អ្នកនិពន្ធបានទេ', following: 'កំពុង Follow...', follow: 'Follow', more: 'បន្ថែម', comments: '{{count}} មតិ', echoes: '{{count}} Echo', like: 'ចូលចិត្ត', comment: 'មតិ', noPosts: 'មិនទាន់មាន Post', noPostsText: 'Follow អ្នកនិពន្ធដើម្បីមើល Post ថ្មីៗនៅទីនេះ។', findAuthors: 'រកអ្នកនិពន្ធ', couldNotLoad: 'មិនអាចផ្ទុក Post បានទេ', connectionRetry: 'ពិនិត្យអ៊ីនធឺណិត ហើយសាកម្តងទៀត។', retry: 'សាកម្តងទៀត', failedPromotions: 'មិនអាចផ្ទុក Promotion របស់ Shadow Mall បានទេ', failedSaleStatus: 'មិនអាចពិនិត្យស្ថានភាពលក់រឿងបានទេ', failedSocialStatus: 'មិនអាចផ្ទុកស្ថានភាព Promotion បានទេ', failedPurchaseStatus: 'មិនអាចពិនិត្យស្ថានភាពការទិញបានទេ', failedPurchase: 'មិនអាចទិញរឿងបានទេ', alreadyOwned: 'អ្នកមានរឿងនេះរួចហើយ។', purchaseSuccess: 'បានទិញរឿងដោយជោគជ័យ។', ad: 'ពាណិជ្ជកម្ម', sponsoredOptions: 'ជម្រើសពាណិជ្ជកម្មបន្ថែម', hidePromotion: 'លាក់ Promotion នេះ', promotionAlt: 'Promotion របស់ Shadow Mall', moreCaption: 'បន្ថែម', off: 'បញ្ចុះ', checking: 'កំពុងពិនិត្យ...', readStory: 'អានរឿង', topUp: 'បញ្ចូល Diamond', buyNow: 'ទិញឥឡូវនេះ', shopNow: 'ទៅហាង', confirmStoryPurchase: 'បញ្ជាក់ការទិញរឿង', closePurchase: 'បិទការបញ្ជាក់ទិញ', confirmPurchase: 'បញ្ជាក់ការទិញ', thisStory: 'រឿងនេះ', purchasePrefix: 'ទិញ', purchaseSuffix: 'និងដោះសោជាអចិន្ត្រៃយ៍គ្រប់ភាគបច្ចុប្បន្ន និងភាគថ្មីនាពេលអនាគត។', price: 'តម្លៃ', balance: 'Diamond របស់អ្នក', cancel: 'បោះបង់', purchasing: 'កំពុងទិញ...', confirm: 'បញ្ជាក់', loading: 'កំពុងផ្ទុក', loadMorePosts: 'ផ្ទុក Post បន្ថែម', authorPostComments: 'មតិលើ Post អ្នកនិពន្ធ' },
+  zh: { justNow: '刚刚', minutesAgo: '{{count}}分钟前', hoursAgo: '{{count}}小时前', daysAgo: '{{count}}天前', author: '作者', authorPost: '{{author}} 的帖子', music: '音乐', search: '搜索', chat: '聊天', openAuthor: '打开 {{name}}', failedAuthorPosts: '无法加载作者帖子', failedReaderPosts: '无法加载读者帖子', loginFirst: '请先登录', failedReaction: '无法更新反应', failedFollow: '无法关注作者', following: '关注中...', follow: '关注', more: '更多', comments: '{{count}} 条评论', echoes: '{{count}} 次 Echo', like: '赞', comment: '评论', noPosts: '暂无帖子', noPostsText: '关注作者后可在这里看到他们的最新帖子。', findAuthors: '发现作者', couldNotLoad: '无法加载帖子', connectionRetry: '请检查网络后重试。', retry: '重试', failedPromotions: '无法加载 Shadow Mall 推广', failedSaleStatus: '无法加载故事销售状态', failedSocialStatus: '无法加载推广互动状态', failedPurchaseStatus: '无法检查购买状态', failedPurchase: '无法购买故事', alreadyOwned: '你已经拥有这个故事。', purchaseSuccess: '故事购买成功。', ad: '广告', sponsoredOptions: '更多推广选项', hidePromotion: '隐藏推广', promotionAlt: 'Shadow Mall 推广', moreCaption: '更多', off: '优惠', checking: '检查中...', readStory: '阅读故事', topUp: '充值', buyNow: '立即购买', shopNow: '去购买', confirmStoryPurchase: '确认购买故事', closePurchase: '关闭购买确认', confirmPurchase: '确认购买', thisStory: '这个故事', purchasePrefix: '购买', purchaseSuffix: '并永久解锁当前和未来的所有章节。', price: '价格', balance: '你的余额', cancel: '取消', purchasing: '购买中...', confirm: '确认', loading: '加载中', loadMorePosts: '加载更多帖子', authorPostComments: '作者帖子评论' },
+  ja: { justNow: 'たった今', minutesAgo: '{{count}}分前', hoursAgo: '{{count}}時間前', daysAgo: '{{count}}日前', author: '作者', authorPost: '{{author}} の投稿', music: '音楽', search: '検索', chat: 'チャット', openAuthor: '{{name}} を開く', failedAuthorPosts: '作者の投稿を読み込めませんでした', failedReaderPosts: '読者の投稿を読み込めませんでした', loginFirst: '先にログインしてください', failedReaction: 'リアクションを更新できませんでした', failedFollow: '作者をフォローできませんでした', following: 'フォロー中...', follow: 'フォロー', more: 'その他', comments: 'コメント {{count}}件', echoes: 'Echo {{count}}件', like: 'いいね', comment: 'コメント', noPosts: '投稿はまだありません', noPostsText: '作者をフォローすると最新投稿がここに表示されます。', findAuthors: '作者を探す', couldNotLoad: '投稿を読み込めませんでした', connectionRetry: '接続を確認してもう一度お試しください。', retry: '再試行', failedPromotions: 'Shadow Mall のプロモーションを読み込めませんでした', failedSaleStatus: 'ストーリー販売状態を読み込めませんでした', failedSocialStatus: 'プロモーションの状態を読み込めませんでした', failedPurchaseStatus: '購入状態を確認できませんでした', failedPurchase: 'ストーリーを購入できませんでした', alreadyOwned: 'このストーリーはすでに所有しています。', purchaseSuccess: 'ストーリーを購入しました。', ad: '広告', sponsoredOptions: 'スポンサーオプション', hidePromotion: 'プロモーションを非表示', promotionAlt: 'Shadow Mall プロモーション', moreCaption: 'もっと見る', off: 'OFF', checking: '確認中...', readStory: 'ストーリーを読む', topUp: 'チャージ', buyNow: '今すぐ購入', shopNow: 'ショップへ', confirmStoryPurchase: 'ストーリー購入を確認', closePurchase: '購入確認を閉じる', confirmPurchase: '購入を確認', thisStory: 'このストーリー', purchasePrefix: '購入:', purchaseSuffix: '現在および今後のすべてのエピソードを永久にアンロックします。', price: '価格', balance: '残高', cancel: 'キャンセル', purchasing: '購入中...', confirm: '確認', loading: '読み込み中', loadMorePosts: 'さらに投稿を読み込む', authorPostComments: '作者投稿のコメント' },
+  ko: { justNow: '방금', minutesAgo: '{{count}}분 전', hoursAgo: '{{count}}시간 전', daysAgo: '{{count}}일 전', author: '작가', authorPost: '{{author}}의 게시물', music: '음악', search: '검색', chat: '채팅', openAuthor: '{{name}} 열기', failedAuthorPosts: '작가 게시물을 불러오지 못했습니다', failedReaderPosts: '독자 게시물을 불러오지 못했습니다', loginFirst: '먼저 로그인해 주세요', failedReaction: '리액션을 업데이트하지 못했습니다', failedFollow: '작가를 팔로우하지 못했습니다', following: '팔로우 중...', follow: '팔로우', more: '더 보기', comments: '댓글 {{count}}개', echoes: 'Echo {{count}}개', like: '좋아요', comment: '댓글', noPosts: '아직 게시물이 없습니다', noPostsText: '작가를 팔로우하면 최신 게시물이 여기에 표시됩니다.', findAuthors: '작가 찾기', couldNotLoad: '게시물을 불러오지 못했습니다', connectionRetry: '연결 상태를 확인하고 다시 시도해 주세요.', retry: '다시 시도', failedPromotions: 'Shadow Mall 프로모션을 불러오지 못했습니다', failedSaleStatus: '스토리 판매 상태를 불러오지 못했습니다', failedSocialStatus: '프로모션 상태를 불러오지 못했습니다', failedPurchaseStatus: '구매 상태를 확인하지 못했습니다', failedPurchase: '스토리를 구매하지 못했습니다', alreadyOwned: '이미 이 스토리를 보유하고 있습니다.', purchaseSuccess: '스토리를 구매했습니다.', ad: '광고', sponsoredOptions: '광고 옵션 더 보기', hidePromotion: '프로모션 숨기기', promotionAlt: 'Shadow Mall 프로모션', moreCaption: '더 보기', off: '할인', checking: '확인 중...', readStory: '스토리 읽기', topUp: '충전', buyNow: '지금 구매', shopNow: '쇼핑하기', confirmStoryPurchase: '스토리 구매 확인', closePurchase: '구매 확인 닫기', confirmPurchase: '구매 확인', thisStory: '이 스토리', purchasePrefix: '구매:', purchaseSuffix: '현재 및 앞으로 공개될 모든 에피소드를 영구적으로 잠금 해제합니다.', price: '가격', balance: '내 잔액', cancel: '취소', purchasing: '구매 중...', confirm: '확인', loading: '불러오는 중', loadMorePosts: '게시물 더 불러오기', authorPostComments: '작가 게시물 댓글' },
+})
+
+const DISPLAY_LOCALES = { en: 'en-US', km: 'km-KH', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR' }
+
+function discoverText(key, options) {
+  return getDisplayText(`discoverPage.${key}`, options)
+}
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
@@ -200,23 +216,20 @@ function renderPostTextWithLinks(text, postId) {
 
 function formatPostTime(value) {
   const timestamp = new Date(value || 0).getTime()
-
-  if (!timestamp) return 'Just now'
+  if (!timestamp) return discoverText('justNow')
 
   const difference = Math.max(0, Date.now() - timestamp)
   const minutes = Math.floor(difference / 60000)
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
 
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m`
-  if (hours < 24) return `${hours}h`
-  if (days < 7) return `${days}d`
+  if (minutes < 1) return discoverText('justNow')
+  if (minutes < 60) return discoverText('minutesAgo', { count: minutes })
+  if (hours < 24) return discoverText('hoursAgo', { count: hours })
+  if (days < 7) return discoverText('daysAgo', { count: days })
 
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(timestamp))
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(timestamp))
 }
 
 function mergeUniquePosts(current, incoming) {
@@ -254,7 +267,7 @@ async function fetchFollowedPosts(token, cursor = '') {
 
   if (!response.ok || data.ok === false) {
     throw new Error(
-      data.message || 'Failed to load author posts'
+      data.message || discoverText('failedAuthorPosts')
     )
   }
 
@@ -285,7 +298,7 @@ async function fetchReaderPosts(token) {
   if (!response.ok || data.ok === false) {
     throw new Error(
       data.message ||
-        'Failed to load reader posts'
+        discoverText('failedReaderPosts')
     )
   }
 
@@ -515,7 +528,7 @@ async function fetchShadowMallPromotions(
 
   if (!response.ok || data.ok === false) {
     throw new Error(
-      data.message || 'Failed to load Shadow Mall promotions'
+      data.message || discoverText('failedPromotions')
     )
   }
 
@@ -569,7 +582,7 @@ async function fetchShadowMallStorySaleStatuses(
   if (!response.ok || data.ok === false) {
     throw new Error(
       data.message ||
-        'Failed to load story sale statuses'
+        discoverText('failedSaleStatus')
     )
   }
 
@@ -614,7 +627,7 @@ async function fetchShadowMallPromotionSocialStatuses(
   if (!response.ok || data.ok === false) {
     throw new Error(
       data.message ||
-        'Failed to load promotion social statuses'
+        discoverText('failedSocialStatus')
     )
   }
 
@@ -771,7 +784,7 @@ async function setFollowedPostReaction(
   reactionType = 'love'
 ) {
   if (!token) {
-    throw new Error('Please login first')
+    throw new Error(discoverText('loginFirst'))
   }
 
   const response = await fetch(
@@ -791,7 +804,7 @@ async function setFollowedPostReaction(
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to update reaction')
+    throw new Error(data.message || discoverText('failedReaction'))
   }
 
   return data
@@ -843,7 +856,7 @@ function Header({ hidden }) {
           <Link
   to="/music"
   className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
-  aria-label="Music"
+  aria-label={discoverText('music')}
 >
   <MusicHeaderIcon />
 </Link>
@@ -851,7 +864,7 @@ function Header({ hidden }) {
           <Link
             to="/discover/search"
             className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
-            aria-label="Search"
+            aria-label={discoverText('search')}
           >
             <SearchHeaderIcon />
           </Link>
@@ -860,7 +873,7 @@ function Header({ hidden }) {
   to="/chat"
   state={{ hideReaderFooter: true, fromDiscover: true }}
   className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
-  aria-label="Chat"
+  aria-label={discoverText('chat')}
 >
   <ChatHeaderIcon />
 </Link>
@@ -881,7 +894,7 @@ function RealPostImageGrid({
 
   if (!urls.length) return null
 
-  const alt = `${authorName || 'Author'} post`
+  const alt = discoverText('authorPost', { author: authorName || discoverText('author') })
 
   if (urls.length === 1) {
   return (
@@ -897,7 +910,7 @@ function RealPostImageGrid({
 
   if (urls.length === 2) {
     return (
-      <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+      <div className="grid grid-cols-2 gap-[2px] bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]">
         {urls.map(
   (url, index) => (
     <button
@@ -924,7 +937,7 @@ function RealPostImageGrid({
 
   if (urls.length === 3) {
     return (
-      <div className="grid h-[340px] grid-cols-2 gap-[2px] bg-gray-100 sm:h-[400px]">
+      <div className="grid h-[340px] grid-cols-2 gap-[2px] bg-gray-100 dark:bg-[var(--shadow-bg-elevated)] sm:h-[400px]">
         <button
   type="button"
   onClick={() =>
@@ -975,7 +988,7 @@ function RealPostImageGrid({
   const hiddenCount = Math.max(0, urls.length - 4)
 
   return (
-    <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+    <div className="grid grid-cols-2 gap-[2px] bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]">
       {visibleUrls.map((url, index) => (
   <button
     key={url}
@@ -1018,7 +1031,7 @@ function RealFollowedPostCard({
   const navigate = useNavigate()
   const location = useLocation()
   const author = post.author_page || {}
-  const authorName = author.page_name || 'Author'
+  const authorName = author.page_name || discoverText('author')
   const pageUsername = author.page_username || ''
   const pageUrl = pageUsername
     ? `/author/page/${encodeURIComponent(pageUsername)}`
@@ -1115,7 +1128,7 @@ const isOwner = Boolean(
     if (!response.ok || data.ok === false) {
       throw new Error(
         data.message ||
-          'Failed to follow author'
+          discoverText('failedFollow')
       )
     }
 
@@ -1126,7 +1139,7 @@ const isOwner = Boolean(
   } catch (error) {
     setFollowError(
       error.message ||
-        'Failed to follow author'
+        discoverText('failedFollow')
     )
   } finally {
     setFollowBusy(false)
@@ -1149,7 +1162,7 @@ const isOwner = Boolean(
       onReactionUpdated?.(post.id, data)
     } catch (error) {
       setReactionError(
-        error.message || 'Failed to update reaction'
+        error.message || discoverText('failedReaction')
       )
     } finally {
       setReactionBusy(false)
@@ -1157,7 +1170,7 @@ const isOwner = Boolean(
   }
 
   return (
-    <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
+    <article className="overflow-hidden bg-white dark:bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[22px]">
       <div
   onClick={openFullPost}
   className="flex cursor-pointer items-start gap-2 px-4 pb-3 pt-4"
@@ -1168,7 +1181,7 @@ const isOwner = Boolean(
     event.stopPropagation()
   }
   className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
-          aria-label={`Open ${authorName}`}
+          aria-label={discoverText('openAuthor', { name: authorName })}
         >
           {author.avatar_url ? (
             <img
@@ -1192,14 +1205,14 @@ const isOwner = Boolean(
   onClick={(event) =>
     event.stopPropagation()
   }
-  className="break-words font-semibold text-[#111827]"
+  className="break-words font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]"
 >
       {authorName}
     </Link>
 
     {!isFollowing && !isOwner ? (
       <>
-        <span className="px-1 text-[#65676b]">
+        <span className="px-1 text-[#65676b] dark:text-[var(--shadow-text-secondary)]">
           ·
         </span>
 
@@ -1210,14 +1223,14 @@ const isOwner = Boolean(
           className="font-semibold text-[#1877f2] active:opacity-60 disabled:opacity-60"
         >
           {followBusy
-            ? 'Following...'
-            : 'Follow'}
+            ? discoverText('following')
+            : discoverText('follow')}
         </button>
       </>
     ) : null}
   </div>
 
-  <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+  <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
     <span>{formatPostTime(post.created_at)}</span>
     <span>·</span>
     <i className="fa-solid fa-earth-americas text-[10px]" />
@@ -1230,8 +1243,8 @@ const isOwner = Boolean(
     event.stopPropagation()
     onMore?.(post)
   }}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
-              aria-label="More"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 dark:text-[var(--shadow-text-tertiary)] active:bg-gray-100"
+              aria-label={discoverText('more')}
             >
               <i className="fa-solid fa-ellipsis" />
             </button>
@@ -1246,7 +1259,7 @@ const isOwner = Boolean(
       renderText={(value) =>
   renderPostTextWithLinks(value, post.id)
 }
-      className="text-[14px] font-normal leading-6 text-[#111827]"
+      className="text-[14px] font-normal leading-6 text-[#111827] dark:text-[var(--shadow-text-primary)]"
     />
   </div>
 ) : null}
@@ -1257,8 +1270,8 @@ const isOwner = Boolean(
   onImageClick={openPhotoPost}
 />
 
-      <div className="border-t border-gray-100 bg-white px-4 pb-1">
-  <div className="flex items-center justify-between py-2 text-[12px] text-[#65676b]">
+      <div className="border-t border-gray-100 dark:border-[var(--shadow-border)] bg-white dark:bg-[var(--shadow-bg-surface)] px-4 pb-1">
+  <div className="flex items-center justify-between py-2 text-[12px] text-[#65676b] dark:text-[var(--shadow-text-secondary)]">
     <button
       type="button"
       onClick={() =>
@@ -1286,16 +1299,16 @@ const isOwner = Boolean(
         onClick={() => onComment?.(post)}
         className="active:opacity-60"
       >
-        {Number(post.comment_count || 0)} comments
+        {discoverText('comments', { count: Number(post.comment_count || 0) })}
       </button>
 
       <span>
-        {Number(post.echo_count || 0)} echoes
+        {discoverText('echoes', { count: Number(post.echo_count || 0) })}
       </span>
     </div>
   </div>
 
-  <div className="grid h-11 grid-cols-3 items-stretch text-[14px] font-normal text-[#65676b]">
+  <div className="grid h-11 grid-cols-3 items-stretch text-[14px] font-normal text-[#65676b] dark:text-[var(--shadow-text-secondary)]">
     <ReactionAction
       reactionType={post.my_reaction}
       count={post.like_count}
@@ -1303,9 +1316,9 @@ const isOwner = Boolean(
       showBusySpinner
       showCount={false}
       onReact={chooseReaction}
-      idleLabel="Like"
+      idleLabel={discoverText('like')}
       className="h-full w-full"
-      buttonClassName="h-full w-full justify-center gap-2 text-[#65676b] active:bg-[#f2f2f2] dark:text-[var(--shadow-text-secondary)] dark:active:bg-[var(--shadow-bg-hover)] after:content-['Like']"
+      buttonClassName="h-full w-full justify-center gap-2 text-[#65676b] dark:text-[var(--shadow-text-secondary)] active:bg-[#f2f2f2] dark:text-[var(--shadow-text-secondary)] dark:active:bg-[var(--shadow-bg-hover)]"
     />
 
     <button
@@ -1314,19 +1327,19 @@ const isOwner = Boolean(
       className="flex h-full w-full items-center justify-center gap-2 active:bg-[#f2f2f2] dark:active:bg-[var(--shadow-bg-hover)]"
     >
       <i className="fa-regular fa-comment text-[18px]" />
-      <span>Comment</span>
+      <span>{discoverText('comment')}</span>
     </button>
 
     <AuthorPostEchoAction
       post={post}
       author={author}
-      className="h-full w-full justify-center gap-2 active:bg-[#f2f2f2] dark:active:bg-[var(--shadow-bg-hover)] [&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b] dark:after:text-[var(--shadow-text-secondary)]"
+      className="h-full w-full justify-center gap-2 active:bg-[#f2f2f2] dark:active:bg-[var(--shadow-bg-hover)] [&>span]:inline"
     />
   </div>
 </div>
 
       {followError || reactionError ? (
-  <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-center text-[11px] font-bold text-red-600">
+  <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-center text-[11px] font-bold text-red-600 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300">
     {followError || reactionError}
   </div>
 ) : null}
@@ -1336,43 +1349,43 @@ const isOwner = Boolean(
 
 function RealPostSkeleton() {
   return (
-    <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
+    <article className="overflow-hidden bg-white dark:bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[22px]">
       <div className="flex animate-pulse items-start gap-3 p-4">
-        <div className="h-11 w-11 shrink-0 rounded-full bg-gray-200" />
+        <div className="h-11 w-11 shrink-0 rounded-full bg-gray-200 dark:bg-[var(--shadow-bg-elevated)]" />
 
         <div className="min-w-0 flex-1">
-          <div className="h-4 w-32 rounded bg-gray-200" />
-          <div className="mt-2 h-3 w-24 rounded bg-gray-100" />
-          <div className="mt-5 h-3 w-full rounded bg-gray-100" />
-          <div className="mt-2 h-3 w-4/5 rounded bg-gray-100" />
+          <div className="h-4 w-32 rounded bg-gray-200 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-2 h-3 w-24 rounded bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-5 h-3 w-full rounded bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
+          <div className="mt-2 h-3 w-4/5 rounded bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
         </div>
       </div>
 
-      <div className="h-[230px] animate-pulse bg-gray-100" />
+      <div className="h-[230px] animate-pulse bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
     </article>
   )
 }
 
 function RealFeedEmptyState() {
   return (
-    <article className="bg-white p-7 text-center shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f1edfb] text-[#7c3aed]">
+    <article className="bg-white dark:bg-[var(--shadow-bg-surface)] p-7 text-center shadow-sm ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[22px]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f1edfb] text-[#7c3aed] dark:bg-[#7c3aed]/15 dark:text-[#b8a2ff]">
         <i className="fa-solid fa-user-plus text-xl" />
       </div>
 
-      <div className="mt-4 text-[17px] font-black text-[#111827]">
-        No posts yet
+      <div className="mt-4 text-[17px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
+        {discoverText('noPosts')}
       </div>
 
-      <div className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-gray-500">
-        Follow authors to see their latest posts here.
+      <div className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-gray-500 dark:text-[var(--shadow-text-secondary)]">
+        {discoverText('noPostsText')}
       </div>
 
       <Link
         to="/authors/top"
         className="mt-5 inline-flex items-center justify-center rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-black text-white active:scale-[0.98]"
       >
-        Find authors
+        {discoverText('findAuthors')}
       </Link>
     </article>
   )
@@ -1380,17 +1393,17 @@ function RealFeedEmptyState() {
 
 function RealFeedErrorState({ onRetry }) {
   return (
-    <article className="bg-white p-7 text-center shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500">
+    <article className="bg-white dark:bg-[var(--shadow-bg-surface)] p-7 text-center shadow-sm ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[22px]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500 dark:bg-red-400/10 dark:text-red-300">
         <i className="fa-solid fa-triangle-exclamation text-xl" />
       </div>
 
-      <div className="mt-4 text-[17px] font-black text-[#111827]">
-        Could not load posts
+      <div className="mt-4 text-[17px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
+        {discoverText('couldNotLoad')}
       </div>
 
-      <div className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-gray-500">
-        Check your connection and try again.
+      <div className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-gray-500 dark:text-[var(--shadow-text-secondary)]">
+        {discoverText('connectionRetry')}
       </div>
 
       <button
@@ -1398,7 +1411,7 @@ function RealFeedErrorState({ onRetry }) {
         onClick={onRetry}
         className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-black text-white active:scale-[0.98]"
       >
-        Retry
+        {discoverText('retry')}
       </button>
     </article>
   )
@@ -1444,8 +1457,8 @@ function DiamondPrice({
     <span
       className={`inline-flex items-center gap-1 whitespace-nowrap ${
         oldPrice
-          ? 'text-[11px] font-semibold text-gray-400 line-through'
-          : 'text-[15px] font-black text-[#111827]'
+          ? 'text-[11px] font-semibold text-gray-400 dark:text-[var(--shadow-text-tertiary)] line-through'
+          : 'text-[15px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]'
       }`}
     >
       <span>{Number(value || 0)}</span>
@@ -1575,7 +1588,7 @@ const [saleStatus, setSaleStatus] =
         if (!response.ok || data.ok === false) {
           throw new Error(
             data.message ||
-              'Failed to check purchase status'
+              discoverText('failedPurchaseStatus')
           )
         }
 
@@ -1589,7 +1602,7 @@ const [saleStatus, setSaleStatus] =
         ) {
           setErrorMessage(
             error.message ||
-              'Failed to check purchase status'
+              discoverText('failedPurchaseStatus')
           )
         }
       } finally {
@@ -1723,7 +1736,7 @@ const [saleStatus, setSaleStatus] =
       if (!response.ok || data.ok === false) {
         throw new Error(
           data.message ||
-            'Failed to purchase story'
+            discoverText('failedPurchase')
         )
       }
 
@@ -1757,8 +1770,8 @@ const [saleStatus, setSaleStatus] =
       )
       setMessage(
         data.already_owned
-          ? 'You already own this story.'
-          : 'Story purchased successfully.'
+          ? discoverText('alreadyOwned')
+          : discoverText('purchaseSuccess')
       )
 
       window.dispatchEvent(
@@ -1772,7 +1785,7 @@ const [saleStatus, setSaleStatus] =
     } catch (error) {
       setErrorMessage(
         error.message ||
-          'Failed to purchase story'
+          discoverText('failedPurchase')
       )
     } finally {
       setPurchaseBusy(false)
@@ -1783,7 +1796,7 @@ const [saleStatus, setSaleStatus] =
     <>
       <article
         id={`shadow-mall-promotion-${item.id}`}
-        className="overflow-hidden bg-white ring-1 ring-gray-100 sm:rounded-[12px]"
+        className="overflow-hidden bg-white dark:bg-[var(--shadow-bg-surface)] ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[12px]"
       >
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-white">
@@ -1804,12 +1817,12 @@ const [saleStatus, setSaleStatus] =
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[14px] font-semibold text-[#111827]">
+            <div className="truncate text-[14px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {item.sponsor || 'Shadow Mall'}
             </div>
 
-            <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
-              <span>Ad</span>
+            <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
+              <span>{discoverText('ad')}</span>
               <span>·</span>
               <i className="fa-solid fa-earth-americas text-[10px]" />
             </div>
@@ -1818,8 +1831,8 @@ const [saleStatus, setSaleStatus] =
           <button
             type="button"
             onClick={() => onMore?.(item)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
-            aria-label="More sponsored options"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 dark:text-[var(--shadow-text-tertiary)] active:bg-gray-100"
+            aria-label={discoverText('sponsoredOptions')}
           >
             <i className="fa-solid fa-ellipsis text-[13px]" />
           </button>
@@ -1827,15 +1840,15 @@ const [saleStatus, setSaleStatus] =
           <button
             type="button"
             onClick={() => onHide?.(item)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
-            aria-label="Hide sponsored promotion"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 dark:text-[var(--shadow-text-tertiary)] active:bg-gray-100"
+            aria-label={discoverText('hidePromotion')}
           >
             <i className="fa-solid fa-xmark text-[16px]" />
           </button>
         </div>
 
         {item.title || description ? (
-          <div className="px-4 pb-3 text-[13px] font-normal leading-5 text-[#111827]">
+          <div className="px-4 pb-3 text-[13px] font-normal leading-5 text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {item.title ? (
               <span className="font-semibold">
                 {item.title}
@@ -1868,9 +1881,9 @@ const [saleStatus, setSaleStatus] =
                         (current) => !current
                       )
                     }
-                    className="ml-1 font-semibold text-gray-500"
+                    className="ml-1 font-semibold text-gray-500 dark:text-[var(--shadow-text-secondary)]"
                   >
-                    more
+                    {discoverText('moreCaption')}
                   </button>
                 ) : null}
               </>
@@ -1889,7 +1902,7 @@ const [saleStatus, setSaleStatus] =
                 alt={
                   item.title ||
                   item.sponsor ||
-                  'Shadow Mall promotion'
+                  discoverText('promotionAlt')
                 }
                 className="h-full w-full object-cover"
                 loading="lazy"
@@ -1916,18 +1929,18 @@ const [saleStatus, setSaleStatus] =
         </PromotionLink>
 
         {isStorySale ? (
-          <div className="border-b border-gray-100 bg-white px-4 py-3">
+          <div className="border-b border-gray-100 dark:border-[var(--shadow-border)] bg-white dark:bg-[var(--shadow-bg-surface)] px-4 py-3">
             <div className="flex min-h-[48px] items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-[14px] font-semibold text-[#111827]">
+                  <span className="truncate text-[14px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                     {item.sponsor ||
                       'Shadow Mall'}
                   </span>
 
                   {discountPercent > 0 ? (
                     <span className="shrink-0 text-[10px] font-black text-[#dc2626]">
-                      -{discountPercent}% OFF
+                      -{discountPercent}% {discoverText('off')}
                     </span>
                   ) : null}
                 </div>
@@ -1958,12 +1971,12 @@ const [saleStatus, setSaleStatus] =
                   className="flex h-9 shrink-0 items-center justify-center rounded-[8px] bg-[#111827] px-3.5 text-[12px] font-bold text-white active:bg-black disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {statusLoading
-                    ? 'Checking...'
+                    ? discoverText('checking')
                     : owned
-                      ? 'Read Story'
+                      ? discoverText('readStory')
                       : insufficientDiamonds
-                        ? 'Top up'
-                        : 'Buy now'}
+                        ? discoverText('topUp')
+                        : discoverText('buyNow')}
                 </button>
               </div>
             </div>
@@ -1982,9 +1995,9 @@ const [saleStatus, setSaleStatus] =
                   <button
                     type="button"
                     onClick={openTopUp}
-                    className="shrink-0 font-black text-[#111827]"
+                    className="shrink-0 font-black text-[#111827] dark:text-[var(--shadow-text-primary)]"
                   >
-                    Top up
+                    {discoverText('topUp')}
                   </button>
                 ) : null}
               </div>
@@ -1992,17 +2005,17 @@ const [saleStatus, setSaleStatus] =
           </div>
         ) : (
           <div className="flex min-h-[58px] items-center justify-between gap-4 px-4 py-2.5">
-            <div className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#111827]">
+            <div className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {item.sponsor || 'Shadow Mall'}
             </div>
 
             <PromotionLink
               to={destination}
-              className="flex h-9 shrink-0 items-center justify-center rounded-[8px] bg-[#eef0f4] px-4 text-[12px] font-semibold text-[#111827] active:bg-[#e5e7eb]"
+              className="flex h-9 shrink-0 items-center justify-center rounded-[8px] bg-[#eef0f4] px-4 text-[12px] font-semibold text-[#111827] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)] active:bg-[#e5e7eb]"
             >
               {item.button_text ||
                 item.cta ||
-                'Shop now'}
+                discoverText('shopNow')}
             </PromotionLink>
           </div>
         )}
@@ -2017,11 +2030,11 @@ const [saleStatus, setSaleStatus] =
           className="fixed inset-0 z-[1000000] flex items-end justify-center bg-black/45 sm:items-center sm:p-5"
           role="dialog"
           aria-modal="true"
-          aria-label="Confirm story purchase"
+          aria-label={discoverText('confirmStoryPurchase')}
         >
           <button
             type="button"
-            aria-label="Close purchase confirmation"
+            aria-label={discoverText('closePurchase')}
             className="absolute inset-0"
             onClick={() =>
               !purchaseBusy &&
@@ -2029,26 +2042,25 @@ const [saleStatus, setSaleStatus] =
             }
           />
 
-          <section className="relative z-10 w-full max-w-[420px] rounded-t-[22px] bg-white p-5 shadow-2xl sm:rounded-[22px]">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-200 sm:hidden" />
+          <section className="relative z-10 w-full max-w-[420px] rounded-t-[22px] bg-white dark:bg-[var(--shadow-bg-surface)] p-5 shadow-2xl sm:rounded-[22px]">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-200 dark:bg-[var(--shadow-bg-elevated)] sm:hidden" />
 
-            <h2 className="m-0 text-[18px] font-black text-[#111827]">
-              Confirm purchase
+            <h2 className="m-0 text-[18px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
+              {discoverText('confirmPurchase')}
             </h2>
 
-            <p className="mt-2 text-[13px] font-medium leading-5 text-gray-500">
-              Purchase{' '}
-              <span className="font-bold text-[#111827]">
-                {item.title || 'this story'}
+            <p className="mt-2 text-[13px] font-medium leading-5 text-gray-500 dark:text-[var(--shadow-text-secondary)]">
+              {discoverText('purchasePrefix')}{' '}
+              <span className="font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
+                {item.title || discoverText('thisStory')}
               </span>{' '}
-              and permanently unlock all current
-              and future episodes.
+              {discoverText('purchaseSuffix')}
             </p>
 
-            <div className="mt-4 rounded-[16px] bg-[#f8fafc] p-4 ring-1 ring-gray-100">
+            <div className="mt-4 rounded-[16px] bg-[#f8fafc] p-4 dark:bg-[var(--shadow-bg-elevated)] ring-1 ring-gray-100 dark:ring-[var(--shadow-border)]">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-[12px] font-semibold text-gray-500">
-                  Price
+                <span className="text-[12px] font-semibold text-gray-500 dark:text-[var(--shadow-text-secondary)]">
+                  {discoverText('price')}
                 </span>
 
                 <DiamondPrice
@@ -2057,9 +2069,9 @@ const [saleStatus, setSaleStatus] =
               </div>
 
               {saleStatus ? (
-                <div className="mt-3 flex items-center justify-between gap-4 border-t border-gray-200 pt-3">
-                  <span className="text-[12px] font-semibold text-gray-500">
-                    Your balance
+                <div className="mt-3 flex items-center justify-between gap-4 border-t border-gray-200 dark:border-[var(--shadow-border)] pt-3">
+                  <span className="text-[12px] font-semibold text-gray-500 dark:text-[var(--shadow-text-secondary)]">
+                    {discoverText('balance')}
                   </span>
 
                   <DiamondPrice
@@ -2076,9 +2088,9 @@ const [saleStatus, setSaleStatus] =
                 onClick={() =>
                   setConfirmOpen(false)
                 }
-                className="h-11 rounded-[12px] border border-gray-200 bg-white text-[13px] font-bold text-[#111827] disabled:opacity-60"
+                className="h-11 rounded-[12px] border border-gray-200 dark:border-[var(--shadow-border)] bg-white dark:bg-[var(--shadow-bg-surface)] text-[13px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)] disabled:opacity-60"
               >
-                Cancel
+                {discoverText('cancel')}
               </button>
 
               <button
@@ -2088,8 +2100,8 @@ const [saleStatus, setSaleStatus] =
                 className="h-11 rounded-[12px] bg-[#111827] text-[13px] font-bold text-white active:bg-black disabled:opacity-60"
               >
                 {purchaseBusy
-                  ? 'Purchasing...'
-                  : 'Confirm'}
+                  ? discoverText('purchasing')
+                  : discoverText('confirm')}
               </button>
             </div>
           </section>
@@ -2291,6 +2303,7 @@ function DeferredDiscoverSection({
 }
 
 export default function DiscoverPage() {
+  useDisplayTranslation()
   const [barsHidden, setBarsHidden] = useState(false)
   const lastScrollYRef = useRef(0)
   const token = useMemo(() => getAuthToken(), [])
@@ -2681,7 +2694,7 @@ export default function DiscoverPage() {
           setReaderPosts([])
           setReaderPostsError(
             error.message ||
-              'Failed to load reader posts'
+              discoverText('failedReaderPosts')
           )
         }
       } finally {
@@ -3161,7 +3174,7 @@ export default function DiscoverPage() {
     } catch (error) {
       setReaderPostsError(
         error.message ||
-          'Failed to load reader posts'
+          discoverText('failedReaderPosts')
       )
     } finally {
       setReaderPostsLoading(false)
@@ -3680,7 +3693,7 @@ export default function DiscoverPage() {
   }, [])
 
   return (
-    <div className="app-page min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[var(--shadow-bg-page)]">
+    <div className="app-page discover-page min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[var(--shadow-bg-page)]">
       <style>{`
         body.discover-bars-hidden footer {
           transform: translateY(110%);
@@ -3884,13 +3897,13 @@ discoverTimeline.length < 4 ? (
 
             {readerPostsError &&
             discoverTimeline.length ? (
-              <div className="rounded-[18px] bg-red-50 px-4 py-3 text-center text-[12px] font-normal text-red-600 ring-1 ring-red-100">
+              <div className="rounded-[18px] bg-red-50 px-4 py-3 dark:bg-red-500/10 text-center text-[12px] font-normal text-red-600 ring-1 ring-red-100">
                 {readerPostsError}
               </div>
             ) : null}
 
             {realPostsError && realPosts.length ? (
-              <div className="rounded-[18px] bg-red-50 px-4 py-3 text-center text-[12px] font-bold text-red-600 ring-1 ring-red-100">
+              <div className="rounded-[18px] bg-red-50 px-4 py-3 dark:bg-red-500/10 text-center text-[12px] font-bold text-red-600 ring-1 ring-red-100">
                 {realPostsError}
               </div>
             ) : null}
@@ -3900,15 +3913,15 @@ discoverTimeline.length < 4 ? (
                 type="button"
                 onClick={loadMoreRealPosts}
                 disabled={realPostsLoadingMore}
-                className="w-full rounded-[16px] bg-white py-3.5 text-[13px] font-black text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-[0.99] disabled:opacity-60"
+                className="w-full rounded-[16px] bg-white dark:bg-[var(--shadow-bg-surface)] py-3.5 text-[13px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] active:scale-[0.99] disabled:opacity-60"
               >
                 {realPostsLoadingMore ? (
                   <>
                     <i className="fa-solid fa-circle-notch mr-2 animate-spin" />
-                    Loading
+                    {discoverText('loading')}
                   </>
                 ) : (
-                  'Load more posts'
+                  discoverText('loadMorePosts')
                 )}
               </button>
             ) : null}
@@ -3936,7 +3949,7 @@ discoverTimeline.length < 4 ? (
         open={Boolean(commentPost)}
         targetType="author_post"
         targetId={commentPost?.id}
-        title="Author post comments"
+        title={discoverText('authorPostComments')}
         story={
           commentPost
             ? {
