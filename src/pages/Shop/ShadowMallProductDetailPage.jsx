@@ -726,7 +726,10 @@ export default function ShadowMallProductDetailPage() {
 
       <header className="sticky top-0 z-50 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]">
+          <button type="button" onClick={() => {
+  if (location.state?.from || location.state?.returnTo) return navigate(-1)
+  navigate('/shop', { replace: true })
+}} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]">
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
