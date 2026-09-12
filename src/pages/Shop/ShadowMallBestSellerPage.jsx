@@ -386,7 +386,11 @@ export default function ShadowMallBestSellerPage() {
                 key={product.id}
                 product={product}
                 rank={(page - 1) * 24 + index + 1}
-                onOpen={() => navigate(`/shop/mall/product/${product.id}`)}
+                onOpen={() =>
+  navigate(`/shop/mall/product/${product.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               />
             ))}
           </section>
