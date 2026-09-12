@@ -352,7 +352,10 @@ function MenuRow({ icon, customIcon = null, title, subtitle, to, onClick, danger
           ) : null}
         </div>
       </div>
-      <i className={`fa-solid fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1] dark:text-white/35'}`} />
+      <div className="flex shrink-0 items-center gap-2">
+  {extra}
+  <i className={`fa-solid fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1] dark:text-white/35'}`} />
+</div>
       {divider ? (
         <span className="pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-[#f1f1f1] dark:bg-white/10" />
       ) : null}
@@ -731,6 +734,7 @@ export default function Me() {
   const [checkingAuthorPage, setCheckingAuthorPage] = useState(Boolean(getReaderToken()))
   const [switchingProfile, setSwitchingProfile] = useState(false)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
+  const [authorCommentUnreadCount, setAuthorCommentUnreadCount] = useState(0)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
   const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
   const [meSummaryLoaded, setMeSummaryLoaded] = useState(!getReaderToken())
@@ -889,6 +893,43 @@ export default function Me() {
       ignore = true
     }
   }, [])
+
+  useEffect(() => {
+  if (!token || !hasAuthorPage) {
+    setAuthorCommentUnreadCount(0)
+    return
+  }
+
+  let ignore = false
+
+  async function loadAuthorCommentUnreadCount() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/comments/me/author-unread-count`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!ignore && response.ok && data.ok !== false) {
+        setAuthorCommentUnreadCount(
+          Math.max(0, Number(data.unread_count || 0))
+        )
+      }
+    } catch {}
+  }
+
+  loadAuthorCommentUnreadCount()
+
+  return () => {
+    ignore = true
+  }
+}, [token, hasAuthorPage])
 
   const handleLogout = () => {
     clearReaderSession()
@@ -1221,7 +1262,19 @@ const handleOpenProfileSwitcher = (event) => {
   title={tx('mePage.shadowMall')}
   divider
 />
-            <MenuRow to="/comments" icon="far fa-comment-dots" title={tx('myComments')} divider />
+            <MenuRow
+  to="/comments"
+  icon="far fa-comment-dots"
+  title={tx('myComments')}
+  extra={
+    hasAuthorPage && authorCommentUnreadCount > 0 ? (
+      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ef4444] px-1.5 text-[10px] font-extrabold leading-none text-white">
+        {authorCommentUnreadCount > 99 ? '99+' : authorCommentUnreadCount}
+      </span>
+    ) : null
+  }
+  divider
+/>
             <MenuRow to="/library" customIcon={<img src="/assets/Icons/Library.svg" alt="" className="h-[16px] w-[16px] object-contain" />} title={tx('mePage.library')} divider />
             <MenuRow
   to="/game"
