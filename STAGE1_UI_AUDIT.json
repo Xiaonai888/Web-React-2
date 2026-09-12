@@ -352,6 +352,11 @@
 "src/pages/Author/PublishEpisodePage.jsx",
 "src/components/author/StoryPublishAgreementModal.jsx",
 "src/components/author/ScheduleReleasePicker.jsx",
+"src/pages/Shop/ShadowMallPurchasePage.jsx",
+"src/pages/Author/EpisodePreviewPage.jsx",
+"src/pages/Author/AuthorPostActivityPage.jsx",
+"src/pages/Chat/ChatInboxPage.jsx",
+"src/pages/Chat/ChatInfoPage.jsx",
   ]
 }
 
