@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -360,11 +360,26 @@ function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart, t }
 
 export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChange, onMessage }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [activeType, setActiveType] = useState('All')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
+
+  const [loadError, setLoadError] = useState('')
+
+useEffect(() => {
+  if (location.state?.activeTab === 'Store') return
+
+  navigate(location.pathname + location.search + location.hash, {
+    replace: true,
+    state: { ...(location.state || {}), activeTab: 'Store' },
+  })
+}, [location.pathname, location.search, location.hash, location.state, navigate])
+
+useEffect(() => {
+  let ignore = false
 
   useEffect(() => {
     let ignore = false
@@ -547,8 +562,16 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
           key={section.key}
           section={section}
           items={section.items}
-          onMore={() => navigate(`/author/page/${author.page_username}/store/category/${section.key}`)}
-          onOpenItem={(item) => navigate(`/author/page/${author.page_username}/store/product/${item.id}`)}
+          onMore={() =>
+  navigate(`/author/page/${author.page_username}/store/category/${section.key}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
+onOpenItem={(item) =>
+  navigate(`/author/page/${author.page_username}/store/product/${item.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
           onAddToCart={addToCart}
           t={t}
         />
