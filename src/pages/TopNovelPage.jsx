@@ -9,7 +9,7 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../utils/homeDataCache'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('topNovelPage', {
@@ -29,6 +29,9 @@ registerTranslationNamespace('topNovelPage', {
     cannotConnect: 'Cannot connect to server. Please try again later.',
     loadFailed: 'Failed to load top novels',
     goBack: 'Go back',
+    sampleBook: 'Sample book',
+    sampleAuthor: 'Author Name',
+    sampleDescription: 'A sample story preview will appear here when live data is unavailable.',
     title: 'Top Novel',
   },
   km: {
@@ -47,6 +50,9 @@ registerTranslationNamespace('topNovelPage', {
     cannotConnect: 'មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។',
     loadFailed: 'មិនអាចផ្ទុករឿងកំពូលបានទេ',
     goBack: 'ត្រឡប់ក្រោយ',
+    sampleBook: 'សៀវភៅគំរូ',
+    sampleAuthor: 'ឈ្មោះអ្នកនិពន្ធ',
+    sampleDescription: 'ការមើលរឿងគំរូនឹងបង្ហាញនៅទីនេះ ពេលទិន្នន័យ Live មិនមាន។',
     title: 'រឿងកំពូល',
   },
   zh: {
@@ -65,6 +71,9 @@ registerTranslationNamespace('topNovelPage', {
     cannotConnect: '无法连接服务器，请稍后重试。',
     loadFailed: '无法加载热门小说',
     goBack: '返回',
+    sampleBook: '示例图书',
+    sampleAuthor: '作者名称',
+    sampleDescription: '实时数据不可用时，这里会显示示例故事预览。',
     title: '热门小说',
   },
   ja: {
@@ -83,6 +92,9 @@ registerTranslationNamespace('topNovelPage', {
     cannotConnect: 'サーバーに接続できません。しばらくしてからもう一度お試しください。',
     loadFailed: 'トップ小説を読み込めませんでした',
     goBack: '戻る',
+    sampleBook: 'サンプル作品',
+    sampleAuthor: '作者名',
+    sampleDescription: 'ライブデータが利用できない場合、ここにサンプルのストーリーが表示されます。',
     title: 'トップ小説',
   },
   ko: {
@@ -101,6 +113,9 @@ registerTranslationNamespace('topNovelPage', {
     cannotConnect: '서버에 연결할 수 없습니다. 나중에 다시 시도해 주세요.',
     loadFailed: '인기 소설을 불러오지 못했습니다',
     goBack: '뒤로 가기',
+    sampleBook: '샘플 도서',
+    sampleAuthor: '작가 이름',
+    sampleDescription: '실시간 데이터를 사용할 수 없을 때 샘플 스토리 미리보기가 표시됩니다.',
     title: '인기 소설',
   },
 })
@@ -185,23 +200,23 @@ const fallbackTopNovelData = [
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
-
   if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
 
-  return String(number)
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(number)
 }
 
 function normalizeStory(story, index = 0, category = 'Romance') {
   return {
     id: story.id,
     rank: index + 1,
-    title: story.title || 'Untitled Story',
-    author: story.author_name || 'Shadow Author',
+    title: story.title || getDisplayText('topNovelPage.untitledStory'),
+    author: story.author_name || getDisplayText('topNovelPage.shadowAuthor'),
     views: formatCompactNumber(story.total_views),
     likes: formatCompactNumber(story.total_likes),
-    description: story.description || 'No description yet.',
+    description: story.description || getDisplayText('topNovelPage.noDescription'),
     image: story.cover_url || `/assets/top-novel/top-${((index % 3) + 1)}.jpg`,
     category,
     link: `/story/${story.id}`,
@@ -279,21 +294,21 @@ function getDisplayCategory(category, t) {
 }
 
 function getDisplayTitle(title, t) {
-  return title === 'Untitled Story'
-    ? t('topNovelPage.untitledStory')
-    : title
+  if (title === 'Untitled Story') return t('topNovelPage.untitledStory')
+  if (title === 'Name book') return t('topNovelPage.sampleBook')
+  return title
 }
 
 function getDisplayAuthor(author, t) {
-  return author === 'Shadow Author'
-    ? t('topNovelPage.shadowAuthor')
-    : author
+  if (author === 'Shadow Author') return t('topNovelPage.shadowAuthor')
+  if (author === 'Author Name') return t('topNovelPage.sampleAuthor')
+  return author
 }
 
 function getDisplayDescription(description, t) {
-  return description === 'No description yet.'
-    ? t('topNovelPage.noDescription')
-    : description
+  if (description === 'No description yet.') return t('topNovelPage.noDescription')
+  if (description.startsWith('After looking around,')) return t('topNovelPage.sampleDescription')
+  return description
 }
 
 export default function TopNovelPage() {
