@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { addShadowMallCartItem } from '../../utils/shadowMallCart'
 import {
   isShadowMallWishlisted,
@@ -256,6 +256,7 @@ function FeaturedPreOrder({ product, onOpen }) {
 
 export default function ShadowMallPreOrderPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [products, setProducts] = useState([])
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('latest')
@@ -347,7 +348,14 @@ export default function ShadowMallPreOrderPage() {
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/shop')}
+            onClick={() => {
+  if (location.state?.returnTo) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop', { replace: true })
+}}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
