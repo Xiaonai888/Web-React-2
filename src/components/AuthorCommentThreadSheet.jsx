@@ -27,7 +27,7 @@ function CommentCard({ comment, reply = false }) {
   )
 }
 
-export default function AuthorCommentThreadSheet({ item, onClose }) {
+export default function AuthorCommentThreadSheet({ item, onClose, onRead }) {
   const [thread, setThread] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadingMoreReplies, setLoadingMoreReplies] = useState(false)
@@ -64,7 +64,32 @@ export default function AuthorCommentThreadSheet({ item, onClose }) {
           throw new Error(data.message || 'Failed to load comment thread')
         }
 
-        if (!ignore) setThread(data)
+        if (!ignore) {
+          setThread(data)
+
+          if (!item.is_read) {
+            try {
+              const readResponse = await fetch(
+                `${API_BASE_URL}/api/comments/${encodeURIComponent(item.id)}/author-read`,
+                {
+                  method: 'PATCH',
+                  headers: {
+                    Authorization: `Bearer ${getReaderToken()}`,
+                  },
+                }
+              )
+
+              const readData = await readResponse.json().catch(() => ({}))
+
+              if (
+                readResponse.ok &&
+                readData.ok !== false
+              ) {
+                onRead?.(item.id)
+              }
+            } catch {}
+          }
+        }
       } catch (err) {
         if (!ignore) {
           setError(err.message || 'Failed to load comment thread')
