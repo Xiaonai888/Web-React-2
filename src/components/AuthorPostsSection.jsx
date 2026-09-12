@@ -385,7 +385,7 @@ function getAuthToken() {
 
 const AUTHOR_POST_VIEW_CACHE_TTL_MS =
   30 * 60 * 1000
-const AUTHOR_POST_VIEW_BATCH_DELAY_MS = 1500
+const AUTHOR_POST_VIEW_BATCH_DELAY_MS = 15000
 const AUTHOR_POST_VIEW_BATCH_SIZE = 10
 const AUTHOR_POST_VIEW_BATCH_LIMIT = 50
 
@@ -592,8 +592,14 @@ async function flushAuthorPostViews() {
     if (authorPostViewQueue.size) {
       scheduleAuthorPostViewFlush()
     }
-  }
+    }
 }
+
+window.addEventListener('pagehide', () => {
+  if (authorPostViewQueue.size) {
+    void flushAuthorPostViews()
+  }
+})
 
 function queueAuthorPostView(postId) {
   const id = String(postId || '').trim()
