@@ -184,8 +184,10 @@ export default function AuthorCartPage() {
   }
 
   function openOrderHistory() {
-    navigate('/author/orders')
-  }
+  navigate('/author/orders', {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
 
   function openCheckout() {
   if (!items.length) return
