@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   isShadowMallWishlisted,
   toggleShadowMallWishlist,
@@ -147,6 +147,7 @@ function ProductCard({ product, onOpen }) {
 
 export default function ShadowMallRecentlySoldOutPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [products, setProducts] = useState([])
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('latest')
