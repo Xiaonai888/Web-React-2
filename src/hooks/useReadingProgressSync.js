@@ -102,6 +102,17 @@ export default function useReadingProgressSync({
       signature,
     }
 
+    const previous = latestRef.current
+
+if (
+  previous &&
+  previous.key !== key &&
+  lastSavedRef.current !== previous.signature &&
+  pendingRef.current !== previous.signature
+) {
+  void saveCurrent(previous)
+}
+
     latestRef.current = current
 
     if (baselineKeyRef.current !== key) {
