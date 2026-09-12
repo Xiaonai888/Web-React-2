@@ -5,6 +5,26 @@ import {
   isShadowMallWishlisted,
   toggleShadowMallWishlist,
 } from '../../utils/shadowMallWishlist'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowMallBestSellerPage', {
+  en: {
+    latest: 'Latest', priceLow: 'Price Low', priceHigh: 'Price High', soldOut: 'SOLD OUT', preOrder: 'PRE-ORDER', inStock: 'IN STOCK', untitledBook: 'Untitled book', unknownAuthor: 'Unknown author', removeSaved: 'Remove saved', save: 'Save', addToCart: 'Add {{title}} to cart', failedLoad: 'Failed to load Best Seller books', goBack: 'Go back', title: 'Best Seller', booksSummary: '{{count}} books · Books readers are choosing most.', searchBooks: 'Search Best Seller books', heroTitle: 'Reader favorites right now', heroBody: 'Popular books that customers are buying and checking most often.', searchPlaceholder: 'Search best seller books or authors', clearSearch: 'Clear search', topRank: 'TOP {{rank}}', noBooks: 'No best sellers found', noBooksBody: 'Try another search or check Best Seller again later.', backMall: 'Back to Shadow Mall', previous: 'Previous', pageOf: 'Page {{page}} / {{total}}', next: 'Next',
+  },
+  km: {
+    latest: 'ថ្មីបំផុត', priceLow: 'តម្លៃទាប', priceHigh: 'តម្លៃខ្ពស់', soldOut: 'អស់ស្តុក', preOrder: 'កក់មុន', inStock: 'មានស្តុក', untitledBook: 'សៀវភៅគ្មានចំណងជើង', unknownAuthor: 'មិនស្គាល់អ្នកនិពន្ធ', removeSaved: 'ដកចេញពីការរក្សាទុក', save: 'រក្សាទុក', addToCart: 'បន្ថែម {{title}} ទៅកន្ត្រក', failedLoad: 'មិនអាចផ្ទុកសៀវភៅលក់ដាច់បានទេ', goBack: 'ត្រឡប់ក្រោយ', title: 'សៀវភៅលក់ដាច់', booksSummary: '{{count}} សៀវភៅ · សៀវភៅដែលអ្នកអានកំពុងជ្រើសរើសច្រើនបំផុត។', searchBooks: 'ស្វែងរកសៀវភៅលក់ដាច់', heroTitle: 'សៀវភៅដែលអ្នកអានចូលចិត្តឥឡូវនេះ', heroBody: 'សៀវភៅពេញនិយមដែលអតិថិជនកំពុងទិញ និងមើលញឹកញាប់បំផុត។', searchPlaceholder: 'ស្វែងរកសៀវភៅលក់ដាច់ ឬអ្នកនិពន្ធ', clearSearch: 'សម្អាតការស្វែងរក', topRank: 'កំពូល {{rank}}', noBooks: 'រកមិនឃើញសៀវភៅលក់ដាច់', noBooksBody: 'សាកស្វែងរកផ្សេង ឬត្រឡប់មកមើលសៀវភៅលក់ដាច់ពេលក្រោយ។', backMall: 'ត្រឡប់ទៅ Shadow Mall', previous: 'មុន', pageOf: 'ទំព័រ {{page}} / {{total}}', next: 'បន្ទាប់',
+  },
+  zh: {
+    latest: '最新', priceLow: '价格从低到高', priceHigh: '价格从高到低', soldOut: '售罄', preOrder: '预购', inStock: '有库存', untitledBook: '无标题图书', unknownAuthor: '未知作者', removeSaved: '取消收藏', save: '收藏', addToCart: '将 {{title}} 加入购物车', failedLoad: '无法加载畅销书', goBack: '返回', title: '畅销书', booksSummary: '{{count}} 本书 · 读者当前选择最多的图书。', searchBooks: '搜索畅销书', heroTitle: '当前读者最爱', heroBody: '顾客购买和查看最频繁的热门图书。', searchPlaceholder: '搜索畅销书或作者', clearSearch: '清除搜索', topRank: 'TOP {{rank}}', noBooks: '未找到畅销书', noBooksBody: '请尝试其他搜索，或稍后再查看畅销书。', backMall: '返回 Shadow Mall', previous: '上一页', pageOf: '第 {{page}} / {{total}} 页', next: '下一页',
+  },
+  ja: {
+    latest: '最新', priceLow: '価格の安い順', priceHigh: '価格の高い順', soldOut: '売り切れ', preOrder: '予約注文', inStock: '在庫あり', untitledBook: '無題の本', unknownAuthor: '不明な作者', removeSaved: '保存を解除', save: '保存', addToCart: '{{title}}をカートに追加', failedLoad: 'ベストセラーを読み込めませんでした', goBack: '戻る', title: 'ベストセラー', booksSummary: '{{count}}冊 · 読者に最も選ばれている本です。', searchBooks: 'ベストセラーを検索', heroTitle: '今の読者のお気に入り', heroBody: '購入や閲覧が多い人気の本です。', searchPlaceholder: 'ベストセラーまたは作者を検索', clearSearch: '検索をクリア', topRank: 'TOP {{rank}}', noBooks: 'ベストセラーが見つかりません', noBooksBody: '別の検索を試すか、後でもう一度確認してください。', backMall: 'Shadow Mall に戻る', previous: '前へ', pageOf: '{{page}} / {{total}} ページ', next: '次へ',
+  },
+  ko: {
+    latest: '최신순', priceLow: '낮은 가격순', priceHigh: '높은 가격순', soldOut: '품절', preOrder: '예약 주문', inStock: '재고 있음', untitledBook: '제목 없는 도서', unknownAuthor: '알 수 없는 작가', removeSaved: '저장 취소', save: '저장', addToCart: '{{title}} 장바구니에 추가', failedLoad: '베스트셀러 도서를 불러오지 못했습니다', goBack: '뒤로', title: '베스트셀러', booksSummary: '{{count}}권 · 독자들이 가장 많이 선택하는 도서입니다.', searchBooks: '베스트셀러 검색', heroTitle: '지금 독자들이 좋아하는 책', heroBody: '고객이 가장 많이 구매하고 확인하는 인기 도서입니다.', searchPlaceholder: '베스트셀러 또는 작가 검색', clearSearch: '검색 지우기', topRank: 'TOP {{rank}}', noBooks: '베스트셀러를 찾을 수 없습니다', noBooksBody: '다른 검색을 시도하거나 나중에 다시 확인하세요.', backMall: 'Shadow Mall로 돌아가기', previous: '이전', pageOf: '{{page}} / {{total}} 페이지', next: '다음',
+  },
+})
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -13,15 +33,15 @@ const API_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const sortOptions = [
-  { key: 'latest', label: 'Latest' },
-  { key: 'price_low', label: 'Price Low' },
-  { key: 'price_high', label: 'Price High' },
+  { key: 'latest', labelKey: 'latest' },
+  { key: 'price_low', labelKey: 'priceLow' },
+  { key: 'price_high', labelKey: 'priceHigh' },
 ]
 
 function formatUsd(value) {
   const number = Number(value || 0)
-  if (!Number.isFinite(number)) return '$0.00'
-  return `$${number.toFixed(2)}`
+  if (!Number.isFinite(number)) return new Intl.NumberFormat(getDisplayLanguageId(), { style: 'currency', currency: 'USD' }).format(0)
+  return new Intl.NumberFormat(getDisplayLanguageId(), { style: 'currency', currency: 'USD' }).format(number)
 }
 
 function getProductStatus(product) {
@@ -29,7 +49,7 @@ function getProductStatus(product) {
 
   if (status === 'sold_out') {
     return {
-      label: 'SOLD OUT',
+      label: getDisplayText('shadowMallBestSellerPage.soldOut'),
       className: 'bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/15 dark:text-slate-300',
       disabled: true,
       coverClass: 'opacity-60',
@@ -38,7 +58,7 @@ function getProductStatus(product) {
 
   if (status === 'pre_order') {
     return {
-      label: 'PRE-ORDER',
+      label: getDisplayText('shadowMallBestSellerPage.preOrder'),
       className: 'bg-[#fff7d8] text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300',
       disabled: false,
       coverClass: '',
@@ -46,7 +66,7 @@ function getProductStatus(product) {
   }
 
   return {
-    label: 'IN STOCK',
+    label: getDisplayText('shadowMallBestSellerPage.inStock'),
     className: 'bg-[#dcfce7] text-[#166534] dark:bg-emerald-500/15 dark:text-emerald-300',
     disabled: false,
     coverClass: '',
@@ -56,8 +76,8 @@ function getProductStatus(product) {
 function normalizeProduct(product) {
   return {
     id: product.id,
-    title: product.title || 'Untitled book',
-    author: product.author_name || 'Unknown author',
+    title: product.title || getDisplayText('shadowMallBestSellerPage.untitledBook'),
+    author: product.author_name || getDisplayText('shadowMallBestSellerPage.unknownAuthor'),
     cover: product.cover_url || '',
     category: product.category || 'best_seller',
     priceValue: Number(product.price_usd || 0),
@@ -70,6 +90,7 @@ function normalizeProduct(product) {
 }
 
 function ProductCard({ product, onOpen, rank }) {
+  const { t } = useDisplayTranslation()
   const status = getProductStatus(product)
   const hasOldPrice = Boolean(String(product.oldPrice || '').trim())
   const [wishlisted, setWishlisted] = useState(() => isShadowMallWishlisted(product.id))
@@ -120,7 +141,7 @@ function ProductCard({ product, onOpen, rank }) {
           </span>
 
           <span className="absolute bottom-2 left-2 rounded-full bg-[#f6b800] px-2.5 py-1 text-[9px] font-extrabold text-[#111827] shadow-sm dark:bg-amber-400">
-            TOP {rank}
+            {t('shadowMallBestSellerPage.topRank', { rank: Number(rank).toLocaleString(getDisplayLanguageId()) })}
           </span>
 
           <button
@@ -128,7 +149,7 @@ function ProductCard({ product, onOpen, rank }) {
             className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm active:scale-95 dark:bg-black/70 ${
               wishlisted ? 'text-[#e5484d] dark:text-red-300' : 'text-[#111827] dark:text-white'
             }`}
-            aria-label={`${wishlisted ? 'Remove saved' : 'Save'} ${product.title}`}
+            aria-label={`${t(`shadowMallBestSellerPage.${wishlisted ? 'removeSaved' : 'save'}`)} ${product.title}`}
             onClick={handleWishlistClick}
           >
             <i className={`${wishlisted ? 'fa-solid' : 'fa-regular'} fa-heart text-[13px]`} />
@@ -173,7 +194,7 @@ function ProductCard({ product, onOpen, rank }) {
                 ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-disabled)]'
                 : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
             }`}
-            aria-label={`Add ${product.title} to cart`}
+            aria-label={t('shadowMallBestSellerPage.addToCart', { title: product.title })}
           >
             <i className="fa-solid fa-cart-shopping text-[12px]" />
           </button>
@@ -186,6 +207,7 @@ function ProductCard({ product, onOpen, rank }) {
 export default function ShadowMallBestSellerPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useDisplayTranslation()
   const [products, setProducts] = useState([])
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('latest')
@@ -219,7 +241,7 @@ export default function ShadowMallBestSellerPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load Best Seller books')
+        throw new Error(data.message || t('shadowMallBestSellerPage.failedLoad'))
       }
 
       setProducts((data.products || []).map(normalizeProduct))
@@ -231,7 +253,7 @@ export default function ShadowMallBestSellerPage() {
       })
     } catch (error) {
       setProducts([])
-      setMessage(error.message || 'Failed to load Best Seller books')
+      setMessage(error.message || t('shadowMallBestSellerPage.failedLoad'))
     } finally {
       setLoading(false)
     }
@@ -280,15 +302,15 @@ export default function ShadowMallBestSellerPage() {
   navigate('/shop', { replace: true })
 }}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Go back"
+            aria-label={t('shadowMallBestSellerPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="line-clamp-1 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Best Seller</h1>
+            <h1 className="line-clamp-1 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallBestSellerPage.title')}</h1>
             <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
-              {meta.total} books · Books readers are choosing most.
+              {t('shadowMallBestSellerPage.booksSummary', { count: Number(meta.total || 0).toLocaleString(getDisplayLanguageId()) })}
             </p>
           </div>
 
@@ -296,7 +318,7 @@ export default function ShadowMallBestSellerPage() {
             type="button"
             onClick={() => setSearchOpen((value) => !value)}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Search Best Seller books"
+            aria-label={t('shadowMallBestSellerPage.searchBooks')}
           >
             <i className="fa-solid fa-magnifying-glass text-[14px]" />
           </button>
@@ -312,10 +334,10 @@ export default function ShadowMallBestSellerPage() {
 
             <div className="min-w-0 flex-1">
               <h2 className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">
-                Reader favorites right now
+                {t('shadowMallBestSellerPage.heroTitle')}
               </h2>
               <p className="mt-1 text-[12px] font-semibold leading-5 text-[#7a5600]/80 dark:text-amber-200/80">
-                Popular books that customers are buying and checking most often.
+                {t('shadowMallBestSellerPage.heroBody')}
               </p>
             </div>
           </div>
@@ -329,7 +351,7 @@ export default function ShadowMallBestSellerPage() {
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search best seller books or authors"
+                placeholder={t('shadowMallBestSellerPage.searchPlaceholder')}
                 className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)]"
               />
               {search ? (
@@ -341,7 +363,7 @@ export default function ShadowMallBestSellerPage() {
                     loadProducts({ page: 1, search: '' })
                   }}
                   className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)]"
-                  aria-label="Clear search"
+                  aria-label={t('shadowMallBestSellerPage.clearSearch')}
                 >
                   <i className="fa-solid fa-xmark text-[12px]" />
                 </button>
@@ -362,7 +384,7 @@ export default function ShadowMallBestSellerPage() {
                   : 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)] ring-1 ring-[var(--shadow-border)]'
               }`}
             >
-              {item.label}
+              {t(`shadowMallBestSellerPage.${item.labelKey}`)}
             </button>
           ))}
         </div>
@@ -399,9 +421,9 @@ export default function ShadowMallBestSellerPage() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
               <i className="fa-solid fa-ranking-star text-[22px]" />
             </div>
-            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">No best sellers found</h2>
+            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallBestSellerPage.noBooks')}</h2>
             <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
-              Try another search or check Best Seller again later.
+              {t('shadowMallBestSellerPage.noBooksBody')}
             </p>
             <button
               type="button"
@@ -415,7 +437,7 @@ export default function ShadowMallBestSellerPage() {
 }}
               className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
-              Back to Shadow Mall
+              {t('shadowMallBestSellerPage.backMall')}
             </button>
           </section>
         )}
@@ -428,11 +450,11 @@ export default function ShadowMallBestSellerPage() {
               onClick={() => setPage((value) => Math.max(value - 1, 1))}
               className="rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-extrabold text-[var(--shadow-text-primary)] disabled:text-[var(--shadow-text-disabled)]"
             >
-              Previous
+              {t('shadowMallBestSellerPage.previous')}
             </button>
 
             <div className="text-[12px] font-extrabold text-[var(--shadow-text-secondary)]">
-              Page {page} / {meta.total_pages}
+              {t('shadowMallBestSellerPage.pageOf', { page: Number(page).toLocaleString(getDisplayLanguageId()), total: Number(meta.total_pages || 1).toLocaleString(getDisplayLanguageId()) })}
             </div>
 
             <button
@@ -441,7 +463,7 @@ export default function ShadowMallBestSellerPage() {
               onClick={() => setPage((value) => value + 1)}
               className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)] dark:bg-white dark:text-[#111827]"
             >
-              Next
+              {t('shadowMallBestSellerPage.next')}
             </button>
           </div>
         ) : null}
