@@ -442,7 +442,7 @@ export default function MeCommentsPage() {
                 type="button"
                 onClick={() => openItem(item)}
                 className={`w-full rounded-[22px] bg-white p-4 text-left shadow-sm ring-1 transition active:scale-[0.99] dark:bg-[#171923] ${
-                  activeTab === 'all' && !item.is_read
+                  (activeTab === 'all' || activeTab === 'story') && !item.is_read
                     ? 'ring-[#f6b800]/55'
                     : 'ring-black/5 dark:ring-white/10'
                 }`}
@@ -473,7 +473,7 @@ export default function MeCommentsPage() {
                     </p>
                   </div>
 
-                  {activeTab === 'all' && !item.is_read ? (
+                  {(activeTab === 'all' || activeTab === 'story') && !item.is_read ? (
                     <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#f6b800]" />
                   ) : null}
                 </div>
@@ -509,6 +509,20 @@ export default function MeCommentsPage() {
       <AuthorCommentThreadSheet
         item={selectedStoryComment}
         onClose={() => setSelectedStoryComment(null)}
+        onRead={(commentId) => {
+          setItems((current) =>
+            current.map((row) =>
+              String(row.id) === String(commentId)
+                ? { ...row, is_read: true }
+                : row
+            )
+          )
+          setSelectedStoryComment((current) =>
+            current && String(current.id) === String(commentId)
+              ? { ...current, is_read: true }
+              : current
+          )
+        }}
       />
     </div>
   )
