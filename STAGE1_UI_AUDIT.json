@@ -367,6 +367,12 @@
 "src/pages/TopNovelPage.jsx",
 "src/pages/Shop/ShadowMallProductDetailPage.jsx",
 "src/pages/Shop/ShadowMallCartPage.jsx",
+"src/pages/Shop/ShadowMallBestSellerPage.jsx",
+"src/pages/Shop/ShadowMallNewBooksPage.jsx",
+"src/pages/Shop/ShadowMallDiscountBooksPage.jsx",
+"src/pages/Shop/ShadowMallPreOrderPage.jsx",
+"src/pages/Shop/ShadowMallSearchPage.jsx",
+
   ]
 }
 
