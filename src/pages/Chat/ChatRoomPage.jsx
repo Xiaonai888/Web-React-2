@@ -57,17 +57,697 @@ import {
   unblockChatConversation,
   unpinChatMessage,
 } from '../../services/chatApi'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('chatRoomPage', {
+  en: {
+    close: "Close",
+    unknown: "Unknown",
+    reasonSpam: "Spam",
+    reasonHarassment: "Harassment",
+    reasonHate: "Hate",
+    reasonSexual: "Sexual content",
+    reasonViolence: "Violence",
+    reasonScam: "Scam",
+    reasonImpersonation: "Impersonation",
+    reasonPrivacy: "Privacy",
+    reasonOther: "Other",
+    messageRequest: "Message request",
+    acceptRequestText: "Accept this request before continuing the conversation.",
+    accept: "Accept",
+    decline: "Decline",
+    block: "Block",
+    waitingRequest: "Waiting for the recipient to accept your message request.",
+    requestDeclined: "This message request was declined.",
+    blockedByYou: "You blocked this account. Open the 3 dots menu to unblock it.",
+    blockedByOther: "This account blocked messaging with you.",
+    messagingBlocked: "Messaging is blocked for this conversation.",
+    closeConversationMenu: "Close conversation menu",
+    viewProfile: "View profile",
+    archiveChat: "Archive chat",
+    deleteChat: "Delete chat",
+    unblockAccount: "Unblock account",
+    blockAccount: "Block account",
+    blockedMessaging: "This account blocked messaging",
+    reply: "Reply",
+    edit: "Edit",
+    unpin: "Unpin",
+    pin: "Pin",
+    copyText: "Copy text",
+    forward: "Forward",
+    delete: "Delete",
+    select: "Select",
+    messageInfo: "Message info",
+    report: "Report",
+    closeMessageMenu: "Close message menu",
+    pinnedMessage: "Pinned message",
+    message: "Message",
+    unpinMessage: "Unpin message",
+    failedLoadConversations: "Failed to load conversations",
+    failedForwardMessages: "Failed to forward messages",
+    forwardOne: "Forward 1 message",
+    forwardMany: "Forward {{count}} messages",
+    conversation: "Conversation",
+    messages: "Messages",
+    noAcceptedConversation: "No other accepted conversation is available.",
+    failedSubmitReport: "Failed to submit report",
+    reportMessage: "Report message",
+    reason: "Reason",
+    details: "Details",
+    reportPlaceholder: "Add useful details for the admin review...",
+    submitReport: "Submit report",
+    reportEvidence: "The conversation evidence will be preserved for admin review.",
+    messageId: "Message ID",
+    sent: "Sent",
+    edited: "Edited",
+    no: "No",
+    yes: "Yes",
+    forwarded: "Forwarded",
+    replyTo: "Reply to",
+    type: "Type",
+    textType: "text",
+    messageDeleted: "Message deleted",
+    deleteConversation: "Delete conversation",
+    deleteEvidence: "Deleted chat evidence is kept securely for 90 days and can only be reviewed by authorized admins when needed.",
+    deleteForMe: "Delete for me",
+    removeInbox: "Removes this chat only from your inbox.",
+    deleteForBoth: "Delete for both",
+    removeBoth: "Removes the old chat from both inboxes.",
+    groupDeleteOnly: "Group chats can only be deleted from your own inbox.",
+    authorDeleteOnly: "Author Page conversations can only be deleted from your own side.",
+    messageOptions: "Message options",
+    originalUnavailable: "Original message unavailable",
+    originalMessage: "Original message",
+    read: "Read",
+    sentStatus: "Sent",
+    fromPerson: "from {{name}}",
+    failedLoadConversation: "Failed to load conversation",
+    failedLoadThisMessage: "Failed to load this message",
+    oldMessageUnavailable: "This message is older than the loaded history or is no longer available",
+    failedLoadEarlier: "Failed to load earlier messages",
+    messageEdited: "Message edited",
+    failedSend: "Failed to send message",
+    blockConfirm: "Block this account and stop all messages?",
+    failedUpdateRequest: "Failed to update request",
+    unblockConfirm: "Unblock this account and restore messaging?",
+    failedUnblock: "Failed to unblock account",
+    failedArchive: "Failed to archive conversation",
+    failedDeleteConversation: "Failed to delete conversation",
+    selectLimit: "You can select up to {{count}} messages",
+    noTextToCopy: "No message text to copy",
+    copied: "Copied",
+    failedCopy: "Failed to copy text",
+    messageUnpinned: "Message unpinned",
+    messagePinned: "Message pinned",
+    failedUpdatePin: "Failed to update pin",
+    deleteOneConfirm: "Delete 1 message for everyone? Admin evidence is retained for 90 days.",
+    deleteManyConfirm: "Delete {{count}} messages for everyone? Admin evidence is retained for 90 days.",
+    messageDeletedNotice: "Message deleted",
+    failedDeleteMessage: "Failed to delete message",
+    exitSelection: "Exit selection",
+    selectedCount: "{{selected}} / {{max}} selected",
+    copySelected: "Copy selected",
+    forwardSelected: "Forward selected",
+    pinSelected: "Pin selected",
+    deleteSelected: "Delete selected",
+    backMessages: "Back to messages",
+    openChatInfo: "Open chat info",
+    people: "{{count}} people",
+    conversationOptions: "Conversation options",
+    loadEarlier: "Load earlier messages",
+    noMessages: "No messages yet.",
+    editingMessage: "Editing message",
+    replyingTo: "Replying to {{name}}",
+    yourself: "yourself",
+    replyMessage: "message",
+    editPlaceholder: "Edit message...",
+    replyPlaceholder: "Write a reply...",
+    messagePlaceholder: "Write a message...",
+    waitingApproval: "Waiting for request approval",
+    messagesUnavailable: "Messages are unavailable",
+    comingSoon: "Coming soon",
+    searchMessages: "Search messages",
+    camera: "Camera",
+    image: "Image",
+    saveEdit: "Save edit",
+    sendMessage: "Send message",
+    emoji: "Emoji",
+    messageForwarded: "Message forwarded",
+    reportSubmitted: "Report submitted",
+  },
+  km: {
+    close: "បិទ",
+    unknown: "មិនស្គាល់",
+    reasonSpam: "សាររំខាន",
+    reasonHarassment: "ការរំខាន",
+    reasonHate: "ស្អប់ខ្ពើម",
+    reasonSexual: "មាតិកាផ្លូវភេទ",
+    reasonViolence: "អំពើហិង្សា",
+    reasonScam: "បោកប្រាស់",
+    reasonImpersonation: "ក្លែងបន្លំអត្តសញ្ញាណ",
+    reasonPrivacy: "ឯកជនភាព",
+    reasonOther: "ផ្សេងទៀត",
+    messageRequest: "សំណើសារ",
+    acceptRequestText: "ទទួលយកសំណើនេះមុនពេលបន្តការសន្ទនា។",
+    accept: "ទទួលយក",
+    decline: "បដិសេធ",
+    block: "Block",
+    waitingRequest: "កំពុងរង់ចាំអ្នកទទួលយកសំណើសាររបស់អ្នក។",
+    requestDeclined: "សំណើសារនេះត្រូវបានបដិសេធ។",
+    blockedByYou: "អ្នកបាន Block គណនីនេះ។ បើកម៉ឺនុយ 3 ចំណុចដើម្បី Unblock។",
+    blockedByOther: "គណនីនេះបាន Block ការផ្ញើសារជាមួយអ្នក។",
+    messagingBlocked: "ការផ្ញើសារត្រូវបាន Block សម្រាប់ការសន្ទនានេះ។",
+    closeConversationMenu: "បិទម៉ឺនុយការសន្ទនា",
+    viewProfile: "មើល Profile",
+    archiveChat: "រក្សាទុក Chat",
+    deleteChat: "លុប Chat",
+    unblockAccount: "Unblock គណនី",
+    blockAccount: "Block គណនី",
+    blockedMessaging: "គណនីនេះបាន Block ការផ្ញើសារ",
+    reply: "ឆ្លើយតប",
+    edit: "កែ",
+    unpin: "ដក Pin",
+    pin: "Pin",
+    copyText: "ចម្លងអត្ថបទ",
+    forward: "បញ្ជូនបន្ត",
+    delete: "លុប",
+    select: "ជ្រើស",
+    messageInfo: "ព័ត៌មានសារ",
+    report: "រាយការណ៍",
+    closeMessageMenu: "បិទម៉ឺនុយសារ",
+    pinnedMessage: "សារដែលបាន Pin",
+    message: "សារ",
+    unpinMessage: "ដក Pin សារ",
+    failedLoadConversations: "មិនអាចផ្ទុកការសន្ទនាបានទេ",
+    failedForwardMessages: "មិនអាចបញ្ជូនសារបន្តបានទេ",
+    forwardOne: "បញ្ជូនបន្ត 1 សារ",
+    forwardMany: "បញ្ជូនបន្ត {{count}} សារ",
+    conversation: "ការសន្ទនា",
+    messages: "សារ",
+    noAcceptedConversation: "មិនមានការសន្ទនាដែលបានទទួលយកផ្សេងទៀតទេ។",
+    failedSubmitReport: "មិនអាចផ្ញើរបាយការណ៍បានទេ",
+    reportMessage: "រាយការណ៍សារ",
+    reason: "មូលហេតុ",
+    details: "ព័ត៌មានលម្អិត",
+    reportPlaceholder: "បន្ថែមព័ត៌មានដែលមានប្រយោជន៍សម្រាប់ Admin ពិនិត្យ...",
+    submitReport: "ផ្ញើរបាយការណ៍",
+    reportEvidence: "ភស្តុតាងការសន្ទនានឹងត្រូវបានរក្សាទុកសម្រាប់ Admin ពិនិត្យ។",
+    messageId: "លេខសម្គាល់សារ",
+    sent: "បានផ្ញើ",
+    edited: "បានកែ",
+    no: "ទេ",
+    yes: "បាទ/ចាស",
+    forwarded: "បានបញ្ជូនបន្ត",
+    replyTo: "ឆ្លើយតបទៅ",
+    type: "ប្រភេទ",
+    textType: "អត្ថបទ",
+    messageDeleted: "សារត្រូវបានលុប",
+    deleteConversation: "លុបការសន្ទនា",
+    deleteEvidence: "ភស្តុតាង Chat ដែលបានលុបត្រូវបានរក្សាសុវត្ថិភាព 90 ថ្ងៃ ហើយមានតែ Admin ដែលមានសិទ្ធិប៉ុណ្ណោះអាចពិនិត្យពេលចាំបាច់។",
+    deleteForMe: "លុបសម្រាប់ខ្ញុំ",
+    removeInbox: "ដក Chat នេះចេញតែពី Inbox របស់អ្នក។",
+    deleteForBoth: "លុបសម្រាប់ទាំងពីរ",
+    removeBoth: "ដក Chat ចាស់ចេញពី Inbox ទាំងពីរ។",
+    groupDeleteOnly: "Group Chat អាចលុបបានតែពី Inbox របស់អ្នកប៉ុណ្ណោះ។",
+    authorDeleteOnly: "ការសន្ទនា Author Page អាចលុបបានតែពីខាងអ្នកប៉ុណ្ណោះ។",
+    messageOptions: "ជម្រើសសារ",
+    originalUnavailable: "សារដើមមិនអាចមើលបាន",
+    originalMessage: "សារដើម",
+    read: "បានអាន",
+    sentStatus: "បានផ្ញើ",
+    fromPerson: "ពី {{name}}",
+    failedLoadConversation: "មិនអាចផ្ទុកការសន្ទនាបានទេ",
+    failedLoadThisMessage: "មិនអាចផ្ទុកសារនេះបានទេ",
+    oldMessageUnavailable: "សារនេះចាស់ជាងប្រវត្តិដែលបានផ្ទុក ឬលែងមានទៀតហើយ",
+    failedLoadEarlier: "មិនអាចផ្ទុកសារចាស់ៗបានទេ",
+    messageEdited: "បានកែសារ",
+    failedSend: "មិនអាចផ្ញើសារបានទេ",
+    blockConfirm: "Block គណនីនេះ និងបញ្ឈប់សារទាំងអស់?",
+    failedUpdateRequest: "មិនអាច Update សំណើបានទេ",
+    unblockConfirm: "Unblock គណនីនេះ និងបើកការផ្ញើសារវិញ?",
+    failedUnblock: "មិនអាច Unblock គណនីបានទេ",
+    failedArchive: "មិនអាច Archive ការសន្ទនាបានទេ",
+    failedDeleteConversation: "មិនអាចលុបការសន្ទនាបានទេ",
+    selectLimit: "អ្នកអាចជ្រើសបានអតិបរមា {{count}} សារ",
+    noTextToCopy: "គ្មានអត្ថបទសារសម្រាប់ចម្លង",
+    copied: "បានចម្លង",
+    failedCopy: "មិនអាចចម្លងអត្ថបទបានទេ",
+    messageUnpinned: "បានដក Pin សារ",
+    messagePinned: "បាន Pin សារ",
+    failedUpdatePin: "មិនអាច Update Pin បានទេ",
+    deleteOneConfirm: "លុប 1 សារសម្រាប់គ្រប់គ្នា? ភស្តុតាង Admin នឹងត្រូវរក្សាទុក 90 ថ្ងៃ។",
+    deleteManyConfirm: "លុប {{count}} សារសម្រាប់គ្រប់គ្នា? ភស្តុតាង Admin នឹងត្រូវរក្សាទុក 90 ថ្ងៃ។",
+    messageDeletedNotice: "បានលុបសារ",
+    failedDeleteMessage: "មិនអាចលុបសារបានទេ",
+    exitSelection: "ចាកចេញពីការជ្រើស",
+    selectedCount: "បានជ្រើស {{selected}} / {{max}}",
+    copySelected: "ចម្លងសារដែលបានជ្រើស",
+    forwardSelected: "បញ្ជូនសារដែលបានជ្រើស",
+    pinSelected: "Pin សារដែលបានជ្រើស",
+    deleteSelected: "លុបសារដែលបានជ្រើស",
+    backMessages: "ត្រឡប់ទៅសារ",
+    openChatInfo: "បើកព័ត៌មាន Chat",
+    people: "{{count}} នាក់",
+    conversationOptions: "ជម្រើសការសន្ទនា",
+    loadEarlier: "ផ្ទុកសារចាស់ៗ",
+    noMessages: "មិនទាន់មានសារ។",
+    editingMessage: "កំពុងកែសារ",
+    replyingTo: "កំពុងឆ្លើយតបទៅ {{name}}",
+    yourself: "ខ្លួនឯង",
+    replyMessage: "សារ",
+    editPlaceholder: "កែសារ...",
+    replyPlaceholder: "សរសេរការឆ្លើយតប...",
+    messagePlaceholder: "សរសេរសារ...",
+    waitingApproval: "កំពុងរង់ចាំការយល់ព្រមសំណើ",
+    messagesUnavailable: "មិនអាចផ្ញើសារបានទេ",
+    comingSoon: "នឹងមកដល់ឆាប់ៗ",
+    searchMessages: "ស្វែងរកសារ",
+    camera: "កាមេរ៉ា",
+    image: "រូបភាព",
+    saveEdit: "រក្សាទុកការកែ",
+    sendMessage: "ផ្ញើសារ",
+    emoji: "Emoji",
+    messageForwarded: "បានបញ្ជូនសារបន្ត",
+    reportSubmitted: "បានផ្ញើរបាយការណ៍",
+  },
+  zh: {
+    close: "关闭",
+    unknown: "未知",
+    reasonSpam: "垃圾信息",
+    reasonHarassment: "骚扰",
+    reasonHate: "仇恨",
+    reasonSexual: "色情内容",
+    reasonViolence: "暴力",
+    reasonScam: "诈骗",
+    reasonImpersonation: "冒充他人",
+    reasonPrivacy: "隐私",
+    reasonOther: "其他",
+    messageRequest: "消息请求",
+    acceptRequestText: "请先接受此请求，再继续对话。",
+    accept: "接受",
+    decline: "拒绝",
+    block: "屏蔽",
+    waitingRequest: "正在等待对方接受你的消息请求。",
+    requestDeclined: "此消息请求已被拒绝。",
+    blockedByYou: "你已屏蔽此账号。打开三点菜单可解除屏蔽。",
+    blockedByOther: "此账号已屏蔽与你的消息。",
+    messagingBlocked: "此对话的消息功能已被屏蔽。",
+    closeConversationMenu: "关闭对话菜单",
+    viewProfile: "查看资料",
+    archiveChat: "归档聊天",
+    deleteChat: "删除聊天",
+    unblockAccount: "解除屏蔽",
+    blockAccount: "屏蔽账号",
+    blockedMessaging: "此账号已屏蔽消息",
+    reply: "回复",
+    edit: "编辑",
+    unpin: "取消置顶",
+    pin: "置顶",
+    copyText: "复制文本",
+    forward: "转发",
+    delete: "删除",
+    select: "选择",
+    messageInfo: "消息信息",
+    report: "举报",
+    closeMessageMenu: "关闭消息菜单",
+    pinnedMessage: "已置顶消息",
+    message: "消息",
+    unpinMessage: "取消置顶消息",
+    failedLoadConversations: "无法加载对话",
+    failedForwardMessages: "无法转发消息",
+    forwardOne: "转发 1 条消息",
+    forwardMany: "转发 {{count}} 条消息",
+    conversation: "对话",
+    messages: "消息",
+    noAcceptedConversation: "没有其他已接受的对话。",
+    failedSubmitReport: "无法提交举报",
+    reportMessage: "举报消息",
+    reason: "原因",
+    details: "详情",
+    reportPlaceholder: "添加有助于管理员审核的详细信息...",
+    submitReport: "提交举报",
+    reportEvidence: "对话证据将被保留供管理员审核。",
+    messageId: "消息 ID",
+    sent: "发送时间",
+    edited: "已编辑",
+    no: "否",
+    yes: "是",
+    forwarded: "已转发",
+    replyTo: "回复至",
+    type: "类型",
+    textType: "文本",
+    messageDeleted: "消息已删除",
+    deleteConversation: "删除对话",
+    deleteEvidence: "已删除聊天的证据会安全保留 90 天，仅授权管理员可在需要时查看。",
+    deleteForMe: "仅为我删除",
+    removeInbox: "仅从你的收件箱中移除此聊天。",
+    deleteForBoth: "为双方删除",
+    removeBoth: "从双方收件箱中移除此旧聊天。",
+    groupDeleteOnly: "群聊只能从你自己的收件箱中删除。",
+    authorDeleteOnly: "Author Page 对话只能从你这一侧删除。",
+    messageOptions: "消息选项",
+    originalUnavailable: "原消息不可用",
+    originalMessage: "原消息",
+    read: "已读",
+    sentStatus: "已发送",
+    fromPerson: "来自 {{name}}",
+    failedLoadConversation: "无法加载对话",
+    failedLoadThisMessage: "无法加载此消息",
+    oldMessageUnavailable: "此消息早于已加载的历史记录或已不可用",
+    failedLoadEarlier: "无法加载更早的消息",
+    messageEdited: "消息已编辑",
+    failedSend: "消息发送失败",
+    blockConfirm: "屏蔽此账号并停止所有消息？",
+    failedUpdateRequest: "无法更新请求",
+    unblockConfirm: "解除屏蔽并恢复消息功能？",
+    failedUnblock: "无法解除屏蔽",
+    failedArchive: "无法归档对话",
+    failedDeleteConversation: "无法删除对话",
+    selectLimit: "最多可选择 {{count}} 条消息",
+    noTextToCopy: "没有可复制的消息文本",
+    copied: "已复制",
+    failedCopy: "无法复制文本",
+    messageUnpinned: "已取消置顶消息",
+    messagePinned: "消息已置顶",
+    failedUpdatePin: "无法更新置顶状态",
+    deleteOneConfirm: "为所有人删除 1 条消息？管理员证据将保留 90 天。",
+    deleteManyConfirm: "为所有人删除 {{count}} 条消息？管理员证据将保留 90 天。",
+    messageDeletedNotice: "消息已删除",
+    failedDeleteMessage: "无法删除消息",
+    exitSelection: "退出选择",
+    selectedCount: "已选择 {{selected}} / {{max}}",
+    copySelected: "复制所选消息",
+    forwardSelected: "转发所选消息",
+    pinSelected: "置顶所选消息",
+    deleteSelected: "删除所选消息",
+    backMessages: "返回消息",
+    openChatInfo: "打开聊天信息",
+    people: "{{count}} 人",
+    conversationOptions: "对话选项",
+    loadEarlier: "加载更早的消息",
+    noMessages: "暂无消息。",
+    editingMessage: "正在编辑消息",
+    replyingTo: "正在回复 {{name}}",
+    yourself: "自己",
+    replyMessage: "消息",
+    editPlaceholder: "编辑消息...",
+    replyPlaceholder: "写回复...",
+    messagePlaceholder: "写消息...",
+    waitingApproval: "等待请求批准",
+    messagesUnavailable: "消息不可用",
+    comingSoon: "即将推出",
+    searchMessages: "搜索消息",
+    camera: "相机",
+    image: "图片",
+    saveEdit: "保存编辑",
+    sendMessage: "发送消息",
+    emoji: "表情",
+    messageForwarded: "消息已转发",
+    reportSubmitted: "举报已提交",
+  },
+  ja: {
+    close: "閉じる",
+    unknown: "不明",
+    reasonSpam: "スパム",
+    reasonHarassment: "嫌がらせ",
+    reasonHate: "ヘイト",
+    reasonSexual: "性的コンテンツ",
+    reasonViolence: "暴力",
+    reasonScam: "詐欺",
+    reasonImpersonation: "なりすまし",
+    reasonPrivacy: "プライバシー",
+    reasonOther: "その他",
+    messageRequest: "メッセージリクエスト",
+    acceptRequestText: "会話を続ける前にこのリクエストを承認してください。",
+    accept: "承認",
+    decline: "拒否",
+    block: "ブロック",
+    waitingRequest: "相手がメッセージリクエストを承認するのを待っています。",
+    requestDeclined: "このメッセージリクエストは拒否されました。",
+    blockedByYou: "このアカウントをブロックしました。3点メニューから解除できます。",
+    blockedByOther: "このアカウントはあなたとのメッセージをブロックしています。",
+    messagingBlocked: "この会話ではメッセージがブロックされています。",
+    closeConversationMenu: "会話メニューを閉じる",
+    viewProfile: "プロフィールを見る",
+    archiveChat: "チャットをアーカイブ",
+    deleteChat: "チャットを削除",
+    unblockAccount: "ブロック解除",
+    blockAccount: "アカウントをブロック",
+    blockedMessaging: "このアカウントはメッセージをブロックしています",
+    reply: "返信",
+    edit: "編集",
+    unpin: "ピン解除",
+    pin: "ピン留め",
+    copyText: "テキストをコピー",
+    forward: "転送",
+    delete: "削除",
+    select: "選択",
+    messageInfo: "メッセージ情報",
+    report: "報告",
+    closeMessageMenu: "メッセージメニューを閉じる",
+    pinnedMessage: "ピン留めされたメッセージ",
+    message: "メッセージ",
+    unpinMessage: "メッセージのピンを解除",
+    failedLoadConversations: "会話を読み込めませんでした",
+    failedForwardMessages: "メッセージを転送できませんでした",
+    forwardOne: "1件のメッセージを転送",
+    forwardMany: "{{count}}件のメッセージを転送",
+    conversation: "会話",
+    messages: "メッセージ",
+    noAcceptedConversation: "他に承認済みの会話はありません。",
+    failedSubmitReport: "報告を送信できませんでした",
+    reportMessage: "メッセージを報告",
+    reason: "理由",
+    details: "詳細",
+    reportPlaceholder: "管理者の確認に役立つ詳細を追加...",
+    submitReport: "報告を送信",
+    reportEvidence: "会話の証拠は管理者の確認用に保存されます。",
+    messageId: "メッセージ ID",
+    sent: "送信日時",
+    edited: "編集済み",
+    no: "いいえ",
+    yes: "はい",
+    forwarded: "転送済み",
+    replyTo: "返信先",
+    type: "種類",
+    textType: "テキスト",
+    messageDeleted: "メッセージは削除されました",
+    deleteConversation: "会話を削除",
+    deleteEvidence: "削除されたチャットの証拠は90日間安全に保管され、必要な場合のみ権限のある管理者が確認できます。",
+    deleteForMe: "自分だけ削除",
+    removeInbox: "自分の受信箱からのみこのチャットを削除します。",
+    deleteForBoth: "両方から削除",
+    removeBoth: "双方の受信箱から古いチャットを削除します。",
+    groupDeleteOnly: "グループチャットは自分の受信箱からのみ削除できます。",
+    authorDeleteOnly: "Author Page の会話は自分側からのみ削除できます。",
+    messageOptions: "メッセージオプション",
+    originalUnavailable: "元のメッセージは利用できません",
+    originalMessage: "元のメッセージ",
+    read: "既読",
+    sentStatus: "送信済み",
+    fromPerson: "{{name}} から",
+    failedLoadConversation: "会話を読み込めませんでした",
+    failedLoadThisMessage: "このメッセージを読み込めませんでした",
+    oldMessageUnavailable: "このメッセージは読み込み済み履歴より古いか、利用できなくなっています",
+    failedLoadEarlier: "以前のメッセージを読み込めませんでした",
+    messageEdited: "メッセージを編集しました",
+    failedSend: "メッセージを送信できませんでした",
+    blockConfirm: "このアカウントをブロックしてすべてのメッセージを停止しますか？",
+    failedUpdateRequest: "リクエストを更新できませんでした",
+    unblockConfirm: "ブロックを解除してメッセージを再開しますか？",
+    failedUnblock: "ブロックを解除できませんでした",
+    failedArchive: "会話をアーカイブできませんでした",
+    failedDeleteConversation: "会話を削除できませんでした",
+    selectLimit: "最大 {{count}} 件のメッセージを選択できます",
+    noTextToCopy: "コピーできるメッセージ本文がありません",
+    copied: "コピーしました",
+    failedCopy: "テキストをコピーできませんでした",
+    messageUnpinned: "メッセージのピンを解除しました",
+    messagePinned: "メッセージをピン留めしました",
+    failedUpdatePin: "ピン状態を更新できませんでした",
+    deleteOneConfirm: "1件のメッセージを全員から削除しますか？管理用証拠は90日間保存されます。",
+    deleteManyConfirm: "{{count}}件のメッセージを全員から削除しますか？管理用証拠は90日間保存されます。",
+    messageDeletedNotice: "メッセージを削除しました",
+    failedDeleteMessage: "メッセージを削除できませんでした",
+    exitSelection: "選択を終了",
+    selectedCount: "{{selected}} / {{max}} 件選択",
+    copySelected: "選択したメッセージをコピー",
+    forwardSelected: "選択したメッセージを転送",
+    pinSelected: "選択したメッセージをピン留め",
+    deleteSelected: "選択したメッセージを削除",
+    backMessages: "メッセージに戻る",
+    openChatInfo: "チャット情報を開く",
+    people: "{{count}} 人",
+    conversationOptions: "会話オプション",
+    loadEarlier: "以前のメッセージを読み込む",
+    noMessages: "まだメッセージはありません。",
+    editingMessage: "メッセージを編集中",
+    replyingTo: "{{name}} に返信中",
+    yourself: "自分",
+    replyMessage: "メッセージ",
+    editPlaceholder: "メッセージを編集...",
+    replyPlaceholder: "返信を書く...",
+    messagePlaceholder: "メッセージを書く...",
+    waitingApproval: "リクエストの承認待ち",
+    messagesUnavailable: "メッセージは利用できません",
+    comingSoon: "近日公開",
+    searchMessages: "メッセージを検索",
+    camera: "カメラ",
+    image: "画像",
+    saveEdit: "編集を保存",
+    sendMessage: "メッセージを送信",
+    emoji: "絵文字",
+    messageForwarded: "メッセージを転送しました",
+    reportSubmitted: "報告を送信しました",
+  },
+  ko: {
+    close: "닫기",
+    unknown: "알 수 없음",
+    reasonSpam: "스팸",
+    reasonHarassment: "괴롭힘",
+    reasonHate: "혐오",
+    reasonSexual: "성적 콘텐츠",
+    reasonViolence: "폭력",
+    reasonScam: "사기",
+    reasonImpersonation: "사칭",
+    reasonPrivacy: "개인정보",
+    reasonOther: "기타",
+    messageRequest: "메시지 요청",
+    acceptRequestText: "대화를 계속하기 전에 이 요청을 수락하세요.",
+    accept: "수락",
+    decline: "거절",
+    block: "차단",
+    waitingRequest: "상대방이 메시지 요청을 수락하기를 기다리는 중입니다.",
+    requestDeclined: "이 메시지 요청은 거절되었습니다.",
+    blockedByYou: "이 계정을 차단했습니다. 점 3개 메뉴에서 차단을 해제할 수 있습니다.",
+    blockedByOther: "이 계정이 나와의 메시지를 차단했습니다.",
+    messagingBlocked: "이 대화에서는 메시지가 차단되어 있습니다.",
+    closeConversationMenu: "대화 메뉴 닫기",
+    viewProfile: "프로필 보기",
+    archiveChat: "채팅 보관",
+    deleteChat: "채팅 삭제",
+    unblockAccount: "차단 해제",
+    blockAccount: "계정 차단",
+    blockedMessaging: "이 계정이 메시지를 차단했습니다",
+    reply: "답장",
+    edit: "수정",
+    unpin: "고정 해제",
+    pin: "고정",
+    copyText: "텍스트 복사",
+    forward: "전달",
+    delete: "삭제",
+    select: "선택",
+    messageInfo: "메시지 정보",
+    report: "신고",
+    closeMessageMenu: "메시지 메뉴 닫기",
+    pinnedMessage: "고정된 메시지",
+    message: "메시지",
+    unpinMessage: "메시지 고정 해제",
+    failedLoadConversations: "대화를 불러오지 못했습니다",
+    failedForwardMessages: "메시지를 전달하지 못했습니다",
+    forwardOne: "메시지 1개 전달",
+    forwardMany: "메시지 {{count}}개 전달",
+    conversation: "대화",
+    messages: "메시지",
+    noAcceptedConversation: "다른 수락된 대화가 없습니다.",
+    failedSubmitReport: "신고를 제출하지 못했습니다",
+    reportMessage: "메시지 신고",
+    reason: "이유",
+    details: "세부정보",
+    reportPlaceholder: "관리자 검토에 도움이 되는 세부정보를 추가하세요...",
+    submitReport: "신고 제출",
+    reportEvidence: "대화 증거는 관리자 검토를 위해 보관됩니다.",
+    messageId: "메시지 ID",
+    sent: "보낸 시간",
+    edited: "수정됨",
+    no: "아니요",
+    yes: "예",
+    forwarded: "전달됨",
+    replyTo: "답장 대상",
+    type: "유형",
+    textType: "텍스트",
+    messageDeleted: "메시지가 삭제됨",
+    deleteConversation: "대화 삭제",
+    deleteEvidence: "삭제된 채팅 증거는 90일 동안 안전하게 보관되며 필요한 경우 권한이 있는 관리자만 검토할 수 있습니다.",
+    deleteForMe: "나에게서 삭제",
+    removeInbox: "내 받은편지함에서만 이 채팅을 제거합니다.",
+    deleteForBoth: "양쪽에서 삭제",
+    removeBoth: "양쪽 받은편지함에서 이전 채팅을 제거합니다.",
+    groupDeleteOnly: "그룹 채팅은 내 받은편지함에서만 삭제할 수 있습니다.",
+    authorDeleteOnly: "Author Page 대화는 내 쪽에서만 삭제할 수 있습니다.",
+    messageOptions: "메시지 옵션",
+    originalUnavailable: "원본 메시지를 사용할 수 없음",
+    originalMessage: "원본 메시지",
+    read: "읽음",
+    sentStatus: "보냄",
+    fromPerson: "{{name}}에서",
+    failedLoadConversation: "대화를 불러오지 못했습니다",
+    failedLoadThisMessage: "이 메시지를 불러오지 못했습니다",
+    oldMessageUnavailable: "이 메시지는 불러온 기록보다 오래되었거나 더 이상 사용할 수 없습니다",
+    failedLoadEarlier: "이전 메시지를 불러오지 못했습니다",
+    messageEdited: "메시지를 수정했습니다",
+    failedSend: "메시지를 보내지 못했습니다",
+    blockConfirm: "이 계정을 차단하고 모든 메시지를 중지할까요?",
+    failedUpdateRequest: "요청을 업데이트하지 못했습니다",
+    unblockConfirm: "이 계정의 차단을 해제하고 메시지를 복원할까요?",
+    failedUnblock: "차단을 해제하지 못했습니다",
+    failedArchive: "대화를 보관하지 못했습니다",
+    failedDeleteConversation: "대화를 삭제하지 못했습니다",
+    selectLimit: "최대 {{count}}개의 메시지를 선택할 수 있습니다",
+    noTextToCopy: "복사할 메시지 텍스트가 없습니다",
+    copied: "복사됨",
+    failedCopy: "텍스트를 복사하지 못했습니다",
+    messageUnpinned: "메시지 고정을 해제했습니다",
+    messagePinned: "메시지를 고정했습니다",
+    failedUpdatePin: "고정 상태를 업데이트하지 못했습니다",
+    deleteOneConfirm: "모두에게서 메시지 1개를 삭제할까요? 관리자 증거는 90일간 보관됩니다.",
+    deleteManyConfirm: "모두에게서 메시지 {{count}}개를 삭제할까요? 관리자 증거는 90일간 보관됩니다.",
+    messageDeletedNotice: "메시지가 삭제되었습니다",
+    failedDeleteMessage: "메시지를 삭제하지 못했습니다",
+    exitSelection: "선택 종료",
+    selectedCount: "{{selected}} / {{max}} 선택됨",
+    copySelected: "선택한 메시지 복사",
+    forwardSelected: "선택한 메시지 전달",
+    pinSelected: "선택한 메시지 고정",
+    deleteSelected: "선택한 메시지 삭제",
+    backMessages: "메시지로 돌아가기",
+    openChatInfo: "채팅 정보 열기",
+    people: "{{count}}명",
+    conversationOptions: "대화 옵션",
+    loadEarlier: "이전 메시지 불러오기",
+    noMessages: "아직 메시지가 없습니다.",
+    editingMessage: "메시지 수정 중",
+    replyingTo: "{{name}}에게 답장 중",
+    yourself: "나 자신",
+    replyMessage: "메시지",
+    editPlaceholder: "메시지 수정...",
+    replyPlaceholder: "답장 작성...",
+    messagePlaceholder: "메시지 작성...",
+    waitingApproval: "요청 승인 대기 중",
+    messagesUnavailable: "메시지를 사용할 수 없습니다",
+    comingSoon: "곧 제공 예정",
+    searchMessages: "메시지 검색",
+    camera: "카메라",
+    image: "이미지",
+    saveEdit: "수정 저장",
+    sendMessage: "메시지 보내기",
+    emoji: "이모지",
+    messageForwarded: "메시지를 전달했습니다",
+    reportSubmitted: "신고를 제출했습니다",
+  },
+})
 
 const REPORT_REASONS = [
-  ['spam', 'Spam'],
-  ['harassment', 'Harassment'],
-  ['hate', 'Hate'],
-  ['sexual_content', 'Sexual content'],
-  ['violence', 'Violence'],
-  ['scam', 'Scam'],
-  ['impersonation', 'Impersonation'],
-  ['privacy', 'Privacy'],
-  ['other', 'Other'],
+  ['spam', 'reasonSpam'],
+  ['harassment', 'reasonHarassment'],
+  ['hate', 'reasonHate'],
+  ['sexual_content', 'reasonSexual'],
+  ['violence', 'reasonViolence'],
+  ['scam', 'reasonScam'],
+  ['impersonation', 'reasonImpersonation'],
+  ['privacy', 'reasonPrivacy'],
+  ['other', 'reasonOther'],
 ]
 
 function formatMessageTime(value) {
@@ -77,7 +757,7 @@ function formatMessageTime(value) {
     return ''
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date)
@@ -87,10 +767,10 @@ function formatFullDate(value) {
   const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) {
-    return 'Unknown'
+    return getDisplayText('chatRoomPage.unknown')
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -229,11 +909,13 @@ function ModalShell({
   onClose,
   width = 'max-w-[430px]',
 }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        aria-label="Close"
+        aria-label={t('chatRoomPage.close')}
         onClick={onClose}
         className="absolute inset-0"
       />
@@ -265,6 +947,8 @@ function RequestPanel({
   busyAction,
   onDecision,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!conversation) return null
 
   if (conversation.request_status === 'pending') {
@@ -272,10 +956,10 @@ function RequestPanel({
       return (
         <section className="mx-4 mt-4 rounded-[20px] border border-[#ded4fa] bg-[#f7f3ff] p-4">
           <h2 className="text-[13px] font-extrabold text-[#111827]">
-            Message request
+            {t('chatRoomPage.messageRequest')}
           </h2>
           <p className="mt-1 text-[11px] leading-5 text-[#746b85]">
-            Accept this request before continuing the conversation.
+            {t('chatRoomPage.acceptRequestText')}
           </p>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -293,7 +977,7 @@ function RequestPanel({
               ) : (
                 <Check size={15} />
               )}
-              Accept
+              {t('chatRoomPage.accept')}
             </button>
 
             <button
@@ -310,7 +994,7 @@ function RequestPanel({
               ) : (
                 <X size={15} />
               )}
-              Decline
+              {t('chatRoomPage.decline')}
             </button>
 
             <button
@@ -327,7 +1011,7 @@ function RequestPanel({
               ) : (
                 <Ban size={14} />
               )}
-              Block
+              {t('chatRoomPage.block')}
             </button>
           </div>
         </section>
@@ -337,7 +1021,7 @@ function RequestPanel({
     return (
       <section className="mx-4 mt-4 rounded-[18px] bg-[#f4efff] px-4 py-3 text-center">
         <p className="text-[11px] font-bold leading-5 text-[#705b9d]">
-          Waiting for the recipient to accept your message request.
+          {t('chatRoomPage.waitingRequest')}
         </p>
       </section>
     )
@@ -347,7 +1031,7 @@ function RequestPanel({
     return (
       <section className="mx-4 mt-4 rounded-[18px] bg-[#f4f4f6] px-4 py-3 text-center">
         <p className="text-[11px] font-bold text-[#777781]">
-          This message request was declined.
+          {t('chatRoomPage.requestDeclined')}
         </p>
       </section>
     )
@@ -356,10 +1040,10 @@ function RequestPanel({
   if (conversation.request_status === 'blocked') {
     const blockedMessage =
       blockStatus.viewer_has_blocked
-        ? 'You blocked this account. Open the 3 dots menu to unblock it.'
+        ? t('chatRoomPage.blockedByYou')
         : blockStatus.viewer_is_blocked
-          ? 'This account blocked messaging with you.'
-          : 'Messaging is blocked for this conversation.'
+          ? t('chatRoomPage.blockedByOther')
+          : t('chatRoomPage.messagingBlocked')
 
     return (
       <section className="mx-4 mt-4 rounded-[18px] bg-[#fff0f1] px-4 py-3 text-center">
@@ -388,13 +1072,15 @@ function ConversationMenu({
   onBlock,
   onUnblock,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!open) return null
 
   return (
     <>
       <button
         type="button"
-        aria-label="Close conversation menu"
+        aria-label={t('chatRoomPage.closeConversationMenu')}
         onClick={onClose}
         className="fixed inset-0 z-[84]"
       />
@@ -408,7 +1094,7 @@ function ConversationMenu({
             className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#111827] transition hover:bg-[#f7f5fb] active:bg-[#f1edf8] disabled:opacity-45"
           >
             <UserRound size={17} />
-            View profile
+            {t('chatRoomPage.viewProfile')}
           </button>
         ) : null}
 
@@ -426,7 +1112,7 @@ function ConversationMenu({
           ) : (
             <Archive size={17} />
           )}
-          Archive chat
+          {t('chatRoomPage.archiveChat')}
         </button>
 
         <button
@@ -436,7 +1122,7 @@ function ConversationMenu({
           className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
         >
           <Trash2 size={17} />
-          Delete chat
+          {t('chatRoomPage.deleteChat')}
         </button>
 
         {!isGroup ? (
@@ -458,7 +1144,7 @@ function ConversationMenu({
             ) : (
               <Check size={17} />
             )}
-            Unblock account
+            {t('chatRoomPage.unblockAccount')}
           </button>
         ) : !isGroup && canBlock ? (
           <button
@@ -475,12 +1161,12 @@ function ConversationMenu({
             ) : (
               <Ban size={17} />
             )}
-            Block account
+            {t('chatRoomPage.blockAccount')}
           </button>
         ) : !isGroup && blockedByOther ? (
           <div className="flex min-h-11 w-full items-center gap-3 rounded-[13px] px-3 py-2 text-left text-[11px] font-normal leading-5 text-[#a64a50]">
             <Ban size={17} className="shrink-0" />
-            This account blocked messaging
+            {t('chatRoomPage.blockedMessaging')}
           </div>
         ) : null}
       </div>
@@ -495,42 +1181,44 @@ function MessageActionMenu({
   onClose,
   onAction,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!state?.message) return null
 
   const message = state.message
   const actions = message.is_mine
     ? [
-        ['reply', CornerUpLeft, 'Reply'],
-        ['edit', Pencil, 'Edit'],
+        ['reply', CornerUpLeft, t('chatRoomPage.reply')],
+        ['edit', Pencil, t('chatRoomPage.edit')],
         [
           isPinned ? 'unpin' : 'pin',
           isPinned ? PinOff : Pin,
-          isPinned ? 'Unpin' : 'Pin',
+          isPinned ? t('chatRoomPage.unpin') : t('chatRoomPage.pin'),
         ],
-        ['copy', Copy, 'Copy text'],
-        ['forward', Forward, 'Forward'],
-        ['delete', Trash2, 'Delete'],
-        ['select', Check, 'Select'],
-        ['info', Info, 'Message info'],
+        ['copy', Copy, t('chatRoomPage.copyText')],
+        ['forward', Forward, t('chatRoomPage.forward')],
+        ['delete', Trash2, t('chatRoomPage.delete')],
+        ['select', Check, t('chatRoomPage.select')],
+        ['info', Info, t('chatRoomPage.messageInfo')],
       ]
     : [
-        ['reply', CornerUpLeft, 'Reply'],
+        ['reply', CornerUpLeft, t('chatRoomPage.reply')],
         [
           isPinned ? 'unpin' : 'pin',
           isPinned ? PinOff : Pin,
-          isPinned ? 'Unpin' : 'Pin',
+          isPinned ? t('chatRoomPage.unpin') : t('chatRoomPage.pin'),
         ],
-        ['copy', Copy, 'Copy text'],
-        ['forward', Forward, 'Forward'],
-        ['select', Check, 'Select'],
-        ['report', Flag, 'Report'],
+        ['copy', Copy, t('chatRoomPage.copyText')],
+        ['forward', Forward, t('chatRoomPage.forward')],
+        ['select', Check, t('chatRoomPage.select')],
+        ['report', Flag, t('chatRoomPage.report')],
       ]
 
   return (
     <>
       <button
         type="button"
-        aria-label="Close message menu"
+        aria-label={t('chatRoomPage.closeMessageMenu')}
         onClick={onClose}
         className="fixed inset-0 z-[102]"
       />
@@ -581,6 +1269,8 @@ function PinnedBanner({
   onJump,
   onUnpin,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!pin?.message) return null
 
   const message = pin.message
@@ -595,10 +1285,10 @@ function PinnedBanner({
         >
           <p className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wide text-[#7552c6]">
             <Pin size={12} />
-            Pinned message
+            {t('chatRoomPage.pinnedMessage')}
           </p>
           <p className="mt-0.5 truncate text-[11px] font-semibold text-[#4a4655]">
-            {message.body || 'Message'}
+            {message.body || t('chatRoomPage.message')}
           </p>
         </button>
 
@@ -606,7 +1296,7 @@ function PinnedBanner({
           type="button"
           onClick={() => onUnpin(message.id)}
           disabled={Boolean(busy)}
-          aria-label="Unpin message"
+          aria-label={t('chatRoomPage.unpinMessage')}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#7552c6] transition hover:bg-[#eee8ff] active:scale-90 disabled:opacity-45"
         >
           {busy ? (
@@ -634,6 +1324,7 @@ function ForwardModal({
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState('')
   const [error, setError] = useState('')
+  const { t } = useDisplayTranslation()
 
   useEffect(() => {
     if (!open) return undefined
@@ -659,7 +1350,7 @@ function ForwardModal({
         if (!active) return
         setError(
           loadError.message ||
-            'Failed to load conversations'
+            getDisplayText('chatRoomPage.failedLoadConversations')
         )
       })
       .finally(() => {
@@ -690,7 +1381,7 @@ function ForwardModal({
     } catch (forwardError) {
       setError(
         forwardError.message ||
-          'Failed to forward messages'
+          getDisplayText('chatRoomPage.failedForwardMessages')
       )
     } finally {
       setBusyId('')
@@ -699,9 +1390,9 @@ function ForwardModal({
 
   return (
     <ModalShell
-      title={`Forward ${messageIds.length} message${
-        messageIds.length === 1 ? '' : 's'
-      }`}
+      title={messageIds.length === 1
+        ? t('chatRoomPage.forwardOne')
+        : t('chatRoomPage.forwardMany', { count: messageIds.length.toLocaleString(getDisplayLanguageId()) })}
       onClose={onClose}
     >
       <div className="max-h-[65vh] overflow-y-auto p-3">
@@ -735,12 +1426,12 @@ function ForwardModal({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[12px] font-extrabold text-[#22222b]">
                     {item.counterpart?.name ||
-                      'Conversation'}
+                      t('chatRoomPage.conversation')}
                   </span>
                   <span className="block truncate text-[10px] font-semibold text-[#9696a0]">
                     {item.counterpart?.username
                       ? `@${item.counterpart.username}`
-                      : 'Messages'}
+                      : t('chatRoomPage.messages')}
                   </span>
                 </span>
                 {busyId === item.id ? (
@@ -759,7 +1450,7 @@ function ForwardModal({
           </div>
         ) : (
           <p className="py-14 text-center text-[12px] font-semibold text-[#92929c]">
-            No other accepted conversation is available.
+            {t('chatRoomPage.noAcceptedConversation')}
           </p>
         )}
       </div>
@@ -777,6 +1468,7 @@ function ReportModal({
   const [details, setDetails] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const { t } = useDisplayTranslation()
 
   if (!message) return null
 
@@ -799,7 +1491,7 @@ function ReportModal({
     } catch (reportError) {
       setError(
         reportError.message ||
-          'Failed to submit report'
+          getDisplayText('chatRoomPage.failedSubmitReport')
       )
     } finally {
       setBusy(false)
@@ -808,7 +1500,7 @@ function ReportModal({
 
   return (
     <ModalShell
-      title="Report message"
+      title={t('chatRoomPage.reportMessage')}
       onClose={onClose}
     >
       <div className="max-h-[70vh] overflow-y-auto p-4">
@@ -819,7 +1511,7 @@ function ReportModal({
         </div>
 
         <label className="mt-4 block text-[11px] font-extrabold text-[#3a3a43]">
-          Reason
+          {t('chatRoomPage.reason')}
         </label>
         <select
           value={reason}
@@ -828,15 +1520,15 @@ function ReportModal({
           }
           className="mt-2 h-11 w-full rounded-[14px] border border-[#dedee4] bg-white px-3 text-[12px] font-semibold text-[#22222b] outline-none focus:border-[#9b7be8]"
         >
-          {REPORT_REASONS.map(([value, label]) => (
+          {REPORT_REASONS.map(([value, labelKey]) => (
             <option key={value} value={value}>
-              {label}
+              {t(`chatRoomPage.${labelKey}`)}
             </option>
           ))}
         </select>
 
         <label className="mt-4 block text-[11px] font-extrabold text-[#3a3a43]">
-          Details
+          {t('chatRoomPage.details')}
         </label>
         <textarea
           value={details}
@@ -846,7 +1538,7 @@ function ReportModal({
             )
           }
           rows={4}
-          placeholder="Add useful details for the admin review..."
+          placeholder={t('chatRoomPage.reportPlaceholder')}
           className="mt-2 w-full resize-none rounded-[14px] border border-[#dedee4] bg-white px-3 py-3 text-[12px] leading-5 text-[#22222b] outline-none focus:border-[#9b7be8]"
         />
 
@@ -870,11 +1562,11 @@ function ReportModal({
           ) : (
             <Flag size={17} />
           )}
-          Submit report
+          {t('chatRoomPage.submitReport')}
         </button>
 
         <p className="mt-3 text-center text-[10px] leading-4 text-[#8e8e98]">
-          The conversation evidence will be preserved for admin review.
+          {t('chatRoomPage.reportEvidence')}
         </p>
       </div>
     </ModalShell>
@@ -882,37 +1574,39 @@ function ReportModal({
 }
 
 function MessageInfoModal({ message, onClose }) {
+  const { t } = useDisplayTranslation()
+
   if (!message) return null
 
   const rows = [
-    ['Message ID', message.id],
-    ['Sent', formatFullDate(message.created_at)],
+    [t('chatRoomPage.messageId'), message.id],
+    [t('chatRoomPage.sent'), formatFullDate(message.created_at)],
     [
-      'Edited',
+      t('chatRoomPage.edited'),
       message.edited_at
         ? formatFullDate(message.edited_at)
-        : 'No',
+        : t('chatRoomPage.no'),
     ],
     [
-      'Forwarded',
-      message.is_forwarded ? 'Yes' : 'No',
+      t('chatRoomPage.forwarded'),
+      message.is_forwarded ? t('chatRoomPage.yes') : t('chatRoomPage.no'),
     ],
     [
-      'Reply to',
-      message.reply_to_message_id || 'No',
+      t('chatRoomPage.replyTo'),
+      message.reply_to_message_id || t('chatRoomPage.no'),
     ],
-    ['Type', message.message_type || 'text'],
+    [t('chatRoomPage.type'), message.message_type || t('chatRoomPage.textType')],
   ]
 
   return (
     <ModalShell
-      title="Message info"
+      title={t('chatRoomPage.messageInfo')}
       onClose={onClose}
     >
       <div className="p-4">
         <div className="rounded-[16px] bg-[#f7f7f9] p-3">
           <p className="max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-[12px] leading-5 text-[#33333c]">
-            {message.body || 'Message deleted'}
+            {message.body || t('chatRoomPage.messageDeleted')}
           </p>
         </div>
 
@@ -942,6 +1636,7 @@ function DeleteConversationModal({
   onClose,
   onDelete,
 }) {
+  const { t } = useDisplayTranslation()
   const isGroup =
     conversation?.is_group === true
 
@@ -954,12 +1649,12 @@ function DeleteConversationModal({
 
   return (
     <ModalShell
-      title="Delete conversation"
+      title={t('chatRoomPage.deleteConversation')}
       onClose={onClose}
     >
       <div className="p-4">
         <p className="text-[12px] leading-5 text-[#5d5d67]">
-          Deleted chat evidence is kept securely for 90 days and can only be reviewed by authorized admins when needed.
+          {t('chatRoomPage.deleteEvidence')}
         </p>
 
         <button
@@ -981,10 +1676,10 @@ function DeleteConversationModal({
           )}
           <span>
             <span className="block text-[12px] font-extrabold text-[#2a2a33]">
-              Delete for me
+              {t('chatRoomPage.deleteForMe')}
             </span>
             <span className="mt-0.5 block text-[10px] font-semibold text-[#91919b]">
-              Removes this chat only from your inbox.
+              {t('chatRoomPage.removeInbox')}
             </span>
           </span>
         </button>
@@ -1009,18 +1704,18 @@ function DeleteConversationModal({
             )}
             <span>
               <span className="block text-[12px] font-extrabold text-[#c7353d]">
-                Delete for both
+                {t('chatRoomPage.deleteForBoth')}
               </span>
               <span className="mt-0.5 block text-[10px] font-semibold text-[#a8787c]">
-                Removes the old chat from both inboxes.
+                {t('chatRoomPage.removeBoth')}
               </span>
             </span>
           </button>
         ) : (
           <p className="mt-3 rounded-[14px] bg-[#f7f3ff] px-3 py-2.5 text-[10px] font-bold leading-4 text-[#705b9d]">
             {isGroup
-              ? 'Group chats can only be deleted from your own inbox.'
-              : 'Author Page conversations can only be deleted from your own side.'}
+              ? t('chatRoomPage.groupDeleteOnly')
+              : t('chatRoomPage.authorDeleteOnly')}
           </p>
         )}
       </div>
@@ -1040,6 +1735,7 @@ function MessageBubble({
   onToggleSelection,
   onJumpToReply,
 }) {
+  const { t } = useDisplayTranslation()
   const longPressTimerRef = useRef(null)
   const pointerStartRef = useRef(null)
 
@@ -1111,7 +1807,7 @@ function MessageBubble({
 
   const senderName =
     message.reply_to?.sender?.name ||
-    'Message'
+    t('chatRoomPage.message')
 
   return (
     <div
@@ -1162,7 +1858,7 @@ function MessageBubble({
                 rect.top
               )
             }}
-            aria-label="Message options"
+            aria-label={t('chatRoomPage.messageOptions')}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#8c8c96] opacity-0 transition hover:bg-white active:scale-90 group-hover:opacity-100 focus:opacity-100"
           >
             <EllipsisVertical size={17} />
@@ -1189,9 +1885,9 @@ function MessageBubble({
               }`}
             >
               <Forward size={11} />
-              Forwarded
+              {t('chatRoomPage.forwarded')}
               {message.forwarded_from?.name
-                ? ` from ${message.forwarded_from.name}`
+                ? ` ${t('chatRoomPage.fromPerson', { name: message.forwarded_from.name })}`
                 : ''}
             </p>
           ) : null}
@@ -1228,9 +1924,9 @@ function MessageBubble({
                 }`}
               >
                 {message.reply_to?.is_deleted
-                  ? 'Original message unavailable'
+                  ? t('chatRoomPage.originalUnavailable')
                   : message.reply_to?.body ||
-                    'Original message'}
+                    t('chatRoomPage.originalMessage')}
               </span>
             </button>
           ) : null}
@@ -1243,7 +1939,7 @@ function MessageBubble({
             }`}
           >
             {message.is_deleted
-              ? 'Message deleted'
+              ? t('chatRoomPage.messageDeleted')
               : message.body}
           </p>
 
@@ -1259,7 +1955,7 @@ function MessageBubble({
               <Pin size={10} />
             ) : null}
             {message.edited_at ? (
-              <span>Edited</span>
+              <span>{t('chatRoomPage.edited')}</span>
             ) : null}
             <span>
               {formatMessageTime(
@@ -1271,8 +1967,8 @@ function MessageBubble({
               <span
                 aria-label={
                   isRead
-                    ? 'Read'
-                    : 'Sent'
+                    ? t('chatRoomPage.read')
+                    : t('chatRoomPage.sentStatus')
                 }
               >
                 {isRead ? '✓✓' : '✓'}
@@ -1299,6 +1995,7 @@ function MessageBubble({
 }
 
 export default function ChatRoomPage() {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { conversationId } = useParams()
@@ -1484,7 +2181,7 @@ export default function ChatRoomPage() {
         if (!silent) {
           setError(
             loadError.message ||
-              'Failed to load conversation'
+              getDisplayText('chatRoomPage.failedLoadConversation')
           )
         }
       } finally {
@@ -1828,7 +2525,7 @@ export default function ChatRoomPage() {
     } catch (jumpError) {
       setError(
         jumpError.message ||
-          'Failed to load this message'
+          getDisplayText('chatRoomPage.failedLoadThisMessage')
       )
       return
     } finally {
@@ -1840,7 +2537,7 @@ export default function ChatRoomPage() {
 
   if (!node) {
     setError(
-      'This message is older than the loaded history or is no longer available'
+      getDisplayText('chatRoomPage.oldMessageUnavailable')
     )
     return
   }
@@ -1938,7 +2635,7 @@ export default function ChatRoomPage() {
       scrollRestoreRef.current = null
       setError(
         historyError.message ||
-          'Failed to load earlier messages'
+          getDisplayText('chatRoomPage.failedLoadEarlier')
       )
     } finally {
       setLoadingOlder(false)
@@ -1972,7 +2669,7 @@ export default function ChatRoomPage() {
           editTarget.id,
           message
         )
-        setNotice('Message edited')
+        setNotice(getDisplayText('chatRoomPage.messageEdited'))
       } else if (replyTarget) {
         await replyChatMessage(
           conversationId,
@@ -1999,7 +2696,7 @@ export default function ChatRoomPage() {
     } catch (sendError) {
       setError(
         sendError.message ||
-          'Failed to send message'
+          getDisplayText('chatRoomPage.failedSend')
       )
     } finally {
       setSending(false)
@@ -2012,7 +2709,7 @@ export default function ChatRoomPage() {
     if (
       action === 'block' &&
       !window.confirm(
-        'Block this account and stop all messages?'
+        getDisplayText('chatRoomPage.blockConfirm')
       )
     ) {
       return
@@ -2038,7 +2735,7 @@ export default function ChatRoomPage() {
     } catch (decisionError) {
       setError(
         decisionError.message ||
-          'Failed to update request'
+          getDisplayText('chatRoomPage.failedUpdateRequest')
       )
     } finally {
       setBusyAction('')
@@ -2055,7 +2752,7 @@ export default function ChatRoomPage() {
 
     if (
       !window.confirm(
-        'Unblock this account and restore messaging?'
+        getDisplayText('chatRoomPage.unblockConfirm')
       )
     ) {
       return
@@ -2072,7 +2769,7 @@ export default function ChatRoomPage() {
     } catch (unblockError) {
       setError(
         unblockError.message ||
-          'Failed to unblock account'
+          getDisplayText('chatRoomPage.failedUnblock')
       )
     } finally {
       setBusyAction('')
@@ -2091,7 +2788,7 @@ export default function ChatRoomPage() {
     } catch (archiveError) {
       setError(
         archiveError.message ||
-          'Failed to archive conversation'
+          getDisplayText('chatRoomPage.failedArchive')
       )
       setMenuOpen(false)
     } finally {
@@ -2114,7 +2811,7 @@ export default function ChatRoomPage() {
     } catch (deleteError) {
       setError(
         deleteError.message ||
-          'Failed to delete conversation'
+          getDisplayText('chatRoomPage.failedDeleteConversation')
       )
       setDeleteChatOpen(false)
     } finally {
@@ -2155,7 +2852,7 @@ export default function ChatRoomPage() {
         MAX_CHAT_MESSAGE_SELECTION
       ) {
         setError(
-          `You can select up to ${MAX_CHAT_MESSAGE_SELECTION} messages`
+          getDisplayText('chatRoomPage.selectLimit', { count: MAX_CHAT_MESSAGE_SELECTION.toLocaleString(getDisplayLanguageId()) })
         )
         return current
       }
@@ -2176,15 +2873,15 @@ export default function ChatRoomPage() {
       .join('\n\n')
 
     if (!body) {
-      setError('No message text to copy')
+      setError(getDisplayText('chatRoomPage.noTextToCopy'))
       return
     }
 
     try {
       await copyToClipboard(body)
-      setNotice('Copied')
+      setNotice(getDisplayText('chatRoomPage.copied'))
     } catch {
-      setError('Failed to copy text')
+      setError(getDisplayText('chatRoomPage.failedCopy'))
     }
   }
 
@@ -2207,13 +2904,13 @@ export default function ChatRoomPage() {
           conversationId,
           messageId
         )
-        setNotice('Message unpinned')
+        setNotice(getDisplayText('chatRoomPage.messageUnpinned'))
       } else {
         await pinChatMessage(
           conversationId,
           messageId
         )
-        setNotice('Message pinned')
+        setNotice(getDisplayText('chatRoomPage.messagePinned'))
       }
 
       await refreshPins()
@@ -2221,7 +2918,7 @@ export default function ChatRoomPage() {
     } catch (pinError) {
       setError(
         pinError.message ||
-          'Failed to update pin'
+          getDisplayText('chatRoomPage.failedUpdatePin')
       )
     } finally {
       setBusyAction('')
@@ -2233,9 +2930,9 @@ export default function ChatRoomPage() {
 
     if (
       !window.confirm(
-        `Delete ${ids.length} message${
-          ids.length === 1 ? '' : 's'
-        } for everyone? Admin evidence is retained for 90 days.`
+        ids.length === 1
+          ? getDisplayText('chatRoomPage.deleteOneConfirm')
+          : getDisplayText('chatRoomPage.deleteManyConfirm', { count: ids.length.toLocaleString(getDisplayLanguageId()) })
       )
     ) {
       return
@@ -2276,12 +2973,12 @@ export default function ChatRoomPage() {
       )
       setSelectedIds(new Set())
       setMessageMenu(null)
-      setNotice('Message deleted')
+      setNotice(getDisplayText('chatRoomPage.messageDeletedNotice'))
       notifyChatUpdated()
     } catch (deleteError) {
       setError(
         deleteError.message ||
-          'Failed to delete message'
+          getDisplayText('chatRoomPage.failedDeleteMessage')
       )
     } finally {
       setBusyAction('')
@@ -2660,6 +3357,20 @@ export default function ChatRoomPage() {
           background-color: var(--shadow-input-bg) !important;
         }
 
+        html.dark .chat-room-page [class~="text-[#7b5bc5]"],
+        html.dark .chat-room-page [class~="text-[#7552c6]"],
+        html.dark .chat-room-page [class~="text-[#705b9d]"],
+        html.dark .chat-room-page [class~="text-[#6f52b5]"],
+        html.dark .chat-room-page [class~="text-[#5f4a96]"] {
+          color: #b8a2ff !important;
+        }
+
+        html.dark .chat-room-page [class~="bg-[#f1edf8]"],
+        html.dark .chat-room-page [class~="bg-[#eee8f8]"],
+        html.dark .chat-room-page [class~="bg-[#ece6fa]"] {
+          background-color: var(--shadow-bg-hover) !important;
+        }
+
         html.dark .chat-room-page option {
           background: var(--shadow-bg-elevated);
           color: var(--shadow-text-primary);
@@ -2674,7 +3385,7 @@ export default function ChatRoomPage() {
                 onClick={() =>
                   setSelectedIds(new Set())
                 }
-                aria-label="Exit selection"
+                aria-label={t('chatRoomPage.exitSelection')}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] transition active:scale-90"
               >
                 <X size={24} />
@@ -2682,9 +3393,10 @@ export default function ChatRoomPage() {
 
               <div className="min-w-0 flex-1">
                 <h1 className="text-[14px] font-extrabold text-[#111827]">
-                  {selectedIds.size} /{' '}
-                  {MAX_CHAT_MESSAGE_SELECTION}{' '}
-                  selected
+                  {t('chatRoomPage.selectedCount', {
+                    selected: selectedIds.size.toLocaleString(getDisplayLanguageId()),
+                    max: MAX_CHAT_MESSAGE_SELECTION.toLocaleString(getDisplayLanguageId()),
+                  })}
                 </h1>
               </div>
 
@@ -2692,7 +3404,7 @@ export default function ChatRoomPage() {
                 type="button"
                 onClick={handleSelectionCopy}
                 disabled={Boolean(busyAction)}
-                aria-label="Copy selected"
+                aria-label={t('chatRoomPage.copySelected')}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#5f4a96] transition hover:bg-[#f3effc] active:scale-90 disabled:opacity-40"
               >
                 <Copy size={18} />
@@ -2702,7 +3414,7 @@ export default function ChatRoomPage() {
                 type="button"
                 onClick={handleSelectionForward}
                 disabled={Boolean(busyAction)}
-                aria-label="Forward selected"
+                aria-label={t('chatRoomPage.forwardSelected')}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#5f4a96] transition hover:bg-[#f3effc] active:scale-90 disabled:opacity-40"
               >
                 <Forward size={18} />
@@ -2715,7 +3427,7 @@ export default function ChatRoomPage() {
                   selectedMessages.length !== 1 ||
                   Boolean(busyAction)
                 }
-                aria-label="Pin selected"
+                aria-label={t('chatRoomPage.pinSelected')}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#5f4a96] transition hover:bg-[#f3effc] active:scale-90 disabled:opacity-30"
               >
                 <Pin size={18} />
@@ -2728,7 +3440,7 @@ export default function ChatRoomPage() {
                   !selectedAllMine ||
                   Boolean(busyAction)
                 }
-                aria-label="Delete selected"
+                aria-label={t('chatRoomPage.deleteSelected')}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#c7353d] transition hover:bg-[#fff0f1] active:scale-90 disabled:opacity-30"
               >
                 {busyAction === 'delete' ? (
@@ -2746,7 +3458,7 @@ export default function ChatRoomPage() {
               <button
                 type="button"
                 onClick={() => navigate('/chat')}
-                aria-label="Back to messages"
+                aria-label={t('chatRoomPage.backMessages')}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] transition active:scale-90"
               >
                 <ChevronLeft
@@ -2758,7 +3470,7 @@ export default function ChatRoomPage() {
               <button
                 type="button"
                 onClick={handleOpenChatInfo}
-                aria-label="Open chat info"
+                aria-label={t('chatRoomPage.openChatInfo')}
                 className="shrink-0 rounded-full disabled:cursor-default"
               >
                 <RoomAvatar person={person} />
@@ -2770,21 +3482,18 @@ export default function ChatRoomPage() {
                 className="min-w-0 flex-1 text-left"
               >
                 <h1 className="truncate text-[14px] font-extrabold text-[#111827]">
-                  {person.name || 'Conversation'}
+                  {person.name || t('chatRoomPage.conversation')}
                 </h1>
                 <p className="truncate text-[10px] font-semibold text-[#92929c]">
                   {isGroup
-                    ? `${Number(
-                        conversation
-                          ?.member_count || 0
-                      )} people`
+                    ? t('chatRoomPage.people', { count: Number(conversation?.member_count || 0).toLocaleString(getDisplayLanguageId()) })
                     : person.username
                       ? `@${person.username}`
                       : conversation
                             ?.request_status ===
                           'accepted'
-                        ? 'Messages'
-                        : 'Message request'}
+                        ? t('chatRoomPage.messages')
+                        : t('chatRoomPage.messageRequest')}
                 </p>
               </button>
 
@@ -2795,7 +3504,7 @@ export default function ChatRoomPage() {
                     (current) => !current
                   )
                 }
-                aria-label="Conversation options"
+                aria-label={t('chatRoomPage.conversationOptions')}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f4f2f7] active:scale-90"
               >
                 <EllipsisVertical size={21} />
@@ -2885,7 +3594,7 @@ export default function ChatRoomPage() {
                     ) : (
                       <ChevronUp size={16} />
                     )}
-                    Load earlier messages
+                    {t('chatRoomPage.loadEarlier')}
                   </button>
                 </div>
               ) : null}
@@ -2923,7 +3632,7 @@ export default function ChatRoomPage() {
                 ))
               ) : (
                 <p className="py-20 text-center text-[12px] font-semibold text-[#9898a2]">
-                  No messages yet.
+                  {t('chatRoomPage.noMessages')}
                 </p>
               )}
 
@@ -2947,13 +3656,13 @@ export default function ChatRoomPage() {
                 <span className="min-w-0 flex-1 border-l-[3px] border-[#7c3aed] pl-2.5">
                   <span className="block text-[9px] font-extrabold uppercase tracking-wide text-[#7552c6]">
                     {editTarget
-                      ? 'Editing message'
-                      : `Replying to ${
-                          replyTarget?.sender?.name ||
-                          (replyTarget?.is_mine
-                            ? 'yourself'
-                            : 'message')
-                        }`}
+                      ? t('chatRoomPage.editingMessage')
+                      : t('chatRoomPage.replyingTo', {
+                          name: replyTarget?.sender?.name ||
+                            (replyTarget?.is_mine
+                              ? t('chatRoomPage.yourself')
+                              : t('chatRoomPage.replyMessage')),
+                        })}
                   </span>
                   <span className="mt-0.5 block truncate text-[10px] font-semibold text-[#6c6875]">
                     {(editTarget || replyTarget)?.body}
@@ -2984,13 +3693,13 @@ export default function ChatRoomPage() {
   placeholder={
     canSend
       ? editTarget
-        ? 'Edit message...'
+        ? t('chatRoomPage.editPlaceholder')
         : replyTarget
-          ? 'Write a reply...'
-          : 'Write a message...'
+          ? t('chatRoomPage.replyPlaceholder')
+          : t('chatRoomPage.messagePlaceholder')
       : conversation?.request_status === 'pending'
-        ? 'Waiting for request approval'
-        : 'Messages are unavailable'
+        ? t('chatRoomPage.waitingApproval')
+        : t('chatRoomPage.messagesUnavailable')
   }
   style={{ fontFamily: "'Kantumruy Pro', 'Noto Sans Khmer', sans-serif" }}
   className="block max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-[12px] pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
@@ -2998,12 +3707,12 @@ export default function ChatRoomPage() {
 
               <button
                 type="button"
-                onClick={() => setNotice('Coming soon')}
+                onClick={() => setNotice(getDisplayText('chatRoomPage.comingSoon'))}
                 disabled={!canSend || sending}
                 aria-label={
                   text.trim()
-                    ? 'Search messages'
-                    : 'Camera'
+                    ? t('chatRoomPage.searchMessages')
+                    : t('chatRoomPage.camera')
                 }
                 className="absolute inset-y-0 left-[7px] my-auto flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white transition active:scale-90 disabled:opacity-45"
               >
@@ -3017,9 +3726,9 @@ export default function ChatRoomPage() {
               {!text.trim() ? (
   <button
     type="button"
-    onClick={() => setNotice('Coming soon')}
+    onClick={() => setNotice(getDisplayText('chatRoomPage.comingSoon'))}
     disabled={!canSend || sending}
-    aria-label="Image"
+    aria-label={t('chatRoomPage.image')}
     className="absolute inset-y-0 right-[39px] my-auto flex h-8 w-8 items-center justify-center bg-transparent text-[#111827] transition active:scale-90 disabled:opacity-45"
   >
     <Image size={20} />
@@ -3032,15 +3741,15 @@ export default function ChatRoomPage() {
                   text.trim()
                     ? handleSend
                     : () =>
-                        setNotice('Coming soon')
+                        setNotice(getDisplayText('chatRoomPage.comingSoon'))
                 }
                 disabled={!canSend || sending}
                 aria-label={
                   text.trim()
                     ? editTarget
-                      ? 'Save edit'
-                      : 'Send message'
-                    : 'Emoji'
+                      ? t('chatRoomPage.saveEdit')
+                      : t('chatRoomPage.sendMessage')
+                    : t('chatRoomPage.emoji')
                 }
                 className={`absolute inset-y-0 right-[7px] my-auto flex h-8 w-8 items-center justify-center transition active:scale-90 disabled:opacity-45 ${
   text.trim()
@@ -3093,7 +3802,7 @@ export default function ChatRoomPage() {
         onForwarded={() => {
           setForwardIds([])
           setSelectedIds(new Set())
-          setNotice('Message forwarded')
+          setNotice(getDisplayText('chatRoomPage.messageForwarded'))
           notifyChatUpdated()
         }}
       />
@@ -3104,7 +3813,7 @@ export default function ChatRoomPage() {
         onClose={() => setReportTarget(null)}
         onSubmitted={() => {
           setReportTarget(null)
-          setNotice('Report submitted')
+          setNotice(getDisplayText('chatRoomPage.reportSubmitted'))
         }}
       />
 
