@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { addShadowMallCartItem } from '../../utils/shadowMallCart'
 import {
   isShadowMallWishlisted,
@@ -235,6 +235,7 @@ function ProductCard({ product, onOpen, index, sectionKey }) {
 
 export default function ShadowMallSectionPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { sectionKey = 'new-books' } = useParams()
   const section = sectionMap[sectionKey] || sectionMap['new-books']
   const [products, setProducts] = useState([])
@@ -327,7 +328,14 @@ export default function ShadowMallSectionPage() {
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/shop')}
+            onClick={() => {
+  if (location.state?.returnTo || location.state?.from) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop', { replace: true })
+}}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label="Go back"
           >
@@ -408,7 +416,11 @@ export default function ShadowMallSectionPage() {
                 product={product}
                 index={index}
                 sectionKey={section.key}
-                onOpen={() => navigate(`/shop/mall/product/${product.id}`)}
+                onOpen={() =>
+  navigate(`/shop/mall/product/${product.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               />
             ))}
           </section>
@@ -423,7 +435,14 @@ export default function ShadowMallSectionPage() {
             </p>
             <button
               type="button"
-              onClick={() => navigate('/shop')}
+              onClick={() => {
+  if (location.state?.returnTo || location.state?.from) {
+    navigate(-1)
+    return
+  }
+
+  navigate('/shop', { replace: true })
+}}
               className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
               Back to Shadow Mall
