@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { addShadowMallCartItem } from '../../utils/shadowMallCart'
 import {
   isShadowMallWishlisted,
@@ -209,6 +209,7 @@ function PublisherCard({ publisher, selected, onClick }) {
 
 export default function ShadowMallSearchPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [query, setQuery] = useState('')
   const [products, setProducts] = useState([])
@@ -317,7 +318,10 @@ export default function ShadowMallSearchPage() {
         <div className="mx-auto flex max-w-4xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/shop')}
+            onClick={() => {
+  if (location.state?.returnTo || location.state?.from) return navigate(-1)
+  navigate('/shop', { replace: true })
+}}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label={t('shadowMallSearchPage.goBack')}
           >
@@ -441,7 +445,11 @@ export default function ShadowMallSearchPage() {
               <SearchResultItem
                 key={product.id}
                 product={product}
-                onOpen={() => navigate(`/shop/mall/product/${product.id}`)}
+                onOpen={() =>
+  navigate(`/shop/mall/product/${product.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               />
             ))}
           </section>
