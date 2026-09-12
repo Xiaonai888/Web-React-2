@@ -385,7 +385,11 @@ export default function ShadowMallSecondHandPage() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onOpen={() => navigate(`/shop/mall/product/${product.id}`)}
+                onOpen={() =>
+  navigate(`/shop/mall/product/${product.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               />
             ))}
           </section>
