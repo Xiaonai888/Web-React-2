@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import AuthorCommentThreadSheet from '../../components/AuthorCommentThreadSheet'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -995,6 +996,8 @@ export default function StoryNotificationsPage() {
     selectedNotification,
     setSelectedNotification,
   ] = useState(null)
+  const [selectedStoryComment, setSelectedStoryComment] =
+    useState(null)
   const [toast, setToast] = useState('')
   const [toastVisible, setToastVisible] =
     useState(false)
@@ -1176,6 +1179,24 @@ export default function StoryNotificationsPage() {
         )
         return
       }
+    }
+
+    const commentId =
+      notification.metadata?.comment_id
+
+    if (
+      notification.typeKey === 'comments' &&
+      commentId
+    ) {
+      setSelectedStoryComment({
+        id: commentId,
+        story_id:
+          notification.metadata?.story_id || '',
+        episode_id:
+          notification.metadata?.episode_id || '',
+        is_read: false,
+      })
+      return
     }
 
     if (notification.targetUrl) {
@@ -1557,6 +1578,25 @@ export default function StoryNotificationsPage() {
       >
         <AuthorStudioBottomNav />
       </div>
+
+      <AuthorCommentThreadSheet
+        item={selectedStoryComment}
+        onClose={() =>
+          setSelectedStoryComment(null)
+        }
+        onRead={(commentId) => {
+          setSelectedStoryComment((current) =>
+            current &&
+            String(current.id) ===
+              String(commentId)
+              ? {
+                  ...current,
+                  is_read: true,
+                }
+              : current
+          )
+        }}
+      />
 
       <OptionsSheet
         notification={selectedNotification}
