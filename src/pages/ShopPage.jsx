@@ -155,7 +155,11 @@ export default function ShopPage() {
 
               <button
                 type="button"
-                onClick={() => navigate('/shop/mall/wishlist')}
+                onClick={() =>
+  navigate('/shop/mall/wishlist', {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
                 className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
                 aria-label={t('shopPage.openWishlist')}
               >
@@ -169,7 +173,11 @@ export default function ShopPage() {
 
               <button
                 type="button"
-                onClick={() => navigate('/shop/mall/cart')}
+                onClick={() =>
+  navigate('/shop/mall/cart', {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
                 className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
                 aria-label={t('shopPage.openCart')}
               >
