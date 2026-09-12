@@ -476,6 +476,7 @@ const API_BASE_URL =
 
 const COMMENT_PAGE_SIZE = 10
 const REPLY_PAGE_SIZE = 5
+const THREAD_INITIAL_REPLY_SIZE = 20
 const COMMENT_LIMIT = 1000
 
 const COMMENT_SORT_OPTIONS = [
@@ -1616,6 +1617,7 @@ function CommentItem({
   story,
   targetType,
   focusCommentId = '',
+  threadMode = false,
   onLike,
   onStartReply,
   onLoadMoreReplies,
@@ -1644,12 +1646,18 @@ function CommentItem({
   )
 
 const [repliesShown, setRepliesShown] =
-  useState(focusedReplyPresent)
+  useState(
+    threadMode ||
+      focusedReplyPresent
+  )
   useEffect(() => {
-  if (focusedReplyPresent) {
+  if (
+    threadMode ||
+    focusedReplyPresent
+  ) {
     setRepliesShown(true)
   }
-}, [focusedReplyPresent])
+}, [focusedReplyPresent, threadMode])
   const [spoilerOpen, setSpoilerOpen] =
     useState(false)
   const menuPressTimerRef = useRef(null)
@@ -2539,6 +2547,8 @@ export default function CommentSection({
   focusComment = null,
   focusParentComment = null,
   focusCommentId = '',
+  threadMode = false,
+  threadRootComment = null,
   episodeOptions = [],
   selectedEpisodeId,
   onEpisodeChange,
@@ -2665,6 +2675,49 @@ async function fetchComments(
 ) {
     if (!targetId) return
 
+    if (threadMode) {
+      const normalizedRoot =
+        threadRootComment?.id
+          ? normalizeApiComment(
+              threadRootComment
+            )
+          : null
+
+      const threadRoot =
+        normalizedRoot
+          ? {
+              ...normalizedRoot,
+              reply_page: Math.max(
+                1,
+                Math.ceil(
+                  Math.min(
+                    Number(
+                      normalizedRoot.reply_total || 0
+                    ),
+                    THREAD_INITIAL_REPLY_SIZE
+                  ) / REPLY_PAGE_SIZE
+                )
+              ),
+            }
+          : null
+
+      setComments(
+        threadRoot
+          ? [threadRoot]
+          : []
+      )
+      setPage(1)
+      setHasMore(false)
+      setTotalComments(
+        threadRoot
+          ? countCommentTree(
+              [threadRoot]
+            )
+          : 0
+      )
+      return
+    }
+
     try {
       if (append) {
         setLoadingMore(true)
@@ -2766,6 +2819,8 @@ const nextComments =
   sort,
   focusComment?.id,
   focusParentComment?.id,
+  threadMode,
+  threadRootComment?.id,
 ])
 
   const isBanned = false
@@ -3853,118 +3908,122 @@ updateComments(
           : 'min-h-screen bg-[var(--shadow-bg-surface)] pb-[84px]'
       }
     >
-      <div className="relative z-10 shrink-0 bg-[var(--shadow-bg-surface)] px-4 pb-1 pt-0">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={() =>
-              setSortMenuOpen(true)
-            }
-            className="flex items-center gap-1 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
-          >
-            <span>
-              {t(`commentSection.${selectedSort.labelKey}`)}
-            </span>
-            <i className="fa-solid fa-chevron-down text-[11px]" />
-          </button>
-
-          {canSwitchEpisode ? (
-            <button
-              type="button"
-              onClick={() =>
-                setEpisodeMenuOpen(
-                  (value) => !value
-                )
-              }
-              className="flex items-center gap-1 text-[14px] font-normal text-[var(--shadow-text-secondary)] active:scale-95"
-            >
-              <span>
-                {t('commentSection.episodeNumber', { number: selectedEpisode
-                  ?.episode_number ||
-                  '' })}
-              </span>
-              <i
-                className={`fa-solid fa-chevron-${
-                  episodeMenuOpen
-                    ? 'up'
-                    : 'down'
-                } text-[10px]`}
-              />
-            </button>
-          ) : null}
-        </div>
-
-        {episodeMenuOpen ? (
-          <div className="absolute right-4 top-8 z-[30] w-[220px] overflow-hidden rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-1 shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
-            <div className="max-h-[260px] overflow-y-auto">
-              {episodeOptions.map(
-                (item) => {
-                  const itemId =
-                    item.id ||
-                    item.episode_id
-                  const active =
-                    String(itemId) ===
-                    String(
-                      selectedEpisodeId ||
-                        targetId
-                    )
-                  const total =
-                    Math.max(
-                      0,
-                      Number(
-                        item.total_comments ||
-                          0
-                      )
-                    )
-
-                  return (
-                    <button
-                      key={itemId}
-                      type="button"
-                      onClick={() => {
-                        onEpisodeChange?.(
-                          String(itemId)
-                        )
-                        setEpisodeMenuOpen(
-                          false
-                        )
-                      }}
-                      className={`flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left active:bg-[var(--shadow-bg-hover)] ${
-                        active
-                          ? 'bg-[#fff1f4] text-[#ff3b5f] dark:bg-[#ff3b5f]/10'
-                          : 'text-[var(--shadow-text-primary)]'
-                      }`}
-                    >
-                      <span className="text-[14px] font-normal">
-                        {t('commentSection.episodeNumber', { number: item.episode_number || '' })}
-                      </span>
-
-                      <span className="text-[12px] font-normal">
-                        {total}{' '}
-                        {total === 1
-                          ? t('commentSection.comment')
-                          : t('commentSection.comments')}
-                      </span>
-                    </button>
-                  )
+      {!threadMode ? (
+        <>
+          <div className="relative z-10 shrink-0 bg-[var(--shadow-bg-surface)] px-4 pb-1 pt-0">
+            <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+              <button
+                type="button"
+                onClick={() =>
+                  setSortMenuOpen(true)
                 }
-              )}
-            </div>
-          </div>
-        ) : null}
-      </div>
+                className="flex items-center gap-1 text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
+              >
+                <span>
+                  {t(`commentSection.${selectedSort.labelKey}`)}
+                </span>
+                <i className="fa-solid fa-chevron-down text-[11px]" />
+              </button>
 
-      <SortSheet
-        open={sortMenuOpen}
-        value={sort}
-        onChoose={(value) => {
-          setSort(value)
-          setSortMenuOpen(false)
-        }}
-        onClose={() =>
-          setSortMenuOpen(false)
-        }
-      />
+              {canSwitchEpisode ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEpisodeMenuOpen(
+                      (value) => !value
+                    )
+                  }
+                  className="flex items-center gap-1 text-[14px] font-normal text-[var(--shadow-text-secondary)] active:scale-95"
+                >
+                  <span>
+                    {t('commentSection.episodeNumber', { number: selectedEpisode
+                      ?.episode_number ||
+                      '' })}
+                  </span>
+                  <i
+                    className={`fa-solid fa-chevron-${
+                      episodeMenuOpen
+                        ? 'up'
+                        : 'down'
+                    } text-[10px]`}
+                  />
+                </button>
+              ) : null}
+            </div>
+
+            {episodeMenuOpen ? (
+              <div className="absolute right-4 top-8 z-[30] w-[220px] overflow-hidden rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] py-1 shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
+                <div className="max-h-[260px] overflow-y-auto">
+                  {episodeOptions.map(
+                    (item) => {
+                      const itemId =
+                        item.id ||
+                        item.episode_id
+                      const active =
+                        String(itemId) ===
+                        String(
+                          selectedEpisodeId ||
+                            targetId
+                        )
+                      const total =
+                        Math.max(
+                          0,
+                          Number(
+                            item.total_comments ||
+                              0
+                          )
+                        )
+
+                      return (
+                        <button
+                          key={itemId}
+                          type="button"
+                          onClick={() => {
+                            onEpisodeChange?.(
+                              String(itemId)
+                            )
+                            setEpisodeMenuOpen(
+                              false
+                            )
+                          }}
+                          className={`flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left active:bg-[var(--shadow-bg-hover)] ${
+                            active
+                              ? 'bg-[#fff1f4] text-[#ff3b5f] dark:bg-[#ff3b5f]/10'
+                              : 'text-[var(--shadow-text-primary)]'
+                          }`}
+                        >
+                          <span className="text-[14px] font-normal">
+                            {t('commentSection.episodeNumber', { number: item.episode_number || '' })}
+                          </span>
+
+                          <span className="text-[12px] font-normal">
+                            {total}{' '}
+                            {total === 1
+                              ? t('commentSection.comment')
+                              : t('commentSection.comments')}
+                          </span>
+                        </button>
+                      )
+                    }
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <SortSheet
+            open={sortMenuOpen}
+            value={sort}
+            onChoose={(value) => {
+              setSort(value)
+              setSortMenuOpen(false)
+            }}
+            onClose={() =>
+              setSortMenuOpen(false)
+            }
+          />
+        </>
+      ) : null}
 
       <div
         className={
@@ -3998,6 +4057,7 @@ updateComments(
     targetType
   }
   focusCommentId={focusCommentId}
+  threadMode={threadMode}
   onLike={handleLike}
                     onStartReply={
   handleStartReply
@@ -4250,21 +4310,25 @@ onSpoiler={(
         }
       />
 
-      <CommentComposer
-  value={replyTarget ? replyText : text}
-onChange={
-  replyTarget ? setReplyText : setText
-}
-  onSend={handleSend}
-  replyTarget={replyTarget}
-  onCancelReply={() => {
-  setReplyTarget(null)
-  setReplyText('')
-}}
-        isModal={isModal}
-        isBanned={isBanned}
-        sending={sending}
-      />
+      {!threadMode || replyTarget ? (
+        <CommentComposer
+          value={replyTarget ? replyText : text}
+          onChange={
+            replyTarget
+              ? setReplyText
+              : setText
+          }
+          onSend={handleSend}
+          replyTarget={replyTarget}
+          onCancelReply={() => {
+            setReplyTarget(null)
+            setReplyText('')
+          }}
+          isModal={isModal}
+          isBanned={isBanned}
+          sending={sending}
+        />
+      ) : null}
 
       <EditCommentSheet
         comment={editComment}
