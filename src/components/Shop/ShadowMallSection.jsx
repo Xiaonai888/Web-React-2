@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { addShadowMallCartItem } from '../../utils/shadowMallCart'
 import {
   isShadowMallWishlisted,
@@ -715,6 +715,7 @@ function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey, 
 
 export default function ShadowMallSection({ setActiveTab, showSearch = false, sliderOnly = false }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [search, setSearch] = useState('')
   const [mallSlides, setMallSlides] = useState([])
@@ -832,8 +833,13 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
   const handleSlideClick = () => {}
 
   const openProduct = (product) => {
-    navigate(`/shop/mall/product/${product.id}`)
-  }
+  navigate(`/shop/mall/product/${product.id}`, {
+    state: {
+      returnTo: location.pathname,
+      returnState: location.state || null,
+    },
+  })
+}
 
   return (
     <section className="space-y-5 pb-4">
@@ -971,12 +977,14 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false, sl
           sectionKey={section.key}
           t={t}
 onMore={() => {
-  if (section.key === 'new_books') navigate('/shop/mall/new-books')
-  if (section.key === 'second_hand') navigate('/shop/mall/second-hand')
-  if (section.key === 'best_seller') navigate('/shop/mall/best-seller')
-  if (section.key === 'discount') navigate('/shop/mall/discount-books')
-  if (section.key === 'pre_order') navigate('/shop/mall/pre-order')
-  if (section.key === 'sold_out') navigate('/shop/mall/recently-sold-out')
+  const state = { returnTo: location.pathname, returnState: location.state || null }
+
+  if (section.key === 'new_books') navigate('/shop/mall/new-books', { state })
+  if (section.key === 'second_hand') navigate('/shop/mall/second-hand', { state })
+  if (section.key === 'best_seller') navigate('/shop/mall/best-seller', { state })
+  if (section.key === 'discount') navigate('/shop/mall/discount-books', { state })
+  if (section.key === 'pre_order') navigate('/shop/mall/pre-order', { state })
+  if (section.key === 'sold_out') navigate('/shop/mall/recently-sold-out', { state })
 }}
         />
       ))}
