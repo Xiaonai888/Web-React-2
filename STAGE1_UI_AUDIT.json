@@ -357,6 +357,11 @@
 "src/pages/Author/AuthorPostActivityPage.jsx",
 "src/pages/Chat/ChatInboxPage.jsx",
 "src/pages/Chat/ChatInfoPage.jsx",
+"src/pages/DiscoverPage.jsx",
+"src/pages/Author/TopAuthorsPage.jsx",
+"src/pages/Me/AboutUsPage.jsx",
+"src/pages/Me/HelpCenterPage.jsx",
+"src/pages/Me/FeedbackSupportPage.jsx",
   ]
 }
 
