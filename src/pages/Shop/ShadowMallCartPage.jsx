@@ -1,5 +1,130 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowMallCartPage', {
+  en: {
+    untitledBook: "Untitled book",
+    unknownAuthor: "Unknown author",
+    remove: "Remove {{title}}",
+    decrease: "Decrease {{title}}",
+    increase: "Increase {{title}}",
+    goBack: "Go back",
+    myCart: "My Cart",
+    cartItems: "Cart items",
+    selectedBooks: "Selected Books",
+    selectedHelp: "Check your books and quantity before checkout.",
+    orderHistory: "Order History",
+    orderHistoryHelp: "View your previous Shadow Mall orders.",
+    orderSummary: "Order Summary",
+    subtotal: "Subtotal",
+    deliveryFee: "Delivery fee",
+    calculateLater: "Calculate later",
+    total: "Total",
+    deliveryLater: "Delivery fee will be added after address information.",
+    emptyTitle: "Your cart is empty",
+    emptyBody: "Add real books from Shadow Mall before checkout.",
+    backShop: "Back to Shop",
+    checkout: "Checkout",
+  },
+  km: {
+    untitledBook: "សៀវភៅគ្មានចំណងជើង",
+    unknownAuthor: "មិនស្គាល់អ្នកនិពន្ធ",
+    remove: "លុប {{title}}",
+    decrease: "បន្ថយ {{title}}",
+    increase: "បន្ថែម {{title}}",
+    goBack: "ត្រឡប់ក្រោយ",
+    myCart: "កន្ត្រករបស់ខ្ញុំ",
+    cartItems: "ទំនិញក្នុងកន្ត្រក",
+    selectedBooks: "សៀវភៅដែលបានជ្រើស",
+    selectedHelp: "ពិនិត្យសៀវភៅ និងចំនួនមុន Checkout។",
+    orderHistory: "ប្រវត្តិការបញ្ជាទិញ",
+    orderHistoryHelp: "មើលការបញ្ជាទិញ Shadow Mall មុនៗរបស់អ្នក។",
+    orderSummary: "សង្ខេបការបញ្ជាទិញ",
+    subtotal: "តម្លៃសរុបរង",
+    deliveryFee: "ថ្លៃដឹកជញ្ជូន",
+    calculateLater: "គណនាពេលក្រោយ",
+    total: "សរុប",
+    deliveryLater: "ថ្លៃដឹកជញ្ជូននឹងបន្ថែមបន្ទាប់ពីបំពេញអាសយដ្ឋាន។",
+    emptyTitle: "កន្ត្រករបស់អ្នកទទេ",
+    emptyBody: "បន្ថែមសៀវភៅពិតពី Shadow Mall មុន Checkout។",
+    backShop: "ត្រឡប់ទៅហាង",
+    checkout: "Checkout",
+  },
+  zh: {
+    untitledBook: "无标题图书",
+    unknownAuthor: "未知作者",
+    remove: "移除 {{title}}",
+    decrease: "减少 {{title}}",
+    increase: "增加 {{title}}",
+    goBack: "返回",
+    myCart: "我的购物车",
+    cartItems: "购物车商品",
+    selectedBooks: "已选图书",
+    selectedHelp: "结账前请检查图书和数量。",
+    orderHistory: "订单历史",
+    orderHistoryHelp: "查看你之前的 Shadow Mall 订单。",
+    orderSummary: "订单摘要",
+    subtotal: "小计",
+    deliveryFee: "配送费",
+    calculateLater: "稍后计算",
+    total: "总计",
+    deliveryLater: "填写地址后将加入配送费。",
+    emptyTitle: "购物车为空",
+    emptyBody: "结账前请先从 Shadow Mall 添加实体书。",
+    backShop: "返回商店",
+    checkout: "结账",
+  },
+  ja: {
+    untitledBook: "無題の本",
+    unknownAuthor: "不明な作者",
+    remove: "{{title}}を削除",
+    decrease: "{{title}}を減らす",
+    increase: "{{title}}を増やす",
+    goBack: "戻る",
+    myCart: "カート",
+    cartItems: "カートの商品",
+    selectedBooks: "選択した本",
+    selectedHelp: "購入前に本と数量を確認してください。",
+    orderHistory: "注文履歴",
+    orderHistoryHelp: "以前の Shadow Mall 注文を確認します。",
+    orderSummary: "注文概要",
+    subtotal: "小計",
+    deliveryFee: "配送料",
+    calculateLater: "後で計算",
+    total: "合計",
+    deliveryLater: "住所情報の入力後に配送料が追加されます。",
+    emptyTitle: "カートは空です",
+    emptyBody: "購入前に Shadow Mall から本を追加してください。",
+    backShop: "ショップに戻る",
+    checkout: "購入手続き",
+  },
+  ko: {
+    untitledBook: "제목 없는 도서",
+    unknownAuthor: "알 수 없는 작가",
+    remove: "{{title}} 삭제",
+    decrease: "{{title}} 수량 줄이기",
+    increase: "{{title}} 수량 늘리기",
+    goBack: "뒤로",
+    myCart: "내 장바구니",
+    cartItems: "장바구니 상품",
+    selectedBooks: "선택한 도서",
+    selectedHelp: "결제 전에 도서와 수량을 확인하세요.",
+    orderHistory: "주문 내역",
+    orderHistoryHelp: "이전 Shadow Mall 주문을 확인하세요.",
+    orderSummary: "주문 요약",
+    subtotal: "소계",
+    deliveryFee: "배송비",
+    calculateLater: "나중에 계산",
+    total: "합계",
+    deliveryLater: "주소 입력 후 배송비가 추가됩니다.",
+    emptyTitle: "장바구니가 비어 있습니다",
+    emptyBody: "결제 전에 Shadow Mall에서 실제 도서를 추가하세요.",
+    backShop: "상점으로 돌아가기",
+    checkout: "결제하기",
+  },
+})
 
 const CART_KEY = 'shadow_mall_cart'
 
@@ -21,14 +146,14 @@ function saveCart(items) {
 function formatUsd(value) {
   const number = Number(value || 0)
   if (!Number.isFinite(number)) return '$0.00'
-  return `$${number.toFixed(2)}`
+  return new Intl.NumberFormat(getDisplayLanguageId(), { style: 'currency', currency: 'USD' }).format(number)
 }
 
 function normalizeItem(item) {
   return {
     id: item.id,
-    title: item.title || 'Untitled book',
-    author: item.author || item.author_name || 'Unknown author',
+    title: item.title || getDisplayText('shadowMallCartPage.untitledBook'),
+    author: item.author || item.author_name || getDisplayText('shadowMallCartPage.unknownAuthor'),
     cover: item.cover || item.cover_url || '',
     price: Number(item.price || item.price_usd || 0),
     oldPrice: item.oldPrice || item.old_price_usd ? Number(item.oldPrice || item.old_price_usd || 0) : 0,
@@ -37,6 +162,7 @@ function normalizeItem(item) {
 }
 
 function CartItem({ item, onIncrease, onDecrease, onRemove }) {
+  const { t } = useDisplayTranslation()
   return (
     <article className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
       <div className="flex gap-3">
@@ -72,7 +198,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
               type="button"
               onClick={onRemove}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] active:scale-95 dark:bg-red-500/10 dark:text-red-300"
-              aria-label={`Remove ${item.title}`}
+              aria-label={t('shadowMallCartPage.remove', { title: item.title })}
             >
               <i className="fa-solid fa-trash text-[11px]" />
             </button>
@@ -93,16 +219,16 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
                 type="button"
                 onClick={onDecrease}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] active:scale-95"
-                aria-label={`Decrease ${item.title}`}
+                aria-label={t('shadowMallCartPage.decrease', { title: item.title })}
               >
                 <i className="fa-solid fa-minus text-[10px]" />
               </button>
-              <div className="w-9 text-center text-[13px] font-extrabold text-[var(--shadow-text-primary)]">{item.quantity}</div>
+              <div className="w-9 text-center text-[13px] font-extrabold text-[var(--shadow-text-primary)]">{Number(item.quantity).toLocaleString(getDisplayLanguageId())}</div>
               <button
                 type="button"
                 onClick={onIncrease}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 dark:bg-white dark:text-[#111827]"
-                aria-label={`Increase ${item.title}`}
+                aria-label={t('shadowMallCartPage.increase', { title: item.title })}
               >
                 <i className="fa-solid fa-plus text-[10px]" />
               </button>
@@ -117,6 +243,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 export default function ShadowMallCartPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useDisplayTranslation()
   const [items, setItems] = useState([])
 
   useEffect(() => {
@@ -173,13 +300,13 @@ export default function ShadowMallCartPage() {
   navigate('/shop', { replace: true })
 }}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Go back"
+            aria-label={t('shadowMallCartPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[var(--shadow-text-primary)]">
-            My Cart
+            {t('shadowMallCartPage.myCart')}
           </h1>
 
           <button
@@ -191,12 +318,12 @@ export default function ShadowMallCartPage() {
   })
 }
             className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Cart items"
+            aria-label={t('shadowMallCartPage.cartItems')}
           >
             <i className="fa-solid fa-cart-shopping text-[20px]" />
             {itemCount > 0 ? (
               <span className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-                {itemCount}
+                {Number(itemCount).toLocaleString(getDisplayLanguageId())}
               </span>
             ) : null}
           </button>
@@ -207,9 +334,9 @@ export default function ShadowMallCartPage() {
         {items.length ? (
           <>
             <section className="rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
-              <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Selected Books</div>
+              <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallCartPage.selectedBooks')}</div>
               <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
-                Check your books and quantity before checkout.
+                {t('shadowMallCartPage.selectedHelp')}
               </div>
             </section>
 
@@ -227,9 +354,9 @@ export default function ShadowMallCartPage() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Order History</div>
+                <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallCartPage.orderHistory')}</div>
                 <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
-                  View your previous Shadow Mall orders.
+                  {t('shadowMallCartPage.orderHistoryHelp')}
                 </div>
               </div>
 
@@ -249,26 +376,26 @@ export default function ShadowMallCartPage() {
             </section>
 
             <section className="mt-4 rounded-[24px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
-              <div className="text-[15px] font-extrabold text-[var(--shadow-text-primary)]">Order Summary</div>
+              <div className="text-[15px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallCartPage.orderSummary')}</div>
 
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
-                  <span>Subtotal</span>
+                  <span>{t('shadowMallCartPage.subtotal')}</span>
                   <span className="font-extrabold text-[var(--shadow-text-primary)]">{formatUsd(subtotal)}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
-                  <span>Delivery fee</span>
-                  <span className="font-extrabold text-[var(--shadow-text-primary)]">Calculate later</span>
+                  <span>{t('shadowMallCartPage.deliveryFee')}</span>
+                  <span className="font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallCartPage.calculateLater')}</span>
                 </div>
 
                 <div className="border-t border-[var(--shadow-border)] pt-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Total</span>
+                    <span className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallCartPage.total')}</span>
                     <span className="text-[18px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</span>
                   </div>
                   <p className="mt-1 text-[11px] font-medium text-[var(--shadow-text-secondary)]">
-                    Delivery fee will be added after address information.
+                    {t('shadowMallCartPage.deliveryLater')}
                   </p>
                 </div>
               </div>
@@ -290,9 +417,9 @@ export default function ShadowMallCartPage() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Order History</div>
+                <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallCartPage.orderHistory')}</div>
                 <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
-                  View your previous Shadow Mall orders.
+                  {t('shadowMallCartPage.orderHistoryHelp')}
                 </div>
               </div>
 
@@ -303,9 +430,9 @@ export default function ShadowMallCartPage() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
                 <i className="fa-solid fa-cart-shopping text-[22px]" />
               </div>
-              <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Your cart is empty</h2>
+              <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallCartPage.emptyTitle')}</h2>
               <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
-                Add real books from Shadow Mall before checkout.
+                {t('shadowMallCartPage.emptyBody')}
               </p>
               <button
                 type="button"
@@ -319,7 +446,7 @@ export default function ShadowMallCartPage() {
 }}
                 className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
               >
-                Back to Shop
+                {t('shadowMallCartPage.backShop')}
               </button>
             </section>
           </>
@@ -330,7 +457,7 @@ export default function ShadowMallCartPage() {
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-5xl items-center gap-3">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">Total</div>
+              <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">{t('shadowMallCartPage.total')}</div>
               <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</div>
             </div>
 
@@ -343,7 +470,7 @@ export default function ShadowMallCartPage() {
 }
               className="flex h-[52px] min-w-[160px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] dark:bg-white dark:text-[#111827]"
             >
-              Checkout
+              {t('shadowMallCartPage.checkout')}
             </button>
           </div>
         </div>
