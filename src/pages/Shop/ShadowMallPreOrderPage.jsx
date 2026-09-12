@@ -5,6 +5,16 @@ import {
   isShadowMallWishlisted,
   toggleShadowMallWishlist,
 } from '../../utils/shadowMallWishlist'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowMallPreOrderPage', {
+  en: { latest: 'Latest', releaseSoon: 'Release Soon', priceLow: 'Price Low', priceHigh: 'Price High', soldOut: 'SOLD OUT', preOrder: 'PRE-ORDER', untitledBook: 'Untitled book', unknownAuthor: 'Unknown author', removeSaved: 'Remove saved', save: 'Save', reserveBook: 'Reserve {{title}}', featured: 'FEATURED', preOrderOpen: 'PRE-ORDER OPEN', featuredBody: 'Reserve this upcoming book before release. Pre-order stock can be limited and may close early.', reserveNow: 'Reserve Now', view: 'View', failedLoad: 'Failed to load Pre-order books', goBack: 'Go back', title: 'Pre-order', booksSummary: '{{count}} books · Reserve upcoming books before release.', searchBooks: 'Search Pre-order books', heroTitle: 'Reserve before release', heroBody: 'Pre-order books may have limited stock. Reserve early and check payment details before confirming.', searchPlaceholder: 'Search pre-order books or authors', clearSearch: 'Clear search', type: 'TYPE', reserve: 'Reserve', status: 'STATUS', open: 'Open', stock: 'STOCK', limited: 'Limited', noBooks: 'No pre-order books found', noBooksBody: 'Try another search or check Pre-order again later.', backMall: 'Back to Shadow Mall', previous: 'Previous', pageOf: 'Page {{page}} / {{total}}', next: 'Next' },
+  km: { latest: 'ថ្មីបំផុត', releaseSoon: 'ចេញឆាប់ៗ', priceLow: 'តម្លៃទាប', priceHigh: 'តម្លៃខ្ពស់', soldOut: 'អស់ស្តុក', preOrder: 'កក់មុន', untitledBook: 'សៀវភៅគ្មានចំណងជើង', unknownAuthor: 'មិនស្គាល់អ្នកនិពន្ធ', removeSaved: 'ដកចេញពីការរក្សាទុក', save: 'រក្សាទុក', reserveBook: 'កក់ {{title}}', featured: 'ពិសេស', preOrderOpen: 'កំពុងទទួលកក់មុន', featuredBody: 'កក់សៀវភៅដែលនឹងចេញនេះមុនថ្ងៃចេញ។ ស្តុកកក់មុនអាចមានកំណត់ និងអាចបិទមុន។', reserveNow: 'កក់ឥឡូវនេះ', view: 'មើល', failedLoad: 'មិនអាចផ្ទុកសៀវភៅកក់មុនបានទេ', goBack: 'ត្រឡប់ក្រោយ', title: 'កក់មុន', booksSummary: '{{count}} សៀវភៅ · កក់សៀវភៅដែលនឹងចេញមុនស្តុកបិទ។', searchBooks: 'ស្វែងរកសៀវភៅកក់មុន', heroTitle: 'កក់មុនថ្ងៃចេញ', heroBody: 'សៀវភៅកក់មុនអាចមានស្តុកកំណត់។ កក់ឱ្យបានមុន និងពិនិត្យព័ត៌មានទូទាត់មុនបញ្ជាក់។', searchPlaceholder: 'ស្វែងរកសៀវភៅកក់មុន ឬអ្នកនិពន្ធ', clearSearch: 'សម្អាតការស្វែងរក', type: 'ប្រភេទ', reserve: 'កក់', status: 'ស្ថានភាព', open: 'បើក', stock: 'ស្តុក', limited: 'មានកំណត់', noBooks: 'រកមិនឃើញសៀវភៅកក់មុន', noBooksBody: 'សាកស្វែងរកផ្សេង ឬត្រឡប់មកមើលសៀវភៅកក់មុនពេលក្រោយ។', backMall: 'ត្រឡប់ទៅ Shadow Mall', previous: 'មុន', pageOf: 'ទំព័រ {{page}} / {{total}}', next: 'បន្ទាប់' },
+  zh: { latest: '最新', releaseSoon: '即将发售', priceLow: '价格从低到高', priceHigh: '价格从高到低', soldOut: '售罄', preOrder: '预购', untitledBook: '无标题图书', unknownAuthor: '未知作者', removeSaved: '取消收藏', save: '收藏', reserveBook: '预订 {{title}}', featured: '精选', preOrderOpen: '预购开放中', featuredBody: '在发售前预订这本即将上市的书。预购库存可能有限，并可能提前关闭。', reserveNow: '立即预订', view: '查看', failedLoad: '无法加载预购图书', goBack: '返回', title: '预购', booksSummary: '{{count}} 本书 · 在库存关闭前预订即将发售的图书。', searchBooks: '搜索预购图书', heroTitle: '发售前预订', heroBody: '预购图书库存可能有限，请尽早预订并在确认前检查付款详情。', searchPlaceholder: '搜索预购图书或作者', clearSearch: '清除搜索', type: '类型', reserve: '预订', status: '状态', open: '开放', stock: '库存', limited: '有限', noBooks: '未找到预购图书', noBooksBody: '请尝试其他搜索，或稍后再查看预购图书。', backMall: '返回 Shadow Mall', previous: '上一页', pageOf: '第 {{page}} / {{total}} 页', next: '下一页' },
+  ja: { latest: '最新', releaseSoon: '発売間近', priceLow: '価格の安い順', priceHigh: '価格の高い順', soldOut: '売り切れ', preOrder: '予約注文', untitledBook: '無題の本', unknownAuthor: '不明な作者', removeSaved: '保存を解除', save: '保存', reserveBook: '{{title}}を予約', featured: '注目', preOrderOpen: '予約受付中', featuredBody: '発売前にこの本を予約できます。予約在庫には限りがあり、早期終了する場合があります。', reserveNow: '今すぐ予約', view: '見る', failedLoad: '予約本を読み込めませんでした', goBack: '戻る', title: '予約注文', booksSummary: '{{count}}冊 · 在庫受付終了前に発売予定の本を予約できます。', searchBooks: '予約本を検索', heroTitle: '発売前に予約', heroBody: '予約本は在庫に限りがあります。早めに予約し、確定前に支払い情報を確認してください。', searchPlaceholder: '予約本または作者を検索', clearSearch: '検索をクリア', type: 'タイプ', reserve: '予約', status: '状態', open: '受付中', stock: '在庫', limited: '限定', noBooks: '予約本が見つかりません', noBooksBody: '別の検索を試すか、後でもう一度予約本を確認してください。', backMall: 'Shadow Mall に戻る', previous: '前へ', pageOf: '{{page}} / {{total}} ページ', next: '次へ' },
+  ko: { latest: '최신순', releaseSoon: '출시 임박', priceLow: '낮은 가격순', priceHigh: '높은 가격순', soldOut: '품절', preOrder: '예약 주문', untitledBook: '제목 없는 도서', unknownAuthor: '알 수 없는 작가', removeSaved: '저장 취소', save: '저장', reserveBook: '{{title}} 예약', featured: '추천', preOrderOpen: '예약 주문 가능', featuredBody: '출시 전에 이 도서를 예약하세요. 예약 재고는 한정될 수 있으며 조기 마감될 수 있습니다.', reserveNow: '지금 예약', view: '보기', failedLoad: '예약 도서를 불러오지 못했습니다', goBack: '뒤로', title: '예약 주문', booksSummary: '{{count}}권 · 재고 마감 전에 출시 예정 도서를 예약하세요.', searchBooks: '예약 도서 검색', heroTitle: '출시 전에 예약', heroBody: '예약 도서는 재고가 한정될 수 있습니다. 일찍 예약하고 확인 전에 결제 정보를 확인하세요.', searchPlaceholder: '예약 도서 또는 작가 검색', clearSearch: '검색 지우기', type: '유형', reserve: '예약', status: '상태', open: '예약 가능', stock: '재고', limited: '한정', noBooks: '예약 도서를 찾을 수 없습니다', noBooksBody: '다른 검색을 시도하거나 나중에 예약 도서를 다시 확인하세요.', backMall: 'Shadow Mall로 돌아가기', previous: '이전', pageOf: '{{page}} / {{total}} 페이지', next: '다음' },
+})
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -13,16 +23,16 @@ const API_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const sortOptions = [
-  { key: 'latest', label: 'Latest' },
-  { key: 'release_soon', label: 'Release Soon' },
-  { key: 'price_low', label: 'Price Low' },
-  { key: 'price_high', label: 'Price High' },
+  { key: 'latest', labelKey: 'latest' },
+  { key: 'release_soon', labelKey: 'releaseSoon' },
+  { key: 'price_low', labelKey: 'priceLow' },
+  { key: 'price_high', labelKey: 'priceHigh' },
 ]
 
 function formatUsd(value) {
   const number = Number(value || 0)
-  if (!Number.isFinite(number)) return '$0.00'
-  return `$${number.toFixed(2)}`
+  if (!Number.isFinite(number)) return new Intl.NumberFormat(getDisplayLanguageId(), { style: 'currency', currency: 'USD' }).format(0)
+  return new Intl.NumberFormat(getDisplayLanguageId(), { style: 'currency', currency: 'USD' }).format(number)
 }
 
 function getProductStatus(product) {
@@ -30,7 +40,7 @@ function getProductStatus(product) {
 
   if (status === 'sold_out') {
     return {
-      label: 'SOLD OUT',
+      label: getDisplayText('shadowMallPreOrderPage.soldOut'),
       className: 'bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/15 dark:text-slate-300',
       disabled: true,
       coverClass: 'opacity-60',
@@ -38,7 +48,7 @@ function getProductStatus(product) {
   }
 
   return {
-    label: 'PRE-ORDER',
+    label: getDisplayText('shadowMallPreOrderPage.preOrder'),
     className: 'bg-[#fff7d8] text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300',
     disabled: false,
     coverClass: '',
@@ -48,8 +58,8 @@ function getProductStatus(product) {
 function normalizeProduct(product) {
   return {
     id: product.id,
-    title: product.title || 'Untitled book',
-    author: product.author_name || 'Unknown author',
+    title: product.title || getDisplayText('shadowMallPreOrderPage.untitledBook'),
+    author: product.author_name || getDisplayText('shadowMallPreOrderPage.unknownAuthor'),
     cover: product.cover_url || '',
     category: product.category || 'pre_order',
     priceValue: Number(product.price_usd || 0),
@@ -63,6 +73,7 @@ function normalizeProduct(product) {
 }
 
 function ProductCard({ product, onOpen }) {
+  const { t } = useDisplayTranslation()
   const status = getProductStatus(product)
   const hasOldPrice = Boolean(String(product.oldPrice || '').trim())
   const [wishlisted, setWishlisted] = useState(() => isShadowMallWishlisted(product.id))
@@ -121,7 +132,7 @@ function ProductCard({ product, onOpen }) {
             className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm active:scale-95 dark:bg-black/70 ${
               wishlisted ? 'text-[#e5484d] dark:text-red-300' : 'text-[#111827] dark:text-white'
             }`}
-            aria-label={`${wishlisted ? 'Remove saved' : 'Save'} ${product.title}`}
+            aria-label={`${t(`shadowMallPreOrderPage.${wishlisted ? 'removeSaved' : 'save'}`)} ${product.title}`}
             onClick={handleWishlistClick}
           >
             <i className={`${wishlisted ? 'fa-solid' : 'fa-regular'} fa-heart text-[13px]`} />
@@ -166,7 +177,7 @@ function ProductCard({ product, onOpen }) {
                 ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-disabled)]'
                 : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'
             }`}
-            aria-label={`Reserve ${product.title}`}
+            aria-label={t('shadowMallPreOrderPage.reserveBook', { title: product.title })}
           >
             <i className="fa-solid fa-bookmark text-[12px]" />
           </button>
@@ -177,6 +188,7 @@ function ProductCard({ product, onOpen }) {
 }
 
 function FeaturedPreOrder({ product, onOpen }) {
+  const { t } = useDisplayTranslation()
   if (!product) return null
 
   return (
@@ -203,13 +215,13 @@ function FeaturedPreOrder({ product, onOpen }) {
           )}
 
           <span className="absolute left-2 top-2 rounded-full bg-[#fff7d8] px-2.5 py-1 text-[9px] font-extrabold text-[#7a5600] dark:bg-amber-500/15 dark:text-amber-300">
-            FEATURED
+            {t('shadowMallPreOrderPage.featured')}
           </span>
         </button>
 
         <div className="min-w-0 text-center md:text-left">
           <div className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[10px] font-extrabold text-[#fff7d8] dark:bg-amber-500/10 dark:text-amber-300">
-            PRE-ORDER OPEN
+            {t('shadowMallPreOrderPage.preOrderOpen')}
           </div>
 
           <h2 className="mt-3 text-[22px] font-extrabold leading-7">
@@ -221,7 +233,7 @@ function FeaturedPreOrder({ product, onOpen }) {
           </p>
 
           <p className="mt-3 text-[12px] font-semibold leading-5 text-white/70 dark:text-[var(--shadow-text-secondary)]">
-            Reserve this upcoming book before release. Pre-order stock can be limited and may close early.
+            {t('shadowMallPreOrderPage.featuredBody')}
           </p>
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3 md:justify-start">
@@ -237,7 +249,7 @@ function FeaturedPreOrder({ product, onOpen }) {
               onClick={() => addShadowMallCartItem(product, 1)}
               className="rounded-full bg-white px-5 py-3 text-[12px] font-extrabold text-[#111827] active:scale-95"
             >
-              Reserve Now
+              {t('shadowMallPreOrderPage.reserveNow')}
             </button>
 
             <button
@@ -245,7 +257,7 @@ function FeaturedPreOrder({ product, onOpen }) {
               onClick={onOpen}
               className="rounded-full bg-white/10 px-5 py-3 text-[12px] font-extrabold text-white active:scale-95 dark:bg-[var(--shadow-bg-soft)] dark:text-[var(--shadow-text-primary)]"
             >
-              View
+              {t('shadowMallPreOrderPage.view')}
             </button>
           </div>
         </div>
@@ -257,6 +269,7 @@ function FeaturedPreOrder({ product, onOpen }) {
 export default function ShadowMallPreOrderPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useDisplayTranslation()
   const [products, setProducts] = useState([])
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('latest')
@@ -290,7 +303,7 @@ export default function ShadowMallPreOrderPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load Pre-order books')
+        throw new Error(data.message || t('shadowMallPreOrderPage.failedLoad'))
       }
 
       setProducts((data.products || []).map(normalizeProduct))
@@ -302,7 +315,7 @@ export default function ShadowMallPreOrderPage() {
       })
     } catch (error) {
       setProducts([])
-      setMessage(error.message || 'Failed to load Pre-order books')
+      setMessage(error.message || t('shadowMallPreOrderPage.failedLoad'))
     } finally {
       setLoading(false)
     }
@@ -357,15 +370,15 @@ export default function ShadowMallPreOrderPage() {
   navigate('/shop', { replace: true })
 }}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Go back"
+            aria-label={t('shadowMallPreOrderPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="line-clamp-1 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Pre-order</h1>
+            <h1 className="line-clamp-1 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPreOrderPage.title')}</h1>
             <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
-              {meta.total} books · Reserve upcoming books before release.
+              {t('shadowMallPreOrderPage.booksSummary', { count: Number(meta.total || 0).toLocaleString(getDisplayLanguageId()) })}
             </p>
           </div>
 
@@ -373,7 +386,7 @@ export default function ShadowMallPreOrderPage() {
             type="button"
             onClick={() => setSearchOpen((value) => !value)}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Search Pre-order books"
+            aria-label={t('shadowMallPreOrderPage.searchBooks')}
           >
             <i className="fa-solid fa-magnifying-glass text-[14px]" />
           </button>
@@ -389,24 +402,24 @@ export default function ShadowMallPreOrderPage() {
 
             <div className="min-w-0 flex-1">
               <h2 className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">
-                Reserve before release
+                {t('shadowMallPreOrderPage.heroTitle')}
               </h2>
               <p className="mt-1 text-[12px] font-semibold leading-5 text-[#7a5600]/80 dark:text-amber-200/80">
-                Pre-order books may have limited stock. Reserve early and check payment details before confirming.
+                {t('shadowMallPreOrderPage.heroBody')}
               </p>
             </div>
           </div>
         </section>
 
         {searchOpen ? (
-          <form onSubmit={handleSearchSubmit} className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+          <form onSubmit={handleSearchSubmit} className="rounded-[22px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
             <div className="flex items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-3">
               <i className="fa-solid fa-magnifying-glass text-[14px] text-[var(--shadow-text-secondary)]" />
               <input
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search pre-order books or authors"
+                placeholder={t('shadowMallPreOrderPage.searchPlaceholder')}
                 className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)]"
               />
               {search ? (
@@ -417,8 +430,8 @@ export default function ShadowMallPreOrderPage() {
                     setPage(1)
                     loadProducts({ page: 1, search: '' })
                   }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[var(--shadow-text-secondary)]"
-                  aria-label="Clear search"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)]"
+                  aria-label={t('shadowMallPreOrderPage.clearSearch')}
                 >
                   <i className="fa-solid fa-xmark text-[12px]" />
                 </button>
@@ -442,16 +455,16 @@ export default function ShadowMallPreOrderPage() {
 
         <div className="mt-3 grid grid-cols-3 gap-2">
           <div className="rounded-[18px] bg-[var(--shadow-bg-surface)] px-3 py-3 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
-            <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">TYPE</div>
-            <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">Reserve</div>
+            <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">{t('shadowMallPreOrderPage.type')}</div>
+            <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPreOrderPage.reserve')}</div>
           </div>
           <div className="rounded-[18px] bg-[var(--shadow-bg-surface)] px-3 py-3 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
-            <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">STATUS</div>
-            <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">Open</div>
+            <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">{t('shadowMallPreOrderPage.status')}</div>
+            <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPreOrderPage.open')}</div>
           </div>
           <div className="rounded-[18px] bg-[var(--shadow-bg-surface)] px-3 py-3 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
-            <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">STOCK</div>
-            <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">Limited</div>
+            <div className="text-[9px] font-bold text-[var(--shadow-text-tertiary)]">{t('shadowMallPreOrderPage.stock')}</div>
+            <div className="mt-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPreOrderPage.limited')}</div>
           </div>
         </div>
 
@@ -467,7 +480,7 @@ export default function ShadowMallPreOrderPage() {
                   : 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)] ring-1 ring-[var(--shadow-border)]'
               }`}
             >
-              {item.label}
+              {t(`shadowMallPreOrderPage.${item.labelKey}`)}
             </button>
           ))}
         </div>
@@ -499,13 +512,13 @@ export default function ShadowMallPreOrderPage() {
             ))}
           </section>
         ) : (
-          <section className="mt-4 rounded-[26px] bg-white px-5 py-12 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f3fa] text-[var(--shadow-text-tertiary)]">
+          <section className="mt-4 rounded-[26px] bg-[var(--shadow-bg-surface)] px-5 py-12 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
               <i className="fa-solid fa-calendar-check text-[22px]" />
             </div>
-            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">No pre-order books found</h2>
+            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPreOrderPage.noBooks')}</h2>
             <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
-              Try another search or check Pre-order again later.
+              {t('shadowMallPreOrderPage.noBooksBody')}
             </p>
             <button
               type="button"
@@ -519,24 +532,24 @@ export default function ShadowMallPreOrderPage() {
 }}
               className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
-              Back to Shadow Mall
+              {t('shadowMallPreOrderPage.backMall')}
             </button>
           </section>
         )}
 
         {sortedProducts.length ? (
-          <div className="mt-4 flex items-center justify-between gap-3 rounded-[22px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
             <button
               type="button"
               disabled={!meta.has_prev}
               onClick={() => setPage((value) => Math.max(value - 1, 1))}
               className="rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-extrabold text-[var(--shadow-text-primary)] disabled:text-[var(--shadow-text-disabled)]"
             >
-              Previous
+              {t('shadowMallPreOrderPage.previous')}
             </button>
 
             <div className="text-[12px] font-extrabold text-[var(--shadow-text-secondary)]">
-              Page {page} / {meta.total_pages}
+              {t('shadowMallPreOrderPage.pageOf', { page: Number(page).toLocaleString(getDisplayLanguageId()), total: Number(meta.total_pages || 1).toLocaleString(getDisplayLanguageId()) })}
             </div>
 
             <button
@@ -545,7 +558,7 @@ export default function ShadowMallPreOrderPage() {
               onClick={() => setPage((value) => value + 1)}
               className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)] dark:bg-white dark:text-[#111827]"
             >
-              Next
+              {t('shadowMallPreOrderPage.next')}
             </button>
           </div>
         ) : null}
