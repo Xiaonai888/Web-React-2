@@ -1,5 +1,55 @@
 import { useEffect, useMemo, useState } from 'react'
 import { requestAuthor49DayEvent } from '../../services/author49DayEventClientCache'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('author49DayEventCard', {
+  en: {
+    imageAlt: '80% for 49 Days Event',
+    opening: 'Opening...',
+    startWriting: 'Start Writing',
+    dayShort: 'D',
+    hourShort: 'H',
+    minuteShort: 'M',
+    secondShort: 'S',
+  },
+  km: {
+    imageAlt: 'ព្រឹត្តិការណ៍ 80% រយៈពេល 49 ថ្ងៃ',
+    opening: 'កំពុងបើក...',
+    startWriting: 'ចាប់ផ្តើមសរសេរ',
+    dayShort: 'ថ្ងៃ',
+    hourShort: 'ម៉',
+    minuteShort: 'ន',
+    secondShort: 'វិ',
+  },
+  zh: {
+    imageAlt: '49 天 80% 活动',
+    opening: '正在打开...',
+    startWriting: '开始写作',
+    dayShort: '天',
+    hourShort: '时',
+    minuteShort: '分',
+    secondShort: '秒',
+  },
+  ja: {
+    imageAlt: '49日間 80% イベント',
+    opening: '開いています...',
+    startWriting: '執筆を開始',
+    dayShort: '日',
+    hourShort: '時',
+    minuteShort: '分',
+    secondShort: '秒',
+  },
+  ko: {
+    imageAlt: '49일간 80% 이벤트',
+    opening: '여는 중...',
+    startWriting: '글쓰기 시작',
+    dayShort: '일',
+    hourShort: '시',
+    minuteShort: '분',
+    secondShort: '초',
+  },
+})
 
 function getReaderToken() {
   return (
@@ -27,6 +77,7 @@ export default function Author49DayEventCard({
   onStartWriting,
   startWritingLoading = false,
 }) {
+  const { t } = useDisplayTranslation()
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [serverOffsetMs, setServerOffsetMs] = useState(0)
@@ -171,7 +222,7 @@ export default function Author49DayEventCard({
       <div className="relative aspect-square w-full overflow-hidden">
         <img
           src="/assets/Icons/Event/Event 2.webp"
-          alt="80% for 49 Days Event"
+          alt={t('author49DayEventCard.imageAlt')}
           className="absolute inset-0 h-full w-full object-cover"
         />
 
@@ -180,19 +231,19 @@ export default function Author49DayEventCard({
             <div className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] border-2 border-black bg-[#FFC400] px-3 text-black shadow-[0_5px_0_#111111]">
               <i className="fa-regular fa-clock text-[13px]" />
               <span className="text-[15px] font-black tabular-nums tracking-[0.02em]">
-                {String(countdown.days).padStart(2, '0')}D
+                {String(countdown.days).padStart(2, '0')}{t('author49DayEventCard.dayShort')}
               </span>
               <span className="text-[14px] font-black">:</span>
               <span className="text-[15px] font-black tabular-nums tracking-[0.02em]">
-                {String(countdown.hours).padStart(2, '0')}H
+                {String(countdown.hours).padStart(2, '0')}{t('author49DayEventCard.hourShort')}
               </span>
               <span className="text-[14px] font-black">:</span>
               <span className="text-[15px] font-black tabular-nums tracking-[0.02em]">
-                {String(countdown.minutes).padStart(2, '0')}M
+                {String(countdown.minutes).padStart(2, '0')}{t('author49DayEventCard.minuteShort')}
               </span>
               <span className="text-[14px] font-black">:</span>
               <span className="text-[15px] font-black tabular-nums tracking-[0.02em]">
-                {String(countdown.seconds).padStart(2, '0')}S
+                {String(countdown.seconds).padStart(2, '0')}{t('author49DayEventCard.secondShort')}
               </span>
             </div>
           ) : (
@@ -204,8 +255,8 @@ export default function Author49DayEventCard({
             >
               <i className="fa-solid fa-pen-nib text-[13px]" />
               {startWritingLoading
-                ? 'Opening...'
-                : 'Start Writing'}
+                ? t('author49DayEventCard.opening')
+                : t('author49DayEventCard.startWriting')}
             </button>
           )}
         </div>
