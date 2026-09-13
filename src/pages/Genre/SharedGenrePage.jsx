@@ -2,6 +2,301 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('sharedGenrePage', {
+  en: {
+    back: 'Back',
+    search: 'Search',
+    genreStoriesUpdates: '{{genre}} stories and new updates',
+    latest: 'Latest',
+    updates: 'Updates',
+    completed: 'Completed',
+    failedLoadGenres: 'Failed to load genres',
+    failedLoadStories: 'Failed to load stories',
+    cannotConnect: 'Cannot connect to server.',
+    updating: 'Updating',
+    episodes: '{{count}} Episodes',
+    upToEpisode: 'Up to Ep {{count}}',
+    untitledStory: 'Untitled Story',
+    topGenre: 'Top {{genre}}',
+    trendingGenre: 'Trending {{genre}}',
+    latestGenre: 'Latest {{genre}}',
+    allGenre: 'All {{genre}}',
+    noStoriesFound: 'No stories found',
+    storiesWillAppear: '{{genre}} stories will appear here after publishing.',
+    romance: 'Romance',
+    fantasy: 'Fantasy',
+    action: 'Action',
+    adventure: 'Adventure',
+    comedy: 'Comedy',
+    drama: 'Drama',
+    schoolLife: 'School Life',
+    historical: 'Historical',
+    mystery: 'Mystery',
+    horror: 'Horror',
+    thriller: 'Thriller',
+    sciFi: 'Sci-Fi',
+    system: 'System',
+    isekai: 'Isekai',
+    supernatural: 'Supernatural',
+    martialArts: 'Martial Arts',
+    revenge: 'Revenge',
+    ceo: 'CEO',
+    slowBurn: 'Slow Burn',
+    enemiesToLovers: 'Enemies to Lovers',
+    timeTravel: 'Time Travel',
+    strongFemaleLead: 'Strong Female Lead',
+    hiddenIdentity: 'Hidden Identity',
+    royalty: 'Royalty',
+    magic: 'Magic',
+    secondChance: 'Second Chance',
+    coldMaleLead: 'Cold Male Lead',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+  },
+  km: {
+    back: 'ត្រឡប់ក្រោយ',
+    search: 'ស្វែងរក',
+    genreStoriesUpdates: 'រឿង {{genre}} និង Update ថ្មីៗ',
+    latest: 'ថ្មីបំផុត',
+    updates: 'អាប់ដេត',
+    completed: 'បានបញ្ចប់',
+    failedLoadGenres: 'មិនអាចផ្ទុកប្រភេទរឿងបានទេ',
+    failedLoadStories: 'មិនអាចផ្ទុករឿងបានទេ',
+    cannotConnect: 'មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។',
+    updating: 'កំពុង Update',
+    episodes: '{{count}} ភាគ',
+    upToEpisode: 'ដល់ភាគ {{count}}',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    topGenre: '{{genre}} កំពូល',
+    trendingGenre: '{{genre}} កំពុងពេញនិយម',
+    latestGenre: '{{genre}} ថ្មីបំផុត',
+    allGenre: '{{genre}} ទាំងអស់',
+    noStoriesFound: 'រកមិនឃើញរឿង',
+    storiesWillAppear: 'រឿង {{genre}} នឹងបង្ហាញនៅទីនេះបន្ទាប់ពីបានបោះពុម្ព។',
+    romance: 'មនោសញ្ចេតនា',
+    fantasy: 'Fantasy',
+    action: 'សកម្មភាព',
+    adventure: 'ផ្សងព្រេង',
+    comedy: 'កំប្លែង',
+    drama: 'Drama',
+    schoolLife: 'ជីវិតសាលារៀន',
+    historical: 'ប្រវត្តិសាស្ត្រ',
+    mystery: 'អាថ៌កំបាំង',
+    horror: 'រន្ធត់',
+    thriller: 'Thriller',
+    sciFi: 'វិទ្យាសាស្ត្រប្រឌិត',
+    system: 'System',
+    isekai: 'Isekai',
+    supernatural: 'អរូបី',
+    martialArts: 'ក្បាច់គុន',
+    revenge: 'សងសឹក',
+    ceo: 'CEO',
+    slowBurn: 'ស្នេហាយឺតៗ',
+    enemiesToLovers: 'ពីសត្រូវទៅជាគូស្នេហ៍',
+    timeTravel: 'ឆ្លងពេលវេលា',
+    strongFemaleLead: 'តួស្រីខ្លាំង',
+    hiddenIdentity: 'អត្តសញ្ញាណលាក់បាំង',
+    royalty: 'រាជវង្ស',
+    magic: 'វេទមន្ត',
+    secondChance: 'ឱកាសទីពីរ',
+    coldMaleLead: 'តួប្រុសត្រជាក់',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+  },
+  zh: {
+    back: '返回',
+    search: '搜索',
+    genreStoriesUpdates: '{{genre}} 故事与最新更新',
+    latest: '最新',
+    updates: '更新',
+    completed: '已完结',
+    failedLoadGenres: '无法加载类型',
+    failedLoadStories: '无法加载故事',
+    cannotConnect: '无法连接服务器。',
+    updating: '连载中',
+    episodes: '{{count}} 章',
+    upToEpisode: '更新至第 {{count}} 章',
+    untitledStory: '无标题故事',
+    topGenre: '热门 {{genre}}',
+    trendingGenre: '趋势 {{genre}}',
+    latestGenre: '最新 {{genre}}',
+    allGenre: '全部 {{genre}}',
+    noStoriesFound: '未找到故事',
+    storiesWillAppear: '发布后，{{genre}} 故事会显示在这里。',
+    romance: '爱情',
+    fantasy: '奇幻',
+    action: '动作',
+    adventure: '冒险',
+    comedy: '喜剧',
+    drama: '剧情',
+    schoolLife: '校园生活',
+    historical: '历史',
+    mystery: '悬疑',
+    horror: '恐怖',
+    thriller: '惊悚',
+    sciFi: '科幻',
+    system: '系统',
+    isekai: '异世界',
+    supernatural: '超自然',
+    martialArts: '武侠',
+    revenge: '复仇',
+    ceo: 'CEO',
+    slowBurn: '慢热',
+    enemiesToLovers: '欢喜冤家',
+    timeTravel: '时间旅行',
+    strongFemaleLead: '强势女主',
+    hiddenIdentity: '隐藏身份',
+    royalty: '王室',
+    magic: '魔法',
+    secondChance: '第二次机会',
+    coldMaleLead: '高冷男主',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+  },
+  ja: {
+    back: '戻る',
+    search: '検索',
+    genreStoriesUpdates: '{{genre}} のストーリーと最新更新',
+    latest: '最新',
+    updates: '更新',
+    completed: '完結',
+    failedLoadGenres: 'ジャンルを読み込めませんでした',
+    failedLoadStories: 'ストーリーを読み込めませんでした',
+    cannotConnect: 'サーバーに接続できません。',
+    updating: '連載中',
+    episodes: '{{count}} エピソード',
+    upToEpisode: '第 {{count}} 話まで',
+    untitledStory: '無題のストーリー',
+    topGenre: '人気の {{genre}}',
+    trendingGenre: 'トレンドの {{genre}}',
+    latestGenre: '最新の {{genre}}',
+    allGenre: 'すべての {{genre}}',
+    noStoriesFound: 'ストーリーが見つかりません',
+    storiesWillAppear: '公開後、{{genre}} のストーリーがここに表示されます。',
+    romance: 'ロマンス',
+    fantasy: 'ファンタジー',
+    action: 'アクション',
+    adventure: '冒険',
+    comedy: 'コメディ',
+    drama: 'ドラマ',
+    schoolLife: '学園生活',
+    historical: '歴史',
+    mystery: 'ミステリー',
+    horror: 'ホラー',
+    thriller: 'スリラー',
+    sciFi: 'SF',
+    system: 'システム',
+    isekai: '異世界',
+    supernatural: '超自然',
+    martialArts: '武術',
+    revenge: '復讐',
+    ceo: 'CEO',
+    slowBurn: 'スローバーン',
+    enemiesToLovers: '敵から恋人へ',
+    timeTravel: 'タイムトラベル',
+    strongFemaleLead: '強い女性主人公',
+    hiddenIdentity: '隠された正体',
+    royalty: '王族',
+    magic: '魔法',
+    secondChance: 'セカンドチャンス',
+    coldMaleLead: 'クールな男性主人公',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+  },
+  ko: {
+    back: '뒤로 가기',
+    search: '검색',
+    genreStoriesUpdates: '{{genre}} 스토리 및 최신 업데이트',
+    latest: '최신',
+    updates: '업데이트',
+    completed: '완결',
+    failedLoadGenres: '장르를 불러오지 못했습니다',
+    failedLoadStories: '스토리를 불러오지 못했습니다',
+    cannotConnect: '서버에 연결할 수 없습니다.',
+    updating: '연재 중',
+    episodes: '{{count}}화',
+    upToEpisode: '{{count}}화까지',
+    untitledStory: '제목 없는 스토리',
+    topGenre: '인기 {{genre}}',
+    trendingGenre: '트렌드 {{genre}}',
+    latestGenre: '최신 {{genre}}',
+    allGenre: '모든 {{genre}}',
+    noStoriesFound: '스토리를 찾을 수 없습니다',
+    storiesWillAppear: '게시된 {{genre}} 스토리가 여기에 표시됩니다.',
+    romance: '로맨스',
+    fantasy: '판타지',
+    action: '액션',
+    adventure: '모험',
+    comedy: '코미디',
+    drama: '드라마',
+    schoolLife: '학교생활',
+    historical: '역사',
+    mystery: '미스터리',
+    horror: '호러',
+    thriller: '스릴러',
+    sciFi: 'SF',
+    system: '시스템',
+    isekai: '이세계',
+    supernatural: '초자연',
+    martialArts: '무협',
+    revenge: '복수',
+    ceo: 'CEO',
+    slowBurn: '슬로우 번',
+    enemiesToLovers: '적에서 연인으로',
+    timeTravel: '시간 여행',
+    strongFemaleLead: '강한 여주인공',
+    hiddenIdentity: '숨겨진 정체',
+    royalty: '왕족',
+    magic: '마법',
+    secondChance: '두 번째 기회',
+    coldMaleLead: '차가운 남주인공',
+    bl: 'BL',
+    gl: 'GL',
+    lgbtq: 'LGBTQ+',
+  },
+})
+
+const GENRE_LABEL_KEYS = {
+  romance: 'romance',
+  fantasy: 'fantasy',
+  action: 'action',
+  adventure: 'adventure',
+  comedy: 'comedy',
+  drama: 'drama',
+  'school-life': 'schoolLife',
+  historical: 'historical',
+  mystery: 'mystery',
+  horror: 'horror',
+  thriller: 'thriller',
+  'sci-fi': 'sciFi',
+  scifi: 'sciFi',
+  system: 'system',
+  isekai: 'isekai',
+  supernatural: 'supernatural',
+  'martial-arts': 'martialArts',
+  revenge: 'revenge',
+  ceo: 'ceo',
+  'slow-burn': 'slowBurn',
+  'enemies-to-lovers': 'enemiesToLovers',
+  'time-travel': 'timeTravel',
+  'strong-female-lead': 'strongFemaleLead',
+  'hidden-identity': 'hiddenIdentity',
+  royalty: 'royalty',
+  magic: 'magic',
+  'second-chance': 'secondChance',
+  'cold-male-lead': 'coldMaleLead',
+  bl: 'bl',
+  gl: 'gl',
+  lgbtq: 'lgbtq',
+  'lgbtq-plus': 'lgbtq',
+}
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
 const SHARED_GENRE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
@@ -38,6 +333,19 @@ function formatGenreName(value) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+}
+
+function getGenreDisplayName(slug, fallbackName, t) {
+  const key = GENRE_LABEL_KEYS[slug]
+  return key ? t(`sharedGenrePage.${key}`) : fallbackName
+}
+
+function getStoryTitle(story, t) {
+  if (!story?.title || story.title === 'Untitled Story') {
+    return t('sharedGenrePage.untitledStory')
+  }
+
+  return story.title
 }
 
 function normalizeStory(item) {
@@ -107,7 +415,7 @@ async function requestStories(url) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load stories')
+    throw new Error(data.message || getDisplayText('sharedGenrePage.failedLoadStories'))
   }
 
   return data.stories || data.items || data.results || []
@@ -153,15 +461,13 @@ function sortByTrending(list) {
 function formatNumber(value) {
   const number = Number(value || 0)
 
-  if (number >= 1000000) {
-    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}m`
-  }
-
-  if (number >= 1000) {
-    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
-  }
-
-  return String(number)
+  return new Intl.NumberFormat(
+    getDisplayLanguageId(),
+    {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }
+  ).format(Number.isFinite(number) ? number : 0)
 }
 
 function FireSolidIcon() {
@@ -179,13 +485,27 @@ function FireSolidIcon() {
   )
 }
 
-function getEpisodeLabel(story) {
+function getEpisodeLabel(story, t) {
   const count = Number(story.totalEpisodes || 0)
+  const displayCount = new Intl.NumberFormat(
+    getDisplayLanguageId()
+  ).format(count)
 
-  if (!count) return story.isCompleted ? 'Completed' : 'Updating'
-  if (story.isCompleted) return `${count} Episodes`
+  if (!count) {
+    return story.isCompleted
+      ? t('sharedGenrePage.completed')
+      : t('sharedGenrePage.updating')
+  }
 
-  return `Up to Ep ${count}`
+  if (story.isCompleted) {
+    return t('sharedGenrePage.episodes', {
+      count: displayCount,
+    })
+  }
+
+  return t('sharedGenrePage.upToEpisode', {
+    count: displayCount,
+  })
 }
 
 function getTagLine(story, genreName) {
@@ -203,14 +523,14 @@ function SectionTitle({ icon, title }) {
     <div className="mb-3 grid grid-cols-[1fr_auto] items-center gap-3 px-4">
       <div className="flex min-w-0 items-center gap-1.5">
         <span className="shrink-0 text-[18px] leading-none">{icon}</span>
-        <h2 className="min-w-0 truncate text-[18px] font-bold leading-6 text-[#111827]">
+        <h2 className="min-w-0 truncate text-[18px] font-bold leading-6 text-[var(--shadow-text-primary)]">
           {title}
         </h2>
       </div>
 
       <button
         type="button"
-        className="flex h-7 w-7 shrink-0 items-center justify-end text-[#111827] active:scale-95"
+        className="flex h-7 w-7 shrink-0 items-center justify-end text-[var(--shadow-text-primary)] active:scale-95"
       >
         <i className="fa-solid fa-chevron-right text-[13px]" />
       </button>
@@ -225,7 +545,7 @@ function ImageFrame({
   fallbackClassName = 'text-[#d6336c]',
 }) {
   return (
-    <div className={`overflow-hidden bg-[#f3f4f6] ${className}`}>
+    <div className={`overflow-hidden bg-[var(--shadow-bg-soft)] ${className}`}>
       {src ? (
         <img
           src={src}
@@ -248,6 +568,9 @@ function ImageFrame({
 }
 
 function TopGenreCard({ story, onOpen }) {
+  const { t } = useDisplayTranslation()
+  const title = getStoryTitle(story, t)
+
   return (
     <button
       type="button"
@@ -256,22 +579,25 @@ function TopGenreCard({ story, onOpen }) {
     >
       <ImageFrame
         src={story.landscape || story.cover}
-        title={story.title}
+        title={title}
         className="aspect-[1.42/1] rounded-[9px]"
       />
 
-      <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-neutral-900">
-        {story.title}
+      <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-[var(--shadow-text-primary)]">
+        {title}
       </h3>
 
-      <p className="mt-1 text-[11.5px] font-normal leading-[17px] text-gray-400">
-        {getEpisodeLabel(story)}
+      <p className="mt-1 text-[11.5px] font-normal leading-[17px] text-[var(--shadow-text-tertiary)]">
+        {getEpisodeLabel(story, t)}
       </p>
     </button>
   )
 }
 
 function TrendingGenreCard({ story, onOpen }) {
+  const { t } = useDisplayTranslation()
+  const title = getStoryTitle(story, t)
+
   return (
     <button
       type="button"
@@ -280,15 +606,15 @@ function TrendingGenreCard({ story, onOpen }) {
     >
       <ImageFrame
         src={story.cover}
-        title={story.title}
+        title={title}
         className="aspect-[2/3] rounded-[8px]"
       />
 
-      <h3 className="mt-2 h-[34px] line-clamp-2 text-[12.5px] font-[640] leading-[17px] text-neutral-900 sm:text-[13px]">
-        {story.title}
+      <h3 className="mt-2 h-[34px] line-clamp-2 text-[12.5px] font-[640] leading-[17px] text-[var(--shadow-text-primary)] sm:text-[13px]">
+        {title}
       </h3>
 
-      <p className="mt-1 flex h-[18px] items-center gap-1 text-[11.5px] font-medium leading-none text-[#4B5563]">
+      <p className="mt-1 flex h-[18px] items-center gap-1 text-[11.5px] font-medium leading-none text-[var(--shadow-text-secondary)]">
         <span className="text-[#EF4444]">
           <FireSolidIcon />
         </span>
@@ -300,6 +626,9 @@ function TrendingGenreCard({ story, onOpen }) {
 }
 
 function LatestGenreCard({ story, onOpen }) {
+  const { t } = useDisplayTranslation()
+  const title = getStoryTitle(story, t)
+
   return (
     <button
       type="button"
@@ -308,18 +637,20 @@ function LatestGenreCard({ story, onOpen }) {
     >
       <ImageFrame
         src={story.cover}
-        title={story.title}
+        title={title}
         className="aspect-[2/3] rounded-[8px]"
       />
 
-      <h3 className="mt-2 h-[38px] line-clamp-2 text-[14px] font-[640] leading-[19px] text-neutral-900">
-        {story.title}
+      <h3 className="mt-2 h-[38px] line-clamp-2 text-[14px] font-[640] leading-[19px] text-[var(--shadow-text-primary)]">
+        {title}
       </h3>
     </button>
   )
 }
 
 function AllGenreCard({ story, onOpen, genreName }) {
+  const { t } = useDisplayTranslation()
+  const title = getStoryTitle(story, t)
   const tagLine = getTagLine(story, genreName)
 
   return (
@@ -330,15 +661,15 @@ function AllGenreCard({ story, onOpen, genreName }) {
     >
       <ImageFrame
         src={story.cover}
-        title={story.title}
+        title={title}
         className="aspect-[2/3] rounded-[8px]"
       />
 
-      <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-neutral-900">
-        {story.title}
+      <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-[var(--shadow-text-primary)]">
+        {title}
       </h3>
 
-      <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
+      <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-[var(--shadow-text-tertiary)]">
         {tagLine}
       </p>
     </button>
@@ -350,14 +681,14 @@ function LoadingGrid() {
     <div className="space-y-7 px-4 pt-5">
       {Array.from({ length: 3 }).map((_, sectionIndex) => (
         <section key={sectionIndex}>
-          <div className="mb-3 h-6 w-44 animate-pulse rounded-full bg-gray-100" />
+          <div className="mb-3 h-6 w-44 animate-pulse rounded-full bg-[var(--shadow-bg-elevated)]" />
 
           <div className="grid grid-cols-2 gap-x-3 gap-y-5">
             {Array.from({ length: 4 }).map((__, index) => (
               <div key={index}>
-                <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
-                <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100" />
-                <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+                <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[var(--shadow-bg-elevated)]" />
+                <div className="mt-2 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-elevated)]" />
+                <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[var(--shadow-bg-elevated)]" />
               </div>
             ))}
           </div>
@@ -372,6 +703,7 @@ export default function SharedGenrePage({
   embedded = false,
 }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const normalizedGenreSlug = toSlug(genreSlug)
   const fallbackGenreName = formatGenreName(normalizedGenreSlug)
   const [genreName, setGenreName] = useState(fallbackGenreName)
@@ -492,7 +824,7 @@ export default function SharedGenrePage({
               if (!response.ok || data.ok === false) {
                 throw new Error(
                   data.message ||
-                    'Failed to load genres'
+                    getDisplayText('sharedGenrePage.failedLoadGenres')
                 )
               }
 
@@ -530,7 +862,7 @@ export default function SharedGenrePage({
 
         if (!response.ok || data.ok === false) {
           throw new Error(
-            data.message || 'Failed to load stories'
+            data.message || getDisplayText('sharedGenrePage.failedLoadStories')
           )
         }
 
@@ -603,9 +935,9 @@ export default function SharedGenrePage({
         setStories([])
         setMessage(
           error.message === 'Failed to fetch'
-            ? 'Cannot connect to server.'
+            ? getDisplayText('sharedGenrePage.cannotConnect')
             : error.message ||
-                'Failed to load stories'
+                getDisplayText('sharedGenrePage.failedLoadStories')
         )
       }
     } finally {
@@ -627,17 +959,17 @@ export default function SharedGenrePage({
   const quickButtons = useMemo(
     () => [
       {
-        label: 'Latest',
+        labelKey: 'latest',
         icon: 'fa-regular fa-calendar-plus',
         path: `/genre/${normalizedGenreSlug}/latest`,
       },
       {
-        label: 'Updates',
+        labelKey: 'updates',
         icon: 'fa-regular fa-star',
         path: `/genre/${normalizedGenreSlug}/updates`,
       },
       {
-        label: 'Completed',
+        labelKey: 'completed',
         icon: 'fa-regular fa-circle-check',
         path: `/genre/${normalizedGenreSlug}/completed`,
       },
@@ -678,6 +1010,11 @@ export default function SharedGenrePage({
   const returnToPath = embedded
     ? `/?genre=${encodeURIComponent(normalizedGenreSlug)}`
     : `/genre/${normalizedGenreSlug}`
+  const displayGenreName = getGenreDisplayName(
+    normalizedGenreSlug,
+    genreName,
+    t
+  )
 
   const openStory = (story) => {
     if (latestDragRef.current.blockClick) {
@@ -752,37 +1089,39 @@ export default function SharedGenrePage({
     <div
       className={
         embedded
-          ? 'bg-white pb-6'
-          : 'min-h-screen bg-white pb-[110px]'
+          ? 'bg-[var(--shadow-bg-page)] pb-6'
+          : 'min-h-screen bg-[var(--shadow-bg-page)] pb-[110px]'
       }
     >
       {!embedded ? (
-        <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur">
+        <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
-              aria-label="Back"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
+              aria-label={t('sharedGenrePage.back')}
             >
               <i className="fa-solid fa-chevron-left text-[13px]" />
             </button>
 
             <div className="min-w-0 text-center">
-              <h1 className="text-[17px] font-black text-[#111827]">
-                {genreName}
+              <h1 className="text-[17px] font-black text-[var(--shadow-text-primary)]">
+                {displayGenreName}
               </h1>
 
-              <p className="text-[11px] font-semibold text-gray-400">
-                {genreName} stories and new updates
+              <p className="text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">
+                {t('sharedGenrePage.genreStoriesUpdates', {
+                  genre: displayGenreName,
+                })}
               </p>
             </div>
 
             <button
               type="button"
               onClick={() => navigate('/search')}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
-              aria-label="Search"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
+              aria-label={t('sharedGenrePage.search')}
             >
               <i className="fa-solid fa-magnifying-glass text-[13px]" />
             </button>
@@ -808,7 +1147,7 @@ export default function SharedGenrePage({
 
                 <img
                   src={genreDesktopImage || genreMobileImage}
-                  alt={genreName}
+                  alt={displayGenreName}
                   draggable={false}
                   onDragStart={(event) => event.preventDefault()}
                   className="h-full w-full select-none object-cover"
@@ -830,16 +1169,16 @@ export default function SharedGenrePage({
           <div className="grid grid-cols-3 gap-2">
             {quickButtons.map((item) => (
               <button
-                key={item.label}
+                key={item.labelKey}
                 type="button"
                 onClick={() => openTab(item.path)}
-                className="flex h-12 items-center justify-center gap-2 rounded-[11px] bg-white text-[13px] font-[640] text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-[0.98]"
+                className="flex h-12 items-center justify-center gap-2 rounded-[11px] bg-[var(--shadow-bg-surface)] text-[13px] font-[640] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)] active:scale-[0.98]"
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#facc15] text-[12px] text-[#111827]">
                   <i className={item.icon} />
                 </span>
 
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{t(`sharedGenrePage.${item.labelKey}`)}</span>
               </button>
             ))}
           </div>
@@ -848,8 +1187,8 @@ export default function SharedGenrePage({
         {loading ? <LoadingGrid /> : null}
 
         {!loading && message ? (
-          <section className="mx-4 mt-5 rounded-[18px] bg-gray-50 p-6 text-center">
-            <div className="text-[13px] font-[640] text-[#e5484d]">
+          <section className="mx-4 mt-5 rounded-[18px] bg-[var(--shadow-bg-soft)] p-6 text-center">
+            <div className="text-[13px] font-[640] text-[var(--shadow-danger)]">
               {message}
             </div>
           </section>
@@ -860,7 +1199,7 @@ export default function SharedGenrePage({
             <section>
               <SectionTitle
                 icon="🏆"
-                title={`Top ${genreName}`}
+                title={t('sharedGenrePage.topGenre', { genre: displayGenreName })}
               />
 
               <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 md:grid-cols-6 md:gap-x-3">
@@ -877,7 +1216,7 @@ export default function SharedGenrePage({
             <section className="mt-8">
               <SectionTitle
                 icon="🔥"
-                title={`Trending ${genreName}`}
+                title={t('sharedGenrePage.trendingGenre', { genre: displayGenreName })}
               />
 
               <div className="grid grid-cols-3 items-start gap-x-2.5 gap-y-5 px-4 md:grid-cols-6 md:gap-x-3">
@@ -894,7 +1233,7 @@ export default function SharedGenrePage({
             <section className="mt-8">
               <SectionTitle
                 icon="🆕"
-                title={`Latest ${genreName}`}
+                title={t('sharedGenrePage.latestGenre', { genre: displayGenreName })}
               />
 
               <div
@@ -918,7 +1257,7 @@ export default function SharedGenrePage({
             <section className="mt-8">
               <SectionTitle
                 icon="📖"
-                title={`All ${genreName}`}
+                title={t('sharedGenrePage.allGenre', { genre: displayGenreName })}
               />
 
               {allStories.length ? (
@@ -933,13 +1272,15 @@ export default function SharedGenrePage({
                   ))}
                 </div>
               ) : (
-                <div className="mx-4 rounded-[18px] bg-gray-50 p-8 text-center">
-                  <h3 className="text-[16px] font-black text-[#111827]">
-                    No stories found
+                <div className="mx-4 rounded-[18px] bg-[var(--shadow-bg-soft)] p-8 text-center">
+                  <h3 className="text-[16px] font-black text-[var(--shadow-text-primary)]">
+                    {t('sharedGenrePage.noStoriesFound')}
                   </h3>
 
-                  <p className="mt-2 text-[13px] font-normal text-gray-400">
-                    {genreName} stories will appear here after publishing.
+                  <p className="mt-2 text-[13px] font-normal text-[var(--shadow-text-tertiary)]">
+                    {t('sharedGenrePage.storiesWillAppear', {
+                      genre: displayGenreName,
+                    })}
                   </p>
                 </div>
               )}
