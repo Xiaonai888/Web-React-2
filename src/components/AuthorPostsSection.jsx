@@ -586,7 +586,16 @@ async function flushAuthorPostViews() {
     }
 
     markAuthorPostViewsCached(postIds)
+    postIds.forEach((id) => authorPostViewRetryCount.delete(id))
   } catch {
+    for (const id of postIds) {
+      const retries = authorPostViewRetryCount.get(id) || 0
+
+      if (retries < 1) {
+        authorPostViewRetryCount.set(id, retries + 1)
+        authorPostViewQueue.add(id)
+      }
+    }
   } finally {
     authorPostViewFlushInFlight = false
 
