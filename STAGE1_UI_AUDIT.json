@@ -379,6 +379,11 @@
 "src/pages/Shop/ShadowMallSecondHandPage.jsx",
 "src/pages/Shop/ShadowMallSectionPage.jsx",
 "src/pages/Shop/ShadowMallWishlistPage.jsx"
+"src/pages/Genre/GenreStoriesPage.jsx",
+"src/pages/Genre/SharedGenrePage.jsx",
+"src/pages/ChatStoryHomePage.jsx",
+"src/pages/MusicPage.jsx",
+"src/components/story-detail/StoryStatsSection.jsx"
 
   ]
 }
