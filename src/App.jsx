@@ -74,6 +74,7 @@ import AuthorBlockedReadersPage from './pages/Author/AuthorBlockedReadersPage'
 import AuthorModerationHistoryPage from './pages/Author/AuthorModerationHistoryPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
 import AuthorIncomeOldPage from './pages/Author/AuthorIncomeOldPage'
+import AuthorRecentEarningsPage from './pages/Author/AuthorRecentEarningsPage'
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
@@ -1373,6 +1374,7 @@ const shouldShowOpeningAds =
         <Route path="/search" element={<Search />} />
         <Route path="/discover/search" element={<DiscoverSearchPage />} />
         <Route path="/author/income" element={<AuthorIncomeOldPage />} />
+        <Route path="/author/recent-earnings" element={<AuthorRecentEarningsPage />} />
         <Route path="/author/earnings" element={<AuthorIncomePage />} />
         <Route path="/author/diamonds" element={<AuthorDiamondPage />} />
         <Route path="/author/gifts" element={<AuthorGiftPage />} />
