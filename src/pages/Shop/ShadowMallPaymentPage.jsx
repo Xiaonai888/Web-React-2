@@ -1,5 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowMallPaymentPage', {
+  en: { "closeBuyerProfile": "Close Buyer Profile", "buyerProfile": "Buyer Profile", "printedDeliveryRequired": "{t('shadowMallPaymentPage.printedDeliveryRequired')}", "loadingBuyerProfile": "{t('shadowMallPaymentPage.loadingBuyerProfile')}", "name": "Name", "nameHelp": "{t('shadowMallPaymentPage.nameHelp')}", "phoneNumber": "Phone Number", "enterPhone": "Enter phone number", "pleaseLoginFirst": "Please login first", "deliveryAddress": "Delivery Address", "addressPlaceholder": "House number, street, village, commune, district, province/city...", "saving": "Saving...", "saveInformation": "Save Information", "failedLoadProfile": "Failed to load buyer profile", "loginBeforeSave": "Please login before saving buyer profile.", "profileRequired": "Phone number and delivery address are required.", "failedSaveProfile": "Failed to save buyer profile", "loginBeforeCheckout": "Please login before checkout.", "cartEmpty": "Your cart is empty.", "failedCreatePayment": "Failed to create Shadow Mall payment", "paymentNotCreated": "Payment order was not created", "failedContinuePayment": "Failed to continue payment", "goBack": "Go back", "checkout": "Checkout", "openBuyerProfile": "Open Buyer Profile", "deliveryCompany": "Delivery Company", "chooseDeliveryCompany": "{t('shadowMallPaymentPage.chooseDeliveryCompany')}", "deliveryNote": "Delivery Note", "notePlaceholder": "Optional note for admin or delivery...", "orderItems": "Order Items", "booksInOrder": "{{count}} books in this order", "noBooksCart": "No books in cart", "backToShop": "Back to Shop", "paymentSummary": "Payment Summary", "subtotal": "Subtotal", "deliveryFee": "Delivery Fee", "total": "Total", "openingPayWay": "Opening PayWay...", "continuePayment": "Continue to Payment", "loginCheckout": "Login to Checkout", "untitledBook": "Untitled book", "unknownAuthor": "Unknown author", "each": "each", "removeItem": "Remove {{title}}", "telegramUsername": "Telegram Username", "facebookLink": "Facebook Link", "facebookPlaceholder": "Paste Facebook profile or Messenger link", "quantity": "Qty: {{count}}", "provinceCity": "Province / City", "addressPlaceholderShort": "House number, street, village, commune, district..." },
+  km: { "closeBuyerProfile": "បិទព័ត៌មានអ្នកទិញ", "buyerProfile": "ព័ត៌មានអ្នកទិញ", "printedDeliveryRequired": "ត្រូវការសម្រាប់ការដឹកជញ្ជូនសៀវភៅបោះពុម្ព។", "loadingBuyerProfile": "កំពុងផ្ទុកព័ត៌មានអ្នកទិញ...", "name": "ឈ្មោះ", "nameHelp": "ឈ្មោះយកពីគណនីអ្នកអានរបស់អ្នក។ បើចង់ប្តូរ សូមកែ Profile មេ។", "phoneNumber": "លេខទូរស័ព្ទ", "enterPhone": "បញ្ចូលលេខទូរស័ព្ទ", "pleaseLoginFirst": "សូមចូលគណនីជាមុន", "deliveryAddress": "អាសយដ្ឋានដឹកជញ្ជូន", "addressPlaceholder": "លេខផ្ទះ ផ្លូវ ភូមិ ឃុំ/សង្កាត់ ស្រុក/ខណ្ឌ ខេត្ត/ក្រុង...", "saving": "កំពុងរក្សាទុក...", "saveInformation": "រក្សាទុកព័ត៌មាន", "failedLoadProfile": "មិនអាចផ្ទុកព័ត៌មានអ្នកទិញបានទេ", "loginBeforeSave": "សូមចូលគណនីមុនពេលរក្សាទុកព័ត៌មានអ្នកទិញ។", "profileRequired": "ត្រូវបញ្ចូលលេខទូរស័ព្ទ និងអាសយដ្ឋានដឹកជញ្ជូន។", "failedSaveProfile": "មិនអាចរក្សាទុកព័ត៌មានអ្នកទិញបានទេ", "loginBeforeCheckout": "សូមចូលគណនីមុនពេល Checkout។", "cartEmpty": "កន្ត្រករបស់អ្នកទទេ។", "failedCreatePayment": "មិនអាចបង្កើតការទូទាត់ Shadow Mall បានទេ", "paymentNotCreated": "មិនបានបង្កើតការបញ្ជាទិញសម្រាប់ទូទាត់ទេ", "failedContinuePayment": "មិនអាចបន្តការទូទាត់បានទេ", "goBack": "ត្រឡប់ក្រោយ", "checkout": "Checkout", "openBuyerProfile": "បើកព័ត៌មានអ្នកទិញ", "deliveryCompany": "ក្រុមហ៊ុនដឹកជញ្ជូន", "chooseDeliveryCompany": "ជ្រើសរើសក្រុមហ៊ុនសម្រាប់ដឹកជញ្ជូនសៀវភៅបោះពុម្ព។", "deliveryNote": "កំណត់ចំណាំដឹកជញ្ជូន", "notePlaceholder": "កំណត់ចំណាំជាជម្រើសសម្រាប់ Admin ឬអ្នកដឹកជញ្ជូន...", "orderItems": "ទំនិញក្នុងការបញ្ជាទិញ", "booksInOrder": "សៀវភៅ {{count}} ក្នុងការបញ្ជាទិញនេះ", "noBooksCart": "គ្មានសៀវភៅក្នុងកន្ត្រក", "backToShop": "ត្រឡប់ទៅហាង", "paymentSummary": "សង្ខេបការទូទាត់", "subtotal": "តម្លៃសរុបរង", "deliveryFee": "ថ្លៃដឹកជញ្ជូន", "total": "សរុប", "openingPayWay": "កំពុងបើក PayWay...", "continuePayment": "បន្តទៅការទូទាត់", "loginCheckout": "ចូលគណនីដើម្បី Checkout", "untitledBook": "សៀវភៅគ្មានចំណងជើង", "unknownAuthor": "មិនស្គាល់អ្នកនិពន្ធ", "each": "ក្នុងមួយ", "removeItem": "ដក {{title}} ចេញ", "telegramUsername": "ឈ្មោះ Telegram", "facebookLink": "តំណ Facebook", "facebookPlaceholder": "បិទភ្ជាប់តំណ Facebook Profile ឬ Messenger", "quantity": "ចំនួន៖ {{count}}", "provinceCity": "ខេត្ត / ក្រុង", "addressPlaceholderShort": "លេខផ្ទះ ផ្លូវ ភូមិ ឃុំ/សង្កាត់ ស្រុក/ខណ្ឌ..." },
+  zh: { "closeBuyerProfile": "关闭买家资料", "buyerProfile": "买家资料", "printedDeliveryRequired": "印刷书配送需要这些信息。", "loadingBuyerProfile": "正在加载买家资料...", "name": "姓名", "nameHelp": "姓名来自你的读者账号。如需更改，请更新主个人资料。", "phoneNumber": "电话号码", "enterPhone": "输入电话号码", "pleaseLoginFirst": "请先登录", "deliveryAddress": "配送地址", "addressPlaceholder": "门牌号、街道、村、区、县、省/市...", "saving": "正在保存...", "saveInformation": "保存信息", "failedLoadProfile": "无法加载买家资料", "loginBeforeSave": "请先登录再保存买家资料。", "profileRequired": "电话号码和配送地址为必填项。", "failedSaveProfile": "无法保存买家资料", "loginBeforeCheckout": "请先登录再结账。", "cartEmpty": "购物车为空。", "failedCreatePayment": "无法创建 Shadow Mall 支付", "paymentNotCreated": "未创建支付订单", "failedContinuePayment": "无法继续支付", "goBack": "返回", "checkout": "结账", "openBuyerProfile": "打开买家资料", "deliveryCompany": "配送公司", "chooseDeliveryCompany": "选择印刷书配送公司。", "deliveryNote": "配送备注", "notePlaceholder": "给管理员或配送员的可选备注...", "orderItems": "订单商品", "booksInOrder": "本订单共 {{count}} 本书", "noBooksCart": "购物车中没有书", "backToShop": "返回商店", "paymentSummary": "支付摘要", "subtotal": "小计", "deliveryFee": "配送费", "total": "合计", "openingPayWay": "正在打开 PayWay...", "continuePayment": "继续支付", "loginCheckout": "登录后结账", "untitledBook": "无标题图书", "unknownAuthor": "未知作者", "each": "每件", "removeItem": "移除 {{title}}", "telegramUsername": "Telegram 用户名", "facebookLink": "Facebook 链接", "facebookPlaceholder": "粘贴 Facebook 个人资料或 Messenger 链接", "quantity": "数量：{{count}}", "provinceCity": "省 / 市", "addressPlaceholderShort": "门牌号、街道、村、区、县..." },
+  ja: { "closeBuyerProfile": "購入者情報を閉じる", "buyerProfile": "購入者情報", "printedDeliveryRequired": "印刷本の配送に必要な情報です。", "loadingBuyerProfile": "購入者情報を読み込み中...", "name": "名前", "nameHelp": "名前は読者アカウントから取得されます。変更するにはメインプロフィールを更新してください。", "phoneNumber": "電話番号", "enterPhone": "電話番号を入力", "pleaseLoginFirst": "先にログインしてください", "deliveryAddress": "配送先住所", "addressPlaceholder": "番地、通り、村、コミューン、地区、州/市...", "saving": "保存中...", "saveInformation": "情報を保存", "failedLoadProfile": "購入者情報を読み込めませんでした", "loginBeforeSave": "購入者情報を保存する前にログインしてください。", "profileRequired": "電話番号と配送先住所が必要です。", "failedSaveProfile": "購入者情報を保存できませんでした", "loginBeforeCheckout": "チェックアウト前にログインしてください。", "cartEmpty": "カートは空です。", "failedCreatePayment": "Shadow Mall の支払いを作成できませんでした", "paymentNotCreated": "支払い注文が作成されませんでした", "failedContinuePayment": "支払いを続行できませんでした", "goBack": "戻る", "checkout": "チェックアウト", "openBuyerProfile": "購入者情報を開く", "deliveryCompany": "配送会社", "chooseDeliveryCompany": "印刷本の配送会社を選択してください。", "deliveryNote": "配送メモ", "notePlaceholder": "管理者または配送担当者への任意メモ...", "orderItems": "注文商品", "booksInOrder": "この注文には {{count}} 冊", "noBooksCart": "カートに本がありません", "backToShop": "ショップに戻る", "paymentSummary": "支払い概要", "subtotal": "小計", "deliveryFee": "配送料", "total": "合計", "openingPayWay": "PayWay を開いています...", "continuePayment": "支払いへ進む", "loginCheckout": "ログインしてチェックアウト", "untitledBook": "無題の本", "unknownAuthor": "不明な作者", "each": "1冊あたり", "removeItem": "{{title}}を削除", "telegramUsername": "Telegram ユーザー名", "facebookLink": "Facebook リンク", "facebookPlaceholder": "FacebookプロフィールまたはMessengerリンクを貼り付け", "quantity": "数量：{{count}}", "provinceCity": "州 / 市", "addressPlaceholderShort": "番地、通り、村、コミューン、地区..." },
+  ko: { "closeBuyerProfile": "구매자 정보 닫기", "buyerProfile": "구매자 정보", "printedDeliveryRequired": "인쇄 도서 배송에 필요한 정보입니다.", "loadingBuyerProfile": "구매자 정보를 불러오는 중...", "name": "이름", "nameHelp": "이름은 독자 계정에서 가져옵니다. 변경하려면 기본 프로필을 수정하세요.", "phoneNumber": "전화번호", "enterPhone": "전화번호 입력", "pleaseLoginFirst": "먼저 로그인하세요", "deliveryAddress": "배송 주소", "addressPlaceholder": "집 번호, 도로, 마을, 코뮌, 구역, 주/도시...", "saving": "저장 중...", "saveInformation": "정보 저장", "failedLoadProfile": "구매자 정보를 불러오지 못했습니다", "loginBeforeSave": "구매자 정보를 저장하기 전에 로그인하세요.", "profileRequired": "전화번호와 배송 주소가 필요합니다.", "failedSaveProfile": "구매자 정보를 저장하지 못했습니다", "loginBeforeCheckout": "결제 전에 로그인하세요.", "cartEmpty": "장바구니가 비어 있습니다.", "failedCreatePayment": "Shadow Mall 결제를 만들지 못했습니다", "paymentNotCreated": "결제 주문이 생성되지 않았습니다", "failedContinuePayment": "결제를 계속할 수 없습니다", "goBack": "뒤로", "checkout": "결제", "openBuyerProfile": "구매자 정보 열기", "deliveryCompany": "배송 회사", "chooseDeliveryCompany": "인쇄 도서 배송 회사를 선택하세요.", "deliveryNote": "배송 메모", "notePlaceholder": "관리자 또는 배송 담당자에게 남길 선택 메모...", "orderItems": "주문 상품", "booksInOrder": "이 주문에 도서 {{count}}권", "noBooksCart": "장바구니에 도서가 없습니다", "backToShop": "스토어로 돌아가기", "paymentSummary": "결제 요약", "subtotal": "소계", "deliveryFee": "배송비", "total": "합계", "openingPayWay": "PayWay 여는 중...", "continuePayment": "결제 계속하기", "loginCheckout": "로그인 후 결제", "untitledBook": "제목 없는 도서", "unknownAuthor": "알 수 없는 작가", "each": "개당", "removeItem": "{{title}} 삭제", "telegramUsername": "Telegram 사용자명", "facebookLink": "Facebook 링크", "facebookPlaceholder": "Facebook 프로필 또는 Messenger 링크 붙여넣기", "quantity": "수량: {{count}}", "provinceCity": "주 / 도시", "addressPlaceholderShort": "집 번호, 도로, 마을, 코뮌, 구역..." },
+})
+
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -109,8 +120,8 @@ function normalizePrice(value) {
 function normalizeCartItem(item) {
   return {
     id: item.id,
-    title: item.title || 'Untitled book',
-    author: item.author || item.author_name || 'Unknown author',
+    title: item.title || getDisplayText('shadowMallPaymentPage.untitledBook'),
+    author: item.author || item.author_name || getDisplayText('shadowMallPaymentPage.unknownAuthor'),
     cover: item.cover || item.cover_url || '',
     price: normalizePrice(item.price || item.price_usd),
     oldPrice: normalizePrice(item.oldPrice || item.old_price_usd),
@@ -129,8 +140,10 @@ function normalizeProfile(profile) {
 
 function formatUsd(value) {
   const number = Number(value || 0)
-  if (!Number.isFinite(number)) return '$0.00'
-  return `$${number.toFixed(2)}`
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    style: 'currency',
+    currency: 'USD',
+  }).format(Number.isFinite(number) ? number : 0)
 }
 
 function FieldLabel({ children, required = false }) {
@@ -196,13 +209,15 @@ function BuyerProfileSheet({
   saving,
   onSave,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[120]">
       <button
         type="button"
-        aria-label="Close Buyer Profile"
+        aria-label={t('shadowMallPaymentPage.closeBuyerProfile')}
         onClick={onClose}
         className="absolute inset-0 bg-black/40"
       />
@@ -212,9 +227,9 @@ function BuyerProfileSheet({
 
         <div className="flex items-center justify-between gap-3 border-b border-[var(--shadow-border)] px-5 pb-4 pt-5">
           <div>
-            <div className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">Buyer Profile</div>
+            <div className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPaymentPage.buyerProfile')}</div>
             <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
-              Required for printed book delivery.
+              {t('shadowMallPaymentPage.printedDeliveryRequired')}
             </div>
           </div>
 
@@ -230,35 +245,35 @@ function BuyerProfileSheet({
         <div className="max-h-[70vh] overflow-y-auto px-5 pb-5 pt-4">
           {profileLoading ? (
             <div className="mb-4 rounded-[16px] bg-[#eef2ff] px-4 py-3 text-[12px] font-extrabold text-[#4f46e5] dark:bg-indigo-500/15 dark:text-indigo-300">
-              Loading buyer profile...
+              {t('shadowMallPaymentPage.loadingBuyerProfile')}
             </div>
           ) : null}
 
           <div className="space-y-4">
             <div>
-              <FieldLabel required>Name</FieldLabel>
+              <FieldLabel required>{t('shadowMallPaymentPage.name')}</FieldLabel>
               <TextInput
-                value={readerName || 'Please login first'}
+                value={readerName || t('shadowMallPaymentPage.pleaseLoginFirst')}
                 disabled
                 readOnly
               />
               <p className="mt-2 text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
-                Name comes from your reader account. To change it, update your main profile.
+                {t('shadowMallPaymentPage.nameHelp')}
               </p>
             </div>
 
             <div>
-              <FieldLabel required>Phone Number</FieldLabel>
+              <FieldLabel required>{t('shadowMallPaymentPage.phoneNumber')}</FieldLabel>
               <TextInput
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
-                placeholder="Enter phone number"
+                placeholder={t('shadowMallPaymentPage.enterPhone')}
                 inputMode="tel"
               />
             </div>
 
             <div>
-              <FieldLabel required>Province / City</FieldLabel>
+              <FieldLabel required>{t('shadowMallPaymentPage.provinceCity')}</FieldLabel>
               <SelectInput value={province} onChange={(event) => setProvince(event.target.value)}>
                 {provinces.map((item) => (
                   <option key={item} value={item}>{item}</option>
@@ -267,11 +282,11 @@ function BuyerProfileSheet({
             </div>
 
             <div>
-              <FieldLabel required>Delivery Address</FieldLabel>
+              <FieldLabel required>{t('shadowMallPaymentPage.deliveryAddress')}</FieldLabel>
               <textarea
                 value={address}
                 onChange={(event) => setAddress(event.target.value)}
-                placeholder="House number, street, village, commune, district..."
+                placeholder={t('shadowMallPaymentPage.addressPlaceholderShort')}
                 className="app-input min-h-[120px] w-full resize-none rounded-[16px] border px-4 py-3 text-[14px] font-semibold leading-6 outline-none transition focus:border-[#8a70b5]"
               />
             </div>
@@ -282,7 +297,7 @@ function BuyerProfileSheet({
               onClick={onSave}
               className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)] dark:bg-white dark:text-[#111827]"
             >
-              {saving ? 'Saving...' : 'Save Information'}
+              {saving ? t('shadowMallPaymentPage.saving') : t('shadowMallPaymentPage.saveInformation')}
             </button>
           </div>
         </div>
@@ -292,6 +307,8 @@ function BuyerProfileSheet({
 }
 
 function CheckoutItem({ item }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="flex gap-3 border-b border-[var(--shadow-border)] py-3 last:border-b-0">
       <div className="h-[76px] w-[52px] shrink-0 overflow-hidden rounded-[12px] bg-[var(--shadow-bg-soft)]">
@@ -315,7 +332,7 @@ function CheckoutItem({ item }) {
         <div className="line-clamp-2 text-[13px] font-extrabold leading-5 text-[var(--shadow-text-primary)]">{item.title}</div>
         <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">{item.author}</div>
         <div className="mt-2 flex items-center justify-between gap-3">
-          <span className="text-[12px] font-bold text-[var(--shadow-text-secondary)]">Qty: {item.quantity}</span>
+          <span className="text-[12px] font-bold text-[var(--shadow-text-secondary)]">{t('shadowMallPaymentPage.quantity', { count: Number(item.quantity).toLocaleString(getDisplayLanguageId()) })}</span>
           <span className="text-[13px] font-extrabold text-[#e5484d]">
             {formatUsd(item.price * item.quantity)}
           </span>
@@ -327,6 +344,7 @@ function CheckoutItem({ item }) {
 
 export default function ShadowMallCheckoutPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [items, setItems] = useState([])
   const [readerUser, setReaderUser] = useState(null)
   const [phone, setPhone] = useState('')
@@ -372,7 +390,7 @@ export default function ShadowMallCheckoutPage() {
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load buyer profile')
+          throw new Error(data.message || t('shadowMallPaymentPage.failedLoadProfile'))
         }
 
         if (!ignore && data.profile) {
@@ -390,7 +408,7 @@ export default function ShadowMallCheckoutPage() {
         }
       } catch (error) {
         if (!ignore) {
-          setMessage(error.message || 'Failed to load buyer profile')
+          setMessage(error.message || t('shadowMallPaymentPage.failedLoadProfile'))
         }
       } finally {
         if (!ignore) setProfileLoading(false)
@@ -438,12 +456,12 @@ export default function ShadowMallCheckoutPage() {
     const token = getReaderToken()
 
     if (!readerName.trim() || !token) {
-      setMessage('Please login before saving buyer profile.')
+      setMessage(t('shadowMallPaymentPage.loginBeforeSave'))
       return false
     }
 
     if (!phone.trim() || !address.trim()) {
-      setMessage('Phone number and delivery address are required.')
+      setMessage(t('shadowMallPaymentPage.profileRequired'))
       return false
     }
 
@@ -470,7 +488,7 @@ export default function ShadowMallCheckoutPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to save buyer profile')
+        throw new Error(data.message || t('shadowMallPaymentPage.failedSaveProfile'))
       }
 
       const savedProfile = normalizeProfile(data.profile || profile)
@@ -482,7 +500,7 @@ export default function ShadowMallCheckoutPage() {
       setBuyerProfileOpen(false)
       return true
     } catch (error) {
-      setMessage(error.message || 'Failed to save buyer profile')
+      setMessage(error.message || t('shadowMallPaymentPage.failedSaveProfile'))
       return false
     } finally {
       setSaving(false)
@@ -493,18 +511,18 @@ export default function ShadowMallCheckoutPage() {
     const token = getReaderToken()
 
     if (!readerName.trim() || !token) {
-      setMessage('Please login before checkout.')
+      setMessage(t('shadowMallPaymentPage.loginBeforeCheckout'))
       setBuyerProfileOpen(true)
       return
     }
 
     if (!items.length) {
-      setMessage('Your cart is empty.')
+      setMessage(t('shadowMallPaymentPage.cartEmpty'))
       return
     }
 
     if (!phone.trim() || !address.trim()) {
-      setMessage('Phone number and delivery address are required.')
+      setMessage(t('shadowMallPaymentPage.profileRequired'))
       setBuyerProfileOpen(true)
       return
     }
@@ -532,7 +550,7 @@ export default function ShadowMallCheckoutPage() {
       const profileData = await profileResponse.json().catch(() => ({}))
 
       if (!profileResponse.ok || profileData.ok === false) {
-        throw new Error(profileData.message || 'Failed to save buyer profile')
+        throw new Error(profileData.message || t('shadowMallPaymentPage.failedSaveProfile'))
       }
 
       const savedProfile = normalizeProfile(profileData.profile || profile)
@@ -553,11 +571,11 @@ export default function ShadowMallCheckoutPage() {
       const orderData = await orderResponse.json().catch(() => ({}))
 
       if (!orderResponse.ok || orderData.ok === false) {
-        throw new Error(orderData.message || 'Failed to create Shadow Mall payment')
+        throw new Error(orderData.message || t('shadowMallPaymentPage.failedCreatePayment'))
       }
 
       if (!orderData.order) {
-        throw new Error('Payment order was not created')
+        throw new Error(t('shadowMallPaymentPage.paymentNotCreated'))
       }
 
       localStorage.setItem(
@@ -571,7 +589,7 @@ export default function ShadowMallCheckoutPage() {
       const paywayUrl = orderData.order.checkout_url || orderData.order.deeplink || FALLBACK_PAYWAY_LINK
       window.location.href = paywayUrl
     } catch (error) {
-      setMessage(error.message || 'Failed to continue payment')
+      setMessage(error.message || t('shadowMallPaymentPage.failedContinuePayment'))
     } finally {
       setSaving(false)
     }
@@ -600,20 +618,20 @@ export default function ShadowMallCheckoutPage() {
             type="button"
             onClick={() => navigate('/shop/mall/cart')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Go back"
+            aria-label={t('shadowMallPaymentPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[var(--shadow-text-primary)]">
-            Checkout
+            {t('shadowMallPaymentPage.checkout')}
           </h1>
 
           <button
             type="button"
             onClick={() => setBuyerProfileOpen(true)}
             className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Open Buyer Profile"
+            aria-label={t('shadowMallPaymentPage.openBuyerProfile')}
           >
             <i className="fa-solid fa-user text-[14px]" />
             {!profileComplete ? (
@@ -633,9 +651,9 @@ export default function ShadowMallCheckoutPage() {
         <section className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Delivery Company</div>
+              <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPaymentPage.deliveryCompany')}</div>
               <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
-                Choose the company for printed book delivery.
+                {t('shadowMallPaymentPage.chooseDeliveryCompany')}
               </p>
             </div>
 
@@ -679,11 +697,11 @@ export default function ShadowMallCheckoutPage() {
           </div>
 
           <div className="mt-4">
-            <FieldLabel>Delivery Note</FieldLabel>
+            <FieldLabel>{t('shadowMallPaymentPage.deliveryNote')}</FieldLabel>
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              placeholder="Optional note for admin or delivery..."
+              placeholder={t('shadowMallPaymentPage.notePlaceholder')}
               className="app-input min-h-[90px] w-full resize-none rounded-[16px] border px-4 py-3 text-[14px] font-semibold leading-6 outline-none transition focus:border-[#8a70b5]"
             />
           </div>
@@ -696,9 +714,9 @@ export default function ShadowMallCheckoutPage() {
             className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
           >
             <div>
-              <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Order Items</div>
+              <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPaymentPage.orderItems')}</div>
               <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
-                {itemCount} books in this order
+                {t('shadowMallPaymentPage.booksInOrder', { count: Number(itemCount).toLocaleString(getDisplayLanguageId()) })}
               </div>
             </div>
             <i className={`fa-solid fa-chevron-down text-[12px] text-[var(--shadow-text-tertiary)] transition ${showOrderItems ? 'rotate-180' : ''}`} />
@@ -712,7 +730,7 @@ export default function ShadowMallCheckoutPage() {
                 ))
               ) : (
                 <div className="py-8 text-center text-[13px] font-extrabold text-[var(--shadow-text-tertiary)]">
-                  No books in cart.
+                  {t('shadowMallPaymentPage.noBooksCart')}
                 </div>
               )}
             </div>
@@ -720,27 +738,27 @@ export default function ShadowMallCheckoutPage() {
         </section>
 
         <section className="mt-4 rounded-[24px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
-          <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">Payment Summary</div>
+          <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPaymentPage.paymentSummary')}</div>
 
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
-              <span>Subtotal</span>
+              <span>{t('shadowMallPaymentPage.subtotal')}</span>
               <span className="font-extrabold text-[var(--shadow-text-primary)]">{formatUsd(subtotal)}</span>
             </div>
 
             <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
-              <span>Delivery Fee</span>
+              <span>{t('shadowMallPaymentPage.deliveryFee')}</span>
               <span className="font-extrabold text-[var(--shadow-text-primary)]">{formatUsd(DELIVERY_FEE)}</span>
             </div>
 
             <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
-              <span>Delivery Company</span>
+              <span>{t('shadowMallPaymentPage.deliveryCompany')}</span>
               <span className="font-extrabold text-[var(--shadow-text-primary)]">{selectedDeliveryCompany.shortName}</span>
             </div>
 
             <div className="border-t border-[var(--shadow-border)] pt-3">
               <div className="flex items-center justify-between">
-                <span className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Total</span>
+                <span className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallPaymentPage.total')}</span>
                 <span className="text-[20px] font-extrabold text-[#e5484d]">{formatUsd(total)}</span>
               </div>
             </div>
@@ -751,7 +769,7 @@ export default function ShadowMallCheckoutPage() {
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">Total</div>
+            <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">{t('shadowMallPaymentPage.total')}</div>
             <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(total)}</div>
           </div>
 
@@ -762,7 +780,7 @@ export default function ShadowMallCheckoutPage() {
               onClick={handleContinue}
               className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)] disabled:shadow-none dark:bg-white dark:text-[#111827]"
             >
-              {saving ? 'Opening PayWay...' : 'Continue to Payment'}
+              {saving ? t('shadowMallPaymentPage.openingPayWay') : t('shadowMallPaymentPage.continuePayment')}
             </button>
           ) : (
             <button
@@ -770,7 +788,7 @@ export default function ShadowMallCheckoutPage() {
               onClick={() => navigate('/login')}
               className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] dark:bg-white dark:text-[#111827]"
             >
-              Login to Checkout
+              {t('shadowMallPaymentPage.loginCheckout')}
             </button>
           )}
         </div>
