@@ -196,6 +196,7 @@ export default function WeeklyUpdateSection() {
       scope: getReaderCacheScope(),
       params: {
         surface: 'weekly-updates',
+         limit: 12, 
       },
     })
 
@@ -208,7 +209,7 @@ export default function WeeklyUpdateSection() {
             (story) =>
               Number(story.weekly_update_count || 0) > 0
           )
-          .slice(0, 6)
+          .slice(0, 12)
           .map(normalizeStory)
       )
     }
@@ -240,7 +241,7 @@ export default function WeeklyUpdateSection() {
       try {
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/weekly-updates?limit=6`
+            `${API_BASE_URL}/api/public/weekly-updates?limit=12`
           )
         )
         const data = await response
