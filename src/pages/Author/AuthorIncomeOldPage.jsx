@@ -1202,9 +1202,13 @@ export default function AuthorIncomePage() {
               icon="fa-solid fa-gem"
               tone="purple"
               action={
-                <span className="rounded-full border border-[#e0d4eb] bg-[#f5effa] px-3 py-1.5 text-[9px] font-black text-[#775a95]">
-                  {t('authorIncomeOld.latest')}
-                </span>
+                <button
+  type="button"
+  onClick={() => navigate('/author/recent-earnings')}
+  className="rounded-full border border-[#e0d4eb] bg-[#f5effa] px-3 py-1.5 text-[9px] font-black text-[#775a95]"
+>
+  {t('authorIncomeOld.latest')} ›
+</button>
               }
             >
               {recentEarnings.length ? (
