@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MusicYoutubePlayer from '../components/MusicYoutubePlayer'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
@@ -287,13 +287,30 @@ function CloseIcon() {
 
 function formatViews(value) {
   const count = Number(value || 0)
-  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`
-  return String(count)
+
+  return new Intl.NumberFormat(
+    getDisplayLanguageId(),
+    {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }
+  ).format(Number.isFinite(count) ? count : 0)
 }
 
 function formatListeners(value) {
-  return Number(value || 0).toLocaleString()
+  return new Intl.NumberFormat(
+    getDisplayLanguageId()
+  ).format(Number(value || 0))
+}
+
+function formatDisplayInteger(value) {
+  return new Intl.NumberFormat(
+    getDisplayLanguageId(),
+    {
+      maximumFractionDigits: 0,
+      useGrouping: false,
+    }
+  ).format(Number(value || 0))
 }
 
 function getYoutubeVideoId(song) {
@@ -332,9 +349,17 @@ function getYoutubeVideoId(song) {
 function durationText(seconds) {
   const total = Number(seconds || 0)
   if (!total) return ''
+
   const minutes = Math.floor(total / 60)
-  const rest = String(total % 60).padStart(2, '0')
-  return `${minutes}:${rest}`
+  const rest = total % 60
+  const language = getDisplayLanguageId()
+
+  return `${new Intl.NumberFormat(language, {
+    useGrouping: false,
+  }).format(minutes)}:${new Intl.NumberFormat(language, {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  }).format(rest)}`
 }
 
 function getReaderToken() {
@@ -766,7 +791,7 @@ export default function MusicPage() {
         </div>
         <button type="button" className="smusic-release-text" onClick={() => isSingle ? playSingle(release) : openAlbum(release)}>
           <span className="smusic-release-name">{release.title}</span>
-          <span className="smusic-release-meta">{release.release_year || ''}{release.release_year ? ' • ' : ''}{t(`musicPage.${isSingle ? 'single' : 'album'}`)}</span>
+          <span className="smusic-release-meta">{release.release_year ? formatDisplayInteger(release.release_year) : ''}{release.release_year ? ' • ' : ''}{t(`musicPage.${isSingle ? 'single' : 'album'}`)}</span>
         </button>
       </article>
     )
@@ -863,7 +888,7 @@ export default function MusicPage() {
         <div className="smusic-page-title-row"><button type="button" className="smusic-round-btn" onClick={() => openView('home')}><BackIcon /></button></div>
         <div className="smusic-album-hero">
           <div className="smusic-album-cover">{selectedAlbum.cover_url ? <img src={selectedAlbum.cover_url} alt="" /> : <MusicIcon size={54} />}</div>
-          <div className="smusic-album-copy"><div className="smusic-eyebrow">{t('musicPage.album')}</div><h1>{selectedAlbum.title}</h1><div className="smusic-album-meta">{artist?.name} • {selectedAlbum.release_year || ''} • {songs.length} {t('musicPage.tracks')}</div></div>
+          <div className="smusic-album-copy"><div className="smusic-eyebrow">{t('musicPage.album')}</div><h1>{selectedAlbum.title}</h1><div className="smusic-album-meta">{artist?.name} • {selectedAlbum.release_year ? formatDisplayInteger(selectedAlbum.release_year) : ''} • {formatDisplayInteger(songs.length)} {t('musicPage.tracks')}</div></div>
         </div>
         <div className="smusic-album-actions"><button type="button" className="smusic-hero-play" disabled={!songs.length} onClick={() => playAlbum(selectedAlbum)}><PlayIcon size={21} /></button></div>
         {songs.length ? (
