@@ -108,7 +108,10 @@ export default function ReaderMallCartPage() {
         <div className="mx-auto flex h-14 max-w-[560px] items-center px-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+  if (location.state?.from) return navigate(-1)
+  navigate('/store', { replace: true })
+}}
             aria-label={t('readerMallCart.goBack')}
             className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
           >
