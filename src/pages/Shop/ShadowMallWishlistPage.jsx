@@ -5,17 +5,90 @@ import {
   removeShadowMallWishlist,
   saveShadowMallWishlist,
 } from '../../utils/shadowMallWishlist'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('shadowMallWishlistPage', {
+  en: {
+    removeItem: 'Remove {{title}}',
+    addToCart: 'Add to Cart',
+    goBack: 'Go back',
+    title: 'My Wishlist',
+    savedBooks: 'Saved Books',
+    savedBody: 'Books you saved for later.',
+    clear: 'Clear',
+    noBooks: 'No saved books yet',
+    noBooksBody: 'Tap the heart icon on any Shadow Mall book to save it here.',
+    backShop: 'Back to Shop',
+  },
+  km: {
+    removeItem: 'ដក {{title}} ចេញ',
+    addToCart: 'បន្ថែមទៅកន្ត្រក',
+    goBack: 'ត្រឡប់ក្រោយ',
+    title: 'បញ្ជីដែលខ្ញុំបានរក្សាទុក',
+    savedBooks: 'សៀវភៅដែលបានរក្សាទុក',
+    savedBody: 'សៀវភៅដែលអ្នកបានរក្សាទុកសម្រាប់ពេលក្រោយ។',
+    clear: 'សម្អាត',
+    noBooks: 'មិនទាន់មានសៀវភៅដែលបានរក្សាទុក',
+    noBooksBody: 'ចុចរូបបេះដូងលើសៀវភៅណាមួយក្នុង Shadow Mall ដើម្បីរក្សាទុកនៅទីនេះ។',
+    backShop: 'ត្រឡប់ទៅហាង',
+  },
+  zh: {
+    removeItem: '移除 {{title}}',
+    addToCart: '加入购物车',
+    goBack: '返回',
+    title: '我的心愿单',
+    savedBooks: '已保存书籍',
+    savedBody: '你保存以便稍后查看的书籍。',
+    clear: '清除',
+    noBooks: '还没有保存的书籍',
+    noBooksBody: '点击 Shadow Mall 中任意书籍的爱心即可保存到这里。',
+    backShop: '返回商店',
+  },
+  ja: {
+    removeItem: '{{title}} を削除',
+    addToCart: 'カートに追加',
+    goBack: '戻る',
+    title: 'マイウィッシュリスト',
+    savedBooks: '保存した本',
+    savedBody: 'あとで見るために保存した本です。',
+    clear: 'クリア',
+    noBooks: '保存した本はまだありません',
+    noBooksBody: 'Shadow Mall の本にあるハートを押すと、ここに保存できます。',
+    backShop: 'ショップに戻る',
+  },
+  ko: {
+    removeItem: '{{title}} 삭제',
+    addToCart: '장바구니에 추가',
+    goBack: '뒤로 가기',
+    title: '내 위시리스트',
+    savedBooks: '저장한 도서',
+    savedBody: '나중에 보기 위해 저장한 도서입니다.',
+    clear: '지우기',
+    noBooks: '저장한 도서가 없습니다',
+    noBooksBody: 'Shadow Mall 도서의 하트를 눌러 여기에 저장하세요.',
+    backShop: '상점으로 돌아가기',
+  },
+})
+
 
 const CART_KEY = 'shadow_mall_cart'
 
 function formatUsd(value) {
-  const number = Number(String(value || '').replace('$', ''))
-  if (!Number.isFinite(number)) return '$0.00'
-  return `$${number.toFixed(2)}`
+  const number = normalizePrice(value)
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    style: 'currency',
+    currency: 'USD',
+  }).format(number)
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat(getDisplayLanguageId()).format(Number(value || 0))
 }
 
 function normalizePrice(value) {
-  return Number(String(value || '').replace('$', '')) || 0
+  const number = Number(String(value || '').replace(/[^\d.-]/g, ''))
+  return Number.isFinite(number) ? number : 0
 }
 
 function addToCart(product) {
@@ -47,6 +120,7 @@ function addToCart(product) {
 }
 
 function WishlistItem({ item, onRemove, onAddToCart, onOpen }) {
+  const { t } = useDisplayTranslation()
   const price = normalizePrice(item.price)
   const oldPrice = normalizePrice(item.oldPrice)
 
@@ -89,7 +163,7 @@ function WishlistItem({ item, onRemove, onAddToCart, onOpen }) {
               type="button"
               onClick={onRemove}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] active:scale-95 dark:bg-red-500/10 dark:text-red-300"
-              aria-label={`Remove ${item.title}`}
+              aria-label={t('shadowMallWishlistPage.removeItem', { title: item.title })}
             >
               <i className="fa-solid fa-trash text-[11px]" />
             </button>
@@ -110,7 +184,7 @@ function WishlistItem({ item, onRemove, onAddToCart, onOpen }) {
               onClick={onAddToCart}
               className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
-              Add to Cart
+              {t('shadowMallWishlistPage.addToCart')}
             </button>
           </div>
         </div>
@@ -122,6 +196,7 @@ function WishlistItem({ item, onRemove, onAddToCart, onOpen }) {
 export default function ShadowMallWishlistPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useDisplayTranslation()
   const [items, setItems] = useState([])
 
   useEffect(() => {
@@ -158,16 +233,16 @@ export default function ShadowMallWishlistPage() {
   navigate('/shop', { replace: true })
 }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
-            aria-label="Go back"
+            aria-label={t('shadowMallWishlistPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[var(--shadow-text-primary)]">My Wishlist</h1>
+          <h1 className="text-[17px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallWishlistPage.title')}</h1>
 
           {itemCount > 0 ? (
             <div className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#111827] px-3 text-[12px] font-extrabold text-white dark:bg-white dark:text-[#111827]">
-              {itemCount}
+              {formatNumber(itemCount)}
             </div>
           ) : (
             <div className="h-10 w-10" />
@@ -180,9 +255,9 @@ export default function ShadowMallWishlistPage() {
           <>
             <section className="mb-4 flex items-center justify-between gap-3 rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
               <div>
-                <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">Saved Books</div>
+                <div className="text-[14px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallWishlistPage.savedBooks')}</div>
                 <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
-                  Books you saved for later.
+                  {t('shadowMallWishlistPage.savedBody')}
                 </div>
               </div>
 
@@ -191,7 +266,7 @@ export default function ShadowMallWishlistPage() {
                 onClick={handleClearAll}
                 className="rounded-full bg-[#fff1f1] px-4 py-2 text-[12px] font-extrabold text-[#e5484d] active:scale-95 dark:bg-red-500/10 dark:text-red-300"
               >
-                Clear
+                {t('shadowMallWishlistPage.clear')}
               </button>
             </section>
 
@@ -216,9 +291,9 @@ export default function ShadowMallWishlistPage() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
               <i className="fa-regular fa-heart text-[24px]" />
             </div>
-            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">No saved books yet</h2>
+            <h2 className="mt-4 text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallWishlistPage.noBooks')}</h2>
             <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
-              Tap the heart icon on any Shadow Mall book to save it here.
+              {t('shadowMallWishlistPage.noBooksBody')}
             </p>
             <button
               type="button"
@@ -228,7 +303,7 @@ export default function ShadowMallWishlistPage() {
 }}
               className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
             >
-              Back to Shop
+              {t('shadowMallWishlistPage.backShop')}
             </button>
           </section>
         )}
