@@ -1,6 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { requestWriterWednesdayEvent } from '../../services/writerWednesdayEventClientCache'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('writerWednesdayEventCard', {
+  en: {
+    imageAlt: 'Writer Wednesday 70% Event',
+    nextWriterWednesday: 'Next Writer Wednesday',
+  },
+  km: {
+    imageAlt: 'ព្រឹត្តិការណ៍ Writer Wednesday 70%',
+    nextWriterWednesday: 'Writer Wednesday បន្ទាប់',
+  },
+  zh: {
+    imageAlt: 'Writer Wednesday 70% 活动',
+    nextWriterWednesday: '下一个 Writer Wednesday',
+  },
+  ja: {
+    imageAlt: 'Writer Wednesday 70% イベント',
+    nextWriterWednesday: '次の Writer Wednesday',
+  },
+  ko: {
+    imageAlt: 'Writer Wednesday 70% 이벤트',
+    nextWriterWednesday: '다음 Writer Wednesday',
+  },
+})
+
 const CAMBODIA_OFFSET_MS = 7 * 60 * 60 * 1000
 
 function getCambodiaDate(value = new Date()) {
@@ -57,7 +83,7 @@ function getTimeParts(target, now) {
 }
 
 function formatEventDate(date) {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
     timeZone: 'Asia/Phnom_Penh',
     weekday: 'long',
     month: 'short',
@@ -68,6 +94,7 @@ function formatEventDate(date) {
 
 export default function WriterWednesdayEventCard() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [now, setNow] = useState(
     () => new Date()
   )
@@ -185,7 +212,7 @@ export default function WriterWednesdayEventCard() {
     >
       <img
         src="/assets/Icons/Event/Event 3.webp"
-        alt="Writer Wednesday 70% Event"
+        alt={t('writerWednesdayEventCard.imageAlt')}
         className="block h-auto w-full"
       />
 
@@ -217,7 +244,7 @@ export default function WriterWednesdayEventCard() {
         <div className="px-4 pb-5 pt-4">
           <div className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-4 py-3 text-center">
             <div className="text-[11px] font-black uppercase tracking-[0.12em] text-[#8B5CF6]">
-              Next Writer Wednesday
+              {t('writerWednesdayEventCard.nextWriterWednesday')}
             </div>
             <div className="mt-1 text-[13px] font-bold text-[var(--shadow-text-primary)]">
               {formatEventDate(eventDate)}
