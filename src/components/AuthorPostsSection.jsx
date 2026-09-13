@@ -2172,33 +2172,86 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   }
 
   async function handlePinChange(post, isPinned) {
-    if (!post?.id || pinBusy) return
+  if (!post?.id || pinBusy) return
 
-    try {
-      setPinBusy(true)
-      setLocalError('')
+  try {
+    setPinBusy(true)
+    setLocalError('')
 
-      await setAuthorPostPinned(post.id, isPinned)
-      clearAuthorPostsListCache()
+    const updatedPost = await setAuthorPostPinned(
+      post.id,
+      isPinned
+    )
 
-      const nextPosts = await fetchAuthorPosts(
-        author?.page_username || '',
-        postFilterDate
+    clearAuthorPostsListCache()
+
+    setPosts((current) => {
+      let nextPosts = current.map((item) =>
+        item.id === post.id
+          ? {
+              ...item,
+              ...updatedPost,
+              my_reaction: item.my_reaction,
+              reaction_summary: item.reaction_summary,
+            }
+          : item
       )
-      const sortedPosts = sortAuthorPosts(nextPosts)
 
-      setPosts(sortedPosts)
+      if (isPinned) {
+        const pinnedPosts = nextPosts
+          .filter((item) =>
+            Boolean(item.is_pinned || item.pinned)
+          )
+          .sort(
+            (a, b) =>
+              new Date(a.pinned_at || 0).getTime() -
+              new Date(b.pinned_at || 0).getTime()
+          )
+
+        if (pinnedPosts.length > 3) {
+          const removeCount = pinnedPosts.length - 3
+          const removeIds = new Set(
+            pinnedPosts
+              .slice(0, removeCount)
+              .map((item) => item.id)
+          )
+
+          nextPosts = nextPosts.map((item) =>
+            removeIds.has(item.id)
+              ? {
+                  ...item,
+                  is_pinned: false,
+                  pinned: false,
+                  pinned_at: null,
+                }
+              : item
+          )
+        }
+      }
+
+      const sortedPosts = sortAuthorPosts(nextPosts)
       onCountChange?.(sortedPosts.length)
-      setSelectedPost(null)
-      onMessage?.(isPinned ? t('authorPostsSection.postPinnedTop') : t('authorPostsSection.postRemovedTop'))
-    } catch (error) {
-      const message = error.message || t('authorPostsSection.failedUpdatePinned')
-      setLocalError(message)
-      onMessage?.(message)
-    } finally {
-      setPinBusy(false)
-    }
+      return sortedPosts
+    })
+
+    setSelectedPost(null)
+    onMessage?.(
+      isPinned
+        ? t('authorPostsSection.postPinnedTop')
+        : t('authorPostsSection.postRemovedTop')
+    )
+  } catch (error) {
+    const message =
+      error.message ||
+      t('authorPostsSection.failedUpdatePinned')
+
+    setLocalError(message)
+    onMessage?.(message)
+  } finally {
+    setPinBusy(false)
   }
+}
+
 
  function handlePostReaction(post, reactionType = 'love') {
   const postId = String(post?.id || '').trim()
