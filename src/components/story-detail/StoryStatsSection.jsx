@@ -1,4 +1,4 @@
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('storyStatsSection', {
@@ -37,10 +37,20 @@ registerTranslationNamespace('storyStatsSection', {
 function formatShortNumber(value) {
   const number = Number(value || 0)
 
-  if (number >= 1000000) return `${(number / 1000000).toFixed(1).replace(/\.0$/, '')}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(1).replace(/\.0$/, '')}K`
+  return new Intl.NumberFormat(
+    getDisplayLanguageId(),
+    {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }
+  ).format(Number.isFinite(number) ? number : 0)
+}
 
-  return number.toLocaleString()
+function formatDisplayNumber(value, options = {}) {
+  return new Intl.NumberFormat(
+    getDisplayLanguageId(),
+    options
+  ).format(Number(value || 0))
 }
 
 function StatItem({ label, value, icon, onClick }) {
@@ -88,7 +98,7 @@ export default function StoryStatsSection({ story, episodes, onOpenLikes, onOpen
           className="h-[23px] w-[23px] object-contain"
         />
         <span className="text-[14px] font-bold text-[#f6a800] dark:text-amber-300">
-          {t('storyStatsSection.rank', { rank })}
+          {t('storyStatsSection.rank', { rank: formatDisplayNumber(rank) })}
         </span>
       </div>
 
@@ -113,7 +123,10 @@ export default function StoryStatsSection({ story, episodes, onOpenLikes, onOpen
 
           <StatItem
             label={t('storyStatsSection.rate')}
-            value={rating.toFixed(1)}
+            value={formatDisplayNumber(rating, {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            })}
             icon="fa-solid fa-star"
             onClick={onOpenRating}
           />
