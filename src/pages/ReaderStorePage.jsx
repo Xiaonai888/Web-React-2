@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -628,6 +628,7 @@ function EditorPickCard({ book, t, onOpen }) {
 
 export default function ReaderStorePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [products, setProducts] = useState([])
   const [featuredAuthors, setFeaturedAuthors] = useState([])
@@ -722,11 +723,12 @@ export default function ReaderStorePage() {
     : filteredProducts.slice(0, 4)
 
   const openProduct = (book) => {
-    if (!book.pageUsername) return
-    navigate(
-      `/author/page/${encodeURIComponent(book.pageUsername)}/store/product/${book.id}`
-    )
-  }
+  if (!book.pageUsername) return
+
+  navigate(`/author/page/${encodeURIComponent(book.pageUsername)}/store/product/${book.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
 
   const filterLabel = (filter) => t(`readerStore.${filter}`)
 
@@ -770,7 +772,11 @@ export default function ReaderStorePage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/reader-mall/cart')}
+              onClick={() =>
+  navigate('/reader-mall/cart', {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
               aria-label={t('readerStore.openCart')}
               className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             >
