@@ -14,6 +14,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import GoogleAdBanner from '../components/ads/GoogleAdBanner'
 
 registerTranslationNamespace('storyDetailPage', {
   en: {
@@ -926,6 +927,10 @@ if (message || !story) {
           onOpenEpisode={handleOpenEpisode}
           onOpenAll={() => setEpisodeListOpen(true)}
         />
+
+        <div className="my-6 px-4">
+  <GoogleAdBanner slot={import.meta.env.VITE_ADSENSE_STORY_SLOT} />
+</div>
 
         <StoryAuthorMiniCard
           authorPage={story.author_page}
