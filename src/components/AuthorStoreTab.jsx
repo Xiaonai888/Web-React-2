@@ -380,9 +380,6 @@ useEffect(() => {
 useEffect(() => {
   let ignore = false
 
-  useEffect(() => {
-    let ignore = false
-
     async function loadProducts() {
       if (!author?.page_username) return
 
