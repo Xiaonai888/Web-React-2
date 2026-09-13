@@ -180,6 +180,54 @@ const NAV_ITEMS = [
   { key: 'me', labelKey: 'me' },
 ]
 
+const CHAT_BADGE_REFRESH_MS = 10000
+const CHAT_BADGE_RATE_LIMIT_BACKOFF_MS = 30000
+
+let chatBadgeRequestPromise = null
+let chatBadgeLastRequestAt = 0
+let chatBadgeBlockedUntil = 0
+let chatBadgeCachedData = null
+
+async function getChatBadgeData() {
+  const now = Date.now()
+
+  if (now < chatBadgeBlockedUntil) {
+    return chatBadgeCachedData
+  }
+
+  if (chatBadgeRequestPromise) {
+    return chatBadgeRequestPromise
+  }
+
+  if (
+    now - chatBadgeLastRequestAt <
+    CHAT_BADGE_REFRESH_MS
+  ) {
+    return chatBadgeCachedData
+  }
+
+  chatBadgeLastRequestAt = now
+  chatBadgeRequestPromise =
+    getChatConversations('all')
+      .then((data) => {
+        chatBadgeCachedData = data
+        return data
+      })
+      .catch((error) => {
+        if (Number(error?.status || 0) === 429) {
+          chatBadgeBlockedUntil =
+            Date.now() +
+            CHAT_BADGE_RATE_LIMIT_BACKOFF_MS
+        }
+        throw error
+      })
+      .finally(() => {
+        chatBadgeRequestPromise = null
+      })
+
+  return chatBadgeRequestPromise
+}
+
 export default function ReaderProfileFooter({
   avatarUrl = '',
   profileName = '',
@@ -190,6 +238,7 @@ export default function ReaderProfileFooter({
   const messageTimerRef = useRef(null)
   const chatSnapshotRef = useRef(new Map())
   const chatSnapshotReadyRef = useRef(false)
+  const mountedRef = useRef(true)
   const [storedUser, setStoredUser] = useState(
     () => getStoredUser()
   )
@@ -230,15 +279,21 @@ export default function ReaderProfileFooter({
 
   const loadChatBadge = useCallback(async () => {
     if (!hasReaderSession()) {
-      setChatBadgeCount(0)
+      if (mountedRef.current) {
+        setChatBadgeCount(0)
+      }
       chatSnapshotRef.current = new Map()
       chatSnapshotReadyRef.current = false
       return
     }
 
     try {
-      const data =
-        await getChatConversations('all')
+      const data = await getChatBadgeData()
+
+      if (!data || !mountedRef.current) {
+        return
+      }
+
       const conversations =
         Array.isArray(data.conversations)
           ? data.conversations
@@ -317,7 +372,9 @@ export default function ReaderProfileFooter({
         playChatNotificationTone(toneToPlay)
       }
 
-      setChatBadgeCount(total)
+      if (mountedRef.current) {
+        setChatBadgeCount(total)
+      }
     } catch {
       return
     }
@@ -352,6 +409,7 @@ export default function ReaderProfileFooter({
   }, [])
 
   useEffect(() => {
+    mountedRef.current = true
     loadChatBadge()
     refreshStoredUser()
 
@@ -363,16 +421,30 @@ export default function ReaderProfileFooter({
           loadChatBadge()
         }
       },
-      10000
+      CHAT_BADGE_REFRESH_MS
     )
 
     const handleChatUpdated = () => {
       loadChatBadge()
     }
 
-    const handleStorage = () => {
-      refreshStoredUser()
-      loadChatBadge()
+    const handleStorage = (event) => {
+      const key = event?.key || ''
+
+      if (
+        !key ||
+        key === 'shadow_reader_user'
+      ) {
+        refreshStoredUser()
+      }
+
+      if (
+        !key ||
+        key === 'shadow_reader_token' ||
+        key === 'shadow_reader_user'
+      ) {
+        loadChatBadge()
+      }
     }
 
     window.addEventListener(
@@ -389,6 +461,7 @@ export default function ReaderProfileFooter({
     )
 
     return () => {
+      mountedRef.current = false
       window.clearInterval(intervalId)
       window.removeEventListener(
         'shadow-chat-updated',
