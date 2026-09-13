@@ -1,5 +1,200 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('monthlyVoteTab', {
+  en: {
+    monthlyVote: 'Monthly Vote',
+    defaultHeroDescription: "Vote for your favorite story or author and help crown this month's winner.",
+    eventAnnouncement: 'Event announcement',
+    votes: '{{count}} Votes',
+    vote: 'Vote',
+    pastWinners: 'Past Winners',
+    closePastWinners: 'Close past winners',
+    ended: 'Ended',
+    story: 'Story',
+    noStoryWinner: 'No Story winner',
+    author: 'Author',
+    noAuthorWinner: 'No Author winner',
+    noPreviousWinners: 'No previous winners yet',
+    untitledStory: 'Untitled Story',
+    failedLoad: 'Failed to load Monthly Vote',
+    inactive: 'Monthly Vote is not active.',
+    zeroBalance: 'Your Vote Balance is 0.',
+    failedCast: 'Failed to cast Vote',
+    voteSent: '1 Vote sent to {{name}}.',
+    failedPreviousWinners: 'Failed to load previous winners',
+    voteBalance: 'Vote Balance',
+    countdown: '{{days}}d {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: 'Ends in',
+    noActive: 'No active Monthly Vote',
+    topThreeNow: 'Top 3 Right Now',
+    viewAll: 'View All',
+    noCandidatesYet: 'No candidates yet',
+    myVoteStatus: 'My Vote Status',
+    candidates: 'Candidates',
+    winner: 'Winner',
+    rules: 'Rules',
+    rulesSubtitle: 'Read the voting rules.',
+    pastWinnersSubtitle: 'See previous winners.',
+    howItWorks: 'How it works',
+    howItWorksSubtitle: 'Learn about voting.',
+    voteNow: 'Vote Now',
+  },
+  km: {
+    monthlyVote: 'ការបោះឆ្នោតប្រចាំខែ',
+    defaultHeroDescription: 'បោះឆ្នោតឱ្យរឿង ឬអ្នកនិពន្ធដែលអ្នកចូលចិត្ត ដើម្បីជួយជ្រើសរើសអ្នកឈ្នះប្រចាំខែនេះ។',
+    eventAnnouncement: 'សេចក្តីជូនដំណឹងព្រឹត្តិការណ៍',
+    votes: '{{count}} សំឡេង',
+    vote: 'បោះឆ្នោត',
+    pastWinners: 'អ្នកឈ្នះកន្លងមក',
+    closePastWinners: 'បិទអ្នកឈ្នះកន្លងមក',
+    ended: 'បានបញ្ចប់',
+    story: 'រឿង',
+    noStoryWinner: 'មិនមានរឿងឈ្នះ',
+    author: 'អ្នកនិពន្ធ',
+    noAuthorWinner: 'មិនមានអ្នកនិពន្ធឈ្នះ',
+    noPreviousWinners: 'មិនទាន់មានអ្នកឈ្នះកន្លងមក',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    failedLoad: 'មិនអាចផ្ទុកការបោះឆ្នោតប្រចាំខែបានទេ',
+    inactive: 'ការបោះឆ្នោតប្រចាំខែមិនកំពុងដំណើរការទេ។',
+    zeroBalance: 'Vote Balance របស់អ្នកគឺ 0។',
+    failedCast: 'មិនអាចបោះឆ្នោតបានទេ',
+    voteSent: 'បានផ្ញើ 1 សំឡេងទៅ {{name}}។',
+    failedPreviousWinners: 'មិនអាចផ្ទុកអ្នកឈ្នះកន្លងមកបានទេ',
+    voteBalance: 'Vote Balance',
+    countdown: '{{days}}ថ្ងៃ {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: 'បញ្ចប់ក្នុង',
+    noActive: 'មិនមានការបោះឆ្នោតប្រចាំខែកំពុងដំណើរការ',
+    topThreeNow: 'កំពូល 3 ឥឡូវនេះ',
+    viewAll: 'មើលទាំងអស់',
+    noCandidatesYet: 'មិនទាន់មានបេក្ខភាព',
+    myVoteStatus: 'ស្ថានភាពបោះឆ្នោតរបស់ខ្ញុំ',
+    candidates: 'បេក្ខភាព',
+    winner: 'អ្នកឈ្នះ',
+    rules: 'ច្បាប់',
+    rulesSubtitle: 'អានច្បាប់នៃការបោះឆ្នោត។',
+    pastWinnersSubtitle: 'មើលអ្នកឈ្នះកន្លងមក។',
+    howItWorks: 'របៀបដំណើរការ',
+    howItWorksSubtitle: 'ស្វែងយល់ពីការបោះឆ្នោត។',
+    voteNow: 'បោះឆ្នោតឥឡូវនេះ',
+  },
+  zh: {
+    monthlyVote: '月度投票',
+    defaultHeroDescription: '为你最喜欢的故事或作者投票，帮助选出本月冠军。',
+    eventAnnouncement: '活动公告',
+    votes: '{{count}} 票',
+    vote: '投票',
+    pastWinners: '往期获奖者',
+    closePastWinners: '关闭往期获奖者',
+    ended: '已结束',
+    story: '故事',
+    noStoryWinner: '暂无故事获奖者',
+    author: '作者',
+    noAuthorWinner: '暂无作者获奖者',
+    noPreviousWinners: '暂无往期获奖者',
+    untitledStory: '无标题故事',
+    failedLoad: '无法加载月度投票',
+    inactive: '月度投票当前未开启。',
+    zeroBalance: '你的投票余额为 0。',
+    failedCast: '投票失败',
+    voteSent: '已向 {{name}} 投出 1 票。',
+    failedPreviousWinners: '无法加载往期获奖者',
+    voteBalance: '投票余额',
+    countdown: '{{days}}天 {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: '结束倒计时',
+    noActive: '当前没有月度投票',
+    topThreeNow: '当前前三名',
+    viewAll: '查看全部',
+    noCandidatesYet: '暂无候选者',
+    myVoteStatus: '我的投票状态',
+    candidates: '候选者',
+    winner: '获奖日期',
+    rules: '规则',
+    rulesSubtitle: '查看投票规则。',
+    pastWinnersSubtitle: '查看往期获奖者。',
+    howItWorks: '活动方式',
+    howItWorksSubtitle: '了解投票方式。',
+    voteNow: '立即投票',
+  },
+  ja: {
+    monthlyVote: '月間投票',
+    defaultHeroDescription: 'お気に入りのストーリーや作者に投票して、今月の勝者を決めましょう。',
+    eventAnnouncement: 'イベントのお知らせ',
+    votes: '{{count}}票',
+    vote: '投票',
+    pastWinners: '過去の受賞者',
+    closePastWinners: '過去の受賞者を閉じる',
+    ended: '終了',
+    story: 'ストーリー',
+    noStoryWinner: 'ストーリー受賞者はいません',
+    author: '作者',
+    noAuthorWinner: '作者の受賞者はいません',
+    noPreviousWinners: '過去の受賞者はまだいません',
+    untitledStory: '無題のストーリー',
+    failedLoad: '月間投票を読み込めませんでした',
+    inactive: '月間投票は現在開催されていません。',
+    zeroBalance: '投票残高は 0 です。',
+    failedCast: '投票できませんでした',
+    voteSent: '{{name}} に1票を投票しました。',
+    failedPreviousWinners: '過去の受賞者を読み込めませんでした',
+    voteBalance: '投票残高',
+    countdown: '{{days}}日 {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: '終了まで',
+    noActive: '開催中の月間投票はありません',
+    topThreeNow: '現在のトップ3',
+    viewAll: 'すべて見る',
+    noCandidatesYet: '候補者はまだいません',
+    myVoteStatus: '投票ステータス',
+    candidates: '候補者',
+    winner: '勝者',
+    rules: 'ルール',
+    rulesSubtitle: '投票ルールを確認します。',
+    pastWinnersSubtitle: '過去の受賞者を確認します。',
+    howItWorks: '仕組み',
+    howItWorksSubtitle: '投票方法を確認します。',
+    voteNow: '今すぐ投票',
+  },
+  ko: {
+    monthlyVote: '월간 투표',
+    defaultHeroDescription: '좋아하는 스토리나 작가에게 투표하여 이번 달의 우승자를 뽑아 주세요.',
+    eventAnnouncement: '이벤트 공지',
+    votes: '{{count}}표',
+    vote: '투표',
+    pastWinners: '지난 우승자',
+    closePastWinners: '지난 우승자 닫기',
+    ended: '종료',
+    story: '스토리',
+    noStoryWinner: '스토리 우승자가 없습니다',
+    author: '작가',
+    noAuthorWinner: '작가 우승자가 없습니다',
+    noPreviousWinners: '지난 우승자가 아직 없습니다',
+    untitledStory: '제목 없는 스토리',
+    failedLoad: '월간 투표를 불러오지 못했습니다',
+    inactive: '월간 투표가 진행 중이 아닙니다.',
+    zeroBalance: '투표 잔액이 0입니다.',
+    failedCast: '투표하지 못했습니다',
+    voteSent: '{{name}}에게 1표를 보냈습니다.',
+    failedPreviousWinners: '지난 우승자를 불러오지 못했습니다',
+    voteBalance: '투표 잔액',
+    countdown: '{{days}}일 {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: '종료까지',
+    noActive: '진행 중인 월간 투표가 없습니다',
+    topThreeNow: '현재 TOP 3',
+    viewAll: '모두 보기',
+    noCandidatesYet: '후보가 아직 없습니다',
+    myVoteStatus: '내 투표 상태',
+    candidates: '후보',
+    winner: '우승자',
+    rules: '규칙',
+    rulesSubtitle: '투표 규칙을 확인하세요.',
+    pastWinnersSubtitle: '지난 우승자를 확인하세요.',
+    howItWorks: '이용 방법',
+    howItWorksSubtitle: '투표 방법을 알아보세요.',
+    voteNow: '지금 투표',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -14,18 +209,27 @@ function getReaderToken() {
 function formatNumber(value) {
   const number = Number(value || 0)
   if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}K`
-  return String(number)
+
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: number >= 10000 ? 0 : 1,
+  }).format(number)
 }
 
-function formatCountdown(targetMs, nowMs) {
+function formatCountdown(targetMs, nowMs, t) {
   const seconds = Math.max(0, Math.floor((targetMs - nowMs) / 1000))
   const days = Math.floor(seconds / 86400)
   const hours = Math.floor((seconds % 86400) / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const secs = seconds % 60
-  return `${days}d ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+
+  return t('monthlyVoteTab.countdown', {
+    days: new Intl.NumberFormat(getDisplayLanguageId()).format(days),
+    hours: String(hours).padStart(2, '0'),
+    minutes: String(minutes).padStart(2, '0'),
+    seconds: String(secs).padStart(2, '0'),
+  })
 }
 
 function getInitial(value) {
@@ -36,14 +240,14 @@ function getCampaignMonthLabel(campaign, now = new Date()) {
   if (campaign?.month_key) {
     const date = new Date(`${campaign.month_key}T12:00:00.000Z`)
     if (!Number.isNaN(date.getTime())) {
-      return new Intl.DateTimeFormat('en-US', {
+      return new Intl.DateTimeFormat(getDisplayLanguageId(), {
         timeZone: 'Asia/Phnom_Penh',
         month: 'long',
         year: 'numeric',
       }).format(date)
     }
   }
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
     timeZone: 'Asia/Phnom_Penh',
     month: 'long',
     year: 'numeric',
@@ -54,22 +258,22 @@ function getWinnerLabel(campaign) {
   if (!campaign?.ends_at) return '--'
   const date = new Date(campaign.ends_at)
   if (Number.isNaN(date.getTime())) return '--'
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
     timeZone: 'Asia/Phnom_Penh',
     month: 'short',
     day: 'numeric',
   }).format(date)
 }
 
-function normalizeCandidate(candidate) {
+function normalizeCandidate(candidate, t) {
   const subtitle = String(candidate?.display_subtitle || '').trim()
   const username = candidate?.candidate_type === 'author' && subtitle.startsWith('@') ? subtitle.slice(1) : ''
   return {
     id: candidate.id,
     entityId: candidate.entity_id,
     kind: candidate.candidate_type === 'author' ? 'author' : 'story',
-    name: candidate.display_name || (candidate.candidate_type === 'author' ? 'Author' : 'Untitled Story'),
-    subtitle: subtitle || (candidate.candidate_type === 'author' ? 'Author' : 'Story'),
+    name: candidate.display_name || (candidate.candidate_type === 'author' ? t('monthlyVoteTab.author') : t('monthlyVoteTab.untitledStory')),
+    subtitle: subtitle || (candidate.candidate_type === 'author' ? t('monthlyVoteTab.author') : t('monthlyVoteTab.story')),
     image: candidate.image_url || '',
     username,
     votes: Number(candidate.vote_count || 0),
@@ -78,11 +282,11 @@ function normalizeCandidate(candidate) {
 }
 
 
-function getDefaultDesign() {
+function getDefaultDesign(t) {
   return {
-    badge_text: 'MONTHLY VOTE',
+    badge_text: t('monthlyVoteTab.monthlyVote'),
     hero_title: '',
-    hero_description: 'Vote for your favorite story or author and help crown this month\'s winner.',
+    hero_description: t('monthlyVoteTab.defaultHeroDescription'),
     hero_image_url: '',
     background_type: 'gradient',
     background_value: 'linear-gradient(135deg,#fff8fb,#fff4f8,#ffeef4)',
@@ -117,6 +321,8 @@ function getHeroBackground(design) {
 }
 
 function AnnouncementCard({ item, onOpen }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <section
       className="mt-4 overflow-hidden rounded-[20px] border border-black/5 p-4 shadow-[0_8px_24px_rgba(31,41,55,0.06)]"
@@ -125,7 +331,7 @@ function AnnouncementCard({ item, onOpen }) {
       {item.image_url ? (
         <img
           src={item.image_url}
-          alt={item.title || 'Event announcement'}
+          alt={item.title || t('monthlyVoteTab.eventAnnouncement')}
           className="mb-3 max-h-[260px] w-full rounded-[16px] object-cover"
           loading="lazy"
           decoding="async"
@@ -170,6 +376,7 @@ function CandidateImage({ candidate }) {
 }
 
 function PodiumCard({ candidate, rank, onOpen }) {
+  const { t } = useDisplayTranslation()
   if (!candidate) return <div className="min-w-0 flex-1" />
   const isFirst = rank === 1
   const tone = rank === 1
@@ -188,13 +395,14 @@ function PodiumCard({ candidate, rank, onOpen }) {
       <div className="mt-4 line-clamp-1 text-[11px] font-black text-[var(--shadow-text-primary)]">{candidate.name}</div>
       <div className="mt-1 flex items-center justify-center gap-1 text-[10px] font-bold text-[var(--shadow-text-secondary)]">
         <i className="fa-solid fa-heart text-[#ff4f7a]" />
-        <span>{formatNumber(candidate.votes)} Votes</span>
+        <span>{t('monthlyVoteTab.votes', { count: formatNumber(candidate.votes) })}</span>
       </div>
     </button>
   )
 }
 
 function CandidateRow({ candidate, rank, onOpen, onVote, voting }) {
+  const { t } = useDisplayTranslation()
   const rankTone = rank === 1 ? 'text-[#f6b800]' : rank === 2 ? 'text-[var(--shadow-text-tertiary)] dark:text-slate-300' : rank === 3 ? 'text-[#d9823b]' : 'text-[var(--shadow-text-secondary)]'
   return (
     <div className="flex items-center gap-3 border-b border-[var(--shadow-border)] px-3 py-3 last:border-b-0">
@@ -207,12 +415,12 @@ function CandidateRow({ candidate, rank, onOpen, onVote, voting }) {
         <div className="mt-1 line-clamp-1 text-[10px] font-semibold text-[var(--shadow-text-secondary)]">{candidate.subtitle}</div>
         <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[var(--shadow-text-secondary)]">
           <i className="fa-solid fa-heart text-[#ff4f7a]" />
-          <span>{formatNumber(candidate.votes)} Votes</span>
+          <span>{t('monthlyVoteTab.votes', { count: formatNumber(candidate.votes) })}</span>
         </div>
       </button>
       <button type="button" disabled={voting} onClick={() => onVote(candidate)} className="flex h-9 min-w-[76px] shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#ff4f7a] to-[#f52f68] px-4 text-[11px] font-black text-white shadow-sm active:scale-95 disabled:opacity-60">
         <i className="fa-regular fa-heart text-[11px]" />
-        {voting ? '...' : 'Vote'}
+        {voting ? '...' : t('monthlyVoteTab.vote')}
       </button>
     </div>
   )
@@ -235,13 +443,14 @@ function QuickLink({ icon, title, subtitle, onClick }) {
 }
 
 function WinnerItem({ winner, onOpen }) {
-  const candidate = normalizeCandidate(winner)
+  const { t } = useDisplayTranslation()
+  const candidate = normalizeCandidate(winner, t)
   const rankTone =
     candidate.rank === 1
-      ? 'bg-[#fff8dc] text-[#c58b00]'
+      ? 'bg-[#fff8dc] text-[#c58b00] dark:bg-amber-500/10 dark:text-amber-300'
       : candidate.rank === 2
-        ? 'bg-[#f3f5f8] text-[#7c8798]'
-        : 'bg-[#fff2e8] text-[#b96b2e]'
+        ? 'bg-[#f3f5f8] text-[#7c8798] dark:bg-slate-500/10 dark:text-slate-300'
+        : 'bg-[#fff2e8] text-[#b96b2e] dark:bg-orange-500/10 dark:text-orange-300'
 
   return (
     <button type="button" onClick={() => onOpen(candidate)} className="flex w-full items-center gap-3 rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-2.5 text-left active:scale-[0.99]">
@@ -261,15 +470,17 @@ function WinnerItem({ winner, onOpen }) {
 }
 
 function PastWinnersModal({ campaigns, loading, error, onClose, onOpen }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4" onMouseDown={onClose}>
       <div className="max-h-[82vh] w-full max-w-[520px] overflow-hidden rounded-t-[24px] bg-[var(--shadow-bg-elevated)] shadow-2xl sm:rounded-[24px]" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-4">
           <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#ff3f70]">Monthly Vote</div>
-            <h3 className="mt-1 text-[18px] font-black text-[var(--shadow-text-primary)]">Past Winners</h3>
+            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#ff3f70]">{t('monthlyVoteTab.monthlyVote')}</div>
+            <h3 className="mt-1 text-[18px] font-black text-[var(--shadow-text-primary)]">{t('monthlyVoteTab.pastWinners')}</h3>
           </div>
-          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] active:scale-95">
+          <button type="button" onClick={onClose} aria-label={t('monthlyVoteTab.closePastWinners')} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] active:scale-95">
             <i className="fa-solid fa-xmark" />
           </button>
         </div>
@@ -292,13 +503,13 @@ function PastWinnersModal({ campaigns, loading, error, onClose, onOpen }) {
                       <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">{item.title}</div>
                       <div className="mt-1 text-[9px] font-bold text-[#9b6575]">{getCampaignMonthLabel(item)}</div>
                     </div>
-                    <span className="rounded-full bg-[#fff0f5] px-2.5 py-1 text-[9px] font-black text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300">Ended</span>
+                    <span className="rounded-full bg-[#fff0f5] px-2.5 py-1 text-[9px] font-black text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300">{t('monthlyVoteTab.ended')}</span>
                   </div>
 
                   <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                       <div className="mb-2 flex items-center gap-2 text-[10px] font-black text-[var(--shadow-text-secondary)]">
-                        <i className="fa-solid fa-book-open text-[#ff3f70]" /> Story
+                        <i className="fa-solid fa-book-open text-[#ff3f70]" /> {t('monthlyVoteTab.story')}
                       </div>
                       <div className="space-y-2">
                         {(item.winners?.story || []).length ? (
@@ -306,14 +517,14 @@ function PastWinnersModal({ campaigns, loading, error, onClose, onOpen }) {
                             <WinnerItem key={winner.id} winner={winner} onOpen={onOpen} />
                           ))
                         ) : (
-                          <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-3 py-5 text-center text-[9px] font-bold text-[var(--shadow-text-tertiary)]">No Story winner</div>
+                          <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-3 py-5 text-center text-[9px] font-bold text-[var(--shadow-text-tertiary)]">{t('monthlyVoteTab.noStoryWinner')}</div>
                         )}
                       </div>
                     </div>
 
                     <div>
                       <div className="mb-2 flex items-center gap-2 text-[10px] font-black text-[var(--shadow-text-secondary)]">
-                        <i className="fa-solid fa-user text-[#ff3f70]" /> Author
+                        <i className="fa-solid fa-user text-[#ff3f70]" /> {t('monthlyVoteTab.author')}
                       </div>
                       <div className="space-y-2">
                         {(item.winners?.author || []).length ? (
@@ -321,7 +532,7 @@ function PastWinnersModal({ campaigns, loading, error, onClose, onOpen }) {
                             <WinnerItem key={winner.id} winner={winner} onOpen={onOpen} />
                           ))
                         ) : (
-                          <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-3 py-5 text-center text-[9px] font-bold text-[var(--shadow-text-tertiary)]">No Author winner</div>
+                          <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-3 py-5 text-center text-[9px] font-bold text-[var(--shadow-text-tertiary)]">{t('monthlyVoteTab.noAuthorWinner')}</div>
                         )}
                       </div>
                     </div>
@@ -330,7 +541,7 @@ function PastWinnersModal({ campaigns, loading, error, onClose, onOpen }) {
               ))}
             </div>
           ) : (
-            <div className="rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-10 text-center text-[11px] font-bold text-[var(--shadow-text-secondary)]">No previous winners yet</div>
+            <div className="rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-10 text-center text-[11px] font-bold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.noPreviousWinners')}</div>
           )}
         </div>
       </div>
@@ -340,12 +551,13 @@ function PastWinnersModal({ campaigns, loading, error, onClose, onOpen }) {
 
 export default function MonthlyVoteTab() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const candidatesRef = useRef(null)
   const [activeType, setActiveType] = useState('story')
   const [stories, setStories] = useState([])
   const [authors, setAuthors] = useState([])
   const [campaign, setCampaign] = useState(null)
-  const [design, setDesign] = useState(getDefaultDesign())
+  const [design, setDesign] = useState(() => getDefaultDesign(t))
   const [announcements, setAnnouncements] = useState([])
   const [voteBalance, setVoteBalance] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -369,22 +581,22 @@ export default function MonthlyVoteTab() {
         setLoading(true)
         const response = await fetch(`${API_BASE_URL}/api/monthly-vote/active`)
         const data = await response.json().catch(() => ({}))
-        if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load Monthly Vote')
+        if (!response.ok || data.ok === false) throw new Error(data.message || t('monthlyVoteTab.failedLoad'))
         if (!ignore) {
           setCampaign(data.campaign || null)
-          setDesign({ ...getDefaultDesign(), ...(data.design || {}) })
+          setDesign({ ...getDefaultDesign(t), ...(data.design || {}) })
           setAnnouncements(Array.isArray(data.announcements) ? data.announcements : [])
-          setStories((Array.isArray(data.candidates?.story) ? data.candidates.story : []).map(normalizeCandidate))
-          setAuthors((Array.isArray(data.candidates?.author) ? data.candidates.author : []).map(normalizeCandidate))
+          setStories((Array.isArray(data.candidates?.story) ? data.candidates.story : []).map((candidate) => normalizeCandidate(candidate, t)))
+          setAuthors((Array.isArray(data.candidates?.author) ? data.candidates.author : []).map((candidate) => normalizeCandidate(candidate, t)))
         }
       } catch (error) {
         if (!ignore) {
           setCampaign(null)
-          setDesign(getDefaultDesign())
+          setDesign(getDefaultDesign(t))
           setAnnouncements([])
           setStories([])
           setAuthors([])
-          setNotice(error.message || 'Failed to load Monthly Vote')
+          setNotice(error.message || t('monthlyVoteTab.failedLoad'))
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -394,7 +606,7 @@ export default function MonthlyVoteTab() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     let ignore = false
@@ -432,7 +644,7 @@ export default function MonthlyVoteTab() {
   const winnerLabel = getWinnerLabel(campaign)
   const campaignEndsAt = campaign?.ends_at ? new Date(campaign.ends_at).getTime() : nowMs
   const heroTitle = design.hero_title || campaign?.title || monthLabel
-  const heroDescription = design.hero_description || getDefaultDesign().hero_description
+  const heroDescription = design.hero_description || getDefaultDesign(t).hero_description
   const heroStyle = {
     ...getHeroBackground(design),
     color: design.text_color || '#111827',
@@ -469,11 +681,11 @@ export default function MonthlyVoteTab() {
       return
     }
     if (!campaign) {
-      setNotice('Monthly Vote is not active.')
+      setNotice(t('monthlyVoteTab.inactive'))
       return
     }
     if (voteBalance <= 0) {
-      setNotice('Your Vote Balance is 0.')
+      setNotice(t('monthlyVoteTab.zeroBalance'))
       return
     }
     if (votingId) return
@@ -494,7 +706,7 @@ export default function MonthlyVoteTab() {
         navigate('/login')
         return
       }
-      if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to cast Vote')
+      if (!response.ok || data.ok === false) throw new Error(data.message || t('monthlyVoteTab.failedCast'))
 
       const updateCandidate = (item) => item.id === candidate.id
         ? { ...item, votes: Number(data.candidate_vote_count ?? item.votes) }
@@ -504,9 +716,9 @@ export default function MonthlyVoteTab() {
       else setStories((current) => current.map(updateCandidate))
 
       setVoteBalance(Number(data.vote_balance || 0))
-      setNotice(`1 Vote sent to ${candidate.name}.`)
+      setNotice(t('monthlyVoteTab.voteSent', { name: candidate.name }))
     } catch (error) {
-      setNotice(error.message || 'Failed to cast Vote')
+      setNotice(error.message || t('monthlyVoteTab.failedCast'))
     } finally {
       setVotingId('')
     }
@@ -525,13 +737,13 @@ export default function MonthlyVoteTab() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load previous winners')
+        throw new Error(data.message || t('monthlyVoteTab.failedPreviousWinners'))
       }
 
       setPastWinners(Array.isArray(data.campaigns) ? data.campaigns : [])
     } catch (error) {
       setPastWinners([])
-      setPastWinnersError(error.message || 'Failed to load previous winners')
+      setPastWinnersError(error.message || t('monthlyVoteTab.failedPreviousWinners'))
     } finally {
       setPastWinnersLoading(false)
     }
@@ -562,7 +774,7 @@ export default function MonthlyVoteTab() {
             <div className="flex items-center gap-2" style={{ color: design.accent_color || '#ff3f70' }}>
               <i className="fa-solid fa-crown text-[14px]" />
               <span className="text-[10px] font-black uppercase tracking-[0.14em]">
-                {design.badge_text || 'MONTHLY VOTE'}
+                {design.badge_text || t('monthlyVoteTab.monthlyVote')}
               </span>
             </div>
 
@@ -597,7 +809,7 @@ export default function MonthlyVoteTab() {
             >
               <i className="fa-solid fa-ticket text-[11px]" />
               <div>
-                <div className="text-[8px] font-bold leading-none opacity-60">Vote Balance</div>
+                <div className="text-[8px] font-bold leading-none opacity-60">{t('monthlyVoteTab.voteBalance')}</div>
                 <div className="mt-1 text-[14px] font-black leading-none">{formatNumber(voteBalance)}</div>
               </div>
             </div>
@@ -609,9 +821,9 @@ export default function MonthlyVoteTab() {
             <i className="fa-regular fa-clock" />
             <span>
               {campaign ? (
-                <>Ends in <span className="font-black" style={{ color: design.accent_color || '#ff3f70' }}>{formatCountdown(campaignEndsAt, nowMs)}</span></>
+                <>{t('monthlyVoteTab.endsIn')} <span className="font-black" style={{ color: design.accent_color || '#ff3f70' }}>{formatCountdown(campaignEndsAt, nowMs, t)}</span></>
               ) : (
-                <span className="font-black" style={{ color: design.accent_color || '#ff3f70' }}>No active Monthly Vote</span>
+                <span className="font-black" style={{ color: design.accent_color || '#ff3f70' }}>{t('monthlyVoteTab.noActive')}</span>
               )}
             </span>
           </div>
@@ -624,19 +836,19 @@ export default function MonthlyVoteTab() {
 
       <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-sm">
         <button type="button" onClick={() => setActiveType('story')} className={`flex h-11 items-center justify-center gap-2 text-[12px] font-black transition ${activeType === 'story' ? 'text-white' : 'text-[var(--shadow-text-secondary)]'}`} style={activeType === 'story' ? { background: design.accent_color || '#ff3f70' } : undefined}>
-          <i className="fa-solid fa-book-open text-[11px]" /> Story
+          <i className="fa-solid fa-book-open text-[11px]" /> {t('monthlyVoteTab.story')}
         </button>
         <button type="button" onClick={() => setActiveType('author')} className={`flex h-11 items-center justify-center gap-2 text-[12px] font-black transition ${activeType === 'author' ? 'text-white' : 'text-[var(--shadow-text-secondary)]'}`} style={activeType === 'author' ? { background: design.accent_color || '#ff3f70' } : undefined}>
-          <i className="fa-solid fa-user text-[11px]" /> Author
+          <i className="fa-solid fa-user text-[11px]" /> {t('monthlyVoteTab.author')}
         </button>
       </div>
 
       {design.show_top_three ? (
       <section className="mt-4 rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 shadow-[0_8px_24px_rgba(31,41,55,0.05)]">
         <div className="flex items-center justify-between">
-          <h3 className="text-[15px] font-black text-[var(--shadow-text-primary)]">Top 3 Right Now</h3>
+          <h3 className="text-[15px] font-black text-[var(--shadow-text-primary)]">{t('monthlyVoteTab.topThreeNow')}</h3>
           <button type="button" onClick={scrollToCandidates} className="text-[11px] font-black text-[#ff3f70] active:opacity-70">
-            View All <i className="fa-solid fa-chevron-right ml-1 text-[9px]" />
+            {t('monthlyVoteTab.viewAll')} <i className="fa-solid fa-chevron-right ml-1 text-[9px]" />
           </button>
         </div>
         {loading ? (
@@ -650,29 +862,29 @@ export default function MonthlyVoteTab() {
             ))}
           </div>
         ) : (
-          <div className="mt-4 rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-8 text-center text-[12px] font-bold text-[var(--shadow-text-secondary)]">No candidates yet</div>
+          <div className="mt-4 rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-8 text-center text-[12px] font-bold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.noCandidatesYet')}</div>
         )}
       </section>
       ) : null}
 
       <section className="mt-4 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_8px_24px_rgba(31,41,55,0.05)]">
-        <div className="text-[13px] font-black text-[#ff3f70]">My Vote Status</div>
+        <div className="text-[13px] font-black text-[#ff3f70]">{t('monthlyVoteTab.myVoteStatus')}</div>
         <div className="mt-3 grid divide-x divide-[var(--shadow-border)]" style={{ gridTemplateColumns: `repeat(${design.show_vote_balance ? 3 : 2}, minmax(0, 1fr))` }}>
           {design.show_vote_balance ? (
           <div className="px-2 text-center">
             <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300"><i className="fa-solid fa-ticket text-[12px]" /></span>
-            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">Vote Balance</div>
+            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.voteBalance')}</div>
             <div className="mt-1 text-[14px] font-black text-[#e91e58]">{formatNumber(voteBalance)}</div>
           </div>
           ) : null}
           <div className="px-2 text-center">
             <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300"><i className="fa-solid fa-list text-[12px]" /></span>
-            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">Candidates</div>
-            <div className="mt-1 text-[14px] font-black text-[#e91e58]">{candidates.length}</div>
+            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.candidates')}</div>
+            <div className="mt-1 text-[14px] font-black text-[#e91e58]">{formatNumber(candidates.length)}</div>
           </div>
           <div className="px-2 text-center">
             <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300"><i className="fa-regular fa-calendar text-[12px]" /></span>
-            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">Winner</div>
+            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.winner')}</div>
             <div className="mt-1 text-[14px] font-black text-[#e91e58]">{winnerLabel}</div>
           </div>
         </div>
@@ -691,25 +903,25 @@ export default function MonthlyVoteTab() {
             <CandidateRow key={candidate.id} candidate={candidate} rank={index + 1} onOpen={handleOpen} onVote={handleVote} voting={votingId === candidate.id} />
           ))
         ) : (
-          <div className="px-4 py-10 text-center text-[12px] font-bold text-[var(--shadow-text-secondary)]">No candidates yet</div>
+          <div className="px-4 py-10 text-center text-[12px] font-bold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.noCandidatesYet')}</div>
         )}
       </section>
       ) : null}
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <QuickLink icon="fa-shield" title="Rules" subtitle="Read the voting rules." />
-        <QuickLink icon="fa-trophy" title="Past Winners" subtitle="See previous winners." onClick={openPastWinners} />
-        <QuickLink icon="fa-circle-question" title="How it works" subtitle="Learn about voting." />
+        <QuickLink icon="fa-shield" title={t('monthlyVoteTab.rules')} subtitle={t('monthlyVoteTab.rulesSubtitle')} />
+        <QuickLink icon="fa-trophy" title={t('monthlyVoteTab.pastWinners')} subtitle={t('monthlyVoteTab.pastWinnersSubtitle')} onClick={openPastWinners} />
+        <QuickLink icon="fa-circle-question" title={t('monthlyVoteTab.howItWorks')} subtitle={t('monthlyVoteTab.howItWorksSubtitle')} />
       </div>
 
       {design.show_candidate_list ? (
       <div className="sticky bottom-3 z-30 mt-4 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] p-2 shadow-[0_14px_34px_rgba(31,41,55,0.16)] backdrop-blur">
         <div className="grid grid-cols-[1.35fr_1fr] gap-2">
           <button type="button" onClick={scrollToCandidates} className="flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff4f7a] to-[#f52f68] px-4 text-[13px] font-black text-white shadow-[0_10px_20px_rgba(245,47,104,0.24)] active:scale-[0.98]">
-            <i className="fa-solid fa-heart" /> Vote Now
+            <i className="fa-solid fa-heart" /> {t('monthlyVoteTab.voteNow')}
           </button>
           <button type="button" onClick={scrollToCandidates} className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#ff4f7a] bg-[var(--shadow-bg-surface)] px-4 text-[12px] font-black text-[#ff3f70] active:scale-[0.98] dark:text-rose-300">
-            <i className="fa-regular fa-eye" /> View All
+            <i className="fa-regular fa-eye" /> {t('monthlyVoteTab.viewAll')}
           </button>
         </div>
       </div>
