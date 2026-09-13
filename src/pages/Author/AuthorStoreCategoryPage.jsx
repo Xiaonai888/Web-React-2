@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -375,6 +375,7 @@ function ProductCard({ item, onOpen, onAddToCart }) {
 
 export default function AuthorStoreCategoryPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const { pageUsername, categoryKey } = useParams()
   const category = CATEGORY_CONFIG[categoryKey] || CATEGORY_CONFIG['new-books']
@@ -451,7 +452,14 @@ export default function AuthorStoreCategoryPage() {
           <button
             type="button"
             aria-label={t('authorStoreCategory.goBack')}
-            onClick={() => navigate(-1)}
+            onClick={() => {
+  if (location.state?.from) return navigate(-1)
+
+  navigate(`/author/page/${pageUsername}`, {
+    replace: true,
+    state: { activeTab: 'Store' },
+  })
+}}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
@@ -489,7 +497,11 @@ export default function AuthorStoreCategoryPage() {
               <ProductCard
                 key={item.id}
                 item={item}
-                onOpen={() => navigate(`/author/page/${pageUsername}/store/product/${item.id}`)}
+                onOpen={() =>
+  navigate(`/author/page/${pageUsername}/store/product/${item.id}`, {
+    state: { from: location.pathname + location.search + location.hash },
+  })
+}
                 onAddToCart={addToCart}
               />
             ))}
