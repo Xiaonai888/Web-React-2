@@ -367,7 +367,6 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
 
-  const [loadError, setLoadError] = useState('')
 
 useEffect(() => {
   if (location.state?.activeTab === 'Store') return
