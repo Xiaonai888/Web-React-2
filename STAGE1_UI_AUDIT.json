@@ -384,6 +384,11 @@
 "src/pages/ChatStoryHomePage.jsx",
 "src/pages/MusicPage.jsx",
 "src/components/story-detail/StoryStatsSection.jsx"
+"src/pages/EventPage.jsx",
+"src/components/events/BlackSundayEventTab.jsx",
+"src/components/events/WriterWednesdayEventCard.jsx",
+"src/components/events/Author49DayEventCard.jsx",
+"src/pages/Event/MonthlyVoteTab.jsx"    
 
   ]
 }
