@@ -125,7 +125,7 @@ export default function ContinueReadingSection({
 
     try {
       const limit =
-        normalizedStoryType ? 30 : 6
+        normalizedStoryType ? 30 : 12
 
       const response = await fetch(
         `${API_BASE_URL}/api/reading-progress?limit=${limit}`,
@@ -173,7 +173,7 @@ export default function ContinueReadingSection({
 
       if (!ignore) {
         setItems(
-          visibleItems.slice(0, 6)
+          visibleItems.slice(0, 12)
         )
       }
     } catch {
