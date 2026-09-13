@@ -8,7 +8,7 @@ import { requestAuthor49DayEvent } from '../services/author49DayEventClientCache
 import { requestWriterWednesdayEvent } from '../services/writerWednesdayEventClientCache'
 import ManagedEventHeroCard from '../components/events/ManagedEventHeroCard'
 import MonthlyVoteTab from './Event/MonthlyVoteTab'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 
@@ -405,10 +405,13 @@ function getEventSlideBadgeClass(badge) {
 function formatCompactNumber(value) {
   const number = Number(value || 0)
 
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+  if (!Number.isFinite(number)) return '0'
 
-  return String(number)
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: number >= 10000 ? 0 : 1,
+  }).format(number)
 }
 
 function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
