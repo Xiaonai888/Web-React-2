@@ -937,7 +937,7 @@ async function setAuthorPostPinned(postId, isPinned) {
   return data.post || null
 }
 
-async function setAuthorPostReaction(postId, reactionType = 'love') {
+async function setAuthorPostReaction(postId, reactionType = null) {
   const token = getAuthToken()
 
   if (!token) throw new Error(getDisplayText('authorPostsSection.loginFirst'))
@@ -949,7 +949,7 @@ async function setAuthorPostReaction(postId, reactionType = 'love') {
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      reaction_type: reactionType,
+      desired_reaction_type: reactionType || null,
     }),
   })
 
@@ -2248,21 +2248,18 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
     if (nextReaction === savedReaction) return
 
-    const requestType = nextReaction || savedReaction
-    if (!requestType) return
-
     try {
       setReactionBusyId(postId)
 
       const data = await setAuthorPostReaction(
         postId,
-        requestType
+        nextReaction
       )
 
       clearAuthorPostsListCache()
 
       const serverReaction = data.reacted
-        ? data.reaction_type || requestType
+        ? data.reaction_type || nextReaction
         : null
 
       const serverSummary =
@@ -2321,7 +2318,6 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
   reactionTimersRef.current.set(postId, timer)
 }
-
 
 function handleAuthorPostCommentChanged(nextComments = []) {
   if (!commentPost?.id) return
