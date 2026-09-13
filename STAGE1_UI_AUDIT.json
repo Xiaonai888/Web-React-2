@@ -372,6 +372,11 @@
 "src/pages/Shop/ShadowMallDiscountBooksPage.jsx",
 "src/pages/Shop/ShadowMallPreOrderPage.jsx",
 "src/pages/Shop/ShadowMallSearchPage.jsx",
+"src/pages/Shop/ShadowMallCheckoutPage.jsx",
+"src/pages/Shop/ShadowMallOrderHistoryPage.jsx",
+"src/pages/Shop/ShadowMallPaymentPage.jsx",
+"src/pages/Shop/ShadowMallRecentlySoldOutPage.jsx",
+"src/pages/Shop/ShadowMallSecondHandPage.jsx",
 
   ]
 }
