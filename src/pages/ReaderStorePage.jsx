@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import ShadowMallSection from '../components/Shop/ShadowMallSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -810,9 +809,6 @@ export default function ReaderStorePage() {
       </header>
 
       <main className="mx-auto w-full max-w-[560px] px-4 pt-4">
-        <section className="space-y-3">
-          <ShadowMallSection />
-        </section>
 
         <HorizontalScrollRow className="-mx-1 mt-5 flex gap-2 px-1 pb-2">
           {FILTERS.map((filter) => {
