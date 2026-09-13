@@ -27,21 +27,30 @@ export default function useReadingProgressSync({
   enabled,
 }) {
   const latestRef = useRef(null)
-  const baselineKeyRef = useRef('')
-  const lastSavedRef = useRef('')
-  const lastSavedPercentRef = useRef(null)
-  const lastSavedAtRef = useRef(0)
-  const pendingRef = useRef('')
-  const inFlightRef = useRef(false)
+  const savedStateByKeyRef = useRef(new Map())
+  const inFlightByStoryRef = useRef(new Map())
+  const queuedByStoryRef = useRef(new Map())
 
   const saveCurrent = useCallback(async (current) => {
     if (!current) return false
-    if (lastSavedRef.current === current.signature) return false
-    if (pendingRef.current === current.signature) return false
-    if (inFlightRef.current) return false
 
-    inFlightRef.current = true
-    pendingRef.current = current.signature
+    const state = savedStateByKeyRef.current.get(current.key)
+
+    if (state?.lastSavedSignature === current.signature) {
+      return false
+    }
+
+    const storyKey = String(current.storyId)
+
+    if (inFlightByStoryRef.current.has(storyKey)) {
+      queuedByStoryRef.current.set(storyKey, current)
+      return false
+    }
+
+    inFlightByStoryRef.current.set(
+      storyKey,
+      current.signature
+    )
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/reading-progress`, {
@@ -64,20 +73,39 @@ export default function useReadingProgressSync({
         return false
       }
 
-      if (baselineKeyRef.current === current.key) {
-        lastSavedRef.current = current.signature
-        lastSavedPercentRef.current = current.percent
-        lastSavedAtRef.current = Date.now()
-      }
+      savedStateByKeyRef.current.set(current.key, {
+        lastSavedSignature: current.signature,
+        lastSavedPercent: current.percent,
+        lastSavedAt: Date.now(),
+      })
 
       return true
     } catch {
       return false
     } finally {
-      if (pendingRef.current === current.signature) {
-        pendingRef.current = ''
+      if (
+        inFlightByStoryRef.current.get(storyKey) ===
+        current.signature
+      ) {
+        inFlightByStoryRef.current.delete(storyKey)
       }
-      inFlightRef.current = false
+
+      const queued =
+        queuedByStoryRef.current.get(storyKey)
+
+      if (queued) {
+        queuedByStoryRef.current.delete(storyKey)
+
+        const queuedState =
+          savedStateByKeyRef.current.get(queued.key)
+
+        if (
+          queuedState?.lastSavedSignature !==
+          queued.signature
+        ) {
+          void saveCurrent(queued)
+        }
+      }
     }
   }, [])
 
@@ -104,33 +132,46 @@ export default function useReadingProgressSync({
 
     const previous = latestRef.current
 
-if (
-  previous &&
-  previous.key !== key &&
-  lastSavedRef.current !== previous.signature &&
-  pendingRef.current !== previous.signature
-) {
-  void saveCurrent(previous)
-}
+    if (
+      previous &&
+      previous.key !== key
+    ) {
+      const previousState =
+        savedStateByKeyRef.current.get(previous.key)
+
+      if (
+        previousState?.lastSavedSignature !==
+        previous.signature
+      ) {
+        void saveCurrent(previous)
+      }
+    }
 
     latestRef.current = current
 
-    if (baselineKeyRef.current !== key) {
-      baselineKeyRef.current = key
-      lastSavedRef.current = signature
-      lastSavedPercentRef.current = percent
-      lastSavedAtRef.current = Date.now()
-      pendingRef.current = ''
+    let state =
+      savedStateByKeyRef.current.get(key)
+
+    if (!state) {
+      state = {
+        lastSavedSignature: signature,
+        lastSavedPercent: percent,
+        lastSavedAt: Date.now(),
+      }
+
+      savedStateByKeyRef.current.set(key, state)
       return
     }
 
-    if (lastSavedRef.current === signature) return
-
-    const lastPercent = lastSavedPercentRef.current
+    if (state.lastSavedSignature === signature) {
+      return
+    }
 
     if (
-      Number.isFinite(lastPercent) &&
-      Math.abs(percent - lastPercent) >= SAVE_PERCENT_STEP
+      Math.abs(
+        percent -
+        Number(state.lastSavedPercent || 0)
+      ) >= SAVE_PERCENT_STEP
     ) {
       void saveCurrent(current)
     }
@@ -147,13 +188,25 @@ if (
       const current = latestRef.current
 
       if (!current) return
-      if (lastSavedRef.current === current.signature) return
-      if (pendingRef.current === current.signature) return
 
-      const elapsed =
-        Date.now() - Number(lastSavedAtRef.current || 0)
+      const state =
+        savedStateByKeyRef.current.get(current.key)
 
-      if (elapsed < SAVE_MAX_DELAY_MS) return
+      if (!state) return
+      if (
+        state.lastSavedSignature ===
+        current.signature
+      ) {
+        return
+      }
+
+      if (
+        Date.now() -
+          Number(state.lastSavedAt || 0) <
+        SAVE_MAX_DELAY_MS
+      ) {
+        return
+      }
 
       void saveCurrent(current)
     }, SAVE_CHECK_INTERVAL_MS)
@@ -166,8 +219,16 @@ if (
       const current = latestRef.current
 
       if (!current) return
-      if (lastSavedRef.current === current.signature) return
-      if (pendingRef.current === current.signature) return
+
+      const state =
+        savedStateByKeyRef.current.get(current.key)
+
+      if (
+        state?.lastSavedSignature ===
+        current.signature
+      ) {
+        return
+      }
 
       void saveCurrent(current)
     }
