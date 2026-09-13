@@ -739,22 +739,186 @@ function sortAuthorPosts(posts) {
   })
 }
 
-const AUTHOR_POSTS_CACHE_TTL_MS = 3 * 60 * 1000
+const AUTHOR_POSTS_CACHE_MAX_ENTRIES = 100
 const authorPostsListCache = new Map()
 const authorPostsListInFlight = new Map()
-let authorPostsListCacheVersion = 0
+const authorPostsListCacheVersionByPage = new Map()
+
+function normalizeAuthorPostsCachePage(pageUsername) {
+  return String(pageUsername || '').trim().toLowerCase()
+}
 
 function getAuthorPostsListCacheKey(pageUsername, before = '') {
-  const page = String(pageUsername || '').trim().toLowerCase()
+  const page = normalizeAuthorPostsCachePage(pageUsername)
   const filter = String(before || '').trim()
 
-  return `${getAuthorPostViewCacheScope()}:${page}:${filter}`
+  return JSON.stringify({
+    scope: getAuthorPostViewCacheScope(),
+    page,
+    filter,
+  })
 }
 
-function clearAuthorPostsListCache() {
-  authorPostsListCache.clear()
-  authorPostsListCacheVersion += 1
+function getAuthorPostsListCacheVersion(pageUsername) {
+  const page = normalizeAuthorPostsCachePage(pageUsername)
+
+  return Number(
+    authorPostsListCacheVersionByPage.get(page) || 0
+  )
 }
+
+function setAuthorPostsListCache(
+  cacheKey,
+  pageUsername,
+  posts
+) {
+  const page = normalizeAuthorPostsCachePage(pageUsername)
+
+  if (authorPostsListCache.has(cacheKey)) {
+    authorPostsListCache.delete(cacheKey)
+  }
+
+  authorPostsListCache.set(cacheKey, {
+    page,
+    posts,
+  })
+
+  while (
+    authorPostsListCache.size >
+    AUTHOR_POSTS_CACHE_MAX_ENTRIES
+  ) {
+    const oldestKey =
+      authorPostsListCache.keys().next().value
+
+    if (!oldestKey) break
+
+    authorPostsListCache.delete(oldestKey)
+  }
+}
+
+function clearAuthorPostsListCache(pageUsername = '') {
+  const page = normalizeAuthorPostsCachePage(pageUsername)
+
+  if (!page) {
+    authorPostsListCache.clear()
+    authorPostsListCacheVersionByPage.clear()
+    return
+  }
+
+  for (
+    const [cacheKey, cached] of
+    authorPostsListCache.entries()
+  ) {
+    if (cached?.page === page) {
+      authorPostsListCache.delete(cacheKey)
+    }
+  }
+
+  authorPostsListCacheVersionByPage.set(
+    page,
+    getAuthorPostsListCacheVersion(page) + 1
+  )
+}
+
+async function fetchAuthorPosts(pageUsername, before = '') {
+  if (!pageUsername) return []
+
+  const page =
+    normalizeAuthorPostsCachePage(pageUsername)
+  const cacheKey =
+    getAuthorPostsListCacheKey(pageUsername, before)
+  const cached =
+    authorPostsListCache.get(cacheKey)
+
+  if (cached) {
+    authorPostsListCache.delete(cacheKey)
+    authorPostsListCache.set(cacheKey, cached)
+    return cached.posts
+  }
+
+  const inFlight =
+    authorPostsListInFlight.get(cacheKey)
+
+  if (inFlight) {
+    return inFlight
+  }
+
+  const cacheVersion =
+    getAuthorPostsListCacheVersion(page)
+
+  const request = (async () => {
+    const token = getAuthToken()
+    const params =
+      new URLSearchParams({ limit: '30' })
+
+    if (before) {
+      params.set('before', before)
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`,
+      {
+        headers: token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : {},
+      }
+    )
+
+    const data = await response
+      .json()
+      .catch(() => ({}))
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.message ||
+          getDisplayText(
+            'authorPostsSection.failedLoadPosts'
+          )
+      )
+    }
+
+    const posts =
+      Array.isArray(data.posts)
+        ? data.posts
+        : []
+
+    if (
+      cacheVersion ===
+      getAuthorPostsListCacheVersion(page)
+    ) {
+      setAuthorPostsListCache(
+        cacheKey,
+        page,
+        posts
+      )
+    }
+
+    return posts
+  })()
+
+  authorPostsListInFlight.set(
+    cacheKey,
+    request
+  )
+
+  try {
+    return await request
+  } finally {
+    if (
+      authorPostsListInFlight.get(cacheKey) ===
+      request
+    ) {
+      authorPostsListInFlight.delete(cacheKey)
+    }
+  }
+}
+
 
 async function fetchAuthorPosts(pageUsername, before = '') {
   if (!pageUsername) return []
@@ -1363,7 +1527,7 @@ useEffect(() => {
         post={post}
         author={author}
         onCountChange={(_, total) => {
-          clearAuthorPostsListCache()
+          clearAuthorPostsListCache(author?.page_username || '')
           setEchoCount(Number(total || 0))
         }}
         className="w-full justify-center gap-2 pr-[42px] [&>span]:hidden [&>img]:!h-[20px] [&>img]:!w-[20px]"
