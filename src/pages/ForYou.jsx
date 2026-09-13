@@ -24,6 +24,7 @@ import {
 } from '../utils/homeDataCache'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import GoogleAdBanner from '../components/ads/GoogleAdBanner'
 
 registerTranslationNamespace('forYouPage', {
   en: {
@@ -1321,6 +1322,10 @@ useEffect(() => {
             <div className="my-6">
               <YouMightLikeSection />
             </div>
+    <div className="my-6 px-4">
+  <GoogleAdBanner slot={import.meta.env.VITE_ADSENSE_HOME_SLOT} />
+</div>
+    
   </>
 )}
 
