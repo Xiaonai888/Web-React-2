@@ -392,6 +392,7 @@ const AUTHOR_POST_VIEW_BATCH_LIMIT = 50
 const authorPostViewQueue = new Set()
 let authorPostViewBatchTimer = null
 let authorPostViewFlushInFlight = false
+const authorPostViewRetryCount = new Map()
 let authorPostViewCacheScope = ''
 let authorPostViewCache = {}
 
