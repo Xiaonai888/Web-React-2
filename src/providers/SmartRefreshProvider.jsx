@@ -1,36 +1,113 @@
-import { createContext, useEffect, useMemo, useRef } from 'react'
+import {
+  createContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import { useLocation } from 'react-router-dom'
 import { clearHomeCacheSection } from '../utils/homeDataCache'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
+  (
+    window.location.hostname ===
+      'localhost' ||
+    window.location.hostname ===
+      '127.0.0.1'
+      ? 'http://localhost:5000'
+      : 'https://shadow-backend-kucw.onrender.com'
+  )
 
 const MIN_CHECK_INTERVAL_MS = 60000
-const STORAGE_KEY = 'shadow_content_versions'
+const STORAGE_KEY =
+  'shadow_content_versions'
 
-export const SmartRefreshContext = createContext(null)
+export const SmartRefreshContext =
+  createContext(null)
 
 function getRouteRefreshKeys(pathname) {
-  if (pathname === '/') return ['home', 'slides', 'banners', 'genres', 'stories']
-  if (pathname === '/genres' || pathname.startsWith('/genre/')) return ['genres', 'stories']
-  if (pathname.startsWith('/story/')) return ['stories']
-  if (pathname.startsWith('/shop')) return ['shop']
-  if (pathname.startsWith('/author/page')) return ['authors', 'shop']
-  if (pathname.startsWith('/author/')) return ['authors', 'stories']
-  if (pathname === '/library') return ['library']
-  if (pathname === '/notifications' || pathname.startsWith('/notifications/')) return ['notifications']
-  if (pathname === '/comments') return ['comments']
-  if (pathname === '/tasks' || pathname.startsWith('/tasks/')) return []
-  if (pathname === '/ranking' || pathname === '/top-novel') return ['ranking', 'stories']
+  if (pathname === '/') {
+    return [
+      'home',
+      'slides',
+      'banners',
+      'genres',
+      'stories',
+    ]
+  }
+
   if (
-  pathname === '/manga' ||
-  pathname === '/chat-story' ||
-  pathname === '/shadow-exclusive'
-) return ['stories']
-  if (pathname === '/me' || pathname.startsWith('/profile')) return ['me']
+    pathname === '/genres' ||
+    pathname.startsWith('/genre/')
+  ) {
+    return ['genres', 'stories']
+  }
+
+  if (pathname.startsWith('/story/')) {
+    return ['stories']
+  }
+
+  if (pathname.startsWith('/shop')) {
+    return ['shop']
+  }
+
+  if (
+    pathname.startsWith(
+      '/author/page'
+    )
+  ) {
+    return ['authors', 'shop']
+  }
+
+  if (pathname.startsWith('/author/')) {
+    return ['authors', 'stories']
+  }
+
+  if (pathname === '/library') {
+    return ['library']
+  }
+
+  if (
+    pathname === '/notifications' ||
+    pathname.startsWith(
+      '/notifications/'
+    )
+  ) {
+    return ['notifications']
+  }
+
+  if (pathname === '/comments') {
+    return ['comments']
+  }
+
+  if (
+    pathname === '/tasks' ||
+    pathname.startsWith('/tasks/')
+  ) {
+    return []
+  }
+
+  if (
+    pathname === '/ranking' ||
+    pathname === '/top-novel'
+  ) {
+    return ['ranking', 'stories']
+  }
+
+  if (
+    pathname === '/manga' ||
+    pathname === '/chat-story' ||
+    pathname === '/shadow-exclusive'
+  ) {
+    return ['stories']
+  }
+
+  if (
+    pathname === '/me' ||
+    pathname.startsWith('/profile')
+  ) {
+    return ['me']
+  }
 
   if (
     pathname === '/discover' ||
@@ -39,7 +116,8 @@ function getRouteRefreshKeys(pathname) {
     pathname === '/update-today' ||
     pathname === '/daily-picks' ||
     pathname === '/you-might-like' ||
-    pathname === '/most-read-this-week'
+    pathname ===
+      '/most-read-this-week'
   ) {
     return ['stories']
   }
@@ -50,8 +128,12 @@ function getRouteRefreshKeys(pathname) {
 function loadStoredVersions() {
   try {
     const stored =
-      localStorage.getItem(STORAGE_KEY) ||
-      sessionStorage.getItem(STORAGE_KEY) ||
+      localStorage.getItem(
+        STORAGE_KEY
+      ) ||
+      sessionStorage.getItem(
+        STORAGE_KEY
+      ) ||
       '{}'
 
     return JSON.parse(stored)
@@ -60,7 +142,9 @@ function loadStoredVersions() {
   }
 }
 
-function saveStoredVersions(versions) {
+function saveStoredVersions(
+  versions
+) {
   try {
     localStorage.setItem(
       STORAGE_KEY,
@@ -71,32 +155,51 @@ function saveStoredVersions(versions) {
   }
 }
 
-export function SmartRefreshProvider({ children }) {
+export function SmartRefreshProvider({
+  children,
+}) {
   const location = useLocation()
-  const versionsRef = useRef(loadStoredVersions())
+  const versionsRef = useRef(
+    loadStoredVersions()
+  )
   const lastCheckAtRef = useRef(0)
   const checkingRef = useRef(false)
-  const pathnameRef = useRef(location.pathname)
+  const pathnameRef = useRef(
+    location.pathname
+  )
 
   useEffect(() => {
-    pathnameRef.current = location.pathname
+    pathnameRef.current =
+      location.pathname
   }, [location.pathname])
 
-  const value = useMemo(() => ({
-    getKeysForPath: getRouteRefreshKeys,
-  }), [])
+  const value = useMemo(
+    () => ({
+      getKeysForPath:
+        getRouteRefreshKeys,
+    }),
+    []
+  )
 
-  async function checkCurrentPageVersion({ force = false } = {}) {
+  async function checkCurrentPageVersion({
+    force = false,
+  } = {}) {
     if (checkingRef.current) return
 
     const now = Date.now()
 
-    if (!force && now - lastCheckAtRef.current < MIN_CHECK_INTERVAL_MS) {
+    if (
+      !force &&
+      now - lastCheckAtRef.current <
+        MIN_CHECK_INTERVAL_MS
+    ) {
       return
     }
 
-    const pathname = pathnameRef.current
-    const keys = getRouteRefreshKeys(pathname)
+    const pathname =
+      pathnameRef.current
+    const keys =
+      getRouteRefreshKeys(pathname)
 
     if (!keys.length) return
 
@@ -104,70 +207,106 @@ export function SmartRefreshProvider({ children }) {
     lastCheckAtRef.current = now
 
     try {
-      const url = new URL(`${API_URL}/api/public/content-versions`)
-      url.searchParams.set('keys', keys.join(','))
+      const url = new URL(
+        `${API_URL}/api/public/content-versions`
+      )
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        cache: 'no-store',
-      })
+      url.searchParams.set(
+        'keys',
+        keys.join(',')
+      )
 
-      const data = await response.json().catch(() => ({}))
+      const response = await fetch(
+        url.toString(),
+        {
+          method: 'GET',
+          cache: 'no-store',
+        }
+      )
 
-      if (!response.ok || data.ok === false || !data.versions) {
+      const data =
+        await response
+          .json()
+          .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false ||
+        !data.versions
+      ) {
         return
       }
 
-      const oldVersions = versionsRef.current || {}
+      const oldVersions =
+        versionsRef.current || {}
       const nextVersions = {
         ...oldVersions,
         ...data.versions,
       }
 
-      const hasKnownOldVersion = keys.some(
-  (key) => oldVersions[key]
-)
+      const hasKnownOldVersion =
+        keys.some(
+          (key) =>
+            oldVersions[key]
+        )
 
-const changedKeys = hasKnownOldVersion
-  ? keys.filter((key) => {
-      const oldVersion = Number(
-        oldVersions[key]?.version || 0
+      const changedKeys =
+        hasKnownOldVersion
+          ? keys.filter((key) => {
+              const oldVersion =
+                Number(
+                  oldVersions[
+                    key
+                  ]?.version || 0
+                )
+              const nextVersion =
+                Number(
+                  data.versions[
+                    key
+                  ]?.version || 0
+                )
+
+              return (
+                oldVersion > 0 &&
+                nextVersion > 0 &&
+                oldVersion !==
+                  nextVersion
+              )
+            })
+          : []
+
+      const hasChanged =
+        changedKeys.length > 0
+
+      versionsRef.current =
+        nextVersions
+      saveStoredVersions(
+        nextVersions
       )
-      const nextVersion = Number(
-        data.versions[key]?.version || 0
-      )
-
-      return (
-        oldVersion > 0 &&
-        nextVersion > 0 &&
-        oldVersion !== nextVersion
-      )
-    })
-  : []
-
-const hasChanged = changedKeys.length > 0
-
-      versionsRef.current = nextVersions
-      saveStoredVersions(nextVersions)
 
       if (hasChanged) {
-  const cacheSections = new Set([
-    'slides',
-    'banners',
-    'genres',
-    'stories',
-  ])
+        const cacheSections =
+          new Set([
+            'slides',
+            'banners',
+            'genres',
+            'stories',
+          ])
 
-  await Promise.all(
-    changedKeys
-      .filter((key) => cacheSections.has(key))
-      .map((key) =>
-        clearHomeCacheSection(key)
-      )
-  )
+        await Promise.all(
+          changedKeys
+            .filter((key) =>
+              cacheSections.has(key)
+            )
+            .map((key) =>
+              clearHomeCacheSection(
+                key
+              )
+            )
+        )
 
-  window.location.reload()
-}
+        window.location.reload()
+      }
     } catch {
       return
     } finally {
@@ -176,16 +315,21 @@ const hasChanged = changedKeys.length > 0
   }
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      checkCurrentPageVersion()
-    }, 250)
+    const timer =
+      window.setTimeout(() => {
+        checkCurrentPageVersion()
+      }, 250)
 
-    return () => window.clearTimeout(timer)
+    return () =>
+      window.clearTimeout(timer)
   }, [location.pathname])
 
   useEffect(() => {
     function handleVisibleAgain() {
-      if (document.visibilityState === 'visible') {
+      if (
+        document.visibilityState ===
+        'visible'
+      ) {
         checkCurrentPageVersion()
       }
     }
@@ -194,27 +338,31 @@ const hasChanged = changedKeys.length > 0
       checkCurrentPageVersion()
     }
 
-    document.addEventListener('visibilitychange', handleVisibleAgain)
-    window.addEventListener('focus', handleFocus)
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibleAgain
+    )
+    window.addEventListener(
+      'focus',
+      handleFocus
+    )
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibleAgain)
-      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibleAgain
+      )
+      window.removeEventListener(
+        'focus',
+        handleFocus
+      )
     }
   }, [])
 
-    useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        checkCurrentPageVersion({ force: true })
-      }
-    }, MIN_CHECK_INTERVAL_MS)
-
-    return () => window.clearInterval(timer)
-  }, [])
-
   return (
-    <SmartRefreshContext.Provider value={value}>
+    <SmartRefreshContext.Provider
+      value={value}
+    >
       {children}
     </SmartRefreshContext.Provider>
   )
