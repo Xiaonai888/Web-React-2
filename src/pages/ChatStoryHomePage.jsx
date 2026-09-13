@@ -6,7 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('chatStoryHomePage', {
@@ -41,6 +41,13 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature1Subtitle: 'New writing event',
     feature2Title: 'Chat Story Creator Week',
     feature2Subtitle: 'Join the challenge',
+    romance: 'Romance',
+    lgbt: 'LGBT',
+    cpIdol: 'CP Idol',
+    modernRomance: 'Modern Romance',
+    fantasyRomance: 'Fantasy Romance',
+    fanficAnimeGameFilm: 'Fanfic Anime / Game / Film',
+    actionAdventureHorror: 'Action / Adventure / Horror',
   },
   km: {
     chat: 'Chat',
@@ -73,6 +80,13 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature1Subtitle: 'កម្មវិធីសរសេរថ្មី',
     feature2Title: 'សប្តាហ៍អ្នកបង្កើត Chat Story',
     feature2Subtitle: 'ចូលរួមការប្រកួតប្រជែង',
+    romance: 'មនោសញ្ចេតនា',
+    lgbt: 'LGBT',
+    cpIdol: 'CP Idol',
+    modernRomance: 'មនោសញ្ចេតនាសម័យទំនើប',
+    fantasyRomance: 'មនោសញ្ចេតនា Fantasy',
+    fanficAnimeGameFilm: 'Fanfic Anime / Game / Film',
+    actionAdventureHorror: 'សកម្មភាព / ផ្សងព្រេង / រន្ធត់',
   },
   zh: {
     chat: '聊天',
@@ -105,6 +119,13 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature1Subtitle: '全新写作活动',
     feature2Title: 'Chat Story 创作者周',
     feature2Subtitle: '加入挑战',
+    romance: '爱情',
+    lgbt: 'LGBT',
+    cpIdol: 'CP Idol',
+    modernRomance: '现代爱情',
+    fantasyRomance: '奇幻爱情',
+    fanficAnimeGameFilm: '同人动漫 / 游戏 / 影视',
+    actionAdventureHorror: '动作 / 冒险 / 恐怖',
   },
   ja: {
     chat: 'チャット',
@@ -137,6 +158,13 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature1Subtitle: '新しい執筆イベント',
     feature2Title: 'Chat Story クリエイターウィーク',
     feature2Subtitle: 'チャレンジに参加',
+    romance: 'ロマンス',
+    lgbt: 'LGBT',
+    cpIdol: 'CP Idol',
+    modernRomance: '現代ロマンス',
+    fantasyRomance: 'ファンタジーロマンス',
+    fanficAnimeGameFilm: 'アニメ / ゲーム / 映画のファンフィク',
+    actionAdventureHorror: 'アクション / 冒険 / ホラー',
   },
   ko: {
     chat: '채팅',
@@ -169,6 +197,13 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature1Subtitle: '새로운 글쓰기 이벤트',
     feature2Title: 'Chat Story 크리에이터 위크',
     feature2Subtitle: '챌린지 참여하기',
+    romance: '로맨스',
+    lgbt: 'LGBT',
+    cpIdol: 'CP Idol',
+    modernRomance: '현대 로맨스',
+    fantasyRomance: '판타지 로맨스',
+    fanficAnimeGameFilm: '애니 / 게임 / 영화 팬픽',
+    actionAdventureHorror: '액션 / 모험 / 호러',
   },
 })
 
@@ -192,7 +227,7 @@ const sections = [
   {
     key: 'romance',
     icon: '💕',
-    title: 'Romance',
+    titleKey: 'romance',
     stories: [
       { id: '5', title: 'A Little Timid, Completely Yours', cover: '/assets/chat-story/romance-1.jpg', views: '23.9K', genre: 'Modern Romance' },
       { id: '6', title: 'Reborn to Get Pampered', cover: '/assets/chat-story/romance-2.jpg', views: '399.9K', genre: 'Fantasy Romance' },
@@ -203,7 +238,7 @@ const sections = [
   {
     key: 'lgbt',
     icon: '🌈',
-    title: 'LGBT',
+    titleKey: 'lgbt',
     stories: [
       { id: '9', title: 'Transmigrated: I Am a Star', cover: '/assets/chat-story/lgbt-1.jpg', views: '23.7K', comments: '43' },
       { id: '10', title: 'Married to My Villain', cover: '/assets/chat-story/lgbt-2.jpg', views: '138.5K', comments: '931' },
@@ -214,7 +249,7 @@ const sections = [
   {
     key: 'cp-idol',
     icon: '🌟',
-    title: 'CP Idol',
+    titleKey: 'cpIdol',
     stories: [
       { id: '13', title: 'Reborn to Love My Husband', cover: '/assets/chat-story/cp-1.jpg', views: '535.4K', comments: '557' },
       { id: '14', title: 'Reincarnate to Find a New Love', cover: '/assets/chat-story/cp-2.jpg', views: '177.6K', comments: '775' },
@@ -225,21 +260,14 @@ const sections = [
 ]
 
 const categories = [
-  { title: 'Modern Romance', icon: '🥂', className: 'from-[#ff8cb9] to-[#f6b7e6]' },
-  { title: 'LGBT', icon: '🌈', className: 'from-[#5b7cff] to-[#d083ee]' },
-  { title: 'CP Idol', icon: '🎤', className: 'from-[#ffa4bf] to-[#a9eff6]' },
-  { title: 'Fantasy Romance', icon: '👑', className: 'from-[#ffd777] to-[#a8efae]' },
-  { title: 'Fanfic Anime / Game / Film', icon: '🎮', className: 'from-[#f6aa8d] to-[#a9eff6]' },
-  { title: 'Action / Adventure / Horror', icon: '⚔️', className: 'from-[#ffc06f] to-[#8db8ef]' },
+  { title: 'Modern Romance', labelKey: 'modernRomance', icon: '🥂', className: 'from-[#ff8cb9] to-[#f6b7e6]' },
+  { title: 'LGBT', labelKey: 'lgbt', icon: '🌈', className: 'from-[#5b7cff] to-[#d083ee]' },
+  { title: 'CP Idol', labelKey: 'cpIdol', icon: '🎤', className: 'from-[#ffa4bf] to-[#a9eff6]' },
+  { title: 'Fantasy Romance', labelKey: 'fantasyRomance', icon: '👑', className: 'from-[#ffd777] to-[#a8efae]' },
+  { title: 'Fanfic Anime / Game / Film', labelKey: 'fanficAnimeGameFilm', icon: '🎮', className: 'from-[#f6aa8d] to-[#a9eff6]' },
+  { title: 'Action / Adventure / Horror', labelKey: 'actionAdventureHorror', icon: '⚔️', className: 'from-[#ffc06f] to-[#8db8ef]' },
 ]
 
-const DISPLAY_LOCALES = {
-  km: 'km-KH',
-  en: 'en-GB',
-  zh: 'zh-CN',
-  ja: 'ja-JP',
-  ko: 'ko-KR',
-}
 
 const featureBanners = [
   {
@@ -257,28 +285,28 @@ const featureBanners = [
 ]
 
 function formatCompactNumber(value) {
-  const number = Number(value || 0)
+  const number = Number(value)
 
-  if (!Number.isFinite(number) || number <= 0) {
-    return '0'
+  if (!Number.isFinite(number)) {
+    return String(value || '0')
   }
 
-  if (number >= 1000000) {
-    return `${(number / 1000000)
-      .toFixed(number >= 10000000 ? 0 : 1)
-      .replace(/\.0$/, '')}M`
-  }
-
-  if (number >= 1000) {
-    return `${(number / 1000)
-      .toFixed(number >= 10000 ? 0 : 1)
-      .replace(/\.0$/, '')}K`
-  }
-
-  return String(number)
+  return new Intl.NumberFormat(
+    getDisplayLanguageId(),
+    {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }
+  ).format(number)
 }
 
-function formatUpdatedTime(value, language, t) {
+function formatDisplayNumber(value) {
+  return new Intl.NumberFormat(
+    getDisplayLanguageId()
+  ).format(Number(value || 0))
+}
+
+function formatUpdatedTime(value, t) {
   const updatedTime = value ? new Date(value).getTime() : 0
 
   if (!updatedTime || Number.isNaN(updatedTime)) {
@@ -319,7 +347,7 @@ function formatUpdatedTime(value, language, t) {
   }
 
   return new Date(updatedTime).toLocaleDateString(
-    DISPLAY_LOCALES[language] || DISPLAY_LOCALES.en
+    getDisplayLanguageId()
   )
 }
 
@@ -331,6 +359,7 @@ function mapApiStory(story) {
     views: formatCompactNumber(story.total_views),
     totalViews: Number(story.total_views || 0),
     comments: formatCompactNumber(story.total_comments),
+    totalComments: Number(story.total_comments || 0),
     genre: story.main_genre || 'Chat Story',
     tags: Array.isArray(story.tags) ? story.tags : [],
     description: story.description || '',
@@ -385,12 +414,22 @@ function getStoryTitle(story, t) {
   return story.title
 }
 
+const STORY_GENRE_LABEL_KEYS = {
+  'Modern Romance': 'modernRomance',
+  'Fantasy Romance': 'fantasyRomance',
+  LGBT: 'lgbt',
+  'CP Idol': 'cpIdol',
+}
+
 function getStoryGenre(story, t) {
   if (!story?.genre || story.genre === 'Chat Story') {
     return t('chatStoryHomePage.chatStory')
   }
 
-  return story.genre
+  const key = STORY_GENRE_LABEL_KEYS[story.genre]
+  return key
+    ? t(`chatStoryHomePage.${key}`)
+    : story.genre
 }
 
 function getBadgeLabel(badge, t) {
@@ -461,7 +500,7 @@ function StoryCover({ story, onOpen }) {
         style={{ color: 'var(--shadow-text-secondary)' }}
       >
         <i className="fa-regular fa-eye text-[9px]" />
-        <span>{story.views}</span>
+        <span>{formatCompactNumber(story.totalViews ?? story.views)}</span>
       </div>
 
       <div
@@ -471,7 +510,7 @@ function StoryCover({ story, onOpen }) {
         {story.genre
           ? genre
           : t('chatStoryHomePage.comments', {
-              count: story.comments || 0,
+              count: formatCompactNumber(story.totalComments ?? story.comments ?? 0),
             })}
       </div>
     </button>
@@ -508,7 +547,7 @@ function SectionHeader({ icon, title, onMore }) {
 
 export default function ChatStoryHomePage() {
   const navigate = useNavigate()
-  const { language, t } = useDisplayTranslation()
+  const { t } = useDisplayTranslation()
   const [chatStories, setChatStories] = useState([])
   const [loadingStories, setLoadingStories] = useState(true)
   const [storiesError, setStoriesError] = useState('')
@@ -802,7 +841,7 @@ export default function ChatStoryHomePage() {
           <section key={section.key} className="mt-7">
             <SectionHeader
               icon={section.icon}
-              title={section.title}
+              title={t(`chatStoryHomePage.${section.titleKey}`)}
               onMore={() => openCollection(section.key)}
             />
 
@@ -840,7 +879,7 @@ export default function ChatStoryHomePage() {
                   {category.icon}
                 </span>
                 <span className="relative z-10 block max-w-[72%] text-[14px] font-black uppercase leading-[17px] text-white drop-shadow-sm">
-                  {category.title}
+                  {t(`chatStoryHomePage.${category.labelKey}`)}
                 </span>
               </button>
             ))}
@@ -864,7 +903,6 @@ export default function ChatStoryHomePage() {
                 const title = getStoryTitle(story, t)
                 const updatedTime = formatUpdatedTime(
                   story.updatedAt,
-                  language,
                   t
                 )
 
@@ -902,7 +940,7 @@ export default function ChatStoryHomePage() {
                         style={{ color: 'var(--shadow-text-secondary)' }}
                       >
                         {t('chatStoryHomePage.updatedEpisode', {
-                          count: story.totalEpisodes,
+                          count: formatDisplayNumber(story.totalEpisodes),
                           time: updatedTime,
                         })}
                       </div>
@@ -976,7 +1014,7 @@ export default function ChatStoryHomePage() {
                 >
                   <span>
                     <i className="fa-regular fa-eye mr-1" />
-                    {recommendedStory.views}
+                    {formatCompactNumber(recommendedStory.totalViews ?? recommendedStory.views)}
                   </span>
 
                   <span>{getStoryGenre(recommendedStory, t)}</span>
