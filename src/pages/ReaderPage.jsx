@@ -18,6 +18,7 @@ import RichEpisodeContent, {
   episodeContentToPlainText,
 } from '../components/reader/RichEpisodeContent'
 import { trackSectionQualifiedRead } from '../services/storySectionRankTracking'
+import GoogleAdBanner from '../components/ads/GoogleAdBanner'
 
 const STORY_TRANSLATION_ENABLED = false
 
@@ -4158,6 +4159,12 @@ function ContinuousEpisodeBlock({
 </section>
 
           {showToBeContinued ? <ToBeContinued theme={theme} /> : null}
+
+{active ? (
+  <div className="my-6 px-4">
+    <GoogleAdBanner slot={import.meta.env.VITE_ADSENSE_READER_SLOT} />
+  </div>
+) : null}
 
           <ReaderEndPanel
             story={story}
