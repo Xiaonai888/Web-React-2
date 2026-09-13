@@ -1,405 +1,944 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
-const CAMBODIA_TIME_ZONE = 'Asia/Phnom_Penh'
-const CAMBODIA_OFFSET_MS = 7 * 60 * 60 * 1000
+registerTranslationNamespace('monthlyVoteTab', {
+  en: {
+    monthlyVote: 'Monthly Vote',
+    defaultHeroDescription: "Vote for your favorite story or author and help crown this month's winner.",
+    eventAnnouncement: 'Event announcement',
+    votes: '{{count}} Votes',
+    vote: 'Vote',
+    pastWinners: 'Past Winners',
+    closePastWinners: 'Close past winners',
+    ended: 'Ended',
+    story: 'Story',
+    noStoryWinner: 'No Story winner',
+    author: 'Author',
+    noAuthorWinner: 'No Author winner',
+    noPreviousWinners: 'No previous winners yet',
+    untitledStory: 'Untitled Story',
+    failedLoad: 'Failed to load Monthly Vote',
+    inactive: 'Monthly Vote is not active.',
+    zeroBalance: 'Your Vote Balance is 0.',
+    failedCast: 'Failed to cast Vote',
+    voteSent: '1 Vote sent to {{name}}.',
+    failedPreviousWinners: 'Failed to load previous winners',
+    voteBalance: 'Vote Balance',
+    countdown: '{{days}}d {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: 'Ends in',
+    noActive: 'No active Monthly Vote',
+    topThreeNow: 'Top 3 Right Now',
+    viewAll: 'View All',
+    noCandidatesYet: 'No candidates yet',
+    myVoteStatus: 'My Vote Status',
+    candidates: 'Candidates',
+    winner: 'Winner',
+    rules: 'Rules',
+    rulesSubtitle: 'Read the voting rules.',
+    pastWinnersSubtitle: 'See previous winners.',
+    howItWorks: 'How it works',
+    howItWorksSubtitle: 'Learn about voting.',
+    voteNow: 'Vote Now',
+  },
+  km: {
+    monthlyVote: 'ការបោះឆ្នោតប្រចាំខែ',
+    defaultHeroDescription: 'បោះឆ្នោតឱ្យរឿង ឬអ្នកនិពន្ធដែលអ្នកចូលចិត្ត ដើម្បីជួយជ្រើសរើសអ្នកឈ្នះប្រចាំខែនេះ។',
+    eventAnnouncement: 'សេចក្តីជូនដំណឹងព្រឹត្តិការណ៍',
+    votes: '{{count}} សំឡេង',
+    vote: 'បោះឆ្នោត',
+    pastWinners: 'អ្នកឈ្នះកន្លងមក',
+    closePastWinners: 'បិទអ្នកឈ្នះកន្លងមក',
+    ended: 'បានបញ្ចប់',
+    story: 'រឿង',
+    noStoryWinner: 'មិនមានរឿងឈ្នះ',
+    author: 'អ្នកនិពន្ធ',
+    noAuthorWinner: 'មិនមានអ្នកនិពន្ធឈ្នះ',
+    noPreviousWinners: 'មិនទាន់មានអ្នកឈ្នះកន្លងមក',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    failedLoad: 'មិនអាចផ្ទុកការបោះឆ្នោតប្រចាំខែបានទេ',
+    inactive: 'ការបោះឆ្នោតប្រចាំខែមិនកំពុងដំណើរការទេ។',
+    zeroBalance: 'Vote Balance របស់អ្នកគឺ 0។',
+    failedCast: 'មិនអាចបោះឆ្នោតបានទេ',
+    voteSent: 'បានផ្ញើ 1 សំឡេងទៅ {{name}}។',
+    failedPreviousWinners: 'មិនអាចផ្ទុកអ្នកឈ្នះកន្លងមកបានទេ',
+    voteBalance: 'Vote Balance',
+    countdown: '{{days}}ថ្ងៃ {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: 'បញ្ចប់ក្នុង',
+    noActive: 'មិនមានការបោះឆ្នោតប្រចាំខែកំពុងដំណើរការ',
+    topThreeNow: 'កំពូល 3 ឥឡូវនេះ',
+    viewAll: 'មើលទាំងអស់',
+    noCandidatesYet: 'មិនទាន់មានបេក្ខភាព',
+    myVoteStatus: 'ស្ថានភាពបោះឆ្នោតរបស់ខ្ញុំ',
+    candidates: 'បេក្ខភាព',
+    winner: 'អ្នកឈ្នះ',
+    rules: 'ច្បាប់',
+    rulesSubtitle: 'អានច្បាប់នៃការបោះឆ្នោត។',
+    pastWinnersSubtitle: 'មើលអ្នកឈ្នះកន្លងមក។',
+    howItWorks: 'របៀបដំណើរការ',
+    howItWorksSubtitle: 'ស្វែងយល់ពីការបោះឆ្នោត។',
+    voteNow: 'បោះឆ្នោតឥឡូវនេះ',
+  },
+  zh: {
+    monthlyVote: '月度投票',
+    defaultHeroDescription: '为你最喜欢的故事或作者投票，帮助选出本月冠军。',
+    eventAnnouncement: '活动公告',
+    votes: '{{count}} 票',
+    vote: '投票',
+    pastWinners: '往期获奖者',
+    closePastWinners: '关闭往期获奖者',
+    ended: '已结束',
+    story: '故事',
+    noStoryWinner: '暂无故事获奖者',
+    author: '作者',
+    noAuthorWinner: '暂无作者获奖者',
+    noPreviousWinners: '暂无往期获奖者',
+    untitledStory: '无标题故事',
+    failedLoad: '无法加载月度投票',
+    inactive: '月度投票当前未开启。',
+    zeroBalance: '你的投票余额为 0。',
+    failedCast: '投票失败',
+    voteSent: '已向 {{name}} 投出 1 票。',
+    failedPreviousWinners: '无法加载往期获奖者',
+    voteBalance: '投票余额',
+    countdown: '{{days}}天 {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: '结束倒计时',
+    noActive: '当前没有月度投票',
+    topThreeNow: '当前前三名',
+    viewAll: '查看全部',
+    noCandidatesYet: '暂无候选者',
+    myVoteStatus: '我的投票状态',
+    candidates: '候选者',
+    winner: '获奖日期',
+    rules: '规则',
+    rulesSubtitle: '查看投票规则。',
+    pastWinnersSubtitle: '查看往期获奖者。',
+    howItWorks: '活动方式',
+    howItWorksSubtitle: '了解投票方式。',
+    voteNow: '立即投票',
+  },
+  ja: {
+    monthlyVote: '月間投票',
+    defaultHeroDescription: 'お気に入りのストーリーや作者に投票して、今月の勝者を決めましょう。',
+    eventAnnouncement: 'イベントのお知らせ',
+    votes: '{{count}}票',
+    vote: '投票',
+    pastWinners: '過去の受賞者',
+    closePastWinners: '過去の受賞者を閉じる',
+    ended: '終了',
+    story: 'ストーリー',
+    noStoryWinner: 'ストーリー受賞者はいません',
+    author: '作者',
+    noAuthorWinner: '作者の受賞者はいません',
+    noPreviousWinners: '過去の受賞者はまだいません',
+    untitledStory: '無題のストーリー',
+    failedLoad: '月間投票を読み込めませんでした',
+    inactive: '月間投票は現在開催されていません。',
+    zeroBalance: '投票残高は 0 です。',
+    failedCast: '投票できませんでした',
+    voteSent: '{{name}} に1票を投票しました。',
+    failedPreviousWinners: '過去の受賞者を読み込めませんでした',
+    voteBalance: '投票残高',
+    countdown: '{{days}}日 {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: '終了まで',
+    noActive: '開催中の月間投票はありません',
+    topThreeNow: '現在のトップ3',
+    viewAll: 'すべて見る',
+    noCandidatesYet: '候補者はまだいません',
+    myVoteStatus: '投票ステータス',
+    candidates: '候補者',
+    winner: '勝者',
+    rules: 'ルール',
+    rulesSubtitle: '投票ルールを確認します。',
+    pastWinnersSubtitle: '過去の受賞者を確認します。',
+    howItWorks: '仕組み',
+    howItWorksSubtitle: '投票方法を確認します。',
+    voteNow: '今すぐ投票',
+  },
+  ko: {
+    monthlyVote: '월간 투표',
+    defaultHeroDescription: '좋아하는 스토리나 작가에게 투표하여 이번 달의 우승자를 뽑아 주세요.',
+    eventAnnouncement: '이벤트 공지',
+    votes: '{{count}}표',
+    vote: '투표',
+    pastWinners: '지난 우승자',
+    closePastWinners: '지난 우승자 닫기',
+    ended: '종료',
+    story: '스토리',
+    noStoryWinner: '스토리 우승자가 없습니다',
+    author: '작가',
+    noAuthorWinner: '작가 우승자가 없습니다',
+    noPreviousWinners: '지난 우승자가 아직 없습니다',
+    untitledStory: '제목 없는 스토리',
+    failedLoad: '월간 투표를 불러오지 못했습니다',
+    inactive: '월간 투표가 진행 중이 아닙니다.',
+    zeroBalance: '투표 잔액이 0입니다.',
+    failedCast: '투표하지 못했습니다',
+    voteSent: '{{name}}에게 1표를 보냈습니다.',
+    failedPreviousWinners: '지난 우승자를 불러오지 못했습니다',
+    voteBalance: '투표 잔액',
+    countdown: '{{days}}일 {{hours}}:{{minutes}}:{{seconds}}',
+    endsIn: '종료까지',
+    noActive: '진행 중인 월간 투표가 없습니다',
+    topThreeNow: '현재 TOP 3',
+    viewAll: '모두 보기',
+    noCandidatesYet: '후보가 아직 없습니다',
+    myVoteStatus: '내 투표 상태',
+    candidates: '후보',
+    winner: '우승자',
+    rules: '규칙',
+    rulesSubtitle: '투표 규칙을 확인하세요.',
+    pastWinnersSubtitle: '지난 우승자를 확인하세요.',
+    howItWorks: '이용 방법',
+    howItWorksSubtitle: '투표 방법을 알아보세요.',
+    voteNow: '지금 투표',
+  },
+})
 
-function getCambodiaDate(value = new Date()) {
-  return new Date(
-    new Date(value).getTime() +
-      CAMBODIA_OFFSET_MS
-  )
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+function getReaderToken() {
+  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
 }
 
-const BENEFITS = [
-  { icon: 'fa-gem', label: 'Diamonds', color: 'text-[#7C3AED] dark:text-violet-300', bg: 'bg-[#F1EAFE] dark:bg-violet-500/15' },
-  { icon: 'fa-coins', label: 'Coins', color: 'text-[#E9A400] dark:text-amber-300', bg: 'bg-[#FFF6D8] dark:bg-amber-500/15' },
-  { icon: 'fa-tag', label: '10% Off', color: 'text-[#F05275] dark:text-rose-300', bg: 'bg-[#FFE8EF] dark:bg-rose-500/15' },
-  { icon: 'fa-calendar-days', label: 'Every Sunday', color: 'text-[#4F86F7] dark:text-blue-300', bg: 'bg-[#EAF1FF] dark:bg-blue-500/15' },
-]
+function formatNumber(value) {
+  const number = Number(value || 0)
+  if (!Number.isFinite(number)) return '0'
 
-const RULES = [
-  'Discount applies to episode unlocks',
-  'Available every Sunday',
-  'Limited to the event time',
-]
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: number >= 10000 ? 0 : 1,
+  }).format(number)
+}
 
-function getNextSunday(
-  now,
-  skipToday = false
-) {
-  const cambodiaDate =
-    getCambodiaDate(now)
+function formatCountdown(targetMs, nowMs, t) {
+  const seconds = Math.max(0, Math.floor((targetMs - nowMs) / 1000))
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
 
-  let daysUntilSunday =
-    (7 - cambodiaDate.getUTCDay()) % 7
+  return t('monthlyVoteTab.countdown', {
+    days: new Intl.NumberFormat(getDisplayLanguageId()).format(days),
+    hours: String(hours).padStart(2, '0'),
+    minutes: String(minutes).padStart(2, '0'),
+    seconds: String(secs).padStart(2, '0'),
+  })
+}
 
-  if (
-    daysUntilSunday === 0 &&
-    skipToday
-  ) {
-    daysUntilSunday = 7
+function getInitial(value) {
+  return String(value || 'A').trim().slice(0, 1).toUpperCase()
+}
+
+function getCampaignMonthLabel(campaign, now = new Date()) {
+  if (campaign?.month_key) {
+    const date = new Date(`${campaign.month_key}T12:00:00.000Z`)
+    if (!Number.isNaN(date.getTime())) {
+      return new Intl.DateTimeFormat(getDisplayLanguageId(), {
+        timeZone: 'Asia/Phnom_Penh',
+        month: 'long',
+        year: 'numeric',
+      }).format(date)
+    }
   }
-
-  const sundayMidnightUtc = Date.UTC(
-    cambodiaDate.getUTCFullYear(),
-    cambodiaDate.getUTCMonth(),
-    cambodiaDate.getUTCDate() +
-      daysUntilSunday
-  )
-
-  return new Date(
-    sundayMidnightUtc -
-      CAMBODIA_OFFSET_MS
-  )
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
+    timeZone: 'Asia/Phnom_Penh',
+    month: 'long',
+    year: 'numeric',
+  }).format(now)
 }
 
-function getEndOfToday(now) {
-  const cambodiaDate =
-    getCambodiaDate(now)
-
-  const nextMidnightUtc = Date.UTC(
-    cambodiaDate.getUTCFullYear(),
-    cambodiaDate.getUTCMonth(),
-    cambodiaDate.getUTCDate() + 1
-  )
-
-  return new Date(
-    nextMidnightUtc -
-      CAMBODIA_OFFSET_MS -
-      1
-  )
-}
-
-function getTimeParts(target, now) {
-  const difference = Math.max(0, target.getTime() - now.getTime())
-  const totalSeconds = Math.floor(difference / 1000)
-
-  return {
-    days: Math.floor(totalSeconds / 86400),
-    hours: Math.floor((totalSeconds % 86400) / 3600),
-    minutes: Math.floor((totalSeconds % 3600) / 60),
-    seconds: totalSeconds % 60,
-  }
-}
-
-function pad(value) {
-  return String(value).padStart(2, '0')
-}
-
-function formatEventDate(date) {
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: CAMBODIA_TIME_ZONE,
-    weekday: 'long',
+function getWinnerLabel(campaign) {
+  if (!campaign?.ends_at) return '--'
+  const date = new Date(campaign.ends_at)
+  if (Number.isNaN(date.getTime())) return '--'
+  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
+    timeZone: 'Asia/Phnom_Penh',
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
   }).format(date)
 }
 
-function CountdownBox({ value, label }) {
-  return (
-    <div className="text-center">
-      <div className="flex h-12 min-w-[54px] items-center justify-center rounded-[10px] bg-white/10 px-3 text-[22px] font-black text-white ring-1 ring-white/10 backdrop-blur-sm">
-        {pad(value)}
-      </div>
-      <div className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-white/45">
-        {label}
-      </div>
-    </div>
-  )
+function normalizeCandidate(candidate, t) {
+  const subtitle = String(candidate?.display_subtitle || '').trim()
+  const username = candidate?.candidate_type === 'author' && subtitle.startsWith('@') ? subtitle.slice(1) : ''
+  return {
+    id: candidate.id,
+    entityId: candidate.entity_id,
+    kind: candidate.candidate_type === 'author' ? 'author' : 'story',
+    name: candidate.display_name || (candidate.candidate_type === 'author' ? t('monthlyVoteTab.author') : t('monthlyVoteTab.untitledStory')),
+    subtitle: subtitle || (candidate.candidate_type === 'author' ? t('monthlyVoteTab.author') : t('monthlyVoteTab.story')),
+    image: candidate.image_url || '',
+    username,
+    votes: Number(candidate.vote_count || 0),
+    rank: Number(candidate.rank || candidate.final_rank || 0),
+  }
 }
 
-function BenefitItem({ item }) {
-  return (
-    <div className="min-w-0 text-center">
-      <span className={`mx-auto flex h-10 w-10 items-center justify-center rounded-[14px] ${item.bg} ${item.color}`}>
-        <i className={`fa-solid ${item.icon} text-[18px]`} />
-      </span>
-      <div className="mt-2 truncate text-[11px] font-semibold text-[var(--shadow-text-primary)]">
-        {item.label}
-      </div>
-    </div>
-  )
+
+function getDefaultDesign(t) {
+  return {
+    badge_text: t('monthlyVoteTab.monthlyVote'),
+    hero_title: '',
+    hero_description: t('monthlyVoteTab.defaultHeroDescription'),
+    hero_image_url: '',
+    background_type: 'gradient',
+    background_value: 'linear-gradient(135deg,#fff8fb,#fff4f8,#ffeef4)',
+    text_color: '#111827',
+    accent_color: '#ff3f70',
+    cta_text: '',
+    cta_url: '',
+    show_hero_image: true,
+    show_countdown: true,
+    show_vote_balance: true,
+    show_top_three: true,
+    show_candidate_list: true,
+  }
 }
 
-function LiveEventCard({ now, onExplore }) {
-  const countdown = getTimeParts(getEndOfToday(now), now)
+function getHeroBackground(design) {
+  if (design?.background_type === 'image' && design?.background_value) {
+    return {
+      backgroundImage: `linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,.08)), url("${design.background_value}")`,
+      backgroundPosition: 'center',
+      backgroundSize: 'cover',
+    }
+  }
+
+  if (design?.background_type === 'solid') {
+    return { background: design.background_value || '#fff4f8' }
+  }
+
+  return {
+    background: design?.background_value || 'linear-gradient(135deg,#fff8fb,#fff4f8,#ffeef4)',
+  }
+}
+
+function AnnouncementCard({ item, onOpen }) {
+  const { t } = useDisplayTranslation()
 
   return (
-    <section className="overflow-hidden rounded-[26px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_18px_45px_rgba(41,29,76,0.12)]">
-      <div className="relative min-h-[350px] overflow-hidden bg-[linear-gradient(135deg,#19172E_0%,#22163E_58%,#060608_100%)] px-5 pb-6 pt-5 text-white">
-        <div
-          className="absolute right-0 top-0 h-full w-[45%] bg-black"
-          aria-label="Coin artwork placeholder"
+    <section
+      className="mt-4 overflow-hidden rounded-[20px] border border-black/5 p-4 shadow-[0_8px_24px_rgba(31,41,55,0.06)]"
+      style={{ background: item.background_color || '#ffffff', color: item.text_color || '#111827' }}
+    >
+      {item.image_url ? (
+        <img
+          src={item.image_url}
+          alt={item.title || t('monthlyVoteTab.eventAnnouncement')}
+          className="mb-3 max-h-[260px] w-full rounded-[16px] object-cover"
+          loading="lazy"
+          decoding="async"
         />
-        <div className="absolute -right-12 top-16 h-48 w-48 rounded-full bg-[#7C3AED]/35 blur-3xl" />
-        <div className="absolute right-[8%] top-[43%] h-28 w-28 rounded-full border border-white/10 bg-white/[0.03]" />
-        <div className="absolute right-[14%] top-[49%] h-16 w-16 rounded-full border border-[#A855F7]/30 bg-black" />
+      ) : null}
 
-        <div className="absolute right-4 top-5 z-20 flex h-[76px] w-[76px] rotate-6 items-center justify-center rounded-full bg-[linear-gradient(145deg,#A855F7,#6D28D9)] text-center shadow-[0_12px_30px_rgba(124,58,237,0.42)] ring-2 ring-white/55">
-          <span className="text-[20px] font-black leading-[20px]">
-            10%
-            <span className="block text-[13px]">OFF</span>
-          </span>
+      {item.badge_text ? (
+        <div
+          className="text-[9px] font-black uppercase tracking-[0.14em]"
+          style={{ color: item.accent_color || '#ff3f70' }}
+        >
+          {item.badge_text}
         </div>
+      ) : null}
 
-        <div className="relative z-10 max-w-[68%]">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#F0E7FF] px-3 py-2 text-[11px] font-black text-[#7C3AED]">
-            <i className="fa-solid fa-bolt text-[10px]" />
-            Happening Now
-          </div>
+      {item.title ? <h3 className="mt-1 text-[17px] font-black leading-snug">{item.title}</h3> : null}
+      {item.description ? <p className="mt-2 text-[11px] font-semibold leading-5 opacity-75">{item.description}</p> : null}
 
-          <h2 className="mt-6 text-[34px] font-black leading-[1.04] tracking-[-0.04em]">
-            Black Sunday
-          </h2>
-
-          <p className="mt-5 text-[18px] font-bold leading-7 text-white">
-            <span className="text-[#B56CFF]">10%</span> discount on
-            <span className="block">Diamond &amp; Coin unlocks</span>
-          </p>
-
-          <div className="mt-7">
-            <div className="mb-3 text-[13px] font-semibold text-white/65">Ends in</div>
-
-            <div className="flex items-start gap-2">
-              <CountdownBox value={countdown.hours} label="Hrs" />
-              <span className="pt-3 text-[20px] font-black text-white/45">:</span>
-              <CountdownBox value={countdown.minutes} label="Min" />
-              <span className="pt-3 text-[20px] font-black text-white/45">:</span>
-              <CountdownBox value={countdown.seconds} label="Sec" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-[var(--shadow-bg-surface)] px-4 pb-4 pt-4">
-        <div className="grid grid-cols-4 gap-2">
-          {BENEFITS.map((item) => (
-            <BenefitItem key={item.label} item={item} />
-          ))}
-        </div>
-
+      {item.button_text && item.button_url ? (
         <button
           type="button"
-          onClick={onExplore}
-          className="mt-4 flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[linear-gradient(90deg,#6D3DF1_0%,#D865DD_100%)] px-5 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(124,58,237,0.24)] active:scale-[0.99]"
+          onClick={() => onOpen(item.button_url)}
+          className="mt-3 min-h-9 rounded-full px-4 text-[11px] font-black text-white active:scale-[0.98]"
+          style={{ background: item.accent_color || '#ff3f70' }}
         >
-          See Eligible Stories
-          <i className="fa-solid fa-chevron-right text-[12px]" />
+          {item.button_text}
         </button>
-      </div>
+      ) : null}
     </section>
   )
 }
 
-function NoEventTodayCard({ nextEvent, countdown }) {
+function CandidateImage({ candidate }) {
+  if (candidate?.image) {
+    return <img src={candidate.image} alt={candidate.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+  }
   return (
-    <section className="overflow-hidden rounded-[24px] border border-[#E5E1EF] bg-[linear-gradient(135deg,#1A1730,#09090B)] px-5 py-6 text-white shadow-[0_18px_45px_rgba(41,29,76,0.12)]">
-      <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-[11px] font-black text-[#C89BFF] ring-1 ring-white/10">
-        <i className="fa-regular fa-calendar" />
-        Weekly Event
-      </div>
-
-      <h2 className="mt-5 text-[27px] font-black tracking-[-0.03em]">
-        No Event Today
-      </h2>
-
-      <p className="mt-2 max-w-[410px] text-[13px] font-medium leading-6 text-white/65">
-        Black Sunday returns with 10% off Diamond and Coin episode unlocks.
-      </p>
-
-      <div className="mt-5 rounded-[18px] bg-black/45 px-4 py-4 ring-1 ring-white/10">
-        <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/45">
-          Next Black Sunday
-        </div>
-        <div className="mt-1 text-[16px] font-black">{formatEventDate(nextEvent)}</div>
-        <div className="mt-3 flex items-center gap-2 text-[13px] font-bold text-[#B56CFF]">
-          <i className="fa-regular fa-clock" />
-          Starts in {countdown.days}d {countdown.hours}h {countdown.minutes}m
-        </div>
-      </div>
-    </section>
+    <div className="flex h-full w-full items-center justify-center bg-[#fff2f6] text-[20px] font-black text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300">
+      {getInitial(candidate?.name)}
+    </div>
   )
 }
 
-function UpcomingEventCard({ eventDate, countdown }) {
+function PodiumCard({ candidate, rank, onOpen }) {
+  const { t } = useDisplayTranslation()
+  if (!candidate) return <div className="min-w-0 flex-1" />
+  const isFirst = rank === 1
+  const tone = rank === 1
+    ? ['text-[#f6b800]', 'border-[#f6c94f] dark:border-amber-400/30', 'bg-[#f6b800] text-white', 'bg-[#fffaf0] dark:bg-amber-500/10']
+    : rank === 2
+      ? ['text-[#aab3c2]', 'border-[#d5dbe5] dark:border-slate-400/30', 'bg-[#aab3c2] text-white', 'bg-[#fbfcff] dark:bg-slate-500/10']
+      : ['text-[#d9823b]', 'border-[#edc19e] dark:border-orange-400/30', 'bg-[#d9823b] text-white', 'bg-[#fffaf7] dark:bg-orange-500/10']
+
   return (
-    <section className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]">
-      <div className="flex items-center gap-4">
-        <div className="flex h-[112px] w-[112px] shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(145deg,#F5EFFF,#FFF8F0)]">
-          <div className="relative flex h-[78px] w-[70px] flex-col items-center rounded-[17px] bg-[var(--shadow-bg-surface)] pt-5 shadow-[0_10px_22px_rgba(124,58,237,0.16)] ring-1 ring-[var(--shadow-border)]">
-            <span className="absolute -top-2 left-3 h-4 w-2 rounded-full bg-[#7C3AED]" />
-            <span className="absolute -top-2 right-3 h-4 w-2 rounded-full bg-[#7C3AED]" />
-            <i className="fa-solid fa-star text-[27px] text-[#8B5CF6]" />
-          </div>
+    <button type="button" onClick={() => onOpen(candidate)} className={`relative min-w-0 flex-1 rounded-[18px] border px-2 pb-3 pt-6 text-center shadow-[0_8px_22px_rgba(31,41,55,0.06)] active:scale-[0.98] ${tone[1]} ${tone[3]} ${isFirst ? '-mt-3' : 'mt-3'}`}>
+      <i className={`fa-solid fa-crown absolute -top-4 left-1/2 -translate-x-1/2 text-[22px] ${tone[0]}`} />
+      <div className={`relative mx-auto overflow-hidden rounded-[14px] bg-[var(--shadow-bg-soft)] ${isFirst ? 'h-[112px] w-[82px]' : 'h-[94px] w-[70px]'}`}>
+        <CandidateImage candidate={candidate} />
+        <span className={`absolute -bottom-2 left-1/2 flex h-7 min-w-7 -translate-x-1/2 items-center justify-center rounded-full px-2 text-[11px] font-black ring-2 ring-white dark:ring-[var(--shadow-bg-surface)] ${tone[2]}`}>{rank}</span>
+      </div>
+      <div className="mt-4 line-clamp-1 text-[11px] font-black text-[var(--shadow-text-primary)]">{candidate.name}</div>
+      <div className="mt-1 flex items-center justify-center gap-1 text-[10px] font-bold text-[var(--shadow-text-secondary)]">
+        <i className="fa-solid fa-heart text-[#ff4f7a]" />
+        <span>{t('monthlyVoteTab.votes', { count: formatNumber(candidate.votes) })}</span>
+      </div>
+    </button>
+  )
+}
+
+function CandidateRow({ candidate, rank, onOpen, onVote, voting }) {
+  const { t } = useDisplayTranslation()
+  const rankTone = rank === 1 ? 'text-[#f6b800]' : rank === 2 ? 'text-[var(--shadow-text-tertiary)] dark:text-slate-300' : rank === 3 ? 'text-[#d9823b]' : 'text-[var(--shadow-text-secondary)]'
+  return (
+    <div className="flex items-center gap-3 border-b border-[var(--shadow-border)] px-3 py-3 last:border-b-0">
+      <div className={`w-6 shrink-0 text-center text-[18px] font-black ${rankTone}`}>{rank}</div>
+      <button type="button" onClick={() => onOpen(candidate)} className="h-[58px] w-[44px] shrink-0 overflow-hidden rounded-[9px] bg-[var(--shadow-bg-soft)] active:scale-95">
+        <CandidateImage candidate={candidate} />
+      </button>
+      <button type="button" onClick={() => onOpen(candidate)} className="min-w-0 flex-1 text-left active:opacity-70">
+        <div className="line-clamp-1 text-[12px] font-black text-[var(--shadow-text-primary)]">{candidate.name}</div>
+        <div className="mt-1 line-clamp-1 text-[10px] font-semibold text-[var(--shadow-text-secondary)]">{candidate.subtitle}</div>
+        <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[var(--shadow-text-secondary)]">
+          <i className="fa-solid fa-heart text-[#ff4f7a]" />
+          <span>{t('monthlyVoteTab.votes', { count: formatNumber(candidate.votes) })}</span>
         </div>
+      </button>
+      <button type="button" disabled={voting} onClick={() => onVote(candidate)} className="flex h-9 min-w-[76px] shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#ff4f7a] to-[#f52f68] px-4 text-[11px] font-black text-white shadow-sm active:scale-95 disabled:opacity-60">
+        <i className="fa-regular fa-heart text-[11px]" />
+        {voting ? '...' : t('monthlyVoteTab.vote')}
+      </button>
+    </div>
+  )
+}
 
-        <div className="min-w-0 flex-1">
-          <div className="inline-flex rounded-full bg-[#F1EAFE] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#7C3AED]">
-            Next Event
-          </div>
-
-          <h3 className="mt-3 text-[18px] font-black text-[var(--shadow-text-primary)]">
-            Next Black Sunday
-          </h3>
-
-          <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
-            <i className="fa-regular fa-calendar text-[#8B5CF6]" />
-            <span>{formatEventDate(eventDate)}</span>
-          </div>
-
-          <div className="mt-3 flex items-center gap-2 text-[12px] font-black text-[#7C3AED]">
-            <i className="fa-regular fa-clock" />
-            Starts in {countdown.days}d {countdown.hours}h {countdown.minutes}m
-          </div>
-        </div>
-
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[#7C3AED]">
-          <i className="fa-solid fa-chevron-right text-[12px]" />
+function QuickLink({ icon, title, subtitle, onClick }) {
+  return (
+    <button type="button" onClick={onClick} className="min-w-0 rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 text-left shadow-[0_6px_18px_rgba(31,41,55,0.04)] active:scale-[0.98]">
+      <div className="flex items-start gap-2">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300">
+          <i className={`fa-solid ${icon} text-[12px]`} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[11px] font-black text-[var(--shadow-text-primary)]">{title}</span>
+          <span className="mt-1 block text-[9px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">{subtitle}</span>
         </span>
       </div>
-    </section>
+    </button>
   )
 }
 
-function HowItWorksCard() {
+function WinnerItem({ winner, onOpen }) {
+  const { t } = useDisplayTranslation()
+  const candidate = normalizeCandidate(winner, t)
+  const rankTone =
+    candidate.rank === 1
+      ? 'bg-[#fff8dc] text-[#c58b00] dark:bg-amber-500/10 dark:text-amber-300'
+      : candidate.rank === 2
+        ? 'bg-[#f3f5f8] text-[#7c8798] dark:bg-slate-500/10 dark:text-slate-300'
+        : 'bg-[#fff2e8] text-[#b96b2e] dark:bg-orange-500/10 dark:text-orange-300'
+
   return (
-    <section className="mt-4 rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]">
-      <div className="flex items-center gap-4">
-        <div className="flex h-[112px] w-[112px] shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(145deg,#FFF4EC,#F5EFFF)]">
-          <span className="flex h-[70px] w-[70px] items-center justify-center rounded-[20px] bg-[#7C3AED] text-[30px] text-[#FFD85C] shadow-[0_12px_26px_rgba(124,58,237,0.22)]">
-            <i className="fa-solid fa-gift" />
-          </span>
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <h3 className="text-[18px] font-black text-[var(--shadow-text-primary)]">How it works</h3>
-
-          <div className="mt-3 space-y-2">
-            {RULES.map((rule) => (
-              <div key={rule} className="flex items-start gap-2 text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
-                <i className="fa-regular fa-circle-check mt-1 text-[12px] text-[#7C3AED]" />
-                <span>{rule}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[#7C3AED]">
-          <i className="fa-solid fa-question text-[14px]" />
-        </span>
-      </div>
-    </section>
+    <button type="button" onClick={() => onOpen(candidate)} className="flex w-full items-center gap-3 rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-2.5 text-left active:scale-[0.99]">
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-black ${rankTone}`}>
+        {candidate.rank}
+      </span>
+      <span className={`shrink-0 overflow-hidden bg-[var(--shadow-bg-soft)] ${candidate.kind === 'author' ? 'h-11 w-11 rounded-full' : 'h-12 w-9 rounded-[8px]'}`}>
+        <CandidateImage candidate={candidate} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block line-clamp-1 text-[11px] font-black text-[var(--shadow-text-primary)]">{candidate.name}</span>
+        <span className="mt-1 block line-clamp-1 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">{candidate.subtitle}</span>
+      </span>
+      <span className="shrink-0 text-[10px] font-black text-[#ff3f70]">{formatNumber(candidate.votes)}</span>
+    </button>
   )
 }
 
-export default function BlackSundayEventTab({
-  mode = 'full',
-  showNoEventToday = true,
-}) {
+function PastWinnersModal({ campaigns, loading, error, onClose, onOpen }) {
+  const { t } = useDisplayTranslation()
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4" onMouseDown={onClose}>
+      <div className="max-h-[82vh] w-full max-w-[520px] overflow-hidden rounded-t-[24px] bg-[var(--shadow-bg-elevated)] shadow-2xl sm:rounded-[24px]" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-4">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#ff3f70]">{t('monthlyVoteTab.monthlyVote')}</div>
+            <h3 className="mt-1 text-[18px] font-black text-[var(--shadow-text-primary)]">{t('monthlyVoteTab.pastWinners')}</h3>
+          </div>
+          <button type="button" onClick={onClose} aria-label={t('monthlyVoteTab.closePastWinners')} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] active:scale-95">
+            <i className="fa-solid fa-xmark" />
+          </button>
+        </div>
+
+        <div className="max-h-[calc(82vh-76px)] overflow-y-auto p-4">
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="h-[190px] animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="rounded-[16px] bg-[#fff0f4] px-4 py-8 text-center text-[11px] font-bold text-[#d92d55] dark:bg-rose-500/10 dark:text-rose-300">{error}</div>
+          ) : campaigns.length ? (
+            <div className="space-y-4">
+              {campaigns.map((item) => (
+                <section key={item.id} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 shadow-[0_6px_18px_rgba(31,41,55,0.04)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">{item.title}</div>
+                      <div className="mt-1 text-[9px] font-bold text-[#9b6575]">{getCampaignMonthLabel(item)}</div>
+                    </div>
+                    <span className="rounded-full bg-[#fff0f5] px-2.5 py-1 text-[9px] font-black text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300">{t('monthlyVoteTab.ended')}</span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <div className="mb-2 flex items-center gap-2 text-[10px] font-black text-[var(--shadow-text-secondary)]">
+                        <i className="fa-solid fa-book-open text-[#ff3f70]" /> {t('monthlyVoteTab.story')}
+                      </div>
+                      <div className="space-y-2">
+                        {(item.winners?.story || []).length ? (
+                          item.winners.story.map((winner) => (
+                            <WinnerItem key={winner.id} winner={winner} onOpen={onOpen} />
+                          ))
+                        ) : (
+                          <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-3 py-5 text-center text-[9px] font-bold text-[var(--shadow-text-tertiary)]">{t('monthlyVoteTab.noStoryWinner')}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-2 flex items-center gap-2 text-[10px] font-black text-[var(--shadow-text-secondary)]">
+                        <i className="fa-solid fa-user text-[#ff3f70]" /> {t('monthlyVoteTab.author')}
+                      </div>
+                      <div className="space-y-2">
+                        {(item.winners?.author || []).length ? (
+                          item.winners.author.map((winner) => (
+                            <WinnerItem key={winner.id} winner={winner} onOpen={onOpen} />
+                          ))
+                        ) : (
+                          <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-3 py-5 text-center text-[9px] font-bold text-[var(--shadow-text-tertiary)]">{t('monthlyVoteTab.noAuthorWinner')}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-10 text-center text-[11px] font-bold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.noPreviousWinners')}</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function MonthlyVoteTab() {
   const navigate = useNavigate()
-  const [now, setNow] = useState(() => new Date())
+  const { t } = useDisplayTranslation()
+  const candidatesRef = useRef(null)
+  const [activeType, setActiveType] = useState('story')
+  const [stories, setStories] = useState([])
+  const [authors, setAuthors] = useState([])
+  const [campaign, setCampaign] = useState(null)
+  const [design, setDesign] = useState(() => getDefaultDesign(t))
+  const [announcements, setAnnouncements] = useState([])
+  const [voteBalance, setVoteBalance] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [notice, setNotice] = useState('')
+  const [votingId, setVotingId] = useState('')
+  const [nowMs, setNowMs] = useState(Date.now())
+  const [showPastWinners, setShowPastWinners] = useState(false)
+  const [pastWinners, setPastWinners] = useState([])
+  const [pastWinnersLoading, setPastWinnersLoading] = useState(false)
+  const [pastWinnersError, setPastWinnersError] = useState('')
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNow(new Date())
-    }, 1000)
-
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000)
     return () => window.clearInterval(timer)
   }, [])
 
-  const isLive =
-    getCambodiaDate(now).getUTCDay() === 0
+  useEffect(() => {
+    let ignore = false
+    async function loadMonthlyVote() {
+      try {
+        setLoading(true)
+        const response = await fetch(`${API_BASE_URL}/api/monthly-vote/active`)
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok === false) throw new Error(data.message || t('monthlyVoteTab.failedLoad'))
+        if (!ignore) {
+          setCampaign(data.campaign || null)
+          setDesign({ ...getDefaultDesign(t), ...(data.design || {}) })
+          setAnnouncements(Array.isArray(data.announcements) ? data.announcements : [])
+          setStories((Array.isArray(data.candidates?.story) ? data.candidates.story : []).map((candidate) => normalizeCandidate(candidate, t)))
+          setAuthors((Array.isArray(data.candidates?.author) ? data.candidates.author : []).map((candidate) => normalizeCandidate(candidate, t)))
+        }
+      } catch (error) {
+        if (!ignore) {
+          setCampaign(null)
+          setDesign(getDefaultDesign(t))
+          setAnnouncements([])
+          setStories([])
+          setAuthors([])
+          setNotice(error.message || t('monthlyVoteTab.failedLoad'))
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+    loadMonthlyVote()
+    return () => {
+      ignore = true
+    }
+  }, [t])
 
-  const upcomingEvent = useMemo(
-    () => getNextSunday(now, isLive),
-    [isLive, now]
-  )
+  useEffect(() => {
+    let ignore = false
+    async function loadVoteBalance() {
+      const token = getReaderToken()
+      if (!token) {
+        setVoteBalance(0)
+        return
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/monthly-vote/balance`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const data = await response.json().catch(() => ({}))
+        if (!ignore && response.ok && data.ok !== false) setVoteBalance(Number(data.vote_balance || 0))
+      } catch {
+        if (!ignore) setVoteBalance(0)
+      }
+    }
+    loadVoteBalance()
+    return () => {
+      ignore = true
+    }
+  }, [])
 
-  const upcomingCountdown = getTimeParts(
-    upcomingEvent,
-    now
-  )
+  const candidates = useMemo(() => {
+    const list = activeType === 'story' ? stories : authors
+    return [...list].sort((first, second) => Number(second.votes || 0) - Number(first.votes || 0))
+  }, [activeType, stories, authors])
 
-  if (mode === 'active-only' && !isLive) {
-    return null
+  const topThree = candidates.slice(0, 3)
+  const podiumOrder = [topThree[1], topThree[0], topThree[2]]
+  const podiumRanks = [2, 1, 3]
+  const monthLabel = getCampaignMonthLabel(campaign, new Date(nowMs))
+  const winnerLabel = getWinnerLabel(campaign)
+  const campaignEndsAt = campaign?.ends_at ? new Date(campaign.ends_at).getTime() : nowMs
+  const heroTitle = design.hero_title || campaign?.title || monthLabel
+  const heroDescription = design.hero_description || getDefaultDesign(t).hero_description
+  const heroStyle = {
+    ...getHeroBackground(design),
+    color: design.text_color || '#111827',
   }
 
-  const showHero = mode !== 'upcoming-only'
-  const showUpcoming = mode !== 'active-only'
 
-  const shouldShowNoEventToday =
-    !isLive &&
-    (
-      mode === 'full' ||
-      (
-        mode === 'upcoming-only' &&
-        showNoEventToday
-      )
-    )
+  const handleActionLink = (url) => {
+    const target = String(url || '').trim()
+    if (!target) return
 
-  const hasTopCard =
-    (showHero && isLive) ||
-    shouldShowNoEventToday
+    if (target.startsWith('/') && !target.startsWith('//')) {
+      navigate(target)
+      return
+    }
+
+    if (/^https?:\/\//i.test(target)) {
+      window.location.assign(target)
+    }
+  }
+
+  const handleOpen = (candidate) => {
+    if (!candidate) return
+    if (candidate.kind === 'author') {
+      if (candidate.username) navigate(`/author/page/${candidate.username}`)
+      return
+    }
+    if (candidate.entityId) navigate(`/story/${candidate.entityId}`)
+  }
+
+  const handleVote = async (candidate) => {
+    const token = getReaderToken()
+    if (!token) {
+      navigate('/login')
+      return
+    }
+    if (!campaign) {
+      setNotice(t('monthlyVoteTab.inactive'))
+      return
+    }
+    if (voteBalance <= 0) {
+      setNotice(t('monthlyVoteTab.zeroBalance'))
+      return
+    }
+    if (votingId) return
+
+    try {
+      setVotingId(candidate.id)
+      setNotice('')
+      const response = await fetch(`${API_BASE_URL}/api/monthly-vote/cast`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ candidate_id: candidate.id, amount: 1 }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (response.status === 401) {
+        navigate('/login')
+        return
+      }
+      if (!response.ok || data.ok === false) throw new Error(data.message || t('monthlyVoteTab.failedCast'))
+
+      const updateCandidate = (item) => item.id === candidate.id
+        ? { ...item, votes: Number(data.candidate_vote_count ?? item.votes) }
+        : item
+
+      if (candidate.kind === 'author') setAuthors((current) => current.map(updateCandidate))
+      else setStories((current) => current.map(updateCandidate))
+
+      setVoteBalance(Number(data.vote_balance || 0))
+      setNotice(t('monthlyVoteTab.voteSent', { name: candidate.name }))
+    } catch (error) {
+      setNotice(error.message || t('monthlyVoteTab.failedCast'))
+    } finally {
+      setVotingId('')
+    }
+  }
+
+  const openPastWinners = async () => {
+    setShowPastWinners(true)
+
+    if (pastWinners.length || pastWinnersLoading) return
+
+    try {
+      setPastWinnersLoading(true)
+      setPastWinnersError('')
+
+      const response = await fetch(`${API_BASE_URL}/api/monthly-vote/previous-winners?limit=6`)
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || t('monthlyVoteTab.failedPreviousWinners'))
+      }
+
+      setPastWinners(Array.isArray(data.campaigns) ? data.campaigns : [])
+    } catch (error) {
+      setPastWinners([])
+      setPastWinnersError(error.message || t('monthlyVoteTab.failedPreviousWinners'))
+    } finally {
+      setPastWinnersLoading(false)
+    }
+  }
+
+  const scrollToCandidates = () => {
+    candidatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
-    <div
-      className={
-        mode === 'active-only'
-          ? 'pt-4'
-          : 'pb-8 pt-6'
-      }
-    >
-      {showHero && isLive ? (
-        <LiveEventCard
-          now={now}
-          onExplore={() => navigate('/discover')}
-        />
-      ) : null}
+    <section className="pb-4 pt-5">
+      <div
+        className="overflow-hidden rounded-[22px] border border-black/5 p-4 shadow-[0_10px_28px_rgba(31,41,55,0.10)]"
+        style={heroStyle}
+      >
+        {design.show_hero_image && design.hero_image_url ? (
+          <img
+            src={design.hero_image_url}
+            alt={heroTitle}
+            className="mb-4 max-h-[300px] w-full rounded-[18px] object-cover"
+            loading="eager"
+            decoding="async"
+          />
+        ) : null}
 
-      {shouldShowNoEventToday ? (
-        <NoEventTodayCard
-          nextEvent={upcomingEvent}
-          countdown={upcomingCountdown}
-        />
-      ) : null}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2" style={{ color: design.accent_color || '#ff3f70' }}>
+              <i className="fa-solid fa-crown text-[14px]" />
+              <span className="text-[10px] font-black uppercase tracking-[0.14em]">
+                {design.badge_text || t('monthlyVoteTab.monthlyVote')}
+              </span>
+            </div>
 
-      {showUpcoming ? (
-        <>
-          <div
-            className={`flex items-center gap-2 ${
-              hasTopCard ? 'mt-7' : ''
-            }`}
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-[11px] bg-[#F1EAFE] text-[#7C3AED]">
-              <i className="fa-regular fa-calendar-days text-[14px]" />
-            </span>
-
-            <h2 className="text-[21px] font-black text-[var(--shadow-text-primary)]">
-              Upcoming
+            <h2 className="mt-2 text-[24px] font-black leading-tight" style={{ color: design.accent_color || '#e91e58' }}>
+              {heroTitle}
             </h2>
 
-            <span className="text-[14px] text-[#F6B800]">
-              ✦
+            <p className="mt-1 text-[10px] font-bold opacity-60">{monthLabel}</p>
+
+            {heroDescription ? (
+              <p className="mt-2 max-w-[390px] text-[12px] font-semibold leading-5 opacity-75">
+                {heroDescription}
+              </p>
+            ) : null}
+
+            {design.cta_text && design.cta_url ? (
+              <button
+                type="button"
+                onClick={() => handleActionLink(design.cta_url)}
+                className="mt-3 min-h-10 rounded-full px-5 text-[11px] font-black text-white shadow-sm active:scale-[0.98]"
+                style={{ background: design.accent_color || '#ff3f70' }}
+              >
+                {design.cta_text}
+              </button>
+            ) : null}
+          </div>
+
+          {design.show_vote_balance ? (
+            <div
+              className="flex shrink-0 items-center gap-2 rounded-full border border-white/60 bg-white/80 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-black/45"
+              style={{ color: design.accent_color || '#e91e58' }}
+            >
+              <i className="fa-solid fa-ticket text-[11px]" />
+              <div>
+                <div className="text-[8px] font-bold leading-none opacity-60">{t('monthlyVoteTab.voteBalance')}</div>
+                <div className="mt-1 text-[14px] font-black leading-none">{formatNumber(voteBalance)}</div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {design.show_countdown ? (
+          <div className="mt-4 flex items-center gap-2 text-[11px] font-bold opacity-75">
+            <i className="fa-regular fa-clock" />
+            <span>
+              {campaign ? (
+                <>{t('monthlyVoteTab.endsIn')} <span className="font-black" style={{ color: design.accent_color || '#ff3f70' }}>{formatCountdown(campaignEndsAt, nowMs, t)}</span></>
+              ) : (
+                <span className="font-black" style={{ color: design.accent_color || '#ff3f70' }}>{t('monthlyVoteTab.noActive')}</span>
+              )}
             </span>
           </div>
+        ) : null}
+      </div>
 
-          <div className="mt-4">
-            <UpcomingEventCard
-              eventDate={upcomingEvent}
-              countdown={upcomingCountdown}
-            />
+      {announcements.map((item) => (
+        <AnnouncementCard key={item.id} item={item} onOpen={handleActionLink} />
+      ))}
 
-            <HowItWorksCard />
+      <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-sm">
+        <button type="button" onClick={() => setActiveType('story')} className={`flex h-11 items-center justify-center gap-2 text-[12px] font-black transition ${activeType === 'story' ? 'text-white' : 'text-[var(--shadow-text-secondary)]'}`} style={activeType === 'story' ? { background: design.accent_color || '#ff3f70' } : undefined}>
+          <i className="fa-solid fa-book-open text-[11px]" /> {t('monthlyVoteTab.story')}
+        </button>
+        <button type="button" onClick={() => setActiveType('author')} className={`flex h-11 items-center justify-center gap-2 text-[12px] font-black transition ${activeType === 'author' ? 'text-white' : 'text-[var(--shadow-text-secondary)]'}`} style={activeType === 'author' ? { background: design.accent_color || '#ff3f70' } : undefined}>
+          <i className="fa-solid fa-user text-[11px]" /> {t('monthlyVoteTab.author')}
+        </button>
+      </div>
+
+      {design.show_top_three ? (
+      <section className="mt-4 rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 shadow-[0_8px_24px_rgba(31,41,55,0.05)]">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[15px] font-black text-[var(--shadow-text-primary)]">{t('monthlyVoteTab.topThreeNow')}</h3>
+          <button type="button" onClick={scrollToCandidates} className="text-[11px] font-black text-[#ff3f70] active:opacity-70">
+            {t('monthlyVoteTab.viewAll')} <i className="fa-solid fa-chevron-right ml-1 text-[9px]" />
+          </button>
+        </div>
+        {loading ? (
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-[170px] animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]" />)}
           </div>
-
-          <div className="mt-4 flex items-center gap-2 px-2 text-[10px] font-semibold text-[var(--shadow-text-secondary)]">
-            <i className="fa-solid fa-shield-halved text-[#22C55E]" />
-            Discount is applied automatically when an eligible episode is unlocked.
+        ) : topThree.length ? (
+          <div className="mt-6 grid grid-cols-3 items-end gap-2">
+            {podiumOrder.map((candidate, index) => (
+              <PodiumCard key={candidate?.id || `podium-${index}`} candidate={candidate} rank={podiumRanks[index]} onOpen={handleOpen} />
+            ))}
           </div>
-        </>
+        ) : (
+          <div className="mt-4 rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-8 text-center text-[12px] font-bold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.noCandidatesYet')}</div>
+        )}
+      </section>
       ) : null}
-    </div>
+
+      <section className="mt-4 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_8px_24px_rgba(31,41,55,0.05)]">
+        <div className="text-[13px] font-black text-[#ff3f70]">{t('monthlyVoteTab.myVoteStatus')}</div>
+        <div className="mt-3 grid divide-x divide-[var(--shadow-border)]" style={{ gridTemplateColumns: `repeat(${design.show_vote_balance ? 3 : 2}, minmax(0, 1fr))` }}>
+          {design.show_vote_balance ? (
+          <div className="px-2 text-center">
+            <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300"><i className="fa-solid fa-ticket text-[12px]" /></span>
+            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.voteBalance')}</div>
+            <div className="mt-1 text-[14px] font-black text-[#e91e58]">{formatNumber(voteBalance)}</div>
+          </div>
+          ) : null}
+          <div className="px-2 text-center">
+            <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300"><i className="fa-solid fa-list text-[12px]" /></span>
+            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.candidates')}</div>
+            <div className="mt-1 text-[14px] font-black text-[#e91e58]">{formatNumber(candidates.length)}</div>
+          </div>
+          <div className="px-2 text-center">
+            <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70] dark:bg-rose-500/10 dark:text-rose-300"><i className="fa-regular fa-calendar text-[12px]" /></span>
+            <div className="mt-2 text-[9px] font-semibold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.winner')}</div>
+            <div className="mt-1 text-[14px] font-black text-[#e91e58]">{winnerLabel}</div>
+          </div>
+        </div>
+      </section>
+
+      {notice ? <div className="mt-3 rounded-[14px] bg-[#fff0f4] px-4 py-3 text-[11px] font-bold text-[#d92d55] dark:bg-rose-500/10 dark:text-rose-300">{notice}</div> : null}
+
+      {design.show_candidate_list ? (
+      <section ref={candidatesRef} className="mt-4 scroll-mt-24 overflow-hidden rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_8px_24px_rgba(31,41,55,0.05)]">
+        {loading ? (
+          <div className="space-y-2 p-3">
+            {Array.from({ length: 5 }).map((_, index) => <div key={index} className="h-[78px] animate-pulse rounded-[14px] bg-[var(--shadow-bg-soft)]" />)}
+          </div>
+        ) : candidates.length ? (
+          candidates.slice(0, 8).map((candidate, index) => (
+            <CandidateRow key={candidate.id} candidate={candidate} rank={index + 1} onOpen={handleOpen} onVote={handleVote} voting={votingId === candidate.id} />
+          ))
+        ) : (
+          <div className="px-4 py-10 text-center text-[12px] font-bold text-[var(--shadow-text-secondary)]">{t('monthlyVoteTab.noCandidatesYet')}</div>
+        )}
+      </section>
+      ) : null}
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <QuickLink icon="fa-shield" title={t('monthlyVoteTab.rules')} subtitle={t('monthlyVoteTab.rulesSubtitle')} />
+        <QuickLink icon="fa-trophy" title={t('monthlyVoteTab.pastWinners')} subtitle={t('monthlyVoteTab.pastWinnersSubtitle')} onClick={openPastWinners} />
+        <QuickLink icon="fa-circle-question" title={t('monthlyVoteTab.howItWorks')} subtitle={t('monthlyVoteTab.howItWorksSubtitle')} />
+      </div>
+
+      {design.show_candidate_list ? (
+      <div className="sticky bottom-3 z-30 mt-4 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] p-2 shadow-[0_14px_34px_rgba(31,41,55,0.16)] backdrop-blur">
+        <div className="grid grid-cols-[1.35fr_1fr] gap-2">
+          <button type="button" onClick={scrollToCandidates} className="flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff4f7a] to-[#f52f68] px-4 text-[13px] font-black text-white shadow-[0_10px_20px_rgba(245,47,104,0.24)] active:scale-[0.98]">
+            <i className="fa-solid fa-heart" /> {t('monthlyVoteTab.voteNow')}
+          </button>
+          <button type="button" onClick={scrollToCandidates} className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#ff4f7a] bg-[var(--shadow-bg-surface)] px-4 text-[12px] font-black text-[#ff3f70] active:scale-[0.98] dark:text-rose-300">
+            <i className="fa-regular fa-eye" /> {t('monthlyVoteTab.viewAll')}
+          </button>
+        </div>
+      </div>
+      ) : null}
+
+      {showPastWinners ? (
+        <PastWinnersModal
+          campaigns={pastWinners}
+          loading={pastWinnersLoading}
+          error={pastWinnersError}
+          onClose={() => setShowPastWinners(false)}
+          onOpen={(candidate) => {
+            setShowPastWinners(false)
+            handleOpen(candidate)
+          }}
+        />
+      ) : null}
+    </section>
   )
 }
