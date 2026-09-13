@@ -658,7 +658,14 @@ export default function AuthorStoreProductDetailPage() {
           <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-tertiary)]">{error || t('authorStoreProductDetail.notAvailable')}</p>
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+  if (location.state?.from) return navigate(-1)
+
+  navigate(`/author/page/${pageUsername}`, {
+    replace: true,
+    state: { activeTab: 'Store' },
+  })
+}}
             className="mt-5 rounded-full bg-[var(--shadow-text-primary)] px-5 py-3 text-[13px] font-black text-[var(--shadow-bg-surface)] active:scale-95"
           >
             {t('authorStoreProductDetail.goBack')}
@@ -695,7 +702,14 @@ export default function AuthorStoreProductDetailPage() {
 
       <header className="sticky top-0 z-50 bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <button type="button" aria-label={t('authorStoreProductDetail.goBack')} onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)] active:scale-95">
+          <button type="button" aria-label={t('authorStoreProductDetail.goBack')} onClick={() => {
+  if (location.state?.from) return navigate(-1)
+
+  navigate(`/author/page/${pageUsername}`, {
+    replace: true,
+    state: { activeTab: 'Store' },
+  })
+}} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)] active:scale-95">
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
