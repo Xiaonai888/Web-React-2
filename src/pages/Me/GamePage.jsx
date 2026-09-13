@@ -83,20 +83,17 @@ const gameMeta = {
   },
 }
 
-const fallbackGames = Object.entries(gameMeta).map(([gameKey, meta]) => ({
-  gameKey,
-  name: meta.defaultName,
-  profile: null,
-  hidden: false,
-  disabled: gameKey === 'test',
-}))
-
 function mergeGame(game) {
   const meta = gameMeta[game.gameKey] || {}
 
   return {
     gameKey: game.gameKey,
-    name: String(game.name || meta.defaultName || game.gameKey || '').trim(),
+    name: String(
+      game.name ||
+      meta.defaultName ||
+      game.gameKey ||
+      ''
+    ).trim(),
     profile: game.profile || null,
     hidden: Boolean(game.hidden),
     disabled: Boolean(game.disabled),
@@ -118,10 +115,13 @@ export default function GamePage() {
 
     async function loadGames() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/games`, {
-          cache: 'no-store',
-          signal: controller.signal,
-        })
+        const response = await fetch(
+          `${API_BASE_URL}/api/games`,
+          {
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
 
         if (!response.ok) {
           throw new Error('Failed to load games')
@@ -142,7 +142,7 @@ export default function GamePage() {
         if (error.name === 'AbortError') return
 
         console.error('LOAD GAMES ERROR:', error)
-        setGames(fallbackGames.map(mergeGame))
+        setGames([])
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false)
@@ -203,10 +203,11 @@ export default function GamePage() {
             {t('gamePage.noGames')}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {games.map((game) => {
               const displayName = getDisplayName(game)
               const cannotOpen = game.disabled || !game.path
+              const status = t(getStatusKey(game))
 
               return (
                 <button
@@ -218,29 +219,54 @@ export default function GamePage() {
                     }
                   }}
                   disabled={cannotOpen}
-                  className="aspect-square rounded-[14px] bg-white p-4 text-center ring-1 ring-black/[0.04] transition active:scale-[0.98] disabled:cursor-default disabled:active:scale-100 dark:bg-[#171923] dark:ring-white/10"
-                  aria-label={displayName}
+                  className="group relative aspect-square overflow-hidden rounded-[18px] bg-[#f1f2f5] text-left shadow-sm ring-1 ring-black/[0.06] transition active:scale-[0.98] disabled:cursor-default disabled:active:scale-100 dark:bg-[#171923] dark:ring-white/10"
+                  aria-label={`${displayName} - ${status}`}
                 >
-                  <div className="flex h-full flex-col items-center justify-center text-center">
-                    {game.profile ? (
-                      <img
-                        src={game.profile}
-                        alt={displayName}
-                        loading="lazy"
-                        className="h-12 w-12 rounded-[13px] object-cover"
+                  {game.profile ? (
+                    <img
+                      src={game.profile}
+                      alt={displayName}
+                      loading="lazy"
+                      decoding="async"
+                      className={`absolute inset-0 h-full w-full object-cover transition duration-300 ${
+                        cannotOpen
+                          ? 'scale-100 opacity-85'
+                          : 'group-hover:scale-[1.02]'
+                      }`}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-[#374151] dark:text-white/85">
+                      <i
+                        className={`${game.icon} text-[42px] sm:text-[48px]`}
                       />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-[13px] bg-[#f5f5f7] text-[#111827] dark:bg-white/10 dark:text-white">
-                        <i className={`${game.icon} text-[20px]`} />
-                      </div>
-                    )}
+                    </div>
+                  )}
 
-                    <div className="mt-3 text-[14px] font-semibold text-[#111827] dark:text-white">
+                  {game.profile ? (
+                    <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+                  ) : (
+                    <div className="absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-black/10 to-transparent dark:from-black/35" />
+                  )}
+
+                  <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4">
+                    <div
+                      className={`truncate text-[14px] font-semibold sm:text-[15px] ${
+                        game.profile
+                          ? 'text-white'
+                          : 'text-[#111827] dark:text-white'
+                      }`}
+                    >
                       {displayName}
                     </div>
 
-                    <div className="mt-1 text-[11px] font-normal text-[#9aa1ad] dark:text-white/45">
-                      {t(getStatusKey(game))}
+                    <div
+                      className={`mt-1 text-[10px] font-medium sm:text-[11px] ${
+                        game.profile
+                          ? 'text-white/75'
+                          : 'text-[#8b93a1] dark:text-white/50'
+                      }`}
+                    >
+                      {status}
                     </div>
                   </div>
                 </button>
