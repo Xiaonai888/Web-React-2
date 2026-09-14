@@ -394,6 +394,11 @@
 "src/components/events/AuthorManagedEventsSection.jsx"
 "src/components/events/ManagedEventHeroCard.jsx"
 "src/pages/ProfileFollowListPage.jsx"
+src/pages/AuthorPosts/AuthorPostDetailPage.jsx
+src/pages/ReaderStorePage.jsx
+src/pages/ReaderMallWishlistPage.jsx
+src/pages/ReaderMallCartPage.jsx
+src/pages/MangaPage.jsx
 
   ]
 }
