@@ -3036,6 +3036,13 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
   })}
 </div>
 
+                          </section>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
 
 function ResetSettingsModal({ open, onCancel, onConfirm }) {
   if (!open) return null
