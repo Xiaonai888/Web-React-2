@@ -64,10 +64,11 @@ registerTranslationNamespace('authorIncomeOld', {
     topSupportersBody: 'Readers who supported your stories through paid unlocks.',
     noSupporters: 'No supporters yet',
     noSupportersBody: 'When readers unlock paid episodes, your strongest supporters will appear here.',
-    payoutHistory: 'Payout History',
-    payoutHistoryBody: 'Automatic monthly payout records.',
-    noPayout: 'No payout yet',
-    noPayoutBody: 'Your monthly payout history will appear here after admin processes payments.',
+    monthlyEarnings: 'Monthly Earnings',
+    monthlyEarningsBody: 'Monthly income grouped from paid Diamond unlocks.',
+    noMonthlyEarnings: 'No monthly earnings yet',
+    noMonthlyEarningsBody: 'Monthly summaries will appear after readers use paid Diamonds to unlock your stories.',
+    viewAll: 'View all',
     incomeRules: 'Income Rules',
     incomeRulesBody: 'Income is calculated from net Diamond unlock revenue after package discounts. Your current share comes from Quest progress. Free unlocks, Gems, Vouchers, Story Cards, and Episodes 1–5 do not count as paid income.',
   },
@@ -126,10 +127,11 @@ registerTranslationNamespace('authorIncomeOld', {
     topSupportersBody: 'អ្នកអានដែលបានគាំទ្ររឿងរបស់អ្នកតាមការដោះសោបង់ប្រាក់។',
     noSupporters: 'មិនទាន់មានអ្នកគាំទ្រ',
     noSupportersBody: 'ពេលអ្នកអានដោះសោភាគបង់ប្រាក់ អ្នកគាំទ្រខ្លាំងបំផុតនឹងបង្ហាញនៅទីនេះ។',
-    payoutHistory: 'ប្រវត្តិបង់ប្រាក់',
-    payoutHistoryBody: 'កំណត់ត្រាការបង់ប្រាក់ប្រចាំខែដោយស្វ័យប្រវត្តិ។',
-    noPayout: 'មិនទាន់មានការបង់ប្រាក់',
-    noPayoutBody: 'ប្រវត្តិបង់ប្រាក់ប្រចាំខែរបស់អ្នកនឹងបង្ហាញនៅទីនេះ បន្ទាប់ពី Admin ដំណើរការការបង់ប្រាក់។',
+    monthlyEarnings: 'ចំណូលប្រចាំខែ',
+    monthlyEarningsBody: 'សង្ខេបចំណូលប្រចាំខែពីការដោះសោដោយ Diamond ដែលបានបង់ប្រាក់។',
+    noMonthlyEarnings: 'មិនទាន់មានចំណូលប្រចាំខែ',
+    noMonthlyEarningsBody: 'សង្ខេបចំណូលប្រចាំខែនឹងបង្ហាញនៅទីនេះ បន្ទាប់ពីអ្នកអានប្រើ Diamond បង់ប្រាក់ដើម្បីដោះសោរឿងរបស់អ្នក។',
+    viewAll: 'មើលទាំងអស់',
     incomeRules: 'ច្បាប់ចំណូល',
     incomeRulesBody: 'ចំណូលគណនាពីចំណូលសុទ្ធនៃការដោះសោ Diamond បន្ទាប់ពីបញ្ចុះតម្លៃកញ្ចប់។ ចំណែកបច្ចុប្បន្នអាស្រ័យលើវឌ្ឍនភាព Quest។ ការដោះសោឥតគិតថ្លៃ Gems, Vouchers, Story Cards និងភាគ 1–5 មិនរាប់ជាចំណូលបង់ប្រាក់ទេ។',
   },
@@ -188,10 +190,11 @@ registerTranslationNamespace('authorIncomeOld', {
     topSupportersBody: '通过付费解锁支持你作品的读者。',
     noSupporters: '暂无支持者',
     noSupportersBody: '读者解锁付费章节后，主要支持者会显示在这里。',
-    payoutHistory: '付款记录',
-    payoutHistoryBody: '每月自动付款记录。',
-    noPayout: '暂无付款',
-    noPayoutBody: '管理员处理付款后，你的每月付款记录会显示在这里。',
+    monthlyEarnings: '月度收益',
+    monthlyEarningsBody: '按月汇总付费 Diamond 解锁产生的收益。',
+    noMonthlyEarnings: '暂无月度收益',
+    noMonthlyEarningsBody: '读者使用付费 Diamond 解锁你的作品后，月度收益汇总会显示在这里。',
+    viewAll: '查看全部',
     incomeRules: '收入规则',
     incomeRulesBody: '收入按套餐折扣后的 Diamond 解锁净收入计算。当前分成来自 Quest 进度。免费解锁、Gems、Vouchers、Story Cards 以及第 1–5 章不计入付费收入。',
   },
@@ -250,10 +253,11 @@ registerTranslationNamespace('authorIncomeOld', {
     topSupportersBody: '有料解放で作品を支援した読者。',
     noSupporters: 'まだサポーターはいません',
     noSupportersBody: '有料エピソードが解放されると、強力なサポーターがここに表示されます。',
-    payoutHistory: '支払い履歴',
-    payoutHistoryBody: '毎月の自動支払い記録。',
-    noPayout: 'まだ支払いはありません',
-    noPayoutBody: '管理者が支払いを処理すると、月次支払い履歴がここに表示されます。',
+    monthlyEarnings: '月間収益',
+    monthlyEarningsBody: '有料 Diamond 解放による収益を月ごとにまとめます。',
+    noMonthlyEarnings: '月間収益はまだありません',
+    noMonthlyEarningsBody: '読者が有料 Diamond で作品を解放すると、月間収益の集計がここに表示されます。',
+    viewAll: 'すべて表示',
     incomeRules: '収益ルール',
     incomeRulesBody: '収益はパッケージ割引後の Diamond 解放純収入から計算されます。現在の分配率は Quest の進捗で決まります。無料解放、Gems、Vouchers、Story Cards、エピソード1〜5は有料収益に含まれません。',
   },
@@ -312,10 +316,11 @@ registerTranslationNamespace('authorIncomeOld', {
     topSupportersBody: '유료 잠금 해제로 작품을 후원한 독자.',
     noSupporters: '아직 후원자가 없습니다',
     noSupportersBody: '독자가 유료 에피소드를 해제하면 주요 후원자가 여기에 표시됩니다.',
-    payoutHistory: '지급 내역',
-    payoutHistoryBody: '월 자동 지급 기록.',
-    noPayout: '아직 지급 내역이 없습니다',
-    noPayoutBody: '관리자가 지급을 처리하면 월 지급 내역이 여기에 표시됩니다.',
+    monthlyEarnings: '월간 수입',
+    monthlyEarningsBody: '유료 Diamond 잠금 해제 수입을 월별로 집계합니다.',
+    noMonthlyEarnings: '아직 월간 수입이 없습니다',
+    noMonthlyEarningsBody: '독자가 유료 Diamond로 작품을 잠금 해제하면 월간 수입 요약이 여기에 표시됩니다.',
+    viewAll: '모두 보기',
     incomeRules: '수입 규칙',
     incomeRulesBody: '수입은 패키지 할인 후 Diamond 잠금 해제 순수익을 기준으로 계산됩니다. 현재 지분은 Quest 진행도에 따라 결정됩니다. 무료 잠금 해제, Gems, Vouchers, Story Cards 및 에피소드 1~5는 유료 수입에 포함되지 않습니다.',
   },
@@ -385,15 +390,26 @@ function dateText(value) {
   })
 }
 
-function dateTimeText(value) {
-  function monthName(value) {
+function monthName(value) {
   const match = String(value || '').match(/^(\d{4})-(\d{2})$/)
+
   if (!match) return value || 'Month'
-  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1))
-    .toLocaleDateString(getDisplayLanguageId(), { month: 'long', year: 'numeric', timeZone: 'UTC' })
+
+  return new Date(
+    Date.UTC(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      1
+    )
+  ).toLocaleDateString(getDisplayLanguageId(), {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
 }
+
+function dateTimeText(value) {
   if (!value) return ''
-  
 
   const date = new Date(value)
 
@@ -415,17 +431,6 @@ function methodLabel(method) {
   if (method.method_type === 'paypal') return getDisplayText('authorIncomeOld.paypal')
   if (method.method_type === 'phone') return getDisplayText('authorIncomeOld.phoneNumber')
   return getDisplayText('authorIncomeOld.paymentMethod')
-}
-
-function statusStyle(status) {
-  if (status === 'paid') return 'border-[#bfe5c8] bg-[#effbf2] text-[#3f8d56]'
-  if (status === 'failed' || status === 'missing_payment_method') {
-    return 'border-[#f2c8d6] bg-[#fff2f6] text-[#c8567c]'
-  }
-  if (status === 'scheduled') {
-    return 'border-[#ead59b] bg-[#fff8e6] text-[#aa7512]'
-  }
-  return 'border-[#ddd1ec] bg-[#f6f1fb] text-[#785b99]'
 }
 
 function normalizeEarning(item, t) {
@@ -851,67 +856,6 @@ function SupporterRow({ item, index }) {
   )
 }
 
-function PayoutRow({ item }) {
-  const { t } = useDisplayTranslation()
-  const statusKey = String(item.status || 'scheduled')
-  const status = {
-    paid: t('authorIncomeOld.statusPaid'),
-    failed: t('authorIncomeOld.statusFailed'),
-    missing_payment_method: t('authorIncomeOld.statusMissingPaymentMethod'),
-    scheduled: t('authorIncomeOld.statusScheduled'),
-    available: t('authorIncomeOld.statusAvailable'),
-  }[statusKey] || statusKey.replaceAll('_', ' ')
-  const detail = item.paid_at
-    ? t('authorIncomeOld.paidDate', { date: dateText(item.paid_at) })
-    : item.scheduled_at
-      ? t('authorIncomeOld.scheduledDate', { date: dateText(item.scheduled_at) })
-      : t('authorIncomeOld.automaticMonthlyPayout')
-
-  return (
-    <div className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3.5">
-      <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#fff0c8] text-[#b98215]">
-          <i className="fa-solid fa-receipt text-[16px]" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="line-clamp-1 text-[13px] font-black text-[var(--shadow-text-primary)]">
-            {item.payout_month || t('authorIncomeOld.monthlyPayout')}
-          </div>
-          <div className="mt-1 text-[10.5px] font-semibold text-[var(--shadow-text-secondary)]">
-            {detail}
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex rounded-full border px-2.5 py-1 text-[8.5px] font-black capitalize ${statusStyle(
-                item.status
-              )}`}
-            >
-              {status}
-            </span>
-
-            {item.payment_method_type ? (
-              <span className="inline-flex rounded-full border border-[#ddd0eb] bg-[#f7f3fb] px-2.5 py-1 text-[8.5px] font-black text-[#765d8d]">
-                {methodLabel({ method_type: item.payment_method_type })}
-              </span>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="shrink-0 text-right">
-          <div className="text-[14px] font-black text-[#7651ad]">
-            {money(item.net_payout_usd)}
-          </div>
-          <div className="mt-1 text-[9.5px] font-semibold text-[var(--shadow-text-tertiary)]">
-            {t('authorIncomeOld.netPayout')}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function LoadingSkeleton() {
   return (
     <div className="space-y-4">
@@ -1270,22 +1214,65 @@ export default function AuthorIncomePage() {
             </LongSectionCard>
 
             <LongSectionCard
-              title={t('authorIncomeOld.payoutHistory')}
-              subtitle={t('authorIncomeOld.payoutHistoryBody')}
-              icon="fa-solid fa-receipt"
+              title={t('authorIncomeOld.monthlyEarnings')}
+              subtitle={t('authorIncomeOld.monthlyEarningsBody')}
+              icon="fa-solid fa-calendar-days"
               tone="gold"
+              action={
+                data.monthly_earnings?.length ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/author/monthly-earnings')}
+                    className="rounded-full border border-[#ead6a2] bg-[#fff7df] px-3 py-1.5 text-[9px] font-black text-[#a97818]"
+                  >
+                    {t('authorIncomeOld.viewAll')} ›
+                  </button>
+                ) : null
+              }
             >
-              {data.payout_history?.length ? (
+              {data.monthly_earnings?.length ? (
                 <div className="space-y-2.5">
-                  {data.payout_history.map((item) => (
-                    <PayoutRow key={item.id} item={item} />
+                  {data.monthly_earnings.map((item) => (
+                    <div
+                      key={item.earning_month}
+                      className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3.5"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[#fff0c8] text-[#b98215]">
+                          <i className="fa-solid fa-calendar-days text-[16px]" />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">
+                            {monthName(item.earning_month)}
+                          </div>
+                          <div className="mt-1 text-[10px] font-semibold text-[var(--shadow-text-secondary)]">
+                            {numberText(item.unlock_count)} unlocks · {numberText(item.supporter_count)} supporters · {numberText(item.story_count)} stories
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div className="text-[14px] font-black text-[#b9517b]">
+                            {money(item.total_author_usd)}
+                          </div>
+                          <div className="mt-1 flex items-center justify-end gap-1 text-[10px] font-bold text-[#8e7f98]">
+                            <img
+                              src="/assets/Icons/Diamond.svg"
+                              alt=""
+                              className="h-3.5 w-3.5 object-contain"
+                            />
+                            <span>{numberText(item.total_author_diamonds)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (
                 <EmptyState
-                  icon="fa-solid fa-receipt"
-                  title={t('authorIncomeOld.noPayout')}
-                  text={t('authorIncomeOld.noPayoutBody')}
+                  icon="fa-solid fa-calendar-days"
+                  title={t('authorIncomeOld.noMonthlyEarnings')}
+                  text={t('authorIncomeOld.noMonthlyEarningsBody')}
                   tone="gold"
                 />
               )}
