@@ -459,7 +459,7 @@ function getAuthToken() {
   )
 }
 
-function MetricCard({ icon, label, value }) {
+function MetricCard({ icon, label, value, locale }) {
   return (
     <div className="rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 text-[var(--shadow-text-primary)]">
       <div className="flex items-center justify-between gap-3">
@@ -471,7 +471,7 @@ function MetricCard({ icon, label, value }) {
         </span>
       </div>
       <div className="mt-4 text-[25px] font-bold tracking-[-0.02em]">
-        {Number(value || 0).toLocaleString()}
+        {Number(value || 0).toLocaleString(locale)}
       </div>
     </div>
   )
@@ -1219,6 +1219,7 @@ export default function AuthorPostInsightsPage() {
                 icon="fa-regular fa-eye"
                 label={t('authorPostInsights.views')}
                 value={overview.views}
+                locale={locale}
               />
               <MetricCard
                 icon="fa-regular fa-user"
@@ -1226,6 +1227,7 @@ export default function AuthorPostInsightsPage() {
                   'authorPostInsights.viewers'
                 )}
                 value={overview.viewers}
+                locale={locale}
               />
               <MetricCard
                 icon="fa-solid fa-chart-simple"
@@ -1233,6 +1235,7 @@ export default function AuthorPostInsightsPage() {
                   'authorPostInsights.engagement'
                 )}
                 value={overview.engagement}
+                locale={locale}
               />
               <MetricCard
                 icon="fa-solid fa-user-plus"
@@ -1240,6 +1243,7 @@ export default function AuthorPostInsightsPage() {
                   'authorPostInsights.netFollows'
                 )}
                 value={overview.net_follows}
+                locale={locale}
               />
               <MetricCard
                 icon="fa-solid fa-arrow-pointer"
@@ -1247,6 +1251,7 @@ export default function AuthorPostInsightsPage() {
                   'authorPostInsights.clicks'
                 )}
                 value={engagement.clicks}
+                locale={locale}
               />
               <MetricCard
                 icon="fa-regular fa-bookmark"
@@ -1254,6 +1259,7 @@ export default function AuthorPostInsightsPage() {
                   'authorPostInsights.saves'
                 )}
                 value={engagement.saves}
+                locale={locale}
               />
             </section>
 
