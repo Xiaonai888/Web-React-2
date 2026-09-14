@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import ShadowMallSection from '../components/Shop/ShadowMallSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -307,11 +308,12 @@ function HorizontalScrollRow({ children, className = '' }) {
     <div
       ref={rowRef}
       className={`select-none overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}
-      style={{ touchAction: 'pan-y pinch-zoom' }}
+      style={{ touchAction: 'pan-x pan-y pinch-zoom', WebkitOverflowScrolling: 'touch' }}
       onPointerDown={(event) => {
-        if (event.button !== undefined && event.button !== 0) return
+  if (event.pointerType === 'touch') return
+  if (event.button !== undefined && event.button !== 0) return
 
-        const row = rowRef.current
+  const row = rowRef.current
         if (!row) return
 
         dragRef.current.pointerId = event.pointerId
@@ -809,8 +811,9 @@ export default function ReaderStorePage() {
       </header>
 
       <main className="mx-auto w-full max-w-[560px] px-4 pt-4">
+  <ShadowMallSection sliderOnly />
 
-        <HorizontalScrollRow className="-mx-1 mt-5 flex gap-2 px-1 pb-2">
+  <HorizontalScrollRow className="-mx-1 mt-5 flex gap-2 px-1 pb-2">
           {FILTERS.map((filter) => {
             const active = activeFilter === filter
 
