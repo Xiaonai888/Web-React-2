@@ -915,6 +915,75 @@ const hasAdvancedPackages = availableLockedCount >= 30
           )}
         </div>
       </section>
+
+      {showPackageSelector && hasAdvancedPackages ? (
+        <div className="fixed inset-0 z-[170] flex items-end justify-center bg-black/55 sm:items-center sm:px-6">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedPackage('next10')
+              setShowPackageSelector(false)
+            }}
+            className="absolute inset-0"
+            aria-label={t('lockedEpisodeModal.close')}
+          />
+
+          <div className="relative z-10 max-h-[82vh] w-full overflow-y-auto rounded-t-[28px] bg-[var(--shadow-bg-elevated)] p-5 text-[var(--shadow-text-primary)] shadow-2xl sm:max-w-[560px] sm:rounded-[28px]">
+            <div className="flex items-center justify-between gap-4">
+              <h3 className="text-[20px] font-black">{t('lockedEpisodeModal.unlockEpisode')}</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPackage('next10')
+                  setShowPackageSelector(false)
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] active:scale-95"
+                aria-label={t('lockedEpisodeModal.close')}
+              >
+                <i className="fa-solid fa-xmark text-[18px]" />
+              </button>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {packageOptions
+                .filter((option) => option.key !== 'single')
+                .map((option) => (
+                  <InstantOption
+                    key={option.key}
+                    option={option}
+                    active={selectedPackage === option.key}
+                    onClick={() => setSelectedPackage(option.key)}
+                  />
+                ))}
+            </div>
+
+            {message ? (
+              <button
+                type="button"
+                onClick={() => setMessage('')}
+                className="mt-4 w-full rounded-[16px] bg-[#FFF1F1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#E5484D] dark:bg-red-500/10 dark:text-red-300"
+              >
+                {message}
+              </button>
+            ) : null}
+
+            {!hasEnoughDiamonds && getReaderToken() ? (
+              <div className="mt-3 text-center text-[12px] font-medium text-[var(--shadow-text-secondary)]">
+                {t('lockedEpisodeModal.needMoreDiamonds', { count: needDiamonds })}
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={handlePurchase}
+              disabled={loading || unlocking || !selectedOption?.enabled}
+              className="mt-5 h-[56px] w-full rounded-full bg-[#111111] text-[16px] font-medium text-white shadow-[0_16px_32px_rgba(17,24,39,0.22)] active:scale-[0.99] disabled:bg-[#9CA3AF] dark:bg-white dark:text-[#111827] dark:disabled:bg-slate-600 dark:disabled:text-slate-300"
+            >
+              {purchaseText}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
