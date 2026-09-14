@@ -5,7 +5,7 @@ import { getShadowMallWishlistCount } from '../utils/shadowMallWishlist'
 import PlanSection from '../components/Shop/PlanSection'
 import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('shopPage', {
@@ -45,6 +45,20 @@ registerTranslationNamespace('shopPage', {
     openCart: '장바구니 열기',
   },
 })
+
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale).format(Number.isFinite(number) ? number : 0)
+}
 
 const tabs = ['Shadow Mall', 'Plans']
 
@@ -166,7 +180,7 @@ export default function ShopPage() {
                 <i className="fa-regular fa-heart text-[20px]" />
                 {wishlistCount > 0 ? (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-                    {wishlistCount}
+                    {formatDisplayNumber(wishlistCount)}
                   </span>
                 ) : null}
               </button>
@@ -184,7 +198,7 @@ export default function ShopPage() {
                 <i className="fa-solid fa-cart-shopping text-[20px]" />
                 {cartCount > 0 ? (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-                    {cartCount}
+                    {formatDisplayNumber(cartCount)}
                   </span>
                 ) : null}
               </button>
