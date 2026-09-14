@@ -455,10 +455,10 @@ function InstantOption({ option, active, onClick }) {
       title={getPackageReason(option, t)}
     >
       {Number(option.package_discount_percent ?? option.discount_percent ?? 0) > 0 ? (
-  <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
-    {t('lockedEpisodeModal.off', { count: option.package_discount_percent ?? option.discount_percent })}
-  </span>
-) : null}
+        <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
+          {t('lockedEpisodeModal.off', { count: option.package_discount_percent ?? option.discount_percent })}
+        </span>
+      ) : null}
 
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 text-[14px] font-black leading-5 text-[var(--shadow-text-primary)]">
@@ -536,12 +536,15 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
   const needDiamonds = Math.max(0, packagePrice - diamondBalance)
   const hasEnoughGems = gemBalance >= Number(gemAccess.amount || FALLBACK_GEM_PRICE)
   const availableLockedCount = Math.max(
-  0,
-  ...packageOptions.map((option) => Number(option.available_count || 0))
-)
-const hasAdvancedPackages =
-  availableLockedCount >= 30 ||
-  packageOptions.some((option) => option.key === 'all_released' && option.enabled)
+    0,
+    ...packageOptions.map((option) => Number(option.available_count || 0))
+  )
+  const hasAdvancedPackages = availableLockedCount >= 30
+
+  const closePackageSelector = () => {
+    setSelectedPackage('single')
+    setShowPackageSelector(false)
+  }
 
   const purchaseText = useMemo(() => {
     if (unlocking) return t('lockedEpisodeModal.unlocking')
@@ -607,9 +610,9 @@ const hasAdvancedPackages =
   if (!episode) return null
 
   const handlePurchase = async (packageKey = selectedPackage) => {
-  const targetOption = packageOptions.find((option) => option.key === packageKey) || selectedOption
-  const targetPrice = Number(targetOption?.price || FALLBACK_DIAMOND_PRICE)
-  const targetNeedDiamonds = Math.max(0, targetPrice - diamondBalance)
+    const targetOption = packageOptions.find((option) => option.key === packageKey) || selectedOption
+    const targetPrice = Number(targetOption?.price || FALLBACK_DIAMOND_PRICE)
+    const targetNeedDiamonds = Math.max(0, targetPrice - diamondBalance)
     const token = getReaderToken()
 
     if (!token) {
@@ -618,7 +621,7 @@ const hasAdvancedPackages =
     }
 
     if (!targetOption?.enabled) {
-  setMessage(targetOption?.disabled_reason || t('lockedEpisodeModal.packageNotAvailable'))
+      setMessage(targetOption?.disabled_reason || t('lockedEpisodeModal.packageNotAvailable'))
       return
     }
 
@@ -759,28 +762,30 @@ const hasAdvancedPackages =
               </button>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-  {packageOptions
-    .filter((option) => option.key === 'single' || option.key === 'next10')
-    .map((option) => (
-      <InstantOption
-        key={option.key}
-        option={option}
-        active={selectedPackage === option.key}
-        onClick={() => {
-          if (option.key === 'next10' && hasAdvancedPackages) {
-            setSelectedPackage('next10')
-            setShowPackageSelector(true)
-            return
-          }
-if (option.key === 'next10') {
-  handlePurchase('next10')
-  return
-}
-setSelectedPackage(option.key)
-        }}
-      />
-    ))}
-</div>
+                {packageOptions
+                  .filter((option) => option.key === 'single' || option.key === 'next10')
+                  .map((option) => (
+                    <InstantOption
+                      key={option.key}
+                      option={option}
+                      active={selectedPackage === option.key}
+                      onClick={() => {
+                        if (option.key === 'next10' && hasAdvancedPackages) {
+                          setSelectedPackage('next10')
+                          setShowPackageSelector(true)
+                          return
+                        }
+
+                        if (option.key === 'next10') {
+                          handlePurchase('next10')
+                          return
+                        }
+
+                        setSelectedPackage(option.key)
+                      }}
+                    />
+                  ))}
+              </div>
 
               <div className="mt-5 flex items-center justify-between gap-4">
                 <div className="text-[14px] font-medium text-[var(--shadow-text-tertiary)]">
@@ -929,10 +934,7 @@ setSelectedPackage(option.key)
         <div className="fixed inset-0 z-[170] flex items-end justify-center bg-black/55 sm:items-center sm:px-6">
           <button
             type="button"
-            onClick={() => {
-              setSelectedPackage('next10')
-              setShowPackageSelector(false)
-            }}
+            onClick={closePackageSelector}
             className="absolute inset-0"
             aria-label={t('lockedEpisodeModal.close')}
           />
@@ -942,10 +944,7 @@ setSelectedPackage(option.key)
               <h3 className="text-[20px] font-black">{t('lockedEpisodeModal.unlockEpisode')}</h3>
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedPackage('next10')
-                  setShowPackageSelector(false)
-                }}
+                onClick={closePackageSelector}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] active:scale-95"
                 aria-label={t('lockedEpisodeModal.close')}
               >
