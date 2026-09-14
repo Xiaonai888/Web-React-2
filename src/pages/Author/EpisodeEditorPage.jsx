@@ -1064,7 +1064,7 @@ const EDITOR_HISTORY_GROUP_MS = 1000
 const LOCAL_AUTOSAVE_INTERVAL_SECONDS = 10
 const SERVER_CHECKPOINT_MINUTES = 10
 const STORY_LANGUAGES = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
-const FALLBACK_GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
+const FALLBACK_GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama', 'School Life', 'Historical', 'Mystery', 'Horror', 'Thriller', 'Sci-Fi', 'System', 'Isekai', 'Supernatural', 'Martial Arts', 'Revenge', 'CEO', 'Slow Burn', 'Enemies to Lovers', 'Time Travel', 'Strong Female Lead', 'Hidden Identity', 'Royalty', 'Magic', 'Second Chance', 'Cold Male Lead', 'BL', 'GL', 'LGBTQ+']
 const STORY_TAG_GROUPS = [
   {
     name: 'Characters',
