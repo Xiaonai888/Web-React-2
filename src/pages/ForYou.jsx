@@ -1285,7 +1285,10 @@ useEffect(() => {
 </div>
 
     <div className="my-6 px-4">
-  <GoogleAdBanner slot={import.meta.env.VITE_ADSENSE_HOME_SLOT} />
+  <GoogleAdBanner
+  slot={import.meta.env.VITE_ADSENSE_HOME_SLOT}
+  placement="home"
+/>
 </div>
 
             <div className="my-6">
