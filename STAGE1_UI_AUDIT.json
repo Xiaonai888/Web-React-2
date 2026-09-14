@@ -388,7 +388,12 @@
 "src/components/events/BlackSundayEventTab.jsx",
 "src/components/events/WriterWednesdayEventCard.jsx",
 "src/components/events/Author49DayEventCard.jsx",
-"src/pages/Event/MonthlyVoteTab.jsx"    
+"src/pages/Event/MonthlyVoteTab.jsx"
+"src/pages/Author/AuthorIncomePage.jsx"
+"src/components/events/Author49DayDashboardCard.jsx"
+"src/components/events/AuthorManagedEventsSection.jsx"
+"src/components/events/ManagedEventHeroCard.jsx"
+"src/pages/ProfileFollowListPage.jsx"
 
   ]
 }
