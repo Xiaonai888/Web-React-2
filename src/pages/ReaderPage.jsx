@@ -4197,7 +4197,10 @@ function ContinuousEpisodeBlock({
 
 {active ? (
   <div className="my-6 px-4">
-    <GoogleAdBanner slot={import.meta.env.VITE_ADSENSE_READER_SLOT} />
+    <GoogleAdBanner
+  slot={import.meta.env.VITE_ADSENSE_READER_SLOT}
+  placement="readerEnd"
+/>
   </div>
 ) : null}
 
