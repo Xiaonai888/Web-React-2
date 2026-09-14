@@ -15,7 +15,7 @@ import YouMightLikeSection from '../components/YouMightLikeSection'
 import StoriesDailyCheckIn from '../components/StoriesDailyCheckIn'
 import NotificationPage from './NotificationPage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('mangaPage', {
@@ -137,6 +137,13 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 const MANGA_PUBLIC_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
+const DISPLAY_LOCALES = { km: 'km-KH', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR' }
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale).format(Number.isFinite(number) ? number : 0)
+}
 
 const fallbackGenreTabs = [
   { label: 'Today', slug: 'today' },
@@ -572,7 +579,7 @@ export default function MangaPage() {
               <Bell size={20} strokeWidth={1.8} />
               {notificationUnreadCount > 0 ? (
                 <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-medium leading-none text-[#111827] shadow-sm">
-                  {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                  {notificationUnreadCount > 99 ? `${formatDisplayNumber(99)}+` : formatDisplayNumber(notificationUnreadCount)}
                 </span>
               ) : null}
             </button>
