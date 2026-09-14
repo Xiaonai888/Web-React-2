@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import {
   getReaderMallWishlist,
@@ -65,12 +65,28 @@ registerTranslationNamespace('readerMallWishlist', {
   },
 })
 
+const DISPLAY_LOCALES = { km: 'km-KH', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR' }
+
+function displayLocale() {
+  return DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  return new Intl.NumberFormat(displayLocale()).format(Number.isFinite(number) ? number : 0)
+}
+
 function displayPrice(value) {
   const text = String(value ?? '').trim()
-  if (!text) return '$0.00'
-  if (text.startsWith('$')) return text
-  const number = Number(text)
-  return Number.isFinite(number) ? `$${number.toFixed(2)}` : text
+  const normalized = text.replace(/^US\$/i, '').replace(/^\$/, '').replace(/,/g, '')
+  const number = Number(normalized)
+  if (!Number.isFinite(number)) return text || new Intl.NumberFormat(displayLocale(), { style: 'currency', currency: 'USD' }).format(0)
+  return new Intl.NumberFormat(displayLocale(), {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(number)
 }
 
 function WaitlistImage({ src, alt }) {
@@ -153,7 +169,7 @@ export default function ReaderMallWishlistPage({ onBack }) {
             {t('readerMallWishlist.title')}
           </h1>
           <span className="ml-auto rounded-full bg-[var(--shadow-bg-soft)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--shadow-text-secondary)]">
-            {sortedItems.length}
+            {formatDisplayNumber(sortedItems.length)}
           </span>
         </div>
       </header>
