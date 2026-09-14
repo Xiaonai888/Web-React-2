@@ -20,6 +20,37 @@ import AuthorPageShareSheet from '../../components/AuthorPageShareSheet'
 import ReactionAction from '../../components/social/reactions/ReactionAction'
 import ReactionSummary from '../../components/social/reactions/ReactionSummary'
 import { ProfessionalSinglePostImage } from '../../components/common/ProfessionalPostContent'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorPostDetailPage', {
+  en: {
+    justNow: 'Just now', minutesAgo: '{{count}}m', hoursAgo: '{{count}}h', daysAgo: '{{count}}d', author: 'Author', authorPostAlt: '{{name}} post', loginRequired: 'Please login first', reactionFailed: 'Failed to update reaction', postNotFound: 'Post not found', loadPostFailed: 'Failed to load post', captionSaveFailed: 'Failed to save caption.', captionSaved: 'Caption saved.', captionRemoved: 'Caption removed.', altSaveFailed: 'Failed to save alt text.', altSaved: 'Alt text saved.', altRemoved: 'Alt text removed.', postNeedsContent: 'This post needs text or a photo. Delete the post instead.', photoDeleteFailed: 'Failed to delete photo.', photoDeleted: 'Photo deleted.', photoDownloadFailed: 'Could not download photo', photoSaved: 'Photo saved.', photoOpened: 'Photo opened for saving.', followFailed: 'Failed to follow author', like: 'Like', closeFullscreenPhoto: 'Close fullscreen photo', photoOptions: 'Photo options', photoPosition: '{{current}} of {{total}}', commentsCount: '{{count}} comments', sharesCount: '{{count}} shares', boostSoon: 'Boost Post is coming soon.', boostPost: 'Boost Post', comment: 'Comment', share: 'Share', editCaption: 'Edit caption', deletePhoto: 'Delete photo', saveToPhone: 'Save to phone', shareExternal: 'Share external', reportPhoto: 'Report photo', editAltText: 'Edit alt text', photoNumber: 'Photo {{count}}', captionPlaceholder: 'Write a caption for this photo...', cancel: 'Cancel', saving: 'Saving...', save: 'Save', altHelp: 'Describe what is shown in this photo for accessibility.', altPlaceholder: 'Describe this photo...', deletePhotoTitle: 'Delete photo?', deletePhotoDescription: 'This photo will be permanently removed from this post.', deleting: 'Deleting...', delete: 'Delete', sharePhoto: 'Share Photo', photoFromAuthor: '{{name}} photo', sharePhotoText: 'View this photo from {{name}} on Shadow.', photoLinkCopied: 'Photo link copied.', authorPostComments: 'Author post comments',
+  },
+  km: {
+    justNow: 'មុននេះបន្តិច', minutesAgo: '{{count}} នាទី', hoursAgo: '{{count}} ម៉ោង', daysAgo: '{{count}} ថ្ងៃ', author: 'អ្នកនិពន្ធ', authorPostAlt: 'Post របស់ {{name}}', loginRequired: 'សូមចូលគណនីជាមុន', reactionFailed: 'មិនអាចកែ Reaction បានទេ', postNotFound: 'រកមិនឃើញ Post', loadPostFailed: 'មិនអាចផ្ទុក Post បានទេ', captionSaveFailed: 'មិនអាចរក្សាទុក Caption បានទេ។', captionSaved: 'បានរក្សាទុក Caption។', captionRemoved: 'បានលុប Caption។', altSaveFailed: 'មិនអាចរក្សាទុក Alt text បានទេ។', altSaved: 'បានរក្សាទុក Alt text។', altRemoved: 'បានលុប Alt text។', postNeedsContent: 'Post នេះត្រូវមានអត្ថបទ ឬរូបភាព។ សូមលុប Post ជំនួសវិញ។', photoDeleteFailed: 'មិនអាចលុបរូបភាពបានទេ។', photoDeleted: 'បានលុបរូបភាព។', photoDownloadFailed: 'មិនអាចទាញយករូបភាពបានទេ', photoSaved: 'បានរក្សាទុករូបភាព។', photoOpened: 'បានបើករូបភាពសម្រាប់រក្សាទុក។', followFailed: 'មិនអាច Follow អ្នកនិពន្ធបានទេ', like: 'ចូលចិត្ត', closeFullscreenPhoto: 'បិទរូបភាពពេញអេក្រង់', photoOptions: 'ជម្រើសរូបភាព', photoPosition: '{{current}} នៃ {{total}}', commentsCount: '{{count}} មតិយោបល់', sharesCount: '{{count}} Shares', boostSoon: 'Boost Post នឹងមកដល់ឆាប់ៗនេះ។', boostPost: 'Boost Post', comment: 'មតិយោបល់', share: 'ចែករំលែក', editCaption: 'កែ Caption', deletePhoto: 'លុបរូបភាព', saveToPhone: 'រក្សាទុកក្នុងទូរសព្ទ', shareExternal: 'ចែករំលែកខាងក្រៅ', reportPhoto: 'រាយការណ៍រូបភាព', editAltText: 'កែ Alt text', photoNumber: 'រូបភាព {{count}}', captionPlaceholder: 'សរសេរ Caption សម្រាប់រូបភាពនេះ...', cancel: 'បោះបង់', saving: 'កំពុងរក្សាទុក...', save: 'រក្សាទុក', altHelp: 'ពិពណ៌នាអ្វីដែលមានក្នុងរូបភាពនេះសម្រាប់ Accessibility។', altPlaceholder: 'ពិពណ៌នារូបភាពនេះ...', deletePhotoTitle: 'លុបរូបភាព?', deletePhotoDescription: 'រូបភាពនេះនឹងត្រូវលុបចេញពី Post នេះជាអចិន្ត្រៃយ៍។', deleting: 'កំពុងលុប...', delete: 'លុប', sharePhoto: 'ចែករំលែករូបភាព', photoFromAuthor: 'រូបភាពរបស់ {{name}}', sharePhotoText: 'មើលរូបភាពនេះពី {{name}} នៅលើ Shadow។', photoLinkCopied: 'បានចម្លងតំណរូបភាព។', authorPostComments: 'មតិយោបល់លើ Post អ្នកនិពន្ធ',
+  },
+  zh: {
+    justNow: '刚刚', minutesAgo: '{{count}} 分钟', hoursAgo: '{{count}} 小时', daysAgo: '{{count}} 天', author: '作者', authorPostAlt: '{{name}} 的帖子', loginRequired: '请先登录', reactionFailed: '更新 Reaction 失败', postNotFound: '未找到帖子', loadPostFailed: '加载帖子失败', captionSaveFailed: '保存说明失败。', captionSaved: '说明已保存。', captionRemoved: '说明已移除。', altSaveFailed: '保存替代文字失败。', altSaved: '替代文字已保存。', altRemoved: '替代文字已移除。', postNeedsContent: '帖子需要文字或图片，请改为删除整个帖子。', photoDeleteFailed: '删除图片失败。', photoDeleted: '图片已删除。', photoDownloadFailed: '无法下载图片', photoSaved: '图片已保存。', photoOpened: '已打开图片以便保存。', followFailed: '关注作者失败', like: '赞', closeFullscreenPhoto: '关闭全屏图片', photoOptions: '图片选项', photoPosition: '{{current}} / {{total}}', commentsCount: '{{count}} 条评论', sharesCount: '{{count}} 次分享', boostSoon: 'Boost Post 即将推出。', boostPost: 'Boost Post', comment: '评论', share: '分享', editCaption: '编辑说明', deletePhoto: '删除图片', saveToPhone: '保存到手机', shareExternal: '外部分享', reportPhoto: '举报图片', editAltText: '编辑替代文字', photoNumber: '图片 {{count}}', captionPlaceholder: '为这张图片写说明...', cancel: '取消', saving: '保存中...', save: '保存', altHelp: '描述图片内容以提升无障碍体验。', altPlaceholder: '描述这张图片...', deletePhotoTitle: '删除图片？', deletePhotoDescription: '这张图片将从该帖子中永久删除。', deleting: '删除中...', delete: '删除', sharePhoto: '分享图片', photoFromAuthor: '{{name}} 的图片', sharePhotoText: '在 Shadow 查看 {{name}} 的这张图片。', photoLinkCopied: '图片链接已复制。', authorPostComments: '作者帖子评论',
+  },
+  ja: {
+    justNow: 'たった今', minutesAgo: '{{count}}分', hoursAgo: '{{count}}時間', daysAgo: '{{count}}日', author: '作者', authorPostAlt: '{{name}} の投稿', loginRequired: '先にログインしてください', reactionFailed: 'リアクションを更新できませんでした', postNotFound: '投稿が見つかりません', loadPostFailed: '投稿を読み込めませんでした', captionSaveFailed: 'キャプションを保存できませんでした。', captionSaved: 'キャプションを保存しました。', captionRemoved: 'キャプションを削除しました。', altSaveFailed: '代替テキストを保存できませんでした。', altSaved: '代替テキストを保存しました。', altRemoved: '代替テキストを削除しました。', postNeedsContent: '投稿にはテキストまたは写真が必要です。代わりに投稿を削除してください。', photoDeleteFailed: '写真を削除できませんでした。', photoDeleted: '写真を削除しました。', photoDownloadFailed: '写真をダウンロードできませんでした', photoSaved: '写真を保存しました。', photoOpened: '保存用に写真を開きました。', followFailed: '作者をフォローできませんでした', like: 'いいね', closeFullscreenPhoto: '全画面写真を閉じる', photoOptions: '写真オプション', photoPosition: '{{current}} / {{total}}', commentsCount: '{{count}} コメント', sharesCount: '{{count}} シェア', boostSoon: 'Boost Post は近日公開予定です。', boostPost: 'Boost Post', comment: 'コメント', share: 'シェア', editCaption: 'キャプションを編集', deletePhoto: '写真を削除', saveToPhone: '端末に保存', shareExternal: '外部に共有', reportPhoto: '写真を報告', editAltText: '代替テキストを編集', photoNumber: '写真 {{count}}', captionPlaceholder: 'この写真のキャプションを書く...', cancel: 'キャンセル', saving: '保存中...', save: '保存', altHelp: 'アクセシビリティのため写真の内容を説明してください。', altPlaceholder: 'この写真を説明...', deletePhotoTitle: '写真を削除しますか？', deletePhotoDescription: 'この写真は投稿から完全に削除されます。', deleting: '削除中...', delete: '削除', sharePhoto: '写真を共有', photoFromAuthor: '{{name}} の写真', sharePhotoText: 'Shadow で {{name}} のこの写真を見る。', photoLinkCopied: '写真リンクをコピーしました。', authorPostComments: '作者投稿のコメント',
+  },
+  ko: {
+    justNow: '방금', minutesAgo: '{{count}}분', hoursAgo: '{{count}}시간', daysAgo: '{{count}}일', author: '작가', authorPostAlt: '{{name}} 게시물', loginRequired: '먼저 로그인해 주세요', reactionFailed: 'Reaction을 업데이트하지 못했습니다', postNotFound: '게시물을 찾을 수 없습니다', loadPostFailed: '게시물을 불러오지 못했습니다', captionSaveFailed: '캡션을 저장하지 못했습니다.', captionSaved: '캡션을 저장했습니다.', captionRemoved: '캡션을 삭제했습니다.', altSaveFailed: '대체 텍스트를 저장하지 못했습니다.', altSaved: '대체 텍스트를 저장했습니다.', altRemoved: '대체 텍스트를 삭제했습니다.', postNeedsContent: '게시물에는 텍스트나 사진이 필요합니다. 대신 게시물을 삭제해 주세요.', photoDeleteFailed: '사진을 삭제하지 못했습니다.', photoDeleted: '사진을 삭제했습니다.', photoDownloadFailed: '사진을 다운로드하지 못했습니다', photoSaved: '사진을 저장했습니다.', photoOpened: '저장을 위해 사진을 열었습니다.', followFailed: '작가를 팔로우하지 못했습니다', like: '좋아요', closeFullscreenPhoto: '전체 화면 사진 닫기', photoOptions: '사진 옵션', photoPosition: '{{current}} / {{total}}', commentsCount: '{{count}}개 댓글', sharesCount: '{{count}}회 공유', boostSoon: 'Boost Post 기능이 곧 제공됩니다.', boostPost: 'Boost Post', comment: '댓글', share: '공유', editCaption: '캡션 편집', deletePhoto: '사진 삭제', saveToPhone: '휴대폰에 저장', shareExternal: '외부 공유', reportPhoto: '사진 신고', editAltText: '대체 텍스트 편집', photoNumber: '사진 {{count}}', captionPlaceholder: '이 사진의 캡션을 작성하세요...', cancel: '취소', saving: '저장 중...', save: '저장', altHelp: '접근성을 위해 사진에 보이는 내용을 설명하세요.', altPlaceholder: '이 사진을 설명하세요...', deletePhotoTitle: '사진을 삭제할까요?', deletePhotoDescription: '이 사진은 게시물에서 영구적으로 삭제됩니다.', deleting: '삭제 중...', delete: '삭제', sharePhoto: '사진 공유', photoFromAuthor: '{{name}} 사진', sharePhotoText: 'Shadow에서 {{name}}의 이 사진을 확인하세요.', photoLinkCopied: '사진 링크를 복사했습니다.', authorPostComments: '작가 게시물 댓글',
+  },
+})
+
+const DISPLAY_LOCALES = { km: 'km-KH', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR' }
+
+function getDisplayLocale() {
+  return DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  return new Intl.NumberFormat(getDisplayLocale()).format(Number.isFinite(number) ? number : 0)
+}
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -52,38 +83,23 @@ function getAuthToken() {
 }
 
 function formatPostTime(value) {
-  const timestamp = new Date(
-    value || 0
-  ).getTime()
+  const timestamp = new Date(value || 0).getTime()
+  if (!timestamp) return getDisplayText('authorPostDetailPage.justNow')
 
-  if (!timestamp) return 'Just now'
+  const difference = Math.max(0, Date.now() - timestamp)
+  const minutes = Math.floor(difference / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
 
-  const difference = Math.max(
-    0,
-    Date.now() - timestamp
-  )
-  const minutes = Math.floor(
-    difference / 60000
-  )
-  const hours = Math.floor(
-    minutes / 60
-  )
-  const days = Math.floor(
-    hours / 24
-  )
+  if (minutes < 1) return getDisplayText('authorPostDetailPage.justNow')
+  if (minutes < 60) return getDisplayText('authorPostDetailPage.minutesAgo', { count: formatDisplayNumber(minutes) })
+  if (hours < 24) return getDisplayText('authorPostDetailPage.hoursAgo', { count: formatDisplayNumber(hours) })
+  if (days < 7) return getDisplayText('authorPostDetailPage.daysAgo', { count: formatDisplayNumber(days) })
 
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m`
-  if (hours < 24) return `${hours}h`
-  if (days < 7) return `${days}d`
-
-  return new Intl.DateTimeFormat(
-    undefined,
-    {
-      month: 'short',
-      day: 'numeric',
-    }
-  ).format(new Date(timestamp))
+  return new Intl.DateTimeFormat(getDisplayLocale(), {
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(timestamp))
 }
 
 
@@ -93,7 +109,7 @@ function formatPhotoViewerDateTime(value) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getDisplayLocale(), {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -177,7 +193,7 @@ function AuthorPostImages({
   if (!urls.length) return null
 
   const alt =
-    `${authorName || 'Author'} post`
+    getDisplayText('authorPostDetailPage.authorPostAlt', { name: authorName || getDisplayText('authorPostDetailPage.author') })
 
   const safeSelectedIndex =
     Math.min(
@@ -228,7 +244,7 @@ function AuthorPostImages({
 
   if (urls.length === 2) {
     return (
-      <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+      <div className="grid grid-cols-2 gap-[2px] bg-[var(--shadow-bg-soft)]">
         {urls.map(
           (url, index) => (
             <button
@@ -257,7 +273,7 @@ function AuthorPostImages({
 
   if (urls.length === 3) {
     return (
-      <div className="grid h-[360px] grid-cols-2 gap-[2px] bg-gray-100 sm:h-[420px]">
+      <div className="grid h-[360px] grid-cols-2 gap-[2px] bg-[var(--shadow-bg-soft)] sm:h-[420px]">
         <button
           type="button"
           onClick={() =>
@@ -317,7 +333,7 @@ function AuthorPostImages({
     )
 
   return (
-    <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+    <div className="grid grid-cols-2 gap-[2px] bg-[var(--shadow-bg-soft)]">
       {visibleUrls.map(
         (url, index) => (
           <button
@@ -357,7 +373,7 @@ async function setAuthorPostReaction(
 ) {
   if (!token) {
     throw new Error(
-      'Please login first'
+      getDisplayText('authorPostDetailPage.loginRequired')
     )
   }
 
@@ -390,7 +406,7 @@ async function setAuthorPostReaction(
   ) {
     throw new Error(
       data.message ||
-        'Failed to update reaction'
+        getDisplayText('authorPostDetailPage.reactionFailed')
     )
   }
 
@@ -399,6 +415,7 @@ async function setAuthorPostReaction(
 
 export default function AuthorPostDetailPage() {
 const navigate = useNavigate()
+const { t } = useDisplayTranslation()
 const location = useLocation()
 const { postId } = useParams()
 const [searchParams] = useSearchParams()
@@ -540,7 +557,7 @@ const [photoAltSaving, setPhotoAltSaving] = useState(false)
         ) {
           throw new Error(
             data.message ||
-              'Post not found'
+              t('authorPostDetailPage.postNotFound')
           )
         }
 
@@ -555,7 +572,7 @@ const [photoAltSaving, setPhotoAltSaving] = useState(false)
         ) {
           setError(
             loadError.message ||
-              'Failed to load post'
+              t('authorPostDetailPage.loadPostFailed')
           )
         }
       } finally {
@@ -750,7 +767,7 @@ async function savePhotoCaption(event) {
       throw new Error(
         data.error ||
           data.message ||
-          'Failed to save caption'
+          t('authorPostDetailPage.captionSaveFailed')
       )
     }
 
@@ -773,12 +790,12 @@ async function savePhotoCaption(event) {
     setPhotoCaptionEditorOpen(false)
     setPhotoActionMessage(
       nextCaption
-        ? 'Caption saved.'
-        : 'Caption removed.'
+        ? t('authorPostDetailPage.captionSaved')
+        : t('authorPostDetailPage.captionRemoved')
     )
   } catch (error) {
     setPhotoActionMessage(
-      error.message || 'Failed to save caption.'
+      error.message || t('authorPostDetailPage.captionSaveFailed')
     )
   } finally {
     setPhotoCaptionSaving(false)
@@ -859,7 +876,7 @@ async function savePhotoAltText(event) {
       throw new Error(
         data.error ||
           data.message ||
-          'Failed to save alt text'
+          t('authorPostDetailPage.altSaveFailed')
       )
     }
 
@@ -882,13 +899,13 @@ async function savePhotoAltText(event) {
     setPhotoAltEditorOpen(false)
     setPhotoActionMessage(
       nextAltText
-        ? 'Alt text saved.'
-        : 'Alt text removed.'
+        ? t('authorPostDetailPage.altSaved')
+        : t('authorPostDetailPage.altRemoved')
     )
   } catch (error) {
     setPhotoActionMessage(
       error.message ||
-        'Failed to save alt text.'
+        t('authorPostDetailPage.altSaveFailed')
     )
   } finally {
     setPhotoAltSaving(false)
@@ -924,7 +941,7 @@ async function savePhotoAltText(event) {
     setPhotoDeleteConfirmOpen(false)
     setFullscreenPhotoMenuOpen(false)
     setPhotoActionMessage(
-      'This post needs text or a photo. Delete the post instead.'
+      t('authorPostDetailPage.postNeedsContent')
     )
     return
   }
@@ -971,7 +988,7 @@ async function savePhotoAltText(event) {
     ) {
       throw new Error(
         data.message ||
-          'Failed to delete photo'
+          t('authorPostDetailPage.photoDeleteFailed')
       )
     }
 
@@ -1025,7 +1042,7 @@ async function savePhotoAltText(event) {
       )
 
     setPhotoActionMessage(
-      'Photo deleted.'
+      t('authorPostDetailPage.photoDeleted')
     )
 
     navigate(
@@ -1042,7 +1059,7 @@ async function savePhotoAltText(event) {
 
     setPhotoActionMessage(
       error.message ||
-        'Failed to delete photo.'
+        t('authorPostDetailPage.photoDeleteFailed')
     )
   } finally {
     setPhotoDeleteBusy(false)
@@ -1066,7 +1083,7 @@ async function savePhotoAltText(event) {
 
     if (!response.ok) {
       throw new Error(
-        'Could not download photo'
+        t('authorPostDetailPage.photoDownloadFailed')
       )
     }
 
@@ -1102,7 +1119,7 @@ async function savePhotoAltText(event) {
 
     setFullscreenPhotoMenuOpen(false)
     setPhotoActionMessage(
-      'Photo saved.'
+      t('authorPostDetailPage.photoSaved')
     )
   } catch {
     const link =
@@ -1121,7 +1138,7 @@ async function savePhotoAltText(event) {
 
     setFullscreenPhotoMenuOpen(false)
     setPhotoActionMessage(
-      'Photo opened for saving.'
+      t('authorPostDetailPage.photoOpened')
     )
   }
 }
@@ -1195,7 +1212,7 @@ function shareSelectedPhoto(event) {
       ) {
         throw new Error(
           data.message ||
-            'Failed to follow author'
+            t('authorPostDetailPage.followFailed')
         )
       }
 
@@ -1223,7 +1240,7 @@ function shareSelectedPhoto(event) {
     } catch (followError) {
       setActionError(
         followError.message ||
-          'Failed to follow author'
+          t('authorPostDetailPage.followFailed')
       )
     } finally {
       setFollowBusy(false)
@@ -1292,7 +1309,7 @@ function shareSelectedPhoto(event) {
     } catch (reactionError) {
       setActionError(
         reactionError.message ||
-          'Failed to update reaction'
+          t('authorPostDetailPage.reactionFailed')
       )
     } finally {
       setReactionBusy(false)
@@ -1371,7 +1388,7 @@ function shareSelectedPhoto(event) {
   const author =
     post?.author_page || {}
   const authorName =
-    author.page_name || 'Author'
+    author.page_name || t('authorPostDetailPage.author')
   const pageUsername =
     author.page_username || ''
   const pageUrl = pageUsername
@@ -1452,7 +1469,7 @@ const selectedPhotoAltText = String(
 }, [photoPostView, selectedPhotoUrl])
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa]">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)]">
       <PublicPostDetailView
   pageName={authorName}
   pageAvatarUrl={
@@ -1511,8 +1528,8 @@ const selectedPhotoAltText = String(
           showBusySpinner
           showCount={false}
           onReact={chooseReaction}
-          idleLabel="Like"
-          buttonClassName="text-[#65676b]"
+          idleLabel={t('authorPostDetailPage.like')}
+          buttonClassName="text-[var(--shadow-text-secondary)]"
         />
         <button
           type="button"
@@ -1523,9 +1540,9 @@ const selectedPhotoAltText = String(
             )
           }
           disabled={reactionBusy}
-          className="text-[14px] font-normal text-[#65676b] disabled:opacity-60"
+          className="text-[14px] font-normal text-[var(--shadow-text-secondary)] disabled:opacity-60"
         >
-          Like
+          {t('authorPostDetailPage.like')}
         </button>
       </div>
     ) : null
@@ -1535,7 +1552,7 @@ const selectedPhotoAltText = String(
       <AuthorPostEchoAction
         post={post}
         author={author}
-        className="[&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
+        className="[&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[var(--shadow-text-secondary)]"
         onCountChange={handleEchoCountChange}
       />
     ) : null
@@ -1712,14 +1729,14 @@ likeCount={
           setPhotoActionMessage('')
         }}
         className="flex h-10 w-10 items-center justify-center text-white active:opacity-60"
-        aria-label="Close fullscreen photo"
+        aria-label={t('authorPostDetailPage.closeFullscreenPhoto')}
       >
         <i className="fa-solid fa-xmark text-[22px]" />
       </button>
 
       {photoUrls.length > 1 ? (
         <div className="absolute left-1/2 -translate-x-1/2 text-[14px] font-semibold text-white">
-          {safeSelectedPhotoIndex + 1} of {photoUrls.length}
+          {t('authorPostDetailPage.photoPosition', { current: formatDisplayNumber(safeSelectedPhotoIndex + 1), total: formatDisplayNumber(photoUrls.length) })}
         </div>
       ) : null}
 
@@ -1729,7 +1746,7 @@ likeCount={
           setFullscreenPhotoMenuOpen(true)
         }
         className="flex h-10 w-10 items-center justify-center text-white active:opacity-60"
-        aria-label="Photo options"
+        aria-label={t('authorPostDetailPage.photoOptions')}
       >
         <i className="fa-solid fa-ellipsis text-[19px]" />
       </button>
@@ -1816,11 +1833,11 @@ likeCount={
 />
         <div className="flex items-center gap-4">
           <span>
-            {Number(post?.comment_count || 0)} comments
+            {t('authorPostDetailPage.commentsCount', { count: formatDisplayNumber(post?.comment_count) })}
           </span>
 
           <span>
-            {Number(post?.echo_count || 0)} shares
+            {t('authorPostDetailPage.sharesCount', { count: formatDisplayNumber(post?.echo_count) })}
           </span>
         </div>
       </div>
@@ -1831,26 +1848,31 @@ likeCount={
       type="button"
       onClick={(event) => {
         event.stopPropagation()
-        setPhotoActionMessage('Boost Post is coming soon.')
+        setPhotoActionMessage(t('authorPostDetailPage.boostSoon'))
       }}
       className="h-10 w-full rounded-[10px] bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-[14px] font-semibold text-white shadow-[0_6px_16px_rgba(139,92,246,0.28)] active:scale-[0.99]"
     >
-      Boost Post
+      {t('authorPostDetailPage.boostPost')}
     </button>
   </div>
 ) : null}
 
       <div className="flex items-center px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-1">
-        <ReactionAction
-          reactionType={post?.my_reaction}
-          count={post?.like_count}
-          busy={reactionBusy}
-          onReact={chooseReaction}
-          showCount={false}
-          idleLabel="Like"
-          className="flex-1 justify-center"
-          buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
-        />
+        <div className="relative flex-1">
+          <ReactionAction
+            reactionType={post?.my_reaction}
+            count={post?.like_count}
+            busy={reactionBusy}
+            onReact={chooseReaction}
+            showCount={false}
+            idleLabel={t('authorPostDetailPage.like')}
+            className="w-full justify-center"
+            buttonClassName="h-12 w-full justify-center gap-2 pr-12 text-white [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
+          />
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center pl-8 text-[14px] font-medium text-white">
+            {t('authorPostDetailPage.like')}
+          </span>
+        </div>
 
         <button
           type="button"
@@ -1862,15 +1884,20 @@ likeCount={
           className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
         >
           <i className="fa-regular fa-comment text-[20px]" />
-          <span>Comment</span>
+          <span>{t('authorPostDetailPage.comment')}</span>
         </button>
 
-        <AuthorPostEchoAction
-          post={post}
-          author={author}
-          onCountChange={handleEchoCountChange}
-          className="h-12 flex-1 justify-center gap-2 text-white [&>img]:!h-5 [&>img]:!w-5 [&>img]:brightness-0 [&>img]:invert [&>span]:hidden after:content-['Share'] after:text-[14px] after:font-medium"
-        />
+        <div className="relative flex-1">
+          <AuthorPostEchoAction
+            post={post}
+            author={author}
+            onCountChange={handleEchoCountChange}
+            className="h-12 w-full justify-center gap-2 pr-12 text-white [&>img]:!h-5 [&>img]:!w-5 [&>img]:brightness-0 [&>img]:invert [&>span]:hidden"
+          />
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center pl-8 text-[14px] font-medium text-white">
+            {t('authorPostDetailPage.share')}
+          </span>
+        </div>
       </div>
     </div>
   </div>
@@ -1904,7 +1931,7 @@ likeCount={
         }}
       >
         <div
-          className="w-full bg-white px-2 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+          className="w-full bg-[var(--shadow-bg-surface)] px-2 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
           onClick={(event) =>
             event.stopPropagation()
           }
@@ -1915,13 +1942,13 @@ likeCount={
             <button
               type="button"
               onClick={openPhotoCaptionEditor}
-              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
             >
-              <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+              <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
                 <i className="fa-solid fa-pencil text-[19px]" />
               </span>
-              <span className="text-[15px] font-normal text-[#111827]">
-                Edit caption
+              <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                {t('authorPostDetailPage.editCaption')}
               </span>
             </button>
           ) : null}
@@ -1934,13 +1961,13 @@ likeCount={
                 setFullscreenPhotoMenuOpen(false)
                 setPhotoDeleteConfirmOpen(true)
               }}
-              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
             >
-              <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+              <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
                 <i className="fa-regular fa-trash-can text-[20px]" />
               </span>
-              <span className="text-[15px] font-normal text-[#111827]">
-                Delete photo
+              <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                {t('authorPostDetailPage.deletePhoto')}
               </span>
             </button>
           ) : null}
@@ -1948,33 +1975,33 @@ likeCount={
           <button
             type="button"
             onClick={saveSelectedPhoto}
-            className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+            className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
           >
-            <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+            <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
   <path d="M12 3v11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   <path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
 </svg>
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">
-              Save to phone
+            <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+              {t('authorPostDetailPage.saveToPhone')}
             </span>
           </button>
 
           <button
             type="button"
             onClick={shareSelectedPhoto}
-            className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+            className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
           >
-            <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+            <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
               <i
   className="fa-solid fa-share text-[19px] text-transparent"
   style={{ WebkitTextStroke: '1.1px #4b5563' }}
 />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">
-              Share external
+            <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+              {t('authorPostDetailPage.shareExternal')}
             </span>
           </button>
 
@@ -2001,16 +2028,16 @@ likeCount={
         }
       )
     }}
-    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
   >
-    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+    <span className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)]">
       <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-current">
   <i className="fa-solid fa-question text-[10px]" />
 </span>
     </span>
 
-    <span className="text-[15px] font-normal text-[#111827]">
-      Report photo
+    <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+      {t('authorPostDetailPage.reportPhoto')}
     </span>
   </button>
 ) : null}
@@ -2019,15 +2046,15 @@ likeCount={
             <button
               type="button"
               onClick={openPhotoAltEditor}
-              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[var(--shadow-bg-hover)]"
             >
               <span className="flex h-9 w-9 items-center justify-center">
-                <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border-2 border-[#6b7280] text-[14px] font-semibold text-[#4b5563]">
+                <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border-2 border-[var(--shadow-border-strong)] text-[14px] font-semibold text-[var(--shadow-text-secondary)]">
                   A
                 </span>
               </span>
-              <span className="text-[15px] font-normal text-[#111827]">
-                Edit alt text
+              <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+                {t('authorPostDetailPage.editAltText')}
               </span>
             </button>
           ) : null}
@@ -2046,25 +2073,25 @@ likeCount={
         }}
       >
         <div
-          className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+          className="w-full rounded-t-[22px] bg-[var(--shadow-bg-surface)] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
           onClick={(event) =>
             event.stopPropagation()
           }
         >
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" />
 
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-[16px] font-semibold text-[#111827]">
-                Edit caption
+              <div className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">
+                {t('authorPostDetailPage.editCaption')}
               </div>
-              <div className="mt-1 text-[12px] text-[#98a2b3]">
-                Photo {safeSelectedPhotoIndex + 1}
+              <div className="mt-1 text-[12px] text-[var(--shadow-text-tertiary)]">
+                {t('authorPostDetailPage.photoNumber', { count: formatDisplayNumber(safeSelectedPhotoIndex + 1) })}
               </div>
             </div>
 
-            <span className="text-[11px] text-[#98a2b3]">
-              {photoCaption.length} / {MAX_PHOTO_CAPTION_LENGTH}
+            <span className="text-[11px] text-[var(--shadow-text-tertiary)]">
+              {formatDisplayNumber(photoCaption.length)} / {formatDisplayNumber(MAX_PHOTO_CAPTION_LENGTH)}
             </span>
           </div>
 
@@ -2080,8 +2107,8 @@ likeCount={
                 )
               )
             }
-            placeholder="Write a caption for this photo..."
-            className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] leading-5 text-[#111827] outline-none"
+            placeholder={t('authorPostDetailPage.captionPlaceholder')}
+            className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3.5 py-3 text-[14px] leading-5 text-[var(--shadow-text-primary)] outline-none"
           />
 
           <div className="mt-4 flex gap-3">
@@ -2091,9 +2118,9 @@ likeCount={
               onClick={() =>
                 setPhotoCaptionEditorOpen(false)
               }
-              className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827]"
+              className="h-11 flex-1 rounded-full bg-[var(--shadow-bg-soft)] text-[14px] font-semibold text-[var(--shadow-text-primary)]"
             >
-              Cancel
+              {t('authorPostDetailPage.cancel')}
             </button>
 
             <button
@@ -2103,8 +2130,8 @@ likeCount={
               className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white"
             >
               {photoCaptionSaving
-                ? 'Saving...'
-                : 'Save'}
+                ? t('authorPostDetailPage.saving')
+                : t('authorPostDetailPage.save')}
             </button>
           </div>
         </div>
@@ -2122,25 +2149,25 @@ likeCount={
         }}
       >
         <div
-          className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+          className="w-full rounded-t-[22px] bg-[var(--shadow-bg-surface)] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
           onClick={(event) =>
             event.stopPropagation()
           }
         >
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" />
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-[16px] font-semibold text-[#111827]">
-                Edit alt text
+              <div className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">
+                {t('authorPostDetailPage.editAltText')}
               </div>
-              <p className="mt-1 text-[12px] leading-5 text-[#667085]">
-                Describe what is shown in this photo for accessibility.
+              <p className="mt-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">
+                {t('authorPostDetailPage.altHelp')}
               </p>
             </div>
 
-            <span className="shrink-0 text-[11px] text-[#98a2b3]">
-              {photoAltText.length} / {MAX_PHOTO_ALT_TEXT_LENGTH}
+            <span className="shrink-0 text-[11px] text-[var(--shadow-text-tertiary)]">
+              {formatDisplayNumber(photoAltText.length)} / {formatDisplayNumber(MAX_PHOTO_ALT_TEXT_LENGTH)}
             </span>
           </div>
 
@@ -2156,8 +2183,8 @@ likeCount={
                 )
               )
             }
-            placeholder="Describe this photo..."
-            className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] leading-5 text-[#111827] outline-none"
+            placeholder={t('authorPostDetailPage.altPlaceholder')}
+            className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3.5 py-3 text-[14px] leading-5 text-[var(--shadow-text-primary)] outline-none"
           />
 
           <div className="mt-4 flex gap-3">
@@ -2167,9 +2194,9 @@ likeCount={
               onClick={() =>
                 setPhotoAltEditorOpen(false)
               }
-              className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827]"
+              className="h-11 flex-1 rounded-full bg-[var(--shadow-bg-soft)] text-[14px] font-semibold text-[var(--shadow-text-primary)]"
             >
-              Cancel
+              {t('authorPostDetailPage.cancel')}
             </button>
 
             <button
@@ -2179,8 +2206,8 @@ likeCount={
               className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white"
             >
               {photoAltSaving
-                ? 'Saving...'
-                : 'Save'}
+                ? t('authorPostDetailPage.saving')
+                : t('authorPostDetailPage.save')}
             </button>
           </div>
         </div>
@@ -2198,19 +2225,19 @@ likeCount={
         }}
       >
         <div
-          className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
+          className="w-full rounded-t-[22px] bg-[var(--shadow-bg-surface)] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
           onClick={(event) =>
             event.stopPropagation()
           }
         >
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" />
 
-          <div className="text-[16px] font-semibold text-[#111827]">
-            Delete photo?
+          <div className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">
+            {t('authorPostDetailPage.deletePhotoTitle')}
           </div>
 
-          <p className="mt-1 text-[13px] leading-5 text-[#667085]">
-            This photo will be permanently removed from this post.
+          <p className="mt-1 text-[13px] leading-5 text-[var(--shadow-text-secondary)]">
+            {t('authorPostDetailPage.deletePhotoDescription')}
           </p>
 
           <div className="mt-5 flex gap-3">
@@ -2220,9 +2247,9 @@ likeCount={
               onClick={() =>
                 setPhotoDeleteConfirmOpen(false)
               }
-              className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827]"
+              className="h-11 flex-1 rounded-full bg-[var(--shadow-bg-soft)] text-[14px] font-semibold text-[var(--shadow-text-primary)]"
             >
-              Cancel
+              {t('authorPostDetailPage.cancel')}
             </button>
 
             <button
@@ -2232,8 +2259,8 @@ likeCount={
               className="h-11 flex-1 rounded-full bg-[#e5484d] text-[14px] font-semibold text-white"
             >
               {photoDeleteBusy
-                ? 'Deleting...'
-                : 'Delete'}
+                ? t('authorPostDetailPage.deleting')
+                : t('authorPostDetailPage.delete')}
             </button>
           </div>
         </div>
@@ -2244,7 +2271,7 @@ likeCount={
 
 <AuthorPageShareSheet
   open={photoShareOpen}
-  pageName={`${authorName} photo`}
+  pageName={t('authorPostDetailPage.photoFromAuthor', { name: authorName })}
   pageLink={
   post?.id
     ? `${window.location.origin}/author/post/${encodeURIComponent(
@@ -2252,12 +2279,12 @@ likeCount={
       )}?photo=${safeSelectedPhotoIndex}&source=share`
     : selectedPhotoUrl
 }
-  sheetTitle="Share Photo"
-  shareText={`View this photo from ${authorName} on Shadow.`}
+  sheetTitle={t('authorPostDetailPage.sharePhoto')}
+  shareText={t('authorPostDetailPage.sharePhotoText', { name: authorName })}
   zClassName="z-[200000]"
   onClose={() => setPhotoShareOpen(false)}
   onCopied={() =>
-    setPhotoActionMessage('Photo link copied.')
+    setPhotoActionMessage(t('authorPostDetailPage.photoLinkCopied'))
   }
 />
 
@@ -2268,7 +2295,7 @@ likeCount={
         }
         targetType="author_post"
         targetId={post?.id}
-        title="Author post comments"
+        title={t('authorPostDetailPage.authorPostComments')}
         story={
           post
             ? {
