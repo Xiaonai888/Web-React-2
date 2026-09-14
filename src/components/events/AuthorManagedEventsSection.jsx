@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorManagedEventsSection', {
+  en: { events: 'Events', currentEvents: 'Current Shadow events', auto5s: 'Auto 5s', eventFallback: 'Event' },
+  km: { events: 'ព្រឹត្តិការណ៍', currentEvents: 'ព្រឹត្តិការណ៍ Shadow បច្ចុប្បន្ន', auto5s: 'ស្វ័យប្រវត្តិ 5 វិនាទី', eventFallback: 'ព្រឹត្តិការណ៍' },
+  zh: { events: '活动', currentEvents: '当前 Shadow 活动', auto5s: '自动 5 秒', eventFallback: '活动' },
+  ja: { events: 'イベント', currentEvents: '現在の Shadow イベント', auto5s: '自動 5秒', eventFallback: 'イベント' },
+  ko: { events: '이벤트', currentEvents: '현재 Shadow 이벤트', auto5s: '자동 5초', eventFallback: '이벤트' },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -26,6 +36,7 @@ function openEventLink(url, navigate) {
 
 export default function AuthorManagedEventsSection() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const [events, setEvents] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [loading, setLoading] = useState(true)
@@ -140,17 +151,17 @@ export default function AuthorManagedEventsSection() {
     <section className="mt-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-extrabold text-[#21143f]">
-            Events
+          <h2 className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">
+            {t('authorManagedEventsSection.events')}
           </h2>
-          <p className="mt-0.5 text-[11px] font-medium text-[#958ba8]">
-            Current Shadow events
+          <p className="mt-0.5 text-[11px] font-medium text-[var(--shadow-text-secondary)]">
+            {t('authorManagedEventsSection.currentEvents')}
           </p>
         </div>
 
         {events.length > 1 ? (
-          <span className="text-[10px] font-bold text-[#958ba8]">
-            Auto 5s
+          <span className="text-[10px] font-bold text-[var(--shadow-text-tertiary)]">
+            {t('authorManagedEventsSection.auto5s')}
           </span>
         ) : null}
       </div>
@@ -179,7 +190,7 @@ export default function AuthorManagedEventsSection() {
             )
           }
         }}
-        className={`relative mt-4 aspect-[16/9] w-full overflow-hidden rounded-[16px] border border-[#eceaf2] bg-[#f5f2fb] shadow-[0_10px_26px_rgba(31,24,55,0.10)] ${
+        className={`relative mt-4 aspect-[16/9] w-full overflow-hidden rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] shadow-[0_10px_26px_rgba(31,24,55,0.10)] ${
           hasLink
             ? 'cursor-pointer transition active:scale-[0.99]'
             : ''
@@ -188,7 +199,7 @@ export default function AuthorManagedEventsSection() {
         {displayImage ? (
           <img
             src={displayImage}
-            alt={selectedEvent.title || 'Event'}
+            alt={selectedEvent.title || t('authorManagedEventsSection.eventFallback')}
             className="absolute inset-0 h-full w-full object-cover"
             loading="eager"
             decoding="async"
@@ -219,11 +230,11 @@ export default function AuthorManagedEventsSection() {
                 }
                 className={`flex min-h-[68px] w-[220px] shrink-0 items-center gap-3 rounded-[14px] border px-2.5 py-2 text-left transition active:scale-[0.99] ${
                   active
-                    ? 'border-[#8050e8] bg-[#f7f4ff] shadow-[0_8px_20px_rgba(109,66,219,0.12)]'
-                    : 'border-[#eceaf2] bg-white'
+                    ? 'border-[#8050e8] bg-[#8050e8]/10 shadow-[0_8px_20px_rgba(109,66,219,0.12)]'
+                    : 'border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)]'
                 }`}
               >
-                <div className="h-[50px] w-[76px] shrink-0 overflow-hidden rounded-[10px] bg-[#f0eaff]">
+                <div className="h-[50px] w-[76px] shrink-0 overflow-hidden rounded-[10px] bg-[var(--shadow-bg-soft)]">
                   {thumbImage ? (
                     <img
                       src={thumbImage}
@@ -246,8 +257,8 @@ export default function AuthorManagedEventsSection() {
                     </div>
                   ) : null}
 
-                  <div className="mt-0.5 line-clamp-2 text-[11.5px] font-extrabold leading-4 text-[#21143f]">
-                    {event.title || 'Event'}
+                  <div className="mt-0.5 line-clamp-2 text-[11.5px] font-extrabold leading-4 text-[var(--shadow-text-primary)]">
+                    {event.title || t('authorManagedEventsSection.eventFallback')}
                   </div>
                 </div>
 
@@ -255,7 +266,7 @@ export default function AuthorManagedEventsSection() {
                   className={`h-2 w-2 shrink-0 rounded-full ${
                     active
                       ? 'bg-[#8050e8]'
-                      : 'bg-[#d8d1e8]'
+                      : 'bg-[var(--shadow-border-strong)]'
                   }`}
                 />
               </button>
