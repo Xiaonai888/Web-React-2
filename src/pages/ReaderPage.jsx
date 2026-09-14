@@ -1389,10 +1389,6 @@ const showWaitNotice = () => {
   window.setTimeout(() => setWaitNotice(false), 2500)
 }
   const backgroundImage = episode?.cover_url || story?.cover_url || ''
-  const adDailyLimit = Math.max(1, Number(adAccess?.daily_limit || 5))
-  const adUsedToday = Math.max(0, Number(adAccess?.used_today || 0))
-  const adRemainingToday = Math.max(0, Number(adAccess?.remaining_today ?? adDailyLimit - adUsedToday))
-  const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRemainingToday > 0
   const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
   const voucherBalance = Number(wallet?.voucher_balance || 0)
   const walletLoaded = Boolean(wallet)
@@ -1705,25 +1701,6 @@ const showWaitNotice = () => {
                   </div>
                 </div>
 
-                {rewardedAdsEnabled ? (
-  <div className="mt-4 px-5">
-    <button
-      type="button"
-      onClick={onRewardedUnlock}
-      disabled={unlocking || !adCanAccess}
-      className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-[16px] border border-[#E5E7EB] bg-white px-4 py-3 text-left disabled:opacity-55"
-    >
-      <span>
-        Watch Ad to Unlock Episode
-        <span className="block text-[11px] text-[#667085]">
-          {`${adUsedToday}/${adDailyLimit} used today`}
-        </span>
-      </span>
-      <span>{adRemainingToday <= 0 ? 'Limit reached' : 'Watch'}</span>
-    </button>
-  </div>
-) : null}
-
                 {unlocking ? (
                   <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
                     Unlocking...
@@ -1826,19 +1803,30 @@ function ContinuousLockedEpisodeCard({
   story,
   episode,
   wallet,
+  adAccess,
+  rewardedAdsEnabled,
   packageOptions,
   autoUnlock,
   setAutoUnlock,
   unlocking,
   onPurchase,
   onUnlock,
-  adAccess,
-  rewardedAdsEnabled,
+  onRewardedUnlock,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
 const [diamondBoxIndex, setDiamondBoxIndex] = useState(0)
 const [showAutoHint, setShowAutoHint] = useState(false)
   const backgroundImage = episode?.cover_url || story?.cover_url || ''
+  const adDailyLimit = Math.max(1, Number(adAccess?.daily_limit || 5))
+  const adUsedToday = Math.max(0, Number(adAccess?.used_today || 0))
+  const adRemainingToday = Math.max(
+    0,
+    Number(adAccess?.remaining_today ?? adDailyLimit - adUsedToday)
+  )
+  const adCanAccess =
+    rewardedAdsEnabled &&
+    Boolean(adAccess?.available) &&
+    adRemainingToday > 0
 
   const diamondBoxSources = [
   '/assets/Icons/Diamond box 2.png',
@@ -2064,6 +2052,34 @@ const [showAutoHint, setShowAutoHint] = useState(false)
     </button>
   </div>
 </div>
+
+          {rewardedAdsEnabled ? (
+            <div className="mt-4 px-5">
+              <button
+                type="button"
+                onClick={onRewardedUnlock}
+                disabled={unlocking || !adCanAccess}
+                className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-[16px] border border-[#E5E7EB] bg-white px-4 py-3 text-left active:scale-[0.99] disabled:opacity-55"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EFF6FF]">
+                    <i className="fa-solid fa-play text-[14px] text-[#0B5CFF]" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-semibold text-[#111827]">
+                      Watch Ad to Unlock Episode
+                    </span>
+                    <span className="mt-0.5 block text-[11px] font-semibold text-[#667085]">
+                      {`Unlock this episode • ${adUsedToday}/${adDailyLimit} used today`}
+                    </span>
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full bg-[#111827] px-4 py-2 text-[11px] font-black text-white">
+                  {adRemainingToday <= 0 ? 'Limit reached' : 'Watch'}
+                </span>
+              </button>
+            </div>
+          ) : null}
 
           {unlocking ? (
             <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
@@ -5002,6 +5018,7 @@ const continuousReader = useContinuousEpisodeReader({
         unlock.coin_access || unlock.gem_access || null
       )
       setUnlockVoucherAccess(unlock.voucher_access || null)
+      setUnlockAdAccess(unlock.ad_access || null)
       setUnlockPackageOptions(
         Array.isArray(unlock.package_options)
           ? unlock.package_options
@@ -5112,6 +5129,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
             setUnlockWallet(null)
             setUnlockCoinAccess(null)
             setUnlockVoucherAccess(null)
+            setUnlockAdAccess(null)
             setUnlockPackageOptions([])
           }
 
@@ -6050,6 +6068,50 @@ async function handleLockedVoucherUnlock(
   }
 }
 
+async function handleLockedRewardedUnlock(
+  targetEpisodeId = episodeId
+) {
+  if (
+    !rewardedAdsEnabled ||
+    !targetEpisodeId ||
+    unlockingEpisode
+  ) {
+    return
+  }
+
+  try {
+    setUnlockingEpisode(true)
+    setMessage('')
+
+    await runRewardedEpisodeUnlock({
+      storyId,
+      episodeId: targetEpisodeId,
+    })
+
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `/story/${storyId}/episode/${targetEpisodeId}`
+    )
+    window.location.reload()
+  } catch (error) {
+    if (error?.code === 'AD_DAILY_LIMIT_REACHED') {
+      await loadLockedUnlockStatus(
+        targetEpisodeId
+      ).catch(() => {})
+    }
+
+    setMessage(
+      error?.code === 'REWARDED_AD_CANCELLED'
+        ? 'Ad closed before completion. This episode is still locked.'
+        : error?.message ||
+            'Rewarded ad is unavailable right now.'
+    )
+  } finally {
+    setUnlockingEpisode(false)
+  }
+}
+
 async function handleLockedDiamondUnlock(
   packageKey,
   targetEpisodeId = episodeId,
@@ -6722,6 +6784,11 @@ onUnlock={handleLockedDiamondUnlock}
               continuousLockedEntry.unlockStatus?.wallet ||
               unlockWallet
             }
+            adAccess={
+              unlockAdAccess ||
+              continuousLockedEntry.unlockStatus?.ad_access
+            }
+            rewardedAdsEnabled={rewardedAdsEnabled}
             packageOptions={
               Array.isArray(
                 continuousLockedEntry.unlockStatus?.package_options
@@ -6746,6 +6813,11 @@ onUnlock={handleLockedDiamondUnlock}
                   : unlockPackageOptions,
                 continuousLockedEntry.unlockStatus?.wallet ||
                   unlockWallet
+              )
+            }
+            onRewardedUnlock={() =>
+              handleLockedRewardedUnlock(
+                continuousLockedEntry.id
               )
             }
           />
