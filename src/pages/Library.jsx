@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import SubscriptionsSection from '../components/library/SubscriptionsSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('libraryPage', {
@@ -288,6 +288,20 @@ registerTranslationNamespace('libraryPage', {
   },
 })
 
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale).format(Number.isFinite(number) ? number : 0)
+}
+
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -368,7 +382,7 @@ function getSubtitle(tab, t) {
 function formatInfo(tab, story, t) {
   if (tab === 'Subscribed') {
     return t('libraryPage.newEpisode', {
-      count: story?.total_episodes || 0,
+      count: formatDisplayNumber(story?.total_episodes || 0),
     })
   }
 
@@ -386,7 +400,7 @@ function formatInfo(tab, story, t) {
   }
 
   return t('libraryPage.savedEpisode', {
-    count: story?.total_episodes || 0,
+    count: formatDisplayNumber(story?.total_episodes || 0),
   })
 }
 
@@ -765,7 +779,7 @@ function ContextCard({ item, tab }) {
               {story.description ||
                 t('libraryPage.episodeCount', {
                   genre: genreFallback,
-                  count: story.total_episodes || 0,
+                  count: formatDisplayNumber(story.total_episodes || 0),
                 })}
             </p>
 
