@@ -38,7 +38,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const languages = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
-const fallbackGenres = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
+const fallbackGenres = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama', 'School Life', 'Historical', 'Mystery', 'Horror', 'Thriller', 'Sci-Fi', 'System', 'Isekai', 'Supernatural', 'Martial Arts', 'Revenge', 'CEO', 'Slow Burn', 'Enemies to Lovers', 'Time Travel', 'Strong Female Lead', 'Hidden Identity', 'Royalty', 'Magic', 'Second Chance', 'Cold Male Lead', 'BL', 'GL', 'LGBTQ+']
 const tagOptions = [
   'CEO',
   'Slow Burn',
