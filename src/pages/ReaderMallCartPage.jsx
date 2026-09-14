@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('readerMallCart', {
@@ -55,6 +55,14 @@ registerTranslationNamespace('readerMallCart', {
     goBack: '뒤로',
   },
 })
+
+const DISPLAY_LOCALES = { km: 'km-KH', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR' }
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale).format(Number.isFinite(number) ? number : 0)
+}
 
 function readCount(key) {
   try {
@@ -132,7 +140,7 @@ export default function ReaderMallCartPage() {
                 : 'text-[var(--shadow-text-secondary)]'
             }`}
           >
-            {t('readerMallCart.shadowMall')} ({counts.shadow})
+            {t('readerMallCart.shadowMall')} ({formatDisplayNumber(counts.shadow)})
           </button>
           <button
             type="button"
@@ -143,7 +151,7 @@ export default function ReaderMallCartPage() {
                 : 'text-[var(--shadow-text-secondary)]'
             }`}
           >
-            {t('readerMallCart.authorStore')} ({counts.author})
+            {t('readerMallCart.authorStore')} ({formatDisplayNumber(counts.author)})
           </button>
         </div>
 
@@ -160,7 +168,7 @@ export default function ReaderMallCartPage() {
 
           <div className="mt-5 flex items-center justify-between border-t border-[var(--shadow-border)] pt-4">
             <span className="text-[12px] font-bold text-[var(--shadow-text-secondary)]">
-              {t('readerMallCart.items', { count })}
+              {t('readerMallCart.items', { count: formatDisplayNumber(count) })}
             </span>
             <button
               type="button"
