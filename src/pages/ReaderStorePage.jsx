@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import ReaderMallWishlistPage from './ReaderMallWishlistPage'
 import {
@@ -196,10 +196,25 @@ registerTranslationNamespace('readerStore', {
   },
 })
 
+const DISPLAY_LOCALES = { km: 'km-KH', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR' }
+
+function displayLocale() {
+  return DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  return new Intl.NumberFormat(displayLocale()).format(Number.isFinite(number) ? number : 0)
+}
+
 function formatMoney(value) {
   const number = Number(value || 0)
-  if (!Number.isFinite(number)) return '$0.00'
-  return `$${number.toFixed(2)}`
+  return new Intl.NumberFormat(displayLocale(), {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(number) ? number : 0)
 }
 
 function normalizeProduct(product) {
@@ -226,6 +241,10 @@ function normalizeProduct(product) {
       salePrice > 0 && originalPrice > 0 && salePrice !== originalPrice
         ? formatMoney(originalPrice)
         : '',
+    oldPriceValue:
+      salePrice > 0 && originalPrice > 0 && salePrice !== originalPrice
+        ? originalPrice
+        : 0,
     type,
     badge: product.best_seller ? 'trending' : 'new',
     stockStatus: product.stock_status || (type === 'pdf' ? 'digital' : 'in_stock'),
@@ -407,8 +426,8 @@ function toReaderMallWaitlistItem(book) {
     title: book.title,
     author: book.author,
     cover: book.cover,
-    price: book.price,
-    oldPrice: book.oldPrice,
+    price: book.priceValue,
+    oldPrice: book.oldPriceValue,
     type: book.type,
     status: book.stockStatus,
     pageName: book.pageName,
@@ -451,9 +470,9 @@ function WaitlistHeartButton({ book, t, compact = false }) {
           ? t('readerStore.removeFromWaitlist')
           : t('readerStore.addToWaitlist')
       }
-      className={`absolute right-2 top-2 z-10 flex items-center justify-center rounded-full bg-white/95 shadow-sm active:scale-95 ${
+      className={`absolute right-2 top-2 z-10 flex items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] shadow-sm active:scale-95 ${
         compact ? 'h-7 w-7' : 'h-8 w-8'
-      } ${wishlisted ? 'text-[#e5484d]' : 'text-[#111827]'}`}
+      } ${wishlisted ? 'text-[#e5484d]' : 'text-[var(--shadow-text-primary)]'}`}
     >
       <i
         className={`${wishlisted ? 'fa-solid' : 'fa-regular'} fa-heart ${
@@ -542,11 +561,11 @@ function StoreBookCard({ book, t, onOpen }) {
         <div className="mt-3 flex items-end justify-between gap-2">
           <div className="min-w-0">
             <div className="text-[13px] font-extrabold text-[#7c3aed]">
-              {book.price}
+              {formatMoney(book.priceValue)}
             </div>
             {book.oldPrice ? (
               <div className="mt-0.5 text-[10px] font-semibold text-[var(--shadow-text-tertiary)] line-through">
-                {book.oldPrice}
+                {formatMoney(book.oldPriceValue)}
               </div>
             ) : null}
           </div>
@@ -620,7 +639,7 @@ function EditorPickCard({ book, t, onOpen }) {
           {displayTitle}
         </h3>
         <div className="mt-0.5 text-[10.5px] font-extrabold text-[#7c3aed]">
-          {book.price}
+          {formatMoney(book.priceValue)}
         </div>
       </button>
     </article>
@@ -899,7 +918,7 @@ export default function ReaderStorePage() {
                           {author.page_name || author.page_username}
                         </span>
                         <span className="mt-0.5 block text-[9.5px] font-semibold text-[var(--shadow-text-tertiary)]">
-                          {author.product_count || 0} {t('readerStore.books')}
+                          {formatDisplayNumber(author.product_count)} {t('readerStore.books')}
                         </span>
                       </button>
                     )
