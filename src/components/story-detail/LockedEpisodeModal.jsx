@@ -539,7 +539,9 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
   0,
   ...packageOptions.map((option) => Number(option.available_count || 0))
 )
-const hasAdvancedPackages = availableLockedCount >= 30
+const hasAdvancedPackages =
+  availableLockedCount >= 30 ||
+  packageOptions.some((option) => option.key === 'all_released' && option.enabled)
 
   const purchaseText = useMemo(() => {
     if (unlocking) return t('lockedEpisodeModal.unlocking')
@@ -604,7 +606,10 @@ const hasAdvancedPackages = availableLockedCount >= 30
 
   if (!episode) return null
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (packageKey = selectedPackage) => {
+  const targetOption = packageOptions.find((option) => option.key === packageKey) || selectedOption
+  const targetPrice = Number(targetOption?.price || FALLBACK_DIAMOND_PRICE)
+  const targetNeedDiamonds = Math.max(0, targetPrice - diamondBalance)
     const token = getReaderToken()
 
     if (!token) {
@@ -612,12 +617,12 @@ const hasAdvancedPackages = availableLockedCount >= 30
       return
     }
 
-    if (!selectedOption?.enabled) {
-      setMessage(selectedOption?.disabled_reason || t('lockedEpisodeModal.packageNotAvailable'))
+    if (!targetOption?.enabled) {
+  setMessage(targetOption?.disabled_reason || t('lockedEpisodeModal.packageNotAvailable'))
       return
     }
 
-    if (!hasEnoughDiamonds) {
+    if (diamondBalance < targetPrice) {
       onTopUp?.()
       return
     }
@@ -630,7 +635,7 @@ const hasAdvancedPackages = availableLockedCount >= 30
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({
-          package_key: selectedPackage,
+          package_key: packageKey,
         }),
       })
 
@@ -640,7 +645,7 @@ const hasAdvancedPackages = availableLockedCount >= 30
         if (data.code === 'INSUFFICIENT_DIAMONDS') {
           setWallet(data.wallet || wallet)
           setMessage(t('lockedEpisodeModal.notEnoughDiamonds', {
-            count: data.need || needDiamonds,
+            count: data.need || targetNeedDiamonds,
           }))
           return
         }
@@ -767,7 +772,11 @@ const hasAdvancedPackages = availableLockedCount >= 30
             setShowPackageSelector(true)
             return
           }
-          setSelectedPackage(option.key)
+if (option.key === 'next10') {
+  handlePurchase('next10')
+  return
+}
+setSelectedPackage(option.key)
         }}
       />
     ))}
@@ -837,7 +846,7 @@ const hasAdvancedPackages = availableLockedCount >= 30
 
               <button
                 type="button"
-                onClick={handlePurchase}
+                onClick={() => handlePurchase()}
                 disabled={loading || unlocking || !selectedOption?.enabled}
                 className="mt-5 h-[56px] w-full rounded-full bg-[#111111] text-[16px] font-medium text-white shadow-[0_16px_32px_rgba(17,24,39,0.22)] active:scale-[0.99] disabled:bg-[#9CA3AF] dark:bg-white dark:text-[#111827] dark:disabled:bg-slate-600 dark:disabled:text-slate-300"
               >
@@ -975,7 +984,7 @@ const hasAdvancedPackages = availableLockedCount >= 30
 
             <button
               type="button"
-              onClick={handlePurchase}
+              onClick={() => handlePurchase()}
               disabled={loading || unlocking || !selectedOption?.enabled}
               className="mt-5 h-[56px] w-full rounded-full bg-[#111111] text-[16px] font-medium text-white shadow-[0_16px_32px_rgba(17,24,39,0.22)] active:scale-[0.99] disabled:bg-[#9CA3AF] dark:bg-white dark:text-[#111827] dark:disabled:bg-slate-600 dark:disabled:text-slate-300"
             >
