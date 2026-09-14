@@ -1,5 +1,120 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorTopSupportersPage', {
+  en: {
+    back: 'Back',
+    topSupporters: 'Top Supporters',
+    monthlyRanking: 'Monthly supporter ranking',
+    monthlyRankingText: 'Ranked by total paid Diamonds used to unlock your stories this month.',
+    supporters: 'Supporters',
+    paidDiamonds: 'Paid Diamonds',
+    unlocks: 'Unlocks',
+    allSupporters: 'All Supporters',
+    highestPaidFirst: 'Highest paid Diamonds first',
+    readersCount: '{{count}} readers',
+    reader: 'Reader',
+    paidUnlocks: '{{count}} paid unlocks',
+    latest: 'Latest {{date}}',
+    authorAmount: 'Author {{amount}}',
+    noSupporters: 'No supporters this month',
+    noSupportersText: 'Readers will appear here after they use paid Diamonds to unlock your stories.',
+    previous: 'Previous',
+    pageOf: 'Page {{page}} of {{total}}',
+    next: 'Next',
+    loadFailed: 'Failed to load top supporters',
+  },
+  km: {
+    back: 'ត្រឡប់ក្រោយ',
+    topSupporters: 'អ្នកគាំទ្រកំពូល',
+    monthlyRanking: 'ចំណាត់ថ្នាក់អ្នកគាំទ្រប្រចាំខែ',
+    monthlyRankingText: 'ចំណាត់ថ្នាក់ផ្អែកលើ Diamond បង់ប្រាក់សរុបដែលប្រើដើម្បីដោះសោរឿងរបស់អ្នកក្នុងខែនេះ។',
+    supporters: 'អ្នកគាំទ្រ',
+    paidDiamonds: 'Diamond បង់ប្រាក់',
+    unlocks: 'ការដោះសោ',
+    allSupporters: 'អ្នកគាំទ្រទាំងអស់',
+    highestPaidFirst: 'Diamond បង់ប្រាក់ខ្ពស់បំផុតមុន',
+    readersCount: '{{count}} អ្នកអាន',
+    reader: 'អ្នកអាន',
+    paidUnlocks: '{{count}} ការដោះសោបង់ប្រាក់',
+    latest: 'ចុងក្រោយ {{date}}',
+    authorAmount: 'អ្នកនិពន្ធ {{amount}}',
+    noSupporters: 'មិនទាន់មានអ្នកគាំទ្រក្នុងខែនេះ',
+    noSupportersText: 'អ្នកអាននឹងបង្ហាញនៅទីនេះ បន្ទាប់ពីពួកគេប្រើ Diamond បង់ប្រាក់ដើម្បីដោះសោរឿងរបស់អ្នក។',
+    previous: 'មុន',
+    pageOf: 'ទំព័រ {{page}} នៃ {{total}}',
+    next: 'បន្ទាប់',
+    loadFailed: 'មិនអាចផ្ទុកអ្នកគាំទ្រកំពូលបាន',
+  },
+  zh: {
+    back: '返回',
+    topSupporters: '顶级支持者',
+    monthlyRanking: '月度支持者排行',
+    monthlyRankingText: '按本月用于解锁你故事的付费 Diamond 总数排名。',
+    supporters: '支持者',
+    paidDiamonds: '付费 Diamond',
+    unlocks: '解锁',
+    allSupporters: '所有支持者',
+    highestPaidFirst: '付费 Diamond 最高优先',
+    readersCount: '{{count}} 位读者',
+    reader: '读者',
+    paidUnlocks: '{{count}} 次付费解锁',
+    latest: '最近 {{date}}',
+    authorAmount: '作者 {{amount}}',
+    noSupporters: '本月暂无支持者',
+    noSupportersText: '当读者使用付费 Diamond 解锁你的故事后，他们会显示在这里。',
+    previous: '上一页',
+    pageOf: '第 {{page}} 页，共 {{total}} 页',
+    next: '下一页',
+    loadFailed: '无法加载顶级支持者',
+  },
+  ja: {
+    back: '戻る',
+    topSupporters: 'トップサポーター',
+    monthlyRanking: '月間サポーターランキング',
+    monthlyRankingText: '今月、作品のアンロックに使われた有料 Diamond の合計で順位付けします。',
+    supporters: 'サポーター',
+    paidDiamonds: '有料 Diamond',
+    unlocks: 'アンロック',
+    allSupporters: 'すべてのサポーター',
+    highestPaidFirst: '有料 Diamond が多い順',
+    readersCount: '{{count}} 人の読者',
+    reader: '読者',
+    paidUnlocks: '{{count}} 回の有料アンロック',
+    latest: '最新 {{date}}',
+    authorAmount: '作者 {{amount}}',
+    noSupporters: '今月のサポーターはまだいません',
+    noSupportersText: '読者が有料 Diamond で作品をアンロックすると、ここに表示されます。',
+    previous: '前へ',
+    pageOf: '{{page}} / {{total}} ページ',
+    next: '次へ',
+    loadFailed: 'トップサポーターを読み込めませんでした',
+  },
+  ko: {
+    back: '뒤로',
+    topSupporters: '최고 후원자',
+    monthlyRanking: '월간 후원자 순위',
+    monthlyRankingText: '이번 달 스토리 잠금 해제에 사용된 유료 Diamond 총액으로 순위를 정합니다.',
+    supporters: '후원자',
+    paidDiamonds: '유료 Diamond',
+    unlocks: '잠금 해제',
+    allSupporters: '모든 후원자',
+    highestPaidFirst: '유료 Diamond가 많은 순',
+    readersCount: '독자 {{count}}명',
+    reader: '독자',
+    paidUnlocks: '유료 잠금 해제 {{count}}회',
+    latest: '최근 {{date}}',
+    authorAmount: '작가 {{amount}}',
+    noSupporters: '이번 달 후원자가 아직 없습니다',
+    noSupportersText: '독자가 유료 Diamond로 스토리를 잠금 해제하면 여기에 표시됩니다.',
+    previous: '이전',
+    pageOf: '{{page}} / {{total}} 페이지',
+    next: '다음',
+    loadFailed: '최고 후원자를 불러오지 못했습니다',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -21,7 +136,7 @@ function getAuthToken() {
 function monthLabel() {
   const date = new Date(Date.now() + CAMBODIA_OFFSET_MS)
 
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(getDisplayLanguageId(), {
     timeZone: 'UTC',
     month: 'long',
     year: 'numeric',
@@ -33,7 +148,7 @@ function numberText(value) {
 
   if (!Number.isFinite(number)) return '0'
 
-  return number.toLocaleString('en-US', {
+  return number.toLocaleString(getDisplayLanguageId(), {
     maximumFractionDigits: 2,
   })
 }
@@ -43,7 +158,7 @@ function money(value) {
 
   if (!Number.isFinite(number)) return '$0.00'
 
-  return number.toLocaleString('en-US', {
+  return number.toLocaleString(getDisplayLanguageId(), {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
@@ -58,7 +173,7 @@ function dateText(value) {
 
   if (Number.isNaN(date.getTime())) return '-'
 
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(getDisplayLanguageId(), {
     timeZone: 'Asia/Phnom_Penh',
     month: 'short',
     day: '2-digit',
@@ -93,8 +208,10 @@ function SupporterAvatar({ item }) {
 }
 
 function SupporterRow({ item }) {
+  const { t } = useDisplayTranslation()
+
   return (
-    <article className="flex gap-3 border-b border-[#f0edf4] px-4 py-4 last:border-b-0">
+    <article className="flex gap-3 border-b border-[var(--shadow-border)] px-4 py-4 last:border-b-0">
       <div className="flex w-8 shrink-0 items-start justify-center pt-2">
         <span className="text-[13px] font-black text-[#7651ad]">
           #{item.rank}
@@ -105,7 +222,7 @@ function SupporterRow({ item }) {
 
       <div className="min-w-0 flex-1">
         <div className="line-clamp-1 text-[13px] font-black text-[var(--shadow-text-primary)]">
-          {item.reader_name || 'Reader'}
+          {item.reader_name || t('authorTopSupportersPage.reader')}
         </div>
 
         {item.reader_username ? (
@@ -115,11 +232,11 @@ function SupporterRow({ item }) {
         ) : null}
 
         <div className="mt-1.5 text-[10px] font-semibold text-[var(--shadow-text-secondary)]">
-          {numberText(item.unlock_count)} paid unlocks
+          {t('authorTopSupportersPage.paidUnlocks', { count: numberText(item.unlock_count) })}
         </div>
 
         <div className="mt-1 text-[9.5px] font-semibold text-[var(--shadow-text-tertiary)]">
-          Latest {dateText(item.latest_support_at)}
+          {t('authorTopSupportersPage.latest', { date: dateText(item.latest_support_at) })}
         </div>
       </div>
 
@@ -134,7 +251,7 @@ function SupporterRow({ item }) {
         </div>
 
         <div className="mt-1 text-[10px] font-bold text-[#b9517b]">
-          Author {money(item.total_author_usd)}
+          {t('authorTopSupportersPage.authorAmount', { amount: money(item.total_author_usd) })}
         </div>
       </div>
     </article>
@@ -147,7 +264,7 @@ function LoadingRows() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
-          className="h-[78px] animate-pulse rounded-[18px] bg-[#f3eff7]"
+          className="h-[78px] animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]"
         />
       ))}
     </div>
@@ -156,6 +273,7 @@ function LoadingRows() {
 
 export default function AuthorTopSupportersPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const currentMonth = useMemo(() => monthLabel(), [])
 
   const [page, setPage] = useState(1)
@@ -202,7 +320,7 @@ export default function AuthorTopSupportersPage() {
 
         if (!response.ok || result.ok === false) {
           throw new Error(
-            result.message || 'Failed to load top supporters'
+            result.message || getDisplayText('authorTopSupportersPage.loadFailed')
           )
         }
 
@@ -210,7 +328,7 @@ export default function AuthorTopSupportersPage() {
       } catch (error) {
         if (error.name !== 'AbortError') {
           setMessage(
-            error.message || 'Failed to load top supporters'
+            error.message || getDisplayText('authorTopSupportersPage.loadFailed')
           )
         }
       } finally {
@@ -232,7 +350,7 @@ export default function AuthorTopSupportersPage() {
           <button
             type="button"
             onClick={() => navigate('/author/income')}
-            aria-label="Back"
+            aria-label={t('authorTopSupportersPage.back')}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#7651ad] active:scale-95"
           >
             <i className="fa-solid fa-chevron-left text-[15px]" />
@@ -240,7 +358,7 @@ export default function AuthorTopSupportersPage() {
 
           <div className="text-center">
             <h1 className="text-[17px] font-black text-[var(--shadow-text-primary)]">
-              Top Supporters
+              {t('authorTopSupportersPage.topSupporters')}
             </h1>
             <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.09em] text-[var(--shadow-text-tertiary)]">
               {currentMonth}
@@ -252,7 +370,7 @@ export default function AuthorTopSupportersPage() {
       </header>
 
       <main className="mx-auto max-w-[720px] space-y-4 px-3 pt-4 sm:px-4">
-        <section className="rounded-[24px] border border-[#efcbd9] bg-[linear-gradient(145deg,#fff7fa_0%,#fff_100%)] p-4 shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
+        <section className="rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
           <div className="flex items-start gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[17px] bg-[#ffe4ef] text-[#d56894]">
               <i className="fa-solid fa-heart text-[15px]" />
@@ -260,37 +378,37 @@ export default function AuthorTopSupportersPage() {
 
             <div>
               <h2 className="text-[15px] font-black text-[var(--shadow-text-primary)]">
-                Monthly supporter ranking
+                {t('authorTopSupportersPage.monthlyRanking')}
               </h2>
               <p className="mt-1 text-[10.5px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
-                Ranked by total paid Diamonds used to unlock your stories this month.
+                {t('authorTopSupportersPage.monthlyRankingText')}
               </p>
             </div>
           </div>
         </section>
 
         <section className="grid grid-cols-3 gap-2">
-          <div className="rounded-[20px] border border-[#eadfef] bg-[var(--shadow-bg-surface)] p-3">
+          <div className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3">
             <div className="text-[8.5px] font-black uppercase tracking-[0.07em] text-[var(--shadow-text-tertiary)]">
-              Supporters
+              {t('authorTopSupportersPage.supporters')}
             </div>
-            <div className="mt-2 text-[17px] font-black text-[#31263d]">
+            <div className="mt-2 text-[17px] font-black text-[var(--shadow-text-primary)]">
               {numberText(summary.total_supporters)}
             </div>
           </div>
 
-          <div className="rounded-[20px] border border-[#eadfef] bg-[var(--shadow-bg-surface)] p-3">
+          <div className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3">
             <div className="text-[8.5px] font-black uppercase tracking-[0.07em] text-[var(--shadow-text-tertiary)]">
-              Paid Diamonds
+              {t('authorTopSupportersPage.paidDiamonds')}
             </div>
             <div className="mt-2 text-[17px] font-black text-[#7651ad]">
               {numberText(summary.total_paid_diamonds)}
             </div>
           </div>
 
-          <div className="rounded-[20px] border border-[#eadfef] bg-[var(--shadow-bg-surface)] p-3">
+          <div className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3">
             <div className="text-[8.5px] font-black uppercase tracking-[0.07em] text-[var(--shadow-text-tertiary)]">
-              Unlocks
+              {t('authorTopSupportersPage.unlocks')}
             </div>
             <div className="mt-2 text-[17px] font-black text-[#b9517b]">
               {numberText(summary.total_unlocks)}
@@ -298,19 +416,19 @@ export default function AuthorTopSupportersPage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[24px] border border-[#e0d4eb] bg-[var(--shadow-bg-surface)] shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
-          <div className="flex items-center justify-between gap-3 border-b border-[#eee8f3] px-4 py-4">
+        <section className="overflow-hidden rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--shadow-border)] px-4 py-4">
             <div>
               <h2 className="text-[14px] font-black text-[var(--shadow-text-primary)]">
-                All Supporters
+                {t('authorTopSupportersPage.allSupporters')}
               </h2>
               <p className="mt-1 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
-                Highest paid Diamonds first
+                {t('authorTopSupportersPage.highestPaidFirst')}
               </p>
             </div>
 
             <span className="rounded-full bg-[#fff0f5] px-3 py-1.5 text-[9px] font-black text-[#bd557e]">
-              {numberText(pagination.total)} readers
+              {t('authorTopSupportersPage.readersCount', { count: numberText(pagination.total) })}
             </span>
           </div>
 
@@ -332,37 +450,37 @@ export default function AuthorTopSupportersPage() {
                 <i className="fa-solid fa-users" />
               </div>
               <div className="mt-4 text-[14px] font-black text-[var(--shadow-text-primary)]">
-                No supporters this month
+                {t('authorTopSupportersPage.noSupporters')}
               </div>
               <div className="mx-auto mt-2 max-w-[290px] text-[11px] font-medium leading-5 text-[var(--shadow-text-tertiary)]">
-                Readers will appear here after they use paid Diamonds to unlock your stories.
+                {t('authorTopSupportersPage.noSupportersText')}
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3 border-t border-[#eee8f3] px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-t border-[var(--shadow-border)] px-4 py-3">
             <button
               type="button"
               disabled={loading || !pagination.has_prev}
               onClick={() =>
                 setPage((current) => Math.max(1, current - 1))
               }
-              className="h-10 rounded-full border border-[#ddd1ec] bg-white px-4 text-[11px] font-black text-[#7651ad] disabled:opacity-40"
+              className="h-10 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 text-[11px] font-black text-[#7651ad] disabled:opacity-40"
             >
-              Previous
+              {t('authorTopSupportersPage.previous')}
             </button>
 
             <span className="text-[10.5px] font-bold text-[var(--shadow-text-tertiary)]">
-              Page {pagination.page || 1} of {pagination.total_pages || 0}
+              {t('authorTopSupportersPage.pageOf', { page: numberText(pagination.page || 1), total: numberText(pagination.total_pages || 0) })}
             </span>
 
             <button
               type="button"
               disabled={loading || !pagination.has_next}
               onClick={() => setPage((current) => current + 1)}
-              className="h-10 rounded-full border border-[#ddd1ec] bg-white px-4 text-[11px] font-black text-[#7651ad] disabled:opacity-40"
+              className="h-10 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 text-[11px] font-black text-[#7651ad] disabled:opacity-40"
             >
-              Next
+              {t('authorTopSupportersPage.next')}
             </button>
           </div>
         </section>
