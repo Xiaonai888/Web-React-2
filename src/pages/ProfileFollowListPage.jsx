@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('profileFollowListPage', {
@@ -266,6 +266,12 @@ function getAuthToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
 }
 
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  if (!Number.isFinite(number)) return '0'
+  return new Intl.NumberFormat(getDisplayLanguageId(), { maximumFractionDigits: 0 }).format(number)
+}
+
 function getStoredUser() {
   try {
     return JSON.parse(localStorage.getItem('shadow_reader_user') || sessionStorage.getItem('shadow_reader_user') || 'null')
@@ -486,13 +492,13 @@ function FollowedAuthorRow({ author, onOpen, onMenu }) {
               ? 'profileFollowListPage.followerOne'
               : 'profileFollowListPage.followersMany',
             {
-              count: followerCount.toLocaleString(),
+              count: formatDisplayNumber(followerCount),
             }
           )}
         </div>
         <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
           {t('profileFollowListPage.works', {
-            count: worksCount.toLocaleString(),
+            count: formatDisplayNumber(worksCount),
           })}
         </div>
       </div>
@@ -527,7 +533,7 @@ function FollowedAuthorsTab({ authors, total, sort, loading, message, selectedAu
           <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">{sortLabel}</div>
           <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">
             {t('profileFollowListPage.followedAuthorsCount', {
-              count: Number(total || 0).toLocaleString(),
+              count: formatDisplayNumber(total),
             })}
           </div>
         </div>
@@ -879,7 +885,7 @@ export default function ProfileFollowListPage() {
                 </div>
                 <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">
                   {t('profileFollowListPage.readersCount', {
-                    count: visibleUsers.length,
+                    count: formatDisplayNumber(visibleUsers.length),
                   })}
                 </div>
               </div>
