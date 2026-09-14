@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { requestAuthor49DayEvent } from '../../services/author49DayEventClientCache'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('author49DayDashboardCard', {
+  en: { eventAlt: '80% for 49 Days Event', startWriting: 'Start Writing', dayShort: 'D' },
+  km: { eventAlt: 'ព្រឹត្តិការណ៍ 80% រយៈពេល 49 ថ្ងៃ', startWriting: 'ចាប់ផ្តើមសរសេរ', dayShort: 'ថ្ងៃ' },
+  zh: { eventAlt: '49天 80% 活动', startWriting: '开始写作', dayShort: '天' },
+  ja: { eventAlt: '49日間 80% イベント', startWriting: '執筆を開始', dayShort: '日' },
+  ko: { eventAlt: '49일간 80% 이벤트', startWriting: '글쓰기 시작', dayShort: '일' },
+})
 
 function getAuthToken() {
   return (
@@ -24,7 +34,15 @@ function getCountdown(milliseconds) {
   }
 }
 
+function formatCountdownNumber(value) {
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  }).format(Number(value || 0))
+}
+
 export default function Author49DayDashboardCard({ onStartWriting }) {
+  const { t } = useDisplayTranslation()
   const [event, setEvent] = useState(null)
   const [serverOffsetMs, setServerOffsetMs] = useState(0)
   const [now, setNow] = useState(Date.now())
@@ -136,7 +154,7 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
       <div className="relative aspect-[16/9] w-full overflow-hidden">
         <img
           src="/assets/Icons/Event/Event 1.webp"
-          alt="80% for 49 Days Event"
+          alt={t('author49DayDashboardCard.eventAlt')}
           className="absolute inset-0 h-full w-full object-cover"
         />
 
@@ -145,19 +163,19 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
             <div className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-[#FFC400] px-3 text-black shadow-[0_4px_0_#111111]">
               <i className="fa-regular fa-clock text-[11px]" />
               <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
-                {String(countdown.days).padStart(2, '0')}D
+                {formatCountdownNumber(countdown.days)}{t('author49DayDashboardCard.dayShort')}
               </span>
               <span className="text-[12px] font-black">:</span>
               <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
-                {String(countdown.hours).padStart(2, '0')}
+                {formatCountdownNumber(countdown.hours)}
               </span>
               <span className="text-[12px] font-black">:</span>
               <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
-                {String(countdown.minutes).padStart(2, '0')}
+                {formatCountdownNumber(countdown.minutes)}
               </span>
               <span className="text-[12px] font-black">:</span>
               <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
-                {String(countdown.seconds).padStart(2, '0')}
+                {formatCountdownNumber(countdown.seconds)}
               </span>
             </div>
           ) : (
@@ -167,7 +185,7 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
               className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-[#FFC400] text-[12px] font-black text-black shadow-[0_4px_0_#111111] transition active:translate-y-[2px] active:shadow-[0_2px_0_#111111]"
             >
               <i className="fa-solid fa-pen-nib text-[10px]" />
-              Start Writing
+              {t('author49DayDashboardCard.startWriting')}
             </button>
           )}
         </div>
