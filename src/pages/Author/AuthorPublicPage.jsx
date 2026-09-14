@@ -7,8 +7,726 @@ import AuthorStoreTab from '../../components/AuthorStoreTab'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPopup'
 import Cropper from 'react-easy-crop'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
-
+registerTranslationNamespace('authorPublicPage', {
+  en: {
+    authorPage: 'Author Page',
+    reader: 'Reader',
+    untitledStory: 'Untitled Story',
+    story: 'Story',
+    episodesShort: '{{count}} eps',
+    notFoundTitle: 'Author page not found',
+    notFoundText: 'This author page may be unavailable or the username is incorrect.',
+    goBack: 'Go Back',
+    cropProfilePhoto: 'Crop Profile Photo',
+    cropCoverPhoto: 'Crop Cover Photo',
+    cropHelp: 'Drag and zoom to fit your author page image.',
+    closeCropEditor: 'Close crop editor',
+    zoom: 'Zoom',
+    cancel: 'Cancel',
+    saving: 'Saving...',
+    saveCrop: 'Save Crop',
+    closeFollowSettings: 'Close follow settings',
+    seeFirst: 'See first',
+    muteUpdates: 'Mute updates',
+    unfollowing: 'Unfollowing...',
+    unfollowAuthor: 'Unfollow {{name}}',
+    closeSwitcher: 'Close switcher',
+    notification: '{{count}} notification',
+    notifications: '{{count}} notifications',
+    manageAccount: 'Manage Account',
+    closeAuthorMenu: 'Close author menu',
+    authorMenu: 'Author Menu',
+    switchProfile: 'Switch Profile',
+    finance: 'Finance',
+    settings: 'Settings',
+    closeProfileSwitcher: 'Close profile switcher',
+    authorPageLabel: 'Author page',
+    switchingTo: 'Switching to',
+    closeCoverOptions: 'Close cover options',
+    seeCover: 'See cover',
+    uploadCover: 'Upload cover',
+    chooseCover: 'Choose cover',
+    noBio: 'This author has not added a bio yet.',
+    alwaysOpen: 'Always open',
+    temporarilyClosed: 'Temporarily closed',
+    permanentlyClosed: 'Permanently closed',
+    closed: 'Closed',
+    hoursAvailable: 'Hours available',
+    open24Hours: 'Open 24 hours',
+    openEveryday: 'Open · Everyday {{hours}}',
+    openWeekdays: 'Open · Mon–Fri {{hours}}',
+    openWeekend: 'Open · Sat–Sun {{hours}}',
+    openDay: 'Open · {{day}} {{hours}}',
+    hoursVary: 'Hours vary by day',
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday',
+    sunday: 'Sunday',
+    failedUploadImage: 'Failed to upload image',
+    failedSaveProfileImage: 'Failed to save author profile image',
+    authorPageNotFound: 'Author page not found',
+    failedLoadReviews: 'Failed to load reviews',
+    failedSaveReview: 'Failed to save review',
+    failedRemoveReview: 'Failed to remove review',
+    failedUpdateFollow: 'Failed to update follow',
+    comingSoon: '{{label}} is coming soon.',
+    seeFirstUnavailable: 'See first is not available yet.',
+    muteUnavailable: 'Mute updates is not available yet.',
+    dashboard: 'Dashboard',
+    advertise: 'Advertise',
+    following: 'Following',
+    follow: 'Follow',
+    message: 'Message',
+    selectImage: 'Please select an image file',
+    adjustPhoto: 'Please adjust the photo first',
+    failedSaveImage: 'Failed to save image',
+    uploadingSlide: 'Uploading slide to Cloudflare...',
+    slideUploaded: 'Slide uploaded.',
+    failedUploadSlide: 'Failed to upload slide',
+    noCoverPhoto: 'No cover photo yet.',
+    reviews: 'Reviews',
+    reviewSettingsText: 'Reviews help readers decide whether your page is worth following. You can turn reviews off anytime. Existing reviews will be hidden from your page until you turn them on again.',
+    allowReviews: 'Allow reviews on this page',
+    save: 'Save',
+    backToReviews: 'Back to reviews',
+    aboutReviewScore: 'About review score',
+    recommendSummary: '{{percent}}% recommend ({{count}} Reviews)',
+    reviewScoreInfo: 'This score is based on reader reviews for this author page. Readers can choose whether they recommend the page and leave a public review. The percentage shows how many active reviews recommend it.',
+    noReviewsYet: 'No reviews yet.',
+    howReviewsWork: 'How Shadow reviews work',
+    reportReview: 'Report review',
+    reportReviewComingSoon: 'Report review is coming soon.',
+    copyReviewLink: 'Copy review link',
+    reviewLinkCopied: 'Review link copied.',
+    closeReviews: 'Close reviews',
+    edit: 'Edit',
+    recentReviews: 'Recent reviews',
+    seeAll: 'See all',
+    yes: 'Yes',
+    no: 'No',
+    reviewPrompt: 'What would you like to say about {{name}}?',
+    public: 'Public',
+    reviewMinimum: '{{count}} / 25 · Reviews must be at least 25 characters',
+    discardReview: 'Discard review?',
+    discardReviewText: 'Reviews help other readers understand this page. Are you sure you want to discard your draft?',
+    discard: 'Discard',
+    keepWriting: 'Keep Writing',
+    allowReadersReviewQuestion: 'Allow readers to view and write reviews on your page?',
+    recommends: 'recommends',
+    doesNotRecommend: "doesn't recommend",
+    basedOnReaderReviews: 'Based on {{count}} reader reviews',
+    loading: 'Loading...',
+    recommendedPercent: '{{percent}}% recommended',
+    basedOnOpinions: 'Based on the opinions of {{count}} people',
+    messageAuthor: 'Message {{name}}',
+    doYouRecommend: 'Do you recommend {{name}}?',
+    reviewPlaceholder: 'Your review',
+    sharing: 'Sharing...',
+    share: 'Share',
+    reviewTooShort: 'Review must be at least 25 characters.',
+    loadingReviews: 'Loading reviews...',
+    socialMedia: 'Social media',
+    back: 'Back',
+    openCart: 'Open cart',
+    authorPageOptions: 'Author Page options',
+    editPage: 'Edit page',
+    pageOptions: 'Page options',
+    switchReaderAccount: 'Switch to Reader account',
+    works: 'Works',
+    followers: 'Followers',
+    posts: 'Posts',
+    addToStory: 'Add to story',
+    details: 'Details',
+    book: 'Book',
+    links: 'Links',
+    website: 'Website',
+    facebookPage: 'Facebook Page',
+    facebookComingSoon: 'Facebook Page link will be available after update.',
+    contactInfo: 'Contact info',
+    store: 'Store',
+    noWorksYet: 'No works yet',
+    noWorksText: 'Published novels, chat stories, and manga will appear here.',
+    reviewSettingsSaved: 'Review settings saved.',
+  },
+  km: {
+    authorPage: 'ទំព័រអ្នកនិពន្ធ',
+    reader: 'អ្នកអាន',
+    untitledStory: 'រឿងគ្មានចំណងជើង',
+    story: 'រឿង',
+    episodesShort: '{{count}} ភាគ',
+    notFoundTitle: 'រកមិនឃើញទំព័រអ្នកនិពន្ធ',
+    notFoundText: 'ទំព័រអ្នកនិពន្ធនេះអាចមិនមាន ឬ Username មិនត្រឹមត្រូវ។',
+    goBack: 'ត្រឡប់ក្រោយ',
+    cropProfilePhoto: 'កាត់រូប Profile',
+    cropCoverPhoto: 'កាត់រូប Cover',
+    cropHelp: 'អូស និងពង្រីក ដើម្បីកំណត់រូបទំព័រអ្នកនិពន្ធ។',
+    closeCropEditor: 'បិទកម្មវិធីកាត់រូប',
+    zoom: 'ពង្រីក',
+    cancel: 'បោះបង់',
+    saving: 'កំពុងរក្សាទុក...',
+    saveCrop: 'រក្សាទុករូបកាត់',
+    closeFollowSettings: 'បិទការកំណត់ Follow',
+    seeFirst: 'មើលមុនគេ',
+    muteUpdates: 'បិទសំឡេង Update',
+    unfollowing: 'កំពុងឈប់ Follow...',
+    unfollowAuthor: 'ឈប់ Follow {{name}}',
+    closeSwitcher: 'បិទការប្តូរ Profile',
+    notification: '{{count}} ការជូនដំណឹង',
+    notifications: '{{count}} ការជូនដំណឹង',
+    manageAccount: 'គ្រប់គ្រងគណនី',
+    closeAuthorMenu: 'បិទ Menu អ្នកនិពន្ធ',
+    authorMenu: 'Menu អ្នកនិពន្ធ',
+    switchProfile: 'ប្តូរ Profile',
+    finance: 'ហិរញ្ញវត្ថុ',
+    settings: 'ការកំណត់',
+    closeProfileSwitcher: 'បិទការប្តូរ Profile',
+    authorPageLabel: 'ទំព័រអ្នកនិពន្ធ',
+    switchingTo: 'កំពុងប្តូរទៅ',
+    closeCoverOptions: 'បិទជម្រើស Cover',
+    seeCover: 'មើល Cover',
+    uploadCover: 'Upload Cover',
+    chooseCover: 'ជ្រើស Cover',
+    noBio: 'អ្នកនិពន្ធនេះមិនទាន់បន្ថែម Bio ទេ។',
+    alwaysOpen: 'បើកជានិច្ច',
+    temporarilyClosed: 'បិទបណ្តោះអាសន្ន',
+    permanentlyClosed: 'បិទជាអចិន្ត្រៃយ៍',
+    closed: 'បិទ',
+    hoursAvailable: 'មានម៉ោងបើក',
+    open24Hours: 'បើក 24 ម៉ោង',
+    openEveryday: 'បើក · រាល់ថ្ងៃ {{hours}}',
+    openWeekdays: 'បើក · ចន្ទ–សុក្រ {{hours}}',
+    openWeekend: 'បើក · សៅរ៍–អាទិត្យ {{hours}}',
+    openDay: 'បើក · {{day}} {{hours}}',
+    hoursVary: 'ម៉ោងបើកខុសគ្នាតាមថ្ងៃ',
+    monday: 'ចន្ទ',
+    tuesday: 'អង្គារ',
+    wednesday: 'ពុធ',
+    thursday: 'ព្រហស្បតិ៍',
+    friday: 'សុក្រ',
+    saturday: 'សៅរ៍',
+    sunday: 'អាទិត្យ',
+    failedUploadImage: 'មិនអាច Upload រូបបាន',
+    failedSaveProfileImage: 'មិនអាចរក្សាទុករូបទំព័រអ្នកនិពន្ធបាន',
+    authorPageNotFound: 'រកមិនឃើញទំព័រអ្នកនិពន្ធ',
+    failedLoadReviews: 'មិនអាចផ្ទុក Review បាន',
+    failedSaveReview: 'មិនអាចរក្សាទុក Review បាន',
+    failedRemoveReview: 'មិនអាចលុប Review បាន',
+    failedUpdateFollow: 'មិនអាច Update Follow បាន',
+    comingSoon: '{{label}} នឹងមកដល់ឆាប់ៗនេះ។',
+    seeFirstUnavailable: 'មុខងារ See first មិនទាន់មានទេ។',
+    muteUnavailable: 'មុខងារ Mute updates មិនទាន់មានទេ។',
+    dashboard: 'Dashboard',
+    advertise: 'ផ្សព្វផ្សាយ',
+    following: 'កំពុង Follow',
+    follow: 'Follow',
+    message: 'សារ',
+    selectImage: 'សូមជ្រើសរើសឯកសាររូបភាព',
+    adjustPhoto: 'សូមកែតម្រូវរូបជាមុន',
+    failedSaveImage: 'មិនអាចរក្សាទុករូបបាន',
+    uploadingSlide: 'កំពុង Upload Slide ទៅ Cloudflare...',
+    slideUploaded: 'បាន Upload Slide។',
+    failedUploadSlide: 'មិនអាច Upload Slide បាន',
+    noCoverPhoto: 'មិនទាន់មានរូប Cover ទេ។',
+    reviews: 'Review',
+    reviewSettingsText: 'Review ជួយអ្នកអានសម្រេចចិត្តថាគួរ Follow ទំព័ររបស់អ្នកឬអត់។ អ្នកអាចបិទ Review បានគ្រប់ពេល ហើយ Review ចាស់នឹងត្រូវលាក់រហូតដល់បើកវិញ។',
+    allowReviews: 'អនុញ្ញាត Review លើទំព័រនេះ',
+    save: 'រក្សាទុក',
+    backToReviews: 'ត្រឡប់ទៅ Review',
+    aboutReviewScore: 'អំពីពិន្ទុ Review',
+    recommendSummary: '{{percent}}% ណែនាំ ({{count}} Review)',
+    reviewScoreInfo: 'ពិន្ទុនេះផ្អែកលើ Review របស់អ្នកអានសម្រាប់ទំព័រអ្នកនិពន្ធនេះ។ អ្នកអានអាចជ្រើសថាណែនាំទំព័រ ឬទុក Review សាធារណៈ។ ភាគរយបង្ហាញចំនួន Review សកម្មដែលណែនាំទំព័រ។',
+    noReviewsYet: 'មិនទាន់មាន Review ទេ។',
+    howReviewsWork: 'របៀបដែល Shadow Review ដំណើរការ',
+    reportReview: 'រាយការណ៍ Review',
+    reportReviewComingSoon: 'មុខងារ Report Review នឹងមកដល់ឆាប់ៗនេះ។',
+    copyReviewLink: 'ចម្លង Link Review',
+    reviewLinkCopied: 'បានចម្លង Link Review។',
+    closeReviews: 'បិទ Review',
+    edit: 'កែ',
+    recentReviews: 'Review ថ្មីៗ',
+    seeAll: 'មើលទាំងអស់',
+    yes: 'បាទ/ចាស',
+    no: 'ទេ',
+    reviewPrompt: 'តើអ្នកចង់និយាយអ្វីអំពី {{name}}?',
+    public: 'សាធារណៈ',
+    reviewMinimum: '{{count}} / 25 · Review ត្រូវមានយ៉ាងតិច 25 តួអក្សរ',
+    discardReview: 'បោះបង់ Review?',
+    discardReviewText: 'Review ជួយអ្នកអានផ្សេងយល់ពីទំព័រនេះ។ តើអ្នកប្រាកដថាចង់បោះបង់អត្ថបទព្រាងទេ?',
+    discard: 'បោះបង់',
+    keepWriting: 'បន្តសរសេរ',
+    allowReadersReviewQuestion: 'អនុញ្ញាតឱ្យអ្នកអានមើល និងសរសេរ Review លើទំព័ររបស់អ្នក?',
+    recommends: 'ណែនាំ',
+    doesNotRecommend: 'មិនណែនាំ',
+    basedOnReaderReviews: 'ផ្អែកលើ Review របស់អ្នកអាន {{count}}',
+    loading: 'កំពុងផ្ទុក...',
+    recommendedPercent: '{{percent}}% ណែនាំ',
+    basedOnOpinions: 'ផ្អែកលើមតិរបស់មនុស្ស {{count}} នាក់',
+    messageAuthor: 'ផ្ញើសារ {{name}}',
+    doYouRecommend: 'តើអ្នកណែនាំ {{name}} ទេ?',
+    reviewPlaceholder: 'Review របស់អ្នក',
+    sharing: 'កំពុងចែករំលែក...',
+    share: 'ចែករំលែក',
+    reviewTooShort: 'Review ត្រូវមានយ៉ាងតិច 25 តួអក្សរ។',
+    loadingReviews: 'កំពុងផ្ទុក Review...',
+    socialMedia: 'បណ្ដាញសង្គម',
+    back: 'ត្រឡប់ក្រោយ',
+    openCart: 'បើកកន្ត្រក',
+    authorPageOptions: 'ជម្រើសទំព័រអ្នកនិពន្ធ',
+    editPage: 'កែទំព័រ',
+    pageOptions: 'ជម្រើសទំព័រ',
+    switchReaderAccount: 'ប្តូរទៅគណនីអ្នកអាន',
+    works: 'ស្នាដៃ',
+    followers: 'អ្នក Follow',
+    posts: 'Post',
+    addToStory: 'បន្ថែមទៅ Story',
+    details: 'ព័ត៌មានលម្អិត',
+    book: 'សៀវភៅ',
+    links: 'Link',
+    website: 'វេបសាយ',
+    facebookPage: 'Facebook Page',
+    facebookComingSoon: 'Link Facebook Page នឹងមានបន្ទាប់ពី Update។',
+    contactInfo: 'ព័ត៌មានទំនាក់ទំនង',
+    store: 'Store',
+    noWorksYet: 'មិនទាន់មានស្នាដៃ',
+    noWorksText: 'Novel, Chat Story និង Manga ដែលបាន Publish នឹងបង្ហាញនៅទីនេះ។',
+    reviewSettingsSaved: 'បានរក្សាទុកការកំណត់ Review។',
+  },
+  zh: {
+    authorPage: '作者主页',
+    reader: '读者',
+    untitledStory: '无标题故事',
+    story: '故事',
+    episodesShort: '{{count}} 集',
+    notFoundTitle: '未找到作者主页',
+    notFoundText: '此作者主页可能不可用，或用户名不正确。',
+    goBack: '返回',
+    cropProfilePhoto: '裁剪头像',
+    cropCoverPhoto: '裁剪封面',
+    cropHelp: '拖动并缩放以适配作者主页图片。',
+    closeCropEditor: '关闭裁剪编辑器',
+    zoom: '缩放',
+    cancel: '取消',
+    saving: '保存中...',
+    saveCrop: '保存裁剪',
+    closeFollowSettings: '关闭关注设置',
+    seeFirst: '优先查看',
+    muteUpdates: '静音更新',
+    unfollowing: '正在取消关注...',
+    unfollowAuthor: '取消关注 {{name}}',
+    closeSwitcher: '关闭账号切换',
+    notification: '{{count}} 条通知',
+    notifications: '{{count}} 条通知',
+    manageAccount: '管理账号',
+    closeAuthorMenu: '关闭作者菜单',
+    authorMenu: '作者菜单',
+    switchProfile: '切换个人资料',
+    finance: '财务',
+    settings: '设置',
+    closeProfileSwitcher: '关闭个人资料切换',
+    authorPageLabel: '作者主页',
+    switchingTo: '正在切换到',
+    closeCoverOptions: '关闭封面选项',
+    seeCover: '查看封面',
+    uploadCover: '上传封面',
+    chooseCover: '选择封面',
+    noBio: '该作者尚未添加简介。',
+    alwaysOpen: '始终营业',
+    temporarilyClosed: '暂时关闭',
+    permanentlyClosed: '永久关闭',
+    closed: '已关闭',
+    hoursAvailable: '有营业时间',
+    open24Hours: '24 小时营业',
+    openEveryday: '营业 · 每天 {{hours}}',
+    openWeekdays: '营业 · 周一至周五 {{hours}}',
+    openWeekend: '营业 · 周六至周日 {{hours}}',
+    openDay: '营业 · {{day}} {{hours}}',
+    hoursVary: '营业时间因日期而异',
+    monday: '星期一',
+    tuesday: '星期二',
+    wednesday: '星期三',
+    thursday: '星期四',
+    friday: '星期五',
+    saturday: '星期六',
+    sunday: '星期日',
+    failedUploadImage: '图片上传失败',
+    failedSaveProfileImage: '保存作者主页图片失败',
+    authorPageNotFound: '未找到作者主页',
+    failedLoadReviews: '加载评价失败',
+    failedSaveReview: '保存评价失败',
+    failedRemoveReview: '删除评价失败',
+    failedUpdateFollow: '更新关注状态失败',
+    comingSoon: '{{label}} 即将推出。',
+    seeFirstUnavailable: '优先查看功能暂不可用。',
+    muteUnavailable: '静音更新功能暂不可用。',
+    dashboard: '控制面板',
+    advertise: '推广',
+    following: '已关注',
+    follow: '关注',
+    message: '消息',
+    selectImage: '请选择图片文件',
+    adjustPhoto: '请先调整照片',
+    failedSaveImage: '保存图片失败',
+    uploadingSlide: '正在上传幻灯片到 Cloudflare...',
+    slideUploaded: '幻灯片已上传。',
+    failedUploadSlide: '上传幻灯片失败',
+    noCoverPhoto: '暂无封面图片。',
+    reviews: '评价',
+    reviewSettingsText: '评价可帮助读者判断是否值得关注你的主页。你可以随时关闭评价，已有评价会隐藏，直到再次开启。',
+    allowReviews: '允许此主页显示评价',
+    save: '保存',
+    backToReviews: '返回评价',
+    aboutReviewScore: '关于评价分数',
+    recommendSummary: '{{percent}}% 推荐（{{count}} 条评价）',
+    reviewScoreInfo: '此分数基于读者对该作者主页的评价。读者可以选择是否推荐该主页并留下公开评价。百分比表示推荐该主页的有效评价比例。',
+    noReviewsYet: '暂无评价。',
+    howReviewsWork: 'Shadow 评价的工作方式',
+    reportReview: '举报评价',
+    reportReviewComingSoon: '举报评价功能即将推出。',
+    copyReviewLink: '复制评价链接',
+    reviewLinkCopied: '评价链接已复制。',
+    closeReviews: '关闭评价',
+    edit: '编辑',
+    recentReviews: '近期评价',
+    seeAll: '查看全部',
+    yes: '是',
+    no: '否',
+    reviewPrompt: '你想对 {{name}} 说些什么？',
+    public: '公开',
+    reviewMinimum: '{{count}} / 25 · 评价至少需要 25 个字符',
+    discardReview: '放弃评价？',
+    discardReviewText: '评价可以帮助其他读者了解此主页。确定要放弃草稿吗？',
+    discard: '放弃',
+    keepWriting: '继续编辑',
+    allowReadersReviewQuestion: '允许读者查看并在你的主页上撰写评价？',
+    recommends: '推荐',
+    doesNotRecommend: '不推荐',
+    basedOnReaderReviews: '基于 {{count}} 条读者评价',
+    loading: '加载中...',
+    recommendedPercent: '{{percent}}% 推荐',
+    basedOnOpinions: '基于 {{count}} 人的意见',
+    messageAuthor: '给 {{name}} 发消息',
+    doYouRecommend: '你推荐 {{name}} 吗？',
+    reviewPlaceholder: '你的评价',
+    sharing: '正在分享...',
+    share: '分享',
+    reviewTooShort: '评价至少需要 25 个字符。',
+    loadingReviews: '正在加载评价...',
+    socialMedia: '社交媒体',
+    back: '返回',
+    openCart: '打开购物车',
+    authorPageOptions: '作者主页选项',
+    editPage: '编辑主页',
+    pageOptions: '主页选项',
+    switchReaderAccount: '切换到读者账号',
+    works: '作品',
+    followers: '关注者',
+    posts: '帖子',
+    addToStory: '添加到故事',
+    details: '详情',
+    book: '图书',
+    links: '链接',
+    website: '网站',
+    facebookPage: 'Facebook Page',
+    facebookComingSoon: 'Facebook Page 链接将在更新后提供。',
+    contactInfo: '联系信息',
+    store: '商店',
+    noWorksYet: '暂无作品',
+    noWorksText: '已发布的小说、Chat Story 和 Manga 会显示在这里。',
+    reviewSettingsSaved: '评价设置已保存。',
+  },
+  ja: {
+    authorPage: '作者ページ',
+    reader: '読者',
+    untitledStory: '無題のストーリー',
+    story: 'ストーリー',
+    episodesShort: '{{count}}話',
+    notFoundTitle: '作者ページが見つかりません',
+    notFoundText: 'この作者ページは利用できないか、ユーザー名が正しくない可能性があります。',
+    goBack: '戻る',
+    cropProfilePhoto: 'プロフィール写真を切り抜く',
+    cropCoverPhoto: 'カバー写真を切り抜く',
+    cropHelp: 'ドラッグとズームで作者ページ画像を調整します。',
+    closeCropEditor: '切り抜きエディターを閉じる',
+    zoom: 'ズーム',
+    cancel: 'キャンセル',
+    saving: '保存中...',
+    saveCrop: '切り抜きを保存',
+    closeFollowSettings: 'フォロー設定を閉じる',
+    seeFirst: '優先表示',
+    muteUpdates: '更新をミュート',
+    unfollowing: 'フォロー解除中...',
+    unfollowAuthor: '{{name}} のフォローを解除',
+    closeSwitcher: '切り替え画面を閉じる',
+    notification: '{{count}} 件の通知',
+    notifications: '{{count}} 件の通知',
+    manageAccount: 'アカウント管理',
+    closeAuthorMenu: '作者メニューを閉じる',
+    authorMenu: '作者メニュー',
+    switchProfile: 'プロフィール切替',
+    finance: '収益',
+    settings: '設定',
+    closeProfileSwitcher: 'プロフィール切替を閉じる',
+    authorPageLabel: '作者ページ',
+    switchingTo: '切り替え中',
+    closeCoverOptions: 'カバーオプションを閉じる',
+    seeCover: 'カバーを見る',
+    uploadCover: 'カバーをアップロード',
+    chooseCover: 'カバーを選択',
+    noBio: 'この作者はまだ紹介文を追加していません。',
+    alwaysOpen: '常時営業',
+    temporarilyClosed: '一時休業',
+    permanentlyClosed: '閉業',
+    closed: '休業',
+    hoursAvailable: '営業時間あり',
+    open24Hours: '24時間営業',
+    openEveryday: '営業 · 毎日 {{hours}}',
+    openWeekdays: '営業 · 月〜金 {{hours}}',
+    openWeekend: '営業 · 土〜日 {{hours}}',
+    openDay: '営業 · {{day}} {{hours}}',
+    hoursVary: '曜日によって営業時間が異なります',
+    monday: '月曜日',
+    tuesday: '火曜日',
+    wednesday: '水曜日',
+    thursday: '木曜日',
+    friday: '金曜日',
+    saturday: '土曜日',
+    sunday: '日曜日',
+    failedUploadImage: '画像のアップロードに失敗しました',
+    failedSaveProfileImage: '作者ページ画像の保存に失敗しました',
+    authorPageNotFound: '作者ページが見つかりません',
+    failedLoadReviews: 'レビューを読み込めませんでした',
+    failedSaveReview: 'レビューを保存できませんでした',
+    failedRemoveReview: 'レビューを削除できませんでした',
+    failedUpdateFollow: 'フォロー状態を更新できませんでした',
+    comingSoon: '{{label}} は近日公開予定です。',
+    seeFirstUnavailable: '優先表示はまだ利用できません。',
+    muteUnavailable: '更新のミュートはまだ利用できません。',
+    dashboard: 'ダッシュボード',
+    advertise: '広告',
+    following: 'フォロー中',
+    follow: 'フォロー',
+    message: 'メッセージ',
+    selectImage: '画像ファイルを選択してください',
+    adjustPhoto: '先に写真を調整してください',
+    failedSaveImage: '画像を保存できませんでした',
+    uploadingSlide: 'スライドを Cloudflare にアップロード中...',
+    slideUploaded: 'スライドをアップロードしました。',
+    failedUploadSlide: 'スライドをアップロードできませんでした',
+    noCoverPhoto: 'カバー写真はまだありません。',
+    reviews: 'レビュー',
+    reviewSettingsText: 'レビューは読者がこのページをフォローする価値があるか判断する助けになります。レビューはいつでもオフにでき、再度オンにするまで既存レビューは非表示になります。',
+    allowReviews: 'このページでレビューを許可',
+    save: '保存',
+    backToReviews: 'レビューに戻る',
+    aboutReviewScore: 'レビュー評価について',
+    recommendSummary: '{{percent}}% が推奨（{{count}}件のレビュー）',
+    reviewScoreInfo: 'この評価は作者ページに対する読者レビューに基づきます。読者はページを勧めるか選択し、公開レビューを残せます。割合は有効なレビューのうち推奨した割合を示します。',
+    noReviewsYet: 'レビューはまだありません。',
+    howReviewsWork: 'Shadow レビューの仕組み',
+    reportReview: 'レビューを報告',
+    reportReviewComingSoon: 'レビュー報告機能は近日公開予定です。',
+    copyReviewLink: 'レビューリンクをコピー',
+    reviewLinkCopied: 'レビューリンクをコピーしました。',
+    closeReviews: 'レビューを閉じる',
+    edit: '編集',
+    recentReviews: '最近のレビュー',
+    seeAll: 'すべて見る',
+    yes: 'はい',
+    no: 'いいえ',
+    reviewPrompt: '{{name}} についてどう思いますか？',
+    public: '公開',
+    reviewMinimum: '{{count}} / 25 · レビューは25文字以上必要です',
+    discardReview: 'レビューを破棄しますか？',
+    discardReviewText: 'レビューは他の読者がこのページを理解する助けになります。下書きを破棄してもよろしいですか？',
+    discard: '破棄',
+    keepWriting: '書き続ける',
+    allowReadersReviewQuestion: '読者がこのページのレビューを閲覧・投稿できるようにしますか？',
+    recommends: 'おすすめしています',
+    doesNotRecommend: 'おすすめしていません',
+    basedOnReaderReviews: '{{count}}件の読者レビューに基づく',
+    loading: '読み込み中...',
+    recommendedPercent: '{{percent}}% がおすすめ',
+    basedOnOpinions: '{{count}}人の意見に基づく',
+    messageAuthor: '{{name}} にメッセージ',
+    doYouRecommend: '{{name}} をおすすめしますか？',
+    reviewPlaceholder: 'レビューを入力',
+    sharing: '共有中...',
+    share: '共有',
+    reviewTooShort: 'レビューは25文字以上必要です。',
+    loadingReviews: 'レビューを読み込み中...',
+    socialMedia: 'ソーシャルメディア',
+    back: '戻る',
+    openCart: 'カートを開く',
+    authorPageOptions: '作者ページのオプション',
+    editPage: 'ページを編集',
+    pageOptions: 'ページオプション',
+    switchReaderAccount: '読者アカウントに切り替え',
+    works: '作品',
+    followers: 'フォロワー',
+    posts: '投稿',
+    addToStory: 'ストーリーに追加',
+    details: '詳細',
+    book: '本',
+    links: 'リンク',
+    website: 'ウェブサイト',
+    facebookPage: 'Facebook Page',
+    facebookComingSoon: 'Facebook Page のリンクは更新後に利用できます。',
+    contactInfo: '連絡先',
+    store: 'ストア',
+    noWorksYet: '作品はまだありません',
+    noWorksText: '公開した小説、Chat Story、Manga がここに表示されます。',
+    reviewSettingsSaved: 'レビュー設定を保存しました。',
+  },
+  ko: {
+    authorPage: '작가 페이지',
+    reader: '독자',
+    untitledStory: '제목 없는 스토리',
+    story: '스토리',
+    episodesShort: '{{count}}화',
+    notFoundTitle: '작가 페이지를 찾을 수 없습니다',
+    notFoundText: '이 작가 페이지를 사용할 수 없거나 사용자 이름이 올바르지 않을 수 있습니다.',
+    goBack: '뒤로 가기',
+    cropProfilePhoto: '프로필 사진 자르기',
+    cropCoverPhoto: '커버 사진 자르기',
+    cropHelp: '드래그하고 확대하여 작가 페이지 이미지를 맞추세요.',
+    closeCropEditor: '자르기 편집기 닫기',
+    zoom: '확대',
+    cancel: '취소',
+    saving: '저장 중...',
+    saveCrop: '자르기 저장',
+    closeFollowSettings: '팔로우 설정 닫기',
+    seeFirst: '먼저 보기',
+    muteUpdates: '업데이트 알림 끄기',
+    unfollowing: '팔로우 해제 중...',
+    unfollowAuthor: '{{name}} 팔로우 해제',
+    closeSwitcher: '프로필 전환 닫기',
+    notification: '알림 {{count}}개',
+    notifications: '알림 {{count}}개',
+    manageAccount: '계정 관리',
+    closeAuthorMenu: '작가 메뉴 닫기',
+    authorMenu: '작가 메뉴',
+    switchProfile: '프로필 전환',
+    finance: '재정',
+    settings: '설정',
+    closeProfileSwitcher: '프로필 전환 닫기',
+    authorPageLabel: '작가 페이지',
+    switchingTo: '전환 중',
+    closeCoverOptions: '커버 옵션 닫기',
+    seeCover: '커버 보기',
+    uploadCover: '커버 업로드',
+    chooseCover: '커버 선택',
+    noBio: '이 작가는 아직 소개를 추가하지 않았습니다.',
+    alwaysOpen: '항상 영업',
+    temporarilyClosed: '임시 휴업',
+    permanentlyClosed: '영구 폐업',
+    closed: '휴무',
+    hoursAvailable: '영업시간 있음',
+    open24Hours: '24시간 영업',
+    openEveryday: '영업 · 매일 {{hours}}',
+    openWeekdays: '영업 · 월–금 {{hours}}',
+    openWeekend: '영업 · 토–일 {{hours}}',
+    openDay: '영업 · {{day}} {{hours}}',
+    hoursVary: '요일마다 영업시간이 다릅니다',
+    monday: '월요일',
+    tuesday: '화요일',
+    wednesday: '수요일',
+    thursday: '목요일',
+    friday: '금요일',
+    saturday: '토요일',
+    sunday: '일요일',
+    failedUploadImage: '이미지를 업로드하지 못했습니다',
+    failedSaveProfileImage: '작가 페이지 이미지를 저장하지 못했습니다',
+    authorPageNotFound: '작가 페이지를 찾을 수 없습니다',
+    failedLoadReviews: '리뷰를 불러오지 못했습니다',
+    failedSaveReview: '리뷰를 저장하지 못했습니다',
+    failedRemoveReview: '리뷰를 삭제하지 못했습니다',
+    failedUpdateFollow: '팔로우 상태를 업데이트하지 못했습니다',
+    comingSoon: '{{label}} 기능은 곧 제공됩니다.',
+    seeFirstUnavailable: '먼저 보기 기능은 아직 사용할 수 없습니다.',
+    muteUnavailable: '업데이트 알림 끄기 기능은 아직 사용할 수 없습니다.',
+    dashboard: '대시보드',
+    advertise: '광고',
+    following: '팔로우 중',
+    follow: '팔로우',
+    message: '메시지',
+    selectImage: '이미지 파일을 선택하세요',
+    adjustPhoto: '먼저 사진을 조정하세요',
+    failedSaveImage: '이미지를 저장하지 못했습니다',
+    uploadingSlide: '슬라이드를 Cloudflare에 업로드 중...',
+    slideUploaded: '슬라이드를 업로드했습니다.',
+    failedUploadSlide: '슬라이드를 업로드하지 못했습니다',
+    noCoverPhoto: '커버 사진이 아직 없습니다.',
+    reviews: '리뷰',
+    reviewSettingsText: '리뷰는 독자가 이 페이지를 팔로우할 가치가 있는지 판단하는 데 도움을 줍니다. 리뷰는 언제든 끌 수 있으며 다시 켤 때까지 기존 리뷰는 숨겨집니다.',
+    allowReviews: '이 페이지에서 리뷰 허용',
+    save: '저장',
+    backToReviews: '리뷰로 돌아가기',
+    aboutReviewScore: '리뷰 점수 정보',
+    recommendSummary: '{{percent}}% 추천 (리뷰 {{count}}개)',
+    reviewScoreInfo: '이 점수는 이 작가 페이지에 대한 독자 리뷰를 기반으로 합니다. 독자는 페이지 추천 여부를 선택하고 공개 리뷰를 남길 수 있습니다. 비율은 활성 리뷰 중 페이지를 추천한 비율을 나타냅니다.',
+    noReviewsYet: '아직 리뷰가 없습니다.',
+    howReviewsWork: 'Shadow 리뷰 작동 방식',
+    reportReview: '리뷰 신고',
+    reportReviewComingSoon: '리뷰 신고 기능은 곧 제공됩니다.',
+    copyReviewLink: '리뷰 링크 복사',
+    reviewLinkCopied: '리뷰 링크를 복사했습니다.',
+    closeReviews: '리뷰 닫기',
+    edit: '편집',
+    recentReviews: '최근 리뷰',
+    seeAll: '전체 보기',
+    yes: '예',
+    no: '아니요',
+    reviewPrompt: '{{name}}에 대해 무엇을 말하고 싶으신가요?',
+    public: '공개',
+    reviewMinimum: '{{count}} / 25 · 리뷰는 최소 25자여야 합니다',
+    discardReview: '리뷰를 버릴까요?',
+    discardReviewText: '리뷰는 다른 독자가 이 페이지를 이해하는 데 도움을 줍니다. 초안을 버리시겠습니까?',
+    discard: '버리기',
+    keepWriting: '계속 작성',
+    allowReadersReviewQuestion: '독자가 이 페이지의 리뷰를 보고 작성하도록 허용할까요?',
+    recommends: '추천함',
+    doesNotRecommend: '추천하지 않음',
+    basedOnReaderReviews: '독자 리뷰 {{count}}개 기준',
+    loading: '불러오는 중...',
+    recommendedPercent: '{{percent}}% 추천',
+    basedOnOpinions: '{{count}}명의 의견을 기준으로 함',
+    messageAuthor: '{{name}}에게 메시지',
+    doYouRecommend: '{{name}}을(를) 추천하시나요?',
+    reviewPlaceholder: '리뷰를 입력하세요',
+    sharing: '공유 중...',
+    share: '공유',
+    reviewTooShort: '리뷰는 최소 25자여야 합니다.',
+    loadingReviews: '리뷰 불러오는 중...',
+    socialMedia: '소셜 미디어',
+    back: '뒤로',
+    openCart: '장바구니 열기',
+    authorPageOptions: '작가 페이지 옵션',
+    editPage: '페이지 편집',
+    pageOptions: '페이지 옵션',
+    switchReaderAccount: '독자 계정으로 전환',
+    works: '작품',
+    followers: '팔로워',
+    posts: '게시물',
+    addToStory: '스토리에 추가',
+    details: '상세 정보',
+    book: '책',
+    links: '링크',
+    website: '웹사이트',
+    facebookPage: 'Facebook Page',
+    facebookComingSoon: 'Facebook Page 링크는 업데이트 후 제공됩니다.',
+    contactInfo: '연락처',
+    store: '스토어',
+    noWorksYet: '아직 작품이 없습니다',
+    noWorksText: '게시된 소설, Chat Story, Manga가 여기에 표시됩니다.',
+    reviewSettingsSaved: '리뷰 설정을 저장했습니다.',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -122,7 +840,7 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to upload image')
+    throw new Error(data.message || getDisplayText('authorPublicPage.failedUploadImage'))
   }
 
   return data.image_url || data.imageUrl
@@ -150,7 +868,7 @@ async function saveAuthorProfileImages({ token, avatarUrl = '', coverUrl = '', s
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to save author profile image')
+    throw new Error(data.message || getDisplayText('authorPublicPage.failedSaveProfileImage'))
   }
 
   return data.author_page || null
@@ -160,10 +878,11 @@ function formatCompactNumber(value) {
   const number = Number(value || 0)
 
   if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
 
-  return String(number)
+  return new Intl.NumberFormat(getDisplayLanguageId(), {
+    notation: number >= 1000 ? 'compact' : 'standard',
+    maximumFractionDigits: number >= 1000 ? 1 : 0,
+  }).format(number)
 }
 
 function getCompactHoursText(details = {}) {
@@ -171,10 +890,10 @@ function getCompactHoursText(details = {}) {
   const text = String(details?.hours || '').trim()
 
   if (!text || type === 'not_applicable') return ''
-  if (type === 'always_open' || /^always open$/i.test(text)) return 'Always open'
-  if (type === 'temporarily_closed' || /^temporarily closed$/i.test(text)) return 'Temporarily closed'
-  if (type === 'permanently_closed' || /^permanently closed$/i.test(text)) return 'Permanently closed'
-  if (/^closed$/i.test(text)) return 'Closed'
+  if (type === 'always_open' || /^always open$/i.test(text)) return getDisplayText('authorPublicPage.alwaysOpen')
+  if (type === 'temporarily_closed' || /^temporarily closed$/i.test(text)) return getDisplayText('authorPublicPage.temporarilyClosed')
+  if (type === 'permanently_closed' || /^permanently closed$/i.test(text)) return getDisplayText('authorPublicPage.permanentlyClosed')
+  if (/^closed$/i.test(text)) return getDisplayText('authorPublicPage.closed')
 
   const oneLine = text.replace(/\s+/g, ' ').trim()
 
@@ -220,11 +939,11 @@ function getCompactHoursText(details = {}) {
     })
     .filter(Boolean)
 
-  if (!entries.length) return 'Hours available'
+  if (!entries.length) return getDisplayText('authorPublicPage.hoursAvailable')
 
   const openEntries = entries.filter((item) => !/^closed$/i.test(item.hours))
 
-  if (!openEntries.length) return 'Closed'
+  if (!openEntries.length) return getDisplayText('authorPublicPage.closed')
 
   const uniqueHours = [...new Set(openEntries.map((item) => item.hours))]
   const openIndexes = openEntries.map((item) => item.index).sort((a, b) => a - b)
@@ -234,24 +953,24 @@ function getCompactHoursText(details = {}) {
     const indexesText = openIndexes.join(',')
 
     if (indexesText === '0,1,2,3,4,5,6') {
-      if (/open 24 hours/i.test(hours)) return 'Open 24 hours'
-      return `Open · Everyday ${hours}`
+      if (/open 24 hours/i.test(hours)) return getDisplayText('authorPublicPage.open24Hours')
+      return getDisplayText('authorPublicPage.openEveryday', { hours })
     }
 
     if (indexesText === '0,1,2,3,4') {
-      return `Open · Mon–Fri ${hours}`
+      return getDisplayText('authorPublicPage.openWeekdays', { hours })
     }
 
     if (indexesText === '5,6') {
-      return `Open · Sat–Sun ${hours}`
+      return getDisplayText('authorPublicPage.openWeekend', { hours })
     }
 
     if (openEntries.length === 1) {
-      return `Open · ${openEntries[0].label} ${hours}`
+      return getDisplayText('authorPublicPage.openDay', { day: getDisplayText(`authorPublicPage.${openEntries[0].key}`), hours })
     }
   }
 
-  return 'Hours vary by day'
+  return getDisplayText('authorPublicPage.hoursVary')
 }
 
 function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) {
@@ -270,10 +989,10 @@ function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) 
   return {
     id: author.id || '',
     user_id: author.user_id || '',
-    page_name: author.page_name || author.name || 'Author Page',
+    page_name: author.page_name || author.name || getDisplayText('authorPublicPage.authorPage'),
     page_username: author.page_username || author.username || pageUsername || 'author',
     page_slug: author.page_slug || author.page_username || pageUsername || 'author',
-    bio: author.bio || 'This author has not added a bio yet.',
+    bio: author.bio || getDisplayText('authorPublicPage.noBio'),
     avatar_url: author.avatar_url || author.profile_image_url || '',
     cover_url: author.cover_url || author.banner_url || '',
     slide_urls: Array.isArray(author.slide_urls) ? author.slide_urls : [],
@@ -305,7 +1024,7 @@ async function fetchPublicAuthorPage(pageUsername) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Author page not found')
+    throw new Error(data.message || getDisplayText('authorPublicPage.authorPageNotFound'))
   }
 
   const authorPage = data.author_page || data.author || data.page || null
@@ -369,10 +1088,10 @@ return {
 function StatItem({ value, label }) {
   return (
     <div className="min-w-0 text-center">
-      <div className="text-[18px] font-black leading-tight text-[#111827] sm:text-[20px]">
+      <div className="text-[18px] font-black leading-tight text-[var(--shadow-text-primary)] sm:text-[20px]">
         {formatCompactNumber(value)}
       </div>
-      <div className="mt-0.5 text-[12px] font-semibold text-[#6b7280] sm:text-[13px]">
+      <div className="mt-0.5 text-[12px] font-semibold text-[var(--shadow-text-secondary)] sm:text-[13px]">
         {label}
       </div>
     </div>
@@ -381,13 +1100,15 @@ function StatItem({ value, label }) {
 
 
 function AuthorWorkCard({ work, onOpen }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="group flex gap-3 rounded-[20px] bg-white p-3 text-left shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
+      className="group flex gap-3 rounded-[20px] bg-[var(--shadow-bg-surface)] p-3 text-left shadow-sm ring-1 ring-[var(--shadow-border)] transition active:scale-[0.99]"
     >
-      <div className="h-[108px] w-[78px] shrink-0 overflow-hidden rounded-[14px] bg-[#e5e7eb]">
+      <div className="h-[108px] w-[78px] shrink-0 overflow-hidden rounded-[14px] bg-[var(--shadow-bg-elevated)]">
         {work.cover_url ? (
           <img
             src={work.cover_url}
@@ -395,24 +1116,24 @@ function AuthorWorkCard({ work, onOpen }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[#9ca3af]">
+          <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
             <i className="fa-regular fa-bookmark text-[22px]" />
           </div>
         )}
       </div>
 
       <div className="min-w-0 flex-1 py-1">
-        <h3 className="line-clamp-2 text-[15px] font-black leading-5 text-[#111827]">
-          {work.title || 'Untitled Story'}
+        <h3 className="line-clamp-2 text-[15px] font-black leading-5 text-[var(--shadow-text-primary)]">
+          {work.title || t('authorPublicPage.untitledStory')}
         </h3>
 
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-[#8b93a1]">
-          <span>{work.main_genre || 'Story'}</span>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-[var(--shadow-text-secondary)]">
+          <span>{work.main_genre || t('authorPublicPage.story')}</span>
           <span>•</span>
-          <span>{Number(work.total_episodes || 0)} eps</span>
+          <span>{t('authorPublicPage.episodesShort', { count: new Intl.NumberFormat(getDisplayLanguageId()).format(Number(work.total_episodes || 0)) })}</span>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-bold text-[#9ca3af]">
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-bold text-[var(--shadow-text-tertiary)]">
           <span>
             <i className="fa-regular fa-eye mr-1" />
             {formatCompactNumber(work.total_views)}
@@ -434,12 +1155,12 @@ function AuthorWorkCard({ work, onOpen }) {
 
 function EmptyPanel({ title, text }) {
   return (
-    <div className="rounded-[24px] bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+    <div className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-7 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
         <i className="fa-regular fa-file-lines text-[20px]" />
       </div>
-      <h3 className="text-[16px] font-black text-[#111827]">{title}</h3>
-      <p className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
+      <h3 className="text-[16px] font-black text-[var(--shadow-text-primary)]">{title}</h3>
+      <p className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">
         {text}
       </p>
     </div>
@@ -447,22 +1168,24 @@ function EmptyPanel({ title, text }) {
 }
 
 function AuthorNotFound({ onBack }) {
+  const { t } = useDisplayTranslation()
+
   return (
-    <div className="min-h-screen bg-[#f3f4f6] px-4 py-10">
-      <div className="mx-auto max-w-[420px] rounded-full bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+    <div className="min-h-screen bg-[var(--shadow-bg-soft)] px-4 py-10">
+      <div className="mx-auto max-w-[420px] rounded-full bg-[var(--shadow-bg-surface)] p-7 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
           <i className="fa-regular fa-user text-[24px]" />
         </div>
-        <h1 className="text-[20px] font-black text-[#111827]">Author page not found</h1>
-        <p className="mt-2 text-[13px] font-semibold leading-6 text-[#8b93a1]">
-          This author page may be unavailable or the username is incorrect.
+        <h1 className="text-[20px] font-black text-[var(--shadow-text-primary)]">{t('authorPublicPage.notFoundTitle')}</h1>
+        <p className="mt-2 text-[13px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">
+          {t('authorPublicPage.notFoundText')}
         </p>
         <button
           type="button"
           onClick={onBack}
           className="mt-6 h-11 w-full rounded-full bg-[#111827] text-[14px] font-black text-white"
         >
-          Go Back
+          {t('authorPublicPage.goBack')}
         </button>
       </div>
     </div>
@@ -485,6 +1208,8 @@ function CropImageModal({
   onClose,
   onSave,
 }) {
+  const { t } = useDisplayTranslation()
+
   if (!open) return null
 
   const isAvatar = mode === 'avatar'
@@ -492,22 +1217,22 @@ function CropImageModal({
   return (
    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/35 px-0 pb-[72px] md:items-center md:px-4 md:pb-0">
       <div className="mx-auto flex min-h-0 w-full max-w-[560px] items-end justify-center md:items-center">
-        <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
+        <div className="w-full rounded-[26px] bg-[var(--shadow-bg-surface)] p-4 shadow-2xl">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-[17px] font-extrabold text-[#111827]">
-                {isAvatar ? 'Crop Profile Photo' : 'Crop Cover Photo'}
+              <h2 className="text-[17px] font-extrabold text-[var(--shadow-text-primary)]">
+                {isAvatar ? t('authorPublicPage.cropProfilePhoto') : t('authorPublicPage.cropCoverPhoto')}
               </h2>
-              <p className="mt-1 text-[11.5px] leading-4 text-[#8d94a1]">
-                Drag and zoom to fit your author page image.
+              <p className="mt-1 text-[11.5px] leading-4 text-[var(--shadow-text-secondary)]">
+                {t('authorPublicPage.cropHelp')}
               </p>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
-              aria-label="Close crop editor"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"
+              aria-label={t('authorPublicPage.closeCropEditor')}
             >
               <i className="fa-solid fa-xmark text-[14px]" />
             </button>
@@ -515,7 +1240,7 @@ function CropImageModal({
 
           {message ? (
             <div
-              className={`mb-3 rounded-[14px] bg-white px-4 py-3 text-[12px] font-medium text-[#111827] shadow-sm ring-1 ring-black/10 transition-all duration-300 ${
+              className={`mb-3 rounded-[14px] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[12px] font-medium text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)] transition-all duration-300 ${
                 messageVisible ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
               }`}
             >
@@ -540,8 +1265,8 @@ function CropImageModal({
           </div>
 
           <div className="mt-4">
-            <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
-              <span>Zoom</span>
+            <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[var(--shadow-text-secondary)]">
+              <span>{t('authorPublicPage.zoom')}</span>
               <span>{zoom.toFixed(1)}x</span>
             </div>
             <input
@@ -559,9 +1284,9 @@ function CropImageModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+              className="h-12 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[13px] font-extrabold text-[var(--shadow-text-primary)] active:scale-[0.99]"
             >
-              Cancel
+              {t('authorPublicPage.cancel')}
             </button>
             <button
               type="button"
@@ -569,7 +1294,7 @@ function CropImageModal({
               disabled={saving}
               className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? 'Saving...' : 'Save Crop'}
+              {saving ? t('authorPublicPage.saving') : t('authorPublicPage.saveCrop')}
             </button>
           </div>
         </div>
@@ -579,6 +1304,7 @@ function CropImageModal({
 }
 
 function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMute, onUnfollow }) {
+  const { t } = useDisplayTranslation()
   const [dragY, setDragY] = useState(0)
   const dragStartYRef = useRef(null)
   const dragCurrentYRef = useRef(0)
@@ -612,11 +1338,11 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
         type="button"
         className="absolute inset-0 h-full w-full cursor-default"
         onClick={onClose}
-        aria-label="Close follow settings"
+        aria-label={t('authorPublicPage.closeFollowSettings')}
       />
 
       <div
-        className="relative w-full overflow-hidden rounded-t-[24px] bg-white pb-5 shadow-2xl md:max-w-[420px] md:rounded-[24px]"
+        className="relative w-full overflow-hidden rounded-t-[24px] bg-[var(--shadow-bg-surface)] pb-5 shadow-2xl md:max-w-[420px] md:rounded-[24px]"
         style={{
           transform: `translateY(${dragY}px)`,
           transition: dragStartYRef.current === null ? 'transform 180ms ease-out' : 'none',
@@ -633,44 +1359,44 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
         </div>
 
         <div className="px-5 pb-4 pt-1">
-          <div className="text-[15px] font-normal text-[#111827]">{author.page_name}</div>
-          <div className="mt-1 text-[12px] font-normal text-[#8b93a1]">@{author.page_username}</div>
+          <div className="text-[15px] font-normal text-[var(--shadow-text-primary)]">{author.page_name}</div>
+          <div className="mt-1 text-[12px] font-normal text-[var(--shadow-text-secondary)]">@{author.page_username}</div>
         </div>
 
-        <div className="border-t border-[#f0eef6]">
+        <div className="border-t border-[var(--shadow-border)]">
           <button
             type="button"
             onClick={onSeeFirst}
-            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
+            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
               <i className="fa-regular fa-star text-[15px]" />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">See first</span>
+            <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">{t('authorPublicPage.seeFirst')}</span>
           </button>
 
           <button
             type="button"
             onClick={onMute}
-            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
+            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
               <i className="fa-regular fa-bell-slash text-[15px]" />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">Mute updates</span>
+            <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">{t('authorPublicPage.muteUpdates')}</span>
           </button>
 
           <button
             type="button"
             onClick={onUnfollow}
             disabled={loading}
-            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb] disabled:opacity-60"
+            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[var(--shadow-bg-hover)] disabled:opacity-60"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
               <i className="fa-solid fa-user-minus text-[14px]" />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">
-              {loading ? 'Unfollowing...' : `Unfollow ${author.page_name}`}
+            <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+              {loading ? t('authorPublicPage.unfollowing') : t('authorPublicPage.unfollowAuthor', { name: author.page_name })}
             </span>
           </button>
         </div>
@@ -681,27 +1407,29 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
 
 
 function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, readerNotificationCount, onPage, onOwnAccount, onManageAccount }) {
+  const { t } = useDisplayTranslation()
+
   if (!open) return null
 
-  const pageName = author?.page_name || 'Author Page'
+  const pageName = author?.page_name || t('authorPublicPage.authorPage')
   const pageLogo = author?.avatar_url || ''
   const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
-  const readerName = readerUser?.name || 'Reader'
+  const readerName = readerUser?.name || t('authorPublicPage.reader')
   const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
   const showReaderBadge = Number(readerNotificationCount || 0) > 0
 
   return (
     <div className="fixed inset-0 z-[230]">
-      <button type="button" aria-label="Close switcher" onClick={onClose} className="absolute inset-0 bg-black/35" />
+      <button type="button" aria-label={t('authorPublicPage.closeSwitcher')} onClick={onClose} className="absolute inset-0 bg-black/35" />
 
-      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-white px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px]">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e5e7eb]" />
+      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px]">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-bg-elevated)]" />
 
-        <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-sm">
           <button type="button" onClick={onPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10">
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
                 {pageLogo ? (
                   <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
                 ) : (
@@ -709,7 +1437,7 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, readerNoti
                 )}
               </div>
               <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{pageName}</div>
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{pageName}</div>
               </div>
             </div>
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
@@ -717,7 +1445,7 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, readerNoti
             </span>
           </button>
 
-          <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99]">
+          <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 border-t border-[var(--shadow-border)] px-4 py-4 text-left active:scale-[0.99]">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
                 {readerAvatar ? (
@@ -727,21 +1455,21 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, readerNoti
                 )}
               </div>
               <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{readerName}</div>
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{readerName}</div>
                 {showReaderBadge ? (
-  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1]">
+  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
     <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-    <span>{`${readerNotificationCount} notification${Number(readerNotificationCount) === 1 ? '' : 's'}`}</span>
+    <span>{t(Number(readerNotificationCount) === 1 ? 'authorPublicPage.notification' : 'authorPublicPage.notifications', { count: new Intl.NumberFormat(getDisplayLanguageId()).format(Number(readerNotificationCount)) })}</span>
   </div>
 ) : null}
               </div>
             </div>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-disabled)]" />
           </button>
         </div>
 
-        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99]">
-          Manage Account
+        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99]">
+          {t('authorPublicPage.manageAccount')}
         </button>
 
         <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
@@ -769,10 +1497,10 @@ function AuthorOwnerMenuSheet({
 
   if (!open) return null
 
-  const pageName = author?.page_name || 'Author Page'
+  const pageName = author?.page_name || t('authorPublicPage.authorPage')
   const pageLogo = author?.avatar_url || ''
   const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
-  const readerName = readerUser?.name || 'Reader'
+  const readerName = readerUser?.name || t('authorPublicPage.reader')
   const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
   const showReaderBadge = Number(readerNotificationCount || 0) > 0
@@ -781,23 +1509,23 @@ function AuthorOwnerMenuSheet({
     <div className="fixed inset-0 z-[235]">
       <button
         type="button"
-        aria-label="Close author menu"
+        aria-label={t('authorPublicPage.closeAuthorMenu')}
         onClick={onClose}
         className="absolute inset-0 bg-black/35"
       />
 
-      <aside className="absolute bottom-0 left-0 top-0 w-[84vw] max-w-[390px] overflow-y-auto bg-white px-4 pb-8 pt-4 shadow-2xl">
+      <aside className="absolute bottom-0 left-0 top-0 w-[84vw] max-w-[390px] overflow-y-auto bg-[var(--shadow-bg-surface)] px-4 pb-8 pt-4 shadow-2xl">
         <div className="mb-4">
-          <h2 className="text-[15px] font-black text-[#111827]">Author Menu</h2>
+          <h2 className="text-[15px] font-black text-[var(--shadow-text-primary)]">{t('authorPublicPage.authorMenu')}</h2>
         </div>
 
-        <div className="bg-white px-0 py-3">
+        <div className="bg-[var(--shadow-bg-surface)] px-0 py-3">
           <button
             type="button"
             onClick={() => setProfileSwitcherOpen(true)}
             className="flex w-full items-center gap-3 text-left active:scale-[0.99]"
           >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/10">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
               {pageLogo ? (
                 <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
               ) : (
@@ -806,9 +1534,9 @@ function AuthorOwnerMenuSheet({
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="line-clamp-1 text-[16px] font-black text-[#111827]">{pageName}</div>
-              <div className="mt-1 text-[11.5px] font-semibold text-[#8b93a1]">
-                Switch Profile
+              <div className="line-clamp-1 text-[16px] font-black text-[var(--shadow-text-primary)]">{pageName}</div>
+              <div className="mt-1 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
+                {t('authorPublicPage.switchProfile')}
               </div>
             </div>
           </button>
@@ -822,12 +1550,12 @@ function AuthorOwnerMenuSheet({
     onClick={onOpenFinance}
     className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
   >
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
       <i className="fa-solid fa-wallet text-[17px]" />
     </span>
 
-    <span className="text-[15px] font-normal text-[#111827]">
-      Finance
+    <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+      {t('authorPublicPage.finance')}
     </span>
   </button>
 
@@ -836,12 +1564,12 @@ function AuthorOwnerMenuSheet({
   onClick={onOpenStoreSetting}
   className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
 >
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
       <i className="fa-solid fa-gear text-[17px]" />
     </span>
 
-    <span className="text-[15px] font-normal text-[#111827]">
-      Settings
+    <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+      {t('authorPublicPage.settings')}
     </span>
   </button>
 </div>
@@ -855,25 +1583,25 @@ function AuthorOwnerMenuSheet({
         <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/35 px-0 pb-0 md:items-center md:px-4 md:pb-0">
           <button
             type="button"
-            aria-label="Close profile switcher"
+            aria-label={t('authorPublicPage.closeProfileSwitcher')}
             onClick={() => setProfileSwitcherOpen(false)}
             className="absolute inset-0"
           />
 
-          <div className="relative w-full overflow-hidden rounded-t-[26px] bg-white px-4 pb-6 pt-3 shadow-2xl md:max-w-[390px] md:rounded-[26px]">
+          <div className="relative w-full overflow-hidden rounded-t-[26px] bg-[var(--shadow-bg-surface)] px-4 pb-6 pt-3 shadow-2xl md:max-w-[390px] md:rounded-[26px]">
             <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
-            <div className="overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
+            <div className="overflow-hidden rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-sm">
               <button
                 type="button"
                 onClick={() => {
                   setProfileSwitcherOpen(false)
                   onPage?.()
                 }}
-                className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+                className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
                     {pageLogo ? (
                       <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
                     ) : (
@@ -882,8 +1610,8 @@ function AuthorOwnerMenuSheet({
                   </div>
 
                   <div className="min-w-0">
-                    <div className="line-clamp-1 text-[15px] font-black text-[#111827]">{pageName}</div>
-                    <div className="mt-0.5 text-[11.5px] font-semibold text-[#8b93a1]">Author page</div>
+                    <div className="line-clamp-1 text-[15px] font-black text-[var(--shadow-text-primary)]">{pageName}</div>
+                    <div className="mt-0.5 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">{t('authorPublicPage.authorPageLabel')}</div>
                   </div>
                 </div>
 
@@ -898,10 +1626,10 @@ function AuthorOwnerMenuSheet({
                   setProfileSwitcherOpen(false)
                   onOwnAccount?.()
                 }}
-                className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:bg-[#f8fafc]"
+                className="flex w-full items-center justify-between gap-3 border-t border-[var(--shadow-border)] px-4 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/10">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
                     {readerAvatar ? (
                       <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
                     ) : (
@@ -910,17 +1638,17 @@ function AuthorOwnerMenuSheet({
                   </div>
 
                   <div className="min-w-0">
-                    <div className="line-clamp-1 text-[15px] font-black text-[#111827]">{readerName}</div>
+                    <div className="line-clamp-1 text-[15px] font-black text-[var(--shadow-text-primary)]">{readerName}</div>
                     {showReaderBadge ? (
-  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b93a1]">
+  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
     <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-    <span>{`${readerNotificationCount} notification${Number(readerNotificationCount) === 1 ? '' : 's'}`}</span>
+    <span>{t(Number(readerNotificationCount) === 1 ? 'authorPublicPage.notification' : 'authorPublicPage.notifications', { count: new Intl.NumberFormat(getDisplayLanguageId()).format(Number(readerNotificationCount)) })}</span>
   </div>
 ) : null}
                   </div>
                 </div>
 
-                <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
+                <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-disabled)]" />
               </button>
             </div>
 
@@ -930,9 +1658,9 @@ function AuthorOwnerMenuSheet({
                 setProfileSwitcherOpen(false)
                 onManageAccount?.()
               }}
-              className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99]"
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99]"
             >
-              Manage Account
+              {t('authorPublicPage.manageAccount')}
             </button>
 
             <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
@@ -946,14 +1674,16 @@ function AuthorOwnerMenuSheet({
 }
 
 function SwitchingAccountScreen({ open, name, avatarUrl, avatarLetter }) {
+  const { t } = useDisplayTranslation()
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[260] flex min-h-screen flex-col items-center justify-center bg-white">
+    <div className="fixed inset-0 z-[260] flex min-h-screen flex-col items-center justify-center bg-[var(--shadow-bg-surface)]">
       <div className="flex flex-1 flex-col items-center justify-center">
         <div className="relative flex h-20 w-20 items-center justify-center">
-          <div className="absolute inset-0 rounded-full border-2 border-[#d9dce4] border-t-[#111827] animate-spin" />
-          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/10">
+          <div className="absolute inset-0 rounded-full border-2 border-[var(--shadow-border)] border-t-[#111827] animate-spin" />
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
             {avatarUrl ? (
               <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
             ) : (
@@ -963,8 +1693,8 @@ function SwitchingAccountScreen({ open, name, avatarUrl, avatarLetter }) {
         </div>
 
         <div className="mt-5 text-center">
-          <div className="text-[16px] font-medium text-[#111827]">Switching to</div>
-          <div className="mt-1 text-[17px] font-bold text-[#111827]">{name}</div>
+          <div className="text-[16px] font-medium text-[var(--shadow-text-primary)]">{t('authorPublicPage.switchingTo')}</div>
+          <div className="mt-1 text-[17px] font-bold text-[var(--shadow-text-primary)]">{name}</div>
         </div>
       </div>
 
@@ -975,35 +1705,37 @@ function SwitchingAccountScreen({ open, name, avatarUrl, avatarLetter }) {
   )
 }
 function CoverOptionsSheet({ open, savingSlide, onClose, onSeeCover, onUploadCover, onChooseCover }) {
+  const { t } = useDisplayTranslation()
+
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[240]">
-      <button type="button" aria-label="Close cover options" onClick={onClose} className="absolute inset-0 bg-black/35" />
+      <button type="button" aria-label={t('authorPublicPage.closeCoverOptions')} onClick={onClose} className="absolute inset-0 bg-black/35" />
 
-      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-white px-5 pb-8 pt-4 shadow-2xl">
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-5 pb-8 pt-4 shadow-2xl">
         <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#9ca3af]" />
 
         <div className="space-y-1">
-          <button type="button" onClick={onSeeCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[#111827]">
+          <button type="button" onClick={onSeeCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[var(--shadow-bg-soft)]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
               <i className="fa-regular fa-image text-[18px]" />
             </span>
-            <span className="text-[17px] font-normal text-[#111827]">See cover</span>
+            <span className="text-[17px] font-normal text-[var(--shadow-text-primary)]">{t('authorPublicPage.seeCover')}</span>
           </button>
 
-          <button type="button" onClick={onUploadCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[#111827]">
+          <button type="button" onClick={onUploadCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[var(--shadow-bg-soft)]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
               <i className="fa-solid fa-arrow-up-from-bracket text-[17px]" />
             </span>
-            <span className="text-[17px] font-normal text-[#111827]">Upload cover</span>
+            <span className="text-[17px] font-normal text-[var(--shadow-text-primary)]">{t('authorPublicPage.uploadCover')}</span>
           </button>
 
-          <button type="button" onClick={onChooseCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[#111827]">
+          <button type="button" onClick={onChooseCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[var(--shadow-bg-soft)]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
               <i className="fa-regular fa-folder-open text-[17px]" />
             </span>
-            <span className="text-[17px] font-normal text-[#111827]">Choose cover</span>
+            <span className="text-[17px] font-normal text-[var(--shadow-text-primary)]">{t('authorPublicPage.chooseCover')}</span>
           </button>
         </div>
       </div>
@@ -1014,6 +1746,7 @@ function CoverOptionsSheet({ open, savingSlide, onClose, onSeeCover, onUploadCov
 export default function AuthorPublicPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useDisplayTranslation()
   const { pageUsername } = useParams()
 
   const [author, setAuthor] = useState(null)
@@ -1070,7 +1803,7 @@ export default function AuthorPublicPage() {
   const [socialMediaOpen, setSocialMediaOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
-  const readerName = readerUser?.name || 'Reader'
+  const readerName = readerUser?.name || t('authorPublicPage.reader')
   const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
   const [coverOptionsOpen, setCoverOptionsOpen] = useState(false)
@@ -1089,7 +1822,7 @@ const socialLinks = Array.isArray(profileDetails.social_links) ? profileDetails.
 const legacySocialUrls = String(profileDetails.social_media || '').match(/https?:\/\/[^\s]+/gi) || []
 const firstSocial = socialLinks[0]
 const firstValue = String(firstSocial?.display_name || firstSocial?.value || '').trim()
-const socialBase = firstSocial ? (!/^https?:\/\//i.test(firstValue) ? firstValue.replace(/^@/, '') : String(firstSocial.platform || 'Social media').replace(/^./, (c) => c.toUpperCase())) : legacySocialUrls[0]?.includes('facebook.com') ? 'Facebook' : legacySocialUrls.length ? 'Social media' : ''
+const socialBase = firstSocial ? (!/^https?:\/\//i.test(firstValue) ? firstValue.replace(/^@/, '') : String(firstSocial.platform || t('authorPublicPage.socialMedia')).replace(/^./, (c) => c.toUpperCase())) : legacySocialUrls[0]?.includes('facebook.com') ? 'Facebook' : legacySocialUrls.length ? t('authorPublicPage.socialMedia') : ''
 const socialCount = socialLinks.length || legacySocialUrls.length
 const socialPreview = socialBase ? `${socialBase}${socialCount > 1 ? ` + ${socialCount - 1}` : ''}` : ''
 
@@ -1125,7 +1858,7 @@ const socialPreview = socialBase ? `${socialBase}${socialCount > 1 ? ` + ${socia
 }
 
   function handleAuthorFooterComingSoon(label) {
-  setMessage(`${label} is coming soon.`)
+  setMessage(getDisplayText('authorPublicPage.comingSoon', { label }))
 }
   useEffect(() => {
   if (!followSettingsOpen) return undefined
@@ -1265,7 +1998,7 @@ useEffect(() => {
         const myPage = await fetchMyAuthorPage()
 
         if (!myPage) {
-          throw new Error('Author page not found')
+          throw new Error(getDisplayText('authorPublicPage.authorPageNotFound'))
         }
 
         setAuthor(normalizeAuthor(myPage, myPage.page_username, myPage, true))
@@ -1285,7 +2018,7 @@ useEffect(() => {
     } catch (loadError) {
       setAuthor(null)
       setOwnerResolved(true)
-      setPageError(loadError.message || 'Author page not found')
+      setPageError(loadError.message || getDisplayText('authorPublicPage.authorPageNotFound'))
       setLoading(false)
     }
   }
@@ -1302,7 +2035,7 @@ useEffect(() => {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to load reviews')
+      throw new Error(data.message || getDisplayText('authorPublicPage.failedLoadReviews'))
     }
 
     setReviewSummary(data.summary || {
@@ -1442,7 +2175,7 @@ async function handleSaveReview() {
   ) return
 
   if (reviewText.length < 25) {
-    setReviewDraftError('Review must be at least 25 characters.')
+    setReviewDraftError(getDisplayText('authorPublicPage.reviewTooShort'))
     return
   }
 
@@ -1465,7 +2198,7 @@ async function handleSaveReview() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to save review')
+      throw new Error(data.message || getDisplayText('authorPublicPage.failedSaveReview'))
     }
 
     await loadAuthorReviews(username)
@@ -1473,7 +2206,7 @@ async function handleSaveReview() {
     setReviewDraftText('')
     setReviewDraftError('')
   } catch (error) {
-    setReviewDraftError(error.message || 'Failed to save review')
+    setReviewDraftError(error.message || getDisplayText('authorPublicPage.failedSaveReview'))
   } finally {
     setSavingReview(false)
   }
@@ -1512,7 +2245,7 @@ async function handleRemoveReview() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to remove review')
+      throw new Error(data.message || getDisplayText('authorPublicPage.failedRemoveReview'))
     }
 
     await loadAuthorReviews(username)
@@ -1520,7 +2253,7 @@ async function handleRemoveReview() {
     setReviewDraftText('')
     setReviewDraftError('')
   } catch (error) {
-    setReviewDraftError(error.message || 'Failed to remove review')
+    setReviewDraftError(error.message || getDisplayText('authorPublicPage.failedRemoveReview'))
   } finally {
     setSavingReview(false)
   }
@@ -1560,7 +2293,7 @@ async function handleRemoveReview() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to update follow')
+      throw new Error(data.message || getDisplayText('authorPublicPage.failedUpdateFollow'))
     }
 
     setAuthor((current) => ({
@@ -1570,7 +2303,7 @@ async function handleRemoveReview() {
     }))
   } catch (error) {
     setAuthor(previousAuthor)
-    setMessage(error.message || 'Failed to update follow')
+    setMessage(error.message || getDisplayText('authorPublicPage.failedUpdateFollow'))
   } finally {
     setFollowLoading(false)
   }
@@ -1583,12 +2316,12 @@ async function handleRemoveReview() {
 
 function handleSeeFirst() {
   setFollowSettingsOpen(false)
-  setMessage('See first is not available yet.')
+  setMessage(getDisplayText('authorPublicPage.seeFirstUnavailable'))
 }
 
 function handleMuteUpdates() {
   setFollowSettingsOpen(false)
-  setMessage('Mute updates is not available yet.')
+  setMessage(getDisplayText('authorPublicPage.muteUnavailable'))
 }
 
 async function handleUnfollowFromSettings() {
@@ -1621,19 +2354,19 @@ function handleOpenMessage() {
   if (author.is_owner) {
     return [
       {
-        label: 'Dashboard',
+        label: t('authorPublicPage.dashboard'),
         icon: 'fa-chart-simple',
         type: 'primary',
         onClick: () =>
           navigate('/author/page/dashboard'),
       },
       {
-        label: 'Advertise',
+        label: t('authorPublicPage.advertise'),
         icon: 'fa-bullhorn',
         type: 'secondary',
         onClick: () =>
           setMessage(
-            'Advertise is coming soon.'
+            getDisplayText('authorPublicPage.comingSoon', { label: t('authorPublicPage.advertise') })
           ),
       },
     ]
@@ -1642,7 +2375,7 @@ function handleOpenMessage() {
   const followButton =
     author.is_following
       ? {
-          label: 'Following',
+          label: t('authorPublicPage.following'),
           icon: 'fa-user-check',
           type: 'primary',
           onClick:
@@ -1650,7 +2383,7 @@ function handleOpenMessage() {
           disabled: followLoading,
         }
       : {
-          label: 'Follow',
+          label: t('authorPublicPage.follow'),
           icon: 'fa-user-plus',
           type: 'primary',
           onClick: handleToggleFollow,
@@ -1664,7 +2397,7 @@ function handleOpenMessage() {
   return [
     followButton,
     {
-      label: 'Message',
+      label: t('authorPublicPage.message'),
       icon: 'fa-comment',
       type: 'secondary',
       onClick: handleOpenMessage,
@@ -1678,6 +2411,7 @@ function handleOpenMessage() {
   author?.is_following,
   followLoading,
   navigate,
+  t,
 ])
 
   function openCropEditor(mode) {
@@ -1691,7 +2425,7 @@ function handleOpenMessage() {
       if (!file) return
 
       if (!file.type.startsWith('image/')) {
-        setMessage('Please select an image file')
+        setMessage(getDisplayText('authorPublicPage.selectImage'))
         return
       }
 
@@ -1722,7 +2456,7 @@ function handleOpenMessage() {
     }
 
     if (!rawImage || !pixels) {
-      setMessage('Please adjust the photo first')
+      setMessage(getDisplayText('authorPublicPage.adjustPhoto'))
       return
     }
 
@@ -1753,7 +2487,7 @@ function handleOpenMessage() {
       setRawImage('')
       setCroppedAreaPixels(null)
     } catch (error) {
-      setMessage(error.message || 'Failed to save image')
+      setMessage(error.message || getDisplayText('authorPublicPage.failedSaveImage'))
     } finally {
       setSavingImage(false)
     }
@@ -1779,7 +2513,7 @@ function handleOpenMessage() {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setMessage('Please select an image file')
+      setMessage(getDisplayText('authorPublicPage.selectImage'))
       return
     }
 
@@ -1788,7 +2522,7 @@ function handleOpenMessage() {
     reader.onload = async () => {
       try {
         setSavingSlide(true)
-        setMessage('Uploading slide to Cloudflare...')
+        setMessage(getDisplayText('authorPublicPage.uploadingSlide'))
 
         const imageUrl = await uploadImageToStorage({
           token,
@@ -1810,9 +2544,9 @@ function handleOpenMessage() {
           setAuthor((current) => normalizeAuthor(updatedAuthorPage, current?.page_username || pageUsername, updatedAuthorPage, true))
         }
 
-        setMessage('Slide uploaded.')
+        setMessage(getDisplayText('authorPublicPage.slideUploaded'))
       } catch (error) {
-        setMessage(error.message || 'Failed to upload slide')
+        setMessage(error.message || getDisplayText('authorPublicPage.failedUploadSlide'))
       } finally {
         setSavingSlide(false)
       }
@@ -1885,7 +2619,7 @@ if (!loading && pageError) {
 }
 
   const displayAuthor = author || {
-    page_name: 'Loading',
+    page_name: t('authorPublicPage.loading'),
     page_username: pageUsername || 'author',
     bio: '',
     avatar_url: '',
@@ -1909,7 +2643,7 @@ if (!loading && pageError) {
 function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
   return (
     <svg
-      className={`${className} shrink-0 text-[#111827]`}
+      className={`${className} shrink-0 text-[var(--shadow-text-primary)]`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -1923,7 +2657,7 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
 }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6] pb-10">
+    <div className="min-h-screen bg-[var(--shadow-bg-soft)] pb-10">
 
       <ReaderAuthorMessageRequestModal
         open={messageRequestOpen}
@@ -2022,7 +2756,7 @@ onOpenStoreSetting={() => {
     if (displayAuthor.cover_url) {
       window.open(displayAuthor.cover_url, '_blank', 'noopener,noreferrer')
     } else {
-      setMessage('No cover photo yet.')
+      setMessage(getDisplayText('authorPublicPage.noCoverPhoto'))
     }
   }}
   onUploadCover={() => {
@@ -2036,32 +2770,32 @@ onOpenStoreSetting={() => {
 />
 
       {reviewSettingsOpen ? (
-  <div className="fixed inset-0 z-[290] bg-white">
-    <header className="flex h-[52px] items-center justify-center border-b border-[#eef0f3] px-4">
+  <div className="fixed inset-0 z-[290] bg-[var(--shadow-bg-surface)]">
+    <header className="flex h-[52px] items-center justify-center border-b border-[var(--shadow-border)] px-4">
       <button
         type="button"
         onClick={() => setReviewSettingsOpen(false)}
-        className="absolute left-3 flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-70"
-        aria-label="Close review settings"
+        className="absolute left-3 flex h-10 w-10 items-center justify-center text-[var(--shadow-text-primary)] active:opacity-70"
+        aria-label={t('authorPublicPage.closeReviews')}
       >
         <i className="fa-solid fa-xmark text-[18px]" />
       </button>
 
-      <h1 className="text-[15px] font-bold text-[#111827]">Reviews</h1>
+      <h1 className="text-[15px] font-bold text-[var(--shadow-text-primary)]">{t('authorPublicPage.reviews')}</h1>
     </header>
 
     <main className="px-4 pt-8">
-      <h2 className="text-[17px] font-normal leading-6 text-[#111827]">
-        Allow readers to view and write reviews on your page?
+      <h2 className="text-[17px] font-normal leading-6 text-[var(--shadow-text-primary)]">
+        {t('authorPublicPage.allowReadersReviewQuestion')}
       </h2>
 
-      <p className="mt-2 text-[13px] font-normal leading-5 text-[#6b7280]">
-        Reviews help readers decide whether your page is worth following. You can turn reviews off anytime. Existing reviews will be hidden from your page until you turn them on again.
+      <p className="mt-2 text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+        {t('authorPublicPage.reviewSettingsText')}
       </p>
 
       <label className="mt-8 flex items-center justify-between gap-4">
-        <span className="text-[15px] font-normal text-[#111827]">
-          Allow reviews on this page
+        <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+          {t('authorPublicPage.allowReviews')}
         </span>
 
         <input
@@ -2073,46 +2807,46 @@ onOpenStoreSetting={() => {
       </label>
     </main>
 
-    <div className="fixed bottom-0 left-0 right-0 border-t border-[#eef0f3] bg-white px-4 py-3">
+    <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3">
       <button
         type="button"
         disabled={allowReviewsDraft === allowReviewsSaved}
         onClick={() => {
           setAllowReviewsSaved(allowReviewsDraft)
           setReviewSettingsOpen(false)
-          setMessage('Review settings saved.')
+          setMessage(getDisplayText('authorPublicPage.reviewSettingsSaved'))
         }}
         className="h-12 w-full rounded-[10px] bg-[#111827] text-[14px] font-medium text-white active:scale-[0.99] disabled:bg-[#e2e5ea] disabled:text-[#a5adba]"
       >
-        Save
+        {t('authorPublicPage.save')}
       </button>
     </div>
   </div>
 ) : null}
 
       {reviewsListOpen ? (
-  <div className="fixed inset-0 z-[280] bg-[#f3f4f6]">
-    <header className="sticky top-0 z-10 flex h-[54px] items-center border-b border-[#e5e7eb] bg-white px-3">
+  <div className="fixed inset-0 z-[280] bg-[var(--shadow-bg-soft)]">
+    <header className="sticky top-0 z-10 flex h-[54px] items-center border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3">
       <button
         type="button"
         onClick={() => setReviewsListOpen(false)}
-        className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-70"
-        aria-label="Back to reviews"
+        className="flex h-10 w-10 items-center justify-center text-[var(--shadow-text-primary)] active:opacity-70"
+        aria-label={t('authorPublicPage.backToReviews')}
       >
         <i className="fa-solid fa-chevron-left text-[20px]" />
       </button>
 
-      <h1 className="ml-2 text-[22px] font-normal text-[#111827]">Reviews</h1>
+      <h1 className="ml-2 text-[22px] font-normal text-[var(--shadow-text-primary)]">{t('authorPublicPage.reviews')}</h1>
     </header>
 
     <main className="pb-8">
-      <div className="flex items-center gap-2 bg-white px-4 py-3 text-[16px] font-bold leading-6 text-[#111827]">
-        <span>{reviewSummary.recommend_percent || 0}% recommend ({reviewSummary.total_count || 0} Reviews)</span>
+      <div className="flex items-center gap-2 bg-[var(--shadow-bg-surface)] px-4 py-3 text-[16px] font-bold leading-6 text-[var(--shadow-text-primary)]">
+        <span>{t('authorPublicPage.recommendSummary', { percent: new Intl.NumberFormat(getDisplayLanguageId()).format(reviewSummary.recommend_percent || 0), count: new Intl.NumberFormat(getDisplayLanguageId()).format(reviewSummary.total_count || 0) })}</span>
         <button
           type="button"
           onClick={() => setReviewInfoOpen(true)}
-          className="flex h-6 w-6 items-center justify-center text-[#6b7280] active:opacity-70"
-          aria-label="About review score"
+          className="flex h-6 w-6 items-center justify-center text-[var(--shadow-text-secondary)] active:opacity-70"
+          aria-label={t('authorPublicPage.aboutReviewScore')}
         >
           <i className="fa-solid fa-circle-info text-[15px]" />
         </button>
@@ -2122,21 +2856,21 @@ onOpenStoreSetting={() => {
         {reviewItems.length ? (
           reviewItems.map((review) => {
             const reviewer = review.reviewer || review.user || review.reader || {}
-            const name = review.reviewer_name || reviewer.name || review.name || 'Reader'
+            const name = review.reviewer_name || reviewer.name || review.name || t('authorPublicPage.reader')
             const avatarUrl = review.reviewer_avatar_url || reviewer.avatar_url || review.avatar_url || ''
             const text = review.review_text || review.text || ''
             const recommended = review.is_recommended !== false
             const dateText = review.created_at
-              ? new Date(review.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+              ? new Date(review.created_at).toLocaleDateString(getDisplayLanguageId(), { month: 'short', day: 'numeric' })
               : ''
 
             return (
               <article
                 key={review.id || `${name}-${text}`}
-                className="rounded-[14px] bg-white px-3 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+                className="rounded-[14px] bg-[var(--shadow-bg-surface)] px-3 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
               >
                 <div className="flex gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[16px] font-bold text-[#111827]">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-elevated)] text-[16px] font-bold text-[var(--shadow-text-primary)]">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
                     ) : (
@@ -2147,19 +2881,19 @@ onOpenStoreSetting={() => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="text-[16px] leading-6 text-[#111827]">
+                        <div className="text-[16px] leading-6 text-[var(--shadow-text-primary)]">
                           <span className="font-bold">{name}</span>
-                          <span className="ml-2 font-normal text-[#6b7280]">
-                            {recommended ? 'recommends' : "doesn't recommend"}
+                          <span className="ml-2 font-normal text-[var(--shadow-text-secondary)]">
+                            {recommended ? t('authorPublicPage.recommends') : t('authorPublicPage.doesNotRecommend')}
                           </span>
                         </div>
 
-                        <div className="text-[15px] font-bold leading-5 text-[#111827]">
+                        <div className="text-[15px] font-bold leading-5 text-[var(--shadow-text-primary)]">
                           {displayAuthor.page_name}
                         </div>
 
                         {dateText ? (
-                          <div className="mt-0.5 text-[13px] font-normal text-[#6b7280]">
+                          <div className="mt-0.5 text-[13px] font-normal text-[var(--shadow-text-secondary)]">
                             {dateText} · <i className="fa-solid fa-earth-asia text-[12px]" />
                           </div>
                         ) : null}
@@ -2171,20 +2905,20 @@ onOpenStoreSetting={() => {
                           setSelectedReviewOption(review)
                           setReviewOptionsOpen(true)
                         }}
-                        className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:opacity-70"
-                        aria-label="Review options"
+                        className="flex h-8 w-8 items-center justify-center text-[var(--shadow-text-secondary)] active:opacity-70"
+                        aria-label={t('authorPublicPage.pageOptions')}
                       >
                         <i className="fa-solid fa-ellipsis text-[16px]" />
                       </button>
                     </div>
 
                     {text ? (
-                      <p className="mt-3 whitespace-pre-line text-[17px] font-normal leading-7 text-[#111827]">
+                      <p className="mt-3 whitespace-pre-line text-[17px] font-normal leading-7 text-[var(--shadow-text-primary)]">
                         {text}
                       </p>
                     ) : null}
 
-                    <div className="mt-5 flex items-center gap-7 text-[#6b7280]">
+                    <div className="mt-5 flex items-center gap-7 text-[var(--shadow-text-secondary)]">
                       <button type="button" className="flex items-center gap-1 active:opacity-70">
                         <i className="fa-regular fa-thumbs-up text-[22px]" />
                       </button>
@@ -2203,8 +2937,8 @@ onOpenStoreSetting={() => {
             )
           })
         ) : (
-          <div className="rounded-[14px] bg-white px-4 py-8 text-[14px] font-medium text-[#8b93a1]">
-            No reviews yet.
+          <div className="rounded-[14px] bg-[var(--shadow-bg-surface)] px-4 py-8 text-[14px] font-medium text-[var(--shadow-text-secondary)]">
+            {t('authorPublicPage.noReviewsYet')}
           </div>
         )}
       </div>
@@ -2214,26 +2948,26 @@ onOpenStoreSetting={() => {
       <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/35">
         <button
           type="button"
-          aria-label="Close review info"
+          aria-label={t('authorPublicPage.closeReviews')}
           onClick={() => setReviewInfoOpen(false)}
           className="absolute inset-0"
         />
 
-        <div className="relative w-full rounded-t-[18px] bg-white px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[18px]">
+        <div className="relative w-full rounded-t-[18px] bg-[var(--shadow-bg-surface)] px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[18px]">
           <div className="mx-auto mb-5 h-1 w-11 rounded-full bg-[#9ca3af]" />
 
-          <div className="text-center text-[16px] font-bold text-[#111827]">
+          <div className="text-center text-[16px] font-bold text-[var(--shadow-text-primary)]">
             {reviewSummary.recommend_percent || 0}%
           </div>
 
-          <p className="mt-1 text-center text-[12px] font-normal text-[#6b7280]">
-            Based on {reviewSummary.total_count || 0} reader reviews
+          <p className="mt-1 text-center text-[12px] font-normal text-[var(--shadow-text-secondary)]">
+            {t('authorPublicPage.basedOnReaderReviews', { count: new Intl.NumberFormat(getDisplayLanguageId()).format(reviewSummary.total_count || 0) })}
           </p>
 
-          <div className="mt-5 border-t border-[#eef0f3] pt-4">
-            <h2 className="text-[14px] font-bold text-[#111827]">How Shadow reviews work</h2>
-            <p className="mt-2 text-[13px] font-normal leading-5 text-[#374151]">
-              This score is based on reader reviews for this author page. Readers can choose whether they recommend the page and leave a public review. The percentage shows how many active reviews recommend it.
+          <div className="mt-5 border-t border-[var(--shadow-border)] pt-4">
+            <h2 className="text-[14px] font-bold text-[var(--shadow-text-primary)]">{t('authorPublicPage.howReviewsWork')}</h2>
+            <p className="mt-2 text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+              {t('authorPublicPage.reviewScoreInfo')}
             </p>
           </div>
         </div>
@@ -2244,24 +2978,24 @@ onOpenStoreSetting={() => {
       <div className="fixed inset-0 z-[310] flex items-end justify-center bg-black/35">
         <button
           type="button"
-          aria-label="Close review options"
+          aria-label={t('authorPublicPage.closeReviews')}
           onClick={() => setReviewOptionsOpen(false)}
           className="absolute inset-0"
         />
 
-        <div className="relative w-full rounded-t-[18px] bg-white px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[18px]">
+        <div className="relative w-full rounded-t-[18px] bg-[var(--shadow-bg-surface)] px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[18px]">
           <div className="mx-auto mb-4 h-1 w-11 rounded-full bg-[#9ca3af]" />
 
           <button
             type="button"
             onClick={() => {
               setReviewOptionsOpen(false)
-              setMessage('Report review is coming soon.')
+              setMessage(getDisplayText('authorPublicPage.reportReviewComingSoon'))
             }}
-            className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[#111827] active:opacity-70"
+            className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[var(--shadow-text-primary)] active:opacity-70"
           >
             <i className="fa-regular fa-flag w-6 text-center text-[17px]" />
-            Report review
+            {t('authorPublicPage.reportReview')}
           </button>
 
           <button
@@ -2272,25 +3006,25 @@ onOpenStoreSetting={() => {
 
               try {
                 await navigator.clipboard.writeText(link)
-                setMessage('Review link copied.')
+                setMessage(getDisplayText('authorPublicPage.reviewLinkCopied'))
               } catch {
                 setMessage(link)
               }
 
               setReviewOptionsOpen(false)
             }}
-            className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[#111827] active:opacity-70"
+            className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[var(--shadow-text-primary)] active:opacity-70"
           >
             <i className="fa-regular fa-copy w-6 text-center text-[17px]" />
-            Copy review link
+            {t('authorPublicPage.copyReviewLink')}
           </button>
 
           <button
             type="button"
             onClick={() => setReviewOptionsOpen(false)}
-            className="mt-2 h-11 w-full rounded-[10px] bg-[#f3f4f6] text-[15px] font-medium text-[#111827] active:scale-[0.99]"
+            className="mt-2 h-11 w-full rounded-[10px] bg-[var(--shadow-bg-soft)] text-[15px] font-medium text-[var(--shadow-text-primary)] active:scale-[0.99]"
           >
-            Cancel
+            {t('authorPublicPage.cancel')}
           </button>
         </div>
       </div>
@@ -2303,13 +3037,13 @@ onOpenStoreSetting={() => {
   <div className="fixed inset-0 z-[250] flex items-end justify-center bg-black/45">
   <button
     type="button"
-    aria-label="Close reviews"
+    aria-label={t('authorPublicPage.closeReviews')}
     onClick={handleCloseReviewsOverview}
     className="absolute inset-0"
   />
 
   <div
-    className="relative max-h-[86vh] w-full overflow-y-auto rounded-t-[26px] bg-[#f3f4f6] px-4 pb-5 pt-0 shadow-2xl md:max-w-[520px] md:rounded-[26px]"
+    className="relative max-h-[86vh] w-full overflow-y-auto rounded-t-[26px] bg-[var(--shadow-bg-soft)] px-4 pb-5 pt-0 shadow-2xl md:max-w-[520px] md:rounded-[26px]"
     style={{
       transform: `translateY(${reviewsOverviewDragY}px)`,
       transition: reviewsOverviewDragY ? 'none' : 'transform 180ms ease',
@@ -2327,9 +3061,9 @@ onOpenStoreSetting={() => {
       <div className="h-1.5 w-14 rounded-full bg-[#9ca3af]" />
     </div>
 
-      <section className="rounded-[14px] bg-white px-4 py-5">
+      <section className="rounded-[14px] bg-[var(--shadow-bg-surface)] px-4 py-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[17px] font-bold text-[#111827]">Reviews</h2>
+          <h2 className="text-[17px] font-bold text-[var(--shadow-text-primary)]">{t('authorPublicPage.reviews')}</h2>
           {displayAuthor.is_owner ? (
             <button
               type="button"
@@ -2337,9 +3071,9 @@ onOpenStoreSetting={() => {
   setAllowReviewsDraft(allowReviewsSaved)
   setReviewSettingsOpen(true)
 }}
-              className="text-[14px] font-medium text-[#374151] active:opacity-70"
+              className="text-[14px] font-medium text-[var(--shadow-text-secondary)] active:opacity-70"
             >
-              Edit
+              {t('authorPublicPage.edit')}
             </button>
           ) : null}
         </div>
@@ -2347,11 +3081,11 @@ onOpenStoreSetting={() => {
         <div className="flex items-center gap-4">
           <ReviewStarIcon />
           <div>
-            <div className="text-[15px] font-normal leading-5 text-[#111827]">
-              {reviewLoading ? 'Loading...' : `${reviewSummary.recommend_percent || 0}% recommended`}
+            <div className="text-[15px] font-normal leading-5 text-[var(--shadow-text-primary)]">
+              {reviewLoading ? t('authorPublicPage.loading') : t('authorPublicPage.recommendedPercent', { percent: new Intl.NumberFormat(getDisplayLanguageId()).format(reviewSummary.recommend_percent || 0) })}
             </div>
-            <div className="text-[15px] font-normal leading-5 text-[#111827]">
-              Based on the opinions of {reviewSummary.total_count || 0} people
+            <div className="text-[15px] font-normal leading-5 text-[var(--shadow-text-primary)]">
+              {t('authorPublicPage.basedOnOpinions', { count: new Intl.NumberFormat(getDisplayLanguageId()).format(reviewSummary.total_count || 0) })}
             </div>
           </div>
         </div>
@@ -2361,48 +3095,48 @@ onOpenStoreSetting={() => {
           <button
             type="button"
             onClick={handleOpenMessage}
-            className="mt-5 flex h-10 w-full items-center justify-center rounded-[9px] bg-[#e5e7eb] text-[15px] font-medium text-[#111827] active:scale-[0.99]"
+            className="mt-5 flex h-10 w-full items-center justify-center rounded-[9px] bg-[var(--shadow-bg-elevated)] text-[15px] font-medium text-[var(--shadow-text-primary)] active:scale-[0.99]"
           >
             <i className="fa-brands fa-facebook-messenger mr-2 text-[15px]" />
-            Message {displayAuthor.page_name}
+            {t('authorPublicPage.messageAuthor', { name: displayAuthor.page_name })}
           </button>
         ) : null}
       </section>
 
-      <section className="mt-4 rounded-[14px] bg-white px-4 py-5">
+      <section className="mt-4 rounded-[14px] bg-[var(--shadow-bg-surface)] px-4 py-5">
         <div className="mb-4 flex items-center justify-between">
-  <h3 className="text-[17px] font-bold text-[#111827]">Recent reviews</h3>
+  <h3 className="text-[17px] font-bold text-[var(--shadow-text-primary)]">{t('authorPublicPage.recentReviews')}</h3>
   <button
     type="button"
     onClick={() => setReviewsListOpen(true)}
-    className="text-[14px] font-medium text-[#374151] active:opacity-70"
+    className="text-[14px] font-medium text-[var(--shadow-text-secondary)] active:opacity-70"
   >
-    See all
+    {t('authorPublicPage.seeAll')}
   </button>
 </div>
 
         {!displayAuthor.is_owner &&
 !displayAuthor.viewer_owns_page ? (
-          <div className="mb-4 rounded-[14px] bg-[#f8fafc] px-4 py-3">
-            <div className="text-[16px] font-normal leading-6 text-[#111827]">
-              Do you recommend {displayAuthor.page_name}?
+          <div className="mb-4 rounded-[14px] bg-[var(--shadow-bg-soft)] px-4 py-3">
+            <div className="text-[16px] font-normal leading-6 text-[var(--shadow-text-primary)]">
+              {t('authorPublicPage.doYouRecommend', { name: displayAuthor.page_name })}
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleOpenReviewSheet(true)}
-                className="h-9 rounded-[9px] bg-[#e5e7eb] text-[15px] font-medium text-[#111827] active:scale-[0.99]"
+                className="h-9 rounded-[9px] bg-[var(--shadow-bg-elevated)] text-[15px] font-medium text-[var(--shadow-text-primary)] active:scale-[0.99]"
               >
-                Yes
+                {t('authorPublicPage.yes')}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleOpenReviewSheet(false)}
-                className="h-9 rounded-[9px] bg-[#e5e7eb] text-[15px] font-medium text-[#111827] active:scale-[0.99]"
+                className="h-9 rounded-[9px] bg-[var(--shadow-bg-elevated)] text-[15px] font-medium text-[var(--shadow-text-primary)] active:scale-[0.99]"
               >
-                No
+                {t('authorPublicPage.no')}
               </button>
             </div>
           </div>
@@ -2412,14 +3146,14 @@ onOpenStoreSetting={() => {
           {reviewItems.length ? (
             reviewItems.slice(0, 4).map((review) => {
               const reviewer = review.reviewer || review.user || review.reader || {}
-              const name = review.reviewer_name || reviewer.name || review.name || 'Reader'
+              const name = review.reviewer_name || reviewer.name || review.name || t('authorPublicPage.reader')
               const avatarUrl = review.reviewer_avatar_url || reviewer.avatar_url || review.avatar_url || ''
               const text = review.review_text || review.text || ''
               const recommended = review.is_recommended !== false
 
               return (
                 <div key={review.id || `${name}-${text}`} className="flex gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[14px] font-bold text-[#111827]">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-elevated)] text-[14px] font-bold text-[var(--shadow-text-primary)]">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
                     ) : (
@@ -2428,18 +3162,18 @@ onOpenStoreSetting={() => {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="text-[14px] leading-5 text-[#111827]">
+                    <div className="text-[14px] leading-5 text-[var(--shadow-text-primary)]">
                       <span className="font-medium">{name}</span>{' '}
                       <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#22c55e] align-middle text-white">
                         <i className="fa-solid fa-star text-[9px]" />
                       </span>{' '}
-                      <span className="font-normal text-[#111827]">
-                        {recommended ? 'recommends' : "doesn't recommend"}
+                      <span className="font-normal text-[var(--shadow-text-primary)]">
+                        {recommended ? t('authorPublicPage.recommends') : t('authorPublicPage.doesNotRecommend')}
                       </span>
                     </div>
 
                     {text ? (
-                      <p className="line-clamp-2 text-[13px] font-normal leading-5 text-[#6b7280]">
+                      <p className="line-clamp-2 text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
                         {text}
                       </p>
                     ) : null}
@@ -2448,8 +3182,8 @@ onOpenStoreSetting={() => {
               )
             })
           ) : (
-            <div className="py-3 text-[14px] font-medium text-[#8b93a1]">
-              No reviews yet.
+            <div className="py-3 text-[14px] font-medium text-[var(--shadow-text-secondary)]">
+              {t('authorPublicPage.noReviewsYet')}
             </div>
           )}
         </div>
@@ -2462,20 +3196,20 @@ onOpenStoreSetting={() => {
   <div className="fixed inset-0 z-[270] flex items-center justify-center bg-black/55 px-8">
     <button
       type="button"
-      aria-label="Close review editor"
+      aria-label={t('authorPublicPage.closeReviews')}
       onClick={handleCloseReviewSheet}
       className="absolute inset-0"
     />
 
-    <div className="relative w-full max-w-[500px] rounded-[14px] bg-white px-4 pb-4 pt-7 shadow-2xl">
-      <h2 className="mx-auto max-w-[380px] text-center text-[18px] font-normal leading-6 text-[#111827]">
-        What would you like to say about <span className="font-bold">{displayAuthor.page_name}</span>?
+    <div className="relative w-full max-w-[500px] rounded-[14px] bg-[var(--shadow-bg-surface)] px-4 pb-4 pt-7 shadow-2xl">
+      <h2 className="mx-auto max-w-[380px] text-center text-[18px] font-normal leading-6 text-[var(--shadow-text-primary)]">
+        {t('authorPublicPage.reviewPrompt', { name: displayAuthor.page_name })}
       </h2>
 
       <div className="mt-4 flex justify-center">
-        <div className="inline-flex items-center gap-2 rounded-[9px] bg-[#e5e7eb] px-4 py-2 text-[14px] font-medium text-[#111827]">
+        <div className="inline-flex items-center gap-2 rounded-[9px] bg-[var(--shadow-bg-elevated)] px-4 py-2 text-[14px] font-medium text-[var(--shadow-text-primary)]">
           <i className="fa-solid fa-globe text-[12px]" />
-          Public
+          {t('authorPublicPage.public')}
           <i className="fa-solid fa-caret-down text-[11px]" />
         </div>
       </div>
@@ -2496,13 +3230,13 @@ onOpenStoreSetting={() => {
               setReviewDraftText(event.target.value)
               if (reviewDraftError) setReviewDraftError('')
             }}
-            placeholder="Your review"
-            className="h-[390px] w-full resize-none rounded-[14px] border border-[#cfd4dc] bg-white px-3 py-3 text-[20px] font-normal leading-7 text-[#111827] outline-none focus:border-[#2563eb]"
+            placeholder={t('authorPublicPage.reviewPlaceholder')}
+            className="h-[390px] w-full resize-none rounded-[14px] border border-[#cfd4dc] bg-[var(--shadow-bg-surface)] px-3 py-3 text-[20px] font-normal leading-7 text-[var(--shadow-text-primary)] outline-none focus:border-[#2563eb]"
           />
 
           <div className="mt-2 text-[13px] font-normal">
-            <span className={reviewDraftText.trim().length < 25 ? 'text-[#e5484d]' : 'text-[#6b7280]'}>
-              {reviewDraftText.trim().length} / 25 · Reviews must be at least 25 characters
+            <span className={reviewDraftText.trim().length < 25 ? 'text-[#e5484d]' : 'text-[var(--shadow-text-secondary)]'}>
+              {t('authorPublicPage.reviewMinimum', { count: new Intl.NumberFormat(getDisplayLanguageId()).format(reviewDraftText.trim().length) })}
             </span>
           </div>
 
@@ -2521,33 +3255,33 @@ onOpenStoreSetting={() => {
           onClick={handleSaveReview}
           className="h-12 rounded-[10px] bg-[#111827] text-[17px] font-medium text-white active:scale-[0.99] disabled:bg-[#e2e5ea] disabled:text-[#a5adba]"
         >
-          {savingReview ? 'Sharing...' : 'Share'}
+          {savingReview ? t('authorPublicPage.sharing') : t('authorPublicPage.share')}
         </button>
 
         <button
           type="button"
           onClick={handleCloseReviewSheet}
-          className="h-12 rounded-[10px] bg-[#e5e7eb] text-[17px] font-medium text-[#111827] active:scale-[0.99]"
+          className="h-12 rounded-[10px] bg-[var(--shadow-bg-elevated)] text-[17px] font-medium text-[var(--shadow-text-primary)] active:scale-[0.99]"
         >
-          Cancel
+          {t('authorPublicPage.cancel')}
         </button>
       </div>
 
       {reviewDiscardOpen ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[14px] bg-black/45 px-8">
-          <div className="w-full rounded-[8px] bg-white px-6 py-5 shadow-2xl">
-            <h3 className="text-[17px] font-normal text-[#111827]">Discard review?</h3>
-            <p className="mt-3 text-[18px] font-normal leading-7 text-[#4b5563]">
-              Reviews help other readers understand this page. Are you sure you want to discard your draft?
+          <div className="w-full rounded-[8px] bg-[var(--shadow-bg-surface)] px-6 py-5 shadow-2xl">
+            <h3 className="text-[17px] font-normal text-[var(--shadow-text-primary)]">{t('authorPublicPage.discardReview')}</h3>
+            <p className="mt-3 text-[18px] font-normal leading-7 text-[var(--shadow-text-secondary)]">
+              {t('authorPublicPage.discardReviewText')}
             </p>
 
             <div className="mt-6 flex justify-end gap-6">
               <button
                 type="button"
                 onClick={handleDiscardReviewDraft}
-                className="text-[16px] font-normal text-[#6b7280] active:opacity-70"
+                className="text-[16px] font-normal text-[var(--shadow-text-secondary)] active:opacity-70"
               >
-                Discard
+                {t('authorPublicPage.discard')}
               </button>
 
               <button
@@ -2555,7 +3289,7 @@ onOpenStoreSetting={() => {
                 onClick={() => setReviewDiscardOpen(false)}
                 className="text-[16px] font-normal text-[#2563eb] active:opacity-70"
               >
-                Keep Writing
+                {t('authorPublicPage.keepWriting')}
               </button>
             </div>
           </div>
@@ -2569,20 +3303,20 @@ onOpenStoreSetting={() => {
 
       {ownerResolved && !displayAuthor.is_owner ? (
  <header className={`fixed left-0 right-0 top-0 z-[120] transition ${
-  readerHeaderSolid ? 'bg-white shadow-sm' : 'bg-transparent'
+  readerHeaderSolid ? 'bg-[var(--shadow-bg-surface)] shadow-sm' : 'bg-transparent'
 }`}>
   <div className="mx-auto flex h-[54px] max-w-[980px] items-center justify-between px-3">
    <button
   type="button"
   onClick={handleReaderBack}
   className={`flex h-10 w-10 items-center justify-center rounded-full ${
-    readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
+    readerHeaderSolid ? 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
   }`}
-  aria-label="Back"
+  aria-label={t('authorPublicPage.back')}
 >
   <i className="fa-solid fa-chevron-left text-[15px]" />
 </button>
-    <div className={`min-w-0 flex-1 px-3 text-center text-[15px] font-semibold text-[#111827] transition ${
+    <div className={`min-w-0 flex-1 px-3 text-center text-[15px] font-semibold text-[var(--shadow-text-primary)] transition ${
       readerHeaderTitle ? 'opacity-100' : 'opacity-0'
     }`}>
       <span className="line-clamp-1">{displayAuthor.page_name}</span>
@@ -2592,9 +3326,9 @@ onOpenStoreSetting={() => {
     type="button"
     onClick={() => navigate('/author/cart')}
     className={`flex h-10 w-10 items-center justify-center rounded-full ${
-      readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
+      readerHeaderSolid ? 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
     }`}
-    aria-label="Open cart"
+    aria-label={t('authorPublicPage.openCart')}
   >
     <span className="relative flex h-10 w-10 items-center justify-center">
   <i className="fa-solid fa-cart-shopping text-[15px]" />
@@ -2610,9 +3344,9 @@ onOpenStoreSetting={() => {
   type="button"
   onClick={() => navigate(`/author/page/${displayAuthor?.page_username || pageUsername}/options`)}
   className={`flex h-10 w-10 items-center justify-center rounded-full ${
-    readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
+    readerHeaderSolid ? 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
   }`}
-  aria-label="Author Page options"
+  aria-label={t('authorPublicPage.authorPageOptions')}
 >
   <i className="fa-solid fa-ellipsis text-[17px]" />
 </button>
@@ -2628,13 +3362,13 @@ onOpenStoreSetting={() => {
               messageVisible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
             }`}
           >
-            <div className="rounded-[16px] bg-white px-4 py-3 text-[13px] font-medium leading-5 text-[#111827] shadow-[0_8px_30px_rgba(15,23,42,0.18)] ring-1 ring-black/5">
+            <div className="rounded-[16px] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[13px] font-medium leading-5 text-[var(--shadow-text-primary)] shadow-[0_8px_30px_rgba(15,23,42,0.18)] ring-1 ring-[var(--shadow-border)]">
               {message}
             </div>
           </div>
         ) : null}
 
-        <section className="overflow-hidden bg-white">
+        <section className="overflow-hidden bg-[var(--shadow-bg-surface)]">
           <div
   role="button"
   tabIndex={0}
@@ -2668,7 +3402,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       setAuthorMenuOpen(true)
     }}
     className="absolute left-3 top-3 z-20 flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)] active:scale-95"
-    aria-label="Author menu"
+    aria-label={t('authorPublicPage.authorMenu')}
   >
     <i className="fa-solid fa-bars text-[18px]" />
   </button>
@@ -2683,7 +3417,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         navigate('/author/page/edit?section=cover')
       }}
       className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
-      aria-label="Edit page"
+      aria-label={t('authorPublicPage.editPage')}
     >
       <i className="fa-solid fa-pen text-[14px]" />
     </button>
@@ -2695,7 +3429,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         navigate('/author/page-options')
       }}
       className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
-      aria-label="Page options"
+      aria-label={t('authorPublicPage.pageOptions')}
     >
       <i className="fa-solid fa-ellipsis text-[16px]" />
     </button>
@@ -2717,11 +3451,11 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 </div>
 
           <div ref={profileRef} className="relative px-4 pb-5 sm:px-6">
-            <div className="pointer-events-none absolute -top-[14px] left-0 right-0 h-[36px] rounded-t-[16px] bg-white" />
+            <div className="pointer-events-none absolute -top-[14px] left-0 right-0 h-[36px] rounded-t-[16px] bg-[var(--shadow-bg-surface)]" />
 
             <div className="relative z-10">
               <div className="flex items-start gap-4">
-                <div className="relative -mt-[42px] h-[92px] w-[92px] shrink-0 rounded-full border-[3px] border-white bg-[#f3f4f6] shadow-sm sm:-mt-[52px] sm:h-[112px] sm:w-[112px]">
+                <div className="relative -mt-[42px] h-[92px] w-[92px] shrink-0 rounded-full border-[3px] border-white bg-[var(--shadow-bg-soft)] shadow-sm sm:-mt-[52px] sm:h-[112px] sm:w-[112px]">
                   {displayAuthor.avatar_url ? (
                     <img
                       src={displayAuthor.avatar_url}
@@ -2729,7 +3463,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                       className="h-full w-full rounded-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#e5e7eb] text-[42px] font-black text-[#9ca3af]">
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[42px] font-black text-[var(--shadow-text-tertiary)]">
                       {displayAuthor.page_name.slice(0, 1).toUpperCase()}
                     </div>
                   )}
@@ -2749,9 +3483,9 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {loading ? (
-                        <div className="h-8 w-52 animate-pulse rounded-full bg-[#f3f4f6]" />
+                        <div className="h-8 w-52 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                       ) : (
-                        <h1 className="line-clamp-1 text-[18px] font-bold leading-tight tracking-tight text-[#111827] sm:text-[22px]">
+                        <h1 className="line-clamp-1 text-[18px] font-bold leading-tight tracking-tight text-[var(--shadow-text-primary)] sm:text-[22px]">
                           {displayAuthor.page_name}
                         </h1>
                       )}
@@ -2763,8 +3497,8 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   <button
     type="button"
     onClick={() => setPageSwitcherOpen(true)}
-    className="relative mt-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/5 transition active:scale-95"
-    aria-label="Switch to Reader account"
+    className="relative mt-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)] transition active:scale-95"
+    aria-label={t('authorPublicPage.switchReaderAccount')}
   >
     <i className="fa-solid fa-chevron-down text-[12px]" />
     {readerNotificationCount > 0 ? (
@@ -2774,10 +3508,10 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 ) : null}
                   </div>
 
-                  <div className="-mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#111827] sm:text-[12px]">
+                  <div className="-mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[var(--shadow-text-primary)] sm:text-[12px]">
                     <span>
                       <strong>{formatCompactNumber(displayAuthor.works_count)}</strong>{' '}
-                      <span className="text-[#6b7280]">Works</span>
+                      <span className="text-[var(--shadow-text-secondary)]">{t('authorPublicPage.works')}</span>
                     </span>
                    <button
   type="button"
@@ -2786,23 +3520,23 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       navigate(`/author/page/${displayAuthor.page_username}/followers`)
     }
   }}
-  className="-mx-1 rounded-md px-1.5 py-1 text-left cursor-pointer active:bg-[#f3f4f6] active:opacity-70"
+  className="-mx-1 rounded-md px-1.5 py-1 text-left cursor-pointer active:bg-[var(--shadow-bg-soft)] active:opacity-70"
 >
   <strong>{formatCompactNumber(displayAuthor.followers_count || displayAuthor.fans_count)}</strong>{' '}
-  <span className="text-[#6b7280]">Followers</span>
+  <span className="text-[var(--shadow-text-secondary)]">{t('authorPublicPage.followers')}</span>
 </button>
                     <span>
                       <strong>{formatCompactNumber(authorPostsCount)}</strong>{' '}
-                      <span className="text-[#6b7280]">Posts</span>
+                      <span className="text-[var(--shadow-text-secondary)]">{t('authorPublicPage.posts')}</span>
                     </span>
                   </div>
                 </div>
               </div>
 
               {loading ? (
-                <div className="mt-4 h-4 w-full max-w-[420px] animate-pulse rounded-full bg-[#f3f4f6]" />
+                <div className="mt-4 h-4 w-full max-w-[420px] animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
               ) : displayAuthor.bio ? (
-                <p className="mt-4 line-clamp-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#374151] sm:text-[14px]">
+                <p className="mt-4 line-clamp-2 max-w-[620px] text-[13px] font-medium leading-6 text-[var(--shadow-text-secondary)] sm:text-[14px]">
                   {displayAuthor.bio}
                 </p>
               ) : null}
@@ -2819,11 +3553,11 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
               className={`h-10 flex-1 rounded-[12px] text-[13px] font-normal transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
                 button.type === 'primary'
                   ? 'bg-[#111827] text-white'
-                  : 'bg-[#f3f4f6] text-[#111827]'
+                  : 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
               }`}
             >
               <i className={`fa-solid ${button.icon} mr-2 text-[12px]`} />
-              {button.disabled ? 'Loading...' : button.label}
+              {button.disabled ? t('authorPublicPage.loading') : button.label}
             </button>
           ))}
         </div>
@@ -2832,14 +3566,14 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           <button
             type="button"
             onClick={() => navigate('/author/page/story/create')}
-            className="flex h-10 w-full items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
+            className="flex h-10 w-full items-center justify-center rounded-[12px] bg-[var(--shadow-bg-soft)] text-[13px] font-normal text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
           >
             <img
               src="/assets/Icons/Add Story.svg"
               alt=""
               className="mr-2 h-4 w-4 object-contain"
             />
-            Add to story
+            {t('authorPublicPage.addToStory')}
           </button>
         ) : null}
       </div>
@@ -2852,7 +3586,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
        <section
   id="author-page-tabs"
   ref={tabsRef}
-  className={`sticky z-50 border-b border-[#eef0f3] bg-white ${
+  className={`sticky z-50 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] ${
     !ownerResolved || displayAuthor.is_owner ? 'top-0' : 'top-[54px]'
   } ${tabsFrozen ? 'shadow-sm' : ''}`}
 >
@@ -2868,8 +3602,8 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           onClick={() => setActiveTab(tab)}
           className={`flex h-9 shrink-0 items-center justify-center rounded-full px-5 text-[13px] font-medium leading-none transition-colors ${
             active
-              ? 'bg-[#f3f4f6] text-[#111827]'
-              : 'bg-transparent text-[#9ca3af]'
+              ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
+              : 'bg-transparent text-[var(--shadow-text-tertiary)]'
           }`}
         >
           {tab}
@@ -2880,20 +3614,20 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 </div>
 </section>
 
-        <section className="min-h-[calc(100vh-50px)] bg-white px-4 pb-24 pt-4 sm:px-6">
+        <section className="min-h-[calc(100vh-50px)] bg-[var(--shadow-bg-surface)] px-4 pb-24 pt-4 sm:px-6">
          {activeTab === 'Posts' ? (
   <div className="space-y-5 pb-4">
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[17px] font-semibold text-[#111827]">Details</h2>
+        <h2 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPublicPage.details')}</h2>
         {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/page/edit?section=details')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+          <button type="button" onClick={() => navigate('/author/page/edit?section=details')} className="flex h-8 w-8 items-center justify-center text-[var(--shadow-text-secondary)] active:scale-95">
             <i className="fa-solid fa-pen text-[14px]" />
           </button>
         ) : null}
       </div>
 
-     <div className="space-y-4 text-[14px] font-normal text-[#111827]">
+     <div className="space-y-4 text-[14px] font-normal text-[var(--shadow-text-primary)]">
   <button
     type="button"
     onClick={handleOpenReviewsOverview}
@@ -2902,14 +3636,14 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
     <ReviewStarIcon className="h-[31px] w-[31px]" />
     <span>
       {reviewLoading
-        ? 'Loading reviews...'
-        : `${reviewSummary.recommend_percent || 0}% recommend (${reviewSummary.total_count || 0} Reviews)`}
+        ? t('authorPublicPage.loadingReviews')
+        : t('authorPublicPage.recommendSummary', { percent: new Intl.NumberFormat(getDisplayLanguageId()).format(reviewSummary.recommend_percent || 0), count: new Intl.NumberFormat(getDisplayLanguageId()).format(reviewSummary.total_count || 0) })}
     </span>
   </button>
 
   <div className="flex items-center gap-4">
     <svg
-      className="h-[26px] w-8 shrink-0 text-[#111827]"
+      className="h-[26px] w-8 shrink-0 text-[var(--shadow-text-primary)]"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -2922,12 +3656,12 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       <path d="M8.3 7.25h5.65" />
       <path d="M8.3 10.15h4.4" />
     </svg>
-    <span>{profileDetails.price_range ? `Book · ${profileDetails.price_range}` : 'Book'}</span>
+    <span>{profileDetails.price_range ? `${t('authorPublicPage.book')} · ${profileDetails.price_range}` : t('authorPublicPage.book')}</span>
   </div>
 
   {profileDetails.address ? (
     <div className="flex items-start gap-4">
-      <span className="flex w-8 shrink-0 items-center justify-center pt-0.5 text-[#111827]" aria-hidden="true">
+      <span className="flex w-8 shrink-0 items-center justify-center pt-0.5 text-[var(--shadow-text-primary)]" aria-hidden="true">
   <svg
     className="h-[18px] w-[18px]"
     viewBox="0 0 24 24"
@@ -2949,7 +3683,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
   {getCompactHoursText(profileDetails) ? (
   <div className="flex items-center gap-4">
-    <span className="flex w-8 shrink-0 items-center justify-center text-[#111827]">
+    <span className="flex w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
       <i className="fa-regular fa-clock text-[16px]" />
     </span>
     <span className="line-clamp-1 break-words leading-5">
@@ -2965,9 +3699,9 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
     {profileDetails.website_url ? (
   <section>
     <div className="mb-3 flex items-center justify-between">
-      <h2 className="text-[17px] font-semibold text-[#111827]">Links</h2>
+      <h2 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPublicPage.links')}</h2>
       {displayAuthor.is_owner ? (
-        <button type="button" onClick={() => navigate('/author/page/edit?section=links')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+        <button type="button" onClick={() => navigate('/author/page/edit?section=links')} className="flex h-8 w-8 items-center justify-center text-[var(--shadow-text-secondary)] active:scale-95">
           <i className="fa-solid fa-pen text-[14px]" />
         </button>
       ) : null}
@@ -2982,51 +3716,51 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       }
       target="_blank"
       rel="noreferrer"
-      className="flex w-full items-center gap-4 text-left text-[14px] font-normal text-[#111827] active:opacity-70"
+      className="flex w-full items-center gap-4 text-left text-[14px] font-normal text-[var(--shadow-text-primary)] active:opacity-70"
     >
-      <span className="flex w-8 shrink-0 items-center justify-center text-[#111827]">
+      <span className="flex w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
   <i className="fa-solid fa-link text-[13px]" />
 </span>
 
-      <span>{profileDetails.website_label || 'Website'}</span>
+      <span>{profileDetails.website_label || t('authorPublicPage.website')}</span>
     </a>
   </section>
 ) : null}
     
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[17px] font-semibold text-[#111827]">Facebook Page</h2>
+        <h2 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPublicPage.facebookPage')}</h2>
         {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/page/edit?section=facebook')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+          <button type="button" onClick={() => navigate('/author/page/edit?section=facebook')} className="flex h-8 w-8 items-center justify-center text-[var(--shadow-text-secondary)] active:scale-95">
             <i className="fa-solid fa-pen text-[14px]" />
           </button>
         ) : null}
       </div>
 
-      <button type="button" onClick={() => setMessage('Facebook Page link will be available after update.')} className="flex w-full items-center gap-4 text-left active:scale-[0.99]">
-        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-[#f3f4f6] ring-1 ring-black/10">
+      <button type="button" onClick={() => setMessage(getDisplayText('authorPublicPage.facebookComingSoon'))} className="flex w-full items-center gap-4 text-left active:scale-[0.99]">
+        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
           {displayAuthor.avatar_url ? (
             <img src={displayAuthor.avatar_url} alt={displayAuthor.page_name} className="h-full w-full object-cover" />
           ) : null}
         </div>
         <div className="min-w-0">
-          <div className="line-clamp-1 text-[14px] font-normal text-[#111827]">{displayAuthor.page_name}</div>
-          <div className="mt-0.5 text-[12px] font-normal text-[#6b7280]">Facebook Page</div>
+          <div className="line-clamp-1 text-[14px] font-normal text-[var(--shadow-text-primary)]">{displayAuthor.page_name}</div>
+          <div className="mt-0.5 text-[12px] font-normal text-[var(--shadow-text-secondary)]">{t('authorPublicPage.facebookPage')}</div>
         </div>
       </button>
     </section>
 
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[17px] font-semibold text-[#111827]">Contact info</h2>
+        <h2 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPublicPage.contactInfo')}</h2>
         {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/page/edit?section=contact')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+          <button type="button" onClick={() => navigate('/author/page/edit?section=contact')} className="flex h-8 w-8 items-center justify-center text-[var(--shadow-text-secondary)] active:scale-95">
             <i className="fa-solid fa-pen text-[14px]" />
           </button>
         ) : null}
       </div>
 
-      <div className="space-y-4 text-[14px] font-normal text-[#111827]">
+      <div className="space-y-4 text-[14px] font-normal text-[var(--shadow-text-primary)]">
   {socialPreview ? (
   <button type="button" onClick={() => setSocialMediaOpen(true)} className="flex w-full items-center gap-4 text-left">
     <i className="fa-solid fa-at w-8 text-center text-[18px]" />
@@ -3037,7 +3771,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   {profileDetails.phone ? (
     <div className="flex items-center gap-4">
       <svg
-  className="h-[22px] w-8 shrink-0 text-[#111827]"
+  className="h-[22px] w-8 shrink-0 text-[var(--shadow-text-primary)]"
   viewBox="0 0 24 24"
   fill="none"
   stroke="currentColor"
@@ -3054,7 +3788,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   {profileDetails.email ? (
     <div className="flex items-center gap-4">
       <svg
-  className="h-[22px] w-8 shrink-0 text-[#111827]"
+  className="h-[22px] w-8 shrink-0 text-[var(--shadow-text-primary)]"
   viewBox="0 0 24 24"
   fill="none"
   stroke="currentColor"
@@ -3074,7 +3808,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   {profileDetails.telegram ? (
     <div className="flex items-center gap-4">
       <svg
-  className="h-[22px] w-8 shrink-0 text-[#111827]"
+  className="h-[22px] w-8 shrink-0 text-[var(--shadow-text-primary)]"
   viewBox="0 0 24 24"
   fill="none"
   stroke="currentColor"
@@ -3113,8 +3847,8 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
               </div>
             ) : (
               <EmptyPanel
-                title="No works yet"
-                text="Published novels, chat stories, and manga will appear here."
+                title={t('authorPublicPage.noWorksYet')}
+                text={t('authorPublicPage.noWorksText')}
               />
             )
           ) : null}
