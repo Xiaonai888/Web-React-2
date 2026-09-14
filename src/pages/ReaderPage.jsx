@@ -275,14 +275,13 @@ const FONT_OPTIONS = [
     group: 'Khmer Fonts',
     family: '"Noto Sans Khmer", "Khmer OS Content", system-ui, sans-serif',
   },
-  {
     {
-  key: 'khmer-os-fasthand',
+    key: 'khmer-os-fasthand',
   label: 'Khmer OS Fasthand',
   group: 'Khmer Fonts',
   family: '"Khmer OS Fasthand", "Noto Sans Khmer", serif',
 },
-  
+  {
     key: 'khmer-os-content',
     label: 'Khmer OS Content',
     group: 'Khmer Fonts',
