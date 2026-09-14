@@ -953,7 +953,10 @@ if (message || !story) {
         />
 
         <div className="my-6 px-4">
-  <GoogleAdBanner slot={import.meta.env.VITE_ADSENSE_STORY_SLOT} />
+  <GoogleAdBanner
+  slot={import.meta.env.VITE_ADSENSE_STORY_SLOT}
+  placement="storyDetail"
+/>
 </div>
 
         <StoryAuthorMiniCard
