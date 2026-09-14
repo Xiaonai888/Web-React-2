@@ -2968,22 +2968,37 @@ function ChoiceButton({ active, children, onClick, className = '' }) {
 }
 
 function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
+  const [search, setSearch] = useState('')
+
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
     document.documentElement.style.overflow = open ? 'hidden' : ''
+
+    if (open) setSearch('')
+
     return () => {
       document.body.style.overflow = ''
       document.documentElement.style.overflow = ''
     }
-   }, [open])
+  }, [open])
 
   if (!open) return null
 
+  const normalizedSearch = search.trim().toLowerCase()
+
   const groups = FONT_OPTIONS.reduce((result, font) => {
+    const searchableText = `${font.label} ${font.group}`.toLowerCase()
+
+    if (normalizedSearch && !searchableText.includes(normalizedSearch)) {
+      return result
+    }
+
     if (!result[font.group]) result[font.group] = []
     result[font.group].push(font)
     return result
   }, {})
+
+  const hasFonts = Object.keys(groups).length > 0
 
   return (
     <div className="fixed inset-0 z-[170]">
@@ -2995,49 +3010,64 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
       />
 
       <section className="absolute bottom-0 left-0 right-0 max-h-[82vh] overflow-hidden rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
-  
+        <div className="shrink-0 bg-white px-4 pb-3 pt-4">
+          <div className="flex h-12 items-center rounded-full bg-[#f5f3fa] px-4">
+            <i className="fa-solid fa-magnifying-glass mr-3 text-[#98a2b3]" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search Font"
+              className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none placeholder:text-[#98a2b3]"
+            />
+          </div>
+        </div>
 
-        <div className="max-h-[66vh] overflow-y-auto p-4">
-          {Object.entries(groups).map(([group, fonts]) => (
-            <section key={group} className="mb-5 last:mb-0">
-              <h3 className="mb-2 text-[12px] font-black uppercase tracking-[0.08em] text-[#8d94a1]">
-                {group}
-              </h3>
+        <div className="max-h-[66vh] overflow-y-auto px-4 pb-4">
+          {hasFonts ? (
+            Object.entries(groups).map(([group, fonts]) => (
+              <section key={group} className="mb-5 last:mb-0">
+                <h3 className="mb-2 text-[12px] font-black uppercase tracking-[0.08em] text-[#8d94a1]">
+                  {group}
+                </h3>
 
-              <div className="grid grid-cols-2 gap-3">
-  {fonts.map((font) => {
-    const active = font.key === selectedFontKey
+                <div className="grid grid-cols-2 gap-3">
+                  {fonts.map((font) => {
+                    const active = font.key === selectedFontKey
 
-    return (
-      <button
-        key={font.key}
-        type="button"
-        onClick={() => {
-          onSelect(font.key)
-          onClose()
-        }}
-        className={`flex h-[76px] items-center justify-center rounded-[12px] px-3 text-center text-[14px] font-bold transition active:scale-[0.98] ${
-          active
-            ? 'border-2 border-[#FE526E] bg-white text-[#FE526E]'
-            : 'border border-transparent bg-[#f7f7f9] text-[#111827]'
-        }`}
-      >
-        <span
-          className="line-clamp-2"
-          style={{
-            fontFamily: font.family,
-            fontWeight: 700,
-          }}
-        >
-          {font.label}
-        </span>
-      </button>
-    )
-  })}
-</div>
-
-                          </section>
-          ))}
+                    return (
+                      <button
+                        key={font.key}
+                        type="button"
+                        onClick={() => {
+                          onSelect(font.key)
+                          onClose()
+                        }}
+                        className={`flex h-[76px] items-center justify-center rounded-[12px] px-3 text-center text-[14px] font-bold transition active:scale-[0.98] ${
+                          active
+                            ? 'border-2 border-[#FE526E] bg-[#f7f7f9] text-[#FE526E]'
+                            : 'border border-transparent bg-[#f7f7f9] text-[#111827]'
+                        }`}
+                      >
+                        <span
+                          className="line-clamp-2"
+                          style={{
+                            fontFamily: font.family,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {font.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
+            ))
+          ) : (
+            <div className="flex h-28 items-center justify-center text-[13px] font-semibold text-[#98a2b3]">
+              No fonts found
+            </div>
+          )}
         </div>
       </section>
     </div>
