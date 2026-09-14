@@ -1,5 +1,160 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('authorRecentEarningsPage', {
+  en: {
+    back: 'Back',
+    incomeHistory: 'Income history',
+    recentEarnings: 'Recent Earnings',
+    latest30Days: 'Latest 30 days',
+    today: 'Today',
+    last7Days: 'Last 7 Days',
+    last30Days: t('authorRecentEarningsPage.last30Days'),
+    custom: 'Custom',
+    start: 'Start',
+    end: 'End',
+    applyCustomRange: 'Apply Custom Range',
+    earned: 'Earned',
+    diamonds: 'Diamonds',
+    unlocks: 'Unlocks',
+    newestEarningsFirst: 'Newest earnings first',
+    recordsCount: '{{count}} records',
+    reader: 'Reader',
+    episodeNumber: 'Episode {{number}}',
+    episodeUnlock: 'Episode unlock',
+    story: 'Story',
+    noRecentEarnings: 'No recent earnings',
+    noRecentEarningsText: 'Paid Diamond unlocks in this recent period will appear here.',
+    previous: 'Previous',
+    pageOf: 'Page {{page}} of {{total}}',
+    next: 'Next',
+    olderHistoryHelp: 'Recent Earnings only shows the latest 30 days. Tap here for older Income History.',
+    invalidRange: getDisplayText('authorRecentEarningsPage.invalidRange'),
+    loadFailed: 'Failed to load recent earnings',
+  },
+  km: {
+    back: 'ត្រឡប់ក្រោយ',
+    incomeHistory: 'ប្រវត្តិចំណូល',
+    recentEarnings: 'ចំណូលថ្មីៗ',
+    latest30Days: '30 ថ្ងៃចុងក្រោយ',
+    today: 'ថ្ងៃនេះ',
+    last7Days: '7 ថ្ងៃចុងក្រោយ',
+    last30Days: '30 ថ្ងៃចុងក្រោយ',
+    custom: 'កំណត់ផ្ទាល់',
+    start: 'ចាប់ផ្តើម',
+    end: 'បញ្ចប់',
+    applyCustomRange: 'អនុវត្តចន្លោះថ្ងៃ',
+    earned: 'ចំណូល',
+    diamonds: 'Diamond',
+    unlocks: 'ការដោះសោ',
+    newestEarningsFirst: 'ចំណូលថ្មីបំផុតមុន',
+    recordsCount: '{{count}} កំណត់ត្រា',
+    reader: 'អ្នកអាន',
+    episodeNumber: 'ភាគ {{number}}',
+    episodeUnlock: 'ដោះសោភាគ',
+    story: 'រឿង',
+    noRecentEarnings: 'មិនទាន់មានចំណូលថ្មីៗ',
+    noRecentEarningsText: 'ការដោះសោដោយ Diamond បង់ប្រាក់ក្នុងរយៈពេលនេះនឹងបង្ហាញនៅទីនេះ។',
+    previous: 'មុន',
+    pageOf: 'ទំព័រ {{page}} នៃ {{total}}',
+    next: 'បន្ទាប់',
+    olderHistoryHelp: 'ចំណូលថ្មីៗបង្ហាញតែ 30 ថ្ងៃចុងក្រោយ។ ចុចទីនេះសម្រាប់ប្រវត្តិចំណូលចាស់ជាងនេះ។',
+    invalidRange: 'សូមជ្រើសចន្លោះថ្ងៃត្រឹមត្រូវក្នុង 30 ថ្ងៃចុងក្រោយ។',
+    loadFailed: 'មិនអាចផ្ទុកចំណូលថ្មីៗបាន',
+  },
+  zh: {
+    back: '返回',
+    incomeHistory: '收入记录',
+    recentEarnings: '近期收入',
+    latest30Days: '最近 30 天',
+    today: '今天',
+    last7Days: '最近 7 天',
+    last30Days: '最近 30 天',
+    custom: '自定义',
+    start: '开始',
+    end: '结束',
+    applyCustomRange: '应用自定义日期',
+    earned: '收入',
+    diamonds: 'Diamond',
+    unlocks: '解锁',
+    newestEarningsFirst: '最新收入优先',
+    recordsCount: '{{count}} 条记录',
+    reader: '读者',
+    episodeNumber: '第 {{number}} 集',
+    episodeUnlock: '章节解锁',
+    story: '故事',
+    noRecentEarnings: '暂无近期收入',
+    noRecentEarningsText: '此期间的付费 Diamond 解锁会显示在这里。',
+    previous: '上一页',
+    pageOf: '第 {{page}} 页，共 {{total}} 页',
+    next: '下一页',
+    olderHistoryHelp: '近期收入仅显示最近 30 天。点击这里查看更早的收入记录。',
+    invalidRange: '请选择最近 30 天内的有效日期范围。',
+    loadFailed: '无法加载近期收入',
+  },
+  ja: {
+    back: '戻る',
+    incomeHistory: '収益履歴',
+    recentEarnings: '最近の収益',
+    latest30Days: '直近30日',
+    today: '今日',
+    last7Days: '直近7日',
+    last30Days: '直近30日',
+    custom: 'カスタム',
+    start: '開始',
+    end: '終了',
+    applyCustomRange: '期間を適用',
+    earned: '収益',
+    diamonds: 'Diamond',
+    unlocks: 'アンロック',
+    newestEarningsFirst: '新しい収益から表示',
+    recordsCount: '{{count}} 件',
+    reader: '読者',
+    episodeNumber: 'エピソード {{number}}',
+    episodeUnlock: 'エピソードのアンロック',
+    story: 'ストーリー',
+    noRecentEarnings: '最近の収益はありません',
+    noRecentEarningsText: 'この期間の有料 Diamond アンロックがここに表示されます。',
+    previous: '前へ',
+    pageOf: '{{page}} / {{total}} ページ',
+    next: '次へ',
+    olderHistoryHelp: '最近の収益には直近30日だけが表示されます。以前の収益履歴はこちらから確認できます。',
+    invalidRange: '直近30日以内の有効な期間を選択してください。',
+    loadFailed: '最近の収益を読み込めませんでした',
+  },
+  ko: {
+    back: '뒤로',
+    incomeHistory: '수입 기록',
+    recentEarnings: '최근 수입',
+    latest30Days: '최근 30일',
+    today: '오늘',
+    last7Days: '최근 7일',
+    last30Days: '최근 30일',
+    custom: '직접 설정',
+    start: '시작',
+    end: '종료',
+    applyCustomRange: '기간 적용',
+    earned: '수입',
+    diamonds: 'Diamond',
+    unlocks: '잠금 해제',
+    newestEarningsFirst: '최신 수입부터 표시',
+    recordsCount: '{{count}}개 기록',
+    reader: '독자',
+    episodeNumber: '에피소드 {{number}}',
+    episodeUnlock: '에피소드 잠금 해제',
+    story: '스토리',
+    noRecentEarnings: '최근 수입이 없습니다',
+    noRecentEarningsText: '이 기간의 유료 Diamond 잠금 해제가 여기에 표시됩니다.',
+    previous: '이전',
+    pageOf: '{{page}} / {{total}} 페이지',
+    next: '다음',
+    olderHistoryHelp: '최근 수입에는 최근 30일만 표시됩니다. 이전 수입 기록은 여기를 눌러 확인하세요.',
+    invalidRange: '최근 30일 안에서 올바른 날짜 범위를 선택하세요.',
+    loadFailed: '최근 수입을 불러오지 못했습니다',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -35,7 +190,7 @@ function formatMoney(value) {
 
   if (!Number.isFinite(number)) return '$0.00'
 
-  return number.toLocaleString('en-US', {
+  return number.toLocaleString(getDisplayLanguageId(), {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
@@ -48,7 +203,7 @@ function formatNumber(value) {
 
   if (!Number.isFinite(number)) return '0'
 
-  return number.toLocaleString('en-US', {
+  return number.toLocaleString(getDisplayLanguageId(), {
     maximumFractionDigits: 2,
   })
 }
@@ -60,7 +215,7 @@ function formatDateTime(value) {
 
   if (Number.isNaN(date.getTime())) return '-'
 
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(getDisplayLanguageId(), {
     timeZone: 'Asia/Phnom_Penh',
     month: 'short',
     day: '2-digit',
@@ -81,7 +236,7 @@ function RangeButton({ active, children, onClick }) {
       className={`h-10 rounded-full px-3 text-[11px] font-black transition active:scale-[0.98] ${
         active
           ? 'bg-[#7651ad] text-white'
-          : 'border border-[#ddd1ec] bg-white text-[#7651ad]'
+          : 'border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[#7651ad]'
       }`}
     >
       {children}
@@ -108,18 +263,19 @@ function ReaderAvatar({ item }) {
 }
 
 function EarningRow({ item }) {
+  const { t } = useDisplayTranslation()
   const episode =
     Number(item.episode_number || 0) > 0
-      ? `Episode ${item.episode_number}`
-      : item.episode_title || 'Episode unlock'
+      ? t('authorRecentEarningsPage.episodeNumber', { number: formatNumber(item.episode_number) })
+      : item.episode_title || t('authorRecentEarningsPage.episodeUnlock')
 
   return (
-    <article className="flex gap-3 border-b border-[#f0edf4] px-4 py-4 last:border-b-0">
+    <article className="flex gap-3 border-b border-[var(--shadow-border)] px-4 py-4 last:border-b-0">
       <ReaderAvatar item={item} />
 
       <div className="min-w-0 flex-1">
         <div className="line-clamp-1 text-[13px] font-black text-[var(--shadow-text-primary)]">
-          {item.reader_name || 'Reader'}
+          {item.reader_name || t('authorRecentEarningsPage.reader')}
         </div>
 
         <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
@@ -127,7 +283,7 @@ function EarningRow({ item }) {
         </div>
 
         <div className="mt-1 line-clamp-1 text-[10.5px] font-semibold text-[#b4517b]">
-          {item.story_title || 'Story'}
+          {item.story_title || t('authorRecentEarningsPage.story')}
         </div>
 
         <div className="mt-1.5 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
@@ -140,7 +296,7 @@ function EarningRow({ item }) {
           +{formatMoney(item.author_net_payout_usd)}
         </div>
 
-        <div className="mt-1 flex items-center justify-end gap-1 text-[10px] font-bold text-[#8e7f98]">
+        <div className="mt-1 flex items-center justify-end gap-1 text-[10px] font-bold text-[var(--shadow-text-secondary)]">
           <img
             src="/assets/Icons/Diamond.svg"
             alt=""
@@ -159,7 +315,7 @@ function LoadingRows() {
       {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
-          className="h-[72px] animate-pulse rounded-[18px] bg-[#f3eff7]"
+          className="h-[72px] animate-pulse rounded-[18px] bg-[var(--shadow-bg-soft)]"
         />
       ))}
     </div>
@@ -168,6 +324,7 @@ function LoadingRows() {
 
 export default function AuthorRecentEarningsPage() {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
   const minDate = useMemo(() => cambodiaDateValue(-29), [])
   const maxDate = useMemo(() => cambodiaDateValue(0), [])
 
@@ -229,7 +386,7 @@ export default function AuthorRecentEarningsPage() {
 
         if (!response.ok || result.ok === false) {
           throw new Error(
-            result.message || 'Failed to load recent earnings'
+            result.message || getDisplayText('authorRecentEarningsPage.loadFailed')
           )
         }
 
@@ -237,7 +394,7 @@ export default function AuthorRecentEarningsPage() {
       } catch (error) {
         if (error.name !== 'AbortError') {
           setMessage(
-            error.message || 'Failed to load recent earnings'
+            error.message || getDisplayText('authorRecentEarningsPage.loadFailed')
           )
         }
       } finally {
@@ -271,7 +428,7 @@ export default function AuthorRecentEarningsPage() {
       draftFrom > draftTo
     ) {
       setMessage(
-        'Choose a valid date range inside the latest 30 days.'
+        getDisplayText('authorRecentEarningsPage.invalidRange')
       )
       return
     }
@@ -288,12 +445,12 @@ export default function AuthorRecentEarningsPage() {
 
   const filterLabel =
     filter.range === 'today'
-      ? 'Today'
+      ? t('authorRecentEarningsPage.today')
       : filter.range === 'last7'
-        ? 'Last 7 Days'
+        ? t('authorRecentEarningsPage.last7Days')
         : filter.range === 'custom'
           ? `${filter.from} → ${filter.to}`
-          : 'Last 30 Days'
+          : t('authorRecentEarningsPage.last30Days')
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-10">
@@ -302,7 +459,7 @@ export default function AuthorRecentEarningsPage() {
           <button
             type="button"
             onClick={() => navigate('/author/income')}
-            aria-label="Back"
+            aria-label={t('authorRecentEarningsPage.back')}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#7651ad] active:scale-95"
           >
             <i className="fa-solid fa-chevron-left text-[15px]" />
@@ -310,17 +467,17 @@ export default function AuthorRecentEarningsPage() {
 
           <div className="text-center">
             <h1 className="text-[17px] font-black text-[var(--shadow-text-primary)]">
-              Recent Earnings
+              {t('authorRecentEarningsPage.recentEarnings')}
             </h1>
             <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.09em] text-[var(--shadow-text-tertiary)]">
-              Latest 30 days
+              {t('authorRecentEarningsPage.latest30Days')}
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => navigate('/author/earnings')}
-            aria-label="Income history"
+            aria-label={t('authorRecentEarningsPage.incomeHistory')}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#7651ad] active:scale-95"
           >
             <i className="fa-solid fa-clock-rotate-left text-[14px]" />
@@ -329,69 +486,71 @@ export default function AuthorRecentEarningsPage() {
       </header>
 
       <main className="mx-auto max-w-[720px] space-y-4 px-3 pt-4 sm:px-4">
-        <section className="rounded-[24px] border border-[#d9cae8] bg-[var(--shadow-bg-surface)] p-3 shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
+        <section className="rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <RangeButton
               active={filter.range === 'today' && !customOpen}
               onClick={() => selectRange('today')}
             >
-              Today
+              {t('authorRecentEarningsPage.today')}
             </RangeButton>
 
             <RangeButton
               active={filter.range === 'last7' && !customOpen}
               onClick={() => selectRange('last7')}
             >
-              Last 7 Days
+              {t('authorRecentEarningsPage.last7Days')}
             </RangeButton>
 
             <RangeButton
               active={filter.range === 'last30' && !customOpen}
               onClick={() => selectRange('last30')}
             >
-              Last 30 Days
+              {t('authorRecentEarningsPage.last30Days')}
             </RangeButton>
 
             <RangeButton
               active={filter.range === 'custom' || customOpen}
               onClick={() => setCustomOpen(true)}
             >
-              Custom
+              {t('authorRecentEarningsPage.custom')}
             </RangeButton>
           </div>
 
           {customOpen ? (
-            <div className="mt-3 rounded-[20px] border border-[#eadff3] bg-[#faf7fd] p-3">
+            <div className="mt-3 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-3">
               <div className="grid grid-cols-2 gap-2">
                 <label className="min-w-0">
-                  <span className="mb-1.5 block text-[9px] font-black uppercase tracking-[0.08em] text-[#8e7f98]">
-                    Start
+                  <span className="mb-1.5 block text-[9px] font-black uppercase tracking-[0.08em] text-[var(--shadow-text-secondary)]">
+                    {t('authorRecentEarningsPage.start')}
                   </span>
                   <input
                     type="date"
+                    lang={getDisplayLanguageId()}
                     min={minDate}
                     max={maxDate}
                     value={draftFrom}
                     onChange={(event) =>
                       setDraftFrom(event.target.value)
                     }
-                    className="h-11 w-full min-w-0 rounded-[14px] border border-[#ddd1ec] bg-white px-2 text-[12px] font-bold text-[#31263d] outline-none focus:border-[#9d7ac1]"
+                    className="h-11 w-full min-w-0 rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-2 text-[12px] font-bold text-[var(--shadow-text-primary)] outline-none focus:border-[#9d7ac1]"
                   />
                 </label>
 
                 <label className="min-w-0">
-                  <span className="mb-1.5 block text-[9px] font-black uppercase tracking-[0.08em] text-[#8e7f98]">
-                    End
+                  <span className="mb-1.5 block text-[9px] font-black uppercase tracking-[0.08em] text-[var(--shadow-text-secondary)]">
+                    {t('authorRecentEarningsPage.end')}
                   </span>
                   <input
                     type="date"
+                    lang={getDisplayLanguageId()}
                     min={minDate}
                     max={maxDate}
                     value={draftTo}
                     onChange={(event) =>
                       setDraftTo(event.target.value)
                     }
-                    className="h-11 w-full min-w-0 rounded-[14px] border border-[#ddd1ec] bg-white px-2 text-[12px] font-bold text-[#31263d] outline-none focus:border-[#9d7ac1]"
+                    className="h-11 w-full min-w-0 rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-2 text-[12px] font-bold text-[var(--shadow-text-primary)] outline-none focus:border-[#9d7ac1]"
                   />
                 </label>
               </div>
@@ -401,54 +560,54 @@ export default function AuthorRecentEarningsPage() {
                 onClick={applyCustom}
                 className="mt-3 h-11 w-full rounded-full bg-[#7651ad] text-[12px] font-black text-white active:scale-[0.99]"
               >
-                Apply Custom Range
+                {t('authorRecentEarningsPage.applyCustomRange')}
               </button>
             </div>
           ) : null}
         </section>
 
         <section className="grid grid-cols-3 gap-2">
-          <div className="rounded-[20px] border border-[#e2d7ed] bg-[var(--shadow-bg-surface)] p-3">
+          <div className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3">
             <div className="text-[8.5px] font-black uppercase tracking-[0.07em] text-[var(--shadow-text-tertiary)]">
-              Earned
+              {t('authorRecentEarningsPage.earned')}
             </div>
             <div className="mt-2 text-[17px] font-black text-[#b9517b]">
               {formatMoney(summary.total_author_usd)}
             </div>
           </div>
 
-          <div className="rounded-[20px] border border-[#e2d7ed] bg-[var(--shadow-bg-surface)] p-3">
+          <div className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3">
             <div className="text-[8.5px] font-black uppercase tracking-[0.07em] text-[var(--shadow-text-tertiary)]">
-              Diamonds
+              {t('authorRecentEarningsPage.diamonds')}
             </div>
             <div className="mt-2 text-[17px] font-black text-[#7651ad]">
               {formatNumber(summary.total_author_diamonds)}
             </div>
           </div>
 
-          <div className="rounded-[20px] border border-[#e2d7ed] bg-[var(--shadow-bg-surface)] p-3">
+          <div className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3">
             <div className="text-[8.5px] font-black uppercase tracking-[0.07em] text-[var(--shadow-text-tertiary)]">
-              Unlocks
+              {t('authorRecentEarningsPage.unlocks')}
             </div>
-            <div className="mt-2 text-[17px] font-black text-[#31263d]">
+            <div className="mt-2 text-[17px] font-black text-[var(--shadow-text-primary)]">
               {formatNumber(summary.total_transactions)}
             </div>
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[24px] border border-[#d9cae8] bg-[var(--shadow-bg-surface)] shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
-          <div className="flex items-center justify-between gap-3 border-b border-[#eee8f3] px-4 py-4">
+        <section className="overflow-hidden rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--shadow-border)] px-4 py-4">
             <div>
               <h2 className="text-[14px] font-black text-[var(--shadow-text-primary)]">
                 {filterLabel}
               </h2>
               <p className="mt-1 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
-                Newest earnings first
+                {t('authorRecentEarningsPage.newestEarningsFirst')}
               </p>
             </div>
 
             <span className="rounded-full bg-[#f4eef9] px-3 py-1.5 text-[9px] font-black text-[#7651ad]">
-              {formatNumber(pagination.total)} records
+              {t('authorRecentEarningsPage.recordsCount', { count: formatNumber(pagination.total) })}
             </span>
           </div>
 
@@ -472,37 +631,37 @@ export default function AuthorRecentEarningsPage() {
                 className="mx-auto h-7 w-7 object-contain"
               />
               <div className="mt-4 text-[14px] font-black text-[var(--shadow-text-primary)]">
-                No recent earnings
+                {t('authorRecentEarningsPage.noRecentEarnings')}
               </div>
               <div className="mx-auto mt-2 max-w-[270px] text-[11px] font-medium leading-5 text-[var(--shadow-text-tertiary)]">
-                Paid Diamond unlocks in this recent period will appear here.
+                {t('authorRecentEarningsPage.noRecentEarningsText')}
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3 border-t border-[#eee8f3] px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-t border-[var(--shadow-border)] px-4 py-3">
             <button
               type="button"
               disabled={loading || !pagination.has_prev}
               onClick={() =>
                 setPage((current) => Math.max(1, current - 1))
               }
-              className="h-10 rounded-full border border-[#ddd1ec] bg-white px-4 text-[11px] font-black text-[#7651ad] disabled:opacity-40"
+              className="h-10 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 text-[11px] font-black text-[#7651ad] disabled:opacity-40"
             >
-              Previous
+              {t('authorRecentEarningsPage.previous')}
             </button>
 
             <span className="text-[10.5px] font-bold text-[var(--shadow-text-tertiary)]">
-              Page {pagination.page || 1} of {pagination.total_pages || 0}
+              {t('authorRecentEarningsPage.pageOf', { page: formatNumber(pagination.page || 1), total: formatNumber(pagination.total_pages || 0) })}
             </span>
 
             <button
               type="button"
               disabled={loading || !pagination.has_next}
               onClick={() => setPage((current) => current + 1)}
-              className="h-10 rounded-full border border-[#ddd1ec] bg-white px-4 text-[11px] font-black text-[#7651ad] disabled:opacity-40"
+              className="h-10 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 text-[11px] font-black text-[#7651ad] disabled:opacity-40"
             >
-              Next
+              {t('authorRecentEarningsPage.next')}
             </button>
           </div>
         </section>
@@ -512,7 +671,7 @@ export default function AuthorRecentEarningsPage() {
           onClick={() => navigate('/author/earnings')}
           className="w-full rounded-[18px] border border-[#ead69c] bg-[#fff8e7] px-4 py-3 text-left text-[10.5px] font-semibold leading-5 text-[#9a6b12]"
         >
-          Recent Earnings only shows the latest 30 days. Tap here for older Income History.
+          {t('authorRecentEarningsPage.olderHistoryHelp')}
         </button>
       </main>
     </div>
