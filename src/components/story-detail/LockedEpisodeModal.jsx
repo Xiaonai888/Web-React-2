@@ -14,7 +14,7 @@ registerTranslationNamespace('lockedEpisodeModal', {
     next10Unavailable: 'This story does not have 10 locked released episodes available from this point.',
     next30Unavailable: 'This story does not have 30 locked released episodes available from this point.',
     next50Unavailable: 'This story does not have 50 locked released episodes available from this point.',
-    allReleasedUnavailable: 'All Released Episodes works when the story has more than 70 released locked episodes or the story is completed.',
+    allReleasedUnavailable: 'All Released Episodes works when the story has at least 70 released locked episodes or the story is completed.',
     off: '{{count}}% Off',
     access: 'Access',
     unlocking: 'Unlocking...',
@@ -65,7 +65,7 @@ registerTranslationNamespace('lockedEpisodeModal', {
     next10Unavailable: 'ចាប់ពីចំណុចនេះ រឿងនេះមិនមានភាគដែលបានចេញ និងជាប់សោចំនួន 10 ភាគទេ។',
     next30Unavailable: 'ចាប់ពីចំណុចនេះ រឿងនេះមិនមានភាគដែលបានចេញ និងជាប់សោចំនួន 30 ភាគទេ។',
     next50Unavailable: 'ចាប់ពីចំណុចនេះ រឿងនេះមិនមានភាគដែលបានចេញ និងជាប់សោចំនួន 50 ភាគទេ។',
-    allReleasedUnavailable: 'ជម្រើសភាគដែលបានចេញទាំងអស់ អាចប្រើបាននៅពេលរឿងមានភាគដែលបានចេញ និងជាប់សោលើស 70 ភាគ ឬរឿងបានបញ្ចប់។',
+    allReleasedUnavailable: 'ជម្រើសភាគដែលបានចេញទាំងអស់ អាចប្រើបាននៅពេលមានភាគដែលបានចេញ និងជាប់សោចាប់ពី 70 ភាគឡើងទៅ ឬរឿងបានបញ្ចប់។',
     off: 'បញ្ចុះ {{count}}%',
     access: 'ចូលអាន',
     unlocking: 'កំពុងដោះសោ...',
@@ -116,7 +116,7 @@ registerTranslationNamespace('lockedEpisodeModal', {
     next10Unavailable: '从当前位置开始，没有 10 个已发布且锁定的章节可供解锁。',
     next30Unavailable: '从当前位置开始，没有 30 个已发布且锁定的章节可供解锁。',
     next50Unavailable: '从当前位置开始，没有 50 个已发布且锁定的章节可供解锁。',
-    allReleasedUnavailable: '当故事有超过 70 个已发布且锁定的章节，或故事已完结时，才可使用全部已发布章节。',
+    allReleasedUnavailable: '当故事有至少 70 个已发布且锁定的章节，或故事已完结时，才可使用全部已发布章节。',
     off: '优惠 {{count}}%',
     access: '访问',
     unlocking: '正在解锁...',
@@ -167,7 +167,7 @@ registerTranslationNamespace('lockedEpisodeModal', {
     next10Unavailable: 'この位置から利用できる公開済みのロックされたエピソードが10話ありません。',
     next30Unavailable: 'この位置から利用できる公開済みのロックされたエピソードが30話ありません。',
     next50Unavailable: 'この位置から利用できる公開済みのロックされたエピソードが50話ありません。',
-    allReleasedUnavailable: '公開済み全エピソードは、公開済みのロックされたエピソードが70話を超える場合、またはストーリーが完結している場合に利用できます。',
+    allReleasedUnavailable: '公開済み全エピソードは、公開済みのロックされたエピソードが70話以上ある場合、またはストーリーが完結している場合に利用できます。',
     off: '{{count}}% オフ',
     access: 'アクセス',
     unlocking: '解除中...',
@@ -218,7 +218,7 @@ registerTranslationNamespace('lockedEpisodeModal', {
     next10Unavailable: '현재 지점부터 이용 가능한 공개된 잠금 에피소드가 10개 없습니다.',
     next30Unavailable: '현재 지점부터 이용 가능한 공개된 잠금 에피소드가 30개 없습니다.',
     next50Unavailable: '현재 지점부터 이용 가능한 공개된 잠금 에피소드가 50개 없습니다.',
-    allReleasedUnavailable: '공개된 잠금 에피소드가 70개를 초과하거나 스토리가 완결된 경우 전체 공개 에피소드를 이용할 수 있습니다.',
+    allReleasedUnavailable: '공개된 잠금 에피소드가 70개 이상이거나 스토리가 완결된 경우 전체 공개 에피소드를 이용할 수 있습니다.',
     off: '{{count}}% 할인',
     access: '이용',
     unlocking: '잠금 해제 중...',
@@ -284,7 +284,7 @@ const FALLBACK_REASON_KEYS = {
   'This story does not have 10 locked released episodes available from this point.': 'next10Unavailable',
   'This story does not have 30 locked released episodes available from this point.': 'next30Unavailable',
   'This story does not have 50 locked released episodes available from this point.': 'next50Unavailable',
-  'All Released Episodes works when the story has more than 70 released locked episodes or the story is completed.': 'allReleasedUnavailable',
+  'All Released Episodes works when the story has at least 70 released locked episodes or the story is completed.': 'allReleasedUnavailable',
 }
 
 function getPackageLabel(option, t) {
@@ -369,7 +369,7 @@ function buildFallbackPackageOptions(price = FALLBACK_DIAMOND_PRICE) {
       discount_percent: 40,
       original_price: 5000,
       price: 3000,
-      disabled_reason: 'All Released Episodes works when the story has more than 70 released locked episodes or the story is completed.',
+      disabled_reason: 'All Released Episodes works when the story has at least 70 released locked episodes or the story is completed.',
     },
   ]
 }
