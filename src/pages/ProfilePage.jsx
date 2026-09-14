@@ -7,7 +7,7 @@ import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscov
 import ReaderProfileOptionsSheet from '../components/reader-profile/ReaderProfileOptionsSheet'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import ReaderReaderMessageRequestModal from '../components/chat/ReaderReaderMessageRequestModal'
-import { getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('profilePage', {
@@ -408,6 +408,20 @@ registerTranslationNamespace('profilePage', {
   },
 })
 
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value, options = {}) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale, options).format(Number.isFinite(number) ? number : 0)
+}
+
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -582,7 +596,7 @@ function DropdownMenu({ items, align = 'right' }) {
 function StatItem({ value, label }) {
   return (
     <div className="min-w-0 text-center">
-      <div className="text-[15px] font-extrabold leading-none text-[var(--shadow-text-primary)]">{value}</div>
+      <div className="text-[15px] font-extrabold leading-none text-[var(--shadow-text-primary)]">{formatDisplayNumber(value)}</div>
       <div className="mt-1 text-[11px] font-semibold text-[var(--shadow-text-primary)]">{label}</div>
     </div>
   )
@@ -708,7 +722,7 @@ function AvatarCropModal({
               <div className="mt-4">
                 <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[var(--shadow-text-secondary)]">
                   <span>{t('profilePage.zoom')}</span>
-                  <span>{zoom.toFixed(1)}x</span>
+                  <span>{formatDisplayNumber(zoom, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}x</span>
                 </div>
 
                 <input
@@ -886,7 +900,7 @@ function EditProfileModal({
                 placeholder={t('profilePage.bioPlaceholder')}
                 maxLength={180}
               />
-              <div className="mt-1 text-right text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{form.bio.length}/180</div>
+              <div className="mt-1 text-right text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{formatDisplayNumber(form.bio.length)}/{formatDisplayNumber(180)}</div>
             </div>
 
             <div>
@@ -902,7 +916,7 @@ function EditProfileModal({
             <div>
               <div className="mb-2 flex items-center justify-between gap-3">
                 <label className="block text-[13px] font-extrabold text-[var(--shadow-text-primary)]">{t('profilePage.addLink')}</label>
-                <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{(form.social_links || []).length}/5</div>
+                <div className="text-[11px] font-bold text-[var(--shadow-text-tertiary)]">{formatDisplayNumber((form.social_links || []).length)}/{formatDisplayNumber(5)}</div>
               </div>
             
               <div className="space-y-2">
