@@ -5,6 +5,7 @@ import { AuthorPageNotificationProvider } from './providers/AuthorPageNotificati
 import { useDisplayTranslation } from './utils/displayLanguage'
 import './i18n/appTranslations'
 import Footer from './components/Footer'
+import WorkMaintenanceGuard from './components/common/WorkMaintenanceGuard'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
 import ChatStoryHomePage from './pages/ChatStoryHomePage'
@@ -1468,8 +1469,10 @@ export default function App() {
     <Router>
   <AuthorPageNotificationProvider>
     <SmartRefreshProvider>
-      <AppShell />
-    </SmartRefreshProvider>
+  <WorkMaintenanceGuard>
+    <AppShell />
+  </WorkMaintenanceGuard>
+</SmartRefreshProvider>
   </AuthorPageNotificationProvider>
 </Router>
   )
