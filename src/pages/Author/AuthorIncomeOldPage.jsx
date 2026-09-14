@@ -1228,11 +1228,20 @@ export default function AuthorIncomePage() {
             </LongSectionCard>
 
             <LongSectionCard
-              title={t('authorIncomeOld.topSupporters')}
-              subtitle={t('authorIncomeOld.topSupportersBody')}
-              icon="fa-solid fa-heart"
-              tone="pink"
-            >
+  title={t('authorIncomeOld.topSupporters')}
+  subtitle={t('authorIncomeOld.topSupportersBody')}
+  icon="fa-solid fa-heart"
+  tone="pink"
+  action={
+    <button
+      type="button"
+      onClick={() => navigate('/author/top-supporters')}
+      className="rounded-full border border-[#efcbd9] bg-[#fff0f5] px-3 py-1.5 text-[9px] font-black text-[#bd557e]"
+    >
+      Top 3 ›
+    </button>
+  }
+>
               {data.top_supporters?.length ? (
                 <div className="space-y-2.5">
                   {data.top_supporters.map((item, index) => (
