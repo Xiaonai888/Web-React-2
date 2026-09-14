@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('socialInteractionUsersPage', {
@@ -322,6 +322,12 @@ const DISPLAY_LOCALES = {
   ko: 'ko-KR',
 }
 
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale).format(Number.isFinite(number) ? number : 0)
+}
+
 function getReaderToken() {
   return (
     sessionStorage.getItem('shadow_reader_token') ||
@@ -599,9 +605,9 @@ function EchoSourcePreview({
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-[16px] border border-[#e5e7eb] bg-white p-3 text-left active:bg-[#f8fafc]"
+      className="flex w-full items-center gap-3 rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 text-left active:bg-[var(--shadow-bg-hover)]"
     >
-      <div className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[#f3f4f6]">
+      <div className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[var(--shadow-bg-soft)]">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -609,16 +615,16 @@ function EchoSourcePreview({
             className="h-full w-full object-cover"
           />
         ) : (
-          <i className="fa-regular fa-image text-[20px] text-[#98a2b3]" />
+          <i className="fa-regular fa-image text-[20px] text-[var(--shadow-text-tertiary)]" />
         )}
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[14px] font-semibold text-[#111827]">
+        <div className="truncate text-[14px] font-semibold text-[var(--shadow-text-primary)]">
           {source.name || displayLabel}
         </div>
 
-        <div className="mt-1 truncate text-[11px] font-medium text-[#98a2b3]">
+        <div className="mt-1 truncate text-[11px] font-medium text-[var(--shadow-text-tertiary)]">
           {displayLabel}
           {ownerName
             ? ` · ${ownerName}`
@@ -626,13 +632,13 @@ function EchoSourcePreview({
         </div>
 
         {source.content ? (
-          <div className="mt-1 line-clamp-1 text-[12px] text-[#667085]">
+          <div className="mt-1 line-clamp-1 text-[12px] text-[var(--shadow-text-secondary)]">
             {source.content}
           </div>
         ) : null}
       </div>
 
-      <i className="fa-solid fa-chevron-right text-[11px] text-[#c1c7d0]" />
+      <i className="fa-solid fa-chevron-right text-[11px] text-[var(--shadow-text-disabled)]" />
     </button>
   )
 }
@@ -708,7 +714,7 @@ function EchoPostCard({
   const displayName = getDisplayUserName(item.user, t)
 
   return (
-    <article className="border-b border-[#eef1f5] py-4">
+    <article className="border-b border-[var(--shadow-border)] py-4">
       <div className="flex items-start gap-3">
         <button
           type="button"
@@ -727,12 +733,12 @@ function EchoPostCard({
             type="button"
             onClick={onOpenProfile}
             disabled={!canOpenProfile}
-            className="block max-w-full truncate text-left text-[15px] font-semibold text-[#111827] disabled:cursor-default"
+            className="block max-w-full truncate text-left text-[15px] font-semibold text-[var(--shadow-text-primary)] disabled:cursor-default"
           >
             {displayName}
           </button>
 
-          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-[#98a2b3]">
+          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-[var(--shadow-text-tertiary)]">
             {time ? <span>{time}</span> : null}
             {time ? <span>·</span> : null}
             <i
@@ -744,7 +750,7 @@ function EchoPostCard({
                 <span>·</span>
                 <span>
                   {t('socialInteractionUsersPage.echoesCount', {
-                    count: item.share_count.toLocaleString(),
+                    count: formatDisplayNumber(item.share_count),
                   })}
                 </span>
               </>
@@ -755,7 +761,7 @@ function EchoPostCard({
         <button
           type="button"
           onClick={onOpenPost}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#98a2b3] active:bg-[#f3f4f6]"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-tertiary)] active:bg-[var(--shadow-bg-soft)]"
           aria-label={t('socialInteractionUsersPage.openEchoedPost')}
         >
           <i className="fa-solid fa-chevron-right text-[11px]" />
@@ -768,18 +774,18 @@ function EchoPostCard({
         className="mt-3 block w-full text-left"
       >
         {item.content ? (
-          <p className="whitespace-pre-wrap break-words text-[14px] leading-6 text-[#111827]">
+          <p className="whitespace-pre-wrap break-words text-[14px] leading-6 text-[var(--shadow-text-primary)]">
             {item.content}
           </p>
         ) : (
-          <p className="text-[13px] font-medium text-[#667085]">
+          <p className="text-[13px] font-medium text-[var(--shadow-text-secondary)]">
             {t('socialInteractionUsersPage.echoedThis')}
           </p>
         )}
       </button>
 
       {hasStats ? (
-        <div className="mt-3 flex items-center gap-3 border-t border-[#f2f4f7] pt-2.5 text-[11px] font-medium text-[#98a2b3]">
+        <div className="mt-3 flex items-center gap-3 border-t border-[var(--shadow-border)] pt-2.5 text-[11px] font-medium text-[var(--shadow-text-tertiary)]">
           {item.like_count > 0 ? (
             <span>
               {t(
@@ -787,7 +793,7 @@ function EchoPostCard({
                   ? 'socialInteractionUsersPage.reactionOne'
                   : 'socialInteractionUsersPage.reactionsMany',
                 {
-                  count: item.like_count.toLocaleString(),
+                  count: formatDisplayNumber(item.like_count),
                 }
               )}
             </span>
@@ -800,7 +806,7 @@ function EchoPostCard({
                   ? 'socialInteractionUsersPage.commentOne'
                   : 'socialInteractionUsersPage.commentsMany',
                 {
-                  count: item.comment_count.toLocaleString(),
+                  count: formatDisplayNumber(item.comment_count),
                 }
               )}
             </span>
@@ -813,7 +819,7 @@ function EchoPostCard({
                   ? 'socialInteractionUsersPage.echoOne'
                   : 'socialInteractionUsersPage.echoesMany',
                 {
-                  count: item.echo_count.toLocaleString(),
+                  count: formatDisplayNumber(item.echo_count),
                 }
               )}
             </span>
@@ -1060,25 +1066,25 @@ export default function SocialInteractionUsersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-[#111827]">
-      <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
+    <main className="min-h-screen bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto grid h-16 max-w-3xl grid-cols-[44px_1fr_44px] items-center px-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f3f4f6]"
+            className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-soft)]"
             aria-label={t('socialInteractionUsersPage.goBack')}
           >
             <i className="fa-solid fa-chevron-left text-[19px]" />
           </button>
 
           <div className="min-w-0 text-center">
-  <h1 className="truncate text-[17px] font-semibold text-[#111827]">
+  <h1 className="truncate text-[17px] font-semibold text-[var(--shadow-text-primary)]">
     {title}
   </h1>
 
   {interactionType !== 'echo' ? (
-    <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
+    <p className="mt-0.5 truncate text-[10.5px] font-medium text-[var(--shadow-text-tertiary)]">
       {sourceName || displaySourceLabel}
     </p>
   ) : null}
@@ -1108,8 +1114,8 @@ export default function SocialInteractionUsersPage() {
                     onClick={() => setActiveReaction(tab.type)}
                     className={`relative flex h-14 items-center gap-1.5 px-3 text-[13px] font-semibold ${
                       active
-                        ? 'text-[#111827]'
-                        : 'text-[#98a2b3]'
+                        ? 'text-[var(--shadow-text-primary)]'
+                        : 'text-[var(--shadow-text-tertiary)]'
                     }`}
                   >
                     {tab.src ? (
@@ -1120,7 +1126,7 @@ export default function SocialInteractionUsersPage() {
                       />
                     ) : null}
                     <span>{tabLabel}</span>
-                    <span>{tab.count.toLocaleString()}</span>
+                    <span>{formatDisplayNumber(tab.count)}</span>
                     {active ? (
                       <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#111827] dark:bg-[#a78bfa]" />
                     ) : null}
@@ -1145,13 +1151,13 @@ export default function SocialInteractionUsersPage() {
 
       {interactionType === 'like' ? (
   <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
-    <div className="text-[15px] font-bold text-[#111827]">
+    <div className="text-[15px] font-bold text-[var(--shadow-text-primary)]">
       {t(
         total === 1
           ? 'socialInteractionUsersPage.reactionTotalOne'
           : 'socialInteractionUsersPage.reactionTotalMany',
         {
-          count: total.toLocaleString(),
+          count: formatDisplayNumber(total),
         }
       )}
     </div>
@@ -1160,13 +1166,13 @@ export default function SocialInteractionUsersPage() {
 
 {interactionType === 'echo' ? (
   <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
-    <div className="text-[15px] font-bold text-[#111827]">
+    <div className="text-[15px] font-bold text-[var(--shadow-text-primary)]">
   {t(
     shareTotal === 1
       ? 'socialInteractionUsersPage.echoTotalOne'
       : 'socialInteractionUsersPage.echoTotalMany',
     {
-      count: shareTotal.toLocaleString(),
+      count: formatDisplayNumber(shareTotal),
     }
   )}
 </div>
@@ -1182,26 +1188,26 @@ export default function SocialInteractionUsersPage() {
                 key={index}
                 className="flex animate-pulse items-center gap-3 py-3"
               >
-                <div className="h-12 w-12 rounded-full bg-[#eef1f5]" />
+                <div className="h-12 w-12 rounded-full bg-[var(--shadow-bg-elevated)]" />
                 <div className="min-w-0 flex-1">
-                  <div className="h-4 w-36 rounded-full bg-[#eef1f5]" />
-                  <div className="mt-2 h-3 w-24 rounded-full bg-[#f3f4f6]" />
+                  <div className="h-4 w-36 rounded-full bg-[var(--shadow-bg-elevated)]" />
+                  <div className="mt-2 h-3 w-24 rounded-full bg-[var(--shadow-bg-soft)]" />
                 </div>
               </div>
             ))}
           </div>
         ) : message ? (
           <div className="py-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] dark:bg-red-500/10 dark:text-red-300">
               <i className="fa-solid fa-triangle-exclamation text-[21px]" />
             </div>
-            <div className="mt-4 text-[14px] font-semibold text-[#667085]">
+            <div className="mt-4 text-[14px] font-semibold text-[var(--shadow-text-secondary)]">
               {message}
             </div>
             <button
               type="button"
               onClick={() => loadPage(1)}
-              className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-bold text-white active:scale-95 dark:bg-[#7c3aed]"
+              className="mt-5 rounded-full bg-[var(--shadow-text-primary)] px-5 py-2.5 text-[12px] font-bold text-[var(--shadow-bg-page)] active:scale-95"
             >
               {t('socialInteractionUsersPage.tryAgain')}
             </button>
@@ -1246,11 +1252,11 @@ export default function SocialInteractionUsersPage() {
                     openProfile(item.user)
                   }
                   disabled={!canOpenProfile}
-                  className="flex w-full items-center gap-3 border-b border-[#f2f4f7] py-3 text-left active:bg-[#f8fafc] disabled:cursor-default"
+                  className="flex w-full items-center gap-3 border-b border-[var(--shadow-border)] py-3 text-left active:bg-[var(--shadow-bg-hover)] disabled:cursor-default"
                 >
                   <div className="relative shrink-0">
                     <Avatar user={item.user} />
-                    <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
+                    <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
                       <img
                         src={meta.src}
                         alt={reactionLabel}
@@ -1265,14 +1271,14 @@ export default function SocialInteractionUsersPage() {
                     </div>
 
                     {item.user.username ? (
-                      <div className="mt-0.5 truncate text-[12px] font-medium text-[#98a2b3]">
+                      <div className="mt-0.5 truncate text-[12px] font-medium text-[var(--shadow-text-tertiary)]">
                         @{item.user.username}
                       </div>
                     ) : null}
                   </div>
 
                   {canOpenProfile ? (
-                    <i className="fa-solid fa-chevron-right text-[10px] text-[#c1c7d0]" />
+                    <i className="fa-solid fa-chevron-right text-[10px] text-[var(--shadow-text-disabled)]" />
                   ) : null}
                 </button>
               )
@@ -1283,7 +1289,7 @@ export default function SocialInteractionUsersPage() {
                 type="button"
                 onClick={() => loadPage(page + 1, true)}
                 disabled={loadingMore}
-                className="mt-4 h-11 w-full rounded-full bg-[#f3f4f6] text-[13px] font-semibold text-[#111827] active:scale-[0.99] disabled:opacity-60"
+                className="mt-4 h-11 w-full rounded-full bg-[var(--shadow-bg-soft)] text-[13px] font-semibold text-[var(--shadow-text-primary)] active:scale-[0.99] disabled:opacity-60"
               >
                 {loadingMore
                   ? t('socialInteractionUsersPage.loading')
@@ -1294,7 +1300,7 @@ export default function SocialInteractionUsersPage() {
           </div>
         ) : (
           <div className="py-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
               <i
                 className={`fa-solid ${
                   interactionType === 'echo'
@@ -1309,7 +1315,7 @@ export default function SocialInteractionUsersPage() {
     : t('socialInteractionUsersPage.noReactions')}
 </div>
 
-<p className="mx-auto mt-2 max-w-[280px] text-[13px] leading-5 text-[#98a2b3]">
+<p className="mx-auto mt-2 max-w-[280px] text-[13px] leading-5 text-[var(--shadow-text-tertiary)]">
   {interactionType === 'echo'
     ? t('socialInteractionUsersPage.firstEcho')
     : t('socialInteractionUsersPage.firstReact')}
