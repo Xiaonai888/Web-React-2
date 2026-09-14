@@ -399,6 +399,11 @@ src/pages/ReaderStorePage.jsx
 src/pages/ReaderMallWishlistPage.jsx
 src/pages/ReaderMallCartPage.jsx
 src/pages/MangaPage.jsx
+"src/pages/ProfilePage.jsx"
+"src/pages/Library.jsx"
+"src/pages/ShopPage.jsx"
+"src/pages/StoryDetailPage.jsx"
+"src/pages/SocialInteractionUsersPage.jsx"
 
   ]
 }
