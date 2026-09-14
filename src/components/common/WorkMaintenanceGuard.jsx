@@ -68,6 +68,7 @@ function retrySecondsFromResponse(response, payload) {
 export default function WorkMaintenanceGuard({ children }) {
   const location = useLocation()
   const [checking, setChecking] = useState(true)
+  const [checkedPath, setCheckedPath] = useState('')
   const [maintenance, setMaintenance] = useState(null)
 
   useEffect(() => {
@@ -114,8 +115,9 @@ export default function WorkMaintenanceGuard({ children }) {
         clearTimeout(timeout)
 
         if (active) {
-          setChecking(false)
-        }
+  setCheckedPath(location.pathname)
+  setChecking(false)
+}
       }
     }
 
@@ -172,7 +174,7 @@ export default function WorkMaintenanceGuard({ children }) {
     )
   }
 
-  if (checking) {
+  if (checking || checkedPath !== location.pathname) {
     return (
       <div className="app-page flex min-h-screen items-center justify-center">
         <div className="h-9 w-9 animate-spin rounded-full border-4 border-[var(--shadow-border)] border-t-[var(--shadow-text-primary)]" />
