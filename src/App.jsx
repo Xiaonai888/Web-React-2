@@ -76,6 +76,7 @@ import UpdateTodayPage from './pages/UpdateTodayPage'
 import AuthorIncomeOldPage from './pages/Author/AuthorIncomeOldPage'
 import AuthorRecentEarningsPage from './pages/Author/AuthorRecentEarningsPage'
 import AuthorTopSupportersPage from './pages/Author/AuthorTopSupportersPage'
+import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
@@ -1405,6 +1406,7 @@ const shouldShowOpeningAds =
         <Route path="/me" element={<Me />} />
         <Route path="/music" element={<LazyPage><MusicPage /></LazyPage>} />
         <Route path="/author/top-supporters" element={<AuthorTopSupportersPage />} />
+        <Route path="/author/monthly-earnings" element={<AuthorMonthlyEarningsPage />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
