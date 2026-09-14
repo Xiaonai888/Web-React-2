@@ -1,4 +1,14 @@
 import { useNavigate } from 'react-router-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('managedEventHeroCard', {
+  en: { eventFallback: 'Event' },
+  km: { eventFallback: 'ព្រឹត្តិការណ៍' },
+  zh: { eventFallback: '活动' },
+  ja: { eventFallback: 'イベント' },
+  ko: { eventFallback: '이벤트' },
+})
 
 function openEventLink(url, navigate) {
   const target = String(url || '').trim()
@@ -15,6 +25,7 @@ function openEventLink(url, navigate) {
 
 export default function ManagedEventHeroCard({ event }) {
   const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
 
   if (!event) return null
 
@@ -52,7 +63,7 @@ export default function ManagedEventHeroCard({ event }) {
       {event.image_url ? (
         <img
           src={event.image_url}
-          alt={event.title || 'Event'}
+          alt={event.title || t('managedEventHeroCard.eventFallback')}
           className="absolute inset-0 h-full w-full object-cover"
           loading="eager"
           decoding="async"
@@ -69,7 +80,7 @@ export default function ManagedEventHeroCard({ event }) {
         ) : null}
 
         <h2 className="line-clamp-2 text-[24px] font-black leading-[1.12] tracking-[-0.02em]">
-          {event.title || 'Event'}
+          {event.title || t('managedEventHeroCard.eventFallback')}
         </h2>
 
         {event.description ? (
