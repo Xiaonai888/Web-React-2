@@ -75,6 +75,7 @@ import AuthorModerationHistoryPage from './pages/Author/AuthorModerationHistoryP
 import UpdateTodayPage from './pages/UpdateTodayPage'
 import AuthorIncomeOldPage from './pages/Author/AuthorIncomeOldPage'
 import AuthorRecentEarningsPage from './pages/Author/AuthorRecentEarningsPage'
+import AuthorTopSupportersPage from './pages/Author/AuthorTopSupportersPage'
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
@@ -1402,6 +1403,7 @@ const shouldShowOpeningAds =
         <Route path="/store" element={<ReaderStorePage />} />
         <Route path="/me" element={<Me />} />
         <Route path="/music" element={<LazyPage><MusicPage /></LazyPage>} />
+        <Route path="/author/top-supporters" element={<AuthorTopSupportersPage />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
