@@ -3004,46 +3004,38 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
                 {group}
               </h3>
 
-              <div className="overflow-hidden rounded-[10px] border border-[#ececf0] bg-white">
-                {fonts.map((font) => {
-                  const active = font.key === selectedFontKey
+              <div className="grid grid-cols-2 gap-3">
+  {fonts.map((font) => {
+    const active = font.key === selectedFontKey
 
-                  return (
-                    <button
-                      key={font.key}
-                      type="button"
-                      onClick={() => {
-                        onSelect(font.key)
-                        onClose()
-                      }}
-                      className={`flex w-full items-center justify-between gap-3 border-b border-[#eeeeF2] px-4 py-3 text-left last:border-b-0 active:scale-[0.995] ${
-  active ? 'bg-[#111827] text-white' : 'bg-white text-[#111827]'
-}`}
-                    >
-                      <span
-  className="line-clamp-1 text-[14px] font-bold"
-  style={{
-    fontFamily: font.family,
-    fontWeight: 700,
-  }}
->
-  {font.label}
-</span>
+    return (
+      <button
+        key={font.key}
+        type="button"
+        onClick={() => {
+          onSelect(font.key)
+          onClose()
+        }}
+        className={`flex h-[76px] items-center justify-center rounded-[12px] px-3 text-center text-[14px] font-bold transition active:scale-[0.98] ${
+          active
+            ? 'border-2 border-[#FE526E] bg-white text-[#FE526E]'
+            : 'border border-transparent bg-[#f7f7f9] text-[#111827]'
+        }`}
+      >
+        <span
+          className="line-clamp-2"
+          style={{
+            fontFamily: font.family,
+            fontWeight: 700,
+          }}
+        >
+          {font.label}
+        </span>
+      </button>
+    )
+  })}
+</div>
 
-                      {active ? (
-                        <i className="fa-solid fa-check text-[13px]" />
-                      ) : null}
-                    </button>
-                  )
-                })}
-              </div>
-            </section>
-          ))}
-        </div>
-      </section>
-    </div>
-  )
-}
 
 function ResetSettingsModal({ open, onCancel, onConfirm }) {
   if (!open) return null
