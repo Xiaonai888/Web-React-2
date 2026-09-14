@@ -11,7 +11,7 @@ import RecommendationSection from '../components/story-detail/RecommendationSect
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import GoogleAdBanner from '../components/ads/GoogleAdBanner'
@@ -113,6 +113,30 @@ registerTranslationNamespace('storyDetailPage', {
     failedLoadStory: '스토리를 불러오지 못했습니다',
   },
 })
+
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale).format(Number.isFinite(number) ? number : 0)
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale, {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: number >= 10000 ? 0 : 1,
+  }).format(Number.isFinite(number) ? number : 0)
+}
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -291,8 +315,8 @@ function StoryAuthorMiniCard({
   const followers = Number(followerCount || authorPage.total_followers || 0)
   const followerCountText =
     followers >= 1000
-      ? `${(followers / 1000).toFixed(followers >= 10000 ? 0 : 1).replace(/\.0$/, '')}k`
-      : `${followers}`
+      ? formatCompactNumber(followers)
+      : formatDisplayNumber(followers)
   const followerText = t('storyDetailPage.followers', {
     count: followerCountText,
   })
@@ -368,7 +392,7 @@ function StoryAuthorMiniCard({
       <div className="flex items-center gap-1.5 text-[14px] font-normal text-[#111827] dark:text-[var(--shadow-text-primary)]">
         <span>{t('storyDetailPage.topFans')}</span>
         <span className="text-[#d99a00]">
-          {t('storyDetailPage.peopleInTotal', { count: topFanCount })}
+          {t('storyDetailPage.peopleInTotal', { count: formatDisplayNumber(topFanCount) })}
         </span>
         <i className="fa-solid fa-chevron-right text-[9px] text-[#d99a00]" />
       </div>
