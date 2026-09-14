@@ -19,6 +19,10 @@ import RichEpisodeContent, {
 } from '../components/reader/RichEpisodeContent'
 import { trackSectionQualifiedRead } from '../services/storySectionRankTracking'
 import GoogleAdBanner from '../components/ads/GoogleAdBanner'
+import {
+  isRewardedEpisodeUnlockReady,
+  runRewardedEpisodeUnlock,
+} from '../services/rewardedAds'
 
 const STORY_TRANSLATION_ENABLED = false
 
@@ -1362,6 +1366,8 @@ function LockedEpisodeCard({
   wallet,
   coinAccess,
   voucherAccess,
+  adAccess,
+  rewardedAdsEnabled,
   packageOptions,
   autoUnlock,
   setAutoUnlock,
@@ -1370,6 +1376,7 @@ function LockedEpisodeCard({
   onUnlock,
   onCoinUnlock,
   onVoucherUnlock,
+  onRewardedUnlock,
   inline = false,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
@@ -1382,6 +1389,10 @@ const showWaitNotice = () => {
   window.setTimeout(() => setWaitNotice(false), 2500)
 }
   const backgroundImage = episode?.cover_url || story?.cover_url || ''
+  const adDailyLimit = Math.max(1, Number(adAccess?.daily_limit || 5))
+  const adUsedToday = Math.max(0, Number(adAccess?.used_today || 0))
+  const adRemainingToday = Math.max(0, Number(adAccess?.remaining_today ?? adDailyLimit - adUsedToday))
+  const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRemainingToday > 0
   const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
   const voucherBalance = Number(wallet?.voucher_balance || 0)
   const walletLoaded = Boolean(wallet)
@@ -1391,6 +1402,10 @@ const showWaitNotice = () => {
   const voucherCanAccess = Boolean(voucherAccess?.available) && (voucherRequired <= 0 || voucherBalance >= voucherRequired)
   const coinWaitRequired = Number(coinAccess?.wait_seconds || 0) > 0
   const voucherWaitRequired = Number(voucherAccess?.wait_seconds || 0) > 0
+  const adDailyLimit = Math.max(1, Number(adAccess?.daily_limit || 5))
+  const adUsedToday = Math.max(0, Number(adAccess?.used_today || 0))
+  const adRemainingToday = Math.max(0, Number(adAccess?.remaining_today ?? adDailyLimit - adUsedToday))
+  const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRemainingToday > 0
 
   const singleOption =
     packageOptions.find((option) => option.key === 'single') || {
@@ -1690,6 +1705,25 @@ const showWaitNotice = () => {
                   </div>
                 </div>
 
+                {rewardedAdsEnabled ? (
+  <div className="mt-4 px-5">
+    <button
+      type="button"
+      onClick={onRewardedUnlock}
+      disabled={unlocking || !adCanAccess}
+      className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-[16px] border border-[#E5E7EB] bg-white px-4 py-3 text-left disabled:opacity-55"
+    >
+      <span>
+        Watch Ad to Unlock Episode
+        <span className="block text-[11px] text-[#667085]">
+          {`${adUsedToday}/${adDailyLimit} used today`}
+        </span>
+      </span>
+      <span>{adRemainingToday <= 0 ? 'Limit reached' : 'Watch'}</span>
+    </button>
+  </div>
+) : null}
+
                 {unlocking ? (
                   <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
                     Unlocking...
@@ -1750,13 +1784,16 @@ const showWaitNotice = () => {
     </>
   ) : (
     <>
-      <FreeAccessOption
-        icon={<i className="fa-solid fa-play text-[15px] text-[#0B5CFF]" />}
-        title="Watch Video — Coming soon"
-        subtitle="Unlock for one read only."
-        buttonText="Watch"
-        disabled
-      />
+      {rewardedAdsEnabled ? (
+  <FreeAccessOption
+    icon={<i className="fa-solid fa-play text-[15px] text-[#0B5CFF]" />}
+    title="Watch Ad to Unlock Episode"
+    subtitle={`Unlock this episode • ${adUsedToday}/${adDailyLimit} used today`}
+    buttonText={adRemainingToday <= 0 ? 'Limit reached' : 'Watch'}
+    disabled={unlocking || !adCanAccess}
+    onClick={onRewardedUnlock}
+  />
+) : null}
 
       <FreeAccessOption
         icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
@@ -1795,6 +1832,8 @@ function ContinuousLockedEpisodeCard({
   unlocking,
   onPurchase,
   onUnlock,
+  adAccess,
+  rewardedAdsEnabled,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
 const [diamondBoxIndex, setDiamondBoxIndex] = useState(0)
@@ -4258,7 +4297,25 @@ export default function ReaderPage() {
   const [unlockWallet, setUnlockWallet] = useState(null)
   const [unlockCoinAccess, setUnlockCoinAccess] = useState(null)
   const [unlockVoucherAccess, setUnlockVoucherAccess] = useState(null)
+  const [unlockAdAccess, setUnlockAdAccess] = useState(null)
+  const [rewardedAdsEnabled, setRewardedAdsEnabled] = useState(false)
   const [unlockPackageOptions, setUnlockPackageOptions] = useState([])
+
+  useEffect(() => {
+  let ignore = false
+
+  isRewardedEpisodeUnlockReady()
+    .then((enabled) => {
+      if (!ignore) setRewardedAdsEnabled(Boolean(enabled))
+    })
+    .catch(() => {
+      if (!ignore) setRewardedAdsEnabled(false)
+    })
+
+  return () => {
+    ignore = true
+  }
+}, [])
 
   const [unlockAutoUnlock, setUnlockAutoUnlock] = useState(false)
   const [unlockAutoHintOpen, setUnlockAutoHintOpen] = useState(false)
@@ -5862,6 +5919,7 @@ async function loadLockedUnlockStatus(
     data.coin_access || data.gem_access || null
   )
   setUnlockVoucherAccess(data.voucher_access || null)
+  setUnlockAdAccess(data.ad_access || null)
   setUnlockAutoUnlock(
     Boolean(data.wallet?.auto_unlock)
   )
@@ -6148,6 +6206,7 @@ const openContinuousLockedEpisode = (lockedEntry) => {
     unlock.coin_access || unlock.gem_access || null
   )
   setUnlockVoucherAccess(unlock.voucher_access || null)
+  setUnlockAdAccess(unlock.ad_access || null)
   setUnlockPackageOptions(
     Array.isArray(unlock.package_options)
       ? unlock.package_options
@@ -6637,6 +6696,8 @@ className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
   wallet={unlockWallet}
   coinAccess={unlockCoinAccess}
   voucherAccess={unlockVoucherAccess}
+  adAccess={unlockAdAccess}
+  rewardedAdsEnabled={rewardedAdsEnabled}
   packageOptions={unlockPackageOptions}
   autoUnlock={unlockAutoUnlock}
   setAutoUnlock={setUnlockAutoUnlock}
@@ -6647,6 +6708,9 @@ onPurchase={handleOpenPurchasePage}
 onUnlock={handleLockedDiamondUnlock}
   onCoinUnlock={handleLockedCoinUnlock}
   onVoucherUnlock={handleLockedVoucherUnlock}
+    onRewardedUnlock={() =>
+  handleLockedRewardedUnlock(episodeId)
+}
 />
 ) : null}
 
