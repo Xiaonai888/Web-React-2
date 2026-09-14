@@ -525,6 +525,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
   })
   const [autoUnlock, setAutoUnlock] = useState(false)
   const [showAutoHint, setShowAutoHint] = useState(false)
+  const [showPackageSelector, setShowPackageSelector] = useState(false)
 
   const episodeStoryId = storyId || episode?.story_id
   const diamondBalance = Number(wallet?.diamond_balance || 0)
@@ -534,6 +535,11 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
   const hasEnoughDiamonds = diamondBalance >= packagePrice
   const needDiamonds = Math.max(0, packagePrice - diamondBalance)
   const hasEnoughGems = gemBalance >= Number(gemAccess.amount || FALLBACK_GEM_PRICE)
+  const availableLockedCount = Math.max(
+  0,
+  ...packageOptions.map((option) => Number(option.available_count || 0))
+)
+const hasAdvancedPackages = availableLockedCount >= 30
 
   const purchaseText = useMemo(() => {
     if (unlocking) return t('lockedEpisodeModal.unlocking')
@@ -748,45 +754,24 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
               </button>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                {packageOptions.filter((option) => option.key !== 'all_released').map((option) => (
-                  <InstantOption
-                    key={option.key}
-                    option={option}
-                    active={selectedPackage === option.key}
-                    onClick={() => setSelectedPackage(option.key)}
-                  />
-                ))}
-              </div>
-
-              {packageOptions.filter((option) => option.key === 'all_released').map((option) => (
-                <button
-                  key={option.key}
-                  type="button"
-                  disabled={!option.enabled}
-                  onClick={() => setSelectedPackage(option.key)}
-                  className={`mt-3 flex min-h-[88px] w-full items-center justify-between rounded-[18px] border bg-[var(--shadow-bg-surface)] px-4 py-3 text-left ${
-                    selectedPackage === option.key ? 'border-[#C59B2D]' : 'border-[var(--shadow-border)]'
-                  } ${!option.enabled ? 'opacity-55' : ''}`}
-                  title={getPackageReason(option, t)}
-                >
-                  <div>
-                    <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
-                      {t('lockedEpisodeModal.off', { count: option.discount_percent })}
-                    </span>
-                    <div className="text-[14px] font-black text-[var(--shadow-text-primary)]">{getPackageLabel(option, t)}</div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    {Number(option.original_price || 0) > Number(option.price || 0) ? (
-                      <span className="text-[13px] font-medium text-[var(--shadow-text-tertiary)] line-through">
-                        {formatNumber(option.original_price)}
-                      </span>
-                    ) : null}
-                    <DiamondIcon selected={selectedPackage === option.key} size="h-7 w-7" />
-                    <span className="text-[15px] font-black text-[var(--shadow-text-primary)]">{formatNumber(option.price)}</span>
-                  </div>
-                </button>
-              ))}
+  {packageOptions
+    .filter((option) => option.key === 'single' || option.key === 'next10')
+    .map((option) => (
+      <InstantOption
+        key={option.key}
+        option={option}
+        active={selectedPackage === option.key}
+        onClick={() => {
+          if (option.key === 'next10' && hasAdvancedPackages) {
+            setSelectedPackage('next10')
+            setShowPackageSelector(true)
+            return
+          }
+          setSelectedPackage(option.key)
+        }}
+      />
+    ))}
+</div>
 
               <div className="mt-5 flex items-center justify-between gap-4">
                 <div className="text-[14px] font-medium text-[var(--shadow-text-tertiary)]">
