@@ -454,11 +454,11 @@ function InstantOption({ option, active, onClick }) {
       } ${!option.enabled ? 'opacity-55' : ''}`}
       title={getPackageReason(option, t)}
     >
-      {Number(option.discount_percent || 0) > 0 ? (
-        <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
-          {t('lockedEpisodeModal.off', { count: option.discount_percent })}
-        </span>
-      ) : null}
+      {Number(option.package_discount_percent ?? option.discount_percent ?? 0) > 0 ? (
+  <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
+    {t('lockedEpisodeModal.off', { count: option.package_discount_percent ?? option.discount_percent })}
+  </span>
+) : null}
 
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 text-[14px] font-black leading-5 text-[var(--shadow-text-primary)]">
