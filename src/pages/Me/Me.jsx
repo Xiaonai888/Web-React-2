@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { setDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, setDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -163,6 +163,20 @@ const LANGUAGE_LABEL_KEYS = {
   ko: 'koreanLanguage',
 }
 
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || 'en-US'
+  return new Intl.NumberFormat(locale).format(number)
+}
+
 function getReaderToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -261,7 +275,7 @@ function HeaderIcon({ icon, customIcon = null, label, to, onClick, badgeCount = 
       {customIcon || <i className={`${icon} text-[22px]`} />}
       {showBadge ? (
         <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[9px] font-extrabold leading-none text-white ring-2 ring-white dark:ring-[#202331]">
-          {badgeCount > 99 ? '99+' : badgeCount}
+          {badgeCount > 99 ? `${formatDisplayNumber(99)}+` : formatDisplayNumber(badgeCount)}
         </span>
       ) : null}
     </button>
@@ -696,7 +710,7 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
         Number(authorNotificationCount) === 1
           ? 'mePage.notification'
           : 'mePage.notifications',
-        { count: Number(authorNotificationCount) }
+        { count: formatDisplayNumber(authorNotificationCount) }
       )}
     </span>
   </div>
@@ -1193,9 +1207,9 @@ const handleOpenProfileSwitcher = (event) => {
 </div>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#f3f3f3] px-2 py-1 dark:divide-white/10">
-            <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} to="/shop" state={{ activeTab: 'Purchase', from: '/me' }} />
-            <BalanceItem value={walletBalance.gems} label={tx('mePage.coin')} to="/tasks" />
-            <BalanceItem value={walletBalance.vouchers} label={tx('voucher')} />
+            <BalanceItem value={formatDisplayNumber(walletBalance.diamonds)} label={tx('diamond')} to="/shop" state={{ activeTab: 'Purchase', from: '/me' }} />
+            <BalanceItem value={formatDisplayNumber(walletBalance.gems)} label={tx('mePage.coin')} to="/tasks" />
+            <BalanceItem value={formatDisplayNumber(walletBalance.vouchers)} label={tx('voucher')} />
           </div>
 
         </section>
