@@ -11,7 +11,7 @@ registerTranslationNamespace('authorRecentEarningsPage', {
     latest30Days: 'Latest 30 days',
     today: 'Today',
     last7Days: 'Last 7 Days',
-    last30Days: t('authorRecentEarningsPage.last30Days'),
+    last30Days: 'Last 30 Days',
     custom: 'Custom',
     start: 'Start',
     end: 'End',
