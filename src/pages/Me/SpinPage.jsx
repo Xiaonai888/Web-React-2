@@ -7,7 +7,7 @@ import {
   PageShell,
   SurfaceCard,
 } from '../../components/common/PagePrimitives'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
   cleanupSpinLocalStorage,
@@ -975,14 +975,26 @@ function buildWheelGradient(entries) {
     .join(', ')})`
 }
 
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function getDisplayLocale() {
+  return DISPLAY_LOCALES[getDisplayLanguageId()] || 'en-US'
+}
+
 function formatNumber(value) {
-  return new Intl.NumberFormat().format(Number(value || 0))
+  return new Intl.NumberFormat(getDisplayLocale()).format(Number(value || 0))
 }
 
 function formatDate(value) {
   const date = value ? new Date(value) : new Date()
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleString()
+  return date.toLocaleString(getDisplayLocale())
 }
 
 function validateImage(file, t) {
@@ -1411,7 +1423,7 @@ function EntriesVirtualList({
               }}
             >
               <div className="app-muted w-7 shrink-0 text-right text-[9px] font-bold">
-                {absoluteIndex + 1}
+                {formatNumber(absoluteIndex + 1)}
               </div>
               <Avatar
                 src={entry.image_url}
@@ -1628,7 +1640,7 @@ function ManualManager({
       right={
         <div className="text-right">
           <div className="app-title text-[10px] font-black">
-            {draftEntries.length + nonManualCount} / {formatNumber(MAX_ENTRIES)}
+            {formatNumber(draftEntries.length + nonManualCount)} / {formatNumber(MAX_ENTRIES)}
           </div>
           {dirty ? (
             <div className="mt-0.5 text-[8.5px] font-bold text-amber-500">
@@ -1655,7 +1667,7 @@ function ManualManager({
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <div className="app-muted text-[10px] font-bold">
               {t('spinPage.batchCount', {
-                count: Math.min(parsedBatch.length, MAX_BULK_NAMES),
+                count: formatNumber(Math.min(parsedBatch.length, MAX_BULK_NAMES)),
               })}
             </div>
             <button
@@ -1665,7 +1677,7 @@ function ManualManager({
               className="rounded-[12px] bg-violet-600 px-4 py-2.5 text-[10px] font-extrabold text-white active:scale-95 disabled:opacity-45"
             >
               <i className="fa-solid fa-plus mr-1.5" />
-              {t('spinPage.addBatch', { count: batchCount })}
+              {t('spinPage.addBatch', { count: formatNumber(batchCount) })}
             </button>
           </div>
         </SurfaceCard>
@@ -1698,7 +1710,7 @@ function ManualManager({
                     : 'app-elevated app-muted'
                 }`}
               >
-                {t('spinPage.allNames')} {draftEntries.length}
+                {t('spinPage.allNames')} {formatNumber(draftEntries.length)}
               </button>
 
               <button
@@ -1713,7 +1725,7 @@ function ManualManager({
                     : 'app-elevated app-muted'
                 }`}
               >
-                {t('spinPage.duplicates')} {duplicateInfo.groupCount}
+                {t('spinPage.duplicates')} {formatNumber(duplicateInfo.groupCount)}
               </button>
             </div>
 
@@ -1724,7 +1736,7 @@ function ManualManager({
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
               <div className="app-muted text-[9.5px]">
                 {t('spinPage.duplicateGroups', {
-                  count: duplicateInfo.groupCount,
+                  count: formatNumber(duplicateInfo.groupCount),
                 })}
               </div>
               <div className="flex gap-2">
@@ -1734,7 +1746,7 @@ function ManualManager({
                   disabled={!selectedIds.length}
                   className="rounded-full bg-red-500/10 px-3 py-1.5 text-[9px] font-extrabold text-red-500 disabled:opacity-40"
                 >
-                  {t('spinPage.removeSelected')} {selectedIds.length || ''}
+                  {t('spinPage.removeSelected')} {selectedIds.length ? formatNumber(selectedIds.length) : ''}
                 </button>
                 <button
                   type="button"
@@ -1785,7 +1797,7 @@ function ManualManager({
                         />
 
                         <div className="app-muted w-8 shrink-0 text-right text-[9px] font-bold">
-                          {absoluteIndex + 1}
+                          {formatNumber(absoluteIndex + 1)}
                         </div>
 
                         <input
@@ -1819,8 +1831,8 @@ function ManualManager({
 
               <div className="app-muted border-t border-[var(--shadow-border)] px-3 py-2 text-center text-[9px]">
                 {t('spinPage.showingNames', {
-                  shown: filteredEntries.length,
-                  total: draftEntries.length,
+                  shown: formatNumber(filteredEntries.length),
+                  total: formatNumber(draftEntries.length),
                 })}
               </div>
             </>
@@ -2217,9 +2229,11 @@ export default function SpinPage() {
     [entries]
   )
   const chanceDecimals = entries.length > 1000 ? 4 : entries.length > 20 ? 2 : 1
-  const chanceText = entries.length
-    ? `${(100 / entries.length).toFixed(chanceDecimals)}%`
-    : '0%'
+  const chanceText = new Intl.NumberFormat(getDisplayLocale(), {
+    style: 'percent',
+    minimumFractionDigits: entries.length ? chanceDecimals : 0,
+    maximumFractionDigits: entries.length ? chanceDecimals : 0,
+  }).format(entries.length ? 1 / entries.length : 0)
 
   useEffect(() => {
     let active = true
@@ -3055,7 +3069,7 @@ export default function SpinPage() {
                   </div>
                   <div className="app-muted mt-0.5 text-[10.5px]">
                     {t('spinPage.fairBody', {
-                      count: entries.length,
+                      count: formatNumber(entries.length),
                       chance: chanceText,
                     })}
                   </div>
@@ -3082,7 +3096,7 @@ export default function SpinPage() {
                     disabled={isSpinning}
                     className="rounded-full bg-violet-500/10 px-3 py-2 text-[10px] font-extrabold text-violet-600"
                   >
-                    {t('spinPage.resetRound')} ({blockedIds.length})
+                    {t('spinPage.resetRound')} ({formatNumber(blockedIds.length)})
                   </button>
                 ) : null}
               </div>
@@ -3168,7 +3182,7 @@ export default function SpinPage() {
                     {t('spinPage.addEntries')}
                   </h2>
                   <p className="app-muted mt-1 text-[10.5px]">
-                    {t('spinPage.entriesCount', { count: entries.length })}
+                    {t('spinPage.entriesCount', { count: formatNumber(entries.length) })}
                   </p>
                 </div>
               </div>
@@ -3197,7 +3211,7 @@ export default function SpinPage() {
                         className="shrink-0 rounded-full bg-amber-500/10 px-2.5 py-1.5 text-[9px] font-extrabold text-amber-600 dark:text-amber-300"
                       >
                         <i className="fa-solid fa-triangle-exclamation mr-1" />
-                        {manualDuplicateCount}
+                        {formatNumber(manualDuplicateCount)}
                       </button>
                     ) : null}
                   </div>
@@ -3288,7 +3302,7 @@ export default function SpinPage() {
                     {t('spinPage.entries')}
                   </h2>
                   <div className="app-muted mt-0.5 text-[10px]">
-                    {t('spinPage.entriesCount', { count: entries.length })}
+                    {t('spinPage.entriesCount', { count: formatNumber(entries.length) })}
                   </div>
                 </div>
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/10 text-violet-600">
@@ -3335,7 +3349,7 @@ export default function SpinPage() {
                       {t('spinPage.prizeHelp')}
                     </div>
                     <div className="mt-1 text-[9.5px] font-bold text-fuchsia-500">
-                      {t('spinPage.activePrizeCount', { count: activePrizes.length })}
+                      {t('spinPage.activePrizeCount', { count: formatNumber(activePrizes.length) })}
                     </div>
                   </div>
                 </div>
@@ -3368,7 +3382,7 @@ export default function SpinPage() {
                       {t('spinPage.customGifts')}
                     </div>
                     <div className="app-muted mt-0.5 text-[9.5px]">
-                      {t('spinPage.customCount', { count: customGifts.length })}
+                      {t('spinPage.customCount', { count: formatNumber(customGifts.length) })}
                     </div>
                   </div>
                   {!giftForm ? (
@@ -3712,7 +3726,7 @@ export default function SpinPage() {
                       {item.mode === 'shadow'
                         ? t('spinPage.shadow')
                         : t('spinPage.normal')}{' '}
-                      • {t('spinPage.entriesCount', { count: item.entries?.length || 0 })}
+                      • {t('spinPage.entriesCount', { count: formatNumber(item.entries?.length || 0) })}
                     </div>
                   </div>
                   {currentWheelId === item.id ? (
