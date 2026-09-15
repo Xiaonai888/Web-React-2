@@ -280,7 +280,7 @@ function StoryCard({
             src={
               latestStory.media_url
             }
-            alt={story?.alt_text || ''}
+            alt={latestStory?.alt_text || ''}
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover"
           />
@@ -733,7 +733,7 @@ function StoryViewer({
               <img
                 key={story.id}
                 src={story.media_url}
-                alt={story?.alt_text || ''}
+                alt={latestStory?.alt_text || ''}
                 className="relative h-full w-full object-contain"
               />
             </>
