@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PremiumHelpSheet from '../../components/Me/PremiumHelpSheet'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('premiumPage', {
@@ -178,6 +178,37 @@ const PLAN_BADGE_KEYS = {
   FLEXIBLE: 'flexible',
   POPULAR: 'popular',
   ANNUAL: 'annual',
+}
+
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function getDisplayLocale() {
+  return DISPLAY_LOCALES[getDisplayLanguageId()] || 'en-US'
+}
+
+function formatPlanMoney(value) {
+  const number = Number(String(value || '').replace(/[^0-9.-]/g, ''))
+  if (!Number.isFinite(number)) return value || ''
+
+  return new Intl.NumberFormat(getDisplayLocale(), {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(number)
+}
+
+function formatPlanDiamonds(value) {
+  const number = Number(String(value || '').replace(/[^0-9.-]/g, ''))
+  if (!Number.isFinite(number)) return value || ''
+
+  return `${new Intl.NumberFormat(getDisplayLocale()).format(number)} Diamonds`
 }
 
 function getStoredReader() {
@@ -389,11 +420,11 @@ export default function PremiumPage() {
                   <div className="text-[18px] font-medium">
                     {t(`premiumPage.${PLAN_LABEL_KEYS[plan.label]}`)}
                   </div>
-                  <div className="mt-5 text-[27px] font-semibold">{plan.price}</div>
+                  <div className="mt-5 text-[27px] font-semibold">{formatPlanMoney(plan.price)}</div>
 
                   <div className="mt-5 flex items-center justify-center gap-1.5 text-[12px] text-[#777] dark:text-[var(--shadow-text-secondary)]">
                     <DiamondMark className="h-5 w-5 text-[9px]" />
-                    <span>{plan.diamonds}</span>
+                    <span>{formatPlanDiamonds(plan.diamonds)}</span>
                   </div>
                 </button>
               )
