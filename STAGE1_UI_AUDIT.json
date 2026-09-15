@@ -417,6 +417,8 @@ src/pages/MangaPage.jsx
 "src/pages/Auth/RegisterPage.jsx",
 "src/pages/FastCreateVideoPage.jsx",
 "src/pages/Event/WriterWednesdayEventPage.jsx",
+"src/pages/ReaderPage.jsx"
+
 
 
   ]
