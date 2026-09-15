@@ -733,7 +733,7 @@ function StoryViewer({
               <img
                 key={story.id}
                 src={story.media_url}
-                alt={latestStory?.alt_text || ''}
+                alt={story?.alt_text || ''}
                 className="relative h-full w-full object-contain"
               />
             </>
