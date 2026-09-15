@@ -82,6 +82,32 @@ async function apiRequest(path, options = {}) {
   return data
 }
 
+function trackRewardedEvent(
+  storyId,
+  episodeId,
+  eventType,
+  errorCode = ''
+) {
+  if (
+    !storyId ||
+    !episodeId ||
+    !getReaderToken()
+  ) {
+    return
+  }
+
+  void apiRequest(
+    `/api/unlocks/stories/${storyId}/episodes/${episodeId}/ad/event`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        eventType,
+        errorCode,
+      }),
+    }
+  ).catch(() => {})
+}
+
 async function loadGooglePublisherTag() {
   if (typeof window === 'undefined') {
     throw new RewardedAdError(
@@ -323,6 +349,12 @@ function showRewardedSlot({
         ready = true
         window.clearTimeout(readyTimeout)
 
+        trackRewardedEvent(
+          storyId,
+          episodeId,
+          'ready'
+        )
+
         try {
           event.makeRewardedVisible()
         } catch {
@@ -352,6 +384,12 @@ function showRewardedSlot({
         if (event.slot !== slot) return
 
         if (!rewardGranted) {
+          trackRewardedEvent(
+            storyId,
+            episodeId,
+            'cancelled'
+          )
+
           finishReject(
             new RewardedAdError(
               'REWARDED_AD_CANCELLED',
@@ -378,6 +416,12 @@ function showRewardedSlot({
         if (event.slot !== slot) return
 
         if (event.isEmpty && !ready) {
+          trackRewardedEvent(
+            storyId,
+            episodeId,
+            'no_fill'
+          )
+
           finishReject(
             new RewardedAdError(
               'REWARDED_AD_NO_FILL',
@@ -438,33 +482,67 @@ export function runRewardedEpisodeUnlock({
   }
 
   activeRewardedRequest = (async () => {
-    const adUnitPath =
-      await verifyRewardedAvailability()
+    try {
+      const adUnitPath =
+        await verifyRewardedAvailability()
 
-    const challenge =
-      await createChallenge(
+      const challenge =
+        await createChallenge(
+          storyId,
+          episodeId
+        )
+
+      if (!challenge.challengeToken) {
+        throw new RewardedAdError(
+          'REWARDED_AD_CHALLENGE_MISSING',
+          'Unable to start rewarded unlock.'
+        )
+      }
+
+      trackRewardedEvent(
         storyId,
-        episodeId
+        episodeId,
+        'started'
       )
 
-    if (!challenge.challengeToken) {
-      throw new RewardedAdError(
-        'REWARDED_AD_CHALLENGE_MISSING',
-        'Unable to start rewarded unlock.'
-      )
+      const googletag =
+        await loadGooglePublisherTag()
+
+      return await showRewardedSlot({
+        googletag,
+        adUnitPath,
+        storyId,
+        episodeId,
+        challengeToken:
+          challenge.challengeToken,
+      })
+    } catch (error) {
+      if (
+        error?.code ===
+        'AD_DAILY_LIMIT_REACHED'
+      ) {
+        trackRewardedEvent(
+          storyId,
+          episodeId,
+          'daily_limit_reached'
+        )
+      } else if (
+        ![
+          'REWARDED_AD_CANCELLED',
+          'REWARDED_AD_NO_FILL',
+        ].includes(error?.code)
+      ) {
+        trackRewardedEvent(
+          storyId,
+          episodeId,
+          'error',
+          error?.code ||
+            'REWARDED_AD_UNKNOWN_ERROR'
+        )
+      }
+
+      throw error
     }
-
-    const googletag =
-      await loadGooglePublisherTag()
-
-    return showRewardedSlot({
-      googletag,
-      adUnitPath,
-      storyId,
-      episodeId,
-      challengeToken:
-        challenge.challengeToken,
-    })
   })().finally(() => {
     activeRewardedRequest = null
   })
