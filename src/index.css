@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Battambang&family=Content&family=Dangrek&family=Hanuman&family=Inter:wght@400;600;700&family=Kantumruy+Pro:wght@400;600;700&family=Lora:wght@400;600;700&family=Merriweather:wght@400;700&family=Metal&family=Moulpali&family=Noto+Sans+Khmer:wght@100..900&family=Preahvihear&family=Roboto:wght@400;500;700&family=Siemreap&display=swap');
+@font-face { font-family: 'Khmer OS Fasthand'; src: url('/fonts/KhmerOSFasthand.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Khmer OS Content'; src: url('/fonts/KhmerOSContent.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Khmer OS Battambang'; src: url('/fonts/KhmerOSBattambang.ttf') format('truetype'); font-display: swap; }
 
 :root {
   --shadow-bg-page: #f5f3fa;
