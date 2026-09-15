@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TurnstileBox from '../../components/TurnstileBox'
 import Cropper from 'react-easy-crop'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('registerPage', {
@@ -331,6 +331,19 @@ const API_BASE_URL =
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value, options) {
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale, options).format(Number(value || 0))
+}
+
 const days = Array.from({ length: 31 }, (_, index) => index + 1)
 const months = [
   'January',
@@ -613,7 +626,7 @@ function AddProfileStep({
               <div className="mt-4">
                 <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
                   <span>{t('registerPage.zoom')}</span>
-                  <span>{zoom.toFixed(1)}x</span>
+                  <span>{formatDisplayNumber(zoom, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}x</span>
                 </div>
 
                 <input
@@ -993,7 +1006,7 @@ export default function RegisterPage() {
                   <option value="" disabled></option>
                   {days.map((day) => (
                     <option key={day} value={day} className="text-[#111827]">
-                      {day}
+                      {formatDisplayNumber(day)}
                     </option>
                   ))}
                 </select>
@@ -1051,7 +1064,7 @@ export default function RegisterPage() {
                   <option value="" disabled></option>
                   {years.map((year) => (
                     <option key={year} value={year} className="text-[#111827]">
-                      {year}
+                      {formatDisplayNumber(year, { useGrouping: false })}
                     </option>
                   ))}
                 </select>
