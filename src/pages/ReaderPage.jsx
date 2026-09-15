@@ -7087,7 +7087,7 @@ function showReadingRewardAnimation(coins) {
   }, 1700)
 }
 
-const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
+const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad
 const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
 
 const openContinuousLockedEpisode = (lockedEntry) => {
