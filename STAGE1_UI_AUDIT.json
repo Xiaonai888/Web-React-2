@@ -409,6 +409,11 @@ src/pages/MangaPage.jsx
 "src/pages/Author/AuthorTopSupportersPage.jsx"
 "src/pages/Author/AuthorMonthlyEarningsPage.jsx"
 "src/pages/Author/AuthorPostInsightsPage.jsx"
+"src/pages/ForYou.jsx"
+"src/pages/Me/Me.jsx"
+"src/pages/Me/PremiumPage.jsx"
+"src/pages/Me/SavedPostsPage.jsx"
+"src/pages/Me/SpinPage.jsx"
 
   ]
 }
