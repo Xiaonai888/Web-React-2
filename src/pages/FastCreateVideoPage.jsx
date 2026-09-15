@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useFastThumbnailUpload from '../hooks/useFastThumbnailUpload'
 import useFastVideoCreate from '../hooks/useFastVideoCreate'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import {
   ArrowLeft,
@@ -286,6 +286,19 @@ registerTranslationNamespace('fastCreateVideoPage', {
 const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024
 const ALLOWED_THUMBNAIL_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value) {
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale).format(Number(value || 0))
+}
+
 function extractYouTubeId(value) {
   const input = String(value || '').trim()
 
@@ -519,7 +532,7 @@ export default function FastCreateVideoPage() {
             className="h-12 w-full rounded-[16px] border border-[#ddd7e8] bg-[#faf9fd] px-4 text-[13px] text-[#171329] outline-none transition placeholder:text-[#aaa3b4] focus:border-[#7b48e7] focus:bg-white focus:shadow-[0_0_0_4px_rgba(123,72,231,0.09)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:bg-[var(--shadow-input-bg)]"
           />
           <div className="mb-4 mt-1 text-right text-[10px] font-semibold text-[#aaa3b4] dark:text-[var(--shadow-text-tertiary)]">
-            {title.length}/100
+            {formatDisplayNumber(title.length)}/{formatDisplayNumber(100)}
           </div>
 
           <label className="mb-2 block text-[12px] font-extrabold text-[#302943] dark:text-[var(--shadow-text-primary)]">
@@ -534,7 +547,7 @@ export default function FastCreateVideoPage() {
             className="w-full resize-none rounded-[16px] border border-[#ddd7e8] bg-[#faf9fd] px-4 py-3 text-[13px] leading-5 text-[#171329] outline-none transition placeholder:text-[#aaa3b4] focus:border-[#7b48e7] focus:bg-white focus:shadow-[0_0_0_4px_rgba(123,72,231,0.09)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:bg-[var(--shadow-input-bg)]"
           />
           <div className="mb-4 mt-1 text-right text-[10px] font-semibold text-[#aaa3b4] dark:text-[var(--shadow-text-tertiary)]">
-            {description.length}/500
+            {formatDisplayNumber(description.length)}/{formatDisplayNumber(500)}
           </div>
 
           <label className="mb-2 block text-[12px] font-extrabold text-[#302943] dark:text-[var(--shadow-text-primary)]">
@@ -784,7 +797,7 @@ export default function FastCreateVideoPage() {
                   }`}
                 >
                   {access === 'paid' ? <Gem size={12} fill="currentColor" /> : null}
-                  {access === 'paid' ? t('fastCreateVideoPage.diamondsAmount', { count: diamonds || 0 }) : t('fastCreateVideoPage.free')}
+                  {access === 'paid' ? t('fastCreateVideoPage.diamondsAmount', { count: formatDisplayNumber(diamonds || 0) }) : t('fastCreateVideoPage.free')}
                 </span>
                 <button
                   type="button"
