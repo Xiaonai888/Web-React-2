@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import EchoV2Count from '../components/social/EchoV2Count'
@@ -23,6 +25,830 @@ import {
   isRewardedEpisodeUnlockReady,
   runRewardedEpisodeUnlock,
 } from '../services/rewardedAds'
+
+registerTranslationNamespace('readerPage', {
+  "en": {
+    "toBeContinued": "to be continued",
+    "pageOf": "Page {{current}} / {{total}}",
+    "youtubeVideo": "YouTube Video",
+    "openVideo": "Open {{title}}",
+    "hideVideo": "Hide {{title}}",
+    "watchOnYouTube": "Watch on YouTube",
+    "noMangaPages": "No manga pages found.",
+    "mangaEpisode": "Manga episode",
+    "mangaPageAlt": "{{title}} — Page {{page}}",
+    "mangaPagePartAlt": "{{title}} — Page {{page}}, Part {{part}}",
+    "like": "Like",
+    "gift": "Gift",
+    "hotComments": "Hot comments",
+    "viewComment_one": "View {{count}} comment",
+    "viewComment_other": "View {{count}} comments",
+    "writeComment": "Write a comment",
+    "reader": "Reader",
+    "reactionUpdateFailed": "Failed to update reaction",
+    "reactionFailed": "Episode reaction failed",
+    "oneEpisode": "1 Episode",
+    "nextEpisodes": "Next {{count}} Eps",
+    "premium": "Premium",
+    "premiumDiscount": "Enjoy 10% off every episode you unlock.",
+    "unlockThisEpisode": "to unlock this Ep.",
+    "unlockEpisodes": "to unlock {{count}} Eps.",
+    "unlockAllEpisodes": "to unlock all Eps.",
+    "discountOff": "{{count}}% OFF",
+    "comingSoon": "Coming soon",
+    "topUpBonus": "FIRST TOP-UP $10+ BONUS!",
+    "topUpBonusDetail": "1 Free Book Pass + 3 reading vouchers",
+    "instantAccess": "Instant Access",
+    "freeAccess": "Free Access",
+    "myDiamonds": "My Diamonds:",
+    "autoUnlockInfo": "Auto unlock info",
+    "autoUnlockHelp": "Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.",
+    "autoUnlock": "Auto unlock",
+    "unlocking": "Unlocking...",
+    "freeUnlockWait": "Free unlocks are available 7 days after release.",
+    "coinsRemaining": "Coins — {{count}} remaining",
+    "coinsUnavailable": "Coins — Unable to load",
+    "accessDays": "Access lasts {{count}} days.",
+    "availableLater": "Available later",
+    "access": "Access",
+    "notEnough": "Not enough",
+    "vouchersRemaining": "Vouchers — {{count}} remaining",
+    "vouchersUnavailable": "Vouchers — Unable to load",
+    "permanentUnlockEpisode": "Permanent unlock for this episode.",
+    "moreFreeMethods": "More free methods",
+    "watchAdUnlock": "Watch Ad to Unlock Episode",
+    "adUsage": "Unlock this episode • {{used}}/{{limit}} used today",
+    "limitReached": "Limit reached",
+    "watch": "Watch",
+    "storyCardComing": "Story Card — Coming soon",
+    "sameStoryPermanent": "Permanent unlock for same story only.",
+    "coinsVouchers": "Coins & Vouchers",
+    "dontMissOut": "Don’t Miss Out",
+    "diamondsAwait": "Diamonds Await!",
+    "continueReading": "Continue reading?",
+    "subscribeFollow": "Subscribe to follow new episodes",
+    "subscribe": "Subscribe",
+    "subscribed": "Subscribed",
+    "newEpisodesFirst": "You will see new episodes first",
+    "showSubscribePopup": "Show subscribe popup",
+    "closeSubscribePopup": "Close subscribe popup",
+    "subscribeStory": "Subscribe to this story",
+    "prev": "Prev",
+    "next": "Next",
+    "episode": "Episode",
+    "comments": "Comments",
+    "settings": "Settings",
+    "progress": "Progress",
+    "adultWarningTitle": "18+ Content Warning",
+    "adultWarningText": "This episode may contain mature themes, including violence, strong language, sexual or suggestive content, or other sensitive material. Please continue at your own discretion.",
+    "continueReadingButton": "Continue Reading",
+    "goBack": "Go Back",
+    "untitledStory": "Untitled Story",
+    "completed": "Completed",
+    "new": "New",
+    "ongoing": "Ongoing",
+    "byAuthor": "by {{author}}",
+    "episodesStatus": "{{count}} Episodes, {{status}}",
+    "closeEpisodeList": "Close episode list",
+    "reverseEpisodeOrder": "Reverse episode order",
+    "reverse": "Reverse",
+    "episodeNumber": "Episode {{number}}",
+    "closeFontList": "Close font list",
+    "searchFont": "Search Font",
+    "khmerFonts": "Khmer Fonts",
+    "otherFonts": "Other Fonts",
+    "noFonts": "No fonts found",
+    "cancelReset": "Cancel reset",
+    "resetTitle": "Reset reading settings?",
+    "resetDescription": "This will restore font size, font style, page color, brightness, line spacing, and auto scroll to default.",
+    "cancel": "Cancel",
+    "reset": "Reset",
+    "readingPreferences": "Reading Preferences",
+    "manualTap": "Manual Tap",
+    "autoTap": "Auto Tap",
+    "autoTapSpeed": "Auto Tap Speed",
+    "autoTapHelp": "Shows one message at a time automatically",
+    "manualTapHelp": "Tap the reading area to show one message at a time.",
+    "slow": "Slow",
+    "fast": "Fast",
+    "verySlow": "Very slow",
+    "normal": "Normal",
+    "veryFast": "Very fast",
+    "moreSetting": "More Setting",
+    "backReaderSettings": "Back to reader settings",
+    "closeReaderSettings": "Close reader settings",
+    "paging": "Paging",
+    "scrolling": "Scrolling",
+    "autoScroll": "Auto Scroll",
+    "scrollingOnly": "Available only in Scrolling mode",
+    "turnOff": "Turn Off",
+    "turnOn": "Turn On",
+    "resetSettings": "Reset Settings",
+    "brightness": "Brightness",
+    "fontSpacing": "Font & Spacing",
+    "fontSize": "Font Size",
+    "decreaseFontSize": "Decrease font size",
+    "increaseFontSize": "Increase font size",
+    "lineSpacing": "Line Spacing",
+    "decreaseLineSpacing": "Decrease line spacing",
+    "increaseLineSpacing": "Increase line spacing",
+    "pageColor": "Page Color",
+    "fontStyle": "Font Style",
+    "white": "White",
+    "paper": "Paper",
+    "sepia": "Sepia",
+    "dark": "Dark",
+    "openTaskCenter": "Open Task Center",
+    "adultConfirmRequired": "Confirm the adult-content warning to continue.",
+    "adRequired": "Advertisement required before this episode.",
+    "untitledEpisode": "Untitled Episode",
+    "backToStory": "Back to story",
+    "readerSettings": "Reader settings",
+    "episodeList": "Episode list",
+    "moreOptions": "More options",
+    "report": "Report",
+    "copyLink": "Copy link",
+    "echo": "Echo",
+    "pauseAutoScroll": "Pause Auto Scroll",
+    "copyThisLink": "Copy this link:",
+    "episodeListNotFound": "Episode list not found",
+    "episodeNotFound": "Episode not found",
+    "cannotConnectServer": "Cannot connect to server. Please try again later.",
+    "unlockStatusFailed": "Failed to check unlock status",
+    "notEnoughCoins": "Not enough Coins.",
+    "cannotConnectBackend": "Cannot connect to backend.",
+    "notEnoughVouchers": "Not enough Vouchers.",
+    "rewardedUnavailable": "Rewarded ad is unavailable right now.",
+    "unlockFailed": "Failed to unlock episode",
+    "unlockCoinsFailed": "Failed to unlock episode with Coins",
+    "unlockVouchersFailed": "Failed to unlock episode with Vouchers",
+    "readMinutes": "Read {{count}} minutes",
+    "daysHours": "{{days}} days {{hours}} hours",
+    "hoursMinutes": "{{hours}} hours {{minutes}} minutes",
+    "minutes": "{{minutes}} minutes",
+    "failedLoadEpisode": "Failed to load episode",
+    "invalidReadingLink": "Invalid reading link. Please open the episode from its story page.",
+    "adClosedIncomplete": "Ad closed before completion. This episode is still locked."
+  },
+  "km": {
+    "toBeContinued": "នៅមានបន្ត",
+    "pageOf": "ទំព័រ {{current}} / {{total}}",
+    "youtubeVideo": "វីដេអូ YouTube",
+    "openVideo": "បើក {{title}}",
+    "hideVideo": "បិទ {{title}}",
+    "watchOnYouTube": "មើលនៅលើ YouTube",
+    "noMangaPages": "រកមិនឃើញទំព័រ Manga។",
+    "mangaEpisode": "ភាគ Manga",
+    "mangaPageAlt": "{{title}} — ទំព័រ {{page}}",
+    "mangaPagePartAlt": "{{title}} — ទំព័រ {{page}}, ផ្នែក {{part}}",
+    "like": "ចូលចិត្ត",
+    "gift": "អំណោយ",
+    "hotComments": "មតិកំពុងពេញនិយម",
+    "viewComment_one": "មើលមតិ {{count}}",
+    "viewComment_other": "មើលមតិ {{count}}",
+    "writeComment": "សរសេរមតិ",
+    "reader": "អ្នកអាន",
+    "reactionUpdateFailed": "មិនអាច Update Reaction បាន",
+    "reactionFailed": "Reaction ភាគនេះបរាជ័យ",
+    "oneEpisode": "1 ភាគ",
+    "nextEpisodes": "{{count}} ភាគបន្ទាប់",
+    "premium": "Premium",
+    "premiumDiscount": "ទទួលបានបញ្ចុះតម្លៃ 10% រាល់ភាគដែលអ្នកដោះសោ។",
+    "unlockThisEpisode": "ដើម្បីដោះសោភាគនេះ",
+    "unlockEpisodes": "ដើម្បីដោះសោ {{count}} ភាគ",
+    "unlockAllEpisodes": "ដើម្បីដោះសោភាគទាំងអស់",
+    "discountOff": "បញ្ចុះ {{count}}%",
+    "comingSoon": "នឹងមកដល់ឆាប់ៗ",
+    "topUpBonus": "បញ្ចូលលុយ $10+ លើកដំបូង ទទួល BONUS!",
+    "topUpBonusDetail": "Book Pass ឥតគិតថ្លៃ 1 + Reading Voucher 3",
+    "instantAccess": "ដោះសោភ្លាមៗ",
+    "freeAccess": "ដោះសោឥតគិតថ្លៃ",
+    "myDiamonds": "Diamonds របស់ខ្ញុំ៖",
+    "autoUnlockInfo": "ព័ត៌មាន Auto Unlock",
+    "autoUnlockHelp": "Auto Unlock ប្រើតែ Diamonds ប៉ុណ្ណោះ។ Coins, Vouchers ឬ Story Cards មិនត្រូវបានប្រើទេ។",
+    "autoUnlock": "Auto Unlock",
+    "unlocking": "កំពុងដោះសោ...",
+    "freeUnlockWait": "ការដោះសោឥតគិតថ្លៃអាចប្រើបានក្រោយចេញផ្សាយ 7 ថ្ងៃ។",
+    "coinsRemaining": "Coins — នៅសល់ {{count}}",
+    "coinsUnavailable": "Coins — មិនអាចទាញទិន្នន័យបាន",
+    "accessDays": "អាចអានបាន {{count}} ថ្ងៃ។",
+    "availableLater": "អាចប្រើពេលក្រោយ",
+    "access": "ប្រើ",
+    "notEnough": "មិនគ្រប់",
+    "vouchersRemaining": "Vouchers — នៅសល់ {{count}}",
+    "vouchersUnavailable": "Vouchers — មិនអាចទាញទិន្នន័យបាន",
+    "permanentUnlockEpisode": "ដោះសោភាគនេះជាអចិន្ត្រៃយ៍។",
+    "moreFreeMethods": "វិធីឥតគិតថ្លៃផ្សេងទៀត",
+    "watchAdUnlock": "មើលពាណិជ្ជកម្មដើម្បីដោះសោភាគ",
+    "adUsage": "ដោះសោភាគនេះ • បានប្រើ {{used}}/{{limit}} ថ្ងៃនេះ",
+    "limitReached": "ដល់កំណត់ហើយ",
+    "watch": "មើល",
+    "storyCardComing": "Story Card — នឹងមកដល់ឆាប់ៗ",
+    "sameStoryPermanent": "ដោះសោជាអចិន្ត្រៃយ៍សម្រាប់រឿងដដែលប៉ុណ្ណោះ។",
+    "coinsVouchers": "Coins និង Vouchers",
+    "dontMissOut": "កុំឱ្យខកខាន",
+    "diamondsAwait": "Diamonds កំពុងរង់ចាំ!",
+    "continueReading": "បន្តអាន?",
+    "subscribeFollow": "Subscribe ដើម្បីតាមដានភាគថ្មី",
+    "subscribe": "Subscribe",
+    "subscribed": "បាន Subscribe",
+    "newEpisodesFirst": "អ្នកនឹងឃើញភាគថ្មីមុនគេ",
+    "showSubscribePopup": "បង្ហាញផ្ទាំង Subscribe",
+    "closeSubscribePopup": "បិទផ្ទាំង Subscribe",
+    "subscribeStory": "Subscribe រឿងនេះ",
+    "prev": "មុន",
+    "next": "បន្ទាប់",
+    "episode": "ភាគ",
+    "comments": "មតិ",
+    "settings": "ការកំណត់",
+    "progress": "វឌ្ឍនភាព",
+    "adultWarningTitle": "ការព្រមានមាតិកា 18+",
+    "adultWarningText": "ភាគនេះអាចមានមាតិកាសម្រាប់មនុស្សពេញវ័យ ដូចជា អំពើហិង្សា ពាក្យសម្តីខ្លាំង មាតិកាផ្លូវភេទ ឬមាតិកាប្រកាន់អារម្មណ៍ផ្សេងៗ។ សូមបន្តអានដោយការសម្រេចចិត្តរបស់អ្នក។",
+    "continueReadingButton": "បន្តអាន",
+    "goBack": "ត្រឡប់ក្រោយ",
+    "untitledStory": "រឿងគ្មានចំណងជើង",
+    "completed": "បានបញ្ចប់",
+    "new": "ថ្មី",
+    "ongoing": "កំពុងបន្ត",
+    "byAuthor": "ដោយ {{author}}",
+    "episodesStatus": "{{count}} ភាគ, {{status}}",
+    "closeEpisodeList": "បិទបញ្ជីភាគ",
+    "reverseEpisodeOrder": "ប្ដូរលំដាប់ភាគ",
+    "reverse": "ប្ដូរលំដាប់",
+    "episodeNumber": "ភាគ {{number}}",
+    "closeFontList": "បិទបញ្ជី Font",
+    "searchFont": "ស្វែងរក Font",
+    "khmerFonts": "Font ខ្មែរ",
+    "otherFonts": "Font ផ្សេងៗ",
+    "noFonts": "រកមិនឃើញ Font",
+    "cancelReset": "បោះបង់ Reset",
+    "resetTitle": "Reset ការកំណត់ការអាន?",
+    "resetDescription": "វានឹងស្ដារ Font size, Font style, Page color, Brightness, Line spacing និង Auto scroll ទៅតម្លៃដើម។",
+    "cancel": "បោះបង់",
+    "reset": "Reset",
+    "readingPreferences": "ជម្រើសការអាន",
+    "manualTap": "ចុចដោយដៃ",
+    "autoTap": "ចុចស្វ័យប្រវត្តិ",
+    "autoTapSpeed": "ល្បឿន Auto Tap",
+    "autoTapHelp": "បង្ហាញសារម្តងមួយដោយស្វ័យប្រវត្តិ",
+    "manualTapHelp": "ចុចតំបន់អាន ដើម្បីបង្ហាញសារម្តងមួយ។",
+    "slow": "យឺត",
+    "fast": "លឿន",
+    "verySlow": "យឺតខ្លាំង",
+    "normal": "ធម្មតា",
+    "veryFast": "លឿនខ្លាំង",
+    "moreSetting": "ការកំណត់បន្ថែម",
+    "backReaderSettings": "ត្រឡប់ទៅការកំណត់ការអាន",
+    "closeReaderSettings": "បិទការកំណត់ការអាន",
+    "paging": "ប្ដូរទំព័រ",
+    "scrolling": "អូសចុះឡើង",
+    "autoScroll": "អូសស្វ័យប្រវត្តិ",
+    "scrollingOnly": "អាចប្រើបានតែក្នុងរបៀប Scrolling",
+    "turnOff": "បិទ",
+    "turnOn": "បើក",
+    "resetSettings": "Reset ការកំណត់",
+    "brightness": "ពន្លឺ",
+    "fontSpacing": "Font និងចន្លោះ",
+    "fontSize": "ទំហំ Font",
+    "decreaseFontSize": "បន្ថយទំហំ Font",
+    "increaseFontSize": "បង្កើនទំហំ Font",
+    "lineSpacing": "ចន្លោះបន្ទាត់",
+    "decreaseLineSpacing": "បន្ថយចន្លោះបន្ទាត់",
+    "increaseLineSpacing": "បង្កើនចន្លោះបន្ទាត់",
+    "pageColor": "ពណ៌ក្រដាស",
+    "fontStyle": "រចនាប័ទ្ម Font",
+    "white": "ស",
+    "paper": "ក្រដាស",
+    "sepia": "Sepia",
+    "dark": "ងងឹត",
+    "openTaskCenter": "បើក Task Center",
+    "adultConfirmRequired": "សូមបញ្ជាក់ការព្រមានមាតិកាមនុស្សពេញវ័យដើម្បីបន្ត។",
+    "adRequired": "ត្រូវមើលពាណិជ្ជកម្មមុនពេលអានភាគនេះ។",
+    "untitledEpisode": "ភាគគ្មានចំណងជើង",
+    "backToStory": "ត្រឡប់ទៅរឿង",
+    "readerSettings": "ការកំណត់អ្នកអាន",
+    "episodeList": "បញ្ជីភាគ",
+    "moreOptions": "ជម្រើសបន្ថែម",
+    "report": "រាយការណ៍",
+    "copyLink": "ចម្លង Link",
+    "echo": "Echo",
+    "pauseAutoScroll": "ផ្អាក Auto Scroll",
+    "copyThisLink": "ចម្លង Link នេះ៖",
+    "episodeListNotFound": "រកមិនឃើញបញ្ជីភាគ",
+    "episodeNotFound": "រកមិនឃើញភាគ",
+    "cannotConnectServer": "មិនអាចភ្ជាប់ទៅ Server បាន។ សូមព្យាយាមម្តងទៀត។",
+    "unlockStatusFailed": "មិនអាចពិនិត្យស្ថានភាពដោះសោបាន",
+    "notEnoughCoins": "Coins មិនគ្រប់។",
+    "cannotConnectBackend": "មិនអាចភ្ជាប់ទៅ Backend បាន។",
+    "notEnoughVouchers": "Vouchers មិនគ្រប់។",
+    "rewardedUnavailable": "Rewarded Ad មិនអាចប្រើបាននៅពេលនេះ។",
+    "unlockFailed": "មិនអាចដោះសោភាគបាន",
+    "unlockCoinsFailed": "មិនអាចដោះសោភាគដោយ Coins បាន",
+    "unlockVouchersFailed": "មិនអាចដោះសោភាគដោយ Vouchers បាន",
+    "readMinutes": "អាន {{count}} នាទី",
+    "daysHours": "{{days}} ថ្ងៃ {{hours}} ម៉ោង",
+    "hoursMinutes": "{{hours}} ម៉ោង {{minutes}} នាទី",
+    "minutes": "{{minutes}} នាទី",
+    "failedLoadEpisode": "មិនអាច Load ភាគបាន",
+    "invalidReadingLink": "Link សម្រាប់អានមិនត្រឹមត្រូវ។ សូមបើកភាគនេះពីទំព័ររឿង។",
+    "adClosedIncomplete": "ពាណិជ្ជកម្មត្រូវបានបិទមុនពេលចប់។ ភាគនេះនៅតែ Locked។"
+  },
+  "zh": {
+    "toBeContinued": "未完待续",
+    "pageOf": "第 {{current}} / {{total}} 页",
+    "youtubeVideo": "YouTube 视频",
+    "openVideo": "打开 {{title}}",
+    "hideVideo": "收起 {{title}}",
+    "watchOnYouTube": "在 YouTube 上观看",
+    "noMangaPages": "未找到漫画页面。",
+    "mangaEpisode": "漫画章节",
+    "mangaPageAlt": "{{title}} — 第 {{page}} 页",
+    "mangaPagePartAlt": "{{title}} — 第 {{page}} 页，第 {{part}} 部分",
+    "like": "喜欢",
+    "gift": "礼物",
+    "hotComments": "热门评论",
+    "viewComment_one": "查看 {{count}} 条评论",
+    "viewComment_other": "查看 {{count}} 条评论",
+    "writeComment": "写评论",
+    "reader": "读者",
+    "reactionUpdateFailed": "更新互动失败",
+    "reactionFailed": "章节互动失败",
+    "oneEpisode": "1 章",
+    "nextEpisodes": "接下来 {{count}} 章",
+    "premium": "Premium",
+    "premiumDiscount": "每次解锁章节可享 10% 优惠。",
+    "unlockThisEpisode": "解锁本章",
+    "unlockEpisodes": "解锁 {{count}} 章",
+    "unlockAllEpisodes": "解锁全部章节",
+    "discountOff": "优惠 {{count}}%",
+    "comingSoon": "即将推出",
+    "topUpBonus": "首次充值 $10+ 奖励！",
+    "topUpBonusDetail": "1 张免费 Book Pass + 3 张阅读券",
+    "instantAccess": "立即解锁",
+    "freeAccess": "免费解锁",
+    "myDiamonds": "我的 Diamonds：",
+    "autoUnlockInfo": "自动解锁信息",
+    "autoUnlockHelp": "自动解锁仅使用 Diamonds。Coins、Vouchers 或 Story Cards 不会被使用。",
+    "autoUnlock": "自动解锁",
+    "unlocking": "正在解锁...",
+    "freeUnlockWait": "免费解锁在发布 7 天后可用。",
+    "coinsRemaining": "Coins — 剩余 {{count}}",
+    "coinsUnavailable": "Coins — 无法加载",
+    "accessDays": "可阅读 {{count}} 天。",
+    "availableLater": "稍后可用",
+    "access": "使用",
+    "notEnough": "不足",
+    "vouchersRemaining": "Vouchers — 剩余 {{count}}",
+    "vouchersUnavailable": "Vouchers — 无法加载",
+    "permanentUnlockEpisode": "永久解锁本章。",
+    "moreFreeMethods": "更多免费方式",
+    "watchAdUnlock": "观看广告解锁章节",
+    "adUsage": "解锁本章 • 今日已使用 {{used}}/{{limit}}",
+    "limitReached": "已达上限",
+    "watch": "观看",
+    "storyCardComing": "Story Card — 即将推出",
+    "sameStoryPermanent": "仅永久解锁同一故事。",
+    "coinsVouchers": "Coins 与 Vouchers",
+    "dontMissOut": "不要错过",
+    "diamondsAwait": "Diamonds 等你领取！",
+    "continueReading": "继续阅读？",
+    "subscribeFollow": "订阅以追踪新章节",
+    "subscribe": "订阅",
+    "subscribed": "已订阅",
+    "newEpisodesFirst": "你将优先看到新章节",
+    "showSubscribePopup": "显示订阅提示",
+    "closeSubscribePopup": "关闭订阅提示",
+    "subscribeStory": "订阅此故事",
+    "prev": "上一章",
+    "next": "下一章",
+    "episode": "章节",
+    "comments": "评论",
+    "settings": "设置",
+    "progress": "进度",
+    "adultWarningTitle": "18+ 内容警告",
+    "adultWarningText": "本章节可能包含成人主题，包括暴力、强烈语言、性或暗示性内容，或其他敏感素材。请自行判断是否继续。",
+    "continueReadingButton": "继续阅读",
+    "goBack": "返回",
+    "untitledStory": "无标题故事",
+    "completed": "已完结",
+    "new": "新作",
+    "ongoing": "连载中",
+    "byAuthor": "作者：{{author}}",
+    "episodesStatus": "{{count}} 章，{{status}}",
+    "closeEpisodeList": "关闭章节列表",
+    "reverseEpisodeOrder": "反转章节顺序",
+    "reverse": "反转",
+    "episodeNumber": "第 {{number}} 章",
+    "closeFontList": "关闭字体列表",
+    "searchFont": "搜索字体",
+    "khmerFonts": "高棉字体",
+    "otherFonts": "其他字体",
+    "noFonts": "未找到字体",
+    "cancelReset": "取消重置",
+    "resetTitle": "重置阅读设置？",
+    "resetDescription": "这将把字体大小、字体样式、页面颜色、亮度、行距和自动滚动恢复为默认值。",
+    "cancel": "取消",
+    "reset": "重置",
+    "readingPreferences": "阅读偏好",
+    "manualTap": "手动点击",
+    "autoTap": "自动点击",
+    "autoTapSpeed": "自动点击速度",
+    "autoTapHelp": "自动逐条显示消息",
+    "manualTapHelp": "点击阅读区域，一次显示一条消息。",
+    "slow": "慢",
+    "fast": "快",
+    "verySlow": "很慢",
+    "normal": "正常",
+    "veryFast": "很快",
+    "moreSetting": "更多设置",
+    "backReaderSettings": "返回阅读设置",
+    "closeReaderSettings": "关闭阅读设置",
+    "paging": "翻页",
+    "scrolling": "滚动",
+    "autoScroll": "自动滚动",
+    "scrollingOnly": "仅在滚动模式下可用",
+    "turnOff": "关闭",
+    "turnOn": "开启",
+    "resetSettings": "重置设置",
+    "brightness": "亮度",
+    "fontSpacing": "字体与间距",
+    "fontSize": "字体大小",
+    "decreaseFontSize": "减小字体",
+    "increaseFontSize": "增大字体",
+    "lineSpacing": "行距",
+    "decreaseLineSpacing": "减小行距",
+    "increaseLineSpacing": "增大行距",
+    "pageColor": "页面颜色",
+    "fontStyle": "字体样式",
+    "white": "白色",
+    "paper": "纸张",
+    "sepia": "棕褐色",
+    "dark": "深色",
+    "openTaskCenter": "打开任务中心",
+    "adultConfirmRequired": "请确认成人内容警告后继续。",
+    "adRequired": "阅读本章前需要先观看广告。",
+    "untitledEpisode": "无标题章节",
+    "backToStory": "返回故事",
+    "readerSettings": "阅读设置",
+    "episodeList": "章节列表",
+    "moreOptions": "更多选项",
+    "report": "举报",
+    "copyLink": "复制链接",
+    "echo": "Echo",
+    "pauseAutoScroll": "暂停自动滚动",
+    "copyThisLink": "复制此链接：",
+    "episodeListNotFound": "未找到章节列表",
+    "episodeNotFound": "未找到章节",
+    "cannotConnectServer": "无法连接服务器，请稍后重试。",
+    "unlockStatusFailed": "检查解锁状态失败",
+    "notEnoughCoins": "Coins 不足。",
+    "cannotConnectBackend": "无法连接 Backend。",
+    "notEnoughVouchers": "Vouchers 不足。",
+    "rewardedUnavailable": "奖励广告暂时不可用。",
+    "unlockFailed": "解锁章节失败",
+    "unlockCoinsFailed": "使用 Coins 解锁章节失败",
+    "unlockVouchersFailed": "使用 Vouchers 解锁章节失败",
+    "readMinutes": "阅读 {{count}} 分钟",
+    "daysHours": "{{days}} 天 {{hours}} 小时",
+    "hoursMinutes": "{{hours}} 小时 {{minutes}} 分钟",
+    "minutes": "{{minutes}} 分钟",
+    "failedLoadEpisode": "加载章节失败",
+    "invalidReadingLink": "阅读链接无效。请从故事页面打开此章节。",
+    "adClosedIncomplete": "广告未播放完成就被关闭，本章节仍处于锁定状态。"
+  },
+  "ja": {
+    "toBeContinued": "つづく",
+    "pageOf": "{{current}} / {{total}} ページ",
+    "youtubeVideo": "YouTube 動画",
+    "openVideo": "{{title}} を開く",
+    "hideVideo": "{{title}} を閉じる",
+    "watchOnYouTube": "YouTube で見る",
+    "noMangaPages": "マンガページが見つかりません。",
+    "mangaEpisode": "マンガエピソード",
+    "mangaPageAlt": "{{title}} — {{page}} ページ",
+    "mangaPagePartAlt": "{{title}} — {{page}} ページ、パート {{part}}",
+    "like": "いいね",
+    "gift": "ギフト",
+    "hotComments": "人気コメント",
+    "viewComment_one": "コメント {{count}} 件を見る",
+    "viewComment_other": "コメント {{count}} 件を見る",
+    "writeComment": "コメントを書く",
+    "reader": "読者",
+    "reactionUpdateFailed": "リアクションを更新できませんでした",
+    "reactionFailed": "エピソードのリアクションに失敗しました",
+    "oneEpisode": "1 話",
+    "nextEpisodes": "次の {{count}} 話",
+    "premium": "Premium",
+    "premiumDiscount": "エピソードのアンロックが毎回 10% オフになります。",
+    "unlockThisEpisode": "この話をアンロック",
+    "unlockEpisodes": "{{count}} 話をアンロック",
+    "unlockAllEpisodes": "全話をアンロック",
+    "discountOff": "{{count}}% OFF",
+    "comingSoon": "近日公開",
+    "topUpBonus": "初回 $10+ チャージ BONUS!",
+    "topUpBonusDetail": "無料 Book Pass 1枚 + Reading Voucher 3枚",
+    "instantAccess": "今すぐアンロック",
+    "freeAccess": "無料アンロック",
+    "myDiamonds": "マイ Diamonds：",
+    "autoUnlockInfo": "自動アンロック情報",
+    "autoUnlockHelp": "自動アンロックは Diamonds のみ使用します。Coins、Vouchers、Story Cards は使用されません。",
+    "autoUnlock": "自動アンロック",
+    "unlocking": "アンロック中...",
+    "freeUnlockWait": "無料アンロックは公開から7日後に利用できます。",
+    "coinsRemaining": "Coins — 残り {{count}}",
+    "coinsUnavailable": "Coins — 読み込めません",
+    "accessDays": "{{count}} 日間読めます。",
+    "availableLater": "後で利用可能",
+    "access": "利用",
+    "notEnough": "不足",
+    "vouchersRemaining": "Vouchers — 残り {{count}}",
+    "vouchersUnavailable": "Vouchers — 読み込めません",
+    "permanentUnlockEpisode": "この話を永久アンロック。",
+    "moreFreeMethods": "ほかの無料方法",
+    "watchAdUnlock": "広告を見てエピソードをアンロック",
+    "adUsage": "この話をアンロック • 本日 {{used}}/{{limit}} 使用",
+    "limitReached": "上限に達しました",
+    "watch": "見る",
+    "storyCardComing": "Story Card — 近日公開",
+    "sameStoryPermanent": "同じストーリーのみ永久アンロック。",
+    "coinsVouchers": "Coins & Vouchers",
+    "dontMissOut": "お見逃しなく",
+    "diamondsAwait": "Diamonds が待っています！",
+    "continueReading": "続きを読む？",
+    "subscribeFollow": "購読して新しいエピソードを追跡",
+    "subscribe": "購読",
+    "subscribed": "購読済み",
+    "newEpisodesFirst": "新しいエピソードを優先表示します",
+    "showSubscribePopup": "購読ポップアップを表示",
+    "closeSubscribePopup": "購読ポップアップを閉じる",
+    "subscribeStory": "このストーリーを購読",
+    "prev": "前へ",
+    "next": "次へ",
+    "episode": "エピソード",
+    "comments": "コメント",
+    "settings": "設定",
+    "progress": "進行状況",
+    "adultWarningTitle": "18+ コンテンツ警告",
+    "adultWarningText": "このエピソードには、暴力、強い言葉、性的または示唆的な内容、その他のセンシティブな素材など、成人向けテーマが含まれる場合があります。ご自身の判断で続行してください。",
+    "continueReadingButton": "続きを読む",
+    "goBack": "戻る",
+    "untitledStory": "無題のストーリー",
+    "completed": "完結",
+    "new": "新着",
+    "ongoing": "連載中",
+    "byAuthor": "{{author}} 作",
+    "episodesStatus": "{{count}} 話・{{status}}",
+    "closeEpisodeList": "エピソード一覧を閉じる",
+    "reverseEpisodeOrder": "エピソード順を反転",
+    "reverse": "反転",
+    "episodeNumber": "エピソード {{number}}",
+    "closeFontList": "フォント一覧を閉じる",
+    "searchFont": "フォントを検索",
+    "khmerFonts": "クメールフォント",
+    "otherFonts": "その他のフォント",
+    "noFonts": "フォントが見つかりません",
+    "cancelReset": "リセットをキャンセル",
+    "resetTitle": "読書設定をリセットしますか？",
+    "resetDescription": "フォントサイズ、フォントスタイル、ページカラー、明るさ、行間、自動スクロールを初期設定に戻します。",
+    "cancel": "キャンセル",
+    "reset": "リセット",
+    "readingPreferences": "読書設定",
+    "manualTap": "手動タップ",
+    "autoTap": "自動タップ",
+    "autoTapSpeed": "自動タップ速度",
+    "autoTapHelp": "メッセージを1つずつ自動表示します",
+    "manualTapHelp": "読書エリアをタップして、メッセージを1つずつ表示します。",
+    "slow": "遅い",
+    "fast": "速い",
+    "verySlow": "とても遅い",
+    "normal": "標準",
+    "veryFast": "とても速い",
+    "moreSetting": "詳細設定",
+    "backReaderSettings": "読書設定に戻る",
+    "closeReaderSettings": "読書設定を閉じる",
+    "paging": "ページ送り",
+    "scrolling": "スクロール",
+    "autoScroll": "自動スクロール",
+    "scrollingOnly": "スクロールモードでのみ利用できます",
+    "turnOff": "オフ",
+    "turnOn": "オン",
+    "resetSettings": "設定をリセット",
+    "brightness": "明るさ",
+    "fontSpacing": "フォントと間隔",
+    "fontSize": "フォントサイズ",
+    "decreaseFontSize": "フォントを小さくする",
+    "increaseFontSize": "フォントを大きくする",
+    "lineSpacing": "行間",
+    "decreaseLineSpacing": "行間を狭くする",
+    "increaseLineSpacing": "行間を広くする",
+    "pageColor": "ページカラー",
+    "fontStyle": "フォントスタイル",
+    "white": "白",
+    "paper": "紙",
+    "sepia": "セピア",
+    "dark": "ダーク",
+    "openTaskCenter": "タスクセンターを開く",
+    "adultConfirmRequired": "成人向けコンテンツの警告を確認して続行してください。",
+    "adRequired": "このエピソードを読む前に広告の視聴が必要です。",
+    "untitledEpisode": "無題のエピソード",
+    "backToStory": "ストーリーに戻る",
+    "readerSettings": "読書設定",
+    "episodeList": "エピソード一覧",
+    "moreOptions": "その他のオプション",
+    "report": "報告",
+    "copyLink": "リンクをコピー",
+    "echo": "Echo",
+    "pauseAutoScroll": "自動スクロールを一時停止",
+    "copyThisLink": "このリンクをコピー：",
+    "episodeListNotFound": "エピソード一覧が見つかりません",
+    "episodeNotFound": "エピソードが見つかりません",
+    "cannotConnectServer": "サーバーに接続できません。後でもう一度お試しください。",
+    "unlockStatusFailed": "アンロック状態を確認できませんでした",
+    "notEnoughCoins": "Coins が足りません。",
+    "cannotConnectBackend": "Backend に接続できません。",
+    "notEnoughVouchers": "Vouchers が足りません。",
+    "rewardedUnavailable": "リワード広告は現在利用できません。",
+    "unlockFailed": "エピソードをアンロックできませんでした",
+    "unlockCoinsFailed": "Coins でエピソードをアンロックできませんでした",
+    "unlockVouchersFailed": "Vouchers でエピソードをアンロックできませんでした",
+    "readMinutes": "{{count}} 分読む",
+    "daysHours": "{{days}} 日 {{hours}} 時間",
+    "hoursMinutes": "{{hours}} 時間 {{minutes}} 分",
+    "minutes": "{{minutes}} 分",
+    "failedLoadEpisode": "エピソードを読み込めませんでした",
+    "invalidReadingLink": "読書リンクが無効です。ストーリーページからこのエピソードを開いてください。",
+    "adClosedIncomplete": "広告が完了前に閉じられました。このエピソードはまだロックされています。"
+  },
+  "ko": {
+    "toBeContinued": "계속됩니다",
+    "pageOf": "{{current}} / {{total}} 페이지",
+    "youtubeVideo": "YouTube 동영상",
+    "openVideo": "{{title}} 열기",
+    "hideVideo": "{{title}} 닫기",
+    "watchOnYouTube": "YouTube에서 보기",
+    "noMangaPages": "만화 페이지를 찾을 수 없습니다.",
+    "mangaEpisode": "만화 에피소드",
+    "mangaPageAlt": "{{title}} — {{page}} 페이지",
+    "mangaPagePartAlt": "{{title}} — {{page}} 페이지, 파트 {{part}}",
+    "like": "좋아요",
+    "gift": "선물",
+    "hotComments": "인기 댓글",
+    "viewComment_one": "댓글 {{count}}개 보기",
+    "viewComment_other": "댓글 {{count}}개 보기",
+    "writeComment": "댓글 작성",
+    "reader": "독자",
+    "reactionUpdateFailed": "반응을 업데이트하지 못했습니다",
+    "reactionFailed": "에피소드 반응에 실패했습니다",
+    "oneEpisode": "1화",
+    "nextEpisodes": "다음 {{count}}화",
+    "premium": "Premium",
+    "premiumDiscount": "에피소드를 잠금 해제할 때마다 10% 할인됩니다.",
+    "unlockThisEpisode": "이 에피소드 잠금 해제",
+    "unlockEpisodes": "{{count}}화 잠금 해제",
+    "unlockAllEpisodes": "전체 에피소드 잠금 해제",
+    "discountOff": "{{count}}% 할인",
+    "comingSoon": "곧 출시",
+    "topUpBonus": "첫 $10+ 충전 BONUS!",
+    "topUpBonusDetail": "무료 Book Pass 1개 + Reading Voucher 3개",
+    "instantAccess": "즉시 잠금 해제",
+    "freeAccess": "무료 잠금 해제",
+    "myDiamonds": "내 Diamonds:",
+    "autoUnlockInfo": "자동 잠금 해제 정보",
+    "autoUnlockHelp": "자동 잠금 해제는 Diamonds만 사용합니다. Coins, Vouchers, Story Cards는 사용되지 않습니다.",
+    "autoUnlock": "자동 잠금 해제",
+    "unlocking": "잠금 해제 중...",
+    "freeUnlockWait": "무료 잠금 해제는 공개 7일 후 이용할 수 있습니다.",
+    "coinsRemaining": "Coins — {{count}} 남음",
+    "coinsUnavailable": "Coins — 불러올 수 없음",
+    "accessDays": "{{count}}일 동안 읽을 수 있습니다.",
+    "availableLater": "나중에 이용 가능",
+    "access": "이용",
+    "notEnough": "부족",
+    "vouchersRemaining": "Vouchers — {{count}} 남음",
+    "vouchersUnavailable": "Vouchers — 불러올 수 없음",
+    "permanentUnlockEpisode": "이 에피소드를 영구 잠금 해제합니다.",
+    "moreFreeMethods": "다른 무료 방법",
+    "watchAdUnlock": "광고를 보고 에피소드 잠금 해제",
+    "adUsage": "이 에피소드 잠금 해제 • 오늘 {{used}}/{{limit}} 사용",
+    "limitReached": "한도 도달",
+    "watch": "보기",
+    "storyCardComing": "Story Card — 곧 출시",
+    "sameStoryPermanent": "같은 스토리에서만 영구 잠금 해제됩니다.",
+    "coinsVouchers": "Coins & Vouchers",
+    "dontMissOut": "놓치지 마세요",
+    "diamondsAwait": "Diamonds가 기다리고 있어요!",
+    "continueReading": "계속 읽을까요?",
+    "subscribeFollow": "구독하고 새 에피소드 팔로우",
+    "subscribe": "구독",
+    "subscribed": "구독 중",
+    "newEpisodesFirst": "새 에피소드를 먼저 볼 수 있습니다",
+    "showSubscribePopup": "구독 팝업 표시",
+    "closeSubscribePopup": "구독 팝업 닫기",
+    "subscribeStory": "이 스토리 구독",
+    "prev": "이전",
+    "next": "다음",
+    "episode": "에피소드",
+    "comments": "댓글",
+    "settings": "설정",
+    "progress": "진행률",
+    "adultWarningTitle": "18+ 콘텐츠 경고",
+    "adultWarningText": "이 에피소드에는 폭력, 강한 언어, 성적이거나 암시적인 내용 또는 기타 민감한 소재 등 성인 주제가 포함될 수 있습니다. 계속 여부는 직접 판단해 주세요.",
+    "continueReadingButton": "계속 읽기",
+    "goBack": "뒤로 가기",
+    "untitledStory": "제목 없는 스토리",
+    "completed": "완결",
+    "new": "신규",
+    "ongoing": "연재 중",
+    "byAuthor": "{{author}} 작품",
+    "episodesStatus": "{{count}}화, {{status}}",
+    "closeEpisodeList": "에피소드 목록 닫기",
+    "reverseEpisodeOrder": "에피소드 순서 반전",
+    "reverse": "반전",
+    "episodeNumber": "에피소드 {{number}}",
+    "closeFontList": "폰트 목록 닫기",
+    "searchFont": "폰트 검색",
+    "khmerFonts": "크메르 폰트",
+    "otherFonts": "기타 폰트",
+    "noFonts": "폰트를 찾을 수 없습니다",
+    "cancelReset": "초기화 취소",
+    "resetTitle": "읽기 설정을 초기화할까요?",
+    "resetDescription": "폰트 크기, 폰트 스타일, 페이지 색상, 밝기, 줄 간격 및 자동 스크롤을 기본값으로 되돌립니다.",
+    "cancel": "취소",
+    "reset": "초기화",
+    "readingPreferences": "읽기 환경설정",
+    "manualTap": "수동 탭",
+    "autoTap": "자동 탭",
+    "autoTapSpeed": "자동 탭 속도",
+    "autoTapHelp": "메시지를 하나씩 자동으로 표시합니다",
+    "manualTapHelp": "읽기 영역을 탭하면 메시지를 하나씩 표시합니다.",
+    "slow": "느림",
+    "fast": "빠름",
+    "verySlow": "매우 느림",
+    "normal": "보통",
+    "veryFast": "매우 빠름",
+    "moreSetting": "추가 설정",
+    "backReaderSettings": "읽기 설정으로 돌아가기",
+    "closeReaderSettings": "읽기 설정 닫기",
+    "paging": "페이지 넘김",
+    "scrolling": "스크롤",
+    "autoScroll": "자동 스크롤",
+    "scrollingOnly": "스크롤 모드에서만 사용할 수 있습니다",
+    "turnOff": "끄기",
+    "turnOn": "켜기",
+    "resetSettings": "설정 초기화",
+    "brightness": "밝기",
+    "fontSpacing": "폰트 및 간격",
+    "fontSize": "폰트 크기",
+    "decreaseFontSize": "폰트 크기 줄이기",
+    "increaseFontSize": "폰트 크기 늘리기",
+    "lineSpacing": "줄 간격",
+    "decreaseLineSpacing": "줄 간격 줄이기",
+    "increaseLineSpacing": "줄 간격 늘리기",
+    "pageColor": "페이지 색상",
+    "fontStyle": "폰트 스타일",
+    "white": "흰색",
+    "paper": "종이",
+    "sepia": "세피아",
+    "dark": "다크",
+    "openTaskCenter": "Task Center 열기",
+    "adultConfirmRequired": "계속하려면 성인 콘텐츠 경고를 확인하세요.",
+    "adRequired": "이 에피소드를 읽기 전에 광고 시청이 필요합니다.",
+    "untitledEpisode": "제목 없는 에피소드",
+    "backToStory": "스토리로 돌아가기",
+    "readerSettings": "읽기 설정",
+    "episodeList": "에피소드 목록",
+    "moreOptions": "더보기",
+    "report": "신고",
+    "copyLink": "링크 복사",
+    "echo": "Echo",
+    "pauseAutoScroll": "자동 스크롤 일시정지",
+    "copyThisLink": "이 링크 복사:",
+    "episodeListNotFound": "에피소드 목록을 찾을 수 없습니다",
+    "episodeNotFound": "에피소드를 찾을 수 없습니다",
+    "cannotConnectServer": "서버에 연결할 수 없습니다. 잠시 후 다시 시도하세요.",
+    "unlockStatusFailed": "잠금 해제 상태를 확인하지 못했습니다",
+    "notEnoughCoins": "Coins가 부족합니다.",
+    "cannotConnectBackend": "Backend에 연결할 수 없습니다.",
+    "notEnoughVouchers": "Vouchers가 부족합니다.",
+    "rewardedUnavailable": "리워드 광고를 지금 사용할 수 없습니다.",
+    "unlockFailed": "에피소드 잠금 해제에 실패했습니다",
+    "unlockCoinsFailed": "Coins로 에피소드 잠금 해제에 실패했습니다",
+    "unlockVouchersFailed": "Vouchers로 에피소드 잠금 해제에 실패했습니다",
+    "readMinutes": "{{count}}분 읽기",
+    "daysHours": "{{days}}일 {{hours}}시간",
+    "hoursMinutes": "{{hours}}시간 {{minutes}}분",
+    "minutes": "{{minutes}}분",
+    "failedLoadEpisode": "에피소드를 불러오지 못했습니다",
+    "invalidReadingLink": "읽기 링크가 올바르지 않습니다. 스토리 페이지에서 이 에피소드를 열어 주세요.",
+    "adClosedIncomplete": "광고가 완료되기 전에 닫혔습니다. 이 에피소드는 아직 잠겨 있습니다."
+  }
+})
+
+const DISPLAY_LOCALES = { en: 'en-US', km: 'km-KH', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR' }
+
+function getReaderLocale() {
+  return DISPLAY_LOCALES[getDisplayLanguageId()] || 'en-US'
+}
 
 const STORY_TRANSLATION_ENABLED = false
 
@@ -158,7 +984,7 @@ function buildDailyReadingTarget(readingReward = null) {
   return {
     id: `daily-${readingReward.reward_date}-${milestoneSeconds}`,
     reward_type: 'daily',
-    title: `Read ${nextMilestone.minutes} minutes`,
+    title: getDisplayText('readerPage.readMinutes', { count: formatNumber(nextMilestone.minutes) }),
     reward_coins: Number(nextMilestone.coins || 0),
     target_seconds: targetSeconds,
     active_seconds: activeSeconds,
@@ -197,9 +1023,11 @@ function shouldShowToBeContinued(story, episodes, episode) {
 }
 
 function ToBeContinued({ theme }) {
+  const { t } = useDisplayTranslation()
+
   return (
     <div className={`px-4 pb-8 pt-3 text-center ${theme.card}`}>
-      <div className={`text-[15px] font-medium tracking-[0.08em] ${theme.muted}`}>to be continued</div>
+      <div className={`text-[15px] font-medium tracking-[0.08em] ${theme.muted}`}>{t('readerPage.toBeContinued')}</div>
       <div className="mx-auto mt-4 flex max-w-[260px] items-center gap-3">
         <span className={`h-px flex-1 border-t ${theme.border}`} />
         <span className="text-[15px]">❤️</span>
@@ -230,6 +1058,7 @@ const READER_THEMES = {
     button: 'bg-[#111827] text-white',
     ghost: 'bg-white/85 text-[#111827] ring-1 ring-black/5',
     swatch: 'bg-white',
+    flash: 'bg-white/45',
   },
   paper: {
     name: 'Paper',
@@ -242,6 +1071,7 @@ const READER_THEMES = {
     button: 'bg-[#3b2f25] text-white',
     ghost: 'bg-[#fff8ed] text-[#3b2f25] ring-1 ring-[#dec8ae]',
     swatch: 'bg-[#fbf3e3]',
+    flash: 'bg-white/35',
   },
   sepia: {
     name: 'Sepia',
@@ -254,6 +1084,7 @@ const READER_THEMES = {
     button: 'bg-[#3b2f25] text-white',
     ghost: 'bg-[#f8edcf] text-[#3b2f25] ring-1 ring-[#c8b180]',
     swatch: 'bg-[#e5d6ad]',
+    flash: 'bg-white/30',
   },
   dark: {
     name: 'Dark',
@@ -266,6 +1097,7 @@ const READER_THEMES = {
     button: 'bg-white text-[#111827]',
     ghost: 'bg-[#1f2937] text-white ring-1 ring-white/10',
     swatch: 'bg-[#050505]',
+    flash: 'bg-white/10',
   },
 }
 
@@ -450,41 +1282,44 @@ const CHAT_STORY_AUTO_TAP_SPEEDS = [
 const DEFAULT_CHAT_STORY_AUTO_TAP_SPEED = 2
 
 function formatDate(value) {
-
-
   if (!value) return ''
 
   const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) return ''
 
-  return date.toLocaleDateString('en-GB')
+  return date.toLocaleDateString(getReaderLocale())
 }
 
 function formatNumber(value) {
-  return Number(value || 0).toLocaleString()
+  const number = Number(value || 0)
+  return new Intl.NumberFormat(getReaderLocale()).format(Number.isFinite(number) ? number : 0)
 }
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
 
-  if (!Number.isFinite(number) || number <= 0) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1).replace(/\.0$/, '')}m`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1).replace(/\.0$/, '')}k`
+  if (!Number.isFinite(number) || number <= 0) return formatNumber(0)
 
-  return String(number)
+  try {
+    return new Intl.NumberFormat(getReaderLocale(), {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(number)
+  } catch {
+    return formatNumber(number)
+  }
 }
 
 function formatUnlockDateTime(value) {
   const date = value ? new Date(value) : null
   if (!date || Number.isNaN(date.getTime())) return ''
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(getReaderLocale(), {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
   })
 }
 
@@ -494,9 +1329,9 @@ function formatWaitSeconds(value) {
   const hours = Math.floor((total % 86400) / 3600)
   const minutes = Math.floor((total % 3600) / 60)
 
-  if (days > 0) return `${days} days ${hours} hours`
-  if (hours > 0) return `${hours} hours ${minutes} minutes`
-  return `${minutes} minutes`
+  if (days > 0) return getDisplayText('readerPage.daysHours', { days: formatNumber(days), hours: formatNumber(hours) })
+  if (hours > 0) return getDisplayText('readerPage.hoursMinutes', { hours: formatNumber(hours), minutes: formatNumber(minutes) })
+  return getDisplayText('readerPage.minutes', { minutes: formatNumber(minutes) })
 }
 
 function splitParagraphs(content) {
@@ -660,12 +1495,13 @@ function getInitialFontSizeIndex() {
 }
 
 function YouTubeEpisodeCard({ videoId, title, theme }) {
+  const { t } = useDisplayTranslation()
   const [expanded, setExpanded] = useState(false)
   const safeVideoId = String(videoId || '').trim()
 
   if (!/^[A-Za-z0-9_-]{11}$/.test(safeVideoId)) return null
 
-  const label = String(title || '').trim() || 'YouTube Video'
+  const label = String(title || '').trim() || t('readerPage.youtubeVideo')
 
   if (!expanded) {
     return (
@@ -673,7 +1509,7 @@ function YouTubeEpisodeCard({ videoId, title, theme }) {
         type="button"
         onClick={() => setExpanded(true)}
         className={`mt-7 flex w-full items-center gap-3 rounded-[12px] border px-4 py-3 text-left active:scale-[0.995] ${theme.border} ${theme.soft}`}
-        aria-label={`Open ${label}`}
+        aria-label={t('readerPage.openVideo', { title: label })}
       >
         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${theme.card}`}>
           <i className={`fa-solid fa-play text-[11px] ${theme.text}`} />
@@ -694,7 +1530,7 @@ function YouTubeEpisodeCard({ videoId, title, theme }) {
         type="button"
         onClick={() => setExpanded(false)}
         className={`flex w-full items-center gap-3 px-4 py-3 text-left ${theme.soft}`}
-        aria-label={`Hide ${label}`}
+        aria-label={t('readerPage.hideVideo', { title: label })}
       >
         <span className={`min-w-0 flex-1 truncate text-[13px] font-medium ${theme.text}`}>
           {label}
@@ -721,7 +1557,7 @@ function YouTubeEpisodeCard({ videoId, title, theme }) {
   rel="noopener noreferrer"
   className={`block px-4 py-3 text-center text-[12px] font-medium ${theme.muted}`}
 >
-  Watch on YouTube
+  {t('readerPage.watchOnYouTube')}
 </a>
       
     </div>
@@ -743,8 +1579,10 @@ function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
 
 function MangaEpisodePages({
   pages = [],
-  title = 'Manga episode',
+  title = '',
 }) {
+  const { t } = useDisplayTranslation()
+  const mangaTitle = String(title || '').trim() || t('readerPage.mangaEpisode')
 
   const orderedPages = useMemo(() => {
     return (Array.isArray(pages) ? pages : [])
@@ -766,7 +1604,7 @@ function MangaEpisodePages({
   if (!orderedPages.length) {
     return (
       <p className="px-4 pb-6 text-[15px] font-semibold text-[#8a8175]">
-        No manga pages found.
+        {t('readerPage.noMangaPages')}
       </p>
     )
   }
@@ -816,8 +1654,8 @@ function MangaEpisodePages({
                   src={image.image_url}
                   alt={
                     images.length > 1
-                      ? `${title} — Page ${pageIndex + 1}, Part ${partIndex + 1}`
-                      : `${title} — Page ${pageIndex + 1}`
+                      ? t('readerPage.mangaPagePartAlt', { title: mangaTitle, page: formatNumber(pageIndex + 1), part: formatNumber(partIndex + 1) })
+                      : t('readerPage.mangaPageAlt', { title: mangaTitle, page: formatNumber(pageIndex + 1) })
                   }
                   width={width > 0 ? width : undefined}
                   height={height > 0 ? height : undefined}
@@ -845,6 +1683,7 @@ function MangaEpisodePages({
 }
 
 function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFamily, lineSpacing, theme, onReadingActivity }) {
+  const { t } = useDisplayTranslation()
   const [flashDirection, setFlashDirection] = useState('')
   const flashTimerRef = useRef(null)
   const touchStartXRef = useRef(0)
@@ -940,7 +1779,7 @@ const handlePointerEnd = () => {
     <div>
       <div className="mb-4 flex items-center justify-center">
         <span className={`${theme.soft} ${theme.muted} rounded-full px-4 py-2 text-[12px] font-black`}>
-          Page {safePageIndex + 1} / {totalPages}
+          {t('readerPage.pageOf', { current: formatNumber(safePageIndex + 1), total: formatNumber(totalPages) })}
         </span>
       </div>
 
@@ -955,7 +1794,7 @@ const handlePointerEnd = () => {
 >
         {flashDirection ? (
           <div
-            className={`pointer-events-none absolute bottom-0 top-0 z-20 flex w-[34%] items-center justify-center bg-white/45 backdrop-blur-[1px] transition-opacity duration-300 ${
+            className={`pointer-events-none absolute bottom-0 top-0 z-20 flex w-[34%] items-center justify-center ${theme.flash || 'bg-white/45'} backdrop-blur-[1px] transition-opacity duration-300 ${
               flashDirection === 'left' ? 'left-0' : 'right-0'
             }`}
           >
@@ -1014,7 +1853,9 @@ function ReaderEndPanel({
   onOpenGift,
   active = true,
   commentSummary = null,
+  theme = READER_THEMES.white,
 }) {
+  const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const episodeId = episode?.id || episode?.episode_id || ''
 
@@ -1163,7 +2004,7 @@ function ReaderEndPanel({
       ) {
         throw new Error(
           data.message ||
-            'Failed to update reaction'
+            t('readerPage.reactionUpdateFailed')
         )
       }
 
@@ -1180,7 +2021,7 @@ function ReaderEndPanel({
         )
       )
    } catch (error) {
-  window.alert(error?.message || 'Episode reaction failed')
+  window.alert(error?.message || t('readerPage.reactionFailed'))
   setReactionType(previousType)
   setLikeCount(previousCount)
 } finally {
@@ -1208,14 +2049,14 @@ function ReaderEndPanel({
   const replyCount = replies.length
   const hotLikes = Number(hotComment?.likes || hotComment?.like_count || 0)
   const hotUser = hotComment?.user || {}
-  const hotName = hotUser.name || hotComment?.name || 'Reader'
+  const hotName = hotUser.name || hotComment?.name || t('readerPage.reader')
   const hotAvatar = hotUser.avatar_url || hotComment?.avatar_url || ''
   const activeEpisodeReaction =
     getReactionMeta(reactionType)
 
   return (
-    <article className="mt-8 bg-white px-4 pb-8 pt-2">
-      <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
+    <article className={`mt-8 ${theme.card} px-4 pb-8 pt-2`}>
+      <div className={`grid grid-cols-2 border-b ${theme.border} pb-5`}>
        <div className="flex flex-col items-center justify-center gap-1">
   <ReactionAction
   reactionType={reactionType}
@@ -1224,7 +2065,7 @@ function ReaderEndPanel({
   disabled={!episodeId}
   onReact={handleEpisodeReaction}
   showCount={false}
-  idleLabel="Like"
+  idleLabel={t('readerPage.like')}
   idleIcon={
   <svg viewBox="0 0 24 24" className="h-[28px] w-[28px]" fill="none">
     <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1234,15 +2075,13 @@ function ReaderEndPanel({
 />
 
 <span
-  className="pointer-events-none relative -top-[10px] w-[74px] text-center text-[13px] font-normal leading-none"
+  className={`pointer-events-none relative -top-[10px] w-[74px] text-center text-[13px] font-normal leading-none ${theme.text}`}
     style={{
-      color:
-        activeEpisodeReaction?.text ||
-        '#111827',
+      color: activeEpisodeReaction?.text || undefined,
     }}
   >
     {activeEpisodeReaction?.label ||
-      'Like'}
+      t('readerPage.like')}
   </span>
 
   <button
@@ -1263,11 +2102,9 @@ function ReaderEndPanel({
       )
     }}
     disabled={!episodeId}
-    className="text-[11px] font-normal text-[#98a2b3] transition-colors duration-200 active:scale-95 disabled:cursor-not-allowed"
+    className={`text-[11px] font-normal ${theme.muted} transition-colors duration-200 active:scale-95 disabled:cursor-not-allowed`}
     style={{
-      color:
-        activeEpisodeReaction?.text ||
-        '#98a2b3',
+      color: activeEpisodeReaction?.text || undefined,
     }}
   >
     {formatCompactNumber(likeCount)}
@@ -1276,23 +2113,23 @@ function ReaderEndPanel({
 
         <button type="button" onClick={onOpenGift} className="flex flex-col items-center justify-center gap-1 active:scale-95">
   <img src="/assets/Icons/Gift%203.svg" alt="" className="h-[26px] w-[26px] object-contain" />
-  <span className="text-[13px] font-normal text-[#111827]">Gift</span>
-  <span className="text-[11px] font-normal text-[#98a2b3]">{formatCompactNumber(giftCount)}</span>
+  <span className={`text-[13px] font-normal ${theme.text}`}>{t('readerPage.gift')}</span>
+  <span className={`text-[11px] font-normal ${theme.muted}`}>{formatCompactNumber(giftCount)}</span>
 </button>
 
 </div>
 
       <div className="pt-5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-[18px] font-bold text-[#111827]">Hot comments</h3>
+          <h3 className={`text-[18px] font-bold ${theme.text}`}>{t('readerPage.hotComments')}</h3>
 
           <button
             type="button"
             onClick={onOpenComments}
-            className="flex items-center gap-1 text-[13px] font-normal text-[#98a2b3] active:scale-95"
+            className={`flex items-center gap-1 text-[13px] font-normal ${theme.muted} active:scale-95`}
           >
             <span>
-              {`View ${formatCompactNumber(commentCount)} ${commentCount === 1 ? 'comment' : 'comments'}`}
+              {t(commentCount === 1 ? 'readerPage.viewComment_one' : 'readerPage.viewComment_other', { count: formatCompactNumber(commentCount) })}
             </span>
             <i className="fa-solid fa-chevron-right text-[10px]" />
           </button>
@@ -1319,15 +2156,15 @@ function ReaderEndPanel({
             )}
 
             <span className="min-w-0 flex-1">
-              <span className="block text-[13px] font-bold text-[#98a2b3]">
+              <span className={`block text-[13px] font-bold ${theme.muted}`}>
                 {hotName}
               </span>
 
-              <span className="mt-1 line-clamp-3 block whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
+              <span className={`mt-1 line-clamp-3 block whitespace-pre-wrap break-words text-[14px] font-normal leading-6 ${theme.text}`}>
                 {hotComment.text}
               </span>
 
-              <span className="mt-2 flex items-center gap-5 text-[12px] font-normal text-[#98a2b3]">
+              <span className={`mt-2 flex items-center gap-5 text-[12px] font-normal ${theme.muted}`}>
                 <span className="flex items-center gap-1">
                   <i className="fa-regular fa-comment text-[13px]" />
                   {formatCompactNumber(replyCount)}
@@ -1345,14 +2182,14 @@ function ReaderEndPanel({
         <button
           type="button"
           onClick={onOpenComments}
-          className="flex w-full items-center gap-3 rounded-full border border-[#eef1f5] bg-white px-4 py-3 text-left active:scale-[0.995]"
+          className={`flex w-full items-center gap-3 rounded-full border ${theme.border} ${theme.card} px-4 py-3 text-left active:scale-[0.995]`}
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${theme.soft} ${theme.muted}`}>
             <i className="fa-regular fa-comment text-[15px]" />
           </span>
 
-          <span className="min-w-0 flex-1 text-[13px] font-normal text-[#98a2b3]">
-            Write a comment
+          <span className={`min-w-0 flex-1 text-[13px] font-normal ${theme.muted}`}>
+            {t('readerPage.writeComment')}
           </span>
         </button>
       </div>
@@ -1379,6 +2216,7 @@ function LockedEpisodeCard({
   onRewardedUnlock,
   inline = false,
 }) {
+  const { t } = useDisplayTranslation()
   const diamondBalance = Number(wallet?.diamond_balance || 0)
   const [showAutoHint, setShowAutoHint] = useState(false)
   const [activeTab, setActiveTab] = useState('instant')
@@ -1473,11 +2311,11 @@ const showWaitNotice = () => {
           loading="lazy"
           decoding="async"
         />
-        Premium
+        {t('readerPage.premium')}
       </span>
 
       <span className="min-w-0 flex-1 text-[12px] font-semibold leading-4 text-[#8D94A1]">
-        Enjoy 10% off every episode you unlock.
+        {t('readerPage.premiumDiscount')}
       </span>
 
       <i className="fa-solid fa-chevron-right text-[12px] text-[#9CA3AF]" />
@@ -1542,7 +2380,7 @@ const showWaitNotice = () => {
   </span>
 ) : null}
 
-<span>to unlock this Ep.</span>
+<span>{t('readerPage.unlockThisEpisode')}</span>
           </span>
         </button>
       )
@@ -1557,7 +2395,7 @@ const showWaitNotice = () => {
       >
         {discount > 0 ? (
           <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
-            {discount}% OFF
+            {t('readerPage.discountOff', { count: formatNumber(discount) })}
           </span>
         ) : null}
 
@@ -1569,7 +2407,7 @@ const showWaitNotice = () => {
               {formatNumber(originalPrice)}
             </span>
           ) : null}
-          <span>to unlock {requestedCount || 'all'} Eps.</span>
+          <span>{requestedCount > 0 ? t('readerPage.unlockEpisodes', { count: formatNumber(requestedCount) }) : t('readerPage.unlockAllEpisodes')}</span>
         </span>
       </button>
     )
@@ -1603,16 +2441,16 @@ const showWaitNotice = () => {
         <div className="w-full pb-[env(safe-area-inset-bottom)] md:max-w-[520px] md:pb-0">
           <button
             type="button"
-            onClick={() => window.alert('Coming soon')}
+            onClick={() => window.alert(t('readerPage.comingSoon'))}
             className="relative mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center overflow-visible rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 pl-5 pr-[150px] text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px] active:scale-[0.99]"
           >
             <div className="min-w-0 flex-1">
               <div className="truncate text-[15px] font-black italic leading-5 text-[#FFE36E]">
-                FIRST TOP-UP $10+ BONUS!
+                {t('readerPage.topUpBonus')}
               </div>
 
               <div className="mt-0.5 truncate text-[11.5px] font-bold leading-4 text-white/90">
-                1 Free Book Pass + 3 reading vouchers
+                {t('readerPage.topUpBonusDetail')}
               </div>
             </div>
 
@@ -1635,11 +2473,11 @@ const showWaitNotice = () => {
             <div className="border-b border-[#E5E7EB] px-4 pt-2">
               <div className="flex">
                 <AccessTab active={activeTab === 'instant'} onClick={() => setActiveTab('instant')}>
-                  Instant Access
+                  {t('readerPage.instantAccess')}
                 </AccessTab>
 
                 <AccessTab active={activeTab === 'free'} onClick={() => setActiveTab('free')}>
-                  Free Access
+                  {t('readerPage.freeAccess')}
                 </AccessTab>
               </div>
             </div>
@@ -1655,7 +2493,7 @@ const showWaitNotice = () => {
 
                 <div className="mt-4 flex items-center justify-between gap-3 px-5">
                   <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#9CA3AF]">
-                    <span>My Diamonds:</span>
+                    <span>{t('readerPage.myDiamonds')}</span>
                     <span className="font-black text-[#667085]">{formatNumber(diamondBalance)}</span>
                   </div>
 
@@ -1664,7 +2502,7 @@ const showWaitNotice = () => {
                       type="button"
                       onClick={() => setShowAutoHint((value) => !value)}
                       className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D6DAE2] bg-white text-[11px] font-black text-[#A0A6B0] shadow-sm active:scale-95"
-                      aria-label="Auto unlock info"
+                      aria-label={t('readerPage.autoUnlockInfo')}
                     >
                       ?
                     </button>
@@ -1675,7 +2513,7 @@ const showWaitNotice = () => {
                         onClick={() => setShowAutoHint(false)}
                         className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-bold leading-5 text-white shadow-xl"
                       >
-                        Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
+                        {t('readerPage.autoUnlockHelp')}
                       </button>
                     ) : null}
 
@@ -1685,7 +2523,7 @@ const showWaitNotice = () => {
                       className="flex items-center gap-2"
                     >
                       <span className="text-[12px] font-bold text-[#9CA3AF]">
-                        Auto unlock
+                        {t('readerPage.autoUnlock')}
                       </span>
 
                       <span className={`relative h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
@@ -1703,7 +2541,7 @@ const showWaitNotice = () => {
 
                 {unlocking ? (
                   <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
-                    Unlocking...
+                    {t('readerPage.unlocking')}
                   </div>
                 ) : null}
               </>
@@ -1711,7 +2549,7 @@ const showWaitNotice = () => {
        <div className="space-y-2.5 px-3 py-4">
          {waitNotice ? (
   <div className="fixed bottom-6 left-1/2 z-[120] -translate-x-1/2 rounded-full bg-[#111827] px-4 py-2 text-[11px] font-bold text-white shadow-xl">
-    Free unlocks are available 7 days after release.
+    {t('readerPage.freeUnlockWait')}
   </div>
 ) : null}
   {freeAccessView === 'wallet' ? (
@@ -1726,9 +2564,9 @@ const showWaitNotice = () => {
     decoding="async"
   />
 }
-        title={walletLoaded ? `Coins — ${formatNumber(coinBalance)} remaining` : 'Coins — Unable to load'}
-        subtitle={`Access lasts ${Number(coinAccess?.access_days || 7)} days.`}
-        buttonText={coinWaitRequired ? 'Available later' : coinCanAccess ? 'Access' : 'Not enough'}
+        title={walletLoaded ? t('readerPage.coinsRemaining', { count: formatNumber(coinBalance) }) : t('readerPage.coinsUnavailable')}
+        subtitle={t('readerPage.accessDays', { count: formatNumber(Number(coinAccess?.access_days || 7)) })}
+        buttonText={coinWaitRequired ? t('readerPage.availableLater') : coinCanAccess ? t('readerPage.access') : t('readerPage.notEnough')}
         disabled={unlocking || (!coinWaitRequired && !coinCanAccess)}
         onClick={coinWaitRequired ? showWaitNotice : onCoinUnlock}
       />
@@ -1743,9 +2581,9 @@ const showWaitNotice = () => {
     decoding="async"
   />
 }
-        title={walletLoaded ? `Vouchers — ${formatNumber(voucherBalance)} remaining` : 'Vouchers — Unable to load'}
-        subtitle="Permanent unlock for this episode."
-        buttonText={voucherWaitRequired ? 'Available later' : voucherCanAccess ? 'Access' : 'Not enough'}
+        title={walletLoaded ? t('readerPage.vouchersRemaining', { count: formatNumber(voucherBalance) }) : t('readerPage.vouchersUnavailable')}
+        subtitle={t('readerPage.permanentUnlockEpisode')}
+        buttonText={voucherWaitRequired ? t('readerPage.availableLater') : voucherCanAccess ? t('readerPage.access') : t('readerPage.notEnough')}
         disabled={unlocking || (!voucherWaitRequired && !voucherCanAccess)}
         onClick={voucherWaitRequired ? showWaitNotice : onVoucherUnlock}
       />
@@ -1755,7 +2593,7 @@ const showWaitNotice = () => {
         onClick={() => setFreeAccessView('more')}
         className="mx-auto flex items-center gap-1 px-2 pt-1 text-[12px] font-normal text-[#8D94A1] active:text-[#111827]"
       >
-        <span>More free methods</span>
+        <span>{t('readerPage.moreFreeMethods')}</span>
         <i className="fa-solid fa-chevron-right text-[10px]" />
       </button>
     </>
@@ -1764,9 +2602,9 @@ const showWaitNotice = () => {
       {rewardedAdsEnabled ? (
   <FreeAccessOption
     icon={<i className="fa-solid fa-play text-[15px] text-[#0B5CFF]" />}
-    title="Watch Ad to Unlock Episode"
-    subtitle={`Unlock this episode • ${adUsedToday}/${adDailyLimit} used today`}
-    buttonText={adRemainingToday <= 0 ? 'Limit reached' : 'Watch'}
+    title={t('readerPage.watchAdUnlock')}
+    subtitle={t('readerPage.adUsage', { used: formatNumber(adUsedToday), limit: formatNumber(adDailyLimit) })}
+    buttonText={adRemainingToday <= 0 ? t('readerPage.limitReached') : t('readerPage.watch')}
     disabled={unlocking || !adCanAccess}
     onClick={onRewardedUnlock}
   />
@@ -1774,9 +2612,9 @@ const showWaitNotice = () => {
 
       <FreeAccessOption
         icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
-        title="Story Card — Coming soon"
-        subtitle="Permanent unlock for same story only."
-        buttonText="Access"
+        title={t('readerPage.storyCardComing')}
+        subtitle={t('readerPage.sameStoryPermanent')}
+        buttonText={t('readerPage.access')}
         disabled
       />
 
@@ -1785,7 +2623,7 @@ const showWaitNotice = () => {
         onClick={() => setFreeAccessView('wallet')}
         className="mx-auto flex items-center gap-1 px-2 pt-1 text-[12px] font-normal text-[#8D94A1] active:text-[#111827]"
       >
-        <span>Coins & Vouchers</span>
+        <span>{t('readerPage.coinsVouchers')}</span>
         <i className="fa-solid fa-chevron-right text-[10px]" />
       </button>
     </>
@@ -1813,6 +2651,7 @@ function ContinuousLockedEpisodeCard({
   onUnlock,
   onRewardedUnlock,
 }) {
+  const { t } = useDisplayTranslation()
   const diamondBalance = Number(wallet?.diamond_balance || 0)
 const [diamondBoxIndex, setDiamondBoxIndex] = useState(0)
 const [showAutoHint, setShowAutoHint] = useState(false)
@@ -1912,7 +2751,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
   </span>
 ) : null}
 
-<span>to unlock this Ep.</span>
+<span>{t('readerPage.unlockThisEpisode')}</span>
 </span>
         </button>
       )
@@ -1927,7 +2766,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
       >
         {discount > 0 ? (
       <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
-  {discount}% OFF
+  {t('readerPage.discountOff', { count: formatNumber(discount) })}
 </span>
         ) : null}
 
@@ -1939,7 +2778,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
               {formatNumber(originalPrice)}
             </span>
           ) : null}
-          <span>to unlock {requestedCount || 'all'} Eps.</span>
+          <span>{requestedCount > 0 ? t('readerPage.unlockEpisodes', { count: formatNumber(requestedCount) }) : t('readerPage.unlockAllEpisodes')}</span>
         </span>
 
         
@@ -1963,7 +2802,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
         <div className="w-full pb-[env(safe-area-inset-bottom)] md:max-w-[520px] md:pb-0">
         <button
           type="button"
-          onClick={() => window.alert('Coming soon')}
+          onClick={() => window.alert(t('readerPage.comingSoon'))}
           className="mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 px-3 py-1 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px]"
         >
           <span className="-mb-0 -mt-3 -ml-1 flex h-[78px] w-[78px] shrink-0 items-end justify-center overflow-visible">
@@ -1981,12 +2820,12 @@ const [showAutoHint, setShowAutoHint] = useState(false)
 
           <div className="min-w-0 flex-1">
             <div className="truncate text-[16px] font-black italic leading-5 text-white">
-              Don’t Miss Out
+              {t('readerPage.dontMissOut')}
             </div>
 
             <div className="mt-0.5 flex items-baseline gap-1 leading-4">
-              <span className="text-[15px] font-black italic text-[#FFE36E]">330</span>
-              <span className="text-[11px] font-medium italic text-white/90">Diamonds Await!</span>
+              <span className="text-[15px] font-black italic text-[#FFE36E]">{formatNumber(330)}</span>
+              <span className="text-[11px] font-medium italic text-white/90">{t('readerPage.diamondsAwait')}</span>
             </div>
           </div>
 
@@ -1996,7 +2835,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
         <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)] md:rounded-[26px]">
           <div className="px-5 text-center">
             <h2 className="text-[16px] font-semibold text-[#4B5563]">
-  Continue reading?
+  {t('readerPage.continueReading')}
 </h2>
           </div>
 
@@ -2007,7 +2846,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
 
           <div className="mt-4 flex items-center justify-between gap-3 px-5">
   <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#9CA3AF]">
-    <span>My Diamonds:</span>
+    <span>{t('readerPage.myDiamonds')}</span>
     <span className="font-black text-[#667085]">{formatNumber(diamondBalance)}</span>
   </div>
 
@@ -2016,7 +2855,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
       type="button"
       onClick={() => setShowAutoHint((value) => !value)}
       className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D6DAE2] bg-white text-[11px] font-black text-[#A0A6B0] shadow-sm active:scale-95"
-      aria-label="Auto unlock info"
+      aria-label={t('readerPage.autoUnlockInfo')}
     >
       ?
     </button>
@@ -2027,7 +2866,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
         onClick={() => setShowAutoHint(false)}
         className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-bold leading-5 text-white shadow-xl"
       >
-        Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
+        {t('readerPage.autoUnlockHelp')}
       </button>
     ) : null}
 
@@ -2037,7 +2876,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
       className="flex items-center gap-2"
     >
       <span className="text-[12px] font-bold text-[#9CA3AF]">
-  Auto unlock
+  {t('readerPage.autoUnlock')}
 </span>
 
       <span className={`relative h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
@@ -2067,15 +2906,15 @@ const [showAutoHint, setShowAutoHint] = useState(false)
                   </span>
                   <span className="min-w-0">
                     <span className="block text-[13px] font-semibold text-[#111827]">
-                      Watch Ad to Unlock Episode
+                      {t('readerPage.watchAdUnlock')}
                     </span>
                     <span className="mt-0.5 block text-[11px] font-semibold text-[#667085]">
-                      {`Unlock this episode • ${adUsedToday}/${adDailyLimit} used today`}
+                      {t('readerPage.adUsage', { used: formatNumber(adUsedToday), limit: formatNumber(adDailyLimit) })}
                     </span>
                   </span>
                 </span>
                 <span className="shrink-0 rounded-full bg-[#111827] px-4 py-2 text-[11px] font-black text-white">
-                  {adRemainingToday <= 0 ? 'Limit reached' : 'Watch'}
+                  {adRemainingToday <= 0 ? t('readerPage.limitReached') : t('readerPage.watch')}
                 </span>
               </button>
             </div>
@@ -2083,7 +2922,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
 
           {unlocking ? (
             <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
-              Unlocking...
+              {t('readerPage.unlocking')}
             </div>
           ) : null}
         </section>
@@ -2137,7 +2976,8 @@ function ProgressLineIcon() {
   )
 }
 
-function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, onSubscribe, onClose }) {
+function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, onSubscribe, onClose, theme = READER_THEMES.white }) {
+  const { t } = useDisplayTranslation()
   const [expandedByUser, setExpandedByUser] = useState(false)
   const [actionState, setActionState] = useState('idle')
   const dismissTimerRef = useRef(null)
@@ -2214,12 +3054,12 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
   if (collapsed) {
     return (
       <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
-        <div className="pointer-events-auto ml-auto flex h-[62px] w-[calc(100vw-24px)] max-w-[430px] translate-x-[calc(100%-30px)] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] transition-transform duration-300 ease-out">
+        <div className={`pointer-events-auto ml-auto flex h-[62px] w-[calc(100vw-24px)] max-w-[430px] translate-x-[calc(100%-30px)] items-center gap-2 rounded-full ${theme.card} px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] transition-transform duration-300 ease-out`}>
           <button
             type="button"
             onClick={handleSubscribe}
             className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
-            aria-label="Show subscribe popup"
+            aria-label={t('readerPage.showSubscribePopup')}
           >
             <i className="fa-regular fa-heart text-[13px] text-[#98a2b3]" />
           </button>
@@ -2232,8 +3072,8 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
             decoding="async"
           />
 
-          <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#111827]">
-            Subscribe to follow new episodes
+          <div className={`min-w-0 flex-1 text-[13px] font-bold leading-4 ${theme.text}`}>
+            {t('readerPage.subscribeFollow')}
           </div>
 
           <button
@@ -2242,7 +3082,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
             className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#ff3b5f] px-4 text-[12px] font-bold text-white active:scale-95"
           >
             <i className="fa-regular fa-heart text-[14px]" />
-            <span>Subscribe</span>
+            <span>{t('readerPage.subscribe')}</span>
           </button>
         </div>
       </div>
@@ -2361,14 +3201,14 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
 
       <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
         <div
-          className={`pointer-events-auto mx-auto flex h-[62px] max-w-[430px] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] ${bannerMotionClass}`}
+          className={`pointer-events-auto mx-auto flex h-[62px] max-w-[430px] items-center gap-2 rounded-full ${theme.card} px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] ${bannerMotionClass}`}
         >
           <button
             type="button"
             onClick={handleClose}
             disabled={actionState !== 'idle'}
             className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95 disabled:pointer-events-none"
-            aria-label="Close subscribe popup"
+            aria-label={t('readerPage.closeSubscribePopup')}
           >
             <i className="fa-solid fa-xmark text-[13px]" />
           </button>
@@ -2381,10 +3221,10 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
             decoding="async"
           />
 
-          <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#111827]">
+          <div className={`min-w-0 flex-1 text-[13px] font-bold leading-4 ${theme.text}`}>
             {actionState === 'success'
-              ? 'You will see new episodes first'
-              : 'Subscribe to follow new episodes'}
+              ? t('readerPage.newEpisodesFirst')
+              : t('readerPage.subscribeFollow')}
           </div>
 
           <button
@@ -2400,7 +3240,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
             {actionState === 'success' ? (
               <>
                 <i className="fa-solid fa-check text-[13px]" />
-                <span>Subscribed</span>
+                <span>{t('readerPage.subscribed')}</span>
 
                 <span
                   className="shadowSubscribeHeart absolute left-1/2 top-1/2 text-[10px] text-[#ff3b5f]"
@@ -2453,7 +3293,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
             ) : (
               <>
                 <i className="fa-regular fa-heart text-[14px]" />
-                <span>Subscribe</span>
+                <span>{t('readerPage.subscribe')}</span>
               </>
             )}
           </button>
@@ -2482,6 +3322,7 @@ function ReaderBottomActionBar({
   onOpenComments,
   onOpenSettings,
 }) {
+  const { t } = useDisplayTranslation()
   const [progressOpen, setProgressOpen] = useState(false)
   const [sideSubscribeState, setSideSubscribeState] = useState('idle')
   const sideSubscribeTimerRef = useRef(null)
@@ -2544,17 +3385,17 @@ function ReaderBottomActionBar({
       onClick={onClick}
       className="flex h-[54px] flex-1 flex-col items-center justify-center gap-1 active:scale-95"
     >
-      <span className="relative flex h-5 items-center justify-center text-[#111827]">
+      <span className={`relative flex h-5 items-center justify-center ${theme.text}`}>
         {iconNode || <i className={`${icon} text-[16px]`} />}
 
         {badge ? (
-          <span className="absolute left-[20px] top-[-5px] text-[9px] font-normal text-[#9ca3af]">
+          <span className={`absolute left-[20px] top-[-5px] text-[9px] font-normal ${theme.muted}`}>
             {badge}
           </span>
         ) : null}
       </span>
 
-      <span className="text-[11px] font-normal leading-none text-[#8d94a1]">
+      <span className={`text-[11px] font-normal leading-none ${theme.muted}`}>
         {label}
       </span>
     </button>
@@ -2631,7 +3472,7 @@ function ReaderBottomActionBar({
   type="button"
   onClick={handleSubscribeClick}
   disabled={sideSubscribeState !== 'idle'}
-  aria-label="Subscribe to this story"
+  aria-label={t('readerPage.subscribeStory')}
   className={`pointer-events-auto absolute right-[-7px] z-[2] flex h-[58px] min-w-[84px] flex-col items-center justify-center overflow-visible rounded-l-[28px] rounded-r-none px-4 text-white shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition-colors duration-200 active:scale-95 disabled:pointer-events-none md:right-[-2px] ${
     sideSubscribeState === 'idle'
       ? 'bg-black/60'
@@ -2648,14 +3489,14 @@ function ReaderBottomActionBar({
     <>
       <i className="fa-regular fa-heart text-[20px]" />
       <span className="mt-1 text-[11px] font-normal leading-none">
-        Subscribe
+        {t('readerPage.subscribe')}
       </span>
     </>
   ) : (
     <>
       <i className="fa-solid fa-heart text-[20px]" />
       <span className="mt-1 text-[10px] font-semibold leading-none">
-        Subscribed
+        {t('readerPage.subscribed')}
       </span>
 
       <span
@@ -2699,17 +3540,17 @@ function ReaderBottomActionBar({
 
       ) : null}
 
-      <div className="pointer-events-auto mx-auto max-w-3xl bg-[#FFFFFF] md:rounded-[18px] md:border md:border-[#E5E7EB]">
+      <div className={`pointer-events-auto mx-auto max-w-3xl ${theme.card} md:rounded-[18px] md:border ${theme.border}`}>
         {progressOpen ? (
-          <div className="grid h-[48px] grid-cols-[58px_1fr_58px] items-center gap-3 border-b border-[#eef1f5] px-4">
+          <div className={`grid h-[48px] grid-cols-[58px_1fr_58px] items-center gap-3 border-b ${theme.border} px-4`}>
             {previousEpisode ? (
               <button
                 type="button"
                 onClick={onPrevious}
-                className="flex flex-col items-center justify-center gap-0.5 text-[#8d94a1] active:scale-95"
+                className={`flex flex-col items-center justify-center gap-0.5 ${theme.muted} active:scale-95`}
               >
-                <i className="fa-solid fa-chevron-left text-[17px] text-[#111827]" />
-                <span className="text-[10px] font-normal leading-none">Prev</span>
+                <i className={`fa-solid fa-chevron-left text-[17px] ${theme.text}`} />
+                <span className="text-[10px] font-normal leading-none">{t('readerPage.prev')}</span>
               </button>
             ) : (
               <div className="h-10 w-[58px]" />
@@ -2721,10 +3562,10 @@ function ReaderBottomActionBar({
               <button
                 type="button"
                 onClick={onNext}
-                className="flex flex-col items-center justify-center gap-0.5 text-[#8d94a1] active:scale-95"
+                className={`flex flex-col items-center justify-center gap-0.5 ${theme.muted} active:scale-95`}
               >
-                <i className="fa-solid fa-chevron-right text-[17px] text-[#111827]" />
-                <span className="text-[10px] font-normal leading-none">Next</span>
+                <i className={`fa-solid fa-chevron-right text-[17px] ${theme.text}`} />
+                <span className="text-[10px] font-normal leading-none">{t('readerPage.next')}</span>
               </button>
             ) : (
               <div className="h-10 w-[58px]" />
@@ -2735,20 +3576,20 @@ function ReaderBottomActionBar({
         <div className="grid grid-cols-4 px-1 py-1">
           <FooterTab
             icon="fa-solid fa-list-ul"
-            label="Episode"
+            label={t('readerPage.episode')}
             onClick={onOpenChapters}
           />
 
           <FooterTab
             icon="fa-regular fa-comment"
-            label="Comments"
+            label={t('readerPage.comments')}
             badge={commentBadge}
             onClick={onOpenComments}
           />
 
           <FooterTab
             iconNode={<SettingsLineIcon />}
-            label="Settings"
+            label={t('readerPage.settings')}
             onClick={onOpenSettings}
           />
 
@@ -2760,8 +3601,8 @@ function ReaderBottomActionBar({
                 <ProgressLineIcon />
               )
             }
-            label="Progress"
-            badge={`${safeProgress}%`}
+            label={t('readerPage.progress')}
+            badge={`${formatNumber(safeProgress)}%`}
             onClick={() => setProgressOpen((value) => !value)}
           />
         </div>
@@ -2770,33 +3611,33 @@ function ReaderBottomActionBar({
   )
 }
 
-function LoadingCard() {
+function LoadingCard({ theme = READER_THEMES.white }) {
   return (
     <section className="px-1 pb-10 pt-2">
       <div className="animate-pulse">
-        <div className="mb-7 border-b border-[#eef0f4] pb-6">
-          <div className="h-5 w-28 rounded-full bg-[#eef1f5]" />
-          <div className="mt-3 h-3 w-36 rounded-full bg-[#f3f4f6]" />
+        <div className={`mb-7 border-b ${theme.border} pb-6`}>
+          <div className={`h-5 w-28 rounded-full ${theme.soft}`} />
+          <div className={`mt-3 h-3 w-36 rounded-full ${theme.soft}`} />
         </div>
 
         <div className="space-y-4">
-          <div className="h-4 w-full rounded-full bg-[#eef1f5]" />
-          <div className="h-4 w-[92%] rounded-full bg-[#eef1f5]" />
-          <div className="h-4 w-[96%] rounded-full bg-[#eef1f5]" />
-          <div className="h-4 w-[78%] rounded-full bg-[#eef1f5]" />
+          <div className={`h-4 w-full rounded-full ${theme.soft}`} />
+          <div className={`h-4 w-[92%] rounded-full ${theme.soft}`} />
+          <div className={`h-4 w-[96%] rounded-full ${theme.soft}`} />
+          <div className={`h-4 w-[78%] rounded-full ${theme.soft}`} />
 
           <div className="h-3" />
 
-          <div className="h-4 w-full rounded-full bg-[#eef1f5]" />
-          <div className="h-4 w-[88%] rounded-full bg-[#eef1f5]" />
-          <div className="h-4 w-[94%] rounded-full bg-[#eef1f5]" />
-          <div className="h-4 w-[70%] rounded-full bg-[#eef1f5]" />
+          <div className={`h-4 w-full rounded-full ${theme.soft}`} />
+          <div className={`h-4 w-[88%] rounded-full ${theme.soft}`} />
+          <div className={`h-4 w-[94%] rounded-full ${theme.soft}`} />
+          <div className={`h-4 w-[70%] rounded-full ${theme.soft}`} />
 
           <div className="h-3" />
 
-          <div className="h-4 w-[98%] rounded-full bg-[#eef1f5]" />
-          <div className="h-4 w-[84%] rounded-full bg-[#eef1f5]" />
-          <div className="h-4 w-[91%] rounded-full bg-[#eef1f5]" />
+          <div className={`h-4 w-[98%] rounded-full ${theme.soft}`} />
+          <div className={`h-4 w-[84%] rounded-full ${theme.soft}`} />
+          <div className={`h-4 w-[91%] rounded-full ${theme.soft}`} />
         </div>
       </div>
     </section>
@@ -2804,7 +3645,8 @@ function LoadingCard() {
 }
 
 
-function AdultWarningModal({ open, onCancel, onContinue }) {
+function AdultWarningModal({ open, onCancel, onContinue, theme = READER_THEMES.white }) {
+  const { t } = useDisplayTranslation()
   if (!open) return null
 
   return (
@@ -2814,22 +3656,20 @@ function AdultWarningModal({ open, onCancel, onContinue }) {
       aria-modal="true"
       aria-labelledby="adult-warning-title"
     >
-      <div className="w-full max-w-[380px] rounded-[26px] bg-white px-6 pb-6 pt-7 text-center shadow-2xl">
+      <div className={`w-full max-w-[380px] rounded-[26px] ${theme.card} px-6 pb-6 pt-7 text-center shadow-2xl`}>
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f2] text-[#FE526E]">
           <i className="fa-solid fa-triangle-exclamation text-[26px]" />
         </div>
 
         <h2
           id="adult-warning-title"
-          className="mt-4 text-[20px] font-bold text-[#111827]"
+          className={`mt-4 text-[20px] font-bold ${theme.text}`}
         >
-          18+ Content Warning
+          {t('readerPage.adultWarningTitle')}
         </h2>
 
-        <p className="mt-3 text-[13px] font-normal leading-6 text-[#667085]">
-          This episode may contain mature themes, including violence, strong
-          language, sexual or suggestive content, or other sensitive material.
-          Please continue at your own discretion.
+        <p className={`mt-3 text-[13px] font-normal leading-6 ${theme.muted}`}>
+          {t('readerPage.adultWarningText')}
         </p>
 
         <div className="mt-6 flex flex-col gap-3">
@@ -2838,15 +3678,15 @@ function AdultWarningModal({ open, onCancel, onContinue }) {
             onClick={onContinue}
             className="h-12 w-full rounded-full bg-[#FE526E] text-[14px] font-medium text-white transition active:scale-[0.98]"
           >
-            Continue Reading
+            {t('readerPage.continueReadingButton')}
           </button>
 
           <button
             type="button"
             onClick={onCancel}
-            className="h-12 w-full rounded-full border border-[#e4e7ec] bg-white text-[14px] font-medium text-[#111827] transition active:scale-[0.98]"
+            className={`h-12 w-full rounded-full border ${theme.border} ${theme.card} text-[14px] font-medium ${theme.text} transition active:scale-[0.98]`}
           >
-            Go Back
+            {t('readerPage.goBack')}
           </button>
         </div>
       </div>
@@ -2855,6 +3695,7 @@ function AdultWarningModal({ open, onCancel, onContinue }) {
 }
 
 function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, storyId, navigate, theme }) {
+  const { t } = useDisplayTranslation()
   const [newestFirst, setNewestFirst] = useState(false)
   useEffect(() => {
   document.body.style.overflow = open ? 'hidden' : ''
@@ -2875,7 +3716,7 @@ function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, s
 
   const readEpisodeIds = getReviewReadEpisodes(storyId).map((id) => String(id))
   const cover = story?.cover_url || story?.thumbnail_url || story?.image_url || ''
-  const title = story?.title || story?.name || 'Untitled Story'
+  const title = story?.title || story?.name || t('readerPage.untitledStory')
   const authorName =
   story?.author_page?.page_name ||
   story?.authorPage?.page_name ||
@@ -2887,16 +3728,16 @@ function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, s
   const rawStatus = String(story?.status || story?.publication_status || '').toLowerCase()
   const statusText =
     rawStatus.includes('complete') || rawStatus.includes('completed')
-      ? 'Completed'
+      ? t('readerPage.completed')
       : rawStatus.includes('new')
-        ? 'New'
-        : 'Ongoing'
+        ? t('readerPage.new')
+        : t('readerPage.ongoing')
 
   return (
     <div className="fixed inset-0 z-[140]">
       <button
         type="button"
-        aria-label="Close episode list"
+        aria-label={t('readerPage.closeEpisodeList')}
         onClick={onClose}
         className="absolute inset-0 bg-black/35"
       />
@@ -2916,7 +3757,7 @@ function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, s
   decoding="async"
 />
             ) : (
-              <div className="h-[66px] w-[50px] shrink-0 rounded-[7px] bg-[#eef0f4]" />
+              <div className={`h-[66px] w-[50px] shrink-0 rounded-[7px] ${theme.soft}`} />
             )}
 
             <div className="min-w-0 flex-1">
@@ -2926,7 +3767,7 @@ function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, s
 
   {authorName ? (
     <p className={`mt-1 line-clamp-1 text-[11.5px] font-normal leading-5 ${theme.muted}`}>
-      by {authorName}
+      {t('readerPage.byAuthor', { author: authorName })}
     </p>
   ) : null}
 </div>
@@ -2934,16 +3775,16 @@ function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, s
 
           <div className={`flex h-14 items-center justify-between border-t ${theme.border} px-4`}>
             <div className={`text-[15px] font-semibold ${theme.text}`}>
-              {episodes.length} Episodes, {statusText}
+              {t('readerPage.episodesStatus', { count: formatNumber(episodes.length), status: statusText })}
             </div>
 
             <button
               type="button"
               onClick={() => setNewestFirst((current) => !current)}
               className="flex h-9 w-9 items-center justify-center active:scale-95"
-              aria-label="Reverse episode order"
+              aria-label={t('readerPage.reverseEpisodeOrder')}
             >
-              <img src="/assets/Icons/Revers.svg" alt="Reverse" className="h-4 w-4" />
+              <img src="/assets/Icons/Revers.svg" alt={t('readerPage.reverse')} className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -2961,7 +3802,7 @@ function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, s
               item.lock_type
             )
 
-const titleColor = active ? 'text-[#111827]' : 'text-[#b6bcc6]'
+const titleColor = active ? theme.text : theme.muted
 
             return (
               <button
@@ -2978,15 +3819,15 @@ const titleColor = active ? 'text-[#111827]' : 'text-[#b6bcc6]'
                   })
                 }}
                 className={`relative flex min-h-[64px] w-full items-center gap-3 px-5 text-left transition active:scale-[0.995] ${
-  active ? 'bg-[#f3f4f6]' : 'bg-transparent'
+  active ? theme.soft : 'bg-transparent'
 }`}
               >
                 <span className={`line-clamp-1 min-w-0 flex-1 text-[16px] font-semibold ${titleColor}`}>
-  {item.title || `Episode ${item.episode_number || ''}`}
+  {item.title || t('readerPage.episodeNumber', { number: formatNumber(item.episode_number || '') })}
 </span>
 
 {locked ? (
-  <i className="fa-solid fa-lock shrink-0 text-[12px] text-[#b6bcc6]" />
+  <i className={`fa-solid fa-lock shrink-0 text-[12px] ${theme.muted}`} />
 ) : null}
 
                
@@ -2999,10 +3840,10 @@ const titleColor = active ? 'text-[#111827]' : 'text-[#b6bcc6]'
   )
 }
 
-function SettingSection({ title, children }) {
+function SettingSection({ title, children, theme = READER_THEMES.white }) {
   return (
-    <section className="border-t border-[#f0eef6] px-2 py-3 first:border-t-0">
-      <h3 className="mb-3 text-[14px] font-bold text-[#111827]">{title}</h3>
+    <section className={`border-t ${theme.border} px-2 py-3 first:border-t-0`}>
+      <h3 className={`mb-3 text-[14px] font-bold ${theme.text}`}>{title}</h3>
       {children}
     </section>
   )
@@ -3022,7 +3863,8 @@ function ChoiceButton({ active, children, onClick, className = '' }) {
   )
 }
 
-function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
+function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect, theme = READER_THEMES.white }) {
+  const { t } = useDisplayTranslation()
   const [search, setSearch] = useState('')
 
   useEffect(() => {
@@ -3059,20 +3901,20 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
     <div className="fixed inset-0 z-[170]">
       <button
         type="button"
-        aria-label="Close font list"
+        aria-label={t('readerPage.closeFontList')}
         onClick={onClose}
         className="absolute inset-0 bg-black/35"
       />
 
-      <section className="absolute bottom-0 left-0 right-0 max-h-[82vh] overflow-hidden rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
-        <div className="shrink-0 bg-white px-4 pb-3 pt-4">
-          <div className="flex h-12 items-center rounded-full bg-[#f5f3fa] px-4">
-            <i className="fa-solid fa-magnifying-glass mr-3 text-[#98a2b3]" />
+      <section className={`absolute bottom-0 left-0 right-0 max-h-[82vh] overflow-hidden rounded-t-[30px] ${theme.card} shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]`}>
+        <div className={`shrink-0 ${theme.card} px-4 pb-3 pt-4`}>
+          <div className={`flex h-12 items-center rounded-full ${theme.soft} px-4`}>
+            <i className={`fa-solid fa-magnifying-glass mr-3 ${theme.muted}`} />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search Font"
-              className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none placeholder:text-[#98a2b3]"
+              placeholder={t('readerPage.searchFont')}
+              className={`min-w-0 flex-1 bg-transparent text-[14px] ${theme.text} outline-none placeholder:opacity-60`}
             />
           </div>
         </div>
@@ -3081,8 +3923,8 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
           {hasFonts ? (
             Object.entries(groups).map(([group, fonts]) => (
               <section key={group} className="mb-5 last:mb-0">
-                <h3 className="mb-2 text-[12px] font-black uppercase tracking-[0.08em] text-[#8d94a1]">
-                  {group}
+                <h3 className={`mb-2 text-[12px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>
+                  {group === 'Khmer Fonts' ? t('readerPage.khmerFonts') : group === 'Other Fonts' ? t('readerPage.otherFonts') : group}
                 </h3>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -3099,8 +3941,8 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
                         }}
                         className={`flex h-[76px] items-center justify-center rounded-[12px] px-3 text-center text-[14px] font-bold transition active:scale-[0.98] ${
                           active
-                            ? 'border-2 border-[#FE526E] bg-[#f7f7f9] text-[#FE526E]'
-                            : 'border border-transparent bg-[#f7f7f9] text-[#111827]'
+                            ? `border-2 border-[#FE526E] ${theme.soft} text-[#FE526E]`
+                            : `border border-transparent ${theme.soft} ${theme.text}`
                         }`}
                       >
                         <span
@@ -3119,8 +3961,8 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
               </section>
             ))
           ) : (
-            <div className="flex h-28 items-center justify-center text-[13px] font-semibold text-[#98a2b3]">
-              No fonts found
+            <div className={`flex h-28 items-center justify-center text-[13px] font-semibold ${theme.muted}`}>
+              {t('readerPage.noFonts')}
             </div>
           )}
         </div>
@@ -3129,30 +3971,31 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
   )
 }
 
-function ResetSettingsModal({ open, onCancel, onConfirm }) {
+function ResetSettingsModal({ open, onCancel, onConfirm, theme = READER_THEMES.white }) {
+  const { t } = useDisplayTranslation()
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[180] flex items-end justify-center bg-black/45 px-4 pb-4 sm:items-center sm:pb-0">
-      <button type="button" aria-label="Cancel reset" onClick={onCancel} className="absolute inset-0" />
+      <button type="button" aria-label={t('readerPage.cancelReset')} onClick={onCancel} className="absolute inset-0" />
 
-      <section className="relative w-full max-w-[430px] rounded-[30px] bg-white p-5 text-center shadow-2xl">
+      <section className={`relative w-full max-w-[430px] rounded-[30px] ${theme.card} p-5 text-center shadow-2xl`}>
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
           <i className="fa-solid fa-rotate-left text-[24px]" />
         </div>
 
-        <h2 className="mt-4 text-[20px] font-black text-[#111827]">Reset reading settings?</h2>
-        <p className="mt-2 text-[13px] font-semibold leading-6 text-[#667085]">
-          This will restore font size, font style, page color, brightness, line spacing, and auto scroll to default.
+        <h2 className={`mt-4 text-[20px] font-black ${theme.text}`}>{t('readerPage.resetTitle')}</h2>
+        <p className={`mt-2 text-[13px] font-semibold leading-6 ${theme.muted}`}>
+          {t('readerPage.resetDescription')}
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827]"
+            className={`h-12 rounded-full border ${theme.border} ${theme.card} text-[13px] font-extrabold ${theme.text}`}
           >
-            Cancel
+            {t('readerPage.cancel')}
           </button>
 
           <button
@@ -3160,7 +4003,7 @@ function ResetSettingsModal({ open, onCancel, onConfirm }) {
             onClick={onConfirm}
             className="h-12 rounded-full bg-[#e5484d] text-[13px] font-extrabold text-white"
           >
-            Reset
+            {t('readerPage.reset')}
           </button>
         </div>
       </section>
@@ -3173,7 +4016,9 @@ function ChatStoryReadingPreferences({
   setReadMode,
   autoTapSpeed,
   setAutoTapSpeed,
+  theme = READER_THEMES.white,
 }) {
+  const { t } = useDisplayTranslation()
   const selectedSpeed =
     CHAT_STORY_AUTO_TAP_SPEEDS[
       autoTapSpeed
@@ -3183,7 +4028,7 @@ function ChatStoryReadingPreferences({
     ]
 
   return (
-    <SettingSection title="Reading Preferences">
+    <SettingSection title={t('readerPage.readingPreferences')} theme={theme}>
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
@@ -3192,11 +4037,11 @@ function ChatStoryReadingPreferences({
           }
           className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
             readMode === 'manual'
-              ? 'bg-[#111827] text-white'
-              : 'bg-[#f5f3fa] text-[#111827]'
+              ? theme.button
+              : `${theme.soft} ${theme.text}`
           }`}
         >
-          Manual Tap
+          {t('readerPage.manualTap')}
         </button>
 
         <button
@@ -3206,34 +4051,34 @@ function ChatStoryReadingPreferences({
           }
           className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
             readMode === 'auto'
-              ? 'bg-[#111827] text-white'
-              : 'bg-[#f5f3fa] text-[#111827]'
+              ? theme.button
+              : `${theme.soft} ${theme.text}`
           }`}
         >
-          Auto Tap
+          {t('readerPage.autoTap')}
         </button>
       </div>
 
       {readMode === 'auto' ? (
-        <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
+        <div className={`mt-5 rounded-[22px] ${theme.soft} p-3`}>
           <div className="mb-3">
-            <h4 className="text-[13px] font-bold text-[#111827]">
-              Auto Tap Speed
+            <h4 className={`text-[13px] font-bold ${theme.text}`}>
+              {t('readerPage.autoTapSpeed')}
             </h4>
 
-            <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
-              Shows one message at a time automatically
+            <p className={`mt-0.5 text-[11px] font-bold ${theme.muted}`}>
+              {t('readerPage.autoTapHelp')}
             </p>
           </div>
 
-          <div className="mb-2 text-center text-[12px] font-black text-[#667085]">
-            {selectedSpeed.label}
+          <div className={`mb-2 text-center text-[12px] font-black ${theme.muted}`}>
+            {t(`readerPage.${['verySlow', 'slow', 'normal', 'fast', 'veryFast'][autoTapSpeed] || 'normal'}`)}
           </div>
 
           <div className="flex items-center gap-3">
             <img
               src="/assets/Icons/Turtle.svg"
-              alt="Slow"
+              alt={t('readerPage.slow')}
               className="h-6 w-6 shrink-0"
             />
 
@@ -3256,14 +4101,14 @@ function ChatStoryReadingPreferences({
 
             <img
               src="/assets/Icons/Rabbit.svg"
-              alt="Fast"
+              alt={t('readerPage.fast')}
               className="h-6 w-6 shrink-0"
             />
           </div>
         </div>
       ) : (
-        <div className="mt-5 rounded-[18px] bg-[#fafafe] px-4 py-4 text-[11px] font-medium leading-5 text-[#8d94a1]">
-          Tap the reading area to show one message at a time.
+        <div className={`mt-5 rounded-[18px] ${theme.soft} px-4 py-4 text-[11px] font-medium leading-5 ${theme.muted}`}>
+          {t('readerPage.manualTapHelp')}
         </div>
       )}
     </SettingSection>
@@ -3298,6 +4143,8 @@ function ReaderSettingsDrawer({
   onOpenFontList,
   onOpenReset,
 }) {
+  const { t } = useDisplayTranslation()
+  const readerTheme = READER_THEMES[themeName] || READER_THEMES.white
   const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
   const lineSpacingOrder = ['compact', 'normal', 'comfort']
   const lineSpacingValues = {
@@ -3358,24 +4205,24 @@ const handleDragEnd = () => {
 
   if (moreSettingsOpen) {
     return (
-      <div className="fixed inset-0 z-[146] bg-white">
-        <div className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-[#f0eef6] bg-white px-4">
+      <div className={`fixed inset-0 z-[146] ${readerTheme.page}`}>
+        <div className={`sticky top-0 z-10 flex h-14 items-center justify-between border-b ${readerTheme.border} ${readerTheme.card} px-4`}>
           <button
   type="button"
   onClick={() => setMoreSettingsOpen(false)}
-  className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
-  aria-label="Back to reader settings"
+  className={`flex h-10 w-10 items-center justify-center bg-transparent ${readerTheme.text} active:scale-95`}
+  aria-label={t('readerPage.backReaderSettings')}
 >
   <i className="fa-solid fa-chevron-left text-[14px]" />
 </button>
 
-          <h2 className="text-[15px] font-bold text-[#111827]">More Setting</h2>
+          <h2 className={`text-[15px] font-bold ${readerTheme.text}`}>{t('readerPage.moreSetting')}</h2>
 
           <button
   type="button"
   onClick={onClose}
-  className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
-  aria-label="Close reader settings"
+  className={`flex h-10 w-10 items-center justify-center bg-transparent ${readerTheme.text} active:scale-95`}
+  aria-label={t('readerPage.closeReaderSettings')}
 >
   <i className="fa-solid fa-xmark text-[15px]" />
 </button>
@@ -3388,9 +4235,10 @@ const handleDragEnd = () => {
               setReadMode={setChatStoryReadMode}
               autoTapSpeed={chatStoryAutoTapSpeed}
               setAutoTapSpeed={setChatStoryAutoTapSpeed}
+              theme={readerTheme}
             />
           ) : (
-            <SettingSection title="Reading Preferences">
+            <SettingSection title={t('readerPage.readingPreferences')} theme={readerTheme}>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -3400,11 +4248,11 @@ const handleDragEnd = () => {
                   }}
                   className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
                     readingMode === 'paging'
-                      ? 'bg-[#111827] text-white'
-                      : 'bg-[#f5f3fa] text-[#111827]'
+                      ? readerTheme.button
+                      : `${readerTheme.soft} ${readerTheme.text}`
                   }`}
                 >
-                  Paging
+                  {t('readerPage.paging')}
                 </button>
 
                 <button
@@ -3412,23 +4260,23 @@ const handleDragEnd = () => {
                   onClick={() => setReadingMode('scroll')}
                   className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
                     readingMode === 'scroll'
-                      ? 'bg-[#111827] text-white'
-                      : 'bg-[#f5f3fa] text-[#111827]'
+                      ? readerTheme.button
+                      : `${readerTheme.soft} ${readerTheme.text}`
                   }`}
                 >
-                  Scrolling
+                  {t('readerPage.scrolling')}
                 </button>
               </div>
 
               {readingMode === 'scroll' ? (
-                <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
+                <div className={`mt-5 rounded-[22px] ${readerTheme.soft} p-3`}>
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
-                      <h4 className="text-[13px] font-bold text-[#111827]">
-                        Auto Scroll
+                      <h4 className={`text-[13px] font-bold ${readerTheme.text}`}>
+                        {t('readerPage.autoScroll')}
                       </h4>
-                      <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
-                        Available only in Scrolling mode
+                      <p className={`mt-0.5 text-[11px] font-bold ${readerTheme.muted}`}>
+                        {t('readerPage.scrollingOnly')}
                       </p>
                     </div>
 
@@ -3441,19 +4289,19 @@ const handleDragEnd = () => {
                           : 'bg-[#111827] text-white'
                       }`}
                     >
-                      {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
+                      {autoScrollEnabled ? t('readerPage.turnOff') : t('readerPage.turnOn')}
                     </button>
                   </div>
 
                   <div>
-                    <div className="mb-2 flex items-center justify-center text-[12px] font-black text-[#667085]">
-                      {AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}
+                    <div className={`mb-2 flex items-center justify-center text-[12px] font-black ${readerTheme.muted}`}>
+                      {t(`readerPage.${['verySlow', 'slow', 'normal', 'fast', 'veryFast'][autoScrollSpeed] || 'slow'}`)}
                     </div>
 
                     <div className="flex items-center gap-3">
                       <img
                         src="/assets/Icons/Turtle.svg"
-                        alt="Slow"
+                        alt={t('readerPage.slow')}
                         className="h-6 w-6 shrink-0"
                       />
 
@@ -3471,7 +4319,7 @@ const handleDragEnd = () => {
 
                       <img
                         src="/assets/Icons/Rabbit.svg"
-                        alt="Fast"
+                        alt={t('readerPage.fast')}
                         className="h-6 w-6 shrink-0"
                       />
                     </div>
@@ -3487,7 +4335,7 @@ const handleDragEnd = () => {
               onClick={onOpenReset}
               className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-normal text-[#e5484d] active:scale-[0.99]"
             >
-              Reset Settings
+              {t('readerPage.resetSettings')}
             </button>
           </section>
         </div>
@@ -3499,13 +4347,13 @@ const handleDragEnd = () => {
     <div className="fixed inset-0 z-[145]">
       <button
         type="button"
-        aria-label="Close reader settings"
+        aria-label={t('readerPage.closeReaderSettings')}
         onClick={onClose}
         className="absolute inset-0 bg-black/35"
       />
 
      <section
-  className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]"
+  className={`absolute bottom-0 left-0 right-0 rounded-t-[30px] ${readerTheme.card} shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]`}
   onTouchStart={handleDragStart}
   onTouchMove={handleDragMove}
   onTouchEnd={handleDragEnd}
@@ -3515,9 +4363,9 @@ const handleDragEnd = () => {
 >
 
         <div className="px-3 pt-2 pb-6">
-          <SettingSection title="Brightness">
+          <SettingSection title={t('readerPage.brightness')} theme={readerTheme}>
             <div className="flex items-center gap-3">
-              <i className="fa-regular fa-sun text-[18px] text-[#111827]" />
+              <i className={`fa-regular fa-sun text-[18px] ${readerTheme.text}`} />
               <input
                 type="range"
                 min="60"
@@ -3527,67 +4375,67 @@ const handleDragEnd = () => {
                 onChange={(event) => setBrightness(Number(event.target.value))}
                 className="w-full accent-[#111827]"
               />
-              <span className="w-10 text-right text-[12px] font-extrabold text-[#667085]">{brightness}%</span>
+              <span className={`w-10 text-right text-[12px] font-extrabold ${readerTheme.muted}`}>{formatNumber(brightness)}%</span>
             </div>
           </SettingSection>
 
-          <SettingSection title="Font & Spacing">
+          <SettingSection title={t('readerPage.fontSpacing')} theme={readerTheme}>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-[20px] bg-[#fafafe] p-2.5">
-                <div className="mb-2 text-[11px] font-black text-[#8d94a1]">Font Size</div>
+              <div className={`rounded-[20px] ${readerTheme.soft} p-2.5`}>
+                <div className={`mb-2 text-[11px] font-black ${readerTheme.muted}`}>{t('readerPage.fontSize')}</div>
 
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                   <button
                     type="button"
                     onClick={decreaseFont}
                     disabled={fontSizeIndex <= 0}
-                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[13px] font-bold text-[#111827] active:scale-[0.98] disabled:opacity-40"
-                    aria-label="Decrease font size"
+                    className={`flex h-10 items-center justify-center rounded-[15px] ${readerTheme.card} text-[13px] font-bold ${readerTheme.text} active:scale-[0.98] disabled:opacity-40`}
+                    aria-label={t('readerPage.decreaseFontSize')}
                   >
                     A<sup className="-mt-2 text-[10px]">−</sup>
                   </button>
 
-                  <div className="min-w-[34px] text-center text-[12px] font-bold text-[#8d94a1]">
-  {fontSizePx}
+                  <div className={`min-w-[34px] text-center text-[12px] font-bold ${readerTheme.muted}`}>
+  {formatNumber(fontSizePx)}
 </div>
 
                   <button
                     type="button"
                     onClick={increaseFont}
                     disabled={fontSizeIndex >= FONT_SIZE_LEVELS.length - 1}
-                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[14px] font-black text-[#111827] active:scale-[0.98] disabled:opacity-40"
-                    aria-label="Increase font size"
+                    className={`flex h-10 items-center justify-center rounded-[15px] ${readerTheme.card} text-[14px] font-black ${readerTheme.text} active:scale-[0.98] disabled:opacity-40`}
+                    aria-label={t('readerPage.increaseFontSize')}
                   >
                     A<sup className="-mt-2 text-[10px]">+</sup>
                   </button>
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-[#fafafe] p-2.5">
-                <div className="mb-2 text-[11px] font-black text-[#8d94a1]">Line Spacing</div>
+              <div className={`rounded-[20px] ${readerTheme.soft} p-2.5`}>
+                <div className={`mb-2 text-[11px] font-black ${readerTheme.muted}`}>{t('readerPage.lineSpacing')}</div>
 
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                   <button
                     type="button"
                     onClick={decreaseLineSpacing}
                     disabled={lineSpacingIndex <= 0}
-                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[#111827] active:scale-[0.98] disabled:opacity-40"
-                    aria-label="Decrease line spacing"
+                    className={`flex h-10 items-center justify-center rounded-[15px] ${readerTheme.card} ${readerTheme.text} active:scale-[0.98] disabled:opacity-40`}
+                    aria-label={t('readerPage.decreaseLineSpacing')}
                   >
                     <i className="fa-solid fa-text-height text-[12px]" />
                    <i className="fa-solid fa-plus ml-1 text-[9px]" />
                   </button>
 
-                  <div className="min-w-[34px] text-center text-[12px] font-bold text-[#8d94a1]">
-  {lineSpacingValue}
+                  <div className={`min-w-[34px] text-center text-[12px] font-bold ${readerTheme.muted}`}>
+  {formatNumber(lineSpacingValue)}
 </div>
 
                   <button
                     type="button"
                     onClick={increaseLineSpacing}
                     disabled={lineSpacingIndex >= lineSpacingOrder.length - 1}
-                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[#111827] active:scale-[0.98] disabled:opacity-40"
-                    aria-label="Increase line spacing"
+                    className={`flex h-10 items-center justify-center rounded-[15px] ${readerTheme.card} ${readerTheme.text} active:scale-[0.98] disabled:opacity-40`}
+                    aria-label={t('readerPage.increaseLineSpacing')}
                   >
                     <i className="fa-solid fa-text-height text-[13px]" />
                     <i className="fa-solid fa-plus ml-1 text-[9px]" />
@@ -3597,7 +4445,7 @@ const handleDragEnd = () => {
             </div>
           </SettingSection>
 
-          <SettingSection title="Page Color">
+          <SettingSection title={t('readerPage.pageColor')} theme={readerTheme}>
 <div className="grid grid-cols-4 gap-2">
   {Object.entries(READER_THEMES).map(([key, item]) => (
     <button
@@ -3605,7 +4453,7 @@ const handleDragEnd = () => {
       type="button"
       onClick={() => setThemeName(key)}
       className="flex items-center justify-center rounded-[12px] bg-transparent p-0 active:scale-[0.98]"
-      aria-label={item.name}
+      aria-label={t(`readerPage.${key}`)}
     >
       <span
         className={`block h-9 w-full rounded-[12px] ${item.swatch} ${
@@ -3619,14 +4467,14 @@ const handleDragEnd = () => {
 </div>
           </SettingSection>
 
-          <SettingSection title="Font Style">
+          <SettingSection title={t('readerPage.fontStyle')} theme={readerTheme}>
             <button
               type="button"
               onClick={onOpenFontList}
-              className="flex h-14 w-full items-center justify-between rounded-[18px] bg-[#f5f3fa] px-4 text-left active:scale-[0.995]"
+              className={`flex h-14 w-full items-center justify-between rounded-[18px] ${readerTheme.soft} px-4 text-left active:scale-[0.995]`}
             >
               <span
-  className="line-clamp-1 text-[14px] font-bold text-[#111827]"
+  className={`line-clamp-1 text-[14px] font-bold ${readerTheme.text}`}
   style={{
     fontFamily: selectedFont.family,
     fontWeight: 700,
@@ -3634,7 +4482,7 @@ const handleDragEnd = () => {
 >
   {selectedFont.label}
 </span>
-              <i className="fa-solid fa-chevron-right text-[12px] text-[#8d94a1]" />
+              <i className={`fa-solid fa-chevron-right text-[12px] ${readerTheme.muted}`} />
             </button>
           </SettingSection>
 
@@ -3642,15 +4490,15 @@ const handleDragEnd = () => {
   <button
   type="button"
   onClick={() => setMoreSettingsOpen(true)}
-  className="text-[13px] font-normal text-[#8d94a1] active:scale-[0.98]"
+  className={`text-[13px] font-normal ${readerTheme.muted} active:scale-[0.98]`}
 >
-  More Setting
+  {t('readerPage.moreSetting')}
 </button>
 </section>
 
           {moreSettingsOpen ? (
             <>
-              <SettingSection title="Reading Preferences">
+              <SettingSection title={t('readerPage.readingPreferences')} theme={readerTheme}>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -3659,30 +4507,30 @@ const handleDragEnd = () => {
                   setAutoScrollEnabled(false)
                 }}
                 className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
-                  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                  readingMode === 'paging' ? readerTheme.button : `${readerTheme.soft} ${readerTheme.text}`
                 }`}
               >
-                Paging
+                {t('readerPage.paging')}
               </button>
 
               <button
                 type="button"
                 onClick={() => setReadingMode('scroll')}
                 className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
-                  readingMode === 'scroll' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                  readingMode === 'scroll' ? readerTheme.button : `${readerTheme.soft} ${readerTheme.text}`
                 }`}
               >
-                Scrolling
+                {t('readerPage.scrolling')}
               </button>
             </div>
 
             {readingMode === 'scroll' ? (
-              <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
+              <div className={`mt-5 rounded-[22px] ${readerTheme.soft} p-3`}>
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <h4 className="text-[13px] font-black text-[#111827]">Auto Scroll</h4>
-                    <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
-                      Available only in Scrolling mode
+                    <h4 className={`text-[13px] font-black ${readerTheme.text}`}>{t('readerPage.autoScroll')}</h4>
+                    <p className={`mt-0.5 text-[11px] font-bold ${readerTheme.muted}`}>
+                      {t('readerPage.scrollingOnly')}
                     </p>
                   </div>
 
@@ -3693,17 +4541,17 @@ const handleDragEnd = () => {
                       autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
                     }`}
                   >
-                    {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
+                    {autoScrollEnabled ? t('readerPage.turnOff') : t('readerPage.turnOn')}
                   </button>
                 </div>
 
                 <div>
-                  <div className="mb-2 flex items-center justify-center text-[12px] font-black text-[#667085]">
-  {AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}
+                  <div className={`mb-2 flex items-center justify-center text-[12px] font-black ${readerTheme.muted}`}>
+  {t(`readerPage.${['verySlow', 'slow', 'normal', 'fast', 'veryFast'][autoScrollSpeed] || 'slow'}`)}
 </div>
 
 <div className="flex items-center gap-3">
-  <img src="/assets/Icons/Turtle.svg" alt="Slow" className="h-6 w-6 shrink-0" />
+  <img src="/assets/Icons/Turtle.svg" alt={t('readerPage.slow')} className="h-6 w-6 shrink-0" />
 
   <input
     type="range"
@@ -3715,7 +4563,7 @@ const handleDragEnd = () => {
     className="w-full accent-[#111827]"
   />
 
-  <img src="/assets/Icons/Rabbit.svg" alt="Fast" className="h-6 w-6 shrink-0" />
+  <img src="/assets/Icons/Rabbit.svg" alt={t('readerPage.fast')} className="h-6 w-6 shrink-0" />
 </div>
                 </div>
               </div>
@@ -3728,7 +4576,7 @@ const handleDragEnd = () => {
               onClick={onOpenReset}
               className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-black text-[#e5484d] active:scale-[0.99]"
             >
-              Reset Settings
+              {t('readerPage.resetSettings')}
             </button>
           </section>
             </>
@@ -3745,6 +4593,7 @@ function WebcomicReadingMissionCoin({
   rewardAnimation,
   onClick,
 }) {
+  const { t } = useDisplayTranslation()
   if (!target && !rewardAnimation) return null
 
   const targetSeconds = Math.max(
@@ -3923,7 +4772,7 @@ function WebcomicReadingMissionCoin({
       <button
         type="button"
         onClick={onClick}
-        aria-label="Open Task Center"
+        aria-label={t('readerPage.openTaskCenter')}
         className={`fixed right-3 top-[74px] z-[92] flex h-[56px] w-[56px] items-center justify-center transition-all duration-300 active:scale-95 ${
           visible || showingReward
             ? 'pointer-events-auto translate-x-0 opacity-100'
@@ -3976,7 +4825,7 @@ function WebcomicReadingMissionCoin({
                 />
 
                 <span className="shadowReadingNumberDrop relative z-10 text-[17px] font-bold leading-none tracking-[-0.02em] text-white drop-shadow-[0_2px_2px_rgba(120,48,0,0.38)] [font-variant-numeric:tabular-nums]">
-                  {rewardAnimation.coins}
+                  {formatNumber(rewardAnimation.coins)}
                 </span>
               </span>
             </span>
@@ -4022,6 +4871,7 @@ function MangaEpisodeHeader({
   fontFamily,
   isFirstEpisode,
 }) {
+  const { t } = useDisplayTranslation()
   const [expanded, setExpanded] = useState(false)
   const genre = String(story?.main_genre || '').trim()
   const description = String(
@@ -4036,7 +4886,7 @@ function MangaEpisodeHeader({
             className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
             style={{ fontFamily }}
           >
-            {story?.title || 'Untitled Story'}
+            {story?.title || t('readerPage.untitledStory')}
           </h1>
 
           {genre ? (
@@ -4083,7 +4933,7 @@ function MangaEpisodeHeader({
           style={{ fontFamily }}
         >
           {episode?.title ||
-            `Episode ${episode?.episode_number || 1}`}
+            t('readerPage.episodeNumber', { number: formatNumber(episode?.episode_number || 1) })}
         </h2>
       </div>
     </div>
@@ -4109,6 +4959,7 @@ function ContinuousEpisodeBlock({
   showToBeContinued,
   isFirstEpisode,
 }) {
+  const { t } = useDisplayTranslation()
   const episode = entry?.episode || {}
   const isManga =
     String(
@@ -4174,7 +5025,7 @@ function ContinuousEpisodeBlock({
           <div className="text-center">
             <i className={`fa-solid fa-triangle-exclamation text-[26px] ${theme.muted}`} />
             <p className={`mt-3 text-[13px] font-semibold ${theme.muted}`}>
-              Confirm the adult-content warning to continue.
+              {t('readerPage.adultConfirmRequired')}
             </p>
           </div>
         </div>
@@ -4185,7 +5036,7 @@ function ContinuousEpisodeBlock({
           <div className="text-center">
             <i className={`fa-solid fa-play-circle text-[26px] ${theme.muted}`} />
             <p className={`mt-3 text-[13px] font-semibold ${theme.muted}`}>
-              Advertisement required before this episode.
+              {t('readerPage.adRequired')}
             </p>
           </div>
         </div>
@@ -4219,7 +5070,7 @@ function ContinuousEpisodeBlock({
           className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
           style={{ fontFamily }}
         >
-          {episode.title || 'Untitled Episode'}
+          {episode.title || t('readerPage.untitledEpisode')}
         </h1>
       </div>
     </div>
@@ -4266,6 +5117,7 @@ function ContinuousEpisodeBlock({
             commentSummary={commentSummary}
             onOpenComments={() => onOpenComments(episode)}
             onOpenGift={onOpenGift}
+            theme={theme}
           />
         </>
       )}
@@ -4279,6 +5131,7 @@ function ContinuousEpisodeBlock({
 }
 
 export default function ReaderPage() {
+  const { t } = useDisplayTranslation()
   const SHOW_READER_COVER = false
   const SHOW_READER_INFO = false
   const navigate = useNavigate()
@@ -4957,7 +5810,7 @@ async function loadContinuousEpisode(targetEpisode) {
   }
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load episode')
+    throw new Error(data.message || t('readerPage.failedLoadEpisode'))
   }
 
   const gate = await loadReaderAdStatus(targetId).catch(() => ({
@@ -5065,7 +5918,7 @@ useEffect(() => {
       if (!isUsableRouteId(storyId) || !isUsableRouteId(routeEpisodeId)) {
         setLoading(false)
         setReaderGateReady(true)
-        setMessage('Invalid reading link. Please open the episode from its story page.')
+        setMessage(t('readerPage.invalidReadingLink'))
         return
       }
 
@@ -5102,7 +5955,7 @@ if (episodeData.code === 'ADULT_RESTRICTED' || episodesData.code === 'ADULT_REST
 }
 
 if (!episodesResponse.ok || episodesData.ok === false) {
-          throw new Error(episodesData.message || 'Episode list not found')
+          throw new Error(episodesData.message || t('readerPage.episodeListNotFound'))
         }
 
         const nextEpisodes = episodesData.episodes || []
@@ -5146,7 +5999,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         }
 
         if (!episodeResponse.ok || episodeData.ok === false) {
-          throw new Error(episodeData.message || 'Episode not found')
+          throw new Error(episodeData.message || t('readerPage.episodeNotFound'))
         }
 
         const nextReaderAdStatus = await loadReaderAdStatus(
@@ -5195,8 +6048,8 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
         setMessage(
           error.message === 'Failed to fetch'
-            ? 'Cannot connect to server. Please try again later.'
-            : error.message || 'Failed to load episode'
+            ? t('readerPage.cannotConnectServer')
+            : error.message || t('readerPage.failedLoadEpisode')
         )
       } finally {
         if (!ignore) setLoading(false)
@@ -5877,7 +6730,7 @@ const handleReaderCopyLink = async () => {
   try {
     await navigator.clipboard.writeText(link)
   } catch {
-    window.prompt('Copy this link:', link)
+    window.prompt(t('readerPage.copyThisLink'), link)
   }
 
   setReaderMoreOpen(false)
@@ -5928,7 +6781,7 @@ async function loadLockedUnlockStatus(
 
   if (!response.ok || data.ok === false) {
     throw new Error(
-      data.message || 'Failed to check unlock status'
+      data.message || t('readerPage.unlockStatusFailed')
     )
   }
 
@@ -5965,7 +6818,7 @@ async function handleLockedCoinUnlock(
   const price = Number(targetCoinAccess?.amount || 0)
 
   if (coinBalance < price) {
-    setMessage('Not enough Coins.')
+    setMessage(t('readerPage.notEnoughCoins'))
     return
   }
 
@@ -5988,7 +6841,7 @@ async function handleLockedCoinUnlock(
     if (!response.ok || data.ok === false) {
       throw new Error(
         data.message ||
-          'Failed to unlock episode with Coins'
+          t('readerPage.unlockCoinsFailed')
       )
     }
 
@@ -6001,9 +6854,9 @@ async function handleLockedCoinUnlock(
   } catch (error) {
     setMessage(
       error.message === 'Failed to fetch'
-        ? 'Cannot connect to backend.'
+        ? t('readerPage.cannotConnectBackend')
         : error.message ||
-            'Failed to unlock episode with Coins'
+            t('readerPage.unlockCoinsFailed')
     )
   } finally {
     setUnlockingEpisode(false)
@@ -6023,7 +6876,7 @@ async function handleLockedVoucherUnlock(
   const price = Number(targetVoucherAccess?.amount || 0)
 
   if (voucherBalance < price) {
-    setMessage('Not enough Vouchers.')
+    setMessage(t('readerPage.notEnoughVouchers'))
     return
   }
 
@@ -6046,7 +6899,7 @@ async function handleLockedVoucherUnlock(
     if (!response.ok || data.ok === false) {
       throw new Error(
         data.message ||
-          'Failed to unlock episode with Voucher'
+          t('readerPage.unlockVouchersFailed')
       )
     }
 
@@ -6059,9 +6912,9 @@ async function handleLockedVoucherUnlock(
   } catch (error) {
     setMessage(
       error.message === 'Failed to fetch'
-        ? 'Cannot connect to backend.'
+        ? t('readerPage.cannotConnectBackend')
         : error.message ||
-            'Failed to unlock episode with Voucher'
+            t('readerPage.unlockVouchersFailed')
     )
   } finally {
     setUnlockingEpisode(false)
@@ -6103,9 +6956,9 @@ async function handleLockedRewardedUnlock(
 
     setMessage(
       error?.code === 'REWARDED_AD_CANCELLED'
-        ? 'Ad closed before completion. This episode is still locked.'
+        ? t('readerPage.adClosedIncomplete')
         : error?.message ||
-            'Rewarded ad is unavailable right now.'
+            t('readerPage.rewardedUnavailable')
     )
   } finally {
     setUnlockingEpisode(false)
@@ -6166,7 +7019,7 @@ async function handleLockedDiamondUnlock(
       }
 
       throw new Error(
-        data.message || 'Failed to unlock episode'
+        data.message || t('readerPage.unlockFailed')
       )
     }
 
@@ -6179,9 +7032,9 @@ async function handleLockedDiamondUnlock(
   } catch (error) {
     setMessage(
       error.message === 'Failed to fetch'
-        ? 'Cannot connect to backend.'
+        ? t('readerPage.cannotConnectBackend')
         : error.message ||
-            'Failed to unlock episode'
+            t('readerPage.unlockFailed')
     )
   } finally {
     setUnlockingEpisode(false)
@@ -6358,7 +7211,7 @@ autoScrollEnabled ? (
           className="fixed bottom-5 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#111827] px-5 py-3 text-[12px] font-black text-white shadow-2xl active:scale-95"
         >
           <i className="fa-solid fa-pause text-[11px]" />
-          Pause Auto Scroll
+          {t('readerPage.pauseAutoScroll')}
         </button>
       ) : null}
 
@@ -6373,6 +7226,7 @@ autoScrollEnabled ? (
 
       <AdultWarningModal
         open={adultWarningOpen}
+        theme={theme}
         onCancel={() => navigate(`/story/${storyId}`, { replace: true })}
         onContinue={() => {
           adultConsentGrantedRef.current = true
@@ -6384,12 +7238,14 @@ autoScrollEnabled ? (
 
       <ResetSettingsModal
         open={resetOpen}
+        theme={theme}
         onCancel={() => setResetOpen(false)}
         onConfirm={handleResetSettings}
       />
 
       <FontSelectDrawer
         open={fontSelectOpen}
+        theme={theme}
         onClose={() => setFontSelectOpen(false)}
         selectedFontKey={fontKey}
         onSelect={setFontKey}
@@ -6484,14 +7340,14 @@ autoScrollEnabled ? (
   open={echoShareOpen}
   sourceType="episode"
   sourceId={episode?.id || episodeId}
-  sourceName={story?.title || 'Story'}
+  sourceName={story?.title || t('readerPage.untitledStory')}
   sourceAvatarUrl={
     story?.author_page?.avatar_url ||
     story?.author?.avatar_url ||
     story?.cover_url ||
     ''
   }
-  sourceContent={episode?.title || 'Episode'}
+  sourceContent={episode?.title || t('readerPage.untitledEpisode')}
   sourceImageUrl={
     episode?.cover_url ||
     story?.landscape_thumbnail_url ||
@@ -6520,7 +7376,7 @@ autoScrollEnabled ? (
   title={
     activeCommentsEpisode?.title ||
     story?.title ||
-    'Comments'
+    t('readerPage.comments')
   }
   onClose={() => {
     setCommentsOpen(false)
@@ -6567,6 +7423,7 @@ autoScrollEnabled ? (
 
 <ScrollSubscribePopup
   visible={scrollSubscribePopupVisible}
+  theme={theme}
   storyId={storyId}
   readingProgress={readingProgress}
   subscribed={subscribed}
@@ -6615,13 +7472,13 @@ autoScrollEnabled ? (
   className={`${isChatStory || readerHeaderVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b px-4 py-3 transition-transform duration-300 ease-out ${
     lockedHeaderActive
   ? 'border-[#111111] bg-[#111111]'
-  : 'border-[#F2F2F2] bg-[#FFFFFF]'
+  : `${theme.border} ${theme.card}`
   }`}
 >
   <div className="mx-auto flex max-w-3xl items-center justify-between">
     <ReaderIconButton
       icon="fa-solid fa-chevron-left"
-      label="Back to story"
+      label={t('readerPage.backToStory')}
       onClick={() => {
   const returnTo = location.state?.returnTo
 
@@ -6639,7 +7496,7 @@ autoScrollEnabled ? (
 
 navigate(`/story/${storyId}`, { replace: true })
 }}
-className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
+className={lockedHeaderActive ? '!text-white' : theme.text}
     />
 
     <div className="min-w-0 flex-1 px-3 text-center">
@@ -6647,13 +7504,13 @@ className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
     <h1 className="line-clamp-1 text-[14.5px] font-extrabold text-white">
       {continuousLockedEntry?.episode?.title ||
         episode?.title ||
-        'Untitled Episode'}
+        t('readerPage.untitledEpisode')}
     </h1>
   ) : (
-    <h1 className="line-clamp-1 text-[14.5px] font-extrabold text-[#111827]">
+    <h1 className={`line-clamp-1 text-[14.5px] font-extrabold ${theme.text}`}>
       {isChatStory
-  ? episode?.title || 'Untitled Episode'
-  : story?.title || 'Reader'}
+  ? episode?.title || t('readerPage.untitledEpisode')
+  : story?.title || t('readerPage.reader')}
     </h1>
   )}
 </div>
@@ -6665,16 +7522,16 @@ className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
         <>
           <ReaderIconButton
             icon="fa-solid fa-gear"
-            label="Reader settings"
+            label={t('readerPage.readerSettings')}
             onClick={() => setSettingsOpen(true)}
-            className="text-[#111827]"
+            className={theme.text}
           />
 
           <ReaderIconButton
   icon="fa-solid fa-list-ul"
-  label="Episode list"
+  label={t('readerPage.episodeList')}
   onClick={() => setEpisodeListOpen(true)}
-  className="text-[#111827]"
+  className={theme.text}
 />
         </>
       ) : null}
@@ -6694,38 +7551,38 @@ className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
       <div className="relative">
         <ReaderIconButton
           icon="fa-solid fa-ellipsis-vertical"
-          label="More options"
+          label={t('readerPage.moreOptions')}
           onClick={() => setReaderMoreOpen((value) => !value)}
-          className="text-[#111827]"
+          className={theme.text}
         />
 
         {readerMoreOpen ? (
-          <div className="absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
+          <div className={`absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border ${theme.border} ${theme.card} shadow-[0_12px_30px_rgba(17,24,39,0.16)]`}>
             <button
               type="button"
               onClick={handleReaderReport}
-              className="flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f3f4f6]"
+              className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
             >
-              <i className="fa-regular fa-flag w-4 text-center text-[14px] text-[#667085]" />
-              <span>Report</span>
+              <i className={`fa-regular fa-flag w-4 text-center text-[14px] ${theme.muted}`} />
+              <span>{t('readerPage.report')}</span>
             </button>
 
             <button
               type="button"
               onClick={handleReaderCopyLink}
-              className="flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f3f4f6]"
+              className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
             >
-              <i className="fa-solid fa-link w-4 text-center text-[14px] text-[#667085]" />
-              <span>Copy link</span>
+              <i className={`fa-solid fa-link w-4 text-center text-[14px] ${theme.muted}`} />
+              <span>{t('readerPage.copyLink')}</span>
             </button>
 
             <button
               type="button"
               onClick={handleReaderEcho}
-              className="flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f3f4f6]"
+              className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
             >
-              <i className="fa-solid fa-rotate w-4 text-center text-[14px] text-[#667085]" />
-              <span>Echo</span>
+              <i className={`fa-solid fa-rotate w-4 text-center text-[14px] ${theme.muted}`} />
+              <span>{t('readerPage.echo')}</span>
             </button>
           </div>
         ) : null}
@@ -6742,7 +7599,7 @@ className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
   onClick={isChatStory ? undefined : handleReaderDoubleTap}
   className={`mx-auto max-w-3xl ${theme.card} px-0 pb-[92px] pt-[50px] sm:px-4`}
 >
-        {loading ? <LoadingCard /> : null}
+        {loading ? <LoadingCard theme={theme} /> : null}
 
         {message ? (
           <section className="rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
@@ -6752,7 +7609,6 @@ className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
 
         {!loading && showFullLockedEpisode ? (
   <LockedEpisodeCard
-  theme={theme}
   story={story}
   episode={episode}
   wallet={unlockWallet}
@@ -6877,6 +7733,7 @@ adultAccepted &&
             setCommentsOpen(true)
           }}
           onOpenGift={() => setGiftPopupOpen(true)}
+          theme={theme}
         />
       </>
     ) : null}
@@ -6952,7 +7809,7 @@ adultAccepted &&
                     </div>
 
                     <h2 className="text-[24px] font-extrabold leading-8 text-white sm:text-[30px] sm:leading-10">
-                      {episode.title || 'Untitled Episode'}
+                      {episode.title || t('readerPage.untitledEpisode')}
                     </h2>
 
                     {story?.title ? (
@@ -6980,7 +7837,7 @@ adultAccepted &&
                     </div>
 
                     <h2 className={`text-[26px] font-extrabold leading-10 ${theme.text}`}>
-                      {episode.title || 'Untitled Episode'}
+                      {episode.title || t('readerPage.untitledEpisode')}
                     </h2>
 
                     {story?.title ? (
@@ -7020,7 +7877,7 @@ adultAccepted &&
        className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
     style={{ fontFamily: activeFont.family }}
   >
-    {episode.title || 'Untitled Episode'}
+    {episode.title || t('readerPage.untitledEpisode')}
   </h1>
 </div>
 
@@ -7075,6 +7932,7 @@ adultAccepted &&
                     setCommentsOpen(true)
                   }}
                   onOpenGift={() => setGiftPopupOpen(true)}
+                  theme={theme}
                 />
               </>
             ) : null}
