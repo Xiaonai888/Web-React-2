@@ -258,8 +258,21 @@ function formatNextWednesdayLabel(date, language) {
   ).format(date)
 }
 
-function pad(value) {
-  return String(value).padStart(2, '0')
+function formatDisplayNumber(value, language, options) {
+  const locale = DISPLAY_LOCALES[language] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale, options).format(Number(value || 0))
+}
+
+function formatCountdownNumber(value, language) {
+  return formatDisplayNumber(value, language, {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  })
+}
+
+function formatDisplayPercent(value, language) {
+  const locale = DISPLAY_LOCALES[language] || DISPLAY_LOCALES.en
+  return new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(value)
 }
 
 function InfoCard({
@@ -446,7 +459,7 @@ export default function WriterWednesdayEventPage() {
 
             <div className="mt-4 flex items-center justify-center gap-2 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-3 py-4">
               <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[var(--shadow-text-primary)]">
-                {pad(displayHours)}
+                {formatCountdownNumber(displayHours, language)}
               </span>
 
               <span className="pb-1 text-[27px] font-black text-[#A78BFA]">
@@ -454,9 +467,7 @@ export default function WriterWednesdayEventPage() {
               </span>
 
               <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[var(--shadow-text-primary)]">
-                {pad(
-                  countdown.minutes
-                )}
+                {formatCountdownNumber(countdown.minutes, language)}
               </span>
 
               <span className="pb-1 text-[27px] font-black text-[#A78BFA]">
@@ -464,9 +475,7 @@ export default function WriterWednesdayEventPage() {
               </span>
 
               <span className="min-w-[58px] text-center text-[36px] font-black tabular-nums tracking-[-0.05em] text-[var(--shadow-text-primary)]">
-                {pad(
-                  countdown.seconds
-                )}
+                {formatCountdownNumber(countdown.seconds, language)}
               </span>
             </div>
 
@@ -494,7 +503,7 @@ export default function WriterWednesdayEventPage() {
           <div className="mt-4 grid grid-cols-3 gap-2">
             <InfoCard
               icon="fa-percent"
-              value="70%"
+              value={formatDisplayPercent(0.7, language)}
               label={t('writerWednesdayEventPage.authorShare')}
             />
             <InfoCard
@@ -518,7 +527,7 @@ export default function WriterWednesdayEventPage() {
           <div className="mt-4 space-y-3">
             <div className="flex gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300">
-                1
+                {formatDisplayNumber(1, language)}
               </div>
               <div>
                 <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">
@@ -532,7 +541,7 @@ export default function WriterWednesdayEventPage() {
 
             <div className="flex gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300">
-                2
+                {formatDisplayNumber(2, language)}
               </div>
               <div>
                 <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">
@@ -546,7 +555,7 @@ export default function WriterWednesdayEventPage() {
 
             <div className="flex gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-[12px] font-black text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300">
-                3
+                {formatDisplayNumber(3, language)}
               </div>
               <div>
                 <div className="text-[13px] font-black text-[var(--shadow-text-primary)]">
