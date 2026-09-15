@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
   ArrowLeft,
@@ -437,6 +437,20 @@ const SORT_OPTIONS = [
 
 const SAVED_POST_PAGE_SIZE = 30
 
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || 'en-US'
+  return new Intl.NumberFormat(locale).format(number)
+}
+
 function getCollectionDisplayName(collection, t) {
   if (collection?.system_key === 'all') return t('savedPostsPage.allSaved')
   if (collection?.system_key === 'favorites') return t('savedPostsPage.favorites')
@@ -616,7 +630,7 @@ function CollectionCard({ collection, active, onSelect, onMenu }) {
         </div>
 
         <div className="mt-0.5 text-[9.5px] font-medium text-[#777f8d] dark:text-white/45">
-          {Number(collection.item_count || 0)}{' '}
+          {formatDisplayNumber(collection.item_count)}{' '}
           {t(`savedPostsPage.${Number(collection.item_count || 0) === 1 ? 'post' : 'posts'}`)}
         </div>
 
@@ -1020,7 +1034,7 @@ export default function SavedPostsPage() {
       {t('savedPostsPage.savedPosts')}
     </h1>
     <p className="mt-0.5 text-[11px] text-[#8d94a1] dark:text-white/40">
-       {t(`savedPostsPage.${total === 1 ? 'savedCountOne' : 'savedCountMany'}`, { count: total })}
+       {t(`savedPostsPage.${total === 1 ? 'savedCountOne' : 'savedCountMany'}`, { count: formatDisplayNumber(total) })}
     </p>
   </div>
 </div>
@@ -1125,7 +1139,7 @@ export default function SavedPostsPage() {
               {getCollectionDisplayName(collectionCards.find((collection) => collection.id === selectedCollectionId), t)}
             </div>
             {!loading ? (
-              <div className="text-[10.5px] font-semibold text-[#9aa1ad] dark:text-white/35">{t('savedPostsPage.total', { count: total })}</div>
+              <div className="text-[10.5px] font-semibold text-[#9aa1ad] dark:text-white/35">{t('savedPostsPage.total', { count: formatDisplayNumber(total) })}</div>
             ) : null}
           </div>
 
