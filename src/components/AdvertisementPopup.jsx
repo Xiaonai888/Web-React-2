@@ -178,7 +178,7 @@ export default function AdvertisementPopup({
       const debug = getSearchFlag('addebug') || getSearchFlag('adtest')
 
       try {
-        if (advertisementOverride?.image_url) {
+        if (advertisementOverride?.image_url && placement !== 'freeUnlock') {
           if (!shouldShowByFrequency(advertisementOverride)) {
             finishAd()
             return
