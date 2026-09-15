@@ -22,7 +22,7 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../utils/homeDataCache'
-import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import GoogleAdBanner from '../components/ads/GoogleAdBanner'
 
@@ -274,6 +274,20 @@ const SHORTCUT_LABEL_KEYS = {
   Tasks: 'tasks',
   Ranking: 'ranking',
   Event: 'event',
+}
+
+const DISPLAY_LOCALES = {
+  km: 'km-KH',
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+}
+
+function formatDisplayNumber(value) {
+  const number = Number(value || 0)
+  const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || 'en-US'
+  return new Intl.NumberFormat(locale).format(number)
 }
 
 function getSlideBadge(slide) {
@@ -1052,7 +1066,7 @@ useEffect(() => {
 
     {notificationUnreadCount > 0 ? (
       <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-medium leading-none text-[#111827] shadow-sm">
-        {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+        {notificationUnreadCount > 99 ? `${formatDisplayNumber(99)}+` : formatDisplayNumber(notificationUnreadCount)}
       </span>
     ) : null}
   </button>
