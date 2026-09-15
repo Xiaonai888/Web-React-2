@@ -2,7 +2,7 @@
 
 @font-face {
   font-family: 'Khmer OS Fasthand';
-  src: url('/fonts/KhmerOSFasthand.ttf') format('truetype');
+  src: url('/fonts/KhmerOSfasthand.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -10,7 +10,7 @@
 
 @font-face {
   font-family: 'Khmer OS Content';
-  src: url('/fonts/KhmerOSContent.ttf') format('truetype');
+  src: url('/fonts/KhmerOScontent.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -18,7 +18,7 @@
 
 @font-face {
   font-family: 'Khmer OS Battambang';
-  src: url('/fonts/KhmerOSBattambang.ttf') format('truetype');
+  src: url('/fonts/KhmerOSbattambang.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
