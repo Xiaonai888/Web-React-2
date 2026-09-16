@@ -3054,7 +3054,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
   if (collapsed) {
     return (
       <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
-        <div className={`pointer-events-auto ml-auto flex h-[62px] w-[calc(100vw-24px)] max-w-[430px] translate-x-[calc(100%-30px)] items-center gap-2 rounded-full ${theme.card} px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] transition-transform duration-300 ease-out`}>
+        <div className="pointer-events-auto ml-auto flex h-[62px] w-[calc(100vw-24px)] max-w-[430px] translate-x-[calc(100%-30px)] items-center gap-2 rounded-full bg-[#FFFFFF] px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] transition-transform duration-300 ease-out">
           <button
             type="button"
             onClick={handleSubscribe}
@@ -3072,7 +3072,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
             decoding="async"
           />
 
-          <div className={`min-w-0 flex-1 text-[13px] font-bold leading-4 ${theme.text}`}>
+          <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#24201b]">
             {t('readerPage.subscribeFollow')}
           </div>
 
@@ -3201,7 +3201,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
 
       <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
         <div
-          className={`pointer-events-auto mx-auto flex h-[62px] max-w-[430px] items-center gap-2 rounded-full ${theme.card} px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] ${bannerMotionClass}`}
+          className={`pointer-events-auto mx-auto flex h-[62px] max-w-[430px] items-center gap-2 rounded-full bg-[#FFFFFF] px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] ${bannerMotionClass}`}
         >
           <button
             type="button"
@@ -3221,7 +3221,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
             decoding="async"
           />
 
-          <div className={`min-w-0 flex-1 text-[13px] font-bold leading-4 ${theme.text}`}>
+          <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#24201b]">
             {actionState === 'success'
               ? t('readerPage.newEpisodesFirst')
               : t('readerPage.subscribeFollow')}
