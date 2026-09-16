@@ -1281,9 +1281,64 @@ function sanitizeEpisodeHtml(value) {
   }
 
   Array.from(inputRoot?.childNodes || []).forEach((child) => appendSafeNode(child, outputRoot))
-  return outputRoot.innerHTML
-}
 
+  const normalizedRoot = outputDocument.createElement('div')
+  let paragraph = null
+  let pendingBreaks = 0
+
+  const ensureParagraph = () => {
+    if (!paragraph) paragraph = outputDocument.createElement('p')
+    return paragraph
+  }
+
+  const flushParagraph = () => {
+    if (!paragraph) {
+      pendingBreaks = 0
+      return
+    }
+
+    if (String(paragraph.textContent || '').trim() || paragraph.querySelector('img')) {
+      normalizedRoot.appendChild(paragraph)
+    }
+
+    paragraph = null
+    pendingBreaks = 0
+  }
+
+  Array.from(outputRoot.childNodes).forEach((node) => {
+    const tagName = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toLowerCase() : ''
+
+    if (node.nodeType === Node.TEXT_NODE && !String(node.textContent || '').trim()) return
+
+    if (tagName === 'p') {
+      flushParagraph()
+      normalizedRoot.appendChild(node)
+      return
+    }
+
+    if (tagName === 'img') {
+      flushParagraph()
+      normalizedRoot.appendChild(node)
+      return
+    }
+
+    if (tagName === 'br') {
+      pendingBreaks += 1
+      if (pendingBreaks >= 2) flushParagraph()
+      return
+    }
+
+    if (pendingBreaks === 1 && paragraph) {
+      paragraph.appendChild(outputDocument.createElement('br'))
+    }
+
+    pendingBreaks = 0
+    ensureParagraph().appendChild(node)
+  })
+
+  flushParagraph()
+  return normalizedRoot.innerHTML
+}
 function plainTextToEpisodeHtml(value) {
   const source = String(value || '').replace(/\r\n/g, '\n').trim()
   if (!source) return ''
