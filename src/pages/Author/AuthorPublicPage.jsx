@@ -1493,6 +1493,7 @@ function AuthorOwnerMenuSheet({
   onOpenStoreSetting,
 }) {
   
+  const { t } = useDisplayTranslation()
   const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
 
   if (!open) return null
