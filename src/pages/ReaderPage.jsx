@@ -2940,7 +2940,7 @@ function ReaderIconButton({ icon, label, onClick, className = '', disabled = fal
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex h-10 w-10 items-center justify-center border-0 bg-transparent p-0 text-current shadow-none ring-0 outline-none transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`flex h-10 w-10 items-center justify-center border-0 bg-transparent p-0 shadow-none ring-0 outline-none transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       aria-label={label}
     >
       <i className={`${icon} text-[14px]`} />
