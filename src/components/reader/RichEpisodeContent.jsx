@@ -190,7 +190,10 @@ export default function RichEpisodeContent({
   }
 
   return (
-    <div className={`${theme.text} ${lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}`}>
+    <div
+  className={`${theme.text} ${lineHeightClass} ${lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}`}
+  style={{ fontFamily, fontSize: `${fontSizePx}px` }}
+>
       {renderedContent}
     </div>
   )
