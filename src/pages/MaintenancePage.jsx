@@ -594,7 +594,7 @@ export default function MaintenancePage() {
 
               <a
                 className="contact-card"
-                href="https://t.me/Hei_xxing"
+                href="https://t.me/Shadow12226"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -602,7 +602,7 @@ export default function MaintenancePage() {
                   <TelegramIcon />
                 </span>
                 <span className="contact-copy">
-                  <span className="contact-name">បុត្រីពៅយមទូត</span>
+                  <span className="contact-name">Shadow Admin</span>
                   <span className="contact-type">Telegram</span>
                 </span>
                 <span className="contact-arrow">
