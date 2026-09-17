@@ -363,6 +363,95 @@ function ViewerAvatar({ creator }) {
   )
 }
 
+function OwnerStoryMenu({
+  open,
+  isAuthor,
+  onClose,
+  onCopyLink,
+  onDelete,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[200090]">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/45"
+        aria-label="Close story options"
+      />
+
+      <section className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[520px] rounded-t-[24px] bg-white px-3 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#9ca3af]" />
+
+        {isAuthor ? (
+          <button
+            type="button"
+            disabled
+            className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-[#111827] opacity-55"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff4cc] text-[#a36b00]">
+              <i className="fa-solid fa-bolt text-[14px]" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] font-semibold">
+                Boost Story
+              </span>
+              <span className="block text-[10px] text-[#667085]">
+                Coming soon
+              </span>
+            </span>
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          disabled
+          className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-[#111827] opacity-55"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f4f7] text-[#344054]">
+            <i className="fa-solid fa-lock text-[13px]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-semibold">
+              Edit Story Privacy
+            </span>
+            <span className="block text-[10px] text-[#667085]">
+              Coming soon
+            </span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onCopyLink}
+          className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-[#111827] active:bg-[#f2f4f7]"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff] text-[#155eef]">
+            <i className="fa-solid fa-link text-[13px]" />
+          </span>
+          <span className="text-[13px] font-semibold">
+            Copy Story Link
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onDelete}
+          className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-[#d92d20] active:bg-[#fff1f1]"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#d92d20]">
+            <i className="fa-regular fa-trash-can text-[14px]" />
+          </span>
+          <span className="text-[13px] font-semibold">
+            Delete Story
+          </span>
+        </button>
+      </section>
+    </div>
+  )
+}
+
 function DeleteStorySheet({
   open,
   deleting,
@@ -432,6 +521,10 @@ function StoryViewer({
   const [trayOpen, setTrayOpen] =
     useState(false)
   const [
+    ownerMenuOpen,
+    setOwnerMenuOpen,
+  ] = useState(false)
+  const [
     deleteSheetOpen,
     setDeleteSheetOpen,
   ] = useState(false)
@@ -451,6 +544,7 @@ function StoryViewer({
     setStoryIndex(0)
     setProgress(0)
     setTrayOpen(false)
+    setOwnerMenuOpen(false)
   }, [group?.key])
 
   useEffect(() => {
@@ -688,6 +782,35 @@ function StoryViewer({
     }
   }
 
+  async function copyStoryLink() {
+    const url = new URL(
+      '/discover',
+      window.location.origin
+    )
+
+    url.searchParams.set(
+      'story',
+      String(story.id)
+    )
+    url.searchParams.set(
+      'source',
+      String(story.source_type || '')
+    )
+
+    try {
+      await navigator.clipboard.writeText(
+        url.toString()
+      )
+      setOwnerMenuOpen(false)
+      window.alert('Story link copied')
+    } catch {
+      window.prompt(
+        'Copy Story Link',
+        url.toString()
+      )
+    }
+  }
+
   function handleSwipeStart(event) {
     if (
       !group.is_owner ||
@@ -898,9 +1021,7 @@ function StoryViewer({
                 <button
                   type="button"
                   onClick={() =>
-                    setDeleteSheetOpen(
-                      true
-                    )
+                    setOwnerMenuOpen(true)
                   }
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
                   aria-label="Story options"
@@ -1076,6 +1197,21 @@ function StoryViewer({
         </div>
       </div>
 
+      <OwnerStoryMenu
+        open={ownerMenuOpen}
+        isAuthor={
+          story.source_type === 'author'
+        }
+        onClose={() =>
+          setOwnerMenuOpen(false)
+        }
+        onCopyLink={copyStoryLink}
+        onDelete={() => {
+          setOwnerMenuOpen(false)
+          setDeleteSheetOpen(true)
+        }}
+      />
+
       <DeleteStorySheet
         open={deleteSheetOpen}
         deleting={deleting}
@@ -1098,6 +1234,8 @@ export default function DiscoverStorySection() {
     activeGroup,
     setActiveGroup,
   ] = useState(null)
+  const deepLinkHandledRef =
+    useRef(false)
 
     const token = useMemo(
     () => getAuthToken(),
@@ -1120,6 +1258,46 @@ export default function DiscoverStorySection() {
       getDiscoverStoryCacheKey(token),
     [token]
   )
+
+  useEffect(() => {
+    if (
+      deepLinkHandledRef.current ||
+      !groups.length
+    ) {
+      return
+    }
+
+    const params = new URLSearchParams(
+      window.location.search
+    )
+    const storyId =
+      params.get('story') || ''
+    const sourceType =
+      params.get('source') || ''
+
+    if (!storyId) {
+      deepLinkHandledRef.current = true
+      return
+    }
+
+    const matchedGroup = groups.find(
+      (group) =>
+        (group.stories || []).some(
+          (item) =>
+            String(item.id) ===
+              String(storyId) &&
+            (!sourceType ||
+              item.source_type ===
+                sourceType)
+        )
+    )
+
+    if (matchedGroup) {
+      setActiveGroup(matchedGroup)
+    }
+
+    deepLinkHandledRef.current = true
+  }, [groups])
 
   useEffect(() => {
     let alive = true
