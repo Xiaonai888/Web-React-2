@@ -203,7 +203,7 @@ export default function GamePage() {
             {t('gamePage.noGames')}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
             {games.map((game) => {
               const displayName = getDisplayName(game)
               const cannotOpen = game.disabled || !game.path
