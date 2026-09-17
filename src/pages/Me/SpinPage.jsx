@@ -180,6 +180,8 @@ const translations = {
     removeBlocked: 'This winner is already excluded for the current No Repeat round.',
     unexpected: 'Something went wrong.',
     checkingAccess: 'Checking game access...',
+    gameRequired: 'Start a game before using the wheel.',
+    savedSourceMismatch: 'This saved wheel belongs to another source. Start the matching game first.',
   },
   km: {
     title: 'បង្វិល',
@@ -338,6 +340,8 @@ const translations = {
     removeBlocked: 'អ្នកឈ្នះនេះត្រូវបានរំលងរួចក្នុងជុំ No Repeat បច្ចុប្បន្ន។',
     unexpected: 'មានបញ្ហាអ្វីមួយកើតឡើង។',
     checkingAccess: 'កំពុងពិនិត្យសិទ្ធិចូលហ្គេម...',
+    gameRequired: 'សូមចាប់ផ្តើម Game មុនប្រើកង់។',
+    savedSourceMismatch: 'កង់ដែលបាន Save នេះជាប្រភេទផ្សេង។ សូមចាប់ផ្តើម Game ប្រភេទដែលត្រូវគ្នាសិន។',
   },
   zh: {
     title: '转盘',
@@ -496,6 +500,8 @@ const translations = {
     removeBlocked: '此获胜者已在当前不重复轮次中被排除。',
     unexpected: '出现了问题。',
     checkingAccess: '正在检查游戏访问权限...',
+    gameRequired: '请先开始游戏再使用转盘。',
+    savedSourceMismatch: '此已保存转盘属于其他来源，请先开始对应类型的游戏。',
   },
   ja: {
     title: 'スピン',
@@ -654,6 +660,8 @@ const translations = {
     removeBlocked: 'この当選者は現在の重複なしラウンドですでに除外されています。',
     unexpected: '問題が発生しました。',
     checkingAccess: 'ゲームのアクセスを確認中...',
+    gameRequired: 'ホイールを使う前にゲームを開始してください。',
+    savedSourceMismatch: 'この保存済みホイールは別のソースです。対応するゲームを開始してください。',
   },
   ko: {
     title: '스핀',
@@ -812,6 +820,8 @@ const translations = {
     removeBlocked: '이 당첨자는 현재 중복 없음 라운드에서 이미 제외되었습니다.',
     unexpected: '문제가 발생했습니다.',
     checkingAccess: '게임 접근 권한 확인 중...',
+    gameRequired: '휠을 사용하기 전에 게임을 시작하세요.',
+    savedSourceMismatch: '이 저장된 휠은 다른 소스입니다. 해당 게임을 먼저 시작하세요.',
   },
 }
 
@@ -831,11 +841,7 @@ const MANUAL_VIEWPORT_HEIGHT = 420
 const MANUAL_OVERSCAN = 6
 const MAX_CUSTOM_GIFTS = 10
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
-const SEARCH_LIMIT = 20
-const SEARCH_DELAY_MS = 400
-const SEARCH_CACHE_MAX = 60
 const SPIN_DURATION_MS = 5600
-const SPIN_SEARCH_CACHE = new Map()
 const WHEEL_COLORS = [
   '#8b5cf6',
   '#f472b6',
@@ -850,47 +856,6 @@ const DEFAULT_REWARDS = {
   diamond: { enabled: false, amount: 100 },
   coin: { enabled: false, amount: 1000 },
   voucher: { enabled: false, amount: 1 },
-}
-
-function getReaderToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
-
-function getSpinSearchCacheKey(type, keyword) {
-  const normalized = String(keyword || '')
-    .normalize('NFKC')
-    .trim()
-    .replace(/\s+/g, ' ')
-    .toLocaleLowerCase()
-  const sessionKey = getReaderToken() ? 'reader' : 'guest'
-  return `${sessionKey}:${type}:${normalized}`
-}
-
-function getCachedSpinSearch(key) {
-  if (!SPIN_SEARCH_CACHE.has(key)) return null
-
-  const value = SPIN_SEARCH_CACHE.get(key)
-  SPIN_SEARCH_CACHE.delete(key)
-  SPIN_SEARCH_CACHE.set(key, value)
-  return value
-}
-
-function setCachedSpinSearch(key, items) {
-  if (SPIN_SEARCH_CACHE.has(key)) {
-    SPIN_SEARCH_CACHE.delete(key)
-  }
-
-  SPIN_SEARCH_CACHE.set(key, items)
-
-  while (SPIN_SEARCH_CACHE.size > SEARCH_CACHE_MAX) {
-    const oldestKey = SPIN_SEARCH_CACHE.keys().next().value
-    if (!oldestKey) break
-    SPIN_SEARCH_CACHE.delete(oldestKey)
-  }
 }
 
 function createLocalId(prefix = 'entry') {
@@ -1037,83 +1002,6 @@ function sourceLabel(type, t) {
   return t('spinPage.sourceManual')
 }
 
-function useSpinSearch(type, query, t) {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    const keyword = String(query || '').trim()
-
-    if (keyword.length < 2) {
-      setItems([])
-      setLoading(false)
-      setError('')
-      return undefined
-    }
-
-    const cacheKey = getSpinSearchCacheKey(type, keyword)
-    const cached = getCachedSpinSearch(cacheKey)
-
-    if (cached) {
-      setItems(cached)
-      setLoading(false)
-      setError('')
-      return undefined
-    }
-
-    const controller = new AbortController()
-    const timer = window.setTimeout(async () => {
-      try {
-        setLoading(true)
-        setError('')
-
-        const params = new URLSearchParams({
-          q: keyword,
-          type,
-          limit: String(SEARCH_LIMIT),
-        })
-        const token = getReaderToken()
-        const response = await fetch(
-          `${API_BASE_URL}/api/discover-search?${params.toString()}`,
-          {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-            cache: 'no-store',
-            signal: controller.signal,
-          }
-        )
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || t('spinPage.searchFailed'))
-        }
-
-        const nextItems = Array.isArray(data.results)
-          ? data.results.slice(0, SEARCH_LIMIT)
-          : []
-
-        setCachedSpinSearch(cacheKey, nextItems)
-        setItems(nextItems)
-      } catch (searchError) {
-        if (searchError.name === 'AbortError') return
-        setItems([])
-        setError(searchError.message || t('spinPage.searchFailed'))
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false)
-        }
-      }
-    }, SEARCH_DELAY_MS)
-
-    return () => {
-      window.clearTimeout(timer)
-      controller.abort()
-    }
-  }, [query, t, type])
-
-  return { items, loading, error }
-}
-
 function Avatar({ src, name, square = false, size = 46 }) {
   const initial =
     String(name || 'S')
@@ -1205,165 +1093,6 @@ function Modal({ open, title, onClose, children, right = null, closeLabel }) {
         <div className="max-h-[calc(88vh-62px)] overflow-y-auto p-4">{children}</div>
       </div>
     </div>
-  )
-}
-
-function SearchBlock({
-  icon,
-  title,
-  query,
-  setQuery,
-  search,
-  type,
-  entryKeys,
-  onAdd,
-  disabled,
-  t,
-}) {
-  const placeholder =
-    type === 'readers'
-      ? t('spinPage.searchReader')
-      : type === 'pages'
-        ? t('spinPage.searchAuthor')
-        : t('spinPage.searchBook')
-
-  function normalizeResult(item) {
-    if (type === 'readers') {
-      return {
-        id: createLocalId('reader'),
-        source_type: 'reader',
-        source_id: String(item.id || ''),
-        name: item.name || item.username || t('spinPage.reader'),
-        secondary: item.username ? `@${item.username}` : '',
-        image_url: item.avatar_url || null,
-      }
-    }
-
-    if (type === 'pages') {
-      return {
-        id: createLocalId('author'),
-        source_type: 'author',
-        source_id: String(item.id || ''),
-        name: item.page_name || item.page_username || t('spinPage.author'),
-        secondary: item.page_username ? `@${item.page_username}` : '',
-        image_url: item.avatar_url || null,
-      }
-    }
-
-    return {
-      id: createLocalId('book'),
-      source_type: 'book',
-      source_id: String(item.id || ''),
-      name: item.title || t('spinPage.book'),
-      secondary:
-        item.author_page?.page_name ||
-        item.author_page?.page_username ||
-        '',
-      image_url: item.cover_url || null,
-    }
-  }
-
-  return (
-    <SurfaceCard className="overflow-hidden p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-violet-500/10 text-violet-600">
-          <i className={`${icon} text-[15px]`} />
-        </div>
-        <div>
-          <h3 className="app-title text-[14px] font-black">{title}</h3>
-          <p className="app-muted mt-0.5 text-[10.5px]">{t('spinPage.searchHint')}</p>
-        </div>
-      </div>
-
-      <div className="relative mt-4">
-        <i className="fa-solid fa-magnifying-glass app-tertiary absolute left-3 top-1/2 -translate-y-1/2 text-[12px]" />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          disabled={disabled}
-          placeholder={t('spinPage.searchPlaceholder')}
-          className="app-input w-full rounded-[13px] border py-3 pl-9 pr-10 text-[12px] outline-none transition focus:border-violet-500"
-        />
-        {query ? (
-          <button
-            type="button"
-            onClick={() => setQuery('')}
-            className="app-tertiary absolute right-3 top-1/2 -translate-y-1/2"
-            aria-label={t('spinPage.close')}
-          >
-            <i className="fa-solid fa-circle-xmark text-[13px]" />
-          </button>
-        ) : null}
-      </div>
-
-      {query.trim().length >= 2 ? (
-        <div className="mt-3 max-h-[310px] overflow-y-auto rounded-[14px] border border-[var(--shadow-border)]">
-          {search.loading ? (
-            <div className="app-muted flex items-center justify-center gap-2 px-3 py-6 text-[11px]">
-              <i className="fa-solid fa-spinner animate-spin" />
-              {t('spinPage.searching')}
-            </div>
-          ) : search.error ? (
-            <div className="px-3 py-6 text-center text-[11px] font-semibold text-red-500">
-              {t('spinPage.searchFailed')}
-            </div>
-          ) : search.items.length ? (
-            <div className="divide-y divide-[var(--shadow-border)]">
-              {search.items.map((item) => {
-                const entry = normalizeResult(item)
-                const isBook = entry.source_type === 'book'
-                const alreadyAdded = Boolean(
-                  entry.source_id &&
-                    entryKeys.has(
-                      `${entry.source_type}:${entry.source_id}`
-                    )
-                )
-
-                return (
-                  <div
-                    key={`${type}-${item.id}`}
-                    className="flex items-center gap-3 px-3 py-2.5"
-                  >
-                    <Avatar
-                      src={entry.image_url}
-                      name={entry.name}
-                      square={isBook}
-                      size={44}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="app-title line-clamp-1 text-[12px] font-extrabold">
-                        {entry.name}
-                      </div>
-                      {entry.secondary ? (
-                        <div className="app-muted mt-0.5 truncate text-[10px]">
-                          {entry.secondary}
-                        </div>
-                      ) : null}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => onAdd(entry)}
-                      disabled={alreadyAdded || disabled}
-                      className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-extrabold ${
-                        alreadyAdded
-                          ? 'app-elevated app-muted'
-                          : 'bg-violet-600 text-white active:scale-95'
-                      }`}
-                    >
-                      {alreadyAdded ? t('spinPage.added') : t('spinPage.add')}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="app-muted px-3 py-6 text-center text-[11px]">
-              {t('spinPage.noSearchResults')}
-            </div>
-          )}
-        </div>
-      ) : null}
-    </SurfaceCard>
   )
 }
 
@@ -2177,6 +1906,7 @@ export default function SpinPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [toast, setToast] = useState('')
   const [gameAccessState, setGameAccessState] = useState('checking')
+  const [activeGameSource, setActiveGameSource] = useState('')
 
 
   const activePrizes = useMemo(() => {
@@ -2425,8 +2155,28 @@ export default function SpinPage() {
     setToast(t('spinPage.changesSaved'))
   }
 
+  function entriesMatchActiveSource(value = entries) {
+    if (!activeGameSource) return false
+
+    return (Array.isArray(value) ? value : []).every(
+      (entry) => entry?.source_type === activeGameSource
+    )
+  }
+
   function addEntry(entry) {
     if (isSpinning) return
+
+    if (
+      !activeGameSource ||
+      entry?.source_type !== activeGameSource
+    ) {
+      setToast(
+        activeGameSource
+          ? t('spinPage.savedSourceMismatch')
+          : t('spinPage.gameRequired')
+      )
+      return
+    }
 
     if (entries.length >= MAX_ENTRIES) {
       setToast(t('spinPage.entryLimit'))
@@ -2501,6 +2251,16 @@ export default function SpinPage() {
   }
 
   function spin() {
+    if (!activeGameSource) {
+      setToast(t('spinPage.gameRequired'))
+      return
+    }
+
+    if (!entriesMatchActiveSource()) {
+      setToast(t('spinPage.savedSourceMismatch'))
+      return
+    }
+
     if (isSpinning || entries.length < 2) {
       if (entries.length < 2) setToast(t('spinPage.needTwoEntries'))
       return
@@ -2581,6 +2341,16 @@ export default function SpinPage() {
   }
 
   async function saveWheel() {
+    if (!activeGameSource) {
+      setToast(t('spinPage.gameRequired'))
+      return
+    }
+
+    if (!entriesMatchActiveSource()) {
+      setToast(t('spinPage.savedSourceMismatch'))
+      return
+    }
+
     if (entries.length < 2) {
       setToast(t('spinPage.saveNeedsEntries'))
       return
@@ -2612,6 +2382,20 @@ export default function SpinPage() {
   }
 
   function loadWheel(item) {
+    if (!activeGameSource) {
+      setToast(t('spinPage.gameRequired'))
+      return
+    }
+
+    const savedEntries = Array.isArray(item?.entries)
+      ? item.entries
+      : []
+
+    if (!entriesMatchActiveSource(savedEntries)) {
+      setToast(t('spinPage.savedSourceMismatch'))
+      return
+    }
+
     setCurrentWheelId(item.id)
     setWheelTitle(item.title || '')
     setMode(item.mode === 'shadow' ? 'shadow' : 'normal')
@@ -3182,6 +2966,7 @@ export default function SpinPage() {
                 addEntry={addEntry}
                 isSpinning={isSpinning}
                 onGameStarted={resetToNewWheel}
+                onActiveGameChange={setActiveGameSource}
                 t={t}
               />
           </div>
