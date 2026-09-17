@@ -9,6 +9,7 @@ import {
 } from '../../components/common/PagePrimitives'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import SpinGameSourcePanel from './SpinGameSourcePanel'
 import {
   cleanupSpinLocalStorage,
   clearSpinResults,
