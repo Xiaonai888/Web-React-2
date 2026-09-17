@@ -434,6 +434,7 @@ function StoryViewer({
   const [deleting, setDeleting] =
     useState(false)
   const videoRef = useRef(null)
+  const swipeStartRef = useRef(null)
 
   const stories =
     group?.stories || []
@@ -682,12 +683,71 @@ function StoryViewer({
     }
   }
 
+  function handleSwipeStart(event) {
+    if (
+      !group.is_owner ||
+      event.touches.length !== 1
+    ) {
+      return
+    }
+
+    const touch = event.touches[0]
+
+    swipeStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    }
+  }
+
+  function handleSwipeEnd(event) {
+    if (
+      !group.is_owner ||
+      !swipeStartRef.current
+    ) {
+      return
+    }
+
+    const touch =
+      event.changedTouches?.[0]
+
+    if (!touch) {
+      swipeStartRef.current = null
+      return
+    }
+
+    const deltaX =
+      touch.clientX -
+      swipeStartRef.current.x
+    const deltaY =
+      touch.clientY -
+      swipeStartRef.current.y
+
+    swipeStartRef.current = null
+
+    if (
+      deltaY >= 90 &&
+      deltaY >
+        Math.abs(deltaX) * 1.25
+    ) {
+      onClose()
+    }
+  }
+
+  function handleSwipeCancel() {
+    swipeStartRef.current = null
+  }
+
   if (!story) return null
 
   return (
     <>
       <div className="fixed inset-0 z-[200000] bg-black">
-        <div className="relative mx-auto h-[100dvh] w-full max-w-[520px] overflow-hidden bg-[#050712]">
+        <div
+          className="relative mx-auto h-[100dvh] w-full max-w-[520px] overflow-hidden bg-[#050712]"
+          onTouchStart={handleSwipeStart}
+          onTouchEnd={handleSwipeEnd}
+          onTouchCancel={handleSwipeCancel}
+        >
           {story.media_type ===
           'video' ? (
             <video
@@ -821,14 +881,16 @@ function StoryViewer({
                 </button>
               ) : null}
 
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
-                aria-label="Close story"
-              >
-                <i className="fa-solid fa-xmark text-[20px]" />
-              </button>
+              {!group.is_owner ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
+                  aria-label="Close story"
+                >
+                  <i className="fa-solid fa-xmark text-[20px]" />
+                </button>
+              ) : null}
             </div>
           </div>
 
