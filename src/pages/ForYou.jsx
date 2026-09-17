@@ -413,6 +413,30 @@ function ComingSoonPanel({ title }) {
 
 const SHOW_STORY_TYPE_TABS = false
 
+const HOME_RETURN_POSITION_KEY = 'shadow_home_return_position_v1'
+const HOME_RETURN_MAX_AGE_MS = 30 * 60 * 1000
+
+function readHomeReturnPosition() {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = sessionStorage.getItem(HOME_RETURN_POSITION_KEY)
+    if (!raw) return null
+
+    const value = JSON.parse(raw)
+
+    if (!value?.savedAt || Date.now() - Number(value.savedAt) > HOME_RETURN_MAX_AGE_MS) {
+      sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
+      return null
+    }
+
+    return value
+  } catch {
+    sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
+    return null
+  }
+}
+
 export default function ForYou({
   slideSectionKey = 'home_top_slider',
   titleOnlySections = false,
@@ -420,9 +444,11 @@ export default function ForYou({
 }) {
   const { t } = useDisplayTranslation()
   const [searchParams] = useSearchParams()
+  const [homeReturnPosition] = useState(() => readHomeReturnPosition())
+  const initialHomeGenre = homeReturnPosition?.genre || 'today'
   const [activeTab, setActiveTab] = useState('novel')
-  const [activeGenre, setActiveGenre] = useState('today')
-  const [contentGenre, setContentGenre] = useState('today')
+  const [activeGenre, setActiveGenre] = useState(initialHomeGenre)
+  const [contentGenre, setContentGenre] = useState(initialHomeGenre)
   const [, startGenreTransition] = useTransition()
   const [pressedGenre, setPressedGenre] = useState('')
   const [genreTabs, setGenreTabs] = useState(fallbackGenreTabs)
@@ -460,6 +486,55 @@ export default function ForYou({
   const swiperRef = useRef(null)
   const lastScrollYRef = useRef(0)
   const swipeStartRef = useRef(null)
+
+  function saveHomeReturnPosition() {
+    const markers = [...document.querySelectorAll('[data-home-section]')]
+    const anchorY = 140
+    let current = markers[0] || null
+
+    for (const marker of markers) {
+      if (marker.getBoundingClientRect().top <= anchorY) {
+        current = marker
+      } else {
+        break
+      }
+    }
+
+    const sectionTop = current
+      ? window.scrollY + current.getBoundingClientRect().top
+      : 0
+
+    sessionStorage.setItem(
+      HOME_RETURN_POSITION_KEY,
+      JSON.stringify({
+        section: current?.dataset.homeSection || '',
+        offset: current ? window.scrollY - sectionTop : 0,
+        scrollY: window.scrollY,
+        genre: activeGenre,
+        savedAt: Date.now(),
+      })
+    )
+  }
+
+  function handleHomeNavigationCapture(event) {
+    const element =
+      typeof Element !== 'undefined' && event.target instanceof Element
+        ? event.target
+        : null
+
+    const link = element?.closest('a')
+
+    if (!link) return
+
+    const url = new URL(link.href, window.location.href)
+
+    if (
+      url.origin === window.location.origin &&
+      url.pathname.startsWith('/story/')
+    ) {
+      saveHomeReturnPosition()
+    }
+  }
 
   function handleGenreChange(tab) {
   setPressedGenre(tab.slug)
@@ -623,11 +698,66 @@ useEffect(() => {
 
     window.addEventListener('scroll', handleScroll, { passive: true })
 
-    return () => {
+        return () => {
       window.removeEventListener('scroll', handleScroll)
       document.body.classList.remove('for-you-bars-hidden')
     }
   }, [])
+
+  useEffect(() => {
+    if (!homeReturnPosition) return undefined
+
+    sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
+
+    let cancelled = false
+
+    function restorePosition() {
+      if (cancelled) return
+
+      const section = homeReturnPosition.section
+        ? document.querySelector(
+            `[data-home-section="${homeReturnPosition.section}"]`
+          )
+        : null
+
+      const target = section
+        ? window.scrollY +
+          section.getBoundingClientRect().top +
+          Number(homeReturnPosition.offset || 0)
+        : Number(homeReturnPosition.scrollY || 0)
+
+      window.scrollTo({
+        top: Math.max(0, target),
+        left: 0,
+        behavior: 'auto',
+      })
+    }
+
+    const timers = [0, 120, 350, 700, 1100, 1800].map((delay) =>
+      window.setTimeout(restorePosition, delay)
+    )
+
+    function cancelRestore() {
+      cancelled = true
+      timers.forEach((timer) => window.clearTimeout(timer))
+    }
+
+    window.addEventListener('wheel', cancelRestore, {
+      once: true,
+      passive: true,
+    })
+
+    window.addEventListener('touchstart', cancelRestore, {
+      once: true,
+      passive: true,
+    })
+
+    return () => {
+      cancelRestore()
+      window.removeEventListener('wheel', cancelRestore)
+      window.removeEventListener('touchstart', cancelRestore)
+    }
+  }, [homeReturnPosition])
 
   useEffect(() => {
     let alive = true
@@ -1139,8 +1269,9 @@ useEffect(() => {
             )}
           />
         ) : (
-         <div
+                  <div
            id="tab-content-root"
+           onClickCapture={handleHomeNavigationCapture}
            onTouchStart={handleContentTouchStart}
            onTouchEnd={handleContentTouchEnd}
          >
@@ -1153,7 +1284,7 @@ useEffect(() => {
 ) : (
   <>
 
-            <div className="swiper-container mySwiper">
+            <div className="swiper-container mySwiper" data-home-section="hero">
               <div className="swiper-wrapper">
                 {slidesLoading && (
                   <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center dark:bg-[var(--shadow-bg-soft)]">
@@ -1181,8 +1312,22 @@ useEffect(() => {
                     <div
                       key={slide.id}
                       className="swiper-slide relative aspect-[16/9] cursor-pointer"
-                      onClick={() => {
-                        if (slide.link_url) navigate(slide.link_url)
+                                            onClick={() => {
+                        if (!slide.link_url) return
+
+                        const url = new URL(
+                          slide.link_url,
+                          window.location.href
+                        )
+
+                        if (
+                          url.origin === window.location.origin &&
+                          url.pathname.startsWith('/story/')
+                        ) {
+                          saveHomeReturnPosition()
+                        }
+
+                        navigate(slide.link_url)
                       }}
                     >
                       <img
@@ -1236,7 +1381,10 @@ useEffect(() => {
               <div className="swiper-pagination" />
             </div>
 
-            <div className="grid grid-cols-4 gap-4 px-4 py-4 text-center">
+            <div
+  className="grid grid-cols-4 gap-4 px-4 py-4 text-center"
+  data-home-section="shortcuts"
+>
   {[
     { icon: '/assets/Shortcut/Store.svg', label: 'Shop', path: '/shop' },
     { icon: '/assets/Shortcut/Task.svg', label: 'Tasks', path: '/tasks' },
@@ -1284,9 +1432,9 @@ useEffect(() => {
 ) : (
   <>
 
-            <div className="my-6">
-              <ShadowSpotlight />
-            </div>
+            <div className="my-6" data-home-section="shadow-spotlight">
+  <ShadowSpotlight />
+</div>
 
             {SHOW_SHADOW_EXCLUSIVE ? (
   <div className="my-6">
