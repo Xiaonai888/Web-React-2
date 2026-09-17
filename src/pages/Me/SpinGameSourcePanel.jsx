@@ -10,7 +10,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const MAX_ENTRIES = 10000
-const SEARCH_LIMIT = 20
+const RESULT_LIMIT = 20
 const SEARCH_DELAY_MS = 400
 const ACTIVE_GAME_KEY = 'shadow_spin_active_game_v1'
 const PENDING_START_KEY = 'shadow_spin_pending_start_v1'
@@ -57,7 +57,7 @@ const COPY = {
     starting: 'Starting...',
     choose: 'Choose one source and start a game. Spins inside the game are unlimited.',
     rule: 'Only starting a New Game counts toward the daily limit or charges currency. Spinning does not count.',
-    searchHint: '2+ characters • max 20 results • 20 searches per game',
+    searchHint: '2+ characters • max 20 results',
     searchesLeft: 'searches left',
     signIn: 'Sign in before starting a game.',
     network: 'Could not reach the server. Try again.',
@@ -72,7 +72,7 @@ const COPY = {
     starting: 'កំពុងចាប់ផ្តើម...',
     choose: 'ជ្រើសប្រភេទមួយ ហើយចាប់ផ្តើម Game។ ការបង្វិលក្នុង Game គឺ Unlimited។',
     rule: 'រាប់ Limit ឬកាត់លុយ តែពេលចាប់ផ្តើម New Game ប៉ុណ្ណោះ។ ការបង្វិលមិនរាប់ទេ។',
-    searchHint: 'វាយចាប់ពី 2 តួ • អតិបរមា 20 លទ្ធផល • Search 20 ដង/Game',
+    searchHint: 'វាយចាប់ពី 2 តួ • អតិបរមា 20 លទ្ធផល',
     searchesLeft: 'Search នៅសល់',
     signIn: 'សូម Login មុនចាប់ផ្តើម Game។',
     network: 'មិនអាចភ្ជាប់ Server បាន។ សូមសាកម្តងទៀត។',
@@ -87,7 +87,7 @@ const COPY = {
     starting: '正在开始...',
     choose: '选择一个来源并开始游戏。游戏内旋转不限次数。',
     rule: '只有开始新游戏才计入每日限制或扣除货币。旋转不计数。',
-    searchHint: '至少 2 个字符 • 最多 20 个结果 • 每局 20 次搜索',
+    searchHint: '至少 2 个字符 • 最多 20 个结果',
     searchesLeft: '剩余搜索',
     signIn: '请先登录再开始游戏。',
     network: '无法连接服务器，请重试。',
@@ -102,7 +102,7 @@ const COPY = {
     starting: '開始中...',
     choose: '1つのソースを選んでゲームを開始してください。ゲーム内のスピン回数は無制限です。',
     rule: '新しいゲームを開始した時だけ日次上限や通貨消費にカウントされます。スピンはカウントされません。',
-    searchHint: '2文字以上 • 最大20件 • 1ゲーム20回検索',
+    searchHint: '2文字以上 • 最大20件',
     searchesLeft: '検索残り',
     signIn: 'ゲームを開始する前にログインしてください。',
     network: 'サーバーに接続できません。もう一度お試しください。',
@@ -117,7 +117,7 @@ const COPY = {
     starting: '시작 중...',
     choose: '하나의 소스를 선택해 게임을 시작하세요. 게임 안의 스핀 횟수는 무제한입니다.',
     rule: '새 게임을 시작할 때만 일일 한도 또는 재화가 차감됩니다. 스핀은 계산되지 않습니다.',
-    searchHint: '2자 이상 • 최대 20개 결과 • 게임당 검색 20회',
+    searchHint: '2자 이상 • 최대 20개 결과',
     searchesLeft: '남은 검색',
     signIn: '게임을 시작하기 전에 로그인하세요.',
     network: '서버에 연결할 수 없습니다. 다시 시도하세요.',
@@ -266,6 +266,28 @@ function useProtectedSearch(source, query, activeGame, t) {
   const [remaining, setRemaining] = useState(null)
 
   useEffect(() => {
+    if (activeGame?.source !== source) {
+      setRemaining(null)
+      return
+    }
+
+    const limit = Number(activeGame?.session?.search_limit)
+    const used = Number(activeGame?.session?.search_count || 0)
+
+    setRemaining(
+      Number.isFinite(limit)
+        ? Math.max(0, limit - used)
+        : null
+    )
+  }, [
+    activeGame?.session?.id,
+    activeGame?.session?.search_count,
+    activeGame?.session?.search_limit,
+    activeGame?.source,
+    source,
+  ])
+
+  useEffect(() => {
     const keyword = String(query || '').trim()
     const sessionId = activeGame?.session?.id || ''
 
@@ -309,7 +331,7 @@ function useProtectedSearch(source, query, activeGame, t) {
         const params = new URLSearchParams({
           q: keyword,
           type,
-          limit: String(SEARCH_LIMIT),
+          limit: String(RESULT_LIMIT),
         })
 
         const response = await fetch(
@@ -334,7 +356,7 @@ function useProtectedSearch(source, query, activeGame, t) {
         }
 
         const nextItems = Array.isArray(data?.results)
-          ? data.results.slice(0, SEARCH_LIMIT)
+          ? data.results.slice(0, RESULT_LIMIT)
           : []
 
         SEARCH_CACHE.set(key, nextItems)
@@ -588,6 +610,7 @@ export default function SpinGameSourcePanel({
   const copy = uiCopy()
   const startBusyRef = useRef(false)
   const [activeGame, setActiveGame] = useState(() => readActiveGame())
+  const [sessionReady, setSessionReady] = useState(false)
   const [status, setStatus] = useState(null)
   const [startingSource, setStartingSource] = useState('')
   const [message, setMessage] = useState('')
@@ -615,12 +638,14 @@ export default function SpinGameSourcePanel({
   )
 
   useEffect(() => {
-    onActiveGameChange?.(activeGame?.source || '')
+    onActiveGameChange?.(
+      sessionReady ? activeGame?.source || '' : ''
+    )
 
     return () => {
       onActiveGameChange?.('')
     }
-  }, [activeGame?.source, onActiveGameChange])
+  }, [activeGame?.source, onActiveGameChange, sessionReady])
 
   useEffect(() => {
     const expiresAt = new Date(
@@ -636,6 +661,7 @@ export default function SpinGameSourcePanel({
     if (remaining <= 0) {
       clearActiveGameStorage()
       setActiveGame(null)
+      setSessionReady(false)
       setMessage(copy.expired)
       return undefined
     }
@@ -643,6 +669,7 @@ export default function SpinGameSourcePanel({
     const timer = window.setTimeout(() => {
       clearActiveGameStorage()
       setActiveGame(null)
+      setSessionReady(false)
       setMessage(copy.expired)
     }, Math.min(remaining + 250, 2147483647))
 
@@ -662,6 +689,7 @@ export default function SpinGameSourcePanel({
     ) {
       clearActiveGameStorage()
       setActiveGame(null)
+      setSessionReady(false)
       setMessage(copy.expired)
     }
   }, [
@@ -673,7 +701,14 @@ export default function SpinGameSourcePanel({
 
   useEffect(() => {
     const token = getReaderToken()
-    if (!token) return undefined
+    const ownerId = getReaderUserId(token)
+
+    if (!token || !ownerId) {
+      clearActiveGameStorage()
+      setActiveGame(null)
+      setSessionReady(false)
+      return undefined
+    }
 
     let active = true
     const controller = new AbortController()
@@ -698,9 +733,32 @@ export default function SpinGameSourcePanel({
           data?.ok !== false
         ) {
           setStatus(data)
+
+          const serverSession = data?.active_session
+
+          if (
+            serverSession?.id &&
+            SOURCE_META[serverSession?.mode]
+          ) {
+            const nextGame = {
+              source: serverSession.mode,
+              owner_id: ownerId,
+              session: serverSession,
+              saved_at: new Date().toISOString(),
+            }
+
+            saveActiveGame(nextGame)
+            setActiveGame(nextGame)
+            setSessionReady(true)
+          } else {
+            clearActiveGameStorage()
+            setActiveGame(null)
+            setSessionReady(false)
+          }
         }
       } catch (error) {
         if (error?.name !== 'AbortError' && active) {
+          setSessionReady(false)
           setMessage(copy.network)
         }
       }
@@ -793,6 +851,7 @@ export default function SpinGameSourcePanel({
       saveActiveGame(nextGame)
       clearPendingRequest()
       setActiveGame(nextGame)
+      setSessionReady(true)
 
       if (data?.status) {
         setStatus(data.status)
