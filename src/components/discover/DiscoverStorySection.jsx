@@ -13,6 +13,10 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../../utils/homeDataCache'
+import {
+  REACTIONS,
+  formatReactionCount,
+} from '../social/reactions/reactionConfig'
 
 const API_BASE_URL =
   window.location.hostname ===
@@ -452,6 +456,43 @@ function OwnerStoryMenu({
   )
 }
 
+
+function ViewerStoryMenu({
+  open,
+  onClose,
+  onCopyLink,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[200090]">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/45"
+        aria-label="Close story options"
+      />
+
+      <section className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[520px] rounded-t-[24px] bg-white px-3 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#9ca3af]" />
+
+        <button
+          type="button"
+          onClick={onCopyLink}
+          className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-[#111827] active:bg-[#f2f4f7]"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff] text-[#155eef]">
+            <i className="fa-solid fa-link text-[13px]" />
+          </span>
+          <span className="text-[13px] font-semibold">
+            Copy Story Link
+          </span>
+        </button>
+      </section>
+    </div>
+  )
+}
+
 function DeleteStorySheet({
   open,
   deleting,
@@ -525,6 +566,26 @@ function StoryViewer({
     setOwnerMenuOpen,
   ] = useState(false)
   const [
+    viewerMenuOpen,
+    setViewerMenuOpen,
+  ] = useState(false)
+  const [
+    reactionType,
+    setReactionType,
+  ] = useState(null)
+  const [
+    reactionCounts,
+    setReactionCounts,
+  ] = useState({})
+  const [
+    reactionLoading,
+    setReactionLoading,
+  ] = useState(false)
+  const [
+    reactionSaving,
+    setReactionSaving,
+  ] = useState(false)
+  const [
     deleteSheetOpen,
     setDeleteSheetOpen,
   ] = useState(false)
@@ -545,6 +606,7 @@ function StoryViewer({
     setProgress(0)
     setTrayOpen(false)
     setOwnerMenuOpen(false)
+    setViewerMenuOpen(false)
   }, [group?.key])
 
   useEffect(() => {
@@ -690,6 +752,76 @@ function StoryViewer({
     story?.view_count,
   ])
 
+
+  useEffect(() => {
+    const token = getAuthToken()
+
+    if (
+      group.is_owner ||
+      !story?.id ||
+      !story?.source_type ||
+      !token
+    ) {
+      setReactionType(null)
+      setReactionCounts({})
+      setReactionLoading(false)
+      return undefined
+    }
+
+    let active = true
+
+    async function loadReaction() {
+      try {
+        setReactionLoading(true)
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/discover-stories/${encodeURIComponent(story.source_type)}/${encodeURIComponent(story.id)}/reaction`,
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+            cache: 'no-store',
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          !active ||
+          !response.ok ||
+          data.ok === false
+        ) {
+          return
+        }
+
+        setReactionType(
+          data.reaction_type || null
+        )
+        setReactionCounts(
+          data.counts || {}
+        )
+      } catch {
+      } finally {
+        if (active) {
+          setReactionLoading(false)
+        }
+      }
+    }
+
+    loadReaction()
+
+    return () => {
+      active = false
+    }
+  }, [
+    group.is_owner,
+    story?.id,
+    story?.source_type,
+  ])
+
   function goNext() {
     if (
       storyIndex <
@@ -721,6 +853,72 @@ function StoryViewer({
       videoRef.current
         .play()
         .catch(() => {})
+    }
+  }
+
+
+  async function toggleReaction(
+    nextReactionType
+  ) {
+    const token = getAuthToken()
+
+    if (
+      group.is_owner ||
+      !story?.id ||
+      !story?.source_type ||
+      !token ||
+      reactionSaving
+    ) {
+      return
+    }
+
+    try {
+      setReactionSaving(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/discover-stories/${encodeURIComponent(story.source_type)}/${encodeURIComponent(story.id)}/reaction`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+            'Content-Type':
+              'application/json',
+          },
+          body: JSON.stringify({
+            reaction_type:
+              nextReactionType,
+          }),
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to update reaction'
+        )
+      }
+
+      setReactionType(
+        data.reaction_type || null
+      )
+      setReactionCounts(
+        data.counts || {}
+      )
+    } catch (error) {
+      window.alert(
+        error.message ||
+          'Failed to update reaction'
+      )
+    } finally {
+      setReactionSaving(false)
     }
   }
 
@@ -802,6 +1000,7 @@ function StoryViewer({
         url.toString()
       )
       setOwnerMenuOpen(false)
+      setViewerMenuOpen(false)
       window.alert('Story link copied')
     } catch {
       window.prompt(
@@ -1028,7 +1227,18 @@ function StoryViewer({
                 >
                   <i className="fa-solid fa-ellipsis text-[16px]" />
                 </button>
-              ) : null}
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setViewerMenuOpen(true)
+                  }
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
+                  aria-label="Story options"
+                >
+                  <i className="fa-solid fa-ellipsis text-[16px]" />
+                </button>
+              )}
 
               {!group.is_owner ? (
                 <button
@@ -1164,6 +1374,66 @@ function StoryViewer({
             </div>
           ) : null}
 
+
+          {!group.is_owner ? (
+            <div className="absolute inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-40">
+              <div className="mx-auto flex max-w-[480px] items-end justify-between gap-1 rounded-[22px] bg-black/45 px-2 py-2 backdrop-blur-xl">
+                {REACTIONS.map(
+                  (reaction) => {
+                    const selected =
+                      reactionType ===
+                      reaction.type
+                    const count = Number(
+                      reactionCounts?.[
+                        reaction.type
+                      ] || 0
+                    )
+
+                    return (
+                      <button
+                        key={reaction.type}
+                        type="button"
+                        disabled={
+                          reactionLoading ||
+                          reactionSaving
+                        }
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          toggleReaction(
+                            reaction.type
+                          )
+                        }}
+                        className={`flex min-w-0 flex-1 flex-col items-center rounded-[14px] px-1 py-1.5 transition active:scale-95 disabled:opacity-55 ${
+                          selected
+                            ? 'bg-white/20 ring-1 ring-white/70'
+                            : 'bg-transparent'
+                        }`}
+                        aria-label={
+                          reaction.label
+                        }
+                      >
+                        <img
+                          src={reaction.src}
+                          alt=""
+                          className="h-7 w-7 object-contain"
+                        />
+                        {count > 0 ? (
+                          <span className="mt-0.5 text-[8px] font-black text-white/90">
+                            {formatReactionCount(
+                              count
+                            )}
+                          </span>
+                        ) : (
+                          <span className="mt-0.5 h-[10px]" />
+                        )}
+                      </button>
+                    )
+                  }
+                )}
+              </div>
+            </div>
+          ) : null}
+
           {story.text_overlay || story.caption ? (
   <div className="pointer-events-none absolute inset-x-6 top-[40%] z-20 text-center">
     <span className="inline-block max-w-full break-words rounded-[14px] bg-black/35 px-4 py-2 text-[28px] font-black leading-tight text-white shadow-lg backdrop-blur-sm">
@@ -1173,7 +1443,13 @@ function StoryViewer({
 ) : null}
 
 {story.mention_username ? (
-  <div className="pointer-events-none absolute inset-x-0 bottom-[112px] z-20 flex justify-center px-5">
+  <div
+    className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-5 ${
+      group.is_owner
+        ? 'bottom-[112px]'
+        : 'bottom-[178px]'
+    }`}
+  >
     <span className="max-w-full truncate rounded-full bg-white px-4 py-2 text-[15px] font-black text-[#111827] shadow-lg">
       @{story.mention_username}
     </span>
@@ -1181,7 +1457,13 @@ function StoryViewer({
 ) : null}
 
 {story.link_url ? (
-  <div className="absolute inset-x-0 bottom-[60px] z-30 flex justify-center px-5">
+  <div
+    className={`absolute inset-x-0 z-30 flex justify-center px-5 ${
+      group.is_owner
+        ? 'bottom-[60px]'
+        : 'bottom-[122px]'
+    }`}
+  >
     <a
       href={story.link_url}
       target="_blank"
@@ -1196,6 +1478,15 @@ function StoryViewer({
 ) : null}
         </div>
       </div>
+
+
+      <ViewerStoryMenu
+        open={viewerMenuOpen}
+        onClose={() =>
+          setViewerMenuOpen(false)
+        }
+        onCopyLink={copyStoryLink}
+      />
 
       <OwnerStoryMenu
         open={ownerMenuOpen}
