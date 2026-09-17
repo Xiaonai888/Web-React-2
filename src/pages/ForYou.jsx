@@ -1437,12 +1437,12 @@ useEffect(() => {
 </div>
 
             {SHOW_SHADOW_EXCLUSIVE ? (
-  <div className="my-6">
+  <div className="my-6" data-home-section="shadow-exclusive">
     <ShadowExclusiveSection />
   </div>
 ) : null}
 
-    <div className="my-6">
+    <div className="my-6" data-home-section="continue-reading">
   <ContinueReadingSection />
 </div>
 
@@ -1453,41 +1453,41 @@ useEffect(() => {
 />
 </div>
 
-            <div className="my-6">
+            <div className="my-6" data-home-section="daily-picks">
               <DailyPicksSection />
             </div>
 
-            <div className="my-6">
+            <div className="my-6" data-home-section="trending-now">
               <TrendingNowSection />
             </div>
 
-           <div className="my-6">
+           <div className="my-6" data-home-section="update-today">
   <UpdateTodaySection />
 </div>
 
-<div className="my-6">
+<div className="my-6" data-home-section="editor-weekly-picks">
   <EditorWeeklyPicksSection />
 </div>
 
-    <div className="my-6">
+    <div className="my-6" data-home-section="weekly-update">
   <WeeklyUpdateSection />
 </div>
 
-            <div className="my-6">
+            <div className="my-6" data-home-section="new-arrivals">
               <NewArrivalsSection />
             </div>
 
-            <div className="my-6">
+            <div className="my-6" data-home-section="top-novel">
               <TopNovelSection />
             </div>
 
 
 
-            <div className="my-6">
+            <div className="my-6" data-home-section="event-perks-hub">
               <EventPerksHubSection />
             </div>
 
-            <div className="my-6">
+            <div className="my-6" data-home-section="you-might-like">
               <YouMightLikeSection />
             </div>
     
