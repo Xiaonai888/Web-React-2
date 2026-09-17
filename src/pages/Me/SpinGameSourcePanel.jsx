@@ -1,0 +1,1021 @@
+import { useEffect, useRef, useState } from 'react'
+import { SurfaceCard } from '../../components/common/PagePrimitives'
+import { getDisplayLanguageId } from '../../utils/displayLanguage'
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const MAX_ENTRIES = 10000
+const SEARCH_LIMIT = 20
+const SEARCH_DELAY_MS = 400
+const ACTIVE_GAME_KEY = 'shadow_spin_active_game_v1'
+const PENDING_START_KEY = 'shadow_spin_pending_start_v1'
+const SEARCH_CACHE = new Map()
+
+const SOURCE_META = {
+  manual: {
+    icon: 'fa-solid fa-keyboard',
+    labelKey: 'manual',
+    daily_limit: 100,
+    cost_currency: null,
+    cost_amount: 0,
+  },
+  reader: {
+    icon: 'fa-solid fa-user',
+    labelKey: 'reader',
+    daily_limit: 20,
+    cost_currency: 'coin',
+    cost_amount: 100,
+  },
+  book: {
+    icon: 'fa-solid fa-book-open',
+    labelKey: 'book',
+    daily_limit: 20,
+    cost_currency: 'coin',
+    cost_amount: 100,
+  },
+  author: {
+    icon: 'fa-solid fa-feather-pointed',
+    labelKey: 'author',
+    daily_limit: 100,
+    cost_currency: 'diamond',
+    cost_amount: 10,
+  },
+}
+
+const COPY = {
+  en: {
+    start: 'Start Game',
+    newGame: 'New Game',
+    current: 'Current Game',
+    remaining: 'remaining today',
+    free: 'Free',
+    starting: 'Starting...',
+    choose: 'Choose one source and start a game. Spins inside the game are unlimited.',
+    rule: 'Only starting a New Game counts toward the daily limit or charges currency. Spinning does not count.',
+    searchHint: '2+ characters • max 20 results • 20 searches per game',
+    searchesLeft: 'searches left',
+    signIn: 'Sign in before starting a game.',
+    network: 'Could not reach the server. Try again.',
+    expired: 'This game session expired. Start a new game.',
+  },
+  km: {
+    start: 'ចាប់ផ្តើម Game',
+    newGame: 'Game ថ្មី',
+    current: 'Game បច្ចុប្បន្ន',
+    remaining: 'នៅសល់ថ្ងៃនេះ',
+    free: 'Free',
+    starting: 'កំពុងចាប់ផ្តើម...',
+    choose: 'ជ្រើសប្រភេទមួយ ហើយចាប់ផ្តើម Game។ ការបង្វិលក្នុង Game គឺ Unlimited។',
+    rule: 'រាប់ Limit ឬកាត់លុយ តែពេលចាប់ផ្តើម New Game ប៉ុណ្ណោះ។ ការបង្វិលមិនរាប់ទេ។',
+    searchHint: 'វាយចាប់ពី 2 តួ • អតិបរមា 20 លទ្ធផល • Search 20 ដង/Game',
+    searchesLeft: 'Search នៅសល់',
+    signIn: 'សូម Login មុនចាប់ផ្តើម Game។',
+    network: 'មិនអាចភ្ជាប់ Server បាន។ សូមសាកម្តងទៀត។',
+    expired: 'Game session នេះផុតកំណត់ហើយ។ សូមចាប់ផ្តើម Game ថ្មី។',
+  },
+  zh: {
+    start: '开始游戏',
+    newGame: '新游戏',
+    current: '当前游戏',
+    remaining: '今日剩余',
+    free: '免费',
+    starting: '正在开始...',
+    choose: '选择一个来源并开始游戏。游戏内旋转不限次数。',
+    rule: '只有开始新游戏才计入每日限制或扣除货币。旋转不计数。',
+    searchHint: '至少 2 个字符 • 最多 20 个结果 • 每局 20 次搜索',
+    searchesLeft: '剩余搜索',
+    signIn: '请先登录再开始游戏。',
+    network: '无法连接服务器，请重试。',
+    expired: '此游戏会话已过期，请开始新游戏。',
+  },
+  ja: {
+    start: 'ゲーム開始',
+    newGame: '新しいゲーム',
+    current: '現在のゲーム',
+    remaining: '本日の残り',
+    free: '無料',
+    starting: '開始中...',
+    choose: '1つのソースを選んでゲームを開始してください。ゲーム内のスピン回数は無制限です。',
+    rule: '新しいゲームを開始した時だけ日次上限や通貨消費にカウントされます。スピンはカウントされません。',
+    searchHint: '2文字以上 • 最大20件 • 1ゲーム20回検索',
+    searchesLeft: '検索残り',
+    signIn: 'ゲームを開始する前にログインしてください。',
+    network: 'サーバーに接続できません。もう一度お試しください。',
+    expired: 'ゲームセッションの期限が切れました。新しいゲームを開始してください。',
+  },
+  ko: {
+    start: '게임 시작',
+    newGame: '새 게임',
+    current: '현재 게임',
+    remaining: '오늘 남은 횟수',
+    free: '무료',
+    starting: '시작 중...',
+    choose: '하나의 소스를 선택해 게임을 시작하세요. 게임 안의 스핀 횟수는 무제한입니다.',
+    rule: '새 게임을 시작할 때만 일일 한도 또는 재화가 차감됩니다. 스핀은 계산되지 않습니다.',
+    searchHint: '2자 이상 • 최대 20개 결과 • 게임당 검색 20회',
+    searchesLeft: '남은 검색',
+    signIn: '게임을 시작하기 전에 로그인하세요.',
+    network: '서버에 연결할 수 없습니다. 다시 시도하세요.',
+    expired: '게임 세션이 만료되었습니다. 새 게임을 시작하세요.',
+  },
+}
+
+function uiCopy() {
+  const language = getDisplayLanguageId()
+  return COPY[language] || COPY.en
+}
+
+function getReaderToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function getReaderUserId(token = getReaderToken()) {
+  try {
+    const encoded = String(token || '').split('.')[1]
+    if (!encoded) return ''
+    const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      '='
+    )
+    const payload = JSON.parse(atob(padded))
+    return String(payload?.user_id || payload?.id || '')
+  } catch {
+    return ''
+  }
+}
+
+function makeId(prefix) {
+  if (globalThis.crypto?.randomUUID) {
+    return `${prefix}-${globalThis.crypto.randomUUID()}`
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+function readJson(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || 'null')
+  } catch {
+    return null
+  }
+}
+
+function writeJson(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    return
+  }
+}
+
+function removeStored(key) {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    return
+  }
+}
+
+function readActiveGame() {
+  const token = getReaderToken()
+  const ownerId = getReaderUserId(token)
+  const stored = readJson(ACTIVE_GAME_KEY)
+
+  if (
+    !token ||
+    !ownerId ||
+    !stored?.session?.id ||
+    !SOURCE_META[stored?.source] ||
+    stored.owner_id !== ownerId ||
+    new Date(stored.session.expires_at || 0).getTime() <= Date.now()
+  ) {
+    removeStored(ACTIVE_GAME_KEY)
+    return null
+  }
+
+  return stored
+}
+
+function saveActiveGame(game) {
+  writeJson(ACTIVE_GAME_KEY, game)
+}
+
+function clearActiveGameStorage() {
+  removeStored(ACTIVE_GAME_KEY)
+}
+
+function pendingRequest(source, ownerId) {
+  const stored = readJson(PENDING_START_KEY)
+
+  if (
+    stored?.source === source &&
+    stored?.owner_id === ownerId &&
+    stored?.request_key
+  ) {
+    return stored
+  }
+
+  const next = {
+    source,
+    owner_id: ownerId,
+    request_key: makeId(`spin-${source}`),
+    created_at: new Date().toISOString(),
+  }
+
+  writeJson(PENDING_START_KEY, next)
+  return next
+}
+
+function clearPendingRequest() {
+  removeStored(PENDING_START_KEY)
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat().format(Number(value || 0))
+}
+
+function sourceSearchType(source) {
+  if (source === 'reader') return 'readers'
+  if (source === 'author') return 'pages'
+  if (source === 'book') return 'stories'
+  return ''
+}
+
+function searchCacheKey(sessionId, type, keyword) {
+  return `${sessionId}:${type}:${String(keyword || '')
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase()}`
+}
+
+function useProtectedSearch(source, query, activeGame, t) {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [errorCode, setErrorCode] = useState('')
+  const [remaining, setRemaining] = useState(null)
+
+  useEffect(() => {
+    const keyword = String(query || '').trim()
+    const sessionId = activeGame?.session?.id || ''
+
+    if (
+      keyword.length < 2 ||
+      !sessionId ||
+      activeGame?.source !== source
+    ) {
+      setItems([])
+      setLoading(false)
+      setError('')
+      setErrorCode('')
+      return undefined
+    }
+
+    const type = sourceSearchType(source)
+    const key = searchCacheKey(sessionId, type, keyword)
+    const cached = SEARCH_CACHE.get(key)
+
+    if (cached) {
+      setItems(cached)
+      setLoading(false)
+      setError('')
+      setErrorCode('')
+      return undefined
+    }
+
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      try {
+        const token = getReaderToken()
+
+        if (!token) {
+          throw new Error(uiCopy().signIn)
+        }
+
+        setLoading(true)
+        setError('')
+        setErrorCode('')
+
+        const params = new URLSearchParams({
+          q: keyword,
+          type,
+          limit: String(SEARCH_LIMIT),
+        })
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/spin/sessions/${encodeURIComponent(sessionId)}/search?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data?.ok === false) {
+          const requestError = new Error(
+            data?.message || t('spinPage.searchFailed')
+          )
+          requestError.code = data?.code || ''
+          throw requestError
+        }
+
+        const nextItems = Array.isArray(data?.results)
+          ? data.results.slice(0, SEARCH_LIMIT)
+          : []
+
+        SEARCH_CACHE.set(key, nextItems)
+        setItems(nextItems)
+
+        const headerRemaining = Number(
+          response.headers.get('X-Spin-Search-Remaining')
+        )
+        if (Number.isFinite(headerRemaining)) {
+          setRemaining(Math.max(0, headerRemaining))
+        }
+      } catch (searchError) {
+        if (searchError?.name === 'AbortError') return
+        setItems([])
+        setError(searchError?.message || t('spinPage.searchFailed'))
+        setErrorCode(searchError?.code || '')
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
+    }, SEARCH_DELAY_MS)
+
+    return () => {
+      window.clearTimeout(timer)
+      controller.abort()
+    }
+  }, [activeGame, query, source, t])
+
+  return {
+    items,
+    loading,
+    error,
+    errorCode,
+    remaining,
+  }
+}
+
+function Avatar({ src, name, square = false }) {
+  const initial =
+    String(name || 'S').trim().slice(0, 1).toUpperCase() || 'S'
+
+  return (
+    <div
+      className={`app-elevated flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden font-black ${
+        square ? 'rounded-[12px]' : 'rounded-full'
+      }`}
+    >
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          className="h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <span className="text-[12px] text-violet-600">{initial}</span>
+      )}
+    </div>
+  )
+}
+
+function SearchPanel({
+  source,
+  query,
+  setQuery,
+  search,
+  existingEntryKeys,
+  addEntry,
+  disabled,
+  t,
+}) {
+  const copy = uiCopy()
+  const type = sourceSearchType(source)
+
+  function normalizeResult(item) {
+    if (source === 'reader') {
+      return {
+        id: makeId('reader'),
+        source_type: 'reader',
+        source_id: String(item?.id || ''),
+        name: item?.name || item?.username || t('spinPage.reader'),
+        secondary: item?.username ? `@${item.username}` : '',
+        image_url: item?.avatar_url || null,
+      }
+    }
+
+    if (source === 'author') {
+      return {
+        id: makeId('author'),
+        source_type: 'author',
+        source_id: String(item?.id || ''),
+        name:
+          item?.page_name ||
+          item?.page_username ||
+          t('spinPage.author'),
+        secondary: item?.page_username
+          ? `@${item.page_username}`
+          : '',
+        image_url: item?.avatar_url || null,
+      }
+    }
+
+    return {
+      id: makeId('book'),
+      source_type: 'book',
+      source_id: String(item?.id || ''),
+      name: item?.title || t('spinPage.book'),
+      secondary:
+        item?.author_page?.page_name ||
+        item?.author_page?.page_username ||
+        '',
+      image_url: item?.cover_url || null,
+    }
+  }
+
+  return (
+    <SurfaceCard className="overflow-hidden p-4">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-violet-500/10 text-violet-600">
+          <i className={`${SOURCE_META[source].icon} text-[15px]`} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="app-title text-[14px] font-black">
+            {t(`spinPage.${SOURCE_META[source].labelKey}`)}
+          </h3>
+          <p className="app-muted mt-0.5 text-[10px]">
+            {copy.searchHint}
+          </p>
+        </div>
+        {search.remaining !== null ? (
+          <span className="rounded-full bg-violet-500/10 px-2.5 py-1 text-[9px] font-black text-violet-600">
+            {formatNumber(search.remaining)} {copy.searchesLeft}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="relative mt-4">
+        <i className="fa-solid fa-magnifying-glass app-tertiary absolute left-3 top-1/2 -translate-y-1/2 text-[12px]" />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          disabled={disabled}
+          placeholder={t('spinPage.searchPlaceholder')}
+          className="app-input w-full rounded-[13px] border py-3 pl-9 pr-10 text-[12px] outline-none transition focus:border-violet-500"
+        />
+        {query ? (
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            className="app-tertiary absolute right-3 top-1/2 -translate-y-1/2"
+            aria-label={t('spinPage.close')}
+          >
+            <i className="fa-solid fa-circle-xmark text-[13px]" />
+          </button>
+        ) : null}
+      </div>
+
+      {query.trim().length >= 2 ? (
+        <div className="mt-3 max-h-[310px] overflow-y-auto rounded-[14px] border border-[var(--shadow-border)]">
+          {search.loading ? (
+            <div className="app-muted flex items-center justify-center gap-2 px-3 py-6 text-[11px]">
+              <i className="fa-solid fa-spinner animate-spin" />
+              {t('spinPage.searching')}
+            </div>
+          ) : search.error ? (
+            <div className="px-3 py-6 text-center text-[11px] font-semibold text-red-500">
+              {search.error}
+            </div>
+          ) : search.items.length ? (
+            <div className="divide-y divide-[var(--shadow-border)]">
+              {search.items.map((item) => {
+                const entry = normalizeResult(item)
+                const alreadyAdded = Boolean(
+                  entry.source_id &&
+                    existingEntryKeys.has(
+                      `${entry.source_type}:${entry.source_id}`
+                    )
+                )
+
+                return (
+                  <div
+                    key={`${type}-${item.id}`}
+                    className="flex items-center gap-3 px-3 py-2.5"
+                  >
+                    <Avatar
+                      src={entry.image_url}
+                      name={entry.name}
+                      square={entry.source_type === 'book'}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="app-title line-clamp-1 text-[12px] font-extrabold">
+                        {entry.name}
+                      </div>
+                      {entry.secondary ? (
+                        <div className="app-muted mt-0.5 truncate text-[10px]">
+                          {entry.secondary}
+                        </div>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addEntry(entry)}
+                      disabled={alreadyAdded || disabled}
+                      className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-extrabold ${
+                        alreadyAdded
+                          ? 'app-elevated app-muted'
+                          : 'bg-violet-600 text-white active:scale-95'
+                      }`}
+                    >
+                      {alreadyAdded
+                        ? t('spinPage.added')
+                        : t('spinPage.add')}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="app-muted px-3 py-6 text-center text-[11px]">
+              {t('spinPage.noSearchResults')}
+            </div>
+          )}
+        </div>
+      ) : null}
+    </SurfaceCard>
+  )
+}
+
+export default function SpinGameSourcePanel({
+  entries,
+  manualName,
+  setManualName,
+  manualEntries,
+  manualDuplicateCount,
+  addManualEntry,
+  openManualManager,
+  existingEntryKeys,
+  addEntry,
+  isSpinning,
+  onGameStarted,
+  t,
+}) {
+  const copy = uiCopy()
+  const startBusyRef = useRef(false)
+  const [activeGame, setActiveGame] = useState(() => readActiveGame())
+  const [status, setStatus] = useState(null)
+  const [startingSource, setStartingSource] = useState('')
+  const [message, setMessage] = useState('')
+  const [readerQuery, setReaderQuery] = useState('')
+  const [authorQuery, setAuthorQuery] = useState('')
+  const [bookQuery, setBookQuery] = useState('')
+
+  const readerSearch = useProtectedSearch(
+    'reader',
+    readerQuery,
+    activeGame,
+    t
+  )
+  const authorSearch = useProtectedSearch(
+    'author',
+    authorQuery,
+    activeGame,
+    t
+  )
+  const bookSearch = useProtectedSearch(
+    'book',
+    bookQuery,
+    activeGame,
+    t
+  )
+
+  useEffect(() => {
+    const invalidCodes = new Set([
+      'SPIN_SESSION_NOT_FOUND',
+      'SPIN_SESSION_EXPIRED',
+    ])
+
+    if (
+      invalidCodes.has(readerSearch.errorCode) ||
+      invalidCodes.has(authorSearch.errorCode) ||
+      invalidCodes.has(bookSearch.errorCode)
+    ) {
+      clearActiveGameStorage()
+      setActiveGame(null)
+      setMessage(copy.expired)
+    }
+  }, [
+    authorSearch.errorCode,
+    bookSearch.errorCode,
+    copy.expired,
+    readerSearch.errorCode,
+  ])
+
+  useEffect(() => {
+    const token = getReaderToken()
+    if (!token) return undefined
+
+    let active = true
+    const controller = new AbortController()
+
+    async function loadStatus() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/spin/sessions/status`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (
+          active &&
+          response.ok &&
+          data?.ok !== false
+        ) {
+          setStatus(data)
+        }
+      } catch (error) {
+        if (error?.name !== 'AbortError' && active) {
+          setMessage(copy.network)
+        }
+      }
+    }
+
+    void loadStatus()
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [copy.network])
+
+  async function startGame(source) {
+    if (
+      startBusyRef.current ||
+      startingSource ||
+      isSpinning ||
+      !SOURCE_META[source]
+    ) {
+      return
+    }
+
+    const token = getReaderToken()
+    const ownerId = getReaderUserId(token)
+
+    if (!token || !ownerId) {
+      setMessage(copy.signIn)
+      return
+    }
+
+    startBusyRef.current = true
+    setStartingSource(source)
+    setMessage('')
+
+    const pending = pendingRequest(source, ownerId)
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/spin/sessions/start`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          cache: 'no-store',
+          body: JSON.stringify({
+            mode: source,
+            request_key: pending.request_key,
+          }),
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data?.ok === false) {
+        if (response.status < 500) {
+          clearPendingRequest()
+        }
+
+        if (data?.status) {
+          setStatus(data.status)
+        }
+
+        if (
+          data?.code === 'SPIN_COOLDOWN' &&
+          Number(data?.wait_seconds || 0) > 0
+        ) {
+          setMessage(
+            `${data.message || 'Please wait'} • ${formatNumber(
+              data.wait_seconds
+            )}s`
+          )
+        } else {
+          setMessage(
+            data?.message || copy.network
+          )
+        }
+        return
+      }
+
+      const nextGame = {
+        source,
+        owner_id: ownerId,
+        session: data.session,
+        saved_at: new Date().toISOString(),
+      }
+
+      saveActiveGame(nextGame)
+      clearPendingRequest()
+      setActiveGame(nextGame)
+
+      if (data?.status) {
+        setStatus(data.status)
+      }
+
+      setReaderQuery('')
+      setAuthorQuery('')
+      setBookQuery('')
+      onGameStarted?.(source)
+    } catch {
+      setMessage(copy.network)
+    } finally {
+      startBusyRef.current = false
+      setStartingSource('')
+    }
+  }
+
+  function ruleFor(source) {
+    return status?.rules?.[source] || SOURCE_META[source]
+  }
+
+  function usageFor(source) {
+    const rule = ruleFor(source)
+    return (
+      status?.usage?.[source] || {
+        used: 0,
+        limit: rule.daily_limit,
+        remaining: rule.daily_limit,
+      }
+    )
+  }
+
+  function priceFor(source) {
+    const rule = ruleFor(source)
+    const amount = Number(rule?.cost_amount || 0)
+
+    if (!amount) return copy.free
+
+    const currency =
+      rule?.cost_currency === 'diamond'
+        ? t('spinPage.diamond')
+        : t('spinPage.coin')
+
+    return `${formatNumber(amount)} ${currency}`
+  }
+
+  return (
+    <section>
+      <div className="mb-3 flex items-end justify-between gap-3 px-1">
+        <div>
+          <h2 className="app-title text-[16px] font-black">
+            {t('spinPage.addEntries')}
+          </h2>
+          <p className="app-muted mt-1 text-[10.5px]">
+            {copy.choose}
+          </p>
+        </div>
+        <div className="app-muted text-[10px] font-bold">
+          {t('spinPage.entriesCount', {
+            count: formatNumber(entries.length),
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {Object.keys(SOURCE_META).map((source) => {
+          const meta = SOURCE_META[source]
+          const usage = usageFor(source)
+          const current = activeGame?.source === source
+          const busy = startingSource === source
+          const noRemaining = Number(usage?.remaining || 0) <= 0
+
+          return (
+            <SurfaceCard
+              key={source}
+              className={`p-3 ${
+                current
+                  ? 'border-violet-500/50 bg-violet-500/5'
+                  : ''
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-violet-500/10 text-violet-600">
+                  <i className={`${meta.icon} text-[13px]`} />
+                </div>
+                <div className="min-w-0">
+                  <div className="app-title truncate text-[11px] font-black">
+                    {t(`spinPage.${meta.labelKey}`)}
+                  </div>
+                  <div className="mt-0.5 text-[9px] font-extrabold text-violet-600">
+                    {priceFor(source)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="app-muted mt-3 text-[9px] font-bold">
+                {formatNumber(usage?.remaining)} /{' '}
+                {formatNumber(usage?.limit || meta.daily_limit)}{' '}
+                {copy.remaining}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void startGame(source)}
+                disabled={
+                  Boolean(startingSource) ||
+                  isSpinning ||
+                  noRemaining
+                }
+                className={`mt-2 w-full rounded-[10px] px-2 py-2 text-[9.5px] font-black text-white disabled:opacity-45 ${
+                  current
+                    ? 'bg-fuchsia-600'
+                    : 'bg-violet-600'
+                }`}
+              >
+                {busy
+                  ? copy.starting
+                  : current
+                    ? copy.newGame
+                    : copy.start}
+              </button>
+
+              {current ? (
+                <div className="mt-2 text-center text-[8.5px] font-black text-fuchsia-500">
+                  {copy.current}
+                </div>
+              ) : null}
+            </SurfaceCard>
+          )
+        })}
+      </div>
+
+      <div className="mt-3 rounded-[12px] bg-violet-500/10 px-3 py-2.5 text-[9.5px] font-semibold leading-4 text-violet-700 dark:text-violet-300">
+        {copy.rule}
+      </div>
+
+      {message ? (
+        <div className="mt-3 rounded-[12px] bg-amber-500/10 px-3 py-2.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+          {message}
+        </div>
+      ) : null}
+
+      <div className="mt-3">
+        {!activeGame ? (
+          <SurfaceCard className="p-5 text-center">
+            <div className="app-muted text-[11px]">
+              {copy.choose}
+            </div>
+          </SurfaceCard>
+        ) : activeGame.source === 'manual' ? (
+          <SurfaceCard className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-amber-500/10 text-amber-500">
+                <i className="fa-solid fa-keyboard text-[15px]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="app-title text-[14px] font-black">
+                  {t('spinPage.manual')}
+                </h3>
+                <p className="app-muted mt-0.5 text-[10.5px]">
+                  {t('spinPage.manualSummary', {
+                    count: formatNumber(manualEntries.length),
+                  })}
+                </p>
+              </div>
+              {manualDuplicateCount ? (
+                <button
+                  type="button"
+                  onClick={openManualManager}
+                  disabled={isSpinning}
+                  className="shrink-0 rounded-full bg-amber-500/10 px-2.5 py-1.5 text-[9px] font-extrabold text-amber-600 dark:text-amber-300"
+                >
+                  <i className="fa-solid fa-triangle-exclamation mr-1" />
+                  {formatNumber(manualDuplicateCount)}
+                </button>
+              ) : null}
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <input
+                value={manualName}
+                onChange={(event) => setManualName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') addManualEntry()
+                }}
+                disabled={
+                  isSpinning ||
+                  entries.length >= MAX_ENTRIES
+                }
+                placeholder={t('spinPage.manualPlaceholder')}
+                maxLength={120}
+                className="app-input min-w-0 flex-1 rounded-[13px] border px-3 py-3 text-[12px] outline-none focus:border-violet-500"
+              />
+              <button
+                type="button"
+                onClick={addManualEntry}
+                disabled={
+                  !manualName.trim() ||
+                  isSpinning ||
+                  entries.length >= MAX_ENTRIES
+                }
+                className="rounded-[13px] bg-violet-600 px-4 py-3 text-[11px] font-extrabold text-white active:scale-95 disabled:opacity-45"
+              >
+                {t('spinPage.add')}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={openManualManager}
+              disabled={isSpinning}
+              className="app-elevated mt-3 flex w-full items-center justify-center gap-2 rounded-[13px] px-4 py-3 text-[10.5px] font-extrabold disabled:opacity-45"
+            >
+              <i className="fa-solid fa-list-check text-violet-500" />
+              {t('spinPage.manageNames')}
+              <span className="app-muted">
+                • {formatNumber(manualEntries.length)}
+              </span>
+            </button>
+          </SurfaceCard>
+        ) : activeGame.source === 'reader' ? (
+          <SearchPanel
+            source="reader"
+            query={readerQuery}
+            setQuery={setReaderQuery}
+            search={readerSearch}
+            existingEntryKeys={existingEntryKeys}
+            addEntry={addEntry}
+            disabled={
+              isSpinning ||
+              entries.length >= MAX_ENTRIES
+            }
+            t={t}
+          />
+        ) : activeGame.source === 'author' ? (
+          <SearchPanel
+            source="author"
+            query={authorQuery}
+            setQuery={setAuthorQuery}
+            search={authorSearch}
+            existingEntryKeys={existingEntryKeys}
+            addEntry={addEntry}
+            disabled={
+              isSpinning ||
+              entries.length >= MAX_ENTRIES
+            }
+            t={t}
+          />
+        ) : (
+          <SearchPanel
+            source="book"
+            query={bookQuery}
+            setQuery={setBookQuery}
+            search={bookSearch}
+            existingEntryKeys={existingEntryKeys}
+            addEntry={addEntry}
+            disabled={
+              isSpinning ||
+              entries.length >= MAX_ENTRIES
+            }
+            t={t}
+          />
+        )}
+      </div>
+    </section>
+  )
+}
