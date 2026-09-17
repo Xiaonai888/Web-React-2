@@ -627,7 +627,9 @@ function StoryViewer({
   async function deleteStory() {
     if (
       !story?.id ||
-      story.source_type !== 'reader'
+      !['reader', 'author'].includes(
+        story.source_type
+      )
     ) {
       return
     }
@@ -635,8 +637,13 @@ function StoryViewer({
     try {
       setDeleting(true)
 
+      const endpoint =
+        story.source_type === 'author'
+          ? `/api/author-stories/me/${encodeURIComponent(story.id)}`
+          : `/api/reader-stories/me/${encodeURIComponent(story.id)}`
+
       const response = await fetch(
-        `${API_BASE_URL}/api/reader-stories/me/${encodeURIComponent(story.id)}`,
+        `${API_BASE_URL}${endpoint}`,
         {
           method: 'DELETE',
           headers: {
