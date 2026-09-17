@@ -419,6 +419,8 @@ function DeleteStorySheet({
 
 function StoryViewer({
   group,
+  allGroups,
+  onSelectGroup,
   onClose,
   onViewed,
   onDeleted,
@@ -427,6 +429,8 @@ function StoryViewer({
     useState(0)
   const [progress, setProgress] =
     useState(0)
+  const [trayOpen, setTrayOpen] =
+    useState(false)
   const [
     deleteSheetOpen,
     setDeleteSheetOpen,
@@ -446,6 +450,7 @@ function StoryViewer({
   useEffect(() => {
     setStoryIndex(0)
     setProgress(0)
+    setTrayOpen(false)
   }, [group?.key])
 
   useEffect(() => {
@@ -866,6 +871,29 @@ function StoryViewer({
                 </div>
               </div>
 
+              <button
+                type="button"
+                onClick={() =>
+                  setTrayOpen(
+                    (current) => !current
+                  )
+                }
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
+                aria-label={
+                  trayOpen
+                    ? 'Hide stories'
+                    : 'Show stories'
+                }
+              >
+                <i
+                  className={`fa-solid ${
+                    trayOpen
+                      ? 'fa-chevron-up'
+                      : 'fa-chevron-down'
+                  } text-[14px]`}
+                />
+              </button>
+
               {group.is_owner ? (
                 <button
                   type="button"
@@ -893,6 +921,91 @@ function StoryViewer({
               ) : null}
             </div>
           </div>
+
+          {trayOpen ? (
+            <div
+              data-story-tray
+              className="absolute inset-x-0 z-30 border-y border-white/10 bg-black/65 py-3 backdrop-blur-xl"
+              style={{
+                top:
+                  'calc(max(12px, env(safe-area-inset-top)) + 64px)',
+              }}
+              onTouchStart={(event) =>
+                event.stopPropagation()
+              }
+              onTouchEnd={(event) =>
+                event.stopPropagation()
+              }
+            >
+              <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
+                {(allGroups || []).map(
+                  (trayGroup) => {
+                    const trayCreator =
+                      trayGroup.creator || {}
+                    const isActive =
+                      trayGroup.key === group.key
+                    const ringClass =
+                      isActive
+                        ? 'ring-2 ring-white'
+                        : trayGroup.has_unseen
+                          ? 'ring-2 ring-[#8b5cf6]'
+                          : 'ring-1 ring-white/35'
+
+                    return (
+                      <button
+                        key={trayGroup.key}
+                        type="button"
+                        onClick={() => {
+                          setTrayOpen(false)
+                          onSelectGroup(
+                            trayGroup
+                          )
+                        }}
+                        className="w-[58px] shrink-0 text-center active:scale-95"
+                        aria-label={`Open ${trayCreator.name || 'Story'}`}
+                      >
+                        <div
+                          className={`mx-auto h-11 w-11 overflow-hidden rounded-full bg-[#111827] ${ringClass}`}
+                        >
+                          {trayCreator.avatar_url ? (
+                            <img
+                              src={
+                                trayCreator.avatar_url
+                              }
+                              alt={
+                                trayCreator.name || ''
+                              }
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-[12px] font-black text-white">
+                              {getInitial(
+                                trayCreator.name
+                              )}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-1 truncate text-[9px] font-bold text-white">
+                          {trayGroup.is_owner
+                            ? 'Your story'
+                            : trayCreator.name ||
+                              'Story'}
+                        </div>
+
+                        {trayCreator.type ===
+                        'author' ? (
+                          <div className="mx-auto mt-0.5 w-fit rounded-full bg-[#f6b800] px-1.5 py-0.5 text-[6px] font-black text-[#111827]">
+                            AUTHOR
+                          </div>
+                        ) : null}
+                      </button>
+                    )
+                  }
+                )}
+              </div>
+            </div>
+          ) : null}
 
           <button
             type="button"
@@ -1316,6 +1429,10 @@ export default function DiscoverStorySection() {
       {activeGroup ? (
         <StoryViewer
           group={activeGroup}
+          allGroups={groups}
+          onSelectGroup={(nextGroup) =>
+            setActiveGroup(nextGroup)
+          }
           onClose={() =>
             setActiveGroup(null)
           }
