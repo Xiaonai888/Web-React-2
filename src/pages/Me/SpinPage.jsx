@@ -2156,9 +2156,6 @@ export default function SpinPage() {
   const [showManualManager, setShowManualManager] = useState(false)
   const [manualDraftEntries, setManualDraftEntries] = useState([])
   const [manualDirty, setManualDirty] = useState(false)
-  const [readerQuery, setReaderQuery] = useState('')
-  const [authorQuery, setAuthorQuery] = useState('')
-  const [bookQuery, setBookQuery] = useState('')
   const [rewardConfig, setRewardConfig] = useState(DEFAULT_REWARDS)
   const [customGifts, setCustomGifts] = useState([])
   const [giftForm, setGiftForm] = useState(null)
@@ -2181,9 +2178,6 @@ export default function SpinPage() {
   const [toast, setToast] = useState('')
   const [gameAccessState, setGameAccessState] = useState('checking')
 
-  const readerSearch = useSpinSearch('readers', readerQuery, t)
-  const authorSearch = useSpinSearch('pages', authorQuery, t)
-  const bookSearch = useSpinSearch('stories', bookQuery, t)
 
   const activePrizes = useMemo(() => {
     const builtIns = Object.entries(rewardConfig)
@@ -3176,123 +3170,20 @@ export default function SpinPage() {
               </div>
             </SurfaceCard>
 
-            <section>
-              <div className="mb-3 flex items-end justify-between gap-3 px-1">
-                <div>
-                  <h2 className="app-title text-[16px] font-black">
-                    {t('spinPage.addEntries')}
-                  </h2>
-                  <p className="app-muted mt-1 text-[10.5px]">
-                    {t('spinPage.entriesCount', { count: formatNumber(entries.length) })}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <SurfaceCard className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-amber-500/10 text-amber-500">
-                      <i className="fa-solid fa-keyboard text-[15px]" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="app-title text-[14px] font-black">
-                        {t('spinPage.manual')}
-                      </h3>
-                      <p className="app-muted mt-0.5 text-[10.5px]">
-                        {t('spinPage.manualSummary', {
-                          count: formatNumber(manualEntries.length),
-                        })}
-                      </p>
-                    </div>
-                    {manualDuplicateCount ? (
-                      <button
-                        type="button"
-                        onClick={openManualManager}
-                        disabled={isSpinning}
-                        className="shrink-0 rounded-full bg-amber-500/10 px-2.5 py-1.5 text-[9px] font-extrabold text-amber-600 dark:text-amber-300"
-                      >
-                        <i className="fa-solid fa-triangle-exclamation mr-1" />
-                        {formatNumber(manualDuplicateCount)}
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <input
-                      value={manualName}
-                      onChange={(event) => setManualName(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') addManualEntry()
-                      }}
-                      disabled={isSpinning || entries.length >= MAX_ENTRIES}
-                      placeholder={t('spinPage.manualPlaceholder')}
-                      maxLength={120}
-                      className="app-input min-w-0 flex-1 rounded-[13px] border px-3 py-3 text-[12px] outline-none focus:border-violet-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={addManualEntry}
-                      disabled={!manualName.trim() || isSpinning || entries.length >= MAX_ENTRIES}
-                      className="rounded-[13px] bg-violet-600 px-4 py-3 text-[11px] font-extrabold text-white active:scale-95 disabled:opacity-45"
-                    >
-                      {t('spinPage.add')}
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={openManualManager}
-                    disabled={isSpinning}
-                    className="app-elevated mt-3 flex w-full items-center justify-center gap-2 rounded-[13px] px-4 py-3 text-[10.5px] font-extrabold disabled:opacity-45"
-                  >
-                    <i className="fa-solid fa-list-check text-violet-500" />
-                    {t('spinPage.manageNames')}
-                    <span className="app-muted">
-                      • {formatNumber(manualEntries.length)}
-                    </span>
-                  </button>
-                </SurfaceCard>
-
-                <SearchBlock
-                  icon="fa-solid fa-user"
-                  title={t('spinPage.reader')}
-                  query={readerQuery}
-                  setQuery={setReaderQuery}
-                  search={readerSearch}
-                  type="readers"
-                  entryKeys={existingEntryKeys}
-                  onAdd={addEntry}
-                  disabled={isSpinning || entries.length >= MAX_ENTRIES}
-                  t={t}
-                />
-
-                <SearchBlock
-                  icon="fa-solid fa-feather-pointed"
-                  title={t('spinPage.author')}
-                  query={authorQuery}
-                  setQuery={setAuthorQuery}
-                  search={authorSearch}
-                  type="pages"
-                  entryKeys={existingEntryKeys}
-                  onAdd={addEntry}
-                  disabled={isSpinning || entries.length >= MAX_ENTRIES}
-                  t={t}
-                />
-
-                <SearchBlock
-                  icon="fa-solid fa-book-open"
-                  title={t('spinPage.book')}
-                  query={bookQuery}
-                  setQuery={setBookQuery}
-                  search={bookSearch}
-                  type="stories"
-                  entryKeys={existingEntryKeys}
-                  onAdd={addEntry}
-                  disabled={isSpinning || entries.length >= MAX_ENTRIES}
-                  t={t}
-                />
-              </div>
-            </section>
+            <SpinGameSourcePanel
+                entries={entries}
+                manualName={manualName}
+                setManualName={setManualName}
+                manualEntries={manualEntries}
+                manualDuplicateCount={manualDuplicateCount}
+                addManualEntry={addManualEntry}
+                openManualManager={openManualManager}
+                existingEntryKeys={existingEntryKeys}
+                addEntry={addEntry}
+                isSpinning={isSpinning}
+                onGameStarted={resetToNewWheel}
+                t={t}
+              />
           </div>
 
           <div className="space-y-4">
