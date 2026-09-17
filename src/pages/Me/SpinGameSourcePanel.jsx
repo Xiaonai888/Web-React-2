@@ -340,11 +340,16 @@ function useProtectedSearch(source, query, activeGame, t) {
         SEARCH_CACHE.set(key, nextItems)
         setItems(nextItems)
 
-        const headerRemaining = Number(
-          response.headers.get('X-Spin-Search-Remaining')
+        const remainingHeader = response.headers.get(
+          'X-Spin-Search-Remaining'
         )
-        if (Number.isFinite(headerRemaining)) {
-          setRemaining(Math.max(0, headerRemaining))
+
+        if (remainingHeader !== null) {
+          const headerRemaining = Number(remainingHeader)
+
+          if (Number.isFinite(headerRemaining)) {
+            setRemaining(Math.max(0, headerRemaining))
+          }
         }
       } catch (searchError) {
         if (searchError?.name === 'AbortError') return
@@ -577,6 +582,7 @@ export default function SpinGameSourcePanel({
   addEntry,
   isSpinning,
   onGameStarted,
+  onActiveGameChange,
   t,
 }) {
   const copy = uiCopy()
@@ -607,6 +613,41 @@ export default function SpinGameSourcePanel({
     activeGame,
     t
   )
+
+  useEffect(() => {
+    onActiveGameChange?.(activeGame?.source || '')
+
+    return () => {
+      onActiveGameChange?.('')
+    }
+  }, [activeGame?.source, onActiveGameChange])
+
+  useEffect(() => {
+    const expiresAt = new Date(
+      activeGame?.session?.expires_at || 0
+    ).getTime()
+
+    if (!activeGame || !Number.isFinite(expiresAt)) {
+      return undefined
+    }
+
+    const remaining = expiresAt - Date.now()
+
+    if (remaining <= 0) {
+      clearActiveGameStorage()
+      setActiveGame(null)
+      setMessage(copy.expired)
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      clearActiveGameStorage()
+      setActiveGame(null)
+      setMessage(copy.expired)
+    }, Math.min(remaining + 250, 2147483647))
+
+    return () => window.clearTimeout(timer)
+  }, [activeGame, copy.expired])
 
   useEffect(() => {
     const invalidCodes = new Set([
