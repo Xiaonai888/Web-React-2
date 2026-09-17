@@ -388,7 +388,7 @@ function DeleteStorySheet({
         </h2>
 
         <p className="mt-2 text-[12px] font-normal leading-5 text-[#667085]">
-          This Reader Story will be removed from Discover.
+          This Story will be removed from Discover.
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -799,9 +799,7 @@ function StoryViewer({
                 </div>
               </div>
 
-              {group.is_owner &&
-              story.source_type ===
-                'reader' ? (
+              {group.is_owner ? (
                 <button
                   type="button"
                   onClick={() =>
