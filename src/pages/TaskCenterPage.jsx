@@ -2529,17 +2529,26 @@ navigate(targetPath, {
     </li>
 
     <li>
-      {t('taskCenterPage.noteContact')}{' '}
-      <a
-        href="https://web.facebook.com/AlphaCentauri12226/"
-        target="_blank"
-        rel="noreferrer"
-        className="font-black text-[#1877F2] underline decoration-[#1877F2]/40 underline-offset-2"
-      >
-        “ប្រលោមលោកស្នេហា”
-      </a>
-      .
-    </li>
+  {t('taskCenterPage.noteContact')}{' '}
+  <a
+    href="https://web.facebook.com/AlphaCentauri12226/"
+    target="_blank"
+    rel="noreferrer"
+    className="font-black text-[#1877F2] underline decoration-[#1877F2]/40 underline-offset-2"
+  >
+    “ប្រលោមលោកស្នេហា”
+  </a>
+  {' • '}
+  <a
+    href="https://t.me/Shadow12226"
+    target="_blank"
+    rel="noreferrer"
+    className="font-black text-[#229ED9] underline decoration-[#229ED9]/40 underline-offset-2"
+  >
+    “Shadow Admin”
+  </a>
+  .
+</li>
   </ol>
 </section>
       </main>
