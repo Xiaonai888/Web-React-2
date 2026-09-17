@@ -14,6 +14,11 @@ const RESULT_LIMIT = 20
 const SEARCH_DELAY_MS = 400
 const ACTIVE_GAME_KEY = 'shadow_spin_active_game_v1'
 const PENDING_START_KEY = 'shadow_spin_pending_start_v1'
+const MANUAL_USAGE_KEY = 'shadow_spin_manual_usage_v1'
+const SHARED_GAME_USAGE_KEY = 'shadow_spin_shared_game_usage_v1'
+const MANUAL_DAILY_LIMIT = 100
+const SHARED_COOLDOWN_EVERY = 10
+const SHARED_COOLDOWN_MS = 2 * 60 * 1000
 const SEARCH_CACHE = new Map()
 
 const SOURCE_META = {
@@ -62,6 +67,8 @@ const COPY = {
     signIn: 'Sign in before starting a game.',
     network: 'Could not reach the server. Try again.',
     expired: 'This game session expired. Start a new game.',
+    cooldown: 'Please wait before starting another game.',
+    manualLimit: 'Manual daily game limit reached.',
   },
   km: {
     start: 'ចាប់ផ្តើម Game',
@@ -77,6 +84,8 @@ const COPY = {
     signIn: 'សូម Login មុនចាប់ផ្តើម Game។',
     network: 'មិនអាចភ្ជាប់ Server បាន។ សូមសាកម្តងទៀត។',
     expired: 'Game session នេះផុតកំណត់ហើយ។ សូមចាប់ផ្តើម Game ថ្មី។',
+    cooldown: 'សូមរង់ចាំសិន មុនចាប់ផ្តើម Game ថ្មី។',
+    manualLimit: 'Manual Game ដល់កំណត់ប្រចាំថ្ងៃហើយ។',
   },
   zh: {
     start: '开始游戏',
@@ -92,6 +101,8 @@ const COPY = {
     signIn: '请先登录再开始游戏。',
     network: '无法连接服务器，请重试。',
     expired: '此游戏会话已过期，请开始新游戏。',
+    cooldown: '请稍候再开始新游戏。',
+    manualLimit: 'Manual 游戏已达到每日上限。',
   },
   ja: {
     start: 'ゲーム開始',
@@ -107,6 +118,8 @@ const COPY = {
     signIn: 'ゲームを開始する前にログインしてください。',
     network: 'サーバーに接続できません。もう一度お試しください。',
     expired: 'ゲームセッションの期限が切れました。新しいゲームを開始してください。',
+    cooldown: '新しいゲームを開始する前に少しお待ちください。',
+    manualLimit: 'Manualゲームは1日の上限に達しました。',
   },
   ko: {
     start: '게임 시작',
@@ -122,6 +135,8 @@ const COPY = {
     signIn: '게임을 시작하기 전에 로그인하세요.',
     network: '서버에 연결할 수 없습니다. 다시 시도하세요.',
     expired: '게임 세션이 만료되었습니다. 새 게임을 시작하세요.',
+    cooldown: '새 게임을 시작하기 전에 잠시 기다려 주세요.',
+    manualLimit: 'Manual 게임의 일일 한도에 도달했습니다.',
   },
 }
 
@@ -185,19 +200,160 @@ function removeStored(key) {
   }
 }
 
-function readActiveGame() {
-  const token = getReaderToken()
-  const ownerId = getReaderUserId(token)
-  const stored = readJson(ACTIVE_GAME_KEY)
+function cambodiaDayKey(value = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Phnom_Penh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(value)
+
+  const get = (type) =>
+    parts.find((part) => part.type === type)?.value || ''
+
+  return `${get('year')}-${get('month')}-${get('day')}`
+}
+
+function readManualUsage() {
+  const dayKey = cambodiaDayKey()
+  const stored = readJson(MANUAL_USAGE_KEY)
+
+  if (stored?.day_key !== dayKey) {
+    return { day_key: dayKey, used: 0 }
+  }
+
+  return {
+    day_key: dayKey,
+    used: Math.max(
+      0,
+      Math.min(
+        MANUAL_DAILY_LIMIT,
+        Number(stored?.used || 0)
+      )
+    ),
+  }
+}
+
+function saveManualUsage(value) {
+  writeJson(MANUAL_USAGE_KEY, value)
+}
+
+function readSharedGameUsage() {
+  const dayKey = cambodiaDayKey()
+  const stored = readJson(SHARED_GAME_USAGE_KEY)
+
+  if (stored?.day_key !== dayKey) {
+    return {
+      day_key: dayKey,
+      count: 0,
+      cooldown_until: 0,
+      seen_ids: [],
+    }
+  }
+
+  return {
+    day_key: dayKey,
+    count: Math.max(0, Number(stored?.count || 0)),
+    cooldown_until: Math.max(
+      0,
+      Number(stored?.cooldown_until || 0)
+    ),
+    seen_ids: Array.isArray(stored?.seen_ids)
+      ? stored.seen_ids.slice(-200)
+      : [],
+  }
+}
+
+function saveSharedGameUsage(value) {
+  writeJson(SHARED_GAME_USAGE_KEY, value)
+}
+
+function localCooldownSeconds() {
+  const usage = readSharedGameUsage()
+  return Math.max(
+    0,
+    Math.ceil((usage.cooldown_until - Date.now()) / 1000)
+  )
+}
+
+function recordLocalGameStart(sessionId) {
+  const usage = readSharedGameUsage()
+  const id = String(sessionId || '')
+
+  if (id && usage.seen_ids.includes(id)) {
+    return usage
+  }
+
+  const count = usage.count + 1
+  const next = {
+    ...usage,
+    count,
+    cooldown_until:
+      count % SHARED_COOLDOWN_EVERY === 0
+        ? Date.now() + SHARED_COOLDOWN_MS
+        : 0,
+    seen_ids: id
+      ? [...usage.seen_ids, id].slice(-200)
+      : usage.seen_ids,
+  }
+
+  saveSharedGameUsage(next)
+  return next
+}
+
+function syncLocalSharedCount(total, startedAt = null) {
+  const serverCount = Math.max(0, Number(total || 0))
+  const usage = readSharedGameUsage()
+
+  if (serverCount <= usage.count) return usage
+
+  let cooldownUntil = usage.cooldown_until
+  const startedAtMs = new Date(startedAt || 0).getTime()
 
   if (
-    !token ||
-    !ownerId ||
+    serverCount % SHARED_COOLDOWN_EVERY === 0 &&
+    Number.isFinite(startedAtMs)
+  ) {
+    cooldownUntil = Math.max(
+      cooldownUntil,
+      startedAtMs + SHARED_COOLDOWN_MS
+    )
+  }
+
+  const next = {
+    ...usage,
+    count: serverCount,
+    cooldown_until: cooldownUntil,
+  }
+
+  saveSharedGameUsage(next)
+  return next
+}
+
+function readActiveGame() {
+  const stored = readJson(ACTIVE_GAME_KEY)
+  const expiresAt = new Date(
+    stored?.session?.expires_at || 0
+  ).getTime()
+
+  if (
     !stored?.session?.id ||
     !SOURCE_META[stored?.source] ||
-    stored.owner_id !== ownerId ||
-    new Date(stored.session.expires_at || 0).getTime() <= Date.now()
+    !Number.isFinite(expiresAt) ||
+    expiresAt <= Date.now()
   ) {
+    removeStored(ACTIVE_GAME_KEY)
+    return null
+  }
+
+  if (stored.source === 'manual') {
+    return stored
+  }
+
+  const token = getReaderToken()
+  const ownerId = getReaderUserId(token)
+
+  if (!token || !ownerId || stored.owner_id !== ownerId) {
     removeStored(ACTIVE_GAME_KEY)
     return null
   }
@@ -612,6 +768,9 @@ export default function SpinGameSourcePanel({
   const [activeGame, setActiveGame] = useState(() => readActiveGame())
   const [sessionReady, setSessionReady] = useState(false)
   const [status, setStatus] = useState(null)
+  const [manualUsage, setManualUsage] = useState(
+    () => readManualUsage()
+  )
   const [startingSource, setStartingSource] = useState('')
   const [message, setMessage] = useState('')
   const [readerQuery, setReaderQuery] = useState('')
@@ -700,13 +859,26 @@ export default function SpinGameSourcePanel({
   ])
 
   useEffect(() => {
+    const localGame = readActiveGame()
     const token = getReaderToken()
     const ownerId = getReaderUserId(token)
 
+    setManualUsage(readManualUsage())
+
+    if (localGame?.source === 'manual') {
+      setActiveGame(localGame)
+      setSessionReady(true)
+    }
+
     if (!token || !ownerId) {
-      clearActiveGameStorage()
-      setActiveGame(null)
-      setSessionReady(false)
+      setStatus(null)
+
+      if (localGame?.source !== 'manual') {
+        clearActiveGameStorage()
+        setActiveGame(null)
+        setSessionReady(false)
+      }
+
       return undefined
     }
 
@@ -735,10 +907,19 @@ export default function SpinGameSourcePanel({
           setStatus(data)
 
           const serverSession = data?.active_session
+          syncLocalSharedCount(
+            data?.usage?.total,
+            serverSession?.started_at
+          )
+
+          if (localGame?.source === 'manual') {
+            return
+          }
 
           if (
             serverSession?.id &&
-            SOURCE_META[serverSession?.mode]
+            SOURCE_META[serverSession?.mode] &&
+            serverSession.mode !== 'manual'
           ) {
             const nextGame = {
               source: serverSession.mode,
@@ -758,8 +939,10 @@ export default function SpinGameSourcePanel({
         }
       } catch (error) {
         if (error?.name !== 'AbortError' && active) {
-          setSessionReady(false)
-          setMessage(copy.network)
+          if (localGame?.source !== 'manual') {
+            setSessionReady(false)
+            setMessage(copy.network)
+          }
         }
       }
     }
@@ -782,17 +965,80 @@ export default function SpinGameSourcePanel({
       return
     }
 
-    const token = getReaderToken()
-    const ownerId = getReaderUserId(token)
+    const waitSeconds = localCooldownSeconds()
 
-    if (!token || !ownerId) {
-      setMessage(copy.signIn)
+    if (waitSeconds > 0) {
+      setMessage(
+        `${copy.cooldown} • ${formatNumber(waitSeconds)}s`
+      )
       return
     }
 
     startBusyRef.current = true
     setStartingSource(source)
     setMessage('')
+
+    if (source === 'manual') {
+      try {
+        const usage = readManualUsage()
+
+        if (usage.used >= MANUAL_DAILY_LIMIT) {
+          setManualUsage(usage)
+          setMessage(copy.manualLimit)
+          return
+        }
+
+        const startedAt = new Date()
+        const sessionId = makeId('manual-game')
+        const nextUsage = {
+          ...usage,
+          used: usage.used + 1,
+        }
+        const nextGame = {
+          source: 'manual',
+          owner_id: 'local',
+          session: {
+            id: sessionId,
+            mode: 'manual',
+            cost_currency: null,
+            cost_amount: 0,
+            search_count: 0,
+            search_limit: 0,
+            started_at: startedAt.toISOString(),
+            expires_at: new Date(
+              startedAt.getTime() + 24 * 60 * 60 * 1000
+            ).toISOString(),
+          },
+          saved_at: startedAt.toISOString(),
+        }
+
+        saveManualUsage(nextUsage)
+        recordLocalGameStart(sessionId)
+        saveActiveGame(nextGame)
+        setManualUsage(nextUsage)
+        setActiveGame(nextGame)
+        setSessionReady(true)
+        setReaderQuery('')
+        setAuthorQuery('')
+        setBookQuery('')
+        onGameStarted?.('manual')
+      } finally {
+        startBusyRef.current = false
+        setStartingSource('')
+      }
+
+      return
+    }
+
+    const token = getReaderToken()
+    const ownerId = getReaderUserId(token)
+
+    if (!token || !ownerId) {
+      startBusyRef.current = false
+      setStartingSource('')
+      setMessage(copy.signIn)
+      return
+    }
 
     const pending = pendingRequest(source, ownerId)
 
@@ -824,20 +1070,7 @@ export default function SpinGameSourcePanel({
           setStatus(data.status)
         }
 
-        if (
-          data?.code === 'SPIN_COOLDOWN' &&
-          Number(data?.wait_seconds || 0) > 0
-        ) {
-          setMessage(
-            `${data.message || 'Please wait'} • ${formatNumber(
-              data.wait_seconds
-            )}s`
-          )
-        } else {
-          setMessage(
-            data?.message || copy.network
-          )
-        }
+        setMessage(data?.message || copy.network)
         return
       }
 
@@ -848,6 +1081,7 @@ export default function SpinGameSourcePanel({
         saved_at: new Date().toISOString(),
       }
 
+      recordLocalGameStart(data?.session?.id)
       saveActiveGame(nextGame)
       clearPendingRequest()
       setActiveGame(nextGame)
@@ -870,10 +1104,25 @@ export default function SpinGameSourcePanel({
   }
 
   function ruleFor(source) {
+    if (source === 'manual') {
+      return SOURCE_META.manual
+    }
+
     return status?.rules?.[source] || SOURCE_META[source]
   }
 
   function usageFor(source) {
+    if (source === 'manual') {
+      return {
+        used: manualUsage.used,
+        limit: MANUAL_DAILY_LIMIT,
+        remaining: Math.max(
+          0,
+          MANUAL_DAILY_LIMIT - manualUsage.used
+        ),
+      }
+    }
+
     const rule = ruleFor(source)
     return (
       status?.usage?.[source] || {
@@ -920,7 +1169,8 @@ export default function SpinGameSourcePanel({
         {Object.keys(SOURCE_META).map((source) => {
           const meta = SOURCE_META[source]
           const usage = usageFor(source)
-          const current = activeGame?.source === source
+          const current =
+            sessionReady && activeGame?.source === source
           const busy = startingSource === source
           const noRemaining = Number(usage?.remaining || 0) <= 0
 
