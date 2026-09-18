@@ -2360,7 +2360,7 @@ export default function ChatRoomPage() {
 
     const intervalId = window.setInterval(
       refreshMessages,
-      status === 'accepted' ? 15000 : 30000
+      status === 'accepted' ? 30000 : 60000
     )
 
     const handleVisibilityChange = () => {
