@@ -866,8 +866,8 @@ function readerAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-const READING_ACTIVITY_GRACE_MS = 12000
-const READING_PROGRESS_STEP_SECONDS = 5
+const READING_ACTIVITY_GRACE_MS = 45000
+const READING_PROGRESS_STEP_SECONDS = 30
 
 function normalizeReadingMission(mission = null) {
   if (!mission?.id) return null
