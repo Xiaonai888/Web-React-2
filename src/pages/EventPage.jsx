@@ -4,7 +4,9 @@ import { addStoryLanguageParam } from '../utils/storyLanguage'
 import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 import Author49DayEventCard from '../components/events/Author49DayEventCard'
+import AuthorDaily50DashboardCard from '../components/events/AuthorDaily50DashboardCard'
 import { requestAuthor49DayEvent } from '../services/author49DayEventClientCache'
+import { requestAuthorDaily50Event } from '../services/authorDaily50EventClientCache'
 import { requestWriterWednesdayEvent } from '../services/writerWednesdayEventClientCache'
 import ManagedEventHeroCard from '../components/events/ManagedEventHeroCard'
 import MonthlyVoteTab from './Event/MonthlyVoteTab'
@@ -58,6 +60,7 @@ registerTranslationNamespace('eventPage', {
     writerWednesday: 'Writer Wednesday',
     weeklyEvent: 'Weekly Event',
     author49Days: '80% for 49 Days',
+    authorDaily50: '50% Daily Author Boost',
     authorEvent: 'Author Event',
     goBack: 'Go back',
     event: 'Event',
