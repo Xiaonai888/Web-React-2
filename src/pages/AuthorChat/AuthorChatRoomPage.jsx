@@ -448,7 +448,7 @@ export default function AuthorChatRoomPage() {
 
     const intervalId = window.setInterval(
       refreshRoom,
-      15000
+      30000
     )
 
     const handleVisibilityChange = () => {
