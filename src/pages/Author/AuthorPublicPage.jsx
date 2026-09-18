@@ -106,7 +106,7 @@ registerTranslationNamespace('authorPublicPage', {
     deleteReview: 'Delete review',
     deleteReviewConfirm: 'Delete your review? This cannot be undone.',
     reviewRemoved: 'Review deleted.',
-    copyReviewLink: 'Copy review link',
+    copyReviewLink: 'Copy link',
     reviewLinkCopied: 'Review link copied.',
     closeReviews: 'Close reviews',
     edit: 'Edit',
