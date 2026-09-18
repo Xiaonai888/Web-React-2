@@ -6,9 +6,9 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const SAVE_PERCENT_STEP = 5
-const SAVE_MAX_DELAY_MS = 30 * 1000
-const SAVE_CHECK_INTERVAL_MS = 5 * 1000
+const SAVE_PERCENT_STEP = 10
+const SAVE_MAX_DELAY_MS = 60 * 1000
+const SAVE_CHECK_INTERVAL_MS = 10 * 1000
 
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
