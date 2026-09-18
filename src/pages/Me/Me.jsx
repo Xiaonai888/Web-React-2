@@ -30,6 +30,7 @@ registerTranslationNamespace('mePage', {
     shadowMall: 'Shadow Mall',
     library: 'Library',
     game: 'Game',
+    app: 'App',
     savedPosts: 'Saved Posts',
     authorDashboardShortcut: 'Author Dashboard shortcut',
   },
@@ -57,6 +58,7 @@ registerTranslationNamespace('mePage', {
     shadowMall: 'Shadow Mall',
     library: 'បណ្ណាល័យ',
     game: 'ហ្គេម',
+    app: 'កម្មវិធី',
     savedPosts: 'Post ដែលបានរក្សាទុក',
     authorDashboardShortcut: 'ផ្លូវកាត់ Author Dashboard',
   },
@@ -84,6 +86,7 @@ registerTranslationNamespace('mePage', {
     shadowMall: 'Shadow Mall',
     library: '书库',
     game: '游戏',
+    app: '应用',
     savedPosts: '已保存帖子',
     authorDashboardShortcut: '作者控制台快捷方式',
   },
@@ -111,6 +114,7 @@ registerTranslationNamespace('mePage', {
     shadowMall: 'Shadow Mall',
     library: 'ライブラリ',
     game: 'ゲーム',
+    app: 'アプリ',
     savedPosts: '保存した投稿',
     authorDashboardShortcut: '作者ダッシュボードのショートカット',
   },
@@ -138,6 +142,7 @@ registerTranslationNamespace('mePage', {
     shadowMall: 'Shadow Mall',
     library: '라이브러리',
     game: '게임',
+    app: '앱',
     savedPosts: '저장한 게시물',
     authorDashboardShortcut: '작가 대시보드 바로가기',
   },
@@ -1294,6 +1299,12 @@ const handleOpenProfileSwitcher = (event) => {
   to="/game"
   icon="fa-solid fa-gamepad"
   title={tx('mePage.game')}
+  divider
+/>
+            <MenuRow
+  to="/app"
+  icon="fa-solid fa-table-cells-large"
+  title={tx('mePage.app')}
   divider
 />
             <MenuRow to="/saved-posts" icon="far fa-bookmark" title={tx('mePage.savedPosts')} divider />
