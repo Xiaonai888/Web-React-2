@@ -191,42 +191,62 @@ export default function useContinuousEpisodeReader({
   )
 
   useEffect(() => {
-    if (!enabled || !activeEpisodeId) return
+    if (!enabled || !activeEpisodeId) return undefined
 
     const activeEntry = entriesRef.current.find(
       (item) => String(item.id) === String(activeEpisodeId)
     )
 
-    if (!activeEntry || activeEntry.locked) return
+    if (!activeEntry || activeEntry.locked) return undefined
 
     const nextEpisode = getNextEpisode(activeEpisodeId)
 
-    if (!nextEpisode) return
+    if (!nextEpisode) return undefined
 
+    let frameId = 0
     let cancelled = false
 
-    const run = () => {
-      if (!cancelled) {
-        loadTarget(nextEpisode).catch(() => null)
-      }
+    const maybeLoadNext = () => {
+      frameId = 0
+
+      if (cancelled || document.visibilityState !== 'visible') return
+
+      const activeNode = nodesRef.current.get(
+        String(activeEpisodeId)
+      )
+
+      if (!activeNode) return
+
+      const rect = activeNode.getBoundingClientRect()
+      const preloadDistance = Math.max(
+        320,
+        window.innerHeight * 0.75
+      )
+
+      if (rect.bottom - window.innerHeight > preloadDistance) return
+
+      loadTarget(nextEpisode).catch(() => null)
     }
 
-    if ('requestIdleCallback' in window) {
-      const idleId = window.requestIdleCallback(run, {
-        timeout: 1200,
-      })
-
-      return () => {
-        cancelled = true
-        window.cancelIdleCallback(idleId)
-      }
+    const scheduleCheck = () => {
+      if (frameId) return
+      frameId = window.requestAnimationFrame(maybeLoadNext)
     }
 
-    const timer = window.setTimeout(run, 260)
+    scheduleCheck()
+    window.addEventListener('scroll', scheduleCheck, {
+      passive: true,
+    })
+    window.addEventListener('resize', scheduleCheck)
 
     return () => {
       cancelled = true
-      window.clearTimeout(timer)
+      window.removeEventListener('scroll', scheduleCheck)
+      window.removeEventListener('resize', scheduleCheck)
+
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+      }
     }
   }, [
     activeEpisodeId,
