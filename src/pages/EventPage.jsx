@@ -124,6 +124,7 @@ registerTranslationNamespace('eventPage', {
     writerWednesday: 'Writer Wednesday',
     weeklyEvent: 'ព្រឹត្តិការណ៍ប្រចាំសប្តាហ៍',
     author49Days: '80% រយៈពេល 49 ថ្ងៃ',
+    authorDaily50: '50% Daily Author Boost',
     authorEvent: 'ព្រឹត្តិការណ៍អ្នកនិពន្ធ',
     goBack: 'ត្រឡប់ក្រោយ',
     event: 'ព្រឹត្តិការណ៍',
@@ -187,6 +188,7 @@ registerTranslationNamespace('eventPage', {
     writerWednesday: 'Writer Wednesday',
     weeklyEvent: '每周活动',
     author49Days: '49 天 80%',
+    authorDaily50: '每日作者 50% 加成',
     authorEvent: '作者活动',
     goBack: '返回',
     event: '活动',
@@ -250,6 +252,7 @@ registerTranslationNamespace('eventPage', {
     writerWednesday: 'Writer Wednesday',
     weeklyEvent: '週間イベント',
     author49Days: '49日間 80%',
+    authorDaily50: 'デイリー作者 50% ブースト',
     authorEvent: '作者イベント',
     goBack: '戻る',
     event: 'イベント',
@@ -313,6 +316,7 @@ registerTranslationNamespace('eventPage', {
     writerWednesday: 'Writer Wednesday',
     weeklyEvent: '주간 이벤트',
     author49Days: '49일간 80%',
+    authorDaily50: '데일리 작가 50% 부스트',
     authorEvent: '작가 이벤트',
     goBack: '뒤로',
     event: '이벤트',
@@ -1280,6 +1284,8 @@ export default function EventPage() {
   const [followLoadingId, setFollowLoadingId] = useState('')
   const [author49Available, setAuthor49Available] =
     useState(() => !getReaderToken())
+  const [daily50Available, setDaily50Available] =
+    useState(false)
   const [writerWednesdayLive, setWriterWednesdayLive] =
     useState(false)
   const [eventNow, setEventNow] =
@@ -1491,6 +1497,72 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
   }, [])
 
   useEffect(() => {
+    let ignore = false
+    let releaseRequest = () => {}
+
+    async function loadDaily50() {
+      const token = getReaderToken()
+
+      if (!token) {
+        if (!ignore) {
+          setDaily50Available(false)
+        }
+        return
+      }
+
+      releaseRequest()
+
+      const request = requestAuthorDaily50Event(
+        token,
+        { force: true }
+      )
+
+      releaseRequest = request.release
+
+      try {
+        const event = await request.promise
+
+        if (!ignore) {
+          setDaily50Available(
+            Boolean(
+              event?.visible &&
+              event.status !== 'finished'
+            )
+          )
+        }
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError' &&
+          !ignore
+        ) {
+          setDaily50Available(false)
+        }
+      } finally {
+        releaseRequest()
+        releaseRequest = () => {}
+      }
+    }
+
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadDaily50()
+      }
+    }
+
+    loadDaily50()
+    window.addEventListener('focus', refreshOnFocus)
+
+    return () => {
+      ignore = true
+      releaseRequest()
+      window.removeEventListener(
+        'focus',
+        refreshOnFocus
+      )
+    }
+  }, [])
+
+  useEffect(() => {
     const timer = window.setInterval(() => {
       setEventNow(new Date())
     }, 60000)
@@ -1583,6 +1655,19 @@ const activeEvents = [
           iconBg: 'bg-[#FFF5D8] dark:bg-amber-500/15',
           iconColor: 'text-[#E3AB00]',
           labelColor: 'text-[#C99300]',
+        }
+      : null,
+
+    daily50Available
+      ? {
+          id: 'author-daily-50',
+          title: t('eventPage.authorDaily50'),
+          label: t('eventPage.authorEvent'),
+          icon: 'fa-clock',
+          iconBg:
+            'bg-emerald-50 dark:bg-emerald-500/15',
+          iconColor: 'text-emerald-600',
+          labelColor: 'text-emerald-600',
         }
       : null,
   ].filter(Boolean)
@@ -2117,6 +2202,12 @@ const activeEvents = [
   <Author49DayEventCard
     onStartWriting={handleStartYourWork}
     startWritingLoading={loading}
+  />
+) : null}
+
+{selectedActiveEvent === 'author-daily-50' ? (
+  <AuthorDaily50DashboardCard
+    onStartWriting={handleStartYourWork}
   />
 ) : null}
 
