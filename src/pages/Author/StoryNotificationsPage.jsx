@@ -526,7 +526,7 @@ async function fetchStoryNotifications(
   }
 }
 
-async async function markNotificationRead(notificationId) {
+async function markNotificationRead(notificationId) {
   const data = await apiRequest(
     `/api/authors/me/story-notifications/${encodeURIComponent(
       notificationId
