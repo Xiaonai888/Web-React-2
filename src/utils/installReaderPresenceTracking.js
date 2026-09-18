@@ -5,7 +5,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const HEARTBEAT_INTERVAL_MS = 60 * 1000
+const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
 const IDLE_AFTER_MS = 2 * 60 * 1000
 const MIN_SEND_GAP_MS = 15 * 1000
 const SESSION_KEY = 'shadow_reader_presence_session_id'
