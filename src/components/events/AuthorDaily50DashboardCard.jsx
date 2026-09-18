@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { requestAuthorDaily50Event } from '../../services/authorDaily50EventClientCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -87,6 +88,7 @@ function formatNumber(value) {
 export default function AuthorDaily50DashboardCard({
   onStartWriting,
 }) {
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [event, setEvent] = useState(null)
   const [serverOffsetMs, setServerOffsetMs] = useState(0)
@@ -206,7 +208,10 @@ export default function AuthorDaily50DashboardCard({
   const max = Number(event.max_activations || 365)
 
   return (
-    <section className="mt-5 overflow-hidden rounded-[16px] border border-emerald-300 bg-white shadow-[0_10px_26px_rgba(16,185,129,0.12)] dark:border-emerald-700 dark:bg-[#111713]">
+    <section
+  onClick={() => navigate('/event/daily-author-boost')}
+  className="mt-5 cursor-pointer overflow-hidden rounded-[16px] border border-emerald-300 bg-white shadow-[0_10px_26px_rgba(16,185,129,0.12)] transition active:scale-[0.99] dark:border-emerald-700 dark:bg-[#111713]"
+>
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-[linear-gradient(135deg,#ECFDF5_0%,#D1FAE5_45%,#A7F3D0_100%)] dark:bg-[linear-gradient(135deg,#0B1510_0%,#10251A_45%,#153824_100%)]">
         <div className="absolute -left-10 -top-12 h-36 w-36 rounded-full border-[18px] border-emerald-400/35" />
         <div className="absolute right-6 top-5 h-16 w-16 rotate-12 rounded-[22px] bg-white/45 shadow-sm dark:bg-white/10" />
@@ -244,11 +249,9 @@ export default function AuthorDaily50DashboardCard({
           {isActive ? (
             <button
               type="button"
-              onClick={
-                event.can_activate_today
-                  ? onStartWriting
-                  : undefined
-              }
+              onClick={() =>
+  navigate('/event/daily-author-boost')
+}
               className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-white px-3 text-black shadow-[0_4px_0_#111111] dark:bg-emerald-100"
             >
               <i className="fa-regular fa-clock text-[11px]" />
@@ -267,7 +270,9 @@ export default function AuthorDaily50DashboardCard({
           ) : (
             <button
               type="button"
-              onClick={onStartWriting}
+              onClick={() =>
+  navigate('/event/daily-author-boost')
+}
               className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-emerald-400 text-[12px] font-black text-black shadow-[0_4px_0_#111111] transition active:translate-y-[2px] active:shadow-[0_2px_0_#111111]"
             >
               <i className="fa-solid fa-pen-nib text-[10px]" />
