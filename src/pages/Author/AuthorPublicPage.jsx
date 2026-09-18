@@ -102,6 +102,10 @@ registerTranslationNamespace('authorPublicPage', {
     howReviewsWork: 'How Shadow reviews work',
     reportReview: 'Report review',
     reportReviewComingSoon: 'Report review is coming soon.',
+    editReview: 'Edit review',
+    deleteReview: 'Delete review',
+    deleteReviewConfirm: 'Delete your review? This cannot be undone.',
+    reviewRemoved: 'Review deleted.',
     copyReviewLink: 'Copy review link',
     reviewLinkCopied: 'Review link copied.',
     closeReviews: 'Close reviews',
@@ -248,6 +252,10 @@ registerTranslationNamespace('authorPublicPage', {
     howReviewsWork: 'របៀបដែល Shadow Review ដំណើរការ',
     reportReview: 'រាយការណ៍ Review',
     reportReviewComingSoon: 'មុខងារ Report Review នឹងមកដល់ឆាប់ៗនេះ។',
+    editReview: 'កែ Review',
+    deleteReview: 'លុប Review',
+    deleteReviewConfirm: 'លុប Review របស់អ្នកមែនទេ? មិនអាចត្រឡប់វិញបានទេ។',
+    reviewRemoved: 'បានលុប Review។',
     copyReviewLink: 'ចម្លង Link Review',
     reviewLinkCopied: 'បានចម្លង Link Review។',
     closeReviews: 'បិទ Review',
@@ -394,6 +402,10 @@ registerTranslationNamespace('authorPublicPage', {
     howReviewsWork: 'Shadow 评价的工作方式',
     reportReview: '举报评价',
     reportReviewComingSoon: '举报评价功能即将推出。',
+    editReview: '编辑评价',
+    deleteReview: '删除评价',
+    deleteReviewConfirm: '删除你的评价？此操作无法撤销。',
+    reviewRemoved: '评价已删除。',
     copyReviewLink: '复制评价链接',
     reviewLinkCopied: '评价链接已复制。',
     closeReviews: '关闭评价',
@@ -540,6 +552,10 @@ registerTranslationNamespace('authorPublicPage', {
     howReviewsWork: 'Shadow レビューの仕組み',
     reportReview: 'レビューを報告',
     reportReviewComingSoon: 'レビュー報告機能は近日公開予定です。',
+    editReview: 'レビューを編集',
+    deleteReview: 'レビューを削除',
+    deleteReviewConfirm: 'レビューを削除しますか？この操作は元に戻せません。',
+    reviewRemoved: 'レビューを削除しました。',
     copyReviewLink: 'レビューリンクをコピー',
     reviewLinkCopied: 'レビューリンクをコピーしました。',
     closeReviews: 'レビューを閉じる',
@@ -686,6 +702,10 @@ registerTranslationNamespace('authorPublicPage', {
     howReviewsWork: 'Shadow 리뷰 작동 방식',
     reportReview: '리뷰 신고',
     reportReviewComingSoon: '리뷰 신고 기능은 곧 제공됩니다.',
+    editReview: '리뷰 수정',
+    deleteReview: '리뷰 삭제',
+    deleteReviewConfirm: '리뷰를 삭제할까요? 이 작업은 되돌릴 수 없습니다.',
+    reviewRemoved: '리뷰를 삭제했습니다.',
     copyReviewLink: '리뷰 링크 복사',
     reviewLinkCopied: '리뷰 링크를 복사했습니다.',
     closeReviews: '리뷰 닫기',
@@ -2255,9 +2275,12 @@ async function handleSaveReview() {
     }
 
     await loadAuthorReviews(username)
+    setReviewOptionsOpen(false)
+    setSelectedReviewOption(null)
     setReviewSheetOpen(false)
     setReviewDraftText('')
     setReviewDraftError('')
+    setMessage(getDisplayText('authorPublicPage.reviewRemoved'))
   } catch (error) {
     setReviewDraftError(error.message || getDisplayText('authorPublicPage.failedSaveReview'))
   } finally {
@@ -3084,17 +3107,55 @@ onOpenStoreSetting={() => {
         <div className="relative w-full rounded-t-[18px] bg-[var(--shadow-bg-surface)] px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[18px]">
           <div className="mx-auto mb-4 h-1 w-11 rounded-full bg-[#9ca3af]" />
 
-          <button
-            type="button"
-            onClick={() => {
-              setReviewOptionsOpen(false)
-              setMessage(getDisplayText('authorPublicPage.reportReviewComingSoon'))
-            }}
-            className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[var(--shadow-text-primary)] active:opacity-70"
-          >
-            <i className="fa-regular fa-flag w-6 text-center text-[17px]" />
-            {t('authorPublicPage.reportReview')}
-          </button>
+          {selectedReviewOption?.is_mine ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  const review = selectedReviewOption
+                  setReviewOptionsOpen(false)
+                  handleOpenReviewSheet(review?.is_recommended !== false)
+                }}
+                className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[var(--shadow-text-primary)] active:opacity-70"
+              >
+                <i className="fa-regular fa-pen-to-square w-6 text-center text-[17px]" />
+                {t('authorPublicPage.editReview')}
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!window.confirm(t('authorPublicPage.deleteReviewConfirm'))) return
+                  await handleRemoveReview()
+                }}
+                className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[#dc2626] active:opacity-70"
+              >
+                <i className="fa-regular fa-trash-can w-6 text-center text-[17px]" />
+                {t('authorPublicPage.deleteReview')}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                const reviewId = selectedReviewOption?.id || ''
+                if (!reviewId) return
+
+                setReviewOptionsOpen(false)
+                navigate(`/report/comment/${encodeURIComponent(reviewId)}`, {
+                  state: {
+                    targetTitle: `${t('authorPublicPage.reviews')} · ${displayAuthor.page_name}`,
+                    sourceUrl: window.location.href,
+                    returnTo: `${location.pathname}${location.search}${location.hash}`,
+                  },
+                })
+              }}
+              className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[var(--shadow-text-primary)] active:opacity-70"
+            >
+              <i className="fa-regular fa-flag w-6 text-center text-[17px]" />
+              {t('authorPublicPage.reportReview')}
+            </button>
+          )}
 
           <button
             type="button"
