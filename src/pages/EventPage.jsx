@@ -1047,6 +1047,7 @@ function ActiveEventPicker({
   selectedId,
   onSelect,
 }) {
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
 
   if (events.length <= 1) return null
@@ -1069,7 +1070,11 @@ function ActiveEventPicker({
             <button
               key={event.id}
               type="button"
-              onClick={() => onSelect(event.id)}
+              onClick={() =>
+                event.href
+                  ? navigate(event.href)
+                  : onSelect(event.id)
+              }
               className={`w-[68%] shrink-0 snap-start overflow-hidden rounded-[18px] border bg-[var(--shadow-bg-surface)] p-3 text-left shadow-sm transition active:scale-[0.98] ${
                 selected
                   ? 'border-[#F6B800] ring-2 ring-[#F6B800]/20'
@@ -1667,6 +1672,7 @@ const activeEvents = [
       iconBg: 'bg-emerald-100 dark:bg-emerald-500/15',
       iconColor: 'text-emerald-700 dark:text-emerald-300',
       labelColor: 'text-emerald-600',
+      href: '/event/daily-author-boost',
     }
   : null,
   ].filter(Boolean)
