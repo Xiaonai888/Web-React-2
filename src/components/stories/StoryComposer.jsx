@@ -418,6 +418,11 @@ export default function StoryComposer({ mode }) {
   const photoInputRef = useRef(null)
   const videoInputRef = useRef(null)
   const config = MODE_CONFIG[mode] || MODE_CONFIG.reader
+  const requestedReturnPath = new URLSearchParams(window.location.search).get('returnTo')
+  const returnPath =
+  mode === 'author' && requestedReturnPath === '/author/dashboard'
+    ? '/author/dashboard'
+    : config.returnPath
 
   const [step, setStep] = useState('choose')
   const [mediaFile, setMediaFile] = useState(null)
@@ -446,7 +451,7 @@ export default function StoryComposer({ mode }) {
   }, [error])
 
   function leaveComposer() {
-    navigate(config.returnPath, { replace: true })
+    navigate(returnPath, { replace: true })
   }
 
   async function chooseMedia(file) {
@@ -567,7 +572,7 @@ export default function StoryComposer({ mode }) {
         })
       }
 
-      navigate(config.returnPath, {
+      navigate(returnPath, {
         replace: true,
         state: {
           storyShared: true,
