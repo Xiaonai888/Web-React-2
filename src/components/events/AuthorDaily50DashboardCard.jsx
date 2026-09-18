@@ -12,7 +12,7 @@ registerTranslationNamespace('authorDaily50DashboardCard', {
     available: 'Publish 1 new episode today',
     addToday: 'Publish today to add +24h',
     claimedToday: 'Today’s +24h claimed',
-    startWriting: 'Start Writing',
+    viewDetails: 'View Event Details',
     used: 'Boost days used',
   },
   km: {
@@ -22,7 +22,7 @@ registerTranslationNamespace('authorDaily50DashboardCard', {
     available: 'បង្ហោះភាគថ្មី 1 ភាគថ្ងៃនេះ',
     addToday: 'បង្ហោះថ្ងៃនេះដើម្បីបូក +24h',
     claimedToday: 'ថ្ងៃនេះបាន +24h រួចហើយ',
-    startWriting: 'ចាប់ផ្តើមសរសេរ',
+    viewDetails: 'មើលព័ត៌មាន Event',
     used: 'ថ្ងៃ Boost ដែលបានប្រើ',
   },
   zh: {
@@ -32,7 +32,7 @@ registerTranslationNamespace('authorDaily50DashboardCard', {
     available: '今天发布 1 个新章节',
     addToday: '今天发布可增加 +24 小时',
     claimedToday: '今天的 +24 小时已领取',
-    startWriting: '开始写作',
+    viewDetails: '查看活动详情',
     used: '已使用加成天数',
   },
   ja: {
@@ -42,7 +42,7 @@ registerTranslationNamespace('authorDaily50DashboardCard', {
     available: '今日、新しい話を1話公開',
     addToday: '今日公開すると +24時間',
     claimedToday: '本日の +24時間は獲得済み',
-    startWriting: '執筆を開始',
+    viewDetails: 'イベント詳細を見る',
     used: '使用済みブースト日数',
   },
   ko: {
@@ -52,7 +52,7 @@ registerTranslationNamespace('authorDaily50DashboardCard', {
     available: '오늘 새 에피소드 1개 게시',
     addToday: '오늘 게시하면 +24시간',
     claimedToday: '오늘의 +24시간 획득 완료',
-    startWriting: '글쓰기 시작',
+    viewDetails: '이벤트 자세히 보기',
     used: '사용한 부스트 일수',
   },
 })
@@ -85,9 +85,7 @@ function formatNumber(value) {
   }).format(Number(value || 0))
 }
 
-export default function AuthorDaily50DashboardCard({
-  onStartWriting,
-}) {
+export default function AuthorDaily50DashboardCard() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [event, setEvent] = useState(null)
@@ -209,9 +207,17 @@ export default function AuthorDaily50DashboardCard({
 
   return (
     <section
-  onClick={() => navigate('/event/daily-author-boost')}
-  className="mt-5 cursor-pointer overflow-hidden rounded-[16px] border border-emerald-300 bg-white shadow-[0_10px_26px_rgba(16,185,129,0.12)] transition active:scale-[0.99] dark:border-emerald-700 dark:bg-[#111713]"
->
+      role="button"
+      tabIndex={0}
+      onClick={() => navigate('/event/daily-author-boost')}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          navigate('/event/daily-author-boost')
+        }
+      }}
+      className="mt-5 cursor-pointer overflow-hidden rounded-[16px] border border-emerald-300 bg-white shadow-[0_10px_26px_rgba(16,185,129,0.12)] transition active:scale-[0.99] dark:border-emerald-700 dark:bg-[#111713]"
+    >
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-[linear-gradient(135deg,#ECFDF5_0%,#D1FAE5_45%,#A7F3D0_100%)] dark:bg-[linear-gradient(135deg,#0B1510_0%,#10251A_45%,#153824_100%)]">
         <div className="absolute -left-10 -top-12 h-36 w-36 rounded-full border-[18px] border-emerald-400/35" />
         <div className="absolute right-6 top-5 h-16 w-16 rotate-12 rounded-[22px] bg-white/45 shadow-sm dark:bg-white/10" />
@@ -249,9 +255,10 @@ export default function AuthorDaily50DashboardCard({
           {isActive ? (
             <button
               type="button"
-              onClick={() =>
-  navigate('/event/daily-author-boost')
-}
+              onClick={(event) => {
+                event.stopPropagation()
+                navigate('/event/daily-author-boost')
+              }}
               className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-white px-3 text-black shadow-[0_4px_0_#111111] dark:bg-emerald-100"
             >
               <i className="fa-regular fa-clock text-[11px]" />
@@ -270,13 +277,14 @@ export default function AuthorDaily50DashboardCard({
           ) : (
             <button
               type="button"
-              onClick={() =>
-  navigate('/event/daily-author-boost')
-}
+              onClick={(event) => {
+                event.stopPropagation()
+                navigate('/event/daily-author-boost')
+              }}
               className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-emerald-400 text-[12px] font-black text-black shadow-[0_4px_0_#111111] transition active:translate-y-[2px] active:shadow-[0_2px_0_#111111]"
             >
-              <i className="fa-solid fa-pen-nib text-[10px]" />
-              {t('authorDaily50DashboardCard.startWriting')}
+              <i className="fa-solid fa-circle-info text-[10px]" />
+              {t('authorDaily50DashboardCard.viewDetails')}
             </button>
           )}
         </div>
