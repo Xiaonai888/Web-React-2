@@ -47,7 +47,7 @@ const SOURCE_META = {
     icon: 'fa-solid fa-feather-pointed',
     labelKey: 'author',
     daily_limit: 100,
-    cost_currency: 'diamond',
+    cost_currency: 'voucher',
     cost_amount: 10,
   },
 }
@@ -68,6 +68,20 @@ const COPY = {
     network: 'Could not reach the server. Try again.',
     expired: 'This game session expired. Start a new game.',
     cooldown: 'Please wait before starting another game.',
+    confirmTitlePrefix: 'Start',
+    gameWord: 'Game',
+    gamesWord: 'games',
+    onlyNewGameUses: 'Only starting a New Game uses',
+    spinsUnlimited: 'Spins inside are unlimited.',
+    cost: 'Cost',
+    yourBalance: 'Your balance',
+    balanceAfter: 'Balance after',
+    dailyLimit: 'Daily limit',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    notEnough: 'Not enough',
+    needMore: 'Need',
+    balanceUnavailable: 'Could not load your balance. Try again.',
     manualLimit: 'Manual daily game limit reached.',
   },
   km: {
@@ -85,6 +99,20 @@ const COPY = {
     network: 'មិនអាចភ្ជាប់ Server បាន។ សូមសាកម្តងទៀត។',
     expired: 'Game session នេះផុតកំណត់ហើយ។ សូមចាប់ផ្តើម Game ថ្មី។',
     cooldown: 'សូមរង់ចាំសិន មុនចាប់ផ្តើម Game ថ្មី។',
+    confirmTitlePrefix: 'ចាប់ផ្តើម',
+    gameWord: 'Game',
+    gamesWord: 'Games',
+    onlyNewGameUses: 'គិតតែពេលចាប់ផ្តើម New Game ដោយប្រើ',
+    spinsUnlimited: 'ការបង្វិលក្នុង Game គឺ Unlimited។',
+    cost: 'តម្លៃ',
+    yourBalance: 'Balance របស់អ្នក',
+    balanceAfter: 'Balance after',
+    dailyLimit: 'កំណត់ប្រចាំថ្ងៃ',
+    cancel: 'បោះបង់',
+    confirm: 'Confirm',
+    notEnough: 'មិនគ្រប់',
+    needMore: 'ត្រូវការបន្ថែម',
+    balanceUnavailable: 'មិនអាចទាញ Balance បាន។ សូមសាកម្តងទៀត។',
     manualLimit: 'Manual Game ដល់កំណត់ប្រចាំថ្ងៃហើយ។',
   },
   zh: {
@@ -102,6 +130,20 @@ const COPY = {
     network: '无法连接服务器，请重试。',
     expired: '此游戏会话已过期，请开始新游戏。',
     cooldown: '请稍候再开始新游戏。',
+    confirmTitlePrefix: '开始',
+    gameWord: '游戏',
+    gamesWord: '次游戏',
+    onlyNewGameUses: '只有开始新游戏才会使用',
+    spinsUnlimited: '游戏内旋转次数不限。',
+    cost: '费用',
+    yourBalance: '当前余额',
+    balanceAfter: '开始后余额',
+    dailyLimit: '每日上限',
+    cancel: '取消',
+    confirm: '确认',
+    notEnough: '余额不足',
+    needMore: '还需要',
+    balanceUnavailable: '无法读取余额，请重试。',
     manualLimit: 'Manual 游戏已达到每日上限。',
   },
   ja: {
@@ -119,6 +161,20 @@ const COPY = {
     network: 'サーバーに接続できません。もう一度お試しください。',
     expired: 'ゲームセッションの期限が切れました。新しいゲームを開始してください。',
     cooldown: '新しいゲームを開始する前に少しお待ちください。',
+    confirmTitlePrefix: '開始',
+    gameWord: 'ゲーム',
+    gamesWord: 'ゲーム',
+    onlyNewGameUses: '新しいゲームを開始するときだけ使用します',
+    spinsUnlimited: 'ゲーム内のスピン回数は無制限です。',
+    cost: '料金',
+    yourBalance: '現在の残高',
+    balanceAfter: '開始後の残高',
+    dailyLimit: '1日の上限',
+    cancel: 'キャンセル',
+    confirm: '確認',
+    notEnough: '残高不足',
+    needMore: 'あと必要',
+    balanceUnavailable: '残高を読み込めません。もう一度お試しください。',
     manualLimit: 'Manualゲームは1日の上限に達しました。',
   },
   ko: {
@@ -136,6 +192,20 @@ const COPY = {
     network: '서버에 연결할 수 없습니다. 다시 시도하세요.',
     expired: '게임 세션이 만료되었습니다. 새 게임을 시작하세요.',
     cooldown: '새 게임을 시작하기 전에 잠시 기다려 주세요.',
+    confirmTitlePrefix: '시작',
+    gameWord: '게임',
+    gamesWord: '게임',
+    onlyNewGameUses: '새 게임을 시작할 때만 사용합니다',
+    spinsUnlimited: '게임 안의 스핀 횟수는 무제한입니다.',
+    cost: '비용',
+    yourBalance: '현재 잔액',
+    balanceAfter: '시작 후 잔액',
+    dailyLimit: '일일 한도',
+    cancel: '취소',
+    confirm: '확인',
+    notEnough: '잔액 부족',
+    needMore: '추가 필요',
+    balanceUnavailable: '잔액을 불러올 수 없습니다. 다시 시도하세요.',
     manualLimit: 'Manual 게임의 일일 한도에 도달했습니다.',
   },
 }
@@ -772,6 +842,7 @@ export default function SpinGameSourcePanel({
     () => readManualUsage()
   )
   const [startingSource, setStartingSource] = useState('')
+  const [confirmSource, setConfirmSource] = useState('')
   const [message, setMessage] = useState('')
   const [readerQuery, setReaderQuery] = useState('')
   const [authorQuery, setAuthorQuery] = useState('')
@@ -795,6 +866,17 @@ export default function SpinGameSourcePanel({
     activeGame,
     t
   )
+
+  useEffect(() => {
+    if (!confirmSource) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [confirmSource])
 
   useEffect(() => {
     onActiveGameChange?.(
@@ -962,7 +1044,7 @@ export default function SpinGameSourcePanel({
       isSpinning ||
       !SOURCE_META[source]
     ) {
-      return
+      return false
     }
 
     const waitSeconds = localCooldownSeconds()
@@ -971,7 +1053,7 @@ export default function SpinGameSourcePanel({
       setMessage(
         `${copy.cooldown} • ${formatNumber(waitSeconds)}s`
       )
-      return
+      return false
     }
 
     startBusyRef.current = true
@@ -985,7 +1067,7 @@ export default function SpinGameSourcePanel({
         if (usage.used >= MANUAL_DAILY_LIMIT) {
           setManualUsage(usage)
           setMessage(copy.manualLimit)
-          return
+          return false
         }
 
         const startedAt = new Date()
@@ -1022,12 +1104,11 @@ export default function SpinGameSourcePanel({
         setAuthorQuery('')
         setBookQuery('')
         onGameStarted?.('manual')
+        return true
       } finally {
         startBusyRef.current = false
         setStartingSource('')
       }
-
-      return
     }
 
     const token = getReaderToken()
@@ -1037,7 +1118,7 @@ export default function SpinGameSourcePanel({
       startBusyRef.current = false
       setStartingSource('')
       setMessage(copy.signIn)
-      return
+      return false
     }
 
     const pending = pendingRequest(source, ownerId)
@@ -1070,8 +1151,26 @@ export default function SpinGameSourcePanel({
           setStatus(data.status)
         }
 
-        setMessage(data?.message || copy.network)
-        return
+        const insufficientCodes = new Set([
+          'INSUFFICIENT_COINS',
+          'INSUFFICIENT_DIAMONDS',
+          'INSUFFICIENT_VOUCHERS',
+        ])
+
+        if (insufficientCodes.has(data?.code)) {
+          const currency = currencyLabelFor(source)
+          const need = Math.max(0, Number(data?.need || 0))
+
+          setMessage(
+            `${copy.notEnough} ${currency}. ${copy.needMore} ${formatNumber(
+              need
+            )} ${currency}.`
+          )
+        } else {
+          setMessage(data?.message || copy.network)
+        }
+
+        return false
       }
 
       const nextGame = {
@@ -1095,8 +1194,10 @@ export default function SpinGameSourcePanel({
       setAuthorQuery('')
       setBookQuery('')
       onGameStarted?.(source)
+      return true
     } catch {
       setMessage(copy.network)
+      return false
     } finally {
       startBusyRef.current = false
       setStartingSource('')
@@ -1133,19 +1234,121 @@ export default function SpinGameSourcePanel({
     )
   }
 
+  function currencyLabelFor(source) {
+    const currency = ruleFor(source)?.cost_currency
+
+    if (currency === 'voucher') return t('spinPage.voucher')
+    if (currency === 'diamond') return t('spinPage.diamond')
+
+    return t('spinPage.coin')
+  }
+
+  function walletBalanceFor(source) {
+    const wallet = status?.wallet
+    const currency = ruleFor(source)?.cost_currency
+
+    if (!wallet || !currency) return null
+
+    const raw =
+      currency === 'voucher'
+        ? wallet.voucher_balance
+        : currency === 'diamond'
+          ? wallet.diamond_balance
+          : wallet.coin_balance
+
+    const value = Number(raw)
+
+    return Number.isFinite(value) ? Math.max(0, value) : null
+  }
+
   function priceFor(source) {
     const rule = ruleFor(source)
     const amount = Number(rule?.cost_amount || 0)
 
     if (!amount) return copy.free
 
-    const currency =
-      rule?.cost_currency === 'diamond'
-        ? t('spinPage.diamond')
-        : t('spinPage.coin')
-
-    return `${formatNumber(amount)} ${currency}`
+    return `${formatNumber(amount)} ${currencyLabelFor(source)}`
   }
+
+  function requestStart(source) {
+    if (source === 'manual') {
+      void startGame(source)
+      return
+    }
+
+    if (
+      startBusyRef.current ||
+      startingSource ||
+      isSpinning ||
+      !SOURCE_META[source]
+    ) {
+      return
+    }
+
+    const waitSeconds = localCooldownSeconds()
+
+    if (waitSeconds > 0) {
+      setMessage(
+        `${copy.cooldown} • ${formatNumber(waitSeconds)}s`
+      )
+      return
+    }
+
+    const token = getReaderToken()
+    const ownerId = getReaderUserId(token)
+
+    if (!token || !ownerId) {
+      setMessage(copy.signIn)
+      return
+    }
+
+    if (walletBalanceFor(source) === null) {
+      setMessage(copy.balanceUnavailable)
+      return
+    }
+
+    setMessage('')
+    setConfirmSource(source)
+  }
+
+  async function confirmStartGame() {
+    const source = confirmSource
+
+    if (!source) return
+
+    const started = await startGame(source)
+
+    if (started) {
+      setConfirmSource('')
+    }
+  }
+
+  const confirmRule = confirmSource
+    ? ruleFor(confirmSource)
+    : null
+  const confirmUsage = confirmSource
+    ? usageFor(confirmSource)
+    : null
+  const confirmBalance = confirmSource
+    ? walletBalanceFor(confirmSource)
+    : null
+  const confirmCost = Number(
+    confirmRule?.cost_amount || 0
+  )
+  const confirmCurrency = confirmSource
+    ? currencyLabelFor(confirmSource)
+    : ''
+  const confirmHasEnough =
+    confirmBalance !== null &&
+    confirmBalance >= confirmCost
+  const confirmAfter = confirmHasEnough
+    ? confirmBalance - confirmCost
+    : null
+  const confirmShortage =
+    confirmBalance === null
+      ? 0
+      : Math.max(0, confirmCost - confirmBalance)
+
 
   return (
     <section>
@@ -1205,7 +1408,7 @@ export default function SpinGameSourcePanel({
 
               <button
                 type="button"
-                onClick={() => void startGame(source)}
+                onClick={() => requestStart(source)}
                 disabled={
                   Boolean(startingSource) ||
                   isSpinning ||
@@ -1366,6 +1569,161 @@ export default function SpinGameSourcePanel({
           />
         )}
       </div>
+
+      {confirmSource ? (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 px-4 py-6 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              !startingSource
+            ) {
+              setConfirmSource('')
+              setMessage('')
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${copy.confirmTitlePrefix} ${t(
+              `spinPage.${SOURCE_META[confirmSource].labelKey}`
+            )} ${copy.gameWord}`}
+            className="relative w-full max-w-[420px] rounded-[28px] border border-white/70 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.28)] dark:border-white/10 dark:bg-[#171923]"
+          >
+            <button
+              type="button"
+              aria-label={t('spinPage.close')}
+              disabled={Boolean(startingSource)}
+              onClick={() => {
+                setConfirmSource('')
+                setMessage('')
+              }}
+              className="app-muted absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-[14px] transition active:scale-95 disabled:opacity-40 dark:bg-white/10"
+            >
+              <i className="fa-solid fa-xmark" />
+            </button>
+
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 shadow-[0_10px_32px_rgba(124,58,237,0.12)]">
+              <i
+                className={`${SOURCE_META[confirmSource].icon} text-[30px]`}
+              />
+            </div>
+
+            <div className="mt-4 text-center">
+              <h3 className="app-title text-[22px] font-black leading-tight">
+                {copy.confirmTitlePrefix}{' '}
+                {t(
+                  `spinPage.${SOURCE_META[confirmSource].labelKey}`
+                )}{' '}
+                {copy.gameWord}?
+              </h3>
+              <p className="app-muted mx-auto mt-2 max-w-[330px] text-[11.5px] font-semibold leading-5">
+                {copy.onlyNewGameUses} {confirmCurrency}.{' '}
+                {copy.spinsUnlimited}
+              </p>
+            </div>
+
+            <div className="mt-5 overflow-hidden rounded-[20px] border border-violet-100 bg-white dark:border-violet-400/15 dark:bg-white/[0.03]">
+              <div className="flex items-center justify-between gap-4 bg-violet-500/[0.07] px-4 py-3.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-violet-500/10 text-violet-600">
+                    <i className="fa-solid fa-ticket text-[13px]" />
+                  </span>
+                  <span className="app-title text-[12px] font-black">
+                    {copy.cost}
+                  </span>
+                </div>
+                <span className="text-[13px] font-black text-violet-600">
+                  {formatNumber(confirmCost)} {confirmCurrency}
+                </span>
+              </div>
+
+              <div className="px-4">
+                <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-3.5 dark:border-white/10">
+                  <span className="app-muted text-[11px] font-semibold">
+                    {copy.yourBalance}
+                  </span>
+                  <span className="app-title text-[12px] font-black">
+                    {formatNumber(confirmBalance)} {confirmCurrency}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 py-3.5">
+                  <span className="app-muted text-[11px] font-semibold">
+                    {copy.balanceAfter}
+                  </span>
+                  <span
+                    className={`text-[12px] font-black ${
+                      confirmHasEnough
+                        ? 'app-title'
+                        : 'text-rose-500'
+                    }`}
+                  >
+                    {confirmAfter === null
+                      ? '—'
+                      : formatNumber(confirmAfter)}{' '}
+                    {confirmAfter === null ? '' : confirmCurrency}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="app-muted mt-3 flex items-center justify-center gap-2 text-[10px] font-bold">
+              <i className="fa-solid fa-circle-info" />
+              <span>
+                {copy.dailyLimit}:{' '}
+                {formatNumber(
+                  confirmUsage?.limit ||
+                    SOURCE_META[confirmSource].daily_limit
+                )}{' '}
+                {copy.gamesWord}
+              </span>
+            </div>
+
+            {!confirmHasEnough ? (
+              <div className="mt-3 rounded-[14px] bg-rose-500/10 px-3 py-2.5 text-center text-[10.5px] font-extrabold text-rose-600 dark:text-rose-300">
+                {copy.notEnough} {confirmCurrency}.{' '}
+                {copy.needMore}{' '}
+                {formatNumber(confirmShortage)} {confirmCurrency}.
+              </div>
+            ) : null}
+
+            {message ? (
+              <div className="mt-3 rounded-[14px] bg-amber-500/10 px-3 py-2.5 text-center text-[10.5px] font-bold text-amber-700 dark:text-amber-300">
+                {message}
+              </div>
+            ) : null}
+
+            <div className="mt-5 grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                disabled={Boolean(startingSource)}
+                onClick={() => {
+                  setConfirmSource('')
+                  setMessage('')
+                }}
+                className="app-elevated rounded-[14px] px-4 py-3 text-[11px] font-black text-violet-600 active:scale-[0.98] disabled:opacity-45"
+              >
+                {copy.cancel}
+              </button>
+              <button
+                type="button"
+                disabled={
+                  Boolean(startingSource) ||
+                  !confirmHasEnough
+                }
+                onClick={() => void confirmStartGame()}
+                className="rounded-[14px] bg-violet-600 px-4 py-3 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(124,58,237,0.24)] active:scale-[0.98] disabled:opacity-45"
+              >
+                {startingSource
+                  ? copy.starting
+                  : copy.confirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
