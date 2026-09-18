@@ -673,18 +673,44 @@ function BookCard({ book, onOpen }) {
 export default function GenresPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
+  const [savedState] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('shadow:genres-page:v1') || '{}')
+    } catch {
+      return {}
+    }
+  })
   const [query, setQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
-  const [genresExpanded, setGenresExpanded] = useState(false)
-  const [activeGenre, setActiveGenre] = useState('All')
-  const [activeQuickFilter, setActiveQuickFilter] = useState('')
+  const [genresExpanded, setGenresExpanded] = useState(Boolean(savedState.genresExpanded))
+  const [activeGenre, setActiveGenre] = useState(
+    genres.some((item) => item.label === savedState.activeGenre) ? savedState.activeGenre : 'All'
+  )
+  const [activeQuickFilter, setActiveQuickFilter] = useState(
+    quickFilters.some((item) => item.value === savedState.activeQuickFilter) ? savedState.activeQuickFilter : ''
+  )
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [access, setAccess] = useState('all')
-  const [type, setType] = useState('all')
-  const [progress, setProgress] = useState('all')
+  const [access, setAccess] = useState(
+    accessFilters.some((item) => item.value === savedState.access) ? savedState.access : 'all'
+  )
+  const [type, setType] = useState(
+    typeFilters.some((item) => item.value === savedState.type) ? savedState.type : 'all'
+  )
+  const [progress, setProgress] = useState(
+    progressFilters.some((item) => item.value === savedState.progress) ? savedState.progress : 'all'
+  )
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        'shadow:genres-page:v1',
+        JSON.stringify({ activeGenre, activeQuickFilter, access, type, progress, genresExpanded })
+      )
+    } catch {}
+  }, [activeGenre, activeQuickFilter, access, type, progress, genresExpanded])
 
   useEffect(() => {
     if (filtersOpen) {
