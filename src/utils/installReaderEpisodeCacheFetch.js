@@ -16,7 +16,7 @@ const API_ORIGIN = new URL(
   window.location.origin
 ).origin
 
-const MANIFEST_TTL_MS = 2 * 60 * 1000
+const MANIFEST_TTL_MS = 10 * 60 * 1000
 const MANIFEST_MAX_STORIES = 10
 const MANIFEST_PREFIX =
   'shadow_reader_episode_manifest_v1:'
