@@ -99,6 +99,7 @@ const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMall
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesdayEventPage'))
+const AuthorDaily50EventPage = lazy(() => import('./pages/Event/AuthorDaily50EventPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const MusicPage = lazy(() => import('./pages/MusicPage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
@@ -297,6 +298,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/chat',
     '/event',
     '/event/writer-wednesday',
+    '/event/daily-author-boost',
     '/author/create',
     '/author/dashboard',
     '/author/profile',
@@ -1323,6 +1325,10 @@ const shouldShowOpeningAds =
         <Route
   path="/event/writer-wednesday"
   element={<LazyPage><WriterWednesdayEventPage /></LazyPage>}
+/>
+          <Route
+  path="/event/daily-author-boost"
+  element={<LazyPage><AuthorDaily50EventPage /></LazyPage>}
 />
 
         <Route
