@@ -371,9 +371,9 @@ async function fetchManifest(
           safeStoryId
         )}/episodes`,
         {
-  headers: getRequestHeaders(input, init),
-  cache: 'no-store',
-}
+          headers: getRequestHeaders(input, init),
+          cache: 'no-store',
+        }
       )
 
       const data = await response
@@ -686,7 +686,9 @@ export function installReaderEpisodeCacheFetch() {
       const result =
         await fetchManifest(
           apiFetch,
-          route.storyId
+          route.storyId,
+          input,
+          init
         )
 
       return jsonResponse(
@@ -704,7 +706,9 @@ export function installReaderEpisodeCacheFetch() {
     const manifestResult =
       await fetchManifest(
         apiFetch,
-        route.storyId
+        route.storyId,
+        input,
+        init
       )
 
     const manifestEpisode =
