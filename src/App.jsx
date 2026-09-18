@@ -80,6 +80,7 @@ import AuthorTopSupportersPage from './pages/Author/AuthorTopSupportersPage'
 import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
+const ShadowStudioPage = lazy(() => import('./pages/Studio/ShadowStudioPage'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
@@ -320,6 +321,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/comments',
     '/saved-posts',
     '/game',
+    '/apps/shadow-studio',
     '/reader/post/create',
     '/reader/post/review',
     '/author/comment-protection',
@@ -1327,6 +1329,10 @@ const shouldShowOpeningAds =
   path="/author/page/:pageUsername/search"
   element={<LazyPage><AuthorPageSearchPage /></LazyPage>}
 />
+
+          <Route path="/apps/shadow-studio" element={
+  <LazyPage><ShadowStudioPage /></LazyPage>
+} />
 
 
         <Route path="/author/story/description-guide" element={<StoryDescriptionGuidePage />} />
