@@ -5169,6 +5169,9 @@ export default function ReaderPage() {
   const [unlockAdAccess, setUnlockAdAccess] = useState(null)
   const [rewardedAdsEnabled, setRewardedAdsEnabled] = useState(false)
   const [unlockPackageOptions, setUnlockPackageOptions] = useState([])
+  const unlockStatusCacheRef = useRef(new Map())
+  const unlockStatusRequestRef = useRef(new Map())
+  
 
   useEffect(() => {
   let ignore = false
@@ -5735,6 +5738,48 @@ useEffect(() => {
   pagingPages.length,
   storyId,
 ])
+
+  async function fetchUnlockStatus(targetEpisodeId, force = false) {
+  const key = `${storyId}:${targetEpisodeId}`
+  const cached = unlockStatusCacheRef.current.get(key)
+
+  if (!force && cached && Date.now() - cached.savedAt < 30000) {
+    return cached.data
+  }
+
+  if (!force && unlockStatusRequestRef.current.has(key)) {
+    return unlockStatusRequestRef.current.get(key)
+  }
+
+  const request = fetch(
+    `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/status`,
+    {
+      headers: readerAuthHeaders(),
+      cache: 'no-store',
+    }
+  ).then(async (response) => {
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Unlock status failed')
+    }
+
+    unlockStatusCacheRef.current.set(key, {
+      data,
+      savedAt: Date.now(),
+    })
+
+    return data
+  })
+
+  unlockStatusRequestRef.current.set(key, request)
+
+  try {
+    return await request
+  } finally {
+    unlockStatusRequestRef.current.delete(key)
+  }
+}
 
 async function loadReaderAdStatus(targetEpisodeId = episodeId) {
   if (!isUsableRouteId(storyId) || !isUsableRouteId(targetEpisodeId)) {
