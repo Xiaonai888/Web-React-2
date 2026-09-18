@@ -13,9 +13,9 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../../utils/homeDataCache'
+import ReactionAction from '../social/reactions/ReactionAction'
 import {
-  REACTIONS,
-  formatReactionCount,
+  getReactionMeta,
 } from '../social/reactions/reactionConfig'
 
 const API_BASE_URL =
@@ -555,6 +555,7 @@ function StoryViewer({
   onViewed,
   onDeleted,
 }) {
+  const navigate = useNavigate()
   const [storyIndex, setStoryIndex] =
     useState(0)
   const [progress, setProgress] =
@@ -586,6 +587,10 @@ function StoryViewer({
     setReactionSaving,
   ] = useState(false)
   const [
+    reactionBurst,
+    setReactionBurst,
+  ] = useState(null)
+  const [
     deleteSheetOpen,
     setDeleteSheetOpen,
   ] = useState(false)
@@ -600,6 +605,17 @@ function StoryViewer({
     stories[storyIndex] || null
   const creator =
     group?.creator || {}
+  const reactionTotal = useMemo(
+    () =>
+      Object.values(
+        reactionCounts || {}
+      ).reduce(
+        (sum, value) =>
+          sum + Number(value || 0),
+        0
+      ),
+    [reactionCounts]
+  )
 
   useEffect(() => {
     setStoryIndex(0)
@@ -754,6 +770,20 @@ function StoryViewer({
 
 
   useEffect(() => {
+    if (!reactionBurst) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(
+      () => setReactionBurst(null),
+      900
+    )
+
+    return () =>
+      window.clearTimeout(timer)
+  }, [reactionBurst])
+
+  useEffect(() => {
     const token = getAuthToken()
 
     if (
@@ -821,6 +851,33 @@ function StoryViewer({
     story?.id,
     story?.source_type,
   ])
+
+  function openCreatorPage(event) {
+    event?.stopPropagation?.()
+
+    const username = String(
+      creator?.username || ''
+    )
+      .trim()
+      .replace(/^@+/, '')
+
+    if (!username) {
+      return
+    }
+
+    onClose()
+
+    if (creator.type === 'author') {
+      navigate(
+        `/author/page/${encodeURIComponent(username)}`
+      )
+      return
+    }
+
+    navigate(
+      `/profile?username=${encodeURIComponent(username)}`
+    )
+  }
 
   function goNext() {
     if (
@@ -912,6 +969,20 @@ function StoryViewer({
       setReactionCounts(
         data.counts || {}
       )
+
+      if (data.reaction_type) {
+        const meta = getReactionMeta(
+          data.reaction_type
+        )
+
+        if (meta?.src) {
+          setReactionBurst({
+            type: data.reaction_type,
+            src: meta.src,
+            key: `${Date.now()}-${data.reaction_type}`,
+          })
+        }
+      }
     } catch (error) {
       window.alert(
         error.message ||
@@ -1167,31 +1238,38 @@ function StoryViewer({
             </div>
 
             <div className="mt-3 flex items-center gap-3">
-              <ViewerAvatar
-                creator={creator}
-              />
+              <button
+                type="button"
+                onClick={openCreatorPage}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left active:opacity-80"
+                aria-label={`Open ${creator.name || 'creator'} page`}
+              >
+                <ViewerAvatar
+                  creator={creator}
+                />
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="truncate text-[13px] font-black text-white">
-                    {creator.name ||
-                      'Story'}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-[13px] font-black text-white">
+                      {creator.name ||
+                        'Story'}
+                    </div>
+
+                    {creator.type ===
+                    'author' ? (
+                      <span className="rounded-full bg-[#f6b800] px-2 py-0.5 text-[8px] font-black text-[#111827]">
+                        AUTHOR
+                      </span>
+                    ) : null}
                   </div>
 
-                  {creator.type ===
-                  'author' ? (
-                    <span className="rounded-full bg-[#f6b800] px-2 py-0.5 text-[8px] font-black text-[#111827]">
-                      AUTHOR
-                    </span>
-                  ) : null}
+                  <div className="mt-0.5 text-[10px] font-bold text-white/65">
+                    {formatStoryTime(
+                      story.created_at
+                    )}
+                  </div>
                 </div>
-
-                <div className="mt-0.5 text-[10px] font-bold text-white/65">
-                  {formatStoryTime(
-                    story.created_at
-                  )}
-                </div>
-              </div>
+              </button>
 
               <button
                 type="button"
@@ -1376,62 +1454,94 @@ function StoryViewer({
 
 
           {!group.is_owner ? (
-            <div className="absolute inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-40">
-              <div className="mx-auto flex max-w-[480px] items-end justify-between gap-1 rounded-[22px] bg-black/45 px-2 py-2 backdrop-blur-xl">
-                {REACTIONS.map(
-                  (reaction) => {
-                    const selected =
-                      reactionType ===
-                      reaction.type
-                    const count = Number(
-                      reactionCounts?.[
-                        reaction.type
-                      ] || 0
-                    )
+            <>
+              <style>{`
+                @keyframes storyReactionBurstA {
+                  0% { opacity: 0; transform: translate3d(0, 12px, 0) scale(.72) rotate(-6deg); }
+                  18% { opacity: .95; }
+                  100% { opacity: 0; transform: translate3d(-34px, -92px, 0) scale(1.08) rotate(-14deg); }
+                }
+                @keyframes storyReactionBurstB {
+                  0% { opacity: 0; transform: translate3d(0, 14px, 0) scale(.68) rotate(5deg); }
+                  22% { opacity: .9; }
+                  100% { opacity: 0; transform: translate3d(8px, -108px, 0) scale(.98) rotate(10deg); }
+                }
+                @keyframes storyReactionBurstC {
+                  0% { opacity: 0; transform: translate3d(0, 10px, 0) scale(.7) rotate(8deg); }
+                  20% { opacity: .88; }
+                  100% { opacity: 0; transform: translate3d(38px, -82px, 0) scale(.92) rotate(16deg); }
+                }
+              `}</style>
 
-                    return (
-                      <button
-                        key={reaction.type}
-                        type="button"
-                        disabled={
-                          reactionLoading ||
-                          reactionSaving
-                        }
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          toggleReaction(
-                            reaction.type
-                          )
-                        }}
-                        className={`flex min-w-0 flex-1 flex-col items-center rounded-[14px] px-1 py-1.5 transition active:scale-95 disabled:opacity-55 ${
-                          selected
-                            ? 'bg-white/20 ring-1 ring-white/70'
-                            : 'bg-transparent'
-                        }`}
-                        aria-label={
-                          reaction.label
-                        }
-                      >
-                        <img
-                          src={reaction.src}
-                          alt=""
-                          className="h-7 w-7 object-contain"
-                        />
-                        {count > 0 ? (
-                          <span className="mt-0.5 text-[8px] font-black text-white/90">
-                            {formatReactionCount(
-                              count
-                            )}
-                          </span>
-                        ) : (
-                          <span className="mt-0.5 h-[10px]" />
-                        )}
-                      </button>
-                    )
-                  }
-                )}
+              {reactionBurst ? (
+                <div
+                  key={reactionBurst.key}
+                  className="pointer-events-none absolute bottom-[74px] left-1/2 z-30 h-[120px] w-[170px] -translate-x-1/2"
+                  aria-hidden="true"
+                >
+                  <img
+                    src={reactionBurst.src}
+                    alt=""
+                    className="absolute bottom-0 left-[58px] h-10 w-10 object-contain"
+                    style={{
+                      animation:
+                        'storyReactionBurstA 820ms ease-out forwards',
+                    }}
+                  />
+                  <img
+                    src={reactionBurst.src}
+                    alt=""
+                    className="absolute bottom-0 left-[66px] h-9 w-9 object-contain"
+                    style={{
+                      animation:
+                        'storyReactionBurstB 880ms ease-out 40ms forwards',
+                    }}
+                  />
+                  <img
+                    src={reactionBurst.src}
+                    alt=""
+                    className="absolute bottom-0 left-[72px] h-8 w-8 object-contain"
+                    style={{
+                      animation:
+                        'storyReactionBurstC 780ms ease-out 90ms forwards',
+                    }}
+                  />
+                </div>
+              ) : null}
+
+              <div className="absolute inset-x-0 bottom-[max(10px,env(safe-area-inset-bottom))] z-40 flex justify-center px-3">
+                <div className="rounded-full bg-black/90 px-2 py-1.5 shadow-2xl backdrop-blur-xl">
+                  <ReactionAction
+                    reactionType={
+                      reactionType || ''
+                    }
+                    count={reactionTotal}
+                    busy={
+                      reactionLoading ||
+                      reactionSaving
+                    }
+                    disabled={false}
+                    onReact={toggleReaction}
+                    countInAction
+                    showCount={
+                      reactionTotal > 0
+                    }
+                    idleIcon={
+                      <img
+                        src="/assets/React/Love.svg"
+                        alt=""
+                        aria-hidden="true"
+                        draggable="false"
+                        className="h-[50px] w-[50px] object-contain"
+                      />
+                    }
+                    buttonClassName="h-[62px] min-w-[76px] justify-center rounded-full px-3 text-[11px] font-black text-white [&_img]:!h-[50px] [&_img]:!w-[50px]"
+                    countClassName="text-[10px] font-black text-white"
+                    pickerClassName="!h-[72px] !w-[calc(100vw-20px)] !max-w-[500px] !gap-[2px] !bg-black/95 !px-[8px] [&>div:last-child]:!bg-black/95 [&>div:last-child]:!text-white/70"
+                  />
+                </div>
               </div>
-            </div>
+            </>
           ) : null}
 
           {story.text_overlay || story.caption ? (
