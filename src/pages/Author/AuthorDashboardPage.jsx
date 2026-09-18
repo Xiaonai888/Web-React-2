@@ -1157,7 +1157,7 @@ return {
 
             <button
   type="button"
-  onClick={() => navigate('/author/page/story/create')}
+  onClick={() => navigate('/author/page/story/create?returnTo=%2Fauthor%2Fdashboard')}
   className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#7444df] shadow-md ring-2 ring-[#8352e9] active:scale-95"
   aria-label={t('authorDashboard.addToStory')}
 >
