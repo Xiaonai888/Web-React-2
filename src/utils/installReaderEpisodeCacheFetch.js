@@ -36,7 +36,7 @@ function normalizeText(value) {
 }
 
 function isReaderSurface() {
-  return /^\/story\/[^/]+\/episode\/[^/]+/.test(
+  return /^\/story\/[^/]+(?:\/episode\/[^/]+)?\/?$/.test(
     window.location.pathname
   )
 }
@@ -335,7 +335,9 @@ function jsonResponse(
 
 async function fetchManifest(
   apiFetch,
-  storyId
+  storyId,
+  input = null,
+  init = {}
 ) {
   const safeStoryId =
     normalizeText(storyId)
@@ -369,8 +371,9 @@ async function fetchManifest(
           safeStoryId
         )}/episodes`,
         {
-          cache: 'no-store',
-        }
+  headers: getRequestHeaders(input, init),
+  cache: 'no-store',
+}
       )
 
       const data = await response
