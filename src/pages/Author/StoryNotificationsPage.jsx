@@ -245,6 +245,21 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const PAGE_SIZE = 30
+const NOTIFICATION_CACHE_TTL_MS = 30 * 1000
+const notificationResponseCache = new Map()
+const notificationRequests = new Map()
+
+function notificationRequestKey(before = '', includeMeta = true) {
+  return [
+    getAuthToken(),
+    String(before || 'first'),
+    includeMeta ? 'meta' : 'page',
+  ].join(':')
+}
+
+function invalidateNotificationResponseCache() {
+  notificationResponseCache.clear()
+}
 const filters = [
   { value: 'all', labelKey: 'all' },
   { value: 'unread', labelKey: 'unread' },
@@ -437,67 +452,122 @@ async function apiRequest(path, options = {}) {
   return data
 }
 
-async function fetchStoryNotifications(before = '') {
+async function fetchStoryNotifications(
+  before = '',
+  {
+    force = false,
+    includeMeta = true,
+  } = {}
+) {
   const params = new URLSearchParams({
     limit: String(PAGE_SIZE),
+    include_meta: includeMeta ? 'true' : 'false',
   })
 
   if (before) {
     params.set('before', before)
   }
 
-  const data = await apiRequest(
-    `/api/authors/me/story-notifications?${params.toString()}`
+  const requestKey = notificationRequestKey(
+    before,
+    includeMeta
   )
+  const cached =
+    notificationResponseCache.get(requestKey)
 
-  return {
+  if (
+    !before &&
+    !force &&
+    cached &&
+    Date.now() - cached.savedAt <
+      NOTIFICATION_CACHE_TTL_MS
+  ) {
+    return cached.data
+  }
+
+  if (notificationRequests.has(requestKey)) {
+    return notificationRequests.get(requestKey)
+  }
+
+  const request = apiRequest(
+    `/api/authors/me/story-notifications?${params.toString()}`
+  ).then((data) => ({
     notifications: Array.isArray(data.notifications)
       ? data.notifications.map(normalizeNotification)
       : [],
-    unreadCount: Number(data.unread_count || 0),
+    unreadCount:
+      data.unread_count == null
+        ? null
+        : Number(data.unread_count || 0),
     preferences:
       data.preferences &&
       typeof data.preferences === 'object'
         ? data.preferences
-        : {},
+        : null,
     hasMore: Boolean(data.has_more),
     nextCursor: data.next_cursor || '',
+  }))
+
+  notificationRequests.set(requestKey, request)
+
+  try {
+    const data = await request
+
+    if (!before && includeMeta) {
+      notificationResponseCache.set(requestKey, {
+        data,
+        savedAt: Date.now(),
+      })
+    }
+
+    return data
+  } finally {
+    notificationRequests.delete(requestKey)
   }
 }
 
-function markNotificationRead(notificationId) {
-  return apiRequest(
+async async function markNotificationRead(notificationId) {
+  const data = await apiRequest(
     `/api/authors/me/story-notifications/${encodeURIComponent(
       notificationId
     )}/read`,
     { method: 'PATCH' }
   )
+
+  invalidateNotificationResponseCache()
+  return data
 }
 
-function markNotificationUnread(notificationId) {
-  return apiRequest(
+async function markNotificationUnread(notificationId) {
+  const data = await apiRequest(
     `/api/authors/me/story-notifications/${encodeURIComponent(
       notificationId
     )}/unread`,
     { method: 'PATCH' }
   )
+
+  invalidateNotificationResponseCache()
+  return data
 }
 
-function deleteNotification(notificationId) {
-  return apiRequest(
+async function deleteNotification(notificationId) {
+  const data = await apiRequest(
     `/api/authors/me/story-notifications/${encodeURIComponent(
       notificationId
     )}`,
     { method: 'DELETE' }
   )
+
+  invalidateNotificationResponseCache()
+  return data
 }
 
-function updateNotificationPreference(
+async function updateNotificationPreference(
   type,
   isEnabled,
   frequencyLevel = 'normal'
 ) {
-  return apiRequest(
+  const data = await apiRequest(
     `/api/authors/me/story-notification-preferences/${encodeURIComponent(
       type
     )}`,
@@ -509,15 +579,21 @@ function updateNotificationPreference(
       }),
     }
   )
+
+  invalidateNotificationResponseCache()
+  return data
 }
 
-function markAllNotificationsRead() {
-  return apiRequest(
+async function markAllNotificationsRead() {
+  const data = await apiRequest(
     '/api/authors/me/story-notifications/read-all',
     {
       method: 'PATCH',
     }
   )
+
+  invalidateNotificationResponseCache()
+  return data
 }
 
 function NotificationAvatar({ notification }) {
@@ -1050,7 +1126,9 @@ export default function StoryNotificationsPage() {
         }
 
         const data =
-          await fetchStoryNotifications(cursor)
+          await fetchStoryNotifications(cursor, {
+            includeMeta: !append,
+          })
 
         setNotifications((current) => {
           if (!append) {
@@ -1070,8 +1148,14 @@ export default function StoryNotificationsPage() {
           ]
         })
 
-        setUnreadCount(data.unreadCount)
-        setPreferences(data.preferences)
+        if (data.unreadCount != null) {
+          setUnreadCount(data.unreadCount)
+        }
+
+        if (data.preferences) {
+          setPreferences(data.preferences)
+        }
+
         setHasMore(data.hasMore)
         setNextCursor(data.nextCursor)
       } catch (error) {
