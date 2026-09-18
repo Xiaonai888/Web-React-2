@@ -4,7 +4,6 @@ import { addStoryLanguageParam } from '../utils/storyLanguage'
 import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 import Author49DayEventCard from '../components/events/Author49DayEventCard'
-import AuthorDaily50DashboardCard from '../components/events/AuthorDaily50DashboardCard'
 import AuthorDaily50CoverCard from '../components/events/AuthorDaily50CoverCard'
 import { requestAuthor49DayEvent } from '../services/author49DayEventClientCache'
 import { requestAuthorDaily50Event } from '../services/authorDaily50EventClientCache'
@@ -1660,17 +1659,16 @@ const activeEvents = [
       : null,
 
     daily50Available
-      ? {
-          id: 'author-daily-50',
-          title: t('eventPage.authorDaily50'),
-          label: t('eventPage.authorEvent'),
-          icon: 'fa-clock',
-          iconBg:
-            'bg-emerald-50 dark:bg-emerald-500/15',
-          iconColor: 'text-emerald-600',
-          labelColor: 'text-emerald-600',
-        }
-      : null,
+  ? {
+      id: 'author-daily-50',
+      title: t('eventPage.authorDaily50'),
+      label: t('eventPage.authorEvent'),
+      icon: 'fa-bolt',
+      iconBg: 'bg-emerald-100 dark:bg-emerald-500/15',
+      iconColor: 'text-emerald-700 dark:text-emerald-300',
+      labelColor: 'text-emerald-600',
+    }
+  : null,
   ].filter(Boolean)
 
   const selectedManagedEvent =
