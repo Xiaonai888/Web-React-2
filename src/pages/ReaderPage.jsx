@@ -5171,6 +5171,11 @@ export default function ReaderPage() {
   const [unlockPackageOptions, setUnlockPackageOptions] = useState([])
   const unlockStatusCacheRef = useRef(new Map())
   const unlockStatusRequestRef = useRef(new Map())
+
+  useEffect(() => {
+    unlockStatusCacheRef.current.clear()
+    unlockStatusRequestRef.current.clear()
+  }, [storyId])
   
 
   useEffect(() => {
@@ -5761,7 +5766,7 @@ useEffect(() => {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Unlock status failed')
+      throw new Error(data.message || t('readerPage.unlockStatusFailed'))
     }
 
     unlockStatusCacheRef.current.set(key, {
@@ -5786,25 +5791,18 @@ async function loadReaderAdStatus(targetEpisodeId = episodeId) {
     return { ad_policy: null, advertisement: null }
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/status`,
-    {
-      headers: readerAuthHeaders(),
+  try {
+    const data = await fetchUnlockStatus(targetEpisodeId)
+
+    return {
+      ad_policy: data?.ad_policy || null,
+      advertisement: data?.advertisement || null,
     }
-  )
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
+  } catch {
     return {
       ad_policy: null,
       advertisement: null,
     }
-  }
-
-  return {
-    ad_policy: data.ad_policy || null,
-    advertisement: data.advertisement || null,
   }
 }
 
@@ -5829,20 +5827,9 @@ async function loadContinuousEpisode(targetEpisode) {
     response.status === 423 ||
     data.code === 'EPISODE_LOCKED'
   ) {
-    const unlockResponse = await fetch(
-      `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetId}/status`,
-      {
-        headers: readerAuthHeaders(),
-        cache: 'no-store',
-      }
-    )
-    const unlockData = await unlockResponse
-      .json()
-      .catch(() => ({}))
-    const unlockStatus =
-      unlockResponse.ok && unlockData.ok !== false
-        ? unlockData
-        : {}
+    const unlockStatus = await fetchUnlockStatus(
+      targetId
+    ).catch(() => ({}))
 
     return {
       id: targetId,
@@ -6810,25 +6797,15 @@ const handleOpenPurchasePage = (
 }
 
 async function loadLockedUnlockStatus(
-  targetEpisodeId = episodeId
+  targetEpisodeId = episodeId,
+  force = false
 ) {
   if (!storyId || !targetEpisodeId) return null
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/status`,
-    {
-      headers: readerAuthHeaders(),
-      cache: 'no-store',
-    }
+  const data = await fetchUnlockStatus(
+    targetEpisodeId,
+    force
   )
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.message || t('readerPage.unlockStatusFailed')
-    )
-  }
 
   setUnlockWallet(data.wallet || null)
   setUnlockCoinAccess(
@@ -6995,7 +6972,8 @@ async function handleLockedRewardedUnlock(
   } catch (error) {
     if (error?.code === 'AD_DAILY_LIMIT_REACHED') {
       await loadLockedUnlockStatus(
-        targetEpisodeId
+        targetEpisodeId,
+        true
       ).catch(() => {})
     }
 
