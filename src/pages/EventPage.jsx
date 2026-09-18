@@ -5,6 +5,7 @@ import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 import Author49DayEventCard from '../components/events/Author49DayEventCard'
 import AuthorDaily50DashboardCard from '../components/events/AuthorDaily50DashboardCard'
+import AuthorDaily50CoverCard from '../components/events/AuthorDaily50CoverCard'
 import { requestAuthor49DayEvent } from '../services/author49DayEventClientCache'
 import { requestAuthorDaily50Event } from '../services/authorDaily50EventClientCache'
 import { requestWriterWednesdayEvent } from '../services/writerWednesdayEventClientCache'
@@ -2206,9 +2207,7 @@ const activeEvents = [
 ) : null}
 
 {selectedActiveEvent === 'author-daily-50' ? (
-  <AuthorDaily50DashboardCard
-    onStartWriting={handleStartYourWork}
-  />
+  <AuthorDaily50CoverCard />
 ) : null}
 
 {!managedEventsLoading && activeEvents.length === 0 ? (
