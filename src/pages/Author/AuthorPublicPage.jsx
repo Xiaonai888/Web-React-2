@@ -126,6 +126,9 @@ registerTranslationNamespace('authorPublicPage', {
     basedOnOpinions: 'Based on the opinions of {{count}} people',
     messageAuthor: 'Message {{name}}',
     doYouRecommend: 'Do you recommend {{name}}?',
+    like: 'Like',
+    comment: 'Comment',
+    echo: 'Echo',
     reviewPlaceholder: 'Your review',
     sharing: 'Sharing...',
     share: 'Share',
@@ -269,6 +272,9 @@ registerTranslationNamespace('authorPublicPage', {
     basedOnOpinions: 'ផ្អែកលើមតិរបស់មនុស្ស {{count}} នាក់',
     messageAuthor: 'ផ្ញើសារ {{name}}',
     doYouRecommend: 'តើអ្នកណែនាំ {{name}} ទេ?',
+    like: 'ចូលចិត្ត',
+    comment: 'មតិយោបល់',
+    echo: 'Echo',
     reviewPlaceholder: 'Review របស់អ្នក',
     sharing: 'កំពុងចែករំលែក...',
     share: 'ចែករំលែក',
@@ -412,6 +418,9 @@ registerTranslationNamespace('authorPublicPage', {
     basedOnOpinions: '基于 {{count}} 人的意见',
     messageAuthor: '给 {{name}} 发消息',
     doYouRecommend: '你推荐 {{name}} 吗？',
+    like: '赞',
+    comment: '评论',
+    echo: 'Echo',
     reviewPlaceholder: '你的评价',
     sharing: '正在分享...',
     share: '分享',
@@ -555,6 +564,9 @@ registerTranslationNamespace('authorPublicPage', {
     basedOnOpinions: '{{count}}人の意見に基づく',
     messageAuthor: '{{name}} にメッセージ',
     doYouRecommend: '{{name}} をおすすめしますか？',
+    like: 'いいね',
+    comment: 'コメント',
+    echo: 'Echo',
     reviewPlaceholder: 'レビューを入力',
     sharing: '共有中...',
     share: '共有',
@@ -698,6 +710,9 @@ registerTranslationNamespace('authorPublicPage', {
     basedOnOpinions: '{{count}}명의 의견을 기준으로 함',
     messageAuthor: '{{name}}에게 메시지',
     doYouRecommend: '{{name}}을(를) 추천하시나요?',
+    like: '좋아요',
+    comment: '댓글',
+    echo: 'Echo',
     reviewPlaceholder: '리뷰를 입력하세요',
     sharing: '공유 중...',
     share: '공유',
@@ -1787,6 +1802,14 @@ export default function AuthorPublicPage() {
   const [reviewDraftRecommended, setReviewDraftRecommended] = useState(true)
   const [reviewDraftError, setReviewDraftError] = useState('')
   const [reviewDiscardOpen, setReviewDiscardOpen] = useState(false)
+  const reviewPopupOpen =
+    reviewsOverviewOpen ||
+    reviewsListOpen ||
+    reviewInfoOpen ||
+    reviewOptionsOpen ||
+    reviewSettingsOpen ||
+    reviewSheetOpen ||
+    reviewDiscardOpen
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [cropMode, setCropMode] = useState('avatar')
   const [rawImage, setRawImage] = useState('')
@@ -1888,6 +1911,35 @@ const socialPreview = socialBase ? `${socialBase}${socialCount > 1 ? ` + ${socia
     window.scrollTo(0, scrollY)
   }
 }, [followSettingsOpen])
+
+
+useEffect(() => {
+  if (!reviewPopupOpen) return undefined
+
+  const scrollY = window.scrollY
+  const previousHtmlOverflow = document.documentElement.style.overflow
+  const previousOverflow = document.body.style.overflow
+  const previousPosition = document.body.style.position
+  const previousTop = document.body.style.top
+  const previousWidth = document.body.style.width
+
+  document.body.classList.add('mobile-popup-open')
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${scrollY}px`
+  document.body.style.width = '100%'
+
+  return () => {
+    document.body.classList.remove('mobile-popup-open')
+    document.documentElement.style.overflow = previousHtmlOverflow
+    document.body.style.overflow = previousOverflow
+    document.body.style.position = previousPosition
+    document.body.style.top = previousTop
+    document.body.style.width = previousWidth
+    window.scrollTo(0, scrollY)
+  }
+}, [reviewPopupOpen])
 
   
 
@@ -2853,7 +2905,35 @@ onOpenStoreSetting={() => {
         </button>
       </div>
 
-      <div className="space-y-3 px-3 pt-3">
+      {!displayAuthor.is_owner && !displayAuthor.viewer_owns_page ? (
+        <section className="bg-[var(--shadow-bg-surface)] px-4 pb-4 pt-2">
+          <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-4 py-4">
+            <div className="text-center text-[18px] font-bold text-[var(--shadow-text-primary)]">
+              {t('authorPublicPage.doYouRecommend', { name: displayAuthor.page_name })}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleOpenReviewSheet(true)}
+                className="h-11 rounded-[10px] bg-[var(--shadow-bg-elevated)] text-[16px] font-medium text-[var(--shadow-text-primary)] active:scale-[0.99]"
+              >
+                {t('authorPublicPage.yes')}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenReviewSheet(false)}
+                className="h-11 rounded-[10px] bg-[var(--shadow-bg-elevated)] text-[16px] font-medium text-[var(--shadow-text-primary)] active:scale-[0.99]"
+              >
+                {t('authorPublicPage.no')}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <div className="space-y-2 pt-2">
         {reviewItems.length ? (
           reviewItems.map((review) => {
             const reviewer = review.reviewer || review.user || review.reader || {}
@@ -2868,7 +2948,7 @@ onOpenStoreSetting={() => {
             return (
               <article
                 key={review.id || `${name}-${text}`}
-                className="rounded-[14px] bg-[var(--shadow-bg-surface)] px-3 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+                className="bg-[var(--shadow-bg-surface)] px-4 py-4"
               >
                 <div className="flex gap-3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-elevated)] text-[16px] font-bold text-[var(--shadow-text-primary)]">
@@ -2918,27 +2998,44 @@ onOpenStoreSetting={() => {
                         {text}
                       </p>
                     ) : null}
-
-                    <div className="mt-5 flex items-center gap-7 text-[var(--shadow-text-secondary)]">
-                      <button type="button" className="flex items-center gap-1 active:opacity-70">
-                        <i className="fa-regular fa-thumbs-up text-[22px]" />
-                      </button>
-
-                      <button type="button" className="flex items-center gap-1 active:opacity-70">
-                        <i className="fa-regular fa-comment text-[22px]" />
-                      </button>
-
-                      <button type="button" className="flex items-center gap-1 active:opacity-70">
-                        <i className="fa-solid fa-share text-[21px]" />
-                      </button>
-                    </div>
                   </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b] dark:text-white/60">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
+                  >
+                    <i className="fa-regular fa-heart text-[18px]" />
+                    <span>{t('authorPublicPage.like')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
+                  >
+                    <i className="fa-regular fa-comment text-[18px]" />
+                    <span>{t('authorPublicPage.comment')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-[#242836]"
+                  >
+                    <img
+                      src="/assets/Icons/echo.svg"
+                      alt=""
+                      aria-hidden="true"
+                      className="h-[18px] w-[18px] object-contain opacity-75 dark:brightness-0 dark:invert"
+                    />
+                    <span>{t('authorPublicPage.echo')}</span>
+                  </button>
                 </div>
               </article>
             )
           })
         ) : (
-          <div className="rounded-[14px] bg-[var(--shadow-bg-surface)] px-4 py-8 text-[14px] font-medium text-[var(--shadow-text-secondary)]">
+          <div className="bg-[var(--shadow-bg-surface)] px-4 py-8 text-[14px] font-medium text-[var(--shadow-text-secondary)]">
             {t('authorPublicPage.noReviewsYet')}
           </div>
         )}
@@ -3145,7 +3242,7 @@ onOpenStoreSetting={() => {
 
         <div className="space-y-4">
           {reviewItems.length ? (
-            reviewItems.slice(0, 4).map((review) => {
+            reviewItems.slice(0, 2).map((review) => {
               const reviewer = review.reviewer || review.user || review.reader || {}
               const name = review.reviewer_name || reviewer.name || review.name || t('authorPublicPage.reader')
               const avatarUrl = review.reviewer_avatar_url || reviewer.avatar_url || review.avatar_url || ''
