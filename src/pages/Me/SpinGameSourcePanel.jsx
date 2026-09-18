@@ -431,7 +431,7 @@ function useProtectedSearch(source, query, activeGame, t) {
     const used = Number(activeGame?.session?.search_count || 0)
 
     setRemaining(
-      Number.isFinite(limit)
+      Number.isFinite(limit) && limit > 0
         ? Math.max(0, limit - used)
         : null
     )
