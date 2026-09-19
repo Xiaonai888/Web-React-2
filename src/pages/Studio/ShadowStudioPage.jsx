@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
+import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -214,6 +215,7 @@ export default function ShadowStudioPage() {
   const redoRef = useRef([])
   const documentsRef = useRef([])
   const loadTokenRef = useRef(0)
+  const openProjectInputRef = useRef(null)
 
   const [, refresh] = useState(0)
   const [documents, setDocuments] = useState([])
@@ -226,6 +228,10 @@ export default function ShadowStudioPage() {
   const [size, setSize] = useState(8)
   const [opacity, setOpacity] = useState(100)
   const [zoom, setZoom] = useState(75)
+  const [projectBusy, setProjectBusy] = useState(false)
+  const [projectNotice, setProjectNotice] = useState('')
+  const [projectLoadKey, setProjectLoadKey] = useState(0)
+  const [paperLoading, setPaperLoading] = useState(false)
 
   const activeDocument =
     documents.find((document) => document.id === activeDocumentId) ||
@@ -310,7 +316,7 @@ export default function ShadowStudioPage() {
       return documentList
     }
 
-    const image = canvas.toDataURL('image/webp', 0.88)
+    const image = canvas.toDataURL('image/png')
 
     return documentList.map((document) =>
       document.id === activeDocumentId
@@ -330,9 +336,12 @@ export default function ShadowStudioPage() {
     paintBlank(document)
 
     if (!document.image) {
+      setPaperLoading(false)
       resetHistory()
       return
     }
+
+    setPaperLoading(true)
 
     const image = new Image()
 
@@ -352,11 +361,14 @@ export default function ShadowStudioPage() {
         currentCanvas.width,
         currentCanvas.height
       )
+      setPaperLoading(false)
       resetHistory()
     }
 
     image.onerror = () => {
       if (token === loadTokenRef.current) {
+        setPaperLoading(false)
+        setProjectNotice('This paper image could not be loaded. Restore it from another saved project copy.')
         resetHistory()
       }
     }
@@ -374,9 +386,95 @@ export default function ShadowStudioPage() {
     if (document) {
       loadDocument(document)
     }
-  }, [workspaceStarted, activeDocumentId])
+  }, [workspaceStarted, activeDocumentId, projectLoadKey])
+
+  useEffect(() => {
+    function confirmBeforeUnload(event) {
+      if (!documentsRef.current.some((document) => document.dirty)) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', confirmBeforeUnload)
+    return () => window.removeEventListener('beforeunload', confirmBeforeUnload)
+  }, [])
+
+  function exitStudio() {
+    if (
+      documentsRef.current.length &&
+      !window.confirm('Leaving Studio closes the open papers. Save Project to your device first. Leave?')
+    ) {
+      return
+    }
+
+    navigate(-1)
+  }
+
+  function chooseProjectFile() {
+    if (projectBusy) return
+    openProjectInputRef.current?.click()
+  }
+
+  async function openProject(file) {
+    if (!file || projectBusy) return
+
+    setProjectBusy(true)
+    setProjectNotice('')
+
+    try {
+      const project = await readStudioProject(file)
+
+      if (
+        documentsRef.current.length &&
+        !window.confirm('Opening this project will close your current papers. Save Project first if you want to keep them. Continue?')
+      ) {
+        return
+      }
+
+      documentsRef.current = project.documents
+      setDocuments(project.documents)
+      setActiveDocumentId(project.activeDocumentId)
+      setNewFileOpen(false)
+      setProjectLoadKey((value) => value + 1)
+      setWorkspaceStarted(true)
+      setProjectNotice(`Opened ${project.documents.length} paper(s) from your device.`)
+    } catch (error) {
+      setProjectNotice(error.message || 'Unable to open the project file.')
+    } finally {
+      setProjectBusy(false)
+    }
+  }
+
+  function saveProject() {
+    if (projectBusy || paperLoading) {
+      setProjectNotice('Wait for the current paper to finish loading.')
+      return
+    }
+
+    const current = documentsRef.current
+
+    if (!current.length) {
+      setProjectNotice('Create a paper before saving.')
+      return
+    }
+
+    try {
+      const saved = workspaceStarted && activeDocumentId
+        ? storeActiveImage(current)
+        : current
+      const project = buildStudioProject(saved, activeDocumentId)
+      downloadStudioProject(project)
+      documentsRef.current = saved
+      setDocuments(saved)
+      setProjectNotice('Project download started. Keep the .shadowstudio file in a safe place.')
+    } catch (error) {
+      setProjectNotice(error.message || 'Unable to save the project.')
+    }
+  }
 
   function openNewFile(presetId = 'basic') {
+    if (paperLoading || projectBusy) return
+
     if (documentsRef.current.length >= DOCUMENT_LIMIT) {
       window.alert(tx('shadowStudio.documentLimit'))
       return
@@ -387,6 +485,8 @@ export default function ShadowStudioPage() {
   }
 
   function createPaper(settings) {
+    if (paperLoading || projectBusy) return
+
     const current = documentsRef.current
 
     if (current.length >= DOCUMENT_LIMIT) {
@@ -401,9 +501,7 @@ export default function ShadowStudioPage() {
         : current
 
     const document = createDocument(settings)
-    const next = workspaceStarted
-      ? [...saved, document]
-      : [document]
+    const next = [...saved, document]
 
     documentsRef.current = next
     setDocuments(next)
@@ -413,7 +511,7 @@ export default function ShadowStudioPage() {
   }
 
   function switchDocument(documentId) {
-    if (documentId === activeDocumentId) return
+    if (paperLoading || projectBusy || documentId === activeDocumentId) return
 
     const saved = storeActiveImage(documentsRef.current)
     const target = saved.find(
@@ -429,6 +527,7 @@ export default function ShadowStudioPage() {
 
   function closeDocument(documentId, event) {
     event?.stopPropagation()
+    if (paperLoading || projectBusy) return
 
     const current = documentsRef.current
     const index = current.findIndex(
@@ -473,6 +572,7 @@ export default function ShadowStudioPage() {
   }
 
   function goHome() {
+    if (paperLoading || projectBusy) return
     const saved = storeActiveImage(documentsRef.current)
     documentsRef.current = saved
     setDocuments(saved)
@@ -480,7 +580,7 @@ export default function ShadowStudioPage() {
   }
 
   function resumeWorkspace() {
-    if (!documentsRef.current.length) return
+    if (projectBusy || !documentsRef.current.length) return
 
     setWorkspaceStarted(true)
 
@@ -531,6 +631,8 @@ export default function ShadowStudioPage() {
   }
 
   function start(event) {
+    if (paperLoading || projectBusy) return
+
     if (
       event.pointerType === 'mouse' &&
       event.button !== 0
@@ -647,6 +749,9 @@ export default function ShadowStudioPage() {
         .ss-menu-btn{height:28px;border:0;background:transparent;color:#e6e7e9;padding:0 8px;font:inherit;font-size:11px;cursor:pointer}
         .ss-menu-btn:hover{background:#474b50}
         .ss-menu-btn:disabled{opacity:.45;cursor:default}
+        .ss-hidden-file{display:none}
+        .ss-project-message{margin:14px 0 0;border:1px solid #59636d;border-radius:8px;background:#303842;color:#d7e6f7;padding:11px 13px;font-size:11px;line-height:1.5}
+        .ss-home-link:disabled{opacity:.45;cursor:default}
         .ss-home{min-height:calc(100vh - 34px);display:grid;grid-template-columns:180px minmax(0,1fr);background:#1e2023}
         .ss-home-side{border-right:1px solid #35393e;background:#25272a;padding:22px 18px}
         .ss-home-primary{width:100%;height:38px;border:0;border-radius:8px;background:#2d8cff;color:#fff;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
@@ -730,13 +835,20 @@ export default function ShadowStudioPage() {
         @media(max-width:640px){.ss-home{grid-template-columns:1fr}.ss-home-side{border-right:0;border-bottom:1px solid #35393e}.ss-home-main{padding:26px 16px}.ss-top{top:34px;padding:0 8px}.ss-layout{display:block}.ss-tab{min-width:104px}.ss-tab-count{display:none}.ss-tools{position:sticky;top:118px;z-index:25;display:flex;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid #3b4046;padding:7px}.ss-tool{width:72px;min-width:72px;min-height:50px}.ss-work{padding:12px 12px 66px}.ss-bottom{left:0}.ss-controls{gap:8px}.ss-control label{display:none}.ss-dialog-body{grid-template-columns:1fr}.ss-field-wide{grid-column:auto}}
       `}</style>
 
-      <StudioChrome onBack={() => navigate(-1)}>
+      <StudioChrome onBack={exitStudio}>
         <button
           type="button"
           className="ss-menu-btn"
+          disabled={paperLoading || projectBusy}
           onClick={() => openNewFile('basic')}
         >
-          File
+          New
+        </button>
+        <button type="button" className="ss-menu-btn" disabled={projectBusy} onClick={chooseProjectFile}>
+          Open
+        </button>
+        <button type="button" className="ss-menu-btn" disabled={!documents.length || paperLoading || projectBusy} onClick={saveProject}>
+          Save
         </button>
         <button
           type="button"
@@ -766,6 +878,10 @@ export default function ShadowStudioPage() {
               + {tx('shadowStudio.newPaper')}
             </button>
 
+            <button type="button" className="ss-home-link" disabled={projectBusy} onClick={chooseProjectFile}>
+              Open Project
+            </button>
+
             {documents.length ? (
               <button
                 type="button"
@@ -776,11 +892,7 @@ export default function ShadowStudioPage() {
               </button>
             ) : null}
 
-            <button
-              type="button"
-              className="ss-home-link"
-              onClick={() => navigate(-1)}
-            >
+            <button type="button" className="ss-home-link" onClick={exitStudio}>
               {tx('shadowStudio.back')}
             </button>
           </aside>
@@ -810,10 +922,11 @@ export default function ShadowStudioPage() {
             </div>
 
             <section className="ss-recent">
-              <h2>{tx('shadowStudio.recent')}</h2>
+              <h2>Project files</h2>
               <div className="ss-empty">
-                {tx('shadowStudio.noRecent')}
+                Save Project downloads a .shadowstudio file to your device. Use Open Project to resume it later. Automatic recovery is not enabled yet.
               </div>
+              {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
             </section>
           </section>
         </main>
@@ -821,12 +934,14 @@ export default function ShadowStudioPage() {
         <>
           <header className="ss-top">
             <div className="ss-row">
-              <button
-                type="button"
-                className="ss-btn"
-                onClick={goHome}
-              >
+              <button type="button" className="ss-btn" onClick={goHome} disabled={paperLoading || projectBusy}>
                 Home
+              </button>
+              <button type="button" className="ss-btn" disabled={paperLoading || projectBusy} onClick={saveProject}>
+                Save Project
+              </button>
+              <button type="button" className="ss-btn" disabled={projectBusy} onClick={chooseProjectFile}>
+                Open Project
               </button>
 
               <div className="ss-doc-info">
@@ -867,6 +982,8 @@ export default function ShadowStudioPage() {
               </button>
             </div>
           </header>
+
+          {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
 
           <div className="ss-tabs">
             {documents.map((document) => (
@@ -1101,6 +1218,18 @@ export default function ShadowStudioPage() {
           </footer>
         </>
       )}
+
+      <input
+        ref={openProjectInputRef}
+        className="ss-hidden-file"
+        type="file"
+        accept=".shadowstudio"
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          event.target.value = ''
+          if (file) openProject(file)
+        }}
+      />
 
       <StudioNewFileDialog
         open={newFileOpen}
