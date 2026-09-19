@@ -55,14 +55,18 @@ export default function useReadingProgressSync({
   const inFlightByStoryRef = useRef(new Map())
   const queuedByStoryRef = useRef(new Map())
   const retryByStoryRef = useRef(new Map())
+  const rejectedEpisodeKeysRef = useRef(new Set())
+  const rejectedStoryKeysRef = useRef(new Set())
 
   const saveCurrent = useCallback(async (current) => {
     if (!current || current.percent <= 0) return false
 
+    const storyKey = `${current.token}:${current.storyId}`
+    if (rejectedStoryKeysRef.current.has(storyKey) || rejectedEpisodeKeysRef.current.has(current.key)) return false
+
     const state = savedStateByKeyRef.current.get(current.key)
     if (state?.lastSavedSignature === current.signature) return false
 
-    const storyKey = `${current.token}:${current.storyId}`
     const inFlight = inFlightByStoryRef.current.get(storyKey)
     if (inFlight) {
       if (inFlight !== current.signature) enqueueProgress(queuedByStoryRef.current, storyKey, current)
@@ -77,6 +81,7 @@ export default function useReadingProgressSync({
 
     inFlightByStoryRef.current.set(storyKey, current.signature)
     let saved = false
+    let permanentFailure = false
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/reading-progress`, {
@@ -94,7 +99,21 @@ export default function useReadingProgressSync({
       })
 
       const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.ok === false) return false
+      if (!response.ok || data.ok === false) {
+        permanentFailure = response.status >= 400 && response.status < 500 && ![408, 409, 429].includes(response.status)
+        if (permanentFailure) {
+          if (response.status === 401 || response.status === 403) {
+            rejectedStoryKeysRef.current.add(storyKey)
+            queuedByStoryRef.current.delete(storyKey)
+          } else {
+            rejectedEpisodeKeysRef.current.add(current.key)
+            if (rejectedEpisodeKeysRef.current.size > MAX_TRACKED_KEYS) {
+              rejectedEpisodeKeysRef.current.delete(rejectedEpisodeKeysRef.current.values().next().value)
+            }
+          }
+        }
+        return false
+      }
 
       const now = Date.now()
       savedStateByKeyRef.current.set(current.key, {
@@ -108,25 +127,31 @@ export default function useReadingProgressSync({
     } catch {
       return false
     } finally {
-      if (!saved) {
+      if (!saved && !permanentFailure) {
         const failures = Math.min(5, Number(retryByStoryRef.current.get(storyKey)?.failures || 0) + 1)
         retryByStoryRef.current.set(storyKey, {
           failures,
           nextAttemptAt: Date.now() + Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** (failures - 1)),
         })
       }
+      if (permanentFailure) retryByStoryRef.current.delete(storyKey)
 
       if (inFlightByStoryRef.current.get(storyKey) === current.signature) {
         inFlightByStoryRef.current.delete(storyKey)
       }
 
-      if (!saved) {
+      if (!saved && !permanentFailure) {
         enqueueProgress(queuedByStoryRef.current, storyKey, current, true)
       } else {
-        const queued = dequeueProgress(queuedByStoryRef.current, storyKey)
-        if (queued && queued.signature !== savedStateByKeyRef.current.get(queued.key)?.lastSavedSignature) {
-          void saveCurrent(queued)
+        let queued = dequeueProgress(queuedByStoryRef.current, storyKey)
+        while (queued && (
+          rejectedStoryKeysRef.current.has(storyKey) ||
+          rejectedEpisodeKeysRef.current.has(queued.key) ||
+          queued.signature === savedStateByKeyRef.current.get(queued.key)?.lastSavedSignature
+        )) {
+          queued = dequeueProgress(queuedByStoryRef.current, storyKey)
         }
+        if (queued) void saveCurrent(queued)
       }
     }
   }, [])
