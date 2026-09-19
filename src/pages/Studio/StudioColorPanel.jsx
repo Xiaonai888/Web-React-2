@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+const FAVORITES_KEY = 'shadow-studio-color-favorites-v1'
+
 const PALETTE = [
   '#111111', '#374151', '#6B7280', '#D1D5DB', '#FFFFFF',
   '#EF4444', '#F97316', '#EAB308', '#22C55E', '#06B6D4',
@@ -51,10 +53,22 @@ export function hsvToHex(hue, saturation, value) {
   return `#${parts.map((channel) => Math.round((channel + offset) * 255).toString(16).padStart(2, '0')).join('')}`.toUpperCase()
 }
 
+function readFavorites() {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(FAVORITES_KEY) || '[]')
+    if (!Array.isArray(stored)) return []
+    return [...new Set(stored.map((item) => typeof item === 'string' ? fullHex(item) : null).filter(Boolean))].slice(0, 12)
+  } catch {
+    return []
+  }
+}
+
 export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
   const [previous, setPrevious] = useState('#FFFFFF')
   const [hexText, setHexText] = useState(color.toUpperCase())
   const [expanded, setExpanded] = useState(false)
+  const [favorites, setFavorites] = useState(readFavorites)
+  const [recentColors, setRecentColors] = useState([])
   const dragRef = useRef(null)
   const currentRef = useRef(color)
   currentRef.current = color
@@ -63,7 +77,31 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
     setHexText(color.toUpperCase())
   }, [color])
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites))
+    } catch {
+      return
+    }
+  }, [favorites])
+
   const hsv = hexToHsv(color)
+
+  function rememberColor(nextColor) {
+    const normalized = fullHex(nextColor)
+    if (!normalized) return
+    setRecentColors((current) => [normalized, ...current.filter((item) => item !== normalized)].slice(0, 8))
+  }
+
+  function addFavorite() {
+    const normalized = fullHex(color)
+    if (!normalized) return
+    setFavorites((current) => current.includes(normalized) || current.length >= 12 ? current : [...current, normalized])
+  }
+
+  function removeFavorite(toRemove) {
+    setFavorites((current) => current.filter((item) => item !== toRemove))
+  }
 
   function pick(nextColor) {
     const normalized = fullHex(nextColor)
@@ -71,6 +109,7 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
     if (normalized !== currentRef.current.toUpperCase()) {
       setPrevious(currentRef.current.toUpperCase())
       onChange(normalized)
+      rememberColor(normalized)
     }
   }
 
@@ -107,6 +146,7 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
   function endDrag(event) {
     if (dragRef.current?.id !== event.pointerId) return
     dragRef.current = null
+    rememberColor(currentRef.current)
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
@@ -140,6 +180,17 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
         .ss-color-panel .ss-swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}
         .ss-color-panel .ss-swatch{width:100%;min-width:0;aspect-ratio:1;border:1px solid #596068;border-radius:5px;cursor:pointer}
         .ss-color-panel .ss-swatch.selected{outline:2px solid #eef4fb;outline-offset:1px}
+        .ss-color-extra{width:100%;min-width:0;margin-top:13px;display:grid;gap:12px}
+        .ss-color-group{min-width:0}
+        .ss-color-group-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px;color:#cad3dd;font-size:10px}
+        .ss-color-fav-add{min-height:26px;border:1px solid #586775;border-radius:5px;background:#373f48;color:#f0f6fc;padding:2px 8px;font:inherit;font-size:10px;cursor:pointer}
+        .ss-color-fav-add:disabled{opacity:.4;cursor:default}
+        .ss-color-items{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+        .ss-color-favorite{position:relative;width:35px;height:35px;flex:none}
+        .ss-color-favorite .ss-color-fav-pick{width:35px;height:35px;border:1px solid #6b7886;border-radius:5px;cursor:pointer}
+        .ss-color-fav-remove{position:absolute;right:-5px;top:-6px;display:grid;place-items:center;width:17px;height:17px;border:1px solid #626e7b;border-radius:50%;background:#30363e;color:#fff;font:inherit;font-size:12px;line-height:1;cursor:pointer}
+        .ss-color-recent-pick{height:32px;width:32px;border:1px solid #687583;border-radius:5px;cursor:pointer}
+        .ss-color-empty{margin:0;font-size:10px;color:#a1afbc;line-height:1.5}
         @media(max-width:900px),(max-width:1100px) and (max-height:650px) and (orientation:landscape){
           .shadow-studio .ss-side .ss-color-panel{display:flex;flex:1 1 100%;min-width:0;flex-wrap:wrap;align-items:center;gap:6px;margin:0;padding:0;border:0}
           .shadow-studio .ss-color-panel .ss-color-heading{flex:0 0 auto;margin:0;gap:5px}
@@ -151,6 +202,8 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
           .shadow-studio .ss-color-panel .ss-color-advanced{display:none;width:100%;flex:1 1 100%;margin:4px 0 6px;gap:8px}
           .shadow-studio .ss-color-panel[data-mobile-open='true'] .ss-color-advanced{display:flex}
           .shadow-studio .ss-color-panel .ss-hue-wheel{width:min(100%,175px)}
+          .shadow-studio .ss-color-panel .ss-color-extra{display:none;flex:1 1 100%;margin:5px 0 8px}
+          .shadow-studio .ss-color-panel[data-mobile-open='true'] .ss-color-extra{display:grid}
         }
       `}</style>
       <div className="ss-color-heading">
@@ -186,6 +239,32 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
       </div>
       <div className="ss-swatches" aria-label="Color palette">
         {PALETTE.map((swatch) => <button key={swatch} type="button" className={`ss-swatch ${color.toUpperCase() === swatch ? 'selected' : ''}`} style={{ backgroundColor: swatch }} title={swatch} aria-label={`Use color ${swatch}`} onClick={() => pick(swatch)} />)}
+      </div>
+      <div className="ss-color-extra">
+        <div className="ss-color-group">
+          <div className="ss-color-group-head">
+            <strong>My Palette · {favorites.length}/12</strong>
+            <button type="button" className="ss-color-fav-add" disabled={favorites.length >= 12 || favorites.includes(color.toUpperCase())} onClick={addFavorite} aria-label={`Save ${color} to My Palette`}>+ Save color</button>
+          </div>
+          {favorites.length ? (
+            <div className="ss-color-items" aria-label="My saved colors">
+              {favorites.map((favorite) => (
+                <div key={favorite} className="ss-color-favorite">
+                  <button type="button" className="ss-color-fav-pick" style={{ backgroundColor: favorite }} title={`Use ${favorite}`} aria-label={`Use saved color ${favorite}`} onClick={() => pick(favorite)} />
+                  <button type="button" className="ss-color-fav-remove" title={`Remove ${favorite}`} aria-label={`Remove saved color ${favorite}`} onClick={() => removeFavorite(favorite)}>×</button>
+                </div>
+              ))}
+            </div>
+          ) : <p className="ss-color-empty">Choose a color, then save it here.</p>}
+        </div>
+        <div className="ss-color-group">
+          <div className="ss-color-group-head"><strong>Recent Colors</strong></div>
+          {recentColors.length ? (
+            <div className="ss-color-items" aria-label="Recently used colors">
+              {recentColors.map((recent) => <button key={recent} type="button" className="ss-color-recent-pick" style={{ backgroundColor: recent }} title={`Use ${recent}`} aria-label={`Use recent color ${recent}`} onClick={() => pick(recent)} />)}
+            </div>
+          ) : <p className="ss-color-empty">Colors you pick will appear here.</p>}
+        </div>
       </div>
     </section>
   )
