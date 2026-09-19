@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
+import StudioFileMenu from './StudioFileMenu'
+import './ShadowStudioMobile.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
-import './ShadowStudioMobile.css'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -569,7 +570,7 @@ export default function ShadowStudioPage() {
     }
   }
 
-  function saveProject() {
+  function saveProject(fileName = '') {
     if (projectBusy || paperLoading) {
       setProjectNotice('Wait for the current paper to finish loading.')
       return
@@ -587,13 +588,73 @@ export default function ShadowStudioPage() {
         ? storeActiveImage(current)
         : current
       const project = buildStudioProject(saved, activeDocumentId)
-      downloadStudioProject(project)
+      downloadStudioProject(project, fileName)
       documentsRef.current = saved
       setDocuments(saved)
       setProjectNotice('Project download started. Keep the .shadowstudio file in a safe place.')
     } catch (error) {
       setProjectNotice(error.message || 'Unable to save the project.')
     }
+  }
+
+  function saveProjectAs() {
+    if (!documentsRef.current.length || paperLoading || projectBusy) return
+    const suggestedName = documentsRef.current[0]?.name || 'Shadow-Project'
+    const entered = window.prompt('Save project copy as:', suggestedName)
+    if (entered === null) return
+    const name = entered.trim().replace(/\.shadowstudio$/i, '')
+    if (!name) {
+      window.alert('Enter a project file name.')
+      return
+    }
+    saveProject(name)
+  }
+
+  function exportCurrentPng() {
+    const canvas = canvasRef.current
+    const paper = documentsRef.current.find((item) => item.id === activeDocumentId)
+    if (!workspaceStarted || !canvas || !paper || paperLoading || projectBusy) return
+    const name = paper.name.replace(/[\\/:*?"<>|\x00-\x1f]/g, '-').slice(0, 60) || 'Paper'
+    setProjectBusy(true)
+    try {
+      canvas.toBlob((blob) => {
+        try {
+          if (!blob) throw new Error('Could not export the current paper.')
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = name + '.png'
+          document.body.appendChild(link)
+          link.click()
+          link.remove()
+          setTimeout(() => URL.revokeObjectURL(url), 30_000)
+          setProjectNotice('PNG download started for ' + paper.name + '.')
+        } catch (error) {
+          setProjectNotice(error.message || 'PNG export failed.')
+        } finally {
+          setProjectBusy(false)
+        }
+      }, 'image/png')
+    } catch (error) {
+      setProjectBusy(false)
+      setProjectNotice(error.message || 'PNG export failed.')
+    }
+  }
+
+  function closeAllPapers() {
+    if (paperLoading || projectBusy || recoveryBusy || !documentsRef.current.length) return
+    if (!window.confirm('Close all open papers? Save Project first if you need to keep unsaved changes.')) return
+    loadTokenRef.current += 1
+    clearTimeout(recoveryTimerRef.current)
+    documentsRef.current = []
+    setDocuments([])
+    setActiveDocumentId('')
+    setWorkspaceStarted(false)
+    setNewFileOpen(false)
+    canvasDocumentRef.current = ''
+    historyRef.current = []
+    redoRef.current = []
+    setProjectNotice('All papers closed.')
   }
 
   function openNewFile(presetId = 'basic') {
@@ -1040,6 +1101,7 @@ export default function ShadowStudioPage() {
         .ss-chrome{height:34px;display:flex;align-items:center;gap:2px;border-bottom:1px solid #454a50;background:#34373b;padding:0 7px}
         .ss-logo-btn{height:28px;width:28px;display:grid;place-items:center;border:0;background:transparent;cursor:pointer}
         .ss-logo{display:block;width:16px;height:16px;object-fit:contain}
+        .ss-chrome-right{display:flex;align-items:center;gap:6px;margin-left:auto;white-space:nowrap}.ss-chrome-right .ss-doc-info{margin-right:7px}.ss-chrome-right .ss-btn.icon{height:27px;width:29px}
         .ss-menu-btn{height:28px;border:0;background:transparent;color:#e6e7e9;padding:0 8px;font:inherit;font-size:11px;cursor:pointer}
         .ss-menu-btn:hover{background:#474b50}
         .ss-menu-btn:disabled{opacity:.45;cursor:default}
@@ -1073,7 +1135,7 @@ export default function ShadowStudioPage() {
         .ss-btn.primary{border-color:#4b9df4;background:#4b9df4;color:#08131f}
         .ss-btn.icon{width:32px;padding:0;display:grid;place-items:center}
         .ss-btn:disabled{opacity:.35;cursor:default}
-        .ss-tabs{position:sticky;top:82px;z-index:29;display:flex;align-items:stretch;min-height:36px;overflow-x:auto;border-bottom:1px solid #3d4248;background:#24272a;padding-left:8px}
+        .ss-tabs{position:sticky;top:34px;z-index:29;display:flex;align-items:stretch;min-height:36px;overflow-x:auto;border-bottom:1px solid #3d4248;background:#24272a;padding-left:8px}
         .ss-tab{min-width:118px;max-width:220px;height:36px;display:flex;align-items:center;border-right:1px solid #3d4248;background:#292c30;color:#b9c0c7}
         .ss-tab.active{background:#3a3f45;color:#fff}
         .ss-tab-main{min-width:0;flex:1;height:36px;display:flex;align-items:center;gap:8px;border:0;background:transparent;color:inherit;padding:0 4px 0 10px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
@@ -1083,7 +1145,7 @@ export default function ShadowStudioPage() {
         .ss-tab-close:hover{background:rgba(255,255,255,.08)}
         .ss-tab-add{height:36px;min-width:42px;border:0;background:transparent;color:#d2d6db;cursor:pointer}
         .ss-tab-count{margin-left:auto;display:flex;align-items:center;padding:0 12px;color:#8f969e;font-size:10px;font-weight:800;white-space:nowrap}
-        .ss-layout{display:grid;grid-template-columns:86px minmax(0,1fr) 236px;height:calc(100dvh - 118px);min-height:320px}
+        .ss-layout{display:grid;grid-template-columns:86px minmax(0,1fr) 236px;height:calc(100dvh - 70px);min-height:320px}
         .ss-tools{border-right:1px solid #3b4046;background:#292c30;padding:10px 7px}
         .ss-tool{width:100%;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:9px;background:transparent;color:#bbc1c8;font:inherit;cursor:pointer}
         .ss-tool i{font-size:17px}
@@ -1136,40 +1198,42 @@ export default function ShadowStudioPage() {
         .ss-dialog-info{display:flex;flex-wrap:wrap;gap:8px 16px;border-radius:7px;background:#2f3236;padding:10px;color:#aeb5bd;font-size:9px}
         .ss-dialog-error{border-radius:7px;background:#552f32;color:#ffc2c7;padding:10px;font-size:10px;font-weight:700}
         .ss-dialog-actions{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid #50555b}
+        @media (max-width:900px), (max-width:1100px) and (max-height:650px) and (orientation:landscape){
+          .shadow-studio .ss-chrome-right{display:flex;align-items:center;gap:4px;margin-left:auto}
+          .shadow-studio .ss-chrome-right .ss-doc-info{display:none}
+          .shadow-studio .ss-chrome-right .ss-btn.icon{flex:0 0 29px;width:29px;height:29px;min-height:29px}
+          .shadow-studio .ss-file-trigger{font-weight:800}
+        }
         @media(max-width:900px){.ss-layout{grid-template-columns:72px minmax(0,1fr)}.ss-side{display:none}.ss-bottom{left:72px;right:0}.ss-work{padding:18px 18px 68px}}
         @media(max-width:640px){.ss-home{grid-template-columns:1fr}.ss-home-side{border-right:0;border-bottom:1px solid #35393e}.ss-home-main{padding:26px 16px}.ss-top{top:34px;padding:0 8px}.ss-layout{display:block}.ss-tab{min-width:104px}.ss-tab-count{display:none}.ss-tools{position:sticky;top:118px;z-index:25;display:flex;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid #3b4046;padding:7px}.ss-tool{width:72px;min-width:72px;min-height:50px}.ss-work{padding:12px 12px 66px}.ss-bottom{left:0}.ss-controls{gap:8px}.ss-control label{display:none}.ss-dialog-body{grid-template-columns:1fr}.ss-field-wide{grid-column:auto}}
       `}</style>
 
       <StudioChrome onBack={exitStudio}>
-        <button
-          type="button"
-          className="ss-menu-btn"
-          disabled={paperLoading || projectBusy}
-          onClick={() => openNewFile('basic')}
-        >
-          New
-        </button>
-        <button type="button" className="ss-menu-btn" disabled={projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy} onClick={chooseProjectFile}>
-          Open
-        </button>
-        <button type="button" className="ss-menu-btn" disabled={!documents.length || paperLoading || projectBusy} onClick={saveProject}>
-          Save
-        </button>
-        <button
-          type="button"
-          className="ss-menu-btn"
-          disabled={!workspaceStarted}
-          onClick={undo}
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          className="ss-menu-btn"
-          disabled={!workspaceStarted}
-        >
-          View
-        </button>
+        <StudioFileMenu
+          hasPaper={documents.length > 0}
+          inWorkspace={workspaceStarted}
+          canNew={!paperLoading && !projectBusy && !recoveryBooting && !recoveryEntry && !recoveryBusy && !newFileOpen && documents.length < DOCUMENT_LIMIT}
+          canOpen={!projectBusy && !recoveryBooting && !recoveryEntry && !recoveryBusy && !newFileOpen}
+          busy={paperLoading || projectBusy || recoveryBusy || newFileOpen}
+          onNew={() => openNewFile('basic')}
+          onOpen={chooseProjectFile}
+          onSave={() => saveProject()}
+          onSaveAs={saveProjectAs}
+          onExport={exportCurrentPng}
+          onClose={() => closeDocument(activeDocumentId)}
+          onCloseAll={closeAllPapers}
+          onHome={goHome}
+          onExit={exitStudio}
+        />
+        <button type="button" className="ss-menu-btn" disabled title="Edit menu coming in a later stage">Edit</button>
+        <button type="button" className="ss-menu-btn" disabled title="View menu coming in a later stage">View</button>
+        {workspaceStarted ? (
+          <div className="ss-chrome-right">
+            <div className="ss-doc-info">{activeDocument?.width} × {activeDocument?.height}px · {activeDocument?.resolution} PPI</div>
+            <button type="button" className="ss-btn icon" onClick={undo} disabled={!canUndo || paperLoading || projectBusy} title="Undo" aria-label="Undo"><i className="fa-solid fa-rotate-left" /></button>
+            <button type="button" className="ss-btn icon" onClick={redo} disabled={!canRedo || paperLoading || projectBusy} title="Redo" aria-label="Redo"><i className="fa-solid fa-rotate-right" /></button>
+          </div>
+        ) : null}
       </StudioChrome>
 
       {!workspaceStarted ? (
@@ -1260,57 +1324,6 @@ export default function ShadowStudioPage() {
         </main>
       ) : (
         <>
-          <header className="ss-top">
-            <div className="ss-row">
-              <button type="button" className="ss-btn" onClick={goHome} disabled={paperLoading || projectBusy}>
-                Home
-              </button>
-              <button type="button" className="ss-btn" disabled={paperLoading || projectBusy} onClick={saveProject}>
-                Save Project
-              </button>
-              <button type="button" className="ss-btn" disabled={projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy} onClick={chooseProjectFile}>
-                Open Project
-              </button>
-
-              <div className="ss-doc-info">
-                {activeDocument?.width} × {activeDocument?.height}px
-                {' · '}
-                {activeDocument?.resolution} PPI
-              </div>
-            </div>
-
-            <div className="ss-row">
-              <button
-                type="button"
-                className="ss-btn icon"
-                onClick={undo}
-                disabled={!canUndo}
-                title={tx('shadowStudio.undo')}
-              >
-                <i className="fa-solid fa-rotate-left" />
-              </button>
-
-              <button
-                type="button"
-                className="ss-btn icon"
-                onClick={redo}
-                disabled={!canRedo}
-                title={tx('shadowStudio.redo')}
-              >
-                <i className="fa-solid fa-rotate-right" />
-              </button>
-
-              <button
-                type="button"
-                className="ss-btn primary"
-                onClick={() => openNewFile('basic')}
-              >
-                <i className="fa-solid fa-plus" />{' '}
-                {tx('shadowStudio.newPaper')}
-              </button>
-            </div>
-          </header>
-
           {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
               {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
 
