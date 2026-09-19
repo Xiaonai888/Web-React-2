@@ -57,6 +57,7 @@ export function StudioControlSidebar({
   paperLoading,
   projectBusy,
   onClear,
+  navigator,
   labels,
 }) {
   return (
@@ -90,6 +91,7 @@ export function StudioControlSidebar({
         </div>
         <p className="ss-view-help">View-only rotation and flip. Your saved drawing and export are not transformed.</p>
       </section>
+      {navigator}
       <section className="ss-section">
         <button
           type="button"
