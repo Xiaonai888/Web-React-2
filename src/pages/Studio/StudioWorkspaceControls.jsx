@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import StudioColorPanel from './StudioColorPanel'
 import StudioBrushSettings from './StudioBrushSettings'
 import StudioRightPanels from './StudioRightPanels'
+import StudioToolPalette from './StudioToolPalette'
 
 function Tool({ active, icon, label, onClick }) {
   return (
