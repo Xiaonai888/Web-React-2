@@ -1341,6 +1341,9 @@ export default function ShadowStudioPage() {
           </main>
 
           <StudioControlFooter
+            paper={activeDocument}
+            paperIndex={documents.findIndex((item) => item.id === activeDocumentId) + 1}
+            paperCount={documents.length}
             size={size}
             onSizeChange={setSize}
             opacity={opacity}
