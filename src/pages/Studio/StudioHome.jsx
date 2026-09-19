@@ -21,8 +21,12 @@ export default function StudioHome({
   onDiscardRecovery,
   labels,
 }) {
-  const canOpen = !projectBusy && !recoveryBooting && !recoveryEntry && !recoveryBusy
-  const canImport = canOpen && !paperLoading && !newFileOpen && !exportOpen && documents.length < documentLimit
+  const recoveryPending = recoveryBooting || Boolean(recoveryEntry) || recoveryBusy
+  const busy = projectBusy || paperLoading || newFileOpen || exportOpen
+  const canOpen = !recoveryPending && !busy
+  const canNew = canOpen && documents.length < documentLimit
+  const canImport = canNew
+  const canResume = canOpen && documents.length > 0
 
   return (
     <>
@@ -41,7 +45,8 @@ export default function StudioHome({
         .ss-home-main>p{margin:7px 0 0;color:#aab0b7;font-size:13px}
         .ss-preset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:28px}
         .ss-preset-card{min-height:112px;border:1px solid #3b4046;border-radius:10px;background:#292c30;color:#fff;padding:16px;text-align:left;cursor:pointer}
-        .ss-preset-card:hover{border-color:#5a93d6;background:#30343a}
+        .ss-preset-card:hover:not(:disabled){border-color:#5a93d6;background:#30343a}
+        .ss-home-primary:disabled,.ss-preset-card:disabled{opacity:.45;cursor:default}
         .ss-preset-card strong{display:block;font-size:13px}
         .ss-preset-card span{display:block;margin-top:8px;color:#9fa6ae;font-size:10px;line-height:1.5}
         .ss-recent{margin-top:36px}
@@ -50,7 +55,7 @@ export default function StudioHome({
       `}</style>
       <main className="ss-home">
         <aside className="ss-home-side">
-          <button type="button" className="ss-home-primary" onClick={() => onNewFile('basic')}>
+          <button type="button" className="ss-home-primary" disabled={!canNew} onClick={() => onNewFile('basic')}>
             + {labels.newPaper}
           </button>
           <button type="button" className="ss-home-link" disabled={!canOpen} onClick={onOpenProject}>
@@ -60,7 +65,7 @@ export default function StudioHome({
             Import Image as Paper
           </button>
           {documents.length > 0 ? (
-            <button type="button" className="ss-home-link" onClick={onResume}>
+            <button type="button" className="ss-home-link" disabled={!canResume} onClick={onResume}>
               Continue Workspace
             </button>
           ) : null}
@@ -77,6 +82,7 @@ export default function StudioHome({
                 type="button"
                 key={preset.id}
                 className="ss-preset-card"
+                disabled={!canNew}
                 onClick={() => onNewFile(preset.id)}
               >
                 <strong>{preset.label}</strong>
