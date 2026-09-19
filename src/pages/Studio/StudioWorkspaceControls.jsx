@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import StudioColorPanel from './StudioColorPanel'
 import StudioBrushSettings from './StudioBrushSettings'
+import StudioRightPanels from './StudioRightPanels'
 
 function Tool({ active, icon, label, onClick }) {
   return (
@@ -53,6 +54,7 @@ export function StudioToolRail({ tool, onToolChange, labels }) {
 }
 
 export function StudioControlSidebar({
+  <StudioRightPanels />
   color,
   onColorChange,
   brushStyle,
