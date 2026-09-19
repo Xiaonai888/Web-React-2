@@ -728,3 +728,7 @@
   }
 }
 
+@media (min-width: 1101px) and (min-height: 651px) {
+  .shadow-studio:has(.ss-layout) .ss-logo-btn { width: 32px; min-width: 32px; margin-right: 6px; }
+  .shadow-studio:has(.ss-layout) .ss-logo-btn::after { content: none; }
+}
