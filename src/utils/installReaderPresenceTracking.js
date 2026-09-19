@@ -9,7 +9,7 @@ const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
 const IDLE_AFTER_MS = 2 * 60 * 1000
 const MIN_SEND_GAP_MS = 15 * 1000
 const FAILURE_RETRY_MS = 30 * 1000
-const AUTH_RETRY_MS = 5 * 60 * 1000
+const MAX_FAILURE_RETRY_MS = 5 * 60 * 1000
 const SESSION_KEY = 'shadow_reader_presence_session_id'
 
 function getReaderToken() {
@@ -53,6 +53,8 @@ export function installReaderPresenceTracking() {
   let lastSentToken = ''
   let nextAttemptAt = 0
   let retryToken = ''
+  let blockedToken = ''
+  let failureCount = 0
   let sending = false
   let pendingHeartbeat = null
   let deferredTimer = null
@@ -82,8 +84,12 @@ export function installReaderPresenceTracking() {
 
     if (retryToken !== token) {
       nextAttemptAt = 0
+      failureCount = 0
+      blockedToken = ''
       retryToken = token
     }
+
+    if (blockedToken === token) return
 
     if (sending) {
       pendingHeartbeat = { forceInactive }
@@ -138,20 +144,32 @@ export function installReaderPresenceTracking() {
         lastSentAt = Date.now()
         lastPayloadKey = payloadKey
         lastSentToken = token
+        failureCount = 0
+        nextAttemptAt = 0
+      } else if (response.status === 401 || response.status === 403) {
+        blockedToken = token
         nextAttemptAt = 0
       } else {
-        nextAttemptAt = Date.now() + (response.status === 401 || response.status === 403
-          ? AUTH_RETRY_MS
-          : FAILURE_RETRY_MS)
+        failureCount = Math.min(5, failureCount + 1)
+        nextAttemptAt = Date.now() + Math.min(
+          MAX_FAILURE_RETRY_MS,
+          FAILURE_RETRY_MS * 2 ** (failureCount - 1)
+        )
       }
     } catch {
-      nextAttemptAt = Date.now() + FAILURE_RETRY_MS
+      failureCount = Math.min(5, failureCount + 1)
+      nextAttemptAt = Date.now() + Math.min(
+        MAX_FAILURE_RETRY_MS,
+        FAILURE_RETRY_MS * 2 ** (failureCount - 1)
+      )
     } finally {
       sending = false
       if (pendingHeartbeat) {
         const pending = pendingHeartbeat
         pendingHeartbeat = null
-        scheduleHeartbeat(Math.max(0, nextAttemptAt - Date.now()), pending)
+        if (blockedToken !== token) {
+          scheduleHeartbeat(Math.max(0, nextAttemptAt - Date.now()), pending)
+        }
       }
     }
   }
