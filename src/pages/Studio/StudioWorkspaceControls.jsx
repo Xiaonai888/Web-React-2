@@ -54,7 +54,6 @@ export function StudioToolRail({ tool, onToolChange, labels }) {
 }
 
 export function StudioControlSidebar({
-  <StudioRightPanels />
   color,
   onColorChange,
   brushStyle,
@@ -98,6 +97,7 @@ export function StudioControlSidebar({
   return (
     <aside className="ss-side" aria-label="Studio side panels">
       <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />
+      <StudioRightPanels />
       {brushDock ? createPortal(brushControls, brushDock) : brushControls}
       <section className="ss-section" aria-label="Canvas view">
         <h2 className="ss-label">Canvas View</h2>
