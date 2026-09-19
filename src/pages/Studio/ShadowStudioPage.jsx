@@ -16,6 +16,7 @@ import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
 import './ShadowStudioMobile.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
+import StudioOptionsBar from './StudioOptionsBar'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -1264,6 +1265,14 @@ export default function ShadowStudioPage() {
         <>
           {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
               {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
+          <StudioOptionsBar
+  tool={tool} paper={activeDocument} size={size} opacity={opacity}
+  showGrid={showGrid} busy={paperLoading || projectBusy || recoveryBusy || newFileOpen}
+  canUndo={canUndo} canRedo={canRedo} onSizeChange={setSize} onOpacityChange={setOpacity}
+  onToggleGrid={() => setShowGrid((value) => !value)} onUndo={undo} onRedo={redo}
+  onFit={fitCanvas} onNew={() => openNewFile('basic')}
+  onSave={() => saveProject()} onExport={openExportDialog}
+/>
 
           <StudioPaperTabs
             documents={documents}
