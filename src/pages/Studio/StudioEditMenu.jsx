@@ -1,0 +1,123 @@
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+
+export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRedo, onClear }) {
+  const [open, setOpen] = useState(false)
+  const [position, setPosition] = useState({ top: 34, left: 48 })
+  const triggerRef = useRef(null)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!enabled) setOpen(false)
+  }, [enabled])
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    function reposition() {
+      const rect = triggerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setPosition({
+        top: Math.min(rect.bottom + 3, Math.max(4, window.innerHeight - 48)),
+        left: Math.min(Math.max(4, rect.left), Math.max(4, window.innerWidth - 264)),
+      })
+    }
+
+    function dismiss(event) {
+      if (triggerRef.current?.contains(event.target) || menuRef.current?.contains(event.target)) return
+      setOpen(false)
+    }
+
+    function escape(event) {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setOpen(false)
+      triggerRef.current?.focus()
+    }
+
+    reposition()
+    document.addEventListener('pointerdown', dismiss)
+    document.addEventListener('keydown', escape)
+    window.addEventListener('resize', reposition)
+    window.addEventListener('scroll', reposition, true)
+    return () => {
+      document.removeEventListener('pointerdown', dismiss)
+      document.removeEventListener('keydown', escape)
+      window.removeEventListener('resize', reposition)
+      window.removeEventListener('scroll', reposition, true)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!enabled) return undefined
+
+    function shortcuts(event) {
+      if (event.defaultPrevented || event.altKey || !(event.ctrlKey || event.metaKey)) return
+      if (event.target?.closest?.('input,textarea,select,[contenteditable="true"],[role="dialog"]')) return
+      const key = event.key.toLowerCase()
+      if (key === 'z' && !event.shiftKey) {
+        event.preventDefault()
+        if (canUndo) onUndo()
+      } else if ((key === 'z' && event.shiftKey) || (key === 'y' && !event.shiftKey)) {
+        event.preventDefault()
+        if (canRedo) onRedo()
+      }
+    }
+
+    window.addEventListener('keydown', shortcuts)
+    return () => window.removeEventListener('keydown', shortcuts)
+  }, [enabled, canUndo, canRedo, onUndo, onRedo])
+
+  function invoke(action) {
+    setOpen(false)
+    action()
+  }
+
+  function clearPaper() {
+    setOpen(false)
+    if (window.confirm('Clear this paper? You can restore it with Undo.')) onClear()
+  }
+
+  return (
+    <>
+      <style>{`
+        .ss-edit-menu{position:fixed;z-index:100002;width:min(258px,calc(100vw - 8px));max-height:calc(100dvh - 48px);overflow-y:auto;padding:6px;border:1px solid #68727e;border-radius:6px;background:#292e34;color:#f1f4f7;box-shadow:0 16px 42px rgba(0,0,0,.55);font-family:inherit;overscroll-behavior:contain}
+        .ss-edit-menu-heading{padding:8px 9px 5px;color:#aebccc;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+        .ss-edit-menu-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:38px;border:0;border-radius:4px;background:transparent;color:inherit;padding:6px 9px;text-align:left;font:inherit;font-size:12px;cursor:pointer}
+        .ss-edit-menu-item:hover:not(:disabled),.ss-edit-menu-item:focus-visible{outline:none;background:#365679}
+        .ss-edit-menu-item:disabled{opacity:.35;cursor:default}
+        .ss-edit-menu-item small{color:#b5c0cc;font-size:10px;white-space:nowrap}
+        .ss-edit-menu-divider{height:1px;margin:5px 6px;background:#4b5560}
+        @media(max-width:600px){.ss-edit-menu-item{min-height:44px;font-size:13px}}
+      `}</style>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="ss-menu-btn"
+        disabled={!enabled}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        Edit
+      </button>
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          role="menu"
+          aria-label="Edit drawing"
+          className="ss-edit-menu"
+          style={{ top: position.top, left: position.left }}
+        >
+          <div className="ss-edit-menu-heading">History</div>
+          <button type="button" role="menuitem" className="ss-edit-menu-item" disabled={!canUndo} onClick={() => invoke(onUndo)}>Undo <small>Ctrl/⌘ Z</small></button>
+          <button type="button" role="menuitem" className="ss-edit-menu-item" disabled={!canRedo} onClick={() => invoke(onRedo)}>Redo <small>Ctrl/⌘ Shift Z</small></button>
+          <div className="ss-edit-menu-divider" role="separator" />
+          <div className="ss-edit-menu-heading">Current paper</div>
+          <button type="button" role="menuitem" className="ss-edit-menu-item" onClick={clearPaper}>Clear Paper <small>Undo available</small></button>
+        </div>,
+        document.body
+      )}
+    </>
+  )
+}
