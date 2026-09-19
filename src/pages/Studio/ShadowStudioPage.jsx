@@ -5,6 +5,7 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
 import StudioFileMenu from './StudioFileMenu'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
+import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
 import './ShadowStudioMobile.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
@@ -190,7 +191,7 @@ export default function ShadowStudioPage() {
   const spaceRef = useRef(false)
   const zoomAnchorRef = useRef(null)
   const drawingRef = useRef(false)
-  const lastRef = useRef(null)
+  const strokeRef = useRef(null)
   const historyRef = useRef([])
   const redoRef = useRef([])
   const documentsRef = useRef([])
@@ -957,35 +958,13 @@ export default function ShadowStudioPage() {
     }
   }
 
-  function setupStroke(ctx) {
-    const eraserColor =
-      activeDocument?.background || '#FFFFFF'
-
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    ctx.lineWidth = size
-    ctx.globalAlpha = opacity / 100
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.strokeStyle =
-      tool === 'eraser' ? eraserColor : color
-    ctx.fillStyle =
-      tool === 'eraser' ? eraserColor : color
-  }
-
   function start(event) {
-    if (paperLoading || projectBusy || panRef.current || spaceRef.current) return
-
-    if (
-      event.pointerType === 'mouse' &&
-      event.button !== 0
-    ) {
-      return
-    }
+    if (drawingRef.current || paperLoading || projectBusy || panRef.current || spaceRef.current) return
+    if (event.pointerType === 'mouse' && event.button !== 0) return
 
     const canvas = canvasRef.current
     const ctx = context()
     const currentPoint = point(event)
-
     if (!canvas || !ctx || !currentPoint) return
 
     if (tool === 'eyedropper') {
@@ -994,54 +973,47 @@ export default function ShadowStudioPage() {
       return
     }
 
+    const stroke = beginStudioStroke(ctx, currentPoint, event, {
+      size,
+      opacity,
+      color: tool === 'eraser' ? activeDocument?.background || '#FFFFFF' : color,
+    })
+    if (!stroke) return
     event.preventDefault()
-    canvas.setPointerCapture?.(event.pointerId)
+    strokeRef.current = stroke
     drawingRef.current = true
-    lastRef.current = currentPoint
-
-    ctx.save()
-    setupStroke(ctx)
-    ctx.beginPath()
-    ctx.arc(
-      currentPoint.x,
-      currentPoint.y,
-      Math.max(size / 2, 0.5),
-      0,
-      Math.PI * 2
-    )
-    ctx.fill()
-    ctx.restore()
+    canvas.setPointerCapture?.(event.pointerId)
   }
 
   function draw(event) {
-    if (!drawingRef.current) return
-
+    const stroke = strokeRef.current
+    if (!drawingRef.current || !stroke || stroke.pointerId !== event.pointerId) return
     const ctx = context()
-    const currentPoint = point(event)
-    const lastPoint = lastRef.current
-
-    if (!ctx || !currentPoint || !lastPoint) return
+    if (!ctx) return
 
     event.preventDefault()
-    ctx.save()
-    setupStroke(ctx)
-    ctx.beginPath()
-    ctx.moveTo(lastPoint.x, lastPoint.y)
-    ctx.lineTo(currentPoint.x, currentPoint.y)
-    ctx.stroke()
-    ctx.restore()
-    lastRef.current = currentPoint
+    const coalesced = typeof event.getCoalescedEvents === 'function'
+      ? event.getCoalescedEvents()
+      : []
+    for (const sample of [...coalesced, event]) {
+      if (sample.pointerId !== stroke.pointerId) continue
+      const currentPoint = point(sample)
+      if (currentPoint) extendStudioStroke(ctx, stroke, currentPoint, sample)
+    }
   }
 
   function finish(event) {
-    if (!drawingRef.current) return
-
+    const stroke = strokeRef.current
+    if (!drawingRef.current || !stroke || stroke.pointerId !== event.pointerId) return
     event.preventDefault()
+    if (event.type !== 'pointercancel') {
+      const currentPoint = point(event)
+      if (currentPoint) extendStudioStroke(context(), stroke, currentPoint, event)
+    }
     drawingRef.current = false
-    lastRef.current = null
+    strokeRef.current = null
 
     const canvas = canvasRef.current
-
     if (canvas?.hasPointerCapture?.(event.pointerId)) {
       canvas.releasePointerCapture(event.pointerId)
     }
