@@ -58,12 +58,19 @@ const UNITS = [
   { id: 'pt', label: 'Points' },
   { id: 'pc', label: 'Picas' },
 ]
-const VALID_UNITS = new Set(UNITS.map((unit) => unit.id))
-const validSize = (width, height, ppi) => Number.isInteger(width) && Number.isInteger(height) && Number.isInteger(ppi) && width >= 64 && height >= 64 && width <= MAX_SIDE && height <= MAX_SIDE && width * height <= MAX_AREA && ppi >= 72 && ppi <= 600
+const VALID_UNITS = new Set(UNITS.map((item) => item.id))
+const PHYSICAL = {
+  a0: [841, 1189], a1: [594, 841], a2: [420, 594], a3: [297, 420],
+  a4: [210, 297], a5: [148, 210], a6: [105, 148], b4: [250, 353], b5: [176, 250],
+  'us-letter': [8.5, 11], 'us-legal': [8.5, 14], 'us-tabloid': [11, 17], 'us-half': [5.5, 8.5],
+  'photo-4x6': [4, 6], 'photo-5x7': [5, 7], 'photo-8x10': [8, 10],
+}
 const factor = (unit, ppi) => unit === 'in' ? ppi : unit === 'cm' ? ppi / 2.54 : unit === 'mm' ? ppi / 25.4 : unit === 'pt' ? ppi / 72 : unit === 'pc' ? ppi / 6 : 1
-const pixels = (value, unit, ppi) => Math.round(Number(value) * factor(unit, ppi))
-const format = (value, unit, ppi) => unit === 'px' ? String(value) : String(Number((value / factor(unit, ppi)).toFixed(unit === 'in' || unit === 'pc' ? 3 : 2)))
-const groupUnit = (group) => group === 'international' ? 'mm' : group === 'us' || group === 'photo' ? 'in' : 'px'
+const toPixels = (value, unit, ppi) => Math.round(Number(value) * factor(unit, ppi))
+const toUnit = (value, unit, ppi) => unit === 'px' ? String(value) : String(Number((value / factor(unit, ppi)).toFixed(unit === 'in' || unit === 'pc' ? 4 : 3)))
+const presetUnit = (group) => group === 'international' ? 'mm' : group === 'us' || group === 'photo' ? 'in' : 'px'
+const presetLabel = (item) => PHYSICAL[item.id] ? item.label.replace(/\s*[·•]\s*\d+\s*PPI/i, '').trim() : item.label
+const validSize = (w, h, ppi) => Number.isInteger(w) && Number.isInteger(h) && Number.isInteger(ppi) && w >= 64 && h >= 64 && w <= MAX_SIDE && h <= MAX_SIDE && w * h <= MAX_AREA && ppi >= 72 && ppi <= 600
 
 function readSaved() {
   try {
@@ -71,13 +78,12 @@ function readSaved() {
     if (!Array.isArray(value)) return []
     return value.filter((item) => item && /^saved-[a-z0-9-]{1,28}$/.test(item.id) && typeof item.label === 'string' && item.label.trim() && validSize(item.width, item.height, item.resolution))
       .slice(0, MAX_SAVED).map((item) => ({
-        id: item.id,
-        label: item.label.trim().slice(0, 48),
-        width: item.width,
-        height: item.height,
-        resolution: item.resolution,
-        background: isHexColor(item.background) ? item.background.toUpperCase() : '#FFFFFF',
+        id: item.id, label: item.label.trim().slice(0, 48), width: item.width, height: item.height,
+        resolution: item.resolution, background: isHexColor(item.background) ? item.background : '#FFFFFF',
         unit: VALID_UNITS.has(item.unit) ? item.unit : 'px',
+        heightUnit: VALID_UNITS.has(item.heightUnit) ? item.heightUnit : VALID_UNITS.has(item.unit) ? item.unit : 'px',
+        physicalWidth: Number.isFinite(item.physicalWidth) && item.physicalWidth > 0 ? item.physicalWidth : null,
+        physicalHeight: Number.isFinite(item.physicalHeight) && item.physicalHeight > 0 ? item.physicalHeight : null,
       }))
   } catch {
     return []
@@ -94,51 +100,55 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
   const [name, setName] = useState(defaultName || 'Untitled-1')
   const [groupId, setGroupId] = useState(findGroup(initial.id))
   const [presetId, setPresetId] = useState(initial.id)
-  const [unit, setUnit] = useState('px')
+  const [widthUnit, setWidthUnit] = useState('px')
+  const [heightUnit, setHeightUnit] = useState('px')
   const [widthInput, setWidthInput] = useState(String(initial.width))
   const [heightInput, setHeightInput] = useState(String(initial.height))
   const [resolutionInput, setResolutionInput] = useState(String(initial.resolution))
   const [backgroundType, setBackgroundType] = useState('white')
   const [customBackground, setCustomBackground] = useState('#FFFFFF')
   const [savedName, setSavedName] = useState('')
+  const [presetNaming, setPresetNaming] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const ppi = Number(resolutionInput)
-  const width = pixels(widthInput, unit, ppi)
-  const height = pixels(heightInput, unit, ppi)
+  const width = toPixels(widthInput, widthUnit, ppi)
+  const height = toPixels(heightInput, heightUnit, ppi)
   const background = backgroundType === 'black' ? '#000000' : backgroundType === 'gray' ? '#E5E7EB' : backgroundType === 'custom' ? customBackground : '#FFFFFF'
 
   useEffect(() => {
     if (!open) return
     const next = BUILTIN_PRESETS.find((item) => item.id === initialPreset) || STUDIO_PRESETS[0]
-    const nextGroup = findGroup(next.id)
-    const nextUnit = groupUnit(nextGroup)
+    const group = findGroup(next.id)
+    const unit = presetUnit(group)
+    const physical = PHYSICAL[next.id]
     setSaved(readSaved())
     setName(defaultName || 'Untitled-1')
-    setGroupId(nextGroup)
+    setGroupId(group)
     setPresetId(next.id)
-    setUnit(nextUnit)
-    setWidthInput(format(next.width, nextUnit, next.resolution))
-    setHeightInput(format(next.height, nextUnit, next.resolution))
+    setWidthUnit(unit)
+    setHeightUnit(unit)
+    setWidthInput(physical ? String(physical[0]) : toUnit(next.width, unit, next.resolution))
+    setHeightInput(physical ? String(physical[1]) : toUnit(next.height, unit, next.resolution))
     setResolutionInput(String(next.resolution))
     setBackgroundType('white')
     setCustomBackground('#FFFFFF')
     setSavedName('')
+    setPresetNaming(false)
     setError('')
     setNotice('')
   }, [open, defaultName, initialPreset])
 
   const groups = saved.length ? [...PAPER_GROUPS, { id: 'saved', label: `My Presets (${saved.length})`, presets: saved }] : PAPER_GROUPS
-  const currentGroup = groups.find((group) => group.id === groupId) || groups[0]
-  const choices = presetId === 'custom' && !currentGroup.presets.some((item) => item.id === 'custom')
-    ? [...currentGroup.presets, { id: 'custom', label: 'Custom Size' }] : currentGroup.presets
+  const currentGroup = groups.find((item) => item.id === groupId) || groups[0]
+  const choices = currentGroup.presets.some((item) => item.id === presetId) ? currentGroup.presets : [...currentGroup.presets, { id: 'custom', label: 'Custom' }]
   const status = useMemo(() => {
-    if (!Number.isInteger(ppi) || ppi < 72 || ppi > 600) return 'Resolution must be a whole number between 72 and 600 PPI.'
-    if (!widthInput.trim() || !heightInput.trim() || !Number.isFinite(Number(widthInput)) || !Number.isFinite(Number(heightInput)) || Number(widthInput) <= 0 || Number(heightInput) <= 0) return 'Enter a valid width and height.'
-    if (!validSize(width, height, ppi)) return 'The paper must be 64–4096 px per side and no more than 12 million pixels. Choose smaller dimensions or resolution.'
+    if (!Number.isInteger(ppi) || ppi < 72 || ppi > 600) return 'Resolution must be a whole number between 72 and 600 Pixels/Inch.'
+    if (!widthInput.trim() || !heightInput.trim() || !Number.isFinite(Number(widthInput)) || !Number.isFinite(Number(heightInput)) || Number(widthInput) <= 0 || Number(heightInput) <= 0) return 'Enter valid width and height.'
+    if (!validSize(width, height, ppi)) return 'Canvas limit: 64–4096 px per side, no more than 12 million pixels. Reduce size or resolution.'
     return ''
   }, [width, height, ppi, widthInput, heightInput])
-  const rawMemory = useMemo(() => Number.isFinite(width * height) ? (width * height * 4 / 1048576).toFixed(1) : '0.0', [width, height])
+  const imageSize = Number.isFinite(width * height) ? (width * height * 4 / 1048576).toFixed(1) : '0.0'
 
   function markCustom() {
     setPresetId('custom')
@@ -147,19 +157,22 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
   }
 
   function applyBackground(color) {
-    const next = isHexColor(color) ? color.toUpperCase() : '#FFFFFF'
-    setCustomBackground(next)
-    setBackgroundType(next === '#FFFFFF' ? 'white' : next === '#000000' ? 'black' : next === '#E5E7EB' ? 'gray' : 'custom')
+    const safe = isHexColor(color) ? color.toUpperCase() : '#FFFFFF'
+    setCustomBackground(safe)
+    setBackgroundType(safe === '#FFFFFF' ? 'white' : safe === '#000000' ? 'black' : safe === '#E5E7EB' ? 'gray' : 'custom')
   }
 
   function applyPreset(next, targetGroup = groupId) {
-    const nextUnit = VALID_UNITS.has(next.unit) ? next.unit : groupUnit(targetGroup)
+    const unit = VALID_UNITS.has(next.unit) ? next.unit : presetUnit(targetGroup)
+    const hu = VALID_UNITS.has(next.heightUnit) ? next.heightUnit : unit
+    const physical = PHYSICAL[next.id]
     setGroupId(targetGroup)
     setPresetId(next.id)
-    setUnit(nextUnit)
+    setWidthUnit(unit)
+    setHeightUnit(hu)
     setResolutionInput(String(next.resolution))
-    setWidthInput(format(next.width, nextUnit, next.resolution))
-    setHeightInput(format(next.height, nextUnit, next.resolution))
+    setWidthInput(physical && unit === presetUnit(targetGroup) ? String(physical[0]) : next.physicalWidth ? String(next.physicalWidth) : toUnit(next.width, unit, next.resolution))
+    setHeightInput(physical && hu === presetUnit(targetGroup) ? String(physical[1]) : next.physicalHeight ? String(next.physicalHeight) : toUnit(next.height, hu, next.resolution))
     applyBackground(next.background)
     setError('')
     setNotice('')
@@ -169,47 +182,49 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
     const group = groups.find((item) => item.id === id)
     if (!group) return
     if (group.id === 'custom') {
-      setGroupId(group.id)
+      setGroupId('custom')
       markCustom()
-      return
-    }
-    if (group.presets[0]) applyPreset(group.presets[0], group.id)
+    } else if (group.presets[0]) applyPreset(group.presets[0], group.id)
   }
 
-  function setDimension(field, text) {
-    if (field === 'width') setWidthInput(text)
-    else setHeightInput(text)
+  function changeUnit(nextUnit, dimension) {
+    if (!VALID_UNITS.has(nextUnit)) return
+    const current = dimension === 'width' ? widthUnit : heightUnit
+    if (current === nextUnit) return
+    const currentPixels = dimension === 'width' ? width : height
+    const updateInput = dimension === 'width' ? setWidthInput : setHeightInput
+    updateInput(Number.isFinite(currentPixels) && currentPixels > 0 && Number.isFinite(ppi) && ppi > 0 ? toUnit(currentPixels, nextUnit, ppi) : '')
+    if (dimension === 'width') setWidthUnit(nextUnit)
+    else setHeightUnit(nextUnit)
     markCustom()
   }
 
-  function setMeasurement(nextUnit) {
-    if (!VALID_UNITS.has(nextUnit) || nextUnit === unit) return
-    if (!status) {
-      setWidthInput(format(width, nextUnit, ppi))
-      setHeightInput(format(height, nextUnit, ppi))
-    } else {
-      setWidthInput('')
-      setHeightInput('')
-    }
-    setUnit(nextUnit)
-    setError('')
-  }
-
   function orient(direction) {
-    if (!status && ((direction === 'portrait' && width > height) || (direction === 'landscape' && height > width))) {
+    if ((direction === 'portrait' && width > height) || (direction === 'landscape' && height > width)) {
       setWidthInput(heightInput)
       setHeightInput(widthInput)
+      setWidthUnit(heightUnit)
+      setHeightUnit(widthUnit)
       markCustom()
     }
   }
 
   function savePreset() {
+    if (!presetNaming) {
+      setPresetNaming(true)
+      setSavedName(name.trim().slice(0, 48))
+      return
+    }
     const title = savedName.trim().slice(0, 48)
-    if (!title) return setError('Enter a preset name first.')
+    if (!title) return setError('Enter a preset name.')
     if (status) return setError(status)
-    if (saved.length >= MAX_SAVED) return setError(`My Presets is full (${MAX_SAVED}). Delete one to save another.`)
+    if (saved.length >= MAX_SAVED) return setError('My Presets is full. Delete one before saving another.')
     if (saved.some((item) => item.label.toLowerCase() === title.toLowerCase())) return setError('A preset with this name already exists.')
-    const item = { id: `saved-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, label: title, width, height, resolution: ppi, background, unit }
+    const item = {
+      id: `saved-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      label: title, width, height, resolution: ppi, background, unit: widthUnit, heightUnit,
+      physicalWidth: Number(widthInput), physicalHeight: Number(heightInput),
+    }
     const next = [...saved, item]
     try {
       window.localStorage.setItem(SAVED_KEY, JSON.stringify(next))
@@ -217,10 +232,11 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
       setGroupId('saved')
       setPresetId(item.id)
       setSavedName('')
+      setPresetNaming(false)
       setError('')
-      setNotice(`Saved “${title}” in this browser.`)
+      setNotice(`Preset “${title}” saved on this browser.`)
     } catch {
-      setError('Could not save the preset in this browser. Your current paper settings are unchanged.')
+      setError('Could not save this preset in the browser.')
     }
   }
 
@@ -232,14 +248,11 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
       window.localStorage.setItem(SAVED_KEY, JSON.stringify(next))
       setSaved(next)
       if (next.length) applyPreset(next[0], 'saved')
-      else {
-        setGroupId('custom')
-        setPresetId('custom')
-      }
-      setNotice(`Deleted “${selected.label}”.`)
+      else { setGroupId('custom'); markCustom() }
+      setNotice(`Preset “${selected.label}” deleted.`)
       setError('')
     } catch {
-      setError('Could not delete this preset from this browser.')
+      setError('Could not delete this preset from the browser.')
     }
   }
 
@@ -257,83 +270,80 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
   return (
     <div className="ss-dialog-backdrop ss-nd-backdrop" role="presentation" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <style>{`
-        .shadow-studio .ss-nd-backdrop{padding:12px;background:rgba(8,11,15,.76)}
-        .shadow-studio .ss-paper-dialog{box-sizing:border-box;width:min(762px,100%);max-height:min(700px,calc(100dvh - 24px));display:flex;flex-direction:column;overflow:hidden;border:1px solid #555c64;border-radius:7px;background:#35383c;color:#edf1f5;box-shadow:0 26px 75px #000a;font-size:12px}
-        .shadow-studio .ss-nd-head{display:flex;align-items:center;justify-content:space-between;min-height:43px;border-bottom:1px solid #4d545c;background:#3b3e42;padding:0 12px 0 16px}
-        .shadow-studio .ss-nd-head h2{margin:0;font-size:15px;font-weight:700}
-        .shadow-studio .ss-nd-close{width:26px;height:26px;border:0;border-radius:4px;background:transparent;color:#f1f3f6;font-size:19px;cursor:pointer}
-        .shadow-studio .ss-nd-close:hover{background:#555e68}
-        .shadow-studio .ss-nd-content{display:grid;grid-template-columns:minmax(0,1fr) 142px;min-height:0;flex:1;overflow:hidden}
-        .shadow-studio .ss-nd-fields{display:grid;align-content:start;gap:11px;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 20px 20px}
-        .shadow-studio .ss-nd-row{display:grid;grid-template-columns:132px minmax(0,1fr);align-items:center;gap:10px;min-width:0}
-        .shadow-studio .ss-nd-label{font-size:11px;font-weight:600;color:#d8e0e7;text-align:right}
-        .shadow-studio .ss-nd-control{min-width:0;width:100%;height:32px;box-sizing:border-box;border:1px solid #636b74;border-radius:4px;background:#2e3236;color:#fff;padding:0 9px;font:inherit;font-size:12px;outline:none}
-        .shadow-studio .ss-nd-control:focus-visible{border-color:#86bfff;box-shadow:0 0 0 2px #4799f230}
-        .shadow-studio .ss-nd-control:disabled{color:#aab4be;opacity:.75}
-        .shadow-studio .ss-nd-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px;min-width:0}
-        .shadow-studio .ss-nd-three{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:7px;min-width:0}
-        .shadow-studio .ss-nd-orient{display:flex;gap:6px;min-width:0}
-        .shadow-studio .ss-nd-orient button{flex:1;min-height:30px;border:1px solid #636b74;border-radius:4px;background:#31363b;color:#e6edf3;font:inherit;font-size:11px;cursor:pointer}
-        .shadow-studio .ss-nd-orient button[aria-pressed=true]{border-color:#83c2ff;background:#324c64;color:#fff}
-        .shadow-studio .ss-nd-orient button:disabled{opacity:.45;cursor:default}
-        .shadow-studio .ss-nd-background{display:grid;grid-template-columns:minmax(0,1fr) 34px 34px;gap:7px;align-items:center;min-width:0}
-        .shadow-studio .ss-nd-background input[type=color]{width:34px;height:32px;padding:2px;cursor:pointer}
-        .shadow-studio .ss-nd-swatch{display:block;width:32px;height:30px;box-sizing:border-box;border:1px solid #89929e;border-radius:4px}
-        .shadow-studio .ss-nd-info{margin:3px 0 0;border:1px solid #50565e;border-radius:4px;background:#2d3034;color:#cbd6e1;padding:9px 11px;font-size:10px;line-height:1.7}
-        .shadow-studio .ss-nd-advanced{margin-top:2px;border-top:1px solid #50565e;padding-top:9px}
-        .shadow-studio .ss-nd-advanced summary{cursor:pointer;font-size:11px;font-weight:700;color:#d4e0eb}
-        .shadow-studio .ss-nd-advanced-body{display:grid;gap:10px;margin-top:11px}
-        .shadow-studio .ss-nd-hint{margin:0;color:#adb9c5;font-size:10px;line-height:1.55}
-        .shadow-studio .ss-nd-actions{display:flex;flex-direction:column;align-items:stretch;gap:9px;min-width:0;border-left:1px solid #4f565e;background:#34373b;padding:18px 12px}
-        .shadow-studio .ss-nd-actions button{min-height:34px;border:1px solid #77818b;border-radius:18px;background:#41464b;color:#f6f8fa;padding:3px 8px;font:inherit;font-size:11px;cursor:pointer}
-        .shadow-studio .ss-nd-actions button.primary{border-color:#8dc7ff;background:#4b9df4;color:#0c2032;font-weight:800}
-        .shadow-studio .ss-nd-actions button:disabled{opacity:.4;cursor:default}
-        .shadow-studio .ss-nd-actions button:hover:not(:disabled){filter:brightness(1.13)}
-        .shadow-studio .ss-nd-preset-save{display:grid;gap:5px;margin-top:15px;border-top:1px solid #4e555d;padding-top:12px}
-        .shadow-studio .ss-nd-preset-save label{font-size:10px;color:#c8d4e0}
-        .shadow-studio .ss-nd-preset-save input{height:31px;box-sizing:border-box;min-width:0;width:100%;border:1px solid #606a74;border-radius:4px;background:#292d32;color:#fff;padding:0 6px;font:inherit;font-size:11px}
-        .shadow-studio .ss-nd-status{grid-column:1/-1;margin:0;border-radius:4px;background:#463438;color:#ffccd1;padding:8px;font-size:11px;line-height:1.45}
-        .shadow-studio .ss-nd-success{grid-column:1/-1;margin:0;border-radius:4px;background:#294436;color:#b9f4d2;padding:8px;font-size:10px}
-        .shadow-studio .ss-nd-mobile-actions{display:none}
+        .shadow-studio .ss-nd-backdrop{padding:8px;background:rgba(0,0,0,.68)}
+        .shadow-studio .ss-paper-dialog{box-sizing:border-box;width:min(568px,100%);max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden;border:1px solid #858585;border-radius:2px;background:#535353;color:#f1f1f1;box-shadow:0 20px 55px #0009;font:12px Arial,Helvetica,sans-serif}
+        .shadow-studio .ss-nd-head{display:flex;align-items:center;justify-content:space-between;height:29px;flex:none;border-bottom:1px solid #aaa;background:#f9f9f9;color:#222;padding:0 10px}
+        .shadow-studio .ss-nd-head h2{margin:0;font-size:12px;font-weight:400}
+        .shadow-studio .ss-nd-close{width:23px;height:23px;border:0;border-radius:0;background:transparent;color:#222;font:18px Arial;cursor:pointer}
+        .shadow-studio .ss-nd-close:hover{background:#dedede}
+        .shadow-studio .ss-nd-content{display:grid;grid-template-columns:minmax(0,1fr) 127px;min-height:0;flex:1;overflow:hidden}
+        .shadow-studio .ss-nd-fields{display:grid;align-content:start;gap:6px;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:11px 12px 12px 13px}
+        .shadow-studio .ss-nd-row{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center;gap:7px;min-width:0}
+        .shadow-studio .ss-nd-label{color:#f1f1f1;font-size:11px;font-weight:400;text-align:right}
+        .shadow-studio .ss-nd-control{box-sizing:border-box;min-width:0;width:100%;height:25px;border:1px solid #747474;border-radius:1px;background:#454545;color:#fff;padding:0 5px;font:11px Arial,Helvetica,sans-serif;outline:none}
+        .shadow-studio .ss-nd-control:focus-visible{border-color:#7badf7;box-shadow:0 0 0 1px #7badf7}
+        .shadow-studio .ss-nd-control:disabled{color:#d1d1d1;background:#595959;opacity:.85}
+        .shadow-studio .ss-nd-three{display:grid;grid-template-columns:minmax(0,1fr) 118px;gap:5px;min-width:0}
+        .shadow-studio .ss-nd-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;min-width:0}
+        .shadow-studio .ss-nd-line{display:flex;align-items:center;gap:6px;min-width:0}
+        .shadow-studio .ss-nd-line>.ss-nd-control{flex:1}
+        .shadow-studio .ss-nd-orient{display:flex;gap:3px;flex:none}
+        .shadow-studio .ss-nd-orient button{width:23px;height:24px;border:1px solid #737373;border-radius:1px;background:#4a4a4a;color:#e9e9e9;font:13px Arial;cursor:pointer}
+        .shadow-studio .ss-nd-orient button[aria-pressed=true]{border-color:#84b8f4;background:#38669c;color:#fff}
+        .shadow-studio .ss-nd-background{display:grid;grid-template-columns:minmax(0,1fr) 26px 26px;gap:5px;align-items:center;min-width:0}
+        .shadow-studio .ss-nd-background input[type=color]{width:26px;height:25px;border:1px solid #888;padding:1px;cursor:pointer}
+        .shadow-studio .ss-nd-swatch{display:block;width:25px;height:24px;border:1px solid #aaa;box-sizing:border-box}
+        .shadow-studio .ss-nd-info{margin:2px 0 0;border:1px solid #757575;border-radius:2px;padding:6px 8px;color:#e1e1e1;font-size:10px;line-height:1.5}
+        .shadow-studio .ss-nd-advanced{margin-top:1px;border:1px solid #7a7a7a;padding:5px 8px 7px}
+        .shadow-studio .ss-nd-advanced summary{cursor:pointer;color:#f2f2f2;font-size:11px}
+        .shadow-studio .ss-nd-advanced-body{display:grid;gap:6px;margin-top:7px}
+        .shadow-studio .ss-nd-hint{margin:2px 0;color:#c8c8c8;font-size:10px;line-height:1.4}
+        .shadow-studio .ss-nd-actions{display:flex;flex-direction:column;gap:7px;min-width:0;border-left:1px solid #727272;padding:11px 9px}
+        .shadow-studio .ss-nd-actions button{min-height:26px;border:1px solid #999;border-radius:16px;background:#565656;color:#fff;font:11px Arial,Helvetica,sans-serif;cursor:pointer}
+        .shadow-studio .ss-nd-actions button.primary{background:#4b9df4;border-color:#8ebdff;color:#102033;font-weight:700}
+        .shadow-studio .ss-nd-actions button:disabled{color:#aaa;border-color:#6e6e6e;opacity:.62;cursor:default}
+        .shadow-studio .ss-nd-actions button:not(:disabled):hover{filter:brightness(1.13)}
+        .shadow-studio .ss-nd-preset-save{display:grid;gap:4px;margin-top:5px;border-top:1px solid #787878;padding-top:6px}
+        .shadow-studio .ss-nd-preset-save input{box-sizing:border-box;width:100%;min-width:0;height:25px;border:1px solid #777;background:#404040;color:#fff;padding:0 5px;font:11px Arial}
+        .shadow-studio .ss-nd-image-size{margin-top:auto;color:#eaeaea;text-align:center;font-size:11px;line-height:1.65}
+        .shadow-studio .ss-nd-status{margin:2px 0;background:#683b3b;color:#ffdbdb;padding:6px;border-radius:2px;font-size:10px;line-height:1.45}
+        .shadow-studio .ss-nd-success{margin:0;background:#356149;color:#e7ffec;padding:6px;border-radius:2px;font-size:10px}
         @media(max-width:620px){
-          .shadow-studio .ss-paper-dialog{max-height:calc(100dvh - 12px);width:100%;border-radius:6px}
-          .shadow-studio .ss-nd-content{display:flex;flex-direction:column;overflow:auto}
-          .shadow-studio .ss-nd-fields{overflow:visible;flex:0 0 auto;padding:14px 12px;gap:12px}
-          .shadow-studio .ss-nd-row{grid-template-columns:1fr;gap:5px}
-          .shadow-studio .ss-nd-label{text-align:left}
-          .shadow-studio .ss-nd-three{grid-template-columns:minmax(0,1fr) 115px}
-          .shadow-studio .ss-nd-actions{flex:0 0 auto;border-left:0;border-top:1px solid #4e555d;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px 15px}
-          .shadow-studio .ss-nd-actions .ss-nd-preset-save{grid-column:1/-1;grid-row:1;margin:0;border:0;padding:0}
-          .shadow-studio .ss-nd-actions .ss-nd-preset-save>div{display:flex;gap:7px}
-          .shadow-studio .ss-nd-actions .ss-nd-preset-save input{flex:1}
+          .shadow-studio .ss-paper-dialog{width:100%;max-height:calc(100dvh - 10px)}
+          .shadow-studio .ss-nd-content{display:flex;flex-direction:column;overflow-y:auto}
+          .shadow-studio .ss-nd-fields{overflow:visible;flex:0 0 auto;padding:11px 9px;gap:7px}
+          .shadow-studio .ss-nd-row{grid-template-columns:88px minmax(0,1fr);gap:6px}
+          .shadow-studio .ss-nd-three{grid-template-columns:minmax(0,1fr) 102px}
+          .shadow-studio .ss-nd-actions{border-top:1px solid #777;border-left:0;display:grid;grid-template-columns:1fr 1fr;padding:9px}
+          .shadow-studio .ss-nd-image-size{grid-column:1/-1;margin-top:0}
+          .shadow-studio .ss-nd-preset-save{grid-column:1/-1}
         }
-        @media(max-width:370px){.shadow-studio .ss-nd-two{grid-template-columns:1fr}.shadow-studio .ss-nd-background{grid-template-columns:minmax(0,1fr) 32px 32px}}
+        @media(max-width:370px){.shadow-studio .ss-nd-three{grid-template-columns:minmax(0,1fr) 90px}.shadow-studio .ss-nd-row{grid-template-columns:76px minmax(0,1fr)}}
       `}</style>
       <form className="ss-new-dialog ss-paper-dialog" onSubmit={submit} role="dialog" aria-modal="true" aria-label="New File" onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onClose() } }}>
-        <div className="ss-nd-head"><h2>New File</h2><button type="button" className="ss-nd-close" onClick={onClose} aria-label="Close new file dialog">×</button></div>
+        <div className="ss-nd-head"><h2>New</h2><button type="button" className="ss-nd-close" onClick={onClose} aria-label="Close new file dialog">×</button></div>
         <div className="ss-nd-content">
           <div className="ss-nd-fields">
-            <label className="ss-nd-row"><span className="ss-nd-label">Name</span><input className="ss-nd-control" maxLength={80} value={name} autoFocus onChange={(event) => { setName(event.target.value); setError('') }} /></label>
-            <label className="ss-nd-row"><span className="ss-nd-label">Document Type</span><select className="ss-nd-control" value={groupId} onChange={(event) => selectGroup(event.target.value)}>{groups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}</select></label>
-            <label className="ss-nd-row"><span className="ss-nd-label">Size</span><select className="ss-nd-control" value={presetId} onChange={(event) => { const next = choices.find((item) => item.id === event.target.value); if (next?.id === 'custom') markCustom(); else if (next) applyPreset(next) }}>{choices.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-            <div className="ss-nd-row"><span className="ss-nd-label">Orientation</span><div className="ss-nd-orient"><button type="button" aria-pressed={height >= width} disabled={Boolean(status)} onClick={() => orient('portrait')}>▯ Portrait</button><button type="button" aria-pressed={width >= height} disabled={Boolean(status)} onClick={() => orient('landscape')}>▭ Landscape</button></div></div>
-            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-width">Width</label><div className="ss-nd-three"><input id="ss-nd-width" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={widthInput} onChange={(event) => setDimension('width', event.target.value)} /><select className="ss-nd-control" aria-label="Measurement units" value={unit} onChange={(event) => setMeasurement(event.target.value)}>{UNITS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div></div>
-            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-height">Height</label><input id="ss-nd-height" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={heightInput} onChange={(event) => setDimension('height', event.target.value)} /></div>
-            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-ppi">Resolution</label><div className="ss-nd-three"><input id="ss-nd-ppi" className="ss-nd-control" type="number" min="72" max="600" step="1" value={resolutionInput} onChange={(event) => { setResolutionInput(event.target.value); markCustom() }} /><input className="ss-nd-control" value="Pixels / Inch" aria-label="Resolution unit" disabled readOnly /></div></div>
-            <div className="ss-nd-row"><span className="ss-nd-label">Color Mode</span><div className="ss-nd-two"><input className="ss-nd-control" value="RGB Color" readOnly disabled aria-label="Color mode RGB only" /><input className="ss-nd-control" value="8 bit" readOnly disabled aria-label="Color depth 8 bit only" /></div></div>
-            <label className="ss-nd-row"><span className="ss-nd-label">Background Contents</span><div className="ss-nd-background"><select className="ss-nd-control" value={backgroundType} onChange={(event) => { setBackgroundType(event.target.value); setNotice('') }}><option value="white">White</option><option value="gray">Light Gray</option><option value="black">Black</option><option value="custom">Custom Color</option></select><input type="color" value={customBackground} aria-label="Custom background color" title="Pick a background color" onChange={(event) => { setCustomBackground(event.target.value); setBackgroundType('custom') }} /><span className="ss-nd-swatch" style={{ backgroundColor: background }} title={background} /></div></label>
-            <p className="ss-nd-info">{status ? 'Check your dimensions and resolution.' : `${width.toLocaleString()} × ${height.toLocaleString()} px · ${ppi} PPI · ≈ ${rawMemory} MB raw canvas`}</p>
-            <details className="ss-nd-advanced"><summary>Advanced</summary><div className="ss-nd-advanced-body"><div className="ss-nd-row"><span className="ss-nd-label">Color Profile</span><input className="ss-nd-control" value="sRGB (browser canvas)" disabled readOnly aria-label="Browser sRGB color profile" /></div><div className="ss-nd-row"><span className="ss-nd-label">Pixel Aspect Ratio</span><input className="ss-nd-control" value="Square Pixels" disabled readOnly aria-label="Square pixel aspect ratio" /></div><p className="ss-nd-hint">The current canvas supports RGB 8-bit with square pixels and a solid-color background. Other color modes, color profiles, and transparency require additional canvas engine support. PPI here is a document setting; downloaded image metadata is not guaranteed to include it.</p></div></details>
-            <p className="ss-nd-hint">Limit: 4096 px per side / 12 megapixels / 8 open papers. Units convert to pixels at the chosen PPI. Saved presets remain on this browser only.</p>
+            <label className="ss-nd-row"><span className="ss-nd-label">Name:</span><input className="ss-nd-control" maxLength={80} value={name} autoFocus onChange={(event) => { setName(event.target.value); setError('') }} /></label>
+            <label className="ss-nd-row"><span className="ss-nd-label">Document Type:</span><select className="ss-nd-control" value={groupId} onChange={(event) => selectGroup(event.target.value)}>{groups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}</select></label>
+            <label className="ss-nd-row"><span className="ss-nd-label">Size:</span><select className="ss-nd-control" value={presetId} onChange={(event) => { const next = choices.find((item) => item.id === event.target.value); if (next?.id === 'custom') markCustom(); else if (next) applyPreset(next) }}>{choices.map((item) => <option key={item.id} value={item.id}>{presetLabel(item)}</option>)}</select></label>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-width">Width:</label><div className="ss-nd-three"><div className="ss-nd-line"><input id="ss-nd-width" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={widthInput} onChange={(event) => { setWidthInput(event.target.value); markCustom() }} /><div className="ss-nd-orient" role="group" aria-label="Orientation"><button type="button" aria-label="Portrait" title="Portrait" aria-pressed={height > width} disabled={Boolean(status)} onClick={() => orient('portrait')}>▯</button><button type="button" aria-label="Landscape" title="Landscape" aria-pressed={width >= height} disabled={Boolean(status)} onClick={() => orient('landscape')}>▭</button></div></div><select className="ss-nd-control" aria-label="Width unit" value={widthUnit} onChange={(event) => changeUnit(event.target.value, 'width')}>{UNITS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div></div>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-height">Height:</label><div className="ss-nd-three"><input id="ss-nd-height" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={heightInput} onChange={(event) => { setHeightInput(event.target.value); markCustom() }} /><select className="ss-nd-control" aria-label="Height unit" value={heightUnit} onChange={(event) => changeUnit(event.target.value, 'height')}>{UNITS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div></div>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-ppi">Resolution:</label><div className="ss-nd-three"><input id="ss-nd-ppi" className="ss-nd-control" type="number" min="72" max="600" step="1" value={resolutionInput} onChange={(event) => { setResolutionInput(event.target.value); markCustom() }} /><input className="ss-nd-control" value="Pixels/Inch" aria-label="Resolution unit" disabled readOnly /></div></div>
+            <div className="ss-nd-row"><span className="ss-nd-label">Color Mode:</span><div className="ss-nd-two"><input className="ss-nd-control" value="RGB Color" readOnly disabled aria-label="RGB Color only" title="Only RGB Color is currently supported" /><input className="ss-nd-control" value="8 bit" readOnly disabled aria-label="8 bit only" title="Only 8-bit color is currently supported" /></div></div>
+            <label className="ss-nd-row"><span className="ss-nd-label">Background Contents:</span><div className="ss-nd-background"><select className="ss-nd-control" value={backgroundType} onChange={(event) => { setBackgroundType(event.target.value); setNotice('') }}><option value="white">White</option><option value="gray">Light Gray</option><option value="black">Black</option><option value="custom">Custom Color</option></select><input type="color" value={customBackground} aria-label="Custom background color" title="Pick a background color" onChange={(event) => { setCustomBackground(event.target.value); setBackgroundType('custom') }} /><span className="ss-nd-swatch" style={{ backgroundColor: background }} title={background} /></div></label>
+            <details className="ss-nd-advanced" open><summary>Advanced</summary><div className="ss-nd-advanced-body"><div className="ss-nd-row"><span className="ss-nd-label">Color Profile:</span><input className="ss-nd-control" value="sRGB (browser canvas)" disabled readOnly title="The browser canvas uses sRGB" /></div><div className="ss-nd-row"><span className="ss-nd-label">Pixel Aspect Ratio:</span><input className="ss-nd-control" value="Square Pixels" disabled readOnly title="Square pixels only" /></div></div></details>
             {error || status ? <p className="ss-nd-status" role="alert">{error || status}</p> : null}
             {notice ? <p className="ss-nd-success" role="status">{notice}</p> : null}
+            <p className="ss-nd-hint">Canvas limit: 4096 px per side / 12 MP. Large paper sizes may require a lower resolution. Only RGB 8-bit and opaque backgrounds are currently supported.</p>
           </div>
           <aside className="ss-nd-actions" aria-label="New document actions">
-            <button className="primary" type="submit" disabled={Boolean(status)}>Create</button>
+            <button type="submit" className="primary" disabled={Boolean(status)}>OK</button>
             <button type="button" onClick={onClose}>Cancel</button>
-            <button type="button" disabled={saved.length >= MAX_SAVED || Boolean(status)} onClick={savePreset}>Save Preset...</button>
+            <button type="button" disabled={saved.length >= MAX_SAVED || Boolean(status)} onClick={savePreset}>{presetNaming ? 'Save Preset' : 'Save Preset...'}</button>
             <button type="button" disabled={!saved.some((item) => item.id === presetId)} onClick={deletePreset}>Delete Preset...</button>
-            <div className="ss-nd-preset-save"><label htmlFor="ss-nd-preset-name">Preset name</label><div><input id="ss-nd-preset-name" type="text" maxLength={48} value={savedName} placeholder="My custom size" onChange={(event) => { setSavedName(event.target.value); setError('') }} /></div></div>
+            {presetNaming ? <div className="ss-nd-preset-save"><label htmlFor="ss-nd-preset-name">Preset name:</label><input id="ss-nd-preset-name" type="text" maxLength={48} value={savedName} onChange={(event) => { setSavedName(event.target.value); setError('') }} /></div> : null}
+            <div className="ss-nd-image-size">Image Size:<br />{imageSize} MB<br /><small>{Number.isFinite(width) && Number.isFinite(height) ? `${width.toLocaleString()} × ${height.toLocaleString()} px` : ''}</small></div>
           </aside>
         </div>
       </form>
