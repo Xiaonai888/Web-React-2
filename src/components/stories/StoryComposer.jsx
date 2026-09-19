@@ -574,9 +574,8 @@ export default function StoryComposer({ mode }) {
       }
 
       await clearHomeCacheSection('discover-story-feed')
-navigate(returnPath, {
 
-      navigate(returnPath, {
+navigate(returnPath, {
         replace: true,
         state: {
           storyShared: true,
