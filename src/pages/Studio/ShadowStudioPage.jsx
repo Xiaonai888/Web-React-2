@@ -14,6 +14,7 @@ registerTranslationNamespace('shadowStudio', {
     back: 'Back',
     brush: 'Brush',
     eraser: 'Eraser',
+    eyedropper: 'Pick Color',
     newPaper: 'New File',
     undo: 'Undo',
     redo: 'Redo',
@@ -35,6 +36,7 @@ registerTranslationNamespace('shadowStudio', {
     back: 'ត្រឡប់ក្រោយ',
     brush: 'ជក់',
     eraser: 'ជ័រលុប',
+    eyedropper: 'ចាប់ពណ៌',
     newPaper: 'ក្រដាសថ្មី',
     undo: 'ត្រឡប់ក្រោយ',
     redo: 'ធ្វើឡើងវិញ',
@@ -56,6 +58,7 @@ registerTranslationNamespace('shadowStudio', {
     back: '返回',
     brush: '画笔',
     eraser: '橡皮擦',
+    eyedropper: '吸管取色',
     newPaper: '新建文件',
     undo: '撤销',
     redo: '重做',
@@ -77,6 +80,7 @@ registerTranslationNamespace('shadowStudio', {
     back: '戻る',
     brush: 'ブラシ',
     eraser: '消しゴム',
+    eyedropper: 'スポイト',
     newPaper: '新規ファイル',
     undo: '元に戻す',
     redo: 'やり直す',
@@ -98,6 +102,7 @@ registerTranslationNamespace('shadowStudio', {
     back: '뒤로',
     brush: '브러시',
     eraser: '지우개',
+    eyedropper: '스포이트',
     newPaper: '새 파일',
     undo: '실행 취소',
     redo: '다시 실행',
@@ -953,6 +958,20 @@ export default function ShadowStudioPage() {
     return { x, y }
   }
 
+  function sampleCanvasColor(ctx, canvas, position) {
+    const x = Math.floor(position.x)
+    const y = Math.floor(position.y)
+    if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return
+    try {
+      const pixel = ctx.getImageData(x, y, 1, 1).data
+      const sampled = `#${Array.from(pixel.slice(0, 3), (channel) => channel.toString(16).padStart(2, '0')).join('')}`.toUpperCase()
+      setColor(sampled)
+      setTool('brush')
+    } catch {
+      setProjectNotice('Unable to sample this pixel.')
+    }
+  }
+
   function setupStroke(ctx) {
     const eraserColor =
       activeDocument?.background || '#FFFFFF'
@@ -983,6 +1002,12 @@ export default function ShadowStudioPage() {
     const currentPoint = point(event)
 
     if (!canvas || !ctx || !currentPoint) return
+
+    if (tool === 'eyedropper') {
+      event.preventDefault()
+      sampleCanvasColor(ctx, canvas, currentPoint)
+      return
+    }
 
     event.preventDefault()
     canvas.setPointerCapture?.(event.pointerId)
@@ -1137,7 +1162,7 @@ export default function ShadowStudioPage() {
         .ss-work{min-width:0;min-height:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53;touch-action:pan-x pan-y;overscroll-behavior:contain}.ss-work.ss-panning,.ss-work.ss-panning *{cursor:grabbing!important}.ss-work.ss-hand,.ss-work.ss-hand *{cursor:grab!important}
         .ss-stage{width:max-content;min-width:100%;min-height:100%;display:grid;place-items:center}
         .ss-canvas-frame{position:relative;flex:none;overflow:visible}
-        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eraser' ? 'cell' : 'crosshair'}}
+        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : tool === 'eraser' ? 'cell' : 'crosshair'}}
         .ss-view-buttons{display:flex;flex-wrap:wrap;gap:6px}
         .ss-view-btn{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:44px;height:31px;border:1px solid #555b62;border-radius:6px;background:#353a40;color:#e7ecf1;font:inherit;font-size:11px;cursor:pointer}
         .ss-view-btn:hover,.ss-view-btn.active{border-color:#72b3f7;background:#355274}
@@ -1376,6 +1401,12 @@ export default function ShadowStudioPage() {
                 icon="fa-solid fa-eraser"
                 label={tx('shadowStudio.eraser')}
                 onClick={() => setTool('eraser')}
+              />
+              <Tool
+                active={tool === 'eyedropper'}
+                icon="fa-solid fa-eye-dropper"
+                label={tx('shadowStudio.eyedropper')}
+                onClick={() => setTool('eyedropper')}
               />
             </aside>
 
