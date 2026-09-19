@@ -17,6 +17,7 @@ import './ShadowStudioMobile.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
 import StudioOptionsBar from './StudioOptionsBar'
+import StudioCanvasRulers from './StudioCanvasRulers'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -1294,6 +1295,13 @@ export default function ShadowStudioPage() {
             />
 
             <section ref={workRef} className={`ss-work ${panRef.current ? 'ss-panning' : handMode ? 'ss-hand' : ''}`} onPointerDownCapture={panStart} onPointerMove={panMove} onPointerUp={panEnd} onPointerCancel={panEnd}>
+              <StudioCanvasRulers
+  workRef={workRef}
+  canvasRef={canvasRef}
+  paperId={activeDocumentId}
+  zoom={zoom}
+  rotation={viewRotation}
+/>
               <div className="ss-stage">
                 <div className="ss-canvas-frame" style={{ width: viewFrameWidth, height: viewFrameHeight }}>
                   <canvas
