@@ -4,6 +4,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
+import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -216,6 +217,10 @@ export default function ShadowStudioPage() {
   const documentsRef = useRef([])
   const loadTokenRef = useRef(0)
   const openProjectInputRef = useRef(null)
+  const canvasDocumentRef = useRef('')
+  const recoveryTimerRef = useRef(null)
+  const recoverySequenceRef = useRef(0)
+  const hadWorkspaceRef = useRef(false)
 
   const [, refresh] = useState(0)
   const [documents, setDocuments] = useState([])
@@ -232,6 +237,11 @@ export default function ShadowStudioPage() {
   const [projectNotice, setProjectNotice] = useState('')
   const [projectLoadKey, setProjectLoadKey] = useState(0)
   const [paperLoading, setPaperLoading] = useState(false)
+  const [recoveryBooting, setRecoveryBooting] = useState(true)
+  const [recoveryEntry, setRecoveryEntry] = useState(null)
+  const [recoveryBusy, setRecoveryBusy] = useState(false)
+  const [recoveryStatus, setRecoveryStatus] = useState('')
+  const [recoveryStorageAvailable, setRecoveryStorageAvailable] = useState(true)
 
   const activeDocument =
     documents.find((document) => document.id === activeDocumentId) ||
@@ -327,6 +337,7 @@ export default function ShadowStudioPage() {
 
   function loadDocument(document) {
     const token = ++loadTokenRef.current
+    canvasDocumentRef.current = ''
     const canvas = canvasRef.current
 
     if (!canvas || !document) return
@@ -336,6 +347,7 @@ export default function ShadowStudioPage() {
     paintBlank(document)
 
     if (!document.image) {
+      canvasDocumentRef.current = document.id
       setPaperLoading(false)
       resetHistory()
       return
@@ -361,6 +373,7 @@ export default function ShadowStudioPage() {
         currentCanvas.width,
         currentCanvas.height
       )
+      canvasDocumentRef.current = document.id
       setPaperLoading(false)
       resetHistory()
     }
@@ -389,6 +402,107 @@ export default function ShadowStudioPage() {
   }, [workspaceStarted, activeDocumentId, projectLoadKey])
 
   useEffect(() => {
+    let mounted = true
+
+    readStudioRecovery()
+      .then((entry) => {
+        if (mounted) setRecoveryEntry(entry)
+      })
+      .catch((error) => {
+        if (mounted) {
+          setRecoveryStorageAvailable(false)
+          setRecoveryStatus(`${error.message} Use Save Project to keep a device copy.`)
+        }
+      })
+      .finally(() => {
+        if (mounted) setRecoveryBooting(false)
+      })
+
+    return () => {
+      mounted = false
+      clearTimeout(recoveryTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    clearTimeout(recoveryTimerRef.current)
+
+    if (recoveryBooting || !recoveryStorageAvailable || recoveryEntry || recoveryBusy || projectBusy || paperLoading) return
+
+    const current = documentsRef.current
+    const revision = ++recoverySequenceRef.current
+
+    if (!current.length) {
+      if (!hadWorkspaceRef.current) return
+      hadWorkspaceRef.current = false
+      clearStudioRecovery()
+        .then(() => setRecoveryStatus('No open papers. Local recovery cleared.'))
+        .catch((error) => setRecoveryStatus(`Autosave failed: ${error.message}`))
+      return
+    }
+
+    hadWorkspaceRef.current = true
+    if (workspaceStarted && canvasDocumentRef.current !== activeDocumentId) return
+
+    recoveryTimerRef.current = setTimeout(() => {
+      if (drawingRef.current || revision !== recoverySequenceRef.current) return
+
+      const pages = documentsRef.current
+      const canvas = workspaceStarted ? canvasRef.current : null
+
+      saveStudioRecovery(pages, activeDocumentId, canvas)
+        .then((savedAt) => {
+          if (revision === recoverySequenceRef.current) {
+            setRecoveryStatus(`Autosaved locally at ${new Date(savedAt).toLocaleTimeString()}.`)
+          }
+        })
+        .catch((error) => {
+          setRecoveryStatus(`Autosave failed: ${error.message} Save Project to your device.`)
+        })
+    }, 2500)
+
+    return () => clearTimeout(recoveryTimerRef.current)
+  }, [documents, activeDocumentId, workspaceStarted, paperLoading, projectBusy, recoveryBooting, recoveryEntry, recoveryBusy, recoveryStorageAvailable])
+
+  async function recoverWorkspace() {
+    if (!recoveryEntry || recoveryBusy) return
+    setRecoveryBusy(true)
+
+    try {
+      const recovered = await restoreStudioRecovery(recoveryEntry)
+      const checked = buildStudioProject(recovered.documents, recovered.activeDocumentId)
+      const papers = checked.documents.map((paper) => ({ ...paper, dirty: true }))
+      documentsRef.current = papers
+      setDocuments(papers)
+      setActiveDocumentId(checked.activeDocumentId)
+      setWorkspaceStarted(true)
+      setProjectLoadKey((value) => value + 1)
+      setRecoveryEntry(null)
+      setRecoveryStatus('Recovered local papers. Use Save Project for a durable device copy.')
+    } catch (error) {
+      setRecoveryStatus(`Recovery failed: ${error.message}`)
+    } finally {
+      setRecoveryBusy(false)
+    }
+  }
+
+  async function discardRecovery() {
+    if (!recoveryEntry || recoveryBusy) return
+    if (!window.confirm('Delete the local recovery copy? Save a .shadowstudio file first if you need this work.')) return
+
+    setRecoveryBusy(true)
+    try {
+      await clearStudioRecovery()
+      setRecoveryEntry(null)
+      setRecoveryStatus('Local recovery copy deleted.')
+    } catch (error) {
+      setRecoveryStatus(`Could not discard recovery: ${error.message}`)
+    } finally {
+      setRecoveryBusy(false)
+    }
+  }
+
+  useEffect(() => {
     function confirmBeforeUnload(event) {
       if (!documentsRef.current.some((document) => document.dirty)) return
       event.preventDefault()
@@ -411,12 +525,12 @@ export default function ShadowStudioPage() {
   }
 
   function chooseProjectFile() {
-    if (projectBusy) return
+    if (projectBusy || recoveryBooting || recoveryEntry || recoveryBusy) return
     openProjectInputRef.current?.click()
   }
 
   async function openProject(file) {
-    if (!file || projectBusy) return
+    if (!file || projectBusy || recoveryBooting || recoveryEntry || recoveryBusy) return
 
     setProjectBusy(true)
     setProjectNotice('')
@@ -473,7 +587,7 @@ export default function ShadowStudioPage() {
   }
 
   function openNewFile(presetId = 'basic') {
-    if (paperLoading || projectBusy) return
+    if (paperLoading || projectBusy || recoveryBooting || recoveryEntry || recoveryBusy) return
 
     if (documentsRef.current.length >= DOCUMENT_LIMIT) {
       window.alert(tx('shadowStudio.documentLimit'))
@@ -751,6 +865,10 @@ export default function ShadowStudioPage() {
         .ss-menu-btn:disabled{opacity:.45;cursor:default}
         .ss-hidden-file{display:none}
         .ss-project-message{margin:14px 0 0;border:1px solid #59636d;border-radius:8px;background:#303842;color:#d7e6f7;padding:11px 13px;font-size:11px;line-height:1.5}
+        .ss-recovery-card{border:1px solid #80a9cf;border-radius:12px;background:#2c3843;padding:18px;margin:20px 0;color:#e9f3ff}
+        .ss-recovery-card h2{margin:0 0 7px;font-size:16px;font-weight:800}
+        .ss-recovery-card p{margin:0 0 12px;font-size:11px;line-height:1.5;color:#c2d1df}
+        .ss-recovery-actions{display:flex;flex-wrap:wrap;gap:8px}
         .ss-home-link:disabled{opacity:.45;cursor:default}
         .ss-home{min-height:calc(100vh - 34px);display:grid;grid-template-columns:180px minmax(0,1fr);background:#1e2023}
         .ss-home-side{border-right:1px solid #35393e;background:#25272a;padding:22px 18px}
@@ -844,7 +962,7 @@ export default function ShadowStudioPage() {
         >
           New
         </button>
-        <button type="button" className="ss-menu-btn" disabled={projectBusy} onClick={chooseProjectFile}>
+        <button type="button" className="ss-menu-btn" disabled={projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy} onClick={chooseProjectFile}>
           Open
         </button>
         <button type="button" className="ss-menu-btn" disabled={!documents.length || paperLoading || projectBusy} onClick={saveProject}>
@@ -878,7 +996,7 @@ export default function ShadowStudioPage() {
               + {tx('shadowStudio.newPaper')}
             </button>
 
-            <button type="button" className="ss-home-link" disabled={projectBusy} onClick={chooseProjectFile}>
+            <button type="button" className="ss-home-link" disabled={projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy} onClick={chooseProjectFile}>
               Open Project
             </button>
 
@@ -921,12 +1039,35 @@ export default function ShadowStudioPage() {
               ))}
             </div>
 
+            {recoveryBooting ? (
+              <div className="ss-project-message" role="status">Checking for locally autosaved work...</div>
+            ) : null}
+
+            {recoveryEntry ? (
+              <section className="ss-recovery-card" aria-label="Local recovery">
+                <h2>Recover your last workspace</h2>
+                <p>
+                  {recoveryEntry.documents.length} paper(s) · Autosaved{' '}
+                  {new Date(recoveryEntry.savedAt).toLocaleString()}. Restore them before creating or opening another project.
+                </p>
+                <div className="ss-recovery-actions">
+                  <button type="button" className="ss-btn primary" disabled={recoveryBusy} onClick={recoverWorkspace}>
+                    {recoveryBusy ? 'Restoring...' : 'Restore Workspace'}
+                  </button>
+                  <button type="button" className="ss-btn" disabled={recoveryBusy} onClick={discardRecovery}>
+                    Discard Recovery
+                  </button>
+                </div>
+              </section>
+            ) : null}
+
             <section className="ss-recent">
               <h2>Project files</h2>
               <div className="ss-empty">
-                Save Project downloads a .shadowstudio file to your device. Use Open Project to resume it later. Automatic recovery is not enabled yet.
+                Save Project downloads a .shadowstudio file to your device. Open Project reopens it later. Local autosave is only a temporary browser recovery copy.
               </div>
               {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
+              {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
             </section>
           </section>
         </main>
@@ -940,7 +1081,7 @@ export default function ShadowStudioPage() {
               <button type="button" className="ss-btn" disabled={paperLoading || projectBusy} onClick={saveProject}>
                 Save Project
               </button>
-              <button type="button" className="ss-btn" disabled={projectBusy} onClick={chooseProjectFile}>
+              <button type="button" className="ss-btn" disabled={projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy} onClick={chooseProjectFile}>
                 Open Project
               </button>
 
@@ -984,6 +1125,7 @@ export default function ShadowStudioPage() {
           </header>
 
           {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
+              {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
 
           <div className="ss-tabs">
             {documents.map((document) => (
