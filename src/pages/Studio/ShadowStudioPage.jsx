@@ -6,6 +6,7 @@ import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
 import StudioFileMenu from './StudioFileMenu'
 import StudioViewMenu from './StudioViewMenu'
 import StudioEditMenu from './StudioEditMenu'
+import StudioExportDialog from './StudioExportDialog'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
 import './ShadowStudioMobile.css'
@@ -209,6 +210,7 @@ export default function ShadowStudioPage() {
   const [activeDocumentId, setActiveDocumentId] = useState('')
   const [workspaceStarted, setWorkspaceStarted] = useState(false)
   const [newFileOpen, setNewFileOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const [newFilePreset, setNewFilePreset] = useState('basic')
   const [tool, setTool] = useState('brush')
   const [brushStyle, setBrushStyle] = useState('round')
@@ -589,35 +591,9 @@ export default function ShadowStudioPage() {
     saveProject(name)
   }
 
-  function exportCurrentPng() {
-    const canvas = canvasRef.current
-    const paper = documentsRef.current.find((item) => item.id === activeDocumentId)
-    if (!workspaceStarted || !canvas || !paper || paperLoading || projectBusy) return
-    const name = paper.name.replace(/[\\/:*?"<>|\x00-\x1f]/g, '-').slice(0, 60) || 'Paper'
-    setProjectBusy(true)
-    try {
-      canvas.toBlob((blob) => {
-        try {
-          if (!blob) throw new Error('Could not export the current paper.')
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = url
-          link.download = name + '.png'
-          document.body.appendChild(link)
-          link.click()
-          link.remove()
-          setTimeout(() => URL.revokeObjectURL(url), 30_000)
-          setProjectNotice('PNG download started for ' + paper.name + '.')
-        } catch (error) {
-          setProjectNotice(error.message || 'PNG export failed.')
-        } finally {
-          setProjectBusy(false)
-        }
-      }, 'image/png')
-    } catch (error) {
-      setProjectBusy(false)
-      setProjectNotice(error.message || 'PNG export failed.')
-    }
+  function openExportDialog() {
+    if (!workspaceStarted || !activeDocument || paperLoading || projectBusy || newFileOpen) return
+    setExportOpen(true)
   }
 
   function closeAllPapers() {
@@ -1190,7 +1166,7 @@ export default function ShadowStudioPage() {
           onOpen={chooseProjectFile}
           onSave={() => saveProject()}
           onSaveAs={saveProjectAs}
-          onExport={exportCurrentPng}
+          onExport={openExportDialog}
           onClose={() => closeDocument(activeDocumentId)}
           onCloseAll={closeAllPapers}
           onHome={goHome}
@@ -1463,6 +1439,14 @@ export default function ShadowStudioPage() {
           event.target.value = ''
           if (file) openProject(file)
         }}
+      />
+
+      <StudioExportDialog
+        open={exportOpen && workspaceStarted && !paperLoading}
+        paper={activeDocument}
+        canvasRef={canvasRef}
+        onClose={() => setExportOpen(false)}
+        onExported={(message) => { setProjectNotice(message); setExportOpen(false) }}
       />
 
       <StudioNewFileDialog
