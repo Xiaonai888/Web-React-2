@@ -7,7 +7,12 @@ const API_URL =
 
 const VISITOR_ID_KEY = 'shadow_anonymous_visitor_id'
 const CONTEXT_KEY = 'shadow_story_section_rank_context'
+const EVENT_CACHE_KEY = 'shadow_story_section_rank_confirmed_v1'
 const CONTEXT_MAX_AGE_MS = 24 * 60 * 60 * 1000
+const MAX_CONFIRMED_EVENTS = 500
+const confirmedEvents = new Set()
+const pendingEvents = new Map()
+let cachedDay = ''
 
 const VALID_SECTIONS = new Set([
   'daily_picks',
@@ -101,36 +106,113 @@ function getContext(storyId) {
   return context
 }
 
+function cambodiaDate() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Phnom_Penh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
+function readConfirmedEvents(day) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(EVENT_CACHE_KEY) || 'null')
+    return saved?.day === day && Array.isArray(saved.keys)
+      ? saved.keys.filter((key) => typeof key === 'string').slice(-MAX_CONFIRMED_EVENTS)
+      : []
+  } catch {
+    return []
+  }
+}
+
+function isConfirmedEvent(day, key) {
+  if (cachedDay !== day) {
+    cachedDay = day
+    confirmedEvents.clear()
+  }
+
+  if (confirmedEvents.has(key)) return true
+  if (!readConfirmedEvents(day).includes(key)) return false
+
+  confirmedEvents.add(key)
+  while (confirmedEvents.size > MAX_CONFIRMED_EVENTS) {
+    confirmedEvents.delete(confirmedEvents.values().next().value)
+  }
+  return true
+}
+
+function rememberConfirmedEvent(day, key) {
+  if (cachedDay !== day) {
+    cachedDay = day
+    confirmedEvents.clear()
+  }
+
+  confirmedEvents.add(key)
+  while (confirmedEvents.size > MAX_CONFIRMED_EVENTS) {
+    confirmedEvents.delete(confirmedEvents.values().next().value)
+  }
+
+  try {
+    const saved = new Set([...readConfirmedEvents(day), ...confirmedEvents])
+    while (saved.size > MAX_CONFIRMED_EVENTS) {
+      saved.delete(saved.values().next().value)
+    }
+    localStorage.setItem(EVENT_CACHE_KEY, JSON.stringify({ day, keys: [...saved] }))
+  } catch {
+    return
+  }
+}
+
 async function sendEvent(sectionKey, storyId, action) {
   if (!VALID_SECTIONS.has(sectionKey) || !storyId) return false
 
+  const visitorId = getVisitorId()
+  const day = cambodiaDate()
+  const eventKey = JSON.stringify([visitorId, day, sectionKey, storyId, action])
+
+  if (isConfirmedEvent(day, eventKey)) return true
+  if (pendingEvents.has(eventKey)) return pendingEvents.get(eventKey)
+
+  const pending = (async () => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/visitors/story-section-rank`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Shadow-Visitor-Id': visitorId,
+          },
+          body: JSON.stringify({
+            visitor_id: visitorId,
+            section_key: sectionKey,
+            story_id: storyId,
+            action,
+          }),
+          keepalive: true,
+        }
+      )
+
+      if (!response.ok) return false
+
+      const data = await response.json().catch(() => ({}))
+      if (data.ok === false) return false
+
+      rememberConfirmedEvent(day, eventKey)
+      return true
+    } catch {
+      return false
+    }
+  })()
+
+  pendingEvents.set(eventKey, pending)
   try {
-    const visitorId = getVisitorId()
-
-    const response = await fetch(
-      `${API_URL}/api/visitors/story-section-rank`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shadow-Visitor-Id': visitorId,
-        },
-        body: JSON.stringify({
-          visitor_id: visitorId,
-          section_key: sectionKey,
-          story_id: storyId,
-          action,
-        }),
-        keepalive: true,
-      }
-    )
-
-    if (!response.ok) return false
-
-    const data = await response.json().catch(() => ({}))
-    return data.ok !== false
-  } catch {
-    return false
+    return await pending
+  } finally {
+    if (pendingEvents.get(eventKey) === pending) pendingEvents.delete(eventKey)
   }
 }
 
