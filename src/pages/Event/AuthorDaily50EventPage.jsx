@@ -209,7 +209,7 @@ export default function AuthorDaily50EventPage() {
 
       const request = requestAuthorDaily50Event(
         token,
-        { force: true }
+        { force: false }
       )
       releaseRequest = request.release
 
