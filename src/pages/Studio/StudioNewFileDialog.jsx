@@ -50,13 +50,35 @@ const PAPER_GROUPS = [
 ]
 
 const BUILTIN_PRESETS = PAPER_GROUPS.flatMap((group) => group.presets)
-const isValidSize = (width, height, resolution) => Number.isInteger(width) && Number.isInteger(height) && Number.isInteger(resolution) && width >= 64 && height >= 64 && width <= MAX_SIDE && height <= MAX_SIDE && width * height <= MAX_AREA && resolution >= 72 && resolution <= 600
+const UNITS = [
+  { id: 'px', label: 'Pixels' },
+  { id: 'in', label: 'Inches' },
+  { id: 'cm', label: 'Centimeters' },
+  { id: 'mm', label: 'Millimeters' },
+  { id: 'pt', label: 'Points' },
+  { id: 'pc', label: 'Picas' },
+]
+const VALID_UNITS = new Set(UNITS.map((unit) => unit.id))
+const validSize = (width, height, ppi) => Number.isInteger(width) && Number.isInteger(height) && Number.isInteger(ppi) && width >= 64 && height >= 64 && width <= MAX_SIDE && height <= MAX_SIDE && width * height <= MAX_AREA && ppi >= 72 && ppi <= 600
+const factor = (unit, ppi) => unit === 'in' ? ppi : unit === 'cm' ? ppi / 2.54 : unit === 'mm' ? ppi / 25.4 : unit === 'pt' ? ppi / 72 : unit === 'pc' ? ppi / 6 : 1
+const pixels = (value, unit, ppi) => Math.round(Number(value) * factor(unit, ppi))
+const format = (value, unit, ppi) => unit === 'px' ? String(value) : String(Number((value / factor(unit, ppi)).toFixed(unit === 'in' || unit === 'pc' ? 3 : 2)))
+const groupUnit = (group) => group === 'international' ? 'mm' : group === 'us' || group === 'photo' ? 'in' : 'px'
 
 function readSaved() {
   try {
     const value = JSON.parse(window.localStorage.getItem(SAVED_KEY) || '[]')
     if (!Array.isArray(value)) return []
-    return value.filter((item) => item && /^saved-[a-z0-9-]{1,28}$/.test(item.id) && typeof item.label === 'string' && item.label.trim().length > 0 && isValidSize(item.width, item.height, item.resolution)).slice(0, MAX_SAVED).map((item) => ({ ...item, background: isHexColor(item.background) ? item.background.toUpperCase() : '#FFFFFF' }))
+    return value.filter((item) => item && /^saved-[a-z0-9-]{1,28}$/.test(item.id) && typeof item.label === 'string' && item.label.trim() && validSize(item.width, item.height, item.resolution))
+      .slice(0, MAX_SAVED).map((item) => ({
+        id: item.id,
+        label: item.label.trim().slice(0, 48),
+        width: item.width,
+        height: item.height,
+        resolution: item.resolution,
+        background: isHexColor(item.background) ? item.background.toUpperCase() : '#FFFFFF',
+        unit: VALID_UNITS.has(item.unit) ? item.unit : 'px',
+      }))
   } catch {
     return []
   }
@@ -72,93 +94,122 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
   const [name, setName] = useState(defaultName || 'Untitled-1')
   const [groupId, setGroupId] = useState(findGroup(initial.id))
   const [presetId, setPresetId] = useState(initial.id)
-  const [width, setWidth] = useState(initial.width)
-  const [height, setHeight] = useState(initial.height)
-  const [resolution, setResolution] = useState(initial.resolution)
+  const [unit, setUnit] = useState('px')
+  const [widthInput, setWidthInput] = useState(String(initial.width))
+  const [heightInput, setHeightInput] = useState(String(initial.height))
+  const [resolutionInput, setResolutionInput] = useState(String(initial.resolution))
   const [backgroundType, setBackgroundType] = useState('white')
   const [customBackground, setCustomBackground] = useState('#FFFFFF')
   const [savedName, setSavedName] = useState('')
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const ppi = Number(resolutionInput)
+  const width = pixels(widthInput, unit, ppi)
+  const height = pixels(heightInput, unit, ppi)
+  const background = backgroundType === 'black' ? '#000000' : backgroundType === 'gray' ? '#E5E7EB' : backgroundType === 'custom' ? customBackground : '#FFFFFF'
 
   useEffect(() => {
     if (!open) return
     const next = BUILTIN_PRESETS.find((item) => item.id === initialPreset) || STUDIO_PRESETS[0]
+    const nextGroup = findGroup(next.id)
+    const nextUnit = groupUnit(nextGroup)
+    setSaved(readSaved())
     setName(defaultName || 'Untitled-1')
-    setGroupId(findGroup(next.id))
+    setGroupId(nextGroup)
     setPresetId(next.id)
-    setWidth(next.width)
-    setHeight(next.height)
-    setResolution(next.resolution)
+    setUnit(nextUnit)
+    setWidthInput(format(next.width, nextUnit, next.resolution))
+    setHeightInput(format(next.height, nextUnit, next.resolution))
+    setResolutionInput(String(next.resolution))
     setBackgroundType('white')
     setCustomBackground('#FFFFFF')
     setSavedName('')
     setError('')
+    setNotice('')
   }, [open, defaultName, initialPreset])
 
   const groups = saved.length ? [...PAPER_GROUPS, { id: 'saved', label: `My Presets (${saved.length})`, presets: saved }] : PAPER_GROUPS
   const currentGroup = groups.find((group) => group.id === groupId) || groups[0]
-  const background = backgroundType === 'black' ? '#000000' : backgroundType === 'gray' ? '#E5E7EB' : backgroundType === 'transparent' ? '#FFFFFF' : backgroundType === 'custom' ? customBackground : '#FFFFFF'
-  const rawMemory = useMemo(() => ((Number(width) * Number(height) * 4) / (1024 * 1024)).toFixed(1), [width, height])
+  const choices = presetId === 'custom' && !currentGroup.presets.some((item) => item.id === 'custom')
+    ? [...currentGroup.presets, { id: 'custom', label: 'Custom Size' }] : currentGroup.presets
   const status = useMemo(() => {
-    const w = Number(width)
-    const h = Number(height)
-    const ppi = Number(resolution)
-    if (!Number.isInteger(w) || !Number.isInteger(h) || w < 64 || h < 64 || w > MAX_SIDE || h > MAX_SIDE) return `Width and height must be whole pixels between 64 and ${MAX_SIDE}.`
-    if (w * h > MAX_AREA) return 'This paper exceeds 12 million pixels. Choose smaller dimensions.'
-    if (!Number.isInteger(ppi) || ppi < 72 || ppi > 600) return 'Resolution must be between 72 and 600 PPI.'
+    if (!Number.isInteger(ppi) || ppi < 72 || ppi > 600) return 'Resolution must be a whole number between 72 and 600 PPI.'
+    if (!widthInput.trim() || !heightInput.trim() || !Number.isFinite(Number(widthInput)) || !Number.isFinite(Number(heightInput)) || Number(widthInput) <= 0 || Number(heightInput) <= 0) return 'Enter a valid width and height.'
+    if (!validSize(width, height, ppi)) return 'The paper must be 64–4096 px per side and no more than 12 million pixels. Choose smaller dimensions or resolution.'
     return ''
-  }, [width, height, resolution])
+  }, [width, height, ppi, widthInput, heightInput])
+  const rawMemory = useMemo(() => Number.isFinite(width * height) ? (width * height * 4 / 1048576).toFixed(1) : '0.0', [width, height])
 
-  function usePreset(next) {
-    setPresetId(next.id)
-    setWidth(next.width)
-    setHeight(next.height)
-    setResolution(next.resolution)
-    const backgroundColor = isHexColor(next.background) ? next.background.toUpperCase() : '#FFFFFF'
-    setBackgroundType(backgroundColor === '#FFFFFF' ? 'white' : backgroundColor === '#000000' ? 'black' : backgroundColor === '#E5E7EB' ? 'gray' : 'custom')
-    setCustomBackground(backgroundColor)
+  function markCustom() {
+    setPresetId('custom')
     setError('')
+    setNotice('')
+  }
+
+  function applyBackground(color) {
+    const next = isHexColor(color) ? color.toUpperCase() : '#FFFFFF'
+    setCustomBackground(next)
+    setBackgroundType(next === '#FFFFFF' ? 'white' : next === '#000000' ? 'black' : next === '#E5E7EB' ? 'gray' : 'custom')
+  }
+
+  function applyPreset(next, targetGroup = groupId) {
+    const nextUnit = VALID_UNITS.has(next.unit) ? next.unit : groupUnit(targetGroup)
+    setGroupId(targetGroup)
+    setPresetId(next.id)
+    setUnit(nextUnit)
+    setResolutionInput(String(next.resolution))
+    setWidthInput(format(next.width, nextUnit, next.resolution))
+    setHeightInput(format(next.height, nextUnit, next.resolution))
+    applyBackground(next.background)
+    setError('')
+    setNotice('')
   }
 
   function selectGroup(id) {
     const group = groups.find((item) => item.id === id)
     if (!group) return
-    setGroupId(group.id)
     if (group.id === 'custom') {
-      setPresetId('custom')
-      setError('')
-    } else if (group.presets[0]) {
-      usePreset(group.presets[0])
+      setGroupId(group.id)
+      markCustom()
+      return
     }
+    if (group.presets[0]) applyPreset(group.presets[0], group.id)
   }
 
-  function customize(field, next) {
-    if (field === 'width') setWidth(next)
-    if (field === 'height') setHeight(next)
-    if (field === 'resolution') setResolution(next)
-    setPresetId('custom')
-    setGroupId('custom')
+  function setDimension(field, text) {
+    if (field === 'width') setWidthInput(text)
+    else setHeightInput(text)
+    markCustom()
+  }
+
+  function setMeasurement(nextUnit) {
+    if (!VALID_UNITS.has(nextUnit) || nextUnit === unit) return
+    if (!status) {
+      setWidthInput(format(width, nextUnit, ppi))
+      setHeightInput(format(height, nextUnit, ppi))
+    } else {
+      setWidthInput('')
+      setHeightInput('')
+    }
+    setUnit(nextUnit)
     setError('')
   }
 
   function orient(direction) {
-    const w = Number(width)
-    const h = Number(height)
-    if ((direction === 'portrait' && w > h) || (direction === 'landscape' && h > w)) {
-      setWidth(h)
-      setHeight(w)
-      setPresetId('custom')
-      setGroupId('custom')
-      setError('')
+    if (!status && ((direction === 'portrait' && width > height) || (direction === 'landscape' && height > width))) {
+      setWidthInput(heightInput)
+      setHeightInput(widthInput)
+      markCustom()
     }
   }
 
   function savePreset() {
     const title = savedName.trim().slice(0, 48)
-    if (!title) return setError('Enter a name for your custom preset.')
+    if (!title) return setError('Enter a preset name first.')
     if (status) return setError(status)
-    if (saved.length >= MAX_SAVED) return setError(`You can save up to ${MAX_SAVED} presets. Delete one first.`)
-    const item = { id: `saved-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, label: title, width: Number(width), height: Number(height), resolution: Number(resolution), background }
+    if (saved.length >= MAX_SAVED) return setError(`My Presets is full (${MAX_SAVED}). Delete one to save another.`)
+    if (saved.some((item) => item.label.toLowerCase() === title.toLowerCase())) return setError('A preset with this name already exists.')
+    const item = { id: `saved-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, label: title, width, height, resolution: ppi, background, unit }
     const next = [...saved, item]
     try {
       window.localStorage.setItem(SAVED_KEY, JSON.stringify(next))
@@ -167,22 +218,25 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
       setPresetId(item.id)
       setSavedName('')
       setError('')
+      setNotice(`Saved “${title}” in this browser.`)
     } catch {
-      setError('This browser could not save your custom presets. Your paper settings are still available.')
+      setError('Could not save the preset in this browser. Your current paper settings are unchanged.')
     }
   }
 
   function deletePreset() {
-    if (!presetId.startsWith('saved-')) return
     const selected = saved.find((item) => item.id === presetId)
-    if (!selected || !window.confirm(`Delete preset "${selected.label}"?`)) return
-    const next = saved.filter((item) => item.id !== presetId)
+    if (!selected || !window.confirm(`Delete preset “${selected.label}”?`)) return
+    const next = saved.filter((item) => item.id !== selected.id)
     try {
       window.localStorage.setItem(SAVED_KEY, JSON.stringify(next))
       setSaved(next)
-      setGroupId(next.length ? 'saved' : 'custom')
-      if (next.length) usePreset(next[0])
-      else setPresetId('custom')
+      if (next.length) applyPreset(next[0], 'saved')
+      else {
+        setGroupId('custom')
+        setPresetId('custom')
+      }
+      setNotice(`Deleted “${selected.label}”.`)
       setError('')
     } catch {
       setError('Could not delete this preset from this browser.')
@@ -191,70 +245,97 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
 
   function submit(event) {
     event.preventDefault()
-    const cleanName = String(name || '').trim()
-    if (!cleanName) return setError('Name is required.')
+    const cleanName = name.trim().slice(0, 80)
+    if (!cleanName) return setError('A document name is required.')
     if (status) return setError(status)
-    if (!Number.isInteger(Number(width)) || !Number.isInteger(Number(height))) return setError('Width and height must be whole pixels.')
-    onCreate({ name: cleanName.slice(0, 80), width: Number(width), height: Number(height), resolution: Number(resolution), background, presetId })
+    setError('')
+    onCreate({ name: cleanName, width, height, resolution: ppi, background, presetId })
   }
 
   if (!open) return null
 
   return (
-    <div className="ss-dialog-backdrop" role="dialog" aria-modal="true" aria-label="New paper">
+    <div className="ss-dialog-backdrop ss-nd-backdrop" role="presentation" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <style>{`
-        .shadow-studio .ss-paper-dialog{width:min(640px,100%);max-height:calc(100dvh - 20px);display:flex;flex-direction:column;overflow:hidden}
-        .shadow-studio .ss-paper-dialog .ss-dialog-head,.shadow-studio .ss-paper-dialog .ss-dialog-actions{flex:none}
-        .shadow-studio .ss-paper-dialog .ss-dialog-body{min-height:0;overflow-y:auto;overscroll-behavior:contain;align-content:start}
-        .shadow-studio .ss-paper-dialog .ss-paper-section{grid-column:1/-1;display:grid;gap:7px;min-width:0}
-        .shadow-studio .ss-paper-dialog .ss-paper-section>span{font-size:10px;font-weight:800;color:#d4d7db}
-        .shadow-studio .ss-paper-dialog .ss-paper-type{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
-        .shadow-studio .ss-paper-dialog .ss-paper-type select{min-width:0;width:100%;height:36px;border:1px solid #61676e;border-radius:6px;background:#2f3236;color:#fff;padding:0 8px;font:inherit;font-size:12px}
-        .shadow-studio .ss-paper-dialog .ss-paper-orientation{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-        .shadow-studio .ss-paper-dialog .ss-paper-orientation button{min-height:34px;flex:1;border:1px solid #61676e;border-radius:6px;background:#2f3236;color:#e8edf3;padding:4px 10px;font:inherit;font-size:11px;cursor:pointer}
-        .shadow-studio .ss-paper-dialog .ss-paper-orientation button.active{border-color:#68aef6;background:#36516a}
-        .shadow-studio .ss-paper-dialog .ss-paper-save{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-        .shadow-studio .ss-paper-dialog .ss-paper-save input{flex:1 1 150px;min-width:0;height:36px;border:1px solid #61676e;border-radius:6px;background:#2f3236;color:#fff;padding:0 9px;font:inherit;font-size:12px}
-        .shadow-studio .ss-paper-dialog .ss-paper-save button{min-height:36px;border:1px solid #61676e;border-radius:6px;background:#424951;color:#fff;padding:4px 10px;font:inherit;font-size:11px;cursor:pointer}
-        .shadow-studio .ss-paper-dialog .ss-paper-save button:disabled{opacity:.45;cursor:default}
-        .shadow-studio .ss-paper-dialog .ss-paper-hint{grid-column:1/-1;margin:0;color:#adb7c3;font-size:10px;line-height:1.5}
-        .shadow-studio .ss-paper-dialog .ss-dialog-actions{background:#3a3d41}
-        @media(max-width:600px){.shadow-studio .ss-paper-dialog{max-height:calc(100dvh - 12px)}.shadow-studio .ss-paper-dialog .ss-dialog-body{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px}.shadow-studio .ss-paper-dialog .ss-paper-type{grid-template-columns:1fr}.shadow-studio .ss-paper-dialog .ss-paper-orientation button{min-height:40px}.shadow-studio .ss-paper-dialog .ss-paper-save button{min-height:40px}}
+        .shadow-studio .ss-nd-backdrop{padding:12px;background:rgba(8,11,15,.76)}
+        .shadow-studio .ss-paper-dialog{box-sizing:border-box;width:min(762px,100%);max-height:min(700px,calc(100dvh - 24px));display:flex;flex-direction:column;overflow:hidden;border:1px solid #555c64;border-radius:7px;background:#35383c;color:#edf1f5;box-shadow:0 26px 75px #000a;font-size:12px}
+        .shadow-studio .ss-nd-head{display:flex;align-items:center;justify-content:space-between;min-height:43px;border-bottom:1px solid #4d545c;background:#3b3e42;padding:0 12px 0 16px}
+        .shadow-studio .ss-nd-head h2{margin:0;font-size:15px;font-weight:700}
+        .shadow-studio .ss-nd-close{width:26px;height:26px;border:0;border-radius:4px;background:transparent;color:#f1f3f6;font-size:19px;cursor:pointer}
+        .shadow-studio .ss-nd-close:hover{background:#555e68}
+        .shadow-studio .ss-nd-content{display:grid;grid-template-columns:minmax(0,1fr) 142px;min-height:0;flex:1;overflow:hidden}
+        .shadow-studio .ss-nd-fields{display:grid;align-content:start;gap:11px;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 20px 20px}
+        .shadow-studio .ss-nd-row{display:grid;grid-template-columns:132px minmax(0,1fr);align-items:center;gap:10px;min-width:0}
+        .shadow-studio .ss-nd-label{font-size:11px;font-weight:600;color:#d8e0e7;text-align:right}
+        .shadow-studio .ss-nd-control{min-width:0;width:100%;height:32px;box-sizing:border-box;border:1px solid #636b74;border-radius:4px;background:#2e3236;color:#fff;padding:0 9px;font:inherit;font-size:12px;outline:none}
+        .shadow-studio .ss-nd-control:focus-visible{border-color:#86bfff;box-shadow:0 0 0 2px #4799f230}
+        .shadow-studio .ss-nd-control:disabled{color:#aab4be;opacity:.75}
+        .shadow-studio .ss-nd-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px;min-width:0}
+        .shadow-studio .ss-nd-three{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:7px;min-width:0}
+        .shadow-studio .ss-nd-orient{display:flex;gap:6px;min-width:0}
+        .shadow-studio .ss-nd-orient button{flex:1;min-height:30px;border:1px solid #636b74;border-radius:4px;background:#31363b;color:#e6edf3;font:inherit;font-size:11px;cursor:pointer}
+        .shadow-studio .ss-nd-orient button[aria-pressed=true]{border-color:#83c2ff;background:#324c64;color:#fff}
+        .shadow-studio .ss-nd-orient button:disabled{opacity:.45;cursor:default}
+        .shadow-studio .ss-nd-background{display:grid;grid-template-columns:minmax(0,1fr) 34px 34px;gap:7px;align-items:center;min-width:0}
+        .shadow-studio .ss-nd-background input[type=color]{width:34px;height:32px;padding:2px;cursor:pointer}
+        .shadow-studio .ss-nd-swatch{display:block;width:32px;height:30px;box-sizing:border-box;border:1px solid #89929e;border-radius:4px}
+        .shadow-studio .ss-nd-info{margin:3px 0 0;border:1px solid #50565e;border-radius:4px;background:#2d3034;color:#cbd6e1;padding:9px 11px;font-size:10px;line-height:1.7}
+        .shadow-studio .ss-nd-advanced{margin-top:2px;border-top:1px solid #50565e;padding-top:9px}
+        .shadow-studio .ss-nd-advanced summary{cursor:pointer;font-size:11px;font-weight:700;color:#d4e0eb}
+        .shadow-studio .ss-nd-advanced-body{display:grid;gap:10px;margin-top:11px}
+        .shadow-studio .ss-nd-hint{margin:0;color:#adb9c5;font-size:10px;line-height:1.55}
+        .shadow-studio .ss-nd-actions{display:flex;flex-direction:column;align-items:stretch;gap:9px;min-width:0;border-left:1px solid #4f565e;background:#34373b;padding:18px 12px}
+        .shadow-studio .ss-nd-actions button{min-height:34px;border:1px solid #77818b;border-radius:18px;background:#41464b;color:#f6f8fa;padding:3px 8px;font:inherit;font-size:11px;cursor:pointer}
+        .shadow-studio .ss-nd-actions button.primary{border-color:#8dc7ff;background:#4b9df4;color:#0c2032;font-weight:800}
+        .shadow-studio .ss-nd-actions button:disabled{opacity:.4;cursor:default}
+        .shadow-studio .ss-nd-actions button:hover:not(:disabled){filter:brightness(1.13)}
+        .shadow-studio .ss-nd-preset-save{display:grid;gap:5px;margin-top:15px;border-top:1px solid #4e555d;padding-top:12px}
+        .shadow-studio .ss-nd-preset-save label{font-size:10px;color:#c8d4e0}
+        .shadow-studio .ss-nd-preset-save input{height:31px;box-sizing:border-box;min-width:0;width:100%;border:1px solid #606a74;border-radius:4px;background:#292d32;color:#fff;padding:0 6px;font:inherit;font-size:11px}
+        .shadow-studio .ss-nd-status{grid-column:1/-1;margin:0;border-radius:4px;background:#463438;color:#ffccd1;padding:8px;font-size:11px;line-height:1.45}
+        .shadow-studio .ss-nd-success{grid-column:1/-1;margin:0;border-radius:4px;background:#294436;color:#b9f4d2;padding:8px;font-size:10px}
+        .shadow-studio .ss-nd-mobile-actions{display:none}
+        @media(max-width:620px){
+          .shadow-studio .ss-paper-dialog{max-height:calc(100dvh - 12px);width:100%;border-radius:6px}
+          .shadow-studio .ss-nd-content{display:flex;flex-direction:column;overflow:auto}
+          .shadow-studio .ss-nd-fields{overflow:visible;flex:0 0 auto;padding:14px 12px;gap:12px}
+          .shadow-studio .ss-nd-row{grid-template-columns:1fr;gap:5px}
+          .shadow-studio .ss-nd-label{text-align:left}
+          .shadow-studio .ss-nd-three{grid-template-columns:minmax(0,1fr) 115px}
+          .shadow-studio .ss-nd-actions{flex:0 0 auto;border-left:0;border-top:1px solid #4e555d;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px 15px}
+          .shadow-studio .ss-nd-actions .ss-nd-preset-save{grid-column:1/-1;grid-row:1;margin:0;border:0;padding:0}
+          .shadow-studio .ss-nd-actions .ss-nd-preset-save>div{display:flex;gap:7px}
+          .shadow-studio .ss-nd-actions .ss-nd-preset-save input{flex:1}
+        }
+        @media(max-width:370px){.shadow-studio .ss-nd-two{grid-template-columns:1fr}.shadow-studio .ss-nd-background{grid-template-columns:minmax(0,1fr) 32px 32px}}
       `}</style>
-      <form className="ss-new-dialog ss-paper-dialog" onSubmit={submit}>
-        <div className="ss-dialog-head">
-          <div><h2>New File</h2><p>Choose a paper type, size, and background. Your current papers stay open.</p></div>
-          <button type="button" className="ss-dialog-x" onClick={onClose} aria-label="Close new file dialog"><i className="fa-solid fa-xmark" /></button>
-        </div>
-        <div className="ss-dialog-body">
-          <label className="ss-field ss-field-wide"><span>Name</span><input value={name} maxLength={80} autoFocus onChange={(event) => setName(event.target.value)} /></label>
-          <div className="ss-paper-section">
-            <span>Paper Type & Size</span>
-            <div className="ss-paper-type">
-              <select value={groupId} aria-label="Paper type" onChange={(event) => selectGroup(event.target.value)}>
-                {groups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}
-              </select>
-              <select value={currentGroup.presets.some((item) => item.id === presetId) ? presetId : currentGroup.presets[0].id} aria-label="Paper size" onChange={(event) => { const next = currentGroup.presets.find((item) => item.id === event.target.value); if (next) usePreset(next) }}>
-                {currentGroup.presets.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-              </select>
-            </div>
+      <form className="ss-new-dialog ss-paper-dialog" onSubmit={submit} role="dialog" aria-modal="true" aria-label="New File" onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onClose() } }}>
+        <div className="ss-nd-head"><h2>New File</h2><button type="button" className="ss-nd-close" onClick={onClose} aria-label="Close new file dialog">×</button></div>
+        <div className="ss-nd-content">
+          <div className="ss-nd-fields">
+            <label className="ss-nd-row"><span className="ss-nd-label">Name</span><input className="ss-nd-control" maxLength={80} value={name} autoFocus onChange={(event) => { setName(event.target.value); setError('') }} /></label>
+            <label className="ss-nd-row"><span className="ss-nd-label">Document Type</span><select className="ss-nd-control" value={groupId} onChange={(event) => selectGroup(event.target.value)}>{groups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}</select></label>
+            <label className="ss-nd-row"><span className="ss-nd-label">Size</span><select className="ss-nd-control" value={presetId} onChange={(event) => { const next = choices.find((item) => item.id === event.target.value); if (next?.id === 'custom') markCustom(); else if (next) applyPreset(next) }}>{choices.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+            <div className="ss-nd-row"><span className="ss-nd-label">Orientation</span><div className="ss-nd-orient"><button type="button" aria-pressed={height >= width} disabled={Boolean(status)} onClick={() => orient('portrait')}>▯ Portrait</button><button type="button" aria-pressed={width >= height} disabled={Boolean(status)} onClick={() => orient('landscape')}>▭ Landscape</button></div></div>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-width">Width</label><div className="ss-nd-three"><input id="ss-nd-width" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={widthInput} onChange={(event) => setDimension('width', event.target.value)} /><select className="ss-nd-control" aria-label="Measurement units" value={unit} onChange={(event) => setMeasurement(event.target.value)}>{UNITS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div></div>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-height">Height</label><input id="ss-nd-height" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={heightInput} onChange={(event) => setDimension('height', event.target.value)} /></div>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-ppi">Resolution</label><div className="ss-nd-three"><input id="ss-nd-ppi" className="ss-nd-control" type="number" min="72" max="600" step="1" value={resolutionInput} onChange={(event) => { setResolutionInput(event.target.value); markCustom() }} /><input className="ss-nd-control" value="Pixels / Inch" aria-label="Resolution unit" disabled readOnly /></div></div>
+            <div className="ss-nd-row"><span className="ss-nd-label">Color Mode</span><div className="ss-nd-two"><input className="ss-nd-control" value="RGB Color" readOnly disabled aria-label="Color mode RGB only" /><input className="ss-nd-control" value="8 bit" readOnly disabled aria-label="Color depth 8 bit only" /></div></div>
+            <label className="ss-nd-row"><span className="ss-nd-label">Background Contents</span><div className="ss-nd-background"><select className="ss-nd-control" value={backgroundType} onChange={(event) => { setBackgroundType(event.target.value); setNotice('') }}><option value="white">White</option><option value="gray">Light Gray</option><option value="black">Black</option><option value="custom">Custom Color</option></select><input type="color" value={customBackground} aria-label="Custom background color" title="Pick a background color" onChange={(event) => { setCustomBackground(event.target.value); setBackgroundType('custom') }} /><span className="ss-nd-swatch" style={{ backgroundColor: background }} title={background} /></div></label>
+            <p className="ss-nd-info">{status ? 'Check your dimensions and resolution.' : `${width.toLocaleString()} × ${height.toLocaleString()} px · ${ppi} PPI · ≈ ${rawMemory} MB raw canvas`}</p>
+            <details className="ss-nd-advanced"><summary>Advanced</summary><div className="ss-nd-advanced-body"><div className="ss-nd-row"><span className="ss-nd-label">Color Profile</span><input className="ss-nd-control" value="sRGB (browser canvas)" disabled readOnly aria-label="Browser sRGB color profile" /></div><div className="ss-nd-row"><span className="ss-nd-label">Pixel Aspect Ratio</span><input className="ss-nd-control" value="Square Pixels" disabled readOnly aria-label="Square pixel aspect ratio" /></div><p className="ss-nd-hint">The current canvas supports RGB 8-bit with square pixels and a solid-color background. Other color modes, color profiles, and transparency require additional canvas engine support. PPI here is a document setting; downloaded image metadata is not guaranteed to include it.</p></div></details>
+            <p className="ss-nd-hint">Limit: 4096 px per side / 12 megapixels / 8 open papers. Units convert to pixels at the chosen PPI. Saved presets remain on this browser only.</p>
+            {error || status ? <p className="ss-nd-status" role="alert">{error || status}</p> : null}
+            {notice ? <p className="ss-nd-success" role="status">{notice}</p> : null}
           </div>
-          <div className="ss-paper-orientation" role="group" aria-label="Paper orientation">
-            <button type="button" className={Number(height) >= Number(width) ? 'active' : ''} onClick={() => orient('portrait')}>▯ Portrait</button>
-            <button type="button" className={Number(width) >= Number(height) ? 'active' : ''} onClick={() => orient('landscape')}>▭ Landscape</button>
-          </div>
-          <label className="ss-field"><span>Width</span><div className="ss-input-unit"><input type="number" min="64" max={MAX_SIDE} step="1" value={width} onChange={(event) => customize('width', event.target.value)} /><b>px</b></div></label>
-          <label className="ss-field"><span>Height</span><div className="ss-input-unit"><input type="number" min="64" max={MAX_SIDE} step="1" value={height} onChange={(event) => customize('height', event.target.value)} /><b>px</b></div></label>
-          <label className="ss-field"><span>Resolution</span><div className="ss-input-unit"><input type="number" min="72" max="600" step="1" value={resolution} onChange={(event) => customize('resolution', event.target.value)} /><b>PPI</b></div></label>
-          <label className="ss-field"><span>Color Mode</span><input value="RGB Color · 8 bit" disabled /></label>
-          <label className="ss-field ss-field-wide"><span>Background</span><div className="ss-background-row"><select value={backgroundType} onChange={(event) => setBackgroundType(event.target.value)}><option value="white">White</option><option value="gray">Light Gray</option><option value="black">Black</option><option value="custom">Custom Color</option></select><input type="color" value={customBackground} disabled={backgroundType !== 'custom'} aria-label="Custom background color" onChange={(event) => setCustomBackground(event.target.value)} /><span className="ss-background-preview" style={{ background }} /></div></label>
-          <div className="ss-dialog-info ss-field-wide"><span>{Number(width || 0).toLocaleString()} × {Number(height || 0).toLocaleString()} px</span><span>{resolution} PPI</span><span>≈ {rawMemory} MB raw canvas</span></div>
-          <p className="ss-paper-hint">Large print sizes use a lower PPI here to stay within the current 4096 px / 12 MP canvas limit. PPI changes print metadata only; it does not resize pixels automatically.</p>
-          <div className="ss-paper-save"><input type="text" maxLength={48} value={savedName} aria-label="Custom preset name" placeholder="Name for your custom preset" onChange={(event) => setSavedName(event.target.value)} /><button type="button" onClick={savePreset} disabled={saved.length >= MAX_SAVED}>Save Preset</button>{presetId.startsWith('saved-') ? <button type="button" onClick={deletePreset}>Delete Preset</button> : null}</div>
-          <p className="ss-paper-hint">My Presets save the paper dimensions, resolution, and background color in this browser only. They are not synced with your account.</p>
-          {error || status ? <div className="ss-dialog-error ss-field-wide" role="alert">{error || status}</div> : null}
+          <aside className="ss-nd-actions" aria-label="New document actions">
+            <button className="primary" type="submit" disabled={Boolean(status)}>Create</button>
+            <button type="button" onClick={onClose}>Cancel</button>
+            <button type="button" disabled={saved.length >= MAX_SAVED || Boolean(status)} onClick={savePreset}>Save Preset...</button>
+            <button type="button" disabled={!saved.some((item) => item.id === presetId)} onClick={deletePreset}>Delete Preset...</button>
+            <div className="ss-nd-preset-save"><label htmlFor="ss-nd-preset-name">Preset name</label><div><input id="ss-nd-preset-name" type="text" maxLength={48} value={savedName} placeholder="My custom size" onChange={(event) => { setSavedName(event.target.value); setError('') }} /></div></div>
+          </aside>
         </div>
-        <div className="ss-dialog-actions"><button type="button" className="ss-btn" onClick={onClose}>Cancel</button><button type="submit" className="ss-btn primary" disabled={Boolean(status)}>Create</button></div>
       </form>
     </div>
   )
