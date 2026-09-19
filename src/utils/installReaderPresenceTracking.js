@@ -8,6 +8,8 @@ const API_BASE_URL =
 const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
 const IDLE_AFTER_MS = 2 * 60 * 1000
 const MIN_SEND_GAP_MS = 15 * 1000
+const FAILURE_RETRY_MS = 30 * 1000
+const AUTH_RETRY_MS = 5 * 60 * 1000
 const SESSION_KEY = 'shadow_reader_presence_session_id'
 
 function getReaderToken() {
@@ -48,19 +50,51 @@ export function installReaderPresenceTracking() {
   let lastPath = window.location.pathname || '/'
   let lastSentAt = 0
   let lastPayloadKey = ''
+  let lastSentToken = ''
+  let nextAttemptAt = 0
+  let retryToken = ''
   let sending = false
+  let pendingHeartbeat = null
+  let deferredTimer = null
 
   const markActive = () => {
     lastActivityAt = Date.now()
   }
 
+  const scheduleHeartbeat = (delay, options = {}) => {
+    pendingHeartbeat = {
+      forceInactive: Boolean(options.forceInactive),
+    }
+    if (deferredTimer !== null) return
+    deferredTimer = window.setTimeout(() => {
+      deferredTimer = null
+      const pending = pendingHeartbeat
+      pendingHeartbeat = null
+      void sendHeartbeat(pending || {})
+    }, Math.max(0, delay))
+  }
+
   const sendHeartbeat = async ({
     forceInactive = false,
-    force = false,
   } = {}) => {
-    if (sending) return
-    if (!getReaderToken()) return
-    if (!navigator.onLine) return
+    const token = getReaderToken()
+    if (!token || !navigator.onLine) return
+
+    if (retryToken !== token) {
+      nextAttemptAt = 0
+      retryToken = token
+    }
+
+    if (sending) {
+      pendingHeartbeat = { forceInactive }
+      return
+    }
+
+    const now = Date.now()
+    if (now < nextAttemptAt) {
+      scheduleHeartbeat(nextAttemptAt - now, { forceInactive })
+      return
+    }
 
     const payload = {
       session_id: getSessionId(),
@@ -69,28 +103,18 @@ export function installReaderPresenceTracking() {
       is_active:
         !forceInactive &&
         document.visibilityState === 'visible' &&
-        Date.now() - lastActivityAt < IDLE_AFTER_MS,
+        now - lastActivityAt < IDLE_AFTER_MS,
     }
 
-    const now = Date.now()
-    const payloadKey = JSON.stringify({
-      current_path: payload.current_path,
-      visibility_state: payload.visibility_state,
-      is_active: payload.is_active,
-    })
+    const payloadKey = JSON.stringify(payload)
+    const sameToken = token === lastSentToken
+    const samePayload = payloadKey === lastPayloadKey && sameToken
+    const elapsed = now - lastSentAt
 
-    if (
-      !force &&
-      now - lastSentAt < MIN_SEND_GAP_MS
-    ) {
-      return
-    }
+    if (samePayload && elapsed < HEARTBEAT_INTERVAL_MS) return
 
-    if (
-      !force &&
-      payloadKey === lastPayloadKey &&
-      now - lastSentAt < HEARTBEAT_INTERVAL_MS
-    ) {
+    if (sameToken && lastSentAt && elapsed < MIN_SEND_GAP_MS && !forceInactive) {
+      if (!samePayload) scheduleHeartbeat(MIN_SEND_GAP_MS - elapsed)
       return
     }
 
@@ -102,6 +126,7 @@ export function installReaderPresenceTracking() {
         {
           method: 'POST',
           headers: {
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
@@ -112,10 +137,22 @@ export function installReaderPresenceTracking() {
       if (response.ok) {
         lastSentAt = Date.now()
         lastPayloadKey = payloadKey
+        lastSentToken = token
+        nextAttemptAt = 0
+      } else {
+        nextAttemptAt = Date.now() + (response.status === 401 || response.status === 403
+          ? AUTH_RETRY_MS
+          : FAILURE_RETRY_MS)
       }
     } catch {
+      nextAttemptAt = Date.now() + FAILURE_RETRY_MS
     } finally {
       sending = false
+      if (pendingHeartbeat) {
+        const pending = pendingHeartbeat
+        pendingHeartbeat = null
+        scheduleHeartbeat(Math.max(0, nextAttemptAt - Date.now()), pending)
+      }
     }
   }
 
@@ -177,15 +214,13 @@ export function installReaderPresenceTracking() {
     } else {
       sendHeartbeat({
         forceInactive: true,
-        force: true,
-      })
+        })
     }
   })
 
   window.addEventListener('pagehide', () => {
     sendHeartbeat({
       forceInactive: true,
-      force: true,
     })
   })
 
