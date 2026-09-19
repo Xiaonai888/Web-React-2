@@ -50,16 +50,17 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
   useEffect(() => {
     let ignore = false
     let releaseRequest = () => {}
+    let lastRequestAt = 0
+    let inFlight = false
 
     async function loadEvent() {
+      if (ignore || inFlight || document.visibilityState !== 'visible') return
       const token = getAuthToken()
       if (!token) return
 
-      releaseRequest()
-
-      const request =
-        requestAuthor49DayEvent(token)
-
+      inFlight = true
+      lastRequestAt = Date.now()
+      const request = requestAuthor49DayEvent(token)
       releaseRequest = request.release
 
       try {
@@ -88,25 +89,27 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
       } finally {
         releaseRequest()
         releaseRequest = () => {}
+        inFlight = false
       }
     }
 
     const refreshOnFocus = () => {
-      if (document.visibilityState === 'visible') {
-        loadEvent()
+      if (document.visibilityState === 'visible' && Date.now() - lastRequestAt >= 60 * 1000) {
+        void loadEvent()
       }
     }
 
-    loadEvent()
+    void loadEvent()
     window.addEventListener('focus', refreshOnFocus)
+    document.addEventListener('visibilitychange', refreshOnFocus)
+    const refreshId = window.setInterval(refreshOnFocus, 5 * 60 * 1000)
 
     return () => {
       ignore = true
       releaseRequest()
-      window.removeEventListener(
-        'focus',
-        refreshOnFocus
-      )
+      window.removeEventListener('focus', refreshOnFocus)
+      document.removeEventListener('visibilitychange', refreshOnFocus)
+      window.clearInterval(refreshId)
     }
   }, [])
 
