@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 const FAVORITES_KEY = 'shadow-studio-color-favorites-v1'
+const RECENTS_KEY = 'shadow-studio-color-recent-v1'
 
 const PALETTE = [
   '#111111', '#374151', '#6B7280', '#D1D5DB', '#FFFFFF',
@@ -53,22 +54,32 @@ export function hsvToHex(hue, saturation, value) {
   return `#${parts.map((channel) => Math.round((channel + offset) * 255).toString(16).padStart(2, '0')).join('')}`.toUpperCase()
 }
 
-function readFavorites() {
+function readColors(key, limit) {
   try {
-    const stored = JSON.parse(window.localStorage.getItem(FAVORITES_KEY) || '[]')
+    const stored = JSON.parse(window.localStorage.getItem(key) || '[]')
     if (!Array.isArray(stored)) return []
-    return [...new Set(stored.map((item) => typeof item === 'string' ? fullHex(item) : null).filter(Boolean))].slice(0, 12)
+    return [...new Set(stored.map((item) => typeof item === 'string' ? fullHex(item) : null).filter(Boolean))].slice(0, limit)
   } catch {
     return []
   }
+}
+
+function hexToRgb(hex) {
+  const safe = fullHex(hex) || '#111111'
+  return [1, 3, 5].map((index) => parseInt(safe.slice(index, index + 2), 16))
+}
+
+function rgbToHex(channels) {
+  return `#${channels.map((item) => clamp(Math.round(item), 0, 255).toString(16).padStart(2, '0')).join('')}`.toUpperCase()
 }
 
 export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
   const [previous, setPrevious] = useState('#FFFFFF')
   const [hexText, setHexText] = useState(color.toUpperCase())
   const [expanded, setExpanded] = useState(false)
-  const [favorites, setFavorites] = useState(readFavorites)
-  const [recentColors, setRecentColors] = useState([])
+  const [favorites, setFavorites] = useState(() => readColors(FAVORITES_KEY, 12))
+  const [recentColors, setRecentColors] = useState(() => readColors(RECENTS_KEY, 8))
+  const [copyStatus, setCopyStatus] = useState('')
   const dragRef = useRef(null)
   const currentRef = useRef(color)
   currentRef.current = color
@@ -85,7 +96,16 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
     }
   }, [favorites])
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(RECENTS_KEY, JSON.stringify(recentColors))
+    } catch {
+      return
+    }
+  }, [recentColors])
+
   const hsv = hexToHsv(color)
+  const rgb = hexToRgb(color)
 
   function rememberColor(nextColor) {
     const normalized = fullHex(nextColor)
@@ -158,6 +178,35 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
     else setHexText(color.toUpperCase())
   }
 
+  function updateRgb(channel, text) {
+    if (text.trim() === '') return
+    const value = Number(text)
+    if (!Number.isFinite(value)) return
+    const next = [...rgb]
+    next[channel] = clamp(Math.round(value), 0, 255)
+    pick(rgbToHex(next))
+  }
+
+  function updateHsv(channel, text) {
+    if (text.trim() === '') return
+    const value = Number(text)
+    if (!Number.isFinite(value)) return
+    const h = channel === 'h' ? clamp(Math.round(value), 0, 359) : hsv.h
+    const saturation = channel === 's' ? clamp(value, 0, 100) / 100 : hsv.s
+    const brightness = channel === 'v' ? clamp(value, 0, 100) / 100 : hsv.v
+    pick(hsvToHex(h, saturation, brightness))
+  }
+
+  async function copyHex() {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
+      await navigator.clipboard.writeText((fullHex(color) || '#111111').toUpperCase())
+      setCopyStatus('HEX copied')
+    } catch {
+      setCopyStatus('Select the HEX field to copy it manually.')
+    }
+  }
+
   return (
     <section className="ss-section ss-color-panel" data-mobile-open={expanded} aria-label="Color panel">
       <style>{`
@@ -177,6 +226,16 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
         .ss-color-native{display:block;width:34px;height:34px;border:1px solid #697582;border-radius:5px;background:transparent;padding:2px;cursor:pointer}
         .ss-color-previous{display:block;width:34px;height:34px;border:1px solid #697582;border-radius:5px;cursor:pointer}
         .ss-color-legend{width:100%;display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#aeb7c1}
+        .ss-color-copy{min-height:30px;width:100%;border:1px solid #596b7e;border-radius:5px;background:#35495e;color:#e9f4ff;font:inherit;font-size:10px;cursor:pointer}
+        .ss-color-copy-status{margin:0;width:100%;font-size:10px;line-height:1.4;color:#c3d8eb}
+        .ss-color-numeric{width:100%;min-width:0;border:1px solid #475460;border-radius:6px;background:#272c32;padding:7px}
+        .ss-color-numeric summary{cursor:pointer;list-style:revert;font-size:10px;font-weight:800;color:#e1ebf6}
+        .ss-color-numeric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
+        .ss-color-number{display:grid;gap:4px;min-width:0;color:#b9c7d5;font-size:10px;font-weight:800}
+        .ss-color-number input{box-sizing:border-box;min-width:0;width:100%;height:32px;border:1px solid #586775;border-radius:4px;background:#1d242a;color:#f1f5fa;padding:0 5px;font:inherit;font-size:12px}
+        .ss-color-number input:focus-visible{outline:2px solid #75bdff;outline-offset:1px}
+        .ss-color-numeric-title{grid-column:1/-1;font-size:10px;font-weight:700;color:#a8b9cb}
+        .ss-color-numeric-help{margin:8px 0 0;font-size:9px;line-height:1.4;color:#a9b7c6}
         .ss-color-panel .ss-swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}
         .ss-color-panel .ss-swatch{width:100%;min-width:0;aspect-ratio:1;border:1px solid #596068;border-radius:5px;cursor:pointer}
         .ss-color-panel .ss-swatch.selected{outline:2px solid #eef4fb;outline-offset:1px}
@@ -236,6 +295,30 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
           <button type="button" className="ss-color-previous" style={{ backgroundColor: previous }} title={`Use previous color ${previous}`} aria-label={`Previous color ${previous}`} onClick={() => pick(previous)} />
         </div>
         <div className="ss-color-legend"><span>HEX / System picker</span><span>Previous</span></div>
+        <button type="button" className="ss-color-copy" onClick={copyHex} aria-label={`Copy HEX color ${color}`}>Copy HEX · {color.toUpperCase()}</button>
+        {copyStatus ? <p className="ss-color-copy-status" role="status">{copyStatus}</p> : null}
+        <details className="ss-color-numeric">
+          <summary>RGB / HSV numeric controls</summary>
+          <div className="ss-color-numeric-grid">
+            <div className="ss-color-numeric-title">RGB · 0–255</div>
+            {['R', 'G', 'B'].map((label, channel) => (
+              <label className="ss-color-number" key={label}>{label}
+                <input type="number" min="0" max="255" step="1" inputMode="numeric" aria-label={`${label} channel`} value={rgb[channel]} onChange={(event) => updateRgb(channel, event.target.value)} />
+              </label>
+            ))}
+            <div className="ss-color-numeric-title">HSV · Hue 0–359° / Saturation &amp; Value 0–100%</div>
+            {[
+              { label: 'H', key: 'h', value: Math.round(hsv.h), max: 359 },
+              { label: 'S', key: 's', value: Math.round(hsv.s * 100), max: 100 },
+              { label: 'V', key: 'v', value: Math.round(hsv.v * 100), max: 100 },
+            ].map((field) => (
+              <label className="ss-color-number" key={field.key}>{field.label}
+                <input type="number" min="0" max={field.max} step="1" inputMode="numeric" aria-label={`${field.label} HSV channel`} value={field.value} onChange={(event) => updateHsv(field.key, event.target.value)} />
+              </label>
+            ))}
+          </div>
+          <p className="ss-color-numeric-help">Opacity is controlled separately in Brush Settings.</p>
+        </details>
       </div>
       <div className="ss-swatches" aria-label="Color palette">
         {PALETTE.map((swatch) => <button key={swatch} type="button" className={`ss-swatch ${color.toUpperCase() === swatch ? 'selected' : ''}`} style={{ backgroundColor: swatch }} title={swatch} aria-label={`Use color ${swatch}`} onClick={() => pick(swatch)} />)}
