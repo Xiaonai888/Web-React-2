@@ -4,6 +4,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
 import StudioFileMenu from './StudioFileMenu'
+import StudioColorPanel from './StudioColorPanel'
 import './ShadowStudioMobile.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
@@ -120,24 +121,6 @@ const W = 1200
 const H = 800
 const HISTORY_LIMIT = 8
 const DOCUMENT_LIMIT = 8
-const SWATCHES = [
-  '#111111',
-  '#374151',
-  '#6B7280',
-  '#D1D5DB',
-  '#FFFFFF',
-  '#EF4444',
-  '#F97316',
-  '#EAB308',
-  '#22C55E',
-  '#06B6D4',
-  '#3B82F6',
-  '#8B5CF6',
-  '#EC4899',
-  '#7F1D1D',
-  '#78350F',
-  '#172554',
-]
 
 function createDocument({
   name,
@@ -1420,37 +1403,7 @@ export default function ShadowStudioPage() {
             </section>
 
             <aside className="ss-side">
-              <section className="ss-section">
-                <h2 className="ss-label">
-                  {tx('shadowStudio.color')}
-                </h2>
-
-                <input
-                  className="ss-color"
-                  type="color"
-                  value={color}
-                  onChange={(event) => {
-                    setColor(event.target.value)
-                    setTool('brush')
-                  }}
-                />
-
-                <div className="ss-swatches">
-                  {SWATCHES.map((swatch) => (
-                    <button
-                      key={swatch}
-                      type="button"
-                      className="ss-swatch"
-                      style={{ background: swatch }}
-                      onClick={() => {
-                        setColor(swatch)
-                        setTool('brush')
-                      }}
-                      aria-label={swatch}
-                    />
-                  ))}
-                </div>
-              </section>
+              <StudioColorPanel color={color} label={tx('shadowStudio.color')} onChange={(nextColor) => { setColor(nextColor); setTool('brush') }} />
 
               <section className="ss-section">
                 <h2 className="ss-label">
