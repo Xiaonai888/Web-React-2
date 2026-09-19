@@ -4,7 +4,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
 import StudioFileMenu from './StudioFileMenu'
-import StudioColorPanel from './StudioColorPanel'
+import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import './ShadowStudioMobile.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
@@ -159,21 +159,6 @@ function nextDocumentName(documents) {
   }
 
   return `Untitled-${index}`
-}
-
-function Tool({ active, icon, label, onClick }) {
-  return (
-    <button
-      type="button"
-      className={`ss-tool ${active ? 'active' : ''}`}
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-    >
-      <i className={icon} />
-      <span>{label}</span>
-    </button>
-  )
 }
 
 function StudioChrome({ children, onBack }) {
@@ -1389,26 +1374,11 @@ export default function ShadowStudioPage() {
           </div>
 
           <main className="ss-layout">
-            <aside className="ss-tools">
-              <Tool
-                active={tool === 'brush'}
-                icon="fa-solid fa-paintbrush"
-                label={tx('shadowStudio.brush')}
-                onClick={() => setTool('brush')}
-              />
-              <Tool
-                active={tool === 'eraser'}
-                icon="fa-solid fa-eraser"
-                label={tx('shadowStudio.eraser')}
-                onClick={() => setTool('eraser')}
-              />
-              <Tool
-                active={tool === 'eyedropper'}
-                icon="fa-solid fa-eye-dropper"
-                label={tx('shadowStudio.eyedropper')}
-                onClick={() => setTool('eyedropper')}
-              />
-            </aside>
+            <StudioToolRail
+              tool={tool}
+              onToolChange={setTool}
+              labels={{ brush: tx('shadowStudio.brush'), eraser: tx('shadowStudio.eraser'), eyedropper: tx('shadowStudio.eyedropper') }}
+            />
 
             <section ref={workRef} className={`ss-work ${panRef.current ? 'ss-panning' : handMode ? 'ss-hand' : ''}`} onPointerDownCapture={panStart} onPointerMove={panMove} onPointerUp={panEnd} onPointerCancel={panEnd}>
               <div className="ss-stage">
@@ -1433,143 +1403,38 @@ export default function ShadowStudioPage() {
               </div>
             </section>
 
-            <aside className="ss-side">
-              <StudioColorPanel color={color} label={tx('shadowStudio.color')} onChange={(nextColor) => { setColor(nextColor); setTool('brush') }} />
-
-              <section className="ss-section">
-                <h2 className="ss-label">
-                  {tx('shadowStudio.size')}
-                </h2>
-                <div className="ss-range">
-                  <input
-                    type="range"
-                    min="1"
-                    max="80"
-                    value={size}
-                    onChange={(event) =>
-                      setSize(Number(event.target.value))
-                    }
-                  />
-                  <span className="ss-value">
-                    {size}px
-                  </span>
-                </div>
-              </section>
-
-              <section className="ss-section">
-                <h2 className="ss-label">
-                  {tx('shadowStudio.opacity')}
-                </h2>
-                <div className="ss-range">
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={opacity}
-                    onChange={(event) =>
-                      setOpacity(
-                        Number(event.target.value)
-                      )
-                    }
-                  />
-                  <span className="ss-value">
-                    {opacity}%
-                  </span>
-                </div>
-              </section>
-
-              <section className="ss-section" aria-label="Canvas view">
-                <h2 className="ss-label">Canvas View</h2>
-                <div className="ss-view-buttons">
-                  <button type="button" className="ss-view-btn" title="Rotate view 90° counterclockwise" onClick={() => updateCanvasView(viewRotation - 90)} disabled={paperLoading || projectBusy}>↶ 90°</button>
-                  <button type="button" className="ss-view-btn" title="Rotate view 90° clockwise" onClick={() => updateCanvasView(viewRotation + 90)} disabled={paperLoading || projectBusy}>↷ 90°</button>
-                </div>
-                <div className="ss-view-buttons" style={{ marginTop: 6 }}>
-                  <button type="button" className={`ss-view-btn ${flipHorizontal ? 'active' : ''}`} onClick={() => updateCanvasView(viewRotation, !flipHorizontal, flipVertical)} disabled={paperLoading || projectBusy}>Flip H</button>
-                  <button type="button" className={`ss-view-btn ${flipVertical ? 'active' : ''}`} onClick={() => updateCanvasView(viewRotation, flipHorizontal, !flipVertical)} disabled={paperLoading || projectBusy}>Flip V</button>
-                  <button type="button" className="ss-view-btn" onClick={() => updateCanvasView(0, false, false)} disabled={paperLoading || projectBusy}>Reset</button>
-                </div>
-                <div className="ss-view-angle">Rotation: {viewRotation}°</div>
-                <div className="ss-range">
-                  <input type="range" min="-180" max="180" step="1" value={viewRotation} aria-label="Canvas rotation" onChange={(event) => updateCanvasView(Number(event.target.value))} disabled={paperLoading || projectBusy} />
-                </div>
-                <p className="ss-view-help">View-only rotation and flip. Your saved drawing and export are not transformed.</p>
-              </section>
-              <section className="ss-section">
-                <button
-                  type="button"
-                  className="ss-btn"
-                  onClick={() => clearCanvas()}
-                >
-                  {tx('shadowStudio.clear')}
-                </button>
-              </section>
-            </aside>
+            <StudioControlSidebar
+              color={color}
+              onColorChange={(nextColor) => { setColor(nextColor); setTool('brush') }}
+              size={size}
+              onSizeChange={setSize}
+              opacity={opacity}
+              onOpacityChange={setOpacity}
+              viewRotation={viewRotation}
+              flipHorizontal={flipHorizontal}
+              flipVertical={flipVertical}
+              onViewChange={updateCanvasView}
+              paperLoading={paperLoading}
+              projectBusy={projectBusy}
+              onClear={() => clearCanvas()}
+              labels={{ color: tx('shadowStudio.color'), size: tx('shadowStudio.size'), opacity: tx('shadowStudio.opacity'), clear: tx('shadowStudio.clear') }}
+            />
           </main>
 
-          <footer className="ss-bottom">
-            <div className="ss-controls">
-              <div className="ss-control">
-                <label>
-                  {tx('shadowStudio.size')}
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="80"
-                  value={size}
-                  onChange={(event) =>
-                    setSize(Number(event.target.value))
-                  }
-                />
-                <span className="ss-value">
-                  {size}px
-                </span>
-              </div>
-
-              <div className="ss-control">
-                <label>
-                  {tx('shadowStudio.opacity')}
-                </label>
-                <input
-                  type="range"
-                  min="10"
-                  max="100"
-                  value={opacity}
-                  onChange={(event) =>
-                    setOpacity(
-                      Number(event.target.value)
-                    )
-                  }
-                />
-                <span className="ss-value">
-                  {opacity}%
-                </span>
-              </div>
-
-              <div className="ss-control ss-zoom-control">
-                <label>{tx('shadowStudio.zoom')}</label>
-                <button type="button" className="ss-zoom-btn" title="Zoom out" aria-label="Zoom out" onClick={() => zoomAround(zoom / 1.2)} disabled={zoom <= 10}>−</button>
-                <input
-                  type="range"
-                  min="10"
-                  max="400"
-                  step="1"
-                  value={zoom}
-                  aria-label="Canvas zoom"
-                  onChange={(event) => zoomAround(Number(event.target.value))}
-                />
-                <button type="button" className="ss-zoom-btn" title="Zoom in" aria-label="Zoom in" onClick={() => zoomAround(zoom * 1.2)} disabled={zoom >= 400}>+</button>
-                <span className="ss-value">{zoom}%</span>
-                <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={() => zoomAround(100)}>100%</button>
-                <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={fitCanvas}>Fit</button>
-                <button type="button" className="ss-zoom-btn" title="Rotate view counterclockwise" aria-label="Rotate view counterclockwise" onClick={() => updateCanvasView(viewRotation - 90)}>↶</button>
-                <button type="button" className="ss-zoom-btn" title="Rotate view clockwise" aria-label="Rotate view clockwise" onClick={() => updateCanvasView(viewRotation + 90)}>↷</button>
-                <button type="button" className="ss-zoom-btn" title="Flip view horizontally" aria-label="Flip view horizontally" onClick={() => updateCanvasView(viewRotation, !flipHorizontal, flipVertical)}>⇋</button>
-                <button type="button" className="ss-zoom-btn" title="Reset view orientation" aria-label="Reset view orientation" onClick={() => updateCanvasView(0, false, false)}>0°</button>
-              </div>
-            </div>
-          </footer>
+          <StudioControlFooter
+            size={size}
+            onSizeChange={setSize}
+            opacity={opacity}
+            onOpacityChange={setOpacity}
+            zoom={zoom}
+            onZoom={zoomAround}
+            onFit={fitCanvas}
+            viewRotation={viewRotation}
+            flipHorizontal={flipHorizontal}
+            flipVertical={flipVertical}
+            onViewChange={updateCanvasView}
+            labels={{ size: tx('shadowStudio.size'), opacity: tx('shadowStudio.opacity'), zoom: tx('shadowStudio.zoom') }}
+          />
         </>
       )}
 
