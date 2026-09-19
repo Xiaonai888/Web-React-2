@@ -95,11 +95,13 @@ export default function AuthorDaily50DashboardCard() {
   useEffect(() => {
     let ignore = false
     let releaseRequest = () => {}
+    let lastRefreshAt = 0
 
     async function loadEvent(force = false) {
       const token = getAuthToken()
       if (!token) return
 
+      lastRefreshAt = Date.now()
       releaseRequest()
 
       const request = requestAuthorDaily50Event(
@@ -139,17 +141,18 @@ export default function AuthorDaily50DashboardCard() {
     }
 
     const refreshOnFocus = () => {
-      if (document.visibilityState === 'visible') {
-        loadEvent(true)
+      if (document.visibilityState === 'visible' && Date.now() - lastRefreshAt >= 5 * 60 * 1000) {
+        void loadEvent(true)
       }
     }
 
     loadEvent()
     window.addEventListener('focus', refreshOnFocus)
+    document.addEventListener('visibilitychange', refreshOnFocus)
 
     const refreshId = window.setInterval(
-      () => loadEvent(true),
-      30000
+      refreshOnFocus,
+      5 * 60 * 1000
     )
 
     return () => {
@@ -159,6 +162,7 @@ export default function AuthorDaily50DashboardCard() {
         'focus',
         refreshOnFocus
       )
+      document.removeEventListener('visibilitychange', refreshOnFocus)
       window.clearInterval(refreshId)
     }
   }, [])
