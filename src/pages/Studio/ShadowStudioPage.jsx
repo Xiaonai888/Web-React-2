@@ -5,6 +5,7 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
 import StudioFileMenu from './StudioFileMenu'
 import StudioViewMenu from './StudioViewMenu'
+import StudioEditMenu from './StudioEditMenu'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
 import './ShadowStudioMobile.css'
@@ -1195,7 +1196,14 @@ export default function ShadowStudioPage() {
           onHome={goHome}
           onExit={exitStudio}
         />
-        <button type="button" className="ss-menu-btn" disabled title="Edit menu coming in a later stage">Edit</button>
+        <StudioEditMenu
+          enabled={workspaceStarted && !paperLoading && !projectBusy && !recoveryBooting && !recoveryEntry && !recoveryBusy && !newFileOpen}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={undo}
+          onRedo={redo}
+          onClear={() => clearCanvas()}
+        />
         <StudioViewMenu
           enabled={workspaceStarted && !paperLoading && !projectBusy && !newFileOpen}
           zoom={zoom}
