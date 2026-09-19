@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
+import { BRUSH_STYLES } from './StudioBrushEngine'
 
 const STORAGE_KEY = 'shadow-studio-brush-presets-v1'
 const MAX_SAVED = 10
 
 const BUILT_IN = [
-  { id: 'fine', name: 'Fine line', size: 2, opacity: 100 },
-  { id: 'sketch', name: 'Light sketch', size: 3, opacity: 45 },
-  { id: 'ink', name: 'Ink line', size: 7, opacity: 100 },
-  { id: 'soft', name: 'Soft stroke', size: 12, opacity: 50 },
-  { id: 'marker', name: 'Wide marker', size: 26, opacity: 65 },
-  { id: 'bold', name: 'Bold line', size: 48, opacity: 100 },
+  { id: 'fine', name: 'Fine line', style: 'pencil', size: 2, opacity: 100 },
+  { id: 'sketch', name: 'Light sketch', style: 'pencil', size: 3, opacity: 45 },
+  { id: 'ink', name: 'Ink line', style: 'round', size: 7, opacity: 100 },
+  { id: 'soft', name: 'Soft stroke', style: 'airbrush', size: 12, opacity: 50 },
+  { id: 'marker', name: 'Wide marker', style: 'marker', size: 26, opacity: 65 },
+  { id: 'bold', name: 'Bold line', style: 'round', size: 48, opacity: 100 },
 ]
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, Math.round(Number(value) || min)))
@@ -23,6 +24,7 @@ function readSaved() {
       .map((item, index) => ({
         id: String(item.id || `saved-${index}`),
         name: item.name.trim().slice(0, 22),
+        style: BRUSH_STYLES.some((style) => style.id === item.style) ? item.style : 'round',
         size: clamp(item.size, 1, 80),
         opacity: clamp(item.opacity, 10, 100),
       }))
@@ -31,7 +33,7 @@ function readSaved() {
   }
 }
 
-export default function StudioBrushSettings({ size, onSizeChange, opacity, onOpacityChange, labels }) {
+export default function StudioBrushSettings({ size, onSizeChange, style = 'round', onStyleChange = () => {}, opacity, onOpacityChange, labels }) {
   const [saved, setSaved] = useState(readSaved)
   const [name, setName] = useState('')
   const [notice, setNotice] = useState('')
@@ -45,6 +47,7 @@ export default function StudioBrushSettings({ size, onSizeChange, opacity, onOpa
   }, [saved])
 
   function applyPreset(preset) {
+    onStyleChange(preset.style || 'round')
     onSizeChange(preset.size)
     onOpacityChange(preset.opacity)
   }
@@ -62,6 +65,7 @@ export default function StudioBrushSettings({ size, onSizeChange, opacity, onOpa
     setSaved((current) => [...current, {
       id: globalThis.crypto?.randomUUID?.() || `brush-${Date.now()}-${Math.random()}`,
       name: cleanName,
+      style,
       size: clamp(size, 1, 80),
       opacity: clamp(opacity, 10, 100),
     }])
@@ -77,15 +81,24 @@ export default function StudioBrushSettings({ size, onSizeChange, opacity, onOpa
   function presetOptions() {
     return (
       <>
+        <div className="ss-brush-heading">Brush tip</div>
+        <div className="ss-brush-styles" role="group" aria-label="Brush tip style">
+          {BRUSH_STYLES.map((option) => (
+            <button key={option.id} type="button" className={`ss-brush-style ${style === option.id ? 'active' : ''}`} onClick={() => onStyleChange(option.id)} aria-pressed={style === option.id} title={option.description}>
+              <span className={`ss-brush-style-icon ss-brush-style-${option.id}`} aria-hidden="true" />
+              <span>{option.label}</span>
+            </button>
+          ))}
+        </div>
         <div className="ss-brush-heading">Quick presets</div>
         <div className="ss-brush-presets" role="group" aria-label="Brush size and opacity presets">
           {BUILT_IN.map((preset) => (
             <button
               key={preset.id}
               type="button"
-              className={`ss-brush-preset ${size === preset.size && opacity === preset.opacity ? 'active' : ''}`}
+              className={`ss-brush-preset ${style === preset.style && size === preset.size && opacity === preset.opacity ? 'active' : ''}`}
               onClick={() => applyPreset(preset)}
-              aria-label={`${preset.name}: ${preset.size} pixels, ${preset.opacity} percent opacity`}
+              aria-label={`${preset.name}: ${preset.style} tip, ${preset.size} pixels, ${preset.opacity} percent opacity`}
             >
               <span className="ss-brush-dot" style={{ width: Math.max(3, Math.min(28, preset.size / 2)), height: Math.max(3, Math.min(28, preset.size / 2)), opacity: preset.opacity / 100 }} />
               <span className="ss-brush-preset-name">{preset.name}</span>
@@ -111,7 +124,7 @@ export default function StudioBrushSettings({ size, onSizeChange, opacity, onOpa
             {saved.map((preset) => (
               <div className="ss-brush-saved-item" key={preset.id}>
                 <button type="button" className="ss-brush-saved-use" onClick={() => applyPreset(preset)} title={`Use ${preset.name}`}>
-                  <span>{preset.name}</span><small>{preset.size}px · {preset.opacity}%</small>
+                  <span>{preset.name}</span><small>{preset.style} · {preset.size}px · {preset.opacity}%</small>
                 </button>
                 <button type="button" className="ss-brush-saved-remove" onClick={() => deletePreset(preset.id)} title={`Remove ${preset.name}`} aria-label={`Remove ${preset.name}`}>×</button>
               </div>
@@ -127,6 +140,13 @@ export default function StudioBrushSettings({ size, onSizeChange, opacity, onOpa
     <>
       <section className="ss-section ss-brush-settings" aria-label="Brush settings">
         <style>{`
+          .ss-brush-styles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:8px 0 12px}
+          .ss-brush-style{display:flex;min-width:0;align-items:center;gap:7px;min-height:36px;border:1px solid #58636e;border-radius:6px;background:#30353b;color:#eaf0f6;padding:5px 7px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+          .ss-brush-style.active,.ss-brush-style:focus-visible{outline:none;border-color:#78baff;background:#355371}
+          .ss-brush-style-icon{display:inline-block;flex:none;width:14px;height:14px;border-radius:50%;background:#eaf0f6}
+          .ss-brush-style-pencil{width:3px;height:14px;border-radius:2px;transform:rotate(35deg)}
+          .ss-brush-style-marker{width:16px;height:7px;border-radius:2px;transform:rotate(-35deg)}
+          .ss-brush-style-airbrush{width:18px;height:18px;background:radial-gradient(circle,#eaf0f6 0%,rgba(234,240,246,.6) 28%,transparent 72%)}
           .ss-brush-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:9px 0}
           .ss-brush-heading{margin-top:14px;font-size:10px;font-weight:800;color:#cbd3dc}
           .ss-brush-saved-heading{margin-top:15px}
@@ -152,12 +172,14 @@ export default function StudioBrushSettings({ size, onSizeChange, opacity, onOpa
             .shadow-studio .ss-brush-mobile summary::-webkit-details-marker{display:none}
             .shadow-studio .ss-brush-mobile summary::after{content:'▾';margin-left:auto;color:#b8c6d4}
             .shadow-studio .ss-brush-mobile[open] summary::after{content:'▴'}
+            .shadow-studio .ss-brush-styles{grid-template-columns:repeat(4,minmax(0,1fr))}
+            .shadow-studio .ss-brush-style{min-height:42px;flex-direction:column;gap:3px;font-size:9px}
             .shadow-studio .ss-brush-presets{grid-template-columns:repeat(3,minmax(0,1fr))}
             .shadow-studio .ss-brush-preset{min-height:68px}
             .shadow-studio .ss-brush-mobile .ss-brush-save-row input{font-size:16px}
             .shadow-studio .ss-brush-mobile .ss-brush-notice{padding-bottom:8px}
           }
-          @media(max-width:360px){.shadow-studio .ss-brush-presets{grid-template-columns:repeat(2,minmax(0,1fr))}}
+          @media(max-width:360px){.shadow-studio .ss-brush-presets{grid-template-columns:repeat(2,minmax(0,1fr))}.shadow-studio .ss-brush-styles{grid-template-columns:repeat(2,minmax(0,1fr))}}
         `}</style>
         <h2 className="ss-label">{labels.size}</h2>
         <div className="ss-range">
@@ -176,7 +198,7 @@ export default function StudioBrushSettings({ size, onSizeChange, opacity, onOpa
       </section>
 
       <details className="ss-brush-mobile">
-        <summary>Brush Presets · {size}px / {opacity}%</summary>
+        <summary>Brush · {BRUSH_STYLES.find((option) => option.id === style)?.label || 'Round'} · {size}px / {opacity}%</summary>
         {presetOptions()}
       </details>
     </>
