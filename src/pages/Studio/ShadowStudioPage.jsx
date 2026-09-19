@@ -237,6 +237,10 @@ export default function ShadowStudioPage() {
   const [size, setSize] = useState(8)
   const [opacity, setOpacity] = useState(100)
   const [zoom, setZoom] = useState(75)
+  const [viewRotation, setViewRotation] = useState(0)
+  const [flipHorizontal, setFlipHorizontal] = useState(false)
+  const [flipVertical, setFlipVertical] = useState(false)
+  const viewStatesRef = useRef({})
   const [handMode, setHandMode] = useState(false)
   const [projectBusy, setProjectBusy] = useState(false)
   const [projectNotice, setProjectNotice] = useState('')
@@ -708,6 +712,35 @@ export default function ShadowStudioPage() {
     }
   }
 
+  const displayedWidth = Math.max(1, Math.round((activeDocument?.width || W) * zoom / 100))
+  const displayedHeight = Math.max(1, Math.round((activeDocument?.height || H) * zoom / 100))
+  const viewRadians = viewRotation * Math.PI / 180
+  const viewCos = Math.cos(viewRadians)
+  const viewSin = Math.sin(viewRadians)
+  const viewFrameWidth = Math.ceil(Math.abs(displayedWidth * viewCos) + Math.abs(displayedHeight * viewSin)) + 2
+  const viewFrameHeight = Math.ceil(Math.abs(displayedWidth * viewSin) + Math.abs(displayedHeight * viewCos)) + 2
+
+  function updateCanvasView(nextRotation = viewRotation, nextHorizontal = flipHorizontal, nextVertical = flipVertical) {
+    const angle = ((Math.round(nextRotation) % 360) + 540) % 360 - 180
+    setViewRotation(angle)
+    setFlipHorizontal(nextHorizontal)
+    setFlipVertical(nextVertical)
+    if (activeDocumentId) {
+      viewStatesRef.current[activeDocumentId] = {
+        angle,
+        horizontal: nextHorizontal,
+        vertical: nextVertical,
+      }
+    }
+  }
+
+  useEffect(() => {
+    const previous = viewStatesRef.current[activeDocumentId]
+    setViewRotation(previous?.angle || 0)
+    setFlipHorizontal(Boolean(previous?.horizontal))
+    setFlipVertical(Boolean(previous?.vertical))
+  }, [activeDocumentId])
+
   function clampZoom(value) {
     return Math.min(400, Math.max(10, Math.round(value)))
   }
@@ -741,7 +774,9 @@ export default function ShadowStudioPage() {
 
     const width = Math.max(100, work.clientWidth - 70)
     const height = Math.max(100, work.clientHeight - 70)
-    const next = clampZoom(Math.min(width / document.width, height / document.height) * 100)
+    const boundingWidth = Math.abs(document.width * viewCos) + Math.abs(document.height * viewSin)
+    const boundingHeight = Math.abs(document.width * viewSin) + Math.abs(document.height * viewCos)
+    const next = clampZoom(Math.min(width / boundingWidth, height / boundingHeight) * 100)
     zoomAnchorRef.current = null
     setZoom(next)
     requestAnimationFrame(() => {
@@ -863,15 +898,14 @@ export default function ShadowStudioPage() {
     if (!canvas) return null
 
     const rect = canvas.getBoundingClientRect()
+    const dx = event.clientX - (rect.left + rect.width / 2)
+    const dy = event.clientY - (rect.top + rect.height / 2)
+    const unrotatedX = dx * viewCos + dy * viewSin
+    const unrotatedY = -dx * viewSin + dy * viewCos
+    const x = (unrotatedX * (flipHorizontal ? -1 : 1) / displayedWidth + 0.5) * canvas.width
+    const y = (unrotatedY * (flipVertical ? -1 : 1) / displayedHeight + 0.5) * canvas.height
 
-    return {
-      x:
-        (event.clientX - rect.left) *
-        (canvas.width / rect.width),
-      y:
-        (event.clientY - rect.top) *
-        (canvas.height / rect.height),
-    }
+    return { x, y }
   }
 
   function setupStroke(ctx) {
@@ -1056,7 +1090,14 @@ export default function ShadowStudioPage() {
         .ss-tool.active{border-color:#506273;background:#3b4e61;color:#fff}
         .ss-work{min-width:0;min-height:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53;touch-action:pan-x pan-y;overscroll-behavior:contain}.ss-work.ss-panning,.ss-work.ss-panning *{cursor:grabbing!important}.ss-work.ss-hand,.ss-work.ss-hand *{cursor:grab!important}
         .ss-stage{width:max-content;min-width:100%;min-height:100%;display:grid;place-items:center}
-        .ss-canvas{display:block;width:${Math.round((activeDocument?.width || W) * zoom / 100)}px;max-width:none;height:auto;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eraser' ? 'cell' : 'crosshair'}}
+        .ss-canvas-frame{position:relative;flex:none;overflow:visible}
+        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eraser' ? 'cell' : 'crosshair'}}
+        .ss-view-buttons{display:flex;flex-wrap:wrap;gap:6px}
+        .ss-view-btn{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:44px;height:31px;border:1px solid #555b62;border-radius:6px;background:#353a40;color:#e7ecf1;font:inherit;font-size:11px;cursor:pointer}
+        .ss-view-btn:hover,.ss-view-btn.active{border-color:#72b3f7;background:#355274}
+        .ss-view-btn:disabled{opacity:.4;cursor:default}
+        .ss-view-angle{margin:10px 0 0;color:#d1d7dd;font-size:11px}
+        .ss-view-help{margin:9px 0 0;color:#9ea9b4;font-size:10px;line-height:1.5}
         .ss-side{border-left:1px solid #3b4046;background:#292c30;padding:16px}
         .ss-section+.ss-section{margin-top:20px;padding-top:18px;border-top:1px solid #3d4248}
         .ss-label{margin:0 0 10px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#c2c7cd}
@@ -1067,10 +1108,10 @@ export default function ShadowStudioPage() {
         .ss-range input{min-width:0;flex:1;accent-color:#73b9ff}
         .ss-value{width:44px;text-align:right;font-size:11px;font-weight:800;color:#c6ccd2}
         .ss-bottom{position:fixed;left:86px;right:236px;bottom:0;z-index:20;min-height:46px;display:flex;align-items:center;justify-content:center;border-top:1px solid #3b4046;background:rgba(42,45,49,.97);backdrop-filter:blur(8px);padding:7px 12px}
-        .ss-controls{width:min(760px,100%);display:flex;align-items:center;gap:15px}
-        .ss-control{min-width:0;flex:1;display:flex;align-items:center;gap:7px}
+        .ss-controls{width:100%;display:flex;align-items:center;gap:12px;overflow-x:auto;scrollbar-width:thin}
+        .ss-control{min-width:110px;flex:1;display:flex;align-items:center;gap:7px}
         .ss-control label{font-size:10px;font-weight:800;color:#c2c7cd}
-        .ss-control input{min-width:60px;flex:1;accent-color:#73b9ff}.ss-zoom-control{flex:2;min-width:265px}.ss-zoom-btn{height:26px;min-width:25px;padding:0 5px;border:1px solid #50555b;border-radius:5px;background:#373b40;color:#eef0f3;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.ss-zoom-btn:disabled{opacity:.4;cursor:default}.ss-zoom-label{min-width:34px}.ss-zoom-control .ss-value{width:36px}
+        .ss-control input{min-width:60px;flex:1;accent-color:#73b9ff}.ss-zoom-control{flex:2;min-width:475px}.ss-zoom-btn{height:26px;min-width:25px;padding:0 5px;border:1px solid #50555b;border-radius:5px;background:#373b40;color:#eef0f3;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.ss-zoom-btn:disabled{opacity:.4;cursor:default}.ss-zoom-label{min-width:34px}.ss-zoom-control .ss-value{width:36px}
         .ss-dialog-backdrop{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(0,0,0,.62);padding:18px}
         .ss-new-dialog{width:min(560px,100%);overflow:hidden;border:1px solid #555b62;border-radius:10px;background:#3a3d41;color:#fff;box-shadow:0 24px 70px rgba(0,0,0,.5)}
         .ss-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:17px 18px;border-bottom:1px solid #50555b}
@@ -1343,17 +1384,24 @@ export default function ShadowStudioPage() {
 
             <section ref={workRef} className={`ss-work ${panRef.current ? 'ss-panning' : handMode ? 'ss-hand' : ''}`} onPointerDownCapture={panStart} onPointerMove={panMove} onPointerUp={panEnd} onPointerCancel={panEnd}>
               <div className="ss-stage">
-                <canvas
-                  ref={canvasRef}
-                  className="ss-canvas"
-                  width={activeDocument?.width || W}
-                  height={activeDocument?.height || H}
-                  aria-label={tx('shadowStudio.canvas')}
-                  onPointerDown={start}
-                  onPointerMove={draw}
-                  onPointerUp={finish}
-                  onPointerCancel={finish}
-                />
+                <div className="ss-canvas-frame" style={{ width: viewFrameWidth, height: viewFrameHeight }}>
+                  <canvas
+                    ref={canvasRef}
+                    className="ss-canvas"
+                    width={activeDocument?.width || W}
+                    height={activeDocument?.height || H}
+                    style={{
+                      width: displayedWidth,
+                      height: displayedHeight,
+                      transform: `translate(-50%, -50%) rotate(${viewRotation}deg) scale(${flipHorizontal ? -1 : 1}, ${flipVertical ? -1 : 1})`,
+                    }}
+                    aria-label={tx('shadowStudio.canvas')}
+                    onPointerDown={start}
+                    onPointerMove={draw}
+                    onPointerUp={finish}
+                    onPointerCancel={finish}
+                  />
+                </div>
               </div>
             </section>
 
@@ -1432,6 +1480,23 @@ export default function ShadowStudioPage() {
                 </div>
               </section>
 
+              <section className="ss-section" aria-label="Canvas view">
+                <h2 className="ss-label">Canvas View</h2>
+                <div className="ss-view-buttons">
+                  <button type="button" className="ss-view-btn" title="Rotate view 90° counterclockwise" onClick={() => updateCanvasView(viewRotation - 90)} disabled={paperLoading || projectBusy}>↶ 90°</button>
+                  <button type="button" className="ss-view-btn" title="Rotate view 90° clockwise" onClick={() => updateCanvasView(viewRotation + 90)} disabled={paperLoading || projectBusy}>↷ 90°</button>
+                </div>
+                <div className="ss-view-buttons" style={{ marginTop: 6 }}>
+                  <button type="button" className={`ss-view-btn ${flipHorizontal ? 'active' : ''}`} onClick={() => updateCanvasView(viewRotation, !flipHorizontal, flipVertical)} disabled={paperLoading || projectBusy}>Flip H</button>
+                  <button type="button" className={`ss-view-btn ${flipVertical ? 'active' : ''}`} onClick={() => updateCanvasView(viewRotation, flipHorizontal, !flipVertical)} disabled={paperLoading || projectBusy}>Flip V</button>
+                  <button type="button" className="ss-view-btn" onClick={() => updateCanvasView(0, false, false)} disabled={paperLoading || projectBusy}>Reset</button>
+                </div>
+                <div className="ss-view-angle">Rotation: {viewRotation}°</div>
+                <div className="ss-range">
+                  <input type="range" min="-180" max="180" step="1" value={viewRotation} aria-label="Canvas rotation" onChange={(event) => updateCanvasView(Number(event.target.value))} disabled={paperLoading || projectBusy} />
+                </div>
+                <p className="ss-view-help">View-only rotation and flip. Your saved drawing and export are not transformed.</p>
+              </section>
               <section className="ss-section">
                 <button
                   type="button"
@@ -1500,6 +1565,10 @@ export default function ShadowStudioPage() {
                 <span className="ss-value">{zoom}%</span>
                 <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={() => zoomAround(100)}>100%</button>
                 <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={fitCanvas}>Fit</button>
+                <button type="button" className="ss-zoom-btn" title="Rotate view counterclockwise" aria-label="Rotate view counterclockwise" onClick={() => updateCanvasView(viewRotation - 90)}>↶</button>
+                <button type="button" className="ss-zoom-btn" title="Rotate view clockwise" aria-label="Rotate view clockwise" onClick={() => updateCanvasView(viewRotation + 90)}>↷</button>
+                <button type="button" className="ss-zoom-btn" title="Flip view horizontally" aria-label="Flip view horizontally" onClick={() => updateCanvasView(viewRotation, !flipHorizontal, flipVertical)}>⇋</button>
+                <button type="button" className="ss-zoom-btn" title="Reset view orientation" aria-label="Reset view orientation" onClick={() => updateCanvasView(0, false, false)}>0°</button>
               </div>
             </div>
           </footer>
