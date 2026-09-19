@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { BRUSH_STYLES } from './StudioBrushEngine'
 
 const STORAGE_KEY = 'shadow-studio-brush-presets-v1'
 const MAX_SAVED = 10
 
 const BUILT_IN = [
-  { id: 'fine', name: 'Fine line', style: 'pencil', size: 2, opacity: 100 },
-  { id: 'sketch', name: 'Light sketch', style: 'pencil', size: 3, opacity: 45 },
-  { id: 'ink', name: 'Ink line', style: 'round', size: 7, opacity: 100 },
-  { id: 'soft', name: 'Soft stroke', style: 'airbrush', size: 12, opacity: 50 },
-  { id: 'marker', name: 'Wide marker', style: 'marker', size: 26, opacity: 65 },
-  { id: 'bold', name: 'Bold line', style: 'round', size: 48, opacity: 100 },
+  { id: 'fine', style: 'pencil', name: 'Fine line', size: 2, opacity: 100 },
+  { id: 'sketch', style: 'pencil', name: 'Light sketch', size: 3, opacity: 45 },
+  { id: 'ink', style: 'round', name: 'Ink line', size: 7, opacity: 100 },
+  { id: 'soft', style: 'airbrush', name: 'Soft stroke', size: 12, opacity: 50 },
+  { id: 'marker', style: 'marker', name: 'Wide marker', size: 26, opacity: 65 },
+  { id: 'bold', style: 'round', name: 'Bold line', size: 48, opacity: 100 },
 ]
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, Math.round(Number(value) || min)))
@@ -24,7 +24,7 @@ function readSaved() {
       .map((item, index) => ({
         id: String(item.id || `saved-${index}`),
         name: item.name.trim().slice(0, 22),
-        style: BRUSH_STYLES.some((style) => style.id === item.style) ? item.style : 'round',
+        style: BRUSH_STYLES.some((option) => option.id === item.style) ? item.style : 'round',
         size: clamp(item.size, 1, 80),
         opacity: clamp(item.opacity, 10, 100),
       }))
@@ -38,13 +38,16 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
   const [name, setName] = useState('')
   const [notice, setNotice] = useState('')
 
-  useEffect(() => {
+  function persist(next) {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      setSaved(next)
+      return true
     } catch {
-      setNotice('This browser cannot save brush presets. Your current brush still works.')
+      setNotice('Could not save changes to browser storage. Your current brush still works.')
+      return false
     }
-  }, [saved])
+  }
 
   function applyPreset(preset) {
     onStyleChange(preset.style || 'round')
@@ -58,24 +61,30 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
       setNotice('Enter a preset name first.')
       return
     }
+    if (saved.some((preset) => preset.name.toLocaleLowerCase() === cleanName.toLocaleLowerCase())) {
+      setNotice('A preset with this name already exists. Choose another name.')
+      return
+    }
     if (saved.length >= MAX_SAVED) {
       setNotice('My Presets is full. Remove one before saving another.')
       return
     }
-    setSaved((current) => [...current, {
+    const next = [...saved, {
       id: globalThis.crypto?.randomUUID?.() || `brush-${Date.now()}-${Math.random()}`,
       name: cleanName,
-      style,
+      style: BRUSH_STYLES.some((option) => option.id === style) ? style : 'round',
       size: clamp(size, 1, 80),
       opacity: clamp(opacity, 10, 100),
-    }])
+    }]
+    if (!persist(next)) return
     setName('')
     setNotice('Preset saved in this browser.')
   }
 
   function deletePreset(id) {
-    setSaved((current) => current.filter((item) => item.id !== id))
-    setNotice('Preset removed.')
+    const target = saved.find((item) => item.id === id)
+    if (!target || !window.confirm(`Delete brush preset “${target.name}”?`)) return
+    if (persist(saved.filter((item) => item.id !== id))) setNotice('Preset removed.')
   }
 
   function presetOptions() {
