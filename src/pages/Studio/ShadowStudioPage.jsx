@@ -7,6 +7,7 @@ import StudioFileMenu from './StudioFileMenu'
 import StudioViewMenu from './StudioViewMenu'
 import StudioEditMenu from './StudioEditMenu'
 import StudioExportDialog from './StudioExportDialog'
+import { readStudioImage } from './StudioImageImport'
 import StudioPaperTabs from './StudioPaperTabs'
 import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
@@ -140,6 +141,7 @@ function createDocument({
   resolution = 144,
   background = '#FFFFFF',
   presetId = 'custom',
+  image = '',
 }) {
   return {
     id:
@@ -151,8 +153,8 @@ function createDocument({
     resolution,
     background,
     presetId,
-    image: '',
-    dirty: false,
+    image,
+    dirty: Boolean(image),
   }
 }
 
@@ -202,6 +204,7 @@ export default function ShadowStudioPage() {
   const documentsRef = useRef([])
   const loadTokenRef = useRef(0)
   const openProjectInputRef = useRef(null)
+  const importImageInputRef = useRef(null)
   const canvasDocumentRef = useRef('')
   const recoveryTimerRef = useRef(null)
   const recoverySequenceRef = useRef(0)
@@ -521,6 +524,46 @@ export default function ShadowStudioPage() {
   function chooseProjectFile() {
     if (projectBusy || recoveryBooting || recoveryEntry || recoveryBusy) return
     openProjectInputRef.current?.click()
+  }
+
+  function chooseImageFile() {
+    if (paperLoading || projectBusy || recoveryBooting || recoveryEntry || recoveryBusy || newFileOpen || exportOpen) return
+    if (documentsRef.current.length >= DOCUMENT_LIMIT) {
+      window.alert(tx('shadowStudio.documentLimit'))
+      return
+    }
+    importImageInputRef.current?.click()
+  }
+
+  async function importImageAsPaper(file) {
+    if (!file || paperLoading || projectBusy || recoveryBooting || recoveryEntry || recoveryBusy || newFileOpen || exportOpen) return
+    if (documentsRef.current.length >= DOCUMENT_LIMIT) {
+      window.alert(tx('shadowStudio.documentLimit'))
+      return
+    }
+    setProjectBusy(true)
+    setProjectNotice('')
+    try {
+      const settings = await readStudioImage(file)
+      if (documentsRef.current.length >= DOCUMENT_LIMIT) {
+        window.alert(tx('shadowStudio.documentLimit'))
+        return
+      }
+      const previous = workspaceStarted && activeDocumentId
+        ? storeActiveImage(documentsRef.current)
+        : documentsRef.current
+      const imported = createDocument(settings)
+      const next = [...previous, imported]
+      documentsRef.current = next
+      setDocuments(next)
+      setWorkspaceStarted(true)
+      setActiveDocumentId(imported.id)
+      setProjectNotice(`Imported ${settings.name} as a new paper. Save Project to keep a copy.`)
+    } catch (error) {
+      setProjectNotice(error.message || 'Image import failed. Your existing papers were not changed.')
+    } finally {
+      setProjectBusy(false)
+    }
   }
 
   async function openProject(file) {
@@ -1164,6 +1207,8 @@ export default function ShadowStudioPage() {
           busy={paperLoading || projectBusy || recoveryBusy || newFileOpen}
           onNew={() => openNewFile('basic')}
           onOpen={chooseProjectFile}
+          canImport={!paperLoading && !projectBusy && !recoveryBooting && !recoveryEntry && !recoveryBusy && !newFileOpen && !exportOpen && documents.length < DOCUMENT_LIMIT}
+          onImport={chooseImageFile}
           onSave={() => saveProject()}
           onSaveAs={saveProjectAs}
           onExport={openExportDialog}
@@ -1219,6 +1264,10 @@ export default function ShadowStudioPage() {
 
             <button type="button" className="ss-home-link" disabled={projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy} onClick={chooseProjectFile}>
               Open Project
+            </button>
+
+            <button type="button" className="ss-home-link" disabled={paperLoading || projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy || newFileOpen || exportOpen || documents.length >= DOCUMENT_LIMIT} onClick={chooseImageFile}>
+              Import Image as Paper
             </button>
 
             {documents.length ? (
@@ -1398,6 +1447,19 @@ export default function ShadowStudioPage() {
           const file = event.target.files?.[0]
           event.target.value = ''
           if (file) openProject(file)
+        }}
+      />
+
+      <input
+        ref={importImageInputRef}
+        className="ss-hidden-file"
+        type="file"
+        accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+        aria-label="Import image as a new paper"
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          event.target.value = ''
+          if (file) importImageAsPaper(file)
         }}
       />
 
