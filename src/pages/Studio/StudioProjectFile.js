@@ -112,8 +112,8 @@ export function buildStudioProject(documents, activeDocumentId) {
   }
 }
 
-export function downloadStudioProject(project) {
-  const safeName = String(project.documents[0]?.name || 'Shadow-Project')
+export function downloadStudioProject(project, requestedName = '') {
+  const safeName = String(requestedName || project.documents[0]?.name || 'Shadow-Project')
     .replace(/[\\/:*?"<>|\x00-\x1f]/g, '-')
     .slice(0, 60) || 'Shadow-Project'
   const content = JSON.stringify(project)
