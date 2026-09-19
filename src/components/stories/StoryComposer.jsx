@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { clearHomeCacheSection } from '../../utils/homeDataCache'
 
 registerTranslationNamespace('storyComposer', {
   en: {
@@ -571,6 +572,9 @@ export default function StoryComposer({ mode }) {
           linkUrl,
         })
       }
+
+      await clearHomeCacheSection('discover-story-feed')
+navigate(returnPath, {
 
       navigate(returnPath, {
         replace: true,
