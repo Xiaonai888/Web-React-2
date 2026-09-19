@@ -1,0 +1,165 @@
+const DATABASE_NAME = 'shadow-studio-local-recovery'
+const STORE_NAME = 'workspaces'
+const RECOVERY_KEY = 'current'
+const MAX_RECOVERY_BYTES = 55 * 1024 * 1024
+
+let databasePromise = null
+let operations = Promise.resolve()
+
+function database() {
+  if (!globalThis.indexedDB) {
+    return Promise.reject(new Error('Local autosave is not supported in this browser.'))
+  }
+
+  if (!databasePromise) {
+    databasePromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(DATABASE_NAME, 1)
+
+      request.onupgradeneeded = () => {
+        const db = request.result
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+        }
+      }
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error || new Error('Cannot open local storage.'))
+      request.onblocked = () => reject(new Error('Close other Studio tabs and try again.'))
+    }).catch((error) => {
+      databasePromise = null
+      throw error
+    })
+  }
+
+  return databasePromise
+}
+
+async function transaction(mode, operation) {
+  const db = await database()
+
+  return new Promise((resolve, reject) => {
+    let result
+    const tx = db.transaction(STORE_NAME, mode)
+    const store = tx.objectStore(STORE_NAME)
+    const request = operation(store)
+
+    request.onsuccess = () => {
+      result = request.result
+    }
+    tx.oncomplete = () => resolve(result)
+    tx.onerror = () => reject(tx.error || new Error('Local storage failed.'))
+    tx.onabort = () => reject(tx.error || new Error('Local storage was interrupted.'))
+  })
+}
+
+function queue(operation) {
+  const next = operations.catch(() => {}).then(operation)
+  operations = next
+  return next
+}
+
+function canvasBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob)
+      else reject(new Error('Could not capture the current paper.'))
+    }, 'image/png')
+  })
+}
+
+function toDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error || new Error('Cannot read local recovery.'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+function estimatedBytes(image) {
+  if (image instanceof Blob) return image.size
+  return typeof image === 'string' ? Math.ceil(image.length * 0.75) : 0
+}
+
+export async function readStudioRecovery() {
+  await operations.catch(() => {})
+  const record = await transaction('readonly', (store) => store.get(RECOVERY_KEY))
+
+  if (!record) return null
+  if (
+    record.version !== 1 ||
+    !Array.isArray(record.documents) ||
+    record.documents.length < 1 ||
+    record.documents.length > 8
+  ) {
+    throw new Error('The local recovery copy is unsupported. Restore your .shadowstudio file instead.')
+  }
+
+  return record
+}
+
+export function saveStudioRecovery(documents, activeDocumentId, canvas) {
+  if (!Array.isArray(documents) || documents.length < 1 || documents.length > 8) {
+    return Promise.reject(new Error('A workspace must have 1–8 papers.'))
+  }
+
+  const capturedDocuments = documents.map((document) => ({ ...document }))
+  const capturedId = activeDocumentId
+  const activeBitmapPromise = canvas ? canvasBlob(canvas) : Promise.resolve(null)
+
+  return queue(async () => {
+    const activeBitmap = await activeBitmapPromise
+    const papers = capturedDocuments.map((document) => ({
+      id: document.id,
+      name: document.name,
+      width: document.width,
+      height: document.height,
+      resolution: document.resolution,
+      background: document.background,
+      presetId: document.presetId,
+      dirty: Boolean(document.dirty),
+      image: activeBitmap && document.id === capturedId
+        ? activeBitmap
+        : document.image || '',
+    }))
+
+    const totalBytes = papers.reduce((sum, paper) => sum + estimatedBytes(paper.image), 0)
+    if (totalBytes > MAX_RECOVERY_BYTES) {
+      throw new Error('Local recovery is over 55 MB. Save Project to your device.')
+    }
+
+    const record = {
+      id: RECOVERY_KEY,
+      version: 1,
+      savedAt: new Date().toISOString(),
+      activeDocumentId: capturedId,
+      documents: papers,
+    }
+
+    await transaction('readwrite', (store) => store.put(record))
+    return record.savedAt
+  })
+}
+
+export function clearStudioRecovery() {
+  return queue(() => transaction('readwrite', (store) => store.delete(RECOVERY_KEY)))
+}
+
+export async function restoreStudioRecovery(record) {
+  if (!record || !Array.isArray(record.documents) || record.documents.length < 1) {
+    throw new Error('No local recovery copy found.')
+  }
+
+  const documents = []
+
+  for (const paper of record.documents) {
+    documents.push({
+      ...paper,
+      image: paper.image instanceof Blob
+        ? await toDataUrl(paper.image)
+        : paper.image || '',
+      dirty: true,
+    })
+  }
+
+  return { documents, activeDocumentId: record.activeDocumentId }
+}
