@@ -170,6 +170,7 @@ async function sendEvent(sectionKey, storyId, action) {
   if (!VALID_SECTIONS.has(sectionKey) || !storyId) return false
 
   const visitorId = getVisitorId()
+  const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
   const day = cambodiaDate()
   const eventKey = JSON.stringify([visitorId, day, sectionKey, storyId, action])
 
@@ -185,6 +186,7 @@ async function sendEvent(sectionKey, storyId, action) {
           headers: {
             'Content-Type': 'application/json',
             'X-Shadow-Visitor-Id': visitorId,
+...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
             visitor_id: visitorId,
