@@ -44,6 +44,8 @@ export function StudioToolRail({ tool, onToolChange, labels }) {
 export function StudioControlSidebar({
   color,
   onColorChange,
+  brushStyle,
+  onBrushStyleChange,
   size,
   onSizeChange,
   opacity,
@@ -64,6 +66,8 @@ export function StudioControlSidebar({
       <StudioBrushSettings
         size={size}
         onSizeChange={onSizeChange}
+        style={brushStyle}
+        onStyleChange={onBrushStyleChange}
         opacity={opacity}
         onOpacityChange={onOpacityChange}
         labels={labels}
