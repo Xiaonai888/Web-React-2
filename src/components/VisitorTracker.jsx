@@ -162,6 +162,7 @@ async function readResponse(response) {
 export default function VisitorTracker() {
   const location = useLocation()
   const [debugState, setDebugState] = useState(null)
+  const debugEnabled = new URLSearchParams(location.search).get('visitorDebug') === '1'
   useEffect(() => {
     if (!hasReaderAccount()) {
       return undefined
@@ -227,7 +228,7 @@ export default function VisitorTracker() {
 
 
   useEffect(() => {
-    const debugEnabled = new URLSearchParams(window.location.search).get('visitorDebug') === '1'
+    if (!debugEnabled) setDebugState(null)
 
     if (hasReaderAccount()) {
       if (debugEnabled) {
@@ -260,6 +261,8 @@ export default function VisitorTracker() {
     }
 
     const timer = window.setTimeout(async () => {
+      if (hasReaderAccount()) return
+
       try {
         const response = await fetch(`${API_URL}/api/visitors/track`, {
           method: 'POST',
@@ -322,7 +325,7 @@ export default function VisitorTracker() {
       window.clearTimeout(timer)
       controller.abort()
     }
-  }, [location.pathname, location.search])
+  }, [location.pathname, debugEnabled])
 
   if (!debugState) return null
 
