@@ -209,6 +209,7 @@ export default function ShadowStudioPage() {
   const [newFileOpen, setNewFileOpen] = useState(false)
   const [newFilePreset, setNewFilePreset] = useState('basic')
   const [tool, setTool] = useState('brush')
+  const [brushStyle, setBrushStyle] = useState('round')
   const [color, setColor] = useState('#111111')
   const [size, setSize] = useState(8)
   const [opacity, setOpacity] = useState(100)
@@ -976,6 +977,7 @@ export default function ShadowStudioPage() {
     const stroke = beginStudioStroke(ctx, currentPoint, event, {
       size,
       opacity,
+      style: tool === 'eraser' ? 'round' : brushStyle,
       color: tool === 'eraser' ? activeDocument?.background || '#FFFFFF' : color,
     })
     if (!stroke) return
@@ -1378,6 +1380,8 @@ export default function ShadowStudioPage() {
             <StudioControlSidebar
               color={color}
               onColorChange={(nextColor) => { setColor(nextColor); setTool('brush') }}
+              brushStyle={brushStyle}
+              onBrushStyleChange={(nextStyle) => { setBrushStyle(nextStyle); setTool('brush') }}
               size={size}
               onSizeChange={setSize}
               opacity={opacity}
