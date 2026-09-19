@@ -1,0 +1,437 @@
+@media (max-width: 900px), (max-width: 1100px) and (max-height: 650px) and (orientation: landscape) {
+  .shadow-studio {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .shadow-studio .ss-chrome {
+    position: relative;
+    z-index: 40;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .shadow-studio .ss-chrome::-webkit-scrollbar,
+  .shadow-studio .ss-tabs::-webkit-scrollbar,
+  .shadow-studio .ss-tools::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shadow-studio .ss-logo-btn {
+    flex: 0 0 28px;
+  }
+
+  .shadow-studio .ss-menu-btn {
+    flex: 0 0 auto;
+    min-width: 43px;
+    min-height: 30px;
+    padding-inline: 9px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-home {
+    min-width: 0;
+  }
+
+  .shadow-studio .ss-home-side {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .shadow-studio .ss-home-primary,
+  .shadow-studio .ss-home-link {
+    flex: 1 1 130px;
+    width: auto;
+    min-height: 44px;
+    margin: 0;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-home-main {
+    min-width: 0;
+    padding: 22px 14px 120px;
+  }
+
+  .shadow-studio .ss-preset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 16px;
+  }
+
+  .shadow-studio .ss-preset-card {
+    min-width: 0;
+    min-height: 94px;
+    padding: 12px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-top {
+    position: relative;
+    top: auto;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 46px;
+    gap: 6px;
+    padding: 7px 8px;
+  }
+
+  .shadow-studio .ss-top .ss-row {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 5px;
+  }
+
+  .shadow-studio .ss-top .ss-row:last-child {
+    justify-content: flex-end;
+  }
+
+  .shadow-studio .ss-top .ss-btn {
+    min-height: 36px;
+    flex: 0 0 auto;
+  }
+
+  .shadow-studio .ss-doc-info {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .shadow-studio .ss-project-message {
+    margin: 6px 8px;
+    padding: 8px;
+    overflow-wrap: anywhere;
+  }
+
+  .shadow-studio .ss-tabs {
+    position: relative;
+    top: auto;
+    min-width: 0;
+    width: 100%;
+    min-height: 40px;
+    padding-left: 4px;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .shadow-studio .ss-tab {
+    min-width: 118px;
+    flex: 0 0 auto;
+    height: 40px;
+  }
+
+  .shadow-studio .ss-tab-main,
+  .shadow-studio .ss-tab-add {
+    height: 40px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-tab-close {
+    flex: 0 0 30px;
+    height: 36px;
+    width: 30px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-layout {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .shadow-studio .ss-tools {
+    position: relative;
+    top: auto;
+    z-index: 2;
+    order: 0;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid #3b4046;
+    padding: 7px 9px;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .shadow-studio .ss-tool {
+    flex: 0 0 76px;
+    width: 76px;
+    min-width: 76px;
+    min-height: 50px;
+    gap: 3px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-side {
+    order: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px 10px;
+    width: 100%;
+    min-width: 0;
+    border-left: 0;
+    border-bottom: 1px solid #3b4046;
+    padding: 8px 10px;
+  }
+
+  .shadow-studio .ss-side .ss-section {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .shadow-studio .ss-side .ss-section:first-child {
+    display: flex;
+    flex: 1 1 100%;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .shadow-studio .ss-side .ss-section:first-child .ss-label {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .shadow-studio .ss-side .ss-color {
+    flex: 0 0 45px;
+    width: 45px;
+    height: 38px;
+    padding: 2px;
+  }
+
+  .shadow-studio .ss-side .ss-swatches {
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    min-width: 0;
+    gap: 6px;
+    overflow-x: auto;
+    margin: 0;
+    padding-block: 3px;
+    overscroll-behavior-x: contain;
+  }
+
+  .shadow-studio .ss-side .ss-swatch {
+    flex: 0 0 31px;
+    width: 31px;
+    height: 31px;
+    border-radius: 5px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-side .ss-section:nth-child(2),
+  .shadow-studio .ss-side .ss-section:nth-child(3) {
+    display: none;
+  }
+
+  .shadow-studio .ss-side .ss-section[aria-label='Canvas view'] {
+    flex: 1 1 235px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 9px;
+  }
+
+  .shadow-studio .ss-side .ss-section[aria-label='Canvas view'] > .ss-label {
+    width: auto;
+    margin: 0;
+  }
+
+  .shadow-studio .ss-side .ss-view-buttons {
+    display: flex;
+    gap: 5px;
+    margin: 0 !important;
+  }
+
+  .shadow-studio .ss-side .ss-view-btn {
+    min-height: 32px;
+    padding-inline: 8px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-side .ss-view-angle {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .shadow-studio .ss-side .ss-section[aria-label='Canvas view'] > .ss-range {
+    flex: 1 1 110px;
+    min-width: 110px;
+  }
+
+  .shadow-studio .ss-side .ss-view-help {
+    display: none;
+  }
+
+  .shadow-studio .ss-side .ss-section:last-child {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .shadow-studio .ss-side .ss-section:last-child .ss-btn {
+    min-height: 34px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-work {
+    order: 2;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: max(310px, calc(100dvh - 480px));
+    min-height: 310px;
+    max-height: 750px;
+    overflow: auto;
+    padding: 12px 12px 110px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .shadow-studio .ss-stage {
+    min-height: 100%;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .shadow-studio .ss-bottom {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 35;
+    width: 100%;
+    min-height: 85px;
+    height: auto;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .shadow-studio .ss-controls {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 5px 10px;
+    overflow: visible;
+  }
+
+  .shadow-studio .ss-control {
+    flex: 1 1 calc(50% - 10px);
+    min-width: 0;
+    gap: 5px;
+  }
+
+  .shadow-studio .ss-control label {
+    display: inline;
+    flex: 0 0 auto;
+    font-size: 10px;
+  }
+
+  .shadow-studio .ss-control input {
+    min-width: 24px;
+  }
+
+  .shadow-studio .ss-control .ss-value {
+    width: 38px;
+    flex: 0 0 auto;
+  }
+
+  .shadow-studio .ss-zoom-control {
+    display: flex;
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 5px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .shadow-studio .ss-zoom-control input {
+    flex: 1 0 60px;
+  }
+
+  .shadow-studio .ss-zoom-control .ss-zoom-btn {
+    flex: 0 0 auto;
+    min-width: 29px;
+    min-height: 30px;
+    touch-action: manipulation;
+  }
+
+  .shadow-studio .ss-zoom-control label {
+    display: none;
+  }
+
+  .shadow-studio .ss-dialog-backdrop {
+    overflow-y: auto;
+    align-items: start;
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+  }
+
+  .shadow-studio .ss-new-dialog {
+    width: min(100%, 560px);
+    max-height: calc(100dvh - 16px);
+    margin: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .shadow-studio .ss-dialog-head,
+  .shadow-studio .ss-dialog-actions {
+    padding: 12px;
+  }
+
+  .shadow-studio .ss-dialog-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .shadow-studio .ss-field-wide {
+    grid-column: 1 / -1;
+  }
+
+  .shadow-studio .ss-field input,
+  .shadow-studio .ss-field select {
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .shadow-studio .ss-dialog-actions .ss-btn {
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 360px) {
+  .shadow-studio .ss-home-main h1 {
+    font-size: 24px;
+  }
+
+  .shadow-studio .ss-doc-info {
+    font-size: 9px;
+  }
+
+  .shadow-studio .ss-top .ss-row {
+    flex-wrap: wrap;
+  }
+
+  .shadow-studio .ss-side .ss-section[aria-label='Canvas view'] {
+    flex-basis: 100%;
+  }
+}
