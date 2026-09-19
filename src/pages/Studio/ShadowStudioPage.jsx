@@ -8,6 +8,7 @@ import StudioViewMenu from './StudioViewMenu'
 import StudioEditMenu from './StudioEditMenu'
 import StudioExportDialog from './StudioExportDialog'
 import StudioPaperTabs from './StudioPaperTabs'
+import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
 import './ShadowStudioMobile.css'
@@ -206,7 +207,7 @@ export default function ShadowStudioPage() {
   const recoverySequenceRef = useRef(0)
   const hadWorkspaceRef = useRef(false)
 
-  const [, refresh] = useState(0)
+  const [canvasRevision, refresh] = useState(0)
   const [documents, setDocuments] = useState([])
   const [activeDocumentId, setActiveDocumentId] = useState('')
   const [workspaceStarted, setWorkspaceStarted] = useState(false)
@@ -1366,6 +1367,7 @@ export default function ShadowStudioPage() {
               paperLoading={paperLoading}
               projectBusy={projectBusy}
               onClear={() => clearCanvas()}
+              navigator={<StudioNavigator canvasRef={canvasRef} workRef={workRef} paperId={activeDocumentId} revision={canvasRevision} rotation={viewRotation} flipHorizontal={flipHorizontal} flipVertical={flipVertical} zoom={zoom} disabled={paperLoading || projectBusy} />}
               labels={{ color: tx('shadowStudio.color'), size: tx('shadowStudio.size'), opacity: tx('shadowStudio.opacity'), clear: tx('shadowStudio.clear') }}
             />
           </main>
