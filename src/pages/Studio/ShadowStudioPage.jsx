@@ -616,8 +616,9 @@ export default function ShadowStudioPage() {
         : current
       const project = buildStudioProject(saved, activeDocumentId)
       downloadStudioProject(project, fileName)
-      documentsRef.current = saved
-      setDocuments(saved)
+            const clean = saved.map((document) => ({ ...document, dirty: false }))
+      documentsRef.current = clean
+      setDocuments(clean)
       setProjectNotice('Project download started. Keep the .shadowstudio file in a safe place.')
     } catch (error) {
       setProjectNotice(error.message || 'Unable to save the project.')
