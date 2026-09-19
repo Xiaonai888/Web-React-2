@@ -22,7 +22,13 @@ registerTranslationNamespace('giftPopup', {
     "monthlyGifts": "Monthly Gifts -",
     "topFans": "Top Fans",
     "sending": "Sending...",
-    "gift": "Gift"
+    "gift": "Gift",
+    "confirmTitle": "Confirm Gift",
+    "confirmMessage": "Are you sure you want to send this gift?",
+    "confirmTotal": "Total Cost",
+    "confirmBalance": "Your Balance",
+    "confirmCancel": "Cancel",
+    "confirmInsufficient": "Not enough Diamonds"
   },
   "km": {
     "candy": "ស្ករគ្រាប់",
@@ -43,7 +49,13 @@ registerTranslationNamespace('giftPopup', {
     "monthlyGifts": "អំណោយប្រចាំខែ -",
     "topFans": "អ្នកគាំទ្រកំពូល",
     "sending": "កំពុងផ្ញើ...",
-    "gift": "ផ្ញើ"
+    "gift": "ផ្ញើ",
+    "confirmTitle": "បញ្ជាក់ការផ្ញើអំណោយ",
+    "confirmMessage": "តើអ្នកប្រាកដថាចង់ផ្ញើអំណោយនេះមែនទេ?",
+    "confirmTotal": "ពេជ្រត្រូវចំណាយ",
+    "confirmBalance": "ពេជ្រដែលមាន",
+    "confirmCancel": "បោះបង់",
+    "confirmInsufficient": "ពេជ្រមិនគ្រប់គ្រាន់"
   },
   "zh": {
     "candy": "糖果",
@@ -64,7 +76,13 @@ registerTranslationNamespace('giftPopup', {
     "monthlyGifts": "本月礼物 -",
     "topFans": "顶级粉丝",
     "sending": "发送中...",
-    "gift": "赠送"
+    "gift": "赠送",
+    "confirmTitle": "确认赠送",
+    "confirmMessage": "确定要发送这份礼物吗？",
+    "confirmTotal": "总花费",
+    "confirmBalance": "钻石余额",
+    "confirmCancel": "取消",
+    "confirmInsufficient": "钻石不足"
   },
   "ja": {
     "candy": "キャンディ",
@@ -85,7 +103,13 @@ registerTranslationNamespace('giftPopup', {
     "monthlyGifts": "今月のギフト -",
     "topFans": "トップファン",
     "sending": "送信中...",
-    "gift": "送る"
+    "gift": "送る",
+    "confirmTitle": "ギフト送信の確認",
+    "confirmMessage": "このギフトを送信しますか？",
+    "confirmTotal": "合計費用",
+    "confirmBalance": "ダイヤ残高",
+    "confirmCancel": "キャンセル",
+    "confirmInsufficient": "ダイヤが足りません"
   },
   "ko": {
     "candy": "캔디",
@@ -106,7 +130,13 @@ registerTranslationNamespace('giftPopup', {
     "monthlyGifts": "이번 달 선물 -",
     "topFans": "톱 팬",
     "sending": "보내는 중...",
-    "gift": "선물"
+    "gift": "선물",
+    "confirmTitle": "선물 보내기 확인",
+    "confirmMessage": "이 선물을 보내시겠습니까?",
+    "confirmTotal": "총 비용",
+    "confirmBalance": "다이아 잔액",
+    "confirmCancel": "취소",
+    "confirmInsufficient": "다이아가 부족합니다"
   }
 })
 
@@ -153,6 +183,7 @@ export default function GiftPopup({
   const [wallet, setWallet] = useState({ coin_balance: 0, diamond_balance: 0 })
   const [loadingWallet, setLoadingWallet] = useState(false)
   const [sending, setSending] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [dragOffset, setDragOffset] = useState(0)
   const [dragging, setDragging] = useState(false)
@@ -163,9 +194,12 @@ export default function GiftPopup({
   const closeTimerRef = useRef(null)
 
   const selectedGift = GIFT_ITEMS.find((item) => item.key === selectedKey) || GIFT_ITEMS[0]
+  const totalGiftCost = selectedGift.price * quantity
+  const insufficientDiamonds = wallet.diamond_balance < totalGiftCost
 
   useEffect(() => {
     if (!open) {
+      setConfirmOpen(false)
       setDragOffset(0)
       setDragging(false)
       dragStartYRef.current = null
@@ -242,6 +276,15 @@ export default function GiftPopup({
       ignore = true
     }
   }, [open])
+
+  useEffect(() => {
+    if (!confirmOpen || sending) return undefined
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setConfirmOpen(false)
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [confirmOpen, sending])
 
   const beginDrag = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
@@ -339,11 +382,22 @@ export default function GiftPopup({
       const points = Number(data.gift?.support_points || selectedGift.points * quantity)
       setFeedback(t('giftPopup.sentSupport', { gift: t(`giftPopup.${selectedGift.nameKey}`), points: formatNumber(points) }))
       onGiftSent?.(data)
+      setConfirmOpen(false)
     } catch (error) {
       setFeedback(error.message || t('giftPopup.failedSend'))
+      setConfirmOpen(false)
     } finally {
       setSending(false)
     }
+  }
+
+  const handleGiftClick = () => {
+    if (selectedGift.currency === 'diamond' && getReaderToken() && storyId && !['undefined', 'null'].includes(String(storyId))) {
+      setFeedback('')
+      setConfirmOpen(true)
+      return
+    }
+    handleSendGift()
   }
 
   if (!open) return null
@@ -477,7 +531,7 @@ export default function GiftPopup({
 
             <button
               type="button"
-              onClick={handleSendGift}
+              onClick={handleGiftClick}
               disabled={sending || loadingWallet}
               className="h-9 bg-[#ff3b5f] px-5 text-[12px] font-bold text-white active:scale-95 disabled:bg-[#ff9aaa]"
             >
@@ -486,6 +540,35 @@ export default function GiftPopup({
           </div>
         </div>
       </section>
+      {confirmOpen && selectedGift.currency === 'diamond' ? (
+        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60 px-4 py-4">
+          <button type="button" aria-label={t('giftPopup.confirmCancel')} disabled={sending} onClick={() => setConfirmOpen(false)} className="absolute inset-0" />
+          <section role="dialog" aria-modal="true" aria-labelledby="gift-confirm-heading" className="relative max-h-[calc(100dvh-32px)] w-full max-w-[340px] overflow-y-auto rounded-[22px] bg-[var(--shadow-bg-surface)] p-5 shadow-2xl">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#ff3b5f]/10 text-2xl">🎁</div>
+            <h3 id="gift-confirm-heading" className="mt-3 text-center text-[17px] font-bold text-[var(--shadow-text-primary)]">{t('giftPopup.confirmTitle')}</h3>
+            <p className="mt-1 text-center text-[12px] text-[var(--shadow-text-secondary)]">{t('giftPopup.confirmMessage')}</p>
+            <div className="mt-4 space-y-3 rounded-[14px] bg-[var(--shadow-bg-soft)] p-3 text-[13px]">
+              <div className="flex items-center justify-between gap-2 text-[var(--shadow-text-primary)]">
+                <span className="text-[var(--shadow-text-secondary)]">{t('giftPopup.gift')}</span>
+                <span className="flex items-center gap-1.5 font-semibold"><img src={selectedGift.image} alt="" className="h-7 w-7 object-contain" />{t(`giftPopup.${selectedGift.nameKey}`)} × {quantity}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 text-[var(--shadow-text-primary)]">
+                <span className="text-[var(--shadow-text-secondary)]">{t('giftPopup.confirmTotal')}</span>
+                <span className="flex items-center gap-1 font-bold"><img src="/assets/Icons/Diamond.svg" alt="" className="h-4 w-4" />{formatNumber(totalGiftCost)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 text-[var(--shadow-text-primary)]">
+                <span className="text-[var(--shadow-text-secondary)]">{t('giftPopup.confirmBalance')}</span>
+                <span className="flex items-center gap-1 font-semibold"><img src="/assets/Icons/Diamond.svg" alt="" className="h-4 w-4" />{formatNumber(wallet.diamond_balance)}</span>
+              </div>
+            </div>
+            {insufficientDiamonds && <p className="mt-3 text-center text-[12px] font-semibold text-[#ff3b5f]">{t('giftPopup.confirmInsufficient')}</p>}
+            <button type="button" onClick={handleSendGift} disabled={sending || insufficientDiamonds} className="mt-4 w-full rounded-full bg-[#ff3b5f] px-4 py-3 text-[13px] font-bold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50">
+              {sending ? t('giftPopup.sending') : t('giftPopup.confirmTitle')}
+            </button>
+            <button type="button" onClick={() => setConfirmOpen(false)} disabled={sending} className="mt-2 w-full rounded-full border border-[var(--shadow-border)] px-4 py-3 text-[13px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50">{t('giftPopup.confirmCancel')}</button>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
