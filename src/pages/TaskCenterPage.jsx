@@ -1380,8 +1380,8 @@ export default function TaskCenterPage() {
   const coverRef = useRef(null)
   const smartRefreshVersionRef = useRef('')
   const smartRefreshTimerRef = useRef(null)
-  const versionCheckInFlightRef = useRef(null)
-  const nextVersionCheckAtRef = useRef(0)
+  const smartRefreshChecksRef = useRef(0)
+  const smartRefreshCooldownUntilRef = useRef(0)
   const loadTaskCenterRef = useRef(null)
   const token = getReaderToken()
   const storedUser = getStoredUser()
@@ -1504,7 +1504,6 @@ export default function TaskCenterPage() {
 
   async function loadTaskCenter(options = {}) {
   const silent = Boolean(options.silent)
-  const skipWeekly = Boolean(options.skipWeekly)
 
   if (!token) {
     if (!silent) setLoading(false)
@@ -1522,7 +1521,7 @@ export default function TaskCenterPage() {
     if (!silent) setLoading(true)
     setMessage('')
 
-    const weeklyResult = skipWeekly ? null : await loadWeeklyReading()
+    const weeklyResult = await loadWeeklyReading()
 
     if (weeklyResult?.authFailed) {
       return
@@ -1589,46 +1588,33 @@ function clearSmartRefreshTimer() {
 }
 
 async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
-  if (document.visibilityState !== 'visible' || !navigator.onLine) return false
-  if (versionCheckInFlightRef.current) return versionCheckInFlightRef.current
+  if (document.visibilityState !== 'visible') return false
 
-  const now = Date.now()
-  if (now < nextVersionCheckAtRef.current) return false
-  nextVersionCheckAtRef.current = now + 2 * 60 * 1000
+  const nextVersion = await fetchTaskCenterVersion().catch(() => '')
 
-  const request = (async () => {
-    const nextVersion = await fetchTaskCenterVersion().catch(() => '')
-    if (!nextVersion) return false
+  if (!nextVersion) return false
 
-    const previousVersion = smartRefreshVersionRef.current
-    if (!previousVersion) {
-      smartRefreshVersionRef.current = nextVersion
-      return false
-    }
+  const previousVersion = smartRefreshVersionRef.current
 
-    if (nextVersion !== previousVersion) {
-      smartRefreshVersionRef.current = nextVersion
-      if (refreshOnChange) {
-        await Promise.allSettled([
-          loadTaskCenterRef.current?.({ silent: true }),
-          loadTaskCover(),
-        ])
-      }
-      return true
-    }
-
+  if (!previousVersion) {
+    smartRefreshVersionRef.current = nextVersion
     return false
-  })()
-
-  versionCheckInFlightRef.current = request
-
-  try {
-    return await request
-  } finally {
-    if (versionCheckInFlightRef.current === request) {
-      versionCheckInFlightRef.current = null
-    }
   }
+
+  if (nextVersion !== previousVersion) {
+    smartRefreshVersionRef.current = nextVersion
+
+    if (refreshOnChange) {
+      await Promise.allSettled([
+        loadTaskCenterRef.current?.({ silent: true }),
+        loadTaskCover(),
+      ])
+    }
+
+    return true
+  }
+
+  return false
 }
 
 function startSmartRefreshCycle() {
@@ -1942,7 +1928,7 @@ function startSmartRefreshCycle() {
         setWeeklyReading(data.weekly_reading)
       }
 
-      await loadTaskCenter({ silent: true, skipWeekly: true })
+      await loadTaskCenter({ silent: true })
       setToast(t('taskCenterPage.weeklyVoucherAdded'))
     } catch (error) {
       setToast(
