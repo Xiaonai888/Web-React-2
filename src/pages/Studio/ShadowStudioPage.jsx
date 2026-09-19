@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -210,6 +210,10 @@ export default function ShadowStudioPage() {
   const navigate = useNavigate()
   const { t: tx } = useDisplayTranslation()
   const canvasRef = useRef(null)
+  const workRef = useRef(null)
+  const panRef = useRef(null)
+  const spaceRef = useRef(false)
+  const zoomAnchorRef = useRef(null)
   const drawingRef = useRef(false)
   const lastRef = useRef(null)
   const historyRef = useRef([])
@@ -233,6 +237,7 @@ export default function ShadowStudioPage() {
   const [size, setSize] = useState(8)
   const [opacity, setOpacity] = useState(100)
   const [zoom, setZoom] = useState(75)
+  const [handMode, setHandMode] = useState(false)
   const [projectBusy, setProjectBusy] = useState(false)
   const [projectNotice, setProjectNotice] = useState('')
   const [projectLoadKey, setProjectLoadKey] = useState(0)
@@ -703,6 +708,146 @@ export default function ShadowStudioPage() {
     }
   }
 
+  function clampZoom(value) {
+    return Math.min(400, Math.max(10, Math.round(value)))
+  }
+
+  function zoomAround(nextZoom, clientX, clientY) {
+    const work = workRef.current
+    const canvas = canvasRef.current
+    if (!work || !canvas || !workspaceStarted) return
+
+    const target = clampZoom(nextZoom)
+    if (target === zoom) return
+
+    const canvasRect = canvas.getBoundingClientRect()
+    const workRect = work.getBoundingClientRect()
+    const x = clientX ?? workRect.left + workRect.width / 2
+    const y = clientY ?? workRect.top + workRect.height / 2
+
+    zoomAnchorRef.current = {
+      x,
+      y,
+      canvasX: (x - canvasRect.left) / canvasRect.width,
+      canvasY: (y - canvasRect.top) / canvasRect.height,
+    }
+    setZoom(target)
+  }
+
+  function fitCanvas() {
+    const work = workRef.current
+    const document = documentsRef.current.find((item) => item.id === activeDocumentId)
+    if (!work || !document) return
+
+    const width = Math.max(100, work.clientWidth - 70)
+    const height = Math.max(100, work.clientHeight - 70)
+    const next = clampZoom(Math.min(width / document.width, height / document.height) * 100)
+    zoomAnchorRef.current = null
+    setZoom(next)
+    requestAnimationFrame(() => {
+      if (workRef.current !== work) return
+      work.scrollLeft = 0
+      work.scrollTop = 0
+    })
+  }
+
+  useLayoutEffect(() => {
+    const anchor = zoomAnchorRef.current
+    const work = workRef.current
+    const canvas = canvasRef.current
+    if (!anchor || !work || !canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    work.scrollLeft += rect.left + anchor.canvasX * rect.width - anchor.x
+    work.scrollTop += rect.top + anchor.canvasY * rect.height - anchor.y
+    zoomAnchorRef.current = null
+  }, [zoom])
+
+  useEffect(() => {
+    if (!workspaceStarted || !activeDocumentId) return
+    const frame = requestAnimationFrame(fitCanvas)
+    return () => cancelAnimationFrame(frame)
+  }, [workspaceStarted, activeDocumentId, projectLoadKey])
+
+  useEffect(() => {
+    function onKeyDown(event) {
+      const target = event.target
+      if (event.code !== 'Space' || event.repeat || !workspaceStarted || newFileOpen) return
+      if (target?.closest?.('input, textarea, select, button, [contenteditable="true"]')) return
+      event.preventDefault()
+      spaceRef.current = true
+      setHandMode(true)
+    }
+
+    function releaseSpace(event) {
+      if (event?.code && event.code !== 'Space') return
+      spaceRef.current = false
+      setHandMode(false)
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', releaseSpace)
+    window.addEventListener('blur', releaseSpace)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', releaseSpace)
+      window.removeEventListener('blur', releaseSpace)
+    }
+  }, [workspaceStarted, newFileOpen])
+
+  useEffect(() => {
+    const work = workRef.current
+    if (!work || !workspaceStarted) return
+
+    function onWheel(event) {
+      if (!event.ctrlKey && !event.metaKey) return
+      event.preventDefault()
+      if (paperLoading || projectBusy || newFileOpen) return
+      zoomAround(zoom * (event.deltaY < 0 ? 1.12 : 1 / 1.12), event.clientX, event.clientY)
+    }
+
+    work.addEventListener('wheel', onWheel, { passive: false })
+    return () => work.removeEventListener('wheel', onWheel)
+  }, [workspaceStarted, zoom, paperLoading, projectBusy, newFileOpen])
+
+  function panStart(event) {
+    if (drawingRef.current || paperLoading || projectBusy) return
+    if (!spaceRef.current && !(event.pointerType === 'mouse' && event.button === 1)) return
+
+    const work = workRef.current
+    if (!work) return
+    event.preventDefault()
+    event.stopPropagation()
+    setHandMode(true)
+    panRef.current = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      left: work.scrollLeft,
+      top: work.scrollTop,
+    }
+    work.setPointerCapture?.(event.pointerId)
+  }
+
+  function panMove(event) {
+    const pan = panRef.current
+    const work = workRef.current
+    if (!pan || !work || pan.id !== event.pointerId) return
+    event.preventDefault()
+    work.scrollLeft = pan.left - (event.clientX - pan.x)
+    work.scrollTop = pan.top - (event.clientY - pan.y)
+  }
+
+  function panEnd(event) {
+    const pan = panRef.current
+    const work = workRef.current
+    if (!pan || pan.id !== event.pointerId) return
+    event.preventDefault()
+    panRef.current = null
+    setHandMode(spaceRef.current)
+    if (work?.hasPointerCapture?.(event.pointerId)) work.releasePointerCapture(event.pointerId)
+  }
+
   function clearCanvas(save = true) {
     paintBlank()
     updateDocument(activeDocumentId, { dirty: true })
@@ -745,7 +890,7 @@ export default function ShadowStudioPage() {
   }
 
   function start(event) {
-    if (paperLoading || projectBusy) return
+    if (paperLoading || projectBusy || panRef.current || spaceRef.current) return
 
     if (
       event.pointerType === 'mouse' &&
@@ -903,15 +1048,15 @@ export default function ShadowStudioPage() {
         .ss-tab-close:hover{background:rgba(255,255,255,.08)}
         .ss-tab-add{height:36px;min-width:42px;border:0;background:transparent;color:#d2d6db;cursor:pointer}
         .ss-tab-count{margin-left:auto;display:flex;align-items:center;padding:0 12px;color:#8f969e;font-size:10px;font-weight:800;white-space:nowrap}
-        .ss-layout{display:grid;grid-template-columns:86px minmax(0,1fr) 236px;min-height:calc(100vh - 118px)}
+        .ss-layout{display:grid;grid-template-columns:86px minmax(0,1fr) 236px;height:calc(100dvh - 118px);min-height:320px}
         .ss-tools{border-right:1px solid #3b4046;background:#292c30;padding:10px 7px}
         .ss-tool{width:100%;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:9px;background:transparent;color:#bbc1c8;font:inherit;cursor:pointer}
         .ss-tool i{font-size:17px}
         .ss-tool span{font-size:10px;font-weight:700}
         .ss-tool.active{border-color:#506273;background:#3b4e61;color:#fff}
-        .ss-work{min-width:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53}
-        .ss-stage{min-width:100%;min-height:calc(100vh - 210px);display:grid;place-items:center}
-        .ss-canvas{display:block;width:${zoom}%;max-width:none;height:auto;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eraser' ? 'cell' : 'crosshair'}}
+        .ss-work{min-width:0;min-height:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53;touch-action:pan-x pan-y;overscroll-behavior:contain}.ss-work.ss-panning,.ss-work.ss-panning *{cursor:grabbing!important}.ss-work.ss-hand,.ss-work.ss-hand *{cursor:grab!important}
+        .ss-stage{width:max-content;min-width:100%;min-height:100%;display:grid;place-items:center}
+        .ss-canvas{display:block;width:${Math.round((activeDocument?.width || W) * zoom / 100)}px;max-width:none;height:auto;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eraser' ? 'cell' : 'crosshair'}}
         .ss-side{border-left:1px solid #3b4046;background:#292c30;padding:16px}
         .ss-section+.ss-section{margin-top:20px;padding-top:18px;border-top:1px solid #3d4248}
         .ss-label{margin:0 0 10px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#c2c7cd}
@@ -925,7 +1070,7 @@ export default function ShadowStudioPage() {
         .ss-controls{width:min(760px,100%);display:flex;align-items:center;gap:15px}
         .ss-control{min-width:0;flex:1;display:flex;align-items:center;gap:7px}
         .ss-control label{font-size:10px;font-weight:800;color:#c2c7cd}
-        .ss-control input{min-width:60px;flex:1;accent-color:#73b9ff}
+        .ss-control input{min-width:60px;flex:1;accent-color:#73b9ff}.ss-zoom-control{flex:2;min-width:265px}.ss-zoom-btn{height:26px;min-width:25px;padding:0 5px;border:1px solid #50555b;border-radius:5px;background:#373b40;color:#eef0f3;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.ss-zoom-btn:disabled{opacity:.4;cursor:default}.ss-zoom-label{min-width:34px}.ss-zoom-control .ss-value{width:36px}
         .ss-dialog-backdrop{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(0,0,0,.62);padding:18px}
         .ss-new-dialog{width:min(560px,100%);overflow:hidden;border:1px solid #555b62;border-radius:10px;background:#3a3d41;color:#fff;box-shadow:0 24px 70px rgba(0,0,0,.5)}
         .ss-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:17px 18px;border-bottom:1px solid #50555b}
@@ -1196,7 +1341,7 @@ export default function ShadowStudioPage() {
               />
             </aside>
 
-            <section className="ss-work">
+            <section ref={workRef} className={`ss-work ${panRef.current ? 'ss-panning' : handMode ? 'ss-hand' : ''}`} onPointerDownCapture={panStart} onPointerMove={panMove} onPointerUp={panEnd} onPointerCancel={panEnd}>
               <div className="ss-stage">
                 <canvas
                   ref={canvasRef}
@@ -1339,22 +1484,22 @@ export default function ShadowStudioPage() {
                 </span>
               </div>
 
-              <div className="ss-control">
-                <label>
-                  {tx('shadowStudio.zoom')}
-                </label>
+              <div className="ss-control ss-zoom-control">
+                <label>{tx('shadowStudio.zoom')}</label>
+                <button type="button" className="ss-zoom-btn" title="Zoom out" aria-label="Zoom out" onClick={() => zoomAround(zoom / 1.2)} disabled={zoom <= 10}>−</button>
                 <input
                   type="range"
-                  min="35"
-                  max="125"
+                  min="10"
+                  max="400"
+                  step="1"
                   value={zoom}
-                  onChange={(event) =>
-                    setZoom(Number(event.target.value))
-                  }
+                  aria-label="Canvas zoom"
+                  onChange={(event) => zoomAround(Number(event.target.value))}
                 />
-                <span className="ss-value">
-                  {zoom}%
-                </span>
+                <button type="button" className="ss-zoom-btn" title="Zoom in" aria-label="Zoom in" onClick={() => zoomAround(zoom * 1.2)} disabled={zoom >= 400}>+</button>
+                <span className="ss-value">{zoom}%</span>
+                <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={() => zoomAround(100)}>100%</button>
+                <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={fitCanvas}>Fit</button>
               </div>
             </div>
           </footer>
