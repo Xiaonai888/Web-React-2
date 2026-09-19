@@ -67,7 +67,7 @@ export default function StudioFileMenu({
     { separator: true },
     { label: 'Save Project', detail: 'Download project', action: onSave, disabled: !hasPaper || busy },
     { label: 'Save As...', detail: 'Name a project copy', action: onSaveAs, disabled: !hasPaper || busy },
-    { label: 'Export PNG...', detail: 'Current paper', action: onExport, disabled: !hasPaper || !inWorkspace || busy },
+    { label: 'Export Image...', detail: 'PNG / JPEG / WebP', action: onExport, disabled: !hasPaper || !inWorkspace || busy },
     { separator: true },
     { label: 'Close Paper', action: onClose, disabled: !hasPaper || !inWorkspace || busy },
     { label: 'Close All Papers', action: onCloseAll, disabled: !hasPaper || busy },
