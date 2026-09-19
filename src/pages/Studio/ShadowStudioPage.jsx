@@ -7,6 +7,7 @@ import StudioFileMenu from './StudioFileMenu'
 import StudioViewMenu from './StudioViewMenu'
 import StudioEditMenu from './StudioEditMenu'
 import StudioExportDialog from './StudioExportDialog'
+import StudioPaperTabs from './StudioPaperTabs'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
 import './ShadowStudioMobile.css'
@@ -650,6 +651,14 @@ export default function ShadowStudioPage() {
     setActiveDocumentId(document.id)
   }
 
+  function renameDocument(documentId, nextName) {
+    if (paperLoading || projectBusy || recoveryBusy) return
+    const current = documentsRef.current.find((paper) => paper.id === documentId)
+    const name = String(nextName || '').trim().slice(0, 80)
+    if (!current || !name || current.name === name) return
+    updateDocument(documentId, { name, dirty: true })
+  }
+
   function switchDocument(documentId) {
     if (paperLoading || projectBusy || documentId === activeDocumentId) return
 
@@ -1082,16 +1091,6 @@ export default function ShadowStudioPage() {
         .ss-btn.primary{border-color:#4b9df4;background:#4b9df4;color:#08131f}
         .ss-btn.icon{width:32px;padding:0;display:grid;place-items:center}
         .ss-btn:disabled{opacity:.35;cursor:default}
-        .ss-tabs{position:sticky;top:34px;z-index:29;display:flex;align-items:stretch;min-height:36px;overflow-x:auto;border-bottom:1px solid #3d4248;background:#24272a;padding-left:8px}
-        .ss-tab{min-width:118px;max-width:220px;height:36px;display:flex;align-items:center;border-right:1px solid #3d4248;background:#292c30;color:#b9c0c7}
-        .ss-tab.active{background:#3a3f45;color:#fff}
-        .ss-tab-main{min-width:0;flex:1;height:36px;display:flex;align-items:center;gap:8px;border:0;background:transparent;color:inherit;padding:0 4px 0 10px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
-        .ss-tab-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .ss-dirty{height:6px;width:6px;flex:0 0 6px;border-radius:999px;background:#9ca3af}
-        .ss-tab-close{height:24px;width:24px;display:grid;place-items:center;border:0;border-radius:5px;background:transparent;color:inherit;cursor:pointer}
-        .ss-tab-close:hover{background:rgba(255,255,255,.08)}
-        .ss-tab-add{height:36px;min-width:42px;border:0;background:transparent;color:#d2d6db;cursor:pointer}
-        .ss-tab-count{margin-left:auto;display:flex;align-items:center;padding:0 12px;color:#8f969e;font-size:10px;font-weight:800;white-space:nowrap}
         .ss-layout{display:grid;grid-template-columns:86px minmax(0,1fr) 236px;height:calc(100dvh - 70px);min-height:320px}
         .ss-tools{border-right:1px solid #3b4046;background:#292c30;padding:10px 7px}
         .ss-tool{width:100%;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:9px;background:transparent;color:#bbc1c8;font:inherit;cursor:pointer}
@@ -1297,58 +1296,17 @@ export default function ShadowStudioPage() {
           {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
               {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
 
-          <div className="ss-tabs">
-            {documents.map((document) => (
-              <div
-                key={document.id}
-                className={`ss-tab ${
-                  document.id === activeDocumentId
-                    ? 'active'
-                    : ''
-                }`}
-              >
-                <button
-                  type="button"
-                  className="ss-tab-main"
-                  onClick={() =>
-                    switchDocument(document.id)
-                  }
-                >
-                  {document.dirty ? (
-                    <span className="ss-dirty" />
-                  ) : null}
-                  <span className="ss-tab-name">
-                    {document.name}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  className="ss-tab-close"
-                  title={tx('shadowStudio.closePaper')}
-                  aria-label={tx('shadowStudio.closePaper')}
-                  onClick={(event) =>
-                    closeDocument(document.id, event)
-                  }
-                >
-                  <i className="fa-solid fa-xmark" />
-                </button>
-              </div>
-            ))}
-
-            <button
-              type="button"
-              className="ss-tab-add"
-              onClick={() => openNewFile('basic')}
-              title={tx('shadowStudio.newPaper')}
-            >
-              <i className="fa-solid fa-plus" />
-            </button>
-
-            <div className="ss-tab-count">
-              {documents.length}/{DOCUMENT_LIMIT}
-            </div>
-          </div>
+          <StudioPaperTabs
+            documents={documents}
+            activeDocumentId={activeDocumentId}
+            limit={DOCUMENT_LIMIT}
+            disabled={paperLoading || projectBusy || recoveryBusy}
+            onSwitch={switchDocument}
+            onClose={closeDocument}
+            onNew={() => openNewFile('basic')}
+            onRename={renameDocument}
+            labels={{ close: tx('shadowStudio.closePaper'), new: tx('shadowStudio.newPaper') }}
+          />
 
           <main className="ss-layout">
             <StudioToolRail
