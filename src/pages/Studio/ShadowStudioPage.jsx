@@ -2,13 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
+import StudioNewFileDialog from './StudioNewFileDialog'
 import StudioFileMenu from './StudioFileMenu'
 import StudioViewMenu from './StudioViewMenu'
 import StudioEditMenu from './StudioEditMenu'
 import StudioExportDialog from './StudioExportDialog'
 import { readStudioImage } from './StudioImageImport'
 import StudioPaperTabs from './StudioPaperTabs'
+import StudioHome from './StudioHome'
 import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
@@ -1107,26 +1108,6 @@ export default function ShadowStudioPage() {
         .ss-menu-btn:disabled{opacity:.45;cursor:default}
         .ss-hidden-file{display:none}
         .ss-project-message{margin:14px 0 0;border:1px solid #59636d;border-radius:8px;background:#303842;color:#d7e6f7;padding:11px 13px;font-size:11px;line-height:1.5}
-        .ss-recovery-card{border:1px solid #80a9cf;border-radius:12px;background:#2c3843;padding:18px;margin:20px 0;color:#e9f3ff}
-        .ss-recovery-card h2{margin:0 0 7px;font-size:16px;font-weight:800}
-        .ss-recovery-card p{margin:0 0 12px;font-size:11px;line-height:1.5;color:#c2d1df}
-        .ss-recovery-actions{display:flex;flex-wrap:wrap;gap:8px}
-        .ss-home-link:disabled{opacity:.45;cursor:default}
-        .ss-home{min-height:calc(100vh - 34px);display:grid;grid-template-columns:180px minmax(0,1fr);background:#1e2023}
-        .ss-home-side{border-right:1px solid #35393e;background:#25272a;padding:22px 18px}
-        .ss-home-primary{width:100%;height:38px;border:0;border-radius:8px;background:#2d8cff;color:#fff;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
-        .ss-home-link{width:100%;height:38px;margin-top:8px;border:1px solid #42474d;border-radius:8px;background:transparent;color:#eef0f3;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-        .ss-home-main{padding:42px clamp(24px,5vw,72px)}
-        .ss-home-main h1{margin:0;font-size:29px;font-weight:700}
-        .ss-home-main>p{margin:7px 0 0;color:#aab0b7;font-size:13px}
-        .ss-preset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:28px}
-        .ss-preset-card{min-height:112px;border:1px solid #3b4046;border-radius:10px;background:#292c30;color:#fff;padding:16px;text-align:left;cursor:pointer}
-        .ss-preset-card:hover{border-color:#5a93d6;background:#30343a}
-        .ss-preset-card strong{display:block;font-size:13px}
-        .ss-preset-card span{display:block;margin-top:8px;color:#9fa6ae;font-size:10px;line-height:1.5}
-        .ss-recent{margin-top:36px}
-        .ss-recent h2{margin:0 0 12px;font-size:15px}
-        .ss-empty{border:1px dashed #41464c;border-radius:12px;background:#24272a;padding:22px;color:#8f969e;font-size:12px}
         .ss-top{position:sticky;top:34px;z-index:30;height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 10px;border-bottom:1px solid #41464c;background:#2c2f33}
         .ss-row{display:flex;align-items:center;gap:7px}
         .ss-doc-info{color:#c9cdd2;font-size:10px;font-weight:700}
@@ -1252,95 +1233,32 @@ export default function ShadowStudioPage() {
       </StudioChrome>
 
       {!workspaceStarted ? (
-        <main className="ss-home">
-          <aside className="ss-home-side">
-            <button
-              type="button"
-              className="ss-home-primary"
-              onClick={() => openNewFile('basic')}
-            >
-              + {tx('shadowStudio.newPaper')}
-            </button>
-
-            <button type="button" className="ss-home-link" disabled={projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy} onClick={chooseProjectFile}>
-              Open Project
-            </button>
-
-            <button type="button" className="ss-home-link" disabled={paperLoading || projectBusy || recoveryBooting || Boolean(recoveryEntry) || recoveryBusy || newFileOpen || exportOpen || documents.length >= DOCUMENT_LIMIT} onClick={chooseImageFile}>
-              Import Image as Paper
-            </button>
-
-            {documents.length ? (
-              <button
-                type="button"
-                className="ss-home-link"
-                onClick={resumeWorkspace}
-              >
-                Continue Workspace
-              </button>
-            ) : null}
-
-            <button type="button" className="ss-home-link" onClick={exitStudio}>
-              {tx('shadowStudio.back')}
-            </button>
-          </aside>
-
-          <section className="ss-home-main">
-            <h1>{tx('shadowStudio.welcomeTitle')}</h1>
-            <p>{tx('shadowStudio.welcomeText')}</p>
-
-            <div className="ss-preset-grid">
-              {STUDIO_PRESETS.filter(
-                (preset) => preset.id !== 'custom'
-              ).map((preset) => (
-                <button
-                  type="button"
-                  key={preset.id}
-                  className="ss-preset-card"
-                  onClick={() => openNewFile(preset.id)}
-                >
-                  <strong>{preset.label}</strong>
-                  <span>
-                    {preset.width} × {preset.height} px
-                    <br />
-                    {preset.resolution} PPI
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {recoveryBooting ? (
-              <div className="ss-project-message" role="status">Checking for locally autosaved work...</div>
-            ) : null}
-
-            {recoveryEntry ? (
-              <section className="ss-recovery-card" aria-label="Local recovery">
-                <h2>Recover your last workspace</h2>
-                <p>
-                  {recoveryEntry.documents.length} paper(s) · Autosaved{' '}
-                  {new Date(recoveryEntry.savedAt).toLocaleString()}. Restore them before creating or opening another project.
-                </p>
-                <div className="ss-recovery-actions">
-                  <button type="button" className="ss-btn primary" disabled={recoveryBusy} onClick={recoverWorkspace}>
-                    {recoveryBusy ? 'Restoring...' : 'Restore Workspace'}
-                  </button>
-                  <button type="button" className="ss-btn" disabled={recoveryBusy} onClick={discardRecovery}>
-                    Discard Recovery
-                  </button>
-                </div>
-              </section>
-            ) : null}
-
-            <section className="ss-recent">
-              <h2>Project files</h2>
-              <div className="ss-empty">
-                Save Project downloads a .shadowstudio file to your device. Open Project reopens it later. Local autosave is only a temporary browser recovery copy.
-              </div>
-              {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
-              {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
-            </section>
-          </section>
-        </main>
+        <StudioHome
+          documents={documents}
+          documentLimit={DOCUMENT_LIMIT}
+          recoveryBooting={recoveryBooting}
+          recoveryEntry={recoveryEntry}
+          recoveryBusy={recoveryBusy}
+          projectBusy={projectBusy}
+          paperLoading={paperLoading}
+          newFileOpen={newFileOpen}
+          exportOpen={exportOpen}
+          projectNotice={projectNotice}
+          recoveryStatus={recoveryStatus}
+          onNewFile={openNewFile}
+          onOpenProject={chooseProjectFile}
+          onImportImage={chooseImageFile}
+          onResume={resumeWorkspace}
+          onExit={exitStudio}
+          onRecover={recoverWorkspace}
+          onDiscardRecovery={discardRecovery}
+          labels={{
+            newPaper: tx('shadowStudio.newPaper'),
+            back: tx('shadowStudio.back'),
+            welcomeTitle: tx('shadowStudio.welcomeTitle'),
+            welcomeText: tx('shadowStudio.welcomeText'),
+          }}
+        />
       ) : (
         <>
           {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
