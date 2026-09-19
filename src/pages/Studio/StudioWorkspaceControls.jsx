@@ -5,15 +5,6 @@ import StudioBrushSettings from './StudioBrushSettings'
 import StudioRightPanels from './StudioRightPanels'
 import StudioToolPalette from './StudioToolPalette'
 
-function Tool({ active, icon, label, onClick }) {
-  return (
-    <button type="button" className={`ss-tool ${active ? 'active' : ''}`} onClick={onClick} title={label} aria-label={label} aria-pressed={active}>
-      <i className={icon} />
-      <span>{label}</span>
-    </button>
-  )
-}
-
 export function StudioToolRail({ tool, onToolChange, labels }) {
   return (
     <div className="ss-left-workspace">
@@ -42,11 +33,7 @@ export function StudioToolRail({ tool, onToolChange, labels }) {
           .shadow-studio .ss-brush-dock{display:none}
         }
       `}</style>
-      <aside className="ss-tools" aria-label="Drawing tools">
-        <Tool active={tool === 'brush'} icon="fa-solid fa-paintbrush" label={labels.brush} onClick={() => onToolChange('brush')} />
-        <Tool active={tool === 'eraser'} icon="fa-solid fa-eraser" label={labels.eraser} onClick={() => onToolChange('eraser')} />
-        <Tool active={tool === 'eyedropper'} icon="fa-solid fa-eye-dropper" label={labels.eyedropper} onClick={() => onToolChange('eyedropper')} />
-      </aside>
+      <StudioToolPalette tool={tool} onToolChange={onToolChange} labels={labels} />
       <aside className="ss-brush-dock" id="ss-brush-dock-root" aria-label="Brush settings panel">
         <div className="ss-brush-dock-title"><span>Brush</span><small>Settings &amp; presets</small></div>
       </aside>
