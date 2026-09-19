@@ -80,12 +80,17 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
   const [favorites, setFavorites] = useState(() => readColors(FAVORITES_KEY, 12))
   const [recentColors, setRecentColors] = useState(() => readColors(RECENTS_KEY, 8))
   const [copyStatus, setCopyStatus] = useState('')
+  const [selectedHue, setSelectedHue] = useState(() => hexToHsv(color).h)
+  const [numericDraft, setNumericDraft] = useState({})
   const dragRef = useRef(null)
   const currentRef = useRef(color)
   currentRef.current = color
 
   useEffect(() => {
     setHexText(color.toUpperCase())
+    setNumericDraft({})
+    const next = hexToHsv(color)
+    if (next.s > 0 && next.v > 0) setSelectedHue(next.h)
   }, [color])
 
   useEffect(() => {
@@ -105,6 +110,7 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
   }, [recentColors])
 
   const hsv = hexToHsv(color)
+  const activeHue = hsv.s > 0 && hsv.v > 0 ? hsv.h : selectedHue
   const rgb = hexToRgb(color)
 
   function rememberColor(nextColor) {
@@ -121,6 +127,10 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
 
   function removeFavorite(toRemove) {
     setFavorites((current) => current.filter((item) => item !== toRemove))
+  }
+
+  function clearRecentColors() {
+    setRecentColors([])
   }
 
   function pick(nextColor) {
@@ -140,11 +150,16 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
       const dx = event.clientX - rect.left - rect.width / 2
       const dy = event.clientY - rect.top - rect.height / 2
       const angle = (Math.atan2(dy, dx) * 180 / Math.PI + 450) % 360
-      onChange(hsvToHex(angle, hsv.s, hsv.v))
+      setSelectedHue(angle)
+      const next = hsvToHex(angle, hsv.s, hsv.v)
+      if (dragRef.current) dragRef.current.color = next
+      onChange(next)
     } else {
       const saturation = clamp((event.clientX - rect.left) / rect.width, 0, 1)
       const value = 1 - clamp((event.clientY - rect.top) / rect.height, 0, 1)
-      onChange(hsvToHex(hsv.h, saturation, value))
+      const next = hsvToHex(activeHue, saturation, value)
+      if (dragRef.current) dragRef.current.color = next
+      onChange(next)
     }
   }
 
@@ -152,7 +167,7 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
     if (event.pointerType === 'mouse' && event.button !== 0) return
     event.preventDefault()
     setPrevious(currentRef.current.toUpperCase())
-    dragRef.current = { id: event.pointerId, kind }
+    dragRef.current = { id: event.pointerId, kind, color: currentRef.current }
     event.currentTarget.setPointerCapture?.(event.pointerId)
     updateDrag(event, kind)
   }
@@ -165,8 +180,9 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
 
   function endDrag(event) {
     if (dragRef.current?.id !== event.pointerId) return
+    const finalColor = dragRef.current.color
     dragRef.current = null
-    rememberColor(currentRef.current)
+    rememberColor(finalColor)
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
@@ -178,23 +194,29 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
     else setHexText(color.toUpperCase())
   }
 
-  function updateRgb(channel, text) {
+  function changeNumeric(key, text, onValid) {
+    setNumericDraft((current) => ({ ...current, [key]: text }))
     if (text.trim() === '') return
     const value = Number(text)
-    if (!Number.isFinite(value)) return
-    const next = [...rgb]
-    next[channel] = clamp(Math.round(value), 0, 255)
-    pick(rgbToHex(next))
+    if (Number.isFinite(value)) onValid(value)
+  }
+
+  function updateRgb(channel, text) {
+    changeNumeric(`rgb-${channel}`, text, (value) => {
+      const next = [...rgb]
+      next[channel] = clamp(Math.round(value), 0, 255)
+      pick(rgbToHex(next))
+    })
   }
 
   function updateHsv(channel, text) {
-    if (text.trim() === '') return
-    const value = Number(text)
-    if (!Number.isFinite(value)) return
-    const h = channel === 'h' ? clamp(Math.round(value), 0, 359) : hsv.h
-    const saturation = channel === 's' ? clamp(value, 0, 100) / 100 : hsv.s
-    const brightness = channel === 'v' ? clamp(value, 0, 100) / 100 : hsv.v
-    pick(hsvToHex(h, saturation, brightness))
+    changeNumeric(`hsv-${channel}`, text, (value) => {
+      const h = channel === 'h' ? clamp(Math.round(value), 0, 359) : activeHue
+      if (channel === 'h') setSelectedHue(h)
+      const saturation = channel === 's' ? clamp(value, 0, 100) / 100 : hsv.s
+      const brightness = channel === 'v' ? clamp(value, 0, 100) / 100 : hsv.v
+      pick(hsvToHex(h, saturation, brightness))
+    })
   }
 
   async function copyHex() {
@@ -278,10 +300,12 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
           onKeyDown={(event) => {
             if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
             event.preventDefault()
-            pick(hsvToHex(hsv.h + (event.key === 'ArrowRight' ? 1 : -1), hsv.s, hsv.v))
+            const nextHue = (activeHue + (event.key === 'ArrowRight' ? 1 : -1) + 360) % 360
+             setSelectedHue(nextHue)
+             pick(hsvToHex(nextHue, hsv.s, hsv.v))
           }}>
-          <span className="ss-hue-marker" style={{ left: `${50 + 45 * Math.sin(hsv.h * Math.PI / 180)}%`, top: `${50 - 45 * Math.cos(hsv.h * Math.PI / 180)}%` }} />
-          <div className="ss-sv-square" role="group" aria-label="Saturation and brightness" style={{ '--ss-hue': hsv.h }}
+          <span className="ss-hue-marker" style={{ left: `${50 + 45 * Math.sin(activeHue * Math.PI / 180)}%`, top: `${50 - 45 * Math.cos(activeHue * Math.PI / 180)}%` }} />
+          <div className="ss-sv-square" role="group" aria-label="Saturation and brightness" style={{ '--ss-hue': activeHue }}
             onPointerDown={(event) => { event.stopPropagation(); startDrag(event, 'sv') }}
             onPointerMove={(event) => { event.stopPropagation(); moveDrag(event, 'sv') }}
             onPointerUp={(event) => { event.stopPropagation(); endDrag(event) }}
@@ -303,17 +327,17 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
             <div className="ss-color-numeric-title">RGB · 0–255</div>
             {['R', 'G', 'B'].map((label, channel) => (
               <label className="ss-color-number" key={label}>{label}
-                <input type="number" min="0" max="255" step="1" inputMode="numeric" aria-label={`${label} channel`} value={rgb[channel]} onChange={(event) => updateRgb(channel, event.target.value)} />
+                <input type="number" min="0" max="255" step="1" inputMode="numeric" aria-label={`${label} channel`} value={numericDraft[`rgb-${channel}`] ?? rgb[channel]} onChange={(event) => updateRgb(channel, event.target.value)} onBlur={() => setNumericDraft((current) => { const next = { ...current }; delete next[`rgb-${channel}`]; return next })} />
               </label>
             ))}
             <div className="ss-color-numeric-title">HSV · Hue 0–359° / Saturation &amp; Value 0–100%</div>
             {[
-              { label: 'H', key: 'h', value: Math.round(hsv.h), max: 359 },
+              { label: 'H', key: 'h', value: Math.round(activeHue), max: 359 },
               { label: 'S', key: 's', value: Math.round(hsv.s * 100), max: 100 },
               { label: 'V', key: 'v', value: Math.round(hsv.v * 100), max: 100 },
             ].map((field) => (
               <label className="ss-color-number" key={field.key}>{field.label}
-                <input type="number" min="0" max={field.max} step="1" inputMode="numeric" aria-label={`${field.label} HSV channel`} value={field.value} onChange={(event) => updateHsv(field.key, event.target.value)} />
+                <input type="number" min="0" max={field.max} step="1" inputMode="numeric" aria-label={`${field.label} HSV channel`} value={numericDraft[`hsv-${field.key}`] ?? field.value} onChange={(event) => updateHsv(field.key, event.target.value)} onBlur={() => setNumericDraft((current) => { const next = { ...current }; delete next[`hsv-${field.key}`]; return next })} />
               </label>
             ))}
           </div>
@@ -341,7 +365,7 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
           ) : <p className="ss-color-empty">Choose a color, then save it here.</p>}
         </div>
         <div className="ss-color-group">
-          <div className="ss-color-group-head"><strong>Recent Colors</strong></div>
+          <div className="ss-color-group-head"><strong>Recent Colors</strong><button type="button" className="ss-color-fav-add" disabled={!recentColors.length} onClick={clearRecentColors}>Clear</button></div>
           {recentColors.length ? (
             <div className="ss-color-items" aria-label="Recently used colors">
               {recentColors.map((recent) => <button key={recent} type="button" className="ss-color-recent-pick" style={{ backgroundColor: recent }} title={`Use ${recent}`} aria-label={`Use recent color ${recent}`} onClick={() => pick(recent)} />)}
