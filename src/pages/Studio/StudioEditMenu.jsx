@@ -36,6 +36,7 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
     }
 
     reposition()
+    menuRef.current?.querySelector('[role="menuitem"]:not(:disabled)')?.focus()
     document.addEventListener('pointerdown', dismiss)
     document.addEventListener('keydown', escape)
     window.addEventListener('resize', reposition)
@@ -54,6 +55,7 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
     function shortcuts(event) {
       if (event.defaultPrevented || event.altKey || !(event.ctrlKey || event.metaKey)) return
       if (event.target?.closest?.('input,textarea,select,[contenteditable="true"],[role="dialog"]')) return
+      if (document.querySelector('[aria-modal="true"],.ss-dialog-backdrop,.ss-export-backdrop')) return
       const key = event.key.toLowerCase()
       if (key === 'z' && !event.shiftKey) {
         event.preventDefault()
@@ -68,14 +70,26 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
     return () => window.removeEventListener('keydown', shortcuts)
   }, [enabled, canUndo, canRedo, onUndo, onRedo])
 
+  function navigateMenu(event) {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+    const items = [...(menuRef.current?.querySelectorAll('[role="menuitem"]:not(:disabled)') || [])]
+    if (!items.length) return
+    event.preventDefault()
+    const current = items.indexOf(document.activeElement)
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
+      : event.key === 'ArrowDown' ? (current + 1) % items.length
+        : (current + items.length - 1) % items.length
+    items[next].focus()
+  }
+
   function invoke(action) {
     setOpen(false)
-    action()
+    if (enabled) action()
   }
 
   function clearPaper() {
     setOpen(false)
-    if (window.confirm('Clear this paper? You can restore it with Undo.')) onClear()
+    if (enabled && window.confirm('Clear this paper? You can restore it with Undo.')) onClear()
   }
 
   return (
@@ -98,6 +112,12 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault()
+            setOpen(true)
+          }
+        }}
       >
         Edit
       </button>
@@ -108,6 +128,7 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
           aria-label="Edit drawing"
           className="ss-edit-menu"
           style={{ top: position.top, left: position.left }}
+          onKeyDown={navigateMenu}
         >
           <div className="ss-edit-menu-heading">History</div>
           <button type="button" role="menuitem" className="ss-edit-menu-item" disabled={!canUndo} onClick={() => invoke(onUndo)}>Undo <small>Ctrl/⌘ Z</small></button>
