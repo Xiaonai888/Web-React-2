@@ -31,11 +31,11 @@ function createSessionId() {
 }
 
 function getSessionId() {
-  let sessionId = localStorage.getItem(SESSION_KEY)
+  let sessionId = sessionStorage.getItem(SESSION_KEY)
 
   if (!sessionId) {
     sessionId = createSessionId()
-    localStorage.setItem(SESSION_KEY, sessionId)
+    sessionStorage.setItem(SESSION_KEY, sessionId)
   }
 
   return sessionId
