@@ -14,6 +14,7 @@ const MAX_SIDE = 4096
 const MAX_AREA = 12_000_000
 const SAVED_KEY = 'shadow-studio-paper-presets-v1'
 const MAX_SAVED = 20
+const isHexColor = (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)
 
 const PAPER_GROUPS = [
   { id: 'drawing', label: 'Drawing & Illustration', presets: [STUDIO_PRESETS[0], STUDIO_PRESETS[4], { id: 'art-portrait', label: 'Portrait Illustration', width: 2400, height: 3200, resolution: 300 }, { id: 'art-landscape', label: 'Landscape Illustration', width: 3200, height: 2400, resolution: 300 }] },
@@ -55,7 +56,7 @@ function readSaved() {
   try {
     const value = JSON.parse(window.localStorage.getItem(SAVED_KEY) || '[]')
     if (!Array.isArray(value)) return []
-    return value.filter((item) => item && /^saved-[a-z0-9-]{1,28}$/.test(item.id) && typeof item.label === 'string' && item.label.trim().length > 0 && isValidSize(item.width, item.height, item.resolution)).slice(0, MAX_SAVED)
+    return value.filter((item) => item && /^saved-[a-z0-9-]{1,28}$/.test(item.id) && typeof item.label === 'string' && item.label.trim().length > 0 && isValidSize(item.width, item.height, item.resolution)).slice(0, MAX_SAVED).map((item) => ({ ...item, background: isHexColor(item.background) ? item.background.toUpperCase() : '#FFFFFF' }))
   } catch {
     return []
   }
@@ -113,6 +114,9 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
     setWidth(next.width)
     setHeight(next.height)
     setResolution(next.resolution)
+    const backgroundColor = isHexColor(next.background) ? next.background.toUpperCase() : '#FFFFFF'
+    setBackgroundType(backgroundColor === '#FFFFFF' ? 'white' : backgroundColor === '#000000' ? 'black' : backgroundColor === '#E5E7EB' ? 'gray' : 'custom')
+    setCustomBackground(backgroundColor)
     setError('')
   }
 
@@ -143,6 +147,9 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
     if ((direction === 'portrait' && w > h) || (direction === 'landscape' && h > w)) {
       setWidth(h)
       setHeight(w)
+      setPresetId('custom')
+      setGroupId('custom')
+      setError('')
     }
   }
 
@@ -151,7 +158,7 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
     if (!title) return setError('Enter a name for your custom preset.')
     if (status) return setError(status)
     if (saved.length >= MAX_SAVED) return setError(`You can save up to ${MAX_SAVED} presets. Delete one first.`)
-    const item = { id: `saved-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, label: title, width: Number(width), height: Number(height), resolution: Number(resolution) }
+    const item = { id: `saved-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, label: title, width: Number(width), height: Number(height), resolution: Number(resolution), background }
     const next = [...saved, item]
     try {
       window.localStorage.setItem(SAVED_KEY, JSON.stringify(next))
@@ -167,6 +174,8 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
 
   function deletePreset() {
     if (!presetId.startsWith('saved-')) return
+    const selected = saved.find((item) => item.id === presetId)
+    if (!selected || !window.confirm(`Delete preset "${selected.label}"?`)) return
     const next = saved.filter((item) => item.id !== presetId)
     try {
       window.localStorage.setItem(SAVED_KEY, JSON.stringify(next))
@@ -192,7 +201,7 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
   if (!open) return null
 
   return (
-    <div className="ss-dialog-backdrop">
+    <div className="ss-dialog-backdrop" role="dialog" aria-modal="true" aria-label="New paper">
       <style>{`
         .shadow-studio .ss-paper-dialog{width:min(640px,100%);max-height:calc(100dvh - 20px);display:flex;flex-direction:column;overflow:hidden}
         .shadow-studio .ss-paper-dialog .ss-dialog-head,.shadow-studio .ss-paper-dialog .ss-dialog-actions{flex:none}
@@ -242,7 +251,7 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
           <div className="ss-dialog-info ss-field-wide"><span>{Number(width || 0).toLocaleString()} × {Number(height || 0).toLocaleString()} px</span><span>{resolution} PPI</span><span>≈ {rawMemory} MB raw canvas</span></div>
           <p className="ss-paper-hint">Large print sizes use a lower PPI here to stay within the current 4096 px / 12 MP canvas limit. PPI changes print metadata only; it does not resize pixels automatically.</p>
           <div className="ss-paper-save"><input type="text" maxLength={48} value={savedName} aria-label="Custom preset name" placeholder="Name for your custom preset" onChange={(event) => setSavedName(event.target.value)} /><button type="button" onClick={savePreset} disabled={saved.length >= MAX_SAVED}>Save Preset</button>{presetId.startsWith('saved-') ? <button type="button" onClick={deletePreset}>Delete Preset</button> : null}</div>
-          <p className="ss-paper-hint">My Presets are saved in this browser only, not synced with your account.</p>
+          <p className="ss-paper-hint">My Presets save the paper dimensions, resolution, and background color in this browser only. They are not synced with your account.</p>
           {error || status ? <div className="ss-dialog-error ss-field-wide" role="alert">{error || status}</div> : null}
         </div>
         <div className="ss-dialog-actions"><button type="button" className="ss-btn" onClick={onClose}>Cancel</button><button type="submit" className="ss-btn primary" disabled={Boolean(status)}>Create</button></div>
