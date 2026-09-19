@@ -18,7 +18,7 @@ const API_URL =
       : 'https://shadow-backend-kucw.onrender.com'
   )
 
-const MIN_CHECK_INTERVAL_MS = 60000
+const MIN_CHECK_INTERVAL_MS = 2 * 60 * 1000
 const STORAGE_KEY =
   'shadow_content_versions'
 
@@ -185,6 +185,7 @@ export function SmartRefreshProvider({
     force = false,
   } = {}) {
     if (checkingRef.current) return
+    if (document.visibilityState !== 'visible' || !navigator.onLine) return
 
     const now = Date.now()
 
@@ -317,7 +318,7 @@ export function SmartRefreshProvider({
   useEffect(() => {
     const timer =
       window.setTimeout(() => {
-        checkCurrentPageVersion()
+        void checkCurrentPageVersion()
       }, 250)
 
     return () =>
@@ -330,12 +331,12 @@ export function SmartRefreshProvider({
         document.visibilityState ===
         'visible'
       ) {
-        checkCurrentPageVersion()
+        void checkCurrentPageVersion()
       }
     }
 
     function handleFocus() {
-      checkCurrentPageVersion()
+      void checkCurrentPageVersion()
     }
 
     document.addEventListener(
@@ -346,6 +347,10 @@ export function SmartRefreshProvider({
       'focus',
       handleFocus
     )
+    window.addEventListener(
+      'online',
+      handleFocus
+    )
 
     return () => {
       document.removeEventListener(
@@ -354,6 +359,10 @@ export function SmartRefreshProvider({
       )
       window.removeEventListener(
         'focus',
+        handleFocus
+      )
+      window.removeEventListener(
+        'online',
         handleFocus
       )
     }
