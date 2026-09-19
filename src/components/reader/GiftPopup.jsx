@@ -28,7 +28,11 @@ registerTranslationNamespace('giftPopup', {
     "confirmTotal": "Total Cost",
     "confirmBalance": "Your Balance",
     "confirmCancel": "Cancel",
-    "confirmInsufficient": "Not enough Diamonds"
+    "confirmInsufficient": "Not enough Diamonds",
+    "retryPending": "Gift status is uncertain. Retry this same gift; you will not be charged twice.",
+    "resolvePrevious": "A previous gift is unresolved. Return to that story and retry it before sending another.",
+    "storageUnavailable": "Secure gift retry is unavailable in this browser. Please enable session storage.",
+    "retrying": "Retry the same gift"
   },
   "km": {
     "candy": "ស្ករគ្រាប់",
@@ -55,7 +59,11 @@ registerTranslationNamespace('giftPopup', {
     "confirmTotal": "ពេជ្រត្រូវចំណាយ",
     "confirmBalance": "ពេជ្រដែលមាន",
     "confirmCancel": "បោះបង់",
-    "confirmInsufficient": "ពេជ្រមិនគ្រប់គ្រាន់"
+    "confirmInsufficient": "ពេជ្រមិនគ្រប់គ្រាន់",
+    "retryPending": "មិនទាន់ដឹងលទ្ធផលអំណោយ។ សូមសាកផ្ញើអំណោយដដែលឡើងវិញ ដោយមិនកាត់លុយស្ទួន។",
+    "resolvePrevious": "អំណោយមុនមិនទាន់បានបញ្ជាក់លទ្ធផល។ សូមត្រឡប់ទៅរឿងមុន ហើយសាកអំណោយដដែលឡើងវិញ។",
+    "storageUnavailable": "មិនអាចរក្សាទុកលេខប្រតិបត្តិការអំណោយបានទេ។ សូមបើក Session Storage។",
+    "retrying": "សាកអំណោយដដែលឡើងវិញ"
   },
   "zh": {
     "candy": "糖果",
@@ -82,7 +90,11 @@ registerTranslationNamespace('giftPopup', {
     "confirmTotal": "总花费",
     "confirmBalance": "钻石余额",
     "confirmCancel": "取消",
-    "confirmInsufficient": "钻石不足"
+    "confirmInsufficient": "钻石不足",
+    "retryPending": "Gift status is uncertain. Retry this same gift without a duplicate charge.",
+    "resolvePrevious": "A previous gift is unresolved. Return to that story and retry it first.",
+    "storageUnavailable": "Secure gift retry is unavailable. Please enable session storage.",
+    "retrying": "Retry the same gift"
   },
   "ja": {
     "candy": "キャンディ",
@@ -109,7 +121,11 @@ registerTranslationNamespace('giftPopup', {
     "confirmTotal": "合計費用",
     "confirmBalance": "ダイヤ残高",
     "confirmCancel": "キャンセル",
-    "confirmInsufficient": "ダイヤが足りません"
+    "confirmInsufficient": "ダイヤが足りません",
+    "retryPending": "Gift status is uncertain. Retry this same gift without a duplicate charge.",
+    "resolvePrevious": "A previous gift is unresolved. Return to that story and retry it first.",
+    "storageUnavailable": "Secure gift retry is unavailable. Please enable session storage.",
+    "retrying": "Retry the same gift"
   },
   "ko": {
     "candy": "캔디",
@@ -136,7 +152,11 @@ registerTranslationNamespace('giftPopup', {
     "confirmTotal": "총 비용",
     "confirmBalance": "다이아 잔액",
     "confirmCancel": "취소",
-    "confirmInsufficient": "다이아가 부족합니다"
+    "confirmInsufficient": "다이아가 부족합니다",
+    "retryPending": "Gift status is uncertain. Retry this same gift without a duplicate charge.",
+    "resolvePrevious": "A previous gift is unresolved. Return to that story and retry it first.",
+    "storageUnavailable": "Secure gift retry is unavailable. Please enable session storage.",
+    "retrying": "Retry the same gift"
   }
 })
 
@@ -169,6 +189,55 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString(getDisplayLanguageId() || 'en')
 }
 
+const PENDING_GIFT_STORAGE_KEY = 'shadow_pending_story_gift_v1'
+
+function giftStorageKey(token) {
+  try {
+    const encoded = String(token || '').split('.')[1]
+    const payload = JSON.parse(atob(encoded.replace(/-/g, '+').replace(/_/g, '/')))
+    const userId = String(payload.user_id || '').toLowerCase()
+    return /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(userId)
+      ? `${PENDING_GIFT_STORAGE_KEY}:${userId}`
+      : null
+  } catch {
+    return null
+  }
+}
+
+function readPendingGift(token) {
+  const key = giftStorageKey(token)
+  if (!key) return null
+  try {
+    const pending = JSON.parse(sessionStorage.getItem(key) || 'null')
+    return pending && typeof pending.requestId === 'string' &&
+      typeof pending.storyId === 'string' && typeof pending.giftKey === 'string' &&
+      Number.isInteger(pending.quantity) ? pending : null
+  } catch {
+    return null
+  }
+}
+
+function storePendingGift(token, pending) {
+  const key = giftStorageKey(token)
+  if (!key) return false
+  try {
+    sessionStorage.setItem(key, JSON.stringify(pending))
+    return true
+  } catch {
+    return false
+  }
+}
+
+function clearPendingGift(token) {
+  const key = giftStorageKey(token)
+  if (!key) return
+  try {
+    sessionStorage.removeItem(key)
+  } catch {
+    return
+  }
+}
+
 export default function GiftPopup({
   open,
   storyId,
@@ -184,6 +253,7 @@ export default function GiftPopup({
   const [loadingWallet, setLoadingWallet] = useState(false)
   const [sending, setSending] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingGift, setPendingGift] = useState(null)
   const [feedback, setFeedback] = useState('')
   const [dragOffset, setDragOffset] = useState(0)
   const [dragging, setDragging] = useState(false)
@@ -192,6 +262,7 @@ export default function GiftPopup({
   const dragLastYRef = useRef(0)
   const dragStartedAtRef = useRef(0)
   const closeTimerRef = useRef(null)
+  const sendLockRef = useRef(false)
 
   const selectedGift = GIFT_ITEMS.find((item) => item.key === selectedKey) || GIFT_ITEMS[0]
   const totalGiftCost = selectedGift.price * quantity
@@ -232,13 +303,36 @@ export default function GiftPopup({
   }, [open])
 
   useEffect(() => {
+    if (!open) return
+    const pending = readPendingGift(getReaderToken())
+    setPendingGift(pending)
+    if (!pending) {
+      setFeedback('')
+    } else if (pending.storyId === String(storyId) && GIFT_ITEMS.some((gift) => gift.key === pending.giftKey)) {
+      setSelectedKey(pending.giftKey)
+      setQuantity(pending.quantity)
+      setFeedback(t('giftPopup.retryPending'))
+    } else {
+      setFeedback(t('giftPopup.resolvePrevious'))
+    }
+  }, [open, storyId])
+
+  useEffect(() => {
+    if (!confirmOpen || sending) return undefined
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setConfirmOpen(false)
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [confirmOpen, sending])
+
+  useEffect(() => {
     if (!open) return undefined
 
     let ignore = false
 
     async function loadWallet() {
       const token = getReaderToken()
-      setFeedback('')
 
       if (!token) {
         setWallet({ coin_balance: 0, diamond_balance: 0 })
@@ -276,15 +370,6 @@ export default function GiftPopup({
       ignore = true
     }
   }, [open])
-
-  useEffect(() => {
-    if (!confirmOpen || sending) return undefined
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') setConfirmOpen(false)
-    }
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [confirmOpen, sending])
 
   const beginDrag = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
@@ -340,18 +425,45 @@ export default function GiftPopup({
   }
 
   const handleSendGift = async () => {
-    if (sending) return
+    if (sendLockRef.current) return
 
-    if (!getReaderToken()) {
+    const token = getReaderToken()
+    if (!token) {
       setFeedback(t('giftPopup.loginFirst'))
       return
     }
 
-    if (!storyId || String(storyId) === 'undefined' || String(storyId) === 'null') {
+    if (!storyId || ['undefined', 'null'].includes(String(storyId))) {
       setFeedback(t('giftPopup.storyMissing'))
       return
     }
 
+    const previous = readPendingGift(token)
+    if (previous && (previous.storyId !== String(storyId) || previous.giftKey !== selectedGift.key || previous.quantity !== quantity)) {
+      setFeedback(t('giftPopup.resolvePrevious'))
+      return
+    }
+
+    if (!previous && typeof crypto.randomUUID !== 'function') {
+      setFeedback(t('giftPopup.storageUnavailable'))
+      return
+    }
+
+    const pending = previous || {
+      requestId: crypto.randomUUID(),
+      storyId: String(storyId),
+      giftKey: selectedGift.key,
+      quantity,
+      attempts: 0,
+    }
+
+    if (!storePendingGift(token, pending)) {
+      setFeedback(t('giftPopup.storageUnavailable'))
+      return
+    }
+
+    sendLockRef.current = true
+    setPendingGift(pending)
     setSending(true)
     setFeedback('')
 
@@ -360,44 +472,90 @@ export default function GiftPopup({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...readerAuthHeaders(),
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          gift_key: selectedGift.key,
-          quantity,
+          gift_key: pending.giftKey,
+          quantity: pending.quantity,
+          request_id: pending.requestId,
         }),
       })
 
-      const data = await response.json().catch(() => ({}))
+      const data = await response.json().catch(() => null)
 
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || t('giftPopup.failedSend'))
+      if (!response.ok || data?.ok !== true || !data?.gift?.id) {
+        const definitiveFailure = !response.ok && response.status >= 400 && response.status < 500 &&
+          ![408, 409, 425, 429].includes(response.status)
+        if (definitiveFailure) {
+          clearPendingGift(token)
+          setPendingGift(null)
+          setFeedback(data?.message || t('giftPopup.failedSend'))
+        } else {
+          const retry = { ...pending, attempts: pending.attempts + 1 }
+          storePendingGift(token, retry)
+          setPendingGift(retry)
+          setFeedback(t('giftPopup.retryPending'))
+        }
+        setConfirmOpen(false)
+        return
       }
 
+      clearPendingGift(token)
+      setPendingGift(null)
       setWallet({
         coin_balance: Number(data.wallet?.coin_balance ?? data.wallet?.gem_balance ?? 0),
         diamond_balance: Number(data.wallet?.diamond_balance || 0),
       })
 
-      const points = Number(data.gift?.support_points || selectedGift.points * quantity)
+      const points = Number(data.gift.support_points || selectedGift.points * quantity)
       setFeedback(t('giftPopup.sentSupport', { gift: t(`giftPopup.${selectedGift.nameKey}`), points: formatNumber(points) }))
-      onGiftSent?.(data)
       setConfirmOpen(false)
-    } catch (error) {
-      setFeedback(error.message || t('giftPopup.failedSend'))
+
+      try {
+        onGiftSent?.(data)
+      } catch (callbackError) {
+        console.error('GIFT_SENT_CALLBACK_ERROR:', callbackError)
+      }
+
+      if (previous || pending.attempts > 0) {
+        try {
+          const walletResponse = await fetch(`${API_BASE_URL}/api/purchase/wallet`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          const walletData = await walletResponse.json().catch(() => null)
+          if (walletResponse.ok && walletData?.ok !== false && walletData?.wallet) {
+            setWallet({
+              coin_balance: Number(walletData.wallet.coin_balance ?? walletData.wallet.gem_balance ?? 0),
+              diamond_balance: Number(walletData.wallet.diamond_balance || 0),
+            })
+          }
+        } catch {
+          return
+        }
+      }
+    } catch {
+      const retry = { ...pending, attempts: pending.attempts + 1 }
+      storePendingGift(token, retry)
+      setPendingGift(retry)
+      setFeedback(t('giftPopup.retryPending'))
       setConfirmOpen(false)
     } finally {
+      sendLockRef.current = false
       setSending(false)
     }
   }
 
   const handleGiftClick = () => {
+    if (pendingGift && pendingGift.storyId !== String(storyId)) {
+      setFeedback(t('giftPopup.resolvePrevious'))
+      return
+    }
     if (selectedGift.currency === 'diamond' && getReaderToken() && storyId && !['undefined', 'null'].includes(String(storyId))) {
       setFeedback('')
       setConfirmOpen(true)
       return
     }
-    handleSendGift()
+    void handleSendGift()
   }
 
   if (!open) return null
@@ -407,6 +565,7 @@ export default function GiftPopup({
       <button
         type="button"
         aria-label="Close gift popup"
+        disabled={sending}
         onClick={onClose}
         className="absolute inset-0"
       />
@@ -471,6 +630,7 @@ export default function GiftPopup({
               <button
                 key={gift.key}
                 type="button"
+                disabled={sending || Boolean(pendingGift)}
                 onClick={() => {
                   setSelectedKey(gift.key)
                   setFeedback('')
@@ -515,6 +675,7 @@ export default function GiftPopup({
             <div className="relative h-9 w-[64px] shrink-0 bg-[var(--shadow-bg-surface)]">
               <select
                 value={quantity}
+                disabled={sending || Boolean(pendingGift)}
                 onChange={(event) => {
                   setQuantity(Number(event.target.value))
                   setFeedback('')
@@ -532,10 +693,10 @@ export default function GiftPopup({
             <button
               type="button"
               onClick={handleGiftClick}
-              disabled={sending || loadingWallet}
+              disabled={sending || loadingWallet || (Boolean(pendingGift) && pendingGift.storyId !== String(storyId))}
               className="h-9 bg-[#ff3b5f] px-5 text-[12px] font-bold text-white active:scale-95 disabled:bg-[#ff9aaa]"
             >
-              {sending ? t('giftPopup.sending') : t('giftPopup.gift')}
+              {sending ? t('giftPopup.sending') : pendingGift ? t('giftPopup.retrying') : t('giftPopup.gift')}
             </button>
           </div>
         </div>
@@ -561,9 +722,9 @@ export default function GiftPopup({
                 <span className="flex items-center gap-1 font-semibold"><img src="/assets/Icons/Diamond.svg" alt="" className="h-4 w-4" />{formatNumber(wallet.diamond_balance)}</span>
               </div>
             </div>
-            {insufficientDiamonds && <p className="mt-3 text-center text-[12px] font-semibold text-[#ff3b5f]">{t('giftPopup.confirmInsufficient')}</p>}
-            <button type="button" onClick={handleSendGift} disabled={sending || insufficientDiamonds} className="mt-4 w-full rounded-full bg-[#ff3b5f] px-4 py-3 text-[13px] font-bold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50">
-              {sending ? t('giftPopup.sending') : t('giftPopup.confirmTitle')}
+            {insufficientDiamonds && !pendingGift && <p className="mt-3 text-center text-[12px] font-semibold text-[#ff3b5f]">{t('giftPopup.confirmInsufficient')}</p>}
+            <button type="button" onClick={handleSendGift} disabled={sending || (insufficientDiamonds && !pendingGift)} className="mt-4 w-full rounded-full bg-[#ff3b5f] px-4 py-3 text-[13px] font-bold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50">
+              {sending ? t('giftPopup.sending') : pendingGift ? t('giftPopup.retrying') : t('giftPopup.confirmTitle')}
             </button>
             <button type="button" onClick={() => setConfirmOpen(false)} disabled={sending} className="mt-2 w-full rounded-full border border-[var(--shadow-border)] px-4 py-3 text-[13px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50">{t('giftPopup.confirmCancel')}</button>
           </section>
