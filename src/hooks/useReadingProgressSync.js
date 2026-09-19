@@ -9,6 +9,9 @@ const API_BASE_URL =
 const SAVE_PERCENT_STEP = 10
 const SAVE_MAX_DELAY_MS = 60 * 1000
 const SAVE_CHECK_INTERVAL_MS = 10 * 1000
+const RETRY_BASE_MS = 20 * 1000
+const RETRY_MAX_MS = 5 * 60 * 1000
+const MAX_TRACKED_KEYS = 150
 
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
@@ -30,27 +33,29 @@ export default function useReadingProgressSync({
   const savedStateByKeyRef = useRef(new Map())
   const inFlightByStoryRef = useRef(new Map())
   const queuedByStoryRef = useRef(new Map())
+  const retryByStoryRef = useRef(new Map())
 
   const saveCurrent = useCallback(async (current) => {
-    if (!current) return false
+    if (!current || current.percent <= 0) return false
 
     const state = savedStateByKeyRef.current.get(current.key)
+    if (state?.lastSavedSignature === current.signature) return false
 
-    if (state?.lastSavedSignature === current.signature) {
+    const storyKey = `${current.token}:${current.storyId}`
+    const inFlight = inFlightByStoryRef.current.get(storyKey)
+    if (inFlight) {
+      if (inFlight !== current.signature) queuedByStoryRef.current.set(storyKey, current)
       return false
     }
 
-    const storyKey = String(current.storyId)
-
-    if (inFlightByStoryRef.current.has(storyKey)) {
+    const retry = retryByStoryRef.current.get(storyKey)
+    if (retry && Date.now() < retry.nextAttemptAt) {
       queuedByStoryRef.current.set(storyKey, current)
       return false
     }
 
-    inFlightByStoryRef.current.set(
-      storyKey,
-      current.signature
-    )
+    inFlightByStoryRef.current.set(storyKey, current.signature)
+    let saved = false
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/reading-progress`, {
@@ -68,41 +73,36 @@ export default function useReadingProgressSync({
       })
 
       const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) return false
 
-      if (!response.ok || data.ok === false) {
-        return false
-      }
-
+      const now = Date.now()
       savedStateByKeyRef.current.set(current.key, {
         lastSavedSignature: current.signature,
         lastSavedPercent: current.percent,
-        lastSavedAt: Date.now(),
+        lastSavedAt: now,
       })
-
+      retryByStoryRef.current.delete(storyKey)
+      saved = true
       return true
     } catch {
       return false
     } finally {
-      if (
-        inFlightByStoryRef.current.get(storyKey) ===
-        current.signature
-      ) {
+      if (!saved) {
+        const failures = Math.min(5, Number(retryByStoryRef.current.get(storyKey)?.failures || 0) + 1)
+        retryByStoryRef.current.set(storyKey, {
+          failures,
+          nextAttemptAt: Date.now() + Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** (failures - 1)),
+        })
+      }
+
+      if (inFlightByStoryRef.current.get(storyKey) === current.signature) {
         inFlightByStoryRef.current.delete(storyKey)
       }
 
-      const queued =
-        queuedByStoryRef.current.get(storyKey)
-
+      const queued = queuedByStoryRef.current.get(storyKey)
       if (queued) {
         queuedByStoryRef.current.delete(storyKey)
-
-        const queuedState =
-          savedStateByKeyRef.current.get(queued.key)
-
-        if (
-          queuedState?.lastSavedSignature !==
-          queued.signature
-        ) {
+        if (queued.signature !== savedStateByKeyRef.current.get(queued.key)?.lastSavedSignature) {
           void saveCurrent(queued)
         }
       }
@@ -111,104 +111,72 @@ export default function useReadingProgressSync({
 
   useEffect(() => {
     const token = getReaderToken()
-
     if (!enabled || !token || !storyId || !episodeId) {
       latestRef.current = null
       return
     }
 
     const percent = normalizePercent(readingPercent)
-    const key = `${storyId}:${episodeId}`
-    const signature = `${key}:${percent}`
-
+    const key = `${token}:${storyId}:${episodeId}`
     const current = {
       token,
       storyId,
       episodeId,
       percent,
       key,
-      signature,
+      signature: `${key}:${percent}`,
     }
 
     const previous = latestRef.current
-
-    if (
-      previous &&
-      previous.key !== key
-    ) {
-      const previousState =
-        savedStateByKeyRef.current.get(previous.key)
-
-      if (
-        previousState?.lastSavedSignature !==
-        previous.signature
-      ) {
+    if (previous && previous.key !== key && previous.percent > 0) {
+      const previousState = savedStateByKeyRef.current.get(previous.key)
+      if (previousState?.lastSavedSignature !== previous.signature) {
         void saveCurrent(previous)
       }
     }
 
     latestRef.current = current
 
-    let state =
-      savedStateByKeyRef.current.get(key)
-
+    let state = savedStateByKeyRef.current.get(key)
     if (!state) {
       state = {
-        lastSavedSignature: signature,
-        lastSavedPercent: percent,
+        lastSavedSignature: null,
+        lastSavedPercent: 0,
         lastSavedAt: Date.now(),
       }
-
+      if (savedStateByKeyRef.current.size >= MAX_TRACKED_KEYS) {
+        savedStateByKeyRef.current.delete(savedStateByKeyRef.current.keys().next().value)
+      }
       savedStateByKeyRef.current.set(key, state)
-      return
-    }
-
-    if (state.lastSavedSignature === signature) {
-      return
     }
 
     if (
-      Math.abs(
-        percent -
-        Number(state.lastSavedPercent || 0)
-      ) >= SAVE_PERCENT_STEP
+      percent > 0 &&
+      state.lastSavedSignature !== current.signature &&
+      (percent >= 100 || Math.abs(percent - Number(state.lastSavedPercent || 0)) >= SAVE_PERCENT_STEP)
     ) {
       void saveCurrent(current)
     }
-  }, [
-    enabled,
-    episodeId,
-    readingPercent,
-    saveCurrent,
-    storyId,
-  ])
+  }, [enabled, episodeId, readingPercent, saveCurrent, storyId])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+
       const current = latestRef.current
-
-      if (!current) return
-
-      const state =
-        savedStateByKeyRef.current.get(current.key)
-
-      if (!state) return
-      if (
-        state.lastSavedSignature ===
-        current.signature
-      ) {
-        return
+      if (current && current.percent > 0) {
+        const state = savedStateByKeyRef.current.get(current.key)
+        if (
+          state?.lastSavedSignature !== current.signature &&
+          Date.now() - Number(state?.lastSavedAt || 0) >= SAVE_MAX_DELAY_MS
+        ) {
+          void saveCurrent(current)
+        }
       }
 
-      if (
-        Date.now() -
-          Number(state.lastSavedAt || 0) <
-        SAVE_MAX_DELAY_MS
-      ) {
-        return
+      for (const [storyKey, pending] of queuedByStoryRef.current) {
+        if (!inFlightByStoryRef.current.has(storyKey)) void saveCurrent(pending)
       }
-
-      void saveCurrent(current)
     }, SAVE_CHECK_INTERVAL_MS)
 
     return () => window.clearInterval(timer)
@@ -217,40 +185,21 @@ export default function useReadingProgressSync({
   useEffect(() => {
     const saveLatest = () => {
       const current = latestRef.current
-
-      if (!current) return
-
-      const state =
-        savedStateByKeyRef.current.get(current.key)
-
-      if (
-        state?.lastSavedSignature ===
-        current.signature
-      ) {
-        return
+      if (!current || current.percent <= 0) return
+      if (savedStateByKeyRef.current.get(current.key)?.lastSavedSignature !== current.signature) {
+        void saveCurrent(current)
       }
-
-      void saveCurrent(current)
     }
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        saveLatest()
-      }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveLatest()
     }
 
     window.addEventListener('pagehide', saveLatest)
-    document.addEventListener(
-      'visibilitychange',
-      handleVisibilityChange
-    )
-
+    document.addEventListener('visibilitychange', onVisibilityChange)
     return () => {
       window.removeEventListener('pagehide', saveLatest)
-      document.removeEventListener(
-        'visibilitychange',
-        handleVisibilityChange
-      )
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }, [saveCurrent])
 }
