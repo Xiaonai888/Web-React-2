@@ -10,9 +10,11 @@ const MAX_SIDE = 4096
 const MAX_AREA = 12000000
 
 const cleanName = (name) => String(name || 'Paper')
+  .trim()
+  .replace(/\.(?:png|jpe?g|webp)$/i, '')
   .replace(/[\\/:*?"<>|\x00-\x1f]/g, '-')
   .replace(/^\.+/, '')
-  .slice(0, 60) || 'Paper'
+  .slice(0, 60).trim() || 'Paper'
 
 function generateBlob(canvas, mime, quality) {
   return new Promise((resolve, reject) => {
@@ -37,6 +39,7 @@ function generateBlob(canvas, mime, quality) {
 export default function StudioExportDialog({ open, paper, canvasRef, onClose, onExported }) {
   const [format, setFormat] = useState('png')
   const [scale, setScale] = useState(100)
+  const [customWidth, setCustomWidth] = useState('')
   const [quality, setQuality] = useState(90)
   const [filename, setFilename] = useState('')
   const [busy, setBusy] = useState(false)
@@ -46,6 +49,7 @@ export default function StudioExportDialog({ open, paper, canvasRef, onClose, on
     if (!open) return
     setFormat('png')
     setScale(100)
+    setCustomWidth(String(paper?.width || ''))
     setQuality(90)
     setFilename(paper?.name || 'Paper')
     setBusy(false)
@@ -53,16 +57,19 @@ export default function StudioExportDialog({ open, paper, canvasRef, onClose, on
   }, [open, paper?.id])
 
   const dimensions = useMemo(() => {
-    const width = Math.max(1, Math.round((paper?.width || 1) * scale / 100))
-    const height = Math.max(1, Math.round((paper?.height || 1) * scale / 100))
-    return { width, height, valid: width <= MAX_SIDE && height <= MAX_SIDE && width * height <= MAX_AREA }
-  }, [paper?.width, paper?.height, scale])
+    const sourceWidth = paper?.width || 1
+    const sourceHeight = paper?.height || 1
+    const width = scale === 'custom' ? Number(customWidth) : Math.round(sourceWidth * scale / 100)
+    const height = Math.round(sourceHeight * width / sourceWidth)
+    const valid = Number.isInteger(width) && Number.isInteger(height) && width >= 1 && height >= 1 && width <= MAX_SIDE && height <= MAX_SIDE && width * height <= MAX_AREA
+    return { width, height, valid }
+  }, [paper?.width, paper?.height, scale, customWidth])
 
   if (!open || !paper) return null
 
   async function exportImage(event) {
     event.preventDefault()
-    if (busy || !dimensions.valid) return
+    if (busy || !dimensions.valid || !filename.trim()) return
     const canvas = canvasRef.current
     if (!canvas || canvas.width !== paper.width || canvas.height !== paper.height) {
       setError('The current paper is not ready. Close this window and try again.')
@@ -124,6 +131,10 @@ export default function StudioExportDialog({ open, paper, canvasRef, onClose, on
         .ss-export-scales button{min-height:32px;border:1px solid #5e6c7a;border-radius:6px;background:#35404a;color:#f1f5f9;padding:0 10px;font:inherit;font-size:11px;cursor:pointer}
         .ss-export-scales button[aria-pressed=true]{border-color:#89c6ff;background:#365c80}
         .ss-export-scales button:disabled{opacity:.3;cursor:default}
+        .ss-export-custom{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .ss-export-custom input{box-sizing:border-box;width:125px;max-width:100%;height:36px;border:1px solid #606c79;border-radius:6px;background:#252c34;color:#fff;padding:5px 9px;font:inherit;font-size:13px}
+        .ss-export-custom input:focus-visible{outline:2px solid #7cbcff;outline-offset:1px}
+        .ss-export-custom span{font-size:11px;font-weight:400;color:#aebdcd}
         .ss-export-note{margin:0;color:#aebdcd;font-size:11px;line-height:1.5}
         .ss-export-error{margin:0;border-radius:6px;background:#63363b;color:#ffe0e0;padding:9px;font-size:11px}
         .ss-export-actions{display:flex;justify-content:flex-end;gap:8px;padding:13px 18px;border-top:1px solid #49535d}
@@ -137,10 +148,15 @@ export default function StudioExportDialog({ open, paper, canvasRef, onClose, on
         <div className="ss-export-body">
           <label className="ss-export-field">File name<input type="text" maxLength={80} required value={filename} disabled={busy} onChange={(event) => setFilename(event.target.value)} /></label>
           <div className="ss-export-field"><span>Image format</span><div className="ss-export-options">{FORMATS.map((item) => <button key={item.id} type="button" className="ss-export-format" aria-pressed={format === item.id} disabled={busy} onClick={() => setFormat(item.id)}>{item.label}<small>{item.description}</small></button>)}</div></div>
-          <div className="ss-export-field"><span>Output size</span><div className="ss-export-scales">{SCALES.map((percent) => { const w = Math.round(paper.width * percent / 100); const h = Math.round(paper.height * percent / 100); return <button type="button" key={percent} disabled={busy || w > MAX_SIDE || h > MAX_SIDE || w * h > MAX_AREA} aria-pressed={scale === percent} onClick={() => setScale(percent)}>{percent}%</button> })}</div><p className="ss-export-note">{dimensions.width.toLocaleString()} × {dimensions.height.toLocaleString()} px · Maximum 4096 px per side / 12 million pixels</p></div>
+          <div className="ss-export-field">
+            <span>Output size</span>
+            <div className="ss-export-scales">{SCALES.map((percent) => { const w = Math.round(paper.width * percent / 100); const h = Math.round(paper.height * percent / 100); return <button type="button" key={percent} disabled={busy || w > MAX_SIDE || h > MAX_SIDE || w * h > MAX_AREA} aria-pressed={scale === percent} onClick={() => setScale(percent)}>{percent}%</button> })}<button type="button" disabled={busy} aria-pressed={scale === 'custom'} onClick={() => setScale('custom')}>Custom</button></div>
+            {scale === 'custom' ? <label className="ss-export-custom">Width (px)<input type="number" min="1" max={MAX_SIDE} step="1" inputMode="numeric" value={customWidth} disabled={busy} onChange={(event) => setCustomWidth(event.target.value)} /><span>Height adjusts automatically · original aspect ratio</span></label> : null}
+            <p className="ss-export-note">{dimensions.valid ? `${dimensions.width.toLocaleString()} × ${dimensions.height.toLocaleString()} px` : 'Enter a supported output size'} · Maximum 4096 px per side / 12 million pixels</p>
+          </div>
           {format !== 'png' ? <label className="ss-export-field">Quality · {quality}%<input type="range" min="50" max="100" step="1" value={quality} disabled={busy} onChange={(event) => setQuality(Number(event.target.value))} /></label> : null}
           <p className="ss-export-note">Only the drawing is exported. Canvas Grid and other on-screen guides are not included. Export does not modify your saved project.</p>
-          {!dimensions.valid ? <p className="ss-export-error" role="alert">This output size exceeds the supported canvas limits.</p> : null}
+          {!dimensions.valid ? <p className="ss-export-error" role="alert">Enter a whole-pixel width that keeps both dimensions within 4096 px and the output within 12 million pixels.</p> : null}
           {error ? <p className="ss-export-error" role="alert">{error}</p> : null}
         </div>
         <div className="ss-export-actions"><button type="button" disabled={busy} onClick={onClose}>Cancel</button><button type="submit" disabled={busy || !dimensions.valid || !filename.trim()}>{busy ? 'Exporting…' : `Export ${format.toUpperCase()}`}</button></div>
