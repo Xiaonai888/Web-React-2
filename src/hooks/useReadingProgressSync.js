@@ -23,6 +23,27 @@ function normalizePercent(value) {
   return Math.min(100, Math.max(0, Math.round(number)))
 }
 
+function enqueueProgress(pendingByStory, storyKey, current, priority = false) {
+  const pending = pendingByStory.get(storyKey) || []
+  const existingIndex = pending.findIndex((item) => item.key === current.key)
+  if (existingIndex >= 0) {
+    if (!priority) pending[existingIndex] = current
+  } else if (priority) {
+    pending.unshift(current)
+  } else {
+    pending.push(current)
+  }
+  pendingByStory.set(storyKey, pending)
+}
+
+function dequeueProgress(pendingByStory, storyKey) {
+  const pending = pendingByStory.get(storyKey)
+  if (!pending?.length) return null
+  const next = pending.shift()
+  if (!pending.length) pendingByStory.delete(storyKey)
+  return next
+}
+
 export default function useReadingProgressSync({
   storyId,
   episodeId,
@@ -44,13 +65,13 @@ export default function useReadingProgressSync({
     const storyKey = `${current.token}:${current.storyId}`
     const inFlight = inFlightByStoryRef.current.get(storyKey)
     if (inFlight) {
-      if (inFlight !== current.signature) queuedByStoryRef.current.set(storyKey, current)
+      if (inFlight !== current.signature) enqueueProgress(queuedByStoryRef.current, storyKey, current)
       return false
     }
 
     const retry = retryByStoryRef.current.get(storyKey)
     if (retry && Date.now() < retry.nextAttemptAt) {
-      queuedByStoryRef.current.set(storyKey, current)
+      enqueueProgress(queuedByStoryRef.current, storyKey, current)
       return false
     }
 
@@ -99,10 +120,11 @@ export default function useReadingProgressSync({
         inFlightByStoryRef.current.delete(storyKey)
       }
 
-      const queued = queuedByStoryRef.current.get(storyKey)
-      if (queued) {
-        queuedByStoryRef.current.delete(storyKey)
-        if (queued.signature !== savedStateByKeyRef.current.get(queued.key)?.lastSavedSignature) {
+      if (!saved) {
+        enqueueProgress(queuedByStoryRef.current, storyKey, current, true)
+      } else {
+        const queued = dequeueProgress(queuedByStoryRef.current, storyKey)
+        if (queued && queued.signature !== savedStateByKeyRef.current.get(queued.key)?.lastSavedSignature) {
           void saveCurrent(queued)
         }
       }
@@ -174,8 +196,12 @@ export default function useReadingProgressSync({
         }
       }
 
-      for (const [storyKey, pending] of queuedByStoryRef.current) {
-        if (!inFlightByStoryRef.current.has(storyKey)) void saveCurrent(pending)
+      for (const [storyKey] of [...queuedByStoryRef.current]) {
+        if (inFlightByStoryRef.current.has(storyKey)) continue
+        const retry = retryByStoryRef.current.get(storyKey)
+        if (retry && Date.now() < retry.nextAttemptAt) continue
+        const pending = dequeueProgress(queuedByStoryRef.current, storyKey)
+        if (pending) void saveCurrent(pending)
       }
     }, SAVE_CHECK_INTERVAL_MS)
 
