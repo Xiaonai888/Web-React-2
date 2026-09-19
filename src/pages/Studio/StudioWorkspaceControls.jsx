@@ -1,4 +1,5 @@
 import StudioColorPanel from './StudioColorPanel'
+import StudioBrushSettings from './StudioBrushSettings'
 
 function Tool({ active, icon, label, onClick }) {
   return (
@@ -60,47 +61,13 @@ export function StudioControlSidebar({
     <aside className="ss-side">
       <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />
 
-      <section className="ss-section">
-        <h2 className="ss-label">
-          {labels.size}
-        </h2>
-        <div className="ss-range">
-          <input
-            type="range"
-            min="1"
-            max="80"
-            value={size}
-            onChange={(event) =>
-              onSizeChange(Number(event.target.value))
-            }
-          />
-          <span className="ss-value">
-            {size}px
-          </span>
-        </div>
-      </section>
-
-      <section className="ss-section">
-        <h2 className="ss-label">
-          {labels.opacity}
-        </h2>
-        <div className="ss-range">
-          <input
-            type="range"
-            min="10"
-            max="100"
-            value={opacity}
-            onChange={(event) =>
-              onOpacityChange(
-                Number(event.target.value)
-              )
-            }
-          />
-          <span className="ss-value">
-            {opacity}%
-          </span>
-        </div>
-      </section>
+      <StudioBrushSettings
+        size={size}
+        onSizeChange={onSizeChange}
+        opacity={opacity}
+        onOpacityChange={onOpacityChange}
+        labels={labels}
+      />
 
       <section className="ss-section" aria-label="Canvas view">
         <h2 className="ss-label">Canvas View</h2>
