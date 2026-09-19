@@ -4,6 +4,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import StudioNewFileDialog, { STUDIO_PRESETS } from './StudioNewFileDialog'
 import StudioFileMenu from './StudioFileMenu'
+import StudioViewMenu from './StudioViewMenu'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
 import './ShadowStudioMobile.css'
@@ -214,6 +215,8 @@ export default function ShadowStudioPage() {
   const [size, setSize] = useState(8)
   const [opacity, setOpacity] = useState(100)
   const [zoom, setZoom] = useState(75)
+  const [showGrid, setShowGrid] = useState(false)
+  const [gridSpacing, setGridSpacing] = useState(50)
   const [viewRotation, setViewRotation] = useState(0)
   const [flipHorizontal, setFlipHorizontal] = useState(false)
   const [flipVertical, setFlipVertical] = useState(false)
@@ -1193,7 +1196,23 @@ export default function ShadowStudioPage() {
           onExit={exitStudio}
         />
         <button type="button" className="ss-menu-btn" disabled title="Edit menu coming in a later stage">Edit</button>
-        <button type="button" className="ss-menu-btn" disabled title="View menu coming in a later stage">View</button>
+        <StudioViewMenu
+          enabled={workspaceStarted && !paperLoading && !projectBusy && !newFileOpen}
+          zoom={zoom}
+          gridVisible={showGrid}
+          gridSpacing={gridSpacing}
+          rotation={viewRotation}
+          flippedHorizontal={flipHorizontal}
+          flippedVertical={flipVertical}
+          onToggleGrid={() => setShowGrid((current) => !current)}
+          onGridSpacing={(spacing) => { setGridSpacing(spacing); setShowGrid(true) }}
+          onZoom={zoomAround}
+          onFit={fitCanvas}
+          onRotate={(degrees) => updateCanvasView(viewRotation + degrees)}
+          onFlipHorizontal={() => updateCanvasView(viewRotation, !flipHorizontal, flipVertical)}
+          onFlipVertical={() => updateCanvasView(viewRotation, flipHorizontal, !flipVertical)}
+          onResetOrientation={() => updateCanvasView(0, false, false)}
+        />
         {workspaceStarted ? (
           <div className="ss-chrome-right">
             <div className="ss-doc-info">{activeDocument?.width} × {activeDocument?.height}px · {activeDocument?.resolution} PPI</div>
@@ -1373,6 +1392,18 @@ export default function ShadowStudioPage() {
                     onPointerUp={finish}
                     onPointerCancel={finish}
                   />
+                  {showGrid && gridSpacing * zoom / 100 >= 8 ? (
+                    <div
+                      className="ss-view-grid"
+                      aria-hidden="true"
+                      style={{
+                        width: displayedWidth,
+                        height: displayedHeight,
+                        backgroundSize: `${gridSpacing * zoom / 100}px ${gridSpacing * zoom / 100}px`,
+                        transform: `translate(-50%, -50%) rotate(${viewRotation}deg) scale(${flipHorizontal ? -1 : 1}, ${flipVertical ? -1 : 1})`,
+                      }}
+                    />
+                  ) : null}
                 </div>
               </div>
             </section>
