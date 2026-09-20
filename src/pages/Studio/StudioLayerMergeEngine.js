@@ -1,4 +1,5 @@
 import { studioActiveLayer } from './StudioLayerEngine'
+import { studioLayerCanEdit } from './StudioLayerGroupEngine'
 
 export function canMergeStudioLayerDown(stack) {
   if (!stack || !Array.isArray(stack.layers)) return false
@@ -7,14 +8,17 @@ export function canMergeStudioLayerDown(stack) {
   const upper = stack.layers[index]
   const lower = stack.layers[index - 1]
   return Boolean(upper?.canvas && lower?.canvas && upper.visible && lower.visible &&
-    !upper.locked && !lower.locked && upper.opacity === 100 && lower.opacity === 100 &&
+    studioLayerCanEdit(stack, upper.id) && studioLayerCanEdit(stack, lower.id) &&
+    (upper.groupId || null) === (lower.groupId || null) &&
+    (upper.blendMode || 'normal') === 'normal' && (lower.blendMode || 'normal') === 'normal' &&
+    upper.opacity === 100 && lower.opacity === 100 &&
     upper.canvas.width === stack.width && upper.canvas.height === stack.height &&
     lower.canvas.width === stack.width && lower.canvas.height === stack.height)
 }
 
 export function mergeStudioLayerDown(stack) {
   if (!canMergeStudioLayerDown(stack)) {
-    throw new Error('To merge, select a visible, unlocked layer above another visible, unlocked layer. Both need 100% opacity.')
+    throw new Error('To merge, select two adjacent visible, unlocked layers outside locked groups. Both must have 100% opacity, Normal blend mode, and belong to the same group (or neither to a group).')
   }
   const upper = studioActiveLayer(stack)
   const index = stack.layers.findIndex((layer) => layer.id === upper.id)
