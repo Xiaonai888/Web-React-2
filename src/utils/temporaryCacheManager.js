@@ -178,6 +178,7 @@ async function pruneTemporaryCacheNow() {
   if (!updatedImage?.ok) throw new Error('MANGA_CACHE_STATS_UNAVAILABLE')
   const updatedMangaBytes = Math.max(0, Number(updatedImage.cachedBytes) || 0)
   const budget = await getTotalBudget(readerBytes + updatedMangaBytes, settings)
+  if (updatedMangaBytes >= budget) return false
   for (const entry of remaining.sort((a, b) =>
     Number(a.lastAccessedAt || a.savedAt || 0) - Number(b.lastAccessedAt || b.savedAt || 0))) {
     if (readerBytes + updatedMangaBytes <= budget) break
