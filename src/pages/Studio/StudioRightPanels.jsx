@@ -260,8 +260,6 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper 
     paper={paper}
   />
 </div>
-          <p className="ss-panel-hint">{tx('studioPanels.layerHint')}</p>
-        </div>
       <div className="ss-right-panel" data-panel="assets" aria-label={tx('studioPanels.assetsOverview')}>
           <div className="ss-right-panel-head"><strong>{tx('studioPanels.tabs.assets')}</strong><span>{tx('studioPanels.library')}</span></div>
           <div className="ss-asset-placeholder"><i className="fa-solid fa-shapes" aria-hidden="true" /><strong>{tx('studioPanels.emptyAssets')}</strong><p>{tx('studioPanels.assetHint')}</p></div>
