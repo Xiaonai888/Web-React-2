@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { describeReaderLoadFailure } from '../utils/readerLoadDiagnosis'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import EchoV2Count from '../components/social/EchoV2Count'
@@ -5988,6 +5989,7 @@ if (episodeData.code === 'ADULT_RESTRICTED' || episodesData.code === 'ADULT_REST
 
 if (!episodesResponse.ok || episodesData.ok === false) {
           throw new Error(episodesData.message || t('readerPage.episodeListNotFound'))
+  throw Object.assign(new Error(episodesData.message || t('readerPage.episodeListNotFound')), { status: episodesResponse.status, code: episodesData.code })
         }
 
         const nextEpisodes = episodesData.episodes || []
@@ -6032,6 +6034,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
         if (!episodeResponse.ok || episodeData.ok === false) {
           throw new Error(episodeData.message || t('readerPage.episodeNotFound'))
+          throw Object.assign(new Error(episodeData.message || t('readerPage.episodeNotFound')), { status: episodeResponse.status, code: episodeData.code })
         }
 
         const nextReaderAdStatus = await loadReaderAdStatus(
@@ -6078,11 +6081,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       } catch (error) {
         if (ignore) return
 
-        setMessage(
-          error.message === 'Failed to fetch'
-            ? t('readerPage.cannotConnectServer')
-            : error.message || t('readerPage.failedLoadEpisode')
-        )
+        setMessage(describeReaderLoadFailure(error, getDisplayLanguageId()))
       } finally {
         if (!ignore) setLoading(false)
       }
