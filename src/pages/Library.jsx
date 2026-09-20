@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import SubscriptionsSection from '../components/library/SubscriptionsSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
@@ -802,6 +802,7 @@ function ContextCard({ item, tab }) {
 }
 
 export default function Library() {
+  const location = useLocation()
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState('Subscribed')
@@ -1198,7 +1199,7 @@ export default function Library() {
         ) : null}
       </div>
 
-      <ReaderProfileFooter />
+      {new URLSearchParams(location.search).get('source') !== 'me' && <ReaderProfileFooter />}
     </>
   )
 }
