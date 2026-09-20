@@ -3,6 +3,7 @@ import { ChevronRight, Database, Download } from 'lucide-react'
 import { PageShell, PageHeader, SurfaceCard } from '../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import LibraryCacheSettings from '../components/library/LibraryCacheSettings'
 
 registerTranslationNamespace('manageLibraryPage', {
   en: {
@@ -51,13 +52,15 @@ export default function ManageLibraryPage() {
         backLabel={t('manageLibraryPage.back')}
       />
       <main className="mx-auto w-full max-w-[640px] px-4 py-5 sm:px-5">
-        {selected ? (
-          <SurfaceCard className="p-5">
-            <p className="text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
-              {t(`manageLibraryPage.${selected.id === 'cache' ? 'pendingCache' : 'pendingDownloads'}`)}
-            </p>
-          </SurfaceCard>
-        ) : (
+        {selected?.id === 'cache' ? (
+  <LibraryCacheSettings />
+) : selected ? (
+  <SurfaceCard className="p-5">
+    <p className="text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
+      {t('manageLibraryPage.pendingDownloads')}
+    </p>
+  </SurfaceCard>
+) : (
           <SurfaceCard className="divide-y divide-[var(--shadow-border)] overflow-hidden">
             {items.map(({ id, key, Icon }) => (
               <Link
