@@ -394,7 +394,7 @@ async function fetchManifest(
       }
 
             if (
-        data.story_is_adult !== true &&
+        data.story_is_adult === false &&
         !data.episodes?.some((item) => item?.is_adult)
       ) {
         saveManifest(safeStoryId, data)
@@ -745,7 +745,7 @@ export function installReaderEpisodeCacheFetch() {
     }
 
     if (
-      manifestResult.data?.story_is_adult === true ||
+      manifestResult.data?.story_is_adult !== false ||
       manifestEpisode?.is_adult === true
     ) {
       return apiFetch(input, init)
