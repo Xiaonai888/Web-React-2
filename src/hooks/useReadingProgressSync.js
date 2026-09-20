@@ -7,6 +7,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const SAVE_PERCENT_STEP = 10
+const SAVE_MIN_INTERVAL_MS = 30 * 1000
 const SAVE_MAX_DELAY_MS = 60 * 1000
 const SAVE_CHECK_INTERVAL_MS = 10 * 1000
 const RETRY_BASE_MS = 20 * 1000
@@ -197,10 +198,16 @@ export default function useReadingProgressSync({
       savedStateByKeyRef.current.set(key, state)
     }
 
-    if (
+        if (
       percent > 0 &&
       state.lastSavedSignature !== current.signature &&
-      (percent >= 100 || Math.abs(percent - Number(state.lastSavedPercent || 0)) >= SAVE_PERCENT_STEP)
+      (
+        percent >= 100 ||
+        (
+          Date.now() - state.lastSavedAt >= SAVE_MIN_INTERVAL_MS &&
+          Math.abs(percent - Number(state.lastSavedPercent || 0)) >= SAVE_PERCENT_STEP
+        )
+      )
     ) {
       void saveCurrent(current)
     }
