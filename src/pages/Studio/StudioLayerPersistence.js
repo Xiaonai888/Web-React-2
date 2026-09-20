@@ -47,8 +47,9 @@ export function exportStudioLayerStack(stack) {
   return {
     activeLayerId: stack.activeLayerId,
     ...(groups.length ? { groups } : {}),
-    layers: stack.layers.map((layer) => ({
+    layers: stack.layers.map((layer, index) => ({
       id: layer.id,
+      ...(index === 0 ? { isBackground: layer.isBackground === true } : {}),
       name: layer.name,
       image: layer.canvas.toDataURL('image/png'),
       visible: layer.visible,
@@ -69,7 +70,8 @@ export async function loadStudioLayerStack(paper, displayCanvas) {
     throw new Error('The saved paper has an invalid layer count.')
   }
   const ids = new Set()
-  const loaded = await Promise.all(paper.layers.map(async (item) => {
+  const loaded = await Promise.all(paper.layers.map(async (item, index) => {
+    if (item && ((item.isBackground !== undefined && typeof item.isBackground !== 'boolean') || (index > 0 && item.isBackground))) throw new Error('Invalid Background layer metadata.')
     if (!item || typeof item.id !== 'string' || !item.id || item.id.length > 100 || ids.has(item.id) ||
         typeof item.name !== 'string' || !item.name.trim() || item.name.length > 80 ||
         typeof item.image !== 'string' || !IMAGE_PREFIX.test(item.image) ||
@@ -86,6 +88,7 @@ export async function loadStudioLayerStack(paper, displayCanvas) {
     if (!context) throw new Error('Could not restore a saved layer.')
     context.drawImage(image, 0, 0)
     return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity,
+      isBackground: index === 0 && item.isBackground !== false,
       ...(item.groupId ? { groupId: item.groupId } : {}),
       ...(item.blendMode ? { blendMode: checkBlend(item.blendMode) } : {}),
     }
@@ -95,7 +98,7 @@ export async function loadStudioLayerStack(paper, displayCanvas) {
     ...(paper.groups !== undefined ? { groups: paper.groups.map((group) => ({ ...group })) } : {}),
   }
   savedGroups(stack)
-  if (stack.layers[0].blendMode && stack.layers[0].blendMode !== 'normal') throw new Error('Background must use Normal blend mode.')
+  if (stack.layers[0].isBackground && stack.layers[0].blendMode && stack.layers[0].blendMode !== 'normal') throw new Error('Background must use Normal blend mode.')
   renderStudioAdvancedLayers(stack, displayCanvas)
   return stack
 }
