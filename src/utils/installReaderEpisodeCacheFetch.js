@@ -19,7 +19,7 @@ const API_ORIGIN = new URL(
 const MANIFEST_TTL_MS = 10 * 60 * 1000
 const MANIFEST_MAX_STORIES = 10
 const MANIFEST_PREFIX =
-  'shadow_reader_episode_manifest_v1:'
+  'shadow_reader_episode_manifest_v2:'
 
 const STORY_TYPES = [
   'novel',
@@ -393,10 +393,12 @@ async function fetchManifest(
         }
       }
 
-      saveManifest(
-        safeStoryId,
-        data
-      )
+            if (
+        data.story_is_adult !== true &&
+        !data.episodes?.some((item) => item?.is_adult)
+      ) {
+        saveManifest(safeStoryId, data)
+      }
 
       return {
         ok: true,
@@ -592,6 +594,10 @@ async function fetchAndCacheDetail({
     return response
   }
 
+  if (data.story?.is_adult || data.episode?.is_adult) {
+    return response
+  }
+
   const cacheAccess =
     data.cache_access
 
@@ -735,6 +741,13 @@ export function installReaderEpisodeCacheFetch() {
         includePublic: true,
       })
 
+      return apiFetch(input, init)
+    }
+
+    if (
+      manifestResult.data?.story_is_adult === true ||
+      manifestEpisode?.is_adult === true
+    ) {
       return apiFetch(input, init)
     }
 
