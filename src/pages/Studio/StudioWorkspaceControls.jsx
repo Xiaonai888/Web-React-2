@@ -258,6 +258,7 @@ export function StudioControlSidebar({
   layers,
   activeLayerId,
   onLayerAction,
+  onFeatureApply,
   navigator,
   labels,
 }) {
@@ -297,6 +298,8 @@ export function StudioControlSidebar({
   layers={layers}
   activeLayerId={activeLayerId}
   onLayerAction={onLayerAction}
+  onFeatureApply={onFeatureApply}
+  color={color}
   layerDisabled={paperLoading || projectBusy}
 />
       {brushDock ? createPortal(brushControls, brushDock) : brushControls}
