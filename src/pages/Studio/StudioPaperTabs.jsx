@@ -1,4 +1,32 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+
+const STUDIO_TEXT = {
+  "km": {
+    "Open papers": "ក្រដាសដែលកំពុងបើក",
+    "Rename": "ប្ដូរឈ្មោះ",
+    "Unsaved changes": "ការកែប្រែមិនទាន់រក្សាទុក"
+  },
+  "zh": {
+    "Open papers": "打开的画布",
+    "Rename": "重命名",
+    "Unsaved changes": "未保存的更改"
+  },
+  "ja": {
+    "Open papers": "開いているキャンバス",
+    "Rename": "名前を変更",
+    "Unsaved changes": "未保存の変更"
+  },
+  "ko": {
+    "Open papers": "열린 캔버스",
+    "Rename": "이름 바꾸기",
+    "Unsaved changes": "저장되지 않은 변경 사항"
+  }
+}
+
+function studioTranslate(language, text) {
+  return STUDIO_TEXT[language]?.[text] || text
+}
 
 export default function StudioPaperTabs({
   documents,
@@ -12,6 +40,8 @@ export default function StudioPaperTabs({
   labels,
 }) {
   const [editingId, setEditingId] = useState('')
+  const { language } = useDisplayTranslation()
+  const tr = (text) => studioTranslate(language, text)
   const [draft, setDraft] = useState('')
   const inputRef = useRef(null)
   const canceledRef = useRef(false)
@@ -74,7 +104,7 @@ export default function StudioPaperTabs({
   }
 
   return (
-    <div ref={tabsRef} className="ss-tabs" role="group" aria-label="Open papers">
+    <div ref={tabsRef} className="ss-tabs" role="group" aria-label={tr('Open papers')}>
       <style>{`
         .ss-tabs{position:sticky;top:34px;z-index:29;display:flex;align-items:stretch;min-height:36px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid #3d4248;background:#24272a;padding-left:8px;scrollbar-width:thin}
         .ss-tab{flex:0 0 auto;min-width:118px;max-width:220px;height:36px;display:flex;align-items:center;border-right:1px solid #3d4248;background:#292c30;color:#b9c0c7}
@@ -104,7 +134,7 @@ export default function StudioPaperTabs({
                 className="ss-tab-input"
                 maxLength={80}
                 value={draft}
-                aria-label={`Rename ${paper.name}`}
+                aria-label={`${tr('Rename')} ${paper.name}`}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
@@ -129,12 +159,12 @@ export default function StudioPaperTabs({
                 onClick={() => { if (!active) onSwitch(paper.id) }}
                 onDoubleClick={() => beginRename(paper)}
               >
-                {paper.dirty ? <span className="ss-dirty" aria-label="Unsaved changes" /> : null}
+                {paper.dirty ? <span className="ss-dirty" aria-label={tr('Unsaved changes')} /> : null}
                 <span className="ss-tab-name">{paper.name}</span>
               </button>
             )}
             {active && !editing ? (
-              <button type="button" className="ss-tab-edit" disabled={disabled} title={`Rename ${paper.name}`} aria-label={`Rename ${paper.name}`} onClick={() => beginRename(paper)}>
+              <button type="button" className="ss-tab-edit" disabled={disabled} title={`${tr('Rename')} ${paper.name}`} aria-label={`${tr('Rename')} ${paper.name}`} onClick={() => beginRename(paper)}>
                 <i className="fa-solid fa-pen" />
               </button>
             ) : null}
