@@ -1,4 +1,5 @@
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import StudioPrecisionInput from './StudioPrecisionInput'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -340,11 +341,11 @@ export function StudioControlFooter({
           .shadow-studio:has(.ss-layout) .ss-footer-meta strong{max-width:188px;overflow:hidden;text-overflow:ellipsis;font-weight:700;color:#e5ebf1}
           .shadow-studio:has(.ss-layout) .ss-footer-meta span{margin-left:auto;color:#a4b2bf;font-weight:800}
           .shadow-studio:has(.ss-layout) .ss-controls{width:auto;min-width:0;display:flex;flex:1 0 auto;align-items:center;gap:0;overflow:visible}
-          .shadow-studio:has(.ss-layout) .ss-control{flex:0 0 181px;width:181px;min-width:0;height:30px;display:flex;align-items:center;gap:6px;padding:0 10px;border-right:1px solid #465360}
+          .shadow-studio:has(.ss-layout) .ss-control{flex:0 0 225px;width:225px;min-width:0;height:30px;display:flex;align-items:center;gap:6px;padding:0 10px;border-right:1px solid #465360}
           .shadow-studio:has(.ss-layout) .ss-control label{flex:0 0 auto;display:inline;color:#c7d2dc;font-size:10px;font-weight:700;white-space:nowrap}
           .shadow-studio:has(.ss-layout) .ss-control input[type=range]{flex:1 1 auto;min-width:26px;width:auto;max-width:85px;margin:0;cursor:pointer}
           .shadow-studio:has(.ss-layout) .ss-value{flex:0 0 auto;width:auto;min-width:31px;font-size:10px;font-variant-numeric:tabular-nums;color:#e0eaf4;text-align:right}
-          .shadow-studio:has(.ss-layout) .ss-control.ss-zoom-control{flex:0 0 300px;width:300px;min-width:0;gap:5px}
+          .shadow-studio:has(.ss-layout) .ss-control.ss-zoom-control{flex:0 0 350px;width:350px;min-width:0;gap:5px}
           .shadow-studio:has(.ss-layout) .ss-zoom-control input[type=range]{max-width:72px}
           .shadow-studio:has(.ss-layout) .ss-zoom-control>.ss-zoom-btn.ss-view-only-control{display:none}
           .shadow-studio:has(.ss-layout) .ss-zoom-btn{width:25px;min-width:25px;height:27px;display:grid;place-items:center;padding:0;border:1px solid #536272;border-radius:5px;background:#344250;color:#e7f0f9;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
@@ -368,8 +369,9 @@ export function StudioControlFooter({
         <div className="ss-controls">
           <div className="ss-control ss-footer-control">
             <label htmlFor="ss-footer-brush-size">{labels.size}</label>
-            <input id="ss-footer-brush-size" type="range" min="1" max="80" step="1" value={size} onChange={(event) => onSizeChange(Number(event.target.value))} />
-            <span className="ss-value">{size}px</span>
+            <input id="ss-footer-brush-size" type="range" min="1" max="5000" step="1" value={Math.max(1, size)} onChange={(event) => onSizeChange(Number(event.target.value))} />
+            <StudioPrecisionInput value={size} onCommit={onSizeChange} min={0.1} max={5000} step={0.1} label={labels.size} width={61} />
+            <span className="ss-value">px</span>
           </div>
           <div className="ss-control ss-footer-control">
             <label htmlFor="ss-footer-opacity">{labels.opacity}</label>
@@ -378,10 +380,11 @@ export function StudioControlFooter({
           </div>
           <div className="ss-control ss-zoom-control ss-footer-control">
             <label htmlFor="ss-footer-zoom">{labels.zoom}</label>
-            <button type="button" className="ss-zoom-btn" title={tx('studioWorkspace.zoomOut')} aria-label={tx('studioWorkspace.zoomOut')} onClick={() => onZoom(zoom / 1.2)} disabled={zoom <= 10}>−</button>
-            <input id="ss-footer-zoom" type="range" min="10" max="400" step="1" value={zoom} aria-label={tx('studioWorkspace.canvasZoom')} onChange={(event) => onZoom(Number(event.target.value))} />
-            <button type="button" className="ss-zoom-btn" title={tx('studioWorkspace.zoomIn')} aria-label={tx('studioWorkspace.zoomIn')} onClick={() => onZoom(zoom * 1.2)} disabled={zoom >= 400}>+</button>
-            <span className="ss-value">{zoom}%</span>
+            <button type="button" className="ss-zoom-btn" title={tx('studioWorkspace.zoomOut')} aria-label={tx('studioWorkspace.zoomOut')} onClick={() => onZoom(zoom / 1.2)} disabled={zoom <= 1}>−</button>
+            <input id="ss-footer-zoom" type="range" min="1" max="6400" step="1" value={zoom} aria-label={tx('studioWorkspace.canvasZoom')} onChange={(event) => onZoom(Number(event.target.value))} />
+            <button type="button" className="ss-zoom-btn" title={tx('studioWorkspace.zoomIn')} aria-label={tx('studioWorkspace.zoomIn')} onClick={() => onZoom(zoom * 1.2)} disabled={zoom >= 6400}>+</button>
+            <StudioPrecisionInput value={zoom} onCommit={onZoom} min={1} max={6400} step={1} label={tx('studioWorkspace.canvasZoom')} width={65} />
+            <span className="ss-value">%</span>
             <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={() => onZoom(100)} title={tx('studioWorkspace.actualPixels')}>100%</button>
             <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={onFit} title={tx('studioWorkspace.fitScreen')}>{tx('studioWorkspace.fit')}</button>
             <button type="button" className="ss-zoom-btn ss-zoom-label ss-view-only-control" title={tx('studioWorkspace.rotateViewLeft')} aria-label={tx('studioWorkspace.rotateViewLeft')} onClick={() => onViewChange(viewRotation - 90)}>↶</button>
