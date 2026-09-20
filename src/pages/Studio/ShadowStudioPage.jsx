@@ -1016,6 +1016,10 @@ export default function ShadowStudioPage() {
   useEffect(() => {
     function onKeyDown(event) {
       const target = event.target
+      if (!workspaceStarted || paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen || drawingRef.current || event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return
+      if (target?.closest?.('input, textarea, select, button, [contenteditable="true"], [role="dialog"]') || document.querySelector('[aria-modal="true"]')) return
+      const shortcutTool = { b: 'brush', e: 'eraser', i: 'eyedropper' }[event.key.toLowerCase()]
+      if (shortcutTool) { event.preventDefault(); setTool(shortcutTool); return }
       if (event.code !== 'Space' || event.repeat || !workspaceStarted || newFileOpen) return
       if (target?.closest?.('input, textarea, select, button, [contenteditable="true"]')) return
       event.preventDefault()
