@@ -2,6 +2,7 @@ const DATABASE_NAME = 'shadow-studio-local-recovery'
 const STORE_NAME = 'workspaces'
 const RECOVERY_KEY = 'current'
 const MAX_RECOVERY_BYTES = 55 * 1024 * 1024
+const MAX_RECOVERY_LAYERS = 8
 
 let databasePromise = null
 let operations = Promise.resolve()
@@ -80,6 +81,29 @@ function estimatedBytes(image) {
   return typeof image === 'string' ? Math.ceil(image.length * 0.75) : 0
 }
 
+function captureLayers(paper) {
+  if (paper.layers === undefined) return {}
+  if (!Array.isArray(paper.layers) || paper.layers.length < 1 || paper.layers.length > MAX_RECOVERY_LAYERS) {
+    throw new Error('The paper has an invalid layer stack. Save a project copy before continuing.')
+  }
+
+  const layers = paper.layers.map((layer) => {
+    if (!layer || (typeof layer.image !== 'string' && !(layer.image instanceof Blob))) {
+      throw new Error('The paper has an invalid layer image. Save a project copy before continuing.')
+    }
+    return {
+      id: layer.id,
+      name: layer.name,
+      image: layer.image,
+      visible: layer.visible,
+      locked: layer.locked,
+      opacity: layer.opacity,
+    }
+  })
+
+  return { layers, activeLayerId: paper.activeLayerId }
+}
+
 export async function readStudioRecovery() {
   await operations.catch(() => {})
   const record = await transaction('readonly', (store) => store.get(RECOVERY_KEY))
@@ -102,27 +126,34 @@ export function saveStudioRecovery(documents, activeDocumentId, canvas) {
     return Promise.reject(new Error('A workspace must have 1–8 papers.'))
   }
 
-  const capturedDocuments = documents.map((document) => ({ ...document }))
+  let capturedDocuments
+  try {
+    capturedDocuments = documents.map((paper) => ({ ...paper, ...captureLayers(paper) }))
+  } catch (error) {
+    return Promise.reject(error)
+  }
   const capturedId = activeDocumentId
   const activeBitmapPromise = canvas ? canvasBlob(canvas) : Promise.resolve(null)
 
   return queue(async () => {
     const activeBitmap = await activeBitmapPromise
-    const papers = capturedDocuments.map((document) => ({
-      id: document.id,
-      name: document.name,
-      width: document.width,
-      height: document.height,
-      resolution: document.resolution,
-      background: document.background,
-      presetId: document.presetId,
-      dirty: Boolean(document.dirty),
-      image: activeBitmap && document.id === capturedId
+    const papers = capturedDocuments.map((paper) => ({
+      id: paper.id,
+      name: paper.name,
+      width: paper.width,
+      height: paper.height,
+      resolution: paper.resolution,
+      background: paper.background,
+      presetId: paper.presetId,
+      dirty: Boolean(paper.dirty),
+      image: activeBitmap && paper.id === capturedId
         ? activeBitmap
-        : document.image || '',
+        : paper.image || '',
+      ...captureLayers(paper),
     }))
 
-    const totalBytes = papers.reduce((sum, paper) => sum + estimatedBytes(paper.image), 0)
+    const totalBytes = papers.reduce((sum, paper) =>
+      sum + estimatedBytes(paper.image) + (paper.layers || []).reduce((size, layer) => size + estimatedBytes(layer.image), 0), 0)
     if (totalBytes > MAX_RECOVERY_BYTES) {
       throw new Error('Local recovery is over 55 MB. Save Project to your device.')
     }
@@ -152,11 +183,20 @@ export async function restoreStudioRecovery(record) {
   const documents = []
 
   for (const paper of record.documents) {
+    const storedLayers = captureLayers(paper)
+    const layers = storedLayers.layers
+      ? await Promise.all(storedLayers.layers.map(async (layer) => ({
+          ...layer,
+          image: layer.image instanceof Blob ? await toDataUrl(layer.image) : layer.image,
+        })))
+      : undefined
+
     documents.push({
       ...paper,
       image: paper.image instanceof Blob
         ? await toDataUrl(paper.image)
         : paper.image || '',
+      ...(layers ? { layers, activeLayerId: storedLayers.activeLayerId } : {}),
       dirty: true,
     })
   }
