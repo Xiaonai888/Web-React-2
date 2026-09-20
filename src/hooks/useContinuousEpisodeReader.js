@@ -23,6 +23,7 @@ export default function useContinuousEpisodeReader({
   const nodesRef = useRef(new Map())
   const loadingRef = useRef(new Map())
   const preloadRetryAfterRef = useRef(new Map())
+  const generationRef = useRef(0)
   const activeIdRef = useRef(String(activeEpisodeId || ''))
   const pendingScrollAdjustmentRef = useRef(0)
   const loadEpisodeRef = useRef(loadEpisode)
@@ -45,11 +46,22 @@ export default function useContinuousEpisodeReader({
     setEntries(nextEntries)
   }, [])
 
+  useEffect(() => {
+    generationRef.current += 1
+    loadingRef.current.clear()
+    preloadRetryAfterRef.current.clear()
+    nodesRef.current.clear()
+    pendingScrollAdjustmentRef.current = 0
+    commitEntries([])
+  }, [storyId, commitEntries])
+
   const setInitialEntry = useCallback(
     (entry) => {
       if (!entry?.id || !entry?.episode) return
 
+      generationRef.current += 1
       loadingRef.current.clear()
+      preloadRetryAfterRef.current.clear()
       nodesRef.current.clear()
       pendingScrollAdjustmentRef.current = 0
       activeIdRef.current = String(entry.id)
@@ -153,16 +165,18 @@ export default function useContinuousEpisodeReader({
         return loadingRef.current.get(targetId)
       }
 
-      const promise = Promise.resolve(
-        loadEpisodeRef.current?.(targetEpisode)
-      )
+      const generation = generationRef.current
+      const promise = Promise.resolve()
+        .then(() => loadEpisodeRef.current?.(targetEpisode))
         .then((entry) => {
-          if (!entry) return null
+          if (!entry || generation !== generationRef.current) return null
           insertEntry(entry)
           return entry
         })
         .finally(() => {
-          loadingRef.current.delete(targetId)
+          if (loadingRef.current.get(targetId) === promise) {
+            loadingRef.current.delete(targetId)
+          }
         })
 
       loadingRef.current.set(targetId, promise)
@@ -227,11 +241,13 @@ export default function useContinuousEpisodeReader({
       if (rect.bottom - window.innerHeight > preloadDistance) return
 
       const nextId = getEpisodeId(nextEpisode)
-if (Date.now() < (preloadRetryAfterRef.current.get(nextId) || 0)) return
-preloadRetryAfterRef.current.set(nextId, Date.now() + 60000)
-loadTarget(nextEpisode)
-  .then(() => preloadRetryAfterRef.current.delete(nextId))
-  .catch(() => null)
+      if (Date.now() < (preloadRetryAfterRef.current.get(nextId) || 0)) return
+      preloadRetryAfterRef.current.set(nextId, Date.now() + 60000)
+      loadTarget(nextEpisode)
+        .then((entry) => {
+          if (entry && !entry.locked) preloadRetryAfterRef.current.delete(nextId)
+        })
+        .catch(() => null)
     }
 
     const scheduleCheck = () => {
