@@ -1,8 +1,49 @@
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useEffect, useRef, useState } from 'react'
+
+registerTranslationNamespace('studioNavigator', {
+  "en": {
+    "title": "Navigator",
+    "panel": "Navigator",
+    "moveView": "Move the canvas view. Click or drag to pan.",
+    "moveAround": "Click or drag to move around the paper",
+    "hint": "Click or drag to pan · Preview is not exported"
+  },
+  "km": {
+    "title": "ផ្ទាំងរុករក",
+    "panel": "ផ្ទាំងរុករក",
+    "moveView": "ផ្លាស់ទីទិដ្ឋភាព Canvas។ ចុច ឬអូសដើម្បីរំកិល។",
+    "moveAround": "ចុច ឬអូសដើម្បីផ្លាស់ទីលើក្រដាស",
+    "hint": "ចុច ឬអូសដើម្បីរំកិល · រូបមើលជាមុនមិនត្រូវបាន Export ទេ"
+  },
+  "zh": {
+    "title": "导航器",
+    "panel": "导航器",
+    "moveView": "移动画布视图。单击或拖动以平移。",
+    "moveAround": "单击或拖动以浏览画布",
+    "hint": "单击或拖动以平移 · 预览不会导出"
+  },
+  "ja": {
+    "title": "ナビゲーター",
+    "panel": "ナビゲーター",
+    "moveView": "キャンバス表示を移動します。クリックまたはドラッグして移動できます。",
+    "moveAround": "クリックまたはドラッグしてキャンバスを移動",
+    "hint": "クリックまたはドラッグして移動 · プレビューは書き出されません"
+  },
+  "ko": {
+    "title": "네비게이터",
+    "panel": "네비게이터",
+    "moveView": "캔버스 보기를 이동합니다. 클릭하거나 드래그하여 이동하세요.",
+    "moveAround": "클릭하거나 드래그하여 캔버스 이동",
+    "hint": "클릭 또는 드래그하여 이동 · 미리보기는 내보내지지 않습니다"
+  }
+})
 
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value))
 
 export default function StudioNavigator({ canvasRef, workRef, paperId, revision, rotation, flipHorizontal, flipVertical, zoom, disabled }) {
+  const { t: tx } = useDisplayTranslation()
   const previewRef = useRef(null)
   const dragRef = useRef(null)
   const [expanded, setExpanded] = useState(() => typeof window !== 'undefined' && window.matchMedia('(min-width: 901px)').matches)
@@ -131,7 +172,7 @@ export default function StudioNavigator({ canvasRef, workRef, paperId, revision,
   }
 
   return (
-    <section className="ss-section ss-navigator" aria-label="Navigator">
+    <section className="ss-section ss-navigator" aria-label={tx('studioNavigator.panel')}>
       <style>{`
         .shadow-studio .ss-navigator{min-width:0}
         @media(min-width:901px) and (min-height:651px),(min-width:1101px){.shadow-studio .ss-layout > .ss-side{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}}
@@ -154,12 +195,12 @@ export default function StudioNavigator({ canvasRef, workRef, paperId, revision,
         }
       `}</style>
       <details className="ss-nav-fold" open={expanded} onToggle={(event) => setExpanded(event.currentTarget.open)}>
-        <summary>Navigator · {zoom}%</summary>
+        <summary>{tx('studioNavigator.title')} · {zoom}%</summary>
         <button
           type="button"
           className="ss-nav-preview"
-          aria-label="Move canvas view. Click or drag to pan."
-          title="Click or drag to move around the paper"
+          aria-label={tx('studioNavigator.moveView')}
+          title={tx('studioNavigator.moveAround')}
           disabled={disabled}
           style={{ width: dimensions.width, height: dimensions.height }}
           onPointerDown={pointerStart}
@@ -173,7 +214,7 @@ export default function StudioNavigator({ canvasRef, workRef, paperId, revision,
             {viewport ? <polygon points={viewport} fill="rgba(53,147,255,.2)" stroke="#2789f4" strokeWidth="2" vectorEffect="non-scaling-stroke" /> : null}
           </svg>
         </button>
-        <p className="ss-nav-hint">Click or drag to pan · Preview is not exported</p>
+        <p className="ss-nav-hint">{tx('studioNavigator.hint')}</p>
       </details>
     </section>
   )
