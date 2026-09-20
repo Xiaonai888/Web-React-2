@@ -80,7 +80,7 @@ export async function getTemporaryCacheStats() {
     getMangaImageCacheStats(),
   ])
   const bytes = readerStats(entries)
-  const imageBytes = imageStats?.ok ? Math.max(0, Number(imageStats.totalCachedBytes) || 0) : null
+  const imageBytes = imageStats?.ok ? Math.max(0, Number(imageStats.cachedBytes) || 0) : null
   return {
     novelBytes: bytes.novel,
     chatStoryBytes: bytes.chat_story,
@@ -88,7 +88,7 @@ export async function getTemporaryCacheStats() {
     mangaImageBytes: imageBytes,
     mangaBytes: imageBytes === null ? null : bytes.manga + imageBytes,
     totalBytes: imageBytes === null ? null : bytes.novel + bytes.chat_story + bytes.manga + imageBytes,
-    limitBytes: imageStats?.ok ? imageStats.totalBudgetBytes : null,
+    limitBytes: imageStats?.ok ? await getTotalBudget(bytes.novel + bytes.chat_story + bytes.manga + imageBytes, getTemporaryCachePreferences()) : null,
     imageCacheAvailable: imageStats?.ok === true,
   }
 }
@@ -149,7 +149,7 @@ async function pruneTemporaryCacheNow() {
   const entries = await readReaderEntries()
   const image = await getMangaImageCacheStats()
   if (!image?.ok) throw new Error('MANGA_CACHE_STATS_UNAVAILABLE')
-  const mangaBytes = Math.max(0, Number(image.totalCachedBytes) || 0)
+  const mangaBytes = Math.max(0, Number(image.cachedBytes) || 0)
   const now = Date.now()
   let remaining = entries.map((entry) => ({
     ...entry,
@@ -189,7 +189,7 @@ export function pruneTemporaryCache() {
 export async function clearTemporaryCacheType(type) {
   if (!['novel', 'chat_story', 'manga', 'all'].includes(type)) throw new Error('INVALID_CACHE_TYPE')
   if (type === 'manga' || type === 'all') {
-    const result = await clearMangaImageCache({ all: true })
+    const result = await clearMangaImageCache({ all: false, includePublic: true })
     if (!result?.ok) throw new Error(result?.code || 'MANGA_CACHE_CLEAR_FAILED')
   }
   if (type === 'all') await clearReaderEpisodeCache()
@@ -209,12 +209,16 @@ export async function clearTemporaryCacheType(type) {
 export function installTemporaryCacheManagement() {
   if (window.__shadowTemporaryCacheManagementInstalled) return
   window.__shadowTemporaryCacheManagementInstalled = true
-  const run = () => {
+  let lastRunAt = 0
+  const run = (force = false) => {
     if (document.visibilityState !== 'visible') return
+    const now = Date.now()
+    if (force !== true && now - lastRunAt < 30 * 60 * 1000) return
+    lastRunAt = now
     pruneTemporaryCache().catch(() => {})
   }
-  window.setTimeout(run, 4000)
-  window.setInterval(run, 5 * 60 * 1000)
-  window.addEventListener('focus', run)
-  window.addEventListener('shadow-temporary-cache-settings-changed', run)
+  window.setTimeout(run, 12000)
+  window.setInterval(run, 60 * 60 * 1000)
+  window.addEventListener('focus', () => run())
+  window.addEventListener('shadow-temporary-cache-settings-changed', () => run(true))
 }
