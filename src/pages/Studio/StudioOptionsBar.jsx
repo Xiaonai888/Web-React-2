@@ -129,8 +129,14 @@ export default function StudioOptionsBar({
   onSizeChange, onOpacityChange, onToggleGrid, onUndo, onRedo,
   onFit, onNew, onSave, onExport,
 }) {
-  const { t: tx } = useDisplayTranslation()
-  const toolName = { brush: tx('studioOptions.brush'), eraser: tx('studioOptions.eraser'), eyedropper: tx('studioOptions.eyedropper') }[tool] || tx('studioOptions.tool')
+  const { t: tx, language } = useDisplayTranslation()
+  const toolName = {
+  brush: tx('studioOptions.brush'),
+  eraser: tx('studioOptions.eraser'),
+  eyedropper: tx('studioOptions.eyedropper'),
+  pencil: { km: 'ខ្មៅដៃ', en: 'Pencil', zh: '铅笔', ja: '鉛筆', ko: '연필' }[language] || 'Pencil',
+  shape: { km: 'រូបរាង', en: 'Shape', zh: '形状', ja: '図形', ko: '도형' }[language] || 'Shape',
+}[tool] || tx('studioOptions.tool')
   return (
     <div className="ss-options-bar" role="toolbar" aria-label={tx('studioOptions.toolbar')}>
       <style>{`
@@ -152,7 +158,7 @@ export default function StudioOptionsBar({
         @media(max-width:700px){.shadow-studio .ss-options-bar{padding:4px 8px;gap:7px}.shadow-studio .ss-options-bar .ss-opt-title{min-width:65px}.shadow-studio .ss-options-bar .ss-opt-range input{width:60px;min-width:60px}}
       `}</style>
       <div className="ss-opt-title" title={paper?.name || toolName}>
-        <i className={`fa-solid ${tool === 'eraser' ? 'fa-eraser' : tool === 'eyedropper' ? 'fa-eye-dropper' : 'fa-paintbrush'}`} aria-hidden="true" />
+        <i className={`fa-solid ${tool === 'eraser' ? 'fa-eraser' : tool === 'eyedropper' ? 'fa-eye-dropper' : tool === 'pencil' ? 'fa-pencil' : tool === 'shape' ? 'fa-shapes' : 'fa-paintbrush'}`} aria-hidden="true" />
         <span>{toolName} {tx('studioOptions.options')}</span>
       </div>
       <span className="ss-opt-separator" aria-hidden="true" />
