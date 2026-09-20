@@ -1,3 +1,5 @@
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import StudioColorPanel from './StudioColorPanel'
@@ -5,7 +7,196 @@ import StudioBrushSettings from './StudioBrushSettings'
 import StudioRightPanels from './StudioRightPanels'
 import StudioToolPalette from './StudioToolPalette'
 
+registerTranslationNamespace('studioWorkspace', {
+  "en": {
+    "brush": "Brush",
+    "settingsPresets": "Settings & presets",
+    "brushSettingsPanel": "Brush settings panel",
+    "studioSidePanels": "Studio side panels",
+    "canvasView": "Canvas View",
+    "rotateLeft": "Rotate view 90° counterclockwise",
+    "rotateRight": "Rotate view 90° clockwise",
+    "flipH": "Flip H",
+    "flipV": "Flip V",
+    "reset": "Reset",
+    "rotation": "Rotation",
+    "canvasRotation": "Canvas rotation",
+    "viewOnlyHelp": "Rotation and flipping affect only the view. Your saved drawing and exported image remain unchanged.",
+    "statusControls": "Studio status and canvas controls",
+    "documentInfo": "Current document information",
+    "currentPaper": "Current paper",
+    "noPaper": "No open paper",
+    "paperCount": "Current paper / open papers",
+    "zoomOut": "Zoom out",
+    "zoomIn": "Zoom in",
+    "canvasZoom": "Canvas zoom",
+    "actualPixels": "Actual pixels",
+    "fitScreen": "Fit paper to screen",
+    "fit": "Fit",
+    "rotateViewLeft": "Rotate view counterclockwise",
+    "rotateViewRight": "Rotate view clockwise",
+    "flipViewHoriz": "Flip view horizontally",
+    "flipViewVert": "Flip view vertically",
+    "resetOrientation": "Reset view orientation",
+    "viewOrientation": "View orientation",
+    "rotate": "Rotate",
+    "angleDegrees": "View rotation in degrees",
+    "flipHViewOnly": "Flip horizontal (view only)",
+    "flipVViewOnly": "Flip vertical (view only)",
+    "resetCanvasView": "Reset canvas view orientation"
+  },
+  "km": {
+    "brush": "ជក់",
+    "settingsPresets": "ការកំណត់ និង Preset",
+    "brushSettingsPanel": "ផ្ទាំងកំណត់ជក់",
+    "studioSidePanels": "ផ្ទាំងចំហៀង Studio",
+    "canvasView": "ទិដ្ឋភាព Canvas",
+    "rotateLeft": "បង្វិលទិដ្ឋភាព ៩០° ច្រាសទ្រនិចនាឡិកា",
+    "rotateRight": "បង្វិលទិដ្ឋភាព ៩០° តាមទ្រនិចនាឡិកា",
+    "flipH": "ត្រឡប់ផ្ដេក",
+    "flipV": "ត្រឡប់បញ្ឈរ",
+    "reset": "កំណត់ឡើងវិញ",
+    "rotation": "មុំបង្វិល",
+    "canvasRotation": "មុំបង្វិល Canvas",
+    "viewOnlyHelp": "ការបង្វិល និងត្រឡប់នេះប្ដូរតែទិដ្ឋភាព មិនប្ដូររូបគំនូរដែលបានរក្សាទុក ឬរូបភាព Export ទេ។",
+    "statusControls": "ស្ថានភាព និងការគ្រប់គ្រង Canvas",
+    "documentInfo": "ព័ត៌មានឯកសារបច្ចុប្បន្ន",
+    "currentPaper": "ក្រដាសបច្ចុប្បន្ន",
+    "noPaper": "គ្មានក្រដាសបើក",
+    "paperCount": "ក្រដាសបច្ចុប្បន្ន / ក្រដាសដែលបើក",
+    "zoomOut": "បង្រួម",
+    "zoomIn": "ពង្រីក",
+    "canvasZoom": "កម្រិតពង្រីក Canvas",
+    "actualPixels": "ទំហំភីកសែលពិត",
+    "fitScreen": "បង្ហាញក្រដាសឱ្យសមនឹងអេក្រង់",
+    "fit": "សមអេក្រង់",
+    "rotateViewLeft": "បង្វិលទិដ្ឋភាពទៅឆ្វេង",
+    "rotateViewRight": "បង្វិលទិដ្ឋភាពទៅស្ដាំ",
+    "flipViewHoriz": "ត្រឡប់ទិដ្ឋភាពផ្ដេក",
+    "flipViewVert": "ត្រឡប់ទិដ្ឋភាពបញ្ឈរ",
+    "resetOrientation": "កំណត់ទិសទិដ្ឋភាពឡើងវិញ",
+    "viewOrientation": "ទិសទិដ្ឋភាព",
+    "rotate": "បង្វិល",
+    "angleDegrees": "មុំបង្វិលទិដ្ឋភាពគិតជាដឺក្រេ",
+    "flipHViewOnly": "ត្រឡប់ផ្ដេក (តែទិដ្ឋភាព)",
+    "flipVViewOnly": "ត្រឡប់បញ្ឈរ (តែទិដ្ឋភាព)",
+    "resetCanvasView": "កំណត់ទិស Canvas ឡើងវិញ"
+  },
+  "zh": {
+    "brush": "画笔",
+    "settingsPresets": "设置与预设",
+    "brushSettingsPanel": "画笔设置面板",
+    "studioSidePanels": "Studio 侧边面板",
+    "canvasView": "画布视图",
+    "rotateLeft": "视图逆时针旋转 90°",
+    "rotateRight": "视图顺时针旋转 90°",
+    "flipH": "水平翻转",
+    "flipV": "垂直翻转",
+    "reset": "重置",
+    "rotation": "旋转角度",
+    "canvasRotation": "画布视图旋转",
+    "viewOnlyHelp": "旋转和翻转仅改变视图，不会影响保存的绘图或导出图像。",
+    "statusControls": "Studio 状态与画布控制",
+    "documentInfo": "当前文档信息",
+    "currentPaper": "当前画布",
+    "noPaper": "未打开画布",
+    "paperCount": "当前画布 / 已打开画布",
+    "zoomOut": "缩小",
+    "zoomIn": "放大",
+    "canvasZoom": "画布缩放",
+    "actualPixels": "实际像素",
+    "fitScreen": "适合屏幕",
+    "fit": "适合",
+    "rotateViewLeft": "逆时针旋转视图",
+    "rotateViewRight": "顺时针旋转视图",
+    "flipViewHoriz": "水平翻转视图",
+    "flipViewVert": "垂直翻转视图",
+    "resetOrientation": "重置视图方向",
+    "viewOrientation": "视图方向",
+    "rotate": "旋转",
+    "angleDegrees": "视图旋转角度",
+    "flipHViewOnly": "水平翻转（仅视图）",
+    "flipVViewOnly": "垂直翻转（仅视图）",
+    "resetCanvasView": "重置画布视图方向"
+  },
+  "ja": {
+    "brush": "ブラシ",
+    "settingsPresets": "設定とプリセット",
+    "brushSettingsPanel": "ブラシ設定パネル",
+    "studioSidePanels": "Studio サイドパネル",
+    "canvasView": "キャンバス表示",
+    "rotateLeft": "表示を反時計回りに 90° 回転",
+    "rotateRight": "表示を時計回りに 90° 回転",
+    "flipH": "左右反転",
+    "flipV": "上下反転",
+    "reset": "リセット",
+    "rotation": "回転角度",
+    "canvasRotation": "キャンバス表示の回転",
+    "viewOnlyHelp": "回転と反転は表示のみに適用されます。保存した描画や書き出し画像は変更されません。",
+    "statusControls": "Studio の状態とキャンバス操作",
+    "documentInfo": "現在のドキュメント情報",
+    "currentPaper": "現在のキャンバス",
+    "noPaper": "開いているキャンバスはありません",
+    "paperCount": "現在のキャンバス / 開いているキャンバス",
+    "zoomOut": "縮小",
+    "zoomIn": "拡大",
+    "canvasZoom": "キャンバスの拡大率",
+    "actualPixels": "実際のピクセル",
+    "fitScreen": "画面に合わせる",
+    "fit": "全体表示",
+    "rotateViewLeft": "表示を反時計回りに回転",
+    "rotateViewRight": "表示を時計回りに回転",
+    "flipViewHoriz": "表示を左右反転",
+    "flipViewVert": "表示を上下反転",
+    "resetOrientation": "表示方向をリセット",
+    "viewOrientation": "表示方向",
+    "rotate": "回転",
+    "angleDegrees": "表示の回転角度",
+    "flipHViewOnly": "左右反転（表示のみ）",
+    "flipVViewOnly": "上下反転（表示のみ）",
+    "resetCanvasView": "キャンバス表示方向をリセット"
+  },
+  "ko": {
+    "brush": "브러시",
+    "settingsPresets": "설정 및 프리셋",
+    "brushSettingsPanel": "브러시 설정 패널",
+    "studioSidePanels": "Studio 측면 패널",
+    "canvasView": "캔버스 보기",
+    "rotateLeft": "보기를 반시계 방향으로 90° 회전",
+    "rotateRight": "보기를 시계 방향으로 90° 회전",
+    "flipH": "가로 뒤집기",
+    "flipV": "세로 뒤집기",
+    "reset": "초기화",
+    "rotation": "회전 각도",
+    "canvasRotation": "캔버스 보기 회전",
+    "viewOnlyHelp": "회전 및 뒤집기는 화면 보기에만 적용됩니다. 저장한 그림이나 내보낸 이미지는 변경되지 않습니다.",
+    "statusControls": "Studio 상태 및 캔버스 컨트롤",
+    "documentInfo": "현재 문서 정보",
+    "currentPaper": "현재 캔버스",
+    "noPaper": "열린 캔버스 없음",
+    "paperCount": "현재 캔버스 / 열린 캔버스",
+    "zoomOut": "축소",
+    "zoomIn": "확대",
+    "canvasZoom": "캔버스 확대/축소",
+    "actualPixels": "실제 픽셀",
+    "fitScreen": "화면에 맞추기",
+    "fit": "맞춤",
+    "rotateViewLeft": "보기 반시계 방향 회전",
+    "rotateViewRight": "보기 시계 방향 회전",
+    "flipViewHoriz": "보기 가로 뒤집기",
+    "flipViewVert": "보기 세로 뒤집기",
+    "resetOrientation": "보기 방향 초기화",
+    "viewOrientation": "보기 방향",
+    "rotate": "회전",
+    "angleDegrees": "보기 회전 각도",
+    "flipHViewOnly": "가로 뒤집기(보기만)",
+    "flipVViewOnly": "세로 뒤집기(보기만)",
+    "resetCanvasView": "캔버스 보기 방향 초기화"
+  }
+})
+
 export function StudioToolRail({ tool, onToolChange, labels }) {
+  const { t: tx } = useDisplayTranslation()
   return (
     <div className="ss-left-workspace">
       <style>{`
@@ -34,8 +225,8 @@ export function StudioToolRail({ tool, onToolChange, labels }) {
         }
       `}</style>
       <StudioToolPalette tool={tool} onToolChange={onToolChange} labels={labels} />
-      <aside className="ss-brush-dock" id="ss-brush-dock-root" aria-label="Brush settings panel">
-        <div className="ss-brush-dock-title"><span>Brush</span><small>Settings &amp; presets</small></div>
+      <aside className="ss-brush-dock" id="ss-brush-dock-root" aria-label={tx('studioWorkspace.brushSettingsPanel')}>
+        <div className="ss-brush-dock-title"><span>{tx('studioWorkspace.brush')}</span><small>{tx('studioWorkspace.settingsPresets')}</small></div>
       </aside>
     </div>
   )
@@ -60,6 +251,7 @@ export function StudioControlSidebar({
   navigator,
   labels,
 }) {
+  const { t: tx } = useDisplayTranslation()
   const [brushDock, setBrushDock] = useState(null)
 
   useEffect(() => {
@@ -83,26 +275,26 @@ export function StudioControlSidebar({
   )
 
   return (
-    <aside className="ss-side" aria-label="Studio side panels">
+    <aside className="ss-side" aria-label={tx('studioWorkspace.studioSidePanels')}>
       <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />
       <StudioRightPanels />
       {brushDock ? createPortal(brushControls, brushDock) : brushControls}
       <section className="ss-section" aria-label="Canvas view">
-        <h2 className="ss-label">Canvas View</h2>
+        <h2 className="ss-label">{tx('studioWorkspace.canvasView')}</h2>
         <div className="ss-view-buttons">
-          <button type="button" className="ss-view-btn" title="Rotate view 90° counterclockwise" onClick={() => onViewChange(viewRotation - 90)} disabled={paperLoading || projectBusy}>↶ 90°</button>
-          <button type="button" className="ss-view-btn" title="Rotate view 90° clockwise" onClick={() => onViewChange(viewRotation + 90)} disabled={paperLoading || projectBusy}>↷ 90°</button>
+          <button type="button" className="ss-view-btn" title={tx('studioWorkspace.rotateLeft')} onClick={() => onViewChange(viewRotation - 90)} disabled={paperLoading || projectBusy}>↶ 90°</button>
+          <button type="button" className="ss-view-btn" title={tx('studioWorkspace.rotateRight')} onClick={() => onViewChange(viewRotation + 90)} disabled={paperLoading || projectBusy}>↷ 90°</button>
         </div>
         <div className="ss-view-buttons" style={{ marginTop: 6 }}>
-          <button type="button" className={`ss-view-btn ${flipHorizontal ? 'active' : ''}`} onClick={() => onViewChange(viewRotation, !flipHorizontal, flipVertical)} disabled={paperLoading || projectBusy}>Flip H</button>
-          <button type="button" className={`ss-view-btn ${flipVertical ? 'active' : ''}`} onClick={() => onViewChange(viewRotation, flipHorizontal, !flipVertical)} disabled={paperLoading || projectBusy}>Flip V</button>
-          <button type="button" className="ss-view-btn" onClick={() => onViewChange(0, false, false)} disabled={paperLoading || projectBusy}>Reset</button>
+          <button type="button" className={`ss-view-btn ${flipHorizontal ? 'active' : ''}`} onClick={() => onViewChange(viewRotation, !flipHorizontal, flipVertical)} disabled={paperLoading || projectBusy}>{tx('studioWorkspace.flipH')}</button>
+          <button type="button" className={`ss-view-btn ${flipVertical ? 'active' : ''}`} onClick={() => onViewChange(viewRotation, flipHorizontal, !flipVertical)} disabled={paperLoading || projectBusy}>{tx('studioWorkspace.flipV')}</button>
+          <button type="button" className="ss-view-btn" onClick={() => onViewChange(0, false, false)} disabled={paperLoading || projectBusy}>{tx('studioWorkspace.reset')}</button>
         </div>
-        <div className="ss-view-angle">Rotation: {viewRotation}°</div>
+        <div className="ss-view-angle">{tx('studioWorkspace.rotation')}: {viewRotation}°</div>
         <div className="ss-range">
-          <input type="range" min="-180" max="180" step="1" value={viewRotation} aria-label="Canvas rotation" onChange={(event) => onViewChange(Number(event.target.value))} disabled={paperLoading || projectBusy} />
+          <input type="range" min="-180" max="180" step="1" value={viewRotation} aria-label={tx('studioWorkspace.canvasRotation')} onChange={(event) => onViewChange(Number(event.target.value))} disabled={paperLoading || projectBusy} />
         </div>
-        <p className="ss-view-help">View-only rotation and flip. Your saved drawing and export are not transformed.</p>
+        <p className="ss-view-help">{tx('studioWorkspace.viewOnlyHelp')}</p>
       </section>
       {navigator}
       <section className="ss-section">
@@ -129,10 +321,11 @@ export function StudioControlFooter({
   onViewChange,
   labels,
 }) {
+  const { t: tx } = useDisplayTranslation()
   const clamp = (value, min, max) => Math.min(max, Math.max(min, Math.round(Number(value) || 0)))
 
   return (
-    <footer className="ss-bottom" aria-label="Studio status and canvas controls">
+    <footer className="ss-bottom" aria-label={tx('studioWorkspace.statusControls')}>
       <style>{`
         .shadow-studio .ss-footer-inner{width:100%;min-width:0}
         .shadow-studio .ss-footer-meta{display:none}
@@ -153,7 +346,7 @@ export function StudioControlFooter({
           .shadow-studio:has(.ss-layout) .ss-value{flex:0 0 auto;width:auto;min-width:31px;font-size:10px;font-variant-numeric:tabular-nums;color:#e0eaf4;text-align:right}
           .shadow-studio:has(.ss-layout) .ss-control.ss-zoom-control{flex:0 0 300px;width:300px;min-width:0;gap:5px}
           .shadow-studio:has(.ss-layout) .ss-zoom-control input[type=range]{max-width:72px}
-          .shadow-studio:has(.ss-layout) .ss-zoom-control>.ss-zoom-btn[aria-label^='Rotate'],.shadow-studio:has(.ss-layout) .ss-zoom-control>.ss-zoom-btn[aria-label^='Flip'],.shadow-studio:has(.ss-layout) .ss-zoom-control>.ss-zoom-btn[aria-label^='Reset']{display:none}
+          .shadow-studio:has(.ss-layout) .ss-zoom-control>.ss-zoom-btn.ss-view-only-control{display:none}
           .shadow-studio:has(.ss-layout) .ss-zoom-btn{width:25px;min-width:25px;height:27px;display:grid;place-items:center;padding:0;border:1px solid #536272;border-radius:5px;background:#344250;color:#e7f0f9;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
           .shadow-studio:has(.ss-layout) .ss-zoom-btn:hover:not(:disabled){background:#45617d}
           .shadow-studio:has(.ss-layout) .ss-zoom-label{width:auto;min-width:31px;padding:0 5px;font-size:10px}
@@ -168,9 +361,9 @@ export function StudioControlFooter({
         }
       `}</style>
       <div className="ss-footer-inner">
-        <div className="ss-footer-meta" aria-label="Current document information">
-          <strong title={paper?.name || 'Current paper'}>{paper ? `${paper.width} × ${paper.height}px · ${paper.resolution} PPI` : 'No open paper'}</strong>
-          {paperCount > 0 ? <span title="Current paper / open papers">{paperIndex}/{paperCount}</span> : null}
+        <div className="ss-footer-meta" aria-label={tx('studioWorkspace.documentInfo')}>
+          <strong title={paper?.name || tx('studioWorkspace.currentPaper')}>{paper ? `${paper.width} × ${paper.height}px · ${paper.resolution} PPI` : tx('studioWorkspace.noPaper')}</strong>
+          {paperCount > 0 ? <span title={tx('studioWorkspace.paperCount')}>{paperIndex}/{paperCount}</span> : null}
         </div>
         <div className="ss-controls">
           <div className="ss-control ss-footer-control">
@@ -185,25 +378,25 @@ export function StudioControlFooter({
           </div>
           <div className="ss-control ss-zoom-control ss-footer-control">
             <label htmlFor="ss-footer-zoom">{labels.zoom}</label>
-            <button type="button" className="ss-zoom-btn" title="Zoom out" aria-label="Zoom out" onClick={() => onZoom(zoom / 1.2)} disabled={zoom <= 10}>−</button>
-            <input id="ss-footer-zoom" type="range" min="10" max="400" step="1" value={zoom} aria-label="Canvas zoom" onChange={(event) => onZoom(Number(event.target.value))} />
-            <button type="button" className="ss-zoom-btn" title="Zoom in" aria-label="Zoom in" onClick={() => onZoom(zoom * 1.2)} disabled={zoom >= 400}>+</button>
+            <button type="button" className="ss-zoom-btn" title={tx('studioWorkspace.zoomOut')} aria-label={tx('studioWorkspace.zoomOut')} onClick={() => onZoom(zoom / 1.2)} disabled={zoom <= 10}>−</button>
+            <input id="ss-footer-zoom" type="range" min="10" max="400" step="1" value={zoom} aria-label={tx('studioWorkspace.canvasZoom')} onChange={(event) => onZoom(Number(event.target.value))} />
+            <button type="button" className="ss-zoom-btn" title={tx('studioWorkspace.zoomIn')} aria-label={tx('studioWorkspace.zoomIn')} onClick={() => onZoom(zoom * 1.2)} disabled={zoom >= 400}>+</button>
             <span className="ss-value">{zoom}%</span>
-            <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={() => onZoom(100)} title="Actual pixels">100%</button>
-            <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={onFit} title="Fit paper to screen">Fit</button>
-            <button type="button" className="ss-zoom-btn ss-zoom-label" title="Rotate view counterclockwise" aria-label="Rotate view counterclockwise" onClick={() => onViewChange(viewRotation - 90)}>↶</button>
-            <button type="button" className="ss-zoom-btn ss-zoom-label" title="Rotate view clockwise" aria-label="Rotate view clockwise" onClick={() => onViewChange(viewRotation + 90)}>↷</button>
-            <button type="button" className="ss-zoom-btn ss-zoom-label" title="Flip view horizontally" aria-label="Flip view horizontally" aria-pressed={flipHorizontal} onClick={() => onViewChange(viewRotation, !flipHorizontal, flipVertical)}>⇋</button>
-            <button type="button" className="ss-zoom-btn ss-zoom-label" title="Reset view orientation" aria-label="Reset view orientation" onClick={() => onViewChange(0, false, false)}>0°</button>
+            <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={() => onZoom(100)} title={tx('studioWorkspace.actualPixels')}>100%</button>
+            <button type="button" className="ss-zoom-btn ss-zoom-label" onClick={onFit} title={tx('studioWorkspace.fitScreen')}>{tx('studioWorkspace.fit')}</button>
+            <button type="button" className="ss-zoom-btn ss-zoom-label ss-view-only-control" title={tx('studioWorkspace.rotateViewLeft')} aria-label={tx('studioWorkspace.rotateViewLeft')} onClick={() => onViewChange(viewRotation - 90)}>↶</button>
+            <button type="button" className="ss-zoom-btn ss-zoom-label ss-view-only-control" title={tx('studioWorkspace.rotateViewRight')} aria-label={tx('studioWorkspace.rotateViewRight')} onClick={() => onViewChange(viewRotation + 90)}>↷</button>
+            <button type="button" className="ss-zoom-btn ss-zoom-label ss-view-only-control" title={tx('studioWorkspace.flipViewHoriz')} aria-label={tx('studioWorkspace.flipViewHoriz')} aria-pressed={flipHorizontal} onClick={() => onViewChange(viewRotation, !flipHorizontal, flipVertical)}>⇋</button>
+            <button type="button" className="ss-zoom-btn ss-zoom-label ss-view-only-control" title={tx('studioWorkspace.resetOrientation')} aria-label={tx('studioWorkspace.resetOrientation')} onClick={() => onViewChange(0, false, false)}>0°</button>
           </div>
         </div>
-        <div className="ss-footer-view" aria-label="View orientation">
-          <label htmlFor="ss-footer-angle">Rotate</label>
-          <input id="ss-footer-angle" className="ss-footer-angle" type="number" step="1" min="-180" max="180" value={viewRotation} onChange={(event) => { if (event.target.value !== '') onViewChange(clamp(event.target.value, -180, 180)) }} aria-label="View rotation in degrees" />
+        <div className="ss-footer-view" aria-label={tx('studioWorkspace.viewOrientation')}>
+          <label htmlFor="ss-footer-angle">{tx('studioWorkspace.rotate')}</label>
+          <input id="ss-footer-angle" className="ss-footer-angle" type="number" step="1" min="-180" max="180" value={viewRotation} onChange={(event) => { if (event.target.value !== '') onViewChange(clamp(event.target.value, -180, 180)) }} aria-label={tx('studioWorkspace.angleDegrees')} />
           <span className="ss-value">°</span>
-          <button type="button" aria-label="Flip canvas view horizontally" title="Flip horizontal (view only)" aria-pressed={flipHorizontal} onClick={() => onViewChange(viewRotation, !flipHorizontal, flipVertical)}>⇋</button>
-          <button type="button" aria-label="Flip canvas view vertically" title="Flip vertical (view only)" aria-pressed={flipVertical} onClick={() => onViewChange(viewRotation, flipHorizontal, !flipVertical)}>⇅</button>
-          <button type="button" className="ss-footer-reset" title="Reset canvas view orientation" onClick={() => onViewChange(0, false, false)}>Reset</button>
+          <button type="button" aria-label={tx('studioWorkspace.flipViewHoriz')} title={tx('studioWorkspace.flipHViewOnly')} aria-pressed={flipHorizontal} onClick={() => onViewChange(viewRotation, !flipHorizontal, flipVertical)}>⇋</button>
+          <button type="button" aria-label={tx('studioWorkspace.flipViewVert')} title={tx('studioWorkspace.flipVViewOnly')} aria-pressed={flipVertical} onClick={() => onViewChange(viewRotation, flipHorizontal, !flipVertical)}>⇅</button>
+          <button type="button" className="ss-footer-reset" title={tx('studioWorkspace.resetCanvasView')} onClick={() => onViewChange(0, false, false)}>{tx('studioWorkspace.reset')}</button>
         </div>
       </div>
     </footer>
