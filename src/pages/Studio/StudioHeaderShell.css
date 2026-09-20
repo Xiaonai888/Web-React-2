@@ -1,0 +1,312 @@
+.shadow-studio:has(.ss-layout) > .ss-chrome {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 50px;
+  height: 50px;
+  min-width: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #4b5968;
+  background: linear-gradient(180deg, #303943, #252d37);
+  scrollbar-width: none;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome::-webkit-scrollbar {
+  display: none;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 178px;
+  height: 42px;
+  margin-right: 6px;
+  padding: 0 7px;
+  gap: 10px;
+  border: 0;
+  border-radius: 5px;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn::after {
+  content: 'Shadow Studio';
+  display: block;
+  color: #f0f5fc;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo {
+  width: 23px;
+  height: 23px;
+  object-fit: contain;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn:hover,
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn:focus-visible {
+  background: #3a4755;
+  outline: none;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome > .ss-menu-btn {
+  flex: 0 0 auto;
+  min-height: 34px;
+  height: 34px;
+  padding-inline: 9px;
+  color: #dce5ee;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome > .ss-menu-btn:focus-visible {
+  outline: 2px solid #85bffd;
+  outline-offset: -2px;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome > .ss-menu-btn:disabled {
+  opacity: .68;
+  cursor: default;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome > .ss-menu-btn:disabled:hover {
+  background: transparent;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-chrome-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  gap: 7px;
+  margin-left: auto;
+  padding-left: 10px;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-doc-info {
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #b9c9d9;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-chrome-right .ss-btn.icon {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border: 1px solid #526578;
+  border-radius: 5px;
+  background: #344252;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-chrome .ss-chrome-right .ss-btn.icon:hover:not(:disabled) {
+  background: #4b6682;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-project-message {
+  flex: 0 0 auto;
+  max-height: 30px;
+  min-height: 24px;
+  margin: 0;
+  padding: 5px 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid #3d4b59;
+  background: #27323e;
+  color: #bacddd;
+  font-size: 10px;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-options-bar {
+  flex: 0 0 42px;
+  height: 42px;
+  min-height: 42px;
+  gap: 8px;
+  padding: 4px 11px;
+  background: #303a45;
+  border-bottom: 1px solid #526172;
+  scrollbar-width: thin;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-title {
+  min-width: 105px;
+  max-width: 170px;
+  font-size: 11px;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-range {
+  flex: 0 0 auto;
+  gap: 6px;
+  color: #d4dfed;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-range input {
+  width: 76px;
+  min-width: 76px;
+  accent-color: #86bdff;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-range output {
+  min-width: 36px;
+  text-align: right;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-separator {
+  height: 23px;
+  background: #596979;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-options-bar button {
+  height: 29px;
+  min-height: 29px;
+  border-radius: 5px;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-primary {
+  border-color: #6fabe2;
+  background: #356da7;
+  color: #fff;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-tabs {
+  flex: 0 0 38px;
+  height: 38px;
+  min-height: 38px;
+  border-bottom: 1px solid #485564;
+  background: #222a33;
+  scrollbar-width: thin;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-tabs .ss-tab {
+  height: 37px;
+  border-right: 1px solid #445261;
+  background: #2d3743;
+  color: #b8c8d7;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-tabs .ss-tab.active {
+  border-top: 2px solid #8ac0fc;
+  background: #43586f;
+  color: #fff;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-tabs .ss-tab-add {
+  border-left: 1px solid #3e4b59;
+  color: #d7e9fa;
+}
+
+.shadow-studio:has(.ss-layout) > .ss-tabs .ss-tab-add:hover:not(:disabled) {
+  background: #344657;
+}
+
+@media (min-width: 1101px) and (max-width: 1399px) {
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn {
+    min-width: 41px;
+    width: 41px;
+    margin-right: 5px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn::after {
+    content: none;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-doc-info {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px), (max-height: 650px) and (orientation: landscape) {
+  .shadow-studio:has(.ss-layout) > .ss-chrome {
+    overflow-x: auto;
+    flex: 0 0 45px;
+    height: 45px;
+    padding: 0 7px;
+    gap: 1px;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn {
+    min-width: 30px;
+    width: 30px;
+    height: 36px;
+    margin-right: 2px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn::after {
+    content: none;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo {
+    width: 19px;
+    height: 19px;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-chrome > .ss-menu-btn {
+    min-width: 0;
+    min-height: 32px;
+    height: 32px;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-doc-info {
+    display: none;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-options-bar {
+    flex: 0 0 42px;
+    gap: 7px;
+    padding: 4px 8px;
+    overflow-x: auto;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-title {
+    min-width: 86px;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-tabs {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-chrome-right {
+    padding-left: 3px;
+    gap: 3px;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-chrome .ss-chrome-right .ss-btn.icon {
+    flex-basis: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-title {
+    min-width: 72px;
+    max-width: 88px;
+  }
+
+  .shadow-studio:has(.ss-layout) > .ss-options-bar .ss-opt-range input {
+    min-width: 60px;
+    width: 60px;
+  }
+}
