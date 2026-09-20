@@ -25,6 +25,16 @@ const DEFAULT_POLICY = {
 }
 
 const memoryFallback = new Map()
+const MEMORY_FALLBACK_LIMIT = 40
+
+function rememberFallbackEntry(entry) {
+  if (!entry?.key) return
+  memoryFallback.delete(entry.key)
+  memoryFallback.set(entry.key, entry)
+  if (memoryFallback.size > MEMORY_FALLBACK_LIMIT) {
+    memoryFallback.delete(memoryFallback.keys().next().value)
+  }
+}
 const INDEXED_DB_TIMEOUT_MS = 2000
 const PRUNE_CHECK_INTERVAL_MS = 15 * 60 * 1000
 const lastPrunedByType = new Map()
@@ -251,7 +261,7 @@ async function getStoredEntry(key) {
     )
 
     if (value) {
-      memoryFallback.set(key, value)
+      rememberFallbackEntry(value)
     }
 
     return value || null
@@ -263,7 +273,7 @@ async function getStoredEntry(key) {
 async function putStoredEntry(value) {
   if (!value?.key) return null
 
-  memoryFallback.set(value.key, value)
+  rememberFallbackEntry(value)
 
   try {
     await runTransaction(
@@ -288,7 +298,7 @@ async function getAllStoredEntries(storyType = '') {
 
     for (const value of values) {
       if (value?.key) {
-        memoryFallback.set(value.key, value)
+        rememberFallbackEntry(value)
       }
     }
 
