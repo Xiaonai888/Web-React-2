@@ -61,7 +61,11 @@ export function installApiAuthFetch() {
       window.location.origin
     )
 
-    if (url.origin !== API_ORIGIN) {
+    const method = String(init.method || (input instanceof Request ? input.method : 'GET')).toUpperCase()
+    if (
+      url.origin !== API_ORIGIN ||
+      (method === 'GET' && ['/health/maintenance', '/api/advertisements/public', '/api/public/content-versions', '/api/events'].includes(url.pathname))
+    ) {
       return nativeFetch(input, init)
     }
 
