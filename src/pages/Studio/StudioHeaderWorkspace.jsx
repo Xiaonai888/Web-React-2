@@ -97,7 +97,10 @@ export default function StudioHeaderWorkspace({
           <div className="ss-header-project-menu" role="group" aria-label={t[1]}>
             <span>{t[1]}</span>
             {documents.map((paper) => (
-              <button key={paper.id} type="button" aria-current={paper.id === activeDocumentId ? 'page' : undefined} disabled={busy || paper.id === activeDocumentId} onClick={() => onSwitchPaper(paper.id)}>{paper.name}</button>
+              <button key={paper.id} type="button" aria-current={paper.id === activeDocumentId ? 'page' : undefined} disabled={busy || paper.id === activeDocumentId} onClick={(event) => {
+  event.currentTarget.closest('details')?.removeAttribute('open')
+  onSwitchPaper(paper.id)
+}}>{paper.name}</button>
             ))}
           </div>
         </details>
