@@ -78,7 +78,7 @@ async function checkForAppUpdate({ force = false } = {}) {
   }
 }
 
-const MANGA_CACHE_SW_VERSION = '20260825-1'
+const MANGA_CACHE_SW_VERSION = String(__APP_BUILD_VERSION__)
 const MANGA_PERSIST_ATTEMPT_KEY =
   'shadow_manga_persist_attempt_v1'
 const MANGA_PERSIST_RETRY_MS =
@@ -266,6 +266,26 @@ function installReaderRouteContextTracking() {
 installReaderRouteContextTracking()
 
 if ('serviceWorker' in navigator) {
+  let previousController = navigator.serviceWorker.controller
+  let reloadRequested = false
+  const reloadKey = `shadow-sw-reloaded:${__APP_BUILD_VERSION__}`
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const currentController = navigator.serviceWorker.controller
+    notifyMangaCacheReaderContext()
+    if (!previousController || !currentController || currentController === previousController || reloadRequested) {
+      previousController = currentController
+      return
+    }
+    previousController = currentController
+    reloadRequested = true
+    try {
+      if (sessionStorage.getItem(reloadKey) === '1') return
+      sessionStorage.setItem(reloadKey, '1')
+    } catch {}
+    window.location.reload()
+  })
+
   navigator.serviceWorker
     .register(`/sw.js?v=${MANGA_CACHE_SW_VERSION}`, {
       scope: '/',
@@ -275,12 +295,9 @@ if ('serviceWorker' in navigator) {
       await registration.update()
       notifyMangaCacheReaderContext()
     })
-    .catch(() => {})
-
-  navigator.serviceWorker.addEventListener(
-    'controllerchange',
-    notifyMangaCacheReaderContext
-  )
+    .catch((error) => {
+      console.error('SHADOW_SW_UPDATE_FAILED', error)
+    })
 }
 
 window.addEventListener('load', () => {
