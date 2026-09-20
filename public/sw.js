@@ -536,7 +536,7 @@ async function getMangaCacheStats(
     await getStorageSnapshot()
 
   const budget =
-    await getStorageBudget(records)
+    await getStorageBudget(records, storage)
 
   const cachedBytes =
     visibleRecords.reduce(
@@ -709,7 +709,7 @@ let readerBytesLastCheckedAt = 0
 let readerBytesPending = null
 
 async function getReaderCacheBytes() {
-  if (readerBytesLastCheckedAt && Date.now() - readerBytesLastCheckedAt < 5 * 60 * 1000) {
+  if (readerBytesLastCheckedAt && Date.now() - readerBytesLastCheckedAt < 15 * 1000) {
     return readerBytesSnapshot
   }
   if (readerBytesPending) return readerBytesPending
@@ -749,7 +749,7 @@ async function getReaderCacheBytes() {
   return readerBytesPending
 }
 
-async function getStorageBudget(existingRecords = null) {
+async function getStorageBudget(existingRecords = null, storageSnapshot = null) {
   const GB = 1024 * 1024 * 1024
   const settings = await readTemporaryCacheSettings()
   const readerBytes = await getReaderCacheBytes()
@@ -757,7 +757,7 @@ async function getStorageBudget(existingRecords = null) {
   let quota = 0
   let usage = 0
   try {
-    const estimate = await self.navigator.storage.estimate()
+    const estimate = storageSnapshot || await self.navigator.storage.estimate()
     quota = normalizeBytes(estimate?.quota)
     usage = normalizeBytes(estimate?.usage)
   } catch {
