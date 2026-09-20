@@ -321,7 +321,7 @@ export default function AuthorChatRoomPage() {
       const after = pollCursorRef.current
 
       if (!after) {
-        await loadRoom({ silent: true })
+        await loadRoom({ silent: true, signal })
         return
       }
 
@@ -415,6 +415,7 @@ export default function AuthorChatRoomPage() {
     knownMessageIdsRef.current = new Set()
     pollCursorRef.current = ''
     incrementalLoadingRef.current = false
+    lastVisibilityRefreshAtRef.current = Date.now()
     loadRoom({
       signal: controller.signal,
     })
