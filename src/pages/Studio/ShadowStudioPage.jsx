@@ -340,7 +340,14 @@ function studioBrushCursor(size, zoom) {
 
 export default function ShadowStudioPage() {
   const navigate = useNavigate()
-  const { t: tx, language } = useDisplayTranslation()
+const { t: tx, language } = useDisplayTranslation()
+const placeImageLabel = {
+  en: 'Place Image',
+  km: 'ដាក់រូបភាព',
+  zh: '放入图片',
+  ja: '画像を配置',
+  ko: '이미지 배치',
+}[language] || 'Place Image'
   const canvasRef = useRef(null)
   const workRef = useRef(null)
   const panRef = useRef(null)
@@ -354,6 +361,7 @@ export default function ShadowStudioPage() {
   const loadTokenRef = useRef(0)
   const openProjectInputRef = useRef(null)
   const importImageInputRef = useRef(null)
+  const placeImageInputRef = useRef(null)
   const canvasDocumentRef = useRef('')
   const recoveryTimerRef = useRef(null)
   const recoverySequenceRef = useRef(0)
@@ -1157,14 +1165,40 @@ export default function ShadowStudioPage() {
     }
   }
 
-  async function dropImageOnPaper(event) {
-  event.preventDefault()
-  const file = [...event.dataTransfer.files].find(f => /\.(png|jpe?g|webp)$/i.test(f.name))
-  if (!file || paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen || drawingRef.current) return
-  const canvas = canvasRef.current, paperId = activeDocumentId, anchor = event.target === canvas ? point(event) : null
+  async function placeImageOnCurrentPaper(file, anchor = null) {
+  if (!file || !workspaceStarted || paperLoading || projectBusy ||
+      recoveryBusy || newFileOpen || exportOpen || drawingRef.current) return
+
+  const canvas = canvasRef.current
+  const paperId = activeDocumentId
+  if (!canvas || canvasDocumentRef.current !== paperId) return
+
   setProjectBusy(true)
-  try { const name = await placeStudioDroppedImage(file, canvas, anchor, () => canvas === canvasRef.current && paperId === activeDocumentId && canvasDocumentRef.current === paperId); if (name) { snapshot(); updateDocument(paperId, { dirty: true }); setProjectNotice(tx('shadowStudio.imageImported', { name })) } }
-  catch { setProjectNotice(tx('shadowStudio.imageImportFailed')) } finally { setProjectBusy(false) }
+  try {
+    const name = await placeStudioDroppedImage(
+      file, canvas, anchor,
+      () => canvas === canvasRef.current &&
+        paperId === activeDocumentId &&
+        canvasDocumentRef.current === paperId
+    )
+    if (name) {
+      snapshot()
+      updateDocument(paperId, { dirty: true })
+      setProjectNotice(`${placeImageLabel}: ${name}`)
+    }
+  } catch {
+    setProjectNotice(tx('shadowStudio.imageImportFailed'))
+  } finally {
+    setProjectBusy(false)
+  }
+}
+
+async function dropImageOnPaper(event) {
+  event.preventDefault()
+  const file = [...event.dataTransfer.files]
+    .find(f => /\.(png|jpe?g|webp)$/i.test(f.name))
+  const anchor = event.target === canvasRef.current ? point(event) : null
+  await placeImageOnCurrentPaper(file, anchor)
 }
 
   function start(event) {
@@ -1407,6 +1441,15 @@ export default function ShadowStudioPage() {
         {workspaceStarted ? (
           <div className="ss-chrome-right">
             <div className="ss-doc-info">{activeDocument?.width} × {activeDocument?.height}px · {activeDocument?.resolution} PPI</div>
+<button
+  type="button"
+  className="ss-btn"
+  disabled={paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen}
+  onClick={() => placeImageInputRef.current?.click()}
+  title={placeImageLabel}
+>
+  <i className="fa-solid fa-image" aria-hidden="true" /> {placeImageLabel}
+</button>
             <button type="button" className="ss-btn icon" onClick={undo} disabled={!canUndo || paperLoading || projectBusy} title={tx('shadowStudio.undo')} aria-label={tx('shadowStudio.undo')}><i className="fa-solid fa-rotate-left" /></button>
             <button type="button" className="ss-btn icon" onClick={redo} disabled={!canRedo || paperLoading || projectBusy} title={tx('shadowStudio.redo')} aria-label={tx('shadowStudio.redo')}><i className="fa-solid fa-rotate-right" /></button>
           </div>
@@ -1579,6 +1622,21 @@ export default function ShadowStudioPage() {
           if (file) importImageAsPaper(file)
         }}
       />
+
+      <input
+  ref={placeImageInputRef}
+  className="ss-hidden-file"
+  type="file"
+  accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+  aria-label={placeImageLabel}
+  onChange={(event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (file) placeImageOnCurrentPaper(file)
+  }}
+/>
+
+<StudioExportDialog
 
       <StudioExportDialog
         open={exportOpen && workspaceStarted && !paperLoading}
