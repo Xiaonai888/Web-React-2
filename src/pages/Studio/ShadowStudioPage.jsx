@@ -1583,6 +1583,10 @@ if (tool === 'shape') {
             </section>
 
             <StudioControlSidebar
+              canvasRef={canvasRef}
+              paperId={activeDocumentId}
+              revision={canvasRevision}
+              paper={activeDocument}
               color={color}
               onColorChange={(nextColor) => { setColor(nextColor); setTool('brush') }}
               brushStyle={brushStyle}
