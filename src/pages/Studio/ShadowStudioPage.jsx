@@ -1430,11 +1430,11 @@ if (tool === 'shape') {
           onRedo={redo}
           onClear={() => clearCanvas()}
                 />
-        {['Window', 'Help'].map((label) => (
-          <button key={label} type="button" className="ss-menu-btn" disabled>
-            {label}
-          </button>
-        ))}
+        {STUDIO_HEADER_PLACEHOLDER_MENUS.map((label) => (
+  <button key={label} type="button" className="ss-menu-btn" disabled>
+    {label}
+  </button>
+))}
         <StudioViewMenu
           enabled={workspaceStarted && !paperLoading && !projectBusy && !newFileOpen}
           zoom={zoom}
