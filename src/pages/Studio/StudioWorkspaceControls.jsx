@@ -257,6 +257,7 @@ export function StudioControlSidebar({
   onPlaceAsset,
   layers,
   activeLayerId,
+  groups,
   onLayerAction,
   onFeatureApply,
   navigator,
@@ -297,6 +298,7 @@ export function StudioControlSidebar({
   onPlaceAsset={onPlaceAsset}
   layers={layers}
   activeLayerId={activeLayerId}
+  groups={groups}
   onLayerAction={onLayerAction}
   onFeatureApply={onFeatureApply}
   color={color}
