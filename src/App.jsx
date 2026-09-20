@@ -9,7 +9,7 @@ import WorkMaintenanceGuard from './components/common/WorkMaintenanceGuard'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
 import ChatStoryHomePage from './pages/ChatStoryHomePage'
-import Library from './pages/Library'
+import ManageLibraryPage from './pages/ManageLibraryPage'
 import ShopPage from './pages/ShopPage'
 import ReaderStorePage from './pages/ReaderStorePage'
 import WalletPage from './pages/WalletPage'
@@ -355,6 +355,8 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/store',
     '/music',
     '/author/earnings',
+    '/library/manage',
+    
 
   ]
 
@@ -375,6 +377,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
   location.pathname.startsWith('/notifications/') ||
   location.pathname.startsWith('/interactions/') ||
   location.pathname.startsWith('/game/')
+  location.pathname.startsWith('/library/manage/') ||
 
 const readerToken =
   sessionStorage.getItem('shadow_reader_token') ||
@@ -1349,7 +1352,8 @@ const shouldShowOpeningAds =
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/library" element={<Library />} />
+        <Route path="/library/manage" element={<ManageLibraryPage />} />
+        <Route path="/library/manage/:section" element={<ManageLibraryPage />} />
         <Route path="/profile/edit" element={<EditProfilePage />} />
         <Route path="/profile/edit/links" element={<EditProfileLinksPage />} />
         <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
