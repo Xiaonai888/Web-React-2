@@ -8,6 +8,7 @@ import StudioViewMenu from './StudioViewMenu'
 import StudioEditMenu from './StudioEditMenu'
 import StudioExportDialog from './StudioExportDialog'
 import { readStudioImage } from './StudioImageImport'
+import { placeStudioDroppedImage } from './StudioImageDrop'
 import StudioPaperTabs from './StudioPaperTabs'
 import StudioHome from './StudioHome'
 import StudioNavigator from './StudioNavigator'
@@ -1156,6 +1157,16 @@ export default function ShadowStudioPage() {
     }
   }
 
+  async function dropImageOnPaper(event) {
+  event.preventDefault()
+  const file = [...event.dataTransfer.files].find(f => /\.(png|jpe?g|webp)$/i.test(f.name))
+  if (!file || paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen || drawingRef.current) return
+  const canvas = canvasRef.current, paperId = activeDocumentId, anchor = event.target === canvas ? point(event) : null
+  setProjectBusy(true)
+  try { const name = await placeStudioDroppedImage(file, canvas, anchor, () => canvas === canvasRef.current && paperId === activeDocumentId && canvasDocumentRef.current === paperId); if (name) { snapshot(); updateDocument(paperId, { dirty: true }); setProjectNotice(tx('shadowStudio.imageImported', { name })) } }
+  catch { setProjectNotice(tx('shadowStudio.imageImportFailed')) } finally { setProjectBusy(false) }
+}
+
   function start(event) {
     if (drawingRef.current || paperLoading || projectBusy || panRef.current || spaceRef.current) return
     if (event.pointerType === 'mouse' && event.button !== 0) return
@@ -1461,7 +1472,7 @@ export default function ShadowStudioPage() {
               labels={{ brush: tx('shadowStudio.brush'), eraser: tx('shadowStudio.eraser'), eyedropper: tx('shadowStudio.eyedropper') }}
             />
 
-            <section ref={workRef} className={`ss-work ${panRef.current ? 'ss-panning' : handMode ? 'ss-hand' : ''}`} onPointerDownCapture={panStart} onPointerMove={panMove} onPointerUp={panEnd} onPointerCancel={panEnd}>
+            <section ref={workRef} className={`ss-work ${panRef.current ? 'ss-panning' : handMode ? 'ss-hand' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={dropImageOnPaper} onPointerDownCapture={panStart} onPointerMove={panMove} onPointerUp={panEnd} onPointerCancel={panEnd}>
               <StudioCanvasRulers
   workRef={workRef}
   canvasRef={canvasRef}
