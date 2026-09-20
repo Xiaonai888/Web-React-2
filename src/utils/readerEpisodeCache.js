@@ -25,6 +25,15 @@ const DEFAULT_POLICY = {
 }
 
 const memoryFallback = new Map()
+const INDEXED_DB_TIMEOUT_MS = 2000
+let indexedDbUnavailable = false
+
+function disableIndexedDb(error) {
+  if (!indexedDbUnavailable) {
+    console.warn('READER_EPISODE_CACHE_IDB_UNAVAILABLE', error?.message || String(error))
+  }
+  indexedDbUnavailable = true
+}
 
 function normalizeText(value) {
   return String(value ?? '').trim()
@@ -120,98 +129,107 @@ export function buildReaderEpisodeCacheKey({
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
-    if (typeof indexedDB === 'undefined') {
-      reject(new Error('IndexedDB unavailable'))
+    if (indexedDbUnavailable || typeof indexedDB === 'undefined') {
+      if (!indexedDbUnavailable) disableIndexedDb(new Error('IndexedDB unavailable'))
+      reject(new Error('Reader episode IndexedDB unavailable'))
       return
     }
 
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
+    let settled = false
+    const timeout = setTimeout(() => {
+      const error = new Error('Reader episode IndexedDB open timed out')
+      disableIndexedDb(error)
+      finish(error)
+    }, INDEXED_DB_TIMEOUT_MS)
 
-    request.onupgradeneeded = () => {
-      const database = request.result
-
-      if (!database.objectStoreNames.contains(STORE_NAME)) {
-        const store = database.createObjectStore(STORE_NAME, {
-          keyPath: 'key',
-        })
-
-        store.createIndex('storyType', 'storyType', {
-          unique: false,
-        })
-        store.createIndex('storyId', 'storyId', {
-          unique: false,
-        })
-        store.createIndex('lastAccessedAt', 'lastAccessedAt', {
-          unique: false,
-        })
+    function finish(error, database) {
+      if (settled) {
+        database?.close()
+        return
       }
+      settled = true
+      clearTimeout(timeout)
+      if (error) reject(error)
+      else resolve(database)
     }
 
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () =>
-      reject(
-        request.error ||
-          new Error('Could not open reader episode cache')
-      )
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION)
+      request.onupgradeneeded = () => {
+        const database = request.result
+        if (!database.objectStoreNames.contains(STORE_NAME)) {
+          const store = database.createObjectStore(STORE_NAME, {
+            keyPath: 'key',
+          })
+          store.createIndex('storyType', 'storyType', { unique: false })
+          store.createIndex('storyId', 'storyId', { unique: false })
+          store.createIndex('lastAccessedAt', 'lastAccessedAt', { unique: false })
+        }
+      }
+      request.onsuccess = () => finish(null, request.result)
+      request.onerror = () => {
+        const error = request.error || new Error('Could not open reader episode cache')
+        disableIndexedDb(error)
+        finish(error)
+      }
+      request.onblocked = () => {
+        const error = new Error('Reader episode IndexedDB open blocked')
+        disableIndexedDb(error)
+        finish(error)
+      }
+    } catch (error) {
+      disableIndexedDb(error)
+      finish(error)
+    }
   })
 }
 
 function runTransaction(mode, action) {
-  return openDatabase().then(
-    (database) =>
-      new Promise((resolve, reject) => {
-        let requestResult
+  return openDatabase().then((database) =>
+    new Promise((resolve, reject) => {
+      let settled = false
+      let transaction = null
+      let requestResult
 
-        const transaction = database.transaction(
-          STORE_NAME,
-          mode
-        )
+      const timeout = setTimeout(() => {
+        const error = new Error('Reader episode IndexedDB transaction timed out')
+        disableIndexedDb(error)
+        finish(error)
+      }, INDEXED_DB_TIMEOUT_MS)
+
+      function finish(error) {
+        if (settled) return
+        settled = true
+        clearTimeout(timeout)
+        if (error) {
+          try { transaction?.abort() } catch {}
+        }
+        database.close()
+        if (error) reject(error)
+        else resolve(requestResult)
+      }
+
+      try {
+        transaction = database.transaction(STORE_NAME, mode)
         const store = transaction.objectStore(STORE_NAME)
-
-        try {
-          const request = action(store)
-
-          if (request) {
-            request.onsuccess = () => {
-              requestResult = request.result
-            }
-
-            request.onerror = () => {
-              reject(
-                request.error ||
-                  new Error('Reader episode cache operation failed')
-              )
-            }
-          }
-        } catch (error) {
-          database.close()
-          reject(error)
-          return
+        const request = action(store)
+        if (request) {
+          request.onsuccess = () => { requestResult = request.result }
+          request.onerror = () => finish(
+            request.error || new Error('Reader episode cache operation failed')
+          )
         }
-
-        transaction.oncomplete = () => {
-          database.close()
-          resolve(requestResult)
-        }
-
-        transaction.onerror = () => {
-          const error =
-            transaction.error ||
-            new Error('Reader episode cache transaction failed')
-
-          database.close()
-          reject(error)
-        }
-
-        transaction.onabort = () => {
-          const error =
-            transaction.error ||
-            new Error('Reader episode cache transaction aborted')
-
-          database.close()
-          reject(error)
-        }
-      })
+        transaction.oncomplete = () => finish()
+        transaction.onerror = () => finish(
+          transaction.error || new Error('Reader episode cache transaction failed')
+        )
+        transaction.onabort = () => finish(
+          transaction.error || new Error('Reader episode cache transaction aborted')
+        )
+      } catch (error) {
+        finish(error)
+      }
+    })
   )
 }
 
