@@ -174,7 +174,7 @@ const TABS = [
 
 export default function StudioRightPanels() {
   const { t: tx } = useDisplayTranslation()
-  const [active, setActive] = useState('layers')
+  const [active, setActive] = useState('color')
 
   return (
     <section className="ss-right-switcher" data-active={active} aria-label={tx('studioPanels.workspacePanels')}>
