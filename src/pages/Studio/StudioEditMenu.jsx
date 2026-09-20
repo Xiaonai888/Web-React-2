@@ -110,27 +110,6 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
     }
   }, [open])
 
-  useEffect(() => {
-    if (!enabled) return undefined
-
-    function shortcuts(event) {
-      if (event.defaultPrevented || event.altKey || !(event.ctrlKey || event.metaKey)) return
-      if (event.target?.closest?.('input,textarea,select,[contenteditable="true"],[role="dialog"]')) return
-      if (document.querySelector('[aria-modal="true"],.ss-dialog-backdrop,.ss-export-backdrop')) return
-      const key = event.key.toLowerCase()
-      if (key === 'z' && !event.shiftKey) {
-        event.preventDefault()
-        if (canUndo) onUndo()
-      } else if ((key === 'z' && event.shiftKey) || (key === 'y' && !event.shiftKey)) {
-        event.preventDefault()
-        if (canRedo) onRedo()
-      }
-    }
-
-    window.addEventListener('keydown', shortcuts)
-    return () => window.removeEventListener('keydown', shortcuts)
-  }, [enabled, canUndo, canRedo, onUndo, onRedo])
-
   function navigateMenu(event) {
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
     const items = [...(menuRef.current?.querySelectorAll('[role="menuitem"]:not(:disabled)') || [])]
