@@ -1577,27 +1577,21 @@ self.addEventListener(
   (event) => {
     event.waitUntil(
       (async () => {
-        const names =
-          await caches.keys()
-
-        await Promise.all(
-          names
-            .filter(
-              (name) =>
-                name.startsWith(
-                  'shadow-manga-images-'
-                ) &&
-                !name.startsWith(
-                  MANGA_CACHE_PREFIX
-                )
-            )
-            .map((name) =>
-              caches.delete(name)
-            )
-        )
-
         await self.clients.claim()
-        await pruneMangaCache().catch(() => {})
+        try {
+          const names = await caches.keys()
+          await Promise.all(
+            names
+              .filter((name) =>
+                name.startsWith('shadow-manga-images-') &&
+                !name.startsWith(MANGA_CACHE_PREFIX)
+              )
+              .map((name) => caches.delete(name))
+          )
+          await pruneMangaCache()
+        } catch (error) {
+          console.error('SHADOW_SW_CACHE_CLEANUP_FAILED', error)
+        }
       })()
     )
   }
@@ -1682,20 +1676,16 @@ self.addEventListener(
 
 
     if (isSplashAssetRequest(url)) {
-  const cachePromise = caches.open(SPLASH_CACHE_NAME)
-
-  const cachedPromise = cachePromise
-  .then((cache) => cache.match(request, { ignoreSearch: true }))
-  .catch(() => null)
-
-  const refreshPromise = cachePromise
-    .then(async (cache) => {
-      const response = await fetch(request, { cache: 'no-cache' })
-
+  const cachePromise = caches.open(SPLASH_CACHE_NAME).catch(() => null)
+  const cachedPromise = cachePromise.then((cache) =>
+    cache ? cache.match(request, { ignoreSearch: true }).catch(() => null) : null
+  )
+  const refreshPromise = fetch(request, { cache: 'no-cache' })
+    .then(async (response) => {
       if (response.ok) {
-        await cache.put(request, response.clone())
+        const cache = await cachePromise
+        if (cache) await cache.put(request, response.clone()).catch(() => {})
       }
-
       return response
     })
     .catch(() => null)
