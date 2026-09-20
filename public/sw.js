@@ -1585,10 +1585,14 @@ self.addEventListener(
       return
     }
 
-    const clientId =
+        const clientId =
       event.source?.id
 
     if (!clientId) return
+
+    if (data?.type === 'SHADOW_READER_CONTEXT' && data.iosDiagnostic === true) {
+      iosDiagnosticClients.add(clientId)
+    }
 
     if (
       data?.type ===
