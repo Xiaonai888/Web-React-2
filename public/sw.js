@@ -759,9 +759,9 @@ async function getStorageBudget() {
     quota = normalizeBytes(estimate?.quota)
     usage = normalizeBytes(estimate?.usage)
   } catch {
-    return { budgetBytes: Math.min(GB, selectedLimit), pressured: false }
+    return { budgetBytes: selectedLimit, pressured: false }
   }
-  if (!quota) return { budgetBytes: Math.min(GB, selectedLimit), pressured: false }
+  if (!quota) return { budgetBytes: selectedLimit, pressured: false }
 
   const records = await getAllEpisodeRecords()
   const cachedBytes = records.reduce(
