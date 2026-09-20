@@ -12,6 +12,7 @@ const QUOTA_BUDGET_RATIO = 0.2
 const STORAGE_PRESSURE_RATIO = 0.85
 
 const clientContexts = new Map()
+const iosDiagnosticClients = new Set()
 
 const SPLASH_CACHE_NAME = 'shadow-splash-assets-v1'
 const SPLASH_ASSETS = [
