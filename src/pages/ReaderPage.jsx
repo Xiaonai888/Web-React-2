@@ -5404,7 +5404,7 @@ const pagingPages = useMemo(() => {
   storyId,
   episodeId,
   readingPercent: readingProgress,
-  enabled: Boolean(episode) && !loading && !lockedEpisode && adultAccepted,
+  enabled: Boolean(episode?.id) && String(episode.id) === String(episodeId) && !loading && !lockedEpisode && adultAccepted,
 })
 
 useEffect(() => {
