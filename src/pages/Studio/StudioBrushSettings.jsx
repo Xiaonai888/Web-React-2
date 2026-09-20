@@ -267,7 +267,9 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
               onClick={() => applyPreset(preset)}
               aria-label={`${tr(preset.name)}: ${tr(preset.style)} ${tr('tip')}, ${preset.size} ${tr('pixels')}, ${preset.opacity} ${tr('percent opacity')}`}
             >
-              <span className="ss-brush-dot" style={{ width: Math.max(3, Math.min(28, preset.size / 2)), height: Math.max(3, Math.min(28, preset.size / 2)), opacity: preset.opacity / 100 }} />
+              <svg className="ss-brush-preset-preview" viewBox="0 0 46 22" aria-hidden="true">
+                <path d="M5 15 C15 5 28 17 41 7" fill="none" stroke="currentColor" strokeWidth={Math.min(9, Math.max(1.4, preset.size / 6))} strokeLinecap={preset.style === 'marker' ? 'square' : 'round'} opacity={preset.opacity / 100} />
+              </svg>
               <span className="ss-brush-preset-name">{tr(preset.name)}</span>
               <small>{preset.size}px · {preset.opacity}%</small>
             </button>
@@ -307,6 +309,9 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
     <>
       <section className="ss-section ss-brush-settings" aria-label={tr('Brush settings')}>
         <style>{`
+          .ss-brush-settings{min-width:0}
+          .ss-brush-current-preview{display:flex;align-items:center;justify-content:center;min-height:76px;margin:0 0 13px;border:1px solid #4c5c6c;border-radius:6px;background:#1c2530}
+          .ss-brush-current-preview svg{display:block;width:100%;max-width:166px;height:55px;color:#f4f7fc}
           .ss-brush-styles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:8px 0 12px}
           .ss-brush-style{display:flex;min-width:0;align-items:center;gap:7px;min-height:36px;border:1px solid #58636e;border-radius:6px;background:#30353b;color:#eaf0f6;padding:5px 7px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
           .ss-brush-style.active,.ss-brush-style:focus-visible{outline:none;border-color:#78baff;background:#355371}
@@ -314,14 +319,16 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
           .ss-brush-style-pencil{width:3px;height:14px;border-radius:2px;transform:rotate(35deg)}
           .ss-brush-style-marker{width:16px;height:7px;border-radius:2px;transform:rotate(-35deg)}
           .ss-brush-style-airbrush{width:18px;height:18px;background:radial-gradient(circle,#eaf0f6 0%,rgba(234,240,246,.6) 28%,transparent 72%)}
-          .ss-brush-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:9px 0}
+          .ss-brush-presets{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;margin:8px 0 10px}
           .ss-brush-heading{margin-top:14px;font-size:10px;font-weight:800;color:#cbd3dc}
           .ss-brush-saved-heading{margin-top:15px}
-          .ss-brush-preset{display:flex;min-width:0;min-height:78px;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid #515b66;border-radius:7px;background:#30353b;color:#e3e8ee;padding:7px 4px;font:inherit;cursor:pointer}
-          .ss-brush-preset.active,.ss-brush-preset:focus-visible{border-color:#6bb9ff;background:#304a62;outline:none}
-          .ss-brush-dot{display:block;flex:none;border-radius:50%;background:#eaf3ff}
-          .ss-brush-preset-name{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:10px;font-weight:800}
-          .ss-brush-preset small,.ss-brush-saved-use small{font-size:9px;color:#b8c6d4}
+          .ss-brush-preset{display:grid;grid-template-columns:46px minmax(0,1fr) auto;align-items:center;min-width:0;min-height:35px;gap:5px;border:1px solid transparent;border-radius:5px;background:#303945;color:#e3e8ee;padding:4px 6px;text-align:left;font:inherit;cursor:pointer}
+          .ss-brush-preset:hover:not(:disabled){background:#3a4b60}
+          .ss-brush-preset.active,.ss-brush-preset:focus-visible{border-color:#6bb9ff;background:#355978;outline:none}
+          .ss-brush-preset-preview{display:block;width:46px;height:22px;flex:none;color:#f4f7fc;overflow:visible}
+          .ss-brush-preset-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700}
+          .ss-brush-preset small{font-size:9px;color:#b8c6d4;white-space:nowrap;text-align:right}
+          .ss-brush-saved-use small{font-size:9px;color:#b8c6d4}
           .ss-brush-save-row{display:flex;gap:5px;margin:8px 0}
           .ss-brush-save-row input{min-width:0;flex:1;height:32px;border:1px solid #5b6672;border-radius:5px;background:#272d33;color:#f5f7fa;padding:0 7px;font:inherit;font-size:11px}
           .ss-brush-save-row button{min-height:32px;border:1px solid #6782a0;border-radius:5px;background:#375674;color:#f5f7fa;padding:0 9px;font:inherit;font-size:11px;cursor:pointer}
@@ -341,13 +348,18 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
             .shadow-studio .ss-brush-mobile[open] summary::after{content:'▴'}
             .shadow-studio .ss-brush-styles{grid-template-columns:repeat(4,minmax(0,1fr))}
             .shadow-studio .ss-brush-style{min-height:42px;flex-direction:column;gap:3px;font-size:9px}
-            .shadow-studio .ss-brush-presets{grid-template-columns:repeat(3,minmax(0,1fr))}
-            .shadow-studio .ss-brush-preset{min-height:68px}
+            .shadow-studio .ss-brush-presets{grid-template-columns:minmax(0,1fr)}
+            .shadow-studio .ss-brush-preset{min-height:38px}
             .shadow-studio .ss-brush-mobile .ss-brush-save-row input{font-size:16px}
             .shadow-studio .ss-brush-mobile .ss-brush-notice{padding-bottom:8px}
           }
-          @media(max-width:360px){.shadow-studio .ss-brush-presets{grid-template-columns:repeat(2,minmax(0,1fr))}.shadow-studio .ss-brush-styles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+          @media(max-width:360px){.shadow-studio .ss-brush-presets{grid-template-columns:minmax(0,1fr)}.shadow-studio .ss-brush-styles{grid-template-columns:repeat(2,minmax(0,1fr))}}
         `}</style>
+        <div className="ss-brush-current-preview" aria-hidden="true">
+          <svg viewBox="0 0 160 56">
+            <path d="M12 42 C38 7 80 14 106 32 S139 35 149 15" fill="none" stroke="currentColor" strokeWidth={Math.min(18, Math.max(1.5, size / 4))} strokeLinecap={style === 'marker' ? 'square' : 'round'} opacity={opacity / 100} />
+          </svg>
+        </div>
         <h2 className="ss-label">{labels.size}</h2>
         <div className="ss-range">
           <input type="range" min="1" max="80" value={size} aria-label={tr('Brush size')} onChange={(event) => onSizeChange(Number(event.target.value))} />
