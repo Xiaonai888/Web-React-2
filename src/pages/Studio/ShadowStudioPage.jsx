@@ -10,6 +10,7 @@ import StudioExportDialog from './StudioExportDialog'
 import { readStudioImage } from './StudioImageImport'
 import { placeStudioDroppedImage } from './StudioImageDrop'
 import StudioTextEditor, { drawStudioText } from './StudioTextEditor'
+import StudioShapeEditor, { drawStudioShape } from './StudioShapeEditor'
 import StudioPaperTabs from './StudioPaperTabs'
 import StudioHome from './StudioHome'
 import StudioNavigator from './StudioNavigator'
@@ -377,6 +378,7 @@ const placeImageLabel = {
   const [newFilePreset, setNewFilePreset] = useState('basic')
   const [tool, setTool] = useState('brush')
   const [textEditor, setTextEditor] = useState(null)
+  const [shapeEditor, setShapeEditor] = useState(null)
   const [brushStyle, setBrushStyle] = useState('round')
   const [color, setColor] = useState('#111111')
   const [size, setSize] = useState(8)
@@ -1217,6 +1219,11 @@ async function dropImageOnPaper(event) {
   setTextEditor({ ...currentPoint, paperId: activeDocumentId })
   return
 }
+if (tool === 'shape') {
+  event.preventDefault()
+  setShapeEditor({ ...currentPoint, paperId: activeDocumentId })
+  return
+}
 
     if (tool === 'eyedropper') {
       event.preventDefault()
@@ -1227,7 +1234,7 @@ async function dropImageOnPaper(event) {
     const stroke = beginStudioStroke(ctx, currentPoint, event, {
       size,
       opacity,
-      style: tool === 'eraser' ? 'round' : brushStyle,
+      style: tool === 'eraser' ? 'round' : tool === 'pencil' ? 'pencil' : brushStyle,
       color: tool === 'eraser' ? activeDocument?.background || '#FFFFFF' : color,
     })
     if (!stroke) return
@@ -1663,8 +1670,25 @@ async function dropImageOnPaper(event) {
 
 <StudioExportDialog
 
-      <StudioExportDialog
-        open={exportOpen && workspaceStarted && !paperLoading}
+      <StudioShapeEditor
+  key={shapeEditor ? `${shapeEditor.paperId}:${shapeEditor.x}:${shapeEditor.y}` : 'closed'}
+  open={Boolean(shapeEditor) && workspaceStarted}
+  color={color}
+  onCancel={() => setShapeEditor(null)}
+  onApply={(settings) => {
+    if (shapeEditor?.paperId === activeDocumentId &&
+        !paperLoading && !projectBusy &&
+        canvasDocumentRef.current === activeDocumentId &&
+        drawStudioShape(context(), shapeEditor, settings)) {
+      snapshot()
+      updateDocument(activeDocumentId, { dirty: true })
+    }
+    setShapeEditor(null)
+  }}
+/>
+
+<StudioExportDialog
+  open={exportOpen && workspaceStarted && !paperLoading}
         paper={activeDocument}
         canvasRef={canvasRef}
         onClose={() => setExportOpen(false)}
