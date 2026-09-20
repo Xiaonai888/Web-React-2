@@ -1404,6 +1404,7 @@ if (tool === 'shape') {
       `}</style>
 
       <StudioChrome onBack={exitStudio} backLabel={tx('shadowStudio.back')}>
+        <nav className="ss-header-menus" aria-label="Studio menus">
         <StudioFileMenu
           hasPaper={documents.length > 0}
           inWorkspace={workspaceStarted}
@@ -1458,7 +1459,7 @@ if (tool === 'shape') {
     {label}
   </button>
 ))}
-        
+        </nav>
         {workspaceStarted ? (
   <StudioHeaderWorkspace
     documents={documents}
