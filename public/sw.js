@@ -562,6 +562,11 @@ async function getMangaCacheStats(
       0
     )
 
+  const totalCachedBytes = records.reduce(
+    (sum, record) => sum + normalizeBytes(record.cachedBytes),
+    0
+  )
+
   return {
     ok: true,
     scope:
@@ -570,6 +575,7 @@ async function getMangaCacheStats(
       visibleRecords.length,
     imageCount,
     cachedBytes,
+    totalCachedBytes,
     cachedMegabytes:
       Number(
         (
