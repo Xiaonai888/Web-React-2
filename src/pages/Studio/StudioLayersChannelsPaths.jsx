@@ -26,6 +26,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const a = ACTIONS[language] || ACTIONS.en
   const [active, setActive] = useState('layers')
   const duplicateLabel = ({ en: 'Duplicate layer', km: 'ចម្លងស្រទាប់', zh: '复制图层', ja: 'レイヤーを複製', ko: '레이어 복제' })[language] || 'Duplicate layer' 
+  const mergeLabel = ({ en: 'Merge layer down', km: 'បញ្ចូលស្រទាប់ចុះក្រោម', zh: '向下合并图层', ja: '下のレイヤーと結合', ko: '아래 레이어와 병합' })[language] || 'Merge layer down'
   const [error, setError] = useState(false)
   const previewRefs = useRef({})
   const layerRefs = useRef({})
@@ -33,6 +34,13 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const blocked = disabled || !onLayerAction || !paperId || !layers.length
   const selectedGroup = groups.find((group) => group.id === selected?.groupId)
   const selectedIndex = layers.indexOf(selected)
+  const lower = selectedIndex > 0 ? layers[selectedIndex - 1] : null
+  const canMerge = Boolean(selected && lower && selectedIndex > 1 &&
+    selected.visible && lower.visible && !selected.locked && !lower.locked &&
+    selected.opacity === 100 && lower.opacity === 100 &&
+    (selected.blendMode || 'normal') === 'normal' && (lower.blendMode || 'normal') === 'normal' &&
+    (selected.groupId || null) === (lower.groupId || null) &&
+    (!selected.groupId || groups.some((group) => group.id === selected.groupId && group.visible && !group.locked)))
   const adjacentGroups = selected && !selected.groupId && selectedIndex > 0
     ? groups.filter((group) => layers[selectedIndex - 1]?.groupId === group.id || layers[selectedIndex + 1]?.groupId === group.id)
     : []
@@ -146,6 +154,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
           <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || layers.indexOf(selected) <= 1} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => selected && rename(selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[9]} aria-label={a[9]} disabled={blocked || !selected || layers.indexOf(selected) === 0} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={mergeLabel} aria-label={mergeLabel} disabled={blocked || !canMerge} onClick={() => onLayerAction('merge-down', activeLayerId)}><i className="fa-solid fa-layer-group" aria-hidden="true" /></button>
           <label className="ss-lcp-opacity">{t[7]}
             <select aria-label={t[7]} disabled={blocked || !selected} value={selected?.opacity ?? 100} onChange={(event) => onLayerAction('opacity', activeLayerId, Number(event.target.value))}>
               {[...new Set([0,10,20,30,40,50,60,70,80,90,100, selected?.opacity].filter((value) => value !== undefined))].sort((x,y) => x-y).map((value) => <option key={value} value={value}>{value}%</option>)}
