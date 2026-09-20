@@ -140,9 +140,11 @@ const FAVORITES_KEY = 'shadow-studio-color-favorites-v1'
 const RECENTS_KEY = 'shadow-studio-color-recent-v1'
 
 const PALETTE = [
-  '#111111', '#374151', '#6B7280', '#D1D5DB', '#FFFFFF',
-  '#EF4444', '#F97316', '#EAB308', '#22C55E', '#06B6D4',
-  '#3B82F6', '#8B5CF6', '#EC4899', '#7F1D1D', '#78350F', '#172554',
+  '#111111', '#252525', '#374151', '#6B7280', '#9CA3AF', '#D1D5DB', '#E5E7EB', '#FFFFFF',
+  '#7F1D1D', '#DC2626', '#EF4444', '#FCA5A5', '#78350F', '#EA580C', '#F97316', '#FDBA74',
+  '#854D0E', '#EAB308', '#FACC15', '#FEF08A', '#14532D', '#16A34A', '#22C55E', '#86EFAC',
+  '#164E63', '#0891B2', '#06B6D4', '#A5F3FC', '#172554', '#2563EB', '#3B82F6', '#93C5FD',
+  '#4C1D95', '#7C3AED', '#8B5CF6', '#C4B5FD', '#831843', '#DB2777', '#EC4899', '#F9A8D4',
 ]
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
@@ -370,25 +372,25 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
   return (
     <section className="ss-section ss-color-panel" data-mobile-open={expanded} aria-label={tr('Color panel')}>
       <style>{`
-        .ss-color-panel{min-width:0}
-        .ss-color-heading{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+        .ss-color-panel{min-width:0;box-sizing:border-box;overflow-x:hidden}
+        .ss-color-heading{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:8px;border-bottom:1px solid #42505d}
         .ss-color-heading .ss-label{margin:0;flex:1}
-        .ss-color-current{display:block;width:29px;height:24px;border:1px solid #8993a0;border-radius:4px;flex:none}
+        .ss-color-current{display:block;width:26px;height:24px;border:1px solid #8993a0;border-radius:4px;flex:none}
         .ss-color-expand{border:1px solid #515a65;border-radius:5px;background:#343a42;color:#ebf1f7;font:inherit;font-size:10px;height:28px;padding:0 8px;cursor:pointer}
-        .ss-color-advanced{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:12px}
-        .ss-hue-wheel{width:min(100%,184px);aspect-ratio:1;border:0;border-radius:50%;padding:13px;background:conic-gradient(#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);position:relative;touch-action:none;cursor:crosshair;flex:none}
+        .ss-color-advanced{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:10px}
+        .ss-hue-wheel{width:min(100%,166px);aspect-ratio:1;border:0;border-radius:50%;padding:13px;background:conic-gradient(#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);position:relative;touch-action:none;cursor:crosshair;flex:none}
         .ss-hue-wheel::after{content:'';position:absolute;inset:13px;border-radius:50%;background:#292c30;pointer-events:none}
         .ss-hue-marker{position:absolute;left:50%;top:50%;width:13px;height:13px;border:2px solid white;border-radius:50%;box-shadow:0 0 0 1px #202225,0 2px 4px #0009;pointer-events:none;z-index:2;transform:translate(-50%,-50%)}
         .ss-sv-square{width:min(100%,130px);aspect-ratio:1;position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);z-index:1;cursor:crosshair;touch-action:none;border:1px solid #9aa2ab;background:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent),hsl(var(--ss-hue) 100% 50%)}
         .ss-sv-marker{position:absolute;width:12px;height:12px;border:2px solid #fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #131619,0 1px 3px #0008;pointer-events:none}
-        .ss-color-values{display:grid;grid-template-columns:minmax(0,1fr) 34px 34px;gap:6px;width:100%;align-items:center}
-        .ss-color-hex{min-width:0;height:34px;border:1px solid #58636e;border-radius:5px;background:#202429;color:#eef2f7;font:inherit;font-size:12px;padding:0 8px;letter-spacing:.035em}
-        .ss-color-native{display:block;width:34px;height:34px;border:1px solid #697582;border-radius:5px;background:transparent;padding:2px;cursor:pointer}
-        .ss-color-previous{display:block;width:34px;height:34px;border:1px solid #697582;border-radius:5px;cursor:pointer}
+        .ss-color-values{display:grid;grid-template-columns:minmax(0,1fr) 30px 30px;gap:5px;width:100%;align-items:center}
+        .ss-color-hex{min-width:0;height:30px;border:1px solid #58636e;border-radius:5px;background:#202429;color:#eef2f7;font:inherit;font-size:12px;padding:0 8px;letter-spacing:.035em}
+        .ss-color-native{display:block;width:30px;height:30px;border:1px solid #697582;border-radius:5px;background:transparent;padding:2px;cursor:pointer}
+        .ss-color-previous{display:block;width:30px;height:30px;border:1px solid #697582;border-radius:5px;cursor:pointer}
         .ss-color-legend{width:100%;display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#aeb7c1}
-        .ss-color-copy{min-height:30px;width:100%;border:1px solid #596b7e;border-radius:5px;background:#35495e;color:#e9f4ff;font:inherit;font-size:10px;cursor:pointer}
+        .ss-color-copy{min-height:27px;width:100%;border:1px solid #596b7e;border-radius:5px;background:#35495e;color:#e9f4ff;font:inherit;font-size:10px;cursor:pointer}
         .ss-color-copy-status{margin:0;width:100%;font-size:10px;line-height:1.4;color:#c3d8eb}
-        .ss-color-numeric{width:100%;min-width:0;border:1px solid #475460;border-radius:6px;background:#272c32;padding:7px}
+        .ss-color-numeric{width:100%;min-width:0;box-sizing:border-box;border:1px solid #475460;border-radius:6px;background:#272c32;padding:7px}
         .ss-color-numeric summary{cursor:pointer;list-style:revert;font-size:10px;font-weight:800;color:#e1ebf6}
         .ss-color-numeric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
         .ss-color-number{display:grid;gap:4px;min-width:0;color:#b9c7d5;font-size:10px;font-weight:800}
@@ -396,19 +398,21 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
         .ss-color-number input:focus-visible{outline:2px solid #75bdff;outline-offset:1px}
         .ss-color-numeric-title{grid-column:1/-1;font-size:10px;font-weight:700;color:#a8b9cb}
         .ss-color-numeric-help{margin:8px 0 0;font-size:9px;line-height:1.4;color:#a9b7c6}
-        .ss-color-panel .ss-swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}
-        .ss-color-panel .ss-swatch{width:100%;min-width:0;aspect-ratio:1;border:1px solid #596068;border-radius:5px;cursor:pointer}
-        .ss-color-panel .ss-swatch.selected{outline:2px solid #eef4fb;outline-offset:1px}
-        .ss-color-extra{width:100%;min-width:0;margin-top:13px;display:grid;gap:12px}
+        .ss-color-panel .ss-swatches{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;margin-top:5px;width:100%;max-width:100%;box-sizing:border-box}
+        .ss-color-panel .ss-swatch{display:block;width:100%;min-width:0;aspect-ratio:1;border:1px solid #596068;border-radius:3px;cursor:pointer;padding:0;touch-action:manipulation}
+        .ss-color-panel .ss-swatch.selected{outline:2px solid #eef4fb;outline-offset:1px;position:relative;z-index:1}
+        .ss-color-extra{width:100%;min-width:0;margin-top:12px;display:grid;gap:10px}
+        .ss-color-palette-title{margin:1px 0 0;border-top:1px solid #42505d;padding-top:9px;font-size:10px;font-weight:800}
+        .ss-color-palette-title span{font-size:9px;color:#91a4b5;font-variant-numeric:tabular-nums}
         .ss-color-group{min-width:0}
-        .ss-color-group-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px;color:#cad3dd;font-size:10px}
-        .ss-color-fav-add{min-height:26px;border:1px solid #586775;border-radius:5px;background:#373f48;color:#f0f6fc;padding:2px 8px;font:inherit;font-size:10px;cursor:pointer}
+        .ss-color-group-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;color:#cad3dd;font-size:10px}
+        .ss-color-fav-add{min-height:24px;border:1px solid #586775;border-radius:5px;background:#373f48;color:#f0f6fc;padding:2px 8px;font:inherit;font-size:10px;cursor:pointer}
         .ss-color-fav-add:disabled{opacity:.4;cursor:default}
-        .ss-color-items{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
-        .ss-color-favorite{position:relative;width:35px;height:35px;flex:none}
-        .ss-color-favorite .ss-color-fav-pick{width:35px;height:35px;border:1px solid #6b7886;border-radius:5px;cursor:pointer}
-        .ss-color-fav-remove{position:absolute;right:-5px;top:-6px;display:grid;place-items:center;width:17px;height:17px;border:1px solid #626e7b;border-radius:50%;background:#30363e;color:#fff;font:inherit;font-size:12px;line-height:1;cursor:pointer}
-        .ss-color-recent-pick{height:32px;width:32px;border:1px solid #687583;border-radius:5px;cursor:pointer}
+        .ss-color-items{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));align-items:center;gap:5px}
+        .ss-color-favorite{position:relative;min-width:0;aspect-ratio:1}
+        .ss-color-favorite .ss-color-fav-pick{display:block;width:100%;height:100%;border:1px solid #6b7886;border-radius:3px;cursor:pointer;padding:0}
+        .ss-color-fav-remove{position:absolute;right:-5px;top:-6px;display:grid;place-items:center;width:16px;height:16px;border:1px solid #626e7b;border-radius:50%;background:#30363e;color:#fff;font:inherit;font-size:12px;line-height:1;cursor:pointer}
+        .ss-color-recent-pick{display:block;width:100%;min-width:0;aspect-ratio:1;border:1px solid #687583;border-radius:3px;cursor:pointer;padding:0}
         .ss-color-empty{margin:0;font-size:10px;color:#a1afbc;line-height:1.5}
         @media(max-width:900px),(max-width:1100px) and (max-height:650px) and (orientation:landscape){
           .shadow-studio .ss-side .ss-color-panel{display:flex;flex:1 1 100%;min-width:0;flex-wrap:wrap;align-items:center;gap:6px;margin:0;padding:0;border:0}
@@ -416,8 +420,9 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
           .shadow-studio .ss-color-panel .ss-color-heading .ss-label{font-size:10px}
           .shadow-studio .ss-color-panel .ss-color-expand{display:block}
           .shadow-studio .ss-color-panel .ss-color-current{width:26px;height:26px}
-          .shadow-studio .ss-color-panel .ss-swatches{display:flex;flex:1 1 75px;min-width:0;overflow-x:auto;gap:6px;margin:0;padding:3px 2px;overscroll-behavior-x:contain}
-          .shadow-studio .ss-color-panel .ss-swatch{flex:0 0 29px;width:29px;height:29px;min-width:29px;aspect-ratio:1}
+          .shadow-studio .ss-color-panel .ss-color-palette-title{display:none}
+          .shadow-studio .ss-color-panel .ss-swatches{display:flex;flex:1 1 75px;min-width:0;overflow-x:auto;gap:5px;margin:0;padding:3px 2px;overscroll-behavior-x:contain}
+          .shadow-studio .ss-color-panel .ss-swatch{flex:0 0 27px;width:27px;height:27px;min-width:27px;aspect-ratio:1}
           .shadow-studio .ss-color-panel .ss-color-advanced{display:none;width:100%;flex:1 1 100%;margin:4px 0 6px;gap:8px}
           .shadow-studio .ss-color-panel[data-mobile-open='true'] .ss-color-advanced{display:flex}
           .shadow-studio .ss-color-panel .ss-hue-wheel{width:min(100%,175px)}
@@ -482,7 +487,8 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
           <p className="ss-color-numeric-help">{tr('Opacity is controlled separately in Brush Settings.')}</p>
         </details>
       </div>
-      <div className="ss-swatches" aria-label={tr('Color palette')}>
+      <div className="ss-color-group-head ss-color-palette-title"><strong>{tr('Color palette')}</strong><span>{PALETTE.length}</span></div>
+      <div className="ss-swatches" role="group" aria-label={tr('Color palette')}>
         {PALETTE.map((swatch) => <button key={swatch} type="button" className={`ss-swatch ${color.toUpperCase() === swatch ? 'selected' : ''}`} style={{ backgroundColor: swatch }} title={swatch} aria-label={`${tr('Use color')} ${swatch}`} onClick={() => pick(swatch)} />)}
       </div>
       <div className="ss-color-extra">
