@@ -14,6 +14,7 @@ import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
 import './ShadowStudioMobile.css'
+import './StudioHeaderShell.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
 import StudioOptionsBar from './StudioOptionsBar'
@@ -1369,7 +1370,7 @@ export default function ShadowStudioPage() {
         />
 
         {STUDIO_HEADER_PLACEHOLDER_MENUS.map((label) => (
-  <button key={label} type="button" className="ss-menu-btn">
+  <button key={label} type="button" className="ss-menu-btn" disabled>
     {label}
   </button>
 ))}
