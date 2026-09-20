@@ -15,7 +15,9 @@ import { installMangaImageCacheControl } from './utils/mangaImageCacheControl'
 installApiAuthFetch()
 installPaidContentRequirementFetch()
 installHomePublicCacheFetch()
-installReaderEpisodeCacheFetch()
+if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+  installReaderEpisodeCacheFetch()
+}
 installReaderPresenceTracking()
 installMangaImageCacheControl()
 
