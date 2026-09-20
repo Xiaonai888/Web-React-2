@@ -1,8 +1,12 @@
+import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
+import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
+
 const DATABASE_NAME = 'shadow-studio-local-recovery'
 const STORE_NAME = 'workspaces'
 const RECOVERY_KEY = 'current'
 const MAX_RECOVERY_BYTES = 55 * 1024 * 1024
 const MAX_RECOVERY_LAYERS = 8
+const BLEND_MODES = new Set(STUDIO_BLEND_MODES)
 
 let databasePromise = null
 let operations = Promise.resolve()
@@ -98,10 +102,27 @@ function captureLayers(paper) {
       visible: layer.visible,
       locked: layer.locked,
       opacity: layer.opacity,
+      ...(layer.groupId ? { groupId: layer.groupId } : {}),
+      ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
     }
   })
 
-  return { layers, activeLayerId: paper.activeLayerId }
+  if (paper.groups === undefined && !layers.some((layer) => layer.groupId)) {
+    if (layers.some((layer) => layer.blendMode !== undefined && !BLEND_MODES.has(layer.blendMode))) throw new Error('Invalid layer blend mode.')
+    return { layers, activeLayerId: paper.activeLayerId }
+  }
+  if (!Array.isArray(paper.groups) || paper.groups.length > 8) throw new Error('Invalid local recovery layer groups.')
+  const groups = paper.groups.map((group) => {
+    if (!group || typeof group.id !== 'string' || !group.id || group.id.length > 100 ||
+      typeof group.name !== 'string' || !group.name.trim() || group.name.length > 80 ||
+      typeof group.visible !== 'boolean' || typeof group.locked !== 'boolean' || typeof group.collapsed !== 'boolean' ||
+      !Number.isFinite(group.opacity) || group.opacity < 0 || group.opacity > 100 ||
+      !BLEND_MODES.has(group.blendMode ?? 'normal')) throw new Error('Invalid local recovery group metadata.')
+    return { id: group.id, name: group.name, visible: group.visible, locked: group.locked, collapsed: group.collapsed, opacity: group.opacity, blendMode: group.blendMode ?? 'normal' }
+  })
+  if (layers.some((layer) => layer.blendMode !== undefined && !BLEND_MODES.has(layer.blendMode))) throw new Error('Invalid layer blend mode.')
+  validateStudioGroupLayout({ layers, groups })
+  return { layers, activeLayerId: paper.activeLayerId, groups }
 }
 
 export async function readStudioRecovery() {
@@ -196,7 +217,7 @@ export async function restoreStudioRecovery(record) {
       image: paper.image instanceof Blob
         ? await toDataUrl(paper.image)
         : paper.image || '',
-      ...(layers ? { layers, activeLayerId: storedLayers.activeLayerId } : {}),
+      ...(layers ? { layers, activeLayerId: storedLayers.activeLayerId, ...(storedLayers.groups ? { groups: storedLayers.groups } : {}) } : {}),
       dirty: true,
     })
   }
