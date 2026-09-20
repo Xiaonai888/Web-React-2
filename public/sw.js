@@ -443,32 +443,12 @@ function recordHasImage(record, url) {
   )
 }
 
-function isRecordExpired(
-  record,
-  now = Date.now()
-) {
+function isRecordExpired(record, now = Date.now(), ageDays = MANGA_TTL_MS / DAY_MS) {
   if (!record) return true
-
-  const savedAt = Number(
-    record.savedAt || 0
-  )
-
-  const accessExpiresAt =
-    normalizeTime(
-      record.accessExpiresAt
-    )
-
-  if (
-    accessExpiresAt > 0 &&
-    now >= accessExpiresAt
-  ) {
-    return true
-  }
-
-  return (
-    savedAt > 0 &&
-    now - savedAt > MANGA_TTL_MS
-  )
+  const accessExpiresAt = normalizeTime(record.accessExpiresAt)
+  if (accessExpiresAt > 0 && now >= accessExpiresAt) return true
+  const lastUsed = Number(record.lastAccessedAt || record.savedAt || now)
+  return ageDays > 0 && lastUsed > 0 && now - lastUsed >= ageDays * DAY_MS
 }
 
 async function deleteCachedEpisode(record) {
@@ -701,9 +681,10 @@ async function readTemporaryCacheSettings() {
     return {
       mode: data.mode === 'manual' ? 'manual' : 'auto',
       limitGb: Number.isInteger(data.limitGb) && data.limitGb >= 1 && data.limitGb <= 5 ? data.limitGb : 1,
+      ageDays: [0, 3, 7, 30, 90].includes(data.ageDays) ? data.ageDays : 30,
     }
   } catch {
-    return { mode: 'auto', limitGb: 1 }
+    return { mode: 'auto', limitGb: 1, ageDays: 30 }
   }
 }
 
@@ -711,7 +692,8 @@ async function saveTemporaryCacheSettings(data) {
   const mode = data?.mode === 'manual' ? 'manual' : 'auto'
   const input = Number(data?.limitGb)
   const limitGb = Number.isInteger(input) && input >= 1 && input <= 5 ? input : 1
-  const settings = { mode, limitGb }
+  const ageDays = [0, 3, 7, 30, 90].includes(Number(data?.ageDays)) ? Number(data.ageDays) : 30
+  const settings = { mode, limitGb, ageDays }
   const cache = await caches.open(TEMP_CACHE_SETTINGS_NAME)
   await cache.put(TEMP_CACHE_SETTINGS_URL, new Response(JSON.stringify(settings), {
     headers: { 'Content-Type': 'application/json' },
@@ -720,10 +702,56 @@ async function saveTemporaryCacheSettings(data) {
   return { ok: true, ...settings }
 }
 
+let readerBytesSnapshot = 0
+let readerBytesLastCheckedAt = 0
+let readerBytesPending = null
+
+async function getReaderCacheBytes() {
+  if (readerBytesLastCheckedAt && Date.now() - readerBytesLastCheckedAt < 5 * 60 * 1000) {
+    return readerBytesSnapshot
+  }
+  if (readerBytesPending) return readerBytesPending
+  readerBytesPending = (async () => {
+    let database = null
+    try {
+      database = await new Promise((resolve, reject) => {
+        const request = self.indexedDB.open('shadow_reader_episode_cache', 1)
+        request.onupgradeneeded = () => request.transaction.abort()
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error)
+      })
+      if (!database.objectStoreNames.contains('episodes')) return 0
+      return await new Promise((resolve, reject) => {
+        const transaction = database.transaction('episodes', 'readonly')
+        const request = transaction.objectStore('episodes').getAll()
+        request.onsuccess = () => {
+          const bytes = (request.result || []).reduce((sum, entry) => {
+            if (Number.isFinite(entry?.cacheBytes) && entry.cacheBytes > 0) return sum + entry.cacheBytes
+            try { return sum + new Blob([JSON.stringify(entry)]).size }
+            catch { return sum + 4096 }
+          }, 0)
+          resolve(bytes)
+        }
+        request.onerror = () => reject(request.error)
+        transaction.onabort = () => reject(transaction.error)
+        transaction.onerror = () => reject(transaction.error)
+      })
+    } finally {
+      if (database) database.close()
+    }
+  })().then((bytes) => {
+    readerBytesSnapshot = bytes
+    readerBytesLastCheckedAt = Date.now()
+    return bytes
+  }).catch(() => { readerBytesLastCheckedAt = Date.now(); return readerBytesSnapshot }).finally(() => { readerBytesPending = null })
+  return readerBytesPending
+}
+
 async function getStorageBudget() {
   const GB = 1024 * 1024 * 1024
   const settings = await readTemporaryCacheSettings()
-  const selectedLimit = settings.mode === 'manual' ? settings.limitGb * GB : HARD_MAX_BYTES
+  const readerBytes = await getReaderCacheBytes()
+  const selectedLimit = Math.max(0, (settings.mode === 'manual' ? settings.limitGb * GB : HARD_MAX_BYTES) - readerBytes)
   let quota = 0
   let usage = 0
   try {
@@ -744,7 +772,7 @@ async function getStorageBudget() {
   const budgetBytes = Math.max(0, Math.min(
     selectedLimit,
     HARD_MAX_BYTES,
-    Math.floor(quota * QUOTA_BUDGET_RATIO),
+    Math.max(0, Math.floor(quota * QUOTA_BUDGET_RATIO) - readerBytes),
     cachedBytes + available
   ))
   const pressured = usage / quota >= STORAGE_PRESSURE_RATIO || available < GB
@@ -761,10 +789,8 @@ async function pruneMangaCache({
   let records =
     await getAllEpisodeRecords()
 
-  const expired = records.filter(
-    (record) =>
-      isRecordExpired(record, now)
-  )
+  const ageDays = (await readTemporaryCacheSettings()).ageDays
+  const expired = records.filter((record) => isRecordExpired(record, now, ageDays))
 
   await Promise.all(
     expired.map((record) =>
@@ -1234,6 +1260,7 @@ async function findEpisodeForImage(
     normalizeText(context.scope),
     'public',
   ].filter(Boolean)
+  const ageDays = (await readTemporaryCacheSettings()).ageDays
 
   for (const scope of [
     ...new Set(scopes),
@@ -1249,7 +1276,7 @@ async function findEpisodeForImage(
 
     if (!record) continue
 
-    if (isRecordExpired(record)) {
+    if (isRecordExpired(record, Date.now(), ageDays)) {
       await deleteCachedEpisode(
         record
       )
@@ -1342,6 +1369,17 @@ async function prepareMangaImageResponse(
   }
 }
 
+let lastMangaImagePruneAt = 0
+let mangaImagePrunePending = null
+
+async function pruneMangaCacheAfterImage() {
+  if (mangaImagePrunePending) return mangaImagePrunePending
+  if (lastMangaImagePruneAt && Date.now() - lastMangaImagePruneAt < 15000) return
+  lastMangaImagePruneAt = Date.now()
+  mangaImagePrunePending = pruneMangaCache().finally(() => { mangaImagePrunePending = null })
+  return mangaImagePrunePending
+}
+
 async function finishMangaImageWork(
   event,
   result
@@ -1390,7 +1428,7 @@ async function finishMangaImageWork(
     event.request.url
   )
 
-  await pruneMangaCache()
+  await pruneMangaCacheAfterImage()
 }
 
 async function processClientEpisodePayload(
