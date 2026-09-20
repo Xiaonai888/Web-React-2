@@ -2,6 +2,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useState } from 'react'
 import StudioLayersChannelsPaths from './StudioLayersChannelsPaths'
+import StudioMangaAssets from './StudioMangaAssets'
 
 registerTranslationNamespace('studioPanels', {
   "en": {
@@ -173,7 +174,7 @@ const TABS = [
   { id: 'view', label: 'View', icon: 'fa-magnifying-glass' },
 ]
 
-export default function StudioRightPanels({ canvasRef, paperId, revision, paper }) {
+export default function StudioRightPanels({ canvasRef, paperId, revision, paper, onPlaceAsset }) {
   const { t: tx } = useDisplayTranslation()
   const [active, setActive] = useState('color')
 
@@ -261,10 +262,12 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper 
   />
 </div>
       <div className="ss-right-panel" data-panel="assets" aria-label={tx('studioPanels.assetsOverview')}>
-          <div className="ss-right-panel-head"><strong>{tx('studioPanels.tabs.assets')}</strong><span>{tx('studioPanels.library')}</span></div>
-          <div className="ss-asset-placeholder"><i className="fa-solid fa-shapes" aria-hidden="true" /><strong>{tx('studioPanels.emptyAssets')}</strong><p>{tx('studioPanels.assetHint')}</p></div>
-          <p className="ss-panel-hint">{tx('studioPanels.importHint')}</p>
-        </div>
+  <div className="ss-right-panel-head">
+    <strong>{tx('studioPanels.tabs.assets')}</strong>
+    <span>{tx('studioPanels.library')}</span>
+  </div>
+  <StudioMangaAssets onInsert={onPlaceAsset} />
+</div>
     </section>
   )
 }
