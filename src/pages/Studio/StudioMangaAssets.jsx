@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 
 const WORDS = {
@@ -7,6 +7,14 @@ const WORDS = {
   zh: ['对话气泡', '分镜框', '网点', '效果', '放到画布', '添加中...', '无法添加素材。', '素材将绘制到当前画布，可使用撤销移除。'],
   ja: ['吹き出し', 'コマ枠', 'スクリーントーン', '効果', 'キャンバスに追加', '追加中...', '素材を追加できませんでした。', '素材は現在のキャンバスに描画されます。元に戻すで取り消せます。'],
   ko: ['말풍선', '컷 테두리', '스크린톤', '효과', '캔버스에 추가', '추가 중...', '소재를 추가할 수 없습니다.', '소재는 현재 캔버스에 그려집니다. 실행 취소로 제거할 수 있습니다.'],
+}
+
+const UPLOAD_LABELS = {
+  en: ['Upload your image', 'Choose a PNG, JPEG, or WebP image (up to 12 MB).'],
+  km: ['ដាក់រូបភាពផ្ទាល់ខ្លួន', 'ជ្រើសរូប PNG, JPEG ឬ WebP (មិនលើស 12 MB)។'],
+  zh: ['上传自己的图片', '选择 PNG、JPEG 或 WebP 图片（不超过 12 MB）。'],
+  ja: ['自分の画像を追加', 'PNG、JPEG、WebP 画像を選択（12 MB 以下）。'],
+  ko: ['내 이미지 추가', 'PNG, JPEG 또는 WebP 이미지 선택 (12MB 이하).'],
 }
 
 const ASSETS = [
@@ -49,6 +57,8 @@ function toPng(asset) {
 export default function StudioMangaAssets({ onInsert, disabled = false }) {
   const { language } = useDisplayTranslation()
   const t = WORDS[language] || WORDS.en
+  const uploadText = UPLOAD_LABELS[language] || UPLOAD_LABELS.en
+  const fileRef = useRef(null)
   const [group, setGroup] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -58,6 +68,19 @@ export default function StudioMangaAssets({ onInsert, disabled = false }) {
     setBusy(true)
     setError('')
     try { await onInsert(await toPng(asset)) } catch { setError(t[6]) } finally { setBusy(false) }
+  }
+
+  async function uploadImage(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || busy || disabled || !onInsert) return
+    if (file.size > 12 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      setError(uploadText[1])
+      return
+    }
+    setBusy(true)
+    setError('')
+    try { await onInsert(file) } catch { setError(t[6]) } finally { setBusy(false) }
   }
 
   return (
@@ -72,6 +95,9 @@ export default function StudioMangaAssets({ onInsert, disabled = false }) {
         .shadow-studio .ss-manga-assets .ss-asset-grid button:disabled{opacity:.55;cursor:wait}
         .shadow-studio .ss-manga-assets .ss-asset-grid img{width:100%;max-width:75px;aspect-ratio:1;object-fit:contain;background:#f4f5f6;border-radius:3px}
         .shadow-studio .ss-manga-assets p{margin:8px 0 0;color:#b2c3d2;font-size:10px;line-height:1.5}
+        .shadow-studio .ss-manga-assets .ss-upload-asset{display:block;width:100%;min-height:34px;margin-top:12px;padding:7px;border:1px solid #789ec1;border-radius:5px;background:#385b7c;color:#f2f8ff;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+        .shadow-studio .ss-manga-assets .ss-upload-asset:disabled{opacity:.55;cursor:not-allowed}
+        .shadow-studio .ss-manga-assets .ss-upload-file{display:none}
       `}</style>
       <div className="ss-asset-groups" role="group" aria-label="Manga asset categories">
         {t.slice(0, 4).map((label, index) => <button key={index} type="button" aria-pressed={group === index} onClick={() => setGroup(index)}>{label}</button>)}
@@ -79,6 +105,8 @@ export default function StudioMangaAssets({ onInsert, disabled = false }) {
       <div className="ss-asset-grid">
         {ASSETS.filter((asset) => asset.group === group).map((asset) => <button key={asset.id} type="button" disabled={busy || disabled} title={`${t[4]}: ${asset.name}`} onClick={() => insert(asset)}><img alt="" src={`data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgFor(asset))}`} /><span>{asset.name}</span></button>)}
       </div>
+      <input ref={fileRef} className="ss-upload-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" onChange={uploadImage} aria-label={uploadText[0]} />
+      <button type="button" className="ss-upload-asset" disabled={busy || disabled || !onInsert} onClick={() => fileRef.current?.click()}>{uploadText[0]}</button>
       <p role="status">{error || (busy ? t[5] : t[7])}</p>
     </div>
   )
