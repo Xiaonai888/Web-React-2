@@ -24,6 +24,8 @@ import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStu
 import StudioOptionsBar from './StudioOptionsBar'
 import { confirmLargeBrush } from './StudioPrecisionInput'
 import StudioCanvasRulers from './StudioCanvasRulers'
+import { renderStudioLayers, studioLayerContext } from './StudioLayerEngine'
+import { exportStudioLayerStack, loadStudioLayerStack } from './StudioLayerPersistence'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -276,6 +278,7 @@ registerTranslationNamespace('shadowStudio', {
 const W = 1200
 const H = 800
 const HISTORY_LIMIT = 8
+const HISTORY_MEMORY_BUDGET = 256 * 1024 * 1024
 const DOCUMENT_LIMIT = 8
 
 const STUDIO_HEADER_PLACEHOLDER_MENUS = ['Layer', 'Select', 'Filter']
@@ -360,6 +363,7 @@ const placeImageLabel = {
   const strokeRef = useRef(null)
   const historyRef = useRef([])
   const redoRef = useRef([])
+  const layerStackRef = useRef(null)
   const documentsRef = useRef([])
   const loadTokenRef = useRef(0)
   const openProjectInputRef = useRef(null)
@@ -431,34 +435,69 @@ const placeImageLabel = {
     )
   }
 
-  function resetHistory() {
+  function drawingContext() {
+    const stack = layerStackRef.current
+    if (!stack || canvasDocumentRef.current !== activeDocumentId) return null
+    return studioLayerContext(stack)
+  }
+
+  function paintLayerPreview() {
+    const stack = layerStackRef.current
     const canvas = canvasRef.current
-    const ctx = context()
+    if (stack && canvas) renderStudioLayers(stack, canvas)
+  }
 
-    if (!canvas || !ctx) return
+  function captureLayerHistory() {
+    const stack = layerStackRef.current
+    if (!stack) return null
+    return {
+      activeLayerId: stack.activeLayerId,
+      layers: stack.layers.map((layer) => ({
+        id: layer.id,
+        name: layer.name,
+        visible: layer.visible,
+        locked: layer.locked,
+        opacity: layer.opacity,
+        pixels: layer.canvas.getContext('2d', { willReadFrequently: true })
+          .getImageData(0, 0, stack.width, stack.height),
+      })),
+    }
+  }
 
-    historyRef.current = [
-      ctx.getImageData(0, 0, canvas.width, canvas.height),
-    ]
+  function restoreLayerHistory(entry) {
+    const stack = layerStackRef.current
+    if (!stack || !entry) return
+    stack.layers = entry.layers.map((item) => {
+      const canvas = document.createElement('canvas')
+      canvas.width = stack.width
+      canvas.height = stack.height
+      canvas.getContext('2d', { willReadFrequently: true }).putImageData(item.pixels, 0, 0)
+      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity }
+    })
+    stack.activeLayerId = entry.activeLayerId
+    paintLayerPreview()
+  }
+
+  function limitLayerHistory(entries) {
+    const latest = entries.slice(-HISTORY_LIMIT)
+    const bytes = (entry) => entry.layers.reduce((total, layer) => total + layer.pixels.data.byteLength, 0)
+    let total = latest.reduce((sum, entry) => sum + bytes(entry), 0)
+    while (latest.length > 2 && total > HISTORY_MEMORY_BUDGET) total -= bytes(latest.shift())
+    return latest
+  }
+
+  function resetHistory() {
+    const entry = captureLayerHistory()
+    historyRef.current = entry ? [entry] : []
     redoRef.current = []
     refresh((number) => number + 1)
   }
 
   function snapshot(resetRedo = true) {
-    const canvas = canvasRef.current
-    const ctx = context()
-
-    if (!canvas || !ctx) return
-
-    historyRef.current = [
-      ...historyRef.current,
-      ctx.getImageData(0, 0, canvas.width, canvas.height),
-    ].slice(-HISTORY_LIMIT)
-
-    if (resetRedo) {
-      redoRef.current = []
-    }
-
+    const entry = captureLayerHistory()
+    if (!entry) return
+    historyRef.current = limitLayerHistory([...historyRef.current, entry])
+    if (resetRedo) redoRef.current = []
     refresh((number) => number + 1)
   }
 
@@ -485,67 +524,65 @@ const placeImageLabel = {
       return documentList
     }
 
+    const stack = layerStackRef.current
+    if (!stack || canvasDocumentRef.current !== activeDocumentId) return documentList
     const image = canvas.toDataURL('image/png')
+    const savedLayers = exportStudioLayerStack(stack)
 
     return documentList.map((document) =>
       document.id === activeDocumentId
-        ? { ...document, image }
+        ? { ...document, image, ...savedLayers }
         : document
     )
   }
 
-  function loadDocument(document) {
+  function loadDocument(paper) {
     const token = ++loadTokenRef.current
     canvasDocumentRef.current = ''
+    layerStackRef.current = null
     const canvas = canvasRef.current
+    if (!canvas || !paper) return
 
-    if (!canvas || !document) return
-
-    canvas.width = document.width || W
-    canvas.height = document.height || H
-    paintBlank(document)
-
-    if (!document.image) {
-      canvasDocumentRef.current = document.id
-      setPaperLoading(false)
-      resetHistory()
-      return
-    }
-
+    canvas.width = paper.width || W
+    canvas.height = paper.height || H
+    paintBlank(paper)
     setPaperLoading(true)
 
-    const image = new Image()
-
-    image.onload = () => {
-      if (token !== loadTokenRef.current) return
-
-      const ctx = context()
-      const currentCanvas = canvasRef.current
-
-      if (!ctx || !currentCanvas) return
-
-      paintBlank(document)
-      ctx.drawImage(
-        image,
-        0,
-        0,
-        currentCanvas.width,
-        currentCanvas.height
-      )
-      canvasDocumentRef.current = document.id
-      setPaperLoading(false)
-      resetHistory()
-    }
-
-    image.onerror = () => {
-      if (token === loadTokenRef.current) {
-        setPaperLoading(false)
-        setProjectNotice(tx('shadowStudio.imageLoadFailed'))
+    async function finishLoading() {
+      if (token !== loadTokenRef.current || canvasRef.current !== canvas) return
+      try {
+        const stack = await loadStudioLayerStack(paper, canvas)
+        if (token !== loadTokenRef.current || canvasRef.current !== canvas) return
+        layerStackRef.current = stack
+        canvasDocumentRef.current = paper.id
         resetHistory()
+      } catch (error) {
+        if (token !== loadTokenRef.current) return
+        layerStackRef.current = null
+        setProjectNotice(`Layer restore failed: ${error.message}. Your saved paper is unchanged.`)
+      } finally {
+        if (token === loadTokenRef.current) setPaperLoading(false)
       }
     }
 
-    image.src = document.image
+    if (!paper.image) {
+      void finishLoading()
+      return
+    }
+
+    const image = new Image()
+    image.onload = () => {
+      if (token !== loadTokenRef.current || canvasRef.current !== canvas) return
+      paintBlank(paper)
+      context()?.drawImage(image, 0, 0, canvas.width, canvas.height)
+      void finishLoading()
+    }
+    image.onerror = () => {
+      if (token !== loadTokenRef.current) return
+      setProjectNotice(tx('shadowStudio.imageLoadFailed'))
+      setPaperLoading(false)
+    }
+    image.src = paper.image
   }
 
   useEffect(() => {
@@ -606,8 +643,8 @@ const placeImageLabel = {
     recoveryTimerRef.current = setTimeout(() => {
       if (drawingRef.current || revision !== recoverySequenceRef.current) return
 
-      const pages = documentsRef.current
-      const canvas = workspaceStarted ? canvasRef.current : null
+      const pages = workspaceStarted ? storeActiveImage(documentsRef.current) : documentsRef.current
+      const canvas = workspaceStarted && layerStackRef.current ? canvasRef.current : null
 
       saveStudioRecovery(pages, activeDocumentId, canvas)
         .then((savedAt) => {
@@ -815,6 +852,7 @@ const placeImageLabel = {
     setWorkspaceStarted(false)
     setNewFileOpen(false)
     canvasDocumentRef.current = ''
+    layerStackRef.current = null
     historyRef.current = []
     redoRef.current = []
     setProjectNotice(tx('shadowStudio.allPapersClosed'))
@@ -917,6 +955,7 @@ const placeImageLabel = {
       setWorkspaceStarted(false)
       historyRef.current = []
       redoRef.current = []
+      layerStackRef.current = null
       return
     }
 
@@ -1217,12 +1256,19 @@ const placeImageLabel = {
   }
 
   function clearCanvas(save = true) {
-    paintBlank()
+    const stack = layerStackRef.current
+    if (!stack || canvasDocumentRef.current !== activeDocumentId) return
+    stack.layers.forEach((layer, index) => {
+      const ctx = layer.canvas.getContext('2d', { willReadFrequently: true })
+      ctx.clearRect(0, 0, stack.width, stack.height)
+      if (index === 0) {
+        ctx.fillStyle = activeDocument?.background || '#FFFFFF'
+        ctx.fillRect(0, 0, stack.width, stack.height)
+      }
+    })
+    paintLayerPreview()
     updateDocument(activeDocumentId, { dirty: true })
-
-    if (save) {
-      snapshot()
-    }
+    if (save) snapshot()
   }
 
   function point(event) {
@@ -1261,17 +1307,18 @@ const placeImageLabel = {
 
   const canvas = canvasRef.current
   const paperId = activeDocumentId
-  if (!canvas || canvasDocumentRef.current !== paperId) return
+  const target = drawingContext()?.canvas
+  if (!canvas || !target || canvasDocumentRef.current !== paperId) return
 
   setProjectBusy(true)
   try {
     const name = await placeStudioDroppedImage(
-      file, canvas, anchor,
-      () => canvas === canvasRef.current &&
-        paperId === activeDocumentId &&
-        canvasDocumentRef.current === paperId
+      file, target, anchor,
+      () => canvas === canvasRef.current && target === drawingContext()?.canvas &&
+        paperId === activeDocumentId && canvasDocumentRef.current === paperId
     )
     if (name) {
+      paintLayerPreview()
       snapshot()
       updateDocument(paperId, { dirty: true })
       setProjectNotice(`${placeImageLabel}: ${name}`)
@@ -1296,9 +1343,8 @@ async function dropImageOnPaper(event) {
     if (event.pointerType === 'mouse' && event.button !== 0) return
 
     const canvas = canvasRef.current
-    const ctx = context()
     const currentPoint = point(event)
-    if (!canvas || !ctx || !currentPoint) return
+    if (!canvas || !currentPoint || !layerStackRef.current || canvasDocumentRef.current !== activeDocumentId) return
 
     if (tool === 'text') {
   event.preventDefault()
@@ -1317,6 +1363,8 @@ if (tool === 'shape') {
       return
     }
 
+    const ctx = drawingContext()
+    if (!ctx) return
     const stroke = beginStudioStroke(ctx, currentPoint, event, {
       size,
       opacity,
@@ -1324,6 +1372,7 @@ if (tool === 'shape') {
       color: tool === 'eraser' ? activeDocument?.background || '#FFFFFF' : color,
     })
     if (!stroke) return
+    paintLayerPreview()
     event.preventDefault()
     strokeRef.current = stroke
     drawingRef.current = true
@@ -1333,7 +1382,7 @@ if (tool === 'shape') {
   function draw(event) {
     const stroke = strokeRef.current
     if (!drawingRef.current || !stroke || stroke.pointerId !== event.pointerId) return
-    const ctx = context()
+    const ctx = drawingContext()
     if (!ctx) return
 
     event.preventDefault()
@@ -1345,6 +1394,7 @@ if (tool === 'shape') {
       const currentPoint = point(sample)
       if (currentPoint) extendStudioStroke(ctx, stroke, currentPoint, sample)
     }
+    paintLayerPreview()
   }
 
   function finish(event) {
@@ -1353,8 +1403,9 @@ if (tool === 'shape') {
     event.preventDefault()
     if (event.type !== 'pointercancel') {
       const currentPoint = point(event)
-      if (currentPoint) extendStudioStroke(context(), stroke, currentPoint, event)
+      if (currentPoint) extendStudioStroke(drawingContext(), stroke, currentPoint, event)
     }
+    paintLayerPreview()
     drawingRef.current = false
     strokeRef.current = null
 
@@ -1368,35 +1419,18 @@ if (tool === 'shape') {
   }
 
   function undo() {
-    if (historyRef.current.length <= 1) return
-
-    redoRef.current = [
-      ...redoRef.current,
-      historyRef.current.pop(),
-    ].slice(-HISTORY_LIMIT)
-
-    const previous =
-      historyRef.current[historyRef.current.length - 1]
-
-    if (previous) {
-      context()?.putImageData(previous, 0, 0)
-    }
-
+    if (historyRef.current.length <= 1 || !layerStackRef.current) return
+    redoRef.current = limitLayerHistory([...redoRef.current, historyRef.current.pop()])
+    restoreLayerHistory(historyRef.current[historyRef.current.length - 1])
     updateDocument(activeDocumentId, { dirty: true })
     refresh((number) => number + 1)
   }
 
   function redo() {
-    if (!redoRef.current.length) return
-
+    if (!redoRef.current.length || !layerStackRef.current) return
     const next = redoRef.current.pop()
-
-    historyRef.current = [
-      ...historyRef.current,
-      next,
-    ].slice(-HISTORY_LIMIT)
-
-    context()?.putImageData(next, 0, 0)
+    historyRef.current = limitLayerHistory([...historyRef.current, next])
+    restoreLayerHistory(next)
     updateDocument(activeDocumentId, { dirty: true })
     refresh((number) => number + 1)
   }
@@ -1760,7 +1794,8 @@ if (tool === 'shape') {
     if (textEditor?.paperId === activeDocumentId &&
         !paperLoading && !projectBusy &&
         canvasDocumentRef.current === activeDocumentId &&
-        drawStudioText(context(), textEditor, settings)) {
+        drawStudioText(drawingContext(), textEditor, settings)) {
+      paintLayerPreview()
       snapshot()
       updateDocument(activeDocumentId, { dirty: true })
     }
@@ -1777,7 +1812,8 @@ if (tool === 'shape') {
     if (shapeEditor?.paperId === activeDocumentId &&
         !paperLoading && !projectBusy &&
         canvasDocumentRef.current === activeDocumentId &&
-        drawStudioShape(context(), shapeEditor, settings)) {
+        drawStudioShape(drawingContext(), shapeEditor, settings)) {
+      paintLayerPreview()
       snapshot()
       updateDocument(activeDocumentId, { dirty: true })
     }
