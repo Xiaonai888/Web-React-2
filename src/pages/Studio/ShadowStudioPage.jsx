@@ -330,6 +330,12 @@ function StudioChrome({ children, onBack, backLabel }) {
   )
 }
 
+function studioBrushCursor(size, zoom) {
+  const radius = Math.max(2, Math.min(30, size * zoom / 200))
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><circle cx="32" cy="32" r="${radius}" fill="none" stroke="#ffffff" stroke-width="2"/><circle cx="32" cy="32" r="${radius}" fill="none" stroke="#1a2530" stroke-width="0.8"/></svg>`
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 32 32, crosshair`
+}
+
 export default function ShadowStudioPage() {
   const navigate = useNavigate()
   const { t: tx } = useDisplayTranslation()
@@ -1270,7 +1276,7 @@ export default function ShadowStudioPage() {
         .ss-work{min-width:0;min-height:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53;touch-action:pan-x pan-y;overscroll-behavior:contain}.ss-work.ss-panning,.ss-work.ss-panning *{cursor:grabbing!important}.ss-work.ss-hand,.ss-work.ss-hand *{cursor:grab!important}
         .ss-stage{width:max-content;min-width:100%;min-height:100%;display:grid;place-items:center}
         .ss-canvas-frame{position:relative;flex:none;overflow:visible}
-        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : tool === 'eraser' ? 'cell' : 'crosshair'}}
+        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : studioBrushCursor(size, zoom)}}
         .ss-view-buttons{display:flex;flex-wrap:wrap;gap:6px}
         .ss-view-btn{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:44px;height:31px;border:1px solid #555b62;border-radius:6px;background:#353a40;color:#e7ecf1;font:inherit;font-size:11px;cursor:pointer}
         .ss-view-btn:hover,.ss-view-btn.active{border-color:#72b3f7;background:#355274}
