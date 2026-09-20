@@ -16,7 +16,7 @@ function operation(mode) {
 export function setStudioLayerBlendMode(stack, layerId, mode) {
   const layer = stack?.layers?.find((item) => item.id === layerId)
   if (!layer) throw new Error('Layer not found.')
-  if (stack.layers[0] === layer && mode !== 'normal') throw new Error('Background must use Normal blend mode.')
+  if (layer.isBackground && mode !== 'normal') throw new Error('Background must use Normal blend mode.')
   operation(mode)
   layer.blendMode = mode
   return layer
