@@ -16,6 +16,8 @@ const DAY_MS = 86400000
 const GB = 1024 ** 3
 const AGE_OPTIONS = [0, 3, 7, 30, 90]
 let cleanupPromise = null
+let lastWorkerPruneAt = 0
+const WORKER_PRUNE_INTERVAL_MS = 30 * 60 * 1000
 
 function readLocal(key, fallback) {
   try { return localStorage.getItem(key) ?? fallback } catch { return fallback }
@@ -125,6 +127,7 @@ export async function applyTemporaryCachePreferences(next) {
     ageDays: AGE_OPTIONS.includes(Number(next.ageDays)) ? Number(next.ageDays) : 30,
   }
   await workerMessage({ type: 'SHADOW_TEMP_CACHE_SETTINGS_SET', ...settings })
+  lastWorkerPruneAt = Date.now()
   writeLocal(MODE_KEY, settings.mode)
   writeLocal(LIMIT_KEY, settings.limitGb)
   writeLocal(AGE_KEY, settings.ageDays)
@@ -147,9 +150,6 @@ async function getTotalBudget(totalBytes, preferences) {
 async function pruneTemporaryCacheNow() {
   const settings = getTemporaryCachePreferences()
   const entries = await readReaderEntries()
-  const image = await getMangaImageCacheStats()
-  if (!image?.ok) throw new Error('MANGA_CACHE_STATS_UNAVAILABLE')
-  const mangaBytes = Math.max(0, Number(image.cachedBytes) || 0)
   const now = Date.now()
   let remaining = entries.map((entry) => ({
     ...entry,
@@ -170,7 +170,10 @@ async function pruneTemporaryCacheNow() {
       (settings.ageDays > 0 && now - lastUsed >= settings.ageDays * DAY_MS))
   })
   let readerBytes = remaining.reduce((sum, entry) => sum + entry.cacheBytes, 0)
-  await workerMessage({ type: 'SHADOW_TEMP_CACHE_SETTINGS_SET', ...settings })
+  if (Date.now() - lastWorkerPruneAt >= WORKER_PRUNE_INTERVAL_MS) {
+    await workerMessage({ type: 'SHADOW_TEMP_CACHE_SETTINGS_SET', ...settings })
+    lastWorkerPruneAt = Date.now()
+  }
   const updatedImage = await getMangaImageCacheStats()
   if (!updatedImage?.ok) throw new Error('MANGA_CACHE_STATS_UNAVAILABLE')
   const updatedMangaBytes = Math.max(0, Number(updatedImage.cachedBytes) || 0)
