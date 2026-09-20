@@ -1719,6 +1719,14 @@ self.addEventListener(
   return
 }
 
+    if (
+  /iPhone|iPad|iPod/.test(self.navigator.userAgent) &&
+  url.origin !== self.location.origin &&
+  url.pathname.startsWith('/api/')
+) {
+  return
+}
+
     const episodeRoute =
       parseEpisodeApiUrl(url)
 
