@@ -9,6 +9,7 @@ import StudioEditMenu from './StudioEditMenu'
 import StudioExportDialog from './StudioExportDialog'
 import { readStudioImage } from './StudioImageImport'
 import { placeStudioDroppedImage } from './StudioImageDrop'
+import StudioTextEditor, { drawStudioText } from './StudioTextEditor'
 import StudioPaperTabs from './StudioPaperTabs'
 import StudioHome from './StudioHome'
 import StudioNavigator from './StudioNavigator'
@@ -375,6 +376,7 @@ const placeImageLabel = {
   const [exportOpen, setExportOpen] = useState(false)
   const [newFilePreset, setNewFilePreset] = useState('basic')
   const [tool, setTool] = useState('brush')
+  const [textEditor, setTextEditor] = useState(null)
   const [brushStyle, setBrushStyle] = useState('round')
   const [color, setColor] = useState('#111111')
   const [size, setSize] = useState(8)
@@ -1210,6 +1212,12 @@ async function dropImageOnPaper(event) {
     const currentPoint = point(event)
     if (!canvas || !ctx || !currentPoint) return
 
+    if (tool === 'text') {
+  event.preventDefault()
+  setTextEditor({ ...currentPoint, paperId: activeDocumentId })
+  return
+}
+
     if (tool === 'eyedropper') {
       event.preventDefault()
       sampleCanvasColor(ctx, canvas, currentPoint)
@@ -1633,6 +1641,22 @@ async function dropImageOnPaper(event) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (file) placeImageOnCurrentPaper(file)
+  }}
+/>
+
+      <StudioTextEditor
+  open={Boolean(textEditor) && workspaceStarted}
+  color={color}
+  onCancel={() => setTextEditor(null)}
+  onApply={(settings) => {
+    if (textEditor?.paperId === activeDocumentId &&
+        !paperLoading && !projectBusy &&
+        canvasDocumentRef.current === activeDocumentId &&
+        drawStudioText(context(), textEditor, settings)) {
+      snapshot()
+      updateDocument(activeDocumentId, { dirty: true })
+    }
+    setTextEditor(null)
   }}
 />
 
