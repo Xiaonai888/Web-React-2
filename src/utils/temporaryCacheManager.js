@@ -82,7 +82,7 @@ export async function getTemporaryCacheStats() {
     getMangaImageCacheStats(),
   ])
   const bytes = readerStats(entries)
-  const updatedMangaBytes = Math.max(0, Number(updatedImage.cachedBytes) || 0)
+  const imageBytes = imageStats?.ok ? Math.max(0, Number(imageStats.totalCachedBytes ?? imageStats.cachedBytes) || 0) : null
   return {
     novelBytes: bytes.novel,
     chatStoryBytes: bytes.chat_story,
@@ -176,7 +176,7 @@ async function pruneTemporaryCacheNow() {
   }
   const updatedImage = await getMangaImageCacheStats()
   if (!updatedImage?.ok) throw new Error('MANGA_CACHE_STATS_UNAVAILABLE')
-  const updatedMangaBytes = Math.max(0, Number(updatedImage.cachedBytes) || 0)
+  const updatedMangaBytes = Math.max(0, Number(updatedImage.totalCachedBytes ?? updatedImage.cachedBytes) || 0)
   const budget = await getTotalBudget(readerBytes + updatedMangaBytes, settings)
   if (updatedMangaBytes >= budget) return false
   for (const entry of remaining.sort((a, b) =>
