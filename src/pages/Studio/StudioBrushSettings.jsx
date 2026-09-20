@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import StudioPrecisionInput from './StudioPrecisionInput'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { BRUSH_STYLES } from './StudioBrushEngine'
 
@@ -170,6 +171,7 @@ const BUILT_IN = [
 ]
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, Math.round(Number(value) || min)))
+const clampBrush = (value) => Math.round(Math.min(5000, Math.max(0.1, Number(value) || 0.1)) * 10) / 10
 
 function readSaved() {
   try {
@@ -181,7 +183,7 @@ function readSaved() {
         id: String(item.id || `saved-${index}`),
         name: item.name.trim().slice(0, 22),
         style: BRUSH_STYLES.some((option) => option.id === item.style) ? item.style : 'round',
-        size: clamp(item.size, 1, 80),
+        size: clampBrush(item.size),
         opacity: clamp(item.opacity, 10, 100),
       }))
   } catch {
@@ -231,7 +233,7 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
       id: globalThis.crypto?.randomUUID?.() || `brush-${Date.now()}-${Math.random()}`,
       name: cleanName,
       style: BRUSH_STYLES.some((option) => option.id === style) ? style : 'round',
-      size: clamp(size, 1, 80),
+      size: clampBrush(size),
       opacity: clamp(opacity, 10, 100),
     }]
     if (!persist(next)) return
@@ -362,8 +364,9 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
         </div>
         <h2 className="ss-label">{labels.size}</h2>
         <div className="ss-range">
-          <input type="range" min="1" max="80" value={size} aria-label={tr('Brush size')} onChange={(event) => onSizeChange(Number(event.target.value))} />
-          <span className="ss-value">{size}px</span>
+          <input type="range" min="1" max="5000" step="1" value={Math.max(1, size)} aria-label={tr('Brush size')} onChange={(event) => onSizeChange(Number(event.target.value))} />
+          <StudioPrecisionInput value={size} onCommit={onSizeChange} min={0.1} max={5000} step={0.1} label={tr('Brush size')} width={62} />
+          <span className="ss-value">px</span>
         </div>
         {presetOptions()}
       </section>
