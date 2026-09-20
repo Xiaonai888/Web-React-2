@@ -1687,6 +1687,7 @@ if (tool === 'shape') {
               paperLoading={paperLoading}
               projectBusy={projectBusy}
               onClear={() => clearCanvas()}
+              onPlaceAsset={placeImageOnCurrentPaper}
               navigator={<StudioNavigator canvasRef={canvasRef} workRef={workRef} paperId={activeDocumentId} revision={canvasRevision} rotation={viewRotation} flipHorizontal={flipHorizontal} flipVertical={flipVertical} zoom={zoom} disabled={paperLoading || projectBusy} />}
               labels={{ color: tx('shadowStudio.color'), size: tx('shadowStudio.size'), opacity: tx('shadowStudio.opacity'), clear: tx('shadowStudio.clear') }}
             />
