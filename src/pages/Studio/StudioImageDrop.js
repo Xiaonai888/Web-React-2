@@ -14,8 +14,8 @@ export async function placeStudioDroppedImage(file, canvas, anchor, stillCurrent
   const scale = Math.min(1, canvas.width / image.naturalWidth, canvas.height / image.naturalHeight)
   const width = Math.max(1, Math.round(image.naturalWidth * scale))
   const height = Math.max(1, Math.round(image.naturalHeight * scale))
-  const x = Math.round(Math.max(0, Math.min(canvas.width, anchor?.x ?? canvas.width / 2)) - width / 2)
-  const y = Math.round(Math.max(0, Math.min(canvas.height, anchor?.y ?? canvas.height / 2)) - height / 2)
+  const x = Math.round(Math.max(0, Math.min(canvas.width - width, (anchor?.x ?? canvas.width / 2) - width / 2)))
+  const y = Math.round(Math.max(0, Math.min(canvas.height - height, (anchor?.y ?? canvas.height / 2) - height / 2)))
   ctx.save()
   try {
     ctx.globalAlpha = 1
