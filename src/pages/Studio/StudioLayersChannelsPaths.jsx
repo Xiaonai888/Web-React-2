@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
 
 const WORDS = {
   en: ['Layers', 'Channels', 'Paths', 'Canvas bitmap', 'Current paper · one flattened canvas', 'Blend mode', 'Normal', 'Opacity', 'Independent layers are not enabled yet.', 'Composite', 'Red', 'Green', 'Blue', 'Read-only channel previews of the current canvas.', 'No vector paths on this canvas.', 'Vector paths are not enabled yet.', 'Preview is unavailable.'],
@@ -19,7 +20,7 @@ const ACTIONS = {
 
 const CHANNELS = ['rgb', 'red', 'green', 'blue']
 
-export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision = 0, paper, layers = [], activeLayerId = '', onLayerAction, disabled = false }) {
+export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision = 0, paper, layers = [], activeLayerId = '', groups = [], onLayerAction, disabled = false }) {
   const { language } = useDisplayTranslation()
   const t = WORDS[language] || WORDS.en
   const a = ACTIONS[language] || ACTIONS.en
@@ -30,6 +31,15 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const layerRefs = useRef({})
   const selected = layers.find((layer) => layer.id === activeLayerId)
   const blocked = disabled || !onLayerAction || !paperId || !layers.length
+  const selectedGroup = groups.find((group) => group.id === selected?.groupId)
+  const selectedIndex = layers.indexOf(selected)
+  const adjacentGroups = selected && !selected.groupId && selectedIndex > 0
+    ? groups.filter((group) => layers[selectedIndex - 1]?.groupId === group.id || layers[selectedIndex + 1]?.groupId === group.id)
+    : []
+  const reverseLayers = [...layers].reverse()
+  const groupTitle = ({ en: 'Group', km: 'ក្រុមស្រទាប់', zh: '图层组', ja: 'レイヤーグループ', ko: '레이어 그룹' })[language] || 'Group'
+  const blendTitle = ({ en: 'Blend mode', km: 'របៀបលាយពណ៌', zh: '混合模式', ja: '描画モード', ko: '혼합 모드' })[language] || 'Blend mode'
+  const groupControl = ({ en: ['New group', 'Join group', 'Ungroup', 'Rename group', 'Collapse', 'Expand'], km: ['បង្កើតក្រុម', 'ចូលក្រុម', 'ដោះក្រុម', 'ប្ដូរឈ្មោះក្រុម', 'បង្រួម', 'ពង្រីក'], zh: ['新建组', '加入组', '取消编组', '重命名组', '收起', '展开'], ja: ['グループ作成', 'グループに追加', 'グループ解除', 'グループ名変更', '折りたたむ', '展開'], ko: ['그룹 만들기', '그룹에 추가', '그룹 해제', '그룹 이름 변경', '접기', '펼치기'] })[language] || ['New group', 'Join group', 'Ungroup', 'Rename group', 'Collapse', 'Expand']
 
   useEffect(() => {
     if (active !== 'layers') return
@@ -111,7 +121,17 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
         .shadow-studio .ss-lcp-hint{margin:10px 0 0;font-size:10px;line-height:1.5;color:#b2c3d2}
         .shadow-studio .ss-lcp-paths{padding:24px 7px;text-align:center;border:1px dashed #5c6a77;border-radius:5px;color:#bccbd8}
         .shadow-studio .ss-lcp-paths i{display:block;margin-bottom:10px;font-size:22px}
-        .shadow-studio .ss-lcp-list{display:grid;gap:4px;max-height:270px;overflow-y:auto;overscroll-behavior:contain}
+        .shadow-studio .ss-lcp-list{display:grid;gap:4px;max-height:300px;overflow-y:auto;overscroll-behavior:contain}
+        .shadow-studio .ss-lcp-group{display:grid;gap:5px;margin:5px 0 3px;padding:6px;border:1px solid #607b94;border-radius:5px;background:#283c50}
+        .shadow-studio .ss-lcp-group-head{display:flex;align-items:center;gap:5px}
+        .shadow-studio .ss-lcp-group-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+        .shadow-studio .ss-lcp-group-settings{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+        .shadow-studio .ss-lcp-group-settings select,.shadow-studio .ss-lcp-group-settings button,.shadow-studio .ss-lcp-blend select{min-width:0;max-width:100%;height:27px;border:1px solid #637f97;border-radius:4px;background:#31495f;color:#eef6ff;font:inherit;font-size:10px}
+        .shadow-studio .ss-lcp-group-settings select{max-width:103px}
+        .shadow-studio .ss-lcp-group-settings button{padding:0 6px}
+        .shadow-studio .ss-lcp-blend{display:flex;align-items:center;gap:5px;font-size:10px;color:#ccdce9}
+        .shadow-studio .ss-lcp-blend select{max-width:107px}
+        .shadow-studio .ss-lcp-layer[data-grouped=true]{margin-left:12px;border-left:3px solid #86b4dc} 
       `}</style>
       <div className="ss-lcp-tabs" role="tablist" aria-label={t[0]}>
         {['layers', 'channels', 'paths'].map((tab, index) => (
@@ -131,18 +151,48 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
               {[...new Set([0,10,20,30,40,50,60,70,80,90,100, selected?.opacity].filter((value) => value !== undefined))].sort((x,y) => x-y).map((value) => <option key={value} value={value}>{value}%</option>)}
             </select>
           </label>
+          <button className="ss-lcp-action" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selectedIndex === 0 || Boolean(selectedGroup) || groups.length >= 8} onClick={() => onLayerAction('group-add', activeLayerId)}><i className="fa-solid fa-folder-plus" aria-hidden="true" /></button>
+          <label className="ss-lcp-blend">{blendTitle}
+            <select aria-label={blendTitle} disabled={blocked || !selected || selectedIndex === 0} value={selected?.blendMode || 'normal'} onChange={(event) => onLayerAction('blend', activeLayerId, event.target.value)}>
+              {STUDIO_BLEND_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}
+            </select>
+          </label>
+          {adjacentGroups.length ? <label className="ss-lcp-blend">{groupControl[1]}
+            <select aria-label={groupControl[1]} disabled={blocked} value="" onChange={(event) => event.target.value && onLayerAction('group-join', activeLayerId, event.target.value)}>
+              <option value="">—</option>
+              {adjacentGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+            </select>
+          </label> : null}
         </div>
         <div className="ss-lcp-list">
-          {[...layers].reverse().map((layer) => (
-            <div className="ss-lcp-layer" data-selected={layer.id === activeLayerId} key={layer.id}>
+          {reverseLayers.map((layer, index) => {
+            const group = groups.find((item) => item.id === layer.groupId)
+            const firstOfGroup = group && (index === 0 || reverseLayers[index - 1].groupId !== group.id)
+            return <div key={layer.id}>
+              {firstOfGroup ? <div className="ss-lcp-group" aria-label={`${groupTitle}: ${group.name}`}>
+                <div className="ss-lcp-group-head">
+                  <button className="ss-lcp-action" type="button" title={group.collapsed ? groupControl[5] : groupControl[4]} disabled={blocked} onClick={() => onLayerAction('group-collapse', group.id)}>{group.collapsed ? '▸' : '▾'}</button>
+                  <button className="ss-lcp-action" type="button" title={group.visible ? a[3] : a[2]} disabled={blocked} onClick={() => onLayerAction('group-visibility', group.id)}><i className={`fa-regular ${group.visible ? 'fa-eye' : 'fa-eye-slash'}`} aria-hidden="true" /></button>
+                  <strong className="ss-lcp-group-name" title={group.name}>{group.name}</strong>
+                  <button className="ss-lcp-action" type="button" title={groupControl[3]} disabled={blocked} onClick={() => { const name = window.prompt(groupControl[3], group.name); if (name?.trim() && name.trim() !== group.name) onLayerAction('group-rename', group.id, name.trim()) }}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
+                  <button className="ss-lcp-action" type="button" title={group.locked ? a[5] : a[4]} disabled={blocked} onClick={() => onLayerAction('group-lock', group.id)}><i className={`fa-solid ${group.locked ? 'fa-lock' : 'fa-lock-open'}`} aria-hidden="true" /></button>
+                </div>
+                <div className="ss-lcp-group-settings">
+                  <label className="ss-lcp-blend">{blendTitle}<select aria-label={`${group.name}: ${blendTitle}`} disabled={blocked} value={group.blendMode || 'normal'} onChange={(event) => onLayerAction('group-blend', group.id, event.target.value)}>{STUDIO_BLEND_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select></label>
+                  <label className="ss-lcp-blend">{t[7]}<select aria-label={`${group.name}: ${t[7]}`} disabled={blocked} value={group.opacity ?? 100} onChange={(event) => onLayerAction('group-opacity', group.id, Number(event.target.value))}>{[...new Set([0,10,20,30,40,50,60,70,80,90,100,group.opacity].filter((value) => value !== undefined))].sort((x,y) => x-y).map((value) => <option key={value} value={value}>{value}%</option>)}</select></label>
+                  <button type="button" title={groupControl[2]} disabled={blocked} onClick={() => onLayerAction('group-remove', group.id)}>{groupControl[2]}</button>
+                </div>
+              </div> : null}
+              {!group?.collapsed ? <div className="ss-lcp-layer" data-grouped={Boolean(group)} data-selected={layer.id === activeLayerId}>
               <button className="ss-lcp-action" type="button" aria-label={layer.visible ? a[3] : a[2]} title={layer.visible ? a[3] : a[2]} disabled={blocked} onClick={() => onLayerAction('visibility', layer.id)}><i className={`fa-regular ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}`} aria-hidden="true" /></button>
               <button className="ss-lcp-pick" type="button" disabled={blocked} onClick={() => onLayerAction('select', layer.id)} aria-label={`${a[1]} ${layer.name}`}>
                 <canvas className="ss-lcp-thumb" ref={(node) => { layerRefs.current[layer.id] = node }} aria-hidden="true" />
                 <span className="ss-lcp-item-name"><strong>{layer.name}</strong><small>{layer.id === activeLayerId ? '● ' : ''}{layer.opacity}%</small></span>
               </button>
               <button className="ss-lcp-action" type="button" aria-label={layer.locked ? a[5] : a[4]} title={layer.locked ? a[5] : a[4]} disabled={blocked} onClick={() => onLayerAction('lock', layer.id)}><i className={`fa-solid ${layer.locked ? 'fa-lock' : 'fa-lock-open'}`} aria-hidden="true" /></button>
+              </div> : null}
             </div>
-          ))}
+          })}
         </div>
         {!layers.length ? <p className="ss-lcp-hint">{a[13]}</p> : null}
       </> : null}
