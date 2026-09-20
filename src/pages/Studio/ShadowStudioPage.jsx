@@ -24,7 +24,7 @@ import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStu
 import StudioOptionsBar from './StudioOptionsBar'
 import { confirmLargeBrush } from './StudioPrecisionInput'
 import StudioCanvasRulers from './StudioCanvasRulers'
-import { renderStudioLayers, studioLayerContext } from './StudioLayerEngine'
+import { renderStudioLayers, studioLayerContext, addStudioLayer, selectStudioLayer, updateStudioLayer, moveStudioLayer, removeStudioLayer } from './StudioLayerEngine'
 import { exportStudioLayerStack, loadStudioLayerStack } from './StudioLayerPersistence'
 
 registerTranslationNamespace('shadowStudio', {
@@ -439,6 +439,38 @@ const placeImageLabel = {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId) return null
     return studioLayerContext(stack)
+  }
+
+  function changeLayer(action, layerId, value) {
+    const stack = layerStackRef.current
+    if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy || drawingRef.current || newFileOpen || exportOpen || recoveryBusy) return
+    try {
+      if (action === 'add') addStudioLayer(stack)
+      else if (action === 'select') selectStudioLayer(stack, layerId)
+      else if (action === 'visibility') {
+        const layer = stack.layers.find((item) => item.id === layerId)
+        if (!layer) return
+        updateStudioLayer(stack, layerId, { visible: !layer.visible })
+      } else if (action === 'lock') {
+        const layer = stack.layers.find((item) => item.id === layerId)
+        if (!layer) return
+        updateStudioLayer(stack, layerId, { locked: !layer.locked })
+      } else if (action === 'opacity') updateStudioLayer(stack, layerId, { opacity: value })
+      else if (action === 'rename') updateStudioLayer(stack, layerId, { name: value })
+      else if (action === 'move') { if (!moveStudioLayer(stack, layerId, value)) return }
+      else if (action === 'remove') { if (!removeStudioLayer(stack, layerId)) return }
+      else return
+      paintLayerPreview()
+      if (action === 'select') {
+        const last = historyRef.current[historyRef.current.length - 1]
+        if (last) last.activeLayerId = stack.activeLayerId
+        refresh((number) => number + 1)
+      } else snapshot()
+      updateDocument(activeDocumentId, { dirty: true })
+      setProjectNotice('')
+    } catch (error) {
+      setProjectNotice(error.message || 'Could not update the layer.')
+    }
   }
 
   function paintLayerPreview() {
@@ -1359,7 +1391,7 @@ if (tool === 'shape') {
 
     if (tool === 'eyedropper') {
       event.preventDefault()
-      sampleCanvasColor(ctx, canvas, currentPoint)
+      sampleCanvasColor(context(), canvas, currentPoint)
       return
     }
 
@@ -1706,6 +1738,9 @@ if (tool === 'shape') {
               paperId={activeDocumentId}
               revision={canvasRevision}
               paper={activeDocument}
+              layers={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.layers || [] : []}
+              activeLayerId={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.activeLayerId || '' : ''}
+              onLayerAction={changeLayer}
               color={color}
               onColorChange={(nextColor) => { setColor(nextColor); setTool('brush') }}
               brushStyle={brushStyle}
