@@ -205,7 +205,7 @@ const GROUPS = [
   ] },
 ]
 
-const AVAILABLE = new Set(['brush', 'eraser', 'eyedropper'])
+const AVAILABLE = new Set(['brush', 'eraser', 'eyedropper', 'text'])
 
 export default function StudioToolPalette({ tool, onToolChange, labels = {} }) {
   const { t: tx } = useDisplayTranslation()
