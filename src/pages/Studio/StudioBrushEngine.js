@@ -77,7 +77,7 @@ function paintTip(ctx, stroke, x, y, pressure) {
 
 function configureContext(ctx, stroke) {
   ctx.globalAlpha = stroke.opacity / 100 * (stroke.style === 'pencil' ? 0.85 : 1)
-  ctx.globalCompositeOperation = 'source-over'
+  ctx.globalCompositeOperation = stroke.erase ? 'destination-out' : 'source-over'
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   ctx.strokeStyle = stroke.color
@@ -93,6 +93,7 @@ export function beginStudioStroke(ctx, position, event, settings) {
     size: clamp(Number.isFinite(requestedSize) ? requestedSize : 1, 0.1, 5000),
     opacity: clamp(Number(settings.opacity) || 100, 10, 100),
     color: settings.color,
+    erase: settings.erase === true,
     style: BRUSH_STYLES.some((item) => item.id === settings.style) ? settings.style : 'round',
     last: { x: position.x, y: position.y },
     lastPressure: pressureFor(event, event.pointerType),
