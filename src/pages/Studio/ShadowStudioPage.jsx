@@ -1426,6 +1426,7 @@ const placeImageLabel = {
       snapshot()
       updateDocument(paperId, { dirty: true })
       setProjectNotice(`${placeImageLabel}: ${name}`)
+      return name
     }
   } catch {
     setProjectNotice(tx('shadowStudio.imageImportFailed'))
@@ -1830,7 +1831,7 @@ if (tool === 'shape') {
               paperLoading={paperLoading}
               projectBusy={projectBusy}
               onClear={() => clearCanvas()}
-              onPlaceAsset={placeImageOnCurrentPaper}
+              onPlaceAsset={async (file) => { if (!await placeImageOnCurrentPaper(file)) throw new Error('Could not add the image to the selected layer.') }}
               navigator={<StudioNavigator canvasRef={canvasRef} workRef={workRef} paperId={activeDocumentId} revision={canvasRevision} rotation={viewRotation} flipHorizontal={flipHorizontal} flipVertical={flipVertical} zoom={zoom} disabled={paperLoading || projectBusy} />}
               labels={{ color: tx('shadowStudio.color'), size: tx('shadowStudio.size'), opacity: tx('shadowStudio.opacity'), clear: tx('shadowStudio.clear') }}
             />
