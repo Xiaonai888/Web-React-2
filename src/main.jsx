@@ -199,6 +199,7 @@ async function notifyMangaCacheReaderContext() {
 
   worker.postMessage({
     type: 'SHADOW_READER_CONTEXT',
+    iosDiagnostic: isIOS,
     scope,
     storyId: route.storyId,
     episodeId: route.episodeId,
