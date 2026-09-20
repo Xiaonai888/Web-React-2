@@ -13,8 +13,10 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../../utils/homeDataCache'
-import ReactionAction from '../social/reactions/ReactionAction'
+import ReactionPicker from '../social/reactions/ReactionPicker'
+import useReactionInteraction from '../social/reactions/useReactionInteraction'
 import {
+  REACTIONS,
   getReactionMeta,
 } from '../social/reactions/reactionConfig'
 
@@ -367,6 +369,80 @@ function ViewerAvatar({ creator }) {
   )
 }
 
+function StoryReactionIcon({
+  reaction,
+  reactionType,
+  count,
+  busy,
+  onReact,
+}) {
+  const anchorRef = useRef(null)
+  const interaction = useReactionInteraction({
+    busy,
+    onReact,
+    defaultReactionType: reaction.type,
+  })
+
+  return (
+    <div className="flex min-w-0 flex-1 items-center justify-center">
+      <ReactionPicker
+        anchorRef={anchorRef}
+        open={interaction.reactionPickerOpen}
+        activeType={reactionType || ''}
+        previewType={interaction.previewReactionType}
+        isSliding={interaction.isSlidingReaction}
+        busy={busy}
+        onSelect={interaction.selectReaction}
+        onClose={interaction.closeReactionPicker}
+        className="!h-[68px] !w-[min(440px,calc(100vw-16px))] !max-w-[calc(100vw-16px)] !gap-[1px] !bg-[#080808] !px-[5px] [&>div:last-child]:!hidden"
+      />
+
+      <button
+        ref={anchorRef}
+        type="button"
+        disabled={busy}
+        aria-label={`${reaction.label}, ${count} reactions`}
+        aria-pressed={reactionType === reaction.type}
+        onPointerDown={(event) => {
+          event.stopPropagation()
+          interaction.startReactionPress(event)
+        }}
+        onPointerUp={(event) => {
+          event.stopPropagation()
+          interaction.endReactionPress()
+        }}
+        onPointerLeave={interaction.cancelReactionPress}
+        onPointerCancel={(event) => {
+          event.stopPropagation()
+          interaction.cancelReactionPress()
+        }}
+        onContextMenu={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return
+          event.preventDefault()
+          event.stopPropagation()
+          interaction.quickReact()
+        }}
+        className={`flex min-w-0 flex-1 touch-none items-center justify-center rounded-full py-1 transition active:scale-95 disabled:opacity-50 ${
+          reactionType === reaction.type
+            ? 'bg-white/20 ring-1 ring-white/55'
+            : 'hover:bg-white/10'
+        }`}
+      >
+        <img
+          src={reaction.src}
+          alt=""
+          draggable="false"
+          className="h-[clamp(37px,11vw,54px)] w-[clamp(37px,11vw,54px)] select-none object-contain"
+        />
+      </button>
+    </div>
+  )
+}
+
 function OwnerStoryMenu({
   open,
   isAuthor,
@@ -605,17 +681,6 @@ function StoryViewer({
     stories[storyIndex] || null
   const creator =
     group?.creator || {}
-  const reactionTotal = useMemo(
-    () =>
-      Object.values(
-        reactionCounts || {}
-      ).reduce(
-        (sum, value) =>
-          sum + Number(value || 0),
-        0
-      ),
-    [reactionCounts]
-  )
 
   useEffect(() => {
     setStoryIndex(0)
@@ -1509,37 +1574,19 @@ function StoryViewer({
                 </div>
               ) : null}
 
-              <div className="absolute inset-x-0 bottom-[max(10px,env(safe-area-inset-bottom))] z-40 flex justify-center px-3">
-                <div className="rounded-full bg-black/90 px-2 py-1.5 shadow-2xl backdrop-blur-xl">
-                  <ReactionAction
-                    reactionType={
-                      reactionType || ''
-                    }
-                    count={reactionTotal}
-                    busy={
-                      reactionLoading ||
-                      reactionSaving
-                    }
-                    disabled={false}
-                    onReact={toggleReaction}
-                    countInAction
-                    showCount={
-                      reactionTotal > 0
-                    }
-                    idleIcon={
-                      <img
-                        src="/assets/React/Love.svg"
-                        alt=""
-                        aria-hidden="true"
-                        draggable="false"
-                        className="h-[50px] w-[50px] object-contain"
-                      />
-                    }
-                    buttonClassName="h-[62px] min-w-[76px] justify-center rounded-full px-3 text-[11px] font-black text-white [&_img]:!h-[50px] [&_img]:!w-[50px]"
-                    countClassName="text-[10px] font-black text-white"
-                    pickerClassName="!h-[72px] !w-[calc(100vw-20px)] !max-w-[500px] !gap-[2px] !bg-black/95 !px-[8px] [&>div:last-child]:!bg-black/95 [&>div:last-child]:!text-white/70"
-                  />
-                </div>
+              <div className="absolute inset-x-0 bottom-[max(10px,env(safe-area-inset-bottom))] z-40 flex justify-center px-2">
+                <article className="relative flex w-full max-w-[480px] items-center justify-between gap-0.5 rounded-full bg-black/95 px-1.5 py-2 shadow-2xl backdrop-blur-xl">
+                  {REACTIONS.map((reaction) => (
+                    <StoryReactionIcon
+                      key={reaction.type}
+                      reaction={reaction}
+                      reactionType={reactionType}
+                      count={Number(reactionCounts?.[reaction.type] || 0)}
+                      busy={reactionLoading || reactionSaving}
+                      onReact={toggleReaction}
+                    />
+                  ))}
+                </article>
               </div>
             </>
           ) : null}
