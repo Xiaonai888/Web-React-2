@@ -457,7 +457,7 @@ function normalizeStory(story) {
     status,
     rawStatus: story.status || 'draft',
     updated: formatDate(story.updated_at || story.created_at),
-    views: formatCompactNumber(story.total_views),
+    rawViews: Number(story.total_views || 0),
     likes: formatCompactNumber(story.total_likes),
     rawLikes: Number(story.total_likes || 0),
     comments: formatCompactNumber(story.total_comments),
@@ -1027,7 +1027,7 @@ const stopStoriesDrag = () => {
   const stats = useMemo(() => {
     const published = stories.filter((story) => story.rawStatus === 'published').length
     const drafts = stories.filter((story) => story.rawStatus !== 'published').length
-    const views = stories.reduce((sum, story) => sum + Number(String(story.views).replace(/[^\d.]/g, '') || 0), 0)
+    const views = stories.reduce((sum, story) => sum + story.rawViews, 0)
 const likes = stories.reduce((sum, story) => sum + story.rawLikes, 0)
 
 return {
