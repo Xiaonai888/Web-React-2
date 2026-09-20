@@ -272,6 +272,8 @@ const H = 800
 const HISTORY_LIMIT = 8
 const DOCUMENT_LIMIT = 8
 
+const STUDIO_HEADER_PLACEHOLDER_MENUS = ['Layer', 'Select', 'Filter', 'Window', 'Help']
+
 function createDocument({
   name,
   width = W,
@@ -1365,6 +1367,13 @@ export default function ShadowStudioPage() {
           onFlipVertical={() => updateCanvasView(viewRotation, flipHorizontal, !flipVertical)}
           onResetOrientation={() => updateCanvasView(0, false, false)}
         />
+
+        {STUDIO_HEADER_PLACEHOLDER_MENUS.map((label) => (
+  <button key={label} type="button" className="ss-menu-btn">
+    {label}
+  </button>
+))}
+        
         {workspaceStarted ? (
           <div className="ss-chrome-right">
             <div className="ss-doc-info">{activeDocument?.width} × {activeDocument?.height}px · {activeDocument?.resolution} PPI</div>
