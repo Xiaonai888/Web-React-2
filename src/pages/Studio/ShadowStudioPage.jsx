@@ -1048,18 +1048,98 @@ const placeImageLabel = {
     return () => cancelAnimationFrame(frame)
   }, [workspaceStarted, activeDocumentId, projectLoadKey])
 
-  useEffect(() => {
+    useEffect(() => {
     function onKeyDown(event) {
+      if (!workspaceStarted || !activeDocumentId || paperLoading || projectBusy || recoveryBooting || recoveryEntry || recoveryBusy || newFileOpen || exportOpen || textEditor || shapeEditor || drawingRef.current || event.isComposing) return
+
       const target = event.target
-      if (!workspaceStarted || paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen || drawingRef.current || event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return
-      if (target?.closest?.('input, textarea, select, button, [contenteditable="true"], [role="dialog"]') || document.querySelector('[aria-modal="true"]')) return
-      const shortcutTool = { b: 'brush', e: 'eraser', i: 'eyedropper' }[event.key.toLowerCase()]
-      if (shortcutTool) { event.preventDefault(); setTool(shortcutTool); return }
-      if (event.code !== 'Space' || event.repeat || !workspaceStarted || newFileOpen) return
-      if (target?.closest?.('input, textarea, select, button, [contenteditable="true"]')) return
-      event.preventDefault()
-      spaceRef.current = true
-      setHandMode(true)
+      if (target?.closest?.('input, textarea, select, [contenteditable="true"], [role="textbox"], [role="dialog"]')) return
+      if (document.querySelector('[aria-modal="true"], .ss-dialog-backdrop, .ss-export-backdrop')) return
+
+      const key = event.key.toLowerCase()
+      const modifier = event.ctrlKey || event.metaKey
+
+      if (modifier && !event.altKey) {
+        let action = null
+
+        if (key === 'z') {
+          action = event.shiftKey ? redo : undo
+        } else if (key === 'y' && !event.shiftKey) {
+          action = redo
+        } else if (key === 's') {
+          action = event.shiftKey ? saveProjectAs : () => saveProject()
+        } else if (key === 'o' && !event.shiftKey) {
+          action = chooseProjectFile
+        } else if (key === 'n' && !event.shiftKey) {
+          action = () => openNewFile('basic')
+        } else if (key === 'e' && event.shiftKey) {
+          action = openExportDialog
+        }
+
+        if (!action) return
+
+        event.preventDefault()
+        event.stopPropagation()
+
+        if (!event.repeat) action()
+        return
+      }
+
+      if (modifier || event.altKey || event.repeat) return
+
+      if (event.code === 'Space') {
+        if (target?.closest?.('button, a, summary, [role="button"], [role="menuitem"]')) return
+        event.preventDefault()
+        spaceRef.current = true
+        setHandMode(true)
+        return
+      }
+
+      if (event.shiftKey && key === 'g') {
+        event.preventDefault()
+        setShowGrid((current) => !current)
+        return
+      }
+
+      if (key === '[' || key === ']') {
+        event.preventDefault()
+        const step = Math.max(1, Math.round(size * 0.1))
+        updateBrushSize(size + (key === '[' ? -step : step))
+        return
+      }
+
+      if (key === '=' || key === '+') {
+        event.preventDefault()
+        zoomAround(zoom * 1.2)
+        return
+      }
+
+      if (key === '-' || key === '_') {
+        event.preventDefault()
+        zoomAround(zoom / 1.2)
+        return
+      }
+
+      if (event.shiftKey) return
+
+      const tools = {
+        b: 'brush',
+        e: 'eraser',
+        i: 'eyedropper',
+        p: 'pencil',
+        t: 'text',
+      }
+
+      if (tools[key]) {
+        event.preventDefault()
+        setTool(tools[key])
+        return
+      }
+
+      if (key === 'f') {
+        event.preventDefault()
+        fitCanvas()
+      }
     }
 
     function releaseSpace(event) {
@@ -1068,15 +1148,20 @@ const placeImageLabel = {
       setHandMode(false)
     }
 
-    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keydown', onKeyDown, true)
     window.addEventListener('keyup', releaseSpace)
     window.addEventListener('blur', releaseSpace)
+
     return () => {
-      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keydown', onKeyDown, true)
       window.removeEventListener('keyup', releaseSpace)
       window.removeEventListener('blur', releaseSpace)
     }
-  }, [workspaceStarted, newFileOpen, paperLoading, projectBusy, recoveryBusy, exportOpen])
+  }, [
+    workspaceStarted, activeDocumentId, paperLoading, projectBusy,
+    recoveryBooting, recoveryEntry, recoveryBusy, newFileOpen,
+    exportOpen, textEditor, shapeEditor, size, zoom, language,
+  ])
 
   useEffect(() => {
     const work = workRef.current
