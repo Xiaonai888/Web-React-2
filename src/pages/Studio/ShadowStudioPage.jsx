@@ -24,7 +24,9 @@ import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStu
 import StudioOptionsBar from './StudioOptionsBar'
 import { confirmLargeBrush } from './StudioPrecisionInput'
 import StudioCanvasRulers from './StudioCanvasRulers'
-import { renderStudioLayers, studioLayerContext, addStudioLayer, duplicateStudioLayer, selectStudioLayer, updateStudioLayer, moveStudioLayer, removeStudioLayer } from './StudioLayerEngine'
+import { studioLayerContext, addStudioLayer, duplicateStudioLayer, selectStudioLayer, updateStudioLayer, moveStudioLayer, removeStudioLayer } from './StudioLayerEngine'
+import { createStudioLayerGroup, updateStudioLayerGroup, removeStudioLayerGroup, validateStudioGroupLayout, studioLayerCanEdit } from './StudioLayerGroupEngine'
+import { renderStudioAdvancedLayers, setStudioLayerBlendMode, setStudioGroupBlendMode } from './StudioLayerBlendEngine'
 import { exportStudioLayerStack, loadStudioLayerStack } from './StudioLayerPersistence'
 import { applyStudioLayerGradient } from './StudioGradientEngine'
 import { applyStudioScreentone } from './StudioScreentoneEngine'
@@ -443,16 +445,23 @@ const placeImageLabel = {
   function drawingContext() {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId) return null
-    return studioLayerContext(stack)
+    return studioLayerCanEdit(stack) ? studioLayerContext(stack) : null
   }
 
   function changeLayer(action, layerId, value) {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy || drawingRef.current || newFileOpen || exportOpen || recoveryBusy) return
     try {
-      if (action === 'add') addStudioLayer(stack)
-      else if (action === 'duplicate') duplicateStudioLayer(stack, layerId)
-      else if (action === 'select') selectStudioLayer(stack, layerId)
+      if (action === 'add') {
+        const selected = stack.layers.find((layer) => layer.id === stack.activeLayerId)
+        const added = addStudioLayer(stack)
+        if (selected?.groupId) added.groupId = selected.groupId
+      } else if (action === 'duplicate') {
+        const original = stack.layers.find((layer) => layer.id === layerId)
+        const copy = duplicateStudioLayer(stack, layerId)
+        if (original?.groupId) copy.groupId = original.groupId
+        if (original?.blendMode) copy.blendMode = original.blendMode
+      } else if (action === 'select') selectStudioLayer(stack, layerId)
       else if (action === 'visibility') {
         const layer = stack.layers.find((item) => item.id === layerId)
         if (!layer) return
@@ -463,9 +472,34 @@ const placeImageLabel = {
         updateStudioLayer(stack, layerId, { locked: !layer.locked })
       } else if (action === 'opacity') updateStudioLayer(stack, layerId, { opacity: value })
       else if (action === 'rename') updateStudioLayer(stack, layerId, { name: value })
-      else if (action === 'move') { if (!moveStudioLayer(stack, layerId, value)) return }
-      else if (action === 'remove') { if (!removeStudioLayer(stack, layerId)) return }
-      else return
+      else if (action === 'blend') setStudioLayerBlendMode(stack, layerId, value)
+      else if (action === 'group-add') createStudioLayerGroup(stack, [layerId || stack.activeLayerId])
+      else if (action === 'group-remove') removeStudioLayerGroup(stack, layerId)
+      else if (action === 'group-rename') updateStudioLayerGroup(stack, layerId, { name: value })
+      else if (action === 'group-visibility' || action === 'group-lock' || action === 'group-collapse') {
+        const group = stack.groups?.find((item) => item.id === layerId)
+        if (!group) throw new Error('Layer group not found.')
+        const field = action === 'group-visibility' ? 'visible' : action === 'group-lock' ? 'locked' : 'collapsed'
+        updateStudioLayerGroup(stack, layerId, { [field]: !group[field] })
+      } else if (action === 'group-opacity') updateStudioLayerGroup(stack, layerId, { opacity: value })
+      else if (action === 'group-blend') setStudioGroupBlendMode(stack, layerId, value)
+      else if (action === 'group-join') {
+        const layer = stack.layers.find((item) => item.id === layerId)
+        const group = stack.groups?.find((item) => item.id === value)
+        if (!layer || !group || layer === stack.layers[0] || layer.groupId) throw new Error('Select an ungrouped layer above Background.')
+        const index = stack.layers.indexOf(layer)
+        if (stack.layers[index - 1]?.groupId !== group.id && stack.layers[index + 1]?.groupId !== group.id) throw new Error('Only an adjacent layer can join a group.')
+        layer.groupId = group.id
+        try { validateStudioGroupLayout(stack) } catch (error) { delete layer.groupId; throw error }
+      } else if (action === 'move') {
+        const before = [...stack.layers]
+        if (!moveStudioLayer(stack, layerId, value)) return
+        try { validateStudioGroupLayout(stack) } catch (error) { stack.layers = before; throw error }
+      } else if (action === 'remove') {
+        const layer = stack.layers.find((item) => item.id === layerId)
+        if (!removeStudioLayer(stack, layerId)) return
+        if (layer?.groupId && !stack.layers.some((item) => item.groupId === layer.groupId)) removeStudioLayerGroup(stack, layer.groupId)
+      } else return
       paintLayerPreview()
       if (action === 'select') {
         const last = historyRef.current[historyRef.current.length - 1]
@@ -485,8 +519,8 @@ const placeImageLabel = {
       drawingRef.current || newFileOpen || exportOpen || recoveryBusy) {
       throw new Error('Wait until the current paper is ready before applying an effect.')
     }
-    if (!studioLayerContext(stack)) {
-      throw new Error('Select a visible, unlocked layer before applying an effect.')
+    if (!studioLayerCanEdit(stack) || !studioLayerContext(stack)) {
+      throw new Error('Select a visible, unlocked layer outside a locked or hidden group.')
     }
     const actions = {
       gradient: applyStudioLayerGradient,
@@ -510,7 +544,7 @@ const placeImageLabel = {
   function paintLayerPreview() {
     const stack = layerStackRef.current
     const canvas = canvasRef.current
-    if (stack && canvas) renderStudioLayers(stack, canvas)
+    if (stack && canvas) renderStudioAdvancedLayers(stack, canvas)
   }
 
   function captureLayerHistory() {
@@ -518,12 +552,15 @@ const placeImageLabel = {
     if (!stack) return null
     return {
       activeLayerId: stack.activeLayerId,
+      groups: (stack.groups || []).map((group) => ({ ...group })),
       layers: stack.layers.map((layer) => ({
         id: layer.id,
         name: layer.name,
         visible: layer.visible,
         locked: layer.locked,
         opacity: layer.opacity,
+        ...(layer.groupId ? { groupId: layer.groupId } : {}),
+        ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
         pixels: layer.canvas.getContext('2d', { willReadFrequently: true })
           .getImageData(0, 0, stack.width, stack.height),
       })),
@@ -538,9 +575,10 @@ const placeImageLabel = {
       canvas.width = stack.width
       canvas.height = stack.height
       canvas.getContext('2d', { willReadFrequently: true }).putImageData(item.pixels, 0, 0)
-      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity }
+      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}) }
     })
     stack.activeLayerId = entry.activeLayerId
+    stack.groups = (entry.groups || []).map((group) => ({ ...group }))
     paintLayerPreview()
   }
 
@@ -1774,6 +1812,7 @@ if (tool === 'shape') {
               paper={activeDocument}
               layers={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.layers || [] : []}
               activeLayerId={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.activeLayerId || '' : ''}
+              groups={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.groups || [] : []}
               onLayerAction={changeLayer}
               onFeatureApply={applyRightFeature}
               color={color}
