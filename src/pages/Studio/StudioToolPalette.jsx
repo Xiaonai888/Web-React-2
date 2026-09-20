@@ -5,7 +5,8 @@ registerTranslationNamespace('studioTools', {
     "groups": {
       "navigation": "Navigation & selection",
       "drawing": "Drawing & painting",
-      "design": "Comics & design"
+      "design": "Comics & design",
+      "other": "More tools"
     },
     "tools": {
       "move": "Move",
@@ -27,7 +28,8 @@ registerTranslationNamespace('studioTools', {
       "frame": "Comic Frames",
       "balloon": "Speech Balloons",
       "ruler": "Ruler",
-      "perspective": "Perspective"
+      "perspective": "Perspective",
+      "canvas": "Canvas"
     },
     "drawingTools": "Drawing tools",
     "notAvailable": " (not available yet)",
@@ -37,7 +39,8 @@ registerTranslationNamespace('studioTools', {
     "groups": {
       "navigation": "ផ្លាស់ទី និងជ្រើសរើស",
       "drawing": "គូរ និងផាត់ពណ៌",
-      "design": "Manga និងរចនា"
+      "design": "Manga និងរចនា",
+      "other": "ឧបករណ៍ផ្សេងទៀត"
     },
     "tools": {
       "move": "ផ្លាស់ទី",
@@ -59,7 +62,8 @@ registerTranslationNamespace('studioTools', {
       "frame": "ស៊ុម Manga",
       "balloon": "ប្រអប់សន្ទនា",
       "ruler": "បន្ទាត់វាស់",
-      "perspective": "ទស្សនវិស័យ"
+      "perspective": "ទស្សនវិស័យ",
+      "canvas": "ផ្ទាំងគំនូរ"
     },
     "drawingTools": "ឧបករណ៍គូរ",
     "notAvailable": " (មិនទាន់អាចប្រើបាន)",
@@ -69,7 +73,8 @@ registerTranslationNamespace('studioTools', {
     "groups": {
       "navigation": "导航与选择",
       "drawing": "绘画与上色",
-      "design": "漫画与设计"
+      "design": "漫画与设计",
+      "other": "更多工具"
     },
     "tools": {
       "move": "移动",
@@ -91,7 +96,8 @@ registerTranslationNamespace('studioTools', {
       "frame": "漫画分格",
       "balloon": "对话气泡",
       "ruler": "标尺",
-      "perspective": "透视"
+      "perspective": "透视",
+      "canvas": "画布"
     },
     "drawingTools": "绘图工具",
     "notAvailable": "（暂不可用）",
@@ -101,7 +107,8 @@ registerTranslationNamespace('studioTools', {
     "groups": {
       "navigation": "移動と選択",
       "drawing": "描画とペイント",
-      "design": "マンガとデザイン"
+      "design": "マンガとデザイン",
+      "other": "その他のツール"
     },
     "tools": {
       "move": "移動",
@@ -123,7 +130,8 @@ registerTranslationNamespace('studioTools', {
       "frame": "コマ割り",
       "balloon": "吹き出し",
       "ruler": "定規",
-      "perspective": "パース"
+      "perspective": "パース",
+      "canvas": "キャンバス"
     },
     "drawingTools": "描画ツール",
     "notAvailable": "（未対応）",
@@ -133,7 +141,8 @@ registerTranslationNamespace('studioTools', {
     "groups": {
       "navigation": "이동 및 선택",
       "drawing": "그리기 및 채색",
-      "design": "만화 및 디자인"
+      "design": "만화 및 디자인",
+      "other": "기타 도구"
     },
     "tools": {
       "move": "이동",
@@ -155,7 +164,8 @@ registerTranslationNamespace('studioTools', {
       "frame": "만화 컷",
       "balloon": "말풍선",
       "ruler": "눈금자",
-      "perspective": "원근법"
+      "perspective": "원근법",
+      "canvas": "캔버스"
     },
     "drawingTools": "그리기 도구",
     "notAvailable": "(아직 사용 불가)",
@@ -164,31 +174,34 @@ registerTranslationNamespace('studioTools', {
 })
 
 const GROUPS = [
-  { id: 'navigation', label: 'Navigation & selection', tools: [
-    { id: 'move', label: 'Move', icon: 'fa-arrows-up-down-left-right' },
-    { id: 'transform', label: 'Transform', icon: 'fa-up-down-left-right' },
-    { id: 'marquee', label: 'Rectangle Select', icon: 'fa-vector-square' },
-    { id: 'lasso', label: 'Lasso', icon: 'fa-draw-polygon' },
-    { id: 'wand', label: 'Magic Wand', icon: 'fa-wand-magic-sparkles' },
-    { id: 'crop', label: 'Crop', icon: 'fa-crop-simple' },
+  { id: 'navigation', tools: [
+    { id: 'move', icon: 'fa-arrows-up-down-left-right' },
+    { id: 'transform', icon: 'fa-up-down-left-right' },
+    { id: 'marquee', icon: 'fa-vector-square' },
+    { id: 'wand', icon: 'fa-wand-magic-sparkles' },
+    { id: 'lasso', icon: 'fa-draw-polygon' },
   ] },
-  { id: 'drawing', label: 'Drawing & painting', tools: [
-    { id: 'brush', label: 'Brush', icon: 'fa-paintbrush' },
-    { id: 'pencil', label: 'Pencil', icon: 'fa-pencil' },
-    { id: 'eraser', label: 'Eraser', icon: 'fa-eraser' },
-    { id: 'fill', label: 'Paint Bucket', icon: 'fa-fill-drip' },
-    { id: 'gradient', label: 'Gradient', icon: 'fa-palette' },
-    { id: 'eyedropper', label: 'Eyedropper', icon: 'fa-eye-dropper' },
-    { id: 'smudge', label: 'Smudge', icon: 'fa-hand-pointer' },
-    { id: 'blur', label: 'Blur', icon: 'fa-droplet' },
+  { id: 'drawing', tools: [
+    { id: 'brush', icon: 'fa-paintbrush' },
+    { id: 'pencil', icon: 'fa-pencil' },
+    { id: 'eraser', icon: 'fa-eraser' },
+    { id: 'smudge', icon: 'fa-hand-pointer' },
+    { id: 'blur', icon: 'fa-droplet' },
+    { id: 'fill', icon: 'fa-fill-drip' },
+    { id: 'gradient', icon: 'fa-fill' },
+    { id: 'eyedropper', icon: 'fa-eye-dropper' },
   ] },
-  { id: 'design', label: 'Comics & design', tools: [
-    { id: 'text', label: 'Text', icon: 'fa-font' },
-    { id: 'shape', label: 'Shapes', icon: 'fa-shapes' },
-    { id: 'frame', label: 'Comic Frames', icon: 'fa-table-cells-large' },
-    { id: 'balloon', label: 'Speech Balloons', icon: 'fa-comment' },
-    { id: 'ruler', label: 'Ruler', icon: 'fa-ruler' },
-    { id: 'perspective', label: 'Perspective', icon: 'fa-border-all' },
+  { id: 'design', tools: [
+    { id: 'text', icon: 'fa-font' },
+    { id: 'shape', icon: 'fa-shapes' },
+    { id: 'frame', icon: 'fa-table-cells-large' },
+    { id: 'crop', icon: 'fa-crop-simple' },
+    { id: 'ruler', icon: 'fa-ruler' },
+    { id: 'canvas', icon: 'fa-image' },
+  ] },
+  { id: 'other', tools: [
+    { id: 'balloon', icon: 'fa-comment' },
+    { id: 'perspective', icon: 'fa-border-all' },
   ] },
 ]
 
@@ -205,8 +218,9 @@ export default function StudioToolPalette({ tool, onToolChange, labels = {} }) {
         .shadow-studio .ss-tool-palette .ss-palette-tool i{font-size:15px}
         .shadow-studio .ss-tool-palette .ss-palette-tool .ss-round-brush-icon{display:inline-block;width:14px;height:14px;flex:none;border-radius:50%;background:currentColor;box-shadow:0 0 0 1px rgba(255,255,255,.16)}
         .shadow-studio .ss-tool-palette .ss-palette-tool span{display:none}
-        .shadow-studio .ss-tool-palette .ss-palette-tool:disabled{cursor:not-allowed;opacity:.42;filter:grayscale(.8)}
+        .shadow-studio .ss-tool-palette .ss-palette-tool:disabled{cursor:not-allowed;opacity:.58;filter:grayscale(.65)}
         .shadow-studio .ss-tool-palette .ss-palette-tool:focus-visible{outline:2px solid #8bc4ff;outline-offset:-2px}
+        .shadow-studio .ss-tool-palette .ss-palette-group:last-child{opacity:.8}
         @media(min-width:1101px) and (min-height:651px){
           .shadow-studio:has(.ss-layout) .ss-left-workspace>.ss-tool-palette{padding:9px 4px 60px}
           .shadow-studio:has(.ss-layout) .ss-tool-palette .ss-palette-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;justify-items:center;padding:0 0 9px}
@@ -216,7 +230,7 @@ export default function StudioToolPalette({ tool, onToolChange, labels = {} }) {
         }
       `}</style>
       {GROUPS.map((group) => (
-        <div key={group.label} className="ss-palette-group" role="group" aria-label={tx(`studioTools.groups.${group.id}`)}>
+        <div key={group.id} className="ss-palette-group" role="group" aria-label={tx(`studioTools.groups.${group.id}`)}>
           {group.tools.map((item) => {
             const enabled = AVAILABLE.has(item.id)
             const label = labels[item.id] || tx(`studioTools.tools.${item.id}`)
