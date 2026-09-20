@@ -91,7 +91,8 @@ function captureLayers(paper) {
     throw new Error('The paper has an invalid layer stack. Save a project copy before continuing.')
   }
 
-  const layers = paper.layers.map((layer) => {
+  const layers = paper.layers.map((layer, index) => {
+    if (layer && ((layer.isBackground !== undefined && typeof layer.isBackground !== 'boolean') || (index > 0 && layer.isBackground))) throw new Error('Invalid Background layer metadata.')
     if (!layer || (typeof layer.image !== 'string' && !(layer.image instanceof Blob))) {
       throw new Error('The paper has an invalid layer image. Save a project copy before continuing.')
     }
@@ -102,6 +103,7 @@ function captureLayers(paper) {
       visible: layer.visible,
       locked: layer.locked,
       opacity: layer.opacity,
+      ...(index === 0 ? { isBackground: layer.isBackground !== false } : {}),
       ...(layer.groupId ? { groupId: layer.groupId } : {}),
       ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
     }
