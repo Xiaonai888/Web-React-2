@@ -186,7 +186,9 @@ export default function StudioRightPanels() {
           .shadow-studio:has(.ss-layout) .ss-side>.ss-section[aria-label='Canvas view']{order:1}
           .shadow-studio:has(.ss-layout) .ss-side>.ss-section:last-child{order:2}
           .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='color']))>.ss-color-panel{display:none}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-navigator{order:1}
           .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='view']))>.ss-section[aria-label='Canvas view'],
+          .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='view']))>.ss-navigator,
           .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='view']))>.ss-section:last-child{display:none}
           .shadow-studio .ss-right-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:#212932;padding:5px 5px 0}
           .shadow-studio .ss-right-tab{display:flex;min-width:0;min-height:36px;align-items:center;justify-content:center;gap:5px;padding:5px 2px;border:1px solid transparent;border-bottom:2px solid transparent;border-radius:5px 5px 0 0;background:transparent;color:#aebac8;font:inherit;font-size:10px;font-weight:700;cursor:pointer}
