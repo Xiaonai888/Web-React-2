@@ -1,5 +1,90 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('studioFileMenu', {
+  "en": {
+    "file": "File",
+    "new": "New...",
+    "newDetail": "New paper",
+    "openProject": "Open Project...",
+    "importImage": "Import Image as Paper...",
+    "saveProject": "Save Project",
+    "downloadProject": "Download project",
+    "saveAs": "Save As...",
+    "saveAsDetail": "Name a project copy",
+    "exportImage": "Export Image...",
+    "closePaper": "Close Paper",
+    "closeAll": "Close All Papers",
+    "home": "Home",
+    "exit": "Exit Studio"
+  },
+  "km": {
+    "file": "ឯកសារ",
+    "new": "ថ្មី...",
+    "newDetail": "ក្រដាសថ្មី",
+    "openProject": "បើកគម្រោង...",
+    "importImage": "នាំចូលរូបភាពជាក្រដាស...",
+    "saveProject": "រក្សាទុកគម្រោង",
+    "downloadProject": "ទាញយកគម្រោង",
+    "saveAs": "រក្សាទុកជា...",
+    "saveAsDetail": "ដាក់ឈ្មោះច្បាប់ចម្លងគម្រោង",
+    "exportImage": "នាំចេញរូបភាព...",
+    "closePaper": "បិទក្រដាស",
+    "closeAll": "បិទក្រដាសទាំងអស់",
+    "home": "ទំព័រដើម",
+    "exit": "ចាកចេញពី Studio"
+  },
+  "zh": {
+    "file": "文件",
+    "new": "新建...",
+    "newDetail": "新建画布",
+    "openProject": "打开项目...",
+    "importImage": "将图像导入为画布...",
+    "saveProject": "保存项目",
+    "downloadProject": "下载项目",
+    "saveAs": "另存为...",
+    "saveAsDetail": "为项目副本命名",
+    "exportImage": "导出图像...",
+    "closePaper": "关闭画布",
+    "closeAll": "关闭所有画布",
+    "home": "主页",
+    "exit": "退出 Studio"
+  },
+  "ja": {
+    "file": "ファイル",
+    "new": "新規...",
+    "newDetail": "新しいキャンバス",
+    "openProject": "プロジェクトを開く...",
+    "importImage": "画像をキャンバスとして読み込む...",
+    "saveProject": "プロジェクトを保存",
+    "downloadProject": "プロジェクトをダウンロード",
+    "saveAs": "名前を付けて保存...",
+    "saveAsDetail": "プロジェクトのコピーに名前を付ける",
+    "exportImage": "画像を書き出す...",
+    "closePaper": "キャンバスを閉じる",
+    "closeAll": "すべて閉じる",
+    "home": "ホーム",
+    "exit": "Studio を終了"
+  },
+  "ko": {
+    "file": "파일",
+    "new": "새로 만들기...",
+    "newDetail": "새 캔버스",
+    "openProject": "프로젝트 열기...",
+    "importImage": "이미지를 캔버스로 가져오기...",
+    "saveProject": "프로젝트 저장",
+    "downloadProject": "프로젝트 다운로드",
+    "saveAs": "다른 이름으로 저장...",
+    "saveAsDetail": "프로젝트 사본 이름 지정",
+    "exportImage": "이미지 내보내기...",
+    "closePaper": "캔버스 닫기",
+    "closeAll": "모든 캔버스 닫기",
+    "home": "홈",
+    "exit": "Studio 종료"
+  }
+})
 
 export default function StudioFileMenu({
   hasPaper,
@@ -19,6 +104,7 @@ export default function StudioFileMenu({
   onHome,
   onExit,
 }) {
+  const { t: tx } = useDisplayTranslation()
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState({ top: 34, left: 7 })
   const menuId = useId()
@@ -26,19 +112,19 @@ export default function StudioFileMenu({
   const menuRef = useRef(null)
 
   const entries = [
-    { label: 'New...', detail: 'New paper', action: onNew, disabled: !canNew },
-    { label: 'Open Project...', detail: '.shadowstudio', action: onOpen, disabled: !canOpen },
-    { label: 'Import Image as Paper...', detail: 'PNG / JPEG / WebP', action: onImport, disabled: !canImport },
+    { label: tx('studioFileMenu.new'), detail: tx('studioFileMenu.newDetail'), action: onNew, disabled: !canNew },
+    { label: tx('studioFileMenu.openProject'), detail: '.shadowstudio', action: onOpen, disabled: !canOpen },
+    { label: tx('studioFileMenu.importImage'), detail: 'PNG / JPEG / WebP', action: onImport, disabled: !canImport },
     { separator: true },
-    { label: 'Save Project', detail: 'Download project', action: onSave, disabled: !hasPaper || busy },
-    { label: 'Save As...', detail: 'Name a project copy', action: onSaveAs, disabled: !hasPaper || busy },
-    { label: 'Export Image...', detail: 'PNG / JPEG / WebP', action: onExport, disabled: !hasPaper || !inWorkspace || busy },
+    { label: tx('studioFileMenu.saveProject'), detail: tx('studioFileMenu.downloadProject'), action: onSave, disabled: !hasPaper || busy },
+    { label: tx('studioFileMenu.saveAs'), detail: tx('studioFileMenu.saveAsDetail'), action: onSaveAs, disabled: !hasPaper || busy },
+    { label: tx('studioFileMenu.exportImage'), detail: 'PNG / JPEG / WebP', action: onExport, disabled: !hasPaper || !inWorkspace || busy },
     { separator: true },
-    { label: 'Close Paper', action: onClose, disabled: !hasPaper || !inWorkspace || busy },
-    { label: 'Close All Papers', action: onCloseAll, disabled: !hasPaper || busy },
+    { label: tx('studioFileMenu.closePaper'), action: onClose, disabled: !hasPaper || !inWorkspace || busy },
+    { label: tx('studioFileMenu.closeAll'), action: onCloseAll, disabled: !hasPaper || busy },
     { separator: true },
-    { label: 'Home', action: onHome, disabled: !inWorkspace || busy },
-    { label: 'Exit Studio', action: onExit },
+    { label: tx('studioFileMenu.home'), action: onHome, disabled: !inWorkspace || busy },
+    { label: tx('studioFileMenu.exit'), action: onExit },
   ]
 
   useEffect(() => {
@@ -123,7 +209,7 @@ export default function StudioFileMenu({
           }
         }}
       >
-        File
+        {tx('studioFileMenu.file')}
       </button>
       {open && createPortal(
         <>
@@ -142,7 +228,7 @@ export default function StudioFileMenu({
             id={menuId}
             ref={menuRef}
             role="menu"
-            aria-label="File"
+            aria-label={tx('studioFileMenu.file')}
             className="ss-file-dropdown"
             style={{ top: position.top, left: position.left }}
             onKeyDown={navigateMenu}
