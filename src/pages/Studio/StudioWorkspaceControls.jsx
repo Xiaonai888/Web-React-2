@@ -317,7 +317,7 @@ export function StudioControlSidebar({
   )
 }
 
-export function StudioControlFooter({export function StudioControlFooter({
+export function StudioControlFooter({
   paper,
   paperIndex = 0,
   paperCount = 0,
