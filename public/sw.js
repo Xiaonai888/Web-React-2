@@ -536,7 +536,7 @@ async function getMangaCacheStats(
     await getStorageSnapshot()
 
   const budget =
-    await getStorageBudget()
+    await getStorageBudget(records)
 
   const cachedBytes =
     visibleRecords.reduce(
@@ -699,6 +699,7 @@ async function saveTemporaryCacheSettings(data) {
   await cache.put(TEMP_CACHE_SETTINGS_URL, new Response(JSON.stringify(settings), {
     headers: { 'Content-Type': 'application/json' },
   }))
+  readerBytesLastCheckedAt = 0
   await pruneMangaCache()
   return { ok: true, ...settings }
 }
@@ -748,7 +749,7 @@ async function getReaderCacheBytes() {
   return readerBytesPending
 }
 
-async function getStorageBudget() {
+async function getStorageBudget(existingRecords = null) {
   const GB = 1024 * 1024 * 1024
   const settings = await readTemporaryCacheSettings()
   const readerBytes = await getReaderCacheBytes()
@@ -764,7 +765,7 @@ async function getStorageBudget() {
   }
   if (!quota) return { budgetBytes: selectedLimit, pressured: false }
 
-  const records = await getAllEpisodeRecords()
+  const records = Array.isArray(existingRecords) ? existingRecords : await getAllEpisodeRecords()
   const cachedBytes = records.reduce(
     (total, record) => total + normalizeBytes(record.cachedBytes), 0
   )
@@ -841,7 +842,7 @@ async function pruneMangaCache({
   )
 
   const storage =
-    await getStorageBudget()
+    await getStorageBudget(records)
 
   const budgetBytes =
     aggressive || storage.pressured
@@ -1072,7 +1073,6 @@ async function registerMangaEpisode({
         : now,
     lastAccessedAt: now,
   })
-  readerBytesLastCheckedAt = 0
 
   await pruneMangaCache()
 }
