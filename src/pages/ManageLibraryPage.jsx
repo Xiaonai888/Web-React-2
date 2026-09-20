@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ChevronRight, Database, Download } from 'lucide-react'
 import { PageShell, PageHeader, SurfaceCard } from '../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -40,6 +40,8 @@ const items = [
 
 export default function ManageLibraryPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const source = new URLSearchParams(location.search).get('source') === 'me' ? '?source=me' : ''
   const { section } = useParams()
   const { t } = useDisplayTranslation()
   const selected = items.find((item) => item.id === section)
@@ -48,24 +50,24 @@ export default function ManageLibraryPage() {
     <PageShell className="pb-[88px]">
       <PageHeader
         title={selected ? t(`manageLibraryPage.${selected.key}`) : t('manageLibraryPage.title')}
-        onBack={() => navigate(selected ? '/library/manage' : '/library')}
+        onBack={() => navigate((selected ? '/library/manage' : '/library') + source)}
         backLabel={t('manageLibraryPage.back')}
       />
       <main className="mx-auto w-full max-w-[640px] px-4 py-5 sm:px-5">
         {selected?.id === 'cache' ? (
-  <LibraryCacheSettings />
-) : selected ? (
-  <SurfaceCard className="p-5">
-    <p className="text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
-      {t('manageLibraryPage.pendingDownloads')}
-    </p>
-  </SurfaceCard>
-) : (
+          <LibraryCacheSettings />
+        ) : selected ? (
+          <SurfaceCard className="p-5">
+            <p className="text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
+              {t('manageLibraryPage.pendingDownloads')}
+            </p>
+          </SurfaceCard>
+        ) : (
           <SurfaceCard className="divide-y divide-[var(--shadow-border)] overflow-hidden">
             {items.map(({ id, key, Icon }) => (
               <Link
                 key={id}
-                to={`/library/manage/${id}`}
+                to={`/library/manage/${id}${source}`}
                 className="flex min-h-[72px] items-center gap-3 px-4 py-4 active:bg-[var(--shadow-bg-hover)]"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--shadow-bg-soft)] text-[#8B5CF6]">
