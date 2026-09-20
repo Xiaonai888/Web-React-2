@@ -1644,7 +1644,8 @@ async function dropImageOnPaper(event) {
   }}
 />
 
-      <StudioTextEditor
+     <StudioTextEditor
+  key={textEditor ? `${textEditor.paperId}:${textEditor.x}:${textEditor.y}` : 'closed'}
   open={Boolean(textEditor) && workspaceStarted}
   color={color}
   onCancel={() => setTextEditor(null)}
