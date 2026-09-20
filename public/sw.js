@@ -1072,6 +1072,7 @@ async function registerMangaEpisode({
         : now,
     lastAccessedAt: now,
   })
+  readerBytesLastCheckedAt = 0
 
   await pruneMangaCache()
 }
