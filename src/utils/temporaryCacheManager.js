@@ -195,7 +195,7 @@ export function pruneTemporaryCache() {
 export async function clearTemporaryCacheType(type) {
   if (!['novel', 'chat_story', 'manga', 'all'].includes(type)) throw new Error('INVALID_CACHE_TYPE')
   if (type === 'manga' || type === 'all') {
-    const result = await clearMangaImageCache({ all: type === 'all', includePublic: true })
+    const result = await clearMangaImageCache({ all: true, includePublic: true })
     if (!result?.ok) throw new Error(result?.code || 'MANGA_CACHE_CLEAR_FAILED')
   }
   if (type === 'all') await clearReaderEpisodeCache()
