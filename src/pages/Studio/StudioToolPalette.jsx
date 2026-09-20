@@ -203,6 +203,7 @@ export default function StudioToolPalette({ tool, onToolChange, labels = {} }) {
         .shadow-studio .ss-tool-palette .ss-palette-group+.ss-palette-group{border-left:1px solid #495563;padding-left:6px}
         .shadow-studio .ss-tool-palette .ss-palette-tool{flex:0 0 40px;width:40px;min-width:40px;min-height:44px;height:44px;gap:3px;padding:3px;border-radius:5px}
         .shadow-studio .ss-tool-palette .ss-palette-tool i{font-size:15px}
+        .shadow-studio .ss-tool-palette .ss-palette-tool .ss-round-brush-icon{display:inline-block;width:14px;height:14px;flex:none;border-radius:50%;background:currentColor;box-shadow:0 0 0 1px rgba(255,255,255,.16)}
         .shadow-studio .ss-tool-palette .ss-palette-tool span{display:none}
         .shadow-studio .ss-tool-palette .ss-palette-tool:disabled{cursor:not-allowed;opacity:.42;filter:grayscale(.8)}
         .shadow-studio .ss-tool-palette .ss-palette-tool:focus-visible{outline:2px solid #8bc4ff;outline-offset:-2px}
@@ -230,7 +231,7 @@ export default function StudioToolPalette({ tool, onToolChange, labels = {} }) {
                 disabled={!enabled}
                 onClick={() => onToolChange(item.id)}
               >
-                <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
+                <i className={item.id === 'brush' ? 'ss-round-brush-icon' : `fa-solid ${item.icon}`} aria-hidden="true" />
                 <span>{label}</span>
               </button>
             )
