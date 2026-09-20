@@ -174,7 +174,7 @@ const TABS = [
   { id: 'view', label: 'View', icon: 'fa-magnifying-glass' },
 ]
 
-export default function StudioRightPanels({ canvasRef, paperId, revision, paper, onPlaceAsset }) {
+export default function StudioRightPanels({ canvasRef, paperId, revision, paper, onPlaceAsset, layers, activeLayerId, onLayerAction, layerDisabled }) {
   const { t: tx } = useDisplayTranslation()
   const [active, setActive] = useState('color')
 
@@ -259,6 +259,10 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper,
     paperId={paperId}
     revision={revision}
     paper={paper}
+    layers={layers}
+    activeLayerId={activeLayerId}
+    onLayerAction={onLayerAction}
+    disabled={layerDisabled}
   />
 </div>
       <div className="ss-right-panel" data-panel="assets" aria-label={tx('studioPanels.assetsOverview')}>
