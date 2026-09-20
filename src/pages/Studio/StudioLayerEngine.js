@@ -24,6 +24,7 @@ function makeLayer(width, height, name, locked = false) {
     canvas: surface(width, height),
     visible: true,
     locked,
+    isBackground: false,
     opacity: 100,
   }
 }
@@ -31,6 +32,7 @@ function makeLayer(width, height, name, locked = false) {
 export function createStudioLayerStack(sourceCanvas) {
   if (!sourceCanvas?.width || !sourceCanvas?.height) throw new Error('A loaded canvas is required.')
   const background = makeLayer(sourceCanvas.width, sourceCanvas.height, 'Background', true)
+  background.isBackground = true
   background.canvas.getContext('2d').drawImage(sourceCanvas, 0, 0)
   const drawing = makeLayer(sourceCanvas.width, sourceCanvas.height, 'Layer 1')
   return {
@@ -62,7 +64,7 @@ export function addStudioLayer(stack, name = '') {
 
 export function duplicateStudioLayer(stack, id = stack.activeLayerId) {
   const original = requireLayer(stack, id)
-  if (stack.layers[0].id === id) throw new Error('Background cannot be duplicated.')
+  if (original.isBackground) throw new Error('Convert Background to a normal layer before duplicating it.')
   if (stack.layers.length >= MAX_STUDIO_LAYERS) throw new Error('The layer limit has been reached.')
   const duplicate = makeLayer(stack.width, stack.height, `${original.name} Copy`.slice(0, 80))
   const context = duplicate.canvas.getContext('2d', { willReadFrequently: true })
@@ -98,7 +100,7 @@ export function moveStudioLayer(stack, id, delta) {
   if (!Number.isInteger(delta) || Math.abs(delta) !== 1) throw new Error('Move a layer one step at a time.')
   const next = index + delta
   if (next < 0 || next >= stack.layers.length) return false
-  if (index === 0 || next === 0) return false
+  if (stack.layers[index].isBackground || stack.layers[next].isBackground) return false
   const [layer] = stack.layers.splice(index, 1)
   stack.layers.splice(next, 0, layer)
   return true
@@ -106,7 +108,7 @@ export function moveStudioLayer(stack, id, delta) {
 
 export function removeStudioLayer(stack, id) {
   const index = stack.layers.findIndex((item) => item.id === id)
-  if (index <= 0) return false
+  if (index < 0 || stack.layers.length <= 1 || stack.layers[index].isBackground) return false
   stack.layers.splice(index, 1)
   if (stack.activeLayerId === id) stack.activeLayerId = stack.layers[Math.min(index, stack.layers.length - 1)].id
   return true
