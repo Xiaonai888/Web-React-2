@@ -28,6 +28,7 @@ import { studioLayerContext, addStudioLayer, duplicateStudioLayer, selectStudioL
 import { createStudioLayerGroup, updateStudioLayerGroup, removeStudioLayerGroup, validateStudioGroupLayout, studioLayerCanEdit } from './StudioLayerGroupEngine'
 import { renderStudioAdvancedLayers, setStudioLayerBlendMode, setStudioGroupBlendMode } from './StudioLayerBlendEngine'
 import { exportStudioLayerStack, loadStudioLayerStack } from './StudioLayerPersistence'
+import { mergeStudioLayerDown } from './StudioLayerMergeEngine'
 import { applyStudioLayerGradient } from './StudioGradientEngine'
 import { applyStudioScreentone } from './StudioScreentoneEngine'
 import { applyStudioSpeechBubble } from './StudioSpeechBubbleEngine'
@@ -495,6 +496,8 @@ const placeImageLabel = {
         const before = [...stack.layers]
         if (!moveStudioLayer(stack, layerId, value)) return
         try { validateStudioGroupLayout(stack) } catch (error) { stack.layers = before; throw error }
+      } else if (action === 'merge-down') {
+        mergeStudioLayerDown(stack)
       } else if (action === 'remove') {
         const layer = stack.layers.find((item) => item.id === layerId)
         if (!removeStudioLayer(stack, layerId)) return
