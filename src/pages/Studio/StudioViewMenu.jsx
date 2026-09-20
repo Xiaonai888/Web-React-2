@@ -237,8 +237,8 @@ export default function StudioViewMenu({
           onKeyDown={navigateMenu}
         >
           <div className="ss-view-menu-heading">{tx('studioViewMenu.zoom')}</div>
-          <button role="menuitem" type="button" className="ss-view-menu-item" disabled={zoom >= 400} onClick={() => invoke(() => onZoom(zoom * 1.2))}>{tx('studioViewMenu.zoomIn')} <small>+</small></button>
-          <button role="menuitem" type="button" className="ss-view-menu-item" disabled={zoom <= 10} onClick={() => invoke(() => onZoom(zoom / 1.2))}>{tx('studioViewMenu.zoomOut')} <small>−</small></button>
+          <button role="menuitem" type="button" className="ss-view-menu-item" disabled={zoom >= 6400} onClick={() => invoke(() => onZoom(zoom * 1.2))}>{tx('studioViewMenu.zoomIn')} <small>+</small></button>
+          <button role="menuitem" type="button" className="ss-view-menu-item" disabled={zoom <= 1} onClick={() => invoke(() => onZoom(zoom / 1.2))}>{tx('studioViewMenu.zoomOut')} <small>−</small></button>
           <button role="menuitem" type="button" className="ss-view-menu-item" onClick={() => invoke(() => onZoom(100))}>{tx('studioViewMenu.actualPixels')} <small>100%</small></button>
           <button role="menuitem" type="button" className="ss-view-menu-item" onClick={() => invoke(onFit)}>{tx('studioViewMenu.fit')} <small>{zoom}%</small></button>
           <div className="ss-view-menu-divider" role="separator" />
