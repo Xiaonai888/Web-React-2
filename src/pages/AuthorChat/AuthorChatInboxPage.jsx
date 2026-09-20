@@ -796,7 +796,7 @@ export default function AuthorChatInboxPage() {
     if (!hasAuthorChatSession()) return undefined
 
     let refreshInFlight = false
-    let lastRefreshAt = 0
+    let lastRefreshAt = Date.now()
     const controller = new AbortController()
 
     const refreshIfStale = async () => {
