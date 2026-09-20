@@ -41,6 +41,33 @@ registerTranslationNamespace('shadowStudio', {
     welcomeText: 'Start with a preset or create a custom paper.',
     recent: 'Recent',
     noRecent: 'Recent local projects will appear here after Local Project Save is added.',
+    imageLoadFailed: "This paper image could not be loaded. Restore it from another saved project copy.",
+    recoveryStorageUnavailable: "{{error}} Use Save Project to keep a device copy.",
+    recoveryCleared: "No open papers. Local recovery cleared.",
+    autosaveFailed: "Autosave failed: {{error}}",
+    autosavedAt: "Autosaved locally at {{time}}.",
+    autosaveFailedSave: "Autosave failed: {{error}} Save Project to your device.",
+    recoveredPapers: "Recovered local papers. Use Save Project for a durable device copy.",
+    recoveryFailed: "Recovery failed: {{error}}",
+    deleteRecoveryConfirm: "Delete the local recovery copy? Save a .shadowstudio file first if you need this work.",
+    recoveryDeleted: "Local recovery copy deleted.",
+    discardRecoveryFailed: "Could not discard recovery: {{error}}",
+    exitConfirm: "Leaving Studio closes the open papers. Save Project to your device first. Leave?",
+    imageImported: "Imported {{name}} as a new paper. Save Project to keep a copy.",
+    imageImportFailed: "Image import failed. Your existing papers were not changed.",
+    openProjectConfirm: "Opening this project will close your current papers. Save Project first if you want to keep them. Continue?",
+    projectOpened: "Opened {{count}} paper(s) from your device.",
+    openProjectFailed: "Unable to open the project file.",
+    paperStillLoading: "Wait for the current paper to finish loading.",
+    createPaperFirst: "Create a paper before saving.",
+    projectDownloadStarted: "Project download started. Keep the .shadowstudio file in a safe place.",
+    projectSaveFailed: "Unable to save the project.",
+    saveProjectCopyPrompt: "Save project copy as:",
+    projectNameRequired: "Enter a project file name.",
+    closeAllConfirm: "Close all open papers? Save Project first if you need to keep unsaved changes.",
+    allPapersClosed: "All papers closed.",
+    samplePixelFailed: "Unable to sample this pixel.",
+    importImageLabel: "Import image as a new paper.",
   },
   km: {
     back: 'ត្រឡប់ក្រោយ',
@@ -63,6 +90,33 @@ registerTranslationNamespace('shadowStudio', {
     welcomeText: 'ជ្រើស Preset ឬបង្កើតក្រដាសតាមទំហំដែលអ្នកចង់បាន។',
     recent: 'ថ្មីៗ',
     noRecent: 'Project local ថ្មីៗនឹងបង្ហាញនៅទីនេះ ក្រោយពេលយើងបន្ថែម Local Project Save។',
+    imageLoadFailed: "មិនអាចបើករូបភាពក្រដាសនេះបានទេ។ សូមស្ដារពីឯកសារគម្រោងដែលបានរក្សាទុកផ្សេងទៀត។",
+    recoveryStorageUnavailable: "{{error}} សូមប្រើ Save Project ដើម្បីរក្សាទុកច្បាប់ចម្លងលើឧបករណ៍។",
+    recoveryCleared: "គ្មានក្រដាសបើកទេ។ បានសម្អាតទិន្នន័យស្ដារក្នុងឧបករណ៍។",
+    autosaveFailed: "រក្សាទុកស្វ័យប្រវត្តិមិនបាន៖ {{error}}",
+    autosavedAt: "បានរក្សាទុកស្វ័យប្រវត្តិក្នុងឧបករណ៍នៅម៉ោង {{time}}។",
+    autosaveFailedSave: "រក្សាទុកស្វ័យប្រវត្តិមិនបាន៖ {{error}} សូមប្រើ Save Project ដើម្បីរក្សាទុកលើឧបករណ៍។",
+    recoveredPapers: "បានស្ដារក្រដាសពីឧបករណ៍។ សូមប្រើ Save Project ដើម្បីរក្សាទុកច្បាប់ចម្លង។",
+    recoveryFailed: "ស្ដារទិន្នន័យមិនបាន៖ {{error}}",
+    deleteRecoveryConfirm: "លុបទិន្នន័យស្ដារដែលរក្សាទុកក្នុងឧបករណ៍មែនទេ? សូមរក្សាទុកឯកសារ .shadowstudio ជាមុន ប្រសិនបើអ្នកនៅត្រូវការការងារនេះ។",
+    recoveryDeleted: "បានលុបទិន្នន័យស្ដារក្នុងឧបករណ៍។",
+    discardRecoveryFailed: "មិនអាចលុបទិន្នន័យស្ដារបាន៖ {{error}}",
+    exitConfirm: "ការចាកចេញពី Studio នឹងបិទក្រដាសដែលកំពុងបើក។ សូមប្រើ Save Project ជាមុន។ តើចាកចេញមែនទេ?",
+    imageImported: "បាននាំចូល {{name}} ជាក្រដាសថ្មី។ សូមប្រើ Save Project ដើម្បីរក្សាទុកច្បាប់ចម្លង។",
+    imageImportFailed: "នាំចូលរូបភាពមិនបាន។ ក្រដាសដែលមានស្រាប់មិនត្រូវបានផ្លាស់ប្ដូរទេ។",
+    openProjectConfirm: "ការបើកគម្រោងនេះនឹងបិទក្រដាសបច្ចុប្បន្ន។ សូមប្រើ Save Project ជាមុន ប្រសិនបើចង់រក្សាទុក។ តើបន្តមែនទេ?",
+    projectOpened: "បានបើកក្រដាស {{count}} ពីឧបករណ៍របស់អ្នក។",
+    openProjectFailed: "មិនអាចបើកឯកសារគម្រោងបានទេ។",
+    paperStillLoading: "សូមរង់ចាំឱ្យក្រដាសបច្ចុប្បន្នបើករួចសិន។",
+    createPaperFirst: "សូមបង្កើតក្រដាសមួយ មុនពេលរក្សាទុក។",
+    projectDownloadStarted: "បានចាប់ផ្ដើមទាញយកគម្រោង។ សូមរក្សាទុកឯកសារ .shadowstudio នៅកន្លែងមានសុវត្ថិភាព។",
+    projectSaveFailed: "មិនអាចរក្សាទុកគម្រោងបានទេ។",
+    saveProjectCopyPrompt: "រក្សាទុកច្បាប់ចម្លងគម្រោងជាឈ្មោះ៖",
+    projectNameRequired: "សូមបញ្ចូលឈ្មោះឯកសារគម្រោង។",
+    closeAllConfirm: "បិទក្រដាសទាំងអស់មែនទេ? សូមប្រើ Save Project ជាមុន ប្រសិនបើត្រូវការរក្សាទុកការកែប្រែ។",
+    allPapersClosed: "បានបិទក្រដាសទាំងអស់។",
+    samplePixelFailed: "មិនអាចចាប់យកពណ៌ពីចំណុចនេះបានទេ។",
+    importImageLabel: "នាំចូលរូបភាពជាក្រដាសថ្មី",
   },
   zh: {
     back: '返回',
@@ -85,6 +139,33 @@ registerTranslationNamespace('shadowStudio', {
     welcomeText: '选择预设或创建自定义画布。',
     recent: '最近',
     noRecent: '添加本地项目保存后，最近项目将显示在这里。',
+    imageLoadFailed: "无法加载此画布图像。请从其他已保存的项目副本恢复。",
+    recoveryStorageUnavailable: "{{error}} 请使用 Save Project 将副本保存到设备。",
+    recoveryCleared: "没有打开的画布，已清除本地恢复数据。",
+    autosaveFailed: "自动保存失败：{{error}}",
+    autosavedAt: "已于 {{time}} 自动保存到本地。",
+    autosaveFailedSave: "自动保存失败：{{error}} 请使用 Save Project 保存到设备。",
+    recoveredPapers: "已恢复本地画布。请使用 Save Project 保存项目副本。",
+    recoveryFailed: "恢复失败：{{error}}",
+    deleteRecoveryConfirm: "删除本地恢复副本？如需保留作品，请先保存 .shadowstudio 文件。",
+    recoveryDeleted: "已删除本地恢复副本。",
+    discardRecoveryFailed: "无法删除恢复数据：{{error}}",
+    exitConfirm: "离开 Studio 将关闭所有打开的画布。请先使用 Save Project 保存。确定离开吗？",
+    imageImported: "已将 {{name}} 导入为新画布。请使用 Save Project 保存副本。",
+    imageImportFailed: "导入图像失败。现有画布未被更改。",
+    openProjectConfirm: "打开此项目将关闭当前画布。如需保留，请先使用 Save Project 保存。继续吗？",
+    projectOpened: "已从设备打开 {{count}} 个画布。",
+    openProjectFailed: "无法打开项目文件。",
+    paperStillLoading: "请等待当前画布加载完成。",
+    createPaperFirst: "请先创建画布再保存。",
+    projectDownloadStarted: "已开始下载项目。请妥善保存 .shadowstudio 文件。",
+    projectSaveFailed: "无法保存项目。",
+    saveProjectCopyPrompt: "将项目副本另存为：",
+    projectNameRequired: "请输入项目文件名。",
+    closeAllConfirm: "关闭所有画布？如需保留未保存的更改，请先使用 Save Project。",
+    allPapersClosed: "已关闭所有画布。",
+    samplePixelFailed: "无法从此像素取色。",
+    importImageLabel: "将图像导入为新画布",
   },
   ja: {
     back: '戻る',
@@ -107,6 +188,33 @@ registerTranslationNamespace('shadowStudio', {
     welcomeText: 'プリセットを選択するか、カスタム用紙を作成します。',
     recent: '最近',
     noRecent: 'ローカルプロジェクト保存を追加すると、最近のプロジェクトがここに表示されます。',
+    imageLoadFailed: "このキャンバス画像を読み込めません。別の保存済みプロジェクトから復元してください。",
+    recoveryStorageUnavailable: "{{error}} Save Project でデバイスにコピーを保存してください。",
+    recoveryCleared: "開いているキャンバスはありません。ローカル復元データを削除しました。",
+    autosaveFailed: "自動保存に失敗しました：{{error}}",
+    autosavedAt: "{{time}} にローカルへ自動保存しました。",
+    autosaveFailedSave: "自動保存に失敗しました：{{error}} Save Project でデバイスに保存してください。",
+    recoveredPapers: "ローカルのキャンバスを復元しました。Save Project でコピーを保存してください。",
+    recoveryFailed: "復元に失敗しました：{{error}}",
+    deleteRecoveryConfirm: "ローカルの復元データを削除しますか？作業を残す場合は、先に .shadowstudio ファイルを保存してください。",
+    recoveryDeleted: "ローカルの復元データを削除しました。",
+    discardRecoveryFailed: "復元データを削除できません：{{error}}",
+    exitConfirm: "Studio を終了すると開いているキャンバスが閉じられます。先に Save Project で保存してください。終了しますか？",
+    imageImported: "{{name}} を新しいキャンバスとして読み込みました。Save Project でコピーを保存してください。",
+    imageImportFailed: "画像を読み込めませんでした。既存のキャンバスは変更されていません。",
+    openProjectConfirm: "このプロジェクトを開くと現在のキャンバスが閉じられます。必要なら先に Save Project で保存してください。続行しますか？",
+    projectOpened: "デバイスから {{count}} 件のキャンバスを開きました。",
+    openProjectFailed: "プロジェクトファイルを開けません。",
+    paperStillLoading: "現在のキャンバスの読み込みが完了するまでお待ちください。",
+    createPaperFirst: "保存する前にキャンバスを作成してください。",
+    projectDownloadStarted: "プロジェクトのダウンロードを開始しました。.shadowstudio ファイルを安全な場所に保管してください。",
+    projectSaveFailed: "プロジェクトを保存できません。",
+    saveProjectCopyPrompt: "プロジェクトのコピーの保存名：",
+    projectNameRequired: "プロジェクトのファイル名を入力してください。",
+    closeAllConfirm: "すべてのキャンバスを閉じますか？変更を残す場合は、先に Save Project で保存してください。",
+    allPapersClosed: "すべてのキャンバスを閉じました。",
+    samplePixelFailed: "このピクセルから色を取得できません。",
+    importImageLabel: "画像を新しいキャンバスとして読み込む",
   },
   ko: {
     back: '뒤로',
@@ -129,6 +237,33 @@ registerTranslationNamespace('shadowStudio', {
     welcomeText: '프리셋을 선택하거나 사용자 정의 용지를 만드세요.',
     recent: '최근',
     noRecent: '로컬 프로젝트 저장 기능을 추가하면 최근 프로젝트가 여기에 표시됩니다.',
+    imageLoadFailed: "이 캔버스 이미지를 불러올 수 없습니다. 다른 저장된 프로젝트 사본에서 복원하세요.",
+    recoveryStorageUnavailable: "{{error}} Save Project로 기기에 사본을 저장하세요.",
+    recoveryCleared: "열린 캔버스가 없습니다. 로컬 복구 데이터를 지웠습니다.",
+    autosaveFailed: "자동 저장 실패: {{error}}",
+    autosavedAt: "{{time}}에 로컬 자동 저장을 완료했습니다.",
+    autosaveFailedSave: "자동 저장 실패: {{error}} Save Project로 기기에 저장하세요.",
+    recoveredPapers: "로컬 캔버스를 복구했습니다. Save Project로 프로젝트 사본을 저장하세요.",
+    recoveryFailed: "복구 실패: {{error}}",
+    deleteRecoveryConfirm: "로컬 복구 사본을 삭제할까요? 작업을 보관하려면 먼저 .shadowstudio 파일을 저장하세요.",
+    recoveryDeleted: "로컬 복구 사본을 삭제했습니다.",
+    discardRecoveryFailed: "복구 데이터를 삭제할 수 없습니다: {{error}}",
+    exitConfirm: "Studio를 나가면 열린 캔버스가 닫힙니다. 먼저 Save Project로 저장하세요. 나갈까요?",
+    imageImported: "{{name}}을(를) 새 캔버스로 가져왔습니다. Save Project로 사본을 저장하세요.",
+    imageImportFailed: "이미지를 가져오지 못했습니다. 기존 캔버스는 변경되지 않았습니다.",
+    openProjectConfirm: "이 프로젝트를 열면 현재 캔버스가 닫힙니다. 보관하려면 먼저 Save Project로 저장하세요. 계속할까요?",
+    projectOpened: "기기에서 캔버스 {{count}}개를 열었습니다.",
+    openProjectFailed: "프로젝트 파일을 열 수 없습니다.",
+    paperStillLoading: "현재 캔버스가 모두 열릴 때까지 기다리세요.",
+    createPaperFirst: "저장하기 전에 캔버스를 만드세요.",
+    projectDownloadStarted: "프로젝트 다운로드를 시작했습니다. .shadowstudio 파일을 안전한 곳에 보관하세요.",
+    projectSaveFailed: "프로젝트를 저장할 수 없습니다.",
+    saveProjectCopyPrompt: "프로젝트 사본의 저장 이름:",
+    projectNameRequired: "프로젝트 파일 이름을 입력하세요.",
+    closeAllConfirm: "열린 캔버스를 모두 닫을까요? 저장되지 않은 변경 사항이 필요하면 먼저 Save Project로 저장하세요.",
+    allPapersClosed: "모든 캔버스를 닫았습니다.",
+    samplePixelFailed: "이 픽셀에서 색상을 가져올 수 없습니다.",
+    importImageLabel: "이미지를 새 캔버스로 가져오기",
   },
 })
 
@@ -172,14 +307,14 @@ function nextDocumentName(documents) {
   return `Untitled-${index}`
 }
 
-function StudioChrome({ children, onBack }) {
+function StudioChrome({ children, onBack, backLabel }) {
   return (
     <div className="ss-chrome">
       <button
         type="button"
         className="ss-logo-btn"
         onClick={onBack}
-        aria-label="Back"
+        aria-label={backLabel}
       >
         <img
           src="/assets/Icons/Shadow Logo.svg"
@@ -381,7 +516,7 @@ export default function ShadowStudioPage() {
     image.onerror = () => {
       if (token === loadTokenRef.current) {
         setPaperLoading(false)
-        setProjectNotice('This paper image could not be loaded. Restore it from another saved project copy.')
+        setProjectNotice(tx('shadowStudio.imageLoadFailed'))
         resetHistory()
       }
     }
@@ -411,7 +546,7 @@ export default function ShadowStudioPage() {
       .catch((error) => {
         if (mounted) {
           setRecoveryStorageAvailable(false)
-          setRecoveryStatus(`${error.message} Use Save Project to keep a device copy.`)
+          setRecoveryStatus(tx('shadowStudio.recoveryStorageUnavailable', { error: error.message }))
         }
       })
       .finally(() => {
@@ -436,8 +571,8 @@ export default function ShadowStudioPage() {
       if (!hadWorkspaceRef.current) return
       hadWorkspaceRef.current = false
       clearStudioRecovery()
-        .then(() => setRecoveryStatus('No open papers. Local recovery cleared.'))
-        .catch((error) => setRecoveryStatus(`Autosave failed: ${error.message}`))
+        .then(() => setRecoveryStatus(tx('shadowStudio.recoveryCleared')))
+        .catch((error) => setRecoveryStatus(tx('shadowStudio.autosaveFailed', { error: error.message })))
       return
     }
 
@@ -453,11 +588,11 @@ export default function ShadowStudioPage() {
       saveStudioRecovery(pages, activeDocumentId, canvas)
         .then((savedAt) => {
           if (revision === recoverySequenceRef.current) {
-            setRecoveryStatus(`Autosaved locally at ${new Date(savedAt).toLocaleTimeString()}.`)
+            setRecoveryStatus(tx('shadowStudio.autosavedAt', { time: new Date(savedAt).toLocaleTimeString() }))
           }
         })
         .catch((error) => {
-          setRecoveryStatus(`Autosave failed: ${error.message} Save Project to your device.`)
+          setRecoveryStatus(tx('shadowStudio.autosaveFailedSave', { error: error.message }))
         })
     }, 2500)
 
@@ -478,9 +613,9 @@ export default function ShadowStudioPage() {
       setWorkspaceStarted(true)
       setProjectLoadKey((value) => value + 1)
       setRecoveryEntry(null)
-      setRecoveryStatus('Recovered local papers. Use Save Project for a durable device copy.')
+      setRecoveryStatus(tx('shadowStudio.recoveredPapers'))
     } catch (error) {
-      setRecoveryStatus(`Recovery failed: ${error.message}`)
+      setRecoveryStatus(tx('shadowStudio.recoveryFailed', { error: error.message }))
     } finally {
       setRecoveryBusy(false)
     }
@@ -488,15 +623,15 @@ export default function ShadowStudioPage() {
 
   async function discardRecovery() {
     if (!recoveryEntry || recoveryBusy) return
-    if (!window.confirm('Delete the local recovery copy? Save a .shadowstudio file first if you need this work.')) return
+    if (!window.confirm(tx('shadowStudio.deleteRecoveryConfirm'))) return
 
     setRecoveryBusy(true)
     try {
       await clearStudioRecovery()
       setRecoveryEntry(null)
-      setRecoveryStatus('Local recovery copy deleted.')
+      setRecoveryStatus(tx('shadowStudio.recoveryDeleted'))
     } catch (error) {
-      setRecoveryStatus(`Could not discard recovery: ${error.message}`)
+      setRecoveryStatus(tx('shadowStudio.discardRecoveryFailed', { error: error.message }))
     } finally {
       setRecoveryBusy(false)
     }
@@ -516,7 +651,7 @@ export default function ShadowStudioPage() {
   function exitStudio() {
     if (
       documentsRef.current.length &&
-      !window.confirm('Leaving Studio closes the open papers. Save Project to your device first. Leave?')
+      !window.confirm(tx('shadowStudio.exitConfirm'))
     ) {
       return
     }
@@ -561,9 +696,9 @@ export default function ShadowStudioPage() {
       setDocuments(next)
       setWorkspaceStarted(true)
       setActiveDocumentId(imported.id)
-      setProjectNotice(`Imported ${settings.name} as a new paper. Save Project to keep a copy.`)
+      setProjectNotice(tx('shadowStudio.imageImported', { name: settings.name }))
     } catch (error) {
-      setProjectNotice(error.message || 'Image import failed. Your existing papers were not changed.')
+      setProjectNotice(error.message || tx('shadowStudio.imageImportFailed'))
     } finally {
       setProjectBusy(false)
     }
@@ -580,7 +715,7 @@ export default function ShadowStudioPage() {
 
       if (
         documentsRef.current.length &&
-        !window.confirm('Opening this project will close your current papers. Save Project first if you want to keep them. Continue?')
+        !window.confirm(tx('shadowStudio.openProjectConfirm'))
       ) {
         return
       }
@@ -591,9 +726,9 @@ export default function ShadowStudioPage() {
       setNewFileOpen(false)
       setProjectLoadKey((value) => value + 1)
       setWorkspaceStarted(true)
-      setProjectNotice(`Opened ${project.documents.length} paper(s) from your device.`)
+      setProjectNotice(tx('shadowStudio.projectOpened', { count: project.documents.length }))
     } catch (error) {
-      setProjectNotice(error.message || 'Unable to open the project file.')
+      setProjectNotice(error.message || tx('shadowStudio.openProjectFailed'))
     } finally {
       setProjectBusy(false)
     }
@@ -601,14 +736,14 @@ export default function ShadowStudioPage() {
 
   function saveProject(fileName = '') {
     if (projectBusy || paperLoading) {
-      setProjectNotice('Wait for the current paper to finish loading.')
+      setProjectNotice(tx('shadowStudio.paperStillLoading'))
       return
     }
 
     const current = documentsRef.current
 
     if (!current.length) {
-      setProjectNotice('Create a paper before saving.')
+      setProjectNotice(tx('shadowStudio.createPaperFirst'))
       return
     }
 
@@ -621,20 +756,20 @@ export default function ShadowStudioPage() {
             const clean = saved.map((document) => ({ ...document, dirty: false }))
       documentsRef.current = clean
       setDocuments(clean)
-      setProjectNotice('Project download started. Keep the .shadowstudio file in a safe place.')
+      setProjectNotice(tx('shadowStudio.projectDownloadStarted'))
     } catch (error) {
-      setProjectNotice(error.message || 'Unable to save the project.')
+      setProjectNotice(error.message || tx('shadowStudio.projectSaveFailed'))
     }
   }
 
   function saveProjectAs() {
     if (!documentsRef.current.length || paperLoading || projectBusy) return
     const suggestedName = documentsRef.current[0]?.name || 'Shadow-Project'
-    const entered = window.prompt('Save project copy as:', suggestedName)
+    const entered = window.prompt(tx('shadowStudio.saveProjectCopyPrompt'), suggestedName)
     if (entered === null) return
     const name = entered.trim().replace(/\.shadowstudio$/i, '')
     if (!name) {
-      window.alert('Enter a project file name.')
+      window.alert(tx('shadowStudio.projectNameRequired'))
       return
     }
     saveProject(name)
@@ -647,7 +782,7 @@ export default function ShadowStudioPage() {
 
   function closeAllPapers() {
     if (paperLoading || projectBusy || recoveryBusy || !documentsRef.current.length) return
-    if (!window.confirm('Close all open papers? Save Project first if you need to keep unsaved changes.')) return
+    if (!window.confirm(tx('shadowStudio.closeAllConfirm'))) return
     loadTokenRef.current += 1
     clearTimeout(recoveryTimerRef.current)
     documentsRef.current = []
@@ -658,7 +793,7 @@ export default function ShadowStudioPage() {
     canvasDocumentRef.current = ''
     historyRef.current = []
     redoRef.current = []
-    setProjectNotice('All papers closed.')
+    setProjectNotice(tx('shadowStudio.allPapersClosed'))
   }
 
   function openNewFile(presetId = 'basic') {
@@ -992,7 +1127,7 @@ export default function ShadowStudioPage() {
       setColor(sampled)
       setTool('brush')
     } catch {
-      setProjectNotice('Unable to sample this pixel.')
+      setProjectNotice(tx('shadowStudio.samplePixelFailed'))
     }
   }
 
@@ -1182,7 +1317,7 @@ export default function ShadowStudioPage() {
         @media(max-width:640px){.ss-home{grid-template-columns:1fr}.ss-home-side{border-right:0;border-bottom:1px solid #35393e}.ss-home-main{padding:26px 16px}.ss-top{top:34px;padding:0 8px}.ss-layout{display:block}.ss-tab{min-width:104px}.ss-tab-count{display:none}.ss-tools{position:sticky;top:118px;z-index:25;display:flex;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid #3b4046;padding:7px}.ss-tool{width:72px;min-width:72px;min-height:50px}.ss-work{padding:12px 12px 66px}.ss-bottom{left:0}.ss-controls{gap:8px}.ss-control label{display:none}.ss-dialog-body{grid-template-columns:1fr}.ss-field-wide{grid-column:auto}}
       `}</style>
 
-      <StudioChrome onBack={exitStudio}>
+      <StudioChrome onBack={exitStudio} backLabel={tx('shadowStudio.back')}>
         <StudioFileMenu
           hasPaper={documents.length > 0}
           inWorkspace={workspaceStarted}
@@ -1229,8 +1364,8 @@ export default function ShadowStudioPage() {
         {workspaceStarted ? (
           <div className="ss-chrome-right">
             <div className="ss-doc-info">{activeDocument?.width} × {activeDocument?.height}px · {activeDocument?.resolution} PPI</div>
-            <button type="button" className="ss-btn icon" onClick={undo} disabled={!canUndo || paperLoading || projectBusy} title="Undo" aria-label="Undo"><i className="fa-solid fa-rotate-left" /></button>
-            <button type="button" className="ss-btn icon" onClick={redo} disabled={!canRedo || paperLoading || projectBusy} title="Redo" aria-label="Redo"><i className="fa-solid fa-rotate-right" /></button>
+            <button type="button" className="ss-btn icon" onClick={undo} disabled={!canUndo || paperLoading || projectBusy} title={tx('shadowStudio.undo')} aria-label={tx('shadowStudio.undo')}><i className="fa-solid fa-rotate-left" /></button>
+            <button type="button" className="ss-btn icon" onClick={redo} disabled={!canRedo || paperLoading || projectBusy} title={tx('shadowStudio.redo')} aria-label={tx('shadowStudio.redo')}><i className="fa-solid fa-rotate-right" /></button>
           </div>
         ) : null}
       </StudioChrome>
@@ -1394,7 +1529,7 @@ export default function ShadowStudioPage() {
         className="ss-hidden-file"
         type="file"
         accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
-        aria-label="Import image as a new paper"
+        aria-label={tx('shadowStudio.importImageLabel')}
         onChange={(event) => {
           const file = event.target.files?.[0]
           event.target.value = ''
