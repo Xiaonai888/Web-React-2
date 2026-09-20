@@ -1684,9 +1684,9 @@ self.addEventListener(
     if (isSplashAssetRequest(url)) {
   const cachePromise = caches.open(SPLASH_CACHE_NAME)
 
-  const cachedPromise = cachePromise.then((cache) =>
-    cache.match(request, { ignoreSearch: true })
-  )
+  const cachedPromise = cachePromise
+  .then((cache) => cache.match(request, { ignoreSearch: true }))
+  .catch(() => null)
 
   const refreshPromise = cachePromise
     .then(async (cache) => {
