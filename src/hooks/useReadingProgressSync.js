@@ -160,6 +160,11 @@ export default function useReadingProgressSync({
   useEffect(() => {
     const token = getReaderToken()
     if (!enabled || !token || !storyId || !episodeId) {
+      const previous = latestRef.current
+      if (previous?.percent > 0 &&
+        savedStateByKeyRef.current.get(previous.key)?.lastSavedSignature !== previous.signature) {
+        void saveCurrent(previous)
+      }
       latestRef.current = null
       return
     }
