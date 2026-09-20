@@ -11,6 +11,7 @@ import { installReaderEpisodeCacheFetch } from './utils/installReaderEpisodeCach
 import { installReaderPresenceTracking } from './utils/installReaderPresenceTracking'
 import { loadReaderEpisodeCache } from './utils/readerEpisodeCache'
 import { installMangaImageCacheControl } from './utils/mangaImageCacheControl'
+import { installTemporaryCacheManagement } from './utils/temporaryCacheManager'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
@@ -20,6 +21,7 @@ if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) {
 }
 installReaderPresenceTracking()
 installMangaImageCacheControl()
+installTemporaryCacheManagement()
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault()
