@@ -24,7 +24,7 @@ import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStu
 import StudioOptionsBar from './StudioOptionsBar'
 import { confirmLargeBrush } from './StudioPrecisionInput'
 import StudioCanvasRulers from './StudioCanvasRulers'
-import { renderStudioLayers, studioLayerContext, addStudioLayer, selectStudioLayer, updateStudioLayer, moveStudioLayer, removeStudioLayer } from './StudioLayerEngine'
+import { renderStudioLayers, studioLayerContext, addStudioLayer, duplicateStudioLayer, selectStudioLayer, updateStudioLayer, moveStudioLayer, removeStudioLayer } from './StudioLayerEngine'
 import { exportStudioLayerStack, loadStudioLayerStack } from './StudioLayerPersistence'
 
 registerTranslationNamespace('shadowStudio', {
@@ -446,6 +446,7 @@ const placeImageLabel = {
     if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy || drawingRef.current || newFileOpen || exportOpen || recoveryBusy) return
     try {
       if (action === 'add') addStudioLayer(stack)
+      else if (action === 'duplicate') duplicateStudioLayer(stack, layerId)
       else if (action === 'select') selectStudioLayer(stack, layerId)
       else if (action === 'visibility') {
         const layer = stack.layers.find((item) => item.id === layerId)
