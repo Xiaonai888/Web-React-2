@@ -691,49 +691,33 @@ function replyToMessage(
 }
 
 async function getStorageBudget() {
+  const GB = 1024 * 1024 * 1024
   let quota = 0
   let usage = 0
-
   try {
-    const estimate =
-      await self.navigator.storage.estimate()
-
-    quota = normalizeBytes(
-      estimate?.quota
-    )
-
-    usage = normalizeBytes(
-      estimate?.usage
-    )
+    const estimate = await self.navigator.storage.estimate()
+    quota = normalizeBytes(estimate?.quota)
+    usage = normalizeBytes(estimate?.usage)
   } catch {
-    return {
-      budgetBytes: HARD_MAX_BYTES,
-      pressured: false,
-    }
+    return { budgetBytes: GB, pressured: false }
   }
+  if (!quota) return { budgetBytes: GB, pressured: false }
 
-  if (!quota) {
-    return {
-      budgetBytes: HARD_MAX_BYTES,
-      pressured: false,
-    }
-  }
-
-  const adaptiveBudget = Math.max(
-    1,
-    Math.floor(
-      quota * QUOTA_BUDGET_RATIO
-    )
+  const records = await getAllEpisodeRecords()
+  const cachedBytes = records.reduce(
+    (total, record) => total + normalizeBytes(record.cachedBytes), 0
   )
-
+  const reserve = Math.max(GB, Math.floor(quota * 0.15))
+  const available = Math.max(0, quota - usage - reserve)
+  const budgetBytes = Math.min(
+    HARD_MAX_BYTES,
+    Math.floor(quota * QUOTA_BUDGET_RATIO),
+    cachedBytes + available
+  )
+  const pressured = usage / quota >= STORAGE_PRESSURE_RATIO || available < GB
   return {
-    budgetBytes: Math.min(
-      HARD_MAX_BYTES,
-      adaptiveBudget
-    ),
-    pressured:
-      usage / quota >=
-      STORAGE_PRESSURE_RATIO,
+    budgetBytes: pressured ? Math.min(GB, budgetBytes) : budgetBytes,
+    pressured,
   }
 }
 
