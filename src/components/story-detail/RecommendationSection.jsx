@@ -115,6 +115,26 @@ const MAX_PENDING_REQUESTS = 32
 const recommendationsCache = new Map()
 const recommendationsInFlight = new Map()
 const recommendationFailures = new Map()
+let activeReaderToken = null
+let readerSessionVersion = 0
+
+function getReaderToken() {
+  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+}
+
+function getReaderSession() {
+  const token = getReaderToken()
+
+  if (token !== activeReaderToken) {
+    activeReaderToken = token
+    readerSessionVersion += 1
+    recommendationsCache.clear()
+    recommendationsInFlight.clear()
+    recommendationFailures.clear()
+  }
+
+  return { token, scope: readerSessionVersion }
+}
 
 function readRecommendationsCache(key) {
   const cached = recommendationsCache.get(key)
@@ -153,7 +173,7 @@ function rememberRecommendationFailure(key) {
   }
 }
 
-async function getRecommendations(key, storyId, authorId, genre) {
+async function getRecommendations(key, storyId, authorId, genre, readerToken) {
   const cached = readRecommendationsCache(key)
 
   if (cached) return cached
@@ -185,6 +205,7 @@ async function getRecommendations(key, storyId, authorId, genre) {
         )}/recommendations?${params.toString()}`,
         {
           cache: 'no-store',
+          headers: readerToken ? { Authorization: `Bearer ${readerToken}` } : {},
           signal: controller.signal,
         }
       )
@@ -209,6 +230,10 @@ async function getRecommendations(key, storyId, authorId, genre) {
           : [],
       }
 
+      if (getReaderSession().token !== readerToken) {
+        throw new Error('Reader session changed')
+      }
+
       rememberRecommendations(key, result)
       recommendationFailures.delete(key)
 
@@ -223,7 +248,9 @@ async function getRecommendations(key, storyId, authorId, genre) {
   try {
     return await request
   } catch (error) {
-    rememberRecommendationFailure(key)
+    if (getReaderSession().token === readerToken) {
+      rememberRecommendationFailure(key)
+    }
     throw error
   } finally {
     if (recommendationsInFlight.get(key) === request) {
@@ -303,7 +330,8 @@ export default function RecommendationSection({ story }) {
   const storyId = String(story?.id || '')
   const authorId = String(story?.author_id || '')
   const genre = String(story?.main_genre || '')
-  const requestKey = JSON.stringify([storyId, authorId, genre])
+  const { token: readerToken, scope: readerScope } = getReaderSession()
+  const requestKey = JSON.stringify([storyId, authorId, genre, readerScope])
   const [intersection, setIntersection] = useState({ key: '', visible: false })
   const [refreshTick, setRefreshTick] = useState(0)
   const [result, setResult] = useState({
@@ -368,10 +396,14 @@ export default function RecommendationSection({ story }) {
 
     document.addEventListener('visibilitychange', wake)
     window.addEventListener('online', wake)
+    window.addEventListener('storage', wake)
+    window.addEventListener('focus', wake)
 
     return () => {
       document.removeEventListener('visibilitychange', wake)
       window.removeEventListener('online', wake)
+      window.removeEventListener('storage', wake)
+      window.removeEventListener('focus', wake)
     }
   }, [])
 
@@ -417,9 +449,9 @@ export default function RecommendationSection({ story }) {
       data: null,
     })
 
-    getRecommendations(requestKey, storyId, authorId, genre)
+    getRecommendations(requestKey, storyId, authorId, genre, readerToken)
       .then((data) => {
-        if (ignore) return
+        if (ignore || getReaderSession().token !== readerToken) return
 
         setResult({
           key: requestKey,
@@ -428,7 +460,7 @@ export default function RecommendationSection({ story }) {
         })
       })
       .catch(() => {
-        if (ignore) return
+        if (ignore || getReaderSession().token !== readerToken) return
 
         setResult({
           key: requestKey,
@@ -445,6 +477,7 @@ export default function RecommendationSection({ story }) {
     storyId,
     authorId,
     genre,
+    readerToken,
     inView,
     refreshTick,
   ])
