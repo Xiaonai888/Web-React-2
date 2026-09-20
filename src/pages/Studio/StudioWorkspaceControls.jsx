@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom'
 import StudioColorPanel from './StudioColorPanel'
 import StudioBrushSettings from './StudioBrushSettings'
 import StudioRightPanels from './StudioRightPanels'
+import StudioFloatingRightDock from './StudioFloatingRightDock'
 import StudioFloatingToolDock from './StudioFloatingToolDock'
 
 registerTranslationNamespace('studioWorkspace', {
@@ -234,6 +235,10 @@ export function StudioToolRail({ tool, onToolChange, labels }) {
 }
 
 export function StudioControlSidebar({
+  canvasRef,
+  paperId,
+  revision,
+  paper,
   color,
   onColorChange,
   brushStyle,
@@ -275,10 +280,16 @@ export function StudioControlSidebar({
     />
   )
 
-  return (
-    <aside className="ss-side" aria-label={tx('studioWorkspace.studioSidePanels')}>
-      <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />
-      <StudioRightPanels />
+    return (
+    <StudioFloatingRightDock>
+      <aside className="ss-side" aria-label={tx('studioWorkspace.studioSidePanels')}>
+        <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />
+        <StudioRightPanels
+          canvasRef={canvasRef}
+          paperId={paperId}
+          revision={revision}
+          paper={paper}
+        />
       {brushDock ? createPortal(brushControls, brushDock) : brushControls}
       <section className="ss-section" aria-label="Canvas view">
         <h2 className="ss-label">{tx('studioWorkspace.canvasView')}</h2>
@@ -301,11 +312,12 @@ export function StudioControlSidebar({
       <section className="ss-section">
         <button type="button" className="ss-btn" onClick={onClear}>{labels.clear}</button>
       </section>
-    </aside>
+          </aside>
+    </StudioFloatingRightDock>
   )
 }
 
-export function StudioControlFooter({
+export function StudioControlFooter({export function StudioControlFooter({
   paper,
   paperIndex = 0,
   paperCount = 0,
