@@ -26,6 +26,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const a = ACTIONS[language] || ACTIONS.en
   const [active, setActive] = useState('layers')
   const duplicateLabel = ({ en: 'Duplicate layer', km: 'ចម្លងស្រទាប់', zh: '复制图层', ja: 'レイヤーを複製', ko: '레이어 복제' })[language] || 'Duplicate layer' 
+  const convertLabel = ({ en: 'Convert Background to normal layer', km: 'ប្ដូរ Background ទៅជា Layer ធម្មតា', zh: '将背景转换为普通图层', ja: '背景を通常レイヤーに変換', ko: '배경을 일반 레이어로 변환' })[language] || 'Convert Background to normal layer'
   const mergeLabel = ({ en: 'Merge layer down', km: 'បញ្ចូលស្រទាប់ចុះក្រោម', zh: '向下合并图层', ja: '下のレイヤーと結合', ko: '아래 레이어와 병합' })[language] || 'Merge layer down'
   const [error, setError] = useState(false)
   const previewRefs = useRef({})
@@ -35,13 +36,13 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const selectedGroup = groups.find((group) => group.id === selected?.groupId)
   const selectedIndex = layers.indexOf(selected)
   const lower = selectedIndex > 0 ? layers[selectedIndex - 1] : null
-  const canMerge = Boolean(selected && lower && selectedIndex > 1 &&
+  const canMerge = Boolean(selected && lower && selectedIndex > 0 &&
     selected.visible && lower.visible && !selected.locked && !lower.locked &&
     selected.opacity === 100 && lower.opacity === 100 &&
     (selected.blendMode || 'normal') === 'normal' && (lower.blendMode || 'normal') === 'normal' &&
     (selected.groupId || null) === (lower.groupId || null) &&
     (!selected.groupId || groups.some((group) => group.id === selected.groupId && group.visible && !group.locked)))
-  const adjacentGroups = selected && !selected.groupId && selectedIndex > 0
+  const adjacentGroups = selected && !selected.isBackground && !selected.groupId && selectedIndex >= 0
     ? groups.filter((group) => layers[selectedIndex - 1]?.groupId === group.id || layers[selectedIndex + 1]?.groupId === group.id)
     : []
   const reverseLayers = [...layers].reverse()
@@ -149,20 +150,21 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
       {active === 'layers' ? <>
         <div className="ss-lcp-tools">
           <button className="ss-lcp-action" type="button" title={a[0]} aria-label={a[0]} disabled={blocked || layers.length >= 8} onClick={() => onLayerAction('add')}><i className="fa-solid fa-plus" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={duplicateLabel} aria-label={duplicateLabel} disabled={blocked || !selected || layers.indexOf(selected) === 0 || layers.length >= 8} onClick={() => onLayerAction('duplicate', activeLayerId)}><i className="fa-regular fa-copy" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={a[6]} aria-label={a[6]} disabled={blocked || !selected || layers.indexOf(selected) === layers.length - 1} onClick={() => onLayerAction('move', activeLayerId, 1)}><i className="fa-solid fa-arrow-up" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || layers.indexOf(selected) <= 1} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={duplicateLabel} aria-label={duplicateLabel} disabled={blocked || !selected || selected.isBackground || layers.length >= 8} onClick={() => onLayerAction('duplicate', activeLayerId)}><i className="fa-regular fa-copy" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={a[6]} aria-label={a[6]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) === layers.length - 1} onClick={() => onLayerAction('move', activeLayerId, 1)}><i className="fa-solid fa-arrow-up" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) <= 0 || lower?.isBackground} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => selected && rename(selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={a[9]} aria-label={a[9]} disabled={blocked || !selected || layers.indexOf(selected) === 0} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={a[9]} aria-label={a[9]} disabled={blocked || !selected || selected.isBackground || layers.length <= 1} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={mergeLabel} aria-label={mergeLabel} disabled={blocked || !canMerge} onClick={() => onLayerAction('merge-down', activeLayerId)}><i className="fa-solid fa-layer-group" aria-hidden="true" /></button>
           <label className="ss-lcp-opacity">{t[7]}
             <select aria-label={t[7]} disabled={blocked || !selected} value={selected?.opacity ?? 100} onChange={(event) => onLayerAction('opacity', activeLayerId, Number(event.target.value))}>
               {[...new Set([0,10,20,30,40,50,60,70,80,90,100, selected?.opacity].filter((value) => value !== undefined))].sort((x,y) => x-y).map((value) => <option key={value} value={value}>{value}%</option>)}
             </select>
           </label>
-          <button className="ss-lcp-action" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selectedIndex === 0 || Boolean(selectedGroup) || groups.length >= 8} onClick={() => onLayerAction('group-add', activeLayerId)}><i className="fa-solid fa-folder-plus" aria-hidden="true" /></button>
+          {selected?.isBackground ? <button className="ss-lcp-action" type="button" title={convertLabel} aria-label={convertLabel} disabled={blocked} onClick={() => onLayerAction('convert-background', activeLayerId)}><i className="fa-solid fa-unlock-keyhole" aria-hidden="true" /></button> : null}
+          <button className="ss-lcp-action" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selected.isBackground || Boolean(selectedGroup) || groups.length >= 8} onClick={() => onLayerAction('group-add', activeLayerId)}><i className="fa-solid fa-folder-plus" aria-hidden="true" /></button>
           <label className="ss-lcp-blend">{blendTitle}
-            <select aria-label={blendTitle} disabled={blocked || !selected || selectedIndex === 0} value={selected?.blendMode || 'normal'} onChange={(event) => onLayerAction('blend', activeLayerId, event.target.value)}>
+            <select aria-label={blendTitle} disabled={blocked || !selected || selected.isBackground} value={selected?.blendMode || 'normal'} onChange={(event) => onLayerAction('blend', activeLayerId, event.target.value)}>
               {STUDIO_BLEND_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}
             </select>
           </label>
