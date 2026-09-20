@@ -26,7 +26,15 @@ const DEFAULT_POLICY = {
 
 const memoryFallback = new Map()
 const INDEXED_DB_TIMEOUT_MS = 2000
+const PRUNE_CHECK_INTERVAL_MS = 15 * 60 * 1000
+const lastPrunedByType = new Map()
+let lastCacheAccessMs = 0
 let indexedDbUnavailable = false
+
+function nextCacheAccessTime() {
+  lastCacheAccessMs = Math.max(Date.now(), lastCacheAccessMs + 1)
+  return lastCacheAccessMs
+}
 
 function disableIndexedDb(error) {
   if (!indexedDbUnavailable) {
@@ -269,12 +277,13 @@ async function putStoredEntry(value) {
   return value
 }
 
-async function getAllStoredEntries() {
+async function getAllStoredEntries(storyType = '') {
+  const type = storyType ? normalizeStoryType(storyType) : ''
   try {
     const values =
       (await runTransaction(
         'readonly',
-        (store) => store.getAll()
+        (store) => type ? store.index('storyType').getAll(type) : store.getAll()
       )) || []
 
     for (const value of values) {
@@ -285,7 +294,19 @@ async function getAllStoredEntries() {
 
     return values
   } catch {
-    return [...memoryFallback.values()]
+    const values = [...memoryFallback.values()]
+    return type ? values.filter((entry) => entry.storyType === type) : values
+  }
+}
+
+async function getReaderEpisodeCacheCount(storyType) {
+  try {
+    return await runTransaction(
+      'readonly',
+      (store) => store.index('storyType').count(storyType)
+    )
+  } catch {
+    return [...memoryFallback.values()].filter((entry) => entry.storyType === storyType).length
   }
 }
 
@@ -384,11 +405,18 @@ export async function saveReaderEpisodeCache({
     accessExpiresAt: normalizedAccessExpiresAt,
     ttlMs: policy.ttlMs,
     savedAt: now,
-    lastAccessedAt: now,
+    lastAccessedAt: nextCacheAccessTime(),
   }
 
   await putStoredEntry(value)
-  await pruneReaderEpisodeCache({ storyType: normalizedType })
+  const entryCount = await getReaderEpisodeCacheCount(normalizedType)
+  if (
+    entryCount > policy.maxEntries ||
+    now - (lastPrunedByType.get(normalizedType) || 0) >= PRUNE_CHECK_INTERVAL_MS
+  ) {
+    await pruneReaderEpisodeCache({ storyType: normalizedType })
+    lastPrunedByType.set(normalizedType, Date.now())
+  }
 
   return value
 }
@@ -440,7 +468,7 @@ export async function loadReaderEpisodeCache({
 
   const touched = {
     ...entry,
-    lastAccessedAt: Date.now(),
+    lastAccessedAt: nextCacheAccessTime(),
   }
 
   await putStoredEntry(touched)
@@ -488,14 +516,11 @@ export async function clearReaderEpisodeCacheForStory(storyId) {
 export async function clearReaderEpisodeCache() {
   memoryFallback.clear()
 
-  try {
-    await runTransaction(
-      'readwrite',
-      (store) => store.clear()
-    )
-  } catch {
-    return
-  }
+  if (typeof indexedDB === 'undefined') return
+  await runTransaction(
+    'readwrite',
+    (store) => store.clear()
+  )
 }
 
 export async function pruneReaderEpisodeCache({
@@ -505,7 +530,7 @@ export async function pruneReaderEpisodeCache({
   const requestedType = storyType
     ? normalizeStoryType(storyType)
     : ''
-  const entries = await getAllStoredEntries()
+  const entries = await getAllStoredEntries(requestedType)
   const expiredKeys = entries
     .filter((entry) => isEntryExpired(entry, now))
     .map((entry) => entry.key)
