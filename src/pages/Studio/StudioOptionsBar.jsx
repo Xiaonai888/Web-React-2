@@ -1,4 +1,5 @@
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import StudioPrecisionInput from './StudioPrecisionInput'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 registerTranslationNamespace('studioOptions', {
   "en": {
@@ -155,7 +156,7 @@ export default function StudioOptionsBar({
         <span>{toolName} {tx('studioOptions.options')}</span>
       </div>
       <span className="ss-opt-separator" aria-hidden="true" />
-      <label className="ss-opt-range">{tx('studioOptions.size')} <input aria-label={tx('studioOptions.brushSize')} type="range" min="1" max="80" step="1" value={size} disabled={busy} onChange={(event) => onSizeChange(Number(event.target.value))} /><output>{size}px</output></label>
+      <label className="ss-opt-range">{tx('studioOptions.size')} <input aria-label={tx('studioOptions.brushSize')} type="range" min="1" max="5000" step="1" value={Math.max(1, size)} disabled={busy} onChange={(event) => onSizeChange(Number(event.target.value))} /><StudioPrecisionInput value={size} onCommit={onSizeChange} min={0.1} max={5000} step={0.1} label={tx('studioOptions.brushSize')} width={62} /><output>px</output></label>
       <label className="ss-opt-range">{tx('studioOptions.opacity')} <input aria-label={tx('studioOptions.brushOpacity')} type="range" min="10" max="100" step="1" value={opacity} disabled={busy} onChange={(event) => onOpacityChange(Number(event.target.value))} /><output>{opacity}%</output></label>
       <span className="ss-opt-separator" aria-hidden="true" />
       <button type="button" aria-pressed={showGrid} disabled={busy} onClick={onToggleGrid} title={tx('studioOptions.toggleGrid')}><i className="fa-solid fa-border-all" aria-hidden="true" /> {tx('studioOptions.grid')}</button>
