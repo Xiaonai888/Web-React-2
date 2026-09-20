@@ -1,4 +1,140 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+
+const STUDIO_TEXT = {
+  "km": {
+    "HEX copied": "បានចម្លង HEX",
+    "Select the HEX field to copy it manually.": "សូមជ្រើសប្រអប់ HEX ដើម្បីចម្លងដោយដៃ។",
+    "Color panel": "ផ្ទាំងពណ៌",
+    "Current": "បច្ចុប្បន្ន",
+    "Hide": "លាក់",
+    "Picker": "ជ្រើសពណ៌",
+    "Hue": "លំនាំពណ៌",
+    "Saturation and brightness": "កម្រិតឆ្អែត និងពន្លឺពណ៌",
+    "System color picker": "ឧបករណ៍ជ្រើសពណ៌ប្រព័ន្ធ",
+    "Use previous color": "ប្រើពណ៌មុន",
+    "Previous color": "ពណ៌មុន",
+    "HEX / System picker": "HEX / ឧបករណ៍ជ្រើសពណ៌ប្រព័ន្ធ",
+    "Previous": "មុន",
+    "Copy HEX color": "ចម្លងកូដពណ៌ HEX",
+    "Copy HEX": "ចម្លង HEX",
+    "RGB / HSV numeric controls": "ការកំណត់ RGB / HSV ជាលេខ",
+    "Opacity is controlled separately in Brush Settings.": "ភាពស្រអាប់ត្រូវកំណត់ដោយឡែកនៅ Brush Settings។",
+    "Color palette": "ក្ដារពណ៌",
+    "Use color": "ប្រើពណ៌",
+    "My Palette": "ក្ដារពណ៌ខ្ញុំ",
+    "Save color": "រក្សាទុកពណ៌",
+    "My saved colors": "ពណ៌ដែលខ្ញុំបានរក្សាទុក",
+    "Use saved color": "ប្រើពណ៌ដែលបានរក្សាទុក",
+    "Remove saved color": "លុបពណ៌ដែលបានរក្សាទុក",
+    "Choose a color, then save it here.": "ជ្រើសពណ៌មួយ រួចរក្សាទុកនៅទីនេះ។",
+    "Recent Colors": "ពណ៌ដែលប្រើថ្មីៗ",
+    "Clear": "សម្អាត",
+    "Recently used colors": "ពណ៌ដែលទើបប្រើ",
+    "Use recent color": "ប្រើពណ៌ថ្មីៗ",
+    "Colors you pick will appear here.": "ពណ៌ដែលអ្នកជ្រើសនឹងបង្ហាញនៅទីនេះ។"
+  },
+  "zh": {
+    "HEX copied": "已复制 HEX",
+    "Select the HEX field to copy it manually.": "请选择 HEX 输入框手动复制。",
+    "Color panel": "颜色面板",
+    "Current": "当前",
+    "Hide": "隐藏",
+    "Picker": "选色器",
+    "Hue": "色相",
+    "Saturation and brightness": "饱和度与明度",
+    "System color picker": "系统选色器",
+    "Use previous color": "使用上一种颜色",
+    "Previous color": "上一种颜色",
+    "HEX / System picker": "HEX / 系统选色器",
+    "Previous": "上一种",
+    "Copy HEX color": "复制 HEX 色值",
+    "Copy HEX": "复制 HEX",
+    "RGB / HSV numeric controls": "RGB / HSV 数值控制",
+    "Opacity is controlled separately in Brush Settings.": "不透明度在画笔设置中单独调整。",
+    "Color palette": "调色板",
+    "Use color": "使用颜色",
+    "My Palette": "我的调色板",
+    "Save color": "保存颜色",
+    "My saved colors": "我保存的颜色",
+    "Use saved color": "使用已保存的颜色",
+    "Remove saved color": "移除已保存的颜色",
+    "Choose a color, then save it here.": "选择颜色后在此保存。",
+    "Recent Colors": "最近使用的颜色",
+    "Clear": "清除",
+    "Recently used colors": "最近使用的颜色",
+    "Use recent color": "使用最近的颜色",
+    "Colors you pick will appear here.": "您选择的颜色将显示在这里。"
+  },
+  "ja": {
+    "HEX copied": "HEX をコピーしました",
+    "Select the HEX field to copy it manually.": "HEX 欄を選んで手動でコピーしてください。",
+    "Color panel": "カラーパネル",
+    "Current": "現在",
+    "Hide": "隠す",
+    "Picker": "カラーピッカー",
+    "Hue": "色相",
+    "Saturation and brightness": "彩度と明度",
+    "System color picker": "システムのカラーピッカー",
+    "Use previous color": "前の色を使う",
+    "Previous color": "前の色",
+    "HEX / System picker": "HEX / システム選色",
+    "Previous": "前の色",
+    "Copy HEX color": "HEX カラーコードをコピー",
+    "Copy HEX": "HEX をコピー",
+    "RGB / HSV numeric controls": "RGB / HSV 数値設定",
+    "Opacity is controlled separately in Brush Settings.": "不透明度はブラシ設定で別途調整します。",
+    "Color palette": "カラーパレット",
+    "Use color": "色を使う",
+    "My Palette": "マイパレット",
+    "Save color": "色を保存",
+    "My saved colors": "保存した色",
+    "Use saved color": "保存した色を使う",
+    "Remove saved color": "保存した色を削除",
+    "Choose a color, then save it here.": "色を選んでここに保存してください。",
+    "Recent Colors": "最近使った色",
+    "Clear": "クリア",
+    "Recently used colors": "最近使った色",
+    "Use recent color": "最近の色を使う",
+    "Colors you pick will appear here.": "選んだ色はここに表示されます。"
+  },
+  "ko": {
+    "HEX copied": "HEX 복사됨",
+    "Select the HEX field to copy it manually.": "HEX 입력란을 선택하여 직접 복사하세요.",
+    "Color panel": "색상 패널",
+    "Current": "현재",
+    "Hide": "숨기기",
+    "Picker": "색상 선택기",
+    "Hue": "색조",
+    "Saturation and brightness": "채도 및 명도",
+    "System color picker": "시스템 색상 선택기",
+    "Use previous color": "이전 색상 사용",
+    "Previous color": "이전 색상",
+    "HEX / System picker": "HEX / 시스템 선택기",
+    "Previous": "이전",
+    "Copy HEX color": "HEX 색상 코드 복사",
+    "Copy HEX": "HEX 복사",
+    "RGB / HSV numeric controls": "RGB / HSV 수치 설정",
+    "Opacity is controlled separately in Brush Settings.": "불투명도는 브러시 설정에서 별도로 조정합니다.",
+    "Color palette": "색상 팔레트",
+    "Use color": "색상 사용",
+    "My Palette": "내 팔레트",
+    "Save color": "색상 저장",
+    "My saved colors": "저장한 색상",
+    "Use saved color": "저장한 색상 사용",
+    "Remove saved color": "저장한 색상 제거",
+    "Choose a color, then save it here.": "색상을 선택한 다음 여기에 저장하세요.",
+    "Recent Colors": "최근 사용한 색상",
+    "Clear": "지우기",
+    "Recently used colors": "최근 사용한 색상",
+    "Use recent color": "최근 색상 사용",
+    "Colors you pick will appear here.": "선택한 색상이 여기에 표시됩니다."
+  }
+}
+
+function studioTranslate(language, text) {
+  return STUDIO_TEXT[language]?.[text] || text
+}
 
 const FAVORITES_KEY = 'shadow-studio-color-favorites-v1'
 const RECENTS_KEY = 'shadow-studio-color-recent-v1'
@@ -75,6 +211,8 @@ function rgbToHex(channels) {
 
 export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
   const [previous, setPrevious] = useState('#FFFFFF')
+  const { language } = useDisplayTranslation()
+  const tr = (text) => studioTranslate(language, text)
   const [hexText, setHexText] = useState(color.toUpperCase())
   const [expanded, setExpanded] = useState(false)
   const [favorites, setFavorites] = useState(() => readColors(FAVORITES_KEY, 12))
@@ -223,14 +361,14 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
       await navigator.clipboard.writeText((fullHex(color) || '#111111').toUpperCase())
-      setCopyStatus('HEX copied')
+      setCopyStatus(tr('HEX copied'))
     } catch {
-      setCopyStatus('Select the HEX field to copy it manually.')
+      setCopyStatus(tr('Select the HEX field to copy it manually.'))
     }
   }
 
   return (
-    <section className="ss-section ss-color-panel" data-mobile-open={expanded} aria-label="Color panel">
+    <section className="ss-section ss-color-panel" data-mobile-open={expanded} aria-label={tr('Color panel')}>
       <style>{`
         .ss-color-panel{min-width:0}
         .ss-color-heading{display:flex;align-items:center;gap:8px;margin-bottom:10px}
@@ -289,11 +427,11 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
       `}</style>
       <div className="ss-color-heading">
         <h2 className="ss-label">{label}</h2>
-        <span className="ss-color-current" style={{ backgroundColor: color }} title={`Current: ${color}`} />
-        <button type="button" className="ss-color-expand" aria-expanded={expanded} onClick={() => setExpanded((open) => !open)}>{expanded ? 'Hide' : 'Picker'}</button>
+        <span className="ss-color-current" style={{ backgroundColor: color }} title={`${tr('Current')}: ${color}`} />
+        <button type="button" className="ss-color-expand" aria-expanded={expanded} onClick={() => setExpanded((open) => !open)}>{expanded ? tr('Hide') : tr('Picker')}</button>
       </div>
       <div className="ss-color-advanced">
-        <div className="ss-hue-wheel" role="slider" tabIndex={0} aria-label="Hue" aria-valuemin={0} aria-valuemax={359} aria-valuenow={Math.round(hsv.h)}
+        <div className="ss-hue-wheel" role="slider" tabIndex={0} aria-label={tr('Hue')} aria-valuemin={0} aria-valuemax={359} aria-valuenow={Math.round(hsv.h)}
           onPointerDown={(event) => startDrag(event, 'hue')}
           onPointerMove={(event) => moveDrag(event, 'hue')}
           onPointerUp={endDrag} onPointerCancel={endDrag}
@@ -305,7 +443,7 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
              pick(hsvToHex(nextHue, hsv.s, hsv.v))
           }}>
           <span className="ss-hue-marker" style={{ left: `${50 + 45 * Math.sin(activeHue * Math.PI / 180)}%`, top: `${50 - 45 * Math.cos(activeHue * Math.PI / 180)}%` }} />
-          <div className="ss-sv-square" role="group" aria-label="Saturation and brightness" style={{ '--ss-hue': activeHue }}
+          <div className="ss-sv-square" role="group" aria-label={tr('Saturation and brightness')} style={{ '--ss-hue': activeHue }}
             onPointerDown={(event) => { event.stopPropagation(); startDrag(event, 'sv') }}
             onPointerMove={(event) => { event.stopPropagation(); moveDrag(event, 'sv') }}
             onPointerUp={(event) => { event.stopPropagation(); endDrag(event) }}
@@ -315,14 +453,14 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
         </div>
         <div className="ss-color-values">
           <input className="ss-color-hex" type="text" maxLength={7} spellCheck={false} aria-label="HEX color" value={hexText} onChange={(event) => setHexText(event.target.value)} onBlur={applyHex} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); if (event.key === 'Escape') { setHexText(color.toUpperCase()); event.currentTarget.blur() } }} />
-          <input className="ss-color-native" type="color" title="System color picker" aria-label="System color picker" value={color} onChange={(event) => pick(event.target.value)} />
-          <button type="button" className="ss-color-previous" style={{ backgroundColor: previous }} title={`Use previous color ${previous}`} aria-label={`Previous color ${previous}`} onClick={() => pick(previous)} />
+          <input className="ss-color-native" type="color" title={tr('System color picker')} aria-label={tr('System color picker')} value={color} onChange={(event) => pick(event.target.value)} />
+          <button type="button" className="ss-color-previous" style={{ backgroundColor: previous }} title={`${tr('Use previous color')} ${previous}`} aria-label={`${tr('Previous color')} ${previous}`} onClick={() => pick(previous)} />
         </div>
-        <div className="ss-color-legend"><span>HEX / System picker</span><span>Previous</span></div>
-        <button type="button" className="ss-color-copy" onClick={copyHex} aria-label={`Copy HEX color ${color}`}>Copy HEX · {color.toUpperCase()}</button>
+        <div className="ss-color-legend"><span>{tr('HEX / System picker')}</span><span>{tr('Previous')}</span></div>
+        <button type="button" className="ss-color-copy" onClick={copyHex} aria-label={`${tr('Copy HEX color')} ${color}`}>{tr('Copy HEX')} · {color.toUpperCase()}</button>
         {copyStatus ? <p className="ss-color-copy-status" role="status">{copyStatus}</p> : null}
         <details className="ss-color-numeric">
-          <summary>RGB / HSV numeric controls</summary>
+          <summary>{tr('RGB / HSV numeric controls')}</summary>
           <div className="ss-color-numeric-grid">
             <div className="ss-color-numeric-title">RGB · 0–255</div>
             {['R', 'G', 'B'].map((label, channel) => (
@@ -341,36 +479,36 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
               </label>
             ))}
           </div>
-          <p className="ss-color-numeric-help">Opacity is controlled separately in Brush Settings.</p>
+          <p className="ss-color-numeric-help">{tr('Opacity is controlled separately in Brush Settings.')}</p>
         </details>
       </div>
-      <div className="ss-swatches" aria-label="Color palette">
-        {PALETTE.map((swatch) => <button key={swatch} type="button" className={`ss-swatch ${color.toUpperCase() === swatch ? 'selected' : ''}`} style={{ backgroundColor: swatch }} title={swatch} aria-label={`Use color ${swatch}`} onClick={() => pick(swatch)} />)}
+      <div className="ss-swatches" aria-label={tr('Color palette')}>
+        {PALETTE.map((swatch) => <button key={swatch} type="button" className={`ss-swatch ${color.toUpperCase() === swatch ? 'selected' : ''}`} style={{ backgroundColor: swatch }} title={swatch} aria-label={`${tr('Use color')} ${swatch}`} onClick={() => pick(swatch)} />)}
       </div>
       <div className="ss-color-extra">
         <div className="ss-color-group">
           <div className="ss-color-group-head">
-            <strong>My Palette · {favorites.length}/12</strong>
-            <button type="button" className="ss-color-fav-add" disabled={favorites.length >= 12 || favorites.includes(color.toUpperCase())} onClick={addFavorite} aria-label={`Save ${color} to My Palette`}>+ Save color</button>
+            <strong>{tr('My Palette')} · {favorites.length}/12</strong>
+            <button type="button" className="ss-color-fav-add" disabled={favorites.length >= 12 || favorites.includes(color.toUpperCase())} onClick={addFavorite} aria-label={`${tr('Save color')} ${color}`}>+ {tr('Save color')}</button>
           </div>
           {favorites.length ? (
-            <div className="ss-color-items" aria-label="My saved colors">
+            <div className="ss-color-items" aria-label={tr('My saved colors')}>
               {favorites.map((favorite) => (
                 <div key={favorite} className="ss-color-favorite">
-                  <button type="button" className="ss-color-fav-pick" style={{ backgroundColor: favorite }} title={`Use ${favorite}`} aria-label={`Use saved color ${favorite}`} onClick={() => pick(favorite)} />
-                  <button type="button" className="ss-color-fav-remove" title={`Remove ${favorite}`} aria-label={`Remove saved color ${favorite}`} onClick={() => removeFavorite(favorite)}>×</button>
+                  <button type="button" className="ss-color-fav-pick" style={{ backgroundColor: favorite }} title={`Use ${favorite}`} aria-label={`${tr('Use saved color')} ${favorite}`} onClick={() => pick(favorite)} />
+                  <button type="button" className="ss-color-fav-remove" title={`Remove ${favorite}`} aria-label={`${tr('Remove saved color')} ${favorite}`} onClick={() => removeFavorite(favorite)}>×</button>
                 </div>
               ))}
             </div>
-          ) : <p className="ss-color-empty">Choose a color, then save it here.</p>}
+          ) : <p className="ss-color-empty">{tr('Choose a color, then save it here.')}</p>}
         </div>
         <div className="ss-color-group">
-          <div className="ss-color-group-head"><strong>Recent Colors</strong><button type="button" className="ss-color-fav-add" disabled={!recentColors.length} onClick={clearRecentColors}>Clear</button></div>
+          <div className="ss-color-group-head"><strong>{tr('Recent Colors')}</strong><button type="button" className="ss-color-fav-add" disabled={!recentColors.length} onClick={clearRecentColors}>{tr('Clear')}</button></div>
           {recentColors.length ? (
-            <div className="ss-color-items" aria-label="Recently used colors">
-              {recentColors.map((recent) => <button key={recent} type="button" className="ss-color-recent-pick" style={{ backgroundColor: recent }} title={`Use ${recent}`} aria-label={`Use recent color ${recent}`} onClick={() => pick(recent)} />)}
+            <div className="ss-color-items" aria-label={tr('Recently used colors')}>
+              {recentColors.map((recent) => <button key={recent} type="button" className="ss-color-recent-pick" style={{ backgroundColor: recent }} title={`Use ${recent}`} aria-label={`${tr('Use recent color')} ${recent}`} onClick={() => pick(recent)} />)}
             </div>
-          ) : <p className="ss-color-empty">Colors you pick will appear here.</p>}
+          ) : <p className="ss-color-empty">{tr('Colors you pick will appear here.')}</p>}
         </div>
       </div>
     </section>
