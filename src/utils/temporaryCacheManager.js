@@ -170,19 +170,18 @@ async function pruneTemporaryCacheNow() {
       (settings.ageDays > 0 && now - lastUsed >= settings.ageDays * DAY_MS))
   })
   let readerBytes = remaining.reduce((sum, entry) => sum + entry.cacheBytes, 0)
-  const budget = await getTotalBudget(readerBytes + mangaBytes, settings)
-    if (!(budget > mangaBytes)) {
-    console.warn('SHADOW_READER_CACHE_PRUNE_SKIPPED', { budget, mangaBytes })
-    return false
-  }
+  await workerMessage({ type: 'SHADOW_TEMP_CACHE_SETTINGS_SET', ...settings })
+  const updatedImage = await getMangaImageCacheStats()
+  if (!updatedImage?.ok) throw new Error('MANGA_CACHE_STATS_UNAVAILABLE')
+  const updatedMangaBytes = Math.max(0, Number(updatedImage.cachedBytes) || 0)
+  const budget = await getTotalBudget(readerBytes + updatedMangaBytes, settings)
   for (const entry of remaining.sort((a, b) =>
     Number(a.lastAccessedAt || a.savedAt || 0) - Number(b.lastAccessedAt || b.savedAt || 0))) {
-    if (readerBytes + mangaBytes <= budget) break
+    if (readerBytes + updatedMangaBytes <= budget) break
     await deleteReaderEpisodeCacheByKey(entry.key)
     readerBytes -= entry.cacheBytes
   }
-  await workerMessage({ type: 'SHADOW_TEMP_CACHE_SETTINGS_SET', ...settings })
-  return true
+  return readerBytes + updatedMangaBytes <= budget
 }
 
 export function pruneTemporaryCache() {
