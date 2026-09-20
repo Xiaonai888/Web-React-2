@@ -90,6 +90,38 @@ export default function StudioHeaderWorkspace({
           .shadow-studio .ss-header-actions .ss-header-icon{height:33px;font-size:0}
           .shadow-studio .ss-header-actions .ss-header-icon i{font-size:14px}
         }
+        .shadow-studio:has(.ss-layout) > .ss-chrome{display:grid!important;grid-template-columns:38px max-content minmax(90px,1fr) max-content;align-items:center;column-gap:5px;overflow:visible}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn{grid-column:1;min-width:34px!important;width:34px!important;height:34px!important;margin:0!important;padding:0!important;justify-content:center!important}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-logo-btn::after{content:none!important;display:none!important}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-menus{grid-column:2;display:flex;align-items:center;gap:1px;min-width:0;max-width:100%;white-space:nowrap}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-menus>.ss-menu-btn{flex:0 0 auto;height:34px;min-width:0;padding:0 8px;font-size:12px;font-weight:500;color:#e2e8ef}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-menus>.ss-menu-btn:disabled{opacity:.7;color:#bcc8d4}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-center{grid-column:3;position:relative;left:auto;top:auto;transform:none;display:flex;justify-content:center;align-items:center;width:100%;min-width:0;max-width:none;height:100%;z-index:4}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-project{max-width:100%;min-width:0}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-project>summary{max-width:100%;min-width:0;overflow:hidden}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-project>summary>strong{min-width:0;max-width:155px;overflow:hidden;text-overflow:ellipsis}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-actions{grid-column:4;display:flex;align-items:center;justify-content:flex-end;flex:none;gap:5px;margin-left:0;min-width:0;z-index:5}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-actions .ss-header-icon{width:32px;min-width:32px}
+        .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-actions .ss-header-state{max-width:140px}
+        @media(max-width:1460px) and (min-width:1101px){
+          .shadow-studio:has(.ss-layout) > .ss-chrome{grid-template-columns:36px max-content minmax(60px,1fr) max-content;column-gap:2px;padding:0 7px}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-menus>.ss-menu-btn{padding:0 6px;font-size:11px}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-actions{gap:3px}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-actions .ss-header-state{max-width:95px;padding:0 4px}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-actions button{padding:0 8px}
+        }
+        @media(max-width:1250px) and (min-width:1101px){
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-actions .ss-header-state{display:none}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-project>summary>span{display:none}
+        }
+        @media(max-width:1100px){
+          .shadow-studio:has(.ss-layout) > .ss-chrome{display:flex!important;gap:2px;overflow-x:auto;overflow-y:hidden}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-menus{flex:none;width:max-content;max-width:none;gap:0}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-center{position:relative;left:auto;top:auto;transform:none;flex:none;min-width:100px;max-width:170px;width:auto}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-actions{flex:none;margin-left:auto}
+          .shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-state{display:none}
+        }
+        @media(max-width:650px){.shadow-studio:has(.ss-layout) > .ss-chrome .ss-header-center{display:none}}
       `}</style>
       <div className="ss-header-center">
         <details className="ss-header-project">
@@ -97,10 +129,7 @@ export default function StudioHeaderWorkspace({
           <div className="ss-header-project-menu" role="group" aria-label={t[1]}>
             <span>{t[1]}</span>
             {documents.map((paper) => (
-              <button key={paper.id} type="button" aria-current={paper.id === activeDocumentId ? 'page' : undefined} disabled={busy || paper.id === activeDocumentId} onClick={(event) => {
-  event.currentTarget.closest('details')?.removeAttribute('open')
-  onSwitchPaper(paper.id)
-}}>{paper.name}</button>
+              <button key={paper.id} type="button" aria-current={paper.id === activeDocumentId ? 'page' : undefined} disabled={busy || paper.id === activeDocumentId} onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); onSwitchPaper(paper.id) }}>{paper.name}</button>
             ))}
           </div>
         </details>
