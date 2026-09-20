@@ -3,6 +3,8 @@ export const BRUSH_STYLES = [
   { id: 'pencil', label: 'Pencil', description: 'Fine, precise pencil line' },
   { id: 'marker', label: 'Marker', description: 'Angled chisel tip' },
   { id: 'airbrush', label: 'Airbrush', description: 'Soft, feathered spray tip' },
+  { id: 'gpen', label: 'G-Pen', description: 'Pressure-sensitive manga inking pen' },
+  { id: 'dryink', label: 'Dry Ink', description: 'Broken, textured dry ink strokes' },
 ]
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value))
@@ -14,9 +16,10 @@ function pressureFor(event, pointerType) {
 }
 
 function widthFor(stroke, pressure) {
+  const factor = stroke.style === 'gpen' ? 0.12 + 0.88 * pressure : 0.25 + 0.75 * pressure
   return stroke.pointerType === 'pen'
-    ? Math.max(0.1, stroke.size * (0.25 + 0.75 * pressure))
-    : stroke.size
+    ? Math.max(0.1, stroke.size * factor)
+    : stroke.style === 'gpen' ? stroke.size * 0.82 : stroke.size
 }
 
 function paintTip(ctx, stroke, x, y, pressure) {
@@ -47,6 +50,23 @@ function paintTip(ctx, stroke, x, y, pressure) {
     ctx.globalAlpha = stroke.opacity / 100 * 0.32
     ctx.fillStyle = gradient
     ctx.fillRect(left, top, right - left, bottom - top)
+    ctx.restore()
+    return
+  }
+  if (stroke.style === 'dryink') {
+    const count = Math.min(28, Math.max(4, Math.ceil(diameter * 0.7)))
+    ctx.save()
+    ctx.globalAlpha = stroke.opacity / 100 * 0.84
+    for (let index = 0; index < count; index += 1) {
+      const angle = index * 2.399963229728653 + x * 0.013 + y * 0.017
+      const ring = Math.sqrt((index + 0.5) / count)
+      const px = x + Math.cos(angle) * radius * ring
+      const py = y + Math.sin(angle) * radius * ring
+      const dot = Math.max(0.12, Math.min(2.2, diameter * (index % 4 === 0 ? 0.11 : 0.055)))
+      ctx.beginPath()
+      ctx.arc(px, py, dot, 0, Math.PI * 2)
+      ctx.fill()
+    }
     ctx.restore()
     return
   }
@@ -90,8 +110,8 @@ export function extendStudioStroke(ctx, stroke, position, event) {
   const distance = Math.hypot(position.x - stroke.last.x, position.y - stroke.last.y)
   if (distance < 0.001) return false
   const nextPressure = pressureFor(event, stroke.pointerType)
-  const stampMode = stroke.style === 'marker' || stroke.style === 'airbrush'
-  const spacing = Math.max(0.1, stroke.size * 0.12)
+  const stampMode = stroke.style === 'marker' || stroke.style === 'airbrush' || stroke.style === 'dryink'
+  const spacing = stroke.style === 'dryink' ? Math.max(0.8, stroke.size * 0.14) : Math.max(0.1, stroke.size * 0.12)
   const segments = stampMode
     ? Math.min(stroke.size > 512 ? 1 : 128, Math.max(1, Math.ceil(distance / spacing)))
     : stroke.pointerType === 'pen'
