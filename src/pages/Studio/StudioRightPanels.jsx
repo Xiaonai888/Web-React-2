@@ -1,6 +1,7 @@
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useState } from 'react'
+import StudioLayersChannelsPaths from './StudioLayersChannelsPaths'
 
 registerTranslationNamespace('studioPanels', {
   "en": {
@@ -172,7 +173,7 @@ const TABS = [
   { id: 'view', label: 'View', icon: 'fa-magnifying-glass' },
 ]
 
-export default function StudioRightPanels() {
+export default function StudioRightPanels({ canvasRef, paperId, revision, paper }) {
   const { t: tx } = useDisplayTranslation()
   const [active, setActive] = useState('color')
 
