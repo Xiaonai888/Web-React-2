@@ -6,7 +6,6 @@ import { createPortal } from 'react-dom'
 import StudioColorPanel from './StudioColorPanel'
 import StudioBrushSettings from './StudioBrushSettings'
 import StudioRightPanels from './StudioRightPanels'
-import StudioFloatingRightDock from './StudioFloatingRightDock'
 import StudioDetachablePanel from './StudioDetachablePanel'
 import StudioFloatingToolDock from './StudioFloatingToolDock'
 
@@ -292,7 +291,6 @@ export function StudioControlSidebar({
   )
 
     return (
-    <StudioFloatingRightDock>
       <aside className="ss-side" aria-label={tx('studioWorkspace.studioSidePanels')}>
         <style>{`
           .shadow-studio .ss-side>.ss-color-slot,.shadow-studio .ss-side>.ss-nav-slot{box-sizing:border-box;min-width:0;min-height:0}
@@ -356,7 +354,6 @@ export function StudioControlSidebar({
         <button type="button" className="ss-btn" onClick={onClear}>{labels.clear}</button>
       </section>
           </aside>
-    </StudioFloatingRightDock>
   )
 }
 
