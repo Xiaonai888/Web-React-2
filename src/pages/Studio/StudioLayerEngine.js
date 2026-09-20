@@ -60,6 +60,21 @@ export function addStudioLayer(stack, name = '') {
   return layer
 }
 
+export function duplicateStudioLayer(stack, id = stack.activeLayerId) {
+  const original = requireLayer(stack, id)
+  if (stack.layers[0].id === id) throw new Error('Background cannot be duplicated.')
+  if (stack.layers.length >= MAX_STUDIO_LAYERS) throw new Error('The layer limit has been reached.')
+  const duplicate = makeLayer(stack.width, stack.height, `${original.name} Copy`.slice(0, 80))
+  const context = duplicate.canvas.getContext('2d', { willReadFrequently: true })
+  if (!context) throw new Error('Could not copy the layer.')
+  context.drawImage(original.canvas, 0, 0)
+  duplicate.visible = original.visible
+  duplicate.opacity = original.opacity
+  stack.layers.splice(stack.layers.indexOf(original) + 1, 0, duplicate)
+  stack.activeLayerId = duplicate.id
+  return duplicate
+}
+
 export function updateStudioLayer(stack, id, patch) {
   const layer = requireLayer(stack, id)
   if (Object.hasOwn(patch, 'name')) {
