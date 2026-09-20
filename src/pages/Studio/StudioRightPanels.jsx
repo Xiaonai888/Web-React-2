@@ -2,7 +2,13 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useState } from 'react'
 import StudioLayersChannelsPaths from './StudioLayersChannelsPaths'
-import StudioMangaAssets from './StudioMangaAssets'
+import StudioAssetLibraryPanel from './StudioAssetLibraryPanel'
+import StudioDetachablePanel from './StudioDetachablePanel'
+import StudioGradientPanel from './StudioGradientPanel'
+import StudioScreentonePanel from './StudioScreentonePanel'
+import StudioSpeechBubblePanel from './StudioSpeechBubblePanel'
+import StudioComicPanelsPanel from './StudioComicPanelsPanel'
+import StudioMangaEffectsPanel from './StudioMangaEffectsPanel'
 
 registerTranslationNamespace('studioPanels', {
   "en": {
@@ -174,9 +180,20 @@ const TABS = [
   { id: 'view', label: 'View', icon: 'fa-magnifying-glass' },
 ]
 
-export default function StudioRightPanels({ canvasRef, paperId, revision, paper, onPlaceAsset, layers, activeLayerId, onLayerAction, layerDisabled }) {
+export default function StudioRightPanels({ canvasRef, paperId, revision, paper, onPlaceAsset, layers, activeLayerId, onLayerAction, layerDisabled, color, onFeatureApply }) {
   const { t: tx } = useDisplayTranslation()
   const [active, setActive] = useState('color')
+  const [assetMode, setAssetMode] = useState('library')
+  const choices = [
+    ['library', 'Library', 'បណ្ណាល័យ'],
+    ['gradient', 'Gradient', 'ពណ៌ជម្រាល'],
+    ['screentone', 'Screentone', 'ស្គ្រីនតូន'],
+    ['bubble', 'Speech bubble', 'ពពុះសន្ទនា'],
+    ['panels', 'Comic panels', 'ស៊ុមរឿង'],
+    ['effects', 'Manga effects', 'បែបផែន'],
+  ]
+  const canApply = !layerDisabled && typeof onFeatureApply === 'function'
+  const apply = (name) => canApply ? (options) => onFeatureApply(name, options) : undefined
 
   return (
     <section className="ss-right-switcher" data-active={active} aria-label={tx('studioPanels.workspacePanels')}>
@@ -213,6 +230,11 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper,
           .shadow-studio .ss-panel-actions{display:flex;justify-content:flex-end;gap:5px;margin-top:10px;border-top:1px solid #455463;padding-top:9px}
           .shadow-studio .ss-panel-actions button{width:28px;height:27px;border:1px solid #4c5d6f;border-radius:4px;background:#344351;color:#9daebe;cursor:not-allowed}
           .shadow-studio .ss-panel-hint{margin:10px 0 0;color:#b2c0ce;font-size:10px;line-height:1.5}
+          .shadow-studio .ss-asset-mode-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin-bottom:10px}
+          .shadow-studio .ss-asset-mode-tabs button{min-width:0;min-height:27px;border:1px solid #576d82;border-radius:4px;padding:4px 2px;background:#304152;color:#dce8f3;font:inherit;font-size:10px;cursor:pointer}
+          .shadow-studio .ss-asset-mode-tabs button[aria-pressed='true']{background:#466a8e;border-color:#9bcaff;color:#fff}
+          .shadow-studio .ss-independent-panel .ss-lcp-tabs{margin:0 0 10px}
+          .shadow-studio .ss-independent-panel .ss-independent-content{padding:8px;box-sizing:border-box}
           .shadow-studio .ss-asset-placeholder{display:grid;justify-items:center;gap:9px;padding:26px 9px;border:1px dashed #566779;border-radius:6px;color:#aabccd;text-align:center}
           .shadow-studio .ss-asset-placeholder i{font-size:24px;color:#8ca7c2}
           .shadow-studio .ss-asset-placeholder strong{font-size:11px;color:#dce6f0}
@@ -254,24 +276,34 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper,
         ))}
       </div>
       <div className="ss-right-panel" data-panel="layers" aria-label={tx('studioPanels.layersOverview')}>
-  <StudioLayersChannelsPaths
-    canvasRef={canvasRef}
-    paperId={paperId}
-    revision={revision}
-    paper={paper}
-    layers={layers}
-    activeLayerId={activeLayerId}
-    onLayerAction={onLayerAction}
-    disabled={layerDisabled}
-  />
-</div>
+        <StudioDetachablePanel id="studio-layers" title={tx('studioPanels.tabs.layers')} width={320}>
+          <StudioLayersChannelsPaths
+            canvasRef={canvasRef}
+            paperId={paperId}
+            revision={revision}
+            paper={paper}
+            layers={layers}
+            activeLayerId={activeLayerId}
+            onLayerAction={onLayerAction}
+            disabled={layerDisabled}
+          />
+        </StudioDetachablePanel>
+      </div>
       <div className="ss-right-panel" data-panel="assets" aria-label={tx('studioPanels.assetsOverview')}>
-  <div className="ss-right-panel-head">
-    <strong>{tx('studioPanels.tabs.assets')}</strong>
-    <span>{tx('studioPanels.library')}</span>
-  </div>
-  <StudioMangaAssets onInsert={onPlaceAsset} />
-</div>
+        <StudioDetachablePanel id="studio-assets" title={tx('studioPanels.tabs.assets')} width={380}>
+          <div className="ss-asset-mode-tabs" role="group" aria-label={tx('studioPanels.tabs.assets')}>
+            {choices.map(([id, en, km]) => (
+              <button key={id} type="button" aria-pressed={assetMode === id} onClick={() => setAssetMode(id)}>{tx('studioPanels.tabs.assets') === 'ធនធាន' ? km : en}</button>
+            ))}
+          </div>
+          {assetMode === 'library' ? <StudioAssetLibraryPanel onInsert={onPlaceAsset} disabled={layerDisabled} /> : null}
+          {assetMode === 'gradient' ? <StudioGradientPanel color={color} onApply={apply('gradient')} disabled={layerDisabled} /> : null}
+          {assetMode === 'screentone' ? <StudioScreentonePanel onApply={apply('screentone')} disabled={layerDisabled} /> : null}
+          {assetMode === 'bubble' ? <StudioSpeechBubblePanel onApply={apply('bubble')} disabled={layerDisabled} /> : null}
+          {assetMode === 'panels' ? <StudioComicPanelsPanel onApply={apply('panels')} disabled={layerDisabled} /> : null}
+          {assetMode === 'effects' ? <StudioMangaEffectsPanel onApply={apply('effects')} disabled={layerDisabled} /> : null}
+        </StudioDetachablePanel>
+      </div>
     </section>
   )
 }
