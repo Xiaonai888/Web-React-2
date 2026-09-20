@@ -7,21 +7,21 @@ const DAY_MS = 24 * 60 * 60 * 1000
 const CACHE_POLICIES = {
   novel: {
     ttlMs: 30 * DAY_MS,
-    maxEntries: 100,
+    maxEntries: 10000,
   },
   chat_story: {
     ttlMs: 30 * DAY_MS,
-    maxEntries: 50,
+    maxEntries: 10000,
   },
   manga: {
     ttlMs: 365 * DAY_MS,
-    maxEntries: 30,
+    maxEntries: 10000,
   },
 }
 
 const DEFAULT_POLICY = {
   ttlMs: 30 * DAY_MS,
-  maxEntries: 50,
+  maxEntries: 10000,
 }
 
 const memoryFallback = new Map()
