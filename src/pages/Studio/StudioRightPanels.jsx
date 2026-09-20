@@ -253,21 +253,13 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper 
         ))}
       </div>
       <div className="ss-right-panel" data-panel="layers" aria-label={tx('studioPanels.layersOverview')}>
-          <div className="ss-right-panel-head"><strong>{tx('studioPanels.tabs.layers')}</strong><span>{tx('studioPanels.canvasMode')}</span></div>
-          <div className="ss-layer-options">
-            <label>{tx('studioPanels.blendMode')}<select disabled aria-label={tx('studioPanels.blendMode')}><option>{tx('studioPanels.normal')}</option></select></label>
-            <label>{tx('studioPanels.opacity')}<input disabled aria-label={tx('studioPanels.opacity')} value="100%" readOnly /></label>
-          </div>
-          <div className="ss-layer-row">
-            <div className="ss-layer-thumb"><i className="fa-regular fa-image" aria-hidden="true" /></div>
-            <div className="ss-layer-name"><strong>{tx('studioPanels.canvasBitmap')}</strong><small>{tx('studioPanels.singleCanvas')}</small></div>
-          </div>
-          <div className="ss-panel-actions" aria-label={tx('studioPanels.futureLayers')}>
-            <button type="button" disabled title={tx('studioPanels.addLayerTitle')} aria-label={tx('studioPanels.addLayer')}><i className="fa-solid fa-plus" /></button>
-            <button type="button" disabled title={tx('studioPanels.addGroupTitle')} aria-label={tx('studioPanels.addGroup')}><i className="fa-regular fa-folder" /></button>
-            <button type="button" disabled title={tx('studioPanels.addMaskTitle')} aria-label={tx('studioPanels.addMask')}><i className="fa-regular fa-square" /></button>
-            <button type="button" disabled title={tx('studioPanels.deleteLayerTitle')} aria-label={tx('studioPanels.deleteLayer')}><i className="fa-regular fa-trash-can" /></button>
-          </div>
+  <StudioLayersChannelsPaths
+    canvasRef={canvasRef}
+    paperId={paperId}
+    revision={revision}
+    paper={paper}
+  />
+</div>
           <p className="ss-panel-hint">{tx('studioPanels.layerHint')}</p>
         </div>
       <div className="ss-right-panel" data-panel="assets" aria-label={tx('studioPanels.assetsOverview')}>
