@@ -1596,8 +1596,8 @@ self.addEventListener(
             )
         )
 
-        await pruneMangaCache()
         await self.clients.claim()
+        await pruneMangaCache().catch(() => {})
       })()
     )
   }
