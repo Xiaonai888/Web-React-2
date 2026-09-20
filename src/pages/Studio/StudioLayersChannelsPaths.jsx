@@ -24,6 +24,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const t = WORDS[language] || WORDS.en
   const a = ACTIONS[language] || ACTIONS.en
   const [active, setActive] = useState('layers')
+  const duplicateLabel = ({ en: 'Duplicate layer', km: 'ចម្លងស្រទាប់', zh: '复制图层', ja: 'レイヤーを複製', ko: '레이어 복제' })[language] || 'Duplicate layer' 
   const [error, setError] = useState(false)
   const previewRefs = useRef({})
   const layerRefs = useRef({})
@@ -120,6 +121,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
       {active === 'layers' ? <>
         <div className="ss-lcp-tools">
           <button className="ss-lcp-action" type="button" title={a[0]} aria-label={a[0]} disabled={blocked || layers.length >= 8} onClick={() => onLayerAction('add')}><i className="fa-solid fa-plus" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={duplicateLabel} aria-label={duplicateLabel} disabled={blocked || !selected || layers.indexOf(selected) === 0 || layers.length >= 8} onClick={() => onLayerAction('duplicate', activeLayerId)}><i className="fa-regular fa-copy" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[6]} aria-label={a[6]} disabled={blocked || !selected || layers.indexOf(selected) === layers.length - 1} onClick={() => onLayerAction('move', activeLayerId, 1)}><i className="fa-solid fa-arrow-up" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || layers.indexOf(selected) <= 1} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => selected && rename(selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
