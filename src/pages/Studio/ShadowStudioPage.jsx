@@ -978,7 +978,9 @@ export default function ShadowStudioPage() {
     const canvas = canvasRef.current
     if (!work || !canvas || !workspaceStarted) return
 
-    const target = clampZoom(nextZoom)
+    let target = clampZoom(nextZoom)
+    if (target === zoom && nextZoom > zoom) target = clampZoom(zoom + 1)
+    if (target === zoom && nextZoom < zoom) target = clampZoom(zoom - 1)
     if (target === zoom) return
 
     const canvasRect = canvas.getBoundingClientRect()
