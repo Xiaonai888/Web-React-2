@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import StudioColorPanel from './StudioColorPanel'
 import StudioBrushSettings from './StudioBrushSettings'
 import StudioRightPanels from './StudioRightPanels'
-import StudioToolPalette from './StudioToolPalette'
+import StudioFloatingToolDock from './StudioFloatingToolDock'
 
 registerTranslationNamespace('studioWorkspace', {
   "en": {
@@ -225,7 +225,7 @@ export function StudioToolRail({ tool, onToolChange, labels }) {
           .shadow-studio .ss-brush-dock{display:none}
         }
       `}</style>
-      <StudioToolPalette tool={tool} onToolChange={onToolChange} labels={labels} />
+      <StudioFloatingToolDock tool={tool} onToolChange={onToolChange} labels={labels} />
       <aside className="ss-brush-dock" id="ss-brush-dock-root" aria-label={tx('studioWorkspace.brushSettingsPanel')}>
         <div className="ss-brush-dock-title"><span>{tx('studioWorkspace.brush')}</span><small>{tx('studioWorkspace.settingsPresets')}</small></div>
       </aside>
