@@ -16,9 +16,7 @@ import { installTemporaryCacheManagement } from './utils/temporaryCacheManager'
 installApiAuthFetch()
 installPaidContentRequirementFetch()
 installHomePublicCacheFetch()
-if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-  installReaderEpisodeCacheFetch()
-}
+installReaderEpisodeCacheFetch()
 installReaderPresenceTracking()
 installMangaImageCacheControl()
 installTemporaryCacheManagement()
