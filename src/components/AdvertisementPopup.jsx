@@ -173,6 +173,7 @@ export default function AdvertisementPopup({
 
   useEffect(() => {
     let cancelled = false
+    const controller = new AbortController()
 
     async function loadAdvertisement() {
       const debug = getSearchFlag('addebug') || getSearchFlag('adtest')
@@ -204,8 +205,12 @@ export default function AdvertisementPopup({
 
         if (debug) setDebugMessage(`Loading: ${url}`)
 
-        const response = await fetch(url, { cache: 'no-store' })
+        const response = await fetch(url, {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
         const data = await response.json().catch(() => ({}))
+        if (cancelled) return
 
         if (debug) {
           console.log('Advertisement response:', data)
@@ -242,6 +247,7 @@ export default function AdvertisementPopup({
         setSkipCountdown(waitSeconds)
         markShown(nextAdvertisement)
       } catch (error) {
+        if (cancelled || error?.name === 'AbortError') return
         console.error('Advertisement load error:', error)
 
         if (debug) setDebugMessage(error.message || 'Advertisement load error')
@@ -253,6 +259,7 @@ export default function AdvertisementPopup({
 
     return () => {
       cancelled = true
+      controller.abort()
     }
   }, [placement, advertisementOverride])
 
