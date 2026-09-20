@@ -180,7 +180,7 @@ const TABS = [
   { id: 'view', label: 'View', icon: 'fa-magnifying-glass' },
 ]
 
-export default function StudioRightPanels({ canvasRef, paperId, revision, paper, onPlaceAsset, layers, activeLayerId, onLayerAction, layerDisabled, color, onFeatureApply }) {
+export default function StudioRightPanels({ canvasRef, paperId, revision, paper, onPlaceAsset, layers, activeLayerId, groups = [], onLayerAction, layerDisabled, color, onFeatureApply }) {
   const { t: tx } = useDisplayTranslation()
   const [active, setActive] = useState('color')
   const [assetMode, setAssetMode] = useState('library')
@@ -284,6 +284,7 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper,
             paper={paper}
             layers={layers}
             activeLayerId={activeLayerId}
+            groups={groups}
             onLayerAction={onLayerAction}
             disabled={layerDisabled}
           />
