@@ -139,11 +139,11 @@ async function getTotalBudget(totalBytes, preferences) {
   const selected = preferences.mode === 'manual' ? preferences.limitGb * GB : 5 * GB
   try {
     const { quota, usage } = await navigator.storage.estimate()
-    if (!(quota > 0)) return selected
-    const reserve = Math.max(GB, Math.floor(quota * 0.15))
+    if (!(Number.isFinite(quota) && quota > 0 && Number.isFinite(usage) && usage >= 0)) return selected
+    const reserve = Math.floor(quota * 0.15)
     const available = Math.max(0, quota - usage - reserve)
     const budget = Math.max(0, Math.min(selected, Math.floor(quota * 0.2), totalBytes + available))
-    return usage / quota >= 0.85 || available < GB ? Math.min(GB, budget) : budget
+    return usage / quota >= 0.85 || available <= 0 ? Math.min(GB, budget) : budget
   } catch { return selected }
 }
 
