@@ -1,4 +1,79 @@
 import { STUDIO_PRESETS } from './StudioNewFileDialog'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('studioHome', {
+  "en": {
+    "openProject": "Open Project",
+    "importImage": "Import Image as Paper",
+    "resume": "Continue Workspace",
+    "checking": "Checking for locally autosaved work...",
+    "localRecovery": "Local recovery",
+    "recoverHeading": "Recover your last workspace",
+    "recoveryDescription": "{{count}} paper(s) · Autosaved {{time}}. Restore them before creating or opening another project.",
+    "restoring": "Restoring...",
+    "restore": "Restore Workspace",
+    "discard": "Discard Recovery",
+    "projectFiles": "Project files",
+    "projectInfo": "Save Project downloads a .shadowstudio file to your device. Open Project reopens it later. Local autosave is only a temporary browser recovery copy."
+  },
+  "km": {
+    "openProject": "បើកគម្រោង",
+    "importImage": "នាំចូលរូបភាពជាក្រដាស",
+    "resume": "បន្តការងារ",
+    "checking": "កំពុងពិនិត្យការងារដែលបានរក្សាទុកស្វ័យប្រវត្តិ...",
+    "localRecovery": "ការស្ដារទិន្នន័យក្នុងឧបករណ៍",
+    "recoverHeading": "ស្ដារការងារចុងក្រោយ",
+    "recoveryDescription": "មានក្រដាស {{count}} · បានរក្សាទុកស្វ័យប្រវត្តិនៅ {{time}}។ សូមស្ដារវាមុនបង្កើត ឬបើកគម្រោងផ្សេង។",
+    "restoring": "កំពុងស្ដារ...",
+    "restore": "ស្ដារការងារ",
+    "discard": "បោះបង់ទិន្នន័យស្ដារ",
+    "projectFiles": "ឯកសារគម្រោង",
+    "projectInfo": "Save Project ទាញយកឯកសារ .shadowstudio ទៅឧបករណ៍របស់អ្នក។ អាចប្រើ Open Project ដើម្បីបើកវាម្ដងទៀត។ ការរក្សាទុកស្វ័យប្រវត្តិក្នុង Browser គឺសម្រាប់ស្ដារជាបណ្ដោះអាសន្នប៉ុណ្ណោះ។"
+  },
+  "zh": {
+    "openProject": "打开项目",
+    "importImage": "将图像导入为画布",
+    "resume": "继续编辑",
+    "checking": "正在检查本地自动保存的作品...",
+    "localRecovery": "本地恢复",
+    "recoverHeading": "恢复上次的工作区",
+    "recoveryDescription": "{{count}} 个画布 · 于 {{time}} 自动保存。请先恢复，再创建或打开其他项目。",
+    "restoring": "正在恢复...",
+    "restore": "恢复工作区",
+    "discard": "丢弃恢复数据",
+    "projectFiles": "项目文件",
+    "projectInfo": "Save Project 会将 .shadowstudio 文件下载到设备。以后可用 Open Project 重新打开。本地自动保存仅用于浏览器中的临时恢复。"
+  },
+  "ja": {
+    "openProject": "プロジェクトを開く",
+    "importImage": "画像をキャンバスとして読み込む",
+    "resume": "作業を続ける",
+    "checking": "ローカルの自動保存データを確認中...",
+    "localRecovery": "ローカル復元",
+    "recoverHeading": "前回の作業を復元",
+    "recoveryDescription": "キャンバス {{count}} 件 · {{time}} に自動保存。ほかのプロジェクトを作成または開く前に復元してください。",
+    "restoring": "復元中...",
+    "restore": "作業を復元",
+    "discard": "復元データを破棄",
+    "projectFiles": "プロジェクトファイル",
+    "projectInfo": "Save Project で .shadowstudio ファイルをデバイスにダウンロードできます。あとで Open Project から開けます。ローカル自動保存はブラウザでの一時的な復元用です。"
+  },
+  "ko": {
+    "openProject": "프로젝트 열기",
+    "importImage": "이미지를 캔버스로 가져오기",
+    "resume": "작업 계속하기",
+    "checking": "로컬 자동 저장 작업 확인 중...",
+    "localRecovery": "로컬 복구",
+    "recoverHeading": "마지막 작업 공간 복구",
+    "recoveryDescription": "캔버스 {{count}}개 · {{time}}에 자동 저장됨. 다른 프로젝트를 만들거나 열기 전에 복구하세요.",
+    "restoring": "복구 중...",
+    "restore": "작업 공간 복구",
+    "discard": "복구 데이터 삭제",
+    "projectFiles": "프로젝트 파일",
+    "projectInfo": "Save Project는 .shadowstudio 파일을 기기에 다운로드합니다. 나중에 Open Project로 다시 열 수 있습니다. 로컬 자동 저장은 브라우저의 임시 복구용입니다."
+  }
+})
 
 export default function StudioHome({
   documents,
@@ -21,6 +96,7 @@ export default function StudioHome({
   onDiscardRecovery,
   labels,
 }) {
+  const { t: tx } = useDisplayTranslation()
   const recoveryPending = recoveryBooting || Boolean(recoveryEntry) || recoveryBusy
   const busy = projectBusy || paperLoading || newFileOpen || exportOpen
   const canOpen = !recoveryPending && !busy
@@ -58,16 +134,10 @@ export default function StudioHome({
           <button type="button" className="ss-home-primary" disabled={!canNew} onClick={() => onNewFile('basic')}>
             + {labels.newPaper}
           </button>
-          <button type="button" className="ss-home-link" disabled={!canOpen} onClick={onOpenProject}>
-            Open Project
-          </button>
-          <button type="button" className="ss-home-link" disabled={!canImport} onClick={onImportImage}>
-            Import Image as Paper
-          </button>
+          <button type="button" className="ss-home-link" disabled={!canOpen} onClick={onOpenProject}>{tx('studioHome.openProject')}</button>
+          <button type="button" className="ss-home-link" disabled={!canImport} onClick={onImportImage}>{tx('studioHome.importImage')}</button>
           {documents.length > 0 ? (
-            <button type="button" className="ss-home-link" disabled={!canResume} onClick={onResume}>
-              Continue Workspace
-            </button>
+            <button type="button" className="ss-home-link" disabled={!canResume} onClick={onResume}>{tx('studioHome.resume')}</button>
           ) : null}
           <button type="button" className="ss-home-link" onClick={onExit}>
             {labels.back}
@@ -91,30 +161,25 @@ export default function StudioHome({
             ))}
           </div>
           {recoveryBooting ? (
-            <div className="ss-project-message" role="status">Checking for locally autosaved work...</div>
+            <div className="ss-project-message" role="status">{tx('studioHome.checking')}</div>
           ) : null}
           {recoveryEntry ? (
-            <section className="ss-recovery-card" aria-label="Local recovery">
-              <h2>Recover your last workspace</h2>
+            <section className="ss-recovery-card" aria-label={tx('studioHome.localRecovery')}>
+              <h2>{tx('studioHome.recoverHeading')}</h2>
               <p>
-                {recoveryEntry.documents.length} paper(s) · Autosaved{' '}
-                {new Date(recoveryEntry.savedAt).toLocaleString()}. Restore them before creating or opening another project.
+                {tx('studioHome.recoveryDescription', { count: recoveryEntry.documents.length, time: new Date(recoveryEntry.savedAt).toLocaleString() })}
               </p>
               <div className="ss-recovery-actions">
                 <button type="button" className="ss-btn primary" disabled={recoveryBusy} onClick={onRecover}>
-                  {recoveryBusy ? 'Restoring...' : 'Restore Workspace'}
+                  {recoveryBusy ? tx('studioHome.restoring') : tx('studioHome.restore')}
                 </button>
-                <button type="button" className="ss-btn" disabled={recoveryBusy} onClick={onDiscardRecovery}>
-                  Discard Recovery
-                </button>
+                <button type="button" className="ss-btn" disabled={recoveryBusy} onClick={onDiscardRecovery}>{tx('studioHome.discard')}</button>
               </div>
             </section>
           ) : null}
           <section className="ss-recent">
-            <h2>Project files</h2>
-            <div className="ss-empty">
-              Save Project downloads a .shadowstudio file to your device. Open Project reopens it later. Local autosave is only a temporary browser recovery copy.
-            </div>
+            <h2>{tx('studioHome.projectFiles')}</h2>
+            <div className="ss-empty">{tx('studioHome.projectInfo')}</div>
             {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
             {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
           </section>
