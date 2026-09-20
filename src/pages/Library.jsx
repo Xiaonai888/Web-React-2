@@ -803,6 +803,7 @@ function ContextCard({ item, tab }) {
 
 export default function Library() {
   const location = useLocation()
+  const meLibrarySource = new URLSearchParams(location.search).get('source') === 'me'
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState('Subscribed')
@@ -1049,7 +1050,7 @@ export default function Library() {
 
               <button
                 type="button"
-                onClick={activeTab === 'Subscribed' ? () => navigate('/library/manage') : handleAction}
+                onClick={activeTab === 'Subscribed' ? () => navigate(meLibrarySource ? '/library/manage?source=me' : '/library/manage') : handleAction}
                 className="shrink-0 pb-3 text-[13px] font-semibold transition"
                 style={{ color: 'var(--shadow-text-secondary)' }}
               >
@@ -1199,7 +1200,7 @@ export default function Library() {
         ) : null}
       </div>
 
-      {new URLSearchParams(location.search).get('source') !== 'me' && <ReaderProfileFooter />}
+      {!meLibrarySource && <ReaderProfileFooter />}
     </>
   )
 }
