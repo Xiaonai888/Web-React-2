@@ -5988,7 +5988,7 @@ if (episodeData.code === 'ADULT_RESTRICTED' || episodesData.code === 'ADULT_REST
 }
 
 if (!episodesResponse.ok || episodesData.ok === false) {
-          throw new Error(episodesData.message || t('readerPage.episodeListNotFound'))
+          throw Object.assign(new Error(episodesData.message || t('readerPage.episodeListNotFound')), { status: episodesResponse.status, code: episodesData.code })
   
         }
 
@@ -6033,7 +6033,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         }
 
         if (!episodeResponse.ok || episodeData.ok === false) {
-          throw new Error(episodeData.message || t('readerPage.episodeNotFound'))
+          throw Object.assign(new Error(episodeData.message || t('readerPage.episodeNotFound')), { status: episodeResponse.status, code: episodeData.code })
           
         }
 
