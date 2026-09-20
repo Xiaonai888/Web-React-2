@@ -1567,17 +1567,10 @@ self.addEventListener(
   }
 )
 
-self.addEventListener(
-  'install',
-  (event) => {
-    event.waitUntil(
-      (async () => {
-        await precacheSplashAssets()
-        await self.skipWaiting()
-      })()
-    )
-  }
-)
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting())
+  precacheSplashAssets().catch(() => {})
+})
 
 self.addEventListener(
   'activate',
