@@ -1627,6 +1627,67 @@ self.addEventListener(
       return
     }
 
+    if (request.mode === 'navigate' && url.origin === self.location.origin) {
+  event.respondWith((async () => {
+    const selected = (request.headers.get('Accept-Language') || self.navigator.language || 'en').toLowerCase()
+    const language = ['en', 'km', 'zh', 'ja', 'ko', 'th'].find((item) => selected === item || selected.startsWith(`${item}-`)) || 'en'
+    const messages = {
+      en: {
+        server: ['Shadow is temporarily unavailable', 'Shadow returned a server error (HTTP {status}). This is a Shadow service issue, not a problem with your device.', 'Please try again later. If the problem continues, contact Shadow Support.'],
+        offline: ['Your device reports that it is offline', 'Your device currently reports no internet connection. Shadow cannot load the page.', 'Check Wi-Fi or mobile data, then try again.'],
+        unknown: ['Shadow could not be reached', 'The page request failed, but we cannot yet tell whether the cause is your connection or Shadow. Your account and age have not been identified as the cause.', 'Try another website to check your connection. If it works, contact Shadow Support with the error code below.'],
+        retry: 'Try again', owner: 'Diagnosis', code: 'Error code', serverOwner: 'Shadow service', offlineOwner: 'Device connection reported offline', unknownOwner: 'Not yet determined',
+      },
+      km: {
+        server: ['Shadow មិនអាចដំណើរការបានបណ្តោះអាសន្ន', 'ម៉ាស៊ីនមេ Shadow បានឆ្លើយតបដោយកំហុស (HTTP {status})។ នេះជាបញ្ហាខាងសេវាកម្ម Shadow មិនមែនឧបករណ៍របស់អ្នកទេ។', 'សូមសាកល្បងពេលក្រោយ។ បើនៅមានបញ្ហា សូមទាក់ទងក្រុមជំនួយ Shadow។'],
+        offline: ['ឧបករណ៍របស់អ្នកបង្ហាញថាគ្មានអ៊ីនធឺណិត', 'ឧបករណ៍រាយការណ៍ថាមិនមានការតភ្ជាប់អ៊ីនធឺណិត ដូច្នេះមិនអាចផ្ទុកទំព័រ Shadow បាន។', 'សូមពិនិត្យ Wi-Fi ឬទិន្នន័យទូរសព្ទ រួចព្យាយាមម្តងទៀត។'],
+        unknown: ['មិនអាចភ្ជាប់ទៅ Shadow បាន', 'ការផ្ទុកទំព័របរាជ័យ ប៉ុន្តែមិនទាន់អាចបញ្ជាក់ថាបញ្ហាមកពីអ៊ីនធឺណិត ឬ Shadow បានទេ។ មិនមានភស្តុតាងថាបណ្តាលពីគណនី ឬអាយុរបស់អ្នកទេ។', 'សូមសាកល្បងបើកគេហទំព័រផ្សេង។ បើអាចបើកបាន សូមផ្ញើលេខកូដខាងក្រោមទៅក្រុមជំនួយ Shadow។'],
+        retry: 'ព្យាយាមម្តងទៀត', owner: 'លទ្ធផលពិនិត្យ', code: 'លេខកូដកំហុស', serverOwner: 'សេវាកម្ម Shadow', offlineOwner: 'ឧបករណ៍រាយការណ៍ថាគ្មានអ៊ីនធឺណិត', unknownOwner: 'មិនទាន់អាចកំណត់បាន',
+      },
+      zh: {
+        server: ['Shadow 服务暂时不可用', 'Shadow 服务器返回错误（HTTP {status}）。这是 Shadow 服务端的问题，并非您的设备故障。', '请稍后重试。如果问题持续，请联系 Shadow 客服。'],
+        offline: ['您的设备报告处于离线状态', '您的设备当前报告没有互联网连接，因此无法加载 Shadow 页面。', '请检查 Wi-Fi 或移动网络，然后重试。'],
+        unknown: ['无法连接 Shadow', '页面请求失败，但目前无法确认问题来自您的网络还是 Shadow。没有证据表明与您的账户或年龄有关。', '请尝试访问其他网站。如果其他网站正常，请将下方错误代码发送给 Shadow 客服。'],
+        retry: '重试', owner: '诊断结果', code: '错误代码', serverOwner: 'Shadow 服务端', offlineOwner: '设备报告离线', unknownOwner: '暂时无法确定',
+      },
+      ja: {
+        server: ['Shadow を一時的に利用できません', 'Shadow のサーバーがエラーを返しました（HTTP {status}）。Shadow 側の問題であり、お使いの端末の問題ではありません。', 'しばらくしてから再度お試しください。問題が続く場合は Shadow サポートにご連絡ください。'],
+        offline: ['端末がオフラインと報告しています', '端末でインターネット接続がないと報告されているため、Shadow のページを読み込めません。', 'Wi-Fi またはモバイルデータ通信を確認して、再度お試しください。'],
+        unknown: ['Shadow に接続できません', 'ページの読み込みに失敗しましたが、通信環境と Shadow のどちらが原因かはまだ特定できません。アカウントや年齢が原因という証拠はありません。', '別のサイトが開けるか確認してください。開ける場合は下記のエラーコードを Shadow サポートへお知らせください。'],
+        retry: '再試行', owner: '診断結果', code: 'エラーコード', serverOwner: 'Shadow のサービス', offlineOwner: '端末がオフラインと報告', unknownOwner: '原因未特定',
+      },
+      ko: {
+        server: ['Shadow 서비스를 일시적으로 이용할 수 없습니다', 'Shadow 서버에서 오류를 반환했습니다(HTTP {status}). 기기 문제가 아닌 Shadow 서비스 측 문제입니다.', '잠시 후 다시 시도해 주세요. 문제가 계속되면 Shadow 고객지원에 문의해 주세요.'],
+        offline: ['기기가 오프라인 상태라고 보고합니다', '현재 기기에서 인터넷 연결이 없다고 보고하여 Shadow 페이지를 불러올 수 없습니다.', 'Wi-Fi 또는 모바일 데이터를 확인한 후 다시 시도해 주세요.'],
+        unknown: ['Shadow에 연결할 수 없습니다', '페이지 요청에 실패했지만 인터넷 연결과 Shadow 중 어느 쪽이 원인인지 아직 확인되지 않았습니다. 계정이나 나이 때문이라는 증거는 없습니다.', '다른 웹사이트가 열리는지 확인해 주세요. 정상이라면 아래 오류 코드를 Shadow 고객지원에 전달해 주세요.'],
+        retry: '다시 시도', owner: '진단 결과', code: '오류 코드', serverOwner: 'Shadow 서비스', offlineOwner: '기기가 오프라인이라고 보고', unknownOwner: '원인 미확인',
+      },
+      th: {
+        server: ['Shadow ไม่พร้อมให้บริการชั่วคราว', 'เซิร์ฟเวอร์ Shadow ตอบกลับด้วยข้อผิดพลาด (HTTP {status}) ปัญหานี้เกิดจากบริการ Shadow ไม่ใช่อุปกรณ์ของคุณ', 'โปรดลองใหม่ภายหลัง หากยังมีปัญหา โปรดติดต่อฝ่ายสนับสนุน Shadow'],
+        offline: ['อุปกรณ์รายงานว่าไม่ได้เชื่อมต่ออินเทอร์เน็ต', 'อุปกรณ์ของคุณรายงานว่าไม่มีการเชื่อมต่ออินเทอร์เน็ต จึงไม่สามารถโหลดหน้า Shadow ได้', 'โปรดตรวจสอบ Wi-Fi หรือข้อมูลมือถือ แล้วลองอีกครั้ง'],
+        unknown: ['ไม่สามารถเชื่อมต่อ Shadow ได้', 'การโหลดหน้าล้มเหลว แต่ยังระบุไม่ได้ว่าเกิดจากการเชื่อมต่อของคุณหรือ Shadow และไม่มีหลักฐานว่าเกิดจากบัญชีหรืออายุของคุณ', 'ลองเปิดเว็บไซต์อื่นเพื่อตรวจสอบการเชื่อมต่อ หากเปิดได้ โปรดส่งรหัสข้อผิดพลาดด้านล่างให้ฝ่ายสนับสนุน Shadow'],
+        retry: 'ลองอีกครั้ง', owner: 'ผลการตรวจสอบ', code: 'รหัสข้อผิดพลาด', serverOwner: 'บริการ Shadow', offlineOwner: 'อุปกรณ์รายงานว่าออฟไลน์', unknownOwner: 'ยังไม่ทราบสาเหตุ',
+      },
+    }
+    const copy = messages[language]
+    const renderFailure = (type, status = 0) => {
+      const [title, description, action] = copy[type]
+      const code = type === 'server' ? `SHADOW-HTTP-${status}` : type === 'offline' ? 'DEVICE-OFFLINE' : 'CONNECTION-UNDETERMINED'
+      const owner = type === 'server' ? copy.serverOwner : type === 'offline' ? copy.offlineOwner : copy.unknownOwner
+      const html = `<!doctype html><html lang="${language}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Shadow · ${title}</title><style>body{font:16px/1.6 system-ui,-apple-system,sans-serif;background:#fff;color:#25212a;margin:0;padding:24px}main{max-width:520px;margin:12vh auto;border:1px solid #e6e1eb;border-radius:20px;padding:24px}h1{font-size:22px;line-height:1.35}p{overflow-wrap:anywhere}small{color:#6b6472}button{background:#6741b8;color:white;border:0;border-radius:12px;padding:12px 20px;font:inherit;cursor:pointer}@media(prefers-color-scheme:dark){body{background:#15131a;color:#f5f3fa}main{border-color:#4d4658}small{color:#c4bccb}}</style><main><h1>${title}</h1><p>${description.replace('{status}', String(status))}</p><p><strong>${copy.owner}:</strong> ${owner}</p><p>${action}</p><p><small>${copy.code}: ${code}</small></p><button onclick="location.reload()">${copy.retry}</button></main></html>`
+      return new Response(html, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Shadow-Error-Code': code } })
+    }
+    try {
+      const response = await fetch(request)
+      return response.status >= 500 ? renderFailure('server', response.status) : response
+    } catch {
+      return renderFailure(self.navigator.onLine === false ? 'offline' : 'unknown')
+    }
+  })())
+  return
+}
+
+
     if (isSplashAssetRequest(url)) {
   const cachePromise = caches.open(SPLASH_CACHE_NAME)
 
