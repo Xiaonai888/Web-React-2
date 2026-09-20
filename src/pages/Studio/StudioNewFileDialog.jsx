@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
 
 export const STUDIO_PRESETS = [
   { id: 'basic', label: 'Basic Drawing', width: 1200, height: 800, resolution: 144 },
@@ -9,6 +10,325 @@ export const STUDIO_PRESETS = [
   { id: 'video', label: '16:9', width: 1920, height: 1080, resolution: 144 },
   { id: 'custom', label: 'Custom', width: 1200, height: 800, resolution: 144 },
 ]
+
+const STUDIO_TEXT = {
+  "km": {
+    "New File": "ឯកសារថ្មី",
+    "New": "ថ្មី",
+    "Close new file dialog": "បិទផ្ទាំងឯកសារថ្មី",
+    "Name:": "ឈ្មោះ៖",
+    "Document Type:": "ប្រភេទឯកសារ៖",
+    "Size:": "ទំហំ៖",
+    "Width:": "ទទឹង៖",
+    "Height:": "កម្ពស់៖",
+    "Resolution:": "កម្រិតបង្ហាញ៖",
+    "Color Mode:": "របៀបពណ៌៖",
+    "Background Contents:": "ផ្ទៃខាងក្រោយ៖",
+    "Advanced": "ការកំណត់បន្ថែម",
+    "Color Profile:": "កម្រងពណ៌៖",
+    "Pixel Aspect Ratio:": "សមាមាត្រ Pixel៖",
+    "Image Size:": "ទំហំរូបភាព៖",
+    "New document actions": "សកម្មភាពឯកសារថ្មី",
+    "OK": "យល់ព្រម",
+    "Cancel": "បោះបង់",
+    "Save Preset": "រក្សាទុក Preset",
+    "Save Preset...": "រក្សាទុក Preset...",
+    "Delete Preset...": "លុប Preset...",
+    "Preset name:": "ឈ្មោះ Preset៖",
+    "Orientation": "ទិសក្រដាស",
+    "Portrait": "បញ្ឈរ",
+    "Landscape": "ផ្ដេក",
+    "Width unit": "ឯកតាទទឹង",
+    "Height unit": "ឯកតាកម្ពស់",
+    "Resolution unit": "ឯកតាកម្រិតបង្ហាញ",
+    "RGB Color only": "គាំទ្រតែ RGB Color",
+    "Only RGB Color is currently supported": "បច្ចុប្បន្នគាំទ្រតែ RGB Color",
+    "8 bit only": "គាំទ្រតែ 8 bit",
+    "Only 8-bit color is currently supported": "បច្ចុប្បន្នគាំទ្រតែពណ៌ 8 bit",
+    "White": "ស",
+    "Light Gray": "ប្រផេះស្រាល",
+    "Black": "ខ្មៅ",
+    "Custom Color": "ពណ៌កំណត់ផ្ទាល់ខ្លួន",
+    "Custom background color": "ពណ៌ផ្ទៃខាងក្រោយកំណត់ផ្ទាល់ខ្លួន",
+    "Pick a background color": "ជ្រើសពណ៌ផ្ទៃខាងក្រោយ",
+    "The browser canvas uses sRGB": "Canvas របស់ Browser ប្រើ sRGB",
+    "Square Pixels": "Pixels ការ៉េ",
+    "Square pixels only": "គាំទ្រតែ Pixels ការ៉េ",
+    "Canvas limit: 4096 px per side / 12 MP. Large paper sizes may require a lower resolution. Only RGB 8-bit and opaque backgrounds are currently supported.": "ទំហំ Canvas អតិបរមា 4096 px ក្នុងមួយជ្រុង / 12 MP។ ក្រដាសធំអាចត្រូវបន្ថយ Resolution។ បច្ចុប្បន្នគាំទ្រតែ RGB 8-bit និងផ្ទៃខាងក្រោយមិនថ្លា។",
+    "Resolution must be a whole number between 72 and 600 Pixels/Inch.": "Resolution ត្រូវជាចំនួនគត់ចន្លោះ 72 ដល់ 600 Pixels/Inch។",
+    "Enter valid width and height.": "សូមបញ្ចូលទទឹង និងកម្ពស់ឱ្យត្រឹមត្រូវ។",
+    "Canvas limit: 64–4096 px per side, no more than 12 million pixels. Reduce size or resolution.": "Canvas អាចមានពី 64 ដល់ 4096 px ក្នុងមួយជ្រុង និងសរុបមិនលើស 12 លាន pixels។ សូមបន្ថយទំហំ ឬ Resolution។",
+    "Enter a preset name.": "សូមបញ្ចូលឈ្មោះ Preset។",
+    "My Presets is full. Delete one before saving another.": "My Presets ពេញហើយ។ សូមលុបមួយ មុនពេលរក្សាទុកថ្មី។",
+    "A preset with this name already exists.": "មាន Preset ឈ្មោះនេះរួចហើយ។",
+    "Preset saved on this browser.": "បានរក្សាទុក Preset ក្នុង Browser នេះ។",
+    "Could not save this preset in the browser.": "មិនអាចរក្សាទុក Preset ក្នុង Browser នេះបានទេ។",
+    "Delete preset": "លុប Preset",
+    "Preset deleted.": "បានលុប Preset។",
+    "Could not delete this preset from the browser.": "មិនអាចលុប Preset ពី Browser នេះបានទេ។",
+    "A document name is required.": "សូមបញ្ចូលឈ្មោះឯកសារ។",
+    "My Presets": "Preset របស់ខ្ញុំ",
+    "Basic Drawing": "គំនូរមូលដ្ឋាន",
+    "Manga Page": "ទំព័រ Manga",
+    "Book Cover": "ក្របសៀវភៅ",
+    "Square": "ការ៉េ",
+    "Custom": "កំណត់ផ្ទាល់ខ្លួន",
+    "Drawing & Illustration": "គំនូរ និងរូបភាព",
+    "Manga & Comic": "Manga និង Comic",
+    "International Paper": "ក្រដាសអន្តរជាតិ",
+    "U.S. Paper": "ក្រដាសអាមេរិក",
+    "Photo": "រូបថត",
+    "Web & Social": "វេប និងបណ្ដាញសង្គម",
+    "Mobile App Design": "រចនា Mobile App",
+    "Film & Video": "ភាពយន្ត និងវីដេអូ",
+    "Iconography": "រចនា Icon",
+    "Book & Cover": "សៀវភៅ និងក្រប",
+    "Pixels": "Pixels",
+    "Inches": "អ៊ីញ",
+    "Centimeters": "សង់ទីម៉ែត្រ",
+    "Millimeters": "មីល្លីម៉ែត្រ",
+    "Points": "Points",
+    "Picas": "Picas"
+  },
+  "zh": {
+    "New File": "新建文件",
+    "New": "新建",
+    "Close new file dialog": "关闭新建文件窗口",
+    "Name:": "名称：",
+    "Document Type:": "文档类型：",
+    "Size:": "尺寸：",
+    "Width:": "宽度：",
+    "Height:": "高度：",
+    "Resolution:": "分辨率：",
+    "Color Mode:": "颜色模式：",
+    "Background Contents:": "背景内容：",
+    "Advanced": "高级",
+    "Color Profile:": "色彩配置文件：",
+    "Pixel Aspect Ratio:": "像素宽高比：",
+    "Image Size:": "图像大小：",
+    "New document actions": "新建文件操作",
+    "OK": "确定",
+    "Cancel": "取消",
+    "Save Preset": "保存预设",
+    "Save Preset...": "保存预设…",
+    "Delete Preset...": "删除预设…",
+    "Preset name:": "预设名称：",
+    "Orientation": "方向",
+    "Portrait": "纵向",
+    "Landscape": "横向",
+    "Width unit": "宽度单位",
+    "Height unit": "高度单位",
+    "Resolution unit": "分辨率单位",
+    "RGB Color only": "仅支持 RGB 颜色",
+    "Only RGB Color is currently supported": "目前仅支持 RGB 颜色",
+    "8 bit only": "仅支持 8 位",
+    "Only 8-bit color is currently supported": "目前仅支持 8 位颜色",
+    "White": "白色",
+    "Light Gray": "浅灰色",
+    "Black": "黑色",
+    "Custom Color": "自定义颜色",
+    "Custom background color": "自定义背景颜色",
+    "Pick a background color": "选择背景颜色",
+    "The browser canvas uses sRGB": "浏览器画布使用 sRGB",
+    "Square Pixels": "方形像素",
+    "Square pixels only": "仅支持方形像素",
+    "Canvas limit: 4096 px per side / 12 MP. Large paper sizes may require a lower resolution. Only RGB 8-bit and opaque backgrounds are currently supported.": "画布最大每边 4096 px / 1200 万像素。大尺寸纸张可能需要降低分辨率。目前仅支持 RGB 8 位和不透明背景。",
+    "Resolution must be a whole number between 72 and 600 Pixels/Inch.": "分辨率必须是 72 到 600 Pixels/Inch 之间的整数。",
+    "Enter valid width and height.": "请输入有效的宽度和高度。",
+    "Canvas limit: 64–4096 px per side, no more than 12 million pixels. Reduce size or resolution.": "画布每边必须为 64～4096 px，总像素不超过 1200 万。请减小尺寸或分辨率。",
+    "Enter a preset name.": "请输入预设名称。",
+    "My Presets is full. Delete one before saving another.": "我的预设已满，请先删除一个。",
+    "A preset with this name already exists.": "同名预设已存在。",
+    "Preset saved on this browser.": "预设已保存在当前浏览器。",
+    "Could not save this preset in the browser.": "无法在浏览器中保存预设。",
+    "Delete preset": "删除预设",
+    "Preset deleted.": "预设已删除。",
+    "Could not delete this preset from the browser.": "无法从浏览器删除预设。",
+    "A document name is required.": "必须填写文件名。",
+    "My Presets": "我的预设",
+    "Basic Drawing": "基础绘画",
+    "Manga Page": "漫画页面",
+    "Book Cover": "书籍封面",
+    "Square": "正方形",
+    "Custom": "自定义",
+    "Drawing & Illustration": "绘画与插画",
+    "Manga & Comic": "漫画与连环画",
+    "International Paper": "国际纸张",
+    "U.S. Paper": "美国纸张",
+    "Photo": "照片",
+    "Web & Social": "网页与社交媒体",
+    "Mobile App Design": "移动应用设计",
+    "Film & Video": "影视与视频",
+    "Iconography": "图标设计",
+    "Book & Cover": "书籍与封面",
+    "Pixels": "像素",
+    "Inches": "英寸",
+    "Centimeters": "厘米",
+    "Millimeters": "毫米",
+    "Points": "磅",
+    "Picas": "派卡"
+  },
+  "ja": {
+    "New File": "新規ファイル",
+    "New": "新規",
+    "Close new file dialog": "新規ファイル画面を閉じる",
+    "Name:": "名前：",
+    "Document Type:": "ドキュメントの種類：",
+    "Size:": "サイズ：",
+    "Width:": "幅：",
+    "Height:": "高さ：",
+    "Resolution:": "解像度：",
+    "Color Mode:": "カラーモード：",
+    "Background Contents:": "背景の内容：",
+    "Advanced": "詳細設定",
+    "Color Profile:": "カラープロファイル：",
+    "Pixel Aspect Ratio:": "ピクセル縦横比：",
+    "Image Size:": "画像サイズ：",
+    "New document actions": "新規ファイルの操作",
+    "OK": "OK",
+    "Cancel": "キャンセル",
+    "Save Preset": "プリセットを保存",
+    "Save Preset...": "プリセットを保存…",
+    "Delete Preset...": "プリセットを削除…",
+    "Preset name:": "プリセット名：",
+    "Orientation": "用紙の向き",
+    "Portrait": "縦向き",
+    "Landscape": "横向き",
+    "Width unit": "幅の単位",
+    "Height unit": "高さの単位",
+    "Resolution unit": "解像度の単位",
+    "RGB Color only": "RGB カラーのみ対応",
+    "Only RGB Color is currently supported": "現在は RGB カラーのみ対応しています",
+    "8 bit only": "8 bit のみ対応",
+    "Only 8-bit color is currently supported": "現在は 8 bit カラーのみ対応しています",
+    "White": "白",
+    "Light Gray": "薄いグレー",
+    "Black": "黒",
+    "Custom Color": "カスタムカラー",
+    "Custom background color": "カスタム背景色",
+    "Pick a background color": "背景色を選択",
+    "The browser canvas uses sRGB": "ブラウザーのキャンバスは sRGB を使用します",
+    "Square Pixels": "正方形ピクセル",
+    "Square pixels only": "正方形ピクセルのみ対応",
+    "Canvas limit: 4096 px per side / 12 MP. Large paper sizes may require a lower resolution. Only RGB 8-bit and opaque backgrounds are currently supported.": "キャンバスの上限は各辺 4096 px / 1200 万ピクセルです。大きな用紙には低い解像度が必要な場合があります。RGB 8 bit と不透明な背景のみ対応します。",
+    "Resolution must be a whole number between 72 and 600 Pixels/Inch.": "解像度は 72～600 Pixels/Inch の整数で入力してください。",
+    "Enter valid width and height.": "幅と高さを正しく入力してください。",
+    "Canvas limit: 64–4096 px per side, no more than 12 million pixels. Reduce size or resolution.": "キャンバスは各辺 64～4096 px、合計 1200 万ピクセル以下です。サイズか解像度を下げてください。",
+    "Enter a preset name.": "プリセット名を入力してください。",
+    "My Presets is full. Delete one before saving another.": "マイプリセットが上限に達しました。追加する前に一つ削除してください。",
+    "A preset with this name already exists.": "同じ名前のプリセットがあります。",
+    "Preset saved on this browser.": "プリセットをこのブラウザーに保存しました。",
+    "Could not save this preset in the browser.": "ブラウザーにプリセットを保存できませんでした。",
+    "Delete preset": "プリセットを削除",
+    "Preset deleted.": "プリセットを削除しました。",
+    "Could not delete this preset from the browser.": "ブラウザーからプリセットを削除できませんでした。",
+    "A document name is required.": "ドキュメント名を入力してください。",
+    "My Presets": "マイプリセット",
+    "Basic Drawing": "基本の描画",
+    "Manga Page": "マンガページ",
+    "Book Cover": "本の表紙",
+    "Square": "正方形",
+    "Custom": "カスタム",
+    "Drawing & Illustration": "描画とイラスト",
+    "Manga & Comic": "マンガとコミック",
+    "International Paper": "国際規格用紙",
+    "U.S. Paper": "米国用紙",
+    "Photo": "写真",
+    "Web & Social": "ウェブと SNS",
+    "Mobile App Design": "モバイルアプリのデザイン",
+    "Film & Video": "映像と動画",
+    "Iconography": "アイコンデザイン",
+    "Book & Cover": "本と表紙",
+    "Pixels": "ピクセル",
+    "Inches": "インチ",
+    "Centimeters": "センチメートル",
+    "Millimeters": "ミリメートル",
+    "Points": "ポイント",
+    "Picas": "パイカ"
+  },
+  "ko": {
+    "New File": "새 파일",
+    "New": "새로 만들기",
+    "Close new file dialog": "새 파일 창 닫기",
+    "Name:": "이름:",
+    "Document Type:": "문서 유형:",
+    "Size:": "크기:",
+    "Width:": "너비:",
+    "Height:": "높이:",
+    "Resolution:": "해상도:",
+    "Color Mode:": "색상 모드:",
+    "Background Contents:": "배경 내용:",
+    "Advanced": "고급 설정",
+    "Color Profile:": "색상 프로필:",
+    "Pixel Aspect Ratio:": "픽셀 가로세로 비율:",
+    "Image Size:": "이미지 크기:",
+    "New document actions": "새 파일 작업",
+    "OK": "확인",
+    "Cancel": "취소",
+    "Save Preset": "프리셋 저장",
+    "Save Preset...": "프리셋 저장…",
+    "Delete Preset...": "프리셋 삭제…",
+    "Preset name:": "프리셋 이름:",
+    "Orientation": "방향",
+    "Portrait": "세로",
+    "Landscape": "가로",
+    "Width unit": "너비 단위",
+    "Height unit": "높이 단위",
+    "Resolution unit": "해상도 단위",
+    "RGB Color only": "RGB 색상만 지원",
+    "Only RGB Color is currently supported": "현재 RGB 색상만 지원합니다",
+    "8 bit only": "8비트만 지원",
+    "Only 8-bit color is currently supported": "현재 8비트 색상만 지원합니다",
+    "White": "흰색",
+    "Light Gray": "밝은 회색",
+    "Black": "검정",
+    "Custom Color": "사용자 지정 색상",
+    "Custom background color": "사용자 지정 배경색",
+    "Pick a background color": "배경색 선택",
+    "The browser canvas uses sRGB": "브라우저 캔버스는 sRGB를 사용합니다",
+    "Square Pixels": "정사각형 픽셀",
+    "Square pixels only": "정사각형 픽셀만 지원",
+    "Canvas limit: 4096 px per side / 12 MP. Large paper sizes may require a lower resolution. Only RGB 8-bit and opaque backgrounds are currently supported.": "캔버스는 한 변 최대 4096 px / 1,200만 픽셀입니다. 큰 용지는 해상도를 낮춰야 할 수 있습니다. RGB 8비트 및 불투명 배경만 지원합니다.",
+    "Resolution must be a whole number between 72 and 600 Pixels/Inch.": "해상도는 72~600 Pixels/Inch 사이의 정수여야 합니다.",
+    "Enter valid width and height.": "올바른 너비와 높이를 입력하세요.",
+    "Canvas limit: 64–4096 px per side, no more than 12 million pixels. Reduce size or resolution.": "캔버스는 한 변 64~4096 px, 총 1,200만 픽셀 이하여야 합니다. 크기나 해상도를 낮추세요.",
+    "Enter a preset name.": "프리셋 이름을 입력하세요.",
+    "My Presets is full. Delete one before saving another.": "내 프리셋이 가득 찼습니다. 하나를 삭제한 후 저장하세요.",
+    "A preset with this name already exists.": "같은 이름의 프리셋이 이미 있습니다.",
+    "Preset saved on this browser.": "이 브라우저에 프리셋을 저장했습니다.",
+    "Could not save this preset in the browser.": "브라우저에 프리셋을 저장할 수 없습니다.",
+    "Delete preset": "프리셋 삭제",
+    "Preset deleted.": "프리셋이 삭제되었습니다.",
+    "Could not delete this preset from the browser.": "브라우저에서 프리셋을 삭제할 수 없습니다.",
+    "A document name is required.": "문서 이름을 입력하세요.",
+    "My Presets": "내 프리셋",
+    "Basic Drawing": "기본 드로잉",
+    "Manga Page": "만화 페이지",
+    "Book Cover": "책 표지",
+    "Square": "정사각형",
+    "Custom": "사용자 지정",
+    "Drawing & Illustration": "드로잉 및 일러스트",
+    "Manga & Comic": "만화 및 코믹",
+    "International Paper": "국제 용지",
+    "U.S. Paper": "미국 용지",
+    "Photo": "사진",
+    "Web & Social": "웹 및 소셜",
+    "Mobile App Design": "모바일 앱 디자인",
+    "Film & Video": "영화 및 동영상",
+    "Iconography": "아이콘 디자인",
+    "Book & Cover": "책 및 표지",
+    "Pixels": "픽셀",
+    "Inches": "인치",
+    "Centimeters": "센티미터",
+    "Millimeters": "밀리미터",
+    "Points": "포인트",
+    "Picas": "파이카"
+  }
+}
+
+function studioTranslate(language, text) {
+  return STUDIO_TEXT[language]?.[text] || text
+}
 
 const MAX_SIDE = 4096
 const MAX_AREA = 12_000_000
@@ -96,6 +416,8 @@ function findGroup(id) {
 
 export default function StudioNewFileDialog({ open, defaultName, initialPreset = 'basic', onClose, onCreate }) {
   const initial = BUILTIN_PRESETS.find((item) => item.id === initialPreset) || STUDIO_PRESETS[0]
+  const { language } = useDisplayTranslation()
+  const tr = (text) => studioTranslate(language, text)
   const [saved, setSaved] = useState(readSaved)
   const [name, setName] = useState(defaultName || 'Untitled-1')
   const [groupId, setGroupId] = useState(findGroup(initial.id))
@@ -139,15 +461,15 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
     setNotice('')
   }, [open, defaultName, initialPreset])
 
-  const groups = saved.length ? [...PAPER_GROUPS, { id: 'saved', label: `My Presets (${saved.length})`, presets: saved }] : PAPER_GROUPS
+  const groups = saved.length ? [...PAPER_GROUPS, { id: 'saved', label: `${tr('My Presets')} (${saved.length})`, presets: saved }] : PAPER_GROUPS
   const currentGroup = groups.find((item) => item.id === groupId) || groups[0]
   const choices = currentGroup.presets.some((item) => item.id === presetId) ? currentGroup.presets : [...currentGroup.presets, { id: 'custom', label: 'Custom' }]
   const status = useMemo(() => {
-    if (!Number.isInteger(ppi) || ppi < 72 || ppi > 600) return 'Resolution must be a whole number between 72 and 600 Pixels/Inch.'
-    if (!widthInput.trim() || !heightInput.trim() || !Number.isFinite(Number(widthInput)) || !Number.isFinite(Number(heightInput)) || Number(widthInput) <= 0 || Number(heightInput) <= 0) return 'Enter valid width and height.'
-    if (!validSize(width, height, ppi)) return 'Canvas limit: 64–4096 px per side, no more than 12 million pixels. Reduce size or resolution.'
+    if (!Number.isInteger(ppi) || ppi < 72 || ppi > 600) return tr('Resolution must be a whole number between 72 and 600 Pixels/Inch.')
+    if (!widthInput.trim() || !heightInput.trim() || !Number.isFinite(Number(widthInput)) || !Number.isFinite(Number(heightInput)) || Number(widthInput) <= 0 || Number(heightInput) <= 0) return tr('Enter valid width and height.')
+    if (!validSize(width, height, ppi)) return tr('Canvas limit: 64–4096 px per side, no more than 12 million pixels. Reduce size or resolution.')
     return ''
-  }, [width, height, ppi, widthInput, heightInput])
+  }, [width, height, ppi, widthInput, heightInput, language])
   const imageSize = Number.isFinite(width * height) ? (width * height * 4 / 1048576).toFixed(1) : '0.0'
 
   function markCustom() {
@@ -216,10 +538,10 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
       return
     }
     const title = savedName.trim().slice(0, 48)
-    if (!title) return setError('Enter a preset name.')
+    if (!title) return setError(tr('Enter a preset name.'))
     if (status) return setError(status)
-    if (saved.length >= MAX_SAVED) return setError('My Presets is full. Delete one before saving another.')
-    if (saved.some((item) => item.label.toLowerCase() === title.toLowerCase())) return setError('A preset with this name already exists.')
+    if (saved.length >= MAX_SAVED) return setError(tr('My Presets is full. Delete one before saving another.'))
+    if (saved.some((item) => item.label.toLowerCase() === title.toLowerCase())) return setError(tr('A preset with this name already exists.'))
     const item = {
       id: `saved-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
       label: title, width, height, resolution: ppi, background, unit: widthUnit, heightUnit,
@@ -234,32 +556,32 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
       setSavedName('')
       setPresetNaming(false)
       setError('')
-      setNotice(`Preset “${title}” saved on this browser.`)
+      setNotice(`${tr('Preset saved on this browser.')} “${title}”`)
     } catch {
-      setError('Could not save this preset in the browser.')
+      setError(tr('Could not save this preset in the browser.'))
     }
   }
 
   function deletePreset() {
     const selected = saved.find((item) => item.id === presetId)
-    if (!selected || !window.confirm(`Delete preset “${selected.label}”?`)) return
+    if (!selected || !window.confirm(`${tr('Delete preset')} “${selected.label}”?`)) return
     const next = saved.filter((item) => item.id !== selected.id)
     try {
       window.localStorage.setItem(SAVED_KEY, JSON.stringify(next))
       setSaved(next)
       if (next.length) applyPreset(next[0], 'saved')
       else { setGroupId('custom'); markCustom() }
-      setNotice(`Preset “${selected.label}” deleted.`)
+      setNotice(`${tr('Preset deleted.')} “${selected.label}”`)
       setError('')
     } catch {
-      setError('Could not delete this preset from the browser.')
+      setError(tr('Could not delete this preset from the browser.'))
     }
   }
 
   function submit(event) {
     event.preventDefault()
     const cleanName = name.trim().slice(0, 80)
-    if (!cleanName) return setError('A document name is required.')
+    if (!cleanName) return setError(tr('A document name is required.'))
     if (status) return setError(status)
     setError('')
     onCreate({ name: cleanName, width, height, resolution: ppi, background, presetId })
@@ -320,30 +642,30 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
         }
         @media(max-width:370px){.shadow-studio .ss-nd-three{grid-template-columns:minmax(0,1fr) 90px}.shadow-studio .ss-nd-row{grid-template-columns:76px minmax(0,1fr)}}
       `}</style>
-      <form className="ss-new-dialog ss-paper-dialog" onSubmit={submit} role="dialog" aria-modal="true" aria-label="New File" onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onClose() } }}>
-        <div className="ss-nd-head"><h2>New</h2><button type="button" className="ss-nd-close" onClick={onClose} aria-label="Close new file dialog">×</button></div>
+      <form className="ss-new-dialog ss-paper-dialog" onSubmit={submit} role="dialog" aria-modal="true" aria-label={tr('New File')} onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onClose() } }}>
+        <div className="ss-nd-head"><h2>{tr('New')}</h2><button type="button" className="ss-nd-close" onClick={onClose} aria-label={tr('Close new file dialog')}>×</button></div>
         <div className="ss-nd-content">
           <div className="ss-nd-fields">
-            <label className="ss-nd-row"><span className="ss-nd-label">Name:</span><input className="ss-nd-control" maxLength={80} value={name} autoFocus onChange={(event) => { setName(event.target.value); setError('') }} /></label>
-            <label className="ss-nd-row"><span className="ss-nd-label">Document Type:</span><select className="ss-nd-control" value={groupId} onChange={(event) => selectGroup(event.target.value)}>{groups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}</select></label>
-            <label className="ss-nd-row"><span className="ss-nd-label">Size:</span><select className="ss-nd-control" value={presetId} onChange={(event) => { const next = choices.find((item) => item.id === event.target.value); if (next?.id === 'custom') markCustom(); else if (next) applyPreset(next) }}>{choices.map((item) => <option key={item.id} value={item.id}>{presetLabel(item)}</option>)}</select></label>
-            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-width">Width:</label><div className="ss-nd-three"><div className="ss-nd-line"><input id="ss-nd-width" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={widthInput} onChange={(event) => { setWidthInput(event.target.value); markCustom() }} /><div className="ss-nd-orient" role="group" aria-label="Orientation"><button type="button" aria-label="Portrait" title="Portrait" aria-pressed={height > width} disabled={Boolean(status)} onClick={() => orient('portrait')}>▯</button><button type="button" aria-label="Landscape" title="Landscape" aria-pressed={width >= height} disabled={Boolean(status)} onClick={() => orient('landscape')}>▭</button></div></div><select className="ss-nd-control" aria-label="Width unit" value={widthUnit} onChange={(event) => changeUnit(event.target.value, 'width')}>{UNITS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div></div>
-            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-height">Height:</label><div className="ss-nd-three"><input id="ss-nd-height" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={heightInput} onChange={(event) => { setHeightInput(event.target.value); markCustom() }} /><select className="ss-nd-control" aria-label="Height unit" value={heightUnit} onChange={(event) => changeUnit(event.target.value, 'height')}>{UNITS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div></div>
-            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-ppi">Resolution:</label><div className="ss-nd-three"><input id="ss-nd-ppi" className="ss-nd-control" type="number" min="72" max="600" step="1" value={resolutionInput} onChange={(event) => { setResolutionInput(event.target.value); markCustom() }} /><input className="ss-nd-control" value="Pixels/Inch" aria-label="Resolution unit" disabled readOnly /></div></div>
-            <div className="ss-nd-row"><span className="ss-nd-label">Color Mode:</span><div className="ss-nd-two"><input className="ss-nd-control" value="RGB Color" readOnly disabled aria-label="RGB Color only" title="Only RGB Color is currently supported" /><input className="ss-nd-control" value="8 bit" readOnly disabled aria-label="8 bit only" title="Only 8-bit color is currently supported" /></div></div>
-            <label className="ss-nd-row"><span className="ss-nd-label">Background Contents:</span><div className="ss-nd-background"><select className="ss-nd-control" value={backgroundType} onChange={(event) => { setBackgroundType(event.target.value); setNotice('') }}><option value="white">White</option><option value="gray">Light Gray</option><option value="black">Black</option><option value="custom">Custom Color</option></select><input type="color" value={customBackground} aria-label="Custom background color" title="Pick a background color" onChange={(event) => { setCustomBackground(event.target.value); setBackgroundType('custom') }} /><span className="ss-nd-swatch" style={{ backgroundColor: background }} title={background} /></div></label>
-            <details className="ss-nd-advanced" open><summary>Advanced</summary><div className="ss-nd-advanced-body"><div className="ss-nd-row"><span className="ss-nd-label">Color Profile:</span><input className="ss-nd-control" value="sRGB (browser canvas)" disabled readOnly title="The browser canvas uses sRGB" /></div><div className="ss-nd-row"><span className="ss-nd-label">Pixel Aspect Ratio:</span><input className="ss-nd-control" value="Square Pixels" disabled readOnly title="Square pixels only" /></div></div></details>
+            <label className="ss-nd-row"><span className="ss-nd-label">{tr('Name:')}</span><input className="ss-nd-control" maxLength={80} value={name} autoFocus onChange={(event) => { setName(event.target.value); setError('') }} /></label>
+            <label className="ss-nd-row"><span className="ss-nd-label">{tr('Document Type:')}</span><select className="ss-nd-control" value={groupId} onChange={(event) => selectGroup(event.target.value)}>{groups.map((group) => <option key={group.id} value={group.id}>{tr(group.label)}</option>)}</select></label>
+            <label className="ss-nd-row"><span className="ss-nd-label">{tr('Size:')}</span><select className="ss-nd-control" value={presetId} onChange={(event) => { const next = choices.find((item) => item.id === event.target.value); if (next?.id === 'custom') markCustom(); else if (next) applyPreset(next) }}>{choices.map((item) => <option key={item.id} value={item.id}>{item.id.startsWith('saved-') ? item.label : tr(presetLabel(item))}</option>)}</select></label>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-width">{tr('Width:')}</label><div className="ss-nd-three"><div className="ss-nd-line"><input id="ss-nd-width" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={widthInput} onChange={(event) => { setWidthInput(event.target.value); markCustom() }} /><div className="ss-nd-orient" role="group" aria-label={tr('Orientation')}><button type="button" aria-label={tr('Portrait')} title={tr('Portrait')} aria-pressed={height > width} disabled={Boolean(status)} onClick={() => orient('portrait')}>▯</button><button type="button" aria-label={tr('Landscape')} title={tr('Landscape')} aria-pressed={width >= height} disabled={Boolean(status)} onClick={() => orient('landscape')}>▭</button></div></div><select className="ss-nd-control" aria-label={tr('Width unit')} value={widthUnit} onChange={(event) => changeUnit(event.target.value, 'width')}>{UNITS.map((item) => <option key={item.id} value={item.id}>{tr(item.label)}</option>)}</select></div></div>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-height">{tr('Height:')}</label><div className="ss-nd-three"><input id="ss-nd-height" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={heightInput} onChange={(event) => { setHeightInput(event.target.value); markCustom() }} /><select className="ss-nd-control" aria-label={tr('Height unit')} value={heightUnit} onChange={(event) => changeUnit(event.target.value, 'height')}>{UNITS.map((item) => <option key={item.id} value={item.id}>{tr(item.label)}</option>)}</select></div></div>
+            <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-ppi">{tr('Resolution:')}</label><div className="ss-nd-three"><input id="ss-nd-ppi" className="ss-nd-control" type="number" min="72" max="600" step="1" value={resolutionInput} onChange={(event) => { setResolutionInput(event.target.value); markCustom() }} /><input className="ss-nd-control" value="Pixels/Inch" aria-label={tr('Resolution unit')} disabled readOnly /></div></div>
+            <div className="ss-nd-row"><span className="ss-nd-label">{tr('Color Mode:')}</span><div className="ss-nd-two"><input className="ss-nd-control" value="RGB Color" readOnly disabled aria-label={tr('RGB Color only')} title={tr('Only RGB Color is currently supported')} /><input className="ss-nd-control" value="8 bit" readOnly disabled aria-label={tr('8 bit only')} title={tr('Only 8-bit color is currently supported')} /></div></div>
+            <label className="ss-nd-row"><span className="ss-nd-label">{tr('Background Contents:')}</span><div className="ss-nd-background"><select className="ss-nd-control" value={backgroundType} onChange={(event) => { setBackgroundType(event.target.value); setNotice('') }}><option value="white">{tr('White')}</option><option value="gray">{tr('Light Gray')}</option><option value="black">{tr('Black')}</option><option value="custom">{tr('Custom Color')}</option></select><input type="color" value={customBackground} aria-label={tr('Custom background color')} title={tr('Pick a background color')} onChange={(event) => { setCustomBackground(event.target.value); setBackgroundType('custom') }} /><span className="ss-nd-swatch" style={{ backgroundColor: background }} title={background} /></div></label>
+            <details className="ss-nd-advanced" open><summary>{tr('Advanced')}</summary><div className="ss-nd-advanced-body"><div className="ss-nd-row"><span className="ss-nd-label">{tr('Color Profile:')}</span><input className="ss-nd-control" value="sRGB (browser canvas)" disabled readOnly title={tr('The browser canvas uses sRGB')} /></div><div className="ss-nd-row"><span className="ss-nd-label">{tr('Pixel Aspect Ratio:')}</span><input className="ss-nd-control" value={tr('Square Pixels')} disabled readOnly title={tr('Square pixels only')} /></div></div></details>
             {error || status ? <p className="ss-nd-status" role="alert">{error || status}</p> : null}
             {notice ? <p className="ss-nd-success" role="status">{notice}</p> : null}
-            <p className="ss-nd-hint">Canvas limit: 4096 px per side / 12 MP. Large paper sizes may require a lower resolution. Only RGB 8-bit and opaque backgrounds are currently supported.</p>
+            <p className="ss-nd-hint">{tr('Canvas limit: 4096 px per side / 12 MP. Large paper sizes may require a lower resolution. Only RGB 8-bit and opaque backgrounds are currently supported.')}</p>
           </div>
-          <aside className="ss-nd-actions" aria-label="New document actions">
-            <button type="submit" className="primary" disabled={Boolean(status)}>OK</button>
-            <button type="button" onClick={onClose}>Cancel</button>
-            <button type="button" disabled={saved.length >= MAX_SAVED || Boolean(status)} onClick={savePreset}>{presetNaming ? 'Save Preset' : 'Save Preset...'}</button>
-            <button type="button" disabled={!saved.some((item) => item.id === presetId)} onClick={deletePreset}>Delete Preset...</button>
-            {presetNaming ? <div className="ss-nd-preset-save"><label htmlFor="ss-nd-preset-name">Preset name:</label><input id="ss-nd-preset-name" type="text" maxLength={48} value={savedName} onChange={(event) => { setSavedName(event.target.value); setError('') }} /></div> : null}
-            <div className="ss-nd-image-size">Image Size:<br />{imageSize} MB<br /><small>{Number.isFinite(width) && Number.isFinite(height) ? `${width.toLocaleString()} × ${height.toLocaleString()} px` : ''}</small></div>
+          <aside className="ss-nd-actions" aria-label={tr('New document actions')}>
+            <button type="submit" className="primary" disabled={Boolean(status)}>{tr('OK')}</button>
+            <button type="button" onClick={onClose}>{tr('Cancel')}</button>
+            <button type="button" disabled={saved.length >= MAX_SAVED || Boolean(status)} onClick={savePreset}>{presetNaming ? tr('Save Preset') : tr('Save Preset...')}</button>
+            <button type="button" disabled={!saved.some((item) => item.id === presetId)} onClick={deletePreset}>{tr('Delete Preset...')}</button>
+            {presetNaming ? <div className="ss-nd-preset-save"><label htmlFor="ss-nd-preset-name">{tr('Preset name:')}</label><input id="ss-nd-preset-name" type="text" maxLength={48} value={savedName} onChange={(event) => { setSavedName(event.target.value); setError('') }} /></div> : null}
+            <div className="ss-nd-image-size">{tr('Image Size:')}<br />{imageSize} MB<br /><small>{Number.isFinite(width) && Number.isFinite(height) ? `${width.toLocaleString()} × ${height.toLocaleString()} px` : ''}</small></div>
           </aside>
         </div>
       </form>
