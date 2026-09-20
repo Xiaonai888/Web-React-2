@@ -26,6 +26,11 @@ import { confirmLargeBrush } from './StudioPrecisionInput'
 import StudioCanvasRulers from './StudioCanvasRulers'
 import { renderStudioLayers, studioLayerContext, addStudioLayer, duplicateStudioLayer, selectStudioLayer, updateStudioLayer, moveStudioLayer, removeStudioLayer } from './StudioLayerEngine'
 import { exportStudioLayerStack, loadStudioLayerStack } from './StudioLayerPersistence'
+import { applyStudioLayerGradient } from './StudioGradientEngine'
+import { applyStudioScreentone } from './StudioScreentoneEngine'
+import { applyStudioSpeechBubble } from './StudioSpeechBubbleEngine'
+import { applyStudioComicPanels } from './StudioComicPanelsEngine'
+import { applyStudioMangaEffect } from './StudioMangaEffectsEngine'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -472,6 +477,34 @@ const placeImageLabel = {
     } catch (error) {
       setProjectNotice(error.message || 'Could not update the layer.')
     }
+  }
+
+  function applyRightFeature(kind, options) {
+    const stack = layerStackRef.current
+    if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy ||
+      drawingRef.current || newFileOpen || exportOpen || recoveryBusy) {
+      throw new Error('Wait until the current paper is ready before applying an effect.')
+    }
+    if (!studioLayerContext(stack)) {
+      throw new Error('Select a visible, unlocked layer before applying an effect.')
+    }
+    const actions = {
+      gradient: applyStudioLayerGradient,
+      screentone: applyStudioScreentone,
+      bubble: applyStudioSpeechBubble,
+      panels: applyStudioComicPanels,
+      effects: applyStudioMangaEffect,
+    }
+    const action = actions[kind]
+    if (!action) throw new Error('This effect is not available.')
+    const changed = action(stack, options)
+    if (changed) {
+      paintLayerPreview()
+      snapshot()
+      updateDocument(activeDocumentId, { dirty: true })
+      setProjectNotice('')
+    }
+    return changed
   }
 
   function paintLayerPreview() {
@@ -1742,6 +1775,7 @@ if (tool === 'shape') {
               layers={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.layers || [] : []}
               activeLayerId={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.activeLayerId || '' : ''}
               onLayerAction={changeLayer}
+              onFeatureApply={applyRightFeature}
               color={color}
               onColorChange={(nextColor) => { setColor(nextColor); setTool('brush') }}
               brushStyle={brushStyle}
