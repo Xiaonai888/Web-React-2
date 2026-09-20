@@ -254,6 +254,7 @@ export function StudioControlSidebar({
   paperLoading,
   projectBusy,
   onClear,
+  onPlaceAsset,
   navigator,
   labels,
 }) {
@@ -285,11 +286,12 @@ export function StudioControlSidebar({
       <aside className="ss-side" aria-label={tx('studioWorkspace.studioSidePanels')}>
         <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />
         <StudioRightPanels
-          canvasRef={canvasRef}
-          paperId={paperId}
-          revision={revision}
-          paper={paper}
-        />
+  canvasRef={canvasRef}
+  paperId={paperId}
+  revision={revision}
+  paper={paper}
+  onPlaceAsset={onPlaceAsset}
+/>
       {brushDock ? createPortal(brushControls, brushDock) : brushControls}
       <section className="ss-section" aria-label="Canvas view">
         <h2 className="ss-label">{tx('studioWorkspace.canvasView')}</h2>
