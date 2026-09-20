@@ -12,6 +12,7 @@ import { placeStudioDroppedImage } from './StudioImageDrop'
 import StudioTextEditor, { drawStudioText } from './StudioTextEditor'
 import StudioShapeEditor, { drawStudioShape } from './StudioShapeEditor'
 import StudioPaperTabs from './StudioPaperTabs'
+import StudioHeaderWorkspace from './StudioHeaderWorkspace'
 import StudioHome from './StudioHome'
 import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
@@ -277,7 +278,7 @@ const H = 800
 const HISTORY_LIMIT = 8
 const DOCUMENT_LIMIT = 8
 
-const STUDIO_HEADER_PLACEHOLDER_MENUS = ['Layer', 'Select', 'Filter', 'Window', 'Help']
+const STUDIO_HEADER_PLACEHOLDER_MENUS = ['Layer', 'Select', 'Filter']
 
 function createDocument({
   name,
@@ -1428,7 +1429,12 @@ if (tool === 'shape') {
           onUndo={undo}
           onRedo={redo}
           onClear={() => clearCanvas()}
-        />
+                />
+        {['Window', 'Help'].map((label) => (
+          <button key={label} type="button" className="ss-menu-btn" disabled>
+            {label}
+          </button>
+        ))}
         <StudioViewMenu
           enabled={workspaceStarted && !paperLoading && !projectBusy && !newFileOpen}
           zoom={zoom}
@@ -1447,28 +1453,31 @@ if (tool === 'shape') {
           onResetOrientation={() => updateCanvasView(0, false, false)}
         />
 
-        {STUDIO_HEADER_PLACEHOLDER_MENUS.map((label) => (
+        {['Window', 'Help'].map((label) => (
   <button key={label} type="button" className="ss-menu-btn" disabled>
     {label}
   </button>
 ))}
         
         {workspaceStarted ? (
-          <div className="ss-chrome-right">
-            <div className="ss-doc-info">{activeDocument?.width} × {activeDocument?.height}px · {activeDocument?.resolution} PPI</div>
-<button
-  type="button"
-  className="ss-btn"
-  disabled={paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen}
-  onClick={() => placeImageInputRef.current?.click()}
-  title={placeImageLabel}
->
-  <i className="fa-solid fa-image" aria-hidden="true" /> {placeImageLabel}
-</button>
-            <button type="button" className="ss-btn icon" onClick={undo} disabled={!canUndo || paperLoading || projectBusy} title={tx('shadowStudio.undo')} aria-label={tx('shadowStudio.undo')}><i className="fa-solid fa-rotate-left" /></button>
-            <button type="button" className="ss-btn icon" onClick={redo} disabled={!canRedo || paperLoading || projectBusy} title={tx('shadowStudio.redo')} aria-label={tx('shadowStudio.redo')}><i className="fa-solid fa-rotate-right" /></button>
-          </div>
-        ) : null}
+  <StudioHeaderWorkspace
+    documents={documents}
+    activeDocumentId={activeDocumentId}
+    canUndo={canUndo}
+    canRedo={canRedo}
+    busy={paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen}
+    onSwitchPaper={switchDocument}
+    onUndo={undo}
+    onRedo={redo}
+    onSave={() => saveProject()}
+    onExport={openExportDialog}
+    onPlaceImage={() => placeImageInputRef.current?.click()}
+    onNewPaper={() => openNewFile('basic')}
+    onFit={fitCanvas}
+    onToggleGrid={() => setShowGrid((value) => !value)}
+    onHome={goHome}
+  />
+) : null}
       </StudioChrome>
 
       {!workspaceStarted ? (
