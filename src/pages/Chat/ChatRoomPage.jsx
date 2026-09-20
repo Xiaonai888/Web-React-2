@@ -2213,6 +2213,7 @@ export default function ChatRoomPage() {
         await loadRoom({
           silent: true,
           includeMeta: false,
+          signal,
         })
         return
       }
@@ -2311,6 +2312,7 @@ export default function ChatRoomPage() {
 
     pollCursorRef.current = ''
     incrementalLoadingRef.current = false
+    lastVisibilityRefreshAtRef.current = Date.now()
     loadRoom({
       signal: controller.signal,
     })
