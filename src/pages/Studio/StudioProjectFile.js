@@ -2,6 +2,7 @@ export const STUDIO_PROJECT_EXTENSION = '.shadowstudio'
 
 const MAX_FILE_BYTES = 80 * 1024 * 1024
 const MAX_DOCUMENTS = 8
+const MAX_LAYERS = 8
 const MAX_CANVAS_PIXELS = 12_000_000
 const MAX_CANVAS_SIDE = 4096
 const IMAGE_PREFIX = /^data:image\/(?:png|webp|jpeg);base64,/i
@@ -13,6 +14,34 @@ function error(message) {
 
 function validNumber(value, min, max) {
   return Number.isInteger(value) && value >= min && value <= max
+}
+
+function normalizedLayers(raw, paperIndex) {
+  if (!Array.isArray(raw.layers) || raw.layers.length < 1 || raw.layers.length > MAX_LAYERS) {
+    error(`Paper ${paperIndex + 1} has an invalid layer count.`)
+  }
+
+  const ids = new Set()
+  const layers = raw.layers.map((item, index) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      error(`Paper ${paperIndex + 1}, layer ${index + 1} is invalid.`)
+    }
+    const id = typeof item.id === 'string' ? item.id : ''
+    const name = typeof item.name === 'string' ? item.name.trim() : ''
+    const image = item.image
+    const opacity = Number(item.opacity)
+    if (!id || id.length > 100 || ids.has(id) || !name || name.length > 80 ||
+      typeof image !== 'string' || !IMAGE_PREFIX.test(image) || image.length > MAX_FILE_BYTES ||
+      !Number.isFinite(opacity) || opacity < 0 || opacity > 100 ||
+      typeof item.visible !== 'boolean' || typeof item.locked !== 'boolean') {
+      error(`Paper ${paperIndex + 1}, layer ${index + 1} has invalid data.`)
+    }
+    ids.add(id)
+    return { id, name, image, visible: item.visible, locked: item.locked, opacity }
+  })
+
+  const activeLayerId = ids.has(raw.activeLayerId) ? raw.activeLayerId : layers[layers.length - 1].id
+  return { layers, activeLayerId }
 }
 
 function normalizedDocument(raw, index) {
@@ -55,7 +84,7 @@ function normalizedDocument(raw, index) {
     error(`Paper ${index + 1} has an invalid name.`)
   }
 
-  return {
+  const document = {
     id: String(raw.id || `imported-${index}`).slice(0, 100),
     name,
     width,
@@ -66,6 +95,12 @@ function normalizedDocument(raw, index) {
     image,
     dirty: false,
   }
+
+  if (raw.layers !== undefined) {
+    Object.assign(document, normalizedLayers(raw, index))
+  }
+
+  return document
 }
 
 function normalizeProject(raw) {
@@ -133,6 +168,22 @@ export function downloadStudioProject(project, requestedName = '') {
   setTimeout(() => URL.revokeObjectURL(url), 30_000)
 }
 
+function validateImage(source, width, height, label) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => {
+      if (image.naturalWidth !== width || image.naturalHeight !== height) {
+        reject(new Error(`${label} image size does not match its canvas.`))
+      } else {
+        resolve()
+      }
+      image.src = ''
+    }
+    image.onerror = () => reject(new Error(`${label} image could not be opened.`))
+    image.src = source
+  })
+}
+
 export async function readStudioProject(file) {
   if (!file || file.size > MAX_FILE_BYTES) {
     error('Choose a Shadow Studio project file smaller than 80 MB.')
@@ -154,21 +205,12 @@ export async function readStudioProject(file) {
 
   for (let index = 0; index < project.documents.length; index += 1) {
     const paper = project.documents[index]
-    if (!paper.image) continue
-
-    await new Promise((resolve, reject) => {
-      const image = new Image()
-      image.onload = () => {
-        if (image.naturalWidth !== paper.width || image.naturalHeight !== paper.height) {
-          reject(new Error(`Paper ${index + 1} image size does not match its canvas.`))
-        } else {
-          resolve()
-        }
-        image.src = ''
-      }
-      image.onerror = () => reject(new Error(`Paper ${index + 1} image could not be opened.`))
-      image.src = paper.image
-    })
+    if (paper.image) {
+      await validateImage(paper.image, paper.width, paper.height, `Paper ${index + 1}`)
+    }
+    for (let layerIndex = 0; layerIndex < (paper.layers?.length || 0); layerIndex += 1) {
+      await validateImage(paper.layers[layerIndex].image, paper.width, paper.height, `Paper ${index + 1}, layer ${layerIndex + 1}`)
+    }
   }
 
   return project
