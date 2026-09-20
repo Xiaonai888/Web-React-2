@@ -28,7 +28,7 @@ export function validateStudioGroupLayout(stack) {
   let previous = null
   for (let index = 0; index < stack.layers.length; index += 1) {
     const id = stack.layers[index]?.groupId || null
-    if (index === 0 && id) throw new Error('Background cannot belong to a group.')
+    if (index === 0 && id && stack.layers[0].isBackground !== false) throw new Error('Background cannot belong to a group.')
     if (id && !ids.has(id)) throw new Error('A layer references a missing group.')
     if (id !== previous) {
       if (previous) closed.add(previous)
@@ -44,7 +44,7 @@ export function createStudioLayerGroup(stack, layerIds = [stack?.activeLayerId],
   if (groups.length >= MAX_STUDIO_GROUPS) throw new Error('The group limit has been reached.')
   if (!Array.isArray(layerIds) || !layerIds.length || new Set(layerIds).size !== layerIds.length) throw new Error('Select distinct layers to group.')
   const positions = layerIds.map((id) => stack.layers.findIndex((layer) => layer.id === id)).sort((a, b) => a - b)
-  if (positions[0] <= 0 || positions.some((position, index) => position !== positions[0] + index)) throw new Error('Select adjacent layers above Background.')
+  if (positions[0] < 0 || (positions[0] === 0 && stack.layers[0].isBackground !== false) || positions.some((position, index) => position !== positions[0] + index)) throw new Error('Select adjacent editable layers.')
   if (positions.some((position) => stack.layers[position].groupId)) throw new Error('Ungroup existing layers before making a new group.')
   const title = String(name || `Group ${groups.length + 1}`).trim().slice(0, 80)
   if (!title) throw new Error('A group name is required.')
