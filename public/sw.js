@@ -5,7 +5,7 @@ const EPISODE_STORE = 'episodes'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const MANGA_TTL_MS = 365 * DAY_MS
-const MAX_MANGA_EPISODES = 30
+const MAX_MANGA_EPISODES = 10000
 const HARD_MAX_BYTES = 5 * 1024 * 1024 * 1024
 const FALLBACK_IMAGE_BYTES = 512 * 1024
 const QUOTA_BUDGET_RATIO = 0.2
@@ -690,8 +690,40 @@ function replyToMessage(
   port.postMessage(payload)
 }
 
+const TEMP_CACHE_SETTINGS_NAME = 'shadow-temporary-cache-settings-v1'
+const TEMP_CACHE_SETTINGS_URL = new URL('/__shadow_temporary_cache_settings_v1__', self.location.origin).href
+
+async function readTemporaryCacheSettings() {
+  try {
+    const cache = await caches.open(TEMP_CACHE_SETTINGS_NAME)
+    const saved = await cache.match(TEMP_CACHE_SETTINGS_URL)
+    const data = saved ? await saved.json() : {}
+    return {
+      mode: data.mode === 'manual' ? 'manual' : 'auto',
+      limitGb: Number.isInteger(data.limitGb) && data.limitGb >= 1 && data.limitGb <= 5 ? data.limitGb : 1,
+    }
+  } catch {
+    return { mode: 'auto', limitGb: 1 }
+  }
+}
+
+async function saveTemporaryCacheSettings(data) {
+  const mode = data?.mode === 'manual' ? 'manual' : 'auto'
+  const input = Number(data?.limitGb)
+  const limitGb = Number.isInteger(input) && input >= 1 && input <= 5 ? input : 1
+  const settings = { mode, limitGb }
+  const cache = await caches.open(TEMP_CACHE_SETTINGS_NAME)
+  await cache.put(TEMP_CACHE_SETTINGS_URL, new Response(JSON.stringify(settings), {
+    headers: { 'Content-Type': 'application/json' },
+  }))
+  await pruneMangaCache()
+  return { ok: true, ...settings }
+}
+
 async function getStorageBudget() {
   const GB = 1024 * 1024 * 1024
+  const settings = await readTemporaryCacheSettings()
+  const selectedLimit = settings.mode === 'manual' ? settings.limitGb * GB : HARD_MAX_BYTES
   let quota = 0
   let usage = 0
   try {
@@ -699,9 +731,9 @@ async function getStorageBudget() {
     quota = normalizeBytes(estimate?.quota)
     usage = normalizeBytes(estimate?.usage)
   } catch {
-    return { budgetBytes: GB, pressured: false }
+    return { budgetBytes: Math.min(GB, selectedLimit), pressured: false }
   }
-  if (!quota) return { budgetBytes: GB, pressured: false }
+  if (!quota) return { budgetBytes: Math.min(GB, selectedLimit), pressured: false }
 
   const records = await getAllEpisodeRecords()
   const cachedBytes = records.reduce(
@@ -709,11 +741,12 @@ async function getStorageBudget() {
   )
   const reserve = Math.max(GB, Math.floor(quota * 0.15))
   const available = Math.max(0, quota - usage - reserve)
-  const budgetBytes = Math.min(
+  const budgetBytes = Math.max(0, Math.min(
+    selectedLimit,
     HARD_MAX_BYTES,
     Math.floor(quota * QUOTA_BUDGET_RATIO),
     cachedBytes + available
-  )
+  ))
   const pressured = usage / quota >= STORAGE_PRESSURE_RATIO || available < GB
   return {
     budgetBytes: pressured ? Math.min(GB, budgetBytes) : budgetBytes,
@@ -1442,6 +1475,15 @@ self.addEventListener(
   'message',
   (event) => {
     const data = event.data
+
+    if (data?.type === 'SHADOW_TEMP_CACHE_SETTINGS_SET') {
+      event.waitUntil(
+        saveTemporaryCacheSettings(data)
+          .then((result) => replyToMessage(event, result))
+          .catch(() => replyToMessage(event, { ok: false, code: 'CACHE_SETTINGS_SAVE_FAILED' }))
+      )
+      return
+    }
 
     if (
       data?.type ===
