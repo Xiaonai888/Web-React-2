@@ -457,6 +457,12 @@ const placeImageLabel = {
         const selected = stack.layers.find((layer) => layer.id === stack.activeLayerId)
         const added = addStudioLayer(stack)
         if (selected?.groupId) added.groupId = selected.groupId
+      } else if (action === 'convert-background') {
+        const layer = stack.layers.find((item) => item.id === layerId)
+        if (!layer?.isBackground || stack.layers[0] !== layer) return
+        layer.isBackground = false
+        layer.locked = false
+        layer.name = 'Layer 0'
       } else if (action === 'duplicate') {
         const original = stack.layers.find((layer) => layer.id === layerId)
         const copy = duplicateStudioLayer(stack, layerId)
@@ -487,7 +493,7 @@ const placeImageLabel = {
       else if (action === 'group-join') {
         const layer = stack.layers.find((item) => item.id === layerId)
         const group = stack.groups?.find((item) => item.id === value)
-        if (!layer || !group || layer === stack.layers[0] || layer.groupId) throw new Error('Select an ungrouped layer above Background.')
+        if (!layer || !group || layer.isBackground || layer.groupId) throw new Error('Select an ungrouped editable layer.')
         const index = stack.layers.indexOf(layer)
         if (stack.layers[index - 1]?.groupId !== group.id && stack.layers[index + 1]?.groupId !== group.id) throw new Error('Only an adjacent layer can join a group.')
         layer.groupId = group.id
@@ -500,6 +506,8 @@ const placeImageLabel = {
         mergeStudioLayerDown(stack)
       } else if (action === 'remove') {
         const layer = stack.layers.find((item) => item.id === layerId)
+        if (!layer || layer.isBackground || stack.layers.length <= 1) return
+        if (!window.confirm(`Delete "${layer.name}"? You can undo this action.`)) return
         if (!removeStudioLayer(stack, layerId)) return
         if (layer?.groupId && !stack.layers.some((item) => item.groupId === layer.groupId)) removeStudioLayerGroup(stack, layer.groupId)
       } else return
@@ -562,6 +570,7 @@ const placeImageLabel = {
         visible: layer.visible,
         locked: layer.locked,
         opacity: layer.opacity,
+        isBackground: layer.isBackground === true,
         ...(layer.groupId ? { groupId: layer.groupId } : {}),
         ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
         pixels: layer.canvas.getContext('2d', { willReadFrequently: true })
@@ -578,7 +587,7 @@ const placeImageLabel = {
       canvas.width = stack.width
       canvas.height = stack.height
       canvas.getContext('2d', { willReadFrequently: true }).putImageData(item.pixels, 0, 0)
-      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}) }
+      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, isBackground: item.isBackground === true, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}) }
     })
     stack.activeLayerId = entry.activeLayerId
     stack.groups = (entry.groups || []).map((group) => ({ ...group }))
@@ -1368,7 +1377,7 @@ const placeImageLabel = {
     stack.layers.forEach((layer, index) => {
       const ctx = layer.canvas.getContext('2d', { willReadFrequently: true })
       ctx.clearRect(0, 0, stack.width, stack.height)
-      if (index === 0) {
+      if (index === 0 && layer.isBackground) {
         ctx.fillStyle = activeDocument?.background || '#FFFFFF'
         ctx.fillRect(0, 0, stack.width, stack.height)
       }
@@ -1478,6 +1487,7 @@ if (tool === 'shape') {
       opacity,
       style: tool === 'eraser' ? 'round' : tool === 'pencil' ? 'pencil' : brushStyle,
       color: tool === 'eraser' ? activeDocument?.background || '#FFFFFF' : color,
+      erase: tool === 'eraser',
     })
     if (!stroke) return
     paintLayerPreview()
@@ -1576,7 +1586,7 @@ if (tool === 'shape') {
         .ss-work{min-width:0;min-height:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53;touch-action:pan-x pan-y;overscroll-behavior:contain}.ss-work.ss-panning,.ss-work.ss-panning *{cursor:grabbing!important}.ss-work.ss-hand,.ss-work.ss-hand *{cursor:grab!important}
         .ss-stage{width:max-content;min-width:100%;min-height:100%;display:grid;place-items:center}
         .ss-canvas-frame{position:relative;flex:none;overflow:visible}
-        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : studioBrushCursor(size, zoom)}}
+        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;background-color:#fff;background-image:linear-gradient(45deg,#d9dfe6 25%,transparent 25%),linear-gradient(-45deg,#d9dfe6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9dfe6 75%),linear-gradient(-45deg,transparent 75%,#d9dfe6 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : studioBrushCursor(size, zoom)}}
         .ss-view-buttons{display:flex;flex-wrap:wrap;gap:6px}
         .ss-view-btn{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:44px;height:31px;border:1px solid #555b62;border-radius:6px;background:#353a40;color:#e7ecf1;font:inherit;font-size:11px;cursor:pointer}
         .ss-view-btn:hover,.ss-view-btn.active{border-color:#72b3f7;background:#355274}
