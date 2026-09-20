@@ -1,7 +1,68 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('studioEditMenu', {
+  "en": {
+    "edit": "Edit",
+    "drawing": "Edit drawing",
+    "history": "History",
+    "undo": "Undo",
+    "redo": "Redo",
+    "currentPaper": "Current paper",
+    "clearPaper": "Clear Paper",
+    "undoAvailable": "Undo available",
+    "clearConfirm": "Clear this paper? You can restore it with Undo."
+  },
+  "km": {
+    "edit": "កែសម្រួល",
+    "drawing": "កែសម្រួលគំនូរ",
+    "history": "ប្រវត្តិកែប្រែ",
+    "undo": "ត្រឡប់ក្រោយ",
+    "redo": "ធ្វើឡើងវិញ",
+    "currentPaper": "ក្រដាសបច្ចុប្បន្ន",
+    "clearPaper": "សម្អាតក្រដាស",
+    "undoAvailable": "អាចត្រឡប់ក្រោយបាន",
+    "clearConfirm": "សម្អាតក្រដាសនេះមែនទេ? អ្នកអាចស្ដារវាវិញដោយប្រើ Undo។"
+  },
+  "zh": {
+    "edit": "编辑",
+    "drawing": "编辑绘图",
+    "history": "历史记录",
+    "undo": "撤销",
+    "redo": "重做",
+    "currentPaper": "当前画布",
+    "clearPaper": "清空画布",
+    "undoAvailable": "可撤销",
+    "clearConfirm": "清空此画布？您可以使用撤销恢复。"
+  },
+  "ja": {
+    "edit": "編集",
+    "drawing": "描画を編集",
+    "history": "履歴",
+    "undo": "元に戻す",
+    "redo": "やり直す",
+    "currentPaper": "現在のキャンバス",
+    "clearPaper": "キャンバスを消去",
+    "undoAvailable": "元に戻せます",
+    "clearConfirm": "このキャンバスを消去しますか？元に戻す操作で復元できます。"
+  },
+  "ko": {
+    "edit": "편집",
+    "drawing": "그림 편집",
+    "history": "기록",
+    "undo": "실행 취소",
+    "redo": "다시 실행",
+    "currentPaper": "현재 캔버스",
+    "clearPaper": "캔버스 지우기",
+    "undoAvailable": "실행 취소 가능",
+    "clearConfirm": "이 캔버스를 지울까요? 실행 취소로 복구할 수 있습니다."
+  }
+})
 
 export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRedo, onClear }) {
+  const { t: tx } = useDisplayTranslation()
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState({ top: 34, left: 48 })
   const triggerRef = useRef(null)
@@ -89,7 +150,7 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
 
   function clearPaper() {
     setOpen(false)
-    if (enabled && window.confirm('Clear this paper? You can restore it with Undo.')) onClear()
+    if (enabled && window.confirm(tx('studioEditMenu.clearConfirm'))) onClear()
   }
 
   return (
@@ -119,23 +180,23 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
           }
         }}
       >
-        Edit
+        {tx('studioEditMenu.edit')}
       </button>
       {open && createPortal(
         <div
           ref={menuRef}
           role="menu"
-          aria-label="Edit drawing"
+          aria-label={tx('studioEditMenu.drawing')}
           className="ss-edit-menu"
           style={{ top: position.top, left: position.left }}
           onKeyDown={navigateMenu}
         >
-          <div className="ss-edit-menu-heading">History</div>
-          <button type="button" role="menuitem" className="ss-edit-menu-item" disabled={!canUndo} onClick={() => invoke(onUndo)}>Undo <small>Ctrl/⌘ Z</small></button>
-          <button type="button" role="menuitem" className="ss-edit-menu-item" disabled={!canRedo} onClick={() => invoke(onRedo)}>Redo <small>Ctrl/⌘ Shift Z</small></button>
+          <div className="ss-edit-menu-heading">{tx('studioEditMenu.history')}</div>
+          <button type="button" role="menuitem" className="ss-edit-menu-item" disabled={!canUndo} onClick={() => invoke(onUndo)}>{tx('studioEditMenu.undo')} <small>Ctrl/⌘ Z</small></button>
+          <button type="button" role="menuitem" className="ss-edit-menu-item" disabled={!canRedo} onClick={() => invoke(onRedo)}>{tx('studioEditMenu.redo')} <small>Ctrl/⌘ Shift Z</small></button>
           <div className="ss-edit-menu-divider" role="separator" />
-          <div className="ss-edit-menu-heading">Current paper</div>
-          <button type="button" role="menuitem" className="ss-edit-menu-item" onClick={clearPaper}>Clear Paper <small>Undo available</small></button>
+          <div className="ss-edit-menu-heading">{tx('studioEditMenu.currentPaper')}</div>
+          <button type="button" role="menuitem" className="ss-edit-menu-item" onClick={clearPaper}>{tx('studioEditMenu.clearPaper')} <small>{tx('studioEditMenu.undoAvailable')}</small></button>
         </div>,
         document.body
       )}
