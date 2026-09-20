@@ -22,6 +22,7 @@ export default function useContinuousEpisodeReader({
   const entriesRef = useRef([])
   const nodesRef = useRef(new Map())
   const loadingRef = useRef(new Map())
+  const preloadRetryAfterRef = useRef(new Map())
   const activeIdRef = useRef(String(activeEpisodeId || ''))
   const pendingScrollAdjustmentRef = useRef(0)
   const loadEpisodeRef = useRef(loadEpisode)
@@ -225,7 +226,12 @@ export default function useContinuousEpisodeReader({
 
       if (rect.bottom - window.innerHeight > preloadDistance) return
 
-      loadTarget(nextEpisode).catch(() => null)
+      const nextId = getEpisodeId(nextEpisode)
+if (Date.now() < (preloadRetryAfterRef.current.get(nextId) || 0)) return
+preloadRetryAfterRef.current.set(nextId, Date.now() + 60000)
+loadTarget(nextEpisode)
+  .then(() => preloadRetryAfterRef.current.delete(nextId))
+  .catch(() => null)
     }
 
     const scheduleCheck = () => {
