@@ -41,13 +41,16 @@ function normalizedLayers(raw, paperIndex) {
       error(`Paper ${paperIndex + 1}, layer ${index + 1} has invalid data.`)
     }
     const blendMode = item.blendMode ?? 'normal'
+    const isBackground = index === 0 && item.isBackground !== false
     const groupId = item.groupId
-    if (!BLEND_MODES.has(blendMode) || (index === 0 && blendMode !== 'normal') ||
-      (groupId !== undefined && (typeof groupId !== 'string' || !groupId || groupId.length > 100 || index === 0))) {
+    if ((item.isBackground !== undefined && typeof item.isBackground !== 'boolean') || (index > 0 && item.isBackground) ||
+      !BLEND_MODES.has(blendMode) || (isBackground && blendMode !== 'normal') ||
+      (groupId !== undefined && (typeof groupId !== 'string' || !groupId || groupId.length > 100 || isBackground))) {
       error(`Paper ${paperIndex + 1}, layer ${index + 1} has invalid group or blend metadata.`)
     }
     ids.add(id)
     return { id, name, image, visible: item.visible, locked: item.locked, opacity,
+      isBackground,
       ...(groupId ? { groupId } : {}), ...(item.blendMode ? { blendMode } : {}),
     }
   })
