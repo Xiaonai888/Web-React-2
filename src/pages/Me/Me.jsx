@@ -1294,7 +1294,7 @@ const handleOpenProfileSwitcher = (event) => {
   }
   divider
 />
-            <MenuRow to="/library" customIcon={<img src="/assets/Icons/Library.svg" alt="" className="h-[16px] w-[16px] object-contain" />} title={tx('mePage.library')} divider />
+            <MenuRow to="/library?source=me" customIcon={<img src="/assets/Icons/Library.svg" alt="" className="h-[16px] w-[16px] object-contain" />} title={tx('mePage.library')} divider />
             <MenuRow
   to="/game"
   icon="fa-solid fa-gamepad"
