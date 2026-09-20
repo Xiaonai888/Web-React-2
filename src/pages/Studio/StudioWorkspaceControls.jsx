@@ -7,6 +7,7 @@ import StudioColorPanel from './StudioColorPanel'
 import StudioBrushSettings from './StudioBrushSettings'
 import StudioRightPanels from './StudioRightPanels'
 import StudioFloatingRightDock from './StudioFloatingRightDock'
+import StudioDetachablePanel from './StudioDetachablePanel'
 import StudioFloatingToolDock from './StudioFloatingToolDock'
 
 registerTranslationNamespace('studioWorkspace', {
@@ -265,10 +266,14 @@ export function StudioControlSidebar({
 }) {
   const { t: tx } = useDisplayTranslation()
   const [brushDock, setBrushDock] = useState(null)
+  const [desktopPanels, setDesktopPanels] = useState(false)
 
   useEffect(() => {
     const media = window.matchMedia('(min-width:1101px) and (min-height:651px)')
-    const sync = () => setBrushDock(media.matches ? document.getElementById('ss-brush-dock-root') : null)
+    const sync = () => {
+      setDesktopPanels(media.matches)
+      setBrushDock(media.matches ? document.getElementById('ss-brush-dock-root') : null)
+    }
     sync()
     media.addEventListener?.('change', sync)
     return () => media.removeEventListener?.('change', sync)
@@ -289,7 +294,25 @@ export function StudioControlSidebar({
     return (
     <StudioFloatingRightDock>
       <aside className="ss-side" aria-label={tx('studioWorkspace.studioSidePanels')}>
-        <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />
+        <style>{`
+          .shadow-studio .ss-side>.ss-color-slot,.shadow-studio .ss-side>.ss-nav-slot{box-sizing:border-box;min-width:0;min-height:0}
+          .shadow-studio .ss-side .ss-color-slot .ss-color-panel,.shadow-studio .ss-side .ss-nav-slot .ss-navigator{box-sizing:border-box;min-width:0;width:100%;margin:0}
+          @media(min-width:1101px) and (min-height:651px) and (max-width:1279px){
+            .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='color']))>.ss-color-slot{display:none}
+            .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='view']))>.ss-nav-slot{display:none}
+          }
+          @media(min-width:1280px) and (min-height:651px){
+            .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher)>.ss-nav-slot{display:block!important;grid-column:1;grid-row:1;align-self:stretch;overflow:auto;border-bottom:1px solid #45515e}
+            .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher)>.ss-color-slot{display:block!important;grid-column:1;grid-row:2;align-self:stretch;overflow:auto;border-bottom:1px solid #45515e}
+          }
+        `}</style>
+        {desktopPanels ? (
+          <div className="ss-color-slot">
+            <StudioDetachablePanel id="studio-color" title={labels.color || 'Color'} width={320}>
+              <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />
+            </StudioDetachablePanel>
+          </div>
+        ) : <StudioColorPanel color={color} label={labels.color} onChange={onColorChange} />}
         <StudioRightPanels
   canvasRef={canvasRef}
   paperId={paperId}
@@ -322,7 +345,13 @@ export function StudioControlSidebar({
         </div>
         <p className="ss-view-help">{tx('studioWorkspace.viewOnlyHelp')}</p>
       </section>
-      {navigator}
+      {desktopPanels ? (
+        <div className="ss-nav-slot">
+          <StudioDetachablePanel id="studio-navigator" title="Navigator" width={290}>
+            {navigator}
+          </StudioDetachablePanel>
+        </div>
+      ) : navigator}
       <section className="ss-section">
         <button type="button" className="ss-btn" onClick={onClear}>{labels.clear}</button>
       </section>
