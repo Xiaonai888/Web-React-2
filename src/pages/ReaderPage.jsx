@@ -15,6 +15,7 @@ import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisod
 import StoryTranslateButton from '../components/reader/StoryTranslateButton'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
 import useContinuousEpisodeReader from '../hooks/useContinuousEpisodeReader'
+import { loadReaderEpisodeCache, saveReaderEpisodeCache } from '../utils/readerEpisodeCache'
 import useEpisodeTranslation from '../hooks/useEpisodeTranslation'
 import ReportModal from '../components/ReportModal'
 import RichEpisodeContent, {
@@ -865,6 +866,114 @@ function getReaderToken() {
 function readerAuthHeaders() {
   const token = getReaderToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+const IOS_READER = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+const IOS_MANIFEST_PREFIX = 'shadow_reader_episode_manifest_v2:'
+const IOS_MANIFEST_TTL_MS = 10 * 60 * 1000
+const iosEpisodeRequests = new Map()
+
+function iosPrivateScope() {
+  const token = getReaderToken()
+  if (!token) return ''
+  let hash = 2166136261
+  for (let index = 0; index < token.length; index += 1) {
+    hash ^= token.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return `reader-${(hash >>> 0).toString(36)}`
+}
+
+function iosManifestKey(storyId) {
+  return `${IOS_MANIFEST_PREFIX}${encodeURIComponent(String(storyId))}`
+}
+
+function iosEligibleManifest(data) {
+  return data?.ok !== false && data?.story_is_adult === false &&
+    Array.isArray(data.episodes) && !data.episodes.some((item) => item?.is_adult)
+}
+
+function readIOSManifest(storyId) {
+  if (!IOS_READER) return null
+  try {
+    const entry = JSON.parse(sessionStorage.getItem(iosManifestKey(storyId)) || 'null')
+    if (entry?.savedAt > 0 && Date.now() - entry.savedAt <= IOS_MANIFEST_TTL_MS && iosEligibleManifest(entry.data)) {
+      return entry.data
+    }
+  } catch {}
+  return null
+}
+
+function saveIOSManifest(storyId, data) {
+  if (!IOS_READER || !iosEligibleManifest(data)) return
+  try {
+    sessionStorage.setItem(iosManifestKey(storyId), JSON.stringify({ data, savedAt: Date.now() }))
+  } catch {}
+}
+
+function iosCacheResponse(data, cacheState) {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'X-Shadow-Reader-Cache': cacheState },
+  })
+}
+
+async function saveIOSEpisode(storyId, episodeId, data, manifest) {
+  const item = manifest?.episodes?.find((entry) => String(entry.id) === String(episodeId))
+  const privateAccess = data?.cache_access?.private_access === true
+  if (!IOS_READER || !item || typeof item.is_locked !== 'boolean' ||
+    privateAccess !== item.is_locked || item.is_adult || !iosEligibleManifest(manifest) ||
+    data?.ok !== true || data?.locked === true || !data.episode ||
+    String(data.episode.id) !== String(episodeId) ||
+    data.story?.is_adult === true || data.episode.is_adult === true) return
+  const scope = privateAccess ? iosPrivateScope() : 'public'
+  if (!scope) return
+  const storyType = String(data.story?.story_type || data.episode?.story_type || 'novel').toLowerCase()
+  if (!['novel', 'chat_story', 'manga'].includes(storyType)) return
+  await saveReaderEpisodeCache({
+    storyType, storyId, episodeId, data, updatedAt: item.updated_at,
+    privateAccess, scope, accessExpiresAt: data.cache_access?.expires_at || null,
+  })
+}
+
+async function fetchIOSEpisode(storyId, episodeId, manifest, nativeFetch) {
+  const item = manifest?.episodes?.find((entry) => String(entry.id) === String(episodeId))
+  if (!IOS_READER || !iosEligibleManifest(manifest) || !item ||
+    item.is_adult || typeof item.is_locked !== 'boolean') return nativeFetch()
+  const privateAccess = item.is_locked
+  const scope = privateAccess ? iosPrivateScope() : 'public'
+  if (scope) {
+    for (const storyType of ['novel', 'chat_story', 'manga']) {
+      try {
+        const data = await loadReaderEpisodeCache({
+          storyType, storyId, episodeId, expectedUpdatedAt: item.updated_at,
+          privateAccess, scope,
+        })
+        if (data?.ok === true && data?.locked !== true && data?.episode &&
+          String(data.episode.id) === String(episodeId) &&
+          data.cache_access?.private_access === privateAccess &&
+          data.story?.is_adult !== true && data.episode?.is_adult !== true) {
+          return iosCacheResponse(data, privateAccess ? 'EPISODE-PRIVATE-HIT' : 'EPISODE-PUBLIC-HIT')
+        }
+      } catch {}
+    }
+  }
+  const requestKey = `${scope}:${storyId}:${episodeId}`
+  if (iosEpisodeRequests.has(requestKey)) return (await iosEpisodeRequests.get(requestKey)).clone()
+  const pending = Promise.resolve().then(nativeFetch)
+  iosEpisodeRequests.set(requestKey, pending)
+  try {
+    const response = await pending
+    if (response.ok) {
+      response.clone().json()
+        .then((data) => saveIOSEpisode(storyId, episodeId, data, manifest))
+        .catch(() => {})
+    }
+    return response.clone()
+  } finally {
+    iosEpisodeRequests.delete(requestKey)
+  }
 }
 
 const READING_ACTIVITY_GRACE_MS = 45000
@@ -5814,13 +5923,14 @@ async function loadContinuousEpisode(targetEpisode) {
 
   if (!targetId) return null
 
-  const response = await fetch(
+  const fetchNext = () => fetch(
     `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${targetId}`,
-    {
-      headers: readerAuthHeaders(),
-      cache: 'no-store',
-    }
+    { headers: readerAuthHeaders(), cache: 'no-store' }
   )
+  const manifest = readIOSManifest(storyId)
+  const response = manifest
+    ? await fetchIOSEpisode(storyId, targetId, manifest, fetchNext)
+    : await fetchNext()
 
   const data = await response.json().catch(() => ({}))
 
@@ -5971,13 +6081,21 @@ useEffect(() => {
         serviceWorker: navigator.serviceWorker?.controller?.scriptURL || 'none',
         requests: {},
       }
+      const savedIOSManifest = readIOSManifest(storyId)
+      const iosManifest = savedIOSManifest?.episodes?.some((item) =>
+        String(item.id) === String(routeEpisodeId)) ? savedIOSManifest : null
       const observedFetch = async (name, url) => {
         const started = Date.now()
         try {
-          const response = await fetch(url, {
+          const nativeFetch = () => fetch(url, {
             headers: readerAuthHeaders(),
             cache: 'no-store',
           })
+          const response = iosManifest && name === 'list'
+            ? iosCacheResponse(iosManifest, 'MANIFEST-HIT')
+            : iosManifest && name === 'episode'
+              ? await fetchIOSEpisode(storyId, routeEpisodeId, iosManifest, nativeFetch)
+              : await nativeFetch()
           readTrace.requests[name] = {
             outcome: 'HTTP_RESPONSE_RECEIVED',
             status: response.status,
@@ -6033,6 +6151,12 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         }
 
         const nextEpisodes = episodesData.episodes || []
+        if (IOS_READER) {
+          saveIOSManifest(storyId, episodesData)
+          if (!iosManifest && episodeResponse.ok && episodeData.ok === true) {
+            saveIOSEpisode(storyId, routeEpisodeId, episodeData, episodesData).catch(() => {})
+          }
+        }
 
         if (
           episodeResponse.status === 423 ||
