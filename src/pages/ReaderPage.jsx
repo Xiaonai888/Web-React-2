@@ -5964,23 +5964,63 @@ useEffect(() => {
         return
       }
 
-      try {
-        const [episodeResponse, episodesResponse] = await Promise.all([
-          fetch(
-            `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${routeEpisodeId}`,
-            {
-              headers: readerAuthHeaders(),
-              cache: 'no-store',
-            }
-          ),
-          fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes`, {
-  headers: readerAuthHeaders(),
-  cache: 'no-store',
-}),
-        ])
+      const readTrace = {
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        onlineReported: navigator.onLine,
+        serviceWorker: navigator.serviceWorker?.controller?.scriptURL || 'none',
+        requests: {},
+      }
+      const observedFetch = async (name, url) => {
+        const started = Date.now()
+        try {
+          const response = await fetch(url, {
+            headers: readerAuthHeaders(),
+            cache: 'no-store',
+          })
+          readTrace.requests[name] = {
+            outcome: 'HTTP_RESPONSE_RECEIVED',
+            status: response.status,
+            statusText: response.statusText,
+            responseType: response.type,
+            redirected: response.redirected,
+            readerCache: response.headers.get('X-Shadow-Reader-Cache') || 'none/not exposed',
+            requestId: response.headers.get('X-Request-Id') || response.headers.get('X-Shadow-Request-Id') || 'not exposed',
+            elapsedMs: Date.now() - started,
+          }
+          return response
+        } catch (error) {
+          readTrace.requests[name] = {
+            outcome: 'FETCH_REJECTED_NO_HTTP_RESPONSE',
+            errorName: String(error?.name || 'Error'),
+            errorMessage: String(error?.message || error),
+            elapsedMs: Date.now() - started,
+          }
+          throw error
+        }
+      }
 
-        const episodeData = await episodeResponse.json().catch(() => ({}))
-        const episodesData = await episodesResponse.json().catch(() => ({}))
+      try {
+        const requests = await Promise.allSettled([
+          observedFetch('episode', `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${routeEpisodeId}`),
+          observedFetch('list', `${API_BASE_URL}/api/public/stories/${storyId}/episodes`),
+        ])
+        if (requests[0].status === 'rejected') throw requests[0].reason
+        if (requests[1].status === 'rejected') throw requests[1].reason
+        const episodeResponse = requests[0].value
+        const episodesResponse = requests[1].value
+        const episodeData = await episodeResponse.json().catch((error) => {
+          readTrace.requests.episode.jsonError = String(error?.message || error)
+          throw error
+        })
+        const episodesData = await episodesResponse.json().catch((error) => {
+          readTrace.requests.list.jsonError = String(error?.message || error)
+          throw error
+        })
+        readTrace.requests.episode.backendCode = String(episodeData?.code || 'none').slice(0, 100)
+        readTrace.requests.list.backendCode = String(episodesData?.code || 'none').slice(0, 100)
+        readTrace.requests.episode.backendOk = episodeData?.ok === false ? false : 'not false'
+        readTrace.requests.list.backendOk = episodesData?.ok === false ? false : 'not false'
 
 if (episodeData.code === 'ADULT_RESTRICTED' || episodesData.code === 'ADULT_RESTRICTED') {
   navigate(`/story/${storyId}`, { replace: true })
@@ -6080,8 +6120,89 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         window.scrollTo({ top: 0, behavior: 'auto' })
       } catch (error) {
         if (ignore) return
-
-        setMessage(describeReaderLoadFailure(error, getDisplayLanguageId()))
+        readTrace.originalError = {
+          name: String(error?.name || 'Error'),
+          message: String(error?.message || error),
+          status: Number(error?.status) || 'not available',
+          backendCode: String(error?.code || 'not available'),
+        }
+        const report = () => {
+          const checks = readTrace.requests
+          const failed = Object.entries(checks).filter(([, result]) =>
+            result.outcome === 'FETCH_REJECTED_NO_HTTP_RESPONSE' ||
+            result.jsonError ||
+            (Number(result.status) >= 400 && result.backendCode !== 'ADULT_RESTRICTED') ||
+            result.backendOk === false
+          )
+          let finding = 'The failure stage is not determined by the collected results.'
+          if (failed.some(([, result]) => result.jsonError)) {
+            finding = 'The API returned a response, but its JSON body could not be parsed. Check the endpoint response/content type.'
+          } else if (failed.some(([, result]) => Number(result.status) >= 500)) {
+            finding = 'The API returned HTTP 5xx. Check Shadow backend, middleware and upstream/proxy logs for the matching time.'
+          } else if (failed.some(([, result]) => Number(result.status) === 429)) {
+            finding = 'The API returned HTTP 429. Check Shadow rate limits, security middleware and edge/proxy limits.'
+          } else if (failed.some(([, result]) => [401, 403].includes(Number(result.status)))) {
+            finding = 'The API returned HTTP 401/403. Check login/session validation, access rules and security middleware.'
+          } else if (failed.some(([, result]) => Number(result.status) === 404)) {
+            finding = 'The API returned HTTP 404. Check the route and episode/story identifiers.'
+          } else if (failed.some(([, result]) => result.outcome === 'FETCH_REJECTED_NO_HTTP_RESPONSE')) {
+            const frontend = readTrace.probes?.frontend
+            const backend = readTrace.probes?.backend
+            if (frontend?.status === 200 && backend?.status === 200) {
+              finding = 'Frontend and Backend health both responded, but an authenticated reading request failed before an HTTP response was exposed. Inspect request-specific CORS/preflight, auth, browser/Service Worker and security logs. The exact cause is not established.'
+            } else if (frontend?.status === 200 && backend?.outcome === 'FETCH_REJECTED_NO_HTTP_RESPONSE') {
+              finding = 'Frontend responded but the independent Backend health request failed. Backend reachability, cross-origin access or the device-to-Backend path is suspect; the exact cause is not established.'
+            } else if (frontend?.outcome === 'FETCH_REJECTED_NO_HTTP_RESPONSE' && backend?.outcome === 'FETCH_REJECTED_NO_HTTP_RESPONSE') {
+              finding = 'Both independent Frontend and Backend probes failed on this device. Network, DNS, browser restrictions or both services may be involved; the exact cause is not established.'
+            } else {
+              finding = 'Browser fetch failed before an HTTP response was exposed. Inspect independent probes below. Possible causes include CORS/preflight, browser/Service Worker handling, network transport or a blocked request. The exact cause is not established.'
+            }
+          } else if (failed.some(([, result]) => result.backendOk === false)) {
+            finding = 'Shadow API replied with ok=false; inspect backendCode and the matching backend log.'
+          }
+          return [
+            'SHADOW READER DIAGNOSTIC — TEMPORARY',
+            `Finding: ${finding}`,
+            `Captured at UTC: ${readTrace.timestamp}`,
+            `Original browser error: ${readTrace.originalError.name}: ${readTrace.originalError.message}`,
+            `Original HTTP status: ${readTrace.originalError.status}; backend code: ${readTrace.originalError.backendCode}`,
+            `Browser reports online: ${readTrace.onlineReported}; Service Worker: ${readTrace.serviceWorker}`,
+            `Device/browser: ${readTrace.userAgent}`,
+            `Episode request: ${JSON.stringify(checks.episode || 'not started')}`,
+            `Episode-list request: ${JSON.stringify(checks.list || 'not started')}`,
+            `Independent probes: ${JSON.stringify(readTrace.probes || 'running...')}`,
+            'No bearer token, personal account data or private episode content is included.',
+          ].join('\n')
+        }
+        setMessage(report())
+        const probe = async (url) => {
+          const controller = new AbortController()
+          const timeout = window.setTimeout(() => controller.abort(), 8000)
+          const started = Date.now()
+          try {
+            const response = await fetch(url, {
+              cache: 'no-store',
+              signal: controller.signal,
+            })
+            return { outcome: 'HTTP_RESPONSE_RECEIVED', status: response.status, elapsedMs: Date.now() - started }
+          } catch (probeError) {
+            return { outcome: 'FETCH_REJECTED_NO_HTTP_RESPONSE', name: String(probeError?.name || 'Error'), message: String(probeError?.message || probeError), elapsedMs: Date.now() - started }
+          } finally {
+            window.clearTimeout(timeout)
+          }
+        }
+        void Promise.all([
+          probe('/app-version.json'),
+          probe(`${API_BASE_URL}/health/maintenance`),
+        ]).then(([frontend, backend]) => {
+          readTrace.probes = { frontend, backend }
+          if (!ignore) setMessage(report())
+          console.error('SHADOW_READER_DIAGNOSTIC', readTrace)
+        }).catch((probeError) => {
+          readTrace.probes = { unexpectedError: String(probeError?.message || probeError) }
+          if (!ignore) setMessage(report())
+          console.error('SHADOW_READER_DIAGNOSTIC', readTrace)
+        })
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -7624,7 +7745,7 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
         {loading ? <LoadingCard theme={theme} /> : null}
 
         {message ? (
-          <section className="rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
+          <section className="whitespace-pre-wrap break-words rounded-[18px] bg-[#fff1f1] px-4 py-3 font-mono text-[12px] leading-5 text-[#e5484d] dark:bg-[#2d1f29] dark:text-[#ffb4b4]">
             {message}
           </section>
         ) : null}
