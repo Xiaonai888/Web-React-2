@@ -29,6 +29,11 @@ function MangaIcon({ active }) {
   )
 }
 
+function LibraryIcon({ active }) {
+  return <img src={active ? '/assets/Icons/Library-active.svg' : '/assets/Icons/Library.svg'} alt=""
+    className={`h-[21px] w-[21px] object-contain ${active ? '' : 'dark:brightness-0 dark:invert'}`} />
+}
+
 function CompassIcon({ active }) {
   const stroke = active ? 'var(--shadow-accent-text)' : 'currentColor'
 
@@ -109,8 +114,13 @@ const NAV = [
   { to: '/me', labelKey: 'navMine', Icon: SmileIcon },
 ]
 
-export default function Footer() {
+export default function Footer({ libraryMode = false }) {
   const { t } = useDisplayTranslation()
+  const navItems = libraryMode
+    ? NAV.map(item => item.to === '/discover'
+        ? { to: '/library?source=me', labelKey: 'mePage.library', Icon: LibraryIcon }
+        : item)
+    : NAV
 
   return (
     <footer
@@ -142,7 +152,7 @@ export default function Footer() {
           padding: '0 8px',
         }}
       >
-        {NAV.map(({ to, labelKey, Icon }) => (
+        {navItems.map(({ to, labelKey, Icon }) => (
           <NavLink
             key={to}
             to={to}
