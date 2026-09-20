@@ -171,6 +171,10 @@ async function pruneTemporaryCacheNow() {
   })
   let readerBytes = remaining.reduce((sum, entry) => sum + entry.cacheBytes, 0)
   const budget = await getTotalBudget(readerBytes + mangaBytes, settings)
+    if (!(budget > mangaBytes)) {
+    console.warn('SHADOW_READER_CACHE_PRUNE_SKIPPED', { budget, mangaBytes })
+    return false
+  }
   for (const entry of remaining.sort((a, b) =>
     Number(a.lastAccessedAt || a.savedAt || 0) - Number(b.lastAccessedAt || b.savedAt || 0))) {
     if (readerBytes + mangaBytes <= budget) break
