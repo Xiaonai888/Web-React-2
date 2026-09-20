@@ -255,6 +255,9 @@ export function StudioControlSidebar({
   projectBusy,
   onClear,
   onPlaceAsset,
+  layers,
+  activeLayerId,
+  onLayerAction,
   navigator,
   labels,
 }) {
@@ -291,6 +294,10 @@ export function StudioControlSidebar({
   revision={revision}
   paper={paper}
   onPlaceAsset={onPlaceAsset}
+  layers={layers}
+  activeLayerId={activeLayerId}
+  onLayerAction={onLayerAction}
+  layerDisabled={paperLoading || projectBusy}
 />
       {brushDock ? createPortal(brushControls, brushDock) : brushControls}
       <section className="ss-section" aria-label="Canvas view">
