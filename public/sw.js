@@ -769,7 +769,7 @@ async function getStorageBudget(existingRecords = null, storageSnapshot = null) 
   const cachedBytes = records.reduce(
     (total, record) => total + normalizeBytes(record.cachedBytes), 0
   )
-  const reserve = Math.max(GB, Math.floor(quota * 0.15))
+  const reserve = Math.floor(quota * 0.15)
   const available = Math.max(0, quota - usage - reserve)
   const budgetBytes = Math.max(0, Math.min(
     selectedLimit,
@@ -777,7 +777,7 @@ async function getStorageBudget(existingRecords = null, storageSnapshot = null) 
     Math.max(0, Math.floor(quota * QUOTA_BUDGET_RATIO) - readerBytes),
     cachedBytes + available
   ))
-  const pressured = usage / quota >= STORAGE_PRESSURE_RATIO || available < GB
+  const pressured = usage / quota >= STORAGE_PRESSURE_RATIO || available <= 0
   return {
     budgetBytes: pressured ? Math.min(GB, budgetBytes) : budgetBytes,
     pressured,
