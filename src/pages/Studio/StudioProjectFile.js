@@ -1,3 +1,6 @@
+import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
+import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
+
 export const STUDIO_PROJECT_EXTENSION = '.shadowstudio'
 
 const MAX_FILE_BYTES = 80 * 1024 * 1024
@@ -7,6 +10,7 @@ const MAX_CANVAS_PIXELS = 12_000_000
 const MAX_CANVAS_SIDE = 4096
 const IMAGE_PREFIX = /^data:image\/(?:png|webp|jpeg);base64,/i
 const HEX_COLOR = /^#[0-9a-f]{6}$/i
+const BLEND_MODES = new Set(STUDIO_BLEND_MODES)
 
 function error(message) {
   throw new Error(message)
@@ -36,12 +40,32 @@ function normalizedLayers(raw, paperIndex) {
       typeof item.visible !== 'boolean' || typeof item.locked !== 'boolean') {
       error(`Paper ${paperIndex + 1}, layer ${index + 1} has invalid data.`)
     }
+    const blendMode = item.blendMode ?? 'normal'
+    const groupId = item.groupId
+    if (!BLEND_MODES.has(blendMode) || (index === 0 && blendMode !== 'normal') ||
+      (groupId !== undefined && (typeof groupId !== 'string' || !groupId || groupId.length > 100 || index === 0))) {
+      error(`Paper ${paperIndex + 1}, layer ${index + 1} has invalid group or blend metadata.`)
+    }
     ids.add(id)
-    return { id, name, image, visible: item.visible, locked: item.locked, opacity }
+    return { id, name, image, visible: item.visible, locked: item.locked, opacity,
+      ...(groupId ? { groupId } : {}), ...(item.blendMode ? { blendMode } : {}),
+    }
   })
 
   const activeLayerId = ids.has(raw.activeLayerId) ? raw.activeLayerId : layers[layers.length - 1].id
-  return { layers, activeLayerId }
+  if (raw.groups === undefined && !layers.some((layer) => layer.groupId)) return { layers, activeLayerId }
+  if (!Array.isArray(raw.groups) || raw.groups.length > 8) error(`Paper ${paperIndex + 1} has invalid groups.`)
+  const groups = raw.groups.map((group) => {
+    if (!group || typeof group.id !== 'string' || !group.id || group.id.length > 100 ||
+      typeof group.name !== 'string' || !group.name.trim() || group.name.length > 80 ||
+      typeof group.visible !== 'boolean' || typeof group.locked !== 'boolean' || typeof group.collapsed !== 'boolean' ||
+      !Number.isFinite(group.opacity) || group.opacity < 0 || group.opacity > 100 ||
+      !BLEND_MODES.has(group.blendMode ?? 'normal')) error(`Paper ${paperIndex + 1} has invalid group metadata.`)
+    return { id: group.id, name: group.name, visible: group.visible, locked: group.locked, collapsed: group.collapsed, opacity: group.opacity, blendMode: group.blendMode ?? 'normal' }
+  })
+  try { validateStudioGroupLayout({ layers, groups }) }
+  catch { error(`Paper ${paperIndex + 1} has an invalid group layout.`) }
+  return { layers, activeLayerId, groups }
 }
 
 function normalizedDocument(raw, index) {
@@ -98,6 +122,8 @@ function normalizedDocument(raw, index) {
 
   if (raw.layers !== undefined) {
     Object.assign(document, normalizedLayers(raw, index))
+  } else if (raw.groups !== undefined) {
+    error(`Paper ${index + 1} cannot contain groups without layers.`)
   }
 
   return document
