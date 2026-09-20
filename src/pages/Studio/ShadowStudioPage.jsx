@@ -1041,7 +1041,7 @@ export default function ShadowStudioPage() {
       window.removeEventListener('keyup', releaseSpace)
       window.removeEventListener('blur', releaseSpace)
     }
-  }, [workspaceStarted, newFileOpen])
+  }, [workspaceStarted, newFileOpen, paperLoading, projectBusy, recoveryBusy, exportOpen])
 
   useEffect(() => {
     const work = workRef.current
