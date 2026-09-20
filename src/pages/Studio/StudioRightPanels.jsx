@@ -216,18 +216,42 @@ export default function StudioRightPanels() {
           .shadow-studio .ss-asset-placeholder strong{font-size:11px;color:#dce6f0}
           .shadow-studio .ss-asset-placeholder p{margin:0;font-size:10px;line-height:1.6}
           .shadow-studio .ss-right-switcher+.ss-color-panel{min-width:0}
+          .shadow-studio:has(.ss-layout) .ss-right-panel[data-panel]{display:none}
+          .shadow-studio:has(.ss-layout) .ss-right-switcher[data-active='layers'] .ss-right-panel[data-panel='layers'],
+          .shadow-studio:has(.ss-layout) .ss-right-switcher[data-active='assets'] .ss-right-panel[data-panel='assets']{display:block}
+          .shadow-studio:has(.ss-layout) .ss-right-panel{border-bottom:1px solid #4b5663}
+          .shadow-studio:has(.ss-layout) .ss-layer-row{border-radius:4px;min-height:58px}
+          .shadow-studio:has(.ss-layout) .ss-panel-hint{font-size:10px;line-height:1.55}
+        }
+        @media(min-width:1280px) and (min-height:651px){
+          .shadow-studio:has(.ss-layout) .ss-layout{grid-template-columns:284px minmax(0,1fr) clamp(400px,31vw,490px)}
+          .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:220px minmax(0,max-content) auto auto;align-content:start;gap:0;padding:0;min-width:0;overflow-x:hidden;overflow-y:auto}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-right-switcher{grid-column:2;grid-row:1 / span 4;display:flex;flex-direction:column;align-self:stretch;order:0;flex:none;width:auto;min-width:0;height:auto;min-height:100%;border-bottom:0;border-left:1px solid #485561;overflow:visible;background:#29333d}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-navigator{grid-column:1;grid-row:1;order:0;display:block!important;min-width:0;min-height:0;margin:0;padding:10px 9px!important;border-bottom:1px solid #45515e;overflow:hidden}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-color-panel{grid-column:1;grid-row:2;order:0;display:block!important;flex:none;min-width:0;align-self:start;margin:0;padding:10px 9px 12px!important;border-bottom:1px solid #45515e}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-section[aria-label='Canvas view']{grid-column:1;grid-row:3;order:0;display:block!important;margin:0;padding:10px 9px!important}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-section:last-child{grid-column:1;grid-row:4;order:0;display:block!important;margin:0;padding:9px!important}
+          .shadow-studio:has(.ss-layout) .ss-right-tabs{display:none}
+          .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel[data-panel]{display:block!important;min-width:0;padding:10px 9px 13px}
+          .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel[data-panel='assets']{border-top:1px solid #596777}
+          .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel-head{padding:1px 0 4px}
+          .shadow-studio:has(.ss-layout) .ss-layer-options{grid-template-columns:minmax(0,1fr) 62px;gap:5px}
+          .shadow-studio:has(.ss-layout) .ss-panel-actions{gap:3px}
+          .shadow-studio:has(.ss-layout) .ss-asset-placeholder{padding:14px 6px}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-navigator .ss-nav-preview{max-width:100%}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-color-panel .ss-hue-wheel{width:min(100%,152px)}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-color-panel .ss-swatches{gap:3px}
         }
       `}</style>
       <div className="ss-right-tabs" role="group" aria-label={tx('studioPanels.rightTabs')}>
         {TABS.map((tab) => (
-          <button key={tab.id} type="button" className="ss-right-tab" aria-pressed={active === tab.id} onClick={() => setActive(tab.id)}>
+          <button key={tab.id} type="button" className="ss-right-tab" data-tab={tab.id} aria-pressed={active === tab.id} onClick={() => setActive(tab.id)}>
             <i className={`fa-solid ${tab.icon}`} aria-hidden="true" />
             <span>{tx(`studioPanels.tabs.${tab.id}`)}</span>
           </button>
         ))}
       </div>
-      {active === 'layers' ? (
-        <div className="ss-right-panel" aria-label={tx('studioPanels.layersOverview')}>
+      <div className="ss-right-panel" data-panel="layers" aria-label={tx('studioPanels.layersOverview')}>
           <div className="ss-right-panel-head"><strong>{tx('studioPanels.tabs.layers')}</strong><span>{tx('studioPanels.canvasMode')}</span></div>
           <div className="ss-layer-options">
             <label>{tx('studioPanels.blendMode')}<select disabled aria-label={tx('studioPanels.blendMode')}><option>{tx('studioPanels.normal')}</option></select></label>
@@ -245,14 +269,11 @@ export default function StudioRightPanels() {
           </div>
           <p className="ss-panel-hint">{tx('studioPanels.layerHint')}</p>
         </div>
-      ) : null}
-      {active === 'assets' ? (
-        <div className="ss-right-panel" aria-label={tx('studioPanels.assetsOverview')}>
+      <div className="ss-right-panel" data-panel="assets" aria-label={tx('studioPanels.assetsOverview')}>
           <div className="ss-right-panel-head"><strong>{tx('studioPanels.tabs.assets')}</strong><span>{tx('studioPanels.library')}</span></div>
           <div className="ss-asset-placeholder"><i className="fa-solid fa-shapes" aria-hidden="true" /><strong>{tx('studioPanels.emptyAssets')}</strong><p>{tx('studioPanels.assetHint')}</p></div>
           <p className="ss-panel-hint">{tx('studioPanels.importHint')}</p>
         </div>
-      ) : null}
     </section>
   )
 }
