@@ -357,9 +357,10 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/music',
     '/author/earnings',
     '/library/manage',
-    
-
   ]
+
+  const isMeLibrary = location.pathname === '/library' &&
+  new URLSearchParams(location.search).get('source') === 'me'
 
   const shouldHideFooter =
   hideFooterPaths.includes(location.pathname) ||
@@ -1480,7 +1481,7 @@ const shouldShowOpeningAds =
 
       {shouldShowMeAd ? <AdvertisementPopup placement="me" /> : null}
 
-      {!shouldHideFooter ? <Footer /> : null}
+      {isMeLibrary ? <Footer libraryMode /> : !shouldHideFooter ? <Footer /> : null}
     </>
   )
 }
