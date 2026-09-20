@@ -813,11 +813,13 @@ export default function Library() {
   const [downloadItems, setDownloadItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [clearing, setClearing] = useState(false)
 
   const isLoggedIn = Boolean(getReaderToken())
   const loadedTabsRef = useRef(new Set())
   const inFlightTabsRef = useRef(new Set())
   const activeTabRef = useRef(activeTab)
+  const clearInProgressRef = useRef(false)
 
   const loadLibrary = async (
     tab = activeTab,
@@ -978,26 +980,49 @@ export default function Library() {
       return
     }
 
-    if (activeTab !== 'Recents' || !libraryItems.length) return
+    if (activeTab !== 'Recents' || !libraryItems.length || clearInProgressRef.current) return
+    if (!window.confirm(t('libraryPage.clearConfirm'))) return
 
-    const confirmed = window.confirm(t('libraryPage.clearConfirm'))
-    if (!confirmed) return
+    clearInProgressRef.current = true
+    setClearing(true)
+    setMessage('')
+    let failed = false
 
     try {
-      await Promise.all(
-        libraryItems.map((item) =>
-          fetch(`${API_BASE_URL}/api/reader/library/${item.story_id}`, {
+      const headers = getHeaders()
+      const ids = [...new Set(libraryItems.map((item) => item.story_id).filter(Boolean))]
+      for (let i = 0; i < ids.length; i += 4) {
+        const results = await Promise.allSettled(ids.slice(i, i + 4).map(async (storyId) => {
+          const response = await fetch(`${API_BASE_URL}/api/reader/library/${encodeURIComponent(storyId)}`, {
             method: 'DELETE',
-            headers: getHeaders(),
+            headers,
           })
-        )
-      )
+          const data = await response.json().catch(() => ({}))
+          if (!response.ok || data.ok !== true) throw new Error('LIBRARY_REMOVE_FAILED')
+        }))
+        if (results.some((result) => result.status === 'rejected')) failed = true
+      }
 
-      setLibraryItems([])
+      const response = await fetch(`${API_BASE_URL}/api/reader/library`, {
+        headers,
+        cache: 'no-store',
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok !== true || !Array.isArray(data.items)) {
+        throw new Error('LIBRARY_REFRESH_FAILED')
+      }
+      setLibraryItems(data.items)
       loadedTabsRef.current.add('Recents')
+      if (data.items.length) failed = true
     } catch {
-      setMessage(t('libraryPage.clearFailed'))
+      loadedTabsRef.current.delete('Recents')
+      failed = true
+    } finally {
+      clearInProgressRef.current = false
+      setClearing(false)
     }
+
+    if (failed) setMessage(t('libraryPage.clearFailed'))
   }
 
   return (
@@ -1051,6 +1076,7 @@ export default function Library() {
               <button
                 type="button"
                 onClick={activeTab === 'Subscribed' ? () => navigate(meLibrarySource ? '/library/manage?source=me' : '/library/manage') : handleAction}
+                disabled={clearing}
                 className="shrink-0 pb-3 text-[13px] font-semibold transition"
                 style={{ color: 'var(--shadow-text-secondary)' }}
               >
