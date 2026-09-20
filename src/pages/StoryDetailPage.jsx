@@ -5,6 +5,7 @@ import StoryInfoSection from '../components/story-detail/StoryInfoSection'
 import EpisodePreviewSection from '../components/story-detail/EpisodePreviewSection'
 import EpisodeListModal from '../components/story-detail/EpisodeListModal'
 import LockedEpisodeModal from '../components/story-detail/LockedEpisodeModal'
+import SignUpRequiredPopup from './SignUpRequiredPopup'
 import LatestCommentSection from '../components/story-detail/LatestCommentSection'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import RecommendationSection from '../components/story-detail/RecommendationSection'
@@ -456,6 +457,7 @@ export default function StoryDetailPage() {
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [lockedEpisode, setLockedEpisode] = useState(null)
+  const [signUpRequiredOpen, setSignUpRequiredOpen] = useState(false)
   const [unlockedEpisodeIds, setUnlockedEpisodeIds] = useState([])
   const [bookmarked, setBookmarked] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -737,9 +739,10 @@ useEffect(() => {
     if (!episode) return
 
     if (!getReaderToken()) {
-      navigate('/login')
-      return
-    }
+  setEpisodeListOpen(false)
+  setSignUpRequiredOpen(true)
+  return
+}
 
     const alreadyUnlocked = unlockedEpisodeIds.includes(episode.id)
 
@@ -995,6 +998,11 @@ if (message || !story) {
         onClose={() => setEpisodeListOpen(false)}
         onOpenEpisode={handleOpenEpisode}
       />
+
+      <SignUpRequiredPopup
+  open={signUpRequiredOpen}
+  onClose={() => setSignUpRequiredOpen(false)}
+/>
 
       <LockedEpisodeModal
         episode={lockedEpisode}
