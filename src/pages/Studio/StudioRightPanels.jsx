@@ -225,12 +225,12 @@ export default function StudioRightPanels() {
         }
         @media(min-width:1280px) and (min-height:651px){
           .shadow-studio:has(.ss-layout) .ss-layout{grid-template-columns:284px minmax(0,1fr) clamp(400px,31vw,490px)}
-          .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:220px minmax(0,max-content) auto auto;align-content:start;gap:0;padding:0;min-width:0;overflow-x:hidden;overflow-y:auto}
-          .shadow-studio:has(.ss-layout) .ss-side>.ss-right-switcher{grid-column:2;grid-row:1 / span 4;display:flex;flex-direction:column;align-self:stretch;order:0;flex:none;width:auto;min-width:0;height:auto;min-height:100%;border-bottom:0;border-left:1px solid #485561;overflow:visible;background:#29333d}
+          .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:220px minmax(0,1fr);align-content:start;gap:0;padding:0;min-width:0;overflow-x:hidden;overflow-y:auto}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-right-switcher{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;align-self:stretch;order:0;flex:none;width:auto;min-width:0;height:auto;min-height:0;border-bottom:0;border-left:1px solid #485561;overflow-x:hidden;overflow-y:auto;background:#29333d}
           .shadow-studio:has(.ss-layout) .ss-side>.ss-navigator{grid-column:1;grid-row:1;order:0;display:block!important;min-width:0;min-height:0;margin:0;padding:10px 9px!important;border-bottom:1px solid #45515e;overflow:hidden}
-          .shadow-studio:has(.ss-layout) .ss-side>.ss-color-panel{grid-column:1;grid-row:2;order:0;display:block!important;flex:none;min-width:0;align-self:start;margin:0;padding:10px 9px 12px!important;border-bottom:1px solid #45515e}
-          .shadow-studio:has(.ss-layout) .ss-side>.ss-section[aria-label='Canvas view']{grid-column:1;grid-row:3;order:0;display:block!important;margin:0;padding:10px 9px!important}
-          .shadow-studio:has(.ss-layout) .ss-side>.ss-section:last-child{grid-column:1;grid-row:4;order:0;display:block!important;margin:0;padding:9px!important}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-color-panel{grid-column:1;grid-row:2;order:0;display:block!important;flex:none;min-width:0;align-self:stretch;min-height:0;height:100%;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;margin:0;padding:10px 9px 12px!important;border-bottom:1px solid #45515e}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-section[aria-label='Canvas view']{display:none!important}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-section:last-child{display:none!important}
           .shadow-studio:has(.ss-layout) .ss-right-tabs{display:none}
           .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel[data-panel]{display:block!important;min-width:0;padding:10px 9px 13px}
           .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel[data-panel='assets']{border-top:1px solid #596777}
