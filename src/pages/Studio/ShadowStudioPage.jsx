@@ -1668,8 +1668,6 @@ if (tool === 'shape') {
   }}
 />
 
-<StudioExportDialog
-
       <StudioShapeEditor
   key={shapeEditor ? `${shapeEditor.paperId}:${shapeEditor.x}:${shapeEditor.y}` : 'closed'}
   open={Boolean(shapeEditor) && workspaceStarted}
