@@ -1048,7 +1048,7 @@ export default function Library() {
 
               <button
                 type="button"
-                onClick={handleAction}
+                onClick={activeTab === 'Subscribed' ? () => navigate('/library/manage') : handleAction}
                 className="shrink-0 pb-3 text-[13px] font-semibold transition"
                 style={{ color: 'var(--shadow-text-secondary)' }}
               >
