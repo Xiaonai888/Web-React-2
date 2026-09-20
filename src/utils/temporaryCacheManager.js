@@ -82,7 +82,7 @@ export async function getTemporaryCacheStats() {
     getMangaImageCacheStats(),
   ])
   const bytes = readerStats(entries)
-  const imageBytes = imageStats?.ok ? Math.max(0, Number(imageStats.cachedBytes) || 0) : null
+  const updatedMangaBytes = Math.max(0, Number(updatedImage.cachedBytes) || 0)
   return {
     novelBytes: bytes.novel,
     chatStoryBytes: bytes.chat_story,
