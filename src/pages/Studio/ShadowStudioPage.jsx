@@ -18,6 +18,7 @@ import './StudioHeaderShell.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
 import StudioOptionsBar from './StudioOptionsBar'
+import { confirmLargeBrush } from './StudioPrecisionInput'
 import StudioCanvasRulers from './StudioCanvasRulers'
 
 registerTranslationNamespace('shadowStudio', {
@@ -338,7 +339,7 @@ function studioBrushCursor(size, zoom) {
 
 export default function ShadowStudioPage() {
   const navigate = useNavigate()
-  const { t: tx } = useDisplayTranslation()
+  const { t: tx, language } = useDisplayTranslation()
   const canvasRef = useRef(null)
   const workRef = useRef(null)
   const panRef = useRef(null)
@@ -959,8 +960,17 @@ export default function ShadowStudioPage() {
     setFlipVertical(Boolean(previous?.vertical))
   }, [activeDocumentId])
 
+  function updateBrushSize(raw) {
+  const value = Number(raw)
+  if (!Number.isFinite(value)) return false
+  const next = Math.round(Math.min(5000, Math.max(0.1, value)) * 10) / 10
+  if (!confirmLargeBrush(next, size, language)) return false
+  setSize(next)
+  return true
+}
+
   function clampZoom(value) {
-    return Math.min(400, Math.max(10, Math.round(value)))
+    return Math.min(6400, Math.max(1, Math.round(Number(value) || 1)))
   }
 
   function zoomAround(nextZoom, clientX, clientY) {
@@ -1424,7 +1434,7 @@ export default function ShadowStudioPage() {
           <StudioOptionsBar
   tool={tool} paper={activeDocument} size={size} opacity={opacity}
   showGrid={showGrid} busy={paperLoading || projectBusy || recoveryBusy || newFileOpen}
-  canUndo={canUndo} canRedo={canRedo} onSizeChange={setSize} onOpacityChange={setOpacity}
+  canUndo={canUndo} canRedo={canRedo} onSizeChange={updateBrushSize} onOpacityChange={setOpacity}
   onToggleGrid={() => setShowGrid((value) => !value)} onUndo={undo} onRedo={redo}
   onFit={fitCanvas} onNew={() => openNewFile('basic')}
   onSave={() => saveProject()} onExport={openExportDialog}
@@ -1497,7 +1507,7 @@ export default function ShadowStudioPage() {
               brushStyle={brushStyle}
               onBrushStyleChange={(nextStyle) => { setBrushStyle(nextStyle); setTool('brush') }}
               size={size}
-              onSizeChange={setSize}
+              onSizeChange={updateBrushSize}
               opacity={opacity}
               onOpacityChange={setOpacity}
               viewRotation={viewRotation}
@@ -1517,7 +1527,7 @@ export default function ShadowStudioPage() {
             paperIndex={documents.findIndex((item) => item.id === activeDocumentId) + 1}
             paperCount={documents.length}
             size={size}
-            onSizeChange={setSize}
+            onSizeChange={updateBrushSize}
             opacity={opacity}
             onOpacityChange={setOpacity}
             zoom={zoom}
