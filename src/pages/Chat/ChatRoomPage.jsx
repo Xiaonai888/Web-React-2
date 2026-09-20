@@ -2007,6 +2007,7 @@ export default function ChatRoomPage() {
   const jumpHandledRef = useRef('')
   const pollCursorRef = useRef('')
   const incrementalLoadingRef = useRef(false)
+  const lastVisibilityRefreshAtRef = useRef(0)
   const [conversation, setConversation] = useState(null)
   const [blockStatus, setBlockStatus] = useState({
     is_blocked: false,
@@ -2364,9 +2365,12 @@ export default function ChatRoomPage() {
     )
 
     const handleVisibilityChange = () => {
-      if (
-        document.visibilityState === 'visible'
+            if (
+        document.visibilityState === 'visible' &&
+        !incrementalLoadingRef.current &&
+        Date.now() - lastVisibilityRefreshAtRef.current >= 30000
       ) {
+        lastVisibilityRefreshAtRef.current = Date.now()
         loadRoom({
           silent: true,
           includeMeta: true,
