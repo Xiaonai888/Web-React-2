@@ -1240,6 +1240,39 @@ const placeImageLabel = {
         return
       }
 
+      if ((key === 'delete' || key === 'backspace') && !modifier && !event.altKey && !event.shiftKey) {
+        const paperTab = target?.closest?.('.ss-tabs > .ss-tab')
+        if (paperTab) {
+          const tabIndex = Array.from(paperTab.parentElement.children).filter((node) => node.classList.contains('ss-tab')).indexOf(paperTab)
+          const paperId = documentsRef.current[tabIndex]?.id
+          if (paperId) {
+            event.preventDefault()
+            event.stopPropagation()
+            if (!event.repeat) closeDocument(paperId)
+          }
+          return
+        }
+        if (target?.closest?.('.ss-lcp-group')) return
+        const withinLayers = target?.closest?.('.ss-lcp')
+        const withinCanvas = target === canvasRef.current || target?.closest?.('.ss-work')
+        const noFocusedControl = target === document.body || target === document.documentElement
+        if (!withinLayers && !withinCanvas && !noFocusedControl) return
+        const stack = layerStackRef.current
+        if (!stack || canvasDocumentRef.current !== activeDocumentId) return
+        const focusedLayerId = target?.closest?.('[data-ss-layer-id]')?.getAttribute('data-ss-layer-id')
+        const selectedLayer = stack.layers.find((layer) => layer.id === (focusedLayerId || stack.activeLayerId))
+        if (!selectedLayer) return
+        event.preventDefault()
+        event.stopPropagation()
+        if (event.repeat) return
+        if (selectedLayer.isBackground || stack.layers.length <= 1) {
+          setProjectNotice(selectedLayer.isBackground ? 'Convert Background to a normal layer before deleting it.' : 'Keep at least one layer on the canvas.')
+          return
+        }
+        changeLayer('remove', selectedLayer.id)
+        return
+      }
+
       if (modifier || event.altKey || event.repeat) return
 
       if (event.code === 'Space') {
