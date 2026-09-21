@@ -7823,11 +7823,15 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
           className={theme.text}
         />
 
-        {readerMoreOpen ? (
-          <div className={`absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border ${theme.border} ${theme.card} shadow-[0_12px_30px_rgba(17,24,39,0.16)]`}>
-            <button
-              type="button"
-              onClick={handleReaderReport}
+            <OfflineDownloadMenuItem
+      storyId={storyId}
+      episodeId={episodeId}
+      theme={theme}
+      disabled={loading || lockedEpisode || !adultAccepted || !episode || shouldBlockReaderContent}
+    />
+    <button
+      type="button"
+      onClick={handleReaderReport}
               className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
             >
               <i className={`fa-regular fa-flag w-4 text-center text-[14px] ${theme.muted}`} />
