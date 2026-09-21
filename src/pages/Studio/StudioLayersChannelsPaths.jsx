@@ -154,7 +154,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
           <button className="ss-lcp-action" type="button" title={a[6]} aria-label={a[6]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) === layers.length - 1} onClick={() => onLayerAction('move', activeLayerId, 1)}><i className="fa-solid fa-arrow-up" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) <= 0 || lower?.isBackground} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => selected && rename(selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={a[9]} aria-label={a[9]} disabled={blocked || !selected || selected.isBackground || layers.length <= 1} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={`${a[9]} · Delete / Backspace`} aria-label={a[9]} disabled={blocked || !selected || selected.isBackground || layers.length <= 1} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={mergeLabel} aria-label={mergeLabel} disabled={blocked || !canMerge} onClick={() => onLayerAction('merge-down', activeLayerId)}><i className="fa-solid fa-layer-group" aria-hidden="true" /></button>
           <label className="ss-lcp-opacity">{t[7]}
             <select aria-label={t[7]} disabled={blocked || !selected} value={selected?.opacity ?? 100} onChange={(event) => onLayerAction('opacity', activeLayerId, Number(event.target.value))}>
@@ -194,7 +194,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
                   <button type="button" title={groupControl[2]} disabled={blocked} onClick={() => onLayerAction('group-remove', group.id)}>{groupControl[2]}</button>
                 </div>
               </div> : null}
-              {!group?.collapsed ? <div className="ss-lcp-layer" data-grouped={Boolean(group)} data-selected={layer.id === activeLayerId}>
+              {!group?.collapsed ? <div className="ss-lcp-layer" data-ss-layer-id={layer.id} data-grouped={Boolean(group)} data-selected={layer.id === activeLayerId}>
               <button className="ss-lcp-action" type="button" aria-label={layer.visible ? a[3] : a[2]} title={layer.visible ? a[3] : a[2]} disabled={blocked} onClick={() => onLayerAction('visibility', layer.id)}><i className={`fa-regular ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}`} aria-hidden="true" /></button>
               <button className="ss-lcp-pick" type="button" disabled={blocked} onClick={() => onLayerAction('select', layer.id)} aria-label={`${a[1]} ${layer.name}`}>
                 <canvas className="ss-lcp-thumb" ref={(node) => { layerRefs.current[layer.id] = node }} aria-hidden="true" />
