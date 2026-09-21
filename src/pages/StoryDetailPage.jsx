@@ -920,6 +920,7 @@ if (message || !story) {
     <div className="story-detail-page app-page min-h-screen bg-white pb-[95px] dark:bg-[var(--shadow-bg-page)] sm:bg-[#f5f3fa] sm:pb-[120px] sm:dark:bg-[var(--shadow-bg-page)]">
       <StoryHeroSection
         story={story}
+        episodeCount={episodes.length}
         onBack={() => navigate(-1)}
         bookmarked={bookmarked}
         onToggleBookmark={handleToggleBookmark}
