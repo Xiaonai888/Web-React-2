@@ -109,8 +109,9 @@ function normalizeSlides(story) {
   return []
 }
 
-function getStoryStatus(story) {
-  return story?.story_status || story?.storyStatus || 'New'
+function getStoryStatus(story, episodeCount) {
+  if (String(story?.story_status || story?.storyStatus || '').trim().toLowerCase() === 'completed') return 'Completed'
+  return episodeCount >= 2 ? 'Ongoing' : 'New'
 }
 
 function getDisplayStoryStatus(status, t) {
@@ -118,7 +119,7 @@ function getDisplayStoryStatus(status, t) {
   return key ? t(`storyHeroSection.${key}`) : status
 }
 
-export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBookmark, onEcho }) {
+export default function StoryHeroSection({ story, episodeCount, onBack, bookmarked, onToggleBookmark, onEcho }) {
   const { t } = useDisplayTranslation()
   const slides = useMemo(() => normalizeSlides(story), [story])
   const [activeIndex, setActiveIndex] = useState(0)
@@ -126,7 +127,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
   const [reportOpen, setReportOpen] = useState(false)
   const [showTitleBar, setShowTitleBar] = useState(false)
   const activeSlide = slides[activeIndex] || slides[0] || null
-  const storyStatus = getStoryStatus(story)
+  const storyStatus = getStoryStatus(story, episodeCount)
   const displayGenre = story?.main_genre || t('storyHeroSection.novel')
   const displayStatus = getDisplayStoryStatus(storyStatus, t)
   const infoLine = `${displayGenre} / ${displayStatus}`
