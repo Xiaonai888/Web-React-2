@@ -1947,15 +1947,40 @@ if (tool === 'shape') {
   color={color}
   onCancel={() => setTextEditor(null)}
   onApply={(settings) => {
-    if (textEditor?.paperId === activeDocumentId &&
-        !paperLoading && !projectBusy &&
-        canvasDocumentRef.current === activeDocumentId &&
-        drawStudioText(drawingContext(), textEditor, settings)) {
+    const stack = layerStackRef.current
+    if (!textEditor || textEditor.paperId !== activeDocumentId ||
+        paperLoading || projectBusy || drawingRef.current ||
+        canvasDocumentRef.current !== activeDocumentId || !stack) return false
+    const previouslySelected = stack.activeLayerId
+    const previousLayer = stack.layers.find((layer) => layer.id === previouslySelected)
+    const group = stack.groups?.find((item) => item.id === previousLayer?.groupId)
+    if (previousLayer?.groupId && (!group || !group.visible || group.locked)) {
+      setProjectNotice('Unlock and show the selected group before adding text.')
+      return false
+    }
+    let textLayer = null
+    try {
+      const title = String(settings.text || '').trim().replace(/\s+/g, ' ').slice(0, 65)
+      textLayer = addStudioLayer(stack, `Text · ${title}`.slice(0, 80))
+      if (previousLayer?.groupId) textLayer.groupId = previousLayer.groupId
+      const context = textLayer.canvas.getContext('2d', { willReadFrequently: true })
+      if (!drawStudioText(context, textEditor, settings)) throw new Error('Could not draw text on the new layer.')
+      validateStudioGroupLayout(stack)
       paintLayerPreview()
       snapshot()
       updateDocument(activeDocumentId, { dirty: true })
+      setProjectNotice('Text added as a separate layer. Use Layers to hide, duplicate or delete it.')
+      setTextEditor(null)
+      return true
+    } catch (error) {
+      if (textLayer) {
+        stack.layers = stack.layers.filter((layer) => layer !== textLayer)
+        stack.activeLayerId = previouslySelected
+        paintLayerPreview()
+      }
+      setProjectNotice(error.message || 'Could not add text.')
+      return false
     }
-    setTextEditor(null)
   }}
 />
 
