@@ -337,6 +337,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/author/comment-protection/blocked-readers',
     '/author/comment-protection/moderation-history',
     '/author/page-settings',
+    '/author/page-options',
     '/author/page/edit',
     '/author/page/posts',
     '/author/edit-page',
