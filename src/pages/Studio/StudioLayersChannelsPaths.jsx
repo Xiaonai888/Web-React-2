@@ -25,6 +25,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const t = WORDS[language] || WORDS.en
   const a = ACTIONS[language] || ACTIONS.en
   const [active, setActive] = useState('layers')
+  const editTextLabel = ({ en: 'Edit text', km: 'កែអក្សរ', zh: '编辑文字', ja: 'テキストを編集', ko: '텍스트 수정' })[language] || 'Edit text'
   const duplicateLabel = ({ en: 'Duplicate layer', km: 'ចម្លងស្រទាប់', zh: '复制图层', ja: 'レイヤーを複製', ko: '레이어 복제' })[language] || 'Duplicate layer' 
   const convertLabel = ({ en: 'Convert Background to normal layer', km: 'ប្ដូរ Background ទៅជា Layer ធម្មតា', zh: '将背景转换为普通图层', ja: '背景を通常レイヤーに変換', ko: '배경을 일반 레이어로 변환' })[language] || 'Convert Background to normal layer'
   const mergeLabel = ({ en: 'Merge layer down', km: 'បញ្ចូលស្រទាប់ចុះក្រោម', zh: '向下合并图层', ja: '下のレイヤーと結合', ko: '아래 레이어와 병합' })[language] || 'Merge layer down'
@@ -153,6 +154,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
           <button className="ss-lcp-action" type="button" title={duplicateLabel} aria-label={duplicateLabel} disabled={blocked || !selected || selected.isBackground || layers.length >= 8} onClick={() => onLayerAction('duplicate', activeLayerId)}><i className="fa-regular fa-copy" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[6]} aria-label={a[6]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) === layers.length - 1} onClick={() => onLayerAction('move', activeLayerId, 1)}><i className="fa-solid fa-arrow-up" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) <= 0 || lower?.isBackground} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
+          {selected?.textData ? <button className="ss-lcp-action" type="button" title={editTextLabel} aria-label={editTextLabel} disabled={blocked || selected.locked || !selected.visible || Boolean(selectedGroup && (!selectedGroup.visible || selectedGroup.locked))} onClick={() => onLayerAction('edit-text', activeLayerId)}><i className="fa-solid fa-font" aria-hidden="true" /></button> : null}
           <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => selected && rename(selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={`${a[9]} · Delete / Backspace`} aria-label={a[9]} disabled={blocked || !selected || selected.isBackground || layers.length <= 1} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={mergeLabel} aria-label={mergeLabel} disabled={blocked || !canMerge} onClick={() => onLayerAction('merge-down', activeLayerId)}><i className="fa-solid fa-layer-group" aria-hidden="true" /></button>
@@ -196,9 +198,9 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
               </div> : null}
               {!group?.collapsed ? <div className="ss-lcp-layer" data-ss-layer-id={layer.id} data-grouped={Boolean(group)} data-selected={layer.id === activeLayerId}>
               <button className="ss-lcp-action" type="button" aria-label={layer.visible ? a[3] : a[2]} title={layer.visible ? a[3] : a[2]} disabled={blocked} onClick={() => onLayerAction('visibility', layer.id)}><i className={`fa-regular ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}`} aria-hidden="true" /></button>
-              <button className="ss-lcp-pick" type="button" disabled={blocked} onClick={() => onLayerAction('select', layer.id)} aria-label={`${a[1]} ${layer.name}`}>
+              <button className="ss-lcp-pick" type="button" disabled={blocked} onDoubleClick={layer.textData ? () => onLayerAction('edit-text', layer.id) : undefined} onClick={() => onLayerAction('select', layer.id)} aria-label={`${a[1]} ${layer.name}`}>
                 <canvas className="ss-lcp-thumb" ref={(node) => { layerRefs.current[layer.id] = node }} aria-hidden="true" />
-                <span className="ss-lcp-item-name"><strong>{layer.name}</strong><small>{layer.id === activeLayerId ? '● ' : ''}{layer.opacity}%</small></span>
+                <span className="ss-lcp-item-name"><strong>{layer.textData ? 'T · ' : ''}{layer.name}</strong><small>{layer.id === activeLayerId ? '● ' : ''}{layer.opacity}%</small></span>
               </button>
               <button className="ss-lcp-action" type="button" aria-label={layer.locked ? a[5] : a[4]} title={layer.locked ? a[5] : a[4]} disabled={blocked} onClick={() => onLayerAction('lock', layer.id)}><i className={`fa-solid ${layer.locked ? 'fa-lock' : 'fa-lock-open'}`} aria-hidden="true" /></button>
               </div> : null}
