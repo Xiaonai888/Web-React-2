@@ -167,7 +167,7 @@ export default function ReaderSecuritySettingsPage() {
       return
     }
     if (PIN_PURPOSES.has(pending.purpose)) {
-      if (!/^\d{4}$/.test(pin)) {
+      if (!/^\d{6}$/.test(pin)) {
         setErrorMessage(t('readerSecuritySettingsPage.pinRequired'))
         return
       }
@@ -282,12 +282,12 @@ export default function ReaderSecuritySettingsPage() {
             {PIN_PURPOSES.has(pending.purpose) ? (
               <>
                 <label className="block text-[13px] font-semibold" htmlFor="reader-security-pin">{t('readerSecuritySettingsPage.pin')}</label>
-                <input id="reader-security-pin" inputMode="numeric" autoComplete="new-password" type="password" maxLength={4}
-                  value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                <input id="reader-security-pin" inputMode="numeric" autoComplete="new-password" type="password" maxLength={6}
+value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 6))}
                   className="app-input h-12 w-full rounded-xl border px-3 text-[16px] tracking-widest" />
                 <label className="block text-[13px] font-semibold" htmlFor="reader-security-pin-confirm">{t('readerSecuritySettingsPage.confirmPin')}</label>
-                <input id="reader-security-pin-confirm" inputMode="numeric" autoComplete="new-password" type="password" maxLength={4}
-                  value={pinConfirm} onChange={(event) => setPinConfirm(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                <input id="reader-security-pin-confirm" inputMode="numeric" autoComplete="new-password" type="password" maxLength={6}
+value={pinConfirm} onChange={(event) => setPinConfirm(event.target.value.replace(/\D/g, '').slice(0, 6))}
                   className="app-input h-12 w-full rounded-xl border px-3 text-[16px] tracking-widest" />
               </>
             ) : null}
