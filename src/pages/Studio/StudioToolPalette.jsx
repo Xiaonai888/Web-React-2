@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import StudioToolPage from './StudioToolPage'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
@@ -198,6 +199,7 @@ export default function StudioToolPalette({ tool, onToolChange, labels = {} }) {
   const [pinned, setPinned] = useState(loadStudioPinnedTools)
   const [draft, setDraft] = useState(() => [...pinned])
   const [pageOpen, setPageOpen] = useState(false)
+  const [newPageOpen, setNewPageOpen] = useState(false)
   const [error, setError] = useState('')
 
   function openPage() {
@@ -297,9 +299,19 @@ export default function StudioToolPalette({ tool, onToolChange, labels = {} }) {
           )
         })}
       </div>
-      <button type="button" className="ss-tool-page-launch" title={words[1]} aria-label={words[1]} onClick={openPage}>
+      <button type="button" className="ss-tool-page-launch" title={words[1]} aria-label={words[1]} onClick={() => setNewPageOpen(true)}>
         <i className="fa-solid fa-ellipsis" aria-hidden="true" />
       </button>
+      <button type="button" className="ss-tool-page-launch" title="Previous Tool Page" aria-label="Previous Tool Page" onClick={openPage}>
+        <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" />
+      </button>
+      <StudioToolPage
+        open={newPageOpen}
+        onClose={() => setNewPageOpen(false)}
+        onSaved={setPinned}
+        activeTool={tool}
+        onToolChange={onToolChange}
+      />
       {pageOpen ? createPortal(
         <div className="ss-tool-page" role="dialog" aria-modal="true" aria-label={words[0]} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { event.preventDefault(); setPageOpen(false) } }}>
           <header className="ss-tool-page-header"><h2>{words[0]} · {words[1]}</h2><button type="button" aria-label={words[13]} onClick={() => setPageOpen(false)}>✕</button></header>
