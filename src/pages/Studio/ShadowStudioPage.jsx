@@ -10,6 +10,7 @@ import StudioExportDialog from './StudioExportDialog'
 import { readStudioImage } from './StudioImageImport'
 import { placeStudioDroppedImage } from './StudioImageDrop'
 import StudioTextEditor, { drawStudioText } from './StudioTextEditor'
+import { normalizeStudioTextData } from './StudioTextLayerData'
 import StudioShapeEditor, { drawStudioShape } from './StudioShapeEditor'
 import StudioPaperTabs from './StudioPaperTabs'
 import StudioHeaderWorkspace from './StudioHeaderWorkspace'
@@ -453,7 +454,15 @@ const placeImageLabel = {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy || drawingRef.current || newFileOpen || exportOpen || recoveryBusy) return
     try {
-      if (action === 'add') {
+      if (action === 'edit-text') {
+        const layer = stack.layers.find((item) => item.id === layerId)
+        if (!layer?.textData || !studioLayerCanEdit(stack, layerId)) return
+        selectStudioLayer(stack, layerId)
+        setTool('text')
+        setTextEditor({ paperId: activeDocumentId, editingLayerId: layer.id, ...layer.textData.anchor, initialData: layer.textData })
+        refresh((number) => number + 1)
+        return
+      } else if (action === 'add') {
         const selected = stack.layers.find((layer) => layer.id === stack.activeLayerId)
         const added = addStudioLayer(stack)
         if (selected?.groupId) added.groupId = selected.groupId
@@ -503,7 +512,7 @@ const placeImageLabel = {
         if (!moveStudioLayer(stack, layerId, value)) return
         try { validateStudioGroupLayout(stack) } catch (error) { stack.layers = before; throw error }
       } else if (action === 'merge-down') {
-        mergeStudioLayerDown(stack)
+        delete mergeStudioLayerDown(stack).textData
       } else if (action === 'remove') {
         const layer = stack.layers.find((item) => item.id === layerId)
         if (!layer || layer.isBackground || stack.layers.length <= 1) return
@@ -544,6 +553,7 @@ const placeImageLabel = {
     if (!action) throw new Error('This effect is not available.')
     const changed = action(stack, options)
     if (changed) {
+      delete stack.layers.find((item) => item.id === stack.activeLayerId)?.textData
       paintLayerPreview()
       snapshot()
       updateDocument(activeDocumentId, { dirty: true })
@@ -573,6 +583,7 @@ const placeImageLabel = {
         isBackground: layer.isBackground === true,
         ...(layer.groupId ? { groupId: layer.groupId } : {}),
         ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
+        ...(layer.textData ? { textData: { ...layer.textData, anchor: { ...layer.textData.anchor } } } : {}),
         pixels: layer.canvas.getContext('2d', { willReadFrequently: true })
           .getImageData(0, 0, stack.width, stack.height),
       })),
@@ -587,7 +598,7 @@ const placeImageLabel = {
       canvas.width = stack.width
       canvas.height = stack.height
       canvas.getContext('2d', { willReadFrequently: true }).putImageData(item.pixels, 0, 0)
-      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, isBackground: item.isBackground === true, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}) }
+      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, isBackground: item.isBackground === true, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}), ...(item.textData ? { textData: { ...item.textData, anchor: { ...item.textData.anchor } } } : {}) }
     })
     stack.activeLayerId = entry.activeLayerId
     stack.groups = (entry.groups || []).map((group) => ({ ...group }))
@@ -1410,6 +1421,7 @@ const placeImageLabel = {
     stack.layers.forEach((layer, index) => {
       const ctx = layer.canvas.getContext('2d', { willReadFrequently: true })
       ctx.clearRect(0, 0, stack.width, stack.height)
+      delete layer.textData
       if (index === 0 && layer.isBackground) {
         ctx.fillStyle = activeDocument?.background || '#FFFFFF'
         ctx.fillRect(0, 0, stack.width, stack.height)
@@ -1467,6 +1479,8 @@ const placeImageLabel = {
         paperId === activeDocumentId && canvasDocumentRef.current === paperId
     )
     if (name) {
+      const changedLayer = layerStackRef.current?.layers.find((layer) => layer.canvas === target)
+      if (changedLayer) delete changedLayer.textData
       paintLayerPreview()
       snapshot()
       updateDocument(paperId, { dirty: true })
@@ -1523,6 +1537,7 @@ if (tool === 'shape') {
       erase: tool === 'eraser',
     })
     if (!stroke) return
+    delete layerStackRef.current?.layers.find((layer) => layer.id === layerStackRef.current.activeLayerId)?.textData
     paintLayerPreview()
     event.preventDefault()
     strokeRef.current = stroke
@@ -1942,9 +1957,10 @@ if (tool === 'shape') {
 />
 
      <StudioTextEditor
-  key={textEditor ? `${textEditor.paperId}:${textEditor.x}:${textEditor.y}` : 'closed'}
+  key={textEditor ? `${textEditor.paperId}:${textEditor.editingLayerId || 'new'}:${textEditor.x}:${textEditor.y}` : 'closed'}
   open={Boolean(textEditor) && workspaceStarted}
   color={color}
+  initialData={textEditor?.initialData}
   onCancel={() => setTextEditor(null)}
   onApply={(settings) => {
     const stack = layerStackRef.current
@@ -1955,30 +1971,45 @@ if (tool === 'shape') {
     const previousLayer = stack.layers.find((layer) => layer.id === previouslySelected)
     const group = stack.groups?.find((item) => item.id === previousLayer?.groupId)
     if (previousLayer?.groupId && (!group || !group.visible || group.locked)) {
-      setProjectNotice('Unlock and show the selected group before adding text.')
+      setProjectNotice('Unlock and show the selected group before editing text.')
       return false
     }
     let textLayer = null
     try {
-      const title = String(settings.text || '').trim().replace(/\s+/g, ' ').slice(0, 65)
-      textLayer = addStudioLayer(stack, `Text · ${title}`.slice(0, 80))
-      if (previousLayer?.groupId) textLayer.groupId = previousLayer.groupId
-      const context = textLayer.canvas.getContext('2d', { willReadFrequently: true })
-      if (!drawStudioText(context, textEditor, settings)) throw new Error('Could not draw text on the new layer.')
-      validateStudioGroupLayout(stack)
+      const data = normalizeStudioTextData({ ...settings, anchor: { x: textEditor.x, y: textEditor.y } }, stack.width, stack.height)
+      const title = data.text.trim().replace(/\s+/g, ' ').slice(0, 65)
+      if (textEditor.editingLayerId) {
+        textLayer = stack.layers.find((layer) => layer.id === textEditor.editingLayerId)
+        if (!textLayer?.textData || !studioLayerCanEdit(stack, textLayer.id)) throw new Error('Unlock and show the text layer before editing it.')
+        const replacement = document.createElement('canvas')
+        replacement.width = stack.width
+        replacement.height = stack.height
+        const context = replacement.getContext('2d', { willReadFrequently: true })
+        if (!context || !drawStudioText(context, data.anchor, data)) throw new Error('Could not redraw the text layer.')
+        textLayer.canvas = replacement
+        textLayer.textData = data
+        textLayer.name = `Text · ${title}`.slice(0, 80)
+      } else {
+        textLayer = addStudioLayer(stack, `Text · ${title}`.slice(0, 80))
+        if (previousLayer?.groupId) textLayer.groupId = previousLayer.groupId
+        const context = textLayer.canvas.getContext('2d', { willReadFrequently: true })
+        if (!context || !drawStudioText(context, data.anchor, data)) throw new Error('Could not draw text on the new layer.')
+        textLayer.textData = data
+        validateStudioGroupLayout(stack)
+      }
       paintLayerPreview()
       snapshot()
       updateDocument(activeDocumentId, { dirty: true })
-      setProjectNotice('Text added as a separate layer. Use Layers to hide, duplicate or delete it.')
+      setProjectNotice(textEditor.editingLayerId ? 'Text layer updated.' : 'Text layer added. Double-click its name in Layers to edit it again.')
       setTextEditor(null)
       return true
     } catch (error) {
-      if (textLayer) {
+      if (textLayer && !textEditor.editingLayerId) {
         stack.layers = stack.layers.filter((layer) => layer !== textLayer)
         stack.activeLayerId = previouslySelected
         paintLayerPreview()
       }
-      setProjectNotice(error.message || 'Could not add text.')
+      setProjectNotice(error.message || 'Could not save text.')
       return false
     }
   }}
@@ -1994,6 +2025,7 @@ if (tool === 'shape') {
         !paperLoading && !projectBusy &&
         canvasDocumentRef.current === activeDocumentId &&
         drawStudioShape(drawingContext(), shapeEditor, settings)) {
+      delete layerStackRef.current?.layers.find((layer) => layer.id === layerStackRef.current.activeLayerId)?.textData
       paintLayerPreview()
       snapshot()
       updateDocument(activeDocumentId, { dirty: true })
