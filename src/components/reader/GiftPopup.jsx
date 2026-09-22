@@ -445,14 +445,15 @@ export default function GiftPopup({
       return
     }
 
+    if (!previous) {
+      const wait = getGiftWaitSeconds()
+      if (wait > 0) {
+        showGiftWaitToast(wait, getDisplayLanguageId())
+        return
+      }
+    }
+
     if (!previous && typeof crypto.randomUUID !== 'function') {
-      if (!previous) {
-  const wait = getGiftWaitSeconds()
-  if (wait > 0) {
-    showGiftWaitToast(wait, getDisplayLanguageId())
-    return
-  }
-}
       setFeedback(t('giftPopup.storageUnavailable'))
       return
     }
@@ -492,16 +493,17 @@ export default function GiftPopup({
 
 
       const data = await response.json().catch(() => null)
-            if (response.status === 429 && String(data?.scope || '').startsWith('gift_send_')) {
-  if (!previous) {
-    clearPendingGift(token)
-    setPendingGift(null)
-  }
-  setConfirmOpen(false)
-  setFeedback('')
-  showGiftWaitToast(Math.max(1, Number(data?.retry_after_seconds || response.headers.get('Retry-After') || 3)), getDisplayLanguageId())
-  return
-}
+      if (response.status === 429) {
+        if (!previous) {
+          clearPendingGift(token)
+          setPendingGift(null)
+        }
+        setConfirmOpen(false)
+        setFeedback('')
+        const retryAfter = Number(data?.retry_after_seconds || response.headers.get('Retry-After') || 3)
+        showGiftWaitToast(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.ceil(retryAfter) : 3, getDisplayLanguageId())
+        return
+      }
 
 
       if (!response.ok || data?.ok !== true || !data?.gift?.id) {
@@ -568,16 +570,16 @@ export default function GiftPopup({
   }
 
   const handleGiftClick = () => {
-    if (!pendingGift) {
-  const wait = getGiftWaitSeconds()
-  if (wait > 0) {
-    showGiftWaitToast(wait, getDisplayLanguageId())
-    return
-  }
-}
     if (pendingGift && pendingGift.storyId !== String(storyId)) {
       setFeedback(t('giftPopup.resolvePrevious'))
       return
+    }
+    if (!pendingGift) {
+      const wait = getGiftWaitSeconds()
+      if (wait > 0) {
+        showGiftWaitToast(wait, getDisplayLanguageId())
+        return
+      }
     }
     if (selectedGift.currency === 'diamond' && getReaderToken() && storyId && !['undefined', 'null'].includes(String(storyId))) {
       setFeedback('')
