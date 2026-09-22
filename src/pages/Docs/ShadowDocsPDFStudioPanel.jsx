@@ -1,20 +1,22 @@
 import { useMemo, useState } from 'react'
 import { AlertCircle, BookOpen, Download, FileDown, FileText, Printer } from 'lucide-react'
-import { buildShadowDocsPrintHTML, downloadShadowDocsPrintHTML, inspectShadowDocsForPDF } from './ShadowDocsPDFExport'
+import { buildShadowDocsPrintHTML, downloadShadowDocsPrintHTML } from './ShadowDocsPDFExport'
+import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
 
 export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBackup }) {
   const [error, setError] = useState('')
   const [showPreview, setShowPreview] = useState(false)
-  const issues = useMemo(() => inspectShadowDocsForPDF(book), [book])
+  const report = useMemo(() => inspectShadowDocsProject(book), [book])
+  const issues = report.issues
   const html = useMemo(() => {
-    if (!book) return ''
+    if (!book || !report.canExport) return ''
     try { return buildShadowDocsPrintHTML(book) } catch { return '' }
-  }, [book])
+  }, [book, report.canExport])
   const settings = book?.settings || {}
   const chapterCount = Array.isArray(book?.chapters) ? book.chapters.length : 0
 
   function downloadPrintable() {
-    if (!book) return
+    if (!book || !report.canExport) return
     try {
       downloadShadowDocsPrintHTML(book)
       setError('')
@@ -24,7 +26,7 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
   }
 
   function printBook() {
-    if (typeof onPrint !== 'function') return
+    if (!report.canExport || typeof onPrint !== 'function') return
     try {
       onPrint()
       setError('')
@@ -56,14 +58,14 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
           <div className="rounded-xl bg-[#f8f5fe] p-3 dark:bg-white/5"><FileText size={17} className="text-[#7653bd]" /><strong className="mt-2 block text-sm">{chapterCount}</strong><span className="text-[11px] text-[#77758b] dark:text-white/60">Chapters</span></div>
           <div className="col-span-2 rounded-xl bg-[#f8f5fe] p-3 dark:bg-white/5 sm:col-span-1"><Printer size={17} className="text-[#7653bd]" /><strong className="mt-2 block text-sm">{settings.fontSize || 13} pt</strong><span className="text-[11px] text-[#77758b] dark:text-white/60">Body text size</span></div>
         </div>
-        {issues.length > 0 && <div role="status" className="mt-4 rounded-xl border border-[#f2d9a2] bg-[#fffaed] p-3 text-[#785519] dark:border-[#70572f] dark:bg-[#302719] dark:text-[#f1d59b]">
-          <div className="flex items-center gap-2 text-xs font-bold"><AlertCircle size={16} /> Review before printing</div>
-          <ul className="mt-2 list-inside list-disc space-y-1 text-[11px] leading-5">{issues.map(issue => <li key={issue}>{issue}</li>)}</ul>
+        {issues.length > 0 && <div role={report.canExport ? "status" : "alert"} className="mt-4 rounded-xl border border-[#f2d9a2] bg-[#fffaed] p-3 text-[#785519] dark:border-[#70572f] dark:bg-[#302719] dark:text-[#f1d59b]">
+          <div className="flex items-center gap-2 text-xs font-bold"><AlertCircle size={16} /> {report.canExport ? 'Review before printing' : 'Fix these errors before printing'}</div>
+          <ul className="mt-2 list-inside list-disc space-y-1 text-[11px] leading-5">{issues.map(issue => <li key={issue.code}>{issue.severity === 'error' ? 'Error: ' : ''}{issue.message}</li>)}</ul>
         </div>}
         {error && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300">{error}</p>}
         <div className="mt-5 flex flex-wrap gap-2">
-          <button type="button" onClick={printBook} disabled={!html || typeof onPrint !== 'function'} className="sd-button sd-button-primary"><Printer size={16} /> Print / Save as PDF</button>
-          <button type="button" onClick={downloadPrintable} disabled={!html} className="sd-button sd-button-ghost"><Download size={16} /> Download printable HTML</button>
+          <button type="button" onClick={printBook} disabled={!report.canExport || !html || typeof onPrint !== 'function'} className="sd-button sd-button-primary"><Printer size={16} /> Print / Save as PDF</button>
+          <button type="button" onClick={downloadPrintable} disabled={!report.canExport || !html} className="sd-button sd-button-ghost"><Download size={16} /> Download printable HTML</button>
           {typeof onDownloadBackup === 'function' && <button type="button" onClick={() => onDownloadBackup(book)} className="sd-button sd-button-ghost"><Download size={16} /> Backup editable project</button>}
         </div>
         <p className="mt-3 text-[11px] leading-5 text-[#77758b] dark:text-white/60">For a PDF, choose “Save as PDF” in your browser’s print dialog. Check Khmer fonts, page breaks, margins and printer requirements before physical printing.</p>
