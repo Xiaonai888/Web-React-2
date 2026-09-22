@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import AuthorPageNameChangeStatus from './AuthorPageNameChangeStatus'
 
 registerTranslationNamespace('authorEditPage', {
   "en": {
@@ -143,6 +144,7 @@ export default function AuthorEditPage() {
   const [message, setMessage] = useState('')
   const [pageName, setPageName] = useState('')
   const [pageUsername, setPageUsername] = useState('')
+  const [originalPageUsername, setOriginalPageUsername] = useState('')
   const [bio, setBio] = useState('')
   const redirectTimerRef = useRef(null)
 
@@ -179,6 +181,7 @@ export default function AuthorEditPage() {
 
         setPageName(data.author_page.page_name || '')
         setPageUsername(data.author_page.page_username || '')
+        setOriginalPageUsername(data.author_page.page_username || '')
         setBio(data.author_page.bio || '')
       } catch (error) {
         if (
@@ -349,6 +352,7 @@ if (!Number.isFinite(nextDate.getTime())) {
           placeholder={editText('pageNamePlaceholder')}
           className="h-11 w-full rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 text-[14px] font-normal text-[var(--shadow-text-primary)] outline-none focus:border-[#111827] disabled:bg-[var(--shadow-bg-soft)]"
         />
+        <AuthorPageNameChangeStatus pageUsername={originalPageUsername} />
       </div>
 
       <div>
