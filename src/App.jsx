@@ -188,6 +188,10 @@ const ReaderAccountSecurityPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderAccountSecurityPage')
 )
 
+const ReaderLoginDevicesPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderLoginDevicesPage')
+)
+
 const ReaderChangePasswordPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderChangePasswordPage')
 )
@@ -884,6 +888,11 @@ const shouldShowOpeningAds =
   <Route
   path="/profile/settings/account-security/change-email"
   element={<LazyPage><ReaderChangeEmailPage /></LazyPage>}
+/>
+
+          <Route
+  path="/profile/settings/account-security/devices"
+  element={<LazyPage><ReaderLoginDevicesPage /></LazyPage>}
 />
 
         <Route
