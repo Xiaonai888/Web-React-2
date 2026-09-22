@@ -197,6 +197,7 @@ const ReaderChangeEmailPage = lazy(() =>
 )
 
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
+const AuthorPageTransparencyPage = lazy(() => import('./pages/Author/AuthorPageTransparencyPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
 const AuthorPageSearchPage = lazy(() => import('./pages/Author/AuthorPageSearchPage'))
 const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
@@ -1136,6 +1137,12 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+
+          <Route
+  path="/author/page/:pageUsername/transparency"
+  element={<LazyPage><AuthorPageTransparencyPage /></LazyPage>}
+/>
+          
         <Route
   path="/author/page/:pageUsername/options"
   element={
