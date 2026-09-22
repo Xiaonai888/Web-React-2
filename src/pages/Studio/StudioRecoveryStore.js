@@ -1,5 +1,6 @@
 import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
 import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
+import { normalizeStudioTextData } from './StudioTextLayerData'
 
 const DATABASE_NAME = 'shadow-studio-local-recovery'
 const STORE_NAME = 'workspaces'
@@ -103,7 +104,8 @@ function captureLayers(paper) {
       visible: layer.visible,
       locked: layer.locked,
       opacity: layer.opacity,
-      ...(index === 0 ? { isBackground: layer.isBackground !== false } : {}),
+       ...(index === 0 ? { isBackground: layer.isBackground !== false } : {}),
+      ...(layer.textData !== undefined ? { textData: normalizeStudioTextData(layer.textData, paper.width, paper.height) } : {}),
       ...(layer.groupId ? { groupId: layer.groupId } : {}),
       ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
     }
