@@ -126,6 +126,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           identifier,
           password,
+          deviceKey: localStorage.getItem('shadow_reader_device_key') || '',
         }),
       })
 
@@ -137,7 +138,7 @@ export default function LoginPage() {
         )
       }
 
-      const storage = rememberMe ? localStorage : sessionStorage
+      if (data.deviceKey) localStorage.setItem('shadow_reader_device_key', data.deviceKey)
 
       storage.setItem('shadow_reader_token', data.token)
       storage.setItem('shadow_reader_user', JSON.stringify(data.user))
