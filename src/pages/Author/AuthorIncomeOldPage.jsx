@@ -1117,13 +1117,14 @@ export default function AuthorIncomePage() {
             </section>
 
             <PaperCard
-              title={dateText(data.next_payout_date)}
+              title={t('authorIncomeOld.netPayout')}
               eyebrow={t('authorIncomeOld.nextPayout')}
               icon="fa-solid fa-calendar-check"
               tone="pink"
+              onClick={() => navigate('/author/payout-status')}
             >
               <p className="mt-2 max-w-[470px] text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
-                {t('authorIncomeOld.payoutAutomaticBody')}
+                {t('authorIncomeOld.paymentReadyBody')}
               </p>
             </PaperCard>
 
