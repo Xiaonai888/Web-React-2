@@ -11,6 +11,8 @@ import { getReactionMeta } from '../components/social/reactions/reactionConfig'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
 import OfflineDownloadMenuItem from '../components/reader/OfflineDownloadMenuItem'
+import { loadOfflineReaderFallback } from '../utils/offlineReaderFallback'
+import { rememberViewedEpisode } from '../utils/offlineViewedEpisode'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
 import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisodeListDrawer'
 import StoryTranslateButton from '../components/reader/StoryTranslateButton'
@@ -5266,6 +5268,8 @@ export default function ReaderPage() {
   const weeklyReadingTrackedEpisodeRef = useRef('')
   const activeReadingTargetRef = useRef(null)
   const rewardAnimationTimerRef = useRef(null)
+  const offlineReaderReleaseRef = useRef(null)
+  const pendingViewedEpisodeRef = useRef(new Map())
 
   const [story, setStory] = useState(expectedStory)
   const [episode, setEpisode] = useState(expectedEpisode)
@@ -5957,14 +5961,32 @@ async function loadContinuousEpisode(targetEpisode) {
     throw new Error(data.message || t('readerPage.failedLoadEpisode'))
   }
 
-  const gate = await loadReaderAdStatus(targetId).catch(() => ({
-    ad_policy: null,
-    advertisement: null,
-  }))
+  let gateVerified = true
+  const gate = await loadReaderAdStatus(targetId).catch(() => {
+    gateVerified = false
+    return { ad_policy: null, advertisement: null }
+  })
   const requiresAd = Boolean(
     gate?.ad_policy?.show_read_ad &&
       gate?.advertisement?.image_url
   )
+
+  if (gateVerified && navigator.onLine !== false && response.ok && data.ok === true &&
+    data.locked === false && !response.headers.get('X-Shadow-Reader-Cache')) {
+    const cacheKey = `${storyId}:${targetId}`
+    if (requiresAd) {
+      pendingViewedEpisodeRef.current.set(cacheKey, data)
+      if (pendingViewedEpisodeRef.current.size > 20) {
+        pendingViewedEpisodeRef.current.delete(pendingViewedEpisodeRef.current.keys().next().value)
+      }
+    } else {
+      rememberViewedEpisode({
+        storyId, episodeId: targetId,
+        storyType: String(data.story?.story_type || data.episode?.story_type || 'novel').toLowerCase(),
+        response: data,
+      }).catch(() => {})
+    }
+  }
 
   return {
     id: targetId,
@@ -6043,7 +6065,44 @@ const continuousReader = useContinuousEpisodeReader({
 useEffect(() => {
     let ignore = false
 
+    async function showOfflineFallback() {
+      const offline = await loadOfflineReaderFallback({ storyId, episodeId: routeEpisodeId }).catch(() => null)
+      if (!offline) return false
+      if (ignore) {
+        offline.release()
+        return true
+      }
+      offlineReaderReleaseRef.current?.()
+      offlineReaderReleaseRef.current = offline.release
+      pendingViewedEpisodeRef.current.clear()
+      setStory(offline.payload.story)
+      setEpisode(offline.payload.episode)
+      setEpisodes(offline.episodes)
+      setLockedEpisode(false)
+      setReaderAdPolicy(null)
+      setReaderAdvertisement(null)
+      setReaderAdFinished(true)
+      setReadingProgress(0)
+      setReaderGateReady(true)
+      setAdultAccepted(true)
+      setAdultWarningOpen(false)
+      setMessage('')
+      setLoading(false)
+      continuousReader.setInitialEntry({
+        id: routeEpisodeId,
+        episode: offline.payload.episode,
+        locked: false,
+        gate: null,
+        adFinished: true,
+      })
+      window.scrollTo({ top: 0, behavior: 'auto' })
+      return true
+    }
+
     async function loadReader() {
+      offlineReaderReleaseRef.current?.()
+      offlineReaderReleaseRef.current = null
+      pendingViewedEpisodeRef.current.clear()
       setContinuousLockedEntry(null)
       setActiveEpisodeId(routeEpisodeId)
       setLoading(!hasExpectedLockedPreview)
@@ -6074,6 +6133,8 @@ useEffect(() => {
         })
         return
       }
+
+      if (navigator.onLine === false && await showOfflineFallback()) return
 
       const readTrace = {
         timestamp: new Date().toISOString(),
@@ -6202,12 +6263,13 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           
         }
 
+        let gateVerified = true
         const nextReaderAdStatus = await loadReaderAdStatus(
           routeEpisodeId
-        ).catch(() => ({
-          ad_policy: null,
-          advertisement: null,
-        }))
+        ).catch(() => {
+          gateVerified = false
+          return { ad_policy: null, advertisement: null }
+        })
 
         if (ignore) return
 
@@ -6215,6 +6277,20 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           nextReaderAdStatus.ad_policy?.show_read_ad &&
             nextReaderAdStatus.advertisement?.image_url
         )
+
+        if (gateVerified && navigator.onLine !== false && episodeData.locked === false &&
+          !episodeResponse.headers.get('X-Shadow-Reader-Cache')) {
+          const cacheKey = `${storyId}:${routeEpisodeId}`
+          if (requiresAd) {
+            pendingViewedEpisodeRef.current.set(cacheKey, episodeData)
+          } else {
+            rememberViewedEpisode({
+              storyId, episodeId: routeEpisodeId,
+              storyType: String(episodeData.story?.story_type || episodeData.episode?.story_type || 'novel').toLowerCase(),
+              response: episodeData,
+            }).catch(() => {})
+          }
+        }
 
         setStory(episodeData.story || null)
         setEpisode(episodeData.episode || null)
@@ -6245,6 +6321,17 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         window.scrollTo({ top: 0, behavior: 'auto' })
       } catch (error) {
         if (ignore) return
+        const requestResults = Object.values(readTrace.requests)
+        const hasServerDenial = requestResults.some((result) =>
+          Number(result.status) >= 400 || result.backendOk === false
+        )
+        const connectionLost = requestResults.some((result) =>
+          result.outcome === 'FETCH_REJECTED_NO_HTTP_RESPONSE'
+        )
+        if (!hasServerDenial && (navigator.onLine === false || connectionLost)) {
+          if (await showOfflineFallback()) return
+          if (ignore) return
+        }
         readTrace.originalError = {
           name: String(error?.name || 'Error'),
           message: String(error?.message || error),
@@ -6337,6 +6424,9 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
     return () => {
       ignore = true
+      offlineReaderReleaseRef.current?.()
+      offlineReaderReleaseRef.current = null
+      pendingViewedEpisodeRef.current.clear()
     }
   }, [
     continuousReader.setInitialEntry,
@@ -7681,6 +7771,16 @@ autoScrollEnabled ? (
   onFinish={() => {
     setReaderAdFinished(true)
     continuousReader.markAdFinished(episodeId)
+    const cacheKey = `${storyId}:${episodeId}`
+    const viewed = pendingViewedEpisodeRef.current.get(cacheKey)
+    if (viewed) {
+      pendingViewedEpisodeRef.current.delete(cacheKey)
+      rememberViewedEpisode({
+        storyId, episodeId,
+        storyType: String(viewed.story?.story_type || viewed.episode?.story_type || 'novel').toLowerCase(),
+        response: viewed,
+      }).catch(() => {})
+    }
   }}
 />
 ) : null}
