@@ -1,6 +1,7 @@
 import { createStudioLayerStack, MAX_STUDIO_LAYERS } from './StudioLayerEngine'
 import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
 import { renderStudioAdvancedLayers, STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
+import { normalizeStudioTextData } from './StudioTextLayerData'
 
 const IMAGE_PREFIX = /^data:image\/(png|webp|jpeg);base64,/i
 const BLEND_MODES = new Set(STUDIO_BLEND_MODES)
@@ -55,6 +56,7 @@ export function exportStudioLayerStack(stack) {
       visible: layer.visible,
       locked: layer.locked,
       opacity: layer.opacity,
+      ...(layer.textData ? { textData: normalizeStudioTextData(layer.textData, stack.width, stack.height) } : {}),
       ...(layer.groupId ? { groupId: layer.groupId } : {}),
       ...(layer.blendMode && layer.blendMode !== 'normal' ? { blendMode: checkBlend(layer.blendMode) } : {}),
     })),
@@ -89,6 +91,7 @@ export async function loadStudioLayerStack(paper, displayCanvas) {
     context.drawImage(image, 0, 0)
     return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity,
       isBackground: index === 0 && item.isBackground !== false,
+      ...(item.textData !== undefined ? { textData: normalizeStudioTextData(item.textData, paper.width, paper.height) } : {}),
       ...(item.groupId ? { groupId: item.groupId } : {}),
       ...(item.blendMode ? { blendMode: checkBlend(item.blendMode) } : {}),
     }
