@@ -32,6 +32,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     manageLoginEmail: 'Manage login email',
     loginDevices: 'Login devices',
     manageDevices: 'Manage signed-in devices (max 5)',
+    loginSecurity: 'Login security',
+    manageLoginSecurity: 'Email verification (2FA) and 4-digit PIN',
   },
   km: {
     notSet: 'មិនទាន់កំណត់',
@@ -61,6 +63,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     manageLoginEmail: 'គ្រប់គ្រងអ៊ីមែលចូលគណនី',
     loginDevices: 'ឧបករណ៍ដែលបានចូលគណនី',
     manageDevices: 'គ្រប់គ្រងឧបករណ៍ដែលបានចូលគណនី (អតិបរមា ៥)',
+    loginSecurity: 'សុវត្ថិភាពការចូលគណនី',
+    manageLoginSecurity: 'ផ្ទៀងផ្ទាត់តាមអ៊ីមែល (2FA) និង PIN ៤ ខ្ទង់',
   },
   zh: {
     notSet: '未设置',
@@ -90,6 +94,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     manageLoginEmail: '管理登录邮箱',
     loginDevices: '登录设备',
     manageDevices: '管理已登录设备（最多 5 个）',
+    loginSecurity: '登录安全',
+    manageLoginSecurity: '邮箱验证（2FA）和 4 位 PIN',
   },
   ja: {
     notSet: '未設定',
@@ -119,6 +125,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     manageLoginEmail: 'ログイン用メールを管理',
     loginDevices: 'ログイン端末',
     manageDevices: 'ログイン端末を管理（最大5台）',
+    loginSecurity: 'ログインのセキュリティ',
+    manageLoginSecurity: 'メール認証（2FA）と4桁のPIN',
   },
   ko: {
     notSet: '설정되지 않음',
@@ -148,6 +156,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     manageLoginEmail: '로그인 이메일 관리',
     loginDevices: '로그인 기기',
     manageDevices: '로그인 기기 관리 (최대 5대)',
+    loginSecurity: '로그인 보안',
+    manageLoginSecurity: '이메일 인증(2FA) 및 4자리 PIN',
   },
 })
 
@@ -586,6 +596,25 @@ export default function ReaderAccountSecurityPage() {
                 </span>
                 <span className="mt-1 block text-[12px] text-[var(--shadow-text-secondary)]">
                   {t('readerAccountSecurityPage.manageDevices')}
+                </span>
+              </span>
+              <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/profile/settings/account-security/login-security')}
+              className="flex w-full items-center gap-4 border-t border-[var(--shadow-border)] px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
+                <i className="fa-solid fa-shield-halved text-[16px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold">
+                  {t('readerAccountSecurityPage.loginSecurity')}
+                </span>
+                <span className="mt-1 block text-[12px] text-[var(--shadow-text-secondary)]">
+                  {t('readerAccountSecurityPage.manageLoginSecurity')}
                 </span>
               </span>
               <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
