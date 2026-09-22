@@ -341,8 +341,9 @@ function getHeaders() {
 }
 
 function normalizeAccessRule(value = '') {
-  const rule = String(value || '').toLowerCase()
+  const rule = String(value || '').toLowerCase().replace(/[_-]/g, ' ')
 
+  if (/\b(?:no|not|without)\s+download\b|\bread\s+only\b|\bonline\s+only\b/.test(rule)) return 'read_only'
   if (rule.includes('read') && rule.includes('download')) return 'download_and_read'
   if (rule.includes('read')) return 'read_only'
   return 'download_after_payment'
@@ -356,6 +357,12 @@ function canDownloadPdf(story) {
 function canReadPdf(story) {
   const rule = normalizeAccessRule(story?.access_rule)
   return rule === 'read_only' || rule === 'download_and_read'
+}
+
+function canSavePdfOffline(story) {
+  const rule = String(story?.access_rule || '').toLowerCase().replace(/[_-]/g, ' ')
+  return Boolean(story?.id && story?.pdf_file_url) && /\bdownload\b/.test(rule) &&
+    !/\b(?:no|not|without)\s+download\b|\bread\s+only\b|\bonline\s+only\b/.test(rule)
 }
 
 function getStoryType(story) {
@@ -529,7 +536,6 @@ function PdfActionButtons({ story, compact = false }) {
         }}
       >
         {t('libraryPage.pdfNotReady')}
-        {canDownloadPdf(story) ? <OfflinePdfSaveButton pdfId={story.id} /> : null}
       </div>
     )
   }
@@ -567,6 +573,7 @@ function PdfActionButtons({ story, compact = false }) {
           {t('libraryPage.download')}
         </a>
       ) : null}
+      {canSavePdfOffline(story) ? <OfflinePdfSaveButton pdfId={story.id} /> : null}
     </div>
   )
 }
