@@ -10,6 +10,7 @@ import ReactionAction from '../components/social/reactions/ReactionAction'
 import { getReactionMeta } from '../components/social/reactions/reactionConfig'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
+import OfflineDownloadMenuItem from '../components/reader/OfflineDownloadMenuItem'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
 import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisodeListDrawer'
 import StoryTranslateButton from '../components/reader/StoryTranslateButton'
@@ -7824,6 +7825,8 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
         />
 
             <OfflineDownloadMenuItem
+  {readerMoreOpen ? (
+  <div className={`absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border ${theme.border} ${theme.card} shadow-[0_12px_30px_rgba(17,24,39,0.16)]`}>
       storyId={storyId}
       episodeId={episodeId}
       theme={theme}
