@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { getGiftWaitSeconds, recordGiftSuccess, showGiftWaitToast } from '../../utils/giftRateLimit'
 
 registerTranslationNamespace('giftPopup', {
   "en": {
@@ -445,6 +446,13 @@ export default function GiftPopup({
     }
 
     if (!previous && typeof crypto.randomUUID !== 'function') {
+      if (!previous) {
+  const wait = getGiftWaitSeconds()
+  if (wait > 0) {
+    showGiftWaitToast(wait, getDisplayLanguageId())
+    return
+  }
+}
       setFeedback(t('giftPopup.storageUnavailable'))
       return
     }
@@ -500,6 +508,7 @@ export default function GiftPopup({
         return
       }
 
+      recordGiftSuccess()
       clearPendingGift(token)
       setPendingGift(null)
       setWallet({
@@ -546,6 +555,13 @@ export default function GiftPopup({
   }
 
   const handleGiftClick = () => {
+    if (!pendingGift) {
+  const wait = getGiftWaitSeconds()
+  if (wait > 0) {
+    showGiftWaitToast(wait, getDisplayLanguageId())
+    return
+  }
+}
     if (pendingGift && pendingGift.storyId !== String(storyId)) {
       setFeedback(t('giftPopup.resolvePrevious'))
       return
