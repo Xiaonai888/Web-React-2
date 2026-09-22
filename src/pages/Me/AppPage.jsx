@@ -19,6 +19,13 @@ const apps = [
   },
 ]
 
+  {
+    key: 'shadow-docs',
+    name: 'Shadow Docs',
+    icon: 'fa-solid fa-book-open',
+    path: '/apps/shadow-docs',
+  },
+
 export default function AppPage() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
@@ -60,7 +67,7 @@ export default function AppPage() {
               </div>
 
               <div className="mt-2 truncate px-0.5 text-[14px] font-semibold text-[#111827] dark:text-white sm:text-[15px]">
-                {t(`appPage.${app.nameKey}`)}
+                {app.name || t(`appPage.${app.nameKey}`)}
               </div>
 
               <div className="mt-0.5 px-0.5 text-[10px] font-medium text-[#8b93a1] dark:text-white/50 sm:text-[11px]">
