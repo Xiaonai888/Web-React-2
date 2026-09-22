@@ -67,20 +67,22 @@ export function drawStudioText(ctx, anchor, settings) {
   }
 }
 
-export default function StudioTextEditor({ open, color, onCancel, onApply }) {
+export default function StudioTextEditor({ open, color, initialData, onCancel, onApply }) {
   const { language } = useDisplayTranslation()
   const t = WORDS[language] || WORDS.en
-  const [text, setText] = useState('')
-  const [font, setFont] = useState('sans')
-  const [size, setSize] = useState(32)
-  const [bold, setBold] = useState(false)
-  const [italic, setItalic] = useState(false)
-  const [align, setAlign] = useState('left')
-  const [widthPercent, setWidthPercent] = useState(80)
-  const [lineSpacing, setLineSpacing] = useState(1.35)
-  const [ink, setInk] = useState(() => /^#[0-9a-f]{6}$/i.test(color) ? color : '#111111')
+  const [text, setText] = useState(initialData?.text || '')
+  const [font, setFont] = useState(initialData?.font || 'sans')
+  const [size, setSize] = useState(initialData?.size ?? 32)
+  const [bold, setBold] = useState(initialData?.bold ?? false)
+  const [italic, setItalic] = useState(initialData?.italic ?? false)
+  const [align, setAlign] = useState(initialData?.align || 'left')
+  const [widthPercent, setWidthPercent] = useState(initialData?.widthPercent ?? 80)
+  const [lineSpacing, setLineSpacing] = useState(initialData?.lineSpacing ?? 1.35)
+  const [ink, setInk] = useState(() => /^#[0-9a-f]{6}$/i.test(initialData?.color || color) ? (initialData?.color || color) : '#111111')
   const [error, setError] = useState('')
   if (!open) return null
+  const editTitle = ({ en: 'Edit text layer', km: 'កែអក្សរលើស្រទាប់', zh: '编辑文字图层', ja: 'テキストレイヤーを編集', ko: '텍스트 레이어 수정' })[language] || 'Edit text layer'
+  const saveLabel = ({ en: 'Save text changes', km: 'រក្សាទុកការកែអក្សរ', zh: '保存文字修改', ja: 'テキストの変更を保存', ko: '텍스트 변경 저장' })[language] || 'Save text changes'
   const submit = (event) => {
     event.preventDefault()
     if (!text.trim()) return
@@ -95,7 +97,7 @@ export default function StudioTextEditor({ open, color, onCancel, onApply }) {
   return (
     <div className="ss-text-backdrop" onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onCancel() } }}>
       <style>{`
-        .ss-text-backdrop{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:12px;box-sizing:border-box;background:#080e18c9}
+        .ss-text-backdrop{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:12px;box-sizing:border-box;background:#080e18c9}
         .ss-text-modal{width:min(525px,100%);max-height:92dvh;overflow-y:auto;box-sizing:border-box;padding:18px;border:1px solid #61758b;border-radius:12px;background:#283441;color:#eff5fc;box-shadow:0 18px 65px #0009}
         .ss-text-modal h2{font-size:16px;margin:0 0 12px}
         .ss-text-modal label{display:grid;gap:6px;font-size:12px;font-weight:600}
@@ -114,8 +116,8 @@ export default function StudioTextEditor({ open, color, onCancel, onApply }) {
         .ss-text-actions button:disabled{opacity:.45;cursor:not-allowed}
         @media(max-width:440px){.ss-text-modal{padding:12px}.ss-text-form-grid{grid-template-columns:minmax(0,1fr) 90px}}
       `}</style>
-      <form className="ss-text-modal" role="dialog" aria-modal="true" aria-label={t[0]} onSubmit={submit}>
-        <h2>{t[0]}</h2>
+      <form className="ss-text-modal" role="dialog" aria-modal="true" aria-label={initialData ? editTitle : t[0]} onSubmit={submit}>
+        <h2>{initialData ? editTitle : t[0]}</h2>
         <label>{t[1]}<textarea autoFocus value={text} maxLength={1200} placeholder={t[2]} onChange={(event) => { setText(event.target.value); setError('') }} /></label>
         <div className="ss-text-form-grid">
           <label>{t[3]}<select value={font} onChange={(event) => setFont(event.target.value)}><option value="sans">Sans Serif</option><option value="serif">Serif</option><option value="mono">Monospace</option><option value="khmer">Khmer</option></select></label>
@@ -134,9 +136,9 @@ export default function StudioTextEditor({ open, color, onCancel, onApply }) {
           <label>{t[16]}<input type="number" min="1" max="2.5" step="0.05" value={lineSpacing} onChange={(event) => setLineSpacing(clamp(event.target.value, 1, 2.5))} /></label>
         </div>
         <label style={{ marginTop: 12 }}>{t[6]}<div className="ss-text-preview" style={{ color: ink, fontFamily: FONTS[font], fontWeight: bold ? 700 : 400, fontStyle: italic ? 'italic' : 'normal', textAlign: align, fontSize: Math.min(size, 36), lineHeight: lineSpacing }}>{text || t[2]}</div></label>
-        <p className="ss-text-help">{t[17]}</p>
+        <p className="ss-text-help">{initialData ? editTitle : t[17]}</p>
         {error ? <p className="ss-text-error" role="alert">{error}</p> : null}
-        <div className="ss-text-actions"><button type="button" onClick={onCancel}>{t[7]}</button><button type="submit" disabled={!text.trim()}>{t[8]}</button></div>
+        <div className="ss-text-actions"><button type="button" onClick={onCancel}>{t[7]}</button><button type="submit" disabled={!text.trim()}>{initialData ? saveLabel : t[8]}</button></div>
       </form>
     </div>
   )
