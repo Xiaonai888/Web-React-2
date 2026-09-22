@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, BookOpen, CheckCircle2, CloudOff, FileDown, LayoutTemplate, PenLine, Settings2, X } from 'lucide-react'
-import { deleteLocalBook, loadLocalBooks, saveLocalBook, flushLocalBooks } from './ShadowDocsStore'
+import { deleteLocalBook, saveLocalBook } from './ShadowDocsStore'
+import { loadShadowDocsBooksSafely, flushShadowDocsPendingWrites } from './ShadowDocsLocalIntegrity'
 import { createShadowDocsBook, createShadowDocsId, normalizeShadowDocsBook, sanitizeShadowDocsHTML } from './ShadowDocsBookModel'
 import { downloadShadowDocsProject, imageToShadowDocsCover, printShadowDocsProject, readShadowDocsProject } from './ShadowDocsProjectIO'
 import { moveManuscriptChapter } from './ShadowDocsManuscriptTools'
@@ -45,13 +46,13 @@ export default function ShadowDocsWorkspace() {
 
   useEffect(() => {
     let active = true
-    loadLocalBooks().then(items => {
+    loadShadowDocsBooksSafely().then(({ books: normalized, skippedIds }) => {
       if (!active) return
-      const normalized = items.map(item => normalizeShadowDocsBook(item))
       bookRef.current = normalized
       setBooks(normalized)
       setReady(true)
       setStatus('Saved on this device')
+      if (skippedIds.length) setError(`${skippedIds.length} saved book(s) could not be opened. Their original records remain in this browser; do not clear browser data.`)
     }).catch(failure => {
       if (active) { setReady(false); setError(`Unable to load your local books: ${failure.message}`); setStatus('Local storage unavailable') }
     })
@@ -60,12 +61,10 @@ export default function ShadowDocsWorkspace() {
 
   useEffect(() => {
     function flushPending() {
-      pending.current.forEach((timer, id) => {
-        clearTimeout(timer)
-        const latest = bookRef.current.find(item => item.id === id)
-        if (latest) saveLocalBook(latest).catch(() => {})
+      void flushShadowDocsPendingWrites(pending.current, bookRef.current).catch(failure => {
+        setStatus('Save failed')
+        setError(`Local save failed: ${failure.message}`)
       })
-      pending.current.clear()
     }
     const whenHidden = () => { if (document.visibilityState === 'hidden') flushPending() }
     window.addEventListener('pagehide', flushPending)
@@ -144,8 +143,7 @@ export default function ShadowDocsWorkspace() {
   async function exportBackup(item) {
     if (!item) return
     try {
-      persist(item.id)
-      await flushLocalBooks()
+      await flushShadowDocsPendingWrites(pending.current, bookRef.current)
       const latest = bookRef.current.find(book => book.id === item.id) || item
       downloadShadowDocsProject(latest)
       setNotice('Project backup downloaded. Keep the .shadowdocs file in a safe place.')
