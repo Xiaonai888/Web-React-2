@@ -432,7 +432,9 @@ function readHomeReturnPosition() {
 
     return value
   } catch {
-    sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
+    try {
+      sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
+    } catch {}
     return null
   }
 }
@@ -486,11 +488,15 @@ export default function ForYou({
   const swiperRef = useRef(null)
   const lastScrollYRef = useRef(0)
   const swipeStartRef = useRef(null)
+  const restoringPositionRef = useRef(Boolean(homeReturnPosition))
 
   function saveHomeReturnPosition() {
-    const markers = [...document.querySelectorAll('[data-home-section]')]
+    if (restoringPositionRef.current) return
+
+    const root = document.getElementById('tab-content-root')
+    const markers = root ? [...root.querySelectorAll('[data-home-section]')] : []
     const anchorY = 140
-    let current = markers[0] || null
+    let current = null
 
     for (const marker of markers) {
       if (marker.getBoundingClientRect().top <= anchorY) {
@@ -504,37 +510,68 @@ export default function ForYou({
       ? window.scrollY + current.getBoundingClientRect().top
       : 0
 
-    sessionStorage.setItem(
-      HOME_RETURN_POSITION_KEY,
-      JSON.stringify({
-        section: current?.dataset.homeSection || '',
-        offset: current ? window.scrollY - sectionTop : 0,
-        scrollY: window.scrollY,
-        genre: activeGenre,
-        savedAt: Date.now(),
-      })
-    )
+    try {
+      sessionStorage.setItem(
+        HOME_RETURN_POSITION_KEY,
+        JSON.stringify({
+          section: current?.dataset.homeSection || '',
+          offset: current ? window.scrollY - sectionTop : 0,
+          scrollY: window.scrollY,
+          genre: activeGenre,
+          savedAt: Date.now(),
+        })
+      )
+    } catch {}
   }
 
   function handleHomeNavigationCapture(event) {
-    const element =
-      typeof Element !== 'undefined' && event.target instanceof Element
-        ? event.target
-        : null
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) return
 
-    const link = element?.closest('a')
-
-    if (!link) return
-
-    const url = new URL(link.href, window.location.href)
+    const element = event.target instanceof Element
+      ? event.target
+      : event.target?.parentElement
+    const link = element?.closest('a[href]')
+    if (link) {
+      if (link.hasAttribute('download') || link.target === '_blank') return
+      try {
+        const url = new URL(link.href, window.location.href)
+        if (
+          url.origin === window.location.origin &&
+          url.pathname !== window.location.pathname
+        ) {
+          saveHomeReturnPosition()
+        }
+      } catch {}
+      return
+    }
 
     if (
-      url.origin === window.location.origin &&
-      url.pathname.startsWith('/story/')
+      element?.closest('#tab-content-root') &&
+      element.closest('button,[role="button"],.cursor-pointer')
     ) {
       saveHomeReturnPosition()
     }
   }
+
+  useEffect(() => {
+    function rememberBeforeLeaving() {
+      saveHomeReturnPosition()
+    }
+
+    window.addEventListener('pagehide', rememberBeforeLeaving)
+    window.addEventListener('popstate', rememberBeforeLeaving)
+    return () => {
+      window.removeEventListener('pagehide', rememberBeforeLeaving)
+      window.removeEventListener('popstate', rememberBeforeLeaving)
+    }
+  }, [activeGenre])
 
   function handleGenreChange(tab) {
   setPressedGenre(tab.slug)
@@ -707,11 +744,25 @@ useEffect(() => {
   useEffect(() => {
     if (!homeReturnPosition) return undefined
 
+    restoringPositionRef.current = true
     let stopped = false
-    let restored = false
     let intervalId = null
     let timeoutId = null
     let frameId = null
+    let settledSince = 0
+    let lastTarget = null
+
+    function stopRestoring() {
+      if (stopped) return
+      stopped = true
+      restoringPositionRef.current = false
+      window.clearInterval(intervalId)
+      window.clearTimeout(timeoutId)
+      window.cancelAnimationFrame(frameId)
+      try {
+        sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
+      } catch {}
+    }
 
     function restorePosition() {
       if (stopped) return
@@ -721,8 +772,11 @@ useEffect(() => {
             (item) => item.dataset.homeSection === homeReturnPosition.section
           )
         : null
-
-      if (homeReturnPosition.section && !section) return
+      if (homeReturnPosition.section && !section) {
+        settledSince = 0
+        lastTarget = null
+        return
+      }
 
       const sectionTop = section
         ? window.scrollY + section.getBoundingClientRect().top
@@ -732,39 +786,53 @@ useEffect(() => {
         : Number(homeReturnPosition.scrollY || 0)
       const maxScroll = Math.max(
         0,
-        document.documentElement.scrollHeight - window.innerHeight
+        Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) - window.innerHeight
       )
 
-      window.scrollTo({
-        top: Math.max(0, target),
-        left: 0,
-        behavior: 'auto',
-      })
-
-      if (Math.abs(window.scrollY - Math.min(Math.max(0, target), maxScroll)) < 3) {
-        restored = true
+      if (!Number.isFinite(target) || target < 0) {
+        stopRestoring()
+        return
       }
-    }
+      if (target > maxScroll + 4) {
+        settledSince = 0
+        lastTarget = null
+        return
+      }
 
-    function stopRestoring() {
-      if (stopped) return
-      stopped = true
-      window.clearInterval(intervalId)
-      window.clearTimeout(timeoutId)
-      window.cancelAnimationFrame(frameId)
-      sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
+      window.scrollTo({ top: target, left: 0, behavior: 'auto' })
+      if (Math.abs(window.scrollY - target) >= 4) {
+        settledSince = 0
+        lastTarget = null
+        return
+      }
+      if (lastTarget === null || Math.abs(lastTarget - target) >= 4) {
+        lastTarget = target
+        settledSince = Date.now()
+      } else if (Date.now() - settledSince >= 2000) {
+        stopRestoring()
+      }
     }
 
     frameId = window.requestAnimationFrame(restorePosition)
     intervalId = window.setInterval(restorePosition, 200)
     timeoutId = window.setTimeout(() => {
-      if (restored) {
-        stopRestoring()
-      } else {
-        stopped = true
-        window.clearInterval(intervalId)
-        window.cancelAnimationFrame(frameId)
+      if (stopped) return
+      const section = homeReturnPosition.section
+        ? [...document.querySelectorAll('[data-home-section]')].find(
+            (item) => item.dataset.homeSection === homeReturnPosition.section
+          )
+        : null
+      const target = section
+        ? window.scrollY + section.getBoundingClientRect().top + Number(homeReturnPosition.offset || 0)
+        : Number(homeReturnPosition.scrollY || 0)
+      const maxScroll = Math.max(
+        0,
+        Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) - window.innerHeight
+      )
+      if (Number.isFinite(target)) {
+        window.scrollTo({ top: Math.min(Math.max(0, target), maxScroll), left: 0, behavior: 'auto' })
       }
+      stopRestoring()
     }, 10000)
 
     window.addEventListener('wheel', stopRestoring, { passive: true })
@@ -774,6 +842,7 @@ useEffect(() => {
 
     return () => {
       stopped = true
+      restoringPositionRef.current = false
       window.clearInterval(intervalId)
       window.clearTimeout(timeoutId)
       window.cancelAnimationFrame(frameId)
@@ -1176,7 +1245,7 @@ useEffect(() => {
         }
       `}</style>
 
-      <div className="app-page min-h-screen" style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
+      <div className="app-page min-h-screen" onClickCapture={handleHomeNavigationCapture} style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
         <div
           className="for-you-top-bars"
           style={{ transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)' }}
@@ -1296,7 +1365,6 @@ useEffect(() => {
         ) : (
                   <div
            id="tab-content-root"
-           onClickCapture={handleHomeNavigationCapture}
            onTouchStart={handleContentTouchStart}
            onTouchEnd={handleContentTouchEnd}
          >
@@ -1347,7 +1415,7 @@ useEffect(() => {
 
                         if (
                           url.origin === window.location.origin &&
-                          url.pathname.startsWith('/story/')
+                          url.pathname !== window.location.pathname
                         ) {
                           saveHomeReturnPosition()
                         }
@@ -1425,7 +1493,11 @@ useEffect(() => {
         key={item.label}
         type="button"
         className="group cursor-pointer"
-        onClick={() => item.path && navigate(item.path)}
+        onClick={() => {
+           if (!item.path) return
+           saveHomeReturnPosition()
+           navigate(item.path)
+         }}
       >
         <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center transition-all">
           <img
