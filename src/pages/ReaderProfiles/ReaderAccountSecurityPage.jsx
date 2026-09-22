@@ -30,6 +30,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     currentPasswordRequired: 'Current password required',
     email: 'Email',
     manageLoginEmail: 'Manage login email',
+    loginDevices: 'Login devices',
+    manageDevices: 'Manage signed-in devices (max 5)',
   },
   km: {
     notSet: 'មិនទាន់កំណត់',
@@ -57,6 +59,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     currentPasswordRequired: 'ត្រូវការពាក្យសម្ងាត់បច្ចុប្បន្ន',
     email: 'អ៊ីមែល',
     manageLoginEmail: 'គ្រប់គ្រងអ៊ីមែលចូលគណនី',
+    loginDevices: 'ឧបករណ៍ដែលបានចូលគណនី',
+    manageDevices: 'គ្រប់គ្រងឧបករណ៍ដែលបានចូលគណនី (អតិបរមា ៥)',
   },
   zh: {
     notSet: '未设置',
@@ -84,6 +88,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     currentPasswordRequired: '需要当前密码',
     email: '邮箱',
     manageLoginEmail: '管理登录邮箱',
+    loginDevices: '登录设备',
+    manageDevices: '管理已登录设备（最多 5 个）',
   },
   ja: {
     notSet: '未設定',
@@ -111,6 +117,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     currentPasswordRequired: '現在のパスワードが必要です',
     email: 'メール',
     manageLoginEmail: 'ログイン用メールを管理',
+    loginDevices: 'ログイン端末',
+    manageDevices: 'ログイン端末を管理（最大5台）',
   },
   ko: {
     notSet: '설정되지 않음',
@@ -138,6 +146,8 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     currentPasswordRequired: '현재 비밀번호 필요',
     email: '이메일',
     manageLoginEmail: '로그인 이메일 관리',
+    loginDevices: '로그인 기기',
+    manageDevices: '로그인 기기 관리 (최대 5대)',
   },
 })
 
@@ -559,6 +569,25 @@ export default function ReaderAccountSecurityPage() {
                 </span>
               </span>
 
+              <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/profile/settings/account-security/devices')}
+              className="flex w-full items-center gap-4 border-t border-[var(--shadow-border)] px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
+                <i className="fa-solid fa-laptop text-[16px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold">
+                  {t('readerAccountSecurityPage.loginDevices')}
+                </span>
+                <span className="mt-1 block text-[12px] text-[var(--shadow-text-secondary)]">
+                  {t('readerAccountSecurityPage.manageDevices')}
+                </span>
+              </span>
               <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
             </button>
           </div>
