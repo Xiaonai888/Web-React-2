@@ -824,6 +824,8 @@ export default function RegisterPage() {
         )
       }
 
+      if (data.deviceKey) localStorage.setItem('shadow_reader_device_key', data.deviceKey)
+
       saveLogin(data.token, data.user)
       setCreatedToken(data.token)
       setCreatedUser(data.user)
