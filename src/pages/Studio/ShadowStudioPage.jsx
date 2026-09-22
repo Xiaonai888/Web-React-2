@@ -24,6 +24,7 @@ import { buildStudioProject, downloadStudioProject, readStudioProject } from './
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
 import StudioOptionsBar from './StudioOptionsBar'
 import StudioMangaToolSettingsPage from './StudioMangaToolSettingsPage'
+import { drawStudioMangaBalloon } from './StudioMangaBalloonRenderer'
 import { confirmLargeBrush } from './StudioPrecisionInput'
 import StudioCanvasRulers from './StudioCanvasRulers'
 import { studioLayerContext, addStudioLayer, duplicateStudioLayer, selectStudioLayer, updateStudioLayer, moveStudioLayer, removeStudioLayer } from './StudioLayerEngine'
@@ -544,6 +545,41 @@ const placeImageLabel = {
     }
     if (!studioLayerCanEdit(stack) || !studioLayerContext(stack)) {
       throw new Error('Select a visible, unlocked layer outside a locked or hidden group.')
+    }
+    if (kind === 'balloon') {
+      const previousLayerId = stack.activeLayerId
+      const previousLayer = stack.layers.find((layer) => layer.id === previousLayerId)
+      const group = stack.groups?.find((item) => item.id === previousLayer?.groupId)
+      if (previousLayer?.groupId && (!group || !group.visible || group.locked)) {
+        throw new Error('Unlock and show the selected group before adding a Manga balloon.')
+      }
+      const prepared = document.createElement('canvas')
+      prepared.width = stack.width
+      prepared.height = stack.height
+      const context = prepared.getContext('2d', { willReadFrequently: true })
+      if (!context) throw new Error('The Manga balloon canvas is unavailable.')
+      drawStudioMangaBalloon(context, null, options)
+      let addedLayer = null
+      try {
+        addedLayer = addStudioLayer(stack, 'Manga Balloon')
+        if (previousLayer?.groupId) addedLayer.groupId = previousLayer.groupId
+        validateStudioGroupLayout(stack)
+        const target = addedLayer.canvas.getContext('2d', { willReadFrequently: true })
+        if (!target) throw new Error('Could not create the Manga balloon layer.')
+        target.drawImage(prepared, 0, 0)
+        paintLayerPreview()
+        snapshot()
+        updateDocument(activeDocumentId, { dirty: true })
+        setProjectNotice('Manga balloon added on a new layer. Undo can remove it.')
+        return true
+      } catch (error) {
+        if (addedLayer) {
+          stack.layers = stack.layers.filter((layer) => layer !== addedLayer)
+          stack.activeLayerId = previousLayerId
+          paintLayerPreview()
+        }
+        throw error
+      }
     }
     const actions = {
       gradient: applyStudioLayerGradient,
