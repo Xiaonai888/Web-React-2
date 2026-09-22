@@ -25,6 +25,10 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const t = WORDS[language] || WORDS.en
   const a = ACTIONS[language] || ACTIONS.en
   const [active, setActive] = useState('layers')
+  const [editing, setEditing] = useState(null)
+  const editingRef = useRef(null)
+  const inputRef = useRef(null)
+  const pendingGroupIds = useRef(null)
   const editTextLabel = ({ en: 'Edit text', km: 'កែអក្សរ', zh: '编辑文字', ja: 'テキストを編集', ko: '텍스트 수정' })[language] || 'Edit text'
   const duplicateLabel = ({ en: 'Duplicate layer', km: 'ចម្លងស្រទាប់', zh: '复制图层', ja: 'レイヤーを複製', ko: '레이어 복제' })[language] || 'Duplicate layer' 
   const convertLabel = ({ en: 'Convert Background to normal layer', km: 'ប្ដូរ Background ទៅជា Layer ធម្មតា', zh: '将背景转换为普通图层', ja: '背景を通常レイヤーに変換', ko: '배경을 일반 레이어로 변환' })[language] || 'Convert Background to normal layer'
@@ -50,6 +54,73 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const groupTitle = ({ en: 'Group', km: 'ក្រុមស្រទាប់', zh: '图层组', ja: 'レイヤーグループ', ko: '레이어 그룹' })[language] || 'Group'
   const blendTitle = ({ en: 'Blend mode', km: 'របៀបលាយពណ៌', zh: '混合模式', ja: '描画モード', ko: '혼합 모드' })[language] || 'Blend mode'
   const groupControl = ({ en: ['New group', 'Join group', 'Ungroup', 'Rename group', 'Collapse', 'Expand'], km: ['បង្កើតក្រុម', 'ចូលក្រុម', 'ដោះក្រុម', 'ប្ដូរឈ្មោះក្រុម', 'បង្រួម', 'ពង្រីក'], zh: ['新建组', '加入组', '取消编组', '重命名组', '收起', '展开'], ja: ['グループ作成', 'グループに追加', 'グループ解除', 'グループ名変更', '折りたたむ', '展開'], ko: ['그룹 만들기', '그룹에 추가', '그룹 해제', '그룹 이름 변경', '접기', '펼치기'] })[language] || ['New group', 'Join group', 'Ungroup', 'Rename group', 'Collapse', 'Expand']
+
+  function beginRename(kind, item) {
+    if (blocked || !item) return
+    const next = { kind, id: item.id, name: item.name }
+    editingRef.current = next
+    setEditing(next)
+  }
+
+  function finishRename(save) {
+    const current = editingRef.current
+    if (!current) return
+    editingRef.current = null
+    setEditing(null)
+    const value = current.name.trim().slice(0, 80)
+    const item = current.kind === 'group' ? groups.find((group) => group.id === current.id) : layers.find((layer) => layer.id === current.id)
+    if (save && !blocked && value && item && value !== item.name) {
+      onLayerAction(current.kind === 'group' ? 'group-rename' : 'rename', current.id, value)
+    }
+  }
+
+  function changeRename(value) {
+    if (!editingRef.current) return
+    const next = { ...editingRef.current, name: value }
+    editingRef.current = next
+    setEditing(next)
+  }
+
+  function renameInput(kind, item) {
+    if (editing?.kind !== kind || editing.id !== item.id) return null
+    return <input
+      ref={inputRef}
+      className="ss-lcp-rename-input"
+      type="text"
+      value={editing.name}
+      maxLength={80}
+      aria-label={kind === 'group' ? groupControl[3] : a[8]}
+      onChange={(event) => changeRename(event.target.value)}
+      onClick={(event) => event.stopPropagation()}
+      onDoubleClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        event.stopPropagation()
+        if (event.key === 'Enter') { event.preventDefault(); finishRename(true) }
+        else if (event.key === 'Escape') { event.preventDefault(); finishRename(false) }
+      }}
+      onBlur={() => finishRename(true)}
+    />
+  }
+
+  useEffect(() => {
+    if (!editing) return
+    inputRef.current?.focus()
+    inputRef.current?.select()
+  }, [editing?.id, editing?.kind])
+
+  useEffect(() => {
+    editingRef.current = null
+    setEditing(null)
+    pendingGroupIds.current = null
+  }, [paperId])
+
+  useEffect(() => {
+    const previous = pendingGroupIds.current
+    if (!previous) return
+    pendingGroupIds.current = null
+    const created = groups.find((group) => !previous.has(group.id))
+    if (created) beginRename('group', created)
+  }, [groups])
 
   useEffect(() => {
     if (active !== 'layers') return
@@ -99,12 +170,6 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
     }
   }, [active, canvasRef, paperId, revision])
 
-  function rename(layer) {
-    if (blocked) return
-    const name = window.prompt(a[12], layer.name)
-    if (name !== null && name.trim() && name.trim() !== layer.name) onLayerAction('rename', layer.id, name.trim())
-  }
-
   return (
     <section className="ss-lcp" aria-label={t[0]}>
       <style>{`
@@ -118,8 +183,14 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
         .shadow-studio .ss-lcp-channel+.ss-lcp-channel{border-top:0}
         .shadow-studio .ss-lcp-thumb{display:block;flex:0 0 41px;width:41px;max-height:42px;object-fit:contain;border:1px solid #7b8996;background:#fff}
         .shadow-studio .ss-lcp-layer .ss-lcp-thumb{flex:0 0 auto;max-width:35px;max-height:37px}
-        .shadow-studio .ss-lcp-pick{display:flex;align-items:center;gap:5px;min-width:0;flex:1;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
-        .shadow-studio .ss-lcp-item-name{min-width:0;display:grid;gap:3px}
+        .shadow-studio .ss-lcp-pick{display:flex;align-items:center;gap:5px;min-width:0;flex:0 0 35px;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+        .shadow-studio .ss-lcp-item-name{min-width:0;flex:1;display:grid;gap:3px}
+        .shadow-studio .ss-lcp-name-trigger{display:block;width:100%;min-width:0;padding:1px 0;border:0;background:transparent;color:inherit;text-align:left;font:inherit;cursor:text}
+        .shadow-studio .ss-lcp-rename-input{box-sizing:border-box;display:block;width:100%;min-width:0;height:29px;padding:3px 5px;border:1px solid #9dc9fa;border-radius:4px;background:#152638;color:#fff;font:inherit;font-size:12px;outline:2px solid #5ca9f4;outline-offset:0}
+        .shadow-studio .ss-lcp-group-name.ss-lcp-name-trigger{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:700}
+        .shadow-studio .ss-lcp-group-head>.ss-lcp-rename-input{flex:1}
+        .shadow-studio .ss-lcp-group-add-label{display:none}
+        @media(pointer:coarse){.shadow-studio .ss-lcp-action{min-height:34px;min-width:30px}.shadow-studio .ss-lcp-name-trigger{min-height:34px;display:flex;align-items:center}.shadow-studio .ss-lcp-group-add-label{display:inline}.shadow-studio .ss-lcp-group-add{display:flex;align-items:center;gap:5px;padding:0 7px}.shadow-studio .ss-lcp-list{max-height:min(55vh,440px)}}
         .shadow-studio .ss-lcp-item-name strong{font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .shadow-studio .ss-lcp-item-name small{font-size:9px;color:#b3c5d7;line-height:1.4}
         .shadow-studio .ss-lcp-tools{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin:7px 0}
@@ -155,7 +226,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
           <button className="ss-lcp-action" type="button" title={a[6]} aria-label={a[6]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) === layers.length - 1} onClick={() => onLayerAction('move', activeLayerId, 1)}><i className="fa-solid fa-arrow-up" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) <= 0 || lower?.isBackground} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
           {selected?.textData ? <button className="ss-lcp-action" type="button" title={editTextLabel} aria-label={editTextLabel} disabled={blocked || selected.locked || !selected.visible || Boolean(selectedGroup && (!selectedGroup.visible || selectedGroup.locked))} onClick={() => onLayerAction('edit-text', activeLayerId)}><i className="fa-solid fa-font" aria-hidden="true" /></button> : null}
-          <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => selected && rename(selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => beginRename('layer', selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={`${a[9]} · Delete / Backspace`} aria-label={a[9]} disabled={blocked || !selected || selected.isBackground || layers.length <= 1} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={mergeLabel} aria-label={mergeLabel} disabled={blocked || !canMerge} onClick={() => onLayerAction('merge-down', activeLayerId)}><i className="fa-solid fa-layer-group" aria-hidden="true" /></button>
           <label className="ss-lcp-opacity">{t[7]}
@@ -164,7 +235,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
             </select>
           </label>
           {selected?.isBackground ? <button className="ss-lcp-action" type="button" title={convertLabel} aria-label={convertLabel} disabled={blocked} onClick={() => onLayerAction('convert-background', activeLayerId)}><i className="fa-solid fa-unlock-keyhole" aria-hidden="true" /></button> : null}
-          <button className="ss-lcp-action" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selected.isBackground || Boolean(selectedGroup) || groups.length >= 8} onClick={() => onLayerAction('group-add', activeLayerId)}><i className="fa-solid fa-folder-plus" aria-hidden="true" /></button>
+          <button className="ss-lcp-action ss-lcp-group-add" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selected.isBackground || Boolean(selectedGroup) || groups.length >= 8} onClick={() => { pendingGroupIds.current = new Set(groups.map((item) => item.id)); onLayerAction('group-add', activeLayerId) }}><i className="fa-solid fa-folder-plus" aria-hidden="true" /><span className="ss-lcp-group-add-label">{groupControl[0]}</span></button>
           <label className="ss-lcp-blend">{blendTitle}
             <select aria-label={blendTitle} disabled={blocked || !selected || selected.isBackground} value={selected?.blendMode || 'normal'} onChange={(event) => onLayerAction('blend', activeLayerId, event.target.value)}>
               {STUDIO_BLEND_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}
@@ -186,8 +257,8 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
                 <div className="ss-lcp-group-head">
                   <button className="ss-lcp-action" type="button" title={group.collapsed ? groupControl[5] : groupControl[4]} disabled={blocked} onClick={() => onLayerAction('group-collapse', group.id)}>{group.collapsed ? '▸' : '▾'}</button>
                   <button className="ss-lcp-action" type="button" title={group.visible ? a[3] : a[2]} disabled={blocked} onClick={() => onLayerAction('group-visibility', group.id)}><i className={`fa-regular ${group.visible ? 'fa-eye' : 'fa-eye-slash'}`} aria-hidden="true" /></button>
-                  <strong className="ss-lcp-group-name" title={group.name}>{group.name}</strong>
-                  <button className="ss-lcp-action" type="button" title={groupControl[3]} disabled={blocked} onClick={() => { const name = window.prompt(groupControl[3], group.name); if (name?.trim() && name.trim() !== group.name) onLayerAction('group-rename', group.id, name.trim()) }}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
+                  {editing?.kind === 'group' && editing.id === group.id ? renameInput('group', group) : <button className="ss-lcp-group-name ss-lcp-name-trigger" type="button" disabled={blocked} title={`${groupControl[3]}: ${group.name}`} aria-label={`${groupControl[3]}: ${group.name}`} onClick={() => beginRename('group', group)}>{group.name}</button>}
+                  <button className="ss-lcp-action" type="button" title={groupControl[3]} disabled={blocked} onClick={() => beginRename('group', group)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
                   <button className="ss-lcp-action" type="button" title={group.locked ? a[5] : a[4]} disabled={blocked} onClick={() => onLayerAction('group-lock', group.id)}><i className={`fa-solid ${group.locked ? 'fa-lock' : 'fa-lock-open'}`} aria-hidden="true" /></button>
                 </div>
                 <div className="ss-lcp-group-settings">
@@ -198,10 +269,13 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
               </div> : null}
               {!group?.collapsed ? <div className="ss-lcp-layer" data-ss-layer-id={layer.id} data-grouped={Boolean(group)} data-selected={layer.id === activeLayerId}>
               <button className="ss-lcp-action" type="button" aria-label={layer.visible ? a[3] : a[2]} title={layer.visible ? a[3] : a[2]} disabled={blocked} onClick={() => onLayerAction('visibility', layer.id)}><i className={`fa-regular ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}`} aria-hidden="true" /></button>
-              <button className="ss-lcp-pick" type="button" disabled={blocked} onDoubleClick={layer.textData ? () => onLayerAction('edit-text', layer.id) : undefined} onClick={() => onLayerAction('select', layer.id)} aria-label={`${a[1]} ${layer.name}`}>
+              <button className="ss-lcp-pick" type="button" disabled={blocked} onDoubleClick={layer.textData ? () => onLayerAction('edit-text', layer.id) : undefined} onClick={() => onLayerAction('select', layer.id)} aria-label={`${a[1]} ${layer.name}`} title={layer.textData ? editTextLabel : a[1]}>
                 <canvas className="ss-lcp-thumb" ref={(node) => { layerRefs.current[layer.id] = node }} aria-hidden="true" />
-                <span className="ss-lcp-item-name"><strong>{layer.textData ? 'T · ' : ''}{layer.name}</strong><small>{layer.id === activeLayerId ? '● ' : ''}{layer.opacity}%</small></span>
               </button>
+              <span className="ss-lcp-item-name">
+                {editing?.kind === 'layer' && editing.id === layer.id ? renameInput('layer', layer) : <button className="ss-lcp-name-trigger" type="button" disabled={blocked} title={`${a[8]}: ${layer.name}`} aria-label={`${a[8]}: ${layer.name}`} onClick={() => layer.id === activeLayerId ? beginRename('layer', layer) : onLayerAction('select', layer.id)}><strong>{layer.textData ? 'T · ' : ''}{layer.name}</strong></button>}
+                <small>{layer.id === activeLayerId ? '● ' : ''}{layer.opacity}%</small>
+              </span>
               <button className="ss-lcp-action" type="button" aria-label={layer.locked ? a[5] : a[4]} title={layer.locked ? a[5] : a[4]} disabled={blocked} onClick={() => onLayerAction('lock', layer.id)}><i className={`fa-solid ${layer.locked ? 'fa-lock' : 'fa-lock-open'}`} aria-hidden="true" /></button>
               </div> : null}
             </div>
