@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, BookOpen, CheckCircle2, CloudOff, FileDown, LayoutTemplate, PenLine, Settings2, X } from 'lucide-react'
 import { deleteLocalBook, saveLocalBook } from './ShadowDocsStore'
+import { downloadShadowDocsLibrary, readShadowDocsLibrary } from './ShadowDocsLibraryBackup'
 import { loadShadowDocsBooksSafely, flushShadowDocsPendingWrites } from './ShadowDocsLocalIntegrity'
 import { createShadowDocsBook, createShadowDocsId, normalizeShadowDocsBook, sanitizeShadowDocsHTML } from './ShadowDocsBookModel'
 import { downloadShadowDocsProject, imageToShadowDocsCover, printShadowDocsProject, readShadowDocsProject } from './ShadowDocsProjectIO'
@@ -13,6 +14,12 @@ import ShadowDocsBookDesignerPanel from './ShadowDocsBookDesignerPanel'
 import ShadowDocsCoverDesignerPanel from './ShadowDocsCoverDesignerPanel'
 import ShadowDocsTemplateGallery from './ShadowDocsTemplateGallery'
 import ShadowDocsPDFStudioPanel from './ShadowDocsPDFStudioPanel'
+import ShadowDocsBackupCenter from './ShadowDocsBackupCenter'
+import ShadowDocsReaderPreview from './ShadowDocsReaderPreview'
+import ShadowDocsFindReplacePanel from './ShadowDocsFindReplacePanel'
+import ShadowDocsTextExportPanel from './ShadowDocsTextExportPanel'
+import ShadowDocsPlainTextImportPanel from './ShadowDocsPlainTextImportPanel'
+import ShadowDocsContentsPanel from './ShadowDocsContentsPanel'
 import './ShadowDocsPage.css'
 
 const NAV = [
@@ -34,6 +41,9 @@ export default function ShadowDocsWorkspace() {
   const [chapterId, setChapterId] = useState('')
   const [designTab, setDesignTab] = useState('page')
   const [showOutline, setShowOutline] = useState(false)
+  const [showBackupCenter, setShowBackupCenter] = useState(false)
+  const [showWritingTools, setShowWritingTools] = useState(false)
+  const [backupBusy, setBackupBusy] = useState(false)
   const [dialog, setDialog] = useState('')
   const [details, setDetails] = useState({ title: '', author: '', description: '' })
   const [status, setStatus] = useState('Loading your local books…')
@@ -41,6 +51,7 @@ export default function ShadowDocsWorkspace() {
   const [notice, setNotice] = useState('')
   const importRef = useRef(null)
   const coverRef = useRef(null)
+  const libraryImportRef = useRef(null)
   const book = books.find(item => item.id === activeId) || null
   const currentChapter = book?.chapters.find(item => item.id === chapterId) || book?.chapters[0] || null
 
@@ -192,7 +203,9 @@ export default function ShadowDocsWorkspace() {
 
   function patchChapter(id, patch, immediate = false) {
     if (!book) return
-    patchBook(book.id, { chapters: book.chapters.map(item => item.id === id ? { ...item, ...patch } : item) }, immediate)
+    const latest = bookRef.current.find(item => item.id === book.id)
+    if (!latest) return
+    patchBook(latest.id, { chapters: latest.chapters.map(item => item.id === id ? { ...item, ...patch } : item) }, immediate)
   }
 
   function addChapter() {
@@ -229,6 +242,53 @@ export default function ShadowDocsWorkspace() {
     } catch (failure) { setError(`Cover upload failed: ${failure.message}`) }
   }
 
+  async function exportLibraryBackup() {
+    if (!ready || backupBusy) return
+    setBackupBusy(true)
+    try {
+      await flushShadowDocsPendingWrites(pending.current, bookRef.current)
+      downloadShadowDocsLibrary(bookRef.current)
+      setNotice('Library backup downloaded. Keep this file in a safe place.')
+    } catch (failure) { setError(`Library backup failed: ${failure.message}`) }
+    finally { setBackupBusy(false) }
+  }
+
+  async function importLibraryBackup(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !ready || backupBusy) return
+    setBackupBusy(true)
+    try {
+      const restored = await readShadowDocsLibrary(file)
+      await flushShadowDocsPendingWrites(pending.current, bookRef.current)
+      const results = await Promise.allSettled(restored.map(item => saveLocalBook(item)))
+      const saved = restored.filter((item, index) => results[index].status === 'fulfilled')
+      if (saved.length) {
+        bookRef.current = [...saved, ...bookRef.current]
+        setBooks(bookRef.current)
+      }
+      if (saved.length !== restored.length) throw new Error(`${saved.length} of ${restored.length} books were restored. Check available storage before trying again.`)
+      setNotice(`${saved.length} book(s) restored as new copies. Existing books were not replaced.`)
+    } catch (failure) { setError(`Library restore failed: ${failure.message}`) }
+    finally { setBackupBusy(false) }
+  }
+
+  async function appendImportedChapters(bookId, chapters) {
+    const latest = bookRef.current.find(item => item.id === bookId)
+    if (!ready || !latest || !Array.isArray(chapters) || !chapters.length) throw new Error('Choose a book and chapters to import.')
+    if (latest.chapters.length + chapters.length > 500) throw new Error('A book can have at most 500 chapters. Import fewer chapters.')
+    patchBook(latest.id, { chapters: [...latest.chapters, ...chapters] }, true)
+    await flushShadowDocsPendingWrites(pending.current, bookRef.current)
+    setNotice(`${chapters.length} chapter(s) added. Existing chapters were kept.`)
+  }
+
+  function applyTextReplacements(bookId, chapters, replacements) {
+    const latest = bookRef.current.find(item => item.id === bookId)
+    if (!latest || !Array.isArray(chapters) || chapters.length !== latest.chapters.length) throw new Error('The selected book changed. Reopen Find & Replace.')
+    patchBook(latest.id, { chapters }, true)
+    setNotice(`${replacements} text match(es) replaced. Download a backup to keep a separate copy.`)
+  }
+
   function printSelectedBook() {
     if (!book) return
     const latest = bookRef.current.find(item => item.id === book.id) || book
@@ -245,21 +305,23 @@ export default function ShadowDocsWorkspace() {
     </div></header>
 
     <main className="sd-main">
-      <div className="sd-topline"><div><span className="sd-eyebrow">YOUR BOOK WORKSPACE</span><h1>{NAV.find(item => item.id === section)?.name}</h1><p>{section === 'books' ? 'Your writing, saved on this device.' : book?.title || 'Create or select a book to continue.'}</p></div>{book && section !== 'books' && <button type="button" className="sd-button sd-button-ghost" onClick={() => setSection('books')}><BookOpen size={15}/> Library</button>}</div>
+      <div className="sd-topline"><div><span className="sd-eyebrow">YOUR BOOK WORKSPACE</span><h1>{section === 'preview' ? 'Reading Preview' : NAV.find(item => item.id === section)?.name}</h1><p>{section === 'books' ? 'Your writing, saved on this device.' : book?.title || 'Create or select a book to continue.'}</p></div>{book && section !== 'books' && <button type="button" className="sd-button sd-button-ghost" onClick={() => setSection('books')}><BookOpen size={15}/> Library</button>}</div>
       {error && <div role="alert" className="sd-alert sd-alert-error"><span>{error}</span><button type="button" aria-label="Dismiss error" onClick={() => setError('')}><X size={16}/></button></div>}
       {notice && <div role="status" className="sd-alert sd-alert-ok"><span>{notice}</span><button type="button" aria-label="Dismiss notice" onClick={() => setNotice('')}><X size={16}/></button></div>}
       <div className="sd-status"><CheckCircle2 size={15}/><span>{status}</span><span className="sd-status-note">Projects remain in this browser; download backups regularly.</span></div>
 
-      {section === 'books' && <ShadowDocsMyBooksPanel books={books} ready={ready} onCreate={startNewBook} onImport={() => importRef.current?.click()} onOpen={openBook} onAction={bookAction}/>}
-      {section === 'write' && <div className="sd-stack"><ShadowDocsWritingStudioPanel book={book} chapterId={currentChapter?.id} onSelectChapter={setChapterId} onAddChapter={addChapter} onRenameChapter={(id, title) => patchChapter(id, { title: title.slice(0, 160) })} onChangeHTML={(id, html) => patchChapter(id, { html: sanitizeShadowDocsHTML(html) })} onMoveChapter={moveChapter} onDeleteChapter={deleteChapter} onPreview={() => setSection('pdf')} onDownloadBackup={exportBackup} onEditorBlur={persist} status={status}/>{book && <div className="sd-stack"><button type="button" className="sd-button sd-button-ghost" aria-expanded={showOutline} onClick={() => setShowOutline(value => !value)}>{showOutline ? 'Hide manuscript search & outline' : 'Show manuscript search & outline'}</button>{showOutline && <ShadowDocsManuscriptPanel book={book} activeChapterId={currentChapter?.id} onSelectChapter={setChapterId} onAddChapter={addChapter} onMoveChapter={moveChapter}/>}</div>}</div>}
+      {section === 'books' && <div className="sd-stack"><button type="button" className="sd-button sd-button-ghost" aria-expanded={showBackupCenter} onClick={() => setShowBackupCenter(value => !value)}>{showBackupCenter ? 'Hide Backup Center' : 'Open Backup Center'}</button><ShadowDocsMyBooksPanel books={books} ready={ready} onCreate={startNewBook} onImport={() => importRef.current?.click()} onOpen={openBook} onAction={bookAction}/>{showBackupCenter && <ShadowDocsBackupCenter books={books} ready={ready} busy={backupBusy} onBackupBook={exportBackup} onImportBook={() => importRef.current?.click()} onExportLibrary={exportLibraryBackup} onImportLibrary={() => libraryImportRef.current?.click()}/>}</div>}
+      {section === 'write' && <div className="sd-stack"><ShadowDocsWritingStudioPanel book={book} chapterId={currentChapter?.id} onSelectChapter={setChapterId} onAddChapter={addChapter} onRenameChapter={(id, title) => patchChapter(id, { title: title.slice(0, 160) })} onChangeHTML={(id, html) => patchChapter(id, { html: sanitizeShadowDocsHTML(html) })} onMoveChapter={moveChapter} onDeleteChapter={deleteChapter} onPreview={() => setSection('preview')} onDownloadBackup={exportBackup} onEditorBlur={persist} status={status}/>{book && <div className="sd-stack"><div className="flex flex-wrap gap-2"><button type="button" className="sd-button sd-button-ghost" aria-expanded={showOutline} onClick={() => setShowOutline(value => !value)}>{showOutline ? 'Hide manuscript outline' : 'Show manuscript outline'}</button><button type="button" className="sd-button sd-button-ghost" aria-expanded={showWritingTools} onClick={() => setShowWritingTools(value => !value)}>{showWritingTools ? 'Hide writing tools' : 'Open writing tools'}</button></div>{showOutline && <ShadowDocsManuscriptPanel book={book} activeChapterId={currentChapter?.id} onSelectChapter={setChapterId} onAddChapter={addChapter} onMoveChapter={moveChapter}/>}{showWritingTools && <div className="sd-stack"><ShadowDocsFindReplacePanel key={`find-${book.id}`} book={book} activeChapterId={currentChapter?.id} onApply={(chapters, count) => applyTextReplacements(book.id, chapters, count)}/><ShadowDocsPlainTextImportPanel key={`import-${book.id}`} book={book} onImportParsed={chapters => appendImportedChapters(book.id, chapters)}/><ShadowDocsTextExportPanel key={`text-${book.id}`} book={book}/><ShadowDocsContentsPanel book={book} onSelectChapter={setChapterId}/></div>}</div>}</div>}
       {section === 'design' && <div className="sd-stack"><div className="sd-segments"><button type="button" className={designTab === 'page' ? 'is-active' : ''} onClick={() => setDesignTab('page')}>Page & type</button><button type="button" className={designTab === 'cover' ? 'is-active' : ''} onClick={() => setDesignTab('cover')}>Cover Designer</button></div>{designTab === 'page' ? <ShadowDocsBookDesignerPanel book={book} onChangeSettings={patch => book && patchBook(book.id, { settings: { ...book.settings, ...patch } })}/> : <ShadowDocsCoverDesignerPanel book={book} onSaveDetails={details => book && patchBook(book.id, details, true)} onUploadCover={() => coverRef.current?.click()} onRemoveCover={() => book && patchBook(book.id, { image: '' }, true)}/>}</div>}
       {section === 'templates' && <ShadowDocsTemplateGallery book={book} onSelectTemplate={id => book && patchBook(book.id, { template: id }, true)}/>}
-      {section === 'pdf' && <ShadowDocsPDFStudioPanel book={book} onPrint={printSelectedBook} onDownloadBackup={exportBackup}/>}
+      {section === 'preview' && <ShadowDocsReaderPreview key={book?.id || 'empty'} book={book} onEditChapter={id => { setChapterId(id); setSection('write') }} onPrint={() => setSection('pdf')}/>}
+      {section === 'pdf' && <div className="sd-stack"><ShadowDocsPDFStudioPanel book={book} onPrint={printSelectedBook} onDownloadBackup={exportBackup}/>{book && <ShadowDocsContentsPanel book={book} onSelectChapter={id => { setChapterId(id); setSection('write') }}/>}</div>}
     </main>
 
     <nav className="sd-bottom-nav" aria-label="Shadow Docs navigation"><div className="sd-bottom-inner">{NAV.map(item => { const Icon = item.icon; return <button key={item.id} type="button" className={section === item.id ? 'is-active' : ''} onClick={() => { setSection(item.id); setShowOutline(false) }}><Icon size={20}/><span>{item.name}</span></button> })}</div></nav>
     <input ref={importRef} hidden type="file" accept=".shadowdocs" onChange={importBackup}/>
     <input ref={coverRef} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={coverSelected}/>
+    <input ref={libraryImportRef} hidden type="file" accept=".shadowdocs-library" onChange={importLibraryBackup}/>
     {dialog && <div className="sd-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setDialog('') }}><form className="sd-modal" onSubmit={submitDetails}><div className="sd-panel-title"><h2>{dialog === 'new' ? 'Create a new book' : 'Edit book details'}</h2><button type="button" aria-label="Close dialog" className="sd-icon-button" onClick={() => setDialog('')}><X size={16}/></button></div><p>Book details are saved on this device.</p><label htmlFor="sd-book-title" className="sd-field-label">BOOK TITLE</label><input id="sd-book-title" className="sd-field" required maxLength={160} autoFocus value={details.title} onChange={event => setDetails(value => ({ ...value, title: event.target.value }))}/><label htmlFor="sd-book-author" className="sd-field-label">AUTHOR NAME</label><input id="sd-book-author" className="sd-field" maxLength={120} value={details.author} onChange={event => setDetails(value => ({ ...value, author: event.target.value }))}/><label htmlFor="sd-book-description" className="sd-field-label">DESCRIPTION</label><textarea id="sd-book-description" className="sd-field sd-textarea" rows={3} maxLength={350} value={details.description} onChange={event => setDetails(value => ({ ...value, description: event.target.value }))}/><div className="sd-modal-actions"><button type="button" className="sd-button sd-button-ghost" onClick={() => setDialog('')}>Cancel</button><button type="submit" className="sd-button sd-button-primary" disabled={!details.title.trim()}>{dialog === 'new' ? 'Create Book' : 'Save Changes'}</button></div></form></div>}
   </div>
 }
