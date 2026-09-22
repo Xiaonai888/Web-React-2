@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('authorEditPage', {
@@ -251,8 +251,21 @@ export default function AuthorEditPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || editText('updateFailed'))
-      }
+  if (response.status === 409 && data.next_change_at) {
+    const nextDate = new Date(data.next_change_at)
+    const days = Math.max(1, Math.ceil((nextDate.getTime() - Date.now()) / 86400000))
+    const messages = {
+      en: `Please wait ${days} more day(s) before changing your Page name.`,
+      km: `សូមរង់ចាំ ${days} ថ្ងៃទៀត ទើបអាចប្តូរឈ្មោះទំព័របាន។`,
+      zh: `请再等待 ${days} 天后更改主页名称。`,
+      ja: `ページ名を変更するには、あと${days}日お待ちください。`,
+      ko: `페이지 이름을 변경하려면 ${days}일 더 기다려 주세요。`,
+    }
+    throw new Error(messages[getDisplayLanguageId()] || messages.en)
+  }
+  throw new Error(data.message || editText('updateFailed'))
+}
+
 
       invalidateMyAuthorPageClientCache()
 
