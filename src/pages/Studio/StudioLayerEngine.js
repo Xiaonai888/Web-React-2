@@ -72,6 +72,7 @@ export function duplicateStudioLayer(stack, id = stack.activeLayerId) {
   context.drawImage(original.canvas, 0, 0)
   duplicate.visible = original.visible
   duplicate.opacity = original.opacity
+  if (original.textData) duplicate.textData = { ...original.textData, anchor: { ...original.textData.anchor } }
   stack.layers.splice(stack.layers.indexOf(original) + 1, 0, duplicate)
   stack.activeLayerId = duplicate.id
   return duplicate
