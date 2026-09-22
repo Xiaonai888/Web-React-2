@@ -19,6 +19,7 @@ const API_URL =
   )
 
 const MIN_CHECK_INTERVAL_MS = 2 * 60 * 1000
+const PERIODIC_CHECK_INTERVAL_MS = 60 * 60 * 1000
 const STORAGE_KEY =
   'shadow_content_versions'
 
@@ -288,6 +289,7 @@ export function SmartRefreshProvider({
       if (hasChanged) {
         const cacheSections =
           new Set([
+            'home',
             'slides',
             'banners',
             'genres',
@@ -306,7 +308,15 @@ export function SmartRefreshProvider({
             )
         )
 
-        window.location.reload()
+        const currentPath = pathnameRef.current
+
+        if (
+          currentPath === pathname &&
+          !currentPath.startsWith('/story/') &&
+          !currentPath.startsWith('/author/')
+        ) {
+          window.location.reload()
+        }
       }
     } catch {
       return
@@ -339,6 +349,10 @@ export function SmartRefreshProvider({
       void checkCurrentPageVersion()
     }
 
+    const periodicTimer = window.setInterval(() => {
+      void checkCurrentPageVersion()
+    }, PERIODIC_CHECK_INTERVAL_MS)
+
     document.addEventListener(
       'visibilitychange',
       handleVisibleAgain
@@ -353,6 +367,7 @@ export function SmartRefreshProvider({
     )
 
     return () => {
+      window.clearInterval(periodicTimer)
       document.removeEventListener(
         'visibilitychange',
         handleVisibleAgain
