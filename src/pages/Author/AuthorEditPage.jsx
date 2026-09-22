@@ -253,6 +253,9 @@ export default function AuthorEditPage() {
       if (!response.ok || data.ok === false) {
   if (response.status === 409 && data.next_change_at) {
     const nextDate = new Date(data.next_change_at)
+if (!Number.isFinite(nextDate.getTime())) {
+  throw new Error(data.message || editText('updateFailed'))
+}
     const days = Math.max(1, Math.ceil((nextDate.getTime() - Date.now()) / 86400000))
     const messages = {
       en: `Please wait ${days} more day(s) before changing your Page name.`,
