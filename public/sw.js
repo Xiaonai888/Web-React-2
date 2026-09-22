@@ -1710,6 +1710,52 @@ self.addEventListener(
       return
     }
 
+        const offlineShellName = 'shadow-offline-shell-v1'
+    const isLocalShellAsset = url.origin === self.location.origin &&
+      /^\/assets\/.+\.(?:js|css)$/i.test(url.pathname)
+    const isExternalShellAsset = [
+      'cdn.tailwindcss.com', 'cdnjs.cloudflare.com', 'unpkg.com',
+      'fonts.googleapis.com', 'fonts.gstatic.com',
+    ].includes(url.hostname) && ['script', 'style', 'font'].includes(request.destination)
+
+    if (isLocalShellAsset || isExternalShellAsset) {
+      event.respondWith((async () => {
+        const cache = await caches.open(offlineShellName).catch(() => null)
+        try {
+          const response = await fetch(request)
+          if (cache && (response.ok || response.type === 'opaque')) {
+            await cache.put(request, response.clone()).catch(() => {})
+          }
+          return response
+        } catch {
+          const cached = cache && await cache.match(request, { ignoreSearch: true }).catch(() => null)
+          return cached || Response.error()
+        }
+      })())
+      return
+    }
+
+    const offlineShellRoutes = new Set([
+      '/', '/me', '/library', '/library/manage', '/library/manage/offline-downloads',
+    ])
+    const route = url.pathname.replace(/\/+$/, '') || '/'
+    if (request.mode === 'navigate' && url.origin === self.location.origin && offlineShellRoutes.has(route)) {
+      event.respondWith((async () => {
+        try {
+          return await fetch(request)
+        } catch {
+          const cache = await caches.open(offlineShellName).catch(() => null)
+          const cached = cache && await cache.match(new URL('/', self.location.origin).href).catch(() => null)
+          return cached || new Response('Shadow offline shell has not been saved yet. Open Shadow once with internet.', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+          })
+        }
+      })())
+      return
+    }
+
+
     if (request.mode === 'navigate' && url.origin === self.location.origin) {
   event.respondWith((async () => {
     const selected = (request.headers.get('Accept-Language') || self.navigator.language || 'en').toLowerCase()
