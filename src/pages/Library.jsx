@@ -4,6 +4,7 @@ import SubscriptionsSection from '../components/library/SubscriptionsSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import OfflinePdfSaveButton from '../components/library/OfflinePdfSaveButton'
 
 registerTranslationNamespace('libraryPage', {
   en: {
@@ -528,6 +529,7 @@ function PdfActionButtons({ story, compact = false }) {
         }}
       >
         {t('libraryPage.pdfNotReady')}
+        {canDownloadPdf(story) ? <OfflinePdfSaveButton pdfId={story.id} /> : null}
       </div>
     )
   }
