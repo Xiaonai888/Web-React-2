@@ -83,6 +83,7 @@ import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const AppPage = lazy(() => import('./pages/Me/AppPage'))
+const AppAccessGuard = lazy(() => import('./pages/Me/AppAccessGuard'))
 const ShadowStudioPage = lazy(() => import('./pages/Studio/ShadowStudioPage'))
 const ShadowDocsPage = lazy(() => import('./pages/Docs/ShadowDocsPage'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
@@ -1368,11 +1369,11 @@ const shouldShowOpeningAds =
 />
 
           <Route path="/apps/shadow-studio" element={
-  <LazyPage><ShadowStudioPage /></LazyPage>
+  <LazyPage><AppAccessGuard appKey="shadow-studio"><ShadowStudioPage /></AppAccessGuard></LazyPage>
 } />
 
-          <Route path="/apps/shadow-docs" element={
-  <LazyPage><ShadowDocsPage /></LazyPage>
+<Route path="/apps/shadow-docs" element={
+  <LazyPage><AppAccessGuard appKey="shadow-docs"><ShadowDocsPage /></AppAccessGuard></LazyPage>
 } />
 
 
