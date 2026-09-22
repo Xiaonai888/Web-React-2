@@ -1646,7 +1646,27 @@ self.addEventListener(
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting())
   precacheSplashAssets().catch(() => {})
+  event.waitUntil((async () => {
+    try {
+      const root = new URL('/', self.location.origin)
+      const response = await fetch(new Request(root.href, { cache: 'reload' }))
+      if (!response.ok || !String(response.headers.get('content-type') || '').includes('text/html')) return
+      const html = await response.clone().text()
+      const cache = await caches.open('shadow-offline-shell-v1')
+      await cache.put(root.href, response)
+      const urls = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)=["']([^"']+)["']/gi)]
+        .map((match) => new URL(match[1], root))
+        .filter((url) => url.origin === root.origin && /^\/assets\/.+\.(?:js|css)$/i.test(url.pathname))
+      await Promise.allSettled([...new Set(urls.map((url) => url.href))].map(async (url) => {
+        const asset = await fetch(new Request(url, { cache: 'reload' }))
+        if (asset.ok) await cache.put(url, asset)
+      }))
+    } catch (error) {
+      console.warn('SHADOW_OFFLINE_SHELL_INSTALL_FAILED', error)
+    }
+  })())
 })
+
 
 self.addEventListener(
   'activate',
