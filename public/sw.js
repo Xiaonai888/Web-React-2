@@ -1739,7 +1739,7 @@ self.addEventListener(
       '/', '/me', '/library', '/library/manage', '/library/manage/offline-downloads',
     ])
     const route = url.pathname.replace(/\/+$/, '') || '/'
-    if (request.mode === 'navigate' && url.origin === self.location.origin && offlineShellRoutes.has(route)) {
+    if (request.mode === 'navigate' && url.origin === self.location.origin && (offlineShellRoutes.has(route) || /^\/story\/[^/]+\/episode\/[^/]+$/.test(route))) {
       event.respondWith((async () => {
         try {
           return await fetch(request)
