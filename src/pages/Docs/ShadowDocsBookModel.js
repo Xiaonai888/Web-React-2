@@ -1,0 +1,74 @@
+import { BOOK_TEMPLATES, getBookTemplate, getPageLayoutPreset } from './ShadowDocsTemplateCatalog'
+
+const ids = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
+const PAGE_SIZES = new Set(['A5', 'A4', 'B5'])
+const FONTS = new Set(['Noto Serif Khmer', 'Noto Sans Khmer', 'Battambang', 'Georgia', 'Arial'])
+const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
+const CHAPTER_STYLES = new Set(['classic', 'modern', 'minimal'])
+const ALLOWED = new Set(['P', 'DIV', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'H1', 'H2', 'H3', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'SPAN'])
+const clamp = (value, low, high, fallback) => value === '' || value == null || !Number.isFinite(Number(value)) ? fallback : Math.max(low, Math.min(high, Number(value)))
+const brief = (value, max) => String(value ?? '').slice(0, max)
+const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
+export const createShadowDocsId = ids
+export const isShadowDocsImage = value => typeof value === 'string' && /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(value) && value.length < 2_500_000
+
+export function sanitizeShadowDocsHTML(source) {
+  const html = String(source ?? '').slice(0, 500_000)
+  if (typeof DOMParser === 'undefined') return `<p>${escapeHTML(html.replace(/<[^>]*>/g, ' '))}</p>`
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  function walk(node) {
+    if (node.nodeType === 3) return escapeHTML(node.nodeValue)
+    if (node.nodeType !== 1) return ''
+    const content = Array.from(node.childNodes, walk).join('')
+    if (!ALLOWED.has(node.tagName)) return content
+    if (node.tagName === 'BR') return '<br>'
+    const align = node.style?.textAlign
+    const style = ALIGNMENTS.has(align) ? ` style="text-align:${align}"` : ''
+    return `<${node.tagName.toLowerCase()}${style}>${content}</${node.tagName.toLowerCase()}>`
+  }
+  return Array.from(doc.body.childNodes, walk).join('')
+}
+
+export function normalizeShadowDocsBook(source, { duplicate = false } = {}) {
+  if (!source || typeof source !== 'object' || !Array.isArray(source.chapters) || source.chapters.length > 500) throw new Error('Invalid Shadow Docs project.')
+  const requested = BOOK_TEMPLATES.some(template => template.id === source.template) ? source.template : 'classic'
+  const layout = getPageLayoutPreset(getBookTemplate(requested).layout)
+  const sourceSettings = source.settings || {}
+  const chapterIds = new Set()
+  const chapters = source.chapters.map((chapter, index) => {
+    if (!chapter || typeof chapter !== 'object') throw new Error('Invalid chapter in project.')
+    let id = duplicate ? ids() : brief(chapter.id || ids(), 120)
+    if (chapterIds.has(id)) id = ids()
+    chapterIds.add(id)
+    return { id, title: brief(chapter.title || `Chapter ${index + 1}`, 160), html: sanitizeShadowDocsHTML(chapter.html) }
+  })
+  const now = Date.now()
+  return {
+    id: duplicate ? ids() : brief(source.id || ids(), 120),
+    title: brief(source.title || 'Untitled Book', 160),
+    author: brief(source.author, 120),
+    description: brief(source.description, 350),
+    status: source.status === 'completed' ? 'completed' : 'draft',
+    template: requested,
+    image: isShadowDocsImage(source.image) ? source.image : '',
+    settings: {
+      size: PAGE_SIZES.has(sourceSettings.size) ? sourceSettings.size : layout.size,
+      margin: clamp(sourceSettings.margin, 10, 35, layout.margin),
+      font: FONTS.has(sourceSettings.font) ? sourceSettings.font : layout.font,
+      fontSize: clamp(sourceSettings.fontSize, 10, 24, layout.fontSize),
+      lineSpacing: clamp(sourceSettings.lineSpacing, 1.2, 2.2, layout.lineSpacing),
+      alignment: ALIGNMENTS.has(sourceSettings.alignment) ? sourceSettings.alignment : layout.alignment,
+      numbers: sourceSettings.numbers !== false,
+      chapterStyle: CHAPTER_STYLES.has(sourceSettings.chapterStyle) ? sourceSettings.chapterStyle : layout.chapterStyle,
+    },
+    chapters: chapters.length ? chapters : [{ id: ids(), title: 'Chapter 1', html: '' }],
+    createdAt: duplicate ? now : Number(source.createdAt) || now,
+    updatedAt: duplicate ? now : Number(source.updatedAt) || now,
+  }
+}
+
+export function createShadowDocsBook(values = {}) {
+  const template = getBookTemplate(values.template || 'classic')
+  const layout = getPageLayoutPreset(template.layout)
+  return normalizeShadowDocsBook({ id: ids(), title: brief(values.title || 'Untitled Book', 160), author: brief(values.author, 120), description: brief(values.description, 350), template: template.id, settings: layout, chapters: [{ id: ids(), title: 'Chapter 1', html: '' }] })
+}
