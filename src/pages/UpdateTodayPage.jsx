@@ -488,6 +488,102 @@ export default function UpdateTodayPage() {
       })
   }, [activeDay, stories])
 
+    const updateTodayReturnKey = 'shadow_update_today_return_v1'
+  const [returnPosition] = useState(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(updateTodayReturnKey) || 'null')
+      if (!saved || Date.now() - Number(saved.savedAt) > 30 * 60 * 1000) return null
+      if (!Number.isFinite(Number(saved.scrollY)) || Number(saved.scrollY) < 0) return null
+      return saved
+    } catch {
+      return null
+    }
+  })
+
+  useEffect(() => {
+    function rememberStoryPosition(event) {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+      const link = event.target instanceof Element ? event.target.closest('a[href]') : null
+      if (!link || !link.pathname.startsWith('/story/')) return
+      try {
+        sessionStorage.setItem(updateTodayReturnKey, JSON.stringify({
+          day: activeDay,
+          scrollY: window.scrollY,
+          savedAt: Date.now(),
+        }))
+      } catch {
+        return
+      }
+    }
+
+    document.addEventListener('click', rememberStoryPosition, true)
+    return () => document.removeEventListener('click', rememberStoryPosition, true)
+  }, [activeDay])
+
+  useEffect(() => {
+    if (!returnPosition || loading) return undefined
+    const savedDay = Number(returnPosition.day)
+    if (returnPosition.day !== null && Number.isInteger(savedDay) && savedDay >= 0 && savedDay <= 6 && activeDay !== savedDay) {
+      setActiveDay(savedDay)
+      return undefined
+    }
+
+    let stopped = false
+    let stableCount = 0
+    const targetY = Number(returnPosition.scrollY)
+    const restorePosition = () => {
+      if (stopped) return
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+      if (maxScroll + 4 < targetY) return
+      window.scrollTo({ top: targetY, left: 0, behavior: 'auto' })
+      stableCount = Math.abs(window.scrollY - targetY) < 4 ? stableCount + 1 : 0
+      if (stableCount >= 3) stopRestoring()
+    }
+    const stopRestoring = () => {
+      if (stopped) return
+      stopped = true
+      window.clearInterval(intervalId)
+      window.clearTimeout(timeoutId)
+      window.cancelAnimationFrame(frameId)
+      window.removeEventListener('wheel', stopRestoring)
+      window.removeEventListener('touchstart', stopRestoring)
+      window.removeEventListener('pointerdown', stopRestoring)
+      window.removeEventListener('keydown', stopRestoring)
+      try {
+        sessionStorage.removeItem(updateTodayReturnKey)
+      } catch {
+        return
+      }
+    }
+
+    const frameId = window.requestAnimationFrame(restorePosition)
+    const intervalId = window.setInterval(restorePosition, 200)
+    const timeoutId = window.setTimeout(() => {
+      if (!stopped) {
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+        window.scrollTo({ top: Math.min(targetY, maxScroll), left: 0, behavior: 'auto' })
+        stopRestoring()
+      }
+    }, 10000)
+
+    window.addEventListener('wheel', stopRestoring, { passive: true })
+    window.addEventListener('touchstart', stopRestoring, { passive: true })
+    window.addEventListener('pointerdown', stopRestoring)
+    window.addEventListener('keydown', stopRestoring)
+
+    return () => {
+      stopped = true
+      window.clearInterval(intervalId)
+      window.clearTimeout(timeoutId)
+      window.cancelAnimationFrame(frameId)
+      window.removeEventListener('wheel', stopRestoring)
+      window.removeEventListener('touchstart', stopRestoring)
+      window.removeEventListener('pointerdown', stopRestoring)
+      window.removeEventListener('keydown', stopRestoring)
+    }
+  }, [returnPosition, loading, activeDay])
+
+
   return (
     <div className="app-page min-h-screen bg-white pb-16 dark:bg-[var(--shadow-bg-page)]">
       <header className="sticky top-0 z-40 border-b border-[#eceef2] bg-white/95 backdrop-blur dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
