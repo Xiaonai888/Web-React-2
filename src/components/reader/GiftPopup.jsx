@@ -489,6 +489,18 @@ export default function GiftPopup({
         }),
       })
 
+      if (response.status === 429 && String(data?.scope || '').startsWith('gift_send_')) {
+  if (!previous) {
+    clearPendingGift(token)
+    setPendingGift(null)
+  }
+  setConfirmOpen(false)
+  setFeedback('')
+  showGiftWaitToast(Math.max(1, Number(data?.retry_after_seconds || response.headers.get('Retry-After') || 3)), getDisplayLanguageId())
+  return
+}
+
+
       const data = await response.json().catch(() => null)
 
       if (!response.ok || data?.ok !== true || !data?.gift?.id) {
