@@ -23,6 +23,7 @@ import './StudioHeaderShell.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
 import { clearStudioRecovery, readStudioRecovery, restoreStudioRecovery, saveStudioRecovery } from './StudioRecoveryStore'
 import StudioOptionsBar from './StudioOptionsBar'
+import StudioMangaToolSettingsPage from './StudioMangaToolSettingsPage'
 import { confirmLargeBrush } from './StudioPrecisionInput'
 import StudioCanvasRulers from './StudioCanvasRulers'
 import { studioLayerContext, addStudioLayer, duplicateStudioLayer, selectStudioLayer, updateStudioLayer, moveStudioLayer, removeStudioLayer } from './StudioLayerEngine'
@@ -356,6 +357,7 @@ function studioBrushCursor(size, zoom) {
 export default function ShadowStudioPage() {
   const navigate = useNavigate()
 const { t: tx, language } = useDisplayTranslation()
+const mangaToolsLabel = { en: 'Manga Tools', km: 'ឧបករណ៍ Manga', zh: '漫画工具', ja: 'マンガツール', ko: '만화 도구' }[language] || 'Manga Tools'
 const placeImageLabel = {
   en: 'Place Image',
   km: 'ដាក់រូបភាព',
@@ -391,6 +393,7 @@ const placeImageLabel = {
   const [exportOpen, setExportOpen] = useState(false)
   const [newFilePreset, setNewFilePreset] = useState('basic')
   const [tool, setTool] = useState('brush')
+  const [mangaToolsOpen, setMangaToolsOpen] = useState(false)
   const [textEditor, setTextEditor] = useState(null)
   const [shapeEditor, setShapeEditor] = useState(null)
   const [brushStyle, setBrushStyle] = useState('round')
@@ -1739,6 +1742,11 @@ if (tool === 'shape') {
           onResetOrientation={() => updateCanvasView(0, false, false)}
         />
 
+        {workspaceStarted ? (
+          <button type="button" className="ss-menu-btn" aria-label={mangaToolsLabel}
+            disabled={paperLoading || projectBusy || recoveryBooting || recoveryBusy || Boolean(recoveryEntry) || newFileOpen || exportOpen}
+            onClick={() => setMangaToolsOpen(true)}>{mangaToolsLabel}</button>
+        ) : null}
         {['Window', 'Help'].map((label) => (
   <button key={label} type="button" className="ss-menu-btn" disabled>
     {label}
@@ -1955,6 +1963,14 @@ if (tool === 'shape') {
     if (file) placeImageOnCurrentPaper(file)
   }}
 />
+
+      <StudioMangaToolSettingsPage
+        open={mangaToolsOpen && workspaceStarted}
+        onClose={() => setMangaToolsOpen(false)}
+        onApply={applyRightFeature}
+        color={color}
+        disabled={!activeDocumentId || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy || recoveryBooting || recoveryBusy || Boolean(recoveryEntry) || newFileOpen || exportOpen || !studioLayerCanEdit(layerStackRef.current)}
+      />
 
      <StudioTextEditor
   key={textEditor ? `${textEditor.paperId}:${textEditor.editingLayerId || 'new'}:${textEditor.x}:${textEditor.y}` : 'closed'}
