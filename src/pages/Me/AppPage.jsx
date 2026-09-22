@@ -17,14 +17,13 @@ const apps = [
     icon: 'fa-solid fa-palette',
     path: '/apps/shadow-studio',
   },
-]
-
   {
     key: 'shadow-docs',
     name: 'Shadow Docs',
     icon: 'fa-solid fa-book-open',
     path: '/apps/shadow-docs',
   },
+]
 
 export default function AppPage() {
   const { t } = useDisplayTranslation()
