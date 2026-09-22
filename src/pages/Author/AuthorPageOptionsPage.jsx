@@ -195,7 +195,7 @@ function copyPageLink() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-10">
+    <div className="min-h-screen bg-[var(--shadow-bg-surface)] pb-10">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[720px] items-center justify-between px-4">
           <button
