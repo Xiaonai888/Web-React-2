@@ -5276,6 +5276,7 @@ export default function ReaderPage() {
   const offlineReaderReleaseRef = useRef(null)
   const pendingViewedEpisodeRef = useRef(new Map())
   const [offlineAccessExpiresAt, setOfflineAccessExpiresAt] = useState(0)
+  const [offlineAccessExpired, setOfflineAccessExpired] = useState(false)
 
   const [story, setStory] = useState(expectedStory)
   const [episode, setEpisode] = useState(expectedEpisode)
@@ -5307,6 +5308,7 @@ export default function ReaderPage() {
       offlineReaderReleaseRef.current = null
       pendingViewedEpisodeRef.current.clear()
       setOfflineAccessExpiresAt(0)
+      setOfflineAccessExpired(true)
       setStory(null)
       setEpisode(null)
       setEpisodes([])
@@ -6043,7 +6045,7 @@ const continuousReader = useContinuousEpisodeReader({
   episodes,
   loadEpisode: loadContinuousEpisode,
   onActiveEntry: (entry) => {
-    if (!entry?.episode) return
+    if (offlineAccessExpired || !entry?.episode) return
 
     setActiveEpisodeId(String(entry.id))
     setEpisode(entry.episode)
@@ -6151,6 +6153,7 @@ useEffect(() => {
       offlineReaderReleaseRef.current = null
       pendingViewedEpisodeRef.current.clear()
       setOfflineAccessExpiresAt(0)
+      setOfflineAccessExpired(false)
       setContinuousLockedEntry(null)
       setActiveEpisodeId(routeEpisodeId)
       setLoading(!hasExpectedLockedPreview)
@@ -8166,6 +8169,7 @@ adultAccepted &&
 !isChatStory &&
 !showFullLockedEpisode &&
 !showContinuousLockedEpisode &&
+!offlineAccessExpired &&
 effectiveReadingMode === 'scroll' ? (
           <div>
             {continuousReader.entries.map((entry, index) => (
