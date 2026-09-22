@@ -5,6 +5,7 @@ import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import LibraryCacheSettings from '../components/library/LibraryCacheSettings'
 import ReaderLibraryTrash from '../components/library/ReaderLibraryTrash'
+import OfflineDownloadsPanel from '../components/library/OfflineDownloadsPanel'
 
 registerTranslationNamespace('manageLibraryPage', {
   en: {
@@ -21,7 +22,7 @@ registerTranslationNamespace('manageLibraryPage', {
   },
   zh: {
     title: '管理书库', cache: '缓存', downloads: '离线下载', trash: '回收站',
-    cacheDescription: '管理存储空间', downloadsDescription: '管理已下载的故事', trashDescription: '30天内恢复已移除的作品',
+    cacheDescription: '管理存储空间', downloadsDescription: '管理已下载的作品', trashDescription: '恢复30天内移除的作品',
     back: '返回书库', pendingCache: '缓存设置将在下一步添加。',
     pendingDownloads: '离线下载管理将在后续步骤中添加。',
   },
@@ -65,6 +66,8 @@ export default function ManageLibraryPage() {
           <LibraryCacheSettings />
         ) : selected?.id === 'trash' ? (
           <ReaderLibraryTrash />
+        ) : selected?.id === 'offline-downloads' ? (
+          <OfflineDownloadsPanel />
         ) : selected ? (
           <SurfaceCard className="p-5">
             <p className="text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
