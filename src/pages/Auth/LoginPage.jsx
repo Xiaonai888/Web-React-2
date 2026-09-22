@@ -221,7 +221,7 @@ export default function LoginPage() {
       setMessage(t('loginPage.emailCodeRequired'))
       return
     }
-    if (challenge.pinRequired && !/^\d{4}$/.test(pin)) {
+    if (challenge.pinRequired && !/^\d{6}$/.test(pin)) {
       setMessage(t('loginPage.pinRequired'))
       return
     }
@@ -299,8 +299,8 @@ export default function LoginPage() {
                   <label htmlFor="reader-login-pin" className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                     {t('loginPage.pin')}
                   </label>
-                  <input id="reader-login-pin" type="password" inputMode="numeric" autoComplete="off" maxLength={4}
-                    value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                  <input id="reader-login-pin" type="password" inputMode="numeric" autoComplete="off" maxLength={6}
+                  value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 6))}
                     className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[16px] tracking-[0.2em] text-[#111827] outline-none focus:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)]" />
                 </>
               ) : null}
