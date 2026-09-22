@@ -25,6 +25,7 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "searchThisPage": "Search this Page",
     "inviteFriends": "Invite friends",
     "sharePage": "Share Page",
+    "pageTransparency": "Page Transparency",
     "pageLinkTitle": "{{name}}’s Page link",
     "shareDescription": "Share this personalized Shadow Page link.",
     "copyLink": "Copy link",
@@ -56,6 +57,7 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "searchThisPage": "ស្វែងរកក្នុងទំព័រនេះ",
     "inviteFriends": "អញ្ជើញមិត្តភក្តិ",
     "sharePage": "ចែករំលែកទំព័រ",
+    "pageTransparency": "ព័ត៌មានតម្លាភាពទំព័រ",
     "pageLinkTitle": "តំណទំព័ររបស់ {{name}}",
     "shareDescription": "ចែករំលែកតំណ Shadow Page ផ្ទាល់ខ្លួននេះ។",
     "copyLink": "ចម្លងតំណ",
@@ -87,6 +89,7 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "searchThisPage": "搜索此主页",
     "inviteFriends": "邀请朋友",
     "sharePage": "分享主页",
+    "pageTransparency": "主页透明度",
     "pageLinkTitle": "{{name}} 的主页链接",
     "shareDescription": "分享这个个性化 Shadow 主页链接。",
     "copyLink": "复制链接",
@@ -118,6 +121,7 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "searchThisPage": "このページを検索",
     "inviteFriends": "友達を招待",
     "sharePage": "ページを共有",
+    "pageTransparency": "ページの透明性",
     "pageLinkTitle": "{{name}} のページリンク",
     "shareDescription": "この個人用 Shadow Page リンクを共有します。",
     "copyLink": "リンクをコピー",
@@ -149,6 +153,7 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "searchThisPage": "이 페이지 검색",
     "inviteFriends": "친구 초대",
     "sharePage": "페이지 공유",
+    "pageTransparency": "페이지 투명성",
     "pageLinkTitle": "{{name}}의 페이지 링크",
     "shareDescription": "이 개인화된 Shadow Page 링크를 공유하세요.",
     "copyLink": "링크 복사",
@@ -434,6 +439,11 @@ export default function AuthorReaderPageOptionsPage() {
             icon="fa-solid fa-share"
             label={t('authorReaderPageOptions.sharePage')}
             onClick={() => setShareOpen(true)}
+          />
+          <ActionRow
+            icon="fa-solid fa-shield-halved"
+            label={t('authorReaderPageOptions.pageTransparency')}
+            onClick={() => navigate(`/author/page/${encodeURIComponent(pageUsername)}/transparency`)}
           />
         </section>
 
