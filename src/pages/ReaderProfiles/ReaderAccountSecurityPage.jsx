@@ -33,7 +33,7 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     loginDevices: 'Login devices',
     manageDevices: 'Manage signed-in devices (max 5)',
     loginSecurity: 'Login security',
-    manageLoginSecurity: 'Email verification (2FA) and 4-digit PIN',
+    manageLoginSecurity: 'Email verification (2FA) and 6-digit PIN',
   },
   km: {
     notSet: 'មិនទាន់កំណត់',
@@ -64,7 +64,7 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     loginDevices: 'ឧបករណ៍ដែលបានចូលគណនី',
     manageDevices: 'គ្រប់គ្រងឧបករណ៍ដែលបានចូលគណនី (អតិបរមា ៥)',
     loginSecurity: 'សុវត្ថិភាពការចូលគណនី',
-    manageLoginSecurity: 'ផ្ទៀងផ្ទាត់តាមអ៊ីមែល (2FA) និង PIN ៤ ខ្ទង់',
+    manageLoginSecurity: 'ផ្ទៀងផ្ទាត់តាមអ៊ីមែល (2FA) និង PIN ៦ ខ្ទង់',
   },
   zh: {
     notSet: '未设置',
@@ -126,7 +126,7 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     loginDevices: 'ログイン端末',
     manageDevices: 'ログイン端末を管理（最大5台）',
     loginSecurity: 'ログインのセキュリティ',
-    manageLoginSecurity: 'メール認証（2FA）と4桁のPIN',
+    manageLoginSecurity: 'メール認証（2FA）と6桁のPIN',
   },
   ko: {
     notSet: '설정되지 않음',
@@ -157,7 +157,7 @@ registerTranslationNamespace('readerAccountSecurityPage', {
     loginDevices: '로그인 기기',
     manageDevices: '로그인 기기 관리 (최대 5대)',
     loginSecurity: '로그인 보안',
-    manageLoginSecurity: '이메일 인증(2FA) 및 4자리 PIN',
+    manageLoginSecurity: '이메일 인증(2FA) 및 6자리 PIN',
   },
 })
 
