@@ -193,6 +193,7 @@ registerTranslationNamespace('readerPage', {
     "minutes": "{{minutes}} minutes",
     "failedLoadEpisode": "Failed to load episode",
     "invalidReadingLink": "Invalid reading link. Please open the episode from its story page.",
+    "offlineAccessExpired": "Offline access to this episode has expired. Connect to the internet to renew access.",
     "adClosedIncomplete": "Ad closed before completion. This episode is still locked."
   },
   "km": {
@@ -356,6 +357,7 @@ registerTranslationNamespace('readerPage', {
     "minutes": "{{minutes}} នាទី",
     "failedLoadEpisode": "មិនអាច Load ភាគបាន",
     "invalidReadingLink": "Link សម្រាប់អានមិនត្រឹមត្រូវ។ សូមបើកភាគនេះពីទំព័ររឿង។",
+    "offlineAccessExpired": "សិទ្ធិអានភាគនេះពេល Offline បានផុតកំណត់ហើយ។ សូមភ្ជាប់អ៊ីនធឺណិត ដើម្បីបន្តសិទ្ធិអាន។",
     "adClosedIncomplete": "ពាណិជ្ជកម្មត្រូវបានបិទមុនពេលចប់។ ភាគនេះនៅតែ Locked។"
   },
   "zh": {
@@ -519,6 +521,7 @@ registerTranslationNamespace('readerPage', {
     "minutes": "{{minutes}} 分钟",
     "failedLoadEpisode": "加载章节失败",
     "invalidReadingLink": "阅读链接无效。请从故事页面打开此章节。",
+    "offlineAccessExpired": "此章节的离线阅读权限已过期。请连接网络以续期。",
     "adClosedIncomplete": "广告未播放完成就被关闭，本章节仍处于锁定状态。"
   },
   "ja": {
@@ -682,6 +685,7 @@ registerTranslationNamespace('readerPage', {
     "minutes": "{{minutes}} 分",
     "failedLoadEpisode": "エピソードを読み込めませんでした",
     "invalidReadingLink": "読書リンクが無効です。ストーリーページからこのエピソードを開いてください。",
+    "offlineAccessExpired": "このエピソードのオフライン閲覧期限が切れました。インターネットに接続してアクセスを更新してください。",
     "adClosedIncomplete": "広告が完了前に閉じられました。このエピソードはまだロックされています。"
   },
   "ko": {
@@ -845,6 +849,7 @@ registerTranslationNamespace('readerPage', {
     "minutes": "{{minutes}}분",
     "failedLoadEpisode": "에피소드를 불러오지 못했습니다",
     "invalidReadingLink": "읽기 링크가 올바르지 않습니다. 스토리 페이지에서 이 에피소드를 열어 주세요.",
+    "offlineAccessExpired": "이 에피소드의 오프라인 읽기 권한이 만료되었습니다. 인터넷에 연결하여 권한을 갱신하세요.",
     "adClosedIncomplete": "광고가 완료되기 전에 닫혔습니다. 이 에피소드는 아직 잠겨 있습니다."
   }
 })
@@ -5270,6 +5275,7 @@ export default function ReaderPage() {
   const rewardAnimationTimerRef = useRef(null)
   const offlineReaderReleaseRef = useRef(null)
   const pendingViewedEpisodeRef = useRef(new Map())
+  const [offlineAccessExpiresAt, setOfflineAccessExpiresAt] = useState(0)
 
   const [story, setStory] = useState(expectedStory)
   const [episode, setEpisode] = useState(expectedEpisode)
@@ -5291,6 +5297,39 @@ export default function ReaderPage() {
     unlockStatusCacheRef.current.clear()
     unlockStatusRequestRef.current.clear()
   }, [storyId])
+
+  useEffect(() => {
+    if (!offlineAccessExpiresAt) return undefined
+
+    const expireOfflineAccess = () => {
+      if (Date.now() < offlineAccessExpiresAt) return
+      offlineReaderReleaseRef.current?.()
+      offlineReaderReleaseRef.current = null
+      pendingViewedEpisodeRef.current.clear()
+      setOfflineAccessExpiresAt(0)
+      setStory(null)
+      setEpisode(null)
+      setEpisodes([])
+      setLockedEpisode(true)
+      setContinuousLockedEntry(null)
+      setReaderAdPolicy(null)
+      setReaderAdvertisement(null)
+      setReaderAdFinished(false)
+      setReaderGateReady(false)
+      setAdultAccepted(false)
+      setMessage(t('readerPage.offlineAccessExpired'))
+    }
+
+    const interval = window.setInterval(expireOfflineAccess, 1000)
+    window.addEventListener('focus', expireOfflineAccess)
+    document.addEventListener('visibilitychange', expireOfflineAccess)
+    expireOfflineAccess()
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', expireOfflineAccess)
+      document.removeEventListener('visibilitychange', expireOfflineAccess)
+    }
+  }, [offlineAccessExpiresAt, t])
   
 
   useEffect(() => {
@@ -6072,9 +6111,17 @@ useEffect(() => {
         offline.release()
         return true
       }
+      const grant = offline.payload.cache_access
+      const temporary = grant?.private_access === true && String(grant.access_type || '').toLowerCase() === 'temporary'
+      const expiresAt = temporary ? Date.parse(grant.expires_at) : 0
+      if (temporary && (!Number.isFinite(expiresAt) || expiresAt <= Date.now())) {
+        offline.release()
+        return false
+      }
       offlineReaderReleaseRef.current?.()
       offlineReaderReleaseRef.current = offline.release
       pendingViewedEpisodeRef.current.clear()
+      setOfflineAccessExpiresAt(expiresAt)
       setStory(offline.payload.story)
       setEpisode(offline.payload.episode)
       setEpisodes(offline.episodes)
@@ -6103,6 +6150,7 @@ useEffect(() => {
       offlineReaderReleaseRef.current?.()
       offlineReaderReleaseRef.current = null
       pendingViewedEpisodeRef.current.clear()
+      setOfflineAccessExpiresAt(0)
       setContinuousLockedEntry(null)
       setActiveEpisodeId(routeEpisodeId)
       setLoading(!hasExpectedLockedPreview)
