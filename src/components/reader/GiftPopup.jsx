@@ -489,7 +489,10 @@ export default function GiftPopup({
         }),
       })
 
-      if (response.status === 429 && String(data?.scope || '').startsWith('gift_send_')) {
+
+
+      const data = await response.json().catch(() => null)
+            if (response.status === 429 && String(data?.scope || '').startsWith('gift_send_')) {
   if (!previous) {
     clearPendingGift(token)
     setPendingGift(null)
@@ -500,8 +503,6 @@ export default function GiftPopup({
   return
 }
 
-
-      const data = await response.json().catch(() => null)
 
       if (!response.ok || data?.ok !== true || !data?.gift?.id) {
         const definitiveFailure = !response.ok && response.status >= 400 && response.status < 500 &&
