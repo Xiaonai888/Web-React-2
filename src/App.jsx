@@ -76,6 +76,7 @@ import AuthorBlockedReadersPage from './pages/Author/AuthorBlockedReadersPage'
 import AuthorModerationHistoryPage from './pages/Author/AuthorModerationHistoryPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
 import AuthorIncomeOldPage from './pages/Author/AuthorIncomeOldPage'
+import AuthorStoryPayoutStatusPage from './pages/Author/AuthorStoryPayoutStatusPage'
 import AuthorRecentEarningsPage from './pages/Author/AuthorRecentEarningsPage'
 import AuthorTopSupportersPage from './pages/Author/AuthorTopSupportersPage'
 import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
@@ -1421,6 +1422,7 @@ const shouldShowOpeningAds =
         <Route path="/search" element={<Search />} />
         <Route path="/discover/search" element={<DiscoverSearchPage />} />
         <Route path="/author/income" element={<AuthorIncomeOldPage />} />
+        <Route path="/author/payout-status" element={<AuthorStoryPayoutStatusPage />} />
         <Route path="/author/recent-earnings" element={<AuthorRecentEarningsPage />} />
         <Route path="/author/top-supporters" element={<AuthorTopSupportersPage />} />
         <Route path="/author/earnings" element={<AuthorIncomePage />} />
