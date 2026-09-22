@@ -1,5 +1,6 @@
 import { getShadowDocsPrintCoverStyle } from './ShadowDocsPrintTheme'
 import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
+import { buildShadowDocsPrintContents, SHADOW_DOCS_PRINT_CONTENTS_CSS } from './ShadowDocsContents'
 
 const PAGE_SIZES = Object.freeze({ A5: [148, 210], A4: [210, 297], B5: [176, 250] })
 const FONT_FAMILIES = Object.freeze({
@@ -9,6 +10,7 @@ const FONT_FAMILIES = Object.freeze({
   Georgia: 'Georgia, "Noto Serif Khmer", serif',
   Arial: 'Arial, "Noto Sans Khmer", sans-serif',
 })
+
 function escapeText(value) {
   return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
 }
@@ -56,7 +58,8 @@ export function buildShadowDocsPrintHTML(book) {
   const settings = normalizedSettings(book.settings)
   const [width, height] = PAGE_SIZES[settings.size]
   const coverStyle = getShadowDocsPrintCoverStyle(book)
-  const chapters = book.chapters.slice(0, 500).map((chapter, index) => `<section class="chapter"><h2>${escapeText(chapter?.title || `Chapter ${index + 1}`)}</h2><div class="chapter-body">${safeChapterHTML(chapter?.html)}</div></section>`).join('\n')
+  const contents = buildShadowDocsPrintContents(book)
+  const chapters = book.chapters.slice(0, 500).map((chapter, index) => `<section id="sd-chapter-${index + 1}" class="chapter"><h2>${escapeText(chapter?.title || `Chapter ${index + 1}`)}</h2><div class="chapter-body">${safeChapterHTML(chapter?.html)}</div></section>`).join('\n')
   return `<!doctype html>
 <html lang="km"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(book.title || 'Untitled Book')}</title>
 <style>
@@ -64,9 +67,10 @@ export function buildShadowDocsPrintHTML(book) {
 *{box-sizing:border-box}html{background:#eee}body{max-width:${width}mm;margin:18px auto;background:#fff;color:#242139;font-family:${settings.font};font-size:${settings.fontSize}pt;line-height:${settings.lineSpacing};text-align:${settings.alignment};overflow-wrap:anywhere}
 .cover{min-height:${Math.max(75, height - 2 * settings.margin)}mm;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;padding:12mm;${coverStyle}}
 .cover h1{font-size:2.15em;line-height:1.45;overflow-wrap:anywhere}.cover p{font-size:1em}.chapter{break-before:page;page-break-before:always;padding:0}.chapter h2{text-align:center;font-size:1.4em;margin:0 0 1.5em;break-after:avoid;page-break-after:avoid}.chapter-body p{margin:0 0 .8em}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%}
+${SHADOW_DOCS_PRINT_CONTENTS_CSS}
 @media screen{body{padding:${settings.margin}mm;box-shadow:0 10px 28px #0002}.chapter{margin-top:1.5em;border-top:1px solid #e3e0e9;padding-top:2em}}
 @media print{html,body{background:#fff;margin:0;max-width:none;padding:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter-body p,.chapter-body li{orphans:2;widows:2}}
-</style></head><body><section class="cover"><h1>${escapeText(book.title || 'Untitled Book')}</h1><p>${escapeText(book.author || '')}</p></section>${chapters}</body></html>`
+</style></head><body><section class="cover"><h1>${escapeText(book.title || 'Untitled Book')}</h1><p>${escapeText(book.author || '')}</p></section>${contents}${chapters}</body></html>`
 }
 
 export function downloadShadowDocsPrintHTML(book) {
