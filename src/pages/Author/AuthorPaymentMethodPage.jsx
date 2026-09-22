@@ -1075,6 +1075,10 @@ export default function AuthorPaymentMethodPage() {
       setSuccess(t('authorPaymentMethod.saved'))
       setViewMode('list')
       setSelectedMethod('')
+      if (backPath === '/author/payout-status') {
+  navigate(backPath, { replace: true })
+  return
+}
     } catch (err) {
       setError(err.message || t('authorPaymentMethod.saveFailed'))
     } finally {
