@@ -221,7 +221,7 @@ export default function LoginPage() {
       setMessage(t('loginPage.emailCodeRequired'))
       return
     }
-    if (challenge.pinRequired && !/^\d{6}$/.test(pin)) {
+    if (challenge.pinRequired && !/^(?:\d{4}|\d{6})$/.test(pin)) {
       setMessage(t('loginPage.pinRequired'))
       return
     }
