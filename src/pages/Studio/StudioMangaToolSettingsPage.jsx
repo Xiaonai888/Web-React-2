@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import StudioSpeechBubblePanel from './StudioSpeechBubblePanel'
+import StudioMangaBalloonTool from './StudioMangaBalloonTool'
 import StudioComicPanelsPanel from './StudioComicPanelsPanel'
 import StudioScreentonePanel from './StudioScreentonePanel'
 import StudioMangaEffectsPanel from './StudioMangaEffectsPanel'
@@ -9,6 +10,7 @@ import StudioGradientPanel from './StudioGradientPanel'
 
 const TOOLS = [
   { id: 'bubble', icon: 'fa-comment', en: 'Speech balloons', km: 'ពពុះសន្ទនា', zh: '对话气泡', ja: '吹き出し', ko: '말풍선' },
+  { id: 'balloon', icon: 'fa-comment-dots', en: 'Manga balloon · Preview', km: 'ពពុះ Manga · មើលជាមុន', zh: '漫画气泡 · 预览', ja: 'マンガ吹き出し · プレビュー', ko: '만화 말풍선 · 미리보기' },
   { id: 'panels', icon: 'fa-table-cells-large', en: 'Comic frames', km: 'ស៊ុម Manga', zh: '漫画分镜', ja: 'コマ割り', ko: '만화 컷' },
   { id: 'screentone', icon: 'fa-circle-half-stroke', en: 'Screentones', km: 'ស្គ្រីនតូន', zh: '网点', ja: 'スクリーントーン', ko: 'スクリーントーン' },
   { id: 'effects', icon: 'fa-bolt', en: 'Manga effects', km: 'បែបផែន Manga', zh: '漫画特效', ja: 'マンガ効果', ko: '만화 효과' },
@@ -83,6 +85,7 @@ export default function StudioMangaToolSettingsPage({ open = false, onClose, onA
           <p>{available ? t[4] : t[5]}</p>
           <div className="ss-manga-tool-page-settings">
             {selected === 'bubble' ? <StudioSpeechBubblePanel onApply={apply} disabled={disabled} /> : null}
+            {selected === 'balloon' ? <StudioMangaBalloonTool onApply={apply} disabled={disabled} color={color} /> : null}
             {selected === 'panels' ? <StudioComicPanelsPanel onApply={apply} disabled={disabled} /> : null}
             {selected === 'screentone' ? <StudioScreentonePanel onApply={apply} disabled={disabled} /> : null}
             {selected === 'effects' ? <StudioMangaEffectsPanel onApply={apply} disabled={disabled} /> : null}
