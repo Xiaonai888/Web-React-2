@@ -11,6 +11,7 @@ registerTranslationNamespace('authorPageOptions', {
     "basicPageInfo": "Basic Page Info",
     "pageStatus": "Page status",
     "activityLog": "Activity log",
+    "pageTransparency": "Page Transparency",
     "share": "Share",
     "sharePage": "Share Page",
     "copyPageLink": "Copy Page link",
@@ -30,6 +31,7 @@ registerTranslationNamespace('authorPageOptions', {
     "basicPageInfo": "ព័ត៌មានមូលដ្ឋានទំព័រ",
     "pageStatus": "ស្ថានភាពទំព័រ",
     "activityLog": "កំណត់ត្រាសកម្មភាព",
+    "pageTransparency": "ព័ត៌មានតម្លាភាពទំព័រ",
     "share": "ចែករំលែក",
     "sharePage": "ចែករំលែកទំព័រ",
     "copyPageLink": "ចម្លងតំណទំព័រ",
@@ -49,6 +51,7 @@ registerTranslationNamespace('authorPageOptions', {
     "basicPageInfo": "基本主页信息",
     "pageStatus": "主页状态",
     "activityLog": "活动记录",
+    "pageTransparency": "主页透明度",
     "share": "分享",
     "sharePage": "分享主页",
     "copyPageLink": "复制主页链接",
@@ -68,6 +71,7 @@ registerTranslationNamespace('authorPageOptions', {
     "basicPageInfo": "基本ページ情報",
     "pageStatus": "ページ状態",
     "activityLog": "アクティビティログ",
+    "pageTransparency": "ページの透明性",
     "share": "共有",
     "sharePage": "ページを共有",
     "copyPageLink": "ページリンクをコピー",
@@ -87,6 +91,7 @@ registerTranslationNamespace('authorPageOptions', {
     "basicPageInfo": "기본 페이지 정보",
     "pageStatus": "페이지 상태",
     "activityLog": "활동 기록",
+    "pageTransparency": "페이지 투명성",
     "share": "공유",
     "sharePage": "페이지 공유",
     "copyPageLink": "페이지 링크 복사",
@@ -224,6 +229,7 @@ function copyPageLink() {
           <ToolRow icon="fa-regular fa-pen-to-square" label={t('authorPageOptions.basicPageInfo')} onClick={() => navigate('/author/edit-page?from=settings')} />
           <ToolRow icon="fa-regular fa-circle-check" label={t('authorPageOptions.pageStatus')} onClick={() => setMessage(t('authorPageOptions.pageStatusSoon'))} />
           <ToolRow icon="fa-regular fa-rectangle-list" label={t('authorPageOptions.activityLog')} onClick={() => setMessage(t('authorPageOptions.activityLogSoon'))} />
+          <ToolRow icon="fa-solid fa-shield-halved" label={t('authorPageOptions.pageTransparency')} onClick={() => pageUsername && navigate(`/author/page/${encodeURIComponent(pageUsername)}/transparency`)} />
         </div>
 
         <SectionTitle>{t('authorPageOptions.share')}</SectionTitle>
