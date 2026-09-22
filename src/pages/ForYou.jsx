@@ -707,55 +707,80 @@ useEffect(() => {
   useEffect(() => {
     if (!homeReturnPosition) return undefined
 
-    sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
-
-    let cancelled = false
+    let stopped = false
+    let restored = false
+    let intervalId = null
+    let timeoutId = null
+    let frameId = null
 
     function restorePosition() {
-      if (cancelled) return
+      if (stopped) return
 
       const section = homeReturnPosition.section
-        ? document.querySelector(
-            `[data-home-section="${homeReturnPosition.section}"]`
+        ? [...document.querySelectorAll('[data-home-section]')].find(
+            (item) => item.dataset.homeSection === homeReturnPosition.section
           )
         : null
 
+      if (homeReturnPosition.section && !section) return
+
+      const sectionTop = section
+        ? window.scrollY + section.getBoundingClientRect().top
+        : 0
       const target = section
-        ? window.scrollY +
-          section.getBoundingClientRect().top +
-          Number(homeReturnPosition.offset || 0)
+        ? sectionTop + Number(homeReturnPosition.offset || 0)
         : Number(homeReturnPosition.scrollY || 0)
+      const maxScroll = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight
+      )
 
       window.scrollTo({
         top: Math.max(0, target),
         left: 0,
         behavior: 'auto',
       })
+
+      if (Math.abs(window.scrollY - Math.min(Math.max(0, target), maxScroll)) < 3) {
+        restored = true
+      }
     }
 
-    const timers = [0, 120, 350, 700, 1100, 1800].map((delay) =>
-      window.setTimeout(restorePosition, delay)
-    )
-
-    function cancelRestore() {
-      cancelled = true
-      timers.forEach((timer) => window.clearTimeout(timer))
+    function stopRestoring() {
+      if (stopped) return
+      stopped = true
+      window.clearInterval(intervalId)
+      window.clearTimeout(timeoutId)
+      window.cancelAnimationFrame(frameId)
+      sessionStorage.removeItem(HOME_RETURN_POSITION_KEY)
     }
 
-    window.addEventListener('wheel', cancelRestore, {
-      once: true,
-      passive: true,
-    })
+    frameId = window.requestAnimationFrame(restorePosition)
+    intervalId = window.setInterval(restorePosition, 200)
+    timeoutId = window.setTimeout(() => {
+      if (restored) {
+        stopRestoring()
+      } else {
+        stopped = true
+        window.clearInterval(intervalId)
+        window.cancelAnimationFrame(frameId)
+      }
+    }, 10000)
 
-    window.addEventListener('touchstart', cancelRestore, {
-      once: true,
-      passive: true,
-    })
+    window.addEventListener('wheel', stopRestoring, { passive: true })
+    window.addEventListener('touchstart', stopRestoring, { passive: true })
+    window.addEventListener('pointerdown', stopRestoring)
+    window.addEventListener('keydown', stopRestoring)
 
     return () => {
-      cancelRestore()
-      window.removeEventListener('wheel', cancelRestore)
-      window.removeEventListener('touchstart', cancelRestore)
+      stopped = true
+      window.clearInterval(intervalId)
+      window.clearTimeout(timeoutId)
+      window.cancelAnimationFrame(frameId)
+      window.removeEventListener('wheel', stopRestoring)
+      window.removeEventListener('touchstart', stopRestoring)
+      window.removeEventListener('pointerdown', stopRestoring)
+      window.removeEventListener('keydown', stopRestoring)
     }
   }, [homeReturnPosition])
 
