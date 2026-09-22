@@ -7824,9 +7824,9 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
           className={theme.text}
         />
 
-            <OfflineDownloadMenuItem
-  {readerMoreOpen ? (
+            {readerMoreOpen ? (
   <div className={`absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border ${theme.border} ${theme.card} shadow-[0_12px_30px_rgba(17,24,39,0.16)]`}>
+    <OfflineDownloadMenuItem
       storyId={storyId}
       episodeId={episodeId}
       theme={theme}
