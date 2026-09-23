@@ -18,6 +18,7 @@ import StudioHome from './StudioHome'
 import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
+import { applyStudioPaintBucket } from './StudioPaintBucketToolEngine'
 import './ShadowStudioMobile.css'
 import './StudioHeaderShell.css'
 import { buildStudioProject, downloadStudioProject, readStudioProject } from './StudioProjectFile'
@@ -1542,6 +1543,9 @@ async function dropImageOnPaper(event) {
 }
 
   function start(event) {
+        const ctx = drawingContext()
+    if (!ctx) return
+    const stroke = beginStudioStroke(ctx, currentPoint, event, {
     if (drawingRef.current || paperLoading || projectBusy || panRef.current || spaceRef.current) return
     if (event.pointerType === 'mouse' && event.button !== 0) return
 
@@ -1563,6 +1567,15 @@ if (tool === 'shape') {
     if (tool === 'eyedropper') {
       event.preventDefault()
       sampleCanvasColor(context(), canvas, currentPoint)
+      return
+    }
+
+        if (tool === 'fill') {
+      event.preventDefault()
+      try { const ctx = drawingContext(); if (ctx && applyStudioPaintBucket(ctx, currentPoint, { color, opacity })) {
+        delete layerStackRef.current.layers.find((l) => l.id === layerStackRef.current.activeLayerId)?.textData
+        paintLayerPreview(); snapshot(); updateDocument(activeDocumentId, { dirty: true })
+      } } catch (error) { setProjectNotice(error.message || 'Paint Bucket failed.') }
       return
     }
 
