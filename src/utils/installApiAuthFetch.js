@@ -10,32 +10,23 @@ const API_ORIGIN = new URL(
   window.location.origin
 ).origin
 
-function handleReaderSessionResponse(fetchPromise) {
+function handleReaderSessionResponse(fetchPromise, requestToken) {
   return fetchPromise.then((response) => {
     const renewedToken =
       response.headers.get('X-Reader-Token')
 
-    if (renewedToken) {
-      if (
-        sessionStorage.getItem(
-          'shadow_reader_token'
-        )
-      ) {
-        sessionStorage.setItem(
-          'shadow_reader_token',
-          renewedToken
-        )
+    const currentToken =
+      sessionStorage.getItem('shadow_reader_token') ||
+      localStorage.getItem('shadow_reader_token') ||
+      ''
+
+    if (renewedToken && requestToken && currentToken === requestToken) {
+      if (sessionStorage.getItem('shadow_reader_token') === requestToken) {
+        sessionStorage.setItem('shadow_reader_token', renewedToken)
       }
 
-      if (
-        localStorage.getItem(
-          'shadow_reader_token'
-        )
-      ) {
-        localStorage.setItem(
-          'shadow_reader_token',
-          renewedToken
-        )
+      if (localStorage.getItem('shadow_reader_token') === requestToken) {
+        localStorage.setItem('shadow_reader_token', renewedToken)
       }
     }
 
@@ -97,6 +88,11 @@ export function installApiAuthFetch() {
       )
     }
 
+    const authorization = headers.get('Authorization') || ''
+    const requestToken = authorization.startsWith('Bearer ')
+      ? authorization.slice(7)
+      : ''
+
     if (input instanceof Request) {
       return handleReaderSessionResponse(
         nativeFetch(
@@ -104,7 +100,8 @@ export function installApiAuthFetch() {
             ...init,
             headers,
           })
-        )
+        ),
+        requestToken
       )
     }
 
@@ -112,7 +109,8 @@ export function installApiAuthFetch() {
       nativeFetch(input, {
         ...init,
         headers,
-      })
+      }),
+      requestToken
     )
   }
 }
