@@ -62,12 +62,14 @@ export function buildShadowDocsPrintHTML(book) {
   const coverStyle = getShadowDocsPrintCoverStyle(book)
   const contents = buildShadowDocsPrintContents(book)
   const chapters = book.chapters.slice(0, 500).map((chapter, index) => `<section id="sd-chapter-${index + 1}" class="chapter"><h2>${escapeText(chapter?.title || `Chapter ${index + 1}`)}</h2><div class="chapter-body">${safeChapterHTML(chapter?.html)}</div></section>`).join('\n')
+  const pageNumbersCss = '@page { @bottom-center { content: counter(page); font: 10pt Georgia, serif; color: #777; } } @page:first { @bottom-center { content: none; } }'
   return `<!doctype html>
 <html lang="km"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(book.title || 'Untitled Book')}</title>
 <style>
 @page{size:${settings.size};margin:${settings.margin}mm}
 @page :left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}
 @page :right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}
+${pageNumbersCss}
 *{box-sizing:border-box}html{background:#eee}body{max-width:${width}mm;margin:18px auto;background:#fff;color:#242139;font-family:${settings.font};font-size:${settings.fontSize}pt;line-height:${settings.lineSpacing};text-align:${settings.alignment};overflow-wrap:anywhere}
 .cover{min-height:${Math.max(75, height - 2 * settings.margin)}mm;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;padding:12mm;${coverStyle}}
 .cover h1{font-size:2.15em;line-height:1.45;overflow-wrap:anywhere}.cover p{font-size:1em}.chapter{break-before:page;page-break-before:always;padding:0}.chapter h2{text-align:center;font-size:1.4em;margin:0 0 1.5em;break-after:avoid;page-break-after:avoid}.chapter-body p{margin:0 0 .8em}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%}
