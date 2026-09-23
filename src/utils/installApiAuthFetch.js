@@ -11,6 +11,7 @@ const AUTH_LOGIN_KEY = 'shadow_reader_login_diagnostic_v1'
 const AUTH_CHANGE_KEY = 'shadow_reader_token_change_v1'
 let lastLoginToken = ''
 let lastShownReport = ''
+const AUTH_POPUP_ENABLED = false
 
 function tokenStatus(token) {
   if (!token) return 'MISSING'
@@ -78,7 +79,7 @@ function reportAuthFailure(reason, details) {
   if (signature !== lastShownReport) {
     lastShownReport = signature
     console.warn('SHADOW_AUTH_DIAGNOSTIC', report)
-    showAuthReport(report)
+    if (AUTH_POPUP_ENABLED) showAuthReport(report)
   }
 }
 
@@ -214,7 +215,7 @@ export function installApiAuthFetch() {
   window.__shadowApiAuthFetchInstalled = true
   installTokenChangeWatch()
   const previousReport = readDiagnostic(AUTH_REPORT_KEY)
-  if (previousReport && Date.now() - Date.parse(previousReport.time || '') < 10 * 60 * 1000) showAuthReport(previousReport)
+  if (AUTH_POPUP_ENABLED && previousReport && Date.now() - Date.parse(previousReport.time || '') < 10 * 60 * 1000) showAuthReport(previousReport)
   const discarded = discardSessionlessReaderTokens()
   if (discarded && !sessionStorage.getItem('shadow_reader_token') && !localStorage.getItem('shadow_reader_token') && !['/login', '/register'].includes(window.location.pathname)) {
     window.location.replace('/login')
