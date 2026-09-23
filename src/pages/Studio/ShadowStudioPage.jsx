@@ -1543,9 +1543,6 @@ async function dropImageOnPaper(event) {
 }
 
   function start(event) {
-        const ctx = drawingContext()
-    if (!ctx) return
-    const stroke = beginStudioStroke(ctx, currentPoint, event, {
     if (drawingRef.current || paperLoading || projectBusy || panRef.current || spaceRef.current) return
     if (event.pointerType === 'mouse' && event.button !== 0) return
 
