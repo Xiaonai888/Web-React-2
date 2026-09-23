@@ -175,7 +175,7 @@ export default function VisitorTracker() {
 
       if (
         document.visibilityState !== 'visible' ||
-        now - lastPresenceAt < 30_000
+        now - lastPresenceAt < 75_000
       ) {
         return
       }
