@@ -30,7 +30,7 @@ export const STUDIO_TOOL_GROUPS = [
   ] },
 ]
 
-export const STUDIO_WORKING_TOOLS = new Set(['brush', 'pencil', 'eraser', 'text', 'eyedropper', 'shape', 'fill'])
+export const STUDIO_WORKING_TOOLS = new Set(['brush', 'pencil', 'eraser', 'text', 'eyedropper', 'shape', 'fill', 'move'])
 export const STUDIO_MANGA_DEFAULT_TOOLS = ['brush', 'pencil', 'eraser', 'text', 'eyedropper', 'shape']
 export const STUDIO_TOOL_PREF_KEY = 'shadow-studio-pinned-tools-v1'
 export const STUDIO_TOOLS_BY_ID = Object.fromEntries(STUDIO_TOOL_GROUPS.flatMap((group) => group.tools.map((item) => [item.id, item])))
