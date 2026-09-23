@@ -493,6 +493,12 @@ function clearReaderSession() {
   sessionStorage.removeItem('shadow_reader_user')
 }
 
+function shouldLogoutForTaskError(response, data) {
+  const code = String(data?.code || '')
+  return (response.status === 401 || response.status === 403) &&
+    ['TOKEN_REQUIRED', 'TOKEN_EXPIRED', 'TOKEN_INVALID', 'READER_SESSION_REQUIRED', 'READER_SESSION_REVOKED', 'READER_SESSION_EXPIRED', 'WRONG_TOKEN_TYPE'].includes(code)
+}
+
 function getHeaders() {
   const token = getReaderToken()
 
@@ -1437,7 +1443,7 @@ export default function TaskCenterPage() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgain'))
         navigate('/login')
@@ -1472,7 +1478,7 @@ export default function TaskCenterPage() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgain'))
         navigate('/login')
@@ -1533,7 +1539,7 @@ export default function TaskCenterPage() {
 
     const data = await response.json().catch(() => ({}))
 
-    if (response.status === 401 || response.status === 403) {
+    if (shouldLogoutForTaskError(response, data)) {
       clearReaderSession()
       setToast(t('taskCenterPage.pleaseLoginAgain'))
       navigate('/login')
@@ -1664,7 +1670,7 @@ function startSmartRefreshCycle() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgain'))
         navigate('/login')
@@ -1703,7 +1709,7 @@ function startSmartRefreshCycle() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgainClaimCoins'))
         navigate('/login')
@@ -1790,7 +1796,7 @@ function startSmartRefreshCycle() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgain'))
         navigate('/login')
@@ -1843,7 +1849,7 @@ function startSmartRefreshCycle() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgain'))
         navigate('/login')
@@ -1907,7 +1913,7 @@ function startSmartRefreshCycle() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgain'))
         navigate('/login')
@@ -1981,7 +1987,7 @@ navigate(targetPath, {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgain'))
         navigate('/login')
@@ -2043,7 +2049,7 @@ navigate(targetPath, {
 
       const data = await response.json().catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (shouldLogoutForTaskError(response, data)) {
         clearReaderSession()
         setToast(t('taskCenterPage.pleaseLoginAgain'))
         navigate('/login')
