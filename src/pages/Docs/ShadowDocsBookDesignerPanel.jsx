@@ -16,6 +16,7 @@ export default function ShadowDocsBookDesignerPanel({ book, onChangeSettings }) 
   const [width, height] = PAGE_SIZES[currentSize]
   const font = FONTS.includes(settings.font) ? settings.font : FONTS[0]
   const margin = clamp(settings.margin, 10, 35, 18)
+  const gutter = clamp(settings.gutter, 0, 20, 0)
   const fontSize = clamp(settings.fontSize, 10, 24, 13)
   const lineSpacing = clamp(settings.lineSpacing, 1.2, 2.2, 1.65)
   const alignment = ALIGNMENTS.some(item => item.id === settings.alignment) ? settings.alignment : 'left'
@@ -37,6 +38,8 @@ export default function ShadowDocsBookDesignerPanel({ book, onChangeSettings }) 
           <div className="flex items-center gap-2"><FileText size={17} className="text-[#7653bd]"/><h3>Page setup</h3></div>
           <div className="mt-4 grid grid-cols-3 gap-2" role="group" aria-label="Page size">{Object.entries(PAGE_SIZES).map(([size, [w, h]]) => <button key={size} type="button" disabled={!canChange} aria-pressed={currentSize === size} onClick={() => patch({ size })} className={`min-w-0 rounded-xl border p-3 text-center text-xs ${currentSize === size ? 'border-[#7653bd] bg-[#f5efff] text-[#6946b4] dark:bg-[#3b3052] dark:text-[#e4d6ff]' : 'border-[#e9e5f1] dark:border-white/15'}`}><strong className="block text-sm">{size}</strong><span className="mt-1 block text-[10px]">{w} × {h} mm</span></button>)}</div>
           <label htmlFor="docs-designer-margin" className="mt-5 flex items-center justify-between gap-3 text-xs font-semibold">Margins <span>{margin} mm</span></label><input id="docs-designer-margin" className="mt-2 w-full accent-[#7653bd]" type="range" min="10" max="35" step="1" value={margin} disabled={!canChange} onChange={event => patch({ margin: Number(event.target.value) })}/>
+          <label htmlFor="docs-designer-gutter" className="mt-4 flex items-center justify-between gap-3 text-xs font-semibold">Binding gutter <span>{gutter} mm</span></label><input id="docs-designer-gutter" className="mt-2 w-full accent-[#7653bd]" type="range" min="0" max="20" step="1" value={gutter} disabled={!canChange} onChange={event => patch({ gutter: Number(event.target.value) })}/>
+          <p className="mt-2 text-[11px] leading-5 text-[#77758b] dark:text-white/60">Extra space at the book spine, alternating on left- and right-hand printed pages. Set 0 mm for documents that will not be bound.</p>
           <label className="mt-4 flex items-center justify-between gap-3 text-xs font-semibold" htmlFor="docs-designer-numbers">Chapter numbers<input id="docs-designer-numbers" type="checkbox" checked={settings.numbers !== false} disabled={!canChange} onChange={event => patch({ numbers: event.target.checked })} className="h-4 w-4 accent-[#7653bd]"/></label>
         </div>
 
@@ -52,9 +55,9 @@ export default function ShadowDocsBookDesignerPanel({ book, onChangeSettings }) 
 
       <div className="sd-card self-start lg:sticky lg:top-20">
         <div className="flex items-center justify-between gap-2"><h3 className="flex items-center gap-2"><BookOpen size={17}/> Page preview</h3><span className="text-xs text-[#77758b] dark:text-white/60">{currentSize}</span></div>
-        <div className="mt-4 overflow-hidden rounded-xl bg-[#e9e5ee] p-3 dark:bg-[#2a2935]"><div className="mx-auto w-full max-w-[380px] overflow-hidden bg-white text-[#242139] shadow-md" style={{ aspectRatio: `${width}/${height}`, fontFamily: `"${font}", serif`, fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment, padding: `${margin / width * 100}%`, overflowWrap: 'anywhere' }}><h4 className="mb-5 text-center font-bold" style={{fontSize:'1.2em'}}>{book.chapters?.[0]?.title || 'Chapter 1'}</h4><p className="whitespace-pre-wrap">{previewText}</p>{settings.numbers !== false && <span className="mt-7 block text-center text-[10px]">1</span>}</div></div>
+        <div className="mt-4 overflow-hidden rounded-xl bg-[#e9e5ee] p-3 dark:bg-[#2a2935]"><div className="mx-auto w-full max-w-[380px] overflow-hidden bg-white text-[#242139] shadow-md" style={{ aspectRatio: `${width}/${height}`, fontFamily: `"${font}", serif`, fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment, paddingTop: `${margin / width * 100}%`, paddingBottom: `${margin / width * 100}%`, paddingLeft: `${(margin + gutter) / width * 100}%`, paddingRight: `${margin / width * 100}%`, overflowWrap: 'anywhere' }}><h4 className="mb-5 text-center font-bold" style={{fontSize:'1.2em'}}>{book.chapters?.[0]?.title || 'Chapter 1'}</h4><p className="whitespace-pre-wrap">{previewText}</p>{settings.numbers !== false && <span className="mt-7 block text-center text-[10px]">1</span>}</div></div>
         <label htmlFor="docs-designer-preview" className="mt-4 block text-xs font-semibold">Preview text</label><textarea id="docs-designer-preview" rows={3} maxLength={500} value={previewText} onChange={event => setPreviewText(event.target.value)} className="sd-field mt-2 w-full"/>
-        <p className="mt-3 text-[11px] leading-5 text-[#77758b] dark:text-white/60">Preview is illustrative. Final PDF page breaks depend on your browser.</p>
+        <p className="mt-3 text-[11px] leading-5 text-[#77758b] dark:text-white/60">Preview illustrates a right-hand page. Final PDF page breaks depend on your browser.</p>
       </div>
     </div>
   </section>
