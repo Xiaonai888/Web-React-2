@@ -54,6 +54,7 @@ export function normalizeShadowDocsBook(source, { duplicate = false } = {}) {
     settings: {
       size: PAGE_SIZES.has(sourceSettings.size) ? sourceSettings.size : layout.size,
       margin: clamp(sourceSettings.margin, 10, 35, layout.margin),
+      gutter: clamp(sourceSettings.gutter, 0, 20, 0),
       font: FONTS.has(sourceSettings.font) ? sourceSettings.font : layout.font,
       fontSize: clamp(sourceSettings.fontSize, 10, 24, layout.fontSize),
       lineSpacing: clamp(sourceSettings.lineSpacing, 1.2, 2.2, layout.lineSpacing),
