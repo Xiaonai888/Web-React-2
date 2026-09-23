@@ -23,6 +23,7 @@ function safeChapterHTML(source) {
   function render(node) {
     if (node.nodeType === 3) return escapeText(node.nodeValue)
     if (node.nodeType !== 1) return ''
+    if (node.tagName === 'HR' && node.getAttribute('data-shadow-docs-page-break') === '1') return '<hr class="sd-page-break">'
     const content = Array.from(node.childNodes, render).join('')
     if (!allowed.has(node.tagName)) return content
     if (node.tagName === 'BR') return '<br>'
@@ -71,8 +72,8 @@ export function buildShadowDocsPrintHTML(book) {
 .cover{min-height:${Math.max(75, height - 2 * settings.margin)}mm;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;padding:12mm;${coverStyle}}
 .cover h1{font-size:2.15em;line-height:1.45;overflow-wrap:anywhere}.cover p{font-size:1em}.chapter{break-before:page;page-break-before:always;padding:0}.chapter h2{text-align:center;font-size:1.4em;margin:0 0 1.5em;break-after:avoid;page-break-after:avoid}.chapter-body p{margin:0 0 .8em}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%}
 ${SHADOW_DOCS_PRINT_CONTENTS_CSS}
-@media screen{body{padding:${settings.margin}mm;box-shadow:0 10px 28px #0002}.chapter{margin-top:1.5em;border-top:1px solid #e3e0e9;padding-top:2em}}
-@media print{html,body{background:#fff;margin:0;max-width:none;padding:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter-body p,.chapter-body li{orphans:2;widows:2}}
+@media screen{body{padding:${settings.margin}mm;box-shadow:0 10px 28px #0002}.chapter{margin-top:1.5em;border-top:1px solid #e3e0e9;padding-top:2em}.chapter-body hr.sd-page-break{margin:1.5em 0;border:0;border-top:2px dashed #8d76be}}
+@media print{html,body{background:#fff;margin:0;max-width:none;padding:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter-body p,.chapter-body li{orphans:2;widows:2}.chapter-body hr.sd-page-break{display:block;break-after:page;page-break-after:always;height:0;margin:0;border:0}}
 </style></head><body><section class="cover"><h1>${escapeText(book.title || 'Untitled Book')}</h1><p>${escapeText(book.author || '')}</p></section>${contents}${chapters}</body></html>`
 }
 
