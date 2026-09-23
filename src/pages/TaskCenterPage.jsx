@@ -1515,6 +1515,7 @@ export default function TaskCenterPage() {
   const silent = Boolean(options.silent)
 
   if (!token) {
+    if (!silent) window.alert('Task Center Error\nCode: TOKEN_MISSING_ON_DEVICE\nThis device has no stored login token.')
     if (!silent) setLoading(false)
     setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
     setCheckIn(null)
