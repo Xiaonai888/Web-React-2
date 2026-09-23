@@ -19,6 +19,7 @@ export function sanitizeShadowDocsHTML(source) {
   function walk(node) {
     if (node.nodeType === 3) return escapeHTML(node.nodeValue)
     if (node.nodeType !== 1) return ''
+    if (node.tagName === 'HR' && node.getAttribute('data-shadow-docs-page-break') === '1') return '<hr data-shadow-docs-page-break="1" contenteditable="false">'
     const content = Array.from(node.childNodes, walk).join('')
     if (!ALLOWED.has(node.tagName)) return content
     if (node.tagName === 'BR') return '<br>'
