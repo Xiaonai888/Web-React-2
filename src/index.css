@@ -91,6 +91,10 @@ body {
   color: var(--shadow-text-primary);
 }
 
+body.settings-popup-open {
+  overflow: hidden;
+}
+
 #root {
   min-height: 100vh;
   background: var(--shadow-bg-page);
