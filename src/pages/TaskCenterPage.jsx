@@ -1502,6 +1502,7 @@ export default function TaskCenterPage() {
       }
     } catch (error) {
       console.error('LOAD WEEKLY READING ERROR:', error)
+      if (error instanceof TypeError) window.alert(`Task Center Error\nAPI: /api/tasks/weekly-reading\nType: ${error.name}\nDetail: ${String(error.message).slice(0, 180)}`)
       setWeeklyReading(null)
 
       return {
@@ -1569,6 +1570,7 @@ export default function TaskCenterPage() {
     setDailyVoteReward(data.daily_vote_reward || null)
   } catch (error) {
     console.error('LOAD TASK CENTER OVERVIEW ERROR:', error)
+    if (error instanceof TypeError) window.alert(`Task Center Error\nAPI: /api/tasks/overview\nType: ${error.name}\nDetail: ${String(error.message).slice(0, 180)}`)
     setToast(t('taskCenterPage.couldNotLoadRewards'))
   } finally {
     if (!silent) setLoading(false)
