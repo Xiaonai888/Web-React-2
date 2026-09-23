@@ -1919,7 +1919,14 @@ if (tool === 'shape') {
           <main className="ss-layout">
             <StudioToolRail
               tool={tool}
-              onToolChange={setTool}
+              onToolChange={(next) => {
+  if (next === 'gradient') {
+    setMangaToolInitial('gradient')
+    setMangaToolsOpen(true)
+  } else {
+    setTool(next)
+  }
+}}
               labels={{ brush: tx('shadowStudio.brush'), eraser: tx('shadowStudio.eraser'), eyedropper: tx('shadowStudio.eyedropper') }}
             />
 
