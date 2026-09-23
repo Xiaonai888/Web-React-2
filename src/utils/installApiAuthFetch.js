@@ -91,6 +91,21 @@ function installTokenChangeWatch() {
       if (this !== localStorage && this !== sessionStorage) return original.apply(this, args)
       if (method !== 'clear' && args[0] !== 'shadow_reader_token') return original.apply(this, args)
       const before = this.getItem('shadow_reader_token') || ''
+      if (method === 'setItem' && tokenStatus(String(args[1] || '')) !== 'SESSION_FIELDS_PRESENT' &&
+        [sessionStorage, localStorage].some((storage) => tokenStatus(storage.getItem('shadow_reader_token') || '') === 'SESSION_FIELDS_PRESENT')) {
+        const change = {
+          time: new Date().toISOString(),
+          method,
+          storage: this === localStorage ? 'localStorage' : 'sessionStorage',
+          before: tokenStatus(before),
+          attempted: tokenStatus(String(args[1] || '')),
+          blocked: true,
+          callsite: diagnosticCallsite(),
+        }
+        writeDiagnostic(AUTH_CHANGE_KEY, change)
+        reportAuthFailure('INVALID_TOKEN_OVERWRITE_BLOCKED', { tokenChange: change, lastLogin: readDiagnostic(AUTH_LOGIN_KEY) })
+        return undefined
+      }
       const result = original.apply(this, args)
       const after = this.getItem('shadow_reader_token') || ''
       if (before !== after) {
@@ -177,6 +192,10 @@ function handleReaderSessionResponse(fetchPromise, requestToken, path) {
     if (path === '/api/users/login' || path === '/api/users/login/verify') inspectLoginResponse(response)
     inspectAuthResponse(response, requestToken, path)
     const renewedToken = response.headers.get('X-Reader-Token')
+    if (renewedToken && tokenStatus(requestToken) === 'SESSION_FIELDS_PRESENT' && tokenStatus(renewedToken) !== 'SESSION_FIELDS_PRESENT') {
+      reportAuthFailure('INVALID_RENEWAL_TOKEN_RECEIVED', { path, http: response.status, requestToken: tokenStatus(requestToken), renewalToken: tokenStatus(renewedToken) })
+      return response
+    }
     const currentToken = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
     if (renewedToken && requestToken && currentToken === requestToken) {
       if (sessionStorage.getItem('shadow_reader_token') === requestToken) {
