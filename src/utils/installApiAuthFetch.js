@@ -10,6 +10,26 @@ const API_ORIGIN = new URL(
   window.location.origin
 ).origin
 
+function discardSessionlessReaderTokens() {
+  let discarded = false
+
+  for (const storage of [sessionStorage, localStorage]) {
+    const token = storage.getItem('shadow_reader_token')
+    if (!token) continue
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+      if (payload?.type !== 'reader' || (payload.session_id && payload.device_id && payload.jwt_id)) continue
+
+      storage.removeItem('shadow_reader_token')
+      storage.removeItem('shadow_reader_user')
+      discarded = true
+    } catch {}
+  }
+
+  return discarded
+}
+
 function handleReaderSessionResponse(fetchPromise, requestToken) {
   return fetchPromise.then((response) => {
     const renewedToken =
@@ -37,7 +57,18 @@ function handleReaderSessionResponse(fetchPromise, requestToken) {
 export function installApiAuthFetch() {
   if (window.__shadowApiAuthFetchInstalled) return
 
+  const discarded = discardSessionlessReaderTokens()
   window.__shadowApiAuthFetchInstalled = true
+
+  if (
+    discarded &&
+    !sessionStorage.getItem('shadow_reader_token') &&
+    !localStorage.getItem('shadow_reader_token') &&
+    !['/login', '/register'].includes(window.location.pathname)
+  ) {
+    window.location.replace('/login')
+    return
+  }
 
   const nativeFetch = window.fetch.bind(window)
 
