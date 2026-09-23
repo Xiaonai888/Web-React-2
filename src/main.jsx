@@ -66,13 +66,12 @@ async function checkForAppUpdate({ force = false } = {}) {
     const remoteVersion = String(data?.version || '')
     const currentVersion = String(__APP_BUILD_VERSION__ || '')
 
-    if (
-      remoteVersion &&
-      currentVersion &&
-      remoteVersion !== currentVersion
-    ) {
-      window.location.reload()
-    }
+    if (remoteVersion && currentVersion && remoteVersion !== currentVersion) {
+  const nextUrl = new URL(window.location.href)
+  if (nextUrl.searchParams.get('_shadow_build') === remoteVersion) return
+  nextUrl.searchParams.set('_shadow_build', remoteVersion)
+  window.location.replace(nextUrl.href)
+}
   } catch {
     return
   } finally {
