@@ -950,7 +950,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="mb-7 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#111827] text-white shadow-[0_14px_28px_rgba(17,24,39,0.18)]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#111827]">
               <i className="fas fa-book-open text-[24px]" />
             </div>
 
