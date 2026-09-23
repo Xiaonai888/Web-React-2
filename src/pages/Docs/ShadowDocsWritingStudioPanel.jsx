@@ -51,6 +51,23 @@ export default function ShadowDocsWritingStudioPanel({
     emitChange()
   }
 
+  function insertPageBreak() {
+    const editor = editorRef.current
+    if (!editor || !chapter || typeof onChangeHTML !== 'function') return
+    const selection = window.getSelection()
+    if (!selection) return
+    if (!selection.rangeCount || !editor.contains(selection.anchorNode)) {
+      const end = document.createRange()
+      end.selectNodeContents(editor)
+      end.collapse(false)
+      selection.removeAllRanges()
+      selection.addRange(end)
+    }
+    editor.focus()
+    const html = '<hr data-shadow-docs-page-break="1" contenteditable="false"><p><br></p>'
+    if (document.execCommand('insertHTML', false, html)) emitChange()
+  }
+
   function pastePlain(event) {
     event.preventDefault()
     const value = event.clipboardData.getData('text/plain')
@@ -72,6 +89,7 @@ export default function ShadowDocsWritingStudioPanel({
   if (!book || !chapter) return <section className="sd-card"><BookOpen size={28} /><h2 className="mt-3">Writing Studio</h2><p className="mt-2 text-sm text-[#77758b] dark:text-white/60">Select a book in My Books to start writing.</p></section>
 
   return <section aria-label="Writing Studio" className="sd-writing-layout">
+    <style>{'.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}'}</style>
     <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
       <div className="sd-chapter-list">{book.chapters.map((item, index) => <button type="button" key={item.id} className={`sd-chapter-item ${item.id === chapter.id ? 'is-active' : ''}`} onClick={() => onSelectChapter?.(item.id)} disabled={typeof onSelectChapter !== 'function'}><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.title || `Chapter ${index + 1}`}</strong></button>)}</div>
@@ -80,7 +98,7 @@ export default function ShadowDocsWritingStudioPanel({
     <div className="sd-writing-main">
       <div className="sd-card sd-editor-card">
         <div className="sd-editor-head"><div className="min-w-0 flex-1"><span className="sd-eyebrow">CHAPTER {chapterIndex + 1}</span><input className="sd-chapter-title" aria-label="Chapter title" maxLength={160} value={chapter.title || ''} onChange={event => onRenameChapter?.(chapter.id, event.target.value)} disabled={typeof onRenameChapter !== 'function'} /></div><button type="button" className="sd-button sd-button-ghost" onClick={() => onPreview?.(chapter.id)} disabled={typeof onPreview !== 'function'}><Eye size={16} /> Preview</button></div>
-        <div className="sd-editor-tools" aria-label="Formatting toolbar">{formats.map(item => <button key={`${item.command}-${item.value || ''}`} type="button" title={item.label} aria-label={item.label} disabled={typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={() => format(item.command, item.value)}>{item.content}</button>)}</div>
+        <div className="sd-editor-tools" aria-label="Formatting toolbar">{formats.map(item => <button key={`${item.command}-${item.value || ''}`} type="button" title={item.label} aria-label={item.label} disabled={typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={() => format(item.command, item.value)}>{item.content}</button>)}<button type="button" title="Insert page break" aria-label="Insert page break" disabled={typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={insertPageBreak} style={{ width: 'auto', padding: '0 10px', whiteSpace: 'nowrap' }}>Page break</button></div>
         <div key={`${book.id}-${chapter.id}`} ref={editorRef} className="sd-writing-area" contentEditable={typeof onChangeHTML === 'function'} suppressContentEditableWarning onInput={emitChange} onBlur={() => onEditorBlur?.(book.id)} onPaste={pastePlain} data-placeholder="Start writing your chapter…" role="textbox" aria-label="Chapter text editor" aria-multiline="true" spellCheck style={{ fontFamily: `"${settings.font || 'Noto Serif Khmer'}",serif`, fontSize: `${(Number(settings.fontSize) || 13) + 2}px`, lineHeight: settings.lineSpacing || 1.65, textAlign: settings.alignment || 'left' }} />
         <div className="sd-editor-footer"><span>{(chapterStats?.words || 0).toLocaleString()} words · {(chapterStats?.characters || 0).toLocaleString()} characters</span><span><CheckCircle2 size={15} /> {status}</span></div>
       </div>
