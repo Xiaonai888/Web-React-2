@@ -235,15 +235,7 @@ function saveReaderUser(user) {
 }
 
 function syncReaderToken() {
-  const localToken = localStorage.getItem('shadow_reader_token') || ''
-  const sessionToken = sessionStorage.getItem('shadow_reader_token') || ''
-  const token = localToken || sessionToken
-
-  if (token && localToken) {
-    sessionStorage.setItem('shadow_reader_token', token)
-  }
-
-  return token
+  return getReaderToken()
 }
 
 function clearReaderSession() {
