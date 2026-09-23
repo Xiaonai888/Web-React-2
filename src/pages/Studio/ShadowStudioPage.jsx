@@ -397,6 +397,7 @@ const placeImageLabel = {
   const [newFilePreset, setNewFilePreset] = useState('basic')
   const [tool, setTool] = useState('brush')
   const [mangaToolsOpen, setMangaToolsOpen] = useState(false)
+  const [mangaToolInitial, setMangaToolInitial] = useState('bubble')
   const [textEditor, setTextEditor] = useState(null)
   const [shapeEditor, setShapeEditor] = useState(null)
   const [brushStyle, setBrushStyle] = useState('round')
@@ -1834,7 +1835,7 @@ if (tool === 'shape') {
         {workspaceStarted ? (
           <button type="button" className="ss-menu-btn" aria-label={mangaToolsLabel}
             disabled={paperLoading || projectBusy || recoveryBooting || recoveryBusy || Boolean(recoveryEntry) || newFileOpen || exportOpen}
-            onClick={() => setMangaToolsOpen(true)}>{mangaToolsLabel}</button>
+            onClick={() => { setMangaToolInitial('bubble'); setMangaToolsOpen(true) }}{mangaToolsLabel}</button>
         ) : null}
         {['Window', 'Help'].map((label) => (
   <button key={label} type="button" className="ss-menu-btn" disabled>
@@ -2055,6 +2056,7 @@ if (tool === 'shape') {
 
       <StudioMangaToolSettingsPage
         open={mangaToolsOpen && workspaceStarted}
+        initialTool={mangaToolInitial}
         onClose={() => setMangaToolsOpen(false)}
         onApply={applyRightFeature}
         color={color}
