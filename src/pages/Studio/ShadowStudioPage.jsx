@@ -1568,8 +1568,6 @@ if (tool === 'shape') {
       return
     }
 
-        if (tool === 'fill') {
-
               if (tool === 'move') {
       const ctx = drawingContext()
       if (!ctx) return
@@ -1609,9 +1607,10 @@ if (tool === 'shape') {
       window.addEventListener('pointerup', completeMove)
       window.addEventListener('pointercancel', cancelMove)
       window.addEventListener('blur', cancelMove)
-      return
+            return
     }
 
+    if (tool === 'fill') {
       event.preventDefault()
       try { const ctx = drawingContext(); if (ctx && applyStudioPaintBucket(ctx, currentPoint, { color, opacity })) {
         delete layerStackRef.current.layers.find((l) => l.id === layerStackRef.current.activeLayerId)?.textData
