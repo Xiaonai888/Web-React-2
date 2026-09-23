@@ -1418,9 +1418,11 @@ export default function AuthorPageNotificationsPage() {
   }
 
   if (notification.targetUrl) {
-    navigate(
-      notification.targetUrl
-    )
+    navigate(notification.targetUrl, {
+  state: ['orders', 'income'].includes(notification.typeKey)
+    ? { from: '/author/page/notifications' }
+    : undefined
+})
     return
   }
 
