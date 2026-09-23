@@ -493,10 +493,13 @@ function clearReaderSession() {
   sessionStorage.removeItem('shadow_reader_user')
 }
 
+let lastTaskDiagnosticAt = 0
 function shouldLogoutForTaskError(response, data) {
-  const code = String(data?.code || '')
-  return (response.status === 401 || response.status === 403) &&
-    ['TOKEN_REQUIRED', 'TOKEN_EXPIRED', 'TOKEN_INVALID', 'READER_SESSION_REQUIRED', 'READER_SESSION_REVOKED', 'READER_SESSION_EXPIRED', 'WRONG_TOKEN_TYPE'].includes(code)
+  if ((!response.ok || data?.ok === false) && Date.now() - lastTaskDiagnosticAt > 15000) {
+    lastTaskDiagnosticAt = Date.now()
+    window.alert(`Task Center Error\nAPI: ${new URL(response.url).pathname}\nHTTP: ${response.status}\nCode: ${String(data?.code || 'UNKNOWN')}\nMessage: ${String(data?.message || 'Request failed').slice(0, 180)}`)
+  }
+  return false
 }
 
 function getHeaders() {
