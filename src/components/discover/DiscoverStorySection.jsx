@@ -1749,8 +1749,11 @@ export default function DiscoverStorySection() {
 
   useEffect(() => {
     let alive = true
+    let requestRunning = false
 
     async function loadStories() {
+      if (requestRunning) return
+      requestRunning = true
       let hasCachedGroups = false
 
       try {
@@ -1781,7 +1784,11 @@ export default function DiscoverStorySection() {
           setGroups(cachedGroups)
           setLoading(false)
 
-          if (cached.isFresh) {
+          if (
+            cached.isFresh &&
+            (cachedGroups.length > 0 ||
+              cached.ageMs < 60 * 1000)
+          ) {
             return
           }
         }
@@ -1862,16 +1869,27 @@ export default function DiscoverStorySection() {
           setGroups([])
         }
       } finally {
+        requestRunning = false
         if (alive) {
           setLoading(false)
         }
       }
     }
 
-    loadStories()
+    function handlePageReturn() {
+      if (document.visibilityState === 'visible') {
+        void loadStories()
+      }
+    }
+
+    void loadStories()
+    window.addEventListener('focus', handlePageReturn)
+    document.addEventListener('visibilitychange', handlePageReturn)
 
     return () => {
       alive = false
+      window.removeEventListener('focus', handlePageReturn)
+      document.removeEventListener('visibilitychange', handlePageReturn)
     }
   }, [
     requestHeaders,
