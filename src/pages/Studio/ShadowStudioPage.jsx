@@ -38,6 +38,7 @@ import { applyStudioScreentone } from './StudioScreentoneEngine'
 import { applyStudioSpeechBubble } from './StudioSpeechBubbleEngine'
 import { applyStudioComicPanels } from './StudioComicPanelsEngine'
 import { applyStudioMangaEffect } from './StudioMangaEffectsEngine'
+import { moveStudioPixels } from './StudioMoveToolEngine'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -1568,6 +1569,49 @@ if (tool === 'shape') {
     }
 
         if (tool === 'fill') {
+
+              if (tool === 'move') {
+      const ctx = drawingContext()
+      if (!ctx) return
+      event.preventDefault()
+      const pointerId = event.pointerId
+      const paperId = activeDocumentId
+      const layerId = layerStackRef.current.activeLayerId
+      const origin = currentPoint
+      drawingRef.current = true
+      canvas.setPointerCapture?.(pointerId)
+      function cleanup() {
+        drawingRef.current = false
+        window.removeEventListener('pointerup', completeMove)
+        window.removeEventListener('pointercancel', cancelMove)
+        window.removeEventListener('blur', cancelMove)
+        if (canvas.hasPointerCapture?.(pointerId)) canvas.releasePointerCapture(pointerId)
+      }
+      function cancelMove() { cleanup() }
+      function completeMove(endEvent) {
+        if (endEvent.pointerId !== pointerId) return
+        cleanup()
+        if (paperId !== activeDocumentId || canvasDocumentRef.current !== paperId || layerStackRef.current?.activeLayerId !== layerId) return
+        const end = point(endEvent)
+        if (!end) return
+        try {
+          if (moveStudioPixels(ctx, { deltaX: end.x - origin.x, deltaY: end.y - origin.y })) {
+            delete layerStackRef.current.layers.find((layer) => layer.id === layerId)?.textData
+            paintLayerPreview()
+            snapshot()
+            updateDocument(paperId, { dirty: true })
+            setProjectNotice('')
+          }
+        } catch (error) {
+          setProjectNotice(error.message || 'Could not move the selected layer.')
+        }
+      }
+      window.addEventListener('pointerup', completeMove)
+      window.addEventListener('pointercancel', cancelMove)
+      window.addEventListener('blur', cancelMove)
+      return
+    }
+
       event.preventDefault()
       try { const ctx = drawingContext(); if (ctx && applyStudioPaintBucket(ctx, currentPoint, { color, opacity })) {
         delete layerStackRef.current.layers.find((l) => l.id === layerStackRef.current.activeLayerId)?.textData
