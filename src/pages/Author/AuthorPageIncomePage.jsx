@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -287,6 +287,7 @@ function WithdrawalRow({ request }) {
 
 export default function AuthorPageIncomePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -344,7 +345,9 @@ export default function AuthorPageIncomePage() {
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => navigate('/author/page/finance')}
+            onClick={() => location.state?.from === '/author/page/notifications'
+  ? navigate(-1)
+  : navigate('/author/page/finance')}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
             aria-label={t('authorPageIncome.back')}
           >
