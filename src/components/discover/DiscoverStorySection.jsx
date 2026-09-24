@@ -13,8 +13,6 @@ import {
   loadHomeCache,
   saveHomeCache,
 } from '../../utils/homeDataCache'
-import ReactionPicker from '../social/reactions/ReactionPicker'
-import useReactionInteraction from '../social/reactions/useReactionInteraction'
 import {
   REACTIONS,
   getReactionMeta,
@@ -376,70 +374,25 @@ function StoryReactionIcon({
   busy,
   onReact,
 }) {
-  const anchorRef = useRef(null)
-  const interaction = useReactionInteraction({
-    busy,
-    onReact,
-    defaultReactionType: reaction.type,
-  })
+  const selected = reactionType === reaction.type
 
   return (
-    <div className="flex min-w-0 flex-1 items-center justify-center">
-      <ReactionPicker
-        anchorRef={anchorRef}
-        open={interaction.reactionPickerOpen}
-        activeType={reactionType || ''}
-        previewType={interaction.previewReactionType}
-        isSliding={interaction.isSlidingReaction}
-        busy={busy}
-        onSelect={interaction.selectReaction}
-        onClose={interaction.closeReactionPicker}
-        className="!h-[68px] !w-[min(440px,calc(100vw-16px))] !max-w-[calc(100vw-16px)] !gap-[1px] !bg-[#080808] !px-[5px] [&>div:last-child]:!hidden"
+    <button
+      type="button"
+      disabled={busy}
+      aria-label={`${reaction.label}, ${count} reactions`}
+      aria-pressed={selected}
+      onClick={() => onReact(reaction.type)}
+      onContextMenu={(event) => event.preventDefault()}
+      className={`flex h-11 w-[clamp(32px,8vw,42px)] shrink-0 touch-manipulation items-center justify-center border-0 bg-transparent p-0 transition-opacity duration-150 disabled:opacity-50 ${selected ? 'opacity-100 brightness-110' : 'opacity-75 hover:opacity-100'}`}
+    >
+      <img
+        src={reaction.src}
+        alt=""
+        draggable="false"
+        className="h-[clamp(30px,8vw,40px)] w-[clamp(30px,8vw,40px)] select-none object-contain"
       />
-
-      <button
-        ref={anchorRef}
-        type="button"
-        disabled={busy}
-        aria-label={`${reaction.label}, ${count} reactions`}
-        aria-pressed={reactionType === reaction.type}
-        onPointerDown={(event) => {
-          event.stopPropagation()
-          interaction.startReactionPress(event)
-        }}
-        onPointerUp={(event) => {
-          event.stopPropagation()
-          interaction.endReactionPress()
-        }}
-        onPointerLeave={interaction.cancelReactionPress}
-        onPointerCancel={(event) => {
-          event.stopPropagation()
-          interaction.cancelReactionPress()
-        }}
-        onContextMenu={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-        }}
-        onKeyDown={(event) => {
-          if (event.key !== 'Enter' && event.key !== ' ') return
-          event.preventDefault()
-          event.stopPropagation()
-          interaction.quickReact()
-        }}
-        className={`flex min-w-0 flex-1 touch-none items-center justify-center rounded-full py-1 transition active:scale-95 disabled:opacity-50 ${
-          reactionType === reaction.type
-            ? 'bg-white/20 ring-1 ring-white/55'
-            : 'hover:bg-white/10'
-        }`}
-      >
-        <img
-          src={reaction.src}
-          alt=""
-          draggable="false"
-          className="h-[clamp(37px,11vw,54px)] w-[clamp(37px,11vw,54px)] select-none object-contain"
-        />
-      </button>
-    </div>
+    </button>
   )
 }
 
@@ -1496,27 +1449,13 @@ function StoryViewer({
           />
 
           {group.is_owner ? (
-            <div
-              className={`absolute inset-x-5 z-20 ${
-                story.text_overlay || story.caption || story.mention_username || story.link_url
-  ? 'bottom-[164px]'
-  : 'bottom-[max(32px,env(safe-area-inset-bottom))]'
-              }`}
-            >
-              <div className="inline-flex items-center gap-2 rounded-full bg-black/45 px-4 py-2 text-[12px] font-black text-white backdrop-blur-xl">
-                <i className="fa-solid fa-eye text-[11px]" />
-                {Number(
-                  story.view_count || 0
-                )}{' '}
-                {Number(
-                  story.view_count || 0
-                ) === 1
-                  ? 'view'
-                  : 'views'}
-              </div>
+            <div className="absolute inset-x-0 bottom-0 z-40 bg-black px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
+              <span className="inline-flex items-center gap-2 text-[13px] font-medium text-white">
+                <i className="fa-solid fa-eye text-[13px]" aria-hidden="true" />
+                {Number(story.view_count || 0)} {Number(story.view_count || 0) === 1 ? 'view' : 'views'}
+              </span>
             </div>
           ) : null}
-
 
           {!group.is_owner ? (
             <>
@@ -1574,8 +1513,8 @@ function StoryViewer({
                 </div>
               ) : null}
 
-              <div className="absolute inset-x-0 bottom-[max(10px,env(safe-area-inset-bottom))] z-40 flex justify-center px-2">
-                <article className="relative flex w-full max-w-[480px] items-center justify-between gap-0.5 rounded-full bg-black/95 px-1.5 py-2 shadow-2xl backdrop-blur-xl">
+              <div className="absolute inset-x-0 bottom-0 z-40 bg-black px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-2">
+                <article className="mx-auto flex w-full max-w-[480px] items-center justify-end gap-0.5">
                   {REACTIONS.map((reaction) => (
                     <StoryReactionIcon
                       key={reaction.type}
