@@ -52,7 +52,7 @@ function collectImageUrls(payload, storyType) {
   }))]
 }
 
-export async function downloadOfflineEpisode({ accountId, storyId, episodeId, signal, onProgress } = {}) {
+export async function downloadOfflineEpisode({ accountId, storyId, episodeId, signal, onProgress, allowedAccess } = {}) {
   const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token')
   if (!token) throw new Error('Please sign in before downloading an episode')
   if (!navigator.onLine) throw new Error('An internet connection is required to download')
@@ -65,6 +65,7 @@ export async function downloadOfflineEpisode({ accountId, storyId, episodeId, si
   const payload = await response.json()
   const storyType = String(payload?.story?.story_type || '').toLowerCase().replace(/-/g, '_')
   const options = getOfflineSaveOptions({ accountId, storyId: story, episodeId: episode, storyType, response: payload })
+  if (allowedAccess && !allowedAccess.includes(options.access)) throw new Error('This episode is not eligible for this download')
   const imageUrls = collectImageUrls(payload, storyType)
   const assets = []
   onProgress?.({ completed: 0, total: imageUrls.length })
