@@ -201,6 +201,8 @@ registerTranslationNamespace('authorStoreManager', {
     "glossyCover": "Glossy Cover",
     "new": "New",
     "readOnlineOnly": "Read online only",
+    "downloadAfterPayment": "Download after payment",
+    "downloadAndReadOnline": "Download and read online",
     "selectImageFile": "Please select an image file.",
     "imageTooLarge": "Image must be 5MB or smaller.",
     "selectPdfFile": "Please select a PDF file.",
@@ -485,6 +487,8 @@ registerTranslationNamespace('authorStoreManager', {
     "glossyCover": "គម្របរលោង",
     "new": "ថ្មី",
     "readOnlineOnly": "អានអនឡាញតែប៉ុណ្ណោះ",
+    "downloadAfterPayment": "ទាញយកបន្ទាប់ពីទូទាត់",
+    "downloadAndReadOnline": "ទាញយក និងអានអនឡាញ",
     "selectImageFile": "សូមជ្រើសឯកសាររូបភាព។",
     "imageTooLarge": "រូបភាពត្រូវមានទំហំ 5MB ឬតិចជាងនេះ។",
     "selectPdfFile": "សូមជ្រើសឯកសារ PDF។",
@@ -769,6 +773,8 @@ registerTranslationNamespace('authorStoreManager', {
     "glossyCover": "亮光封面",
     "new": "全新",
     "readOnlineOnly": "仅在线阅读",
+    "downloadAfterPayment": "付款后下载",
+    "downloadAndReadOnline": "下载并在线阅读",
     "selectImageFile": "请选择图片文件。",
     "imageTooLarge": "图片大小必须不超过 5MB。",
     "selectPdfFile": "请选择 PDF 文件。",
@@ -1053,6 +1059,8 @@ registerTranslationNamespace('authorStoreManager', {
     "glossyCover": "光沢カバー",
     "new": "新品",
     "readOnlineOnly": "オンライン閲覧のみ",
+    "downloadAfterPayment": "支払い後にダウンロード",
+    "downloadAndReadOnline": "ダウンロードしてオンラインで読む",
     "selectImageFile": "画像ファイルを選択してください。",
     "imageTooLarge": "画像は5MB以下にしてください。",
     "selectPdfFile": "PDFファイルを選択してください。",
@@ -1337,6 +1345,8 @@ registerTranslationNamespace('authorStoreManager', {
     "glossyCover": "유광 표지",
     "new": "새 상품",
     "readOnlineOnly": "온라인 읽기 전용",
+    "downloadAfterPayment": "결제 후 다운로드",
+    "downloadAndReadOnline": "다운로드 및 온라인 읽기",
     "selectImageFile": "이미지 파일을 선택해 주세요.",
     "imageTooLarge": "이미지는 5MB 이하여야 합니다.",
     "selectPdfFile": "PDF 파일을 선택해 주세요.",
@@ -1443,7 +1453,9 @@ const STORE_VALUE_KEYS = {
   'Sold out': 'soldOut',
   All: 'all', Book: 'book', PDF: 'pdf', Active: 'active', Draft: 'draft', Hidden: 'hidden', New: 'new',
   'Normal Paper': 'normalPaper', 'Premium Paper': 'premiumPaper', 'Matte Cover': 'matteCover', 'Glossy Cover': 'glossyCover',
+  'Download after payment': 'downloadAfterPayment',
   'Read online only': 'readOnlineOnly',
+  'Download and read online': 'downloadAndReadOnline',
 }
 
 function storeValueLabel(value) {
@@ -4418,11 +4430,22 @@ accessRule,
                 <FieldLabel>{storeText('pageCount')}</FieldLabel>
                 <TextInput value={pageCount} onChange={setPageCount} placeholder={storeText('pageCountPdfPlaceholder')} type="number" />
               </div>
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 min-w-0">
                 <FieldLabel>{storeText('accessRule')}</FieldLabel>
-                <SelectInput value={accessRule} onChange={setAccessRule}>
-                  {PDF_ACCESS_RULES.map((item) => <option key={item} value={item}>{storeValueLabel(item)}</option>)}
-                </SelectInput>
+                <div className="grid w-full min-w-0 grid-cols-3 gap-1.5">
+                  {PDF_ACCESS_RULES.map((item, index) => (
+                    <button
+                      key={item}
+                      type="button"
+                      aria-pressed={accessRule === item}
+                      onClick={() => setAccessRule(item)}
+                      className={`flex min-h-[76px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 text-center text-[10px] font-semibold leading-[1.35] [overflow-wrap:anywhere] transition-colors ${accessRule === item ? 'border-blue-600 bg-blue-600 text-white' : 'border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] text-[var(--shadow-text-primary)]'}`}
+                    >
+                      <i aria-hidden="true" className={`fa-solid text-sm ${index === 0 ? 'fa-download' : index === 1 ? 'fa-book-open' : 'fa-book'}`} />
+                      <span className="block w-full min-w-0">{storeValueLabel(item)}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -4881,7 +4904,7 @@ const saveCategoryOrder = async () => {
               ...product,
               pdfFileName: editingProduct?.pdfFileName || '',
               pdfFileUrl: editingProduct?.pdfFileUrl || '',
-              accessRule,accessRule: product.accessRule,
+              accessRule: product.accessRule,
             }
           : product
 
@@ -4892,7 +4915,7 @@ const saveCategoryOrder = async () => {
               ...product,
               status: 'Draft',
               pdfFileUrl: '',
-              accessRule,accessRule: product.accessRule,
+              accessRule: product.accessRule,
             }
           : product
 
@@ -4914,7 +4937,7 @@ const saveCategoryOrder = async () => {
             pdfFile: null,
             pdfFileUrl: '',
             pdfFileName: privatePdf.file_name,
-            accessRule,accessRule: product.accessRule,
+            accessRule: product.accessRule,
           })
         }
       }
