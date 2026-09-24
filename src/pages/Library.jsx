@@ -5,6 +5,7 @@ import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFoote
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import OfflinePdfSaveButton from '../components/library/OfflinePdfSaveButton'
+import LibraryDownloadsSections from '../components/library/LibraryDownloadsSections'
 
 registerTranslationNamespace('libraryPage', {
   en: {
@@ -21,7 +22,7 @@ registerTranslationNamespace('libraryPage', {
     edit: 'Edit',
     recentsSubtitle: 'Stories you added to your library.',
     subscribedSubtitle: 'Follow the latest updates from stories you love.',
-    downloadsSubtitle: 'Purchased PDFs and downloads from Author Store.',
+    downloadsSubtitle: 'Your purchased books and saved stories.',
     newEpisode: 'New Ep. {{count}}',
     readOnlineOnly: '{{file}} • Read online only',
     downloadAndRead: '{{file}} • Download + Read',
@@ -77,7 +78,7 @@ registerTranslationNamespace('libraryPage', {
     edit: 'កែសម្រួល',
     recentsSubtitle: 'រឿងដែលអ្នកបានបន្ថែមទៅ Library។',
     subscribedSubtitle: 'តាមដាន Update ថ្មីៗពីរឿងដែលអ្នកចូលចិត្ត។',
-    downloadsSubtitle: 'PDF ដែលបានទិញ និងការទាញយកពី Author Store។',
+    downloadsSubtitle: 'សៀវភៅដែលបានទិញ និងរឿងដែលបានទាញយករបស់អ្នក។',
     newEpisode: 'ភាគថ្មី {{count}}',
     readOnlineOnly: '{{file}} • អាន Online ប៉ុណ្ណោះ',
     downloadAndRead: '{{file}} • ទាញយក + អាន',
@@ -133,7 +134,7 @@ registerTranslationNamespace('libraryPage', {
     edit: '编辑',
     recentsSubtitle: '你添加到 Library 的故事。',
     subscribedSubtitle: '关注你喜欢的故事的最新更新。',
-    downloadsSubtitle: '从 Author Store 购买的 PDF 和下载内容。',
+    downloadsSubtitle: '您购买的图书和保存的作品。',
     newEpisode: '新章节 {{count}}',
     readOnlineOnly: '{{file}} • 仅在线阅读',
     downloadAndRead: '{{file}} • 下载 + 阅读',
@@ -189,7 +190,7 @@ registerTranslationNamespace('libraryPage', {
     edit: '編集',
     recentsSubtitle: 'Library に追加したストーリーです。',
     subscribedSubtitle: 'お気に入りのストーリーの最新更新をフォローします。',
-    downloadsSubtitle: 'Author Store で購入した PDF とダウンロードです。',
+    downloadsSubtitle: '購入した本と保存した作品です。',
     newEpisode: '新着 Ep. {{count}}',
     readOnlineOnly: '{{file}} • オンライン閲覧のみ',
     downloadAndRead: '{{file}} • ダウンロード + 閲覧',
@@ -245,7 +246,7 @@ registerTranslationNamespace('libraryPage', {
     edit: '편집',
     recentsSubtitle: 'Library에 추가한 스토리입니다.',
     subscribedSubtitle: '좋아하는 스토리의 최신 업데이트를 확인하세요.',
-    downloadsSubtitle: 'Author Store에서 구매한 PDF와 다운로드입니다.',
+    downloadsSubtitle: '구매한 도서와 저장한 작품입니다.',
     newEpisode: '신규 Ep. {{count}}',
     readOnlineOnly: '{{file}} • 온라인 읽기만 가능',
     downloadAndRead: '{{file}} • 다운로드 + 읽기',
@@ -311,7 +312,6 @@ const API_BASE_URL =
 
 const topTabs = ['Recents', 'Subscribed', 'Downloads']
 const storyTypeTabs = ['All', 'Novel', 'Chat Story', 'Manga']
-const downloadTypeTabs = ['All', 'PDF']
 
 const TOP_TAB_LABEL_KEYS = {
   Recents: 'recents',
@@ -972,7 +972,6 @@ export default function Library() {
     return libraryItems
   }, [activeTab, libraryItems, subscriptionItems, downloadItems])
 
-  const currentTypeTabs = activeTab === 'Downloads' ? downloadTypeTabs : storyTypeTabs
 
   const filteredItems = useMemo(() => {
     if (activeType === 'All') return currentItems
@@ -1100,8 +1099,8 @@ export default function Library() {
               {subtitle}
             </p>
 
-            <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-              {currentTypeTabs.map((type) => {
+            {activeTab !== 'Downloads' ? <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+              {storyTypeTabs.map((type) => {
                 const active = type === activeType
 
                 return (
@@ -1128,7 +1127,7 @@ export default function Library() {
                   </button>
                 )
               })}
-            </div>
+            </div> : null}
           </div>
         </header>
 
@@ -1146,7 +1145,9 @@ export default function Library() {
             </div>
           ) : null}
 
-          {loading ? (
+          {activeTab === 'Downloads' ? (
+            <LibraryDownloadsSections purchases={downloadItems} loading={loading} isLoggedIn={isLoggedIn} />
+          ) : loading ? (
             <div className="pt-5">
               <div
                 className="rounded-[24px] border px-5 py-10 text-center text-[13px] font-bold"
