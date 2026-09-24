@@ -5,7 +5,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 const NAMES = {
   transform: ['Transform', 'បម្លែងរូបភាព'], perspective: ['Perspective', 'ទិដ្ឋភាពបីវិមាត្រ'], crop: ['Crop', 'កាត់ទំហំក្រដាស'],
   canvas: ['Canvas size', 'ទំហំផ្ទាំងគំនូរ'], ruler: ['Ruler guide', 'បន្ទាត់ណែនាំ'], balloon: ['Speech balloon', 'ពពុះសន្ទនា'],
-  frame: ['Comic frame', 'ស៊ុម Manga'],
+  frame: ['Comic frame', 'ស៊ុម Manga'], filter: ['Filter / FX', 'តម្រងរូបភាព'], special: ['Special Brush', 'ជក់ពិសេស'], divider: ['Frame Divider', 'បែងចែកស៊ុម Manga'],
 }
 const FIELD_NAMES = {
   x: ['Left', 'ខាងឆ្វេង'], y: ['Top', 'ខាងលើ'], width: ['Width', 'ទទឹង'], height: ['Height', 'កម្ពស់'],
@@ -22,6 +22,8 @@ const FIELD_NAMES = {
   corner1x: ['Top-right X', 'ជ្រុងស្ដាំលើ X'], corner1y: ['Top-right Y', 'ជ្រុងស្ដាំលើ Y'],
   corner2x: ['Bottom-right X', 'ជ្រុងស្ដាំក្រោម X'], corner2y: ['Bottom-right Y', 'ជ្រុងស្ដាំក្រោម Y'],
   corner3x: ['Bottom-left X', 'ជ្រុងឆ្វេងក្រោម X'], corner3y: ['Bottom-left Y', 'ជ្រុងឆ្វេងក្រោម Y'],
+  type: ['Filter type', 'ប្រភេទតម្រង'], amount: ['Amount (%)', 'កម្រិត (%)'], adjustment: ['Adjustment (-100 to 100)', 'កែតម្រូវ (-100 ដល់ 100)'],
+  mode: ['Special brush type', 'ប្រភេទជក់ពិសេស'], orientation: ['Divider direction', 'ទិសដៅបែងចែក'], gutter: ['Gap (px)', 'ចន្លោះ (px)'], background: ['Gap color', 'ពណ៌ចន្លោះ'],
 }
 const SCHEMAS = {
   transform: ['translateX', 'translateY', 'scaleX', 'scaleY', 'rotate'],
@@ -29,6 +31,7 @@ const SCHEMAS = {
   crop: ['x', 'y', 'width', 'height'], canvas: ['width', 'height', 'offsetX', 'offsetY'],
   ruler: ['axis', 'position', 'angle'], frame: ['x', 'y', 'width', 'height', 'border', 'ink', 'fill'],
   balloon: ['text', 'shape', 'tail', 'width', 'height', 'fontSize', 'font', 'bold', 'italic', 'align', 'fill', 'ink', 'textColor', 'opacity'],
+  filter: ['type', 'amount', 'adjustment'], special: ['mode'], divider: ['orientation', 'position', 'gutter', 'border', 'ink', 'background', 'opacity'],
 }
 const CHOICES = {
   axis: [['vertical', 'Vertical', 'បញ្ឈរ'], ['horizontal', 'Horizontal', 'ផ្ដេក'], ['angled', 'Angled', 'មុំ']],
@@ -37,6 +40,10 @@ const CHOICES = {
   font: [['sans', 'Sans', 'ធម្មតា'], ['serif', 'Serif', 'ស៊េរីហ្វ'], ['mono', 'Mono', 'ម៉ូណូ']],
   align: [['left', 'Left', 'ឆ្វេង'], ['center', 'Center', 'កណ្ដាល'], ['right', 'Right', 'ស្ដាំ']],
   fill: [['transparent', 'Transparent', 'ថ្លា'], ['#FFFFFF', 'White', 'ស']],
+  type: [['grayscale', 'Grayscale', 'ខ្មៅស'], ['sepia', 'Sepia', 'សេពីយ៉ា'], ['invert', 'Invert', 'បញ្ច្រាសពណ៌'], ['brightness', 'Brightness', 'ពន្លឺ'], ['contrast', 'Contrast', 'កម្រិតខុសគ្នា'], ['threshold', 'Threshold', 'ខ្មៅសខ្លាំង']],
+  mode: [['sparkle', 'Sparkle', 'ចាំងផ្កាយ'], ['star', 'Star', 'ផ្កាយ'], ['glow', 'Glow', 'ពន្លឺទន់']],
+  orientation: [['vertical', 'Vertical', 'បញ្ឈរ'], ['horizontal', 'Horizontal', 'ផ្ដេក']],
+  background: [['transparent', 'Transparent', 'ថ្លា'], ['#FFFFFF', 'White', 'ស'], ['#000000', 'Black', 'ខ្មៅ']],
 }
 
 export default function StudioAdvancedToolPanel({ editor, onClose, onApply, onClearGuides }) {
@@ -100,13 +107,13 @@ export default function StudioAdvancedToolPanel({ editor, onClose, onApply, onCl
         <form onSubmit={submit}>
           <div className="ss-advanced-tool-fields">
             {(SCHEMAS[editor.type] || []).map((key) => {
-              const label = FIELD_NAMES[key]?.[km ? 1 : 0] || key
+              const label = editor.type === 'divider' && key === 'position' ? (km ? 'ទីតាំងបែងចែក (0–1)' : 'Divider position (0–1)') : FIELD_NAMES[key]?.[km ? 1 : 0] || key
               const value = values[key]
               if (key === 'text') return <label className="wide" key={key}>{label}<textarea rows={3} maxLength={1200} value={value ?? ''} onChange={(event) => update(key, event.target.value)} /></label>
               if (typeof value === 'boolean') return <label key={key}>{label}<input type="checkbox" checked={value} onChange={(event) => update(key, event.target.checked)} /></label>
               if (CHOICES[key]) return <label key={key}>{label}<select value={value} onChange={(event) => update(key, event.target.value)}>{CHOICES[key].map(([id, en, kh]) => <option key={id} value={id}>{km ? kh : en}</option>)}</select></label>
               if (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)) return <label key={key}>{label}<input type="color" value={value} onChange={(event) => update(key, event.target.value)} /></label>
-              return <label key={key}>{label}<input type="number" step={['scaleX', 'scaleY'].includes(key) ? 0.05 : ['angle', 'rotate'].includes(key) ? 1 : 1} value={value ?? 0} onChange={(event) => update(key, Number(event.target.value))} /></label>
+              return <label key={key}>{label}<input type="number" step={['scaleX', 'scaleY'].includes(key) || (editor.type === 'divider' && key === 'position') ? 0.05 : 1} value={value ?? 0} onChange={(event) => update(key, Number(event.target.value))} /></label>
             })}
           </div>
           {error ? <p className="ss-advanced-tool-error" role="alert">{error}</p> : null}
