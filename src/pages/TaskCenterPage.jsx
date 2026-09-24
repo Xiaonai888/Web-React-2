@@ -846,7 +846,7 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
   return (
     <div className="flex gap-3 border-b border-[var(--shadow-border)] py-5">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f4] text-[#ff3f62] ring-1 ring-[#ff3f62]/10 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/15">
-  <i className="fa-solid fa-ticket text-[15px]" />
+  <img src="/assets/Icons/Voucher.svg" alt="" className="h-5 w-5 object-contain" />
 </div>
 
       <div className="min-w-0 flex-1">
