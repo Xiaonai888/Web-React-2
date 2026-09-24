@@ -102,6 +102,7 @@ const ShadowMallSecondHandPage = lazy(() => import('./pages/Shop/ShadowMallSecon
 const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestSellerPage'))
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
+const StoryBulkDownloadPage = lazy(() => import('./pages/StoryBulkDownloadPage'))
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesdayEventPage'))
 const AuthorDaily50EventPage = lazy(() => import('./pages/Event/AuthorDaily50EventPage'))
@@ -1399,6 +1400,7 @@ const shouldShowOpeningAds =
         <Route path="/profile/edit/links" element={<EditProfileLinksPage />} />
         <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
+        <Route path="/story/:storyId/download" element={<LazyPage><StoryBulkDownloadPage /></LazyPage>} />
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
         <Route path="/story/:storyId/reaction" element={<ReactionPage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
