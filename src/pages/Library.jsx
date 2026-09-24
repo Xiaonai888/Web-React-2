@@ -815,7 +815,7 @@ export default function Library() {
   const meLibrarySource = new URLSearchParams(location.search).get('source') === 'me'
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
-  const [activeTab, setActiveTab] = useState('Subscribed')
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'downloads' ? 'Downloads' : 'Subscribed')
   const [activeType, setActiveType] = useState('All')
   const [libraryItems, setLibraryItems] = useState([])
   const [subscriptionItems, setSubscriptionItems] = useState([])
@@ -1081,7 +1081,7 @@ export default function Library() {
                 })}
               </div>
 
-              <button
+              {activeTab !== 'Downloads' ? <button
                 type="button"
                 onClick={activeTab === 'Subscribed' ? () => navigate(meLibrarySource ? '/library/manage?source=me' : '/library/manage') : handleAction}
                 disabled={clearing}
@@ -1089,7 +1089,7 @@ export default function Library() {
                 style={{ color: 'var(--shadow-text-secondary)' }}
               >
                 {actionText}
-              </button>
+              </button> : null}
             </div>
 
             <p
