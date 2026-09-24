@@ -121,7 +121,7 @@ function Section({ title, subtitle, url, children, t }) {
   return (
     <section className="pt-6">
       <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0"><h2 className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{title}</h2><p className="mt-1 text-[11px] text-[var(--shadow-text-secondary)]">{subtitle}</p></div>
+        <div className="min-w-0"><h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">{title}</h2><p className="mt-1 text-[11px] text-[var(--shadow-text-secondary)]">{subtitle}</p></div>
         <Link to={url} className="flex shrink-0 items-center gap-1 pt-1 text-[11px] font-bold text-[var(--shadow-text-primary)]">{t('librarySections.viewAll')}<ChevronRight size={14} /></Link>
       </div>
       {children}
