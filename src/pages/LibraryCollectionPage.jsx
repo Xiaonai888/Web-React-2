@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { BookOpen, ChevronLeft, Download, FolderOpen } from 'lucide-react'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -94,7 +94,7 @@ function Cover({ title, cover, children }) {
   )
 }
 
-function PurchaseCard({ item, t, token }) {
+function PurchaseCard({ item, t, token, onRead }) {
   const rule = accessType(item.access_rule)
   const canRead = rule === 'readOnline' || rule === 'both'
   const canDownload = rule === 'download' || rule === 'both'
@@ -155,8 +155,7 @@ function PurchaseCard({ item, t, token }) {
   return (
     <article className="min-w-0">
       <Cover title={title} cover={item.cover_url}>
-        {canRead && url ? <a href={url} target="_blank" rel="noreferrer" aria-label={`${t('libraryCollection.read')}: ${title}`} title={t('libraryCollection.read')} className={`${iconClass} top-1.5`}><BookOpen size={16} /></a> : null}
-        {canRead && !url && id ? <button type="button" disabled={busy} onClick={() => accessPrivatePdf('read')} aria-label={`${t('libraryCollection.read')}: ${title}`} title={t('libraryCollection.read')} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
+        {canRead && id ? <button type="button" onClick={() => onRead(id)} aria-label={`${t('libraryCollection.read')}: ${title}`} title={t('libraryCollection.read')} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
         {canDownload && url ? <a href={url} download={item.pdf_file_name || `${title}.pdf`} target="_blank" rel="noreferrer" aria-label={`${t('libraryCollection.downloadFile')}: ${title}`} title={t('libraryCollection.downloadFile')} className={`${iconClass} bottom-1.5`}><Download size={16} /></a> : null}
         {canDownload && !url && id ? <button type="button" disabled={busy} onClick={() => accessPrivatePdf('download')} aria-label={`${t('libraryCollection.downloadFile')}: ${title}`} title={t('libraryCollection.downloadFile')} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
       </Cover>
@@ -183,12 +182,17 @@ function DownloadCard({ item, t, onOpen }) {
 export default function LibraryCollectionPage() {
   const { section } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const purchased = section === 'purchased'
+  const params = new URLSearchParams(location.search)
+  const source = params.get('source') === 'me' ? 'source=me&' : ''
+  const readId = purchased ? params.get('read') : ''
   const [filter, setFilter] = useState('all')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reader, setReader] = useState({ loading: false, url: '', title: '', error: '' })
   const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
   const accountId = getOfflineReaderAccountId()
 
@@ -241,6 +245,47 @@ export default function LibraryCollectionPage() {
     return () => { active = false; controller.abort() }
   }, [section, purchased, token, accountId])
 
+  useEffect(() => {
+    if (!purchased || !readId || loading) return undefined
+    const controller = new AbortController()
+    let blobUrl = ''
+    let active = true
+    const item = items.find((entry) => String(entry.product_id) === String(readId))
+    setReader({ loading: true, url: '', title: item?.title || '', error: '' })
+    if (!item || !token) {
+      setReader({ loading: false, url: '', title: '', error: t('libraryCollection.fileNotReady') })
+      return undefined
+    }
+    const sourceUrl = String(item.pdf_file_url || '').trim()
+    if (/^https?:\/\//i.test(sourceUrl)) {
+      setReader({ loading: false, url: sourceUrl, title: item.title || 'PDF', error: '' })
+      return undefined
+    }
+    async function openPrivate() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/${encodeURIComponent(readId)}/pdf?mode=read`, {
+          headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: controller.signal,
+        })
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}))
+          throw new Error(body.message || t('libraryCollection.fileNotReady'))
+        }
+        const pdf = await response.blob()
+        if (!pdf.size || !pdf.type.toLowerCase().startsWith('application/pdf')) throw new Error(t('libraryCollection.fileNotReady'))
+        blobUrl = URL.createObjectURL(pdf)
+        if (active) setReader({ loading: false, url: blobUrl, title: item.title || 'PDF', error: '' })
+      } catch (reason) {
+        if (active && reason.name !== 'AbortError') setReader({ loading: false, url: '', title: item.title || '', error: reason.message || t('libraryCollection.fileNotReady') })
+      }
+    }
+    void openPrivate()
+    return () => {
+      active = false
+      controller.abort()
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+    }
+  }, [purchased, readId, loading, items, token])
+
   const filtered = useMemo(() => filter === 'all' ? items : items.filter((item) => purchased ? accessType(item.access_rule) === filter : item.type === filter), [filter, items, purchased])
   const filters = purchased ? purchaseFilters : downloadFilters
 
@@ -248,19 +293,26 @@ export default function LibraryCollectionPage() {
     <div className="app-page min-h-screen pb-[88px]">
       <header className="app-nav sticky top-0 z-40 border-b border-[var(--shadow-border)]">
         <div className="flex h-14 items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate('/library')} aria-label={t('libraryCollection.back')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"><ChevronLeft size={20} /></button>
+          <button type="button" onClick={() => navigate(readId ? `/library/collection/purchased${source ? `?${source.slice(0, -1)}` : ''}` : `/library?tab=downloads${source ? '&source=me' : ''}`)} aria-label={t('libraryCollection.back')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"><ChevronLeft size={20} /></button>
           <h1 className="min-w-0 text-[17px] font-extrabold text-[var(--shadow-text-primary)]">{t(`libraryCollection.${purchased ? 'purchased' : 'downloads'}`)}</h1>
         </div>
       </header>
       <main className="mx-auto w-full max-w-[780px] px-4 pb-8 pt-5 sm:px-5">
+        {readId ? (
+          <section className="flex flex-col gap-3">
+            <h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">{reader.title || t('libraryCollection.purchased')}</h2>
+            {reader.loading ? <p role="status" className="text-sm text-[var(--shadow-text-secondary)]">{t('libraryCollection.loading')}</p> : reader.error ? <p role="alert" className="text-sm text-[var(--shadow-warning)]">{reader.error}</p> : reader.url ? <iframe title={reader.title || 'PDF'} src={reader.url} className="h-[calc(100dvh-190px)] min-h-[440px] w-full rounded-xl border border-[var(--shadow-border)] bg-white" /> : null}
+          </section>
+        ) : <>
         <p className="text-[12px] text-[var(--shadow-text-secondary)]">{t(`libraryCollection.${purchased ? 'purchasedSubtitle' : 'downloadsSubtitle'}`)}</p>
         <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-2">
           {filters.map((key) => <button key={key} type="button" onClick={() => setFilter(key)} aria-pressed={filter === key} className="shrink-0 rounded-full border px-4 py-2 text-[12px] font-semibold" style={{ background: filter === key ? 'var(--shadow-text-primary)' : 'var(--shadow-bg-soft)', color: filter === key ? 'var(--shadow-bg-page)' : 'var(--shadow-text-secondary)', borderColor: filter === key ? 'var(--shadow-text-primary)' : 'var(--shadow-border)' }}>{t(`libraryCollection.${key}`)}</button>)}
         </div>
         {loading ? <p role="status" className="mt-7 text-center text-sm text-[var(--shadow-text-secondary)]">{t('libraryCollection.loading')}</p> : error ? <p role="alert" className="mt-6 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]">{error}</p> : filtered.length ?
           <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-            {filtered.map((item) => purchased ? <PurchaseCard key={item.id} item={item} t={t} token={token} /> : <DownloadCard key={item.id} item={item} t={t} onOpen={() => navigate('/library/manage/offline-downloads')} />)}
+            {filtered.map((item) => purchased ? <PurchaseCard key={item.id} item={item} t={t} token={token} onRead={(id) => navigate(`/library/collection/purchased?${source}read=${encodeURIComponent(id)}`)} /> : <DownloadCard key={item.id} item={item} t={t} onOpen={() => navigate(`/library/manage/offline-downloads?storyId=${encodeURIComponent(item.id)}`)} />)}
           </div> : <div className="mt-5 flex flex-col items-center rounded-3xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-5 py-10 text-center text-[var(--shadow-text-secondary)]"><FolderOpen size={28} /><p className="mt-3 text-sm font-semibold">{t(`libraryCollection.${purchased ? 'noPurchases' : 'noDownloads'}`)}</p></div>}
+        </>}
       </main>
     </div>
   )
