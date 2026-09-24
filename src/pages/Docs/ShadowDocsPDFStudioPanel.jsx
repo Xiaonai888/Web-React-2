@@ -4,8 +4,9 @@ import { buildShadowDocsPrintHTML, downloadShadowDocsPrintHTML } from './ShadowD
 import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
 
 const PAGE_SIZES = { A5: [148, 210], A4: [210, 297], B5: [176, 250] }
+const FONT_OPTIONS = ['Noto Serif Khmer', 'Noto Sans Khmer', 'Battambang', 'Georgia', 'Arial']
 
-export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBackup }) {
+export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBackup, onChangeSettings }) {
   const [error, setError] = useState('')
   const [showPreview, setShowPreview] = useState(false)
   const report = useMemo(() => inspectShadowDocsProject(book), [book])
@@ -15,6 +16,8 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
     try { return buildShadowDocsPrintHTML(book) } catch { return '' }
   }, [book, report.canExport])
   const settings = book?.settings || {}
+  const selectedFont = FONT_OPTIONS.includes(settings.font) ? settings.font : FONT_OPTIONS[0]
+  const selectedFontSize = Math.min(24, Math.max(10, Number(settings.fontSize) || 13))
   const chapterCount = Array.isArray(book?.chapters) ? book.chapters.length : 0
   const pageSize = PAGE_SIZES[settings.size] ? settings.size : 'A5'
   const [paperWidth, paperHeight] = PAGE_SIZES[pageSize]
@@ -25,8 +28,7 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
     const screenStyle = `<style media="screen">
       html{background:#eae7ef}
       body{max-width:none;width:auto;margin:0;padding:10px 0;background:transparent;box-shadow:none}
-      .cover,.sd-print-contents,.chapter{box-sizing:border-box;width:${paperWidth}mm;max-width:calc(100% - 20px);min-height:${paperHeight}mm;margin:14px auto;padding:${margin}mm;box-shadow:0 5px 20px #26203725;background:#fff;color:#242139;break-before:auto;page-break-before:auto}
-      .cover{display:flex;min-height:${paperHeight}mm}
+      .chapter{box-sizing:border-box;width:${paperWidth}mm;max-width:calc(100% - 20px);min-height:${paperHeight}mm;margin:14px auto;padding:${margin}mm;box-shadow:0 5px 20px #26203725;background:#fff;color:#242139;break-before:auto;page-break-before:auto}
       .chapter{border:0;break-before:auto;page-break-before:auto}
       .chapter-body hr.sd-page-break{border:0;border-top:2px dashed #8d76be;margin:1.5em 0}
       img{max-width:100%;height:auto}
@@ -77,6 +79,19 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
           <div className="rounded-xl bg-[#f8f5fe] p-3 dark:bg-white/5"><FileText size={17} className="text-[#7653bd]" /><strong className="mt-2 block text-sm">{chapterCount}</strong><span className="text-[11px] text-[#77758b] dark:text-white/60">Chapters</span></div>
           <div className="col-span-2 rounded-xl bg-[#f8f5fe] p-3 dark:bg-white/5 sm:col-span-1"><Printer size={17} className="text-[#7653bd]" /><strong className="mt-2 block text-sm">{settings.fontSize || 13} pt</strong><span className="text-[11px] text-[#77758b] dark:text-white/60">Body text size</span></div>
         </div>
+        <div className="mt-4 rounded-xl border border-[#e9e5f1] p-3 dark:border-white/10">
+          <h3 className="text-sm font-semibold">Text settings for PDF</h3>
+          <p className="mt-1 text-[11px] text-[#77758b] dark:text-white/60">These settings also apply to your book in Write and are saved on this device.</p>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="block text-xs font-semibold" htmlFor="sd-pdf-font">Font family
+              <select id="sd-pdf-font" className="sd-field mt-2 w-full" value={selectedFont} disabled={typeof onChangeSettings !== 'function'} onChange={event => onChangeSettings?.({ font: event.target.value })}>{FONT_OPTIONS.map(item => <option key={item} value={item}>{item}</option>)}</select>
+            </label>
+            <div>
+              <label className="flex items-center justify-between gap-2 text-xs font-semibold" htmlFor="sd-pdf-fontsize">Body text size <span>{selectedFontSize} pt</span></label>
+              <input id="sd-pdf-fontsize" className="mt-3 w-full accent-[#7653bd]" type="range" min="10" max="24" step="1" value={selectedFontSize} disabled={typeof onChangeSettings !== 'function'} onChange={event => onChangeSettings?.({ fontSize: Number(event.target.value) })} />
+            </div>
+          </div>
+        </div>
         {issues.length > 0 && <div role={report.canExport ? 'status' : 'alert'} className="mt-4 rounded-xl border border-[#f2d9a2] bg-[#fffaed] p-3 text-[#785519] dark:border-[#70572f] dark:bg-[#302719] dark:text-[#f1d59b]">
           <div className="flex items-center gap-2 text-xs font-bold"><AlertCircle size={16} /> {report.canExport ? 'Review before printing' : 'Fix these errors before printing'}</div>
           <ul className="mt-2 list-inside list-disc space-y-1 text-[11px] leading-5">{issues.map(issue => <li key={issue.code}>{issue.severity === 'error' ? 'Error: ' : ''}{issue.message}</li>)}</ul>
@@ -91,7 +106,7 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
       </div>
       <div className="sd-card">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div><h2 className="flex items-center gap-2"><Eye size={17} /> Paper layout preview</h2><p className="mt-1 text-xs text-[#77758b] dark:text-white/60">Check cover, contents, chapter starts, type and paper size before printing.</p></div>
+          <div><h2 className="flex items-center gap-2"><Eye size={17} /> Paper layout preview</h2><p className="mt-1 text-xs text-[#77758b] dark:text-white/60">Check manuscript typography and paper size before printing.</p></div>
           <button type="button" onClick={() => setShowPreview(value => !value)} disabled={!previewHtml} aria-expanded={showPreview} className="sd-button sd-button-ghost">{showPreview ? 'Hide preview' : 'Show preview'}</button>
         </div>
         {showPreview && previewHtml && <>
