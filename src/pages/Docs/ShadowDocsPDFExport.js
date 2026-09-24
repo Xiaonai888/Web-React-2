@@ -1,4 +1,5 @@
 import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
+import { sanitizeShadowDocsHTML } from './ShadowDocsBookModel'
 
 const PAGE_SIZES = Object.freeze({ A5: [148, 210], A4: [210, 297], B5: [176, 250] })
 const FONT_FAMILIES = Object.freeze({
@@ -14,23 +15,8 @@ function escapeText(value) {
 }
 
 function safeChapterHTML(source) {
-  const html = String(source || '').slice(0, 2_000_000)
-  if (typeof DOMParser === 'undefined') return `<p>${escapeText(html.replace(/<[^>]*>/g, ' '))}</p>`
-  const document = new DOMParser().parseFromString(html, 'text/html')
-  const allowed = new Set(['P', 'DIV', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'H1', 'H2', 'H3', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'SPAN'])
-  function render(node) {
-    if (node.nodeType === 3) return escapeText(node.nodeValue)
-    if (node.nodeType !== 1) return ''
-    if (node.tagName === 'HR' && node.getAttribute('data-shadow-docs-page-break') === '1') return '<hr class="sd-page-break">'
-    const content = Array.from(node.childNodes, render).join('')
-    if (!allowed.has(node.tagName)) return content
-    if (node.tagName === 'BR') return '<br>'
-    const align = node.style?.textAlign
-    const style = ['left', 'center', 'right', 'justify'].includes(align) ? ` style="text-align:${align}"` : ''
-    const tag = node.tagName.toLowerCase()
-    return `<${tag}${style}>${content}</${tag}>`
-  }
-  return Array.from(document.body.childNodes, render).join('')
+  return sanitizeShadowDocsHTML(String(source || '').slice(0, 500_000))
+    .replaceAll('<hr data-shadow-docs-page-break="1" contenteditable="false">', '<hr class="sd-page-break">')
 }
 
 function normalizedSettings(settings = {}) {
@@ -79,7 +65,7 @@ export function buildShadowDocsPrintHTML(book) {
 @page :left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}
 @page :right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}
 *{box-sizing:border-box}html{background:#eee}body{max-width:${width}mm;margin:18px auto;background:#fff;color:#242139;font-family:${settings.font};font-size:${settings.fontSize}pt;line-height:${settings.lineSpacing};text-align:${settings.alignment};overflow-wrap:anywhere}
-.chapter{padding:0}.chapter-body{text-indent:${settings.firstLineIndent}mm}.chapter-body p,.chapter-body div{margin:0 0 ${settings.paragraphSpacing}pt}.chapter-body h1,.chapter-body h2,.chapter-body h3,.chapter-body li,.chapter-body blockquote{text-indent:0}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%}
+.chapter{padding:0}.chapter-body{text-indent:${settings.firstLineIndent}mm}.chapter-body p,.chapter-body div{margin:0 0 ${settings.paragraphSpacing}pt}.chapter-body h1,.chapter-body h2,.chapter-body h3,.chapter-body li,.chapter-body blockquote{text-indent:0}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%;height:auto;break-inside:avoid;page-break-inside:avoid}
 @media screen{body{padding:${settings.margin}mm;box-shadow:0 10px 28px #0002}.chapter-body hr.sd-page-break{margin:1.5em 0;border:0;border-top:2px dashed #8d76be}}
 @media print{html,body{background:#fff;margin:0;max-width:none;padding:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter-body p,.chapter-body li{orphans:2;widows:2}.chapter-body hr.sd-page-break{display:block;break-after:page;page-break-after:always;height:0;margin:0;border:0}}
 </style></head><body>${chapters}</body></html>`
