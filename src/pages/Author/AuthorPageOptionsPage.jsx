@@ -229,7 +229,7 @@ function copyPageLink() {
           <ToolRow icon="fa-regular fa-pen-to-square" label={t('authorPageOptions.basicPageInfo')} onClick={() => navigate('/author/edit-page?from=settings')} />
           <ToolRow icon="fa-regular fa-circle-check" label={t('authorPageOptions.pageStatus')} onClick={() => setMessage(t('authorPageOptions.pageStatusSoon'))} />
           <ToolRow icon="fa-regular fa-rectangle-list" label={t('authorPageOptions.activityLog')} onClick={() => setMessage(t('authorPageOptions.activityLogSoon'))} />
-          <ToolRow icon="fa-solid fa-shield-halved" label={t('authorPageOptions.pageTransparency')} onClick={() => pageUsername && navigate(`/author/page/${encodeURIComponent(pageUsername)}/transparency`)} />
+          <ToolRow icon="fa-regular fa-eye" label={t('authorPageOptions.pageTransparency')} onClick={() => pageUsername && navigate(`/author/page/${encodeURIComponent(pageUsername)}/transparency`)} />
         </div>
 
         <SectionTitle>{t('authorPageOptions.share')}</SectionTitle>
