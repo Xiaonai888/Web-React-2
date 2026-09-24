@@ -92,6 +92,18 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
             </div>
           </div>
         </div>
+        <div className="mt-4 rounded-xl border border-[#e9e5f1] p-3 dark:border-white/10">
+          <h3 className="text-sm font-semibold">Printed header, footer & page numbers</h3>
+          <p className="mt-1 text-[11px] leading-5 text-[#77758b] dark:text-white/60">Nothing is added automatically. Leave a text field empty to omit it. These options are saved with this book.</p>
+          <label className="mt-3 block text-xs font-semibold" htmlFor="sd-print-header">Header text</label>
+          <input id="sd-print-header" className="sd-field mt-2 w-full" type="text" maxLength={80} placeholder="Optional text at the top of each printed page" value={settings.printHeader || ''} disabled={typeof onChangeSettings !== 'function'} onChange={event => onChangeSettings?.({ printHeader: event.target.value })}/>
+          <label className="mt-3 block text-xs font-semibold" htmlFor="sd-print-footer">Footer text</label>
+          <input id="sd-print-footer" className="sd-field mt-2 w-full" type="text" maxLength={60} placeholder="Optional text at the bottom-left" value={settings.printFooter || ''} disabled={typeof onChangeSettings !== 'function'} onChange={event => onChangeSettings?.({ printFooter: event.target.value })}/>
+          <label className="mt-4 flex items-center justify-between gap-3 text-xs font-semibold" htmlFor="sd-print-numbers">Print page numbers at bottom center
+            <input id="sd-print-numbers" type="checkbox" className="h-4 w-4 accent-[#7653bd]" checked={settings.pageNumbers === true} disabled={typeof onChangeSettings !== 'function'} onChange={event => onChangeSettings?.({ pageNumbers: event.target.checked })}/>
+          </label>
+          <p className="mt-3 text-[11px] leading-5 text-[#77758b] dark:text-white/60">In the browser print dialog, turn off “Headers and footers” to remove the browser’s date, URL and automatic page numbers. The settings above are separate.</p>
+        </div>
         {issues.length > 0 && <div role={report.canExport ? 'status' : 'alert'} className="mt-4 rounded-xl border border-[#f2d9a2] bg-[#fffaed] p-3 text-[#785519] dark:border-[#70572f] dark:bg-[#302719] dark:text-[#f1d59b]">
           <div className="flex items-center gap-2 text-xs font-bold"><AlertCircle size={16} /> {report.canExport ? 'Review before printing' : 'Fix these errors before printing'}</div>
           <ul className="mt-2 list-inside list-disc space-y-1 text-[11px] leading-5">{issues.map(issue => <li key={issue.code}>{issue.severity === 'error' ? 'Error: ' : ''}{issue.message}</li>)}</ul>
