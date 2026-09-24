@@ -3,6 +3,7 @@ import ReportModal from '../ReportModal'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { Link } from 'react-router-dom'
+import { Download } from 'lucide-react'
 
 
 registerTranslationNamespace('storyHeroSection', {
@@ -195,7 +196,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
             aria-label={t('storyHeroSection.goBack')}
           >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
+            <i className="fa-solid fa-chevron-left text-[24px]" />
           </button>
 
           <h1
@@ -212,7 +213,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
               aria-label="Download episodes"
               className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${showTitleBar ? 'bg-transparent text-[var(--shadow-text-primary)]' : 'bg-transparent text-white'}`}
             >
-              <i className="fa-solid fa-download text-[16px]" aria-hidden="true" />
+              <Download size={24} strokeWidth={2.5} aria-hidden="true" />
             </Link>
             <button
               type="button"
@@ -224,7 +225,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
               aria-label={t('storyHeroSection.addToLibrary')}
             >
-              <i className={`${bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark text-[15px]`} />
+              <i className={`${bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark text-[24px]`} />
             </button>
 
             <div className="relative">
@@ -238,7 +239,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
                 aria-label={t('storyHeroSection.more')}
               >
-                <i className="fa-solid fa-ellipsis text-[16px]" />
+                <i className="fa-solid fa-ellipsis flex h-6 w-6 items-center justify-center text-[22px] leading-none" />
               </button>
 
               {menuOpen ? (
