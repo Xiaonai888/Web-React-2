@@ -53,6 +53,9 @@ import { applyStudioCustomComicFrames } from './StudioCustomComicFrameToolEngine
 import { createStudioRulerGuide, renderStudioRulerGuides, snapStudioPointToGuides } from './StudioRulerGuideToolEngine'
 import { placeStudioMangaBalloon } from './StudioBalloonPlacementToolEngine'
 import StudioAdvancedToolPanel from './StudioAdvancedToolPanel'
+import { applyStudioPhotoFilter } from './StudioFilterToolEngine'
+import { beginStudioSpecialBrush, extendStudioSpecialBrush } from './StudioSpecialBrushToolEngine'
+import { applyStudioFrameDivider } from './StudioFrameDividerToolEngine'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -302,6 +305,14 @@ registerTranslationNamespace('shadowStudio', {
   },
 })
 
+registerTranslationNamespace('studioTools', {
+  en: { tools: { filter: 'Filter / FX', special: 'Special Brush', divider: 'Frame Divider' } },
+  km: { tools: { filter: 'តម្រងរូបភាព', special: 'ជក់ពិសេស', divider: 'បែងចែកស៊ុម Manga' } },
+  zh: { tools: { filter: '滤镜', special: '特殊画笔', divider: '分格线' } },
+  ja: { tools: { filter: 'フィルター', special: '特殊ブラシ', divider: 'コマ分割' } },
+  ko: { tools: { filter: '필터', special: '특수 브러시', divider: '컷 분할' } },
+})
+
 const W = 1200
 const H = 800
 const HISTORY_LIMIT = 8
@@ -414,6 +425,7 @@ const placeImageLabel = {
   const [exportOpen, setExportOpen] = useState(false)
   const [newFilePreset, setNewFilePreset] = useState('basic')
   const [tool, setTool] = useState('brush')
+  const [specialMode, setSpecialMode] = useState('sparkle')
   const [mangaToolsOpen, setMangaToolsOpen] = useState(false)
   const [mangaToolInitial, setMangaToolInitial] = useState('bubble')
   const [advancedEditor, setAdvancedEditor] = useState(null)
@@ -1597,6 +1609,9 @@ const placeImageLabel = {
     else if (type === 'ruler') values = { axis: 'vertical', position: Math.round(stack.width / 2), angle: 0 }
     else if (type === 'balloon') values = { text: '', shape: 'ellipse', tail: 'bottom', width: Math.min(240, stack.width), height: Math.min(160, stack.height), fontSize: 24, font: 'sans', bold: false, italic: false, align: 'center', fill: '#FFFFFF', ink: color, textColor: color, opacity: 100 }
     else if (type === 'frame') values = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, border: 5, ink: color, fill: 'transparent' }
+    else if (type === 'filter') values = { type: 'grayscale', amount: 100, adjustment: 30 }
+    else if (type === 'special') values = { mode: specialMode }
+    else if (type === 'divider') values = { orientation: 'vertical', position: 0.5, gutter: 16, border: 4, ink: color, background: 'transparent', opacity: 100 }
     else values = { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
     setAdvancedEditor({ type, paperId: activeDocumentId, layerId: stack.activeLayerId, rect, values: { ...values, ...extras.values }, anchor: extras.anchor })
   }
@@ -1616,12 +1631,20 @@ const placeImageLabel = {
     }
     if (!studioLayerCanEdit(stack)) throw new Error('Unlock and show the selected layer first.')
     if (type === 'balloon') return applyRightFeature('balloon', { ...values, anchor: editor.anchor })
+    if (type === 'special') {
+      if (!['sparkle', 'star', 'glow'].includes(values.mode)) throw new Error('Choose a supported special brush.')
+      setSpecialMode(values.mode)
+      setProjectNotice('')
+      return true
+    }
     const ctx = drawingContext()
     if (!ctx) throw new Error('The selected layer is not editable.')
     const selected = selectionRef.current
     const selection = selected?.width === stack.width && selected?.height === stack.height ? selected : null
     let changed = false
-    if (type === 'transform') changed = transformStudioPixels(ctx, { ...values, rect: editor.rect, selection })
+    if (type === 'filter') changed = applyStudioPhotoFilter(ctx, { ...values, selection })
+    else if (type === 'divider') changed = Boolean(applyStudioFrameDivider(ctx, editor.rect, values))
+    else if (type === 'transform') changed = transformStudioPixels(ctx, { ...values, rect: editor.rect, selection })
     else if (type === 'perspective') {
       const corners = [0, 1, 2, 3].map((index) => ({ x: values[`corner${index}x`], y: values[`corner${index}y`] }))
       changed = applyStudioPerspectiveTransform(stack, { rect: editor.rect, corners, selection })
@@ -1666,7 +1689,7 @@ const placeImageLabel = {
       return
     }
     setTool(next)
-    if (['transform', 'perspective', 'canvas', 'ruler'].includes(next)) editTool(next)
+    if (['transform', 'perspective', 'canvas', 'ruler', 'filter', 'special', 'divider'].includes(next)) editTool(next)
     else if (next === 'balloon') setProjectNotice(language === 'km' ? 'ចុចលើក្រដាសដើម្បីជ្រើសទីតាំងពពុះសន្ទនា។' : 'Tap the paper to choose a speech balloon position.')
     else if (next === 'crop' || next === 'frame') setProjectNotice(language === 'km' ? 'អូសលើក្រដាសដើម្បីជ្រើសតំបន់។' : 'Drag on the paper to choose an area.')
   }
@@ -1770,7 +1793,7 @@ async function dropImageOnPaper(event) {
     if (tool === 'text') { event.preventDefault(); setTextEditor({ ...currentPoint, paperId: activeDocumentId }); return }
     if (tool === 'shape') { event.preventDefault(); setShapeEditor({ ...currentPoint, paperId: activeDocumentId }); return }
     if (tool === 'eyedropper') { event.preventDefault(); sampleCanvasColor(context(), canvas, currentPoint); return }
-    if (['transform', 'perspective', 'canvas', 'ruler'].includes(tool)) { event.preventDefault(); editTool(tool); return }
+    if (['transform', 'perspective', 'canvas', 'ruler', 'filter', 'divider'].includes(tool)) { event.preventDefault(); editTool(tool); return }
     if (tool === 'balloon') { event.preventDefault(); editTool('balloon', { anchor: currentPoint }); return }
     if (tool === 'wand') {
       event.preventDefault()
@@ -1793,10 +1816,10 @@ async function dropImageOnPaper(event) {
       } catch (error) { setProjectNotice(error.message || 'Paint Bucket failed.') }
       return
     }
-    const gestures = ['move', 'marquee', 'lasso', 'crop', 'frame', 'smudge', 'blur']
+    const gestures = ['move', 'marquee', 'lasso', 'crop', 'frame', 'smudge', 'blur', 'special']
     if (gestures.includes(tool)) {
-      const ctx = ['move', 'smudge', 'blur', 'frame'].includes(tool) ? drawingContext() : null
-      if (['move', 'smudge', 'blur', 'frame'].includes(tool) && !ctx) return
+      const ctx = ['move', 'smudge', 'blur', 'frame', 'special'].includes(tool) ? drawingContext() : null
+      if (['move', 'smudge', 'blur', 'frame', 'special'].includes(tool) && !ctx) return
       event.preventDefault()
       try {
         const gesture = {
@@ -1805,6 +1828,10 @@ async function dropImageOnPaper(event) {
         }
         if (tool === 'smudge') gesture.stroke = beginStudioSmudge(ctx, currentPoint, { size: Math.min(size, 256), strength: opacity / 100, selection: selectionRef.current })
         if (tool === 'blur') gesture.changed = applyStudioBlurDab(ctx, currentPoint, { size: Math.min(size, 256), strength: opacity / 100, selection: selectionRef.current })
+        if (tool === 'special') {
+          gesture.stroke = beginStudioSpecialBrush(ctx, currentPoint, { mode: specialMode, size: Math.min(256, Math.max(1, size)), color, opacity, selection: selectionRef.current })
+          gesture.changed = gesture.stroke.changed
+        }
         toolGestureRef.current = gesture
         drawingRef.current = true
         canvas.setPointerCapture?.(event.pointerId)
@@ -1847,6 +1874,7 @@ async function dropImageOnPaper(event) {
       try {
         if (gesture.tool === 'lasso' && Math.hypot(position.x - gesture.last.x, position.y - gesture.last.y) >= 2) gesture.points.push(position)
         if (gesture.tool === 'smudge') gesture.changed = extendStudioSmudge(ctx, gesture.stroke, position) || gesture.changed
+        if (gesture.tool === 'special') gesture.changed = extendStudioSpecialBrush(ctx, gesture.stroke, position) || gesture.changed
         if (gesture.tool === 'blur' && Math.hypot(position.x - gesture.last.x, position.y - gesture.last.y) >= Math.max(2, Math.min(size, 256) / 5)) gesture.changed = applyStudioBlurDab(ctx, position, { size: Math.min(size, 256), strength: opacity / 100, selection: selectionRef.current }) || gesture.changed
         gesture.last = position
         if (['marquee', 'lasso', 'crop', 'frame'].includes(gesture.tool)) paintToolOverlay(gesturePreview(gesture))
@@ -1918,6 +1946,10 @@ async function dropImageOnPaper(event) {
           if (event.type !== 'pointercancel') gesture.changed = extendStudioSmudge(gesture.ctx, gesture.stroke, end) || gesture.changed
           finishRasterStroke(gesture.ctx, gesture.changed)
         } else if (gesture.tool === 'blur') finishRasterStroke(gesture.ctx, gesture.changed)
+        else if (gesture.tool === 'special') {
+          if (event.type !== 'pointercancel') gesture.changed = extendStudioSpecialBrush(gesture.ctx, gesture.stroke, end) || gesture.changed
+          finishRasterStroke(gesture.ctx, gesture.changed)
+        }
       } catch (error) { setProjectNotice(error.message || 'Could not complete this tool.') }
       paintToolOverlay()
       return
@@ -1997,7 +2029,7 @@ async function dropImageOnPaper(event) {
         .ss-work{min-width:0;min-height:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53;touch-action:pan-x pan-y;overscroll-behavior:contain}.ss-work.ss-panning,.ss-work.ss-panning *{cursor:grabbing!important}.ss-work.ss-hand,.ss-work.ss-hand *{cursor:grab!important}
         .ss-stage{width:max-content;min-width:100%;min-height:100%;display:grid;place-items:center}
         .ss-canvas-frame{position:relative;flex:none;overflow:visible}
-        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;background-color:#fff;background-image:linear-gradient(45deg,#d9dfe6 25%,transparent 25%),linear-gradient(-45deg,#d9dfe6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9dfe6 75%),linear-gradient(-45deg,transparent 75%,#d9dfe6 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : ['brush', 'pencil', 'eraser', 'smudge', 'blur'].includes(tool) ? studioBrushCursor(size, zoom) : 'crosshair'}}
+        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;background-color:#fff;background-image:linear-gradient(45deg,#d9dfe6 25%,transparent 25%),linear-gradient(-45deg,#d9dfe6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9dfe6 75%),linear-gradient(-45deg,transparent 75%,#d9dfe6 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : ['brush', 'pencil', 'eraser', 'smudge', 'blur', 'special'].includes(tool) ? studioBrushCursor(size, zoom) : 'crosshair'}}
         .ss-view-buttons{display:flex;flex-wrap:wrap;gap:6px}
         .ss-view-btn{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:44px;height:31px;border:1px solid #555b62;border-radius:6px;background:#353a40;color:#e7ecf1;font:inherit;font-size:11px;cursor:pointer}
         .ss-view-btn:hover,.ss-view-btn.active{border-color:#72b3f7;background:#355274}
