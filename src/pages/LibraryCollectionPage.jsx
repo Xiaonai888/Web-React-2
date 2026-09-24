@@ -94,21 +94,75 @@ function Cover({ title, cover, children }) {
   )
 }
 
-function PurchaseCard({ item, t }) {
+function PurchaseCard({ item, t, token }) {
   const rule = accessType(item.access_rule)
   const canRead = rule === 'readOnline' || rule === 'both'
   const canDownload = rule === 'download' || rule === 'both'
   const url = String(item.pdf_file_url || '')
+  const id = String(item.product_id || '')
   const title = item.title || item.pdf_file_name || 'PDF'
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const iconClass = 'absolute right-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm disabled:opacity-50'
+
+  async function accessPrivatePdf(mode) {
+    if (busy || !id || !token) return
+    const reader = mode === 'read' ? window.open('', '_blank') : null
+    if (reader) reader.opener = null
+    if (mode === 'read' && !reader) {
+      setError(t('libraryCollection.fileNotReady'))
+      return
+    }
+    setBusy(true)
+    setError('')
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/${encodeURIComponent(id)}/pdf?mode=${mode}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}))
+        throw new Error(body.message || t('libraryCollection.fileNotReady'))
+      }
+      const pdf = await response.blob()
+      if (pdf.type !== 'application/pdf' || !pdf.size) throw new Error(t('libraryCollection.fileNotReady'))
+      const blobUrl = URL.createObjectURL(pdf)
+      if (mode === 'read') {
+        if (reader.closed) {
+          URL.revokeObjectURL(blobUrl)
+          return
+        }
+        reader.location.replace(blobUrl)
+        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 60 * 1000)
+      } else {
+        const anchor = document.createElement('a')
+        anchor.href = blobUrl
+        anchor.download = String(item.pdf_file_name || `${title}.pdf`).split(/[\\/]/).pop()
+        document.body.appendChild(anchor)
+        anchor.click()
+        anchor.remove()
+        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000)
+      }
+    } catch (reason) {
+      if (reader && !reader.closed) reader.close()
+      setError(reason?.message || t('libraryCollection.fileNotReady'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <article className="min-w-0">
       <Cover title={title} cover={item.cover_url}>
-        {canRead && url ? <a href={url} target="_blank" rel="noreferrer" aria-label={`${t('libraryCollection.read')}: ${title}`} title={t('libraryCollection.read')} className="absolute right-1.5 top-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm"><BookOpen size={16} /></a> : null}
-        {canDownload && url ? <a href={url} download={item.pdf_file_name || `${title}.pdf`} target="_blank" rel="noreferrer" aria-label={`${t('libraryCollection.downloadFile')}: ${title}`} title={t('libraryCollection.downloadFile')} className="absolute bottom-1.5 right-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm"><Download size={16} /></a> : null}
+        {canRead && url ? <a href={url} target="_blank" rel="noreferrer" aria-label={`${t('libraryCollection.read')}: ${title}`} title={t('libraryCollection.read')} className={`${iconClass} top-1.5`}><BookOpen size={16} /></a> : null}
+        {canRead && !url && id ? <button type="button" disabled={busy} onClick={() => accessPrivatePdf('read')} aria-label={`${t('libraryCollection.read')}: ${title}`} title={t('libraryCollection.read')} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
+        {canDownload && url ? <a href={url} download={item.pdf_file_name || `${title}.pdf`} target="_blank" rel="noreferrer" aria-label={`${t('libraryCollection.downloadFile')}: ${title}`} title={t('libraryCollection.downloadFile')} className={`${iconClass} bottom-1.5`}><Download size={16} /></a> : null}
+        {canDownload && !url && id ? <button type="button" disabled={busy} onClick={() => accessPrivatePdf('download')} aria-label={`${t('libraryCollection.downloadFile')}: ${title}`} title={t('libraryCollection.downloadFile')} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
       </Cover>
       <h2 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">{title}</h2>
       <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{rule === 'readOnline' ? 'eBook' : 'PDF'}</p>
-      {!url ? <p className="mt-1 text-[10px] text-[var(--shadow-warning)]">{t('libraryCollection.fileNotReady')}</p> : null}
+      {!url && !id ? <p className="mt-1 text-[10px] text-[var(--shadow-warning)]">{t('libraryCollection.fileNotReady')}</p> : null}
+      {error ? <p role="alert" className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]">{error}</p> : null}
     </article>
   )
 }
@@ -204,7 +258,7 @@ export default function LibraryCollectionPage() {
         </div>
         {loading ? <p role="status" className="mt-7 text-center text-sm text-[var(--shadow-text-secondary)]">{t('libraryCollection.loading')}</p> : error ? <p role="alert" className="mt-6 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]">{error}</p> : filtered.length ?
           <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-            {filtered.map((item) => purchased ? <PurchaseCard key={item.id} item={item} t={t} /> : <DownloadCard key={item.id} item={item} t={t} onOpen={() => navigate('/library/manage/offline-downloads')} />)}
+            {filtered.map((item) => purchased ? <PurchaseCard key={item.id} item={item} t={t} token={token} /> : <DownloadCard key={item.id} item={item} t={t} onOpen={() => navigate('/library/manage/offline-downloads')} />)}
           </div> : <div className="mt-5 flex flex-col items-center rounded-3xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-5 py-10 text-center text-[var(--shadow-text-secondary)]"><FolderOpen size={28} /><p className="mt-3 text-sm font-semibold">{t(`libraryCollection.${purchased ? 'noPurchases' : 'noDownloads'}`)}</p></div>}
       </main>
     </div>
