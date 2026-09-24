@@ -5295,11 +5295,14 @@ export default function ReaderPage() {
   const unlockStatusCacheRef = useRef(new Map())
   const unlockStatusRequestRef = useRef(new Map())
 
-  useEffect(() => {
-    unlockStatusCacheRef.current.clear()
-    unlockStatusRequestRef.current.clear()
-  }, [storyId])
-
+    useEffect(() => {
+    const recheckOnReconnect = () => {
+      if (offlineReaderReleaseRef.current && Number(episode?.episode_number || 0) > 5) window.location.reload()
+    }
+    window.addEventListener('online', recheckOnReconnect)
+    return () => window.removeEventListener('online', recheckOnReconnect)
+  }, [episode?.episode_number])
+  
   useEffect(() => {
     if (!offlineAccessExpiresAt) return undefined
 
