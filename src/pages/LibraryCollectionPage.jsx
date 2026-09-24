@@ -9,7 +9,7 @@ import { listOfflineEpisodes, loadOfflineEpisode } from '../utils/offlineReading
 registerTranslationNamespace('libraryCollection', {
   en: {
     back: 'Back to Library', purchased: 'Purchased', downloads: 'Downloads',
-    purchasedSubtitle: 'Books and PDFs you have purchased', downloadsSubtitle: 'Stories saved on this device',
+    purchasedSubtitle: 'Your purchased PDF and eBooks', downloadsSubtitle: 'Stories saved on this device',
     all: 'All', download: 'Download', readOnline: 'Read Online', both: 'Both',
     novel: 'Novel', manga: 'Manga', chatStory: 'Chat Story',
     noPurchases: 'No purchased books yet', noDownloads: 'No downloaded stories yet',
@@ -20,7 +20,7 @@ registerTranslationNamespace('libraryCollection', {
   },
   km: {
     back: 'ត្រឡប់ទៅ Library', purchased: 'បានទិញ', downloads: 'បានទាញយក',
-    purchasedSubtitle: 'សៀវភៅ និង PDF ដែលអ្នកបានទិញ', downloadsSubtitle: 'រឿងដែលបានរក្សាទុកលើឧបករណ៍នេះ',
+    purchasedSubtitle: 'PDF និង eBook ដែលអ្នកបានទិញ', downloadsSubtitle: 'រឿងដែលបានរក្សាទុកលើឧបករណ៍នេះ',
     all: 'ទាំងអស់', download: 'ទាញយក', readOnline: 'អាន Online', both: 'ទាំងពីរ',
     novel: 'ប្រលោមលោក', manga: 'Manga', chatStory: 'Chat Story',
     noPurchases: 'មិនទាន់មានសៀវភៅដែលបានទិញ', noDownloads: 'មិនទាន់មានរឿងដែលបានទាញយក',
@@ -31,7 +31,7 @@ registerTranslationNamespace('libraryCollection', {
   },
   zh: {
     back: '返回书库', purchased: '已购买', downloads: '已下载',
-    purchasedSubtitle: '您购买的图书和 PDF', downloadsSubtitle: '保存在此设备上的作品',
+    purchasedSubtitle: '您购买的 PDF 和电子书', downloadsSubtitle: '保存在此设备上的作品',
     all: '全部', download: '下载', readOnline: '在线阅读', both: '两者皆可',
     novel: '小说', manga: '漫画', chatStory: '聊天故事',
     noPurchases: '暂无已购图书', noDownloads: '暂无下载的作品',
@@ -42,7 +42,7 @@ registerTranslationNamespace('libraryCollection', {
   },
   ja: {
     back: 'ライブラリに戻る', purchased: '購入済み', downloads: 'ダウンロード',
-    purchasedSubtitle: '購入した書籍と PDF', downloadsSubtitle: 'この端末に保存した作品',
+    purchasedSubtitle: '購入した PDF と電子書籍', downloadsSubtitle: 'この端末に保存した作品',
     all: 'すべて', download: 'ダウンロード', readOnline: 'オンラインで読む', both: '両方',
     novel: '小説', manga: 'マンガ', chatStory: 'チャットストーリー',
     noPurchases: '購入した書籍はありません', noDownloads: 'ダウンロードした作品はありません',
@@ -53,7 +53,7 @@ registerTranslationNamespace('libraryCollection', {
   },
   ko: {
     back: '라이브러리로 돌아가기', purchased: '구매 내역', downloads: '다운로드',
-    purchasedSubtitle: '구매한 책과 PDF', downloadsSubtitle: '이 기기에 저장한 작품',
+    purchasedSubtitle: '구매한 PDF 및 전자책', downloadsSubtitle: '이 기기에 저장한 작품',
     all: '전체', download: '다운로드', readOnline: '온라인 읽기', both: '둘 다',
     novel: '소설', manga: '만화', chatStory: '채팅 스토리',
     noPurchases: '구매한 책이 없습니다', noDownloads: '다운로드한 작품이 없습니다',
@@ -98,7 +98,8 @@ function PurchaseCard({ item, t, token }) {
   const rule = accessType(item.access_rule)
   const canRead = rule === 'readOnline' || rule === 'both'
   const canDownload = rule === 'download' || rule === 'both'
-  const url = String(item.pdf_file_url || '')
+  const rawUrl = String(item.pdf_file_url || '').trim()
+  const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : ''
   const id = String(item.product_id || '')
   const title = item.title || item.pdf_file_name || 'PDF'
   const [busy, setBusy] = useState(false)
@@ -125,7 +126,7 @@ function PurchaseCard({ item, t, token }) {
         throw new Error(body.message || t('libraryCollection.fileNotReady'))
       }
       const pdf = await response.blob()
-      if (pdf.type !== 'application/pdf' || !pdf.size) throw new Error(t('libraryCollection.fileNotReady'))
+      if (!pdf.type.toLowerCase().startsWith('application/pdf') || !pdf.size) throw new Error(t('libraryCollection.fileNotReady'))
       const blobUrl = URL.createObjectURL(pdf)
       if (mode === 'read') {
         if (reader.closed) {
@@ -247,7 +248,7 @@ export default function LibraryCollectionPage() {
     <div className="app-page min-h-screen pb-[88px]">
       <header className="app-nav sticky top-0 z-40 border-b border-[var(--shadow-border)]">
         <div className="flex h-14 items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate(-1)} aria-label={t('libraryCollection.back')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"><ChevronLeft size={20} /></button>
+          <button type="button" onClick={() => navigate('/library')} aria-label={t('libraryCollection.back')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"><ChevronLeft size={20} /></button>
           <h1 className="min-w-0 text-[17px] font-extrabold text-[var(--shadow-text-primary)]">{t(`libraryCollection.${purchased ? 'purchased' : 'downloads'}`)}</h1>
         </div>
       </header>
