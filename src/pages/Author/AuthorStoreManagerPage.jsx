@@ -1460,7 +1460,7 @@ const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Book
 const TYPE_FILTERS = ['All', 'Book', 'PDF', 'Active', 'Draft']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
-const PDF_ACCESS_RULES = ['Read online only']
+const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Download and read online']
 const ORDER_REPORT_LIMIT = 20
 const ORDER_REFRESH_INTERVAL_MS = 60000
 const ORDER_MAX_AUTO_REFRESHES = 10
@@ -2013,7 +2013,7 @@ async function createStoreProduct(product) {
       pdf_file_url: product.type === 'PDF' ? '' : product.pdfFileUrl,
       pdf_file_name: product.pdfFileName,
       page_count: product.pageCount,
-      access_rule: product.type === 'PDF' ? 'Read online only' : product.accessRule,
+      access_rule: product.accessRule,
     }),
   })
 
@@ -2064,7 +2064,7 @@ async function updateStoreProduct(productId, product) {
       pdf_file_url: product.pdfFileUrl,
       pdf_file_name: product.pdfFileName,
       page_count: product.pageCount,
-      access_rule: product.type === 'PDF' ? 'Read online only' : product.accessRule,
+      access_rule: product.accessRule,
     }),
   })
 
@@ -3945,7 +3945,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const [pdfFile, setPdfFile] = useState(null)
   const [pdfFileUrl, setPdfFileUrl] = useState(productToEdit?.pdfFileUrl || '')
   const [pageCount, setPageCount] = useState(productToEdit?.pageCount || '')
-  const [accessRule, setAccessRule] = useState('Read online only')
+  const [accessRule, setAccessRule] = useState(productToEdit?.accessRule || 'Read online only')
   const [saving, setSaving] = useState(false)
 
   const selectCover = (file) => {
@@ -4132,7 +4132,7 @@ stock,
         pdfFileName,
 pdfFileUrl,
 pageCount,
-accessRule: type === 'PDF' ? 'Read online only' : accessRule,
+accessRule,
       })
     } catch {
       onNotify?.(type === 'PDF' && pdfFile ? storeText('pdfUploadTryAgain') : storeText('saveTryAgain'), 'error')
@@ -4881,7 +4881,7 @@ const saveCategoryOrder = async () => {
               ...product,
               pdfFileName: editingProduct?.pdfFileName || '',
               pdfFileUrl: editingProduct?.pdfFileUrl || '',
-              accessRule: 'Read online only',
+              accessRule,accessRule: product.accessRule,
             }
           : product
 
@@ -4892,7 +4892,7 @@ const saveCategoryOrder = async () => {
               ...product,
               status: 'Draft',
               pdfFileUrl: '',
-              accessRule: 'Read online only',
+              accessRule,accessRule: product.accessRule,
             }
           : product
 
@@ -4914,7 +4914,7 @@ const saveCategoryOrder = async () => {
             pdfFile: null,
             pdfFileUrl: '',
             pdfFileName: privatePdf.file_name,
-            accessRule: 'Read online only',
+            accessRule,accessRule: product.accessRule,
           })
         }
       }
