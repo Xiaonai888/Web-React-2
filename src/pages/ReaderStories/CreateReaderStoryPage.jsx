@@ -22,6 +22,7 @@ function RepostStoryComposer({ source }) {
   const isExpired = Number.isFinite(expiresAt) && expiresAt > 0 && expiresAt <= Date.now()
   const creatorName = String(source.creator_name || 'Shadow creator')
   const sourceText = String(source.text_overlay || '')
+  const previewText = `Repost from ${creatorName}${text || sourceText ? ` · ${text || sourceText}` : ''}`.slice(0, 200)
 
   useEffect(() => {
     if (!error) return undefined
@@ -84,9 +85,9 @@ function RepostStoryComposer({ source }) {
           <span className="h-11 w-11 shrink-0" />
         </div>
       </header>
-      {(text || sourceText) ? (
+      {previewText ? (
         <button type="button" onClick={() => setEditing(true)} disabled={busy} className="absolute inset-x-6 top-[40%] z-20 text-center">
-          <span className="inline-block max-w-full break-words rounded-[12px] bg-black/40 px-4 py-2 text-[25px] font-bold leading-tight text-white shadow-lg backdrop-blur-sm">{text || sourceText}</span>
+          <span className="inline-block max-w-full break-words rounded-[12px] bg-black/40 px-4 py-2 text-[25px] font-bold leading-tight text-white shadow-lg backdrop-blur-sm">{previewText}</span>
         </button>
       ) : null}
       <div className="absolute inset-x-0 bottom-[82px] z-30 flex justify-center">
