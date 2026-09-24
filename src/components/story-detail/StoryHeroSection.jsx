@@ -3,8 +3,7 @@ import ReportModal from '../ReportModal'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { Link } from 'react-router-dom'
-import { Download } from 'lucide-react'
-
+import { Download, ChevronLeft, Bookmark, Ellipsis } from 'lucide-react'
 
 registerTranslationNamespace('storyHeroSection', {
   en: {
@@ -196,7 +195,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
             aria-label={t('storyHeroSection.goBack')}
           >
-            <i className="fa-solid fa-chevron-left text-[24px]" />
+            <ChevronLeft size={24} strokeWidth={2.5} aria-hidden="true" />
           </button>
 
           <h1
@@ -225,7 +224,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
               aria-label={t('storyHeroSection.addToLibrary')}
             >
-              <i className={`${bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark text-[24px]`} />
+              <Bookmark size={24} strokeWidth={2.5} fill={bookmarked ? 'currentColor' : 'none'} aria-hidden="true" />
             </button>
 
             <div className="relative">
@@ -239,7 +238,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
                 aria-label={t('storyHeroSection.more')}
               >
-                <i className="fa-solid fa-ellipsis flex h-6 w-6 items-center justify-center text-[22px] leading-none" />
+                <Ellipsis size={24} strokeWidth={2.5} aria-hidden="true" />
               </button>
 
               {menuOpen ? (
