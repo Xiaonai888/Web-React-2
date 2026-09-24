@@ -11,6 +11,7 @@ const brief = (value, max) => String(value ?? '').slice(0, max)
 const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
 export const createShadowDocsId = ids
 export const isShadowDocsImage = value => typeof value === 'string' && /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(value) && value.length < 2_500_000
+export const isShadowDocsManuscriptImage = value => isShadowDocsImage(value) && value.length <= 300_000
 
 export function sanitizeShadowDocsHTML(source) {
   const html = String(source ?? '').slice(0, 500_000)
@@ -20,6 +21,15 @@ export function sanitizeShadowDocsHTML(source) {
     if (node.nodeType === 3) return escapeHTML(node.nodeValue)
     if (node.nodeType !== 1) return ''
     if (node.tagName === 'HR' && node.getAttribute('data-shadow-docs-page-break') === '1') return '<hr data-shadow-docs-page-break="1" contenteditable="false">'
+    if (node.tagName === 'IMG') {
+      const src = node.getAttribute('src') || ''
+      if (!isShadowDocsManuscriptImage(src)) return ''
+      const width = [50, 75, 100].includes(Number(node.getAttribute('data-shadow-docs-width'))) ? Number(node.getAttribute('data-shadow-docs-width')) : 75
+      const align = ['left', 'center', 'right'].includes(node.getAttribute('data-shadow-docs-align')) ? node.getAttribute('data-shadow-docs-align') : 'center'
+      const margin = align === 'left' ? '1em auto 1em 0' : align === 'right' ? '1em 0 1em auto' : '1em auto'
+      const alt = escapeHTML(String(node.getAttribute('alt') || '').slice(0, 80))
+      return `<img src="${src}" alt="${alt}" data-shadow-docs-width="${width}" data-shadow-docs-align="${align}" style="display:block;width:${width}%;max-width:100%;height:auto;margin:${margin};break-inside:avoid">`
+    }
     const content = Array.from(node.childNodes, walk).join('')
     if (!ALLOWED.has(node.tagName)) return content
     if (node.tagName === 'BR') return '<br>'
