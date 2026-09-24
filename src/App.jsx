@@ -103,6 +103,7 @@ const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestS
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const StoryBulkDownloadPage = lazy(() => import('./pages/StoryBulkDownloadPage'))
+const LibraryCollectionPage = lazy(() => import('./pages/LibraryCollectionPage'))
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesdayEventPage'))
 const AuthorDaily50EventPage = lazy(() => import('./pages/Event/AuthorDaily50EventPage'))
@@ -1394,6 +1395,7 @@ const shouldShowOpeningAds =
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/library" element={<Library />} />
+        <Route path="/library/collection/:section" element={<LazyPage><LibraryCollectionPage /></LazyPage>} />
         <Route path="/library/manage" element={<ManageLibraryPage />} />
         <Route path="/library/manage/:section" element={<ManageLibraryPage />} />
         <Route path="/profile/edit" element={<EditProfilePage />} />
