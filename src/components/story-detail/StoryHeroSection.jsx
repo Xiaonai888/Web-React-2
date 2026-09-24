@@ -195,7 +195,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
             aria-label={t('storyHeroSection.goBack')}
           >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
+            <i className="fa-solid fa-chevron-left text-[17px]" />
           </button>
 
           <h1
@@ -224,7 +224,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
               aria-label={t('storyHeroSection.addToLibrary')}
             >
-              <i className={`${bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark text-[15px]`} />
+              <i className={`${bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark text-[17px]`} />
             </button>
 
             <div className="relative">
@@ -238,7 +238,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
                 aria-label={t('storyHeroSection.more')}
               >
-                <i className="fa-solid fa-ellipsis text-[16px]" />
+                <i className="fa-solid fa-ellipsis relative top-[2px] text-[16px]" />
               </button>
 
               {menuOpen ? (
