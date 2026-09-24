@@ -441,7 +441,7 @@ export default function AuthorReaderPageOptionsPage() {
             onClick={() => setShareOpen(true)}
           />
           <ActionRow
-            icon="fa-solid fa-shield-halved"
+            icon="fa-regular fa-eye"
             label={t('authorReaderPageOptions.pageTransparency')}
             onClick={() => navigate(`/author/page/${encodeURIComponent(pageUsername)}/transparency`)}
           />
