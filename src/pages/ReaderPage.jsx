@@ -949,6 +949,7 @@ async function fetchIOSEpisode(storyId, episodeId, manifest, nativeFetch) {
   const item = manifest?.episodes?.find((entry) => String(entry.id) === String(episodeId))
   if (!IOS_READER || !iosEligibleManifest(manifest) || !item ||
     item.is_adult || typeof item.is_locked !== 'boolean') return nativeFetch()
+  if (!item.is_locked && !item.is_free_published) return nativeFetch()
   const privateAccess = item.is_locked
   const scope = privateAccess ? iosPrivateScope() : 'public'
   if (scope) {
