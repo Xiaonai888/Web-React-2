@@ -215,6 +215,13 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
           </h1>
 
           <div className="flex shrink-0 items-center gap-2">
+            <Link
+  to={`/story/${encodeURIComponent(story?.id || '')}/download`}
+  aria-label="Download episodes"
+  className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${showTitleBar ? 'bg-transparent text-[var(--shadow-text-primary)]' : 'bg-transparent text-white'}`}
+>
+  <i className="fa-solid fa-download text-[16px]" aria-hidden="true" />
+</Link>
             <button
               type="button"
               onClick={onToggleBookmark}
