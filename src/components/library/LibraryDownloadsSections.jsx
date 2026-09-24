@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { BookOpen, Download, FolderOpen, ChevronRight } from 'lucide-react'
 import { getOfflineReaderAccountId } from '../../utils/offlineReaderContent'
 import { listOfflineEpisodes, loadOfflineEpisode } from '../../utils/offlineReadingStorage'
@@ -34,11 +34,12 @@ function BookCover({ title, url, children }) {
   )
 }
 
-function PurchasedBook({ item, t }) {
+function PurchasedBook({ item, t, onRead }) {
   const story = item.story || item
   const rights = accessRights(story.access_rule)
   const title = story.title || story.pdf_file_name || 'PDF'
-  const url = String(story.pdf_file_url || '')
+  const rawUrl = String(story.pdf_file_url || '').trim()
+  const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : ''
   const productId = String(story.id || story.product_id || item.product_id || '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -93,8 +94,7 @@ function PurchasedBook({ item, t }) {
   return (
     <article className="min-w-0">
       <BookCover title={title} url={story.cover_url}>
-        {rights.read && url ? <a href={url} target="_blank" rel="noreferrer" aria-label={`${t('librarySections.read')}: ${title}`} className={`${iconClass} top-1.5`}><BookOpen size={16} /></a> : null}
-        {rights.read && !url && productId ? <button type="button" disabled={busy} onClick={() => openPrivatePdf('read')} aria-label={`${t('librarySections.read')}: ${title}`} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
+        {rights.read && productId ? <button type="button" onClick={() => onRead(productId)} aria-label={`${t('librarySections.read')}: ${title}`} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
         {rights.download && url ? <a href={url} target="_blank" rel="noreferrer" download={story.pdf_file_name || `${title}.pdf`} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></a> : null}
         {rights.download && !url && productId ? <button type="button" disabled={busy} onClick={() => openPrivatePdf('download')} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
       </BookCover>
@@ -132,6 +132,8 @@ function Section({ title, subtitle, url, children, t }) {
 export default function LibraryDownloadsSections({ purchases = [], loading = false, isLoggedIn = false }) {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
+  const source = new URLSearchParams(location.search).get('source') === 'me' ? 'source=me&' : ''
   const accountId = getOfflineReaderAccountId()
   const [savedStories, setSavedStories] = useState([])
   const [loadingSaved, setLoadingSaved] = useState(true)
@@ -170,11 +172,11 @@ export default function LibraryDownloadsSections({ purchases = [], loading = fal
 
   return (
     <>
-      <Section title={t('librarySections.purchased')} subtitle={t('librarySections.purchasedInfo')} url="/library/collection/purchased" t={t}>
-        {loading ? <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">{t('librarySections.loading')}</p> : purchases.length ? <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">{purchases.slice(0, 6).map((item) => <PurchasedBook key={item.id || item.story_id} item={item} t={t} />)}</div> : <div className="flex items-center gap-2 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]"><FolderOpen size={18}/>{t('librarySections.noPurchases')}</div>}
+      <Section title={t('librarySections.purchased')} subtitle={t('librarySections.purchasedInfo')} url={`/library/collection/purchased${source ? `?${source.slice(0, -1)}` : ''}`} t={t}>
+        {loading ? <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">{t('librarySections.loading')}</p> : purchases.length ? <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">{purchases.slice(0, 6).map((item) => <PurchasedBook key={item.id || item.story_id} item={item} t={t} onRead={(id) => navigate(`/library/collection/purchased?${source}read=${encodeURIComponent(id)}`)} />)}</div> : <div className="flex items-center gap-2 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]"><FolderOpen size={18}/>{t('librarySections.noPurchases')}</div>}
       </Section>
-      <Section title={t('librarySections.downloads')} subtitle={t('librarySections.downloadsInfo')} url="/library/collection/downloads" t={t}>
-        {loadingSaved ? <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">{t('librarySections.loading')}</p> : savedError ? <p role="alert" className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]">{savedError}</p> : savedStories.length ? <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">{savedStories.map((item) => <DownloadedStory key={item.id} item={item} t={t} onOpen={() => navigate('/library/manage/offline-downloads')} />)}</div> : <div className="flex items-center gap-2 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]"><FolderOpen size={18}/>{t('librarySections.noDownloads')}</div>}
+      <Section title={t('librarySections.downloads')} subtitle={t('librarySections.downloadsInfo')} url={`/library/collection/downloads${source ? `?${source.slice(0, -1)}` : ''}`} t={t}>
+        {loadingSaved ? <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">{t('librarySections.loading')}</p> : savedError ? <p role="alert" className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]">{savedError}</p> : savedStories.length ? <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">{savedStories.map((item) => <DownloadedStory key={item.id} item={item} t={t} onOpen={() => navigate(`/library/manage/offline-downloads?storyId=${encodeURIComponent(item.id)}`)} />)}</div> : <div className="flex items-center gap-2 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]"><FolderOpen size={18}/>{t('librarySections.noDownloads')}</div>}
       </Section>
     </>
   )
