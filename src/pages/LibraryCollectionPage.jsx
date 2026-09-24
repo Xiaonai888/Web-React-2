@@ -293,7 +293,7 @@ export default function LibraryCollectionPage() {
     <div className="app-page min-h-screen pb-[88px]">
       <header className="app-nav sticky top-0 z-40 border-b border-[var(--shadow-border)]">
         <div className="flex h-14 items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate(readId ? `/library/collection/purchased${source ? `?${source.slice(0, -1)}` : ''}` : `/library?tab=downloads${source ? '&source=me' : ''}`)} aria-label={t('libraryCollection.back')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"><ChevronLeft size={20} /></button>
+          <button type="button" onClick={() => navigate(readId ? `/library/collection/purchased${source ? `?${source.slice(0, -1)}` : ''}` : `/library?tab=downloads${source ? '&source=me' : ''}`)} aria-label={t('libraryCollection.back')} className="flex h-9 w-9 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]"><ChevronLeft size={20} /></button>
           <h1 className="min-w-0 text-[17px] font-extrabold text-[var(--shadow-text-primary)]">{t(`libraryCollection.${purchased ? 'purchased' : 'downloads'}`)}</h1>
         </div>
       </header>
