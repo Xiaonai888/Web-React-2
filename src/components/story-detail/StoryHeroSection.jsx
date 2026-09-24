@@ -3,7 +3,7 @@ import ReportModal from '../ReportModal'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { Link } from 'react-router-dom'
-import { Download, ChevronLeft, Bookmark, Ellipsis } from 'lucide-react'
+import { Download } from 'lucide-react'
 
 registerTranslationNamespace('storyHeroSection', {
   en: {
@@ -195,7 +195,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
             aria-label={t('storyHeroSection.goBack')}
           >
-            <ChevronLeft size={24} strokeWidth={2.5} aria-hidden="true" />
+            <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <h1
@@ -212,7 +212,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
               aria-label="Download episodes"
               className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${showTitleBar ? 'bg-transparent text-[var(--shadow-text-primary)]' : 'bg-transparent text-white'}`}
             >
-              <Download size={24} strokeWidth={2.5} aria-hidden="true" />
+              <Download size={22} strokeWidth={2.5} aria-hidden="true" />
             </Link>
             <button
               type="button"
@@ -224,7 +224,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
               aria-label={t('storyHeroSection.addToLibrary')}
             >
-              <Bookmark size={24} strokeWidth={2.5} fill={bookmarked ? 'currentColor' : 'none'} aria-hidden="true" />
+              <i className={`${bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark text-[15px]`} />
             </button>
 
             <div className="relative">
@@ -238,7 +238,7 @@ export default function StoryHeroSection({ story, episodeCount, onBack, bookmark
 }`}
                 aria-label={t('storyHeroSection.more')}
               >
-                <Ellipsis size={24} strokeWidth={2.5} aria-hidden="true" />
+                <i className="fa-solid fa-ellipsis text-[16px]" />
               </button>
 
               {menuOpen ? (
