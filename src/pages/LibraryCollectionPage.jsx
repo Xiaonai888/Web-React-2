@@ -294,7 +294,7 @@ export default function LibraryCollectionPage() {
       <header className="app-nav sticky top-0 z-40 border-b border-[var(--shadow-border)]">
         <div className="flex h-14 items-center gap-3 px-4">
           <button type="button" onClick={() => navigate(readId ? `/library/collection/purchased${source ? `?${source.slice(0, -1)}` : ''}` : `/library?tab=downloads${source ? '&source=me' : ''}`)} aria-label={t('libraryCollection.back')} className="flex h-9 w-9 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]"><ChevronLeft size={20} /></button>
-          <h1 className="min-w-0 text-[17px] font-extrabold text-[var(--shadow-text-primary)]">{t(`libraryCollection.${purchased ? 'purchased' : 'downloads'}`)}</h1>
+          <h1 className="min-w-0 text-[16px] font-bold text-[var(--shadow-text-primary)]">{t(`libraryCollection.${purchased ? 'purchased' : 'downloads'}`)}</h1>
         </div>
       </header>
       <main className="mx-auto w-full max-w-[780px] px-4 pb-8 pt-5 sm:px-5">
