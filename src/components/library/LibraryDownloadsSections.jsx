@@ -39,15 +39,68 @@ function PurchasedBook({ item, t }) {
   const rights = accessRights(story.access_rule)
   const title = story.title || story.pdf_file_name || 'PDF'
   const url = String(story.pdf_file_url || '')
-  const iconClass = 'absolute right-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm'
+  const productId = String(story.id || story.product_id || item.product_id || '')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const iconClass = 'absolute right-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm disabled:opacity-50'
+
+  async function openPrivatePdf(mode) {
+    if (!productId || busy) return
+    const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+    const reader = mode === 'read' ? window.open('', '_blank') : null
+    if (reader) reader.opener = null
+    if (!token || (mode === 'read' && !reader)) {
+      if (reader) reader.close()
+      setError('Unable to open this PDF')
+      return
+    }
+    setBusy(true)
+    setError('')
+    try {
+      const api = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
+      const response = await fetch(`${api}/api/author-store/downloads/${encodeURIComponent(productId)}/pdf?mode=${mode}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.message || 'Unable to open this PDF')
+      }
+      const pdf = await response.blob()
+      if (!pdf.size || pdf.type !== 'application/pdf') throw new Error('PDF is unavailable')
+      const blobUrl = URL.createObjectURL(pdf)
+      if (mode === 'read') {
+        if (reader.closed) {
+          URL.revokeObjectURL(blobUrl)
+          return
+        }
+        reader.location.replace(blobUrl)
+        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 60 * 1000)
+      } else {
+        const anchor = document.createElement('a')
+        anchor.href = blobUrl
+        anchor.download = String(story.pdf_file_name || `${title}.pdf`).split(/[\\/]/).pop()
+        document.body.appendChild(anchor)
+        anchor.click()
+        anchor.remove()
+        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000)
+      }
+    } catch (reason) {
+      if (reader && !reader.closed) reader.close()
+      setError(reason?.message || 'Unable to open this PDF')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <article className="min-w-0">
       <BookCover title={title} url={story.cover_url}>
         {rights.read && url ? <a href={url} target="_blank" rel="noreferrer" aria-label={`${t('librarySections.read')}: ${title}`} className={`${iconClass} top-1.5`}><BookOpen size={16} /></a> : null}
+        {rights.read && !url && productId ? <button type="button" disabled={busy} onClick={() => openPrivatePdf('read')} aria-label={`${t('librarySections.read')}: ${title}`} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
         {rights.download && url ? <a href={url} target="_blank" rel="noreferrer" download={story.pdf_file_name || `${title}.pdf`} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></a> : null}
+        {rights.download && !url && productId ? <button type="button" disabled={busy} onClick={() => openPrivatePdf('download')} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
       </BookCover>
       <h3 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">{title}</h3>
       <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{rights.read && !rights.download ? 'eBook' : 'PDF'}</p>
+      {error ? <p role="alert" className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]">{error}</p> : null}
     </article>
   )
 }
