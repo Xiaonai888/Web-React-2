@@ -1514,7 +1514,28 @@ function StoryViewer({
               ) : null}
 
               <div className="absolute inset-x-0 bottom-0 z-40 bg-black px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-2">
-                <article className="mx-auto flex w-full max-w-[480px] items-center justify-end gap-0.5">
+                <article className="mx-auto flex w-full max-w-[480px] items-center justify-between gap-0.5">
+                  <button
+                    type="button"
+                    aria-label="Repost this story"
+                    onClick={() => navigate('/reader/story/create', {
+                      state: {
+                        repostStory: {
+                          id: story.id,
+                          source_type: story.source_type,
+                          media_type: story.media_type,
+                          media_url: story.media_url,
+                          expires_at: story.expires_at,
+                          text_overlay: story.text_overlay || story.caption || '',
+                          creator_name: creator.name || 'Shadow creator',
+                        },
+                      },
+                    })}
+                    className="flex h-11 min-w-[38px] shrink-0 items-center justify-center gap-1 text-white/90 transition-opacity active:opacity-60 min-[390px]:min-w-[70px]"
+                  >
+                    <i className="fa-solid fa-retweet text-[18px]" aria-hidden="true" />
+                    <span className="hidden text-[11px] min-[390px]:inline">Repost</span>
+                  </button>
                   {REACTIONS.map((reaction) => (
                     <StoryReactionIcon
                       key={reaction.type}
