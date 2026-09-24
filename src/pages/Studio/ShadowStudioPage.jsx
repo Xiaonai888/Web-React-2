@@ -39,6 +39,20 @@ import { applyStudioSpeechBubble } from './StudioSpeechBubbleEngine'
 import { applyStudioComicPanels } from './StudioComicPanelsEngine'
 import { applyStudioMangaEffect } from './StudioMangaEffectsEngine'
 import { moveStudioPixels } from './StudioMoveToolEngine'
+import { transformStudioPixels } from './StudioTransformToolEngine'
+import { createStudioRectangleSelection } from './StudioRectangleSelectToolEngine'
+import { createStudioMagicWandSelection } from './StudioMagicWandToolEngine'
+import { createStudioLassoSelection } from './StudioLassoToolEngine'
+import { beginStudioSmudge, extendStudioSmudge } from './StudioSmudgeToolEngine'
+import { applyStudioBlurDab } from './StudioBlurToolEngine'
+import { cropStudioCanvas } from './StudioCropToolEngine'
+import { resizeStudioCanvas } from './StudioCanvasResizeToolEngine'
+import { applyStudioPerspectiveTransform } from './StudioPerspectiveToolEngine'
+import { applyStudioSelectedGradient } from './StudioGradientSelectionToolEngine'
+import { applyStudioCustomComicFrames } from './StudioCustomComicFrameToolEngine'
+import { createStudioRulerGuide, renderStudioRulerGuides, snapStudioPointToGuides } from './StudioRulerGuideToolEngine'
+import { placeStudioMangaBalloon } from './StudioBalloonPlacementToolEngine'
+import StudioAdvancedToolPanel from './StudioAdvancedToolPanel'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -375,6 +389,10 @@ const placeImageLabel = {
   const zoomAnchorRef = useRef(null)
   const drawingRef = useRef(false)
   const strokeRef = useRef(null)
+  const toolGestureRef = useRef(null)
+  const toolOverlayRef = useRef(null)
+  const selectionRef = useRef(null)
+  const guidesRef = useRef([])
   const historyRef = useRef([])
   const redoRef = useRef([])
   const layerStackRef = useRef(null)
@@ -398,6 +416,7 @@ const placeImageLabel = {
   const [tool, setTool] = useState('brush')
   const [mangaToolsOpen, setMangaToolsOpen] = useState(false)
   const [mangaToolInitial, setMangaToolInitial] = useState('bubble')
+  const [advancedEditor, setAdvancedEditor] = useState(null)
   const [textEditor, setTextEditor] = useState(null)
   const [shapeEditor, setShapeEditor] = useState(null)
   const [brushStyle, setBrushStyle] = useState('round')
@@ -455,6 +474,61 @@ const placeImageLabel = {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId) return null
     return studioLayerCanEdit(stack) ? studioLayerContext(stack) : null
+  }
+
+  function clearSelection() {
+    selectionRef.current = null
+    paintToolOverlay()
+  }
+
+  function selectionBounds(selection) {
+    if (!selection?.data) return null
+    if (selection.bounds) return selection.bounds.width && selection.bounds.height ? selection.bounds : null
+    let left = selection.width, top = selection.height, right = 0, bottom = 0
+    for (let index = 0; index < selection.data.length; index += 1) {
+      if (!selection.data[index]) continue
+      const x = index % selection.width
+      const y = (index - x) / selection.width
+      left = Math.min(left, x)
+      top = Math.min(top, y)
+      right = Math.max(right, x + 1)
+      bottom = Math.max(bottom, y + 1)
+    }
+    return right > left && bottom > top ? { x: left, y: top, width: right - left, height: bottom - top } : null
+  }
+
+  function paintToolOverlay(preview = null) {
+    const canvas = toolOverlayRef.current
+    const stack = layerStackRef.current
+    if (!canvas || !stack || canvasDocumentRef.current !== activeDocumentId) return
+    if (canvas.width !== stack.width) canvas.width = stack.width
+    if (canvas.height !== stack.height) canvas.height = stack.height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (guidesRef.current.length) renderStudioRulerGuides(ctx, guidesRef.current)
+    const chosen = preview || selectionRef.current
+    if (!chosen) return
+    ctx.save()
+    try {
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+      ctx.setLineDash([7, 5])
+      ctx.lineWidth = Math.max(1, 100 / Math.max(1, zoom))
+      ctx.strokeStyle = '#33bfff'
+      ctx.fillStyle = 'rgba(51,191,255,.12)'
+      if (Array.isArray(chosen.points) && chosen.points.length > 1) {
+        ctx.beginPath()
+        chosen.points.forEach((p, index) => index ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))
+        if (chosen.closed) ctx.closePath()
+        ctx.stroke()
+      } else {
+        const rect = chosen.bounds || chosen
+        if (rect.width > 0 && rect.height > 0) {
+          ctx.strokeRect(rect.x, rect.y, rect.width, rect.height)
+          ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
+        }
+      }
+    } finally { ctx.restore() }
   }
 
   function changeLayer(action, layerId, value) {
@@ -529,6 +603,8 @@ const placeImageLabel = {
       } else return
       paintLayerPreview()
       if (action === 'select') {
+        selectionRef.current = null
+        paintToolOverlay()
         const last = historyRef.current[historyRef.current.length - 1]
         if (last) last.activeLayerId = stack.activeLayerId
         refresh((number) => number + 1)
@@ -561,7 +637,10 @@ const placeImageLabel = {
       prepared.height = stack.height
       const context = prepared.getContext('2d', { willReadFrequently: true })
       if (!context) throw new Error('The Manga balloon canvas is unavailable.')
-      drawStudioMangaBalloon(context, null, options)
+      if (options?.anchor) {
+        const temporary = { width: stack.width, height: stack.height, layers: [{ id: 'balloon-placement', canvas: prepared, visible: true, locked: false }], activeLayerId: 'balloon-placement' }
+        placeStudioMangaBalloon(temporary, options.anchor, options)
+      } else drawStudioMangaBalloon(context, null, options)
       let addedLayer = null
       try {
         addedLayer = addStudioLayer(stack, 'Manga Balloon')
@@ -591,7 +670,10 @@ const placeImageLabel = {
       panels: applyStudioComicPanels,
       effects: applyStudioMangaEffect,
     }
-    const action = actions[kind]
+    const selection = selectionRef.current
+    const action = kind === 'gradient' && selection?.data && selection.width === stack.width && selection.height === stack.height
+      ? (layerStack, settings) => applyStudioSelectedGradient(layerStack, selection, settings)
+      : actions[kind]
     if (!action) throw new Error('This effect is not available.')
     const changed = action(stack, options)
     if (changed) {
@@ -608,12 +690,15 @@ const placeImageLabel = {
     const stack = layerStackRef.current
     const canvas = canvasRef.current
     if (stack && canvas) renderStudioAdvancedLayers(stack, canvas)
+    paintToolOverlay()
   }
 
   function captureLayerHistory() {
     const stack = layerStackRef.current
     if (!stack) return null
     return {
+      width: stack.width,
+      height: stack.height,
       activeLayerId: stack.activeLayerId,
       groups: (stack.groups || []).map((group) => ({ ...group })),
       layers: stack.layers.map((layer) => ({
@@ -635,10 +720,22 @@ const placeImageLabel = {
   function restoreLayerHistory(entry) {
     const stack = layerStackRef.current
     if (!stack || !entry) return
+    const width = entry.width ?? stack.width
+    const height = entry.height ?? stack.height
+    const resized = stack.width !== width || stack.height !== height
+    stack.width = width
+    stack.height = height
+    if (resized) {
+      const display = canvasRef.current
+      if (display) { display.width = width; display.height = height }
+      selectionRef.current = null
+      guidesRef.current = []
+      updateDocument(activeDocumentId, { width, height, dirty: true })
+    }
     stack.layers = entry.layers.map((item) => {
       const canvas = document.createElement('canvas')
-      canvas.width = stack.width
-      canvas.height = stack.height
+      canvas.width = width
+      canvas.height = height
       canvas.getContext('2d', { willReadFrequently: true }).putImageData(item.pixels, 0, 0)
       return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, isBackground: item.isBackground === true, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}), ...(item.textData ? { textData: { ...item.textData, anchor: { ...item.textData.anchor } } } : {}) }
     })
@@ -709,6 +806,11 @@ const placeImageLabel = {
     const token = ++loadTokenRef.current
     canvasDocumentRef.current = ''
     layerStackRef.current = null
+    selectionRef.current = null
+    guidesRef.current = []
+    toolGestureRef.current = null
+    drawingRef.current = false
+    setAdvancedEditor(null)
     const canvas = canvasRef.current
     if (!canvas || !paper) return
 
@@ -1328,6 +1430,12 @@ const placeImageLabel = {
 
       if (modifier || event.altKey || event.repeat) return
 
+      if (key === 'escape' && selectionRef.current) {
+        event.preventDefault()
+        clearSelection()
+        return
+      }
+
       if (event.code === 'Space') {
         if (target?.closest?.('button, a, summary, [role="button"], [role="menuitem"]')) return
         event.preventDefault()
@@ -1474,6 +1582,95 @@ const placeImageLabel = {
     if (save) snapshot()
   }
 
+  function editTool(type, extras = {}) {
+    const stack = layerStackRef.current
+    if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy || drawingRef.current) return
+    const bounds = selectionBounds(selectionRef.current)
+    const rect = bounds || { x: 0, y: 0, width: stack.width, height: stack.height }
+    let values
+    if (type === 'transform') values = { translateX: 0, translateY: 0, scaleX: 1, scaleY: 1, rotate: 0 }
+    else if (type === 'perspective') values = {
+      corner0x: rect.x, corner0y: rect.y, corner1x: rect.x + rect.width, corner1y: rect.y,
+      corner2x: rect.x + rect.width, corner2y: rect.y + rect.height, corner3x: rect.x, corner3y: rect.y + rect.height,
+    }
+    else if (type === 'canvas') values = { width: stack.width, height: stack.height, offsetX: 0, offsetY: 0 }
+    else if (type === 'ruler') values = { axis: 'vertical', position: Math.round(stack.width / 2), angle: 0 }
+    else if (type === 'balloon') values = { text: '', shape: 'ellipse', tail: 'bottom', width: Math.min(240, stack.width), height: Math.min(160, stack.height), fontSize: 24, font: 'sans', bold: false, italic: false, align: 'center', fill: '#FFFFFF', ink: color, textColor: color, opacity: 100 }
+    else if (type === 'frame') values = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, border: 5, ink: color, fill: 'transparent' }
+    else values = { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+    setAdvancedEditor({ type, paperId: activeDocumentId, layerId: stack.activeLayerId, rect, values: { ...values, ...extras.values }, anchor: extras.anchor })
+  }
+
+  function finishAdvancedTool(editor, values) {
+    const stack = layerStackRef.current
+    if (!stack || editor.paperId !== activeDocumentId || canvasDocumentRef.current !== activeDocumentId ||
+        paperLoading || projectBusy || drawingRef.current || newFileOpen || exportOpen || recoveryBusy) throw new Error('Wait for this paper to be ready.')
+    if (editor.layerId !== stack.activeLayerId) throw new Error('The selected layer changed. Reopen the tool.')
+    const type = editor.type
+    if (type === 'ruler') {
+      if (guidesRef.current.length >= 24) throw new Error('The guide limit is 24. Clear guides before adding more.')
+      const guide = createStudioRulerGuide(stack.width, stack.height, values)
+      guidesRef.current = [...guidesRef.current, guide]
+      paintToolOverlay()
+      return true
+    }
+    if (!studioLayerCanEdit(stack)) throw new Error('Unlock and show the selected layer first.')
+    if (type === 'balloon') return applyRightFeature('balloon', { ...values, anchor: editor.anchor })
+    const ctx = drawingContext()
+    if (!ctx) throw new Error('The selected layer is not editable.')
+    const selected = selectionRef.current
+    const selection = selected?.width === stack.width && selected?.height === stack.height ? selected : null
+    let changed = false
+    if (type === 'transform') changed = transformStudioPixels(ctx, { ...values, rect: editor.rect, selection })
+    else if (type === 'perspective') {
+      const corners = [0, 1, 2, 3].map((index) => ({ x: values[`corner${index}x`], y: values[`corner${index}y`] }))
+      changed = applyStudioPerspectiveTransform(stack, { rect: editor.rect, corners, selection })
+    } else if (type === 'frame') {
+      const { x, y, width, height, border, ink, fill } = values
+      changed = applyStudioCustomComicFrames(stack, [{ x, y, width, height }], { border, ink, fill })
+    } else if (type === 'crop' || type === 'canvas') {
+      const width = Number(values.width)
+      const height = Number(values.height)
+      if (![width, height].every((value) => Number.isInteger(value) && value >= 64 && value <= 4096) || width * height > 12_000_000) throw new Error('Canvas must be 64–4096 px per side and no more than 12 MP.')
+      const next = type === 'crop'
+        ? cropStudioCanvas(stack, { x: values.x, y: values.y, width, height })
+        : resizeStudioCanvas(stack, { width, height, offsetX: values.offsetX, offsetY: values.offsetY, background: activeDocument?.background || '#FFFFFF' })
+      layerStackRef.current = next
+      const display = canvasRef.current
+      if (display) { display.width = width; display.height = height }
+      selectionRef.current = null
+      guidesRef.current = []
+      paintLayerPreview()
+      snapshot()
+      updateDocument(activeDocumentId, { width, height, dirty: true })
+      setProjectNotice('')
+      return true
+    } else throw new Error('Unknown tool.')
+    if (changed) {
+      const layer = stack.layers.find((item) => item.id === stack.activeLayerId)
+      if (layer) delete layer.textData
+      if (selection && (type === 'transform' || type === 'perspective')) selectionRef.current = null
+      paintLayerPreview()
+      snapshot()
+      updateDocument(activeDocumentId, { dirty: true })
+      setProjectNotice('')
+    }
+    return true
+  }
+
+  function selectTool(next) {
+    if (drawingRef.current || paperLoading || projectBusy || newFileOpen || exportOpen) return
+    if (next === 'gradient') {
+      setMangaToolInitial('gradient')
+      setMangaToolsOpen(true)
+      return
+    }
+    setTool(next)
+    if (['transform', 'perspective', 'canvas', 'ruler'].includes(next)) editTool(next)
+    else if (next === 'balloon') setProjectNotice(language === 'km' ? 'ចុចលើក្រដាសដើម្បីជ្រើសទីតាំងពពុះសន្ទនា។' : 'Tap the paper to choose a speech balloon position.')
+    else if (next === 'crop' || next === 'frame') setProjectNotice(language === 'km' ? 'អូសលើក្រដាសដើម្បីជ្រើសតំបន់។' : 'Drag on the paper to choose an area.')
+  }
+
   function point(event) {
     const canvas = canvasRef.current
 
@@ -1544,93 +1741,88 @@ async function dropImageOnPaper(event) {
   await placeImageOnCurrentPaper(file, anchor)
 }
 
+  function finishRasterStroke(ctx, changed) {
+    if (!changed) return
+    const stack = layerStackRef.current
+    const layer = stack?.layers.find((item) => item.id === stack.activeLayerId)
+    if (layer) delete layer.textData
+    paintLayerPreview()
+    snapshot()
+    updateDocument(activeDocumentId, { dirty: true })
+    setProjectNotice('')
+  }
+
+  function gesturePoint(event) {
+    const raw = point(event)
+    if (!raw) return null
+    return guidesRef.current.length && tool !== 'lasso' && tool !== 'smudge' && tool !== 'blur'
+      ? snapStudioPointToGuides(raw, guidesRef.current, Math.min(20, 8 * 100 / Math.max(1, zoom)))
+      : raw
+  }
+
   function start(event) {
-    if (drawingRef.current || paperLoading || projectBusy || panRef.current || spaceRef.current) return
+    if (drawingRef.current || paperLoading || projectBusy || recoveryBusy || panRef.current || spaceRef.current || advancedEditor || mangaToolsOpen || newFileOpen || exportOpen) return
     if (event.pointerType === 'mouse' && event.button !== 0) return
-
     const canvas = canvasRef.current
-    const currentPoint = point(event)
-    if (!canvas || !currentPoint || !layerStackRef.current || canvasDocumentRef.current !== activeDocumentId) return
-
-    if (tool === 'text') {
-  event.preventDefault()
-  setTextEditor({ ...currentPoint, paperId: activeDocumentId })
-  return
-}
-if (tool === 'shape') {
-  event.preventDefault()
-  setShapeEditor({ ...currentPoint, paperId: activeDocumentId })
-  return
-}
-
-    if (tool === 'eyedropper') {
+    const currentPoint = gesturePoint(event)
+    const stack = layerStackRef.current
+    if (!canvas || !currentPoint || !stack || canvasDocumentRef.current !== activeDocumentId) return
+    if (tool === 'text') { event.preventDefault(); setTextEditor({ ...currentPoint, paperId: activeDocumentId }); return }
+    if (tool === 'shape') { event.preventDefault(); setShapeEditor({ ...currentPoint, paperId: activeDocumentId }); return }
+    if (tool === 'eyedropper') { event.preventDefault(); sampleCanvasColor(context(), canvas, currentPoint); return }
+    if (['transform', 'perspective', 'canvas', 'ruler'].includes(tool)) { event.preventDefault(); editTool(tool); return }
+    if (tool === 'balloon') { event.preventDefault(); editTool('balloon', { anchor: currentPoint }); return }
+    if (tool === 'wand') {
       event.preventDefault()
-      sampleCanvasColor(context(), canvas, currentPoint)
-      return
-    }
-
-              if (tool === 'move') {
       const ctx = drawingContext()
       if (!ctx) return
-      event.preventDefault()
-      const pointerId = event.pointerId
-      const paperId = activeDocumentId
-      const layerId = layerStackRef.current.activeLayerId
-      const origin = currentPoint
-      drawingRef.current = true
-      canvas.setPointerCapture?.(pointerId)
-      function cleanup() {
-        drawingRef.current = false
-        window.removeEventListener('pointerup', completeMove)
-        window.removeEventListener('pointercancel', cancelMove)
-        window.removeEventListener('blur', cancelMove)
-        if (canvas.hasPointerCapture?.(pointerId)) canvas.releasePointerCapture(pointerId)
-      }
-      function cancelMove() { cleanup() }
-      function completeMove(endEvent) {
-        if (endEvent.pointerId !== pointerId) return
-        cleanup()
-        if (paperId !== activeDocumentId || canvasDocumentRef.current !== paperId || layerStackRef.current?.activeLayerId !== layerId) return
-        const end = point(endEvent)
-        if (!end) return
-        try {
-          if (moveStudioPixels(ctx, { deltaX: end.x - origin.x, deltaY: end.y - origin.y })) {
-            delete layerStackRef.current.layers.find((layer) => layer.id === layerId)?.textData
-            paintLayerPreview()
-            snapshot()
-            updateDocument(paperId, { dirty: true })
-            setProjectNotice('')
-          }
-        } catch (error) {
-          setProjectNotice(error.message || 'Could not move the selected layer.')
-        }
-      }
-      window.addEventListener('pointerup', completeMove)
-      window.addEventListener('pointercancel', cancelMove)
-      window.addEventListener('blur', cancelMove)
-            return
-    }
-
-    if (tool === 'fill') {
-      event.preventDefault()
-      try { const ctx = drawingContext(); if (ctx && applyStudioPaintBucket(ctx, currentPoint, { color, opacity })) {
-        delete layerStackRef.current.layers.find((l) => l.id === layerStackRef.current.activeLayerId)?.textData
-        paintLayerPreview(); snapshot(); updateDocument(activeDocumentId, { dirty: true })
-      } } catch (error) { setProjectNotice(error.message || 'Paint Bucket failed.') }
+      try {
+        const selection = createStudioMagicWandSelection(ctx.getImageData(0, 0, stack.width, stack.height), currentPoint, { tolerance: 16 })
+        selection.bounds = selectionBounds(selection)
+        selectionRef.current = selection.bounds ? selection : null
+        paintToolOverlay()
+        setProjectNotice(selection.bounds ? '' : 'Nothing selected.')
+      } catch (error) { setProjectNotice(error.message || 'Could not select this area.') }
       return
     }
-
+    if (tool === 'fill') {
+      event.preventDefault()
+      try {
+        const ctx = drawingContext()
+        if (ctx) finishRasterStroke(ctx, applyStudioPaintBucket(ctx, currentPoint, { color, opacity, selection: selectionRef.current }))
+      } catch (error) { setProjectNotice(error.message || 'Paint Bucket failed.') }
+      return
+    }
+    const gestures = ['move', 'marquee', 'lasso', 'crop', 'frame', 'smudge', 'blur']
+    if (gestures.includes(tool)) {
+      const ctx = ['move', 'smudge', 'blur', 'frame'].includes(tool) ? drawingContext() : null
+      if (['move', 'smudge', 'blur', 'frame'].includes(tool) && !ctx) return
+      event.preventDefault()
+      try {
+        const gesture = {
+          tool, ctx, pointerId: event.pointerId, paperId: activeDocumentId, layerId: stack.activeLayerId,
+          start: currentPoint, last: currentPoint, points: [currentPoint], changed: false,
+        }
+        if (tool === 'smudge') gesture.stroke = beginStudioSmudge(ctx, currentPoint, { size: Math.min(size, 256), strength: opacity / 100, selection: selectionRef.current })
+        if (tool === 'blur') gesture.changed = applyStudioBlurDab(ctx, currentPoint, { size: Math.min(size, 256), strength: opacity / 100, selection: selectionRef.current })
+        toolGestureRef.current = gesture
+        drawingRef.current = true
+        canvas.setPointerCapture?.(event.pointerId)
+        paintToolOverlay(['marquee', 'crop', 'frame'].includes(tool) ? { x: currentPoint.x, y: currentPoint.y, width: 0, height: 0 } : tool === 'lasso' ? { points: gesture.points } : null)
+      } catch (error) { setProjectNotice(error.message || 'Could not start this tool.') }
+      return
+    }
+    if (!['brush', 'pencil', 'eraser'].includes(tool)) return
     const ctx = drawingContext()
     if (!ctx) return
     const stroke = beginStudioStroke(ctx, currentPoint, event, {
-      size,
-      opacity,
+      size, opacity,
       style: tool === 'eraser' ? 'round' : tool === 'pencil' ? 'pencil' : brushStyle,
       color: tool === 'eraser' ? activeDocument?.background || '#FFFFFF' : color,
       erase: tool === 'eraser',
     })
     if (!stroke) return
-    delete layerStackRef.current?.layers.find((layer) => layer.id === layerStackRef.current.activeLayerId)?.textData
+    delete stack.layers.find((layer) => layer.id === stack.activeLayerId)?.textData
     paintLayerPreview()
     event.preventDefault()
     strokeRef.current = stroke
@@ -1638,16 +1830,36 @@ if (tool === 'shape') {
     canvas.setPointerCapture?.(event.pointerId)
   }
 
+  function gesturePreview(gesture) {
+    if (gesture.tool === 'lasso') return { points: gesture.points }
+    const x = Math.min(gesture.start.x, gesture.last.x)
+    const y = Math.min(gesture.start.y, gesture.last.y)
+    return { x, y, width: Math.abs(gesture.last.x - gesture.start.x), height: Math.abs(gesture.last.y - gesture.start.y) }
+  }
+
   function draw(event) {
+    const gesture = toolGestureRef.current
+    if (gesture && gesture.pointerId === event.pointerId) {
+      const ctx = gesture.ctx
+      event.preventDefault()
+      const position = gesturePoint(event)
+      if (!position) return
+      try {
+        if (gesture.tool === 'lasso' && Math.hypot(position.x - gesture.last.x, position.y - gesture.last.y) >= 2) gesture.points.push(position)
+        if (gesture.tool === 'smudge') gesture.changed = extendStudioSmudge(ctx, gesture.stroke, position) || gesture.changed
+        if (gesture.tool === 'blur' && Math.hypot(position.x - gesture.last.x, position.y - gesture.last.y) >= Math.max(2, Math.min(size, 256) / 5)) gesture.changed = applyStudioBlurDab(ctx, position, { size: Math.min(size, 256), strength: opacity / 100, selection: selectionRef.current }) || gesture.changed
+        gesture.last = position
+        if (['marquee', 'lasso', 'crop', 'frame'].includes(gesture.tool)) paintToolOverlay(gesturePreview(gesture))
+        else if (gesture.changed) paintLayerPreview()
+      } catch (error) { setProjectNotice(error.message || 'Could not use this tool.') }
+      return
+    }
     const stroke = strokeRef.current
     if (!drawingRef.current || !stroke || stroke.pointerId !== event.pointerId) return
     const ctx = drawingContext()
     if (!ctx) return
-
     event.preventDefault()
-    const coalesced = typeof event.getCoalescedEvents === 'function'
-      ? event.getCoalescedEvents()
-      : []
+    const coalesced = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : []
     for (const sample of [...coalesced, event]) {
       if (sample.pointerId !== stroke.pointerId) continue
       const currentPoint = point(sample)
@@ -1657,6 +1869,59 @@ if (tool === 'shape') {
   }
 
   function finish(event) {
+    const gesture = toolGestureRef.current
+    if (gesture && gesture.pointerId === event.pointerId) {
+      event.preventDefault()
+      toolGestureRef.current = null
+      drawingRef.current = false
+      const canvas = canvasRef.current
+      if (canvas?.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture(event.pointerId)
+      if (gesture.paperId !== activeDocumentId || canvasDocumentRef.current !== activeDocumentId || layerStackRef.current?.activeLayerId !== gesture.layerId) return
+      const end = event.type === 'pointercancel' ? gesture.last : gesturePoint(event) || gesture.last
+      const previousPoint = gesture.last
+      gesture.last = end
+      try {
+        if (gesture.tool === 'marquee' && event.type !== 'pointercancel') {
+          const selection = createStudioRectangleSelection(layerStackRef.current.width, layerStackRef.current.height, gesture.start, end)
+          selectionRef.current = selection.bounds.width && selection.bounds.height ? selection : null
+        } else if (gesture.tool === 'lasso' && event.type !== 'pointercancel') {
+          if (Math.hypot(end.x - previousPoint.x, end.y - previousPoint.y) >= 2) gesture.points.push(end)
+          const selection = gesture.points.length >= 3 ? createStudioLassoSelection(layerStackRef.current.width, layerStackRef.current.height, gesture.points) : null
+          selectionRef.current = selection?.bounds?.width && selection?.bounds?.height ? { ...selection, points: gesture.points, closed: true } : null
+        } else if (gesture.tool === 'crop' && event.type !== 'pointercancel') {
+          const area = createStudioRectangleSelection(layerStackRef.current.width, layerStackRef.current.height, gesture.start, end).bounds
+          if (area.width >= 64 && area.height >= 64) editTool('crop', { values: area })
+          else setProjectNotice('Choose a crop area at least 64 × 64 px.')
+        } else if (gesture.tool === 'frame' && event.type !== 'pointercancel') {
+          const area = createStudioRectangleSelection(layerStackRef.current.width, layerStackRef.current.height, gesture.start, end).bounds
+          if (area.width >= 12 && area.height >= 12) editTool('frame', { values: area })
+          else setProjectNotice('Choose a frame at least 12 × 12 px.')
+        } else if (gesture.tool === 'move' && event.type !== 'pointercancel') {
+          const dx = Math.round(end.x - gesture.start.x)
+          const dy = Math.round(end.y - gesture.start.y)
+          const selection = selectionRef.current
+          if (moveStudioPixels(gesture.ctx, { deltaX: dx, deltaY: dy, selection })) {
+            if (selection && (dx || dy)) {
+              const data = new Uint8Array(selection.data.length)
+              const { width, height } = selection
+              for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+                const toX = x + dx
+                const toY = y + dy
+                if (selection.data[y * width + x] && toX >= 0 && toX < width && toY >= 0 && toY < height) data[toY * width + toX] = selection.data[y * width + x]
+              }
+              selectionRef.current = { width, height, data }
+              selectionRef.current.bounds = selectionBounds(selectionRef.current)
+            }
+            finishRasterStroke(gesture.ctx, true)
+          }
+        } else if (gesture.tool === 'smudge') {
+          if (event.type !== 'pointercancel') gesture.changed = extendStudioSmudge(gesture.ctx, gesture.stroke, end) || gesture.changed
+          finishRasterStroke(gesture.ctx, gesture.changed)
+        } else if (gesture.tool === 'blur') finishRasterStroke(gesture.ctx, gesture.changed)
+      } catch (error) { setProjectNotice(error.message || 'Could not complete this tool.') }
+      paintToolOverlay()
+      return
+    }
     const stroke = strokeRef.current
     if (!drawingRef.current || !stroke || stroke.pointerId !== event.pointerId) return
     event.preventDefault()
@@ -1667,18 +1932,15 @@ if (tool === 'shape') {
     paintLayerPreview()
     drawingRef.current = false
     strokeRef.current = null
-
     const canvas = canvasRef.current
-    if (canvas?.hasPointerCapture?.(event.pointerId)) {
-      canvas.releasePointerCapture(event.pointerId)
-    }
-
+    if (canvas?.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture(event.pointerId)
     updateDocument(activeDocumentId, { dirty: true })
     snapshot()
   }
 
   function undo() {
-    if (historyRef.current.length <= 1 || !layerStackRef.current) return
+    if (historyRef.current.length <= 1 || !layerStackRef.current || drawingRef.current) return
+    selectionRef.current = null
     redoRef.current = limitLayerHistory([...redoRef.current, historyRef.current.pop()])
     restoreLayerHistory(historyRef.current[historyRef.current.length - 1])
     updateDocument(activeDocumentId, { dirty: true })
@@ -1686,13 +1948,21 @@ if (tool === 'shape') {
   }
 
   function redo() {
-    if (!redoRef.current.length || !layerStackRef.current) return
+    if (!redoRef.current.length || !layerStackRef.current || drawingRef.current) return
+    selectionRef.current = null
     const next = redoRef.current.pop()
     historyRef.current = limitLayerHistory([...historyRef.current, next])
     restoreLayerHistory(next)
     updateDocument(activeDocumentId, { dirty: true })
     refresh((number) => number + 1)
   }
+
+  useLayoutEffect(() => { paintToolOverlay() }, [activeDocumentId, canvasRevision, workspaceStarted])
+  useLayoutEffect(() => {
+    const stack = layerStackRef.current
+    const canvas = canvasRef.current
+    if (stack && canvas && canvasDocumentRef.current === activeDocumentId && canvas.width === stack.width && canvas.height === stack.height) paintLayerPreview()
+  }, [activeDocumentId, activeDocument?.width, activeDocument?.height])
 
   const canUndo = historyRef.current.length > 1
   const canRedo = redoRef.current.length > 0
@@ -1727,7 +1997,7 @@ if (tool === 'shape') {
         .ss-work{min-width:0;min-height:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53;touch-action:pan-x pan-y;overscroll-behavior:contain}.ss-work.ss-panning,.ss-work.ss-panning *{cursor:grabbing!important}.ss-work.ss-hand,.ss-work.ss-hand *{cursor:grab!important}
         .ss-stage{width:max-content;min-width:100%;min-height:100%;display:grid;place-items:center}
         .ss-canvas-frame{position:relative;flex:none;overflow:visible}
-        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;background-color:#fff;background-image:linear-gradient(45deg,#d9dfe6 25%,transparent 25%),linear-gradient(-45deg,#d9dfe6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9dfe6 75%),linear-gradient(-45deg,transparent 75%,#d9dfe6 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : studioBrushCursor(size, zoom)}}
+        .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;background-color:#fff;background-image:linear-gradient(45deg,#d9dfe6 25%,transparent 25%),linear-gradient(-45deg,#d9dfe6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9dfe6 75%),linear-gradient(-45deg,transparent 75%,#d9dfe6 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : ['brush', 'pencil', 'eraser', 'smudge', 'blur'].includes(tool) ? studioBrushCursor(size, zoom) : 'crosshair'}}
         .ss-view-buttons{display:flex;flex-wrap:wrap;gap:6px}
         .ss-view-btn{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:44px;height:31px;border:1px solid #555b62;border-radius:6px;background:#353a40;color:#e7ecf1;font:inherit;font-size:11px;cursor:pointer}
         .ss-view-btn:hover,.ss-view-btn.active{border-color:#72b3f7;background:#355274}
@@ -1835,7 +2105,7 @@ if (tool === 'shape') {
         {workspaceStarted ? (
           <button type="button" className="ss-menu-btn" aria-label={mangaToolsLabel}
             disabled={paperLoading || projectBusy || recoveryBooting || recoveryBusy || Boolean(recoveryEntry) || newFileOpen || exportOpen}
-            onClick={() => { setMangaToolInitial('bubble'); setMangaToolsOpen(true) }}{mangaToolsLabel}</button>
+            onClick={() => { setMangaToolInitial('bubble'); setMangaToolsOpen(true) }}>{mangaToolsLabel}</button>
         ) : null}
         {['Window', 'Help'].map((label) => (
   <button key={label} type="button" className="ss-menu-btn" disabled>
@@ -1919,14 +2189,7 @@ if (tool === 'shape') {
           <main className="ss-layout">
             <StudioToolRail
               tool={tool}
-              onToolChange={(next) => {
-  if (next === 'gradient') {
-    setMangaToolInitial('gradient')
-    setMangaToolsOpen(true)
-  } else {
-    setTool(next)
-  }
-}}
+              onToolChange={selectTool}
               labels={{ brush: tx('shadowStudio.brush'), eraser: tx('shadowStudio.eraser'), eyedropper: tx('shadowStudio.eyedropper') }}
             />
 
@@ -1955,6 +2218,18 @@ if (tool === 'shape') {
                     onPointerMove={draw}
                     onPointerUp={finish}
                     onPointerCancel={finish}
+                  />
+                  <canvas
+                    ref={toolOverlayRef}
+                    className="ss-canvas"
+                    width={activeDocument?.width || W}
+                    height={activeDocument?.height || H}
+                    aria-hidden="true"
+                    style={{
+                      width: displayedWidth, height: displayedHeight, pointerEvents: 'none', zIndex: 4,
+                      background: 'transparent', backgroundImage: 'none', boxShadow: 'none',
+                      transform: `translate(-50%, -50%) rotate(${viewRotation}deg) scale(${flipHorizontal ? -1 : 1}, ${flipVertical ? -1 : 1})`,
+                    }}
                   />
                   {showGrid && gridSpacing * zoom / 100 >= 8 ? (
                     <div
@@ -2060,6 +2335,13 @@ if (tool === 'shape') {
     if (file) placeImageOnCurrentPaper(file)
   }}
 />
+
+      <StudioAdvancedToolPanel
+        editor={advancedEditor && workspaceStarted ? advancedEditor : null}
+        onClose={() => setAdvancedEditor(null)}
+        onApply={finishAdvancedTool}
+        onClearGuides={() => { guidesRef.current = []; paintToolOverlay() }}
+      />
 
       <StudioMangaToolSettingsPage
         open={mangaToolsOpen && workspaceStarted}
