@@ -44,6 +44,8 @@ function normalizedSettings(settings = {}) {
     gutter: number(settings.gutter, 0, 20, 0),
     fontSize: number(settings.fontSize, 10, 24, 13),
     lineSpacing: number(settings.lineSpacing, 1.2, 2.2, 1.65),
+    firstLineIndent: number(settings.firstLineIndent, 0, 15, 0),
+    paragraphSpacing: number(settings.paragraphSpacing, 0, 20, 10),
     alignment: ['left', 'center', 'right', 'justify'].includes(settings.alignment) ? settings.alignment : 'left',
     pageNumbers: settings.pageNumbers === true,
     printHeader: String(settings.printHeader || '').slice(0, 80).trim(),
@@ -77,7 +79,7 @@ export function buildShadowDocsPrintHTML(book) {
 @page :left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}
 @page :right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}
 *{box-sizing:border-box}html{background:#eee}body{max-width:${width}mm;margin:18px auto;background:#fff;color:#242139;font-family:${settings.font};font-size:${settings.fontSize}pt;line-height:${settings.lineSpacing};text-align:${settings.alignment};overflow-wrap:anywhere}
-.chapter{padding:0}.chapter-body p{margin:0 0 .8em}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%}
+.chapter{padding:0}.chapter-body{text-indent:${settings.firstLineIndent}mm}.chapter-body p,.chapter-body div{margin:0 0 ${settings.paragraphSpacing}pt}.chapter-body h1,.chapter-body h2,.chapter-body h3,.chapter-body li,.chapter-body blockquote{text-indent:0}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%}
 @media screen{body{padding:${settings.margin}mm;box-shadow:0 10px 28px #0002}.chapter-body hr.sd-page-break{margin:1.5em 0;border:0;border-top:2px dashed #8d76be}}
 @media print{html,body{background:#fff;margin:0;max-width:none;padding:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter-body p,.chapter-body li{orphans:2;widows:2}.chapter-body hr.sd-page-break{display:block;break-after:page;page-break-after:always;height:0;margin:0;border:0}}
 </style></head><body>${chapters}</body></html>`
