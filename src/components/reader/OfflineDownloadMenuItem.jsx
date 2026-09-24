@@ -49,6 +49,7 @@ export default function OfflineDownloadMenuItem({ storyId, episodeId, theme, dis
         accountId,
         storyId,
         episodeId,
+        allowedAccess: ['free', 'permanent'],
         signal: controller.signal,
         onProgress: ({ completed, total }) => setProgress({ completed, total }),
       })
