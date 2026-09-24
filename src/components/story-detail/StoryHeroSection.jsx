@@ -2,6 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import ReportModal from '../ReportModal'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { Link } from 'react-router-dom'
+
+<Link
+  to={`/story/${encodeURIComponent(story?.id || '')}/download`}
+  aria-label="Download episodes"
+  className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${showTitleBar ? 'bg-transparent text-[var(--shadow-text-primary)]' : 'bg-transparent text-white'}`}
+>
+  <i className="fa-solid fa-download text-[16px]" aria-hidden="true" />
+</Link>
+
 
 registerTranslationNamespace('storyHeroSection', {
   en: {
