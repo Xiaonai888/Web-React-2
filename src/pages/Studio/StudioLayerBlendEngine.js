@@ -1,4 +1,5 @@
 import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
+import { renderStudioStyledLayer, normalizeStudioLayerStyle } from './StudioLayerStyleEngine'
 
 export const STUDIO_BLEND_MODES = Object.freeze([
   'normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten',
@@ -30,13 +31,21 @@ export function setStudioGroupBlendMode(stack, groupId, mode) {
   return group
 }
 
+function layerSurface(layer) {
+  if (!layer.layerStyle) return layer.canvas
+  const style = normalizeStudioLayerStyle(layer.layerStyle)
+  const affectsPixels = style.fillOpacity !== 100 || !style.channels.r || !style.channels.g || !style.channels.b ||
+    Object.values(style.effects).some((effect) => effect.enabled)
+  return affectsPixels ? renderStudioStyledLayer(layer.canvas, { ...style, opacity: 100 }) : layer.canvas
+}
+
 function drawLayer(context, layer) {
   if (layer.visible === false || Number(layer.opacity) <= 0) return
   context.save()
   try {
     context.globalAlpha = (layer.opacity ?? 100) / 100
     context.globalCompositeOperation = operation(layer.blendMode)
-    context.drawImage(layer.canvas, 0, 0)
+    context.drawImage(layerSurface(layer), 0, 0, layer.canvas.width, layer.canvas.height)
   } finally {
     context.restore()
   }
