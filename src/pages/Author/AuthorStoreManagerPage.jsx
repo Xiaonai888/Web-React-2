@@ -2746,7 +2746,8 @@ function StoreManagerHome({
   onMarkOrderPreparing,
   orderActionLoadingId,
 }) {
-  const [recordQuery, setRecordQuery] = useState('')
+const [recordQuery, setRecordQuery] = useState('')
+const navigate = useNavigate()
 const [recordFilterOpen, setRecordFilterOpen] = useState(false)
 const [recordFilter, setRecordFilter] = useState('newest')
 const [orderFilterOpen, setOrderFilterOpen] = useState(false)
@@ -2972,11 +2973,9 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
             value={String(orderSummary.orders_count || 0)}
             icon="fa-bag-shopping"
           />
-          <StatCard
-            label={storeText('netIncome')}
-            value={formatMoney(orderSummary.revenue || orderSummary.author_income || 0)}
-            icon="fa-chart-line"
-          />
+          <button type="button" onClick={() => navigate('/author/page/store/withdrawal-details')} className="min-w-0 text-left">
+  <StatCard label={storeText('netIncome')} value="—" icon="fa-wallet" />
+</button>
         </div>
       </section>
 
