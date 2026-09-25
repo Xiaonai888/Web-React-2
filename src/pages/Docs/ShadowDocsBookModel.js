@@ -60,6 +60,7 @@ export function normalizeShadowDocsBook(source, { duplicate = false } = {}) {
     author: brief(source.author, 120),
     description: brief(source.description, 350),
     status: source.status === 'completed' ? 'completed' : 'draft',
+    deletedAt: typeof source.deletedAt === 'number' && Number.isFinite(source.deletedAt) && source.deletedAt > 0 ? source.deletedAt : null,
     template: requested,
     image: isShadowDocsImage(source.image) ? source.image : '',
     settings: {
