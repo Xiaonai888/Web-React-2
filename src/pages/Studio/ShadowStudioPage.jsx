@@ -611,10 +611,14 @@ const placeImageLabel = {
         delete mergeStudioLayerDown(stack).textData
       } else if (action === 'remove') {
         const layer = stack.layers.find((item) => item.id === layerId)
-        if (!layer || layer.isBackground || stack.layers.length <= 1) return
+        const group = stack.groups?.find((item) => item.id === layer?.groupId)
+        if (!layer || layer.locked || group?.locked) return
         if (!window.confirm(`Delete "${layer.name}"? You can undo this action.`)) return
+        if (stack.layers.length === 1) addStudioLayer(stack, 'Layer 1')
+        if (layer.isBackground) layer.isBackground = false
         if (!removeStudioLayer(stack, layerId)) return
-        if (layer?.groupId && !stack.layers.some((item) => item.groupId === layer.groupId)) removeStudioLayerGroup(stack, layer.groupId)
+        if (layer.groupId && !stack.layers.some((item) => item.groupId === layer.groupId)) removeStudioLayerGroup(stack, layer.groupId)
+        selectionRef.current = null
       } else return
       paintLayerPreview()
       if (action === 'select') {
@@ -1547,8 +1551,9 @@ const placeImageLabel = {
         event.preventDefault()
         event.stopPropagation()
         if (event.repeat) return
-        if (selectedLayer.isBackground || stack.layers.length <= 1) {
-          setProjectNotice(selectedLayer.isBackground ? 'Convert Background to a normal layer before deleting it.' : 'Keep at least one layer on the canvas.')
+        const selectedGroup = stack.groups?.find((group) => group.id === selectedLayer.groupId)
+        if (selectedLayer.locked || selectedGroup?.locked) {
+          setProjectNotice('Unlock the layer and its group before deleting it.')
           return
         }
         changeLayer('remove', selectedLayer.id)
