@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 import { AlertCircle, BookOpen, Download, Eye, FileDown, FileText, Printer } from 'lucide-react'
 import { buildShadowDocsPrintHTML, downloadShadowDocsPrintHTML } from './ShadowDocsPDFExport'
 import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
+import { SHADOW_DOCS_FONT_OPTIONS } from './ShadowDocsFontCatalog'
 
 const PAGE_SIZES = { A5: [148, 210], A4: [210, 297], B5: [176, 250] }
-const FONT_OPTIONS = ['Noto Serif Khmer', 'Noto Sans Khmer', 'Battambang', 'Georgia', 'Arial']
 
 export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBackup, onChangeSettings }) {
   const [error, setError] = useState('')
