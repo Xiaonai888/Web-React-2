@@ -1,20 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { SHADOW_DOCS_FONT_OPTIONS, loadShadowDocsFont, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, BookOpen, Check, FileText, LayoutTemplate, Type } from 'lucide-react'
 import { getBookTemplate, getPageLayoutPreset, PAGE_LAYOUT_PRESETS } from './ShadowDocsTemplateCatalog'
 
 const PAGE_SIZES = { A5: [148, 210], A4: [210, 297], B5: [176, 250] }
-const FONTS = ['Noto Serif Khmer', 'Noto Sans Khmer', 'Battambang', 'Georgia', 'Arial']
+const font = SHADOW_DOCS_FONT_OPTIONS.includes(settings.font) ? settings.font : 'Noto Serif Khmer'
 const ALIGNMENTS = [{ id: 'left', icon: AlignLeft }, { id: 'center', icon: AlignCenter }, { id: 'right', icon: AlignRight }, { id: 'justify', icon: AlignJustify }]
 const clamp = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Math.min(max, Math.max(min, Number(value))) : fallback
 
 export default function ShadowDocsBookDesignerPanel({ book, onChangeSettings }) {
   const [previewText, setPreviewText] = useState('ជំពូកទី១ · Chapter One\nនេះជាគំរូអត្ថបទសម្រាប់សៀវភៅរបស់អ្នក។')
+  useEffect(() => { loadShadowDocsFont(book?.settings?.font) }, [book?.settings?.font])
   if (!book) return <section className="sd-card" aria-label="Book designer"><h2>Book Designer</h2><p className="mt-2 text-sm text-[#77758b] dark:text-white/65">Select a book in My Books to edit its page layout.</p></section>
 
   const settings = book.settings || {}
   const currentSize = PAGE_SIZES[settings.size] ? settings.size : 'A5'
   const [width, height] = PAGE_SIZES[currentSize]
-  const font = FONTS.includes(settings.font) ? settings.font : FONTS[0]
+  const font = SHADOW_DOCS_FONT_OPTIONS.includes(settings.font) ? settings.font : 'Noto Serif Khmer'
   const margin = clamp(settings.margin, 10, 35, 18)
   const gutter = clamp(settings.gutter, 0, 20, 0)
   const fontSize = clamp(settings.fontSize, 10, 24, 13)
@@ -47,7 +49,7 @@ export default function ShadowDocsBookDesignerPanel({ book, onChangeSettings }) 
 
         <div className="sd-card">
           <div className="flex items-center gap-2"><Type size={17} className="text-[#7653bd]"/><h3>Typography</h3></div>
-          <label htmlFor="docs-designer-font" className="mt-4 block text-xs font-semibold">Font family</label><select id="docs-designer-font" value={font} disabled={!canChange} onChange={event => patch({ font: event.target.value })} className="sd-field mt-2 w-full">{FONTS.map(item => <option key={item} value={item}>{item}</option>)}</select>
+          <label htmlFor="docs-designer-font" className="mt-4 block text-xs font-semibold">Font family</label><select id="docs-designer-font" value={font} disabled={!canChange} onChange={event => patch({ font: event.target.value })} className="sd-field mt-2 w-full">{SHADOW_DOCS_FONT_OPTIONS.map(item => <option key={item} value={item}>{item}</option>)}</select>
           <label htmlFor="docs-designer-fontsize" className="mt-4 flex items-center justify-between gap-3 text-xs font-semibold">Text size <span>{fontSize} pt</span></label><input id="docs-designer-fontsize" type="range" min="10" max="24" step="1" value={fontSize} disabled={!canChange} onChange={event => patch({ fontSize: Number(event.target.value) })} className="mt-2 w-full accent-[#7653bd]"/>
           <label htmlFor="docs-designer-spacing" className="mt-4 flex items-center justify-between gap-3 text-xs font-semibold">Line spacing <span>{lineSpacing.toFixed(2)}</span></label><input id="docs-designer-spacing" type="range" min="1.2" max="2.2" step="0.05" value={lineSpacing} disabled={!canChange} onChange={event => patch({ lineSpacing: Number(event.target.value) })} className="mt-2 w-full accent-[#7653bd]"/>
           <h3 className="mt-5 text-sm font-semibold">Paragraph settings</h3>
@@ -60,7 +62,7 @@ export default function ShadowDocsBookDesignerPanel({ book, onChangeSettings }) 
 
       <div className="sd-card self-start lg:sticky lg:top-20">
         <div className="flex items-center justify-between gap-2"><h3 className="flex items-center gap-2"><BookOpen size={17}/> Page preview</h3><span className="text-xs text-[#77758b] dark:text-white/60">{currentSize}</span></div>
-        <div className="mt-4 overflow-hidden rounded-xl bg-[#e9e5ee] p-3 dark:bg-[#2a2935]"><div className="mx-auto w-full max-w-[380px] overflow-hidden bg-white text-[#242139] shadow-md" style={{ aspectRatio: `${width}/${height}`, fontFamily: `"${font}", serif`, fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment, paddingTop: `${margin / width * 100}%`, paddingBottom: `${margin / width * 100}%`, paddingLeft: `${(margin + gutter) / width * 100}%`, paddingRight: `${margin / width * 100}%`, overflowWrap: 'anywhere' }}><h4 className="mb-5 text-center font-bold" style={{fontSize:'1.2em'}}>{book.chapters?.[0]?.title || 'Chapter 1'}</h4><div>{previewText.split('\n').map((line, index) => <p key={index} style={{ textIndent: `${firstLineIndent / Math.max(1, width - 2 * margin - gutter) * 100}%`, marginBottom: `${paragraphSpacing / fontSize}em` }}>{line || '\u00a0'}</p>)}</div>{settings.numbers !== false && <span className="mt-7 block text-center text-[10px]">1</span>}</div></div>
+        <div className="mt-4 overflow-hidden rounded-xl bg-[#e9e5ee] p-3 dark:bg-[#2a2935]"><div className="mx-auto w-full max-w-[380px] overflow-hidden bg-white text-[#242139] shadow-md" style={{ aspectRatio: `${width}/${height}`, fontFamily: shadowDocsFontFamily(font), fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment, paddingTop: `${margin / width * 100}%`, paddingBottom: `${margin / width * 100}%`, paddingLeft: `${(margin + gutter) / width * 100}%`, paddingRight: `${margin / width * 100}%`, overflowWrap: 'anywhere' }}><h4 className="mb-5 text-center font-bold" style={{fontSize:'1.2em'}}>{book.chapters?.[0]?.title || 'Chapter 1'}</h4><div>{previewText.split('\n').map((line, index) => <p key={index} style={{ textIndent: `${firstLineIndent / Math.max(1, width - 2 * margin - gutter) * 100}%`, marginBottom: `${paragraphSpacing / fontSize}em` }}>{line || '\u00a0'}</p>)}</div>{settings.numbers !== false && <span className="mt-7 block text-center text-[10px]">1</span>}</div></div>
         <label htmlFor="docs-designer-preview" className="mt-4 block text-xs font-semibold">Preview text</label><textarea id="docs-designer-preview" rows={3} maxLength={500} value={previewText} onChange={event => setPreviewText(event.target.value)} className="sd-field mt-2 w-full"/>
         <p className="mt-3 text-[11px] leading-5 text-[#77758b] dark:text-white/60">Preview illustrates a right-hand page. Final PDF page breaks depend on your browser.</p>
       </div>
