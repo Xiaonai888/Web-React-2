@@ -5,6 +5,7 @@ import { getBookTemplate, getPageLayoutPreset, PAGE_LAYOUT_PRESETS } from './Sha
 
 const PAGE_SIZES = { A5: [148, 210], A4: [210, 297], B5: [176, 250] }
 const font = SHADOW_DOCS_FONT_OPTIONS.includes(settings.font) ? settings.font : 'Noto Serif Khmer'
+const font = SHADOW_DOCS_FONT_OPTIONS.includes(settings.font) ? settings.font : 'Noto Serif Khmer'
 const ALIGNMENTS = [{ id: 'left', icon: AlignLeft }, { id: 'center', icon: AlignCenter }, { id: 'right', icon: AlignRight }, { id: 'justify', icon: AlignJustify }]
 const clamp = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Math.min(max, Math.max(min, Number(value))) : fallback
 
