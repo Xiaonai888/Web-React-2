@@ -55,15 +55,28 @@ async function submitEchoV2({
     )
   }
 
-  window.dispatchEvent(
-    new CustomEvent('shadow:echo-v2-updated', {
-      detail: {
-        sourceType,
-        sourceId: String(sourceId),
-        echoCount: Number(data.echo_count || 0),
-      },
-    })
-  )
+  if (destination === 'author_page') {
+    window.dispatchEvent(
+      new CustomEvent('shadow:author-page-echo-created', {
+        detail: {
+          pageUsername: data.author_page?.page_username || '',
+          postId: data.post?.id || null,
+          sourceType,
+          sourceId: String(sourceId),
+        },
+      })
+    )
+  } else {
+    window.dispatchEvent(
+      new CustomEvent('shadow:echo-v2-updated', {
+        detail: {
+          sourceType,
+          sourceId: String(sourceId),
+          echoCount: Number(data.echo_count || 0),
+        },
+      })
+    )
+  }
 
   return data
 }
