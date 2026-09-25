@@ -174,14 +174,14 @@ export function installReaderPresenceTracking() {
     }
   }
 
-  const checkPath = () => {
+    const checkPath = () => {
     const currentPath = window.location.pathname || '/'
-
     if (currentPath === lastPath) return
 
     lastPath = currentPath
     markActive()
-    sendHeartbeat({ force: true })
+    if (document.visibilityState !== 'visible') return
+    scheduleHeartbeat(Math.max(0, 60_000 - (Date.now() - lastSentAt)))
   }
 
   const originalPushState = window.history.pushState.bind(window.history)
