@@ -25,6 +25,7 @@ import {
   fetchSavedPostStatus,
   saveSavedPost,
 } from '../services/savedPostsApi'
+import AuthorEchoStoryCard from './author-posts/AuthorEchoStoryCard'
 
 registerTranslationNamespace('authorPostsSection', {
   en: {
@@ -1365,7 +1366,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {post.content ? (
+      {post.content && (!post.echo_source_type || post.echo_text) ? (
         <div className="mt-2 px-4 pb-3">
           <AuthorDiscoverPostText
   text={postText}
@@ -1378,7 +1379,10 @@ useEffect(() => {
       ) : null}
 
 
-      <PostImageGrid images={postImages} onView={onViewImage} />
+      {post.echo_source_type === 'story' && post.echo_source ? (
+  <AuthorEchoStoryCard source={post.echo_source} />
+) : null}
+<PostImageGrid images={postImages} onView={onViewImage} />
 
 {isOwner ? (
   <div className="flex items-center gap-3 border-b border-[var(--shadow-border)] px-4 py-2">
