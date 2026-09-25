@@ -18,11 +18,12 @@ function BookCover({ book }) {
   )
 }
 
-export default function ShadowDocsMyBooksPanel({ books = [], ready = true, onCreate, onImport, onOpen, onAction }) {
+export default function ShadowDocsMyBooksPanel({ books = [], ready = true, onCreate, onImport, onOpen, onAction, onOpenTrash }) {
   const [filter, setFilter] = useState('All Books')
   const [search, setSearch] = useState('')
   const [menuId, setMenuId] = useState('')
-  const library = Array.isArray(books) ? books : []
+  const library = (Array.isArray(books) ? books : []).filter(book => !book.deletedAt)
+  const trashedCount = (Array.isArray(books) ? books : []).filter(book => !!book.deletedAt).length
   const visibleBooks = useMemo(() => library.filter(book => {
     if (filter === 'Drafts' && book.status === 'completed') return false
     if (filter === 'Completed' && book.status !== 'completed') return false
@@ -42,7 +43,7 @@ export default function ShadowDocsMyBooksPanel({ books = [], ready = true, onCre
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div role="group" aria-label="Filter books" className="sd-segments max-w-full overflow-x-auto">{FILTERS.map(item => <button type="button" key={item} aria-pressed={filter === item} className={filter === item ? 'is-active' : ''} onClick={() => { setFilter(item); setMenuId('') }}>{item}</button>)}</div>
+        <div className="flex min-w-0 flex-wrap items-center gap-2"><div role="group" aria-label="Filter books" className="sd-segments max-w-full overflow-x-auto">{FILTERS.map(item => <button type="button" key={item} aria-pressed={filter === item} className={filter === item ? 'is-active' : ''} onClick={() => { setFilter(item); setMenuId('') }}>{item}</button>)}</div><button type="button" disabled={!ready || typeof onOpenTrash !== 'function'} onClick={onOpenTrash} className="sd-button sd-button-ghost"><Trash2 size={15}/> Trash{trashedCount ? ` (${trashedCount})` : ''}</button></div>
         <label className="sd-search"><Search size={17}/><input type="search" aria-label="Search books" placeholder="Search your books…" value={search} onChange={event => { setSearch(event.target.value); setMenuId('') }} />{search && <button type="button" aria-label="Clear search" onClick={() => setSearch('')}><X size={15}/></button>}</label>
       </div>
 
@@ -60,7 +61,7 @@ export default function ShadowDocsMyBooksPanel({ books = [], ready = true, onCre
                   ['duplicate', Copy, 'Duplicate book'],
                   ['rename', PenLine, 'Edit details'],
                   ['complete', CheckCircle2, book.status === 'completed' ? 'Mark as draft' : 'Mark completed'],
-                  ['delete', Trash2, 'Delete book'],
+                  ['delete', Trash2, 'Move to Trash'],
                 ].map(([id, Icon, label]) => <button key={id} type="button" disabled={typeof onAction !== 'function'} onClick={() => action(book, id)} className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[11px] hover:bg-[#f5f0ff] disabled:opacity-50 dark:hover:bg-white/10 ${id === 'delete' ? 'text-red-600 dark:text-red-300' : 'text-[#332b43] dark:text-white'}`}><Icon size={14}/>{label}</button>)}</div>}
               </div>
             </div>
