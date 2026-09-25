@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('socialEchoShareV2', {
@@ -435,7 +435,8 @@ function ChoiceSheet({
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[16px] font-normal text-[var(--shadow-text-primary)]">
+                <div title={item.title}
+                  className="min-w-0 truncate text-[16px] font-normal text-[var(--shadow-text-primary)]">
                   {item.title}
                 </div>
 
@@ -521,11 +522,71 @@ export default function SocialEchoShareSheetV2({
     [shareUrl]
   )
 
+  const [authorPage, setAuthorPage] = useState(null)
+  const authorPageCacheRef = useRef({ token: '', time: 0, page: null })
+
+  useEffect(() => {
+    if (!open || sourceType !== 'story') {
+      setAuthorPage(null)
+      setDestination((current) => current === 'author_page' ? 'feed' : current)
+      return undefined
+    }
+    if (activePanel !== 'destination') return undefined
+
+    const token = getReaderToken()
+    if (!token) {
+      setAuthorPage(null)
+      return undefined
+    }
+
+    const cached = authorPageCacheRef.current
+    if (cached.token === token && Date.now() - cached.time < 120000) {
+      setAuthorPage(cached.page)
+      return undefined
+    }
+
+    let cancelled = false
+    setAuthorPage(null)
+    fetch(`${API_BASE_URL}/api/authors/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (cancelled) return
+        const page = data?.author_page?.id && data.author_page.status === 'active'
+          ? data.author_page
+          : null
+        authorPageCacheRef.current = { token, time: Date.now(), page }
+        setAuthorPage(page)
+      })
+      .catch(() => {
+        if (!cancelled) setAuthorPage(null)
+      })
+
+    return () => { cancelled = true }
+  }, [open, activePanel, sourceType])
+
   const destinationOptions = DESTINATIONS.map((item) => ({
     ...item,
     title: t(`socialEchoShareV2.${item.titleKey}`),
     subtitle: t(`socialEchoShareV2.${item.subtitleKey}`),
   }))
+
+  if (authorPage && sourceType === 'story') {
+    const pageLabels = {
+      en: 'Author Page',
+      km: 'ទំព័រអ្នកនិពន្ធ',
+      zh: '作者主页',
+      ja: '作者ページ',
+      ko: '작가 페이지',
+    }
+    destinationOptions.splice(1, 0, {
+      key: 'author_page',
+      title: String(authorPage.page_name || '').trim() || 'Author Page',
+      subtitle: pageLabels[getDisplayLanguageId()] || pageLabels.en,
+      icon: 'fa-solid fa-book-open',
+    })
+  }
   const audienceOptions = AUDIENCES.map((item) => ({
     ...item,
     title: t(`socialEchoShareV2.${item.titleKey}`),
@@ -883,11 +944,13 @@ export default function SocialEchoShareSheetV2({
 
       setPostText('')
       setSelectedReaders([])
-      onEchoed?.(
-        data?.echo || null,
-        Number(data?.echo_count || 0),
-        data?.limits || null
-      )
+      if (destination !== 'author_page') {
+        onEchoed?.(
+          data?.echo || null,
+          Number(data?.echo_count || 0),
+          data?.limits || null
+        )
+      }
       onClose?.()
     } catch (error) {
       showToast(
@@ -963,9 +1026,9 @@ export default function SocialEchoShareSheetV2({
                       'destination'
                     )
                   }
-                  className="flex h-8 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
+                  className="flex h-8 min-w-0 max-w-[220px] items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
                 >
-                  <span>
+                  <span className="min-w-0 truncate" title={destinationItem.title}>
                     {destinationItem.title}
                   </span>
                   <i className="fa-solid fa-caret-down text-[11px]" />
@@ -978,7 +1041,8 @@ export default function SocialEchoShareSheetV2({
                       'audience'
                     )
                   }
-                  className="flex h-8 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-normal text-[var(--shadow-text-primary)] active:scale-95"
+                  disabled={destination === 'author_page'}
+                  className="flex h-8 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-3 text-[12px] font-normal text-[var(--shadow-text-primary)] active:scale-95 disabled:opacity-60"
                 >
                   <i
                     className={`${audienceItem.icon} text-[12px]`}
@@ -1181,6 +1245,7 @@ export default function SocialEchoShareSheetV2({
           backLabel={t('socialEchoShareV2.back')}
           onChoose={(value) => {
             setDestination(value)
+            if (value === 'author_page') setAudience('public')
             setActivePanel('')
           }}
         />
