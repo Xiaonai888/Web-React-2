@@ -3,14 +3,6 @@ import { sanitizeShadowDocsHTML } from './ShadowDocsBookModel'
 import { shadowDocsFontCSS, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 
 const PAGE_SIZES = Object.freeze({ A5: [148, 210], A4: [210, 297], B5: [176, 250] })
-const FONT_FAMILIES = Object.freeze({
-  'Noto Serif Khmer': '"Noto Serif Khmer", "Khmer OS", serif',
-  'Noto Sans Khmer': '"Noto Sans Khmer", "Khmer OS", sans-serif',
-  Battambang: '"Battambang", "Khmer OS", serif',
-  Georgia: 'Georgia, "Noto Serif Khmer", serif',
-  Arial: 'Arial, "Noto Sans Khmer", sans-serif',
-})
-
 function escapeText(value) {
   return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
 }
@@ -22,7 +14,7 @@ function safeChapterHTML(source) {
 
 function normalizedSettings(settings = {}) {
   const size = PAGE_SIZES[settings.size] ? settings.size : 'A5'
-  const font = FONT_FAMILIES[settings.font] || FONT_FAMILIES['Noto Serif Khmer']
+  const font = shadowDocsFontFamily(settings.font)
   const number = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Math.max(min, Math.min(max, Number(value))) : fallback
   return {
     size,
@@ -62,6 +54,8 @@ export function buildShadowDocsPrintHTML(book) {
   return `<!doctype html>
 <html lang="km"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(book.title || 'Untitled Book')}</title>
 <style>
+${shadowDocsFontCSS('Noto Serif Khmer')}
+${book.settings?.font === 'Noto Serif Khmer' ? '' : shadowDocsFontCSS(book.settings?.font || 'Noto Serif Khmer')}
 @page{size:${settings.size};margin:${settings.margin}mm;${pageFurnitureCss}}
 @page :left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}
 @page :right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}
