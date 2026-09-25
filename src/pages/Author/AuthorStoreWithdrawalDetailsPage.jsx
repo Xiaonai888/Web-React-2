@@ -1,15 +1,19 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('authorStoreWithdrawalDetails', {
-  en: { title: 'Withdrawal Details', available: 'Available for Withdrawal', minimum: 'Minimum withdrawal: $10.00', request: 'Request Withdrawal', all: 'All', book: 'Book', pdf: 'PDF', history: 'Earnings history', empty: 'No earnings to display yet.', pending: 'Waiting for verified earnings data', price: 'Product price', shipping: 'Delivery fee', company: 'Delivery company', fee: 'Service fee', amount: 'Amount credited', order: 'Order', unavailable: 'Withdrawal is not connected yet', back: 'Back' },
-  km: { title: 'ព័ត៌មានលម្អិតប្រាក់ដក', available: 'ប្រាក់ដែលអាចដកបាន', minimum: 'ចំនួនដកអប្បបរមា៖ $10.00', request: 'ស្នើសុំដកប្រាក់', all: 'ទាំងអស់', book: 'សៀវភៅ', pdf: 'PDF', history: 'ប្រវត្តិចំណូល', empty: 'មិនទាន់មានចំណូលត្រូវបង្ហាញ', pending: 'កំពុងរង់ចាំទិន្នន័យចំណូលដែលបានផ្ទៀងផ្ទាត់', price: 'តម្លៃផលិតផល', shipping: 'ថ្លៃដឹកជញ្ជូន', company: 'ក្រុមហ៊ុនដឹកជញ្ជូន', fee: 'ថ្លៃសេវា', amount: 'ប្រាក់ដែលបានបញ្ចូល', order: 'ការបញ្ជាទិញ', unavailable: 'មុខងារស្នើសុំដកប្រាក់មិនទាន់ភ្ជាប់', back: 'ត្រឡប់ក្រោយ' },
-  zh: { title: '提现详情', available: '可提现金额', minimum: '最低提现金额：$10.00', request: '申请提现', all: '全部', book: '纸质书', pdf: 'PDF', history: '收入记录', empty: '暂无收入记录', pending: '等待已核实的收入数据', price: '商品价格', shipping: '配送费', company: '配送公司', fee: '服务费', amount: '入账金额', order: '订单', unavailable: '提现功能尚未连接', back: '返回' },
-  ja: { title: '出金明細', available: '出金可能額', minimum: '最低出金額：$10.00', request: '出金を申請', all: 'すべて', book: '書籍', pdf: 'PDF', history: '収益履歴', empty: '収益履歴はありません', pending: '確認済みの収益データを待っています', price: '商品価格', shipping: '配送料', company: '配送会社', fee: 'サービス手数料', amount: '計上額', order: '注文', unavailable: '出金機能は未接続です', back: '戻る' },
-  ko: { title: '출금 상세', available: '출금 가능 금액', minimum: '최소 출금액: $10.00', request: '출금 신청', all: '전체', book: '책', pdf: 'PDF', history: '수익 내역', empty: '표시할 수익이 없습니다', pending: '확인된 수익 데이터를 기다리는 중', price: '상품 가격', shipping: '배송비', company: '배송 업체', fee: '서비스 수수료', amount: '적립 금액', order: '주문', unavailable: '출금 기능이 아직 연결되지 않았습니다', back: '뒤로' },
+  en: { title: 'Withdrawal Details', available: 'Available for Withdrawal', minimum: 'Minimum withdrawal: $10.00', request: 'Request Withdrawal', all: 'All', book: 'Book', pdf: 'PDF', history: 'Earnings history', empty: 'No earnings to display yet.', pending: 'Loading verified balance...', failed: 'Could not load your balance. Please try again.', price: 'Product price', shipping: 'Delivery fee', company: 'Delivery company', fee: 'Service fee', amount: 'Amount credited', order: 'Order', back: 'Back' },
+  km: { title: 'ព័ត៌មានលម្អិតប្រាក់ដក', available: 'ប្រាក់ដែលអាចដកបាន', minimum: 'ចំនួនដកអប្បបរមា៖ $10.00', request: 'ស្នើសុំដកប្រាក់', all: 'ទាំងអស់', book: 'សៀវភៅ', pdf: 'PDF', history: 'ប្រវត្តិចំណូល', empty: 'មិនទាន់មានចំណូលត្រូវបង្ហាញ', pending: 'កំពុងផ្ទុកសមតុល្យប្រាក់ដែលបានផ្ទៀងផ្ទាត់...', failed: 'មិនអាចផ្ទុកសមតុល្យប្រាក់បានទេ។ សូមសាកល្បងម្តងទៀត។', price: 'តម្លៃផលិតផល', shipping: 'ថ្លៃដឹកជញ្ជូន', company: 'ក្រុមហ៊ុនដឹកជញ្ជូន', fee: 'ថ្លៃសេវា', amount: 'ប្រាក់ដែលបានបញ្ចូល', order: 'ការបញ្ជាទិញ', back: 'ត្រឡប់ក្រោយ' },
+  zh: { title: '提现详情', available: '可提现金额', minimum: '最低提现金额：$10.00', request: '申请提现', all: '全部', book: '纸质书', pdf: 'PDF', history: '收入记录', empty: '暂无收入记录', pending: '正在加载已核实的余额...', failed: '无法加载余额，请重试。', price: '商品价格', shipping: '配送费', company: '配送公司', fee: '服务费', amount: '入账金额', order: '订单', back: '返回' },
+  ja: { title: '出金明細', available: '出金可能額', minimum: '最低出金額：$10.00', request: '出金を申請', all: 'すべて', book: '書籍', pdf: 'PDF', history: '収益履歴', empty: '収益履歴はありません', pending: '確認済みの残高を読み込み中...', failed: '残高を読み込めませんでした。もう一度お試しください。', price: '商品価格', shipping: '配送料', company: '配送会社', fee: 'サービス手数料', amount: '計上額', order: '注文', back: '戻る' },
+  ko: { title: '출금 상세', available: '출금 가능 금액', minimum: '최소 출금액: $10.00', request: '출금 신청', all: '전체', book: '책', pdf: 'PDF', history: '수익 내역', empty: '표시할 수익이 없습니다', pending: '확인된 잔액을 불러오는 중...', failed: '잔액을 불러오지 못했습니다. 다시 시도해 주세요.', price: '상품 가격', shipping: '배송비', company: '배송 업체', fee: '서비스 수수료', amount: '적립 금액', order: '주문', back: '뒤로' },
 })
+
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
+  : 'https://shadow-backend-kucw.onrender.com'
 
 function money(value) {
   const number = Number(value)
@@ -20,15 +24,45 @@ function DetailRow({ label, value }) {
   return <div className="flex items-center justify-between gap-3 py-1 text-[12px]"><span className="text-[var(--shadow-text-secondary)]">{label}</span><span className="text-right font-semibold text-[var(--shadow-text-primary)]">{value}</span></div>
 }
 
-export default function AuthorStoreWithdrawalDetailsPage({ availableBalance = null, earnings = [], onRequestWithdrawal }) {
+export default function AuthorStoreWithdrawalDetailsPage({ earnings = [] }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [filter, setFilter] = useState('all')
-  
+  const [balance, setBalance] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token')
+    if (!token) {
+      navigate('/login', { replace: true })
+      return () => controller.abort()
+    }
+    async function loadBalance() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        })
+        const data = await response.json()
+        if (!response.ok || data.ok === false || !Number.isFinite(Number(data.summary?.available_balance))) {
+          throw new Error('Invalid withdrawal balance')
+        }
+        if (!controller.signal.aborted) setBalance(Number(data.summary.available_balance))
+      } catch {
+        if (!controller.signal.aborted) setLoadError(true)
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+    loadBalance()
+    return () => controller.abort()
+  }, [navigate])
+
   const translate = (key) => t(`authorStoreWithdrawalDetails.${key}`)
   const list = useMemo(() => Array.isArray(earnings) ? earnings.filter((item) => (filter === 'all' || item.type === filter) && (item.type === 'book' || item.type === 'pdf')) : [], [earnings, filter])
-  const balance = availableBalance === null || availableBalance === undefined ? null : Number(availableBalance)
-  const canRequest = Number.isFinite(balance) && balance >= 10 && typeof onRequestWithdrawal === 'function'
+  const canRequest = !loading && !loadError && Number.isFinite(balance) && balance >= 10
   const language = getDisplayLanguageId()
 
   return (
@@ -40,10 +74,11 @@ export default function AuthorStoreWithdrawalDetailsPage({ availableBalance = nu
         </header>
         <section className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-5 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <p className="text-xs font-semibold text-[var(--shadow-text-secondary)]">{translate('available')}</p>
-          <p className="mt-2 text-[30px] font-black text-emerald-600">{balance !== null && Number.isFinite(balance) ? money(balance) : '—'}</p>
+          <p className="mt-2 text-[30px] font-black text-emerald-600">{balance !== null && !loadError ? money(balance) : '—'}</p>
           <p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{translate('minimum')}</p>
-          {balance === null && <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{translate('pending')}</p>}
-          <button type="button" disabled={!canRequest} onClick={() => onRequestWithdrawal()} className="mt-5 w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{translate('request')}</button>
+          {loading && <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{translate('pending')}</p>}
+          {loadError && <p role="alert" className="mt-2 text-xs text-red-600">{translate('failed')}</p>}
+          <button type="button" disabled={!canRequest} onClick={() => navigate('/author/page/finance/withdrawal')} className="mt-5 w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{translate('request')}</button>
         </section>
         <section className="mt-5">
           <div className="flex gap-2 rounded-2xl bg-[var(--shadow-bg-surface)] p-1 ring-1 ring-[var(--shadow-border)]">
