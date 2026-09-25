@@ -16,7 +16,7 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
     try { return buildShadowDocsPrintHTML(book) } catch { return '' }
   }, [book, report.canExport])
   const settings = book?.settings || {}
-  const selectedFont = FONT_OPTIONS.includes(settings.font) ? settings.font : FONT_OPTIONS[0]
+  const selectedFont = SHADOW_DOCS_FONT_OPTIONS.includes(settings.font) ? settings.font : 'Noto Serif Khmer'
   const selectedFontSize = Math.min(24, Math.max(10, Number(settings.fontSize) || 13))
   const chapterCount = Array.isArray(book?.chapters) ? book.chapters.length : 0
   const pageSize = PAGE_SIZES[settings.size] ? settings.size : 'A5'
@@ -84,7 +84,7 @@ export default function ShadowDocsPDFStudioPanel({ book, onPrint, onDownloadBack
           <p className="mt-1 text-[11px] text-[#77758b] dark:text-white/60">These settings also apply to your book in Write and are saved on this device.</p>
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block text-xs font-semibold" htmlFor="sd-pdf-font">Font family
-              <select id="sd-pdf-font" className="sd-field mt-2 w-full" value={selectedFont} disabled={typeof onChangeSettings !== 'function'} onChange={event => onChangeSettings?.({ font: event.target.value })}>{FONT_OPTIONS.map(item => <option key={item} value={item}>{item}</option>)}</select>
+              <select id="sd-pdf-font" className="sd-field mt-2 w-full" value={selectedFont} disabled={typeof onChangeSettings !== 'function'} onChange={event => onChangeSettings?.({ font: event.target.value })}>{SHADOW_DOCS_FONT_OPTIONS.map(item => <option key={item} value={item}>{item}</option>)}</select>
             </label>
             <div>
               <label className="flex items-center justify-between gap-2 text-xs font-semibold" htmlFor="sd-pdf-fontsize">Body text size <span>{selectedFontSize} pt</span></label>
