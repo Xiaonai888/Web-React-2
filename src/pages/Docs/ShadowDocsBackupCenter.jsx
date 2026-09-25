@@ -3,7 +3,7 @@ import { Archive, BookOpen, Download, HardDriveDownload, HardDriveUpload, Shield
 
 export default function ShadowDocsBackupCenter({ books = [], ready = true, busy = false, onBackupBook, onImportBook, onExportLibrary, onImportLibrary }) {
   const [selectedId, setSelectedId] = useState('')
-  const library = Array.isArray(books) ? books : []
+  const library = (Array.isArray(books) ? books : []).filter(book => !book.deletedAt)
   const selected = library.find(book => book.id === selectedId) || library[0]
   const count = library.length
 
