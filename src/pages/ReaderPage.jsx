@@ -6556,6 +6556,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       loading ||
       lockedEpisode ||
       !adultAccepted ||
+      !getReaderToken() ||
       qualifiedViewSentRef.current
     ) {
       return undefined
@@ -6827,7 +6828,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
   
   useEffect(() => {
-  if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted) {
+  if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted || !getReaderToken()) {
     return undefined
   }
 
