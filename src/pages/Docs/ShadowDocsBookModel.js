@@ -1,8 +1,8 @@
 import { BOOK_TEMPLATES, getBookTemplate, getPageLayoutPreset } from './ShadowDocsTemplateCatalog'
+import { isShadowDocsFont } from './ShadowDocsFontCatalog'
 
 const ids = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
 const PAGE_SIZES = new Set(['A5', 'A4', 'B5'])
-const FONTS = new Set(['Noto Serif Khmer', 'Noto Sans Khmer', 'Battambang', 'Georgia', 'Arial'])
 const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
 const CHAPTER_STYLES = new Set(['classic', 'modern', 'minimal'])
 const ALLOWED = new Set(['P', 'DIV', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'H1', 'H2', 'H3', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'SPAN'])
@@ -12,6 +12,7 @@ const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({ '&
 export const createShadowDocsId = ids
 export const isShadowDocsImage = value => typeof value === 'string' && /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(value) && value.length < 2_500_000
 export const isShadowDocsManuscriptImage = value => isShadowDocsImage(value) && value.length <= 300_000
+
 
 export function sanitizeShadowDocsHTML(source) {
   const html = String(source ?? '').slice(0, 500_000)
@@ -67,7 +68,7 @@ export function normalizeShadowDocsBook(source, { duplicate = false } = {}) {
       size: PAGE_SIZES.has(sourceSettings.size) ? sourceSettings.size : layout.size,
       margin: clamp(sourceSettings.margin, 10, 35, layout.margin),
       gutter: clamp(sourceSettings.gutter, 0, 20, 0),
-      font: FONTS.has(sourceSettings.font) ? sourceSettings.font : layout.font,
+      font: isShadowDocsFont(sourceSettings.font) ? sourceSettings.font : layout.font,
       fontSize: clamp(sourceSettings.fontSize, 10, 24, layout.fontSize),
       lineSpacing: clamp(sourceSettings.lineSpacing, 1.2, 2.2, layout.lineSpacing),
       firstLineIndent: clamp(sourceSettings.firstLineIndent, 0, 15, 0),
