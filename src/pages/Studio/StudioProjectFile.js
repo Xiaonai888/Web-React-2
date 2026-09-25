@@ -1,6 +1,7 @@
 import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
 import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
 import { normalizeStudioTextData } from './StudioTextLayerData'
+import { normalizeStudioLayerStyle } from './StudioLayerStyleEngine'
 
 export const STUDIO_PROJECT_EXTENSION = '.shadowstudio'
 
@@ -53,6 +54,7 @@ function normalizedLayers(raw, paperIndex) {
     return { id, name, image, visible: item.visible, locked: item.locked, opacity,
       isBackground,
       ...(item.textData !== undefined ? { textData: normalizeStudioTextData(item.textData, raw.width, raw.height) } : {}),
+      ...(item.layerStyle !== undefined ? { layerStyle: normalizeStudioLayerStyle(item.layerStyle) } : {}),
       ...(groupId ? { groupId } : {}), ...(item.blendMode ? { blendMode } : {}),
     }
   })
