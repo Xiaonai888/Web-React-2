@@ -31,6 +31,8 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const editingRef = useRef(null)
   const inputRef = useRef(null)
   const pendingGroupIds = useRef(null)
+  const styleHoldRef = useRef(null)
+  const suppressStyleClickRef = useRef(null)
   const editTextLabel = ({ en: 'Edit text', km: 'កែអក្សរ', zh: '编辑文字', ja: 'テキストを編集', ko: '텍스트 수정' })[language] || 'Edit text'
   const duplicateLabel = ({ en: 'Duplicate layer', km: 'ចម្លងស្រទាប់', zh: '复制图层', ja: 'レイヤーを複製', ko: '레이어 복제' })[language] || 'Duplicate layer' 
   const convertLabel = ({ en: 'Convert Background to normal layer', km: 'ប្ដូរ Background ទៅជា Layer ធម្មតា', zh: '将背景转换为普通图层', ja: '背景を通常レイヤーに変換', ko: '배경을 일반 레이어로 변환' })[language] || 'Convert Background to normal layer'
@@ -48,6 +50,9 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
     selected.opacity === 100 && lower.opacity === 100 &&
     (selected.blendMode || 'normal') === 'normal' && (lower.blendMode || 'normal') === 'normal' &&
     (selected.groupId || null) === (lower.groupId || null) &&
+    ![selected, lower].some((layer) => layer.layerStyle && (layer.layerStyle.fillOpacity !== 100 ||
+      ['r', 'g', 'b'].some((channel) => layer.layerStyle.channels?.[channel] === false) ||
+      Object.values(layer.layerStyle.effects || {}).some((effect) => effect.enabled))) &&
     (!selected.groupId || groups.some((group) => group.id === selected.groupId && group.visible && !group.locked)))
   const adjacentGroups = selected && !selected.isBackground && !selected.groupId && selectedIndex >= 0
     ? groups.filter((group) => layers[selectedIndex - 1]?.groupId === group.id || layers[selectedIndex + 1]?.groupId === group.id)
@@ -73,6 +78,51 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const groupTitle = ({ en: 'Group', km: 'ក្រុមស្រទាប់', zh: '图层组', ja: 'レイヤーグループ', ko: '레이어 그룹' })[language] || 'Group'
   const blendTitle = ({ en: 'Blend mode', km: 'របៀបលាយពណ៌', zh: '混合模式', ja: '描画モード', ko: '혼합 모드' })[language] || 'Blend mode'
   const groupControl = ({ en: ['New group', 'Join group', 'Ungroup', 'Rename group', 'Collapse', 'Expand'], km: ['បង្កើតក្រុម', 'ចូលក្រុម', 'ដោះក្រុម', 'ប្ដូរឈ្មោះក្រុម', 'បង្រួម', 'ពង្រីក'], zh: ['新建组', '加入组', '取消编组', '重命名组', '收起', '展开'], ja: ['グループ作成', 'グループに追加', 'グループ解除', 'グループ名変更', '折りたたむ', '展開'], ko: ['그룹 만들기', '그룹에 추가', '그룹 해제', '그룹 이름 변경', '접기', '펼치기'] })[language] || ['New group', 'Join group', 'Ungroup', 'Rename group', 'Collapse', 'Expand']
+
+  function openLayerStyle(layer) {
+    if (blocked || !layer) return
+    editingRef.current = null
+    setEditing(null)
+    onLayerAction('style-open', layer.id)
+  }
+
+  function cancelStyleHold(event) {
+    const hold = styleHoldRef.current
+    if (!hold || (event?.pointerId !== undefined && hold.pointerId !== event.pointerId)) return
+    window.clearTimeout(hold.timer)
+    styleHoldRef.current = null
+  }
+
+  function startStyleHold(event, layer) {
+    if (event.pointerType !== 'touch' || blocked || !layer) return
+    cancelStyleHold()
+    const hold = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, timer: null }
+    hold.timer = window.setTimeout(() => {
+      if (styleHoldRef.current !== hold) return
+      styleHoldRef.current = null
+      suppressStyleClickRef.current = { id: layer.id, until: Date.now() + 1200 }
+      openLayerStyle(layer)
+    }, 550)
+    styleHoldRef.current = hold
+  }
+
+  function moveStyleHold(event) {
+    const hold = styleHoldRef.current
+    if (!hold || hold.pointerId !== event.pointerId) return
+    if (Math.hypot(event.clientX - hold.x, event.clientY - hold.y) > 12) cancelStyleHold(event)
+  }
+
+  function selectStyleLayer(event, layer) {
+    const suppressed = suppressStyleClickRef.current
+    suppressStyleClickRef.current = null
+    if (suppressed?.id === layer.id && Date.now() < suppressed.until) {
+      event.preventDefault()
+      return
+    }
+    onLayerAction('select', layer.id)
+  }
+
+  useEffect(() => () => cancelStyleHold(), [])
 
   function beginRename(kind, item) {
     if (blocked || !item) return
@@ -322,11 +372,11 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
               </div> : null}
               {!group?.collapsed ? <div className="ss-lcp-layer" data-ss-layer-id={layer.id} data-grouped={Boolean(group)} data-selected={layer.id === activeLayerId}>
               <button className="ss-lcp-action" type="button" aria-label={layer.visible ? a[3] : a[2]} title={layer.visible ? a[3] : a[2]} disabled={blocked} onClick={() => onLayerAction('visibility', layer.id)}><i className={`fa-regular ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}`} aria-hidden="true" /></button>
-              <button className="ss-lcp-pick" type="button" disabled={blocked} onDoubleClick={layer.textData ? () => onLayerAction('edit-text', layer.id) : undefined} onClick={() => onLayerAction('select', layer.id)} aria-label={`${a[1]} ${layer.name}`} title={layer.textData ? editTextLabel : a[1]}>
+              <button className="ss-lcp-pick" type="button" disabled={blocked} onDoubleClick={(event) => { event.preventDefault(); openLayerStyle(layer) }} onClick={(event) => selectStyleLayer(event, layer)} onPointerDown={(event) => startStyleHold(event, layer)} onPointerMove={moveStyleHold} onPointerUp={cancelStyleHold} onPointerCancel={cancelStyleHold} onPointerLeave={cancelStyleHold} onContextMenu={(event) => { if (event.currentTarget.matches(':active')) event.preventDefault() }} aria-label={`${a[1]} ${layer.name}`} title={layer.textData ? editTextLabel : a[1]}>
                 <canvas className="ss-lcp-thumb" ref={(node) => { layerRefs.current[layer.id] = node }} aria-hidden="true" />
               </button>
               <span className="ss-lcp-item-name">
-                {editing?.kind === 'layer' && editing.id === layer.id ? renameInput('layer', layer) : <button className="ss-lcp-name-trigger" type="button" disabled={blocked} title={`${a[8]}: ${layer.name}`} aria-label={`${a[8]}: ${layer.name}`} onClick={() => layer.id === activeLayerId ? beginRename('layer', layer) : onLayerAction('select', layer.id)}><strong>{layer.textData ? 'T · ' : ''}{layer.name}</strong></button>}
+                {editing?.kind === 'layer' && editing.id === layer.id ? renameInput('layer', layer) : <button className="ss-lcp-name-trigger" type="button" disabled={blocked} title={`${layer.name} · Layer Style: double-click or long-press`} aria-label={`${a[1]} ${layer.name}`} onClick={(event) => selectStyleLayer(event, layer)} onDoubleClick={(event) => { event.preventDefault(); openLayerStyle(layer) }} onPointerDown={(event) => startStyleHold(event, layer)} onPointerMove={moveStyleHold} onPointerUp={cancelStyleHold} onPointerCancel={cancelStyleHold} onPointerLeave={cancelStyleHold} onContextMenu={(event) => { if (event.currentTarget.matches(':active')) event.preventDefault() }}><strong>{layer.textData ? 'T · ' : ''}{layer.name}</strong></button>}
                 <small>{layer.id === activeLayerId ? '● ' : ''}{layer.opacity}%</small>
               </span>
               <button className="ss-lcp-action" type="button" aria-label={layer.locked ? a[5] : a[4]} title={layer.locked ? a[5] : a[4]} disabled={blocked} onClick={() => onLayerAction('lock', layer.id)}><i className={`fa-solid ${layer.locked ? 'fa-lock' : 'fa-lock-open'}`} aria-hidden="true" /></button>
