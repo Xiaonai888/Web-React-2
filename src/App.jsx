@@ -142,6 +142,7 @@ const ColdMaleLeadGenrePage = lazy(() => import('./pages/Genre/ColdMaleLeadGenre
 const BLGenrePage = lazy(() => import('./pages/Genre/BLGenrePage'))
 const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
 const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreManagerPage'))
+const AuthorStoreWithdrawalDetailsPage = lazy(() => import('./pages/Author/AuthorStoreWithdrawalDetailsPage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
 const AuthorPostsContentLibraryPage = lazy(() =>
@@ -1079,6 +1080,11 @@ const shouldShowOpeningAds =
         <Route
   path="/author/page/store/withdrawal"
   element={<Navigate to="/author/page/finance/withdrawal" replace />}
+/>
+
+          <Route
+  path="/author/page/store/withdrawal-details"
+  element={<LazyPage><AuthorStoreWithdrawalDetailsPage /></LazyPage>}
 />
 
 
