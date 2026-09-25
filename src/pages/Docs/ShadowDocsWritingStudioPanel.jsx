@@ -3,6 +3,8 @@ import { AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, B
 import { getManuscriptOverview } from './ShadowDocsManuscriptTools'
 
 const formats = [
+  { command: 'undo', label: 'Undo', content: '↶' },
+  { command: 'redo', label: 'Redo', content: '↷' },
   { command: 'bold', label: 'Bold', content: <strong>B</strong> },
   { command: 'italic', label: 'Italic', content: <em>I</em> },
   { command: 'underline', label: 'Underline', content: <u>U</u> },
