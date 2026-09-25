@@ -53,6 +53,8 @@ import { applyStudioCustomComicFrames } from './StudioCustomComicFrameToolEngine
 import { createStudioRulerGuide, renderStudioRulerGuides, snapStudioPointToGuides } from './StudioRulerGuideToolEngine'
 import { placeStudioMangaBalloon } from './StudioBalloonPlacementToolEngine'
 import StudioAdvancedToolPanel from './StudioAdvancedToolPanel'
+import StudioLayerStyleDialog from './StudioLayerStyleDialog'
+import { normalizeStudioLayerStyle } from './StudioLayerStyleEngine'
 import { applyStudioPhotoFilter } from './StudioFilterToolEngine'
 import { beginStudioSpecialBrush, extendStudioSpecialBrush } from './StudioSpecialBrushToolEngine'
 import { applyStudioFrameDivider } from './StudioFrameDividerToolEngine'
@@ -430,6 +432,7 @@ const placeImageLabel = {
   const [mangaToolsOpen, setMangaToolsOpen] = useState(false)
   const [mangaToolInitial, setMangaToolInitial] = useState('bubble')
   const [advancedEditor, setAdvancedEditor] = useState(null)
+  const [styleLayerId, setStyleLayerId] = useState(null)
   const [textEditor, setTextEditor] = useState(null)
   const [shapeEditor, setShapeEditor] = useState(null)
   const [brushStyle, setBrushStyle] = useState('round')
@@ -550,6 +553,14 @@ const placeImageLabel = {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy || drawingRef.current || newFileOpen || exportOpen || recoveryBusy) return
     try {
+      if (action === 'style-open') {
+        const layer = stack.layers.find((item) => item.id === layerId)
+        if (!layer) return
+        selectStudioLayer(stack, layerId)
+        setStyleLayerId(layerId)
+        refresh((number) => number + 1)
+        return
+      }
       if (action === 'edit-text') {
         const layer = stack.layers.find((item) => item.id === layerId)
         if (!layer?.textData || !studioLayerCanEdit(stack, layerId)) return
@@ -573,6 +584,7 @@ const placeImageLabel = {
         const copy = duplicateStudioLayer(stack, layerId)
         if (original?.groupId) copy.groupId = original.groupId
         if (original?.blendMode) copy.blendMode = original.blendMode
+        if (original?.layerStyle) copy.layerStyle = normalizeStudioLayerStyle(original.layerStyle)
       } else if (action === 'select') selectStudioLayer(stack, layerId)
       else if (action === 'visibility') {
         const layer = stack.layers.find((item) => item.id === layerId)
@@ -582,9 +594,15 @@ const placeImageLabel = {
         const layer = stack.layers.find((item) => item.id === layerId)
         if (!layer) return
         updateStudioLayer(stack, layerId, { locked: !layer.locked })
-      } else if (action === 'opacity') updateStudioLayer(stack, layerId, { opacity: value })
+      } else if (action === 'opacity') {
+        const layer = updateStudioLayer(stack, layerId, { opacity: value })
+        if (layer.layerStyle) layer.layerStyle.opacity = layer.opacity
+      }
       else if (action === 'rename') updateStudioLayer(stack, layerId, { name: value })
-      else if (action === 'blend') setStudioLayerBlendMode(stack, layerId, value)
+      else if (action === 'blend') {
+        const layer = setStudioLayerBlendMode(stack, layerId, value)
+        if (layer.layerStyle) layer.layerStyle.blendMode = layer.blendMode
+      }
       else if (action === 'group-add') createStudioLayerGroup(stack, [layerId || stack.activeLayerId])
       else if (action === 'group-remove') removeStudioLayerGroup(stack, layerId)
       else if (action === 'group-rename') updateStudioLayerGroup(stack, layerId, { name: value })
@@ -608,6 +626,13 @@ const placeImageLabel = {
         if (!moveStudioLayer(stack, layerId, value)) return
         try { validateStudioGroupLayout(stack) } catch (error) { stack.layers = before; throw error }
       } else if (action === 'merge-down') {
+        const current = stack.layers.find((item) => item.id === stack.activeLayerId)
+        const lower = stack.layers[stack.layers.indexOf(current) - 1]
+        if ([current, lower].some((item) => item?.layerStyle && (item.layerStyle.fillOpacity !== 100 ||
+          ['r', 'g', 'b'].some((channel) => item.layerStyle.channels?.[channel] === false) ||
+          Object.values(item.layerStyle.effects || {}).some((effect) => effect.enabled)))) {
+          throw new Error('Remove or disable Layer Style effects before merging these layers.')
+        }
         delete mergeStudioLayerDown(stack).textData
       } else if (action === 'remove') {
         const layer = stack.layers.find((item) => item.id === layerId)
@@ -634,6 +659,40 @@ const placeImageLabel = {
       setProjectNotice(error.message || 'Could not update the layer.')
     }
   }
+
+  function applyLayerStyle(rawStyle, openedLayer) {
+    const stack = layerStackRef.current
+    const layer = stack?.layers.find((item) => item.id === styleLayerId)
+    if (!stack || !layer || openedLayer?.id !== layer.id || activeDocumentId !== canvasDocumentRef.current ||
+        paperLoading || projectBusy || drawingRef.current || newFileOpen || exportOpen || recoveryBusy) {
+      throw new Error('The selected paper or layer has changed. Reopen Layer Style.')
+    }
+    const group = stack.groups?.find((item) => item.id === layer.groupId)
+    if (layer.locked || group?.locked) throw new Error('Unlock the layer and its group before editing Layer Style.')
+    const style = normalizeStudioLayerStyle(rawStyle)
+    if (layer.isBackground && style.blendMode !== 'normal') throw new Error('Background must use Normal blend mode.')
+    const previous = { opacity: layer.opacity, blendMode: layer.blendMode, layerStyle: layer.layerStyle }
+    try {
+      layer.opacity = style.opacity
+      setStudioLayerBlendMode(stack, layer.id, style.blendMode)
+      layer.layerStyle = style
+      paintLayerPreview()
+      snapshot()
+      updateDocument(activeDocumentId, { dirty: true })
+      setProjectNotice('')
+      return true
+    } catch (error) {
+      layer.opacity = previous.opacity
+      if (previous.blendMode === undefined) delete layer.blendMode
+      else layer.blendMode = previous.blendMode
+      if (previous.layerStyle === undefined) delete layer.layerStyle
+      else layer.layerStyle = previous.layerStyle
+      paintLayerPreview()
+      throw error
+    }
+  }
+
+  useEffect(() => { setStyleLayerId(null) }, [activeDocumentId])
 
   function applyRightFeature(kind, options) {
     const stack = layerStackRef.current
@@ -729,6 +788,7 @@ const placeImageLabel = {
         isBackground: layer.isBackground === true,
         ...(layer.groupId ? { groupId: layer.groupId } : {}),
         ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
+        ...(layer.layerStyle ? { layerStyle: normalizeStudioLayerStyle(layer.layerStyle) } : {}),
         ...(layer.textData ? { textData: { ...layer.textData, anchor: { ...layer.textData.anchor } } } : {}),
         pixels: layer.canvas.getContext('2d', { willReadFrequently: true })
           .getImageData(0, 0, stack.width, stack.height),
@@ -756,7 +816,7 @@ const placeImageLabel = {
       canvas.width = width
       canvas.height = height
       canvas.getContext('2d', { willReadFrequently: true }).putImageData(item.pixels, 0, 0)
-      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, isBackground: item.isBackground === true, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}), ...(item.textData ? { textData: { ...item.textData, anchor: { ...item.textData.anchor } } } : {}) }
+      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, isBackground: item.isBackground === true, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}), ...(item.layerStyle ? { layerStyle: normalizeStudioLayerStyle(item.layerStyle) } : {}), ...(item.textData ? { textData: { ...item.textData, anchor: { ...item.textData.anchor } } } : {}) }
     })
     stack.activeLayerId = entry.activeLayerId
     stack.groups = (entry.groups || []).map((group) => ({ ...group }))
@@ -2491,6 +2551,15 @@ async function dropImageOnPaper(event) {
     if (file) placeImageOnCurrentPaper(file)
   }}
 />
+
+      <StudioLayerStyleDialog
+        open={Boolean(styleLayerId) && workspaceStarted && canvasDocumentRef.current === activeDocumentId}
+        layer={layerStackRef.current?.layers.find((item) => item.id === styleLayerId) || null}
+        onClose={() => setStyleLayerId(null)}
+        onApply={applyLayerStyle}
+        language={language}
+        disabled={paperLoading || projectBusy || recoveryBusy || Boolean(recoveryEntry) || newFileOpen || exportOpen}
+      />
 
       <StudioAdvancedToolPanel
         editor={advancedEditor && workspaceStarted ? advancedEditor : null}
