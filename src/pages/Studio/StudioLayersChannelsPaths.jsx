@@ -11,11 +11,11 @@ const WORDS = {
 }
 
 const ACTIONS = {
-  en: ['Add layer', 'Select', 'Show layer', 'Hide layer', 'Lock layer', 'Unlock layer', 'Move up', 'Move down', 'Rename layer', 'Delete layer', 'Maximum 8 layers', 'Background cannot be deleted', 'Layer name', 'No layers available'],
-  km: ['បន្ថែមស្រទាប់', 'ជ្រើស', 'បង្ហាញស្រទាប់', 'លាក់ស្រទាប់', 'ចាក់សោស្រទាប់', 'ដោះសោស្រទាប់', 'ឡើងលើ', 'ចុះក្រោម', 'ប្ដូរឈ្មោះស្រទាប់', 'លុបស្រទាប់', 'អតិបរមា ៨ ស្រទាប់', 'មិនអាចលុប Background បាន', 'ឈ្មោះស្រទាប់', 'មិនទាន់មានស្រទាប់'],
-  zh: ['新建图层', '选择', '显示图层', '隐藏图层', '锁定图层', '解锁图层', '上移', '下移', '重命名图层', '删除图层', '最多 8 个图层', '背景不可删除', '图层名称', '暂无图层'],
-  ja: ['レイヤーを追加', '選択', '表示', '非表示', 'ロック', 'ロック解除', '上へ', '下へ', '名前を変更', '削除', '最大 8 レイヤー', '背景は削除できません', 'レイヤー名', 'レイヤーなし'],
-  ko: ['레이어 추가', '선택', '레이어 표시', '레이어 숨기기', '잠금', '잠금 해제', '위로', '아래로', '이름 바꾸기', '삭제', '최대 8개 레이어', '배경은 삭제할 수 없습니다', '레이어 이름', '레이어 없음'],
+  en: ['Add layer', 'Select', 'Show layer', 'Hide layer', 'Lock layer', 'Unlock layer', 'Move up', 'Move down', 'Rename layer', 'Delete layer', 'Maximum 8 layers', 'Unlock a layer before deleting it', 'Layer name', 'No layers available'],
+  km: ['បន្ថែមស្រទាប់', 'ជ្រើស', 'បង្ហាញស្រទាប់', 'លាក់ស្រទាប់', 'ចាក់សោស្រទាប់', 'ដោះសោស្រទាប់', 'ឡើងលើ', 'ចុះក្រោម', 'ប្ដូរឈ្មោះស្រទាប់', 'លុបស្រទាប់', 'អតិបរមា ៨ ស្រទាប់', 'ដោះសោ Layer មុនពេលលុប', 'ឈ្មោះស្រទាប់', 'មិនទាន់មានស្រទាប់'],
+  zh: ['新建图层', '选择', '显示图层', '隐藏图层', '锁定图层', '解锁图层', '上移', '下移', '重命名图层', '删除图层', '最多 8 个图层', '解锁图层后可删除', '图层名称', '暂无图层'],
+  ja: ['レイヤーを追加', '選択', '表示', '非表示', 'ロック', 'ロック解除', '上へ', '下へ', '名前を変更', '削除', '最大 8 レイヤー', 'ロックを解除すると削除できます', 'レイヤー名', 'レイヤーなし'],
+  ko: ['레이어 추가', '선택', '레이어 표시', '레이어 숨기기', '잠금', '잠금 해제', '위로', '아래로', '이름 바꾸기', '삭제', '최대 8개 레이어', '잠금 해제 후 삭제할 수 있습니다', '레이어 이름', '레이어 없음'],
 }
 
 const CHANNELS = ['rgb', 'red', 'green', 'blue']
@@ -25,6 +25,8 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const t = WORDS[language] || WORDS.en
   const a = ACTIONS[language] || ACTIONS.en
   const [active, setActive] = useState('layers')
+  const [layerSearch, setLayerSearch] = useState('')
+  const [layerKind, setLayerKind] = useState('all')
   const [editing, setEditing] = useState(null)
   const editingRef = useRef(null)
   const inputRef = useRef(null)
@@ -51,6 +53,23 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
     ? groups.filter((group) => layers[selectedIndex - 1]?.groupId === group.id || layers[selectedIndex + 1]?.groupId === group.id)
     : []
   const reverseLayers = [...layers].reverse()
+  const filteredLayers = reverseLayers.filter((layer) => {
+    const query = layerSearch.trim().toLocaleLowerCase()
+    const groupName = groups.find((group) => group.id === layer.groupId)?.name || ''
+    const matchesName = !query || layer.name.toLocaleLowerCase().includes(query) || groupName.toLocaleLowerCase().includes(query)
+    const matchesKind = layerKind === 'all' ||
+      (layerKind === 'text' && Boolean(layer.textData)) ||
+      (layerKind === 'background' && layer.isBackground) ||
+      (layerKind === 'pixel' && !layer.isBackground && !layer.textData)
+    return matchesName && matchesKind
+  })
+  const layerFilterWords = ({
+    en: ['Search layers', 'Kind', 'All layers', 'Pixel layers', 'Text layers', 'Background', 'More layer actions', 'No matching layers'],
+    km: ['ស្វែងរក Layer', 'ប្រភេទ', 'Layer ទាំងអស់', 'Layer រូបភាព', 'Layer អក្សរ', 'Background', 'មុខងារ Layer បន្ថែម', 'រកមិនឃើញ Layer'],
+    zh: ['搜索图层', '类型', '全部图层', '像素图层', '文字图层', '背景', '更多图层操作', '没有匹配的图层'],
+    ja: ['レイヤーを検索', '種類', 'すべて', '画像レイヤー', 'テキストレイヤー', '背景', 'レイヤーの追加操作', '一致するレイヤーなし'],
+    ko: ['레이어 검색', '유형', '모든 레이어', '픽셀 레이어', '텍스트 레이어', '배경', '추가 레이어 작업', '일치하는 레이어 없음'],
+  })[language] || ['Search layers', 'Kind', 'All layers', 'Pixel layers', 'Text layers', 'Background', 'More layer actions', 'No matching layers']
   const groupTitle = ({ en: 'Group', km: 'ក្រុមស្រទាប់', zh: '图层组', ja: 'レイヤーグループ', ko: '레이어 그룹' })[language] || 'Group'
   const blendTitle = ({ en: 'Blend mode', km: 'របៀបលាយពណ៌', zh: '混合模式', ja: '描画モード', ko: '혼합 모드' })[language] || 'Blend mode'
   const groupControl = ({ en: ['New group', 'Join group', 'Ungroup', 'Rename group', 'Collapse', 'Expand'], km: ['បង្កើតក្រុម', 'ចូលក្រុម', 'ដោះក្រុម', 'ប្ដូរឈ្មោះក្រុម', 'បង្រួម', 'ពង្រីក'], zh: ['新建组', '加入组', '取消编组', '重命名组', '收起', '展开'], ja: ['グループ作成', 'グループに追加', 'グループ解除', 'グループ名変更', '折りたたむ', '展開'], ko: ['그룹 만들기', '그룹에 추가', '그룹 해제', '그룹 이름 변경', '접기', '펼치기'] })[language] || ['New group', 'Join group', 'Ungroup', 'Rename group', 'Collapse', 'Expand']
@@ -213,6 +232,43 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
         .shadow-studio .ss-lcp-blend{display:flex;align-items:center;gap:5px;font-size:10px;color:#ccdce9}
         .shadow-studio .ss-lcp-blend select{max-width:107px}
         .shadow-studio .ss-lcp-layer[data-grouped=true]{margin-left:12px;border-left:3px solid #86b4dc} 
+
+        .shadow-studio .ss-lcp{--ss-layer-bg:#454545;--ss-layer-border:#626262;--ss-layer-fg:#e9e9e9;color:var(--ss-layer-fg);background:var(--ss-layer-bg)}
+        .shadow-studio .ss-lcp-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:0;padding:0 3px;border-color:var(--ss-layer-border);background:#3b3b3b}
+        .shadow-studio .ss-lcp-tab{height:27px;border-radius:0;color:#c9c9c9;font-size:11px}
+        .shadow-studio .ss-lcp-tab[aria-selected=true]{border-bottom:1px solid #979797;background:#4c4c4c;color:#fff}
+        .shadow-studio .ss-lcp-layers-layout{display:flex;flex-direction:column;min-width:0;min-height:230px;height:min(58vh,510px);max-height:calc(100dvh - 160px);background:var(--ss-layer-bg)}
+        .shadow-studio .ss-lcp-filter-bar{display:flex;align-items:center;gap:5px;min-width:0;padding:7px 6px 4px;border-bottom:1px solid #585858}
+        .shadow-studio .ss-lcp-search{display:flex;align-items:center;gap:5px;flex:1;min-width:0;height:27px;padding:0 7px;border:1px solid #686868;background:#414141;color:#c7c7c7;font-size:10px}
+        .shadow-studio .ss-lcp-search input{flex:1;min-width:0;width:100%;height:100%;padding:0;border:0;outline:0;background:transparent;color:#f5f5f5;font:inherit;font-size:11px}
+        .shadow-studio .ss-lcp-search input::placeholder{color:#aaa}
+        .shadow-studio .ss-lcp-kind{flex:0 1 98px;min-width:62px;max-width:98px;height:27px;padding:0 2px;border:1px solid #686868;background:#414141;color:#e7e7e7;font:inherit;font-size:10px}
+        .shadow-studio .ss-lcp-settings{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;padding:5px 6px 7px;border-bottom:1px solid var(--ss-layer-border)}
+        .shadow-studio .ss-lcp-settings .ss-lcp-blend{flex:1;min-width:105px}
+        .shadow-studio .ss-lcp-settings .ss-lcp-blend select{flex:1;max-width:none;min-width:0}
+        .shadow-studio .ss-lcp-settings .ss-lcp-opacity{flex:0 0 auto}
+        .shadow-studio .ss-lcp-settings .ss-lcp-opacity select{width:60px}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-list{flex:1;min-height:95px;max-height:none;gap:0;grid-auto-rows:min-content;align-content:start;overflow:auto;background:var(--ss-layer-bg)}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer{gap:6px;min-height:37px;padding:3px 6px;border:0;border-bottom:1px solid #575757;border-radius:0;background:transparent;color:var(--ss-layer-fg)}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer[data-selected=true]{border-color:#666;background:#686868}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-thumb{background:#fff;border:1px solid #202020}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-pick{flex-basis:35px}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-item-name strong{font-size:11px;font-weight:500}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer[data-selected=true] .ss-lcp-item-name strong{font-weight:650}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-item-name small{font-size:9px;color:#bcbcbc}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-action{height:26px;min-width:25px;padding:0 4px;border:1px solid transparent;border-radius:2px;background:transparent;color:#dedede;font-size:11px}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-action:hover:not(:disabled){border-color:#898989;background:#646464}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-action:disabled{opacity:.35}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-blend select,.shadow-studio .ss-lcp-layers-layout .ss-lcp-opacity select,.shadow-studio .ss-lcp-layers-layout .ss-lcp-group-settings select,.shadow-studio .ss-lcp-layers-layout .ss-lcp-group-settings button{border-color:#696969;background:#414141;color:#e7e7e7}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-group{margin:1px 0;padding:4px;border:0;border-bottom:1px solid #666;border-radius:0;background:#505050}
+        .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer[data-grouped=true]{margin-left:10px;border-left:2px solid #989898}
+        .shadow-studio .ss-lcp-more{flex:none;border-top:1px solid #5d5d5d;background:#404040}
+        .shadow-studio .ss-lcp-more summary{padding:5px 9px;cursor:pointer;font-size:10px;color:#d7d7d7}
+        .shadow-studio .ss-lcp-more .ss-lcp-tools{max-height:114px;overflow-y:auto;flex-wrap:wrap;margin:0;padding:5px 6px;border-top:1px solid #5b5b5b}
+        .shadow-studio .ss-lcp-footer{display:flex;align-items:center;justify-content:space-around;gap:5px;flex:none;min-height:33px;padding:3px 6px;border-top:1px solid #777;background:#404040}
+        .shadow-studio .ss-lcp-footer .ss-lcp-action{flex:1;max-width:55px;min-height:27px}
+        .shadow-studio .ss-lcp-hint{padding:4px 8px}
+        @media(pointer:coarse){.shadow-studio .ss-lcp-layers-layout{height:min(56dvh,510px);max-height:calc(100dvh - 120px)}.shadow-studio .ss-lcp-footer .ss-lcp-action{min-height:36px}.shadow-studio .ss-lcp-more summary{padding:9px}.shadow-studio .ss-lcp-layers-layout .ss-lcp-list{max-height:none}}
       `}</style>
       <div className="ss-lcp-tabs" role="tablist" aria-label={t[0]}>
         {['layers', 'channels', 'paths'].map((tab, index) => (
@@ -220,38 +276,35 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
         ))}
       </div>
       {active === 'layers' ? <>
-        <div className="ss-lcp-tools">
-          <button className="ss-lcp-action" type="button" title={a[0]} aria-label={a[0]} disabled={blocked || layers.length >= 8} onClick={() => onLayerAction('add')}><i className="fa-solid fa-plus" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={duplicateLabel} aria-label={duplicateLabel} disabled={blocked || !selected || selected.isBackground || layers.length >= 8} onClick={() => onLayerAction('duplicate', activeLayerId)}><i className="fa-regular fa-copy" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={a[6]} aria-label={a[6]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) === layers.length - 1} onClick={() => onLayerAction('move', activeLayerId, 1)}><i className="fa-solid fa-arrow-up" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) <= 0 || lower?.isBackground} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
-          {selected?.textData ? <button className="ss-lcp-action" type="button" title={editTextLabel} aria-label={editTextLabel} disabled={blocked || selected.locked || !selected.visible || Boolean(selectedGroup && (!selectedGroup.visible || selectedGroup.locked))} onClick={() => onLayerAction('edit-text', activeLayerId)}><i className="fa-solid fa-font" aria-hidden="true" /></button> : null}
-          <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => beginRename('layer', selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={`${a[9]} · Delete / Backspace`} aria-label={a[9]} disabled={blocked || !selected || selected.isBackground || layers.length <= 1} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={mergeLabel} aria-label={mergeLabel} disabled={blocked || !canMerge} onClick={() => onLayerAction('merge-down', activeLayerId)}><i className="fa-solid fa-layer-group" aria-hidden="true" /></button>
-          <label className="ss-lcp-opacity">{t[7]}
-            <select aria-label={t[7]} disabled={blocked || !selected} value={selected?.opacity ?? 100} onChange={(event) => onLayerAction('opacity', activeLayerId, Number(event.target.value))}>
-              {[...new Set([0,10,20,30,40,50,60,70,80,90,100, selected?.opacity].filter((value) => value !== undefined))].sort((x,y) => x-y).map((value) => <option key={value} value={value}>{value}%</option>)}
-            </select>
+        <div className="ss-lcp-layers-layout">
+        <div className="ss-lcp-filter-bar">
+          <label className="ss-lcp-search">
+            <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
+            <input type="search" value={layerSearch} onChange={(event) => setLayerSearch(event.target.value)} placeholder={layerFilterWords[0]} aria-label={layerFilterWords[0]} />
           </label>
-          {selected?.isBackground ? <button className="ss-lcp-action" type="button" title={convertLabel} aria-label={convertLabel} disabled={blocked} onClick={() => onLayerAction('convert-background', activeLayerId)}><i className="fa-solid fa-unlock-keyhole" aria-hidden="true" /></button> : null}
-          <button className="ss-lcp-action ss-lcp-group-add" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selected.isBackground || Boolean(selectedGroup) || groups.length >= 8} onClick={() => { pendingGroupIds.current = new Set(groups.map((item) => item.id)); onLayerAction('group-add', activeLayerId) }}><i className="fa-solid fa-folder-plus" aria-hidden="true" /><span className="ss-lcp-group-add-label">{groupControl[0]}</span></button>
+          <select className="ss-lcp-kind" aria-label={layerFilterWords[1]} value={layerKind} onChange={(event) => setLayerKind(event.target.value)}>
+            <option value="all">{layerFilterWords[2]}</option>
+            <option value="pixel">{layerFilterWords[3]}</option>
+            <option value="text">{layerFilterWords[4]}</option>
+            <option value="background">{layerFilterWords[5]}</option>
+          </select>
+        </div>
+        <div className="ss-lcp-settings">
           <label className="ss-lcp-blend">{blendTitle}
             <select aria-label={blendTitle} disabled={blocked || !selected || selected.isBackground} value={selected?.blendMode || 'normal'} onChange={(event) => onLayerAction('blend', activeLayerId, event.target.value)}>
               {STUDIO_BLEND_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}
             </select>
           </label>
-          {adjacentGroups.length ? <label className="ss-lcp-blend">{groupControl[1]}
-            <select aria-label={groupControl[1]} disabled={blocked} value="" onChange={(event) => event.target.value && onLayerAction('group-join', activeLayerId, event.target.value)}>
-              <option value="">—</option>
-              {adjacentGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+          <label className="ss-lcp-opacity">{t[7]}
+            <select aria-label={t[7]} disabled={blocked || !selected} value={selected?.opacity ?? 100} onChange={(event) => onLayerAction('opacity', activeLayerId, Number(event.target.value))}>
+              {[...new Set([0,10,20,30,40,50,60,70,80,90,100, selected?.opacity].filter((value) => value !== undefined))].sort((x,y) => x-y).map((value) => <option key={value} value={value}>{value}%</option>)}
             </select>
-          </label> : null}
+          </label>
         </div>
         <div className="ss-lcp-list">
-          {reverseLayers.map((layer, index) => {
+          {filteredLayers.map((layer, index) => {
             const group = groups.find((item) => item.id === layer.groupId)
-            const firstOfGroup = group && (index === 0 || reverseLayers[index - 1].groupId !== group.id)
+            const firstOfGroup = group && (index === 0 || filteredLayers[index - 1].groupId !== group.id)
             return <div key={layer.id}>
               {firstOfGroup ? <div className="ss-lcp-group" aria-label={`${groupTitle}: ${group.name}`}>
                 <div className="ss-lcp-group-head">
@@ -282,6 +335,31 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
           })}
         </div>
         {!layers.length ? <p className="ss-lcp-hint">{a[13]}</p> : null}
+        {layers.length > 0 && !filteredLayers.length ? <p className="ss-lcp-hint">{layerFilterWords[7]}</p> : null}
+        <details className="ss-lcp-more">
+          <summary>{layerFilterWords[6]}</summary>
+          <div className="ss-lcp-tools">
+          <button className="ss-lcp-action" type="button" title={a[6]} aria-label={a[6]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) === layers.length - 1} onClick={() => onLayerAction('move', activeLayerId, 1)}><i className="fa-solid fa-arrow-up" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={a[7]} aria-label={a[7]} disabled={blocked || !selected || selected.isBackground || layers.indexOf(selected) <= 0 || lower?.isBackground} onClick={() => onLayerAction('move', activeLayerId, -1)}><i className="fa-solid fa-arrow-down" aria-hidden="true" /></button>
+          {selected?.textData ? <button className="ss-lcp-action" type="button" title={editTextLabel} aria-label={editTextLabel} disabled={blocked || selected.locked || !selected.visible || Boolean(selectedGroup && (!selectedGroup.visible || selectedGroup.locked))} onClick={() => onLayerAction('edit-text', activeLayerId)}><i className="fa-solid fa-font" aria-hidden="true" /></button> : null}
+          <button className="ss-lcp-action" type="button" title={a[8]} aria-label={a[8]} disabled={blocked || !selected} onClick={() => beginRename('layer', selected)}><i className="fa-solid fa-pen" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={mergeLabel} aria-label={mergeLabel} disabled={blocked || !canMerge} onClick={() => onLayerAction('merge-down', activeLayerId)}><i className="fa-solid fa-layer-group" aria-hidden="true" /></button>
+          {selected?.isBackground ? <button className="ss-lcp-action" type="button" title={convertLabel} aria-label={convertLabel} disabled={blocked} onClick={() => onLayerAction('convert-background', activeLayerId)}><i className="fa-solid fa-unlock-keyhole" aria-hidden="true" /></button> : null}
+          {adjacentGroups.length ? <label className="ss-lcp-blend">{groupControl[1]}
+            <select aria-label={groupControl[1]} disabled={blocked} value="" onChange={(event) => event.target.value && onLayerAction('group-join', activeLayerId, event.target.value)}>
+              <option value="">—</option>
+              {adjacentGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+            </select>
+          </label> : null}
+          </div>
+        </details>
+        <div className="ss-lcp-footer">
+          <button className="ss-lcp-action" type="button" title={a[0]} aria-label={a[0]} disabled={blocked || layers.length >= 8} onClick={() => onLayerAction('add')}><i className="fa-solid fa-plus" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={duplicateLabel} aria-label={duplicateLabel} disabled={blocked || !selected || selected.isBackground || layers.length >= 8} onClick={() => onLayerAction('duplicate', activeLayerId)}><i className="fa-regular fa-copy" aria-hidden="true" /></button>
+          <button className="ss-lcp-action ss-lcp-group-add" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selected.isBackground || Boolean(selectedGroup) || groups.length >= 8} onClick={() => { pendingGroupIds.current = new Set(groups.map((item) => item.id)); onLayerAction('group-add', activeLayerId) }}><i className="fa-solid fa-folder-plus" aria-hidden="true" /><span className="ss-lcp-group-add-label">{groupControl[0]}</span></button>
+          <button className="ss-lcp-action" type="button" title={`${a[9]} · Delete / Backspace`} aria-label={a[9]} disabled={blocked || !selected || selected.locked || Boolean(selectedGroup?.locked)} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
+        </div>
+        </div>
       </> : null}
       {active === 'channels' ? <>
         {CHANNELS.map((channel, index) => (
