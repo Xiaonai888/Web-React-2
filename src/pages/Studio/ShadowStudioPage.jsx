@@ -396,6 +396,7 @@ const placeImageLabel = {
   const canvasRef = useRef(null)
   const workRef = useRef(null)
   const panRef = useRef(null)
+  const mobileGestureRef = useRef({ active: false, blockDrawing: false, selectionBeforeTouch: null })
   const spaceRef = useRef(false)
   const zoomAnchorRef = useRef(null)
   const drawingRef = useRef(false)
@@ -439,6 +440,8 @@ const placeImageLabel = {
   const [showGrid, setShowGrid] = useState(false)
   const [gridSpacing, setGridSpacing] = useState(50)
   const [viewRotation, setViewRotation] = useState(0)
+  const [mobileViewOffset, setMobileViewOffset] = useState({ x: 0, y: 0 })
+  const [mobileViewTarget, setMobileViewTarget] = useState(null)
   const [flipHorizontal, setFlipHorizontal] = useState(false)
   const [flipVertical, setFlipVertical] = useState(false)
   const viewStatesRef = useRef({})
@@ -1291,6 +1294,10 @@ const placeImageLabel = {
 
   useEffect(() => {
     const previous = viewStatesRef.current[activeDocumentId]
+    mobileGestureRef.current.active = false
+    mobileGestureRef.current.blockDrawing = false
+    setMobileViewOffset({ x: 0, y: 0 })
+    setMobileViewTarget(null)
     setViewRotation(previous?.angle || 0)
     setFlipHorizontal(Boolean(previous?.horizontal))
     setFlipVertical(Boolean(previous?.vertical))
@@ -1344,6 +1351,7 @@ const placeImageLabel = {
     const boundingHeight = Math.abs(document.width * viewSin) + Math.abs(document.height * viewCos)
     const next = clampZoom(Math.min(width / boundingWidth, height / boundingHeight) * 100)
     zoomAnchorRef.current = null
+    setMobileViewOffset({ x: 0, y: 0 })
     setZoom(next)
     requestAnimationFrame(() => {
       if (workRef.current !== work) return
@@ -1363,6 +1371,113 @@ const placeImageLabel = {
     work.scrollTop += rect.top + anchor.canvasY * rect.height - anchor.y
     zoomAnchorRef.current = null
   }, [zoom])
+
+  useLayoutEffect(() => {
+    const gesture = mobileGestureRef.current
+    const target = mobileViewTarget
+    const canvas = canvasRef.current
+    if (!gesture.active || !target || !canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+    const x = (gesture.canvasX - canvas.width / 2) * displayedWidth / canvas.width * (flipHorizontal ? -1 : 1)
+    const y = (gesture.canvasY - canvas.height / 2) * displayedHeight / canvas.height * (flipVertical ? -1 : 1)
+    const actualX = cx + x * viewCos - y * viewSin
+    const actualY = cy + x * viewSin + y * viewCos
+    const diffX = target.x - actualX
+    const diffY = target.y - actualY
+    if (Math.abs(diffX) > 0.5 || Math.abs(diffY) > 0.5) {
+      setMobileViewOffset((previous) => ({ x: previous.x + diffX, y: previous.y + diffY }))
+    }
+  }, [zoom, viewRotation, mobileViewTarget, mobileViewOffset, activeDocumentId])
+
+  function isMobileTouch() {
+    return window.matchMedia('(max-width: 1100px) and (pointer: coarse)').matches
+  }
+
+  function mobileTouchStart(event) {
+    if (!isMobileTouch()) return
+    const gesture = mobileGestureRef.current
+    if (event.touches.length === 1 && !gesture.blockDrawing) gesture.selectionBeforeTouch = selectionRef.current
+    if (event.touches.length !== 2) {
+      if (event.touches.length > 2) {
+        gesture.active = false
+        gesture.blockDrawing = true
+        setMobileViewTarget(null)
+      }
+      return
+    }
+    if (!workspaceStarted || !activeDocumentId || paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen || advancedEditor || mangaToolsOpen || textEditor || shapeEditor) return
+    const canvas = canvasRef.current
+    const work = workRef.current
+    if (!canvas || !work) return
+    gesture.blockDrawing = true
+    const ongoing = strokeRef.current || toolGestureRef.current
+    if (drawingRef.current && ongoing) {
+      const previous = historyRef.current[historyRef.current.length - 1]
+      const stack = layerStackRef.current
+      const original = previous?.layers.find((layer) => layer.id === stack?.activeLayerId)
+      const current = stack?.layers.find((layer) => layer.id === stack.activeLayerId)
+      if (original?.pixels && current?.canvas && original.pixels.width === current.canvas.width && original.pixels.height === current.canvas.height) {
+        current.canvas.getContext('2d', { willReadFrequently: true })?.putImageData(original.pixels, 0, 0)
+      }
+      const pointerId = ongoing.pointerId
+      if (pointerId != null && canvas.hasPointerCapture?.(pointerId)) canvas.releasePointerCapture(pointerId)
+      drawingRef.current = false
+      strokeRef.current = null
+      toolGestureRef.current = null
+      selectionRef.current = gesture.selectionBeforeTouch
+      paintLayerPreview()
+    } else {
+      selectionRef.current = gesture.selectionBeforeTouch
+      paintToolOverlay()
+    }
+    panRef.current = null
+    zoomAnchorRef.current = null
+    const first = event.touches[0]
+    const second = event.touches[1]
+    const midX = (first.clientX + second.clientX) / 2
+    const midY = (first.clientY + second.clientY) / 2
+    const rect = canvas.getBoundingClientRect()
+    const deltaX = midX - (rect.left + rect.width / 2)
+    const deltaY = midY - (rect.top + rect.height / 2)
+    const dx = deltaX * viewCos + deltaY * viewSin
+    const dy = -deltaX * viewSin + deltaY * viewCos
+    gesture.canvasX = canvas.width / 2 + dx * canvas.width / displayedWidth * (flipHorizontal ? -1 : 1)
+    gesture.canvasY = canvas.height / 2 + dy * canvas.height / displayedHeight * (flipVertical ? -1 : 1)
+    gesture.startDistance = Math.max(1, Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY))
+    gesture.startAngle = Math.atan2(second.clientY - first.clientY, second.clientX - first.clientX)
+    gesture.startZoom = zoom
+    gesture.startRotation = viewRotation
+    gesture.active = true
+    setMobileViewTarget({ x: midX, y: midY })
+  }
+
+  function mobileTouchMove(event) {
+    const gesture = mobileGestureRef.current
+    if (!gesture.active || event.touches.length !== 2 || !isMobileTouch()) return
+    const first = event.touches[0]
+    const second = event.touches[1]
+    const distance = Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY)
+    const angle = Math.atan2(second.clientY - first.clientY, second.clientX - first.clientX)
+    const delta = Math.atan2(Math.sin(angle - gesture.startAngle), Math.cos(angle - gesture.startAngle))
+    setZoom(clampZoom(gesture.startZoom * distance / gesture.startDistance))
+    updateCanvasView(gesture.startRotation + delta * 180 / Math.PI)
+    setMobileViewTarget({ x: (first.clientX + second.clientX) / 2, y: (first.clientY + second.clientY) / 2 })
+  }
+
+  function mobileTouchEnd(event) {
+    const gesture = mobileGestureRef.current
+    if (!gesture.blockDrawing) return
+    gesture.active = false
+    setMobileViewTarget(null)
+    if (!event.touches.length) {
+      gesture.blockDrawing = false
+      gesture.selectionBeforeTouch = null
+    } else if (event.touches.length === 2) {
+      mobileTouchStart(event)
+    }
+  }
 
   useEffect(() => {
     if (!workspaceStarted || !activeDocumentId) return
@@ -1784,6 +1899,7 @@ async function dropImageOnPaper(event) {
   }
 
   function start(event) {
+    if (event.pointerType === 'touch' && mobileGestureRef.current.blockDrawing) return
     if (drawingRef.current || paperLoading || projectBusy || recoveryBusy || panRef.current || spaceRef.current || advancedEditor || mangaToolsOpen || newFileOpen || exportOpen) return
     if (event.pointerType === 'mouse' && event.button !== 0) return
     const canvas = canvasRef.current
@@ -1865,6 +1981,7 @@ async function dropImageOnPaper(event) {
   }
 
   function draw(event) {
+    if (event.pointerType === 'touch' && mobileGestureRef.current.blockDrawing) return
     const gesture = toolGestureRef.current
     if (gesture && gesture.pointerId === event.pointerId) {
       const ctx = gesture.ctx
@@ -1897,6 +2014,7 @@ async function dropImageOnPaper(event) {
   }
 
   function finish(event) {
+    if (event.pointerType === 'touch' && mobileGestureRef.current.blockDrawing) return
     const gesture = toolGestureRef.current
     if (gesture && gesture.pointerId === event.pointerId) {
       event.preventDefault()
@@ -2027,6 +2145,7 @@ async function dropImageOnPaper(event) {
         .ss-tool span{font-size:10px;font-weight:700}
         .ss-tool.active{border-color:#506273;background:#3b4e61;color:#fff}
         .ss-work{min-width:0;min-height:0;overflow:auto;padding:28px 28px 72px;background:#4a4e53;touch-action:pan-x pan-y;overscroll-behavior:contain}.ss-work.ss-panning,.ss-work.ss-panning *{cursor:grabbing!important}.ss-work.ss-hand,.ss-work.ss-hand *{cursor:grab!important}
+        @media(max-width:1100px) and (pointer:coarse){.shadow-studio .ss-work{touch-action:none}}
         .ss-stage{width:max-content;min-width:100%;min-height:100%;display:grid;place-items:center}
         .ss-canvas-frame{position:relative;flex:none;overflow:visible}
         .ss-canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;background-color:#fff;background-image:linear-gradient(45deg,#d9dfe6 25%,transparent 25%),linear-gradient(-45deg,#d9dfe6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9dfe6 75%),linear-gradient(-45deg,transparent 75%,#d9dfe6 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;box-shadow:0 10px 32px rgba(0,0,0,.25);touch-action:none;cursor:${tool === 'eyedropper' ? 'copy' : ['brush', 'pencil', 'eraser', 'smudge', 'blur', 'special'].includes(tool) ? studioBrushCursor(size, zoom) : 'crosshair'}}
@@ -2225,7 +2344,7 @@ async function dropImageOnPaper(event) {
               labels={{ brush: tx('shadowStudio.brush'), eraser: tx('shadowStudio.eraser'), eyedropper: tx('shadowStudio.eyedropper') }}
             />
 
-            <section ref={workRef} className={`ss-work ${panRef.current ? 'ss-panning' : handMode ? 'ss-hand' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={dropImageOnPaper} onPointerDownCapture={panStart} onPointerMove={panMove} onPointerUp={panEnd} onPointerCancel={panEnd}>
+            <section ref={workRef} className={`ss-work ${panRef.current ? 'ss-panning' : handMode ? 'ss-hand' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={dropImageOnPaper} onPointerDownCapture={panStart} onPointerMove={panMove} onPointerUp={panEnd} onPointerCancel={panEnd} onTouchStartCapture={mobileTouchStart} onTouchMoveCapture={mobileTouchMove} onTouchEndCapture={mobileTouchEnd} onTouchCancelCapture={mobileTouchEnd}>
               <StudioCanvasRulers
   workRef={workRef}
   canvasRef={canvasRef}
@@ -2234,7 +2353,7 @@ async function dropImageOnPaper(event) {
   rotation={viewRotation}
 />
               <div className="ss-stage">
-                <div className="ss-canvas-frame" style={{ width: viewFrameWidth, height: viewFrameHeight }}>
+                <div className="ss-canvas-frame" style={{ width: viewFrameWidth, height: viewFrameHeight, ...(mobileViewOffset.x || mobileViewOffset.y ? { transform: `translate3d(${mobileViewOffset.x}px, ${mobileViewOffset.y}px, 0)` } : {}) }}>
                   <canvas
                     ref={canvasRef}
                     className="ss-canvas"
