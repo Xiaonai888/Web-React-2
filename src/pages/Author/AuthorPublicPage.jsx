@@ -3483,7 +3483,7 @@ onOpenStoreSetting={() => {
 <div className="flex items-center gap-2">
   <button
     type="button"
-    onClick={() => navigate('/author/cart')}
+    onClick={() => navigate('/author/cart', { state: { from: location.pathname + location.search + location.hash } })}
     className={`flex h-10 w-10 items-center justify-center rounded-full ${
       readerHeaderSolid ? 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
     }`}
