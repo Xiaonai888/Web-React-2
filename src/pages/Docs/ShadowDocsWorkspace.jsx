@@ -8,6 +8,7 @@ import { createShadowDocsBook, createShadowDocsId, normalizeShadowDocsBook, sani
 import { downloadShadowDocsProject, imageToShadowDocsCover, printShadowDocsProject, readShadowDocsProject } from './ShadowDocsProjectIO'
 import { moveManuscriptChapter } from './ShadowDocsManuscriptTools'
 import ShadowDocsMyBooksPanel from './ShadowDocsMyBooksPanel'
+import ShadowDocsTrashPanel, { getExpiredShadowDocsBookIds, moveShadowDocsBookToTrash, restoreShadowDocsBookFromTrash } from './ShadowDocsTrashPanel'
 import ShadowDocsWritingStudioPanel from './ShadowDocsWritingStudioPanel'
 import ShadowDocsManuscriptPanel from './ShadowDocsManuscriptPanel'
 import ShadowDocsBookDesignerPanel from './ShadowDocsBookDesignerPanel'
@@ -52,18 +53,26 @@ export default function ShadowDocsWorkspace() {
   const importRef = useRef(null)
   const coverRef = useRef(null)
   const libraryImportRef = useRef(null)
-  const book = books.find(item => item.id === activeId) || null
+  const book = books.find(item => item.id === activeId && !item.deletedAt) || null
   const currentChapter = book?.chapters.find(item => item.id === chapterId) || book?.chapters[0] || null
 
   useEffect(() => {
     let active = true
-    loadShadowDocsBooksSafely().then(({ books: normalized, skippedIds }) => {
+    loadShadowDocsBooksSafely().then(async ({ books: normalized, skippedIds }) => {
       if (!active) return
-      bookRef.current = normalized
-      setBooks(normalized)
+      const expiredIds = getExpiredShadowDocsBookIds(normalized)
+      const deleted = await Promise.allSettled(expiredIds.map(id => deleteLocalBook(id)))
+      if (!active) return
+      const removedIds = new Set(expiredIds.filter((id, index) => deleted[index].status === 'fulfilled'))
+      const available = normalized.filter(item => !removedIds.has(item.id))
+      bookRef.current = available
+      setBooks(available)
       setReady(true)
       setStatus('Saved on this device')
-      if (skippedIds.length) setError(`${skippedIds.length} saved book(s) could not be opened. Their original records remain in this browser; do not clear browser data.`)
+      const warnings = []
+      if (skippedIds.length) warnings.push(`${skippedIds.length} saved book(s) could not be opened. Their original records remain in this browser; do not clear browser data.`)
+      if (deleted.some(result => result.status === 'rejected')) warnings.push('Some expired books could not be removed from Trash. Please check local storage.')
+      if (warnings.length) setError(warnings.join(' '))
     }).catch(failure => {
       if (active) { setReady(false); setError(`Unable to load your local books: ${failure.message}`); setStatus('Local storage unavailable') }
     })
@@ -125,6 +134,7 @@ export default function ShadowDocsWorkspace() {
   }
 
   function openBook(item, target = 'write') {
+    if (!item || item.deletedAt) return
     setActiveId(item.id)
     setChapterId(item.chapters[0]?.id || '')
     setSection(target)
@@ -173,10 +183,48 @@ export default function ShadowDocsWorkspace() {
     } catch (failure) { setError(`Import failed: ${failure.message}`) }
   }
 
+  async function moveBookToTrash(item) {
+    if (!ready || !item || item.deletedAt || !window.confirm(`Move “${item.title}” to Trash? You can restore it within 30 days.`)) return
+    try {
+      await flushShadowDocsPendingWrites(pending.current, bookRef.current)
+      const latest = bookRef.current.find(row => row.id === item.id)
+      if (!latest || latest.deletedAt) return
+      const trashed = moveShadowDocsBookToTrash(latest)
+      await saveLocalBook(trashed)
+      bookRef.current = bookRef.current.map(row => row.id === trashed.id ? trashed : row)
+      setBooks(bookRef.current)
+      if (activeId === trashed.id) { setActiveId(''); setChapterId(''); setSection('books') }
+      setNotice('Book moved to Trash. You have 30 days to restore it.')
+    } catch (failure) { setError(`Could not move book to Trash: ${failure.message}`) }
+  }
+
+  async function restoreTrashedBook(item) {
+    if (!ready) throw new Error('Local books are still loading.')
+    await flushShadowDocsPendingWrites(pending.current, bookRef.current)
+    const latest = bookRef.current.find(row => row.id === item.id)
+    if (!latest) throw new Error('This book is no longer in Trash.')
+    const restored = restoreShadowDocsBookFromTrash(latest)
+    await saveLocalBook(restored)
+    bookRef.current = bookRef.current.map(row => row.id === restored.id ? restored : row)
+    setBooks(bookRef.current)
+    setNotice('Book restored to My Books.')
+  }
+
+  async function permanentlyDeleteTrashedBook(item) {
+    if (!ready) throw new Error('Local books are still loading.')
+    await flushShadowDocsPendingWrites(pending.current, bookRef.current)
+    const latest = bookRef.current.find(row => row.id === item.id)
+    if (!latest?.deletedAt) throw new Error('This book is no longer in Trash.')
+    await deleteLocalBook(latest.id)
+    bookRef.current = bookRef.current.filter(row => row.id !== latest.id)
+    setBooks(bookRef.current)
+    setNotice('Book permanently deleted from this device.')
+  }
+
   function bookAction(item, action) {
     if (action === 'backup') { void exportBackup(item); return }
     if (action === 'duplicate') {
-      const copy = normalizeShadowDocsBook({ ...item, title: `${item.title} (Copy)`.slice(0, 160) }, { duplicate: true })
+      const copy = normalizeShadowDocsBook({ ...item, deletedAt: null, title: `${item.title} (Copy)`.slice(0, 160) }, { duplicate: true })
       putBook(copy)
       setNotice('A separate local copy was created.')
       return
@@ -191,14 +239,7 @@ export default function ShadowDocsWorkspace() {
       patchBook(item.id, { status: item.status === 'completed' ? 'draft' : 'completed' }, true)
       return
     }
-    if (action === 'delete' && window.confirm(`Permanently delete “${item.title}” from this device? Download a backup first if needed.`)) {
-      clearTimeout(pending.current.get(item.id))
-      pending.current.delete(item.id)
-      bookRef.current = bookRef.current.filter(row => row.id !== item.id)
-      setBooks(bookRef.current)
-      if (item.id === activeId) { setActiveId(''); setChapterId(''); setSection('books') }
-      deleteLocalBook(item.id).then(() => setNotice('Local book deleted.')).catch(failure => setError(`Delete failed: ${failure.message}`))
-    }
+    if (action === 'delete') { void moveBookToTrash(item); return }
   }
 
   function patchChapter(id, patch, immediate = false) {
@@ -305,12 +346,13 @@ export default function ShadowDocsWorkspace() {
     </div></header>
 
     <main className="sd-main">
-      <div className="sd-topline"><div><span className="sd-eyebrow">YOUR BOOK WORKSPACE</span><h1>{section === 'preview' ? 'Reading Preview' : NAV.find(item => item.id === section)?.name}</h1><p>{section === 'books' ? 'Your writing, saved on this device.' : book?.title || 'Create or select a book to continue.'}</p></div>{book && section !== 'books' && <button type="button" className="sd-button sd-button-ghost" onClick={() => setSection('books')}><BookOpen size={15}/> Library</button>}</div>
+      <div className="sd-topline"><div><span className="sd-eyebrow">YOUR BOOK WORKSPACE</span><h1>{section === 'preview' ? 'Reading Preview' : section === 'trash' ? 'Trash' : NAV.find(item => item.id === section)?.name}</h1><p>{section === 'books' ? 'Your writing, saved on this device.' : book?.title || 'Create or select a book to continue.'}</p></div>{book && section !== 'books' && <button type="button" className="sd-button sd-button-ghost" onClick={() => setSection('books')}><BookOpen size={15}/> Library</button>}</div>
       {error && <div role="alert" className="sd-alert sd-alert-error"><span>{error}</span><button type="button" aria-label="Dismiss error" onClick={() => setError('')}><X size={16}/></button></div>}
       {notice && <div role="status" className="sd-alert sd-alert-ok"><span>{notice}</span><button type="button" aria-label="Dismiss notice" onClick={() => setNotice('')}><X size={16}/></button></div>}
       <div className="sd-status"><CheckCircle2 size={15}/><span>{status}</span><span className="sd-status-note">Projects remain in this browser; download backups regularly.</span></div>
 
-      {section === 'books' && <div className="sd-stack"><button type="button" className="sd-button sd-button-ghost" aria-expanded={showBackupCenter} onClick={() => setShowBackupCenter(value => !value)}>{showBackupCenter ? 'Hide Backup Center' : 'Open Backup Center'}</button><ShadowDocsMyBooksPanel books={books} ready={ready} onCreate={startNewBook} onImport={() => importRef.current?.click()} onOpen={openBook} onAction={bookAction}/>{showBackupCenter && <ShadowDocsBackupCenter books={books} ready={ready} busy={backupBusy} onBackupBook={exportBackup} onImportBook={() => importRef.current?.click()} onExportLibrary={exportLibraryBackup} onImportLibrary={() => libraryImportRef.current?.click()}/>}</div>}
+      {section === 'books' && <div className="sd-stack"><button type="button" className="sd-button sd-button-ghost" aria-expanded={showBackupCenter} onClick={() => setShowBackupCenter(value => !value)}>{showBackupCenter ? 'Hide Backup Center' : 'Open Backup Center'}</button><ShadowDocsMyBooksPanel books={books} ready={ready} onCreate={startNewBook} onImport={() => importRef.current?.click()} onOpen={openBook} onAction={bookAction} onOpenTrash={() => setSection('trash')}/>{showBackupCenter && <ShadowDocsBackupCenter books={books} ready={ready} busy={backupBusy} onBackupBook={exportBackup} onImportBook={() => importRef.current?.click()} onExportLibrary={exportLibraryBackup} onImportLibrary={() => libraryImportRef.current?.click()}/>}</div>}
+      {section === 'trash' && <ShadowDocsTrashPanel books={books} ready={ready} onRestore={restoreTrashedBook} onDeleteForever={permanentlyDeleteTrashedBook} onClose={() => setSection('books')}/>}
       {section === 'write' && <div className="sd-stack">{book && <button type="button" className="sd-button sd-button-ghost" onClick={() => { setDesignTab('page'); setSection('design') }}>Font & Page Setup</button>}<ShadowDocsWritingStudioPanel book={book} chapterId={currentChapter?.id} onSelectChapter={setChapterId} onAddChapter={addChapter} onRenameChapter={(id, title) => patchChapter(id, { title: title.slice(0, 160) })} onChangeHTML={(id, html) => patchChapter(id, { html: sanitizeShadowDocsHTML(html) })} onMoveChapter={moveChapter} onDeleteChapter={deleteChapter} onPreview={() => setSection('preview')} onDownloadBackup={exportBackup} onEditorBlur={persist} status={status}/>{book && <div className="sd-stack"><div className="flex flex-wrap gap-2"><button type="button" className="sd-button sd-button-ghost" aria-expanded={showOutline} onClick={() => setShowOutline(value => !value)}>{showOutline ? 'Hide manuscript outline' : 'Show manuscript outline'}</button><button type="button" className="sd-button sd-button-ghost" aria-expanded={showWritingTools} onClick={() => setShowWritingTools(value => !value)}>{showWritingTools ? 'Hide writing tools' : 'Open writing tools'}</button></div>{showOutline && <ShadowDocsManuscriptPanel book={book} activeChapterId={currentChapter?.id} onSelectChapter={setChapterId} onAddChapter={addChapter} onMoveChapter={moveChapter}/>}{showWritingTools && <div className="sd-stack"><ShadowDocsFindReplacePanel key={`find-${book.id}`} book={book} activeChapterId={currentChapter?.id} onApply={(chapters, count) => applyTextReplacements(book.id, chapters, count)}/><ShadowDocsPlainTextImportPanel key={`import-${book.id}`} book={book} onImportParsed={chapters => appendImportedChapters(book.id, chapters)}/><ShadowDocsTextExportPanel key={`text-${book.id}`} book={book}/><ShadowDocsContentsPanel book={book} onSelectChapter={setChapterId}/></div>}</div>}</div>}
       {section === 'design' && <div className="sd-stack"><div className="sd-segments"><button type="button" className={designTab === 'page' ? 'is-active' : ''} onClick={() => setDesignTab('page')}>Page & type</button><button type="button" className={designTab === 'cover' ? 'is-active' : ''} onClick={() => setDesignTab('cover')}>Cover Designer</button></div>{designTab === 'page' ? <ShadowDocsBookDesignerPanel book={book} onChangeSettings={patch => book && patchBook(book.id, { settings: { ...book.settings, ...patch } })}/> : <ShadowDocsCoverDesignerPanel book={book} onSaveDetails={details => book && patchBook(book.id, details, true)} onUploadCover={() => coverRef.current?.click()} onRemoveCover={() => book && patchBook(book.id, { image: '' }, true)}/>}</div>}
       {section === 'templates' && <ShadowDocsTemplateGallery book={book} onSelectTemplate={id => book && patchBook(book.id, { template: id }, true)}/>}
