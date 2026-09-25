@@ -25,5 +25,5 @@ export async function readShadowDocsLibrary(file) {
   try { payload = JSON.parse(await file.text()) } catch { throw new Error('This is not a valid Shadow Docs library backup.') }
   if (payload?.format !== FORMAT || payload?.version !== VERSION || !Array.isArray(payload.books) || !payload.books.length) throw new Error('Unsupported or empty Shadow Docs library backup.')
   if (payload.books.length > 1000) throw new Error('Library backup contains too many books.')
-  return payload.books.map(book => normalizeShadowDocsBook(book, { duplicate: true }))
+  return payload.books.map(book => normalizeShadowDocsBook({ ...book, deletedAt: null }, { duplicate: true }))
 }
