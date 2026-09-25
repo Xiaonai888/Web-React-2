@@ -4,6 +4,7 @@ import AuthorPageFooter from '../../components/AuthorPageFooter'
 import { SalesReportsSettingsMenuItem, SalesReportsSettingsPage } from './SalesReportsSettings'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 
 registerTranslationNamespace('authorStoreManager', {
   "en": {
@@ -2973,9 +2974,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
             value={String(orderSummary.orders_count || 0)}
             icon="fa-bag-shopping"
           />
-          <button type="button" onClick={() => navigate('/author/page/store/withdrawal-details')} className="min-w-0 text-left">
-  <StatCard label={storeText('netIncome')} value="—" icon="fa-wallet" />
-</button>
+          <AuthorStoreAvailableWithdrawalCard StatCard={StatCard} formatMoney={formatMoney} />
         </div>
       </section>
 
