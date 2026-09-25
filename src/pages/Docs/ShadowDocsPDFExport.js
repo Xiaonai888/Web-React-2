@@ -1,5 +1,6 @@
 import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
 import { sanitizeShadowDocsHTML } from './ShadowDocsBookModel'
+import { shadowDocsFontCSS, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 
 const PAGE_SIZES = Object.freeze({ A5: [148, 210], A4: [210, 297], B5: [176, 250] })
 const FONT_FAMILIES = Object.freeze({
