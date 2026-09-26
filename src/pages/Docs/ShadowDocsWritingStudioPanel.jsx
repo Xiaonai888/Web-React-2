@@ -47,6 +47,13 @@ export default function ShadowDocsWritingStudioPanel({
   const chapterStats = overview.outline[chapterIndex]
   const settings = book?.settings || {}
   useEffect(() => { loadShadowDocsFont(settings.font) }, [settings.font])
+  useEffect(() => {
+  const doc = new DOMParser().parseFromString(chapter?.html || '', 'text/html')
+  doc.querySelectorAll('[style*="font-family"]').forEach(node => {
+    const font = node.style.fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '')
+    loadShadowDocsFont(font)
+  })
+}, [book?.id, chapter?.id])
   const firstLineIndent = Math.min(15, Math.max(0, Number(settings.firstLineIndent) || 0))
   const paragraphSpacing = settings.paragraphSpacing == null ? 10 : Math.min(20, Math.max(0, Number(settings.paragraphSpacing) || 0))
 
