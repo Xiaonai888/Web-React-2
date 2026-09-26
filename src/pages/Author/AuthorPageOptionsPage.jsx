@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import AuthorPageShareSheet from '../../components/AuthorPageShareSheet'
 
 registerTranslationNamespace('authorPageOptions', {
   "en": {
@@ -140,6 +141,7 @@ export default function AuthorPageOptionsPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [message, setMessage] = useState('')
+  const [shareOpen, setShareOpen] = useState(false)
   const authorPage = useMemo(() => getStoredAuthorPage(), [])
 const pageUsername = authorPage?.page_username || ''
 
@@ -160,29 +162,8 @@ function copyPageLink() {
     setMessage(link)
   }
 
-  async function sharePage() {
-    const path = pageUsername ? `/author/page/${pageUsername}` : '/author/page'
-    const link = `${window.location.origin}${path}`
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: authorPage?.page_name || t('authorPageOptions.authorPage'),
-          url: link,
-        })
-      } catch {
-        setMessage(t('authorPageOptions.shareCancelled'))
-      }
-      return
-    }
-
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(link)
-      setMessage(t('authorPageOptions.pageLinkCopied'))
-      return
-    }
-
-    setMessage(link)
+  function sharePage() {
+    setShareOpen(true)
   }
 
   function viewAsReader() {
@@ -252,6 +233,13 @@ function copyPageLink() {
           />
         </div>
       </main>
+      <AuthorPageShareSheet
+        open={shareOpen}
+        pageName={authorPage?.page_name || t('authorPageOptions.authorPage')}
+        pageLink={`${window.location.origin}${pageUsername ? `/author/page/${encodeURIComponent(pageUsername)}` : '/author/page'}`}
+        onClose={() => setShareOpen(false)}
+        onCopied={() => setMessage(t('authorPageOptions.pageLinkCopied'))}
+      />
     </div>
   )
 }
