@@ -34,6 +34,7 @@ export default function ShadowDocsWritingStudioPanel({
   status = 'Saved on this device',
 }) {
   const editorRef = useRef(null)
+  const fontSelectionRef = useRef(null)
   const imageInputRef = useRef(null)
   const imageTargetRef = useRef(null)
   const [imageWidth, setImageWidth] = useState(75)
@@ -56,6 +57,27 @@ export default function ShadowDocsWritingStudioPanel({
   function emitChange() {
     if (editorRef.current && chapter && typeof onChangeHTML === 'function') onChangeHTML(chapter.id, editorRef.current.innerHTML)
   }
+
+  function rememberFontSelection() {
+  const selection = window.getSelection()
+  const editor = editorRef.current
+  if (!editor || !selection?.rangeCount) return
+  const range = selection.getRangeAt(0)
+  if (!range.collapsed && editor.contains(range.commonAncestorContainer)) fontSelectionRef.current = range.cloneRange()
+}
+
+function applySelectedFont(font) {
+  const editor = editorRef.current
+  const range = fontSelectionRef.current
+  if (!editor || !range || range.collapsed || !editor.contains(range.commonAncestorContainer)) return
+  loadShadowDocsFont(font)
+  const selection = window.getSelection()
+  editor.focus()
+  selection.removeAllRanges()
+  selection.addRange(range)
+  document.execCommand('fontName', false, font)
+  emitChange()
+}
 
   function format(command, value) {
     if (!editorRef.current || !chapter) return
@@ -182,6 +204,7 @@ export default function ShadowDocsWritingStudioPanel({
 
   return <section aria-label="Writing Studio" className="sd-writing-layout">
     <style>{'.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}.sd-writing-area p,.sd-writing-area div{margin-bottom:var(--sd-paragraph-spacing,.75em)}.sd-writing-area h1,.sd-writing-area h2,.sd-writing-area h3,.sd-writing-area li,.sd-writing-area blockquote{text-indent:0}.sd-writing-area img{max-width:100%;height:auto;break-inside:avoid}'}</style>
+     onMouseUp={rememberFontSelection} onKeyUp={rememberFontSelection} onTouchEnd={rememberFontSelection}
     <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
       <div className="sd-chapter-list">{book.chapters.map((item, index) => <button type="button" key={item.id} className={`sd-chapter-item ${item.id === chapter.id ? 'is-active' : ''}`} onClick={() => onSelectChapter?.(item.id)} disabled={typeof onSelectChapter !== 'function'}><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.title || `Chapter ${index + 1}`}</strong></button>)}</div>
@@ -190,7 +213,7 @@ export default function ShadowDocsWritingStudioPanel({
     <div className="sd-writing-main">
       <div className="sd-card sd-editor-card">
         <div className="sd-editor-head"><div className="min-w-0 flex-1"><span className="sd-eyebrow">CHAPTER {chapterIndex + 1}</span><input className="sd-chapter-title" aria-label="Chapter title" maxLength={160} value={chapter.title || ''} onChange={event => onRenameChapter?.(chapter.id, event.target.value)} disabled={typeof onRenameChapter !== 'function'} /></div><button type="button" className="sd-button sd-button-ghost" onClick={() => onPreview?.(chapter.id)} disabled={typeof onPreview !== 'function'}><Eye size={16} /> Preview</button></div>
-        <div className="mb-3 grid grid-cols-[minmax(0,1fr)_90px] gap-2"><label className="min-w-0 text-xs">Font<select className="sd-field mt-1 w-full" value={settings.font || 'Noto Serif Khmer'} disabled={!onChangeSettings} onChange={event => onChangeSettings?.({ font: event.target.value })}><optgroup label="Khmer Fonts">{SHADOW_DOCS_KHMER_FONTS.map(font => <option key={font} value={font}>{font}</option>)}</optgroup><optgroup label="Other Fonts">{SHADOW_DOCS_LATIN_FONTS.map(font => <option key={font} value={font}>{font}</option>)}</optgroup></select></label><label className="min-w-0 text-xs">Size<select className="sd-field mt-1 w-full" value={settings.fontSize || 13} disabled={!onChangeSettings} onChange={event => onChangeSettings?.({ fontSize: Number(event.target.value) })}>{Array.from({ length: 15 }, (_, index) => index + 10).map(size => <option key={size} value={size}>{size} pt</option>)}</select></label></div>
+        <div className="mb-3 grid grid-cols-[minmax(0,1fr)_90px] gap-2"><label className="min-w-0 text-xs">Font<select className="sd-field mt-1 w-full" value={settings.font || 'Noto Serif Khmer'} disabled={!onChangeSettings} onMouseDown={rememberFontSelection} onTouchStart={rememberFontSelection} onChange={event => applySelectedFont(event.target.value)}><optgroup label="Khmer Fonts">{SHADOW_DOCS_KHMER_FONTS.map(font => <option key={font} value={font}>{font}</option>)}</optgroup><optgroup label="Other Fonts">{SHADOW_DOCS_LATIN_FONTS.map(font => <option key={font} value={font}>{font}</option>)}</optgroup></select></label><label className="min-w-0 text-xs">Size<select className="sd-field mt-1 w-full" value={settings.fontSize || 13} disabled={!onChangeSettings} onChange={event => onChangeSettings?.({ fontSize: Number(event.target.value) })}>{Array.from({ length: 15 }, (_, index) => index + 10).map(size => <option key={size} value={size}>{size} pt</option>)}</select></label></div>
         <div className="sd-editor-tools" aria-label="Formatting toolbar">{formats.map(item => <button key={`${item.command}-${item.value || ''}`} type="button" title={item.label} aria-label={item.label} disabled={typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={() => format(item.command, item.value)}>{item.content}</button>)}<button type="button" title="Insert page break" aria-label="Insert page break" disabled={typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={insertPageBreak} style={{ width: 'auto', padding: '0 10px', whiteSpace: 'nowrap' }}>Page break</button><label className="flex items-center gap-1 text-xs">Image size <select aria-label="Image size" className="sd-field" style={{ minHeight: 35, padding: '4px 6px', width: 65 }} value={imageWidth} disabled={imageBusy} onChange={event => setImageWidth(Number(event.target.value))}><option value={50}>50%</option><option value={75}>75%</option><option value={100}>100%</option></select></label><label className="flex items-center gap-1 text-xs">Align <select aria-label="Image alignment" className="sd-field" style={{ minHeight: 35, padding: '4px 6px', width: 80 }} value={imageAlignment} disabled={imageBusy} onChange={event => setImageAlignment(event.target.value)}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label><button type="button" title="Insert image" aria-label="Insert image" disabled={imageBusy || typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={chooseImage} style={{ width: 'auto', padding: '0 10px', whiteSpace: 'nowrap' }}><ImagePlus size={16} /> {imageBusy ? 'Adding…' : 'Image'}</button></div><input ref={imageInputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void insertImage(file) }}/>{imageError && <p role="alert" className="my-2 text-xs text-red-600 dark:text-red-300">{imageError}</p>}
         <div key={`${book.id}-${chapter.id}`} ref={editorRef} data-chapter-id={chapter.id} className="sd-writing-area" contentEditable={typeof onChangeHTML === 'function'} suppressContentEditableWarning onInput={emitChange} onBlur={() => onEditorBlur?.(book.id)} onPaste={pastePlain} data-placeholder="Start writing your chapter…" role="textbox" aria-label="Chapter text editor" aria-multiline="true" spellCheck style={{ fontFamily: shadowDocsFontFamily(settings.font), fontSize: `${(Number(settings.fontSize) || 13) + 2}px`, lineHeight: settings.lineSpacing || 1.65, textAlign: settings.alignment || 'left', textIndent: `${firstLineIndent}mm`, '--sd-paragraph-spacing': `${paragraphSpacing}pt` }} />
         <div className="sd-editor-footer"><span>{(chapterStats?.words || 0).toLocaleString()} words · {(chapterStats?.characters || 0).toLocaleString()} characters</span><span><CheckCircle2 size={15} /> {status}</span></div>
