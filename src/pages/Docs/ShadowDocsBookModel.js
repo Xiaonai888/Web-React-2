@@ -32,10 +32,18 @@ export function sanitizeShadowDocsHTML(source) {
       return `<img src="${src}" alt="${alt}" data-shadow-docs-width="${width}" data-shadow-docs-align="${align}" style="display:block;width:${width}%;max-width:100%;height:auto;margin:${margin};break-inside:avoid">`
     }
     const content = Array.from(node.childNodes, walk).join('')
+    if (node.tagName === 'FONT') {
+  const face = String(node.getAttribute('face') || '').trim().replace(/^["']|["']$/g, '')
+  return isShadowDocsFont(face) ? `<span style="font-family:'${escapeHTML(face)}'">${content}</span>` : content
+}
     if (!ALLOWED.has(node.tagName)) return content
     if (node.tagName === 'BR') return '<br>'
     const align = node.style?.textAlign
-    const style = ALIGNMENTS.has(align) ? ` style="text-align:${align}"` : ''
+const family = node.tagName === 'SPAN' ? String(node.style?.fontFamily || '').split(',')[0].trim().replace(/^["']|["']$/g, '') : ''
+const styles = []
+if (ALIGNMENTS.has(align)) styles.push(`text-align:${align}`)
+if (isShadowDocsFont(family)) styles.push(`font-family:'${escapeHTML(family)}'`)
+const style = styles.length ? ` style="${styles.join(';')}"` : ''
     return `<${node.tagName.toLowerCase()}${style}>${content}</${node.tagName.toLowerCase()}>`
   }
   return Array.from(doc.body.childNodes, walk).join('')
