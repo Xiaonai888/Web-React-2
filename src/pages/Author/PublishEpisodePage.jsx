@@ -55,6 +55,7 @@ registerTranslationNamespace('publishEpisode', {
     freeFirstFive: "Episodes 1–5 are free for readers and do not generate paid income.",
     adultTip: "Use 18+ Episode only when this episode needs a reader warning.",
     manageLater: "You can edit, unpublish, or manage this episode later from Story Manager.",
+    termsAndPolicies: "Terms & Policies",
   },
   km: {
     untitledEpisode: "ភាគគ្មានចំណងជើង",
@@ -108,6 +109,7 @@ registerTranslationNamespace('publishEpisode', {
     freeFirstFive: "ភាគ 1–5 ឥតគិតថ្លៃសម្រាប់អ្នកអាន ហើយមិនបង្កើតចំណូលបង់ប្រាក់ទេ។",
     adultTip: "ប្រើ ភាគ 18+ តែពេលភាគនេះត្រូវការការព្រមានអ្នកអាន។",
     manageLater: "អ្នកអាចកែ ដកពីការបោះផ្សាយ ឬគ្រប់គ្រងភាគនេះពេលក្រោយពី Story Manager។",
+    termsAndPolicies: "លក្ខខណ្ឌ និងគោលការណ៍",
   },
   zh: {
     untitledEpisode: "未命名章节",
@@ -161,6 +163,7 @@ registerTranslationNamespace('publishEpisode', {
     freeFirstFive: "第 1–5 章对读者免费，不产生付费收入。",
     adultTip: "仅在章节需要读者警告时启用 18+。",
     manageLater: "之后可在故事管理中编辑、取消发布或管理此章节。",
+    termsAndPolicies: "条款与政策",
   },
   ja: {
     untitledEpisode: "無題のエピソード",
@@ -214,6 +217,7 @@ registerTranslationNamespace('publishEpisode', {
     freeFirstFive: "エピソード 1～5 は読者に無料で、課金収益は発生しません。",
     adultTip: "読者への警告が必要な場合のみ 18+ を使用してください。",
     manageLater: "後からストーリー管理で編集、非公開化、管理できます。",
+    termsAndPolicies: "利用規約とポリシー",
   },
   ko: {
     untitledEpisode: "제목 없는 에피소드",
@@ -267,6 +271,7 @@ registerTranslationNamespace('publishEpisode', {
     freeFirstFive: "에피소드 1–5는 독자에게 무료이며 유료 수익이 발생하지 않습니다.",
     adultTip: "독자 경고가 필요한 경우에만 18+를 사용하세요.",
     manageLater: "나중에 스토리 관리에서 편집, 게시 취소 또는 관리할 수 있습니다.",
+    termsAndPolicies: "이용약관 및 정책",
   },
 })
 
@@ -1011,6 +1016,18 @@ const handleAcceptAgreement = async (agreement) => {
             <div className="flex gap-3">
               <i className="fa-solid fa-check mt-1 text-[12px] text-[#16803c]" />
               <span>{getDisplayText('publishEpisode.manageLater')}</span>
+            </div>
+
+            <div className="flex gap-3">
+              <i className="fa-solid fa-link mt-1 text-[12px] text-[#0b5cff]" />
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#0b5cff] underline underline-offset-2"
+              >
+                {getDisplayText('publishEpisode.termsAndPolicies')}
+              </a>
             </div>
           </div>
         </section>
