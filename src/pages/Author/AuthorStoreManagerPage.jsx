@@ -3868,43 +3868,41 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   )
 }
 
-function GallerySlot({ image, index, onChoose, onRemove }) {
+function GallerySlot({ image, index, onChoose, onRemove, onDrop }) {
   return (
     <div className="overflow-hidden rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)]">
-      <div className="relative aspect-[3/4] bg-[var(--shadow-bg-soft)]">
+      <button
+        type="button"
+        onClick={onChoose}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault()
+          onDrop?.(event.dataTransfer.files?.[0])
+        }}
+        className="relative block aspect-[3/4] w-full cursor-pointer bg-[var(--shadow-bg-soft)]"
+      >
         {image?.url ? (
           <img src={image.url} alt={storeText('galleryImageAlt', { number: index + 1 })} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[12px] font-black text-[var(--shadow-text-tertiary)]">
-            {storeText('imageNumber', { number: index + 1 })}
+          <div className="flex h-full w-full flex-col items-center justify-center text-[var(--shadow-text-tertiary)]">
+            <i className="fa-regular fa-image mb-2 text-[24px]" />
+            <span className="text-[12px] font-black">{storeText('imageNumber', { number: index + 1 })}</span>
+            <span className="mt-2 text-[10px] font-bold">{storeText('choose')}</span>
           </div>
         )}
+      </button>
 
-        {image?.url ? (
-          <span className="absolute left-2 top-2 rounded-full bg-[var(--shadow-bg-surface)] px-2 py-1 text-[10px] font-black text-[var(--shadow-text-primary)] shadow-sm">
-            {index + 1}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="space-y-1.5 p-2">
-        <button
-          type="button"
-          onClick={onChoose}
-          className="h-8 w-full rounded-xl bg-[var(--shadow-bg-soft)] text-[11px] font-black text-[var(--shadow-text-primary)] active:scale-[0.98]"
-         >
-          {storeText('choose')}
-        </button>
-        {image?.url ? (
+      {image?.url ? (
+        <div className="p-2">
           <button
             type="button"
             onClick={onRemove}
             className="h-8 w-full rounded-xl bg-[#fff1f1] text-[11px] font-black text-[#e5484d] active:scale-[0.98]"
-           >
+          >
             {storeText('clear')}
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -4225,11 +4223,12 @@ accessRule,
                   className="hidden"
                 />
                 <GallerySlot
-                  image={image}
-                  index={index}
-                  onChoose={() => galleryInputRefs.current[index]?.click()}
-                  onRemove={() => removeGalleryImage(index)}
-                />
+  image={image}
+  index={index}
+  onChoose={() => galleryInputRefs.current[index]?.click()}
+  onDrop={(file) => selectGalleryImage(index, file)}
+  onRemove={() => removeGalleryImage(index)}
+/>
               </div>
             ))}
           </div>
