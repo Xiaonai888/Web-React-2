@@ -177,7 +177,6 @@ async function optimizeStandardMangaImage(file, loaded) {
           {
             type: 'image/webp',
             lastModified: Date.now(),
-            }
           }
         ),
         width: dimensions.width,
@@ -293,6 +292,7 @@ async function convertMangaHeicToWebp(file, loaded) {
           {
             type: 'image/webp',
             lastModified: Date.now(),
+          }
         ),
         width: dimensions.width,
         height: dimensions.height,
@@ -653,7 +653,7 @@ export async function uploadMangaPageFile({
   let bytes
 
   try {
-    bytes = await file.arrayBUffer()
+    bytes = await file.arrayBuffer()
   } catch {
     throw new Error(
       'This device could not read the manga image. [read: IMAGE_FILE_READ_FAILED]'
