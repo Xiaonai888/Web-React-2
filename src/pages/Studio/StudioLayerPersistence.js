@@ -3,6 +3,7 @@ import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
 import { renderStudioAdvancedLayers, STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
 import { normalizeStudioTextData } from './StudioTextLayerData'
 import { normalizeStudioLayerStyle } from './StudioLayerStyleEngine'
+import { serializeStudioAdjustmentLayer, restoreStudioAdjustmentLayer } from './StudioAdjustmentLayerPersistence'
 
 const IMAGE_PREFIX = /^data:image\/(png|webp|jpeg);base64,/i
 const BLEND_MODES = new Set(STUDIO_BLEND_MODES)
@@ -59,6 +60,7 @@ export function exportStudioLayerStack(stack) {
       opacity: layer.opacity,
       ...(layer.textData ? { textData: normalizeStudioTextData(layer.textData, stack.width, stack.height) } : {}),
       ...(layer.layerStyle ? { layerStyle: normalizeStudioLayerStyle(layer.layerStyle) } : {}),
+      ...serializeStudioAdjustmentLayer(layer),
       ...(layer.groupId ? { groupId: layer.groupId } : {}),
       ...(layer.blendMode && layer.blendMode !== 'normal' ? { blendMode: checkBlend(layer.blendMode) } : {}),
     })),
@@ -91,13 +93,15 @@ export async function loadStudioLayerStack(paper, displayCanvas) {
     const context = canvas.getContext('2d', { willReadFrequently: true })
     if (!context) throw new Error('Could not restore a saved layer.')
     context.drawImage(image, 0, 0)
-    return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity,
+    const runtimeLayer = { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity,
       isBackground: index === 0 && item.isBackground !== false,
       ...(item.textData !== undefined ? { textData: normalizeStudioTextData(item.textData, paper.width, paper.height) } : {}),
       ...(item.layerStyle !== undefined ? { layerStyle: normalizeStudioLayerStyle(item.layerStyle) } : {}),
       ...(item.groupId ? { groupId: item.groupId } : {}),
       ...(item.blendMode ? { blendMode: checkBlend(item.blendMode) } : {}),
     }
+    if (runtimeLayer.isBackground && item.adjustment !== undefined) throw new Error('Background cannot be an adjustment layer.')
+    return restoreStudioAdjustmentLayer(item, runtimeLayer)
   }))
   if (!ids.has(paper.activeLayerId)) throw new Error('The saved active layer is missing.')
   const stack = { width: paper.width, height: paper.height, layers: loaded, activeLayerId: paper.activeLayerId,
