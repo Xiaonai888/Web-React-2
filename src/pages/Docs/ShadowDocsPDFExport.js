@@ -1,6 +1,6 @@
 import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
 import { sanitizeShadowDocsHTML } from './ShadowDocsBookModel'
-import { shadowDocsFontCSS, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
+import { isShadowDocsFont, shadowDocsFontCSS, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 
 const PAGE_SIZES = Object.freeze({ A5: [148, 210], A4: [210, 297], B5: [176, 250] })
 function escapeText(value) {
@@ -10,6 +10,18 @@ function escapeText(value) {
 function safeChapterHTML(source) {
   return sanitizeShadowDocsHTML(String(source || '').slice(0, 500_000))
     .replaceAll('<hr data-shadow-docs-page-break="1" contenteditable="false">', '<hr class="sd-page-break">')
+}
+
+function selectedFontCSS(chapterHTML, defaultFont) {
+  const fonts = new Set(['Noto Serif Khmer'])
+  if (isShadowDocsFont(defaultFont)) fonts.add(defaultFont)
+  chapterHTML.forEach(html => {
+    for (const match of html.matchAll(/font-family:\s*'([^']+)'/gi)) {
+      if (isShadowDocsFont(match[1])) fonts.add(match[1])
+    }
+  })
+  const rules = [...fonts].map(shadowDocsFontCSS).filter(Boolean)
+  return [...rules.filter(rule => rule.startsWith('@import')), ...rules.filter(rule => !rule.startsWith('@import'))].join('\n')
 }
 
 function normalizedSettings(settings = {}) {
@@ -45,7 +57,9 @@ export function buildShadowDocsPrintHTML(book) {
   if (!report.canExport) throw new Error(report.issues.find(issue => issue.severity === 'error')?.message || 'Choose a valid book to export.')
   const settings = normalizedSettings(book.settings)
   const [width] = PAGE_SIZES[settings.size]
-  const chapters = book.chapters.slice(0, 500).map(chapter => `<section class="chapter"><div class="chapter-body">${safeChapterHTML(chapter?.html)}</div></section>`).join('\n')
+  const chapterHTML = book.chapters.slice(0, 500).map(chapter => safeChapterHTML(chapter?.html))
+  const chapters = chapterHTML.map(html => `<section class="chapter"><div class="chapter-body">${html}</div></section>`).join('\n')
+  const fontCSS = selectedFontCSS(chapterHTML, book.settings?.font)
   const pageFurnitureCss = [
     settings.printHeader ? `@top-center{content:${cssString(settings.printHeader)};font:9pt "Noto Sans Khmer","Khmer OS",sans-serif;color:#555}` : '',
     settings.printFooter ? `@bottom-left{content:${cssString(settings.printFooter)};font:9pt "Noto Sans Khmer","Khmer OS",sans-serif;color:#555}` : '',
@@ -54,8 +68,7 @@ export function buildShadowDocsPrintHTML(book) {
   return `<!doctype html>
 <html lang="km"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(book.title || 'Untitled Book')}</title>
 <style>
-${shadowDocsFontCSS('Noto Serif Khmer')}
-${book.settings?.font === 'Noto Serif Khmer' ? '' : shadowDocsFontCSS(book.settings?.font || 'Noto Serif Khmer')}
+${fontCSS}
 @page{size:${settings.size};margin:${settings.margin}mm;${pageFurnitureCss}}
 @page :left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}
 @page :right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}
