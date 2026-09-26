@@ -1,55 +1,205 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('storyPublishAgreement', {
   en: {
-    closeAgreement: "Close publishing agreement",
-    heading: "Before publishing your first episode",
-    help: "Please confirm both items. This is required only once for this story.",
-    original: "I confirm this story is my original work and I have the right to publish it.",
-    agreement: "I agree to the Shadow Author Agreement.",
-    saving: "Saving...",
-    continuePublish: "Continue to Publish",
+    closeAgreement: 'Close publishing agreement',
+    heading: 'Before publishing your first episode',
+    help: 'Please confirm both items. This is required only once for this story.',
+    original: 'I confirm this story is my original work and I have the right to publish it.',
+    agreement: 'I agree to the Shadow Terms & Conditions.',
+    viewTerms: 'View Terms & Conditions',
+    saving: 'Saving...',
+    continuePublish: 'Continue to Publish',
+    failedCheck: 'Failed to check publishing agreement.',
+    failedSave: 'Failed to save publishing agreement.',
   },
   km: {
-    closeAgreement: "បិទកិច្ចព្រមព្រៀងបោះផ្សាយ",
-    heading: "មុនបោះផ្សាយភាគដំបូងរបស់អ្នក",
-    help: "សូមបញ្ជាក់ទាំងពីរចំណុច។ វាត្រូវការតែម្តងសម្រាប់រឿងនេះ។",
-    original: "ខ្ញុំបញ្ជាក់ថារឿងនេះជាស្នាដៃដើមរបស់ខ្ញុំ ហើយខ្ញុំមានសិទ្ធិបោះផ្សាយវា។",
-    agreement: "ខ្ញុំយល់ព្រមនឹងកិច្ចព្រមព្រៀងអ្នកនិពន្ធរបស់ Shadow។",
-    saving: "កំពុងរក្សាទុក...",
-    continuePublish: "បន្តទៅបោះផ្សាយ",
+    closeAgreement: 'បិទកិច្ចព្រមព្រៀងបោះផ្សាយ',
+    heading: 'មុនបោះផ្សាយភាគដំបូងរបស់អ្នក',
+    help: 'សូមបញ្ជាក់ទាំងពីរចំណុច។ វាត្រូវការតែម្តងសម្រាប់រឿងនេះ។',
+    original: 'ខ្ញុំបញ្ជាក់ថារឿងនេះជាស្នាដៃដើមរបស់ខ្ញុំ ហើយខ្ញុំមានសិទ្ធិបោះផ្សាយវា។',
+    agreement: 'ខ្ញុំយល់ព្រមនឹងលក្ខខណ្ឌ និងគោលការណ៍របស់ Shadow។',
+    viewTerms: 'មើលលក្ខខណ្ឌ និងគោលការណ៍',
+    saving: 'កំពុងរក្សាទុក...',
+    continuePublish: 'បន្តទៅបោះផ្សាយ',
+    failedCheck: 'មិនអាចពិនិត្យកិច្ចព្រមព្រៀងបោះផ្សាយបានទេ។',
+    failedSave: 'មិនអាចរក្សាទុកកិច្ចព្រមព្រៀងបោះផ្សាយបានទេ។',
   },
   zh: {
-    closeAgreement: "关闭发布协议",
-    heading: "发布第一章之前",
-    help: "请确认以下两项。每个故事只需确认一次。",
-    original: "我确认这是我的原创作品，并且我有权发布。",
-    agreement: "我同意 Shadow 作者协议。",
-    saving: "保存中...",
-    continuePublish: "继续发布",
+    closeAgreement: '关闭发布协议',
+    heading: '发布第一章之前',
+    help: '请确认以下两项。每个故事只需确认一次。',
+    original: '我确认这是我的原创作品，并且我有权发布。',
+    agreement: '我同意 Shadow 的条款与政策。',
+    viewTerms: '查看条款与政策',
+    saving: '保存中...',
+    continuePublish: '继续发布',
+    failedCheck: '无法检查发布协议。',
+    failedSave: '无法保存发布协议。',
   },
   ja: {
-    closeAgreement: "公開同意事項を閉じる",
-    heading: "最初のエピソードを公開する前に",
-    help: "2項目を確認してください。このストーリーでは一度だけ必要です。",
-    original: "このストーリーが自分のオリジナル作品であり、公開する権利があることを確認します。",
-    agreement: "Shadow 作者規約に同意します。",
-    saving: "保存中...",
-    continuePublish: "公開へ進む",
+    closeAgreement: '公開同意事項を閉じる',
+    heading: '最初のエピソードを公開する前に',
+    help: '2項目を確認してください。このストーリーでは一度だけ必要です。',
+    original: 'このストーリーが自分のオリジナル作品であり、公開する権利があることを確認します。',
+    agreement: 'Shadow の利用規約とポリシーに同意します。',
+    viewTerms: '利用規約とポリシーを見る',
+    saving: '保存中...',
+    continuePublish: '公開へ進む',
+    failedCheck: '公開同意事項を確認できませんでした。',
+    failedSave: '公開同意事項を保存できませんでした。',
   },
   ko: {
-    closeAgreement: "게시 동의 창 닫기",
-    heading: "첫 에피소드를 게시하기 전에",
-    help: "두 항목을 모두 확인해 주세요. 이 스토리에서는 한 번만 필요합니다.",
-    original: "이 스토리가 제 창작물이며 게시할 권리가 있음을 확인합니다.",
-    agreement: "Shadow 작가 약관에 동의합니다.",
-    saving: "저장 중...",
-    continuePublish: "게시 계속",
+    closeAgreement: '게시 동의 창 닫기',
+    heading: '첫 에피소드를 게시하기 전에',
+    help: '두 항목을 모두 확인해 주세요. 이 스토리에서는 한 번만 필요합니다.',
+    original: '이 스토리가 제 창작물이며 게시할 권리가 있음을 확인합니다.',
+    agreement: 'Shadow 이용약관 및 정책에 동의합니다.',
+    viewTerms: '이용약관 및 정책 보기',
+    saving: '저장 중...',
+    continuePublish: '게시 계속',
+    failedCheck: '게시 동의 여부를 확인하지 못했습니다.',
+    failedSave: '게시 동의를 저장하지 못했습니다.',
   },
 })
 
+export function useStoryPublishAgreementGate({
+  storyId,
+  apiBaseUrl,
+  getAuthToken,
+  navigate,
+  onError,
+}) {
+  useDisplayTranslation()
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const pendingResolveRef = useRef(null)
+
+  const finishPending = useCallback((accepted) => {
+    const resolve = pendingResolveRef.current
+    pendingResolveRef.current = null
+    if (resolve) resolve(accepted)
+  }, [])
+
+  const reportError = useCallback(
+    (error, fallbackKey) => {
+      if (onError) {
+        onError(error?.message || getDisplayText(fallbackKey))
+      }
+    },
+    [onError]
+  )
+
+  const requireAgreement = useCallback(async () => {
+    const token = getAuthToken?.()
+
+    if (!token) {
+      navigate('/login')
+      return false
+    }
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/stories/${storyId}/publish-agreement`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || getDisplayText('storyPublishAgreement.failedCheck')
+        )
+      }
+
+      if (data.accepted) return true
+
+      return await new Promise((resolve) => {
+        pendingResolveRef.current = resolve
+        setOpen(true)
+      })
+    } catch (error) {
+      reportError(error, 'storyPublishAgreement.failedCheck')
+      return false
+    }
+  }, [apiBaseUrl, getAuthToken, navigate, reportError, storyId])
+
+  const closeAgreement = useCallback(() => {
+    if (saving) return
+    setOpen(false)
+    finishPending(false)
+  }, [finishPending, saving])
+
+  const confirmAgreement = useCallback(
+    async (agreement) => {
+      const token = getAuthToken?.()
+
+      if (!token) {
+        setOpen(false)
+        finishPending(false)
+        navigate('/login')
+        return
+      }
+
+      try {
+        setSaving(true)
+
+        const response = await fetch(
+          `${apiBaseUrl}/api/stories/${storyId}/publish-agreement`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(agreement),
+          }
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false || !data.accepted) {
+          throw new Error(
+            data.message || getDisplayText('storyPublishAgreement.failedSave')
+          )
+        }
+
+        setOpen(false)
+        finishPending(true)
+      } catch (error) {
+        reportError(error, 'storyPublishAgreement.failedSave')
+      } finally {
+        setSaving(false)
+      }
+    },
+    [apiBaseUrl, finishPending, getAuthToken, navigate, reportError, storyId]
+  )
+
+  useEffect(
+    () => () => {
+      finishPending(false)
+    },
+    [finishPending]
+  )
+
+  return {
+    requireAgreement,
+    agreementModal: (
+      <StoryPublishAgreementModal
+        open={open}
+        saving={saving}
+        onClose={closeAgreement}
+        onConfirm={confirmAgreement}
+      />
+    ),
+  }
+}
 
 export default function StoryPublishAgreementModal({
   open,
@@ -133,20 +283,31 @@ export default function StoryPublishAgreementModal({
             </span>
           </label>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-[12px] bg-[var(--shadow-bg-soft)] px-4 py-3.5">
-            <input
-              type="checkbox"
-              checked={authorAgreementAccepted}
-              onChange={(event) =>
-                setAuthorAgreementAccepted(event.target.checked)
-              }
-              className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--shadow-text-primary)]"
-            />
+          <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-4 py-3.5">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={authorAgreementAccepted}
+                onChange={(event) =>
+                  setAuthorAgreementAccepted(event.target.checked)
+                }
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--shadow-text-primary)]"
+              />
 
-            <span className="text-[12.5px] font-normal leading-5 text-[var(--shadow-text-primary)]">
-              {getDisplayText('storyPublishAgreement.agreement')}
-            </span>
-          </label>
+              <span className="text-[12.5px] font-normal leading-5 text-[var(--shadow-text-primary)]">
+                {getDisplayText('storyPublishAgreement.agreement')}
+              </span>
+            </label>
+
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-7 mt-2 inline-flex text-[12px] font-medium text-[#0b5cff] underline underline-offset-2"
+            >
+              {getDisplayText('storyPublishAgreement.viewTerms')}
+            </a>
+          </div>
         </div>
 
         <button
@@ -160,7 +321,9 @@ export default function StoryPublishAgreementModal({
           }
           className="mt-5 h-12 w-full rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-normal text-[var(--shadow-bg-surface)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
         >
-          {saving ? getDisplayText('storyPublishAgreement.saving') : getDisplayText('storyPublishAgreement.continuePublish')}
+          {saving
+            ? getDisplayText('storyPublishAgreement.saving')
+            : getDisplayText('storyPublishAgreement.continuePublish')}
         </button>
       </section>
     </div>
