@@ -38,10 +38,26 @@ export function applyStudioAdjustmentLayer(context, layer) {
 
   const source = snapshotCanvas(context.canvas)
   const rendered = renderStudioAdjustmentCanvas(source, adjustment)
+  const opacity = Math.max(0, Math.min(100, Number(layer.opacity) || 0)) / 100
+  const fillLayer = ['solid-color', 'gradient', 'pattern'].includes(adjustment.type)
+  if (!fillLayer && (layer.blendMode || 'normal') === 'normal') {
+    const sourceContext = source.getContext('2d', { willReadFrequently: true })
+    const renderedContext = rendered.getContext('2d', { willReadFrequently: true })
+    const sourceData = sourceContext?.getImageData(0, 0, source.width, source.height)
+    const renderedData = renderedContext?.getImageData(0, 0, rendered.width, rendered.height)
+    if (!sourceData || !renderedData) throw new Error('Could not blend adjustment pixels.')
+    for (let index = 0; index < sourceData.data.length; index += 4) {
+      sourceData.data[index] += (renderedData.data[index] - sourceData.data[index]) * opacity
+      sourceData.data[index + 1] += (renderedData.data[index + 1] - sourceData.data[index + 1]) * opacity
+      sourceData.data[index + 2] += (renderedData.data[index + 2] - sourceData.data[index + 2]) * opacity
+    }
+    context.putImageData(sourceData, 0, 0)
+    return true
+  }
   context.save()
   try {
     context.setTransform(1, 0, 0, 1, 0, 0)
-    context.globalAlpha = Math.max(0, Math.min(100, Number(layer.opacity) || 0)) / 100
+    context.globalAlpha = opacity
     context.globalCompositeOperation = operation(layer.blendMode)
     context.drawImage(rendered, 0, 0, context.canvas.width, context.canvas.height)
   } finally {
