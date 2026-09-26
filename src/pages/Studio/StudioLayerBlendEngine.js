@@ -1,5 +1,6 @@
 import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
 import { renderStudioStyledLayer, normalizeStudioLayerStyle } from './StudioLayerStyleEngine'
+import { applyStudioAdjustmentLayer } from './StudioAdjustmentLayerCompositor'
 
 export const STUDIO_BLEND_MODES = Object.freeze([
   'normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten',
@@ -41,6 +42,7 @@ function layerSurface(layer) {
 
 function drawLayer(context, layer) {
   if (layer.visible === false || Number(layer.opacity) <= 0) return
+  if (layer.adjustment) { applyStudioAdjustmentLayer(context, layer); return }
   context.save()
   try {
     context.globalAlpha = (layer.opacity ?? 100) / 100
