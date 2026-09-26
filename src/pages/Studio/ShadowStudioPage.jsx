@@ -55,6 +55,9 @@ import { placeStudioMangaBalloon } from './StudioBalloonPlacementToolEngine'
 import StudioAdvancedToolPanel from './StudioAdvancedToolPanel'
 import StudioLayerStyleDialog from './StudioLayerStyleDialog'
 import { normalizeStudioLayerStyle } from './StudioLayerStyleEngine'
+import StudioAdjustmentLayerDialog from './StudioAdjustmentLayerDialog'
+import { createStudioAdjustmentLayer, updateStudioAdjustmentLayer } from './StudioAdjustmentLayerFactory'
+import { normalizeStudioAdjustment } from './StudioAdjustmentLayerEngine'
 import { applyStudioPhotoFilter } from './StudioFilterToolEngine'
 import { beginStudioSpecialBrush, extendStudioSpecialBrush } from './StudioSpecialBrushToolEngine'
 import { applyStudioFrameDivider } from './StudioFrameDividerToolEngine'
@@ -433,6 +436,7 @@ const placeImageLabel = {
   const [mangaToolInitial, setMangaToolInitial] = useState('bubble')
   const [advancedEditor, setAdvancedEditor] = useState(null)
   const [styleLayerId, setStyleLayerId] = useState(null)
+  const [adjustmentEditor, setAdjustmentEditor] = useState(null)
   const [textEditor, setTextEditor] = useState(null)
   const [shapeEditor, setShapeEditor] = useState(null)
   const [brushStyle, setBrushStyle] = useState('round')
@@ -491,6 +495,8 @@ const placeImageLabel = {
   function drawingContext() {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId) return null
+    const activeLayer = stack.layers.find((item) => item.id === stack.activeLayerId)
+    if (activeLayer?.adjustment) return null
     return studioLayerCanEdit(stack) ? studioLayerContext(stack) : null
   }
 
@@ -553,6 +559,31 @@ const placeImageLabel = {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy || drawingRef.current || newFileOpen || exportOpen || recoveryBusy) return
     try {
+      if (action === 'adjustment-create') {
+        const previousActiveLayerId = stack.activeLayerId
+        const selected = stack.layers.find((item) => item.id === previousActiveLayerId)
+        const added = createStudioAdjustmentLayer(stack, value)
+        if (selected?.groupId) {
+          const currentIndex = stack.layers.indexOf(added)
+          stack.layers.splice(currentIndex, 1)
+          let lastGroupIndex = -1
+          stack.layers.forEach((item, index) => { if (item.groupId === selected.groupId) lastGroupIndex = index })
+          stack.layers.splice(lastGroupIndex + 1, 0, added)
+        }
+        validateStudioGroupLayout(stack)
+        const sourceCanvas = captureAdjustmentSource(added.id)
+        setAdjustmentEditor({ layerId: added.id, type: added.adjustment.type, sourceCanvas, isNew: true, previousActiveLayerId })
+        refresh((number) => number + 1)
+        return
+      }
+      if (action === 'adjustment-open') {
+        const layer = stack.layers.find((item) => item.id === layerId)
+        if (!layer?.adjustment) return
+        selectStudioLayer(stack, layerId)
+        setAdjustmentEditor({ layerId, type: layer.adjustment.type, sourceCanvas: captureAdjustmentSource(layerId), isNew: false, previousActiveLayerId: layerId })
+        refresh((number) => number + 1)
+        return
+      }
       if (action === 'style-open') {
         const layer = stack.layers.find((item) => item.id === layerId)
         if (!layer) return
@@ -585,6 +616,7 @@ const placeImageLabel = {
         if (original?.groupId) copy.groupId = original.groupId
         if (original?.blendMode) copy.blendMode = original.blendMode
         if (original?.layerStyle) copy.layerStyle = normalizeStudioLayerStyle(original.layerStyle)
+        if (original?.adjustment) copy.adjustment = normalizeStudioAdjustment(original.adjustment)
       } else if (action === 'select') selectStudioLayer(stack, layerId)
       else if (action === 'visibility') {
         const layer = stack.layers.find((item) => item.id === layerId)
@@ -603,7 +635,11 @@ const placeImageLabel = {
         const layer = setStudioLayerBlendMode(stack, layerId, value)
         if (layer.layerStyle) layer.layerStyle.blendMode = layer.blendMode
       }
-      else if (action === 'group-add') createStudioLayerGroup(stack, [layerId || stack.activeLayerId])
+      else if (action === 'group-add') {
+        const layer = stack.layers.find((item) => item.id === (layerId || stack.activeLayerId))
+        if (layer?.adjustment) throw new Error('Adjustment layers stay outside groups.')
+        createStudioLayerGroup(stack, [layerId || stack.activeLayerId])
+      }
       else if (action === 'group-remove') removeStudioLayerGroup(stack, layerId)
       else if (action === 'group-rename') updateStudioLayerGroup(stack, layerId, { name: value })
       else if (action === 'group-visibility' || action === 'group-lock' || action === 'group-collapse') {
@@ -616,7 +652,7 @@ const placeImageLabel = {
       else if (action === 'group-join') {
         const layer = stack.layers.find((item) => item.id === layerId)
         const group = stack.groups?.find((item) => item.id === value)
-        if (!layer || !group || layer.isBackground || layer.groupId) throw new Error('Select an ungrouped editable layer.')
+        if (!layer || !group || layer.isBackground || layer.groupId || layer.adjustment) throw new Error('Select an ungrouped editable pixel or text layer.')
         const index = stack.layers.indexOf(layer)
         if (stack.layers[index - 1]?.groupId !== group.id && stack.layers[index + 1]?.groupId !== group.id) throw new Error('Only an adjacent layer can join a group.')
         layer.groupId = group.id
@@ -628,6 +664,7 @@ const placeImageLabel = {
       } else if (action === 'merge-down') {
         const current = stack.layers.find((item) => item.id === stack.activeLayerId)
         const lower = stack.layers[stack.layers.indexOf(current) - 1]
+        if (current?.adjustment || lower?.adjustment) throw new Error('Adjustment layers cannot be merged down directly.')
         if ([current, lower].some((item) => item?.layerStyle && (item.layerStyle.fillOpacity !== 100 ||
           ['r', 'g', 'b'].some((channel) => item.layerStyle.channels?.[channel] === false) ||
           Object.values(item.layerStyle.effects || {}).some((effect) => effect.enabled)))) {
@@ -694,12 +731,62 @@ const placeImageLabel = {
 
   useEffect(() => { setStyleLayerId(null) }, [activeDocumentId])
 
+  function captureAdjustmentSource(layerId) {
+    const stack = layerStackRef.current
+    const index = stack?.layers.findIndex((item) => item.id === layerId) ?? -1
+    if (!stack || index < 0) throw new Error('Adjustment layer not found.')
+    const surface = document.createElement('canvas')
+    surface.width = stack.width
+    surface.height = stack.height
+    const hidden = stack.layers.slice(index).map((layer) => [layer, layer.visible])
+    try {
+      hidden.forEach(([layer]) => { layer.visible = false })
+      renderStudioAdvancedLayers(stack, surface)
+    } finally {
+      hidden.forEach(([layer, visible]) => { layer.visible = visible })
+    }
+    return surface
+  }
+
+  function closeAdjustmentEditor() {
+    const editor = adjustmentEditor
+    if (!editor) return
+    if (editor.isNew) {
+      const stack = layerStackRef.current
+      const layer = stack?.layers.find((item) => item.id === editor.layerId)
+      if (stack && layer) {
+        stack.layers = stack.layers.filter((item) => item.id !== layer.id)
+        if (stack.layers.some((item) => item.id === editor.previousActiveLayerId)) stack.activeLayerId = editor.previousActiveLayerId
+        else stack.activeLayerId = stack.layers[stack.layers.length - 1]?.id || ''
+        paintLayerPreview()
+        refresh((number) => number + 1)
+      }
+    }
+    setAdjustmentEditor(null)
+  }
+
+  function applyAdjustmentLayer(adjustment) {
+    const editor = adjustmentEditor
+    const stack = layerStackRef.current
+    const layer = stack?.layers.find((item) => item.id === editor?.layerId)
+    if (!editor || !stack || !layer || !layer.adjustment || canvasDocumentRef.current !== activeDocumentId) throw new Error('Reopen the Adjustment Layer before applying changes.')
+    updateStudioAdjustmentLayer(stack, layer.id, adjustment)
+    paintLayerPreview()
+    snapshot()
+    updateDocument(activeDocumentId, { dirty: true })
+    setProjectNotice('')
+    setAdjustmentEditor(null)
+    return false
+  }
+
   function applyRightFeature(kind, options) {
     const stack = layerStackRef.current
     if (!stack || canvasDocumentRef.current !== activeDocumentId || paperLoading || projectBusy ||
       drawingRef.current || newFileOpen || exportOpen || recoveryBusy) {
       throw new Error('Wait until the current paper is ready before applying an effect.')
     }
+    const activeLayer = stack.layers.find((item) => item.id === stack.activeLayerId)
+    if (activeLayer?.adjustment) throw new Error('Select a pixel or text layer before applying this effect.')
     if (!studioLayerCanEdit(stack) || !studioLayerContext(stack)) {
       throw new Error('Select a visible, unlocked layer outside a locked or hidden group.')
     }
@@ -789,6 +876,7 @@ const placeImageLabel = {
         ...(layer.groupId ? { groupId: layer.groupId } : {}),
         ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
         ...(layer.layerStyle ? { layerStyle: normalizeStudioLayerStyle(layer.layerStyle) } : {}),
+        ...(layer.adjustment ? { adjustment: normalizeStudioAdjustment(layer.adjustment) } : {}),
         ...(layer.textData ? { textData: { ...layer.textData, anchor: { ...layer.textData.anchor } } } : {}),
         pixels: layer.canvas.getContext('2d', { willReadFrequently: true })
           .getImageData(0, 0, stack.width, stack.height),
@@ -816,7 +904,7 @@ const placeImageLabel = {
       canvas.width = width
       canvas.height = height
       canvas.getContext('2d', { willReadFrequently: true }).putImageData(item.pixels, 0, 0)
-      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, isBackground: item.isBackground === true, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}), ...(item.layerStyle ? { layerStyle: normalizeStudioLayerStyle(item.layerStyle) } : {}), ...(item.textData ? { textData: { ...item.textData, anchor: { ...item.textData.anchor } } } : {}) }
+      return { id: item.id, name: item.name, canvas, visible: item.visible, locked: item.locked, opacity: item.opacity, isBackground: item.isBackground === true, ...(item.groupId ? { groupId: item.groupId } : {}), ...(item.blendMode ? { blendMode: item.blendMode } : {}), ...(item.layerStyle ? { layerStyle: normalizeStudioLayerStyle(item.layerStyle) } : {}), ...(item.adjustment ? { adjustment: normalizeStudioAdjustment(item.adjustment) } : {}), ...(item.textData ? { textData: { ...item.textData, anchor: { ...item.textData.anchor } } } : {}) }
     })
     stack.activeLayerId = entry.activeLayerId
     stack.groups = (entry.groups || []).map((group) => ({ ...group }))
@@ -1809,6 +1897,8 @@ const placeImageLabel = {
       paintToolOverlay()
       return true
     }
+    const activeLayer = stack.layers.find((item) => item.id === stack.activeLayerId)
+    if (activeLayer?.adjustment) throw new Error('Select a pixel or text layer first.')
     if (!studioLayerCanEdit(stack)) throw new Error('Unlock and show the selected layer first.')
     if (type === 'balloon') return applyRightFeature('balloon', { ...values, anchor: editor.anchor })
     if (type === 'special') {
@@ -2559,6 +2649,17 @@ async function dropImageOnPaper(event) {
         onApply={applyLayerStyle}
         language={language}
         disabled={paperLoading || projectBusy || recoveryBusy || Boolean(recoveryEntry) || newFileOpen || exportOpen}
+      />
+
+      <StudioAdjustmentLayerDialog
+        open={Boolean(adjustmentEditor) && workspaceStarted && canvasDocumentRef.current === activeDocumentId}
+        type={adjustmentEditor?.type || ''}
+        adjustment={layerStackRef.current?.layers.find((item) => item.id === adjustmentEditor?.layerId)?.adjustment || null}
+        sourceCanvas={adjustmentEditor?.sourceCanvas || null}
+        language={language}
+        disabled={paperLoading || projectBusy || recoveryBusy || Boolean(recoveryEntry) || newFileOpen || exportOpen}
+        onClose={closeAdjustmentEditor}
+        onApply={applyAdjustmentLayer}
       />
 
       <StudioAdvancedToolPanel
