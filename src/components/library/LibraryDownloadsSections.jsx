@@ -11,13 +11,14 @@ registerTranslationNamespace('librarySections', {
   km: { purchased: 'បានទិញ', downloads: 'បានទាញយក', purchasedInfo: 'PDF និង eBook ដែលអ្នកបានទិញ', downloadsInfo: 'រឿងដែលបានរក្សាទុកក្នុងឧបករណ៍នេះ', viewAll: 'មើលទាំងអស់', noPurchases: 'មិនទាន់មានសៀវភៅដែលបានទិញ', noDownloads: 'មិនទាន់មានរឿងដែលបានទាញយក', login: 'សូមចូលគណនីដើម្បីមើលការទិញ និងការទាញយក។', loading: 'កំពុងផ្ទុករឿងដែលបានទាញយក…', failed: 'មិនអាចផ្ទុករឿងដែលបានទាញយក', novel: 'ប្រលោមលោក', manga: 'Manga', chat: 'Chat Story', episodes: '{{count}} ភាគ', read: 'អាន Online', download: 'ទាញយកឯកសារ', open: 'បើករឿង Offline' },
   zh: { purchased: '已购买', downloads: '已下载', purchasedInfo: '您购买的 PDF 和电子书', downloadsInfo: '保存在此设备上的作品', viewAll: '查看全部', noPurchases: '暂无已购书籍', noDownloads: '暂无已下载作品', login: '请登录后查看购买和下载内容。', loading: '正在加载下载内容…', failed: '无法加载下载的作品', novel: '小说', manga: '漫画', chat: '聊天故事', episodes: '{{count}} 章', read: '在线阅读', download: '下载文件', open: '打开离线下载' },
   ja: { purchased: '購入済み', downloads: 'ダウンロード', purchasedInfo: '購入した PDF と電子書籍', downloadsInfo: 'この端末に保存した作品', viewAll: 'すべて見る', noPurchases: '購入した本はありません', noDownloads: 'ダウンロードした作品はありません', login: '購入とダウンロードを確認するにはログインしてください。', loading: 'ダウンロードを読み込み中…', failed: 'ダウンロードを読み込めません', novel: '小説', manga: 'マンガ', chat: 'チャットストーリー', episodes: '{{count}} 話', read: 'オンラインで読む', download: 'ファイルをダウンロード', open: 'オフラインダウンロードを開く' },
-  ko: { purchased: '구매 내역', downloads: '다운로드', purchasedInfo: '구매한 PDF 및 전자책', downloadsInfo: '이 기기에 저장한 작품', viewAll: '모두 보기', noPurchases: '구매한 책이 없습니다', noDownloads: '다운로드한 작품이 없습니다', login: '구매 및 다운로드 내역을 보려면 로그인하세요.', loading: '다운로드 불러오는 중…', failed: '다운로드한 작품을 불러올 수 없습니다', novel: '소설', manga: '만화', chat: '채팅 스토리', episodes: '{{count}} 화', read: '온라인 읽기', download: '파일 다운로드', open: '오프라인 다운로드 열기' },
+  ko: { purchased: '구매 내역', downloads: '다운로드', purchasedInfo: '구매한 PDF 및 전자책', downloadsInfo: '이 기기에 저장된 작품', viewAll: '모두 보기', noPurchases: '구매한 책이 없습니다', noDownloads: '다운로드한 작품이 없습니다', login: '구매 및 다운로드 내역을 보려면 로그인하세요.', loading: '다운로드 불러오는 중…', failed: '다운로드한 작품을 불러올 수 없습니다', novel: '소설', manga: '만화', chat: '채팅 스토리', episodes: '{{count}} 화', read: '온라인 읽기', download: '파일 다운로드', open: '오프라인 다운로드 열기' },
 })
 
 function accessRights(value) {
   const rule = String(value || '').toLowerCase().replace(/[_-]/g, ' ')
-  const readOnly = /\b(?:no|not|without)\s+download\b|\bread\s+only\b|\bonline\s+only\b/.test(rule)
-  return { read: readOnly || rule.includes('read'), download: !readOnly && (!rule.includes('read') || rule.includes('download')) }
+  const noDownload = /\b(?:no|not|without)\s+download\b|\bread\s+only\b|\bonline\s+only\b/.test(rule)
+  const download = !noDownload && /\bdownload\b/.test(rule)
+  return { read: true, download }
 }
 
 function typeOfStory(value) {
@@ -45,47 +46,34 @@ function PurchasedBook({ item, t, onRead }) {
   const [error, setError] = useState('')
   const iconClass = 'absolute right-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm disabled:opacity-50'
 
-  async function openPrivatePdf(mode) {
-    if (!productId || busy) return
+  async function downloadPrivatePdf() {
+    if (!productId || busy || !rights.download) return
     const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
-    const reader = mode === 'read' ? window.open('', '_blank') : null
-    if (reader) reader.opener = null
-    if (!token || (mode === 'read' && !reader)) {
-      if (reader) reader.close()
-      setError('Unable to open this PDF')
+    if (!token) {
+      setError('Unable to download this PDF')
       return
     }
     setBusy(true)
     setError('')
     try {
       const api = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
-      const response = await fetch(`${api}/api/author-store/downloads/${encodeURIComponent(productId)}/pdf?mode=${mode}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+      const response = await fetch(`${api}/api/author-store/downloads/${encodeURIComponent(productId)}/pdf?mode=download`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        throw new Error(data.message || 'Unable to open this PDF')
+        throw new Error(data.message || 'Unable to download this PDF')
       }
       const pdf = await response.blob()
-      if (!pdf.size || pdf.type !== 'application/pdf') throw new Error('PDF is unavailable')
+      if (!pdf.size || !pdf.type.toLowerCase().startsWith('application/pdf')) throw new Error('PDF is unavailable')
       const blobUrl = URL.createObjectURL(pdf)
-      if (mode === 'read') {
-        if (reader.closed) {
-          URL.revokeObjectURL(blobUrl)
-          return
-        }
-        reader.location.replace(blobUrl)
-        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 60 * 1000)
-      } else {
-        const anchor = document.createElement('a')
-        anchor.href = blobUrl
-        anchor.download = String(story.pdf_file_name || `${title}.pdf`).split(/[\\/]/).pop()
-        document.body.appendChild(anchor)
-        anchor.click()
-        anchor.remove()
-        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000)
-      }
+      const anchor = document.createElement('a')
+      anchor.href = blobUrl
+      anchor.download = String(story.pdf_file_name || `${title}.pdf`).split(/[\\/]/).pop()
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000)
     } catch (reason) {
-      if (reader && !reader.closed) reader.close()
-      setError(reason?.message || 'Unable to open this PDF')
+      setError(reason?.message || 'Unable to download this PDF')
     } finally {
       setBusy(false)
     }
@@ -94,12 +82,12 @@ function PurchasedBook({ item, t, onRead }) {
   return (
     <article className="min-w-0">
       <BookCover title={title} url={story.cover_url}>
-        {rights.read && productId ? <button type="button" onClick={() => onRead(productId)} aria-label={`${t('librarySections.read')}: ${title}`} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
+        {productId ? <button type="button" onClick={() => onRead(productId)} aria-label={`${t('librarySections.read')}: ${title}`} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
         {rights.download && url ? <a href={url} target="_blank" rel="noreferrer" download={story.pdf_file_name || `${title}.pdf`} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></a> : null}
-        {rights.download && !url && productId ? <button type="button" disabled={busy} onClick={() => openPrivatePdf('download')} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
+        {rights.download && !url && productId ? <button type="button" disabled={busy} onClick={downloadPrivatePdf} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
       </BookCover>
       <h3 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">{title}</h3>
-      <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{rights.read && !rights.download ? 'eBook' : 'PDF'}</p>
+      <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{rights.download ? 'PDF' : 'eBook'}</p>
       {error ? <p role="alert" className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]">{error}</p> : null}
     </article>
   )
