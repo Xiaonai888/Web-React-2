@@ -235,6 +235,7 @@ function copyPageLink() {
       </main>
       <AuthorPageShareSheet
         open={shareOpen}
+        sheetTitle={t('episodeEchoes.shareStory')}
         pageName={authorPage?.page_name || t('authorPageOptions.authorPage')}
         pageLink={`${window.location.origin}${pageUsername ? `/author/page/${encodeURIComponent(pageUsername)}` : '/author/page'}`}
         onClose={() => setShareOpen(false)}
