@@ -5,6 +5,7 @@ import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { getOfflineReaderAccountId } from '../utils/offlineReaderContent'
 import { listOfflineEpisodes, loadOfflineEpisode } from '../utils/offlineReadingStorage'
+import WebPdfReader from '../components/library/WebPdfReader'
 
 registerTranslationNamespace('libraryCollection', {
   en: {
@@ -53,7 +54,7 @@ registerTranslationNamespace('libraryCollection', {
   },
   ko: {
     back: '라이브러리로 돌아가기', purchased: '구매 내역', downloads: '다운로드',
-    purchasedSubtitle: '구매한 PDF 및 전자책', downloadsSubtitle: '이 기기에 저장한 작품',
+    purchasedSubtitle: '구매한 PDF 및 전자책', downloadsSubtitle: '이 기기에 저장된 작품',
     all: '전체', download: '다운로드', readOnline: '온라인 읽기', both: '둘 다',
     novel: '소설', manga: '만화', chatStory: '채팅 스토리',
     noPurchases: '구매한 책이 없습니다', noDownloads: '다운로드한 작품이 없습니다',
@@ -73,10 +74,11 @@ const downloadFilters = ['all', 'novel', 'manga', 'chatStory']
 
 function accessType(value) {
   const text = String(value || '').toLowerCase().replace(/[_-]/g, ' ')
+  if (!text) return 'readOnline'
   if (/\b(?:no|not|without)\s+download\b|\bread\s+only\b|\bonline\s+only\b/.test(text)) return 'readOnline'
   if (text.includes('read') && text.includes('download')) return 'both'
-  if (text.includes('read')) return 'readOnline'
-  return 'download'
+  if (text.includes('download')) return 'download'
+  return 'readOnline'
 }
 
 function storyCategory(value) {
@@ -96,7 +98,6 @@ function Cover({ title, cover, children }) {
 
 function PurchaseCard({ item, t, token, onRead }) {
   const rule = accessType(item.access_rule)
-  const canRead = rule === 'readOnline' || rule === 'both'
   const canDownload = rule === 'download' || rule === 'both'
   const rawUrl = String(item.pdf_file_url || '').trim()
   const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : ''
@@ -106,18 +107,12 @@ function PurchaseCard({ item, t, token, onRead }) {
   const [error, setError] = useState('')
   const iconClass = 'absolute right-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm disabled:opacity-50'
 
-  async function accessPrivatePdf(mode) {
-    if (busy || !id || !token) return
-    const reader = mode === 'read' ? window.open('', '_blank') : null
-    if (reader) reader.opener = null
-    if (mode === 'read' && !reader) {
-      setError(t('libraryCollection.fileNotReady'))
-      return
-    }
+  async function downloadPrivatePdf() {
+    if (busy || !id || !token || !canDownload) return
     setBusy(true)
     setError('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/${encodeURIComponent(id)}/pdf?mode=${mode}`, {
+      const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/${encodeURIComponent(id)}/pdf?mode=download`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       })
@@ -128,24 +123,14 @@ function PurchaseCard({ item, t, token, onRead }) {
       const pdf = await response.blob()
       if (!pdf.type.toLowerCase().startsWith('application/pdf') || !pdf.size) throw new Error(t('libraryCollection.fileNotReady'))
       const blobUrl = URL.createObjectURL(pdf)
-      if (mode === 'read') {
-        if (reader.closed) {
-          URL.revokeObjectURL(blobUrl)
-          return
-        }
-        reader.location.replace(blobUrl)
-        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 60 * 1000)
-      } else {
-        const anchor = document.createElement('a')
-        anchor.href = blobUrl
-        anchor.download = String(item.pdf_file_name || `${title}.pdf`).split(/[\\/]/).pop()
-        document.body.appendChild(anchor)
-        anchor.click()
-        anchor.remove()
-        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000)
-      }
+      const anchor = document.createElement('a')
+      anchor.href = blobUrl
+      anchor.download = String(item.pdf_file_name || `${title}.pdf`).split(/[\\/]/).pop()
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000)
     } catch (reason) {
-      if (reader && !reader.closed) reader.close()
       setError(reason?.message || t('libraryCollection.fileNotReady'))
     } finally {
       setBusy(false)
@@ -155,12 +140,12 @@ function PurchaseCard({ item, t, token, onRead }) {
   return (
     <article className="min-w-0">
       <Cover title={title} cover={item.cover_url}>
-        {canRead && id ? <button type="button" onClick={() => onRead(id)} aria-label={`${t('libraryCollection.read')}: ${title}`} title={t('libraryCollection.read')} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
+        {id ? <button type="button" onClick={() => onRead(id)} aria-label={`${t('libraryCollection.read')}: ${title}`} title={t('libraryCollection.read')} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
         {canDownload && url ? <a href={url} download={item.pdf_file_name || `${title}.pdf`} target="_blank" rel="noreferrer" aria-label={`${t('libraryCollection.downloadFile')}: ${title}`} title={t('libraryCollection.downloadFile')} className={`${iconClass} bottom-1.5`}><Download size={16} /></a> : null}
-        {canDownload && !url && id ? <button type="button" disabled={busy} onClick={() => accessPrivatePdf('download')} aria-label={`${t('libraryCollection.downloadFile')}: ${title}`} title={t('libraryCollection.downloadFile')} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
+        {canDownload && !url && id ? <button type="button" disabled={busy} onClick={downloadPrivatePdf} aria-label={`${t('libraryCollection.downloadFile')}: ${title}`} title={t('libraryCollection.downloadFile')} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
       </Cover>
       <h2 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">{title}</h2>
-      <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{rule === 'readOnline' ? 'eBook' : 'PDF'}</p>
+      <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{canDownload ? 'PDF' : 'eBook'}</p>
       {!url && !id ? <p className="mt-1 text-[10px] text-[var(--shadow-warning)]">{t('libraryCollection.fileNotReady')}</p> : null}
       {error ? <p role="alert" className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]">{error}</p> : null}
     </article>
@@ -192,7 +177,7 @@ export default function LibraryCollectionPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [reader, setReader] = useState({ loading: false, url: '', title: '', error: '' })
+  const [reader, setReader] = useState({ loading: false, blob: null, url: '', title: '', error: '' })
   const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
   const accountId = getOfflineReaderAccountId()
 
@@ -248,21 +233,21 @@ export default function LibraryCollectionPage() {
   useEffect(() => {
     if (!purchased || !readId || loading) return undefined
     const controller = new AbortController()
-    let blobUrl = ''
     let active = true
     const item = items.find((entry) => String(entry.product_id) === String(readId))
-    setReader({ loading: true, url: '', title: item?.title || '', error: '' })
+    setReader({ loading: true, blob: null, url: '', title: item?.title || '', error: '' })
     if (!item || !token) {
-      setReader({ loading: false, url: '', title: '', error: t('libraryCollection.fileNotReady') })
+      setReader({ loading: false, blob: null, url: '', title: '', error: t('libraryCollection.fileNotReady') })
       return undefined
     }
-    const sourceUrl = String(item.pdf_file_url || '').trim()
-    if (/^https?:\/\//i.test(sourceUrl)) {
-      setReader({ loading: false, url: sourceUrl, title: item.title || 'PDF', error: '' })
-      return undefined
-    }
-    async function openPrivate() {
+
+    async function openPdf() {
       try {
+        const sourceUrl = String(item.pdf_file_url || '').trim()
+        if (/^https?:\/\//i.test(sourceUrl) && item.pdf_is_private !== true) {
+          if (active) setReader({ loading: false, blob: null, url: sourceUrl, title: item.title || 'PDF', error: '' })
+          return
+        }
         const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/${encodeURIComponent(readId)}/pdf?mode=read`, {
           headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: controller.signal,
         })
@@ -272,17 +257,16 @@ export default function LibraryCollectionPage() {
         }
         const pdf = await response.blob()
         if (!pdf.size || !pdf.type.toLowerCase().startsWith('application/pdf')) throw new Error(t('libraryCollection.fileNotReady'))
-        blobUrl = URL.createObjectURL(pdf)
-        if (active) setReader({ loading: false, url: blobUrl, title: item.title || 'PDF', error: '' })
+        if (active) setReader({ loading: false, blob: pdf, url: '', title: item.title || 'PDF', error: '' })
       } catch (reason) {
-        if (active && reason.name !== 'AbortError') setReader({ loading: false, url: '', title: item.title || '', error: reason.message || t('libraryCollection.fileNotReady') })
+        if (active && reason.name !== 'AbortError') setReader({ loading: false, blob: null, url: '', title: item.title || '', error: reason.message || t('libraryCollection.fileNotReady') })
       }
     }
-    void openPrivate()
+
+    void openPdf()
     return () => {
       active = false
       controller.abort()
-      if (blobUrl) URL.revokeObjectURL(blobUrl)
     }
   }, [purchased, readId, loading, items, token])
 
@@ -297,11 +281,11 @@ export default function LibraryCollectionPage() {
           <h1 className="min-w-0 text-[16px] font-bold text-[var(--shadow-text-primary)]">{t(`libraryCollection.${purchased ? 'purchased' : 'downloads'}`)}</h1>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[780px] px-4 pb-8 pt-5 sm:px-5">
+      <main className="mx-auto w-full max-w-[900px] px-4 pb-8 pt-5 sm:px-5">
         {readId ? (
           <section className="flex flex-col gap-3">
             <h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">{reader.title || t('libraryCollection.purchased')}</h2>
-            {reader.loading ? <p role="status" className="text-sm text-[var(--shadow-text-secondary)]">{t('libraryCollection.loading')}</p> : reader.error ? <p role="alert" className="text-sm text-[var(--shadow-warning)]">{reader.error}</p> : reader.url ? <iframe title={reader.title || 'PDF'} src={reader.url} className="h-[calc(100dvh-190px)] min-h-[440px] w-full rounded-xl border border-[var(--shadow-border)] bg-white" /> : null}
+            {reader.loading ? <p role="status" className="text-sm text-[var(--shadow-text-secondary)]">{t('libraryCollection.loading')}</p> : reader.error ? <p role="alert" className="text-sm text-[var(--shadow-warning)]">{reader.error}</p> : reader.blob || reader.url ? <WebPdfReader blob={reader.blob} url={reader.url} title={reader.title || 'PDF'} /> : null}
           </section>
         ) : <>
         <p className="text-[12px] text-[var(--shadow-text-secondary)]">{t(`libraryCollection.${purchased ? 'purchasedSubtitle' : 'downloadsSubtitle'}`)}</p>
