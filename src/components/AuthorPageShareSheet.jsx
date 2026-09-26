@@ -5,6 +5,7 @@ import { registerTranslationNamespace } from '../i18n/registerTranslations'
 registerTranslationNamespace('authorPageShareSheet', {
   en: {
     sharePage: 'Share Page',
+    shareStory: 'Share Story',
     shareText: 'View {{pageName}} on Shadow.',
     text: 'Text',
     copyLink: 'Copy link',
@@ -12,6 +13,7 @@ registerTranslationNamespace('authorPageShareSheet', {
   },
   km: {
     sharePage: 'ចែករំលែកទំព័រ',
+    shareStory: 'ចែករំលែករឿង',
     shareText: 'មើល {{pageName}} នៅលើ Shadow។',
     text: 'សារ',
     copyLink: 'ចម្លង Link',
@@ -19,6 +21,7 @@ registerTranslationNamespace('authorPageShareSheet', {
   },
   zh: {
     sharePage: '分享主页',
+    shareStory: '分享故事',
     shareText: '在 Shadow 上查看 {{pageName}}。',
     text: '短信',
     copyLink: '复制链接',
@@ -26,6 +29,7 @@ registerTranslationNamespace('authorPageShareSheet', {
   },
   ja: {
     sharePage: 'ページを共有',
+    shareStory: 'ストーリーを共有',
     shareText: 'Shadow で {{pageName}} を見る。',
     text: 'メッセージ',
     copyLink: 'リンクをコピー',
@@ -33,6 +37,7 @@ registerTranslationNamespace('authorPageShareSheet', {
   },
   ko: {
     sharePage: '페이지 공유',
+    shareStory: '스토리 공유',
     shareText: 'Shadow에서 {{pageName}} 보기.',
     text: '문자',
     copyLink: '링크 복사',
@@ -82,8 +87,9 @@ export default function AuthorPageShareSheet({
 
   if (!open) return null
 
+  const isStoryLink = new URL(pageLink, window.location.origin).pathname.startsWith('/story/')
   const resolvedSheetTitle =
-    sheetTitle || t('authorPageShareSheet.sharePage')
+    sheetTitle || t(isStoryLink ? 'authorPageShareSheet.shareStory' : 'authorPageShareSheet.sharePage')
   const shareText =
     customShareText ||
     t('authorPageShareSheet.shareText', { pageName })
@@ -198,6 +204,13 @@ export default function AuthorPageShareSheet({
         <div className="overflow-x-auto px-3 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex min-w-max gap-1">
             <ShareButton
+              label={t('authorPageShareSheet.copyLink')}
+              icon="fa-solid fa-link"
+              iconClass="bg-white text-[#111827] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)]"
+              onClick={copyLink}
+            />
+
+            <ShareButton
               label={t('authorPageShareSheet.text')}
               icon="fa-regular fa-comment-dots"
               iconClass="bg-[#0a84ff] text-white"
@@ -252,13 +265,6 @@ export default function AuthorPageShareSheet({
                   )}`
                 )
               }
-            />
-
-            <ShareButton
-              label={t('authorPageShareSheet.copyLink')}
-              icon="fa-solid fa-link"
-              iconClass="bg-white text-[#111827] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)]"
-              onClick={copyLink}
             />
 
             <ShareButton
