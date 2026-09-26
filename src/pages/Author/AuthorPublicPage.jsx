@@ -3896,15 +3896,38 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         ) : null}
       </div>
 
-      <button type="button" onClick={() => setMessage(getDisplayText('authorPublicPage.facebookComingSoon'))} className="flex w-full items-center gap-4 text-left active:scale-[0.99]">
+      <button
+        type="button"
+        onClick={() => {
+          const value = String(profileDetails.facebook_page_url || '').trim()
+
+          if (!value) {
+            if (displayAuthor.is_owner) navigate('/author/page/edit?section=facebook')
+            else setMessage(getDisplayText('authorPublicPage.facebookComingSoon'))
+            return
+          }
+
+          const url = /^https?:\/\//i.test(value) ? value : `https://${value}`
+          window.open(url, '_blank', 'noopener,noreferrer')
+        }}
+        className="flex w-full items-center gap-4 text-left active:scale-[0.99]"
+      >
         <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
-          {displayAuthor.avatar_url ? (
-            <img src={displayAuthor.avatar_url} alt={displayAuthor.page_name} className="h-full w-full object-cover" />
+          {(profileDetails.facebook_page_image_url || displayAuthor.avatar_url) ? (
+            <img
+              src={profileDetails.facebook_page_image_url || displayAuthor.avatar_url}
+              alt={profileDetails.facebook_page_name || displayAuthor.page_name}
+              className="h-full w-full object-cover"
+            />
           ) : null}
         </div>
         <div className="min-w-0">
-          <div className="line-clamp-1 text-[14px] font-normal text-[var(--shadow-text-primary)]">{displayAuthor.page_name}</div>
-          <div className="mt-0.5 text-[12px] font-normal text-[var(--shadow-text-secondary)]">{t('authorPublicPage.facebookPage')}</div>
+          <div className="line-clamp-1 text-[14px] font-normal text-[var(--shadow-text-primary)]">
+            {profileDetails.facebook_page_name || displayAuthor.page_name}
+          </div>
+          <div className="mt-0.5 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
+            {t('authorPublicPage.facebookPage')}
+          </div>
         </div>
       </button>
     </section>
