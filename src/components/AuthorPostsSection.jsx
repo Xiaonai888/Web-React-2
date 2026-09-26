@@ -825,11 +825,33 @@ async function fetchAuthorPosts(pageUsername, before = '') {
   if (!pageUsername) return []
 
   const page =
-    normalizeAuthorPostsCachePage(pageUsername)
-  const cacheKey =
-    getAuthorPostsListCacheKey(pageUsername, before)
-  const cached =
-    authorPostsListCache.get(cacheKey)
+  normalizeAuthorPostsCachePage(pageUsername)
+
+let refreshAfterEcho = false
+
+try {
+  const marker = JSON.parse(
+    sessionStorage.getItem('shadow_author_page_echo_refresh') || 'null'
+  )
+
+  refreshAfterEcho =
+    normalizeAuthorPostsCachePage(marker?.pageUsername) === page
+
+  if (refreshAfterEcho) {
+    sessionStorage.removeItem('shadow_author_page_echo_refresh')
+  }
+} catch {}
+
+const cacheKey =
+  getAuthorPostsListCacheKey(pageUsername, before)
+
+if (refreshAfterEcho) {
+  clearAuthorPostsListCache(page)
+  authorPostsListInFlight.delete(cacheKey)
+}
+
+const cached =
+  authorPostsListCache.get(cacheKey)
 
   if (cached) {
     authorPostsListCache.delete(cacheKey)
