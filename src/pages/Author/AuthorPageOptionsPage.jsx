@@ -1,246 +1,281 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
-import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import AuthorPageShareSheet from '../../components/AuthorPageShareSheet'
+import { useRef, useState } from 'react'
+import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
-registerTranslationNamespace('authorPageOptions', {
-  "en": {
-    "back": "Back",
-    "pageSettings": "Page Settings",
-    "manage": "Manage",
-    "basicPageInfo": "Basic Page Info",
-    "pageStatus": "Page status",
-    "activityLog": "Activity log",
-    "pageTransparency": "Page Transparency",
-    "share": "Share",
-    "sharePage": "Share Page",
-    "copyPageLink": "Copy Page link",
-    "view": "View",
-    "viewAsReader": "View as reader",
-    "trash": "Trash",
-    "pageLinkCopied": "Page link copied.",
-    "shareCancelled": "Share cancelled.",
-    "authorPage": "Author Page",
-    "pageStatusSoon": "Page status is coming soon.",
-    "activityLogSoon": "Activity log is coming soon."
+registerTranslationNamespace('authorPageShareSheet', {
+  en: {
+    sharePage: 'Share Page',
+    shareStory: 'Share Story',
+    shareText: 'View {{pageName}} on Shadow.',
+    text: 'Text',
+    copyLink: 'Copy link',
+    more: 'More',
   },
-  "km": {
-    "back": "ត្រឡប់ក្រោយ",
-    "pageSettings": "ការកំណត់ទំព័រ",
-    "manage": "គ្រប់គ្រង",
-    "basicPageInfo": "ព័ត៌មានមូលដ្ឋានទំព័រ",
-    "pageStatus": "ស្ថានភាពទំព័រ",
-    "activityLog": "កំណត់ត្រាសកម្មភាព",
-    "pageTransparency": "ព័ត៌មានតម្លាភាពទំព័រ",
-    "share": "ចែករំលែក",
-    "sharePage": "ចែករំលែកទំព័រ",
-    "copyPageLink": "ចម្លងតំណទំព័រ",
-    "view": "មើល",
-    "viewAsReader": "មើលជាអ្នកអាន",
-    "trash": "ធុងសំរាម",
-    "pageLinkCopied": "បានចម្លងតំណទំព័រ។",
-    "shareCancelled": "បានបោះបង់ការចែករំលែក។",
-    "authorPage": "ទំព័រអ្នកនិពន្ធ",
-    "pageStatusSoon": "ស្ថានភាពទំព័រនឹងមានឆាប់ៗនេះ។",
-    "activityLogSoon": "កំណត់ត្រាសកម្មភាពនឹងមានឆាប់ៗនេះ។"
+  km: {
+    sharePage: 'ចែករំលែកទំព័រ',
+    shareStory: 'ចែករំលែករឿង',
+    shareText: 'មើល {{pageName}} នៅលើ Shadow។',
+    text: 'សារ',
+    copyLink: 'ចម្លង Link',
+    more: 'ផ្សេងទៀត',
   },
-  "zh": {
-    "back": "返回",
-    "pageSettings": "主页设置",
-    "manage": "管理",
-    "basicPageInfo": "基本主页信息",
-    "pageStatus": "主页状态",
-    "activityLog": "活动记录",
-    "pageTransparency": "主页透明度",
-    "share": "分享",
-    "sharePage": "分享主页",
-    "copyPageLink": "复制主页链接",
-    "view": "查看",
-    "viewAsReader": "以读者身份查看",
-    "trash": "回收站",
-    "pageLinkCopied": "主页链接已复制。",
-    "shareCancelled": "已取消分享。",
-    "authorPage": "作者主页",
-    "pageStatusSoon": "主页状态功能即将推出。",
-    "activityLogSoon": "活动记录功能即将推出。"
+  zh: {
+    sharePage: '分享主页',
+    shareStory: '分享故事',
+    shareText: '在 Shadow 上查看 {{pageName}}。',
+    text: '短信',
+    copyLink: '复制链接',
+    more: '更多',
   },
-  "ja": {
-    "back": "戻る",
-    "pageSettings": "ページ設定",
-    "manage": "管理",
-    "basicPageInfo": "基本ページ情報",
-    "pageStatus": "ページ状態",
-    "activityLog": "アクティビティログ",
-    "pageTransparency": "ページの透明性",
-    "share": "共有",
-    "sharePage": "ページを共有",
-    "copyPageLink": "ページリンクをコピー",
-    "view": "表示",
-    "viewAsReader": "読者として表示",
-    "trash": "ゴミ箱",
-    "pageLinkCopied": "ページリンクをコピーしました。",
-    "shareCancelled": "共有をキャンセルしました。",
-    "authorPage": "著者ページ",
-    "pageStatusSoon": "ページ状態は近日公開予定です。",
-    "activityLogSoon": "アクティビティログは近日公開予定です。"
+  ja: {
+    sharePage: 'ページを共有',
+    shareStory: 'ストーリーを共有',
+    shareText: 'Shadow で {{pageName}} を見る。',
+    text: 'メッセージ',
+    copyLink: 'リンクをコピー',
+    more: 'その他',
   },
-  "ko": {
-    "back": "뒤로",
-    "pageSettings": "페이지 설정",
-    "manage": "관리",
-    "basicPageInfo": "기본 페이지 정보",
-    "pageStatus": "페이지 상태",
-    "activityLog": "활동 기록",
-    "pageTransparency": "페이지 투명성",
-    "share": "공유",
-    "sharePage": "페이지 공유",
-    "copyPageLink": "페이지 링크 복사",
-    "view": "보기",
-    "viewAsReader": "독자로 보기",
-    "trash": "휴지통",
-    "pageLinkCopied": "페이지 링크를 복사했습니다.",
-    "shareCancelled": "공유를 취소했습니다.",
-    "authorPage": "작가 페이지",
-    "pageStatusSoon": "페이지 상태 기능이 곧 제공됩니다.",
-    "activityLogSoon": "활동 기록 기능이 곧 제공됩니다."
-  }
+  ko: {
+    sharePage: '페이지 공유',
+    shareStory: '스토리 공유',
+    shareText: 'Shadow에서 {{pageName}} 보기.',
+    text: '문자',
+    copyLink: '링크 복사',
+    more: '더 보기',
+  },
 })
 
-
-function getStoredAuthorPage() {
-  try {
-    return JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
-  } catch {
-    return null
-  }
+function getPointerY(event) {
+  return event.clientY
 }
 
-function ToolRow({ icon, label, onClick }) {
+function ShareButton({ label, icon, iconClass = '', onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-[14px] px-1 py-2.5 text-left active:bg-[var(--shadow-bg-soft)]"
+      className="flex w-[74px] shrink-0 flex-col items-center gap-2 text-center"
     >
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
-        <i className={`${icon} text-[15px] font-normal`} />
+      <span
+        className={`flex h-12 w-12 items-center justify-center rounded-full text-[20px] ${iconClass}`}
+      >
+        <i className={icon} />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-normal text-[var(--shadow-text-primary)]">{label}</span>
+      <span className="text-[11px] font-normal text-[var(--shadow-text-primary)]">
+        {label}
       </span>
     </button>
   )
 }
 
-function SectionTitle({ children }) {
-  return <h2 className="px-1 pt-5 text-[17px] font-semibold text-[var(--shadow-text-primary)]">{children}</h2>
-}
-
-export default function AuthorPageOptionsPage() {
-  const navigate = useNavigate()
+export default function AuthorPageShareSheet({
+  open,
+  pageName,
+  pageLink,
+  sheetTitle = '',
+  shareText: customShareText = '',
+  zClassName = 'z-[280]',
+  onClose,
+  onCopied,
+}) {
   const { t } = useDisplayTranslation()
-  const [message, setMessage] = useState('')
-  const [shareOpen, setShareOpen] = useState(false)
-  const authorPage = useMemo(() => getStoredAuthorPage(), [])
-const pageUsername = authorPage?.page_username || ''
+  const startYRef = useRef(0)
+  const currentYRef = useRef(0)
+  const draggingRef = useRef(false)
+  const [dragging, setDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState(0)
 
-useEffect(() => {
-  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-}, [])
+  if (!open) return null
 
-function copyPageLink() {
-    const path = pageUsername ? `/author/page/${pageUsername}` : '/author/page'
-    const link = `${window.location.origin}${path}`
+  const isStoryLink = new URL(pageLink, window.location.origin).pathname.startsWith('/story/')
+  const resolvedSheetTitle =
+    sheetTitle || t(isStoryLink ? 'authorPageShareSheet.shareStory' : 'authorPageShareSheet.sharePage')
+  const shareText =
+    customShareText ||
+    t('authorPageShareSheet.shareText', { pageName })
+  const encodedText = encodeURIComponent(`${shareText} ${pageLink}`)
+  const encodedUrl = encodeURIComponent(pageLink)
+  const openShareUrl = (url) =>
+    window.open(url, '_blank', 'noopener,noreferrer')
 
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(link)
-      setMessage(t('authorPageOptions.pageLinkCopied'))
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(pageLink)
+      onCopied?.()
+      onClose?.()
+    } catch {
+      onCopied?.(pageLink)
+    }
+  }
+
+  async function moreShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: pageName,
+          text: shareText,
+          url: pageLink,
+        })
+        onClose?.()
+        return
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+      }
+    }
+
+    await copyLink()
+  }
+
+  function handleDragStart(event) {
+    if (!event.isPrimary) return
+
+    draggingRef.current = true
+    setDragging(true)
+    startYRef.current = getPointerY(event)
+    currentYRef.current = getPointerY(event)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  function handleDragMove(event) {
+    if (!draggingRef.current) return
+
+    currentYRef.current = getPointerY(event)
+    setDragOffset(
+      Math.max(
+        0,
+        currentYRef.current - startYRef.current
+      )
+    )
+  }
+
+  function handleDragEnd() {
+    if (!draggingRef.current) return
+
+    const distance = Math.max(
+      0,
+      currentYRef.current - startYRef.current
+    )
+
+    draggingRef.current = false
+    setDragging(false)
+
+    if (distance > 70) {
+      setDragOffset(0)
+      onClose?.()
       return
     }
 
-    setMessage(link)
-  }
-
-  function sharePage() {
-    setShareOpen(true)
-  }
-
-  function viewAsReader() {
-    if (pageUsername) {
-      navigate(`/author/page/${pageUsername}`)
-      return
-    }
-
-    navigate('/author/page')
+    setDragOffset(0)
   }
 
   return (
-    <div className="min-h-screen bg-[var(--shadow-bg-surface)] pb-10">
-      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-[720px] items-center justify-between px-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
-            aria-label={t('authorPageOptions.back')}
-          >
-            <i className="fa-solid fa-chevron-left text-[22px]" />
-          </button>
-
-          <h1 className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPageOptions.pageSettings')}</h1>
-
-          <div className="h-10 w-10" />
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-[720px] px-4 pb-8">
-        {message ? (
-          <button
-            type="button"
-            onClick={() => setMessage('')}
-            className="mt-4 w-full rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-left text-[13px] font-normal text-[var(--shadow-text-primary)]"
-          >
-            {message}
-          </button>
-        ) : null}
-
-        <SectionTitle>{t('authorPageOptions.manage')}</SectionTitle>
-        <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-regular fa-pen-to-square" label={t('authorPageOptions.basicPageInfo')} onClick={() => navigate('/author/edit-page?from=settings')} />
-          <ToolRow icon="fa-regular fa-circle-check" label={t('authorPageOptions.pageStatus')} onClick={() => setMessage(t('authorPageOptions.pageStatusSoon'))} />
-          <ToolRow icon="fa-regular fa-rectangle-list" label={t('authorPageOptions.activityLog')} onClick={() => setMessage(t('authorPageOptions.activityLogSoon'))} />
-          <ToolRow icon="fa-regular fa-eye" label={t('authorPageOptions.pageTransparency')} onClick={() => pageUsername && navigate(`/author/page/${encodeURIComponent(pageUsername)}/transparency`)} />
+    <div
+      className={`fixed inset-0 ${zClassName} flex items-end justify-center bg-black/35`}
+      onClick={onClose}
+    >
+      <section
+        className="w-full rounded-t-[24px] bg-[#f7f7f8] pb-[calc(env(safe-area-inset-bottom)+18px)] pt-3 shadow-2xl dark:bg-[var(--shadow-bg-elevated)] md:max-w-[560px]"
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition: dragging
+            ? 'none'
+            : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+      >
+        <div
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+          className="touch-none cursor-grab py-1 active:cursor-grabbing"
+        >
+          <div className="mx-auto h-1.5 w-10 rounded-full bg-[#b9bec6] dark:bg-[var(--shadow-border-strong)]" />
         </div>
 
-        <SectionTitle>{t('authorPageOptions.share')}</SectionTitle>
-        <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-regular fa-paper-plane" label={t('authorPageOptions.sharePage')} onClick={sharePage} />
-          <ToolRow icon="fa-regular fa-copy" label={t('authorPageOptions.copyPageLink')} onClick={copyPageLink} />
+        <div className="flex items-center justify-between px-5 pb-3 pt-4">
+          <h2 className="text-[17px] font-bold text-[var(--shadow-text-primary)]">
+            {resolvedSheetTitle}
+          </h2>
         </div>
 
-        <SectionTitle>{t('authorPageOptions.view')}</SectionTitle>
-        <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-regular fa-eye" label={t('authorPageOptions.viewAsReader')} onClick={viewAsReader} />
-        </div>
+        <div className="overflow-x-auto px-3 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-max gap-1">
+            <ShareButton
+              label={t('authorPageShareSheet.copyLink')}
+              icon="fa-solid fa-link"
+              iconClass="bg-white text-[#111827] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)]"
+              onClick={copyLink}
+            />
 
-        <SectionTitle>{t('authorPageOptions.trash')}</SectionTitle>
-        <div className="mt-3 space-y-1">
-          <ToolRow
-            icon="fa-regular fa-trash-can"
-            label={t('authorPageOptions.trash')}
-            onClick={() => navigate('/author/trash')}
-          />
+            <ShareButton
+              label={t('authorPageShareSheet.text')}
+              icon="fa-regular fa-comment-dots"
+              iconClass="bg-[#0a84ff] text-white"
+              onClick={() => {
+                window.location.href = `sms:?&body=${encodedText}`
+              }}
+            />
+
+            <ShareButton
+              label="WhatsApp"
+              icon="fa-brands fa-whatsapp"
+              iconClass="bg-[#25d366] text-white"
+              onClick={() =>
+                openShareUrl(
+                  `https://wa.me/?text=${encodedText}`
+                )
+              }
+            />
+
+            <ShareButton
+              label="Facebook"
+              icon="fa-brands fa-facebook-f"
+              iconClass="bg-[#1877f2] text-white"
+              onClick={() =>
+                openShareUrl(
+                  `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
+                )
+              }
+            />
+
+            <ShareButton
+              label="X"
+              icon="fa-brands fa-x-twitter"
+              iconClass="bg-black text-white"
+              onClick={() =>
+                openShareUrl(
+                  `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                    shareText
+                  )}&url=${encodedUrl}`
+                )
+              }
+            />
+
+            <ShareButton
+              label="Telegram"
+              icon="fa-brands fa-telegram"
+              iconClass="bg-[#229ed9] text-white"
+              onClick={() =>
+                openShareUrl(
+                  `https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(
+                    shareText
+                  )}`
+                )
+              }
+            />
+
+            <ShareButton
+              label={t('authorPageShareSheet.more')}
+              icon="fa-solid fa-ellipsis"
+              iconClass="bg-white text-[#111827] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)]"
+              onClick={moreShare}
+            />
+          </div>
         </div>
-      </main>
-      <AuthorPageShareSheet
-        open={shareOpen}
-        sheetTitle={t('episodeEchoes.shareStory')}
-        pageName={authorPage?.page_name || t('authorPageOptions.authorPage')}
-        pageLink={`${window.location.origin}${pageUsername ? `/author/page/${encodeURIComponent(pageUsername)}` : '/author/page'}`}
-        onClose={() => setShareOpen(false)}
-        onCopied={() => setMessage(t('authorPageOptions.pageLinkCopied'))}
-      />
+      </section>
     </div>
   )
 }
