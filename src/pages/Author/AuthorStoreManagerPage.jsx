@@ -247,8 +247,8 @@ registerTranslationNamespace('authorStoreManager', {
     "coverSectionHelp": "Upload the vertical cover shown on product cards.",
     "mainCover": "Main cover",
     "coverPreview": "Cover preview",
-    "chooseReplaceCover": "Choose or replace book cover",
-    "chooseCover": "Choose book cover",
+    "chooseReplaceCover": "Click or drop to replace cover",
+    "chooseCover": "Click or drop book cover here",
     "gallerySectionTitle": "Book Gallery",
     "gallerySectionHelp": "Upload extra vertical images shown on the product detail page.",
     "extraBookImages": "Extra book images",
@@ -533,8 +533,8 @@ registerTranslationNamespace('authorStoreManager', {
     "coverSectionHelp": "បង្ហោះគម្របបញ្ឈរដែលបង្ហាញលើកាតផលិតផល។",
     "mainCover": "គម្របមេ",
     "coverPreview": "មើលគម្របជាមុន",
-    "chooseReplaceCover": "ជ្រើស ឬប្តូរគម្របសៀវភៅ",
-    "chooseCover": "ជ្រើសគម្របសៀវភៅ",
+    "chooseReplaceCover": "ចុច ឬទម្លាក់រូប ដើម្បីប្តូរគម្រប",
+    "chooseCover": "ចុច ឬទម្លាក់គម្របសៀវភៅនៅទីនេះ",
     "gallerySectionTitle": "វិចិត្រសាលសៀវភៅ",
     "gallerySectionHelp": "បង្ហោះរូបបញ្ឈរបន្ថែមដែលបង្ហាញនៅទំព័រលម្អិតផលិតផល។",
     "extraBookImages": "រូបសៀវភៅបន្ថែម",
@@ -4160,27 +4160,41 @@ accessRule,
           <p className="mb-3 text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">{storeText('coverRecommendation')}</p>
 
           <div className="flex flex-col items-center">
-            <div className="aspect-[2/3] w-[200px] overflow-hidden rounded-[24px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-soft)] shadow-inner">
-              {coverPreview ? (
-                <img src={coverPreview} alt={storeText('coverPreview')} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center px-5 text-center text-[var(--shadow-text-tertiary)]">
-                  <i className="fa-regular fa-image mb-3 text-[28px]" />
-                  <span className="text-[12px] font-black">{storeText('bookCoverPreview')}</span>
-                  <span className="mt-1 text-[11px] font-bold">{storeText('vertical23')}</span>
-                </div>
-              )}
-            </div>
-
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={(event) => selectCover(event.target.files?.[0])} className="hidden" />
-
             <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-4 h-11 w-full rounded-2xl border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] text-[12px] font-black text-[var(--shadow-text-primary)] active:scale-[0.98]"
-            >
-              {coverPreview ? storeText('chooseReplaceCover') : storeText('chooseCover')}
-            </button>
+  type="button"
+  onClick={() => fileInputRef.current?.click()}
+  onDragOver={(event) => {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+  }}
+  onDrop={(event) => {
+    event.preventDefault()
+    selectCover(event.dataTransfer.files?.[0])
+  }}
+  className="relative aspect-[2/3] w-[200px] cursor-pointer overflow-hidden rounded-[24px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-soft)] shadow-inner"
+>
+  {coverPreview ? (
+    <img src={coverPreview} alt={storeText('coverPreview')} className="h-full w-full object-cover" />
+  ) : (
+    <div className="flex h-full w-full flex-col items-center justify-center px-5 text-center text-[var(--shadow-text-tertiary)]">
+      <i className="fa-regular fa-image mb-3 text-[28px]" />
+      <span className="text-[12px] font-black">{storeText('bookCoverPreview')}</span>
+      <span className="mt-1 text-[11px] font-bold">{storeText('vertical23')}</span>
+    </div>
+  )}
+
+  <span className="absolute inset-x-3 bottom-3 rounded-xl bg-[var(--shadow-bg-surface)]/90 px-3 py-2 text-center text-[10px] font-black text-[var(--shadow-text-secondary)] shadow-sm">
+    {coverPreview ? storeText('chooseReplaceCover') : storeText('chooseCover')}
+  </span>
+</button>
+
+<input
+  ref={fileInputRef}
+  type="file"
+  accept="image/*"
+  onChange={(event) => selectCover(event.target.files?.[0])}
+  className="hidden"
+/>
 
             {coverPreview ? (
               <button
