@@ -177,6 +177,7 @@ async function optimizeStandardMangaImage(file, loaded) {
           {
             type: 'image/webp',
             lastModified: Date.now(),
+            }
           }
         ),
         width: dimensions.width,
