@@ -1379,7 +1379,7 @@ useEffect(() => {
       ) : null}
 
 
-      {post.echo_source_type === 'story' && post.echo_source ? (
+      {['story', 'episode'].includes(post.echo_source_type) && post.echo_source ? (
   <AuthorEchoStoryCard source={post.echo_source} />
 ) : null}
 <PostImageGrid images={postImages} onView={onViewImage} />
