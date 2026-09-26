@@ -2,6 +2,7 @@ import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
 import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
 import { normalizeStudioTextData } from './StudioTextLayerData'
 import { normalizeStudioLayerStyle } from './StudioLayerStyleEngine'
+import { normalizeStudioAdjustment } from './StudioAdjustmentLayerEngine'
 
 const DATABASE_NAME = 'shadow-studio-local-recovery'
 const STORE_NAME = 'workspaces'
@@ -108,6 +109,7 @@ function captureLayers(paper) {
        ...(index === 0 ? { isBackground: layer.isBackground !== false } : {}),
       ...(layer.textData !== undefined ? { textData: normalizeStudioTextData(layer.textData, paper.width, paper.height) } : {}),
       ...(layer.layerStyle !== undefined ? { layerStyle: normalizeStudioLayerStyle(layer.layerStyle) } : {}),
+      ...(layer.adjustment !== undefined ? { adjustment: normalizeStudioAdjustment(layer.adjustment) } : {}),
       ...(layer.groupId ? { groupId: layer.groupId } : {}),
       ...(layer.blendMode ? { blendMode: layer.blendMode } : {}),
     }
