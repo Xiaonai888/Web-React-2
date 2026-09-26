@@ -56,16 +56,29 @@ async function submitEchoV2({
   }
 
   if (destination === 'author_page') {
-    window.dispatchEvent(
-      new CustomEvent('shadow:author-page-echo-created', {
-        detail: {
-          pageUsername: data.author_page?.page_username || '',
-          postId: data.post?.id || null,
-          sourceType,
-          sourceId: String(sourceId),
-        },
-      })
-    )
+  const pageUsername = String(
+    data.author_page?.page_username || ''
+  ).trim().toLowerCase()
+
+  if (pageUsername) {
+    try {
+      sessionStorage.setItem(
+        'shadow_author_page_echo_refresh',
+        JSON.stringify({ pageUsername, createdAt: Date.now() })
+      )
+    } catch {}
+  }
+
+  window.dispatchEvent(
+    new CustomEvent('shadow:author-page-echo-created', {
+      detail: {
+        pageUsername,
+        postId: data.post?.id || null,
+        sourceType,
+        sourceId: String(sourceId),
+      },
+    })
+  )
   } else {
     window.dispatchEvent(
       new CustomEvent('shadow:echo-v2-updated', {
