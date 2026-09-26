@@ -320,9 +320,36 @@ export default function TermsPoliciesPage() {
               {t('termsPoliciesPage.contactIntro')}
             </p>
             <ul className="list-disc space-y-1 pl-5 font-[400] sm:pl-7">
-              <li>[alphacentauri12226@gmail.com]</li>
-              <li>Facebook Page [ របស់អាល់ផាសេនតាវី ]</li>
-              <li>Telegram [ @Hei_xxing ]</li>
+              <li>
+                <a
+                  href="mailto:alphacentauri12226@gmail.com"
+                  className="break-all text-[#0b5cff] underline underline-offset-2"
+                >
+                  alphacentauri12226@gmail.com
+                </a>
+              </li>
+              <li>
+                Facebook Page{' '}
+                <a
+                  href="https://www.facebook.com/AlphaCentauri12226/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#0b5cff] underline underline-offset-2"
+                >
+                  ប្រលោមលោកស្នេហា
+                </a>
+              </li>
+              <li>
+                Telegram{' '}
+                <a
+                  href="https://t.me/Shadow12226"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#0b5cff] underline underline-offset-2"
+                >
+                  Shadow Admin
+                </a>
+              </li>
             </ul>
           </section>
         </article>
