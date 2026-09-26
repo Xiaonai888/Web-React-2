@@ -2,6 +2,7 @@ import { validateStudioGroupLayout } from './StudioLayerGroupEngine'
 import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
 import { normalizeStudioTextData } from './StudioTextLayerData'
 import { normalizeStudioLayerStyle } from './StudioLayerStyleEngine'
+import { normalizeStudioAdjustment } from './StudioAdjustmentLayerEngine'
 
 export const STUDIO_PROJECT_EXTENSION = '.shadowstudio'
 
@@ -46,7 +47,7 @@ function normalizedLayers(raw, paperIndex) {
     const isBackground = index === 0 && item.isBackground !== false
     const groupId = item.groupId
     if ((item.isBackground !== undefined && typeof item.isBackground !== 'boolean') || (index > 0 && item.isBackground) ||
-      !BLEND_MODES.has(blendMode) || (isBackground && blendMode !== 'normal') ||
+      !BLEND_MODES.has(blendMode) || (isBackground && blendMode !== 'normal') || (isBackground && item.adjustment !== undefined) ||
       (groupId !== undefined && (typeof groupId !== 'string' || !groupId || groupId.length > 100 || isBackground))) {
       error(`Paper ${paperIndex + 1}, layer ${index + 1} has invalid group or blend metadata.`)
     }
@@ -55,6 +56,7 @@ function normalizedLayers(raw, paperIndex) {
       isBackground,
       ...(item.textData !== undefined ? { textData: normalizeStudioTextData(item.textData, raw.width, raw.height) } : {}),
       ...(item.layerStyle !== undefined ? { layerStyle: normalizeStudioLayerStyle(item.layerStyle) } : {}),
+      ...(item.adjustment !== undefined ? { adjustment: normalizeStudioAdjustment(item.adjustment) } : {}),
       ...(groupId ? { groupId } : {}), ...(item.blendMode ? { blendMode } : {}),
     }
   })
