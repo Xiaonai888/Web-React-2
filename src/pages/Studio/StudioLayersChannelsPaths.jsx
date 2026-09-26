@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
+import StudioAdjustmentLayerMenu from './StudioAdjustmentLayerMenu'
 
 const WORDS = {
   en: ['Layers', 'Channels', 'Paths', 'Canvas bitmap', 'Current paper · one flattened canvas', 'Blend mode', 'Normal', 'Opacity', 'Independent layers are not enabled yet.', 'Composite', 'Red', 'Green', 'Blue', 'Read-only channel previews of the current canvas.', 'No vector paths on this canvas.', 'Vector paths are not enabled yet.', 'Preview is unavailable.'],
@@ -28,6 +29,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const [layerSearch, setLayerSearch] = useState('')
   const [layerKind, setLayerKind] = useState('all')
   const [editing, setEditing] = useState(null)
+  const [adjustmentMenu, setAdjustmentMenu] = useState(null)
   const editingRef = useRef(null)
   const inputRef = useRef(null)
   const pendingGroupIds = useRef(null)
@@ -37,6 +39,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const duplicateLabel = ({ en: 'Duplicate layer', km: 'ចម្លងស្រទាប់', zh: '复制图层', ja: 'レイヤーを複製', ko: '레이어 복제' })[language] || 'Duplicate layer' 
   const convertLabel = ({ en: 'Convert Background to normal layer', km: 'ប្ដូរ Background ទៅជា Layer ធម្មតា', zh: '将背景转换为普通图层', ja: '背景を通常レイヤーに変換', ko: '배경을 일반 레이어로 변환' })[language] || 'Convert Background to normal layer'
   const mergeLabel = ({ en: 'Merge layer down', km: 'បញ្ចូលស្រទាប់ចុះក្រោម', zh: '向下合并图层', ja: '下のレイヤーと結合', ko: '아래 레이어와 병합' })[language] || 'Merge layer down'
+  const adjustmentLabel = ({ en: 'Create fill or adjustment layer', km: 'បង្កើត Fill ឬ Adjustment Layer', zh: '新建填充或调整图层', ja: '塗りつぶしまたは調整レイヤーを作成', ko: '칠 또는 조정 레이어 만들기' })[language] || 'Create fill or adjustment layer'
   const [error, setError] = useState(false)
   const previewRefs = useRef({})
   const layerRefs = useRef({})
@@ -49,7 +52,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
     selected.visible && lower.visible && !selected.locked && !lower.locked &&
     selected.opacity === 100 && lower.opacity === 100 &&
     (selected.blendMode || 'normal') === 'normal' && (lower.blendMode || 'normal') === 'normal' &&
-    (selected.groupId || null) === (lower.groupId || null) &&
+    (selected.groupId || null) === (lower.groupId || null) && !selected.adjustment && !lower.adjustment &&
     ![selected, lower].some((layer) => layer.layerStyle && (layer.layerStyle.fillOpacity !== 100 ||
       ['r', 'g', 'b'].some((channel) => layer.layerStyle.channels?.[channel] === false) ||
       Object.values(layer.layerStyle.effects || {}).some((effect) => effect.enabled))) &&
@@ -65,7 +68,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
     const matchesKind = layerKind === 'all' ||
       (layerKind === 'text' && Boolean(layer.textData)) ||
       (layerKind === 'background' && layer.isBackground) ||
-      (layerKind === 'pixel' && !layer.isBackground && !layer.textData)
+      (layerKind === 'pixel' && !layer.isBackground && !layer.textData && !layer.adjustment)
     return matchesName && matchesKind
   })
   const layerFilterWords = ({
@@ -83,7 +86,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
     if (blocked || !layer) return
     editingRef.current = null
     setEditing(null)
-    onLayerAction('style-open', layer.id)
+    onLayerAction(layer.adjustment ? 'adjustment-open' : 'style-open', layer.id)
   }
 
   function cancelStyleHold(event) {
@@ -181,6 +184,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
     editingRef.current = null
     setEditing(null)
     pendingGroupIds.current = null
+    setAdjustmentMenu(null)
   }, [paperId])
 
   useEffect(() => {
@@ -302,6 +306,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
         .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer{gap:6px;min-height:37px;padding:3px 6px;border:0;border-bottom:1px solid #575757;border-radius:0;background:transparent;color:var(--ss-layer-fg)}
         .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer[data-selected=true]{border-color:#666;background:#686868}
         .shadow-studio .ss-lcp-layers-layout .ss-lcp-thumb{background:#fff;border:1px solid #202020}
+        .shadow-studio .ss-lcp-adjustment-thumb{width:28px;height:28px;display:grid;place-items:center;border:1px solid #202020;border-radius:50%;background:linear-gradient(90deg,#111 0 50%,#f5f5f5 50%);color:transparent;box-shadow:inset 0 0 0 1px #888}
         .shadow-studio .ss-lcp-layers-layout .ss-lcp-pick{flex-basis:35px}
         .shadow-studio .ss-lcp-layers-layout .ss-lcp-item-name strong{font-size:11px;font-weight:500}
         .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer[data-selected=true] .ss-lcp-item-name strong{font-weight:650}
@@ -373,10 +378,10 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
               {!group?.collapsed ? <div className="ss-lcp-layer" data-ss-layer-id={layer.id} data-grouped={Boolean(group)} data-selected={layer.id === activeLayerId}>
               <button className="ss-lcp-action" type="button" aria-label={layer.visible ? a[3] : a[2]} title={layer.visible ? a[3] : a[2]} disabled={blocked} onClick={() => onLayerAction('visibility', layer.id)}><i className={`fa-regular ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}`} aria-hidden="true" /></button>
               <button className="ss-lcp-pick" type="button" disabled={blocked} onDoubleClick={(event) => { event.preventDefault(); openLayerStyle(layer) }} onClick={(event) => selectStyleLayer(event, layer)} onPointerDown={(event) => startStyleHold(event, layer)} onPointerMove={moveStyleHold} onPointerUp={cancelStyleHold} onPointerCancel={cancelStyleHold} onPointerLeave={cancelStyleHold} onContextMenu={(event) => { if (event.currentTarget.matches(':active')) event.preventDefault() }} aria-label={`${a[1]} ${layer.name}`} title={layer.textData ? editTextLabel : a[1]}>
-                <canvas className="ss-lcp-thumb" ref={(node) => { layerRefs.current[layer.id] = node }} aria-hidden="true" />
+                {layer.adjustment ? <span className="ss-lcp-adjustment-thumb" aria-hidden="true" /> : <canvas className="ss-lcp-thumb" ref={(node) => { layerRefs.current[layer.id] = node }} aria-hidden="true" />}
               </button>
               <span className="ss-lcp-item-name">
-                {editing?.kind === 'layer' && editing.id === layer.id ? renameInput('layer', layer) : <button className="ss-lcp-name-trigger" type="button" disabled={blocked} title={`${layer.name} · Layer Style: double-click or long-press`} aria-label={`${a[1]} ${layer.name}`} onClick={(event) => selectStyleLayer(event, layer)} onDoubleClick={(event) => { event.preventDefault(); openLayerStyle(layer) }} onPointerDown={(event) => startStyleHold(event, layer)} onPointerMove={moveStyleHold} onPointerUp={cancelStyleHold} onPointerCancel={cancelStyleHold} onPointerLeave={cancelStyleHold} onContextMenu={(event) => { if (event.currentTarget.matches(':active')) event.preventDefault() }}><strong>{layer.textData ? 'T · ' : ''}{layer.name}</strong></button>}
+                {editing?.kind === 'layer' && editing.id === layer.id ? renameInput('layer', layer) : <button className="ss-lcp-name-trigger" type="button" disabled={blocked} title={`${layer.name} · ${layer.adjustment ? 'Adjustment Layer' : 'Layer Style'}: double-click or long-press`} aria-label={`${a[1]} ${layer.name}`} onClick={(event) => selectStyleLayer(event, layer)} onDoubleClick={(event) => { event.preventDefault(); openLayerStyle(layer) }} onPointerDown={(event) => startStyleHold(event, layer)} onPointerMove={moveStyleHold} onPointerUp={cancelStyleHold} onPointerCancel={cancelStyleHold} onPointerLeave={cancelStyleHold} onContextMenu={(event) => { if (event.currentTarget.matches(':active')) event.preventDefault() }}><strong>{layer.adjustment ? '◐ · ' : layer.textData ? 'T · ' : ''}{layer.name}</strong></button>}
                 <small>{layer.id === activeLayerId ? '● ' : ''}{layer.opacity}%</small>
               </span>
               <button className="ss-lcp-action" type="button" aria-label={layer.locked ? a[5] : a[4]} title={layer.locked ? a[5] : a[4]} disabled={blocked} onClick={() => onLayerAction('lock', layer.id)}><i className={`fa-solid ${layer.locked ? 'fa-lock' : 'fa-lock-open'}`} aria-hidden="true" /></button>
@@ -405,10 +410,19 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
         </details>
         <div className="ss-lcp-footer">
           <button className="ss-lcp-action" type="button" title={a[0]} aria-label={a[0]} disabled={blocked || layers.length >= 8} onClick={() => onLayerAction('add')}><i className="fa-solid fa-plus" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={adjustmentLabel} aria-label={adjustmentLabel} disabled={blocked || layers.length >= 8} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setAdjustmentMenu((current) => current ? null : { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom }) }}><i className="fa-solid fa-circle-half-stroke" aria-hidden="true" /></button>
           <button className="ss-lcp-action" type="button" title={duplicateLabel} aria-label={duplicateLabel} disabled={blocked || !selected || selected.isBackground || layers.length >= 8} onClick={() => onLayerAction('duplicate', activeLayerId)}><i className="fa-regular fa-copy" aria-hidden="true" /></button>
-          <button className="ss-lcp-action ss-lcp-group-add" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selected.isBackground || Boolean(selectedGroup) || groups.length >= 8} onClick={() => { pendingGroupIds.current = new Set(groups.map((item) => item.id)); onLayerAction('group-add', activeLayerId) }}><i className="fa-solid fa-folder-plus" aria-hidden="true" /><span className="ss-lcp-group-add-label">{groupControl[0]}</span></button>
+          <button className="ss-lcp-action ss-lcp-group-add" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selected.isBackground || Boolean(selected?.adjustment) || Boolean(selectedGroup) || groups.length >= 8} onClick={() => { pendingGroupIds.current = new Set(groups.map((item) => item.id)); onLayerAction('group-add', activeLayerId) }}><i className="fa-solid fa-folder-plus" aria-hidden="true" /><span className="ss-lcp-group-add-label">{groupControl[0]}</span></button>
           <button className="ss-lcp-action" type="button" title={`${a[9]} · Delete / Backspace`} aria-label={a[9]} disabled={blocked || !selected || selected.locked || Boolean(selectedGroup?.locked)} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
         </div>
+        <StudioAdjustmentLayerMenu
+          open={Boolean(adjustmentMenu)}
+          anchorRect={adjustmentMenu}
+          language={language}
+          disabled={blocked || layers.length >= 8}
+          onClose={() => setAdjustmentMenu(null)}
+          onSelect={(type) => { setAdjustmentMenu(null); onLayerAction('adjustment-create', activeLayerId, type) }}
+        />
         </div>
       </> : null}
       {active === 'channels' ? <>
