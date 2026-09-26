@@ -526,7 +526,7 @@ export default function SocialEchoShareSheetV2({
   const authorPageCacheRef = useRef({ token: '', time: 0, page: null })
 
   useEffect(() => {
-    if (!open || sourceType !== 'story') {
+    if (!open || !['story', 'episode'].includes(sourceType)) {
       setAuthorPage(null)
       setDestination((current) => current === 'author_page' ? 'feed' : current)
       return undefined
@@ -572,7 +572,7 @@ export default function SocialEchoShareSheetV2({
     subtitle: t(`socialEchoShareV2.${item.subtitleKey}`),
   }))
 
-  if (authorPage && sourceType === 'story') {
+  if (authorPage && ['story', 'episode'].includes(sourceType)) {
     const pageLabels = {
       en: 'Author Page',
       km: 'ទំព័រអ្នកនិពន្ធ',
