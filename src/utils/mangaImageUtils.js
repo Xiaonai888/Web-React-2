@@ -9,7 +9,12 @@ const TARGET_MAX_BYTES = 600 * 1024
 const HARD_MAX_BYTES = 800 * 1024
 const MAX_WIDTH = 1600
 const QUALITIES = [0.88, 0.86, 0.84, 0.82, 0.8]
-const MANGA_V2_JOB_POLL_MS = 2000
+const STANDARD_OPTIMIZE_MIN_BYTES = 1536 * 1024
+const STANDARD_OPTIMIZE_TARGET_BYTES = 1536 * 1024
+const STANDARD_OPTIMIZE_MAX_WIDTH = 1440
+const STANDARD_OPTIMIZE_MAX_PIXELS = 16_000_000
+const STANDARD_OPTIMIZE_QUALITIES = [0.92, 0.9, 0.88, 0.86]
+const MANGA_V2_JOB_POLL_MS = 5000
 const MANGA_V2_JOB_TIMEOUT_MS = 30 * 60 * 1000
 
 function createObjectUrl(file) {
@@ -106,6 +111,109 @@ function isMangaHeicFile(file) {
   )
 }
 
+function isStandardMangaCompressibleFile(file) {
+  const type = String(file?.type || '').toLowerCase()
+  const name = String(file?.name || '').toLowerCase()
+
+  return (
+    ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(type) ||
+    /\.(jpe?g|png|webp)$/i.test(name)
+  )
+}
+
+async function optimizeStandardMangaImage(file, loaded) {
+  if (
+    !isStandardMangaCompressibleFile(file) ||
+    Number(file?.size || 0) < STANDARD_OPTIMIZE_MIN_BYTES
+  ) {
+    return null
+  }
+
+  const dimensions = scaledDimensions(
+    loaded.width,
+    loaded.height,
+    Math.min(STANDARD_OPTIMIZE_MAX_WIDTH, loaded.width)
+  )
+
+  if (
+    dimensions.width * dimensions.height >
+    STANDARD_OPTIMIZE_MAX_PIXELS
+  ) {
+    return null
+  }
+
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+
+  if (!context) {
+    return null
+  }
+
+  let best = null
+
+  try {
+    canvas.width = dimensions.width
+    canvas.height = dimensions.height
+
+    context.drawImage(
+      loaded.image,
+      0,
+      0,
+      dimensions.width,
+      dimensions.height
+    )
+
+    for (const quality of STANDARD_OPTIMIZE_QUALITIES) {
+      const blob = await canvasToWebp(canvas, quality)
+
+      if (!blob?.size || blob.size >= file.size) {
+        continue
+      }
+
+      const candidate = {
+        file: new File(
+          [blob],
+          safeWebpName(file.name),
+          {
+            type: 'image/webp',
+            lastModified: Date.now(),
+          }
+        ),
+        width: dimensions.width,
+        height: dimensions.height,
+        fileSize: blob.size,
+        mimeType: 'image/webp',
+        compressed: true,
+      }
+
+      if (!best || candidate.fileSize < best.fileSize) {
+        best = candidate
+      }
+
+      if (
+        candidate.fileSize <=
+        STANDARD_OPTIMIZE_TARGET_BYTES
+      ) {
+        break
+      }
+    }
+  } catch {
+    return null
+  } finally {
+    canvas.width = 0
+    canvas.height = 0
+  }
+
+  if (
+    !best ||
+    best.fileSize >= Number(file.size || 0) * 0.9
+  ) {
+    return null
+  }
+
+  return best
+}
+
 export function validateMangaFile(file) {
   if (!file) return 'Image file is missing.'
 
@@ -184,7 +292,6 @@ async function convertMangaHeicToWebp(file, loaded) {
           {
             type: 'image/webp',
             lastModified: Date.now(),
-          }
         ),
         width: dimensions.width,
         height: dimensions.height,
@@ -255,7 +362,7 @@ export async function optimizeMangaImage(file) {
     }
 
     if (!heic) {
-      return {
+      const original = {
         file,
         width: loaded.width,
         height: loaded.height,
@@ -263,6 +370,11 @@ export async function optimizeMangaImage(file) {
         mimeType: file.type || 'application/octet-stream',
         compressed: false,
       }
+
+      const optimized =
+        await optimizeStandardMangaImage(file, loaded)
+
+      return optimized || original
     }
 
     return await convertMangaHeicToWebp(file, loaded)
@@ -540,7 +652,7 @@ export async function uploadMangaPageFile({
   let bytes
 
   try {
-    bytes = await file.arrayBuffer()
+    bytes = await file.arrayBUffer()
   } catch {
     throw new Error(
       'This device could not read the manga image. [read: IMAGE_FILE_READ_FAILED]'
@@ -636,7 +748,7 @@ export async function uploadMangaPageFile({
     xhr.onerror = () => {
       fail(
         new Error(
-          'Network error: the manga page could not reach the server. Check your connection and try again. [network: IMAGE_REQUEST_FAILED]'
+         'Network error: the manga page could not reach the server. Check your connection and try again. [network: IMAGE_REQUEST_FAILED]'
         )
       )
     }
@@ -746,15 +858,10 @@ export async function runWithConcurrency(
   items,
   concurrency,
   worker
-) {
+){
   const queue = [...items]
   const workers = Array.from(
-    {
-      length: Math.min(
-        concurrency,
-        queue.length
-      ),
-    },
+    { length: Math.min(concurrency, queue.length) },
     async () => {
       while (queue.length) {
         const item = queue.shift()
