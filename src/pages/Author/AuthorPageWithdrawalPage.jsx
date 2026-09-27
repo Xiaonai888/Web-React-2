@@ -469,14 +469,13 @@ export default function AuthorPageWithdrawalPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [searchParams] = useSearchParams()
-  const backPath =
-    searchParams.get('back') === 'income'
-      ? '/author/page/finance/income'
-      : '/author/page/finance'
-  const paymentBackPath =
-    searchParams.get('back') === 'income'
-      ? '/author/page/finance/withdrawal?back=income'
-      : '/author/page/finance/withdrawal'
+  const backMode = searchParams.get('back')
+const backPath = backMode === 'income'
+  ? '/author/page/finance/income'
+  : backMode === 'store-withdrawal'
+    ? '/author/page/store/withdrawal-details'
+    : '/author/page/finance'
+const paymentBackPath = `/author/page/finance/withdrawal${backMode ? `?back=${encodeURIComponent(backMode)}` : ''}`
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
