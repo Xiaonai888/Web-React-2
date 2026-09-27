@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('createAuthor', {
   en: {
@@ -15,10 +16,10 @@ registerTranslationNamespace('createAuthor', {
     cropProfilePhoto: '裁剪头像', cropHelp: '拖动并缩放以适配作者头像。', closeCropEditor: '关闭裁剪编辑器', zoom: '缩放', cropTip: '提示：在图片内拖动可移动。若手机浏览器双指缩放不顺畅，请使用缩放滑块。', cancel: '取消', saveCrop: '保存裁剪', goBack: '返回', createAuthorPage: '创建作者主页', createAuthorDescription: '创建你的公开写作主页。显示名称可以使用任何语言。', pageName: '主页名称', pageNamePlaceholder: '输入公开作者名称', pageUsername: '主页用户名', usernameHelp: '仅限英文。可使用字母、数字和下划线。主页名称可以重复，但用户名必须唯一。', bioOptional: '简介（可选）', bioPlaceholder: '向读者介绍你的创作', motto: '迈向更好的自己 — 释放你的潜力', creating: '正在创建...', createPage: '创建主页', addProfilePhoto: '添加头像', addProfileDescription: '让你的作者主页更值得信赖。你可以暂时跳过，稍后再添加。', authorProfilePreview: '作者头像预览', uploadPhoto: '上传照片', saving: '正在保存...', savePhoto: '保存照片', skipForNow: '暂时跳过', failedUploadImage: '图片上传失败', failedCreate: '创建作者主页失败', selectImage: '请选择图片文件', adjustPhoto: '请先调整照片', failedCrop: '裁剪图片失败', uploadOrSkip: '请上传头像或暂时跳过', failedSave: '保存头像失败'
   },
   ja: {
-    cropProfilePhoto: 'プロフィール写真を切り抜く', cropHelp: 'ドラッグとズームで作者アバターに合わせてください。', closeCropEditor: '切り抜きエディターを閉じる', zoom: 'ズーム', cropTip: 'ヒント：画像内をドラッグして移動できます。スマートフォンでピンチ操作がうまく動かない場合はズームスライダーを使ってください。', cancel: 'キャンセル', saveCrop: '切り抜きを保存', goBack: '戻る', createAuthorPage: '作者ページを作成', createAuthorDescription: '公開用の執筆ページを作成します。表示名はどの言語でも使えます。', pageName: 'ページ名', pageNamePlaceholder: '公開する作者名を入力', pageUsername: 'ページユーザー名', usernameHelp: '英語のみ。文字、数字、アンダースコアを使用できます。ページ名は同じでも構いませんが、ユーザー名は一意である必要があります。', bioOptional: '自己紹介（任意）', bioPlaceholder: 'あなたの執筆について読者に伝えましょう', motto: '大きな一歩を踏み出し、可能性を解き放とう', creating: '作成中...', createPage: 'ページを作成', addProfilePhoto: 'プロフィール写真を追加', addProfileDescription: '作者ページをより信頼感のある見た目にします。今はスキップして後から追加できます。', authorProfilePreview: '作者プロフィールのプレビュー', uploadPhoto: '写真をアップロード', saving: '保存中...', savePhoto: '写真を保存', skipForNow: '今はスキップ', failedUploadImage: '画像のアップロードに失敗しました', failedCreate: '作者ページの作成に失敗しました', selectImage: '画像ファイルを選択してください', adjustPhoto: '先に写真を調整してください', failedCrop: '画像の切り抜きに失敗しました', uploadOrSkip: 'プロフィール写真をアップロードするか、今はスキップしてください', failedSave: 'プロフィール写真の保存に失敗しました'
+    cropProfilePhoto: 'プロフィール写真を切り抜く', cropHelp: 'ドラッグとズームで作者アバターに合わせてください。', closeCropEditor: '切り抜きエディターを閉じる', zoom: 'ズーム', cropTip: 'ヒント: 画像内をドラッグして移動できます。スマートフォンでピンチ操作がうまく動かない場合はズームスライダーを使ってください。', cancel: 'キャンセル', saveCrop: '切り抜きを保存', goBack: '戻る', createAuthorPage: '作者ページを作成', createAuthorDescription: '公開用の執筆ページを作成します。表示名はどの言語でも使えます。', pageName: 'ページ名', pageNamePlaceholder: '公開する作者名を入力', pageUsername: 'ページユーザー名', usernameHelp: '英語のみ。文字、数字、アンダースコアを使用できます。ページ名は同じでも構いませんが、ユーザー名は一意である必要があります。', bioOptional: '自己紹介（任意）', bioPlaceholder: '読者にあなたの執筆について伝えましょう', motto: '大きな一歩を踏み出し、可能性を解き放とう', creating: '作成中...', createPage: 'ページを作成', addProfilePhoto: 'プロフィール写真を追加', addProfileDescription: '作者ページをより信頼感のある見た目にします。今はスキップして後から追加できます。', authorProfilePreview: '作者プロフィールのプレビュー', uploadPhoto: '写真をアップロード', saving: '保存中...', savePhoto: '写真を保存', skipForNow: '今はスキップ', failedUploadImage: '画像のアップロードに失敗しました', failedCreate: '作者ページの作成に失敗しました', selectImage: '画像ファイルを選択してください', adjustPhoto: '先に写真を調整してください', failedCrop: '画像の切り抜きに失敗しました', uploadOrSkip: 'プロフィール写真をアップロードするか、今はスキップしてください', failedSave: 'プロフィール写真の保存に失敗しました'
   },
   ko: {
-    cropProfilePhoto: '프로필 사진 자르기', cropHelp: '드래그하고 확대해 작가 아바타에 맞춰 주세요.', closeCropEditor: '자르기 편집기 닫기', zoom: '확대', cropTip: '팁: 이미지 안을 드래그해 이동하세요. 휴대폰에서 핀치가 잘 작동하지 않으면 확대 슬라이더를 사용하세요.', cancel: '취소', saveCrop: '자르기 저장', goBack: '뒤로', createAuthorPage: '작가 페이지 만들기', createAuthorDescription: '공개 작가 페이지를 만들어 보세요. 표시 이름은 어떤 언어든 사용할 수 있습니다.', pageName: '페이지 이름', pageNamePlaceholder: '공개 작가 이름 입력', pageUsername: '페이지 사용자 이름', usernameHelp: '영어만 사용할 수 있습니다. 문자, 숫자, 밑줄을 사용하세요. 페이지 이름은 같아도 되지만 사용자 이름은 고유해야 합니다.', bioOptional: '소개 (선택)', bioPlaceholder: '독자에게 당신의 글쓰기를 소개하세요', motto: '더 큰 가능성을 향해 나아가세요', creating: '만드는 중...', createPage: '페이지 만들기', addProfilePhoto: '프로필 사진 추가', addProfileDescription: '작가 페이지를 더 신뢰감 있게 보여 주세요. 지금 건너뛰고 나중에 추가할 수 있습니다.', authorProfilePreview: '작가 프로필 미리보기', uploadPhoto: '사진 업로드', saving: '저장 중...', savePhoto: '사진 저장', skipForNow: '지금은 건너뛰기', failedUploadImage: '이미지 업로드에 실패했습니다', failedCreate: '작가 페이지 만들기에 실패했습니다', selectImage: '이미지 파일을 선택해 주세요', adjustPhoto: '먼저 사진을 조정해 주세요', failedCrop: '이미지 자르기에 실패했습니다', uploadOrSkip: '프로필 사진을 업로드하거나 지금은 건너뛰어 주세요', failedSave: '프로필 사진 저장에 실패했습니다'
+    cropProfilePhoto: '프로필 사진 자르기', cropHelp: '드래그하고 확대해 작가 아바타에 맞춰 주세요.', closeCropEditor: '자르기 편집기 닫기', zoom: '확대', cropTip: '팁: 이미지 안을 드래그해 이동하세요. 휴대폰에서 핀치가 잘 작동하지 않으면 확대 슬라이더를 사용하세요.', cancel: '취소', saveCrop: '자르기 저장', goBack: '뒤로', createAuthorPage: '작가 페이지 만들기', createAuthorDescription: '공개 작가 페이지를 만들어 보세요. 표시 이름은 어떤 언어든 사용할 수 있습니다.', pageName: '페이지 이름', pageNamePlaceholder: '공개 작가 이름 입력', pageUsername: '페이지 사용자 이름', usernameHelp: '영어만 사용할 수 있습니다. 문자, 숫자, 밑줄을 사용하세요. 페이지 이름은 같아도 되지만 사용자 이름은 고유해야 합니다.', bioOptional: '소개 (선택)', bioPlaceholder: '독자에게 당신의 글쓰기를 소개하세요', motto: '더 큰 가능성을 향해 나아가세요', creating: '만드는 중...', createPage: '페이지 만들기', addProfilePhoto: '프로필 사진 추가', addProfileDescription: '작가 페이지를 더 신뢰감 있게 보여 주세요. 지금 건너뛰고 나중에 추가할 수 있습니다.', authorProfilePreview: '작가 프로필 미리보기', uploadPhoto: '사진 업로드', saving: '저장 중...', savePhoto: '사진 저장', skipForNow: '지금 건너뛰기', failedUploadImage: '이미지 업로드 실패', failedCreate: '작가 페이지 생성 실패', selectImage: '이미지 파일을 선택해 주세요', adjustPhoto: '먼저 사진을 조정해 주세요', failedCrop: '이미지 자르기 실패', uploadOrSkip: '프로필 사진을 업로드하거나 지금 건너뛰세요', failedSave: '프로필 사진 저장 실패'
   },
 })
 
@@ -87,9 +88,13 @@ async function getCroppedImage(imageSrc, pixelCrop) {
 
 async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   const file = dataUrlToFile(imageDataUrl, fileName)
+  const optimized = await optimizeImageForUpload(file, {
+    preset: 'avatar',
+    maxSourceBytes: 5 * 1024 * 1024,
+  })
   const formData = new FormData()
 
-  formData.append('image', file)
+  formData.append('image', optimized.file)
   formData.append('folder', folder)
 
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
@@ -324,7 +329,7 @@ export default function CreateAuthorPage() {
       const imageUrl = await uploadImageToStorage({
         token,
         imageDataUrl: avatarCropped,
-        folder: 'author-profiles',
+        folder: 'author_page_avatar',
         fileName: `author-profile-${Date.now()}.jpg`,
       })
 
