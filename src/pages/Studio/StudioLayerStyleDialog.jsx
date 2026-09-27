@@ -19,8 +19,11 @@ const CONTROL_GROUPS = {
 }
 
 const TRANSLATIONS = {
-  en: { title: 'Layer Style', name: 'Name', blend: 'Blend Mode', opacity: 'Opacity', fill: 'Fill Opacity', channels: 'Channels', effects: 'Styles', preview: 'Preview', cancel: 'Cancel', apply: 'OK', busy: 'Applying…', locked: 'Unlock this layer before applying changes.', noLayer: 'Select a layer to edit its style.', notConnected: 'Layer Style is not connected to this project yet.', error: 'Unable to preview this layer.', advanced: 'Blend If / Knockout require the layer compositor and will be added during integration.' },
-  km: { title: 'រចនាប័ទ្ម Layer', name: 'ឈ្មោះ', blend: 'របៀបលាយ', opacity: 'ភាពស្រអាប់', fill: 'ភាពស្រអាប់ផ្ទៃ', channels: 'ឆានែល', effects: 'រចនាប័ទ្ម', preview: 'មើលជាមុន', cancel: 'បោះបង់', apply: 'យល់ព្រម', busy: 'កំពុងអនុវត្ត…', locked: 'សូមដោះសោ Layer មុនអនុវត្ត។', noLayer: 'សូមជ្រើស Layer ដើម្បីកែរចនាប័ទ្ម។', notConnected: 'ផ្ទាំង Layer Style មិនទាន់ភ្ជាប់ទៅ Project ទេ។', error: 'មិនអាចបង្ហាញរូបមើលជាមុនបាន។', advanced: 'Blend If / Knockout ត្រូវការប្រព័ន្ធលាយ Layer ហើយនឹងភ្ជាប់នៅជំហានក្រោយ។' },
+  en: { title: 'Layer Style', name: 'Name', blend: 'Blend Mode', opacity: 'Opacity', fill: 'Fill Opacity', channels: 'Channels', effects: 'Styles', preview: 'Preview', cancel: 'Cancel', apply: 'OK', busy: 'Applying…', locked: 'Unlock this layer before applying changes.', noLayer: 'Select a layer to edit its style.', notConnected: 'Layer Style is not connected to this project yet.', error: 'Unable to preview this layer.', knockout: 'Knockout', blendIf: 'Blend If', blendIfChannel: 'Channel', thisLayer: 'This Layer', underlying: 'Underlying Layer', blackCut: 'Black Cut', blackFade: 'Black Fade', whiteFade: 'White Fade', whiteCut: 'White Cut', hint: 'Underlying Layer is calculated from the layers below when the main canvas is rendered.' },
+  km: { title: 'រចនាប័ទ្ម Layer', name: 'ឈ្មោះ', blend: 'របៀបលាយ', opacity: 'ភាពស្រអាប់', fill: 'ភាពស្រអាប់ផ្ទៃ', channels: 'ឆានែល', effects: 'រចនាប័ទ្ម', preview: 'មើលជាមុន', cancel: 'បោះបង់', apply: 'យល់ព្រម', busy: 'កំពុងអនុវត្ត…', locked: 'សូមដោះសោ Layer មុនអនុវត្ត។', noLayer: 'សូមជ្រើស Layer ដើម្បីកែរចនាប័ទ្ម។', notConnected: 'ផ្ទាំង Layer Style មិនទាន់ភ្ជាប់ទៅ Project ទេ។', error: 'មិនអាចបង្ហាញរូបមើលជាមុនបាន។', knockout: 'Knockout', blendIf: 'Blend If', blendIfChannel: 'ឆានែល', thisLayer: 'Layer នេះ', underlying: 'Layer ខាងក្រោម', blackCut: 'Black Cut', blackFade: 'Black Fade', whiteFade: 'White Fade', whiteCut: 'White Cut', hint: 'Underlying Layer នឹងគណនាពី Layer ខាងក្រោមនៅពេល Canvas សរុបត្រូវ Render។' },
+  zh: { title: '图层样式', name: '名称', blend: '混合模式', opacity: '不透明度', fill: '填充不透明度', channels: '通道', effects: '样式', preview: '预览', cancel: '取消', apply: '确定', busy: '应用中…', locked: '请先解锁图层。', noLayer: '请选择图层。', notConnected: '图层样式尚未连接。', error: '无法预览图层。', knockout: '挖空', blendIf: '混合颜色带', blendIfChannel: '通道', thisLayer: '本图层', underlying: '下一图层', blackCut: '黑色截断', blackFade: '黑色过渡', whiteFade: '白色过渡', whiteCut: '白色截断', hint: '下一图层范围会在主画布合成时从下方图层计算。' },
+  ja: { title: 'レイヤースタイル', name: '名前', blend: '描画モード', opacity: '不透明度', fill: '塗りの不透明度', channels: 'チャンネル', effects: 'スタイル', preview: 'プレビュー', cancel: 'キャンセル', apply: 'OK', busy: '適用中…', locked: '先にレイヤーのロックを解除してください。', noLayer: 'レイヤーを選択してください。', notConnected: 'レイヤースタイルは未接続です。', error: 'レイヤーをプレビューできません。', knockout: 'ノックアウト', blendIf: 'ブレンド条件', blendIfChannel: 'チャンネル', thisLayer: 'このレイヤー', underlying: '下のレイヤー', blackCut: '黒のカット', blackFade: '黒のフェード', whiteFade: '白のフェード', whiteCut: '白のカット', hint: '下のレイヤー範囲はメインキャンバス合成時に計算されます。' },
+  ko: { title: '레이어 스타일', name: '이름', blend: '혼합 모드', opacity: '불투명도', fill: '채우기 불투명도', channels: '채널', effects: '스타일', preview: '미리보기', cancel: '취소', apply: '확인', busy: '적용 중…', locked: '먼저 레이어 잠금을 해제하세요.', noLayer: '레이어를 선택하세요.', notConnected: '레이어 스타일이 연결되지 않았습니다.', error: '레이어 미리보기를 표시할 수 없습니다.', knockout: '녹아웃', blendIf: 'Blend If', blendIfChannel: '채널', thisLayer: '이 레이어', underlying: '아래 레이어', blackCut: '검정 컷', blackFade: '검정 페이드', whiteFade: '흰색 페이드', whiteCut: '흰색 컷', hint: '아래 레이어 범위는 메인 캔버스를 합성할 때 계산됩니다.' },
 }
 
 export default function StudioLayerStyleDialog({ open = false, layer = null, initialEffect = 'blending', onClose, onApply, disabled = false, language = 'en' }) {
@@ -80,7 +83,26 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
   if (!open) return null
 
   function updateMain(key, value) {
-    setDraft((current) => ({ ...current, [key]: value }))
+    setDraft((current) => normalizeStudioLayerStyle({ ...current, [key]: value }))
+    setError('')
+  }
+
+  function updateAdvanced(key, value) {
+    setDraft((current) => normalizeStudioLayerStyle({ ...current, advanced: { ...current.advanced, [key]: value } }))
+    setError('')
+  }
+
+  function updateBlendIf(scope, key, value) {
+    setDraft((current) => normalizeStudioLayerStyle({
+      ...current,
+      advanced: {
+        ...current.advanced,
+        blendIf: {
+          ...current.advanced.blendIf,
+          [scope]: { ...current.advanced.blendIf[scope], [key]: value },
+        },
+      },
+    }))
     setError('')
   }
 
@@ -94,6 +116,17 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
       <span>{label}</span>
       <span className="ss-ls-number"><input type="range" min={min} max={max} step="1" value={value} onChange={(event) => update(Number(event.target.value))} disabled={busy || disabled} /><input type="number" min={min} max={max} value={value} onChange={(event) => update(Math.max(min, Math.min(max, Number(event.target.value) || 0)))} disabled={busy || disabled} /></span>
     </label>
+  }
+
+  function blendIfFields(scope, title) {
+    const range = draft.advanced.blendIf[scope]
+    return <div className="ss-ls-blendif-group">
+      <h4>{title}</h4>
+      {renderNumber(`${scope}-black`, words.blackCut, range.black, 0, 255, (value) => updateBlendIf(scope, 'black', value))}
+      {renderNumber(`${scope}-blackFade`, words.blackFade, range.blackFade, 0, 255, (value) => updateBlendIf(scope, 'blackFade', value))}
+      {renderNumber(`${scope}-whiteFade`, words.whiteFade, range.whiteFade, 0, 255, (value) => updateBlendIf(scope, 'whiteFade', value))}
+      {renderNumber(`${scope}-white`, words.whiteCut, range.white, 0, 255, (value) => updateBlendIf(scope, 'white', value))}
+    </div>
   }
 
   function effectFields(name) {
@@ -139,6 +172,7 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
         .ss-ls-effect-row button{flex:1;min-width:0;border:0;background:none;color:#f5f5f5;text-align:left;font:inherit;padding:7px 2px;cursor:pointer}
         .ss-ls-main{min-width:0;min-height:0;overflow-y:auto;border:1px solid #777;padding:12px;background:#515151}
         .ss-ls-main h3{margin:0 0 13px;font-size:13px}
+        .ss-ls-main h4{margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid #6b6b6b;font-size:12px}
         .ss-ls-field{display:grid;grid-template-columns:minmax(85px,120px) minmax(0,1fr);gap:9px;align-items:center;margin:9px 0;min-width:0}
         .ss-ls-field>span:first-child{color:#eee}
         .ss-ls-field select,.ss-ls-field input[type=color],.ss-ls-field input[type=number]{min-width:0;height:30px;background:#404040;border:1px solid #7b7b7b;color:#fff;padding:2px 5px;font:inherit}
@@ -148,6 +182,9 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
         .ss-ls-number input[type=number]{width:54px}
         .ss-ls-channel{display:flex;gap:15px;align-items:center;margin:14px 0}
         .ss-ls-channel label{display:flex;gap:5px;align-items:center}
+        .ss-ls-blendif{margin-top:14px;padding-top:8px;border-top:1px solid #737373}
+        .ss-ls-blendif-title{font-weight:700;margin-bottom:4px}
+        .ss-ls-blendif-group{padding:2px 0}
         .ss-ls-muted{color:#c6c6c6;line-height:1.4}
         .ss-ls-actions{display:flex;flex-direction:column;gap:9px;min-width:0}
         .ss-ls-actions>button{min-height:34px;border-radius:21px;border:1px solid #9d9d9d;background:#555;color:#fff;cursor:pointer}
@@ -178,7 +215,14 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
               {renderNumber('opacity', words.opacity, draft.opacity, 0, 100, (value) => updateMain('opacity', value))}
               {renderNumber('fillOpacity', words.fill, draft.fillOpacity, 0, 100, (value) => updateMain('fillOpacity', value))}
               <div className="ss-ls-channel"><span>{words.channels}:</span>{['r', 'g', 'b'].map((channel) => <label key={channel}><input type="checkbox" checked={draft.channels[channel]} disabled={busy || disabled} onChange={(event) => updateMain('channels', { ...draft.channels, [channel]: event.target.checked })} />{channel.toUpperCase()}</label>)}</div>
-              <p className="ss-ls-muted">{words.advanced}</p>
+              <label className="ss-ls-field"><span>{words.knockout}</span><select value={draft.advanced.knockout} disabled={busy || disabled || layer?.isBackground} onChange={(event) => updateAdvanced('knockout', event.target.value)}><option value="none">None</option><option value="shallow">Shallow</option><option value="deep">Deep</option></select></label>
+              <div className="ss-ls-blendif">
+                <div className="ss-ls-blendif-title">{words.blendIf}</div>
+                <label className="ss-ls-field"><span>{words.blendIfChannel}</span><select value={draft.advanced.blendIf.channel} disabled={busy || disabled} onChange={(event) => updateAdvanced('blendIf', { ...draft.advanced.blendIf, channel: event.target.value })}><option value="gray">Gray</option><option value="r">Red</option><option value="g">Green</option><option value="b">Blue</option></select></label>
+                {blendIfFields('thisLayer', words.thisLayer)}
+                {blendIfFields('underlying', words.underlying)}
+                <p className="ss-ls-muted">{words.hint}</p>
+              </div>
             </> : effectFields(selected)}
             {layer?.locked ? <p className="ss-ls-error">{words.locked}</p> : null}
             {error ? <p className="ss-ls-error" role="alert">{error}</p> : null}
