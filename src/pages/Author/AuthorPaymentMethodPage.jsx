@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('authorPaymentMethod', {
   en: {
@@ -699,7 +700,7 @@ function CurrentMethodCard({ method, onView }) {
   )
 }
 
-function ImageUpload({ value, onChange, onError }) {
+function ImageUpload({ value, onChange, onFileChange, onError }) {
   const { t } = useDisplayTranslation()
 
   async function handleFile(event) {
@@ -707,19 +708,35 @@ function ImageUpload({ value, onChange, onError }) {
 
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
-      onError?.(t('authorPaymentMethod.chooseImage'))
-      return
+    try {
+      onError?.('')
+
+      const optimized = await optimizeImageForUpload(file, {
+        preset: 'default',
+        force: true,
+      })
+      const uploadFile = optimized.file
+
+      if (!uploadFile || uploadFile.size > 2 * 1024 * 1024) {
+        throw new Error('QR image must be 2 MB or smaller after compression.')
+      }
+
+      const reader = new FileReader()
+
+      reader.onload = () => {
+        onChange(String(reader.result || ''))
+        onFileChange?.(uploadFile)
+      }
+
+      reader.onerror = () => {
+        onError?.(t('authorPaymentMethod.chooseImage'))
+      }
+
+      reader.readAsDataURL(uploadFile)
+    } catch (error) {
+      onFileChange?.(null)
+      onError?.(error?.message || t('authorPaymentMethod.chooseImage'))
     }
-
-    onError?.('')
-    const reader = new FileReader()
-
-    reader.onload = () => {
-      onChange(String(reader.result || ''))
-    }
-
-    reader.readAsDataURL(file)
   }
 
   return (
@@ -769,7 +786,10 @@ function ImageUpload({ value, onChange, onError }) {
       {value ? (
         <button
           type="button"
-          onClick={() => onChange('')}
+          onClick={() => {
+            onChange('')
+            onFileChange?.(null)
+          }}
           className="mt-2 inline-flex items-center gap-1.5 text-[10.5px] font-black text-[#d25882]"
         >
           <i className="fa-solid fa-trash-can text-[9px]" />
@@ -958,6 +978,7 @@ export default function AuthorPaymentMethodPage() {
   const [bankName, setBankName] = useState('')
   const [accountName, setAccountName] = useState('')
   const [qrImageUrl, setQrImageUrl] = useState('')
+  const [qrImageFile, setQrImageFile] = useState(null)
   const [paypalName, setPaypalName] = useState('')
   const [paypalEmail, setPaypalEmail] = useState('')
   const [phoneProvider, setPhoneProvider] = useState('')
@@ -1037,6 +1058,7 @@ export default function AuthorPaymentMethodPage() {
     setViewMode('form')
     setError('')
     setSuccess('')
+    setQrImageFile(null)
 
     if (!old) {
       setBankName('')
@@ -1061,6 +1083,7 @@ export default function AuthorPaymentMethodPage() {
   function backToMethods() {
     setViewMode('list')
     setSelectedMethod('')
+    setQrImageFile(null)
     setError('')
     setSuccess('')
   }
@@ -1080,12 +1103,46 @@ export default function AuthorPaymentMethodPage() {
         return
       }
 
+      let paymentQrUrl = qrImageUrl
+
+      if (selectedMethod === 'bank_qr' && qrImageFile) {
+        const uploadBody = new FormData()
+        uploadBody.append('image', qrImageFile)
+        uploadBody.append('folder', 'author_payment_qr')
+
+        const uploadResponse = await fetch(
+          `${API_BASE_URL}/api/story-media/upload-image`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: uploadBody,
+          }
+        )
+
+        const uploadResult = await uploadResponse.json().catch(() => ({}))
+
+        if (!uploadResponse.ok || uploadResult.ok === false) {
+          throw new Error(uploadResult.message || t('authorPaymentMethod.saveFailed'))
+        }
+
+        paymentQrUrl = uploadResult.image_url || uploadResult.imageUrl || ''
+
+        if (!paymentQrUrl) {
+          throw new Error(t('authorPaymentMethod.saveFailed'))
+        }
+
+        setQrImageUrl(paymentQrUrl)
+        setQrImageFile(null)
+      }
+
       const body = {
         method_type: selectedMethod,
         display_name: selectedOption?.title || 'Payment Method',
         account_name: accountName,
         bank_name: bankName,
-        qr_image_url: qrImageUrl,
+        qr_image_url: selectedMethod === 'bank_qr' ? paymentQrUrl : '',
         paypal_name: paypalName,
         paypal_email: paypalEmail,
         phone_provider: phoneProvider,
@@ -1256,7 +1313,12 @@ export default function AuthorPaymentMethodPage() {
                     placeholder={t('authorPaymentMethod.bankExample')}
                     icon="fa-solid fa-building-columns"
                   />
-                  <ImageUpload value={qrImageUrl} onChange={setQrImageUrl} onError={setError} />
+                  <ImageUpload
+                    value={qrImageUrl}
+                    onChange={setQrImageUrl}
+                    onFileChange={setQrImageFile}
+                    onError={setError}
+                  />
 
                   <NoteCard tone="pink">
                     {t('authorPaymentMethod.bankNote1')}
