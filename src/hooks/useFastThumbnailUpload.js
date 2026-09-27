@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -26,11 +27,14 @@ export default function useFastThumbnailUpload() {
       throw new Error('Please log in before uploading a thumbnail.')
     }
 
-    const formData = new FormData()
-    formData.append('thumbnail', file)
-
     try {
       setUploadingThumbnail(true)
+
+      const optimized = await optimizeImageForUpload(file, {
+        preset: 'thumbnail',
+      })
+      const formData = new FormData()
+      formData.append('thumbnail', optimized.file)
 
       const response = await fetch(`${API_BASE_URL}/api/fast/upload-thumbnail`, {
         method: 'POST',
