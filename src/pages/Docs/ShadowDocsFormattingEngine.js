@@ -21,11 +21,37 @@ function textNodesWithin(fragment) {
 
 function wrapTextNodes(fragment, style) {
   textNodesWithin(fragment).forEach(node => {
+    if (!node.nodeValue) return
     const span = document.createElement('span')
     setStyle(span, style)
     node.parentNode.replaceChild(span, node)
     span.appendChild(node)
   })
+}
+
+function insertAndReselect(editor, range, fragment) {
+  if (!editor || !range || !fragment || typeof document === 'undefined') return false
+  const start = document.createComment('shadow-docs-selection-start')
+  const end = document.createComment('shadow-docs-selection-end')
+  const insertion = document.createDocumentFragment()
+  insertion.appendChild(start)
+  insertion.appendChild(fragment)
+  insertion.appendChild(end)
+  range.insertNode(insertion)
+
+  const selection = globalThis.getSelection?.()
+  if (selection) {
+    const next = document.createRange()
+    next.setStartAfter(start)
+    next.setEndBefore(end)
+    selection.removeAllRanges()
+    selection.addRange(next)
+  }
+
+  start.remove()
+  end.remove()
+  editor.normalize()
+  return true
 }
 
 export function applyShadowDocsInlineFormat(editor, snapshot, format) {
@@ -35,9 +61,7 @@ export function applyShadowDocsInlineFormat(editor, snapshot, format) {
   if (!Object.keys(style).length) return false
   const fragment = range.extractContents()
   wrapTextNodes(fragment, style)
-  range.insertNode(fragment)
-  editor.normalize()
-  return true
+  return insertAndReselect(editor, range, fragment)
 }
 
 export function clearShadowDocsInlineFormatting(editor, snapshot) {
@@ -46,12 +70,11 @@ export function clearShadowDocsInlineFormatting(editor, snapshot) {
   const fragment = range.extractContents()
   fragment.querySelectorAll?.('span,font,b,strong,i,em,u,s,sub,sup').forEach(node => {
     const parent = node.parentNode
+    if (!parent) return
     while (node.firstChild) parent.insertBefore(node.firstChild, node)
     node.remove()
   })
-  range.insertNode(fragment)
-  editor.normalize()
-  return true
+  return insertAndReselect(editor, range, fragment)
 }
 
 export function applyShadowDocsParagraphFormat(editor, snapshot, format) {
@@ -67,6 +90,7 @@ export function setShadowDocsBlockType(editor, snapshot, tagName = 'p') {
   const tag = allowed.has(String(tagName).toLowerCase()) ? String(tagName).toLowerCase() : 'p'
   const blocks = getShadowDocsSelectedBlocks(editor, snapshot)
   if (!blocks.length || typeof document === 'undefined') return false
+
   blocks.forEach(block => {
     if (block.tagName === 'LI') return
     const next = document.createElement(tag)
@@ -81,6 +105,7 @@ export function toggleShadowDocsList(editor, snapshot, type = 'ul') {
   const listTag = type === 'ol' ? 'ol' : 'ul'
   const blocks = getShadowDocsSelectedBlocks(editor, snapshot)
   if (!blocks.length || typeof document === 'undefined') return false
+
   if (blocks.every(block => block.tagName === 'LI' && block.parentElement?.tagName === listTag.toUpperCase())) {
     const lists = [...new Set(blocks.map(block => block.parentElement))]
     lists.forEach(list => {
@@ -94,6 +119,7 @@ export function toggleShadowDocsList(editor, snapshot, type = 'ul') {
     })
     return true
   }
+
   const list = document.createElement(listTag)
   const first = blocks[0]
   first.parentNode.insertBefore(list, first)
