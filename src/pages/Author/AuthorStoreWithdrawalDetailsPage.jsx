@@ -115,7 +115,7 @@ export default function AuthorStoreWithdrawalDetailsPage() {
           <p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{translate('minimum')}</p>
           {loading && <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{translate('pending')}</p>}
           {loadError && <p role="alert" className="mt-2 text-xs text-red-600">{translate('failed')}</p>}
-          <button type="button" disabled={!canRequest} onClick={() => navigate('/author/page/finance/withdrawal')} className="mt-5 w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{translate('request')}</button>
+          <button type="button" disabled={!canRequest} onClick={() => navigate('/author/page/finance/withdrawal?back=store-withdrawal')} className="mt-5 w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{translate('request')}</button>
         </section>
         <section className="mt-5">
           <div className="flex gap-2 rounded-2xl bg-[var(--shadow-bg-surface)] p-1 ring-1 ring-[var(--shadow-border)]">
