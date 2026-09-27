@@ -30,9 +30,28 @@ const DEFAULT_EFFECTS = {
   dropShadow: { enabled: false, size: 12, distance: 8, angle: 120, color: '#111111', opacity: 60 },
 }
 
+const DEFAULT_BLEND_RANGE = Object.freeze({ black: 0, blackFade: 0, whiteFade: 255, white: 255 })
 const MODES = new Set(['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'soft-light', 'hard-light', 'color-dodge', 'color-burn', 'difference', 'exclusion'])
+const KNOCKOUT_MODES = new Set(['none', 'shallow', 'deep'])
+const BLEND_IF_CHANNELS = new Set(['gray', 'r', 'g', 'b'])
 const COLOR = /^#[0-9a-f]{6}$/i
 const clip = (number, min, max) => Math.max(min, Math.min(max, number))
+
+function cloneBlendRange() {
+  return { ...DEFAULT_BLEND_RANGE }
+}
+
+function normalizeBlendRange(input = {}) {
+  const white = Number.isFinite(input.white) ? clip(Math.round(input.white), 0, 255) : 255
+  const black = Number.isFinite(input.black) ? clip(Math.round(input.black), 0, white) : 0
+  const blackFade = Number.isFinite(input.blackFade) ? clip(Math.round(input.blackFade), black, white) : black
+  const whiteFade = Number.isFinite(input.whiteFade) ? clip(Math.round(input.whiteFade), blackFade, white) : white
+  return { black, blackFade, whiteFade, white }
+}
+
+function blendRangeActive(range) {
+  return range.black > 0 || range.blackFade > 0 || range.whiteFade < 255 || range.white < 255
+}
 
 export function createStudioLayerStyle() {
   return {
@@ -40,6 +59,14 @@ export function createStudioLayerStyle() {
     opacity: 100,
     fillOpacity: 100,
     channels: { r: true, g: true, b: true },
+    advanced: {
+      knockout: 'none',
+      blendIf: {
+        channel: 'gray',
+        thisLayer: cloneBlendRange(),
+        underlying: cloneBlendRange(),
+      },
+    },
     effects: Object.fromEntries(Object.entries(DEFAULT_EFFECTS).map(([name, settings]) => [name, { ...settings }])),
   }
 }
@@ -54,6 +81,18 @@ export function normalizeStudioLayerStyle(input = {}) {
   for (const key of ['r', 'g', 'b']) {
     if (typeof input.channels?.[key] === 'boolean') style.channels[key] = input.channels[key]
   }
+
+  const advanced = input.advanced
+  if (advanced && typeof advanced === 'object') {
+    if (KNOCKOUT_MODES.has(advanced.knockout)) style.advanced.knockout = advanced.knockout
+    const blendIf = advanced.blendIf
+    if (blendIf && typeof blendIf === 'object') {
+      if (BLEND_IF_CHANNELS.has(blendIf.channel)) style.advanced.blendIf.channel = blendIf.channel
+      style.advanced.blendIf.thisLayer = normalizeBlendRange(blendIf.thisLayer)
+      style.advanced.blendIf.underlying = normalizeBlendRange(blendIf.underlying)
+    }
+  }
+
   for (const [name, defaults] of Object.entries(DEFAULT_EFFECTS)) {
     const settings = input.effects?.[name]
     if (!settings || typeof settings !== 'object') continue
@@ -71,11 +110,23 @@ export function normalizeStudioLayerStyle(input = {}) {
   return style
 }
 
+export function studioLayerStyleHasAdvancedBlend(rawStyle) {
+  const style = normalizeStudioLayerStyle(rawStyle)
+  return style.advanced.knockout !== 'none' ||
+    blendRangeActive(style.advanced.blendIf.thisLayer) ||
+    blendRangeActive(style.advanced.blendIf.underlying)
+}
+
+export function studioLayerStyleNeedsBackdrop(rawStyle) {
+  const style = normalizeStudioLayerStyle(rawStyle)
+  return blendRangeActive(style.advanced.blendIf.underlying)
+}
+
 function newCanvas(width, height) {
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
-  const context = canvas.getContext('2d')
+  const context = canvas.getContext('2d', { willReadFrequently: true })
   if (!context) throw new Error('Canvas 2D is unavailable.')
   return { canvas, context }
 }
@@ -235,6 +286,56 @@ function sourceWithChannels(source, channels) {
   return canvas
 }
 
+function channelValue(data, index, channel) {
+  if (channel === 'r') return data[index]
+  if (channel === 'g') return data[index + 1]
+  if (channel === 'b') return data[index + 2]
+  return Math.round(data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114)
+}
+
+function blendFactor(value, range) {
+  let factor = 1
+  if (range.blackFade > range.black) {
+    if (value <= range.black) factor = 0
+    else if (value < range.blackFade) factor *= (value - range.black) / (range.blackFade - range.black)
+  } else if (range.black > 0 && value < range.black) factor = 0
+
+  if (range.white > range.whiteFade) {
+    if (value >= range.white) factor = 0
+    else if (value > range.whiteFade) factor *= (range.white - value) / (range.white - range.whiteFade)
+  } else if (range.white < 255 && value > range.white) factor = 0
+  return factor
+}
+
+function applyBlendIfMask(source, backdropCanvas, blendIf) {
+  const thisActive = blendRangeActive(blendIf.thisLayer)
+  const underlyingActive = blendRangeActive(blendIf.underlying)
+  if (!thisActive && !underlyingActive) return source
+
+  const context = source.getContext('2d', { willReadFrequently: true })
+  if (!context) return source
+  const pixels = context.getImageData(0, 0, source.width, source.height)
+
+  let backdrop = null
+  if (underlyingActive && backdropCanvas) {
+    const copied = newCanvas(source.width, source.height)
+    copied.context.drawImage(backdropCanvas, 0, 0, source.width, source.height)
+    backdrop = copied.context.getImageData(0, 0, source.width, source.height)
+  }
+
+  for (let index = 0; index < pixels.data.length; index += 4) {
+    if (pixels.data[index + 3] === 0) continue
+    let factor = thisActive ? blendFactor(channelValue(pixels.data, index, blendIf.channel), blendIf.thisLayer) : 1
+    if (factor > 0 && underlyingActive && backdrop) {
+      factor *= blendFactor(channelValue(backdrop.data, index, blendIf.channel), blendIf.underlying)
+    }
+    pixels.data[index + 3] = Math.round(pixels.data[index + 3] * factor)
+  }
+
+  context.putImageData(pixels, 0, 0)
+  return source
+}
+
 export function renderStudioStyledLayer(sourceCanvas, rawStyle, options = {}) {
   if (!sourceCanvas || !Number.isInteger(sourceCanvas.width) || !Number.isInteger(sourceCanvas.height) || sourceCanvas.width < 1 || sourceCanvas.height < 1) throw new Error('A valid source layer is required.')
   const style = normalizeStudioLayerStyle(rawStyle)
@@ -244,6 +345,8 @@ export function renderStudioStyledLayer(sourceCanvas, rawStyle, options = {}) {
   const height = Math.max(1, Math.round(sourceCanvas.height * scale))
   const { canvas: source, context: sourceContext } = newCanvas(width, height)
   sourceContext.drawImage(sourceCanvas, 0, 0, width, height)
+  applyBlendIfMask(source, options.backdropCanvas || null, style.advanced.blendIf)
+
   const { canvas: content, context: contentContext } = newCanvas(width, height)
   const { canvas: output, context } = newCanvas(width, height)
   const e = style.effects
