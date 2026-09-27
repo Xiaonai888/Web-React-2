@@ -622,7 +622,7 @@ export default function StoryManagerPage() {
   const initialView = getSavedManagerView(storyId)
 const [activeTab, setActiveTab] = useState(initialView.activeTab || 'published')
 const [pageSize, setPageSize] = useState(
-  [20, 30, 50].includes(Number(initialView.pageSize)) ? Number(initialView.pageSize) : 20
+  [20, 30, 50, 100].includes(Number(initialView.pageSize)) ? Number(initialView.pageSize) : 20
 )
 const [currentPage, setCurrentPage] = useState(Math.max(1, Number(initialView.currentPage) || 1))
   const saveManagerView = () => {
@@ -1380,7 +1380,7 @@ const handleSavePublishSettings = async () => {
                       >
                         <option value={20}>{getDisplayText('storyManager.perPage', { count: formatDisplayNumber(20) })}</option>
                         <option value={30}>{getDisplayText('storyManager.perPage', { count: formatDisplayNumber(30) })}</option>
-                        <option value={50}>{getDisplayText('storyManager.perPage', { count: formatDisplayNumber(50) })}</option>
+                        <option value={100}>{getDisplayText('storyManager.perPage', { count: formatDisplayNumber(100) })}</option>
                       </select>
 
                       <div className="flex items-center gap-2">
