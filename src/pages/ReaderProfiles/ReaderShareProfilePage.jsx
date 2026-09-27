@@ -4,6 +4,7 @@ import QRCode from 'qrcode'
 import ReaderQrScannerSheet from '../../components/reader-profile/ReaderQrScannerSheet'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('readerShareProfilePage', {
   en: {
@@ -273,6 +274,8 @@ const API_BASE_URL =
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
+const CUSTOM_IMAGE_MAX_BYTES = 8 * 1024 * 1024
 
 const MODES = ['emoji', 'image', 'color']
 
@@ -566,7 +569,7 @@ export default function ReaderShareProfilePage() {
       return
     }
 
-    if (file.size > 8 * 1024 * 1024) {
+    if (file.size > CUSTOM_IMAGE_MAX_BYTES) {
       showMessage(t('readerShareProfilePage.imageTooLarge'))
       return
     }
@@ -582,8 +585,12 @@ export default function ReaderShareProfilePage() {
       setUploading(true)
       setMessage('')
 
+      const optimized = await optimizeImageForUpload(file, {
+        preset: 'post',
+        maxSourceBytes: CUSTOM_IMAGE_MAX_BYTES,
+      })
       const formData = new FormData()
-      formData.append('image', file)
+      formData.append('image', optimized.file)
 
       const response = await fetch(
         `${API_BASE_URL}/api/share-profile/custom-image`,
