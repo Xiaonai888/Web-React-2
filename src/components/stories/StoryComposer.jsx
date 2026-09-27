@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { clearHomeCacheSection } from '../../utils/homeDataCache'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('storyComposer', {
   en: {
