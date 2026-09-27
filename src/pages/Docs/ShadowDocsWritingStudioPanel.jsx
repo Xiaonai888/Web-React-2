@@ -3,7 +3,7 @@ import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, Download, Eye, ImagePlus, P
 import { getManuscriptOverview } from './ShadowDocsManuscriptTools'
 import { loadShadowDocsFont, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 import ShadowDocsRibbon from './ShadowDocsRibbon'
-import { captureShadowDocsSelection, restoreShadowDocsSelection } from './ShadowDocsSelectionEngine'
+import { captureShadowDocsSelection, restoreShadowDocsSelection, selectShadowDocsNodeContents } from './ShadowDocsSelectionEngine'
 import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsParagraphFormat } from './ShadowDocsFormattingEngine'
 import { readShadowDocsFormatState } from './ShadowDocsFormatState'
 import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
@@ -12,6 +12,14 @@ import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
 import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
 import { copyShadowDocsSelection, cutShadowDocsSelection, insertShadowDocsClipboardText } from './ShadowDocsClipboardEngine'
+import { getShadowDocsDesignTheme, SHADOW_DOCS_DESIGN_THEMES } from './ShadowDocsDocumentDesignEngine'
+import { inspectShadowDocsProofing, getShadowDocsProofingStats } from './ShadowDocsProofingEngine'
+import { applyShadowDocsLanguage, detectShadowDocsLanguage, SHADOW_DOCS_LANGUAGES } from './ShadowDocsLanguageEngine'
+import { createShadowDocsCommentRecord, addShadowDocsComment, getShadowDocsCommentMarks, removeShadowDocsCommentMark } from './ShadowDocsCommentEngine'
+import { acceptShadowDocsChange, rejectShadowDocsChange, listShadowDocsChanges, markShadowDocsDeletion, markShadowDocsInsertion } from './ShadowDocsTrackChangesEngine'
+import { buildShadowDocsTableOfContents, createShadowDocsCitation, createShadowDocsFootnote, formatShadowDocsCitation } from './ShadowDocsReferenceEngine'
+import { buildShadowDocsMergedDocuments, createShadowDocsAddressBlock, createShadowDocsGreetingLine, getShadowDocsMergeFields, insertShadowDocsMergeField, parseShadowDocsRecipientsCSV } from './ShadowDocsMailMergeEngine'
+import { applyShadowDocsCase } from './ShadowDocsTextTransform'
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
 const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
@@ -60,18 +68,32 @@ export default function ShadowDocsWritingStudioPanel({
   onDownloadBackup,
   onEditorBlur,
   onChangeSettings,
+  onNewBook,
+  onOpenBooks,
+  onOpenDesigner,
+  onOpenTemplates,
+  onOpenFindReplace,
+  onOpenImport,
+  onOpenPDF,
+  onPrint,
+  onEditProperties,
+  onOpenOutline,
   status = 'Saved on this device',
 }) {
   const editorRef = useRef(null)
   const selectionRef = useRef(null)
   const imageInputRef = useRef(null)
   const imageTargetRef = useRef(null)
+  const mailingInputRef = useRef(null)
   const [imageWidth, setImageWidth] = useState(75)
   const [imageAlignment, setImageAlignment] = useState('center')
   const [imageError, setImageError] = useState('')
   const [imageBusy, setImageBusy] = useState(false)
   const [ribbonMessage, setRibbonMessage] = useState('')
   const [ribbonState, setRibbonState] = useState(() => createShadowDocsRibbonState())
+  const [recipients, setRecipients] = useState([])
+  const [recipientIndex, setRecipientIndex] = useState(0)
+  const [indexEntries, setIndexEntries] = useState([])
   const chapter = book?.chapters?.find(item => item.id === chapterId) || book?.chapters?.[0]
   const chapterIndex = book?.chapters?.findIndex(item => item.id === chapter?.id) ?? -1
   const overview = useMemo(() => getManuscriptOverview(book), [book])
@@ -108,8 +130,22 @@ export default function ShadowDocsWritingStudioPanel({
       fontSize: nearestFontSize(settings.fontSize || 13),
       alignment: ALIGNMENTS.has(settings.alignment) ? settings.alignment : 'left',
       pageSize: settings.size || 'A5',
+      orientation: settings.orientation || 'portrait',
+      columns: settings.columns || 1,
+      lineNumbers: settings.lineNumbers === true,
+      hyphenation: settings.hyphenation === true,
+      textDirection: settings.textDirection || 'ltr',
+      pageColor: settings.pageColor || '#ffffff',
+      textColor: settings.textColor || '#242139',
+      accentColor: settings.accentColor || '#6f57a5',
+      theme: settings.theme || 'classic',
+      watermark: settings.watermark || '',
+      borderColor: settings.borderColor || '#d5d1df',
+      borderWidth: settings.borderWidth || 0,
+      borderStyle: settings.borderStyle || 'solid',
+      documentLanguage: settings.documentLanguage || 'km',
     }))
-  }, [book?.id, book?.title, book?.author, status, settings.font, settings.fontSize, settings.alignment, settings.size])
+  }, [book?.id, book?.title, book?.author, status, settings.font, settings.fontSize, settings.alignment, settings.size, settings.orientation, settings.columns, settings.lineNumbers, settings.hyphenation, settings.textDirection, settings.pageColor, settings.textColor, settings.accentColor, settings.theme, settings.watermark, settings.borderColor, settings.borderWidth, settings.borderStyle, settings.documentLanguage])
 
   function emitChange() {
     if (editorRef.current && chapter && typeof onChangeHTML === 'function') onChangeHTML(chapter.id, editorRef.current.innerHTML)
@@ -156,6 +192,56 @@ export default function ShadowDocsWritingStudioPanel({
     setRibbonMessage(message)
     requestAnimationFrame(() => rememberSelection())
     return true
+  }
+
+  function updateSettings(patch, message = '') {
+    onChangeSettings?.(patch)
+    setRibbonState(state => ({ ...state, ...patch, pageSize: patch.size || state.pageSize }))
+    if (message) setRibbonMessage(message)
+  }
+
+  function insertHTMLAtSelection(html) {
+    const editor = editorRef.current
+    const snapshot = currentSnapshot()
+    const range = restoreShadowDocsSelection(editor, snapshot)
+    if (!editor || !range || typeof document === 'undefined') return false
+    const template = document.createElement('template')
+    template.innerHTML = html
+    range.deleteContents()
+    range.insertNode(template.content)
+    editor.normalize()
+    return finishRibbonChange(true)
+  }
+
+  function insertTextAtSelection(text) {
+    const editor = editorRef.current
+    const snapshot = currentSnapshot()
+    return finishRibbonChange(insertShadowDocsClipboardText(editor, snapshot, text))
+  }
+
+  function selectMarkedNode(selector, direction = 1) {
+    const editor = editorRef.current
+    if (!editor) return false
+    const nodes = [...editor.querySelectorAll(selector)]
+    if (!nodes.length) return false
+    const selection = globalThis.getSelection?.()
+    const current = selection?.anchorNode?.nodeType === 1 ? selection.anchorNode : selection?.anchorNode?.parentElement
+    let index = nodes.findIndex(node => node === current || node.contains(current))
+    index = (index + direction + nodes.length) % nodes.length
+    selectShadowDocsNodeContents(nodes[index])
+    rememberSelection()
+    return true
+  }
+
+  function downloadText(name, text) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }))
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = name
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1200)
   }
 
   async function runRibbonCommand(command, value) {
@@ -337,11 +423,346 @@ export default function ShadowDocsWritingStudioPanel({
     }
 
     if (command === 'find' || command === 'replace' || command === 'findReplace') {
-      setRibbonMessage('Find & Replace is available in Writing tools below.')
+      onOpenFindReplace?.()
+      setRibbonMessage('Writing tools opened below.')
       return
     }
 
-    setRibbonMessage(`${command} is not connected yet.`)
+    if (command === 'new') { onNewBook?.(); return }
+    if (command === 'open' || command === 'recent') { onOpenBooks?.(); return }
+    if (command === 'import') { onOpenImport?.(); return }
+    if (command === 'export' || command === 'saveAs' || command === 'convert') { onOpenPDF?.(); return }
+    if (command === 'print') { onPrint?.(); return }
+    if (command === 'properties') { onEditProperties?.(); return }
+    if (command === 'templates') { onOpenTemplates?.(); return }
+    if (command === 'preferences') { onOpenDesigner?.(); return }
+    if (command === 'navigationPane' || command === 'outline') { onOpenOutline?.(); setRibbonState(state => ({ ...state, navigationPane: true, viewMode: command === 'outline' ? 'outline' : state.viewMode })); return }
+
+    if (command === 'select') {
+      selectShadowDocsNodeContents(editor)
+      rememberSelection()
+      return
+    }
+
+    if (command === 'changeCase') {
+      const mode = globalThis.prompt?.('Case: upper, lower, title, sentence, toggle', 'title')
+      if (mode && snapshot && !snapshot.collapsed) finishRibbonChange(applyShadowDocsCase(editor, snapshot, mode))
+      return
+    }
+
+    if (command === 'formatPainter') {
+      setRibbonMessage('Select target text, then use the same Font/Paragraph controls to apply the captured style.')
+      return
+    }
+
+    if (command === 'showMarks') {
+      setRibbonState(state => ({ ...state, showMarks: !state.showMarks }))
+      setRibbonMessage('Paragraph marks display toggled for this session.')
+      return
+    }
+
+    if (command === 'sort') {
+      const blocks = [...editor.querySelectorAll('p')]
+      if (blocks.length < 2) return setRibbonMessage('Add at least two paragraphs to sort.')
+      const parent = blocks[0].parentNode
+      if (!blocks.every(node => node.parentNode === parent)) return setRibbonMessage('Sort works on sibling paragraphs.')
+      blocks.sort((a, b) => (a.textContent || '').localeCompare(b.textContent || '', settings.documentLanguage || 'km'))
+      blocks.forEach(node => parent.appendChild(node))
+      finishRibbonChange(true, 'Paragraphs sorted A–Z.')
+      return
+    }
+
+    if (command === 'shading') {
+      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
+      const color = globalThis.prompt?.('Shading color (hex):', '#fff3b0')
+      if (color) finishRibbonChange(applyShadowDocsCommand(editor, snapshot, 'highlight', color))
+      return
+    }
+
+    if (command === 'borders') {
+      setRibbonMessage('Paragraph borders use Page Borders in Design for print-safe output.')
+      return
+    }
+
+    if (command === 'coverPage') {
+      const title = String(book.title || 'Untitled Book').replace(/[&<>"']/g, '')
+      const author = String(book.author || '').replace(/[&<>"']/g, '')
+      insertHTMLAtSelection(`<div style="text-align:center"><h1>${title}</h1><p>${author}</p></div><hr data-shadow-docs-page-break="1" contenteditable="false"><p><br></p>`)
+      return
+    }
+    if (command === 'blankPage' || command === 'breaks') { finishRibbonChange(Boolean(insertShadowDocsPageBreak(editor, snapshot))); return }
+    if (command === 'wordArt') {
+      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
+      finishRibbonChange(applyShadowDocsInlineFormat(editor, snapshot, { fontSize: 28, bold: true, color: settings.accentColor || '#6f57a5' }))
+      return
+    }
+    if (command === 'dropCap') {
+      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select the first letter first.')
+      finishRibbonChange(applyShadowDocsInlineFormat(editor, snapshot, { fontSize: 36, bold: true }))
+      return
+    }
+    if (command === 'header') {
+      const text = globalThis.prompt?.('Header text:', settings.printHeader || book.title || '')
+      if (text != null) updateSettings({ printHeader: text.slice(0, 80) }, 'Header updated.')
+      return
+    }
+    if (command === 'footer') {
+      const text = globalThis.prompt?.('Footer text:', settings.printFooter || '')
+      if (text != null) updateSettings({ printFooter: text.slice(0, 60) }, 'Footer updated.')
+      return
+    }
+    if (command === 'pageNumber') { updateSettings({ pageNumbers: !settings.pageNumbers }, `Page numbers ${settings.pageNumbers ? 'off' : 'on'}.`); return }
+    if (['shapes', 'icons', 'smartArt', 'chart', 'screenshot'].includes(command)) {
+      const label = command === 'smartArt' ? 'SmartArt' : command.charAt(0).toUpperCase() + command.slice(1)
+      const text = globalThis.prompt?.(`${label} placeholder text:`, label)
+      if (text != null) finishRibbonChange(Boolean(insertShadowDocsTextBox(editor, snapshot, text)))
+      return
+    }
+    if (command === 'crossReference') {
+      const toc = buildShadowDocsTableOfContents(book)
+      const item = toc.find(row => row.id !== chapter.id) || toc[0]
+      if (item) insertTextAtSelection(`See ${item.title}`)
+      return
+    }
+
+    if (command === 'themes') {
+      const current = SHADOW_DOCS_DESIGN_THEMES.indexOf(settings.theme || 'classic')
+      const next = SHADOW_DOCS_DESIGN_THEMES[(current + 1) % SHADOW_DOCS_DESIGN_THEMES.length]
+      const theme = getShadowDocsDesignTheme(next)
+      updateSettings({ theme: next, font: theme.font, textColor: theme.text, accentColor: theme.accent, pageColor: theme.page }, `Theme: ${next}.`)
+      return
+    }
+    if (command === 'themeColors') {
+      const accentColor = globalThis.prompt?.('Accent color (hex):', settings.accentColor || '#6f57a5')
+      if (accentColor) updateSettings({ accentColor }, 'Theme color updated.')
+      return
+    }
+    if (command === 'themeFonts') { onOpenDesigner?.(); return }
+    if (command === 'paragraphSpacing') {
+      const next = [0, 6, 10, 14, 18][([0, 6, 10, 14, 18].indexOf(Number(settings.paragraphSpacing)) + 1) % 5]
+      updateSettings({ paragraphSpacing: next }, `Paragraph spacing: ${next} pt.`)
+      return
+    }
+    if (command === 'effects') { setRibbonMessage('Document effects use the selected theme and page background.'); return }
+    if (command === 'setDefault') {
+      try { localStorage.setItem('shadow-docs-default-settings', JSON.stringify(settings)); setRibbonMessage('Current document settings saved as local defaults.') } catch { setRibbonMessage('Could not save local defaults.') }
+      return
+    }
+    if (command === 'watermark') {
+      const watermark = globalThis.prompt?.('Watermark text:', settings.watermark || '')
+      if (watermark != null) updateSettings({ watermark: watermark.slice(0, 80) }, watermark ? 'Watermark updated.' : 'Watermark removed.')
+      return
+    }
+    if (command === 'pageColor') { updateSettings({ pageColor: value }, 'Page color updated.'); return }
+    if (command === 'pageBorders') {
+      const width = Number(globalThis.prompt?.('Border width 0–12 px:', String(settings.borderWidth || 0)))
+      if (Number.isFinite(width)) updateSettings({ borderWidth: Math.max(0, Math.min(12, width)) }, 'Page border updated.')
+      return
+    }
+
+    if (command === 'margins') {
+      const margin = Number(globalThis.prompt?.('Page margin (10–35 mm):', String(settings.margin || 18)))
+      if (Number.isFinite(margin)) updateSettings({ margin: Math.max(10, Math.min(35, margin)) }, 'Margins updated.')
+      return
+    }
+    if (command === 'orientation') { const orientation = settings.orientation === 'landscape' ? 'portrait' : 'landscape'; updateSettings({ orientation }, `Orientation: ${orientation}.`); return }
+    if (command === 'paperSize') {
+      const sizes = ['A5', 'A4', 'B5']; const current = sizes.indexOf(settings.size || 'A5'); const size = sizes[(current + 1) % sizes.length]; updateSettings({ size }, `Paper size: ${size}.`); return
+    }
+    if (command === 'columns') { const columns = (Number(settings.columns) || 1) % 3 + 1; updateSettings({ columns }, `Columns: ${columns}.`); return }
+    if (command === 'lineNumbers') { updateSettings({ lineNumbers: Boolean(value) }, `Line numbers ${value ? 'on' : 'off'}.`); return }
+    if (command === 'hyphenation') { updateSettings({ hyphenation: Boolean(value) }, `Hyphenation ${value ? 'on' : 'off'}.`); return }
+    if (command === 'textDirection') { const textDirection = settings.textDirection === 'rtl' ? 'ltr' : 'rtl'; updateSettings({ textDirection }, `Text direction: ${textDirection}.`); return }
+    if (['position', 'wrapText', 'bringForward', 'sendBackward', 'selectionPane', 'alignObjects', 'groupObjects', 'rotate'].includes(command)) { setRibbonMessage('Arrange commands apply to selected visual objects; image placement is controlled by the Image alignment tools.'); return }
+
+    if (command === 'tableOfContents' || command === 'updateToc') {
+      const rows = buildShadowDocsTableOfContents(book)
+      insertHTMLAtSelection(`<h2>Contents</h2>${rows.map(row => `<p>${row.chapterIndex + 1}. ${String(row.title).replace(/[&<>"']/g, '')}</p>`).join('')}<p><br></p>`)
+      return
+    }
+    if (command === 'addTocText') { setRibbonMessage('Chapter titles are already used as level-1 Table of Contents entries.'); return }
+    if (command === 'insertFootnote' || command === 'insertEndnote') {
+      const text = globalThis.prompt?.(command === 'insertFootnote' ? 'Footnote:' : 'Endnote:', '')
+      if (!text) return
+      const note = createShadowDocsFootnote(text, chapter.id)
+      const number = editor.querySelectorAll('sup[data-shadow-docs-note]').length + 1
+      insertHTMLAtSelection(`<sup data-shadow-docs-note="${note.id}">[${number}]</sup>`)
+      editor.insertAdjacentHTML('beforeend', `<p><sup>[${number}]</sup> ${String(note.text).replace(/[&<>"']/g, '')}</p>`)
+      emitChange()
+      return
+    }
+    if (command === 'nextFootnote' || command === 'showNotes') { setRibbonMessage(selectMarkedNode('sup[data-shadow-docs-note]', 1) ? 'Moved to next note.' : 'No notes found.'); return }
+    if (command === 'insertCitation') {
+      const author = globalThis.prompt?.('Author:', '') || ''
+      const title = globalThis.prompt?.('Title:', '') || ''
+      const year = globalThis.prompt?.('Year:', '') || ''
+      const citation = createShadowDocsCitation({ author, title, year })
+      insertTextAtSelection(formatShadowDocsCitation(citation, 'author-year'))
+      return
+    }
+    if (command === 'bibliography') { setRibbonMessage('Insert citations first; bibliography entries can be added from citation text in this local editor.'); return }
+    if (command === 'manageSources' || command === 'citationStyle') { setRibbonMessage('Source management is local to inserted citation text in this version.'); return }
+    if (command === 'insertCaption') {
+      const text = globalThis.prompt?.('Caption:', 'Figure 1')
+      if (text) insertHTMLAtSelection(`<p style="text-align:center"><i>${String(text).replace(/[&<>"']/g, '')}</i></p>`)
+      return
+    }
+    if (command === 'tableOfFigures' || command === 'updateTableOfFigures') { setRibbonMessage('Captions remain in the manuscript and are included in PDF output.'); return }
+    if (command === 'markEntry') {
+      const text = snapshot?.text?.trim()
+      if (!text) return setRibbonMessage('Select index text first.')
+      setIndexEntries(entries => [...new Set([...entries, text.slice(0, 120)])])
+      setRibbonMessage(`Index entry marked: ${text.slice(0, 80)}`)
+      return
+    }
+    if (command === 'insertIndex' || command === 'updateIndex') {
+      if (!indexEntries.length) return setRibbonMessage('Mark at least one index entry first.')
+      insertHTMLAtSelection(`<h2>Index</h2>${[...indexEntries].sort().map(item => `<p>${String(item).replace(/[&<>"']/g, '')}</p>`).join('')}<p><br></p>`)
+      return
+    }
+
+    if (command === 'editor' || command === 'spellingGrammar') {
+      const stats = getShadowDocsProofingStats(editor.innerHTML)
+      const issues = inspectShadowDocsProofing(editor.innerHTML)
+      setRibbonMessage(`${stats.words} words · ${stats.sentences} sentences · ${issues.length} local proofing issue(s).${issues[0] ? ` ${issues[0].message}` : ''}`)
+      return
+    }
+    if (command === 'thesaurus') { setRibbonMessage('Thesaurus needs a dictionary service; local proofing remains available offline.'); return }
+    if (command === 'setLanguage') {
+      const detected = detectShadowDocsLanguage(editor.textContent || '')
+      const languageId = globalThis.prompt?.(`Language code (${SHADOW_DOCS_LANGUAGES.map(item => item.id).join(', ')}):`, settings.documentLanguage || detected.id)
+      if (!languageId) return
+      applyShadowDocsLanguage(editor, languageId)
+      updateSettings({ documentLanguage: languageId }, `Language: ${languageId}.`)
+      return
+    }
+    if (command === 'translate') { setRibbonMessage('Translation requires an external translation service and is not sent anywhere automatically.'); return }
+    if (command === 'newComment') {
+      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
+      const text = globalThis.prompt?.('Comment:', '')
+      if (!text) return
+      const record = createShadowDocsCommentRecord({ text, author: book.author || 'Author', chapterId: chapter.id })
+      finishRibbonChange(addShadowDocsComment(editor, snapshot, record), `Comment added: ${record.text.slice(0, 80)}`)
+      return
+    }
+    if (command === 'deleteComment') {
+      const marks = getShadowDocsCommentMarks(editor)
+      if (!marks.length) return setRibbonMessage('No comments found.')
+      finishRibbonChange(removeShadowDocsCommentMark(editor, marks[0].id), 'Comment mark removed.')
+      return
+    }
+    if (command === 'previousComment' || command === 'nextComment') { setRibbonMessage(selectMarkedNode('[data-shadow-docs-comment-id]', command === 'nextComment' ? 1 : -1) ? 'Comment selected.' : 'No comments found.'); return }
+    if (command === 'trackChanges') { setRibbonState(state => ({ ...state, trackChanges: Boolean(value) })); setRibbonMessage(`Track Changes ${value ? 'on' : 'off'}.`); return }
+    if (command === 'showMarkup') { setRibbonState(state => ({ ...state, showMarkup: !state.showMarkup })); return }
+    if (command === 'reviewPane') { const changes = listShadowDocsChanges(editor); setRibbonMessage(changes.length ? `${changes.length} tracked change(s). ${changes[0].type}: ${changes[0].text}` : 'No tracked changes.'); return }
+    if (command === 'displayReview') { setRibbonMessage(`${listShadowDocsChanges(editor).length} tracked change(s) in this chapter.`); return }
+    if (command === 'acceptChange' || command === 'rejectChange') {
+      const changes = listShadowDocsChanges(editor)
+      if (!changes.length) return setRibbonMessage('No tracked changes.')
+      const changed = command === 'acceptChange' ? acceptShadowDocsChange(editor, changes[0].id) : rejectShadowDocsChange(editor, changes[0].id)
+      finishRibbonChange(changed, command === 'acceptChange' ? 'Change accepted.' : 'Change rejected.')
+      return
+    }
+    if (command === 'previousChange' || command === 'nextChange') { setRibbonMessage(selectMarkedNode('[data-shadow-docs-change-id]', command === 'nextChange' ? 1 : -1) ? 'Tracked change selected.' : 'No tracked changes.'); return }
+    if (command === 'compare' || command === 'compareDocuments') {
+      const other = globalThis.prompt?.('Paste comparison text:', '')
+      if (other != null) setRibbonMessage(`Current: ${(editor.textContent || '').length} characters · Comparison: ${other.length} characters.`)
+      return
+    }
+    if (command === 'combine') {
+      const other = globalThis.prompt?.('Text to combine at the cursor:', '')
+      if (other) insertTextAtSelection(other)
+      return
+    }
+    if (command === 'restrictEditing' || command === 'protectDocument' || command === 'protect') { const protectedEditing = !ribbonState.protectedEditing; setRibbonState(state => ({ ...state, protectedEditing })); setRibbonMessage(`Editing protection ${protectedEditing ? 'on' : 'off'}.`); return }
+
+    if (['readMode', 'printLayout', 'webLayout', 'outline', 'draft'].includes(command)) { const viewMode = command.replace('Mode', '').replace('Layout', '').toLowerCase(); setRibbonState(state => ({ ...state, viewMode })); return }
+    if (command === 'focus' || command === 'ruler' || command === 'gridlines' || command === 'syncScrolling') { const key = command === 'focus' ? 'focus' : command; setRibbonState(state => ({ ...state, [key]: Boolean(value) })); return }
+    if (command === 'zoom100') { setRibbonState(state => ({ ...state, zoom: 100 })); return }
+    if (command === 'onePage') { setRibbonState(state => ({ ...state, zoom: 85 })); return }
+    if (command === 'multiplePages') { setRibbonState(state => ({ ...state, zoom: 70 })); return }
+    if (command === 'pageWidth') { setRibbonState(state => ({ ...state, zoom: 110 })); return }
+    if (command === 'zoom') { const zoom = Number(globalThis.prompt?.('Zoom percent (50–200):', String(ribbonState.zoom || 100))); if (Number.isFinite(zoom)) setRibbonState(state => ({ ...state, zoom: Math.max(50, Math.min(200, zoom)) })); return }
+    if (command === 'newWindow') { window.open(window.location.href, '_blank', 'noopener'); return }
+    if (command === 'split') { setRibbonState(state => ({ ...state, splitView: !state.splitView })); return }
+    if (['arrangeAll', 'sideBySide', 'switchWindows'].includes(command)) { setRibbonMessage('Window arrangement is handled by your browser/operating system.'); return }
+
+    if (['pen', 'pencil', 'highlighter', 'eraser', 'lasso'].includes(command)) { setRibbonState(state => ({ ...state, drawTool: command })); setRibbonMessage(`${command} selected. Ink overlay is session-only until a drawing canvas is added.`); return }
+    if (command === 'inkColor') { setRibbonState(state => ({ ...state, inkColor: value })); return }
+    if (command === 'inkThickness') { setRibbonState(state => ({ ...state, inkThickness: Number(value) || 2 })); return }
+    if (command === 'drawWithTouch') { setRibbonState(state => ({ ...state, drawWithTouch: Boolean(value) })); return }
+    if (command === 'inkToShape' || command === 'inkToText' || command === 'inkToMath') { setRibbonMessage('Ink conversion needs a handwriting-recognition engine; no drawing data is uploaded.'); return }
+
+    if (command === 'autoCorrect') { setRibbonState(state => ({ ...state, autoCorrect: Boolean(value) })); return }
+    if (command === 'ocr') { setRibbonMessage('OCR requires an OCR engine. Image insertion remains local and no image is uploaded automatically.'); return }
+
+    if (command === 'startMailMerge') { setRibbonState(state => ({ ...state, mailMergeActive: Boolean(value) })); return }
+    if (command === 'selectRecipients') { mailingInputRef.current?.click(); return }
+    if (command === 'editRecipients') { setRibbonMessage(`${recipients.length} recipient(s) loaded.`); return }
+    if (command === 'mergeField') {
+      const fields = getShadowDocsMergeFields(recipients)
+      if (!fields.length) return setRibbonMessage('Load a recipient CSV first.')
+      const field = globalThis.prompt?.(`Field: ${fields.join(', ')}`, fields[0])
+      if (field) insertTextAtSelection(insertShadowDocsMergeField(field))
+      return
+    }
+    if (command === 'addressBlock') { if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.'); insertTextAtSelection(createShadowDocsAddressBlock(recipients[recipientIndex] || recipients[0])); return }
+    if (command === 'greetingLine') { if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.'); insertTextAtSelection(createShadowDocsGreetingLine(recipients[recipientIndex] || recipients[0])); return }
+    if (command === 'previewResults') {
+      if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.')
+      const content = buildShadowDocsMergedDocuments(editor.innerText || '', [recipients[recipientIndex] || recipients[0]])[0]?.content || ''
+      setRibbonState(state => ({ ...state, previewMerge: Boolean(value) }))
+      setRibbonMessage(content.slice(0, 240) || 'Preview is empty.')
+      return
+    }
+    if (['firstRecord', 'previousRecord', 'nextRecord', 'lastRecord'].includes(command)) {
+      if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.')
+      setRecipientIndex(index => command === 'firstRecord' ? 0 : command === 'lastRecord' ? recipients.length - 1 : command === 'previousRecord' ? Math.max(0, index - 1) : Math.min(recipients.length - 1, index + 1))
+      return
+    }
+    if (command === 'findRecipient') {
+      const query = globalThis.prompt?.('Find recipient:', '')?.toLowerCase()
+      if (!query) return
+      const index = recipients.findIndex(row => Object.values(row).some(item => String(item).toLowerCase().includes(query)))
+      if (index >= 0) { setRecipientIndex(index); setRibbonMessage(`Recipient ${index + 1} selected.`) } else setRibbonMessage('Recipient not found.')
+      return
+    }
+    if (command === 'finishMerge') {
+      if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.')
+      const docs = buildShadowDocsMergedDocuments(editor.innerText || '', recipients)
+      downloadText(`${String(book.title || 'Shadow Docs').replace(/[^\p{L}\p{N}_-]+/gu, '-')}-mail-merge.txt`, docs.map((item, index) => `--- ${index + 1} ---\n${item.content}`).join('\n\n'))
+      return
+    }
+    if (command === 'envelopes' || command === 'labels' || command === 'rules' || command === 'matchFields') { setRibbonMessage('Mail merge recipients and fields are ready; use Address Block, Greeting Line, Merge Field, Preview, and Finish & Merge.'); return }
+
+    setRibbonMessage(`${command} is available in the ribbon but needs a specialized external engine or object type.`)
+  }
+
+  function trackBeforeInput(event) {
+    if (!ribbonState.trackChanges || event.isComposing || !editorRef.current) return
+    const snapshot = captureShadowDocsSelection(editorRef.current)
+    if (!snapshot) return
+    if (event.inputType === 'insertText' && event.data) {
+      event.preventDefault()
+      if (markShadowDocsInsertion(editorRef.current, snapshot, event.data, book.author || 'Author')) finishRibbonChange(true)
+    } else if ((event.inputType === 'deleteContentBackward' || event.inputType === 'deleteContentForward') && !snapshot.collapsed) {
+      event.preventDefault()
+      if (markShadowDocsDeletion(editorRef.current, snapshot, book.author || 'Author')) finishRibbonChange(true)
+    }
+  }
+
+  async function loadRecipients(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    try {
+      const rows = parseShadowDocsRecipientsCSV(await file.text())
+      setRecipients(rows)
+      setRecipientIndex(0)
+      setRibbonMessage(`${rows.length} recipient(s) loaded.`)
+    } catch (failure) {
+      setRibbonMessage(failure instanceof Error ? failure.message : 'Could not read recipient CSV.')
+    }
   }
 
   function quickFormat(command) {
@@ -454,12 +875,12 @@ export default function ShadowDocsWritingStudioPanel({
   if (!book || !chapter) return <section className="sd-card"><BookOpen size={28} /><h2 className="mt-3">Writing Studio</h2><p className="mt-2 text-sm text-[#77758b] dark:text-white/60">Select a book in My Books to start writing.</p></section>
 
   return <section aria-label="Writing Studio" className="sd-writing-layout">
-    <style>{'.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}.sd-writing-area p,.sd-writing-area div{margin-bottom:var(--sd-paragraph-spacing,.75em)}.sd-writing-area h1,.sd-writing-area h2,.sd-writing-area h3,.sd-writing-area li,.sd-writing-area blockquote{text-indent:0}.sd-writing-area img{max-width:100%;height:auto;break-inside:avoid}.sd-writing-area table{width:100%;border-collapse:collapse;margin:12px 0}.sd-writing-area td,.sd-writing-area th{border:1px solid #b9b4c7;padding:6px}'}</style>
-    <aside className="sd-chapters">
+    <style>{'.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}.sd-writing-area p,.sd-writing-area div{margin-bottom:var(--sd-paragraph-spacing,.75em)}.sd-writing-area h1,.sd-writing-area h2,.sd-writing-area h3,.sd-writing-area li,.sd-writing-area blockquote{text-indent:0}.sd-writing-area img{max-width:100%;height:auto;break-inside:avoid}.sd-writing-area table{width:100%;border-collapse:collapse;margin:12px 0}.sd-writing-area td,.sd-writing-area th{border:1px solid #b9b4c7;padding:6px}.sd-writing-area.sd-gridlines{background-image:linear-gradient(#0000000d 1px,transparent 1px),linear-gradient(90deg,#0000000d 1px,transparent 1px);background-size:24px 24px}.sd-writing-area ins{background:#dff5e8;text-decoration:underline}.sd-writing-area del{background:#fde2e5;color:#9f3d49}'}</style>
+    {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
       <div className="sd-chapter-list">{book.chapters.map((item, index) => <button type="button" key={item.id} className={`sd-chapter-item ${item.id === chapter.id ? 'is-active' : ''}`} onClick={() => onSelectChapter?.(item.id)} disabled={typeof onSelectChapter !== 'function'}><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.title || `Chapter ${index + 1}`}</strong></button>)}</div>
       <div className="sd-side-foot">{overview.chapterCount} chapters · {overview.words.toLocaleString()} words</div>
-    </aside>
+    </aside>}
 
     <div className="sd-writing-main">
       <div className="sd-card sd-editor-card">
@@ -486,15 +907,17 @@ export default function ShadowDocsWritingStudioPanel({
         </div>
 
         <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void insertImage(file) }} />
+        <input ref={mailingInputRef} type="file" accept=".csv,text/csv" hidden onChange={event => void loadRecipients(event)} />
         {imageError && <p role="alert" className="my-2 text-xs text-red-600 dark:text-red-300">{imageError}</p>}
 
         <div
           key={`${book.id}-${chapter.id}`}
           ref={editorRef}
           data-chapter-id={chapter.id}
-          className="sd-writing-area"
-          contentEditable={typeof onChangeHTML === 'function'}
+          className={`sd-writing-area sd-view-${ribbonState.viewMode || 'print'} ${ribbonState.gridlines ? 'sd-gridlines' : ''}`}
+          contentEditable={typeof onChangeHTML === 'function' && !ribbonState.protectedEditing && ribbonState.viewMode !== 'read'}
           suppressContentEditableWarning
+          onBeforeInput={trackBeforeInput}
           onInput={emitChange}
           onBlur={() => onEditorBlur?.(book.id)}
           onPaste={pastePlain}
@@ -514,6 +937,14 @@ export default function ShadowDocsWritingStudioPanel({
             textAlign: settings.alignment || 'left',
             textIndent: `${firstLineIndent}mm`,
             '--sd-paragraph-spacing': `${paragraphSpacing}pt`,
+            backgroundColor: settings.pageColor || '#ffffff',
+            color: settings.textColor || undefined,
+            direction: settings.textDirection || 'ltr',
+            columnCount: settings.columns || 1,
+            columnGap: `${settings.columnGap || 10}mm`,
+            hyphens: settings.hyphenation ? 'auto' : 'manual',
+            border: settings.borderWidth ? `${settings.borderWidth}px ${settings.borderStyle || 'solid'} ${settings.borderColor || '#d5d1df'}` : undefined,
+            zoom: `${ribbonState.zoom || 100}%`,
           }}
         />
 
