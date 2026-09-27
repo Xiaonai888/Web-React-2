@@ -9,6 +9,7 @@ import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFoote
 import ReaderReaderMessageRequestModal from '../components/chat/ReaderReaderMessageRequestModal'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('profilePage', {
   en: {
@@ -428,6 +429,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const PROFILE_AVATAR_MAX_BYTES = 5 * 1024 * 1024
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -491,9 +494,13 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   }
 
   const file = dataUrlToFile(imageDataUrl, fileName)
+  const optimized = await optimizeImageForUpload(file, {
+    preset: 'avatar',
+    maxSourceBytes: PROFILE_AVATAR_MAX_BYTES,
+  })
   const formData = new FormData()
 
-  formData.append('image', file)
+  formData.append('image', optimized.file)
   formData.append('folder', folder)
 
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
@@ -1411,6 +1418,11 @@ async function handleOtherProfileOption(action) {
 
     if (!file.type.startsWith('image/')) {
       setAvatarMessage(t('profilePage.selectImage'))
+      return
+    }
+
+    if (file.size > PROFILE_AVATAR_MAX_BYTES) {
+      setAvatarMessage(t('profilePage.uploadImageFailed'))
       return
     }
 
