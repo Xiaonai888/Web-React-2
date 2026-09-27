@@ -14,6 +14,10 @@ const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({ '&
 const safeToken = value => String(value || '').trim().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 120)
 const safeColor = value => /^(?:#[0-9a-f]{3,8}|rgba?\([^)]{1,60}\)|hsla?\([^)]{1,60}\)|transparent)$/i.test(String(value || '').trim()) ? String(value).trim() : ''
 const safeHref = value => /^(?:https?:|mailto:|tel:|#)/i.test(String(value || '').trim()) ? String(value).trim().slice(0, 2048) : ''
+const safeSettingColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || '').trim()) ? String(value).trim().toLowerCase() : fallback
+const DESIGN_THEMES = new Set(['classic', 'modern', 'minimal', 'warm'])
+const BORDER_STYLES = new Set(['solid', 'double', 'dashed', 'dotted'])
+const DOCUMENT_LANGUAGES = new Set(['km', 'en', 'zh', 'ko', 'ja'])
 export const createShadowDocsId = ids
 export const isShadowDocsImage = value => typeof value === 'string' && /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(value) && value.length < 2_500_000
 export const isShadowDocsManuscriptImage = value => isShadowDocsImage(value) && value.length <= 300_000
@@ -216,6 +220,22 @@ export function normalizeShadowDocsBook(source, { duplicate = false } = {}) {
       printHeader: brief(sourceSettings.printHeader, 80),
       printFooter: brief(sourceSettings.printFooter, 60),
       chapterStyle: CHAPTER_STYLES.has(sourceSettings.chapterStyle) ? sourceSettings.chapterStyle : layout.chapterStyle,
+      orientation: sourceSettings.orientation === 'landscape' ? 'landscape' : 'portrait',
+      columns: Math.round(clamp(sourceSettings.columns, 1, 4, 1)),
+      columnGap: clamp(sourceSettings.columnGap, 4, 30, 10),
+      hyphenation: sourceSettings.hyphenation === true,
+      lineNumbers: sourceSettings.lineNumbers === true,
+      textDirection: sourceSettings.textDirection === 'rtl' ? 'rtl' : 'ltr',
+      theme: DESIGN_THEMES.has(sourceSettings.theme) ? sourceSettings.theme : 'classic',
+      textColor: safeSettingColor(sourceSettings.textColor, '#242139'),
+      accentColor: safeSettingColor(sourceSettings.accentColor, '#6f57a5'),
+      pageColor: safeSettingColor(sourceSettings.pageColor, '#ffffff'),
+      borderColor: safeSettingColor(sourceSettings.borderColor, '#d5d1df'),
+      borderWidth: clamp(sourceSettings.borderWidth, 0, 12, 0),
+      borderStyle: BORDER_STYLES.has(sourceSettings.borderStyle) ? sourceSettings.borderStyle : 'solid',
+      watermark: brief(sourceSettings.watermark, 80).trim(),
+      watermarkOpacity: clamp(sourceSettings.watermarkOpacity, 0.03, 0.4, 0.08),
+      documentLanguage: DOCUMENT_LANGUAGES.has(sourceSettings.documentLanguage) ? sourceSettings.documentLanguage : 'km',
     },
     chapters: chapters.length ? chapters : [{ id: ids(), title: 'Chapter 1', html: '' }],
     createdAt: duplicate ? now : Number(source.createdAt) || now,
