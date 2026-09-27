@@ -10,7 +10,8 @@ import {
   TagSheet,
 } from './EpisodeEditorPage'
 import CompletedStoryConfirmModal from '../../components/author/CompletedStoryConfirmModal'
-import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'.
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('createStory', {
