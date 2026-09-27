@@ -1,0 +1,31 @@
+.sd-ribbon{border:1px solid var(--sd-border);border-radius:14px;background:var(--sd-surface);overflow:hidden;box-shadow:var(--sd-shadow)}
+.sd-ribbon-tabs{display:flex;align-items:end;gap:2px;overflow-x:auto;padding:0 8px;border-bottom:1px solid var(--sd-border);scrollbar-width:thin}
+.sd-ribbon-tab{flex:none;border:0;background:transparent;color:var(--sd-muted);padding:10px 12px 8px;font-size:12px;font-weight:700;border-bottom:2px solid transparent}
+.sd-ribbon-tab:hover{background:var(--sd-faint);color:var(--sd-text)}
+.sd-ribbon-tab.is-active{color:var(--sd-purple);border-bottom-color:var(--sd-purple)}
+.sd-ribbon-content{min-height:94px;overflow-x:auto}
+.sd-ribbon-groups{display:flex;align-items:stretch;min-width:max-content;padding:7px 8px 5px}
+.sd-ribbon-group{position:relative;display:flex;flex-direction:column;justify-content:center;gap:5px;min-height:76px;padding:3px 9px 18px;border-right:1px solid var(--sd-border)}
+.sd-ribbon-group:last-child{border-right:0}
+.sd-ribbon-group-label{position:absolute;bottom:2px;left:7px;right:7px;text-align:center;color:var(--sd-muted);font-size:9px;white-space:nowrap}
+.sd-ribbon-row{display:flex;align-items:center;gap:4px;min-height:30px}
+.sd-ribbon-button{min-height:29px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--sd-text);padding:4px 7px;font-size:11px;white-space:nowrap}
+.sd-ribbon-button:hover:not(:disabled),.sd-ribbon-button.is-active{background:var(--sd-faint);border-color:var(--sd-border);color:var(--sd-purple)}
+.sd-ribbon-select{height:29px;border:1px solid var(--sd-border);border-radius:6px;background:var(--sd-surface);color:var(--sd-text);padding:2px 6px;font-size:11px}
+.sd-ribbon-font-select{width:165px}.sd-ribbon-size-select{width:62px}
+.sd-ribbon-color-control,.sd-ribbon-number-control{display:flex;align-items:center;gap:4px;color:var(--sd-muted);font-size:9px;white-space:nowrap}
+.sd-ribbon-color-control input{width:27px;height:27px;padding:2px;border:1px solid var(--sd-border);border-radius:6px;background:var(--sd-surface)}
+.sd-ribbon-number-control input{width:58px;height:28px;border:1px solid var(--sd-border);border-radius:6px;background:var(--sd-surface);color:var(--sd-text);padding:2px 5px;font-size:10px}
+.sd-ribbon-style-gallery{display:flex;gap:4px;max-width:360px;overflow-x:auto}
+.sd-ribbon-style{min-width:82px;height:52px;border:1px solid var(--sd-border);border-radius:7px;background:var(--sd-surface);color:var(--sd-text);font-family:Georgia,"Noto Serif Khmer",serif;font-size:11px}
+.sd-ribbon-style:hover,.sd-ribbon-style.is-active{background:var(--sd-faint);border-color:var(--sd-purple);color:var(--sd-purple)}
+.sd-ribbon-placeholder{min-height:94px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:var(--sd-muted);font-size:11px}
+.sd-ribbon-placeholder strong{color:var(--sd-text);font-size:13px}
+.sd-ribbon-file{display:grid;grid-template-columns:auto auto minmax(220px,1fr);gap:14px;padding:14px}
+.sd-ribbon-file-primary,.sd-ribbon-file-secondary{display:grid;gap:5px;align-content:start}
+.sd-ribbon-file-button{min-width:120px;min-height:34px;border:1px solid var(--sd-border);border-radius:8px;background:var(--sd-surface);color:var(--sd-text);padding:7px 10px;text-align:left;font-size:11px}
+.sd-ribbon-file-button:hover{background:var(--sd-faint);color:var(--sd-purple)}
+.sd-ribbon-file-info{border-left:1px solid var(--sd-border);padding:7px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.sd-ribbon-file-info strong{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sd-ribbon-file-info span{font-size:10px;color:var(--sd-muted)}
+@media(max-width:700px){.sd-ribbon-content{overflow-x:auto}.sd-ribbon-groups{padding:5px}.sd-ribbon-group{padding-left:6px;padding-right:6px}.sd-ribbon-file{grid-template-columns:1fr 1fr}.sd-ribbon-file-info{grid-column:1/-1;border-left:0;border-top:1px solid var(--sd-border);padding-left:0}}
