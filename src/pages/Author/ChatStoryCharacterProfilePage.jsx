@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('chatStoryCharacterProfile', {
   "en": {
@@ -222,6 +223,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const CHARACTER_IMAGE_MAX_BYTES = 2 * 1024 * 1024
+
 const ROLE_GROUPS = [
   {
     value: 'main',
@@ -299,11 +302,21 @@ function dataUrlToFile(dataUrl, fileName) {
 async function uploadProfileImage(token, imageDataUrl, storyId, characterId) {
   if (!String(imageDataUrl || '').startsWith('data:image/')) return imageDataUrl || null
 
-  const formData = new FormData()
-  formData.append(
-    'image',
-    dataUrlToFile(imageDataUrl, `chat-profile-${storyId}-${characterId}-${Date.now()}.jpg`)
+  const file = dataUrlToFile(
+    imageDataUrl,
+    `chat-profile-${storyId}-${characterId}-${Date.now()}.jpg`
   )
+  const optimized = await optimizeImageForUpload(file, {
+    preset: 'avatar',
+    maxSourceBytes: CHARACTER_IMAGE_MAX_BYTES,
+  })
+
+  if (optimized.file.size > CHARACTER_IMAGE_MAX_BYTES) {
+    throw new Error(getDisplayText('chatStoryCharacterProfile.profileImageTooLarge'))
+  }
+
+  const formData = new FormData()
+  formData.append('image', optimized.file)
   formData.append('folder', 'chat_story_character')
 
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
@@ -691,7 +704,7 @@ const fileInputRef = useRef(null)
       return
     }
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > CHARACTER_IMAGE_MAX_BYTES) {
   setMessage(
     getDisplayText('chatStoryCharacterProfile.profileImageTooLarge')
   )
