@@ -9,6 +9,7 @@ import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPop
 import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('authorPublicPage', {
   en: {
@@ -768,6 +769,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const AUTHOR_PAGE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+
 const tabs = ['Posts', 'Works', 'Store']
 
 function getAuthToken() {
@@ -861,9 +864,21 @@ async function getCroppedImage(imageSrc, pixelCrop) {
 
 async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   const file = dataUrlToFile(imageDataUrl, fileName)
+  const preset =
+    folder === 'author_page_avatar'
+      ? 'avatar'
+      : folder === 'author_page_cover' || folder === 'author_page_slide'
+        ? 'banner'
+        : 'default'
+  const optimized = await optimizeImageForUpload(file, { preset })
+
+  if (optimized.file.size > AUTHOR_PAGE_IMAGE_MAX_BYTES) {
+    throw new Error(getDisplayText('authorPublicPage.failedUploadImage'))
+  }
+
   const formData = new FormData()
 
-  formData.append('image', file)
+  formData.append('image', optimized.file)
   formData.append('folder', folder)
 
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
@@ -2505,6 +2520,11 @@ function handleOpenMessage() {
         return
       }
 
+      if (file.size > AUTHOR_PAGE_IMAGE_MAX_BYTES) {
+        setMessage(getDisplayText('authorPublicPage.failedUploadImage'))
+        return
+      }
+
       const reader = new FileReader()
 
       reader.onload = () => {
@@ -2590,6 +2610,11 @@ function handleOpenMessage() {
 
     if (!file.type.startsWith('image/')) {
       setMessage(getDisplayText('authorPublicPage.selectImage'))
+      return
+    }
+
+    if (file.size > AUTHOR_PAGE_IMAGE_MAX_BYTES) {
+      setMessage(getDisplayText('authorPublicPage.failedUploadImage'))
       return
     }
 
