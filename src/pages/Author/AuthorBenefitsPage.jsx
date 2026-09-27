@@ -386,10 +386,6 @@ registerTranslationNamespace('authorBenefits', {
   },
 })
 
-
-const HERO_IMAGE = '/assets/Author Benefits/Author Benefits 1.png'
-const MANGA_IMAGE = '/assets/Author Benefits/author-benefits-manga-girl.webp'
-
 const BENEFITS = [
   {
     icon: 'fa-solid fa-gem',
