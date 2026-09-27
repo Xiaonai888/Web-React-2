@@ -204,10 +204,14 @@ const MAX_VIDEO_DURATION_SECONDS = 60
 const MODE_CONFIG = {
   reader: {
     apiPath: '/api/reader-stories/me',
+    videoUploadInitPath: '/api/reader-stories/me/video-upload/init',
+    videoUploadFinalizePath: '/api/reader-stories/me/video-upload/finalize',
     returnPath: '/discover',
   },
   author: {
     apiPath: '/api/author-stories/me',
+    videoUploadInitPath: '/api/author-stories/me/video-upload/init',
+    videoUploadFinalizePath: '/api/author-stories/me/video-upload/finalize',
     returnPath: '/author/page',
   },
 }
@@ -295,6 +299,114 @@ function uploadStory({ apiPath, file, textOverlay, token, onProgress }) {
     request.onerror = () => reject(new Error(getDisplayText('storyComposer.networkError')))
     request.ontimeout = () => reject(new Error(getDisplayText('storyComposer.uploadTimeout')))
     request.send(formData)
+  })
+}
+
+
+async function requestStoryVideoUpload({ initPath, file, token }) {
+  const response = await fetch(`${API_BASE_URL}${initPath}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      mime_type: String(file.type || '').toLowerCase(),
+      file_size: file.size,
+      file_name: file.name,
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false || !data.upload_url || !data.upload_token) {
+    throw new Error(data.message || getDisplayText('storyComposer.shareFailed'))
+  }
+
+  return data
+}
+
+function uploadVideoDirectToR2({ uploadUrl, file, onProgress }) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest()
+
+    request.open('PUT', uploadUrl)
+    request.setRequestHeader('Content-Type', String(file.type || '').toLowerCase())
+    request.timeout = 180000
+
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return
+      const percent = Math.round((event.loaded / event.total) * 92)
+      onProgress(Math.min(92, Math.max(1, percent)))
+    }
+
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        onProgress(93)
+        resolve()
+        return
+      }
+
+      reject(new Error(getDisplayText('storyComposer.shareFailed')))
+    }
+
+    request.onerror = () => reject(new Error(getDisplayText('storyComposer.networkError')))
+    request.ontimeout = () => reject(new Error(getDisplayText('storyComposer.uploadTimeout')))
+    request.send(file)
+  })
+}
+
+async function finalizeStoryVideoUpload({
+  finalizePath,
+  uploadToken,
+  textOverlay,
+  token,
+  onProgress,
+}) {
+  onProgress(95)
+
+  const response = await fetch(`${API_BASE_URL}${finalizePath}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      upload_token: uploadToken,
+      caption: textOverlay.trim(),
+      allow_messages: true,
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || getDisplayText('storyComposer.shareFailed'))
+  }
+
+  onProgress(100)
+  return data.story || null
+}
+
+async function uploadStoryVideoDirect({ config, file, textOverlay, token, onProgress }) {
+  const prepared = await requestStoryVideoUpload({
+    initPath: config.videoUploadInitPath,
+    file,
+    token,
+  })
+
+  await uploadVideoDirectToR2({
+    uploadUrl: prepared.upload_url,
+    file,
+    onProgress,
+  })
+
+  return finalizeStoryVideoUpload({
+    finalizePath: config.videoUploadFinalizePath,
+    uploadToken: prepared.upload_token,
+    textOverlay,
+    token,
+    onProgress,
   })
 }
 
@@ -547,22 +659,30 @@ export default function StoryComposer({ mode }) {
       setUploadProgress(0)
       setError('')
 
-      const uploadFile = mediaFile.type.startsWith('image/')
-        ? (
-            await optimizeImageForUpload(mediaFile, {
-              preset: 'post',
-              maxSourceBytes: MAX_PHOTO_BYTES,
-            })
-          ).file
-        : mediaFile
+      if (mediaFile.type.startsWith('video/')) {
+        createdStory = await uploadStoryVideoDirect({
+          config,
+          file: mediaFile,
+          textOverlay,
+          token,
+          onProgress: setUploadProgress,
+        })
+      } else {
+        const uploadFile = (
+          await optimizeImageForUpload(mediaFile, {
+            preset: 'post',
+            maxSourceBytes: MAX_PHOTO_BYTES,
+          })
+        ).file
 
-      createdStory = await uploadStory({
-        apiPath: config.apiPath,
-        file: uploadFile,
-        textOverlay,
-        token,
-        onProgress: setUploadProgress,
-      })
+        createdStory = await uploadStory({
+          apiPath: config.apiPath,
+          file: uploadFile,
+          textOverlay,
+          token,
+          onProgress: setUploadProgress,
+        })
+      }
 
       const hasExtras = Boolean(
         textOverlay.trim() ||
