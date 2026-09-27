@@ -64,6 +64,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saving: 'Saving...',
     saveContinue: 'Save & Continue',
     backToMethods: 'Back to payout methods',
+    errorTitle: 'Something went wrong',
+    closeError: 'Close',
   },
   km: {
     back: 'ត្រឡប់ក្រោយ',
@@ -124,6 +126,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saving: 'កំពុងរក្សាទុក...',
     saveContinue: 'រក្សាទុក និងបន្ត',
     backToMethods: 'ត្រឡប់ទៅវិធីទទួលប្រាក់',
+    errorTitle: 'មានបញ្ហាកើតឡើង',
+    closeError: 'បិទ',
   },
   zh: {
     back: '返回',
@@ -184,6 +188,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saving: '保存中...',
     saveContinue: '保存并继续',
     backToMethods: '返回收款方式',
+    errorTitle: '出现问题',
+    closeError: '关闭',
   },
   ja: {
     back: '戻る',
@@ -244,6 +250,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saving: '保存中...',
     saveContinue: '保存して続行',
     backToMethods: '受取方法へ戻る',
+    errorTitle: 'エラーが発生しました',
+    closeError: '閉じる',
   },
   ko: {
     back: '뒤로',
@@ -304,6 +312,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saving: '저장 중...',
     saveContinue: '저장 후 계속',
     backToMethods: '지급 방법으로 돌아가기',
+    errorTitle: '문제가 발생했습니다',
+    closeError: '닫기',
   },
 })
 
@@ -689,7 +699,7 @@ function CurrentMethodCard({ method, onView }) {
   )
 }
 
-function ImageUpload({ value, onChange }) {
+function ImageUpload({ value, onChange, onError }) {
   const { t } = useDisplayTranslation()
 
   async function handleFile(event) {
@@ -698,10 +708,11 @@ function ImageUpload({ value, onChange }) {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      alert(t('authorPaymentMethod.chooseImage'))
+      onError?.(t('authorPaymentMethod.chooseImage'))
       return
     }
 
+    onError?.('')
     const reader = new FileReader()
 
     reader.onload = () => {
@@ -883,6 +894,40 @@ function NoteCard({ children, tone = 'gold' }) {
       <i className="fa-solid fa-heart mr-2 text-[9px] opacity-75" />
       {children}
       <i className="fa-solid fa-star absolute right-3 top-3 text-[8px] text-[#efb63d]" />
+    </div>
+  )
+}
+
+function ErrorPopup({ message, onClose }) {
+  const { t } = useDisplayTranslation()
+
+  if (!message) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 backdrop-blur-[2px]"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="author-payment-error-title"
+    >
+      <div className="w-full max-w-[520px] rounded-[28px] border border-[#efcad7] bg-[var(--shadow-bg-surface)] p-6 shadow-[0_24px_80px_rgba(61,38,82,0.28)]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff0f5] text-[#cf557f]">
+          <i className="fa-solid fa-circle-exclamation text-[24px]" />
+        </div>
+        <h2 id="author-payment-error-title" className="mt-4 text-center text-[20px] font-black text-[var(--shadow-text-primary)]">
+          {t('authorPaymentMethod.errorTitle')}
+        </h2>
+        <p className="mt-3 break-words rounded-[18px] bg-[var(--shadow-bg-page)] px-4 py-4 text-[13px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">
+          {message}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[linear-gradient(90deg,#8058b8_0%,#a568d0_100%)] text-[13px] font-black text-white shadow-[0_9px_20px_rgba(109,72,155,0.22)] active:scale-[0.99]"
+        >
+          {t('authorPaymentMethod.closeError')}
+        </button>
+      </div>
     </div>
   )
 }
@@ -1122,6 +1167,8 @@ export default function AuthorPaymentMethodPage() {
         </div>
       </div>
 
+      <ErrorPopup message={error} onClose={() => setError('')} />
+
       <main className="mx-auto max-w-[760px] space-y-4 px-3 pt-4 sm:px-4">
         {loading ? <LoadingPage /> : null}
 
@@ -1159,13 +1206,6 @@ export default function AuthorPaymentMethodPage() {
                 <div className="mt-4 rounded-[19px] border border-[#c7e5ce] bg-[#f1fbf3] px-4 py-3 text-[11px] font-bold leading-5 text-[#458b58]">
                   <i className="fa-solid fa-circle-check mr-2 text-[10px]" />
                   {success}
-                </div>
-              ) : null}
-
-              {error ? (
-                <div className="mt-4 rounded-[19px] border border-[#efcad7] bg-[#fff3f7] px-4 py-3 text-[11px] font-bold leading-5 text-[#c9577c]">
-                  <i className="fa-solid fa-circle-exclamation mr-2 text-[10px]" />
-                  {error}
                 </div>
               ) : null}
 
@@ -1216,7 +1256,7 @@ export default function AuthorPaymentMethodPage() {
                     placeholder={t('authorPaymentMethod.bankExample')}
                     icon="fa-solid fa-building-columns"
                   />
-                  <ImageUpload value={qrImageUrl} onChange={setQrImageUrl} />
+                  <ImageUpload value={qrImageUrl} onChange={setQrImageUrl} onError={setError} />
 
                   <NoteCard tone="pink">
                     {t('authorPaymentMethod.bankNote1')}
@@ -1302,13 +1342,6 @@ export default function AuthorPaymentMethodPage() {
                     {t('authorPaymentMethod.phoneNote2')}
                   </NoteCard>
                 </>
-              ) : null}
-
-              {error ? (
-                <div className="rounded-[19px] border border-[#efcad7] bg-[#fff3f7] px-4 py-3 text-[11px] font-bold leading-5 text-[#c9577c]">
-                  <i className="fa-solid fa-circle-exclamation mr-2 text-[10px]" />
-                  {error}
-                </div>
               ) : null}
 
               <button
