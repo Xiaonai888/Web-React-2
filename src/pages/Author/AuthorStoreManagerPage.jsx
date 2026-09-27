@@ -4,6 +4,7 @@ import AuthorPageFooter from '../../components/AuthorPageFooter'
 import { SalesReportsSettingsMenuItem, SalesReportsSettingsPage } from './SalesReportsSettings'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 
 registerTranslationNamespace('authorStoreManager', {
@@ -150,7 +151,7 @@ registerTranslationNamespace('authorStoreManager', {
     "noOrders": "No orders yet",
     "noOrdersHelp": "New confirmed orders from your author store will appear here.",
     "imageNumber": "Image {{number}}",
-    "choose": "Click or drop image",
+    "choose": "Choose",
     "clear": "Clear",
     "coverRecommendation": "Recommended vertical 2:3 ratio, JPG, PNG, or WEBP.",
     "bookCoverPreview": "Book Cover Preview",
@@ -436,7 +437,7 @@ registerTranslationNamespace('authorStoreManager', {
     "noOrders": "មិនទាន់មានការបញ្ជាទិញ",
     "noOrdersHelp": "ការបញ្ជាទិញថ្មីដែលបានបញ្ជាក់ពីហាងអ្នកនិពន្ធនឹងបង្ហាញនៅទីនេះ។",
     "imageNumber": "រូប {{number}}",
-    "choose": "ចុច ឬទម្លាក់រូបភាព",
+    "choose": "ជ្រើស",
     "clear": "សម្អាត",
     "coverRecommendation": "ណែនាំរូបបញ្ឈរ 2:3 ប្រភេទ JPG, PNG ឬ WEBP។",
     "bookCoverPreview": "មើលគម្របសៀវភៅជាមុន",
@@ -722,7 +723,7 @@ registerTranslationNamespace('authorStoreManager', {
     "noOrders": "暂无订单",
     "noOrdersHelp": "作者商店中新确认的订单会显示在这里。",
     "imageNumber": "图片 {{number}}",
-    "choose": "点击或拖放图片",
+    "choose": "选择",
     "clear": "清除",
     "coverRecommendation": "建议使用 2:3 竖图，JPG、PNG 或 WEBP。",
     "bookCoverPreview": "图书封面预览",
@@ -819,8 +820,8 @@ registerTranslationNamespace('authorStoreManager', {
     "coverSectionHelp": "上传商品卡片上显示的竖版封面。",
     "mainCover": "主封面",
     "coverPreview": "封面预览",
-    "chooseReplaceCover": "点击或拖放以替换封面",
-    "chooseCover": "点击或拖放图书封面到这里",
+    "chooseReplaceCover": "选择或替换图书封面",
+    "chooseCover": "选择图书封面",
     "gallerySectionTitle": "图书图库",
     "gallerySectionHelp": "上传商品详情页显示的额外竖版图片。",
     "extraBookImages": "额外图书图片",
@@ -1008,7 +1009,7 @@ registerTranslationNamespace('authorStoreManager', {
     "noOrders": "注文はまだありません",
     "noOrdersHelp": "作者ストアで確認された新しい注文がここに表示されます。",
     "imageNumber": "画像 {{number}}",
-    "choose": "クリックまたは画像をドロップ",
+    "choose": "選択",
     "clear": "クリア",
     "coverRecommendation": "2:3の縦画像（JPG、PNG、WEBP）を推奨します。",
     "bookCoverPreview": "書籍表紙プレビュー",
@@ -1105,8 +1106,8 @@ registerTranslationNamespace('authorStoreManager', {
     "coverSectionHelp": "商品カードに表示する縦表紙をアップロードします。",
     "mainCover": "メイン表紙",
     "coverPreview": "表紙プレビュー",
-    "chooseReplaceCover": "クリックまたはドロップして表紙を変更",
-    "chooseCover": "クリックまたは表紙画像をここにドロップ",
+    "chooseReplaceCover": "書籍表紙を選択または置換",
+    "chooseCover": "書籍表紙を選択",
     "gallerySectionTitle": "書籍ギャラリー",
     "gallerySectionHelp": "商品詳細ページに表示する追加の縦画像をアップロードします。",
     "extraBookImages": "追加書籍画像",
@@ -1294,7 +1295,7 @@ registerTranslationNamespace('authorStoreManager', {
     "noOrders": "아직 주문이 없습니다",
     "noOrdersHelp": "작가 스토어의 새 확인 주문이 여기에 표시됩니다.",
     "imageNumber": "이미지 {{number}}",
-    "choose": "클릭하거나 이미지를 놓으세요",
+    "choose": "선택",
     "clear": "지우기",
     "coverRecommendation": "2:3 세로 비율의 JPG, PNG 또는 WEBP를 권장합니다.",
     "bookCoverPreview": "도서 표지 미리보기",
@@ -1391,8 +1392,8 @@ registerTranslationNamespace('authorStoreManager', {
     "coverSectionHelp": "상품 카드에 표시할 세로 표지를 업로드합니다.",
     "mainCover": "메인 표지",
     "coverPreview": "표지 미리보기",
-    "chooseReplaceCover": "클릭하거나 놓아서 표지를 교체하세요",
-    "chooseCover": "클릭하거나 책 표지를 여기에 놓으세요",
+    "chooseReplaceCover": "도서 표지 선택 또는 교체",
+    "chooseCover": "도서 표지 선택",
     "gallerySectionTitle": "도서 갤러리",
     "gallerySectionHelp": "상품 상세 페이지에 표시할 추가 세로 이미지를 업로드합니다.",
     "extraBookImages": "추가 도서 이미지",
@@ -1477,6 +1478,7 @@ const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Downloa
 const ORDER_REPORT_LIMIT = 20
 const ORDER_REFRESH_INTERVAL_MS = 60000
 const ORDER_MAX_AUTO_REFRESHES = 10
+const STORE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 
 function withSystemCategories(categories) {
@@ -1581,8 +1583,12 @@ async function uploadCoverImage(file) {
 
   if (!token) throw new Error(storeText('pleaseLogin'))
 
+  const optimized = await optimizeImageForUpload(file, {
+    preset: 'cover',
+    maxSourceBytes: STORE_IMAGE_MAX_BYTES,
+  })
   const formData = new FormData()
-  formData.append('image', file)
+  formData.append('image', optimized.file)
   formData.append('folder', 'author_store_cover')
 
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
@@ -1608,8 +1614,12 @@ async function uploadGalleryImage(file) {
 
   if (!token) throw new Error(storeText('pleaseLogin'))
 
+  const optimized = await optimizeImageForUpload(file, {
+    preset: 'gallery',
+    maxSourceBytes: STORE_IMAGE_MAX_BYTES,
+  })
   const formData = new FormData()
-  formData.append('image', file)
+  formData.append('image', optimized.file)
   formData.append('folder', 'author_store_gallery')
 
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
@@ -3874,10 +3884,7 @@ function GallerySlot({ image, index, onChoose, onRemove, onDrop }) {
       <button
         type="button"
         onClick={onChoose}
-        onDragOver={(event) => {
-          event.preventDefault()
-          event.dataTransfer.dropEffect = 'copy'
-        }}
+        onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault()
           onDrop?.(event.dataTransfer.files?.[0])
@@ -3967,7 +3974,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > STORE_IMAGE_MAX_BYTES) {
       onNotify?.(storeText('imageTooLarge'), 'error')
       return
     }
@@ -4001,7 +4008,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
     return
   }
 
-  if (file.size > 5 * 1024 * 1024) {
+  if (file.size > STORE_IMAGE_MAX_BYTES) {
     onNotify?.(storeText('imageTooLarge'), 'error')
     return
   }
@@ -4203,9 +4210,6 @@ accessRule,
   ref={fileInputRef}
   type="file"
   accept="image/*"
-  onClick={(event) => {
-    event.currentTarget.value = ''
-  }}
   onChange={(event) => selectCover(event.target.files?.[0])}
   className="hidden"
 />
@@ -4235,9 +4239,6 @@ accessRule,
                   }}
                   type="file"
                   accept="image/*"
-                  onClick={(event) => {
-                    event.currentTarget.value = ''
-                  }}
                   onChange={(event) => selectGalleryImage(index, event.target.files?.[0])}
                   className="hidden"
                 />
