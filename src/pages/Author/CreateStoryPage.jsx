@@ -10,7 +10,7 @@ import {
   TagSheet,
 } from './EpisodeEditorPage'
 import CompletedStoryConfirmModal from '../../components/author/CompletedStoryConfirmModal'
-import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'.
+import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -90,9 +90,16 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   if (!imageDataUrl || String(imageDataUrl).startsWith('http')) return imageDataUrl || null
 
   const file = dataUrlToFile(imageDataUrl, fileName)
+  const preset =
+    folder === 'story_cover'
+      ? 'cover'
+      : folder === 'story_landscape_thumbnail' || folder === 'story_slide'
+        ? 'banner'
+        : 'default'
+  const optimized = await optimizeImageForUpload(file, { preset })
   const formData = new FormData()
 
-  formData.append('image', file)
+  formData.append('image', optimized.file)
   formData.append('folder', folder)
 
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
