@@ -14,6 +14,11 @@ import {
   saveHomeCache,
 } from '../../utils/homeDataCache'
 import {
+  createReaderAuthorMessageRequest,
+  createReaderReaderMessageRequest,
+  sendChatMessage,
+} from '../../services/chatApi'
+import {
   REACTIONS,
   getReactionMeta,
 } from '../social/reactions/reactionConfig'
@@ -384,13 +389,13 @@ function StoryReactionIcon({
       aria-pressed={selected}
       onClick={() => onReact(reaction.type)}
       onContextMenu={(event) => event.preventDefault()}
-      className={`flex h-11 w-[clamp(32px,8vw,42px)] shrink-0 touch-manipulation items-center justify-center border-0 bg-transparent p-0 transition-opacity duration-150 disabled:opacity-50 ${selected ? 'opacity-100 brightness-110' : 'opacity-75 hover:opacity-100'}`}
+      className={`flex h-12 w-12 shrink-0 touch-manipulation items-center justify-center border-0 bg-transparent p-0 transition-opacity duration-150 disabled:opacity-50 ${selected ? 'opacity-100 brightness-110' : 'opacity-80 hover:opacity-100'}`}
     >
       <img
         src={reaction.src}
         alt=""
         draggable="false"
-        className="h-[clamp(30px,8vw,40px)] w-[clamp(30px,8vw,40px)] select-none object-contain"
+        className="h-[42px] w-[42px] select-none object-contain"
       />
     </button>
   )
@@ -619,6 +624,14 @@ function StoryViewer({
     reactionBurst,
     setReactionBurst,
   ] = useState(null)
+  const [messageText, setMessageText] =
+    useState('')
+  const [messageSending, setMessageSending] =
+    useState(false)
+  const [messageError, setMessageError] =
+    useState('')
+  const [messageFocused, setMessageFocused] =
+    useState(false)
   const [
     deleteSheetOpen,
     setDeleteSheetOpen,
@@ -641,12 +654,16 @@ function StoryViewer({
     setTrayOpen(false)
     setOwnerMenuOpen(false)
     setViewerMenuOpen(false)
+    setMessageText('')
+    setMessageError('')
+    setMessageFocused(false)
   }, [group?.key])
 
   useEffect(() => {
     if (
       !story ||
-      story.media_type === 'video'
+      story.media_type === 'video' ||
+      messageFocused
     ) {
       setProgress(0)
       return undefined
@@ -691,6 +708,7 @@ function StoryViewer({
   }, [
     story?.id,
     story?.media_type,
+    messageFocused,
     storyIndex,
     stories.length,
     onClose,
@@ -1008,6 +1026,100 @@ function StoryViewer({
       )
     } finally {
       setReactionSaving(false)
+    }
+  }
+
+  async function sendStoryMessage(event) {
+    event?.preventDefault?.()
+    event?.stopPropagation?.()
+
+    const text = messageText.trim()
+
+    if (
+      !text ||
+      messageSending ||
+      group.is_owner
+    ) {
+      return
+    }
+
+    if (!getAuthToken()) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setMessageSending(true)
+      setMessageError('')
+
+      if (creator.type === 'author') {
+        if (!creator.id) {
+          throw new Error('Author is unavailable')
+        }
+
+        await createReaderAuthorMessageRequest({
+          authorPageId: creator.id,
+          message: text,
+        })
+      } else {
+        const readerUserId = String(
+          creator.user_id || creator.id || ''
+        ).trim()
+
+        if (!readerUserId) {
+          throw new Error('Reader is unavailable')
+        }
+
+        const data =
+          await createReaderReaderMessageRequest({
+            readerUserId,
+            message: text,
+          })
+
+        const conversation = data?.conversation
+
+        if (!conversation?.id) {
+          throw new Error(
+            'Conversation was not created'
+          )
+        }
+
+        if (!data.created) {
+          if (
+            conversation.can_send ||
+            conversation.request_status ===
+              'accepted'
+          ) {
+            await sendChatMessage(
+              conversation.id,
+              text
+            )
+          } else if (
+            conversation.request_status ===
+              'pending'
+          ) {
+            throw new Error(
+              'Waiting for this reader to accept your message request.'
+            )
+          } else {
+            throw new Error(
+              'Messages are unavailable for this conversation.'
+            )
+          }
+        }
+      }
+
+      setMessageText('')
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+    } catch (error) {
+      setMessageError(
+        error.message ||
+          'Failed to send message'
+      )
+    } finally {
+      setMessageSending(false)
     }
   }
 
@@ -1513,8 +1625,13 @@ function StoryViewer({
                 </div>
               ) : null}
 
-              <div className="absolute inset-x-0 bottom-0 z-40 bg-black px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-2">
-                <article className="mx-auto flex w-full max-w-[480px] items-center justify-between gap-0.5">
+              <div
+                className="absolute inset-x-0 bottom-0 z-40 bg-black px-2 pb-[max(10px,env(safe-area-inset-bottom))] pt-2"
+                onClick={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                onTouchEnd={(event) => event.stopPropagation()}
+              >
+                <article className="mx-auto flex w-full max-w-[520px] items-center gap-1.5">
                   <button
                     type="button"
                     aria-label="Repost this story"
@@ -1531,22 +1648,75 @@ function StoryViewer({
                         },
                       },
                     })}
-                    className="flex h-11 min-w-[38px] shrink-0 items-center justify-center gap-1 text-white/90 transition-opacity active:opacity-60 min-[390px]:min-w-[70px]"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#3a3a3c] text-white/95 transition active:scale-95"
                   >
                     <i className="fa-solid fa-retweet text-[18px]" aria-hidden="true" />
-                    <span className="hidden text-[11px] min-[390px]:inline">Repost</span>
                   </button>
-                  {REACTIONS.map((reaction) => (
-                    <StoryReactionIcon
-                      key={reaction.type}
-                      reaction={reaction}
-                      reactionType={reactionType}
-                      count={Number(reactionCounts?.[reaction.type] || 0)}
-                      busy={reactionLoading || reactionSaving}
-                      onReact={toggleReaction}
-                    />
-                  ))}
+
+                  {story.allow_messages !== false ? (
+                    <form
+                      onSubmit={sendStoryMessage}
+                      className="flex h-11 w-[clamp(145px,42vw,190px)] shrink-0 items-center gap-1 rounded-full bg-[#3a3a3c] px-3"
+                    >
+                      <input
+                        type="text"
+                        value={messageText}
+                        onChange={(event) => {
+                          setMessageText(event.target.value)
+                          if (messageError) {
+                            setMessageError('')
+                          }
+                        }}
+                        onFocus={() => {
+                          setMessageFocused(true)
+                          videoRef.current?.pause?.()
+                        }}
+                        onBlur={() => {
+                          setMessageFocused(false)
+                          videoRef.current
+                            ?.play?.()
+                            ?.catch?.(() => {})
+                        }}
+                        maxLength={2000}
+                        placeholder="Send message..."
+                        disabled={messageSending}
+                        className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-white outline-none placeholder:text-white/75 disabled:opacity-60"
+                      />
+                      {messageText.trim() ? (
+                        <button
+                          type="submit"
+                          disabled={messageSending}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#60a5fa] active:scale-90 disabled:opacity-50"
+                          aria-label="Send message"
+                        >
+                          <i className="fa-solid fa-paper-plane text-[15px]" />
+                        </button>
+                      ) : null}
+                    </form>
+                  ) : null}
+
+                  <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overscroll-x-contain scroll-smooth">
+                    {REACTIONS.map((reaction) => (
+                      <StoryReactionIcon
+                        key={reaction.type}
+                        reaction={reaction}
+                        reactionType={reactionType}
+                        count={Number(reactionCounts?.[reaction.type] || 0)}
+                        busy={reactionLoading || reactionSaving}
+                        onReact={toggleReaction}
+                      />
+                    ))}
+                  </div>
                 </article>
+
+                {messageError ? (
+                  <div
+                    role="alert"
+                    className="mx-auto mt-1 max-w-[520px] truncate px-1 text-[10px] font-medium text-[#fca5a5]"
+                  >
+                    {messageError}
+                  </div>
+                ) : null}
               </div>
             </>
           ) : null}
