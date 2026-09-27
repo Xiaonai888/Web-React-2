@@ -804,20 +804,8 @@ export default function AuthorBenefitsPage() {
           <Sparkles className="absolute right-5 top-4" />
           <Tape className="right-4 top-[74px] rotate-[8deg]" />
 
-          <div className="relative min-h-[300px] pl-[46px] pr-4 pt-5">
-            <div className="absolute right-[-14px] top-[52px] h-[218px] w-[218px] sm:right-3 sm:top-[30px] sm:h-[255px] sm:w-[255px]">
-              <img
-                src={MANGA_IMAGE}
-                alt={t('authorBenefits.authorBenefits')}
-                onError={(event) => {
-                  event.currentTarget.onerror = null
-                  event.currentTarget.src = HERO_IMAGE
-                }}
-                className="h-full w-full object-contain object-bottom drop-shadow-[0_14px_26px_rgba(76,49,110,0.18)]"
-              />
-            </div>
-
-            <div className="relative z-10 max-w-[62%] sm:max-w-[56%]">
+          <div className="relative min-h-[326px] pb-7 pl-[46px] pr-4 pt-5">
+            <div className="relative z-10 max-w-[92%] sm:max-w-[72%]">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f6b0cc] px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-white">
                 <i className="fa-solid fa-heart text-[7px]" />
                 {t('authorBenefits.creatorProgramsRules')}
