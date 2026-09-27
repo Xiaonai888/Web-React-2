@@ -1212,10 +1212,7 @@ function StoryViewer({
   }
 
   function handleSwipeStart(event) {
-    if (
-      !group.is_owner ||
-      event.touches.length !== 1
-    ) {
+    if (event.touches.length !== 1) {
       return
     }
 
@@ -1228,10 +1225,7 @@ function StoryViewer({
   }
 
   function handleSwipeEnd(event) {
-    if (
-      !group.is_owner ||
-      !swipeStartRef.current
-    ) {
+    if (!swipeStartRef.current) {
       return
     }
 
@@ -1448,16 +1442,6 @@ function StoryViewer({
                 </button>
               )}
 
-              {!group.is_owner ? (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
-                  aria-label="Close story"
-                >
-                  <i className="fa-solid fa-xmark text-[20px]" />
-                </button>
-              ) : null}
             </div>
           </div>
 
