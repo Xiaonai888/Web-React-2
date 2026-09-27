@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PageShell, PageHeader, SurfaceCard, PageLoadingState, PageErrorState } from '../../components/common/PagePrimitives'
+import { PageLoadingState, PageErrorState } from '../../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -14,6 +14,50 @@ registerTranslationNamespace('authorStoryPayoutStatus', {
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
 const money = (value) => `$${Math.max(0, Number(value) || 0).toFixed(2)}`
+const paperGrid = {
+  backgroundImage: 'linear-gradient(rgba(115,89,145,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(115,89,145,0.035) 1px, transparent 1px)',
+  backgroundSize: '22px 22px',
+}
+
+function Tape({ className = '' }) {
+  return <span aria-hidden="true" className={`pointer-events-none absolute h-5 w-14 rounded-[4px] border border-[#e5c9ee] bg-[#eadcff]/80 shadow-sm ${className}`} />
+}
+
+function Sparkles({ className = '' }) {
+  return <div aria-hidden="true" className={`pointer-events-none select-none text-[12px] tracking-[7px] ${className}`}><span className="text-[#f4a5c6]">♥</span><span className="text-[#e6b654]">★</span><span className="text-[#9a78d5]">✦</span></div>
+}
+
+function IconBubble({ icon, tone = 'purple', size = 'normal' }) {
+  const tones = {
+    purple: 'border-[#d9c9ee] bg-[#eee6ff] text-[#7d5ab2]',
+    pink: 'border-[#f0c9db] bg-[#ffe6f0] text-[#dc6796]',
+    gold: 'border-[#ecd6a1] bg-[#fff2cd] text-[#bd8518]',
+    blue: 'border-[#cedaf1] bg-[#e8efff] text-[#5f78bd]',
+  }
+
+  return <span className={`flex shrink-0 items-center justify-center rounded-[20px] border ${tones[tone] || tones.purple} ${size === 'large' ? 'h-14 w-14 text-[22px]' : 'h-11 w-11 text-[16px]'}`}><i className={icon} /></span>
+}
+
+function PaperCard({ children, className = '' }) {
+  return <section className={`relative overflow-hidden rounded-[28px] border border-[#ddcfeb] bg-[var(--shadow-bg-surface)] shadow-[0_12px_30px_rgba(86,61,118,0.07)] ${className}`} style={paperGrid}>{children}</section>
+}
+
+function MiniStat({ label, value, tone, icon }) {
+  const tones = {
+    pink: 'border-[#efc9dc] bg-[#fff2f7]',
+    purple: 'border-[#d7c8ee] bg-[#f7f2ff]',
+  }
+
+  return (
+    <div className={`flex min-h-[92px] items-center gap-3 rounded-[22px] border p-3.5 ${tones[tone] || tones.purple}`}>
+      <IconBubble icon={icon} tone={tone} />
+      <div className="min-w-0">
+        <div className="text-[11px] font-bold leading-4 text-[#846e9b]">{label}</div>
+        <div className="mt-1 text-[20px] font-black tracking-[-0.03em] text-[#37156f] tabular-nums">{value}</div>
+      </div>
+    </div>
+  )
+}
 
 export default function AuthorStoryPayoutStatusPage() {
   const navigate = useNavigate()
@@ -22,12 +66,12 @@ export default function AuthorStoryPayoutStatusPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [version, setVersion] = useState(0)
-
   const refresh = useCallback(() => setVersion((current) => current + 1), [])
 
   useEffect(() => {
     let cancelled = false
     const controller = new AbortController()
+
     async function load() {
       setLoading(true)
       setError('')
@@ -51,8 +95,12 @@ export default function AuthorStoryPayoutStatusPage() {
         if (!cancelled) setLoading(false)
       }
     }
+
     load()
-    return () => { cancelled = true; controller.abort() }
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
   }, [navigate, t, version])
 
   const balance = data?.balance || {}
@@ -65,25 +113,142 @@ export default function AuthorStoryPayoutStatusPage() {
   const paymentPath = '/author/payment-method?back=%2Fauthor%2Fpayout-status'
   const minimum = Math.max(10, Number(balance.minimum_payout_usd) || 10)
   const progress = Math.min(100, Math.round((Math.max(0, Number(balance.ready_usd) || 0) / minimum) * 100))
+  const statusIcon = statusKey === 'ready' ? 'fa-solid fa-circle-check' : statusKey === 'scheduled' ? 'fa-solid fa-paper-plane' : statusKey === 'awaitingReceipt' ? 'fa-solid fa-receipt' : statusKey === 'missing' ? 'fa-solid fa-triangle-exclamation' : 'fa-regular fa-calendar'
 
   return (
-    <PageShell className="pb-20">
-      <PageHeader title={t('authorStoryPayoutStatus.title')} subtitle={t('authorStoryPayoutStatus.subtitle')} onBack={() => navigate('/author/income')} backLabel={t('authorStoryPayoutStatus.back')} right={<button type="button" onClick={refresh} className="app-muted rounded-full px-3 py-2 text-xs font-bold">{t('authorStoryPayoutStatus.refresh')}</button>} />
+    <div className="min-h-screen bg-[linear-gradient(180deg,#fbf8ff_0%,#f7f2fb_46%,#fbf8ff_100%)] pb-20">
+      <header className="sticky top-0 z-30 border-b border-[#eadff1] bg-[#fffdfb]/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-[760px] items-center justify-between gap-3">
+          <button type="button" onClick={() => navigate('/author/income')} aria-label={t('authorStoryPayoutStatus.back')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#e3d5ed] bg-white text-[#7b59a7] shadow-[0_4px_12px_rgba(87,62,116,0.08)] active:scale-95">
+            <i className="fa-solid fa-chevron-left text-[12px]" />
+          </button>
+          <div className="min-w-0 flex-1 text-center">
+            <h1 className="truncate text-[18px] font-black tracking-[-0.03em] text-[#35166d]">{t('authorStoryPayoutStatus.title')} <span className="text-[#ef75a9]">♥</span></h1>
+            <p className="mt-0.5 truncate text-[9px] font-black uppercase tracking-[0.08em] text-[#9b8cab]">{t('authorStoryPayoutStatus.subtitle')}</p>
+          </div>
+          <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#e4d7ee] bg-white text-[#7650aa] shadow-[0_4px_12px_rgba(87,62,116,0.08)]"><i className="fa-solid fa-circle-info text-[14px]" /></span>
+        </div>
+      </header>
+
       <main className="mx-auto grid max-w-[760px] gap-4 px-4 py-5">
         {loading ? <PageLoadingState label={t('authorStoryPayoutStatus.loading')} /> : null}
         {!loading && error ? <PageErrorState title={error} actionLabel={t('authorStoryPayoutStatus.retry')} onAction={refresh} /> : null}
-        {!loading && !error && data ? <>
-          <SurfaceCard className="space-y-4 p-5">
-            <div className="flex items-center gap-3"><span className="app-elevated flex h-11 w-11 items-center justify-center rounded-full text-xl" aria-hidden="true">💎</span><div><div className="app-muted text-xs font-semibold">{t('authorStoryPayoutStatus.unpaid')}</div><div className="app-title text-3xl font-black tabular-nums">{money(balance.unpaid_usd)}</div></div></div>
-            <div className="grid grid-cols-2 gap-3"><div className="app-soft rounded-2xl p-3"><div className="app-muted text-[11px]">{t('authorStoryPayoutStatus.eligible')}</div><div className="app-title mt-1 text-lg font-bold tabular-nums">{money(balance.ready_usd)}</div></div><div className="app-soft rounded-2xl p-3"><div className="app-muted text-[11px]">{t('authorStoryPayoutStatus.minimum')}</div><div className="app-title mt-1 text-lg font-bold tabular-nums">{money(minimum)}</div></div></div>
-            <div className="h-2 overflow-hidden rounded-full bg-[var(--shadow-bg-elevated)]"><div className="h-full rounded-full bg-purple-500" style={{ width: `${progress}%` }} /></div>
-            <p className="app-muted text-xs leading-5">{t('authorStoryPayoutStatus.note')}</p>
-          </SurfaceCard>
-          <SurfaceCard className="space-y-2 p-5"><h2 className="app-title text-base font-black">{t(`authorStoryPayoutStatus.${statusKey}`)}</h2><p className="app-muted text-xs leading-6">{t(`authorStoryPayoutStatus.${statusKey}Body`)}</p></SurfaceCard>
-          <SurfaceCard className="space-y-3 p-5"><div className="flex items-center justify-between gap-3"><h2 className="app-title text-base font-black">{t(`authorStoryPayoutStatus.${connected ? 'bankConnected' : 'bankMissing'}`)}</h2><span className="text-xl" aria-hidden="true">{connected ? '✓' : '⌁'}</span></div>{connected ? <p className="app-title text-sm font-semibold">{methodName}</p> : null}{payment.qr_image_url ? <img src={payment.qr_image_url} alt="Bank QR" className="max-h-32 max-w-32 rounded-xl object-contain" /> : null}<p className="app-muted text-xs leading-5">{t('authorStoryPayoutStatus.bankHelp')}</p><button type="button" onClick={() => navigate(paymentPath)} className="w-full rounded-full bg-purple-600 px-4 py-3 text-sm font-black text-white">{t(`authorStoryPayoutStatus.${connected ? 'changeBank' : 'addBank'}`)}</button></SurfaceCard>
-          <SurfaceCard className="space-y-2 p-5"><h2 className="app-title text-base font-black">{t('authorStoryPayoutStatus.latest')}</h2>{latest ? <><p className="app-muted text-xs">{t('authorStoryPayoutStatus.month')}: {latest.payout_month}</p><p className="app-title text-xl font-black tabular-nums">{t('authorStoryPayoutStatus.amount')}: {money(latest.net_payout_usd)}</p><p className="app-muted text-xs">{t(`authorStoryPayoutStatus.${latest.status === 'paid' ? 'paid' : latest.status === 'awaiting_receipt' ? 'awaitingReceipt' : latest.status === 'scheduled' ? 'scheduled' : latest.status === 'missing_payment_method' ? 'missing' : 'pending'}`)}</p></> : <p className="app-muted text-xs">{t('authorStoryPayoutStatus.noPayout')}</p>}</SurfaceCard>
-        </> : null}
+
+        {!loading && !error && data ? (
+          <>
+            <PaperCard className="p-4 sm:p-5">
+              <Tape className="-right-3 top-4 rotate-[8deg]" />
+              <Sparkles className="absolute right-5 top-14 opacity-80" />
+              <div className="absolute bottom-0 left-0 top-0 hidden w-7 sm:block" aria-hidden="true">
+                <span className="absolute left-2 top-16 h-3 w-6 rounded-full border-2 border-[#d3a77a] bg-[#fff7ee]" />
+                <span className="absolute left-2 top-[108px] h-3 w-6 rounded-full border-2 border-[#d3a77a] bg-[#fff7ee]" />
+                <span className="absolute left-2 top-[152px] h-3 w-6 rounded-full border-2 border-[#d3a77a] bg-[#fff7ee]" />
+                <span className="absolute left-2 top-[196px] h-3 w-6 rounded-full border-2 border-[#d3a77a] bg-[#fff7ee]" />
+              </div>
+
+              <div className="relative sm:pl-5">
+                <div className="inline-flex rounded-[13px] border border-[#bba1e7] bg-[linear-gradient(90deg,#8e68cf_0%,#a679df_100%)] px-4 py-2 text-[12px] font-black text-white shadow-[0_6px_14px_rgba(111,77,161,0.18)]"><span className="mr-1.5 text-[#ffe38a]">★</span>{t('authorStoryPayoutStatus.unpaid')}</div>
+
+                <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_210px] sm:items-center">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <IconBubble icon="fa-solid fa-gem" tone="blue" size="large" />
+                      <div className="text-[42px] font-black leading-none tracking-[-0.05em] text-[#37156f] tabular-nums">{money(balance.unpaid_usd)}</div>
+                    </div>
+                    <p className="mt-4 max-w-[430px] text-[12px] font-semibold leading-6 text-[#6f5e84]">{t('authorStoryPayoutStatus.note')}</p>
+                  </div>
+
+                  <div className="relative flex min-h-[150px] items-center justify-center rounded-[26px] border border-dashed border-[#dac8ec] bg-[linear-gradient(145deg,#fff4fa_0%,#f0e8ff_100%)]">
+                    <div className="text-center">
+                      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] border border-[#e1d2ed] bg-white/80 text-[30px] text-[#8a63bd] shadow-sm"><i className="fa-solid fa-book-open" /></div>
+                      <div className="mt-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#a18caf]">Artwork</div>
+                    </div>
+                    <span className="absolute left-4 top-4 text-[#ee8eb7]">♥</span><span className="absolute right-5 top-6 text-[#e7b04e]">★</span><span className="absolute bottom-4 right-7 text-[#9b78d2]">✦</span>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <MiniStat label={t('authorStoryPayoutStatus.eligible')} value={money(balance.ready_usd)} tone="pink" icon="fa-solid fa-gem" />
+                  <MiniStat label={t('authorStoryPayoutStatus.minimum')} value={money(minimum)} tone="purple" icon="fa-solid fa-crown" />
+                </div>
+
+                <div className="mt-4 h-2 overflow-hidden rounded-full border border-[#e6d9ef] bg-[#f5eff9]"><div className="h-full rounded-full bg-[linear-gradient(90deg,#ee8ab7_0%,#9b72d0_100%)] transition-[width] duration-300" style={{ width: `${progress}%` }} /></div>
+              </div>
+            </PaperCard>
+
+            <PaperCard className="p-4 sm:p-5">
+              <Tape className="-right-4 top-3 rotate-[8deg]" />
+              <div className="flex items-start gap-3">
+                <IconBubble icon={statusIcon} tone="purple" />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[18px] font-black tracking-[-0.03em] text-[#35166d]">{t(`authorStoryPayoutStatus.${statusKey}`)}</h2>
+                  <p className="mt-1.5 text-[11.5px] font-semibold leading-6 text-[#746285]">{t(`authorStoryPayoutStatus.${statusKey}Body`)}</p>
+                </div>
+                <div aria-hidden="true" className="hidden h-16 w-20 shrink-0 items-center justify-center rounded-[24px] border border-dashed border-[#ddcdee] bg-[#f5edff] text-[24px] text-[#a27bd0] sm:flex"><i className="fa-solid fa-star" /></div>
+              </div>
+            </PaperCard>
+
+            <PaperCard className="p-4 sm:p-5">
+              <Tape className="-left-3 bottom-3 -rotate-[8deg]" />
+              <div className="flex items-start gap-3">
+                <IconBubble icon={connected ? 'fa-solid fa-wallet' : 'fa-solid fa-circle-exclamation'} tone="pink" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-[18px] font-black tracking-[-0.03em] text-[#35166d]">{t(`authorStoryPayoutStatus.${connected ? 'bankConnected' : 'bankMissing'}`)}</h2>
+                      {connected ? <p className="mt-1 text-[14px] font-black text-[#35166d]">{methodName}</p> : null}
+                    </div>
+                    <span aria-hidden="true" className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${connected ? 'bg-[#eee4ff] text-[#855db8]' : 'bg-[#fff0f4] text-[#dc688d]'}`}><i className={connected ? 'fa-solid fa-check' : 'fa-solid fa-exclamation'} /></span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-[132px_1fr] sm:items-center">
+                    <div className="flex min-h-[128px] items-center justify-center rounded-[22px] border border-[#e2d5ec] bg-[#fbf7ff] p-2">
+                      {payment.qr_image_url ? <img src={payment.qr_image_url} alt="Bank QR" className="max-h-[112px] max-w-full rounded-[15px] object-contain" /> : <div className="text-center text-[#9474b8]"><i className="fa-solid fa-qrcode text-[38px]" /><div className="mt-2 text-[9px] font-black uppercase tracking-[0.08em]">QR</div></div>}
+                    </div>
+                    <div className="rounded-[22px] border border-dashed border-[#d8c5eb] bg-[#faf5ff] p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#9a70d1] text-[11px] text-white"><i className="fa-solid fa-check" /></span>
+                        <div>
+                          <div className="text-[12px] font-black text-[#47217b]">{connected ? t('authorStoryPayoutStatus.bankConnected') : t('authorStoryPayoutStatus.bankMissing')}</div>
+                          <p className="mt-1.5 text-[11px] font-semibold leading-5 text-[#79678c]">{t('authorStoryPayoutStatus.bankHelp')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="button" onClick={() => navigate(paymentPath)} className="mt-4 flex h-[48px] w-full items-center justify-center gap-2 rounded-full border border-[#d9b7e9] bg-[linear-gradient(90deg,#fff1f8_0%,#f2e8ff_100%)] px-4 text-[12.5px] font-black text-[#6f45a3] shadow-[0_7px_18px_rgba(104,73,143,0.08)] transition active:scale-[0.99]">
+                    <i className="fa-solid fa-credit-card text-[11px]" />
+                    {t(`authorStoryPayoutStatus.${connected ? 'changeBank' : 'addBank'}`)}
+                    <i className="fa-solid fa-chevron-right ml-auto text-[9px]" />
+                  </button>
+                </div>
+              </div>
+            </PaperCard>
+
+            <PaperCard className="p-4 sm:p-5">
+              <Tape className="-right-4 top-3 rotate-[7deg]" />
+              <div className="flex items-start gap-3">
+                <IconBubble icon="fa-solid fa-receipt" tone="purple" />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[18px] font-black tracking-[-0.03em] text-[#35166d]">{t('authorStoryPayoutStatus.latest')}</h2>
+                  {latest ? (
+                    <div className="mt-3 grid gap-2">
+                      <div className="rounded-[18px] border border-[#e3d7ec] bg-[#faf7fd] px-3.5 py-3"><div className="text-[10px] font-bold text-[#8b789c]">{t('authorStoryPayoutStatus.month')}</div><div className="mt-1 text-[13px] font-black text-[#3c1d70]">{latest.payout_month}</div></div>
+                      <div className="rounded-[18px] border border-[#efd0df] bg-[#fff5f9] px-3.5 py-3"><div className="text-[10px] font-bold text-[#8b789c]">{t('authorStoryPayoutStatus.amount')}</div><div className="mt-1 text-[20px] font-black text-[#3c1d70] tabular-nums">{money(latest.net_payout_usd)}</div></div>
+                      <p className="text-[10.5px] font-bold leading-5 text-[#806b91]">{t(`authorStoryPayoutStatus.${latest.status === 'paid' ? 'paid' : latest.status === 'awaiting_receipt' ? 'awaitingReceipt' : latest.status === 'scheduled' ? 'scheduled' : latest.status === 'missing_payment_method' ? 'missing' : 'pending'}`)}</p>
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex items-center justify-between gap-4 rounded-[22px] border border-dashed border-[#dfd0eb] bg-[#fbf7ff] p-4">
+                      <p className="text-[11.5px] font-semibold leading-5 text-[#77658a]">{t('authorStoryPayoutStatus.noPayout')}</p>
+                      <div aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-[#f1e8ff] text-[22px] text-[#956dc6]"><i className="fa-regular fa-calendar" /></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </PaperCard>
+          </>
+        ) : null}
       </main>
-    </PageShell>
+    </div>
   )
 }
