@@ -23,7 +23,7 @@ const TRANSLATIONS = {
   km: { title: 'រចនាប័ទ្ម Layer', name: 'ឈ្មោះ', blend: 'របៀបលាយ', opacity: 'ភាពស្រអាប់', fill: 'ភាពស្រអាប់ផ្ទៃ', channels: 'ឆានែល', effects: 'រចនាប័ទ្ម', preview: 'មើលជាមុន', cancel: 'បោះបង់', apply: 'យល់ព្រម', busy: 'កំពុងអនុវត្ត…', locked: 'សូមដោះសោ Layer មុនអនុវត្ត។', noLayer: 'សូមជ្រើស Layer ដើម្បីកែរចនាប័ទ្ម។', notConnected: 'ផ្ទាំង Layer Style មិនទាន់ភ្ជាប់ទៅ Project ទេ។', error: 'មិនអាចបង្ហាញរូបមើលជាមុនបាន។', advanced: 'Blend If / Knockout ត្រូវការប្រព័ន្ធលាយ Layer ហើយនឹងភ្ជាប់នៅជំហានក្រោយ។' },
 }
 
-export default function StudioLayerStyleDialog({ open = false, layer = null, onClose, onApply, disabled = false, language = 'en' }) {
+export default function StudioLayerStyleDialog({ open = false, layer = null, initialEffect = 'blending', onClose, onApply, disabled = false, language = 'en' }) {
   const words = TRANSLATIONS[language] || TRANSLATIONS.en
   const [draft, setDraft] = useState(createStudioLayerStyle)
   const [selected, setSelected] = useState('blending')
@@ -35,13 +35,16 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, onC
 
   useEffect(() => {
     if (!open) return
-    setDraft(normalizeStudioLayerStyle({ blendMode: layer?.blendMode || 'normal', opacity: layer?.opacity ?? 100, ...(layer?.layerStyle || {}) }))
-    setSelected('blending')
+    const next = normalizeStudioLayerStyle({ blendMode: layer?.blendMode || 'normal', opacity: layer?.opacity ?? 100, ...(layer?.layerStyle || {}) })
+    const target = STUDIO_LAYER_STYLE_EFFECTS.some((item) => item.id === initialEffect) ? initialEffect : 'blending'
+    if (target !== 'blending') next.effects[target].enabled = true
+    setDraft(next)
+    setSelected(target)
     setPreview(true)
     setError('')
     setBusy(false)
     requestAnimationFrame(() => titleRef.current?.focus())
-  }, [open, layer?.id])
+  }, [open, layer?.id, initialEffect])
 
   useEffect(() => {
     if (!open || !previewRef.current) return
