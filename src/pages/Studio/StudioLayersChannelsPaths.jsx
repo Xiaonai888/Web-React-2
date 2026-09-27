@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
 import StudioAdjustmentLayerMenu from './StudioAdjustmentLayerMenu'
+import StudioLayerFxMenu from './StudioLayerFxMenu'
 
 const WORDS = {
   en: ['Layers', 'Channels', 'Paths', 'Canvas bitmap', 'Current paper · one flattened canvas', 'Blend mode', 'Normal', 'Opacity', 'Independent layers are not enabled yet.', 'Composite', 'Red', 'Green', 'Blue', 'Read-only channel previews of the current canvas.', 'No vector paths on this canvas.', 'Vector paths are not enabled yet.', 'Preview is unavailable.'],
@@ -30,6 +31,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const [layerKind, setLayerKind] = useState('all')
   const [editing, setEditing] = useState(null)
   const [adjustmentMenu, setAdjustmentMenu] = useState(null)
+  const [fxMenu, setFxMenu] = useState(null)
   const editingRef = useRef(null)
   const inputRef = useRef(null)
   const pendingGroupIds = useRef(null)
@@ -40,6 +42,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   const convertLabel = ({ en: 'Convert Background to normal layer', km: 'ប្ដូរ Background ទៅជា Layer ធម្មតា', zh: '将背景转换为普通图层', ja: '背景を通常レイヤーに変換', ko: '배경을 일반 레이어로 변환' })[language] || 'Convert Background to normal layer'
   const mergeLabel = ({ en: 'Merge layer down', km: 'បញ្ចូលស្រទាប់ចុះក្រោម', zh: '向下合并图层', ja: '下のレイヤーと結合', ko: '아래 레이어와 병합' })[language] || 'Merge layer down'
   const adjustmentLabel = ({ en: 'Create fill or adjustment layer', km: 'បង្កើត Fill ឬ Adjustment Layer', zh: '新建填充或调整图层', ja: '塗りつぶしまたは調整レイヤーを作成', ko: '칠 또는 조정 레이어 만들기' })[language] || 'Create fill or adjustment layer'
+  const fxLabel = ({ en: 'Add layer style', km: 'បន្ថែម FX ទៅ Layer', zh: '添加图层样式', ja: 'レイヤースタイルを追加', ko: '레이어 스타일 추가' })[language] || 'Add layer style'
   const [error, setError] = useState(false)
   const previewRefs = useRef({})
   const layerRefs = useRef({})
@@ -185,6 +188,7 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
     setEditing(null)
     pendingGroupIds.current = null
     setAdjustmentMenu(null)
+    setFxMenu(null)
   }, [paperId])
 
   useEffect(() => {
@@ -410,7 +414,8 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
         </details>
         <div className="ss-lcp-footer">
           <button className="ss-lcp-action" type="button" title={a[0]} aria-label={a[0]} disabled={blocked || layers.length >= 8} onClick={() => onLayerAction('add')}><i className="fa-solid fa-plus" aria-hidden="true" /></button>
-          <button className="ss-lcp-action" type="button" title={adjustmentLabel} aria-label={adjustmentLabel} disabled={blocked || layers.length >= 8} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setAdjustmentMenu((current) => current ? null : { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom }) }}><i className="fa-solid fa-circle-half-stroke" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={adjustmentLabel} aria-label={adjustmentLabel} disabled={blocked || layers.length >= 8} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setFxMenu(null); setAdjustmentMenu((current) => current ? null : { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom }) }}><i className="fa-solid fa-circle-half-stroke" aria-hidden="true" /></button>
+          <button className="ss-lcp-action" type="button" title={fxLabel} aria-label={fxLabel} disabled={blocked || !selected || Boolean(selected.adjustment)} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setAdjustmentMenu(null); setFxMenu((current) => current ? null : { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom }) }}><span aria-hidden="true" style={{ fontStyle: 'italic', fontWeight: 700, fontSize: 12 }}>fx</span></button>
           <button className="ss-lcp-action" type="button" title={duplicateLabel} aria-label={duplicateLabel} disabled={blocked || !selected || selected.isBackground || layers.length >= 8} onClick={() => onLayerAction('duplicate', activeLayerId)}><i className="fa-regular fa-copy" aria-hidden="true" /></button>
           <button className="ss-lcp-action ss-lcp-group-add" type="button" title={groupControl[0]} aria-label={groupControl[0]} disabled={blocked || !selected || selected.isBackground || Boolean(selected?.adjustment) || Boolean(selectedGroup) || groups.length >= 8} onClick={() => { pendingGroupIds.current = new Set(groups.map((item) => item.id)); onLayerAction('group-add', activeLayerId) }}><i className="fa-solid fa-folder-plus" aria-hidden="true" /><span className="ss-lcp-group-add-label">{groupControl[0]}</span></button>
           <button className="ss-lcp-action" type="button" title={`${a[9]} · Delete / Backspace`} aria-label={a[9]} disabled={blocked || !selected || selected.locked || Boolean(selectedGroup?.locked)} onClick={() => onLayerAction('remove', activeLayerId)}><i className="fa-solid fa-trash" aria-hidden="true" /></button>
@@ -422,6 +427,14 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
           disabled={blocked || layers.length >= 8}
           onClose={() => setAdjustmentMenu(null)}
           onSelect={(type) => { setAdjustmentMenu(null); onLayerAction('adjustment-create', activeLayerId, type) }}
+        />
+        <StudioLayerFxMenu
+          open={Boolean(fxMenu)}
+          anchorRect={fxMenu}
+          language={language}
+          disabled={blocked || !selected || Boolean(selected?.adjustment)}
+          onClose={() => setFxMenu(null)}
+          onSelect={(effect) => { setFxMenu(null); onLayerAction('style-open', activeLayerId, effect) }}
         />
         </div>
       </> : null}
