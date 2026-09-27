@@ -22,6 +22,16 @@ export const SHADOW_DOCS_RIBBON_STATE = Object.freeze({
   lineNumbers: false,
   hyphenation: false,
   pageColor: '#ffffff',
+  textColor: '#242139',
+  accentColor: '#6f57a5',
+  theme: 'classic',
+  watermark: '',
+  borderColor: '#d5d1df',
+  borderWidth: 0,
+  borderStyle: 'solid',
+  textDirection: 'ltr',
+  lineHeight: 1.65,
+  documentLanguage: 'km',
   trackChanges: false,
   viewMode: 'print',
   focus: false,
@@ -36,6 +46,11 @@ export const SHADOW_DOCS_RIBBON_STATE = Object.freeze({
   autoCorrect: true,
   mailMergeActive: false,
   previewMerge: false,
+  zoom: 100,
+  protectedEditing: false,
+  splitView: false,
+  showMarkup: true,
+  reviewPane: false,
 })
 
 export function createShadowDocsRibbonState(overrides = {}) {
