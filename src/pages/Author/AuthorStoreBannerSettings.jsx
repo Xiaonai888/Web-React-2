@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const AUTHOR_STORE_BANNER_MAX_BYTES = 5 * 1024 * 1024
 
 function getAuthToken() {
   return (
@@ -90,7 +93,7 @@ setButtonText(details.store_banner_button_text || 'Shop Now →')
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > AUTHOR_STORE_BANNER_MAX_BYTES) {
       setMessage('Banner image must be 5MB or smaller.')
       return
     }
@@ -107,8 +110,17 @@ setButtonText(details.store_banner_button_text || 'Shop Now →')
   }
 
   async function uploadBanner(file, token) {
+    const optimized = await optimizeImageForUpload(file, {
+      preset: 'banner',
+      maxSourceBytes: AUTHOR_STORE_BANNER_MAX_BYTES,
+    })
+
+    if (optimized.file.size > AUTHOR_STORE_BANNER_MAX_BYTES) {
+      throw new Error('Banner image must be 5MB or smaller.')
+    }
+
     const formData = new FormData()
-    formData.append('image', file)
+    formData.append('image', optimized.file)
     formData.append('folder', 'author_store_banner')
 
     const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
@@ -258,7 +270,7 @@ const changed =
       <i className="fa-regular fa-image text-[28px]" />
       <span className="mt-2 text-[12px] font-bold">No Store Banner</span>
     </div>
- 
+
   )}
 </div>
 
@@ -345,7 +357,7 @@ const changed =
         {saving ? 'Saving...' : 'Save'}
       </button>
 
-      
+
     </section>
   )
 }
