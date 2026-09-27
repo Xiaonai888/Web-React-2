@@ -37,6 +37,7 @@ import {
   uploadMangaPageFile,
   validateMangaFile,
 } from '../../utils/mangaImageUtils'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('episodeEditor', {
   en: {
@@ -1175,9 +1176,13 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   if (String(imageDataUrl).startsWith('http')) return imageDataUrl
 
   const file = dataUrlToFile(imageDataUrl, fileName)
+  const optimized = await optimizeImageForUpload(file, {
+    preset: folder === 'episode_cover' ? 'banner' : 'default',
+    maxSourceBytes: 5 * 1024 * 1024,
+  })
   const formData = new FormData()
 
-  formData.append('image', file)
+  formData.append('image', optimized.file)
   formData.append('folder', folder)
 
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
