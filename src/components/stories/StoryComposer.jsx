@@ -547,9 +547,18 @@ export default function StoryComposer({ mode }) {
       setUploadProgress(0)
       setError('')
 
+      const uploadFile = mediaFile.type.startsWith('image/')
+        ? (
+            await optimizeImageForUpload(mediaFile, {
+              preset: 'post',
+              maxSourceBytes: MAX_PHOTO_BYTES,
+            })
+          ).file
+        : mediaFile
+
       createdStory = await uploadStory({
         apiPath: config.apiPath,
-        file: mediaFile,
+        file: uploadFile,
         textOverlay,
         token,
         onProgress: setUploadProgress,
@@ -576,7 +585,7 @@ export default function StoryComposer({ mode }) {
 
       await clearHomeCacheSection('discover-story-feed')
 
-navigate(returnPath, {
+      navigate(returnPath, {
         replace: true,
         state: {
           storyShared: true,
