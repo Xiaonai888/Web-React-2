@@ -48,7 +48,7 @@ export default function AuthorStoreAvailableWithdrawalCard({ StatCard, formatMon
 
   return (
     <button type="button" onClick={() => navigate('/author/page/store/withdrawal-details')} className="block w-full min-w-0 text-left">
-      <StatCard label={t('authorStoreAvailableWithdrawal.available')} value={balance === null ? '—' : formatMoney(balance)} icon="fa-wallet" />
+      <StatCard label={`${t('authorStoreAvailableWithdrawal.available')} >`} value={balance === null ? '—' : formatMoney(balance)} icon="fa-wallet" />
     </button>
   )
 }
