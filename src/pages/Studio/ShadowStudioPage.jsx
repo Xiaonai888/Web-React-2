@@ -436,6 +436,7 @@ const placeImageLabel = {
   const [mangaToolInitial, setMangaToolInitial] = useState('bubble')
   const [advancedEditor, setAdvancedEditor] = useState(null)
   const [styleLayerId, setStyleLayerId] = useState(null)
+  const [styleInitialEffect, setStyleInitialEffect] = useState('blending')
   const [adjustmentEditor, setAdjustmentEditor] = useState(null)
   const [textEditor, setTextEditor] = useState(null)
   const [shapeEditor, setShapeEditor] = useState(null)
@@ -586,8 +587,9 @@ const placeImageLabel = {
       }
       if (action === 'style-open') {
         const layer = stack.layers.find((item) => item.id === layerId)
-        if (!layer) return
+        if (!layer || layer.adjustment) return
         selectStudioLayer(stack, layerId)
+        setStyleInitialEffect(typeof value === 'string' && value ? value : 'blending')
         setStyleLayerId(layerId)
         refresh((number) => number + 1)
         return
@@ -729,7 +731,7 @@ const placeImageLabel = {
     }
   }
 
-  useEffect(() => { setStyleLayerId(null) }, [activeDocumentId])
+  useEffect(() => { setStyleLayerId(null); setStyleInitialEffect('blending') }, [activeDocumentId])
 
   function captureAdjustmentSource(layerId) {
     const stack = layerStackRef.current
@@ -2645,7 +2647,8 @@ async function dropImageOnPaper(event) {
       <StudioLayerStyleDialog
         open={Boolean(styleLayerId) && workspaceStarted && canvasDocumentRef.current === activeDocumentId}
         layer={layerStackRef.current?.layers.find((item) => item.id === styleLayerId) || null}
-        onClose={() => setStyleLayerId(null)}
+        initialEffect={styleInitialEffect}
+        onClose={() => { setStyleLayerId(null); setStyleInitialEffect('blending') }}
         onApply={applyLayerStyle}
         language={language}
         disabled={paperLoading || projectBusy || recoveryBusy || Boolean(recoveryEntry) || newFileOpen || exportOpen}
