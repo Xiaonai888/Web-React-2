@@ -1380,6 +1380,7 @@ const handleSavePublishSettings = async () => {
                       >
                         <option value={20}>{getDisplayText('storyManager.perPage', { count: formatDisplayNumber(20) })}</option>
                         <option value={30}>{getDisplayText('storyManager.perPage', { count: formatDisplayNumber(30) })}</option>
+                        <option value={50}>{getDisplayText('storyManager.perPage', { count: formatDisplayNumber(50) })}</option>
                         <option value={100}>{getDisplayText('storyManager.perPage', { count: formatDisplayNumber(100) })}</option>
                       </select>
 
