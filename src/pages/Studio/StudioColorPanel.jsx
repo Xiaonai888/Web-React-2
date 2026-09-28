@@ -372,64 +372,413 @@ export default function StudioColorPanel({ color, onChange, label = 'Color' }) {
   return (
     <section className="ss-section ss-color-panel" data-mobile-open={expanded} aria-label={tr('Color panel')}>
       <style>{`
-        .ss-color-panel{min-width:0;box-sizing:border-box;overflow-x:hidden}
-        .ss-color-heading{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:8px;border-bottom:1px solid #42505d}
-        .ss-color-heading .ss-label{margin:0;flex:1}
-        .ss-color-current{display:block;width:26px;height:24px;border:1px solid #8993a0;border-radius:4px;flex:none}
-        .ss-color-expand{border:1px solid #515a65;border-radius:5px;background:#343a42;color:#ebf1f7;font:inherit;font-size:10px;height:28px;padding:0 8px;cursor:pointer}
-        .ss-color-advanced{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:10px}
-        .ss-hue-wheel{width:min(100%,166px);aspect-ratio:1;border:0;border-radius:50%;padding:13px;background:conic-gradient(#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);position:relative;touch-action:none;cursor:crosshair;flex:none}
-        .ss-hue-wheel::after{content:'';position:absolute;inset:13px;border-radius:50%;background:#292c30;pointer-events:none}
-        .ss-hue-marker{position:absolute;left:50%;top:50%;width:13px;height:13px;border:2px solid white;border-radius:50%;box-shadow:0 0 0 1px #202225,0 2px 4px #0009;pointer-events:none;z-index:2;transform:translate(-50%,-50%)}
-        .ss-sv-square{width:min(100%,130px);aspect-ratio:1;position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);z-index:1;cursor:crosshair;touch-action:none;border:1px solid #9aa2ab;background:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent),hsl(var(--ss-hue) 100% 50%)}
-        .ss-sv-marker{position:absolute;width:12px;height:12px;border:2px solid #fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #131619,0 1px 3px #0008;pointer-events:none}
-        .ss-color-values{display:grid;grid-template-columns:minmax(0,1fr) 30px 30px;gap:5px;width:100%;align-items:center}
-        .ss-color-hex{min-width:0;height:30px;border:1px solid #58636e;border-radius:5px;background:#202429;color:#eef2f7;font:inherit;font-size:12px;padding:0 8px;letter-spacing:.035em}
-        .ss-color-native{display:block;width:30px;height:30px;border:1px solid #697582;border-radius:5px;background:transparent;padding:2px;cursor:pointer}
-        .ss-color-previous{display:block;width:30px;height:30px;border:1px solid #697582;border-radius:5px;cursor:pointer}
-        .ss-color-legend{width:100%;display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#aeb7c1}
-        .ss-color-copy{min-height:27px;width:100%;border:1px solid #596b7e;border-radius:5px;background:#35495e;color:#e9f4ff;font:inherit;font-size:10px;cursor:pointer}
-        .ss-color-copy-status{margin:0;width:100%;font-size:10px;line-height:1.4;color:#c3d8eb}
-        .ss-color-numeric{width:100%;min-width:0;box-sizing:border-box;border:1px solid #475460;border-radius:6px;background:#272c32;padding:7px}
-        .ss-color-numeric summary{cursor:pointer;list-style:revert;font-size:10px;font-weight:800;color:#e1ebf6}
-        .ss-color-numeric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
-        .ss-color-number{display:grid;gap:4px;min-width:0;color:#b9c7d5;font-size:10px;font-weight:800}
-        .ss-color-number input{box-sizing:border-box;min-width:0;width:100%;height:32px;border:1px solid #586775;border-radius:4px;background:#1d242a;color:#f1f5fa;padding:0 5px;font:inherit;font-size:12px}
-        .ss-color-number input:focus-visible{outline:2px solid #75bdff;outline-offset:1px}
-        .ss-color-numeric-title{grid-column:1/-1;font-size:10px;font-weight:700;color:#a8b9cb}
-        .ss-color-numeric-help{margin:8px 0 0;font-size:9px;line-height:1.4;color:#a9b7c6}
-        .ss-color-panel .ss-swatches{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;margin-top:5px;width:100%;max-width:100%;box-sizing:border-box}
-        .ss-color-panel .ss-swatch{display:block;width:100%;min-width:0;aspect-ratio:1;border:1px solid #596068;border-radius:3px;cursor:pointer;padding:0;touch-action:manipulation}
-        .ss-color-panel .ss-swatch.selected{outline:2px solid #eef4fb;outline-offset:1px;position:relative;z-index:1}
-        .ss-color-extra{width:100%;min-width:0;margin-top:12px;display:grid;gap:10px}
-        .ss-color-palette-title{margin:1px 0 0;border-top:1px solid #42505d;padding-top:9px;font-size:10px;font-weight:800}
-        .ss-color-palette-title span{font-size:9px;color:#91a4b5;font-variant-numeric:tabular-nums}
-        .ss-color-group{min-width:0}
-        .ss-color-group-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;color:#cad3dd;font-size:10px}
-        .ss-color-fav-add{min-height:24px;border:1px solid #586775;border-radius:5px;background:#373f48;color:#f0f6fc;padding:2px 8px;font:inherit;font-size:10px;cursor:pointer}
+        .ss-color-panel{
+          --ss-color-bg:#20262d;
+          --ss-color-panel:#29313a;
+          --ss-color-panel-2:#313b46;
+          --ss-color-line:#4b5968;
+          --ss-color-line-soft:#3b4651;
+          --ss-color-text:#edf3fa;
+          --ss-color-muted:#aab8c6;
+          --ss-color-blue:#5faeff;
+          --ss-color-blue-soft:#355d84;
+          min-width:0;
+          box-sizing:border-box;
+          overflow-x:hidden;
+          color:var(--ss-color-text);
+          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        .ss-color-panel *{box-sizing:border-box}
+        .ss-color-heading{
+          display:flex;
+          align-items:center;
+          gap:8px;
+          margin-bottom:10px;
+          padding:0 0 9px;
+          border-bottom:1px solid var(--ss-color-line-soft)
+        }
+        .ss-color-heading .ss-label{margin:0;flex:1;color:#e7eef6;font-size:10px;font-weight:800}
+        .ss-color-current{
+          display:block;
+          width:30px;
+          height:28px;
+          border:1px solid #7d8995;
+          border-radius:6px;
+          flex:none;
+          box-shadow:inset 0 0 0 1px #0005,0 1px 4px #0005
+        }
+        .ss-color-expand{
+          min-height:30px;
+          border:1px solid #5f7182;
+          border-radius:6px;
+          background:#344250;
+          color:#edf4fb;
+          font:700 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          padding:0 10px;
+          cursor:pointer;
+          transition:120ms ease
+        }
+        .ss-color-expand:hover{border-color:#7fa0bf;background:#405368}
+        .ss-color-expand:focus-visible{outline:2px solid var(--ss-color-blue);outline-offset:2px}
+        .ss-color-advanced{
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          gap:9px;
+          margin-bottom:11px;
+          padding:10px;
+          border:1px solid var(--ss-color-line-soft);
+          border-radius:9px;
+          background:linear-gradient(180deg,#29333d,#232b33)
+        }
+        .ss-hue-wheel{
+          width:min(100%,176px);
+          aspect-ratio:1;
+          border:1px solid #687684;
+          border-radius:50%;
+          padding:14px;
+          background:conic-gradient(#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);
+          position:relative;
+          touch-action:none;
+          cursor:crosshair;
+          flex:none;
+          box-shadow:0 4px 16px #0006,inset 0 0 0 1px #ffffff24
+        }
+        .ss-hue-wheel::after{
+          content:'';
+          position:absolute;
+          inset:14px;
+          border-radius:50%;
+          background:#242c34;
+          box-shadow:inset 0 0 0 1px #0008;
+          pointer-events:none
+        }
+        .ss-hue-marker{
+          position:absolute;
+          left:50%;
+          top:50%;
+          width:15px;
+          height:15px;
+          border:2px solid white;
+          border-radius:50%;
+          box-shadow:0 0 0 1px #15191d,0 2px 5px #000b;
+          pointer-events:none;
+          z-index:2;
+          transform:translate(-50%,-50%)
+        }
+        .ss-sv-square{
+          width:min(100%,136px);
+          aspect-ratio:1;
+          position:absolute;
+          inset:50% auto auto 50%;
+          transform:translate(-50%,-50%);
+          z-index:1;
+          cursor:crosshair;
+          touch-action:none;
+          overflow:hidden;
+          border:1px solid #a8b3bf;
+          border-radius:5px;
+          background:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent),hsl(var(--ss-hue) 100% 50%);
+          box-shadow:0 3px 9px #0007
+        }
+        .ss-sv-marker{
+          position:absolute;
+          width:14px;
+          height:14px;
+          border:2px solid #fff;
+          border-radius:50%;
+          transform:translate(-50%,-50%);
+          box-shadow:0 0 0 1px #11161a,0 2px 4px #0009;
+          pointer-events:none
+        }
+        .ss-color-values{
+          display:grid;
+          grid-template-columns:minmax(0,1fr) 34px 34px;
+          gap:6px;
+          width:100%;
+          align-items:center
+        }
+        .ss-color-hex{
+          min-width:0;
+          height:32px;
+          border:1px solid var(--ss-color-line);
+          border-radius:6px;
+          outline:none;
+          background:#1f2730;
+          color:#eef4fa;
+          font:650 11px Inter,ui-sans-serif,system-ui,sans-serif;
+          padding:0 9px;
+          letter-spacing:.035em
+        }
+        .ss-color-hex:focus{border-color:var(--ss-color-blue);box-shadow:0 0 0 2px #5faeff26}
+        .ss-color-native{
+          display:block;
+          width:34px;
+          height:32px;
+          border:1px solid #687685;
+          border-radius:6px;
+          background:#202832;
+          padding:2px;
+          cursor:pointer
+        }
+        .ss-color-previous{
+          display:block;
+          width:34px;
+          height:32px;
+          border:1px solid #687685;
+          border-radius:6px;
+          cursor:pointer;
+          box-shadow:inset 0 0 0 1px #0005
+        }
+        .ss-color-native:hover,.ss-color-previous:hover{border-color:#8cb8df}
+        .ss-color-legend{
+          width:100%;
+          display:flex;
+          justify-content:space-between;
+          gap:8px;
+          color:var(--ss-color-muted);
+          font-size:9px
+        }
+        .ss-color-copy{
+          min-height:30px;
+          width:100%;
+          border:1px solid #6287aa;
+          border-radius:6px;
+          background:#31587c;
+          color:#edf6ff;
+          font:700 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:120ms ease
+        }
+        .ss-color-copy:hover{border-color:#83b8e6;background:#3971a2}
+        .ss-color-copy:focus-visible{outline:2px solid var(--ss-color-blue);outline-offset:2px}
+        .ss-color-copy-status{
+          margin:0;
+          width:100%;
+          padding:6px 8px;
+          border:1px solid #49657d;
+          border-radius:5px;
+          background:#233747;
+          color:#cfe5f8;
+          font-size:9px;
+          line-height:1.4
+        }
+        .ss-color-numeric{
+          width:100%;
+          min-width:0;
+          box-sizing:border-box;
+          border:1px solid var(--ss-color-line-soft);
+          border-radius:7px;
+          background:#222b33;
+          padding:8px
+        }
+        .ss-color-numeric summary{
+          cursor:pointer;
+          list-style:revert;
+          color:#dce8f3;
+          font-size:10px;
+          font-weight:800
+        }
+        .ss-color-numeric-grid{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:7px;
+          margin-top:10px
+        }
+        .ss-color-number{
+          display:grid;
+          gap:4px;
+          min-width:0;
+          color:#b8c7d5;
+          font-size:9px;
+          font-weight:800
+        }
+        .ss-color-number input{
+          box-sizing:border-box;
+          min-width:0;
+          width:100%;
+          height:31px;
+          border:1px solid var(--ss-color-line);
+          border-radius:5px;
+          outline:none;
+          background:#192129;
+          color:#f1f5fa;
+          padding:0 6px;
+          font:650 11px Inter,ui-sans-serif,system-ui,sans-serif;
+          font-variant-numeric:tabular-nums
+        }
+        .ss-color-number input:focus-visible{outline:2px solid var(--ss-color-blue);outline-offset:1px}
+        .ss-color-numeric-title{
+          grid-column:1/-1;
+          color:#a8b9cb;
+          font-size:9px;
+          font-weight:700
+        }
+        .ss-color-numeric-help{
+          margin:8px 0 0;
+          color:#99aaba;
+          font-size:9px;
+          line-height:1.45
+        }
+        .ss-color-panel .ss-swatches{
+          display:grid;
+          grid-template-columns:repeat(10,minmax(0,1fr));
+          gap:5px;
+          margin-top:6px;
+          width:100%;
+          max-width:100%;
+          box-sizing:border-box
+        }
+        .ss-color-panel .ss-swatch{
+          display:block;
+          width:100%;
+          min-width:0;
+          aspect-ratio:1;
+          border:1px solid #5d6975;
+          border-radius:5px;
+          cursor:pointer;
+          padding:0;
+          touch-action:manipulation;
+          box-shadow:inset 0 0 0 1px #0004;
+          transition:transform 110ms ease,border-color 110ms ease
+        }
+        .ss-color-panel .ss-swatch:hover{
+          transform:translateY(-1px);
+          border-color:#96b5d0
+        }
+        .ss-color-panel .ss-swatch.selected{
+          outline:2px solid #79bcff;
+          outline-offset:2px;
+          position:relative;
+          z-index:1;
+          box-shadow:inset 0 0 0 2px #fff8
+        }
+        .ss-color-extra{
+          width:100%;
+          min-width:0;
+          margin-top:13px;
+          display:grid;
+          gap:12px
+        }
+        .ss-color-palette-title{
+          margin:2px 0 0;
+          border-top:1px solid var(--ss-color-line-soft);
+          padding-top:10px;
+          color:#d2dee9;
+          font-size:10px;
+          font-weight:800
+        }
+        .ss-color-palette-title span{
+          color:#91a4b5;
+          font-size:9px;
+          font-variant-numeric:tabular-nums
+        }
+        .ss-color-group{
+          min-width:0;
+          padding:8px;
+          border:1px solid var(--ss-color-line-soft);
+          border-radius:7px;
+          background:#242d35
+        }
+        .ss-color-group-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:6px;
+          margin-bottom:7px;
+          color:#d3dde7;
+          font-size:10px
+        }
+        .ss-color-fav-add{
+          min-height:27px;
+          border:1px solid #5d7286;
+          border-radius:5px;
+          background:#33404c;
+          color:#f0f6fc;
+          padding:2px 8px;
+          font:700 9px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer
+        }
+        .ss-color-fav-add:hover:not(:disabled){border-color:#7da9d0;background:#40556a}
         .ss-color-fav-add:disabled{opacity:.4;cursor:default}
-        .ss-color-items{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));align-items:center;gap:5px}
-        .ss-color-favorite{position:relative;min-width:0;aspect-ratio:1}
-        .ss-color-favorite .ss-color-fav-pick{display:block;width:100%;height:100%;border:1px solid #6b7886;border-radius:3px;cursor:pointer;padding:0}
-        .ss-color-fav-remove{position:absolute;right:-5px;top:-6px;display:grid;place-items:center;width:16px;height:16px;border:1px solid #626e7b;border-radius:50%;background:#30363e;color:#fff;font:inherit;font-size:12px;line-height:1;cursor:pointer}
-        .ss-color-recent-pick{display:block;width:100%;min-width:0;aspect-ratio:1;border:1px solid #687583;border-radius:3px;cursor:pointer;padding:0}
-        .ss-color-empty{margin:0;font-size:10px;color:#a1afbc;line-height:1.5}
+        .ss-color-items{
+          display:grid;
+          grid-template-columns:repeat(8,minmax(0,1fr));
+          align-items:center;
+          gap:6px
+        }
+        .ss-color-favorite{
+          position:relative;
+          min-width:0;
+          aspect-ratio:1
+        }
+        .ss-color-favorite .ss-color-fav-pick{
+          display:block;
+          width:100%;
+          height:100%;
+          border:1px solid #6b7886;
+          border-radius:5px;
+          cursor:pointer;
+          padding:0;
+          box-shadow:inset 0 0 0 1px #0004
+        }
+        .ss-color-favorite .ss-color-fav-pick:hover{border-color:#9bc5e9}
+        .ss-color-fav-remove{
+          position:absolute;
+          right:-5px;
+          top:-6px;
+          display:grid;
+          place-items:center;
+          width:17px;
+          height:17px;
+          border:1px solid #737f8c;
+          border-radius:50%;
+          background:#303943;
+          color:#fff;
+          font:12px Inter,ui-sans-serif,system-ui,sans-serif;
+          line-height:1;
+          cursor:pointer;
+          box-shadow:0 2px 5px #0008
+        }
+        .ss-color-fav-remove:hover{background:#69353c;border-color:#b55a64}
+        .ss-color-recent-pick{
+          display:block;
+          width:100%;
+          min-width:0;
+          aspect-ratio:1;
+          border:1px solid #687583;
+          border-radius:5px;
+          cursor:pointer;
+          padding:0;
+          box-shadow:inset 0 0 0 1px #0004
+        }
+        .ss-color-recent-pick:hover{border-color:#9bc5e9}
+        .ss-color-empty{
+          margin:0;
+          color:#9eacba;
+          font-size:9px;
+          line-height:1.5
+        }
         @media(max-width:900px),(max-width:1100px) and (max-height:650px) and (orientation:landscape){
           .shadow-studio .ss-side .ss-color-panel{display:flex;flex:1 1 100%;min-width:0;flex-wrap:wrap;align-items:center;gap:6px;margin:0;padding:0;border:0}
-          .shadow-studio .ss-color-panel .ss-color-heading{flex:0 0 auto;margin:0;gap:5px}
+          .shadow-studio .ss-color-panel .ss-color-heading{flex:0 0 auto;margin:0;gap:5px;padding:0;border:0}
           .shadow-studio .ss-color-panel .ss-color-heading .ss-label{font-size:10px}
-          .shadow-studio .ss-color-panel .ss-color-expand{display:block}
-          .shadow-studio .ss-color-panel .ss-color-current{width:26px;height:26px}
+          .shadow-studio .ss-color-panel .ss-color-expand{display:block;min-height:32px}
+          .shadow-studio .ss-color-panel .ss-color-current{width:30px;height:30px}
           .shadow-studio .ss-color-panel .ss-color-palette-title{display:none}
-          .shadow-studio .ss-color-panel .ss-swatches{display:flex;flex:1 1 75px;min-width:0;overflow-x:auto;gap:5px;margin:0;padding:3px 2px;overscroll-behavior-x:contain}
-          .shadow-studio .ss-color-panel .ss-swatch{flex:0 0 27px;width:27px;height:27px;min-width:27px;aspect-ratio:1}
-          .shadow-studio .ss-color-panel .ss-color-advanced{display:none;width:100%;flex:1 1 100%;margin:4px 0 6px;gap:8px}
+          .shadow-studio .ss-color-panel .ss-swatches{display:flex;flex:1 1 75px;min-width:0;overflow-x:auto;gap:5px;margin:0;padding:4px 2px;overscroll-behavior-x:contain}
+          .shadow-studio .ss-color-panel .ss-swatch{flex:0 0 29px;width:29px;height:29px;min-width:29px;aspect-ratio:1}
+          .shadow-studio .ss-color-panel .ss-color-advanced{display:none;width:100%;flex:1 1 100%;margin:4px 0 6px;gap:8px;padding:9px}
           .shadow-studio .ss-color-panel[data-mobile-open='true'] .ss-color-advanced{display:flex}
-          .shadow-studio .ss-color-panel .ss-hue-wheel{width:min(100%,175px)}
+          .shadow-studio .ss-color-panel .ss-hue-wheel{width:min(100%,178px)}
           .shadow-studio .ss-color-panel .ss-color-extra{display:none;flex:1 1 100%;margin:5px 0 8px}
           .shadow-studio .ss-color-panel[data-mobile-open='true'] .ss-color-extra{display:grid}
         }
-      `}</style>
+        @media(max-width:430px){
+          .shadow-studio .ss-color-panel .ss-color-numeric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+          .shadow-studio .ss-color-panel .ss-color-items{grid-template-columns:repeat(6,minmax(0,1fr))}
+        }
+`}</style>
       <div className="ss-color-heading">
         <h2 className="ss-label">{label}</h2>
         <span className="ss-color-current" style={{ backgroundColor: color }} title={`${tr('Current')}: ${color}`} />
