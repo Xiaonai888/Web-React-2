@@ -118,7 +118,7 @@ export default function StudioDetachablePanel({ id, title, children, width = 340
     >
       <header className="ss-independent-header">
         <button type="button" className="ss-independent-grip" disabled={disabled} title={floating ? `Move ${title}` : `Drag ${title} to detach`} aria-label={floating ? `Move ${title}` : `Drag ${title} to detach`} onPointerDown={start} onClick={detachKeyboard}>
-          <span aria-hidden="true">⠿</span><span>{title}</span>
+          <span className="ss-independent-grip-icon" aria-hidden="true">⠿</span><span>{title}</span>
         </button>
         {floating ? <button type="button" className="ss-independent-dock" disabled={disabled} onClick={dock} title={`Dock ${title} on the right`} aria-label={`Dock ${title} on the right`}>↳</button> : null}
       </header>
@@ -129,17 +129,146 @@ export default function StudioDetachablePanel({ id, title, children, width = 340
   return (
     <>
       <style>{`
-        .shadow-studio .ss-independent-panel{box-sizing:border-box;min-width:0;width:100%;border:1px solid #4b5b6a;background:#29333d;color:#e5edf6}
-        .shadow-studio .ss-independent-header{display:flex;align-items:center;justify-content:space-between;gap:4px;height:29px;border-bottom:1px solid #4b5b6a;background:#263441}
-        .shadow-studio .ss-independent-grip{display:flex;align-items:center;gap:7px;flex:1;min-width:0;height:100%;padding:0 9px;border:0;background:transparent;color:#eef3f9;font:inherit;font-size:11px;font-weight:700;text-align:left;cursor:grab;touch-action:none;user-select:none}
-        .shadow-studio .ss-independent-grip:active{cursor:grabbing}
-        .shadow-studio .ss-independent-grip:disabled{cursor:not-allowed;opacity:.6}
-        .shadow-studio .ss-independent-dock{flex:none;height:24px;min-width:27px;margin-right:4px;border:1px solid #647c92;border-radius:3px;background:#344c61;color:white;cursor:pointer}
-        .shadow-studio .ss-independent-grip:focus-visible,.shadow-studio .ss-independent-dock:focus-visible{outline:2px solid #91c8ff;outline-offset:-2px}
-        .shadow-studio .ss-independent-content{min-width:0}
-        .shadow-studio .ss-independent-panel.is-floating{position:fixed!important;display:flex!important;flex-direction:column!important;box-sizing:border-box;max-width:calc(100vw - 16px);max-height:calc(100dvh - 56px);min-height:90px;margin:0!important;overflow:hidden;border:1px solid #8bb8e5;border-radius:6px;box-shadow:0 16px 36px #000a}
-        .shadow-studio .ss-independent-panel.is-floating .ss-independent-content{overflow:auto;overscroll-behavior:contain}
-        .shadow-studio .ss-independent-placeholder{display:block;width:100%;height:30px;border:1px dashed #56718a;box-sizing:border-box}
+        .shadow-studio .ss-independent-panel{
+          --ss-detach-panel:#29313a;
+          --ss-detach-panel-2:#202832;
+          --ss-detach-line:#4b5968;
+          --ss-detach-line-soft:#3b4651;
+          --ss-detach-text:#edf3fa;
+          --ss-detach-muted:#aab8c6;
+          --ss-detach-blue:#5faeff;
+          box-sizing:border-box;
+          min-width:0;
+          width:100%;
+          overflow:hidden;
+          border:1px solid var(--ss-detach-line-soft);
+          border-radius:8px;
+          background:var(--ss-detach-panel);
+          color:var(--ss-detach-text);
+          box-shadow:inset 0 0 0 1px #ffffff06
+        }
+        .shadow-studio .ss-independent-header{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:4px;
+          min-height:34px;
+          border-bottom:1px solid var(--ss-detach-line-soft);
+          background:linear-gradient(180deg,#34404c,#2a333c)
+        }
+        .shadow-studio .ss-independent-grip{
+          display:flex;
+          align-items:center;
+          gap:8px;
+          flex:1;
+          min-width:0;
+          height:34px;
+          padding:0 9px;
+          border:0;
+          background:transparent;
+          color:#eef4fb;
+          font:800 10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          text-align:left;
+          cursor:grab;
+          touch-action:none;
+          user-select:none
+        }
+        .shadow-studio .ss-independent-grip>span:last-child{
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap
+        }
+        .shadow-studio .ss-independent-grip-icon{
+          width:22px;
+          height:22px;
+          display:grid;
+          place-items:center;
+          flex:none;
+          border:1px solid #506171;
+          border-radius:5px;
+          background:#27323c;
+          color:#a7c9e6;
+          font-size:13px;
+          line-height:1
+        }
+        .shadow-studio .ss-independent-grip:hover:not(:disabled){
+          background:#ffffff08
+        }
+        .shadow-studio .ss-independent-grip:active{
+          cursor:grabbing;
+          background:#203243
+        }
+        .shadow-studio .ss-independent-grip:disabled{
+          cursor:not-allowed;
+          opacity:.6
+        }
+        .shadow-studio .ss-independent-dock{
+          flex:none;
+          width:28px;
+          height:26px;
+          min-width:28px;
+          margin-right:4px;
+          border:1px solid #60778c;
+          border-radius:5px;
+          background:#304a60;
+          color:#f0f7fd;
+          font:800 12px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease
+        }
+        .shadow-studio .ss-independent-dock:hover:not(:disabled){
+          border-color:#8ec6f4;
+          background:#3b6f9b
+        }
+        .shadow-studio .ss-independent-grip:focus-visible,
+        .shadow-studio .ss-independent-dock:focus-visible{
+          outline:2px solid var(--ss-detach-blue);
+          outline-offset:-2px
+        }
+        .shadow-studio .ss-independent-content{
+          min-width:0;
+          background:var(--ss-detach-panel)
+        }
+        .shadow-studio .ss-independent-panel.is-floating{
+          position:fixed!important;
+          display:flex!important;
+          flex-direction:column!important;
+          box-sizing:border-box;
+          max-width:calc(100vw - 16px);
+          max-height:calc(100dvh - 56px);
+          min-height:90px;
+          margin:0!important;
+          overflow:hidden;
+          border:1px solid #76aee0;
+          border-radius:9px;
+          background:#29313a;
+          box-shadow:0 18px 42px #000b,0 0 0 1px #5faeff22
+        }
+        .shadow-studio .ss-independent-panel.is-floating .ss-independent-header{
+          background:linear-gradient(180deg,#374757,#2c3945)
+        }
+        .shadow-studio .ss-independent-panel.is-floating .ss-independent-content{
+          overflow:auto;
+          overscroll-behavior:contain;
+          scrollbar-width:thin
+        }
+        .shadow-studio .ss-independent-placeholder{
+          display:block;
+          width:100%;
+          height:34px;
+          border:1px dashed #58738b;
+          border-radius:7px;
+          box-sizing:border-box;
+          background:#26313b55
+        }
+        @media(pointer:coarse){
+          .shadow-studio .ss-independent-header{min-height:40px}
+          .shadow-studio .ss-independent-grip{height:40px;font-size:11px}
+          .shadow-studio .ss-independent-grip-icon{width:26px;height:26px}
+          .shadow-studio .ss-independent-dock{width:34px;height:32px;min-width:34px}
+          .shadow-studio .ss-independent-placeholder{height:40px}
+        }
       `}</style>
       {floating ? <div className="ss-independent-placeholder" aria-hidden="true" /> : panel}
       {floating ? createPortal(panel, root) : null}
