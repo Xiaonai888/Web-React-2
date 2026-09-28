@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import {
+  StudioUIButton,
+  StudioUIButtonRow,
+  StudioUIColor,
+  StudioUIDialog,
+  StudioUIPreview,
+  StudioUISection,
+  StudioUISelect,
+  StudioUISlider,
+  StudioUIToggle,
+} from './StudioUIControls'
+import StudioUIAngleDial from './StudioUIAngleDial'
+import StudioUIGradientEditor from './StudioUIGradientEditor'
 import { STUDIO_BLEND_MODES } from './StudioLayerBlendEngine'
 import { createStudioLayerStyle, normalizeStudioLayerStyle, renderStudioStyledLayer, STUDIO_LAYER_STYLE_EFFECTS } from './StudioLayerStyleEngine'
 
@@ -34,7 +46,6 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const previewRef = useRef(null)
-  const titleRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
@@ -46,7 +57,6 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
     setPreview(true)
     setError('')
     setBusy(false)
-    requestAnimationFrame(() => titleRef.current?.focus())
   }, [open, layer?.id, initialEffect])
 
   useEffect(() => {
@@ -57,8 +67,8 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
     context.clearRect(0, 0, canvas.width, canvas.height)
     if (!layer?.canvas || !preview) return
     try {
-      const rendered = renderStudioStyledLayer(layer.canvas, draft, { maxDimension: 190 })
-      const scale = Math.min(1, 172 / Math.max(rendered.width, rendered.height))
+      const rendered = renderStudioStyledLayer(layer.canvas, draft, { maxDimension: 210 })
+      const scale = Math.min(1, 190 / Math.max(rendered.width, rendered.height))
       const width = rendered.width * scale
       const height = rendered.height * scale
       context.drawImage(rendered, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height)
@@ -111,39 +121,70 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
     setError('')
   }
 
-  function renderNumber(key, label, value, min, max, update) {
-    return <label className="ss-ls-field" key={key}>
-      <span>{label}</span>
-      <span className="ss-ls-number"><input type="range" min={min} max={max} step="1" value={value} onChange={(event) => update(Number(event.target.value))} disabled={busy || disabled} /><input type="number" min={min} max={max} value={value} onChange={(event) => update(Math.max(min, Math.min(max, Number(event.target.value) || 0)))} disabled={busy || disabled} /></span>
-    </label>
+  function control(name, key, label, kind, min, max) {
+    const settings = draft.effects[name]
+    const value = settings[key]
+    if (kind === 'color') {
+      return <StudioUIColor key={key} label={label} value={value} disabled={busy || disabled} onChange={(next) => {
+        if (/^#[0-9a-f]{6}$/i.test(next)) updateEffect(name, key, next)
+      }} />
+    }
+    if (kind === 'select') {
+      return <StudioUISelect key={key} label={label} value={value} options={min} disabled={busy || disabled} onChange={(next) => updateEffect(name, key, next)} />
+    }
+    if (key === 'angle') {
+      return <div className="ss-ls-ui-angle" key={key}><StudioUIAngleDial label={label} value={value} min={min} max={max} disabled={busy || disabled} onChange={(next) => updateEffect(name, key, next)} /></div>
+    }
+    return <StudioUISlider key={key} label={label} value={value} min={min} max={max} suffix={key === 'opacity' || key === 'depth' || key === 'amount' ? '%' : ''} disabled={busy || disabled} onChange={(next) => updateEffect(name, key, next)} />
+  }
+
+  function effectFields(name) {
+    if (name === 'gradientOverlay') {
+      const settings = draft.effects.gradientOverlay
+      return <>
+        <StudioUIGradientEditor
+          label="Gradient Overlay"
+          startColor={settings.color}
+          endColor={settings.secondColor}
+          angle={settings.angle}
+          disabled={busy || disabled}
+          onChange={(next) => {
+            setDraft((current) => ({
+              ...current,
+              effects: {
+                ...current.effects,
+                gradientOverlay: {
+                  ...current.effects.gradientOverlay,
+                  color: next.startColor,
+                  secondColor: next.endColor,
+                  angle: next.angle,
+                },
+              },
+            }))
+          }}
+        />
+        <StudioUISlider label="Opacity" value={settings.opacity} min={0} max={100} suffix="%" disabled={busy || disabled} onChange={(next) => updateEffect(name, 'opacity', next)} />
+      </>
+    }
+    return <>{CONTROL_GROUPS[name].map(([key, label, kind, min, max]) => control(name, key, label, kind, min, max))}</>
   }
 
   function blendIfFields(scope, title) {
     const range = draft.advanced.blendIf[scope]
-    return <div className="ss-ls-blendif-group">
-      <h4>{title}</h4>
-      {renderNumber(`${scope}-black`, words.blackCut, range.black, 0, 255, (value) => updateBlendIf(scope, 'black', value))}
-      {renderNumber(`${scope}-blackFade`, words.blackFade, range.blackFade, 0, 255, (value) => updateBlendIf(scope, 'blackFade', value))}
-      {renderNumber(`${scope}-whiteFade`, words.whiteFade, range.whiteFade, 0, 255, (value) => updateBlendIf(scope, 'whiteFade', value))}
-      {renderNumber(`${scope}-white`, words.whiteCut, range.white, 0, 255, (value) => updateBlendIf(scope, 'white', value))}
-    </div>
+    return <StudioUISection title={title}>
+      <StudioUISlider label={words.blackCut} value={range.black} min={0} max={255} disabled={busy || disabled} onChange={(next) => updateBlendIf(scope, 'black', next)} />
+      <StudioUISlider label={words.blackFade} value={range.blackFade} min={0} max={255} disabled={busy || disabled} onChange={(next) => updateBlendIf(scope, 'blackFade', next)} />
+      <StudioUISlider label={words.whiteFade} value={range.whiteFade} min={0} max={255} disabled={busy || disabled} onChange={(next) => updateBlendIf(scope, 'whiteFade', next)} />
+      <StudioUISlider label={words.whiteCut} value={range.white} min={0} max={255} disabled={busy || disabled} onChange={(next) => updateBlendIf(scope, 'white', next)} />
+    </StudioUISection>
   }
 
-  function effectFields(name) {
-    const settings = draft.effects[name]
-    return <div className="ss-ls-effect-settings">
-      {CONTROL_GROUPS[name].map(([key, label, kind, min, max]) => {
-        if (kind === 'range') return renderNumber(key, label, settings[key], min, max, (value) => updateEffect(name, key, value))
-        if (kind === 'color') return <label className="ss-ls-field" key={key}><span>{label}</span><input type="color" value={settings[key]} disabled={busy || disabled} onChange={(event) => updateEffect(name, key, event.target.value)} /></label>
-        return <label className="ss-ls-field" key={key}><span>{label}</span><select value={settings[key]} disabled={busy || disabled} onChange={(event) => updateEffect(name, key, event.target.value)}>{min.map((choice) => <option value={choice} key={choice}>{choice}</option>)}</select></label>
-      })}
-    </div>
-  }
-
-  async function submit(event) {
-    event.preventDefault()
+  async function submit() {
     if (busy || disabled || !layer) return
-    if (typeof onApply !== 'function') { setError(words.notConnected); return }
+    if (typeof onApply !== 'function') {
+      setError(words.notConnected)
+      return
+    }
     setBusy(true)
     setError('')
     try {
@@ -156,85 +197,112 @@ export default function StudioLayerStyleDialog({ open = false, layer = null, ini
     }
   }
 
-  return createPortal(
-    <div className="ss-ls-overlay" role="presentation">
+  const effectList = (
+    <div className="ss-ls-ui-effects" aria-label={words.effects}>
+      <button type="button" className={selected === 'blending' ? 'active' : ''} onClick={() => setSelected('blending')}>
+        <span className="ss-ls-ui-effect-check-placeholder" aria-hidden="true" />
+        <span>Blending Options</span>
+      </button>
+      {STUDIO_LAYER_STYLE_EFFECTS.map(({ id, label }) => (
+        <div className={`ss-ls-ui-effect-row ${selected === id ? 'active' : ''}`} key={id}>
+          <input type="checkbox" checked={draft.effects[id].enabled} onChange={(event) => updateEffect(id, 'enabled', event.target.checked)} disabled={busy || disabled} aria-label={`${label}: enabled`} />
+          <button type="button" onClick={() => setSelected(id)}>{label}</button>
+        </div>
+      ))}
+    </div>
+  )
+
+  return (
+    <>
       <style>{`
-        .ss-ls-overlay{position:fixed;inset:0;z-index:12200;display:flex;align-items:center;justify-content:center;padding:12px;background:#101010d9;color:#ededed;font:12px Arial,sans-serif}
-        .ss-ls-overlay *{box-sizing:border-box}
-        .ss-ls-dialog{width:min(98vw,900px);max-height:min(94dvh,760px);overflow:hidden;display:flex;flex-direction:column;border:1px solid #969696;background:#505050;box-shadow:0 16px 46px #000a}
-        .ss-ls-title{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;padding:7px 13px;background:#ededed;color:#242424;font-weight:600}
-        .ss-ls-title button{border:0;background:transparent;color:#242424;font-size:18px;cursor:pointer}
-        .ss-ls-body{display:grid;grid-template-columns:225px minmax(0,1fr) 150px;flex:1;min-height:0;gap:10px;padding:11px}
-        .ss-ls-effects{overflow-y:auto;overscroll-behavior:contain;min-height:0;border:1px solid #343434;background:#484848}
-        .ss-ls-effect-row{display:flex;align-items:center;gap:4px;min-height:30px;padding:0 6px;border-bottom:1px solid #565656}
-        .ss-ls-effect-row[data-selected=true]{background:#777}
-        .ss-ls-effect-row input{width:15px;height:15px;accent-color:#93b5e5}
-        .ss-ls-effect-row button{flex:1;min-width:0;border:0;background:none;color:#f5f5f5;text-align:left;font:inherit;padding:7px 2px;cursor:pointer}
-        .ss-ls-main{min-width:0;min-height:0;overflow-y:auto;border:1px solid #777;padding:12px;background:#515151}
-        .ss-ls-main h3{margin:0 0 13px;font-size:13px}
-        .ss-ls-main h4{margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid #6b6b6b;font-size:12px}
-        .ss-ls-field{display:grid;grid-template-columns:minmax(85px,120px) minmax(0,1fr);gap:9px;align-items:center;margin:9px 0;min-width:0}
-        .ss-ls-field>span:first-child{color:#eee}
-        .ss-ls-field select,.ss-ls-field input[type=color],.ss-ls-field input[type=number]{min-width:0;height:30px;background:#404040;border:1px solid #7b7b7b;color:#fff;padding:2px 5px;font:inherit}
-        .ss-ls-field input[type=color]{width:48px;padding:2px;cursor:pointer}
-        .ss-ls-number{display:flex;gap:7px;align-items:center;min-width:0}
-        .ss-ls-number input[type=range]{flex:1;min-width:20px;accent-color:#a6c5ed}
-        .ss-ls-number input[type=number]{width:54px}
-        .ss-ls-channel{display:flex;gap:15px;align-items:center;margin:14px 0}
-        .ss-ls-channel label{display:flex;gap:5px;align-items:center}
-        .ss-ls-blendif{margin-top:14px;padding-top:8px;border-top:1px solid #737373}
-        .ss-ls-blendif-title{font-weight:700;margin-bottom:4px}
-        .ss-ls-blendif-group{padding:2px 0}
-        .ss-ls-muted{color:#c6c6c6;line-height:1.4}
-        .ss-ls-actions{display:flex;flex-direction:column;gap:9px;min-width:0}
-        .ss-ls-actions>button{min-height:34px;border-radius:21px;border:1px solid #9d9d9d;background:#555;color:#fff;cursor:pointer}
-        .ss-ls-actions>button:first-child{border-color:#d4d4d4}
-        .ss-ls-actions>button:disabled{opacity:.5;cursor:not-allowed}
-        .ss-ls-preview{width:100%;aspect-ratio:1;border:1px solid #292929;background:#777;display:grid;place-items:center;overflow:hidden}
-        .ss-ls-preview canvas{max-width:100%;height:auto;background-color:transparent;background-image:linear-gradient(45deg,#aaa 25%,transparent 25%),linear-gradient(-45deg,#aaa 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#aaa 75%),linear-gradient(-45deg,transparent 75%,#aaa 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
-        .ss-ls-error{margin:12px 0 0;color:#ffcbcb;font-size:12px;line-height:1.5}
-        .ss-ls-meta{margin-bottom:12px;padding:5px 8px;border:1px solid #737373;overflow-wrap:anywhere}
-        @media(max-width:740px){.ss-ls-dialog{max-height:96dvh}.ss-ls-body{grid-template-columns:minmax(0,1fr) 110px;grid-template-rows:minmax(130px,36vh) minmax(100px,1fr);overflow-y:auto}.ss-ls-effects{grid-column:1;grid-row:1}.ss-ls-main{grid-column:1;grid-row:2;min-height:220px}.ss-ls-actions{grid-column:2;grid-row:1/3}.ss-ls-preview{max-width:110px}.ss-ls-field{grid-template-columns:minmax(70px,105px) minmax(0,1fr)}.ss-ls-number{flex-wrap:wrap}.ss-ls-number input[type=range]{flex-basis:100%}}
-        @media(max-width:390px){.ss-ls-body{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(100px,26vh) minmax(150px,1fr) auto}.ss-ls-effects{grid-column:1;grid-row:1}.ss-ls-main{grid-column:1;grid-row:2}.ss-ls-actions{grid-column:1;grid-row:3;display:grid;grid-template-columns:1fr 1fr;align-items:center}.ss-ls-actions>.ss-ls-preview{display:none}.ss-ls-actions>.ss-ls-preview-toggle{grid-column:1/3}}
+        .ss-ls-ui-dialog .ss-ui-dialog-layout.has-aside{grid-template-columns:205px minmax(0,1fr)}
+        .ss-ls-ui-dialog .ss-ui-dialog-content{padding:0}
+        .ss-ls-ui-effects{padding:7px;display:grid;gap:3px}
+        .ss-ls-ui-effects>button,.ss-ls-ui-effect-row{min-height:31px;border-radius:5px}
+        .ss-ls-ui-effects>button{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:center;width:100%;padding:0 7px;border:0;background:transparent;color:#dce7f2;text-align:left;font:600 10px Inter,system-ui,sans-serif;cursor:pointer}
+        .ss-ls-ui-effects>button.active,.ss-ls-ui-effect-row.active{background:#355d84;color:#fff}
+        .ss-ls-ui-effect-row{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;padding:0 5px}
+        .ss-ls-ui-effect-row input{width:15px;height:15px;accent-color:#5faeff}
+        .ss-ls-ui-effect-row button{min-width:0;height:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;font:600 10px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .ss-ls-ui-effect-check-placeholder{display:block;width:15px;height:15px}
+        .ss-ls-ui-work{display:grid;grid-template-columns:minmax(0,1fr) 210px;min-height:430px}
+        .ss-ls-ui-main{min-width:0;padding:13px;overflow:auto}
+        .ss-ls-ui-preview-column{display:grid;align-content:start;gap:10px;padding:11px;border-left:1px solid #3b4651;background:#242b33}
+        .ss-ls-ui-preview-column canvas{display:block;width:100%;height:auto;max-width:210px}
+        .ss-ls-ui-meta{margin-bottom:10px;padding:7px 9px;border:1px solid #3b4651;border-radius:6px;background:#242c34;color:#aab8c6;font-size:10px}
+        .ss-ls-ui-controls{display:grid;gap:10px}
+        .ss-ls-ui-channel-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0}
+        .ss-ls-ui-channel-row>span{color:#aab8c6;font-size:10px;font-weight:700}
+        .ss-ls-ui-channel-row label{display:flex;align-items:center;gap:4px;color:#edf3fa;font-size:10px}
+        .ss-ls-ui-channel-row input{width:15px;height:15px;accent-color:#5faeff}
+        .ss-ls-ui-angle{padding:6px 0}
+        .ss-ls-ui-hint{margin:0;padding:8px 9px;border-radius:6px;background:#202832;color:#9fb0c0;font-size:9px;line-height:1.45}
+        .ss-ls-ui-error{margin:10px 0 0;padding:8px 10px;border:1px solid #8e4750;border-radius:6px;background:#4b2b31;color:#ffd5d8;font-size:10px}
+        @media(max-width:760px),(pointer:coarse){
+          .ss-ls-ui-dialog .ss-ui-dialog-layout.has-aside{grid-template-columns:1fr}
+          .ss-ls-ui-dialog .ss-ui-dialog-aside{max-height:145px;border-right:0;border-bottom:1px solid #3b4651}
+          .ss-ls-ui-effects{grid-template-columns:repeat(2,minmax(0,1fr))}
+          .ss-ls-ui-work{grid-template-columns:1fr}
+          .ss-ls-ui-preview-column{grid-template-columns:120px minmax(0,1fr);border-left:0;border-top:1px solid #3b4651}
+        }
+        @media(max-width:430px){
+          .ss-ls-ui-effects{grid-template-columns:1fr 1fr}
+          .ss-ls-ui-preview-column .ss-ui-preview{display:none}
+          .ss-ls-ui-preview-column{grid-template-columns:1fr}
+        }
       `}</style>
-      <section className="ss-ls-dialog" role="dialog" aria-modal="true" aria-label={words.title}>
-        <header className="ss-ls-title"><span ref={titleRef} tabIndex={-1}>{words.title}</span><button type="button" onClick={onClose} disabled={busy} aria-label={words.cancel}>×</button></header>
-        <form className="ss-ls-body" onSubmit={submit}>
-          <aside className="ss-ls-effects" aria-label={words.effects}>
-            <div className="ss-ls-effect-row" data-selected={selected === 'blending'}><button type="button" onClick={() => setSelected('blending')}>Blending Options</button></div>
-            {STUDIO_LAYER_STYLE_EFFECTS.map(({ id, label }) => <div className="ss-ls-effect-row" data-selected={selected === id} key={id}>
-              <input type="checkbox" checked={draft.effects[id].enabled} onChange={(event) => updateEffect(id, 'enabled', event.target.checked)} disabled={busy || disabled} aria-label={`${label}: enabled`} />
-              <button type="button" onClick={() => setSelected(id)} aria-pressed={selected === id}>{label}</button>
-            </div>)}
+      <StudioUIDialog
+        open={open}
+        title={words.title}
+        subtitle={layer?.name || words.noLayer}
+        icon="fa-solid fa-wand-magic-sparkles"
+        width={940}
+        busy={busy}
+        onClose={onClose}
+        aside={effectList}
+        className="ss-ls-ui-dialog"
+        footer={
+          <StudioUIButtonRow>
+            <StudioUIButton disabled={busy} onClick={onClose}>{words.cancel}</StudioUIButton>
+            <StudioUIButton variant="primary" disabled={busy || disabled || layer?.locked || !layer} onClick={submit}>{busy ? words.busy : words.apply}</StudioUIButton>
+          </StudioUIButtonRow>
+        }
+      >
+        <div className="ss-ls-ui-work">
+          <div className="ss-ls-ui-main">
+            <div className="ss-ls-ui-meta"><strong>{words.name}:</strong> {layer?.name || words.noLayer}</div>
+            <div className="ss-ls-ui-controls">
+              {selected === 'blending' ? <>
+                <StudioUISection title="Blending Options" subtitle={words.blend}>
+                  <StudioUISelect label={words.blend} value={draft.blendMode} options={STUDIO_BLEND_MODES} disabled={busy || disabled || layer?.isBackground} onChange={(next) => updateMain('blendMode', next)} />
+                  <StudioUISlider label={words.opacity} value={draft.opacity} min={0} max={100} suffix="%" disabled={busy || disabled} onChange={(next) => updateMain('opacity', next)} />
+                  <StudioUISlider label={words.fill} value={draft.fillOpacity} min={0} max={100} suffix="%" disabled={busy || disabled} onChange={(next) => updateMain('fillOpacity', next)} />
+                  <div className="ss-ls-ui-channel-row">
+                    <span>{words.channels}:</span>
+                    {['r', 'g', 'b'].map((channel) => <label key={channel}><input type="checkbox" checked={draft.channels[channel]} disabled={busy || disabled} onChange={(event) => updateMain('channels', { ...draft.channels, [channel]: event.target.checked })} />{channel.toUpperCase()}</label>)}
+                  </div>
+                  <StudioUISelect label={words.knockout} value={draft.advanced.knockout} options={['none', 'shallow', 'deep']} disabled={busy || disabled || layer?.isBackground} onChange={(next) => updateAdvanced('knockout', next)} />
+                </StudioUISection>
+                <StudioUISection title={words.blendIf} subtitle={words.hint}>
+                  <StudioUISelect label={words.blendIfChannel} value={draft.advanced.blendIf.channel} options={[{ value: 'gray', label: 'Gray' }, { value: 'r', label: 'Red' }, { value: 'g', label: 'Green' }, { value: 'b', label: 'Blue' }]} disabled={busy || disabled} onChange={(next) => updateAdvanced('blendIf', { ...draft.advanced.blendIf, channel: next })} />
+                  {blendIfFields('thisLayer', words.thisLayer)}
+                  {blendIfFields('underlying', words.underlying)}
+                  <p className="ss-ls-ui-hint">{words.hint}</p>
+                </StudioUISection>
+              </> : <StudioUISection title={STUDIO_LAYER_STYLE_EFFECTS.find((item) => item.id === selected)?.label || selected}>
+                <StudioUIToggle label="Enabled" checked={draft.effects[selected].enabled} disabled={busy || disabled} onChange={(next) => updateEffect(selected, 'enabled', next)} />
+                {effectFields(selected)}
+              </StudioUISection>}
+              {layer?.locked ? <p className="ss-ls-ui-error">{words.locked}</p> : null}
+              {error ? <p className="ss-ls-ui-error" role="alert">{error}</p> : null}
+            </div>
+          </div>
+          <aside className="ss-ls-ui-preview-column">
+            <StudioUIPreview label={words.preview}><canvas ref={previewRef} width={210} height={210} aria-label={words.preview} /></StudioUIPreview>
+            <StudioUIToggle label={words.preview} checked={preview} disabled={busy} onChange={setPreview} />
           </aside>
-          <section className="ss-ls-main">
-            <h3>{selected === 'blending' ? 'Blending Options' : STUDIO_LAYER_STYLE_EFFECTS.find((item) => item.id === selected)?.label}</h3>
-            <div className="ss-ls-meta"><strong>{words.name}:</strong> {layer?.name || words.noLayer}</div>
-            {selected === 'blending' ? <>
-              <label className="ss-ls-field"><span>{words.blend}</span><select value={draft.blendMode} disabled={busy || disabled || layer?.isBackground} onChange={(event) => updateMain('blendMode', event.target.value)}>{STUDIO_BLEND_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select></label>
-              {renderNumber('opacity', words.opacity, draft.opacity, 0, 100, (value) => updateMain('opacity', value))}
-              {renderNumber('fillOpacity', words.fill, draft.fillOpacity, 0, 100, (value) => updateMain('fillOpacity', value))}
-              <div className="ss-ls-channel"><span>{words.channels}:</span>{['r', 'g', 'b'].map((channel) => <label key={channel}><input type="checkbox" checked={draft.channels[channel]} disabled={busy || disabled} onChange={(event) => updateMain('channels', { ...draft.channels, [channel]: event.target.checked })} />{channel.toUpperCase()}</label>)}</div>
-              <label className="ss-ls-field"><span>{words.knockout}</span><select value={draft.advanced.knockout} disabled={busy || disabled || layer?.isBackground} onChange={(event) => updateAdvanced('knockout', event.target.value)}><option value="none">None</option><option value="shallow">Shallow</option><option value="deep">Deep</option></select></label>
-              <div className="ss-ls-blendif">
-                <div className="ss-ls-blendif-title">{words.blendIf}</div>
-                <label className="ss-ls-field"><span>{words.blendIfChannel}</span><select value={draft.advanced.blendIf.channel} disabled={busy || disabled} onChange={(event) => updateAdvanced('blendIf', { ...draft.advanced.blendIf, channel: event.target.value })}><option value="gray">Gray</option><option value="r">Red</option><option value="g">Green</option><option value="b">Blue</option></select></label>
-                {blendIfFields('thisLayer', words.thisLayer)}
-                {blendIfFields('underlying', words.underlying)}
-                <p className="ss-ls-muted">{words.hint}</p>
-              </div>
-            </> : effectFields(selected)}
-            {layer?.locked ? <p className="ss-ls-error">{words.locked}</p> : null}
-            {error ? <p className="ss-ls-error" role="alert">{error}</p> : null}
-          </section>
-          <aside className="ss-ls-actions">
-            <button type="submit" disabled={busy || disabled || layer?.locked || !layer}>{busy ? words.busy : words.apply}</button>
-            <button type="button" onClick={onClose} disabled={busy}>{words.cancel}</button>
-            <label className="ss-ls-preview-toggle"><input type="checkbox" checked={preview} onChange={(event) => setPreview(event.target.checked)} /> {words.preview}</label>
-            <div className="ss-ls-preview"><canvas ref={previewRef} width={190} height={190} aria-label={words.preview} /></div>
-          </aside>
-        </form>
-      </section>
-    </div>, document.body
+        </div>
+      </StudioUIDialog>
+    </>
   )
 }
