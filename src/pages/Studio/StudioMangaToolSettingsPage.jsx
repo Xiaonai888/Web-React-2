@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { StudioUIButton, StudioUISection } from './StudioUIControls'
 import StudioSpeechBubblePanel from './StudioSpeechBubblePanel'
 import StudioMangaBalloonTool from './StudioMangaBalloonTool'
 import StudioComicPanelsPanel from './StudioComicPanelsPanel'
@@ -12,7 +13,7 @@ const TOOLS = [
   { id: 'bubble', icon: 'fa-comment', en: 'Speech balloons', km: 'ពពុះសន្ទនា', zh: '对话气泡', ja: '吹き出し', ko: '말풍선' },
   { id: 'balloon', icon: 'fa-comment-dots', en: 'Manga balloon · Preview', km: 'ពពុះ Manga · មើលជាមុន', zh: '漫画气泡 · 预览', ja: 'マンガ吹き出し · プレビュー', ko: '만화 말풍선 · 미리보기' },
   { id: 'panels', icon: 'fa-table-cells-large', en: 'Comic frames', km: 'ស៊ុម Manga', zh: '漫画分镜', ja: 'コマ割り', ko: '만화 컷' },
-  { id: 'screentone', icon: 'fa-circle-half-stroke', en: 'Screentones', km: 'ស្គ្រីនតូន', zh: '网点', ja: 'スクリーントーン', ko: 'スクリーントーン' },
+  { id: 'screentone', icon: 'fa-circle-half-stroke', en: 'Screentones', km: 'ស្គ្រីនតូន', zh: '网点', ja: 'スクリーントーン', ko: '스크린톤' },
   { id: 'effects', icon: 'fa-bolt', en: 'Manga effects', km: 'បែបផែន Manga', zh: '漫画特效', ja: 'マンガ効果', ko: '만화 효과' },
   { id: 'gradient', icon: 'fa-fill', en: 'Gradient', km: 'ពណ៌ជម្រាល', zh: '渐变', ja: 'グラデーション', ko: '그라데이션' },
 ]
@@ -38,61 +39,129 @@ export default function StudioMangaToolSettingsPage({ open = false, onClose, onA
     if (!open) return undefined
     const oldOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = oldOverflow }
-  }, [open])
+    const keydown = (event) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      onClose?.()
+    }
+    window.addEventListener('keydown', keydown, true)
+    return () => {
+      document.body.style.overflow = oldOverflow
+      window.removeEventListener('keydown', keydown, true)
+    }
+  }, [open, onClose])
 
   if (!open || typeof document === 'undefined') return null
 
   const available = !disabled && typeof onApply === 'function'
   const apply = available ? (options) => onApply(selected, options) : undefined
+  const activeTool = TOOLS.find((item) => item.id === selected) || TOOLS[0]
+  const activeLabel = activeTool[language] || activeTool.en
 
   return createPortal(
-    <div className="ss-manga-tool-page" role="dialog" aria-modal="true" aria-label={t[0]} onKeyDown={(event) => {
-      event.stopPropagation()
-      if (event.key === 'Escape') { event.preventDefault(); onClose?.() }
-    }}>
+    <div className="ss-manga-ui-page" role="dialog" aria-modal="true" aria-label={t[0]}>
       <style>{`
-        .ss-manga-tool-page{position:fixed;inset:0;z-index:12010;display:flex;flex-direction:column;box-sizing:border-box;background:#202936;color:#edf4ff;font:inherit}
-        .ss-manga-tool-page *{box-sizing:border-box}
-        .ss-manga-tool-page-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #4b627c;background:#283748}
-        .ss-manga-tool-page-header h2{margin:0;font-size:17px}
-        .ss-manga-tool-page-header p{margin:4px 0 0;font-size:11px;color:#c4d3e4}
-        .ss-manga-tool-page-back{min-height:37px;padding:6px 12px;border:1px solid #6384a5;border-radius:6px;background:#37536e;color:white;font:inherit;cursor:pointer}
-        .ss-manga-tool-page-layout{display:grid;grid-template-columns:minmax(185px,240px) minmax(0,1fr);flex:1;min-height:0;overflow:hidden}
-        .ss-manga-tool-page-tabs{display:flex;flex-direction:column;gap:6px;overflow-y:auto;padding:12px;border-right:1px solid #485c73;background:#263442}
-        .ss-manga-tool-page-tab{display:flex;align-items:center;gap:10px;min-height:43px;padding:9px;border:1px solid transparent;border-radius:6px;background:#32465a;color:#eaf3ff;font:inherit;font-size:12px;text-align:left;cursor:pointer}
-        .ss-manga-tool-page-tab[aria-selected=true]{border-color:#9bcaff;background:#42678d;color:white;font-weight:700}
-        .ss-manga-tool-page-tab:focus-visible,.ss-manga-tool-page-back:focus-visible{outline:2px solid #a8d4ff;outline-offset:2px}
-        .ss-manga-tool-page-content{overflow-y:auto;overscroll-behavior:contain;padding:16px 20px 40px}
-        .ss-manga-tool-page-content>h3{margin:0 0 9px;font-size:16px}
-        .ss-manga-tool-page-content>p{margin:0 0 14px;font-size:11px;line-height:1.5;color:#c4d3e4}
-        .ss-manga-tool-page-settings{width:min(100%,570px);padding:15px;border:1px solid #526980;border-radius:9px;background:#2b3c4d}
-        .ss-manga-tool-page-settings .ss-comic-panels,.ss-manga-tool-page-settings .ss-speech-bubble-panel,.ss-manga-tool-page-settings .ss-screentone-panel{max-width:100%}
-        @media(max-width:690px){.ss-manga-tool-page-header{padding:10px}.ss-manga-tool-page-header h2{font-size:15px}.ss-manga-tool-page-header p{display:none}.ss-manga-tool-page-back{padding:6px 9px;font-size:11px}.ss-manga-tool-page-layout{display:flex;flex-direction:column}.ss-manga-tool-page-tabs{flex:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;min-height:56px;padding:7px;border-right:0;border-bottom:1px solid #485c73}.ss-manga-tool-page-tab{flex:0 0 auto;min-height:39px;white-space:nowrap;padding:7px;font-size:11px}.ss-manga-tool-page-content{padding:12px 12px 36px}.ss-manga-tool-page-settings{padding:10px}}
+        .ss-manga-ui-page{
+          --ss-ui-bg:#20262d;
+          --ss-ui-panel:#29313a;
+          --ss-ui-panel-2:#313b46;
+          --ss-ui-line:#4b5968;
+          --ss-ui-line-soft:#3b4651;
+          --ss-ui-text:#edf3fa;
+          --ss-ui-muted:#aab8c6;
+          --ss-ui-blue:#5faeff;
+          --ss-ui-blue-soft:#355d84;
+          position:fixed;inset:0;z-index:12010;display:flex;flex-direction:column;box-sizing:border-box;
+          background:#20262d;color:#edf3fa;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        .ss-manga-ui-page *{box-sizing:border-box}
+        .ss-manga-ui-header{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px 8px 16px;border-bottom:1px solid #4b5968;background:linear-gradient(180deg,#35414d,#29323c)}
+        .ss-manga-ui-title{min-width:0;display:flex;align-items:center;gap:10px}
+        .ss-manga-ui-title>i{width:28px;height:28px;display:grid;place-items:center;border:1px solid #53708b;border-radius:7px;background:#2c3e50;color:#8bc4ff;font-size:13px}
+        .ss-manga-ui-title>span{min-width:0;display:flex;flex-direction:column;gap:2px}
+        .ss-manga-ui-title strong{font-size:14px;font-weight:800}
+        .ss-manga-ui-title small{color:#aab8c6;font-size:9px}
+        .ss-manga-ui-layout{min-height:0;flex:1;display:grid;grid-template-columns:220px minmax(0,1fr);overflow:hidden}
+        .ss-manga-ui-nav{min-height:0;overflow:auto;padding:8px;border-right:1px solid #3b4651;background:#242b33}
+        .ss-manga-ui-nav-inner{display:grid;gap:4px}
+        .ss-manga-ui-tab{width:100%;min-height:39px;display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:6px;padding:0 8px;border:1px solid transparent;border-radius:6px;background:transparent;color:#dbe6f0;text-align:left;font:650 10px Inter,system-ui,sans-serif;cursor:pointer}
+        .ss-manga-ui-tab i{width:24px;height:24px;display:grid;place-items:center;border-radius:5px;background:#303b46;color:#9bb7d0}
+        .ss-manga-ui-tab:hover:not(:disabled){background:#303b46}
+        .ss-manga-ui-tab[aria-selected=true]{border-color:#6fa6d5;background:#355d84;color:#fff}
+        .ss-manga-ui-tab[aria-selected=true] i{background:#2d73aa;color:#fff}
+        .ss-manga-ui-tab:focus-visible{outline:2px solid #5faeff;outline-offset:2px}
+        .ss-manga-ui-main{min-width:0;min-height:0;overflow:auto;padding:14px 16px 34px}
+        .ss-manga-ui-heading{width:min(100%,760px);margin-bottom:10px}
+        .ss-manga-ui-heading h3{margin:0 0 4px;font-size:14px}
+        .ss-manga-ui-heading p{margin:0;color:#aab8c6;font-size:9px;line-height:1.45}
+        .ss-manga-ui-settings{width:min(100%,760px)}
+        .ss-manga-ui-settings>.ss-ui-section>.ss-ui-section-body{padding:12px}
+        .ss-manga-ui-settings .ss-comic-panels,.ss-manga-ui-settings .ss-speech-bubble-panel,.ss-manga-ui-settings .ss-screentone-panel{max-width:100%}
+        @media(max-width:760px),(pointer:coarse){
+          .ss-manga-ui-header{min-height:52px;padding:7px 9px}
+          .ss-manga-ui-title small{display:none}
+          .ss-manga-ui-layout{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+          .ss-manga-ui-nav{overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid #3b4651;padding:6px}
+          .ss-manga-ui-nav-inner{display:flex;gap:5px;width:max-content}
+          .ss-manga-ui-tab{width:auto;min-width:44px;grid-template-columns:24px auto;min-height:36px;padding:0 8px;white-space:nowrap}
+          .ss-manga-ui-main{padding:10px 10px 28px}
+        }
+        @media(max-width:430px){
+          .ss-manga-ui-title strong{font-size:12px}
+          .ss-manga-ui-tab span{display:none}
+          .ss-manga-ui-tab{grid-template-columns:24px;min-width:38px;justify-content:center;padding:0 6px}
+          .ss-manga-ui-tab i{background:transparent}
+        }
       `}</style>
-      <header className="ss-manga-tool-page-header">
-        <div><h2>{t[0]}</h2><p>{t[1]}</p></div>
-        <button type="button" className="ss-manga-tool-page-back" onClick={() => onClose?.()}>{t[2]} ✕</button>
+
+      <header className="ss-manga-ui-header">
+        <div className="ss-manga-ui-title">
+          <i className="fa-solid fa-pen-ruler" aria-hidden="true" />
+          <span><strong>{t[0]}</strong><small>{t[1]}</small></span>
+        </div>
+        <StudioUIButton icon="fa-solid fa-arrow-left" onClick={onClose}>{t[2]}</StudioUIButton>
       </header>
-      <div className="ss-manga-tool-page-layout">
-        <nav className="ss-manga-tool-page-tabs" role="tablist" aria-label={t[0]}>
-          {TOOLS.map((item) => <button key={item.id} type="button" role="tab" className="ss-manga-tool-page-tab" aria-selected={selected === item.id} onClick={() => setSelected(item.id)}>
-            <i className={`fa-solid ${item.icon}`} aria-hidden="true" />{item[language] || item.en}
-          </button>)}
+
+      <div className="ss-manga-ui-layout">
+        <nav className="ss-manga-ui-nav" role="tablist" aria-label={t[0]}>
+          <div className="ss-manga-ui-nav-inner">
+            {TOOLS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                className="ss-manga-ui-tab"
+                aria-selected={selected === item.id}
+                title={item[language] || item.en}
+                onClick={() => setSelected(item.id)}
+              >
+                <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
+                <span>{item[language] || item.en}</span>
+              </button>
+            ))}
+          </div>
         </nav>
-        <main className="ss-manga-tool-page-content" role="tabpanel">
-          <h3>{t[3]} · {TOOLS.find((item) => item.id === selected)?.[language] || TOOLS.find((item) => item.id === selected)?.en}</h3>
-          <p>{available ? t[4] : t[5]}</p>
-          <div className="ss-manga-tool-page-settings">
-            {selected === 'bubble' ? <StudioSpeechBubblePanel onApply={apply} disabled={disabled} /> : null}
-            {selected === 'balloon' ? <StudioMangaBalloonTool onApply={apply} disabled={disabled} color={color} /> : null}
-            {selected === 'panels' ? <StudioComicPanelsPanel onApply={apply} disabled={disabled} /> : null}
-            {selected === 'screentone' ? <StudioScreentonePanel onApply={apply} disabled={disabled} /> : null}
-            {selected === 'effects' ? <StudioMangaEffectsPanel onApply={apply} disabled={disabled} /> : null}
-            {selected === 'gradient' ? <StudioGradientPanel color={color} onApply={apply} disabled={disabled} /> : null}
+
+        <main className="ss-manga-ui-main" role="tabpanel">
+          <div className="ss-manga-ui-heading">
+            <h3>{t[3]} · {activeLabel}</h3>
+            <p>{available ? t[4] : t[5]}</p>
+          </div>
+
+          <div className="ss-manga-ui-settings">
+            <StudioUISection title={activeLabel} icon={`fa-solid ${activeTool.icon}`}>
+              {selected === 'bubble' ? <StudioSpeechBubblePanel onApply={apply} disabled={disabled} /> : null}
+              {selected === 'balloon' ? <StudioMangaBalloonTool onApply={apply} disabled={disabled} color={color} /> : null}
+              {selected === 'panels' ? <StudioComicPanelsPanel onApply={apply} disabled={disabled} /> : null}
+              {selected === 'screentone' ? <StudioScreentonePanel onApply={apply} disabled={disabled} /> : null}
+              {selected === 'effects' ? <StudioMangaEffectsPanel onApply={apply} disabled={disabled} /> : null}
+              {selected === 'gradient' ? <StudioGradientPanel color={color} onApply={apply} disabled={disabled} /> : null}
+            </StudioUISection>
           </div>
         </main>
       </div>
-    </div>, document.body
+    </div>,
+    document.body,
   )
 }
