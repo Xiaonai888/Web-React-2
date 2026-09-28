@@ -24,6 +24,29 @@ export const STUDIO_ADJUSTMENT_LAYER_ITEMS = Object.freeze([
   { id: 'pattern', group: 'fill' },
 ])
 
+const ADJUSTMENT_ICONS = Object.freeze({
+  'color-vibrance': 'fa-wand-magic-sparkles',
+  'brightness-contrast': 'fa-sun',
+  levels: 'fa-chart-simple',
+  curves: 'fa-chart-line',
+  exposure: 'fa-circle-half-stroke',
+  vibrance: 'fa-droplet',
+  'hue-saturation': 'fa-palette',
+  'color-balance': 'fa-scale-balanced',
+  'black-white': 'fa-circle-half-stroke',
+  'photo-filter': 'fa-filter',
+  'channel-mixer': 'fa-sliders',
+  'color-lookup': 'fa-table-cells',
+  'selective-color': 'fa-eye-dropper',
+  invert: 'fa-arrows-rotate',
+  posterize: 'fa-layer-group',
+  threshold: 'fa-circle',
+  'gradient-map': 'fa-fill',
+  'solid-color': 'fa-square',
+  gradient: 'fa-fill-drip',
+  pattern: 'fa-border-all',
+})
+
 const LABELS = {
   en: {
     title: 'Create new fill or adjustment layer',
@@ -260,15 +283,24 @@ export default function StudioAdjustmentLayerMenu({
       onClick={(event) => event.stopPropagation()}
     >
       <style>{`
-        .ss-adjustment-menu{position:fixed;z-index:12350;width:230px;max-height:calc(100dvh - 16px);overflow:auto;padding:4px 0;border:1px solid #8c8c8c;background:#efefef;color:#111;box-shadow:0 5px 18px #0006;font:12px Arial,sans-serif;overscroll-behavior:contain}
+        .ss-adjustment-menu{position:fixed;z-index:12350;width:252px;max-height:calc(100dvh - 16px);overflow:auto;padding:6px;border:1px solid #657484;border-radius:8px;background:#252d35;color:#edf3fa;box-shadow:0 12px 32px #0009;font:10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overscroll-behavior:contain}
         .ss-adjustment-menu *{box-sizing:border-box}
-        .ss-adjustment-menu-group+.ss-adjustment-menu-group{border-top:1px solid #b9b9b9;margin-top:3px;padding-top:3px}
-        .ss-adjustment-menu-item{display:block;width:100%;min-height:24px;padding:4px 24px;border:0;background:transparent;color:inherit;text-align:left;font:inherit;white-space:nowrap;cursor:pointer}
-        .ss-adjustment-menu-item:hover,.ss-adjustment-menu-item:focus-visible{outline:0;background:#2f73d9;color:#fff}
-        .ss-adjustment-menu-item:disabled{opacity:.45;cursor:default;background:transparent;color:#555}
-        @media(prefers-color-scheme:dark){.ss-adjustment-menu{border-color:#777;background:#383838;color:#f2f2f2}.ss-adjustment-menu-group+.ss-adjustment-menu-group{border-color:#5d5d5d}.ss-adjustment-menu-item:disabled{color:#aaa}}
-        @media(max-width:560px),(pointer:coarse){.ss-adjustment-menu{left:8px!important;right:8px;width:auto;max-height:min(72dvh,620px);border-radius:10px;padding:7px 0;font-size:14px}.ss-adjustment-menu-item{min-height:40px;padding:9px 18px}.ss-adjustment-menu-group+.ss-adjustment-menu-group{margin-top:5px;padding-top:5px}}
+        .ss-adjustment-menu-title{display:flex;align-items:center;gap:7px;min-height:32px;padding:0 7px 5px;color:#aab8c6;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+        .ss-adjustment-menu-title i{color:#8bc4ff}
+        .ss-adjustment-menu-group+.ss-adjustment-menu-group{border-top:1px solid #3b4651;margin-top:5px;padding-top:5px}
+        .ss-adjustment-menu-item{display:grid;width:100%;min-height:31px;grid-template-columns:26px minmax(0,1fr) 12px;align-items:center;gap:4px;padding:0 6px;border:1px solid transparent;border-radius:5px;background:transparent;color:#e2ebf4;text-align:left;font:600 10px Inter,ui-sans-serif,system-ui,sans-serif;white-space:nowrap;cursor:pointer}
+        .ss-adjustment-menu-item>i:first-child{width:22px;height:22px;display:grid;place-items:center;border-radius:5px;background:#303b46;color:#9fc9ed;font-size:9px}
+        .ss-adjustment-menu-item>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+        .ss-adjustment-menu-item>i:last-child{color:#768697;font-size:7px}
+        .ss-adjustment-menu-item:hover,.ss-adjustment-menu-item:focus-visible{outline:0;border-color:#6da4d4;background:#355d84;color:#fff}
+        .ss-adjustment-menu-item:hover>i:first-child,.ss-adjustment-menu-item:focus-visible>i:first-child{background:#2e77ae;color:#fff}
+        .ss-adjustment-menu-item:disabled{opacity:.4;cursor:default;background:transparent}
+        @media(max-width:560px),(pointer:coarse){.ss-adjustment-menu{left:8px!important;right:8px;width:auto;max-height:min(72dvh,620px);border-radius:12px;padding:8px}.ss-adjustment-menu-item{min-height:42px;font-size:12px}.ss-adjustment-menu-item>i:first-child{width:28px;height:28px;font-size:11px}.ss-adjustment-menu-group+.ss-adjustment-menu-group{margin-top:5px;padding-top:5px}}
       `}</style>
+      <div className="ss-adjustment-menu-title">
+        <i className="fa-solid fa-circle-half-stroke" aria-hidden="true" />
+        <span>{words.title}</span>
+      </div>
       {grouped.map(({ group, items }) => (
         <div className="ss-adjustment-menu-group" role="group" key={group}>
           {items.map((item) => {
@@ -285,7 +317,9 @@ export default function StudioAdjustmentLayerMenu({
                 onClick={() => choose(item)}
                 onKeyDown={(event) => keyDown(event, currentIndex)}
               >
-                {words[item.id] || LABELS.en[item.id]}
+                <i className={`fa-solid ${ADJUSTMENT_ICONS[item.id] || 'fa-circle'}`} aria-hidden="true" />
+                <span>{words[item.id] || LABELS.en[item.id]}</span>
+                <i className="fa-solid fa-chevron-right" aria-hidden="true" />
               </button>
             )
           })}
