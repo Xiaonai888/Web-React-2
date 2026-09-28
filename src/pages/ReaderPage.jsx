@@ -5416,6 +5416,7 @@ const [adultWarningOpen, setAdultWarningOpen] =
   const adultConsentGrantedRef = useRef(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [readerMoreOpen, setReaderMoreOpen] = useState(false)
+  const [readerShareOpen, setReaderShareOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [fontSelectOpen, setFontSelectOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
@@ -7160,7 +7161,7 @@ const handleReaderCopyLink = async () => {
     window.prompt(t('readerPage.copyThisLink'), link)
   }
 
-  setReaderMoreOpen(false)
+  setReaderShareOpen(false)
 }
 
 const handleReaderReport = () => {
@@ -7168,7 +7169,7 @@ const handleReaderReport = () => {
   setReportOpen(true)
 }
 const handleReaderEcho = () => {
-  setReaderMoreOpen(false)
+  setReaderShareOpen(false)
   setEchoShareOpen(true)
 }
 
