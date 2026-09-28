@@ -4,6 +4,9 @@ import TurnstileBox from '../../components/TurnstileBox'
 import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { getReaderDeviceKey, persistReaderDeviceKey } from '../../utils/readerDeviceKey'
+
+
 
 registerTranslationNamespace('registerPage', {
   en: {
@@ -389,6 +392,7 @@ async function uploadImageToStorage({
   formData.append('image', file)
   formData.append('folder', folder)
 
+  const deviceKey = await getReaderDeviceKey()
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
     method: 'POST',
     headers: {
@@ -804,6 +808,7 @@ export default function RegisterPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          deviceKey,
           name,
           username,
           email,
@@ -824,7 +829,7 @@ export default function RegisterPage() {
         )
       }
 
-      if (data.deviceKey) localStorage.setItem('shadow_reader_device_key', data.deviceKey)
+      if (data.deviceKey) persistReaderDeviceKey(data.deviceKey)
 
       saveLogin(data.token, data.user)
       setCreatedToken(data.token)
