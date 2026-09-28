@@ -250,84 +250,446 @@ export default function StudioLayersChannelsPaths({ canvasRef, paperId, revision
   return (
     <section className="ss-lcp" aria-label={t[0]}>
       <style>{`
-        .shadow-studio .ss-lcp{min-width:0;color:#e5edf6}
-        .shadow-studio .ss-lcp-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;margin:-10px -9px 10px;padding:5px 5px 0;border-bottom:1px solid #516071;background:#252f39}
-        .shadow-studio .ss-lcp-tab{min-width:0;height:31px;border:0;border-bottom:2px solid transparent;border-radius:4px 4px 0 0;background:transparent;color:#acbbca;font:inherit;font-size:11px;cursor:pointer}
-        .shadow-studio .ss-lcp-tab[aria-selected=true]{border-bottom-color:#82baff;background:#3b4c5e;color:white;font-weight:700}
-        .shadow-studio .ss-lcp-tab:focus-visible{outline:2px solid #8ac4ff;outline-offset:-2px}
-        .shadow-studio .ss-lcp-layer,.shadow-studio .ss-lcp-channel{display:flex;align-items:center;gap:5px;min-width:0;padding:6px 3px;border:1px solid #4d5e70;background:#303e4c;color:#eaf1f9}
-        .shadow-studio .ss-lcp-layer[data-selected=true]{border-color:#8bbef4;background:#3b536d}
-        .shadow-studio .ss-lcp-channel+.ss-lcp-channel{border-top:0}
-        .shadow-studio .ss-lcp-thumb{display:block;flex:0 0 41px;width:41px;max-height:42px;object-fit:contain;border:1px solid #7b8996;background:#fff}
-        .shadow-studio .ss-lcp-layer .ss-lcp-thumb{flex:0 0 auto;max-width:35px;max-height:37px}
-        .shadow-studio .ss-lcp-pick{display:flex;align-items:center;gap:5px;min-width:0;flex:0 0 35px;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
-        .shadow-studio .ss-lcp-item-name{min-width:0;flex:1;display:grid;gap:3px}
-        .shadow-studio .ss-lcp-name-trigger{display:block;width:100%;min-width:0;padding:1px 0;border:0;background:transparent;color:inherit;text-align:left;font:inherit;cursor:text}
-        .shadow-studio .ss-lcp-rename-input{box-sizing:border-box;display:block;width:100%;min-width:0;height:29px;padding:3px 5px;border:1px solid #9dc9fa;border-radius:4px;background:#152638;color:#fff;font:inherit;font-size:12px;outline:2px solid #5ca9f4;outline-offset:0}
-        .shadow-studio .ss-lcp-group-name.ss-lcp-name-trigger{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:700}
-        .shadow-studio .ss-lcp-group-head>.ss-lcp-rename-input{flex:1}
-        .shadow-studio .ss-lcp-group-add-label{display:none}
-        @media(pointer:coarse){.shadow-studio .ss-lcp-action{min-height:34px;min-width:30px}.shadow-studio .ss-lcp-name-trigger{min-height:34px;display:flex;align-items:center}.shadow-studio .ss-lcp-group-add-label{display:inline}.shadow-studio .ss-lcp-group-add{display:flex;align-items:center;gap:5px;padding:0 7px}.shadow-studio .ss-lcp-list{max-height:min(55vh,440px)}}
-        .shadow-studio .ss-lcp-item-name strong{font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .shadow-studio .ss-lcp-item-name small{font-size:9px;color:#b3c5d7;line-height:1.4}
-        .shadow-studio .ss-lcp-tools{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin:7px 0}
-        .shadow-studio .ss-lcp-action{display:grid;place-items:center;flex:none;min-width:22px;height:25px;padding:0 3px;border:1px solid #5b6e80;border-radius:4px;background:#344658;color:#eaf1f9;font:inherit;font-size:10px;cursor:pointer}
-        .shadow-studio .ss-lcp-action:hover:not(:disabled){background:#4b6580}
-        .shadow-studio .ss-lcp-action:disabled,.shadow-studio .ss-lcp-pick:disabled{opacity:.45;cursor:not-allowed}
-        .shadow-studio .ss-lcp-opacity{display:flex;align-items:center;gap:5px;font-size:10px;color:#c8d4e0}
-        .shadow-studio .ss-lcp-opacity select{min-width:0;width:65px;height:27px;border:1px solid #5b6e80;border-radius:4px;background:#25313d;color:white;font:inherit;font-size:10px}
-        .shadow-studio .ss-lcp-hint{margin:10px 0 0;font-size:10px;line-height:1.5;color:#b2c3d2}
-        .shadow-studio .ss-lcp-paths{padding:24px 7px;text-align:center;border:1px dashed #5c6a77;border-radius:5px;color:#bccbd8}
-        .shadow-studio .ss-lcp-paths i{display:block;margin-bottom:10px;font-size:22px}
-        .shadow-studio .ss-lcp-list{display:grid;gap:4px;max-height:300px;overflow-y:auto;overscroll-behavior:contain}
-        .shadow-studio .ss-lcp-group{display:grid;gap:5px;margin:5px 0 3px;padding:6px;border:1px solid #607b94;border-radius:5px;background:#283c50}
-        .shadow-studio .ss-lcp-group-head{display:flex;align-items:center;gap:5px}
-        .shadow-studio .ss-lcp-group-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
-        .shadow-studio .ss-lcp-group-settings{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
-        .shadow-studio .ss-lcp-group-settings select,.shadow-studio .ss-lcp-group-settings button,.shadow-studio .ss-lcp-blend select{min-width:0;max-width:100%;height:27px;border:1px solid #637f97;border-radius:4px;background:#31495f;color:#eef6ff;font:inherit;font-size:10px}
-        .shadow-studio .ss-lcp-group-settings select{max-width:103px}
-        .shadow-studio .ss-lcp-group-settings button{padding:0 6px}
-        .shadow-studio .ss-lcp-blend{display:flex;align-items:center;gap:5px;font-size:10px;color:#ccdce9}
-        .shadow-studio .ss-lcp-blend select{max-width:107px}
-        .shadow-studio .ss-lcp-layer[data-grouped=true]{margin-left:12px;border-left:3px solid #86b4dc} 
-
-        .shadow-studio .ss-lcp{--ss-layer-bg:#454545;--ss-layer-border:#626262;--ss-layer-fg:#e9e9e9;color:var(--ss-layer-fg);background:var(--ss-layer-bg)}
-        .shadow-studio .ss-lcp-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:0;padding:0 3px;border-color:var(--ss-layer-border);background:#3b3b3b}
-        .shadow-studio .ss-lcp-tab{height:27px;border-radius:0;color:#c9c9c9;font-size:11px}
-        .shadow-studio .ss-lcp-tab[aria-selected=true]{border-bottom:1px solid #979797;background:#4c4c4c;color:#fff}
-        .shadow-studio .ss-lcp-layers-layout{display:flex;flex-direction:column;min-width:0;min-height:230px;height:min(58vh,510px);max-height:calc(100dvh - 160px);background:var(--ss-layer-bg)}
-        .shadow-studio .ss-lcp-filter-bar{display:flex;align-items:center;gap:5px;min-width:0;padding:7px 6px 4px;border-bottom:1px solid #585858}
-        .shadow-studio .ss-lcp-search{display:flex;align-items:center;gap:5px;flex:1;min-width:0;height:27px;padding:0 7px;border:1px solid #686868;background:#414141;color:#c7c7c7;font-size:10px}
-        .shadow-studio .ss-lcp-search input{flex:1;min-width:0;width:100%;height:100%;padding:0;border:0;outline:0;background:transparent;color:#f5f5f5;font:inherit;font-size:11px}
-        .shadow-studio .ss-lcp-search input::placeholder{color:#aaa}
-        .shadow-studio .ss-lcp-kind{flex:0 1 98px;min-width:62px;max-width:98px;height:27px;padding:0 2px;border:1px solid #686868;background:#414141;color:#e7e7e7;font:inherit;font-size:10px}
-        .shadow-studio .ss-lcp-settings{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;padding:5px 6px 7px;border-bottom:1px solid var(--ss-layer-border)}
-        .shadow-studio .ss-lcp-settings .ss-lcp-blend{flex:1;min-width:105px}
+        .shadow-studio .ss-lcp{
+          --ss-lcp-bg:#29313a;
+          --ss-lcp-bg-2:#202832;
+          --ss-lcp-bg-3:#313b46;
+          --ss-lcp-line:#4b5968;
+          --ss-lcp-line-soft:#3b4651;
+          --ss-lcp-text:#edf3fa;
+          --ss-lcp-muted:#aab8c6;
+          --ss-lcp-blue:#5faeff;
+          --ss-lcp-blue-soft:#355d84;
+          min-width:0;
+          color:var(--ss-lcp-text);
+          background:var(--ss-lcp-bg);
+          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        .shadow-studio .ss-lcp-tabs{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:3px;
+          margin:0;
+          padding:6px 6px 0;
+          border-bottom:1px solid var(--ss-lcp-line-soft);
+          background:linear-gradient(180deg,#27313b,#202832)
+        }
+        .shadow-studio .ss-lcp-tab{
+          min-width:0;
+          height:34px;
+          border:1px solid transparent;
+          border-bottom:2px solid transparent;
+          border-radius:6px 6px 0 0;
+          background:transparent;
+          color:#aebdca;
+          font:750 9px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .shadow-studio .ss-lcp-tab:hover{
+          border-color:#506171;
+          background:#33414f;
+          color:#fff
+        }
+        .shadow-studio .ss-lcp-tab[aria-selected=true]{
+          border-color:#506171;
+          border-bottom-color:#75baff;
+          background:#34495d;
+          color:#fff;
+          box-shadow:inset 0 -1px 0 #5faeff
+        }
+        .shadow-studio .ss-lcp-tab:focus-visible{
+          outline:2px solid var(--ss-lcp-blue);
+          outline-offset:-2px
+        }
+        .shadow-studio .ss-lcp-layers-layout{
+          display:flex;
+          flex-direction:column;
+          min-width:0;
+          min-height:230px;
+          height:min(58vh,510px);
+          max-height:calc(100dvh - 160px);
+          background:var(--ss-lcp-bg)
+        }
+        .shadow-studio .ss-lcp-filter-bar{
+          display:flex;
+          align-items:center;
+          gap:6px;
+          min-width:0;
+          padding:7px 7px 6px;
+          border-bottom:1px solid var(--ss-lcp-line-soft);
+          background:#27313a
+        }
+        .shadow-studio .ss-lcp-search{
+          display:flex;
+          align-items:center;
+          gap:6px;
+          flex:1;
+          min-width:0;
+          height:30px;
+          padding:0 8px;
+          border:1px solid var(--ss-lcp-line);
+          border-radius:6px;
+          background:var(--ss-lcp-bg-2);
+          color:#91a4b6;
+          font-size:9px;
+          transition:border-color 120ms ease,box-shadow 120ms ease
+        }
+        .shadow-studio .ss-lcp-search:focus-within{
+          border-color:var(--ss-lcp-blue);
+          box-shadow:0 0 0 2px #5faeff24
+        }
+        .shadow-studio .ss-lcp-search input{
+          flex:1;
+          min-width:0;
+          width:100%;
+          height:100%;
+          padding:0;
+          border:0;
+          outline:0;
+          background:transparent;
+          color:#f1f6fb;
+          font:650 10px Inter,ui-sans-serif,system-ui,sans-serif
+        }
+        .shadow-studio .ss-lcp-search input::placeholder{color:#7f91a2}
+        .shadow-studio .ss-lcp-kind{
+          flex:0 1 105px;
+          min-width:68px;
+          max-width:105px;
+          height:30px;
+          padding:0 7px;
+          border:1px solid var(--ss-lcp-line);
+          border-radius:6px;
+          outline:none;
+          background:var(--ss-lcp-bg-2);
+          color:#e6eef6;
+          font:700 9px Inter,ui-sans-serif,system-ui,sans-serif
+        }
+        .shadow-studio .ss-lcp-kind:focus{
+          border-color:var(--ss-lcp-blue);
+          box-shadow:0 0 0 2px #5faeff24
+        }
+        .shadow-studio .ss-lcp-settings{
+          display:flex;
+          align-items:center;
+          gap:8px;
+          min-width:0;
+          flex-wrap:wrap;
+          padding:7px;
+          border-bottom:1px solid var(--ss-lcp-line-soft);
+          background:#2a333d
+        }
+        .shadow-studio .ss-lcp-blend,
+        .shadow-studio .ss-lcp-opacity{
+          display:flex;
+          align-items:center;
+          gap:5px;
+          color:#bcc9d5;
+          font-size:9px;
+          font-weight:700
+        }
+        .shadow-studio .ss-lcp-settings .ss-lcp-blend{flex:1;min-width:110px}
         .shadow-studio .ss-lcp-settings .ss-lcp-blend select{flex:1;max-width:none;min-width:0}
         .shadow-studio .ss-lcp-settings .ss-lcp-opacity{flex:0 0 auto}
-        .shadow-studio .ss-lcp-settings .ss-lcp-opacity select{width:60px}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-list{flex:1;min-height:95px;max-height:none;gap:0;grid-auto-rows:min-content;align-content:start;overflow:auto;background:var(--ss-layer-bg)}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer{gap:6px;min-height:37px;padding:3px 6px;border:0;border-bottom:1px solid #575757;border-radius:0;background:transparent;color:var(--ss-layer-fg)}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer[data-selected=true]{border-color:#666;background:#686868}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-thumb{background:#fff;border:1px solid #202020}
-        .shadow-studio .ss-lcp-adjustment-thumb{width:28px;height:28px;display:grid;place-items:center;border:1px solid #202020;border-radius:50%;background:linear-gradient(90deg,#111 0 50%,#f5f5f5 50%);color:transparent;box-shadow:inset 0 0 0 1px #888}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-pick{flex-basis:35px}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-item-name strong{font-size:11px;font-weight:500}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer[data-selected=true] .ss-lcp-item-name strong{font-weight:650}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-item-name small{font-size:9px;color:#bcbcbc}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-action{height:26px;min-width:25px;padding:0 4px;border:1px solid transparent;border-radius:2px;background:transparent;color:#dedede;font-size:11px}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-action:hover:not(:disabled){border-color:#898989;background:#646464}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-action:disabled{opacity:.35}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-blend select,.shadow-studio .ss-lcp-layers-layout .ss-lcp-opacity select,.shadow-studio .ss-lcp-layers-layout .ss-lcp-group-settings select,.shadow-studio .ss-lcp-layers-layout .ss-lcp-group-settings button{border-color:#696969;background:#414141;color:#e7e7e7}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-group{margin:1px 0;padding:4px;border:0;border-bottom:1px solid #666;border-radius:0;background:#505050}
-        .shadow-studio .ss-lcp-layers-layout .ss-lcp-layer[data-grouped=true]{margin-left:10px;border-left:2px solid #989898}
-        .shadow-studio .ss-lcp-more{flex:none;border-top:1px solid #5d5d5d;background:#404040}
-        .shadow-studio .ss-lcp-more summary{padding:5px 9px;cursor:pointer;font-size:10px;color:#d7d7d7}
-        .shadow-studio .ss-lcp-more .ss-lcp-tools{max-height:114px;overflow-y:auto;flex-wrap:wrap;margin:0;padding:5px 6px;border-top:1px solid #5b5b5b}
-        .shadow-studio .ss-lcp-footer{display:flex;align-items:center;justify-content:space-around;gap:5px;flex:none;min-height:33px;padding:3px 6px;border-top:1px solid #777;background:#404040}
-        .shadow-studio .ss-lcp-footer .ss-lcp-action{flex:1;max-width:55px;min-height:27px}
-        .shadow-studio .ss-lcp-hint{padding:4px 8px}
-        @media(pointer:coarse){.shadow-studio .ss-lcp-layers-layout{height:min(56dvh,510px);max-height:calc(100dvh - 120px)}.shadow-studio .ss-lcp-footer .ss-lcp-action{min-height:36px}.shadow-studio .ss-lcp-more summary{padding:9px}.shadow-studio .ss-lcp-layers-layout .ss-lcp-list{max-height:none}}
+        .shadow-studio .ss-lcp-settings .ss-lcp-opacity select{width:64px}
+        .shadow-studio .ss-lcp-blend select,
+        .shadow-studio .ss-lcp-opacity select,
+        .shadow-studio .ss-lcp-group-settings select,
+        .shadow-studio .ss-lcp-group-settings button{
+          min-width:0;
+          height:28px;
+          border:1px solid var(--ss-lcp-line);
+          border-radius:5px;
+          outline:none;
+          background:var(--ss-lcp-bg-2);
+          color:#e8f0f7;
+          font:700 9px Inter,ui-sans-serif,system-ui,sans-serif
+        }
+        .shadow-studio .ss-lcp-blend select:focus,
+        .shadow-studio .ss-lcp-opacity select:focus,
+        .shadow-studio .ss-lcp-group-settings select:focus{
+          border-color:var(--ss-lcp-blue);
+          box-shadow:0 0 0 2px #5faeff24
+        }
+        .shadow-studio .ss-lcp-list{
+          display:grid;
+          flex:1;
+          min-height:95px;
+          max-height:none;
+          gap:0;
+          grid-auto-rows:min-content;
+          align-content:start;
+          overflow:auto;
+          background:var(--ss-lcp-bg);
+          overscroll-behavior:contain;
+          scrollbar-width:thin;
+          scrollbar-color:#586b7e #252d35
+        }
+        .shadow-studio .ss-lcp-layer,
+        .shadow-studio .ss-lcp-channel{
+          display:flex;
+          align-items:center;
+          gap:6px;
+          min-width:0;
+          min-height:42px;
+          padding:4px 7px;
+          border:0;
+          border-bottom:1px solid var(--ss-lcp-line-soft);
+          background:transparent;
+          color:#eaf1f8;
+          transition:background 120ms ease,border-color 120ms ease
+        }
+        .shadow-studio .ss-lcp-layer:hover{background:#303b46}
+        .shadow-studio .ss-lcp-layer[data-selected=true]{
+          border-bottom-color:#557b9d;
+          background:#344d63;
+          box-shadow:inset 3px 0 0 var(--ss-lcp-blue)
+        }
+        .shadow-studio .ss-lcp-channel+.ss-lcp-channel{border-top:0}
+        .shadow-studio .ss-lcp-thumb{
+          display:block;
+          flex:0 0 41px;
+          width:41px;
+          max-height:42px;
+          object-fit:contain;
+          border:1px solid #607080;
+          border-radius:4px;
+          background:#fff;
+          box-shadow:0 1px 4px #0005
+        }
+        .shadow-studio .ss-lcp-layer .ss-lcp-thumb{
+          flex:0 0 auto;
+          max-width:35px;
+          max-height:37px
+        }
+        .shadow-studio .ss-lcp-adjustment-thumb{
+          width:29px;
+          height:29px;
+          display:grid;
+          place-items:center;
+          border:1px solid #111820;
+          border-radius:50%;
+          background:linear-gradient(90deg,#12171d 0 50%,#f4f6f8 50%);
+          color:transparent;
+          box-shadow:inset 0 0 0 1px #7a8794,0 1px 4px #0005
+        }
+        .shadow-studio .ss-lcp-pick{
+          display:flex;
+          align-items:center;
+          gap:5px;
+          min-width:0;
+          flex:0 0 35px;
+          padding:0;
+          border:0;
+          background:transparent;
+          color:inherit;
+          text-align:left;
+          cursor:pointer
+        }
+        .shadow-studio .ss-lcp-pick:disabled{opacity:.45;cursor:not-allowed}
+        .shadow-studio .ss-lcp-item-name{
+          min-width:0;
+          flex:1;
+          display:grid;
+          gap:2px
+        }
+        .shadow-studio .ss-lcp-item-name strong{
+          overflow:hidden;
+          color:#edf3f9;
+          font-size:10px;
+          font-weight:650;
+          text-overflow:ellipsis;
+          white-space:nowrap
+        }
+        .shadow-studio .ss-lcp-layer[data-selected=true] .ss-lcp-item-name strong{font-weight:800}
+        .shadow-studio .ss-lcp-item-name small{
+          color:#9fb0c0;
+          font-size:8px;
+          line-height:1.35
+        }
+        .shadow-studio .ss-lcp-name-trigger{
+          display:block;
+          width:100%;
+          min-width:0;
+          padding:1px 0;
+          border:0;
+          background:transparent;
+          color:inherit;
+          text-align:left;
+          font:inherit;
+          cursor:text
+        }
+        .shadow-studio .ss-lcp-rename-input{
+          box-sizing:border-box;
+          display:block;
+          width:100%;
+          min-width:0;
+          height:29px;
+          padding:3px 6px;
+          border:1px solid var(--ss-lcp-blue);
+          border-radius:5px;
+          background:#152638;
+          color:#fff;
+          font:650 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          outline:2px solid #5ca9f426;
+          outline-offset:0
+        }
+        .shadow-studio .ss-lcp-action{
+          display:grid;
+          place-items:center;
+          flex:none;
+          min-width:27px;
+          height:28px;
+          padding:0 4px;
+          border:1px solid transparent;
+          border-radius:5px;
+          background:transparent;
+          color:#cbd7e2;
+          font:inherit;
+          font-size:10px;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .shadow-studio .ss-lcp-action:hover:not(:disabled){
+          border-color:#60758a;
+          background:#3b4b5a;
+          color:#fff
+        }
+        .shadow-studio .ss-lcp-action:focus-visible{
+          outline:2px solid var(--ss-lcp-blue);
+          outline-offset:1px
+        }
+        .shadow-studio .ss-lcp-action:disabled{opacity:.35;cursor:not-allowed}
+        .shadow-studio .ss-lcp-group{
+          display:grid;
+          gap:5px;
+          margin:1px 0;
+          padding:5px 6px;
+          border:0;
+          border-bottom:1px solid var(--ss-lcp-line);
+          border-radius:0;
+          background:#303b46
+        }
+        .shadow-studio .ss-lcp-group-head{
+          display:flex;
+          align-items:center;
+          gap:4px
+        }
+        .shadow-studio .ss-lcp-group-name.ss-lcp-name-trigger{
+          flex:1;
+          overflow:hidden;
+          color:#e6eef6;
+          font-size:10px;
+          font-weight:800;
+          text-overflow:ellipsis;
+          white-space:nowrap
+        }
+        .shadow-studio .ss-lcp-group-head>.ss-lcp-rename-input{flex:1}
+        .shadow-studio .ss-lcp-group-settings{
+          display:flex;
+          flex-wrap:wrap;
+          align-items:center;
+          gap:5px;
+          padding-left:31px
+        }
+        .shadow-studio .ss-lcp-group-settings select{max-width:105px}
+        .shadow-studio .ss-lcp-group-settings button{padding:0 7px;cursor:pointer}
+        .shadow-studio .ss-lcp-group-settings button:hover:not(:disabled){background:#3c4c5c}
+        .shadow-studio .ss-lcp-layer[data-grouped=true]{
+          margin-left:10px;
+          border-left:2px solid #6e93b4
+        }
+        .shadow-studio .ss-lcp-tools{
+          display:flex;
+          align-items:center;
+          gap:4px;
+          flex-wrap:wrap;
+          margin:0;
+          padding:6px 7px
+        }
+        .shadow-studio .ss-lcp-more{
+          flex:none;
+          border-top:1px solid var(--ss-lcp-line-soft);
+          background:#27313a
+        }
+        .shadow-studio .ss-lcp-more summary{
+          padding:7px 9px;
+          color:#b8c7d5;
+          font-size:9px;
+          font-weight:750;
+          cursor:pointer
+        }
+        .shadow-studio .ss-lcp-more[open] summary{color:#e5eef7}
+        .shadow-studio .ss-lcp-more .ss-lcp-tools{
+          max-height:120px;
+          overflow-y:auto;
+          border-top:1px solid var(--ss-lcp-line-soft)
+        }
+        .shadow-studio .ss-lcp-footer{
+          display:flex;
+          align-items:center;
+          justify-content:space-around;
+          gap:5px;
+          flex:none;
+          min-height:38px;
+          padding:4px 6px;
+          border-top:1px solid var(--ss-lcp-line);
+          background:linear-gradient(180deg,#2f3944,#27313a)
+        }
+        .shadow-studio .ss-lcp-footer .ss-lcp-action{
+          flex:1;
+          max-width:55px;
+          min-height:29px;
+          border-color:#445363;
+          background:#2d3843
+        }
+        .shadow-studio .ss-lcp-footer .ss-lcp-action:hover:not(:disabled){
+          border-color:#6e879d;
+          background:#3d5062
+        }
+        .shadow-studio .ss-lcp-group-add-label{display:none}
+        .shadow-studio .ss-lcp-hint{
+          margin:0;
+          padding:7px 8px;
+          color:#a8b8c6;
+          font-size:9px;
+          line-height:1.5
+        }
+        .shadow-studio .ss-lcp-channel{
+          min-height:52px;
+          padding:6px 8px;
+          background:#29313a
+        }
+        .shadow-studio .ss-lcp-channel:hover{background:#303b46}
+        .shadow-studio .ss-lcp-paths{
+          margin:10px;
+          padding:26px 10px;
+          border:1px dashed #586a7b;
+          border-radius:8px;
+          background:#222b33;
+          color:#aebfce;
+          text-align:center
+        }
+        .shadow-studio .ss-lcp-paths i{
+          display:block;
+          margin-bottom:10px;
+          color:#89a8c2;
+          font-size:24px
+        }
+        .shadow-studio .ss-lcp-paths strong{
+          color:#dde7f0;
+          font-size:10px
+        }
+        @media(pointer:coarse){
+          .shadow-studio .ss-lcp-action{min-height:36px;min-width:32px}
+          .shadow-studio .ss-lcp-name-trigger{min-height:36px;display:flex;align-items:center}
+          .shadow-studio .ss-lcp-group-add-label{display:inline}
+          .shadow-studio .ss-lcp-group-add{display:flex;align-items:center;gap:5px;padding:0 7px}
+          .shadow-studio .ss-lcp-layers-layout{height:min(56dvh,510px);max-height:calc(100dvh - 120px)}
+          .shadow-studio .ss-lcp-footer .ss-lcp-action{min-height:36px}
+          .shadow-studio .ss-lcp-more summary{padding:9px}
+          .shadow-studio .ss-lcp-list{max-height:none}
+        }
       `}</style>
       <div className="ss-lcp-tabs" role="tablist" aria-label={t[0]}>
         {['layers', 'channels', 'paths'].map((tab, index) => (
