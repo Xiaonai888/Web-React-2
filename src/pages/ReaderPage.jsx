@@ -8001,7 +8001,7 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
       <div className="relative">
   <ReaderIconButton
     icon="fa-solid fa-share-nodes"
-    label="Share"
+    label={t('readerPage.share')}
     onClick={() => {
       setReaderMoreOpen(false)
       setReaderShareOpen((value) => !value)
