@@ -592,55 +592,468 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
   return (
     <div className="ss-dialog-backdrop ss-nd-backdrop" role="presentation" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <style>{`
-        .shadow-studio .ss-nd-backdrop{padding:8px;background:rgba(0,0,0,.68)}
-        .shadow-studio .ss-paper-dialog{box-sizing:border-box;width:min(568px,100%);max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden;border:1px solid #858585;border-radius:2px;background:#535353;color:#f1f1f1;box-shadow:0 20px 55px #0009;font:12px Arial,Helvetica,sans-serif}
-        .shadow-studio .ss-nd-head{display:flex;align-items:center;justify-content:space-between;height:29px;flex:none;border-bottom:1px solid #aaa;background:#f9f9f9;color:#222;padding:0 10px}
-        .shadow-studio .ss-nd-head h2{margin:0;font-size:12px;font-weight:400}
-        .shadow-studio .ss-nd-close{width:23px;height:23px;border:0;border-radius:0;background:transparent;color:#222;font:18px Arial;cursor:pointer}
-        .shadow-studio .ss-nd-close:hover{background:#dedede}
-        .shadow-studio .ss-nd-content{display:grid;grid-template-columns:minmax(0,1fr) 127px;min-height:0;flex:1;overflow:hidden}
-        .shadow-studio .ss-nd-fields{display:grid;align-content:start;gap:6px;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:11px 12px 12px 13px}
-        .shadow-studio .ss-nd-row{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center;gap:7px;min-width:0}
-        .shadow-studio .ss-nd-label{color:#f1f1f1;font-size:11px;font-weight:400;text-align:right}
-        .shadow-studio .ss-nd-control{box-sizing:border-box;min-width:0;width:100%;height:25px;border:1px solid #747474;border-radius:1px;background:#454545;color:#fff;padding:0 5px;font:11px Arial,Helvetica,sans-serif;outline:none}
-        .shadow-studio .ss-nd-control:focus-visible{border-color:#7badf7;box-shadow:0 0 0 1px #7badf7}
-        .shadow-studio .ss-nd-control:disabled{color:#d1d1d1;background:#595959;opacity:.85}
-        .shadow-studio .ss-nd-three{display:grid;grid-template-columns:minmax(0,1fr) 118px;gap:5px;min-width:0}
-        .shadow-studio .ss-nd-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;min-width:0}
-        .shadow-studio .ss-nd-line{display:flex;align-items:center;gap:6px;min-width:0}
-        .shadow-studio .ss-nd-line>.ss-nd-control{flex:1}
-        .shadow-studio .ss-nd-orient{display:flex;gap:3px;flex:none}
-        .shadow-studio .ss-nd-orient button{width:23px;height:24px;border:1px solid #737373;border-radius:1px;background:#4a4a4a;color:#e9e9e9;font:13px Arial;cursor:pointer}
-        .shadow-studio .ss-nd-orient button[aria-pressed=true]{border-color:#84b8f4;background:#38669c;color:#fff}
-        .shadow-studio .ss-nd-background{display:grid;grid-template-columns:minmax(0,1fr) 26px 26px;gap:5px;align-items:center;min-width:0}
-        .shadow-studio .ss-nd-background input[type=color]{width:26px;height:25px;border:1px solid #888;padding:1px;cursor:pointer}
-        .shadow-studio .ss-nd-swatch{display:block;width:25px;height:24px;border:1px solid #aaa;box-sizing:border-box}
-        .shadow-studio .ss-nd-info{margin:2px 0 0;border:1px solid #757575;border-radius:2px;padding:6px 8px;color:#e1e1e1;font-size:10px;line-height:1.5}
-        .shadow-studio .ss-nd-advanced{margin-top:1px;border:1px solid #7a7a7a;padding:5px 8px 7px}
-        .shadow-studio .ss-nd-advanced summary{cursor:pointer;color:#f2f2f2;font-size:11px}
-        .shadow-studio .ss-nd-advanced-body{display:grid;gap:6px;margin-top:7px}
-        .shadow-studio .ss-nd-hint{margin:2px 0;color:#c8c8c8;font-size:10px;line-height:1.4}
-        .shadow-studio .ss-nd-actions{display:flex;flex-direction:column;gap:7px;min-width:0;border-left:1px solid #727272;padding:11px 9px}
-        .shadow-studio .ss-nd-actions button{min-height:26px;border:1px solid #999;border-radius:16px;background:#565656;color:#fff;font:11px Arial,Helvetica,sans-serif;cursor:pointer}
-        .shadow-studio .ss-nd-actions button.primary{background:#4b9df4;border-color:#8ebdff;color:#102033;font-weight:700}
-        .shadow-studio .ss-nd-actions button:disabled{color:#aaa;border-color:#6e6e6e;opacity:.62;cursor:default}
-        .shadow-studio .ss-nd-actions button:not(:disabled):hover{filter:brightness(1.13)}
-        .shadow-studio .ss-nd-preset-save{display:grid;gap:4px;margin-top:5px;border-top:1px solid #787878;padding-top:6px}
-        .shadow-studio .ss-nd-preset-save input{box-sizing:border-box;width:100%;min-width:0;height:25px;border:1px solid #777;background:#404040;color:#fff;padding:0 5px;font:11px Arial}
-        .shadow-studio .ss-nd-image-size{margin-top:auto;color:#eaeaea;text-align:center;font-size:11px;line-height:1.65}
-        .shadow-studio .ss-nd-status{margin:2px 0;background:#683b3b;color:#ffdbdb;padding:6px;border-radius:2px;font-size:10px;line-height:1.45}
-        .shadow-studio .ss-nd-success{margin:0;background:#356149;color:#e7ffec;padding:6px;border-radius:2px;font-size:10px}
-        @media(max-width:620px){
-          .shadow-studio .ss-paper-dialog{width:100%;max-height:calc(100dvh - 10px)}
-          .shadow-studio .ss-nd-content{display:flex;flex-direction:column;overflow-y:auto}
-          .shadow-studio .ss-nd-fields{overflow:visible;flex:0 0 auto;padding:11px 9px;gap:7px}
-          .shadow-studio .ss-nd-row{grid-template-columns:88px minmax(0,1fr);gap:6px}
-          .shadow-studio .ss-nd-three{grid-template-columns:minmax(0,1fr) 102px}
-          .shadow-studio .ss-nd-actions{border-top:1px solid #777;border-left:0;display:grid;grid-template-columns:1fr 1fr;padding:9px}
-          .shadow-studio .ss-nd-image-size{grid-column:1/-1;margin-top:0}
-          .shadow-studio .ss-nd-preset-save{grid-column:1/-1}
+        .shadow-studio .ss-nd-backdrop{
+          --ss-nd-bg:#20262d;
+          --ss-nd-panel:#29313a;
+          --ss-nd-panel-2:#202832;
+          --ss-nd-panel-3:#313b46;
+          --ss-nd-line:#4b5968;
+          --ss-nd-line-soft:#3b4651;
+          --ss-nd-text:#edf3fa;
+          --ss-nd-muted:#aab8c6;
+          --ss-nd-blue:#5faeff;
+          --ss-nd-blue-soft:#355d84;
+          --ss-nd-danger:#ff9aa4;
+          --ss-nd-success:#a9e7bb;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          box-sizing:border-box;
+          padding:14px;
+          background:rgba(8,12,16,.76);
+          backdrop-filter:blur(5px)
         }
-        @media(max-width:370px){.shadow-studio .ss-nd-three{grid-template-columns:minmax(0,1fr) 90px}.shadow-studio .ss-nd-row{grid-template-columns:76px minmax(0,1fr)}}
+        .shadow-studio .ss-paper-dialog{
+          box-sizing:border-box;
+          width:min(650px,100%);
+          max-height:calc(100dvh - 28px);
+          display:flex;
+          flex-direction:column;
+          overflow:hidden;
+          border:1px solid #596a7b;
+          border-radius:10px;
+          background:var(--ss-nd-panel);
+          color:var(--ss-nd-text);
+          box-shadow:0 24px 64px #000c,0 0 0 1px #ffffff08;
+          font:11px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        .shadow-studio .ss-nd-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          min-height:45px;
+          flex:none;
+          padding:0 10px 0 14px;
+          border-bottom:1px solid var(--ss-nd-line);
+          background:linear-gradient(180deg,#35414d,#2c3640);
+          color:#f3f7fb
+        }
+        .shadow-studio .ss-nd-head h2{
+          margin:0;
+          font-size:12px;
+          font-weight:800;
+          letter-spacing:.01em
+        }
+        .shadow-studio .ss-nd-close{
+          width:31px;
+          height:31px;
+          display:grid;
+          place-items:center;
+          border:1px solid transparent;
+          border-radius:6px;
+          background:transparent;
+          color:#c4d0db;
+          font:20px/1 Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .shadow-studio .ss-nd-close:hover{
+          border-color:#5a6c7e;
+          background:#3b4855;
+          color:#fff
+        }
+        .shadow-studio .ss-nd-close:focus-visible{
+          outline:2px solid var(--ss-nd-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-nd-content{
+          display:grid;
+          grid-template-columns:minmax(0,1fr) 154px;
+          min-height:0;
+          flex:1;
+          overflow:hidden
+        }
+        .shadow-studio .ss-nd-fields{
+          display:grid;
+          align-content:start;
+          gap:9px;
+          min-width:0;
+          overflow-y:auto;
+          overscroll-behavior:contain;
+          padding:15px 16px 16px;
+          scrollbar-width:thin;
+          scrollbar-color:#586b7e #252e37
+        }
+        .shadow-studio .ss-nd-row{
+          display:grid;
+          grid-template-columns:132px minmax(0,1fr);
+          align-items:center;
+          gap:9px;
+          min-width:0
+        }
+        .shadow-studio .ss-nd-label{
+          color:#c8d4df;
+          font-size:10px;
+          font-weight:700;
+          text-align:right
+        }
+        .shadow-studio .ss-nd-control{
+          box-sizing:border-box;
+          min-width:0;
+          width:100%;
+          height:32px;
+          border:1px solid var(--ss-nd-line);
+          border-radius:6px;
+          background:var(--ss-nd-panel-2);
+          color:#edf3fa;
+          padding:0 8px;
+          font:10px Inter,ui-sans-serif,system-ui,sans-serif;
+          outline:none;
+          transition:border-color 120ms ease,box-shadow 120ms ease,background 120ms ease
+        }
+        .shadow-studio select.ss-nd-control{
+          padding-right:26px;
+          cursor:pointer
+        }
+        .shadow-studio .ss-nd-control:hover:not(:disabled){
+          border-color:#65798d;
+          background:#25313c
+        }
+        .shadow-studio .ss-nd-control:focus-visible{
+          border-color:var(--ss-nd-blue);
+          box-shadow:0 0 0 2px #5faeff26
+        }
+        .shadow-studio .ss-nd-control:disabled{
+          color:#91a0ae;
+          background:#262f38;
+          opacity:.72;
+          cursor:not-allowed
+        }
+        .shadow-studio .ss-nd-three{
+          display:grid;
+          grid-template-columns:minmax(0,1fr) 124px;
+          gap:7px;
+          min-width:0
+        }
+        .shadow-studio .ss-nd-two{
+          display:grid;
+          grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+          gap:7px;
+          min-width:0
+        }
+        .shadow-studio .ss-nd-line{
+          display:flex;
+          align-items:center;
+          gap:7px;
+          min-width:0
+        }
+        .shadow-studio .ss-nd-line>.ss-nd-control{
+          flex:1
+        }
+        .shadow-studio .ss-nd-orient{
+          display:flex;
+          gap:4px;
+          flex:none
+        }
+        .shadow-studio .ss-nd-orient button{
+          width:31px;
+          height:32px;
+          border:1px solid var(--ss-nd-line);
+          border-radius:6px;
+          background:#303b46;
+          color:#cdd9e4;
+          font:15px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .shadow-studio .ss-nd-orient button:hover:not(:disabled){
+          border-color:#71879a;
+          background:#3d4d5c;
+          color:#fff
+        }
+        .shadow-studio .ss-nd-orient button[aria-pressed=true]{
+          border-color:#79bcff;
+          background:var(--ss-nd-blue-soft);
+          color:#fff;
+          box-shadow:inset 0 0 0 1px #6ba9df
+        }
+        .shadow-studio .ss-nd-orient button:focus-visible{
+          outline:2px solid var(--ss-nd-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-nd-orient button:disabled{
+          opacity:.38;
+          cursor:not-allowed
+        }
+        .shadow-studio .ss-nd-background{
+          display:grid;
+          grid-template-columns:minmax(0,1fr) 34px 34px;
+          gap:7px;
+          align-items:center;
+          min-width:0
+        }
+        .shadow-studio .ss-nd-background input[type=color]{
+          width:34px;
+          height:32px;
+          box-sizing:border-box;
+          border:1px solid var(--ss-nd-line);
+          border-radius:6px;
+          background:#202832;
+          padding:3px;
+          cursor:pointer
+        }
+        .shadow-studio .ss-nd-background input[type=color]:focus-visible{
+          outline:2px solid var(--ss-nd-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-nd-swatch{
+          display:block;
+          width:34px;
+          height:32px;
+          box-sizing:border-box;
+          border:1px solid #748493;
+          border-radius:6px;
+          box-shadow:inset 0 0 0 1px #ffffff18
+        }
+        .shadow-studio .ss-nd-info{
+          margin:2px 0 0;
+          border:1px solid var(--ss-nd-line);
+          border-radius:7px;
+          padding:8px 9px;
+          background:#242d35;
+          color:#c2ced9;
+          font-size:9px;
+          line-height:1.55
+        }
+        .shadow-studio .ss-nd-advanced{
+          margin-top:2px;
+          border:1px solid var(--ss-nd-line-soft);
+          border-radius:7px;
+          background:#252e37;
+          padding:0
+        }
+        .shadow-studio .ss-nd-advanced summary{
+          min-height:34px;
+          display:flex;
+          align-items:center;
+          padding:0 10px;
+          cursor:pointer;
+          color:#dce6ef;
+          font-size:10px;
+          font-weight:800;
+          list-style:none
+        }
+        .shadow-studio .ss-nd-advanced summary::-webkit-details-marker{
+          display:none
+        }
+        .shadow-studio .ss-nd-advanced summary::before{
+          content:'▸';
+          width:15px;
+          flex:none;
+          color:#8ebee8
+        }
+        .shadow-studio .ss-nd-advanced[open] summary::before{
+          content:'▾'
+        }
+        .shadow-studio .ss-nd-advanced-body{
+          display:grid;
+          gap:8px;
+          padding:9px 10px 10px;
+          border-top:1px solid var(--ss-nd-line-soft)
+        }
+        .shadow-studio .ss-nd-hint{
+          margin:1px 0 0;
+          padding:7px 9px;
+          border-left:2px solid #5e89af;
+          background:#24313d;
+          color:#9fb0c0;
+          font-size:9px;
+          line-height:1.5
+        }
+        .shadow-studio .ss-nd-actions{
+          display:flex;
+          flex-direction:column;
+          gap:7px;
+          min-width:0;
+          border-left:1px solid var(--ss-nd-line);
+          padding:14px 11px;
+          background:#252d35
+        }
+        .shadow-studio .ss-nd-actions button{
+          min-height:34px;
+          border:1px solid var(--ss-nd-line);
+          border-radius:7px;
+          background:#303b46;
+          color:#edf3fa;
+          font:750 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          box-shadow:inset 0 0 0 1px #ffffff04;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease,transform 120ms ease
+        }
+        .shadow-studio .ss-nd-actions button:not(:disabled):hover{
+          border-color:#758b9f;
+          background:#405162;
+          color:#fff;
+          transform:translateY(-1px)
+        }
+        .shadow-studio .ss-nd-actions button:focus-visible{
+          outline:2px solid var(--ss-nd-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-nd-actions button.primary{
+          border-color:#7abfff;
+          background:#4f9ddd;
+          color:#10263a;
+          font-weight:850
+        }
+        .shadow-studio .ss-nd-actions button.primary:not(:disabled):hover{
+          border-color:#b7ddff;
+          background:#88c8fa;
+          color:#10263a
+        }
+        .shadow-studio .ss-nd-actions button:disabled{
+          color:#81909e;
+          border-color:#3e4a55;
+          background:#29323b;
+          opacity:.65;
+          cursor:not-allowed;
+          transform:none
+        }
+        .shadow-studio .ss-nd-preset-save{
+          display:grid;
+          gap:5px;
+          margin-top:4px;
+          border-top:1px solid var(--ss-nd-line-soft);
+          padding-top:9px;
+          color:#c5d2dd;
+          font-size:9px
+        }
+        .shadow-studio .ss-nd-preset-save input{
+          box-sizing:border-box;
+          width:100%;
+          min-width:0;
+          height:32px;
+          border:1px solid var(--ss-nd-line);
+          border-radius:6px;
+          outline:none;
+          background:var(--ss-nd-panel-2);
+          color:#fff;
+          padding:0 8px;
+          font:10px Inter,ui-sans-serif,system-ui,sans-serif
+        }
+        .shadow-studio .ss-nd-preset-save input:focus{
+          border-color:var(--ss-nd-blue);
+          box-shadow:0 0 0 2px #5faeff26
+        }
+        .shadow-studio .ss-nd-image-size{
+          margin-top:auto;
+          padding:9px 6px;
+          border:1px solid var(--ss-nd-line-soft);
+          border-radius:7px;
+          background:#202832;
+          color:#d9e4ed;
+          text-align:center;
+          font-size:10px;
+          font-weight:700;
+          line-height:1.65
+        }
+        .shadow-studio .ss-nd-image-size small{
+          color:#9eb0c0;
+          font-size:9px;
+          font-weight:650
+        }
+        .shadow-studio .ss-nd-status,
+        .shadow-studio .ss-nd-success{
+          margin:1px 0;
+          padding:8px 9px;
+          border-radius:6px;
+          font-size:9px;
+          line-height:1.5
+        }
+        .shadow-studio .ss-nd-status{
+          border:1px solid #874d56;
+          background:#4a2d33;
+          color:#ffd2d6
+        }
+        .shadow-studio .ss-nd-success{
+          border:1px solid #47745a;
+          background:#274536;
+          color:#d9ffe4
+        }
+        @media(max-width:620px){
+          .shadow-studio .ss-nd-backdrop{
+            padding:5px;
+            align-items:stretch
+          }
+          .shadow-studio .ss-paper-dialog{
+            width:100%;
+            max-height:calc(100dvh - 10px);
+            border-radius:8px
+          }
+          .shadow-studio .ss-nd-head{
+            min-height:44px
+          }
+          .shadow-studio .ss-nd-content{
+            display:flex;
+            flex-direction:column;
+            overflow-y:auto
+          }
+          .shadow-studio .ss-nd-fields{
+            overflow:visible;
+            flex:0 0 auto;
+            padding:12px 10px;
+            gap:8px
+          }
+          .shadow-studio .ss-nd-row{
+            grid-template-columns:96px minmax(0,1fr);
+            gap:7px
+          }
+          .shadow-studio .ss-nd-three{
+            grid-template-columns:minmax(0,1fr) 108px
+          }
+          .shadow-studio .ss-nd-actions{
+            border-top:1px solid var(--ss-nd-line);
+            border-left:0;
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            padding:10px
+          }
+          .shadow-studio .ss-nd-actions button{
+            min-height:40px
+          }
+          .shadow-studio .ss-nd-image-size{
+            grid-column:1/-1;
+            margin-top:0
+          }
+          .shadow-studio .ss-nd-preset-save{
+            grid-column:1/-1
+          }
+        }
+        @media(max-width:390px){
+          .shadow-studio .ss-nd-fields{
+            padding:10px 8px
+          }
+          .shadow-studio .ss-nd-row{
+            grid-template-columns:82px minmax(0,1fr)
+          }
+          .shadow-studio .ss-nd-three{
+            grid-template-columns:minmax(0,1fr) 94px
+          }
+          .shadow-studio .ss-nd-label{
+            font-size:9px
+          }
+        }
+        @media(pointer:coarse){
+          .shadow-studio .ss-nd-control,
+          .shadow-studio .ss-nd-orient button,
+          .shadow-studio .ss-nd-background input[type=color],
+          .shadow-studio .ss-nd-swatch{
+            min-height:38px
+          }
+          .shadow-studio .ss-nd-actions button{
+            min-height:42px
+          }
+        }
       `}</style>
       <form className="ss-new-dialog ss-paper-dialog" onSubmit={submit} role="dialog" aria-modal="true" aria-label={tr('New File')} onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onClose() } }}>
         <div className="ss-nd-head"><h2>{tr('New')}</h2><button type="button" className="ss-nd-close" onClick={onClose} aria-label={tr('Close new file dialog')}>×</button></div>
