@@ -15,6 +15,20 @@ export const STUDIO_LAYER_FX_MENU_ITEMS = Object.freeze([
   { id: 'dropShadow', group: 'effects' },
 ])
 
+const FX_ICONS = Object.freeze({
+  blending: 'fa-sliders',
+  bevelEmboss: 'fa-gem',
+  stroke: 'fa-circle-dot',
+  innerShadow: 'fa-circle-half-stroke',
+  innerGlow: 'fa-sun',
+  satin: 'fa-wave-square',
+  colorOverlay: 'fa-fill-drip',
+  gradientOverlay: 'fa-fill',
+  patternOverlay: 'fa-border-all',
+  outerGlow: 'fa-certificate',
+  dropShadow: 'fa-circle',
+})
+
 const LABELS = {
   en: {
     title: 'Layer effects',
@@ -204,15 +218,24 @@ export default function StudioLayerFxMenu({
       onClick={(event) => event.stopPropagation()}
     >
       <style>{`
-        .ss-layer-fx-menu{position:fixed;z-index:12370;width:220px;max-height:calc(100dvh - 16px);overflow:auto;padding:4px 0;border:1px solid #8d8d8d;background:#ededed;color:#111;box-shadow:0 5px 18px #0007;font:12px Arial,sans-serif;overscroll-behavior:contain}
+        .ss-layer-fx-menu{position:fixed;z-index:12370;width:236px;max-height:calc(100dvh - 16px);overflow:auto;padding:6px;border:1px solid #657484;border-radius:8px;background:#252d35;color:#edf3fa;box-shadow:0 12px 32px #0009;font:10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overscroll-behavior:contain}
         .ss-layer-fx-menu *{box-sizing:border-box}
-        .ss-layer-fx-group+.ss-layer-fx-group{margin-top:3px;padding-top:3px;border-top:1px solid #b5b5b5}
-        .ss-layer-fx-item{display:block;width:100%;min-height:24px;padding:4px 22px;border:0;background:transparent;color:inherit;text-align:left;font:inherit;white-space:nowrap;cursor:pointer}
-        .ss-layer-fx-item:hover,.ss-layer-fx-item:focus-visible{outline:0;background:#2f73d9;color:#fff}
-        .ss-layer-fx-item:disabled{opacity:.45;cursor:default;background:transparent;color:#666}
-        @media(prefers-color-scheme:dark){.ss-layer-fx-menu{border-color:#747474;background:#393939;color:#f2f2f2}.ss-layer-fx-group+.ss-layer-fx-group{border-color:#5c5c5c}.ss-layer-fx-item:disabled{color:#aaa}}
-        @media(max-width:560px),(pointer:coarse){.ss-layer-fx-menu{left:8px!important;right:8px;width:auto;max-height:min(72dvh,560px);border-radius:10px;padding:7px 0;font-size:14px}.ss-layer-fx-item{min-height:40px;padding:9px 18px}.ss-layer-fx-group+.ss-layer-fx-group{margin-top:5px;padding-top:5px}}
+        .ss-layer-fx-title{display:flex;align-items:center;gap:7px;min-height:32px;padding:0 7px 5px;color:#aab8c6;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+        .ss-layer-fx-title i{color:#8bc4ff}
+        .ss-layer-fx-group+.ss-layer-fx-group{margin-top:5px;padding-top:5px;border-top:1px solid #3b4651}
+        .ss-layer-fx-item{display:grid;width:100%;min-height:31px;grid-template-columns:26px minmax(0,1fr) 12px;align-items:center;gap:4px;padding:0 6px;border:1px solid transparent;border-radius:5px;background:transparent;color:#e2ebf4;text-align:left;font:600 10px Inter,ui-sans-serif,system-ui,sans-serif;white-space:nowrap;cursor:pointer}
+        .ss-layer-fx-item>i:first-child{width:22px;height:22px;display:grid;place-items:center;border-radius:5px;background:#303b46;color:#9fc9ed;font-size:9px}
+        .ss-layer-fx-item>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+        .ss-layer-fx-item>i:last-child{color:#768697;font-size:7px}
+        .ss-layer-fx-item:hover,.ss-layer-fx-item:focus-visible{outline:0;border-color:#6da4d4;background:#355d84;color:#fff}
+        .ss-layer-fx-item:hover>i:first-child,.ss-layer-fx-item:focus-visible>i:first-child{background:#2e77ae;color:#fff}
+        .ss-layer-fx-item:disabled{opacity:.4;cursor:default;background:transparent}
+        @media(max-width:560px),(pointer:coarse){.ss-layer-fx-menu{left:8px!important;right:8px;width:auto;max-height:min(72dvh,560px);border-radius:12px;padding:8px}.ss-layer-fx-item{min-height:42px;font-size:12px}.ss-layer-fx-item>i:first-child{width:28px;height:28px;font-size:11px}.ss-layer-fx-group+.ss-layer-fx-group{margin-top:5px;padding-top:5px}}
       `}</style>
+      <div className="ss-layer-fx-title">
+        <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true" />
+        <span>{words.title}</span>
+      </div>
       {groups.map((items, groupIndex) => (
         <div className="ss-layer-fx-group" role="group" key={groupIndex}>
           {items.map((item) => {
@@ -229,7 +252,9 @@ export default function StudioLayerFxMenu({
                 onClick={() => choose(item.id)}
                 onKeyDown={(event) => keyDown(event, currentIndex)}
               >
-                {words[item.id] || LABELS.en[item.id]}
+                <i className={`fa-solid ${FX_ICONS[item.id] || 'fa-circle'}`} aria-hidden="true" />
+                <span>{words[item.id] || LABELS.en[item.id]}</span>
+                <i className="fa-solid fa-chevron-right" aria-hidden="true" />
               </button>
             )
           })}
