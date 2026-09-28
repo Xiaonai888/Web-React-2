@@ -198,9 +198,29 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper,
   return (
     <section className="ss-right-switcher" data-active={active} aria-label={tx('studioPanels.workspacePanels')}>
       <style>{`
-        .shadow-studio .ss-right-switcher{display:none}
+        .shadow-studio .ss-right-switcher{
+          --ss-rp-panel:#29313a;
+          --ss-rp-panel-2:#202832;
+          --ss-rp-panel-3:#313b46;
+          --ss-rp-line:#4b5968;
+          --ss-rp-line-soft:#3b4651;
+          --ss-rp-text:#edf3fa;
+          --ss-rp-muted:#aab8c6;
+          --ss-rp-blue:#5faeff;
+          --ss-rp-blue-soft:#355d84;
+          display:none;
+          color:var(--ss-rp-text);
+          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
         @media(min-width:1101px) and (min-height:651px){
-          .shadow-studio:has(.ss-layout) .ss-side>.ss-right-switcher{display:block;order:-1;flex:0 0 auto;width:100%;min-width:0;border-bottom:1px solid #48535f}
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-right-switcher{
+            display:block;
+            order:-1;
+            flex:0 0 auto;
+            width:100%;
+            min-width:0;
+            border-bottom:1px solid var(--ss-rp-line)
+          }
           .shadow-studio:has(.ss-layout) .ss-side>.ss-color-panel{order:0}
           .shadow-studio:has(.ss-layout) .ss-side>.ss-section[aria-label='Canvas view']{order:1}
           .shadow-studio:has(.ss-layout) .ss-side>.ss-section:last-child{order:2}
@@ -209,57 +229,300 @@ export default function StudioRightPanels({ canvasRef, paperId, revision, paper,
           .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='view']))>.ss-section[aria-label='Canvas view'],
           .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='view']))>.ss-navigator,
           .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='view']))>.ss-section:last-child{display:none}
-          .shadow-studio .ss-right-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:#212932;padding:5px 5px 0}
-          .shadow-studio .ss-right-tab{display:flex;min-width:0;min-height:36px;align-items:center;justify-content:center;gap:5px;padding:5px 2px;border:1px solid transparent;border-bottom:2px solid transparent;border-radius:5px 5px 0 0;background:transparent;color:#aebac8;font:inherit;font-size:10px;font-weight:700;cursor:pointer}
-          .shadow-studio .ss-right-tab i{font-size:12px}
-          .shadow-studio .ss-right-tab:hover,.shadow-studio .ss-right-tab:focus-visible{color:#fff;background:#364657;outline:none}
-          .shadow-studio .ss-right-tab[aria-pressed='true']{border-color:#4c5b6a;border-bottom-color:#80baff;background:#303e4b;color:#fff}
-          .shadow-studio .ss-right-panel{padding:11px 10px 14px;color:#e5edf6;background:#29333d}
-          .shadow-studio .ss-right-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
-          .shadow-studio .ss-right-panel-head strong{font-size:11px;font-weight:800}
-          .shadow-studio .ss-right-panel-head span{font-size:10px;color:#a6b7c8}
-          .shadow-studio .ss-layer-options{display:grid;grid-template-columns:1fr 76px;gap:7px;margin-bottom:9px}
-          .shadow-studio .ss-layer-options label{display:grid;gap:4px;color:#bac8d7;font-size:10px}
-          .shadow-studio .ss-layer-options select,.shadow-studio .ss-layer-options input{width:100%;height:29px;border:1px solid #516171;border-radius:4px;background:#222c36;color:#e3eaf2;padding:0 7px;font:inherit;font-size:11px}
-          .shadow-studio .ss-layer-options :disabled{opacity:.65;cursor:not-allowed}
-          .shadow-studio .ss-layer-row{display:flex;align-items:center;gap:9px;min-height:55px;padding:6px;border:1px solid #5684b4;border-radius:5px;background:#344d65}
-          .shadow-studio .ss-layer-thumb{display:grid;place-items:center;width:40px;height:38px;flex:none;border:1px solid #a5b3c1;border-radius:3px;background:linear-gradient(45deg,#cbd3da 25%,transparent 25%,transparent 75%,#cbd3da 75%),linear-gradient(45deg,#cbd3da 25%,#fff 25%,#fff 75%,#cbd3da 75%);background-size:12px 12px;background-position:0 0,6px 6px;color:#425367;font-size:15px}
-          .shadow-studio .ss-layer-name{min-width:0;flex:1;display:grid;gap:3px}
-          .shadow-studio .ss-layer-name strong{font-size:11px;font-weight:700}
+          .shadow-studio .ss-right-tabs{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:3px;
+            padding:6px 6px 0;
+            border-bottom:1px solid var(--ss-rp-line-soft);
+            background:linear-gradient(180deg,#27313b,#202832)
+          }
+          .shadow-studio .ss-right-tab{
+            display:flex;
+            min-width:0;
+            min-height:38px;
+            align-items:center;
+            justify-content:center;
+            gap:6px;
+            padding:5px 3px;
+            border:1px solid transparent;
+            border-bottom:2px solid transparent;
+            border-radius:6px 6px 0 0;
+            background:transparent;
+            color:#aebdca;
+            font:750 9px Inter,ui-sans-serif,system-ui,sans-serif;
+            cursor:pointer;
+            transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+          }
+          .shadow-studio .ss-right-tab i{
+            color:#8da7bd;
+            font-size:11px
+          }
+          .shadow-studio .ss-right-tab:hover,
+          .shadow-studio .ss-right-tab:focus-visible{
+            outline:none;
+            border-color:#506171;
+            background:#33414f;
+            color:#fff
+          }
+          .shadow-studio .ss-right-tab:hover i,
+          .shadow-studio .ss-right-tab:focus-visible i{color:#c9e7ff}
+          .shadow-studio .ss-right-tab[aria-pressed='true']{
+            border-color:#506171;
+            border-bottom-color:#75baff;
+            background:#34495d;
+            color:#fff;
+            box-shadow:inset 0 -1px 0 #5faeff
+          }
+          .shadow-studio .ss-right-tab[aria-pressed='true'] i{color:#8fcbff}
+          .shadow-studio .ss-right-panel{
+            padding:10px;
+            color:#e5edf6;
+            background:var(--ss-rp-panel)
+          }
+          .shadow-studio .ss-right-panel-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:8px;
+            margin-bottom:11px
+          }
+          .shadow-studio .ss-right-panel-head strong{font-size:10px;font-weight:800}
+          .shadow-studio .ss-right-panel-head span{font-size:9px;color:var(--ss-rp-muted)}
+          .shadow-studio .ss-layer-options{
+            display:grid;
+            grid-template-columns:1fr 76px;
+            gap:7px;
+            margin-bottom:9px
+          }
+          .shadow-studio .ss-layer-options label{
+            display:grid;
+            gap:4px;
+            color:#bac8d7;
+            font-size:9px
+          }
+          .shadow-studio .ss-layer-options select,
+          .shadow-studio .ss-layer-options input{
+            width:100%;
+            height:30px;
+            border:1px solid var(--ss-rp-line);
+            border-radius:5px;
+            outline:none;
+            background:var(--ss-rp-panel-2);
+            color:#e9f0f7;
+            padding:0 7px;
+            font:10px Inter,ui-sans-serif,system-ui,sans-serif
+          }
+          .shadow-studio .ss-layer-options select:focus,
+          .shadow-studio .ss-layer-options input:focus{
+            border-color:var(--ss-rp-blue);
+            box-shadow:0 0 0 2px #5faeff26
+          }
+          .shadow-studio .ss-layer-options :disabled{opacity:.55;cursor:not-allowed}
+          .shadow-studio .ss-layer-row{
+            display:flex;
+            align-items:center;
+            gap:9px;
+            min-height:58px;
+            padding:7px;
+            border:1px solid #557fa7;
+            border-radius:7px;
+            background:#324a60;
+            box-shadow:inset 0 0 0 1px #ffffff08
+          }
+          .shadow-studio .ss-layer-thumb{
+            display:grid;
+            place-items:center;
+            width:42px;
+            height:40px;
+            flex:none;
+            border:1px solid #9eabb8;
+            border-radius:5px;
+            background:linear-gradient(45deg,#cbd3da 25%,transparent 25%,transparent 75%,#cbd3da 75%),linear-gradient(45deg,#cbd3da 25%,#fff 25%,#fff 75%,#cbd3da 75%);
+            background-size:12px 12px;
+            background-position:0 0,6px 6px;
+            color:#425367;
+            font-size:15px;
+            box-shadow:0 2px 5px #0005
+          }
+          .shadow-studio .ss-layer-name{
+            min-width:0;
+            flex:1;
+            display:grid;
+            gap:3px
+          }
+          .shadow-studio .ss-layer-name strong{
+            min-width:0;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+            font-size:10px;
+            font-weight:750
+          }
           .shadow-studio .ss-layer-name small{font-size:9px;color:#b9ccdc}
-          .shadow-studio .ss-panel-actions{display:flex;justify-content:flex-end;gap:5px;margin-top:10px;border-top:1px solid #455463;padding-top:9px}
-          .shadow-studio .ss-panel-actions button{width:28px;height:27px;border:1px solid #4c5d6f;border-radius:4px;background:#344351;color:#9daebe;cursor:not-allowed}
-          .shadow-studio .ss-panel-hint{margin:10px 0 0;color:#b2c0ce;font-size:10px;line-height:1.5}
-          .shadow-studio .ss-asset-mode-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin-bottom:10px}
-          .shadow-studio .ss-asset-mode-tabs button{min-width:0;min-height:27px;border:1px solid #576d82;border-radius:4px;padding:4px 2px;background:#304152;color:#dce8f3;font:inherit;font-size:10px;cursor:pointer}
-          .shadow-studio .ss-asset-mode-tabs button[aria-pressed='true']{background:#466a8e;border-color:#9bcaff;color:#fff}
+          .shadow-studio .ss-panel-actions{
+            display:flex;
+            justify-content:flex-end;
+            gap:5px;
+            margin-top:10px;
+            padding-top:9px;
+            border-top:1px solid var(--ss-rp-line-soft)
+          }
+          .shadow-studio .ss-panel-actions button{
+            width:29px;
+            height:28px;
+            border:1px solid var(--ss-rp-line);
+            border-radius:5px;
+            background:#303b46;
+            color:#9daebe;
+            cursor:not-allowed
+          }
+          .shadow-studio .ss-panel-hint{
+            margin:10px 0 0;
+            color:#aebdca;
+            font-size:9px;
+            line-height:1.55
+          }
+          .shadow-studio .ss-asset-mode-tabs{
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:5px;
+            margin-bottom:10px;
+            padding:1px
+          }
+          .shadow-studio .ss-asset-mode-tabs button{
+            min-width:0;
+            min-height:31px;
+            overflow:hidden;
+            padding:4px 6px;
+            border:1px solid var(--ss-rp-line);
+            border-radius:6px;
+            background:#303b46;
+            color:#dce8f3;
+            font:700 9px Inter,ui-sans-serif,system-ui,sans-serif;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+            cursor:pointer;
+            transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+          }
+          .shadow-studio .ss-asset-mode-tabs button:hover:not(:disabled){
+            border-color:#6e8397;
+            background:#3a4a59
+          }
+          .shadow-studio .ss-asset-mode-tabs button:focus-visible{
+            outline:2px solid var(--ss-rp-blue);
+            outline-offset:2px
+          }
+          .shadow-studio .ss-asset-mode-tabs button[aria-pressed='true']{
+            border-color:#79bcff;
+            background:var(--ss-rp-blue-soft);
+            color:#fff;
+            box-shadow:inset 0 0 0 1px #6ba9df
+          }
           .shadow-studio .ss-independent-panel .ss-lcp-tabs{margin:0 0 10px}
-          .shadow-studio .ss-independent-panel .ss-independent-content{padding:8px;box-sizing:border-box}
-          .shadow-studio .ss-asset-placeholder{display:grid;justify-items:center;gap:9px;padding:26px 9px;border:1px dashed #566779;border-radius:6px;color:#aabccd;text-align:center}
+          .shadow-studio .ss-independent-panel .ss-independent-content{
+            padding:9px;
+            box-sizing:border-box
+          }
+          .shadow-studio .ss-asset-placeholder{
+            display:grid;
+            justify-items:center;
+            gap:9px;
+            padding:26px 9px;
+            border:1px dashed #566779;
+            border-radius:7px;
+            background:#222b33;
+            color:#aabccd;
+            text-align:center
+          }
           .shadow-studio .ss-asset-placeholder i{font-size:24px;color:#8ca7c2}
-          .shadow-studio .ss-asset-placeholder strong{font-size:11px;color:#dce6f0}
-          .shadow-studio .ss-asset-placeholder p{margin:0;font-size:10px;line-height:1.6}
+          .shadow-studio .ss-asset-placeholder strong{font-size:10px;color:#dce6f0}
+          .shadow-studio .ss-asset-placeholder p{margin:0;font-size:9px;line-height:1.6}
           .shadow-studio .ss-right-switcher+.ss-color-panel{min-width:0}
           .shadow-studio:has(.ss-layout) .ss-right-panel[data-panel]{display:none}
           .shadow-studio:has(.ss-layout) .ss-right-switcher[data-active='layers'] .ss-right-panel[data-panel='layers'],
           .shadow-studio:has(.ss-layout) .ss-right-switcher[data-active='assets'] .ss-right-panel[data-panel='assets']{display:block}
-          .shadow-studio:has(.ss-layout) .ss-right-panel{border-bottom:1px solid #4b5663}
-          .shadow-studio:has(.ss-layout) .ss-layer-row{border-radius:4px;min-height:58px}
-          .shadow-studio:has(.ss-layout) .ss-panel-hint{font-size:10px;line-height:1.55}
+          .shadow-studio:has(.ss-layout) .ss-right-panel{border-bottom:1px solid var(--ss-rp-line)}
+          .shadow-studio:has(.ss-layout) .ss-layer-row{border-radius:6px;min-height:58px}
+          .shadow-studio:has(.ss-layout) .ss-panel-hint{font-size:9px;line-height:1.55}
         }
         @media(min-width:1280px) and (min-height:651px){
           .shadow-studio:has(.ss-layout) .ss-layout{grid-template-columns:284px minmax(0,1fr) clamp(400px,31vw,490px)}
-          .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:220px minmax(0,1fr);align-content:start;gap:0;padding:0;min-width:0;overflow-x:hidden;overflow-y:auto}
-          .shadow-studio:has(.ss-layout) .ss-side>.ss-right-switcher{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;align-self:stretch;order:0;flex:none;width:auto;min-width:0;height:auto;min-height:0;border-bottom:0;border-left:1px solid #485561;overflow-x:hidden;overflow-y:auto;background:#29333d}
-          .shadow-studio:has(.ss-layout) .ss-side>.ss-navigator{grid-column:1;grid-row:1;order:0;display:block!important;min-width:0;min-height:0;margin:0;padding:10px 9px!important;border-bottom:1px solid #45515e;overflow:hidden}
-          .shadow-studio:has(.ss-layout) .ss-side>.ss-color-panel{grid-column:1;grid-row:2;order:0;display:block!important;flex:none;min-width:0;align-self:stretch;min-height:0;height:100%;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;margin:0;padding:10px 9px 12px!important;border-bottom:1px solid #45515e}
+          .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher){
+            display:grid;
+            grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+            grid-template-rows:220px minmax(0,1fr);
+            align-content:start;
+            gap:0;
+            padding:0;
+            min-width:0;
+            overflow-x:hidden;
+            overflow-y:auto
+          }
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-right-switcher{
+            grid-column:2;
+            grid-row:1 / span 2;
+            display:flex;
+            flex-direction:column;
+            align-self:stretch;
+            order:0;
+            flex:none;
+            width:auto;
+            min-width:0;
+            height:auto;
+            min-height:0;
+            border-bottom:0;
+            border-left:1px solid var(--ss-rp-line);
+            overflow-x:hidden;
+            overflow-y:auto;
+            background:var(--ss-rp-panel)
+          }
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-navigator{
+            grid-column:1;
+            grid-row:1;
+            order:0;
+            display:block!important;
+            min-width:0;
+            min-height:0;
+            margin:0;
+            padding:10px 9px!important;
+            border-bottom:1px solid var(--ss-rp-line-soft);
+            overflow:hidden
+          }
+          .shadow-studio:has(.ss-layout) .ss-side>.ss-color-panel{
+            grid-column:1;
+            grid-row:2;
+            order:0;
+            display:block!important;
+            flex:none;
+            min-width:0;
+            align-self:stretch;
+            min-height:0;
+            height:100%;
+            overflow-x:hidden;
+            overflow-y:auto;
+            overscroll-behavior:contain;
+            box-sizing:border-box;
+            margin:0;
+            padding:10px 9px 12px!important;
+            border-bottom:1px solid var(--ss-rp-line-soft)
+          }
           .shadow-studio:has(.ss-layout) .ss-side>.ss-section[aria-label='Canvas view']{display:none!important}
           .shadow-studio:has(.ss-layout) .ss-side>.ss-section:last-child{display:none!important}
           .shadow-studio:has(.ss-layout) .ss-right-tabs{display:none}
-          .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel[data-panel]{display:block!important;min-width:0;padding:10px 9px 13px}
-          .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel[data-panel='assets']{border-top:1px solid #596777}
+          .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel[data-panel]{
+            display:block!important;
+            min-width:0;
+            padding:10px 9px 13px
+          }
+          .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel[data-panel='assets']{
+            border-top:1px solid #596777
+          }
           .shadow-studio:has(.ss-layout) .ss-right-switcher .ss-right-panel-head{padding:1px 0 4px}
-          .shadow-studio:has(.ss-layout) .ss-layer-options{grid-template-columns:minmax(0,1fr) 62px;gap:5px}
+          .shadow-studio:has(.ss-layout) .ss-layer-options{
+            grid-template-columns:minmax(0,1fr) 62px;
+            gap:5px
+          }
           .shadow-studio:has(.ss-layout) .ss-panel-actions{gap:3px}
           .shadow-studio:has(.ss-layout) .ss-asset-placeholder{padding:14px 6px}
           .shadow-studio:has(.ss-layout) .ss-side>.ss-navigator .ss-nav-preview{max-width:100%}
