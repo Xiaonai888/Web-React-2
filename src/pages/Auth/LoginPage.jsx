@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { getReaderDeviceKey, persistReaderDeviceKey } from '../../utils/readerDeviceKey'
+
+
 
 registerTranslationNamespace('loginPage', {
   en: {
@@ -164,7 +167,7 @@ export default function LoginPage() {
 
   const finishLogin = (data) => {
     if (!data?.token || !data?.user) throw new Error(t('loginPage.loginFailed'))
-    if (data.deviceKey) localStorage.setItem('shadow_reader_device_key', data.deviceKey)
+    if (data.deviceKey) persistReaderDeviceKey(data.deviceKey)  
     const storage = rememberMe ? localStorage : sessionStorage
     storage.setItem('shadow_reader_token', data.token)
     storage.setItem('shadow_reader_user', JSON.stringify(data.user))
@@ -182,13 +185,14 @@ export default function LoginPage() {
     setMessage('')
     try {
       setLoading(true)
+      const deviceKey = await getReaderDeviceKey()
       const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           identifier,
           password,
-          deviceKey: localStorage.getItem('shadow_reader_device_key') || '',
+          deviceKey,
         }),
       })
       const data = await response.json().catch(() => ({}))
