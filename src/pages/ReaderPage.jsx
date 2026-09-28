@@ -7173,10 +7173,22 @@ const handleReaderCopyLink = async () => {
   setReaderShareOpen(false)
 }
 
+const handleReaderDownload = () => {
+  const targetStoryId = story?.id || storyId
+  const targetEpisodeId = episode?.id || episodeId
+  if (!targetStoryId || !targetEpisodeId) return
+
+  setReaderMoreOpen(false)
+  navigate(
+    `/story/${encodeURIComponent(targetStoryId)}/download?episodeId=${encodeURIComponent(targetEpisodeId)}`
+  )
+}
+
 const handleReaderReport = () => {
   setReaderMoreOpen(false)
   setReportOpen(true)
 }
+  
 const handleReaderEcho = () => {
   setReaderShareOpen(false)
   setEchoShareOpen(true)
