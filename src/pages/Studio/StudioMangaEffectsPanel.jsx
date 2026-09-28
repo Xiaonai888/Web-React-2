@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import {
+  StudioUIButton,
+  StudioUIColor,
+  StudioUINumber,
+  StudioUIPreview,
+  StudioUISection,
+  StudioUISlider,
+  StudioUITabs,
+} from './StudioUIControls'
 import { drawStudioMangaEffect } from './StudioMangaEffectsEngine'
 
 const TEXT = {
@@ -30,56 +39,86 @@ export default function StudioMangaEffectsPanel({ onApply, disabled = false }) {
   const unavailable = disabled || busy || typeof onApply !== 'function'
 
   useEffect(() => {
-    const ctx = previewRef.current?.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-    try { drawStudioMangaEffect(ctx, { type, count, thickness, scale, centerX, centerY, color, opacity }) }
-    catch { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height) }
+    const context = previewRef.current?.getContext('2d')
+    if (!context) return
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height)
+    try {
+      drawStudioMangaEffect(context, options)
+    } catch {
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height)
+    }
   }, [type, count, thickness, scale, centerX, centerY, color, opacity])
 
   async function apply() {
     if (unavailable) return
     setError('')
     setBusy(true)
-    try { await onApply(options) }
-    catch (reason) { setError(reason?.message || t[14]) }
-    finally { setBusy(false) }
+    try {
+      await onApply(options)
+    } catch (reason) {
+      setError(reason?.message || t[14])
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
-    <section className="ss-manga-effects" aria-label={t[0]}>
+    <div className="ss-manga-effects-ui">
       <style>{`
-        .shadow-studio .ss-manga-effects{display:grid;gap:9px;min-width:0;color:#e5edf6;font-size:11px}
-        .shadow-studio .ss-manga-effects strong{font-size:12px}
-        .shadow-studio .ss-manga-effects label{display:grid;gap:4px;min-width:0}
-        .shadow-studio .ss-manga-effects select,.shadow-studio .ss-manga-effects input[type=number]{box-sizing:border-box;width:100%;min-width:0;padding:6px;border:1px solid #60758a;border-radius:4px;background:#24313e;color:#edf5ff;font:inherit}
-        .shadow-studio .ss-manga-effects input[type=range]{width:100%;accent-color:#82baff}
-        .shadow-studio .ss-manga-effects input[type=color]{box-sizing:border-box;width:100%;height:30px;border:1px solid #60758a;border-radius:4px;background:#24313e}
-        .shadow-studio .ss-manga-effects .ss-effect-preview{box-sizing:border-box;display:block;width:100%;height:auto;aspect-ratio:2/1;border:1px solid #71869c;border-radius:5px;background:white}
-        .shadow-studio .ss-manga-effects .ss-effect-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-        .shadow-studio .ss-manga-effects button{padding:8px;border:1px solid #7795b0;border-radius:5px;background:#385d7e;color:#f2f8ff;font:inherit;cursor:pointer}
-        .shadow-studio .ss-manga-effects button:disabled{opacity:.5;cursor:not-allowed}
-        .shadow-studio .ss-manga-effects p{margin:0;font-size:10px;line-height:1.5}
+        .ss-manga-effects-ui{display:grid;gap:10px;min-width:0}
+        .ss-manga-effects-ui .ss-ui-preview-stage{min-height:150px;background:#fff}
+        .ss-manga-effects-ui canvas{display:block;width:100%;height:auto;max-height:210px;background:#fff}
+        .ss-manga-effects-ui-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .ss-manga-effects-ui-actions{display:grid;gap:8px}
+        .ss-manga-effects-ui-actions>.ss-ui-button{width:100%}
+        .ss-manga-effects-ui-status{margin:0;padding:7px 9px;border:1px solid #3b4651;border-radius:6px;background:#202832;color:#9fb0c0;font-size:9px;line-height:1.45}
+        .ss-manga-effects-ui-status.error{border-color:#8e4750;background:#4b2b31;color:#ffd5d8}
+        @media(max-width:500px){.ss-manga-effects-ui-two{grid-template-columns:1fr}}
       `}</style>
-      <strong>{t[0]}</strong>
-      <canvas ref={previewRef} className="ss-effect-preview" width={240} height={120} aria-label={t[0]} />
-      <label>{t[0]}<select value={type} onChange={(event) => setType(event.target.value)}>{TYPES.map((item, index) => <option key={item} value={item}>{t[index + 1]}</option>)}</select></label>
-      <div className="ss-effect-grid">
-        <label>{t[4]}<input type="number" min="8" max="100" step="1" value={count} onChange={(event) => setCount(Number(event.target.value))} /></label>
-        <label>{t[5]} (px)<input type="number" min="1" max="20" step="1" value={thickness} onChange={(event) => setThickness(Number(event.target.value))} /></label>
+
+      <StudioUIPreview label={t[0]}>
+        <canvas ref={previewRef} width="480" height="240" aria-label={t[0]} />
+      </StudioUIPreview>
+
+      <StudioUISection title={t[0]} subtitle={t[TYPES.indexOf(type) + 1]}>
+        <StudioUITabs
+          value={type}
+          ariaLabel={t[0]}
+          items={[
+            { value: 'speed', label: t[1], icon: 'fa-solid fa-forward-fast' },
+            { value: 'impact', label: t[2], icon: 'fa-solid fa-burst' },
+            { value: 'sparkles', label: t[3], icon: 'fa-solid fa-sparkles' },
+          ]}
+          onChange={setType}
+        />
+
+        <div className="ss-manga-effects-ui-two">
+          <StudioUINumber label={t[4]} value={count} min={8} max={100} step={1} disabled={busy} onChange={setCount} />
+          <StudioUINumber label={`${t[5]} (px)`} value={thickness} min={1} max={20} step={1} disabled={busy} onChange={setThickness} />
+        </div>
+
+        <StudioUISlider label={t[6]} value={scale} min={10} max={100} suffix="%" disabled={busy} onChange={setScale} />
+
+        <div className="ss-manga-effects-ui-two">
+          <StudioUISlider label={t[7]} value={centerX} min={0} max={100} suffix="%" disabled={busy} onChange={setCenterX} />
+          <StudioUISlider label={t[8]} value={centerY} min={0} max={100} suffix="%" disabled={busy} onChange={setCenterY} />
+        </div>
+
+        <StudioUIColor label={t[9]} value={color} disabled={busy} onChange={(next) => {
+          if (/^#[0-9a-f]{6}$/i.test(next)) setColor(next)
+        }} />
+
+        <StudioUISlider label={t[10]} value={opacity} min={0} max={100} suffix="%" disabled={busy} onChange={setOpacity} />
+      </StudioUISection>
+
+      <div className="ss-manga-effects-ui-actions">
+        <StudioUIButton variant="primary" icon="fa-solid fa-check" disabled={unavailable} onClick={apply}>
+          {busy ? t[12] : t[11]}
+        </StudioUIButton>
+        <p className={`ss-manga-effects-ui-status ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>
+          {error || t[13]}
+        </p>
       </div>
-      <label>{t[6]}: {scale}%<input type="range" min="10" max="100" value={scale} onChange={(event) => setScale(Number(event.target.value))} /></label>
-      <div className="ss-effect-grid">
-        <label>{t[7]}: {centerX}%<input type="range" min="0" max="100" value={centerX} onChange={(event) => setCenterX(Number(event.target.value))} /></label>
-        <label>{t[8]}: {centerY}%<input type="range" min="0" max="100" value={centerY} onChange={(event) => setCenterY(Number(event.target.value))} /></label>
-      </div>
-      <div className="ss-effect-grid">
-        <label>{t[9]}<input type="color" value={color} onChange={(event) => setColor(event.target.value)} /></label>
-        <label>{t[10]}: {opacity}%<input type="range" min="0" max="100" value={opacity} onChange={(event) => setOpacity(Number(event.target.value))} /></label>
-      </div>
-      <button type="button" disabled={unavailable} onClick={apply}>{busy ? t[12] : t[11]}</button>
-      {disabled || !onApply ? <p>{t[13]}</p> : null}
-      {error ? <p role="alert">{error}</p> : null}
-    </section>
+    </div>
   )
 }
