@@ -1,12 +1,24 @@
 import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import {
+  StudioUIButton,
+  StudioUIButtonRow,
+  StudioUIColor,
+  StudioUIDialog,
+  StudioUINumber,
+  StudioUISection,
+  StudioUISelect,
+  StudioUISlider,
+  StudioUIToggle,
+} from './StudioUIControls'
+import StudioUIAngleDial from './StudioUIAngleDial'
 
 const NAMES = {
   transform: ['Transform', 'បម្លែងរូបភាព'], perspective: ['Perspective', 'ទិដ្ឋភាពបីវិមាត្រ'], crop: ['Crop', 'កាត់ទំហំក្រដាស'],
   canvas: ['Canvas size', 'ទំហំផ្ទាំងគំនូរ'], ruler: ['Ruler guide', 'បន្ទាត់ណែនាំ'], balloon: ['Speech balloon', 'ពពុះសន្ទនា'],
   frame: ['Comic frame', 'ស៊ុម Manga'], filter: ['Filter / FX', 'តម្រងរូបភាព'], special: ['Special Brush', 'ជក់ពិសេស'], divider: ['Frame Divider', 'បែងចែកស៊ុម Manga'],
 }
+
 const FIELD_NAMES = {
   x: ['Left', 'ខាងឆ្វេង'], y: ['Top', 'ខាងលើ'], width: ['Width', 'ទទឹង'], height: ['Height', 'កម្ពស់'],
   offsetX: ['Horizontal offset', 'រំកិលផ្ដេក'], offsetY: ['Vertical offset', 'រំកិលបញ្ឈរ'],
@@ -25,14 +37,20 @@ const FIELD_NAMES = {
   type: ['Filter type', 'ប្រភេទតម្រង'], amount: ['Amount (%)', 'កម្រិត (%)'], adjustment: ['Adjustment (-100 to 100)', 'កែតម្រូវ (-100 ដល់ 100)'],
   mode: ['Special brush type', 'ប្រភេទជក់ពិសេស'], orientation: ['Divider direction', 'ទិសដៅបែងចែក'], gutter: ['Gap (px)', 'ចន្លោះ (px)'], background: ['Gap color', 'ពណ៌ចន្លោះ'],
 }
+
 const SCHEMAS = {
   transform: ['translateX', 'translateY', 'scaleX', 'scaleY', 'rotate'],
   perspective: ['corner0x', 'corner0y', 'corner1x', 'corner1y', 'corner2x', 'corner2y', 'corner3x', 'corner3y'],
-  crop: ['x', 'y', 'width', 'height'], canvas: ['width', 'height', 'offsetX', 'offsetY'],
-  ruler: ['axis', 'position', 'angle'], frame: ['x', 'y', 'width', 'height', 'border', 'ink', 'fill'],
+  crop: ['x', 'y', 'width', 'height'],
+  canvas: ['width', 'height', 'offsetX', 'offsetY'],
+  ruler: ['axis', 'position', 'angle'],
+  frame: ['x', 'y', 'width', 'height', 'border', 'ink', 'fill'],
   balloon: ['text', 'shape', 'tail', 'width', 'height', 'fontSize', 'font', 'bold', 'italic', 'align', 'fill', 'ink', 'textColor', 'opacity'],
-  filter: ['type', 'amount', 'adjustment'], special: ['mode'], divider: ['orientation', 'position', 'gutter', 'border', 'ink', 'background', 'opacity'],
+  filter: ['type', 'amount', 'adjustment'],
+  special: ['mode'],
+  divider: ['orientation', 'position', 'gutter', 'border', 'ink', 'background', 'opacity'],
 }
+
 const CHOICES = {
   axis: [['vertical', 'Vertical', 'បញ្ឈរ'], ['horizontal', 'Horizontal', 'ផ្ដេក'], ['angled', 'Angled', 'មុំ']],
   shape: [['ellipse', 'Ellipse', 'ពងក្រពើ'], ['rounded', 'Rounded', 'ជ្រុងមូល'], ['thought', 'Thought', 'គំនិត'], ['shout', 'Shout', 'ស្រែក']],
@@ -46,17 +64,26 @@ const CHOICES = {
   background: [['transparent', 'Transparent', 'ថ្លា'], ['#FFFFFF', 'White', 'ស'], ['#000000', 'Black', 'ខ្មៅ']],
 }
 
+const SLIDERS = {
+  amount: [0, 100, 1, '%'],
+  adjustment: [-100, 100, 1, ''],
+  opacity: [0, 100, 1, '%'],
+}
+
 export default function StudioAdvancedToolPanel({ editor, onClose, onApply, onClearGuides }) {
   const { language } = useDisplayTranslation()
   const km = language === 'km'
   const [values, setValues] = useState(() => ({ ...editor?.values }))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+
   useEffect(() => {
     if (!editor) return
     setValues({ ...editor.values })
     setError('')
+    setBusy(false)
   }, [editor])
+
   useEffect(() => {
     if (!editor) return undefined
     const keydown = (event) => {
@@ -68,62 +95,115 @@ export default function StudioAdvancedToolPanel({ editor, onClose, onApply, onCl
     window.addEventListener('keydown', keydown, true)
     return () => window.removeEventListener('keydown', keydown, true)
   }, [editor, busy, onClose])
+
   if (!editor) return null
+
   const title = NAMES[editor.type] || [editor.type, editor.type]
-  const update = (key, value) => { setValues((previous) => ({ ...previous, [key]: value })); setError('') }
-  async function submit(event) {
-    event.preventDefault()
+  const update = (key, value) => {
+    setValues((previous) => ({ ...previous, [key]: value }))
+    setError('')
+  }
+
+  function labelFor(key) {
+    if (editor.type === 'divider' && key === 'position') return km ? 'ទីតាំងបែងចែក (0–1)' : 'Divider position (0–1)'
+    return FIELD_NAMES[key]?.[km ? 1 : 0] || key
+  }
+
+  function field(key) {
+    const label = labelFor(key)
+    const value = values[key]
+
+    if (key === 'text') {
+      return <label className="ss-advanced-ui-text" key={key}><span>{label}</span><textarea rows={4} maxLength={1200} value={value ?? ''} disabled={busy} onChange={(event) => update(key, event.target.value)} /></label>
+    }
+
+    if (typeof value === 'boolean') {
+      return <StudioUIToggle key={key} label={label} checked={value} disabled={busy} onChange={(next) => update(key, next)} />
+    }
+
+    if (CHOICES[key]) {
+      return <StudioUISelect
+        key={key}
+        label={label}
+        value={value}
+        disabled={busy}
+        options={CHOICES[key].map(([id, en, kh]) => ({ value: id, label: km ? kh : en }))}
+        onChange={(next) => update(key, next)}
+      />
+    }
+
+    if (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)) {
+      return <StudioUIColor key={key} label={label} value={value} disabled={busy} onChange={(next) => {
+        if (/^#[0-9a-f]{6}$/i.test(next)) update(key, next)
+      }} />
+    }
+
+    if (key === 'rotate' || key === 'angle') {
+      return <div className="ss-advanced-ui-angle" key={key}><StudioUIAngleDial label={label} value={Number(value) || 0} disabled={busy} onChange={(next) => update(key, next)} /></div>
+    }
+
+    if (SLIDERS[key]) {
+      const [min, max, step, suffix] = SLIDERS[key]
+      return <StudioUISlider key={key} label={label} value={Number(value) || 0} min={min} max={max} step={step} suffix={suffix} disabled={busy} onChange={(next) => update(key, next)} />
+    }
+
+    const fractional = ['scaleX', 'scaleY'].includes(key) || (editor.type === 'divider' && key === 'position')
+    return <StudioUINumber key={key} label={label} value={value ?? 0} step={fractional ? 0.05 : 1} disabled={busy} onChange={(next) => update(key, next)} />
+  }
+
+  async function submit() {
     if (busy) return
     setBusy(true)
     setError('')
-    try { if (await onApply(editor, values) !== false) onClose?.() }
-    catch (reason) { setError(reason?.message || (km ? 'មិនអាចអនុវត្តបាន។' : 'Could not apply this tool.')) }
-    finally { setBusy(false) }
+    try {
+      if (await onApply(editor, values) !== false) onClose?.()
+    } catch (reason) {
+      setError(reason?.message || (km ? 'មិនអាចអនុវត្តបាន។' : 'Could not apply this tool.'))
+    } finally {
+      setBusy(false)
+    }
   }
-  return createPortal(
-    <div className="ss-advanced-tool-overlay" role="presentation">
+
+  return (
+    <>
       <style>{`
-        .ss-advanced-tool-overlay{position:fixed;inset:0;z-index:12100;background:#0b1117cc;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;color:#edf4fc}
-        .ss-advanced-tool-overlay *{box-sizing:border-box}
-        .ss-advanced-tool-modal{width:min(100%,510px);max-height:min(90vh,780px);overflow:auto;border:1px solid #7388a3;border-radius:12px;background:#263646;padding:17px;box-shadow:0 20px 70px #0009}
-        .ss-advanced-tool-modal h2{font-size:18px;margin:0 0 6px}
-        .ss-advanced-tool-modal p{margin:0 0 13px;font-size:12px;color:#c2d4e7;line-height:1.5}
-        .ss-advanced-tool-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:12px 0 15px}
-        .ss-advanced-tool-fields label{display:grid;gap:5px;min-width:0;font-size:12px;color:#e4f0fd}
-        .ss-advanced-tool-fields label.wide{grid-column:1/-1}
-        .ss-advanced-tool-fields input:not([type=checkbox]),.ss-advanced-tool-fields select,.ss-advanced-tool-fields textarea{width:100%;min-width:0;min-height:36px;border-radius:5px;border:1px solid #6d849d;background:#1a2937;color:#fff;padding:6px;font:inherit;font-size:14px}
-        .ss-advanced-tool-fields input[type=color]{min-height:38px;padding:2px;cursor:pointer}
-        .ss-advanced-tool-fields input[type=checkbox]{width:18px;height:18px;accent-color:#80baff}
-        .ss-advanced-tool-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
-        .ss-advanced-tool-actions button{min-height:40px;border:1px solid #7b94ae;border-radius:6px;background:#374f68;color:#fff;padding:7px 15px;font:inherit;cursor:pointer}
-        .ss-advanced-tool-actions button[type=submit]{background:#2d72ac;border-color:#96cafa}
-        .ss-advanced-tool-actions button:disabled{opacity:.5;cursor:not-allowed}
-        .ss-advanced-tool-modal .ss-advanced-tool-error{color:#ffb4b4;font-size:12px;margin-bottom:10px}
-        @media(max-width:390px){.ss-advanced-tool-fields{grid-template-columns:minmax(0,1fr)}.ss-advanced-tool-modal{padding:12px}}
+        .ss-advanced-ui-dialog .ss-ui-dialog-content{padding:13px}
+        .ss-advanced-ui-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+        .ss-advanced-ui-fields>.ss-ui-section{grid-column:1/-1}
+        .ss-advanced-ui-fields .ss-ui-field,.ss-advanced-ui-fields .ss-ui-toggle-row{grid-template-columns:minmax(105px,.9fr) minmax(120px,1.1fr)}
+        .ss-advanced-ui-text{grid-column:1/-1;display:grid;gap:6px;color:#edf3fa;font-size:10px;font-weight:700}
+        .ss-advanced-ui-text textarea{width:100%;min-height:90px;padding:9px;border:1px solid #4b5968;border-radius:6px;outline:none;resize:vertical;background:#202832;color:#edf3fa;font:11px Inter,system-ui,sans-serif;line-height:1.45}
+        .ss-advanced-ui-text textarea:focus{border-color:#5faeff;box-shadow:0 0 0 2px #5faeff26}
+        .ss-advanced-ui-angle{display:flex;align-items:center;min-height:100px;padding:8px;border:1px solid #3b4651;border-radius:8px;background:#242c34}
+        .ss-advanced-ui-note{margin:0 0 11px;padding:8px 10px;border:1px solid #3b4651;border-radius:6px;background:#242c34;color:#aab8c6;font-size:10px;line-height:1.45}
+        .ss-advanced-ui-error{margin:10px 0 0;padding:8px 10px;border:1px solid #8e4750;border-radius:6px;background:#4b2b31;color:#ffd5d8;font-size:10px}
+        @media(max-width:560px){.ss-advanced-ui-fields{grid-template-columns:1fr}.ss-advanced-ui-fields .ss-ui-field,.ss-advanced-ui-fields .ss-ui-toggle-row{grid-template-columns:1fr;gap:6px}}
       `}</style>
-      <div className="ss-advanced-tool-modal" role="dialog" aria-modal="true" aria-label={title[km ? 1 : 0]}>
-        <h2>{title[km ? 1 : 0]}</h2>
-        <p>{km ? 'ពិនិត្យការកំណត់មុនអនុវត្ត។ អាចប្រើ Undo ដើម្បីត្រឡប់ការកែប្រែលើរូបភាព។' : 'Review the settings before applying. Image changes can be undone.'}</p>
-        <form onSubmit={submit}>
-          <div className="ss-advanced-tool-fields">
-            {(SCHEMAS[editor.type] || []).map((key) => {
-              const label = editor.type === 'divider' && key === 'position' ? (km ? 'ទីតាំងបែងចែក (0–1)' : 'Divider position (0–1)') : FIELD_NAMES[key]?.[km ? 1 : 0] || key
-              const value = values[key]
-              if (key === 'text') return <label className="wide" key={key}>{label}<textarea rows={3} maxLength={1200} value={value ?? ''} onChange={(event) => update(key, event.target.value)} /></label>
-              if (typeof value === 'boolean') return <label key={key}>{label}<input type="checkbox" checked={value} onChange={(event) => update(key, event.target.checked)} /></label>
-              if (CHOICES[key]) return <label key={key}>{label}<select value={value} onChange={(event) => update(key, event.target.value)}>{CHOICES[key].map(([id, en, kh]) => <option key={id} value={id}>{km ? kh : en}</option>)}</select></label>
-              if (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)) return <label key={key}>{label}<input type="color" value={value} onChange={(event) => update(key, event.target.value)} /></label>
-              return <label key={key}>{label}<input type="number" step={['scaleX', 'scaleY'].includes(key) || (editor.type === 'divider' && key === 'position') ? 0.05 : 1} value={value ?? 0} onChange={(event) => update(key, Number(event.target.value))} /></label>
-            })}
-          </div>
-          {error ? <p className="ss-advanced-tool-error" role="alert">{error}</p> : null}
-          <div className="ss-advanced-tool-actions">
-            {editor.type === 'ruler' && <button type="button" disabled={busy} onClick={() => { onClearGuides?.(); onClose?.() }}>{km ? 'លុបបន្ទាត់ណែនាំ' : 'Clear guides'}</button>}
-            <button type="button" disabled={busy} onClick={() => onClose?.()}>{km ? 'បោះបង់' : 'Cancel'}</button>
-            <button type="submit" disabled={busy}>{busy ? (km ? 'កំពុងអនុវត្ត...' : 'Applying...') : (km ? 'អនុវត្ត' : 'Apply')}</button>
-          </div>
-        </form>
-      </div>
-    </div>, document.body
+      <StudioUIDialog
+        open={Boolean(editor)}
+        title={title[km ? 1 : 0]}
+        subtitle={km ? 'កំណត់ Tool មុនអនុវត្ត' : 'Review tool settings before applying'}
+        icon="fa-solid fa-sliders"
+        width={620}
+        busy={busy}
+        onClose={onClose}
+        className="ss-advanced-ui-dialog"
+        footer={
+          <StudioUIButtonRow align={editor.type === 'ruler' ? 'between' : 'end'}>
+            {editor.type === 'ruler' ? <StudioUIButton variant="ghost" disabled={busy} onClick={() => { onClearGuides?.(); onClose?.() }}>{km ? 'លុបបន្ទាត់ណែនាំ' : 'Clear guides'}</StudioUIButton> : null}
+            <span className="ss-advanced-ui-footer-actions">
+              <StudioUIButton disabled={busy} onClick={onClose}>{km ? 'បោះបង់' : 'Cancel'}</StudioUIButton>
+              <StudioUIButton variant="primary" disabled={busy} onClick={submit}>{busy ? (km ? 'កំពុងអនុវត្ត...' : 'Applying...') : (km ? 'អនុវត្ត' : 'Apply')}</StudioUIButton>
+            </span>
+          </StudioUIButtonRow>
+        }
+      >
+        <p className="ss-advanced-ui-note">{km ? 'ពិនិត្យការកំណត់មុនអនុវត្ត។ អាចប្រើ Undo ដើម្បីត្រឡប់ការកែប្រែលើរូបភាព។' : 'Review the settings before applying. Image changes can be undone.'}</p>
+        <StudioUISection title={title[km ? 1 : 0]} subtitle={editor.type}>
+          <div className="ss-advanced-ui-fields">{(SCHEMAS[editor.type] || []).map(field)}</div>
+        </StudioUISection>
+        {error ? <p className="ss-advanced-ui-error" role="alert">{error}</p> : null}
+      </StudioUIDialog>
+    </>
   )
 }
