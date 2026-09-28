@@ -8042,12 +8042,15 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
 
   {readerMoreOpen ? (
     <div className={`absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border ${theme.border} ${theme.card} shadow-[0_12px_30px_rgba(17,24,39,0.16)]`}>
-      <OfflineDownloadMenuItem
-        storyId={storyId}
-        episodeId={episodeId}
-        theme={theme}
-        disabled={loading || lockedEpisode || !adultAccepted || !episode || shouldBlockReaderContent}
-      />
+      <button
+  type="button"
+  onClick={handleReaderDownload}
+  disabled={loading || lockedEpisode || !adultAccepted || !episode || shouldBlockReaderContent}
+  className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80 disabled:opacity-50`}
+>
+  <i className={`fa-solid fa-download w-4 text-center text-[14px] ${theme.muted}`} />
+  <span>{t('readerPage.download')}</span>
+</button>
       <button
         type="button"
         onClick={handleReaderReport}
