@@ -392,7 +392,6 @@ async function uploadImageToStorage({
   formData.append('image', file)
   formData.append('folder', folder)
 
-  const deviceKey = await getReaderDeviceKey()
   const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
     method: 'POST',
     headers: {
@@ -801,6 +800,7 @@ export default function RegisterPage() {
 
     try {
       setLoading(true)
+      const deviceKey = await getReaderDeviceKey()
 
       const response = await fetch(`${API_BASE_URL}/api/users/register`, {
         method: 'POST',
