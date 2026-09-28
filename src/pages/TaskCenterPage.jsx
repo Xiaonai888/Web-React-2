@@ -45,6 +45,7 @@ registerTranslationNamespace('taskCenterPage', {
     "updateReminderFailed": "Failed to update reminder",
     "reminderOn": "Check-in reminder set for 7:00 AM",
     "reminderOff": "Check-in reminder turned off",
+    "reminderLimitReached": "Reminder capacity is currently full. New activations are temporarily unavailable. Please try again later.",
     "pleaseLoginAgainClaimCoins": "Please log in again to claim coins",
     "rewardNotAvailable": "Reward is not available yet",
     "coinsAddedWallet": "Coins added to your wallet",
@@ -131,6 +132,7 @@ registerTranslationNamespace('taskCenterPage', {
     "updateReminderFailed": "មិនអាច Update ការរំលឹកបានទេ",
     "reminderOn": "បានកំណត់ការរំលឹក Check-in ម៉ោង 7:00 ព្រឹក",
     "reminderOff": "បានបិទការរំលឹក Check-in",
+    "reminderLimitReached": "ចំនួនអ្នកបើកមុខងារ Reminder បានដល់កម្រិតបច្ចុប្បន្នហើយ។ មិនអាចបើកថ្មីបានទេ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។",
     "pleaseLoginAgainClaimCoins": "សូម Login ម្តងទៀតដើម្បីទទួល Coins",
     "rewardNotAvailable": "រង្វាន់មិនទាន់អាចទទួលបានទេ",
     "coinsAddedWallet": "បានបន្ថែម Coins ទៅ Wallet របស់អ្នក",
@@ -217,6 +219,7 @@ registerTranslationNamespace('taskCenterPage', {
     "updateReminderFailed": "无法更新提醒",
     "reminderOn": "签到提醒已设置为早上 7:00",
     "reminderOff": "签到提醒已关闭",
+    "reminderLimitReached": "当前提醒名额已满，暂时无法开启新的提醒。请稍后再试。",
     "pleaseLoginAgainClaimCoins": "请重新登录以领取 Coins",
     "rewardNotAvailable": "奖励暂不可领取",
     "coinsAddedWallet": "Coins 已添加到你的钱包",
@@ -303,6 +306,7 @@ registerTranslationNamespace('taskCenterPage', {
     "updateReminderFailed": "リマインダーを更新できませんでした",
     "reminderOn": "チェックイン通知を午前7:00に設定しました",
     "reminderOff": "チェックイン通知をオフにしました",
+    "reminderLimitReached": "現在リマインダーの利用枠が上限に達しているため、新しく有効にできません。しばらくしてからもう一度お試しください。",
     "pleaseLoginAgainClaimCoins": "Coins を受け取るには再度ログインしてください",
     "rewardNotAvailable": "報酬はまだ受け取れません",
     "coinsAddedWallet": "Coins をウォレットに追加しました",
@@ -389,6 +393,7 @@ registerTranslationNamespace('taskCenterPage', {
     "updateReminderFailed": "알림을 업데이트하지 못했습니다",
     "reminderOn": "체크인 알림을 오전 7:00으로 설정했습니다",
     "reminderOff": "체크인 알림을 껐습니다",
+    "reminderLimitReached": "현재 알림 이용 가능 인원이 가득 차 새로 켤 수 없습니다. 나중에 다시 시도해 주세요.",
     "pleaseLoginAgainClaimCoins": "Coins를 받으려면 다시 로그인해 주세요",
     "rewardNotAvailable": "보상을 아직 받을 수 없습니다",
     "coinsAddedWallet": "Coins가 지갑에 추가되었습니다",
@@ -1376,6 +1381,7 @@ export default function TaskCenterPage() {
   const [chestTick, setChestTick] = useState(Date.now())
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
+  const [showReminderLimitPopup, setShowReminderLimitPopup] = useState(false)
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
   const [readingMissions, setReadingMissions] = useState([])
   const [missionClaimingId, setMissionClaimingId] = useState('')
@@ -1708,6 +1714,25 @@ function startSmartRefreshCycle() {
     }
   }
 
+  async function saveReminderCapacity(enabled) {
+    const response = await fetch(`${API_BASE_URL}/api/mails/daily-checkin-reminder`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ enabled }),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      const error = new Error(data.message || t('taskCenterPage.updateReminderFailed'))
+      error.code = String(data.code || '')
+      error.status = response.status
+      throw error
+    }
+
+    return data
+  }
+
   async function toggleReminder() {
     if (!isLoggedIn) {
       navigate('/login')
@@ -1719,24 +1744,56 @@ function startSmartRefreshCycle() {
     try {
       setReminderLoading(true)
       setMessage('')
+      setShowReminderLimitPopup(false)
 
-      const OneSignal = await getOneSignal()
       const nextEnabled = !reminderEnabled
 
       if (nextEnabled) {
-        if (!OneSignal.Notifications.isPushSupported()) {
-          throw new Error(t('taskCenterPage.updateReminderFailed'))
+        let reserved = false
+
+        try {
+          await saveReminderCapacity(true)
+          reserved = true
+        } catch (error) {
+          if (error.code === 'REMINDER_LIMIT_REACHED' || error.status === 409) {
+            setReminderEnabled(false)
+            setShowReminderLimitPopup(true)
+            return
+          }
+          throw error
         }
 
-        await OneSignal.User.PushSubscription.optIn()
+        try {
+          const OneSignal = await getOneSignal()
 
-        if (!OneSignal.Notifications.permission || !OneSignal.User.PushSubscription.optedIn) {
-          throw new Error(t('taskCenterPage.updateReminderFailed'))
+          if (!OneSignal.Notifications.isPushSupported()) {
+            throw new Error(t('taskCenterPage.updateReminderFailed'))
+          }
+
+          await OneSignal.User.PushSubscription.optIn()
+
+          if (!OneSignal.Notifications.permission || !OneSignal.User.PushSubscription.optedIn) {
+            throw new Error(t('taskCenterPage.updateReminderFailed'))
+          }
+
+          await OneSignal.User.addTag('daily_checkin_reminder', 'true')
+          reserved = false
+        } catch (error) {
+          if (reserved) {
+            await saveReminderCapacity(false).catch(() => {})
+          }
+          throw error
         }
-
-        await OneSignal.User.addTag('daily_checkin_reminder', 'true')
       } else {
+        const OneSignal = await getOneSignal()
         await OneSignal.User.removeTag('daily_checkin_reminder')
+
+        try {
+          await saveReminderCapacity(false)
+        } catch (error) {
+          await OneSignal.User.addTag('daily_checkin_reminder', 'true').catch(() => {})
+          throw error
+        }
       }
 
       setReminderEnabled(nextEnabled)
@@ -2337,6 +2394,39 @@ navigate(targetPath, {
     }}
   />
 ) : null}
+
+      {showReminderLimitPopup ? (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-6">
+          <button
+            type="button"
+            aria-label={t('taskCenterPage.gotIt')}
+            className="absolute inset-0"
+            onClick={() => setShowReminderLimitPopup(false)}
+          />
+
+          <div className="relative w-full max-w-[340px] rounded-[26px] bg-[var(--shadow-bg-elevated)] px-6 py-7 text-center shadow-[0_18px_50px_rgba(17,24,39,0.24)] ring-1 ring-[var(--shadow-border)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f3] text-[#ff3f62] dark:bg-[#ff3f62]/10">
+              <i className="fa-solid fa-bell-slash text-[22px]" />
+            </div>
+
+            <h3 className="mt-4 text-[20px] font-black leading-7 text-[var(--shadow-text-primary)]">
+              {t('taskCenterPage.reminder')}
+            </h3>
+
+            <p className="mt-3 text-[14px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">
+              {t('taskCenterPage.reminderLimitReached')}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setShowReminderLimitPopup(false)}
+              className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_10px_22px_rgba(255,63,98,0.24)] active:scale-[0.98]"
+            >
+              {t('taskCenterPage.gotIt')}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {showCheckInRules ? (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/45 px-6">
