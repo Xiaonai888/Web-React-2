@@ -8036,7 +8036,10 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
   <ReaderIconButton
     icon="fa-solid fa-ellipsis-vertical"
     label={t('readerPage.moreOptions')}
-    onClick={() => setReaderMoreOpen((value) => !value)}
+    onClick={() => {
+  setReaderShareOpen(false)
+  setReaderMoreOpen((value) => !value)
+}}
     className={theme.text}
   />
 
