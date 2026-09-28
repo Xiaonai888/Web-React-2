@@ -8002,23 +8002,6 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
         <span>{t('readerPage.report')}</span>
       </button>
 
-      <button
-        type="button"
-        onClick={handleReaderCopyLink}
-        className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
-      >
-        <i className={`fa-solid fa-link w-4 text-center text-[14px] ${theme.muted}`} />
-        <span>{t('readerPage.copyLink')}</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={handleReaderEcho}
-        className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
-      >
-        <i className={`fa-solid fa-rotate w-4 text-center text-[14px] ${theme.muted}`} />
-        <span>{t('readerPage.echo')}</span>
-      </button>
     </div>
   ) : null}
 </div>
