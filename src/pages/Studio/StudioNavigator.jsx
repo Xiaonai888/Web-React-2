@@ -36,7 +36,7 @@ registerTranslationNamespace('studioNavigator', {
     "panel": "네비게이터",
     "moveView": "캔버스 보기를 이동합니다. 클릭하거나 드래그하여 이동하세요.",
     "moveAround": "클릭하거나 드래그하여 캔버스 이동",
-    "hint": "클릭 또는 드래그하여 이동 · 미리보기는 내보내지지 않습니다"
+    "hint": "클릭 또는 드래그하여 이동 · 미리보기는 내보내지 않습니다"
   }
 })
 
@@ -174,24 +174,138 @@ export default function StudioNavigator({ canvasRef, workRef, paperId, revision,
   return (
     <section className="ss-section ss-navigator" aria-label={tx('studioNavigator.panel')}>
       <style>{`
-        .shadow-studio .ss-navigator{min-width:0}
-        @media(min-width:901px) and (min-height:651px),(min-width:1101px){.shadow-studio .ss-layout > .ss-side{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}}
-        .shadow-studio .ss-nav-fold{min-width:0}
-        .shadow-studio .ss-nav-fold summary{display:flex;align-items:center;justify-content:space-between;min-height:28px;cursor:pointer;font-size:10px;font-weight:800;color:#cbd3dc;letter-spacing:.04em;list-style:none}
+        .shadow-studio .ss-navigator{
+          --ss-nav-panel:#29313a;
+          --ss-nav-panel-2:#202832;
+          --ss-nav-line:#4b5968;
+          --ss-nav-line-soft:#3b4651;
+          --ss-nav-text:#edf3fa;
+          --ss-nav-muted:#aab8c6;
+          --ss-nav-blue:#5faeff;
+          min-width:0;
+          color:var(--ss-nav-text);
+          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        @media(min-width:901px) and (min-height:651px),(min-width:1101px){
+          .shadow-studio .ss-layout > .ss-side{
+            min-height:0;
+            overflow-y:auto;
+            overscroll-behavior:contain;
+            scrollbar-width:thin
+          }
+        }
+        .shadow-studio .ss-nav-fold{
+          min-width:0;
+          overflow:hidden;
+          border:1px solid var(--ss-nav-line-soft);
+          border-radius:8px;
+          background:linear-gradient(180deg,#2b3540,#252d35);
+          box-shadow:inset 0 0 0 1px #ffffff08
+        }
+        .shadow-studio .ss-nav-fold summary{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          min-height:34px;
+          padding:0 9px;
+          cursor:pointer;
+          color:#dce7f2;
+          font-size:10px;
+          font-weight:800;
+          letter-spacing:.02em;
+          list-style:none;
+          user-select:none
+        }
         .shadow-studio .ss-nav-fold summary::-webkit-details-marker{display:none}
-        .shadow-studio .ss-nav-fold summary::after{content:'▾';font-size:12px;color:#a7b8c9}
+        .shadow-studio .ss-nav-fold summary::after{
+          content:'▾';
+          display:grid;
+          place-items:center;
+          width:18px;
+          height:18px;
+          margin-left:8px;
+          border:1px solid #526272;
+          border-radius:4px;
+          background:#303b46;
+          color:#a9c7e0;
+          font-size:10px
+        }
+        .shadow-studio .ss-nav-fold[open] summary{
+          border-bottom:1px solid var(--ss-nav-line-soft);
+          background:#2e3944
+        }
         .shadow-studio .ss-nav-fold[open] summary::after{content:'▴'}
-        .shadow-studio .ss-nav-preview{position:relative;display:block;margin:9px auto 5px;padding:0;overflow:hidden;border:1px solid #8795a5;background:#fff;box-sizing:content-box;touch-action:none;cursor:crosshair;line-height:0}
-        .shadow-studio .ss-nav-preview:focus-visible{outline:2px solid #78beff;outline-offset:3px}
-        .shadow-studio .ss-nav-preview:disabled{opacity:.5;cursor:default}
-        .shadow-studio .ss-nav-preview canvas{display:block;pointer-events:none}
-        .shadow-studio .ss-nav-preview svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-        .shadow-studio .ss-nav-hint{margin:4px 0 0;text-align:center;color:#aebdca;font-size:10px;line-height:1.35}
+        .shadow-studio .ss-nav-preview{
+          position:relative;
+          display:block;
+          margin:10px auto 6px;
+          padding:0;
+          overflow:hidden;
+          border:1px solid #748596;
+          border-radius:6px;
+          background:#fff;
+          box-sizing:content-box;
+          touch-action:none;
+          cursor:crosshair;
+          line-height:0;
+          box-shadow:0 4px 12px #0007,inset 0 0 0 1px #0002;
+          transition:border-color 120ms ease,box-shadow 120ms ease
+        }
+        .shadow-studio .ss-nav-preview:hover:not(:disabled){
+          border-color:#8fc3ef;
+          box-shadow:0 5px 15px #0008,0 0 0 1px #5faeff55
+        }
+        .shadow-studio .ss-nav-preview:focus-visible{
+          outline:2px solid var(--ss-nav-blue);
+          outline-offset:3px
+        }
+        .shadow-studio .ss-nav-preview:disabled{
+          opacity:.5;
+          cursor:default
+        }
+        .shadow-studio .ss-nav-preview canvas{
+          display:block;
+          pointer-events:none
+        }
+        .shadow-studio .ss-nav-preview svg{
+          position:absolute;
+          inset:0;
+          width:100%;
+          height:100%;
+          pointer-events:none
+        }
+        .shadow-studio .ss-nav-hint{
+          margin:5px 8px 9px;
+          padding-top:7px;
+          border-top:1px solid var(--ss-nav-line-soft);
+          text-align:center;
+          color:var(--ss-nav-muted);
+          font-size:9px;
+          line-height:1.4
+        }
         @media(max-width:900px),(max-width:1100px) and (max-height:650px) and (orientation:landscape){
-          .shadow-studio .ss-side .ss-navigator{display:block;flex:1 1 100%;width:100%;margin:0;padding:0;border:0}
-          .shadow-studio .ss-nav-fold{border:1px solid #535c65;border-radius:6px;background:#30353b;padding:0 9px}
-          .shadow-studio .ss-nav-fold summary{min-height:36px;color:#f0f3f6;font-size:11px}
-          .shadow-studio .ss-nav-fold[open]{padding-bottom:9px}
+          .shadow-studio .ss-side .ss-navigator{
+            display:block;
+            flex:1 1 100%;
+            width:100%;
+            margin:0;
+            padding:0;
+            border:0
+          }
+          .shadow-studio .ss-nav-fold{
+            border:1px solid var(--ss-nav-line);
+            border-radius:8px;
+            background:#29313a
+          }
+          .shadow-studio .ss-nav-fold summary{
+            min-height:40px;
+            padding:0 10px;
+            color:#f0f3f6;
+            font-size:11px
+          }
+          .shadow-studio .ss-nav-fold[open]{padding-bottom:8px}
+          .shadow-studio .ss-nav-fold[open] summary{margin-bottom:8px}
+          .shadow-studio .ss-nav-hint{margin-bottom:0}
         }
       `}</style>
       <details className="ss-nav-fold" open={expanded} onToggle={(event) => setExpanded(event.currentTarget.open)}>
