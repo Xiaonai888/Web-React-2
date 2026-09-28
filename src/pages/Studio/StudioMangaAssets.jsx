@@ -86,18 +86,148 @@ export default function StudioMangaAssets({ onInsert, disabled = false }) {
   return (
     <div className="ss-manga-assets">
       <style>{`
-        .shadow-studio .ss-manga-assets .ss-asset-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:8px 0}
-        .shadow-studio .ss-manga-assets .ss-asset-groups button{padding:7px 2px;border:1px solid #566878;border-radius:5px;background:#26333f;color:#d5e1ed;font:inherit;font-size:10px;cursor:pointer}
-        .shadow-studio .ss-manga-assets .ss-asset-groups button[aria-pressed=true]{background:#43688a;border-color:#9acbff;color:white}
-        .shadow-studio .ss-manga-assets .ss-asset-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-        .shadow-studio .ss-manga-assets .ss-asset-grid button{min-width:0;display:grid;gap:4px;justify-items:center;padding:6px 3px;border:1px solid #536575;border-radius:5px;background:#354251;color:#e1eaf2;font:inherit;font-size:9px;cursor:pointer}
-        .shadow-studio .ss-manga-assets .ss-asset-grid button:hover:not(:disabled){border-color:#a2cdf5;background:#465b6f}
-        .shadow-studio .ss-manga-assets .ss-asset-grid button:disabled{opacity:.55;cursor:wait}
-        .shadow-studio .ss-manga-assets .ss-asset-grid img{width:100%;max-width:75px;aspect-ratio:1;object-fit:contain;background:#f4f5f6;border-radius:3px}
-        .shadow-studio .ss-manga-assets p{margin:8px 0 0;color:#b2c3d2;font-size:10px;line-height:1.5}
-        .shadow-studio .ss-manga-assets .ss-upload-asset{display:block;width:100%;min-height:34px;margin-top:12px;padding:7px;border:1px solid #789ec1;border-radius:5px;background:#385b7c;color:#f2f8ff;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
-        .shadow-studio .ss-manga-assets .ss-upload-asset:disabled{opacity:.55;cursor:not-allowed}
+        .shadow-studio .ss-manga-assets{
+          --ss-ma-panel:#29313a;
+          --ss-ma-panel-2:#202832;
+          --ss-ma-line:#4b5968;
+          --ss-ma-line-soft:#3b4651;
+          --ss-ma-text:#edf3fa;
+          --ss-ma-muted:#aab8c6;
+          --ss-ma-blue:#5faeff;
+          --ss-ma-blue-soft:#355d84;
+          min-width:0;
+          color:var(--ss-ma-text);
+          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        .shadow-studio .ss-manga-assets *{box-sizing:border-box}
+        .shadow-studio .ss-manga-assets .ss-asset-groups{
+          display:grid;
+          grid-template-columns:repeat(2,minmax(0,1fr));
+          gap:5px;
+          margin:8px 0 10px;
+          padding-bottom:8px;
+          border-bottom:1px solid var(--ss-ma-line-soft)
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-groups button{
+          min-height:32px;
+          padding:0 8px;
+          border:1px solid var(--ss-ma-line);
+          border-radius:7px;
+          background:#303b46;
+          color:#d8e4ef;
+          font:750 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,transform 120ms ease
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-groups button:hover:not(:disabled){
+          border-color:#70869b;
+          background:#3a4856
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-groups button[aria-pressed=true]{
+          border-color:#75baff;
+          background:var(--ss-ma-blue-soft);
+          color:#fff;
+          box-shadow:inset 0 0 0 1px #6ba9df
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-grid{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:7px
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-grid button{
+          min-width:0;
+          min-height:105px;
+          display:grid;
+          align-content:start;
+          gap:6px;
+          justify-items:center;
+          overflow:hidden;
+          padding:6px 5px;
+          border:1px solid #465666;
+          border-radius:7px;
+          background:#293540;
+          color:#eef5fb;
+          font:650 9px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          box-shadow:inset 0 0 0 1px #ffffff05;
+          transition:border-color 120ms ease,background 120ms ease,transform 120ms ease,box-shadow 120ms ease
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-grid button:hover:not(:disabled){
+          transform:translateY(-1px);
+          border-color:#79a7cf;
+          background:#344758;
+          box-shadow:0 4px 10px #0005,inset 0 0 0 1px #ffffff08
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-grid button:focus-visible,
+        .shadow-studio .ss-manga-assets .ss-asset-groups button:focus-visible,
+        .shadow-studio .ss-manga-assets .ss-upload-asset:focus-visible{
+          outline:2px solid var(--ss-ma-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-grid button:disabled{
+          opacity:.5;
+          cursor:wait;
+          transform:none
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-grid img{
+          width:100%;
+          max-width:78px;
+          aspect-ratio:1;
+          object-fit:contain;
+          border:1px solid #6b7884;
+          border-radius:5px;
+          background:#f7f8fa;
+          box-shadow:0 2px 5px #0006
+        }
+        .shadow-studio .ss-manga-assets .ss-asset-grid span{
+          width:100%;
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+          text-align:center
+        }
+        .shadow-studio .ss-manga-assets p{
+          min-height:18px;
+          margin:8px 0 0;
+          padding:2px 0;
+          color:var(--ss-ma-muted);
+          font-size:9px;
+          line-height:1.45
+        }
+        .shadow-studio .ss-manga-assets .ss-upload-asset{
+          display:block;
+          width:100%;
+          min-height:35px;
+          margin-top:12px;
+          padding:0 10px;
+          border:1px solid #6c9bc5;
+          border-radius:7px;
+          background:#356b9d;
+          color:#f3f9ff;
+          font:800 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,box-shadow 120ms ease
+        }
+        .shadow-studio .ss-manga-assets .ss-upload-asset:hover:not(:disabled){
+          border-color:#8fc7f7;
+          background:#3e82bd;
+          box-shadow:0 3px 9px #0005
+        }
+        .shadow-studio .ss-manga-assets .ss-upload-asset:disabled{
+          opacity:.5;
+          cursor:not-allowed
+        }
         .shadow-studio .ss-manga-assets .ss-upload-file{display:none}
+        @media(max-width:900px),(pointer:coarse){
+          .shadow-studio .ss-manga-assets .ss-asset-groups button{min-height:38px;font-size:11px}
+          .shadow-studio .ss-manga-assets .ss-asset-grid{gap:8px}
+          .shadow-studio .ss-manga-assets .ss-asset-grid button{min-height:110px;padding:7px 5px}
+          .shadow-studio .ss-manga-assets .ss-upload-asset{min-height:40px;font-size:11px}
+        }
+        @media(max-width:430px){
+          .shadow-studio .ss-manga-assets .ss-asset-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+        }
       `}</style>
       <div className="ss-asset-groups" role="group" aria-label="Manga asset categories">
         {t.slice(0, 4).map((label, index) => <button key={index} type="button" aria-pressed={group === index} onClick={() => setGroup(index)}>{label}</button>)}
