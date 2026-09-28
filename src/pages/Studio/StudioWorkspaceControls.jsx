@@ -202,21 +202,98 @@ export function StudioToolRail({ tool, onToolChange, labels }) {
   return (
     <div className="ss-left-workspace">
       <style>{`
-        .shadow-studio .ss-left-workspace{min-width:0;min-height:0}
+        .shadow-studio .ss-left-workspace{
+          --ss-workspace-bg:#29313a;
+          --ss-workspace-bg-2:#202832;
+          --ss-workspace-line:#4b5968;
+          --ss-workspace-line-soft:#3b4651;
+          --ss-workspace-text:#edf3fa;
+          --ss-workspace-muted:#aab8c6;
+          --ss-workspace-blue:#5faeff;
+          min-width:0;
+          min-height:0
+        }
         .shadow-studio .ss-brush-dock{display:none}
         @media(min-width:1101px) and (min-height:651px){
-          .shadow-studio:has(.ss-layout) .ss-layout{grid-template-columns:284px minmax(0,1fr) 282px}
-          .shadow-studio:has(.ss-layout) .ss-left-workspace{display:grid;grid-template-columns:78px minmax(0,1fr);height:100%;overflow:hidden;background:#293039;border-right:1px solid #45515e}
-          .shadow-studio:has(.ss-layout) .ss-left-workspace>.ss-tools{width:78px;height:100%;min-height:0;overflow-x:hidden;overflow-y:auto;padding:10px 6px 60px;border-right:1px solid #445260;background:#27303a;box-sizing:border-box}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock{display:block;min-width:0;min-height:0;height:100%;overflow-y:auto;overflow-x:hidden;background:#2a323c;scrollbar-width:thin;scrollbar-color:#586b7e #27303a}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock-title{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:5px;min-height:39px;padding:0 12px;border-bottom:1px solid #495560;background:#303a45;color:#eff5fb;font-size:12px;font-weight:800}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock-title small{font-size:9px;font-weight:500;color:#a5b5c7}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock>.ss-section{margin:0;padding:13px 11px;border:0;border-bottom:1px solid #485563}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-label{margin-bottom:10px;color:#e5edf5;font-size:11px}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-styles{grid-template-columns:repeat(2,minmax(0,1fr))}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-style{min-height:42px}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-presets{grid-template-columns:repeat(2,minmax(0,1fr))}
-          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-preset{min-height:69px}
+          .shadow-studio:has(.ss-layout) .ss-layout{
+            grid-template-columns:284px minmax(0,1fr) 282px
+          }
+          .shadow-studio:has(.ss-layout) .ss-left-workspace{
+            display:grid;
+            grid-template-columns:78px minmax(0,1fr);
+            height:100%;
+            overflow:hidden;
+            border-right:1px solid var(--ss-workspace-line);
+            background:linear-gradient(180deg,#2a333d,#252d35);
+            box-shadow:inset -1px 0 0 #0003
+          }
+          .shadow-studio:has(.ss-layout) .ss-left-workspace>.ss-tools{
+            width:78px;
+            height:100%;
+            min-height:0;
+            overflow-x:hidden;
+            overflow-y:auto;
+            padding:10px 6px 60px;
+            border-right:1px solid var(--ss-workspace-line-soft);
+            background:#252d35;
+            box-sizing:border-box
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock{
+            display:block;
+            min-width:0;
+            min-height:0;
+            height:100%;
+            overflow-y:auto;
+            overflow-x:hidden;
+            background:var(--ss-workspace-bg);
+            scrollbar-width:thin;
+            scrollbar-color:#586b7e #252d35
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock-title{
+            position:sticky;
+            top:0;
+            z-index:2;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:5px;
+            min-height:40px;
+            padding:0 12px;
+            border-bottom:1px solid var(--ss-workspace-line-soft);
+            background:linear-gradient(180deg,#34404c,#2a333c);
+            color:var(--ss-workspace-text);
+            font-size:10px;
+            font-weight:800;
+            box-shadow:0 2px 5px #0003
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock-title small{
+            font-size:8px;
+            font-weight:650;
+            color:var(--ss-workspace-muted)
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock>.ss-section{
+            margin:0;
+            padding:13px 11px;
+            border:0;
+            border-bottom:1px solid var(--ss-workspace-line-soft)
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-label{
+            margin-bottom:10px;
+            color:#e5edf5;
+            font-size:10px
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-styles{
+            grid-template-columns:repeat(2,minmax(0,1fr))
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-style{
+            min-height:42px
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-presets{
+            grid-template-columns:repeat(2,minmax(0,1fr))
+          }
+          .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-preset{
+            min-height:69px
+          }
           .shadow-studio:has(.ss-layout) .ss-brush-dock .ss-brush-mobile{display:none}
           .shadow-studio:has(.ss-layout)>.ss-tabs{padding-left:284px}
           .shadow-studio:has(.ss-layout) .ss-bottom{padding-left:296px}
@@ -293,15 +370,90 @@ export function StudioControlSidebar({
     return (
       <aside className="ss-side" aria-label={tx('studioWorkspace.studioSidePanels')}>
         <style>{`
-          .shadow-studio .ss-side>.ss-color-slot,.shadow-studio .ss-side>.ss-nav-slot{box-sizing:border-box;min-width:0;min-height:0}
-          .shadow-studio .ss-side .ss-color-slot .ss-color-panel,.shadow-studio .ss-side .ss-nav-slot .ss-navigator{box-sizing:border-box;min-width:0;width:100%;margin:0}
+          .shadow-studio .ss-side{
+            --ss-workspace-side:#29313a;
+            --ss-workspace-side-2:#202832;
+            --ss-workspace-line:#4b5968;
+            --ss-workspace-line-soft:#3b4651;
+            --ss-workspace-text:#edf3fa;
+            --ss-workspace-muted:#aab8c6;
+            --ss-workspace-blue:#5faeff;
+          }
+          .shadow-studio .ss-side>.ss-color-slot,
+          .shadow-studio .ss-side>.ss-nav-slot{
+            box-sizing:border-box;
+            min-width:0;
+            min-height:0
+          }
+          .shadow-studio .ss-side .ss-color-slot .ss-color-panel,
+          .shadow-studio .ss-side .ss-nav-slot .ss-navigator{
+            box-sizing:border-box;
+            min-width:0;
+            width:100%;
+            margin:0
+          }
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view']{
+            margin:0;
+            border-bottom:1px solid var(--ss-workspace-line-soft);
+            background:var(--ss-workspace-side)
+          }
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view'] .ss-label{
+            color:#dce7f1;
+            font-size:10px;
+            font-weight:800
+          }
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view'] .ss-view-buttons{
+            gap:5px
+          }
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view'] .ss-view-btn{
+            min-height:30px;
+            border:1px solid var(--ss-workspace-line);
+            border-radius:6px;
+            background:#303b46;
+            color:#dbe6ef;
+            font-size:9px;
+            font-weight:750
+          }
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view'] .ss-view-btn:hover:not(:disabled){
+            border-color:#6f879b;
+            background:#3f5060
+          }
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view'] .ss-view-btn.active{
+            border-color:#79bcff;
+            background:#355d84;
+            color:#fff
+          }
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view'] input[type=range]{
+            accent-color:var(--ss-workspace-blue)
+          }
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view'] .ss-view-angle,
+          .shadow-studio .ss-side>.ss-section[aria-label='Canvas view'] .ss-view-help{
+            color:var(--ss-workspace-muted);
+            font-size:9px
+          }
           @media(min-width:1101px) and (min-height:651px) and (max-width:1279px){
             .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='color']))>.ss-color-slot{display:none}
             .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher:not([data-active='view']))>.ss-nav-slot{display:none}
           }
           @media(min-width:1280px) and (min-height:651px){
-            .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher)>.ss-nav-slot{display:block!important;grid-column:1;grid-row:1;align-self:stretch;overflow:auto;border-bottom:1px solid #45515e}
-            .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher)>.ss-color-slot{display:block!important;grid-column:1;grid-row:2;align-self:stretch;overflow:auto;border-bottom:1px solid #45515e}
+            .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher)>.ss-nav-slot{
+              display:block!important;
+              grid-column:1;
+              grid-row:1;
+              align-self:stretch;
+              overflow:auto;
+              border-bottom:1px solid var(--ss-workspace-line-soft);
+              background:var(--ss-workspace-side)
+            }
+            .shadow-studio:has(.ss-layout) .ss-side:has(>.ss-right-switcher)>.ss-color-slot{
+              display:block!important;
+              grid-column:1;
+              grid-row:2;
+              align-self:stretch;
+              overflow:auto;
+              border-bottom:1px solid var(--ss-workspace-line-soft);
+              background:var(--ss-workspace-side)
+            }
           }
         `}</style>
         {desktopPanels ? (
@@ -380,37 +532,212 @@ export function StudioControlFooter({
   return (
     <footer className="ss-bottom" aria-label={tx('studioWorkspace.statusControls')}>
       <style>{`
+        .shadow-studio .ss-bottom{
+          --ss-workspace-footer:#26303a;
+          --ss-workspace-footer-2:#202832;
+          --ss-workspace-line:#4b5968;
+          --ss-workspace-line-soft:#3b4651;
+          --ss-workspace-text:#edf3fa;
+          --ss-workspace-muted:#aab8c6;
+          --ss-workspace-blue:#5faeff;
+        }
         .shadow-studio .ss-footer-inner{width:100%;min-width:0}
         .shadow-studio .ss-footer-meta{display:none}
         .shadow-studio .ss-footer-view{display:none}
         .shadow-studio .ss-footer-control{min-width:0}
-        .shadow-studio .ss-footer-control input[type=range]{accent-color:#88bffe}
-        .shadow-studio .ss-footer-control input[type=range]:focus-visible,.shadow-studio .ss-footer-view button:focus-visible{outline:2px solid #88bffe;outline-offset:2px}
+        .shadow-studio .ss-footer-control input[type=range]{
+          accent-color:var(--ss-workspace-blue)
+        }
+        .shadow-studio .ss-footer-control input[type=range]:focus-visible,
+        .shadow-studio .ss-footer-view button:focus-visible{
+          outline:2px solid var(--ss-workspace-blue);
+          outline-offset:2px
+        }
         @media(min-width:1101px) and (min-height:651px){
-          .shadow-studio:has(.ss-layout) .ss-bottom{left:0;right:0;height:48px;min-height:48px;padding:0 10px;display:flex;align-items:center;overflow:hidden;background:#26303a;border-top:1px solid #52606e;box-shadow:0 -2px 8px #10151a66}
-          .shadow-studio:has(.ss-layout) .ss-footer-inner{display:flex;align-items:center;height:100%;gap:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#5b6c7c #26303a}
-          .shadow-studio:has(.ss-layout) .ss-footer-meta{display:flex;align-items:center;flex:0 0 275px;min-width:0;max-width:275px;height:30px;gap:9px;padding:0 11px 0 5px;margin-right:6px;border-right:1px solid #465360;white-space:nowrap;color:#c2cedb;font-size:10px}
-          .shadow-studio:has(.ss-layout) .ss-footer-meta strong{max-width:188px;overflow:hidden;text-overflow:ellipsis;font-weight:700;color:#e5ebf1}
-          .shadow-studio:has(.ss-layout) .ss-footer-meta span{margin-left:auto;color:#a4b2bf;font-weight:800}
-          .shadow-studio:has(.ss-layout) .ss-controls{width:auto;min-width:0;display:flex;flex:1 0 auto;align-items:center;gap:0;overflow:visible}
-          .shadow-studio:has(.ss-layout) .ss-control{flex:0 0 225px;width:225px;min-width:0;height:30px;display:flex;align-items:center;gap:6px;padding:0 10px;border-right:1px solid #465360}
-          .shadow-studio:has(.ss-layout) .ss-control label{flex:0 0 auto;display:inline;color:#c7d2dc;font-size:10px;font-weight:700;white-space:nowrap}
-          .shadow-studio:has(.ss-layout) .ss-control input[type=range]{flex:1 1 auto;min-width:26px;width:auto;max-width:85px;margin:0;cursor:pointer}
-          .shadow-studio:has(.ss-layout) .ss-value{flex:0 0 auto;width:auto;min-width:31px;font-size:10px;font-variant-numeric:tabular-nums;color:#e0eaf4;text-align:right}
-          .shadow-studio:has(.ss-layout) .ss-control.ss-zoom-control{flex:0 0 350px;width:350px;min-width:0;gap:5px}
+          .shadow-studio:has(.ss-layout) .ss-bottom{
+            left:0;
+            right:0;
+            height:48px;
+            min-height:48px;
+            padding:0 10px;
+            display:flex;
+            align-items:center;
+            overflow:hidden;
+            border-top:1px solid var(--ss-workspace-line);
+            background:linear-gradient(180deg,#2a343f,#252e37);
+            box-shadow:0 -2px 8px #10151a66
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-inner{
+            display:flex;
+            align-items:center;
+            height:100%;
+            gap:0;
+            overflow-x:auto;
+            overflow-y:hidden;
+            scrollbar-width:thin;
+            scrollbar-color:#5b6c7c #26303a
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-meta{
+            display:flex;
+            align-items:center;
+            flex:0 0 275px;
+            min-width:0;
+            max-width:275px;
+            height:30px;
+            gap:9px;
+            padding:0 11px 0 5px;
+            margin-right:6px;
+            border-right:1px solid var(--ss-workspace-line-soft);
+            white-space:nowrap;
+            color:#b5c3d0;
+            font-size:9px
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-meta strong{
+            max-width:188px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            color:#e5edf5;
+            font-weight:750
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-meta span{
+            margin-left:auto;
+            color:#91a1af;
+            font-weight:800
+          }
+          .shadow-studio:has(.ss-layout) .ss-controls{
+            width:auto;
+            min-width:0;
+            display:flex;
+            flex:1 0 auto;
+            align-items:center;
+            gap:0;
+            overflow:visible
+          }
+          .shadow-studio:has(.ss-layout) .ss-control{
+            flex:0 0 225px;
+            width:225px;
+            min-width:0;
+            height:30px;
+            display:flex;
+            align-items:center;
+            gap:6px;
+            padding:0 10px;
+            border-right:1px solid var(--ss-workspace-line-soft)
+          }
+          .shadow-studio:has(.ss-layout) .ss-control label{
+            flex:0 0 auto;
+            display:inline;
+            color:#c7d2dc;
+            font-size:9px;
+            font-weight:750;
+            white-space:nowrap
+          }
+          .shadow-studio:has(.ss-layout) .ss-control input[type=range]{
+            flex:1 1 auto;
+            min-width:26px;
+            width:auto;
+            max-width:85px;
+            margin:0;
+            cursor:pointer
+          }
+          .shadow-studio:has(.ss-layout) .ss-value{
+            flex:0 0 auto;
+            width:auto;
+            min-width:31px;
+            color:#dce7f1;
+            font-size:9px;
+            font-variant-numeric:tabular-nums;
+            text-align:right
+          }
+          .shadow-studio:has(.ss-layout) .ss-control.ss-zoom-control{
+            flex:0 0 350px;
+            width:350px;
+            min-width:0;
+            gap:5px
+          }
           .shadow-studio:has(.ss-layout) .ss-zoom-control input[type=range]{max-width:72px}
           .shadow-studio:has(.ss-layout) .ss-zoom-control>.ss-zoom-btn.ss-view-only-control{display:none}
-          .shadow-studio:has(.ss-layout) .ss-zoom-btn{width:25px;min-width:25px;height:27px;display:grid;place-items:center;padding:0;border:1px solid #536272;border-radius:5px;background:#344250;color:#e7f0f9;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
-          .shadow-studio:has(.ss-layout) .ss-zoom-btn:hover:not(:disabled){background:#45617d}
-          .shadow-studio:has(.ss-layout) .ss-zoom-label{width:auto;min-width:31px;padding:0 5px;font-size:10px}
-          .shadow-studio:has(.ss-layout) .ss-footer-view{display:flex;flex:0 0 auto;align-items:center;gap:6px;height:30px;padding:0 8px 0 12px}
-          .shadow-studio:has(.ss-layout) .ss-footer-view label{color:#c7d2dc;font-size:10px;font-weight:700;white-space:nowrap}
-          .shadow-studio:has(.ss-layout) .ss-footer-angle{width:48px;height:27px;padding:0 3px;border:1px solid #536272;border-radius:5px;background:#2c3742;color:#e5edf5;text-align:center;font:inherit;font-size:11px;font-variant-numeric:tabular-nums}
-          .shadow-studio:has(.ss-layout) .ss-footer-view button{width:auto;min-width:28px;height:27px;padding:0 6px;border:1px solid #536272;border-radius:5px;background:#344250;color:#e7f0f9;font:inherit;font-size:10px;font-weight:700;cursor:pointer}
-          .shadow-studio:has(.ss-layout) .ss-footer-view button[aria-pressed=true]{border-color:#75baff;background:#3b638b}
-          .shadow-studio:has(.ss-layout) .ss-footer-view button:hover{background:#45617d}
+          .shadow-studio:has(.ss-layout) .ss-zoom-btn{
+            width:25px;
+            min-width:25px;
+            height:27px;
+            display:grid;
+            place-items:center;
+            padding:0;
+            border:1px solid var(--ss-workspace-line);
+            border-radius:6px;
+            background:#303b46;
+            color:#e7f0f9;
+            font:800 10px Inter,ui-sans-serif,system-ui,sans-serif;
+            cursor:pointer;
+            transition:border-color 120ms ease,background 120ms ease
+          }
+          .shadow-studio:has(.ss-layout) .ss-zoom-btn:hover:not(:disabled){
+            border-color:#70889c;
+            background:#425467
+          }
+          .shadow-studio:has(.ss-layout) .ss-zoom-label{
+            width:auto;
+            min-width:31px;
+            padding:0 5px;
+            font-size:9px
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-view{
+            display:flex;
+            flex:0 0 auto;
+            align-items:center;
+            gap:6px;
+            height:30px;
+            padding:0 8px 0 12px
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-view label{
+            color:#c7d2dc;
+            font-size:9px;
+            font-weight:750;
+            white-space:nowrap
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-angle{
+            width:48px;
+            height:27px;
+            padding:0 3px;
+            border:1px solid var(--ss-workspace-line);
+            border-radius:6px;
+            outline:none;
+            background:#202832;
+            color:#e5edf5;
+            text-align:center;
+            font:10px Inter,ui-sans-serif,system-ui,sans-serif;
+            font-variant-numeric:tabular-nums
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-angle:focus{
+            border-color:var(--ss-workspace-blue);
+            box-shadow:0 0 0 2px #5faeff26
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-view button{
+            width:auto;
+            min-width:28px;
+            height:27px;
+            padding:0 6px;
+            border:1px solid var(--ss-workspace-line);
+            border-radius:6px;
+            background:#303b46;
+            color:#e7f0f9;
+            font:750 9px Inter,ui-sans-serif,system-ui,sans-serif;
+            cursor:pointer
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-view button[aria-pressed=true]{
+            border-color:#79bcff;
+            background:#355d84;
+            color:#fff
+          }
+          .shadow-studio:has(.ss-layout) .ss-footer-view button:hover{
+            background:#425467
+          }
           .shadow-studio:has(.ss-layout) .ss-footer-view .ss-footer-reset{min-width:45px}
-          .shadow-studio:has(.ss-layout) .ss-bottom button:disabled{opacity:.4;cursor:default}
+          .shadow-studio:has(.ss-layout) .ss-bottom button:disabled{
+            opacity:.4;
+            cursor:default
+          }
         }
       `}</style>
       <div className="ss-footer-inner">
