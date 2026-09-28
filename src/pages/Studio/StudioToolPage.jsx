@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import {
+  StudioUIButton,
+  StudioUIButtonRow,
+  StudioUIIconButton,
+  StudioUISection,
+} from './StudioUIControls'
+import {
   STUDIO_TOOL_GROUPS,
   STUDIO_TOOLS_BY_ID,
   STUDIO_WORKING_TOOLS,
@@ -100,92 +106,126 @@ export default function StudioToolPage({ open = false, onClose, onSaved, activeT
   }
 
   if (!open) return null
+
   const filtered = STUDIO_TOOL_GROUPS.map((group) => ({
     ...group,
     tools: group.tools.filter((item) => `${name(item.id)} ${EN_NAMES[item.id] || ''} ${item.id}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())),
   })).filter((group) => group.tools.length)
 
   return createPortal(
-    <div className="ss-tool-editor" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+    <div className="ss-tool-ui-page" role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <style>{`
-        .ss-tool-editor{position:fixed;inset:0;z-index:12050;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;overflow:hidden;background:#202936;color:#edf4ff;font:inherit}
-        .ss-tool-editor *{box-sizing:border-box}
-        .ss-tool-editor button,.ss-tool-editor input{font:inherit}
-        .ss-tool-editor button{cursor:pointer}
-        .ss-tool-editor button:disabled{cursor:not-allowed;opacity:.4}
-        .ss-tool-editor :focus-visible{outline:2px solid #94c6ff;outline-offset:2px}
-        .ss-tool-editor-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px max(16px,env(safe-area-inset-right));border-bottom:1px solid #52657b;background:#283748}
-        .ss-tool-editor-header h2{margin:0;font-size:18px}
-        .ss-tool-editor-header p{margin:5px 0 0;font-size:12px;color:#c7d4e3}
-        .ss-tool-editor-close{flex:none;width:38px;height:38px;border:1px solid #687f97;border-radius:7px;background:#34485d;color:#fff}
-        .ss-tool-editor-main{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px max(16px,calc((100vw - 1040px)/2));scrollbar-width:thin}
-        .ss-tool-editor-search{display:block;width:100%;height:42px;margin-bottom:14px;padding:8px 12px;border:1px solid #6a84a0;border-radius:7px;background:#1b2734;color:#fff}
-        .ss-tool-editor-section{margin-bottom:14px;padding:14px;border:1px solid #4b6077;border-radius:9px;background:#29394b}
-        .ss-tool-editor-section h3{margin:0 0 11px;font-size:14px}
-        .ss-tool-editor-selected{display:grid;gap:6px}
-        .ss-tool-editor-selected-row{display:flex;align-items:center;gap:9px;min-height:41px;padding:5px 8px;border:1px solid #4c6581;border-radius:6px;background:#30465c}
-        .ss-tool-editor-selected-row span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
-        .ss-tool-editor-icon{flex:none;width:20px;text-align:center;color:#b5d9ff}
-        .ss-tool-editor-mini{min-width:34px;height:31px;padding:4px 7px;border:1px solid #6684a2;border-radius:5px;background:#3b526b;color:#f1f7ff}
-        .ss-tool-editor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:7px}
-        .ss-tool-editor-choice{display:flex;align-items:center;gap:9px;min-height:43px;padding:7px;border:1px solid #506781;border-radius:6px;background:#34485e;font-size:12px;cursor:pointer}
-        .ss-tool-editor-choice[data-disabled=true]{opacity:.6;cursor:not-allowed}
-        .ss-tool-editor-choice input{flex:none;accent-color:#7ab8ff}
-        .ss-tool-editor-choice span{flex:1;min-width:0}
-        .ss-tool-editor-choice small{color:#b9c8d9;font-size:10px}
-        .ss-tool-editor-footer{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding:12px max(16px,env(safe-area-inset-right));border-top:1px solid #52657b;background:#283748}
-        .ss-tool-editor-footer p{flex:1 1 100%;margin:0;color:#ffcbcc;font-size:12px}
-        .ss-tool-editor-footer button{min-height:37px;padding:7px 12px;border:1px solid #6683a0;border-radius:6px;background:#354e67;color:#fff}
-        .ss-tool-editor-footer .ss-tool-editor-save{background:#3479bb;border-color:#94c6ff}
-        .ss-tool-editor-hint{margin:9px 0 0;font-size:11px;color:#bbcadc}
-        .ss-tool-editor-empty{margin:0;color:#bbcadc;font-size:12px}
-        @media(max-width:600px){.ss-tool-editor-header{padding:12px}.ss-tool-editor-header h2{font-size:16px}.ss-tool-editor-main{padding:10px}.ss-tool-editor-section{padding:10px}.ss-tool-editor-grid{grid-template-columns:minmax(0,1fr)}.ss-tool-editor-footer{padding:10px}}
+        .ss-tool-ui-page{
+          --ss-ui-bg:#20262d;--ss-ui-panel:#29313a;--ss-ui-panel-2:#313b46;--ss-ui-line:#4b5968;
+          --ss-ui-line-soft:#3b4651;--ss-ui-text:#edf3fa;--ss-ui-muted:#aab8c6;--ss-ui-blue:#5faeff;--ss-ui-blue-soft:#355d84;
+          position:fixed;inset:0;z-index:12050;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;
+          background:#20262d;color:#edf3fa;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        .ss-tool-ui-page *{box-sizing:border-box}
+        .ss-tool-ui-head{min-height:58px;display:flex;align-items:center;gap:10px;padding:8px 12px 8px 16px;border-bottom:1px solid #4b5968;background:linear-gradient(180deg,#35414d,#29323c)}
+        .ss-tool-ui-title{min-width:0;flex:1;display:flex;align-items:center;gap:10px}
+        .ss-tool-ui-title>i{width:30px;height:30px;display:grid;place-items:center;border:1px solid #53708b;border-radius:7px;background:#2c3e50;color:#8bc4ff}
+        .ss-tool-ui-title>span{min-width:0;display:flex;flex-direction:column;gap:2px}
+        .ss-tool-ui-title strong{font-size:14px;font-weight:800}
+        .ss-tool-ui-title small{color:#aab8c6;font-size:9px}
+        .ss-tool-ui-body{min-height:0;flex:1;overflow:auto;overscroll-behavior:contain;padding:14px max(14px,calc((100vw - 1060px)/2))}
+        .ss-tool-ui-search-wrap{position:relative;margin-bottom:11px}
+        .ss-tool-ui-search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#8395a7;font-size:11px}
+        .ss-tool-ui-search{width:100%;height:36px;padding:0 10px 0 32px;border:1px solid #4b5968;border-radius:7px;outline:none;background:#202832;color:#edf3fa;font:11px Inter,system-ui,sans-serif}
+        .ss-tool-ui-search:focus{border-color:#5faeff;box-shadow:0 0 0 2px #5faeff26}
+        .ss-tool-ui-selected{display:grid;gap:5px}
+        .ss-tool-ui-row{min-height:37px;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:7px;padding:4px 5px 4px 8px;border:1px solid #3f4d5a;border-radius:6px;background:#202832}
+        .ss-tool-ui-row>i{width:24px;height:24px;display:grid;place-items:center;border-radius:5px;background:#303b46;color:#9ccaff}
+        .ss-tool-ui-row>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:650}
+        .ss-tool-ui-row-actions{display:flex;gap:3px}
+        .ss-tool-ui-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px}
+        .ss-tool-ui-choice{min-height:40px;display:grid;grid-template-columns:18px 26px minmax(0,1fr) auto;align-items:center;gap:6px;padding:5px 7px;border:1px solid #3f4d5a;border-radius:6px;background:#202832;color:#edf3fa;font-size:10px;cursor:pointer}
+        .ss-tool-ui-choice:hover{border-color:#63798d;background:#2b3641}
+        .ss-tool-ui-choice[data-disabled=true]{opacity:.48;cursor:not-allowed}
+        .ss-tool-ui-choice input{width:15px;height:15px;accent-color:#5faeff}
+        .ss-tool-ui-choice>i{width:23px;height:23px;display:grid;place-items:center;border-radius:5px;background:#303b46;color:#a7c7e4}
+        .ss-tool-ui-choice span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .ss-tool-ui-choice small{color:#95a5b5;font-size:8px}
+        .ss-tool-ui-hint,.ss-tool-ui-empty{margin:8px 0 0;color:#9fb0c0;font-size:9px;line-height:1.45}
+        .ss-tool-ui-error{margin:0;padding:7px 9px;border:1px solid #8e4750;border-radius:6px;background:#4b2b31;color:#ffd5d8;font-size:9px;line-height:1.45}
+        .ss-tool-ui-foot{min-height:54px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-top:1px solid #4b5968;background:#252d35}
+        .ss-tool-ui-foot-status{min-width:0;flex:1;color:#aab8c6;font-size:9px}
+        @media(max-width:650px),(pointer:coarse){
+          .ss-tool-ui-head{min-height:52px;padding:7px 9px}
+          .ss-tool-ui-title small{display:none}
+          .ss-tool-ui-body{padding:9px}
+          .ss-tool-ui-grid{grid-template-columns:1fr}
+          .ss-tool-ui-foot{align-items:stretch;flex-direction:column}
+          .ss-tool-ui-foot .ss-ui-button-row{width:100%}
+          .ss-tool-ui-foot .ss-ui-button{flex:1}
+        }
       `}</style>
-      <header className="ss-tool-editor-header">
-        <div><h2 id={titleId}>{t[0]}</h2><p>{t[1]}</p></div>
-        <button ref={closeRef} className="ss-tool-editor-close" type="button" onClick={() => onClose?.()} aria-label={t[15]}>✕</button>
+
+      <header className="ss-tool-ui-head">
+        <div className="ss-tool-ui-title">
+          <i className="fa-solid fa-screwdriver-wrench" aria-hidden="true" />
+          <span><strong id={titleId}>{t[0]}</strong><small>{t[1]}</small></span>
+        </div>
+        <span ref={closeRef}>
+          <StudioUIIconButton icon="fa-solid fa-xmark" label={t[15]} onClick={() => onClose?.()} />
+        </span>
       </header>
-      <main className="ss-tool-editor-main">
-        <section className="ss-tool-editor-section" aria-label={t[3]}>
-          <h3>{t[3]} · {draft.length}</h3>
-          <div className="ss-tool-editor-selected">
+
+      <main className="ss-tool-ui-body">
+        <StudioUISection title={`${t[3]} · ${draft.length}`} subtitle={t[17]} icon="fa-solid fa-thumbtack">
+          <div className="ss-tool-ui-selected">
             {draft.map((id, index) => {
               const item = STUDIO_TOOLS_BY_ID[id]
               if (!item) return null
-              return <div className="ss-tool-editor-selected-row" key={id}>
-                <i className={`ss-tool-editor-icon fa-solid ${item.icon}`} aria-hidden="true" />
-                <span>{name(id)}</span>
-                <button className="ss-tool-editor-mini" type="button" disabled={index === 0} onClick={() => move(id, -1)} aria-label={`${t[11]}: ${name(id)}`}>↑</button>
-                <button className="ss-tool-editor-mini" type="button" disabled={index === draft.length - 1} onClick={() => move(id, 1)} aria-label={`${t[12]}: ${name(id)}`}>↓</button>
-                <button className="ss-tool-editor-mini" type="button" onClick={() => toggle(id)} aria-label={`${t[10]}: ${name(id)}`}>×</button>
-              </div>
+              return (
+                <div className="ss-tool-ui-row" key={id}>
+                  <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
+                  <span>{name(id)}</span>
+                  <div className="ss-tool-ui-row-actions">
+                    <StudioUIIconButton icon="fa-solid fa-arrow-up" label={`${t[11]}: ${name(id)}`} disabled={index === 0} onClick={() => move(id, -1)} />
+                    <StudioUIIconButton icon="fa-solid fa-arrow-down" label={`${t[12]}: ${name(id)}`} disabled={index === draft.length - 1} onClick={() => move(id, 1)} />
+                    <StudioUIIconButton icon="fa-solid fa-xmark" label={`${t[10]}: ${name(id)}`} onClick={() => toggle(id)} />
+                  </div>
+                </div>
+              )
             })}
           </div>
-          <p className="ss-tool-editor-hint">{t[17]}</p>
-        </section>
-        <input className="ss-tool-editor-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t[2]} aria-label={t[2]} />
-        {filtered.length ? filtered.map((group) => <section className="ss-tool-editor-section" key={group.id}>
-          <h3>{groups[group.id] || group.id}</h3>
-          <div className="ss-tool-editor-grid">
-            {group.tools.map((item) => {
-              const enabled = STUDIO_WORKING_TOOLS.has(item.id)
-              return <label className="ss-tool-editor-choice" data-disabled={!enabled} key={item.id}>
-                <input type="checkbox" checked={enabled && draft.includes(item.id)} disabled={!enabled} onChange={() => toggle(item.id)} />
-                <i className={`ss-tool-editor-icon fa-solid ${item.icon}`} aria-hidden="true" />
-                <span>{name(item.id)}</span>
-                {!enabled ? <small>{t[6]}</small> : null}
-              </label>
-            })}
-          </div>
-        </section>) : <p className="ss-tool-editor-empty">{t[16]}</p>}
+          <p className="ss-tool-ui-hint">{t[17]}</p>
+        </StudioUISection>
+
+        <div className="ss-tool-ui-search-wrap">
+          <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
+          <input className="ss-tool-ui-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t[2]} aria-label={t[2]} />
+        </div>
+
+        {filtered.length ? filtered.map((group) => (
+          <StudioUISection key={group.id} title={groups[group.id] || group.id} icon="fa-solid fa-toolbox">
+            <div className="ss-tool-ui-grid">
+              {group.tools.map((item) => {
+                const enabled = STUDIO_WORKING_TOOLS.has(item.id)
+                return (
+                  <label className="ss-tool-ui-choice" data-disabled={!enabled} key={item.id}>
+                    <input type="checkbox" checked={enabled && draft.includes(item.id)} disabled={!enabled} onChange={() => toggle(item.id)} />
+                    <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
+                    <span>{name(item.id)}</span>
+                    {!enabled ? <small>{t[6]}</small> : null}
+                  </label>
+                )
+              })}
+            </div>
+          </StudioUISection>
+        )) : <p className="ss-tool-ui-empty">{t[16]}</p>}
       </main>
-      <footer className="ss-tool-editor-footer">
-        {error ? <p role="alert">{error}</p> : null}
-        <button type="button" onClick={() => { setDraft([...STUDIO_MANGA_DEFAULT_TOOLS]); setError('') }}>{t[7]}</button>
-        <button type="button" onClick={() => onClose?.()}>{t[8]}</button>
-        <button type="button" className="ss-tool-editor-save" disabled={!draft.length} onClick={save}>{t[9]}</button>
+
+      <footer className="ss-tool-ui-foot">
+        <div className="ss-tool-ui-foot-status">{error ? <p className="ss-tool-ui-error" role="alert">{error}</p> : `${draft.length} ${t[18]}`}</div>
+        <StudioUIButtonRow>
+          <StudioUIButton variant="ghost" onClick={() => { setDraft([...STUDIO_MANGA_DEFAULT_TOOLS]); setError('') }}>{t[7]}</StudioUIButton>
+          <StudioUIButton onClick={() => onClose?.()}>{t[8]}</StudioUIButton>
+          <StudioUIButton variant="primary" icon="fa-solid fa-check" disabled={!draft.length} onClick={save}>{t[9]}</StudioUIButton>
+        </StudioUIButtonRow>
       </footer>
     </div>,
-    document.body
+    document.body,
   )
 }
