@@ -1623,7 +1623,9 @@ async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
   return false
 }
 
-
+function startSmartRefreshCycle() {
+  return
+}
 
   async function getOneSignal() {
     const appId = String(import.meta.env.VITE_ONESIGNAL_APP_ID || '').trim()
@@ -1741,8 +1743,10 @@ async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
       setToast(nextEnabled ? t('taskCenterPage.reminderOn') : t('taskCenterPage.reminderOff'))
     } catch (error) {
       setToast(error.message || t('taskCenterPage.updateReminderFailed'))
-
-importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
+    } finally {
+      setReminderLoading(false)
+    }
+  }
 
   async function claimToday() {
     if (!isLoggedIn) {
