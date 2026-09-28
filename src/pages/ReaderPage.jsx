@@ -5952,8 +5952,12 @@ async function loadReaderAdStatus(targetEpisodeId = episodeId) {
   }
 
   try {
-    const data = await fetchUnlockStatus(targetEpisodeId)
-
+    const response = await fetch(
+  `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/read-gate`,
+  { headers: readerAuthHeaders(), cache: 'no-store' }
+)
+const data = await response.json().catch(() => ({}))
+if (!response.ok || data.ok === false) throw new Error(data.message)
     return {
       ad_policy: data?.ad_policy || null,
       advertisement: data?.advertisement || null,
