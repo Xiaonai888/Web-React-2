@@ -106,22 +106,167 @@ export default function StudioPaperTabs({
   return (
     <div ref={tabsRef} className="ss-tabs" role="group" aria-label={tr('Open papers')}>
       <style>{`
-        .ss-tabs{position:sticky;top:34px;z-index:29;display:flex;align-items:stretch;min-height:36px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid #3d4248;background:#24272a;padding-left:8px;scrollbar-width:thin}
-        .ss-tab{flex:0 0 auto;min-width:118px;max-width:220px;height:36px;display:flex;align-items:center;border-right:1px solid #3d4248;background:#292c30;color:#b9c0c7}
-        .ss-tab.active{background:#3a3f45;color:#fff}
-        .ss-tab-main{min-width:0;flex:1;height:36px;display:flex;align-items:center;gap:8px;border:0;background:transparent;color:inherit;padding:0 4px 0 10px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+        .ss-tabs{
+          --ss-tabs-bg:#202832;
+          --ss-tabs-bg-2:#29313a;
+          --ss-tabs-bg-3:#313b46;
+          --ss-tabs-line:#4b5968;
+          --ss-tabs-line-soft:#3b4651;
+          --ss-tabs-text:#edf3fa;
+          --ss-tabs-muted:#aab8c6;
+          --ss-tabs-blue:#5faeff;
+          --ss-tabs-blue-soft:#355d84;
+          position:sticky;
+          top:34px;
+          z-index:29;
+          display:flex;
+          align-items:stretch;
+          min-height:36px;
+          overflow-x:auto;
+          overflow-y:hidden;
+          padding-left:8px;
+          border-bottom:1px solid var(--ss-tabs-line);
+          background:linear-gradient(180deg,#252e37,#202832);
+          scrollbar-width:thin;
+          scrollbar-color:#56697b #202832;
+          box-shadow:inset 0 -1px 0 #0004
+        }
+        .ss-tab{
+          position:relative;
+          flex:0 0 auto;
+          min-width:118px;
+          max-width:220px;
+          height:36px;
+          display:flex;
+          align-items:center;
+          border-right:1px solid var(--ss-tabs-line-soft);
+          border-top:1px solid transparent;
+          background:#27313b;
+          color:#aebdca;
+          transition:background 120ms ease,color 120ms ease,border-color 120ms ease
+        }
+        .ss-tab:hover{background:#2f3b47;color:#e7eef5}
+        .ss-tab.active{
+          border-top-color:#79bcff;
+          background:#34495d;
+          color:#fff;
+          box-shadow:inset 0 1px 0 #5faeff,inset 0 -1px 0 #34495d
+        }
+        .ss-tab-main{
+          min-width:0;
+          flex:1;
+          height:36px;
+          display:flex;
+          align-items:center;
+          gap:7px;
+          border:0;
+          background:transparent;
+          color:inherit;
+          padding:0 5px 0 10px;
+          font:700 10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          cursor:pointer
+        }
         .ss-tab-main:disabled{cursor:default}
-        .ss-tab-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .ss-dirty{height:6px;width:6px;flex:0 0 6px;border-radius:999px;background:#9ca3af}
-        .ss-tab-close{height:24px;width:24px;display:grid;place-items:center;border:0;border-radius:5px;background:transparent;color:inherit;cursor:pointer}
-        .ss-tab-close:hover:not(:disabled),.ss-tab-edit:hover:not(:disabled){background:rgba(255,255,255,.08)}
-        .ss-tab-add{height:36px;min-width:42px;flex:0 0 42px;border:0;background:transparent;color:#d2d6db;cursor:pointer}
-        .ss-tab-count{margin-left:auto;display:flex;flex:0 0 auto;align-items:center;padding:0 12px;color:#8f969e;font-size:10px;font-weight:800;white-space:nowrap}
-        .ss-tab-edit{width:22px;min-width:22px;height:24px;display:grid;place-items:center;border:0;border-radius:4px;background:transparent;color:#b9c0c7;font:inherit;font-size:10px;cursor:pointer}
-        .ss-tab-input{box-sizing:border-box;width:100%;min-width:0;height:26px;border:1px solid #72b3f7;border-radius:4px;background:#1e2b38;color:#fff;padding:0 4px;font:inherit;font-size:11px;outline:none}
-        .ss-tabs button:disabled{opacity:.4;cursor:default}
-        .ss-tabs button:focus-visible{outline:2px solid #82c4ff;outline-offset:-2px}
-        @media(max-width:640px){.ss-tab{min-width:104px}.ss-tab-count{display:none}.ss-tab-edit{width:24px;min-width:24px}.ss-tab-close{width:28px;height:28px}}
+        .ss-tab-name{
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap
+        }
+        .ss-dirty{
+          width:7px;
+          height:7px;
+          flex:0 0 7px;
+          border-radius:999px;
+          background:#f2b35b;
+          box-shadow:0 0 0 2px #f2b35b22
+        }
+        .ss-tab-close,
+        .ss-tab-edit{
+          display:grid;
+          place-items:center;
+          flex:none;
+          border:1px solid transparent;
+          background:transparent;
+          color:#aab8c6;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .ss-tab-close{
+          width:26px;
+          height:26px;
+          margin-right:3px;
+          border-radius:5px
+        }
+        .ss-tab-edit{
+          width:24px;
+          min-width:24px;
+          height:26px;
+          border-radius:5px;
+          font:inherit;
+          font-size:9px
+        }
+        .ss-tab-close:hover:not(:disabled),
+        .ss-tab-edit:hover:not(:disabled){
+          border-color:#53687b;
+          background:#415365;
+          color:#fff
+        }
+        .ss-tab-add{
+          height:36px;
+          min-width:42px;
+          flex:0 0 42px;
+          border:0;
+          border-right:1px solid var(--ss-tabs-line-soft);
+          background:#28323c;
+          color:#c8d5e1;
+          cursor:pointer;
+          transition:background 120ms ease,color 120ms ease
+        }
+        .ss-tab-add:hover:not(:disabled){
+          background:#3a4a59;
+          color:#fff
+        }
+        .ss-tab-count{
+          margin-left:auto;
+          display:flex;
+          flex:0 0 auto;
+          align-items:center;
+          padding:0 12px;
+          color:#8fa1b2;
+          font:800 9px Inter,ui-sans-serif,system-ui,sans-serif;
+          white-space:nowrap;
+          font-variant-numeric:tabular-nums
+        }
+        .ss-tab-input{
+          box-sizing:border-box;
+          width:100%;
+          min-width:0;
+          height:28px;
+          margin:0 4px;
+          border:1px solid var(--ss-tabs-blue);
+          border-radius:5px;
+          outline:none;
+          background:#1d2a36;
+          color:#fff;
+          padding:0 7px;
+          font:700 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          box-shadow:0 0 0 2px #5faeff26
+        }
+        .ss-tabs button:disabled{
+          opacity:.4;
+          cursor:default
+        }
+        .ss-tabs button:focus-visible{
+          outline:2px solid var(--ss-tabs-blue);
+          outline-offset:-2px
+        }
+        @media(max-width:640px){
+          .ss-tab{min-width:104px}
+          .ss-tab-count{display:none}
+          .ss-tab-edit{width:24px;min-width:24px}
+          .ss-tab-close{width:28px;height:28px}
+        }
       `}</style>
       {documents.map((paper) => {
         const active = paper.id === activeDocumentId
