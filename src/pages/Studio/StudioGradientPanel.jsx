@@ -1,5 +1,15 @@
 import { useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import {
+  StudioUIButton,
+  StudioUIColor,
+  StudioUIPreview,
+  StudioUISection,
+  StudioUISlider,
+  StudioUITabs,
+  StudioUIToggle,
+} from './StudioUIControls'
+import StudioUIAngleDial from './StudioUIAngleDial'
 
 const LABELS = {
   en: ['Gradient', 'Start color', 'End color', 'Linear', 'Radial', 'Angle', 'Opacity', 'Reverse colors', 'Apply to selected layer', 'Applying…', 'Create or select a visible, unlocked layer first.', 'Could not apply gradient.'],
@@ -31,46 +41,67 @@ export default function StudioGradientPanel({ color = '#111111', onApply, disabl
     if (unavailable) return
     setError('')
     setBusy(true)
-    try { await onApply({ from, to, type, angle, opacity, reverse }) }
-    catch (reason) { setError(reason?.message || labels[11]) }
-    finally { setBusy(false) }
+    try {
+      await onApply({ from, to, type, angle, opacity, reverse })
+    } catch (reason) {
+      setError(reason?.message || labels[11])
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
-    <section className="ss-gradient-panel" aria-label={labels[0]}>
+    <div className="ss-gradient-ui-panel">
       <style>{`
-        .shadow-studio .ss-gradient-panel{min-width:0;color:#e3eaf2;font-size:11px}
-        .shadow-studio .ss-gradient-panel>*+*{margin-top:9px}
-        .shadow-studio .ss-gradient-panel strong{display:block;font-size:12px}
-        .shadow-studio .ss-gradient-preview{height:54px;border:1px solid #71859a;border-radius:5px}
-        .shadow-studio .ss-gradient-colors{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-        .shadow-studio .ss-gradient-panel label{display:grid;gap:4px;min-width:0;color:#d0dbe5}
-        .shadow-studio .ss-gradient-panel input[type=color]{width:100%;height:30px;border:1px solid #61758a;border-radius:4px;background:#283645;cursor:pointer}
-        .shadow-studio .ss-gradient-panel input[type=range]{width:100%;min-width:0;accent-color:#83baff}
-        .shadow-studio .ss-gradient-panel .ss-gradient-types{display:flex;gap:5px}
-        .shadow-studio .ss-gradient-types button,.shadow-studio .ss-gradient-apply{border:1px solid #60778d;border-radius:5px;background:#33485e;color:#e9f2fb;padding:7px;cursor:pointer}
-        .shadow-studio .ss-gradient-types button[aria-pressed=true]{background:#476c91;border-color:#9bc8f5}
-        .shadow-studio .ss-gradient-panel .ss-gradient-check{display:flex;align-items:center;gap:6px}
-        .shadow-studio .ss-gradient-panel .ss-gradient-apply{width:100%;background:#426b91;font-weight:700}
-        .shadow-studio .ss-gradient-panel button:disabled{opacity:.48;cursor:not-allowed}
-        .shadow-studio .ss-gradient-panel .ss-gradient-error{color:#ffb7b7;line-height:1.4}
-        .shadow-studio .ss-gradient-panel .ss-gradient-hint{font-size:10px;color:#b6c6d5;line-height:1.5}
+        .ss-gradient-ui-panel{display:grid;gap:10px;min-width:0}
+        .ss-gradient-ui-preview .ss-ui-preview-stage{min-height:86px}
+        .ss-gradient-ui-preview-swatch{width:100%;height:86px}
+        .ss-gradient-ui-angle{padding:9px;border:1px solid #3b4651;border-radius:8px;background:#242c34}
+        .ss-gradient-ui-actions{display:grid;gap:8px}
+        .ss-gradient-ui-actions>.ss-ui-button{width:100%}
+        .ss-gradient-ui-status{margin:0;padding:7px 9px;border:1px solid #3b4651;border-radius:6px;background:#202832;color:#9fb0c0;font-size:9px;line-height:1.45}
+        .ss-gradient-ui-status.error{border-color:#8e4750;background:#4b2b31;color:#ffd5d8}
       `}</style>
-      <strong>{labels[0]}</strong>
-      <div className="ss-gradient-preview" style={{ background: preview, opacity: opacity / 100 }} aria-hidden="true" />
-      <div className="ss-gradient-colors">
-        <label>{labels[1]}<input type="color" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
-        <label>{labels[2]}<input type="color" value={to} onChange={(event) => setTo(event.target.value)} /></label>
+
+      <StudioUIPreview label={labels[0]} className="ss-gradient-ui-preview">
+        <div className="ss-gradient-ui-preview-swatch" style={{ background: preview, opacity: opacity / 100 }} aria-hidden="true" />
+      </StudioUIPreview>
+
+      <StudioUISection title={labels[0]} subtitle={type === 'linear' ? labels[3] : labels[4]}>
+        <StudioUITabs
+          value={type}
+          ariaLabel={labels[0]}
+          items={[
+            { value: 'linear', label: labels[3], icon: 'fa-solid fa-arrow-right-long' },
+            { value: 'radial', label: labels[4], icon: 'fa-regular fa-circle' },
+          ]}
+          onChange={setType}
+        />
+
+        <StudioUIColor label={labels[1]} value={from} disabled={busy} onChange={(next) => {
+          if (/^#[0-9a-f]{6}$/i.test(next)) setFrom(next)
+        }} />
+
+        <StudioUIColor label={labels[2]} value={to} disabled={busy} onChange={(next) => {
+          if (/^#[0-9a-f]{6}$/i.test(next)) setTo(next)
+        }} />
+
+        {type === 'linear' ? (
+          <div className="ss-gradient-ui-angle">
+            <StudioUIAngleDial label={labels[5]} value={angle} min={-180} max={180} disabled={busy} onChange={setAngle} size={78} />
+          </div>
+        ) : null}
+
+        <StudioUISlider label={labels[6]} value={opacity} min={0} max={100} suffix="%" disabled={busy} onChange={setOpacity} />
+        <StudioUIToggle label={labels[7]} checked={reverse} disabled={busy} onChange={setReverse} />
+      </StudioUISection>
+
+      <div className="ss-gradient-ui-actions">
+        <StudioUIButton variant="primary" icon="fa-solid fa-check" disabled={unavailable} onClick={apply}>
+          {busy ? labels[9] : labels[8]}
+        </StudioUIButton>
+        <p className={`ss-gradient-ui-status ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>{error || labels[10]}</p>
       </div>
-      <div className="ss-gradient-types" role="group" aria-label={labels[0]}>
-        <button type="button" aria-pressed={type === 'linear'} onClick={() => setType('linear')}>{labels[3]}</button>
-        <button type="button" aria-pressed={type === 'radial'} onClick={() => setType('radial')}>{labels[4]}</button>
-      </div>
-      <label>{labels[5]}: {angle}°<input type="range" min="0" max="359" step="1" value={angle} disabled={type === 'radial'} onChange={(event) => setAngle(Number(event.target.value))} /></label>
-      <label>{labels[6]}: {opacity}%<input type="range" min="0" max="100" step="1" value={opacity} onChange={(event) => setOpacity(Number(event.target.value))} /></label>
-      <label className="ss-gradient-check"><input type="checkbox" checked={reverse} onChange={(event) => setReverse(event.target.checked)} />{labels[7]}</label>
-      <button type="button" className="ss-gradient-apply" disabled={unavailable} onClick={apply}>{busy ? labels[9] : labels[8]}</button>
-      <p className={error ? 'ss-gradient-error' : 'ss-gradient-hint'} role="status">{error || labels[10]}</p>
-    </section>
+    </div>
   )
 }
