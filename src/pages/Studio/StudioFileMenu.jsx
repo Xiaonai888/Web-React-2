@@ -214,15 +214,124 @@ export default function StudioFileMenu({
       {open && createPortal(
         <>
           <style>{`
-            .ss-file-dropdown{position:fixed;z-index:100000;width:min(290px,calc(100vw - 8px));max-height:calc(100dvh - 42px);overflow-y:auto;padding:5px;border:1px solid #616872;border-radius:5px;background:#292d32;color:#f3f4f6;box-shadow:0 16px 40px rgba(0,0,0,.5);font-family:inherit;overscroll-behavior:contain}
-            .ss-file-item{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:38px;border:0;border-radius:3px;padding:7px 10px;background:transparent;color:inherit;text-align:left;font:inherit;font-size:12px;cursor:pointer}
-            .ss-file-item:hover:not(:disabled),.ss-file-item:focus-visible{outline:none;background:#365679}
-            .ss-file-item:disabled{opacity:.4;cursor:default}
-            .ss-file-detail{color:#b9c0c8;font-size:10px;text-align:right;white-space:nowrap}
-            .ss-file-item:hover:not(:disabled) .ss-file-detail{color:#f3f4f6}
-            .ss-file-divider{height:1px;margin:5px 6px;background:#4a5159}
-            @media(max-width:600px){.ss-file-dropdown{max-height:calc(100dvh - 48px)}.ss-file-item{min-height:44px;font-size:13px}
-              .ss-file-detail{white-space:normal;text-align:right}}
+            .ss-file-dropdown{
+              --ss-file-bg:#202832;
+              --ss-file-bg-2:#29313a;
+              --ss-file-bg-3:#313b46;
+              --ss-file-line:#4b5968;
+              --ss-file-line-soft:#3b4651;
+              --ss-file-text:#edf3fa;
+              --ss-file-muted:#aab8c6;
+              --ss-file-blue:#5faeff;
+              --ss-file-blue-soft:#355d84;
+              position:fixed;
+              z-index:100000;
+              width:min(290px,calc(100vw - 8px));
+              max-height:calc(100dvh - 42px);
+              overflow-y:auto;
+              padding:6px;
+              border:1px solid #607183;
+              border-radius:8px;
+              background:linear-gradient(180deg,#29313a,#242c34);
+              color:var(--ss-file-text);
+              box-shadow:0 18px 42px #000b,0 0 0 1px #ffffff06;
+              font:10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+              overscroll-behavior:contain;
+              scrollbar-width:thin;
+              scrollbar-color:#596c7f #242c34
+            }
+            .ss-file-item{
+              position:relative;
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              gap:12px;
+              width:100%;
+              min-height:36px;
+              border:1px solid transparent;
+              border-radius:6px;
+              padding:7px 9px;
+              background:transparent;
+              color:inherit;
+              text-align:left;
+              font:700 10px Inter,ui-sans-serif,system-ui,sans-serif;
+              cursor:pointer;
+              transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+            }
+            .ss-file-item::before{
+              content:'';
+              position:absolute;
+              left:5px;
+              top:50%;
+              width:2px;
+              height:0;
+              border-radius:99px;
+              background:var(--ss-file-blue);
+              transform:translateY(-50%);
+              transition:height 120ms ease
+            }
+            .ss-file-item:hover:not(:disabled),
+            .ss-file-item:focus-visible{
+              outline:none;
+              border-color:#516679;
+              background:#34495d;
+              color:#fff
+            }
+            .ss-file-item:hover:not(:disabled)::before,
+            .ss-file-item:focus-visible::before{
+              height:18px
+            }
+            .ss-file-item:disabled{
+              opacity:.38;
+              cursor:default
+            }
+            .ss-file-item>span:first-child{
+              min-width:0;
+              overflow:hidden;
+              text-overflow:ellipsis;
+              white-space:nowrap
+            }
+            .ss-file-detail{
+              flex:none;
+              max-width:44%;
+              overflow:hidden;
+              color:#91a3b3;
+              font-size:8px;
+              font-weight:650;
+              text-align:right;
+              text-overflow:ellipsis;
+              white-space:nowrap
+            }
+            .ss-file-item:hover:not(:disabled) .ss-file-detail,
+            .ss-file-item:focus-visible .ss-file-detail{
+              color:#cde6fb
+            }
+            .ss-file-divider{
+              height:1px;
+              margin:5px 5px;
+              background:linear-gradient(90deg,transparent,var(--ss-file-line),transparent)
+            }
+            @media(max-width:600px){
+              .ss-file-dropdown{
+                max-height:calc(100dvh - 48px);
+                border-radius:9px
+              }
+              .ss-file-item{
+                min-height:42px;
+                font-size:11px
+              }
+              .ss-file-detail{
+                max-width:42%;
+                white-space:normal;
+                text-align:right;
+                line-height:1.25
+              }
+            }
+            @media(pointer:coarse){
+              .ss-file-item{
+                min-height:44px
+              }
+            }
           `}</style>
           <div
             id={menuId}
