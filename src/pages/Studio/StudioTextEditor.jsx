@@ -1,5 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import {
+  StudioUIButton,
+  StudioUIButtonRow,
+  StudioUIColor,
+  StudioUIDialog,
+  StudioUINumber,
+  StudioUIPreview,
+  StudioUISection,
+  StudioUISelect,
+  StudioUIToggle,
+} from './StudioUIControls'
 
 const WORDS = {
   en: ['Add text', 'Text', 'Type your text here', 'Font', 'Size (px)', 'Bold', 'Preview', 'Cancel', 'Add as new layer', 'Italic', 'Alignment', 'Left', 'Center', 'Right', 'Text color', 'Text width', 'Line spacing', 'Choose a position on the paper, then enter text. Each addition creates an independent raster layer.', 'Could not add text. Check the selected layer, available layer slots and text size.'],
@@ -80,11 +91,26 @@ export default function StudioTextEditor({ open, color, initialData, onCancel, o
   const [lineSpacing, setLineSpacing] = useState(initialData?.lineSpacing ?? 1.35)
   const [ink, setInk] = useState(() => /^#[0-9a-f]{6}$/i.test(initialData?.color || color) ? (initialData?.color || color) : '#111111')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!open) return undefined
+    const keydown = (event) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      onCancel?.()
+    }
+    window.addEventListener('keydown', keydown, true)
+    return () => window.removeEventListener('keydown', keydown, true)
+  }, [open, onCancel])
+
   if (!open) return null
+
   const editTitle = ({ en: 'Edit text layer', km: 'កែអក្សរលើស្រទាប់', zh: '编辑文字图层', ja: 'テキストレイヤーを編集', ko: '텍스트 레이어 수정' })[language] || 'Edit text layer'
   const saveLabel = ({ en: 'Save text changes', km: 'រក្សាទុកការកែអក្សរ', zh: '保存文字修改', ja: 'テキストの変更を保存', ko: '텍스트 변경 저장' })[language] || 'Save text changes'
-  const submit = (event) => {
-    event.preventDefault()
+  const title = initialData ? editTitle : t[0]
+
+  function submit() {
     if (!text.trim()) return
     setError('')
     try {
@@ -94,52 +120,115 @@ export default function StudioTextEditor({ open, color, initialData, onCancel, o
       setError(reason?.message || t[18])
     }
   }
+
   return (
-    <div className="ss-text-backdrop" onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onCancel() } }}>
+    <>
       <style>{`
-        .ss-text-backdrop{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:12px;box-sizing:border-box;background:#080e18c9}
-        .ss-text-modal{width:min(525px,100%);max-height:92dvh;overflow-y:auto;box-sizing:border-box;padding:18px;border:1px solid #61758b;border-radius:12px;background:#283441;color:#eff5fc;box-shadow:0 18px 65px #0009}
-        .ss-text-modal h2{font-size:16px;margin:0 0 12px}
-        .ss-text-modal label{display:grid;gap:6px;font-size:12px;font-weight:600}
-        .ss-text-modal textarea,.ss-text-modal select,.ss-text-modal input[type=number]{min-width:0;width:100%;box-sizing:border-box;border:1px solid #687d91;border-radius:6px;padding:8px;background:#1c2834;color:#fff;font:inherit}
-        .ss-text-modal textarea{min-height:104px;resize:vertical;line-height:1.4}
-        .ss-text-form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(90px,120px);gap:11px;margin-top:11px}
-        .ss-text-style-row{display:flex;flex-wrap:wrap;align-items:center;gap:11px;margin-top:11px}
-        .ss-text-style-row label{display:flex;align-items:center;gap:6px}
-        .ss-text-modal input[type=color]{width:48px;height:34px;padding:2px;border:1px solid #687d91;border-radius:5px;background:#1c2834}
-        .ss-text-preview{min-height:55px;max-height:145px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;border:1px solid #516173;border-radius:6px;background:#f9f9f9;line-height:1.35}
-        .ss-text-help{margin:10px 0 0;color:#b9cadb;font-size:11px;line-height:1.45}
-        .ss-text-error{margin:10px 0 0;color:#ffc1c1;font-size:11px;line-height:1.4}
-        .ss-text-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}
-        .ss-text-actions button{min-height:36px;border:1px solid #68809b;border-radius:6px;padding:6px 13px;background:#3b4c60;color:#fff;font:inherit;cursor:pointer}
-        .ss-text-actions button[type=submit]{background:#3474b7;border-color:#71a9e1}
-        .ss-text-actions button:disabled{opacity:.45;cursor:not-allowed}
-        @media(max-width:440px){.ss-text-modal{padding:12px}.ss-text-form-grid{grid-template-columns:minmax(0,1fr) 90px}}
+        .ss-text-ui-dialog .ss-ui-dialog-content{padding:13px}
+        .ss-text-ui-layout{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:12px}
+        .ss-text-ui-controls{display:grid;gap:10px}
+        .ss-text-ui-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .ss-text-ui-area{display:grid;gap:6px;color:#edf3fa;font-size:10px;font-weight:700}
+        .ss-text-ui-area textarea{width:100%;min-height:110px;padding:9px;border:1px solid #4b5968;border-radius:6px;outline:none;resize:vertical;background:#202832;color:#edf3fa;font:11px Inter,system-ui,sans-serif;line-height:1.45}
+        .ss-text-ui-area textarea:focus{border-color:#5faeff;box-shadow:0 0 0 2px #5faeff26}
+        .ss-text-ui-preview .ss-ui-preview-stage{min-height:190px;padding:12px;background:#f7f8fa}
+        .ss-text-ui-preview-text{width:100%;max-height:220px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+        .ss-text-ui-help{margin:0;padding:8px 9px;border:1px solid #3b4651;border-radius:6px;background:#202832;color:#9fb0c0;font-size:9px;line-height:1.45}
+        .ss-text-ui-error{margin:0;padding:8px 9px;border:1px solid #8e4750;border-radius:6px;background:#4b2b31;color:#ffd5d8;font-size:9px;line-height:1.45}
+        @media(max-width:700px),(pointer:coarse){.ss-text-ui-layout{grid-template-columns:1fr}.ss-text-ui-preview-column{order:-1}.ss-text-ui-preview .ss-ui-preview-stage{min-height:120px}}
+        @media(max-width:430px){.ss-text-ui-two{grid-template-columns:1fr}}
       `}</style>
-      <form className="ss-text-modal" role="dialog" aria-modal="true" aria-label={initialData ? editTitle : t[0]} onSubmit={submit}>
-        <h2>{initialData ? editTitle : t[0]}</h2>
-        <label>{t[1]}<textarea autoFocus value={text} maxLength={1200} placeholder={t[2]} onChange={(event) => { setText(event.target.value); setError('') }} /></label>
-        <div className="ss-text-form-grid">
-          <label>{t[3]}<select value={font} onChange={(event) => setFont(event.target.value)}><option value="sans">Sans Serif</option><option value="serif">Serif</option><option value="mono">Monospace</option><option value="khmer">Khmer</option></select></label>
-          <label>{t[4]}<input type="number" min="8" max="400" step="1" value={size} onChange={(event) => setSize(Math.round(clamp(event.target.value, 8, 400)))} /></label>
+
+      <StudioUIDialog
+        open={open}
+        title={title}
+        subtitle={initialData ? editTitle : t[17]}
+        icon="fa-solid fa-font"
+        width={760}
+        onClose={onCancel}
+        className="ss-text-ui-dialog"
+        footer={
+          <StudioUIButtonRow>
+            <StudioUIButton onClick={onCancel}>{t[7]}</StudioUIButton>
+            <StudioUIButton variant="primary" icon="fa-solid fa-check" disabled={!text.trim()} onClick={submit}>
+              {initialData ? saveLabel : t[8]}
+            </StudioUIButton>
+          </StudioUIButtonRow>
+        }
+      >
+        <div className="ss-text-ui-layout">
+          <div className="ss-text-ui-controls">
+            <StudioUISection title={t[1]} subtitle={t[2]}>
+              <label className="ss-text-ui-area">
+                <span>{t[1]}</span>
+                <textarea autoFocus value={text} maxLength={1200} placeholder={t[2]} onChange={(event) => { setText(event.target.value); setError('') }} />
+              </label>
+
+              <div className="ss-text-ui-two">
+                <StudioUISelect
+                  label={t[3]}
+                  value={font}
+                  options={[
+                    { value: 'sans', label: 'Sans Serif' },
+                    { value: 'serif', label: 'Serif' },
+                    { value: 'mono', label: 'Monospace' },
+                    { value: 'khmer', label: 'Khmer' },
+                  ]}
+                  onChange={setFont}
+                />
+                <StudioUINumber label={t[4]} value={size} min={8} max={400} step={1} suffix="px" onChange={(next) => setSize(Math.round(clamp(next, 8, 400)))} />
+              </div>
+
+              <div className="ss-text-ui-two">
+                <StudioUIToggle label={t[5]} checked={bold} onChange={setBold} />
+                <StudioUIToggle label={t[9]} checked={italic} onChange={setItalic} />
+              </div>
+
+              <StudioUIColor label={t[14]} value={ink} onChange={(next) => {
+                if (/^#[0-9a-f]{6}$/i.test(next)) setInk(next)
+              }} />
+
+              <div className="ss-text-ui-two">
+                <StudioUISelect
+                  label={t[10]}
+                  value={align}
+                  options={[
+                    { value: 'left', label: t[11] },
+                    { value: 'center', label: t[12] },
+                    { value: 'right', label: t[13] },
+                  ]}
+                  onChange={setAlign}
+                />
+                <StudioUINumber label={`${t[15]} (%)`} value={widthPercent} min={20} max={100} step={5} suffix="%" onChange={(next) => setWidthPercent(Math.round(clamp(next, 20, 100)))} />
+              </div>
+
+              <StudioUINumber label={t[16]} value={lineSpacing} min={1} max={2.5} step={0.05} onChange={(next) => setLineSpacing(clamp(next, 1, 2.5))} />
+            </StudioUISection>
+
+            <p className="ss-text-ui-help">{initialData ? editTitle : t[17]}</p>
+            {error ? <p className="ss-text-ui-error" role="alert">{error}</p> : null}
+          </div>
+
+          <div className="ss-text-ui-preview-column">
+            <StudioUIPreview label={t[6]} className="ss-text-ui-preview">
+              <div
+                className="ss-text-ui-preview-text"
+                style={{
+                  color: ink,
+                  fontFamily: FONTS[font],
+                  fontWeight: bold ? 700 : 400,
+                  fontStyle: italic ? 'italic' : 'normal',
+                  textAlign: align,
+                  fontSize: Math.min(size, 36),
+                  lineHeight: lineSpacing,
+                }}
+              >
+                {text || t[2]}
+              </div>
+            </StudioUIPreview>
+          </div>
         </div>
-        <div className="ss-text-style-row">
-          <label><input type="checkbox" checked={bold} onChange={(event) => setBold(event.target.checked)} />{t[5]}</label>
-          <label><input type="checkbox" checked={italic} onChange={(event) => setItalic(event.target.checked)} />{t[9]}</label>
-          <label>{t[14]}<input type="color" value={ink} onChange={(event) => setInk(event.target.value)} /></label>
-        </div>
-        <div className="ss-text-form-grid">
-          <label>{t[10]}<select value={align} onChange={(event) => setAlign(event.target.value)}><option value="left">{t[11]}</option><option value="center">{t[12]}</option><option value="right">{t[13]}</option></select></label>
-          <label>{t[15]} (%)<input type="number" min="20" max="100" step="5" value={widthPercent} onChange={(event) => setWidthPercent(Math.round(clamp(event.target.value, 20, 100)))} /></label>
-        </div>
-        <div className="ss-text-form-grid">
-          <label>{t[16]}<input type="number" min="1" max="2.5" step="0.05" value={lineSpacing} onChange={(event) => setLineSpacing(clamp(event.target.value, 1, 2.5))} /></label>
-        </div>
-        <label style={{ marginTop: 12 }}>{t[6]}<div className="ss-text-preview" style={{ color: ink, fontFamily: FONTS[font], fontWeight: bold ? 700 : 400, fontStyle: italic ? 'italic' : 'normal', textAlign: align, fontSize: Math.min(size, 36), lineHeight: lineSpacing }}>{text || t[2]}</div></label>
-        <p className="ss-text-help">{initialData ? editTitle : t[17]}</p>
-        {error ? <p className="ss-text-error" role="alert">{error}</p> : null}
-        <div className="ss-text-actions"><button type="button" onClick={onCancel}>{t[7]}</button><button type="submit" disabled={!text.trim()}>{initialData ? saveLabel : t[8]}</button></div>
-      </form>
-    </div>
+      </StudioUIDialog>
+    </>
   )
 }
