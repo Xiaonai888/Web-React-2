@@ -135,14 +135,118 @@ export default function StudioEditMenu({ enabled, canUndo, canRedo, onUndo, onRe
   return (
     <>
       <style>{`
-        .ss-edit-menu{position:fixed;z-index:100002;width:min(258px,calc(100vw - 8px));max-height:calc(100dvh - 48px);overflow-y:auto;padding:6px;border:1px solid #68727e;border-radius:6px;background:#292e34;color:#f1f4f7;box-shadow:0 16px 42px rgba(0,0,0,.55);font-family:inherit;overscroll-behavior:contain}
-        .ss-edit-menu-heading{padding:8px 9px 5px;color:#aebccc;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
-        .ss-edit-menu-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:38px;border:0;border-radius:4px;background:transparent;color:inherit;padding:6px 9px;text-align:left;font:inherit;font-size:12px;cursor:pointer}
-        .ss-edit-menu-item:hover:not(:disabled),.ss-edit-menu-item:focus-visible{outline:none;background:#365679}
-        .ss-edit-menu-item:disabled{opacity:.35;cursor:default}
-        .ss-edit-menu-item small{color:#b5c0cc;font-size:10px;white-space:nowrap}
-        .ss-edit-menu-divider{height:1px;margin:5px 6px;background:#4b5560}
-        @media(max-width:600px){.ss-edit-menu-item{min-height:44px;font-size:13px}}
+        .ss-edit-menu{
+          --ss-edit-bg:#202832;
+          --ss-edit-bg-2:#29313a;
+          --ss-edit-bg-3:#313b46;
+          --ss-edit-line:#4b5968;
+          --ss-edit-line-soft:#3b4651;
+          --ss-edit-text:#edf3fa;
+          --ss-edit-muted:#aab8c6;
+          --ss-edit-blue:#5faeff;
+          --ss-edit-blue-soft:#355d84;
+          position:fixed;
+          z-index:100002;
+          width:min(258px,calc(100vw - 8px));
+          max-height:calc(100dvh - 48px);
+          overflow-y:auto;
+          padding:6px;
+          border:1px solid #607183;
+          border-radius:8px;
+          background:linear-gradient(180deg,#29313a,#242c34);
+          color:var(--ss-edit-text);
+          box-shadow:0 18px 42px #000b,0 0 0 1px #ffffff06;
+          font:10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          overscroll-behavior:contain;
+          scrollbar-width:thin;
+          scrollbar-color:#596c7f #242c34
+        }
+        .ss-edit-menu-heading{
+          padding:8px 9px 6px;
+          color:#9fb0c0;
+          font-size:8px;
+          font-weight:800;
+          letter-spacing:.06em;
+          text-transform:uppercase
+        }
+        .ss-edit-menu-item{
+          position:relative;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:8px;
+          width:100%;
+          min-height:36px;
+          border:1px solid transparent;
+          border-radius:6px;
+          background:transparent;
+          color:inherit;
+          padding:6px 9px;
+          text-align:left;
+          font:700 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .ss-edit-menu-item::before{
+          content:'';
+          position:absolute;
+          left:5px;
+          top:50%;
+          width:2px;
+          height:0;
+          border-radius:99px;
+          background:var(--ss-edit-blue);
+          transform:translateY(-50%);
+          transition:height 120ms ease
+        }
+        .ss-edit-menu-item:hover:not(:disabled),
+        .ss-edit-menu-item:focus-visible{
+          outline:none;
+          border-color:#516679;
+          background:#34495d;
+          color:#fff
+        }
+        .ss-edit-menu-item:hover:not(:disabled)::before,
+        .ss-edit-menu-item:focus-visible::before{
+          height:18px
+        }
+        .ss-edit-menu-item:disabled{
+          opacity:.35;
+          cursor:default
+        }
+        .ss-edit-menu-item small{
+          flex:none;
+          color:#91a3b3;
+          font-size:8px;
+          font-weight:650;
+          white-space:nowrap
+        }
+        .ss-edit-menu-item:hover:not(:disabled) small,
+        .ss-edit-menu-item:focus-visible small{
+          color:#cde6fb
+        }
+        .ss-edit-menu-divider{
+          height:1px;
+          margin:5px 5px;
+          background:linear-gradient(90deg,transparent,var(--ss-edit-line),transparent)
+        }
+        @media(max-width:600px){
+          .ss-edit-menu{
+            border-radius:9px
+          }
+          .ss-edit-menu-item{
+            min-height:42px;
+            font-size:11px
+          }
+          .ss-edit-menu-item small{
+            font-size:9px
+          }
+        }
+        @media(pointer:coarse){
+          .ss-edit-menu-item{
+            min-height:44px
+          }
+        }
       `}</style>
       <button
         ref={triggerRef}
