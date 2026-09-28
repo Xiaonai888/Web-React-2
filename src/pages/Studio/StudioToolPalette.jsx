@@ -242,49 +242,360 @@ export default function StudioToolPalette({ tool, onToolChange, labels = {} }) {
   return (
     <aside className="ss-tools ss-tool-palette" aria-label={tx('studioTools.drawingTools')}>
       <style>{`
-        .shadow-studio .ss-tool-palette .ss-palette-group{display:flex;flex:0 0 auto;gap:4px;align-items:center}
-        .shadow-studio .ss-tool-palette .ss-palette-group+.ss-palette-group{border-left:1px solid #495563;padding-left:6px}
-        .shadow-studio .ss-tool-palette .ss-palette-tool{flex:0 0 40px;width:40px;min-width:40px;min-height:44px;height:44px;gap:3px;padding:3px;border-radius:5px}
-        .shadow-studio .ss-tool-palette .ss-palette-tool i{font-size:15px}
-        .shadow-studio .ss-tool-palette .ss-palette-tool .ss-round-brush-icon{display:inline-block;width:14px;height:14px;flex:none;border-radius:50%;background:currentColor;box-shadow:0 0 0 1px rgba(255,255,255,.16)}
+        .shadow-studio .ss-tool-palette{
+          --ss-tp-panel:#29313a;
+          --ss-tp-panel-2:#202832;
+          --ss-tp-panel-3:#313b46;
+          --ss-tp-line:#4b5968;
+          --ss-tp-line-soft:#3b4651;
+          --ss-tp-text:#edf3fa;
+          --ss-tp-muted:#aab8c6;
+          --ss-tp-blue:#5faeff;
+          --ss-tp-blue-soft:#355d84
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-group{
+          display:flex;
+          flex:0 0 auto;
+          gap:5px;
+          align-items:center
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-group+.ss-palette-group{
+          border-left:1px solid var(--ss-tp-line-soft);
+          padding-left:7px
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-tool{
+          flex:0 0 40px;
+          width:40px;
+          min-width:40px;
+          min-height:44px;
+          height:44px;
+          display:grid;
+          place-items:center;
+          gap:3px;
+          padding:3px;
+          border:1px solid transparent;
+          border-radius:7px;
+          background:transparent;
+          color:#cbd7e2;
+          box-shadow:none;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease,transform 120ms ease
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-tool:hover:not(:disabled){
+          transform:translateY(-1px);
+          border-color:#52677a;
+          background:#344250;
+          color:#fff
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-tool.active{
+          border-color:#75baff;
+          background:var(--ss-tp-blue-soft);
+          color:#fff;
+          box-shadow:inset 0 0 0 1px #6ba9df
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-tool i{
+          font-size:15px
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-tool .ss-round-brush-icon{
+          display:inline-block;
+          width:14px;
+          height:14px;
+          flex:none;
+          border-radius:50%;
+          background:currentColor;
+          box-shadow:0 0 0 1px rgba(255,255,255,.16)
+        }
         .shadow-studio .ss-tool-palette .ss-palette-tool span{display:none}
-        .shadow-studio .ss-tool-palette .ss-palette-tool:disabled{cursor:not-allowed;opacity:.58;filter:grayscale(.65)}
-        .shadow-studio .ss-tool-palette .ss-palette-tool:focus-visible{outline:2px solid #8bc4ff;outline-offset:-2px}
-        .shadow-studio .ss-tool-palette .ss-palette-group:last-child{opacity:.8}
-        .shadow-studio .ss-tool-page-launch{position:sticky;bottom:0;z-index:2;display:grid;place-items:center;flex:0 0 42px;min-height:38px;width:100%;margin-top:8px;border:1px solid #647b94;border-radius:6px;background:#354759;color:#f3f7ff;font:inherit;font-size:17px;cursor:pointer}
-        .shadow-studio .ss-tool-page-launch:focus-visible{outline:2px solid #8bc4ff;outline-offset:-2px}
+        .shadow-studio .ss-tool-palette .ss-palette-tool:disabled{
+          cursor:not-allowed;
+          opacity:.45;
+          filter:grayscale(.65)
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-tool:focus-visible{
+          outline:2px solid var(--ss-tp-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-tool-palette .ss-palette-group:last-child{opacity:.9}
+        .shadow-studio .ss-tool-page-launch{
+          position:sticky;
+          bottom:0;
+          z-index:2;
+          display:grid;
+          place-items:center;
+          flex:0 0 42px;
+          min-height:38px;
+          width:100%;
+          margin-top:8px;
+          border:1px solid #5c7185;
+          border-radius:7px;
+          background:#303d49;
+          color:#d8e7f5;
+          font:inherit;
+          font-size:15px;
+          cursor:pointer;
+          box-shadow:inset 0 0 0 1px #ffffff05;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .shadow-studio .ss-tool-page-launch:hover{
+          border-color:#83b4df;
+          background:#3c5267;
+          color:#fff
+        }
+        .shadow-studio .ss-tool-page-launch:focus-visible{
+          outline:2px solid var(--ss-tp-blue);
+          outline-offset:2px
+        }
         @media(min-width:1101px) and (min-height:651px){
           .shadow-studio:has(.ss-layout) .ss-left-workspace>.ss-tool-palette{padding:9px 4px 60px}
-          .shadow-studio:has(.ss-layout) .ss-tool-palette .ss-palette-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;justify-items:center;padding:0 0 9px}
-          .shadow-studio:has(.ss-layout) .ss-tool-palette .ss-palette-tool{width:32px;min-width:0;height:37px;min-height:37px;margin:0;padding:4px 2px}
+          .shadow-studio:has(.ss-layout) .ss-tool-palette .ss-palette-group{
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:5px;
+            justify-items:center;
+            padding:0 0 10px
+          }
+          .shadow-studio:has(.ss-layout) .ss-tool-palette .ss-palette-tool{
+            width:32px;
+            min-width:0;
+            height:37px;
+            min-height:37px;
+            margin:0;
+            padding:4px 2px
+          }
         }
         @media(max-width:1100px), (max-height:650px){
-          .shadow-studio .ss-tool-page-launch{position:sticky;right:0;bottom:auto;width:44px;min-width:44px;min-height:44px;margin:0 0 0 5px}
+          .shadow-studio .ss-tool-page-launch{
+            position:sticky;
+            right:0;
+            bottom:auto;
+            width:44px;
+            min-width:44px;
+            min-height:44px;
+            margin:0 0 0 5px
+          }
         }
-        .ss-tool-page{position:fixed;inset:0;z-index:12000;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;background:#202936;color:#edf4ff;font:inherit}
+        .ss-tool-page{
+          --ss-tool-page-bg:#20262d;
+          --ss-tool-page-panel:#29313a;
+          --ss-tool-page-panel-2:#313b46;
+          --ss-tool-page-line:#4b5968;
+          --ss-tool-page-line-soft:#3b4651;
+          --ss-tool-page-text:#edf3fa;
+          --ss-tool-page-muted:#aab8c6;
+          --ss-tool-page-blue:#5faeff;
+          position:fixed;
+          inset:0;
+          z-index:12000;
+          display:flex;
+          flex-direction:column;
+          box-sizing:border-box;
+          overflow:hidden;
+          background:var(--ss-tool-page-bg);
+          color:var(--ss-tool-page-text);
+          font:10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
         .ss-tool-page *{box-sizing:border-box}
-        .ss-tool-page-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px max(16px,env(safe-area-inset-right));border-bottom:1px solid #52657b;background:#283748}
-        .ss-tool-page-header h2{margin:0;font-size:19px}
-        .ss-tool-page-header button,.ss-tool-page-actions button,.ss-tool-page-order button{min-height:36px;border:1px solid #617e9c;border-radius:6px;padding:5px 12px;background:#354e67;color:#f2f7ff;font:inherit;cursor:pointer}
-        .ss-tool-page button:disabled{opacity:.45;cursor:not-allowed}
-        .ss-tool-page-body{flex:1;min-height:0;overflow-y:auto;padding:18px max(16px,calc((100vw - 960px)/2));overscroll-behavior:contain}
-        .ss-tool-page-body>p{margin:0 0 16px;color:#c1d1e1;font-size:13px}
-        .ss-tool-page section{margin:0 0 22px;padding:13px;border:1px solid #4b5e73;border-radius:9px;background:#29394b}
-        .ss-tool-page section h3{margin:0 0 12px;font-size:14px}
-        .ss-tool-page-order{display:flex;flex-direction:column;gap:6px}
-        .ss-tool-page-order-row{display:flex;align-items:center;gap:8px;min-height:42px;padding:5px 7px;border:1px solid #4a647e;border-radius:6px;background:#30465c}
-        .ss-tool-page-order-row>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
-        .ss-tool-page-order-row>button{min-width:36px;padding:4px 8px}
-        .ss-tool-page-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:7px}
-        .ss-tool-page-grid label{display:flex;align-items:center;gap:9px;min-height:43px;padding:7px;border:1px solid #506781;border-radius:6px;background:#34485e;font-size:12px;cursor:pointer}
-        .ss-tool-page-grid label[data-unavailable=true]{opacity:.6;cursor:not-allowed}
-        .ss-tool-page-grid label input{accent-color:#7ab8ff}
-        .ss-tool-page-grid label span{flex:1}
-        .ss-tool-page-grid label small{font-size:10px;color:#b9c8d9}
-        .ss-tool-page-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;padding:12px max(16px,env(safe-area-inset-right));border-top:1px solid #52657b;background:#283748}
-        .ss-tool-page-actions .ss-tool-page-save{border-color:#9ac8fa;background:#3479bb}
-        .ss-tool-page-error{margin:0 auto 0 0;color:#ffccce;font-size:12px}
-        @media(max-width:600px){.ss-tool-page-header h2{font-size:16px}.ss-tool-page-body{padding:12px}.ss-tool-page-actions{justify-content:space-between}.ss-tool-page-grid{grid-template-columns:minmax(0,1fr)}}
+        .ss-tool-page-header{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          min-height:58px;
+          padding:8px max(12px,env(safe-area-inset-right));
+          border-bottom:1px solid var(--ss-tool-page-line);
+          background:linear-gradient(180deg,#35414d,#29323c)
+        }
+        .ss-tool-page-header h2{
+          margin:0;
+          color:#f2f7fc;
+          font-size:14px;
+          font-weight:800
+        }
+        .ss-tool-page-header button,
+        .ss-tool-page-actions button,
+        .ss-tool-page-order button{
+          min-height:32px;
+          border:1px solid var(--ss-tool-page-line);
+          border-radius:6px;
+          padding:4px 10px;
+          background:var(--ss-tool-page-panel-2);
+          color:#edf3fa;
+          font:700 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease
+        }
+        .ss-tool-page-header button:hover:not(:disabled),
+        .ss-tool-page-actions button:hover:not(:disabled),
+        .ss-tool-page-order button:hover:not(:disabled){
+          border-color:#7891a9;
+          background:#455667
+        }
+        .ss-tool-page button:focus-visible{
+          outline:2px solid var(--ss-tool-page-blue);
+          outline-offset:2px
+        }
+        .ss-tool-page button:disabled{
+          opacity:.4;
+          cursor:not-allowed
+        }
+        .ss-tool-page-body{
+          flex:1;
+          min-height:0;
+          overflow-y:auto;
+          padding:14px max(14px,calc((100vw - 960px)/2));
+          overscroll-behavior:contain;
+          scrollbar-width:thin
+        }
+        .ss-tool-page-body>p{
+          margin:0 0 14px;
+          color:#aebdca;
+          font-size:10px;
+          line-height:1.5
+        }
+        .ss-tool-page section{
+          margin:0 0 14px;
+          padding:11px;
+          border:1px solid var(--ss-tool-page-line-soft);
+          border-radius:8px;
+          background:var(--ss-tool-page-panel);
+          box-shadow:inset 0 0 0 1px #ffffff05
+        }
+        .ss-tool-page section h3{
+          margin:0 0 10px;
+          padding-bottom:7px;
+          border-bottom:1px solid var(--ss-tool-page-line-soft);
+          color:#dce8f3;
+          font-size:10px;
+          font-weight:800;
+          text-transform:uppercase;
+          letter-spacing:.04em
+        }
+        .ss-tool-page-order{
+          display:flex;
+          flex-direction:column;
+          gap:5px
+        }
+        .ss-tool-page-order-row{
+          display:flex;
+          align-items:center;
+          gap:7px;
+          min-height:39px;
+          padding:5px 6px;
+          border:1px solid #3f4d5a;
+          border-radius:6px;
+          background:#202832
+        }
+        .ss-tool-page-order-row>i{
+          width:23px;
+          height:23px;
+          display:grid;
+          place-items:center;
+          flex:none;
+          border-radius:5px;
+          background:#303b46;
+          color:#9fc9ed
+        }
+        .ss-tool-page-order-row>span{
+          flex:1;
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+          font-size:10px;
+          font-weight:650
+        }
+        .ss-tool-page-order-row>button{
+          min-width:31px;
+          min-height:29px;
+          padding:3px 7px
+        }
+        .ss-tool-page-grid{
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(185px,1fr));
+          gap:6px
+        }
+        .ss-tool-page-grid label{
+          display:grid;
+          grid-template-columns:16px 24px minmax(0,1fr) auto;
+          align-items:center;
+          gap:7px;
+          min-height:40px;
+          padding:6px 7px;
+          border:1px solid #3f4d5a;
+          border-radius:6px;
+          background:#202832;
+          color:#edf3fa;
+          font-size:10px;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease
+        }
+        .ss-tool-page-grid label:hover{
+          border-color:#61788d;
+          background:#2b3641
+        }
+        .ss-tool-page-grid label[data-unavailable=true]{
+          opacity:.5;
+          cursor:not-allowed
+        }
+        .ss-tool-page-grid label input{
+          width:15px;
+          height:15px;
+          accent-color:var(--ss-tool-page-blue)
+        }
+        .ss-tool-page-grid label i{
+          width:23px;
+          height:23px;
+          display:grid;
+          place-items:center;
+          border-radius:5px;
+          background:#303b46;
+          color:#a7c7e4
+        }
+        .ss-tool-page-grid label span{
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap
+        }
+        .ss-tool-page-grid label small{
+          color:#95a5b5;
+          font-size:8px
+        }
+        .ss-tool-page-actions{
+          display:flex;
+          flex-wrap:wrap;
+          align-items:center;
+          justify-content:flex-end;
+          gap:7px;
+          min-height:54px;
+          padding:8px max(12px,env(safe-area-inset-right));
+          border-top:1px solid var(--ss-tool-page-line);
+          background:#252d35
+        }
+        .ss-tool-page-actions .ss-tool-page-save{
+          border-color:#6d9bc4;
+          background:#356b9d;
+          color:#fff
+        }
+        .ss-tool-page-actions .ss-tool-page-save:hover:not(:disabled){
+          border-color:#91c7f6;
+          background:#3e82bd
+        }
+        .ss-tool-page-error{
+          margin:0 auto 0 0;
+          padding:7px 8px;
+          border:1px solid #8e4750;
+          border-radius:5px;
+          background:#4b2b31;
+          color:#ffd5d8;
+          font-size:9px
+        }
+        @media(max-width:600px){
+          .ss-tool-page-header h2{font-size:12px}
+          .ss-tool-page-body{padding:10px}
+          .ss-tool-page-actions{justify-content:space-between}
+          .ss-tool-page-grid{grid-template-columns:minmax(0,1fr)}
+          .ss-tool-page-header button,.ss-tool-page-actions button,.ss-tool-page-order button{min-height:36px}
+        }
       `}</style>
       <div className="ss-palette-group" role="group" aria-label={tx('studioTools.drawingTools')}>
         {pinned.map((id) => {
