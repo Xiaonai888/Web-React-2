@@ -311,49 +311,79 @@ export default function StudioBrushSettings({ size, onSizeChange, style = 'round
     <>
       <section className="ss-section ss-brush-settings" aria-label={tr('Brush settings')}>
         <style>{`
-          .ss-brush-settings{min-width:0}
-          .ss-brush-current-preview{display:flex;align-items:center;justify-content:center;min-height:76px;margin:0 0 13px;border:1px solid #4c5c6c;border-radius:6px;background:#1c2530}
-          .ss-brush-current-preview svg{display:block;width:100%;max-width:166px;height:55px;color:#f4f7fc}
+          .ss-brush-settings{
+            --ss-brush-bg:#20262d;
+            --ss-brush-panel:#29313a;
+            --ss-brush-panel-2:#313b46;
+            --ss-brush-line:#4b5968;
+            --ss-brush-line-soft:#3b4651;
+            --ss-brush-text:#edf3fa;
+            --ss-brush-muted:#aab8c6;
+            --ss-brush-blue:#5faeff;
+            --ss-brush-blue-soft:#355d84;
+            min-width:0;
+            color:var(--ss-brush-text);
+            font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+          }
+          .ss-brush-settings .ss-label,.ss-brush-opacity .ss-label{color:#dce7f2;font-size:10px;font-weight:800;letter-spacing:.01em}
+          .ss-brush-current-preview{display:flex;align-items:center;justify-content:center;min-height:82px;margin:0 0 13px;border:1px solid var(--ss-brush-line);border-radius:8px;background:linear-gradient(180deg,#242d36,#1b2229);box-shadow:inset 0 0 0 1px #ffffff08}
+          .ss-brush-current-preview svg{display:block;width:100%;max-width:166px;height:55px;color:#f4f7fc;filter:drop-shadow(0 1px 2px #0008)}
+          .ss-brush-settings .ss-range,.ss-brush-opacity .ss-range{display:flex;align-items:center;gap:8px}
+          .ss-brush-settings .ss-range input[type="range"],.ss-brush-opacity .ss-range input[type="range"]{flex:1;min-width:52px;height:20px;margin:0;appearance:none;background:transparent;cursor:pointer}
+          .ss-brush-settings .ss-range input[type="range"]::-webkit-slider-runnable-track,.ss-brush-opacity .ss-range input[type="range"]::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:#171d23;box-shadow:inset 0 0 0 1px #4b5968}
+          .ss-brush-settings .ss-range input[type="range"]::-webkit-slider-thumb,.ss-brush-opacity .ss-range input[type="range"]::-webkit-slider-thumb{width:15px;height:15px;margin-top:-5.5px;appearance:none;border:2px solid #e5f2ff;border-radius:50%;background:var(--ss-brush-blue);box-shadow:0 1px 5px #0008}
+          .ss-brush-settings .ss-range input[type="range"]::-moz-range-track,.ss-brush-opacity .ss-range input[type="range"]::-moz-range-track{height:4px;border:1px solid #4b5968;border-radius:99px;background:#171d23}
+          .ss-brush-settings .ss-range input[type="range"]::-moz-range-thumb,.ss-brush-opacity .ss-range input[type="range"]::-moz-range-thumb{width:13px;height:13px;border:2px solid #e5f2ff;border-radius:50%;background:var(--ss-brush-blue);box-shadow:0 1px 5px #0008}
+          .ss-brush-settings .ss-range input[type="range"]:focus-visible,.ss-brush-opacity .ss-range input[type="range"]:focus-visible{outline:2px solid var(--ss-brush-blue);outline-offset:3px}
+          .ss-brush-settings .ss-value,.ss-brush-opacity .ss-value{min-width:28px;color:var(--ss-brush-muted);font-size:9px;font-weight:700;text-align:right}
           .ss-brush-styles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:8px 0 12px}
-          .ss-brush-style{display:flex;min-width:0;align-items:center;gap:7px;min-height:36px;border:1px solid #58636e;border-radius:6px;background:#30353b;color:#eaf0f6;padding:5px 7px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
-          .ss-brush-style.active,.ss-brush-style:focus-visible{outline:none;border-color:#78baff;background:#355371}
-          .ss-brush-style-icon{display:inline-block;flex:none;width:14px;height:14px;border-radius:50%;background:#eaf0f6}
+          .ss-brush-style{display:flex;min-width:0;align-items:center;gap:7px;min-height:38px;border:1px solid var(--ss-brush-line);border-radius:7px;background:var(--ss-brush-panel-2);color:#eaf0f6;padding:5px 7px;font:inherit;font-size:10px;font-weight:800;cursor:pointer;transition:120ms ease}
+          .ss-brush-style:hover:not(:disabled){border-color:#74879a;background:#3b4855}
+          .ss-brush-style.active,.ss-brush-style:focus-visible{outline:none;border-color:#79bcff;background:var(--ss-brush-blue-soft);box-shadow:inset 0 0 0 1px #6ba9df}
+          .ss-brush-style-icon{display:inline-block;flex:none;width:14px;height:14px;border-radius:50%;background:#eaf0f6;box-shadow:0 1px 3px #0006}
           .ss-brush-style-pencil{width:3px;height:14px;border-radius:2px;transform:rotate(35deg)}
           .ss-brush-style-marker{width:16px;height:7px;border-radius:2px;transform:rotate(-35deg)}
           .ss-brush-style-airbrush{width:18px;height:18px;background:radial-gradient(circle,#eaf0f6 0%,rgba(234,240,246,.6) 28%,transparent 72%)}
-          .ss-brush-presets{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;margin:8px 0 10px}
-          .ss-brush-heading{margin-top:14px;font-size:10px;font-weight:800;color:#cbd3dc}
+          .ss-brush-presets{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;margin:8px 0 10px}
+          .ss-brush-heading{margin-top:14px;padding-bottom:4px;border-bottom:1px solid var(--ss-brush-line-soft);color:#cbd8e5;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
           .ss-brush-saved-heading{margin-top:15px}
-          .ss-brush-preset{display:grid;grid-template-columns:46px minmax(0,1fr) auto;align-items:center;min-width:0;min-height:35px;gap:5px;border:1px solid transparent;border-radius:5px;background:#303945;color:#e3e8ee;padding:4px 6px;text-align:left;font:inherit;cursor:pointer}
-          .ss-brush-preset:hover:not(:disabled){background:#3a4b60}
-          .ss-brush-preset.active,.ss-brush-preset:focus-visible{border-color:#6bb9ff;background:#355978;outline:none}
+          .ss-brush-preset{display:grid;grid-template-columns:46px minmax(0,1fr) auto;align-items:center;min-width:0;min-height:38px;gap:6px;border:1px solid transparent;border-radius:6px;background:#26313b;color:#e3e8ee;padding:5px 7px;text-align:left;font:inherit;cursor:pointer;transition:120ms ease}
+          .ss-brush-preset:hover:not(:disabled){border-color:#536a7f;background:#344453}
+          .ss-brush-preset.active,.ss-brush-preset:focus-visible{border-color:#6bb9ff;background:var(--ss-brush-blue-soft);outline:none;box-shadow:inset 0 0 0 1px #5f9fd5}
           .ss-brush-preset-preview{display:block;width:46px;height:22px;flex:none;color:#f4f7fc;overflow:visible}
           .ss-brush-preset-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700}
           .ss-brush-preset small{font-size:9px;color:#b8c6d4;white-space:nowrap;text-align:right}
           .ss-brush-saved-use small{font-size:9px;color:#b8c6d4}
           .ss-brush-save-row{display:flex;gap:5px;margin:8px 0}
-          .ss-brush-save-row input{min-width:0;flex:1;height:32px;border:1px solid #5b6672;border-radius:5px;background:#272d33;color:#f5f7fa;padding:0 7px;font:inherit;font-size:11px}
-          .ss-brush-save-row button{min-height:32px;border:1px solid #6782a0;border-radius:5px;background:#375674;color:#f5f7fa;padding:0 9px;font:inherit;font-size:11px;cursor:pointer}
+          .ss-brush-save-row input{min-width:0;flex:1;height:33px;border:1px solid var(--ss-brush-line);border-radius:6px;background:#202832;color:#f5f7fa;padding:0 8px;font:inherit;font-size:11px;outline:none}
+          .ss-brush-save-row input:focus{border-color:var(--ss-brush-blue);box-shadow:0 0 0 2px #5faeff26}
+          .ss-brush-save-row button{min-height:33px;border:1px solid #6694bd;border-radius:6px;background:#356b9d;color:#f5f7fa;padding:0 10px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+          .ss-brush-save-row button:hover:not(:disabled){background:#3e82bd}
           .ss-brush-save-row button:disabled{opacity:.4;cursor:default}
           .ss-brush-saved{display:grid;gap:5px}
-          .ss-brush-saved-item{display:flex;min-width:0;align-items:stretch;border:1px solid #4a545d;border-radius:5px;background:#30353b}
-          .ss-brush-saved-use{display:flex;min-width:0;flex:1;align-items:flex-start;flex-direction:column;gap:2px;border:0;background:none;color:#eaf0f6;padding:7px;font:inherit;font-size:11px;cursor:pointer;text-align:left}
+          .ss-brush-saved-item{display:flex;min-width:0;align-items:stretch;border:1px solid var(--ss-brush-line-soft);border-radius:6px;background:#26313b;overflow:hidden}
+          .ss-brush-saved-item:hover{border-color:#596d80}
+          .ss-brush-saved-use{display:flex;min-width:0;flex:1;align-items:flex-start;flex-direction:column;gap:2px;border:0;background:none;color:#eaf0f6;padding:7px 8px;font:inherit;font-size:11px;cursor:pointer;text-align:left}
           .ss-brush-saved-use span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-          .ss-brush-saved-remove{flex:none;width:31px;border:0;border-left:1px solid #4a545d;background:none;color:#e7c5c5;font:inherit;font-size:18px;cursor:pointer}
-          .ss-brush-notice{margin:8px 0 0;color:#c5d4e3;font-size:10px;line-height:1.5}
+          .ss-brush-saved-remove{flex:none;width:33px;border:0;border-left:1px solid var(--ss-brush-line-soft);background:#2c3540;color:#efb9bd;font:inherit;font-size:18px;cursor:pointer}
+          .ss-brush-saved-remove:hover{background:#5d3238;color:#fff}
+          .ss-brush-notice{margin:8px 0 0;padding:7px 8px;border:1px solid #4d6275;border-radius:6px;background:#263747;color:#d4e6f7;font-size:9px;line-height:1.5}
           .ss-brush-mobile{display:none}
+          .ss-brush-opacity{border-color:#3b4651!important;background:#29313a!important}
           @media(max-width:900px),(max-width:1100px) and (max-height:650px) and (orientation:landscape){
-            .shadow-studio .ss-brush-mobile{display:block;flex:1 1 100%;min-width:0;border:1px solid #535c65;border-radius:6px;background:#30353b;padding:0 8px}
-            .shadow-studio .ss-brush-mobile summary{min-height:38px;display:flex;align-items:center;justify-content:space-between;color:#eff3f8;font-size:11px;font-weight:800;cursor:pointer;list-style:none;touch-action:manipulation}
+            .shadow-studio .ss-brush-mobile{display:block;flex:1 1 100%;min-width:0;border:1px solid #4b5968;border-radius:8px;background:#29313a;padding:0 8px}
+            .shadow-studio .ss-brush-mobile summary{min-height:40px;display:flex;align-items:center;justify-content:space-between;color:#eff3f8;font-size:10px;font-weight:800;cursor:pointer;list-style:none;touch-action:manipulation}
             .shadow-studio .ss-brush-mobile summary::-webkit-details-marker{display:none}
             .shadow-studio .ss-brush-mobile summary::after{content:'▾';margin-left:auto;color:#b8c6d4}
             .shadow-studio .ss-brush-mobile[open] summary::after{content:'▴'}
             .shadow-studio .ss-brush-styles{grid-template-columns:repeat(4,minmax(0,1fr))}
-            .shadow-studio .ss-brush-style{min-height:42px;flex-direction:column;gap:3px;font-size:9px}
+            .shadow-studio .ss-brush-style{min-height:44px;flex-direction:column;gap:3px;font-size:9px}
             .shadow-studio .ss-brush-presets{grid-template-columns:minmax(0,1fr)}
-            .shadow-studio .ss-brush-preset{min-height:38px}
+            .shadow-studio .ss-brush-preset{min-height:40px}
             .shadow-studio .ss-brush-mobile .ss-brush-save-row input{font-size:16px}
             .shadow-studio .ss-brush-mobile .ss-brush-notice{padding-bottom:8px}
+            .shadow-studio .ss-brush-settings .ss-range input[type="range"],.shadow-studio .ss-brush-opacity .ss-range input[type="range"]{height:26px}
+            .shadow-studio .ss-brush-settings .ss-range input[type="range"]::-webkit-slider-thumb,.shadow-studio .ss-brush-opacity .ss-range input[type="range"]::-webkit-slider-thumb{width:19px;height:19px;margin-top:-7.5px}
           }
           @media(max-width:360px){.shadow-studio .ss-brush-presets{grid-template-columns:minmax(0,1fr)}.shadow-studio .ss-brush-styles{grid-template-columns:repeat(2,minmax(0,1fr))}}
         `}</style>
