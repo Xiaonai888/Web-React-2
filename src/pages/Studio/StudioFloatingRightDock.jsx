@@ -117,8 +117,8 @@ export default function StudioFloatingRightDock({ children }) {
       title={floating ? 'Drag panels or double-click to dock on the right' : 'Drag panels to detach'}
       aria-label={floating ? 'Drag panels or double-click to dock on the right' : 'Drag panels to detach'}
     >
-      <span aria-hidden="true">⠿</span>
-      <span aria-hidden="true">{floating ? 'Panels · Drag to right edge to dock' : 'Panels · Drag to detach'}</span>
+      <span className="ss-right-drag-icon" aria-hidden="true">⠿</span>
+      <span className="ss-right-drag-text" aria-hidden="true">{floating ? 'Panels · Drag to right edge to dock' : 'Panels · Drag to detach'}</span>
     </button>
   ) : null
 
@@ -135,18 +135,137 @@ export default function StudioFloatingRightDock({ children }) {
   return (
     <>
       <style>{`
-        .shadow-studio .ss-side:has(>.ss-right-drag-handle){position:relative;padding-top:25px!important;box-sizing:border-box}
-        .shadow-studio .ss-right-drag-handle{position:absolute;top:0;left:0;right:0;z-index:30;display:flex;justify-content:center;align-items:center;gap:8px;height:24px;width:100%;border:0;border-bottom:1px solid #4f6072;border-radius:0;background:#303c49;color:#bcd0e2;font:inherit;font-size:10px;cursor:grab;touch-action:none;user-select:none}
-        .shadow-studio .ss-right-drag-handle:active{cursor:grabbing}
-        .shadow-studio .ss-right-drag-handle:focus-visible{outline:2px solid #8bc4ff;outline-offset:-2px}
-        .shadow-studio .ss-side.ss-right-floating{position:fixed!important;z-index:9050!important;display:grid!important;width:min(490px,calc(100vw - 12px))!important;height:min(760px,calc(100dvh - 66px))!important;min-height:180px!important;max-height:calc(100dvh - 66px)!important;margin:0!important;padding:25px 0 0!important;overflow-x:hidden!important;overflow-y:auto!important;grid-column:auto!important;grid-row:auto!important;align-self:auto!important;border:1px solid #71869c!important;border-radius:7px!important;background:#29333d!important;box-shadow:0 14px 36px #0009!important}
-        .shadow-studio .ss-side.ss-right-floating .ss-right-drag-handle{border-radius:6px 6px 0 0}
-        .shadow-studio .ss-side.ss-right-near-dock{border-color:#98c9ff!important;box-shadow:0 0 0 2px #98c9ff77,0 14px 36px #0009!important}
-        .shadow-studio .ss-side.ss-right-floating .ss-right-switcher{min-height:0}
-        .shadow-studio .ss-right-floating-placeholder{display:block;min-width:0;min-height:0}
+        .shadow-studio .ss-side:has(>.ss-right-drag-handle){
+          position:relative;
+          padding-top:30px!important;
+          box-sizing:border-box
+        }
+        .shadow-studio .ss-right-drag-handle{
+          --ss-rdock-bg:#29313a;
+          --ss-rdock-bg-2:#202832;
+          --ss-rdock-line:#4b5968;
+          --ss-rdock-line-soft:#3b4651;
+          --ss-rdock-text:#edf3fa;
+          --ss-rdock-muted:#aab8c6;
+          --ss-rdock-blue:#5faeff;
+          position:absolute;
+          top:0;
+          left:0;
+          right:0;
+          z-index:30;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          gap:8px;
+          width:100%;
+          height:30px;
+          padding:0 8px;
+          border:0;
+          border-bottom:1px solid var(--ss-rdock-line-soft);
+          border-radius:0;
+          background:linear-gradient(180deg,#34414d,#2b3540);
+          color:#c5d7e7;
+          font:750 9px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          cursor:grab;
+          touch-action:none;
+          user-select:none;
+          box-sizing:border-box;
+          transition:background 120ms ease,color 120ms ease
+        }
+        .shadow-studio .ss-right-drag-handle:hover{
+          background:#3b4a58;
+          color:#fff
+        }
+        .shadow-studio .ss-right-drag-handle:active{
+          cursor:grabbing;
+          background:#223448
+        }
+        .shadow-studio .ss-right-drag-handle:focus-visible{
+          outline:2px solid var(--ss-rdock-blue);
+          outline-offset:-2px
+        }
+        .shadow-studio .ss-right-drag-icon{
+          width:23px;
+          height:20px;
+          display:grid;
+          place-items:center;
+          flex:none;
+          border:1px solid #556779;
+          border-radius:5px;
+          background:#26313b;
+          color:#a9c8e1;
+          font-size:13px;
+          line-height:1
+        }
+        .shadow-studio .ss-right-drag-text{
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+          color:#b8c8d7
+        }
+        .shadow-studio .ss-side.ss-right-floating{
+          position:fixed!important;
+          z-index:9050!important;
+          display:grid!important;
+          width:min(490px,calc(100vw - 12px))!important;
+          height:min(760px,calc(100dvh - 66px))!important;
+          min-height:180px!important;
+          max-height:calc(100dvh - 66px)!important;
+          margin:0!important;
+          padding:30px 0 0!important;
+          overflow-x:hidden!important;
+          overflow-y:auto!important;
+          grid-column:auto!important;
+          grid-row:auto!important;
+          align-self:auto!important;
+          border:1px solid #6f8295!important;
+          border-radius:9px!important;
+          background:#29313a!important;
+          box-shadow:0 18px 42px #000b,0 0 0 1px #ffffff08!important;
+          scrollbar-width:thin;
+          scrollbar-color:#596c7f #252d35
+        }
+        .shadow-studio .ss-side.ss-right-floating .ss-right-drag-handle{
+          border-radius:8px 8px 0 0;
+          background:linear-gradient(180deg,#3a4a59,#2e3b47)
+        }
+        .shadow-studio .ss-side.ss-right-near-dock{
+          border-color:#8fc4ff!important;
+          box-shadow:0 0 0 2px #5faeff99,0 18px 42px #000b!important
+        }
+        .shadow-studio .ss-side.ss-right-floating .ss-right-switcher{
+          min-height:0
+        }
+        .shadow-studio .ss-right-floating-placeholder{
+          display:block;
+          min-width:0;
+          min-height:0
+        }
         @media(min-width:1101px) and (min-height:651px){
-          .shadow-studio:has(.ss-right-floating-placeholder) .ss-layout{grid-template-columns:284px minmax(0,1fr) 0px!important}
-          .shadow-studio:has(.ss-right-floating-placeholder) .ss-bottom{right:0!important}
+          .shadow-studio:has(.ss-right-floating-placeholder) .ss-layout{
+            grid-template-columns:284px minmax(0,1fr) 0px!important
+          }
+          .shadow-studio:has(.ss-right-floating-placeholder) .ss-bottom{
+            right:0!important
+          }
+        }
+        @media(pointer:coarse) and (min-width:1101px) and (min-height:651px){
+          .shadow-studio .ss-side:has(>.ss-right-drag-handle){
+            padding-top:36px!important
+          }
+          .shadow-studio .ss-right-drag-handle{
+            height:36px;
+            font-size:10px
+          }
+          .shadow-studio .ss-right-drag-icon{
+            width:27px;
+            height:24px;
+            font-size:15px
+          }
+          .shadow-studio .ss-side.ss-right-floating{
+            padding-top:36px!important
+          }
         }
       `}</style>
       {floating ? <span className="ss-right-floating-placeholder" aria-hidden="true" /> : panel}
