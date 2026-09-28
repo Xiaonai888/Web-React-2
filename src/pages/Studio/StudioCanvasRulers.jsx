@@ -72,14 +72,73 @@ export default function StudioCanvasRulers({ workRef, canvasRef, paperId, zoom, 
   return (
     <div className="ss-canvas-rulers" aria-hidden="true" style={{ width: measure.width, height: 0 }}>
       <style>{`
-        .shadow-studio .ss-canvas-rulers{position:sticky;top:0;left:0;z-index:12;pointer-events:none;overflow:visible;display:block;flex:none}
-        .shadow-studio .ss-canvas-rulers svg{display:block;position:absolute;overflow:hidden;background:#242b33;color:#b7c7d8}
-        .shadow-studio .ss-canvas-ruler-x{top:0;left:24px;border-bottom:1px solid #526171}
-        .shadow-studio .ss-canvas-ruler-y{top:24px;left:0;border-right:1px solid #526171}
-        .shadow-studio .ss-canvas-ruler-corner{position:absolute;top:0;left:0;width:24px;height:24px;display:grid;place-items:center;border-right:1px solid #526171;border-bottom:1px solid #526171;background:#303b46;color:#c4d2df;font-size:9px;font-weight:700}
-        .shadow-studio .ss-canvas-rulers line{stroke:#8595a5;stroke-width:1;shape-rendering:crispEdges}
-        .shadow-studio .ss-canvas-rulers text{fill:#c3d0dd;font-size:9px;font-family:Arial,sans-serif}
-        @media(max-width:640px){.shadow-studio .ss-canvas-rulers{display:none}}
+        .shadow-studio .ss-canvas-rulers{
+          --ss-ruler-bg:#202832;
+          --ss-ruler-bg-2:#29313a;
+          --ss-ruler-line:#4b5968;
+          --ss-ruler-line-soft:#3b4651;
+          --ss-ruler-tick:#8da0b2;
+          --ss-ruler-text:#cbd8e4;
+          position:sticky;
+          top:0;
+          left:0;
+          z-index:12;
+          display:block;
+          flex:none;
+          overflow:visible;
+          pointer-events:none;
+          color:var(--ss-ruler-text)
+        }
+        .shadow-studio .ss-canvas-rulers svg{
+          position:absolute;
+          display:block;
+          overflow:hidden;
+          background:linear-gradient(180deg,#27313b,#202832);
+          color:var(--ss-ruler-text);
+          box-shadow:inset 0 -1px 0 #0003
+        }
+        .shadow-studio .ss-canvas-ruler-x{
+          top:0;
+          left:24px;
+          border-bottom:1px solid var(--ss-ruler-line)
+        }
+        .shadow-studio .ss-canvas-ruler-y{
+          top:24px;
+          left:0;
+          border-right:1px solid var(--ss-ruler-line)
+        }
+        .shadow-studio .ss-canvas-ruler-corner{
+          position:absolute;
+          top:0;
+          left:0;
+          width:24px;
+          height:24px;
+          display:grid;
+          place-items:center;
+          border-right:1px solid var(--ss-ruler-line);
+          border-bottom:1px solid var(--ss-ruler-line);
+          background:linear-gradient(180deg,#34404b,#2a333d);
+          color:#b9c9d8;
+          font:800 8px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          letter-spacing:.02em;
+          box-shadow:inset 0 0 0 1px #ffffff04
+        }
+        .shadow-studio .ss-canvas-rulers line{
+          stroke:var(--ss-ruler-tick);
+          stroke-width:1;
+          shape-rendering:crispEdges
+        }
+        .shadow-studio .ss-canvas-rulers text{
+          fill:var(--ss-ruler-text);
+          font:700 8px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          paint-order:stroke;
+          stroke:#202832;
+          stroke-width:2px;
+          stroke-linejoin:round
+        }
+        @media(max-width:640px){
+          .shadow-studio .ss-canvas-rulers{display:none}
+        }
       `}</style>
       <svg className="ss-canvas-ruler-x" width={Math.max(0, measure.width - RULER_SIZE)} height={RULER_SIZE} viewBox={`0 0 ${Math.max(1, measure.width - RULER_SIZE)} ${RULER_SIZE}`}>
         {xTicks.map(({ value, at, major }) => <g key={`x-${value}`} transform={`translate(${at - RULER_SIZE} 0)`}><line x1="0" x2="0" y1={major ? 14 : 19} y2="24" />{major && <text x="3" y="11">{value}</text>}</g>)}
