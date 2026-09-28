@@ -1,5 +1,14 @@
 import { useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import {
+  StudioUIButton,
+  StudioUIColor,
+  StudioUIPreview,
+  StudioUISection,
+  StudioUISlider,
+  StudioUITabs,
+} from './StudioUIControls'
+import StudioUIAngleDial from './StudioUIAngleDial'
 
 const LABELS = {
   en: ['Screentone', 'Dots', 'Lines', 'Crosshatch', 'Spacing', 'Ink coverage', 'Angle', 'Opacity', 'Ink color', 'Apply to selected layer', 'Applying…', 'Select a visible, unlocked layer first.', 'Could not apply the screentone.'],
@@ -27,47 +36,82 @@ export default function StudioScreentonePanel({ onApply, disabled = false }) {
   const gradient = type === 'dots'
     ? `radial-gradient(circle, ${color} ${spacing * density / 210}px, transparent ${spacing * density / 210 + 0.5}px)`
     : `repeating-linear-gradient(0deg, transparent 0px, transparent ${spacing / 2 - thickness / 2}px, ${color} ${spacing / 2 - thickness / 2}px, ${color} ${spacing / 2 + thickness / 2}px, transparent ${spacing / 2 + thickness / 2}px, transparent ${spacing}px)`
-  const preview = type === 'crosshatch' ? `${gradient}, repeating-linear-gradient(90deg, transparent 0px, transparent ${spacing / 2 - thickness / 2}px, ${color} ${spacing / 2 - thickness / 2}px, ${color} ${spacing / 2 + thickness / 2}px, transparent ${spacing / 2 + thickness / 2}px, transparent ${spacing}px)` : gradient
+  const preview = type === 'crosshatch'
+    ? `${gradient}, repeating-linear-gradient(90deg, transparent 0px, transparent ${spacing / 2 - thickness / 2}px, ${color} ${spacing / 2 - thickness / 2}px, ${color} ${spacing / 2 + thickness / 2}px, transparent ${spacing / 2 + thickness / 2}px, transparent ${spacing}px)`
+    : gradient
 
   async function apply() {
     if (unavailable) return
     setError('')
     setBusy(true)
-    try { await onApply({ type, spacing, density, angle, opacity, color }) }
-    catch (reason) { setError(reason?.message || labels[12]) }
-    finally { setBusy(false) }
+    try {
+      await onApply({ type, spacing, density, angle, opacity, color })
+    } catch (reason) {
+      setError(reason?.message || labels[12])
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
-    <section className="ss-screentone-panel" aria-label={labels[0]}>
+    <div className="ss-screentone-ui">
       <style>{`
-        .shadow-studio .ss-screentone-panel{display:grid;gap:9px;min-width:0;color:#e5edf6;font-size:11px}
-        .shadow-studio .ss-screentone-panel strong{font-size:12px}
-        .shadow-studio .ss-screentone-preview{height:58px;border:1px solid #71869c;border-radius:5px;background-color:white}
-        .shadow-studio .ss-screentone-types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
-        .shadow-studio .ss-screentone-types button,.shadow-studio .ss-screentone-apply{padding:7px 3px;border:1px solid #61788d;border-radius:4px;background:#33485d;color:#e8f1fb;font:inherit;cursor:pointer}
-        .shadow-studio .ss-screentone-types button[aria-pressed=true]{background:#456c92;border-color:#a1cafa}
-        .shadow-studio .ss-screentone-panel label{display:grid;gap:4px;min-width:0}
-        .shadow-studio .ss-screentone-panel label span{display:flex;justify-content:space-between;gap:5px}
-        .shadow-studio .ss-screentone-panel input[type=range]{width:100%;min-width:0;accent-color:#83baff}
-        .shadow-studio .ss-screentone-panel input[type=color]{width:100%;height:29px;border:1px solid #61788d;border-radius:4px;background:#293645}
-        .shadow-studio .ss-screentone-panel .ss-screentone-apply{background:#426b91;font-weight:700}
-        .shadow-studio .ss-screentone-panel button:disabled{opacity:.48;cursor:not-allowed}
-        .shadow-studio .ss-screentone-panel .ss-screentone-error{color:#ffb9b9;line-height:1.5}
+        .ss-screentone-ui{display:grid;gap:10px;min-width:0}
+        .ss-screentone-ui .ss-ui-preview-stage{min-height:112px;background:#fff}
+        .ss-screentone-ui-preview{width:100%;height:112px;background-color:#fff;transform-origin:center}
+        .ss-screentone-ui-angle{padding:9px;border:1px solid #3b4651;border-radius:8px;background:#242c34}
+        .ss-screentone-ui-actions{display:grid;gap:8px}
+        .ss-screentone-ui-actions>.ss-ui-button{width:100%}
+        .ss-screentone-ui-status{margin:0;padding:7px 9px;border:1px solid #3b4651;border-radius:6px;background:#202832;color:#9fb0c0;font-size:9px;line-height:1.45}
+        .ss-screentone-ui-status.error{border-color:#8e4750;background:#4b2b31;color:#ffd5d8}
       `}</style>
-      <strong>{labels[0]}</strong>
-      <div className="ss-screentone-preview" aria-hidden="true" style={{ backgroundImage: preview, backgroundSize: `${spacing}px ${spacing}px`, opacity: opacity / 100, transform: `rotate(${angle}deg)`, maxWidth: '100%' }} />
-      <div className="ss-screentone-types" role="group" aria-label={labels[0]}>
-        {TYPES.map((option, index) => <button key={option} type="button" aria-pressed={type === option} onClick={() => setType(option)}>{labels[index + 1]}</button>)}
+
+      <StudioUIPreview label={labels[0]}>
+        <div
+          className="ss-screentone-ui-preview"
+          aria-hidden="true"
+          style={{
+            backgroundImage: preview,
+            backgroundSize: `${spacing}px ${spacing}px`,
+            opacity: opacity / 100,
+            transform: `rotate(${angle}deg) scale(1.15)`,
+          }}
+        />
+      </StudioUIPreview>
+
+      <StudioUISection title={labels[0]} subtitle={labels[TYPES.indexOf(type) + 1]}>
+        <StudioUITabs
+          value={type}
+          ariaLabel={labels[0]}
+          items={[
+            { value: 'dots', label: labels[1], icon: 'fa-solid fa-braille' },
+            { value: 'lines', label: labels[2], icon: 'fa-solid fa-grip-lines' },
+            { value: 'crosshatch', label: labels[3], icon: 'fa-solid fa-border-all' },
+          ]}
+          onChange={setType}
+        />
+
+        <StudioUISlider label={labels[4]} value={spacing} min={8} max={96} suffix="px" disabled={busy} onChange={setSpacing} />
+        <StudioUISlider label={labels[5]} value={density} min={5} max={95} suffix="%" disabled={busy} onChange={setDensity} />
+
+        <div className="ss-screentone-ui-angle">
+          <StudioUIAngleDial label={labels[6]} value={angle} min={-180} max={180} disabled={busy} onChange={setAngle} size={78} />
+        </div>
+
+        <StudioUISlider label={labels[7]} value={opacity} min={0} max={100} suffix="%" disabled={busy} onChange={setOpacity} />
+        <StudioUIColor label={labels[8]} value={color} disabled={busy} onChange={(next) => {
+          if (/^#[0-9a-f]{6}$/i.test(next)) setColor(next)
+        }} />
+      </StudioUISection>
+
+      <div className="ss-screentone-ui-actions">
+        <StudioUIButton variant="primary" icon="fa-solid fa-check" disabled={unavailable} onClick={apply}>
+          {busy ? labels[10] : labels[9]}
+        </StudioUIButton>
+        <p className={`ss-screentone-ui-status ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>
+          {error || labels[11]}
+        </p>
       </div>
-      <label><span>{labels[4]} <b>{spacing}px</b></span><input type="range" min="8" max="96" step="1" value={spacing} onChange={(event) => setSpacing(Number(event.target.value))} /></label>
-      <label><span>{labels[5]} <b>{density}%</b></span><input type="range" min="5" max="95" step="1" value={density} onChange={(event) => setDensity(Number(event.target.value))} /></label>
-      <label><span>{labels[6]} <b>{angle}°</b></span><input type="range" min="-180" max="180" step="1" value={angle} onChange={(event) => setAngle(Number(event.target.value))} /></label>
-      <label><span>{labels[7]} <b>{opacity}%</b></span><input type="range" min="0" max="100" step="1" value={opacity} onChange={(event) => setOpacity(Number(event.target.value))} /></label>
-      <label>{labels[8]}<input type="color" value={color} onChange={(event) => setColor(event.target.value)} /></label>
-      <button className="ss-screentone-apply" type="button" onClick={apply} disabled={unavailable}>{busy ? labels[10] : labels[9]}</button>
-      {unavailable && !busy ? <small>{labels[11]}</small> : null}
-      {error ? <p className="ss-screentone-error" role="alert">{error}</p> : null}
-    </section>
+    </div>
   )
 }
