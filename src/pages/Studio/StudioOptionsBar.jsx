@@ -140,22 +140,231 @@ export default function StudioOptionsBar({
   return (
     <div className="ss-options-bar" role="toolbar" aria-label={tx('studioOptions.toolbar')}>
       <style>{`
-        .shadow-studio .ss-options-bar{display:flex;align-items:center;gap:9px;flex:0 0 42px;min-height:42px;width:100%;min-width:0;box-sizing:border-box;padding:4px 12px;border-bottom:1px solid #47515d;background:#303943;color:#d7e2ef;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;white-space:nowrap}
-        .shadow-studio .ss-options-bar .ss-opt-title{display:flex;align-items:center;gap:8px;min-width:115px;max-width:190px;font-size:11px;font-weight:800}
-        .shadow-studio .ss-options-bar .ss-opt-title i{color:#8fc4f7;font-size:14px}
-        .shadow-studio .ss-options-bar .ss-opt-title span{overflow:hidden;text-overflow:ellipsis}
-        .shadow-studio .ss-options-bar .ss-opt-separator{height:23px;width:1px;flex:none;background:#536171}
-        .shadow-studio .ss-options-bar .ss-opt-range{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:#c7d5e4}
-        .shadow-studio .ss-options-bar .ss-opt-range input{width:82px;min-width:82px;height:18px;accent-color:#80baff;cursor:pointer}
-        .shadow-studio .ss-options-bar .ss-opt-range output{width:36px;text-align:right;font-variant-numeric:tabular-nums}
-        .shadow-studio .ss-options-bar button{height:29px;min-width:29px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #526274;border-radius:5px;padding:0 9px;background:#394755;color:#e4edf7;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
-        .shadow-studio .ss-options-bar button:hover:not(:disabled){background:#506783;border-color:#759ac0}
-        .shadow-studio .ss-options-bar button:focus-visible{outline:2px solid #86bfff;outline-offset:2px}
-        .shadow-studio .ss-options-bar button:disabled{opacity:.4;cursor:default}
-        .shadow-studio .ss-options-bar button[aria-pressed=true]{border-color:#89c0ff;background:#3e668d;color:#fff}
+        .shadow-studio .ss-options-bar{
+          --ss-opt-bg:#29313a;
+          --ss-opt-bg-2:#202832;
+          --ss-opt-bg-3:#313b46;
+          --ss-opt-line:#4b5968;
+          --ss-opt-line-soft:#3b4651;
+          --ss-opt-text:#edf3fa;
+          --ss-opt-muted:#aab8c6;
+          --ss-opt-blue:#5faeff;
+          --ss-opt-blue-soft:#355d84;
+          display:flex;
+          align-items:center;
+          gap:9px;
+          flex:0 0 44px;
+          min-height:44px;
+          width:100%;
+          min-width:0;
+          box-sizing:border-box;
+          padding:5px 10px;
+          border-bottom:1px solid var(--ss-opt-line);
+          background:linear-gradient(180deg,#303a45,#29313a);
+          color:var(--ss-opt-text);
+          overflow-x:auto;
+          overflow-y:hidden;
+          scrollbar-width:thin;
+          white-space:nowrap;
+          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          box-shadow:inset 0 -1px 0 #0004
+        }
+        .shadow-studio .ss-options-bar .ss-opt-title{
+          display:flex;
+          align-items:center;
+          gap:8px;
+          min-width:118px;
+          max-width:190px;
+          min-height:32px;
+          padding:0 8px;
+          border:1px solid var(--ss-opt-line-soft);
+          border-radius:7px;
+          background:var(--ss-opt-bg-2);
+          color:#e4edf6;
+          font-size:10px;
+          font-weight:800
+        }
+        .shadow-studio .ss-options-bar .ss-opt-title i{
+          width:22px;
+          height:22px;
+          display:grid;
+          place-items:center;
+          flex:none;
+          border-radius:5px;
+          background:#2d3e50;
+          color:#8fc4f7;
+          font-size:11px
+        }
+        .shadow-studio .ss-options-bar .ss-opt-title span{
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis
+        }
+        .shadow-studio .ss-options-bar .ss-opt-separator{
+          height:24px;
+          width:1px;
+          flex:none;
+          background:var(--ss-opt-line)
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range{
+          display:flex;
+          align-items:center;
+          gap:6px;
+          color:#c9d7e4;
+          font-size:9px;
+          font-weight:800
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]{
+          width:84px;
+          min-width:84px;
+          height:20px;
+          margin:0;
+          appearance:none;
+          background:transparent;
+          cursor:pointer
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]::-webkit-slider-runnable-track{
+          height:4px;
+          border-radius:99px;
+          background:#171d23;
+          box-shadow:inset 0 0 0 1px #4b5968
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]::-webkit-slider-thumb{
+          width:15px;
+          height:15px;
+          margin-top:-5.5px;
+          appearance:none;
+          border:2px solid #e5f2ff;
+          border-radius:50%;
+          background:var(--ss-opt-blue);
+          box-shadow:0 1px 5px #0008
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]::-moz-range-track{
+          height:4px;
+          border:1px solid #4b5968;
+          border-radius:99px;
+          background:#171d23
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]::-moz-range-thumb{
+          width:13px;
+          height:13px;
+          border:2px solid #e5f2ff;
+          border-radius:50%;
+          background:var(--ss-opt-blue);
+          box-shadow:0 1px 5px #0008
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]:focus-visible{
+          outline:2px solid var(--ss-opt-blue);
+          outline-offset:3px
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]:disabled{
+          opacity:.45;
+          cursor:default
+        }
+        .shadow-studio .ss-options-bar .ss-opt-range output{
+          min-width:36px;
+          color:var(--ss-opt-muted);
+          text-align:right;
+          font-size:9px;
+          font-variant-numeric:tabular-nums
+        }
+        .shadow-studio .ss-options-bar button{
+          height:31px;
+          min-width:31px;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:6px;
+          flex:none;
+          border:1px solid var(--ss-opt-line);
+          border-radius:6px;
+          padding:0 9px;
+          background:var(--ss-opt-bg-3);
+          color:#e6eef7;
+          font:750 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          box-shadow:inset 0 0 0 1px #ffffff05;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease,box-shadow 120ms ease
+        }
+        .shadow-studio .ss-options-bar button i{
+          color:#b8d4eb;
+          font-size:10px
+        }
+        .shadow-studio .ss-options-bar button:hover:not(:disabled){
+          border-color:#748da3;
+          background:#435466;
+          color:#fff
+        }
+        .shadow-studio .ss-options-bar button:hover:not(:disabled) i{color:#fff}
+        .shadow-studio .ss-options-bar button:focus-visible{
+          outline:2px solid var(--ss-opt-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-options-bar button:disabled{
+          opacity:.4;
+          cursor:default
+        }
+        .shadow-studio .ss-options-bar button[aria-pressed=true]{
+          border-color:#79bcff;
+          background:var(--ss-opt-blue-soft);
+          color:#fff;
+          box-shadow:inset 0 0 0 1px #6ba9df
+        }
+        .shadow-studio .ss-options-bar button[aria-pressed=true] i{color:#fff}
         .shadow-studio .ss-options-bar .ss-opt-spacer{flex:1 0 5px}
-        .shadow-studio .ss-options-bar .ss-opt-primary{background:#326aa0;border-color:#5f9cd3;color:#fff}
-        @media(max-width:700px){.shadow-studio .ss-options-bar{padding:4px 8px;gap:7px}.shadow-studio .ss-options-bar .ss-opt-title{min-width:65px}.shadow-studio .ss-options-bar .ss-opt-range input{width:60px;min-width:60px}}
+        .shadow-studio .ss-options-bar .ss-opt-primary{
+          border-color:#6d9bc4;
+          background:#356b9d;
+          color:#fff;
+          box-shadow:inset 0 0 0 1px #ffffff0d
+        }
+        .shadow-studio .ss-options-bar .ss-opt-primary i{color:#fff}
+        .shadow-studio .ss-options-bar .ss-opt-primary:hover:not(:disabled){
+          border-color:#91c7f6;
+          background:#3e82bd
+        }
+        @media(max-width:700px){
+          .shadow-studio .ss-options-bar{
+            min-height:46px;
+            flex-basis:46px;
+            padding:5px 8px;
+            gap:7px
+          }
+          .shadow-studio .ss-options-bar .ss-opt-title{
+            min-width:72px;
+            max-width:120px;
+            padding:0 6px
+          }
+          .shadow-studio .ss-options-bar .ss-opt-title span{
+            max-width:70px
+          }
+          .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]{
+            width:64px;
+            min-width:64px
+          }
+          .shadow-studio .ss-options-bar button{
+            height:34px;
+            min-width:34px
+          }
+        }
+        @media(pointer:coarse){
+          .shadow-studio .ss-options-bar{
+            min-height:48px;
+            flex-basis:48px
+          }
+          .shadow-studio .ss-options-bar button{
+            height:36px;
+            min-width:36px
+          }
+          .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]{
+            height:24px
+          }
+          .shadow-studio .ss-options-bar .ss-opt-range input[type="range"]::-webkit-slider-thumb{
+            width:19px;
+            height:19px;
+            margin-top:-7.5px
+          }
+        }
       `}</style>
       <div className="ss-opt-title" title={paper?.name || toolName}>
         <i className={`fa-solid ${tool === 'eraser' ? 'fa-eraser' : tool === 'eyedropper' ? 'fa-eye-dropper' : tool === 'pencil' ? 'fa-pencil' : tool === 'shape' ? 'fa-shapes' : 'fa-paintbrush'}`} aria-hidden="true" />
