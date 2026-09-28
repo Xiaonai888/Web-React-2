@@ -196,19 +196,174 @@ export default function StudioViewMenu({
   return (
     <>
       <style>{`
-        .ss-view-grid{position:absolute;left:50%;top:50%;z-index:1;box-sizing:border-box;pointer-events:none;background-image:linear-gradient(to right,rgba(24,96,165,.28) 1px,transparent 1px),linear-gradient(to bottom,rgba(24,96,165,.28) 1px,transparent 1px);box-shadow:inset 0 0 0 1px rgba(25,108,185,.55);background-position:0 0;transform-origin:center center}
-        .ss-view-menu{position:fixed;z-index:100001;width:min(250px,calc(100vw - 8px));max-height:calc(100dvh - 48px);overflow-y:auto;padding:6px;border:1px solid #68727e;border-radius:6px;background:#292e34;color:#f1f4f7;box-shadow:0 16px 42px rgba(0,0,0,.55);font-family:inherit;overscroll-behavior:contain}
-        .ss-view-menu-heading{padding:8px 9px 5px;color:#aebccc;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
-        .ss-view-menu-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:36px;border:0;border-radius:4px;background:transparent;color:inherit;padding:6px 9px;text-align:left;font:inherit;font-size:12px;cursor:pointer}
-        .ss-view-menu-item:hover:not(:disabled),.ss-view-menu-item:focus-visible{outline:none;background:#365679}
-        .ss-view-menu-item:disabled{opacity:.35;cursor:default}
-        .ss-view-menu-item small{color:#b5c0cc;font-size:10px;white-space:nowrap}
-        .ss-view-menu-item[aria-checked=true] small{color:#8cceff}
-        .ss-view-menu-divider{height:1px;margin:5px 6px;background:#4b5560}
-        .ss-view-grid-spacing{display:flex;gap:5px;padding:4px 9px 7px}
-        .ss-view-grid-spacing button{flex:1;min-height:32px;border:1px solid #56616d;border-radius:4px;background:#343b43;color:#d5dfe9;font:inherit;font-size:11px;cursor:pointer}
-        .ss-view-grid-spacing button[aria-pressed=true]{border-color:#78beff;background:#365679;color:#fff}
-        @media(max-width:600px){.ss-view-menu-item{min-height:44px;font-size:13px}.ss-view-grid-spacing button{min-height:40px}}
+        .ss-view-grid{
+          position:absolute;
+          left:50%;
+          top:50%;
+          z-index:1;
+          box-sizing:border-box;
+          pointer-events:none;
+          background-image:
+            linear-gradient(to right,rgba(95,174,255,.24) 1px,transparent 1px),
+            linear-gradient(to bottom,rgba(95,174,255,.24) 1px,transparent 1px);
+          box-shadow:inset 0 0 0 1px rgba(95,174,255,.42);
+          background-position:0 0;
+          transform-origin:center center
+        }
+        .ss-view-menu{
+          --ss-view-bg:#202832;
+          --ss-view-bg-2:#29313a;
+          --ss-view-bg-3:#313b46;
+          --ss-view-line:#4b5968;
+          --ss-view-line-soft:#3b4651;
+          --ss-view-text:#edf3fa;
+          --ss-view-muted:#aab8c6;
+          --ss-view-blue:#5faeff;
+          --ss-view-blue-soft:#355d84;
+          position:fixed;
+          z-index:100001;
+          width:min(250px,calc(100vw - 8px));
+          max-height:calc(100dvh - 48px);
+          overflow-y:auto;
+          padding:6px;
+          border:1px solid #607183;
+          border-radius:8px;
+          background:linear-gradient(180deg,#29313a,#242c34);
+          color:var(--ss-view-text);
+          box-shadow:0 18px 42px #000b,0 0 0 1px #ffffff06;
+          font:10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          overscroll-behavior:contain;
+          scrollbar-width:thin;
+          scrollbar-color:#596c7f #242c34
+        }
+        .ss-view-menu-heading{
+          padding:8px 9px 6px;
+          color:#9fb0c0;
+          font-size:8px;
+          font-weight:800;
+          letter-spacing:.06em;
+          text-transform:uppercase
+        }
+        .ss-view-menu-item{
+          position:relative;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:8px;
+          width:100%;
+          min-height:36px;
+          border:1px solid transparent;
+          border-radius:6px;
+          background:transparent;
+          color:inherit;
+          padding:6px 9px;
+          text-align:left;
+          font:700 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .ss-view-menu-item::before{
+          content:'';
+          position:absolute;
+          left:5px;
+          top:50%;
+          width:2px;
+          height:0;
+          border-radius:99px;
+          background:var(--ss-view-blue);
+          transform:translateY(-50%);
+          transition:height 120ms ease
+        }
+        .ss-view-menu-item:hover:not(:disabled),
+        .ss-view-menu-item:focus-visible{
+          outline:none;
+          border-color:#516679;
+          background:#34495d;
+          color:#fff
+        }
+        .ss-view-menu-item:hover:not(:disabled)::before,
+        .ss-view-menu-item:focus-visible::before{
+          height:18px
+        }
+        .ss-view-menu-item:disabled{
+          opacity:.35;
+          cursor:default
+        }
+        .ss-view-menu-item small{
+          flex:none;
+          color:#91a3b3;
+          font-size:8px;
+          font-weight:650;
+          white-space:nowrap
+        }
+        .ss-view-menu-item:hover:not(:disabled) small,
+        .ss-view-menu-item:focus-visible small{
+          color:#cde6fb
+        }
+        .ss-view-menu-item[aria-checked=true]{
+          border-color:#47739b;
+          background:#2f465b
+        }
+        .ss-view-menu-item[aria-checked=true] small{
+          color:#8fd0ff
+        }
+        .ss-view-menu-divider{
+          height:1px;
+          margin:5px 5px;
+          background:linear-gradient(90deg,transparent,var(--ss-view-line),transparent)
+        }
+        .ss-view-grid-spacing{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:5px;
+          padding:4px 9px 7px
+        }
+        .ss-view-grid-spacing button{
+          min-height:32px;
+          border:1px solid var(--ss-view-line);
+          border-radius:6px;
+          background:#303b46;
+          color:#d6e1ec;
+          font:750 9px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease
+        }
+        .ss-view-grid-spacing button:hover{
+          border-color:#6d8498;
+          background:#3d4e5e;
+          color:#fff
+        }
+        .ss-view-grid-spacing button:focus-visible{
+          outline:2px solid var(--ss-view-blue);
+          outline-offset:2px
+        }
+        .ss-view-grid-spacing button[aria-pressed=true]{
+          border-color:#79bcff;
+          background:var(--ss-view-blue-soft);
+          color:#fff;
+          box-shadow:inset 0 0 0 1px #6ba9df
+        }
+        @media(max-width:600px){
+          .ss-view-menu{
+            border-radius:9px
+          }
+          .ss-view-menu-item{
+            min-height:42px;
+            font-size:11px
+          }
+          .ss-view-menu-item small{
+            font-size:9px
+          }
+          .ss-view-grid-spacing button{
+            min-height:40px;
+            font-size:10px
+          }
+        }
+        @media(pointer:coarse){
+          .ss-view-menu-item{
+            min-height:44px
+          }
+        }
       `}</style>
       <button
         ref={triggerRef}
