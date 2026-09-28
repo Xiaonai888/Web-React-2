@@ -7979,6 +7979,40 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
 
       <div className="relative">
   <ReaderIconButton
+    icon="fa-solid fa-share-nodes"
+    label="Share"
+    onClick={() => {
+      setReaderMoreOpen(false)
+      setReaderShareOpen((value) => !value)
+    }}
+    className={theme.text}
+  />
+
+  {readerShareOpen ? (
+    <div className={`absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border ${theme.border} ${theme.card} shadow-[0_12px_30px_rgba(17,24,39,0.16)]`}>
+      <button
+        type="button"
+        onClick={handleReaderCopyLink}
+        className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
+      >
+        <i className={`fa-solid fa-link w-4 text-center text-[14px] ${theme.muted}`} />
+        <span>{t('readerPage.copyLink')}</span>
+      </button>
+      <button
+        type="button"
+        onClick={handleReaderEcho}
+        className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
+      >
+        <i className={`fa-solid fa-rotate w-4 text-center text-[14px] ${theme.muted}`} />
+        <span>{t('readerPage.echo')}</span>
+      </button>
+    </div>
+  ) : null}
+</div>
+
+
+      <div className="relative">
+  <ReaderIconButton
     icon="fa-solid fa-ellipsis-vertical"
     label={t('readerPage.moreOptions')}
     onClick={() => setReaderMoreOpen((value) => !value)}
