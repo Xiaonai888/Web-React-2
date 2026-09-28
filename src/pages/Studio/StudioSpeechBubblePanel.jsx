@@ -1,5 +1,14 @@
 import { useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import {
+  StudioUIButton,
+  StudioUIColor,
+  StudioUINumber,
+  StudioUISection,
+  StudioUISelect,
+  StudioUISlider,
+  StudioUITabs,
+} from './StudioUIControls'
 
 const LABELS = {
   en: ['Speech bubbles', 'Ellipse', 'Rounded', 'Thought', 'Shout', 'Width', 'Height', 'Border', 'Fill', 'Ink', 'Opacity', 'Tail direction', 'Bottom', 'Top', 'Left', 'Right', 'No tail', 'Text (optional)', 'Font size', 'Add to selected layer', 'Adding…', 'Select a visible, unlocked layer first.', 'Could not add the bubble.'],
@@ -33,42 +42,72 @@ export default function StudioSpeechBubblePanel({ onApply, disabled = false }) {
     if (unavailable) return
     setError('')
     setBusy(true)
-    try { await onApply({ shape, width, height, border, fill, ink, opacity, tail, text, fontSize }) }
-    catch (reason) { setError(reason?.message || t[22]) }
-    finally { setBusy(false) }
+    try {
+      await onApply({ shape, width, height, border, fill, ink, opacity, tail, text, fontSize })
+    } catch (reason) {
+      setError(reason?.message || t[22])
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
-    <section className="ss-speech-bubble" aria-label={t[0]}>
+    <div className="ss-speech-ui">
       <style>{`
-        .shadow-studio .ss-speech-bubble{display:grid;gap:9px;min-width:0;color:#e5edf6;font-size:11px}
-        .shadow-studio .ss-speech-bubble strong{font-size:12px}
-        .shadow-studio .ss-speech-bubble label{display:grid;gap:4px;min-width:0}
-        .shadow-studio .ss-speech-bubble .ss-bubble-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-        .shadow-studio .ss-speech-bubble input:not([type=color]):not([type=range]),.shadow-studio .ss-speech-bubble select,.shadow-studio .ss-speech-bubble textarea{box-sizing:border-box;width:100%;min-width:0;padding:6px;border:1px solid #60758a;border-radius:4px;background:#24313e;color:#edf5ff;font:inherit}
-        .shadow-studio .ss-speech-bubble input[type=color]{box-sizing:border-box;width:100%;height:30px;border:1px solid #60758a;border-radius:4px;background:#24313e}
-        .shadow-studio .ss-speech-bubble input[type=range]{width:100%;accent-color:#82baff}
-        .shadow-studio .ss-speech-bubble textarea{resize:vertical;min-height:55px;max-height:120px}
-        .shadow-studio .ss-speech-bubble button{padding:7px;border:1px solid #7795b0;border-radius:5px;background:#385d7e;color:#f2f8ff;font:inherit;cursor:pointer}
-        .shadow-studio .ss-speech-bubble button:disabled{opacity:.5;cursor:not-allowed}
-        .shadow-studio .ss-speech-bubble p{margin:0;font-size:10px;line-height:1.5}
+        .ss-speech-ui{display:grid;gap:10px;min-width:0}
+        .ss-speech-ui-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .ss-speech-ui-text{display:grid;gap:5px;color:#edf3fa;font-size:10px;font-weight:700}
+        .ss-speech-ui-text textarea{width:100%;min-height:78px;padding:8px;border:1px solid #4b5968;border-radius:6px;outline:none;resize:vertical;background:#202832;color:#edf3fa;font:11px Inter,system-ui,sans-serif;line-height:1.45}
+        .ss-speech-ui-text textarea:focus{border-color:#5faeff;box-shadow:0 0 0 2px #5faeff26}
+        .ss-speech-ui-actions{display:grid;gap:8px}
+        .ss-speech-ui-actions>.ss-ui-button{width:100%}
+        .ss-speech-ui-status{margin:0;padding:7px 9px;border:1px solid #3b4651;border-radius:6px;background:#202832;color:#9fb0c0;font-size:9px;line-height:1.45}
+        .ss-speech-ui-status.error{border-color:#8e4750;background:#4b2b31;color:#ffd5d8}
+        @media(max-width:500px){.ss-speech-ui-grid{grid-template-columns:1fr}}
       `}</style>
-      <strong>{t[0]}</strong>
-      <label>{t[0]}<select value={shape} onChange={(event) => setShape(event.target.value)}>{SHAPES.map((item, index) => <option key={item} value={item}>{t[index + 1]}</option>)}</select></label>
-      <div className="ss-bubble-grid">
-        <label>{t[5]} (px)<input type="number" min="80" max="1600" value={width} onChange={(event) => setWidth(Number(event.target.value))} /></label>
-        <label>{t[6]} (px)<input type="number" min="60" max="1200" value={height} onChange={(event) => setHeight(Number(event.target.value))} /></label>
-        <label>{t[7]} (px)<input type="number" min="1" max="30" value={border} onChange={(event) => setBorder(Number(event.target.value))} /></label>
-        <label>{t[18]} (px)<input type="number" min="10" max="100" value={fontSize} onChange={(event) => setFontSize(Number(event.target.value))} /></label>
-        <label>{t[8]}<input type="color" value={fill} onChange={(event) => setFill(event.target.value)} /></label>
-        <label>{t[9]}<input type="color" value={ink} onChange={(event) => setInk(event.target.value)} /></label>
+
+      <StudioUISection title={t[0]} subtitle={t[SHAPES.indexOf(shape) + 1]}>
+        <StudioUITabs
+          value={shape}
+          ariaLabel={t[0]}
+          items={SHAPES.map((item, index) => ({ value: item, label: t[index + 1] }))}
+          onChange={setShape}
+        />
+
+        <div className="ss-speech-ui-grid">
+          <StudioUINumber label={`${t[5]} (px)`} value={width} min={80} max={1600} onChange={setWidth} disabled={busy} />
+          <StudioUINumber label={`${t[6]} (px)`} value={height} min={60} max={1200} onChange={setHeight} disabled={busy} />
+          <StudioUINumber label={`${t[7]} (px)`} value={border} min={1} max={30} onChange={setBorder} disabled={busy} />
+          <StudioUINumber label={`${t[18]} (px)`} value={fontSize} min={10} max={100} onChange={setFontSize} disabled={busy} />
+        </div>
+
+        <StudioUIColor label={t[8]} value={fill} disabled={busy} onChange={(next) => {
+          if (/^#[0-9a-f]{6}$/i.test(next)) setFill(next)
+        }} />
+        <StudioUIColor label={t[9]} value={ink} disabled={busy} onChange={(next) => {
+          if (/^#[0-9a-f]{6}$/i.test(next)) setInk(next)
+        }} />
+        <StudioUISlider label={t[10]} value={opacity} min={0} max={100} suffix="%" disabled={busy} onChange={setOpacity} />
+        <StudioUISelect
+          label={t[11]}
+          value={tail}
+          options={TAILS.map((item, index) => ({ value: item, label: t[index + 12] }))}
+          disabled={busy}
+          onChange={setTail}
+        />
+
+        <label className="ss-speech-ui-text">
+          <span>{t[17]}</span>
+          <textarea maxLength={1200} value={text} disabled={busy} onChange={(event) => setText(event.target.value)} />
+        </label>
+      </StudioUISection>
+
+      <div className="ss-speech-ui-actions">
+        <StudioUIButton variant="primary" icon="fa-solid fa-plus" disabled={unavailable} onClick={apply}>
+          {busy ? t[20] : t[19]}
+        </StudioUIButton>
+        <p className={`ss-speech-ui-status ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>{error || t[21]}</p>
       </div>
-      <label>{t[10]}: {opacity}%<input type="range" min="0" max="100" value={opacity} onChange={(event) => setOpacity(Number(event.target.value))} /></label>
-      <label>{t[11]}<select value={tail} onChange={(event) => setTail(event.target.value)}>{TAILS.map((item, index) => <option key={item} value={item}>{t[index + 12]}</option>)}</select></label>
-      <label>{t[17]}<textarea maxLength={1200} value={text} onChange={(event) => setText(event.target.value)} /></label>
-      <button type="button" disabled={unavailable} onClick={apply}>{busy ? t[20] : t[19]}</button>
-      {disabled || !onApply ? <p>{t[21]}</p> : null}
-      {error ? <p role="alert">{error}</p> : null}
-    </section>
+    </div>
   )
 }
