@@ -68,18 +68,176 @@ export default function StudioAssetLibraryPanel({ onInsert, disabled = false }) 
   return (
     <section className="ss-asset-library" aria-label={t[0]}>
       <style>{`
-        .shadow-studio .ss-asset-library{display:grid;gap:9px;min-width:0;color:#e9f1f9;font-size:11px}
-        .shadow-studio .ss-asset-library-tabs,.shadow-studio .ss-asset-library-categories{display:flex;flex-wrap:wrap;gap:4px}
-        .shadow-studio .ss-asset-library button{font:inherit;cursor:pointer}
-        .shadow-studio .ss-asset-library-tabs button,.shadow-studio .ss-asset-library-categories button{flex:1 1 auto;min-width:0;padding:6px 5px;border:1px solid #566a7b;border-radius:5px;background:#2c3a48;color:#d7e4f0;font-size:10px}
-        .shadow-studio .ss-asset-library button[aria-pressed=true]{border-color:#9bc9f5;background:#4d7296;color:white}
-        .shadow-studio .ss-asset-library input{box-sizing:border-box;width:100%;min-width:0;padding:7px 8px;border:1px solid #5a7083;border-radius:4px;background:#202e3b;color:#f2f7ff;font:inherit}
-        .shadow-studio .ss-asset-library-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-        .shadow-studio .ss-asset-library-grid button{display:grid;justify-items:center;gap:5px;min-width:0;padding:5px 3px;border:1px solid #5b7082;border-radius:5px;background:#354554;color:#eff5fa;font-size:9px}
-        .shadow-studio .ss-asset-library-grid img{width:100%;max-width:74px;aspect-ratio:1;object-fit:contain;background:white;border-radius:3px}
-        .shadow-studio .ss-asset-library-grid span{text-align:center;overflow-wrap:anywhere}
-        .shadow-studio .ss-asset-library button:disabled{opacity:.48;cursor:not-allowed}
-        .shadow-studio .ss-asset-library [role=status]{min-height:13px;color:#c2d1df;font-size:10px}
+        .shadow-studio .ss-asset-library{
+          --ss-asset-panel:#29313a;
+          --ss-asset-panel-2:#202832;
+          --ss-asset-panel-3:#313b46;
+          --ss-asset-line:#4b5968;
+          --ss-asset-line-soft:#3b4651;
+          --ss-asset-text:#edf3fa;
+          --ss-asset-muted:#aab8c6;
+          --ss-asset-blue:#5faeff;
+          --ss-asset-blue-soft:#355d84;
+          display:grid;
+          gap:10px;
+          min-width:0;
+          color:var(--ss-asset-text);
+          font:10px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        .shadow-studio .ss-asset-library *{box-sizing:border-box}
+        .shadow-studio .ss-asset-library-tabs,
+        .shadow-studio .ss-asset-library-categories{
+          display:flex;
+          flex-wrap:wrap;
+          gap:5px
+        }
+        .shadow-studio .ss-asset-library button{
+          font:inherit;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,color 120ms ease,transform 120ms ease
+        }
+        .shadow-studio .ss-asset-library-tabs{
+          padding-bottom:8px;
+          border-bottom:1px solid var(--ss-asset-line-soft)
+        }
+        .shadow-studio .ss-asset-library-tabs button{
+          flex:1 1 0;
+          min-width:0;
+          min-height:33px;
+          padding:0 9px;
+          border:1px solid var(--ss-asset-line);
+          border-radius:7px;
+          background:var(--ss-asset-panel-3);
+          color:#d8e4ef;
+          font-size:10px;
+          font-weight:800
+        }
+        .shadow-studio .ss-asset-library-categories button{
+          flex:1 1 auto;
+          min-width:0;
+          min-height:30px;
+          padding:0 8px;
+          border:1px solid #455463;
+          border-radius:6px;
+          background:#26313b;
+          color:#cbd8e5;
+          font-size:9px;
+          font-weight:700
+        }
+        .shadow-studio .ss-asset-library-tabs button:hover:not(:disabled),
+        .shadow-studio .ss-asset-library-categories button:hover:not(:disabled){
+          border-color:#70869b;
+          background:#3a4856
+        }
+        .shadow-studio .ss-asset-library button[aria-pressed=true]{
+          border-color:#75baff;
+          background:var(--ss-asset-blue-soft);
+          color:#fff;
+          box-shadow:inset 0 0 0 1px #6ba9df
+        }
+        .shadow-studio .ss-asset-library input[type="search"]{
+          box-sizing:border-box;
+          width:100%;
+          min-width:0;
+          height:34px;
+          padding:0 10px 0 30px;
+          border:1px solid var(--ss-asset-line);
+          border-radius:7px;
+          outline:none;
+          background:
+            linear-gradient(90deg,transparent 0 28px,#3b4651 28px 29px,transparent 29px),
+            var(--ss-asset-panel-2);
+          color:#f2f7ff;
+          font:10px Inter,ui-sans-serif,system-ui,sans-serif
+        }
+        .shadow-studio .ss-asset-library input[type="search"]:focus{
+          border-color:var(--ss-asset-blue);
+          box-shadow:0 0 0 2px #5faeff26
+        }
+        .shadow-studio .ss-asset-library input[type="search"]::placeholder{color:#8192a2}
+        .shadow-studio .ss-asset-library-grid{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:7px
+        }
+        .shadow-studio .ss-asset-library-grid button{
+          display:grid;
+          justify-items:center;
+          align-content:start;
+          gap:6px;
+          min-width:0;
+          min-height:102px;
+          padding:6px 5px;
+          overflow:hidden;
+          border:1px solid #465666;
+          border-radius:7px;
+          background:#293540;
+          color:#eff5fa;
+          font-size:9px;
+          font-weight:650;
+          box-shadow:inset 0 0 0 1px #ffffff05
+        }
+        .shadow-studio .ss-asset-library-grid button:hover:not(:disabled){
+          transform:translateY(-1px);
+          border-color:#79a7cf;
+          background:#344758;
+          box-shadow:0 4px 10px #0005,inset 0 0 0 1px #ffffff08
+        }
+        .shadow-studio .ss-asset-library-grid button:focus-visible{
+          outline:2px solid var(--ss-asset-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-asset-library-grid img{
+          width:100%;
+          max-width:78px;
+          aspect-ratio:1;
+          object-fit:contain;
+          border:1px solid #6b7884;
+          border-radius:5px;
+          background:white;
+          box-shadow:0 2px 5px #0006
+        }
+        .shadow-studio .ss-asset-library-grid span{
+          width:100%;
+          min-width:0;
+          text-align:center;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap
+        }
+        .shadow-studio .ss-asset-library button:disabled{
+          opacity:.45;
+          cursor:not-allowed;
+          transform:none
+        }
+        .shadow-studio .ss-asset-library>p{
+          margin:0;
+          padding:10px;
+          border:1px dashed #465666;
+          border-radius:7px;
+          background:#222b33;
+          color:var(--ss-asset-muted);
+          text-align:center;
+          font-size:9px;
+          line-height:1.45
+        }
+        .shadow-studio .ss-asset-library [role=status]{
+          min-height:18px;
+          padding:2px 0;
+          color:#b9c9d8;
+          font-size:9px;
+          line-height:1.45
+        }
+        @media(max-width:900px),(pointer:coarse){
+          .shadow-studio .ss-asset-library-tabs button{min-height:38px}
+          .shadow-studio .ss-asset-library-categories button{min-height:36px}
+          .shadow-studio .ss-asset-library input[type="search"]{height:38px;font-size:12px}
+          .shadow-studio .ss-asset-library-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+          .shadow-studio .ss-asset-library-grid button{min-height:108px;padding:7px 5px}
+        }
+        @media(max-width:430px){
+          .shadow-studio .ss-asset-library-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+        }
       `}</style>
       <div className="ss-asset-library-tabs" role="group" aria-label={t[0]}>
         <button type="button" aria-pressed={section === 'assets'} onClick={() => { setSection('assets'); setQuery('') }}>{t[0]}</button>
