@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { getOfflineReaderAccountId } from '../utils/offlineReaderContent'
@@ -18,6 +18,8 @@ registerTranslationNamespace('storyBulkDownload', {
 export default function StoryBulkDownloadPage() {
   const { storyId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const preselectedEpisodeId = searchParams.get('episodeId') || ''
   const { t } = useDisplayTranslation()
   const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,6 +34,7 @@ export default function StoryBulkDownloadPage() {
   const [message, setMessage] = useState('')
   const controllerRef = useRef(null)
   const verifyControllerRef = useRef(null)
+  const preselectHandledRef = useRef('')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -113,6 +116,15 @@ export default function StoryBulkDownloadPage() {
     setSelected((current) => current.includes(id) ? current : [...current, id])
     setMessage('')
   }
+
+  useEffect(() => {
+    if (loading || loadError || !preselectedEpisodeId || !episodes.length) return
+    const key = `${storyId}:${preselectedEpisodeId}:${retry}`
+    if (preselectHandledRef.current === key) return
+    const target = episodes.find((item) => String(item.id) === String(preselectedEpisodeId))
+    preselectHandledRef.current = key
+    if (target) void toggleEpisode(target)
+  }, [episodes, loadError, loading, preselectedEpisodeId, retry, storyId])
 
   async function handleDownload() {
     if (working) return
