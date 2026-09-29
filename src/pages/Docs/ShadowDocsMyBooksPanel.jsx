@@ -12,6 +12,7 @@ import {
   PenLine,
   Plus,
   Search,
+  Settings2,
   Share2,
   Smartphone,
   Trash2,
@@ -22,6 +23,7 @@ import { getBookTemplate, getCoverPreset } from './ShadowDocsTemplateCatalog'
 
 const MAIN_TABS = ['This Device', 'Recent', 'Share', 'Trash']
 const RECENT_FILTERS = ['All', 'Today', 'This Week', 'This Month']
+const STATUS_FILTERS = ['All Books', 'Drafts', 'Completed']
 const PAGE_SIZE = 20
 const safeImage = value => typeof value === 'string' && /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(value) && value.length < 2500000
 
@@ -31,44 +33,40 @@ function BookCover({ book }) {
   const withImage = safeImage(book.image)
   return (
     <div
-      className="relative flex aspect-[3/4] w-full flex-col items-center justify-between overflow-hidden rounded-xl p-[10%] text-center"
+      className="relative flex aspect-[3/4] w-full flex-col items-center justify-between overflow-hidden rounded-lg p-[9%] text-center"
       style={{
         background: colors.background,
         backgroundImage: withImage
-          ? `linear-gradient(180deg,rgba(20,15,35,.2),rgba(20,15,35,.7)),url("${book.image}")`
+          ? `linear-gradient(180deg,rgba(20,15,35,.18),rgba(20,15,35,.7)),url("${book.image}")`
           : colors.background,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         color: withImage ? '#fff' : colors.foreground,
       }}
     >
-      <span aria-hidden="true" className="text-xl opacity-90">{template.symbol}</span>
-      <div className="w-full min-w-0">
-        <span className="block text-[6px] font-semibold tracking-[.12em] opacity-80">SHADOW DOCS</span>
-        <strong
-          className="mt-1 block break-words text-[9px] leading-snug"
-          style={{ fontFamily: 'Georgia, "Noto Serif Khmer", serif' }}
-        >
-          {book.title || 'Untitled Book'}
-        </strong>
-      </div>
-      <span aria-hidden="true" className="text-sm opacity-80">{template.symbol}</span>
+      <span aria-hidden="true" className="text-lg opacity-85">{template.symbol}</span>
+      <strong
+        className="block break-words text-[8px] leading-snug"
+        style={{ fontFamily: 'Georgia, "Noto Serif Khmer", serif' }}
+      >
+        {book.title || 'Untitled Book'}
+      </strong>
+      <span aria-hidden="true" className="text-xs opacity-75">{template.symbol}</span>
     </div>
   )
 }
 
-function startOfToday(now = new Date()) {
+function startOfToday() {
+  const now = new Date()
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
 }
 
 function isToday(timestamp) {
-  const value = Number(timestamp) || 0
-  return value >= startOfToday()
+  return (Number(timestamp) || 0) >= startOfToday()
 }
 
 function isThisWeek(timestamp) {
-  const value = Number(timestamp) || 0
-  return value >= Date.now() - (7 * 24 * 60 * 60 * 1000)
+  return (Number(timestamp) || 0) >= Date.now() - (7 * 24 * 60 * 60 * 1000)
 }
 
 function isThisMonth(timestamp) {
@@ -106,9 +104,13 @@ export default function ShadowDocsMyBooksPanel({
   onOpen,
   onAction,
   onOpenTrash,
+  onOpenBackup,
+  backupOpen = false,
 }) {
   const [tab, setTab] = useState('This Device')
   const [recentFilter, setRecentFilter] = useState('All')
+  const [statusFilter, setStatusFilter] = useState('All Books')
+  const [showStatusFilter, setShowStatusFilter] = useState(false)
   const [search, setSearch] = useState('')
   const [menuId, setMenuId] = useState('')
   const [page, setPage] = useState(1)
@@ -124,10 +126,12 @@ export default function ShadowDocsMyBooksPanel({
         if (recentFilter === 'Today' && !isToday(timestamp)) return false
         if (recentFilter === 'This Week' && !isThisWeek(timestamp)) return false
         if (recentFilter === 'This Month' && !isThisMonth(timestamp)) return false
+        if (statusFilter === 'Drafts' && book.status === 'completed') return false
+        if (statusFilter === 'Completed' && book.status !== 'completed') return false
         return `${book.title || ''} ${book.author || ''}`.toLocaleLowerCase().includes(keyword)
       })
       .sort((a, b) => (Number(b.updatedAt) || Number(b.createdAt) || 0) - (Number(a.updatedAt) || Number(a.createdAt) || 0))
-  }, [library, recentFilter, search])
+  }, [library, recentFilter, statusFilter, search])
 
   const pageCount = Math.max(1, Math.ceil(filteredRecent.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount)
@@ -150,6 +154,7 @@ export default function ShadowDocsMyBooksPanel({
 
   function selectTab(item) {
     setMenuId('')
+    setShowStatusFilter(false)
     if (item === 'Trash') {
       onOpenTrash?.()
       return
@@ -159,41 +164,8 @@ export default function ShadowDocsMyBooksPanel({
   }
 
   return (
-    <section aria-label="My Books" className="sd-stack">
-      <div className="sd-card flex flex-wrap items-center justify-between gap-5 bg-[#f6f0ff] dark:bg-[#2d263e]">
-        <div className="min-w-0">
-          <span className="sd-eyebrow">MY LIBRARY</span>
-          <h2 className="mt-2">Your books, your workspace</h2>
-          <p className="mt-2 max-w-xl text-[12px] leading-6 text-[#77758b] dark:text-white/65">
-            Write and design books on this device. Download a project backup to keep a separate copy.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={!ready || typeof onCreate !== 'function'}
-            onClick={onCreate}
-            className="sd-button sd-button-primary"
-          >
-            <Plus size={16} /> Create a Book
-          </button>
-          <button
-            type="button"
-            disabled={!ready || typeof onImport !== 'function'}
-            onClick={onImport}
-            className="sd-button sd-button-ghost"
-          >
-            <Upload size={16} /> Import Backup
-          </button>
-        </div>
-      </div>
-
-      <div
-        role="tablist"
-        aria-label="Local library sections"
-        className="sd-segments w-full"
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))' }}
-      >
+    <section aria-label="Home library" className="sd-library-home sd-stack">
+      <div role="tablist" aria-label="Home library sections" className="sd-library-tabs">
         {MAIN_TABS.map(item => (
           <button
             type="button"
@@ -209,119 +181,149 @@ export default function ShadowDocsMyBooksPanel({
       </div>
 
       {tab === 'This Device' && (
-        <div className="sd-card flex min-h-[300px] flex-col items-center justify-center gap-4 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8fbf6] text-[#24a883] dark:bg-[#16372f] dark:text-[#4fd7b1]">
-            <Smartphone size={27} />
-          </span>
-          <div>
-            <h3>Import from this device</h3>
-            <p className="mx-auto mt-2 max-w-sm text-[12px] leading-6 text-[#77758b] dark:text-white/60">
-              Your Shadow Docs projects stay local in this browser. Import a backup or create a new book.
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-2">
+        <div className="sd-device-home">
+          <div className="sd-device-import">
+            <div className="sd-device-import-icon"><Upload size={25} /></div>
+            <h2>Import from this device</h2>
+            <p>Restore a Shadow Docs project backup saved on your phone or computer.</p>
             <button
               type="button"
               disabled={!ready || typeof onImport !== 'function'}
               onClick={onImport}
-              className="sd-button sd-button-primary"
+              className="sd-home-primary"
             >
-              <Upload size={16} /> Import
+              <Upload size={16} /> Import Backup
             </button>
+          </div>
+
+          <div className="sd-device-actions">
             <button
               type="button"
               disabled={!ready || typeof onCreate !== 'function'}
               onClick={onCreate}
-              className="sd-button sd-button-ghost"
+              className="sd-device-action"
             >
-              <FilePlus2 size={16} /> Create Book
+              <span className="sd-device-action-icon"><Plus size={21} /></span>
+              <span><strong>Create Book</strong><small>Start a new local book</small></span>
+              <span>›</span>
+            </button>
+            <button
+              type="button"
+              disabled={typeof onOpenBackup !== 'function'}
+              onClick={onOpenBackup}
+              className="sd-device-action"
+            >
+              <span className="sd-device-action-icon"><Download size={20} /></span>
+              <span><strong>{backupOpen ? 'Hide Backup Center' : 'Backup Center'}</strong><small>Backup and restore your local library</small></span>
+              <span>›</span>
             </button>
           </div>
-          <span className="text-[10px] text-[#8c8797] dark:text-white/40">
-            {library.length} local book{library.length === 1 ? '' : 's'}
-          </span>
+
+          <div className="sd-local-summary">
+            <Smartphone size={15} />
+            <span>{library.length} local book{library.length === 1 ? '' : 's'} stored in this browser</span>
+          </div>
         </div>
       )}
 
       {tab === 'Recent' && (
         <div className="sd-stack">
-          <div className="flex flex-col gap-3">
-            <label className="sd-search w-full max-w-none">
-              <Search size={17} />
-              <input
-                type="search"
-                aria-label="Search recent books"
-                placeholder="Search recent books…"
-                value={search}
-                onChange={event => {
-                  setSearch(event.target.value)
-                  setPage(1)
-                  setMenuId('')
-                }}
-              />
-              {search && (
-                <button type="button" aria-label="Clear search" onClick={() => { setSearch(''); setPage(1) }}>
-                  <X size={15} />
-                </button>
-              )}
-            </label>
+          <label className="sd-search sd-recent-search">
+            <Search size={17} />
+            <input
+              type="search"
+              aria-label="Search recent books"
+              placeholder="Search recent books…"
+              value={search}
+              onChange={event => {
+                setSearch(event.target.value)
+                setPage(1)
+                setMenuId('')
+              }}
+            />
+            {search && (
+              <button type="button" aria-label="Clear search" onClick={() => { setSearch(''); setPage(1) }}>
+                <X size={15} />
+              </button>
+            )}
+          </label>
 
-            <div className="flex items-center justify-between gap-2 overflow-x-auto">
-              <div className="sd-segments shrink-0">
-                {RECENT_FILTERS.map(item => (
-                  <button
-                    type="button"
-                    key={item}
-                    aria-pressed={recentFilter === item}
-                    className={recentFilter === item ? 'is-active' : ''}
-                    onClick={() => {
-                      setRecentFilter(item)
-                      setPage(1)
-                      setMenuId('')
-                    }}
-                  >
-                    {item}
-                  </button>
-                ))}
+          <div className="sd-recent-toolbar">
+            <div className="sd-recent-filters">
+              {RECENT_FILTERS.map(item => (
+                <button
+                  type="button"
+                  key={item}
+                  aria-pressed={recentFilter === item}
+                  className={recentFilter === item ? 'is-active' : ''}
+                  onClick={() => {
+                    setRecentFilter(item)
+                    setPage(1)
+                    setMenuId('')
+                  }}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+
+            <div className="sd-recent-tools">
+              <span className="sd-page-limit">20 per page</span>
+              <div className="relative">
+                <button
+                  type="button"
+                  className={`sd-filter-button ${statusFilter !== 'All Books' ? 'is-active' : ''}`}
+                  aria-label="Filter by book status"
+                  aria-expanded={showStatusFilter}
+                  onClick={() => setShowStatusFilter(value => !value)}
+                >
+                  <Settings2 size={16} />
+                </button>
+                {showStatusFilter && (
+                  <div className="sd-status-filter-menu">
+                    {STATUS_FILTERS.map(item => (
+                      <button
+                        type="button"
+                        key={item}
+                        className={statusFilter === item ? 'is-active' : ''}
+                        onClick={() => {
+                          setStatusFilter(item)
+                          setShowStatusFilter(false)
+                          setPage(1)
+                        }}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <span className="shrink-0 rounded-xl border border-[var(--sd-border)] bg-[var(--sd-surface)] px-3 py-2 text-[11px] text-[#77758b] dark:text-white/60">
-                20 per page
-              </span>
             </div>
           </div>
 
-          {!ready && (
-            <p role="status" className="sd-card text-center text-sm text-[#77758b]">
-              Loading books saved on this device…
-            </p>
-          )}
+          {!ready && <p role="status" className="sd-card text-center text-sm text-[#77758b]">Loading books saved on this device…</p>}
 
           {ready && !pageBooks.length && (
-            <div className="sd-card flex min-h-[220px] flex-col items-center justify-center gap-3 text-center">
-              <Clock3 size={38} className="text-[#2da984]" />
+            <div className="sd-home-empty">
+              <Clock3 size={34} />
               <h3>No recent books</h3>
-              <p className="max-w-sm text-[12px] leading-6 text-[#77758b] dark:text-white/60">
-                Open or edit a local book and it will appear here.
-              </p>
+              <p>Open or edit a local book and it will appear here.</p>
             </div>
           )}
 
           {ready && pageBooks.length > 0 && (
-            <div className="grid gap-5">
+            <div className="sd-recent-groups">
               {groupedRecent.map(([group, items]) => (
-                <div key={group}>
-                  <h3 className="mb-2 text-[14px] font-bold">{group}</h3>
-                  <div className="overflow-hidden rounded-2xl border border-[var(--sd-border)] bg-[var(--sd-surface)]">
-                    {items.map((book, index) => (
-                      <article
-                        key={book.id}
-                        className={`flex min-w-0 items-center gap-3 p-3 ${index ? 'border-t border-[var(--sd-border)]' : ''}`}
-                      >
+                <section key={group} className="sd-recent-group">
+                  <h3>{group}</h3>
+                  <div className="sd-recent-list">
+                    {items.map(book => (
+                      <article key={book.id} className="sd-recent-row">
                         <button
                           type="button"
                           onClick={() => onOpen?.(book, 'write')}
                           disabled={typeof onOpen !== 'function'}
-                          className="w-[58px] shrink-0 overflow-hidden rounded-lg text-left shadow-sm disabled:cursor-default"
+                          className="sd-recent-cover"
                           aria-label={`Open ${book.title || 'Untitled Book'}`}
                         >
                           <BookCover book={book} />
@@ -331,22 +333,14 @@ export default function ShadowDocsMyBooksPanel({
                           type="button"
                           onClick={() => onOpen?.(book, 'write')}
                           disabled={typeof onOpen !== 'function'}
-                          className="min-w-0 flex-1 text-left"
+                          className="sd-recent-copy"
                         >
-                          <strong className="block truncate text-[13px] text-[var(--sd-text)]">
-                            {book.title || 'Untitled Book'}
-                          </strong>
-                          <span className="mt-1 block text-[10px] text-[#77758b] dark:text-white/55">
-                            {Array.isArray(book.chapters) ? book.chapters.length : 0} chapters · {book.status === 'completed' ? 'Completed' : 'Draft'}
-                          </span>
-                          <span className="mt-1 flex items-center gap-1 text-[10px] text-[#93899f] dark:text-white/40">
-                            <Clock3 size={11} /> {relativeTime(book.updatedAt || book.createdAt)}
-                          </span>
+                          <strong>{book.title || 'Untitled Book'}</strong>
+                          <span>{Array.isArray(book.chapters) ? book.chapters.length : 0} chapters · {book.status === 'completed' ? 'Completed' : 'Draft'}</span>
+                          <small><Clock3 size={11} /> {relativeTime(book.updatedAt || book.createdAt)}</small>
                         </button>
 
-                        <span className="hidden items-center gap-1 rounded-full border border-[#bfe9dc] px-2 py-1 text-[9px] font-bold text-[#278c70] dark:border-[#235f50] dark:text-[#51d2af] sm:inline-flex">
-                          <Smartphone size={11} /> Local
-                        </span>
+                        <span className="sd-local-badge"><Smartphone size={11} /> Local</span>
 
                         <div className="relative">
                           <button
@@ -354,13 +348,13 @@ export default function ShadowDocsMyBooksPanel({
                             aria-label={`Book actions for ${book.title || 'Untitled Book'}`}
                             aria-expanded={menuId === book.id}
                             onClick={() => setMenuId(id => id === book.id ? '' : book.id)}
-                            className="sd-icon-button h-8 w-8 border-0"
+                            className="sd-recent-menu-button"
                           >
-                            <MoreHorizontal size={17} />
+                            <MoreHorizontal size={18} />
                           </button>
 
                           {menuId === book.id && (
-                            <div className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-[#e9e5f1] bg-white p-1 shadow-lg dark:border-white/15 dark:bg-[#252333]">
+                            <div className="sd-book-menu sd-home-book-menu">
                               {[
                                 ['backup', Download, 'Download backup'],
                                 ['duplicate', Copy, 'Duplicate book'],
@@ -373,7 +367,7 @@ export default function ShadowDocsMyBooksPanel({
                                   type="button"
                                   disabled={typeof onAction !== 'function'}
                                   onClick={() => action(book, id)}
-                                  className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[11px] hover:bg-[#eefaf6] disabled:opacity-50 dark:hover:bg-white/10 ${id === 'delete' ? 'text-red-600 dark:text-red-300' : 'text-[#332b43] dark:text-white'}`}
+                                  className={id === 'delete' ? 'text-red-600 dark:text-red-300' : ''}
                                 >
                                   <Icon size={14} /> {label}
                                 </button>
@@ -384,27 +378,23 @@ export default function ShadowDocsMyBooksPanel({
                       </article>
                     ))}
                   </div>
-                </div>
+                </section>
               ))}
             </div>
           )}
 
           {ready && filteredRecent.length > PAGE_SIZE && (
-            <div className="flex items-center justify-center gap-3">
+            <div className="sd-recent-pagination">
               <button
                 type="button"
-                className="sd-button sd-button-ghost"
                 disabled={safePage <= 1}
                 onClick={() => { setPage(value => Math.max(1, value - 1)); setMenuId('') }}
               >
                 <ChevronLeft size={15} /> Previous
               </button>
-              <span className="text-[11px] text-[#77758b] dark:text-white/55">
-                Page {safePage} of {pageCount}
-              </span>
+              <span>Page {safePage} of {pageCount}</span>
               <button
                 type="button"
-                className="sd-button sd-button-ghost"
                 disabled={safePage >= pageCount}
                 onClick={() => { setPage(value => Math.min(pageCount, value + 1)); setMenuId('') }}
               >
@@ -416,15 +406,10 @@ export default function ShadowDocsMyBooksPanel({
       )}
 
       {tab === 'Share' && (
-        <div className="sd-card flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
-          <Share2 size={38} className="text-[#2da984]" />
+        <div className="sd-home-empty">
+          <Share2 size={34} />
           <h3>Share</h3>
-          <p className="max-w-sm text-[12px] leading-6 text-[#77758b] dark:text-white/60">
-            Sharing tools are temporarily hidden while the new local library UI is being rebuilt.
-          </p>
-          <p className="text-[10px] text-[#93899f] dark:text-white/40">
-            Existing backup and export functions are unchanged.
-          </p>
+          <p>Share tools are hidden for now while the new Home layout is being rebuilt. Existing export and backup functions remain unchanged.</p>
         </div>
       )}
 
@@ -433,11 +418,8 @@ export default function ShadowDocsMyBooksPanel({
         <button type="button">Drafts</button>
         <button type="button">Completed</button>
         <FolderOpen />
+        <FilePlus2 />
       </div>
-
-      <p className="text-[11px] leading-5 text-[#77758b] dark:text-white/55">
-        Projects stay in this browser. Clearing browser data or losing this device may remove them; download backups regularly.
-      </p>
     </section>
   )
 }
