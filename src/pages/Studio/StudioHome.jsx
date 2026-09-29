@@ -184,12 +184,24 @@ const HERO_DESKTOP = {
 }
 
 const HERO_MOBILE = {
-  scale: 1,
+  scale: 2,
   x: 0,
   y: 0,
   brightness: 88,
   opacity: 100,
   shade: 48,
+}
+
+const LOGO_DESKTOP = {
+  scale: 1,
+  x: 24,
+  y: 0,
+}
+
+const LOGO_MOBILE = {
+  scale: 1,
+  x: 24,
+  y: 0,
 }
 
 function initialTheme() {
@@ -318,13 +330,21 @@ export default function StudioHome({
           inset:0;
           width:100%;
           height:100%;
-          object-fit:cover;
           object-position:center center;
-          transform:translate(var(--hero-desktop-x),var(--hero-desktop-y)) scale(var(--hero-desktop-scale));
           transform-origin:center center;
-          opacity:var(--hero-desktop-opacity);
-          filter:brightness(var(--hero-desktop-brightness)) saturate(.92) contrast(1.02);
           will-change:transform,filter,opacity
+        }
+        .ss-home-hero-art-back{
+          object-fit:cover;
+          transform:scale(1.06);
+          opacity:.42;
+          filter:brightness(var(--hero-desktop-brightness)) saturate(.82) blur(10px)
+        }
+        .ss-home-hero-art-main{
+          object-fit:cover;
+          transform:translate(var(--hero-desktop-x),var(--hero-desktop-y)) scale(var(--hero-desktop-scale));
+          opacity:var(--hero-desktop-opacity);
+          filter:brightness(var(--hero-desktop-brightness)) saturate(.92) contrast(1.02)
         }
         .ss-home-hero-shade{
           position:absolute;
@@ -408,19 +428,13 @@ export default function StudioHome({
         .ss-home-icon-btn:disabled{opacity:.42;cursor:default}
         .ss-home-icon-btn i{font-size:17px}
         .ss-home-brand{
-  position:relative;
-  z-index:3;
-  align-self:center;
-  max-width:470px;
-  padding:34px 0 48px;
-  margin-left:24px
-}
-        .ss-home-brand{
           position:relative;
           z-index:3;
           align-self:center;
           max-width:470px;
-          padding:34px 0 48px
+          padding:34px 0 48px;
+          transform:translate(var(--logo-desktop-x),var(--logo-desktop-y)) scale(var(--logo-desktop-scale));
+          transform-origin:left center
         }
         .ss-home-logo{
           display:block;
@@ -428,14 +442,6 @@ export default function StudioHome({
           max-height:150px;
           object-fit:contain;
           object-position:left center
-        }
-        .ss-home-tagline{
-          margin:12px 0 0;
-          color:#8d969e;
-          font-size:10px;
-          font-weight:650;
-          letter-spacing:.34em;
-          text-transform:uppercase
         }
         .ss-home-quick{
           position:absolute;
@@ -638,7 +644,14 @@ export default function StudioHome({
             margin-left:-18px;
             margin-right:-18px
           }
-          .ss-home-hero-art{
+          .ss-home-hero-art-back{
+            object-fit:cover;
+            transform:scale(1.08);
+            opacity:.5;
+            filter:brightness(var(--hero-mobile-brightness)) saturate(.78) blur(10px)
+          }
+          .ss-home-hero-art-main{
+            object-fit:contain;
             transform:translate(var(--hero-mobile-x),var(--hero-mobile-y)) scale(var(--hero-mobile-scale));
             opacity:var(--hero-mobile-opacity);
             filter:brightness(var(--hero-mobile-brightness)) saturate(.92) contrast(1.02)
@@ -657,9 +670,17 @@ export default function StudioHome({
           .ss-home-back{top:16px;left:0}
           .ss-home-top-actions{top:16px;right:0}
           .ss-home-icon-btn{width:40px;height:40px}
-          .ss-home-brand{position:absolute;z-index:3;left:0;top:90px;width:64%;padding:0}
+          .ss-home-brand{
+            position:absolute;
+            z-index:3;
+            left:0;
+            top:90px;
+            width:64%;
+            padding:0;
+            transform:translate(var(--logo-mobile-x),var(--logo-mobile-y)) scale(var(--logo-mobile-scale));
+            transform-origin:left top
+          }
           .ss-home-logo{width:min(310px,100%)}
-          .ss-home-tagline{margin-top:9px;font-size:8px;letter-spacing:.27em}
           .ss-home-quick{
             position:absolute;
             z-index:4;
@@ -687,12 +708,10 @@ export default function StudioHome({
             margin-left:-14px;
             margin-right:-14px
           }
-          .ss-home-hero-art{object-position:center center}
           .ss-home-back{left:14px}
           .ss-home-top-actions{right:14px}
           .ss-home-brand{left:14px;top:112px;width:66%}
           .ss-home-logo{width:100%}
-          .ss-home-tagline{max-width:180px;font-size:7px;line-height:1.7}
           .ss-home-top-actions{gap:8px}
           .ss-home-icon-btn{width:38px;height:38px}
           .ss-home-quick{
@@ -726,11 +745,18 @@ export default function StudioHome({
           '--hero-mobile-brightness': `${HERO_MOBILE.brightness}%`,
           '--hero-mobile-opacity': `${HERO_MOBILE.opacity}%`,
           '--hero-mobile-shade': `${HERO_MOBILE.shade}%`,
+          '--logo-desktop-scale': LOGO_DESKTOP.scale,
+          '--logo-desktop-x': `${LOGO_DESKTOP.x}px`,
+          '--logo-desktop-y': `${LOGO_DESKTOP.y}px`,
+          '--logo-mobile-scale': LOGO_MOBILE.scale,
+          '--logo-mobile-x': `${LOGO_MOBILE.x}px`,
+          '--logo-mobile-y': `${LOGO_MOBILE.y}px`,
         }}
       >
         <div className="ss-home-shell">
           <section className="ss-home-hero">
-            <img className="ss-home-hero-art" src={HERO_IMAGE} alt="" />
+            <img className="ss-home-hero-art ss-home-hero-art-back" src={HERO_IMAGE} alt="" aria-hidden="true" />
+            <img className="ss-home-hero-art ss-home-hero-art-main" src={HERO_IMAGE} alt="" />
             <div className="ss-home-hero-shade" aria-hidden="true" />
 
             <button type="button" className="ss-home-back" onClick={onExit} aria-label={labels.back} title={labels.back}>
