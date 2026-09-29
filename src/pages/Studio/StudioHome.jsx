@@ -824,6 +824,13 @@ export default function StudioHome({
           .ss-home-bottom-card{justify-content:flex-start;min-height:66px}
         }
         @media(max-width:520px){
+        .ss-home-shell{padding:0 14px 14px}
+.ss-home-hero{min-height:500px;width:calc(100% + 28px);margin-left:-14px;margin-right:-14px}
+.ss-home-quick{bottom:28px;gap:18px;max-width:calc(100% - 28px)}
+.ss-home-section{padding-top:14px}
+.ss-recent-empty{min-height:105px;padding:14px}
+.ss-home-bottom{margin-top:10px;padding-top:10px}
+.ss-home-bottom-card{min-height:56px}
           .ss-home-shell{padding:0 14px 20px}
           .ss-home-hero{
             min-height:590px;
