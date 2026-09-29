@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, CheckCircle2, CloudOff, FileDown, LayoutTemplate, PenLine, Settings2, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, CheckCircle2, CloudOff, FileDown, LayoutTemplate, PenLine, Search, Settings2, X } from 'lucide-react'
 import { deleteLocalBook, saveLocalBook } from './ShadowDocsStore'
 import { downloadShadowDocsLibrary, readShadowDocsLibrary } from './ShadowDocsLibraryBackup'
 import { loadShadowDocsBooksSafely, flushShadowDocsPendingWrites } from './ShadowDocsLocalIntegrity'
@@ -400,15 +400,16 @@ export default function ShadowDocsWorkspace() {
     printShadowDocsProject(latest)
   }
 
-  return <div className="sd-app">
-    <header className="sd-header">
+  return <div className="sd-app sd-shadow-black">
+    <header className="sd-header sd-minimal-header">
       <div className="sd-header-inner">
-        <button type="button" onClick={() => navigate('/app')} aria-label="Back to Apps" className="sd-icon-button">
-          <ArrowLeft size={19} />
+        <button type="button" onClick={() => navigate('/app')} aria-label="Back" className="sd-icon-button sd-header-back">
+          <ArrowLeft size={20} />
         </button>
-        <div className="sd-brand-icon"><BookOpen size={22} /></div>
-        <div className="sd-brand"><strong>Shadow Docs</strong><small>WRITE · DESIGN · PDF</small></div>
-        <span className="sd-local-chip"><CloudOff size={13} /> Local-first</span>
+        <strong className="sd-minimal-title">Shadow Docs</strong>
+        <button type="button" aria-label="Search" className="sd-icon-button sd-header-search" onClick={() => setSection('books')}>
+          <Search size={20} />
+        </button>
       </div>
     </header>
 
