@@ -1291,7 +1291,7 @@ const handleOpenProfileSwitcher = (event) => {
 />
             <MenuRow
   to="/app"
-  icon="fa-solid fa-table-cells-large"
+  icon="fa-solid fa-shapes"
   title={tx('mePage.app')}
   divider
 />
