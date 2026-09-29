@@ -1,3 +1,4 @@
+```jsx
 import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -23,7 +24,7 @@ registerTranslationNamespace('studioHome', {
     recentProjects: 'Recent Projects',
     seeAll: 'See All',
     importFile: 'Import File',
-    projectFormat: '.shadowstudio',
+    projectFormat: 'PSD, PNG, JPG',
     openDevice: 'Open from Device',
     photosFiles: 'Photos, Files',
     localOnly: 'Local only',
@@ -56,10 +57,10 @@ registerTranslationNamespace('studioHome', {
     recentProjects: 'ការងារថ្មីៗ',
     seeAll: 'មើលទាំងអស់',
     importFile: 'នាំចូល Project',
-    projectFormat: '.shadowstudio',
+    projectFormat: 'PSD, PNG, JPG',
     openDevice: 'បើកពីឧបករណ៍',
-    photosFiles: 'រូបភាព និង Files',
-    localOnly: 'Local ប៉ុណ្ណោះ',
+    photosFiles: 'Photos, Files',
+    localOnly: 'Local only',
     noOnline: 'គ្មាន Online Gallery',
     settings: 'ការកំណត់',
     help: 'ជំនួយ',
@@ -89,10 +90,10 @@ registerTranslationNamespace('studioHome', {
     recentProjects: '最近项目',
     seeAll: '查看全部',
     importFile: '导入项目',
-    projectFormat: '.shadowstudio',
+    projectFormat: 'PSD, PNG, JPG',
     openDevice: '从设备打开',
-    photosFiles: '照片、文件',
-    localOnly: '仅本地',
+    photosFiles: 'Photos, Files',
+    localOnly: 'Local only',
     noOnline: '无在线画廊',
     settings: '设置',
     help: '帮助',
@@ -122,10 +123,10 @@ registerTranslationNamespace('studioHome', {
     recentProjects: '最近のプロジェクト',
     seeAll: 'すべて表示',
     importFile: 'プロジェクトを読み込む',
-    projectFormat: '.shadowstudio',
+    projectFormat: 'PSD, PNG, JPG',
     openDevice: 'デバイスから開く',
-    photosFiles: '写真・ファイル',
-    localOnly: 'ローカルのみ',
+    photosFiles: 'Photos, Files',
+    localOnly: 'Local only',
     noOnline: 'オンラインギャラリーなし',
     settings: '設定',
     help: 'ヘルプ',
@@ -155,10 +156,10 @@ registerTranslationNamespace('studioHome', {
     recentProjects: '최근 프로젝트',
     seeAll: '모두 보기',
     importFile: '프로젝트 가져오기',
-    projectFormat: '.shadowstudio',
+    projectFormat: 'PSD, PNG, JPG',
     openDevice: '기기에서 열기',
-    photosFiles: '사진, 파일',
-    localOnly: '로컬 전용',
+    photosFiles: 'Photos, Files',
+    localOnly: 'Local only',
     noOnline: '온라인 갤러리 없음',
     settings: '설정',
     help: '도움말',
@@ -171,8 +172,8 @@ registerTranslationNamespace('studioHome', {
 })
 
 const THEME_KEY = 'shadow-studio-home-theme-v1'
-const HERO_IMAGE = '/assets/Shadow%20Studio/Pic1.webp'
-const STUDIO_LOGO = '/assets/Shadow%20Studio/Shadow%20Studio%20Logo.png.svg'
+const HERO_IMAGE = '/assets/Shadow Stodio/Pic1.webp'
+const STUDIO_LOGO = '/assets/Shadow Stodio/Shadow Stodio Logo.png.svg'
 
 function initialTheme() {
   try {
@@ -261,13 +262,14 @@ export default function StudioHome({
           --ss-home-yellow-2:#ffd149;
           --ss-home-shadow:rgba(0,0,0,.58);
           position:relative;
-          min-height:calc(100dvh - 34px);
+          min-height:100dvh;
           overflow-x:hidden;
           background:var(--ss-home-bg);
           color:var(--ss-home-text);
           font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
           color-scheme:dark
         }
+        .shadow-studio:has(.ss-home)>.ss-chrome{display:none}
         .ss-home[data-theme=light]{
           --ss-home-bg:#f4f5f6;
           --ss-home-panel:#fff;
@@ -319,6 +321,36 @@ export default function StudioHome({
           background:
             linear-gradient(90deg,#f4f5f6 0%,#f4f5f6 28%,rgba(244,245,246,.83) 42%,rgba(244,245,246,.26) 68%,rgba(244,245,246,.55) 100%),
             linear-gradient(0deg,#f4f5f6 0%,transparent 24%)
+        }
+        .ss-home-back{
+          position:absolute;
+          z-index:6;
+          top:22px;
+          left:4px;
+          width:43px;
+          height:43px;
+          display:grid;
+          place-items:center;
+          border:1px solid transparent;
+          border-radius:50%;
+          background:rgba(13,17,21,.3);
+          color:#f4f6f8;
+          cursor:pointer;
+          backdrop-filter:blur(8px);
+          transition:background 140ms ease,border-color 140ms ease,transform 140ms ease
+        }
+        .ss-home-back:hover{
+          border-color:#58636e;
+          background:rgba(39,45,51,.72);
+          transform:translateX(-1px)
+        }
+        .ss-home-back:focus-visible{
+          outline:2px solid var(--ss-home-yellow);
+          outline-offset:3px
+        }
+        .ss-home[data-theme=light] .ss-home-back{
+          background:rgba(255,255,255,.66);
+          color:#20262c
         }
         .ss-home-top-actions{
           position:absolute;
@@ -581,6 +613,7 @@ export default function StudioHome({
               linear-gradient(90deg,#f4f5f6 0%,rgba(244,245,246,.77) 43%,rgba(244,245,246,.18) 82%),
               linear-gradient(0deg,#f4f5f6 3%,transparent 47%)
           }
+          .ss-home-back{top:16px;left:0}
           .ss-home-top-actions{top:16px;right:0}
           .ss-home-icon-btn{width:40px;height:40px}
           .ss-home-brand{position:absolute;z-index:3;left:0;top:90px;width:64%;padding:0}
@@ -629,6 +662,10 @@ export default function StudioHome({
           <section className="ss-home-hero">
             <img className="ss-home-hero-art" src={HERO_IMAGE} alt="" />
             <div className="ss-home-hero-shade" aria-hidden="true" />
+
+            <button type="button" className="ss-home-back" onClick={onExit} aria-label={labels.back} title={labels.back}>
+              <i className="fa-solid fa-chevron-left" aria-hidden="true" />
+            </button>
 
             <div className="ss-home-top-actions">
               <button type="button" className="ss-home-icon-btn" disabled={!canOpen} onClick={onOpenProject} aria-label={tx('studioHome.openProject')} title={tx('studioHome.openProject')}>
@@ -731,11 +768,10 @@ export default function StudioHome({
           {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
           {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
 
-          <button type="button" className="ss-recent-see" onClick={onExit} style={{ marginTop: 18 }}>
-            <i className="fa-solid fa-arrow-left" aria-hidden="true" /> {labels.back}
-          </button>
         </div>
       </main>
     </>
   )
 }
+
+```
