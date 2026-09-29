@@ -238,6 +238,8 @@ export default function StudioHome({
   const [theme, setTheme] = useState(initialTheme)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [recoveryPreviewUrls, setRecoveryPreviewUrls] = useState({})
+  const [recoveryToast, setRecoveryToast] = useState('')
   const settingsRef = useRef(null)
   const recoveryPending = recoveryBooting || Boolean(recoveryEntry) || recoveryBusy
   const busy = projectBusy || paperLoading || newFileOpen || exportOpen
@@ -263,6 +265,35 @@ export default function StudioHome({
     document.addEventListener('pointerdown', close)
     return () => document.removeEventListener('pointerdown', close)
   }, [settingsOpen])
+
+  useEffect(() => {
+    const urls = []
+    const next = {}
+    const papers = Array.isArray(recoveryEntry?.documents) ? recoveryEntry.documents : []
+
+    papers.forEach((paper) => {
+      if (paper?.image instanceof Blob) {
+        const url = URL.createObjectURL(paper.image)
+        urls.push(url)
+        next[paper.id] = url
+      }
+    })
+
+    setRecoveryPreviewUrls(next)
+    return () => urls.forEach((url) => URL.revokeObjectURL(url))
+  }, [recoveryEntry])
+
+  useEffect(() => {
+    if (!recoveryStatus) return undefined
+    setRecoveryToast(recoveryStatus)
+    const timer = window.setTimeout(() => setRecoveryToast(''), 1800)
+    return () => window.clearTimeout(timer)
+  }, [recoveryStatus])
+
+  function recentPreview(document) {
+    if (typeof document?.image === 'string') return document.image
+    return recoveryPreviewUrls[document?.id] || ''
+  }
 
   function openMyWorks() {
     if (!canOpen) return
@@ -618,17 +649,64 @@ export default function StudioHome({
           font-size:10px;
           line-height:1.6
         }
-        .ss-recovery-card{
-          margin:18px 0 0;
-          padding:14px 16px;
-          border:1px solid #5a6978;
-          border-radius:10px;
-          background:var(--ss-home-panel);
-          color:var(--ss-home-text)
+        .ss-recovery-backdrop{
+          position:fixed;
+          inset:0;
+          z-index:100;
+          display:grid;
+          place-items:center;
+          padding:18px;
+          background:rgba(4,7,10,.64);
+          backdrop-filter:blur(7px)
         }
-        .ss-recovery-card h2{margin:0 0 5px;font-size:13px}
-        .ss-recovery-card p{margin:0 0 10px;color:var(--ss-home-muted);font-size:10px;line-height:1.55}
-        .ss-recovery-actions{display:flex;flex-wrap:wrap;gap:7px}
+        .ss-recovery-card{
+          width:min(430px,100%);
+          padding:18px;
+          border:1px solid #526170;
+          border-radius:12px;
+          background:linear-gradient(180deg,#161d24,#10161b);
+          color:#f6f8fa;
+          box-shadow:0 24px 70px rgba(0,0,0,.58)
+        }
+        .ss-home[data-theme=light] .ss-recovery-card{
+          border-color:#cfd6dc;
+          background:#fff;
+          color:#15191d
+        }
+        .ss-recovery-card h2{
+          margin:0 0 7px;
+          font-size:14px;
+          font-weight:800
+        }
+        .ss-recovery-card p{
+          margin:0 0 14px;
+          color:var(--ss-home-muted);
+          font-size:10px;
+          line-height:1.6
+        }
+        .ss-recovery-actions{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:8px
+        }
+        .ss-recovery-actions .ss-btn{
+          min-height:38px;
+          border:1px solid #465361;
+          border-radius:8px;
+          background:#29323b;
+          color:#eef4f8;
+          font:750 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer
+        }
+        .ss-recovery-actions .ss-btn.primary{
+          border-color:#6ab7f5;
+          background:#55a9ea;
+          color:#0c2233
+        }
+        .ss-recovery-actions .ss-btn:disabled{
+          opacity:.55;
+          cursor:default
+        }
         .ss-project-message{
           margin-top:12px;
           padding:9px 11px;
@@ -637,6 +715,46 @@ export default function StudioHome({
           background:var(--ss-home-panel);
           color:var(--ss-home-muted);
           font-size:10px
+        }
+        .ss-recovery-toast{
+          position:fixed;
+          top:50%;
+          left:50%;
+          z-index:140;
+          width:max-content;
+          max-width:min(360px,calc(100vw - 32px));
+          padding:11px 16px;
+          border:1px solid rgba(255,255,255,.14);
+          border-radius:10px;
+          background:rgba(26,30,34,.96);
+          color:#f7f9fb;
+          box-shadow:0 14px 38px rgba(0,0,0,.42);
+          backdrop-filter:blur(10px);
+          -webkit-backdrop-filter:blur(10px);
+          font:700 10px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          text-align:center;
+          pointer-events:none;
+          animation:ssRecoveryToast 1.8s ease both
+        }
+        .ss-home[data-theme=light] .ss-recovery-toast{
+          border-color:rgba(25,30,35,.12);
+          background:rgba(255,255,255,.97);
+          color:#171b1f;
+          box-shadow:0 14px 34px rgba(24,30,36,.18)
+        }
+        @keyframes ssRecoveryToast{
+          0%{
+            opacity:0;
+            transform:translate(-50%,-50%) scale(.94)
+          }
+          12%,76%{
+            opacity:1;
+            transform:translate(-50%,-50%) scale(1)
+          }
+          100%{
+            opacity:0;
+            transform:translate(-50%,-50%) scale(.98)
+          }
         }
         @media(max-width:900px){
           .ss-home-shell{padding:0 18px 24px}
@@ -758,6 +876,28 @@ export default function StudioHome({
           '--logo-mobile-y': `${LOGO_MOBILE.y}px`,
         }}
       >
+        {recoveryEntry ? (
+          <div className="ss-recovery-backdrop">
+            <section
+              className="ss-recovery-card"
+              role="dialog"
+              aria-modal="true"
+              aria-label={tx('studioHome.localRecovery')}
+            >
+              <h2>{tx('studioHome.recoverHeading')}</h2>
+              <p>{tx('studioHome.recoveryDescription', { count: recoveryEntry.documents.length, time: new Date(recoveryEntry.savedAt).toLocaleString() })}</p>
+              <div className="ss-recovery-actions">
+                <button type="button" className="ss-btn primary" disabled={recoveryBusy} onClick={onRecover}>
+                  {recoveryBusy ? tx('studioHome.restoring') : tx('studioHome.restore')}
+                </button>
+                <button type="button" className="ss-btn" disabled={recoveryBusy} onClick={onDiscardRecovery}>
+                  {tx('studioHome.discard')}
+                </button>
+              </div>
+            </section>
+          </div>
+        ) : null}
+
         <div className="ss-home-shell">
           <section className="ss-home-hero">
             <img
@@ -834,19 +974,6 @@ export default function StudioHome({
 
           {recoveryBooting ? <div className="ss-project-message" role="status">{tx('studioHome.checking')}</div> : null}
 
-          {recoveryEntry ? (
-            <section className="ss-recovery-card" aria-label={tx('studioHome.localRecovery')}>
-              <h2>{tx('studioHome.recoverHeading')}</h2>
-              <p>{tx('studioHome.recoveryDescription', { count: recoveryEntry.documents.length, time: new Date(recoveryEntry.savedAt).toLocaleString() })}</p>
-              <div className="ss-recovery-actions">
-                <button type="button" className="ss-btn primary" disabled={recoveryBusy} onClick={onRecover}>
-                  {recoveryBusy ? tx('studioHome.restoring') : tx('studioHome.restore')}
-                </button>
-                <button type="button" className="ss-btn" disabled={recoveryBusy} onClick={onDiscardRecovery}>{tx('studioHome.discard')}</button>
-              </div>
-            </section>
-          ) : null}
-
           <section className="ss-home-section">
             <div className="ss-home-section-head">
               <h2>{tx('studioHome.recentProjects')}</h2>
@@ -860,7 +987,7 @@ export default function StudioHome({
                 {recentDocuments.slice(0, 8).map((document) => (
                   <article className="ss-recent-card" key={document.id}>
                     <div className="ss-recent-thumb">
-                      {document.image ? <img src={document.image} alt="" /> : <div className="ss-recent-thumb-empty"><i className="fa-regular fa-image" aria-hidden="true" /></div>}
+                      {recentPreview(document) ? <img src={recentPreview(document)} alt="" /> : <div className="ss-recent-thumb-empty"><i className="fa-regular fa-image" aria-hidden="true" /></div>}
                     </div>
                     <strong title={document.name}>{document.name}</strong>
                     <span>{Number(document.width || 0).toLocaleString()} × {Number(document.height || 0).toLocaleString()}</span>
@@ -887,7 +1014,11 @@ export default function StudioHome({
           </section>
 
           {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
-          {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
+          {recoveryToast ? (
+            <div className="ss-recovery-toast" role="status" aria-live="polite">
+              {recoveryToast}
+            </div>
+          ) : null}
 
         </div>
       </main>
