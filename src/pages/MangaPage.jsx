@@ -227,6 +227,7 @@ export default function MangaPage() {
   const { t } = useDisplayTranslation()
   const [searchParams] = useSearchParams()
   const sliderRef = useRef(null)
+  const firstSlideIndexRef = useRef(null)
   const lastScrollYRef = useRef(0)
   const [activeGenre, setActiveGenre] = useState('today')
   const [pressedGenre, setPressedGenre] = useState('')
@@ -458,11 +459,65 @@ export default function MangaPage() {
   }, [])
 
   useEffect(() => {
-    if (slides.length <= 1) return undefined
+    if (slides.length === 0) return undefined
+
+    const slider = sliderRef.current
+    if (!slider) return undefined
+
+    if (firstSlideIndexRef.current === null) {
+      const now = new Date()
+      const day = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0'),
+      ].join('-')
+      const storageKey = 'shadow_daily_slide_manga_top_slider'
+
+      let firstSlideIndex = 0
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')
+        const nextIndex = Number(saved.nextIndex)
+
+        if (
+          saved.day === day &&
+          Number.isInteger(nextIndex) &&
+          nextIndex >= 0
+        ) {
+          firstSlideIndex = nextIndex % slides.length
+        }
+
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({
+            day,
+            nextIndex: (firstSlideIndex + 1) % slides.length,
+          })
+        )
+      } catch {}
+
+      firstSlideIndexRef.current = firstSlideIndex
+    }
+
+    const firstSlideIndex =
+      Number(firstSlideIndexRef.current || 0) % slides.length
+
+    const frame = window.requestAnimationFrame(() => {
+      if (!slider.clientWidth) return
+
+      slider.scrollTo({
+        left: firstSlideIndex * slider.clientWidth,
+        behavior: 'auto',
+      })
+      setActiveSlide(firstSlideIndex)
+    })
+
+    if (slides.length <= 1) {
+      return () => window.cancelAnimationFrame(frame)
+    }
 
     const timer = window.setInterval(() => {
-      const slider = sliderRef.current
-      if (!slider || !slider.clientWidth) return
+      if (!slider.clientWidth) return
 
       const currentIndex = Math.round(slider.scrollLeft / slider.clientWidth)
       const nextIndex = (currentIndex + 1) % slides.length
@@ -474,7 +529,10 @@ export default function MangaPage() {
       setActiveSlide(nextIndex)
     }, 5000)
 
-    return () => window.clearInterval(timer)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.clearInterval(timer)
+    }
   }, [slides.length])
 
   useEffect(() => {
