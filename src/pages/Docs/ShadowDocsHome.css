@@ -386,7 +386,54 @@
 .sd-me-list button+button{border-top:1px solid var(--sd-border)}
 .sd-me-list strong{display:block;font-size:12px}
 .sd-me-list small{display:block;margin-top:4px;color:var(--sd-muted);font-size:10px}
+
+.sd-shadow-black .sd-main:has(.sd-home-surface) .sd-topline{
+  position:relative;
+  min-height:154px;
+  padding-right:min(48vw,430px);
+  overflow:hidden;
+}
+.sd-shadow-black .sd-main:has(.sd-home-surface) .sd-topline::after{
+  content:"";
+  position:absolute;
+  z-index:0;
+  top:-18px;
+  right:-12px;
+  width:min(48vw,410px);
+  height:190px;
+  background:url("/assets/Shadow%20Docs/Doc_Pic1.webp") right center/contain no-repeat;
+  pointer-events:none;
+}
+.sd-shadow-black .sd-main:has(.sd-home-surface) .sd-topline>div,
+.sd-shadow-black .sd-main:has(.sd-home-surface) .sd-topline>button{
+  position:relative;
+  z-index:1;
+}
+.sd-floating-create{
+  position:fixed;
+  z-index:38;
+  right:max(18px,calc((100vw - 680px)/2 + 18px));
+  bottom:86px;
+  width:62px;
+  height:62px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:50%;
+  background:#25a884;
+  color:#fff;
+  box-shadow:0 14px 32px rgba(0,0,0,.36),0 4px 12px rgba(37,168,132,.28);
+  transition:transform .18s,background .18s;
+}
+.sd-floating-create:hover{background:#2dbc94}
+.sd-floating-create:active:not(:disabled){transform:scale(.94)}
+.sd-floating-create:disabled{opacity:.45}
+
 @media(max-width:600px){
+  .sd-shadow-black .sd-main:has(.sd-home-surface) .sd-topline{min-height:132px;padding-right:148px}
+  .sd-shadow-black .sd-main:has(.sd-home-surface) .sd-topline::after{top:-10px;right:-16px;width:190px;height:142px}
+  .sd-floating-create{right:18px;bottom:82px;width:58px;height:58px}
+
   .sd-library-tabs button{padding:9px 4px;font-size:9px}
   .sd-device-import{min-height:245px;padding:24px 14px}
   .sd-device-actions{grid-template-columns:1fr}
