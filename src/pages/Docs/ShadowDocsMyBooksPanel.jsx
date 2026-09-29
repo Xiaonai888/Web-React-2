@@ -413,6 +413,20 @@ export default function ShadowDocsMyBooksPanel({
         </div>
       )}
 
+
+      {tab !== 'Trash' && (
+        <button
+          type="button"
+          className="sd-floating-create"
+          aria-label="Create Book"
+          title="Create Book"
+          disabled={!ready || typeof onCreate !== 'function'}
+          onClick={onCreate}
+        >
+          <Plus size={30} strokeWidth={2} />
+        </button>
+      )}
+
       <div hidden aria-hidden="true">
         <button type="button">All Books</button>
         <button type="button">Drafts</button>
