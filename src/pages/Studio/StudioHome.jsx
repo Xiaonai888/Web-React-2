@@ -408,6 +408,14 @@ export default function StudioHome({
         .ss-home-icon-btn:disabled{opacity:.42;cursor:default}
         .ss-home-icon-btn i{font-size:17px}
         .ss-home-brand{
+  position:relative;
+  z-index:3;
+  align-self:center;
+  max-width:470px;
+  padding:34px 0 48px;
+  margin-left:24px
+}
+        .ss-home-brand{
           position:relative;
           z-index:3;
           align-self:center;
@@ -756,7 +764,7 @@ export default function StudioHome({
 
             <div className="ss-home-brand">
               <img className="ss-home-logo" src={STUDIO_LOGO} alt="Shadow Studio" />
-              <p className="ss-home-tagline">Draw your story</p>
+              
             </div>
 
             <div className="ss-home-quick">
