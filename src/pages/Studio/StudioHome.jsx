@@ -335,13 +335,15 @@ export default function StudioHome({
           transform-origin:center center;
           will-change:transform,filter,opacity
         }
-        .ss-home-hero-art-back{
+        .ss-home-hero-desktop{display:block}
+        .ss-home-hero-mobile{display:none}
+        .ss-home-hero-desktop.ss-home-hero-art-back{
           object-fit:cover;
           transform:scale(1.06);
           opacity:.42;
           filter:brightness(var(--hero-desktop-brightness)) saturate(.82) blur(10px)
         }
-        .ss-home-hero-art-main{
+        .ss-home-hero-desktop.ss-home-hero-art-main{
           object-fit:cover;
           transform:translate(var(--hero-desktop-x),var(--hero-desktop-y)) scale(var(--hero-desktop-scale));
           opacity:var(--hero-desktop-opacity);
@@ -645,13 +647,15 @@ export default function StudioHome({
             margin-left:-18px;
             margin-right:-18px
           }
-          .ss-home-hero-art-back{
+          .ss-home-hero-desktop{display:none}
+          .ss-home-hero-mobile{display:block}
+          .ss-home-hero-mobile.ss-home-hero-art-back{
             object-fit:cover;
             transform:scale(1.08);
             opacity:.5;
             filter:brightness(var(--hero-mobile-brightness)) saturate(.78) blur(10px)
           }
-          .ss-home-hero-art-main{
+          .ss-home-hero-mobile.ss-home-hero-art-main{
             object-fit:contain;
             transform:translate(var(--hero-mobile-x),var(--hero-mobile-y)) scale(var(--hero-mobile-scale));
             opacity:var(--hero-mobile-opacity);
@@ -756,14 +760,28 @@ export default function StudioHome({
       >
         <div className="ss-home-shell">
           <section className="ss-home-hero">
-            <picture>
-  <source media="(max-width:900px)" srcSet={HERO_MOBILE_IMAGE} />
-  <img className="ss-home-hero-art ss-home-hero-art-back" src={HERO_DESKTOP_IMAGE} alt="" aria-hidden="true" />
-</picture>
-<picture>
-  <source media="(max-width:900px)" srcSet={HERO_MOBILE_IMAGE} />
-  <img className="ss-home-hero-art ss-home-hero-art-main" src={HERO_DESKTOP_IMAGE} alt="" />
-</picture>
+            <img
+              className="ss-home-hero-art ss-home-hero-art-back ss-home-hero-desktop"
+              src={HERO_DESKTOP_IMAGE}
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              className="ss-home-hero-art ss-home-hero-art-main ss-home-hero-desktop"
+              src={HERO_DESKTOP_IMAGE}
+              alt=""
+            />
+            <img
+              className="ss-home-hero-art ss-home-hero-art-back ss-home-hero-mobile"
+              src={HERO_MOBILE_IMAGE}
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              className="ss-home-hero-art ss-home-hero-art-main ss-home-hero-mobile"
+              src={HERO_MOBILE_IMAGE}
+              alt=""
+            />
             <div className="ss-home-hero-shade" aria-hidden="true" />
 
             <button type="button" className="ss-home-back" onClick={onExit} aria-label={labels.back} title={labels.back}>
