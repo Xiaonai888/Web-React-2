@@ -1,4 +1,3 @@
-```jsx
 import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -773,5 +772,3 @@ export default function StudioHome({
     </>
   )
 }
-
-```
