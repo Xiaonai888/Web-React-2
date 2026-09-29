@@ -1,76 +1,741 @@
-import { useMemo, useState } from 'react'
-import { BookOpen, CheckCircle2, Copy, Download, FilePlus2, FolderOpen, MoreHorizontal, PenLine, Plus, Search, Settings2, Trash2, Upload, X } from 'lucide-react'
-import { getBookTemplate, getCoverPreset } from './ShadowDocsTemplateCatalog'
+import { useEffect, useRef, useState } from 'react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
-const FILTERS = ['All Books', 'Drafts', 'Completed']
-const safeImage = value => typeof value === 'string' && /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(value) && value.length < 2500000
+registerTranslationNamespace('studioHome', {
+  en: {
+    openProject: 'Open Project',
+    importImage: 'Import Image as Paper',
+    resume: 'Continue Workspace',
+    checking: 'Checking for locally autosaved work...',
+    localRecovery: 'Local recovery',
+    recoverHeading: 'Recover your last workspace',
+    recoveryDescription: '{{count}} paper(s) · Autosaved {{time}}. Restore them before creating or opening another project.',
+    restoring: 'Restoring...',
+    restore: 'Restore Workspace',
+    discard: 'Discard Recovery',
+    projectFiles: 'Project files',
+    projectInfo: 'Save Project downloads a .shadowstudio file to your device. Open Project reopens it later. Local autosave is only a temporary browser recovery copy.',
+    myWorks: 'My Works',
+    openManage: 'Open & Manage',
+    newCanvas: 'New Canvas',
+    startDrawing: 'Start Drawing',
+    recentProjects: 'Recent Projects',
+    seeAll: 'See All',
+    importFile: 'Import File',
+    projectFormat: '.shadowstudio',
+    openDevice: 'Open from Device',
+    photosFiles: 'Photos, Files',
+    localOnly: 'Local only',
+    noOnline: 'No Online Gallery',
+    settings: 'Settings',
+    help: 'Help',
+    appearance: 'Appearance',
+    dark: 'Dark',
+    light: 'Light',
+    localMessage: 'Shadow Studio keeps this workspace local. Project files stay on your device unless you choose to share them.',
+    noRecent: 'No recent local work yet. Create a canvas or open a project.',
+  },
+  km: {
+    openProject: 'បើកគម្រោង',
+    importImage: 'នាំចូលរូបភាពជាក្រដាស',
+    resume: 'បន្តការងារ',
+    checking: 'កំពុងពិនិត្យការងារដែលបានរក្សាទុកស្វ័យប្រវត្តិ...',
+    localRecovery: 'ការស្ដារទិន្នន័យក្នុងឧបករណ៍',
+    recoverHeading: 'ស្ដារការងារចុងក្រោយ',
+    recoveryDescription: 'មានក្រដាស {{count}} · បានរក្សាទុកស្វ័យប្រវត្តិនៅ {{time}}។ សូមស្ដារវាមុនបង្កើត ឬបើកគម្រោងផ្សេង។',
+    restoring: 'កំពុងស្ដារ...',
+    restore: 'ស្ដារការងារ',
+    discard: 'បោះបង់ទិន្នន័យស្ដារ',
+    projectFiles: 'ឯកសារគម្រោង',
+    projectInfo: 'Save Project ទាញយកឯកសារ .shadowstudio ទៅឧបករណ៍របស់អ្នក។ អាចប្រើ Open Project ដើម្បីបើកវាម្ដងទៀត។ ការរក្សាទុកស្វ័យប្រវត្តិក្នុង Browser គឺសម្រាប់ស្ដារជាបណ្ដោះអាសន្នប៉ុណ្ណោះ។',
+    myWorks: 'ការងាររបស់ខ្ញុំ',
+    openManage: 'បើក និងគ្រប់គ្រង',
+    newCanvas: 'Canvas ថ្មី',
+    startDrawing: 'ចាប់ផ្ដើមគូរ',
+    recentProjects: 'ការងារថ្មីៗ',
+    seeAll: 'មើលទាំងអស់',
+    importFile: 'នាំចូល Project',
+    projectFormat: '.shadowstudio',
+    openDevice: 'បើកពីឧបករណ៍',
+    photosFiles: 'រូបភាព និង Files',
+    localOnly: 'Local ប៉ុណ្ណោះ',
+    noOnline: 'គ្មាន Online Gallery',
+    settings: 'ការកំណត់',
+    help: 'ជំនួយ',
+    appearance: 'រូបរាង',
+    dark: 'ខ្មៅ',
+    light: 'ស',
+    localMessage: 'Shadow Studio រក្សាការងារនៅលើឧបករណ៍នេះ។ Project file មិនត្រូវបានបង្ហោះ Online ទេ លុះត្រាតែអ្នកជ្រើសចែករំលែកដោយខ្លួនឯង។',
+    noRecent: 'មិនទាន់មានការងារ Local ថ្មីៗទេ។ បង្កើត Canvas ថ្មី ឬបើក Project មួយ។',
+  },
+  zh: {
+    openProject: '打开项目',
+    importImage: '将图像导入为画布',
+    resume: '继续编辑',
+    checking: '正在检查本地自动保存的作品...',
+    localRecovery: '本地恢复',
+    recoverHeading: '恢复上次的工作区',
+    recoveryDescription: '{{count}} 个画布 · 于 {{time}} 自动保存。请先恢复，再创建或打开其他项目。',
+    restoring: '恢复中...',
+    restore: '恢复工作区',
+    discard: '丢弃恢复数据',
+    projectFiles: '项目文件',
+    projectInfo: 'Save Project 会将 .shadowstudio 文件下载到设备。以后可用 Open Project 重新打开。本地自动保存仅用于浏览器中的临时恢复。',
+    myWorks: '我的作品',
+    openManage: '打开与管理',
+    newCanvas: '新建画布',
+    startDrawing: '开始绘画',
+    recentProjects: '最近项目',
+    seeAll: '查看全部',
+    importFile: '导入项目',
+    projectFormat: '.shadowstudio',
+    openDevice: '从设备打开',
+    photosFiles: '照片、文件',
+    localOnly: '仅本地',
+    noOnline: '无在线画廊',
+    settings: '设置',
+    help: '帮助',
+    appearance: '外观',
+    dark: '深色',
+    light: '浅色',
+    localMessage: 'Shadow Studio 将工作保存在本地设备。除非您主动分享，否则项目不会上传到在线服务。',
+    noRecent: '暂无最近的本地作品。新建画布或打开一个项目。',
+  },
+  ja: {
+    openProject: 'プロジェクトを開く',
+    importImage: '画像をキャンバスとして読み込む',
+    resume: '作業を続ける',
+    checking: 'ローカルの自動保存データを確認中...',
+    localRecovery: 'ローカル復元',
+    recoverHeading: '前回の作業を復元',
+    recoveryDescription: 'キャンバス {{count}} 件 · {{time}} に自動保存。ほかのプロジェクトを作成または開く前に復元してください。',
+    restoring: '復元中...',
+    restore: '作業を復元',
+    discard: '復元データを破棄',
+    projectFiles: 'プロジェクトファイル',
+    projectInfo: 'Save Project で .shadowstudio ファイルをデバイスにダウンロードできます。あとで Open Project から開けます。ローカル自動保存はブラウザでの一時的な復元用です。',
+    myWorks: 'マイ作品',
+    openManage: '開く・管理',
+    newCanvas: '新規キャンバス',
+    startDrawing: '描画を開始',
+    recentProjects: '最近のプロジェクト',
+    seeAll: 'すべて表示',
+    importFile: 'プロジェクトを読み込む',
+    projectFormat: '.shadowstudio',
+    openDevice: 'デバイスから開く',
+    photosFiles: '写真・ファイル',
+    localOnly: 'ローカルのみ',
+    noOnline: 'オンラインギャラリーなし',
+    settings: '設定',
+    help: 'ヘルプ',
+    appearance: '外観',
+    dark: 'ダーク',
+    light: 'ライト',
+    localMessage: 'Shadow Studio は作業をこのデバイスに保存します。自分で共有しない限り、プロジェクトがオンラインへアップロードされることはありません。',
+    noRecent: '最近のローカル作品はまだありません。新規キャンバスを作成するか、プロジェクトを開いてください。',
+  },
+  ko: {
+    openProject: '프로젝트 열기',
+    importImage: '이미지를 캔버스로 가져오기',
+    resume: '작업 계속하기',
+    checking: '로컬 자동 저장 작업 확인 중...',
+    localRecovery: '로컬 복구',
+    recoverHeading: '마지막 작업 공간 복구',
+    recoveryDescription: '캔버스 {{count}}개 · {{time}}에 자동 저장됨. 다른 프로젝트를 만들거나 열기 전에 복구하세요.',
+    restoring: '복구 중...',
+    restore: '작업 공간 복구',
+    discard: '복구 데이터 삭제',
+    projectFiles: '프로젝트 파일',
+    projectInfo: 'Save Project는 .shadowstudio 파일을 기기에 다운로드합니다. 나중에 Open Project로 다시 열 수 있습니다. 로컬 자동 저장은 브라우저의 임시 복구용입니다.',
+    myWorks: '내 작업',
+    openManage: '열기 및 관리',
+    newCanvas: '새 캔버스',
+    startDrawing: '그리기 시작',
+    recentProjects: '최근 프로젝트',
+    seeAll: '모두 보기',
+    importFile: '프로젝트 가져오기',
+    projectFormat: '.shadowstudio',
+    openDevice: '기기에서 열기',
+    photosFiles: '사진, 파일',
+    localOnly: '로컬 전용',
+    noOnline: '온라인 갤러리 없음',
+    settings: '설정',
+    help: '도움말',
+    appearance: '화면 모드',
+    dark: '다크',
+    light: '라이트',
+    localMessage: 'Shadow Studio는 작업을 이 기기에 로컬로 보관합니다. 직접 공유하지 않는 한 프로젝트가 온라인에 업로드되지 않습니다.',
+    noRecent: '최근 로컬 작업이 없습니다. 새 캔버스를 만들거나 프로젝트를 여세요.',
+  },
+})
 
-function BookCover({ book }) {
-  const template = getBookTemplate(book.template)
-  const colors = getCoverPreset(template.cover)
-  const withImage = safeImage(book.image)
-  return (
-    <div className="relative flex aspect-[3/4] w-full flex-col items-center justify-between overflow-hidden rounded-xl p-[10%] text-center" style={{ background: colors.background, backgroundImage: withImage ? `linear-gradient(180deg,rgba(20,15,35,.2),rgba(20,15,35,.7)),url("${book.image}")` : colors.background, backgroundSize: 'cover', backgroundPosition: 'center', color: withImage ? '#fff' : colors.foreground }}>
-      <span aria-hidden="true" className="text-2xl opacity-90">{template.symbol}</span>
-      <div className="w-full min-w-0"><span className="block text-[7px] font-semibold tracking-[.14em] opacity-80">SHADOW DOCS</span><strong className="mt-2 block break-words text-[12px] leading-snug sm:text-[15px]" style={{ fontFamily: 'Georgia, "Noto Serif Khmer", serif' }}>{book.title || 'Untitled Book'}</strong><span className="mx-auto my-2 block h-px w-10" style={{ background: withImage ? '#fff' : colors.accent }} /><small className="block break-words text-[9px]">{book.author || 'YOUR NAME'}</small></div>
-      <span aria-hidden="true" className="text-lg opacity-80">{template.symbol}</span>
-    </div>
-  )
+const THEME_KEY = 'shadow-studio-home-theme-v1'
+const HERO_IMAGE = '/assets/Shadow%20Studio/Pic1.webp'
+const STUDIO_LOGO = '/assets/Shadow%20Studio/Shadow%20Studio%20Logo.png.svg'
+
+function initialTheme() {
+  try {
+    return window.localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark'
+  } catch {
+    return 'dark'
+  }
 }
 
-export default function ShadowDocsMyBooksPanel({ books = [], ready = true, onCreate, onImport, onOpen, onAction, onOpenTrash }) {
-  const [filter, setFilter] = useState('All Books')
-  const [search, setSearch] = useState('')
-  const [menuId, setMenuId] = useState('')
-  const library = (Array.isArray(books) ? books : []).filter(book => !book.deletedAt)
-  const trashedCount = (Array.isArray(books) ? books : []).filter(book => !!book.deletedAt).length
-  const visibleBooks = useMemo(() => library.filter(book => {
-    if (filter === 'Drafts' && book.status === 'completed') return false
-    if (filter === 'Completed' && book.status !== 'completed') return false
-    return `${book.title || ''} ${book.author || ''}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())
-  }).sort((a, b) => (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0)), [library, filter, search])
+export default function StudioHome({
+  documents,
+  documentLimit,
+  recoveryBooting,
+  recoveryEntry,
+  recoveryBusy,
+  projectBusy,
+  paperLoading,
+  newFileOpen,
+  exportOpen,
+  projectNotice,
+  recoveryStatus,
+  onNewFile,
+  onOpenProject,
+  onImportImage,
+  onResume,
+  onExit,
+  onRecover,
+  onDiscardRecovery,
+  labels,
+}) {
+  const { t: tx } = useDisplayTranslation()
+  const [theme, setTheme] = useState(initialTheme)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const settingsRef = useRef(null)
+  const recoveryPending = recoveryBooting || Boolean(recoveryEntry) || recoveryBusy
+  const busy = projectBusy || paperLoading || newFileOpen || exportOpen
+  const canOpen = !recoveryPending && !busy
+  const canNew = canOpen && documents.length < documentLimit
+  const canImport = canNew
+  const canResume = canOpen && documents.length > 0
+  const recoveredDocuments = Array.isArray(recoveryEntry?.documents) ? recoveryEntry.documents : []
+  const recentDocuments = documents.length ? documents : recoveredDocuments
+  const recentFromRecovery = !documents.length && recoveredDocuments.length > 0
 
-  function action(book, value) {
-    setMenuId('')
-    onAction?.(book, value)
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(THEME_KEY, theme)
+    } catch {}
+  }, [theme])
+
+  useEffect(() => {
+    if (!settingsOpen) return undefined
+    const close = (event) => {
+      if (!settingsRef.current?.contains(event.target)) setSettingsOpen(false)
+    }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [settingsOpen])
+
+  function openMyWorks() {
+    if (!canOpen) return
+    if (canResume) onResume()
+    else onOpenProject()
+  }
+
+  function openRecent() {
+    if (recentFromRecovery && recoveryEntry && !recoveryBusy) {
+      onRecover()
+      return
+    }
+    openMyWorks()
   }
 
   return (
-    <section aria-label="My Books" className="sd-stack">
-      <div className="sd-card flex flex-wrap items-center justify-between gap-5 bg-[#f6f0ff] dark:bg-[#2d263e]">
-        <div className="min-w-0"><span className="sd-eyebrow">MY LIBRARY</span><h2 className="mt-2">Your books, your workspace</h2><p className="mt-2 max-w-xl text-[12px] leading-6 text-[#77758b] dark:text-white/65">Write and design books on this device. Download a project backup to keep a separate copy.</p></div>
-        <div className="flex flex-wrap gap-2"><button type="button" disabled={!ready || typeof onCreate !== 'function'} onClick={onCreate} className="sd-button sd-button-primary"><Plus size={16}/> Create a Book</button><button type="button" disabled={!ready || typeof onImport !== 'function'} onClick={onImport} className="sd-button sd-button-ghost"><Upload size={16}/> Import Backup</button></div>
-      </div>
+    <>
+      <style>{`
+        .ss-home{
+          --ss-home-bg:#090c0f;
+          --ss-home-panel:#11161b;
+          --ss-home-panel-2:#151b21;
+          --ss-home-line:#252d35;
+          --ss-home-text:#f6f7f8;
+          --ss-home-muted:#8e98a3;
+          --ss-home-yellow:#f4bd28;
+          --ss-home-yellow-2:#ffd149;
+          --ss-home-shadow:rgba(0,0,0,.58);
+          position:relative;
+          min-height:calc(100dvh - 34px);
+          overflow-x:hidden;
+          background:var(--ss-home-bg);
+          color:var(--ss-home-text);
+          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          color-scheme:dark
+        }
+        .ss-home[data-theme=light]{
+          --ss-home-bg:#f4f5f6;
+          --ss-home-panel:#fff;
+          --ss-home-panel-2:#f8f9fa;
+          --ss-home-line:#d9dde1;
+          --ss-home-text:#15191d;
+          --ss-home-muted:#6f7780;
+          --ss-home-shadow:rgba(35,40,45,.14);
+          color-scheme:light
+        }
+        .ss-home *{box-sizing:border-box}
+        .ss-home-shell{
+          width:min(1600px,100%);
+          min-height:inherit;
+          margin:0 auto;
+          padding:0 clamp(18px,3.2vw,54px) 30px
+        }
+        .ss-home-hero{
+          position:relative;
+          min-height:410px;
+          display:grid;
+          grid-template-columns:minmax(360px,.92fr) minmax(430px,1.08fr);
+          align-items:center;
+          border-bottom:1px solid var(--ss-home-line);
+          overflow:hidden
+        }
+        .ss-home-hero-art{
+          position:absolute;
+          top:0;
+          right:0;
+          width:66%;
+          height:100%;
+          object-fit:cover;
+          object-position:center 32%;
+          opacity:.9;
+          filter:saturate(.82) contrast(1.03)
+        }
+        .ss-home[data-theme=light] .ss-home-hero-art{opacity:.45}
+        .ss-home-hero-shade{
+          position:absolute;
+          inset:0;
+          z-index:1;
+          pointer-events:none;
+          background:
+            linear-gradient(90deg,var(--ss-home-bg) 0%,var(--ss-home-bg) 26%,rgba(9,12,15,.84) 38%,rgba(9,12,15,.17) 63%,rgba(9,12,15,.4) 100%),
+            linear-gradient(0deg,var(--ss-home-bg) 0%,transparent 24%)
+        }
+        .ss-home[data-theme=light] .ss-home-hero-shade{
+          background:
+            linear-gradient(90deg,#f4f5f6 0%,#f4f5f6 28%,rgba(244,245,246,.83) 42%,rgba(244,245,246,.26) 68%,rgba(244,245,246,.55) 100%),
+            linear-gradient(0deg,#f4f5f6 0%,transparent 24%)
+        }
+        .ss-home-top-actions{
+          position:absolute;
+          z-index:5;
+          top:22px;
+          right:4px;
+          display:flex;
+          align-items:center;
+          gap:10px
+        }
+        .ss-home-icon-btn{
+          width:43px;
+          height:43px;
+          display:grid;
+          place-items:center;
+          border:1px solid #48515b;
+          border-radius:50%;
+          background:rgba(13,17,21,.54);
+          color:#f4f6f8;
+          cursor:pointer;
+          backdrop-filter:blur(10px)
+        }
+        .ss-home[data-theme=light] .ss-home-icon-btn{
+          background:rgba(255,255,255,.72);
+          color:#20262c;
+          border-color:#cfd5da
+        }
+        .ss-home-icon-btn:focus-visible,
+        .ss-home-action:focus-visible,
+        .ss-home-bottom-card:focus-visible,
+        .ss-recent-see:focus-visible,
+        .ss-home-settings button:focus-visible{
+          outline:2px solid var(--ss-home-yellow);
+          outline-offset:3px
+        }
+        .ss-home-icon-btn:disabled{opacity:.42;cursor:default}
+        .ss-home-icon-btn i{font-size:17px}
+        .ss-home-brand{
+          position:relative;
+          z-index:3;
+          align-self:center;
+          max-width:470px;
+          padding:34px 0 48px
+        }
+        .ss-home-logo{
+          display:block;
+          width:min(390px,88%);
+          max-height:150px;
+          object-fit:contain;
+          object-position:left center
+        }
+        .ss-home-tagline{
+          margin:12px 0 0;
+          color:#8d969e;
+          font-size:10px;
+          font-weight:650;
+          letter-spacing:.34em;
+          text-transform:uppercase
+        }
+        .ss-home-quick{
+          position:relative;
+          z-index:3;
+          justify-self:start;
+          align-self:center;
+          display:flex;
+          align-items:flex-start;
+          gap:58px;
+          margin-left:-34px;
+          padding-top:90px
+        }
+        .ss-home-action{
+          width:142px;
+          border:0;
+          background:transparent;
+          color:var(--ss-home-text);
+          text-align:center;
+          cursor:pointer
+        }
+        .ss-home-action:disabled{opacity:.4;cursor:default}
+        .ss-home-action-circle{
+          width:112px;
+          height:112px;
+          display:grid;
+          place-items:center;
+          margin:0 auto 12px;
+          border:1px solid #525d68;
+          border-radius:50%;
+          background:rgba(18,23,28,.78);
+          color:#f4f6f8;
+          box-shadow:0 15px 32px rgba(0,0,0,.18);
+          backdrop-filter:blur(9px)
+        }
+        .ss-home[data-theme=light] .ss-home-action-circle{
+          background:rgba(255,255,255,.8);
+          color:#22272c;
+          border-color:#c7cdd2
+        }
+        .ss-home-action--new .ss-home-action-circle{
+          border-color:#d8a511;
+          background:linear-gradient(145deg,var(--ss-home-yellow-2),var(--ss-home-yellow));
+          color:#151515
+        }
+        .ss-home-action-circle i{font-size:37px;font-weight:400}
+        .ss-home-action strong{display:block;font-size:16px;font-weight:800}
+        .ss-home-action small{display:block;margin-top:3px;color:var(--ss-home-muted);font-size:11px}
+        .ss-home-section{padding:22px 0 0}
+        .ss-home-section-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:16px;
+          margin-bottom:14px
+        }
+        .ss-home-section-head h2{margin:0;font-size:18px;font-weight:800}
+        .ss-recent-see{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          border:0;
+          background:transparent;
+          color:var(--ss-home-muted);
+          font:700 11px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer
+        }
+        .ss-recent-list{
+          display:grid;
+          grid-auto-flow:column;
+          grid-auto-columns:minmax(142px,1fr);
+          gap:14px;
+          overflow-x:auto;
+          padding:0 0 8px;
+          scrollbar-width:thin;
+          scrollbar-color:#3b444d transparent
+        }
+        .ss-recent-card{min-width:0;color:var(--ss-home-text)}
+        .ss-recent-thumb{
+          aspect-ratio:1/1;
+          overflow:hidden;
+          border:1px solid var(--ss-home-line);
+          border-radius:9px;
+          background:var(--ss-home-panel)
+        }
+        .ss-recent-thumb img{width:100%;height:100%;display:block;object-fit:cover}
+        .ss-recent-thumb-empty{width:100%;height:100%;display:grid;place-items:center;color:#68727c;font-size:29px}
+        .ss-recent-card strong{display:block;overflow:hidden;margin-top:9px;font-size:11px;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
+        .ss-recent-card span{display:block;margin-top:3px;color:var(--ss-home-muted);font-size:9px}
+        .ss-recent-empty{
+          min-height:135px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          padding:24px;
+          border:1px dashed var(--ss-home-line);
+          border-radius:10px;
+          background:var(--ss-home-panel);
+          color:var(--ss-home-muted);
+          text-align:center;
+          font-size:11px;
+          line-height:1.6
+        }
+        .ss-home-bottom{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:14px;
+          margin-top:18px;
+          padding-top:14px;
+          border-top:1px solid var(--ss-home-line)
+        }
+        .ss-home-bottom-card{
+          min-height:78px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:18px;
+          padding:13px 17px;
+          border:1px solid var(--ss-home-line);
+          border-radius:10px;
+          background:linear-gradient(145deg,var(--ss-home-panel-2),var(--ss-home-panel));
+          color:var(--ss-home-text);
+          text-align:left
+        }
+        button.ss-home-bottom-card{cursor:pointer}
+        .ss-home-bottom-card:disabled{opacity:.45;cursor:default}
+        .ss-home-bottom-card>i{width:34px;flex:none;color:#e9edf0;font-size:28px;text-align:center}
+        .ss-home[data-theme=light] .ss-home-bottom-card>i{color:#272c31}
+        .ss-home-bottom-card strong{display:block;font-size:11px;font-weight:800}
+        .ss-home-bottom-card small{display:block;margin-top:4px;color:var(--ss-home-muted);font-size:9px}
+        .ss-home-settings{
+          position:absolute;
+          z-index:20;
+          top:73px;
+          right:4px;
+          width:210px;
+          padding:11px;
+          border:1px solid var(--ss-home-line);
+          border-radius:10px;
+          background:var(--ss-home-panel);
+          color:var(--ss-home-text);
+          box-shadow:0 18px 45px var(--ss-home-shadow)
+        }
+        .ss-home-settings-title{margin:0 0 8px;color:var(--ss-home-muted);font-size:9px;font-weight:800;text-transform:uppercase}
+        .ss-home-theme-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+        .ss-home-theme-row button{
+          min-height:34px;
+          border:1px solid var(--ss-home-line);
+          border-radius:7px;
+          background:var(--ss-home-panel-2);
+          color:var(--ss-home-text);
+          font:700 10px Inter,ui-sans-serif,system-ui,sans-serif;
+          cursor:pointer
+        }
+        .ss-home-theme-row button[aria-pressed=true]{border-color:#ba9220;background:rgba(244,189,40,.13)}
+        .ss-home-help{
+          position:absolute;
+          z-index:20;
+          top:73px;
+          right:55px;
+          width:min(310px,calc(100vw - 32px));
+          padding:12px 14px;
+          border:1px solid var(--ss-home-line);
+          border-radius:10px;
+          background:var(--ss-home-panel);
+          box-shadow:0 18px 45px var(--ss-home-shadow);
+          color:var(--ss-home-muted);
+          font-size:10px;
+          line-height:1.6
+        }
+        .ss-recovery-card{
+          margin:18px 0 0;
+          padding:14px 16px;
+          border:1px solid #5a6978;
+          border-radius:10px;
+          background:var(--ss-home-panel);
+          color:var(--ss-home-text)
+        }
+        .ss-recovery-card h2{margin:0 0 5px;font-size:13px}
+        .ss-recovery-card p{margin:0 0 10px;color:var(--ss-home-muted);font-size:10px;line-height:1.55}
+        .ss-recovery-actions{display:flex;flex-wrap:wrap;gap:7px}
+        .ss-project-message{
+          margin-top:12px;
+          padding:9px 11px;
+          border:1px solid var(--ss-home-line);
+          border-radius:8px;
+          background:var(--ss-home-panel);
+          color:var(--ss-home-muted);
+          font-size:10px
+        }
+        @media(max-width:900px){
+          .ss-home-shell{padding:0 18px 24px}
+          .ss-home-hero{min-height:570px;display:block}
+          .ss-home-hero-art{width:92%;height:65%;right:-22%;object-position:60% 22%;opacity:.72}
+          .ss-home[data-theme=light] .ss-home-hero-art{opacity:.38}
+          .ss-home-hero-shade{
+            background:
+              linear-gradient(90deg,var(--ss-home-bg) 0%,rgba(9,12,15,.72) 39%,rgba(9,12,15,.18) 78%),
+              linear-gradient(0deg,var(--ss-home-bg) 3%,transparent 44%,rgba(9,12,15,.12) 100%)
+          }
+          .ss-home[data-theme=light] .ss-home-hero-shade{
+            background:
+              linear-gradient(90deg,#f4f5f6 0%,rgba(244,245,246,.77) 43%,rgba(244,245,246,.18) 82%),
+              linear-gradient(0deg,#f4f5f6 3%,transparent 47%)
+          }
+          .ss-home-top-actions{top:16px;right:0}
+          .ss-home-icon-btn{width:40px;height:40px}
+          .ss-home-brand{position:absolute;z-index:3;left:0;top:90px;width:64%;padding:0}
+          .ss-home-logo{width:min(310px,100%)}
+          .ss-home-tagline{margin-top:9px;font-size:8px;letter-spacing:.27em}
+          .ss-home-quick{
+            position:absolute;
+            z-index:4;
+            left:50%;
+            bottom:35px;
+            width:min(420px,100%);
+            justify-content:center;
+            gap:34px;
+            margin:0;
+            padding:0;
+            transform:translateX(-50%)
+          }
+          .ss-home-action{width:130px}
+          .ss-home-action-circle{width:104px;height:104px}
+          .ss-recent-list{grid-auto-columns:minmax(132px,42vw)}
+          .ss-home-bottom{grid-template-columns:1fr;gap:8px}
+          .ss-home-bottom-card{justify-content:flex-start;min-height:66px}
+        }
+        @media(max-width:520px){
+          .ss-home-shell{padding:0 14px 20px}
+          .ss-home-hero{min-height:590px}
+          .ss-home-hero-art{width:118%;height:68%;right:-48%;object-position:55% 22%}
+          .ss-home-brand{top:112px;width:66%}
+          .ss-home-logo{width:100%}
+          .ss-home-tagline{max-width:180px;font-size:7px;line-height:1.7}
+          .ss-home-top-actions{gap:8px}
+          .ss-home-icon-btn{width:38px;height:38px}
+          .ss-home-quick{bottom:38px;gap:18px}
+          .ss-home-action{width:126px;padding:0}
+          .ss-home-action-circle{width:100px;height:100px}
+          .ss-home-action strong{font-size:14px}
+          .ss-home-action small{font-size:10px}
+          .ss-home-section-head h2{font-size:16px}
+          .ss-recent-list{margin-right:-14px;grid-auto-columns:137px;gap:12px;padding-right:14px}
+          .ss-home-settings,.ss-home-help{top:64px;right:0}
+        }
+      `}</style>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2"><div role="group" aria-label="Filter books" className="sd-segments max-w-full overflow-x-auto">{FILTERS.map(item => <button type="button" key={item} aria-pressed={filter === item} className={filter === item ? 'is-active' : ''} onClick={() => { setFilter(item); setMenuId('') }}>{item}</button>)}</div><button type="button" disabled={!ready || typeof onOpenTrash !== 'function'} onClick={onOpenTrash} className="sd-button sd-button-ghost"><Trash2 size={15}/> Trash{trashedCount ? ` (${trashedCount})` : ''}</button></div>
-        <label className="sd-search"><Search size={17}/><input type="search" aria-label="Search books" placeholder="Search your books…" value={search} onChange={event => { setSearch(event.target.value); setMenuId('') }} />{search && <button type="button" aria-label="Clear search" onClick={() => setSearch('')}><X size={15}/></button>}</label>
-      </div>
+      <main className="ss-home" data-theme={theme}>
+        <div className="ss-home-shell">
+          <section className="ss-home-hero">
+            <img className="ss-home-hero-art" src={HERO_IMAGE} alt="" />
+            <div className="ss-home-hero-shade" aria-hidden="true" />
 
-      {!ready && <p role="status" className="sd-card text-center text-sm text-[#77758b]">Loading books saved on this device…</p>}
-      {ready && !visibleBooks.length && <div className="sd-card flex min-h-[230px] flex-col items-center justify-center gap-3 text-center"><FolderOpen size={38} className="text-[#7653bd]"/><h3>{library.length ? 'No books match your search' : 'Start your first book'}</h3><p className="max-w-sm text-[12px] leading-6 text-[#77758b] dark:text-white/65">{library.length ? 'Try a different keyword or book status.' : 'Create a book to start writing. Your drafts are saved locally.'}</p>{!library.length && <button type="button" disabled={typeof onCreate !== 'function'} onClick={onCreate} className="sd-button sd-button-primary"><FilePlus2 size={16}/> Create a Book</button>}</div>}
-
-      {ready && visibleBooks.length > 0 && <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleBooks.map(book => (
-        <article key={book.id} className="sd-card flex min-w-0 gap-3 p-3">
-          <button type="button" onClick={() => onOpen?.(book, 'write')} disabled={typeof onOpen !== 'function'} className="w-[92px] shrink-0 self-start overflow-hidden rounded-xl text-left shadow-sm disabled:cursor-default" aria-label={`Open ${book.title || 'Untitled Book'}`}><BookCover book={book}/></button>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex items-start justify-between gap-1"><span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-[#7653bd] dark:text-[#d4c1ff]">{book.status === 'completed' ? <><CheckCircle2 size={12}/> COMPLETED</> : 'DRAFT'}</span>
-              <div className="relative"><button type="button" aria-label={`Book actions for ${book.title || 'Untitled Book'}`} aria-expanded={menuId === book.id} onClick={() => setMenuId(id => id === book.id ? '' : book.id)} className="sd-icon-button h-8 w-8 border-0"><MoreHorizontal size={17}/></button>
-                {menuId === book.id && <div className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-[#e9e5f1] bg-white p-1 shadow-lg dark:border-white/15 dark:bg-[#252333]">{[
-                  ['backup', Download, 'Download backup'],
-                  ['duplicate', Copy, 'Duplicate book'],
-                  ['rename', PenLine, 'Edit details'],
-                  ['complete', CheckCircle2, book.status === 'completed' ? 'Mark as draft' : 'Mark completed'],
-                  ['delete', Trash2, 'Move to Trash'],
-                ].map(([id, Icon, label]) => <button key={id} type="button" disabled={typeof onAction !== 'function'} onClick={() => action(book, id)} className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[11px] hover:bg-[#f5f0ff] disabled:opacity-50 dark:hover:bg-white/10 ${id === 'delete' ? 'text-red-600 dark:text-red-300' : 'text-[#332b43] dark:text-white'}`}><Icon size={14}/>{label}</button>)}</div>}
+            <div className="ss-home-top-actions">
+              <button type="button" className="ss-home-icon-btn" disabled={!canOpen} onClick={onOpenProject} aria-label={tx('studioHome.openProject')} title={tx('studioHome.openProject')}>
+                <i className="fa-regular fa-folder-open" aria-hidden="true" />
+              </button>
+              <button type="button" className="ss-home-icon-btn" onClick={() => { setHelpOpen((value) => !value); setSettingsOpen(false) }} aria-label={tx('studioHome.help')} title={tx('studioHome.help')}>
+                <i className="fa-regular fa-circle-question" aria-hidden="true" />
+              </button>
+              <div ref={settingsRef}>
+                <button type="button" className="ss-home-icon-btn" onClick={() => { setSettingsOpen((value) => !value); setHelpOpen(false) }} aria-label={tx('studioHome.settings')} title={tx('studioHome.settings')}>
+                  <i className="fa-solid fa-gear" aria-hidden="true" />
+                </button>
+                {settingsOpen ? (
+                  <div className="ss-home-settings" role="dialog" aria-label={tx('studioHome.settings')}>
+                    <p className="ss-home-settings-title">{tx('studioHome.appearance')}</p>
+                    <div className="ss-home-theme-row">
+                      <button type="button" aria-pressed={theme === 'dark'} onClick={() => setTheme('dark')}>{tx('studioHome.dark')}</button>
+                      <button type="button" aria-pressed={theme === 'light'} onClick={() => setTheme('light')}>{tx('studioHome.light')}</button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
-            <h3 className="mt-1 line-clamp-2 break-words text-[13px] font-bold leading-5">{book.title || 'Untitled Book'}</h3><p className="mt-1 truncate text-[11px] text-[#77758b] dark:text-white/60">{book.author || 'Author not specified'}</p><p className="mt-1 text-[10px] text-[#93899f] dark:text-white/45">{Array.isArray(book.chapters) ? book.chapters.length : 0} chapters</p>
-            <div className="mt-auto flex flex-wrap gap-x-3 gap-y-2 pt-3"><button type="button" disabled={typeof onOpen !== 'function'} onClick={() => onOpen?.(book, 'write')} className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7653bd] dark:text-[#d4c1ff]"><BookOpen size={13}/> Write</button><button type="button" disabled={typeof onOpen !== 'function'} onClick={() => onOpen?.(book, 'design')} className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7653bd] dark:text-[#d4c1ff]"><Settings2 size={13}/> Design</button></div>
-          </div>
-        </article>
-      ))}</div>}
-      <p className="text-[11px] leading-5 text-[#77758b] dark:text-white/55">Projects stay in this browser. Clearing browser data or losing this device may remove them; download backups regularly.</p>
-    </section>
+
+            {helpOpen ? <div className="ss-home-help" role="status">{tx('studioHome.localMessage')}</div> : null}
+
+            <div className="ss-home-brand">
+              <img className="ss-home-logo" src={STUDIO_LOGO} alt="Shadow Studio" />
+              <p className="ss-home-tagline">Draw your story</p>
+            </div>
+
+            <div className="ss-home-quick">
+              <button type="button" className="ss-home-action" disabled={!canOpen} onClick={openMyWorks}>
+                <span className="ss-home-action-circle"><i className="fa-regular fa-images" aria-hidden="true" /></span>
+                <strong>{tx('studioHome.myWorks')}</strong>
+                <small>{tx('studioHome.openManage')}</small>
+              </button>
+              <button type="button" className="ss-home-action ss-home-action--new" disabled={!canNew} onClick={() => onNewFile('basic')}>
+                <span className="ss-home-action-circle"><i className="fa-solid fa-plus" aria-hidden="true" /></span>
+                <strong>{tx('studioHome.newCanvas')}</strong>
+                <small>{tx('studioHome.startDrawing')}</small>
+              </button>
+            </div>
+          </section>
+
+          {recoveryBooting ? <div className="ss-project-message" role="status">{tx('studioHome.checking')}</div> : null}
+
+          {recoveryEntry ? (
+            <section className="ss-recovery-card" aria-label={tx('studioHome.localRecovery')}>
+              <h2>{tx('studioHome.recoverHeading')}</h2>
+              <p>{tx('studioHome.recoveryDescription', { count: recoveryEntry.documents.length, time: new Date(recoveryEntry.savedAt).toLocaleString() })}</p>
+              <div className="ss-recovery-actions">
+                <button type="button" className="ss-btn primary" disabled={recoveryBusy} onClick={onRecover}>
+                  {recoveryBusy ? tx('studioHome.restoring') : tx('studioHome.restore')}
+                </button>
+                <button type="button" className="ss-btn" disabled={recoveryBusy} onClick={onDiscardRecovery}>{tx('studioHome.discard')}</button>
+              </div>
+            </section>
+          ) : null}
+
+          <section className="ss-home-section">
+            <div className="ss-home-section-head">
+              <h2>{tx('studioHome.recentProjects')}</h2>
+              <button type="button" className="ss-recent-see" disabled={!canOpen} onClick={openRecent}>
+                {tx('studioHome.seeAll')} <i className="fa-solid fa-chevron-right" aria-hidden="true" />
+              </button>
+            </div>
+
+            {recentDocuments.length ? (
+              <div className="ss-recent-list">
+                {recentDocuments.slice(0, 8).map((document) => (
+                  <article className="ss-recent-card" key={document.id}>
+                    <div className="ss-recent-thumb">
+                      {document.image ? <img src={document.image} alt="" /> : <div className="ss-recent-thumb-empty"><i className="fa-regular fa-image" aria-hidden="true" /></div>}
+                    </div>
+                    <strong title={document.name}>{document.name}</strong>
+                    <span>{Number(document.width || 0).toLocaleString()} × {Number(document.height || 0).toLocaleString()}</span>
+                    <span>{document.resolution || 144} PPI</span>
+                  </article>
+                ))}
+              </div>
+            ) : <div className="ss-recent-empty">{tx('studioHome.noRecent')}</div>}
+          </section>
+
+          <section className="ss-home-bottom" aria-label={tx('studioHome.projectFiles')}>
+            <button type="button" className="ss-home-bottom-card" disabled={!canOpen} onClick={onOpenProject}>
+              <i className="fa-regular fa-file" aria-hidden="true" />
+              <span><strong>{tx('studioHome.importFile')}</strong><small>{tx('studioHome.projectFormat')}</small></span>
+            </button>
+            <button type="button" className="ss-home-bottom-card" disabled={!canImport} onClick={onImportImage}>
+              <i className="fa-solid fa-mobile-screen-button" aria-hidden="true" />
+              <span><strong>{tx('studioHome.openDevice')}</strong><small>{tx('studioHome.photosFiles')}</small></span>
+            </button>
+            <div className="ss-home-bottom-card">
+              <i className="fa-solid fa-cloud-arrow-down" aria-hidden="true" />
+              <span><strong>{tx('studioHome.noOnline')}</strong><small>{tx('studioHome.localOnly')}</small></span>
+            </div>
+          </section>
+
+          {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
+          {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
+
+          <button type="button" className="ss-recent-see" onClick={onExit} style={{ marginTop: 18 }}>
+            <i className="fa-solid fa-arrow-left" aria-hidden="true" /> {labels.back}
+          </button>
+        </div>
+      </main>
+    </>
   )
 }
