@@ -412,8 +412,8 @@
 .sd-floating-create{
   position:fixed;
   z-index:38;
-  right:max(30px,calc((100vw - 680px)/2 + 30px));
-  bottom:104px;
+  right:max(18px,calc((100vw - 680px)/2 - 220px));
+  bottom:86px;
   width:62px;
   height:62px;
   display:grid;
