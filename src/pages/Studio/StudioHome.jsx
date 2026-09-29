@@ -824,39 +824,44 @@ export default function StudioHome({
           .ss-home-bottom-card{justify-content:flex-start;min-height:66px}
         }
         @media(max-width:520px){
-        .ss-home-shell{padding:0 14px 14px}
-.ss-home-hero{min-height:500px;width:calc(100% + 28px);margin-left:-14px;margin-right:-14px}
-.ss-home-quick{bottom:28px;gap:18px;max-width:calc(100% - 28px)}
-.ss-home-section{padding-top:14px}
-.ss-recent-empty{min-height:105px;padding:14px}
-.ss-home-bottom{margin-top:10px;padding-top:10px}
-.ss-home-bottom-card{min-height:56px}
-          .ss-home-shell{padding:0 14px 20px}
-          .ss-home-hero{
-            min-height:590px;
-            width:calc(100% + 28px);
-            margin-left:-14px;
-            margin-right:-14px
-          }
-          .ss-home-back{left:14px}
-          .ss-home-top-actions{right:14px}
-          .ss-home-brand{left:14px;top:112px;width:66%}
-          .ss-home-logo{width:100%}
-          .ss-home-top-actions{gap:8px}
-          .ss-home-icon-btn{width:38px;height:38px}
-          .ss-home-quick{
-            bottom:38px;
-            gap:18px;
-            max-width:calc(100% - 28px)
-          }
-          .ss-home-action{width:126px;padding:0}
-          .ss-home-action-circle{width:100px;height:100px}
-          .ss-home-action strong{font-size:14px}
-          .ss-home-action small{font-size:10px}
-          .ss-home-section-head h2{font-size:16px}
-          .ss-recent-list{margin-right:-14px;grid-auto-columns:137px;gap:12px;padding-right:14px}
-          .ss-home-settings,.ss-home-help{top:64px;right:0}
-        }
+  .ss-home-shell{padding:0 14px 14px}
+  .ss-home-hero{
+    min-height:500px;
+    width:calc(100% + 28px);
+    margin-left:-14px;
+    margin-right:-14px
+  }
+  .ss-home-hero-shade{
+    opacity:1;
+    background:linear-gradient(
+      to top,
+      rgba(9,12,15,.20) 0%,
+      rgba(9,12,15,.08) 15%,
+      rgba(9,12,15,0) 30%
+    )
+  }
+  .ss-home-back{left:14px}
+  .ss-home-top-actions{right:14px;gap:8px}
+  .ss-home-brand{left:14px;top:112px;width:66%}
+  .ss-home-logo{width:100%}
+  .ss-home-icon-btn{width:38px;height:38px}
+  .ss-home-quick{
+    bottom:28px;
+    gap:18px;
+    max-width:calc(100% - 28px)
+  }
+  .ss-home-action{width:126px;padding:0}
+  .ss-home-action-circle{width:100px;height:100px}
+  .ss-home-action strong{font-size:14px}
+  .ss-home-action small{font-size:10px}
+  .ss-home-section{padding-top:14px}
+  .ss-home-section-head h2{font-size:16px}
+  .ss-recent-empty{min-height:105px;padding:14px}
+  .ss-recent-list{margin-right:-14px;grid-auto-columns:137px;gap:12px;padding-right:14px}
+  .ss-home-bottom{margin-top:10px;padding-top:10px}
+  .ss-home-bottom-card{min-height:56px}
+  .ss-home-settings,.ss-home-help{top:64px;right:0}
+}
       `}</style>
 
       <main
