@@ -174,6 +174,24 @@ const THEME_KEY = 'shadow-studio-home-theme-v1'
 const HERO_IMAGE = '/assets/Shadow Stodio/Pic1.webp'
 const STUDIO_LOGO = '/assets/Shadow Stodio/Shadow Stodio Logo.png.svg'
 
+const HERO_DESKTOP = {
+  scale: 1,
+  x: 0,
+  y: 0,
+  brightness: 110,
+  opacity: 100,
+  shade: 32,
+}
+
+const HERO_MOBILE = {
+  scale: 1,
+  x: 0,
+  y: 0,
+  brightness: 88,
+  opacity: 100,
+  shade: 48,
+}
+
 function initialTheme() {
   try {
     return window.localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark'
@@ -297,24 +315,26 @@ export default function StudioHome({
         }
         .ss-home-hero-art{
           position:absolute;
-          top:0;
-          right:0;
-          width:66%;
+          inset:0;
+          width:100%;
           height:100%;
           object-fit:cover;
-          object-position:center 32%;
-          opacity:.9;
-          filter:saturate(.82) contrast(1.03)
+          object-position:center center;
+          transform:translate(var(--hero-desktop-x),var(--hero-desktop-y)) scale(var(--hero-desktop-scale));
+          transform-origin:center center;
+          opacity:var(--hero-desktop-opacity);
+          filter:brightness(var(--hero-desktop-brightness)) saturate(.92) contrast(1.02);
+          will-change:transform,filter,opacity
         }
-        .ss-home[data-theme=light] .ss-home-hero-art{opacity:.45}
         .ss-home-hero-shade{
           position:absolute;
           inset:0;
           z-index:1;
           pointer-events:none;
+          opacity:var(--hero-desktop-shade);
           background:
-            linear-gradient(90deg,var(--ss-home-bg) 0%,var(--ss-home-bg) 26%,rgba(9,12,15,.84) 38%,rgba(9,12,15,.17) 63%,rgba(9,12,15,.4) 100%),
-            linear-gradient(0deg,var(--ss-home-bg) 0%,transparent 24%)
+            linear-gradient(90deg,var(--ss-home-bg) 0%,var(--ss-home-bg) 17%,rgba(9,12,15,.72) 34%,rgba(9,12,15,.12) 66%,rgba(9,12,15,.18) 100%),
+            linear-gradient(0deg,var(--ss-home-bg) 0%,transparent 20%)
         }
         .ss-home[data-theme=light] .ss-home-hero-shade{
           background:
@@ -410,15 +430,19 @@ export default function StudioHome({
           text-transform:uppercase
         }
         .ss-home-quick{
-          position:relative;
-          z-index:3;
-          justify-self:start;
-          align-self:center;
+          position:absolute;
+          z-index:4;
+          left:50%;
+          bottom:62px;
+          width:max-content;
+          max-width:calc(100% - 40px);
           display:flex;
           align-items:flex-start;
+          justify-content:center;
           gap:58px;
-          margin-left:-34px;
-          padding-top:90px
+          margin:0;
+          padding:0;
+          transform:translateX(-50%)
         }
         .ss-home-action{
           width:142px;
@@ -599,13 +623,23 @@ export default function StudioHome({
         }
         @media(max-width:900px){
           .ss-home-shell{padding:0 18px 24px}
-          .ss-home-hero{min-height:570px;display:block}
-          .ss-home-hero-art{width:92%;height:65%;right:-22%;object-position:60% 22%;opacity:.72}
-          .ss-home[data-theme=light] .ss-home-hero-art{opacity:.38}
+          .ss-home-hero{
+            min-height:570px;
+            display:block;
+            width:calc(100% + 36px);
+            margin-left:-18px;
+            margin-right:-18px
+          }
+          .ss-home-hero-art{
+            transform:translate(var(--hero-mobile-x),var(--hero-mobile-y)) scale(var(--hero-mobile-scale));
+            opacity:var(--hero-mobile-opacity);
+            filter:brightness(var(--hero-mobile-brightness)) saturate(.92) contrast(1.02)
+          }
           .ss-home-hero-shade{
+            opacity:var(--hero-mobile-shade);
             background:
-              linear-gradient(90deg,var(--ss-home-bg) 0%,rgba(9,12,15,.72) 39%,rgba(9,12,15,.18) 78%),
-              linear-gradient(0deg,var(--ss-home-bg) 3%,transparent 44%,rgba(9,12,15,.12) 100%)
+              linear-gradient(90deg,var(--ss-home-bg) 0%,rgba(9,12,15,.72) 33%,rgba(9,12,15,.12) 78%),
+              linear-gradient(0deg,var(--ss-home-bg) 2%,transparent 42%,rgba(9,12,15,.08) 100%)
           }
           .ss-home[data-theme=light] .ss-home-hero-shade{
             background:
@@ -623,7 +657,8 @@ export default function StudioHome({
             z-index:4;
             left:50%;
             bottom:35px;
-            width:min(420px,100%);
+            width:max-content;
+            max-width:calc(100% - 36px);
             justify-content:center;
             gap:34px;
             margin:0;
@@ -638,14 +673,25 @@ export default function StudioHome({
         }
         @media(max-width:520px){
           .ss-home-shell{padding:0 14px 20px}
-          .ss-home-hero{min-height:590px}
-          .ss-home-hero-art{width:118%;height:68%;right:-48%;object-position:55% 22%}
-          .ss-home-brand{top:112px;width:66%}
+          .ss-home-hero{
+            min-height:590px;
+            width:calc(100% + 28px);
+            margin-left:-14px;
+            margin-right:-14px
+          }
+          .ss-home-hero-art{object-position:center center}
+          .ss-home-back{left:14px}
+          .ss-home-top-actions{right:14px}
+          .ss-home-brand{left:14px;top:112px;width:66%}
           .ss-home-logo{width:100%}
           .ss-home-tagline{max-width:180px;font-size:7px;line-height:1.7}
           .ss-home-top-actions{gap:8px}
           .ss-home-icon-btn{width:38px;height:38px}
-          .ss-home-quick{bottom:38px;gap:18px}
+          .ss-home-quick{
+            bottom:38px;
+            gap:18px;
+            max-width:calc(100% - 28px)
+          }
           .ss-home-action{width:126px;padding:0}
           .ss-home-action-circle{width:100px;height:100px}
           .ss-home-action strong{font-size:14px}
@@ -656,7 +702,24 @@ export default function StudioHome({
         }
       `}</style>
 
-      <main className="ss-home" data-theme={theme}>
+      <main
+        className="ss-home"
+        data-theme={theme}
+        style={{
+          '--hero-desktop-scale': HERO_DESKTOP.scale,
+          '--hero-desktop-x': `${HERO_DESKTOP.x}px`,
+          '--hero-desktop-y': `${HERO_DESKTOP.y}px`,
+          '--hero-desktop-brightness': `${HERO_DESKTOP.brightness}%`,
+          '--hero-desktop-opacity': `${HERO_DESKTOP.opacity}%`,
+          '--hero-desktop-shade': `${HERO_DESKTOP.shade}%`,
+          '--hero-mobile-scale': HERO_MOBILE.scale,
+          '--hero-mobile-x': `${HERO_MOBILE.x}px`,
+          '--hero-mobile-y': `${HERO_MOBILE.y}px`,
+          '--hero-mobile-brightness': `${HERO_MOBILE.brightness}%`,
+          '--hero-mobile-opacity': `${HERO_MOBILE.opacity}%`,
+          '--hero-mobile-shade': `${HERO_MOBILE.shade}%`,
+        }}
+      >
         <div className="ss-home-shell">
           <section className="ss-home-hero">
             <img className="ss-home-hero-art" src={HERO_IMAGE} alt="" />
