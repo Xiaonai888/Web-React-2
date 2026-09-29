@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { getBookTemplate, getCoverPreset } from './ShadowDocsTemplateCatalog'
+import ShadowDocsNewFilePage from './ShadowDocsNewFilePage'
 
 const MAIN_TABS = ['This Device', 'Recent', 'Share', 'Trash']
 const RECENT_FILTERS = ['All', 'Today', 'This Week', 'This Month']
@@ -114,6 +115,7 @@ export default function ShadowDocsMyBooksPanel({
   const [search, setSearch] = useState('')
   const [menuId, setMenuId] = useState('')
   const [page, setPage] = useState(1)
+  const [showNewFile, setShowNewFile] = useState(false)
 
   const library = (Array.isArray(books) ? books : []).filter(book => !book.deletedAt)
   const trashedCount = (Array.isArray(books) ? books : []).filter(book => !!book.deletedAt).length
@@ -163,6 +165,17 @@ export default function ShadowDocsMyBooksPanel({
     setPage(1)
   }
 
+  if (showNewFile) {
+    return <ShadowDocsNewFilePage
+      ready={ready}
+      onBack={() => setShowNewFile(false)}
+      onCreate={size => {
+        setShowNewFile(false)
+        onCreate?.(size)
+      }}
+    />
+  }
+
   return (
     <section aria-label="Home library" className="sd-library-home sd-stack">
       <div role="tablist" aria-label="Home library sections" className="sd-library-tabs">
@@ -200,7 +213,7 @@ export default function ShadowDocsMyBooksPanel({
             <button
               type="button"
               disabled={!ready || typeof onCreate !== 'function'}
-              onClick={onCreate}
+              onClick={() => setShowNewFile(true)}
               className="sd-device-action"
             >
               <span className="sd-device-action-icon"><Plus size={21} /></span>
@@ -421,7 +434,7 @@ export default function ShadowDocsMyBooksPanel({
           aria-label="Create Book"
           title="Create Book"
           disabled={!ready || typeof onCreate !== 'function'}
-          onClick={onCreate}
+          onClick={() => setShowNewFile(true)}
         >
           <Plus size={30} strokeWidth={2} />
         </button>
