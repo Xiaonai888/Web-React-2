@@ -182,6 +182,8 @@ const HERO_DESKTOP = {
   brightness: 110,
   opacity: 100,
   shade: 32,
+  gradientStart: 58,
+  gradientDarkness: 20,
 }
 
 const HERO_MOBILE = {
@@ -191,6 +193,8 @@ const HERO_MOBILE = {
   brightness: 88,
   opacity: 100,
   shade: 48,
+  gradientStart: 66,
+  gradientDarkness: 20,
 }
 
 const LOGO_DESKTOP = {
@@ -385,15 +389,12 @@ export default function StudioHome({
           inset:0;
           z-index:1;
           pointer-events:none;
-          opacity:var(--hero-desktop-shade);
-          background:
-            linear-gradient(90deg,var(--ss-home-bg) 0%,var(--ss-home-bg) 17%,rgba(9,12,15,.72) 34%,rgba(9,12,15,.12) 66%,rgba(9,12,15,.18) 100%),
-            linear-gradient(0deg,var(--ss-home-bg) 0%,transparent 20%)
-        }
-        .ss-home[data-theme=light] .ss-home-hero-shade{
-          background:
-            linear-gradient(90deg,#f4f5f6 0%,#f4f5f6 28%,rgba(244,245,246,.83) 42%,rgba(244,245,246,.26) 68%,rgba(244,245,246,.55) 100%),
-            linear-gradient(0deg,#f4f5f6 0%,transparent 24%)
+          opacity:1;
+          background:linear-gradient(
+            to bottom,
+            transparent var(--hero-desktop-gradient-start),
+            rgb(0 0 0 / var(--hero-desktop-gradient-darkness)) 100%
+          )
         }
         .ss-home-back{
           position:absolute;
@@ -780,15 +781,12 @@ export default function StudioHome({
             filter:brightness(var(--hero-mobile-brightness)) saturate(.92) contrast(1.02)
           }
           .ss-home-hero-shade{
-            opacity:var(--hero-mobile-shade);
-            background:
-              linear-gradient(90deg,var(--ss-home-bg) 0%,rgba(9,12,15,.72) 33%,rgba(9,12,15,.12) 78%),
-              linear-gradient(0deg,var(--ss-home-bg) 2%,transparent 42%,rgba(9,12,15,.08) 100%)
-          }
-          .ss-home[data-theme=light] .ss-home-hero-shade{
-            background:
-              linear-gradient(90deg,#f4f5f6 0%,rgba(244,245,246,.77) 43%,rgba(244,245,246,.18) 82%),
-              linear-gradient(0deg,#f4f5f6 3%,transparent 47%)
+            opacity:1;
+            background:linear-gradient(
+              to bottom,
+              transparent var(--hero-mobile-gradient-start),
+              rgb(0 0 0 / var(--hero-mobile-gradient-darkness)) 100%
+            )
           }
           .ss-home-back{top:16px;left:0}
           .ss-home-top-actions{top:16px;right:0}
@@ -831,15 +829,6 @@ export default function StudioHome({
     margin-left:-14px;
     margin-right:-14px
   }
-  .ss-home-hero-shade{
-    opacity:1;
-    background:linear-gradient(
-      to top,
-      rgba(9,12,15,.20) 0%,
-      rgba(9,12,15,.08) 15%,
-      rgba(9,12,15,0) 30%
-    )
-  }
   .ss-home-back{left:14px}
   .ss-home-top-actions{right:14px;gap:8px}
   .ss-home-brand{left:14px;top:112px;width:66%}
@@ -874,12 +863,16 @@ export default function StudioHome({
           '--hero-desktop-brightness': `${HERO_DESKTOP.brightness}%`,
           '--hero-desktop-opacity': `${HERO_DESKTOP.opacity}%`,
           '--hero-desktop-shade': `${HERO_DESKTOP.shade}%`,
+          '--hero-desktop-gradient-start': `${HERO_DESKTOP.gradientStart}%`,
+          '--hero-desktop-gradient-darkness': `${HERO_DESKTOP.gradientDarkness}%`,
           '--hero-mobile-scale': HERO_MOBILE.scale,
           '--hero-mobile-x': `${HERO_MOBILE.x}px`,
           '--hero-mobile-y': `${HERO_MOBILE.y}px`,
           '--hero-mobile-brightness': `${HERO_MOBILE.brightness}%`,
           '--hero-mobile-opacity': `${HERO_MOBILE.opacity}%`,
           '--hero-mobile-shade': `${HERO_MOBILE.shade}%`,
+          '--hero-mobile-gradient-start': `${HERO_MOBILE.gradientStart}%`,
+          '--hero-mobile-gradient-darkness': `${HERO_MOBILE.gradientDarkness}%`,
           '--logo-desktop-scale': LOGO_DESKTOP.scale,
           '--logo-desktop-x': `${LOGO_DESKTOP.x}px`,
           '--logo-desktop-y': `${LOGO_DESKTOP.y}px`,
