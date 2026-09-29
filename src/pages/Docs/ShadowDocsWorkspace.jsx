@@ -157,11 +157,17 @@ export default function ShadowDocsWorkspace() {
     setError('')
   }
 
-  function startNewBook() {
-    setDetails({ title: '', author: '', description: '' })
-    setDialog('new')
-    setError('')
+  function startNewBook(size) {
+  if (typeof size === 'string') {
+    const item = createShadowDocsBook({ size })
+    putBook(item)
+    openBook(item)
+    return
   }
+  setDetails({ title: '', author: '', description: '' })
+  setDialog('new')
+  setError('')
+}
 
   function submitDetails(event) {
     event.preventDefault()
