@@ -2,7 +2,7 @@ import { BOOK_TEMPLATES, getBookTemplate, getPageLayoutPreset } from './ShadowDo
 import { isShadowDocsFont } from './ShadowDocsFontCatalog'
 
 const ids = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
-const PAGE_SIZES = new Set(['A5', 'A4', 'B5'])
+const PAGE_SIZES = new Set(['A3','A4','A5','A6','B4','B5','B6','C4','C5','C6'])
 const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
 const CHAPTER_STYLES = new Set(['classic', 'modern', 'minimal'])
 const ALLOWED = new Set(['P', 'DIV', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'SUB', 'SUP', 'H1', 'H2', 'H3', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'SPAN', 'A', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TH', 'TD', 'INS', 'DEL'])
@@ -246,5 +246,6 @@ export function normalizeShadowDocsBook(source, { duplicate = false } = {}) {
 export function createShadowDocsBook(values = {}) {
   const template = getBookTemplate(values.template || 'classic')
   const layout = getPageLayoutPreset(template.layout)
-  return normalizeShadowDocsBook({ id: ids(), title: brief(values.title || 'Untitled Book', 160), author: brief(values.author, 120), description: brief(values.description, 350), template: template.id, settings: layout, chapters: [{ id: ids(), title: 'Chapter 1', html: '' }] })
+  const settings = { ...layout, size: PAGE_SIZES.has(values.size) ? values.size : layout.size }
+return normalizeShadowDocsBook({ id: ids(), title: brief(values.title || 'Untitled Book', 160), author: brief(values.author, 120), description: brief(values.description, 350), template: template.id, settings, chapters: [{ id: ids(), title: 'Chapter 1', html: '' }] })
 }
