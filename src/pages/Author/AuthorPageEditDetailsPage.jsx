@@ -2674,17 +2674,16 @@ const [loading, setLoading] = useState(true)
 
  
 async function updateDetails(patch) {
+  const previousDetails = details
   const nextDetails = { ...details, ...patch }
-
-  setDetails(nextDetails)
-  writeStoredDetails(nextDetails)
-  window.dispatchEvent(new Event('shadow_author_page_profile_details_updated'))
-
   const token = getAuthToken()
+
   if (!token) {
     setMessage(detailsText('loginAgain'))
-    return
+    return false
   }
+
+  setDetails(nextDetails)
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
@@ -2704,6 +2703,16 @@ async function updateDetails(patch) {
       throw new Error(data.message || detailsText('saveContactFailed'))
     }
 
+    const savedDetails =
+      data.author_page?.profile_details &&
+      typeof data.author_page.profile_details === 'object' &&
+      !Array.isArray(data.author_page.profile_details)
+        ? { ...DEFAULT_DETAILS, ...data.author_page.profile_details }
+        : nextDetails
+
+    setDetails(savedDetails)
+    writeStoredDetails(savedDetails)
+    window.dispatchEvent(new Event('shadow_author_page_profile_details_updated'))
     invalidateMyAuthorPageClientCache()
 
     if (data.author_page) {
@@ -2714,8 +2723,11 @@ async function updateDetails(patch) {
     }
 
     setMessage(detailsText('saved'))
+    return true
   } catch (error) {
+    setDetails(previousDetails)
     setMessage(error.message || detailsText('saveContactFailed'))
+    return false
   }
 }
 
@@ -3156,12 +3168,12 @@ updateDetails({
   fallbackImage={displayAvatar}
   onClose={() => setActiveModal('')}
   onUploadImage={() => openImagePicker('facebook')}
-  onSave={({ name, url }) => {
-    updateDetails({
+  onSave={async ({ name, url }) => {
+    const saved = await updateDetails({
       facebook_page_name: name,
       facebook_page_url: url,
     })
-    setActiveModal('')
+    if (saved) setActiveModal('')
   }}
 />
       
