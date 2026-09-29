@@ -182,8 +182,9 @@ const HERO_DESKTOP = {
   brightness: 110,
   opacity: 100,
   shade: 32,
-  gradientStart: 58,
-  gradientDarkness: 20,
+  gradientStart: 48,
+  gradientMid: 18,
+  gradientEnd: 68,
 }
 
 const HERO_MOBILE = {
@@ -193,8 +194,9 @@ const HERO_MOBILE = {
   brightness: 88,
   opacity: 100,
   shade: 48,
-  gradientStart: 66,
-  gradientDarkness: 20,
+  gradientStart: 52,
+  gradientMid: 22,
+  gradientEnd: 100,
 }
 
 const LOGO_DESKTOP = {
@@ -358,7 +360,6 @@ export default function StudioHome({
           display:grid;
           grid-template-columns:minmax(360px,.92fr) minmax(430px,1.08fr);
           align-items:center;
-          border-bottom:1px solid var(--ss-home-line);
           overflow:hidden
         }
         .ss-home-hero-art{
@@ -387,13 +388,14 @@ export default function StudioHome({
         .ss-home-hero-shade{
           position:absolute;
           inset:0;
-          z-index:1;
+          z-index:2;
           pointer-events:none;
-          opacity:1;
           background:linear-gradient(
             to bottom,
+            transparent 0%,
             transparent var(--hero-desktop-gradient-start),
-            rgb(0 0 0 / var(--hero-desktop-gradient-darkness)) 100%
+            rgb(0 0 0 / var(--hero-desktop-gradient-mid)) 78%,
+            rgb(0 0 0 / var(--hero-desktop-gradient-end)) 100%
           )
         }
         .ss-home-back{
@@ -781,11 +783,12 @@ export default function StudioHome({
             filter:brightness(var(--hero-mobile-brightness)) saturate(.92) contrast(1.02)
           }
           .ss-home-hero-shade{
-            opacity:1;
             background:linear-gradient(
               to bottom,
+              transparent 0%,
               transparent var(--hero-mobile-gradient-start),
-              rgb(0 0 0 / var(--hero-mobile-gradient-darkness)) 100%
+              rgb(0 0 0 / var(--hero-mobile-gradient-mid)) 78%,
+              rgb(0 0 0 / var(--hero-mobile-gradient-end)) 100%
             )
           }
           .ss-home-back{top:16px;left:0}
@@ -864,7 +867,8 @@ export default function StudioHome({
           '--hero-desktop-opacity': `${HERO_DESKTOP.opacity}%`,
           '--hero-desktop-shade': `${HERO_DESKTOP.shade}%`,
           '--hero-desktop-gradient-start': `${HERO_DESKTOP.gradientStart}%`,
-          '--hero-desktop-gradient-darkness': `${HERO_DESKTOP.gradientDarkness}%`,
+          '--hero-desktop-gradient-mid': HERO_DESKTOP.gradientMid / 100,
+          '--hero-desktop-gradient-end': HERO_DESKTOP.gradientEnd / 100,
           '--hero-mobile-scale': HERO_MOBILE.scale,
           '--hero-mobile-x': `${HERO_MOBILE.x}px`,
           '--hero-mobile-y': `${HERO_MOBILE.y}px`,
@@ -872,7 +876,8 @@ export default function StudioHome({
           '--hero-mobile-opacity': `${HERO_MOBILE.opacity}%`,
           '--hero-mobile-shade': `${HERO_MOBILE.shade}%`,
           '--hero-mobile-gradient-start': `${HERO_MOBILE.gradientStart}%`,
-          '--hero-mobile-gradient-darkness': `${HERO_MOBILE.gradientDarkness}%`,
+          '--hero-mobile-gradient-mid': HERO_MOBILE.gradientMid / 100,
+          '--hero-mobile-gradient-end': HERO_MOBILE.gradientEnd / 100,
           '--logo-desktop-scale': LOGO_DESKTOP.scale,
           '--logo-desktop-x': `${LOGO_DESKTOP.x}px`,
           '--logo-desktop-y': `${LOGO_DESKTOP.y}px`,
