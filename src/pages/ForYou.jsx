@@ -486,6 +486,7 @@ export default function ForYou({
 
   const navigate = useNavigate()
   const swiperRef = useRef(null)
+  const firstSlideIndexRef = useRef(null)
   const lastScrollYRef = useRef(0)
   const swipeStartRef = useRef(null)
   const restoringPositionRef = useRef(Boolean(homeReturnPosition))
@@ -1047,11 +1048,49 @@ useEffect(() => {
   useEffect(() => {
     if (
       (!titleOnlySections && contentGenre !== 'today') ||
-    !window.Swiper ||
-    slides.length === 0
-  ) {
-    return
-  }
+      !window.Swiper ||
+      slides.length === 0
+    ) {
+      return
+    }
+
+    if (firstSlideIndexRef.current === null) {
+      const now = new Date()
+      const day = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0'),
+      ].join('-')
+      const storageKey = `shadow_daily_slide_${slideSectionKey}`
+
+      let firstSlideIndex = 0
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')
+        const nextIndex = Number(saved.nextIndex)
+
+        if (
+          saved.day === day &&
+          Number.isInteger(nextIndex) &&
+          nextIndex >= 0
+        ) {
+          firstSlideIndex = nextIndex % slides.length
+        }
+
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({
+            day,
+            nextIndex: (firstSlideIndex + 1) % slides.length,
+          })
+        )
+      } catch {}
+
+      firstSlideIndexRef.current = firstSlideIndex
+    }
+
+    const initialSlide =
+      Number(firstSlideIndexRef.current || 0) % slides.length
 
     if (swiperRef.current) {
       swiperRef.current.destroy(true, true)
@@ -1059,41 +1098,36 @@ useEffect(() => {
     }
 
     swiperRef.current = new window.Swiper('.mySwiper', {
-  effect: 'coverflow',
-  grabCursor: true,
-
-  centeredSlides: false,
-  slidesPerView: 1,
-  spaceBetween: 0,
-
-  coverflowEffect: {
-    rotate: 0,
-    stretch: 0,
-    depth: 80,
-    modifier: 2,
-    slideShadows: false,
-  },
-
-  breakpoints: {
-    768: {
-      centeredSlides: true,
-      slidesPerView: 'auto',
+      effect: 'coverflow',
+      grabCursor: true,
+      centeredSlides: false,
+      slidesPerView: 1,
       spaceBetween: 0,
-    },
-  },
-
-  loop: slides.length > 1,
-
-  autoplay: {
-    delay: 4500,
-    disableOnInteraction: false,
-  },
-
-  pagination: {
-    el: '.swiper-pagination',
-    clickable: true,
-  },
-})
+      initialSlide,
+      coverflowEffect: {
+        rotate: 0,
+        stretch: 0,
+        depth: 80,
+        modifier: 2,
+        slideShadows: false,
+      },
+      breakpoints: {
+        768: {
+          centeredSlides: true,
+          slidesPerView: 'auto',
+          spaceBetween: 0,
+        },
+      },
+      loop: slides.length > 1,
+      autoplay: {
+        delay: 4500,
+        disableOnInteraction: false,
+      },
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+    })
 
     return () => {
       if (swiperRef.current) {
@@ -1101,7 +1135,7 @@ useEffect(() => {
         swiperRef.current = null
       }
     }
-  }, [slides, contentGenre, titleOnlySections])
+  }, [slides, contentGenre, titleOnlySections, slideSectionKey])
 
   return (
     <>
