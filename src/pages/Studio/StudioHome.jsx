@@ -171,7 +171,8 @@ registerTranslationNamespace('studioHome', {
 })
 
 const THEME_KEY = 'shadow-studio-home-theme-v1'
-const HERO_IMAGE = '/assets/Shadow Stodio/Pic1.webp'
+const HERO_DESKTOP_IMAGE = '/assets/Shadow Stodio/Pic1.webp'
+const HERO_MOBILE_IMAGE = '/assets/Shadow Stodio/Pic2.webp'
 const STUDIO_LOGO = '/assets/Shadow Stodio/Shadow Stodio Logo.png.svg'
 
 const HERO_DESKTOP = {
@@ -755,8 +756,14 @@ export default function StudioHome({
       >
         <div className="ss-home-shell">
           <section className="ss-home-hero">
-            <img className="ss-home-hero-art ss-home-hero-art-back" src={HERO_IMAGE} alt="" aria-hidden="true" />
-            <img className="ss-home-hero-art ss-home-hero-art-main" src={HERO_IMAGE} alt="" />
+            <picture>
+  <source media="(max-width:900px)" srcSet={HERO_MOBILE_IMAGE} />
+  <img className="ss-home-hero-art ss-home-hero-art-back" src={HERO_DESKTOP_IMAGE} alt="" aria-hidden="true" />
+</picture>
+<picture>
+  <source media="(max-width:900px)" srcSet={HERO_MOBILE_IMAGE} />
+  <img className="ss-home-hero-art ss-home-hero-art-main" src={HERO_DESKTOP_IMAGE} alt="" />
+</picture>
             <div className="ss-home-hero-shade" aria-hidden="true" />
 
             <button type="button" className="ss-home-back" onClick={onExit} aria-label={labels.back} title={labels.back}>
