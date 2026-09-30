@@ -5,13 +5,22 @@
   },
   "rewrites": [
     {
-      "source": "/((?!assets/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$).*)",
+      "source": "/((?!assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/((?!assets/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$).*)",
+      "source": "/((?!assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$).*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/onesignal/OneSignalSDKWorker.js",
       "headers": [
         {
           "key": "Cache-Control",
