@@ -681,6 +681,7 @@ export default function ShadowDocsWritingStudioPanel({
     if (command === 'zoom100') { setRibbonState(state => ({ ...state, zoom: 100 })); return }
     if (command === 'onePage') { setRibbonState(state => ({ ...state, zoom: 85 })); return }
     if (command === 'multiplePages') { setRibbonState(state => ({ ...state, zoom: 70 })); return }
+    if (command === 'mobileFit') { setRibbonState(state => ({ ...state, mobileFit: !state.mobileFit })); return }
     if (command === 'pageWidth') { setRibbonState(state => ({ ...state, zoom: 110 })); return }
     if (command === 'zoom') { const zoom = Number(globalThis.prompt?.('Zoom percent (50–200):', String(ribbonState.zoom || 100))); if (Number.isFinite(zoom)) setRibbonState(state => ({ ...state, zoom: Math.max(50, Math.min(200, zoom)) })); return }
     if (command === 'newWindow') { window.open(window.location.href, '_blank', 'noopener'); return }
@@ -874,34 +875,152 @@ export default function ShadowDocsWritingStudioPanel({
 
   if (!book || !chapter) return <section className="sd-card"><BookOpen size={28} /><h2 className="mt-3">Writing Studio</h2><p className="mt-2 text-sm text-[#77758b] dark:text-white/60">Select a book in My Books to start writing.</p></section>
 
-  return <section aria-label="Writing Studio" className="sd-writing-layout">
+  return <section aria-label="Writing Studio" className={`sd-writing-layout ${ribbonState.mobileFit ? 'sd-mobile-fit-mode' : ''}`}>
     <style>{'.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}.sd-writing-area p,.sd-writing-area div{margin-bottom:var(--sd-paragraph-spacing,.75em)}.sd-writing-area h1,.sd-writing-area h2,.sd-writing-area h3,.sd-writing-area li,.sd-writing-area blockquote{text-indent:0}.sd-writing-area img{max-width:100%;height:auto;break-inside:avoid}.sd-writing-area table{width:100%;border-collapse:collapse;margin:12px 0}.sd-writing-area td,.sd-writing-area th{border:1px solid #b9b4c7;padding:6px}.sd-writing-area.sd-gridlines{background-image:linear-gradient(#0000000d 1px,transparent 1px),linear-gradient(90deg,#0000000d 1px,transparent 1px);background-size:24px 24px}.sd-writing-area ins{background:#dff5e8;text-decoration:underline}.sd-writing-area del{background:#fde2e5;color:#9f3d49}'}</style>
     <style>{`
       .sd-mobile-editor-topbar{display:none}
+      .sd-mobile-word-count{display:none}
       @media(max-width:700px){
         body:has(.sd-writing-layout) .sd-header,
         body:has(.sd-writing-layout) .sd-main>.sd-topline,
-        body:has(.sd-writing-layout) .sd-main>.sd-status{display:none!important}
-        body:has(.sd-writing-layout) .sd-main{padding-top:58px!important}
+        body:has(.sd-writing-layout) .sd-main>.sd-status,
+        body:has(.sd-writing-layout) .sd-main>.sd-stack>.sd-button,
+        body:has(.sd-writing-layout) .sd-main>.sd-stack>.sd-writing-layout~.sd-stack{
+          display:none!important;
+        }
+        body:has(.sd-writing-layout) .sd-main{
+          max-width:none!important;
+          margin:0!important;
+          padding:58px 0 0!important;
+        }
         .sd-mobile-editor-topbar{
-          position:fixed;z-index:82;top:0;left:0;right:0;height:58px;
-          display:flex;align-items:center;gap:2px;padding:0 8px;
-          background:#292929;border-bottom:1px solid #3a3a3a;color:#f5f5f5
+          position:fixed;
+          z-index:82;
+          top:0;
+          left:0;
+          right:0;
+          height:58px;
+          display:flex;
+          align-items:center;
+          gap:2px;
+          padding:0 8px;
+          background:#292929;
+          border-bottom:1px solid #3a3a3a;
+          color:#f5f5f5;
         }
         .sd-mobile-editor-topbar button{
-          width:42px;height:42px;display:grid;place-items:center;flex:none;
-          border:0;border-radius:9px;background:transparent;color:inherit
+          width:42px;
+          height:42px;
+          display:grid;
+          place-items:center;
+          flex:none;
+          border:0;
+          border-radius:9px;
+          background:transparent;
+          color:inherit;
         }
         .sd-mobile-editor-topbar button:active{background:#3a3a3a}
+        .sd-mobile-editor-topbar button:disabled{opacity:.42}
         .sd-mobile-editor-topbar .sd-mobile-page{
-          width:36px;border:1px solid #777;border-radius:3px;font-size:13px;font-weight:800
+          width:36px;
+          border:1px solid #777;
+          border-radius:3px;
+          font-size:13px;
+          font-weight:800;
         }
         .sd-mobile-editor-topbar .sd-mobile-save{
-          width:auto;margin-left:auto;padding:0 14px;display:flex;gap:5px;
-          border-radius:18px;background:#25a884;font-size:12px;font-weight:800
+          width:auto;
+          margin-left:auto;
+          padding:0 14px;
+          display:flex;
+          gap:5px;
+          border-radius:18px;
+          background:#25a884;
+          font-size:12px;
+          font-weight:700;
         }
-        .sd-mobile-editor-topbar svg{width:21px;height:21px;stroke-width:1.8}
-        .sd-editor-head{display:none!important}
+        .sd-mobile-editor-topbar svg{
+          width:21px;
+          height:21px;
+          stroke-width:1.8;
+        }
+        .sd-writing-layout{
+          display:block!important;
+          min-height:calc(100dvh - 58px - 64px);
+          margin:0!important;
+        }
+        .sd-writing-layout .sd-chapters,
+        .sd-writing-layout .sd-editor-head,
+        .sd-writing-layout .sd-editor-tools,
+        .sd-writing-layout .sd-editor-actions,
+        .sd-writing-layout .sd-editor-card>.my-3>p{
+          display:none!important;
+        }
+        .sd-writing-layout .sd-writing-main{
+          display:block!important;
+          margin:0!important;
+          padding:0!important;
+        }
+        .sd-writing-layout .sd-editor-card{
+          min-height:calc(100dvh - 58px - 64px);
+          margin:0!important;
+          padding:0!important;
+          border:0!important;
+          border-radius:0!important;
+          background:#1c1c1c!important;
+          box-shadow:none!important;
+        }
+        .sd-writing-layout .sd-editor-card>.my-3{
+          height:0!important;
+          margin:0!important;
+          padding:0!important;
+        }
+        .sd-writing-layout .sd-writing-area{
+          box-sizing:border-box;
+          width:calc(100% - 18px)!important;
+          max-width:none!important;
+          min-height:calc(100dvh - 58px - 64px - 30px)!important;
+          margin:0 auto!important;
+          padding:28px 24px 42px!important;
+          border:0!important;
+          border-radius:0!important;
+          background:#fff!important;
+          color:#111!important;
+          box-shadow:none!important;
+          zoom:1!important;
+          caret-color:#111;
+        }
+        .sd-writing-layout.sd-mobile-fit-mode .sd-writing-area{
+          width:100%!important;
+          padding-left:8px!important;
+          padding-right:8px!important;
+        }
+        .sd-writing-layout .sd-editor-footer{
+          box-sizing:border-box;
+          width:calc(100% - 18px)!important;
+          min-height:30px;
+          margin:0 auto!important;
+          padding:3px 20px 10px!important;
+          border:0!important;
+          background:#fff!important;
+          color:#777!important;
+          font-size:10px!important;
+          justify-content:flex-start!important;
+        }
+        .sd-writing-layout.sd-mobile-fit-mode .sd-editor-footer{
+          width:100%!important;
+          padding-left:8px!important;
+          padding-right:8px!important;
+        }
+        .sd-writing-layout .sd-editor-footer>span:last-child,
+        .sd-desktop-word-count{
+          display:none!important;
+        }
+        .sd-mobile-word-count{
+          display:block!important;
+          font-weight:400!important;
+          color:#777!important;
+        }
       }
     `}</style>
     <div className="sd-mobile-editor-topbar" aria-label="Mobile editor header">
@@ -985,7 +1104,11 @@ export default function ShadowDocsWritingStudioPanel({
           }}
         />
 
-        <div className="sd-editor-footer"><span>{(chapterStats?.words || 0).toLocaleString()} words · {(chapterStats?.characters || 0).toLocaleString()} characters</span><span><CheckCircle2 size={15} /> {status}</span></div>
+        <div className="sd-editor-footer">
+          <span className="sd-desktop-word-count">{(chapterStats?.words || 0).toLocaleString()} words · {(chapterStats?.characters || 0).toLocaleString()} characters</span>
+          <span className="sd-mobile-word-count">Word count: {(chapterStats?.words || 0).toLocaleString()}</span>
+          <span><CheckCircle2 size={15} /> {status}</span>
+        </div>
       </div>
 
       <div className="sd-editor-actions">
