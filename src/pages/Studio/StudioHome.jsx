@@ -235,6 +235,7 @@ export default function StudioHome({
   onOpenProject,
   onImportImage,
   onResume,
+  onMyWorks,
   onExit,
   onRecover,
   onDiscardRecovery,
@@ -303,6 +304,7 @@ export default function StudioHome({
 
   function openMyWorks() {
     if (!canOpen) return
+    if (onMyWorks) return onMyWorks()
     if (canResume) onResume()
     else onOpenProject()
   }
