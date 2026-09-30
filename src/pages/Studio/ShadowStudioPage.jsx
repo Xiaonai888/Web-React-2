@@ -1197,11 +1197,12 @@ const placeImageLabel = {
   }
 
   async function importImageAsPaper(file) {
-    if (!file || paperLoading || projectBusy || recoveryBooting || recoveryEntry || recoveryBusy || newFileOpen || exportOpen) return
+    if (!file || paperLoading || projectBusy || recoveryBooting || recoveryEntry || recoveryBusy || exportOpen) return
     if (documentsRef.current.length >= DOCUMENT_LIMIT) {
       window.alert(tx('shadowStudio.documentLimit'))
       return
     }
+    if (newFileOpen) setNewFileOpen(false)
     setProjectBusy(true)
     setProjectNotice('')
     try {
@@ -2946,6 +2947,7 @@ async function dropImageOnPaper(event) {
         initialPreset={newFilePreset}
         onClose={() => setNewFileOpen(false)}
         onCreate={createPaper}
+        onImportImage={() => importImageInputRef.current?.click()}
       />
     </div>
   )
