@@ -17,7 +17,9 @@ import StudioHeaderWorkspace from './StudioHeaderWorkspace'
 import StudioHome from './StudioHome'
 import StudioMyWorksPage from './StudioMyWorksPage'
 import StudioFoldersPage from './StudioFoldersPage'
+import StudioFolderPage from './StudioFolderPage'
 import StudioAllWorksPage from './StudioAllWorksPage'
+import { createStudioFolderRecord, readStudioFolderState, saveStudioFolderState } from './StudioFolderStore'
 import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
@@ -432,6 +434,10 @@ const placeImageLabel = {
   const [workspaceStarted, setWorkspaceStarted] = useState(false)
   const [myWorksOpen, setMyWorksOpen] = useState(false)
   const [foldersOpen, setFoldersOpen] = useState(false)
+  const [folderWorksOpen, setFolderWorksOpen] = useState(false)
+  const [activeFolderId, setActiveFolderId] = useState('')
+  const [folderReturnView, setFolderReturnView] = useState('myworks')
+  const [folderState, setFolderState] = useState(readStudioFolderState)
   const [allWorksOpen, setAllWorksOpen] = useState(false)
   const [newFileOpen, setNewFileOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
@@ -474,6 +480,14 @@ const placeImageLabel = {
     documents.find((document) => document.id === activeDocumentId) ||
     documents[0] ||
     null
+  const studioFolders = folderState.folders.map((folder) => ({
+    ...folder,
+    count: documents.filter((document) => folderState.assignments[document.id] === folder.id).length,
+  }))
+  const activeFolder = studioFolders.find((folder) => folder.id === activeFolderId) || null
+  const activeFolderDocuments = activeFolderId
+    ? documents.filter((document) => folderState.assignments[document.id] === activeFolderId)
+    : []
 
   const context = () =>
     canvasRef.current?.getContext('2d', {
@@ -1421,6 +1435,8 @@ const placeImageLabel = {
     setDocuments(saved)
     setMyWorksOpen(false)
     setFoldersOpen(false)
+    setFolderWorksOpen(false)
+    setActiveFolderId('')
     setAllWorksOpen(false)
     setWorkspaceStarted(false)
   }
@@ -1444,8 +1460,44 @@ const placeImageLabel = {
     setActiveDocumentId(target.id)
     setMyWorksOpen(false)
     setFoldersOpen(false)
+    setFolderWorksOpen(false)
+    setActiveFolderId('')
     setAllWorksOpen(false)
     setWorkspaceStarted(true)
+  }
+
+  function commitStudioFolderState(next) {
+    setFolderState((current) => {
+      const value = typeof next === 'function' ? next(current) : next
+      saveStudioFolderState(value)
+      return value
+    })
+  }
+
+  function createStudioFolder() {
+    const entered = window.prompt(tx('studioFolders.create'), '')
+    if (entered === null) return
+    const name = entered.trim().slice(0, 80)
+    if (!name) return
+    const folder = createStudioFolderRecord(name)
+    commitStudioFolderState((current) => ({ ...current, folders: [folder, ...current.folders] }))
+  }
+
+  function openStudioFolder(folder, returnView = 'myworks') {
+    if (!folder?.id) return
+    setActiveFolderId(folder.id)
+    setFolderReturnView(returnView)
+    setMyWorksOpen(false)
+    setFoldersOpen(false)
+    setAllWorksOpen(false)
+    setFolderWorksOpen(true)
+  }
+
+  function closeStudioFolder() {
+    setFolderWorksOpen(false)
+    setActiveFolderId('')
+    if (folderReturnView === 'folders') setFoldersOpen(true)
+    else setMyWorksOpen(true)
   }
 
   const displayedWidth = Math.max(1, Math.round((activeDocument?.width || W) * zoom / 100))
@@ -2467,14 +2519,21 @@ async function dropImageOnPaper(event) {
 ) : null}
       </StudioChrome>
 
-      {!workspaceStarted && foldersOpen ? (
+      {!workspaceStarted && folderWorksOpen ? (
+        <StudioFolderPage
+          folder={activeFolder}
+          documents={activeFolderDocuments}
+          onBack={closeStudioFolder}
+          onOpenDocument={openMyWorksDocument}
+        />
+      ) : !workspaceStarted && foldersOpen ? (
         <StudioFoldersPage
-          folders={[]}
+          folders={studioFolders}
           documents={documents}
           onBack={() => { setFoldersOpen(false); setMyWorksOpen(true) }}
           onSelect={() => {}}
-          onCreateFolder={() => {}}
-          onOpenFolder={() => {}}
+          onCreateFolder={createStudioFolder}
+          onOpenFolder={(folder) => openStudioFolder(folder, 'folders')}
         />
       ) : !workspaceStarted && allWorksOpen ? (
         <StudioAllWorksPage
@@ -2485,13 +2544,13 @@ async function dropImageOnPaper(event) {
       ) : !workspaceStarted && myWorksOpen ? (
         <StudioMyWorksPage
           documents={documents}
-          folders={[]}
+          folders={studioFolders}
           onBack={() => setMyWorksOpen(false)}
           onSelect={() => {}}
           onNewFile={() => openNewFile('basic')}
-          onCreateFolder={() => {}}
+          onCreateFolder={createStudioFolder}
           onOpenDocument={openMyWorksDocument}
-          onOpenFolder={() => {}}
+          onOpenFolder={(folder) => openStudioFolder(folder, 'myworks')}
           onSeeAllWorks={() => { setMyWorksOpen(false); setAllWorksOpen(true) }}
           onSeeAllFolders={() => { setMyWorksOpen(false); setFoldersOpen(true) }}
         />
