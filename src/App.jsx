@@ -107,6 +107,7 @@ const LibraryCollectionPage = lazy(() => import('./pages/LibraryCollectionPage')
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesdayEventPage'))
 const AuthorDaily50EventPage = lazy(() => import('./pages/Event/AuthorDaily50EventPage'))
+const Author49DayEventPage = lazy(() => import('./pages/Event/Author49DayEventPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const MusicPage = lazy(() => import('./pages/MusicPage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
@@ -1379,6 +1380,12 @@ const shouldShowOpeningAds =
   path="/event/daily-author-boost"
   element={<LazyPage><AuthorDaily50EventPage /></LazyPage>}
 />
+          
+<Route
+  path="/event/author-49-day"
+  element={<LazyPage><Author49DayEventPage /></LazyPage>}
+/>
+          
 
         <Route
   path="/author/page/:pageUsername/search"
