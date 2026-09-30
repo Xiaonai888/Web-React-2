@@ -254,9 +254,9 @@ export default function Author49DayEventCard({
               </span>
               <span className="text-[14px] font-black">:</span>
               <span className="text-[15px] font-black tabular-nums tracking-[0.02em]">
-                {String(countdown.seconds).padStart(2, '0')}{t('author49DayEventCard.secondShort')}
-              </span>
-            </div>
+  {String(countdown.seconds).padStart(2, '0')}{t('author49DayEventCard.secondShort')}
+</span>
+</button>
           ) : (
             <button
               type="button"
