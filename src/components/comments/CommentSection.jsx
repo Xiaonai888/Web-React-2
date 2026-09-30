@@ -1521,7 +1521,7 @@ function ReplyItem({
             </span>
           </div>
 
-          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[var(--shadow-text-primary)]">
             {renderReplyTextWithMention(
               reply.text,
               mentionCandidates
@@ -1955,7 +1955,7 @@ const [repliesShown, setRepliesShown] =
                   <i className="fa-regular fa-face-smile text-[30px]" />
                 </div>
               ) : (
-                <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
+                <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] font-normal leading-6 text-[var(--shadow-text-primary)]">
                   {comment.text}
                 </p>
               )}
