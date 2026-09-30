@@ -2988,7 +2988,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
         </div>
       </section>
 
-<section className="mx-4 mt-3 overflow-hidden rounded-[10px] bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-[0_14px_38px_rgba(124,91,255,0.10)] ring-1 ring-[var(--shadow-border)] backdrop-blur sm:mx-0 sm:rounded-[10px]">
+<section className="mx-4 mt-3 overflow-visible rounded-[10px] bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-[0_14px_38px_rgba(124,91,255,0.10)] ring-1 ring-[var(--shadow-border)] backdrop-blur sm:mx-0 sm:rounded-[10px]">
   <div className="flex items-center gap-3">
     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3edff] text-[#7c5cff] shadow-[0_10px_24px_rgba(124,91,255,0.18)] ring-1 ring-[var(--shadow-border)]">
       <i className="fa-solid fa-tags text-[14px]" />
@@ -3083,7 +3083,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       ) : null}
 
       {activeTab === 'Records' ? (
-  <section className="mx-4 mt-3 overflow-hidden rounded-[10px] bg-[linear-gradient(135deg,#fbfaff_0%,#f3efff_55%,#ffffff_100%)] shadow-[0_16px_38px_rgba(124,91,255,0.10)] ring-1 ring-[var(--shadow-border)] sm:mx-0 sm:mt-4">
+  <section className="mx-4 mt-3 overflow-visible rounded-[10px] bg-[linear-gradient(135deg,#fbfaff_0%,#f3efff_55%,#ffffff_100%)] shadow-[0_16px_38px_rgba(124,91,255,0.10)] ring-1 ring-[var(--shadow-border)] sm:mx-0 sm:mt-4">
     <div className="border-b border-white/70 px-4 py-4">
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -3212,7 +3212,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
 ) : products.length === 0 ? (
   <EmptyState onAddProduct={onAddProduct} />
 ) : visibleRecords.length ? (
-  <div className="overflow-hidden bg-[var(--shadow-bg-surface)]">
+  <div className="overflow-visible bg-[var(--shadow-bg-surface)]">
     {visibleRecords.map((product) => (
       <ProductRecordRow
         key={product.id}
