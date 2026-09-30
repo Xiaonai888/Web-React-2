@@ -1514,11 +1514,24 @@ export default function TaskCenterPage() {
 
   async function loadTaskCenter(options = {}) {
   const silent = Boolean(options.silent)
+  const force = Boolean(options.force)
+  const source = String(options.source || 'unknown')
+    .trim()
+    .slice(0, 40)
 
   if (!token) {
-    if (!silent) window.alert('Task Center Error\nCode: TOKEN_MISSING_ON_DEVICE\nThis device has no stored login token.')
-    if (!silent) setLoading(false)
-    setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
+    if (!silent) {
+      window.alert(
+        'Task Center Error\nCode: TOKEN_MISSING_ON_DEVICE\nThis device has no stored login token.'
+      )
+      setLoading(false)
+    }
+
+    setWallet({
+      coins: 0,
+      diamonds: 0,
+      vouchers: 0,
+    })
     setCheckIn(null)
     setRewardChest(null)
     setReadingReward(null)
@@ -1538,40 +1551,207 @@ export default function TaskCenterPage() {
       return
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/tasks/overview`, {
-      headers: getHeaders(),
-    })
+    const userKey = String(
+      storedUser?.id ||
+        storedUser?.user_id ||
+        'reader-session'
+    )
 
-    const data = await response.json().catch(() => ({}))
+    if (
+      !(window.__shadowTaskCenterOverviewState instanceof Map)
+    ) {
+      window.__shadowTaskCenterOverviewState = new Map()
+    }
 
-    if (shouldLogoutForTaskError(response, data)) {
+    const registry =
+      window.__shadowTaskCenterOverviewState
+
+    let state = registry.get(userKey)
+
+    if (!state) {
+      state = {
+        inFlight: null,
+        lastSuccessAt: 0,
+        lastData: null,
+      }
+      registry.set(userKey, state)
+    }
+
+    const now = Date.now()
+    const recentAge =
+      now - Number(state.lastSuccessAt || 0)
+
+    let result = null
+
+    if (state.inFlight) {
+      console.info(
+        'TASK_CENTER_OVERVIEW_DEDUPED',
+        {
+          source,
+          reason: 'in_flight',
+        }
+      )
+
+      result = await state.inFlight
+    } else if (
+      !force &&
+      state.lastData &&
+      recentAge >= 0 &&
+      recentAge < 8000
+    ) {
+      console.info(
+        'TASK_CENTER_OVERVIEW_DEDUPED',
+        {
+          source,
+          reason: 'recent_cache',
+          age_ms: recentAge,
+        }
+      )
+
+      result = {
+        responseOk: true,
+        status: 200,
+        statusText: 'CACHE',
+        data: state.lastData,
+      }
+    } else {
+      const requestPromise = (async () => {
+        const response = await fetch(
+          `${API_BASE_URL}/api/tasks/overview?load_source=${encodeURIComponent(source || 'unknown')}`,
+          {
+            headers: getHeaders(),
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        return {
+          responseOk: response.ok,
+          status: response.status,
+          statusText: response.statusText,
+          data,
+        }
+      })()
+
+      state.inFlight = requestPromise
+
+      try {
+        result = await requestPromise
+
+        if (
+          result.responseOk &&
+          result.data?.ok !== false
+        ) {
+          state.lastSuccessAt = Date.now()
+          state.lastData = result.data
+        }
+      } finally {
+        if (state.inFlight === requestPromise) {
+          state.inFlight = null
+        }
+      }
+    }
+
+    const data = result?.data || {}
+
+    if (
+      shouldLogoutForTaskError(
+        {
+          ok: Boolean(result?.responseOk),
+          status: Number(result?.status || 0),
+        },
+        data
+      )
+    ) {
       clearReaderSession()
-      setToast(t('taskCenterPage.pleaseLoginAgain'))
+      setToast(
+        t('taskCenterPage.pleaseLoginAgain')
+      )
       navigate('/login')
       return
     }
 
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || t('taskCenterPage.loadTaskCenterFailed'))
+    if (
+      !result?.responseOk ||
+      data.ok === false
+    ) {
+      console.error(
+        'TASK_CENTER_OVERVIEW_RESPONSE_ERROR',
+        {
+          source,
+          status: Number(result?.status || 0),
+          status_text:
+            result?.statusText || '',
+          code: data?.code || '',
+          message: data?.message || '',
+          error: data?.error || '',
+        }
+      )
+
+      throw new Error(
+        data.message ||
+          t(
+            'taskCenterPage.loadTaskCenterFailed'
+          )
+      )
     }
 
     if (data.wallet) {
       setWallet({
-        coins: Number(data.wallet.coin_balance ?? data.wallet.gem_balance ?? 0),
-        diamonds: Number(data.wallet.diamond_balance ?? 0),
-        vouchers: Number(data.wallet.voucher_balance ?? 0),
+        coins: Number(
+          data.wallet.coin_balance ??
+            data.wallet.gem_balance ??
+            0
+        ),
+        diamonds: Number(
+          data.wallet.diamond_balance ?? 0
+        ),
+        vouchers: Number(
+          data.wallet.voucher_balance ?? 0
+        ),
       })
     }
 
     setCheckIn(data.check_in || null)
     setRewardChest(data.chest || null)
-    setReadingReward(data.reading_reward || null)
-    setReadingMissions(normalizeReadingMissionList(data.missions))
-    setDailyVoteReward(data.daily_vote_reward || null)
+    setReadingReward(
+      data.reading_reward || null
+    )
+    setReadingMissions(
+      normalizeReadingMissionList(
+        data.missions
+      )
+    )
+    setDailyVoteReward(
+      data.daily_vote_reward || null
+    )
   } catch (error) {
-    console.error('LOAD TASK CENTER OVERVIEW ERROR:', error)
-    if (error instanceof TypeError) window.alert(`Task Center Error\nAPI: /api/tasks/overview\nType: ${error.name}\nDetail: ${String(error.message).slice(0, 180)}`)
-    setToast(t('taskCenterPage.couldNotLoadRewards'))
+    console.error(
+      'LOAD TASK CENTER OVERVIEW ERROR:',
+      {
+        source,
+        name:
+          error?.name || 'Error',
+        message:
+          error?.message || '',
+      }
+    )
+
+    if (error instanceof TypeError) {
+      window.alert(
+        `Task Center Error\nAPI: /api/tasks/overview\nSource: ${source}\nType: ${error.name}\nDetail: ${String(
+          error.message
+        ).slice(0, 180)}`
+      )
+    }
+
+    setToast(
+      t(
+        'taskCenterPage.couldNotLoadRewards'
+      )
+    )
   } finally {
     if (!silent) setLoading(false)
   }
