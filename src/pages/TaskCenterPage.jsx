@@ -1802,8 +1802,8 @@ async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
   silent: true,
   force: true,
   source: 'version-change',
-})
-        loadTaskCover(),
+}),
+loadTaskCover(),
       ])
     }
 
