@@ -967,7 +967,7 @@ export default function ShadowDocsWritingStudioPanel({
           padding:0!important;
           border:0!important;
           border-radius:0!important;
-          background:#1c1c1c!important;
+          background:#fff!important;
           box-shadow:none!important;
         }
         .sd-writing-layout .sd-editor-card>.my-3{
@@ -977,10 +977,10 @@ export default function ShadowDocsWritingStudioPanel({
         }
         .sd-writing-layout .sd-writing-area{
           box-sizing:border-box;
-          width:calc(100% - 18px)!important;
+          width:100%!important;
           max-width:none!important;
-          min-height:calc(100dvh - 58px - 64px - 30px)!important;
-          margin:0 auto!important;
+          min-height:calc(100dvh - 58px - 64px - 34px)!important;
+          margin:0!important;
           padding:28px 24px 42px!important;
           border:0!important;
           border-radius:0!important;
@@ -992,34 +992,38 @@ export default function ShadowDocsWritingStudioPanel({
         }
         .sd-writing-layout.sd-mobile-fit-mode .sd-writing-area{
           width:100%!important;
-          padding-left:8px!important;
-          padding-right:8px!important;
+          padding-left:2px!important;
+          padding-right:2px!important;
         }
         .sd-writing-layout .sd-editor-footer{
           box-sizing:border-box;
-          width:calc(100% - 18px)!important;
-          min-height:30px;
-          margin:0 auto!important;
-          padding:3px 20px 10px!important;
+          width:100%!important;
+          min-height:34px;
+          margin:0!important;
+          padding:2px 20px 10px!important;
           border:0!important;
           background:#fff!important;
           color:#777!important;
           font-size:10px!important;
           justify-content:flex-start!important;
         }
-        .sd-writing-layout.sd-mobile-fit-mode .sd-editor-footer{
-          width:100%!important;
-          padding-left:8px!important;
-          padding-right:8px!important;
-        }
         .sd-writing-layout .sd-editor-footer>span:last-child,
         .sd-desktop-word-count{
           display:none!important;
         }
         .sd-mobile-word-count{
-          display:block!important;
+          display:inline-flex!important;
+          align-items:center;
+          width:max-content;
+          min-height:24px;
+          padding:3px 8px;
+          border:0;
+          border-radius:4px;
+          background:#f3f3f3;
+          color:#8a8a8a!important;
+          font-size:10px!important;
           font-weight:400!important;
-          color:#777!important;
+          line-height:1;
         }
       }
     `}</style>
