@@ -6,54 +6,24 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('authorDaily50DashboardCard', {
   en: {
-    title: 'Daily Author Boost',
-    subtitle: '50% earning',
-    active: 'Active now',
-    available: 'Publish 1 new episode today',
-    addToday: 'Publish today to add +24h',
-    claimedToday: 'Today’s +24h claimed',
-    viewDetails: 'View Event Details',
-    used: 'Boost days used',
+    available: 'Publish 1 new EP to activate +24h',
+    newOnly: 'New EP only • Old EP edits don’t count',
   },
   km: {
-    title: 'Daily Author Boost',
-    subtitle: 'ចំណូល 50%',
-    active: 'កំពុងដំណើរការ',
-    available: 'បង្ហោះភាគថ្មី 1 ភាគថ្ងៃនេះ',
-    addToday: 'បង្ហោះថ្ងៃនេះដើម្បីបូក +24h',
-    claimedToday: 'ថ្ងៃនេះបាន +24h រួចហើយ',
-    viewDetails: 'មើលព័ត៌មាន Event',
-    used: 'ថ្ងៃ Boost ដែលបានប្រើ',
+    available: 'បង្ហោះភាគថ្មី 1 ភាគ ដើម្បីបើក +24h',
+    newOnly: 'រាប់តែភាគថ្មី • កែភាគចាស់មិនរាប់ទេ',
   },
   zh: {
-    title: '每日作者加成',
-    subtitle: '50% 收益',
-    active: '正在生效',
-    available: '今天发布 1 个新章节',
-    addToday: '今天发布可增加 +24 小时',
-    claimedToday: '今天的 +24 小时已领取',
-    viewDetails: '查看活动详情',
-    used: '已使用加成天数',
+    available: '发布 1 个新章节以激活 +24h',
+    newOnly: '仅限新章节 • 编辑旧章节不计入',
   },
   ja: {
-    title: 'デイリー作者ブースト',
-    subtitle: '収益 50%',
-    active: '有効中',
-    available: '今日、新しい話を1話公開',
-    addToday: '今日公開すると +24時間',
-    claimedToday: '本日の +24時間は獲得済み',
-    viewDetails: 'イベント詳細を見る',
-    used: '使用済みブースト日数',
+    available: '新しい話を1話公開して +24h を有効化',
+    newOnly: '新規エピソードのみ • 旧話の編集は対象外',
   },
   ko: {
-    title: '데일리 작가 부스트',
-    subtitle: '수익 50%',
-    active: '활성 중',
-    available: '오늘 새 에피소드 1개 게시',
-    addToday: '오늘 게시하면 +24시간',
-    claimedToday: '오늘의 +24시간 획득 완료',
-    viewDetails: '이벤트 자세히 보기',
-    used: '사용한 부스트 일수',
+    available: '새 에피소드 1개를 게시해 +24h 활성화',
+    newOnly: '새 에피소드만 적용 • 기존 에피소드 수정은 제외',
   },
 })
 
@@ -141,7 +111,10 @@ export default function AuthorDaily50DashboardCard() {
     }
 
     const refreshOnFocus = () => {
-      if (document.visibilityState === 'visible' && Date.now() - lastRefreshAt >= 5 * 60 * 1000) {
+      if (
+        document.visibilityState === 'visible' &&
+        Date.now() - lastRefreshAt >= 5 * 60 * 1000
+      ) {
         void loadEvent(true)
       }
     }
@@ -158,10 +131,7 @@ export default function AuthorDaily50DashboardCard() {
     return () => {
       ignore = true
       releaseRequest()
-      window.removeEventListener(
-        'focus',
-        refreshOnFocus
-      )
+      window.removeEventListener('focus', refreshOnFocus)
       document.removeEventListener('visibilitychange', refreshOnFocus)
       window.clearInterval(refreshId)
     }
@@ -206,9 +176,6 @@ export default function AuthorDaily50DashboardCard() {
   const isActive =
     event.status === 'active' && remainingMs > 0
 
-  const used = Number(event.activation_count || 0)
-  const max = Number(event.max_activations || 365)
-
   return (
     <section
       role="button"
@@ -222,74 +189,39 @@ export default function AuthorDaily50DashboardCard() {
       }}
       className="mt-5 cursor-pointer overflow-hidden rounded-[16px] border border-emerald-300 bg-white shadow-[0_10px_26px_rgba(16,185,129,0.12)] transition active:scale-[0.99] dark:border-emerald-700 dark:bg-[#111713]"
     >
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-[linear-gradient(135deg,#ECFDF5_0%,#D1FAE5_45%,#A7F3D0_100%)] dark:bg-[linear-gradient(135deg,#0B1510_0%,#10251A_45%,#153824_100%)]">
-        <div className="absolute -left-10 -top-12 h-36 w-36 rounded-full border-[18px] border-emerald-400/35" />
-        <div className="absolute right-6 top-5 h-16 w-16 rotate-12 rounded-[22px] bg-white/45 shadow-sm dark:bg-white/10" />
-        <div className="absolute right-16 top-16 h-5 w-5 rounded-full bg-emerald-500/45" />
-        <div className="absolute left-[43%] top-8 h-8 w-8 rotate-45 rounded-[8px] border-4 border-white/65 dark:border-white/15" />
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-emerald-50 dark:bg-[#0B1510]">
+        <img
+          src="/assets/Icons/Event/Event50%25.webp"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          draggable="false"
+        />
 
-        <div className="absolute inset-x-0 top-0 z-10 px-4 pt-4">
-          <div className="inline-flex rounded-full bg-black px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-white dark:bg-white dark:text-black">
-            {t('authorDaily50DashboardCard.title')}
-          </div>
-
-          <div className="mt-2 flex items-end gap-2">
-            <span className="text-[42px] font-black leading-none tracking-[-0.07em] text-emerald-950 dark:text-emerald-100">
-              50%
-            </span>
-            <span className="pb-1 text-[13px] font-black text-emerald-700 dark:text-emerald-300">
-              {t('authorDaily50DashboardCard.subtitle')}
-            </span>
-          </div>
-
-          <div className="mt-2 text-[10px] font-extrabold text-emerald-900/75 dark:text-emerald-100/75">
-            {isActive
-              ? event.can_activate_today
-                ? t('authorDaily50DashboardCard.addToday')
-                : t('authorDaily50DashboardCard.claimedToday')
-              : t('authorDaily50DashboardCard.available')}
-          </div>
-
-          <div className="mt-2 text-[9px] font-bold text-emerald-900/60 dark:text-emerald-100/60">
-            {t('authorDaily50DashboardCard.used')}: {used}/{max}
-          </div>
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-emerald-950/35 via-emerald-900/5 to-transparent px-4 pb-4 pt-12">
+        <div className="absolute bottom-3 right-3 z-10 w-[48%] max-w-[250px] sm:bottom-4 sm:right-4">
           {isActive ? (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-                navigate('/event/daily-author-boost')
-              }}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-white px-3 text-black shadow-[0_4px_0_#111111] dark:bg-emerald-100"
-            >
-              <i className="fa-regular fa-clock text-[11px]" />
-              <span className="text-[13px] font-black tabular-nums tracking-[0.04em]">
+            <div className="flex h-10 w-full items-center justify-center gap-1.5 rounded-[12px] border-2 border-black bg-white/95 px-2 text-black shadow-[0_4px_0_#111111] backdrop-blur-sm dark:bg-emerald-100/95">
+              <i className="fa-regular fa-clock text-[10px]" />
+              <span className="text-[12px] font-black tabular-nums">
                 {formatNumber(countdown.hours)}
               </span>
-              <span className="text-[12px] font-black">:</span>
-              <span className="text-[13px] font-black tabular-nums tracking-[0.04em]">
+              <span className="text-[11px] font-black">:</span>
+              <span className="text-[12px] font-black tabular-nums">
                 {formatNumber(countdown.minutes)}
               </span>
-              <span className="text-[12px] font-black">:</span>
-              <span className="text-[13px] font-black tabular-nums tracking-[0.04em]">
+              <span className="text-[11px] font-black">:</span>
+              <span className="text-[12px] font-black tabular-nums">
                 {formatNumber(countdown.seconds)}
               </span>
-            </button>
+            </div>
           ) : (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-                navigate('/event/daily-author-boost')
-              }}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-emerald-400 text-[12px] font-black text-black shadow-[0_4px_0_#111111] transition active:translate-y-[2px] active:shadow-[0_2px_0_#111111]"
-            >
-              <i className="fa-solid fa-circle-info text-[10px]" />
-              {t('authorDaily50DashboardCard.viewDetails')}
-            </button>
+            <div className="rounded-[12px] border-2 border-black bg-white/95 px-3 py-2 text-black shadow-[0_4px_0_#111111] backdrop-blur-sm dark:bg-emerald-100/95">
+              <div className="text-[10px] font-black leading-4 sm:text-[11px]">
+                {t('authorDaily50DashboardCard.available')}
+              </div>
+              <div className="mt-0.5 text-[8px] font-bold leading-3 text-black/65 sm:text-[9px]">
+                {t('authorDaily50DashboardCard.newOnly')}
+              </div>
+            </div>
           )}
         </div>
       </div>
