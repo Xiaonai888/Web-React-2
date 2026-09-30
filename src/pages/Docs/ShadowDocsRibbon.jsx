@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlignLeft, ImagePlus, Keyboard, Maximize2, Plus, Settings2, Type } from 'lucide-react'
+import { AlignLeft, CirclePlus, ImagePlus, Keyboard, Maximize2, Settings2, Type } from 'lucide-react'
 import { SHADOW_DOCS_RIBBON_TABS } from './ShadowDocsRibbonCatalog'
 import ShadowDocsRibbonFileTab from './ShadowDocsRibbonFileTab'
 import ShadowDocsRibbonHomeTab from './ShadowDocsRibbonHomeTab'
@@ -29,11 +29,11 @@ const RENDERERS = Object.freeze({
 })
 
 const MOBILE_ITEMS = [
-  { id: 'fit', label: 'Fit to Screen', icon: Maximize2 },
+  { id: 'fit', label: 'Fit to\nScreen', icon: Maximize2 },
   { id: 'format', label: 'Format', icon: Type },
   { id: 'paragraph', label: 'Paragraph', icon: AlignLeft },
   { id: 'image', label: 'Add Image', icon: ImagePlus },
-  { id: 'insert', label: 'Insert', icon: Plus },
+  { id: 'insert', label: 'Insert', icon: CirclePlus },
 ]
 
 export default function ShadowDocsRibbon({
@@ -78,7 +78,7 @@ export default function ShadowDocsRibbon({
   function mobileAction(id) {
     if (disabled) return
     if (id === 'fit') {
-      onCommand?.('pageWidth', true)
+      onCommand?.('mobileFit', true)
       return
     }
     if (id === 'format') {
@@ -128,7 +128,7 @@ export default function ShadowDocsRibbon({
           bottom:0;
           display:flex;
           align-items:stretch;
-          min-height:68px;
+          min-height:64px;
           padding-bottom:env(safe-area-inset-bottom);
           background:#292929;
           border-top:1px solid #3a3a3a;
@@ -155,33 +155,46 @@ export default function ShadowDocsRibbon({
         }
         .sd-mobile-tool{
           flex:none;
-          width:78px;
-          min-height:68px;
+          width:74px;
+          min-height:64px;
           border:0;
           background:transparent;
           color:#ededed;
           display:flex;
           align-items:center;
-          justify-content:center;
+          justify-content:flex-start;
           flex-direction:column;
-          gap:6px;
-          padding:7px 5px 6px;
-          font-size:10px;
+          gap:3px;
+          padding:7px 4px 5px;
+          font-size:9px;
+          font-weight:400;
           line-height:1.05;
-          white-space:nowrap;
+          white-space:normal;
         }
         .sd-mobile-tool:active{background:#383838}
         .sd-mobile-tool:disabled{opacity:.4}
-        .sd-mobile-tool svg{width:22px;height:22px;stroke-width:1.8}
-        .sd-mobile-editor-fixed .sd-mobile-tool{width:66px}
-        .sd-mobile-tool-label{display:block}
+        .sd-mobile-tool svg{width:21px;height:21px;stroke-width:1.75}
+        .sd-mobile-editor-fixed .sd-mobile-tool{width:62px}
+        .sd-mobile-tool-label{
+          display:block;
+          max-width:66px;
+          text-align:center;
+          font-size:9px;
+          font-weight:400;
+          line-height:1.05;
+          white-space:pre-line;
+          color:#e2e2e2;
+        }
+        .sd-mobile-tool.is-active{color:#35d0a6}
+        .sd-mobile-tool.is-active .sd-mobile-tool-label{color:#35d0a6}
         .sd-mobile-editor-toolbar.is-keyboard-open{
-          min-height:54px;
+          min-height:52px;
         }
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-tool{
           width:58px;
-          min-height:54px;
-          padding:6px 5px;
+          min-height:52px;
+          padding:0 5px;
+          justify-content:center;
           gap:0;
         }
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-editor-fixed .sd-mobile-tool{width:54px}
@@ -214,7 +227,7 @@ export default function ShadowDocsRibbon({
           return <button
             key={item.id}
             type="button"
-            className="sd-mobile-tool"
+            className={`sd-mobile-tool ${item.id === 'fit' && commandState.mobileFit ? 'is-active' : ''}`}
             disabled={disabled}
             aria-label={item.label}
             title={item.label}
