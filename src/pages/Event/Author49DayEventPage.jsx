@@ -323,50 +323,36 @@ export default function Author49DayEventPage() {
       </header>
 
       <main className="mx-auto max-w-[760px] px-4 py-5">
-        <section className="overflow-hidden rounded-[24px] border border-amber-300 bg-[var(--shadow-bg-surface)] shadow-[0_14px_36px_rgba(245,158,11,0.12)] dark:border-amber-700">
-          <div className="relative aspect-[16/9] overflow-hidden bg-[linear-gradient(145deg,#FFF8D8_0%,#FFE98A_48%,#FFC928_100%)] dark:bg-[linear-gradient(145deg,#211A04_0%,#382B06_48%,#513B05_100%)]">
-            <div className="absolute -left-14 -top-16 h-52 w-52 rounded-full border-[28px] border-amber-500/25" />
-            <div className="absolute right-8 top-7 h-24 w-24 rotate-12 rounded-[28px] bg-white/45 dark:bg-white/10" />
-            <div className="absolute left-[45%] top-12 h-12 w-12 rotate-45 rounded-[12px] border-[6px] border-white/65 dark:border-white/15" />
+        <section className="overflow-hidden rounded-[24px] border border-amber-300 bg-black shadow-[0_14px_36px_rgba(245,158,11,0.12)] dark:border-amber-700">
+          <div className="relative aspect-[16/9] w-full overflow-hidden">
+            <img
+              src="/assets/Icons/Event/Event 1.webp"
+              alt={t('author49DayEventPage.title')}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
 
-            <div className="relative z-10 p-5">
-              <div className="inline-flex rounded-full bg-black px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-white dark:bg-white dark:text-black">
-                {t('author49DayEventPage.authorEvent')}
-              </div>
-
-              <div className="mt-4 text-[64px] font-black leading-none tracking-[-0.08em] text-[#18130A] dark:text-amber-100">
-                {sharePercent}%
-              </div>
-
-              <div className="mt-2 text-[18px] font-bold text-[#3A2B00] dark:text-amber-200">
-                {t('author49DayEventPage.heroSubtitle')}
-              </div>
-            </div>
-
-            <div className="absolute inset-x-0 bottom-0 z-10 p-5">
+            <div className="absolute bottom-3 right-3 z-10 w-[58%] max-w-[280px] sm:bottom-4 sm:right-4">
               {isActive ? (
-                <div className="flex h-12 w-full items-center justify-center gap-1.5 rounded-[16px] border-2 border-black bg-[#FFC928] px-3 text-black shadow-[0_5px_0_#111111]">
-                  <span className="mr-1 text-[9px] font-bold uppercase">
-                    {t('author49DayEventPage.activeBoost')}
-                  </span>
-                  <span className="text-[14px] font-bold tabular-nums">
+                <div className="flex h-10 w-full items-center justify-center gap-1.5 rounded-[12px] border-2 border-black bg-[#FFC400]/95 px-2 text-black shadow-[0_4px_0_#111111] backdrop-blur-sm">
+                  <i className="fa-regular fa-clock text-[10px]" />
+                  <span className="text-[12px] font-black tabular-nums">
                     {formatNumber(countdown.days)}{t('author49DayEventPage.dayShort')}
                   </span>
-                  <span className="font-bold">:</span>
-                  <span className="text-[14px] font-bold tabular-nums">
-                    {formatNumber(countdown.hours)}{t('author49DayEventPage.hourShort')}
+                  <span className="text-[11px] font-black">:</span>
+                  <span className="text-[12px] font-black tabular-nums">
+                    {formatNumber(countdown.hours)}
                   </span>
-                  <span className="font-bold">:</span>
-                  <span className="text-[14px] font-bold tabular-nums">
-                    {formatNumber(countdown.minutes)}{t('author49DayEventPage.minuteShort')}
+                  <span className="text-[11px] font-black">:</span>
+                  <span className="text-[12px] font-black tabular-nums">
+                    {formatNumber(countdown.minutes)}
                   </span>
-                  <span className="font-bold">:</span>
-                  <span className="text-[14px] font-bold tabular-nums">
-                    {formatNumber(countdown.seconds)}{t('author49DayEventPage.secondShort')}
+                  <span className="text-[11px] font-black">:</span>
+                  <span className="text-[12px] font-black tabular-nums">
+                    {formatNumber(countdown.seconds)}
                   </span>
                 </div>
               ) : (
-                <div className="flex h-12 w-full items-center justify-center rounded-[16px] border-2 border-black bg-[#FFC928] text-[13px] font-bold text-black shadow-[0_5px_0_#111111]">
+                <div className="flex h-10 w-full items-center justify-center rounded-[12px] border-2 border-black bg-[#FFC400]/95 px-2 text-[11px] font-bold text-black shadow-[0_4px_0_#111111] backdrop-blur-sm">
                   {t('author49DayEventPage.waitingFirstEpisode')}
                 </div>
               )}
