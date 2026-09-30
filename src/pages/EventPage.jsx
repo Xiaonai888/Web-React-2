@@ -1659,7 +1659,7 @@ const activeEvents = [
           image: '/assets/Icons/Event/Event 2.webp',
           iconBg: 'bg-[#FFF5D8] dark:bg-amber-500/15',
           iconColor: 'text-[#E3AB00]',
-          labelColor: 'text-[#C99300]',
+          href: '/event/author-49-day',
         }
       : null,
 
