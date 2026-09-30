@@ -1798,7 +1798,11 @@ async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
 
     if (refreshOnChange) {
       await Promise.allSettled([
-        loadTaskCenterRef.current?.({ silent: true }),
+        loadTaskCenterRef.current?.({
+  silent: true,
+  force: true,
+  source: 'version-change',
+})
         loadTaskCover(),
       ])
     }
@@ -2229,7 +2233,11 @@ function startSmartRefreshCycle() {
         setWeeklyReading(data.weekly_reading)
       }
 
-      await loadTaskCenter({ silent: true })
+      await loadTaskCenter({
+  silent: true,
+  force: true,
+  source: 'weekly-claim',
+})
       setToast(t('taskCenterPage.weeklyVoucherAdded'))
     } catch (error) {
       setToast(
@@ -2375,7 +2383,9 @@ navigate(targetPath, {
 
   useEffect(() => {
     loadTaskCover()
-    loadTaskCenter()
+    loadTaskCenter({
+  source: 'mount',
+})
     loadReminderSetting()
   }, [])
 
@@ -2560,7 +2570,10 @@ navigate(targetPath, {
             setChestReward(null)
             setToast(t('taskCenterPage.rewardAddedWallet'))
             setChestTick(Date.now())
-            loadTaskCenter()
+            loadTaskCenter({
+  force: true,
+  source: 'chest-claim',
+})
           }}
         />
       ) : null}
