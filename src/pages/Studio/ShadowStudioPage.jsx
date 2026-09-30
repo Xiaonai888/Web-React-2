@@ -18,6 +18,7 @@ import StudioHome from './StudioHome'
 import StudioMyWorksPage from './StudioMyWorksPage'
 import StudioFoldersPage from './StudioFoldersPage'
 import StudioFolderPage from './StudioFolderPage'
+import StudioMoveWorksDialog from './StudioMoveWorksDialog'
 import StudioAllWorksPage from './StudioAllWorksPage'
 import { createStudioFolderRecord, readStudioFolderState, saveStudioFolderState } from './StudioFolderStore'
 import StudioNavigator from './StudioNavigator'
@@ -438,6 +439,7 @@ const placeImageLabel = {
   const [activeFolderId, setActiveFolderId] = useState('')
   const [folderReturnView, setFolderReturnView] = useState('myworks')
   const [folderState, setFolderState] = useState(readStudioFolderState)
+  const [moveWorksOpen, setMoveWorksOpen] = useState(false)
   const [allWorksOpen, setAllWorksOpen] = useState(false)
   const [newFileOpen, setNewFileOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
@@ -1437,6 +1439,7 @@ const placeImageLabel = {
     setFoldersOpen(false)
     setFolderWorksOpen(false)
     setActiveFolderId('')
+    setMoveWorksOpen(false)
     setAllWorksOpen(false)
     setWorkspaceStarted(false)
   }
@@ -1462,6 +1465,7 @@ const placeImageLabel = {
     setFoldersOpen(false)
     setFolderWorksOpen(false)
     setActiveFolderId('')
+    setMoveWorksOpen(false)
     setAllWorksOpen(false)
     setWorkspaceStarted(true)
   }
@@ -1498,6 +1502,22 @@ const placeImageLabel = {
     setActiveFolderId('')
     if (folderReturnView === 'folders') setFoldersOpen(true)
     else setMyWorksOpen(true)
+  }
+
+  function moveStudioWorksToFolder(documentIds, folderId) {
+    const validFolder = folderState.folders.some((folder) => folder.id === folderId)
+    if (!validFolder || !Array.isArray(documentIds) || !documentIds.length) return
+    const validDocuments = new Set(documentsRef.current.map((document) => document.id))
+    const now = new Date().toISOString()
+    commitStudioFolderState((current) => {
+      const assignments = { ...current.assignments }
+      documentIds.forEach((documentId) => {
+        if (validDocuments.has(documentId)) assignments[documentId] = folderId
+      })
+      const folders = current.folders.map((folder) => folder.id === folderId ? { ...folder, updatedAt: now } : folder)
+      return { ...current, folders, assignments }
+    })
+    setMoveWorksOpen(false)
   }
 
   const displayedWidth = Math.max(1, Math.round((activeDocument?.width || W) * zoom / 100))
@@ -2546,7 +2566,7 @@ async function dropImageOnPaper(event) {
           documents={documents}
           folders={studioFolders}
           onBack={() => setMyWorksOpen(false)}
-          onSelect={() => {}}
+          onSelect={() => setMoveWorksOpen(true)}
           onNewFile={() => openNewFile('basic')}
           onCreateFolder={createStudioFolder}
           onOpenDocument={openMyWorksDocument}
@@ -2878,6 +2898,15 @@ async function dropImageOnPaper(event) {
         canvasRef={canvasRef}
         onClose={() => setExportOpen(false)}
         onExported={(message) => { setProjectNotice(message); setExportOpen(false) }}
+      />
+
+      <StudioMoveWorksDialog
+        open={moveWorksOpen}
+        documents={documents}
+        folders={studioFolders}
+        assignments={folderState.assignments}
+        onClose={() => setMoveWorksOpen(false)}
+        onMove={moveStudioWorksToFolder}
       />
 
       <StudioNewFileDialog
