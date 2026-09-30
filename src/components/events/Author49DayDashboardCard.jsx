@@ -168,27 +168,21 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
           className="absolute inset-0 h-full w-full object-cover"
         />
 
-        <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/55 via-black/15 to-transparent px-4 pb-4 pt-14">
-          {isActive ? (
-            <div className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-[#FFC400] px-3 text-black shadow-[0_4px_0_#111111]">
-              <i className="fa-regular fa-clock text-[11px]" />
-              <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
-                {formatCountdownNumber(countdown.days)}{t('author49DayDashboardCard.dayShort')}
-              </span>
-              <span className="text-[12px] font-black">:</span>
-              <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
-                {formatCountdownNumber(countdown.hours)}
-              </span>
-              <span className="text-[12px] font-black">:</span>
-              <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
-                {formatCountdownNumber(countdown.minutes)}
-              </span>
-              <span className="text-[12px] font-black">:</span>
-              <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
-                {formatCountdownNumber(countdown.seconds)}
-              </span>
-            </div>
-          ) : (
+        <div className="absolute bottom-3 right-3 z-10 w-[58%] max-w-[280px] sm:bottom-4 sm:right-4">
+  {isActive ? (
+    <div className="flex h-10 w-full items-center justify-center gap-1.5 rounded-[12px] border-2 border-black bg-[#FFC400]/95 px-2 text-black shadow-[0_4px_0_#111111] backdrop-blur-sm">
+      <i className="fa-regular fa-clock text-[10px]" />
+      <span className="text-[12px] font-black tabular-nums">
+        {formatCountdownNumber(countdown.days)}{t('author49DayDashboardCard.dayShort')}
+      </span>
+      <span className="text-[11px] font-black">:</span>
+      <span className="text-[12px] font-black tabular-nums">{formatCountdownNumber(countdown.hours)}</span>
+      <span className="text-[11px] font-black">:</span>
+      <span className="text-[12px] font-black tabular-nums">{formatCountdownNumber(countdown.minutes)}</span>
+      <span className="text-[11px] font-black">:</span>
+      <span className="text-[12px] font-black tabular-nums">{formatCountdownNumber(countdown.seconds)}</span>
+    </div>
+  ) : (
             <button
               type="button"
               onClick={(event) => {
