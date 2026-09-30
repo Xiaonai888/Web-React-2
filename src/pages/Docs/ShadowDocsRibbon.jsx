@@ -131,9 +131,9 @@ export default function ShadowDocsRibbon({
           min-height:64px;
           padding-bottom:env(safe-area-inset-bottom);
           background:#292929;
-          border-top:1px solid #3a3a3a;
+          border-top:0;
           color:#f4f4f4;
-          box-shadow:0 -8px 24px rgba(0,0,0,.24);
+          box-shadow:none;
         }
         .sd-mobile-editor-scroll{
           min-width:0;
@@ -150,8 +150,8 @@ export default function ShadowDocsRibbon({
           display:flex;
           align-items:stretch;
           background:#292929;
-          border-left:1px solid #454545;
-          box-shadow:-10px 0 18px rgba(0,0,0,.18);
+          border-left:1px solid #3a3a3a;
+          box-shadow:none;
         }
         .sd-mobile-tool{
           flex:none;
