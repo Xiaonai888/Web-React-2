@@ -15,6 +15,8 @@ import StudioShapeEditor, { drawStudioShape } from './StudioShapeEditor'
 import StudioPaperTabs from './StudioPaperTabs'
 import StudioHeaderWorkspace from './StudioHeaderWorkspace'
 import StudioHome from './StudioHome'
+import StudioMyWorksPage from './StudioMyWorksPage'
+import StudioFoldersPage from './StudioFoldersPage'
 import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
@@ -427,6 +429,8 @@ const placeImageLabel = {
   const [documents, setDocuments] = useState([])
   const [activeDocumentId, setActiveDocumentId] = useState('')
   const [workspaceStarted, setWorkspaceStarted] = useState(false)
+  const [myWorksOpen, setMyWorksOpen] = useState(false)
+  const [foldersOpen, setFoldersOpen] = useState(false)
   const [newFileOpen, setNewFileOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [newFilePreset, setNewFilePreset] = useState('basic')
@@ -1332,6 +1336,8 @@ const placeImageLabel = {
     documentsRef.current = next
     setDocuments(next)
     setNewFileOpen(false)
+    setMyWorksOpen(false)
+    setFoldersOpen(false)
     setWorkspaceStarted(true)
     setActiveDocumentId(document.id)
   }
@@ -1411,6 +1417,8 @@ const placeImageLabel = {
     const saved = storeActiveImage(documentsRef.current)
     documentsRef.current = saved
     setDocuments(saved)
+    setMyWorksOpen(false)
+    setFoldersOpen(false)
     setWorkspaceStarted(false)
   }
 
@@ -1422,6 +1430,18 @@ const placeImageLabel = {
     if (!activeDocumentId) {
       setActiveDocumentId(documentsRef.current[0].id)
     }
+  }
+
+  function openMyWorksDocument(document) {
+    if (projectBusy || paperLoading || recoveryBooting || recoveryEntry || recoveryBusy || !document?.id) return
+
+    const target = documentsRef.current.find((item) => item.id === document.id)
+    if (!target) return
+
+    setActiveDocumentId(target.id)
+    setMyWorksOpen(false)
+    setFoldersOpen(false)
+    setWorkspaceStarted(true)
   }
 
   const displayedWidth = Math.max(1, Math.round((activeDocument?.width || W) * zoom / 100))
@@ -2275,9 +2295,10 @@ async function dropImageOnPaper(event) {
   const canRedo = redoRef.current.length > 0
 
   return (
-    <div className="shadow-studio">
+    <div className={`shadow-studio${myWorksOpen || foldersOpen ? ' ss-own-page' : ''}`}>
       <style>{`
         .shadow-studio{min-height:100vh;background:#202225;color:#eef0f3;font-family:inherit}
+        .shadow-studio.ss-own-page>.ss-chrome{display:none}
         .ss-chrome{height:34px;display:flex;align-items:center;gap:2px;border-bottom:1px solid #454a50;background:#34373b;padding:0 7px}
         .ss-logo-btn{height:28px;width:28px;display:grid;place-items:center;border:0;background:transparent;cursor:pointer}
         .ss-logo{display:block;width:16px;height:16px;object-fit:contain}
@@ -2442,7 +2463,29 @@ async function dropImageOnPaper(event) {
 ) : null}
       </StudioChrome>
 
-      {!workspaceStarted ? (
+      {!workspaceStarted && foldersOpen ? (
+        <StudioFoldersPage
+          folders={[]}
+          documents={documents}
+          onBack={() => { setFoldersOpen(false); setMyWorksOpen(true) }}
+          onSelect={() => {}}
+          onCreateFolder={() => {}}
+          onOpenFolder={() => {}}
+        />
+      ) : !workspaceStarted && myWorksOpen ? (
+        <StudioMyWorksPage
+          documents={documents}
+          folders={[]}
+          onBack={() => setMyWorksOpen(false)}
+          onSelect={() => {}}
+          onNewFile={() => openNewFile('basic')}
+          onCreateFolder={() => {}}
+          onOpenDocument={openMyWorksDocument}
+          onOpenFolder={() => {}}
+          onSeeAllWorks={() => {}}
+          onSeeAllFolders={() => { setMyWorksOpen(false); setFoldersOpen(true) }}
+        />
+      ) : !workspaceStarted ? (
         <StudioHome
           documents={documents}
           documentLimit={DOCUMENT_LIMIT}
@@ -2459,6 +2502,7 @@ async function dropImageOnPaper(event) {
           onOpenProject={chooseProjectFile}
           onImportImage={chooseImageFile}
           onResume={resumeWorkspace}
+          onMyWorks={() => setMyWorksOpen(true)}
           onExit={exitStudio}
           onRecover={recoverWorkspace}
           onDiscardRecovery={discardRecovery}
