@@ -1859,8 +1859,8 @@ function startSmartRefreshCycle() {
           try {
             await OneSignal.init({
               appId,
-              serviceWorkerPath: 'assets/onesignal/OneSignalSDKWorker.js',
-              serviceWorkerParam: { scope: '/assets/onesignal/' },
+              serviceWorkerPath: 'onesignal/OneSignalSDKWorker.js',
+              serviceWorkerParam: { scope: '/onesignal/' },
               notifyButton: { enable: false },
               welcomeNotification: { disable: true },
               autoResubscribe: true,
