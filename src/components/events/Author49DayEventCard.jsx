@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { requestAuthor49DayEvent } from '../../services/author49DayEventClientCache'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -77,6 +78,7 @@ export default function Author49DayEventCard({
   onStartWriting,
   startWritingLoading = false,
 }) {
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -233,7 +235,11 @@ export default function Author49DayEventCard({
 
         <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/55 via-black/15 to-transparent px-4 pb-4 pt-16">
           {isActive ? (
-            <div className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] border-2 border-black bg-[#FFC400] px-3 text-black shadow-[0_5px_0_#111111]">
+            <button
+  type="button"
+  onClick={() => navigate('/event/author-49-day')}
+  className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] border-2 border-black bg-[#FFC400] px-3 text-black shadow-[0_5px_0_#111111]"
+>
               <i className="fa-regular fa-clock text-[13px]" />
               <span className="text-[15px] font-black tabular-nums tracking-[0.02em]">
                 {String(countdown.days).padStart(2, '0')}{t('author49DayEventCard.dayShort')}
