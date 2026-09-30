@@ -17,6 +17,7 @@ import StudioHeaderWorkspace from './StudioHeaderWorkspace'
 import StudioHome from './StudioHome'
 import StudioMyWorksPage from './StudioMyWorksPage'
 import StudioFoldersPage from './StudioFoldersPage'
+import StudioAllWorksPage from './StudioAllWorksPage'
 import StudioNavigator from './StudioNavigator'
 import { StudioToolRail, StudioControlSidebar, StudioControlFooter } from './StudioWorkspaceControls'
 import { beginStudioStroke, extendStudioStroke } from './StudioBrushEngine'
@@ -431,6 +432,7 @@ const placeImageLabel = {
   const [workspaceStarted, setWorkspaceStarted] = useState(false)
   const [myWorksOpen, setMyWorksOpen] = useState(false)
   const [foldersOpen, setFoldersOpen] = useState(false)
+  const [allWorksOpen, setAllWorksOpen] = useState(false)
   const [newFileOpen, setNewFileOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [newFilePreset, setNewFilePreset] = useState('basic')
@@ -1419,6 +1421,7 @@ const placeImageLabel = {
     setDocuments(saved)
     setMyWorksOpen(false)
     setFoldersOpen(false)
+    setAllWorksOpen(false)
     setWorkspaceStarted(false)
   }
 
@@ -1441,6 +1444,7 @@ const placeImageLabel = {
     setActiveDocumentId(target.id)
     setMyWorksOpen(false)
     setFoldersOpen(false)
+    setAllWorksOpen(false)
     setWorkspaceStarted(true)
   }
 
@@ -2472,6 +2476,12 @@ async function dropImageOnPaper(event) {
           onCreateFolder={() => {}}
           onOpenFolder={() => {}}
         />
+      ) : !workspaceStarted && allWorksOpen ? (
+        <StudioAllWorksPage
+          documents={documents}
+          onBack={() => { setAllWorksOpen(false); setMyWorksOpen(true) }}
+          onOpenDocument={openMyWorksDocument}
+        />
       ) : !workspaceStarted && myWorksOpen ? (
         <StudioMyWorksPage
           documents={documents}
@@ -2482,7 +2492,7 @@ async function dropImageOnPaper(event) {
           onCreateFolder={() => {}}
           onOpenDocument={openMyWorksDocument}
           onOpenFolder={() => {}}
-          onSeeAllWorks={() => {}}
+          onSeeAllWorks={() => { setMyWorksOpen(false); setAllWorksOpen(true) }}
           onSeeAllFolders={() => { setMyWorksOpen(false); setFoldersOpen(true) }}
         />
       ) : !workspaceStarted ? (
