@@ -991,10 +991,11 @@ export default function ShadowDocsWritingStudioPanel({
           caret-color:#111;
         }
         .sd-writing-layout.sd-mobile-fit-mode .sd-writing-area{
-          width:100%!important;
-          padding-left:2px!important;
-          padding-right:2px!important;
-        }
+  width:100%!important;
+  padding-top:4px!important;
+  padding-left:2px!important;
+  padding-right:2px!important;
+}
         .sd-writing-layout .sd-editor-footer{
           box-sizing:border-box;
           width:100%!important;
