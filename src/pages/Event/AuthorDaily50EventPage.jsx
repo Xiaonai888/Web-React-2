@@ -325,7 +325,7 @@ export default function AuthorDaily50EventPage() {
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <h1 className="text-[18px] font-black">
+          <h1 className="text-[18px] font-bold">
             {t('authorDaily50EventPage.title')}
           </h1>
         </div>
@@ -347,7 +347,7 @@ export default function AuthorDaily50EventPage() {
                 50%
               </div>
 
-              <div className="mt-2 text-[18px] font-black text-emerald-900 dark:text-emerald-200">
+              <div className="mt-2 text-[18px] font-bold text-emerald-900 dark:text-emerald-200">
                 {t('authorDaily50EventPage.title')}
               </div>
 
@@ -384,7 +384,7 @@ export default function AuthorDaily50EventPage() {
         </section>
 
         <section className="mt-4 rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-5 shadow-sm">
-          <h2 className="text-[21px] font-black">
+          <h2 className="text-[21px] font-bold">
             {t('authorDaily50EventPage.heading')}
           </h2>
           <p className="mt-3 text-[13px] font-semibold leading-6 text-[var(--shadow-text-secondary)]">
@@ -413,7 +413,7 @@ export default function AuthorDaily50EventPage() {
         </section>
 
         <section className="mt-4 rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-5 shadow-sm">
-          <h2 className="text-[19px] font-black">
+          <h2 className="text-[19px] font-bold">
             {t('authorDaily50EventPage.howItWorks')}
           </h2>
 
@@ -441,7 +441,7 @@ export default function AuthorDaily50EventPage() {
         </section>
 
         <section className="mt-4 rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-5 shadow-sm">
-          <h2 className="text-[19px] font-black">
+          <h2 className="text-[19px] font-bold">
             {t('authorDaily50EventPage.shareRules')}
           </h2>
 
