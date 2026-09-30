@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, Download, Eye, ImagePlus, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Check, CheckCircle2, Download, Eye, ImagePlus, Menu, Plus, Redo2, Share2, Trash2, Undo2 } from 'lucide-react'
 import { getManuscriptOverview } from './ShadowDocsManuscriptTools'
 import { loadShadowDocsFont, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 import ShadowDocsRibbon from './ShadowDocsRibbon'
@@ -876,6 +876,43 @@ export default function ShadowDocsWritingStudioPanel({
 
   return <section aria-label="Writing Studio" className="sd-writing-layout">
     <style>{'.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}.sd-writing-area p,.sd-writing-area div{margin-bottom:var(--sd-paragraph-spacing,.75em)}.sd-writing-area h1,.sd-writing-area h2,.sd-writing-area h3,.sd-writing-area li,.sd-writing-area blockquote{text-indent:0}.sd-writing-area img{max-width:100%;height:auto;break-inside:avoid}.sd-writing-area table{width:100%;border-collapse:collapse;margin:12px 0}.sd-writing-area td,.sd-writing-area th{border:1px solid #b9b4c7;padding:6px}.sd-writing-area.sd-gridlines{background-image:linear-gradient(#0000000d 1px,transparent 1px),linear-gradient(90deg,#0000000d 1px,transparent 1px);background-size:24px 24px}.sd-writing-area ins{background:#dff5e8;text-decoration:underline}.sd-writing-area del{background:#fde2e5;color:#9f3d49}'}</style>
+    <style>{`
+      .sd-mobile-editor-topbar{display:none}
+      @media(max-width:700px){
+        body:has(.sd-writing-layout) .sd-header,
+        body:has(.sd-writing-layout) .sd-main>.sd-topline,
+        body:has(.sd-writing-layout) .sd-main>.sd-status{display:none!important}
+        body:has(.sd-writing-layout) .sd-main{padding-top:58px!important}
+        .sd-mobile-editor-topbar{
+          position:fixed;z-index:82;top:0;left:0;right:0;height:58px;
+          display:flex;align-items:center;gap:2px;padding:0 8px;
+          background:#292929;border-bottom:1px solid #3a3a3a;color:#f5f5f5
+        }
+        .sd-mobile-editor-topbar button{
+          width:42px;height:42px;display:grid;place-items:center;flex:none;
+          border:0;border-radius:9px;background:transparent;color:inherit
+        }
+        .sd-mobile-editor-topbar button:active{background:#3a3a3a}
+        .sd-mobile-editor-topbar .sd-mobile-page{
+          width:36px;border:1px solid #777;border-radius:3px;font-size:13px;font-weight:800
+        }
+        .sd-mobile-editor-topbar .sd-mobile-save{
+          width:auto;margin-left:auto;padding:0 14px;display:flex;gap:5px;
+          border-radius:18px;background:#25a884;font-size:12px;font-weight:800
+        }
+        .sd-mobile-editor-topbar svg{width:21px;height:21px;stroke-width:1.8}
+        .sd-editor-head{display:none!important}
+      }
+    `}</style>
+    <div className="sd-mobile-editor-topbar" aria-label="Mobile editor header">
+      <button type="button" aria-label="Back" onClick={() => onOpenBooks?.()}><ArrowLeft /></button>
+      <button type="button" aria-label="Undo" disabled={typeof onChangeHTML !== 'function'} onPointerDown={event => event.preventDefault()} onClick={() => quickFormat('undo')}><Undo2 /></button>
+      <button type="button" aria-label="Redo" disabled={typeof onChangeHTML !== 'function'} onPointerDown={event => event.preventDefault()} onClick={() => quickFormat('redo')}><Redo2 /></button>
+      <button type="button" className="sd-mobile-page" aria-label={`Chapter ${chapterIndex + 1}`} onClick={() => onOpenOutline?.()}><span>{chapterIndex + 1}</span></button>
+      <button type="button" aria-label="Export" onClick={() => onOpenPDF?.()}><Share2 /></button>
+      <button type="button" aria-label="Menu" onClick={() => onOpenOutline?.()}><Menu /></button>
+      <button type="button" className="sd-mobile-save" aria-label="Save" onClick={() => void runRibbonCommand('save', true)}><Check /> Save</button>
+    </div>
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
       <div className="sd-chapter-list">{book.chapters.map((item, index) => <button type="button" key={item.id} className={`sd-chapter-item ${item.id === chapter.id ? 'is-active' : ''}`} onClick={() => onSelectChapter?.(item.id)} disabled={typeof onSelectChapter !== 'function'}><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.title || `Chapter ${index + 1}`}</strong></button>)}</div>
