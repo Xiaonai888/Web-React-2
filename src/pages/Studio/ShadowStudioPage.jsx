@@ -1487,6 +1487,36 @@ const placeImageLabel = {
     commitStudioFolderState((current) => ({ ...current, folders: [folder, ...current.folders] }))
   }
 
+  function renameStudioFolder(folderId, name) {
+    const nextName = String(name || '').trim().slice(0, 80)
+    if (!folderId || !nextName) return
+    const now = new Date().toISOString()
+    commitStudioFolderState((current) => ({
+      ...current,
+      folders: current.folders.map((folder) => folder.id === folderId ? { ...folder, name: nextName, updatedAt: now } : folder),
+    }))
+  }
+
+  function deleteStudioFolders(folderIds) {
+    const ids = new Set(Array.isArray(folderIds) ? folderIds.filter(Boolean) : [])
+    if (!ids.size) return
+    commitStudioFolderState((current) => {
+      const assignments = {}
+      Object.entries(current.assignments).forEach(([documentId, folderId]) => {
+        if (!ids.has(folderId)) assignments[documentId] = folderId
+      })
+      return {
+        folders: current.folders.filter((folder) => !ids.has(folder.id)),
+        assignments,
+      }
+    })
+    if (ids.has(activeFolderId)) {
+      setFolderWorksOpen(false)
+      setActiveFolderId('')
+      setFoldersOpen(true)
+    }
+  }
+
   function openStudioFolder(folder, returnView = 'myworks') {
     if (!folder?.id) return
     setActiveFolderId(folder.id)
@@ -2551,9 +2581,10 @@ async function dropImageOnPaper(event) {
           folders={studioFolders}
           documents={documents}
           onBack={() => { setFoldersOpen(false); setMyWorksOpen(true) }}
-          onSelect={() => {}}
           onCreateFolder={createStudioFolder}
           onOpenFolder={(folder) => openStudioFolder(folder, 'folders')}
+          onRenameFolder={renameStudioFolder}
+          onDeleteFolders={deleteStudioFolders}
         />
       ) : !workspaceStarted && allWorksOpen ? (
         <StudioAllWorksPage
