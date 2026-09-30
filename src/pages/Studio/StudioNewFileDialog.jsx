@@ -16,6 +16,8 @@ const STUDIO_TEXT = {
     "New File": "ឯកសារថ្មី",
     "New": "ថ្មី",
     "Close new file dialog": "បិទផ្ទាំងឯកសារថ្មី",
+    "Import Image": "នាំចូលរូបភាព",
+    "Choose from Photos or Files": "ជ្រើសពី Photos ឬ Files",
     "Name:": "ឈ្មោះ៖",
     "Document Type:": "ប្រភេទឯកសារ៖",
     "Size:": "ទំហំ៖",
@@ -94,6 +96,8 @@ const STUDIO_TEXT = {
     "New File": "新建文件",
     "New": "新建",
     "Close new file dialog": "关闭新建文件窗口",
+    "Import Image": "导入图片",
+    "Choose from Photos or Files": "从照片或文件中选择",
     "Name:": "名称：",
     "Document Type:": "文档类型：",
     "Size:": "尺寸：",
@@ -172,6 +176,8 @@ const STUDIO_TEXT = {
     "New File": "新規ファイル",
     "New": "新規",
     "Close new file dialog": "新規ファイル画面を閉じる",
+    "Import Image": "画像を読み込む",
+    "Choose from Photos or Files": "写真またはファイルから選択",
     "Name:": "名前：",
     "Document Type:": "ドキュメントの種類：",
     "Size:": "サイズ：",
@@ -250,6 +256,8 @@ const STUDIO_TEXT = {
     "New File": "새 파일",
     "New": "새로 만들기",
     "Close new file dialog": "새 파일 창 닫기",
+    "Import Image": "이미지 가져오기",
+    "Choose from Photos or Files": "사진 또는 파일에서 선택",
     "Name:": "이름:",
     "Document Type:": "문서 유형:",
     "Size:": "크기:",
@@ -414,7 +422,7 @@ function findGroup(id) {
   return PAPER_GROUPS.find((group) => group.presets.some((item) => item.id === id))?.id || 'drawing'
 }
 
-export default function StudioNewFileDialog({ open, defaultName, initialPreset = 'basic', onClose, onCreate }) {
+export default function StudioNewFileDialog({ open, defaultName, initialPreset = 'basic', onClose, onCreate, onImportImage }) {
   const initial = BUILTIN_PRESETS.find((item) => item.id === initialPreset) || STUDIO_PRESETS[0]
   const { language } = useDisplayTranslation()
   const tr = (text) => studioTranslate(language, text)
@@ -683,6 +691,72 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
           padding:15px 16px 16px;
           scrollbar-width:thin;
           scrollbar-color:#586b7e #252e37
+        }
+        .shadow-studio .ss-nd-import{
+          width:100%;
+          min-height:44px;
+          display:flex;
+          align-items:center;
+          gap:10px;
+          box-sizing:border-box;
+          border:1px solid #5a6f83;
+          border-radius:7px;
+          background:linear-gradient(180deg,#31404d,#293640);
+          color:#edf3fa;
+          padding:8px 10px;
+          text-align:left;
+          cursor:pointer;
+          transition:border-color 120ms ease,background 120ms ease,transform 120ms ease
+        }
+        .shadow-studio .ss-nd-import:hover:not(:disabled){
+          border-color:#79bcff;
+          background:#354a5c;
+          transform:translateY(-1px)
+        }
+        .shadow-studio .ss-nd-import:focus-visible{
+          outline:2px solid var(--ss-nd-blue);
+          outline-offset:2px
+        }
+        .shadow-studio .ss-nd-import:disabled{
+          opacity:.45;
+          cursor:not-allowed;
+          transform:none
+        }
+        .shadow-studio .ss-nd-import-icon{
+          width:32px;
+          height:32px;
+          flex:none;
+          display:grid;
+          place-items:center;
+          border-radius:6px;
+          background:#3c5d79;
+          color:#fff
+        }
+        .shadow-studio .ss-nd-import-icon svg{
+          width:18px;
+          height:18px;
+          display:block
+        }
+        .shadow-studio .ss-nd-import-copy{
+          min-width:0;
+          flex:1;
+          display:block
+        }
+        .shadow-studio .ss-nd-import-copy strong{
+          display:block;
+          font-size:10px;
+          font-weight:800
+        }
+        .shadow-studio .ss-nd-import-copy small{
+          display:block;
+          margin-top:2px;
+          color:#aebdca;
+          font-size:9px
+        }
+        .shadow-studio .ss-nd-import-arrow{
+          flex:none;
+          color:#9fb4c6;
+          font-size:18px
         }
         .shadow-studio .ss-nd-row{
           display:grid;
@@ -1059,7 +1133,26 @@ export default function StudioNewFileDialog({ open, defaultName, initialPreset =
         <div className="ss-nd-head"><h2>{tr('New')}</h2><button type="button" className="ss-nd-close" onClick={onClose} aria-label={tr('Close new file dialog')}>×</button></div>
         <div className="ss-nd-content">
           <div className="ss-nd-fields">
-            <label className="ss-nd-row"><span className="ss-nd-label">{tr('Name:')}</span><input className="ss-nd-control" maxLength={80} value={name} autoFocus onChange={(event) => { setName(event.target.value); setError('') }} /></label>
+            <button
+              type="button"
+              className="ss-nd-import"
+              onClick={onImportImage}
+              disabled={typeof onImportImage !== 'function'}
+            >
+              <span className="ss-nd-import-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 5.5h16v13H4z" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M7 15l3.2-3.4 2.6 2.6 2.2-2.2 2 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="16.5" cy="8.5" r="1.5" fill="currentColor" />
+                </svg>
+              </span>
+              <span className="ss-nd-import-copy">
+                <strong>{tr('Import Image')}</strong>
+                <small>{tr('Choose from Photos or Files')}</small>
+              </span>
+              <span className="ss-nd-import-arrow" aria-hidden="true">›</span>
+            </button>
+            <label className="ss-nd-row"><span className="ss-nd-label">{tr('Name:')}</span><input className="ss-nd-control" maxLength={80} value={name} onChange={(event) => { setName(event.target.value); setError('') }} /></label>
             <label className="ss-nd-row"><span className="ss-nd-label">{tr('Document Type:')}</span><select className="ss-nd-control" value={groupId} onChange={(event) => selectGroup(event.target.value)}>{groups.map((group) => <option key={group.id} value={group.id}>{tr(group.label)}</option>)}</select></label>
             <label className="ss-nd-row"><span className="ss-nd-label">{tr('Size:')}</span><select className="ss-nd-control" value={presetId} onChange={(event) => { const next = choices.find((item) => item.id === event.target.value); if (next?.id === 'custom') markCustom(); else if (next) applyPreset(next) }}>{choices.map((item) => <option key={item.id} value={item.id}>{item.id.startsWith('saved-') ? item.label : tr(presetLabel(item))}</option>)}</select></label>
             <div className="ss-nd-row"><label className="ss-nd-label" htmlFor="ss-nd-width">{tr('Width:')}</label><div className="ss-nd-three"><div className="ss-nd-line"><input id="ss-nd-width" className="ss-nd-control" inputMode="decimal" type="number" min="0" step="any" value={widthInput} onChange={(event) => { setWidthInput(event.target.value); markCustom() }} /><div className="ss-nd-orient" role="group" aria-label={tr('Orientation')}><button type="button" aria-label={tr('Portrait')} title={tr('Portrait')} aria-pressed={height > width} disabled={Boolean(status)} onClick={() => orient('portrait')}>▯</button><button type="button" aria-label={tr('Landscape')} title={tr('Landscape')} aria-pressed={width >= height} disabled={Boolean(status)} onClick={() => orient('landscape')}>▭</button></div></div><select className="ss-nd-control" aria-label={tr('Width unit')} value={widthUnit} onChange={(event) => changeUnit(event.target.value, 'width')}>{UNITS.map((item) => <option key={item.id} value={item.id}>{tr(item.label)}</option>)}</select></div></div>
