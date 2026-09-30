@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { requestAuthor49DayEvent } from '../../services/author49DayEventClientCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -42,6 +43,7 @@ function formatCountdownNumber(value) {
 }
 
 export default function Author49DayDashboardCard({ onStartWriting }) {
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [event, setEvent] = useState(null)
   const [serverOffsetMs, setServerOffsetMs] = useState(0)
@@ -153,7 +155,12 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
   const isActive = event.status === 'active'
 
   return (
-    <section className="mt-5 overflow-hidden rounded-[16px] border border-[#F2C230] bg-black shadow-[0_10px_26px_rgba(216,164,0,0.12)]">
+    <section
+  role="button"
+  tabIndex={0}
+  onClick={() => navigate('/event/author-49-day')}
+  className="mt-5 cursor-pointer overflow-hidden rounded-[16px] border border-[#F2C230] bg-black shadow-[0_10px_26px_rgba(216,164,0,0.12)] active:scale-[0.99]"
+>
       <div className="relative aspect-[16/9] w-full overflow-hidden">
         <img
           src="/assets/Icons/Event/Event 1.webp"
@@ -184,7 +191,10 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
           ) : (
             <button
               type="button"
-              onClick={onStartWriting}
+              onClick={(event) => {
+  event.stopPropagation()
+  onStartWriting?.()
+}}
               className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-[#FFC400] text-[12px] font-black text-black shadow-[0_4px_0_#111111] transition active:translate-y-[2px] active:shadow-[0_2px_0_#111111]"
             >
               <i className="fa-solid fa-pen-nib text-[10px]" />
