@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Check, CheckCircle2, Download, Eye, ImagePlus, Menu, Plus, Redo2, Share2, Trash2, Undo2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, Download, Eye, ImagePlus, Plus, Trash2 } from 'lucide-react'
 import { getManuscriptOverview } from './ShadowDocsManuscriptTools'
 import { loadShadowDocsFont, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 import ShadowDocsRibbon from './ShadowDocsRibbon'
