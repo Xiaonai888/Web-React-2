@@ -204,11 +204,10 @@ export default function StudioMobileColorPopup({
           flex-direction:column;
           overflow:hidden;
           box-sizing:border-box;
-          border:1px solid #3d4853;
-          border-radius:13px;
+          border:1px solid #38424c;
+          border-radius:10px;
           background:#171d24;
           color:#eef4fa;
-          box-shadow:0 -14px 34px #000b;
           font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
         }
         .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-popup *{box-sizing:border-box}
@@ -232,7 +231,6 @@ export default function StudioMobileColorPopup({
           height:28px;
           border:1px solid #71808d;
           border-radius:5px;
-          box-shadow:inset 0 0 0 1px #0005
         }
         .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-hex{
           width:76px;
@@ -248,7 +246,6 @@ export default function StudioMobileColorPopup({
         }
         .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-hex:focus{
           border-color:#5faeff;
-          box-shadow:0 0 0 2px #5faeff22
         }
         .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-body{
           min-height:0;
@@ -269,12 +266,11 @@ export default function StudioMobileColorPopup({
           aspect-ratio:1;
           overflow:hidden;
           border:1px solid #71808c;
-          border-radius:8px;
+          border-radius:6px;
           background:
             linear-gradient(to top,#000,transparent),
             linear-gradient(to right,#fff,transparent),
             hsl(var(--ss-mobile-color-hue) 100% 50%);
-          box-shadow:0 5px 18px #0007;
           touch-action:none;
           cursor:crosshair
         }
@@ -285,7 +281,6 @@ export default function StudioMobileColorPopup({
           border:2px solid #fff;
           border-radius:50%;
           transform:translate(-50%,-50%);
-          box-shadow:0 0 0 1px #111,0 2px 5px #000a;
           pointer-events:none
         }
         .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-hue{
@@ -347,12 +342,10 @@ export default function StudioMobileColorPopup({
           border-radius:5px;
           padding:0;
           cursor:pointer;
-          box-shadow:inset 0 0 0 1px #0004
         }
         .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-swatch.active{
           outline:2px solid #65b4ff;
           outline-offset:1px;
-          box-shadow:inset 0 0 0 2px #fff9
         }
         .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-group{
           margin-top:10px;
