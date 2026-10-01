@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import PremiumHelpSheet from '../../components/Me/PremiumHelpSheet'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import PremiumSubscribeSoon from '../../components/Me/PremiumSubscribeSoon'
 
 registerTranslationNamespace('premiumPage', {
   en: {
@@ -431,12 +432,7 @@ export default function PremiumPage() {
             })}
           </div>
 
-          <button
-            type="button"
-            className="mt-4 flex h-14 w-full items-center justify-center rounded-full bg-gradient-to-r from-[#ffd500] to-[#ffad0a] text-[20px] font-semibold text-[#282828] shadow-[0_7px_18px_rgba(255,180,0,0.18)] active:scale-[0.99]"
-          >
-            {t('premiumPage.subscribe')}
-          </button>
+          <PremiumSubscribeSoon label={t('premiumPage.subscribe')} />
 
           <p className="mt-4 text-center text-[12px] leading-5 text-[#a0a0a0] dark:text-[var(--shadow-text-secondary)]">
             {t('premiumPage.extraDiamonds')}
