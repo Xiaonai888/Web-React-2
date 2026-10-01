@@ -894,51 +894,56 @@ export default function ShadowDocsWritingStudioPanel({
           padding:58px 0 0!important;
         }
         .sd-mobile-editor-topbar{
-          position:fixed;
-          z-index:82;
-          top:0;
-          left:0;
-          right:0;
-          height:58px;
-          display:flex;
-          align-items:center;
-          gap:2px;
-          padding:0 8px;
-          background:#292929;
-          border-bottom:1px solid #3a3a3a;
-          color:#f5f5f5;
-        }
-        .sd-mobile-editor-topbar button{
-          width:42px;
-          height:42px;
-          display:grid;
-          place-items:center;
-          flex:none;
-          border:0;
-          border-radius:9px;
-          background:transparent;
-          color:inherit;
-        }
-        .sd-mobile-editor-topbar button:active{background:#3a3a3a}
-        .sd-mobile-editor-topbar button:disabled{opacity:.42}
-        .sd-mobile-editor-topbar .sd-mobile-page{
-          width:36px;
-          border:1px solid #777;
-          border-radius:3px;
-          font-size:13px;
-          font-weight:800;
-        }
-        .sd-mobile-editor-topbar .sd-mobile-save{
-          width:auto;
-          margin-left:auto;
-          padding:0 14px;
-          display:flex;
-          gap:5px;
-          border-radius:18px;
-          background:#25a884;
-          font-size:12px;
-          font-weight:700;
-        }
+  position:fixed;
+  z-index:82;
+  top:0;
+  left:0;
+  right:0;
+  height:54px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:0 8px;
+  background:#292929;
+  border-bottom:1px solid #3a3a3a;
+  color:#f5f5f5;
+}
+.sd-mobile-editor-topbar button{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  flex:none;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:inherit;
+}
+.sd-mobile-editor-topbar button:first-child{
+  margin-right:12px;
+}
+.sd-mobile-editor-topbar .sd-mobile-page{
+  width:auto;
+  min-width:30px;
+  height:30px;
+  padding:0 7px;
+  border:1px solid #777;
+  border-radius:3px;
+  font-size:10px;
+  font-weight:700;
+}
+.sd-mobile-editor-topbar .sd-mobile-save{
+  width:auto;
+  height:34px;
+  margin-left:0;
+  padding:0 11px;
+  display:flex;
+  gap:4px;
+  border-radius:17px;
+  background:#25a884;
+  font-size:11px;
+  font-weight:700;
+}
         .sd-mobile-editor-topbar svg{
           width:21px;
           height:21px;
