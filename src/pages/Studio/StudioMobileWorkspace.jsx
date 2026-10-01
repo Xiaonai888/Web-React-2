@@ -788,8 +788,8 @@ export default function StudioMobileWorkspace({
             position:relative
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label.active{
-            background:#263d56;
-            color:#68b3ff
+            background:#2b333b;
+            color:#f1f5f9
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-dot{
             width:27px;
@@ -797,10 +797,15 @@ export default function StudioMobileWorkspace({
             box-sizing:border-box;
             border:2px solid #f5f7fa;
             border-radius:6px;
-            box-shadow:0 0 0 1px #000,0 2px 8px #0008
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-down{
-            font-size:22px
+            font-size:24px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label.is-down{
+            gap:0
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label.is-down span{
+            display:none
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-more-cell{
             min-width:0;
@@ -1221,7 +1226,7 @@ export default function StudioMobileWorkspace({
 
         <button
           type="button"
-          className={`ss-mobile-color-label ${colorOpen ? 'active' : ''}`}
+          className={`ss-mobile-color-label ${colorOpen ? 'active is-down' : ''}`}
           aria-label={colorOpen ? text.close : text.color}
           aria-expanded={colorOpen}
           disabled={busy}
@@ -1233,9 +1238,11 @@ export default function StudioMobileWorkspace({
           {colorOpen ? (
             <i className="fa-solid fa-chevron-down ss-mobile-color-down" aria-hidden="true" />
           ) : (
-            <span className="ss-mobile-color-dot" style={{ backgroundColor: color || '#111111' }} aria-hidden="true" />
+            <>
+              <span className="ss-mobile-color-dot" style={{ backgroundColor: color || '#111111' }} aria-hidden="true" />
+              <span>{text.color}</span>
+            </>
           )}
-          <span>{text.color}</span>
         </button>
 
         <button type="button" className={`ss-mobile-dock-main ${panel === 'layers' ? 'active' : ''}`} onClick={() => openPanel('layers')} disabled={busy}>
