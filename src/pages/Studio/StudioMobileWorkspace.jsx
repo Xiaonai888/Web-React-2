@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import StudioBrushSettings from './StudioBrushSettings'
 import { STUDIO_TOOL_GROUPS, STUDIO_TOOLS_BY_ID, STUDIO_WORKING_TOOLS } from './StudioToolCatalog'
@@ -175,6 +175,21 @@ function formatSize(value) {
   return Number.isInteger(number) ? String(number) : number.toFixed(1)
 }
 
+function mobileCanvasScale(document) {
+  const width = Number(document?.width)
+  const height = Number(document?.height)
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return 1
+  return Math.max(0.05, Math.min(width, height) / 1000)
+}
+
+function logicalSizeFromActual(actualSize, scale) {
+  return Math.round(Math.max(0.1, Number(actualSize) || 0.1) / Math.max(0.05, scale) * 10) / 10
+}
+
+function actualSizeFromLogical(logicalSize, scale) {
+  return Math.round(Math.min(5000, Math.max(0.1, Number(logicalSize) || 0.1) * Math.max(0.05, scale)) * 10) / 10
+}
+
 export default function StudioMobileWorkspace({
   tool,
   color,
@@ -210,6 +225,20 @@ export default function StudioMobileWorkspace({
   const text = MOBILE_TEXT[language] || MOBILE_TEXT.en
   const [controlsOpen, setControlsOpen] = useState(true)
   const [panel, setPanel] = useState('')
+  const [paintTool, setPaintTool] = useState(tool === 'eraser' ? 'eraser' : 'brush')
+  const [sizeEditing, setSizeEditing] = useState(false)
+  const [sizeDraft, setSizeDraft] = useState('')
+
+  useEffect(() => {
+    if (tool === 'brush' || tool === 'eraser') setPaintTool(tool)
+  }, [tool])
+
+  const activePaper = documents.find((document) => document.id === activeDocumentId) || documents[0] || null
+  const canvasScale = mobileCanvasScale(activePaper)
+  const logicalSize = logicalSizeFromActual(size, canvasScale)
+  const sliderMax = paintTool === 'eraser' ? 50 : 30
+  const sliderSize = Math.min(sliderMax, Math.max(0.1, logicalSize))
+  const manualLogicalMax = Math.max(sliderMax, Math.floor(5000 / canvasScale * 10) / 10)
 
   const openPanel = (name) => setPanel((current) => current === name ? '' : name)
   const toolGroups = STUDIO_TOOL_GROUPS.map((group) => ({
@@ -219,13 +248,37 @@ export default function StudioMobileWorkspace({
 
   function chooseTool(next) {
     if (busy) return
+    if (next === 'brush' || next === 'eraser') setPaintTool(next)
     onToolChange?.(next)
     setPanel('')
   }
 
+  function toggleBrushEraser() {
+    if (busy) return
+    chooseTool(paintTool === 'eraser' ? 'brush' : 'eraser')
+  }
+
+  function applyLogicalSize(nextLogicalSize, max = sliderMax) {
+    const next = Math.round(clamp(nextLogicalSize, 0.1, max) * 10) / 10
+    return onSizeChange?.(actualSizeFromLogical(next, canvasScale))
+  }
+
   function adjustSize(direction) {
-    const step = sizeStep(size)
-    onSizeChange?.(clamp(Number(size) + direction * step, 0.1, 5000))
+    const step = sizeStep(logicalSize)
+    applyLogicalSize(Number(logicalSize) + direction * step)
+  }
+
+  function beginSizeEdit() {
+    if (busy) return
+    setSizeDraft(formatSize(logicalSize))
+    setSizeEditing(true)
+  }
+
+  function commitSizeEdit() {
+    const value = Number(String(sizeDraft).replace(',', '.'))
+    setSizeEditing(false)
+    if (!Number.isFinite(value)) return
+    applyLogicalSize(value, manualLogicalMax)
   }
 
   function adjustOpacity(direction) {
@@ -480,11 +533,30 @@ export default function StudioMobileWorkspace({
             align-items:center
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-slider-value{
+            width:36px;
+            height:26px;
+            min-width:0;
+            box-sizing:border-box;
+            border:1px solid transparent;
+            border-radius:5px;
+            background:transparent;
             color:#eaf1f8;
-            font-size:10px;
-            font-weight:800;
+            padding:0 2px;
+            font:800 10px Inter,system-ui,sans-serif;
             text-align:right;
             font-variant-numeric:tabular-nums
+          }
+          .shadow-studio.ss-mobile-workspace-mode button.ss-mobile-slider-value{
+            cursor:text
+          }
+          .shadow-studio.ss-mobile-workspace-mode button.ss-mobile-slider-value:hover{
+            border-color:#465564;
+            background:#202933
+          }
+          .shadow-studio.ss-mobile-workspace-mode input.ss-mobile-slider-value{
+            border-color:#4b9fff;
+            background:#11171d;
+            outline:none
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-slider-row input[type=range]{
             width:100%;
@@ -564,6 +636,27 @@ export default function StudioMobileWorkspace({
             box-shadow:inset 0 0 0 1px #499ef5
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main i{font-size:20px}
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-tool-toggle{
+            gap:2px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-toggle-icons{
+            min-height:24px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:3px;
+            color:#eef4fa
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-toggle-icons .ss-mobile-toggle-tool{
+            font-size:14px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-toggle-icons .ss-mobile-toggle-arrow{
+            color:#91a2b3;
+            font-size:9px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-tool-toggle span:last-child{
+            font-size:7px
+          }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main span,
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label span{
             max-width:100%;
@@ -901,16 +994,50 @@ export default function StudioMobileWorkspace({
       <div className={`ss-mobile-controls${controlsOpen ? '' : ' is-hidden'}`}>
         <div className="ss-mobile-brush-preview" aria-hidden="true">
           <svg viewBox="0 0 54 36">
-            <path d="M6 27 C15 9 30 28 48 9" fill="none" stroke="currentColor" strokeWidth={Math.max(2, Math.min(11, Number(size) / 5 || 2))} strokeLinecap={brushStyle === 'marker' ? 'square' : 'round'} opacity={Math.max(.1, Number(opacity) / 100 || 1)} />
+            <path d="M6 27 C15 9 30 28 48 9" fill="none" stroke="currentColor" strokeWidth={Math.max(2, Math.min(11, Number(logicalSize) / 5 || 2))} strokeLinecap={brushStyle === 'marker' ? 'square' : 'round'} opacity={Math.max(.1, Number(opacity) / 100 || 1)} />
           </svg>
         </div>
 
         <div className="ss-mobile-sliders">
           <div className="ss-mobile-slider-row">
-            <output className="ss-mobile-slider-value" aria-label={`${text.size} ${formatSize(size)}`}>{formatSize(size)}</output>
-            <button type="button" className="ss-mobile-step" onClick={() => adjustSize(-1)} disabled={busy || Number(size) <= .1} aria-label={`${text.size} -`}>−</button>
-            <input type="range" min=".1" max="5000" step=".1" value={Math.max(.1, Number(size) || .1)} disabled={busy} aria-label={text.size} onChange={(event) => onSizeChange?.(Number(event.target.value))} />
-            <button type="button" className="ss-mobile-step" onClick={() => adjustSize(1)} disabled={busy || Number(size) >= 5000} aria-label={`${text.size} +`}>+</button>
+            {sizeEditing ? (
+              <input
+                type="number"
+                className="ss-mobile-slider-value"
+                min=".1"
+                max={manualLogicalMax}
+                step=".1"
+                inputMode="decimal"
+                autoFocus
+                value={sizeDraft}
+                aria-label={text.size}
+                onChange={(event) => setSizeDraft(event.target.value)}
+                onBlur={commitSizeEdit}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                  if (event.key === 'Escape') {
+                    setSizeDraft(formatSize(logicalSize))
+                    setSizeEditing(false)
+                  }
+                }}
+              />
+            ) : (
+              <button type="button" className="ss-mobile-slider-value" onClick={beginSizeEdit} disabled={busy} aria-label={`${text.size} ${formatSize(logicalSize)}`}>
+                {formatSize(logicalSize)}
+              </button>
+            )}
+            <button type="button" className="ss-mobile-step" onClick={() => adjustSize(-1)} disabled={busy || logicalSize <= .1} aria-label={`${text.size} -`}>−</button>
+            <input
+              type="range"
+              min=".1"
+              max={sliderMax}
+              step=".1"
+              value={sliderSize}
+              disabled={busy}
+              aria-label={`${text.size} ${formatSize(logicalSize)} · max ${sliderMax}`}
+              onChange={(event) => applyLogicalSize(Number(event.target.value))}
+            />
+            <button type="button" className="ss-mobile-step" onClick={() => adjustSize(1)} disabled={busy || logicalSize >= sliderMax} aria-label={`${text.size} +`}>+</button>
           </div>
 
           <div className="ss-mobile-slider-row">
@@ -928,14 +1055,31 @@ export default function StudioMobileWorkspace({
       </div>
 
       <nav className="ss-mobile-dock" aria-label={text.tools}>
-        <button type="button" className={`ss-mobile-dock-main ${tool === 'brush' ? 'active' : ''}`} onClick={() => chooseTool('brush')} disabled={busy}>
-          <i className="fa-solid fa-paintbrush" aria-hidden="true" />
-          <span>{text.brush}</span>
+        <button
+          type="button"
+          className="ss-mobile-dock-main ss-mobile-tool-toggle"
+          onClick={toggleBrushEraser}
+          disabled={busy}
+          aria-label={`${text.brush} / ${text.eraser}`}
+          title={`${text.brush} ↔ ${text.eraser}`}
+        >
+          <span className="ss-mobile-toggle-icons" aria-hidden="true">
+            <i className="fa-solid fa-paintbrush ss-mobile-toggle-tool" />
+            <i className="fa-solid fa-arrow-right-arrow-left ss-mobile-toggle-arrow" />
+            <i className="fa-solid fa-eraser ss-mobile-toggle-tool" />
+          </span>
+          <span>{paintTool === 'eraser' ? text.brush : text.eraser}</span>
         </button>
 
-        <button type="button" className={`ss-mobile-dock-main ${tool === 'eraser' ? 'active' : ''}`} onClick={() => chooseTool('eraser')} disabled={busy}>
-          <i className="fa-solid fa-eraser" aria-hidden="true" />
-          <span>{text.eraser}</span>
+        <button
+          type="button"
+          className={`ss-mobile-dock-main ${tool === paintTool ? 'active' : ''}`}
+          onClick={() => chooseTool(paintTool)}
+          disabled={busy}
+          aria-label={paintTool === 'eraser' ? text.eraser : text.brush}
+        >
+          <i className={`fa-solid ${paintTool === 'eraser' ? 'fa-eraser' : 'fa-paintbrush'}`} aria-hidden="true" />
+          <span>{paintTool === 'eraser' ? text.eraser : text.brush}</span>
         </button>
 
         <label className="ss-mobile-color-label" aria-label={text.color}>
