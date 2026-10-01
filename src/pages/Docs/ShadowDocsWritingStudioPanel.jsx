@@ -20,6 +20,7 @@ import { acceptShadowDocsChange, rejectShadowDocsChange, listShadowDocsChanges, 
 import { buildShadowDocsTableOfContents, createShadowDocsCitation, createShadowDocsFootnote, formatShadowDocsCitation } from './ShadowDocsReferenceEngine'
 import { buildShadowDocsMergedDocuments, createShadowDocsAddressBlock, createShadowDocsGreetingLine, getShadowDocsMergeFields, insertShadowDocsMergeField, parseShadowDocsRecipientsCSV } from './ShadowDocsMailMergeEngine'
 import { applyShadowDocsCase } from './ShadowDocsTextTransform'
+import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
 const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
@@ -37,6 +38,23 @@ function colorToHex(value, fallback) {
   const match = color.match(/^rgba?\(\s*(\d+)\D+(\d+)\D+(\d+)/i)
   if (!match) return fallback
   return `#${match.slice(1, 4).map(part => Math.max(0, Math.min(255, Number(part))).toString(16).padStart(2, '0')).join('')}`
+}
+
+function mobileDocumentName(book) {
+  const title = String(book?.title || '').trim()
+  if (!title || title === 'Untitled Book') return 'Docs.doc'
+  return /\.(?:doc|docx)$/i.test(title) ? title : `${title}.doc`
+}
+
+function mobileDocumentSize(book) {
+  try {
+    const bytes = new TextEncoder().encode(JSON.stringify(book || {})).length
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+  } catch {
+    return ''
+  }
 }
 
 function explicitFontSize(editor) {
@@ -96,6 +114,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [indexEntries, setIndexEntries] = useState([])
   const [localSaveDirty, setLocalSaveDirty] = useState(false)
   const [localSaveSeconds, setLocalSaveSeconds] = useState(10)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const onEditorBlurRef = useRef(onEditorBlur)
   const chapter = book?.chapters?.find(item => item.id === chapterId) || book?.chapters?.[0]
   const chapterIndex = book?.chapters?.findIndex(item => item.id === chapter?.id) ?? -1
@@ -116,6 +135,7 @@ export default function ShadowDocsWritingStudioPanel({
   useEffect(() => {
     setLocalSaveDirty(false)
     setLocalSaveSeconds(10)
+    setMobileMenuOpen(false)
   }, [book?.id, chapter?.id])
 
   useEffect(() => {
@@ -767,6 +787,49 @@ export default function ShadowDocsWritingStudioPanel({
     setRibbonMessage(`${command} is available in the ribbon but needs a specialized external engine or object type.`)
   }
 
+  async function runMobileMenuAction(action) {
+    if (action === 'saveAs') {
+      onDownloadBackup?.(book)
+      return
+    }
+    if (action === 'findReplace') {
+      onOpenFindReplace?.()
+      return
+    }
+    if (action === 'share') {
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: mobileDocumentName(book),
+            text: book?.title || 'Shadow Docs',
+          })
+          return
+        }
+      } catch (failure) {
+        if (failure?.name === 'AbortError') return
+      }
+      setRibbonMessage('Share is unavailable in this browser.')
+      return
+    }
+    if (action === 'print') {
+      onPrint?.()
+      return
+    }
+    if (action === 'rename') {
+      onEditProperties?.()
+      return
+    }
+    if (action === 'exportPdf' || action === 'exportImage' || action === 'conversion') {
+      onOpenPDF?.()
+      return
+    }
+    if (action === 'information') {
+      setRibbonMessage(`${mobileDocumentName(book)} · ${overview.words.toLocaleString()} words · ${mobileDocumentSize(book)}`)
+      return
+    }
+    setRibbonMessage('This menu action will be connected later.')
+  }
+
   function trackBeforeInput(event) {
     if (!ribbonState.trackChanges || event.isComposing || !editorRef.current) return
     const snapshot = captureShadowDocsSelection(editorRef.current)
@@ -1118,10 +1181,18 @@ export default function ShadowDocsWritingStudioPanel({
         <button type="button" aria-label="Redo" disabled={typeof onChangeHTML !== 'function'} onPointerDown={event => event.preventDefault()} onClick={() => quickFormat('redo')}><Redo2 /></button>
         <button type="button" className="sd-mobile-page" aria-label={`Chapter ${chapterIndex + 1}`} onClick={() => onOpenOutline?.()}><span>{chapterIndex + 1}</span></button>
         <button type="button" aria-label="Export" onClick={() => onOpenPDF?.()}><Share2 /></button>
-        <button type="button" aria-label="Menu" onClick={() => onOpenOutline?.()}><Menu /></button>
+        <button type="button" aria-label="Menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}><Menu /></button>
         <button type="button" className="sd-mobile-save" aria-label="Save" onClick={() => void runRibbonCommand('save', true)}><Check /> Save</button>
       </div>
     </div>
+    <ShadowDocsMobileMenu
+      open={mobileMenuOpen}
+      documentName={mobileDocumentName(book)}
+      wordCount={overview.words}
+      sizeText={mobileDocumentSize(book)}
+      onClose={() => setMobileMenuOpen(false)}
+      onAction={runMobileMenuAction}
+    />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
       <div className="sd-chapter-list">{book.chapters.map((item, index) => <button type="button" key={item.id} className={`sd-chapter-item ${item.id === chapter.id ? 'is-active' : ''}`} onClick={() => onSelectChapter?.(item.id)} disabled={typeof onSelectChapter !== 'function'}><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.title || `Chapter ${index + 1}`}</strong></button>)}</div>
