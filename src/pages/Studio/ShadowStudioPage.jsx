@@ -331,6 +331,16 @@ const HISTORY_LIMIT = 8
 const HISTORY_MEMORY_BUDGET = 256 * 1024 * 1024
 const DOCUMENT_LIMIT = 8
 
+function isStudioMobileDevice() {
+  if (typeof window === 'undefined') return false
+  const screenWidth = Number(window.screen?.width) || window.innerWidth
+  const screenHeight = Number(window.screen?.height) || window.innerHeight
+  const shortSide = Math.min(screenWidth, screenHeight)
+  const touch = (navigator.maxTouchPoints || 0) > 0
+  const coarse = window.matchMedia?.('(hover: none) and (pointer: coarse)')?.matches === true
+  return shortSide <= 700 && (touch || coarse)
+}
+
 const STUDIO_HEADER_PLACEHOLDER_MENUS = ['Layer', 'Select', 'Filter']
 
 function createDocument({
@@ -434,6 +444,7 @@ const placeImageLabel = {
   const [documents, setDocuments] = useState([])
   const [activeDocumentId, setActiveDocumentId] = useState('')
   const [workspaceStarted, setWorkspaceStarted] = useState(false)
+  const [mobileWorkspaceMode, setMobileWorkspaceMode] = useState(isStudioMobileDevice)
   const [myWorksOpen, setMyWorksOpen] = useState(false)
   const [foldersOpen, setFoldersOpen] = useState(false)
   const [folderWorksOpen, setFolderWorksOpen] = useState(false)
@@ -1767,6 +1778,17 @@ const placeImageLabel = {
     return () => cancelAnimationFrame(frame)
   }, [workspaceStarted, activeDocumentId, projectLoadKey])
 
+  useEffect(() => {
+    const syncMobileWorkspaceMode = () => setMobileWorkspaceMode(isStudioMobileDevice())
+    syncMobileWorkspaceMode()
+    window.addEventListener('resize', syncMobileWorkspaceMode)
+    window.addEventListener('orientationchange', syncMobileWorkspaceMode)
+    return () => {
+      window.removeEventListener('resize', syncMobileWorkspaceMode)
+      window.removeEventListener('orientationchange', syncMobileWorkspaceMode)
+    }
+  }, [])
+
     useEffect(() => {
     function onKeyDown(event) {
       if (!workspaceStarted || !activeDocumentId || paperLoading || projectBusy || recoveryBooting || recoveryEntry || recoveryBusy || newFileOpen || exportOpen || textEditor || shapeEditor || drawingRef.current || event.isComposing) return
@@ -2403,7 +2425,7 @@ async function dropImageOnPaper(event) {
   const canRedo = redoRef.current.length > 0
 
   return (
-    <div className={`shadow-studio${myWorksOpen || foldersOpen ? ' ss-own-page' : ''}${workspaceStarted ? ' ss-workspace-started' : ''}`}>
+    <div className={`shadow-studio${myWorksOpen || foldersOpen ? ' ss-own-page' : ''}${workspaceStarted ? ' ss-workspace-started' : ''}${workspaceStarted && mobileWorkspaceMode ? ' ss-mobile-workspace-mode' : ''}`}>
       <style>{`
         .shadow-studio{min-height:100vh;background:#202225;color:#eef0f3;font-family:inherit}
         .shadow-studio.ss-own-page>.ss-chrome{display:none}
