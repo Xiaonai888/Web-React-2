@@ -76,9 +76,9 @@ export default function ShadowDocsMobileMenu({
           display:flex;
           align-items:flex-end;
           justify-content:center;
-          background:rgba(0,0,0,.52);
-          backdrop-filter:blur(2px);
-          -webkit-backdrop-filter:blur(2px)
+          background:rgba(0,0,0,.10);
+          backdrop-filter:blur(0.5px);
+          -webkit-backdrop-filter:blur(0.5px)
         }
         .sd-mobile-doc-menu{
           width:min(100%,620px);
