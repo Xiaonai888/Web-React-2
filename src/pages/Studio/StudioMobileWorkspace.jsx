@@ -244,12 +244,12 @@ export default function StudioMobileWorkspace({
         ${MOBILE_MEDIA}{
           .shadow-studio.ss-mobile-workspace-mode{
             --ss-mobile-blue:#4b9fff;
-            --ss-mobile-bg:#0f141a;
-            --ss-mobile-panel:#171d24;
-            --ss-mobile-panel-2:#1e252d;
-            --ss-mobile-line:#323c47;
+            --ss-mobile-bg:#151a20;
+            --ss-mobile-panel:#1d242c;
+            --ss-mobile-panel-2:#222a33;
+            --ss-mobile-line:#2b343e;
             --ss-mobile-text:#f4f7fb;
-            --ss-mobile-muted:#9aa8b7;
+            --ss-mobile-muted:#a8b0b8;
             display:flex;
             flex-direction:column;
             width:100%;
