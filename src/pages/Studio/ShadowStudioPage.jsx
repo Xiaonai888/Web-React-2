@@ -67,6 +67,7 @@ import { normalizeStudioAdjustment } from './StudioAdjustmentLayerEngine'
 import { applyStudioPhotoFilter } from './StudioFilterToolEngine'
 import { beginStudioSpecialBrush, extendStudioSpecialBrush } from './StudioSpecialBrushToolEngine'
 import { applyStudioFrameDivider } from './StudioFrameDividerToolEngine'
+import StudioMobileWorkspace from './StudioMobileWorkspace'
 
 registerTranslationNamespace('shadowStudio', {
   en: {
@@ -2402,7 +2403,7 @@ async function dropImageOnPaper(event) {
   const canRedo = redoRef.current.length > 0
 
   return (
-    <div className={`shadow-studio${myWorksOpen || foldersOpen ? ' ss-own-page' : ''}`}>
+    <div className={`shadow-studio${myWorksOpen || foldersOpen ? ' ss-own-page' : ''}${workspaceStarted ? ' ss-workspace-started' : ''}`}>
       <style>{`
         .shadow-studio{min-height:100vh;background:#202225;color:#eef0f3;font-family:inherit}
         .shadow-studio.ss-own-page>.ss-chrome{display:none}
@@ -2638,6 +2639,38 @@ async function dropImageOnPaper(event) {
         <>
           {projectNotice ? <div className="ss-project-message" role="status">{projectNotice}</div> : null}
               {recoveryStatus ? <div className="ss-project-message" role="status">{recoveryStatus}</div> : null}
+          <StudioMobileWorkspace
+            tool={tool}
+            color={color}
+            size={size}
+            opacity={opacity}
+            brushStyle={brushStyle}
+            busy={paperLoading || projectBusy || recoveryBusy || newFileOpen || exportOpen}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            showGrid={showGrid}
+            layers={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.layers || [] : []}
+            activeLayerId={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.activeLayerId || '' : ''}
+            documents={documents}
+            activeDocumentId={activeDocumentId}
+            onToolChange={selectTool}
+            onColorChange={(nextColor) => { setColor(nextColor); setTool('brush') }}
+            onSizeChange={updateBrushSize}
+            onOpacityChange={setOpacity}
+            onBrushStyleChange={(nextStyle) => { setBrushStyle(nextStyle); setTool('brush') }}
+            onUndo={undo}
+            onRedo={redo}
+            onImport={() => placeImageInputRef.current?.click()}
+            onLayerAction={changeLayer}
+            onSwitchPaper={switchDocument}
+            onHome={goHome}
+            onNewPaper={() => openNewFile('basic')}
+            onSave={() => saveProject()}
+            onExport={openExportDialog}
+            onFit={fitCanvas}
+            onToggleGrid={() => setShowGrid((value) => !value)}
+          />
+
           <StudioOptionsBar
   tool={tool} paper={activeDocument} size={size} opacity={opacity}
   showGrid={showGrid} busy={paperLoading || projectBusy || recoveryBusy || newFileOpen}
