@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import StudioBrushSettings from './StudioBrushSettings'
 import { STUDIO_TOOL_GROUPS, STUDIO_TOOLS_BY_ID, STUDIO_WORKING_TOOLS } from './StudioToolCatalog'
@@ -9,6 +9,14 @@ const MOBILE_TEXT = {
     adSub: 'Future ads and promotions',
     undo: 'Undo',
     redo: 'Redo',
+    addImage: 'Add Image',
+    reference: 'Reference Window',
+    selection: 'Selection',
+    stabilizer: 'Stabilizer',
+    shape: 'Shape',
+    ruler: 'Ruler',
+    replaceReference: 'Replace reference',
+    closeReference: 'Close reference',
     select: 'Select',
     import: 'Import',
     layers: 'Layers',
@@ -39,6 +47,14 @@ const MOBILE_TEXT = {
     adSub: 'សម្រាប់ Ads និង Promotion ពេលក្រោយ',
     undo: 'ត្រឡប់ក្រោយ',
     redo: 'ធ្វើឡើងវិញ',
+    addImage: 'បន្ថែមរូប',
+    reference: 'Reference Window',
+    selection: 'Selection',
+    stabilizer: 'Stabilizer',
+    shape: 'Shape',
+    ruler: 'Ruler',
+    replaceReference: 'ប្ដូររូប Reference',
+    closeReference: 'បិទ Reference',
     select: 'ជ្រើស',
     import: 'នាំចូល',
     layers: 'Layers',
@@ -69,6 +85,14 @@ const MOBILE_TEXT = {
     adSub: '未来广告与推广',
     undo: '撤销',
     redo: '重做',
+    addImage: '添加图片',
+    reference: '参考窗口',
+    selection: '选择',
+    stabilizer: '防抖',
+    shape: '形状',
+    ruler: '尺子',
+    replaceReference: '更换参考图',
+    closeReference: '关闭参考图',
     select: '选择',
     import: '导入',
     layers: '图层',
@@ -99,6 +123,14 @@ const MOBILE_TEXT = {
     adSub: '今後の広告・プロモーション用',
     undo: '元に戻す',
     redo: 'やり直す',
+    addImage: '画像追加',
+    reference: '資料ウィンドウ',
+    selection: '選択',
+    stabilizer: '手ぶれ補正',
+    shape: '図形',
+    ruler: '定規',
+    replaceReference: '資料画像を変更',
+    closeReference: '資料を閉じる',
     select: '選択',
     import: '読み込む',
     layers: 'レイヤー',
@@ -129,6 +161,14 @@ const MOBILE_TEXT = {
     adSub: '향후 광고 및 프로모션',
     undo: '실행 취소',
     redo: '다시 실행',
+    addImage: '이미지 추가',
+    reference: '참조 창',
+    selection: '선택',
+    stabilizer: '손떨림 보정',
+    shape: '도형',
+    ruler: '자',
+    replaceReference: '참조 이미지 변경',
+    closeReference: '참조 닫기',
     select: '선택',
     import: '가져오기',
     layers: '레이어',
@@ -200,6 +240,7 @@ export default function StudioMobileWorkspace({
   canUndo,
   canRedo,
   showGrid,
+  stabilizer = 0,
   layers = [],
   activeLayerId = '',
   documents = [],
@@ -220,6 +261,7 @@ export default function StudioMobileWorkspace({
   onExport,
   onFit,
   onToggleGrid,
+  onStabilizerChange,
 }) {
   const { t: tx, language } = useDisplayTranslation()
   const text = MOBILE_TEXT[language] || MOBILE_TEXT.en
@@ -228,10 +270,17 @@ export default function StudioMobileWorkspace({
   const [paintTool, setPaintTool] = useState(tool === 'eraser' ? 'eraser' : 'brush')
   const [sizeEditing, setSizeEditing] = useState(false)
   const [sizeDraft, setSizeDraft] = useState('')
+  const [referenceImage, setReferenceImage] = useState('')
+  const [referenceOpen, setReferenceOpen] = useState(false)
+  const referenceInputRef = useRef(null)
 
   useEffect(() => {
     if (tool === 'brush' || tool === 'eraser') setPaintTool(tool)
   }, [tool])
+
+  useEffect(() => () => {
+    if (referenceImage) URL.revokeObjectURL(referenceImage)
+  }, [referenceImage])
 
   const activePaper = documents.find((document) => document.id === activeDocumentId) || documents[0] || null
   const canvasScale = mobileCanvasScale(activePaper)
@@ -239,6 +288,14 @@ export default function StudioMobileWorkspace({
   const sliderMax = paintTool === 'eraser' ? 50 : 30
   const sliderSize = Math.min(sliderMax, Math.max(0.1, logicalSize))
   const manualLogicalMax = Math.max(sliderMax, Math.floor(5000 / canvasScale * 10) / 10)
+  const stabilizerValue = Math.max(0, Math.min(10, Math.round(Number(stabilizer) || 0)))
+  const panelTitle = panel === 'layers'
+    ? text.layers
+    : panel === 'presets'
+      ? text.brushSettings
+      : panel === 'stabilizer'
+        ? text.stabilizer
+        : text.more
 
   const openPanel = (name) => setPanel((current) => current === name ? '' : name)
   const toolGroups = STUDIO_TOOL_GROUPS.map((group) => ({
@@ -283,6 +340,23 @@ export default function StudioMobileWorkspace({
 
   function adjustOpacity(direction) {
     onOpacityChange?.(clamp(Number(opacity) + direction * 5, 10, 100))
+  }
+
+  function chooseReferenceImage(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) return
+    const nextUrl = URL.createObjectURL(file)
+    setReferenceImage(nextUrl)
+    setReferenceOpen(true)
+  }
+
+  function toggleReferenceWindow() {
+    if (referenceImage) {
+      setReferenceOpen((current) => !current)
+      return
+    }
+    referenceInputRef.current?.click()
   }
 
   function toolLabel(id) {
@@ -350,105 +424,142 @@ export default function StudioMobileWorkspace({
             font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-top{
-            display:grid;
-            gap:7px;
+            display:block;
             width:100%;
             box-sizing:border-box;
-            padding:max(6px,env(safe-area-inset-top)) 8px 7px;
-            border-bottom:1px solid #252d36;
-            background:#0e1319
+            padding:max(0px,env(safe-area-inset-top)) 0 0;
+            border:0;
+            background:#151a20
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad{
+            width:100%;
             min-height:68px;
             display:flex;
-            align-items:center;
-            gap:10px;
+            align-items:flex-start;
+            justify-content:flex-start;
             overflow:hidden;
             box-sizing:border-box;
-            border:1px solid #394b68;
-            border-radius:12px;
-            padding:9px 12px;
-            background:
-              radial-gradient(circle at 86% 25%,rgba(68,94,188,.5),transparent 28%),
-              linear-gradient(120deg,#17243a,#1a2041 56%,#101a2d);
-            box-shadow:inset 0 0 0 1px #ffffff08
+            border:0;
+            border-radius:0;
+            padding:6px 8px;
+            background:#11161c;
+            box-shadow:none
           }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-badge{
-            flex:0 0 auto;
-            align-self:flex-start;
-            min-width:25px;
-            height:20px;
-            display:grid;
-            place-items:center;
-            border:1px solid #91a2bd;
-            border-radius:5px;
-            color:#dce8fa;
-            font-size:9px;
-            font-weight:800
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-copy{
-            min-width:0;
-            display:grid;
-            gap:2px
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-copy strong{
-            overflow:hidden;
-            color:#fff;
-            font-size:13px;
-            font-weight:850;
-            text-overflow:ellipsis;
-            white-space:nowrap
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-copy small{
-            overflow:hidden;
-            color:#a9b8ca;
-            font-size:9px;
-            text-overflow:ellipsis;
-            white-space:nowrap
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-placeholder{
+            color:#8d98a4;
+            font-size:8px;
+            font-weight:800;
+            letter-spacing:.08em
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick{
-            display:grid;
-            grid-template-columns:repeat(5,minmax(0,1fr));
-            min-height:55px;
+            min-height:50px;
+            display:flex;
+            align-items:center;
+            gap:2px;
             overflow:hidden;
-            border:1px solid #29333e;
-            border-radius:11px;
-            background:linear-gradient(180deg,#1b222a,#151b21)
+            box-sizing:border-box;
+            padding:4px 6px 5px;
+            border:0;
+            border-radius:0;
+            background:#252b31
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button{
-            min-width:0;
-            min-height:55px;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            gap:4px;
+            width:38px;
+            min-width:38px;
+            height:40px;
+            display:grid;
+            place-items:center;
             border:0;
-            border-right:1px solid #2a333c;
+            border-radius:50%;
             background:transparent;
-            color:#e8eef5;
-            padding:4px 2px;
+            color:#e7edf4;
+            padding:0;
             font:inherit;
             cursor:pointer;
             touch-action:manipulation
           }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button:last-child{border-right:0}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button:disabled{opacity:.32}
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button:disabled{opacity:.3}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button.active{
-            background:#263d56;
+            background:#46515b;
             color:#fff
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button i{
-            font-size:18px;
+            font-size:17px;
             line-height:1
           }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button span{
-            max-width:100%;
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick-spacer{
+            flex:1 1 auto;
+            min-width:10px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-stabilizer-badge{
+            position:absolute;
+            transform:translate(11px,-11px);
+            min-width:14px;
+            height:14px;
+            display:grid;
+            place-items:center;
+            border-radius:7px;
+            background:#4b9fff;
+            color:#07111b;
+            font-size:7px;
+            font-weight:900
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-reference{
+            position:fixed;
+            z-index:76;
+            top:126px;
+            right:8px;
+            width:min(38vw,150px);
             overflow:hidden;
+            border:1px solid #46525e;
+            border-radius:10px;
+            background:#171d24;
+            box-shadow:0 10px 28px #0009
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-reference img{
+            display:block;
+            width:100%;
+            max-height:190px;
+            object-fit:contain;
+            background:#0d1116
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-reference-actions{
+            display:grid;
+            grid-template-columns:1fr 34px;
+            min-height:32px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-reference-actions button{
+            border:0;
+            border-top:1px solid #313a43;
+            background:#202831;
+            color:#dfe7ee;
             font-size:8px;
-            font-weight:700;
-            text-overflow:ellipsis;
-            white-space:nowrap
+            font-weight:750
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-reference-actions button+button{
+            border-left:1px solid #313a43
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-stabilizer-control{
+            display:grid;
+            grid-template-columns:40px minmax(0,1fr);
+            gap:10px;
+            align-items:center;
+            padding:10px 2px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-stabilizer-control output{
+            min-height:40px;
+            display:grid;
+            place-items:center;
+            border:1px solid #3d4a56;
+            border-radius:9px;
+            background:#11171d;
+            color:#fff;
+            font-size:16px;
+            font-weight:850
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-stabilizer-control input{
+            width:100%;
+            accent-color:var(--ss-mobile-blue)
           }
           .shadow-studio.ss-mobile-workspace-mode>.ss-layout{
             flex:1 1 auto;
@@ -946,8 +1057,8 @@ export default function StudioMobileWorkspace({
         }
         @media(max-width:380px){
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad{min-height:61px}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-copy strong{font-size:11px}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button span,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick{gap:0;padding-left:3px;padding-right:3px}
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button{width:35px;min-width:35px;height:38px}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main span,
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label span{font-size:7px}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-controls{grid-template-columns:44px minmax(0,1fr) 48px}
@@ -960,36 +1071,56 @@ export default function StudioMobileWorkspace({
 
       <div className="ss-mobile-top">
         <div className="ss-mobile-ad" data-shadow-studio-mobile-ad-slot="reserved">
-          <span className="ss-mobile-ad-badge">AD</span>
-          <span className="ss-mobile-ad-copy">
-            <strong>{text.ad}</strong>
-            <small>{text.adSub}</small>
-          </span>
+          <span className="ss-mobile-ad-placeholder">AD</span>
         </div>
 
         <nav className="ss-mobile-quick" aria-label={text.actions}>
-          <button type="button" onClick={onUndo} disabled={busy || !canUndo} aria-label={text.undo}>
-            <i className="fa-solid fa-rotate-left" aria-hidden="true" />
-            <span>{text.undo}</span>
-          </button>
-          <button type="button" onClick={onRedo} disabled={busy || !canRedo} aria-label={text.redo}>
-            <i className="fa-solid fa-rotate-right" aria-hidden="true" />
-            <span>{text.redo}</span>
-          </button>
-          <button type="button" className={['marquee', 'lasso', 'wand'].includes(tool) ? 'active' : ''} onClick={() => chooseTool('marquee')} disabled={busy} aria-label={text.select}>
-            <i className="fa-solid fa-vector-square" aria-hidden="true" />
-            <span>{text.select}</span>
-          </button>
-          <button type="button" onClick={onImport} disabled={busy} aria-label={text.import}>
+          <button type="button" onClick={onImport} disabled={busy} aria-label={text.addImage} title={text.addImage}>
             <i className="fa-regular fa-image" aria-hidden="true" />
-            <span>{text.import}</span>
           </button>
-          <button type="button" className={panel === 'layers' ? 'active' : ''} onClick={() => openPanel('layers')} disabled={busy} aria-label={text.layers}>
-            <i className="fa-solid fa-layer-group" aria-hidden="true" />
-            <span>{text.layers}</span>
+          <button type="button" className={referenceOpen ? 'active' : ''} onClick={toggleReferenceWindow} disabled={busy} aria-label={text.reference} title={text.reference}>
+            <i className="fa-regular fa-images" aria-hidden="true" />
+          </button>
+          <button type="button" className={['marquee', 'lasso', 'wand'].includes(tool) ? 'active' : ''} onClick={() => chooseTool('marquee')} disabled={busy} aria-label={text.selection} title={text.selection}>
+            <i className="fa-solid fa-vector-square" aria-hidden="true" />
+          </button>
+          <button type="button" className={panel === 'stabilizer' || stabilizerValue > 0 ? 'active' : ''} onClick={() => openPanel('stabilizer')} disabled={busy} aria-label={`${text.stabilizer} ${stabilizerValue}`} title={`${text.stabilizer}: ${stabilizerValue}`}>
+            <i className="fa-solid fa-wave-square" aria-hidden="true" />
+            <span className="ss-mobile-stabilizer-badge" aria-hidden="true">{stabilizerValue}</span>
+          </button>
+          <button type="button" className={tool === 'shape' ? 'active' : ''} onClick={() => chooseTool('shape')} disabled={busy} aria-label={text.shape} title={text.shape}>
+            <i className="fa-solid fa-shapes" aria-hidden="true" />
+          </button>
+          <button type="button" className={tool === 'ruler' ? 'active' : ''} onClick={() => chooseTool('ruler')} disabled={busy} aria-label={text.ruler} title={text.ruler}>
+            <i className="fa-solid fa-ruler" aria-hidden="true" />
+          </button>
+          <span className="ss-mobile-quick-spacer" aria-hidden="true" />
+          <button type="button" onClick={onUndo} disabled={busy || !canUndo} aria-label={text.undo} title={text.undo}>
+            <i className="fa-solid fa-rotate-left" aria-hidden="true" />
+          </button>
+          <button type="button" onClick={onRedo} disabled={busy || !canRedo} aria-label={text.redo} title={text.redo}>
+            <i className="fa-solid fa-rotate-right" aria-hidden="true" />
           </button>
         </nav>
       </div>
+
+      <input
+        ref={referenceInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        hidden
+        onChange={chooseReferenceImage}
+      />
+
+      {referenceOpen && referenceImage ? (
+        <aside className="ss-mobile-reference" aria-label={text.reference}>
+          <img src={referenceImage} alt="" />
+          <div className="ss-mobile-reference-actions">
+            <button type="button" onClick={() => referenceInputRef.current?.click()}>{text.replaceReference}</button>
+            <button type="button" onClick={() => setReferenceOpen(false)} aria-label={text.closeReference}>×</button>
+          </div>
+        </aside>
+      ) : null}
 
       <div className={`ss-mobile-controls${controlsOpen ? '' : ' is-hidden'}`}>
         <div className="ss-mobile-brush-preview" aria-hidden="true">
@@ -1107,9 +1238,9 @@ export default function StudioMobileWorkspace({
       {panel ? (
         <>
           <button type="button" className="ss-mobile-sheet-backdrop" aria-label={text.close} onClick={() => setPanel('')} />
-          <section className="ss-mobile-sheet" role="dialog" aria-modal="true" aria-label={panel === 'layers' ? text.layers : panel === 'presets' ? text.brushSettings : text.more}>
+          <section className="ss-mobile-sheet" role="dialog" aria-modal="true" aria-label={panelTitle}>
             <header className="ss-mobile-sheet-head">
-              <strong>{panel === 'layers' ? text.layers : panel === 'presets' ? text.brushSettings : text.more}</strong>
+              <strong>{panelTitle}</strong>
               <button type="button" className="ss-mobile-sheet-close" onClick={() => setPanel('')} aria-label={text.close}>×</button>
             </header>
 
@@ -1152,6 +1283,21 @@ export default function StudioMobileWorkspace({
                   onOpacityChange={onOpacityChange}
                   labels={{ size: text.size, opacity: text.opacity }}
                 />
+              ) : null}
+
+              {panel === 'stabilizer' ? (
+                <div className="ss-mobile-stabilizer-control">
+                  <output>{stabilizerValue}</output>
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    step="1"
+                    value={stabilizerValue}
+                    aria-label={text.stabilizer}
+                    onChange={(event) => onStabilizerChange?.(Number(event.target.value))}
+                  />
+                </div>
               ) : null}
 
               {panel === 'more' ? (
