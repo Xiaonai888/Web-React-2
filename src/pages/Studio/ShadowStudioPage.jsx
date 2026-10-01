@@ -467,6 +467,7 @@ const placeImageLabel = {
   const [textEditor, setTextEditor] = useState(null)
   const [shapeEditor, setShapeEditor] = useState(null)
   const [brushStyle, setBrushStyle] = useState('round')
+  const [mobileStabilizer, setMobileStabilizer] = useState(0)
   const [color, setColor] = useState('#111111')
   const [size, setSize] = useState(8)
   const [opacity, setOpacity] = useState(100)
@@ -2205,6 +2206,19 @@ async function dropImageOnPaper(event) {
       : raw
   }
 
+  function stabilizedPaintPoint(stroke, position) {
+    if (!mobileWorkspaceMode || mobileStabilizer <= 0 || !stroke || !position) return position
+    const previous = stroke.stabilizedPoint || stroke.last || position
+    const strength = Math.max(0, Math.min(10, Number(mobileStabilizer) || 0))
+    const alpha = Math.max(0.18, 1 / (1 + strength * 0.32))
+    const next = {
+      x: previous.x + (position.x - previous.x) * alpha,
+      y: previous.y + (position.y - previous.y) * alpha,
+    }
+    stroke.stabilizedPoint = next
+    return next
+  }
+
   function start(event) {
     if (event.pointerType === 'touch' && mobileGestureRef.current.blockDrawing) return
     if (drawingRef.current || paperLoading || projectBusy || recoveryBusy || panRef.current || spaceRef.current || advancedEditor || mangaToolsOpen || newFileOpen || exportOpen) return
@@ -2272,6 +2286,7 @@ async function dropImageOnPaper(event) {
       erase: tool === 'eraser',
     })
     if (!stroke) return
+    stroke.stabilizedPoint = { x: currentPoint.x, y: currentPoint.y }
     delete stack.layers.find((layer) => layer.id === stack.activeLayerId)?.textData
     paintLayerPreview()
     event.preventDefault()
@@ -2315,7 +2330,7 @@ async function dropImageOnPaper(event) {
     for (const sample of [...coalesced, event]) {
       if (sample.pointerId !== stroke.pointerId) continue
       const currentPoint = point(sample)
-      if (currentPoint) extendStudioStroke(ctx, stroke, currentPoint, sample)
+      if (currentPoint) extendStudioStroke(ctx, stroke, stabilizedPaintPoint(stroke, currentPoint), sample)
     }
     paintLayerPreview()
   }
@@ -2384,7 +2399,7 @@ async function dropImageOnPaper(event) {
     event.preventDefault()
     if (event.type !== 'pointercancel') {
       const currentPoint = point(event)
-      if (currentPoint) extendStudioStroke(drawingContext(), stroke, currentPoint, event)
+      if (currentPoint) extendStudioStroke(drawingContext(), stroke, stabilizedPaintPoint(stroke, currentPoint), event)
     }
     paintLayerPreview()
     drawingRef.current = false
@@ -2671,6 +2686,7 @@ async function dropImageOnPaper(event) {
             canUndo={canUndo}
             canRedo={canRedo}
             showGrid={showGrid}
+            stabilizer={mobileStabilizer}
             layers={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.layers || [] : []}
             activeLayerId={canvasDocumentRef.current === activeDocumentId ? layerStackRef.current?.activeLayerId || '' : ''}
             documents={documents}
@@ -2691,6 +2707,7 @@ async function dropImageOnPaper(event) {
             onExport={openExportDialog}
             onFit={fitCanvas}
             onToggleGrid={() => setShowGrid((value) => !value)}
+            onStabilizerChange={setMobileStabilizer}
           />
 
           <StudioOptionsBar
