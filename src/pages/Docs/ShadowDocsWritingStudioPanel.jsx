@@ -881,6 +881,14 @@ export default function ShadowDocsWritingStudioPanel({
       .sd-mobile-editor-topbar{display:none}
       .sd-mobile-word-count{display:none}
       @media(max-width:700px){
+
+      body:has(.sd-writing-layout),
+body:has(.sd-writing-layout) #root,
+body:has(.sd-writing-layout) .sd-app,
+body:has(.sd-writing-layout) .sd-main{
+  background:#fff!important;
+  overscroll-behavior-y:none;
+}
         body:has(.sd-writing-layout) .sd-header,
         body:has(.sd-writing-layout) .sd-main>.sd-topline,
         body:has(.sd-writing-layout) .sd-main>.sd-status,
