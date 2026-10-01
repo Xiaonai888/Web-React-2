@@ -881,14 +881,18 @@ export default function ShadowDocsWritingStudioPanel({
       .sd-mobile-editor-topbar{display:none}
       .sd-mobile-word-count{display:none}
       @media(max-width:700px){
-
-      body:has(.sd-writing-layout),
-body:has(.sd-writing-layout) #root,
-body:has(.sd-writing-layout) .sd-app,
-body:has(.sd-writing-layout) .sd-main{
-  background:#fff!important;
-  overscroll-behavior-y:none;
-}
+        body:has(.sd-writing-layout),
+        body:has(.sd-writing-layout) #root{
+          overflow:hidden!important;
+          background:#fff!important;
+          overscroll-behavior:none;
+        }
+        body:has(.sd-writing-layout) .sd-app{
+          height:100dvh!important;
+          min-height:100dvh!important;
+          overflow:hidden!important;
+          background:#fff!important;
+        }
         body:has(.sd-writing-layout) .sd-header,
         body:has(.sd-writing-layout) .sd-main>.sd-topline,
         body:has(.sd-writing-layout) .sd-main>.sd-status,
@@ -898,69 +902,80 @@ body:has(.sd-writing-layout) .sd-main{
         }
         body:has(.sd-writing-layout) .sd-main{
           max-width:none!important;
+          height:100dvh!important;
           margin:0!important;
-          padding:58px 0 0!important;
+          padding:54px 0 64px!important;
+          overflow:hidden!important;
+          background:#fff!important;
         }
         .sd-mobile-editor-topbar{
-  position:fixed;
-  z-index:82;
-  top:0;
-  left:0;
-  right:0;
-  height:54px;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  padding:0 8px;
-  background:#292929;
-  border-bottom:1px solid #3a3a3a;
-  color:#f5f5f5;
-}
-.sd-mobile-editor-topbar button{
-  width:34px;
-  height:34px;
-  display:grid;
-  place-items:center;
-  flex:none;
-  border:0;
-  border-radius:8px;
-  background:transparent;
-  color:inherit;
-}
-.sd-mobile-editor-topbar button:first-child{
-  margin-right:auto;
-}
-.sd-mobile-editor-topbar .sd-mobile-page{
-  width:auto;
-  min-width:30px;
-  height:30px;
-  padding:0 7px;
-  border:1px solid #777;
-  border-radius:3px;
-  font-size:10px;
-  font-weight:700;
-}
-.sd-mobile-editor-topbar .sd-mobile-save{
-  width:auto;
-  height:34px;
-  margin-left:0;
-  padding:0 11px;
-  display:flex;
-  gap:4px;
-  border-radius:17px;
-  background:#25a884;
-  font-size:11px;
-  font-weight:700;
-}
+          position:fixed;
+          z-index:82;
+          top:0;
+          left:0;
+          right:0;
+          height:54px;
+          display:flex;
+          align-items:center;
+          gap:6px;
+          padding:0 8px;
+          background:#292929;
+          border-bottom:1px solid #3a3a3a;
+          color:#f5f5f5;
+        }
+        .sd-mobile-editor-topbar button{
+          width:34px;
+          height:34px;
+          display:grid;
+          place-items:center;
+          flex:none;
+          border:0;
+          border-radius:8px;
+          background:transparent;
+          color:inherit;
+        }
+        .sd-mobile-editor-topbar button:first-child{
+          margin-right:auto;
+        }
+        .sd-mobile-editor-topbar .sd-mobile-page{
+          width:auto;
+          min-width:30px;
+          height:30px;
+          padding:0 7px;
+          border:1px solid #777;
+          border-radius:3px;
+          font-size:10px;
+          font-weight:700;
+        }
+        .sd-mobile-editor-topbar .sd-mobile-save{
+          width:auto;
+          height:34px;
+          margin-left:0;
+          padding:0 11px;
+          display:flex;
+          gap:4px;
+          border-radius:17px;
+          background:#25a884;
+          font-size:11px;
+          font-weight:700;
+        }
         .sd-mobile-editor-topbar svg{
           width:21px;
           height:21px;
           stroke-width:1.8;
         }
         .sd-writing-layout{
+          position:fixed!important;
+          z-index:35;
+          top:54px;
+          right:0;
+          bottom:64px;
+          left:0;
           display:block!important;
-          min-height:calc(100dvh - 58px - 64px);
+          min-height:0!important;
           margin:0!important;
+          overflow:hidden!important;
+          background:#fff!important;
         }
         .sd-writing-layout .sd-chapters,
         .sd-writing-layout .sd-editor-head,
@@ -971,30 +986,45 @@ body:has(.sd-writing-layout) .sd-main{
         }
         .sd-writing-layout .sd-writing-main{
           display:block!important;
+          width:100%!important;
+          height:100%!important;
           margin:0!important;
           padding:0!important;
+          overflow:hidden!important;
+          background:#fff!important;
         }
         .sd-writing-layout .sd-editor-card{
-          min-height:calc(100dvh - 58px - 64px);
+          display:flex!important;
+          flex-direction:column!important;
+          width:100%!important;
+          height:100%!important;
+          min-height:0!important;
           margin:0!important;
           padding:0!important;
+          overflow:hidden!important;
           border:0!important;
           border-radius:0!important;
           background:#fff!important;
           box-shadow:none!important;
         }
         .sd-writing-layout .sd-editor-card>.my-3{
+          flex:0 0 0!important;
           height:0!important;
           margin:0!important;
           padding:0!important;
         }
         .sd-writing-layout .sd-writing-area{
           box-sizing:border-box;
+          flex:1 1 auto!important;
           width:100%!important;
           max-width:none!important;
-          min-height:calc(100dvh - 58px - 64px - 34px)!important;
+          min-height:0!important;
           margin:0!important;
           padding:28px 24px 42px!important;
+          overflow-x:hidden!important;
+          overflow-y:auto!important;
+          overscroll-behavior-y:contain;
+          -webkit-overflow-scrolling:touch;
           border:0!important;
           border-radius:0!important;
           background:#fff!important;
@@ -1004,17 +1034,19 @@ body:has(.sd-writing-layout) .sd-main{
           caret-color:#111;
         }
         .sd-writing-layout.sd-mobile-fit-mode .sd-writing-area{
-  width:100%!important;
-  padding-top:4px!important;
-  padding-left:2px!important;
-  padding-right:2px!important;
-}
+          width:100%!important;
+          padding-top:4px!important;
+          padding-left:2px!important;
+          padding-right:2px!important;
+        }
         .sd-writing-layout .sd-editor-footer{
           box-sizing:border-box;
+          flex:0 0 34px!important;
           width:100%!important;
-          min-height:34px;
+          height:34px!important;
+          min-height:34px!important;
           margin:0!important;
-          padding:2px 20px 10px!important;
+          padding:5px 20px!important;
           border:0!important;
           background:#fff!important;
           color:#777!important;
