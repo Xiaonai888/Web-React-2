@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import StudioBrushSettings from './StudioBrushSettings'
+import StudioMobileColorPopup from './StudioMobileColorPopup'
 import { STUDIO_TOOL_GROUPS, STUDIO_TOOLS_BY_ID, STUDIO_WORKING_TOOLS } from './StudioToolCatalog'
 
 const MOBILE_TEXT = {
@@ -267,6 +268,7 @@ export default function StudioMobileWorkspace({
   const text = MOBILE_TEXT[language] || MOBILE_TEXT.en
   const [controlsOpen, setControlsOpen] = useState(true)
   const [panel, setPanel] = useState('')
+  const [colorOpen, setColorOpen] = useState(false)
   const [paintTool, setPaintTool] = useState(tool === 'eraser' ? 'eraser' : 'brush')
   const [sizeEditing, setSizeEditing] = useState(false)
   const [sizeDraft, setSizeDraft] = useState('')
@@ -297,7 +299,10 @@ export default function StudioMobileWorkspace({
         ? text.stabilizer
         : text.more
 
-  const openPanel = (name) => setPanel((current) => current === name ? '' : name)
+  const openPanel = (name) => {
+    setColorOpen(false)
+    setPanel((current) => current === name ? '' : name)
+  }
   const toolGroups = STUDIO_TOOL_GROUPS.map((group) => ({
     ...group,
     tools: group.tools.filter((item) => STUDIO_WORKING_TOOLS.has(item.id) && !['brush', 'eraser'].includes(item.id)),
@@ -307,6 +312,7 @@ export default function StudioMobileWorkspace({
     if (busy) return
     if (next === 'brush' || next === 'eraser') setPaintTool(next)
     onToolChange?.(next)
+    setColorOpen(false)
     setPanel('')
   }
 
@@ -781,20 +787,20 @@ export default function StudioMobileWorkspace({
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label{
             position:relative
           }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label input{
-            position:absolute;
-            width:1px;
-            height:1px;
-            opacity:0;
-            pointer-events:none
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label.active{
+            background:#263d56;
+            color:#68b3ff
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-dot{
             width:27px;
             height:27px;
             box-sizing:border-box;
-            border:3px solid #f5f7fa;
-            border-radius:50%;
+            border:2px solid #f5f7fa;
+            border-radius:6px;
             box-shadow:0 0 0 1px #000,0 2px 8px #0008
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-down{
+            font-size:22px
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-more-cell{
             min-width:0;
@@ -1213,11 +1219,24 @@ export default function StudioMobileWorkspace({
           <span>{paintTool === 'eraser' ? text.eraser : text.brush}</span>
         </button>
 
-        <label className="ss-mobile-color-label" aria-label={text.color}>
-          <input type="color" value={color || '#111111'} disabled={busy} onChange={(event) => onColorChange?.(event.target.value)} />
-          <span className="ss-mobile-color-dot" style={{ backgroundColor: color || '#111111' }} aria-hidden="true" />
+        <button
+          type="button"
+          className={`ss-mobile-color-label ${colorOpen ? 'active' : ''}`}
+          aria-label={colorOpen ? text.close : text.color}
+          aria-expanded={colorOpen}
+          disabled={busy}
+          onClick={() => {
+            setPanel('')
+            setColorOpen((current) => !current)
+          }}
+        >
+          {colorOpen ? (
+            <i className="fa-solid fa-chevron-down ss-mobile-color-down" aria-hidden="true" />
+          ) : (
+            <span className="ss-mobile-color-dot" style={{ backgroundColor: color || '#111111' }} aria-hidden="true" />
+          )}
           <span>{text.color}</span>
-        </label>
+        </button>
 
         <button type="button" className={`ss-mobile-dock-main ${panel === 'layers' ? 'active' : ''}`} onClick={() => openPanel('layers')} disabled={busy}>
           <i className="fa-solid fa-layer-group" aria-hidden="true" />
@@ -1234,6 +1253,13 @@ export default function StudioMobileWorkspace({
           </button>
         </div>
       </nav>
+
+      <StudioMobileColorPopup
+        open={colorOpen}
+        color={color}
+        disabled={busy}
+        onChange={(nextColor) => onColorChange?.(nextColor)}
+      />
 
       {panel ? (
         <>
