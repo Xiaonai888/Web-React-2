@@ -190,14 +190,30 @@ export default function ShadowDocsRibbon({
         .sd-mobile-editor-toolbar.is-keyboard-open{
           min-height:52px;
         }
+        .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-editor-scroll{
+          flex:5 1 0;
+          min-width:0;
+          overflow:hidden;
+          overscroll-behavior-x:none;
+        }
+        .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-editor-fixed{
+          flex:2 1 0;
+          min-width:0;
+        }
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-tool{
-          width:58px;
+          width:auto;
+          min-width:0;
           min-height:52px;
-          padding:0 5px;
+          flex:1 1 0;
+          padding:0;
           justify-content:center;
           gap:0;
         }
-        .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-editor-fixed .sd-mobile-tool{width:54px}
+        .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-editor-fixed .sd-mobile-tool{
+          width:auto;
+          min-width:0;
+          flex:1 1 0;
+        }
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-tool-label{display:none}
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-tool svg{width:23px;height:23px}
       }
