@@ -920,7 +920,7 @@ export default function ShadowDocsWritingStudioPanel({
   color:inherit;
 }
 .sd-mobile-editor-topbar button:first-child{
-  margin-right:12px;
+  margin-right:auto;
 }
 .sd-mobile-editor-topbar .sd-mobile-page{
   width:auto;
