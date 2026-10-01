@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -292,46 +293,116 @@ const HELP_SECTIONS = [
 
 export default function PremiumHelpSheet({ open, onClose }) {
   const { t } = useDisplayTranslation()
+  const startYRef = useRef(0)
+  const currentYRef = useRef(0)
+  const draggingRef = useRef(false)
+  const [dragging, setDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState(0)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    setDragOffset(0)
+    setDragging(false)
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
 
   if (!open) return null
 
+  const handleDragStart = (event) => {
+    if (!event.isPrimary) return
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+
+    draggingRef.current = true
+    setDragging(true)
+    startYRef.current = event.clientY
+    currentYRef.current = event.clientY
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const handleDragMove = (event) => {
+    if (!draggingRef.current) return
+
+    currentYRef.current = event.clientY
+    setDragOffset(
+      Math.max(0, currentYRef.current - startYRef.current)
+    )
+  }
+
+  const handleDragEnd = () => {
+    if (!draggingRef.current) return
+
+    const distance = Math.max(
+      0,
+      currentYRef.current - startYRef.current
+    )
+
+    draggingRef.current = false
+    setDragging(false)
+
+    if (distance > 70) {
+      onClose()
+      return
+    }
+
+    setDragOffset(0)
+  }
+
   return (
     <div
-      className="fixed inset-0 z-[300] bg-black/40"
+      className="fixed inset-0 z-[200000] flex items-end justify-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="premium-help-title"
-      onClick={onClose}
     >
-      <div
-        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[88vh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] shadow-[0_-18px_50px_rgba(0,0,0,0.28)]"
-        onClick={(event) => event.stopPropagation()}
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/60"
+        aria-label={t('premiumHelpSheet.close')}
+      />
+
+      <section
+        className="relative flex h-[calc(100dvh-12px)] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] shadow-[0_-18px_50px_rgba(0,0,0,0.28)]"
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition: dragging
+            ? 'none'
+            : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          willChange: 'transform',
+        }}
       >
-        <div className="shrink-0 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-5 pb-4 pt-3">
+        <header
+          role="presentation"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+          onLostPointerCapture={handleDragEnd}
+          className="shrink-0 cursor-grab touch-none border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-5 pb-4 pt-3 active:cursor-grabbing"
+          style={{ touchAction: 'none' }}
+        >
           <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[var(--shadow-text-tertiary)]" />
 
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 id="premium-help-title" className="text-[20px] font-bold text-[var(--shadow-text-primary)]">
-                {t('premiumHelpSheet.aboutPremium')}
-              </h2>
-              <p className="mt-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">
-                {t('premiumHelpSheet.intro')}
-              </p>
-            </div>
+          <h2
+            id="premium-help-title"
+            className="text-[20px] font-bold text-[var(--shadow-text-primary)]"
+          >
+            {t('premiumHelpSheet.aboutPremium')}
+          </h2>
 
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={t('premiumHelpSheet.close')}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)] active:scale-95"
-            >
-              <i className="fa-solid fa-xmark text-[15px]" />
-            </button>
-          </div>
-        </div>
+          <p className="mt-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">
+            {t('premiumHelpSheet.intro')}
+          </p>
+        </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom)+20px)]">
           <div className="divide-y divide-[var(--shadow-border)]">
             {HELP_SECTIONS.map((section) => (
               <section key={section.title} className="py-5">
@@ -341,7 +412,10 @@ export default function PremiumHelpSheet({ open, onClose }) {
 
                 <ul className="mt-3 space-y-2.5">
                   {section.items.map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">
+                    <li
+                      key={item}
+                      className="flex items-start gap-2.5 text-[13px] leading-6 text-[var(--shadow-text-secondary)]"
+                    >
                       <span className="mt-[10px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#ffb000]" />
                       <span>{t(`premiumHelpSheet.${item}`)}</span>
                     </li>
@@ -359,7 +433,8 @@ export default function PremiumHelpSheet({ open, onClose }) {
             {t('premiumHelpSheet.gotIt')}
           </button>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
+
