@@ -13,24 +13,6 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import AuthorPageTransparencyPopup from '../../components/AuthorPageTransparencyPopup'
 
-const [pageTransparencyOpen, setPageTransparencyOpen] = useState(false)
-
-onOpenTransparency={() => {
-  setPageAboutOpen(false)
-  setPageTransparencyOpen(true)
-}}
-
-<AuthorPageTransparencyPopup
-  open={pageTransparencyOpen}
-  author={displayAuthor}
-  onBack={() => {
-    setPageTransparencyOpen(false)
-    setPageAboutOpen(true)
-  }}
-  onClose={() => setPageTransparencyOpen(false)}
-/>
-
-
 registerTranslationNamespace('authorPublicPage', {
   en: {
     authorPage: 'Author Page',
@@ -1881,6 +1863,7 @@ export default function AuthorPublicPage() {
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [socialMediaOpen, setSocialMediaOpen] = useState(false)
   const [pageAboutOpen, setPageAboutOpen] = useState(false)
+  const [pageTransparencyOpen, setPageTransparencyOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
   const readerName = readerUser?.name || t('authorPublicPage.reader')
@@ -4094,16 +4077,27 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           
         </section>
       </main>
+      <AuthorPageAboutPopup
+        open={pageAboutOpen}
+        author={displayAuthor}
+        onClose={() => setPageAboutOpen(false)}
+        onOpenTransparency={() => {
+          setPageAboutOpen(false)
+          setPageTransparencyOpen(true)
+        }}
+      />
+
+      <AuthorPageTransparencyPopup
+        open={pageTransparencyOpen}
+        author={displayAuthor}
+        onBack={() => {
+          setPageTransparencyOpen(false)
+          setPageAboutOpen(true)
+        }}
+        onClose={() => setPageTransparencyOpen(false)}
+      />
+
       {ownerResolved && displayAuthor.is_owner ? (
-  <AuthorPageAboutPopup
-  open={pageAboutOpen}
-  author={displayAuthor}
-  onClose={() => setPageAboutOpen(false)}
-  onOpenTransparency={() => {
-    setPageAboutOpen(false)
-    navigate(`/author/page/${displayAuthor.page_username}/transparency`)
-  }}
-/>
         <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} />
       ) : null}
     </div>
