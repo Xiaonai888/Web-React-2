@@ -48,6 +48,16 @@ function CoinIcon({ className = 'h-5 w-5' }) {
   )
 }
 
+function DiamondIcon({ className = 'h-5 w-5' }) {
+  return (
+    <img
+      src="/assets/Icons/Diamond.svg"
+      alt="Diamond"
+      className={`shrink-0 object-contain ${className}`}
+    />
+  )
+}
+
 export default function DailyGiftRewardPopup({ reward, onClose }) {
   const { t } = useDisplayTranslation()
 
@@ -55,6 +65,7 @@ export default function DailyGiftRewardPopup({ reward, onClose }) {
 
   const coins = Number(reward.coins ?? reward.gems ?? 0)
   const vouchers = Number(reward.vouchers || 0)
+  const diamonds = Number(reward.diamonds || 0)
 
   return (
     <div className="fixed inset-0 z-[100001] flex flex-col items-center justify-center bg-black/65 px-6">
@@ -157,7 +168,7 @@ export default function DailyGiftRewardPopup({ reward, onClose }) {
           {t('dailyGiftRewardPopup.surpriseGot')}
         </h3>
 
-        <div className="dailyGiftRewardPop mt-3 flex items-center justify-center gap-5">
+        <div className="dailyGiftRewardPop mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
           <div className="flex items-center gap-2">
             <CoinIcon className="h-10 w-10" />
             <span className="text-[28px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
@@ -175,6 +186,15 @@ export default function DailyGiftRewardPopup({ reward, onClose }) {
               +{formatNumber(vouchers)}
             </span>
           </div>
+
+          {diamonds > 0 ? (
+            <div className="flex items-center gap-2">
+              <DiamondIcon className="h-10 w-10" />
+              <span className="text-[28px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
+                +{formatNumber(diamonds)}
+              </span>
+            </div>
+          ) : null}
         </div>
 
         <div className="relative mt-5 flex h-[245px] w-full items-center justify-center">
