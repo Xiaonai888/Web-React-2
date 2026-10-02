@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   Archive,
   ChevronRight,
@@ -32,6 +33,8 @@ const ACTION_GROUPS = [
   ],
 ]
 
+const SAVE_AS_TYPES = ['doc', 'docx', 'txt', 'xml', 'pdf', 'uot3']
+
 const QUICK_ACTIONS = [
   { id: 'saveAs', label: 'Save As', icon: FileText },
   { id: 'findReplace', label: 'Find and Replace', icon: Search },
@@ -53,12 +56,43 @@ export default function ShadowDocsMobileMenu({
   onClose,
   onAction,
 }) {
-  if (!open) return null
-
   const safeName = String(documentName || 'Docs.doc').trim() || 'Docs.doc'
   const safeWords = Math.max(0, Math.round(Number(wordCount) || 0))
   const safeSize = String(sizeText || '').trim()
   const meta = `Words: ${safeWords}${safeSize ? `  |  Size: ${safeSize}` : ''}`
+  const defaultBaseName = safeName.replace(/\.(?:docx?|txt|xml|pdf|uot3)$/i, '') || 'Docs'
+  const [saveAsOpen, setSaveAsOpen] = useState(false)
+  const [saveName, setSaveName] = useState(defaultBaseName)
+  const [saveType, setSaveType] = useState('doc')
+  const [encrypt, setEncrypt] = useState(false)
+  const [saveBusy, setSaveBusy] = useState(false)
+  const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    if (!open) setSaveAsOpen(false)
+    setSaveName(defaultBaseName)
+    setSaveError('')
+  }, [open, defaultBaseName])
+
+  if (!open) return null
+
+  async function saveAs() {
+    const name = String(saveName || '').trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').slice(0, 80)
+    if (!name) {
+      setSaveError('Enter a file name.')
+      return
+    }
+    setSaveBusy(true)
+    setSaveError('')
+    try {
+      const result = await onAction?.('saveAs', { name, format: saveType, encrypt })
+      if (result !== false) onClose?.()
+    } catch (failure) {
+      setSaveError(failure instanceof Error ? failure.message : 'Could not save this file.')
+    } finally {
+      setSaveBusy(false)
+    }
+  }
 
   return (
     <div
@@ -76,9 +110,9 @@ export default function ShadowDocsMobileMenu({
           display:flex;
           align-items:flex-end;
           justify-content:center;
-          background:transparent;
-          backdrop-filter:none;
-          -webkit-backdrop-filter:none
+          background:rgba(0,0,0,.10);
+          backdrop-filter:blur(0.5px);
+          -webkit-backdrop-filter:blur(0.5px)
         }
         .sd-mobile-doc-menu{
           width:min(100%,620px);
@@ -89,10 +123,138 @@ export default function ShadowDocsMobileMenu({
           border-radius:20px 20px 0 0;
           background:#151515;
           color:#f2f2f2;
-          box-shadow:none;
+          box-shadow:0 -20px 50px rgba(0,0,0,.52);
           font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
         }
         .sd-mobile-doc-menu *{box-sizing:border-box}
+
+        .sd-save-as-screen{
+          position:fixed;
+          inset:0;
+          z-index:17000;
+          display:flex;
+          flex-direction:column;
+          background:#17181d;
+          color:#f4f4f6;
+          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+        }
+        .sd-save-as-head{
+          height:70px;
+          display:flex;
+          align-items:center;
+          gap:14px;
+          padding:env(safe-area-inset-top) 18px 0;
+          border-bottom:1px solid #24252b;
+          background:#1d1e23
+        }
+        .sd-save-as-back{
+          width:38px;
+          height:38px;
+          display:grid;
+          place-items:center;
+          border:0;
+          border-radius:50%;
+          background:transparent;
+          color:#f4f4f6;
+          font-size:30px;
+          line-height:1
+        }
+        .sd-save-as-head strong{
+          font-size:20px;
+          font-weight:500
+        }
+        .sd-save-as-body{
+          width:min(100%,620px);
+          margin:0 auto;
+          padding:22px 22px calc(28px + env(safe-area-inset-bottom))
+        }
+        .sd-save-as-location{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:14px;
+          padding:0 0 18px;
+          border-bottom:1px solid #24252b
+        }
+        .sd-save-as-location small{
+          display:block;
+          color:#8a8b91;
+          font-size:13px
+        }
+        .sd-save-as-location strong{
+          display:block;
+          margin-top:5px;
+          font-size:17px;
+          font-weight:500
+        }
+        .sd-save-as-file{
+          display:grid;
+          grid-template-columns:minmax(0,1fr) 116px;
+          gap:10px;
+          align-items:end;
+          margin-top:26px
+        }
+        .sd-save-as-name{
+          width:100%;
+          height:52px;
+          border:0;
+          border-bottom:1px solid #3a3b42;
+          outline:0;
+          background:transparent;
+          color:#f5f5f6;
+          font:inherit;
+          font-size:18px
+        }
+        .sd-save-as-name:focus{border-bottom-color:#25a884}
+        .sd-save-as-type{
+          width:100%;
+          height:52px;
+          border:1px solid #35363d;
+          border-radius:8px;
+          outline:0;
+          background:#202126;
+          color:#f4f4f6;
+          padding:0 12px;
+          font:inherit;
+          font-size:16px
+        }
+        .sd-save-as-actions{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:18px;
+          margin-top:28px
+        }
+        .sd-save-as-actions button{
+          min-height:52px;
+          border:1px solid #34353c;
+          border-radius:8px;
+          background:#24252b;
+          color:#e6e6e9;
+          font:inherit;
+          font-size:17px
+        }
+        .sd-save-as-actions .sd-save-as-primary{
+          border-color:#25a884;
+          background:#25a884;
+          color:#fff;
+          font-weight:650
+        }
+        .sd-save-as-actions .is-selected{
+          border-color:#25a884;
+          color:#66d6b6
+        }
+        .sd-save-as-error{
+          margin-top:14px;
+          color:#ff8d8d;
+          font-size:12px;
+          line-height:1.45
+        }
+        .sd-save-as-hint{
+          margin-top:12px;
+          color:#777981;
+          font-size:11px;
+          line-height:1.45
+        }
         .sd-mobile-doc-menu-handle{
           width:46px;
           height:4px;
@@ -287,58 +449,112 @@ export default function ShadowDocsMobileMenu({
         }
       `}</style>
 
-      <section className="sd-mobile-doc-menu" role="dialog" aria-modal="true" aria-label="Document menu">
-        <div className="sd-mobile-doc-menu-handle" aria-hidden="true" />
-        <div className="sd-mobile-doc-menu-scroll">
-          <header className="sd-mobile-doc-menu-file">
-            <div className="sd-mobile-doc-menu-logo" aria-hidden="true"><span>W</span></div>
-            <div className="sd-mobile-doc-menu-title">
-              <strong>{safeName}</strong>
-              <small>{meta}</small>
-            </div>
-            <button type="button" className="sd-mobile-doc-menu-close" aria-label="Close menu" onClick={onClose}>
-              <X size={25} strokeWidth={1.7} />
-            </button>
+      {saveAsOpen ? (
+        <section className="sd-save-as-screen" role="dialog" aria-modal="true" aria-label="Save As">
+          <header className="sd-save-as-head">
+            <button type="button" className="sd-save-as-back" aria-label="Back" onClick={() => { setSaveAsOpen(false); setSaveError('') }}>‹</button>
+            <strong>Save As</strong>
           </header>
+          <div className="sd-save-as-body">
+            <div className="sd-save-as-location">
+              <div>
+                <small>Location</small>
+                <strong>This device / Downloads</strong>
+              </div>
+              <ChevronRight size={22} color="#7d7e84" />
+            </div>
 
-          <div className="sd-mobile-doc-menu-quick">
-            {QUICK_ACTIONS.map(item => {
-              const Icon = item.icon
-              return (
-                <button type="button" key={item.id} onClick={() => runAction(item.id, onAction, onClose)}>
-                  <Icon aria-hidden="true" />
-                  <span>{item.label}</span>
-                </button>
-              )
-            })}
+            <div className="sd-save-as-file">
+              <input
+                className="sd-save-as-name"
+                aria-label="File name"
+                maxLength={80}
+                value={saveName}
+                onChange={event => { setSaveName(event.target.value); setSaveError('') }}
+              />
+              <select className="sd-save-as-type" aria-label="File type" value={saveType} onChange={event => { setSaveType(event.target.value); setSaveError('') }}>
+                {SAVE_AS_TYPES.map(type => <option key={type} value={type}>.{type}</option>)}
+              </select>
+            </div>
+
+            {saveError ? <p className="sd-save-as-error" role="alert">{saveError}</p> : null}
+            <p className="sd-save-as-hint">The browser saves files to your device download location. DOCX and UOT3 converters are not connected yet.</p>
+
+            <div className="sd-save-as-actions">
+              <button type="button" className={encrypt ? 'is-selected' : ''} onClick={() => setEncrypt(value => !value)}>
+                {encrypt ? 'Encrypt ✓' : 'Encrypt'}
+              </button>
+              <button type="button" className="sd-save-as-primary" disabled={saveBusy} onClick={() => void saveAs()}>
+                {saveBusy ? 'Saving…' : 'Save'}
+              </button>
+            </div>
           </div>
+        </section>
+      ) : (
+        <section className="sd-mobile-doc-menu" role="dialog" aria-modal="true" aria-label="Document menu">
+          <div className="sd-mobile-doc-menu-handle" aria-hidden="true" />
+          <div className="sd-mobile-doc-menu-scroll">
+            <header className="sd-mobile-doc-menu-file">
+              <div className="sd-mobile-doc-menu-logo" aria-hidden="true"><span>W</span></div>
+              <div className="sd-mobile-doc-menu-title">
+                <strong>{safeName}</strong>
+                <small>{meta}</small>
+              </div>
+              <button type="button" className="sd-mobile-doc-menu-close" aria-label="Close menu" onClick={onClose}>
+                <X size={25} strokeWidth={1.7} />
+              </button>
+            </header>
 
-          {ACTION_GROUPS.map((group, groupIndex) => (
-            <div className="sd-mobile-doc-menu-group" key={`group-${groupIndex}`}>
-              {group.map(item => {
+            <div className="sd-mobile-doc-menu-quick">
+              {QUICK_ACTIONS.map(item => {
                 const Icon = item.icon
                 return (
                   <button
                     type="button"
-                    className="sd-mobile-doc-menu-row"
                     key={item.id}
-                    onClick={() => runAction(item.id, onAction, onClose)}
+                    onClick={() => {
+                      if (item.id === 'saveAs') {
+                        setSaveAsOpen(true)
+                        setSaveError('')
+                        return
+                      }
+                      runAction(item.id, onAction, onClose)
+                    }}
                   >
                     <Icon aria-hidden="true" />
-                    <span className="sd-mobile-doc-menu-row-copy">
-                      <strong>{item.label}</strong>
-                      {item.detail ? <small>{item.detail}</small> : null}
-                    </span>
-                    {item.chevron
-                      ? <ChevronRight className="sd-mobile-doc-menu-row-chevron" aria-hidden="true" />
-                      : <span className="sd-mobile-doc-menu-row-space" aria-hidden="true" />}
+                    <span>{item.label}</span>
                   </button>
                 )
               })}
             </div>
-          ))}
-        </div>
-      </section>
+
+            {ACTION_GROUPS.map((group, groupIndex) => (
+              <div className="sd-mobile-doc-menu-group" key={`group-${groupIndex}`}>
+                {group.map(item => {
+                  const Icon = item.icon
+                  return (
+                    <button
+                      type="button"
+                      className="sd-mobile-doc-menu-row"
+                      key={item.id}
+                      onClick={() => runAction(item.id, onAction, onClose)}
+                    >
+                      <Icon aria-hidden="true" />
+                      <span className="sd-mobile-doc-menu-row-copy">
+                        <strong>{item.label}</strong>
+                        {item.detail ? <small>{item.detail}</small> : null}
+                      </span>
+                      {item.chevron
+                        ? <ChevronRight className="sd-mobile-doc-menu-row-chevron" aria-hidden="true" />
+                        : <span className="sd-mobile-doc-menu-row-space" aria-hidden="true" />}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
