@@ -21,6 +21,7 @@ import { buildShadowDocsTableOfContents, createShadowDocsCitation, createShadowD
 import { buildShadowDocsMergedDocuments, createShadowDocsAddressBlock, createShadowDocsGreetingLine, getShadowDocsMergeFields, insertShadowDocsMergeField, parseShadowDocsRecipientsCSV } from './ShadowDocsMailMergeEngine'
 import { applyShadowDocsCase } from './ShadowDocsTextTransform'
 import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
+import ShadowDocsShareSheet from './ShadowDocsShareSheet'
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
 const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
@@ -115,6 +116,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [localSaveDirty, setLocalSaveDirty] = useState(false)
   const [localSaveSeconds, setLocalSaveSeconds] = useState(10)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
   const onEditorBlurRef = useRef(onEditorBlur)
   const chapter = book?.chapters?.find(item => item.id === chapterId) || book?.chapters?.[0]
   const chapterIndex = book?.chapters?.findIndex(item => item.id === chapter?.id) ?? -1
@@ -136,6 +138,7 @@ export default function ShadowDocsWritingStudioPanel({
     setLocalSaveDirty(false)
     setLocalSaveSeconds(10)
     setMobileMenuOpen(false)
+    setShareOpen(false)
   }, [book?.id, chapter?.id])
 
   useEffect(() => {
@@ -787,6 +790,46 @@ export default function ShadowDocsWritingStudioPanel({
     setRibbonMessage(`${command} is available in the ribbon but needs a specialized external engine or object type.`)
   }
 
+  async function openShareSheet() {
+    if (!book?.id) return
+    await Promise.resolve(onEditorBlurRef.current?.(book.id))
+    setLocalSaveDirty(false)
+    setLocalSaveSeconds(10)
+    setMobileMenuOpen(false)
+    setShareOpen(true)
+  }
+
+  function shareFileContent() {
+    const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHTML(book?.title || 'Shadow Docs')}</title></head><body>${(book?.chapters || []).map((item, index) => `<section${index ? ' style="page-break-before:always"' : ''}><h1>${escapeHTML(item.title || `Chapter ${index + 1}`)}</h1>${String(item.html || '')}</section>`).join('')}</body></html>`
+  }
+
+  async function shareAsFile() {
+    const baseName = mobileDocumentName(book).replace(/\.(?:doc|docx)$/i, '') || 'Docs'
+    const file = new File([shareFileContent()], `${baseName}.doc`, { type: 'application/msword' })
+    try {
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({ title: mobileDocumentName(book), files: [file] })
+        return
+      }
+    } catch (failure) {
+      if (failure?.name === 'AbortError') return
+    }
+    onDownloadBackup?.(book)
+  }
+
+  async function shareToSocial() {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: mobileDocumentName(book), text: book?.title || 'Shadow Docs' })
+        return
+      }
+    } catch (failure) {
+      if (failure?.name === 'AbortError') return
+    }
+    setRibbonMessage('Sharing is unavailable in this browser.')
+  }
+
   async function runMobileMenuAction(action, payload = {}) {
     if (action === 'saveAs') {
       const name = String(payload.name || mobileDocumentName(book).replace(/\.[^.]+$/, '') || 'Docs').trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').slice(0, 80)
@@ -828,18 +871,7 @@ export default function ShadowDocsWritingStudioPanel({
       return
     }
     if (action === 'share') {
-      try {
-        if (navigator.share) {
-          await navigator.share({
-            title: mobileDocumentName(book),
-            text: book?.title || 'Shadow Docs',
-          })
-          return
-        }
-      } catch (failure) {
-        if (failure?.name === 'AbortError') return
-      }
-      setRibbonMessage('Share is unavailable in this browser.')
+      await openShareSheet()
       return
     }
     if (action === 'print') {
@@ -1116,15 +1148,15 @@ export default function ShadowDocsWritingStudioPanel({
           font-weight:700;
         }
         .sd-mobile-editor-actions svg{
-  width:21px;
-  height:21px;
-  stroke-width:1.8;
-}
-body:has(.sd-writing-layout) .sd-modal .sd-button-primary{
-  background:#25a884!important;
-  border-color:#25a884!important;
-  color:#fff!important;
-}
+          width:21px;
+          height:21px;
+          stroke-width:1.8;
+        }
+        body:has(.sd-writing-layout) .sd-modal .sd-button-primary{
+          background:#25a884!important;
+          border-color:#25a884!important;
+          color:#fff!important;
+        }
         .sd-writing-layout{
           position:fixed!important;
           z-index:35;
@@ -1216,7 +1248,7 @@ body:has(.sd-writing-layout) .sd-modal .sd-button-primary{
         <button type="button" aria-label="Undo" disabled={typeof onChangeHTML !== 'function'} onPointerDown={event => event.preventDefault()} onClick={() => quickFormat('undo')}><Undo2 /></button>
         <button type="button" aria-label="Redo" disabled={typeof onChangeHTML !== 'function'} onPointerDown={event => event.preventDefault()} onClick={() => quickFormat('redo')}><Redo2 /></button>
         <button type="button" className="sd-mobile-page" aria-label={`Chapter ${chapterIndex + 1}`} onClick={() => onOpenOutline?.()}><span>{chapterIndex + 1}</span></button>
-        <button type="button" aria-label="Export" onClick={() => onOpenPDF?.()}><Share2 /></button>
+        <button type="button" aria-label="Share" onClick={() => void openShareSheet()}><Share2 /></button>
         <button type="button" aria-label="Menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}><Menu /></button>
         <button type="button" className="sd-mobile-save" aria-label="Save" onClick={() => void runRibbonCommand('save', true)}><Check /> Save</button>
       </div>
@@ -1228,6 +1260,16 @@ body:has(.sd-writing-layout) .sd-modal .sd-button-primary{
       sizeText={mobileDocumentSize(book)}
       onClose={() => setMobileMenuOpen(false)}
       onAction={runMobileMenuAction}
+    />
+    <ShadowDocsShareSheet
+      open={shareOpen}
+      documentName={mobileDocumentName(book)}
+      wordCount={overview.words}
+      onClose={() => setShareOpen(false)}
+      onCopyLink={() => setRibbonMessage('Copy Link will be connected with the share-link service.')}
+      onShareFile={() => void shareAsFile()}
+      onSocialShare={() => void shareToSocial()}
+      onSettingsChange={() => {}}
     />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
