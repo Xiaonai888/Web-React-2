@@ -14,10 +14,9 @@ registerTranslationNamespace('premiumPage', {
     premiumPrivileges: 'Go Premium to enjoy 6 privileges.',
     privileges: 'Privileges',
     more: 'More',
-    bonusDiamonds: '+90 Diamonds',
-    morePercent: '50% More',
+    bonus: 'BONUS',
     checkInReward: 'Check-in Reward',
-    fiveDiamondsWeek: 'Get 5 Diamonds/Week',
+    sevenDiamondsWeek: '1 Diamond/Day • 7 Diamonds/Week',
     earlyAccess: 'Early access to 300+ stories',
     freeEpisodeAccess: 'Free access to 500+ episodes',
     oneMonth: '1 Month',
@@ -45,10 +44,9 @@ registerTranslationNamespace('premiumPage', {
     premiumPrivileges: 'ប្រើ Premium ដើម្បីទទួលបានអត្ថប្រយោជន៍ 6 យ៉ាង។',
     privileges: 'អត្ថប្រយោជន៍',
     more: 'បន្ថែម',
-    bonusDiamonds: '+90 Diamonds',
-    morePercent: 'បន្ថែម 50%',
+    bonus: 'BONUS',
     checkInReward: 'រង្វាន់ Check-in',
-    fiveDiamondsWeek: 'ទទួល 5 Diamonds/សប្តាហ៍',
+    sevenDiamondsWeek: '1 Diamond/ថ្ងៃ • 7 Diamonds/សប្តាហ៍',
     earlyAccess: 'ចូលអានមុនលើរឿង 300+',
     freeEpisodeAccess: 'ចូលអានឥតគិតថ្លៃ 500+ ភាគ',
     oneMonth: '1 ខែ',
@@ -76,10 +74,9 @@ registerTranslationNamespace('premiumPage', {
     premiumPrivileges: '开通 Premium，享受 6 项权益。',
     privileges: '权益',
     more: '更多',
-    bonusDiamonds: '+90 Diamonds',
-    morePercent: '多 50%',
+    bonus: '奖励',
     checkInReward: '签到奖励',
-    fiveDiamondsWeek: '每周获得 5 Diamonds',
+    sevenDiamondsWeek: '每天 1 Diamond • 每周 7 Diamonds',
     earlyAccess: '抢先阅读 300+ 个故事',
     freeEpisodeAccess: '免费阅读 500+ 个章节',
     oneMonth: '1 个月',
@@ -107,10 +104,9 @@ registerTranslationNamespace('premiumPage', {
     premiumPrivileges: 'Premium に登録して6つの特典を利用できます。',
     privileges: '特典',
     more: 'もっと見る',
-    bonusDiamonds: '+90 Diamonds',
-    morePercent: '50%増量',
+    bonus: 'ボーナス',
     checkInReward: 'チェックイン報酬',
-    fiveDiamondsWeek: '毎週 5 Diamonds を獲得',
+    sevenDiamondsWeek: '1日 1 Diamond • 週 7 Diamonds',
     earlyAccess: '300以上のストーリーを先行閲覧',
     freeEpisodeAccess: '500以上のエピソードを無料で閲覧',
     oneMonth: '1か月',
@@ -138,10 +134,9 @@ registerTranslationNamespace('premiumPage', {
     premiumPrivileges: 'Premium으로 6가지 혜택을 이용하세요.',
     privileges: '혜택',
     more: '더 보기',
-    bonusDiamonds: '+90 Diamonds',
-    morePercent: '50% 추가',
+    bonus: '보너스',
     checkInReward: '체크인 보상',
-    fiveDiamondsWeek: '매주 5 Diamonds 받기',
+    sevenDiamondsWeek: '하루 1 Diamond • 주 7 Diamonds',
     earlyAccess: '300개 이상의 스토리 선공개 이용',
     freeEpisodeAccess: '500개 이상의 에피소드 무료 이용',
     oneMonth: '1개월',
@@ -164,9 +159,9 @@ registerTranslationNamespace('premiumPage', {
 })
 
 const PLANS = [
-  { id: '1', label: '1 Month', price: '$5', diamonds: '180 Diamonds', badge: 'FLEXIBLE' },
-  { id: '3', label: '3 Months', price: '$18', diamonds: '540 Diamonds', badge: 'POPULAR' },
-  { id: '12', label: '12 Months', price: '$70', diamonds: '2,200 Diamonds', badge: 'ANNUAL' },
+  { id: '1', label: '1 Month', price: '$5', diamonds: 180, bonus: 90, badge: 'FLEXIBLE' },
+  { id: '3', label: '3 Months', price: '$18', diamonds: 540, bonus: 270, badge: 'POPULAR' },
+  { id: '12', label: '12 Months', price: '$70', diamonds: 2200, bonus: 1080, badge: 'ANNUAL' },
 ]
 
 const PLAN_LABEL_KEYS = {
@@ -239,6 +234,9 @@ export default function PremiumPage() {
   const reader = useMemo(getStoredReader, [])
   const [selectedPlan, setSelectedPlan] = useState('3')
   const [helpOpen, setHelpOpen] = useState(false)
+
+  const selectedPlanDetails =
+    PLANS.find((plan) => plan.id === selectedPlan) || PLANS[0]
 
   const displayName =
     reader?.name ||
@@ -343,16 +341,18 @@ export default function PremiumPage() {
             <div className="min-h-[92px] rounded-[12px] bg-gradient-to-r from-[#f4f9ff] to-[#f9fbff] px-4 py-3 dark:from-[var(--shadow-bg-elevated)] dark:to-[var(--shadow-bg-soft)]">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-[17px] font-bold">180 Diamonds</div>
+                  <div className="text-[17px] font-bold">
+                    {formatPlanDiamonds(selectedPlanDetails.diamonds)}
+                  </div>
                   <div className="mt-1 text-[13px] text-[#9aa0a6] dark:text-[var(--shadow-text-secondary)]">
-                    {t('premiumPage.bonusDiamonds')}
+                    +{formatPlanDiamonds(selectedPlanDetails.bonus)}
                   </div>
                 </div>
                 <DiamondMark className="h-11 w-11 text-[18px]" />
               </div>
 
               <span className="absolute left-[39%] top-[-7px] rounded-b-[8px] rounded-t-[4px] bg-[#ff9212] px-2 py-1 text-[10px] font-bold text-white">
-                {t('premiumPage.morePercent')}
+                {t('premiumPage.bonus')}
               </span>
             </div>
 
@@ -361,7 +361,7 @@ export default function PremiumPage() {
                 <div>
                   <div className="text-[17px] font-bold">{t('premiumPage.checkInReward')}</div>
                   <div className="mt-1 text-[13px] text-[#9aa0a6] dark:text-[var(--shadow-text-secondary)]">
-                    {t('premiumPage.fiveDiamondsWeek')}
+                    {t('premiumPage.sevenDiamondsWeek')}
                   </div>
                 </div>
                 <DiamondMark className="h-11 w-11 text-[18px]" />
