@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { hexToHsv, hsvToHex } from './StudioColorPanel'
+import StudioMobileColorPalette from './StudioMobileColorPalette'
+import StudioMobileColorRGB from './StudioMobileColorRGB'
+import StudioMobileColorHSB from './StudioMobileColorHSB'
 
 const FAVORITES_KEY = 'shadow-studio-color-favorites-v1'
 const RECENTS_KEY = 'shadow-studio-color-recent-v1'
@@ -70,7 +73,7 @@ function NumericRow({ label, value, min, max, color, onChange }) {
   )
 }
 
-export default function StudioMobileColorPopup({
+function StudioMobileColorPopupLegacy({
   open = false,
   color = '#111111',
   disabled = false,
@@ -563,5 +566,75 @@ export default function StudioMobileColorPopup({
         </button>
       </nav>
     </section>
+  )
+}
+
+
+export default function StudioMobileColorPopup({
+  open = false,
+  color = '#111111',
+  opacity = 100,
+  disabled = false,
+  onChange,
+  onOpacityChange,
+  onClose,
+}) {
+  const [mode, setMode] = useState('rgb')
+
+  useEffect(() => {
+    if (!open) return
+
+    setMode((current) => (
+      current === 'palette' || current === 'rgb' || current === 'hsb'
+        ? current
+        : 'rgb'
+    ))
+  }, [open])
+
+  if (!open) return null
+
+  const sharedProps = {
+    open: true,
+    color,
+    opacity,
+    disabled,
+    onChange,
+    onOpacityChange,
+    onModeChange: setMode,
+  }
+
+  if (mode === 'palette') {
+    return (
+      <StudioMobileColorPalette
+        {...sharedProps}
+      />
+    )
+  }
+
+  if (mode === 'rgb') {
+    return (
+      <StudioMobileColorRGB
+        {...sharedProps}
+        onClose={onClose}
+      />
+    )
+  }
+
+  if (mode === 'hsb') {
+    return (
+      <StudioMobileColorHSB
+        {...sharedProps}
+        onClose={onClose}
+      />
+    )
+  }
+
+  return (
+    <StudioMobileColorPopupLegacy
+      open={open}
+      color={color}
+      disabled={disabled}
+      onChange={onChange}
+    />
   )
 }
