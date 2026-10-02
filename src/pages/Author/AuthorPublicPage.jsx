@@ -6,6 +6,7 @@ import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPopup'
+import AuthorPageAboutPopup from '../../components/AuthorPageAboutPopup'
 import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -1860,6 +1861,7 @@ export default function AuthorPublicPage() {
   const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [socialMediaOpen, setSocialMediaOpen] = useState(false)
+  const [pageAboutOpen, setPageAboutOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
   const readerName = readerUser?.name || t('authorPublicPage.reader')
@@ -3669,9 +3671,11 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                       {loading ? (
                         <div className="h-8 w-52 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
                       ) : (
-                        <h1 className="line-clamp-1 text-[18px] font-bold leading-tight tracking-tight text-[var(--shadow-text-primary)] sm:text-[22px]">
-                          {displayAuthor.page_name}
-                        </h1>
+                        <button type="button" onClick={() => setPageAboutOpen(true)} className="max-w-full text-left active:opacity-70">
+  <h1 className="line-clamp-1 text-[18px] font-bold leading-tight tracking-tight text-[var(--shadow-text-primary)] sm:text-[22px]">
+    {displayAuthor.page_name}
+  </h1>
+</button>
                       )}
 
                       
@@ -4072,6 +4076,15 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         </section>
       </main>
       {ownerResolved && displayAuthor.is_owner ? (
+  <AuthorPageAboutPopup
+  open={pageAboutOpen}
+  author={displayAuthor}
+  onClose={() => setPageAboutOpen(false)}
+  onOpenTransparency={() => {
+    setPageAboutOpen(false)
+    navigate(`/author/page/${displayAuthor.page_username}/transparency`)
+  }}
+/>
         <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} />
       ) : null}
     </div>
