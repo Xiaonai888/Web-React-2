@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react'
 import { buildShadowDocsPrintHTML } from './ShadowDocsPDFExport'
+const [pdfBusy, setPdfBusy] = useState(false)
 
 const PAPER_SIZES = ['A4', 'A5', 'B5']
 const MARGINS = {
@@ -146,19 +147,30 @@ export default function ShadowDocsPrintPanel({
     }
   }
 
-  function handleExportPDF() {
-    setMenuOpen(false)
-    persistLayout()
-    onExportPDF?.({
-      paperSize,
-      orientation,
-      margin,
-      grayscale,
-    })
+  async function handleExportPDF() {
+  setMenuOpen(false)
+  setPdfBusy(true)
+  setError('')
+  persistLayout()
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 350))
+    if (!previewHTML) throw new Error('Could not create PDF file.')
+    printHTML(previewHTML)
+  } catch (failure) {
+    setError(failure instanceof Error ? failure.message : 'Could not create PDF file.')
+  } finally {
+    setPdfBusy(false)
   }
+}
 
   return <section className="sd-print-panel" aria-label="Print">
     <style>{`
+    .sd-pdf-loading{position:fixed;inset:0;z-index:21000;display:grid;place-items:center;background:#0007}
+.sd-pdf-loading-box{min-width:210px;padding:24px;border-radius:16px;background:#222326;text-align:center;color:#fff}
+.sd-pdf-spinner{width:34px;height:34px;margin:0 auto 14px;border:3px solid #ffffff30;border-top-color:#25a884;border-radius:50%;animation:sdPdfSpin .8s linear infinite}
+.sd-pdf-loading-box small{display:block;margin-top:6px;color:#8d8e94}
+@keyframes sdPdfSpin{to{transform:rotate(360deg)}}
       .sd-print-panel{
         position:fixed;
         inset:0;
@@ -565,4 +577,13 @@ export default function ShadowDocsPrintPanel({
       </button>
     </footer>
   </section>
+  {pdfBusy ? (
+  <div className="sd-pdf-loading">
+    <div className="sd-pdf-loading-box">
+      <div className="sd-pdf-spinner" />
+      <strong>Creating PDF file…</strong>
+      <small>Preparing your document</small>
+    </div>
+  </div>
+) : null}
 }
