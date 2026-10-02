@@ -393,7 +393,7 @@ export default function Search() {
           </main>
         ) : (
           <main className="mx-auto mt-6 max-w-3xl px-4">
-            <nav className="no-scrollbar mb-8 flex space-x-8 overflow-x-auto border-b border-gray-100 dark:border-[var(--shadow-border)]">
+            <nav className="no-scrollbar mb-8 flex space-x-4 overflow-x-auto border-b border-gray-100 dark:border-[var(--shadow-border)]">
               {TABS.map((tab) => (
                 <button
                   key={tab.label}
