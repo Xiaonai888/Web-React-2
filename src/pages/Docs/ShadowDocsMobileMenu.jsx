@@ -123,7 +123,7 @@ export default function ShadowDocsMobileMenu({
           border-radius:20px 20px 0 0;
           background:#151515;
           color:#f2f2f2;
-          box-shadow:0 -20px 50px rgba(0,0,0,.52);
+          box-shadow:none;
           font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
         }
         .sd-mobile-doc-menu *{box-sizing:border-box}
