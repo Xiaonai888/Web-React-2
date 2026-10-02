@@ -10,7 +10,6 @@ import {
 import { buildShadowDocsPrintHTML } from './ShadowDocsPDFExport'
 
 const PAPER_SIZES = ['A4', 'A5', 'B5']
-const PAGES_PER_SHEET = [1, 2, 4]
 const MARGINS = {
   normal: 18,
   narrow: 10,
@@ -66,13 +65,11 @@ export default function ShadowDocsPrintPanel({
   const sourceSettings = book?.settings || {}
   const [menuOpen, setMenuOpen] = useState(false)
   const [range, setRange] = useState('all')
-  const [customRange, setCustomRange] = useState('')
   const [paperSize, setPaperSize] = useState(PAPER_SIZES.includes(sourceSettings.size) ? sourceSettings.size : 'A4')
   const [orientation, setOrientation] = useState(sourceSettings.orientation === 'landscape' ? 'landscape' : 'portrait')
   const [marginMode, setMarginMode] = useState('normal')
   const [customMargin, setCustomMargin] = useState(cleanNumber(sourceSettings.margin, 10, 35, 18))
   const [grayscale, setGrayscale] = useState(false)
-  const [pagesPerSheet, setPagesPerSheet] = useState(1)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -106,11 +103,13 @@ export default function ShadowDocsPrintPanel({
   const previewHTML = useMemo(() => {
     if (!renderedBook) return ''
     try {
-      return buildShadowDocsPrintHTML(renderedBook)
+      const html = buildShadowDocsPrintHTML(renderedBook)
+      if (!grayscale) return html
+      return html.replace('</style>', '.chapter-body img{filter:grayscale(1)}html{filter:grayscale(1)}</style>')
     } catch {
       return ''
     }
-  }, [renderedBook])
+  }, [renderedBook, grayscale])
 
   if (!open || !book) return null
 
@@ -131,12 +130,10 @@ export default function ShadowDocsPrintPanel({
       persistLayout()
       const payload = {
         range,
-        customRange: range === 'custom' ? customRange.trim() : '',
         paperSize,
         orientation,
         margin,
         grayscale,
-        pagesPerSheet,
       }
       if (typeof onPrint === 'function') {
         onPrint(payload, renderedBook)
@@ -505,16 +502,9 @@ export default function ShadowDocsPrintPanel({
             <select className="sd-print-select" value={range} onChange={event => setRange(event.target.value)}>
               <option value="all">All Pages</option>
               <option value="current">Current Chapter</option>
-              <option value="custom">Custom</option>
             </select>
             <ChevronRight size={17} color="#66686e" />
           </div>
-
-          {range === 'custom' ? <div className="sd-print-row">
-            <span>Custom Range</span>
-            <input className="sd-print-input" value={customRange} onChange={event => setCustomRange(event.target.value)} placeholder="1-3, 5" />
-            <span />
-          </div> : null}
 
           <div className="sd-print-row">
             <span>Paper Size</span>
@@ -551,14 +541,6 @@ export default function ShadowDocsPrintPanel({
           </div> : null}
 
           <div className="sd-print-row">
-            <span>Pages per sheet</span>
-            <select className="sd-print-select" value={pagesPerSheet} onChange={event => setPagesPerSheet(Number(event.target.value))}>
-              {PAGES_PER_SHEET.map(value => <option key={value} value={value}>{value}</option>)}
-            </select>
-            <ChevronRight size={17} color="#66686e" />
-          </div>
-
-          <div className="sd-print-row">
             <span>Black & White</span>
             <label className="sd-print-toggle">
               <input type="checkbox" checked={grayscale} onChange={event => setGrayscale(event.target.checked)} />
@@ -570,7 +552,7 @@ export default function ShadowDocsPrintPanel({
       </div>
 
       <p className="sd-print-system-note">
-        Printer, copies, duplex printing and physical printer selection are handled by your phone or browser system print dialog after you tap Print.
+        Printer, copies, duplex printing, custom page ranges and pages per sheet are handled by your phone or browser system print dialog after you tap Print.
       </p>
 
       {error ? <p className="sd-print-error" role="alert">{error}</p> : null}
