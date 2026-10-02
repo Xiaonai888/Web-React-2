@@ -1116,10 +1116,15 @@ export default function ShadowDocsWritingStudioPanel({
           font-weight:700;
         }
         .sd-mobile-editor-actions svg{
-          width:21px;
-          height:21px;
-          stroke-width:1.8;
-        }
+  width:21px;
+  height:21px;
+  stroke-width:1.8;
+}
+body:has(.sd-writing-layout) .sd-modal .sd-button-primary{
+  background:#25a884!important;
+  border-color:#25a884!important;
+  color:#fff!important;
+}
         .sd-writing-layout{
           position:fixed!important;
           z-index:35;
