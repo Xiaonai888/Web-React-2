@@ -787,10 +787,41 @@ export default function ShadowDocsWritingStudioPanel({
     setRibbonMessage(`${command} is available in the ribbon but needs a specialized external engine or object type.`)
   }
 
-  async function runMobileMenuAction(action) {
+  async function runMobileMenuAction(action, payload = {}) {
     if (action === 'saveAs') {
-      onDownloadBackup?.(book)
-      return
+      const name = String(payload.name || mobileDocumentName(book).replace(/\.[^.]+$/, '') || 'Docs').trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').slice(0, 80)
+      const format = String(payload.format || 'doc').toLowerCase()
+      if (payload.encrypt) throw new Error('Encrypted Save As is not connected yet.')
+      if (format === 'pdf') {
+        onOpenPDF?.()
+        return true
+      }
+      if (format === 'docx') throw new Error('DOCX export engine is not connected yet.')
+      if (format === 'uot3') throw new Error('UOT3 export engine is not connected yet.')
+
+      const cleanHTML = value => String(value || '')
+      const escapeXML = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[character])
+      const chapterText = html => {
+        const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html')
+        parsed.body.querySelectorAll('br').forEach(node => node.replaceWith('\n'))
+        parsed.body.querySelectorAll('p,div,h1,h2,h3,li,blockquote').forEach(node => node.append('\n\n'))
+        return (parsed.body.textContent || '').replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+      }
+      const plainText = `${book?.title || 'Untitled Book'}\n${book?.author || ''}\n\n${(book?.chapters || []).map((item, index) => `${item.title || `Chapter ${index + 1}`}\n\n${chapterText(item.html)}`).join('\n\n${'—'.repeat(24)}\n\n')}\n`
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<shadowDocs title="${escapeXML(book?.title || 'Untitled Book')}" author="${escapeXML(book?.author || '')}">\n${(book?.chapters || []).map((item, index) => `  <chapter index="${index + 1}" title="${escapeXML(item.title || `Chapter ${index + 1}`)}"><![CDATA[${String(item.html || '').replaceAll(']]>', ']]]]><![CDATA[>')}]]></chapter>`).join('\n')}\n</shadowDocs>\n`
+      const doc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeXML(book?.title || 'Untitled Book')}</title></head><body>${(book?.chapters || []).map((item, index) => `<section${index ? ' style="page-break-before:always"' : ''}><h1>${escapeXML(item.title || `Chapter ${index + 1}`)}</h1>${cleanHTML(item.html)}</section>`).join('')}</body></html>`
+      const content = format === 'txt' ? plainText : format === 'xml' ? xml : doc
+      const type = format === 'txt' ? 'text/plain;charset=utf-8' : format === 'xml' ? 'application/xml;charset=utf-8' : 'application/msword;charset=utf-8'
+      const url = URL.createObjectURL(new Blob([content], { type }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `${name}.${format}`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+      setRibbonMessage(`Saved ${name}.${format}`)
+      return true
     }
     if (action === 'findReplace') {
       onOpenFindReplace?.()
