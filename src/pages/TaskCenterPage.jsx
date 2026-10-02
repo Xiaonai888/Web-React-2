@@ -66,7 +66,6 @@ registerTranslationNamespace('taskCenterPage', {
     "closeCheckInRules": "Close check-in rules",
     "checkInRules": "Check-in Rules",
     "checkInRulesBody1": "Check in every day to keep your streak and collect rewards. If you miss a day, your streak will reset.",
-    "premiumAutoClaim": "Premium readers can auto-claim daily rewards.",
     "gotIt": "Got it",
     "taskCenterCover": "Task Center Cover",
     "goBack": "Go back",
@@ -85,7 +84,6 @@ registerTranslationNamespace('taskCenterPage', {
     "minuteMarker": "{{count}}m",
     "weeklyReading": "Weekly Reading",
     "weeklyReadingHelp": "Read 10 EP = 1 Voucher • Up to 10 Vouchers each week",
-    "premiumWeeklyAutoClaim": "Premium Auto Claim",
     "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
     "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
     "weeklyVoucherAdded": "+1 Voucher added",
@@ -153,7 +151,6 @@ registerTranslationNamespace('taskCenterPage', {
     "closeCheckInRules": "បិទច្បាប់ Check-in",
     "checkInRules": "ច្បាប់ Check-in",
     "checkInRulesBody1": "Check-in រាល់ថ្ងៃដើម្បីរក្សា Streak និងទទួលរង្វាន់។ បើខកខានមួយថ្ងៃ Streak នឹងចាប់ផ្តើមឡើងវិញ។",
-    "premiumAutoClaim": "អ្នកអាន Premium អាចទទួលរង្វាន់ប្រចាំថ្ងៃដោយស្វ័យប្រវត្តិ។",
     "gotIt": "យល់ហើយ",
     "taskCenterCover": "រូប Task Center",
     "goBack": "ត្រឡប់ក្រោយ",
@@ -172,7 +169,6 @@ registerTranslationNamespace('taskCenterPage', {
     "minuteMarker": "{{count}}ន",
     "weeklyReading": "ការអានប្រចាំសប្តាហ៍",
     "weeklyReadingHelp": "អាន 10 EP = 1 Voucher • អាចទទួលបានរហូតដល់ 10 Vouchers ក្នុងមួយសប្តាហ៍",
-    "premiumWeeklyAutoClaim": "Premium ទទួលដោយស្វ័យប្រវត្តិ",
     "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
     "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
     "weeklyVoucherAdded": "បានបន្ថែម +1 Voucher",
@@ -240,7 +236,6 @@ registerTranslationNamespace('taskCenterPage', {
     "closeCheckInRules": "关闭签到规则",
     "checkInRules": "签到规则",
     "checkInRulesBody1": "每天签到以保持连续签到并领取奖励。如果漏签一天，连续签到将重置。",
-    "premiumAutoClaim": "Premium 读者可自动领取每日奖励。",
     "gotIt": "知道了",
     "taskCenterCover": "任务中心封面",
     "goBack": "返回",
@@ -259,7 +254,6 @@ registerTranslationNamespace('taskCenterPage', {
     "minuteMarker": "{{count}}分",
     "weeklyReading": "每周阅读",
     "weeklyReadingHelp": "阅读 10 EP = 1 Voucher • 每周最多可获得 10 Vouchers",
-    "premiumWeeklyAutoClaim": "Premium 自动领取",
     "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
     "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
     "weeklyVoucherAdded": "已添加 +1 Voucher",
@@ -327,7 +321,6 @@ registerTranslationNamespace('taskCenterPage', {
     "closeCheckInRules": "チェックインルールを閉じる",
     "checkInRules": "チェックインルール",
     "checkInRulesBody1": "毎日チェックインして連続記録を維持し、報酬を受け取りましょう。1日逃すと連続記録はリセットされます。",
-    "premiumAutoClaim": "Premium 読者はデイリー報酬を自動受取できます。",
     "gotIt": "わかりました",
     "taskCenterCover": "Task Center カバー",
     "goBack": "戻る",
@@ -346,7 +339,6 @@ registerTranslationNamespace('taskCenterPage', {
     "minuteMarker": "{{count}}分",
     "weeklyReading": "週間読書",
     "weeklyReadingHelp": "10 EP 読むと Voucher 1枚 • 1週間に最大10枚",
-    "premiumWeeklyAutoClaim": "Premium 自動受取",
     "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
     "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
     "weeklyVoucherAdded": "+1 Voucher を追加しました",
@@ -414,7 +406,6 @@ registerTranslationNamespace('taskCenterPage', {
     "closeCheckInRules": "체크인 규칙 닫기",
     "checkInRules": "체크인 규칙",
     "checkInRulesBody1": "매일 체크인하여 연속 기록을 유지하고 보상을 받으세요. 하루를 놓치면 연속 기록이 초기화됩니다.",
-    "premiumAutoClaim": "Premium 독자는 일일 보상을 자동으로 받을 수 있습니다.",
     "gotIt": "확인",
     "taskCenterCover": "Task Center 커버",
     "goBack": "뒤로 가기",
@@ -433,7 +424,6 @@ registerTranslationNamespace('taskCenterPage', {
     "minuteMarker": "{{count}}분",
     "weeklyReading": "주간 읽기",
     "weeklyReadingHelp": "10 EP 읽기 = Voucher 1개 • 매주 최대 10 Vouchers",
-    "premiumWeeklyAutoClaim": "Premium 자동 받기",
     "weeklyEpisodesProgress": "{{progress}}/{{target}} EP",
     "weeklyVouchersProgress": "{{claimed}}/{{total}} Vouchers",
     "weeklyVoucherAdded": "+1 Voucher가 추가되었습니다",
@@ -950,7 +940,6 @@ function WeeklyReadingCard({
     : []
   const claimable = milestones.some((item) => item.claimable)
   const claimedCount = milestones.filter((item) => item.claimed).length
-  const premiumAutoClaim = Boolean(weeklyReading.premium_auto_claim)
   const allRewardsClaimed =
     Boolean(weeklyReading.all_rewards_claimed) ||
     (milestones.length > 0 && milestones.every((item) => item.claimed))
@@ -994,11 +983,6 @@ function WeeklyReadingCard({
                   {t('taskCenterPage.weeklyReading')}
                 </h3>
 
-                {premiumAutoClaim ? (
-                  <span className="rounded-full bg-[#fff4d8] px-2 py-0.5 text-[9px] font-black text-[#b7791f] dark:bg-amber-500/10 dark:text-amber-300">
-                    {t('taskCenterPage.premiumWeeklyAutoClaim')}
-                  </span>
-                ) : null}
               </div>
 
               <p className="mt-1 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">
@@ -1395,16 +1379,13 @@ export default function TaskCenterPage() {
   const token = getReaderToken()
   const storedUser = getStoredUser()
   const isLoggedIn = Boolean(token)
-  const tier = String(storedUser?.reader_tier || storedUser?.subscription_tier || storedUser?.role || 'free').toLowerCase()
-  const isPremium = tier === 'premium' || tier === 'vip'
-
   const fallbackCheckIn = useMemo(() => ({
     current_day: 1,
     claimed_today: false,
     streak_count: 0,
-    premium_auto_claim: isPremium,
+    premium_auto_claim: false,
     rewards: fallbackRewards,
-  }), [isPremium])
+  }), [])
 
   const currentCheckIn = checkIn || fallbackCheckIn
   const rewards = currentCheckIn.rewards || fallbackRewards
@@ -2042,6 +2023,10 @@ function startSmartRefreshCycle() {
           data.history_item?.amount_vouchers ??
           0
       )
+      const rewardDiamonds = Number(
+        data.reward?.diamonds ??
+          0
+      )
       const storyCards = Number(
         data.reward?.story_cards ??
           data.history_item?.story_cards ??
@@ -2057,9 +2042,14 @@ function startSmartRefreshCycle() {
         setGiftReward({
           coins: rewardCoins,
           vouchers: rewardVouchers,
+          diamonds: rewardDiamonds,
         })
       } else {
-        setToast(data.message || t('taskCenterPage.coinsAddedWallet'))
+        setToast(
+          rewardDiamonds > 0
+            ? `+${rewardDiamonds} Diamond`
+            : data.message || t('taskCenterPage.coinsAddedWallet')
+        )
       }
     } catch (error) {
       setToast(error.message || t('taskCenterPage.rewardNotAvailable'))
@@ -2582,8 +2572,13 @@ navigate(targetPath, {
   <DailyGiftRewardPopup
     reward={giftReward}
     onClose={() => {
+      const rewardDiamonds = Number(giftReward?.diamonds || 0)
       setGiftReward(null)
-      setToast(t('taskCenterPage.rewardAddedWallet'))
+      setToast(
+        rewardDiamonds > 0
+          ? `+${rewardDiamonds} Diamond`
+          : t('taskCenterPage.rewardAddedWallet')
+      )
     }}
   />
 ) : null}
@@ -2639,9 +2634,6 @@ navigate(targetPath, {
               {t('taskCenterPage.checkInRulesBody1')}
             </p>
 
-            <p className="mt-3 text-[13px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
-              {t('taskCenterPage.premiumAutoClaim')}
-            </p>
 
             <button
               type="button"
