@@ -1264,8 +1264,11 @@ export default function StudioMobileWorkspace({
       <StudioMobileColorPopup
         open={colorOpen}
         color={color}
+        opacity={opacity}
         disabled={busy}
         onChange={(nextColor) => onColorChange?.(nextColor)}
+        onOpacityChange={(nextOpacity) => onOpacityChange?.(nextOpacity)}
+        onClose={() => setColorOpen(false)}
       />
 
       {panel ? (
