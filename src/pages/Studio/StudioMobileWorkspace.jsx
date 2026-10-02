@@ -199,6 +199,25 @@ const MOBILE_TEXT = {
 
 const MOBILE_MEDIA = '@media all'
 
+
+const MOBILE_BRUSH_TOOLS = [
+  { id: 'transform', label: 'Transform' },
+  { id: 'wand', label: 'Magic Wand' },
+  { id: 'lasso', label: 'Lasso' },
+  { id: 'filter', label: 'Filter' },
+  { id: 'brush', label: 'Brush' },
+  { id: 'eraser', label: 'Eraser' },
+  { id: 'smudge', label: 'Smudge' },
+  { id: 'blur', label: 'Blur' },
+  { id: 'special', label: 'Special Pen' },
+  { id: 'fill', label: 'Bucket' },
+  { id: 'vector', label: 'Vector', icon: 'fa-location-arrow', disabled: true },
+  { id: 'text', label: 'Text' },
+  { id: 'divider', label: 'Frame Divider' },
+  { id: 'eyedropper', label: 'Eyedropper' },
+  { id: 'canvas', label: 'Canvas' },
+]
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, Number(value) || min))
 }
@@ -269,6 +288,7 @@ export default function StudioMobileWorkspace({
   const [controlsOpen, setControlsOpen] = useState(true)
   const [panel, setPanel] = useState('')
   const [colorOpen, setColorOpen] = useState(false)
+  const [brushToolsOpen, setBrushToolsOpen] = useState(false)
   const [paintTool, setPaintTool] = useState(tool === 'eraser' ? 'eraser' : 'brush')
   const [sizeEditing, setSizeEditing] = useState(false)
   const [sizeDraft, setSizeDraft] = useState('')
@@ -301,6 +321,7 @@ export default function StudioMobileWorkspace({
 
   const openPanel = (name) => {
     setColorOpen(false)
+    setBrushToolsOpen(false)
     setPanel((current) => current === name ? '' : name)
   }
   const toolGroups = STUDIO_TOOL_GROUPS.map((group) => ({
@@ -313,6 +334,7 @@ export default function StudioMobileWorkspace({
     if (next === 'brush' || next === 'eraser') setPaintTool(next)
     onToolChange?.(next)
     setColorOpen(false)
+    setBrushToolsOpen(false)
     setPanel('')
   }
 
@@ -685,6 +707,79 @@ export default function StudioMobileWorkspace({
             cursor:pointer
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-step:disabled{opacity:.3}
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tools-backdrop{
+            position:fixed;
+            inset:0;
+            z-index:74;
+            border:0;
+            background:transparent
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tools{
+            position:fixed;
+            left:10px;
+            bottom:calc(82px + env(safe-area-inset-bottom));
+            z-index:76;
+            width:min(228px,calc(100vw - 20px));
+            max-height:min(68dvh,520px);
+            overflow-y:auto;
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:2px;
+            box-sizing:border-box;
+            padding:10px;
+            border:1px solid #39434e;
+            border-radius:18px;
+            background:rgba(28,32,37,.95);
+            box-shadow:0 12px 32px #0008;
+            backdrop-filter:blur(12px);
+            overscroll-behavior:contain
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tool{
+            min-width:0;
+            min-height:70px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:7px;
+            border:0;
+            border-radius:12px;
+            background:transparent;
+            color:#f3f5f7;
+            padding:8px 4px;
+            font:inherit;
+            cursor:pointer;
+            touch-action:manipulation
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tool:hover,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tool.active{
+            background:#202933
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tool.active{
+            color:#69b6ff
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tool:disabled{
+            opacity:.32;
+            cursor:default
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tool i{
+            font-size:25px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tool span{
+            max-width:100%;
+            overflow:hidden;
+            color:inherit;
+            font-size:10px;
+            font-weight:700;
+            text-align:center;
+            text-overflow:ellipsis;
+            white-space:nowrap
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-tool small{
+            color:#93a0ad;
+            font-size:7px;
+            font-weight:800
+          }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock{
             position:fixed;
             left:8px;
@@ -1155,6 +1250,40 @@ export default function StudioMobileWorkspace({
         </div>
       </div>
 
+      {brushToolsOpen ? (
+        <>
+          <button
+            type="button"
+            className="ss-mobile-brush-tools-backdrop"
+            aria-label={text.close}
+            onClick={() => setBrushToolsOpen(false)}
+          />
+          <section className="ss-mobile-brush-tools" aria-label={text.tools}>
+            {MOBILE_BRUSH_TOOLS.map((item) => {
+              const catalogTool = STUDIO_TOOLS_BY_ID[item.id]
+              const available = !item.disabled && STUDIO_WORKING_TOOLS.has(item.id) && catalogTool
+              const icon = item.icon || catalogTool?.icon || 'fa-circle'
+
+              return (
+                <button
+                  type="button"
+                  key={item.id}
+                  className={`ss-mobile-brush-tool ${tool === item.id ? 'active' : ''}`}
+                  disabled={busy || !available}
+                  onClick={() => available && chooseTool(item.id)}
+                  aria-label={item.label}
+                  title={item.label}
+                >
+                  <i className={`fa-solid ${icon}`} aria-hidden="true" />
+                  <span>{item.label}</span>
+                  {!available ? <small>Soon</small> : null}
+                </button>
+              )
+            })}
+          </section>
+        </>
+      ) : null}
+
       <nav className="ss-mobile-dock" aria-label={text.tools}>
         <button
           type="button"
@@ -1173,11 +1302,16 @@ export default function StudioMobileWorkspace({
 
         <button
           type="button"
-          className={`ss-mobile-dock-main ${tool === paintTool ? 'active' : ''}`}
-          onClick={() => chooseTool(paintTool)}
+          className={`ss-mobile-dock-main ${brushToolsOpen || tool === paintTool ? 'active' : ''}`}
+          onClick={() => {
+            setColorOpen(false)
+            setPanel('')
+            setBrushToolsOpen((current) => !current)
+          }}
           disabled={busy}
-          aria-label={paintTool === 'eraser' ? text.eraser : text.brush}
-          title={paintTool === 'eraser' ? text.eraser : text.brush}
+          aria-label={text.tools}
+          aria-expanded={brushToolsOpen}
+          title={text.tools}
         >
           <i className={`fa-solid ${paintTool === 'eraser' ? 'fa-eraser' : 'fa-paintbrush'}`} aria-hidden="true" />
           <span>{paintTool === 'eraser' ? text.eraser : text.brush}</span>
@@ -1208,6 +1342,7 @@ export default function StudioMobileWorkspace({
           disabled={busy}
           onClick={() => {
             setPanel('')
+            setBrushToolsOpen(false)
             setColorOpen((current) => !current)
           }}
           title={text.color}
