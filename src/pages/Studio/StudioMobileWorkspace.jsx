@@ -287,7 +287,7 @@ export default function StudioMobileWorkspace({
   const activePaper = documents.find((document) => document.id === activeDocumentId) || documents[0] || null
   const canvasScale = mobileCanvasScale(activePaper)
   const logicalSize = logicalSizeFromActual(size, canvasScale)
-  const sliderMax = paintTool === 'eraser' ? 50 : 30
+  const sliderMax = paintTool === 'eraser' ? 1000 : 30
   const sliderSize = Math.min(sliderMax, Math.max(0.1, logicalSize))
   const manualLogicalMax = Math.max(sliderMax, Math.floor(5000 / canvasScale * 10) / 10)
   const stabilizerValue = Math.max(0, Math.min(10, Math.round(Number(stabilizer) || 0)))
@@ -607,229 +607,191 @@ export default function StudioMobileWorkspace({
             position:fixed;
             left:8px;
             right:8px;
-            bottom:calc(74px + env(safe-area-inset-bottom));
+            bottom:calc(60px + env(safe-area-inset-bottom));
             z-index:68;
-            display:grid;
-            grid-template-columns:52px minmax(0,1fr) 54px;
-            gap:8px;
-            align-items:stretch;
+            display:block;
             box-sizing:border-box;
-            min-height:96px;
-            padding:8px;
-            border:1px solid #343f4a;
-            border-radius:12px;
-            background:#171d24f4;
-            box-shadow:0 -8px 24px #0008,inset 0 0 0 1px #ffffff05;
-            backdrop-filter:blur(16px)
+            min-height:62px;
+            padding:6px 8px 8px;
+            border-top:1px solid #8d8d8d;
+            background:#8f8f8f
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-controls.is-hidden{display:none}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-preview{
-            display:grid;
-            place-items:center;
-            overflow:hidden;
-            border:1px solid #384653;
-            border-radius:9px;
-            background:#11171d;
-            color:#fff
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-brush-preview svg{
-            width:43px;
-            height:31px
-          }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-sliders{
             min-width:0;
             display:grid;
-            gap:5px;
+            gap:6px;
             align-content:center
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-slider-row{
             min-width:0;
             display:grid;
-            grid-template-columns:36px 28px minmax(54px,1fr) 28px;
-            gap:4px;
+            grid-template-columns:42px 30px minmax(0,1fr) 30px;
+            gap:6px;
             align-items:center
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-slider-value{
-            width:36px;
-            height:26px;
-            min-width:0;
+            width:42px;
+            min-width:42px;
+            height:28px;
             box-sizing:border-box;
-            border:1px solid transparent;
-            border-radius:5px;
+            border:0;
+            border-radius:0;
             background:transparent;
-            color:#eaf1f8;
-            padding:0 2px;
-            font:800 10px Inter,system-ui,sans-serif;
-            text-align:right;
+            color:#131313;
+            padding:0;
+            font:500 12px Inter,system-ui,sans-serif;
+            text-align:left;
             font-variant-numeric:tabular-nums
           }
           .shadow-studio.ss-mobile-workspace-mode button.ss-mobile-slider-value{
             cursor:text
           }
           .shadow-studio.ss-mobile-workspace-mode button.ss-mobile-slider-value:hover{
-            border-color:#465564;
-            background:#202933
+            background:transparent
           }
           .shadow-studio.ss-mobile-workspace-mode input.ss-mobile-slider-value{
-            border-color:#4b9fff;
-            background:#11171d;
-            outline:none
+            outline:none;
+            background:#ffffff22;
+            border-radius:4px;
+            padding:0 4px
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-slider-row input[type=range]{
             width:100%;
             min-width:0;
+            margin:0;
             accent-color:var(--ss-mobile-blue);
             touch-action:manipulation
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-step{
-            width:28px;
-            height:28px;
+            width:30px;
+            height:30px;
             display:grid;
             place-items:center;
-            border:1px solid #3b4854;
+            border:0;
             border-radius:50%;
-            background:#10161c;
+            background:#050505;
             color:#fff;
             padding:0;
-            font:800 17px/1 Inter,system-ui,sans-serif;
+            font:800 20px/1 Inter,system-ui,sans-serif;
             cursor:pointer
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-step:disabled{opacity:.3}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-presets{
-            min-width:0;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            gap:5px;
-            border:1px solid #394754;
-            border-radius:9px;
-            background:#1d252d;
-            color:#dbe5ee;
-            padding:4px;
-            font:inherit;
-            cursor:pointer
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-presets i{font-size:16px}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-presets span{font-size:8px;font-weight:700}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock{
             position:fixed;
-            left:8px;
-            right:8px;
-            bottom:max(4px,env(safe-area-inset-bottom));
+            left:0;
+            right:0;
+            bottom:0;
             z-index:70;
-            min-height:66px;
+            min-height:58px;
             display:grid;
-            grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.18fr);
+            grid-template-columns:repeat(7,minmax(0,1fr));
             overflow:hidden;
             box-sizing:border-box;
-            border:1px solid #303b46;
-            border-radius:14px;
-            background:#11171df6;
-            box-shadow:0 -7px 25px #000a,inset 0 0 0 1px #ffffff05;
-            backdrop-filter:blur(18px)
+            border-top:1px solid #7c7c7c;
+            background:#6a6a6a
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main,
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label{
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-chip,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-size-chip,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-collapse{
             min-width:0;
-            min-height:64px;
+            min-height:58px;
             display:flex;
-            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            border:0;
+            border-right:1px solid #8a8a8a;
+            background:transparent;
+            color:#f2f2f2;
+            padding:0;
+            font:inherit;
+            cursor:pointer;
+            touch-action:manipulation
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock>*:last-child{
+            border-right:0
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main.active,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-chip.active,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-size-chip.active{
+            background:#565656
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main i{font-size:22px}
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main span{
+            display:none
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-tool-toggle{
+            gap:0
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-toggle-icons{
+            min-height:26px;
+            display:flex;
             align-items:center;
             justify-content:center;
             gap:4px;
-            border:0;
-            border-right:1px solid #29323b;
-            background:transparent;
-            color:#e7edf4;
-            padding:4px 2px;
-            font:inherit;
-            cursor:pointer;
-            touch-action:manipulation
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main.active{
-            background:linear-gradient(180deg,#234d7d,#1a3657);
-            color:#68b3ff;
-            box-shadow:inset 0 0 0 1px #499ef5
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main i{font-size:20px}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-tool-toggle{
-            gap:2px
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-toggle-icons{
-            min-height:24px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:3px;
-            color:#eef4fa
+            color:#f3f3f3
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-toggle-icons .ss-mobile-toggle-tool{
-            font-size:14px
+            font-size:18px
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-toggle-icons .ss-mobile-toggle-arrow{
-            color:#91a2b3;
-            font-size:9px
+            color:#d8d8d8;
+            font-size:10px
           }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-tool-toggle span:last-child{
-            font-size:7px
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main:disabled,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-size-chip:disabled,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-chip:disabled,
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-collapse:disabled{opacity:.3}
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-size-chip{
+            padding:0 2px
           }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main span,
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label span{
-            max-width:100%;
-            overflow:hidden;
-            font-size:8px;
-            font-weight:700;
-            text-overflow:ellipsis;
-            white-space:nowrap
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main:disabled{opacity:.3}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label{
-            position:relative
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label.active{
-            background:#2b333b;
-            color:#f1f5f9
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-dot{
-            width:27px;
-            height:27px;
-            box-sizing:border-box;
-            border:2px solid #f5f7fa;
-            border-radius:6px;
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-down{
-            font-size:24px
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label.is-down{
-            gap:0
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label.is-down span{
-            display:none
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-more-cell{
-            min-width:0;
-            display:grid;
-            grid-template-columns:minmax(0,1fr) 29px
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-more-cell>.ss-mobile-dock-main{
-            border-right:0
-          }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-collapse{
-            width:29px;
-            min-width:29px;
-            height:100%;
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-size-badge{
+            width:38px;
+            height:38px;
             display:grid;
             place-items:center;
-            border:0;
-            border-left:1px solid #29323b;
-            background:#161d24;
-            color:#b8c5d1;
-            padding:0;
-            cursor:pointer;
-            touch-action:manipulation
+            border:2px solid #ebebeb;
+            border-radius:50%;
+            background:#000;
+            color:#fff;
+            font:700 12px Inter,system-ui,sans-serif;
+            font-variant-numeric:tabular-nums
           }
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-collapse i{font-size:12px}
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-chip{
+            position:relative
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-dot{
+            width:30px;
+            height:30px;
+            box-sizing:border-box;
+            border:1px solid #d9d9d9;
+            border-radius:4px;
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-collapse i{
+            font-size:22px
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-layer-stack{
+            position:relative;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-layer-badge{
+            position:absolute;
+            top:-8px;
+            right:-10px;
+            min-width:18px;
+            height:18px;
+            display:grid;
+            place-items:center;
+            padding:0 3px;
+            border:1px solid #d7d7d7;
+            border-radius:4px;
+            background:#efefef;
+            color:#202020;
+            font:700 11px/1 Inter,system-ui,sans-serif
+          }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-sheet-backdrop{
             position:fixed;
             inset:0;
@@ -1134,12 +1096,6 @@ export default function StudioMobileWorkspace({
       ) : null}
 
       <div className={`ss-mobile-controls${controlsOpen ? '' : ' is-hidden'}`}>
-        <div className="ss-mobile-brush-preview" aria-hidden="true">
-          <svg viewBox="0 0 54 36">
-            <path d="M6 27 C15 9 30 28 48 9" fill="none" stroke="currentColor" strokeWidth={Math.max(2, Math.min(11, Number(logicalSize) / 5 || 2))} strokeLinecap={brushStyle === 'marker' ? 'square' : 'round'} opacity={Math.max(.1, Number(opacity) / 100 || 1)} />
-          </svg>
-        </div>
-
         <div className="ss-mobile-sliders">
           <div className="ss-mobile-slider-row">
             {sizeEditing ? (
@@ -1189,11 +1145,6 @@ export default function StudioMobileWorkspace({
             <button type="button" className="ss-mobile-step" onClick={() => adjustOpacity(1)} disabled={busy || Number(opacity) >= 100} aria-label={`${text.opacity} +`}>+</button>
           </div>
         </div>
-
-        <button type="button" className="ss-mobile-presets" onClick={() => openPanel('presets')} disabled={busy}>
-          <i className="fa-solid fa-sliders" aria-hidden="true" />
-          <span>{text.presets}</span>
-        </button>
       </div>
 
       <nav className="ss-mobile-dock" aria-label={text.tools}>
@@ -1210,7 +1161,6 @@ export default function StudioMobileWorkspace({
             <i className="fa-solid fa-arrow-right-arrow-left ss-mobile-toggle-arrow" />
             <i className="fa-solid fa-eraser ss-mobile-toggle-tool" />
           </span>
-          <span>{paintTool === 'eraser' ? text.brush : text.eraser}</span>
         </button>
 
         <button
@@ -1219,6 +1169,7 @@ export default function StudioMobileWorkspace({
           onClick={() => chooseTool(paintTool)}
           disabled={busy}
           aria-label={paintTool === 'eraser' ? text.eraser : text.brush}
+          title={paintTool === 'eraser' ? text.eraser : text.brush}
         >
           <i className={`fa-solid ${paintTool === 'eraser' ? 'fa-eraser' : 'fa-paintbrush'}`} aria-hidden="true" />
           <span>{paintTool === 'eraser' ? text.eraser : text.brush}</span>
@@ -1226,7 +1177,24 @@ export default function StudioMobileWorkspace({
 
         <button
           type="button"
-          className={`ss-mobile-color-label ${colorOpen ? 'active is-down' : ''}`}
+          className={`ss-mobile-size-chip ${controlsOpen ? 'active' : ''}`}
+          onClick={() => {
+            if (!controlsOpen) {
+              setControlsOpen(true)
+              return
+            }
+            beginSizeEdit()
+          }}
+          disabled={busy}
+          aria-label={`${text.size} ${formatSize(logicalSize)}`}
+          title={`${text.size} ${formatSize(logicalSize)}`}
+        >
+          <span className="ss-mobile-size-badge">{formatSize(logicalSize)}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`ss-mobile-color-chip ${colorOpen ? 'active' : ''}`}
           aria-label={colorOpen ? text.close : text.color}
           aria-expanded={colorOpen}
           disabled={busy}
@@ -1234,31 +1202,47 @@ export default function StudioMobileWorkspace({
             setPanel('')
             setColorOpen((current) => !current)
           }}
+          title={text.color}
         >
-          {colorOpen ? (
-            <i className="fa-solid fa-chevron-down ss-mobile-color-down" aria-hidden="true" />
-          ) : (
-            <>
-              <span className="ss-mobile-color-dot" style={{ backgroundColor: color || '#111111' }} aria-hidden="true" />
-              <span>{text.color}</span>
-            </>
-          )}
+          <span className="ss-mobile-color-dot" style={{ backgroundColor: color || '#111111' }} aria-hidden="true" />
         </button>
 
-        <button type="button" className={`ss-mobile-dock-main ${panel === 'layers' ? 'active' : ''}`} onClick={() => openPanel('layers')} disabled={busy}>
-          <i className="fa-solid fa-layer-group" aria-hidden="true" />
-          <span>{text.layers}{layers.length ? ` ${layers.length}` : ''}</span>
+        <button
+          type="button"
+          className="ss-mobile-collapse"
+          onClick={() => setControlsOpen((current) => !current)}
+          aria-label={controlsOpen ? text.hideControls : text.showControls}
+          title={controlsOpen ? text.hideControls : text.showControls}
+        >
+          <i className={`fa-solid ${controlsOpen ? 'fa-chevron-down' : 'fa-chevron-up'}`} aria-hidden="true" />
         </button>
 
-        <div className="ss-mobile-more-cell">
-          <button type="button" className={`ss-mobile-dock-main ${panel === 'more' ? 'active' : ''}`} onClick={() => openPanel('more')} disabled={busy}>
-            <i className="fa-solid fa-ellipsis" aria-hidden="true" />
-            <span>{text.more}</span>
-          </button>
-          <button type="button" className="ss-mobile-collapse" onClick={() => setControlsOpen((current) => !current)} aria-label={controlsOpen ? text.hideControls : text.showControls} title={controlsOpen ? text.hideControls : text.showControls}>
-            <i className={`fa-solid ${controlsOpen ? 'fa-chevron-down' : 'fa-chevron-up'}`} aria-hidden="true" />
-          </button>
-        </div>
+        <button
+          type="button"
+          className={`ss-mobile-dock-main ${panel === 'layers' ? 'active' : ''}`}
+          onClick={() => openPanel('layers')}
+          disabled={busy}
+          aria-label={text.layers}
+          title={text.layers}
+        >
+          <span className="ss-mobile-layer-stack" aria-hidden="true">
+            <i className="fa-solid fa-layer-group" />
+            <span className="ss-mobile-layer-badge">{Math.max(1, layers.length || 1)}</span>
+          </span>
+          <span>{text.layers}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`ss-mobile-dock-main ${panel === 'more' ? 'active' : ''}`}
+          onClick={() => openPanel('more')}
+          disabled={busy}
+          aria-label={text.more}
+          title={text.more}
+        >
+          <i className="fa-solid fa-ellipsis" aria-hidden="true" />
+          <span>{text.more}</span>
+        </button>
       </nav>
 
       <StudioMobileColorPopup
