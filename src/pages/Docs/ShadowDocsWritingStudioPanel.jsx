@@ -24,25 +24,6 @@ import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 import ShadowDocsShareSheet from './ShadowDocsShareSheet'
 import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
 
-const [findReplaceOpen, setFindReplaceOpen] = useState(false)
-
-setFindReplaceOpen(false)
-
-setFindReplaceOpen(true)
-
-<ShadowDocsFindReplaceModal
-  open={findReplaceOpen}
-  editorRef={editorRef}
-  onClose={() => setFindReplaceOpen(false)}
-  onChange={html => {
-    if (!chapter) return
-    onChangeHTML?.(chapter.id, html)
-    setLocalSaveDirty(true)
-    setLocalSaveSeconds(10)
-  }}
-/>
-
-
 const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
 const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
 const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
@@ -137,6 +118,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [localSaveSeconds, setLocalSaveSeconds] = useState(10)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [findReplaceOpen, setFindReplaceOpen] = useState(false)
   const onEditorBlurRef = useRef(onEditorBlur)
   const chapter = book?.chapters?.find(item => item.id === chapterId) || book?.chapters?.[0]
   const chapterIndex = book?.chapters?.findIndex(item => item.id === chapter?.id) ?? -1
@@ -159,6 +141,7 @@ export default function ShadowDocsWritingStudioPanel({
     setLocalSaveSeconds(10)
     setMobileMenuOpen(false)
     setShareOpen(false)
+    setFindReplaceOpen(false)
   }, [book?.id, chapter?.id])
 
   useEffect(() => {
@@ -494,8 +477,7 @@ export default function ShadowDocsWritingStudioPanel({
     }
 
     if (command === 'find' || command === 'replace' || command === 'findReplace') {
-      onOpenFindReplace?.()
-      setRibbonMessage('Writing tools opened below.')
+      setFindReplaceOpen(true)
       return
     }
 
@@ -870,7 +852,7 @@ export default function ShadowDocsWritingStudioPanel({
         parsed.body.querySelectorAll('p,div,h1,h2,h3,li,blockquote').forEach(node => node.append('\n\n'))
         return (parsed.body.textContent || '').replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
       }
-      const plainText = `${book?.title || 'Untitled Book'}\n${book?.author || ''}\n\n${(book?.chapters || []).map((item, index) => `${item.title || `Chapter ${index + 1}`}\n\n${chapterText(item.html)}`).join('\n\n${'—'.repeat(24)}\n\n')}\n`
+      const plainText = `${book?.title || 'Untitled Book'}\n${book?.author || ''}\n\n${(book?.chapters || []).map((item, index) => `${item.title || `Chapter ${index + 1}`}\n\n${chapterText(item.html)}`).join(`\n\n${'—'.repeat(24)}\n\n`)}\n`
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<shadowDocs title="${escapeXML(book?.title || 'Untitled Book')}" author="${escapeXML(book?.author || '')}">\n${(book?.chapters || []).map((item, index) => `  <chapter index="${index + 1}" title="${escapeXML(item.title || `Chapter ${index + 1}`)}"><![CDATA[${String(item.html || '').replaceAll(']]>', ']]]]><![CDATA[>')}]]></chapter>`).join('\n')}\n</shadowDocs>\n`
       const doc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeXML(book?.title || 'Untitled Book')}</title></head><body>${(book?.chapters || []).map((item, index) => `<section${index ? ' style="page-break-before:always"' : ''}><h1>${escapeXML(item.title || `Chapter ${index + 1}`)}</h1>${cleanHTML(item.html)}</section>`).join('')}</body></html>`
       const content = format === 'txt' ? plainText : format === 'xml' ? xml : doc
@@ -887,7 +869,8 @@ export default function ShadowDocsWritingStudioPanel({
       return true
     }
     if (action === 'findReplace') {
-      onOpenFindReplace?.()
+      setMobileMenuOpen(false)
+      setFindReplaceOpen(true)
       return
     }
     if (action === 'share') {
@@ -1290,6 +1273,17 @@ export default function ShadowDocsWritingStudioPanel({
       onShareFile={() => void shareAsFile()}
       onSocialShare={() => void shareToSocial()}
       onSettingsChange={() => {}}
+    />
+    <ShadowDocsFindReplaceModal
+      open={findReplaceOpen}
+      editorRef={editorRef}
+      onClose={() => setFindReplaceOpen(false)}
+      onChange={html => {
+        if (!chapter) return
+        onChangeHTML?.(chapter.id, html)
+        setLocalSaveDirty(true)
+        setLocalSaveSeconds(10)
+      }}
     />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
