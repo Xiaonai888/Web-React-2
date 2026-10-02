@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import PremiumHelpSheet from '../../components/Me/PremiumHelpSheet'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import PremiumSubscribeSoon from '../../components/Me/PremiumSubscribeSoon'
+import PremiumPaymentFlow from '../../components/Me/PremiumPaymentFlow'
 
 registerTranslationNamespace('premiumPage', {
   en: {
@@ -26,13 +26,13 @@ registerTranslationNamespace('premiumPage', {
     popular: 'POPULAR',
     annual: 'ANNUAL',
     subscribe: 'Subscribe',
-    extraDiamonds: 'Extra Diamonds for new Premium members (limited time)',
-    autoRenewal: 'Auto-renewal, cancelled anytime',
+    extraDiamonds: 'Extra Diamonds are included with each Premium plan.',
+    autoRenewal: 'Premium stays active until the selected plan ends.',
     premiumDetails: 'Details about Premium',
     giftPackTitle: '1. Premium Gift Pack',
-    giftPackText: 'After subscribing, Premium rewards can be claimed from the Premium Center.',
+    giftPackText: 'After payment is confirmed, the plan Diamonds are added and Premium is activated.',
     subscriptionTitle: '2. Subscription',
-    subscriptionText: 'The selected plan renews automatically unless cancelled before the next billing date.',
+    subscriptionText: 'Premium stays active for the selected 1, 3, or 12 month period.',
     benefitsTitle: '3. Benefits',
     benefitsText: 'Premium privileges remain active until the subscription period ends.',
   },
@@ -56,13 +56,13 @@ registerTranslationNamespace('premiumPage', {
     popular: 'ពេញនិយម',
     annual: 'ប្រចាំឆ្នាំ',
     subscribe: 'ជាវ',
-    extraDiamonds: 'Diamond បន្ថែមសម្រាប់សមាជិក Premium ថ្មី (មានកំណត់)',
-    autoRenewal: 'បន្តស្វ័យប្រវត្តិ និងអាចបោះបង់បានគ្រប់ពេល',
+    extraDiamonds: 'Diamond បន្ថែមមានរួមជាមួយគម្រោង Premium នីមួយៗ។',
+    autoRenewal: 'Premium នឹងសកម្មរហូតដល់គម្រោងដែលបានជ្រើសបញ្ចប់។',
     premiumDetails: 'ព័ត៌មានលម្អិតអំពី Premium',
     giftPackTitle: '1. កញ្ចប់រង្វាន់ Premium',
-    giftPackText: 'បន្ទាប់ពីជាវ អ្នកអាច Claim រង្វាន់ Premium ពី Premium Center។',
+    giftPackText: 'បន្ទាប់ពីការទូទាត់ត្រូវបានបញ្ជាក់ Diamonds នឹងត្រូវបញ្ចូល ហើយ Premium នឹងត្រូវ Activate។',
     subscriptionTitle: '2. ការជាវ',
-    subscriptionText: 'គម្រោងដែលបានជ្រើសនឹងបន្តស្វ័យប្រវត្តិ លុះត្រាតែបោះបង់មុនថ្ងៃគិតថ្លៃបន្ទាប់។',
+    subscriptionText: 'Premium នឹងសកម្មតាមរយៈពេល 1 ខែ 3 ខែ ឬ 12 ខែដែលអ្នកបានជ្រើស។',
     benefitsTitle: '3. អត្ថប្រយោជន៍',
     benefitsText: 'អត្ថប្រយោជន៍ Premium នៅតែសកម្មរហូតដល់រយៈពេលជាវបញ្ចប់។',
   },
@@ -86,13 +86,13 @@ registerTranslationNamespace('premiumPage', {
     popular: '热门',
     annual: '年度',
     subscribe: '订阅',
-    extraDiamonds: '新 Premium 会员额外获得 Diamonds（限时）',
-    autoRenewal: '自动续订，可随时取消',
+    extraDiamonds: '每个 Premium 方案都包含额外 Diamonds。',
+    autoRenewal: 'Premium 在所选方案结束前保持有效。',
     premiumDetails: 'Premium 详情',
     giftPackTitle: '1. Premium 礼包',
-    giftPackText: '订阅后，可在 Premium Center 领取 Premium 奖励。',
+    giftPackText: '付款确认后，将添加方案 Diamonds 并激活 Premium。',
     subscriptionTitle: '2. 订阅',
-    subscriptionText: '所选方案会自动续订，除非您在下一个计费日前取消。',
+    subscriptionText: 'Premium 将按所选的 1、3 或 12 个月期限保持有效。',
     benefitsTitle: '3. 权益',
     benefitsText: 'Premium 权益会持续有效至订阅期结束。',
   },
@@ -116,13 +116,13 @@ registerTranslationNamespace('premiumPage', {
     popular: '人気',
     annual: '年間',
     subscribe: '登録',
-    extraDiamonds: '新規 Premium 会員向け追加 Diamonds（期間限定）',
-    autoRenewal: '自動更新、いつでもキャンセル可能',
+    extraDiamonds: '各 Premium プランには追加 Diamonds が含まれます。',
+    autoRenewal: 'Premium は選択したプランの終了まで有効です。',
     premiumDetails: 'Premium の詳細',
     giftPackTitle: '1. Premium ギフトパック',
-    giftPackText: '登録後、Premium Center から Premium 報酬を受け取れます。',
+    giftPackText: '支払い確認後、プランの Diamonds が追加され Premium が有効になります。',
     subscriptionTitle: '2. 購読',
-    subscriptionText: '次回請求日前にキャンセルしない限り、選択したプランは自動更新されます。',
+    subscriptionText: 'Premium は選択した 1、3、12 か月の期間中有効です。',
     benefitsTitle: '3. 特典',
     benefitsText: 'Premium 特典は購読期間が終了するまで有効です。',
   },
@@ -146,13 +146,13 @@ registerTranslationNamespace('premiumPage', {
     popular: '인기',
     annual: '연간',
     subscribe: '구독',
-    extraDiamonds: '신규 Premium 회원 추가 Diamonds (기간 한정)',
-    autoRenewal: '자동 갱신, 언제든 취소 가능',
+    extraDiamonds: '각 Premium 플랜에는 추가 Diamonds가 포함됩니다.',
+    autoRenewal: 'Premium은 선택한 플랜이 끝날 때까지 활성 상태로 유지됩니다.',
     premiumDetails: 'Premium 상세 정보',
     giftPackTitle: '1. Premium 기프트 팩',
-    giftPackText: '구독 후 Premium Center에서 Premium 보상을 받을 수 있습니다.',
+    giftPackText: '결제가 확인되면 플랜 Diamonds가 추가되고 Premium이 활성화됩니다.',
     subscriptionTitle: '2. 구독',
-    subscriptionText: '다음 결제일 전에 취소하지 않으면 선택한 플랜이 자동으로 갱신됩니다.',
+    subscriptionText: 'Premium은 선택한 1개월, 3개월 또는 12개월 기간 동안 유지됩니다.',
     benefitsTitle: '3. 혜택',
     benefitsText: 'Premium 혜택은 구독 기간이 끝날 때까지 유지됩니다.',
   },
@@ -432,7 +432,10 @@ export default function PremiumPage() {
             })}
           </div>
 
-          <PremiumSubscribeSoon label={t('premiumPage.subscribe')} />
+          <PremiumPaymentFlow
+            plan={selectedPlanDetails}
+            label={t('premiumPage.subscribe')}
+          />
 
           <p className="mt-4 text-center text-[12px] leading-5 text-[#a0a0a0] dark:text-[var(--shadow-text-secondary)]">
             {t('premiumPage.extraDiamonds')}
