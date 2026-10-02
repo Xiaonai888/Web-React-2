@@ -7,8 +7,9 @@ import {
   Printer,
   X,
 } from 'lucide-react'
-import { buildShadowDocsPrintHTML } from './ShadowDocsPDFExport'
+const [menuOpen, setMenuOpen] = useState(false)
 const [pdfBusy, setPdfBusy] = useState(false)
+const [range, setRange] = useState('all')
 
 const PAPER_SIZES = ['A4', 'A5', 'B5']
 const MARGINS = {
