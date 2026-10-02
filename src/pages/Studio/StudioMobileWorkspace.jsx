@@ -433,9 +433,9 @@ export default function StudioMobileWorkspace({
             display:block;
             width:100%;
             box-sizing:border-box;
-            padding:max(0px,env(safe-area-inset-top)) 0 0;
+            padding:max(6px,env(safe-area-inset-top)) 0 0;
             border:0;
-            background:#151a20
+            background:#11161c
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad{
             width:100%;
@@ -458,27 +458,30 @@ export default function StudioMobileWorkspace({
             letter-spacing:.08em
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick{
-            min-height:50px;
+            min-height:56px;
             display:flex;
             align-items:center;
-            gap:2px;
+            gap:4px;
             overflow:hidden;
             box-sizing:border-box;
-            padding:4px 6px 5px;
-            border:0;
-            border-radius:0;
-            background:#252b31
+            margin:8px 8px 0;
+            padding:6px 10px;
+            border:1px solid #2f3944;
+            border-radius:18px;
+            background:rgba(14,18,24,.92);
+            box-shadow:0 8px 24px #0006;
+            backdrop-filter:blur(12px)
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button{
             width:38px;
             min-width:38px;
-            height:40px;
+            height:42px;
             display:grid;
             place-items:center;
             border:0;
-            border-radius:50%;
+            border-radius:12px;
             background:transparent;
-            color:#e7edf4;
+            color:#f3f7fb;
             padding:0;
             font:inherit;
             cursor:pointer;
@@ -486,8 +489,9 @@ export default function StudioMobileWorkspace({
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button:disabled{opacity:.3}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button.active{
-            background:#46515b;
-            color:#fff
+            background:#1e2a36;
+            color:#fff;
+            box-shadow:inset 0 0 0 1px #3f82d4
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button i{
             font-size:17px;
@@ -495,7 +499,7 @@ export default function StudioMobileWorkspace({
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick-spacer{
             flex:1 1 auto;
-            min-width:10px
+            min-width:18px
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-stabilizer-badge{
             position:absolute;
@@ -607,20 +611,23 @@ export default function StudioMobileWorkspace({
             position:fixed;
             left:8px;
             right:8px;
-            bottom:calc(60px + env(safe-area-inset-bottom));
+            bottom:calc(74px + env(safe-area-inset-bottom));
             z-index:68;
             display:block;
             box-sizing:border-box;
-            min-height:62px;
-            padding:6px 8px 8px;
-            border-top:1px solid #8d8d8d;
-            background:#8f8f8f
+            min-height:74px;
+            padding:10px 12px;
+            border:1px solid #353e49;
+            border-radius:18px;
+            background:rgba(14,18,24,.94);
+            box-shadow:0 10px 28px #0008;
+            backdrop-filter:blur(12px)
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-controls.is-hidden{display:none}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-sliders{
             min-width:0;
             display:grid;
-            gap:6px;
+            gap:10px;
             align-content:center
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-slider-row{
@@ -638,7 +645,7 @@ export default function StudioMobileWorkspace({
             border:0;
             border-radius:0;
             background:transparent;
-            color:#131313;
+            color:#f2f6fa;
             padding:0;
             font:500 12px Inter,system-ui,sans-serif;
             text-align:left;
@@ -652,8 +659,9 @@ export default function StudioMobileWorkspace({
           }
           .shadow-studio.ss-mobile-workspace-mode input.ss-mobile-slider-value{
             outline:none;
-            background:#ffffff22;
-            border-radius:4px;
+            background:#ffffff12;
+            color:#fff;
+            border-radius:6px;
             padding:0 4px
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-slider-row input[type=range]{
@@ -679,31 +687,34 @@ export default function StudioMobileWorkspace({
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-step:disabled{opacity:.3}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock{
             position:fixed;
-            left:0;
-            right:0;
-            bottom:0;
+            left:8px;
+            right:8px;
+            bottom:max(8px,env(safe-area-inset-bottom));
             z-index:70;
-            min-height:58px;
+            min-height:62px;
             display:grid;
             grid-template-columns:repeat(7,minmax(0,1fr));
             overflow:hidden;
             box-sizing:border-box;
-            border-top:1px solid #7c7c7c;
-            background:#6a6a6a
+            border:1px solid #323b45;
+            border-radius:18px;
+            background:rgba(12,16,22,.94);
+            box-shadow:0 10px 28px #0009;
+            backdrop-filter:blur(12px)
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main,
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-chip,
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-size-chip,
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-collapse{
             min-width:0;
-            min-height:58px;
+            min-height:62px;
             display:flex;
             align-items:center;
             justify-content:center;
             border:0;
-            border-right:1px solid #8a8a8a;
+            border-right:1px solid #242c35;
             background:transparent;
-            color:#f2f2f2;
+            color:#f5f7fa;
             padding:0;
             font:inherit;
             cursor:pointer;
@@ -715,7 +726,7 @@ export default function StudioMobileWorkspace({
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main.active,
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-chip.active,
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-size-chip.active{
-            background:#565656
+            background:#171f28
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main i{font-size:22px}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main span{
@@ -751,9 +762,9 @@ export default function StudioMobileWorkspace({
             height:38px;
             display:grid;
             place-items:center;
-            border:2px solid #ebebeb;
+            border:1px solid #525d69;
             border-radius:50%;
-            background:#000;
+            background:#11161c;
             color:#fff;
             font:700 12px Inter,system-ui,sans-serif;
             font-variant-numeric:tabular-nums
@@ -765,8 +776,8 @@ export default function StudioMobileWorkspace({
             width:30px;
             height:30px;
             box-sizing:border-box;
-            border:1px solid #d9d9d9;
-            border-radius:4px;
+            border:1px solid #525d69;
+            border-radius:6px;
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-collapse i{
             font-size:22px
@@ -786,10 +797,10 @@ export default function StudioMobileWorkspace({
             display:grid;
             place-items:center;
             padding:0 3px;
-            border:1px solid #d7d7d7;
+            border:1px solid #d9dee4;
             border-radius:4px;
-            background:#efefef;
-            color:#202020;
+            background:#f3f5f7;
+            color:#1f2933;
             font:700 11px/1 Inter,system-ui,sans-serif
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-sheet-backdrop{
@@ -1030,11 +1041,8 @@ export default function StudioMobileWorkspace({
         }
         @media(max-width:380px){
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad{min-height:61px}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick{gap:0;padding-left:3px;padding-right:3px}
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick{gap:2px;padding-left:6px;padding-right:6px}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick button{width:35px;min-width:35px;height:38px}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-dock-main span,
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-color-label span{font-size:7px}
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-controls{grid-template-columns:44px minmax(0,1fr) 48px}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-slider-row{grid-template-columns:31px 25px minmax(45px,1fr) 25px}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-step{width:25px;height:25px}
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-action-grid,
