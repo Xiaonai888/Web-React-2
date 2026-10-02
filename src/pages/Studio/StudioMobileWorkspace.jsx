@@ -213,7 +213,7 @@ const MOBILE_BRUSH_TOOLS = [
   { id: 'fill', label: 'Bucket' },
   { id: 'vector', label: 'Vector', icon: 'fa-location-arrow', disabled: true },
   { id: 'text', label: 'Text' },
-  { id: 'divider', label: 'Frame Divider' },
+  { id: 'frame', label: 'Manga Frame' },
   { id: 'eyedropper', label: 'Eyedropper' },
   { id: 'canvas', label: 'Canvas' },
 ]
@@ -311,6 +311,11 @@ export default function StudioMobileWorkspace({
   const sliderSize = Math.min(sliderMax, Math.max(0.1, logicalSize))
   const manualLogicalMax = Math.max(sliderMax, Math.floor(5000 / canvasScale * 10) / 10)
   const stabilizerValue = Math.max(0, Math.min(10, Math.round(Number(stabilizer) || 0)))
+  const selectedMobileTool = MOBILE_BRUSH_TOOLS.find((item) => item.id === tool)
+  const activeToolId = STUDIO_TOOLS_BY_ID[tool] ? tool : paintTool
+  const activeToolCatalog = STUDIO_TOOLS_BY_ID[activeToolId]
+  const activeToolIcon = selectedMobileTool?.icon || activeToolCatalog?.icon || (paintTool === 'eraser' ? 'fa-eraser' : 'fa-paintbrush')
+  const activeToolLabel = selectedMobileTool?.label || toolLabel(activeToolId)
   const panelTitle = panel === 'layers'
     ? text.layers
     : panel === 'presets'
@@ -1302,19 +1307,19 @@ export default function StudioMobileWorkspace({
 
         <button
           type="button"
-          className={`ss-mobile-dock-main ${brushToolsOpen || tool === paintTool ? 'active' : ''}`}
+          className={`ss-mobile-dock-main ${brushToolsOpen ? 'active' : ''}`}
           onClick={() => {
             setColorOpen(false)
             setPanel('')
             setBrushToolsOpen((current) => !current)
           }}
           disabled={busy}
-          aria-label={text.tools}
+          aria-label={activeToolLabel}
           aria-expanded={brushToolsOpen}
-          title={text.tools}
+          title={activeToolLabel}
         >
-          <i className={`fa-solid ${paintTool === 'eraser' ? 'fa-eraser' : 'fa-paintbrush'}`} aria-hidden="true" />
-          <span>{paintTool === 'eraser' ? text.eraser : text.brush}</span>
+          <i className={`fa-solid ${activeToolIcon}`} aria-hidden="true" />
+          <span>{activeToolLabel}</span>
         </button>
 
         <button
