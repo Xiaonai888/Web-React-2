@@ -211,7 +211,7 @@ const MOBILE_BRUSH_TOOLS = [
   { id: 'blur', label: 'Blur' },
   { id: 'special', label: 'Special Pen' },
   { id: 'fill', label: 'Bucket' },
-  { id: 'vector', label: 'Vector', icon: 'fa-location-arrow', disabled: true },
+  { id: 'vector', label: 'Vector', icon: 'fa-location-arrow', target: 'pencil' },
   { id: 'text', label: 'Text' },
   { id: 'frame', label: 'Manga Frame' },
   { id: 'eyedropper', label: 'Eyedropper' },
@@ -289,6 +289,7 @@ export default function StudioMobileWorkspace({
   const [panel, setPanel] = useState('')
   const [colorOpen, setColorOpen] = useState(false)
   const [brushToolsOpen, setBrushToolsOpen] = useState(false)
+  const [mobileToolAlias, setMobileToolAlias] = useState('')
   const [paintTool, setPaintTool] = useState(tool === 'eraser' ? 'eraser' : 'brush')
   const [sizeEditing, setSizeEditing] = useState(false)
   const [sizeDraft, setSizeDraft] = useState('')
@@ -298,6 +299,7 @@ export default function StudioMobileWorkspace({
 
   useEffect(() => {
     if (tool === 'brush' || tool === 'eraser') setPaintTool(tool)
+    if (tool !== 'pencil') setMobileToolAlias('')
   }, [tool])
 
   useEffect(() => () => {
@@ -311,8 +313,13 @@ export default function StudioMobileWorkspace({
   const sliderSize = Math.min(sliderMax, Math.max(0.1, logicalSize))
   const manualLogicalMax = Math.max(sliderMax, Math.floor(5000 / canvasScale * 10) / 10)
   const stabilizerValue = Math.max(0, Math.min(10, Math.round(Number(stabilizer) || 0)))
-  const selectedMobileTool = MOBILE_BRUSH_TOOLS.find((item) => item.id === tool)
-  const activeToolId = STUDIO_TOOLS_BY_ID[tool] ? tool : paintTool
+  const displayedToolId = mobileToolAlias || tool
+  const selectedMobileTool = MOBILE_BRUSH_TOOLS.find((item) => item.id === displayedToolId)
+  const activeToolId = STUDIO_TOOLS_BY_ID[displayedToolId]
+    ? displayedToolId
+    : STUDIO_TOOLS_BY_ID[tool]
+      ? tool
+      : paintTool
   const activeToolCatalog = STUDIO_TOOLS_BY_ID[activeToolId]
   const activeToolIcon = selectedMobileTool?.icon || activeToolCatalog?.icon || (paintTool === 'eraser' ? 'fa-eraser' : 'fa-paintbrush')
   const activeToolLabel = selectedMobileTool?.label || toolLabel(activeToolId)
@@ -336,8 +343,17 @@ export default function StudioMobileWorkspace({
 
   function chooseTool(next) {
     if (busy) return
-    if (next === 'brush' || next === 'eraser') setPaintTool(next)
-    onToolChange?.(next)
+
+    const item = MOBILE_BRUSH_TOOLS.find((toolItem) => toolItem.id === next)
+    const target = item?.target || next
+
+    setMobileToolAlias(item?.target ? next : '')
+
+    if (target === 'brush' || target === 'eraser') {
+      setPaintTool(target)
+    }
+
+    onToolChange?.(target)
     setColorOpen(false)
     setBrushToolsOpen(false)
     setPanel('')
@@ -1265,15 +1281,16 @@ export default function StudioMobileWorkspace({
           />
           <section className="ss-mobile-brush-tools" aria-label={text.tools}>
             {MOBILE_BRUSH_TOOLS.map((item) => {
-              const catalogTool = STUDIO_TOOLS_BY_ID[item.id]
-              const available = !item.disabled && STUDIO_WORKING_TOOLS.has(item.id) && catalogTool
+              const targetId = item.target || item.id
+              const catalogTool = STUDIO_TOOLS_BY_ID[targetId]
+              const available = !item.disabled && STUDIO_WORKING_TOOLS.has(targetId) && catalogTool
               const icon = item.icon || catalogTool?.icon || 'fa-circle'
 
               return (
                 <button
                   type="button"
                   key={item.id}
-                  className={`ss-mobile-brush-tool ${tool === item.id ? 'active' : ''}`}
+                  className={`ss-mobile-brush-tool ${displayedToolId === item.id ? 'active' : ''}`}
                   disabled={busy || !available}
                   onClick={() => available && chooseTool(item.id)}
                   aria-label={item.label}
