@@ -11,6 +11,25 @@ import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import AuthorPageTransparencyPopup from '../../components/AuthorPageTransparencyPopup'
+
+const [pageTransparencyOpen, setPageTransparencyOpen] = useState(false)
+
+onOpenTransparency={() => {
+  setPageAboutOpen(false)
+  setPageTransparencyOpen(true)
+}}
+
+<AuthorPageTransparencyPopup
+  open={pageTransparencyOpen}
+  author={displayAuthor}
+  onBack={() => {
+    setPageTransparencyOpen(false)
+    setPageAboutOpen(true)
+  }}
+  onClose={() => setPageTransparencyOpen(false)}
+/>
+
 
 registerTranslationNamespace('authorPublicPage', {
   en: {
