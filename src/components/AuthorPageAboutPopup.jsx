@@ -1,738 +1,234 @@
-import { useEffect, useRef, useState } from 'react'
-import { hexToHsv, hsvToHex } from './StudioColorPanel'
+import { useEffect, useMemo } from 'react'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 
-const clamp = (value, min, max) => Math.min(max, Math.max(min, Number(value) || 0))
+registerTranslationNamespace('authorPageAboutPopup', {
+  en: {
+    title: 'About {{name}}',
+    intro: 'Page information helps readers understand this Author Page.',
+    created: 'Page created',
+    updated: 'Profile updated',
+    type: 'Page type',
+    authorPage: 'Author Page',
+    works: 'Published works',
+    transparency: 'Page history & transparency',
+    close: 'Close',
+    unknown: 'Not available',
+  },
+  km: {
+    title: 'អំពី {{name}}',
+    intro: 'ព័ត៌មានទំព័រជួយឱ្យអ្នកអានស្គាល់ទំព័រអ្នកនិពន្ធនេះកាន់តែច្បាស់។',
+    created: 'ថ្ងៃបង្កើតទំព័រ',
+    updated: 'Profile បាន Update',
+    type: 'ប្រភេទទំព័រ',
+    authorPage: 'ទំព័រអ្នកនិពន្ធ',
+    works: 'ស្នាដៃបានបោះពុម្ព',
+    transparency: 'ប្រវត្តិ និងព័ត៌មានតម្លាភាពទំព័រ',
+    close: 'បិទ',
+    unknown: 'មិនមានព័ត៌មាន',
+  },
+  zh: {
+    title: '关于 {{name}}',
+    intro: '主页信息可帮助读者更好地了解此作者主页。',
+    created: '主页创建时间',
+    updated: '资料更新时间',
+    type: '主页类型',
+    authorPage: '作者主页',
+    works: '已发布作品',
+    transparency: '主页历史与透明度',
+    close: '关闭',
+    unknown: '暂无信息',
+  },
+  ja: {
+    title: '{{name}} について',
+    intro: 'ページ情報は、この作者ページを読者がよりよく理解するためのものです。',
+    created: 'ページ作成日',
+    updated: 'プロフィール更新',
+    type: 'ページの種類',
+    authorPage: '作者ページ',
+    works: '公開作品',
+    transparency: 'ページ履歴と透明性',
+    close: '閉じる',
+    unknown: '情報なし',
+  },
+  ko: {
+    title: '{{name}} 정보',
+    intro: '페이지 정보는 독자가 이 작가 페이지를 더 잘 이해하도록 도와줍니다.',
+    created: '페이지 생성일',
+    updated: '프로필 업데이트',
+    type: '페이지 유형',
+    authorPage: '작가 페이지',
+    works: '게시된 작품',
+    transparency: '페이지 기록 및 투명성',
+    close: '닫기',
+    unknown: '정보 없음',
+  },
+})
 
-function normalizeHex(value) {
-  const text = String(value || '').trim().toUpperCase()
-  const source = text.startsWith('#') ? text : `#${text}`
-  if (/^#[\dA-F]{6}$/.test(source)) return source
-  if (/^#[\dA-F]{3}$/.test(source)) {
-    return `#${source[1]}${source[1]}${source[2]}${source[2]}${source[3]}${source[3]}`
-  }
-  return null
+const DATE_LOCALES = {
+  en: 'en-US',
+  km: 'km-KH',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
 }
 
-
-function HSBRow({ label, value, min, max, color, disabled, onChange }) {
-  const safeValue = clamp(Math.round(value), min, max)
-
-  return (
-    <div className="ss-mobile-hsb-row">
-      <span className="ss-mobile-hsb-channel">{label}</span>
-
-      <input
-        className="ss-mobile-hsb-value"
-        type="number"
-        min={min}
-        max={max}
-        step="1"
-        inputMode="numeric"
-        value={safeValue}
-        disabled={disabled}
-        aria-label={`${label} value`}
-        onChange={(event) => {
-          if (event.target.value === '') return
-          onChange(clamp(event.target.value, min, max))
-        }}
-      />
-
-      <button
-        type="button"
-        className="ss-mobile-hsb-step"
-        disabled={disabled || safeValue <= min}
-        aria-label={`${label} decrease`}
-        onClick={() => onChange(safeValue - 1)}
-      >
-        −
-      </button>
-
-      <input
-        className="ss-mobile-hsb-slider"
-        type="range"
-        min={min}
-        max={max}
-        step="1"
-        value={safeValue}
-        disabled={disabled}
-        aria-label={`${label} slider`}
-        style={{ '--ss-mobile-hsb-accent': color }}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
-
-      <button
-        type="button"
-        className="ss-mobile-hsb-step"
-        disabled={disabled || safeValue >= max}
-        aria-label={`${label} increase`}
-        onClick={() => onChange(safeValue + 1)}
-      >
-        +
-      </button>
-    </div>
-  )
+function formatDate(value, language, fallback) {
+  if (!value) return fallback
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) return fallback
+  return new Intl.DateTimeFormat(DATE_LOCALES[language] || 'en-US', {
+    dateStyle: 'long',
+  }).format(date)
 }
 
-function AlphaRow({ value, disabled, onChange }) {
-  const safeValue = clamp(Math.round(value), 0, 100)
+function formatRelative(value, language, fallback) {
+  if (!value) return fallback
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) return fallback
 
+  const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000)
+  const absSeconds = Math.abs(diffSeconds)
+  const formatter = new Intl.RelativeTimeFormat(DATE_LOCALES[language] || 'en-US', {
+    numeric: 'auto',
+  })
+
+  if (absSeconds < 60) return formatter.format(diffSeconds, 'second')
+  if (absSeconds < 3600) return formatter.format(Math.round(diffSeconds / 60), 'minute')
+  if (absSeconds < 86400) return formatter.format(Math.round(diffSeconds / 3600), 'hour')
+  if (absSeconds < 2592000) return formatter.format(Math.round(diffSeconds / 86400), 'day')
+
+  return formatDate(value, language, fallback)
+}
+
+function InfoRow({ icon, label, value }) {
   return (
-    <div className="ss-mobile-hsb-row ss-mobile-alpha-row">
-      <span className="ss-mobile-hsb-channel">A</span>
-
-      <div className="ss-mobile-alpha-value">{safeValue}%</div>
-
-      <button
-        type="button"
-        className="ss-mobile-hsb-step"
-        disabled={disabled || safeValue <= 0}
-        aria-label="Alpha decrease"
-        onClick={() => onChange(safeValue - 1)}
-      >
-        −
-      </button>
-
-      <div className="ss-mobile-alpha-slider-wrap">
-        <span className="ss-mobile-alpha-checker" aria-hidden="true" />
-        <input
-          className="ss-mobile-hsb-slider ss-mobile-alpha-slider"
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-          value={safeValue}
-          disabled={disabled}
-          aria-label="Alpha slider"
-          onChange={(event) => onChange(Number(event.target.value))}
-        />
+    <div className="flex items-center gap-3 px-5 py-3.5">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
+        <i className={`${icon} text-[15px]`} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[12px] font-medium text-[var(--shadow-text-secondary)]">{label}</div>
+        <div className="mt-0.5 break-words text-[14px] font-semibold text-[var(--shadow-text-primary)]">{value}</div>
       </div>
-
-      <button
-        type="button"
-        className="ss-mobile-hsb-step"
-        disabled={disabled || safeValue >= 100}
-        aria-label="Alpha increase"
-        onClick={() => onChange(safeValue + 1)}
-      >
-        +
-      </button>
     </div>
   )
 }
 
-export default function StudioMobileColorHSB({
-  open = true,
-  color = '#111111',
-  opacity = 100,
-  disabled = false,
-  onChange,
-  onOpacityChange,
+export default function AuthorPageAboutPopup({
+  open,
+  author,
   onClose,
-  onModeChange,
+  onOpenTransparency,
 }) {
-  const normalized = normalizeHex(color) || '#111111'
-  const [hexDraft, setHexDraft] = useState(normalized)
-  const [selectedHue, setSelectedHue] = useState(() => hexToHsv(normalized).h)
-  const squareDragRef = useRef(null)
-  const wheelDragRef = useRef(null)
-
-  const hsv = hexToHsv(normalized)
-  const activeHue = hsv.s > 0 && hsv.v > 0 ? hsv.h : selectedHue
-  const hueValue = Math.round(activeHue)
-  const saturationValue = Math.round(hsv.s * 100)
-  const brightnessValue = Math.round(hsv.v * 100)
+  const { t } = useDisplayTranslation()
+  const language = getDisplayLanguageId()
 
   useEffect(() => {
-    setHexDraft(normalized)
-    const next = hexToHsv(normalized)
-    if (next.s > 0 && next.v > 0) setSelectedHue(next.h)
-  }, [normalized])
+    if (!open) return undefined
 
-  function applyColor(nextColor) {
-    const next = normalizeHex(nextColor)
-    if (!next || disabled) return
-    onChange?.(next)
-  }
+    const scrollY = window.scrollY
+    const previousHtmlOverflow = document.documentElement.style.overflow
+    const previousOverflow = document.body.style.overflow
+    const previousPosition = document.body.style.position
+    const previousTop = document.body.style.top
+    const previousWidth = document.body.style.width
 
-  function applyHex() {
-    const next = normalizeHex(hexDraft)
-    if (next) {
-      applyColor(next)
-      return
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow
+      document.body.style.overflow = previousOverflow
+      document.body.style.position = previousPosition
+      document.body.style.top = previousTop
+      document.body.style.width = previousWidth
+      window.scrollTo(0, scrollY)
     }
-    setHexDraft(normalized)
-  }
+  }, [open])
 
-  function updateHue(nextValue) {
-    const nextHue = clamp(nextValue, 0, 359)
-    setSelectedHue(nextHue)
-    applyColor(hsvToHex(nextHue, hsv.s, hsv.v))
-  }
-
-  function updateSaturation(nextValue) {
-    const nextSaturation = clamp(nextValue, 0, 100) / 100
-    applyColor(hsvToHex(activeHue, nextSaturation, hsv.v))
-  }
-
-  function updateBrightness(nextValue) {
-    const nextBrightness = clamp(nextValue, 0, 100) / 100
-    applyColor(hsvToHex(activeHue, hsv.s, nextBrightness))
-  }
-
-  function updateWheel(event) {
-    const rect = event.currentTarget.getBoundingClientRect()
-    if (!rect.width || !rect.height) return
-
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
-    const dx = event.clientX - centerX
-    const dy = event.clientY - centerY
-    const angle = (Math.atan2(dy, dx) * 180 / Math.PI + 450) % 360
-
-    setSelectedHue(angle)
-    applyColor(hsvToHex(angle, hsv.s, hsv.v))
-  }
-
-  function startWheel(event) {
-    if (disabled || (event.pointerType === 'mouse' && event.button !== 0)) return
-    event.preventDefault()
-    wheelDragRef.current = event.pointerId
-    event.currentTarget.setPointerCapture?.(event.pointerId)
-    updateWheel(event)
-  }
-
-  function moveWheel(event) {
-    if (wheelDragRef.current !== event.pointerId) return
-    event.preventDefault()
-    updateWheel(event)
-  }
-
-  function endWheel(event) {
-    if (wheelDragRef.current !== event.pointerId) return
-    wheelDragRef.current = null
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-  }
-
-  function updateSquare(event) {
-    const rect = event.currentTarget.getBoundingClientRect()
-    if (!rect.width || !rect.height) return
-
-    const saturation = clamp((event.clientX - rect.left) / rect.width, 0, 1)
-    const brightness = 1 - clamp((event.clientY - rect.top) / rect.height, 0, 1)
-
-    applyColor(hsvToHex(activeHue, saturation, brightness))
-  }
-
-  function startSquare(event) {
-    if (disabled || (event.pointerType === 'mouse' && event.button !== 0)) return
-    event.preventDefault()
-    squareDragRef.current = event.pointerId
-    event.currentTarget.setPointerCapture?.(event.pointerId)
-    updateSquare(event)
-  }
-
-  function moveSquare(event) {
-    if (squareDragRef.current !== event.pointerId) return
-    event.preventDefault()
-    updateSquare(event)
-  }
-
-  function endSquare(event) {
-    if (squareDragRef.current !== event.pointerId) return
-    squareDragRef.current = null
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-  }
+  const pageName = author?.page_name || t('authorPageAboutPopup.authorPage')
+  const createdText = useMemo(
+    () => formatDate(author?.created_at, language, t('authorPageAboutPopup.unknown')),
+    [author?.created_at, language, t]
+  )
+  const updatedText = useMemo(
+    () => formatRelative(author?.updated_at, language, t('authorPageAboutPopup.unknown')),
+    [author?.updated_at, language, t]
+  )
 
   if (!open) return null
 
   return (
-    <section className="ss-mobile-hsb-popup" aria-label="HSB color picker">
-      <style>{`
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-popup{
-          position:fixed;
-          left:8px;
-          right:8px;
-          bottom:calc(66px + env(safe-area-inset-bottom));
-          z-index:88;
-          max-height:calc(100dvh - 82px);
-          overflow-y:auto;
-          box-sizing:border-box;
-          border:1px solid rgba(151,164,178,.72);
-          border-radius:18px;
-          background:rgba(31,37,44,.84);
-          color:#f4f7fb;
-          padding:12px 12px 8px;
-          font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-          overscroll-behavior:contain
-        }
+    <div className="fixed inset-0 z-[265] flex items-center justify-center bg-black/45 px-3 py-6">
+      <button
+        type="button"
+        aria-label={t('authorPageAboutPopup.close')}
+        onClick={onClose}
+        className="absolute inset-0"
+      />
 
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-popup *{
-          box-sizing:border-box
-        }
+      <section className="relative w-full max-w-[480px] overflow-hidden rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-2xl">
+        <header className="relative flex min-h-[54px] items-center justify-center border-b border-[var(--shadow-border)] px-14 py-3">
+          <h2 className="line-clamp-1 text-center text-[16px] font-bold text-[var(--shadow-text-primary)]">
+            {t('authorPageAboutPopup.title', { name: pageName })}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('authorPageAboutPopup.close')}
+            className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
+          >
+            <i className="fa-solid fa-xmark text-[16px]" />
+          </button>
+        </header>
 
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-header{
-          min-height:42px;
-          display:grid;
-          grid-template-columns:minmax(0,1fr) auto auto;
-          gap:8px;
-          align-items:center;
-          padding:0 2px 9px;
-          border-bottom:1px solid rgba(120,132,144,.32)
-        }
+        <div className="px-5 pb-2 pt-4">
+          <p className="text-[13px] leading-5 text-[var(--shadow-text-secondary)]">
+            {t('authorPageAboutPopup.intro')}
+          </p>
+        </div>
 
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-header strong{
-          font-size:16px;
-          font-weight:850
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-current{
-          display:flex;
-          align-items:center;
-          min-width:0;
-          overflow:hidden;
-          border:1px solid rgba(121,134,147,.55);
-          border-radius:9px;
-          background:rgba(15,19,24,.44)
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-swatch{
-          width:52px;
-          height:30px;
-          flex:0 0 auto;
-          border:0;
-          border-radius:7px 0 0 7px;
-          background:var(--ss-mobile-hsb-current)
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-hex{
-          width:82px;
-          min-width:0;
-          height:30px;
-          border:0;
-          outline:none;
-          background:transparent;
-          color:#f4f7fb;
-          padding:0 8px;
-          font:750 10px Inter,system-ui,sans-serif;
-          text-transform:uppercase
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-close{
-          width:34px;
-          height:34px;
-          display:grid;
-          place-items:center;
-          border:0;
-          border-radius:8px;
-          background:transparent;
-          color:#f5f7fa;
-          font-size:25px;
-          line-height:1;
-          cursor:pointer
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-picker{
-          width:min(78vw,310px);
-          aspect-ratio:1;
-          position:relative;
-          margin:12px auto 10px;
-          touch-action:none
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-wheel{
-          position:absolute;
-          inset:0;
-          border-radius:50%;
-          background:conic-gradient(
-            #ff0000,
-            #ffff00,
-            #00ff00,
-            #00ffff,
-            #0000ff,
-            #ff00ff,
-            #ff0000
-          );
-          touch-action:none;
-          cursor:crosshair
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-wheel::after{
-          content:'';
-          position:absolute;
-          inset:16%;
-          border-radius:50%;
-          background:rgba(20,24,29,.96);
-          pointer-events:none
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-wheel-marker{
-          position:absolute;
-          left:50%;
-          top:50%;
-          width:24px;
-          height:24px;
-          border:3px solid #fff;
-          border-radius:50%;
-          transform:translate(-50%,-50%);
-          pointer-events:none;
-          z-index:3
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-square{
-          position:absolute;
-          z-index:2;
-          left:50%;
-          top:50%;
-          width:66%;
-          aspect-ratio:1;
-          transform:translate(-50%,-50%);
-          border:0;
-          border-radius:8px;
-          background:
-            linear-gradient(to top,#000,transparent),
-            linear-gradient(to right,#fff,transparent),
-            hsl(var(--ss-mobile-hsb-hue) 100% 50%);
-          touch-action:none;
-          cursor:crosshair
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-square-marker{
-          position:absolute;
-          width:24px;
-          height:24px;
-          border:3px solid #fff;
-          border-radius:50%;
-          transform:translate(-50%,-50%);
-          pointer-events:none
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-controls{
-          display:grid;
-          gap:4px;
-          padding:10px 0 8px;
-          border-top:1px solid rgba(120,132,144,.32)
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-row{
-          min-height:38px;
-          display:grid;
-          grid-template-columns:20px 50px 34px minmax(0,1fr) 34px;
-          gap:6px;
-          align-items:center
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-channel{
-          color:#f1f5f9;
-          font-size:12px;
-          font-weight:850;
-          text-align:center
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-value,
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-alpha-value{
-          width:50px;
-          height:30px;
-          border:1px solid rgba(105,119,132,.55);
-          border-radius:7px;
-          outline:none;
-          background:rgba(16,20,25,.48);
-          color:#f4f7fb;
-          padding:0 4px;
-          font:750 11px Inter,system-ui,sans-serif;
-          text-align:center
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-alpha-value{
-          display:grid;
-          place-items:center
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-step{
-          width:32px;
-          height:32px;
-          display:grid;
-          place-items:center;
-          border:0;
-          border-radius:50%;
-          background:#07090c;
-          color:#fff;
-          padding:0;
-          font:850 21px/1 Inter,system-ui,sans-serif;
-          cursor:pointer
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-step:disabled{
-          opacity:.35
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-slider{
-          width:100%;
-          min-width:0;
-          margin:0;
-          accent-color:var(--ss-mobile-hsb-accent);
-          cursor:pointer
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-alpha-slider-wrap{
-          position:relative;
-          min-width:0;
-          height:30px;
-          display:flex;
-          align-items:center
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-alpha-checker{
-          position:absolute;
-          left:2px;
-          right:2px;
-          height:10px;
-          border-radius:5px;
-          background-color:#fff;
-          background-image:
-            linear-gradient(45deg,#c9c9c9 25%,transparent 25%),
-            linear-gradient(-45deg,#c9c9c9 25%,transparent 25%),
-            linear-gradient(45deg,transparent 75%,#c9c9c9 75%),
-            linear-gradient(-45deg,transparent 75%,#c9c9c9 75%);
-          background-size:10px 10px;
-          background-position:0 0,0 5px,5px -5px,-5px 0;
-          pointer-events:none
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-alpha-slider{
-          position:relative;
-          z-index:1;
-          background:transparent
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-alpha-row{
-          margin-top:5px;
-          padding-top:8px;
-          border-top:1px solid rgba(120,132,144,.32)
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-tabs{
-          min-height:54px;
-          display:grid;
-          grid-template-columns:repeat(3,minmax(0,1fr));
-          overflow:hidden;
-          margin-top:2px;
-          border:1px solid rgba(98,111,124,.52);
-          border-radius:12px;
-          background:rgba(12,16,20,.66)
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-tabs button{
-          min-width:0;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          gap:3px;
-          border:0;
-          border-right:1px solid rgba(85,98,111,.38);
-          background:transparent;
-          color:#dce4eb;
-          padding:5px 2px;
-          font:750 9px Inter,system-ui,sans-serif;
-          cursor:pointer
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-tabs button:last-child{
-          border-right:0
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-tabs button.active{
-          background:rgba(25,67,104,.72);
-          color:#4da7ff
-        }
-
-        .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-tabs i{
-          font-size:18px
-        }
-
-        @media(max-width:380px){
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-popup{
-            left:6px;
-            right:6px;
-            bottom:calc(64px + env(safe-area-inset-bottom));
-            padding-left:9px;
-            padding-right:9px
-          }
-
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-picker{
-            width:min(72vw,266px)
-          }
-
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-row{
-            grid-template-columns:18px 46px 31px minmax(0,1fr) 31px;
-            gap:4px
-          }
-
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-value,
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-alpha-value{
-            width:46px
-          }
-
-          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-hsb-step{
-            width:30px;
-            height:30px
-          }
-        }
-      `}</style>
-
-      <header className="ss-mobile-hsb-header">
-        <strong>Color</strong>
-
-        <div className="ss-mobile-hsb-current">
-          <span
-            className="ss-mobile-hsb-swatch"
-            style={{ '--ss-mobile-hsb-current': normalized }}
-            aria-hidden="true"
+        <div className="pb-2">
+          <InfoRow
+            icon="fa-regular fa-calendar"
+            label={t('authorPageAboutPopup.created')}
+            value={createdText}
           />
-          <input
-            className="ss-mobile-hsb-hex"
-            type="text"
-            maxLength="7"
-            spellCheck={false}
-            value={hexDraft}
-            disabled={disabled}
-            aria-label="HEX color"
-            onChange={(event) => setHexDraft(event.target.value)}
-            onBlur={applyHex}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') event.currentTarget.blur()
-              if (event.key === 'Escape') {
-                setHexDraft(normalized)
-                event.currentTarget.blur()
-              }
-            }}
+          <InfoRow
+            icon="fa-regular fa-clock"
+            label={t('authorPageAboutPopup.updated')}
+            value={updatedText}
+          />
+          <InfoRow
+            icon="fa-regular fa-id-badge"
+            label={t('authorPageAboutPopup.type')}
+            value={t('authorPageAboutPopup.authorPage')}
+          />
+          <InfoRow
+            icon="fa-solid fa-book-open"
+            label={t('authorPageAboutPopup.works')}
+            value={Number(author?.works_count || 0).toLocaleString(DATE_LOCALES[language] || 'en-US')}
           />
         </div>
 
         <button
           type="button"
-          className="ss-mobile-hsb-close"
-          aria-label="Close color panel"
-          onClick={() => onClose?.()}
+          onClick={onOpenTransparency}
+          className="flex w-full items-center gap-3 border-t border-[var(--shadow-border)] px-5 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
         >
-          ×
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
+            <i className="fa-solid fa-circle-info text-[15px]" />
+          </span>
+          <span className="min-w-0 flex-1 text-[14px] font-semibold text-[var(--shadow-text-primary)]">
+            {t('authorPageAboutPopup.transparency')}
+          </span>
+          <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-tertiary)]" />
         </button>
-      </header>
-
-      <div className="ss-mobile-hsb-picker">
-        <div
-          className="ss-mobile-hsb-wheel"
-          role="slider"
-          tabIndex={disabled ? -1 : 0}
-          aria-label="Hue"
-          aria-valuemin="0"
-          aria-valuemax="359"
-          aria-valuenow={hueValue}
-          onPointerDown={startWheel}
-          onPointerMove={moveWheel}
-          onPointerUp={endWheel}
-          onPointerCancel={endWheel}
-        >
-          <span
-            className="ss-mobile-hsb-wheel-marker"
-            style={{
-              left: `${50 + 43 * Math.sin(activeHue * Math.PI / 180)}%`,
-              top: `${50 - 43 * Math.cos(activeHue * Math.PI / 180)}%`,
-            }}
-          />
-        </div>
-
-        <div
-          className="ss-mobile-hsb-square"
-          role="group"
-          aria-label="Saturation and brightness"
-          style={{ '--ss-mobile-hsb-hue': activeHue }}
-          onPointerDown={startSquare}
-          onPointerMove={moveSquare}
-          onPointerUp={endSquare}
-          onPointerCancel={endSquare}
-        >
-          <span
-            className="ss-mobile-hsb-square-marker"
-            style={{
-              left: `${hsv.s * 100}%`,
-              top: `${(1 - hsv.v) * 100}%`,
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="ss-mobile-hsb-controls">
-        <HSBRow
-          label="H"
-          value={hueValue}
-          min={0}
-          max={359}
-          color="#b14cff"
-          disabled={disabled}
-          onChange={updateHue}
-        />
-
-        <HSBRow
-          label="S"
-          value={saturationValue}
-          min={0}
-          max={100}
-          color="#36b7ff"
-          disabled={disabled}
-          onChange={updateSaturation}
-        />
-
-        <HSBRow
-          label="B"
-          value={brightnessValue}
-          min={0}
-          max={100}
-          color="#ffd43d"
-          disabled={disabled}
-          onChange={updateBrightness}
-        />
-
-        <AlphaRow
-          value={opacity}
-          disabled={disabled}
-          onChange={(value) => onOpacityChange?.(clamp(value, 0, 100))}
-        />
-      </div>
-
-      <nav className="ss-mobile-hsb-tabs" aria-label="Color mode">
-        <button
-          type="button"
-          aria-label="Palette"
-          onClick={() => onModeChange?.('palette')}
-        >
-          <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
-          <span>Palette</span>
-        </button>
-
-        <button
-          type="button"
-          aria-label="RGB"
-          onClick={() => onModeChange?.('rgb')}
-        >
-          <i className="fa-solid fa-circle-nodes" aria-hidden="true" />
-          <span>RGB</span>
-        </button>
-
-        <button
-          type="button"
-          className="active"
-          aria-current="page"
-          aria-label="HSB"
-        >
-          <i className="fa-solid fa-circle-notch" aria-hidden="true" />
-          <span>HSB</span>
-        </button>
-      </nav>
-    </section>
+      </section>
+    </div>
   )
 }
