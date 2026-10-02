@@ -23,6 +23,7 @@ import { applyShadowDocsCase } from './ShadowDocsTextTransform'
 import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 import ShadowDocsShareSheet from './ShadowDocsShareSheet'
 import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
+import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
 const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
@@ -119,6 +120,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
+  const [printOpen, setPrintOpen] = useState(false)
   const onEditorBlurRef = useRef(onEditorBlur)
   const chapter = book?.chapters?.find(item => item.id === chapterId) || book?.chapters?.[0]
   const chapterIndex = book?.chapters?.findIndex(item => item.id === chapter?.id) ?? -1
@@ -142,6 +144,7 @@ export default function ShadowDocsWritingStudioPanel({
     setMobileMenuOpen(false)
     setShareOpen(false)
     setFindReplaceOpen(false)
+    setPrintOpen(false)
   }, [book?.id, chapter?.id])
 
   useEffect(() => {
@@ -485,7 +488,7 @@ export default function ShadowDocsWritingStudioPanel({
     if (command === 'open' || command === 'recent') { onOpenBooks?.(); return }
     if (command === 'import') { onOpenImport?.(); return }
     if (command === 'export' || command === 'saveAs' || command === 'convert') { onOpenPDF?.(); return }
-    if (command === 'print') { onPrint?.(); return }
+    if (command === 'print') { await openPrintPanel(); return }
     if (command === 'properties') { onEditProperties?.(); return }
     if (command === 'templates') { onOpenTemplates?.(); return }
     if (command === 'preferences') { onOpenDesigner?.(); return }
@@ -792,6 +795,15 @@ export default function ShadowDocsWritingStudioPanel({
     setRibbonMessage(`${command} is available in the ribbon but needs a specialized external engine or object type.`)
   }
 
+  async function openPrintPanel() {
+    if (!book?.id) return
+    await Promise.resolve(onEditorBlurRef.current?.(book.id))
+    setLocalSaveDirty(false)
+    setLocalSaveSeconds(10)
+    setMobileMenuOpen(false)
+    setPrintOpen(true)
+  }
+
   async function openShareSheet() {
     if (!book?.id) return
     await Promise.resolve(onEditorBlurRef.current?.(book.id))
@@ -878,7 +890,7 @@ export default function ShadowDocsWritingStudioPanel({
       return
     }
     if (action === 'print') {
-      onPrint?.()
+      await openPrintPanel()
       return
     }
     if (action === 'rename') {
@@ -1284,6 +1296,17 @@ export default function ShadowDocsWritingStudioPanel({
         setLocalSaveDirty(true)
         setLocalSaveSeconds(10)
       }}
+    />
+    <ShadowDocsPrintPanel
+      open={printOpen}
+      book={book}
+      currentChapterId={chapter?.id || ''}
+      onClose={() => setPrintOpen(false)}
+      onExportPDF={() => {
+        setPrintOpen(false)
+        onOpenPDF?.()
+      }}
+      onChangeSettings={onChangeSettings}
     />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
