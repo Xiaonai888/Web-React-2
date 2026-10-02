@@ -22,6 +22,26 @@ import { buildShadowDocsMergedDocuments, createShadowDocsAddressBlock, createSha
 import { applyShadowDocsCase } from './ShadowDocsTextTransform'
 import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 import ShadowDocsShareSheet from './ShadowDocsShareSheet'
+import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
+
+const [findReplaceOpen, setFindReplaceOpen] = useState(false)
+
+setFindReplaceOpen(false)
+
+setFindReplaceOpen(true)
+
+<ShadowDocsFindReplaceModal
+  open={findReplaceOpen}
+  editorRef={editorRef}
+  onClose={() => setFindReplaceOpen(false)}
+  onChange={html => {
+    if (!chapter) return
+    onChangeHTML?.(chapter.id, html)
+    setLocalSaveDirty(true)
+    setLocalSaveSeconds(10)
+  }}
+/>
+
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
 const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
