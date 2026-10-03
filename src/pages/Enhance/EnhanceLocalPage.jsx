@@ -11,6 +11,7 @@ registerTranslationNamespace('enhanceLocal', {
     before: 'Before',
     after: 'After',
     upload: 'Upload Image',
+    drop: 'Drop image here or tap to choose',
     uploadHint: 'Runs on your device • No server upload',
     upscale: 'Upscale',
     denoise: 'Denoise',
@@ -26,6 +27,8 @@ registerTranslationNamespace('enhanceLocal', {
     failed: 'Could not enhance this image on your device.',
     tooLarge: 'This image is too large for the selected upscale size on this device.',
     ready: 'Ready',
+    original: 'Original',
+    output: 'Output',
   },
   km: {
     title: 'Enhance Local',
@@ -34,6 +37,7 @@ registerTranslationNamespace('enhanceLocal', {
     before: 'មុន',
     after: 'ក្រោយ',
     upload: 'បញ្ចូលរូបភាព',
+    drop: 'ទម្លាក់រូបភាពទីនេះ ឬចុចដើម្បីជ្រើស',
     uploadHint: 'ដំណើរការលើឧបករណ៍របស់អ្នក • មិន Upload ទៅ Server',
     upscale: 'ពង្រីក',
     denoise: 'កាត់បន្ថយ Noise',
@@ -49,6 +53,8 @@ registerTranslationNamespace('enhanceLocal', {
     failed: 'មិនអាចកែលម្អរូបភាពនេះលើឧបករណ៍បានទេ។',
     tooLarge: 'រូបភាពនេះធំពេកសម្រាប់ទំហំពង្រីកដែលបានជ្រើសលើឧបករណ៍នេះ។',
     ready: 'រួចរាល់',
+    original: 'រូបដើម',
+    output: 'លទ្ធផល',
   },
   zh: {
     title: 'Enhance Local',
@@ -57,6 +63,7 @@ registerTranslationNamespace('enhanceLocal', {
     before: '之前',
     after: '之后',
     upload: '上传图片',
+    drop: '拖放图片到这里或点击选择',
     uploadHint: '在你的设备上运行 • 不上传服务器',
     upscale: '放大',
     denoise: '降噪',
@@ -72,6 +79,8 @@ registerTranslationNamespace('enhanceLocal', {
     failed: '无法在此设备上增强这张图片。',
     tooLarge: '这张图片对于当前设备所选的放大尺寸来说太大。',
     ready: '就绪',
+    original: '原图',
+    output: '输出',
   },
   ja: {
     title: 'Enhance Local',
@@ -80,6 +89,7 @@ registerTranslationNamespace('enhanceLocal', {
     before: '補正前',
     after: '補正後',
     upload: '画像を選択',
+    drop: '画像をドロップまたはタップして選択',
     uploadHint: '端末内で処理 • サーバーへ送信しません',
     upscale: '拡大',
     denoise: 'ノイズ除去',
@@ -95,6 +105,8 @@ registerTranslationNamespace('enhanceLocal', {
     failed: 'この端末では画像を補正できませんでした。',
     tooLarge: '選択した拡大率では、この端末で処理するには画像が大きすぎます。',
     ready: '準備完了',
+    original: '元画像',
+    output: '出力',
   },
   ko: {
     title: 'Enhance Local',
@@ -103,6 +115,7 @@ registerTranslationNamespace('enhanceLocal', {
     before: '전',
     after: '후',
     upload: '이미지 업로드',
+    drop: '이미지를 놓거나 눌러서 선택하세요',
     uploadHint: '기기에서 처리 • 서버 업로드 없음',
     upscale: '업스케일',
     denoise: '노이즈 제거',
@@ -118,12 +131,14 @@ registerTranslationNamespace('enhanceLocal', {
     failed: '이 기기에서 이미지를 향상할 수 없습니다.',
     tooLarge: '선택한 업스케일 크기로 처리하기에는 이미지가 너무 큽니다.',
     ready: '준비됨',
+    original: '원본',
+    output: '결과',
   },
 })
 
-const MAX_OUTPUT_PIXELS = 12_000_000
+const MAX_OUTPUT_PIXELS = 16_000_000
 
-function waitForFrame() {
+function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(resolve))
 }
 
@@ -139,11 +154,63 @@ function loadImage(url) {
 function canvasToBlob(canvas) {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error('Canvas export failed'))),
+      (blob) => (blob ? resolve(blob) : reject(new Error('EXPORT_FAILED'))),
       'image/webp',
-      0.95
+      0.96
     )
   })
+}
+
+function sharpenCanvas(canvas, amount) {
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  if (!context) return
+
+  const width = canvas.width
+  const height = canvas.height
+  const source = context.getImageData(0, 0, width, height)
+  const input = source.data
+  const output = new Uint8ClampedArray(input)
+  const strength = Math.max(0, Math.min(1, amount))
+  const center = 1 + strength * 4
+  const side = -strength
+
+  for (let y = 1; y < height - 1; y += 1) {
+    for (let x = 1; x < width - 1; x += 1) {
+      const index = (y * width + x) * 4
+      const left = index - 4
+      const right = index + 4
+      const up = index - width * 4
+      const down = index + width * 4
+
+      for (let channel = 0; channel < 3; channel += 1) {
+        output[index + channel] =
+          input[index + channel] * center +
+          input[left + channel] * side +
+          input[right + channel] * side +
+          input[up + channel] * side +
+          input[down + channel] * side
+      }
+    }
+  }
+
+  context.putImageData(new ImageData(output, width, height), 0, 0)
+}
+
+function upscaleCanvas(source, width, height) {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d', { alpha: false })
+  if (!context) throw new Error('CANVAS_UNAVAILABLE')
+  context.imageSmoothingEnabled = true
+  context.imageSmoothingQuality = 'high'
+  context.drawImage(source, 0, 0, width, height)
+  return canvas
+}
+
+function formatSize(width, height) {
+  if (!width || !height) return '—'
+  return `${width} × ${height}`
 }
 
 function Toggle({ active, onChange, label }) {
@@ -154,9 +221,19 @@ function Toggle({ active, onChange, label }) {
       className="flex min-h-[52px] items-center justify-between rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-4 text-left"
       aria-pressed={active}
     >
-      <span className="text-[13px] font-extrabold text-[var(--shadow-text-primary)]">{label}</span>
-      <span className={`relative h-7 w-12 rounded-full transition ${active ? 'bg-[#E11D48]' : 'bg-[var(--shadow-border-strong)]'}`}>
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${active ? 'left-6' : 'left-1'}`} />
+      <span className="text-[13px] font-extrabold text-[var(--shadow-text-primary)]">
+        {label}
+      </span>
+      <span
+        className={`relative h-7 w-12 rounded-full transition ${
+          active ? 'bg-[#E11D48]' : 'bg-[var(--shadow-border-strong)]'
+        }`}
+      >
+        <span
+          className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${
+            active ? 'left-6' : 'left-1'
+          }`}
+        />
       </span>
     </button>
   )
@@ -171,6 +248,8 @@ export default function EnhanceLocalPage() {
   const [sourceUrl, setSourceUrl] = useState('')
   const [resultUrl, setResultUrl] = useState('')
   const [resultBlob, setResultBlob] = useState(null)
+  const [sourceSize, setSourceSize] = useState({ width: 0, height: 0 })
+  const [resultSize, setResultSize] = useState({ width: 0, height: 0 })
   const [scale, setScale] = useState(2)
   const [denoise, setDenoise] = useState(true)
   const [sharpen, setSharpen] = useState(true)
@@ -178,6 +257,7 @@ export default function EnhanceLocalPage() {
   const [compare, setCompare] = useState(50)
   const [progress, setProgress] = useState(0)
   const [processing, setProcessing] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -192,18 +272,31 @@ export default function EnhanceLocalPage() {
     resultRef.current = ''
     setResultUrl('')
     setResultBlob(null)
+    setResultSize({ width: 0, height: 0 })
     setProgress(0)
   }
 
-  function selectImage(file) {
+  async function selectImage(file) {
     if (!file || !String(file.type || '').startsWith('image/')) return
+
     if (sourceRef.current) URL.revokeObjectURL(sourceRef.current)
     resetResult()
+
     const url = URL.createObjectURL(file)
     sourceRef.current = url
     setSourceUrl(url)
     setCompare(50)
     setError('')
+
+    try {
+      const image = await loadImage(url)
+      setSourceSize({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      })
+    } catch {
+      setSourceSize({ width: 0, height: 0 })
+    }
   }
 
   async function enhanceImage() {
@@ -215,50 +308,87 @@ export default function EnhanceLocalPage() {
     setProcessing(true)
     setError('')
     resetResult()
-    setProgress(8)
+    setProgress(6)
 
     try {
-      await waitForFrame()
-      const image = await loadImage(sourceUrl)
-      const width = Math.max(1, Math.round(image.naturalWidth * scale))
-      const height = Math.max(1, Math.round(image.naturalHeight * scale))
+      await nextFrame()
 
-      if (width * height > MAX_OUTPUT_PIXELS) {
+      const image = await loadImage(sourceUrl)
+      const targetWidth = Math.max(1, Math.round(image.naturalWidth * scale))
+      const targetHeight = Math.max(1, Math.round(image.naturalHeight * scale))
+
+      if (targetWidth * targetHeight > MAX_OUTPUT_PIXELS) {
         throw new Error('OUTPUT_TOO_LARGE')
       }
 
-      setProgress(32)
-      await waitForFrame()
+      const base = document.createElement('canvas')
+      base.width = image.naturalWidth
+      base.height = image.naturalHeight
 
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const context = canvas.getContext('2d', { alpha: false })
+      const baseContext = base.getContext('2d', {
+        alpha: false,
+        willReadFrequently: sharpen,
+      })
 
-      if (!context) throw new Error('CANVAS_UNAVAILABLE')
+      if (!baseContext) throw new Error('CANVAS_UNAVAILABLE')
 
-      context.imageSmoothingEnabled = true
-      context.imageSmoothingQuality = 'high'
+      setProgress(20)
+      await nextFrame()
 
       const strength = intensity / 100
       const filters = []
 
-      if (denoise) filters.push(`blur(${Math.max(0.08, 0.28 - strength * 0.12)}px)`)
-      if (sharpen) filters.push(`contrast(${1 + strength * 0.18})`)
-      filters.push(`saturate(${1 + strength * 0.035})`)
+      if (denoise) {
+        filters.push(`blur(${0.12 + strength * 0.18}px)`)
+      }
 
-      context.filter = filters.join(' ')
-      context.drawImage(image, 0, 0, width, height)
-      context.filter = 'none'
+      filters.push(`contrast(${1 + strength * 0.08})`)
+      filters.push(`saturate(${1 + strength * 0.025})`)
 
-      setProgress(76)
-      await waitForFrame()
+      baseContext.filter = filters.join(' ')
+      baseContext.drawImage(image, 0, 0, base.width, base.height)
+      baseContext.filter = 'none'
 
-      const blob = await canvasToBlob(canvas)
+      setProgress(38)
+      await nextFrame()
+
+      if (sharpen) {
+        sharpenCanvas(base, 0.08 + strength * 0.13)
+      }
+
+      setProgress(56)
+      await nextFrame()
+
+      let output = base
+
+      if (scale >= 2) {
+        output = upscaleCanvas(
+          output,
+          Math.round(image.naturalWidth * 2),
+          Math.round(image.naturalHeight * 2)
+        )
+      }
+
+      setProgress(scale === 4 ? 72 : 82)
+      await nextFrame()
+
+      if (scale === 4) {
+        output = upscaleCanvas(output, targetWidth, targetHeight)
+      }
+
+      setProgress(90)
+      await nextFrame()
+
+      const blob = await canvasToBlob(output)
       const url = URL.createObjectURL(blob)
+
       resultRef.current = url
       setResultBlob(blob)
       setResultUrl(url)
+      setResultSize({
+        width: output.width,
+        height: output.height,
+      })
       setCompare(50)
       setProgress(100)
     } catch (enhanceError) {
@@ -275,12 +405,19 @@ export default function EnhanceLocalPage() {
 
   function downloadResult() {
     if (!resultBlob || !resultUrl) return
+
     const anchor = document.createElement('a')
     anchor.href = resultUrl
     anchor.download = `enhance-local-${Date.now()}.webp`
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()
+  }
+
+  function onDrop(event) {
+    event.preventDefault()
+    setDragging(false)
+    selectImage(event.dataTransfer.files?.[0])
   }
 
   return (
@@ -295,35 +432,52 @@ export default function EnhanceLocalPage() {
           >
             <i className="fa-solid fa-chevron-left text-[18px]" />
           </button>
+
           <div className="min-w-0 text-center">
-            <h1 className="truncate text-[22px] font-black tracking-[-0.02em]">{t('enhanceLocal.title')}</h1>
-            <p className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{t('enhanceLocal.subtitle')}</p>
+            <h1 className="truncate text-[22px] font-black tracking-[-0.02em]">
+              {t('enhanceLocal.title')}
+            </h1>
+            <p className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">
+              {t('enhanceLocal.subtitle')}
+            </p>
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-[760px] space-y-4 px-4 pb-10 pt-4">
-        <section className="relative aspect-[16/10] overflow-hidden rounded-[22px] border border-[var(--shadow-border)] bg-[#15171D] shadow-sm">
+        <section className="relative aspect-[16/10] overflow-hidden rounded-[22px] border border-[var(--shadow-border)] bg-[#111319] shadow-sm">
           {sourceUrl ? (
             <>
-              <img src={sourceUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <img
+                src={sourceUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+
               {resultUrl ? (
                 <img
                   src={resultUrl}
                   alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-contain"
                   style={{ clipPath: `inset(0 ${100 - compare}% 0 0)` }}
                 />
               ) : null}
-              <div className="absolute left-3 top-3 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-extrabold text-white backdrop-blur">
+
+              <div className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-extrabold text-white backdrop-blur">
                 {t('enhanceLocal.before')}
               </div>
-              <div className="absolute right-3 top-3 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-extrabold text-white backdrop-blur">
+
+              <div className="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-extrabold text-white backdrop-blur">
                 {t('enhanceLocal.after')}
               </div>
+
               {resultUrl ? (
                 <>
-                  <div className="absolute bottom-0 top-0 w-[2px] bg-white/90 shadow" style={{ left: `${compare}%` }} />
+                  <div
+                    className="absolute bottom-0 top-0 w-[2px] bg-white/90 shadow"
+                    style={{ left: `${compare}%` }}
+                  />
+
                   <input
                     type="range"
                     min="0"
@@ -333,6 +487,7 @@ export default function EnhanceLocalPage() {
                     className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
                     aria-label={`${t('enhanceLocal.before')} / ${t('enhanceLocal.after')}`}
                   />
+
                   <div
                     className="pointer-events-none absolute top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-[#191B20] text-white shadow-xl"
                     style={{ left: `${compare}%` }}
@@ -348,22 +503,69 @@ export default function EnhanceLocalPage() {
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-[20px] border border-white/10 bg-white/[0.04] text-2xl text-white/80">
                   <i className="fa-regular fa-image" />
                 </div>
-                <p className="mt-3 text-[12px] font-bold text-white/55">{t('enhanceLocal.upload')}</p>
+                <p className="mt-3 text-[12px] font-bold text-white/55">
+                  {t('enhanceLocal.upload')}
+                </p>
               </div>
             </div>
           )}
         </section>
 
+        {sourceUrl ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3">
+              <div className="text-[10px] font-extrabold text-[var(--shadow-text-tertiary)]">
+                {t('enhanceLocal.original')}
+              </div>
+              <div className="mt-1 text-[12px] font-black">
+                {formatSize(sourceSize.width, sourceSize.height)}
+              </div>
+            </div>
+
+            <div className="rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3">
+              <div className="text-[10px] font-extrabold text-[var(--shadow-text-tertiary)]">
+                {t('enhanceLocal.output')}
+              </div>
+              <div className="mt-1 text-[12px] font-black">
+                {resultUrl
+                  ? formatSize(resultSize.width, resultSize.height)
+                  : formatSize(sourceSize.width * scale, sourceSize.height * scale)}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex w-full flex-col items-center justify-center rounded-[22px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] px-5 py-7 text-center active:scale-[0.99]"
+          onDragEnter={(event) => {
+            event.preventDefault()
+            setDragging(true)
+          }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+          className={`flex w-full flex-col items-center justify-center rounded-[22px] border border-dashed px-5 py-7 text-center transition active:scale-[0.99] ${
+            dragging
+              ? 'border-[#E11D48] bg-[#E11D48]/10'
+              : 'border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)]'
+          }`}
         >
           <span className="grid h-14 w-14 place-items-center rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] text-[22px] text-[#E11D48]">
             <i className="fa-regular fa-image" />
           </span>
-          <span className="mt-3 text-[16px] font-black">{t('enhanceLocal.upload')}</span>
-          <span className="mt-1 text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{t('enhanceLocal.uploadHint')}</span>
+
+          <span className="mt-3 text-[16px] font-black">
+            {t('enhanceLocal.upload')}
+          </span>
+
+          <span className="mt-1 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
+            {t('enhanceLocal.drop')}
+          </span>
+
+          <span className="mt-1 text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
+            {t('enhanceLocal.uploadHint')}
+          </span>
         </button>
 
         <input
@@ -404,12 +606,30 @@ export default function EnhanceLocalPage() {
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <Toggle active={denoise} onChange={(value) => { setDenoise(value); resetResult() }} label={t('enhanceLocal.denoise')} />
-            <Toggle active={sharpen} onChange={(value) => { setSharpen(value); resetResult() }} label={t('enhanceLocal.sharpen')} />
+            <Toggle
+              active={denoise}
+              onChange={(value) => {
+                setDenoise(value)
+                resetResult()
+              }}
+              label={t('enhanceLocal.denoise')}
+            />
+
+            <Toggle
+              active={sharpen}
+              onChange={(value) => {
+                setSharpen(value)
+                resetResult()
+              }}
+              label={t('enhanceLocal.sharpen')}
+            />
           </div>
 
           <div className="mt-4 grid grid-cols-[auto_1fr_auto] items-center gap-3">
-            <span className="text-[12px] font-black">{t('enhanceLocal.intensity')}</span>
+            <span className="text-[12px] font-black">
+              {t('enhanceLocal.intensity')}
+            </span>
+
             <input
               type="range"
               min="0"
@@ -421,7 +641,10 @@ export default function EnhanceLocalPage() {
               }}
               className="accent-[#E11D48]"
             />
-            <span className="w-10 text-right text-[12px] font-bold text-[var(--shadow-text-tertiary)]">{intensity}%</span>
+
+            <span className="w-10 text-right text-[12px] font-bold text-[var(--shadow-text-tertiary)]">
+              {intensity}%
+            </span>
           </div>
         </section>
 
@@ -430,19 +653,37 @@ export default function EnhanceLocalPage() {
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[15px] bg-[#E11D48]/10 text-[20px] text-[#E11D48]">
               <i className="fa-solid fa-microchip" />
             </div>
+
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[15px] font-black">{processing ? t('enhanceLocal.processing') : t('enhanceLocal.ready')}</div>
-              <div className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{t('enhanceLocal.privateLine')}</div>
+              <div className="truncate text-[15px] font-black">
+                {processing
+                  ? t('enhanceLocal.processing')
+                  : t('enhanceLocal.ready')}
+              </div>
+
+              <div className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">
+                {t('enhanceLocal.privateLine')}
+              </div>
             </div>
-            <div className="text-[17px] font-black text-[#E11D48]">{progress}%</div>
+
+            <div className="text-[17px] font-black text-[#E11D48]">
+              {progress}%
+            </div>
           </div>
+
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--shadow-bg-elevated)]">
-            <div className="h-full rounded-full bg-gradient-to-r from-[#FB7185] to-[#E11D48] transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#FB7185] to-[#E11D48] transition-[width] duration-300"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </section>
 
         {error ? (
-          <div role="alert" className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-3 text-[12px] font-bold text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+          <div
+            role="alert"
+            className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-3 text-[12px] font-bold text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
+          >
             {error}
           </div>
         ) : null}
@@ -450,20 +691,25 @@ export default function EnhanceLocalPage() {
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            disabled={!sourceUrl}
+            disabled={!resultUrl}
             onClick={() => setCompare(50)}
             className="h-14 rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] text-[14px] font-black disabled:opacity-40"
           >
             <i className="fa-regular fa-eye mr-2" />
             {t('enhanceLocal.preview')}
           </button>
+
           <button
             type="button"
             disabled={!sourceUrl || processing}
             onClick={enhanceImage}
             className="h-14 rounded-[18px] bg-gradient-to-r from-[#FB7185] to-[#E11D48] text-[14px] font-black text-white shadow-[0_10px_28px_rgba(225,29,72,.24)] active:scale-[0.98] disabled:opacity-40"
           >
-            <i className={`fa-solid ${processing ? 'fa-spinner animate-spin' : 'fa-wand-magic-sparkles'} mr-2`} />
+            <i
+              className={`fa-solid ${
+                processing ? 'fa-spinner animate-spin' : 'fa-wand-magic-sparkles'
+              } mr-2`}
+            />
             {t('enhanceLocal.enhance')}
           </button>
         </div>
