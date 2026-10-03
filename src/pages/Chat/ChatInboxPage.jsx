@@ -1362,6 +1362,8 @@ const [soundSettings, setSoundSettings] =
     let active = true
     let refreshInFlight = false
     let lastRefreshAt = 0
+    let lastArchivedRefreshAt = 0
+    let lastQuickContactsAt = 0
     const controller = new AbortController()
 
     const refreshInbox = async ({
@@ -1388,21 +1390,39 @@ const [soundSettings, setSoundSettings] =
       refreshInFlight = true
       lastRefreshAt = now
 
+      const shouldRefreshArchived =
+        initial ||
+        !lastArchivedRefreshAt ||
+        now - lastArchivedRefreshAt >= 5 * 60 * 1000
+      const shouldRefreshQuickContacts =
+        initial ||
+        !lastQuickContactsAt ||
+        now - lastQuickContactsAt >= 2 * 60 * 1000
+
       try {
         const conversationCount =
           await loadConversations({
             silent: !initial,
-            includeArchived: true,
+            includeArchived: shouldRefreshArchived,
             signal: controller.signal,
           })
 
         if (
+          shouldRefreshArchived &&
+          conversationCount !== null
+        ) {
+          lastArchivedRefreshAt = Date.now()
+        }
+
+        if (
           active &&
-          Number(conversationCount) > 0
+          Number(conversationCount) > 0 &&
+          shouldRefreshQuickContacts
         ) {
           await loadQuickContacts({
             signal: controller.signal,
           })
+          lastQuickContactsAt = Date.now()
         }
       } finally {
         refreshInFlight = false
