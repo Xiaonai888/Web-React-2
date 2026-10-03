@@ -524,6 +524,11 @@ export default function ShadowDocsWorkspace() {
         <div className="sd-stack">
           {book && <button type="button" className="sd-button sd-button-ghost" onClick={() => { setDesignTab('page'); setSection('design') }}>Font & Page Setup</button>}
           <ShadowDocsWritingStudioPanel
+            onRestoreBook={snapshot => {
+  if (!book) return
+  patchBook(book.id, { ...snapshot, id: book.id, deletedAt: null }, true)
+  setChapterId(snapshot.chapters?.[0]?.id || '')
+}}
             book={book}
             chapterId={currentChapter?.id}
             onSelectChapter={setChapterId}
