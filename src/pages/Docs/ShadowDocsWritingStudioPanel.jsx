@@ -29,9 +29,11 @@ import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
 import ShadowDocsConversionSheet from './ShadowDocsConversionSheet'
 import ShadowDocsVersionHistorySheet from './ShadowDocsVersionHistorySheet'
 import ShadowDocsEncryptSheet from './ShadowDocsEncryptSheet'
+import ShadowDocsSelectionPopup from './ShadowDocsSelectionPopup'
 
 const SHADOW_DOCS_FOLDERS_KEY = 'shadow-docs-folders-v1'
 const SHADOW_DOCS_FOLDER_MAP_KEY = 'shadow-docs-folder-map-v1'
+const [selectionPopup,setSelectionPopup]=useState({open:false,mode:'expanded',anchor:null})
 
 function readShadowDocsFolders() {
   try {
@@ -240,6 +242,7 @@ export default function ShadowDocsWritingStudioPanel({
     setMobileMenuOpen(false)
     setShareOpen(false)
     setFindReplaceOpen(false)
+    setSelectionPopup({open:false,mode:'expanded',anchor:null})
     setPrintOpen(false)
     setAddToOpen(false)
     setExportImageOpen(false)
