@@ -49,7 +49,17 @@ const templates = [
   { id: 'mint-timeline', name: 'Mint Timeline', layout: 'timeline', accent: '#10b981', side: '#065f46', soft: '#ecfdf5' },
   { id: 'violet-banner', name: 'Violet Banner', layout: 'banner', accent: '#7c3aed', side: '#4c1d95', soft: '#f5f3ff' },
   { id: 'pearl-elegant', name: 'Pearl Elegant', layout: 'elegant', accent: '#64748b', side: '#f1f5f9', soft: '#f8fafc' },
-  { id: 'ink-boxed', name: 'Ink Boxed', layout: 'boxed', accent: '#1f2937', side: '#d1d5db', soft: '#f9fafb' }
+  { id: 'ink-boxed', name: 'Ink Boxed', layout: 'boxed', accent: '#1f2937', side: '#d1d5db', soft: '#f9fafb' },
+  { id: 'azure-sidebar', name: 'Azure Sidebar', layout: 'sidebar-left', accent: '#0284c7', side: '#075985', soft: '#f0f9ff' },
+  { id: 'snow-minimal', name: 'Snow Minimal', layout: 'minimal', accent: '#475569', side: '#ffffff', soft: '#ffffff' },
+  { id: 'steel-header', name: 'Steel Header', layout: 'header-band', accent: '#475569', side: '#cbd5e1', soft: '#f8fafc' },
+  { id: 'peach-creative', name: 'Peach Creative', layout: 'creative', accent: '#fb7185', side: '#ffe4e6', soft: '#fff7ed' },
+  { id: 'olive-classic', name: 'Olive Classic', layout: 'classic', accent: '#4d7c0f', side: '#ecfccb', soft: '#f7fee7' },
+  { id: 'charcoal-right', name: 'Charcoal Right', layout: 'sidebar-right', accent: '#f59e0b', side: '#27272a', soft: '#fafafa' },
+  { id: 'jade-timeline', name: 'Jade Timeline', layout: 'timeline', accent: '#0d9488', side: '#134e4a', soft: '#f0fdfa' },
+  { id: 'ruby-banner', name: 'Ruby Banner', layout: 'banner', accent: '#e11d48', side: '#881337', soft: '#fff1f2' },
+  { id: 'ivory-elegant', name: 'Ivory Elegant', layout: 'elegant', accent: '#a16207', side: '#fefce8', soft: '#fffdf5' },
+  { id: 'blueprint-boxed', name: 'Blueprint Boxed', layout: 'boxed', accent: '#1d4ed8', side: '#dbeafe', soft: '#eff6ff' }
 ]
 
 const initialCv = {
@@ -789,7 +799,7 @@ export default function CVBuilderPage() {
             <div className="cvb-section-head">
               <div>
                 <h2>Choose Template</h2>
-                <p className="cvb-muted">30 styles • 10 layouts • ready to expand to 50</p>
+                <p className="cvb-muted">40 styles • 10 layouts • ready to expand to 50</p>
               </div>
             </div>
             <div className="cvb-grid">
