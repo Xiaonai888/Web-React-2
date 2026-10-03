@@ -4,11 +4,11 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('appPage', {
-  en: { back: 'Back', app: 'App', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'Enhance Local', open: 'Open', disabled: 'Unavailable', loading: 'Loading apps…', failed: 'Could not load app settings. Please try again.', retry: 'Retry', empty: 'No apps available.' },
-  km: { back: 'ត្រឡប់ក្រោយ', app: 'កម្មវិធី', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'កែលម្អរូបភាព', open: 'បើក', disabled: 'មិនអាចប្រើបាន', loading: 'កំពុងផ្ទុកកម្មវិធី…', failed: 'មិនអាចផ្ទុកការកំណត់កម្មវិធីបានទេ។ សូមព្យាយាមម្ដងទៀត។', retry: 'ព្យាយាមម្ដងទៀត', empty: 'មិនមានកម្មវិធីសម្រាប់បង្ហាញទេ។' },
-  zh: { back: '返回', app: '应用', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: '本地图片增强', open: '打开', disabled: '暂不可用', loading: '正在加载应用…', failed: '无法加载应用设置，请重试。', retry: '重试', empty: '暂无可用应用。' },
-  ja: { back: '戻る', app: 'アプリ', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'ローカル画像補正', open: '開く', disabled: '利用できません', loading: 'アプリを読み込み中…', failed: 'アプリの設定を読み込めませんでした。再試行してください。', retry: '再試行', empty: '利用できるアプリがありません。' },
-  ko: { back: '뒤로 가기', app: '앱', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: '로컬 이미지 향상', open: '열기', disabled: '사용 불가', loading: '앱 불러오는 중…', failed: '앱 설정을 불러올 수 없습니다. 다시 시도해 주세요.', retry: '다시 시도', empty: '표시할 앱이 없습니다.' },
+  en: { back: 'Back', app: 'App', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'Enhance Local', cvBuilder: 'CV Builder', open: 'Open', disabled: 'Unavailable', loading: 'Loading apps…', failed: 'Could not load app settings. Please try again.', retry: 'Retry', empty: 'No apps available.' },
+  km: { back: 'ត្រឡប់ក្រោយ', app: 'កម្មវិធី', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'កែលម្អរូបភាព', cvBuilder: 'បង្កើត CV', open: 'បើក', disabled: 'មិនអាចប្រើបាន', loading: 'កំពុងផ្ទុកកម្មវិធី…', failed: 'មិនអាចផ្ទុកការកំណត់កម្មវិធីបានទេ។ សូមព្យាយាមម្ដងទៀត។', retry: 'ព្យាយាមម្ដងទៀត', empty: 'មិនមានកម្មវិធីសម្រាប់បង្ហាញទេ។' },
+  zh: { back: '返回', app: '应用', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: '本地图片增强', cvBuilder: '简历生成器', open: '打开', disabled: '暂不可用', loading: '正在加载应用…', failed: '无法加载应用设置，请重试。', retry: '重试', empty: '暂无可用应用。' },
+  ja: { back: '戻る', app: 'アプリ', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'ローカル画像補正', cvBuilder: 'CVビルダー', open: '開く', disabled: '利用できません', loading: 'アプリを読み込み中…', failed: 'アプリの設定を読み込めませんでした。再試行してください。', retry: '再試行', empty: '利用できるアプリがありません。' },
+  ko: { back: '뒤로 가기', app: '앱', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: '로컬 이미지 향상', cvBuilder: 'CV 빌더', open: '열기', disabled: '사용 불가', loading: '앱 불러오는 중…', failed: '앱 설정을 불러올 수 없습니다. 다시 시도해 주세요.', retry: '다시 시도', empty: '표시할 앱이 없습니다.' },
 })
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
@@ -19,6 +19,7 @@ const apps = [
   { key: 'shadow-docs', name: 'Shadow Docs', icon: 'fa-solid fa-book-open', path: '/apps/shadow-docs' },
   { key: 'shadow-fx', nameKey: 'shadowFx', name: 'Shadow FX', icon: 'fa-solid fa-wand-magic-sparkles', path: '/apps/shadow-fx' },
   { key: 'enhance-local', nameKey: 'enhanceLocal', name: 'Enhance Local', icon: 'fa-solid fa-image', path: '/apps/enhance-local' },
+  { key: 'cv-builder', nameKey: 'cvBuilder', name: 'CV Builder', icon: 'fa-solid fa-file-lines', path: '/apps/cv-builder', local: true },
   { key: 'qr-barcode', name: 'QR & Barcode', icon: 'fa-solid fa-qrcode', path: '/apps/qr-barcode' },
   { key: 'pic-to-art', name: 'Pic to Art', icon: 'fa-solid fa-wand-magic-sparkles', path: '/apps/pic-to-art' },
 ]
@@ -81,7 +82,7 @@ export default function AppPage() {
     return () => { live = false; clearTimeout(timeout); controller.abort() }
   }, [retry])
 
-  const visibleApps = apps.map(app => ({ ...app, remote: settings?.find(item => item.appKey === app.key) })).filter(app => app.remote && !app.remote.hidden)
+  const visibleApps = apps.map(app => ({ ...app, remote: settings?.find(item => item.appKey === app.key) })).filter(app => app.local || (app.remote && !app.remote.hidden))
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0d0f16]">
@@ -99,13 +100,13 @@ export default function AppPage() {
         {!loading && error ? <div className="flex flex-col items-center gap-3 py-8 text-center"><p role="alert" className="text-sm text-[#6b7280] dark:text-white/65">{t('appPage.failed')}</p><button type="button" onClick={() => setRetry(value => value + 1)} className="rounded-xl bg-[#7351b9] px-5 py-2.5 text-sm font-semibold text-white">{t('appPage.retry')}</button></div> : null}
         {!loading && !error && settings && !visibleApps.length ? <p className="py-8 text-center text-sm text-[#6b7280] dark:text-white/65">{t('appPage.empty')}</p> : null}
         <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 lg:grid-cols-6">
-          {!error && visibleApps.map(app => (
-            <button type="button" key={app.key} disabled={app.remote.disabled} onClick={() => navigate(app.path)} className="min-w-0 text-left active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50">
+          {visibleApps.map(app => (
+            <button type="button" key={app.key} disabled={!app.local && app.remote?.disabled} onClick={() => navigate(app.path)} className="min-w-0 text-left active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50">
               <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#f1f2f5] shadow-sm ring-1 ring-black/[0.06] dark:bg-[#171923] dark:ring-white/10">
-                {app.remote.profile ? <img src={app.remote.profile} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : <div className="absolute inset-0 flex items-center justify-center text-[#374151] dark:text-white/85"><i className={`${app.icon} text-[42px] sm:text-[48px]`} /></div>}
+                {app.remote?.profile ? <img src={app.remote.profile} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : <div className="absolute inset-0 flex items-center justify-center text-[#374151] dark:text-white/85"><i className={`${app.icon} text-[42px] sm:text-[48px]`} /></div>}
               </div>
-              <div className="mt-2 truncate px-0.5 text-[14px] font-semibold text-[#111827] dark:text-white sm:text-[15px]">{app.nameKey ? t(`appPage.${app.nameKey}`) : app.remote.name || app.name}</div>
-              <div className="mt-0.5 px-0.5 text-[10px] font-medium text-[#8b93a1] dark:text-white/50 sm:text-[11px]">{t(app.remote.disabled ? 'appPage.disabled' : 'appPage.open')}</div>
+              <div className="mt-2 truncate px-0.5 text-[14px] font-semibold text-[#111827] dark:text-white sm:text-[15px]">{app.nameKey ? t(`appPage.${app.nameKey}`) : app.remote?.name || app.name}</div>
+              <div className="mt-0.5 px-0.5 text-[10px] font-medium text-[#8b93a1] dark:text-white/50 sm:text-[11px]">{t(!app.local && app.remote?.disabled ? 'appPage.disabled' : 'appPage.open')}</div>
             </button>
           ))}
         </div>
