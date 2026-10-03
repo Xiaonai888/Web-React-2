@@ -59,7 +59,17 @@ const templates = [
   { id: 'jade-timeline', name: 'Jade Timeline', layout: 'timeline', accent: '#0d9488', side: '#134e4a', soft: '#f0fdfa' },
   { id: 'ruby-banner', name: 'Ruby Banner', layout: 'banner', accent: '#e11d48', side: '#881337', soft: '#fff1f2' },
   { id: 'ivory-elegant', name: 'Ivory Elegant', layout: 'elegant', accent: '#a16207', side: '#fefce8', soft: '#fffdf5' },
-  { id: 'blueprint-boxed', name: 'Blueprint Boxed', layout: 'boxed', accent: '#1d4ed8', side: '#dbeafe', soft: '#eff6ff' }
+  { id: 'blueprint-boxed', name: 'Blueprint Boxed', layout: 'boxed', accent: '#1d4ed8', side: '#dbeafe', soft: '#eff6ff' },
+  { id: 'plum-sidebar', name: 'Plum Sidebar', layout: 'sidebar-left', accent: '#9333ea', side: '#581c87', soft: '#faf5ff' },
+  { id: 'air-minimal', name: 'Air Minimal', layout: 'minimal', accent: '#0891b2', side: '#ecfeff', soft: '#f8ffff' },
+  { id: 'cobalt-header', name: 'Cobalt Header', layout: 'header-band', accent: '#1d4ed8', side: '#dbeafe', soft: '#eff6ff' },
+  { id: 'berry-creative', name: 'Berry Creative', layout: 'creative', accent: '#db2777', side: '#fce7f3', soft: '#fdf2f8' },
+  { id: 'bronze-classic', name: 'Bronze Classic', layout: 'classic', accent: '#a16207', side: '#fef3c7', soft: '#fffbeb' },
+  { id: 'onyx-right', name: 'Onyx Right', layout: 'sidebar-right', accent: '#a78bfa', side: '#18181b', soft: '#fafafa' },
+  { id: 'spring-timeline', name: 'Spring Timeline', layout: 'timeline', accent: '#22c55e', side: '#166534', soft: '#f0fdf4' },
+  { id: 'aqua-banner', name: 'Aqua Banner', layout: 'banner', accent: '#06b6d4', side: '#155e75', soft: '#ecfeff' },
+  { id: 'blush-elegant', name: 'Blush Elegant', layout: 'elegant', accent: '#c08497', side: '#fce7f3', soft: '#fff7fa' },
+  { id: 'carbon-boxed', name: 'Carbon Boxed', layout: 'boxed', accent: '#374151', side: '#d1d5db', soft: '#f3f4f6' }
 ]
 
 const initialCv = {
@@ -459,11 +469,22 @@ export default function CVBuilderPage() {
   const [editorTab, setEditorTab] = useState('profile')
   const [data, setData] = useState(loadDraft)
   const [savedCvs, setSavedCvs] = useState(loadSaved)
+  const [templateSearch, setTemplateSearch] = useState('')
+  const [templateLayout, setTemplateLayout] = useState('all')
 
   const currentTemplate = useMemo(
     () => templates.find((item) => item.id === data.templateId) || templates[0],
     [data.templateId]
   )
+
+  const filteredTemplates = useMemo(() => {
+    const search = templateSearch.trim().toLowerCase()
+    return templates.filter((item) => {
+      const matchesSearch = !search || item.name.toLowerCase().includes(search)
+      const matchesLayout = templateLayout === 'all' || item.layout === templateLayout
+      return matchesSearch && matchesLayout
+    })
+  }, [templateSearch, templateLayout])
 
   useEffect(() => {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(data))
@@ -529,7 +550,21 @@ export default function CVBuilderPage() {
   const handlePhoto = (file) => {
     if (!file || !String(file.type || '').startsWith('image/')) return
     const reader = new FileReader()
-    reader.onload = () => updateProfile('photo', String(reader.result || ''))
+    reader.onload = () => {
+      const image = new Image()
+      image.onload = () => {
+        const max = 512
+        const scale = Math.min(1, max / Math.max(image.width, image.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(image.width * scale))
+        canvas.height = Math.max(1, Math.round(image.height * scale))
+        const context = canvas.getContext('2d')
+        if (!context) return
+        context.drawImage(image, 0, 0, canvas.width, canvas.height)
+        updateProfile('photo', canvas.toDataURL('image/jpeg', 0.82))
+      }
+      image.src = String(reader.result || '')
+    }
     reader.readAsDataURL(file)
   }
 
@@ -562,6 +597,13 @@ export default function CVBuilderPage() {
     setScreen('editor')
   }
 
+  const deleteSaved = (id) => {
+    if (!window.confirm('Delete this saved CV from this device?')) return
+    const next = savedCvs.filter((item) => item.id !== id)
+    setSavedCvs(next)
+    localStorage.setItem(SAVED_KEY, JSON.stringify(next))
+  }
+
   const downloadPdf = () => {
     setScreen('preview')
     setTimeout(() => window.print(), 100)
@@ -592,7 +634,7 @@ export default function CVBuilderPage() {
         .cvb-hero-art{display:grid;place-items:center}.cvb-demo-paper{width:180px;aspect-ratio:.72;background:#fff;border-radius:14px;transform:rotate(4deg);box-shadow:0 20px 44px rgba(0,0,0,.22);position:relative;overflow:hidden}
         .cvb-demo-paper:before{content:"";position:absolute;inset:0 auto 0 0;width:34%;background:#164e9b}.cvb-demo-paper:after{content:"";position:absolute;left:43%;right:10%;top:16%;height:58%;background:repeating-linear-gradient(to bottom,#cbd5e1 0 5px,transparent 5px 18px)}
         .cvb-section-head{display:flex;align-items:center;justify-content:space-between;margin:24px 2px 12px}.cvb-section-head h2{margin:0;font-size:20px;font-weight:950}.cvb-link{border:0;background:transparent;color:#4f46e5;font-weight:900;cursor:pointer}
-        .cvb-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.cvb-template{border:0;background:transparent;color:inherit;padding:0;cursor:pointer}.cvb-template strong{display:block;font-size:12px;margin-top:8px}.cvb-template.active .cvb-template-paper{outline:3px solid #5b4df5;box-shadow:0 12px 30px rgba(79,70,229,.2)}
+        .cvb-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.cvb-template{border:0;background:transparent;color:inherit;padding:0;cursor:pointer}.cvb-template strong{display:block;font-size:12px;margin-top:8px}.cvb-template.active .cvb-template-paper{outline:3px solid #5b4df5;box-shadow:0 12px 30px rgba(79,70,229,.2)}.cvb-template-tools{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:10px;margin:0 0 18px}.cvb-template-tools input,.cvb-template-tools select{width:100%;box-sizing:border-box;border:1px solid #d9deea;border-radius:14px;padding:12px 13px;background:#fff;color:#111827;font:inherit;outline:none}.cvb-template-tools input:focus,.cvb-template-tools select:focus{border-color:#5b4df5;box-shadow:0 0 0 3px rgba(91,77,245,.1)}.cvb-template-empty{grid-column:1/-1;padding:38px 16px;text-align:center;border:1px dashed #cbd5e1;border-radius:18px;color:#64748b}
         .cvb-template-paper{position:relative;aspect-ratio:.72;background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;box-shadow:0 8px 22px rgba(15,23,42,.08)}.thumb-side{position:absolute}.thumb-lines{position:absolute;display:flex;flex-direction:column;gap:7px}.thumb-lines span{height:8px;width:70%;border-radius:999px}.thumb-lines i,.thumb-lines b{display:block;height:4px;background:#d8dee9;border-radius:999px}.thumb-lines b{width:45%;margin-top:7px;background:#94a3b8}.thumb-accent{position:absolute}
         .thumb-sidebar-left .thumb-side{inset:0 auto 0 0;width:34%}.thumb-sidebar-left .thumb-lines{left:42%;right:9%;top:14%}
         .thumb-minimal .thumb-side{display:none}.thumb-minimal .thumb-accent{left:10%;right:10%;top:15%;height:2px}.thumb-minimal .thumb-lines{left:12%;right:12%;top:26%}
@@ -621,10 +663,10 @@ export default function CVBuilderPage() {
         .cv-layout-elegant{padding:6%;font-family:Georgia,serif}.cv-layout-elegant>header{text-align:center}.cv-layout-elegant>header .cvb-avatar{margin:0 auto 9px;width:62px;height:62px}.elegant-line{height:1px;margin:8px 20%}.cv-layout-elegant>header h1{font-family:Georgia,serif}.cv-layout-elegant>header h5{margin-bottom:4px}.elegant-contact{text-align:center;font-size:7px;color:#8b6f68;margin:8px 0}.elegant-grid{display:grid;grid-template-columns:70% 30%;gap:16px}.elegant-grid>aside{padding:12px}.elegant-grid>aside section+section{margin-top:16px}
         .cv-layout-boxed{padding:5%;border:8px solid #111}.cv-layout-boxed>header{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #111;padding-bottom:10px}.cv-layout-boxed>header h5{margin-bottom:0}.cv-layout-boxed>header .cvb-avatar{width:58px;height:58px;border:2px solid #111}.boxed-contact{font-size:7px;padding:7px 0;border-bottom:1px solid #111}.boxed-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.boxed-skills{display:grid;grid-template-columns:1fr 1fr;gap:16px;border-top:2px solid #111;margin-top:12px;padding-top:10px}
         .cvb-cv.mini{border-radius:5px;box-shadow:none}.cvb-cv.mini .cvb-avatar{width:28px;height:28px}.cvb-cv.mini h1{font-size:7px}.cvb-cv.mini h5{font-size:3px;margin-bottom:4px}.cvb-cv.mini h4{font-size:2.8px;margin-bottom:2px}.cvb-cv.mini small{font-size:2.6px;margin-bottom:1px}.cvb-cv.mini .cv-main-section{margin-top:4px}.cvb-cv.mini .cv-main-section h3{font-size:3px;margin-bottom:2px}.cvb-cv.mini .cv-main-section p,.cvb-cv.mini .cvb-entry span,.cvb-cv.mini .cvb-entry small{font-size:2.6px}.cvb-cv.mini .cvb-entry{margin-bottom:2px}.cvb-cv.mini .cvb-entry strong{font-size:3px}.cvb-cv.mini .minimal-contact,.cvb-cv.mini .timeline-contact,.cvb-cv.mini .elegant-contact,.cvb-cv.mini .boxed-contact{font-size:2.4px}
-        .cvb-saved{display:grid;gap:12px}.cvb-saved-item{display:grid;grid-template-columns:74px 1fr auto;gap:12px;align-items:center;border:1px solid #e5e7eb;background:#fff;border-radius:18px;padding:12px;color:inherit;text-align:left}.cvb-saved-item h3{margin:0 0 4px;font-size:15px}.cvb-saved-item p{margin:0;color:#6b7280;font-size:12px}.cvb-thumb{width:74px}.cvb-bottom{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:50;width:min(620px,calc(100% - 24px));display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,255,255,.96);backdrop-filter:blur(16px);border:1px solid #e5e7eb;border-radius:22px;padding:8px;box-shadow:0 16px 40px rgba(15,23,42,.15)}.cvb-nav{border:0;background:transparent;border-radius:15px;padding:8px 4px;color:#6b7280;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:850}.cvb-nav.active{background:#eef2ff;color:#4f46e5}.cvb-preview-page{max-width:760px;margin:auto}.cvb-preview-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-        @media(max-width:850px){.cvb-main{padding:14px 14px 96px}.cvb-hero{grid-template-columns:1fr;min-height:auto;padding:22px}.cvb-hero h1{font-size:29px}.cvb-hero-art{display:none}.cvb-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cvb-editor{grid-template-columns:1fr}.cvb-preview-sticky{display:none}.cvb-card{border-radius:20px}}
+        .cvb-saved{display:grid;gap:12px}.cvb-saved-item{display:grid;grid-template-columns:minmax(0,1fr) 40px;gap:8px;align-items:center;border:1px solid #e5e7eb;background:#fff;border-radius:18px;padding:8px}.cvb-saved-open{display:grid;grid-template-columns:74px 1fr auto;gap:12px;align-items:center;border:0;background:transparent;color:inherit;text-align:left;padding:4px;min-width:0;cursor:pointer}.cvb-saved-open h3{margin:0 0 4px;font-size:15px}.cvb-saved-open p{margin:0;color:#6b7280;font-size:12px}.cvb-saved-delete{width:38px;height:38px;border:0;border-radius:12px;background:#fff1f2;color:#e11d48;display:grid;place-items:center;cursor:pointer}.cvb-thumb{width:74px}.cvb-bottom{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:50;width:min(620px,calc(100% - 24px));display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,255,255,.96);backdrop-filter:blur(16px);border:1px solid #e5e7eb;border-radius:22px;padding:8px;box-shadow:0 16px 40px rgba(15,23,42,.15)}.cvb-nav{border:0;background:transparent;border-radius:15px;padding:8px 4px;color:#6b7280;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:850}.cvb-nav.active{background:#eef2ff;color:#4f46e5}.cvb-preview-page{max-width:760px;margin:auto}.cvb-preview-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+        @media(max-width:850px){.cvb-main{padding:14px 14px 96px}.cvb-hero{grid-template-columns:1fr;min-height:auto;padding:22px}.cvb-hero h1{font-size:29px}.cvb-hero-art{display:none}.cvb-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cvb-template-tools{grid-template-columns:1fr}.cvb-editor{grid-template-columns:1fr}.cvb-preview-sticky{display:none}.cvb-card{border-radius:20px}}
         @media print{body *{visibility:hidden!important}.cvb-print,.cvb-print *{visibility:visible!important}.cvb-print{position:absolute!important;left:0;top:0;width:100%!important}.cvb-header,.cvb-bottom,.cvb-preview-actions{display:none!important}.cvb-cv{box-shadow:none!important;border-radius:0!important}}
-        .dark .cvb-shell{background:#08090c;color:#f8fafc}.dark .cvb-header,.dark .cvb-card,.dark .cvb-saved-item,.dark .cvb-bottom{background:rgba(17,19,24,.96);border-color:#292d36}.dark .cvb-field input,.dark .cvb-field textarea,.dark .cvb-list-row input{background:#111318;color:#f8fafc;border-color:#30343f}.dark .cvb-muted,.dark .cvb-saved-item p{color:#9ca3af}.dark .cvb-tab{background:#151821;border-color:#30343f;color:#9ca3af}.dark .cvb-tab.active{background:#25214a;color:#c7c2ff;border-color:#5b4df5}.dark .cvb-editor-item{background:#111318;border-color:#2b3039}.dark .cvb-remove{background:#32151c}
+        .dark .cvb-shell{background:#08090c;color:#f8fafc}.dark .cvb-header,.dark .cvb-card,.dark .cvb-saved-item,.dark .cvb-bottom{background:rgba(17,19,24,.96);border-color:#292d36}.dark .cvb-field input,.dark .cvb-field textarea,.dark .cvb-list-row input,.dark .cvb-template-tools input,.dark .cvb-template-tools select{background:#111318;color:#f8fafc;border-color:#30343f}.dark .cvb-muted,.dark .cvb-saved-open p{color:#9ca3af}.dark .cvb-saved-delete{background:#32151c}.dark .cvb-tab{background:#151821;border-color:#30343f;color:#9ca3af}.dark .cvb-tab.active{background:#25214a;color:#c7c2ff;border-color:#5b4df5}.dark .cvb-editor-item{background:#111318;border-color:#2b3039}.dark .cvb-remove{background:#32151c}
       `}</style>
 
       <header className="cvb-header">
@@ -692,6 +734,11 @@ export default function CVBuilderPage() {
 
               {editorTab === 'profile' && (
                 <>
+                  <label className="cvb-field">
+                    <span>CV Name</span>
+                    <input value={data.title || ''} onChange={(e) => setData((current) => ({ ...current, title: e.target.value }))} placeholder="My Professional CV" />
+                  </label>
+
                   <div className="cvb-photo-row">
                     <div className="cvb-photo">{data.profile.photo ? <img src={data.profile.photo} alt="" /> : <User size={34} />}</div>
                     <div>
@@ -799,13 +846,31 @@ export default function CVBuilderPage() {
             <div className="cvb-section-head">
               <div>
                 <h2>Choose Template</h2>
-                <p className="cvb-muted">40 styles • 10 layouts • ready to expand to 50</p>
+                <p className="cvb-muted">50 styles • 10 layouts • Local only</p>
               </div>
             </div>
+
+            <div className="cvb-template-tools">
+              <input value={templateSearch} onChange={(e) => setTemplateSearch(e.target.value)} placeholder="Search 50 templates..." />
+              <select value={templateLayout} onChange={(e) => setTemplateLayout(e.target.value)}>
+                <option value="all">All layouts</option>
+                <option value="sidebar-left">Sidebar Left</option>
+                <option value="minimal">Minimal</option>
+                <option value="header-band">Header Band</option>
+                <option value="creative">Creative</option>
+                <option value="classic">Classic</option>
+                <option value="sidebar-right">Sidebar Right</option>
+                <option value="timeline">Timeline</option>
+                <option value="banner">Banner</option>
+                <option value="elegant">Elegant</option>
+                <option value="boxed">Boxed</option>
+              </select>
+            </div>
+
             <div className="cvb-grid">
-              {templates.map((item) => (
+              {filteredTemplates.length ? filteredTemplates.map((item) => (
                 <TemplateCard key={item.id} item={item} active={data.templateId === item.id} onClick={() => { chooseTemplate(item.id); setScreen('preview') }} />
-              ))}
+              )) : <div className="cvb-template-empty">No template found.</div>}
             </div>
           </>
         )}
@@ -827,13 +892,16 @@ export default function CVBuilderPage() {
               <button className="cvb-btn blue" type="button" onClick={createNew}><Plus size={17} /> New CV</button>
             </div>
             <div className="cvb-saved">
-              {savedCvs.map((item) => (
-                <button className="cvb-saved-item" type="button" key={item.id} onClick={() => openSaved(item)}>
-                  <div className="cvb-thumb"><CVPreview data={item} mini /></div>
-                  <div><h3>{item.title || item.profile.fullName || 'My CV'}</h3><p>{item.profile.jobTitle || 'Professional CV'}</p></div>
-                  <ChevronRight size={20} />
-                </button>
-              ))}
+              {savedCvs.length ? savedCvs.map((item) => (
+                <div className="cvb-saved-item" key={item.id}>
+                  <button className="cvb-saved-open" type="button" onClick={() => openSaved(item)}>
+                    <div className="cvb-thumb"><CVPreview data={item} mini /></div>
+                    <div><h3>{item.title || item.profile.fullName || 'My CV'}</h3><p>{item.profile.jobTitle || 'Professional CV'}</p></div>
+                    <ChevronRight size={20} />
+                  </button>
+                  <button className="cvb-saved-delete" type="button" onClick={() => deleteSaved(item.id)} aria-label="Delete CV"><Trash2 size={17} /></button>
+                </div>
+              )) : <div className="cvb-template-empty">No saved CV yet.</div>}
             </div>
           </>
         )}
