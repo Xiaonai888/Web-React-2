@@ -4,6 +4,7 @@ import { PageHeader, PageShell, SurfaceCard } from '../../components/common/Page
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { convertPicToArt } from './picToArtEngine'
+import { savePicToArtCreation } from './picToArtStore'
 
 registerTranslationNamespace('picToArt', {
   en: { title: 'Pic to Art', subtitle: 'Convert your photo into manga or art', back: 'Back', settings: 'Settings', uploadTitle: 'Add a photo', uploadBody: 'Choose a clear photo from your device.', choosePhoto: 'Choose Photo', changePhoto: 'Change Photo', removePhoto: 'Remove Photo', chooseStyle: 'Choose Style', manga: 'Manga', anime: 'Anime', sketch: 'Sketch', comic: 'Comic', watercolor: 'Watercolor', bwManga: 'B&W Manga', controls: 'Style & Edit', strength: 'Strength', detail: 'Detail', contrast: 'Contrast', lineArt: 'Line Art', reset: 'Reset', generate: 'Generate Art', generating: 'Creating artwork…', noPhoto: 'Choose a photo first.', invalidPhoto: 'Choose a valid image file.', failed: 'Could not create the artwork on this device.', privacy: 'Processed locally on this device. Your photo is not uploaded.', result: 'Your Artwork', original: 'Original', artwork: 'Artwork', download: 'Download PNG', generateAgain: 'Generate Again', output: 'Output', ready: 'Artwork is ready.' },
