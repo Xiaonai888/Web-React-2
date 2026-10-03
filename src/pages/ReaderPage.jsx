@@ -6648,23 +6648,12 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         qualifiedTimer = null
 
         try {
-          const result = await requestView('qualified')
-
-          if (
-            !cancelled &&
-            !result.counted &&
-            result.reason !== 'cooldown'
-          ) {
-            qualifiedViewSentRef.current = false
-          }
-        } catch (error) {
-          if (!cancelled) {
-            qualifiedViewSentRef.current = false
-            console.error('VIEW FLOW ERROR:', error)
-          }
-        }
-      }, 1000)
-    }
+  await requestView('qualified')
+} catch (error) {
+  if (!cancelled) {
+    console.error('VIEW FLOW ERROR:', error)
+  }
+}
 
     async function beginViewFlow() {
       try {
