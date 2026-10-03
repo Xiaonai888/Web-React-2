@@ -823,6 +823,7 @@ export default function Library() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [clearing, setClearing] = useState(false)
+  const [offline, setOffline] = useState(() => !navigator.onLine)
 
   const isLoggedIn = Boolean(getReaderToken())
   const loadedTabsRef = useRef(new Set())
@@ -834,6 +835,14 @@ export default function Library() {
     tab = activeTab,
     { force = false } = {}
   ) => {
+    if (!navigator.onLine) {
+      if (activeTabRef.current === tab) {
+        setLoading(false)
+        setMessage('')
+      }
+      return
+    }
+
     if (!isLoggedIn) {
       loadedTabsRef.current.clear()
       inFlightTabsRef.current.clear()
@@ -946,7 +955,11 @@ export default function Library() {
 
       loadedTabsRef.current.add(tab)
     } catch (error) {
-      if (activeTabRef.current === tab) {
+      if (!navigator.onLine) {
+        if (activeTabRef.current === tab) {
+          setMessage('')
+        }
+      } else if (activeTabRef.current === tab) {
         setMessage(
           error.message ||
             t('libraryPage.loadLibraryFailed')
@@ -962,15 +975,37 @@ export default function Library() {
   }
 
   useEffect(() => {
-  if (!navigator.onLine) {
-    setActiveTab('Downloads')
-    setLoading(false)
-    setMessage('')
-    return
-  }
-  activeTabRef.current = activeTab
-  loadLibrary(activeTab)
-}, [activeTab, isLoggedIn])
+    const handleOffline = () => {
+      setOffline(true)
+      activeTabRef.current = 'Downloads'
+      setActiveTab('Downloads')
+      setActiveType('All')
+      setLoading(false)
+      setMessage('')
+    }
+
+    const handleOnline = () => {
+      setOffline(false)
+      activeTabRef.current = activeTab
+      loadLibrary(activeTab, { force: true })
+    }
+
+    if (navigator.onLine) {
+      setOffline(false)
+      activeTabRef.current = activeTab
+      loadLibrary(activeTab)
+    } else {
+      handleOffline()
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [activeTab, isLoggedIn])
 
   const currentItems = useMemo(() => {
     if (activeTab === 'Subscribed') return subscriptionItems
@@ -1064,17 +1099,21 @@ export default function Library() {
               <div className="flex min-w-0 items-end gap-5 overflow-x-auto no-scrollbar">
                 {topTabs.map((tab) => {
                   const active = tab === activeTab
+                  const disabled = offline && tab !== 'Downloads'
 
                   return (
                     <button
                       key={tab}
+                      type="button"
+                      disabled={disabled}
                       onClick={() => {
+                        if (disabled) return
                         setActiveTab(tab)
                         setActiveType('All')
                       }}
                       className={`relative shrink-0 pb-3 text-[13px] font-bold transition-colors sm:text-[14px] ${
                         active ? 'tab-active-lib' : ''
-                      }`}
+                      } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
                       style={{
                         color: active
                           ? 'var(--shadow-text-primary)'
@@ -1242,7 +1281,7 @@ export default function Library() {
         ) : null}
       </div>
 
-      {!meLibrarySource && <ReaderProfileFooter />}
+      {!meLibrarySource && !offline && <ReaderProfileFooter />}
     </>
   )
 }
