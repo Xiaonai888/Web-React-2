@@ -206,6 +206,7 @@ const STUDIO_AD_API_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 const STUDIO_AD_SECTION_KEY = 'studio_header_ad'
 const STUDIO_AD_CACHE_KEY = 'shadow_studio_header_ads_v1'
+const STUDIO_AD_VERSION_KEY = 'shadow_studio_header_ads_version_v1'
 const STUDIO_AD_LAST_KEY = 'shadow_studio_header_ad_last_v1'
 const STUDIO_AD_CACHE_TTL_MS = 60 * 60 * 1000
 const STUDIO_AD_ROTATE_MS = 5000
@@ -263,6 +264,41 @@ function saveStudioAdCache(ads) {
   } catch {
     return
   }
+}
+
+function readStudioAdVersion() {
+  try {
+    const value = Number(localStorage.getItem(STUDIO_AD_VERSION_KEY) || 0)
+    return Number.isFinite(value) ? value : 0
+  } catch {
+    return 0
+  }
+}
+
+function saveStudioAdVersion(version) {
+  const value = Number(version)
+  if (!Number.isFinite(value) || value <= 0) return
+
+  try {
+    localStorage.setItem(STUDIO_AD_VERSION_KEY, String(value))
+  } catch {
+    return
+  }
+}
+
+async function fetchStudioSlidesVersion() {
+  const response = await fetch(
+    `${STUDIO_AD_API_URL}/api/public/content-versions?keys=slides`,
+    { cache: 'no-store' },
+  )
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load Studio Ad version')
+  }
+
+  const version = Number(data?.versions?.slides?.version)
+  return Number.isFinite(version) ? version : 0
 }
 
 function initialStudioAdIndex(ads) {
@@ -403,23 +439,35 @@ export default function StudioMobileWorkspace({
   useEffect(() => {
     let cancelled = false
     const cached = readStudioAdCache()
+    const cachedVersion = readStudioAdVersion()
 
     if (cached?.ads?.length) {
       setStudioAds(cached.ads)
       setStudioAdIndex(initialStudioAdIndex(cached.ads))
     }
 
-    const cacheFresh =
-      cached &&
-      Date.now() - cached.savedAt < STUDIO_AD_CACHE_TTL_MS
-
-    if (cacheFresh) {
-      return () => {
-        cancelled = true
-      }
-    }
-
     const loadAds = async () => {
+      let remoteVersion = 0
+
+      try {
+        remoteVersion = await fetchStudioSlidesVersion()
+      } catch {
+        remoteVersion = 0
+      }
+
+      const cacheFreshByAge =
+        cached &&
+        Date.now() - cached.savedAt < STUDIO_AD_CACHE_TTL_MS
+
+      const cacheFreshByVersion =
+        cached &&
+        remoteVersion > 0 &&
+        cachedVersion === remoteVersion
+
+      if (cacheFreshByVersion || (!remoteVersion && cacheFreshByAge)) {
+        return
+      }
+
       try {
         const response = await fetch(
           `${STUDIO_AD_API_URL}/api/slides?section_key=${STUDIO_AD_SECTION_KEY}`,
@@ -437,6 +485,10 @@ export default function StudioMobileWorkspace({
         setStudioAds(nextAds)
         setStudioAdIndex(initialStudioAdIndex(nextAds))
         saveStudioAdCache(nextAds)
+
+        if (remoteVersion > 0) {
+          saveStudioAdVersion(remoteVersion)
+        }
       } catch {
         if (!cached?.ads?.length && !cancelled) {
           setStudioAds([])
