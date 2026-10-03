@@ -351,6 +351,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/apps/shadow-studio',
     '/apps/shadow-docs',
     '/apps/shadow-fx',
+    '/apps/enhance-local',
     '/reader/post/create',
     '/reader/post/review',
     '/author/comment-protection',
