@@ -12,6 +12,7 @@ import {
   MoreVertical,
   Plus,
   Save,
+  Trash2,
   User
 } from 'lucide-react'
 
@@ -116,12 +117,12 @@ function CVPreview({ data, mini = false }) {
 
         <section>
           <h4>SKILLS</h4>
-          {data.skills.slice(0, 5).map((item) => <small key={item}>{item}</small>)}
+          {data.skills.slice(0, 8).map((item, index) => <small key={`${item}-${index}`}>{item}</small>)}
         </section>
 
         <section>
           <h4>LANGUAGES</h4>
-          {data.languages.map((item) => <small key={item}>{item}</small>)}
+          {data.languages.slice(0, 6).map((item, index) => <small key={`${item}-${index}`}>{item}</small>)}
         </section>
       </aside>
 
@@ -138,9 +139,9 @@ function CVPreview({ data, mini = false }) {
           <h3 style={{ color: style.accent }}>EXPERIENCE</h3>
           {data.experience.map((item, index) => (
             <div className="cvb-entry" key={`${item.role}-${index}`}>
-              <strong>{item.role}</strong>
-              <span>{item.company}</span>
-              <small>{item.period}</small>
+              <strong>{item.role || 'Job Title'}</strong>
+              <span>{item.company || 'Company'}</span>
+              <small>{item.period || 'Period'}</small>
             </div>
           ))}
         </section>
@@ -149,9 +150,9 @@ function CVPreview({ data, mini = false }) {
           <h3 style={{ color: style.accent }}>EDUCATION</h3>
           {data.education.map((item, index) => (
             <div className="cvb-entry" key={`${item.degree}-${index}`}>
-              <strong>{item.degree}</strong>
-              <span>{item.school}</span>
-              <small>{item.period}</small>
+              <strong>{item.degree || 'Degree'}</strong>
+              <span>{item.school || 'School'}</span>
+              <small>{item.period || 'Period'}</small>
             </div>
           ))}
         </section>
@@ -164,6 +165,7 @@ export default function CVBuilderPage() {
   const navigate = useNavigate()
   const photoRef = useRef(null)
   const [screen, setScreen] = useState('home')
+  const [editorTab, setEditorTab] = useState('profile')
   const [data, setData] = useState(loadDraft)
   const [savedCvs, setSavedCvs] = useState(loadSaved)
 
@@ -187,6 +189,52 @@ export default function CVBuilderPage() {
     setData((current) => ({ ...current, templateId }))
   }
 
+  const updateObjectItem = (section, index, key, value) => {
+    setData((current) => ({
+      ...current,
+      [section]: current[section].map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item)
+    }))
+  }
+
+  const addObjectItem = (section) => {
+    const blank = section === 'experience'
+      ? { role: '', company: '', period: '' }
+      : { degree: '', school: '', period: '' }
+
+    setData((current) => ({
+      ...current,
+      [section]: [...current[section], blank]
+    }))
+  }
+
+  const removeObjectItem = (section, index) => {
+    setData((current) => ({
+      ...current,
+      [section]: current[section].filter((_, itemIndex) => itemIndex !== index)
+    }))
+  }
+
+  const updateTextItem = (section, index, value) => {
+    setData((current) => ({
+      ...current,
+      [section]: current[section].map((item, itemIndex) => itemIndex === index ? value : item)
+    }))
+  }
+
+  const addTextItem = (section) => {
+    setData((current) => ({
+      ...current,
+      [section]: [...current[section], '']
+    }))
+  }
+
+  const removeTextItem = (section, index) => {
+    setData((current) => ({
+      ...current,
+      [section]: current[section].filter((_, itemIndex) => itemIndex !== index)
+    }))
+  }
+
   const handlePhoto = (file) => {
     if (!file || !String(file.type || '').startsWith('image/')) return
     const reader = new FileReader()
@@ -199,7 +247,12 @@ export default function CVBuilderPage() {
     next.id = String(Date.now())
     next.title = 'New CV'
     next.profile = { ...next.profile, fullName: '', jobTitle: '', email: '', phone: '', location: '', about: '', photo: '' }
+    next.experience = [{ role: '', company: '', period: '' }]
+    next.education = [{ degree: '', school: '', period: '' }]
+    next.skills = ['']
+    next.languages = ['']
     setData(next)
+    setEditorTab('profile')
     setScreen('editor')
   }
 
@@ -214,6 +267,7 @@ export default function CVBuilderPage() {
 
   const openSaved = (item) => {
     setData(copy(item))
+    setEditorTab('profile')
     setScreen('editor')
   }
 
@@ -221,6 +275,14 @@ export default function CVBuilderPage() {
     setScreen('preview')
     setTimeout(() => window.print(), 100)
   }
+
+  const editorTabs = [
+    ['profile', 'Profile'],
+    ['experience', 'Experience'],
+    ['education', 'Education'],
+    ['skills', 'Skills'],
+    ['languages', 'Languages']
+  ]
 
   return (
     <div className="cvb-shell">
@@ -236,6 +298,7 @@ export default function CVBuilderPage() {
         .cvb-hero p{margin:0 0 20px;max-width:560px;opacity:.9}
         .cvb-btn{border:0;border-radius:16px;padding:13px 16px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;color:#4f46e5;cursor:pointer}
         .cvb-btn.blue{background:linear-gradient(135deg,#4f46e5,#2563eb);color:#fff}
+        .cvb-btn.soft{background:#eef2ff;color:#4f46e5}
         .cvb-hero-art{display:grid;place-items:center}
         .cvb-demo-paper{width:180px;aspect-ratio:.72;background:#fff;border-radius:14px;transform:rotate(4deg);box-shadow:0 20px 44px rgba(0,0,0,.22);position:relative;overflow:hidden}
         .cvb-demo-paper:before{content:"";position:absolute;inset:0 auto 0 0;width:34%;background:#164e9b}
@@ -256,13 +319,23 @@ export default function CVBuilderPage() {
         .cvb-editor{display:grid;grid-template-columns:minmax(320px,430px) minmax(470px,1fr);gap:20px;align-items:start}
         .cvb-card{background:#fff;border:1px solid #e5e7eb;border-radius:24px;padding:18px;box-shadow:0 10px 30px rgba(15,23,42,.06)}
         .cvb-card h2{margin:0 0 4px;font-size:22px}.cvb-muted{margin:0 0 18px;color:#6b7280;font-size:13px}
+        .cvb-tabs{display:flex;gap:8px;overflow-x:auto;margin:0 -2px 18px;padding:2px 2px 6px;scrollbar-width:none}
+        .cvb-tabs::-webkit-scrollbar{display:none}
+        .cvb-tab{border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;border-radius:999px;padding:9px 12px;font-size:11px;font-weight:900;white-space:nowrap;cursor:pointer}
+        .cvb-tab.active{border-color:#5b4df5;background:#eef2ff;color:#4f46e5}
         .cvb-photo-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}
         .cvb-photo{width:84px;height:84px;border-radius:50%;background:#eef2ff;display:grid;place-items:center;overflow:hidden;color:#4f46e5}
         .cvb-photo img{width:100%;height:100%;object-fit:cover}
         .cvb-field{display:block;margin-bottom:13px}.cvb-field span{display:block;font-size:12px;font-weight:850;margin-bottom:6px}
         .cvb-field input,.cvb-field textarea{width:100%;box-sizing:border-box;border:1px solid #d9deea;border-radius:13px;padding:12px 13px;font:inherit;background:#fff;color:#111827;outline:none}
         .cvb-field textarea{min-height:105px;resize:vertical}.cvb-field input:focus,.cvb-field textarea:focus{border-color:#5b4df5;box-shadow:0 0 0 3px rgba(91,77,245,.1)}
-        .cvb-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+        .cvb-editor-item{border:1px solid #e5e7eb;border-radius:18px;padding:14px;margin-bottom:12px;background:#fafbff}
+        .cvb-item-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+        .cvb-item-head strong{font-size:13px}
+        .cvb-remove{width:34px;height:34px;border:0;border-radius:10px;background:#fff1f2;color:#e11d48;display:grid;place-items:center;cursor:pointer}
+        .cvb-list-row{display:grid;grid-template-columns:1fr 38px;gap:8px;align-items:center;margin-bottom:9px}
+        .cvb-list-row input{width:100%;box-sizing:border-box;border:1px solid #d9deea;border-radius:13px;padding:12px 13px;font:inherit;background:#fff;color:#111827;outline:none}
+        .cvb-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
         .cvb-preview-sticky{position:sticky;top:86px}.cvb-preview-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:900}
         .cvb-cv{display:grid;grid-template-columns:32% 68%;aspect-ratio:.707;border-radius:14px;overflow:hidden;box-shadow:0 22px 52px rgba(15,23,42,.16)}
         .cvb-cv aside,.cvb-cv main{padding:7%;min-width:0}.cvb-avatar{width:74px;height:74px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.25);display:grid;place-items:center;margin-bottom:12px}
@@ -283,7 +356,9 @@ export default function CVBuilderPage() {
         @media(max-width:850px){.cvb-main{padding:14px 14px 96px}.cvb-hero{grid-template-columns:1fr;min-height:auto;padding:22px}.cvb-hero h1{font-size:29px}.cvb-hero-art{display:none}.cvb-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cvb-editor{grid-template-columns:1fr}.cvb-preview-sticky{display:none}.cvb-card{border-radius:20px}}
         @media print{body *{visibility:hidden!important}.cvb-print,.cvb-print *{visibility:visible!important}.cvb-print{position:absolute!important;left:0;top:0;width:100%!important}.cvb-header,.cvb-bottom,.cvb-preview-actions{display:none!important}.cvb-cv{box-shadow:none!important;border-radius:0!important}}
         .dark .cvb-shell{background:#08090c;color:#f8fafc}.dark .cvb-header,.dark .cvb-card,.dark .cvb-saved-item,.dark .cvb-bottom{background:rgba(17,19,24,.96);border-color:#292d36}
-        .dark .cvb-field input,.dark .cvb-field textarea{background:#111318;color:#f8fafc;border-color:#30343f}.dark .cvb-muted,.dark .cvb-saved-item p{color:#9ca3af}
+        .dark .cvb-field input,.dark .cvb-field textarea,.dark .cvb-list-row input{background:#111318;color:#f8fafc;border-color:#30343f}.dark .cvb-muted,.dark .cvb-saved-item p{color:#9ca3af}
+        .dark .cvb-tab{background:#151821;border-color:#30343f;color:#9ca3af}.dark .cvb-tab.active{background:#25214a;color:#c7c2ff;border-color:#5b4df5}
+        .dark .cvb-editor-item{background:#111318;border-color:#2b3039}.dark .cvb-remove{background:#32151c}
       `}</style>
 
       <header className="cvb-header">
@@ -321,6 +396,7 @@ export default function CVBuilderPage() {
                   active={data.templateId === item.id}
                   onClick={() => {
                     chooseTemplate(item.id)
+                    setEditorTab('profile')
                     setScreen('editor')
                   }}
                 />
@@ -332,34 +408,127 @@ export default function CVBuilderPage() {
         {screen === 'editor' && (
           <div className="cvb-editor">
             <section className="cvb-card">
-              <h2>Profile Information</h2>
-              <p className="cvb-muted">Saved locally on this device.</p>
+              <h2>CV Information</h2>
+              <p className="cvb-muted">Everything is saved locally on this device.</p>
 
-              <div className="cvb-photo-row">
-                <div className="cvb-photo">{data.profile.photo ? <img src={data.profile.photo} alt="" /> : <User size={34} />}</div>
-                <div>
-                  <input ref={photoRef} hidden type="file" accept="image/*" onChange={(e) => handlePhoto(e.target.files?.[0])} />
-                  <button className="cvb-btn blue" type="button" onClick={() => photoRef.current?.click()}><ImagePlus size={17} /> Add Photo</button>
-                </div>
+              <div className="cvb-tabs">
+                {editorTabs.map(([key, label]) => (
+                  <button
+                    className={`cvb-tab ${editorTab === key ? 'active' : ''}`}
+                    key={key}
+                    type="button"
+                    onClick={() => setEditorTab(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
 
-              {[
-                ['fullName', 'Full Name', 'Your full name'],
-                ['jobTitle', 'Job Title', 'Frontend Developer'],
-                ['email', 'Email', 'you@example.com'],
-                ['phone', 'Phone', '+855 ...'],
-                ['location', 'Location', 'Phnom Penh, Cambodia']
-              ].map(([key, label, placeholder]) => (
-                <label className="cvb-field" key={key}>
-                  <span>{label}</span>
-                  <input value={data.profile[key]} onChange={(e) => updateProfile(key, e.target.value)} placeholder={placeholder} />
-                </label>
-              ))}
+              {editorTab === 'profile' && (
+                <>
+                  <div className="cvb-photo-row">
+                    <div className="cvb-photo">{data.profile.photo ? <img src={data.profile.photo} alt="" /> : <User size={34} />}</div>
+                    <div>
+                      <input ref={photoRef} hidden type="file" accept="image/*" onChange={(e) => handlePhoto(e.target.files?.[0])} />
+                      <button className="cvb-btn blue" type="button" onClick={() => photoRef.current?.click()}><ImagePlus size={17} /> Add Photo</button>
+                    </div>
+                  </div>
 
-              <label className="cvb-field">
-                <span>About Me</span>
-                <textarea value={data.profile.about} onChange={(e) => updateProfile('about', e.target.value)} placeholder="Write a short professional summary..." />
-              </label>
+                  {[
+                    ['fullName', 'Full Name', 'Your full name'],
+                    ['jobTitle', 'Job Title', 'Frontend Developer'],
+                    ['email', 'Email', 'you@example.com'],
+                    ['phone', 'Phone', '+855 ...'],
+                    ['location', 'Location', 'Phnom Penh, Cambodia']
+                  ].map(([key, label, placeholder]) => (
+                    <label className="cvb-field" key={key}>
+                      <span>{label}</span>
+                      <input value={data.profile[key]} onChange={(e) => updateProfile(key, e.target.value)} placeholder={placeholder} />
+                    </label>
+                  ))}
+
+                  <label className="cvb-field">
+                    <span>About Me</span>
+                    <textarea value={data.profile.about} onChange={(e) => updateProfile('about', e.target.value)} placeholder="Write a short professional summary..." />
+                  </label>
+                </>
+              )}
+
+              {editorTab === 'experience' && (
+                <>
+                  {data.experience.map((item, index) => (
+                    <div className="cvb-editor-item" key={index}>
+                      <div className="cvb-item-head">
+                        <strong>Experience {index + 1}</strong>
+                        <button className="cvb-remove" type="button" onClick={() => removeObjectItem('experience', index)}><Trash2 size={16} /></button>
+                      </div>
+                      <label className="cvb-field">
+                        <span>Job Title</span>
+                        <input value={item.role} onChange={(e) => updateObjectItem('experience', index, 'role', e.target.value)} placeholder="Frontend Developer" />
+                      </label>
+                      <label className="cvb-field">
+                        <span>Company</span>
+                        <input value={item.company} onChange={(e) => updateObjectItem('experience', index, 'company', e.target.value)} placeholder="Company name" />
+                      </label>
+                      <label className="cvb-field">
+                        <span>Period</span>
+                        <input value={item.period} onChange={(e) => updateObjectItem('experience', index, 'period', e.target.value)} placeholder="Jan 2022 – Present" />
+                      </label>
+                    </div>
+                  ))}
+                  <button className="cvb-btn soft" type="button" onClick={() => addObjectItem('experience')}><Plus size={17} /> Add Experience</button>
+                </>
+              )}
+
+              {editorTab === 'education' && (
+                <>
+                  {data.education.map((item, index) => (
+                    <div className="cvb-editor-item" key={index}>
+                      <div className="cvb-item-head">
+                        <strong>Education {index + 1}</strong>
+                        <button className="cvb-remove" type="button" onClick={() => removeObjectItem('education', index)}><Trash2 size={16} /></button>
+                      </div>
+                      <label className="cvb-field">
+                        <span>Degree</span>
+                        <input value={item.degree} onChange={(e) => updateObjectItem('education', index, 'degree', e.target.value)} placeholder="Bachelor of Computer Science" />
+                      </label>
+                      <label className="cvb-field">
+                        <span>School / University</span>
+                        <input value={item.school} onChange={(e) => updateObjectItem('education', index, 'school', e.target.value)} placeholder="University name" />
+                      </label>
+                      <label className="cvb-field">
+                        <span>Period</span>
+                        <input value={item.period} onChange={(e) => updateObjectItem('education', index, 'period', e.target.value)} placeholder="2016 – 2020" />
+                      </label>
+                    </div>
+                  ))}
+                  <button className="cvb-btn soft" type="button" onClick={() => addObjectItem('education')}><Plus size={17} /> Add Education</button>
+                </>
+              )}
+
+              {editorTab === 'skills' && (
+                <>
+                  {data.skills.map((item, index) => (
+                    <div className="cvb-list-row" key={index}>
+                      <input value={item} onChange={(e) => updateTextItem('skills', index, e.target.value)} placeholder={`Skill ${index + 1}`} />
+                      <button className="cvb-remove" type="button" onClick={() => removeTextItem('skills', index)}><Trash2 size={16} /></button>
+                    </div>
+                  ))}
+                  <button className="cvb-btn soft" type="button" onClick={() => addTextItem('skills')}><Plus size={17} /> Add Skill</button>
+                </>
+              )}
+
+              {editorTab === 'languages' && (
+                <>
+                  {data.languages.map((item, index) => (
+                    <div className="cvb-list-row" key={index}>
+                      <input value={item} onChange={(e) => updateTextItem('languages', index, e.target.value)} placeholder={`Language ${index + 1}`} />
+                      <button className="cvb-remove" type="button" onClick={() => removeTextItem('languages', index)}><Trash2 size={16} /></button>
+                    </div>
+                  ))}
+                  <button className="cvb-btn soft" type="button" onClick={() => addTextItem('languages')}><Plus size={17} /> Add Language</button>
+                </>
+              )}
 
               <div className="cvb-actions">
                 <button className="cvb-btn blue" type="button" onClick={saveCurrent}><Save size={17} /> Save Draft</button>
