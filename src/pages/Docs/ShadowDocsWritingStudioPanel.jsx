@@ -27,6 +27,7 @@ import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
 import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
 import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
 import ShadowDocsConversionSheet from './ShadowDocsConversionSheet'
+import ShadowDocsVersionHistorySheet from './ShadowDocsVersionHistorySheet'
 
 const SHADOW_DOCS_FOLDERS_KEY = 'shadow-docs-folders-v1'
 const SHADOW_DOCS_FOLDER_MAP_KEY = 'shadow-docs-folder-map-v1'
@@ -46,6 +47,66 @@ function readShadowDocsFolderMap() {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
   } catch {
     return {}
+  }
+}
+
+
+const SHADOW_DOCS_HISTORY_PREFIX = 'shadow-docs-history-v1:'
+
+function shadowDocsHistoryKey(bookId) {
+  return `${SHADOW_DOCS_HISTORY_PREFIX}${String(bookId || '')}`
+}
+
+function shadowDocsHistoryWords(book) {
+  try {
+    const text = (book?.chapters || []).map(item => {
+      const doc = new DOMParser().parseFromString(String(item.html || ''), 'text/html')
+      return doc.body.textContent || ''
+    }).join(' ')
+    return text.trim() ? text.trim().split(/\s+/u).length : 0
+  } catch {
+    return 0
+  }
+}
+
+function shadowDocsVersionSnapshot(book) {
+  if (!book) return null
+  return {
+    title: String(book.title || 'Untitled Book').slice(0, 160),
+    author: String(book.author || '').slice(0, 120),
+    description: String(book.description || '').slice(0, 350),
+    status: book.status === 'completed' ? 'completed' : 'draft',
+    template: book.template,
+    settings: { ...(book.settings || {}) },
+    chapters: Array.isArray(book.chapters)
+      ? book.chapters.map(item => ({
+          id: item.id,
+          title: String(item.title || '').slice(0, 160),
+          html: String(item.html || ''),
+        }))
+      : [],
+  }
+}
+
+function readShadowDocsVersions(bookId) {
+  try {
+    const value = JSON.parse(localStorage.getItem(shadowDocsHistoryKey(bookId)) || '[]')
+    return Array.isArray(value) ? value.filter(item => item?.id && item?.snapshot).slice(0, 12) : []
+  } catch {
+    return []
+  }
+}
+
+function writeShadowDocsVersions(bookId, versions) {
+  const key = shadowDocsHistoryKey(bookId)
+  const safe = versions.slice(0, 12)
+  try {
+    localStorage.setItem(key, JSON.stringify(safe))
+    return safe
+  } catch {
+    const trimmed = safe.slice(0, 4)
+    localStorage.setItem(key, JSON.stringify(trimmed))
+    return trimmed
   }
 }
 
@@ -123,6 +184,7 @@ export default function ShadowDocsWritingStudioPanel({
   onPrint,
   onEditProperties,
   onOpenOutline,
+  onRestoreBook,
   status = 'Saved on this device',
 }) {
   const editorRef = useRef(null)
@@ -148,6 +210,8 @@ export default function ShadowDocsWritingStudioPanel({
   const [addToOpen, setAddToOpen] = useState(false)
   const [exportImageOpen, setExportImageOpen] = useState(false)
   const [conversionOpen, setConversionOpen] = useState(false)
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false)
+  const [versions, setVersions] = useState([])
   const [docFolders, setDocFolders] = useState(() => readShadowDocsFolders())
   const [currentFolderId, setCurrentFolderId] = useState('my-books')
   const onEditorBlurRef = useRef(onEditorBlur)
@@ -177,6 +241,8 @@ export default function ShadowDocsWritingStudioPanel({
     setAddToOpen(false)
     setExportImageOpen(false)
     setConversionOpen(false)
+    setVersionHistoryOpen(false)
+    setVersions(readShadowDocsVersions(book?.id))
     setDocFolders(readShadowDocsFolders())
     setCurrentFolderId(readShadowDocsFolderMap()[book?.id] || 'my-books')
   }, [book?.id, chapter?.id])
@@ -185,6 +251,7 @@ export default function ShadowDocsWritingStudioPanel({
     if (!localSaveDirty || !book?.id) return undefined
     if (localSaveSeconds <= 0) {
       onEditorBlurRef.current?.(book.id)
+      saveVersion('Auto save')
       setLocalSaveDirty(false)
       setLocalSaveSeconds(10)
       return undefined
@@ -497,6 +564,7 @@ export default function ShadowDocsWritingStudioPanel({
 
     if (command === 'save') {
       onEditorBlurRef.current?.(book.id)
+      saveVersion('Manual save')
       setLocalSaveDirty(false)
       setLocalSaveSeconds(10)
       setRibbonMessage('Saved on this device.')
@@ -1036,6 +1104,69 @@ export default function ShadowDocsWritingStudioPanel({
     }
   }
 
+
+  function saveVersion(reason = 'Saved version') {
+    if (!book?.id) return null
+    const snapshot = shadowDocsVersionSnapshot(book)
+    if (!snapshot) return null
+    const serialized = JSON.stringify(snapshot)
+    if (serialized.length > 1_800_000) {
+      setRibbonMessage('This document is too large for local version history. Download a backup instead.')
+      return null
+    }
+    const current = readShadowDocsVersions(book.id)
+    if (current[0]?.snapshot && JSON.stringify(current[0].snapshot) === serialized) {
+      setVersions(current)
+      return current[0]
+    }
+    const entry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: Date.now(),
+      reason,
+      chapterCount: snapshot.chapters.length,
+      words: shadowDocsHistoryWords(book),
+      snapshot,
+    }
+    try {
+      const next = writeShadowDocsVersions(book.id, [entry, ...current])
+      setVersions(next)
+      return entry
+    } catch {
+      setRibbonMessage('Could not save version history on this device.')
+      return null
+    }
+  }
+
+  function deleteVersion(versionId) {
+    if (!book?.id) return
+    const next = readShadowDocsVersions(book.id).filter(item => item.id !== versionId)
+    try {
+      localStorage.setItem(shadowDocsHistoryKey(book.id), JSON.stringify(next))
+      setVersions(next)
+    } catch {
+      setRibbonMessage('Could not delete this saved version.')
+    }
+  }
+
+  function clearVersionHistory() {
+    if (!book?.id || !globalThis.confirm?.('Clear all saved versions for this document?')) return
+    try {
+      localStorage.removeItem(shadowDocsHistoryKey(book.id))
+      setVersions([])
+    } catch {
+      setRibbonMessage('Could not clear version history.')
+    }
+  }
+
+  async function restoreVersion(version) {
+    if (!version?.snapshot || typeof onRestoreBook !== 'function') return
+    if (!globalThis.confirm?.('Restore this version? Your current document will be replaced.')) return
+    saveVersion('Before restore')
+    await Promise.resolve(onRestoreBook(version.snapshot))
+    setVersionHistoryOpen(false)
+    setRibbonMessage('Version restored.')
+  }
+
   async function runMobileMenuAction(action, payload = {}) {
     if (action === 'saveAs') {
       const name = String(payload.name || mobileDocumentName(book).replace(/\.[^.]+$/, '') || 'Docs').trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').slice(0, 80)
@@ -1105,6 +1236,14 @@ export default function ShadowDocsWritingStudioPanel({
     if (action === 'conversion') {
       setMobileMenuOpen(false)
       setConversionOpen(true)
+      return
+    }
+    if (action === 'versionHistory') {
+      await Promise.resolve(onEditorBlurRef.current?.(book.id))
+      saveVersion('Current version')
+      setVersions(readShadowDocsVersions(book.id))
+      setMobileMenuOpen(false)
+      setVersionHistoryOpen(true)
       return
     }
     if (action === 'exportPdf') {
@@ -1542,6 +1681,15 @@ export default function ShadowDocsWritingStudioPanel({
         setConversionOpen(false)
         setRibbonMessage(option === 'merge' ? 'Merge Documents selected.' : 'Compress Document selected.')
       }}
+    />
+    <ShadowDocsVersionHistorySheet
+      open={versionHistoryOpen}
+      documentName={mobileDocumentName(book)}
+      versions={versions}
+      onClose={() => setVersionHistoryOpen(false)}
+      onRestore={version => void restoreVersion(version)}
+      onDelete={deleteVersion}
+      onClear={clearVersionHistory}
     />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
