@@ -6687,14 +6687,11 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           return
         }
 
-        qualifiedViewSentRef.current = false
-      } catch (error) {
-        if (!cancelled) {
-          qualifiedViewSentRef.current = false
-          console.error('VIEW FLOW ERROR:', error)
-        }
-      }
-    }
+        } catch (error) {
+  if (!cancelled) {
+    console.error('VIEW FLOW ERROR:', error)
+  }
+}
 
     beginViewFlow()
 
