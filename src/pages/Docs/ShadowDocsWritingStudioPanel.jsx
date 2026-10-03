@@ -23,7 +23,6 @@ import { applyShadowDocsCase } from './ShadowDocsTextTransform'
 import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 import ShadowDocsShareSheet from './ShadowDocsShareSheet'
 import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
-import ShadowDocsSmartFindReplacePage from './ShadowDocsSmartFindReplacePage'
 import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
 import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
 import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
@@ -194,6 +193,7 @@ export default function ShadowDocsWritingStudioPanel({
   const imageInputRef = useRef(null)
   const imageTargetRef = useRef(null)
   const mailingInputRef = useRef(null)
+  const selectionPopupTapRef = useRef(0)
   const [imageWidth, setImageWidth] = useState(75)
   const [imageAlignment, setImageAlignment] = useState('center')
   const [imageError, setImageError] = useState('')
@@ -208,7 +208,6 @@ export default function ShadowDocsWritingStudioPanel({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
-  const [smartFindReplaceOpen, setSmartFindReplaceOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
   const [addToOpen, setAddToOpen] = useState(false)
   const [exportImageOpen, setExportImageOpen] = useState(false)
@@ -241,7 +240,6 @@ export default function ShadowDocsWritingStudioPanel({
     setMobileMenuOpen(false)
     setShareOpen(false)
     setFindReplaceOpen(false)
-    setSmartFindReplaceOpen(false)
     setPrintOpen(false)
     setAddToOpen(false)
     setExportImageOpen(false)
@@ -346,6 +344,155 @@ export default function ShadowDocsWritingStudioPanel({
 
   function currentSnapshot() {
     return selectionRef.current || rememberSelection()
+  }
+
+  function mobileSelectionAnchor() {
+    const editor = editorRef.current
+    const selection = globalThis.getSelection?.()
+    if (!editor || !selection?.rangeCount) return null
+    const range = selection.getRangeAt(0)
+    if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return null
+    let rect = range.getBoundingClientRect()
+    if ((!rect.width && !rect.height) || !Number.isFinite(rect.top)) rect = editor.getBoundingClientRect()
+    return {
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      centerX: rect.left + rect.width / 2,
+    }
+  }
+
+  function selectCurrentWord() {
+    const editor = editorRef.current
+    const selection = globalThis.getSelection?.()
+    if (!editor || !selection?.rangeCount) return false
+    const sourceRange = selection.getRangeAt(0)
+    let node = sourceRange.startContainer
+    let offset = sourceRange.startOffset
+
+    if (node.nodeType !== Node.TEXT_NODE) {
+      const candidate = node.childNodes?.[offset] || node.childNodes?.[Math.max(0, offset - 1)]
+      const walker = candidate ? document.createTreeWalker(candidate, NodeFilter.SHOW_TEXT) : null
+      node = candidate?.nodeType === Node.TEXT_NODE ? candidate : walker?.nextNode()
+      offset = node?.nodeType === Node.TEXT_NODE ? Math.min(node.data.length, offset) : 0
+    }
+
+    if (!node || node.nodeType !== Node.TEXT_NODE || !editor.contains(node)) return false
+
+    const value = node.data || ''
+    const isWord = character => Boolean(character) && /[\p{L}\p{M}\p{N}_]/u.test(character)
+    let start = Math.max(0, Math.min(value.length, offset))
+    let end = start
+
+    if (!isWord(value[start]) && start > 0 && isWord(value[start - 1])) start -= 1
+    while (start > 0 && isWord(value[start - 1])) start -= 1
+    while (end < value.length && isWord(value[end])) end += 1
+    if (end <= start) return false
+
+    const range = document.createRange()
+    range.setStart(node, start)
+    range.setEnd(node, end)
+    selection.removeAllRanges()
+    selection.addRange(range)
+    editor.focus()
+    return true
+  }
+
+  function showSelectionPopup(mode = 'expanded') {
+    if (!globalThis.matchMedia?.('(max-width:700px)').matches) return
+    const snapshot = rememberSelection()
+    if (!snapshot) return
+    if (mode === 'expanded' && (snapshot.collapsed || !snapshot.text?.trim())) {
+      setSelectionPopup(current => ({ ...current, open: false }))
+      return
+    }
+    setSelectionPopup({
+      open: true,
+      mode,
+      anchor: mobileSelectionAnchor(),
+    })
+  }
+
+  function handleEditorMouseUp() {
+    requestAnimationFrame(() => showSelectionPopup('expanded'))
+  }
+
+  function handleEditorDoubleClick() {
+    requestAnimationFrame(() => showSelectionPopup('compact'))
+  }
+
+  function handleEditorTouchEnd() {
+    const now = Date.now()
+    const doubleTap = now - selectionPopupTapRef.current < 380
+    selectionPopupTapRef.current = now
+    requestAnimationFrame(() => showSelectionPopup(doubleTap ? 'compact' : 'expanded'))
+  }
+
+  async function runSelectionPopupAction(action) {
+    const editor = editorRef.current
+    if (!editor) return
+
+    if (action === 'select') {
+      const snapshot = rememberSelection()
+      if (!snapshot || snapshot.collapsed) selectCurrentWord()
+      rememberSelection()
+      setSelectionPopup({ open: true, mode: 'expanded', anchor: mobileSelectionAnchor() })
+      return
+    }
+
+    if (action === 'selectAll') {
+      selectShadowDocsNodeContents(editor)
+      rememberSelection()
+      setSelectionPopup({ open: true, mode: 'expanded', anchor: mobileSelectionAnchor() })
+      return
+    }
+
+    setSelectionPopup(current => ({ ...current, open: false }))
+
+    if (action === 'copy') {
+      await runRibbonCommand('copy', true)
+      return
+    }
+    if (action === 'cut') {
+      await runRibbonCommand('cut', true)
+      return
+    }
+    if (action === 'highlight') {
+      await runRibbonCommand('highlight', ribbonState.backgroundColor || '#fff176')
+      return
+    }
+    if (action === 'search') {
+      setFindReplaceOpen(true)
+      return
+    }
+    if (action === 'translate') {
+      await runRibbonCommand('translate', true)
+      return
+    }
+    if (action === 'spellCheck') {
+      await runRibbonCommand('spellingGrammar', true)
+      return
+    }
+    if (action === 'scanText') {
+      await runRibbonCommand('ocr', true)
+      return
+    }
+    if (action === 'copyFormat') {
+      await runRibbonCommand('formatPainter', true)
+      return
+    }
+    if (action === 'comment') {
+      await runRibbonCommand('newComment', true)
+      return
+    }
+    if (action === 'share') {
+      await openShareSheet()
+      return
+    }
+    if (action === 'format') {
+      setRibbonMessage('Use Format in the footer for font and paragraph controls.')
+    }
   }
 
   function finishRibbonChange(changed, message = '') {
@@ -1647,22 +1794,17 @@ export default function ShadowDocsWritingStudioPanel({
       onSocialShare={() => void shareToSocial()}
       onSettingsChange={() => {}}
     />
+    <ShadowDocsSelectionPopup
+      open={selectionPopup.open}
+      mode={selectionPopup.mode}
+      anchor={selectionPopup.anchor}
+      onClose={() => setSelectionPopup(current => ({ ...current, open: false }))}
+      onAction={action => void runSelectionPopupAction(action)}
+    />
     <ShadowDocsFindReplaceModal
       open={findReplaceOpen}
       editorRef={editorRef}
       onClose={() => setFindReplaceOpen(false)}
-      onMoreOptions={() => setSmartFindReplaceOpen(true)}
-      onChange={html => {
-        if (!chapter) return
-        onChangeHTML?.(chapter.id, html)
-        setLocalSaveDirty(true)
-        setLocalSaveSeconds(10)
-      }}
-    />
-    <ShadowDocsSmartFindReplacePage
-      open={smartFindReplaceOpen}
-      editorRef={editorRef}
-      onBack={() => setSmartFindReplaceOpen(false)}
       onChange={html => {
         if (!chapter) return
         onChangeHTML?.(chapter.id, html)
@@ -1767,10 +1909,19 @@ export default function ShadowDocsWritingStudioPanel({
           onInput={emitChange}
           onBlur={() => { onEditorBlurRef.current?.(book.id); setLocalSaveDirty(false); setLocalSaveSeconds(10) }}
           onPaste={pastePlain}
-          onMouseUp={rememberSelection}
-          onKeyUp={rememberSelection}
-          onTouchEnd={rememberSelection}
+          onMouseUp={handleEditorMouseUp}
+          onDoubleClick={handleEditorDoubleClick}
+          onKeyUp={() => {
+            rememberSelection()
+            setSelectionPopup(current => ({ ...current, open: false }))
+          }}
+          onTouchEnd={handleEditorTouchEnd}
           onFocus={rememberSelection}
+          onContextMenu={event => {
+            if (!globalThis.matchMedia?.('(max-width:700px)').matches) return
+            event.preventDefault()
+            requestAnimationFrame(() => showSelectionPopup('expanded'))
+          }}
           data-placeholder="Start writing your chapter…"
           role="textbox"
           aria-label="Chapter text editor"
