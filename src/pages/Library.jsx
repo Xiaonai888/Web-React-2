@@ -962,9 +962,15 @@ export default function Library() {
   }
 
   useEffect(() => {
-    activeTabRef.current = activeTab
-    loadLibrary(activeTab)
-  }, [activeTab, isLoggedIn])
+  if (!navigator.onLine) {
+    setActiveTab('Downloads')
+    setLoading(false)
+    setMessage('')
+    return
+  }
+  activeTabRef.current = activeTab
+  loadLibrary(activeTab)
+}, [activeTab, isLoggedIn])
 
   const currentItems = useMemo(() => {
     if (activeTab === 'Subscribed') return subscriptionItems
