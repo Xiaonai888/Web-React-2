@@ -26,6 +26,7 @@ import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
 import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
 import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
 import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
+import ShadowDocsConversionSheet from './ShadowDocsConversionSheet'
 
 const SHADOW_DOCS_FOLDERS_KEY = 'shadow-docs-folders-v1'
 const SHADOW_DOCS_FOLDER_MAP_KEY = 'shadow-docs-folder-map-v1'
@@ -146,6 +147,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [printOpen, setPrintOpen] = useState(false)
   const [addToOpen, setAddToOpen] = useState(false)
   const [exportImageOpen, setExportImageOpen] = useState(false)
+  const [conversionOpen, setConversionOpen] = useState(false)
   const [docFolders, setDocFolders] = useState(() => readShadowDocsFolders())
   const [currentFolderId, setCurrentFolderId] = useState('my-books')
   const onEditorBlurRef = useRef(onEditorBlur)
@@ -174,6 +176,7 @@ export default function ShadowDocsWritingStudioPanel({
     setPrintOpen(false)
     setAddToOpen(false)
     setExportImageOpen(false)
+    setConversionOpen(false)
     setDocFolders(readShadowDocsFolders())
     setCurrentFolderId(readShadowDocsFolderMap()[book?.id] || 'my-books')
   }, [book?.id, chapter?.id])
@@ -1099,7 +1102,12 @@ export default function ShadowDocsWritingStudioPanel({
       setExportImageOpen(true)
       return
     }
-    if (action === 'exportPdf' || action === 'conversion') {
+    if (action === 'conversion') {
+      setMobileMenuOpen(false)
+      setConversionOpen(true)
+      return
+    }
+    if (action === 'exportPdf') {
       onOpenPDF?.()
       return
     }
@@ -1525,6 +1533,15 @@ export default function ShadowDocsWritingStudioPanel({
       chapterTitle={chapter?.title || `Chapter ${chapterIndex + 1}`}
       onClose={() => setExportImageOpen(false)}
       onExport={exportDocsAsImage}
+    />
+    <ShadowDocsConversionSheet
+      open={conversionOpen}
+      documentName={mobileDocumentName(book)}
+      onClose={() => setConversionOpen(false)}
+      onSelect={option => {
+        setConversionOpen(false)
+        setRibbonMessage(option === 'merge' ? 'Merge Documents selected.' : 'Compress Document selected.')
+      }}
     />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
