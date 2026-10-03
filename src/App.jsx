@@ -85,6 +85,7 @@ const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const AppPage = lazy(() => import('./pages/Me/AppPage'))
 const AppAccessGuard = lazy(() => import('./pages/Me/AppAccessGuard'))
 const ShadowStudioPage = lazy(() => import('./pages/Studio/ShadowStudioPage'))
+const ShadowFXPage = lazy(() => import('./pages/FX/ShadowFXPage'))
 const ShadowDocsWorkspace = lazy(() => import('./pages/Docs/ShadowDocsWorkspace'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
@@ -348,6 +349,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/app',
     '/apps/shadow-studio',
     '/apps/shadow-docs',
+    '/apps/shadow-fx',
     '/reader/post/create',
     '/reader/post/review',
     '/author/comment-protection',
@@ -1486,6 +1488,7 @@ const shouldShowOpeningAds =
         <Route path="/author/top-supporters" element={<AuthorTopSupportersPage />} />
         <Route path="/author/monthly-earnings" element={<AuthorMonthlyEarningsPage />} />
         <Route path="/app" element={<LazyPage><AppPage /></LazyPage>} />
+        <Route path="/apps/shadow-fx" element={<LazyPage><ShadowFXPage /></LazyPage>} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
