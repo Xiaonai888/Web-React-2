@@ -19,6 +19,18 @@ registerTranslationNamespace('shadowFx', {
     soft: 'Soft',
     adjust: 'Adjust',
     filters: 'Filters',
+    effects: 'Effects',
+    export: 'Export',
+    blur: 'Blur',
+    grain: 'Grain',
+    glow: 'Glow',
+    undo: 'Undo',
+    redo: 'Redo',
+    format: 'Format',
+    quality: 'Quality',
+    jpg: 'JPG',
+    png: 'PNG',
+    webp: 'WebP',
     brightness: 'Brightness',
     contrast: 'Contrast',
     highlights: 'Highlights',
@@ -52,6 +64,18 @@ registerTranslationNamespace('shadowFx', {
     soft: 'ទន់',
     adjust: 'កែពន្លឺ',
     filters: 'ហ្វីលធ័រ',
+    effects: 'បែបផែន',
+    export: 'រក្សាទុក',
+    blur: 'ព្រិល',
+    grain: 'គ្រាប់ហ្វីល',
+    glow: 'ពន្លឺរលោង',
+    undo: 'ថយក្រោយ',
+    redo: 'ធ្វើឡើងវិញ',
+    format: 'ប្រភេទឯកសារ',
+    quality: 'គុណភាព',
+    jpg: 'JPG',
+    png: 'PNG',
+    webp: 'WebP',
     brightness: 'ពន្លឺ',
     contrast: 'កម្រិតផ្ទុយ',
     highlights: 'តំបន់ភ្លឺ',
@@ -85,6 +109,18 @@ registerTranslationNamespace('shadowFx', {
     soft: '柔和',
     adjust: '调整',
     filters: '滤镜',
+    effects: '效果',
+    export: '导出',
+    blur: '模糊',
+    grain: '颗粒',
+    glow: '光晕',
+    undo: '撤销',
+    redo: '重做',
+    format: '格式',
+    quality: '质量',
+    jpg: 'JPG',
+    png: 'PNG',
+    webp: 'WebP',
     brightness: '亮度',
     contrast: '对比度',
     highlights: '高光',
@@ -118,6 +154,18 @@ registerTranslationNamespace('shadowFx', {
     soft: 'ソフト',
     adjust: '調整',
     filters: 'フィルター',
+    effects: 'エフェクト',
+    export: '書き出し',
+    blur: 'ぼかし',
+    grain: '粒子',
+    glow: 'グロー',
+    undo: '元に戻す',
+    redo: 'やり直す',
+    format: '形式',
+    quality: '品質',
+    jpg: 'JPG',
+    png: 'PNG',
+    webp: 'WebP',
     brightness: '明るさ',
     contrast: 'コントラスト',
     highlights: 'ハイライト',
@@ -151,6 +199,18 @@ registerTranslationNamespace('shadowFx', {
     soft: '소프트',
     adjust: '조정',
     filters: '필터',
+    effects: '효과',
+    export: '내보내기',
+    blur: '블러',
+    grain: '그레인',
+    glow: '글로우',
+    undo: '실행 취소',
+    redo: '다시 실행',
+    format: '형식',
+    quality: '품질',
+    jpg: 'JPG',
+    png: 'PNG',
+    webp: 'WebP',
     brightness: '밝기',
     contrast: '대비',
     highlights: '하이라이트',
@@ -182,6 +242,9 @@ const DEFAULTS = {
   fade: 0,
   vignette: 0,
   sharpen: 0,
+  blur: 0,
+  grain: 0,
+  glow: 0,
 }
 
 const PRESETS = {
@@ -206,6 +269,18 @@ const SLIDERS = [
   ['fade', 0, 100],
   ['vignette', 0, 100],
   ['sharpen', 0, 100],
+]
+
+const EFFECT_SLIDERS = [
+  ['blur', 0, 20],
+  ['grain', 0, 100],
+  ['glow', 0, 100],
+]
+
+const EXPORT_FORMATS = [
+  { key: 'jpg', mime: 'image/jpeg', extension: 'jpg' },
+  { key: 'png', mime: 'image/png', extension: 'png' },
+  { key: 'webp', mime: 'image/webp', extension: 'webp' },
 ]
 
 function clamp(value) {
@@ -316,7 +391,61 @@ function applySharpen(context, width, height, amount) {
   context.putImageData(output, 0, 0)
 }
 
-function Slider({ label, value, min, max, onChange }) {
+function applyGrain(context, width, height, amount) {
+  if (!amount) return
+  const imageData = context.getImageData(0, 0, width, height)
+  const data = imageData.data
+  let seed = 1337
+  const strength = amount * 0.55
+
+  for (let index = 0; index < data.length; index += 4) {
+    seed = (seed * 1664525 + 1013904223) >>> 0
+    const noise = ((seed / 4294967295) - 0.5) * strength
+    data[index] = clamp(data[index] + noise)
+    data[index + 1] = clamp(data[index + 1] + noise)
+    data[index + 2] = clamp(data[index + 2] + noise)
+  }
+
+  context.putImageData(imageData, 0, 0)
+}
+
+function applyBlurAndGlow(context, canvas, values) {
+  const blurPixels = Math.max(0, Number(values.blur || 0)) * 0.08
+  const glow = Math.max(0, Number(values.glow || 0)) / 100
+  if (!blurPixels && !glow) return
+
+  const snapshot = document.createElement('canvas')
+  snapshot.width = canvas.width
+  snapshot.height = canvas.height
+  const snapshotContext = snapshot.getContext('2d', { alpha: false })
+  if (!snapshotContext) return
+  snapshotContext.drawImage(canvas, 0, 0)
+
+  if (blurPixels) {
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    context.filter = `blur(${blurPixels}px)`
+    context.drawImage(snapshot, 0, 0)
+    context.filter = 'none'
+  }
+
+  if (glow) {
+    const glowSource = document.createElement('canvas')
+    glowSource.width = canvas.width
+    glowSource.height = canvas.height
+    const glowContext = glowSource.getContext('2d', { alpha: false })
+    if (!glowContext) return
+    glowContext.drawImage(canvas, 0, 0)
+
+    context.save()
+    context.globalCompositeOperation = 'screen'
+    context.globalAlpha = glow * 0.42
+    context.filter = `blur(${2 + glow * 12}px) brightness(1.08)`
+    context.drawImage(glowSource, 0, 0)
+    context.restore()
+  }
+}
+
+function Slider({ label, value, min, max, onChange, onStart, onFinish }) {
   return (
     <div className="grid grid-cols-[110px_1fr_42px] items-center gap-3 py-2">
       <span className="truncate text-[12px] font-semibold text-white/88">{label}</span>
@@ -325,6 +454,9 @@ function Slider({ label, value, min, max, onChange }) {
         min={min}
         max={max}
         value={value}
+        onPointerDown={onStart}
+        onPointerUp={onFinish}
+        onPointerCancel={onFinish}
         onChange={(event) => onChange(Number(event.target.value))}
         className="w-full accent-[#7C4DFF]"
       />
@@ -341,6 +473,7 @@ export default function ShadowFXPage() {
   const fileRef = useRef(null)
   const cameraRef = useRef(null)
   const objectUrlRef = useRef('')
+  const adjustmentStartRef = useRef(null)
   const [sourceUrl, setSourceUrl] = useState('')
   const [values, setValues] = useState(DEFAULTS)
   const [preset, setPreset] = useState('original')
@@ -348,6 +481,10 @@ export default function ShadowFXPage() {
   const [compare, setCompare] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [undoStack, setUndoStack] = useState([])
+  const [redoStack, setRedoStack] = useState([])
+  const [exportFormat, setExportFormat] = useState('jpg')
+  const [exportQuality, setExportQuality] = useState(94)
 
   useEffect(() => {
     return () => {
@@ -361,7 +498,8 @@ export default function ShadowFXPage() {
     const saturation = Math.max(0, 1 + values.saturation / 100)
     const sepia = Math.max(0, Math.min(0.35, values.temperature / 280))
     const hue = values.tint * 0.12 - Math.min(0, values.temperature) * 0.08
-    return `brightness(${brightness}) contrast(${contrast}) saturate(${saturation}) sepia(${sepia}) hue-rotate(${hue}deg)`
+    const blur = Math.max(0, values.blur) * 0.08
+    return `brightness(${brightness}) contrast(${contrast}) saturate(${saturation}) sepia(${sepia}) hue-rotate(${hue}deg) blur(${blur}px)`
   }, [values])
 
   function chooseImage(file) {
@@ -374,12 +512,33 @@ export default function ShadowFXPage() {
     setPreset('original')
     setPanel('filters')
     setCompare(false)
+    setUndoStack([])
+    setRedoStack([])
+    adjustmentStartRef.current = null
     setError('')
   }
 
+  function rememberCurrent() {
+    setUndoStack(stack => [...stack.slice(-29), values])
+    setRedoStack([])
+  }
+
   function applyPreset(key) {
+    rememberCurrent()
     setPreset(key)
-    setValues(PRESETS[key])
+    setValues({ ...PRESETS[key] })
+  }
+
+  function beginAdjustment() {
+    if (!adjustmentStartRef.current) adjustmentStartRef.current = values
+  }
+
+  function finishAdjustment() {
+    const start = adjustmentStartRef.current
+    adjustmentStartRef.current = null
+    if (!start || JSON.stringify(start) === JSON.stringify(values)) return
+    setUndoStack(stack => [...stack.slice(-29), start])
+    setRedoStack([])
   }
 
   function updateValue(key, value) {
@@ -387,8 +546,27 @@ export default function ShadowFXPage() {
     setValues(current => ({ ...current, [key]: value }))
   }
 
+  function undoEdit() {
+    if (!undoStack.length) return
+    const previous = undoStack[undoStack.length - 1]
+    setUndoStack(stack => stack.slice(0, -1))
+    setRedoStack(stack => [values, ...stack.slice(0, 29)])
+    setValues(previous)
+    setPreset('')
+  }
+
+  function redoEdit() {
+    if (!redoStack.length) return
+    const next = redoStack[0]
+    setRedoStack(stack => stack.slice(1))
+    setUndoStack(stack => [...stack.slice(-29), values])
+    setValues(next)
+    setPreset('')
+  }
+
   function resetAll() {
-    setValues(DEFAULTS)
+    if (JSON.stringify(values) !== JSON.stringify(DEFAULTS)) rememberCurrent()
+    setValues({ ...DEFAULTS })
     setPreset('original')
     setError('')
   }
@@ -423,15 +601,19 @@ export default function ShadowFXPage() {
       const imageData = context.getImageData(0, 0, width, height)
       context.putImageData(applyPixels(imageData, values, width, height), 0, 0)
       applySharpen(context, width, height, values.sharpen)
+      applyBlurAndGlow(context, canvas, values)
+      applyGrain(context, width, height, values.grain)
 
+      const format = EXPORT_FORMATS.find(item => item.key === exportFormat) || EXPORT_FORMATS[0]
+      const quality = Math.max(0.4, Math.min(1, exportQuality / 100))
       const blob = await new Promise((resolve, reject) => {
-        canvas.toBlob(result => result ? resolve(result) : reject(new Error('EXPORT_FAILED')), 'image/jpeg', 0.94)
+        canvas.toBlob(result => result ? resolve(result) : reject(new Error('EXPORT_FAILED')), format.mime, format.mime === 'image/png' ? undefined : quality)
       })
 
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = `shadow-fx-${Date.now()}.jpg`
+      anchor.download = `shadow-fx-${Date.now()}.${format.extension}`
       document.body.appendChild(anchor)
       anchor.click()
       anchor.remove()
@@ -521,9 +703,28 @@ export default function ShadowFXPage() {
             {t('shadowFx.compare')}
           </button>
 
-          <button type="button" onClick={resetAll} className="h-10 rounded-xl border border-white/10 px-3 text-[12px] font-bold text-white/75">
-            <i className="fa-solid fa-rotate-left sm:mr-2" />
-            <span className="hidden sm:inline">{t('shadowFx.reset')}</span>
+          <button
+            type="button"
+            onClick={undoEdit}
+            disabled={!undoStack.length}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-white/75 disabled:opacity-30"
+            aria-label={t('shadowFx.undo')}
+          >
+            <i className="fa-solid fa-rotate-left text-[12px]" />
+          </button>
+
+          <button
+            type="button"
+            onClick={redoEdit}
+            disabled={!redoStack.length}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-white/75 disabled:opacity-30"
+            aria-label={t('shadowFx.redo')}
+          >
+            <i className="fa-solid fa-rotate-right text-[12px]" />
+          </button>
+
+          <button type="button" onClick={resetAll} className="hidden h-10 rounded-xl border border-white/10 px-3 text-[12px] font-bold text-white/75 sm:block">
+            {t('shadowFx.reset')}
           </button>
 
           <button
@@ -562,6 +763,30 @@ export default function ShadowFXPage() {
               />
             ) : null}
 
+            {!compare && values.glow > 0 ? (
+              <img
+                src={sourceUrl}
+                alt=""
+                className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                style={{
+                  filter: `${previewFilter} blur(${2 + values.glow * 0.1}px) brightness(1.08)`,
+                  mixBlendMode: 'screen',
+                  opacity: Math.min(0.42, values.glow / 240),
+                }}
+              />
+            ) : null}
+
+            {!compare && values.grain > 0 ? (
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  backgroundImage: 'repeating-radial-gradient(circle at 0 0, rgba(255,255,255,.35) 0 1px, rgba(0,0,0,.35) 1px 2px, transparent 2px 4px)',
+                  mixBlendMode: 'overlay',
+                  opacity: Math.min(0.32, values.grain / 320),
+                }}
+              />
+            ) : null}
+
             <button
               type="button"
               onPointerDown={() => setCompare(true)}
@@ -594,23 +819,23 @@ export default function ShadowFXPage() {
         </div>
 
         <aside className="rounded-[22px] border border-white/[0.06] bg-[#0D111C] p-3 lg:self-start">
-          <div className="mb-3 grid grid-cols-2 gap-2 rounded-[14px] bg-black/20 p-1">
-            <button
-              type="button"
-              onClick={() => setPanel('filters')}
-              className={`h-10 rounded-[11px] text-[12px] font-bold ${panel === 'filters' ? 'bg-[#7C4DFF] text-white' : 'text-white/55'}`}
-            >
-              <i className="fa-solid fa-wand-magic-sparkles mr-2" />
-              {t('shadowFx.filters')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPanel('adjust')}
-              className={`h-10 rounded-[11px] text-[12px] font-bold ${panel === 'adjust' ? 'bg-[#7C4DFF] text-white' : 'text-white/55'}`}
-            >
-              <i className="fa-solid fa-sliders mr-2" />
-              {t('shadowFx.adjust')}
-            </button>
+          <div className="mb-3 grid grid-cols-4 gap-1 rounded-[14px] bg-black/20 p-1">
+            {[
+              ['filters', 'fa-wand-magic-sparkles'],
+              ['adjust', 'fa-sliders'],
+              ['effects', 'fa-sparkles'],
+              ['export', 'fa-file-export'],
+            ].map(([key, icon]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setPanel(key)}
+                className={`h-10 rounded-[11px] px-1 text-[10px] font-bold sm:text-[11px] ${panel === key ? 'bg-[#7C4DFF] text-white' : 'text-white/55'}`}
+              >
+                <i className={`fa-solid ${icon} mr-1`} />
+                {t(`shadowFx.${key}`)}
+              </button>
+            ))}
           </div>
 
           {panel === 'filters' ? (
@@ -630,7 +855,7 @@ export default function ShadowFXPage() {
                 </button>
               ))}
             </div>
-          ) : (
+          ) : panel === 'adjust' ? (
             <div className="max-h-[58vh] overflow-y-auto pr-1 lg:max-h-[70vh]">
               {SLIDERS.map(([key, min, max]) => (
                 <Slider
@@ -639,9 +864,68 @@ export default function ShadowFXPage() {
                   value={values[key]}
                   min={min}
                   max={max}
+                  onStart={beginAdjustment}
+                  onFinish={finishAdjustment}
                   onChange={value => updateValue(key, value)}
                 />
               ))}
+            </div>
+          ) : panel === 'effects' ? (
+            <div>
+              {EFFECT_SLIDERS.map(([key, min, max]) => (
+                <Slider
+                  key={key}
+                  label={t(`shadowFx.${key}`)}
+                  value={values[key]}
+                  min={min}
+                  max={max}
+                  onStart={beginAdjustment}
+                  onFinish={finishAdjustment}
+                  onChange={value => updateValue(key, value)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 text-[11px] font-bold text-white/55">{t('shadowFx.format')}</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {EXPORT_FORMATS.map(item => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setExportFormat(item.key)}
+                      className={`h-11 rounded-[12px] border text-[11px] font-black ${
+                        exportFormat === item.key
+                          ? 'border-[#8B5CF6] bg-[#8B5CF6]/15 text-[#B7A2FF]'
+                          : 'border-white/[0.08] bg-white/[0.03] text-white/60'
+                      }`}
+                    >
+                      {t(`shadowFx.${item.key}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {exportFormat !== 'png' ? (
+                <Slider
+                  label={t('shadowFx.quality')}
+                  value={exportQuality}
+                  min={40}
+                  max={100}
+                  onChange={setExportQuality}
+                />
+              ) : null}
+
+              <button
+                type="button"
+                onClick={saveImage}
+                disabled={saving}
+                className="h-12 w-full rounded-[14px] bg-[#7C4DFF] text-[12px] font-black disabled:opacity-50"
+              >
+                <i className={`fa-solid ${saving ? 'fa-spinner animate-spin' : 'fa-download'} mr-2`} />
+                {saving ? t('shadowFx.saving') : t('shadowFx.save')}
+              </button>
             </div>
           )}
 
@@ -660,24 +944,24 @@ export default function ShadowFXPage() {
         </aside>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.07] bg-[#090D16]/96 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => setPanel('filters')}
-            className={`h-12 rounded-[15px] text-[12px] font-bold ${panel === 'filters' ? 'bg-[#7C4DFF]/18 text-[#B7A2FF]' : 'text-white/55'}`}
-          >
-            <i className="fa-solid fa-wand-magic-sparkles mr-2" />
-            {t('shadowFx.filters')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPanel('adjust')}
-            className={`h-12 rounded-[15px] text-[12px] font-bold ${panel === 'adjust' ? 'bg-[#7C4DFF]/18 text-[#B7A2FF]' : 'text-white/55'}`}
-          >
-            <i className="fa-solid fa-sliders mr-2" />
-            {t('shadowFx.adjust')}
-          </button>
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.07] bg-[#090D16]/96 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+          {[
+            ['filters', 'fa-wand-magic-sparkles'],
+            ['adjust', 'fa-sliders'],
+            ['effects', 'fa-sparkles'],
+            ['export', 'fa-file-export'],
+          ].map(([key, icon]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setPanel(key)}
+              className={`h-12 rounded-[13px] text-[9px] font-bold ${panel === key ? 'bg-[#7C4DFF]/18 text-[#B7A2FF]' : 'text-white/55'}`}
+            >
+              <i className={`fa-solid ${icon} mb-1 block text-[13px]`} />
+              {t(`shadowFx.${key}`)}
+            </button>
+          ))}
         </div>
       </nav>
     </div>
