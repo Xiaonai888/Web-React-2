@@ -91,6 +91,7 @@ export default function ShadowDocsFindReplaceModal({
   editorRef,
   onClose,
   onChange,
+  onMoreOptions,
 }) {
   const [findText, setFindText] = useState('')
   const [replaceText, setReplaceText] = useState('')
@@ -279,6 +280,20 @@ export default function ShadowDocsFindReplaceModal({
       .sd-find-replace-actions button:disabled{
         opacity:.38
       }
+      .sd-find-replace-more{
+        display:block;
+        margin:14px auto 0;
+        border:0;
+        background:transparent;
+        color:#8f8f8f;
+        padding:4px 10px;
+        font:inherit;
+        font-size:11px;
+        font-weight:700
+      }
+      .sd-find-replace-more:active{
+        color:#f3f3f3
+      }
       @media(min-width:640px){
         .sd-find-replace-backdrop{
           align-items:center;
@@ -361,6 +376,10 @@ export default function ShadowDocsFindReplaceModal({
           Replace all
         </button>
       </div>
+
+      <button type="button" className="sd-find-replace-more" onClick={onMoreOptions} disabled={!onMoreOptions}>
+        More options
+      </button>
     </section>
   </div>
 }
