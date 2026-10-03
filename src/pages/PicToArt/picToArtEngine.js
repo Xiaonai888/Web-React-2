@@ -1,5 +1,7 @@
-const MAX_SIDE = 2048
-const MAX_PIXELS = 4194304
+const QUALITY_PRESETS = {
+  standard: { maxSide: 1280, maxPixels: 2073600 },
+  hd: { maxSide: 2048, maxPixels: 4194304 },
+}
 
 function clamp(value, min = 0, max = 255) {
   return Math.max(min, Math.min(max, value))
@@ -20,10 +22,11 @@ function canvasToBlob(canvas) {
   })
 }
 
-function fitSize(width, height) {
-  let scale = Math.min(1, MAX_SIDE / Math.max(width, height))
+function fitSize(width, height, quality = 'hd') {
+  const preset = QUALITY_PRESETS[quality] || QUALITY_PRESETS.hd
+  let scale = Math.min(1, preset.maxSide / Math.max(width, height))
   const scaledPixels = width * height * scale * scale
-  if (scaledPixels > MAX_PIXELS) scale *= Math.sqrt(MAX_PIXELS / scaledPixels)
+  if (scaledPixels > preset.maxPixels) scale *= Math.sqrt(preset.maxPixels / scaledPixels)
   return {
     width: Math.max(1, Math.round(width * scale)),
     height: Math.max(1, Math.round(height * scale)),
@@ -143,11 +146,11 @@ function applyStyle(data, width, height, style, controls) {
   return data
 }
 
-export async function convertPicToArt({ sourceUrl, style, controls, onProgress }) {
+export async function convertPicToArt({ sourceUrl, style, controls, quality = 'hd', onProgress }) {
   const update = value => onProgress?.(value)
   update(5)
   const image = await loadImage(sourceUrl)
-  const size = fitSize(image.naturalWidth, image.naturalHeight)
+  const size = fitSize(image.naturalWidth, image.naturalHeight, quality)
   const canvas = document.createElement('canvas')
   canvas.width = size.width
   canvas.height = size.height
