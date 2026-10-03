@@ -100,14 +100,14 @@ function readShadowDocsVersions(bookId) {
 function writeShadowDocsVersions(bookId, versions) {
   const key = shadowDocsHistoryKey(bookId)
   const safe = versions.slice(0, 12)
-  try {
-    localStorage.setItem(key, JSON.stringify(safe))
-    return safe
-  } catch {
-    const trimmed = safe.slice(0, 4)
-    localStorage.setItem(key, JSON.stringify(trimmed))
-    return trimmed
+  for (let count = safe.length; count >= 1; count -= 1) {
+    const trimmed = safe.slice(0, count)
+    try {
+      localStorage.setItem(key, JSON.stringify(trimmed))
+      return trimmed
+    } catch {}
   }
+  throw new Error('Version history storage is full.')
 }
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
