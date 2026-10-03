@@ -19,6 +19,7 @@ const apps = [
   { key: 'shadow-docs', name: 'Shadow Docs', icon: 'fa-solid fa-book-open', path: '/apps/shadow-docs' },
   { key: 'shadow-fx', nameKey: 'shadowFx', name: 'Shadow FX', icon: 'fa-solid fa-wand-magic-sparkles', path: '/apps/shadow-fx' },
   { key: 'enhance-local', nameKey: 'enhanceLocal', name: 'Enhance Local', icon: 'fa-solid fa-image', path: '/apps/enhance-local' },
+  { key: 'qr-barcode', name: 'QR & Barcode', icon: 'fa-solid fa-qrcode', path: '/apps/qr-barcode' },
   { key: 'pic-to-art', name: 'Pic to Art', icon: 'fa-solid fa-wand-magic-sparkles', path: '/apps/pic-to-art' },
 ]
 
