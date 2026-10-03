@@ -45,27 +45,68 @@ export default function ShadowDocsRibbon({
 }) {
   const [localTab, setLocalTab] = useState('home')
   const [keyboardOpen, setKeyboardOpen] = useState(false)
+  const [keyboardInset, setKeyboardInset] = useState(0)
   const viewportBaselineRef = useRef(0)
   const selected = RENDERERS[activeTab] ? activeTab : localTab
   const Active = RENDERERS[selected] || ShadowDocsRibbonHomeTab
 
   useEffect(() => {
     const viewport = globalThis.visualViewport
-    if (!viewport) return undefined
+    let resetTimer = 0
 
-    function updateKeyboardState() {
-      const height = viewport.height || globalThis.innerHeight || 0
-      viewportBaselineRef.current = Math.max(viewportBaselineRef.current, height)
-      setKeyboardOpen(viewportBaselineRef.current - height > 120)
+    function currentHeight() {
+      return viewport?.height || globalThis.innerHeight || 0
     }
 
-    viewportBaselineRef.current = Math.max(globalThis.innerHeight || 0, viewport.height || 0)
+    function currentOffsetTop() {
+      return viewport?.offsetTop || 0
+    }
+
+    function updateKeyboardState() {
+      const height = currentHeight()
+      const offsetTop = currentOffsetTop()
+      const visibleBottom = height + offsetTop
+      const windowHeight = globalThis.innerHeight || 0
+
+      viewportBaselineRef.current = Math.max(
+        viewportBaselineRef.current,
+        visibleBottom,
+        windowHeight
+      )
+
+      const inset = Math.max(0, viewportBaselineRef.current - visibleBottom)
+      const open = inset > 120
+
+      setKeyboardOpen(open)
+      setKeyboardInset(open ? Math.round(inset) : 0)
+    }
+
+    function resetBaseline() {
+      viewportBaselineRef.current = 0
+      setKeyboardOpen(false)
+      setKeyboardInset(0)
+      window.clearTimeout(resetTimer)
+      resetTimer = window.setTimeout(updateKeyboardState, 180)
+    }
+
+    viewportBaselineRef.current = Math.max(
+      globalThis.innerHeight || 0,
+      currentHeight() + currentOffsetTop()
+    )
+
     updateKeyboardState()
-    viewport.addEventListener('resize', updateKeyboardState)
-    viewport.addEventListener('scroll', updateKeyboardState)
+
+    viewport?.addEventListener('resize', updateKeyboardState)
+    viewport?.addEventListener('scroll', updateKeyboardState)
+    globalThis.addEventListener?.('resize', updateKeyboardState)
+    globalThis.addEventListener?.('orientationchange', resetBaseline)
+
     return () => {
-      viewport.removeEventListener('resize', updateKeyboardState)
-      viewport.removeEventListener('scroll', updateKeyboardState)
+      window.clearTimeout(resetTimer)
+      viewport?.removeEventListener('resize', updateKeyboardState)
+      viewport?.removeEventListener('scroll', updateKeyboardState)
+      globalThis.removeEventListener?.('resize', updateKeyboardState)
+      globalThis.removeEventListener?.('orientationchange', resetBaseline)
     }
   }, [])
 
@@ -188,7 +229,9 @@ export default function ShadowDocsRibbon({
         .sd-mobile-tool.is-active{color:#35d0a6}
         .sd-mobile-tool.is-active .sd-mobile-tool-label{color:#35d0a6}
         .sd-mobile-editor-toolbar.is-keyboard-open{
+          bottom:var(--sd-keyboard-inset,0px);
           min-height:52px;
+          padding-bottom:0;
         }
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-editor-scroll{
           flex:5 1 0;
@@ -199,6 +242,7 @@ export default function ShadowDocsRibbon({
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-editor-fixed{
           flex:2 1 0;
           min-width:0;
+          border-left:1px solid #3a3a3a;
         }
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-tool{
           width:auto;
@@ -215,7 +259,7 @@ export default function ShadowDocsRibbon({
           flex:1 1 0;
         }
         .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-tool-label{display:none}
-        .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-tool svg{width:23px;height:23px}
+        .sd-mobile-editor-toolbar.is-keyboard-open .sd-mobile-tool svg{width:22px;height:22px}
       }
     `}</style>
 
@@ -236,7 +280,11 @@ export default function ShadowDocsRibbon({
       </div>
     </section>
 
-    <nav className={`sd-mobile-editor-toolbar ${keyboardOpen ? 'is-keyboard-open' : ''}`} aria-label="Mobile editor tools">
+    <nav
+      className={`sd-mobile-editor-toolbar ${keyboardOpen ? 'is-keyboard-open' : ''}`}
+      aria-label="Mobile editor tools"
+      style={{ '--sd-keyboard-inset': `${keyboardInset}px` }}
+    >
       <div className="sd-mobile-editor-scroll">
         {MOBILE_ITEMS.map(item => {
           const Icon = item.icon
