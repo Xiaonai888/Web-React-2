@@ -62,6 +62,11 @@ registerTranslationNamespace('shadowFx', {
     replace: 'Replace',
     chooseFirst: 'Choose a photo first.',
     failed: 'Could not process this photo on your device.',
+    saved: 'Saved to your device.',
+    invalidFile: 'Choose a supported image file.',
+    fileTooLarge: 'This photo is too large. Maximum file size is 40 MB.',
+    dropPhoto: 'Drop photo here',
+    shortcuts: 'Shortcuts',
   },
   km: {
     title: 'Shadow FX',
@@ -121,6 +126,11 @@ registerTranslationNamespace('shadowFx', {
     replace: 'ប្តូររូប',
     chooseFirst: 'សូមជ្រើសរូបភាពជាមុន។',
     failed: 'មិនអាចកែរូបភាពនេះលើឧបករណ៍បានទេ។',
+    saved: 'បានរក្សាទុកទៅឧបករណ៍របស់អ្នក។',
+    invalidFile: 'សូមជ្រើសឯកសាររូបភាពដែលគាំទ្រ។',
+    fileTooLarge: 'រូបនេះធំពេក។ ទំហំអតិបរមា 40 MB។',
+    dropPhoto: 'ទម្លាក់រូបនៅទីនេះ',
+    shortcuts: 'គ្រាប់ចុចរហ័ស',
   },
   zh: {
     title: 'Shadow FX',
@@ -180,6 +190,11 @@ registerTranslationNamespace('shadowFx', {
     replace: '更换',
     chooseFirst: '请先选择照片。',
     failed: '无法在此设备上处理这张照片。',
+    saved: '已保存到设备。',
+    invalidFile: '请选择支持的图片文件。',
+    fileTooLarge: '图片过大，最大支持 40 MB。',
+    dropPhoto: '将照片拖到这里',
+    shortcuts: '快捷键',
   },
   ja: {
     title: 'Shadow FX',
@@ -239,6 +254,11 @@ registerTranslationNamespace('shadowFx', {
     replace: '変更',
     chooseFirst: '先に写真を選択してください。',
     failed: 'この端末では写真を処理できませんでした。',
+    saved: '端末に保存しました。',
+    invalidFile: '対応している画像ファイルを選択してください。',
+    fileTooLarge: '画像が大きすぎます。最大 40 MB です。',
+    dropPhoto: 'ここに写真をドロップ',
+    shortcuts: 'ショートカット',
   },
   ko: {
     title: 'Shadow FX',
@@ -298,6 +318,11 @@ registerTranslationNamespace('shadowFx', {
     replace: '바꾸기',
     chooseFirst: '먼저 사진을 선택하세요.',
     failed: '이 기기에서 사진을 처리할 수 없습니다.',
+    saved: '기기에 저장했습니다.',
+    invalidFile: '지원되는 이미지 파일을 선택하세요.',
+    fileTooLarge: '사진이 너무 큽니다. 최대 40 MB입니다.',
+    dropPhoto: '여기에 사진 놓기',
+    shortcuts: '단축키',
   },
 })
 
@@ -379,6 +404,15 @@ const CROP_RATIOS = [
   { key: '9:16', value: 9 / 16 },
   { key: '16:9', value: 16 / 9 },
 ]
+
+const MAX_FILE_BYTES = 40 * 1024 * 1024
+const SUPPORTED_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/avif',
+])
 
 function clamp(value) {
   return Math.max(0, Math.min(255, value))
@@ -602,6 +636,8 @@ export default function ShadowFXPage() {
   const [compare, setCompare] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [dragging, setDragging] = useState(false)
   const [undoStack, setUndoStack] = useState([])
   const [redoStack, setRedoStack] = useState([])
   const [exportFormat, setExportFormat] = useState('jpg')
@@ -613,6 +649,63 @@ export default function ShadowFXPage() {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      const target = event.target
+      const editable =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable
+
+      if (editable) return
+
+      const modifier = event.ctrlKey || event.metaKey
+      const key = String(event.key || '').toLowerCase()
+
+      if (modifier && key === 'z' && !event.shiftKey) {
+        event.preventDefault()
+        undoEdit()
+        return
+      }
+
+      if ((modifier && key === 'y') || (modifier && event.shiftKey && key === 'z')) {
+        event.preventDefault()
+        redoEdit()
+        return
+      }
+
+      if (modifier && key === 's') {
+        event.preventDefault()
+        saveImage()
+        return
+      }
+
+      if (key === 'r') {
+        event.preventDefault()
+        resetAll()
+        return
+      }
+
+      if (key === 'c') {
+        setCompare(true)
+      }
+    }
+
+    function handleKeyUp(event) {
+      if (String(event.key || '').toLowerCase() === 'c') {
+        setCompare(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  })
 
   const previewFilter = useMemo(() => {
     const brightness = Math.max(0.2, 1 + values.brightness / 100)
@@ -632,7 +725,17 @@ export default function ShadowFXPage() {
   const previewTransform = `rotate(${transform.rotation}deg) scaleX(${transform.flipX ? -1 : 1}) scaleY(${transform.flipY ? -1 : 1})`
 
   function chooseImage(file) {
-    if (!file || !String(file.type || '').startsWith('image/')) return
+    if (!file) return
+    if (!SUPPORTED_IMAGE_TYPES.has(String(file.type || ''))) {
+      setError(t('shadowFx.invalidFile'))
+      setNotice('')
+      return
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setError(t('shadowFx.fileTooLarge'))
+      setNotice('')
+      return
+    }
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     const url = URL.createObjectURL(file)
     objectUrlRef.current = url
@@ -646,6 +749,7 @@ export default function ShadowFXPage() {
     setTransform({ ...DEFAULT_TRANSFORM })
     adjustmentStartRef.current = null
     setError('')
+    setNotice('')
   }
 
   function snapshot() {
@@ -730,6 +834,7 @@ export default function ShadowFXPage() {
     setTransform({ ...DEFAULT_TRANSFORM })
     setPreset('original')
     setError('')
+    setNotice('')
   }
 
   function resetCrop() {
@@ -829,6 +934,7 @@ export default function ShadowFXPage() {
       anchor.click()
       anchor.remove()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setNotice(t('shadowFx.saved'))
     } catch {
       setError(t('shadowFx.failed'))
     } finally {
@@ -853,8 +959,26 @@ export default function ShadowFXPage() {
           </div>
         </header>
 
-        <main className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg flex-col justify-center px-5 pb-20">
-          <div className="mx-auto grid h-24 w-24 place-items-center rounded-[30px] border border-violet-400/20 bg-violet-500/10 text-[38px] text-[#9B7CFF] shadow-[0_0_60px_rgba(124,77,255,.16)]">
+        <main
+          className={`mx-auto flex min-h-[calc(100vh-64px)] max-w-lg flex-col justify-center px-5 pb-20 transition ${dragging ? 'scale-[0.995]' : ''}`}
+          onDragEnter={(event) => {
+            event.preventDefault()
+            setDragging(true)
+          }}
+          onDragOver={(event) => {
+            event.preventDefault()
+            setDragging(true)
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false)
+          }}
+          onDrop={(event) => {
+            event.preventDefault()
+            setDragging(false)
+            chooseImage(event.dataTransfer.files?.[0])
+          }}
+        >
+          <div className={`mx-auto grid h-24 w-24 place-items-center rounded-[30px] border bg-violet-500/10 text-[38px] text-[#9B7CFF] shadow-[0_0_60px_rgba(124,77,255,.16)] ${dragging ? 'border-[#8B5CF6] bg-violet-500/20' : 'border-violet-400/20'}`}>
             <i className="fa-solid fa-wand-magic-sparkles" />
           </div>
 
@@ -862,6 +986,12 @@ export default function ShadowFXPage() {
             Shadow <span className="text-[#8B5CF6]">FX</span>
           </h1>
           <p className="mt-2 text-center text-[13px] font-medium text-white/48">{t('shadowFx.subtitle')}</p>
+          {dragging ? (
+            <div className="mt-5 rounded-[18px] border border-[#8B5CF6]/50 bg-[#8B5CF6]/10 px-4 py-4 text-center text-[13px] font-black text-[#B7A2FF]">
+              <i className="fa-solid fa-cloud-arrow-down mr-2" />
+              {t('shadowFx.dropPhoto')}
+            </div>
+          ) : null}
 
           <button
             type="button"
@@ -952,7 +1082,25 @@ export default function ShadowFXPage() {
 
       <main className="mx-auto grid max-w-6xl gap-4 px-3 pb-28 pt-3 lg:grid-cols-[1fr_340px] lg:pb-6">
         <div className="min-w-0">
-          <section className="relative flex min-h-[46vh] items-center justify-center overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#0D111C] p-2 lg:min-h-[72vh]">
+          <section
+            className={`relative flex min-h-[46vh] items-center justify-center overflow-hidden rounded-[22px] border bg-[#0D111C] p-2 lg:min-h-[72vh] ${dragging ? 'border-[#8B5CF6]/70' : 'border-white/[0.06]'}`}
+            onDragEnter={(event) => {
+              event.preventDefault()
+              setDragging(true)
+            }}
+            onDragOver={(event) => {
+              event.preventDefault()
+              setDragging(true)
+            }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false)
+            }}
+            onDrop={(event) => {
+              event.preventDefault()
+              setDragging(false)
+              chooseImage(event.dataTransfer.files?.[0])
+            }}
+          >
             <div
               className={`relative flex items-center justify-center overflow-hidden ${cropRatio ? 'w-full' : 'max-h-[72vh] max-w-full'}`}
               style={cropRatio ? {
@@ -1243,6 +1391,11 @@ export default function ShadowFXPage() {
           </button>
 
           {error ? <div className="mt-3 rounded-[12px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] font-semibold text-red-200">{error}</div> : null}
+          {notice ? <div className="mt-3 rounded-[12px] border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[11px] font-semibold text-emerald-200">{notice}</div> : null}
+
+          <div className="mt-3 hidden rounded-[12px] border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-[10px] font-medium text-white/35 lg:block">
+            {t('shadowFx.shortcuts')}: Ctrl/⌘+Z · Ctrl/⌘+Y · Ctrl/⌘+S · R · C
+          </div>
 
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={event => { chooseImage(event.target.files?.[0]); event.target.value = '' }} />
         </aside>
