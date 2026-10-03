@@ -146,6 +146,25 @@ registerTranslationNamespace('enhanceLocal', {
   },
 })
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+)
+const APP_SETTINGS_CACHE_KEY = 'shadow-public-app-settings-v2'
+const APP_KEY = 'enhance-local'
+
+function readConfiguredAppName() {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(APP_SETTINGS_CACHE_KEY) || 'null')
+    if (!Array.isArray(cached?.apps)) return ''
+    const app = cached.apps.find((item) => item?.appKey === APP_KEY)
+    return String(app?.name || '').trim()
+  } catch {
+    return ''
+  }
+}
+
 const MAX_OUTPUT_PIXELS = 12_000_000
 const TF_URLS = [
   'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js',
@@ -400,6 +419,7 @@ export default function EnhanceLocalPage() {
   const [loadingAi, setLoadingAi] = useState(false)
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState('')
+  const [appName, setAppName] = useState(readConfiguredAppName)
 
   useEffect(() => {
     return () => {
@@ -413,6 +433,60 @@ export default function EnhanceLocalPage() {
       if (resultRef.current) URL.revokeObjectURL(resultRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    let active = true
+    let controller = null
+
+    const loadAppName = () => {
+      controller?.abort()
+      controller = new AbortController()
+
+      fetch(`${API_BASE_URL}/api/public/apps`, {
+        signal: controller.signal,
+        cache: 'no-cache',
+      })
+        .then(async (response) => {
+          if (!response.ok) throw new Error('APP_SETTINGS_UNAVAILABLE')
+          const data = await response.json()
+          if (data.ok !== true || !Array.isArray(data.apps)) {
+            throw new Error('APP_SETTINGS_INVALID')
+          }
+          return data.apps
+        })
+        .then((apps) => {
+          if (!active) return
+          const app = apps.find((item) => item?.appKey === APP_KEY)
+          const nextName = String(app?.name || '').trim()
+          if (nextName) setAppName(nextName)
+          try {
+            sessionStorage.setItem(
+              APP_SETTINGS_CACHE_KEY,
+              JSON.stringify({ savedAt: Date.now(), apps }),
+            )
+          } catch {}
+        })
+        .catch(() => {})
+    }
+
+    loadAppName()
+
+    const handleFocus = () => loadAppName()
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') loadAppName()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      active = false
+      controller?.abort()
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [])
+
 
   function resetResult() {
     if (resultRef.current) URL.revokeObjectURL(resultRef.current)
@@ -611,7 +685,7 @@ export default function EnhanceLocalPage() {
 
           <div className="min-w-0 text-center">
             <h1 className="truncate text-[22px] font-black tracking-[-0.02em]">
-              {t('enhanceLocal.title')}
+              {appName || t('enhanceLocal.title')}
             </h1>
             <p className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">
               {t('enhanceLocal.subtitle')}
