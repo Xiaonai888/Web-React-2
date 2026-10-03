@@ -28,6 +28,7 @@ import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
 import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
 import ShadowDocsConversionSheet from './ShadowDocsConversionSheet'
 import ShadowDocsVersionHistorySheet from './ShadowDocsVersionHistorySheet'
+import ShadowDocsEncryptSheet from './ShadowDocsEncryptSheet'
 
 const SHADOW_DOCS_FOLDERS_KEY = 'shadow-docs-folders-v1'
 const SHADOW_DOCS_FOLDER_MAP_KEY = 'shadow-docs-folder-map-v1'
@@ -211,6 +212,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [exportImageOpen, setExportImageOpen] = useState(false)
   const [conversionOpen, setConversionOpen] = useState(false)
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false)
+  const [encryptOpen, setEncryptOpen] = useState(false)
   const [versions, setVersions] = useState([])
   const [docFolders, setDocFolders] = useState(() => readShadowDocsFolders())
   const [currentFolderId, setCurrentFolderId] = useState('my-books')
@@ -242,6 +244,7 @@ export default function ShadowDocsWritingStudioPanel({
     setExportImageOpen(false)
     setConversionOpen(false)
     setVersionHistoryOpen(false)
+    setEncryptOpen(false)
     setVersions(readShadowDocsVersions(book?.id))
     setDocFolders(readShadowDocsFolders())
     setCurrentFolderId(readShadowDocsFolderMap()[book?.id] || 'my-books')
@@ -1246,6 +1249,12 @@ export default function ShadowDocsWritingStudioPanel({
       setVersionHistoryOpen(true)
       return
     }
+    if (action === 'encrypt') {
+      await Promise.resolve(onEditorBlurRef.current?.(book.id))
+      setMobileMenuOpen(false)
+      setEncryptOpen(true)
+      return
+    }
     if (action === 'exportPdf') {
       onOpenPDF?.()
       return
@@ -1690,6 +1699,13 @@ export default function ShadowDocsWritingStudioPanel({
       onRestore={version => void restoreVersion(version)}
       onDelete={deleteVersion}
       onClear={clearVersionHistory}
+    />
+    <ShadowDocsEncryptSheet
+      open={encryptOpen}
+      book={book}
+      documentName={mobileDocumentName(book)}
+      onClose={() => setEncryptOpen(false)}
+      onEncrypted={() => setRibbonMessage('Encrypted copy created.')}
     />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
