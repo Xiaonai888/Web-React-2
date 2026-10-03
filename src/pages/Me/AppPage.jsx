@@ -18,6 +18,7 @@ const apps = [
   { key: 'shadow-studio', nameKey: 'shadowStudio', name: 'Shadow Studio', icon: 'fa-solid fa-palette', path: '/apps/shadow-studio' },
   { key: 'shadow-docs', name: 'Shadow Docs', icon: 'fa-solid fa-book-open', path: '/apps/shadow-docs' },
   { key: 'shadow-fx', name: 'Shadow FX', icon: 'fa-solid fa-wand-magic-sparkles', path: '/apps/shadow-fx' },
+  { key: 'enhance-local', name: 'Enhance Local', icon: 'fa-solid fa-image', path: '/apps/enhance-local' },
 ]
 
 function readCachedApps() {
