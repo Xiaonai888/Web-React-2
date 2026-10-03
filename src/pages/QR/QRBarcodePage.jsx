@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { ArrowLeft, Download, FileCode2, Link2, Mail, Phone, QrCode, ScanLine, Share2, Type, UserRound, Wifi } from 'lucide-react'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
+import { ArrowLeft, Camera, Copy, Download, ExternalLink, FileCode2, ImagePlus, Link2, Mail, Phone, QrCode, ScanLine, Share2, Square, Type, UserRound, Wifi } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -34,7 +35,17 @@ registerTranslationNamespace('qrBarcode', {
     barcodeEmpty: 'Enter a value to generate a barcode.',
     barcodeInvalid: 'This value is not valid for the selected barcode type.',
     failed: 'Could not generate this QR code.',
-    scanSoon: 'Scanner will be added in the next stage.',
+    startCamera: 'Start Camera',
+    stopCamera: 'Stop Camera',
+    scanImage: 'Scan Image',
+    scanHint: 'Point the camera at a QR code or supported barcode.',
+    scanResult: 'Scan Result',
+    copy: 'Copy',
+    copied: 'Copied',
+    openLink: 'Open Link',
+    cameraFailed: 'Camera could not start. Check camera permission and try again.',
+    imageScanFailed: 'No supported QR code or barcode was found in this image.',
+    noResult: 'Scan a code to see the result here.',
   },
   km: {
     title: 'QR & Barcode',
@@ -64,7 +75,17 @@ registerTranslationNamespace('qrBarcode', {
     barcodeEmpty: 'សូមបញ្ចូលទិន្នន័យដើម្បីបង្កើត Barcode។',
     barcodeInvalid: 'ទិន្នន័យនេះមិនត្រឹមត្រូវសម្រាប់ប្រភេទ Barcode ដែលបានជ្រើសទេ។',
     failed: 'មិនអាចបង្កើត QR Code នេះបានទេ។',
-    scanSoon: 'Scanner នឹងបន្ថែមនៅដំណាក់កាលបន្ទាប់។',
+    startCamera: 'បើកកាមេរ៉ា',
+    stopCamera: 'បិទកាមេរ៉ា',
+    scanImage: 'ស្កេនពីរូបភាព',
+    scanHint: 'ដាក់ QR Code ឬ Barcode នៅមុខកាមេរ៉ាដើម្បីស្កេន។',
+    scanResult: 'លទ្ធផលស្កេន',
+    copy: 'ចម្លង',
+    copied: 'បានចម្លង',
+    openLink: 'បើកតំណ',
+    cameraFailed: 'មិនអាចបើកកាមេរ៉ាបានទេ។ សូមពិនិត្យ Camera Permission ហើយសាកម្តងទៀត។',
+    imageScanFailed: 'រកមិនឃើញ QR Code ឬ Barcode ដែលគាំទ្រនៅក្នុងរូបភាពនេះទេ។',
+    noResult: 'ស្កេន Code ដើម្បីមើលលទ្ធផលនៅទីនេះ។',
   },
   zh: {
     title: 'QR & Barcode',
@@ -94,7 +115,17 @@ registerTranslationNamespace('qrBarcode', {
     barcodeEmpty: '请输入内容以生成条码。',
     barcodeInvalid: '该内容不适用于所选条码类型。',
     failed: '无法生成此二维码。',
-    scanSoon: '扫描器将在下一阶段加入。',
+    startCamera: '开启相机',
+    stopCamera: '停止相机',
+    scanImage: '扫描图片',
+    scanHint: '将二维码或支持的条码对准相机。',
+    scanResult: '扫描结果',
+    copy: '复制',
+    copied: '已复制',
+    openLink: '打开链接',
+    cameraFailed: '无法启动相机，请检查相机权限后重试。',
+    imageScanFailed: '图片中未找到支持的二维码或条码。',
+    noResult: '扫描代码后结果会显示在这里。',
   },
   ja: {
     title: 'QR & Barcode',
@@ -124,7 +155,17 @@ registerTranslationNamespace('qrBarcode', {
     barcodeEmpty: 'バーコードを作成する値を入力してください。',
     barcodeInvalid: '選択したバーコード形式では使用できない値です。',
     failed: 'QRコードを作成できませんでした。',
-    scanSoon: 'スキャナーは次の段階で追加します。',
+    startCamera: 'カメラ開始',
+    stopCamera: 'カメラ停止',
+    scanImage: '画像をスキャン',
+    scanHint: 'QRコードまたは対応バーコードをカメラに向けてください。',
+    scanResult: 'スキャン結果',
+    copy: 'コピー',
+    copied: 'コピー済み',
+    openLink: 'リンクを開く',
+    cameraFailed: 'カメラを起動できません。カメラ権限を確認して再試行してください。',
+    imageScanFailed: '画像内に対応するQRコードまたはバーコードが見つかりませんでした。',
+    noResult: 'コードをスキャンすると結果がここに表示されます。',
   },
   ko: {
     title: 'QR & Barcode',
@@ -154,7 +195,17 @@ registerTranslationNamespace('qrBarcode', {
     barcodeEmpty: '바코드를 만들 값을 입력하세요.',
     barcodeInvalid: '선택한 바코드 형식에 맞지 않는 값입니다.',
     failed: 'QR 코드를 생성할 수 없습니다.',
-    scanSoon: '스캐너는 다음 단계에서 추가됩니다.',
+    startCamera: '카메라 시작',
+    stopCamera: '카메라 중지',
+    scanImage: '이미지 스캔',
+    scanHint: 'QR 코드 또는 지원되는 바코드를 카메라에 맞춰 주세요.',
+    scanResult: '스캔 결과',
+    copy: '복사',
+    copied: '복사됨',
+    openLink: '링크 열기',
+    cameraFailed: '카메라를 시작할 수 없습니다. 카메라 권한을 확인한 후 다시 시도하세요.',
+    imageScanFailed: '이미지에서 지원되는 QR 코드 또는 바코드를 찾지 못했습니다.',
+    noResult: '코드를 스캔하면 결과가 여기에 표시됩니다.',
   },
 })
 
@@ -174,6 +225,12 @@ const BARCODE_SAMPLES = {
   'EAN-13': '5901234123457',
   'UPC-A': '036000291452',
 }
+const SCANNER_FORMATS = [
+  Html5QrcodeSupportedFormats.QR_CODE,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.UPC_A,
+]
 
 const CODE128_PATTERNS = [
   '212222','222122','222221','121223','121322','131222','122213','122312','132212','221213',
@@ -352,9 +409,32 @@ function svgToPngBlob(svg) {
   })
 }
 
+async function releaseScanner(scanner) {
+  if (!scanner) return
+  try {
+    await scanner.stop()
+  } catch {}
+  try {
+    scanner.clear()
+  } catch {}
+}
+
+function copyFallback(text) {
+  const area = document.createElement('textarea')
+  area.value = text
+  area.style.position = 'fixed'
+  area.style.opacity = '0'
+  document.body.appendChild(area)
+  area.select()
+  document.execCommand('copy')
+  area.remove()
+}
+
 export default function QRBarcodePage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
+  const scannerRef = useRef(null)
+  const imageInputRef = useRef(null)
   const [tab, setTab] = useState('generate')
   const [generatorKind, setGeneratorKind] = useState('qr')
   const [type, setType] = useState('website')
@@ -364,6 +444,10 @@ export default function QRBarcodePage() {
   const [foreground, setForeground] = useState('#111111')
   const [preview, setPreview] = useState('')
   const [error, setError] = useState('')
+  const [scanning, setScanning] = useState(false)
+  const [scanResult, setScanResult] = useState('')
+  const [scanError, setScanError] = useState('')
+  const [copied, setCopied] = useState(false)
 
   const payload = useMemo(() => buildPayload(type, value), [type, value])
 
@@ -403,6 +487,22 @@ export default function QRBarcodePage() {
     return () => { active = false }
   }, [foreground, generatorKind, payload, size, t])
 
+  useEffect(() => {
+    if (tab === 'scan') return
+    const scanner = scannerRef.current
+    scannerRef.current = null
+    setScanning(false)
+    if (scanner) releaseScanner(scanner)
+  }, [tab])
+
+  useEffect(() => {
+    return () => {
+      const scanner = scannerRef.current
+      scannerRef.current = null
+      if (scanner) releaseScanner(scanner)
+    }
+  }, [])
+
   const chooseQrType = key => {
     if (generatorKind !== 'qr') setValue(key === 'website' ? 'https://example.com' : '')
     setGeneratorKind('qr')
@@ -416,8 +516,100 @@ export default function QRBarcodePage() {
     setError('')
   }
 
+  const stopScanner = async () => {
+    const scanner = scannerRef.current
+    scannerRef.current = null
+    setScanning(false)
+    if (scanner) await releaseScanner(scanner)
+  }
+
+  const acceptScan = decodedText => {
+    setScanResult(decodedText)
+    setScanError('')
+    setCopied(false)
+    const scanner = scannerRef.current
+    scannerRef.current = null
+    setScanning(false)
+    if (scanner) releaseScanner(scanner)
+  }
+
+  const startScanner = async () => {
+    await stopScanner()
+    setScanResult('')
+    setScanError('')
+    setCopied(false)
+
+    const scanner = new Html5Qrcode('qr-barcode-reader', {
+      formatsToSupport: SCANNER_FORMATS,
+      verbose: false,
+    })
+    scannerRef.current = scanner
+
+    try {
+      await scanner.start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: (width, height) => {
+            const edge = Math.max(180, Math.floor(Math.min(width, height) * 0.72))
+            return { width: edge, height: edge }
+          },
+        },
+        acceptScan,
+        () => {}
+      )
+      setScanning(true)
+    } catch {
+      if (scannerRef.current === scanner) scannerRef.current = null
+      await releaseScanner(scanner)
+      setScanning(false)
+      setScanError(t('qrBarcode.cameraFailed'))
+    }
+  }
+
+  const scanImage = async event => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    await stopScanner()
+    setScanResult('')
+    setScanError('')
+    setCopied(false)
+
+    const scanner = new Html5Qrcode('qr-barcode-reader', {
+      formatsToSupport: SCANNER_FORMATS,
+      verbose: false,
+    })
+    scannerRef.current = scanner
+
+    try {
+      const result = await scanner.scanFile(file, true)
+      setScanResult(result)
+      setScanError('')
+    } catch {
+      setScanError(t('qrBarcode.imageScanFailed'))
+    } finally {
+      if (scannerRef.current === scanner) scannerRef.current = null
+      try {
+        scanner.clear()
+      } catch {}
+    }
+  }
+
+  const copyResult = async () => {
+    if (!scanResult) return
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(scanResult)
+      else copyFallback(scanResult)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+    } catch {}
+  }
+
   const activeSvg = generatorKind === 'barcode' ? barcodeResult.svg : ''
   const hasPreview = generatorKind === 'barcode' ? Boolean(activeSvg) : Boolean(preview)
+  const isWebLink = /^https?:\/\//i.test(scanResult)
 
   const downloadPng = async () => {
     if (!hasPreview) return
@@ -503,12 +695,41 @@ export default function QRBarcodePage() {
         </div>
 
         {tab === 'scan' ? (
-          <div className="mt-5 rounded-3xl border border-black/10 bg-white px-5 py-16 text-center dark:border-white/10 dark:bg-[#121212]">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#fff1e7] text-[#ff6a00] dark:bg-[#2a1608]">
-              <ScanLine size={30} />
+          <section className="mt-5 space-y-4">
+            <div className="overflow-hidden rounded-3xl border border-black/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#121212]">
+              <div id="qr-barcode-reader" className="min-h-[260px] overflow-hidden rounded-2xl bg-[#080808] [&_video]:rounded-2xl" />
+              <p className="mt-3 text-center text-xs leading-5 text-black/50 dark:text-white/50">{t('qrBarcode.scanHint')}</p>
+              {scanError ? <p className="mt-3 text-center text-xs font-medium text-red-500">{scanError}</p> : null}
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
+                <button type="button" onClick={scanning ? stopScanner : startScanner} className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#ff6a00] text-xs font-bold text-white shadow-[0_8px_22px_rgba(255,106,0,.22)]">
+                  {scanning ? <Square size={16} /> : <Camera size={17} />}
+                  {t(scanning ? 'qrBarcode.stopCamera' : 'qrBarcode.startCamera')}
+                </button>
+                <button type="button" onClick={() => imageInputRef.current?.click()} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-black/10 text-xs font-bold dark:border-white/10">
+                  <ImagePlus size={17} />
+                  {t('qrBarcode.scanImage')}
+                </button>
+                <input ref={imageInputRef} type="file" accept="image/*" onChange={scanImage} className="hidden" />
+              </div>
             </div>
-            <p className="mt-4 text-sm text-black/55 dark:text-white/55">{t('qrBarcode.scanSoon')}</p>
-          </div>
+
+            <div className="rounded-3xl border border-black/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#121212]">
+              <h2 className="text-[13px] font-bold">{t('qrBarcode.scanResult')}</h2>
+              <div className="mt-3 min-h-[88px] break-all rounded-2xl bg-[#f5f5f5] p-4 text-sm leading-6 text-black/70 dark:bg-[#090909] dark:text-white/75">
+                {scanResult || t('qrBarcode.noResult')}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2.5">
+                <button type="button" disabled={!scanResult} onClick={copyResult} className="flex h-11 items-center justify-center gap-2 rounded-xl border border-black/10 text-xs font-semibold disabled:opacity-35 dark:border-white/10">
+                  <Copy size={16} />
+                  {t(copied ? 'qrBarcode.copied' : 'qrBarcode.copy')}
+                </button>
+                <button type="button" disabled={!isWebLink} onClick={() => window.open(scanResult, '_blank', 'noopener,noreferrer')} className="flex h-11 items-center justify-center gap-2 rounded-xl border border-black/10 text-xs font-semibold disabled:opacity-35 dark:border-white/10">
+                  <ExternalLink size={16} />
+                  {t('qrBarcode.openLink')}
+                </button>
+              </div>
+            </div>
+          </section>
         ) : (
           <>
             <section className="mt-6">
