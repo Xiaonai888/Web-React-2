@@ -1514,7 +1514,9 @@ const shouldShowOpeningAds =
         <Route path="/author/top-supporters" element={<AuthorTopSupportersPage />} />
         <Route path="/author/monthly-earnings" element={<AuthorMonthlyEarningsPage />} />
         <Route path="/app" element={<LazyPage><AppPage /></LazyPage>} />
-        <Route path="/apps/shadow-fx" element={<LazyPage><ShadowFXPage /></LazyPage>} />
+        <Route path="/apps/shadow-fx" element={
+  <LazyPage><AppAccessGuard appKey="shadow-fx"><ShadowFXPage /></AppAccessGuard></LazyPage>
+} />
         <Route path="/apps/qr-barcode" element={
   <LazyPage><AppAccessGuard appKey="qr-barcode"><QRBarcodePage /></AppAccessGuard></LazyPage>
 } />
