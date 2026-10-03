@@ -199,6 +199,98 @@ const MOBILE_TEXT = {
 
 const MOBILE_MEDIA = '@media all'
 
+const STUDIO_AD_API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+const STUDIO_AD_SECTION_KEY = 'studio_header_ad'
+const STUDIO_AD_CACHE_KEY = 'shadow_studio_header_ads_v1'
+const STUDIO_AD_LAST_KEY = 'shadow_studio_header_ad_last_v1'
+const STUDIO_AD_CACHE_TTL_MS = 60 * 60 * 1000
+const STUDIO_AD_ROTATE_MS = 5000
+
+function cleanStudioAdTitle(value) {
+  return String(value || '').replace(/^\[STUDIO-AD\]\s*/i, '').trim()
+}
+
+function normalizeStudioAds(items) {
+  const latestBySlot = new Map()
+
+  for (const item of Array.isArray(items) ? items : []) {
+    const slot = Number(item?.order_index)
+
+    if (!Number.isInteger(slot) || slot < 1 || slot > 7 || item?.is_active === false) {
+      continue
+    }
+
+    const current = latestBySlot.get(slot)
+    const nextTime = new Date(item?.updated_at || item?.created_at || 0).getTime()
+    const currentTime = new Date(current?.updated_at || current?.created_at || 0).getTime()
+
+    if (!current || nextTime >= currentTime) {
+      latestBySlot.set(slot, item)
+    }
+  }
+
+  return [...latestBySlot.values()]
+    .sort((left, right) => Number(left.order_index) - Number(right.order_index))
+    .slice(0, 7)
+}
+
+function readStudioAdCache() {
+  try {
+    const value = JSON.parse(localStorage.getItem(STUDIO_AD_CACHE_KEY) || 'null')
+    if (!value || !Array.isArray(value.ads)) return null
+    return {
+      ads: normalizeStudioAds(value.ads),
+      savedAt: Number(value.savedAt || 0),
+    }
+  } catch {
+    return null
+  }
+}
+
+function saveStudioAdCache(ads) {
+  try {
+    localStorage.setItem(
+      STUDIO_AD_CACHE_KEY,
+      JSON.stringify({
+        ads,
+        savedAt: Date.now(),
+      }),
+    )
+  } catch {
+    return
+  }
+}
+
+function initialStudioAdIndex(ads) {
+  if (!ads.length) return 0
+
+  try {
+    const lastId = localStorage.getItem(STUDIO_AD_LAST_KEY)
+    if (!lastId) return 0
+
+    const lastIndex = ads.findIndex((item) => String(item.id) === String(lastId))
+    if (lastIndex < 0) return 0
+
+    return (lastIndex + 1) % ads.length
+  } catch {
+    return 0
+  }
+}
+
+function rememberStudioAd(item) {
+  if (!item?.id) return
+
+  try {
+    localStorage.setItem(STUDIO_AD_LAST_KEY, String(item.id))
+  } catch {
+    return
+  }
+}
+
 
 const MOBILE_BRUSH_TOOLS = [
   { id: 'transform', label: 'Transform' },
@@ -290,6 +382,8 @@ export default function StudioMobileWorkspace({
   const [colorOpen, setColorOpen] = useState(false)
   const [brushToolsOpen, setBrushToolsOpen] = useState(false)
   const [mobileToolAlias, setMobileToolAlias] = useState('')
+  const [studioAds, setStudioAds] = useState([])
+  const [studioAdIndex, setStudioAdIndex] = useState(0)
   const [paintTool, setPaintTool] = useState(tool === 'eraser' ? 'eraser' : 'brush')
   const [sizeEditing, setSizeEditing] = useState(false)
   const [sizeDraft, setSizeDraft] = useState('')
@@ -306,7 +400,75 @@ export default function StudioMobileWorkspace({
     if (referenceImage) URL.revokeObjectURL(referenceImage)
   }, [referenceImage])
 
+  useEffect(() => {
+    let cancelled = false
+    const cached = readStudioAdCache()
+
+    if (cached?.ads?.length) {
+      setStudioAds(cached.ads)
+      setStudioAdIndex(initialStudioAdIndex(cached.ads))
+    }
+
+    const cacheFresh =
+      cached &&
+      Date.now() - cached.savedAt < STUDIO_AD_CACHE_TTL_MS
+
+    if (cacheFresh) {
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const loadAds = async () => {
+      try {
+        const response = await fetch(
+          `${STUDIO_AD_API_URL}/api/slides?section_key=${STUDIO_AD_SECTION_KEY}`,
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load Studio ads')
+        }
+
+        const nextAds = normalizeStudioAds(data.slides)
+
+        if (cancelled) return
+
+        setStudioAds(nextAds)
+        setStudioAdIndex(initialStudioAdIndex(nextAds))
+        saveStudioAdCache(nextAds)
+      } catch {
+        if (!cached?.ads?.length && !cancelled) {
+          setStudioAds([])
+          setStudioAdIndex(0)
+        }
+      }
+    }
+
+    loadAds()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (studioAds.length <= 1) return undefined
+
+    const timer = window.setInterval(() => {
+      setStudioAdIndex((current) => (current + 1) % studioAds.length)
+    }, STUDIO_AD_ROTATE_MS)
+
+    return () => window.clearInterval(timer)
+  }, [studioAds])
+
+  useEffect(() => {
+    const current = studioAds[studioAdIndex]
+    if (current) rememberStudioAd(current)
+  }, [studioAds, studioAdIndex])
+
   const activePaper = documents.find((document) => document.id === activeDocumentId) || documents[0] || null
+  const activeStudioAd = studioAds[studioAdIndex] || null
   const canvasScale = mobileCanvasScale(activePaper)
   const logicalSize = logicalSizeFromActual(size, canvasScale)
   const sliderMax = paintTool === 'eraser' ? 1000 : 30
@@ -362,6 +524,18 @@ export default function StudioMobileWorkspace({
   function toggleBrushEraser() {
     if (busy) return
     chooseTool(paintTool === 'eraser' ? 'brush' : 'eraser')
+  }
+
+  function openStudioAd() {
+    const link = String(activeStudioAd?.link_url || '').trim()
+    if (!link) return
+
+    if (/^https?:\/\//i.test(link)) {
+      window.open(link, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    window.location.assign(link)
   }
 
   function applyLogicalSize(nextLogicalSize, max = sliderMax) {
@@ -481,24 +655,57 @@ export default function StudioMobileWorkspace({
             background:#11161c
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad{
+            position:relative;
             width:100%;
+            aspect-ratio:5/1;
             min-height:68px;
             display:flex;
-            align-items:flex-start;
-            justify-content:flex-start;
+            align-items:center;
+            justify-content:center;
             overflow:hidden;
             box-sizing:border-box;
             border:0;
             border-radius:0;
-            padding:6px 8px;
+            padding:0;
             background:#11161c;
-            box-shadow:none
+            box-shadow:none;
+            color:inherit
+          }
+          .shadow-studio.ss-mobile-workspace-mode button.ss-mobile-ad{
+            cursor:pointer
+          }
+          .shadow-studio.ss-mobile-workspace-mode button.ss-mobile-ad:disabled{
+            cursor:default
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad img{
+            width:100%;
+            height:100%;
+            display:block;
+            object-fit:cover
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-placeholder{
             color:#8d98a4;
             font-size:8px;
             font-weight:800;
             letter-spacing:.08em
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-dots{
+            position:absolute;
+            right:8px;
+            bottom:5px;
+            z-index:2;
+            display:flex;
+            gap:4px;
+            pointer-events:none
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-dot{
+            width:4px;
+            height:4px;
+            border-radius:50%;
+            background:rgba(255,255,255,.45)
+          }
+          .shadow-studio.ss-mobile-workspace-mode .ss-mobile-ad-dot.active{
+            background:#fff
           }
           .shadow-studio.ss-mobile-workspace-mode .ss-mobile-quick{
             min-height:56px;
@@ -1167,9 +1374,36 @@ export default function StudioMobileWorkspace({
       `}</style>
 
       <div className="ss-mobile-top">
-        <div className="ss-mobile-ad" data-shadow-studio-mobile-ad-slot="reserved">
-          <span className="ss-mobile-ad-placeholder">AD</span>
-        </div>
+        <button
+          type="button"
+          className="ss-mobile-ad"
+          data-shadow-studio-mobile-ad-slot="studio_header_ad"
+          disabled={!activeStudioAd?.link_url}
+          aria-label={activeStudioAd ? cleanStudioAdTitle(activeStudioAd.title) || 'Advertisement' : text.ad}
+          onClick={openStudioAd}
+        >
+          {activeStudioAd?.image_url ? (
+            <img
+              src={activeStudioAd.image_url}
+              alt={cleanStudioAdTitle(activeStudioAd.title) || 'Advertisement'}
+              loading="eager"
+              decoding="async"
+            />
+          ) : (
+            <span className="ss-mobile-ad-placeholder">AD</span>
+          )}
+
+          {studioAds.length > 1 ? (
+            <span className="ss-mobile-ad-dots" aria-hidden="true">
+              {studioAds.map((item, index) => (
+                <span
+                  key={item.id || index}
+                  className={`ss-mobile-ad-dot ${index === studioAdIndex ? 'active' : ''}`}
+                />
+              ))}
+            </span>
+          ) : null}
+        </button>
 
         <nav className="ss-mobile-quick" aria-label={text.actions}>
           <button type="button" onClick={onImport} disabled={busy} aria-label={text.addImage} title={text.addImage}>
