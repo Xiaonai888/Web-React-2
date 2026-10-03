@@ -87,6 +87,7 @@ const AppAccessGuard = lazy(() => import('./pages/Me/AppAccessGuard'))
 const ShadowStudioPage = lazy(() => import('./pages/Studio/ShadowStudioPage'))
 const EnhanceLocalPage = lazy(() => import('./pages/Enhance/EnhanceLocalPage'))
 const ShadowFXPage = lazy(() => import('./pages/FX/ShadowFXPage'))
+const QRBarcodePage = lazy(() => import('./pages/QR/QRBarcodePage'))
 const ShadowDocsWorkspace = lazy(() => import('./pages/Docs/ShadowDocsWorkspace'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
@@ -1495,6 +1496,7 @@ const shouldShowOpeningAds =
         <Route path="/author/monthly-earnings" element={<AuthorMonthlyEarningsPage />} />
         <Route path="/app" element={<LazyPage><AppPage /></LazyPage>} />
         <Route path="/apps/shadow-fx" element={<LazyPage><ShadowFXPage /></LazyPage>} />
+        <Route path="/apps/qr-barcode" element={<LazyPage><QRBarcodePage /></LazyPage>} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
