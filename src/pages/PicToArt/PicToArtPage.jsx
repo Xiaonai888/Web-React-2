@@ -7,11 +7,11 @@ import { convertPicToArt } from './picToArtEngine'
 import { clearPicToArtCreations, savePicToArtCreation } from './picToArtStore'
 
 registerTranslationNamespace('picToArt', {
-  en: { title: 'Pic to Art', subtitle: 'Convert your photo into manga or art', back: 'Back', settings: 'Settings', creations: 'Creations', uploadTitle: 'Add a photo', uploadBody: 'Choose a clear photo from your device.', choosePhoto: 'Choose Photo', changePhoto: 'Change Photo', removePhoto: 'Remove Photo', chooseStyle: 'Choose Style', manga: 'Manga', anime: 'Anime', sketch: 'Sketch', comic: 'Comic', watercolor: 'Watercolor', bwManga: 'B&W Manga', controls: 'Style & Edit', strength: 'Strength', detail: 'Detail', contrast: 'Contrast', lineArt: 'Line Art', reset: 'Reset', generate: 'Generate Art', generating: 'Creating artwork…', noPhoto: 'Choose a photo first.', invalidPhoto: 'Choose a valid image file.', failed: 'Could not create the artwork on this device.', privacy: 'Processed locally on this device. Your photo is not uploaded.', result: 'Your Artwork', original: 'Original', artwork: 'Artwork', download: 'Download PNG', generateAgain: 'Generate Again', output: 'Output', ready: 'Artwork is ready.', settingsTitle: 'Pic to Art Settings', autoSave: 'Auto-save creations', autoSaveBody: 'Save generated artwork to Creations on this device.', rememberControls: 'Remember controls', rememberControlsBody: 'Remember the last style and slider values.', defaultStyle: 'Default style', clearCreations: 'Clear Creations', clearCreationsBody: 'Delete all locally saved Pic to Art creations.', clearConfirm: 'Delete all saved Pic to Art creations from this device?', cleared: 'Creations cleared.', close: 'Close' },
-  km: { title: 'Pic to Art', subtitle: 'បម្លែងរូបថតរបស់អ្នកទៅជា Manga ឬ Art', back: 'ត្រឡប់ក្រោយ', settings: 'ការកំណត់', creations: 'Creations', uploadTitle: 'បន្ថែមរូបថត', uploadBody: 'ជ្រើសរូបថតដែលច្បាស់ពីឧបករណ៍របស់អ្នក។', choosePhoto: 'ជ្រើសរូបថត', changePhoto: 'ប្តូររូបថត', removePhoto: 'លុបរូបថត', chooseStyle: 'ជ្រើស Style', manga: 'Manga', anime: 'Anime', sketch: 'Sketch', comic: 'Comic', watercolor: 'Watercolor', bwManga: 'B&W Manga', controls: 'Style & Edit', strength: 'Strength', detail: 'Detail', contrast: 'Contrast', lineArt: 'Line Art', reset: 'កំណត់ឡើងវិញ', generate: 'បង្កើត Art', generating: 'កំពុងបង្កើត Artwork…', noPhoto: 'សូមជ្រើសរូបថតជាមុន។', invalidPhoto: 'សូមជ្រើសឯកសាររូបភាពដែលត្រឹមត្រូវ។', failed: 'ឧបករណ៍នេះមិនអាចបង្កើត Artwork បានទេ។', privacy: 'ដំណើរការ Local លើឧបករណ៍នេះ។ រូបរបស់អ្នកមិនត្រូវបាន Upload ទេ។', result: 'Artwork របស់អ្នក', original: 'រូបដើម', artwork: 'Artwork', download: 'ទាញយក PNG', generateAgain: 'បង្កើតម្តងទៀត', output: 'លទ្ធផល', ready: 'Artwork រួចរាល់។', settingsTitle: 'ការកំណត់ Pic to Art', autoSave: 'រក្សាទុក Creation ស្វ័យប្រវត្តិ', autoSaveBody: 'រក្សាទុក Artwork ដែលបានបង្កើតទៅ Creations លើឧបករណ៍នេះ។', rememberControls: 'ចងចាំការកំណត់', rememberControlsBody: 'ចងចាំ Style និងតម្លៃ Slider ចុងក្រោយ។', defaultStyle: 'Style លំនាំដើម', clearCreations: 'លុប Creations ទាំងអស់', clearCreationsBody: 'លុប Pic to Art Creations ដែលរក្សាទុក Local ទាំងអស់។', clearConfirm: 'លុប Pic to Art Creations ទាំងអស់ពីឧបករណ៍នេះមែនទេ?', cleared: 'បានលុប Creations រួចរាល់។', close: 'បិទ' },
-  zh: { title: 'Pic to Art', subtitle: '将照片转换成漫画或艺术风格', back: '返回', settings: '设置', creations: '作品', uploadTitle: '添加照片', uploadBody: '从设备中选择一张清晰的照片。', choosePhoto: '选择照片', changePhoto: '更换照片', removePhoto: '移除照片', chooseStyle: '选择风格', manga: '漫画', anime: '动漫', sketch: '素描', comic: '美漫', watercolor: '水彩', bwManga: '黑白漫画', controls: '风格与编辑', strength: '强度', detail: '细节', contrast: '对比度', lineArt: '线稿', reset: '重置', generate: '生成艺术图', generating: '正在生成作品…', noPhoto: '请先选择照片。', invalidPhoto: '请选择有效的图片文件。', failed: '此设备无法生成作品。', privacy: '图片只在本机处理，不会上传。', result: '你的作品', original: '原图', artwork: '作品', download: '下载 PNG', generateAgain: '再次生成', output: '输出', ready: '作品已完成。', settingsTitle: 'Pic to Art 设置', autoSave: '自动保存作品', autoSaveBody: '将生成的作品保存在此设备的作品库中。', rememberControls: '记住控制设置', rememberControlsBody: '记住上次的风格和滑块值。', defaultStyle: '默认风格', clearCreations: '清除作品', clearCreationsBody: '删除本机保存的所有 Pic to Art 作品。', clearConfirm: '删除此设备上的所有 Pic to Art 作品吗？', cleared: '作品已清除。', close: '关闭' },
-  ja: { title: 'Pic to Art', subtitle: '写真をマンガやアートに変換', back: '戻る', settings: '設定', creations: '作品', uploadTitle: '写真を追加', uploadBody: '端末から鮮明な写真を選択してください。', choosePhoto: '写真を選択', changePhoto: '写真を変更', removePhoto: '写真を削除', chooseStyle: 'スタイルを選択', manga: 'マンガ', anime: 'アニメ', sketch: 'スケッチ', comic: 'コミック', watercolor: '水彩', bwManga: '白黒マンガ', controls: 'スタイルと編集', strength: '強度', detail: 'ディテール', contrast: 'コントラスト', lineArt: '線画', reset: 'リセット', generate: 'アートを生成', generating: 'アートを生成中…', noPhoto: '先に写真を選択してください。', invalidPhoto: '有効な画像ファイルを選択してください。', failed: 'この端末ではアートを生成できませんでした。', privacy: '端末内で処理され、写真はアップロードされません。', result: 'あなたのアート', original: '元画像', artwork: 'アート', download: 'PNGをダウンロード', generateAgain: 'もう一度生成', output: '出力', ready: 'アートが完成しました。', settingsTitle: 'Pic to Art 設定', autoSave: '作品を自動保存', autoSaveBody: '生成した作品をこの端末の作品一覧に保存します。', rememberControls: '設定を記憶', rememberControlsBody: '最後に使ったスタイルとスライダー値を記憶します。', defaultStyle: 'デフォルトスタイル', clearCreations: '作品をすべて削除', clearCreationsBody: 'この端末に保存された Pic to Art の作品をすべて削除します。', clearConfirm: 'この端末の Pic to Art 作品をすべて削除しますか？', cleared: '作品を削除しました。', close: '閉じる' },
-  ko: { title: 'Pic to Art', subtitle: '사진을 만화 또는 아트로 변환', back: '뒤로', settings: '설정', creations: '작품', uploadTitle: '사진 추가', uploadBody: '기기에서 선명한 사진을 선택하세요.', choosePhoto: '사진 선택', changePhoto: '사진 변경', removePhoto: '사진 삭제', chooseStyle: '스타일 선택', manga: '만화', anime: '애니메이션', sketch: '스케치', comic: '코믹', watercolor: '수채화', bwManga: '흑백 만화', controls: '스타일 및 편집', strength: '강도', detail: '디테일', contrast: '대비', lineArt: '라인 아트', reset: '초기화', generate: '아트 생성', generating: '아트 생성 중…', noPhoto: '먼저 사진을 선택하세요.', invalidPhoto: '올바른 이미지 파일을 선택하세요.', failed: '이 기기에서 아트를 생성할 수 없습니다.', privacy: '기기에서 로컬로 처리되며 사진은 업로드되지 않습니다.', result: '나의 아트', original: '원본', artwork: '아트', download: 'PNG 다운로드', generateAgain: '다시 생성', output: '출력', ready: '아트가 완성되었습니다.', settingsTitle: 'Pic to Art 설정', autoSave: '작품 자동 저장', autoSaveBody: '생성된 작품을 이 기기의 Creations에 저장합니다.', rememberControls: '설정 기억', rememberControlsBody: '마지막 스타일과 슬라이더 값을 기억합니다.', defaultStyle: '기본 스타일', clearCreations: 'Creations 전체 삭제', clearCreationsBody: '이 기기에 저장된 Pic to Art 작품을 모두 삭제합니다.', clearConfirm: '이 기기의 Pic to Art 작품을 모두 삭제할까요?', cleared: 'Creations를 삭제했습니다.', close: '닫기' },
+  en: { title: 'Pic to Art', subtitle: 'Convert your photo into manga or art', back: 'Back', settings: 'Settings', creations: 'Creations', uploadTitle: 'Add a photo', uploadBody: 'Choose a clear photo from your device.', choosePhoto: 'Choose Photo', changePhoto: 'Change Photo', removePhoto: 'Remove Photo', chooseStyle: 'Choose Style', manga: 'Manga', anime: 'Anime', sketch: 'Sketch', comic: 'Comic', watercolor: 'Watercolor', bwManga: 'B&W Manga', controls: 'Style & Edit', strength: 'Strength', detail: 'Detail', contrast: 'Contrast', lineArt: 'Line Art', reset: 'Reset', generate: 'Generate Art', generating: 'Creating artwork…', noPhoto: 'Choose a photo first.', invalidPhoto: 'Choose a valid image file.', failed: 'Could not create the artwork on this device.', privacy: 'Processed locally on this device. Your photo is not uploaded.', result: 'Your Artwork', original: 'Original', artwork: 'Artwork', download: 'Download PNG', generateAgain: 'Generate Again', output: 'Output', ready: 'Artwork is ready.', settingsTitle: 'Pic to Art Settings', autoSave: 'Auto-save creations', autoSaveBody: 'Save generated artwork to Creations on this device.', rememberControls: 'Remember controls', rememberControlsBody: 'Remember the last style and slider values.', defaultStyle: 'Default style', clearCreations: 'Clear Creations', clearCreationsBody: 'Delete all locally saved Pic to Art creations.', clearConfirm: 'Delete all saved Pic to Art creations from this device?', cleared: 'Creations cleared.', close: 'Close', quality: 'Output quality', standard: 'Standard', hd: 'HD', share: 'Share', shareUnavailable: 'Sharing is not supported on this device.' },
+  km: { title: 'Pic to Art', subtitle: 'បម្លែងរូបថតរបស់អ្នកទៅជា Manga ឬ Art', back: 'ត្រឡប់ក្រោយ', settings: 'ការកំណត់', creations: 'Creations', uploadTitle: 'បន្ថែមរូបថត', uploadBody: 'ជ្រើសរូបថតដែលច្បាស់ពីឧបករណ៍របស់អ្នក។', choosePhoto: 'ជ្រើសរូបថត', changePhoto: 'ប្តូររូបថត', removePhoto: 'លុបរូបថត', chooseStyle: 'ជ្រើស Style', manga: 'Manga', anime: 'Anime', sketch: 'Sketch', comic: 'Comic', watercolor: 'Watercolor', bwManga: 'B&W Manga', controls: 'Style & Edit', strength: 'Strength', detail: 'Detail', contrast: 'Contrast', lineArt: 'Line Art', reset: 'កំណត់ឡើងវិញ', generate: 'បង្កើត Art', generating: 'កំពុងបង្កើត Artwork…', noPhoto: 'សូមជ្រើសរូបថតជាមុន។', invalidPhoto: 'សូមជ្រើសឯកសាររូបភាពដែលត្រឹមត្រូវ។', failed: 'ឧបករណ៍នេះមិនអាចបង្កើត Artwork បានទេ។', privacy: 'ដំណើរការ Local លើឧបករណ៍នេះ។ រូបរបស់អ្នកមិនត្រូវបាន Upload ទេ។', result: 'Artwork របស់អ្នក', original: 'រូបដើម', artwork: 'Artwork', download: 'ទាញយក PNG', generateAgain: 'បង្កើតម្តងទៀត', output: 'លទ្ធផល', ready: 'Artwork រួចរាល់។', settingsTitle: 'ការកំណត់ Pic to Art', autoSave: 'រក្សាទុក Creation ស្វ័យប្រវត្តិ', autoSaveBody: 'រក្សាទុក Artwork ដែលបានបង្កើតទៅ Creations លើឧបករណ៍នេះ។', rememberControls: 'ចងចាំការកំណត់', rememberControlsBody: 'ចងចាំ Style និងតម្លៃ Slider ចុងក្រោយ។', defaultStyle: 'Style លំនាំដើម', clearCreations: 'លុប Creations ទាំងអស់', clearCreationsBody: 'លុប Pic to Art Creations ដែលរក្សាទុក Local ទាំងអស់។', clearConfirm: 'លុប Pic to Art Creations ទាំងអស់ពីឧបករណ៍នេះមែនទេ?', cleared: 'បានលុប Creations រួចរាល់។', close: 'បិទ', quality: 'គុណភាព Output', standard: 'Standard', hd: 'HD', share: 'Share', shareUnavailable: 'ឧបករណ៍នេះមិនគាំទ្រ Share រូបនេះទេ។' },
+  zh: { title: 'Pic to Art', subtitle: '将照片转换成漫画或艺术风格', back: '返回', settings: '设置', creations: '作品', uploadTitle: '添加照片', uploadBody: '从设备中选择一张清晰的照片。', choosePhoto: '选择照片', changePhoto: '更换照片', removePhoto: '移除照片', chooseStyle: '选择风格', manga: '漫画', anime: '动漫', sketch: '素描', comic: '美漫', watercolor: '水彩', bwManga: '黑白漫画', controls: '风格与编辑', strength: '强度', detail: '细节', contrast: '对比度', lineArt: '线稿', reset: '重置', generate: '生成艺术图', generating: '正在生成作品…', noPhoto: '请先选择照片。', invalidPhoto: '请选择有效的图片文件。', failed: '此设备无法生成作品。', privacy: '图片只在本机处理，不会上传。', result: '你的作品', original: '原图', artwork: '作品', download: '下载 PNG', generateAgain: '再次生成', output: '输出', ready: '作品已完成。', settingsTitle: 'Pic to Art 设置', autoSave: '自动保存作品', autoSaveBody: '将生成的作品保存在此设备的作品库中。', rememberControls: '记住控制设置', rememberControlsBody: '记住上次的风格和滑块值。', defaultStyle: '默认风格', clearCreations: '清除作品', clearCreationsBody: '删除本机保存的所有 Pic to Art 作品。', clearConfirm: '删除此设备上的所有 Pic to Art 作品吗？', cleared: '作品已清除。', close: '关闭', quality: '输出质量', standard: '标准', hd: '高清', share: '分享', shareUnavailable: '此设备不支持分享此图片。' },
+  ja: { title: 'Pic to Art', subtitle: '写真をマンガやアートに変換', back: '戻る', settings: '設定', creations: '作品', uploadTitle: '写真を追加', uploadBody: '端末から鮮明な写真を選択してください。', choosePhoto: '写真を選択', changePhoto: '写真を変更', removePhoto: '写真を削除', chooseStyle: 'スタイルを選択', manga: 'マンガ', anime: 'アニメ', sketch: 'スケッチ', comic: 'コミック', watercolor: '水彩', bwManga: '白黒マンガ', controls: 'スタイルと編集', strength: '強度', detail: 'ディテール', contrast: 'コントラスト', lineArt: '線画', reset: 'リセット', generate: 'アートを生成', generating: 'アートを生成中…', noPhoto: '先に写真を選択してください。', invalidPhoto: '有効な画像ファイルを選択してください。', failed: 'この端末ではアートを生成できませんでした。', privacy: '端末内で処理され、写真はアップロードされません。', result: 'あなたのアート', original: '元画像', artwork: 'アート', download: 'PNGをダウンロード', generateAgain: 'もう一度生成', output: '出力', ready: 'アートが完成しました。', settingsTitle: 'Pic to Art 設定', autoSave: '作品を自動保存', autoSaveBody: '生成した作品をこの端末の作品一覧に保存します。', rememberControls: '設定を記憶', rememberControlsBody: '最後に使ったスタイルとスライダー値を記憶します。', defaultStyle: 'デフォルトスタイル', clearCreations: '作品をすべて削除', clearCreationsBody: 'この端末に保存された Pic to Art の作品をすべて削除します。', clearConfirm: 'この端末の Pic to Art 作品をすべて削除しますか？', cleared: '作品を削除しました。', close: '閉じる', quality: '出力品質', standard: '標準', hd: 'HD', share: '共有', shareUnavailable: 'この端末では画像共有に対応していません。' },
+  ko: { title: 'Pic to Art', subtitle: '사진을 만화 또는 아트로 변환', back: '뒤로', settings: '설정', creations: '작품', uploadTitle: '사진 추가', uploadBody: '기기에서 선명한 사진을 선택하세요.', choosePhoto: '사진 선택', changePhoto: '사진 변경', removePhoto: '사진 삭제', chooseStyle: '스타일 선택', manga: '만화', anime: '애니메이션', sketch: '스케치', comic: '코믹', watercolor: '수채화', bwManga: '흑백 만화', controls: '스타일 및 편집', strength: '강도', detail: '디테일', contrast: '대비', lineArt: '라인 아트', reset: '초기화', generate: '아트 생성', generating: '아트 생성 중…', noPhoto: '먼저 사진을 선택하세요.', invalidPhoto: '올바른 이미지 파일을 선택하세요.', failed: '이 기기에서 아트를 생성할 수 없습니다.', privacy: '기기에서 로컬로 처리되며 사진은 업로드되지 않습니다.', result: '나의 아트', original: '원본', artwork: '아트', download: 'PNG 다운로드', generateAgain: '다시 생성', output: '출력', ready: '아트가 완성되었습니다.', settingsTitle: 'Pic to Art 설정', autoSave: '작품 자동 저장', autoSaveBody: '생성된 작품을 이 기기의 Creations에 저장합니다.', rememberControls: '설정 기억', rememberControlsBody: '마지막 스타일과 슬라이더 값을 기억합니다.', defaultStyle: '기본 스타일', clearCreations: 'Creations 전체 삭제', clearCreationsBody: '이 기기에 저장된 Pic to Art 작품을 모두 삭제합니다.', clearConfirm: '이 기기의 Pic to Art 작품을 모두 삭제할까요?', cleared: 'Creations를 삭제했습니다.', close: '닫기', quality: '출력 품질', standard: '표준', hd: 'HD', share: '공유', shareUnavailable: '이 기기는 이미지 공유를 지원하지 않습니다.' },
 })
 
 const STYLE_ITEMS = [
@@ -45,6 +45,7 @@ function readSettings() {
       autoSave: stored?.autoSave !== false,
       rememberControls: stored?.rememberControls !== false,
       defaultStyle,
+      quality: stored?.quality === 'standard' ? 'standard' : 'hd',
       lastStyle,
       controls: savedControls,
     }
@@ -53,6 +54,7 @@ function readSettings() {
       autoSave: true,
       rememberControls: true,
       defaultStyle: 'manga',
+      quality: 'hd',
       lastStyle: 'manga',
       controls: INITIAL_CONTROLS,
     }
@@ -77,6 +79,7 @@ export default function PicToArtPage() {
   const [showSettings, setShowSettings] = useState(false)
   const [settingsNotice, setSettingsNotice] = useState('')
   const [resultUrl, setResultUrl] = useState('')
+  const [resultBlob, setResultBlob] = useState(null)
   const [resultSize, setResultSize] = useState({ width: 0, height: 0 })
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -110,6 +113,7 @@ export default function PicToArtPage() {
     if (resultRef.current) URL.revokeObjectURL(resultRef.current)
     resultRef.current = ''
     setResultUrl('')
+    setResultBlob(null)
     setResultSize({ width: 0, height: 0 })
     setProgress(0)
     setShowOriginal(false)
@@ -200,10 +204,12 @@ export default function PicToArtPage() {
         sourceUrl: photoUrl,
         style: selectedStyle,
         controls,
+        quality: appSettings.quality,
         onProgress: setProgress,
       })
       resultRef.current = result.url
       setResultUrl(result.url)
+      setResultBlob(result.blob)
       setResultSize({ width: result.width, height: result.height })
       if (appSettings.autoSave) {
         savePicToArtCreation({
@@ -230,6 +236,32 @@ export default function PicToArtPage() {
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()
+  }
+
+  const shareResult = async () => {
+    if (!resultBlob) return
+
+    const file = new File(
+      [resultBlob],
+      `pic-to-art-${selectedStyle}-${Date.now()}.png`,
+      { type: 'image/png' },
+    )
+
+    if (!navigator.share || !navigator.canShare?.({ files: [file] })) {
+      setError(t('picToArt.shareUnavailable'))
+      return
+    }
+
+    try {
+      await navigator.share({
+        title: t('picToArt.title'),
+        files: [file],
+      })
+    } catch (shareError) {
+      if (shareError?.name !== 'AbortError') {
+        setError(t('picToArt.shareUnavailable'))
+      }
+    }
   }
 
   return (
@@ -362,8 +394,9 @@ export default function PicToArtPage() {
               <button type="button" onClick={() => setShowOriginal(false)} className={`rounded-xl border px-3 py-2.5 text-[11px] font-bold ${!showOriginal ? 'border-[#7c3aed] bg-[#f3edff] text-[#7040d8] dark:bg-[#302442] dark:text-[#cfb6ff]' : 'app-card'}`}>{t('picToArt.artwork')}</button>
             </div>
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
               <button type="button" onClick={downloadResult} className="rounded-[16px] bg-[#7c3aed] px-4 py-3 text-[12px] font-extrabold text-white active:scale-[0.99]"><i className="fa-solid fa-download mr-2" />{t('picToArt.download')}</button>
+              <button type="button" onClick={shareResult} className="rounded-[16px] border border-[#bba3ee] px-4 py-3 text-[12px] font-extrabold text-[#7040d8] active:scale-[0.99] dark:border-[#5c4776] dark:text-[#cfb6ff]"><i className="fa-solid fa-share-nodes mr-2" />{t('picToArt.share')}</button>
               <button type="button" onClick={handleGenerate} className="rounded-[16px] border border-[#bba3ee] px-4 py-3 text-[12px] font-extrabold text-[#7040d8] active:scale-[0.99] dark:border-[#5c4776] dark:text-[#cfb6ff]"><i className="fa-solid fa-rotate mr-2" />{t('picToArt.generateAgain')}</button>
             </div>
           </SurfaceCard>
@@ -448,6 +481,22 @@ export default function PicToArtPage() {
                     <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${appSettings.rememberControls ? 'left-6' : 'left-1'}`} />
                   </button>
                 </div>
+              </SurfaceCard>
+
+              <SurfaceCard className="p-4">
+                <label className="block">
+                  <span className="app-title text-[13px] font-extrabold">
+                    {t('picToArt.quality')}
+                  </span>
+                  <select
+                    value={appSettings.quality}
+                    onChange={event => updateSetting('quality', event.target.value)}
+                    className="app-input mt-3 h-11 w-full rounded-xl border px-3 text-[12px] font-bold outline-none"
+                  >
+                    <option value="standard">{t('picToArt.standard')}</option>
+                    <option value="hd">{t('picToArt.hd')}</option>
+                  </select>
+                </label>
               </SurfaceCard>
 
               <SurfaceCard className="p-4">
