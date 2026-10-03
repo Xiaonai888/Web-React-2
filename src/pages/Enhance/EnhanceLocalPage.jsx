@@ -6,140 +6,201 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 registerTranslationNamespace('enhanceLocal', {
   en: {
     title: 'Enhance Local',
-    subtitle: 'Free local image enhancer',
+    subtitle: 'Free local AI image enhancer',
     back: 'Back',
     before: 'Before',
     after: 'After',
     upload: 'Upload Image',
     drop: 'Drop image here or tap to choose',
-    uploadHint: 'Runs on your device • No server upload',
-    upscale: 'Upscale',
+    uploadHint: 'Image stays on your device • No server upload',
+    upscale: 'AI Upscale',
     denoise: 'Denoise',
     sharpen: 'Sharpen',
     intensity: 'Intensity',
-    processing: 'Processing locally',
-    privateLine: 'Private • Fast • No cloud cost',
+    loadingAi: 'Loading AI model',
+    processing: 'AI processing locally',
+    privateLine: 'Private • Local AI • No image upload',
     preview: 'Preview',
     enhance: 'Enhance',
     download: 'Download Result',
     footer: 'Best for manga, cover art, and story images',
     chooseFirst: 'Choose an image first.',
     failed: 'Could not enhance this image on your device.',
-    tooLarge: 'This image is too large for the selected upscale size on this device.',
+    tooLarge: 'This image is too large for the selected AI upscale size on this device.',
     ready: 'Ready',
     original: 'Original',
     output: 'Output',
   },
   km: {
     title: 'Enhance Local',
-    subtitle: 'កម្មវិធីកែលម្អរូបភាពដោយប្រើឧបករណ៍របស់អ្នក',
+    subtitle: 'កម្មវិធី AI កែលម្អរូបភាពដោយប្រើឧបករណ៍របស់អ្នក',
     back: 'ត្រឡប់ក្រោយ',
     before: 'មុន',
     after: 'ក្រោយ',
     upload: 'បញ្ចូលរូបភាព',
     drop: 'ទម្លាក់រូបភាពទីនេះ ឬចុចដើម្បីជ្រើស',
-    uploadHint: 'ដំណើរការលើឧបករណ៍របស់អ្នក • មិន Upload ទៅ Server',
-    upscale: 'ពង្រីក',
+    uploadHint: 'រូបភាពនៅលើឧបករណ៍របស់អ្នក • មិន Upload ទៅ Server',
+    upscale: 'AI ពង្រីក',
     denoise: 'កាត់បន្ថយ Noise',
     sharpen: 'ធ្វើឱ្យច្បាស់',
     intensity: 'កម្លាំង',
-    processing: 'កំពុងដំណើរការក្នុងឧបករណ៍',
-    privateLine: 'ឯកជន • លឿន • មិនចំណាយ Cloud',
+    loadingAi: 'កំពុងផ្ទុក AI Model',
+    processing: 'AI កំពុងដំណើរការក្នុងឧបករណ៍',
+    privateLine: 'ឯកជន • Local AI • មិន Upload រូបភាព',
     preview: 'មើលមុន',
     enhance: 'កែលម្អ',
     download: 'ទាញយកលទ្ធផល',
     footer: 'សមសម្រាប់ Manga, Cover Art និងរូបភាពរឿង',
     chooseFirst: 'សូមជ្រើសរូបភាពជាមុន។',
     failed: 'មិនអាចកែលម្អរូបភាពនេះលើឧបករណ៍បានទេ។',
-    tooLarge: 'រូបភាពនេះធំពេកសម្រាប់ទំហំពង្រីកដែលបានជ្រើសលើឧបករណ៍នេះ។',
+    tooLarge: 'រូបភាពនេះធំពេកសម្រាប់ទំហំ AI ពង្រីកដែលបានជ្រើសលើឧបករណ៍នេះ។',
     ready: 'រួចរាល់',
     original: 'រូបដើម',
     output: 'លទ្ធផល',
   },
   zh: {
     title: 'Enhance Local',
-    subtitle: '免费的本地图片增强器',
+    subtitle: '免费的本地 AI 图片增强器',
     back: '返回',
     before: '之前',
     after: '之后',
     upload: '上传图片',
     drop: '拖放图片到这里或点击选择',
-    uploadHint: '在你的设备上运行 • 不上传服务器',
-    upscale: '放大',
+    uploadHint: '图片保留在设备上 • 不上传服务器',
+    upscale: 'AI 放大',
     denoise: '降噪',
     sharpen: '锐化',
     intensity: '强度',
-    processing: '正在本地处理',
-    privateLine: '私密 • 快速 • 无云端成本',
+    loadingAi: '正在加载 AI 模型',
+    processing: 'AI 正在本地处理',
+    privateLine: '私密 • 本地 AI • 不上传图片',
     preview: '预览',
     enhance: '增强',
     download: '下载结果',
     footer: '适合漫画、封面和故事图片',
     chooseFirst: '请先选择图片。',
     failed: '无法在此设备上增强这张图片。',
-    tooLarge: '这张图片对于当前设备所选的放大尺寸来说太大。',
+    tooLarge: '这张图片对于当前设备所选的 AI 放大尺寸来说太大。',
     ready: '就绪',
     original: '原图',
     output: '输出',
   },
   ja: {
     title: 'Enhance Local',
-    subtitle: '無料のローカル画像補正',
+    subtitle: '無料のローカル AI 画像補正',
     back: '戻る',
     before: '補正前',
     after: '補正後',
     upload: '画像を選択',
     drop: '画像をドロップまたはタップして選択',
-    uploadHint: '端末内で処理 • サーバーへ送信しません',
-    upscale: '拡大',
+    uploadHint: '画像は端末内に保持 • サーバーへ送信しません',
+    upscale: 'AI 拡大',
     denoise: 'ノイズ除去',
     sharpen: 'シャープ',
     intensity: '強度',
-    processing: '端末内で処理中',
-    privateLine: 'プライベート • 高速 • クラウド費用なし',
+    loadingAi: 'AI モデルを読み込み中',
+    processing: 'AI を端末内で処理中',
+    privateLine: 'プライベート • ローカル AI • 画像送信なし',
     preview: 'プレビュー',
     enhance: '補正',
     download: '結果をダウンロード',
     footer: '漫画・カバーアート・ストーリー画像に最適',
     chooseFirst: '先に画像を選択してください。',
     failed: 'この端末では画像を補正できませんでした。',
-    tooLarge: '選択した拡大率では、この端末で処理するには画像が大きすぎます。',
+    tooLarge: '選択した AI 拡大率では、この端末で処理するには画像が大きすぎます。',
     ready: '準備完了',
     original: '元画像',
     output: '出力',
   },
   ko: {
     title: 'Enhance Local',
-    subtitle: '무료 로컬 이미지 향상 도구',
+    subtitle: '무료 로컬 AI 이미지 향상 도구',
     back: '뒤로',
     before: '전',
     after: '후',
     upload: '이미지 업로드',
     drop: '이미지를 놓거나 눌러서 선택하세요',
-    uploadHint: '기기에서 처리 • 서버 업로드 없음',
-    upscale: '업스케일',
+    uploadHint: '이미지는 기기에 유지 • 서버 업로드 없음',
+    upscale: 'AI 업스케일',
     denoise: '노이즈 제거',
     sharpen: '선명하게',
     intensity: '강도',
-    processing: '기기에서 처리 중',
-    privateLine: '비공개 • 빠름 • 클라우드 비용 없음',
+    loadingAi: 'AI 모델 불러오는 중',
+    processing: 'AI를 기기에서 처리 중',
+    privateLine: '비공개 • 로컬 AI • 이미지 업로드 없음',
     preview: '미리보기',
     enhance: '향상',
     download: '결과 다운로드',
     footer: '만화, 커버 아트, 스토리 이미지에 적합',
     chooseFirst: '먼저 이미지를 선택하세요.',
     failed: '이 기기에서 이미지를 향상할 수 없습니다.',
-    tooLarge: '선택한 업스케일 크기로 처리하기에는 이미지가 너무 큽니다.',
+    tooLarge: '선택한 AI 업스케일 크기로 처리하기에는 이미지가 너무 큽니다.',
     ready: '준비됨',
     original: '원본',
     output: '결과',
   },
 })
 
-const MAX_OUTPUT_PIXELS = 16_000_000
+const MAX_OUTPUT_PIXELS = 12_000_000
+const TF_URL = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js'
+const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@upscalerjs/default-model@1.0.0/dist/umd/index.min.js'
+const UPSCALER_URL = 'https://cdn.jsdelivr.net/npm/upscaler@1.0.0/dist/browser/umd/upscaler.min.js'
 
-function nextFrame() {
-  return new Promise((resolve) => requestAnimationFrame(resolve))
+let runtimePromise = null
+
+function loadScript(id, src, ready) {
+  if (ready()) return Promise.resolve()
+
+  const existing = document.getElementById(id)
+
+  if (existing) {
+    return new Promise((resolve, reject) => {
+      if (ready()) {
+        resolve()
+        return
+      }
+      existing.addEventListener('load', resolve, { once: true })
+      existing.addEventListener('error', reject, { once: true })
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.id = id
+    script.src = src
+    script.async = true
+    script.crossOrigin = 'anonymous'
+    script.onload = resolve
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+
+function loadAiRuntime() {
+  if (!runtimePromise) {
+    runtimePromise = (async () => {
+      await loadScript('enhance-local-tf', TF_URL, () => Boolean(window.tf))
+      await loadScript(
+        'enhance-local-model',
+        MODEL_URL,
+        () => Boolean(window.DefaultUpscalerJSModel)
+      )
+      await loadScript(
+        'enhance-local-upscaler',
+        UPSCALER_URL,
+        () => Boolean(window.Upscaler)
+      )
+
+      if (!window.tf || !window.DefaultUpscalerJSModel || !window.Upscaler) {
+        throw new Error('AI_RUNTIME_UNAVAILABLE')
+      }
+    })().catch((error) => {
+      runtimePromise = null
+      throw error
+    })
+  }
+
+  return runtimePromise
 }
 
 function loadImage(url) {
@@ -167,10 +228,10 @@ function sharpenCanvas(canvas, amount) {
 
   const width = canvas.width
   const height = canvas.height
-  const source = context.getImageData(0, 0, width, height)
-  const input = source.data
+  const imageData = context.getImageData(0, 0, width, height)
+  const input = imageData.data
   const output = new Uint8ClampedArray(input)
-  const strength = Math.max(0, Math.min(1, amount))
+  const strength = Math.max(0, Math.min(0.22, amount))
   const center = 1 + strength * 4
   const side = -strength
 
@@ -196,16 +257,40 @@ function sharpenCanvas(canvas, amount) {
   context.putImageData(new ImageData(output, width, height), 0, 0)
 }
 
-function upscaleCanvas(source, width, height) {
+async function prepareSource(url, denoise, sharpen, intensity) {
+  const image = await loadImage(url)
+
+  if (!denoise && !sharpen) return url
+
   const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const context = canvas.getContext('2d', { alpha: false })
+  canvas.width = image.naturalWidth
+  canvas.height = image.naturalHeight
+
+  const context = canvas.getContext('2d', {
+    alpha: false,
+    willReadFrequently: sharpen,
+  })
+
   if (!context) throw new Error('CANVAS_UNAVAILABLE')
-  context.imageSmoothingEnabled = true
-  context.imageSmoothingQuality = 'high'
-  context.drawImage(source, 0, 0, width, height)
-  return canvas
+
+  const strength = intensity / 100
+  const filters = []
+
+  if (denoise) filters.push(`blur(${0.08 + strength * 0.14}px)`)
+  filters.push(`contrast(${1 + strength * 0.035})`)
+
+  context.filter = filters.join(' ')
+  context.drawImage(image, 0, 0)
+  context.filter = 'none'
+
+  if (sharpen) sharpenCanvas(canvas, 0.05 + strength * 0.09)
+
+  return canvas.toDataURL('image/png')
+}
+
+function normalizeProgress(value) {
+  const number = Number(value) || 0
+  return Math.max(0, Math.min(100, number <= 1 ? number * 100 : number))
 }
 
 function formatSize(width, height) {
@@ -245,6 +330,8 @@ export default function EnhanceLocalPage() {
   const inputRef = useRef(null)
   const sourceRef = useRef('')
   const resultRef = useRef('')
+  const upscalerRef = useRef(null)
+  const abortRef = useRef(null)
   const [sourceUrl, setSourceUrl] = useState('')
   const [resultUrl, setResultUrl] = useState('')
   const [resultBlob, setResultBlob] = useState(null)
@@ -257,11 +344,15 @@ export default function EnhanceLocalPage() {
   const [compare, setCompare] = useState(50)
   const [progress, setProgress] = useState(0)
   const [processing, setProcessing] = useState(false)
+  const [loadingAi, setLoadingAi] = useState(false)
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     return () => {
+      abortRef.current?.abort()
+      upscalerRef.current?.abort?.()
+      upscalerRef.current?.dispose?.()
       if (sourceRef.current) URL.revokeObjectURL(sourceRef.current)
       if (resultRef.current) URL.revokeObjectURL(resultRef.current)
     }
@@ -278,6 +369,8 @@ export default function EnhanceLocalPage() {
 
   async function selectImage(file) {
     if (!file || !String(file.type || '').startsWith('image/')) return
+
+    abortRef.current?.abort()
 
     if (sourceRef.current) URL.revokeObjectURL(sourceRef.current)
     resetResult()
@@ -299,106 +392,135 @@ export default function EnhanceLocalPage() {
     }
   }
 
+  async function getUpscaler() {
+    if (upscalerRef.current) return upscalerRef.current
+
+    setLoadingAi(true)
+
+    try {
+      await loadAiRuntime()
+      const upscaler = new window.Upscaler({
+        model: window.DefaultUpscalerJSModel,
+      })
+      upscalerRef.current = upscaler
+      return upscaler
+    } finally {
+      setLoadingAi(false)
+    }
+  }
+
+  async function runAiPass(upscaler, input, signal, start, span) {
+    return upscaler.upscale(input, {
+      output: 'base64',
+      patchSize: 64,
+      padding: 2,
+      awaitNextFrame: true,
+      signal,
+      progress: (value) => {
+        const percent = normalizeProgress(value)
+        setProgress(Math.round(start + (percent / 100) * span))
+      },
+    })
+  }
+
   async function enhanceImage() {
-    if (!sourceUrl || processing) {
+    if (!sourceUrl || processing || loadingAi) {
       if (!sourceUrl) setError(t('enhanceLocal.chooseFirst'))
       return
     }
 
+    const expectedWidth = sourceSize.width * scale
+    const expectedHeight = sourceSize.height * scale
+
+    if (expectedWidth * expectedHeight > MAX_OUTPUT_PIXELS) {
+      setError(t('enhanceLocal.tooLarge'))
+      return
+    }
+
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setProcessing(true)
     setError('')
     resetResult()
-    setProgress(6)
+    setProgress(2)
 
     try {
-      await nextFrame()
+      const upscaler = await getUpscaler()
 
-      const image = await loadImage(sourceUrl)
-      const targetWidth = Math.max(1, Math.round(image.naturalWidth * scale))
-      const targetHeight = Math.max(1, Math.round(image.naturalHeight * scale))
+      if (controller.signal.aborted) return
 
-      if (targetWidth * targetHeight > MAX_OUTPUT_PIXELS) {
-        throw new Error('OUTPUT_TOO_LARGE')
-      }
+      setProgress(5)
 
-      const base = document.createElement('canvas')
-      base.width = image.naturalWidth
-      base.height = image.naturalHeight
+      const preparedSource = await prepareSource(
+        sourceUrl,
+        denoise,
+        sharpen,
+        intensity
+      )
 
-      const baseContext = base.getContext('2d', {
-        alpha: false,
-        willReadFrequently: sharpen,
-      })
+      let enhanced
 
-      if (!baseContext) throw new Error('CANVAS_UNAVAILABLE')
+      if (scale === 2) {
+        enhanced = await runAiPass(
+          upscaler,
+          preparedSource,
+          controller.signal,
+          8,
+          86
+        )
+      } else {
+        const firstPass = await runAiPass(
+          upscaler,
+          preparedSource,
+          controller.signal,
+          8,
+          42
+        )
 
-      setProgress(20)
-      await nextFrame()
-
-      const strength = intensity / 100
-      const filters = []
-
-      if (denoise) {
-        filters.push(`blur(${0.12 + strength * 0.18}px)`)
-      }
-
-      filters.push(`contrast(${1 + strength * 0.08})`)
-      filters.push(`saturate(${1 + strength * 0.025})`)
-
-      baseContext.filter = filters.join(' ')
-      baseContext.drawImage(image, 0, 0, base.width, base.height)
-      baseContext.filter = 'none'
-
-      setProgress(38)
-      await nextFrame()
-
-      if (sharpen) {
-        sharpenCanvas(base, 0.08 + strength * 0.13)
-      }
-
-      setProgress(56)
-      await nextFrame()
-
-      let output = base
-
-      if (scale >= 2) {
-        output = upscaleCanvas(
-          output,
-          Math.round(image.naturalWidth * 2),
-          Math.round(image.naturalHeight * 2)
+        enhanced = await runAiPass(
+          upscaler,
+          firstPass,
+          controller.signal,
+          50,
+          44
         )
       }
 
-      setProgress(scale === 4 ? 72 : 82)
-      await nextFrame()
+      if (controller.signal.aborted) return
 
-      if (scale === 4) {
-        output = upscaleCanvas(output, targetWidth, targetHeight)
-      }
+      setProgress(96)
 
-      setProgress(90)
-      await nextFrame()
+      const enhancedImage = await loadImage(enhanced)
+      const canvas = document.createElement('canvas')
+      canvas.width = enhancedImage.naturalWidth
+      canvas.height = enhancedImage.naturalHeight
 
-      const blob = await canvasToBlob(output)
+      const context = canvas.getContext('2d', { alpha: false })
+      if (!context) throw new Error('CANVAS_UNAVAILABLE')
+
+      context.drawImage(enhancedImage, 0, 0)
+
+      const blob = await canvasToBlob(canvas)
       const url = URL.createObjectURL(blob)
 
       resultRef.current = url
       setResultBlob(blob)
       setResultUrl(url)
       setResultSize({
-        width: output.width,
-        height: output.height,
+        width: canvas.width,
+        height: canvas.height,
       })
       setCompare(50)
       setProgress(100)
     } catch (enhanceError) {
-      setProgress(0)
-      setError(
-        enhanceError?.message === 'OUTPUT_TOO_LARGE'
-          ? t('enhanceLocal.tooLarge')
-          : t('enhanceLocal.failed')
-      )
+      if (enhanceError?.name !== 'AbortError') {
+        setProgress(0)
+        setError(t('enhanceLocal.failed'))
+      }
     } finally {
+      if (abortRef.current === controller) abortRef.current = null
       setProcessing(false)
     }
   }
@@ -408,7 +530,7 @@ export default function EnhanceLocalPage() {
 
     const anchor = document.createElement('a')
     anchor.href = resultUrl
-    anchor.download = `enhance-local-${Date.now()}.webp`
+    anchor.download = `enhance-local-ai-${Date.now()}.webp`
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()
@@ -419,6 +541,12 @@ export default function EnhanceLocalPage() {
     setDragging(false)
     selectImage(event.dataTransfer.files?.[0])
   }
+
+  const statusText = loadingAi
+    ? t('enhanceLocal.loadingAi')
+    : processing
+      ? t('enhanceLocal.processing')
+      : t('enhanceLocal.ready')
 
   return (
     <div className="min-h-screen bg-[#F7F7F9] text-[var(--shadow-text-primary)] dark:bg-[#08090C]">
@@ -581,7 +709,7 @@ export default function EnhanceLocalPage() {
 
         <section className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-sm">
           <div className="mb-3 flex items-center gap-2 text-[13px] font-black">
-            <i className="fa-solid fa-up-right-and-down-left-from-center text-[#E11D48]" />
+            <i className="fa-solid fa-microchip text-[#E11D48]" />
             {t('enhanceLocal.upscale')}
           </div>
 
@@ -590,11 +718,12 @@ export default function EnhanceLocalPage() {
               <button
                 key={value}
                 type="button"
+                disabled={processing || loadingAi}
                 onClick={() => {
                   setScale(value)
                   resetResult()
                 }}
-                className={`h-12 rounded-full border text-[15px] font-black transition ${
+                className={`h-12 rounded-full border text-[15px] font-black transition disabled:opacity-50 ${
                   scale === value
                     ? 'border-[#E11D48] bg-[#E11D48]/10 text-[#E11D48] shadow-[0_0_0_1px_rgba(225,29,72,.2)]'
                     : 'border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-secondary)]'
@@ -609,6 +738,7 @@ export default function EnhanceLocalPage() {
             <Toggle
               active={denoise}
               onChange={(value) => {
+                if (processing || loadingAi) return
                 setDenoise(value)
                 resetResult()
               }}
@@ -618,6 +748,7 @@ export default function EnhanceLocalPage() {
             <Toggle
               active={sharpen}
               onChange={(value) => {
+                if (processing || loadingAi) return
                 setSharpen(value)
                 resetResult()
               }}
@@ -635,11 +766,12 @@ export default function EnhanceLocalPage() {
               min="0"
               max="100"
               value={intensity}
+              disabled={processing || loadingAi}
               onChange={(event) => {
                 setIntensity(Number(event.target.value))
                 resetResult()
               }}
-              className="accent-[#E11D48]"
+              className="accent-[#E11D48] disabled:opacity-50"
             />
 
             <span className="w-10 text-right text-[12px] font-bold text-[var(--shadow-text-tertiary)]">
@@ -651,14 +783,16 @@ export default function EnhanceLocalPage() {
         <section className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[15px] bg-[#E11D48]/10 text-[20px] text-[#E11D48]">
-              <i className="fa-solid fa-microchip" />
+              <i
+                className={`fa-solid ${
+                  loadingAi || processing ? 'fa-spinner animate-spin' : 'fa-microchip'
+                }`}
+              />
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="truncate text-[15px] font-black">
-                {processing
-                  ? t('enhanceLocal.processing')
-                  : t('enhanceLocal.ready')}
+                {statusText}
               </div>
 
               <div className="mt-0.5 truncate text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">
@@ -701,13 +835,15 @@ export default function EnhanceLocalPage() {
 
           <button
             type="button"
-            disabled={!sourceUrl || processing}
+            disabled={!sourceUrl || processing || loadingAi}
             onClick={enhanceImage}
             className="h-14 rounded-[18px] bg-gradient-to-r from-[#FB7185] to-[#E11D48] text-[14px] font-black text-white shadow-[0_10px_28px_rgba(225,29,72,.24)] active:scale-[0.98] disabled:opacity-40"
           >
             <i
               className={`fa-solid ${
-                processing ? 'fa-spinner animate-spin' : 'fa-wand-magic-sparkles'
+                processing || loadingAi
+                  ? 'fa-spinner animate-spin'
+                  : 'fa-wand-magic-sparkles'
               } mr-2`}
             />
             {t('enhanceLocal.enhance')}
