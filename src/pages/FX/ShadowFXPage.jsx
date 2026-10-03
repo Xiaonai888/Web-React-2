@@ -21,6 +21,14 @@ registerTranslationNamespace('shadowFx', {
     filters: 'Filters',
     effects: 'Effects',
     export: 'Export',
+    crop: 'Crop',
+    free: 'Free',
+    ratio: 'Aspect Ratio',
+    rotateLeft: 'Rotate Left',
+    rotateRight: 'Rotate Right',
+    flipHorizontal: 'Flip Horizontal',
+    flipVertical: 'Flip Vertical',
+    resetCrop: 'Reset Crop',
     blur: 'Blur',
     grain: 'Grain',
     glow: 'Glow',
@@ -66,6 +74,14 @@ registerTranslationNamespace('shadowFx', {
     filters: 'ហ្វីលធ័រ',
     effects: 'បែបផែន',
     export: 'រក្សាទុក',
+    crop: 'កាត់រូប',
+    free: 'សេរី',
+    ratio: 'សមាមាត្រ',
+    rotateLeft: 'បង្វិលឆ្វេង',
+    rotateRight: 'បង្វិលស្តាំ',
+    flipHorizontal: 'ត្រឡប់ផ្ដេក',
+    flipVertical: 'ត្រឡប់បញ្ឈរ',
+    resetCrop: 'កំណត់ Crop ឡើងវិញ',
     blur: 'ព្រិល',
     grain: 'គ្រាប់ហ្វីល',
     glow: 'ពន្លឺរលោង',
@@ -111,6 +127,14 @@ registerTranslationNamespace('shadowFx', {
     filters: '滤镜',
     effects: '效果',
     export: '导出',
+    crop: '裁剪',
+    free: '自由',
+    ratio: '宽高比',
+    rotateLeft: '向左旋转',
+    rotateRight: '向右旋转',
+    flipHorizontal: '水平翻转',
+    flipVertical: '垂直翻转',
+    resetCrop: '重置裁剪',
     blur: '模糊',
     grain: '颗粒',
     glow: '光晕',
@@ -156,6 +180,14 @@ registerTranslationNamespace('shadowFx', {
     filters: 'フィルター',
     effects: 'エフェクト',
     export: '書き出し',
+    crop: '切り抜き',
+    free: '自由',
+    ratio: 'アスペクト比',
+    rotateLeft: '左回転',
+    rotateRight: '右回転',
+    flipHorizontal: '水平反転',
+    flipVertical: '垂直反転',
+    resetCrop: '切り抜きをリセット',
     blur: 'ぼかし',
     grain: '粒子',
     glow: 'グロー',
@@ -201,6 +233,14 @@ registerTranslationNamespace('shadowFx', {
     filters: '필터',
     effects: '효과',
     export: '내보내기',
+    crop: '자르기',
+    free: '자유',
+    ratio: '화면 비율',
+    rotateLeft: '왼쪽 회전',
+    rotateRight: '오른쪽 회전',
+    flipHorizontal: '좌우 반전',
+    flipVertical: '상하 반전',
+    resetCrop: '자르기 초기화',
     blur: '블러',
     grain: '그레인',
     glow: '글로우',
@@ -281,6 +321,22 @@ const EXPORT_FORMATS = [
   { key: 'jpg', mime: 'image/jpeg', extension: 'jpg' },
   { key: 'png', mime: 'image/png', extension: 'png' },
   { key: 'webp', mime: 'image/webp', extension: 'webp' },
+]
+
+const DEFAULT_TRANSFORM = {
+  rotation: 0,
+  flipX: false,
+  flipY: false,
+  ratio: 'free',
+}
+
+const CROP_RATIOS = [
+  { key: 'free', value: null },
+  { key: '1:1', value: 1 },
+  { key: '3:4', value: 3 / 4 },
+  { key: '4:3', value: 4 / 3 },
+  { key: '9:16', value: 9 / 16 },
+  { key: '16:9', value: 16 / 9 },
 ]
 
 function clamp(value) {
@@ -485,6 +541,7 @@ export default function ShadowFXPage() {
   const [redoStack, setRedoStack] = useState([])
   const [exportFormat, setExportFormat] = useState('jpg')
   const [exportQuality, setExportQuality] = useState(94)
+  const [transform, setTransform] = useState(DEFAULT_TRANSFORM)
 
   useEffect(() => {
     return () => {
@@ -502,6 +559,13 @@ export default function ShadowFXPage() {
     return `brightness(${brightness}) contrast(${contrast}) saturate(${saturation}) sepia(${sepia}) hue-rotate(${hue}deg) blur(${blur}px)`
   }, [values])
 
+  const cropRatio = useMemo(
+    () => CROP_RATIOS.find(item => item.key === transform.ratio)?.value || null,
+    [transform.ratio]
+  )
+
+  const previewTransform = `rotate(${transform.rotation}deg) scaleX(${transform.flipX ? -1 : 1}) scaleY(${transform.flipY ? -1 : 1})`
+
   function chooseImage(file) {
     if (!file || !String(file.type || '').startsWith('image/')) return
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
@@ -514,12 +578,20 @@ export default function ShadowFXPage() {
     setCompare(false)
     setUndoStack([])
     setRedoStack([])
+    setTransform({ ...DEFAULT_TRANSFORM })
     adjustmentStartRef.current = null
     setError('')
   }
 
+  function snapshot() {
+    return {
+      values: { ...values },
+      transform: { ...transform },
+    }
+  }
+
   function rememberCurrent() {
-    setUndoStack(stack => [...stack.slice(-29), values])
+    setUndoStack(stack => [...stack.slice(-29), snapshot()])
     setRedoStack([])
   }
 
@@ -530,13 +602,13 @@ export default function ShadowFXPage() {
   }
 
   function beginAdjustment() {
-    if (!adjustmentStartRef.current) adjustmentStartRef.current = values
+    if (!adjustmentStartRef.current) adjustmentStartRef.current = snapshot()
   }
 
   function finishAdjustment() {
     const start = adjustmentStartRef.current
     adjustmentStartRef.current = null
-    if (!start || JSON.stringify(start) === JSON.stringify(values)) return
+    if (!start || JSON.stringify(start) === JSON.stringify(snapshot())) return
     setUndoStack(stack => [...stack.slice(-29), start])
     setRedoStack([])
   }
@@ -546,12 +618,22 @@ export default function ShadowFXPage() {
     setValues(current => ({ ...current, [key]: value }))
   }
 
+  function updateTransform(next) {
+    rememberCurrent()
+    setTransform(current => ({
+      ...current,
+      ...(typeof next === 'function' ? next(current) : next),
+    }))
+    setPreset('')
+  }
+
   function undoEdit() {
     if (!undoStack.length) return
     const previous = undoStack[undoStack.length - 1]
     setUndoStack(stack => stack.slice(0, -1))
-    setRedoStack(stack => [values, ...stack.slice(0, 29)])
-    setValues(previous)
+    setRedoStack(stack => [snapshot(), ...stack.slice(0, 29)])
+    setValues({ ...previous.values })
+    setTransform({ ...previous.transform })
     setPreset('')
   }
 
@@ -559,16 +641,27 @@ export default function ShadowFXPage() {
     if (!redoStack.length) return
     const next = redoStack[0]
     setRedoStack(stack => stack.slice(1))
-    setUndoStack(stack => [...stack.slice(-29), values])
-    setValues(next)
+    setUndoStack(stack => [...stack.slice(-29), snapshot()])
+    setValues({ ...next.values })
+    setTransform({ ...next.transform })
     setPreset('')
   }
 
   function resetAll() {
-    if (JSON.stringify(values) !== JSON.stringify(DEFAULTS)) rememberCurrent()
+    const clean = {
+      values: DEFAULTS,
+      transform: DEFAULT_TRANSFORM,
+    }
+    if (JSON.stringify(snapshot()) !== JSON.stringify(clean)) rememberCurrent()
     setValues({ ...DEFAULTS })
+    setTransform({ ...DEFAULT_TRANSFORM })
     setPreset('original')
     setError('')
+  }
+
+  function resetCrop() {
+    if (JSON.stringify(transform) === JSON.stringify(DEFAULT_TRANSFORM)) return
+    updateTransform({ ...DEFAULT_TRANSFORM })
   }
 
   async function saveImage() {
@@ -583,26 +676,70 @@ export default function ShadowFXPage() {
     try {
       const image = await loadImage(sourceUrl)
       const maxPixels = 20_000_000
-      const sourcePixels = image.naturalWidth * image.naturalHeight
+      const rotation = ((transform.rotation % 360) + 360) % 360
+      const quarterTurn = rotation === 90 || rotation === 270
+      const desiredRatio = CROP_RATIOS.find(item => item.key === transform.ratio)?.value || null
+      const sourceRatio = desiredRatio ? (quarterTurn ? 1 / desiredRatio : desiredRatio) : null
+
+      let cropWidth = image.naturalWidth
+      let cropHeight = image.naturalHeight
+      let sourceX = 0
+      let sourceY = 0
+
+      if (sourceRatio) {
+        if (cropWidth / cropHeight > sourceRatio) {
+          cropWidth = cropHeight * sourceRatio
+          sourceX = (image.naturalWidth - cropWidth) / 2
+        } else {
+          cropHeight = cropWidth / sourceRatio
+          sourceY = (image.naturalHeight - cropHeight) / 2
+        }
+      }
+
+      const sourcePixels = cropWidth * cropHeight
       const scale = sourcePixels > maxPixels ? Math.sqrt(maxPixels / sourcePixels) : 1
-      const width = Math.max(1, Math.round(image.naturalWidth * scale))
-      const height = Math.max(1, Math.round(image.naturalHeight * scale))
+      const width = Math.max(1, Math.round(cropWidth * scale))
+      const height = Math.max(1, Math.round(cropHeight * scale))
+      const workCanvas = document.createElement('canvas')
+      workCanvas.width = width
+      workCanvas.height = height
+      const workContext = workCanvas.getContext('2d', { alpha: false, willReadFrequently: true })
+
+      if (!workContext) throw new Error('CANVAS_UNAVAILABLE')
+
+      workContext.imageSmoothingEnabled = true
+      workContext.imageSmoothingQuality = 'high'
+      workContext.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        width,
+        height
+      )
+
+      const imageData = workContext.getImageData(0, 0, width, height)
+      workContext.putImageData(applyPixels(imageData, values, width, height), 0, 0)
+      applySharpen(workContext, width, height, values.sharpen)
+      applyBlurAndGlow(workContext, workCanvas, values)
+      applyGrain(workContext, width, height, values.grain)
+
       const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true })
+      canvas.width = quarterTurn ? height : width
+      canvas.height = quarterTurn ? width : height
+      const context = canvas.getContext('2d', { alpha: false })
 
       if (!context) throw new Error('CANVAS_UNAVAILABLE')
 
       context.imageSmoothingEnabled = true
       context.imageSmoothingQuality = 'high'
-      context.drawImage(image, 0, 0, width, height)
-
-      const imageData = context.getImageData(0, 0, width, height)
-      context.putImageData(applyPixels(imageData, values, width, height), 0, 0)
-      applySharpen(context, width, height, values.sharpen)
-      applyBlurAndGlow(context, canvas, values)
-      applyGrain(context, width, height, values.grain)
+      context.translate(canvas.width / 2, canvas.height / 2)
+      context.rotate((rotation * Math.PI) / 180)
+      context.scale(transform.flipX ? -1 : 1, transform.flipY ? -1 : 1)
+      context.drawImage(workCanvas, -width / 2, -height / 2)
 
       const format = EXPORT_FORMATS.find(item => item.key === exportFormat) || EXPORT_FORMATS[0]
       const quality = Math.max(0.4, Math.min(1, exportQuality / 100))
@@ -741,51 +878,63 @@ export default function ShadowFXPage() {
 
       <main className="mx-auto grid max-w-6xl gap-4 px-3 pb-28 pt-3 lg:grid-cols-[1fr_340px] lg:pb-6">
         <div className="min-w-0">
-          <section className="relative flex min-h-[46vh] items-center justify-center overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#0D111C] lg:min-h-[72vh]">
-            <img
-              src={sourceUrl}
-              alt=""
-              className="max-h-[72vh] max-w-full select-none object-contain"
-              draggable="false"
-              style={compare ? undefined : { filter: previewFilter }}
-            />
-
-            {!compare && values.fade > 0 ? (
-              <div className="pointer-events-none absolute inset-0 bg-[#D9CFC6]" style={{ opacity: values.fade / 500 }} />
-            ) : null}
-
-            {!compare && values.vignette > 0 ? (
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background: `radial-gradient(circle at center, transparent 35%, rgba(0,0,0,${Math.min(0.75, values.vignette / 120)}) 100%)`,
-                }}
-              />
-            ) : null}
-
-            {!compare && values.glow > 0 ? (
+          <section className="relative flex min-h-[46vh] items-center justify-center overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#0D111C] p-2 lg:min-h-[72vh]">
+            <div
+              className={`relative flex items-center justify-center overflow-hidden ${cropRatio ? 'w-full' : 'max-h-[72vh] max-w-full'}`}
+              style={cropRatio ? {
+                aspectRatio: String(cropRatio),
+                width: `min(100%, calc(72vh * ${cropRatio}))`,
+              } : undefined}
+            >
               <img
                 src={sourceUrl}
                 alt=""
-                className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                className={cropRatio ? 'h-full w-full select-none object-cover' : 'max-h-[72vh] max-w-full select-none object-contain'}
+                draggable="false"
                 style={{
-                  filter: `${previewFilter} blur(${2 + values.glow * 0.1}px) brightness(1.08)`,
-                  mixBlendMode: 'screen',
-                  opacity: Math.min(0.42, values.glow / 240),
+                  filter: compare ? undefined : previewFilter,
+                  transform: previewTransform,
                 }}
               />
-            ) : null}
 
-            {!compare && values.grain > 0 ? (
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  backgroundImage: 'repeating-radial-gradient(circle at 0 0, rgba(255,255,255,.35) 0 1px, rgba(0,0,0,.35) 1px 2px, transparent 2px 4px)',
-                  mixBlendMode: 'overlay',
-                  opacity: Math.min(0.32, values.grain / 320),
-                }}
-              />
-            ) : null}
+              {!compare && values.fade > 0 ? (
+                <div className="pointer-events-none absolute inset-0 bg-[#D9CFC6]" style={{ opacity: values.fade / 500 }} />
+              ) : null}
+
+              {!compare && values.vignette > 0 ? (
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background: `radial-gradient(circle at center, transparent 35%, rgba(0,0,0,${Math.min(0.75, values.vignette / 120)}) 100%)`,
+                  }}
+                />
+              ) : null}
+
+              {!compare && values.glow > 0 ? (
+                <img
+                  src={sourceUrl}
+                  alt=""
+                  className={cropRatio ? 'pointer-events-none absolute inset-0 h-full w-full object-cover' : 'pointer-events-none absolute inset-0 h-full w-full object-contain'}
+                  style={{
+                    filter: `${previewFilter} blur(${2 + values.glow * 0.1}px) brightness(1.08)`,
+                    transform: previewTransform,
+                    mixBlendMode: 'screen',
+                    opacity: Math.min(0.42, values.glow / 240),
+                  }}
+                />
+              ) : null}
+
+              {!compare && values.grain > 0 ? (
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    backgroundImage: 'repeating-radial-gradient(circle at 0 0, rgba(255,255,255,.35) 0 1px, rgba(0,0,0,.35) 1px 2px, transparent 2px 4px)',
+                    mixBlendMode: 'overlay',
+                    opacity: Math.min(0.32, values.grain / 320),
+                  }}
+                />
+              ) : null}
+            </div>
 
             <button
               type="button"
@@ -819,11 +968,12 @@ export default function ShadowFXPage() {
         </div>
 
         <aside className="rounded-[22px] border border-white/[0.06] bg-[#0D111C] p-3 lg:self-start">
-          <div className="mb-3 grid grid-cols-4 gap-1 rounded-[14px] bg-black/20 p-1">
+          <div className="mb-3 grid grid-cols-5 gap-1 rounded-[14px] bg-black/20 p-1">
             {[
               ['filters', 'fa-wand-magic-sparkles'],
               ['adjust', 'fa-sliders'],
               ['effects', 'fa-sparkles'],
+              ['crop', 'fa-crop-simple'],
               ['export', 'fa-file-export'],
             ].map(([key, icon]) => (
               <button
@@ -885,6 +1035,56 @@ export default function ShadowFXPage() {
                 />
               ))}
             </div>
+          ) : panel === 'crop' ? (
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 text-[11px] font-bold text-white/55">{t('shadowFx.ratio')}</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {CROP_RATIOS.map(item => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => updateTransform({ ratio: item.key })}
+                      className={`h-11 rounded-[12px] border text-[11px] font-black ${
+                        transform.ratio === item.key
+                          ? 'border-[#8B5CF6] bg-[#8B5CF6]/15 text-[#B7A2FF]'
+                          : 'border-white/[0.08] bg-white/[0.03] text-white/60'
+                      }`}
+                    >
+                      {item.key === 'free' ? t('shadowFx.free') : item.key}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => updateTransform(current => ({ rotation: (current.rotation - 90 + 360) % 360 }))} className="h-12 rounded-[13px] border border-white/[0.08] bg-white/[0.03] text-[11px] font-bold text-white/70">
+                  <i className="fa-solid fa-rotate-left mr-2" />
+                  {t('shadowFx.rotateLeft')}
+                </button>
+                <button type="button" onClick={() => updateTransform(current => ({ rotation: (current.rotation + 90) % 360 }))} className="h-12 rounded-[13px] border border-white/[0.08] bg-white/[0.03] text-[11px] font-bold text-white/70">
+                  <i className="fa-solid fa-rotate-right mr-2" />
+                  {t('shadowFx.rotateRight')}
+                </button>
+                <button type="button" onClick={() => updateTransform(current => ({ flipX: !current.flipX }))} className={`h-12 rounded-[13px] border text-[11px] font-bold ${transform.flipX ? 'border-[#8B5CF6] bg-[#8B5CF6]/15 text-[#B7A2FF]' : 'border-white/[0.08] bg-white/[0.03] text-white/70'}`}>
+                  <i className="fa-solid fa-left-right mr-2" />
+                  {t('shadowFx.flipHorizontal')}
+                </button>
+                <button type="button" onClick={() => updateTransform(current => ({ flipY: !current.flipY }))} className={`h-12 rounded-[13px] border text-[11px] font-bold ${transform.flipY ? 'border-[#8B5CF6] bg-[#8B5CF6]/15 text-[#B7A2FF]' : 'border-white/[0.08] bg-white/[0.03] text-white/70'}`}>
+                  <i className="fa-solid fa-up-down mr-2" />
+                  {t('shadowFx.flipVertical')}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={resetCrop}
+                className="h-11 w-full rounded-[13px] border border-white/10 bg-white/[0.04] text-[11px] font-bold text-white/70"
+              >
+                <i className="fa-solid fa-crop-simple mr-2" />
+                {t('shadowFx.resetCrop')}
+              </button>
+            </div>
           ) : (
             <div className="space-y-4">
               <div>
@@ -945,11 +1145,12 @@ export default function ShadowFXPage() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.07] bg-[#090D16]/96 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
           {[
             ['filters', 'fa-wand-magic-sparkles'],
             ['adjust', 'fa-sliders'],
             ['effects', 'fa-sparkles'],
+            ['crop', 'fa-crop-simple'],
             ['export', 'fa-file-export'],
           ].map(([key, icon]) => (
             <button
