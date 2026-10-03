@@ -87,6 +87,7 @@ const AppPage = lazy(() => import('./pages/Me/AppPage'))
 const AppAccessGuard = lazy(() => import('./pages/Me/AppAccessGuard'))
 const ShadowStudioPage = lazy(() => import('./pages/Studio/ShadowStudioPage'))
 const EnhanceLocalPage = lazy(() => import('./pages/Enhance/EnhanceLocalPage'))
+const CVBuilderPage = lazy(() => import('./pages/CVBuilder/CVBuilderPage'))
 const ShadowFXPage = lazy(() => import('./pages/FX/ShadowFXPage'))
 const PicToArtPage = lazy(() => import('./pages/PicToArt/PicToArtPage'))
 const QRBarcodePage = lazy(() => import('./pages/QR/QRBarcodePage'))
@@ -1374,6 +1375,7 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+          
 
   <Route
   path="/profile/settings/account-security"
@@ -1420,6 +1422,11 @@ const shouldShowOpeningAds =
           <Route path="/apps/enhance-local" element={
   <LazyPage><AppAccessGuard appKey="enhance-local"><EnhanceLocalPage /></AppAccessGuard></LazyPage>
 } />
+
+          <Route
+  path="/apps/cv-builder"
+  element={<LazyPage><CVBuilderPage /></LazyPage>}
+/>
 
 
         <Route path="/author/story/description-guide" element={<StoryDescriptionGuidePage />} />
