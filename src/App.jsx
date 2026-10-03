@@ -87,6 +87,7 @@ const AppAccessGuard = lazy(() => import('./pages/Me/AppAccessGuard'))
 const ShadowStudioPage = lazy(() => import('./pages/Studio/ShadowStudioPage'))
 const EnhanceLocalPage = lazy(() => import('./pages/Enhance/EnhanceLocalPage'))
 const ShadowFXPage = lazy(() => import('./pages/FX/ShadowFXPage'))
+const PicToArtPage = lazy(() => import('./pages/PicToArt/PicToArtPage'))
 const QRBarcodePage = lazy(() => import('./pages/QR/QRBarcodePage'))
 const ShadowDocsWorkspace = lazy(() => import('./pages/Docs/ShadowDocsWorkspace'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
@@ -384,6 +385,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/music',
     '/author/earnings',
     '/library/manage',
+    '/apps/pic-to-art',
   ]
 
   const isMeLibrary = location.pathname === '/library' &&
@@ -1092,6 +1094,10 @@ const shouldShowOpeningAds =
   path="/author/page/store/withdrawal-details"
   element={<LazyPage><AuthorStoreWithdrawalDetailsPage /></LazyPage>}
 />
+
+          <Route path="/apps/pic-to-art" element={
+  <LazyPage><AppAccessGuard appKey="pic-to-art"><PicToArtPage /></AppAccessGuard></LazyPage>
+} />
 
 
         <Route
