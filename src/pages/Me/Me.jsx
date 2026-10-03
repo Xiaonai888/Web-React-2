@@ -1291,7 +1291,7 @@ const handleOpenProfileSwitcher = (event) => {
 />
             <MenuRow
   to="/app"
-  icon="fa-solid fa-shapes"
+  customIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z" /></svg>}
   title={tx('mePage.app')}
   divider
 />
