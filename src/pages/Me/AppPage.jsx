@@ -12,7 +12,7 @@ registerTranslationNamespace('appPage', {
 })
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
-const CACHE_KEY = 'shadow-public-app-settings-v1'
+const CACHE_KEY = 'shadow-public-app-settings-v2'  2.
 const CACHE_MS = 30_000
 const apps = [
   { key: 'shadow-studio', nameKey: 'shadowStudio', name: 'Shadow Studio', icon: 'fa-solid fa-palette', path: '/apps/shadow-studio' },
