@@ -436,7 +436,20 @@ function buildDiscoverTimeline(
         }))
       : []),
   ].sort((left, right) => {
-    if (left.post?.id === newestPostId) return -1
+  const leftPriority = Number(left.post?.feed_priority || 0)
+  const rightPriority = Number(right.post?.feed_priority || 0)
+
+  if (leftPriority !== rightPriority) {
+    return rightPriority - leftPriority
+  }
+
+  if (leftPriority > 0 && rightPriority > 0) {
+    const rightTime = new Date(right.post?.created_at || 0).getTime()
+    const leftTime = new Date(left.post?.created_at || 0).getTime()
+    if (rightTime !== leftTime) return rightTime - leftTime
+  }
+
+  if (left.post?.id === newestPostId) return -1
 if (right.post?.id === newestPostId) return 1
     const leftScore =
       getDiscoverRecommendationScore(
