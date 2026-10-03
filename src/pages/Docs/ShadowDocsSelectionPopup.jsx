@@ -1,1965 +1,259 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, BookOpen, Check, CheckCircle2, Download, Eye, ImagePlus, Menu, Plus, Redo2, Share2, Trash2, Undo2 } from 'lucide-react'
-import { getManuscriptOverview } from './ShadowDocsManuscriptTools'
-import { loadShadowDocsFont, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
-import ShadowDocsRibbon from './ShadowDocsRibbon'
-import { captureShadowDocsSelection, restoreShadowDocsSelection, selectShadowDocsNodeContents } from './ShadowDocsSelectionEngine'
-import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsParagraphFormat } from './ShadowDocsFormattingEngine'
-import { readShadowDocsFormatState } from './ShadowDocsFormatState'
-import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
-import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
-import { insertShadowDocsTable } from './ShadowDocsTableEngine'
-import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
-import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
-import { copyShadowDocsSelection, cutShadowDocsSelection, insertShadowDocsClipboardText } from './ShadowDocsClipboardEngine'
-import { getShadowDocsDesignTheme, SHADOW_DOCS_DESIGN_THEMES } from './ShadowDocsDocumentDesignEngine'
-import { inspectShadowDocsProofing, getShadowDocsProofingStats } from './ShadowDocsProofingEngine'
-import { applyShadowDocsLanguage, detectShadowDocsLanguage, SHADOW_DOCS_LANGUAGES } from './ShadowDocsLanguageEngine'
-import { createShadowDocsCommentRecord, addShadowDocsComment, getShadowDocsCommentMarks, removeShadowDocsCommentMark } from './ShadowDocsCommentEngine'
-import { acceptShadowDocsChange, rejectShadowDocsChange, listShadowDocsChanges, markShadowDocsDeletion, markShadowDocsInsertion } from './ShadowDocsTrackChangesEngine'
-import { buildShadowDocsTableOfContents, createShadowDocsCitation, createShadowDocsFootnote, formatShadowDocsCitation } from './ShadowDocsReferenceEngine'
-import { buildShadowDocsMergedDocuments, createShadowDocsAddressBlock, createShadowDocsGreetingLine, getShadowDocsMergeFields, insertShadowDocsMergeField, parseShadowDocsRecipientsCSV } from './ShadowDocsMailMergeEngine'
-import { applyShadowDocsCase } from './ShadowDocsTextTransform'
-import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
-import ShadowDocsShareSheet from './ShadowDocsShareSheet'
-import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
-import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
-import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
-import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
-import ShadowDocsConversionSheet from './ShadowDocsConversionSheet'
-import ShadowDocsVersionHistorySheet from './ShadowDocsVersionHistorySheet'
-import ShadowDocsEncryptSheet from './ShadowDocsEncryptSheet'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Highlighter,
+  Languages,
+  MessageSquarePlus,
+  MousePointer2,
+  Paintbrush,
+  ScanText,
+  Scissors,
+  Search,
+  Share2,
+  SpellCheck2,
+  Type,
+} from 'lucide-react'
 
-const SHADOW_DOCS_FOLDERS_KEY = 'shadow-docs-folders-v1'
-const SHADOW_DOCS_FOLDER_MAP_KEY = 'shadow-docs-folder-map-v1'
+const COMPACT_ACTIONS = [
+  { id: 'select', label: 'Select', icon: MousePointer2 },
+  { id: 'selectAll', label: 'Select all', icon: MousePointer2 },
+  { id: 'scanText', label: 'Scan Text', icon: ScanText },
+]
 
-function readShadowDocsFolders() {
-  try {
-    const value = JSON.parse(localStorage.getItem(SHADOW_DOCS_FOLDERS_KEY) || '[]')
-    return Array.isArray(value) ? value.filter(item => item && item.id && item.name).slice(0, 100) : []
-  } catch {
-    return []
-  }
+const EXPANDED_PAGES = [
+  [
+    { id: 'copy', label: 'Copy', icon: Copy },
+    { id: 'cut', label: 'Cut', icon: Scissors },
+    { id: 'selectAll', label: 'Select all', icon: MousePointer2 },
+    { id: 'format', label: 'Format', icon: Type },
+    { id: 'highlight', label: 'Highlight', icon: Highlighter },
+  ],
+  [
+    { id: 'format', label: 'Format', icon: Type },
+    { id: 'highlight', label: 'Highlight', icon: Highlighter },
+    { id: 'copyFormat', label: 'Copy Formats', icon: Paintbrush },
+    { id: 'comment', label: 'Comment', icon: MessageSquarePlus },
+    { id: 'share', label: 'Share', icon: Share2 },
+  ],
+]
+
+const COMMON_ACTIONS = [
+  { id: 'search', label: 'Search', icon: Search },
+  { id: 'translate', label: 'Translate', icon: Languages },
+  { id: 'spellCheck', label: 'AI Spell Check', icon: SpellCheck2 },
+]
+
+function viewportBounds() {
+  const viewport = globalThis.visualViewport
+  const top = viewport?.offsetTop || 0
+  const height = viewport?.height || globalThis.innerHeight || 0
+  return { top, bottom: top + height }
 }
 
-function readShadowDocsFolderMap() {
-  try {
-    const value = JSON.parse(localStorage.getItem(SHADOW_DOCS_FOLDER_MAP_KEY) || '{}')
-    return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
-  } catch {
-    return {}
-  }
+function popupTop(anchor, mode) {
+  const bounds = viewportBounds()
+  const estimatedHeight = mode === 'compact' ? 150 : 182
+  const fallback = Math.max(bounds.top + 12, Math.min(bounds.bottom - estimatedHeight - 12, bounds.top + 120))
+  if (!anchor) return fallback
+
+  const below = Number(anchor.bottom || 0) + 12
+  if (below + estimatedHeight <= bounds.bottom - 12) return Math.max(bounds.top + 12, below)
+
+  const above = Number(anchor.top || 0) - estimatedHeight - 12
+  return Math.max(bounds.top + 12, Math.min(bounds.bottom - estimatedHeight - 12, above))
 }
 
-
-const SHADOW_DOCS_HISTORY_PREFIX = 'shadow-docs-history-v1:'
-
-function shadowDocsHistoryKey(bookId) {
-  return `${SHADOW_DOCS_HISTORY_PREFIX}${String(bookId || '')}`
-}
-
-function shadowDocsHistoryWords(book) {
-  try {
-    const text = (book?.chapters || []).map(item => {
-      const doc = new DOMParser().parseFromString(String(item.html || ''), 'text/html')
-      return doc.body.textContent || ''
-    }).join(' ')
-    return text.trim() ? text.trim().split(/\s+/u).length : 0
-  } catch {
-    return 0
-  }
-}
-
-function shadowDocsVersionSnapshot(book) {
-  if (!book) return null
-  return {
-    title: String(book.title || 'Untitled Book').slice(0, 160),
-    author: String(book.author || '').slice(0, 120),
-    description: String(book.description || '').slice(0, 350),
-    status: book.status === 'completed' ? 'completed' : 'draft',
-    template: book.template,
-    settings: { ...(book.settings || {}) },
-    chapters: Array.isArray(book.chapters)
-      ? book.chapters.map(item => ({
-          id: item.id,
-          title: String(item.title || '').slice(0, 160),
-          html: String(item.html || ''),
-        }))
-      : [],
-  }
-}
-
-function readShadowDocsVersions(bookId) {
-  try {
-    const value = JSON.parse(localStorage.getItem(shadowDocsHistoryKey(bookId)) || '[]')
-    return Array.isArray(value) ? value.filter(item => item?.id && item?.snapshot).slice(0, 12) : []
-  } catch {
-    return []
-  }
-}
-
-function writeShadowDocsVersions(bookId, versions) {
-  const key = shadowDocsHistoryKey(bookId)
-  const safe = versions.slice(0, 12)
-  for (let count = safe.length; count >= 1; count -= 1) {
-    const trimmed = safe.slice(0, count)
-    try {
-      localStorage.setItem(key, JSON.stringify(trimmed))
-      return trimmed
-    } catch {}
-  }
-  throw new Error('Version history storage is full.')
-}
-
-const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
-const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
-const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
-
-function nearestFontSize(value, fallback = 13) {
-  const number = Number(value)
-  if (!Number.isFinite(number)) return fallback
-  return FONT_SIZES.reduce((best, size) => Math.abs(size - number) < Math.abs(best - number) ? size : best, FONT_SIZES[0])
-}
-
-function colorToHex(value, fallback) {
-  const color = String(value || '').trim()
-  if (/^#[0-9a-f]{6}$/i.test(color)) return color
-  const match = color.match(/^rgba?\(\s*(\d+)\D+(\d+)\D+(\d+)/i)
-  if (!match) return fallback
-  return `#${match.slice(1, 4).map(part => Math.max(0, Math.min(255, Number(part))).toString(16).padStart(2, '0')).join('')}`
-}
-
-function mobileDocumentName(book) {
-  const title = String(book?.title || '').trim()
-  if (!title || title === 'Untitled Book') return 'Docs.doc'
-  return /\.(?:doc|docx)$/i.test(title) ? title : `${title}.doc`
-}
-
-function mobileDocumentSize(book) {
-  try {
-    const bytes = new TextEncoder().encode(JSON.stringify(book || {})).length
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
-  } catch {
-    return ''
-  }
-}
-
-function explicitFontSize(editor) {
-  const selection = globalThis.getSelection?.()
-  if (!editor || !selection?.rangeCount || !editor.contains(selection.anchorNode)) return null
-  let element = selection.anchorNode.nodeType === 1 ? selection.anchorNode : selection.anchorNode.parentElement
-  while (element && element !== editor) {
-    if (element.style?.fontSize) {
-      const raw = String(element.style.fontSize)
-      const number = Number.parseFloat(raw)
-      if (!Number.isFinite(number)) return null
-      return raw.endsWith('px') ? number * 0.75 : number
-    }
-    element = element.parentElement
-  }
-  return null
-}
-
-export default function ShadowDocsWritingStudioPanel({
-  book,
-  chapterId,
-  onSelectChapter,
-  onAddChapter,
-  onRenameChapter,
-  onChangeHTML,
-  onMoveChapter,
-  onDeleteChapter,
-  onPreview,
-  onDownloadBackup,
-  onEditorBlur,
-  onChangeSettings,
-  onNewBook,
-  onOpenBooks,
-  onOpenDesigner,
-  onOpenTemplates,
-  onOpenFindReplace,
-  onOpenImport,
-  onOpenPDF,
-  onPrint,
-  onEditProperties,
-  onOpenOutline,
-  onRestoreBook,
-  status = 'Saved on this device',
+export default function ShadowDocsSelectionPopup({
+  open = false,
+  mode = 'expanded',
+  anchor,
+  onAction,
+  onClose,
 }) {
-  const editorRef = useRef(null)
-  const selectionRef = useRef(null)
-  const imageInputRef = useRef(null)
-  const imageTargetRef = useRef(null)
-  const mailingInputRef = useRef(null)
-  const selectionPopupTapRef = useRef(0)
-  const [imageWidth, setImageWidth] = useState(75)
-  const [imageAlignment, setImageAlignment] = useState('center')
-  const [imageError, setImageError] = useState('')
-  const [imageBusy, setImageBusy] = useState(false)
-  const [ribbonMessage, setRibbonMessage] = useState('')
-  const [ribbonState, setRibbonState] = useState(() => createShadowDocsRibbonState())
-  const [recipients, setRecipients] = useState([])
-  const [recipientIndex, setRecipientIndex] = useState(0)
-  const [indexEntries, setIndexEntries] = useState([])
-  const [localSaveDirty, setLocalSaveDirty] = useState(false)
-  const [localSaveSeconds, setLocalSaveSeconds] = useState(10)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [shareOpen, setShareOpen] = useState(false)
-  const [findReplaceOpen, setFindReplaceOpen] = useState(false)
-  const [printOpen, setPrintOpen] = useState(false)
-  const [addToOpen, setAddToOpen] = useState(false)
-  const [exportImageOpen, setExportImageOpen] = useState(false)
-  const [conversionOpen, setConversionOpen] = useState(false)
-  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false)
-  const [encryptOpen, setEncryptOpen] = useState(false)
-  const [versions, setVersions] = useState([])
-  const [docFolders, setDocFolders] = useState(() => readShadowDocsFolders())
-  const [currentFolderId, setCurrentFolderId] = useState('my-books')
-  const onEditorBlurRef = useRef(onEditorBlur)
-  const chapter = book?.chapters?.find(item => item.id === chapterId) || book?.chapters?.[0]
-  const chapterIndex = book?.chapters?.findIndex(item => item.id === chapter?.id) ?? -1
-  const overview = useMemo(() => getManuscriptOverview(book), [book])
-  const chapterStats = overview.outline[chapterIndex]
-  const settings = book?.settings || {}
-  const firstLineIndent = Math.min(15, Math.max(0, Number(settings.firstLineIndent) || 0))
-  const paragraphSpacing = settings.paragraphSpacing == null ? 10 : Math.min(20, Math.max(0, Number(settings.paragraphSpacing) || 0))
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
-    loadShadowDocsFont(settings.font)
-  }, [settings.font])
+    if (!open || mode === 'compact') setPage(0)
+  }, [open, mode])
 
-  useEffect(() => {
-    onEditorBlurRef.current = onEditorBlur
-  }, [onEditorBlur])
+  const top = useMemo(() => popupTop(anchor, mode), [anchor, mode, open])
 
-  useEffect(() => {
-    setLocalSaveDirty(false)
-    setLocalSaveSeconds(10)
-    setMobileMenuOpen(false)
-    setShareOpen(false)
-    setFindReplaceOpen(false)
-    setPrintOpen(false)
-    setAddToOpen(false)
-    setExportImageOpen(false)
-    setConversionOpen(false)
-    setVersionHistoryOpen(false)
-    setEncryptOpen(false)
-    setVersions(readShadowDocsVersions(book?.id))
-    setDocFolders(readShadowDocsFolders())
-    setCurrentFolderId(readShadowDocsFolderMap()[book?.id] || 'my-books')
-  }, [book?.id, chapter?.id])
+  if (!open) return null
 
-  useEffect(() => {
-    if (!localSaveDirty || !book?.id) return undefined
-    if (localSaveSeconds <= 0) {
-      onEditorBlurRef.current?.(book.id)
-      saveVersion('Auto save')
-      setLocalSaveDirty(false)
-      setLocalSaveSeconds(10)
-      return undefined
-    }
-    const timer = window.setTimeout(() => setLocalSaveSeconds(seconds => Math.max(0, seconds - 1)), 1000)
-    return () => window.clearTimeout(timer)
-  }, [localSaveDirty, localSaveSeconds, book?.id])
+  const expanded = mode === 'expanded'
+  const primaryActions = expanded ? EXPANDED_PAGES[page] : COMPACT_ACTIONS
 
-
-  useEffect(() => {
-    const doc = new DOMParser().parseFromString(chapter?.html || '', 'text/html')
-    doc.querySelectorAll('[style*="font-family"]').forEach(node => {
-      const font = node.style.fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '')
-      loadShadowDocsFont(font)
-    })
-  }, [book?.id, chapter?.id])
-
-  useEffect(() => {
-    if (editorRef.current) editorRef.current.innerHTML = chapter?.html || ''
-    selectionRef.current = null
-    setRibbonMessage('')
-  }, [book?.id, chapter?.id])
-
-  useEffect(() => {
-    setRibbonState(state => ({
-      ...state,
-      title: book?.title || 'Untitled Book',
-      author: book?.author || '',
-      status,
-      fontFamily: settings.font || 'Noto Serif Khmer',
-      fontSize: nearestFontSize(settings.fontSize || 13),
-      alignment: ALIGNMENTS.has(settings.alignment) ? settings.alignment : 'left',
-      pageSize: settings.size || 'A5',
-      orientation: settings.orientation || 'portrait',
-      columns: settings.columns || 1,
-      lineNumbers: settings.lineNumbers === true,
-      hyphenation: settings.hyphenation === true,
-      textDirection: settings.textDirection || 'ltr',
-      pageColor: settings.pageColor || '#ffffff',
-      textColor: settings.textColor || '#242139',
-      accentColor: settings.accentColor || '#6f57a5',
-      theme: settings.theme || 'classic',
-      watermark: settings.watermark || '',
-      borderColor: settings.borderColor || '#d5d1df',
-      borderWidth: settings.borderWidth || 0,
-      borderStyle: settings.borderStyle || 'solid',
-      documentLanguage: settings.documentLanguage || 'km',
-    }))
-  }, [book?.id, book?.title, book?.author, status, settings.font, settings.fontSize, settings.alignment, settings.size, settings.orientation, settings.columns, settings.lineNumbers, settings.hyphenation, settings.textDirection, settings.pageColor, settings.textColor, settings.accentColor, settings.theme, settings.watermark, settings.borderColor, settings.borderWidth, settings.borderStyle, settings.documentLanguage])
-
-  function emitChange() {
-    if (editorRef.current && chapter && typeof onChangeHTML === 'function') onChangeHTML(chapter.id, editorRef.current.innerHTML)
-    setLocalSaveDirty(true)
+  function action(id) {
+    onAction?.(id)
   }
 
-  function rememberSelection() {
-    const editor = editorRef.current
-    if (!editor) return null
-    const snapshot = captureShadowDocsSelection(editor)
-    if (!snapshot) return selectionRef.current
-    selectionRef.current = snapshot
-    const state = readShadowDocsFormatState(editor)
-    if (state) {
-      const size = explicitFontSize(editor)
-      setRibbonState(current => ({
-        ...current,
-        fontFamily: state.fontFamily || current.fontFamily,
-        fontSize: nearestFontSize(size ?? current.fontSize, current.fontSize),
-        color: colorToHex(state.color, current.color || '#242139'),
-        backgroundColor: colorToHex(state.backgroundColor, current.backgroundColor || '#fff176'),
-        bold: state.bold,
-        italic: state.italic,
-        underline: state.underline,
-        strike: state.strike,
-        superscript: state.superscript,
-        subscript: state.subscript,
-        alignment: ALIGNMENTS.has(state.alignment) ? state.alignment : current.alignment,
-        indentLeft: state.marginLeft || 0,
-        indentRight: state.marginRight || 0,
-        spaceBefore: state.marginTop || 0,
-        spaceAfter: state.marginBottom || 0,
-      }))
-    }
-    return snapshot
-  }
-
-  function currentSnapshot() {
-    return selectionRef.current || rememberSelection()
-  }
-
-  function mobileSelectionAnchor() {
-    const editor = editorRef.current
-    const selection = globalThis.getSelection?.()
-    if (!editor || !selection?.rangeCount) return null
-    const range = selection.getRangeAt(0)
-    if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return null
-    let rect = range.getBoundingClientRect()
-    if ((!rect.width && !rect.height) || !Number.isFinite(rect.top)) rect = editor.getBoundingClientRect()
-    return {
-      left: rect.left,
-      right: rect.right,
-      top: rect.top,
-      bottom: rect.bottom,
-      centerX: rect.left + rect.width / 2,
-    }
-  }
-
-  function selectCurrentWord() {
-    const editor = editorRef.current
-    const selection = globalThis.getSelection?.()
-    if (!editor || !selection?.rangeCount) return false
-    const sourceRange = selection.getRangeAt(0)
-    let node = sourceRange.startContainer
-    let offset = sourceRange.startOffset
-
-    if (node.nodeType !== Node.TEXT_NODE) {
-      const candidate = node.childNodes?.[offset] || node.childNodes?.[Math.max(0, offset - 1)]
-      const walker = candidate ? document.createTreeWalker(candidate, NodeFilter.SHOW_TEXT) : null
-      node = candidate?.nodeType === Node.TEXT_NODE ? candidate : walker?.nextNode()
-      offset = node?.nodeType === Node.TEXT_NODE ? Math.min(node.data.length, offset) : 0
-    }
-
-    if (!node || node.nodeType !== Node.TEXT_NODE || !editor.contains(node)) return false
-
-    const value = node.data || ''
-    const isWord = character => Boolean(character) && /[\p{L}\p{M}\p{N}_]/u.test(character)
-    let start = Math.max(0, Math.min(value.length, offset))
-    let end = start
-
-    if (!isWord(value[start]) && start > 0 && isWord(value[start - 1])) start -= 1
-    while (start > 0 && isWord(value[start - 1])) start -= 1
-    while (end < value.length && isWord(value[end])) end += 1
-    if (end <= start) return false
-
-    const range = document.createRange()
-    range.setStart(node, start)
-    range.setEnd(node, end)
-    selection.removeAllRanges()
-    selection.addRange(range)
-    editor.focus()
-    return true
-  }
-
-  function showSelectionPopup(mode = 'expanded') {
-    if (!globalThis.matchMedia?.('(max-width:700px)').matches) return
-    const snapshot = rememberSelection()
-    if (!snapshot) return
-    if (mode === 'expanded' && (snapshot.collapsed || !snapshot.text?.trim())) {
-      setSelectionPopup(current => ({ ...current, open: false }))
-      return
-    }
-    setSelectionPopup({
-      open: true,
-      mode,
-      anchor: mobileSelectionAnchor(),
-    })
-  }
-
-  function handleEditorMouseUp() {
-    requestAnimationFrame(() => showSelectionPopup('expanded'))
-  }
-
-  function handleEditorDoubleClick() {
-    requestAnimationFrame(() => showSelectionPopup('compact'))
-  }
-
-  function handleEditorTouchEnd() {
-    const now = Date.now()
-    const doubleTap = now - selectionPopupTapRef.current < 380
-    selectionPopupTapRef.current = now
-    requestAnimationFrame(() => showSelectionPopup(doubleTap ? 'compact' : 'expanded'))
-  }
-
-  async function runSelectionPopupAction(action) {
-    const editor = editorRef.current
-    if (!editor) return
-
-    if (action === 'select') {
-      const snapshot = rememberSelection()
-      if (!snapshot || snapshot.collapsed) selectCurrentWord()
-      rememberSelection()
-      setSelectionPopup({ open: true, mode: 'expanded', anchor: mobileSelectionAnchor() })
-      return
-    }
-
-    if (action === 'selectAll') {
-      selectShadowDocsNodeContents(editor)
-      rememberSelection()
-      setSelectionPopup({ open: true, mode: 'expanded', anchor: mobileSelectionAnchor() })
-      return
-    }
-
-    setSelectionPopup(current => ({ ...current, open: false }))
-
-    if (action === 'copy') {
-      await runRibbonCommand('copy', true)
-      return
-    }
-    if (action === 'cut') {
-      await runRibbonCommand('cut', true)
-      return
-    }
-    if (action === 'highlight') {
-      await runRibbonCommand('highlight', ribbonState.backgroundColor || '#fff176')
-      return
-    }
-    if (action === 'search') {
-      setFindReplaceOpen(true)
-      return
-    }
-    if (action === 'translate') {
-      await runRibbonCommand('translate', true)
-      return
-    }
-    if (action === 'spellCheck') {
-      await runRibbonCommand('spellingGrammar', true)
-      return
-    }
-    if (action === 'scanText') {
-      await runRibbonCommand('ocr', true)
-      return
-    }
-    if (action === 'copyFormat') {
-      await runRibbonCommand('formatPainter', true)
-      return
-    }
-    if (action === 'comment') {
-      await runRibbonCommand('newComment', true)
-      return
-    }
-    if (action === 'share') {
-      await openShareSheet()
-      return
-    }
-    if (action === 'format') {
-      setRibbonMessage('Use Format in the footer for font and paragraph controls.')
-    }
-  }
-
-  function finishRibbonChange(changed, message = '') {
-    if (!changed) return false
-    emitChange()
-    setRibbonMessage(message)
-    requestAnimationFrame(() => rememberSelection())
-    return true
-  }
-
-  function updateSettings(patch, message = '') {
-    onChangeSettings?.(patch)
-    setRibbonState(state => ({ ...state, ...patch, pageSize: patch.size || state.pageSize }))
-    if (message) setRibbonMessage(message)
-  }
-
-  function insertHTMLAtSelection(html) {
-    const editor = editorRef.current
-    const snapshot = currentSnapshot()
-    const range = restoreShadowDocsSelection(editor, snapshot)
-    if (!editor || !range || typeof document === 'undefined') return false
-    const template = document.createElement('template')
-    template.innerHTML = html
-    range.deleteContents()
-    range.insertNode(template.content)
-    editor.normalize()
-    return finishRibbonChange(true)
-  }
-
-  function insertTextAtSelection(text) {
-    const editor = editorRef.current
-    const snapshot = currentSnapshot()
-    return finishRibbonChange(insertShadowDocsClipboardText(editor, snapshot, text))
-  }
-
-  function selectMarkedNode(selector, direction = 1) {
-    const editor = editorRef.current
-    if (!editor) return false
-    const nodes = [...editor.querySelectorAll(selector)]
-    if (!nodes.length) return false
-    const selection = globalThis.getSelection?.()
-    const current = selection?.anchorNode?.nodeType === 1 ? selection.anchorNode : selection?.anchorNode?.parentElement
-    let index = nodes.findIndex(node => node === current || node.contains(current))
-    index = (index + direction + nodes.length) % nodes.length
-    selectShadowDocsNodeContents(nodes[index])
-    rememberSelection()
-    return true
-  }
-
-  function downloadText(name, text) {
-    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }))
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = name
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 1200)
-  }
-
-  async function runRibbonCommand(command, value) {
-    const editor = editorRef.current
-    if (!editor || !chapter) return
-    const snapshot = currentSnapshot()
-    setRibbonMessage('')
-
-    if (INLINE_COMMANDS.has(command)) {
-      if (!snapshot || snapshot.collapsed) {
-        setRibbonMessage('Select text first.')
-        return
-      }
-      if (command === 'fontFamily') loadShadowDocsFont(value)
-      const changed = applyShadowDocsCommand(editor, snapshot, command, value)
-      if (finishRibbonChange(changed)) {
-        const patch = { [command === 'highlight' ? 'backgroundColor' : command]: value }
-        if (command === 'clearFormatting') {
-          setRibbonState(state => ({ ...state, bold: false, italic: false, underline: false, strike: false, superscript: false, subscript: false }))
-        } else setRibbonState(state => ({ ...state, ...patch }))
-      }
-      return
-    }
-
-    if (command === 'growFont' || command === 'shrinkFont') {
-      if (!snapshot || snapshot.collapsed) {
-        setRibbonMessage('Select text first.')
-        return
-      }
-      const current = Number(ribbonState.fontSize) || Number(settings.fontSize) || 13
-      const index = Math.max(0, FONT_SIZES.indexOf(nearestFontSize(current)))
-      const nextIndex = Math.max(0, Math.min(FONT_SIZES.length - 1, index + (command === 'growFont' ? 1 : -1)))
-      const next = FONT_SIZES[nextIndex]
-      if (finishRibbonChange(applyShadowDocsCommand(editor, snapshot, 'fontSize', next))) setRibbonState(state => ({ ...state, fontSize: next }))
-      return
-    }
-
-    if (command === 'bullets' || command === 'numbering') {
-      finishRibbonChange(applyShadowDocsCommand(editor, snapshot, command, true))
-      return
-    }
-
-    if (['alignLeft', 'alignCenter', 'alignRight', 'justify'].includes(command)) {
-      const alignment = command === 'justify' ? 'justify' : command.replace('align', '').toLowerCase()
-      if (finishRibbonChange(applyShadowDocsCommand(editor, snapshot, 'paragraph', { alignment }))) setRibbonState(state => ({ ...state, alignment }))
-      return
-    }
-
-    if (command === 'increaseIndent' || command === 'decreaseIndent') {
-      const current = Number(ribbonState.indentLeft) || 0
-      const indentLeft = Math.max(-72, Math.min(144, current + (command === 'increaseIndent' ? 12 : -12)))
-      if (finishRibbonChange(applyShadowDocsCommand(editor, snapshot, 'paragraph', { indentLeft }))) setRibbonState(state => ({ ...state, indentLeft }))
-      return
-    }
-
-    if (['indentLeft', 'indentRight', 'spaceBefore', 'spaceAfter'].includes(command)) {
-      if (finishRibbonChange(applyShadowDocsCommand(editor, snapshot, 'paragraph', { [command]: Number(value) || 0 }))) setRibbonState(state => ({ ...state, [command]: Number(value) || 0 }))
-      return
-    }
-
-    if (command === 'lineSpacing') {
-      const choices = [1, 1.15, 1.5, 2]
-      const current = Number(ribbonState.lineHeight) || Number(settings.lineSpacing) || 1.65
-      const next = choices[(choices.findIndex(item => item > current + 0.01) + choices.length) % choices.length]
-      if (finishRibbonChange(applyShadowDocsCommand(editor, snapshot, 'paragraph', { lineHeight: next }))) setRibbonState(state => ({ ...state, lineHeight: next }))
-      return
-    }
-
-    if (command === 'style') {
-      const style = shadowDocsStyleCommand(value)
-      let changed = applyShadowDocsCommand(editor, snapshot, 'blockType', style.blockType)
-      if (!snapshot?.collapsed) changed = applyShadowDocsInlineFormat(editor, snapshot, style.inline) || changed
-      changed = applyShadowDocsParagraphFormat(editor, snapshot, style.paragraph) || changed
-      if (finishRibbonChange(changed)) setRibbonState(state => ({ ...state, styleId: value }))
-      return
-    }
-
-    if (command === 'pageBreak') {
-      finishRibbonChange(Boolean(insertShadowDocsPageBreak(editor, snapshot)))
-      return
-    }
-
-    if (command === 'table') {
-      finishRibbonChange(Boolean(insertShadowDocsTable(editor, snapshot, 2, 2)))
-      return
-    }
-
-    if (command === 'pictures') {
-      chooseImage()
-      return
-    }
-
-    if (command === 'dateTime') {
-      finishRibbonChange(Boolean(insertShadowDocsDateTime(editor, snapshot, { locale: 'km-KH', includeTime: true })))
-      return
-    }
-
-    if (command === 'symbol') {
-      const symbol = globalThis.prompt?.('Enter a symbol:', '©')
-      if (symbol) finishRibbonChange(Boolean(insertShadowDocsSymbol(editor, snapshot, symbol)))
-      return
-    }
-
-    if (command === 'equation') {
-      const expression = globalThis.prompt?.('Enter an equation:', 'x² + y² = z²')
-      if (expression) finishRibbonChange(Boolean(insertShadowDocsEquation(editor, snapshot, expression)))
-      return
-    }
-
-    if (command === 'textBox') {
-      const text = globalThis.prompt?.('Text box content:', '')
-      if (text != null) finishRibbonChange(Boolean(insertShadowDocsTextBox(editor, snapshot, text)))
-      return
-    }
-
-    if (command === 'link') {
-      if (!snapshot || snapshot.collapsed) {
-        setRibbonMessage('Select text first.')
-        return
-      }
-      const href = globalThis.prompt?.('Enter link:', 'https://')
-      if (href) finishRibbonChange(applyShadowDocsLink(editor, snapshot, href))
-      return
-    }
-
-    if (command === 'bookmark') {
-      const range = restoreShadowDocsSelection(editor, snapshot)
-      const element = range?.startContainer?.nodeType === 1 ? range.startContainer : range?.startContainer?.parentElement
-      const name = globalThis.prompt?.('Bookmark name:', '')
-      if (element && name && createShadowDocsBookmark(element, name)) finishRibbonChange(true)
-      return
-    }
-
-    if (command === 'copy') {
-      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
-      try {
-        setRibbonMessage(await copyShadowDocsSelection(editor, snapshot) ? 'Copied.' : 'Clipboard access is unavailable.')
-      } catch {
-        setRibbonMessage('Clipboard access is unavailable.')
-      }
-      return
-    }
-
-    if (command === 'cut') {
-      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
-      try {
-        finishRibbonChange(await cutShadowDocsSelection(editor, snapshot), 'Cut.')
-      } catch {
-        setRibbonMessage('Clipboard access is unavailable.')
-      }
-      return
-    }
-
-    if (command === 'paste') {
-      try {
-        const text = await navigator.clipboard?.readText?.()
-        if (!text) return setRibbonMessage('Clipboard is empty or unavailable.')
-        finishRibbonChange(insertShadowDocsClipboardText(editor, snapshot, text), 'Pasted as plain text.')
-      } catch {
-        setRibbonMessage('Browser blocked clipboard access. Use Ctrl/Cmd + V.')
-      }
-      return
-    }
-
-    if (command === 'save') {
-      onEditorBlurRef.current?.(book.id)
-      saveVersion('Manual save')
-      setLocalSaveDirty(false)
-      setLocalSaveSeconds(10)
-      setRibbonMessage('Saved on this device.')
-      return
-    }
-
-    if (command === 'backup') {
-      onDownloadBackup?.(book)
-      return
-    }
-
-    if (command === 'wordCount') {
-      setRibbonMessage(`${(chapterStats?.words || 0).toLocaleString()} words · ${(chapterStats?.characters || 0).toLocaleString()} characters`)
-      return
-    }
-
-    if (command === 'find' || command === 'replace' || command === 'findReplace') {
-      setFindReplaceOpen(true)
-      return
-    }
-
-    if (command === 'new') { onNewBook?.(); return }
-    if (command === 'open' || command === 'recent') { onOpenBooks?.(); return }
-    if (command === 'import') { onOpenImport?.(); return }
-    if (command === 'export' || command === 'saveAs' || command === 'convert') { onOpenPDF?.(); return }
-    if (command === 'print') { await openPrintPanel(); return }
-    if (command === 'properties') { onEditProperties?.(); return }
-    if (command === 'templates') { onOpenTemplates?.(); return }
-    if (command === 'preferences') { onOpenDesigner?.(); return }
-    if (command === 'navigationPane' || command === 'outline') { onOpenOutline?.(); setRibbonState(state => ({ ...state, navigationPane: true, viewMode: command === 'outline' ? 'outline' : state.viewMode })); return }
-
-    if (command === 'select') {
-      selectShadowDocsNodeContents(editor)
-      rememberSelection()
-      return
-    }
-
-    if (command === 'changeCase') {
-      const mode = globalThis.prompt?.('Case: upper, lower, title, sentence, toggle', 'title')
-      if (mode && snapshot && !snapshot.collapsed) finishRibbonChange(applyShadowDocsCase(editor, snapshot, mode))
-      return
-    }
-
-    if (command === 'formatPainter') {
-      setRibbonMessage('Select target text, then use the same Font/Paragraph controls to apply the captured style.')
-      return
-    }
-
-    if (command === 'showMarks') {
-      setRibbonState(state => ({ ...state, showMarks: !state.showMarks }))
-      setRibbonMessage('Paragraph marks display toggled for this session.')
-      return
-    }
-
-    if (command === 'sort') {
-      const blocks = [...editor.querySelectorAll('p')]
-      if (blocks.length < 2) return setRibbonMessage('Add at least two paragraphs to sort.')
-      const parent = blocks[0].parentNode
-      if (!blocks.every(node => node.parentNode === parent)) return setRibbonMessage('Sort works on sibling paragraphs.')
-      blocks.sort((a, b) => (a.textContent || '').localeCompare(b.textContent || '', settings.documentLanguage || 'km'))
-      blocks.forEach(node => parent.appendChild(node))
-      finishRibbonChange(true, 'Paragraphs sorted A–Z.')
-      return
-    }
-
-    if (command === 'shading') {
-      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
-      const color = globalThis.prompt?.('Shading color (hex):', '#fff3b0')
-      if (color) finishRibbonChange(applyShadowDocsCommand(editor, snapshot, 'highlight', color))
-      return
-    }
-
-    if (command === 'borders') {
-      setRibbonMessage('Paragraph borders use Page Borders in Design for print-safe output.')
-      return
-    }
-
-    if (command === 'coverPage') {
-      const title = String(book.title || 'Untitled Book').replace(/[&<>"']/g, '')
-      const author = String(book.author || '').replace(/[&<>"']/g, '')
-      insertHTMLAtSelection(`<div style="text-align:center"><h1>${title}</h1><p>${author}</p></div><hr data-shadow-docs-page-break="1" contenteditable="false"><p><br></p>`)
-      return
-    }
-    if (command === 'blankPage' || command === 'breaks') { finishRibbonChange(Boolean(insertShadowDocsPageBreak(editor, snapshot))); return }
-    if (command === 'wordArt') {
-      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
-      finishRibbonChange(applyShadowDocsInlineFormat(editor, snapshot, { fontSize: 28, bold: true, color: settings.accentColor || '#6f57a5' }))
-      return
-    }
-    if (command === 'dropCap') {
-      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select the first letter first.')
-      finishRibbonChange(applyShadowDocsInlineFormat(editor, snapshot, { fontSize: 36, bold: true }))
-      return
-    }
-    if (command === 'header') {
-      const text = globalThis.prompt?.('Header text:', settings.printHeader || book.title || '')
-      if (text != null) updateSettings({ printHeader: text.slice(0, 80) }, 'Header updated.')
-      return
-    }
-    if (command === 'footer') {
-      const text = globalThis.prompt?.('Footer text:', settings.printFooter || '')
-      if (text != null) updateSettings({ printFooter: text.slice(0, 60) }, 'Footer updated.')
-      return
-    }
-    if (command === 'pageNumber') { updateSettings({ pageNumbers: !settings.pageNumbers }, `Page numbers ${settings.pageNumbers ? 'off' : 'on'}.`); return }
-    if (['shapes', 'icons', 'smartArt', 'chart', 'screenshot'].includes(command)) {
-      const label = command === 'smartArt' ? 'SmartArt' : command.charAt(0).toUpperCase() + command.slice(1)
-      const text = globalThis.prompt?.(`${label} placeholder text:`, label)
-      if (text != null) finishRibbonChange(Boolean(insertShadowDocsTextBox(editor, snapshot, text)))
-      return
-    }
-    if (command === 'crossReference') {
-      const toc = buildShadowDocsTableOfContents(book)
-      const item = toc.find(row => row.id !== chapter.id) || toc[0]
-      if (item) insertTextAtSelection(`See ${item.title}`)
-      return
-    }
-
-    if (command === 'themes') {
-      const current = SHADOW_DOCS_DESIGN_THEMES.indexOf(settings.theme || 'classic')
-      const next = SHADOW_DOCS_DESIGN_THEMES[(current + 1) % SHADOW_DOCS_DESIGN_THEMES.length]
-      const theme = getShadowDocsDesignTheme(next)
-      updateSettings({ theme: next, font: theme.font, textColor: theme.text, accentColor: theme.accent, pageColor: theme.page }, `Theme: ${next}.`)
-      return
-    }
-    if (command === 'themeColors') {
-      const accentColor = globalThis.prompt?.('Accent color (hex):', settings.accentColor || '#6f57a5')
-      if (accentColor) updateSettings({ accentColor }, 'Theme color updated.')
-      return
-    }
-    if (command === 'themeFonts') { onOpenDesigner?.(); return }
-    if (command === 'paragraphSpacing') {
-      const next = [0, 6, 10, 14, 18][([0, 6, 10, 14, 18].indexOf(Number(settings.paragraphSpacing)) + 1) % 5]
-      updateSettings({ paragraphSpacing: next }, `Paragraph spacing: ${next} pt.`)
-      return
-    }
-    if (command === 'effects') { setRibbonMessage('Document effects use the selected theme and page background.'); return }
-    if (command === 'setDefault') {
-      try { localStorage.setItem('shadow-docs-default-settings', JSON.stringify(settings)); setRibbonMessage('Current document settings saved as local defaults.') } catch { setRibbonMessage('Could not save local defaults.') }
-      return
-    }
-    if (command === 'watermark') {
-      const watermark = globalThis.prompt?.('Watermark text:', settings.watermark || '')
-      if (watermark != null) updateSettings({ watermark: watermark.slice(0, 80) }, watermark ? 'Watermark updated.' : 'Watermark removed.')
-      return
-    }
-    if (command === 'pageColor') { updateSettings({ pageColor: value }, 'Page color updated.'); return }
-    if (command === 'pageBorders') {
-      const width = Number(globalThis.prompt?.('Border width 0–12 px:', String(settings.borderWidth || 0)))
-      if (Number.isFinite(width)) updateSettings({ borderWidth: Math.max(0, Math.min(12, width)) }, 'Page border updated.')
-      return
-    }
-
-    if (command === 'margins') {
-      const margin = Number(globalThis.prompt?.('Page margin (10–35 mm):', String(settings.margin || 18)))
-      if (Number.isFinite(margin)) updateSettings({ margin: Math.max(10, Math.min(35, margin)) }, 'Margins updated.')
-      return
-    }
-    if (command === 'orientation') { const orientation = settings.orientation === 'landscape' ? 'portrait' : 'landscape'; updateSettings({ orientation }, `Orientation: ${orientation}.`); return }
-    if (command === 'paperSize') {
-      const sizes = ['A5', 'A4', 'B5']; const current = sizes.indexOf(settings.size || 'A5'); const size = sizes[(current + 1) % sizes.length]; updateSettings({ size }, `Paper size: ${size}.`); return
-    }
-    if (command === 'columns') { const columns = (Number(settings.columns) || 1) % 3 + 1; updateSettings({ columns }, `Columns: ${columns}.`); return }
-    if (command === 'lineNumbers') { updateSettings({ lineNumbers: Boolean(value) }, `Line numbers ${value ? 'on' : 'off'}.`); return }
-    if (command === 'hyphenation') { updateSettings({ hyphenation: Boolean(value) }, `Hyphenation ${value ? 'on' : 'off'}.`); return }
-    if (command === 'textDirection') { const textDirection = settings.textDirection === 'rtl' ? 'ltr' : 'rtl'; updateSettings({ textDirection }, `Text direction: ${textDirection}.`); return }
-    if (['position', 'wrapText', 'bringForward', 'sendBackward', 'selectionPane', 'alignObjects', 'groupObjects', 'rotate'].includes(command)) { setRibbonMessage('Arrange commands apply to selected visual objects; image placement is controlled by the Image alignment tools.'); return }
-
-    if (command === 'tableOfContents' || command === 'updateToc') {
-      const rows = buildShadowDocsTableOfContents(book)
-      insertHTMLAtSelection(`<h2>Contents</h2>${rows.map(row => `<p>${row.chapterIndex + 1}. ${String(row.title).replace(/[&<>"']/g, '')}</p>`).join('')}<p><br></p>`)
-      return
-    }
-    if (command === 'addTocText') { setRibbonMessage('Chapter titles are already used as level-1 Table of Contents entries.'); return }
-    if (command === 'insertFootnote' || command === 'insertEndnote') {
-      const text = globalThis.prompt?.(command === 'insertFootnote' ? 'Footnote:' : 'Endnote:', '')
-      if (!text) return
-      const note = createShadowDocsFootnote(text, chapter.id)
-      const number = editor.querySelectorAll('sup[data-shadow-docs-note]').length + 1
-      insertHTMLAtSelection(`<sup data-shadow-docs-note="${note.id}">[${number}]</sup>`)
-      editor.insertAdjacentHTML('beforeend', `<p><sup>[${number}]</sup> ${String(note.text).replace(/[&<>"']/g, '')}</p>`)
-      emitChange()
-      return
-    }
-    if (command === 'nextFootnote' || command === 'showNotes') { setRibbonMessage(selectMarkedNode('sup[data-shadow-docs-note]', 1) ? 'Moved to next note.' : 'No notes found.'); return }
-    if (command === 'insertCitation') {
-      const author = globalThis.prompt?.('Author:', '') || ''
-      const title = globalThis.prompt?.('Title:', '') || ''
-      const year = globalThis.prompt?.('Year:', '') || ''
-      const citation = createShadowDocsCitation({ author, title, year })
-      insertTextAtSelection(formatShadowDocsCitation(citation, 'author-year'))
-      return
-    }
-    if (command === 'bibliography') { setRibbonMessage('Insert citations first; bibliography entries can be added from citation text in this local editor.'); return }
-    if (command === 'manageSources' || command === 'citationStyle') { setRibbonMessage('Source management is local to inserted citation text in this version.'); return }
-    if (command === 'insertCaption') {
-      const text = globalThis.prompt?.('Caption:', 'Figure 1')
-      if (text) insertHTMLAtSelection(`<p style="text-align:center"><i>${String(text).replace(/[&<>"']/g, '')}</i></p>`)
-      return
-    }
-    if (command === 'tableOfFigures' || command === 'updateTableOfFigures') { setRibbonMessage('Captions remain in the manuscript and are included in PDF output.'); return }
-    if (command === 'markEntry') {
-      const text = snapshot?.text?.trim()
-      if (!text) return setRibbonMessage('Select index text first.')
-      setIndexEntries(entries => [...new Set([...entries, text.slice(0, 120)])])
-      setRibbonMessage(`Index entry marked: ${text.slice(0, 80)}`)
-      return
-    }
-    if (command === 'insertIndex' || command === 'updateIndex') {
-      if (!indexEntries.length) return setRibbonMessage('Mark at least one index entry first.')
-      insertHTMLAtSelection(`<h2>Index</h2>${[...indexEntries].sort().map(item => `<p>${String(item).replace(/[&<>"']/g, '')}</p>`).join('')}<p><br></p>`)
-      return
-    }
-
-    if (command === 'editor' || command === 'spellingGrammar') {
-      const stats = getShadowDocsProofingStats(editor.innerHTML)
-      const issues = inspectShadowDocsProofing(editor.innerHTML)
-      setRibbonMessage(`${stats.words} words · ${stats.sentences} sentences · ${issues.length} local proofing issue(s).${issues[0] ? ` ${issues[0].message}` : ''}`)
-      return
-    }
-    if (command === 'thesaurus') { setRibbonMessage('Thesaurus needs a dictionary service; local proofing remains available offline.'); return }
-    if (command === 'setLanguage') {
-      const detected = detectShadowDocsLanguage(editor.textContent || '')
-      const languageId = globalThis.prompt?.(`Language code (${SHADOW_DOCS_LANGUAGES.map(item => item.id).join(', ')}):`, settings.documentLanguage || detected.id)
-      if (!languageId) return
-      applyShadowDocsLanguage(editor, languageId)
-      updateSettings({ documentLanguage: languageId }, `Language: ${languageId}.`)
-      return
-    }
-    if (command === 'translate') { setRibbonMessage('Translation requires an external translation service and is not sent anywhere automatically.'); return }
-    if (command === 'newComment') {
-      if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
-      const text = globalThis.prompt?.('Comment:', '')
-      if (!text) return
-      const record = createShadowDocsCommentRecord({ text, author: book.author || 'Author', chapterId: chapter.id })
-      finishRibbonChange(addShadowDocsComment(editor, snapshot, record), `Comment added: ${record.text.slice(0, 80)}`)
-      return
-    }
-    if (command === 'deleteComment') {
-      const marks = getShadowDocsCommentMarks(editor)
-      if (!marks.length) return setRibbonMessage('No comments found.')
-      finishRibbonChange(removeShadowDocsCommentMark(editor, marks[0].id), 'Comment mark removed.')
-      return
-    }
-    if (command === 'previousComment' || command === 'nextComment') { setRibbonMessage(selectMarkedNode('[data-shadow-docs-comment-id]', command === 'nextComment' ? 1 : -1) ? 'Comment selected.' : 'No comments found.'); return }
-    if (command === 'trackChanges') { setRibbonState(state => ({ ...state, trackChanges: Boolean(value) })); setRibbonMessage(`Track Changes ${value ? 'on' : 'off'}.`); return }
-    if (command === 'showMarkup') { setRibbonState(state => ({ ...state, showMarkup: !state.showMarkup })); return }
-    if (command === 'reviewPane') { const changes = listShadowDocsChanges(editor); setRibbonMessage(changes.length ? `${changes.length} tracked change(s). ${changes[0].type}: ${changes[0].text}` : 'No tracked changes.'); return }
-    if (command === 'displayReview') { setRibbonMessage(`${listShadowDocsChanges(editor).length} tracked change(s) in this chapter.`); return }
-    if (command === 'acceptChange' || command === 'rejectChange') {
-      const changes = listShadowDocsChanges(editor)
-      if (!changes.length) return setRibbonMessage('No tracked changes.')
-      const changed = command === 'acceptChange' ? acceptShadowDocsChange(editor, changes[0].id) : rejectShadowDocsChange(editor, changes[0].id)
-      finishRibbonChange(changed, command === 'acceptChange' ? 'Change accepted.' : 'Change rejected.')
-      return
-    }
-    if (command === 'previousChange' || command === 'nextChange') { setRibbonMessage(selectMarkedNode('[data-shadow-docs-change-id]', command === 'nextChange' ? 1 : -1) ? 'Tracked change selected.' : 'No tracked changes.'); return }
-    if (command === 'compare' || command === 'compareDocuments') {
-      const other = globalThis.prompt?.('Paste comparison text:', '')
-      if (other != null) setRibbonMessage(`Current: ${(editor.textContent || '').length} characters · Comparison: ${other.length} characters.`)
-      return
-    }
-    if (command === 'combine') {
-      const other = globalThis.prompt?.('Text to combine at the cursor:', '')
-      if (other) insertTextAtSelection(other)
-      return
-    }
-    if (command === 'restrictEditing' || command === 'protectDocument' || command === 'protect') { const protectedEditing = !ribbonState.protectedEditing; setRibbonState(state => ({ ...state, protectedEditing })); setRibbonMessage(`Editing protection ${protectedEditing ? 'on' : 'off'}.`); return }
-
-    if (['readMode', 'printLayout', 'webLayout', 'outline', 'draft'].includes(command)) { const viewMode = command.replace('Mode', '').replace('Layout', '').toLowerCase(); setRibbonState(state => ({ ...state, viewMode })); return }
-    if (command === 'focus' || command === 'ruler' || command === 'gridlines' || command === 'syncScrolling') { const key = command === 'focus' ? 'focus' : command; setRibbonState(state => ({ ...state, [key]: Boolean(value) })); return }
-    if (command === 'zoom100') { setRibbonState(state => ({ ...state, zoom: 100 })); return }
-    if (command === 'onePage') { setRibbonState(state => ({ ...state, zoom: 85 })); return }
-    if (command === 'multiplePages') { setRibbonState(state => ({ ...state, zoom: 70 })); return }
-    if (command === 'mobileFit') { setRibbonState(state => ({ ...state, mobileFit: !state.mobileFit })); return }
-    if (command === 'pageWidth') { setRibbonState(state => ({ ...state, zoom: 110 })); return }
-    if (command === 'zoom') { const zoom = Number(globalThis.prompt?.('Zoom percent (50–200):', String(ribbonState.zoom || 100))); if (Number.isFinite(zoom)) setRibbonState(state => ({ ...state, zoom: Math.max(50, Math.min(200, zoom)) })); return }
-    if (command === 'newWindow') { window.open(window.location.href, '_blank', 'noopener'); return }
-    if (command === 'split') { setRibbonState(state => ({ ...state, splitView: !state.splitView })); return }
-    if (['arrangeAll', 'sideBySide', 'switchWindows'].includes(command)) { setRibbonMessage('Window arrangement is handled by your browser/operating system.'); return }
-
-    if (['pen', 'pencil', 'highlighter', 'eraser', 'lasso'].includes(command)) { setRibbonState(state => ({ ...state, drawTool: command })); setRibbonMessage(`${command} selected. Ink overlay is session-only until a drawing canvas is added.`); return }
-    if (command === 'inkColor') { setRibbonState(state => ({ ...state, inkColor: value })); return }
-    if (command === 'inkThickness') { setRibbonState(state => ({ ...state, inkThickness: Number(value) || 2 })); return }
-    if (command === 'drawWithTouch') { setRibbonState(state => ({ ...state, drawWithTouch: Boolean(value) })); return }
-    if (command === 'inkToShape' || command === 'inkToText' || command === 'inkToMath') { setRibbonMessage('Ink conversion needs a handwriting-recognition engine; no drawing data is uploaded.'); return }
-
-    if (command === 'autoCorrect') { setRibbonState(state => ({ ...state, autoCorrect: Boolean(value) })); return }
-    if (command === 'ocr') { setRibbonMessage('OCR requires an OCR engine. Image insertion remains local and no image is uploaded automatically.'); return }
-
-    if (command === 'startMailMerge') { setRibbonState(state => ({ ...state, mailMergeActive: Boolean(value) })); return }
-    if (command === 'selectRecipients') { mailingInputRef.current?.click(); return }
-    if (command === 'editRecipients') { setRibbonMessage(`${recipients.length} recipient(s) loaded.`); return }
-    if (command === 'mergeField') {
-      const fields = getShadowDocsMergeFields(recipients)
-      if (!fields.length) return setRibbonMessage('Load a recipient CSV first.')
-      const field = globalThis.prompt?.(`Field: ${fields.join(', ')}`, fields[0])
-      if (field) insertTextAtSelection(insertShadowDocsMergeField(field))
-      return
-    }
-    if (command === 'addressBlock') { if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.'); insertTextAtSelection(createShadowDocsAddressBlock(recipients[recipientIndex] || recipients[0])); return }
-    if (command === 'greetingLine') { if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.'); insertTextAtSelection(createShadowDocsGreetingLine(recipients[recipientIndex] || recipients[0])); return }
-    if (command === 'previewResults') {
-      if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.')
-      const content = buildShadowDocsMergedDocuments(editor.innerText || '', [recipients[recipientIndex] || recipients[0]])[0]?.content || ''
-      setRibbonState(state => ({ ...state, previewMerge: Boolean(value) }))
-      setRibbonMessage(content.slice(0, 240) || 'Preview is empty.')
-      return
-    }
-    if (['firstRecord', 'previousRecord', 'nextRecord', 'lastRecord'].includes(command)) {
-      if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.')
-      setRecipientIndex(index => command === 'firstRecord' ? 0 : command === 'lastRecord' ? recipients.length - 1 : command === 'previousRecord' ? Math.max(0, index - 1) : Math.min(recipients.length - 1, index + 1))
-      return
-    }
-    if (command === 'findRecipient') {
-      const query = globalThis.prompt?.('Find recipient:', '')?.toLowerCase()
-      if (!query) return
-      const index = recipients.findIndex(row => Object.values(row).some(item => String(item).toLowerCase().includes(query)))
-      if (index >= 0) { setRecipientIndex(index); setRibbonMessage(`Recipient ${index + 1} selected.`) } else setRibbonMessage('Recipient not found.')
-      return
-    }
-    if (command === 'finishMerge') {
-      if (!recipients.length) return setRibbonMessage('Load a recipient CSV first.')
-      const docs = buildShadowDocsMergedDocuments(editor.innerText || '', recipients)
-      downloadText(`${String(book.title || 'Shadow Docs').replace(/[^\p{L}\p{N}_-]+/gu, '-')}-mail-merge.txt`, docs.map((item, index) => `--- ${index + 1} ---\n${item.content}`).join('\n\n'))
-      return
-    }
-    if (command === 'envelopes' || command === 'labels' || command === 'rules' || command === 'matchFields') { setRibbonMessage('Mail merge recipients and fields are ready; use Address Block, Greeting Line, Merge Field, Preview, and Finish & Merge.'); return }
-
-    setRibbonMessage(`${command} is available in the ribbon but needs a specialized external engine or object type.`)
-  }
-
-  function createDocsFolder(name) {
-    const cleanName = String(name || '').trim().slice(0, 60)
-    if (!cleanName) return null
-    const folder = {
-      id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: cleanName,
-    }
-    const next = [...docFolders.filter(item => item.name.toLowerCase() !== cleanName.toLowerCase()), folder].slice(0, 100)
-    setDocFolders(next)
-    try {
-      localStorage.setItem(SHADOW_DOCS_FOLDERS_KEY, JSON.stringify(next))
-    } catch {}
-    return folder
-  }
-
-  function addDocumentToFolder(folderId) {
-    if (!book?.id) return false
-    const target = folderId || 'my-books'
-    const map = readShadowDocsFolderMap()
-    if (target === 'my-books') delete map[book.id]
-    else map[book.id] = target
-    try {
-      localStorage.setItem(SHADOW_DOCS_FOLDER_MAP_KEY, JSON.stringify(map))
-    } catch {
-      setRibbonMessage('Could not save folder placement on this device.')
-      return false
-    }
-    setCurrentFolderId(target)
-    const folder = docFolders.find(item => item.id === target)
-    setRibbonMessage(target === 'my-books' ? 'Added to My Books.' : `Added to ${folder?.name || 'folder'}.`)
-    return true
-  }
-
-  async function openPrintPanel() {
-    if (!book?.id) return
-    await Promise.resolve(onEditorBlurRef.current?.(book.id))
-    setLocalSaveDirty(false)
-    setLocalSaveSeconds(10)
-    setMobileMenuOpen(false)
-    setPrintOpen(true)
-  }
-
-  async function openShareSheet() {
-    if (!book?.id) return
-    await Promise.resolve(onEditorBlurRef.current?.(book.id))
-    setLocalSaveDirty(false)
-    setLocalSaveSeconds(10)
-    setMobileMenuOpen(false)
-    setShareOpen(true)
-  }
-
-  function shareFileContent() {
-    const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
-    return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHTML(book?.title || 'Shadow Docs')}</title></head><body>${(book?.chapters || []).map((item, index) => `<section${index ? ' style="page-break-before:always"' : ''}><h1>${escapeHTML(item.title || `Chapter ${index + 1}`)}</h1>${String(item.html || '')}</section>`).join('')}</body></html>`
-  }
-
-  async function shareAsFile() {
-    const baseName = mobileDocumentName(book).replace(/\.(?:doc|docx)$/i, '') || 'Docs'
-    const file = new File([shareFileContent()], `${baseName}.doc`, { type: 'application/msword' })
-    try {
-      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-        await navigator.share({ title: mobileDocumentName(book), files: [file] })
-        return
-      }
-    } catch (failure) {
-      if (failure?.name === 'AbortError') return
-    }
-    onDownloadBackup?.(book)
-  }
-
-  async function shareToSocial() {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: mobileDocumentName(book), text: book?.title || 'Shadow Docs' })
-        return
-      }
-    } catch (failure) {
-      if (failure?.name === 'AbortError') return
-    }
-    setRibbonMessage('Sharing is unavailable in this browser.')
-  }
-
-  async function exportDocsAsImage(options = {}) {
-    const scope = options.scope === 'all' ? 'all' : 'current'
-    const format = options.format === 'jpg' ? 'jpg' : 'png'
-    const outputWidth = [1080, 1440, 2160].includes(Number(options.width)) ? Number(options.width) : 1440
-    const includeTitle = options.includeTitle !== false
-    const chapters = scope === 'all' ? book.chapters : [chapter]
-    const padding = Math.max(48, Math.round(outputWidth * 0.055))
-    const host = document.createElement('div')
-    host.style.position = 'fixed'
-    host.style.left = '-100000px'
-    host.style.top = '0'
-    host.style.width = `${outputWidth}px`
-    host.style.boxSizing = 'border-box'
-    host.style.padding = `${padding}px`
-    host.style.background = settings.pageColor || '#ffffff'
-    host.style.color = settings.textColor || '#242139'
-    host.style.fontFamily = shadowDocsFontFamily(settings.font)
-    host.style.fontSize = `${Math.max(10, Math.min(24, Number(settings.fontSize) || 13))}pt`
-    host.style.lineHeight = String(Math.max(1.2, Math.min(2.2, Number(settings.lineSpacing) || 1.65)))
-    host.style.textAlign = ['left', 'center', 'right', 'justify'].includes(settings.alignment) ? settings.alignment : 'left'
-    host.style.overflowWrap = 'anywhere'
-
-    chapters.forEach((item, index) => {
-      const section = document.createElement('section')
-      if (index) {
-        section.style.marginTop = `${Math.round(padding * 0.9)}px`
-        section.style.paddingTop = `${Math.round(padding * 0.75)}px`
-        section.style.borderTop = '1px solid #d8d8d8'
-      }
-
-      if (includeTitle) {
-        const title = document.createElement('h1')
-        title.textContent = item.title || `Chapter ${book.chapters.indexOf(item) + 1}`
-        title.style.margin = `0 0 ${Math.round(padding * 0.55)}px`
-        title.style.fontSize = '1.7em'
-        title.style.lineHeight = '1.3'
-        title.style.fontWeight = '700'
-        title.style.textAlign = 'left'
-        section.appendChild(title)
-      }
-
-      const body = document.createElement('div')
-      body.innerHTML = item.id === chapter.id && editorRef.current ? editorRef.current.innerHTML : String(item.html || '')
-      body.querySelectorAll('img').forEach(image => {
-        image.style.maxWidth = '100%'
-        image.style.height = 'auto'
-      })
-      body.querySelectorAll('table').forEach(table => {
-        table.style.width = '100%'
-        table.style.borderCollapse = 'collapse'
-      })
-      body.querySelectorAll('td,th').forEach(cell => {
-        cell.style.border = '1px solid #b9b4c7'
-        cell.style.padding = '6px'
-      })
-      section.appendChild(body)
-      host.appendChild(section)
-    })
-
-    document.body.appendChild(host)
-
-    let svgURL = ''
-    let imageBitmap
-    try {
-      await Promise.resolve(document.fonts?.ready)
-      await Promise.all([...host.querySelectorAll('img')].map(image => {
-        if (image.complete) return image.decode?.().catch(() => {}) || Promise.resolve()
-        return new Promise(resolve => {
-          image.onload = resolve
-          image.onerror = resolve
-        })
-      }))
-
-      const outputHeight = Math.max(1, Math.ceil(host.scrollHeight))
-      if (outputWidth * outputHeight > 24_000_000) throw new Error('This export is too long for one image. Export one chapter or use a smaller image width.')
-
-      const clone = host.cloneNode(true)
-      clone.style.position = 'static'
-      clone.style.left = 'auto'
-      clone.style.top = 'auto'
-      clone.style.margin = '0'
-      const serialized = new XMLSerializer().serializeToString(clone)
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}" viewBox="0 0 ${outputWidth} ${outputHeight}"><foreignObject width="100%" height="100%">${serialized}</foreignObject></svg>`
-      svgURL = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
-      imageBitmap = new Image()
-      imageBitmap.decoding = 'async'
-      imageBitmap.src = svgURL
-      await new Promise((resolve, reject) => {
-        imageBitmap.onload = resolve
-        imageBitmap.onerror = () => reject(new Error('Could not render this document as an image.'))
-      })
-
-      const canvas = document.createElement('canvas')
-      canvas.width = outputWidth
-      canvas.height = outputHeight
-      const context = canvas.getContext('2d')
-      if (!context) throw new Error('Image export is unavailable in this browser.')
-      context.fillStyle = '#ffffff'
-      context.fillRect(0, 0, outputWidth, outputHeight)
-      context.drawImage(imageBitmap, 0, 0, outputWidth, outputHeight)
-
-      const mime = format === 'jpg' ? 'image/jpeg' : 'image/png'
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, mime, format === 'jpg' ? 0.92 : undefined))
-      if (!blob) throw new Error('Could not create image file.')
-      const base = String(scope === 'all' ? book.title : chapter.title || book.title || 'Shadow Docs')
-        .trim()
-        .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-')
-        .slice(0, 80) || 'Shadow Docs'
-      const url = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `${base}.${format}`
-      document.body.appendChild(anchor)
-      anchor.click()
-      anchor.remove()
-      setTimeout(() => URL.revokeObjectURL(url), 10_000)
-      setRibbonMessage(`Exported ${base}.${format}`)
-      return true
-    } finally {
-      host.remove()
-      if (svgURL) URL.revokeObjectURL(svgURL)
-      if (imageBitmap) imageBitmap.src = ''
-    }
-  }
-
-
-  function saveVersion(reason = 'Saved version') {
-    if (!book?.id) return null
-    const snapshot = shadowDocsVersionSnapshot(book)
-    if (!snapshot) return null
-    const serialized = JSON.stringify(snapshot)
-    if (serialized.length > 1_800_000) {
-      setRibbonMessage('This document is too large for local version history. Download a backup instead.')
-      return null
-    }
-    const current = readShadowDocsVersions(book.id)
-    if (current[0]?.snapshot && JSON.stringify(current[0].snapshot) === serialized) {
-      setVersions(current)
-      return current[0]
-    }
-    const entry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      createdAt: Date.now(),
-      reason,
-      chapterCount: snapshot.chapters.length,
-      words: shadowDocsHistoryWords(book),
-      snapshot,
-    }
-    try {
-      const next = writeShadowDocsVersions(book.id, [entry, ...current])
-      setVersions(next)
-      return entry
-    } catch {
-      setRibbonMessage('Could not save version history on this device.')
-      return null
-    }
-  }
-
-  function deleteVersion(versionId) {
-    if (!book?.id) return
-    const next = readShadowDocsVersions(book.id).filter(item => item.id !== versionId)
-    try {
-      localStorage.setItem(shadowDocsHistoryKey(book.id), JSON.stringify(next))
-      setVersions(next)
-    } catch {
-      setRibbonMessage('Could not delete this saved version.')
-    }
-  }
-
-  function clearVersionHistory() {
-    if (!book?.id || !globalThis.confirm?.('Clear all saved versions for this document?')) return
-    try {
-      localStorage.removeItem(shadowDocsHistoryKey(book.id))
-      setVersions([])
-    } catch {
-      setRibbonMessage('Could not clear version history.')
-    }
-  }
-
-  async function restoreVersion(version) {
-    if (!version?.snapshot || typeof onRestoreBook !== 'function') return
-    if (!globalThis.confirm?.('Restore this version? Your current document will be replaced.')) return
-    saveVersion('Before restore')
-    await Promise.resolve(onRestoreBook(version.snapshot))
-    setVersionHistoryOpen(false)
-    setRibbonMessage('Version restored.')
-  }
-
-  async function runMobileMenuAction(action, payload = {}) {
-    if (action === 'saveAs') {
-      const name = String(payload.name || mobileDocumentName(book).replace(/\.[^.]+$/, '') || 'Docs').trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').slice(0, 80)
-      const format = String(payload.format || 'doc').toLowerCase()
-      if (payload.encrypt) throw new Error('Encrypted Save As is not connected yet.')
-      if (format === 'pdf') {
-        onOpenPDF?.()
-        return true
-      }
-      if (format === 'docx') throw new Error('DOCX export engine is not connected yet.')
-      if (format === 'uot3') throw new Error('UOT3 export engine is not connected yet.')
-
-      const cleanHTML = value => String(value || '')
-      const escapeXML = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[character])
-      const chapterText = html => {
-        const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html')
-        parsed.body.querySelectorAll('br').forEach(node => node.replaceWith('\n'))
-        parsed.body.querySelectorAll('p,div,h1,h2,h3,li,blockquote').forEach(node => node.append('\n\n'))
-        return (parsed.body.textContent || '').replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
-      }
-      const plainText = `${book?.title || 'Untitled Book'}\n${book?.author || ''}\n\n${(book?.chapters || []).map((item, index) => `${item.title || `Chapter ${index + 1}`}\n\n${chapterText(item.html)}`).join(`\n\n${'—'.repeat(24)}\n\n`)}\n`
-      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<shadowDocs title="${escapeXML(book?.title || 'Untitled Book')}" author="${escapeXML(book?.author || '')}">\n${(book?.chapters || []).map((item, index) => `  <chapter index="${index + 1}" title="${escapeXML(item.title || `Chapter ${index + 1}`)}"><![CDATA[${String(item.html || '').replaceAll(']]>', ']]]]><![CDATA[>')}]]></chapter>`).join('\n')}\n</shadowDocs>\n`
-      const doc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeXML(book?.title || 'Untitled Book')}</title></head><body>${(book?.chapters || []).map((item, index) => `<section${index ? ' style="page-break-before:always"' : ''}><h1>${escapeXML(item.title || `Chapter ${index + 1}`)}</h1>${cleanHTML(item.html)}</section>`).join('')}</body></html>`
-      const content = format === 'txt' ? plainText : format === 'xml' ? xml : doc
-      const type = format === 'txt' ? 'text/plain;charset=utf-8' : format === 'xml' ? 'application/xml;charset=utf-8' : 'application/msword;charset=utf-8'
-      const url = URL.createObjectURL(new Blob([content], { type }))
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `${name}.${format}`
-      document.body.appendChild(anchor)
-      anchor.click()
-      anchor.remove()
-      setTimeout(() => URL.revokeObjectURL(url), 10_000)
-      setRibbonMessage(`Saved ${name}.${format}`)
-      return true
-    }
-    if (action === 'findReplace') {
-      setMobileMenuOpen(false)
-      setFindReplaceOpen(true)
-      return
-    }
-    if (action === 'share') {
-      await openShareSheet()
-      return
-    }
-    if (action === 'print') {
-      await openPrintPanel()
-      return
-    }
-    if (action === 'rename') {
-      onEditProperties?.()
-      return
-    }
-    if (action === 'addTo') {
-      setMobileMenuOpen(false)
-      setDocFolders(readShadowDocsFolders())
-      setCurrentFolderId(readShadowDocsFolderMap()[book?.id] || 'my-books')
-      setAddToOpen(true)
-      return
-    }
-    if (action === 'exportImage') {
-      await Promise.resolve(onEditorBlurRef.current?.(book.id))
-      setMobileMenuOpen(false)
-      setExportImageOpen(true)
-      return
-    }
-    if (action === 'conversion') {
-      setMobileMenuOpen(false)
-      setConversionOpen(true)
-      return
-    }
-    if (action === 'versionHistory') {
-      await Promise.resolve(onEditorBlurRef.current?.(book.id))
-      saveVersion('Current version')
-      setVersions(readShadowDocsVersions(book.id))
-      setMobileMenuOpen(false)
-      setVersionHistoryOpen(true)
-      return
-    }
-    if (action === 'encrypt') {
-      await Promise.resolve(onEditorBlurRef.current?.(book.id))
-      setMobileMenuOpen(false)
-      setEncryptOpen(true)
-      return
-    }
-    if (action === 'exportPdf') {
-      onOpenPDF?.()
-      return
-    }
-    if (action === 'information') {
-      setRibbonMessage(`${mobileDocumentName(book)} · ${overview.words.toLocaleString()} words · ${mobileDocumentSize(book)}`)
-      return
-    }
-    setRibbonMessage('This menu action will be connected later.')
-  }
-
-  function trackBeforeInput(event) {
-    if (!ribbonState.trackChanges || event.isComposing || !editorRef.current) return
-    const snapshot = captureShadowDocsSelection(editorRef.current)
-    if (!snapshot) return
-    if (event.inputType === 'insertText' && event.data) {
-      event.preventDefault()
-      if (markShadowDocsInsertion(editorRef.current, snapshot, event.data, book.author || 'Author')) finishRibbonChange(true)
-    } else if ((event.inputType === 'deleteContentBackward' || event.inputType === 'deleteContentForward') && !snapshot.collapsed) {
-      event.preventDefault()
-      if (markShadowDocsDeletion(editorRef.current, snapshot, book.author || 'Author')) finishRibbonChange(true)
-    }
-  }
-
-  async function loadRecipients(event) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    try {
-      const rows = parseShadowDocsRecipientsCSV(await file.text())
-      setRecipients(rows)
-      setRecipientIndex(0)
-      setRibbonMessage(`${rows.length} recipient(s) loaded.`)
-    } catch (failure) {
-      setRibbonMessage(failure instanceof Error ? failure.message : 'Could not read recipient CSV.')
-    }
-  }
-
-  function quickFormat(command) {
-    if (!editorRef.current || !chapter) return
-    editorRef.current.focus()
-    document.execCommand(command, false)
-    emitChange()
-    requestAnimationFrame(() => rememberSelection())
-  }
-
-  function chooseImage() {
-    const editor = editorRef.current
-    if (!editor || !chapter || imageBusy || typeof onChangeHTML !== 'function') return
-    imageTargetRef.current = {
-      bookId: book.id,
-      chapterId: chapter.id,
-      snapshot: currentSnapshot(),
-      width: imageWidth,
-      align: imageAlignment,
-    }
-    imageInputRef.current?.click()
-  }
-
-  async function insertImage(file) {
-    const target = imageTargetRef.current
-    imageTargetRef.current = null
-    if (!target || !file) return
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 6_000_000) {
-      setImageError('Choose a PNG, JPG or WebP image smaller than 6 MB.')
-      return
-    }
-    setImageBusy(true)
-    setImageError('')
-    let bitmap
-    let objectURL = ''
-    try {
-      if (typeof createImageBitmap === 'function') bitmap = await createImageBitmap(file)
-      else {
-        objectURL = URL.createObjectURL(file)
-        bitmap = await new Promise((resolve, reject) => {
-          const img = new Image()
-          img.onload = () => resolve(img)
-          img.onerror = () => reject(new Error('Cannot read this image.'))
-          img.src = objectURL
-        })
-      }
-      if (!bitmap.width || !bitmap.height) throw new Error('Invalid image dimensions.')
-      const canvas = document.createElement('canvas')
-      const context = canvas.getContext('2d')
-      if (!context) throw new Error('Image conversion is unavailable in this browser.')
-      let scale = Math.min(1, 1200 / bitmap.width, 1200 / bitmap.height)
-      let src = ''
-      for (let attempt = 0; attempt < 7; attempt += 1) {
-        canvas.width = Math.max(1, Math.round(bitmap.width * scale))
-        canvas.height = Math.max(1, Math.round(bitmap.height * scale))
-        context.fillStyle = '#ffffff'
-        context.fillRect(0, 0, canvas.width, canvas.height)
-        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-        src = canvas.toDataURL('image/jpeg', 0.8)
-        if (src.length <= 300_000) break
-        scale *= 0.75
-      }
-      if (src.length > 300_000) throw new Error('This image is too detailed. Choose a smaller image.')
-      const editor = editorRef.current
-      if (!editor || editor.dataset.chapterId !== target.chapterId || book.id !== target.bookId) return
-      const alt = file.name.slice(0, 80).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
-      const margin = target.align === 'left' ? '1em auto 1em 0' : target.align === 'right' ? '1em 0 1em auto' : '1em auto'
-      const html = `<img src="${src}" alt="${alt}" data-shadow-docs-width="${target.width}" data-shadow-docs-align="${target.align}" style="display:block;width:${target.width}%;max-width:100%;height:auto;margin:${margin};break-inside:avoid"><p><br></p>`
-      if (editor.innerHTML.length + html.length > 490_000) throw new Error('This chapter is too large for another image. Use a new chapter.')
-      const selection = window.getSelection()
-      let range = target.snapshot ? restoreShadowDocsSelection(editor, target.snapshot) : null
-      editor.focus()
-      if (!range) {
-        range = document.createRange()
-        range.selectNodeContents(editor)
-        range.collapse(false)
-        selection?.removeAllRanges()
-        selection?.addRange(range)
-      }
-      if (!document.execCommand('insertHTML', false, html)) throw new Error('Image insertion is unavailable in this browser.')
-      emitChange()
-      requestAnimationFrame(() => rememberSelection())
-    } catch (failure) {
-      setImageError(failure instanceof Error ? failure.message : 'Could not insert image.')
-    } finally {
-      bitmap?.close?.()
-      if (objectURL) URL.revokeObjectURL(objectURL)
-      setImageBusy(false)
-    }
-  }
-
-  function pastePlain(event) {
-    event.preventDefault()
-    const value = event.clipboardData.getData('text/plain')
-    if (!document.execCommand('insertText', false, value)) {
-      const selection = window.getSelection()
-      if (!selection?.rangeCount || !editorRef.current?.contains(selection.anchorNode)) return
-      const range = selection.getRangeAt(0)
-      range.deleteContents()
-      const text = document.createTextNode(value)
-      range.insertNode(text)
-      range.setStartAfter(text)
-      range.collapse(true)
-      selection.removeAllRanges()
-      selection.addRange(range)
-    }
-    emitChange()
-  }
-
-  if (!book || !chapter) return <section className="sd-card"><BookOpen size={28} /><h2 className="mt-3">Writing Studio</h2><p className="mt-2 text-sm text-[#77758b] dark:text-white/60">Select a book in My Books to start writing.</p></section>
-
-  return <section aria-label="Writing Studio" className={`sd-writing-layout ${ribbonState.mobileFit ? 'sd-mobile-fit-mode' : ''}`}>
-    <style>{'.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}.sd-writing-area p,.sd-writing-area div{margin-bottom:var(--sd-paragraph-spacing,.75em)}.sd-writing-area h1,.sd-writing-area h2,.sd-writing-area h3,.sd-writing-area li,.sd-writing-area blockquote{text-indent:0}.sd-writing-area img{max-width:100%;height:auto;break-inside:avoid}.sd-writing-area table{width:100%;border-collapse:collapse;margin:12px 0}.sd-writing-area td,.sd-writing-area th{border:1px solid #b9b4c7;padding:6px}.sd-writing-area.sd-gridlines{background-image:linear-gradient(#0000000d 1px,transparent 1px),linear-gradient(90deg,#0000000d 1px,transparent 1px);background-size:24px 24px}.sd-writing-area ins{background:#dff5e8;text-decoration:underline}.sd-writing-area del{background:#fde2e5;color:#9f3d49}'}</style>
+  return <div className="sd-selection-popup-layer" aria-hidden={!open}>
     <style>{`
-      .sd-mobile-editor-topbar{display:none}
-      .sd-mobile-word-count{display:none}
-      @media(max-width:700px){
-        body:has(.sd-writing-layout),
-        body:has(.sd-writing-layout) #root,
-        body:has(.sd-writing-layout) .sd-app,
-        body:has(.sd-writing-layout) .sd-main{
-          background:#fff!important;
-          overscroll-behavior-y:none;
-        }
-        body:has(.sd-writing-layout) .sd-header,
-        body:has(.sd-writing-layout) .sd-main>.sd-topline,
-        body:has(.sd-writing-layout) .sd-main>.sd-status,
-        body:has(.sd-writing-layout) .sd-main>.sd-stack>.sd-button,
-        body:has(.sd-writing-layout) .sd-main>.sd-stack>.sd-writing-layout~.sd-stack{
-          display:none!important;
-        }
-        body:has(.sd-writing-layout) .sd-main{
-          max-width:none!important;
-          height:100dvh!important;
-          margin:0!important;
-          padding:54px 0 64px!important;
-          overflow:hidden!important;
-          background:#fff!important;
-        }
-        .sd-mobile-editor-topbar{
-          position:fixed;
-          z-index:82;
-          top:0;
-          left:0;
-          right:0;
-          height:54px;
-          display:flex;
-          align-items:center;
-          gap:clamp(3px,1.2vw,6px);
-          padding:0 8px;
-          background:#292929;
-          border-bottom:1px solid #3a3a3a;
-          color:#f5f5f5;
-        }
-        .sd-mobile-editor-back{
-          width:clamp(30px,9vw,34px);
-          height:34px;
-          display:grid;
-          place-items:center;
-          flex:none;
-          border:0;
-          border-radius:8px;
-          background:transparent;
-          color:inherit;
-        }
-        .sd-mobile-editor-back i{font-size:16px}
-        .sd-mobile-editor-meta{
-          width:48px;
-          min-width:48px;
-          display:flex;
-          flex-direction:column;
-          justify-content:center;
-          gap:2px;
-          overflow:visible;
-        }
-        .sd-mobile-editor-count{
-          color:#f0f0f0;
-          font-size:10px;
-          font-weight:700;
-          line-height:1.05;
-          white-space:nowrap;
-        }
-        .sd-mobile-editor-autosave{
-          color:#66d6b6;
-          font-size:9px;
-          font-weight:600;
-          line-height:1.05;
-          white-space:nowrap;
-        }
-        .sd-mobile-editor-actions{
-          min-width:0;
-          margin-left:auto;
-          display:flex;
-          align-items:center;
-          justify-content:flex-end;
-          gap:clamp(2px,1vw,6px);
-        }
-        .sd-mobile-editor-actions button{
-          width:clamp(27px,8.5vw,34px);
-          height:34px;
-          display:grid;
-          place-items:center;
-          flex:none;
-          border:0;
-          border-radius:8px;
-          background:transparent;
-          color:inherit;
-        }
-        .sd-mobile-editor-actions .sd-mobile-page{
-          width:clamp(25px,8vw,30px);
-          min-width:clamp(25px,8vw,30px);
-          height:30px;
-          padding:0 5px;
-          border:1px solid #777;
-          border-radius:3px;
-          font-size:10px;
-          font-weight:700;
-        }
-        .sd-mobile-editor-actions .sd-mobile-save{
-          width:auto;
-          height:34px;
-          padding:0 clamp(6px,2.4vw,11px);
-          display:flex;
-          gap:4px;
-          border-radius:17px;
-          background:#25a884;
-          font-size:11px;
-          font-weight:700;
-        }
-        .sd-mobile-editor-actions svg{
-          width:21px;
-          height:21px;
-          stroke-width:1.8;
-        }
-        body:has(.sd-writing-layout) .sd-modal .sd-button-primary{
-          background:#25a884!important;
-          border-color:#25a884!important;
-          color:#fff!important;
-        }
-        .sd-writing-layout{
-          position:fixed!important;
-          z-index:35;
-          top:54px;
-          right:0;
-          bottom:64px;
-          left:0;
-          display:block!important;
-          min-height:0!important;
-          margin:0!important;
-          overflow:hidden!important;
-          background:#fff!important;
-        }
-        .sd-writing-layout .sd-chapters,
-        .sd-writing-layout .sd-editor-head,
-        .sd-writing-layout .sd-editor-tools,
-        .sd-writing-layout .sd-editor-actions,
-        .sd-writing-layout .sd-editor-card>.my-3>p{
-          display:none!important;
-        }
-        .sd-writing-layout .sd-writing-main{
-          display:block!important;
-          width:100%!important;
-          height:100%!important;
-          margin:0!important;
-          padding:0!important;
-          overflow:hidden!important;
-          background:#fff!important;
-        }
-        .sd-writing-layout .sd-editor-card{
-          display:flex!important;
-          flex-direction:column!important;
-          width:100%!important;
-          height:100%!important;
-          min-height:0!important;
-          margin:0!important;
-          padding:0!important;
-          overflow:hidden!important;
-          border:0!important;
-          border-radius:0!important;
-          background:#fff!important;
-          box-shadow:none!important;
-        }
-        .sd-writing-layout .sd-editor-card>.my-3{
-          flex:0 0 0!important;
-          height:0!important;
-          margin:0!important;
-          padding:0!important;
-        }
-        .sd-writing-layout .sd-writing-area{
-          box-sizing:border-box;
-          flex:1 1 auto!important;
-          width:100%!important;
-          max-width:none!important;
-          min-height:0!important;
-          margin:0!important;
-          padding:28px 24px 42px!important;
-          overflow-x:hidden!important;
-          overflow-y:auto!important;
-          overscroll-behavior-y:contain;
-          -webkit-overflow-scrolling:touch;
-          border:0!important;
-          border-radius:0!important;
-          background:#fff!important;
-          color:#111!important;
-          box-shadow:none!important;
-          zoom:1!important;
-          caret-color:#111;
-        }
-        .sd-writing-layout.sd-mobile-fit-mode .sd-writing-area{
-          width:100%!important;
-          padding-top:4px!important;
-          padding-left:2px!important;
-          padding-right:2px!important;
-        }
-        .sd-writing-layout .sd-editor-footer,
-        .sd-mobile-word-count{
-          display:none!important;
-        }
+      .sd-selection-popup-layer{
+        position:fixed;
+        inset:0;
+        z-index:18800;
+        pointer-events:none;
+        font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+      }
+      .sd-selection-popup{
+        position:fixed;
+        left:50%;
+        width:min(calc(100vw - 24px),490px);
+        transform:translateX(-50%);
+        overflow:hidden;
+        border:1px solid #3a3a3a;
+        border-radius:14px;
+        background:#303030;
+        color:#f1f1f1;
+        box-shadow:0 10px 28px #0005;
+        pointer-events:auto;
+      }
+      .sd-selection-popup-row{
+        min-height:78px;
+        display:grid;
+        align-items:stretch;
+        gap:0;
+        padding:7px 8px;
+      }
+      .sd-selection-popup-row.is-compact{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+      }
+      .sd-selection-popup-row.is-expanded{
+        grid-template-columns:repeat(5,minmax(0,1fr));
+      }
+      .sd-selection-popup-bottom{
+        min-height:60px;
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr)) 34px;
+        align-items:stretch;
+        border-top:1px solid #414141;
+        padding:5px 6px;
+      }
+      .sd-selection-popup-bottom.is-compact{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+      }
+      .sd-selection-popup-tool{
+        min-width:0;
+        border:0;
+        border-radius:10px;
+        background:transparent;
+        color:#f0f0f0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        flex-direction:column;
+        gap:5px;
+        padding:6px 3px;
+        font:inherit;
+        font-size:10px;
+        line-height:1.1;
+        text-align:center;
+      }
+      .sd-selection-popup-tool:active{
+        background:#424242;
+      }
+      .sd-selection-popup-tool svg{
+        width:22px;
+        height:22px;
+        stroke-width:1.65;
+        color:#dedede;
+      }
+      .sd-selection-popup-tool[data-action="highlight"] svg{
+        color:#f6dc38;
+      }
+      .sd-selection-popup-tool[data-action="search"] svg,
+      .sd-selection-popup-tool[data-action="translate"] svg,
+      .sd-selection-popup-tool[data-action="spellCheck"] svg{
+        color:#bf84ff;
+      }
+      .sd-selection-popup-tool span{
+        max-width:100%;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+      }
+      .sd-selection-popup-page{
+        width:34px;
+        border:0;
+        border-radius:9px;
+        background:transparent;
+        color:#b7b7b7;
+        display:grid;
+        place-items:center;
+      }
+      .sd-selection-popup-page:active{
+        background:#424242;
+      }
+      .sd-selection-popup-close-zone{
+        position:fixed;
+        inset:0;
+        z-index:-1;
+        pointer-events:auto;
+        background:transparent;
+        border:0;
+      }
+      @media(min-width:701px){
+        .sd-selection-popup-layer{display:none}
       }
     `}</style>
-    <div className="sd-mobile-editor-topbar" aria-label="Mobile editor header">
-      <button type="button" className="sd-mobile-editor-back" aria-label="Back" onClick={() => onOpenBooks?.()}><i className="fa-solid fa-chevron-left" /></button>
-      <div className="sd-mobile-editor-meta">
-        <span className="sd-mobile-editor-count">{(chapterStats?.words || 0).toLocaleString()} / Words</span>
-        <span className="sd-mobile-editor-autosave">{localSaveDirty ? `Save ${localSaveSeconds}s` : 'Saved'}</span>
-      </div>
-      <div className="sd-mobile-editor-actions">
-        <button type="button" aria-label="Undo" disabled={typeof onChangeHTML !== 'function'} onPointerDown={event => event.preventDefault()} onClick={() => quickFormat('undo')}><Undo2 /></button>
-        <button type="button" aria-label="Redo" disabled={typeof onChangeHTML !== 'function'} onPointerDown={event => event.preventDefault()} onClick={() => quickFormat('redo')}><Redo2 /></button>
-        <button type="button" className="sd-mobile-page" aria-label={`Chapter ${chapterIndex + 1}`} onClick={() => onOpenOutline?.()}><span>{chapterIndex + 1}</span></button>
-        <button type="button" aria-label="Share" onClick={() => void openShareSheet()}><Share2 /></button>
-        <button type="button" aria-label="Menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}><Menu /></button>
-        <button type="button" className="sd-mobile-save" aria-label="Save" onClick={() => void runRibbonCommand('save', true)}><Check /> Save</button>
-      </div>
-    </div>
-    <ShadowDocsMobileMenu
-      open={mobileMenuOpen}
-      documentName={mobileDocumentName(book)}
-      wordCount={overview.words}
-      sizeText={mobileDocumentSize(book)}
-      onClose={() => setMobileMenuOpen(false)}
-      onAction={runMobileMenuAction}
-    />
-    <ShadowDocsShareSheet
-      open={shareOpen}
-      documentName={mobileDocumentName(book)}
-      wordCount={overview.words}
-      onClose={() => setShareOpen(false)}
-      onCopyLink={() => setRibbonMessage('Copy Link will be connected with the share-link service.')}
-      onShareFile={() => void shareAsFile()}
-      onSocialShare={() => void shareToSocial()}
-      onSettingsChange={() => {}}
-    />
-    <ShadowDocsSelectionPopup
-      open={selectionPopup.open}
-      mode={selectionPopup.mode}
-      anchor={selectionPopup.anchor}
-      onClose={() => setSelectionPopup(current => ({ ...current, open: false }))}
-      onAction={action => void runSelectionPopupAction(action)}
-    />
-    <ShadowDocsFindReplaceModal
-      open={findReplaceOpen}
-      editorRef={editorRef}
-      onClose={() => setFindReplaceOpen(false)}
-      onChange={html => {
-        if (!chapter) return
-        onChangeHTML?.(chapter.id, html)
-        setLocalSaveDirty(true)
-        setLocalSaveSeconds(10)
-      }}
-    />
-    <ShadowDocsPrintPanel
-      open={printOpen}
-      book={book}
-      currentChapterId={chapter?.id || ''}
-      onClose={() => setPrintOpen(false)}
-      onExportPDF={() => {
-        setPrintOpen(false)
-        onOpenPDF?.()
-      }}
-      onChangeSettings={onChangeSettings}
-    />
-    <ShadowDocsAddToSheet
-      open={addToOpen}
-      documentName={mobileDocumentName(book)}
-      folders={docFolders}
-      currentFolderId={currentFolderId}
-      onClose={() => setAddToOpen(false)}
-      onCreateFolder={createDocsFolder}
-      onAdd={addDocumentToFolder}
-    />
-    <ShadowDocsExportImageSheet
-      open={exportImageOpen}
-      documentName={mobileDocumentName(book)}
-      chapterTitle={chapter?.title || `Chapter ${chapterIndex + 1}`}
-      onClose={() => setExportImageOpen(false)}
-      onExport={exportDocsAsImage}
-    />
-    <ShadowDocsConversionSheet
-      open={conversionOpen}
-      documentName={mobileDocumentName(book)}
-      onClose={() => setConversionOpen(false)}
-      onSelect={option => {
-        setConversionOpen(false)
-        setRibbonMessage(option === 'merge' ? 'Merge Documents selected.' : 'Compress Document selected.')
-      }}
-    />
-    <ShadowDocsVersionHistorySheet
-      open={versionHistoryOpen}
-      documentName={mobileDocumentName(book)}
-      versions={versions}
-      onClose={() => setVersionHistoryOpen(false)}
-      onRestore={version => void restoreVersion(version)}
-      onDelete={deleteVersion}
-      onClear={clearVersionHistory}
-    />
-    <ShadowDocsEncryptSheet
-      open={encryptOpen}
-      book={book}
-      documentName={mobileDocumentName(book)}
-      onClose={() => setEncryptOpen(false)}
-      onEncrypted={() => setRibbonMessage('Encrypted copy created.')}
-    />
-    {!ribbonState.focus && <aside className="sd-chapters">
-      <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
-      <div className="sd-chapter-list">{book.chapters.map((item, index) => <button type="button" key={item.id} className={`sd-chapter-item ${item.id === chapter.id ? 'is-active' : ''}`} onClick={() => onSelectChapter?.(item.id)} disabled={typeof onSelectChapter !== 'function'}><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.title || `Chapter ${index + 1}`}</strong></button>)}</div>
-      <div className="sd-side-foot">{overview.chapterCount} chapters · {overview.words.toLocaleString()} words</div>
-    </aside>}
 
-    <div className="sd-writing-main">
-      <div className="sd-card sd-editor-card">
-        <div className="sd-editor-head">
-          <div className="min-w-0 flex-1">
-            <span className="sd-eyebrow">CHAPTER {chapterIndex + 1}</span>
-            <input className="sd-chapter-title" aria-label="Chapter title" maxLength={160} value={chapter.title || ''} onChange={event => onRenameChapter?.(chapter.id, event.target.value)} disabled={typeof onRenameChapter !== 'function'} />
-          </div>
-          <button type="button" className="sd-button sd-button-ghost" onClick={() => onPreview?.(chapter.id)} disabled={typeof onPreview !== 'function'}><Eye size={16} /> Preview</button>
-        </div>
+    <button type="button" className="sd-selection-popup-close-zone" aria-label="Close selection menu" onPointerDown={event => event.preventDefault()} onClick={onClose} />
 
-        <div className="my-3">
-          <ShadowDocsRibbon commandState={ribbonState} onCommand={runRibbonCommand} disabled={typeof onChangeHTML !== 'function'} />
-          {ribbonMessage && <p role="status" className="mt-2 text-xs text-[#77758b] dark:text-white/60">{ribbonMessage}</p>}
-        </div>
-
-        <div className="sd-editor-tools" aria-label="Quick editor tools">
-          <button type="button" title="Undo" aria-label="Undo" disabled={typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={() => quickFormat('undo')}>↶</button>
-          <button type="button" title="Redo" aria-label="Redo" disabled={typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={() => quickFormat('redo')}>↷</button>
-          <button type="button" title="Insert page break" aria-label="Insert page break" disabled={typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={() => void runRibbonCommand('pageBreak', true)} style={{ width: 'auto', padding: '0 10px', whiteSpace: 'nowrap' }}>Page break</button>
-          <label className="flex items-center gap-1 text-xs">Image size <select aria-label="Image size" className="sd-field" style={{ minHeight: 35, padding: '4px 6px', width: 65 }} value={imageWidth} disabled={imageBusy} onChange={event => setImageWidth(Number(event.target.value))}><option value={50}>50%</option><option value={75}>75%</option><option value={100}>100%</option></select></label>
-          <label className="flex items-center gap-1 text-xs">Align <select aria-label="Image alignment" className="sd-field" style={{ minHeight: 35, padding: '4px 6px', width: 80 }} value={imageAlignment} disabled={imageBusy} onChange={event => setImageAlignment(event.target.value)}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-          <button type="button" title="Insert image" aria-label="Insert image" disabled={imageBusy || typeof onChangeHTML !== 'function'} onMouseDown={event => event.preventDefault()} onClick={chooseImage} style={{ width: 'auto', padding: '0 10px', whiteSpace: 'nowrap' }}><ImagePlus size={16} /> {imageBusy ? 'Adding…' : 'Image'}</button>
-        </div>
-
-        <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void insertImage(file) }} />
-        <input ref={mailingInputRef} type="file" accept=".csv,text/csv" hidden onChange={event => void loadRecipients(event)} />
-        {imageError && <p role="alert" className="my-2 text-xs text-red-600 dark:text-red-300">{imageError}</p>}
-
-        <div
-          key={`${book.id}-${chapter.id}`}
-          ref={editorRef}
-          data-chapter-id={chapter.id}
-          className={`sd-writing-area sd-view-${ribbonState.viewMode || 'print'} ${ribbonState.gridlines ? 'sd-gridlines' : ''}`}
-          contentEditable={typeof onChangeHTML === 'function' && !ribbonState.protectedEditing && ribbonState.viewMode !== 'read'}
-          suppressContentEditableWarning
-          onBeforeInput={trackBeforeInput}
-          onInput={emitChange}
-          onBlur={() => { onEditorBlurRef.current?.(book.id); setLocalSaveDirty(false); setLocalSaveSeconds(10) }}
-          onPaste={pastePlain}
-          onMouseUp={handleEditorMouseUp}
-          onDoubleClick={handleEditorDoubleClick}
-          onKeyUp={() => {
-            rememberSelection()
-            setSelectionPopup(current => ({ ...current, open: false }))
-          }}
-          onTouchEnd={handleEditorTouchEnd}
-          onFocus={rememberSelection}
-          onContextMenu={event => {
-            if (!globalThis.matchMedia?.('(max-width:700px)').matches) return
-            event.preventDefault()
-            requestAnimationFrame(() => showSelectionPopup('expanded'))
-          }}
-          data-placeholder="Start writing your chapter…"
-          role="textbox"
-          aria-label="Chapter text editor"
-          aria-multiline="true"
-          spellCheck
-          style={{
-            fontFamily: shadowDocsFontFamily(settings.font),
-            fontSize: `${(Number(settings.fontSize) || 13) + 2}px`,
-            lineHeight: settings.lineSpacing || 1.65,
-            textAlign: settings.alignment || 'left',
-            textIndent: `${firstLineIndent}mm`,
-            '--sd-paragraph-spacing': `${paragraphSpacing}pt`,
-            backgroundColor: settings.pageColor || '#ffffff',
-            color: settings.textColor || undefined,
-            direction: settings.textDirection || 'ltr',
-            columnCount: settings.columns || 1,
-            columnGap: `${settings.columnGap || 10}mm`,
-            hyphens: settings.hyphenation ? 'auto' : 'manual',
-            border: settings.borderWidth ? `${settings.borderWidth}px ${settings.borderStyle || 'solid'} ${settings.borderColor || '#d5d1df'}` : undefined,
-            zoom: `${ribbonState.zoom || 100}%`,
-          }}
-        />
-
-        <div className="sd-editor-footer">
-          <span className="sd-desktop-word-count">{(chapterStats?.words || 0).toLocaleString()} words · {(chapterStats?.characters || 0).toLocaleString()} characters</span>
-          <span className="sd-mobile-word-count">Word count: {(chapterStats?.words || 0).toLocaleString()}</span>
-          <span><CheckCircle2 size={15} /> {status}</span>
-        </div>
+    <section
+      className="sd-selection-popup"
+      role="menu"
+      aria-label="Selection actions"
+      style={{ top: `${top}px` }}
+      onPointerDown={event => event.preventDefault()}
+    >
+      <div className={`sd-selection-popup-row ${expanded ? 'is-expanded' : 'is-compact'}`}>
+        {primaryActions.map(item => {
+          const Icon = item.icon
+          return <button
+            key={item.id}
+            type="button"
+            role="menuitem"
+            className="sd-selection-popup-tool"
+            data-action={item.id}
+            onPointerDown={event => event.preventDefault()}
+            onClick={() => action(item.id)}
+          >
+            <Icon />
+            <span>{item.label}</span>
+          </button>
+        })}
       </div>
 
-      <div className="sd-editor-actions">
-        <div className="sd-inline">
-          <button type="button" className="sd-icon-button" title="Move chapter up" aria-label="Move chapter up" disabled={chapterIndex === 0 || typeof onMoveChapter !== 'function'} onClick={() => onMoveChapter(chapter.id, -1)}><ArrowUp size={17} /></button>
-          <button type="button" className="sd-icon-button" title="Move chapter down" aria-label="Move chapter down" disabled={chapterIndex === book.chapters.length - 1 || typeof onMoveChapter !== 'function'} onClick={() => onMoveChapter(chapter.id, 1)}><ArrowDown size={17} /></button>
-          <button type="button" className="sd-icon-button sd-icon-danger" title="Delete chapter" aria-label="Delete chapter" disabled={book.chapters.length < 2 || typeof onDeleteChapter !== 'function'} onClick={() => onDeleteChapter(chapter.id)}><Trash2 size={17} /></button>
-        </div>
-        <button type="button" className="sd-button sd-button-ghost" disabled={typeof onDownloadBackup !== 'function'} onClick={() => onDownloadBackup(book)}><Download size={16} /> Backup</button>
+      <div className={`sd-selection-popup-bottom ${expanded ? '' : 'is-compact'}`}>
+        {COMMON_ACTIONS.map(item => {
+          const Icon = item.icon
+          return <button
+            key={item.id}
+            type="button"
+            role="menuitem"
+            className="sd-selection-popup-tool"
+            data-action={item.id}
+            onPointerDown={event => event.preventDefault()}
+            onClick={() => action(item.id)}
+          >
+            <Icon />
+            <span>{item.label}</span>
+          </button>
+        })}
+
+        {expanded ? <button
+          type="button"
+          className="sd-selection-popup-page"
+          aria-label={page === 0 ? 'More selection actions' : 'Previous selection actions'}
+          onPointerDown={event => event.preventDefault()}
+          onClick={() => setPage(value => value === 0 ? 1 : 0)}
+        >
+          {page === 0 ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        </button> : null}
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 }
