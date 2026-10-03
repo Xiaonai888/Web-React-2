@@ -24,6 +24,28 @@ import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 import ShadowDocsShareSheet from './ShadowDocsShareSheet'
 import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
 import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
+import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
+
+const SHADOW_DOCS_FOLDERS_KEY = 'shadow-docs-folders-v1'
+const SHADOW_DOCS_FOLDER_MAP_KEY = 'shadow-docs-folder-map-v1'
+
+function readShadowDocsFolders() {
+  try {
+    const value = JSON.parse(localStorage.getItem(SHADOW_DOCS_FOLDERS_KEY) || '[]')
+    return Array.isArray(value) ? value.filter(item => item && item.id && item.name).slice(0, 100) : []
+  } catch {
+    return []
+  }
+}
+
+function readShadowDocsFolderMap() {
+  try {
+    const value = JSON.parse(localStorage.getItem(SHADOW_DOCS_FOLDER_MAP_KEY) || '{}')
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  } catch {
+    return {}
+  }
+}
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
 const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
@@ -121,6 +143,9 @@ export default function ShadowDocsWritingStudioPanel({
   const [shareOpen, setShareOpen] = useState(false)
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
+  const [addToOpen, setAddToOpen] = useState(false)
+  const [docFolders, setDocFolders] = useState(() => readShadowDocsFolders())
+  const [currentFolderId, setCurrentFolderId] = useState('my-books')
   const onEditorBlurRef = useRef(onEditorBlur)
   const chapter = book?.chapters?.find(item => item.id === chapterId) || book?.chapters?.[0]
   const chapterIndex = book?.chapters?.findIndex(item => item.id === chapter?.id) ?? -1
@@ -145,6 +170,9 @@ export default function ShadowDocsWritingStudioPanel({
     setShareOpen(false)
     setFindReplaceOpen(false)
     setPrintOpen(false)
+    setAddToOpen(false)
+    setDocFolders(readShadowDocsFolders())
+    setCurrentFolderId(readShadowDocsFolderMap()[book?.id] || 'my-books')
   }, [book?.id, chapter?.id])
 
   useEffect(() => {
@@ -795,6 +823,39 @@ export default function ShadowDocsWritingStudioPanel({
     setRibbonMessage(`${command} is available in the ribbon but needs a specialized external engine or object type.`)
   }
 
+  function createDocsFolder(name) {
+    const cleanName = String(name || '').trim().slice(0, 60)
+    if (!cleanName) return null
+    const folder = {
+      id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: cleanName,
+    }
+    const next = [...docFolders.filter(item => item.name.toLowerCase() !== cleanName.toLowerCase()), folder].slice(0, 100)
+    setDocFolders(next)
+    try {
+      localStorage.setItem(SHADOW_DOCS_FOLDERS_KEY, JSON.stringify(next))
+    } catch {}
+    return folder
+  }
+
+  function addDocumentToFolder(folderId) {
+    if (!book?.id) return false
+    const target = folderId || 'my-books'
+    const map = readShadowDocsFolderMap()
+    if (target === 'my-books') delete map[book.id]
+    else map[book.id] = target
+    try {
+      localStorage.setItem(SHADOW_DOCS_FOLDER_MAP_KEY, JSON.stringify(map))
+    } catch {
+      setRibbonMessage('Could not save folder placement on this device.')
+      return false
+    }
+    setCurrentFolderId(target)
+    const folder = docFolders.find(item => item.id === target)
+    setRibbonMessage(target === 'my-books' ? 'Added to My Books.' : `Added to ${folder?.name || 'folder'}.`)
+    return true
+  }
+
   async function openPrintPanel() {
     if (!book?.id) return
     await Promise.resolve(onEditorBlurRef.current?.(book.id))
@@ -895,6 +956,13 @@ export default function ShadowDocsWritingStudioPanel({
     }
     if (action === 'rename') {
       onEditProperties?.()
+      return
+    }
+    if (action === 'addTo') {
+      setMobileMenuOpen(false)
+      setDocFolders(readShadowDocsFolders())
+      setCurrentFolderId(readShadowDocsFolderMap()[book?.id] || 'my-books')
+      setAddToOpen(true)
       return
     }
     if (action === 'exportPdf' || action === 'exportImage' || action === 'conversion') {
@@ -1307,6 +1375,15 @@ export default function ShadowDocsWritingStudioPanel({
         onOpenPDF?.()
       }}
       onChangeSettings={onChangeSettings}
+    />
+    <ShadowDocsAddToSheet
+      open={addToOpen}
+      documentName={mobileDocumentName(book)}
+      folders={docFolders}
+      currentFolderId={currentFolderId}
+      onClose={() => setAddToOpen(false)}
+      onCreateFolder={createDocsFolder}
+      onAdd={addDocumentToFolder}
     />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
