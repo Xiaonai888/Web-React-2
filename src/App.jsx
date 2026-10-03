@@ -85,6 +85,7 @@ const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const AppPage = lazy(() => import('./pages/Me/AppPage'))
 const AppAccessGuard = lazy(() => import('./pages/Me/AppAccessGuard'))
 const ShadowStudioPage = lazy(() => import('./pages/Studio/ShadowStudioPage'))
+const EnhanceLocalPage = lazy(() => import('./pages/Enhance/EnhanceLocalPage'))
 const ShadowFXPage = lazy(() => import('./pages/FX/ShadowFXPage'))
 const ShadowDocsWorkspace = lazy(() => import('./pages/Docs/ShadowDocsWorkspace'))
 const SpinPage = lazy(() => import('./pages/Me/SpinPage'))
@@ -1400,6 +1401,10 @@ const shouldShowOpeningAds =
 
 <Route path="/apps/shadow-docs" element={
   <LazyPage><AppAccessGuard appKey="shadow-docs"><ShadowDocsWorkspace /></AppAccessGuard></LazyPage>
+} />
+
+          <Route path="/apps/enhance-local" element={
+  <LazyPage><AppAccessGuard appKey="enhance-local"><EnhanceLocalPage /></AppAccessGuard></LazyPage>
 } />
 
 
