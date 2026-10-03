@@ -5,6 +5,35 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const CHAT_PRESENCE_MIN_INTERVAL_MS = 60 * 1000
+const CHAT_PRESENCE_CACHE_PREFIX = 'shadow_chat_presence_touch_v2:'
+let chatPresencePending = null
+let chatPresencePendingKey = ''
+let chatPresenceLastTouchAt = 0
+
+function chatPresenceAccountKey(token) {
+  let hash = 2166136261
+  for (let index = 0; index < token.length; index += 1) {
+    hash ^= token.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(36)
+}
+
+function readChatPresenceTouch(key) {
+  try {
+    return Number(localStorage.getItem(key) || 0)
+  } catch {
+    return 0
+  }
+}
+
+function rememberChatPresenceTouch(key, value) {
+  try {
+    localStorage.setItem(key, String(value))
+  } catch {}
+}
+
 export class ChatApiError extends Error {
   constructor(status, code, message) {
     super(message)
@@ -133,9 +162,60 @@ export function getChatQuickContacts(
 }
 
 export function touchChatPresence() {
-  return chatRequest('/presence', {
+  const token = getReaderToken()
+
+  if (!token) {
+    return chatRequest('/presence', {
+      method: 'PATCH',
+    })
+  }
+
+  const accountKey = chatPresenceAccountKey(token)
+  const cacheKey = `${CHAT_PRESENCE_CACHE_PREFIX}${accountKey}`
+  const now = Date.now()
+  const lastTouchAt = Math.max(
+    chatPresenceLastTouchAt,
+    readChatPresenceTouch(cacheKey)
+  )
+
+  if (
+    lastTouchAt > 0 &&
+    now - lastTouchAt < CHAT_PRESENCE_MIN_INTERVAL_MS
+  ) {
+    return Promise.resolve({
+      ok: true,
+      skipped: true,
+      last_seen_at: new Date(lastTouchAt).toISOString(),
+    })
+  }
+
+  if (
+    chatPresencePending &&
+    chatPresencePendingKey === accountKey
+  ) {
+    return chatPresencePending
+  }
+
+  const pending = chatRequest('/presence', {
     method: 'PATCH',
   })
+    .then((data) => {
+      const savedAt = Date.now()
+      chatPresenceLastTouchAt = savedAt
+      rememberChatPresenceTouch(cacheKey, savedAt)
+      return data
+    })
+    .finally(() => {
+      if (chatPresencePending === pending) {
+        chatPresencePending = null
+        chatPresencePendingKey = ''
+      }
+    })
+
+  chatPresencePending = pending
+  chatPresencePendingKey = accountKey
+
+  return pending
 }
 
 export function searchChatUsers(
