@@ -25,6 +25,7 @@ import ShadowDocsShareSheet from './ShadowDocsShareSheet'
 import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
 import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
 import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
+import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
 
 const SHADOW_DOCS_FOLDERS_KEY = 'shadow-docs-folders-v1'
 const SHADOW_DOCS_FOLDER_MAP_KEY = 'shadow-docs-folder-map-v1'
@@ -144,6 +145,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
   const [addToOpen, setAddToOpen] = useState(false)
+  const [exportImageOpen, setExportImageOpen] = useState(false)
   const [docFolders, setDocFolders] = useState(() => readShadowDocsFolders())
   const [currentFolderId, setCurrentFolderId] = useState('my-books')
   const onEditorBlurRef = useRef(onEditorBlur)
@@ -171,6 +173,7 @@ export default function ShadowDocsWritingStudioPanel({
     setFindReplaceOpen(false)
     setPrintOpen(false)
     setAddToOpen(false)
+    setExportImageOpen(false)
     setDocFolders(readShadowDocsFolders())
     setCurrentFolderId(readShadowDocsFolderMap()[book?.id] || 'my-books')
   }, [book?.id, chapter?.id])
@@ -905,6 +908,131 @@ export default function ShadowDocsWritingStudioPanel({
     setRibbonMessage('Sharing is unavailable in this browser.')
   }
 
+  async function exportDocsAsImage(options = {}) {
+    const scope = options.scope === 'all' ? 'all' : 'current'
+    const format = options.format === 'jpg' ? 'jpg' : 'png'
+    const outputWidth = [1080, 1440, 2160].includes(Number(options.width)) ? Number(options.width) : 1440
+    const includeTitle = options.includeTitle !== false
+    const chapters = scope === 'all' ? book.chapters : [chapter]
+    const padding = Math.max(48, Math.round(outputWidth * 0.055))
+    const host = document.createElement('div')
+    host.style.position = 'fixed'
+    host.style.left = '-100000px'
+    host.style.top = '0'
+    host.style.width = `${outputWidth}px`
+    host.style.boxSizing = 'border-box'
+    host.style.padding = `${padding}px`
+    host.style.background = settings.pageColor || '#ffffff'
+    host.style.color = settings.textColor || '#242139'
+    host.style.fontFamily = shadowDocsFontFamily(settings.font)
+    host.style.fontSize = `${Math.max(10, Math.min(24, Number(settings.fontSize) || 13))}pt`
+    host.style.lineHeight = String(Math.max(1.2, Math.min(2.2, Number(settings.lineSpacing) || 1.65)))
+    host.style.textAlign = ['left', 'center', 'right', 'justify'].includes(settings.alignment) ? settings.alignment : 'left'
+    host.style.overflowWrap = 'anywhere'
+
+    chapters.forEach((item, index) => {
+      const section = document.createElement('section')
+      if (index) {
+        section.style.marginTop = `${Math.round(padding * 0.9)}px`
+        section.style.paddingTop = `${Math.round(padding * 0.75)}px`
+        section.style.borderTop = '1px solid #d8d8d8'
+      }
+
+      if (includeTitle) {
+        const title = document.createElement('h1')
+        title.textContent = item.title || `Chapter ${book.chapters.indexOf(item) + 1}`
+        title.style.margin = `0 0 ${Math.round(padding * 0.55)}px`
+        title.style.fontSize = '1.7em'
+        title.style.lineHeight = '1.3'
+        title.style.fontWeight = '700'
+        title.style.textAlign = 'left'
+        section.appendChild(title)
+      }
+
+      const body = document.createElement('div')
+      body.innerHTML = item.id === chapter.id && editorRef.current ? editorRef.current.innerHTML : String(item.html || '')
+      body.querySelectorAll('img').forEach(image => {
+        image.style.maxWidth = '100%'
+        image.style.height = 'auto'
+      })
+      body.querySelectorAll('table').forEach(table => {
+        table.style.width = '100%'
+        table.style.borderCollapse = 'collapse'
+      })
+      body.querySelectorAll('td,th').forEach(cell => {
+        cell.style.border = '1px solid #b9b4c7'
+        cell.style.padding = '6px'
+      })
+      section.appendChild(body)
+      host.appendChild(section)
+    })
+
+    document.body.appendChild(host)
+
+    let svgURL = ''
+    let imageBitmap
+    try {
+      await Promise.resolve(document.fonts?.ready)
+      await Promise.all([...host.querySelectorAll('img')].map(image => {
+        if (image.complete) return image.decode?.().catch(() => {}) || Promise.resolve()
+        return new Promise(resolve => {
+          image.onload = resolve
+          image.onerror = resolve
+        })
+      }))
+
+      const outputHeight = Math.max(1, Math.ceil(host.scrollHeight))
+      if (outputWidth * outputHeight > 24_000_000) throw new Error('This export is too long for one image. Export one chapter or use a smaller image width.')
+
+      const clone = host.cloneNode(true)
+      clone.style.position = 'static'
+      clone.style.left = 'auto'
+      clone.style.top = 'auto'
+      clone.style.margin = '0'
+      const serialized = new XMLSerializer().serializeToString(clone)
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}" viewBox="0 0 ${outputWidth} ${outputHeight}"><foreignObject width="100%" height="100%">${serialized}</foreignObject></svg>`
+      svgURL = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
+      imageBitmap = new Image()
+      imageBitmap.decoding = 'async'
+      imageBitmap.src = svgURL
+      await new Promise((resolve, reject) => {
+        imageBitmap.onload = resolve
+        imageBitmap.onerror = () => reject(new Error('Could not render this document as an image.'))
+      })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = outputWidth
+      canvas.height = outputHeight
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error('Image export is unavailable in this browser.')
+      context.fillStyle = '#ffffff'
+      context.fillRect(0, 0, outputWidth, outputHeight)
+      context.drawImage(imageBitmap, 0, 0, outputWidth, outputHeight)
+
+      const mime = format === 'jpg' ? 'image/jpeg' : 'image/png'
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, mime, format === 'jpg' ? 0.92 : undefined))
+      if (!blob) throw new Error('Could not create image file.')
+      const base = String(scope === 'all' ? book.title : chapter.title || book.title || 'Shadow Docs')
+        .trim()
+        .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-')
+        .slice(0, 80) || 'Shadow Docs'
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `${base}.${format}`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+      setRibbonMessage(`Exported ${base}.${format}`)
+      return true
+    } finally {
+      host.remove()
+      if (svgURL) URL.revokeObjectURL(svgURL)
+      if (imageBitmap) imageBitmap.src = ''
+    }
+  }
+
   async function runMobileMenuAction(action, payload = {}) {
     if (action === 'saveAs') {
       const name = String(payload.name || mobileDocumentName(book).replace(/\.[^.]+$/, '') || 'Docs').trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').slice(0, 80)
@@ -965,7 +1093,13 @@ export default function ShadowDocsWritingStudioPanel({
       setAddToOpen(true)
       return
     }
-    if (action === 'exportPdf' || action === 'exportImage' || action === 'conversion') {
+    if (action === 'exportImage') {
+      await Promise.resolve(onEditorBlurRef.current?.(book.id))
+      setMobileMenuOpen(false)
+      setExportImageOpen(true)
+      return
+    }
+    if (action === 'exportPdf' || action === 'conversion') {
       onOpenPDF?.()
       return
     }
@@ -1384,6 +1518,13 @@ export default function ShadowDocsWritingStudioPanel({
       onClose={() => setAddToOpen(false)}
       onCreateFolder={createDocsFolder}
       onAdd={addDocumentToFolder}
+    />
+    <ShadowDocsExportImageSheet
+      open={exportImageOpen}
+      documentName={mobileDocumentName(book)}
+      chapterTitle={chapter?.title || `Chapter ${chapterIndex + 1}`}
+      onClose={() => setExportImageOpen(false)}
+      onExport={exportDocsAsImage}
     />
     {!ribbonState.focus && <aside className="sd-chapters">
       <div className="sd-side-head"><strong>Chapters</strong><button type="button" aria-label="Add chapter" title="Add chapter" disabled={typeof onAddChapter !== 'function'} onClick={onAddChapter}><Plus size={17} /></button></div>
