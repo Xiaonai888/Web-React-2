@@ -81,6 +81,7 @@ import AuthorRecentEarningsPage from './pages/Author/AuthorRecentEarningsPage'
 import AuthorTopSupportersPage from './pages/Author/AuthorTopSupportersPage'
 import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
 
+
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const AppPage = lazy(() => import('./pages/Me/AppPage'))
 const AppAccessGuard = lazy(() => import('./pages/Me/AppAccessGuard'))
@@ -257,6 +258,7 @@ const AuthorChatRoomPage = lazy(() => import('./pages/AuthorChat/AuthorChatRoomP
 const AuthorChatInfoPage = lazy(() => import('./pages/AuthorChat/AuthorChatInfoPage'))
 const AuthorPostCommentFocusPage = lazy(() => import('./pages/AuthorChat/AuthorPostCommentFocusPage'))
 const AuthorPostActivityPage = lazy(() => import('./pages/Author/AuthorPostActivityPage'))
+const PicToArtCreationsPage = lazy(() => import('./pages/PicToArt/PicToArtCreationsPage'))
 
 
 function ComingSoon({ titleKey }) {
@@ -386,6 +388,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/author/earnings',
     '/library/manage',
     '/apps/pic-to-art',
+    '/apps/pic-to-art/creations',
   ]
 
   const isMeLibrary = location.pathname === '/library' &&
@@ -920,6 +923,9 @@ const shouldShowOpeningAds =
   path="/profile/settings/account-security/login-security"
   element={<LazyPage><ReaderSecuritySettingsPage /></LazyPage>}
 />
+          <Route path="/apps/pic-to-art/creations" element={
+  <LazyPage><AppAccessGuard appKey="pic-to-art"><PicToArtCreationsPage /></AppAccessGuard></LazyPage>
+} />
 
         <Route
   path="/saved-posts"
