@@ -7,9 +7,7 @@ import {
   Printer,
   X,
 } from 'lucide-react'
-const [menuOpen, setMenuOpen] = useState(false)
-const [pdfBusy, setPdfBusy] = useState(false)
-const [range, setRange] = useState('all')
+import { buildShadowDocsPrintHTML } from './ShadowDocsPDFExport'
 
 const PAPER_SIZES = ['A4', 'A5', 'B5']
 const MARGINS = {
@@ -40,19 +38,46 @@ function previewBook(book, settings) {
 }
 
 function printHTML(html) {
-  const popup = window.open('', '_blank')
-  if (!popup) throw new Error('Allow pop-ups for this site to print.')
-  popup.document.open()
-  popup.document.write(html)
-  popup.document.close()
-  popup.focus()
-  const ready = popup.document.fonts?.ready || Promise.resolve()
-  Promise.resolve(ready).then(() => {
-    if (!popup.closed) {
-      popup.focus()
-      popup.print()
-    }
-  }).catch(() => {})
+  if (typeof document === 'undefined') throw new Error('Printing requires a browser.')
+  const frame = document.createElement('iframe')
+  frame.setAttribute('title', 'Shadow Docs print')
+  frame.setAttribute('aria-hidden', 'true')
+  frame.style.position = 'fixed'
+  frame.style.right = '0'
+  frame.style.bottom = '0'
+  frame.style.width = '1px'
+  frame.style.height = '1px'
+  frame.style.border = '0'
+  frame.style.opacity = '0'
+  frame.style.pointerEvents = 'none'
+  document.body.appendChild(frame)
+
+  const printWindow = frame.contentWindow
+  const printDocument = frame.contentDocument
+  if (!printWindow || !printDocument) {
+    frame.remove()
+    throw new Error('Could not prepare the print dialog.')
+  }
+
+  let started = false
+  const cleanup = () => window.setTimeout(() => frame.remove(), 800)
+  const startPrint = () => {
+    if (started) return
+    started = true
+    const ready = printDocument.fonts?.ready || Promise.resolve()
+    Promise.resolve(ready).then(() => {
+      printWindow.focus()
+      printWindow.addEventListener?.('afterprint', cleanup, { once: true })
+      printWindow.print()
+      window.setTimeout(cleanup, 5000)
+    }).catch(cleanup)
+  }
+
+  frame.onload = startPrint
+  printDocument.open()
+  printDocument.write(html)
+  printDocument.close()
+  window.setTimeout(startPrint, 500)
 }
 
 export default function ShadowDocsPrintPanel({
@@ -66,6 +91,7 @@ export default function ShadowDocsPrintPanel({
 }) {
   const sourceSettings = book?.settings || {}
   const [menuOpen, setMenuOpen] = useState(false)
+  const [pdfBusy, setPdfBusy] = useState(false)
   const [range, setRange] = useState('all')
   const [paperSize, setPaperSize] = useState(PAPER_SIZES.includes(sourceSettings.size) ? sourceSettings.size : 'A4')
   const [orientation, setOrientation] = useState(sourceSettings.orientation === 'landscape' ? 'landscape' : 'portrait')
@@ -77,6 +103,7 @@ export default function ShadowDocsPrintPanel({
   useEffect(() => {
     if (!open) {
       setMenuOpen(false)
+      setPdfBusy(false)
       setError('')
       return
     }
@@ -149,23 +176,24 @@ export default function ShadowDocsPrintPanel({
   }
 
   async function handleExportPDF() {
-  setMenuOpen(false)
-  setPdfBusy(true)
-  setError('')
-  persistLayout()
+    setMenuOpen(false)
+    setPdfBusy(true)
+    setError('')
+    persistLayout()
 
-  try {
-    await new Promise(resolve => setTimeout(resolve, 350))
-    if (!previewHTML) throw new Error('Could not create PDF file.')
-    printHTML(previewHTML)
-  } catch (failure) {
-    setError(failure instanceof Error ? failure.message : 'Could not create PDF file.')
-  } finally {
-    setPdfBusy(false)
+    try {
+      await new Promise(resolve => window.setTimeout(resolve, 350))
+      if (!previewHTML) throw new Error('Could not create PDF file.')
+      printHTML(previewHTML)
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Could not create PDF file.')
+    } finally {
+      setPdfBusy(false)
+    }
   }
-}
 
-  return <section className="sd-print-panel" aria-label="Print">
+  return <>
+    <section className="sd-print-panel" aria-label="Print">
     <style>{`
     .sd-pdf-loading{position:fixed;inset:0;z-index:21000;display:grid;place-items:center;background:#0007}
 .sd-pdf-loading-box{min-width:210px;padding:24px;border-radius:16px;background:#222326;text-align:center;color:#fff}
@@ -577,14 +605,15 @@ export default function ShadowDocsPrintPanel({
         Print
       </button>
     </footer>
-  </section>
-  {pdfBusy ? (
-  <div className="sd-pdf-loading">
-    <div className="sd-pdf-loading-box">
-      <div className="sd-pdf-spinner" />
-      <strong>Creating PDF file…</strong>
-      <small>Preparing your document</small>
-    </div>
-  </div>
-) : null}
+    </section>
+    {pdfBusy ? (
+      <div className="sd-pdf-loading" role="status" aria-live="polite">
+        <div className="sd-pdf-loading-box">
+          <div className="sd-pdf-spinner" />
+          <strong>Creating PDF file…</strong>
+          <small>Preparing your document</small>
+        </div>
+      </div>
+    ) : null}
+  </>
 }
