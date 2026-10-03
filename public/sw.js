@@ -1810,8 +1810,11 @@ self.addEventListener(
       const response = await fetch(request)
       return response.status >= 500 ? renderFailure('server', response.status) : response
     } catch {
-      return renderFailure(self.navigator.onLine === false ? 'offline' : 'unknown')
-    }
+  return Response.redirect(
+    new URL('/library', self.location.origin).href,
+    302
+  )
+}
   })())
   return
 }
