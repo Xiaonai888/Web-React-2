@@ -17,14 +17,6 @@ const MARGINS = {
   wide: 28,
 }
 
-function handleExportPDF() {
-  setMenuOpen(false)
-  setError('')
-  persistLayout()
-  if (!previewHTML) return setError('Could not create PDF file.')
-  void startShadowDocsPDFExportTask({ fileName: `${documentName}.pdf`, onReady: () => printHTML(previewHTML) })
-    .catch(failure => setError(failure instanceof Error ? failure.message : 'Could not create PDF file.'))
-}
 
 
 function cleanNumber(value, min, max, fallback) {
@@ -96,13 +88,11 @@ export default function ShadowDocsPrintPanel({
   book,
   currentChapterId = '',
   onClose,
-  onExportPDF,
   onPrint,
   onChangeSettings,
 }) {
   const sourceSettings = book?.settings || {}
   const [menuOpen, setMenuOpen] = useState(false)
-  const [pdfBusy, setPdfBusy] = useState(false)
   const [range, setRange] = useState('all')
   const [paperSize, setPaperSize] = useState(PAPER_SIZES.includes(sourceSettings.size) ? sourceSettings.size : 'A4')
   const [orientation, setOrientation] = useState(sourceSettings.orientation === 'landscape' ? 'landscape' : 'portrait')
@@ -114,7 +104,6 @@ export default function ShadowDocsPrintPanel({
   useEffect(() => {
     if (!open) {
       setMenuOpen(false)
-      setPdfBusy(false)
       setError('')
       return
     }
@@ -186,31 +175,24 @@ export default function ShadowDocsPrintPanel({
     }
   }
 
-  async function handleExportPDF() {
+  function handleExportPDF() {
     setMenuOpen(false)
-    setPdfBusy(true)
     setError('')
     persistLayout()
-
-    try {
-      await new Promise(resolve => window.setTimeout(resolve, 350))
-      if (!previewHTML) throw new Error('Could not create PDF file.')
-      printHTML(previewHTML)
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Could not create PDF file.')
-    } finally {
-      setPdfBusy(false)
+    if (!previewHTML) {
+      setError('Could not create PDF file.')
+      return
     }
+    void startShadowDocsPDFExportTask({
+      fileName: `${documentName}.pdf`,
+      onReady: () => printHTML(previewHTML),
+    }).catch(failure => {
+      setError(failure instanceof Error ? failure.message : 'Could not create PDF file.')
+    })
   }
 
-  return <>
-    <section className="sd-print-panel" aria-label="Print">
+  return <section className="sd-print-panel" aria-label="Print">
     <style>{`
-    .sd-pdf-loading{position:fixed;inset:0;z-index:21000;display:grid;place-items:center;background:#0007}
-.sd-pdf-loading-box{min-width:210px;padding:24px;border-radius:16px;background:#222326;text-align:center;color:#fff}
-.sd-pdf-spinner{width:34px;height:34px;margin:0 auto 14px;border:3px solid #ffffff30;border-top-color:#25a884;border-radius:50%;animation:sdPdfSpin .8s linear infinite}
-.sd-pdf-loading-box small{display:block;margin-top:6px;color:#8d8e94}
-@keyframes sdPdfSpin{to{transform:rotate(360deg)}}
       .sd-print-panel{
         position:fixed;
         inset:0;
@@ -616,15 +598,5 @@ export default function ShadowDocsPrintPanel({
         Print
       </button>
     </footer>
-    </section>
-    {pdfBusy ? (
-      <div className="sd-pdf-loading" role="status" aria-live="polite">
-        <div className="sd-pdf-loading-box">
-          <div className="sd-pdf-spinner" />
-          <strong>Creating PDF file…</strong>
-          <small>Preparing your document</small>
-        </div>
-      </div>
-    ) : null}
-  </>
+  </section>
 }
