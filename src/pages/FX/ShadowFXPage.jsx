@@ -32,6 +32,12 @@ registerTranslationNamespace('shadowFx', {
     blur: 'Blur',
     grain: 'Grain',
     glow: 'Glow',
+    bw: 'B&W',
+    pink: 'Pink',
+    teal: 'Teal',
+    retro: 'Retro',
+    bloom: 'Bloom',
+    lightLeak: 'Light Leak',
     undo: 'Undo',
     redo: 'Redo',
     format: 'Format',
@@ -85,6 +91,12 @@ registerTranslationNamespace('shadowFx', {
     blur: 'ព្រិល',
     grain: 'គ្រាប់ហ្វីល',
     glow: 'ពន្លឺរលោង',
+    bw: 'ខ្មៅស',
+    pink: 'ផ្កាឈូក',
+    teal: 'Teal',
+    retro: 'Retro',
+    bloom: 'Bloom',
+    lightLeak: 'ពន្លឺជ្រៀត',
     undo: 'ថយក្រោយ',
     redo: 'ធ្វើឡើងវិញ',
     format: 'ប្រភេទឯកសារ',
@@ -138,6 +150,12 @@ registerTranslationNamespace('shadowFx', {
     blur: '模糊',
     grain: '颗粒',
     glow: '光晕',
+    bw: '黑白',
+    pink: '粉色',
+    teal: '青色',
+    retro: '复古',
+    bloom: '柔光',
+    lightLeak: '漏光',
     undo: '撤销',
     redo: '重做',
     format: '格式',
@@ -191,6 +209,12 @@ registerTranslationNamespace('shadowFx', {
     blur: 'ぼかし',
     grain: '粒子',
     glow: 'グロー',
+    bw: '白黒',
+    pink: 'ピンク',
+    teal: 'ティール',
+    retro: 'レトロ',
+    bloom: 'ブルーム',
+    lightLeak: 'ライトリーク',
     undo: '元に戻す',
     redo: 'やり直す',
     format: '形式',
@@ -244,6 +268,12 @@ registerTranslationNamespace('shadowFx', {
     blur: '블러',
     grain: '그레인',
     glow: '글로우',
+    bw: '흑백',
+    pink: '핑크',
+    teal: '틸',
+    retro: '레트로',
+    bloom: '블룸',
+    lightLeak: '라이트 리크',
     undo: '실행 취소',
     redo: '다시 실행',
     format: '형식',
@@ -285,6 +315,7 @@ const DEFAULTS = {
   blur: 0,
   grain: 0,
   glow: 0,
+  lightLeak: 0,
 }
 
 const PRESETS = {
@@ -296,6 +327,15 @@ const PRESETS = {
   vintage: { ...DEFAULTS, contrast: -4, saturation: -18, temperature: 20, fade: 18, vignette: 12 },
   dark: { ...DEFAULTS, brightness: -12, contrast: 20, shadows: -8, saturation: -5, vignette: 18 },
   soft: { ...DEFAULTS, brightness: 10, contrast: -12, highlights: -12, shadows: 18, saturation: -5, fade: 7 },
+}
+
+const EFFECT_PRESETS = {
+  bw: { ...DEFAULTS, contrast: 14, saturation: -100, highlights: -8, shadows: 8, grain: 12 },
+  pink: { ...DEFAULTS, brightness: 7, contrast: -4, saturation: 10, tint: 30, temperature: 5, glow: 18 },
+  teal: { ...DEFAULTS, contrast: 8, saturation: 4, temperature: -24, tint: -18, shadows: 10 },
+  retro: { ...DEFAULTS, contrast: 9, saturation: -18, temperature: 18, fade: 16, grain: 22, vignette: 10 },
+  bloom: { ...DEFAULTS, brightness: 8, contrast: -8, highlights: -12, saturation: 5, glow: 48, blur: 3 },
+  lightLeak: { ...DEFAULTS, brightness: 5, contrast: 5, saturation: 9, temperature: 12, lightLeak: 62 },
 }
 
 const SLIDERS = [
@@ -315,6 +355,7 @@ const EFFECT_SLIDERS = [
   ['blur', 0, 20],
   ['grain', 0, 100],
   ['glow', 0, 100],
+  ['lightLeak', 0, 100],
 ]
 
 const EXPORT_FORMATS = [
@@ -465,6 +506,30 @@ function applyGrain(context, width, height, amount) {
   context.putImageData(imageData, 0, 0)
 }
 
+function applyLightLeak(context, width, height, amount) {
+  if (!amount) return
+  const strength = Math.max(0, Math.min(1, amount / 100))
+  const gradient = context.createRadialGradient(
+    width * 0.12,
+    height * 0.28,
+    0,
+    width * 0.12,
+    height * 0.28,
+    Math.max(width, height) * 0.85
+  )
+
+  gradient.addColorStop(0, `rgba(255,94,94,${0.46 * strength})`)
+  gradient.addColorStop(0.28, `rgba(255,169,77,${0.32 * strength})`)
+  gradient.addColorStop(0.58, `rgba(255,90,175,${0.18 * strength})`)
+  gradient.addColorStop(1, 'rgba(255,255,255,0)')
+
+  context.save()
+  context.globalCompositeOperation = 'screen'
+  context.fillStyle = gradient
+  context.fillRect(0, 0, width, height)
+  context.restore()
+}
+
 function applyBlurAndGlow(context, canvas, values) {
   const blurPixels = Math.max(0, Number(values.blur || 0)) * 0.08
   const glow = Math.max(0, Number(values.glow || 0)) / 100
@@ -601,6 +666,14 @@ export default function ShadowFXPage() {
     setValues({ ...PRESETS[key] })
   }
 
+  function applyEffectPreset(key) {
+    const effect = EFFECT_PRESETS[key]
+    if (!effect) return
+    rememberCurrent()
+    setPreset(`effect:${key}`)
+    setValues({ ...effect })
+  }
+
   function beginAdjustment() {
     if (!adjustmentStartRef.current) adjustmentStartRef.current = snapshot()
   }
@@ -726,6 +799,7 @@ export default function ShadowFXPage() {
       applySharpen(workContext, width, height, values.sharpen)
       applyBlurAndGlow(workContext, workCanvas, values)
       applyGrain(workContext, width, height, values.grain)
+      applyLightLeak(workContext, width, height, values.lightLeak)
 
       const canvas = document.createElement('canvas')
       canvas.width = quarterTurn ? height : width
@@ -934,6 +1008,17 @@ export default function ShadowFXPage() {
                   }}
                 />
               ) : null}
+
+              {!compare && values.lightLeak > 0 ? (
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background: 'radial-gradient(circle at 12% 28%, rgba(255,94,94,.72) 0%, rgba(255,169,77,.48) 24%, rgba(255,90,175,.28) 48%, transparent 78%)',
+                    mixBlendMode: 'screen',
+                    opacity: Math.min(0.7, values.lightLeak / 125),
+                  }}
+                />
+              ) : null}
             </div>
 
             <button
@@ -1021,19 +1106,38 @@ export default function ShadowFXPage() {
               ))}
             </div>
           ) : panel === 'effects' ? (
-            <div>
-              {EFFECT_SLIDERS.map(([key, min, max]) => (
-                <Slider
-                  key={key}
-                  label={t(`shadowFx.${key}`)}
-                  value={values[key]}
-                  min={min}
-                  max={max}
-                  onStart={beginAdjustment}
-                  onFinish={finishAdjustment}
-                  onChange={value => updateValue(key, value)}
-                />
-              ))}
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-2">
+                {Object.keys(EFFECT_PRESETS).map(key => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => applyEffectPreset(key)}
+                    className={`h-12 rounded-[13px] border text-[10px] font-black ${
+                      preset === `effect:${key}`
+                        ? 'border-[#8B5CF6] bg-[#8B5CF6]/15 text-[#B7A2FF]'
+                        : 'border-white/[0.08] bg-white/[0.03] text-white/65'
+                    }`}
+                  >
+                    {t(`shadowFx.${key}`)}
+                  </button>
+                ))}
+              </div>
+
+              <div className="border-t border-white/[0.07] pt-2">
+                {EFFECT_SLIDERS.map(([key, min, max]) => (
+                  <Slider
+                    key={key}
+                    label={t(`shadowFx.${key}`)}
+                    value={values[key]}
+                    min={min}
+                    max={max}
+                    onStart={beginAdjustment}
+                    onFinish={finishAdjustment}
+                    onChange={value => updateValue(key, value)}
+                  />
+                ))}
+              </div>
             </div>
           ) : panel === 'crop' ? (
             <div className="space-y-4">
