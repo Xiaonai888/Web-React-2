@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react'
 import { buildShadowDocsPrintHTML } from './ShadowDocsPDFExport'
+import { startShadowDocsPDFExportTask } from './ShadowDocsPDFExportTask'
 
 const PAPER_SIZES = ['A4', 'A5', 'B5']
 const MARGINS = {
@@ -15,6 +16,16 @@ const MARGINS = {
   narrow: 10,
   wide: 28,
 }
+
+function handleExportPDF() {
+  setMenuOpen(false)
+  setError('')
+  persistLayout()
+  if (!previewHTML) return setError('Could not create PDF file.')
+  void startShadowDocsPDFExportTask({ fileName: `${documentName}.pdf`, onReady: () => printHTML(previewHTML) })
+    .catch(failure => setError(failure instanceof Error ? failure.message : 'Could not create PDF file.'))
+}
+
 
 function cleanNumber(value, min, max, fallback) {
   const number = Number(value)
