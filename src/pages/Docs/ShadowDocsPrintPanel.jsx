@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { buildShadowDocsPrintHTML } from './ShadowDocsPDFExport'
 import { startShadowDocsPDFExportTask } from './ShadowDocsPDFExportTask'
+import { measureShadowDocsPageCount } from './ShadowDocsPagination'
 
 const PAPER_SIZES = ['A4', 'A5', 'B5']
 const MARGINS = {
@@ -100,6 +101,8 @@ export default function ShadowDocsPrintPanel({
   const [customMargin, setCustomMargin] = useState(cleanNumber(sourceSettings.margin, 10, 35, 18))
   const [grayscale, setGrayscale] = useState(false)
   const [error, setError] = useState('')
+  const [pageCount, setPageCount] = useState(1)
+  const [pageCounting, setPageCounting] = useState(false)
 
   useEffect(() => {
     if (!open) {
@@ -140,9 +143,34 @@ export default function ShadowDocsPrintPanel({
     }
   }, [renderedBook, grayscale])
 
+  useEffect(() => {
+    if (!open || !renderedBook) {
+      setPageCount(1)
+      setPageCounting(false)
+      return undefined
+    }
+
+    let active = true
+    setPageCounting(true)
+
+    measureShadowDocsPageCount(renderedBook, renderedBook.settings)
+      .then(count => {
+        if (active) setPageCount(count)
+      })
+      .catch(() => {
+        if (active) setPageCount(1)
+      })
+      .finally(() => {
+        if (active) setPageCounting(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [open, renderedBook])
+
   if (!open || !book) return null
 
-  const chapterCount = Array.isArray(selectedBook?.chapters) ? selectedBook.chapters.length : 0
   const documentName = String(book.title || 'Docs').trim() || 'Docs'
 
   function persistLayout() {
@@ -515,7 +543,7 @@ export default function ShadowDocsPrintPanel({
           {previewHTML ? <iframe title="Print preview" sandbox="" srcDoc={previewHTML} /> : null}
           <div className="sd-print-preview-badge">
             <span className="sd-print-preview-check">✓</span>
-            <span>{chapterCount || 1} section{chapterCount === 1 ? '' : 's'}</span>
+            <span>{pageCounting ? 'Counting…' : `1 / ${pageCount}`}</span>
           </div>
         </div>
       </div>
@@ -525,7 +553,7 @@ export default function ShadowDocsPrintPanel({
           <strong>{documentName}.doc</strong>
           <small>{paperSize} · {orientation === 'landscape' ? 'Landscape' : 'Portrait'} · {margin} mm margins</small>
         </div>
-        <span>Preview</span>
+        <span>{pageCounting ? 'Counting…' : `${pageCount} page${pageCount === 1 ? '' : 's'}`}</span>
       </div>
 
       <div className="sd-print-section">
