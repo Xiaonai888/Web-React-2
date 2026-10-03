@@ -6068,12 +6068,18 @@ const continuousReader = useContinuousEpisodeReader({
   onActiveEntry: (entry) => {
     if (offlineAccessExpired || !entry?.episode) return
 
-    setActiveEpisodeId(String(entry.id))
-    setEpisode(entry.episode)
-    setLockedEpisode(Boolean(entry.locked))
-    setReadingProgress(0)
-    readingProgressRef.current = 0
-    qualifiedViewSentRef.current = false
+    const nextEpisodeId = String(entry.id)
+const episodeChanged = String(episodeId || '') !== nextEpisodeId
+
+setActiveEpisodeId(nextEpisodeId)
+setEpisode(entry.episode)
+setLockedEpisode(Boolean(entry.locked))
+setReadingProgress(0)
+readingProgressRef.current = 0
+
+if (episodeChanged) {
+  qualifiedViewSentRef.current = false
+}
     setReviewProgressSaved(false)
     setReaderAdPolicy(entry.gate?.ad_policy || null)
     setReaderAdvertisement(entry.gate?.advertisement || null)
