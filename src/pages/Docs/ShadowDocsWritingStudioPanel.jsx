@@ -23,6 +23,7 @@ import { applyShadowDocsCase } from './ShadowDocsTextTransform'
 import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 import ShadowDocsShareSheet from './ShadowDocsShareSheet'
 import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
+import ShadowDocsSmartFindReplacePage from './ShadowDocsSmartFindReplacePage'
 import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
 import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
 import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
@@ -207,6 +208,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
+  const [smartFindReplaceOpen, setSmartFindReplaceOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
   const [addToOpen, setAddToOpen] = useState(false)
   const [exportImageOpen, setExportImageOpen] = useState(false)
@@ -239,6 +241,7 @@ export default function ShadowDocsWritingStudioPanel({
     setMobileMenuOpen(false)
     setShareOpen(false)
     setFindReplaceOpen(false)
+    setSmartFindReplaceOpen(false)
     setPrintOpen(false)
     setAddToOpen(false)
     setExportImageOpen(false)
@@ -1648,6 +1651,18 @@ export default function ShadowDocsWritingStudioPanel({
       open={findReplaceOpen}
       editorRef={editorRef}
       onClose={() => setFindReplaceOpen(false)}
+      onMoreOptions={() => setSmartFindReplaceOpen(true)}
+      onChange={html => {
+        if (!chapter) return
+        onChangeHTML?.(chapter.id, html)
+        setLocalSaveDirty(true)
+        setLocalSaveSeconds(10)
+      }}
+    />
+    <ShadowDocsSmartFindReplacePage
+      open={smartFindReplaceOpen}
+      editorRef={editorRef}
+      onBack={() => setSmartFindReplaceOpen(false)}
       onChange={html => {
         if (!chapter) return
         onChangeHTML?.(chapter.id, html)
