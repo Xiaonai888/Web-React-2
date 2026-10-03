@@ -29,7 +29,17 @@ const templates = [
   { id: 'emerald', name: 'Emerald', layout: 'timeline', accent: '#059669', side: '#064e3b', soft: '#ecfdf5' },
   { id: 'sunset', name: 'Sunset', layout: 'banner', accent: '#f97316', side: '#7c2d12', soft: '#fff7ed' },
   { id: 'rose-gold', name: 'Rose Gold', layout: 'elegant', accent: '#be7c6b', side: '#f7e7e1', soft: '#fff8f6' },
-  { id: 'mono', name: 'Mono', layout: 'boxed', accent: '#000000', side: '#ededed', soft: '#fafafa' }
+  { id: 'mono', name: 'Mono', layout: 'boxed', accent: '#000000', side: '#ededed', soft: '#fafafa' },
+  { id: 'nordic-teal', name: 'Nordic Teal', layout: 'minimal', accent: '#0f766e', side: '#f0fdfa', soft: '#f0fdfa' },
+  { id: 'executive-navy', name: 'Executive Navy', layout: 'header-band', accent: '#1e3a8a', side: '#dbeafe', soft: '#eff6ff' },
+  { id: 'lavender-clean', name: 'Lavender Clean', layout: 'creative', accent: '#8b5cf6', side: '#f3e8ff', soft: '#faf5ff' },
+  { id: 'serif-classic', name: 'Serif Classic', layout: 'classic', accent: '#7c2d12', side: '#fff7ed', soft: '#fffbeb' },
+  { id: 'graphite-right', name: 'Graphite Right', layout: 'sidebar-right', accent: '#94a3b8', side: '#1f2937', soft: '#f8fafc' },
+  { id: 'forest-timeline', name: 'Forest Timeline', layout: 'timeline', accent: '#15803d', side: '#14532d', soft: '#f0fdf4' },
+  { id: 'ocean-banner', name: 'Ocean Banner', layout: 'banner', accent: '#0284c7', side: '#0c4a6e', soft: '#f0f9ff' },
+  { id: 'champagne', name: 'Champagne', layout: 'elegant', accent: '#a16207', side: '#fef3c7', soft: '#fffbeb' },
+  { id: 'grid-slate', name: 'Grid Slate', layout: 'boxed', accent: '#475569', side: '#e2e8f0', soft: '#f8fafc' },
+  { id: 'crimson-modern', name: 'Crimson Modern', layout: 'sidebar-left', accent: '#be123c', side: '#881337', soft: '#fff1f2' }
 ]
 
 const initialCv = {
