@@ -4,21 +4,21 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('appPage', {
-  en: { back: 'Back', app: 'App', shadowStudio: 'Shadow Studio', open: 'Open', disabled: 'Unavailable', loading: 'Loading apps…', failed: 'Could not load app settings. Please try again.', retry: 'Retry', empty: 'No apps available.' },
-  km: { back: 'ត្រឡប់ក្រោយ', app: 'កម្មវិធី', shadowStudio: 'Shadow Studio', open: 'បើក', disabled: 'មិនអាចប្រើបាន', loading: 'កំពុងផ្ទុកកម្មវិធី…', failed: 'មិនអាចផ្ទុកការកំណត់កម្មវិធីបានទេ។ សូមព្យាយាមម្ដងទៀត។', retry: 'ព្យាយាមម្ដងទៀត', empty: 'មិនមានកម្មវិធីសម្រាប់បង្ហាញទេ។' },
-  zh: { back: '返回', app: '应用', shadowStudio: 'Shadow Studio', open: '打开', disabled: '暂不可用', loading: '正在加载应用…', failed: '无法加载应用设置，请重试。', retry: '重试', empty: '暂无可用应用。' },
-  ja: { back: '戻る', app: 'アプリ', shadowStudio: 'Shadow Studio', open: '開く', disabled: '利用できません', loading: 'アプリを読み込み中…', failed: 'アプリの設定を読み込めませんでした。再試行してください。', retry: '再試行', empty: '利用できるアプリがありません。' },
-  ko: { back: '뒤로 가기', app: '앱', shadowStudio: 'Shadow Studio', open: '열기', disabled: '사용 불가', loading: '앱 불러오는 중…', failed: '앱 설정을 불러올 수 없습니다. 다시 시도해 주세요.', retry: '다시 시도', empty: '표시할 앱이 없습니다.' },
+  en: { back: 'Back', app: 'App', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'Enhance Local', open: 'Open', disabled: 'Unavailable', loading: 'Loading apps…', failed: 'Could not load app settings. Please try again.', retry: 'Retry', empty: 'No apps available.' },
+  km: { back: 'ត្រឡប់ក្រោយ', app: 'កម្មវិធី', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'កែលម្អរូបភាព', open: 'បើក', disabled: 'មិនអាចប្រើបាន', loading: 'កំពុងផ្ទុកកម្មវិធី…', failed: 'មិនអាចផ្ទុកការកំណត់កម្មវិធីបានទេ។ សូមព្យាយាមម្ដងទៀត។', retry: 'ព្យាយាមម្ដងទៀត', empty: 'មិនមានកម្មវិធីសម្រាប់បង្ហាញទេ។' },
+  zh: { back: '返回', app: '应用', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: '本地图片增强', open: '打开', disabled: '暂不可用', loading: '正在加载应用…', failed: '无法加载应用设置，请重试。', retry: '重试', empty: '暂无可用应用。' },
+  ja: { back: '戻る', app: 'アプリ', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: 'ローカル画像補正', open: '開く', disabled: '利用できません', loading: 'アプリを読み込み中…', failed: 'アプリの設定を読み込めませんでした。再試行してください。', retry: '再試行', empty: '利用できるアプリがありません。' },
+  ko: { back: '뒤로 가기', app: '앱', shadowStudio: 'Shadow Studio', shadowFx: 'Shadow FX', enhanceLocal: '로컬 이미지 향상', open: '열기', disabled: '사용 불가', loading: '앱 불러오는 중…', failed: '앱 설정을 불러올 수 없습니다. 다시 시도해 주세요.', retry: '다시 시도', empty: '표시할 앱이 없습니다.' },
 })
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
-const CACHE_KEY = 'shadow-public-app-settings-v2'  2.
+const CACHE_KEY = 'shadow-public-app-settings-v2'
 const CACHE_MS = 30_000
 const apps = [
   { key: 'shadow-studio', nameKey: 'shadowStudio', name: 'Shadow Studio', icon: 'fa-solid fa-palette', path: '/apps/shadow-studio' },
   { key: 'shadow-docs', name: 'Shadow Docs', icon: 'fa-solid fa-book-open', path: '/apps/shadow-docs' },
-  { key: 'shadow-fx', name: 'Shadow FX', icon: 'fa-solid fa-wand-magic-sparkles', path: '/apps/shadow-fx' },
-  { key: 'enhance-local', name: 'Enhance Local', icon: 'fa-solid fa-image', path: '/apps/enhance-local' },
+  { key: 'shadow-fx', nameKey: 'shadowFx', name: 'Shadow FX', icon: 'fa-solid fa-wand-magic-sparkles', path: '/apps/shadow-fx' },
+  { key: 'enhance-local', nameKey: 'enhanceLocal', name: 'Enhance Local', icon: 'fa-solid fa-image', path: '/apps/enhance-local' },
   { key: 'pic-to-art', name: 'Pic to Art', icon: 'fa-solid fa-wand-magic-sparkles', path: '/apps/pic-to-art' },
 ]
 
@@ -103,7 +103,7 @@ export default function AppPage() {
               <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#f1f2f5] shadow-sm ring-1 ring-black/[0.06] dark:bg-[#171923] dark:ring-white/10">
                 {app.remote.profile ? <img src={app.remote.profile} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : <div className="absolute inset-0 flex items-center justify-center text-[#374151] dark:text-white/85"><i className={`${app.icon} text-[42px] sm:text-[48px]`} /></div>}
               </div>
-              <div className="mt-2 truncate px-0.5 text-[14px] font-semibold text-[#111827] dark:text-white sm:text-[15px]">{app.remote.name || app.name || t(`appPage.${app.nameKey}`)}</div>
+              <div className="mt-2 truncate px-0.5 text-[14px] font-semibold text-[#111827] dark:text-white sm:text-[15px]">{app.nameKey ? t(`appPage.${app.nameKey}`) : app.remote.name || app.name}</div>
               <div className="mt-0.5 px-0.5 text-[10px] font-medium text-[#8b93a1] dark:text-white/50 sm:text-[11px]">{t(app.remote.disabled ? 'appPage.disabled' : 'appPage.open')}</div>
             </button>
           ))}
