@@ -26,6 +26,7 @@ registerTranslationNamespace('enhanceLocal', {
     footer: 'Best for manga, cover art, and story images',
     chooseFirst: 'Choose an image first.',
     failed: 'Could not enhance this image on your device.',
+    aiUnavailable: 'Could not load the local AI model. Check your connection and try again.',
     tooLarge: 'This image is too large for the selected AI upscale size on this device.',
     ready: 'Ready',
     original: 'Original',
@@ -53,6 +54,7 @@ registerTranslationNamespace('enhanceLocal', {
     footer: 'សមសម្រាប់ Manga, Cover Art និងរូបភាពរឿង',
     chooseFirst: 'សូមជ្រើសរូបភាពជាមុន។',
     failed: 'មិនអាចកែលម្អរូបភាពនេះលើឧបករណ៍បានទេ។',
+    aiUnavailable: 'មិនអាចផ្ទុក AI Model បានទេ។ សូមពិនិត្យអ៊ីនធឺណិត ហើយព្យាយាមម្ដងទៀត។',
     tooLarge: 'រូបភាពនេះធំពេកសម្រាប់ទំហំ AI ពង្រីកដែលបានជ្រើសលើឧបករណ៍នេះ។',
     ready: 'រួចរាល់',
     original: 'រូបដើម',
@@ -80,6 +82,7 @@ registerTranslationNamespace('enhanceLocal', {
     footer: '适合漫画、封面和故事图片',
     chooseFirst: '请先选择图片。',
     failed: '无法在此设备上增强这张图片。',
+    aiUnavailable: '无法加载本地 AI 模型。请检查网络后重试。',
     tooLarge: '这张图片对于当前设备所选的 AI 放大尺寸来说太大。',
     ready: '就绪',
     original: '原图',
@@ -107,6 +110,7 @@ registerTranslationNamespace('enhanceLocal', {
     footer: '漫画・カバーアート・ストーリー画像に最適',
     chooseFirst: '先に画像を選択してください。',
     failed: 'この端末では画像を補正できませんでした。',
+    aiUnavailable: 'ローカル AI モデルを読み込めませんでした。接続を確認して再試行してください。',
     tooLarge: '選択した AI 拡大率では、この端末で処理するには画像が大きすぎます。',
     ready: '準備完了',
     original: '元画像',
@@ -134,6 +138,7 @@ registerTranslationNamespace('enhanceLocal', {
     footer: '만화, 커버 아트, 스토리 이미지에 적합',
     chooseFirst: '먼저 이미지를 선택하세요.',
     failed: '이 기기에서 이미지를 향상할 수 없습니다.',
+    aiUnavailable: '로컬 AI 모델을 불러올 수 없습니다. 연결을 확인하고 다시 시도하세요.',
     tooLarge: '선택한 AI 업스케일 크기로 처리하기에는 이미지가 너무 큽니다.',
     ready: '준비됨',
     original: '원본',
@@ -142,61 +147,81 @@ registerTranslationNamespace('enhanceLocal', {
 })
 
 const MAX_OUTPUT_PIXELS = 12_000_000
-const TF_URL = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js'
-const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@upscalerjs/default-model@1.0.0/dist/umd/index.min.js'
-const UPSCALER_URL = 'https://cdn.jsdelivr.net/npm/upscaler@1.0.0/dist/browser/umd/upscaler.min.js'
+const TF_URLS = [
+  'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js',
+  'https://unpkg.com/@tensorflow/tfjs@4.22.0/dist/tf.min.js',
+]
+const MODEL_URLS = [
+  'https://cdn.jsdelivr.net/npm/@upscalerjs/default-model@1.0.0/dist/umd/index.min.js',
+  'https://unpkg.com/@upscalerjs/default-model@1.0.0/dist/umd/index.min.js',
+]
+const UPSCALER_URLS = [
+  'https://cdn.jsdelivr.net/npm/upscaler@1.0.0/dist/browser/umd/upscaler.min.js',
+  'https://unpkg.com/upscaler@1.0.0/dist/browser/umd/upscaler.min.js',
+]
 
 let runtimePromise = null
 
-function loadScript(id, src, ready) {
+function loadScript(id, urls, ready) {
   if (ready()) return Promise.resolve()
 
-  const existing = document.getElementById(id)
+  const loadFrom = (index) => {
+    if (ready()) return Promise.resolve()
+    if (index >= urls.length) return Promise.reject(new Error('AI_RUNTIME_UNAVAILABLE'))
 
-  if (existing) {
+    const previous = document.getElementById(id)
+    if (previous) previous.remove()
+
     return new Promise((resolve, reject) => {
-      if (ready()) {
-        resolve()
-        return
+      const script = document.createElement('script')
+      const timer = window.setTimeout(() => {
+        script.remove()
+        reject(new Error('SCRIPT_TIMEOUT'))
+      }, 20_000)
+
+      script.id = id
+      script.src = urls[index]
+      script.async = true
+      script.crossOrigin = 'anonymous'
+      script.onload = () => {
+        window.clearTimeout(timer)
+        ready() ? resolve() : reject(new Error('SCRIPT_GLOBAL_MISSING'))
       }
-      existing.addEventListener('load', resolve, { once: true })
-      existing.addEventListener('error', reject, { once: true })
-    })
+      script.onerror = () => {
+        window.clearTimeout(timer)
+        script.remove()
+        reject(new Error('SCRIPT_LOAD_FAILED'))
+      }
+      document.head.appendChild(script)
+    }).catch(() => loadFrom(index + 1))
   }
 
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.id = id
-    script.src = src
-    script.async = true
-    script.crossOrigin = 'anonymous'
-    script.onload = resolve
-    script.onerror = reject
-    document.head.appendChild(script)
-  })
+  return loadFrom(0)
 }
 
 function loadAiRuntime() {
   if (!runtimePromise) {
     runtimePromise = (async () => {
-      await loadScript('enhance-local-tf', TF_URL, () => Boolean(window.tf))
+      await loadScript('enhance-local-tf', TF_URLS, () => Boolean(window.tf))
       await loadScript(
         'enhance-local-model',
-        MODEL_URL,
+        MODEL_URLS,
         () => Boolean(window.DefaultUpscalerJSModel)
       )
       await loadScript(
         'enhance-local-upscaler',
-        UPSCALER_URL,
+        UPSCALER_URLS,
         () => Boolean(window.Upscaler)
       )
 
       if (!window.tf || !window.DefaultUpscalerJSModel || !window.Upscaler) {
         throw new Error('AI_RUNTIME_UNAVAILABLE')
       }
-    })().catch((error) => {
+
+      await window.tf.ready()
+    })().catch(() => {
       runtimePromise = null
-      throw error
+      throw new Error('AI_RUNTIME_UNAVAILABLE')
     })
   }
 
@@ -285,7 +310,7 @@ async function prepareSource(url, denoise, sharpen, intensity) {
 
   if (sharpen) sharpenCanvas(canvas, 0.05 + strength * 0.09)
 
-  return canvas.toDataURL('image/png')
+  return canvas
 }
 
 function normalizeProgress(value) {
@@ -413,7 +438,7 @@ export default function EnhanceLocalPage() {
     return upscaler.upscale(input, {
       output: 'base64',
       patchSize: 64,
-      padding: 2,
+      padding: 4,
       awaitNextFrame: true,
       signal,
       progress: (value) => {
@@ -517,7 +542,11 @@ export default function EnhanceLocalPage() {
     } catch (enhanceError) {
       if (enhanceError?.name !== 'AbortError') {
         setProgress(0)
-        setError(t('enhanceLocal.failed'))
+        setError(
+          enhanceError?.message === 'AI_RUNTIME_UNAVAILABLE'
+            ? t('enhanceLocal.aiUnavailable')
+            : t('enhanceLocal.failed')
+        )
       }
     } finally {
       if (abortRef.current === controller) abortRef.current = null
