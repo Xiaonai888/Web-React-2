@@ -43,46 +43,91 @@ export default function AppPage() {
   const [retry, setRetry] = useState(0)
 
   useEffect(() => {
-    const cached = readCachedApps()
-    if (cached && !retry) {
-      setSettings(cached)
-      setLoading(false)
-      return
-    }
     let live = true
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 12_000)
-    setLoading(true)
-    setError(false)
-    fetch(`${API_BASE_URL}/api/public/apps`, { signal: controller.signal, cache: 'no-cache' })
-      .then(async response => {
-        if (!response.ok) throw new Error('App settings unavailable')
-        const data = await response.json()
-        if (data.ok !== true || !Array.isArray(data.apps)) throw new Error('Invalid app settings')
-        const valid = data.apps.filter(item => item && typeof item.appKey === 'string' && typeof item.hidden === 'boolean' && typeof item.disabled === 'boolean')
-        if (valid.length !== data.apps.length) throw new Error('Invalid app settings')
-        return valid
+    let controller = null
+    let timeout = null
+    let lastFetch = 0
+
+    const loadApps = (force = false) => {
+      const cached = readCachedApps()
+      if (cached) {
+        setSettings(cached)
+        setLoading(false)
+      }
+
+      if (!force && Date.now() - lastFetch < 1500) return
+      lastFetch = Date.now()
+
+      controller?.abort()
+      if (timeout) clearTimeout(timeout)
+
+      controller = new AbortController()
+      timeout = setTimeout(() => controller.abort(), 12_000)
+
+      if (!cached) setLoading(true)
+      setError(false)
+
+      fetch(`${API_BASE_URL}/api/public/apps`, {
+        signal: controller.signal,
+        cache: 'no-cache',
       })
-      .then(items => {
-        if (!live) return
-        setSettings(items)
-        setError(false)
-        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), apps: items })) } catch {}
-      })
-      .catch(() => {
-        if (!live) return
-        setSettings(null)
-        setError(true)
-        try { sessionStorage.removeItem(CACHE_KEY) } catch {}
-      })
-      .finally(() => {
-        clearTimeout(timeout)
-        if (live) setLoading(false)
-      })
-    return () => { live = false; clearTimeout(timeout); controller.abort() }
+        .then(async response => {
+          if (!response.ok) throw new Error('App settings unavailable')
+          const data = await response.json()
+          if (data.ok !== true || !Array.isArray(data.apps)) throw new Error('Invalid app settings')
+          const valid = data.apps.filter(item => item && typeof item.appKey === 'string' && typeof item.hidden === 'boolean' && typeof item.disabled === 'boolean')
+          if (valid.length !== data.apps.length) throw new Error('Invalid app settings')
+          return valid
+        })
+        .then(items => {
+          if (!live) return
+          setSettings(items)
+          setError(false)
+          try {
+            sessionStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({ savedAt: Date.now(), apps: items }),
+            )
+          } catch {}
+        })
+        .catch(() => {
+          if (!live) return
+          if (!cached) {
+            setSettings(null)
+            setError(true)
+          }
+        })
+        .finally(() => {
+          if (timeout) clearTimeout(timeout)
+          if (live) setLoading(false)
+        })
+    }
+
+    loadApps(Boolean(retry))
+
+    const handleFocus = () => loadApps(true)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') loadApps(true)
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      live = false
+      controller?.abort()
+      if (timeout) clearTimeout(timeout)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [retry])
 
-  const visibleApps = apps.map(app => ({ ...app, remote: settings?.find(item => item.appKey === app.key) })).filter(app => app.local || (app.remote && !app.remote.hidden))
+  const visibleApps = apps
+    .map(app => ({
+      ...app,
+      remote: settings?.find(item => item.appKey === app.key),
+    }))
+    .filter(app => app.local || (app.remote && !app.remote.hidden))
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0d0f16]">
@@ -95,17 +140,21 @@ export default function AppPage() {
           <div className="h-10 w-10" />
         </div>
       </header>
+
       <main className="mx-auto max-w-5xl px-4 py-5">
         {loading && !settings ? <p role="status" className="py-8 text-center text-sm text-[#6b7280] dark:text-white/65">{t('appPage.loading')}</p> : null}
         {!loading && error ? <div className="flex flex-col items-center gap-3 py-8 text-center"><p role="alert" className="text-sm text-[#6b7280] dark:text-white/65">{t('appPage.failed')}</p><button type="button" onClick={() => setRetry(value => value + 1)} className="rounded-xl bg-[#7351b9] px-5 py-2.5 text-sm font-semibold text-white">{t('appPage.retry')}</button></div> : null}
         {!loading && !error && settings && !visibleApps.length ? <p className="py-8 text-center text-sm text-[#6b7280] dark:text-white/65">{t('appPage.empty')}</p> : null}
+
         <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 lg:grid-cols-6">
           {visibleApps.map(app => (
             <button type="button" key={app.key} disabled={!app.local && app.remote?.disabled} onClick={() => navigate(app.path)} className="min-w-0 text-left active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50">
               <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#f1f2f5] shadow-sm ring-1 ring-black/[0.06] dark:bg-[#171923] dark:ring-white/10">
                 {app.remote?.profile ? <img src={app.remote.profile} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : <div className="absolute inset-0 flex items-center justify-center text-[#374151] dark:text-white/85"><i className={`${app.icon} text-[42px] sm:text-[48px]`} /></div>}
               </div>
-              <div className="mt-2 truncate px-0.5 text-[14px] font-semibold text-[#111827] dark:text-white sm:text-[15px]">{app.nameKey ? t(`appPage.${app.nameKey}`) : app.remote?.name || app.name}</div>
+              <div className="mt-2 truncate px-0.5 text-[14px] font-semibold text-[#111827] dark:text-white sm:text-[15px]">
+                {app.remote?.name || (app.nameKey ? t(`appPage.${app.nameKey}`) : app.name)}
+              </div>
               <div className="mt-0.5 px-0.5 text-[10px] font-medium text-[#8b93a1] dark:text-white/50 sm:text-[11px]">{t(!app.local && app.remote?.disabled ? 'appPage.disabled' : 'appPage.open')}</div>
             </button>
           ))}
