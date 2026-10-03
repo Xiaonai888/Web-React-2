@@ -29,6 +29,9 @@ registerTranslationNamespace('shadowFx', {
     flipHorizontal: 'Flip Horizontal',
     flipVertical: 'Flip Vertical',
     resetCrop: 'Reset Crop',
+    zoom: 'Zoom',
+    moveX: 'Horizontal',
+    moveY: 'Vertical',
     blur: 'Blur',
     grain: 'Grain',
     glow: 'Glow',
@@ -38,6 +41,10 @@ registerTranslationNamespace('shadowFx', {
     retro: 'Retro',
     bloom: 'Bloom',
     lightLeak: 'Light Leak',
+    softLight: 'Soft Light',
+    bokeh: 'Bokeh',
+    lensFlare: 'Lens Flare',
+    filmDust: 'Film Dust',
     undo: 'Undo',
     redo: 'Redo',
     format: 'Format',
@@ -93,6 +100,9 @@ registerTranslationNamespace('shadowFx', {
     flipHorizontal: 'ត្រឡប់ផ្ដេក',
     flipVertical: 'ត្រឡប់បញ្ឈរ',
     resetCrop: 'កំណត់ Crop ឡើងវិញ',
+    zoom: 'ពង្រីក',
+    moveX: 'ផ្លាស់ទីផ្ដេក',
+    moveY: 'ផ្លាស់ទីបញ្ឈរ',
     blur: 'ព្រិល',
     grain: 'គ្រាប់ហ្វីល',
     glow: 'ពន្លឺរលោង',
@@ -102,6 +112,10 @@ registerTranslationNamespace('shadowFx', {
     retro: 'Retro',
     bloom: 'Bloom',
     lightLeak: 'ពន្លឺជ្រៀត',
+    softLight: 'ពន្លឺទន់',
+    bokeh: 'Bokeh',
+    lensFlare: 'Lens Flare',
+    filmDust: 'ធូលីហ្វីល',
     undo: 'ថយក្រោយ',
     redo: 'ធ្វើឡើងវិញ',
     format: 'ប្រភេទឯកសារ',
@@ -157,6 +171,9 @@ registerTranslationNamespace('shadowFx', {
     flipHorizontal: '水平翻转',
     flipVertical: '垂直翻转',
     resetCrop: '重置裁剪',
+    zoom: '缩放',
+    moveX: '水平位置',
+    moveY: '垂直位置',
     blur: '模糊',
     grain: '颗粒',
     glow: '光晕',
@@ -166,6 +183,10 @@ registerTranslationNamespace('shadowFx', {
     retro: '复古',
     bloom: '柔光',
     lightLeak: '漏光',
+    softLight: '柔光',
+    bokeh: '散景',
+    lensFlare: '镜头光晕',
+    filmDust: '胶片灰尘',
     undo: '撤销',
     redo: '重做',
     format: '格式',
@@ -221,6 +242,9 @@ registerTranslationNamespace('shadowFx', {
     flipHorizontal: '水平反転',
     flipVertical: '垂直反転',
     resetCrop: '切り抜きをリセット',
+    zoom: 'ズーム',
+    moveX: '横位置',
+    moveY: '縦位置',
     blur: 'ぼかし',
     grain: '粒子',
     glow: 'グロー',
@@ -230,6 +254,10 @@ registerTranslationNamespace('shadowFx', {
     retro: 'レトロ',
     bloom: 'ブルーム',
     lightLeak: 'ライトリーク',
+    softLight: 'ソフトライト',
+    bokeh: 'ボケ',
+    lensFlare: 'レンズフレア',
+    filmDust: 'フィルムダスト',
     undo: '元に戻す',
     redo: 'やり直す',
     format: '形式',
@@ -285,6 +313,9 @@ registerTranslationNamespace('shadowFx', {
     flipHorizontal: '좌우 반전',
     flipVertical: '상하 반전',
     resetCrop: '자르기 초기화',
+    zoom: '확대',
+    moveX: '가로 위치',
+    moveY: '세로 위치',
     blur: '블러',
     grain: '그레인',
     glow: '글로우',
@@ -294,6 +325,10 @@ registerTranslationNamespace('shadowFx', {
     retro: '레트로',
     bloom: '블룸',
     lightLeak: '라이트 리크',
+    softLight: '소프트 라이트',
+    bokeh: '보케',
+    lensFlare: '렌즈 플레어',
+    filmDust: '필름 더스트',
     undo: '실행 취소',
     redo: '다시 실행',
     format: '형식',
@@ -341,6 +376,9 @@ const DEFAULTS = {
   grain: 0,
   glow: 0,
   lightLeak: 0,
+  bokeh: 0,
+  lensFlare: 0,
+  filmDust: 0,
 }
 
 const PRESETS = {
@@ -360,6 +398,10 @@ const EFFECT_PRESETS = {
   teal: { ...DEFAULTS, contrast: 8, saturation: 4, temperature: -24, tint: -18, shadows: 10 },
   retro: { ...DEFAULTS, contrast: 9, saturation: -18, temperature: 18, fade: 16, grain: 22, vignette: 10 },
   bloom: { ...DEFAULTS, brightness: 8, contrast: -8, highlights: -12, saturation: 5, glow: 48, blur: 3 },
+  softLight: { ...DEFAULTS, brightness: 7, contrast: -10, highlights: -8, shadows: 16, saturation: 4, glow: 22 },
+  bokeh: { ...DEFAULTS, brightness: 4, contrast: -4, glow: 14, bokeh: 58 },
+  lensFlare: { ...DEFAULTS, brightness: 4, saturation: 6, temperature: 10, lensFlare: 62 },
+  filmDust: { ...DEFAULTS, contrast: 7, saturation: -8, fade: 9, grain: 16, filmDust: 58 },
   lightLeak: { ...DEFAULTS, brightness: 5, contrast: 5, saturation: 9, temperature: 12, lightLeak: 62 },
 }
 
@@ -380,6 +422,9 @@ const EFFECT_SLIDERS = [
   ['blur', 0, 20],
   ['grain', 0, 100],
   ['glow', 0, 100],
+  ['bokeh', 0, 100],
+  ['lensFlare', 0, 100],
+  ['filmDust', 0, 100],
   ['lightLeak', 0, 100],
 ]
 
@@ -394,6 +439,9 @@ const DEFAULT_TRANSFORM = {
   flipX: false,
   flipY: false,
   ratio: 'free',
+  zoom: 1,
+  panX: 0,
+  panY: 0,
 }
 
 const CROP_RATIOS = [
@@ -538,6 +586,109 @@ function applyGrain(context, width, height, amount) {
   }
 
   context.putImageData(imageData, 0, 0)
+}
+
+function seededRandom(seed) {
+  let value = seed >>> 0
+  return () => {
+    value = (value * 1664525 + 1013904223) >>> 0
+    return value / 4294967295
+  }
+}
+
+function applyBokeh(context, width, height, amount) {
+  if (!amount) return
+  const strength = Math.max(0, Math.min(1, amount / 100))
+  const random = seededRandom(2147)
+  const count = Math.round(8 + strength * 24)
+  const maxSize = Math.max(18, Math.min(width, height) * 0.12)
+
+  context.save()
+  context.globalCompositeOperation = 'screen'
+
+  for (let i = 0; i < count; i += 1) {
+    const x = random() * width
+    const y = random() * height
+    const radius = maxSize * (0.22 + random() * 0.78)
+    const alpha = (0.025 + random() * 0.09) * strength
+    const gradient = context.createRadialGradient(x, y, 0, x, y, radius)
+    gradient.addColorStop(0, `rgba(255,246,220,${alpha})`)
+    gradient.addColorStop(0.45, `rgba(255,210,238,${alpha * 0.65})`)
+    gradient.addColorStop(1, 'rgba(255,255,255,0)')
+    context.fillStyle = gradient
+    context.beginPath()
+    context.arc(x, y, radius, 0, Math.PI * 2)
+    context.fill()
+  }
+
+  context.restore()
+}
+
+function applyLensFlare(context, width, height, amount) {
+  if (!amount) return
+  const strength = Math.max(0, Math.min(1, amount / 100))
+  const x = width * 0.78
+  const y = height * 0.2
+  const radius = Math.max(width, height) * 0.62
+  const gradient = context.createRadialGradient(x, y, 0, x, y, radius)
+
+  gradient.addColorStop(0, `rgba(255,255,245,${0.72 * strength})`)
+  gradient.addColorStop(0.08, `rgba(255,225,170,${0.42 * strength})`)
+  gradient.addColorStop(0.24, `rgba(255,150,190,${0.2 * strength})`)
+  gradient.addColorStop(0.5, `rgba(120,190,255,${0.1 * strength})`)
+  gradient.addColorStop(1, 'rgba(255,255,255,0)')
+
+  context.save()
+  context.globalCompositeOperation = 'screen'
+  context.fillStyle = gradient
+  context.fillRect(0, 0, width, height)
+
+  const random = seededRandom(9017)
+  for (let i = 0; i < 4; i += 1) {
+    const px = width * (0.34 + i * 0.11)
+    const py = height * (0.55 - i * 0.08)
+    const r = Math.min(width, height) * (0.025 + random() * 0.035)
+    context.globalAlpha = strength * (0.08 + random() * 0.1)
+    context.fillStyle = i % 2 ? '#9fd8ff' : '#ffb7d7'
+    context.beginPath()
+    context.arc(px, py, r, 0, Math.PI * 2)
+    context.fill()
+  }
+
+  context.restore()
+}
+
+function applyFilmDust(context, width, height, amount) {
+  if (!amount) return
+  const strength = Math.max(0, Math.min(1, amount / 100))
+  const random = seededRandom(7789)
+  const dots = Math.round((width * height) / 18000 * strength)
+  const scratches = Math.round(2 + strength * 7)
+
+  context.save()
+
+  for (let i = 0; i < dots; i += 1) {
+    const light = random() > 0.38
+    context.fillStyle = light
+      ? `rgba(255,255,245,${0.06 + random() * 0.18})`
+      : `rgba(20,15,18,${0.04 + random() * 0.12})`
+    const size = 0.6 + random() * 2.4
+    context.beginPath()
+    context.arc(random() * width, random() * height, size, 0, Math.PI * 2)
+    context.fill()
+  }
+
+  context.lineWidth = Math.max(0.5, width / 2200)
+  for (let i = 0; i < scratches; i += 1) {
+    const x = random() * width
+    context.strokeStyle = `rgba(255,250,240,${0.035 + random() * 0.09})`
+    context.beginPath()
+    context.moveTo(x, random() * height * 0.3)
+    context.lineTo(x + (random() - 0.5) * width * 0.015, height * (0.7 + random() * 0.3))
+    context.stroke()
+  }
+
+  context.restore()
 }
 
 function applyLightLeak(context, width, height, amount) {
@@ -722,7 +873,10 @@ export default function ShadowFXPage() {
     [transform.ratio]
   )
 
-  const previewTransform = `rotate(${transform.rotation}deg) scaleX(${transform.flipX ? -1 : 1}) scaleY(${transform.flipY ? -1 : 1})`
+  const previewPanLimit = transform.zoom > 1 ? ((transform.zoom - 1) / (2 * transform.zoom)) * 100 : 0
+  const previewPanX = (transform.panX / 100) * previewPanLimit
+  const previewPanY = (transform.panY / 100) * previewPanLimit
+  const previewTransform = `translate(${previewPanX}%, ${previewPanY}%) rotate(${transform.rotation}deg) scale(${transform.zoom}) scaleX(${transform.flipX ? -1 : 1}) scaleY(${transform.flipY ? -1 : 1})`
 
   function chooseImage(file) {
     if (!file) return
@@ -859,20 +1013,28 @@ export default function ShadowFXPage() {
       const desiredRatio = CROP_RATIOS.find(item => item.key === transform.ratio)?.value || null
       const sourceRatio = desiredRatio ? (quarterTurn ? 1 / desiredRatio : desiredRatio) : null
 
-      let cropWidth = image.naturalWidth
-      let cropHeight = image.naturalHeight
-      let sourceX = 0
-      let sourceY = 0
+      let baseCropWidth = image.naturalWidth
+      let baseCropHeight = image.naturalHeight
+      let baseSourceX = 0
+      let baseSourceY = 0
 
       if (sourceRatio) {
-        if (cropWidth / cropHeight > sourceRatio) {
-          cropWidth = cropHeight * sourceRatio
-          sourceX = (image.naturalWidth - cropWidth) / 2
+        if (baseCropWidth / baseCropHeight > sourceRatio) {
+          baseCropWidth = baseCropHeight * sourceRatio
+          baseSourceX = (image.naturalWidth - baseCropWidth) / 2
         } else {
-          cropHeight = cropWidth / sourceRatio
-          sourceY = (image.naturalHeight - cropHeight) / 2
+          baseCropHeight = baseCropWidth / sourceRatio
+          baseSourceY = (image.naturalHeight - baseCropHeight) / 2
         }
       }
+
+      const zoom = Math.max(1, Math.min(4, Number(transform.zoom || 1)))
+      const cropWidth = baseCropWidth / zoom
+      const cropHeight = baseCropHeight / zoom
+      const availableX = baseCropWidth - cropWidth
+      const availableY = baseCropHeight - cropHeight
+      const sourceX = baseSourceX + availableX * ((Number(transform.panX || 0) + 100) / 200)
+      const sourceY = baseSourceY + availableY * ((Number(transform.panY || 0) + 100) / 200)
 
       const sourcePixels = cropWidth * cropHeight
       const scale = sourcePixels > maxPixels ? Math.sqrt(maxPixels / sourcePixels) : 1
@@ -904,6 +1066,9 @@ export default function ShadowFXPage() {
       applySharpen(workContext, width, height, values.sharpen)
       applyBlurAndGlow(workContext, workCanvas, values)
       applyGrain(workContext, width, height, values.grain)
+      applyFilmDust(workContext, width, height, values.filmDust)
+      applyBokeh(workContext, width, height, values.bokeh)
+      applyLensFlare(workContext, width, height, values.lensFlare)
       applyLightLeak(workContext, width, height, values.lightLeak)
 
       const canvas = document.createElement('canvas')
@@ -1157,6 +1322,41 @@ export default function ShadowFXPage() {
                 />
               ) : null}
 
+              {!compare && values.filmDust > 0 ? (
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 18% 22%, rgba(255,255,255,.75) 0 1px, transparent 1.8px), radial-gradient(circle at 72% 41%, rgba(255,255,255,.55) 0 1.2px, transparent 2px), repeating-linear-gradient(92deg, transparent 0 48px, rgba(255,255,255,.08) 49px 50px, transparent 51px 94px)',
+                    backgroundSize: '67px 59px, 83px 71px, 100% 100%',
+                    mixBlendMode: 'screen',
+                    opacity: Math.min(0.42, values.filmDust / 220),
+                  }}
+                />
+              ) : null}
+
+              {!compare && values.bokeh > 0 ? (
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 18% 30%, rgba(255,238,210,.65) 0 3%, transparent 9%), radial-gradient(circle at 72% 24%, rgba(255,190,225,.5) 0 4%, transparent 11%), radial-gradient(circle at 82% 72%, rgba(190,220,255,.5) 0 5%, transparent 13%), radial-gradient(circle at 35% 78%, rgba(255,225,170,.45) 0 3%, transparent 10%)',
+                    mixBlendMode: 'screen',
+                    filter: 'blur(2px)',
+                    opacity: Math.min(0.7, values.bokeh / 115),
+                  }}
+                />
+              ) : null}
+
+              {!compare && values.lensFlare > 0 ? (
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background: 'radial-gradient(circle at 78% 20%, rgba(255,255,245,.9) 0%, rgba(255,220,160,.5) 7%, rgba(255,150,190,.25) 20%, rgba(120,190,255,.12) 38%, transparent 66%)',
+                    mixBlendMode: 'screen',
+                    opacity: Math.min(0.8, values.lensFlare / 105),
+                  }}
+                />
+              ) : null}
+
               {!compare && values.lightLeak > 0 ? (
                 <div
                   className="pointer-events-none absolute inset-0"
@@ -1326,6 +1526,51 @@ export default function ShadowFXPage() {
                   <i className="fa-solid fa-up-down mr-2" />
                   {t('shadowFx.flipVertical')}
                 </button>
+              </div>
+
+              <div className="border-t border-white/[0.07] pt-2">
+                <Slider
+                  label={t('shadowFx.zoom')}
+                  value={Math.round(transform.zoom * 100)}
+                  min={100}
+                  max={400}
+                  onStart={beginAdjustment}
+                  onFinish={finishAdjustment}
+                  onChange={value => {
+                    const zoom = value / 100
+                    setTransform(current => ({
+                      ...current,
+                      zoom,
+                      panX: zoom === 1 ? 0 : current.panX,
+                      panY: zoom === 1 ? 0 : current.panY,
+                    }))
+                    setPreset('')
+                  }}
+                />
+                <Slider
+                  label={t('shadowFx.moveX')}
+                  value={transform.panX}
+                  min={-100}
+                  max={100}
+                  onStart={beginAdjustment}
+                  onFinish={finishAdjustment}
+                  onChange={value => {
+                    setTransform(current => ({ ...current, panX: value }))
+                    setPreset('')
+                  }}
+                />
+                <Slider
+                  label={t('shadowFx.moveY')}
+                  value={transform.panY}
+                  min={-100}
+                  max={100}
+                  onStart={beginAdjustment}
+                  onFinish={finishAdjustment}
+                  onChange={value => {
+                    setTransform(current => ({ ...current, panY: value }))
+                    setPreset('')
+                  }}
+                />
               </div>
 
               <button
