@@ -997,6 +997,7 @@ async function fetchIOSEpisode(storyId, episodeId, manifest, nativeFetch) {
 
 const READING_ACTIVITY_GRACE_MS = 45000
 const READING_PROGRESS_STEP_SECONDS = 30
+const READING_SESSION_IDLE_RECHECK_MS = 10 * 60 * 1000
 
 function normalizeReadingMission(mission = null) {
   if (!mission?.id) return null
@@ -2001,6 +2002,7 @@ function ReaderEndPanel({
     useState(initialLikeCount)
   const [likeBusy, setLikeBusy] =
     useState(false)
+  const loadedReactionStatusRef = useRef('')
 
   const giftCount = Number(
     story?.total_gifts ||
@@ -2021,12 +2023,28 @@ function ReaderEndPanel({
 
   useEffect(() => {
     let ignore = false
+    const reactionKey =
+      `${String(episodeId || '')}:${getReaderToken()}`
 
-    setReactionType(null)
-    setLikeCount(initialLikeCount)
+    if (
+      loadedReactionStatusRef.current &&
+      loadedReactionStatusRef.current !== reactionKey
+    ) {
+      loadedReactionStatusRef.current = ''
+      setReactionType(null)
+      setLikeCount(initialLikeCount)
+    }
 
     async function loadReactionStatus() {
-      if (!active || !episodeId) return
+      if (
+        !active ||
+        !episodeId ||
+        loadedReactionStatusRef.current === reactionKey
+      ) {
+        return
+      }
+
+      loadedReactionStatusRef.current = reactionKey
 
       try {
         const response = await fetch(
@@ -2042,11 +2060,15 @@ function ReaderEndPanel({
 
         if (
           !response.ok ||
-          data.ok === false ||
-          ignore
+          data.ok === false
         ) {
+          if (!ignore) {
+            loadedReactionStatusRef.current = ''
+          }
           return
         }
+
+        if (ignore) return
 
         setReactionType(
           data.reaction_type || null
@@ -2058,6 +2080,9 @@ function ReaderEndPanel({
           )
         )
       } catch {
+        if (!ignore) {
+          loadedReactionStatusRef.current = ''
+        }
       }
     }
 
@@ -5285,6 +5310,13 @@ export default function ReaderPage() {
   const readingHeartbeatBusyRef = useRef(false)
   const weeklyReadingTrackedEpisodeRef = useRef('')
   const activeReadingTargetRef = useRef(null)
+  const readingTargetLoadedRef = useRef(false)
+  const readingSessionIdleUntilRef = useRef({
+    episodeId: '',
+    until: 0,
+  })
+  const commentSummaryCacheRef = useRef(new Map())
+  const commentSummaryRequestRef = useRef(new Map())
   const rewardAnimationTimerRef = useRef(null)
   const offlineReaderReleaseRef = useRef(null)
   const pendingViewedEpisodeRef = useRef(new Map())
@@ -5591,6 +5623,8 @@ useEffect(() => {
     const targetEpisodeId = String(
       episodeId || ''
     ).trim()
+    const cacheKey =
+      `${targetEpisodeId}:${commentRefreshKey}`
 
     const fallbackTotal = Number(
       episode?.total_comments ||
@@ -5613,67 +5647,102 @@ useEffect(() => {
       return undefined
     }
 
+    const cachedSummary =
+      commentSummaryCacheRef.current.get(cacheKey)
+
+    if (cachedSummary) {
+      setActiveCommentSummary(cachedSummary)
+      return undefined
+    }
+
     async function loadActiveCommentSummary() {
+      let pending =
+        commentSummaryRequestRef.current.get(cacheKey)
+
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/comments/episode/${targetEpisodeId}?page=1&limit=20&sort=top`,
-          {
-            headers: readerAuthHeaders(),
-          }
-        )
+        if (!pending) {
+          pending = (async () => {
+            const response = await fetch(
+              `${API_BASE_URL}/api/comments/episode/${targetEpisodeId}?page=1&limit=20&sort=top`,
+              {
+                headers: readerAuthHeaders(),
+              }
+            )
 
-        const data = await response
-          .json()
-          .catch(() => ({}))
+            const data = await response
+              .json()
+              .catch(() => ({}))
 
-        if (
-          !response.ok ||
-          data.ok === false ||
-          ignore
-        ) {
-          return
+            if (
+              !response.ok ||
+              data.ok === false
+            ) {
+              return null
+            }
+
+            const comments = Array.isArray(data.comments)
+              ? data.comments
+              : []
+
+            const sorted = [...comments].sort(
+              (first, second) => {
+                const firstReplies = Array.isArray(first.replies)
+                  ? first.replies.length
+                  : 0
+                const secondReplies = Array.isArray(second.replies)
+                  ? second.replies.length
+                  : 0
+                const firstLikes = Number(
+                  first.likes || first.like_count || 0
+                )
+                const secondLikes = Number(
+                  second.likes || second.like_count || 0
+                )
+
+                return (
+                  secondReplies - firstReplies ||
+                  secondLikes - firstLikes
+                )
+              }
+            )
+
+            const total = Number(
+              data.total ??
+              data.total_comments ??
+              data.count ??
+              comments.length
+            )
+
+            return {
+              episodeId: targetEpisodeId,
+              hotComment: sorted[0] || null,
+              total: Number.isFinite(total)
+                ? Math.max(0, total)
+                : fallbackTotal,
+            }
+          })()
+
+          commentSummaryRequestRef.current.set(
+            cacheKey,
+            pending
+          )
         }
 
-        const comments = Array.isArray(data.comments)
-          ? data.comments
-          : []
+        const summary = await pending
 
-        const sorted = [...comments].sort(
-          (first, second) => {
-            const firstReplies = Array.isArray(first.replies)
-              ? first.replies.length
-              : 0
-            const secondReplies = Array.isArray(second.replies)
-              ? second.replies.length
-              : 0
-            const firstLikes = Number(
-              first.likes || first.like_count || 0
-            )
-            const secondLikes = Number(
-              second.likes || second.like_count || 0
-            )
+        if (!summary || ignore) return
 
-            return (
-              secondReplies - firstReplies ||
-              secondLikes - firstLikes
-            )
-          }
+        if (commentSummaryCacheRef.current.size >= 40) {
+          commentSummaryCacheRef.current.delete(
+            commentSummaryCacheRef.current.keys().next().value
+          )
+        }
+
+        commentSummaryCacheRef.current.set(
+          cacheKey,
+          summary
         )
-
-        const total = Number(
-          data.total ??
-          data.total_comments ??
-          data.count ??
-          comments.length
-        )
-
-        setActiveCommentSummary({
-          episodeId: targetEpisodeId,
-          hotComment: sorted[0] || null,
-          total: Number.isFinite(total)
-            ? Math.max(0, total)
-            : fallbackTotal,
-        })
+        setActiveCommentSummary(summary)
       } catch {
         if (!ignore) {
           setActiveCommentSummary({
@@ -5681,6 +5750,13 @@ useEffect(() => {
             hotComment: null,
             total: fallbackTotal,
           })
+        }
+      } finally {
+        if (
+          pending &&
+          commentSummaryRequestRef.current.get(cacheKey) === pending
+        ) {
+          commentSummaryRequestRef.current.delete(cacheKey)
         }
       }
     }
@@ -6069,24 +6145,26 @@ const continuousReader = useContinuousEpisodeReader({
     if (offlineAccessExpired || !entry?.episode) return
 
     const nextEpisodeId = String(entry.id)
-const episodeChanged = String(episodeId || '') !== nextEpisodeId
+    const episodeChanged =
+      String(episodeId || '') !== nextEpisodeId
 
-setActiveEpisodeId(nextEpisodeId)
-setEpisode(entry.episode)
-setLockedEpisode(Boolean(entry.locked))
-setReadingProgress(0)
-readingProgressRef.current = 0
+    setActiveEpisodeId(nextEpisodeId)
+    setEpisode(entry.episode)
+    setLockedEpisode(Boolean(entry.locked))
 
-if (episodeChanged) {
-  qualifiedViewSentRef.current = false
-}
-    setReviewProgressSaved(false)
+    if (episodeChanged) {
+      setReadingProgress(0)
+      readingProgressRef.current = 0
+      qualifiedViewSentRef.current = false
+      setReviewProgressSaved(false)
+      setCommentEpisode(null)
+    }
+
     setReaderAdPolicy(entry.gate?.ad_policy || null)
     setReaderAdvertisement(entry.gate?.advertisement || null)
     setReaderAdFinished(Boolean(entry.adFinished))
     setReaderGateReady(true)
     setReaderMoreOpen(false)
-    setCommentEpisode(null)
 
     if (
       entry.locked &&
@@ -6625,66 +6703,66 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     }
 
     function startQualifiedViewRule() {
-  qualifiedTimer = window.setInterval(async () => {
-    if (
-      cancelled ||
-      qualifiedRequestBusy ||
-      document.visibilityState !== 'visible'
-    ) {
-      return
+      qualifiedTimer = window.setInterval(async () => {
+        if (
+          cancelled ||
+          qualifiedRequestBusy ||
+          document.visibilityState !== 'visible'
+        ) {
+          return
+        }
+
+        activeSeconds += 1
+
+        if (
+          activeSeconds < requiredSeconds ||
+          readingProgressRef.current < requiredProgress
+        ) {
+          return
+        }
+
+        qualifiedRequestBusy = true
+        window.clearInterval(qualifiedTimer)
+        qualifiedTimer = null
+
+        try {
+          await requestView('qualified')
+        } catch (error) {
+          if (!cancelled) {
+            console.error('VIEW FLOW ERROR:', error)
+          }
+        }
+      }, 1000)
     }
 
-    activeSeconds += 1
+    async function beginViewFlow() {
+      try {
+        const result = await requestView('fast')
 
-    if (
-      activeSeconds < requiredSeconds ||
-      readingProgressRef.current < requiredProgress
-    ) {
-      return
-    }
+        if (cancelled) return
 
-    qualifiedRequestBusy = true
-    window.clearInterval(qualifiedTimer)
-    qualifiedTimer = null
+        if (
+          result.counted ||
+          result.reason === 'fast_cooldown'
+        ) {
+          return
+        }
 
-    try {
-      await requestView('qualified')
-    } catch (error) {
-      if (!cancelled) {
-        console.error('VIEW FLOW ERROR:', error)
+        if (
+          result.reason === 'qualified_view_required' ||
+          result.requires_qualified_view === true
+        ) {
+          startQualifiedViewRule()
+          return
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('VIEW FLOW ERROR:', error)
+        }
       }
     }
-  }, 1000)
-}
 
-async function beginViewFlow() {
-  try {
-    const result = await requestView('fast')
-
-    if (cancelled) return
-
-    if (
-      result.counted ||
-      result.reason === 'fast_cooldown'
-    ) {
-      return
-    }
-
-    if (
-      result.reason === 'qualified_view_required' ||
-      result.requires_qualified_view === true
-    ) {
-      startQualifiedViewRule()
-      return
-    }
-  } catch (error) {
-    if (!cancelled) {
-      console.error('VIEW FLOW ERROR:', error)
-    }
-  }
-}
-
-beginViewFlow()
+    beginViewFlow()
 
     return () => {
       cancelled = true
@@ -6705,6 +6783,7 @@ beginViewFlow()
 
   useEffect(() => {
     let cancelled = false
+    readingTargetLoadedRef.current = false
 
     async function loadReadingTarget() {
       if (!storyId || lockedEpisode || !adultAccepted) {
@@ -6726,15 +6805,20 @@ beginViewFlow()
 
         if (cancelled) return
 
-        const missions =
-          missionsResponse.ok && missionsData.ok !== false
-            ? missionsData.missions || []
-            : []
+        const missionsLoaded =
+          missionsResponse.ok &&
+          missionsData.ok !== false
+        const dailyLoaded =
+          dailyResponse.ok &&
+          dailyData.ok !== false
 
-        const readingReward =
-          dailyResponse.ok && dailyData.ok !== false
-            ? dailyData.reading_reward || null
-            : null
+        const missions = missionsLoaded
+          ? missionsData.missions || []
+          : []
+
+        const readingReward = dailyLoaded
+          ? dailyData.reading_reward || null
+          : null
 
         const nextTarget = resolveReadingTarget({
           missions,
@@ -6742,9 +6826,16 @@ beginViewFlow()
           storyId,
         })
 
+        activeReadingTargetRef.current = nextTarget
+        readingTargetLoadedRef.current =
+          missionsLoaded && dailyLoaded
         setActiveReadingTarget(nextTarget)
       } catch {
-        if (!cancelled) setActiveReadingTarget(null)
+        if (!cancelled) {
+          readingTargetLoadedRef.current = false
+          activeReadingTargetRef.current = null
+          setActiveReadingTarget(null)
+        }
       }
     }
 
@@ -6808,11 +6899,20 @@ beginViewFlow()
   previousReadingPageRef.current = null
   readingHeartbeatBusyRef.current = false
   weeklyReadingTrackedEpisodeRef.current = ''
+  readingSessionIdleUntilRef.current = {
+    episodeId: '',
+    until: 0,
+  }
   setReadingRewardAnimation(null)
 }, [episodeId, storyId])
 
   useEffect(() => {
     activeReadingTargetRef.current = null
+    readingTargetLoadedRef.current = false
+    readingSessionIdleUntilRef.current = {
+      episodeId: '',
+      until: 0,
+    }
     setActiveReadingTarget(null)
   }, [storyId])
 
@@ -6844,12 +6944,53 @@ beginViewFlow()
   }
 
   const timer = window.setInterval(async () => {
-    if (readingHeartbeatBusyRef.current || document.visibilityState !== 'visible') return
+    if (
+      readingHeartbeatBusyRef.current ||
+      document.visibilityState !== 'visible'
+    ) {
+      return
+    }
 
     const recentlyActive =
-      Date.now() - lastReadingActivityRef.current <= READING_ACTIVITY_GRACE_MS
+      Date.now() - lastReadingActivityRef.current <=
+      READING_ACTIVITY_GRACE_MS
 
     if (!recentlyActive && !autoScrollEnabled) return
+
+    const currentEpisodeId = String(episodeId)
+    const weeklyTracked =
+      weeklyReadingTrackedEpisodeRef.current ===
+      currentEpisodeId
+    const shouldAttemptWeekly =
+      !weeklyTracked &&
+      readingProgressRef.current >= 80
+    const targetKnownEmpty =
+      readingTargetLoadedRef.current &&
+      !activeReadingTargetRef.current
+    const idleState =
+      readingSessionIdleUntilRef.current
+
+    if (
+      targetKnownEmpty &&
+      !shouldAttemptWeekly &&
+      idleState.episodeId === currentEpisodeId &&
+      Date.now() < Number(idleState.until || 0)
+    ) {
+      return
+    }
+
+    if (
+      targetKnownEmpty &&
+      !shouldAttemptWeekly
+    ) {
+      readingSessionIdleUntilRef.current = {
+        episodeId: currentEpisodeId,
+        until:
+          Date.now() +
+          READING_SESSION_IDLE_RECHECK_MS,
+      }
+      return
+    }
 
     readingHeartbeatBusyRef.current = true
 
@@ -6862,32 +7003,46 @@ beginViewFlow()
             ...readerAuthHeaders(),
             'Content-Type': 'application/json',
           },
-         body: JSON.stringify({
-  story_id: storyId,
-  episode_id: episodeId,
-  seconds: READING_PROGRESS_STEP_SECONDS,
-  reading_percent:
-    weeklyReadingTrackedEpisodeRef.current === String(episodeId)
-      ? 0
-      : readingProgressRef.current,
-}),
+          body: JSON.stringify({
+            story_id: storyId,
+            episode_id: episodeId,
+            seconds: READING_PROGRESS_STEP_SECONDS,
+            reading_percent: weeklyTracked
+              ? 0
+              : readingProgressRef.current,
+          }),
         }
       )
 
-      const progressData = await progressResponse.json().catch(() => ({}))
+      const progressData = await progressResponse
+        .json()
+        .catch(() => ({}))
 
-      if (!progressResponse.ok || progressData.ok === false) return
+      if (
+        !progressResponse.ok ||
+        progressData.ok === false
+      ) {
+        return
+      }
+
+      readingTargetLoadedRef.current = true
+
       if (progressData.weekly_reading) {
-  weeklyReadingTrackedEpisodeRef.current = String(episodeId)
-}
+        weeklyReadingTrackedEpisodeRef.current =
+          currentEpisodeId
+      }
 
-      const missionIds = Array.isArray(progressData.claimable?.mission_ids)
+      const missionIds = Array.isArray(
+        progressData.claimable?.mission_ids
+      )
         ? progressData.claimable.mission_ids.filter(Boolean)
         : []
 
       const dailyCoins = Math.max(
         0,
-        Number(progressData.claimable?.daily_coins || 0)
+        Number(
+          progressData.claimable?.daily_coins || 0
+        )
       )
 
       let totalClaimedCoins = 0
@@ -6905,9 +7060,15 @@ beginViewFlow()
           }
         )
 
-        const dailyClaimData = await dailyClaimResponse.json().catch(() => ({}))
+        const dailyClaimData =
+          await dailyClaimResponse
+            .json()
+            .catch(() => ({}))
 
-        if (dailyClaimResponse.ok && dailyClaimData.ok !== false) {
+        if (
+          dailyClaimResponse.ok &&
+          dailyClaimData.ok !== false
+        ) {
           totalClaimedCoins += Math.max(
             0,
             Number(
@@ -6933,9 +7094,15 @@ beginViewFlow()
           }
         )
 
-        const missionClaimData = await missionClaimResponse.json().catch(() => ({}))
+        const missionClaimData =
+          await missionClaimResponse
+            .json()
+            .catch(() => ({}))
 
-        if (missionClaimResponse.ok && missionClaimData.ok !== false) {
+        if (
+          missionClaimResponse.ok &&
+          missionClaimData.ok !== false
+        ) {
           totalClaimedCoins += Math.max(
             0,
             Number(
@@ -6951,22 +7118,62 @@ beginViewFlow()
 
       if (totalClaimedCoins > 0) {
         activeReadingTargetRef.current = null
+        readingTargetLoadedRef.current = false
+        readingSessionIdleUntilRef.current = {
+          episodeId: '',
+          until: 0,
+        }
         setActiveReadingTarget(null)
         showReadingRewardAnimation(totalClaimedCoins)
+        setReadingRewardReloadKey(
+          (value) => value + 1
+        )
         return
       }
 
       const nextTarget = resolveReadingTarget({
         missions: progressData.missions || [],
-        readingReward: progressData.reading_reward || null,
+        readingReward:
+          progressData.reading_reward || null,
         storyId,
       })
 
       activeReadingTargetRef.current = nextTarget
       setActiveReadingTarget(nextTarget)
 
+      const weeklyTrackedNow =
+        weeklyReadingTrackedEpisodeRef.current ===
+        currentEpisodeId
+
+      if (
+        !nextTarget &&
+        (
+          weeklyTrackedNow ||
+          readingProgressRef.current < 80
+        )
+      ) {
+        readingSessionIdleUntilRef.current = {
+          episodeId: currentEpisodeId,
+          until:
+            Date.now() +
+            READING_SESSION_IDLE_RECHECK_MS,
+        }
+      } else {
+        readingSessionIdleUntilRef.current = {
+          episodeId: '',
+          until: 0,
+        }
+      }
+
       if (needsReload) {
-        setReadingRewardReloadKey((value) => value + 1)
+        readingTargetLoadedRef.current = false
+        readingSessionIdleUntilRef.current = {
+          episodeId: '',
+          until: 0,
+        }
+        setReadingRewardReloadKey(
+          (value) => value + 1
+        )
       }
     } finally {
       readingHeartbeatBusyRef.current = false
