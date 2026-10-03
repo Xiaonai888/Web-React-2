@@ -151,23 +151,35 @@ const TF_URLS = [
   'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js',
   'https://unpkg.com/@tensorflow/tfjs@4.22.0/dist/tf.min.js',
 ]
-const MODEL_URLS = [
-  'https://cdn.jsdelivr.net/npm/@upscalerjs/default-model@1.0.0/dist/umd/index.min.js',
-  'https://unpkg.com/@upscalerjs/default-model@1.0.0/dist/umd/index.min.js',
-]
 const UPSCALER_URLS = [
   'https://cdn.jsdelivr.net/npm/upscaler@1.0.0/dist/browser/umd/upscaler.min.js',
   'https://unpkg.com/upscaler@1.0.0/dist/browser/umd/upscaler.min.js',
 ]
+const MODEL_URLS = {
+  2: [
+    'https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-slim@1.0.0/dist/umd/2x.min.js',
+    'https://unpkg.com/@upscalerjs/esrgan-slim@1.0.0/dist/umd/2x.min.js',
+  ],
+  4: [
+    'https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-slim@1.0.0/dist/umd/4x.min.js',
+    'https://unpkg.com/@upscalerjs/esrgan-slim@1.0.0/dist/umd/4x.min.js',
+  ],
+}
+const MODEL_GLOBALS = {
+  2: 'ESRGANSlim2x',
+  4: 'ESRGANSlim4x',
+}
 
-let runtimePromise = null
+const runtimePromises = new Map()
 
 function loadScript(id, urls, ready) {
   if (ready()) return Promise.resolve()
 
   const loadFrom = (index) => {
     if (ready()) return Promise.resolve()
-    if (index >= urls.length) return Promise.reject(new Error('AI_RUNTIME_UNAVAILABLE'))
+    if (index >= urls.length) {
+      return Promise.reject(new Error('AI_RUNTIME_UNAVAILABLE'))
+    }
 
     const previous = document.getElementById(id)
     if (previous) previous.remove()
@@ -185,7 +197,9 @@ function loadScript(id, urls, ready) {
       script.crossOrigin = 'anonymous'
       script.onload = () => {
         window.clearTimeout(timer)
-        ready() ? resolve() : reject(new Error('SCRIPT_GLOBAL_MISSING'))
+        ready()
+          ? resolve()
+          : reject(new Error('SCRIPT_GLOBAL_MISSING'))
       }
       script.onerror = () => {
         window.clearTimeout(timer)
@@ -199,33 +213,47 @@ function loadScript(id, urls, ready) {
   return loadFrom(0)
 }
 
-function loadAiRuntime() {
-  if (!runtimePromise) {
-    runtimePromise = (async () => {
-      await loadScript('enhance-local-tf', TF_URLS, () => Boolean(window.tf))
+function loadAiRuntime(scale) {
+  const modelScale = scale === 4 ? 4 : 2
+
+  if (!runtimePromises.has(modelScale)) {
+    const promise = (async () => {
+      const modelGlobal = MODEL_GLOBALS[modelScale]
+
       await loadScript(
-        'enhance-local-model',
-        MODEL_URLS,
-        () => Boolean(window.DefaultUpscalerJSModel)
+        'enhance-local-tf',
+        TF_URLS,
+        () => Boolean(window.tf)
       )
+
+      await loadScript(
+        `enhance-local-model-${modelScale}`,
+        MODEL_URLS[modelScale],
+        () => Boolean(window[modelGlobal])
+      )
+
       await loadScript(
         'enhance-local-upscaler',
         UPSCALER_URLS,
         () => Boolean(window.Upscaler)
       )
 
-      if (!window.tf || !window.DefaultUpscalerJSModel || !window.Upscaler) {
+      if (!window.tf || !window.Upscaler || !window[modelGlobal]) {
         throw new Error('AI_RUNTIME_UNAVAILABLE')
       }
 
       await window.tf.ready()
+
+      return window[modelGlobal]
     })().catch(() => {
-      runtimePromise = null
+      runtimePromises.delete(modelScale)
       throw new Error('AI_RUNTIME_UNAVAILABLE')
     })
+
+    runtimePromises.set(modelScale, promise)
   }
 
-  return runtimePromise
+  return runtimePromises.get(modelScale)
 }
 
 function loadImage(url) {
@@ -355,7 +383,7 @@ export default function EnhanceLocalPage() {
   const inputRef = useRef(null)
   const sourceRef = useRef('')
   const resultRef = useRef('')
-  const upscalerRef = useRef(null)
+  const upscalerRef = useRef(new Map())
   const abortRef = useRef(null)
   const [sourceUrl, setSourceUrl] = useState('')
   const [resultUrl, setResultUrl] = useState('')
@@ -376,8 +404,11 @@ export default function EnhanceLocalPage() {
   useEffect(() => {
     return () => {
       abortRef.current?.abort()
-      upscalerRef.current?.abort?.()
-      upscalerRef.current?.dispose?.()
+      for (const upscaler of upscalerRef.current.values()) {
+        upscaler.abort?.()
+        upscaler.dispose?.()
+      }
+      upscalerRef.current.clear()
       if (sourceRef.current) URL.revokeObjectURL(sourceRef.current)
       if (resultRef.current) URL.revokeObjectURL(resultRef.current)
     }
@@ -417,27 +448,34 @@ export default function EnhanceLocalPage() {
     }
   }
 
-  async function getUpscaler() {
-    if (upscalerRef.current) return upscalerRef.current
+  async function getUpscaler(targetScale) {
+    const modelScale = targetScale === 4 ? 4 : 2
+    const cached = upscalerRef.current.get(modelScale)
+    if (cached) return cached
 
     setLoadingAi(true)
 
     try {
-      await loadAiRuntime()
-      const upscaler = new window.Upscaler({
-        model: window.DefaultUpscalerJSModel,
-      })
-      upscalerRef.current = upscaler
+      const model = await loadAiRuntime(modelScale)
+      const upscaler = new window.Upscaler({ model })
+      upscalerRef.current.set(modelScale, upscaler)
       return upscaler
     } finally {
       setLoadingAi(false)
     }
   }
 
-  async function runAiPass(upscaler, input, signal, start, span) {
+  async function runAiPass(
+    upscaler,
+    input,
+    signal,
+    start,
+    span,
+    targetScale
+  ) {
     return upscaler.upscale(input, {
       output: 'base64',
-      patchSize: 64,
+      patchSize: targetScale === 4 ? 32 : 64,
       padding: 4,
       awaitNextFrame: true,
       signal,
@@ -472,7 +510,7 @@ export default function EnhanceLocalPage() {
     setProgress(2)
 
     try {
-      const upscaler = await getUpscaler()
+      const upscaler = await getUpscaler(scale)
 
       if (controller.signal.aborted) return
 
@@ -485,33 +523,14 @@ export default function EnhanceLocalPage() {
         intensity
       )
 
-      let enhanced
-
-      if (scale === 2) {
-        enhanced = await runAiPass(
-          upscaler,
-          preparedSource,
-          controller.signal,
-          8,
-          86
-        )
-      } else {
-        const firstPass = await runAiPass(
-          upscaler,
-          preparedSource,
-          controller.signal,
-          8,
-          42
-        )
-
-        enhanced = await runAiPass(
-          upscaler,
-          firstPass,
-          controller.signal,
-          50,
-          44
-        )
-      }
+      const enhanced = await runAiPass(
+        upscaler,
+        preparedSource,
+        controller.signal,
+        8,
+        86,
+        scale
+      )
 
       if (controller.signal.aborted) return
 
