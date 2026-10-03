@@ -2007,6 +2007,7 @@ export default function ChatRoomPage() {
   const jumpHandledRef = useRef('')
   const pollCursorRef = useRef('')
   const incrementalLoadingRef = useRef(false)
+  const roomLoadingRef = useRef(false)
   const lastVisibilityRefreshAtRef = useRef(0)
   const [conversation, setConversation] = useState(null)
   const [blockStatus, setBlockStatus] = useState({
@@ -2049,7 +2050,9 @@ export default function ChatRoomPage() {
       includeMeta = true,
       signal,
     } = {}) => {
-      if (!conversationId) return
+      if (!conversationId || roomLoadingRef.current) return
+
+      roomLoadingRef.current = true
 
       if (!silent) setLoading(true)
 
@@ -2186,6 +2189,8 @@ export default function ChatRoomPage() {
           )
         }
       } finally {
+        roomLoadingRef.current = false
+
         if (!silent && !signal?.aborted) {
           setLoading(false)
         }
@@ -2202,7 +2207,8 @@ export default function ChatRoomPage() {
     async ({ signal } = {}) => {
       if (
         !conversationId ||
-        incrementalLoadingRef.current
+        incrementalLoadingRef.current ||
+        roomLoadingRef.current
       ) {
         return
       }
