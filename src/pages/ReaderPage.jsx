@@ -6625,64 +6625,66 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     }
 
     function startQualifiedViewRule() {
-      qualifiedTimer = window.setInterval(async () => {
-        if (
-          cancelled ||
-          qualifiedRequestBusy ||
-          document.visibilityState !== 'visible'
-        ) {
-          return
-        }
+  qualifiedTimer = window.setInterval(async () => {
+    if (
+      cancelled ||
+      qualifiedRequestBusy ||
+      document.visibilityState !== 'visible'
+    ) {
+      return
+    }
 
-        activeSeconds += 1
+    activeSeconds += 1
 
-        if (
-          activeSeconds < requiredSeconds ||
-          readingProgressRef.current < requiredProgress
-        ) {
-          return
-        }
+    if (
+      activeSeconds < requiredSeconds ||
+      readingProgressRef.current < requiredProgress
+    ) {
+      return
+    }
 
-        qualifiedRequestBusy = true
-        window.clearInterval(qualifiedTimer)
-        qualifiedTimer = null
+    qualifiedRequestBusy = true
+    window.clearInterval(qualifiedTimer)
+    qualifiedTimer = null
 
-        try {
-  await requestView('qualified')
-} catch (error) {
-  if (!cancelled) {
-    console.error('VIEW FLOW ERROR:', error)
+    try {
+      await requestView('qualified')
+    } catch (error) {
+      if (!cancelled) {
+        console.error('VIEW FLOW ERROR:', error)
+      }
+    }
+  }, 1000)
+}
+
+async function beginViewFlow() {
+  try {
+    const result = await requestView('fast')
+
+    if (cancelled) return
+
+    if (
+      result.counted ||
+      result.reason === 'fast_cooldown'
+    ) {
+      return
+    }
+
+    if (
+      result.reason === 'qualified_view_required' ||
+      result.requires_qualified_view === true
+    ) {
+      startQualifiedViewRule()
+      return
+    }
+  } catch (error) {
+    if (!cancelled) {
+      console.error('VIEW FLOW ERROR:', error)
+    }
   }
 }
 
-    async function beginViewFlow() {
-      try {
-        const result = await requestView('fast')
-
-        if (cancelled) return
-
-        if (
-          result.counted ||
-          result.reason === 'fast_cooldown'
-        ) {
-          return
-        }
-
-        if (
-          result.reason === 'qualified_view_required' ||
-          result.requires_qualified_view === true
-        ) {
-          startQualifiedViewRule()
-          return
-        }
-
-        } catch (error) {
-  if (!cancelled) {
-    console.error('VIEW FLOW ERROR:', error)
-  }
-}
-
-    beginViewFlow()
+beginViewFlow()
 
     return () => {
       cancelled = true
