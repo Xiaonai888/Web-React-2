@@ -2588,6 +2588,15 @@ const [toast, setToast] = useState('')
     useState(0)
 
   const toastTimerRef = useRef(null)
+  const commentFetchRef = useRef({
+    key: '',
+    pending: false,
+    completedAt: 0,
+  })
+  const focusFetchKey =
+    targetType === 'author_post'
+      ? `${focusComment?.id || ''}:${focusParentComment?.id || ''}:${threadComment?.id || ''}`
+      : `${threadComment?.id || ''}`
   const isModal = variant === 'modal'
   const currentUser = useMemo(
     () => getCurrentUser(),
@@ -2706,6 +2715,31 @@ async function fetchComments(
       return
     }
 
+    const requestKey = `${targetType}:${targetId}:${nextPage}:${sort}:${
+      targetType === 'author_post' ? focusFetchKey : ''
+    }`
+
+    if (
+      !append &&
+      commentFetchRef.current.key === requestKey &&
+      (
+        commentFetchRef.current.pending ||
+        Date.now() - commentFetchRef.current.completedAt < 5000
+      )
+    ) {
+      return
+    }
+
+    if (!append) {
+      commentFetchRef.current = {
+        key: requestKey,
+        pending: true,
+        completedAt: 0,
+      }
+    }
+
+    let requestSucceeded = false
+
     try {
       if (append) {
         setLoadingMore(true)
@@ -2782,12 +2816,24 @@ const nextComments =
       onCommentsChange?.(
         nextComments
       )
+      requestSucceeded = true
     } catch (error) {
       showToast(
         error.message ||
           t('commentSection.failedLoadCommentsPeriod')
       )
     } finally {
+      if (
+        !append &&
+        commentFetchRef.current.key === requestKey
+      ) {
+        commentFetchRef.current = {
+          key: requestKey,
+          pending: false,
+          completedAt: requestSucceeded ? Date.now() : 0,
+        }
+      }
+
       if (append) {
         setLoadingMore(false)
       } else {
@@ -2804,10 +2850,9 @@ const nextComments =
   fetchComments(1, false)
 }, [
   targetId,
+  targetType,
   sort,
-  focusComment?.id,
-  focusParentComment?.id,
-  threadComment?.id,
+  focusFetchKey,
 ])
 
   const isBanned = false
