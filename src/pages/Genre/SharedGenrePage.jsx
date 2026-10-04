@@ -26,6 +26,9 @@ registerTranslationNamespace('sharedGenrePage', {
     allGenre: 'All {{genre}}',
     noStoriesFound: 'No stories found',
     storiesWillAppear: '{{genre}} stories will appear here after publishing.',
+    loadMore: 'Load more',
+    loadingMore: 'Loading...',
+    loadMoreFailed: 'Could not load more stories. Please try again.',
     romance: 'Romance',
     fantasy: 'Fantasy',
     action: 'Action',
@@ -77,6 +80,9 @@ registerTranslationNamespace('sharedGenrePage', {
     allGenre: '{{genre}} ទាំងអស់',
     noStoriesFound: 'រកមិនឃើញរឿង',
     storiesWillAppear: 'រឿង {{genre}} នឹងបង្ហាញនៅទីនេះបន្ទាប់ពីបានបោះពុម្ព។',
+    loadMore: 'បង្ហាញបន្ថែម',
+    loadingMore: 'កំពុងផ្ទុក...',
+    loadMoreFailed: 'មិនអាចផ្ទុករឿងបន្ថែមបានទេ។ សូមសាកម្តងទៀត។',
     romance: 'មនោសញ្ចេតនា',
     fantasy: 'Fantasy',
     action: 'សកម្មភាព',
@@ -128,6 +134,9 @@ registerTranslationNamespace('sharedGenrePage', {
     allGenre: '全部 {{genre}}',
     noStoriesFound: '未找到故事',
     storiesWillAppear: '发布后，{{genre}} 故事会显示在这里。',
+    loadMore: '加载更多',
+    loadingMore: '加载中...',
+    loadMoreFailed: '无法加载更多故事，请重试。',
     romance: '爱情',
     fantasy: '奇幻',
     action: '动作',
@@ -179,6 +188,9 @@ registerTranslationNamespace('sharedGenrePage', {
     allGenre: 'すべての {{genre}}',
     noStoriesFound: 'ストーリーが見つかりません',
     storiesWillAppear: '公開後、{{genre}} のストーリーがここに表示されます。',
+    loadMore: 'さらに読み込む',
+    loadingMore: '読み込み中...',
+    loadMoreFailed: 'ストーリーを追加で読み込めませんでした。もう一度お試しください。',
     romance: 'ロマンス',
     fantasy: 'ファンタジー',
     action: 'アクション',
@@ -230,6 +242,9 @@ registerTranslationNamespace('sharedGenrePage', {
     allGenre: '모든 {{genre}}',
     noStoriesFound: '스토리를 찾을 수 없습니다',
     storiesWillAppear: '게시된 {{genre}} 스토리가 여기에 표시됩니다.',
+    loadMore: '더 보기',
+    loadingMore: '불러오는 중...',
+    loadMoreFailed: '스토리를 더 불러오지 못했습니다. 다시 시도해 주세요.',
     romance: '로맨스',
     fantasy: '판타지',
     action: '액션',
@@ -710,7 +725,12 @@ export default function SharedGenrePage({
   const [stories, setStories] = useState([])
   const [genreInfo, setGenreInfo] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState(null)
   const [message, setMessage] = useState('')
+  const [loadMoreError, setLoadMoreError] = useState('')
+  const loadMoreControllerRef = useRef(null)
   const latestScrollRef = useRef(null)
   const latestDragRef = useRef({
     active: false,
@@ -721,102 +741,166 @@ export default function SharedGenrePage({
   })
 
   useEffect(() => {
-  const controller = new AbortController()
-  let ignore = false
+    const controller = new AbortController()
+    let ignore = false
 
-  async function loadGenrePage() {
-    setMessage('')
+    async function loadGenrePage() {
+      loadMoreControllerRef.current?.abort()
+      setLoadingMore(false)
+      setMessage('')
+      setLoadMoreError('')
+      setStories([])
+      setHasMore(false)
+      setNextCursor(null)
 
-    const genreCacheKey = getHomeCacheKey({
-      section: 'genres',
-      language: 'all',
-      params: {
-        list: 'all',
-        include_inactive: true,
-        schema: 1,
-      },
-    })
+      const genreCacheKey = getHomeCacheKey({
+        section: 'genres',
+        language: 'all',
+        params: {
+          list: 'all',
+          include_inactive: true,
+          schema: 1,
+        },
+      })
 
-    const storiesCacheKey = getHomeCacheKey({
-      section: 'stories',
-      language: getStoryLanguageId(),
-      params: {
-        page: 'shared-genre',
-        genre: normalizedGenreSlug,
-        sort: 'latest',
-        limit: 100,
-        schema: 1,
-      },
-    })
+      const storiesCacheKey = getHomeCacheKey({
+        section: 'stories',
+        language: getStoryLanguageId(),
+        params: {
+          page: 'shared-genre',
+          genre: normalizedGenreSlug,
+          sort: 'latest',
+          limit: 20,
+          schema: 2,
+        },
+      })
 
-    const [cachedGenreList, cachedStories] =
-      await Promise.all([
-        loadHomeCache(genreCacheKey, {
-          maxAgeMs: SHARED_GENRE_CACHE_MAX_AGE_MS,
-          allowExpired: true,
-        }),
-        loadHomeCache(storiesCacheKey, {
-          maxAgeMs: SHARED_GENRE_CACHE_MAX_AGE_MS,
-          allowExpired: true,
-        }),
-      ])
+      const [cachedGenreList, cachedStories] =
+        await Promise.all([
+          loadHomeCache(genreCacheKey, {
+            maxAgeMs: SHARED_GENRE_CACHE_MAX_AGE_MS,
+            allowExpired: true,
+          }),
+          loadHomeCache(storiesCacheKey, {
+            maxAgeMs: SHARED_GENRE_CACHE_MAX_AGE_MS,
+            allowExpired: true,
+          }),
+        ])
 
-    if (ignore || controller.signal.aborted) return
+      if (ignore || controller.signal.aborted) return
 
-    const cachedGenres = Array.isArray(
-      cachedGenreList?.data
-    )
-      ? cachedGenreList.data
-      : null
-
-    const hasCachedStories = Array.isArray(
-      cachedStories?.data
-    )
-
-    const cachedGenreInfo = cachedGenres?.find(
-      (genre) =>
-        toSlug(genre.slug) === normalizedGenreSlug ||
-        toSlug(genre.name) === normalizedGenreSlug
-    ) || null
-
-    if (cachedGenreInfo) {
-      setGenreInfo(cachedGenreInfo)
-      setGenreName(
-        cachedGenreInfo.name || fallbackGenreName
+      const cachedGenres = Array.isArray(
+        cachedGenreList?.data
       )
-    } else {
-      setGenreInfo(null)
-      setGenreName(fallbackGenreName)
-    }
+        ? cachedGenreList.data
+        : null
 
-    if (hasCachedStories) {
-      setStories(cachedStories.data)
-      setLoading(false)
-    }
+      const cachedStoryList = Array.isArray(
+        cachedStories?.data?.stories
+      )
+        ? cachedStories.data.stories
+        : null
 
-    const needsGenreRefresh =
-      !cachedGenreList?.isFresh || !cachedGenres
+      const cachedPagination =
+        cachedStories?.data?.pagination || null
 
-    const needsStoriesRefresh =
-      !cachedStories?.isFresh || !hasCachedStories
+      const hasCachedStories = Array.isArray(
+        cachedStoryList
+      )
 
-    if (!needsGenreRefresh && !needsStoriesRefresh) {
-      return
-    }
+      const cachedGenreInfo = cachedGenres?.find(
+        (genre) =>
+          toSlug(genre.slug) === normalizedGenreSlug ||
+          toSlug(genre.name) === normalizedGenreSlug
+      ) || null
 
-    try {
-      if (!hasCachedStories) {
-        setLoading(true)
+      if (cachedGenreInfo) {
+        setGenreInfo(cachedGenreInfo)
+        setGenreName(
+          cachedGenreInfo.name || fallbackGenreName
+        )
+      } else {
+        setGenreInfo(null)
+        setGenreName(fallbackGenreName)
       }
 
-      setMessage('')
+      if (hasCachedStories) {
+        setStories(cachedStoryList)
+        setHasMore(
+          Boolean(cachedPagination?.has_more)
+        )
+        setNextCursor(
+          cachedPagination?.next_cursor || null
+        )
+        setLoading(false)
+      }
 
-      const genreRequest = needsGenreRefresh
-        ? fetch(
-            `${API_URL}/api/genres?include_inactive=true`,
-            { signal: controller.signal }
-          )
-            .then(async (response) => {
+      const needsGenreRefresh =
+        !cachedGenreList?.isFresh || !cachedGenres
+
+      const needsStoriesRefresh =
+        !cachedStories?.isFresh || !hasCachedStories
+
+      if (!needsGenreRefresh && !needsStoriesRefresh) {
+        return
+      }
+
+      try {
+        if (!hasCachedStories) {
+          setLoading(true)
+        }
+
+        const genreRequest = needsGenreRefresh
+          ? fetch(
+              `${API_URL}/api/genres?include_inactive=true`,
+              { signal: controller.signal }
+            )
+              .then(async (response) => {
+                const data = await response
+                  .json()
+                  .catch(() => ({}))
+
+                if (!response.ok || data.ok === false) {
+                  throw new Error(
+                    data.message ||
+                      getDisplayText('sharedGenrePage.failedLoadGenres')
+                  )
+                }
+
+                return Array.isArray(data.genres)
+                  ? data.genres
+                  : []
+              })
+          : Promise.resolve(cachedGenres || [])
+
+        const storiesRequest = needsStoriesRefresh
+          ? genreRequest.then(async (nextGenres) => {
+              const resolvedGenreInfo =
+                nextGenres.find(
+                  (genre) =>
+                    toSlug(genre.slug) === normalizedGenreSlug ||
+                    toSlug(genre.name) === normalizedGenreSlug
+                ) ||
+                cachedGenreInfo ||
+                null
+
+              const resolvedGenreName =
+                resolvedGenreInfo?.name || fallbackGenreName
+
+              const params = new URLSearchParams({
+                genre: resolvedGenreName,
+                limit: '20',
+                sort: 'latest',
+                genre_pagination: '1',
+              })
+
+              const response = await fetch(
+                addStoryLanguageParam(
+                  `${API_URL}/api/public/stories?${params.toString()}`
+                ),
+                { signal: controller.signal }
+              )
+
               const data = await response
                 .json()
                 .catch(() => ({}))
@@ -824,136 +908,238 @@ export default function SharedGenrePage({
               if (!response.ok || data.ok === false) {
                 throw new Error(
                   data.message ||
-                    getDisplayText('sharedGenrePage.failedLoadGenres')
+                    getDisplayText('sharedGenrePage.failedLoadStories')
                 )
               }
 
-              return Array.isArray(data.genres)
-                ? data.genres
-                : []
+              return {
+                stories: deduplicateStories(
+                  Array.isArray(data.stories)
+                    ? data.stories
+                    : []
+                ).map(normalizeStory),
+                pagination: {
+                  has_more: Boolean(
+                    data.pagination?.has_more
+                  ),
+                  next_cursor:
+                    data.pagination?.next_cursor || null,
+                },
+              }
             })
-        : Promise.resolve(cachedGenres || [])
+          : Promise.resolve({
+              stories: cachedStoryList || [],
+              pagination: cachedPagination || {},
+            })
 
-      const storiesRequest = needsStoriesRefresh
-  ? genreRequest.then((nextGenres) => {
-      const resolvedGenreInfo =
-        nextGenres.find(
-          (genre) =>
-            toSlug(genre.slug) === normalizedGenreSlug ||
-            toSlug(genre.name) === normalizedGenreSlug
-        ) ||
-        cachedGenreInfo ||
-        null
+        const [genreResult, storiesResult] =
+          await Promise.allSettled([
+            genreRequest,
+            storiesRequest,
+          ])
+
+        if (ignore || controller.signal.aborted) return
+
+        if (genreResult.status === 'fulfilled') {
+          const nextGenres = genreResult.value
+          const nextGenreInfo =
+            nextGenres.find(
+              (genre) =>
+                toSlug(genre.slug) ===
+                  normalizedGenreSlug ||
+                toSlug(genre.name) ===
+                  normalizedGenreSlug
+            ) || null
+
+          setGenreInfo(nextGenreInfo)
+          setGenreName(
+            nextGenreInfo?.name || fallbackGenreName
+          )
+
+          if (needsGenreRefresh) {
+            await saveHomeCache(
+              genreCacheKey,
+              nextGenres,
+              {
+                maxAgeMs:
+                  SHARED_GENRE_CACHE_MAX_AGE_MS,
+              }
+            )
+          }
+        }
+
+        if (storiesResult.status === 'fulfilled') {
+          const nextStories =
+            storiesResult.value.stories || []
+          const nextPagination =
+            storiesResult.value.pagination || {}
+
+          setStories(nextStories)
+          setHasMore(
+            Boolean(nextPagination.has_more)
+          )
+          setNextCursor(
+            nextPagination.next_cursor || null
+          )
+
+          if (needsStoriesRefresh) {
+            await saveHomeCache(
+              storiesCacheKey,
+              {
+                stories: nextStories,
+                pagination: nextPagination,
+              },
+              {
+                maxAgeMs:
+                  SHARED_GENRE_CACHE_MAX_AGE_MS,
+              }
+            )
+          }
+        } else if (!hasCachedStories) {
+          throw storiesResult.reason
+        }
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+
+        if (!ignore && !hasCachedStories) {
+          setStories([])
+          setMessage(
+            error.message === 'Failed to fetch'
+              ? getDisplayText('sharedGenrePage.cannotConnect')
+              : error.message ||
+                  getDisplayText('sharedGenrePage.failedLoadStories')
+          )
+        }
+      } finally {
+        if (!ignore && !controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadGenrePage()
+
+    return () => {
+      ignore = true
+      controller.abort()
+      loadMoreControllerRef.current?.abort()
+    }
+  }, [fallbackGenreName, normalizedGenreSlug])
+
+  const loadMoreStories = async () => {
+    if (
+      loading ||
+      loadingMore ||
+      !hasMore ||
+      !nextCursor
+    ) {
+      return
+    }
+
+    loadMoreControllerRef.current?.abort()
+    const controller = new AbortController()
+    loadMoreControllerRef.current = controller
+
+    try {
+      setLoadingMore(true)
+      setLoadMoreError('')
 
       const resolvedGenreName =
-        resolvedGenreInfo?.name || fallbackGenreName
+        genreInfo?.name || genreName || fallbackGenreName
 
-      return fetch(
+      const params = new URLSearchParams({
+        genre: resolvedGenreName,
+        limit: '20',
+        sort: 'latest',
+        genre_pagination: '1',
+        cursor: nextCursor,
+      })
+
+      const response = await fetch(
         addStoryLanguageParam(
-          `${API_URL}/api/public/stories?genre=${encodeURIComponent(
-            resolvedGenreName
-          )}&limit=100&sort=latest`
+          `${API_URL}/api/public/stories?${params.toString()}`
         ),
         { signal: controller.signal }
-      ).then(async (response) => {
-        const data = await response
-          .json()
-          .catch(() => ({}))
+      )
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(
-            data.message || getDisplayText('sharedGenrePage.failedLoadStories')
-          )
-        }
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-        return deduplicateStories(
-          Array.isArray(data.stories)
-            ? data.stories
-            : []
-        ).map(normalizeStory)
-      })
-    })
-  : Promise.resolve(cachedStories.data)
-
-
-      const [genreResult, storiesResult] =
-        await Promise.allSettled([
-          genreRequest,
-          storiesRequest,
-        ])
-
-      if (ignore || controller.signal.aborted) return
-
-      if (genreResult.status === 'fulfilled') {
-        const nextGenres = genreResult.value
-        const nextGenreInfo =
-          nextGenres.find(
-            (genre) =>
-              toSlug(genre.slug) ===
-                normalizedGenreSlug ||
-              toSlug(genre.name) ===
-                normalizedGenreSlug
-          ) || null
-
-        setGenreInfo(nextGenreInfo)
-        setGenreName(
-          nextGenreInfo?.name || fallbackGenreName
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
+            getDisplayText('sharedGenrePage.loadMoreFailed')
         )
-
-        if (needsGenreRefresh) {
-          await saveHomeCache(
-            genreCacheKey,
-            nextGenres,
-            {
-              maxAgeMs:
-                SHARED_GENRE_CACHE_MAX_AGE_MS,
-            }
-          )
-        }
       }
 
-      if (storiesResult.status === 'fulfilled') {
-        setStories(storiesResult.value)
+      const nextStories = deduplicateStories(
+        Array.isArray(data.stories)
+          ? data.stories
+          : []
+      ).map(normalizeStory)
 
-        if (needsStoriesRefresh) {
-          await saveHomeCache(
-            storiesCacheKey,
-            storiesResult.value,
-            {
-              maxAgeMs:
-                SHARED_GENRE_CACHE_MAX_AGE_MS,
-            }
-          )
-        }
-      } else if (!hasCachedStories) {
-        throw storiesResult.reason
+      if (controller.signal.aborted) return
+
+      const mergedStories = deduplicateStories([
+        ...stories,
+        ...nextStories,
+      ])
+
+      const pagination = {
+        has_more: Boolean(
+          data.pagination?.has_more
+        ),
+        next_cursor:
+          data.pagination?.next_cursor || null,
       }
+
+      setStories(mergedStories)
+      setHasMore(pagination.has_more)
+      setNextCursor(pagination.next_cursor)
+
+      const storiesCacheKey = getHomeCacheKey({
+        section: 'stories',
+        language: getStoryLanguageId(),
+        params: {
+          page: 'shared-genre',
+          genre: normalizedGenreSlug,
+          sort: 'latest',
+          limit: 20,
+          schema: 2,
+        },
+      })
+
+      await saveHomeCache(
+        storiesCacheKey,
+        {
+          stories: mergedStories,
+          pagination,
+        },
+        {
+          maxAgeMs:
+            SHARED_GENRE_CACHE_MAX_AGE_MS,
+        }
+      )
     } catch (error) {
       if (error?.name === 'AbortError') return
 
-      if (!ignore && !hasCachedStories) {
-        setStories([])
-        setMessage(
-          error.message === 'Failed to fetch'
-            ? getDisplayText('sharedGenrePage.cannotConnect')
-            : error.message ||
-                getDisplayText('sharedGenrePage.failedLoadStories')
-        )
-      }
+      setLoadMoreError(
+        error.message === 'Failed to fetch'
+          ? getDisplayText('sharedGenrePage.cannotConnect')
+          : error.message ||
+              getDisplayText('sharedGenrePage.loadMoreFailed')
+      )
     } finally {
-      if (!ignore && !controller.signal.aborted) {
-        setLoading(false)
+      if (loadMoreControllerRef.current === controller) {
+        loadMoreControllerRef.current = null
+      }
+
+      if (!controller.signal.aborted) {
+        setLoadingMore(false)
       }
     }
   }
-
-  loadGenrePage()
-
-  return () => {
-    ignore = true
-    controller.abort()
-  }
-}, [fallbackGenreName, normalizedGenreSlug])
 
 
   const quickButtons = useMemo(
@@ -989,7 +1175,7 @@ export default function SharedGenrePage({
     () => sortByLatest(stories).slice(0, 6),
     [stories]
   )
-  const allStories = useMemo(() => stories.slice(0, 20), [stories])
+  const allStories = useMemo(() => stories, [stories])
 
   const heroImage = useMemo(() => {
     const found = topStories.find(
@@ -1284,6 +1470,27 @@ export default function SharedGenrePage({
                   </p>
                 </div>
               )}
+
+              {hasMore ? (
+                <div className="mt-8 flex flex-col items-center gap-3 px-4">
+                  {loadMoreError ? (
+                    <p className="text-center text-[12px] font-semibold text-[var(--shadow-danger)]">
+                      {loadMoreError}
+                    </p>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={loadMoreStories}
+                    disabled={loadingMore}
+                    className="min-w-[140px] rounded-full bg-[var(--shadow-text-primary)] px-5 py-3 text-[13px] font-semibold text-[var(--shadow-bg-surface)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loadingMore
+                      ? t('sharedGenrePage.loadingMore')
+                      : t('sharedGenrePage.loadMore')}
+                  </button>
+                </div>
+              ) : null}
             </section>
           </div>
         ) : null}
