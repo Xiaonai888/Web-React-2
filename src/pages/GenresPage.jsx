@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
@@ -68,6 +68,9 @@ registerTranslationNamespace('genresPage', {
     filters: 'Filters',
     noStoriesFound: 'No stories found',
     tryAnotherGenreFilter: 'Try another genre or filter.',
+    loadMore: 'Load more',
+    loadingMore: 'Loading...',
+    loadMoreFailed: 'Could not load more stories. Please try again.',
   },
   km: {
     all: 'ទាំងអស់',
@@ -131,6 +134,9 @@ registerTranslationNamespace('genresPage', {
     filters: 'Filter',
     noStoriesFound: 'រកមិនឃើញរឿង',
     tryAnotherGenreFilter: 'សាកប្រភេទរឿង ឬ Filter ផ្សេងទៀត។',
+    loadMore: 'បង្ហាញបន្ថែម',
+    loadingMore: 'កំពុងផ្ទុក...',
+    loadMoreFailed: 'មិនអាចផ្ទុករឿងបន្ថែមបានទេ។ សូមសាកម្តងទៀត។',
   },
   zh: {
     all: '全部',
@@ -194,6 +200,9 @@ registerTranslationNamespace('genresPage', {
     filters: '筛选',
     noStoriesFound: '未找到故事',
     tryAnotherGenreFilter: '请尝试其他类型或筛选条件。',
+    loadMore: '加载更多',
+    loadingMore: '加载中...',
+    loadMoreFailed: '无法加载更多故事，请重试。',
   },
   ja: {
     all: 'すべて',
@@ -257,6 +266,9 @@ registerTranslationNamespace('genresPage', {
     filters: 'フィルター',
     noStoriesFound: 'ストーリーが見つかりません',
     tryAnotherGenreFilter: '別のジャンルまたはフィルターをお試しください。',
+    loadMore: 'さらに読み込む',
+    loadingMore: '読み込み中...',
+    loadMoreFailed: 'ストーリーを追加で読み込めませんでした。もう一度お試しください。',
   },
   ko: {
     all: '전체',
@@ -320,6 +332,9 @@ registerTranslationNamespace('genresPage', {
     filters: '필터',
     noStoriesFound: '스토리를 찾을 수 없습니다',
     tryAnotherGenreFilter: '다른 장르나 필터를 사용해 보세요.',
+    loadMore: '더 보기',
+    loadingMore: '불러오는 중...',
+    loadMoreFailed: '스토리를 더 불러오지 못했습니다. 다시 시도해 주세요.',
   },
 })
 
@@ -712,7 +727,12 @@ export default function GenresPage() {
   )
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState(null)
   const [message, setMessage] = useState('')
+  const [loadMoreError, setLoadMoreError] = useState('')
+  const loadMoreControllerRef = useRef(null)
 
   useEffect(() => {
     try {
@@ -736,49 +756,165 @@ export default function GenresPage() {
   }, [filtersOpen])
 
   useEffect(() => {
-  const controller = new AbortController()
-  let ignore = false
+    const controller = new AbortController()
+    let ignore = false
 
-  async function loadBooks() {
-    const cacheKey = getHomeCacheKey({
-      section: 'stories',
-      language: getStoryLanguageId(),
-      params: {
-        page: 'genres',
-        sort: 'updated',
-        limit: 120,
-        schema: 2,
-      },
-    })
+    async function loadBooks() {
+      const cacheKey = getHomeCacheKey({
+        section: 'stories',
+        language: getStoryLanguageId(),
+        params: {
+          page: 'genres',
+          genre: activeGenre,
+          sort: 'updated',
+          limit: 20,
+          schema: 3,
+        },
+      })
 
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
-      allowExpired: true,
-    })
+      setLoading(true)
+      setMessage('')
+      setLoadMoreError('')
+      setBooks([])
+      setHasMore(false)
+      setNextCursor(null)
 
-    if (ignore || controller.signal.aborted) return
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
 
-    const hasCachedBooks = Array.isArray(cached?.data)
+      if (ignore || controller.signal.aborted) return
 
-    if (hasCachedBooks) {
-      setBooks(cached.data)
-      setLoading(false)
+      const cachedBooks = Array.isArray(cached?.data?.books)
+        ? cached.data.books
+        : null
+      const cachedPagination = cached?.data?.pagination || null
+
+      if (cachedBooks) {
+        setBooks(cachedBooks)
+        setHasMore(Boolean(cachedPagination?.has_more))
+        setNextCursor(cachedPagination?.next_cursor || null)
+        setLoading(false)
+      }
+
+      if (cached?.isFresh && cachedBooks) {
+        return
+      }
+
+      try {
+        const params = new URLSearchParams({
+          limit: '20',
+          sort: 'updated',
+          genre_pagination: '1',
+        })
+
+        if (activeGenre !== 'All') {
+          params.set('genre', activeGenre)
+        }
+
+        const response = await fetch(
+          addStoryLanguageParam(
+            `${API_BASE_URL}/api/public/stories?${params.toString()}`
+          ),
+          { signal: controller.signal }
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(
+            data.message || t('genresPage.loadFailed')
+          )
+        }
+
+        const nextBooks = (
+          Array.isArray(data.stories) ? data.stories : []
+        )
+          .map(normalizeBook)
+          .filter((book) => book.id)
+
+        if (ignore || controller.signal.aborted) return
+
+        const pagination = {
+          has_more: Boolean(data.pagination?.has_more),
+          next_cursor: data.pagination?.next_cursor || null,
+        }
+
+        setBooks(nextBooks)
+        setHasMore(pagination.has_more)
+        setNextCursor(pagination.next_cursor)
+
+        await saveHomeCache(
+          cacheKey,
+          {
+            books: nextBooks,
+            pagination,
+          },
+          {
+            maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
+          }
+        )
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+
+        if (!ignore && !cachedBooks) {
+          setBooks([])
+          setMessage(
+            error.message === 'Failed to fetch'
+              ? t('genresPage.cannotConnect')
+              : error.message || t('genresPage.loadFailed')
+          )
+        }
+      } finally {
+        if (!ignore && !controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
     }
 
-    if (cached?.isFresh && hasCachedBooks) {
+    loadMoreControllerRef.current?.abort()
+    loadBooks()
+
+    return () => {
+      ignore = true
+      controller.abort()
+      loadMoreControllerRef.current?.abort()
+    }
+  }, [activeGenre])
+
+  const loadMoreBooks = async () => {
+    if (
+      loading ||
+      loadingMore ||
+      !hasMore ||
+      !nextCursor
+    ) {
       return
     }
 
-    try {
-      if (!hasCachedBooks) {
-        setLoading(true)
-      }
+    loadMoreControllerRef.current?.abort()
+    const controller = new AbortController()
+    loadMoreControllerRef.current = controller
 
-      setMessage('')
+    try {
+      setLoadingMore(true)
+      setLoadMoreError('')
+
+      const params = new URLSearchParams({
+        limit: '20',
+        sort: 'updated',
+        genre_pagination: '1',
+        cursor: nextCursor,
+      })
+
+      if (activeGenre !== 'All') {
+        params.set('genre', activeGenre)
+      }
 
       const response = await fetch(
         addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=120&sort=updated`
+          `${API_BASE_URL}/api/public/stories?${params.toString()}`
         ),
         { signal: controller.signal }
       )
@@ -787,7 +923,7 @@ export default function GenresPage() {
 
       if (!response.ok || data.ok === false) {
         throw new Error(
-          data.message || t('genresPage.loadFailed')
+          data.message || t('genresPage.loadMoreFailed')
         )
       }
 
@@ -797,38 +933,44 @@ export default function GenresPage() {
         .map(normalizeBook)
         .filter((book) => book.id)
 
-      if (ignore || controller.signal.aborted) return
+      if (controller.signal.aborted) return
 
-      setBooks(nextBooks)
+      setBooks((current) => {
+        const seen = new Set(
+          current.map((book) => String(book.id))
+        )
 
-      await saveHomeCache(cacheKey, nextBooks, {
-        maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
+        return [
+          ...current,
+          ...nextBooks.filter((book) => {
+            const id = String(book.id)
+            if (!id || seen.has(id)) return false
+            seen.add(id)
+            return true
+          }),
+        ]
       })
+
+      setHasMore(Boolean(data.pagination?.has_more))
+      setNextCursor(data.pagination?.next_cursor || null)
     } catch (error) {
       if (error?.name === 'AbortError') return
 
-      if (!ignore && !hasCachedBooks) {
-        setBooks([])
-        setMessage(
-          error.message === 'Failed to fetch'
-            ? t('genresPage.cannotConnect')
-            : error.message || t('genresPage.loadFailed')
-        )
-      }
+      setLoadMoreError(
+        error.message === 'Failed to fetch'
+          ? t('genresPage.cannotConnect')
+          : error.message || t('genresPage.loadMoreFailed')
+      )
     } finally {
-      if (!ignore && !controller.signal.aborted) {
-        setLoading(false)
+      if (loadMoreControllerRef.current === controller) {
+        loadMoreControllerRef.current = null
+      }
+
+      if (!controller.signal.aborted) {
+        setLoadingMore(false)
       }
     }
   }
-
-  loadBooks()
-
-  return () => {
-    ignore = true
-    controller.abort()
-  }
-}, [])
 
   const filteredGenres = useMemo(() => {
     const keyword = query.trim().toLowerCase()
@@ -1011,7 +1153,7 @@ export default function GenresPage() {
         <section className="pt-4">
           {loading ? (
             <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
-              {Array.from({ length: 12 }).map((_, index) => (
+              {Array.from({ length: 20 }).map((_, index) => (
                 <div key={index}>
                   <div className="aspect-[2/3] animate-pulse rounded-[16px] bg-[#eef0f4] dark:bg-[var(--shadow-bg-elevated)]" />
                   <div className="mt-2 h-4 animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-elevated)]" />
@@ -1046,6 +1188,27 @@ export default function GenresPage() {
               <p className="mt-1 text-[12px] font-semibold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 {t('genresPage.tryAnotherGenreFilter')}
               </p>
+            </div>
+          ) : null}
+
+          {!loading && !message && hasMore ? (
+            <div className="mt-8 flex flex-col items-center gap-3">
+              {loadMoreError ? (
+                <p className="text-center text-[12px] font-semibold text-[#e5484d] dark:text-red-300">
+                  {loadMoreError}
+                </p>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={loadMoreBooks}
+                disabled={loadingMore}
+                className="min-w-[140px] rounded-full bg-[#111827] px-5 py-3 text-[13px] font-semibold text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-[#111827]"
+              >
+                {loadingMore
+                  ? t('genresPage.loadingMore')
+                  : t('genresPage.loadMore')}
+              </button>
             </div>
           ) : null}
         </section>
