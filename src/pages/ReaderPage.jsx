@@ -5322,6 +5322,7 @@ export default function ReaderPage() {
   const rewardAnimationTimerRef = useRef(null)
   const offlineReaderReleaseRef = useRef(null)
   const pendingViewedEpisodeRef = useRef(new Map())
+  const recheckOnReconnect = () => {
   const [offlineAccessExpiresAt, setOfflineAccessExpiresAt] = useState(0)
   const [offlineAccessExpired, setOfflineAccessExpired] = useState(false)
 
