@@ -21,6 +21,16 @@ function expiryTime(value) {
   return Number.isFinite(result) ? result : 0
 }
 
+async function requestPersistentStorage() {
+  try {
+    if (!navigator.storage?.persist) return false
+    if (navigator.storage.persisted && await navigator.storage.persisted()) return true
+    return Boolean(await navigator.storage.persist())
+  } catch {
+    return false
+  }
+}
+
 function openDatabase() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE, 1)
@@ -86,6 +96,7 @@ export async function saveOfflinePdf({ pdfId, title, blob, grant } = {}) {
     (await blob.slice(0, 5).text()) !== '%PDF-') {
     throw new Error('A complete PDF file is required')
   }
+  await requestPersistentStorage()
   const record = {
     key: pdfKey(accountId, id), accountId, pdfId: id,
     title: String(title || 'PDF'), blob, access, expiresAt, savedAt: Date.now(),
