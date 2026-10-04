@@ -5292,6 +5292,8 @@ export default function ReaderPage() {
   const SHOW_READER_INFO = false
   const navigate = useNavigate()
   const location = useLocation()
+  const offlineRequested =
+  new URLSearchParams(location.search).get('_shadow_offline') === '1'
   const { storyId, episodeId: routeEpisodeId } = useParams()
   const [activeEpisodeId, setActiveEpisodeId] = useState(routeEpisodeId)
   const episodeId = activeEpisodeId || routeEpisodeId
@@ -6290,7 +6292,7 @@ useEffect(() => {
         return
       }
 
-      if (navigator.onLine === false && await showOfflineFallback()) return
+      if ((offlineRequested || navigator.onLine === false) && await showOfflineFallback()) return
 
       const readTrace = {
         timestamp: new Date().toISOString(),
