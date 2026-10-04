@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
@@ -12,6 +12,9 @@ registerTranslationNamespace('genreStoriesPage', {
     completed: 'Completed',
     back: 'Back',
     retry: 'Retry',
+    loadMore: 'Load more',
+    loadingMore: 'Loading...',
+    loadMoreFailed: 'Could not load more stories. Please try again.',
     failedLoadStories: 'Failed to load stories',
     cannotConnect: 'Cannot connect to server.',
     completedBadge: 'COMPLETED',
@@ -61,6 +64,9 @@ registerTranslationNamespace('genreStoriesPage', {
     completed: 'បានបញ្ចប់',
     back: 'ត្រឡប់ក្រោយ',
     retry: 'សាកម្តងទៀត',
+    loadMore: 'បង្ហាញបន្ថែម',
+    loadingMore: 'កំពុងផ្ទុក...',
+    loadMoreFailed: 'មិនអាចផ្ទុករឿងបន្ថែមបានទេ។ សូមសាកម្តងទៀត។',
     failedLoadStories: 'មិនអាចផ្ទុករឿងបានទេ',
     cannotConnect: 'មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។',
     completedBadge: 'បានបញ្ចប់',
@@ -110,6 +116,9 @@ registerTranslationNamespace('genreStoriesPage', {
     completed: '已完结',
     back: '返回',
     retry: '重试',
+    loadMore: '加载更多',
+    loadingMore: '加载中...',
+    loadMoreFailed: '无法加载更多故事，请重试。',
     failedLoadStories: '无法加载故事',
     cannotConnect: '无法连接服务器。',
     completedBadge: '已完结',
@@ -159,6 +168,9 @@ registerTranslationNamespace('genreStoriesPage', {
     completed: '完結',
     back: '戻る',
     retry: '再試行',
+    loadMore: 'さらに読み込む',
+    loadingMore: '読み込み中...',
+    loadMoreFailed: 'ストーリーを追加で読み込めませんでした。もう一度お試しください。',
     failedLoadStories: 'ストーリーを読み込めませんでした',
     cannotConnect: 'サーバーに接続できません。',
     completedBadge: '完結',
@@ -208,6 +220,9 @@ registerTranslationNamespace('genreStoriesPage', {
     completed: '완결',
     back: '뒤로 가기',
     retry: '다시 시도',
+    loadMore: '더 보기',
+    loadingMore: '불러오는 중...',
+    loadMoreFailed: '스토리를 더 불러오지 못했습니다. 다시 시도해 주세요.',
     failedLoadStories: '스토리를 불러오지 못했습니다',
     cannotConnect: '서버에 연결할 수 없습니다.',
     completedBadge: '완결',
@@ -296,12 +311,18 @@ const GENRE_STORIES_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 const TAB_CONFIG = {
   latest: {
     labelKey: 'latest',
+    sort: 'latest',
+    storyStatus: '',
   },
   updates: {
     labelKey: 'updates',
+    sort: 'updated',
+    storyStatus: '',
   },
   completed: {
     labelKey: 'completed',
+    sort: 'latest',
+    storyStatus: 'Completed',
   },
 }
 
@@ -375,28 +396,6 @@ function isCompletedStory(story) {
   )
 }
 
-function getStoryGenreValues(story) {
-  return [
-    story?.main_genre,
-    story?.genre,
-    story?.category,
-    story?.genre_slug,
-    story?.category_slug,
-    ...(Array.isArray(story?.genres)
-      ? story.genres
-      : []),
-    ...(Array.isArray(story?.tags)
-      ? story.tags
-      : []),
-  ]
-}
-
-function matchesGenre(story, aliases) {
-  return getStoryGenreValues(story).some((value) =>
-    aliases.has(toSlug(value))
-  )
-}
-
 function normalizeStory(story) {
   return {
     id: story.id || story.story_id,
@@ -435,26 +434,6 @@ function deduplicateStories(stories) {
   })
 }
 
-async function requestStories(url) {
-  const response = await fetch(url)
-  const data = await response
-    .json()
-    .catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.message || getDisplayText('genreStoriesPage.failedLoadStories')
-    )
-  }
-
-  return (
-    data.stories ||
-    data.items ||
-    data.results ||
-    []
-  )
-}
-
 function StoryCover({ story, completed }) {
   const { t } = useDisplayTranslation()
   const title = getStoryTitle(story, t)
@@ -491,7 +470,7 @@ function StoryCover({ story, completed }) {
 function LoadingGrid() {
   return (
     <div className="grid grid-cols-2 gap-x-2 gap-y-5 px-4 pt-5 md:grid-cols-4 lg:grid-cols-6">
-      {Array.from({ length: 12 }).map(
+      {Array.from({ length: 20 }).map(
         (_, index) => (
           <div key={index}>
             <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[var(--shadow-bg-elevated)]" />
@@ -523,63 +502,205 @@ export default function GenreStoriesPage({
     useState(fallbackGenreName)
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState(null)
   const [message, setMessage] = useState('')
+  const [loadMoreError, setLoadMoreError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
+  const loadMoreControllerRef = useRef(null)
 
-    useEffect(() => {
-  const controller = new AbortController()
-  let ignore = false
+  const cacheKey = useMemo(
+    () =>
+      getHomeCacheKey({
+        section: 'stories',
+        language: getStoryLanguageId(),
+        params: {
+          page: 'genre-stories',
+          tab: activeTab,
+          genre: normalizedGenreSlug,
+          sort: tabConfig.sort,
+          story_status: tabConfig.storyStatus,
+          limit: 20,
+          schema: 2,
+        },
+      }),
+    [
+      activeTab,
+      normalizedGenreSlug,
+      tabConfig.sort,
+      tabConfig.storyStatus,
+    ]
+  )
 
-  async function loadStories() {
-    const cacheKey = getHomeCacheKey({
-      section: 'stories',
-      language: getStoryLanguageId(),
-      params: {
-        page: 'genre-stories',
-        genre: normalizedGenreSlug,
-        sort: 'latest',
-        limit: 100,
-        schema: 1,
-      },
-    })
+  useEffect(() => {
+    const controller = new AbortController()
+    let ignore = false
 
-    let hasCachedStories = false
+    async function loadStories() {
+      loadMoreControllerRef.current?.abort()
+      setLoadingMore(false)
+      setLoadMoreError('')
+      setStories([])
+      setHasMore(false)
+      setNextCursor(null)
+      setGenreName(fallbackGenreName)
+      setMessage('')
 
-    if (reloadKey === 0) {
-      const cached = await loadHomeCache(cacheKey, {
-        maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
-        allowExpired: true,
-      })
+      let cachedStories = null
+      let cachedPagination = null
 
-      if (ignore || controller.signal.aborted) return
+      if (reloadKey === 0) {
+        const cached = await loadHomeCache(cacheKey, {
+          maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
+          allowExpired: true,
+        })
 
-      hasCachedStories = Array.isArray(cached?.data)
+        if (ignore || controller.signal.aborted) return
 
-      if (hasCachedStories) {
-        setGenreName(fallbackGenreName)
-        setStories(cached.data)
-        setLoading(false)
-        setMessage('')
+        if (Array.isArray(cached?.data?.stories)) {
+          cachedStories = cached.data.stories
+          cachedPagination = cached.data.pagination || null
+        } else if (Array.isArray(cached?.data)) {
+          cachedStories = cached.data
+        }
+
+        if (cachedStories) {
+          setStories(cachedStories)
+          setHasMore(Boolean(cachedPagination?.has_more))
+          setNextCursor(cachedPagination?.next_cursor || null)
+          setLoading(false)
+        }
+
+        if (cached?.isFresh && cachedStories) {
+          return
+        }
       }
 
-      if (cached?.isFresh && hasCachedStories) {
-        return
+      try {
+        if (!cachedStories) {
+          setLoading(true)
+        }
+
+        const params = new URLSearchParams({
+          genre: fallbackGenreName,
+          limit: '20',
+          sort: tabConfig.sort,
+          genre_pagination: '1',
+        })
+
+        if (tabConfig.storyStatus) {
+          params.set('story_status', tabConfig.storyStatus)
+        }
+
+        const response = await fetch(
+          addStoryLanguageParam(
+            `${API_URL}/api/public/stories?${params.toString()}`
+          ),
+          { signal: controller.signal }
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(
+            data.message ||
+              getDisplayText('genreStoriesPage.failedLoadStories')
+          )
+        }
+
+        const nextStories = deduplicateStories(
+          Array.isArray(data.stories) ? data.stories : []
+        ).map(normalizeStory)
+
+        if (ignore || controller.signal.aborted) return
+
+        const pagination = {
+          has_more: Boolean(data.pagination?.has_more),
+          next_cursor: data.pagination?.next_cursor || null,
+        }
+
+        setStories(nextStories)
+        setHasMore(pagination.has_more)
+        setNextCursor(pagination.next_cursor)
+
+        await saveHomeCache(
+          cacheKey,
+          {
+            stories: nextStories,
+            pagination,
+          },
+          {
+            maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
+          }
+        )
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+
+        if (!ignore && !cachedStories) {
+          setStories([])
+          setMessage(
+            error.message === 'Failed to fetch'
+              ? getDisplayText('genreStoriesPage.cannotConnect')
+              : error.message ||
+                getDisplayText('genreStoriesPage.failedLoadStories')
+          )
+        }
+      } finally {
+        if (!ignore && !controller.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
 
-    try {
-      if (!hasCachedStories) {
-        setLoading(true)
-      }
+    loadStories()
 
-      setMessage('')
-      setGenreName(fallbackGenreName)
+    return () => {
+      ignore = true
+      controller.abort()
+      loadMoreControllerRef.current?.abort()
+    }
+  }, [
+    cacheKey,
+    fallbackGenreName,
+    reloadKey,
+    tabConfig.sort,
+    tabConfig.storyStatus,
+  ])
+
+  const loadMoreStories = async () => {
+    if (
+      loading ||
+      loadingMore ||
+      !hasMore ||
+      !nextCursor
+    ) {
+      return
+    }
+
+    loadMoreControllerRef.current?.abort()
+    const controller = new AbortController()
+    loadMoreControllerRef.current = controller
+
+    try {
+      setLoadingMore(true)
+      setLoadMoreError('')
+
+      const params = new URLSearchParams({
+        genre: fallbackGenreName,
+        limit: '20',
+        sort: tabConfig.sort,
+        genre_pagination: '1',
+        cursor: nextCursor,
+      })
+
+      if (tabConfig.storyStatus) {
+        params.set('story_status', tabConfig.storyStatus)
+      }
 
       const response = await fetch(
         addStoryLanguageParam(
-          `${API_URL}/api/public/stories?genre=${encodeURIComponent(
-            fallbackGenreName
-          )}&limit=100&sort=latest`
+          `${API_URL}/api/public/stories?${params.toString()}`
         ),
         { signal: controller.signal }
       )
@@ -588,7 +709,7 @@ export default function GenreStoriesPage({
 
       if (!response.ok || data.ok === false) {
         throw new Error(
-          data.message || getDisplayText('genreStoriesPage.failedLoadStories')
+          data.message || t('genreStoriesPage.loadMoreFailed')
         )
       }
 
@@ -596,44 +717,49 @@ export default function GenreStoriesPage({
         Array.isArray(data.stories) ? data.stories : []
       ).map(normalizeStory)
 
-      if (ignore || controller.signal.aborted) return
+      if (controller.signal.aborted) return
 
-      setStories(nextStories)
+      const mergedStories = deduplicateStories([
+        ...stories,
+        ...nextStories,
+      ])
+      const pagination = {
+        has_more: Boolean(data.pagination?.has_more),
+        next_cursor: data.pagination?.next_cursor || null,
+      }
 
-      await saveHomeCache(cacheKey, nextStories, {
-        maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
-      })
+      setStories(mergedStories)
+      setHasMore(pagination.has_more)
+      setNextCursor(pagination.next_cursor)
+
+      await saveHomeCache(
+        cacheKey,
+        {
+          stories: mergedStories,
+          pagination,
+        },
+        {
+          maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
+        }
+      )
     } catch (error) {
       if (error?.name === 'AbortError') return
 
-      if (!ignore && !hasCachedStories) {
-        setStories([])
-        setMessage(
-          error.message === 'Failed to fetch'
-            ? getDisplayText('genreStoriesPage.cannotConnect')
-            : error.message ||
-              getDisplayText('genreStoriesPage.failedLoadStories')
-        )
-      }
+      setLoadMoreError(
+        error.message === 'Failed to fetch'
+          ? getDisplayText('genreStoriesPage.cannotConnect')
+          : error.message || t('genreStoriesPage.loadMoreFailed')
+      )
     } finally {
-      if (!ignore && !controller.signal.aborted) {
-        setLoading(false)
+      if (loadMoreControllerRef.current === controller) {
+        loadMoreControllerRef.current = null
+      }
+
+      if (!controller.signal.aborted) {
+        setLoadingMore(false)
       }
     }
   }
-
-  loadStories()
-
-  return () => {
-    ignore = true
-    controller.abort()
-  }
-}, [
-  fallbackGenreName,
-  normalizedGenreSlug,
-  reloadKey,
-])
-
 
   const visibleStories = useMemo(() => {
     const filtered =
@@ -740,58 +866,81 @@ export default function GenreStoriesPage({
         {!loading &&
         !message &&
         visibleStories.length > 0 ? (
-          <div className="grid auto-rows-fr grid-cols-2 gap-x-2 gap-y-5 px-4 pt-5 md:grid-cols-4 lg:grid-cols-6">
-            {visibleStories.map((story) => (
-              <button
-                key={story.id}
-                type="button"
-                onClick={() =>
-                  navigate(
-                    `/story/${story.id}`,
-                    {
-                      state: {
-                        returnTo:
-                          location.pathname,
-                      },
-                    }
-                  )
-                }
-                className="flex h-full min-w-0 flex-col text-left active:scale-[0.99]"
-              >
-                <StoryCover
-                  story={story}
-                  completed={
-                    activeTab === 'completed'
+          <>
+            <div className="grid auto-rows-fr grid-cols-2 gap-x-2 gap-y-5 px-4 pt-5 md:grid-cols-4 lg:grid-cols-6">
+              {visibleStories.map((story) => (
+                <button
+                  key={story.id}
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/story/${story.id}`,
+                      {
+                        state: {
+                          returnTo:
+                            location.pathname,
+                        },
+                      }
+                    )
                   }
-                />
+                  className="flex h-full min-w-0 flex-col text-left active:scale-[0.99]"
+                >
+                  <StoryCover
+                    story={story}
+                    completed={
+                      activeTab === 'completed'
+                    }
+                  />
 
-                <h2 className="mt-2 h-[38px] line-clamp-2 text-[14px] font-[600] leading-[19px] text-[var(--shadow-text-primary)]">
-                  {getStoryTitle(story, t)}
-                </h2>
+                  <h2 className="mt-2 h-[38px] line-clamp-2 text-[14px] font-[600] leading-[19px] text-[var(--shadow-text-primary)]">
+                    {getStoryTitle(story, t)}
+                  </h2>
 
-                <p className="mt-1 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
-                  {activeTab === 'completed'
-                    ? t(
-                        story.totalEpisodes === 1
-                          ? 'genreStoriesPage.episodeOne'
-                          : 'genreStoriesPage.episodesMany',
-                        {
-                          count: formatDisplayNumber(
-                            story.totalEpisodes
-                          ),
-                        }
-                      )
-                    : story.totalEpisodes > 0
-                      ? t('genreStoriesPage.upToEpisode', {
-                          count: formatDisplayNumber(
-                            story.totalEpisodes
-                          ),
-                        })
-                      : t('genreStoriesPage.updating')}
-                </p>
-              </button>
-            ))}
-          </div>
+                  <p className="mt-1 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
+                    {activeTab === 'completed'
+                      ? t(
+                          story.totalEpisodes === 1
+                            ? 'genreStoriesPage.episodeOne'
+                            : 'genreStoriesPage.episodesMany',
+                          {
+                            count: formatDisplayNumber(
+                              story.totalEpisodes
+                            ),
+                          }
+                        )
+                      : story.totalEpisodes > 0
+                        ? t('genreStoriesPage.upToEpisode', {
+                            count: formatDisplayNumber(
+                              story.totalEpisodes
+                            ),
+                          })
+                        : t('genreStoriesPage.updating')}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            {hasMore ? (
+              <div className="flex flex-col items-center gap-3 px-4 py-8">
+                {loadMoreError ? (
+                  <p className="text-center text-[12px] font-medium text-[var(--shadow-danger)]">
+                    {loadMoreError}
+                  </p>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={loadMoreStories}
+                  disabled={loadingMore}
+                  className="min-w-[140px] rounded-full bg-[var(--shadow-text-primary)] px-5 py-3 text-[13px] font-bold text-[var(--shadow-bg-surface)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loadingMore
+                    ? t('genreStoriesPage.loadingMore')
+                    : t('genreStoriesPage.loadMore')}
+                </button>
+              </div>
+            ) : null}
+          </>
         ) : null}
       </main>
     </div>
