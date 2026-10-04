@@ -556,7 +556,7 @@ function FilterSheet({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
+              className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 dark:text-[var(--shadow-text-primary)]"
               aria-label={t('genresPage.closeFilters')}
             >
               <i className="fa-solid fa-xmark text-[15px]" />
@@ -866,7 +866,7 @@ export default function GenresPage() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
+            className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 dark:text-[var(--shadow-text-primary)]"
             aria-label={t('genresPage.back')}
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
@@ -902,7 +902,7 @@ export default function GenresPage() {
 
               setSearchOpen((current) => !current)
             }}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
+            className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 dark:text-[var(--shadow-text-primary)]"
             aria-label={t('genresPage.searchGenres')}
           >
             <i className={`fa-solid ${searchOpen ? 'fa-xmark' : 'fa-magnifying-glass'} text-[14px]`} />
