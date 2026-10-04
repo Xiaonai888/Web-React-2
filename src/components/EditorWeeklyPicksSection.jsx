@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { getDailyBannerStartIndex } from '../utils/dailyBannerRotation'
 
 registerTranslationNamespace('editorWeeklyPicksSection', {
   en: {
@@ -115,6 +116,7 @@ export default function EditorWeeklyPicksSection() {
   const startXRef = useRef(0)
   const scrollLeftRef = useRef(0)
   const dragMovedRef = useRef(false)
+  const firstBannerIndexRef = useRef(null)
 
   useEffect(() => {
   let ignore = false
@@ -199,6 +201,20 @@ export default function EditorWeeklyPicksSection() {
 }, [])
 
   const displayItems = items
+  useEffect(() => {
+  if (!displayItems.length || !scrollRef.current) return
+  if (firstBannerIndexRef.current === null) {
+    firstBannerIndexRef.current = getDailyBannerStartIndex('editor_weekly_picks', displayItems.length)
+  }
+  const index = Number(firstBannerIndexRef.current || 0) % displayItems.length
+  const frame = window.requestAnimationFrame(() => {
+    const container = scrollRef.current
+    if (!container) return
+    container.scrollTo({ left: (container.offsetWidth * 0.88 + 12) * index, behavior: 'auto' })
+    setActiveIndex(index)
+  })
+  return () => window.cancelAnimationFrame(frame)
+}, [displayItems.length])
 
   const handleScroll = () => {
     const container = scrollRef.current
