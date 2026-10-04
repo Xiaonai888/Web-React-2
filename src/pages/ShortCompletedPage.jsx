@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -27,8 +27,13 @@ function normalizeStory(story) {
     title: String(story.title || '').trim(),
     cover: String(story.cover_url || '').trim(),
     genre: String(story.main_genre || '').trim(),
-    episodes: Number(story.total_episodes || 0),
-    completedAt: new Date(story.last_episode_published_at || story.updated_at || story.created_at || 0).getTime() || 0,
+    completedAt:
+      new Date(
+        story.last_episode_published_at ||
+        story.updated_at ||
+        story.created_at ||
+        0
+      ).getTime() || 0,
   }
 }
 
@@ -37,8 +42,12 @@ function StoryCard({ story, t }) {
   const genre = story.genre || t('shortCompletedPage.genre')
 
   return (
-    <Link to={`/story/${story.id}`} state={{ sectionRank: 'short_completed' }} className="group block min-w-0">
-      <div className="aspect-[2/3] overflow-hidden rounded-[10px] bg-[var(--shadow-bg-soft)] shadow-sm">
+    <Link
+      to={`/story/${story.id}`}
+      state={{ sectionRank: 'short_completed' }}
+      className="group block min-w-0"
+    >
+      <div className="aspect-[2/3] overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)] shadow-sm">
         <img
           src={story.cover}
           alt={title}
@@ -47,9 +56,14 @@ function StoryCard({ story, t }) {
           decoding="async"
         />
       </div>
-      <div className="pt-2.5">
-        <h2 className="truncate text-[14px] font-[650] leading-[19px] text-[var(--shadow-text-primary)]">{title}</h2>
-        <p className="mt-1 truncate text-[11px] text-[var(--shadow-text-tertiary)]">{genre}</p>
+
+      <div className="pt-2">
+        <h2 className="truncate text-[14px] font-[650] leading-[20px] text-[var(--shadow-text-primary)]">
+          {title}
+        </h2>
+        <p className="mt-1 truncate text-[11px] text-[var(--shadow-text-tertiary)]">
+          {genre}
+        </p>
       </div>
     </Link>
   )
@@ -57,11 +71,11 @@ function StoryCard({ story, t }) {
 
 function LoadingGrid() {
   return (
-    <div className="grid grid-cols-3 gap-x-2.5 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-x-3">
+    <div className="grid grid-cols-3 gap-x-2.5 gap-y-6 md:grid-cols-4 lg:grid-cols-6 lg:gap-x-3">
       {Array.from({ length: 12 }).map((_, index) => (
         <div key={index}>
-          <div className="aspect-[2/3] animate-pulse rounded-[10px] bg-[var(--shadow-bg-soft)]" />
-          <div className="mt-2.5 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
+          <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[var(--shadow-bg-soft)]" />
+          <div className="mt-2 h-4 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
           <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
         </div>
       ))}
@@ -82,10 +96,22 @@ export default function ShortCompletedPage() {
       const cacheKey = getHomeCacheKey({
         section: 'stories',
         language: getStoryLanguageId(),
-        params: { page: 'short-completed', story_status: 'Completed', story_type: 'novel', max_episodes: 20, sort: 'episode_updated', limit: 100, schema: 1 },
+        params: {
+          page: 'short-completed',
+          story_status: 'Completed',
+          story_type: 'novel',
+          max_episodes: 20,
+          sort: 'episode_updated',
+          limit: 100,
+          schema: 2,
+        },
       })
 
-      const cached = await loadHomeCache(cacheKey, { maxAgeMs: CACHE_MAX_AGE_MS, allowExpired: true })
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
+
       const hasCached = Array.isArray(cached?.data)
 
       if (hasCached && !ignore) {
@@ -101,9 +127,12 @@ export default function ShortCompletedPage() {
             `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated&story_status=Completed&story_type=novel&max_episodes=20`
           )
         )
+
         const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load Short & Completed')
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load Short & Completed')
+        }
 
         const nextStories = (Array.isArray(data.stories) ? data.stories : [])
           .filter((story) => String(story.story_status || '').trim().toLowerCase() === 'completed')
@@ -116,7 +145,10 @@ export default function ShortCompletedPage() {
         if (ignore) return
 
         setStories(nextStories)
-        await saveHomeCache(cacheKey, nextStories, { maxAgeMs: CACHE_MAX_AGE_MS })
+
+        await saveHomeCache(cacheKey, nextStories, {
+          maxAgeMs: CACHE_MAX_AGE_MS,
+        })
       } catch {
         if (!ignore && !hasCached) setStories([])
       } finally {
@@ -125,12 +157,11 @@ export default function ShortCompletedPage() {
     }
 
     loadStories()
+
     return () => {
       ignore = true
     }
   }, [])
-
-  const visibleStories = useMemo(() => stories, [stories])
 
   return (
     <div className="app-page min-h-screen bg-white pb-28 dark:bg-[var(--shadow-bg-page)]">
@@ -144,7 +175,9 @@ export default function ShortCompletedPage() {
           >
             <i className="fas fa-chevron-left text-[18px] text-[var(--shadow-text-primary)]" />
           </button>
+
           <span className="text-[20px]">📘</span>
+
           <h1 className="truncate text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)]">
             {t('shortCompletedPage.title')}
           </h1>
@@ -155,9 +188,9 @@ export default function ShortCompletedPage() {
         <div className="mx-auto max-w-7xl">
           {loading ? (
             <LoadingGrid />
-          ) : visibleStories.length ? (
-            <div className="grid grid-cols-3 gap-x-2.5 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-x-3">
-              {visibleStories.map((story) => (
+          ) : stories.length ? (
+            <div className="grid grid-cols-3 gap-x-2.5 gap-y-6 md:grid-cols-4 lg:grid-cols-6 lg:gap-x-3">
+              {stories.map((story) => (
                 <StoryCard key={story.id} story={story} t={t} />
               ))}
             </div>
