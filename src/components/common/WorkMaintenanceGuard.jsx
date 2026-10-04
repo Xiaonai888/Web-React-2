@@ -67,11 +67,22 @@ function retrySecondsFromResponse(response, payload) {
 
 export default function WorkMaintenanceGuard({ children }) {
   const location = useLocation()
-  const [checking, setChecking] = useState(true)
-  const [checkedPath, setCheckedPath] = useState('')
+  const offlineRequested =
+    new URLSearchParams(location.search).get('_shadow_offline') === '1'
+  const [checking, setChecking] = useState(() => !offlineRequested)
+  const [checkedPath, setCheckedPath] = useState(() =>
+    offlineRequested ? location.pathname : ''
+  )
   const [maintenance, setMaintenance] = useState(null)
 
   useEffect(() => {
+    if (offlineRequested) {
+      setChecking(false)
+      setMaintenance(null)
+      setCheckedPath(location.pathname)
+      return undefined
+    }
+
     let active = true
     const controller = new AbortController()
     const timeout = setTimeout(
@@ -115,9 +126,9 @@ export default function WorkMaintenanceGuard({ children }) {
         clearTimeout(timeout)
 
         if (active) {
-  setCheckedPath(location.pathname)
-  setChecking(false)
-}
+          setCheckedPath(location.pathname)
+          setChecking(false)
+        }
       }
     }
 
@@ -128,9 +139,11 @@ export default function WorkMaintenanceGuard({ children }) {
       clearTimeout(timeout)
       controller.abort()
     }
-  }, [location.pathname])
+  }, [location.pathname, offlineRequested])
 
   useEffect(() => {
+    if (offlineRequested) return undefined
+
     const originalFetch = window.fetch.bind(window)
 
     const guardedFetch = async (...args) => {
@@ -164,7 +177,11 @@ export default function WorkMaintenanceGuard({ children }) {
         window.fetch = originalFetch
       }
     }
-  }, [])
+  }, [offlineRequested])
+
+  if (offlineRequested) {
+    return children
+  }
 
   if (maintenance) {
     return (
