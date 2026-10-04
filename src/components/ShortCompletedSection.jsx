@@ -142,7 +142,7 @@ export default function ShortCompletedSection() {
       try {
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=${POOL_SIZE}&sort=discover_more&story_status=Completed&story_type=novel&max_episodes=19`
+            `${API_BASE_URL}/api/public/stories?limit=${POOL_SIZE}&sort=discover_more&story_status=Completed&story_type=novel&max_episodes=20`
           )
         )
         const data = await response.json().catch(() => ({}))
