@@ -126,7 +126,7 @@ export default function ShortCompletedSection() {
       const cacheKey = getHomeCacheKey({
         section: 'stories',
         language: getStoryLanguageId(),
-        params: { home_section: 'short-completed', story_status: 'Completed', story_type: 'novel', max_episodes: 19, sort: 'discover_more', limit: POOL_SIZE, schema: 1 },
+        params: { home_section: 'short-completed', story_status: 'Completed', story_type: 'novel', max_episodes: 20, sort: 'discover_more', limit: POOL_SIZE, schema: 1 },
       })
 
       const cached = await loadHomeCache(cacheKey, { maxAgeMs: CACHE_MAX_AGE_MS, allowExpired: true })
@@ -152,7 +152,7 @@ export default function ShortCompletedSection() {
         const nextStories = (Array.isArray(data.stories) ? data.stories : [])
           .filter((story) => String(story.story_status || '').trim().toLowerCase() === 'completed')
           .filter((story) => String(story.story_type || '').trim().toLowerCase() === 'novel')
-          .filter((story) => Number(story.total_episodes || 0) > 0 && Number(story.total_episodes || 0) < 20)
+          .filter((story) => Number(story.total_episodes || 0) > 0 && Number(story.total_episodes || 0) <= 20)
           .filter((story) => Boolean(String(story.cover_url || '').trim()))
           .map(normalizeStory)
 
