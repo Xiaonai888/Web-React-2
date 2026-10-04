@@ -961,11 +961,58 @@ export default function Library() {
 
       loadedTabsRef.current.add(tab)
     } catch (error) {
-      if (!navigator.onLine) {
-        if (activeTabRef.current === tab) {
-          setMessage('')
+      const networkFailure =
+        !navigator.onLine ||
+        error?.name === 'TypeError' ||
+        /failed to fetch|networkerror|load failed/i.test(
+          String(error?.message || '')
+        )
+
+      if (networkFailure) {
+        const controller = new AbortController()
+        const timer = window.setTimeout(
+          () => controller.abort(),
+          1500
+        )
+
+        try {
+          const response = await fetch(
+            `/app-version.json?t=${Date.now()}`,
+            {
+              cache: 'no-store',
+              signal: controller.signal,
+            }
+          )
+
+          if (!response.ok) {
+            throw new Error('FRONTEND_UNREACHABLE')
+          }
+        } catch {
+          if (activeTabRef.current === tab) {
+            const params = new URLSearchParams(
+              location.search
+            )
+
+            params.set('_shadow_offline', '1')
+            setOffline(true)
+            activeTabRef.current = 'Downloads'
+            setActiveTab('Downloads')
+            setActiveType('All')
+            setMessage('')
+
+            navigate(
+              `${location.pathname}?${params.toString()}${location.hash || ''}`,
+              { replace: true }
+            )
+          }
+
+          return
+        } finally {
+          window.clearTimeout(timer)
         }
-      } else if (activeTabRef.current === tab) {
+      }
+
+      if (activeTabRef.current === tab) {
         setMessage(
           error.message ||
             t('libraryPage.loadLibraryFailed')
