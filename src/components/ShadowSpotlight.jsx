@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { getDailyBannerStartIndex } from '../utils/dailyBannerRotation'
 
 registerTranslationNamespace('shadowSpotlight', {
   en: {
@@ -76,6 +77,7 @@ export default function ShadowSpotlight() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const swiperRef = useRef(null)
+  const firstBannerIndexRef = useRef(null)
   const [spotlights, setSpotlights] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -167,8 +169,14 @@ export default function ShadowSpotlight() {
       swiperRef.current = null
     }
 
-    swiperRef.current = new window.Swiper('.shadowSpotlightSwiper', {
-      slidesPerView: 1.08,
+    if (firstBannerIndexRef.current === null) {
+  firstBannerIndexRef.current = getDailyBannerStartIndex('shadow_spotlight', spotlights.length)
+}
+const initialSlide = Number(firstBannerIndexRef.current || 0) % spotlights.length
+
+swiperRef.current = new window.Swiper('.shadowSpotlightSwiper', {
+  initialSlide,
+  slidesPerView: 1.08,
       spaceBetween: 12,
       centeredSlides: false,
       loop: spotlights.length > 1,
