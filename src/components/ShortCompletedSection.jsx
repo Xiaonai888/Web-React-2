@@ -24,6 +24,7 @@ const ROTATION_MS = 60 * 60 * 1000
 const POOL_SIZE = 48
 const DISPLAY_SIZE = 6
 const PRIORITY_POOL_SIZE = 24
+const HISTORY_KEY = 'shadow_short_completed_rotation_v1'
 
 function getRotationSlot() {
   return Math.floor(Date.now() / ROTATION_MS)
@@ -41,24 +42,68 @@ function normalizeStory(story) {
   }
 }
 
-function buildHourlySelection(stories, slot) {
-  const sorted = [...stories]
+function uniqueStories(stories) {
+  const seen = new Set()
+  return stories.filter((story) => {
+    const id = String(story?.id || '')
+    if (!id || seen.has(id)) return false
+    seen.add(id)
+    return true
+  })
+}
+
+function rawHourlySelection(stories, slot) {
+  const pool = uniqueStories(stories)
     .sort((a, b) => a.views - b.views || b.updatedAt - a.updatedAt)
     .slice(0, PRIORITY_POOL_SIZE)
 
-  if (sorted.length <= DISPLAY_SIZE) {
-    if (!sorted.length) return []
-    const shift = slot % sorted.length
-    return sorted.map((_, index) => sorted[(index + shift) % sorted.length])
+  if (pool.length <= DISPLAY_SIZE) return pool
+
+  const start = (slot * 3) % pool.length
+  return Array.from({ length: DISPLAY_SIZE }, (_, index) => pool[(start + index) % pool.length])
+}
+
+function readPreviousIds(slot) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}')
+    return Number(saved.slot) === slot - 1 && Array.isArray(saved.ids) ? saved.ids : []
+  } catch {
+    return []
+  }
+}
+
+function avoidSamePositions(items, previousIds) {
+  if (items.length < 2 || !previousIds.length) return items
+
+  const result = Array(items.length)
+  const used = new Set()
+
+  function place(position) {
+    if (position >= items.length) return true
+
+    for (let index = 0; index < items.length; index += 1) {
+      if (used.has(index)) continue
+      if (String(items[index].id) === String(previousIds[position] || '')) continue
+
+      used.add(index)
+      result[position] = items[index]
+
+      if (place(position + 1)) return true
+
+      used.delete(index)
+    }
+
+    return false
   }
 
-  const start = (slot * DISPLAY_SIZE) % sorted.length
-  const selected = Array.from(
-    { length: DISPLAY_SIZE },
-    (_, index) => sorted[(start + index) % sorted.length]
+  return place(0) ? result : items
+}
+
+function buildHourlySelection(stories, slot) {
+  return avoidSamePositions(
+    rawHourlySelection(stories, slot),
+    readPreviousIds(slot)
   )
-  const shift = slot % selected.length
-  return selected.map((_, index) => selected[(index + shift) % selected.length])
 }
 
 function StoryCard({ story, t }) {
@@ -66,7 +111,11 @@ function StoryCard({ story, t }) {
   const genre = story.genre || t('shortCompletedSection.genre')
 
   return (
-    <Link to={`/story/${story.id}`} state={{ sectionRank: 'short_completed' }} className="group block min-w-0">
+    <Link
+      to={`/story/${story.id}`}
+      state={{ sectionRank: 'short_completed' }}
+      className="group block min-w-0"
+    >
       <div className="aspect-[2/3] overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)] shadow-sm">
         <img
           src={story.cover}
@@ -76,9 +125,14 @@ function StoryCard({ story, t }) {
           decoding="async"
         />
       </div>
+
       <div className="pt-2">
-        <h3 className="truncate text-[13px] font-[650] leading-[18px] text-[var(--shadow-text-primary)]">{title}</h3>
-        <p className="mt-1 truncate text-[10.5px] text-[var(--shadow-text-tertiary)]">{genre}</p>
+        <h3 className="truncate text-[13px] font-[650] leading-[18px] text-[var(--shadow-text-primary)]">
+          {title}
+        </h3>
+        <p className="mt-1 truncate text-[10.5px] text-[var(--shadow-text-tertiary)]">
+          {genre}
+        </p>
       </div>
     </Link>
   )
@@ -88,13 +142,14 @@ function LoadingGrid({ t }) {
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-[20px]">📘</span>
-            <h2 className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">{t('shortCompletedSection.title')}</h2>
-          </div>
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-[20px]">📘</span>
+          <h2 className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">
+            {t('shortCompletedSection.title')}
+          </h2>
         </div>
-        <div className="grid grid-cols-3 gap-x-2.5 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+
+        <div className="grid grid-cols-3 gap-x-2.5 gap-y-5 md:grid-cols-4 lg:grid-cols-6">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index}>
               <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[var(--shadow-bg-soft)]" />
@@ -115,7 +170,10 @@ export default function ShortCompletedSection() {
   const [rotationSlot, setRotationSlot] = useState(getRotationSlot)
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => setRotationSlot(getRotationSlot()), 60 * 1000)
+    const intervalId = window.setInterval(() => {
+      setRotationSlot(getRotationSlot())
+    }, 60 * 1000)
+
     return () => window.clearInterval(intervalId)
   }, [])
 
@@ -126,10 +184,22 @@ export default function ShortCompletedSection() {
       const cacheKey = getHomeCacheKey({
         section: 'stories',
         language: getStoryLanguageId(),
-        params: { home_section: 'short-completed', story_status: 'Completed', story_type: 'novel', max_episodes: 20, sort: 'discover_more', limit: POOL_SIZE, schema: 1 },
+        params: {
+          home_section: 'short-completed',
+          story_status: 'Completed',
+          story_type: 'novel',
+          max_episodes: 20,
+          sort: 'discover_more',
+          limit: POOL_SIZE,
+          schema: 2,
+        },
       })
 
-      const cached = await loadHomeCache(cacheKey, { maxAgeMs: CACHE_MAX_AGE_MS, allowExpired: true })
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
+
       const hasCached = Array.isArray(cached?.data) && cached.data.length > 0
 
       if (hasCached && !ignore) {
@@ -145,9 +215,12 @@ export default function ShortCompletedSection() {
             `${API_BASE_URL}/api/public/stories?limit=${POOL_SIZE}&sort=discover_more&story_status=Completed&story_type=novel&max_episodes=20`
           )
         )
+
         const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load Short & Completed')
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load Short & Completed')
+        }
 
         const nextStories = (Array.isArray(data.stories) ? data.stories : [])
           .filter((story) => String(story.story_status || '').trim().toLowerCase() === 'completed')
@@ -159,7 +232,10 @@ export default function ShortCompletedSection() {
         if (ignore) return
 
         setStories(nextStories)
-        await saveHomeCache(cacheKey, nextStories, { maxAgeMs: CACHE_MAX_AGE_MS })
+
+        await saveHomeCache(cacheKey, nextStories, {
+          maxAgeMs: CACHE_MAX_AGE_MS,
+        })
       } catch {
         if (!ignore && !hasCached) setStories([])
       } finally {
@@ -168,6 +244,7 @@ export default function ShortCompletedSection() {
     }
 
     loadStories()
+
     return () => {
       ignore = true
     }
@@ -177,6 +254,20 @@ export default function ShortCompletedSection() {
     () => buildHourlySelection(stories, rotationSlot),
     [stories, rotationSlot]
   )
+
+  useEffect(() => {
+    if (!visibleStories.length) return
+
+    try {
+      localStorage.setItem(
+        HISTORY_KEY,
+        JSON.stringify({
+          slot: rotationSlot,
+          ids: visibleStories.map((story) => String(story.id)),
+        })
+      )
+    } catch {}
+  }, [rotationSlot, visibleStories])
 
   if (loading) return <LoadingGrid t={t} />
   if (!visibleStories.length) return null
@@ -191,6 +282,7 @@ export default function ShortCompletedSection() {
               {t('shortCompletedSection.title')}
             </h2>
           </div>
+
           <Link
             to="/short-completed"
             className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]"
@@ -199,7 +291,8 @@ export default function ShortCompletedSection() {
             <i className="fas fa-chevron-right text-[15px] text-[var(--shadow-text-secondary)]" />
           </Link>
         </div>
-        <div className="grid grid-cols-3 gap-x-2.5 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-x-3">
+
+        <div className="grid grid-cols-3 gap-x-2.5 gap-y-5 md:grid-cols-4 lg:grid-cols-6 lg:gap-x-3">
           {visibleStories.map((story) => (
             <StoryCard key={story.id} story={story} t={t} />
           ))}
