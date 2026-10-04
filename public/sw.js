@@ -1844,13 +1844,15 @@ self.addEventListener(
       '/', '/me', '/library', '/library/manage', '/library/manage/offline-downloads',
     ])
     const route = url.pathname.replace(/\/+$/, '') || '/'
+    const isOfflineEpisodeRoute =
+      /^\/story\/[^/]+\/episode\/[^/]+$/.test(route)
 
     if (
       request.mode === 'navigate' &&
       url.origin === self.location.origin &&
       (
         offlineShellRoutes.has(route) ||
-        /^\/story\/[^/]+\/episode\/[^/]+$/.test(route)
+        isOfflineEpisodeRoute
       )
     ) {
       event.respondWith((async () => {
@@ -1859,14 +1861,18 @@ self.addEventListener(
           if (cached) return cached
         }
 
+        const offlineRedirect = () => {
+          const offlineUrl = isOfflineEpisodeRoute
+            ? new URL(request.url)
+            : new URL('/library', self.location.origin)
+
+          offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
+          return Response.redirect(offlineUrl.href, 302)
+        }
+
         if (self.navigator.onLine === false) {
           const cached = await getOfflineShell()
-
-          if (cached) {
-            const offlineUrl = new URL('/library', self.location.origin)
-            offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
-            return Response.redirect(offlineUrl.href, 302)
-          }
+          if (cached) return offlineRedirect()
         }
 
         try {
@@ -1875,9 +1881,7 @@ self.addEventListener(
           const cached = await getOfflineShell()
 
           if (cached) {
-            const offlineUrl = new URL('/library', self.location.origin)
-            offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
-            return Response.redirect(offlineUrl.href, 302)
+            return offlineRedirect()
           }
 
           return new Response(
