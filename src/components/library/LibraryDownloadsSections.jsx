@@ -117,7 +117,7 @@ function Section({ title, subtitle, url, children, t }) {
   )
 }
 
-export default function LibraryDownloadsSections({ purchases = [], loading = false, isLoggedIn = false }) {
+export default function LibraryDownloadsSections({ purchases = [], loading = false, isLoggedIn = false, offlineMode = false }) {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const location = useLocation()
@@ -126,10 +126,11 @@ export default function LibraryDownloadsSections({ purchases = [], loading = fal
   const [savedStories, setSavedStories] = useState([])
   const [loadingSaved, setLoadingSaved] = useState(true)
   const [savedError, setSavedError] = useState('')
-  const [offline, setOffline] = useState(() => !navigator.onLine)
+  const [browserOffline, setBrowserOffline] = useState(() => !navigator.onLine)
+  const offline = offlineMode || browserOffline
 
   useEffect(() => {
-    const updateConnectionState = () => setOffline(!navigator.onLine)
+    const updateConnectionState = () => setBrowserOffline(!navigator.onLine)
     window.addEventListener('online', updateConnectionState)
     window.addEventListener('offline', updateConnectionState)
     return () => {
