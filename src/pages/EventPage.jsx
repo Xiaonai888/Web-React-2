@@ -12,6 +12,7 @@ import ManagedEventHeroCard from '../components/events/ManagedEventHeroCard'
 import MonthlyVoteTab from './Event/MonthlyVoteTab'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { getDailyBannerStartIndex } from '../utils/dailyBannerRotation'
 
 
 registerTranslationNamespace('eventPage', {
@@ -906,6 +907,7 @@ function AuthorCenterBannerSlider() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const swiperRef = useRef(null)
+  const firstBannerIndexRef = useRef(null)
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -944,7 +946,14 @@ function AuthorCenterBannerSlider() {
       swiperRef.current = null
     }
 
-    swiperRef.current = new window.Swiper('.authorCenterSwiper', {
+    if (firstBannerIndexRef.current === null) {
+  firstBannerIndexRef.current = getDailyBannerStartIndex('author_center', banners.length)
+}
+
+const initialSlide = Number(firstBannerIndexRef.current || 0) % banners.length
+
+swiperRef.current = new window.Swiper('.authorCenterSwiper', {
+  initialSlide,
   slidesPerView: 1.08,
   spaceBetween: 12,
   centeredSlides: false,
