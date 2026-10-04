@@ -33,7 +33,7 @@ import ShadowDocsSelectionPopup from './ShadowDocsSelectionPopup'
 
 const SHADOW_DOCS_FOLDERS_KEY = 'shadow-docs-folders-v1'
 const SHADOW_DOCS_FOLDER_MAP_KEY = 'shadow-docs-folder-map-v1'
-const [selectionPopup,setSelectionPopup]=useState({open:false,mode:'expanded',anchor:null})
+
 
 function readShadowDocsFolders() {
   try {
@@ -210,6 +210,7 @@ export default function ShadowDocsWritingStudioPanel({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
+  const [selectionPopup,setSelectionPopup]=useState({open:false,mode:'expanded',anchor:null})
   const [printOpen, setPrintOpen] = useState(false)
   const [addToOpen, setAddToOpen] = useState(false)
   const [exportImageOpen, setExportImageOpen] = useState(false)
