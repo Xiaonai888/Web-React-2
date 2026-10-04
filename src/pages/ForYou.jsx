@@ -1619,6 +1619,10 @@ useEffect(() => {
               <EventPerksHubSection />
             </div>
 
+    <div className="my-6" data-home-section="short-completed">
+  <ShortCompletedSection />
+</div>
+
             <div className="my-6" data-home-section="you-might-like">
               <YouMightLikeSection />
             </div>
