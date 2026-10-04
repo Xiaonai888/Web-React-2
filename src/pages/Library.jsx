@@ -812,10 +812,16 @@ function ContextCard({ item, tab }) {
 
 export default function Library() {
   const location = useLocation()
-  const meLibrarySource = new URLSearchParams(location.search).get('source') === 'me'
+  const locationParams = new URLSearchParams(location.search)
+  const meLibrarySource = locationParams.get('source') === 'me'
+  const offlineRequested = locationParams.get('_shadow_offline') === '1'
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
-  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'downloads' ? 'Downloads' : 'Subscribed')
+  const [activeTab, setActiveTab] = useState(() =>
+    offlineRequested || !navigator.onLine || new URLSearchParams(window.location.search).get('tab') === 'downloads'
+      ? 'Downloads'
+      : 'Subscribed'
+  )
   const [activeType, setActiveType] = useState('All')
   const [libraryItems, setLibraryItems] = useState([])
   const [subscriptionItems, setSubscriptionItems] = useState([])
@@ -835,7 +841,7 @@ export default function Library() {
     tab = activeTab,
     { force = false } = {}
   ) => {
-    if (!navigator.onLine) {
+    if (offlineRequested || offline || !navigator.onLine) {
       if (activeTabRef.current === tab) {
         setLoading(false)
         setMessage('')
@@ -975,7 +981,11 @@ export default function Library() {
   }
 
   useEffect(() => {
+    let active = true
+    let controller = null
+
     const handleOffline = () => {
+      if (!active) return
       setOffline(true)
       activeTabRef.current = 'Downloads'
       setActiveTab('Downloads')
@@ -984,28 +994,64 @@ export default function Library() {
       setMessage('')
     }
 
-    const handleOnline = () => {
-      setOffline(false)
-      activeTabRef.current = activeTab
-      loadLibrary(activeTab, { force: true })
+    const clearOfflineMarker = () => {
+      const params = new URLSearchParams(location.search)
+      params.delete('_shadow_offline')
+      const search = params.toString()
+      navigate(`${location.pathname}${search ? `?${search}` : ''}${location.hash || ''}`, { replace: true })
     }
 
-    if (navigator.onLine) {
+    const confirmOnline = async () => {
+      controller?.abort()
+      controller = new AbortController()
+      const timer = window.setTimeout(() => controller?.abort(), 1500)
+
+      try {
+        const response = await fetch(`/app-version.json?t=${Date.now()}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+
+        if (!active || !response.ok) return
+        setOffline(false)
+
+        if (offlineRequested) {
+          clearOfflineMarker()
+          return
+        }
+
+        activeTabRef.current = activeTab
+        loadLibrary(activeTab, { force: true })
+      } catch {
+        handleOffline()
+      } finally {
+        window.clearTimeout(timer)
+      }
+    }
+
+    const handleOnline = () => {
+      void confirmOnline()
+    }
+
+    if (offlineRequested || !navigator.onLine) {
+      handleOffline()
+      if (offlineRequested && navigator.onLine) void confirmOnline()
+    } else {
       setOffline(false)
       activeTabRef.current = activeTab
       loadLibrary(activeTab)
-    } else {
-      handleOffline()
     }
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
 
     return () => {
+      active = false
+      controller?.abort()
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [activeTab, isLoggedIn])
+  }, [activeTab, isLoggedIn, offlineRequested, location.pathname, location.search, location.hash, navigate])
 
   const currentItems = useMemo(() => {
     if (activeTab === 'Subscribed') return subscriptionItems
@@ -1191,7 +1237,7 @@ export default function Library() {
           ) : null}
 
           {activeTab === 'Downloads' ? (
-            <LibraryDownloadsSections purchases={downloadItems} loading={loading} isLoggedIn={isLoggedIn} />
+            <LibraryDownloadsSections purchases={downloadItems} loading={loading} isLoggedIn={isLoggedIn} offlineMode={offline} />
           ) : loading ? (
             <div className="pt-5">
               <div
