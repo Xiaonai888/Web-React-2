@@ -196,6 +196,7 @@ registerTranslationNamespace('readerPage', {
     "failedLoadEpisode": "Failed to load episode",
     "invalidReadingLink": "Invalid reading link. Please open the episode from its story page.",
     "offlineAccessExpired": "Offline access to this episode has expired. Connect to the internet to renew access.",
+    "offlineEpisodeNotSaved": "This episode is not saved on this device. Connect to the internet to open it.",
     "adClosedIncomplete": "Ad closed before completion. This episode is still locked."
   },
   "km": {
@@ -362,6 +363,7 @@ registerTranslationNamespace('readerPage', {
     "failedLoadEpisode": "មិនអាច Load ភាគបាន",
     "invalidReadingLink": "Link សម្រាប់អានមិនត្រឹមត្រូវ។ សូមបើកភាគនេះពីទំព័ររឿង។",
     "offlineAccessExpired": "សិទ្ធិអានភាគនេះពេល Offline បានផុតកំណត់ហើយ។ សូមភ្ជាប់អ៊ីនធឺណិត ដើម្បីបន្តសិទ្ធិអាន។",
+    "offlineEpisodeNotSaved": "ភាគនេះមិនបានរក្សាទុកក្នុងឧបករណ៍នេះទេ។ សូមភ្ជាប់អ៊ីនធឺណិតដើម្បីបើកភាគនេះ។",
     "adClosedIncomplete": "ពាណិជ្ជកម្មត្រូវបានបិទមុនពេលចប់។ ភាគនេះនៅតែ Locked។"
   },
   "zh": {
@@ -528,6 +530,7 @@ registerTranslationNamespace('readerPage', {
     "failedLoadEpisode": "加载章节失败",
     "invalidReadingLink": "阅读链接无效。请从故事页面打开此章节。",
     "offlineAccessExpired": "此章节的离线阅读权限已过期。请连接网络以续期。",
+    "offlineEpisodeNotSaved": "此章节未保存在此设备上。请连接网络后打开。",
     "adClosedIncomplete": "广告未播放完成就被关闭，本章节仍处于锁定状态。"
   },
   "ja": {
@@ -694,6 +697,7 @@ registerTranslationNamespace('readerPage', {
     "failedLoadEpisode": "エピソードを読み込めませんでした",
     "invalidReadingLink": "読書リンクが無効です。ストーリーページからこのエピソードを開いてください。",
     "offlineAccessExpired": "このエピソードのオフライン閲覧期限が切れました。インターネットに接続してアクセスを更新してください。",
+    "offlineEpisodeNotSaved": "このエピソードはこの端末に保存されていません。インターネットに接続して開いてください。",
     "adClosedIncomplete": "広告が完了前に閉じられました。このエピソードはまだロックされています。"
   },
   "ko": {
@@ -860,6 +864,7 @@ registerTranslationNamespace('readerPage', {
     "failedLoadEpisode": "에피소드를 불러오지 못했습니다",
     "invalidReadingLink": "읽기 링크가 올바르지 않습니다. 스토리 페이지에서 이 에피소드를 열어 주세요.",
     "offlineAccessExpired": "이 에피소드의 오프라인 읽기 권한이 만료되었습니다. 인터넷에 연결하여 권한을 갱신하세요.",
+    "offlineEpisodeNotSaved": "이 에피소드는 이 기기에 저장되어 있지 않습니다. 인터넷에 연결하여 열어 주세요.",
     "adClosedIncomplete": "광고가 완료되기 전에 닫혔습니다. 이 에피소드는 아직 잠겨 있습니다."
   }
 })
@@ -5114,6 +5119,7 @@ function ContinuousEpisodeBlock({
   adultAccepted,
   showToBeContinued,
   isFirstEpisode,
+  offlineMode = false,
 }) {
   const { t } = useDisplayTranslation()
   const episode = entry?.episode || {}
@@ -5257,7 +5263,7 @@ function ContinuousEpisodeBlock({
 
           {showToBeContinued ? <ToBeContinued theme={theme} /> : null}
 
-{active ? (
+{active && !offlineMode ? (
   <div className="my-6 px-4">
     <GoogleAdBanner
   slot={import.meta.env.VITE_ADSENSE_READER_SLOT}
@@ -5266,15 +5272,17 @@ function ContinuousEpisodeBlock({
   </div>
 ) : null}
 
-          <ReaderEndPanel
-            story={story}
-            episode={episode}
-            active={active}
-            commentSummary={commentSummary}
-            onOpenComments={() => onOpenComments(episode)}
-            onOpenGift={onOpenGift}
-            theme={theme}
-          />
+          {!offlineMode ? (
+            <ReaderEndPanel
+              story={story}
+              episode={episode}
+              active={active}
+              commentSummary={commentSummary}
+              onOpenComments={() => onOpenComments(episode)}
+              onOpenGift={onOpenGift}
+              theme={theme}
+            />
+          ) : null}
         </>
       )}
 
@@ -5322,7 +5330,16 @@ export default function ReaderPage() {
   const rewardAnimationTimerRef = useRef(null)
   const offlineReaderReleaseRef = useRef(null)
   const pendingViewedEpisodeRef = useRef(new Map())
-  const recheckOnReconnect = () => {
+  const offlineMode =
+    offlineRequested ||
+    navigator.onLine === false ||
+    Boolean(offlineReaderReleaseRef.current)
+  const withOfflineMarker = (to) => {
+    if (!offlineMode) return to
+    const target = new URL(String(to || '/'), window.location.origin)
+    target.searchParams.set('_shadow_offline', '1')
+    return `${target.pathname}${target.search}${target.hash}`
+  }
   const [offlineAccessExpiresAt, setOfflineAccessExpiresAt] = useState(0)
   const [offlineAccessExpired, setOfflineAccessExpired] = useState(false)
 
@@ -5342,13 +5359,53 @@ export default function ReaderPage() {
   const unlockStatusCacheRef = useRef(new Map())
   const unlockStatusRequestRef = useRef(new Map())
 
-    useEffect(() => {
-    const recheckOnReconnect = () => {
-      if (offlineReaderReleaseRef.current && Number(episode?.episode_number || 0) > 5) window.location.reload()
+  useEffect(() => {
+    let active = true
+    let controller = null
+
+    const recheckOnReconnect = async () => {
+      if (!offlineMode) return
+
+      controller?.abort()
+      controller = new AbortController()
+      const timer = window.setTimeout(() => controller?.abort(), 1500)
+
+      try {
+        const response = await fetch(`/app-version.json?t=${Date.now()}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+
+        if (!active || !response.ok) return
+
+        const params = new URLSearchParams(window.location.search)
+        params.delete('_shadow_offline')
+        const search = params.toString()
+
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`
+        )
+        window.location.reload()
+      } catch {
+      } finally {
+        window.clearTimeout(timer)
+      }
     }
+
     window.addEventListener('online', recheckOnReconnect)
-    return () => window.removeEventListener('online', recheckOnReconnect)
-  }, [episode?.episode_number])
+
+    if (offlineRequested && navigator.onLine) {
+      void recheckOnReconnect()
+    }
+
+    return () => {
+      active = false
+      controller?.abort()
+      window.removeEventListener('online', recheckOnReconnect)
+    }
+  }, [offlineMode, offlineRequested])
   
   useEffect(() => {
     if (!offlineAccessExpiresAt) return undefined
@@ -5386,20 +5443,25 @@ export default function ReaderPage() {
   
 
   useEffect(() => {
-  let ignore = false
+    if (offlineMode) {
+      setRewardedAdsEnabled(false)
+      return undefined
+    }
 
-  isRewardedEpisodeUnlockReady()
-    .then((enabled) => {
-      if (!ignore) setRewardedAdsEnabled(Boolean(enabled))
-    })
-    .catch(() => {
-      if (!ignore) setRewardedAdsEnabled(false)
-    })
+    let ignore = false
 
-  return () => {
-    ignore = true
-  }
-}, [])
+    isRewardedEpisodeUnlockReady()
+      .then((enabled) => {
+        if (!ignore) setRewardedAdsEnabled(Boolean(enabled))
+      })
+      .catch(() => {
+        if (!ignore) setRewardedAdsEnabled(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [offlineMode])
 
   const [unlockAutoUnlock, setUnlockAutoUnlock] = useState(false)
   const [unlockAutoHintOpen, setUnlockAutoHintOpen] = useState(false)
@@ -5485,18 +5547,25 @@ useEffect(() => {
     'shadow_reopen_episode_comments'
   )
 
+  if (offlineMode) {
+    if (reopenKey === `${storyId}:${episodeId}`) {
+      sessionStorage.removeItem('shadow_reopen_episode_comments')
+    }
+    return
+  }
+
   if (reopenKey !== `${storyId}:${episodeId}`) return
 
   sessionStorage.removeItem('shadow_reopen_episode_comments')
   setCommentsOpen(true)
-}, [storyId, episodeId])
+}, [episodeId, offlineMode, storyId])
 
 useEffect(() => {
   if (sessionStorage.getItem('shadow_reopen_gift_popup') !== '1') return
 
   sessionStorage.removeItem('shadow_reopen_gift_popup')
-  setGiftPopupOpen(true)
-}, [])
+  if (!offlineMode) setGiftPopupOpen(true)
+}, [offlineMode])
 
   useEffect(() => {
   setChatStoryComplete(false)
@@ -5609,16 +5678,30 @@ const pagingPages = useMemo(() => {
 ])
 
   useReadingProgressSync({
-  storyId,
-  episodeId,
-  readingPercent: readingProgress,
-  enabled: Boolean(episode?.id) && String(episode.id) === String(episodeId) && !loading && !lockedEpisode && adultAccepted,
-})
+    storyId,
+    episodeId,
+    readingPercent: readingProgress,
+    enabled:
+      !offlineMode &&
+      Boolean(episode?.id) &&
+      String(episode.id) === String(episodeId) &&
+      !loading &&
+      !lockedEpisode &&
+      adultAccepted,
+  })
 
 useEffect(() => {
-  if (!storyId || !episode || loading || lockedEpisode || !adultAccepted) return
+  if (
+    offlineMode ||
+    !storyId ||
+    !episode ||
+    loading ||
+    lockedEpisode ||
+    !adultAccepted
+  ) return
+
   void trackSectionQualifiedRead(storyId)
-}, [adultAccepted, episode, loading, lockedEpisode, storyId])
+}, [adultAccepted, episode, loading, lockedEpisode, offlineMode, storyId])
 
   useEffect(() => {
     let ignore = false
@@ -5635,6 +5718,15 @@ useEffect(() => {
       episode?.comments_count ||
       0
     )
+
+    if (offlineMode) {
+      setActiveCommentSummary({
+        episodeId: targetEpisodeId,
+        hotComment: null,
+        total: fallbackTotal,
+      })
+      return undefined
+    }
 
     if (
       !targetEpisodeId ||
@@ -5775,10 +5867,16 @@ useEffect(() => {
     episodeId,
     loading,
     lockedEpisode,
+    offlineMode,
   ])
 
 
 useEffect(() => {
+  if (offlineMode) {
+    setSubscribed(false)
+    return undefined
+  }
+
   let ignore = false
 
   async function loadSubscriptionStatus() {
@@ -5809,9 +5907,11 @@ if (!ignore) setSubscribed(isSubscribed)
   return () => {
     ignore = true
   }
-}, [storyId])
+}, [offlineMode, storyId])
 
 const handleSubscribe = async () => {
+  if (offlineMode) return false
+
   const token = getReaderToken()
 
   if (!token) {
@@ -6039,6 +6139,10 @@ useEffect(() => {
 }
 
 async function loadReaderAdStatus(targetEpisodeId = episodeId) {
+  if (offlineMode) {
+    return { ad_policy: null, advertisement: null }
+  }
+
   if (!isUsableRouteId(storyId) || !isUsableRouteId(targetEpisodeId)) {
     return { ad_policy: null, advertisement: null }
   }
@@ -6063,6 +6167,8 @@ if (!response.ok || data.ok === false) throw new Error(data.message)
 }
 
 async function loadContinuousEpisode(targetEpisode) {
+  if (offlineMode) return null
+
   const targetId = String(
     targetEpisode?.id || targetEpisode?.episode_id || ''
   ).trim()
@@ -6139,7 +6245,10 @@ async function loadContinuousEpisode(targetEpisode) {
 }
 
 const continuousReader = useContinuousEpisodeReader({
-  enabled: !isChatStory && effectiveReadingMode === 'scroll',
+  enabled:
+    !offlineMode &&
+    !isChatStory &&
+    effectiveReadingMode === 'scroll',
   storyId,
   activeEpisodeId: episodeId,
   episodes,
@@ -6293,7 +6402,15 @@ useEffect(() => {
         return
       }
 
-      if ((offlineRequested || navigator.onLine === false) && await showOfflineFallback()) return
+      if (offlineRequested || navigator.onLine === false) {
+        if (await showOfflineFallback()) return
+        if (!ignore) {
+          setLoading(false)
+          setReaderGateReady(true)
+          setMessage(t('readerPage.offlineEpisodeNotSaved'))
+        }
+        return
+      }
 
       const readTrace = {
         timestamp: new Date().toISOString(),
@@ -6661,6 +6778,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       lockedEpisode ||
       !adultAccepted ||
       !getReaderToken() ||
+      offlineMode ||
       qualifiedViewSentRef.current
     ) {
       return undefined
@@ -6780,6 +6898,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     episodeId,
     loading,
     lockedEpisode,
+    offlineMode,
     storyId,
   ])
 
@@ -6789,7 +6908,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     readingTargetLoadedRef.current = false
 
     async function loadReadingTarget() {
-      if (!storyId || lockedEpisode || !adultAccepted) {
+      if (offlineMode || !storyId || lockedEpisode || !adultAccepted) {
         return
       }
 
@@ -6850,6 +6969,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
   }, [
     adultAccepted,
     lockedEpisode,
+    offlineMode,
     readingRewardReloadKey,
     storyId,
   ])
@@ -6942,7 +7062,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
   
   useEffect(() => {
-  if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted || !getReaderToken()) {
+  if (offlineMode || !storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted || !getReaderToken()) {
     return undefined
   }
 
@@ -7193,6 +7313,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
   episodeId,
   loading,
   lockedEpisode,
+  offlineMode,
   storyId,
 ])
       
@@ -7344,6 +7465,21 @@ useEffect(() => {
   const openReaderEpisode = async (targetEpisode) => {
     if (!targetEpisode) return
 
+    if (offlineMode) {
+      navigate(
+        withOfflineMarker(`/story/${storyId}/episode/${targetEpisode.id}`),
+        {
+          replace: true,
+          state: {
+            storyPreview: story,
+            episodePreview: targetEpisode,
+            returnSource: location.state?.returnSource,
+          },
+        }
+      )
+      return
+    }
+
     if (effectiveReadingMode === 'scroll') {
       await continuousReader.scrollToEpisode(targetEpisode)
       return
@@ -7381,6 +7517,8 @@ const handleReaderCopyLink = async () => {
 }
 
 const handleReaderDownload = () => {
+  if (offlineMode) return
+
   const targetStoryId = story?.id || storyId
   const targetEpisodeId = episode?.id || episodeId
   if (!targetStoryId || !targetEpisodeId) return
@@ -7392,11 +7530,15 @@ const handleReaderDownload = () => {
 }
 
 const handleReaderReport = () => {
+  if (offlineMode) return
+
   setReaderMoreOpen(false)
   setReportOpen(true)
 }
   
 const handleReaderEcho = () => {
+  if (offlineMode) return
+
   setReaderShareOpen(false)
   setEchoShareOpen(true)
 }
@@ -7951,7 +8093,7 @@ autoScrollEnabled ? (
     currentEpisodeId={episodeId}
     storyId={storyId}
     navigate={(to, options = {}) =>
-      navigate(to, {
+      navigate(withOfflineMarker(to), {
         ...options,
         replace: true,
       })
@@ -7966,7 +8108,7 @@ autoScrollEnabled ? (
     currentEpisodeId={episodeId}
     storyId={storyId}
     navigate={(to, options = {}) =>
-      navigate(to, {
+      navigate(withOfflineMarker(to), {
         ...options,
         replace: true,
       })
@@ -8079,7 +8221,7 @@ autoScrollEnabled ? (
 ) : null}
 
 <ScrollSubscribePopup
-  visible={scrollSubscribePopupVisible}
+  visible={scrollSubscribePopupVisible && !offlineMode}
   theme={theme}
   storyId={storyId}
   readingProgress={readingProgress}
@@ -8109,9 +8251,10 @@ autoScrollEnabled ? (
   nextEpisode={nextEpisode}
   onPrevious={() => openReaderEpisode(previousEpisode)}
   onNext={() => openReaderEpisode(nextEpisode)}
-  showSubscribeOnDoubleTap={readerDoubleTapVisible}
+  showSubscribeOnDoubleTap={readerDoubleTapVisible && !offlineMode}
   onOpenChapters={() => setEpisodeListOpen(true)}
   onOpenComments={() => {
+    if (offlineMode) return
     setCommentEpisode(episode)
     setCommentsOpen(true)
   }}
@@ -8119,7 +8262,7 @@ autoScrollEnabled ? (
 />
 
 <WebcomicReadingMissionCoin
-  visible={showReadingRewardCoin}
+  visible={showReadingRewardCoin && !offlineMode}
   target={activeReadingTarget}
   rewardAnimation={readingRewardAnimation}
   onClick={() => navigate('/tasks')}
@@ -8229,7 +8372,8 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
       <button
         type="button"
         onClick={handleReaderEcho}
-        className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
+        disabled={offlineMode}
+        className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80 disabled:opacity-40`}
       >
         <i className={`fa-solid fa-rotate w-4 text-center text-[14px] ${theme.muted}`} />
         <span>{t('readerPage.echo')}</span>
@@ -8255,7 +8399,7 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
       <button
   type="button"
   onClick={handleReaderDownload}
-  disabled={loading || lockedEpisode || !adultAccepted || !episode || shouldBlockReaderContent}
+  disabled={offlineMode || loading || lockedEpisode || !adultAccepted || !episode || shouldBlockReaderContent}
   className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80 disabled:opacity-50`}
 >
   <i className={`fa-solid fa-download w-4 text-center text-[14px] ${theme.muted}`} />
@@ -8264,7 +8408,8 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
       <button
         type="button"
         onClick={handleReaderReport}
-        className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80`}
+        disabled={offlineMode}
+        className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold ${theme.text} active:opacity-80 disabled:opacity-40`}
       >
         <i className={`fa-regular fa-flag w-4 text-center text-[14px] ${theme.muted}`} />
         <span>{t('readerPage.report')}</span>
@@ -8411,17 +8556,19 @@ adultAccepted &&
           <ToBeContinued theme={theme} />
         ) : null}
 
-        <ReaderEndPanel
-          story={story}
-          episode={episode}
-          commentSummary={activeCommentSummary}
-          onOpenComments={() => {
-            setCommentEpisode(episode)
-            setCommentsOpen(true)
-          }}
-          onOpenGift={() => setGiftPopupOpen(true)}
-          theme={theme}
-        />
+        {!offlineMode ? (
+          <ReaderEndPanel
+            story={story}
+            episode={episode}
+            commentSummary={activeCommentSummary}
+            onOpenComments={() => {
+              setCommentEpisode(episode)
+              setCommentsOpen(true)
+            }}
+            onOpenGift={() => setGiftPopupOpen(true)}
+            theme={theme}
+          />
+        ) : null}
       </>
     ) : null}
   </>
@@ -8460,6 +8607,7 @@ effectiveReadingMode === 'scroll' ? (
                 fontSizePx={fontSizePx}
                 fontFamily={activeFont.family}
                 lineSpacing={lineSpacing}
+                offlineMode={offlineMode}
                 onRegister={continuousReader.registerSection}
                 onOpenComments={(targetEpisode) => {
                   setCommentEpisode(targetEpisode)
@@ -8611,17 +8759,19 @@ adultAccepted &&
                   <ToBeContinued theme={theme} />
                 ) : null}
 
-                <ReaderEndPanel
-                  story={story}
-                  episode={episode}
-                  commentSummary={activeCommentSummary}
-                  onOpenComments={() => {
-                    setCommentEpisode(episode)
-                    setCommentsOpen(true)
-                  }}
-                  onOpenGift={() => setGiftPopupOpen(true)}
-                  theme={theme}
-                />
+                {!offlineMode ? (
+                  <ReaderEndPanel
+                    story={story}
+                    episode={episode}
+                    commentSummary={activeCommentSummary}
+                    onOpenComments={() => {
+                      setCommentEpisode(episode)
+                      setCommentsOpen(true)
+                    }}
+                    onOpenGift={() => setGiftPopupOpen(true)}
+                    theme={theme}
+                  />
+                ) : null}
               </>
             ) : null}
           </>
