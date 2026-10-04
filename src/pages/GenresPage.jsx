@@ -98,6 +98,7 @@ registerTranslationNamespace('genresPage', {
     magic: 'វេទមន្ត',
     secondChance: 'ឱកាសទីពីរ',
     coldMaleLead: 'តួប្រុសត្រជាក់',
+    bg: 'BG',
     bl: 'BL',
     gl: 'GL',
     lgbtq: 'LGBTQ+',
@@ -160,6 +161,7 @@ registerTranslationNamespace('genresPage', {
     magic: '魔法',
     secondChance: '第二次机会',
     coldMaleLead: '高冷男主',
+    bg: 'BG',
     bl: 'BL',
     gl: 'GL',
     lgbtq: 'LGBTQ+',
@@ -222,6 +224,7 @@ registerTranslationNamespace('genresPage', {
     magic: '魔法',
     secondChance: 'セカンドチャンス',
     coldMaleLead: 'クールな男性主人公',
+    bg: 'BG',
     bl: 'BL',
     gl: 'GL',
     lgbtq: 'LGBTQ+',
@@ -284,6 +287,7 @@ registerTranslationNamespace('genresPage', {
     magic: '마법',
     secondChance: '두 번째 기회',
     coldMaleLead: '차가운 남주인공',
+    bg: 'BG',
     bl: 'BL',
     gl: 'GL',
     lgbtq: 'LGBTQ+',
@@ -454,6 +458,7 @@ function normalizeBook(story, index = 0) {
     title: story.title || 'Untitled Story',
     cover: story.cover_url || story.coverUrl || story.image_url || `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
     genre,
+    tags: Array.isArray(story.tags) ? story.tags : String(story.tags || '').split(',').map((tag) => tag.trim()).filter(Boolean),
     firstTag: getFirstDifferentTag(genre, story.tags),
     status: story.status || story.story_status || '',
     hasFreeEpisode: Boolean(story.has_free_episode),
@@ -468,10 +473,13 @@ function isCompletedBook(book) {
   return Boolean(book.isCompleted)
 }
 
-function isSameGenre(bookGenre, selectedGenre) {
+function isSameGenre(book, selectedGenre) {
   if (!selectedGenre || selectedGenre === 'All') return true
+  if (selectedGenre === 'bg') {
+    return (book.tags || []).some((tag) => String(tag || '').trim().toLowerCase() === 'bg')
+  }
 
-  return String(bookGenre || '').toLowerCase().replace(/\s+/g, '-') === selectedGenre.toLowerCase().replace(/\s+/g, '-')
+  return String(book.genre || '').toLowerCase().replace(/\s+/g, '-') === selectedGenre.toLowerCase().replace(/\s+/g, '-')
 }
 
 function isBookMatchedQuickFilter(book, activeQuickFilter) {
@@ -739,7 +747,7 @@ export default function GenresPage() {
         page: 'genres',
         sort: 'updated',
         limit: 120,
-        schema: 1,
+        schema: 2,
       },
     })
 
@@ -843,7 +851,7 @@ export default function GenresPage() {
 
   const filteredBooks = useMemo(() => {
     return books
-      .filter((book) => isSameGenre(book.genre, selectedGenreSlug))
+      .filter((book) => isSameGenre(book, selectedGenreSlug))
       .filter((book) => isBookMatchedQuickFilter(book, activeQuickFilter))
       .filter((book) => isBookMatchedAdvancedFilters(book, access, type, progress))
   }, [access, activeQuickFilter, books, progress, selectedGenreSlug, type])
