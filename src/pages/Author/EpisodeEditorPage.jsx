@@ -1083,6 +1083,7 @@ const STORY_TAG_GROUPS = [
   {
     name: 'Relationship',
     tags: [
+      'BG',
       'Slow Burn',
       'Enemies to Lovers',
       'Age Gap',
