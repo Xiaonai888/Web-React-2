@@ -28,6 +28,16 @@ function isExpired(metadata) {
   return metadata?.expiresAt != null && Date.now() >= metadata.expiresAt
 }
 
+async function requestPersistentStorage() {
+  try {
+    if (!navigator.storage?.persist) return false
+    if (navigator.storage.persisted && await navigator.storage.persisted()) return true
+    return Boolean(await navigator.storage.persist())
+  } catch {
+    return false
+  }
+}
+
 function openDatabase() {
   return new Promise((resolve, reject) => {
     if (typeof indexedDB === 'undefined') {
@@ -93,6 +103,7 @@ export async function saveOfflineEpisode({ accountId, storyId, episodeId, storyT
   if (!Array.isArray(assets) || assets.some((asset) => !asset?.url || !(asset.blob instanceof Blob) || !asset.blob.size)) {
     throw new Error('Offline media assets must contain a URL and a nonempty Blob')
   }
+  await requestPersistentStorage()
   const expiry = parseExpiry(expiresAt, access)
   const key = episodeKey(accountId, storyId, episodeId)
   const metadata = { key, accountId, storyId, episodeId, storyType, access, expiresAt: expiry, savedAt: Date.now(), assetCount: assets.length }
