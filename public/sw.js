@@ -1670,6 +1670,19 @@ async function fetchWithTimeout(request, timeoutMs) {
   }
 }
 
+async function isOfflineMarkedClient(clientId) {
+  if (!clientId) return false
+
+  try {
+    const client = await self.clients.get(clientId)
+    if (!client?.url) return false
+
+    return new URL(client.url).searchParams.get(OFFLINE_MARKER) === '1'
+  } catch {
+    return false
+  }
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     await self.skipWaiting()
@@ -1804,6 +1817,13 @@ self.addEventListener(
     if (isExternalShellAsset) {
       event.respondWith((async () => {
         const cache = await caches.open(OFFLINE_SHELL_NAME).catch(() => null)
+        const offlineClient = await isOfflineMarkedClient(event.clientId)
+        const cached = cache &&
+          await cache.match(request, { ignoreSearch: true }).catch(() => null)
+
+        if (offlineClient && cached) {
+          return cached
+        }
 
         try {
           const response = await fetchWithTimeout(request, 2500)
@@ -1814,9 +1834,6 @@ self.addEventListener(
 
           return response
         } catch {
-          const cached = cache &&
-            await cache.match(request, { ignoreSearch: true }).catch(() => null)
-
           return cached || Response.error()
         }
       })())
