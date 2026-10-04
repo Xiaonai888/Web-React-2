@@ -1643,27 +1643,85 @@ self.addEventListener(
   }
 )
 
+const OFFLINE_SHELL_NAME = 'shadow-offline-shell-v1'
+const OFFLINE_MARKER = '_shadow_offline'
+const NAVIGATION_TIMEOUT_MS = 5000
+const EXTERNAL_SHELL_ASSETS = [
+  'https://cdn.tailwindcss.com',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://unpkg.com/swiper/swiper-bundle.min.css',
+  'https://unpkg.com/swiper/swiper-bundle.min.js',
+  'https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;600;700&family=Inter:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
+]
+
+async function getOfflineShell() {
+  const cache = await caches.open(OFFLINE_SHELL_NAME).catch(() => null)
+  return cache?.match(new URL('/', self.location.origin).href).catch(() => null)
+}
+
+async function fetchWithTimeout(request, timeoutMs) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(new Request(request, { signal: controller.signal }))
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(self.skipWaiting())
-  precacheSplashAssets().catch(() => {})
   event.waitUntil((async () => {
-    try {
-      const root = new URL('/', self.location.origin)
-      const response = await fetch(new Request(root.href, { cache: 'reload' }))
-      if (!response.ok || !String(response.headers.get('content-type') || '').includes('text/html')) return
-      const html = await response.clone().text()
-      const cache = await caches.open('shadow-offline-shell-v1')
-      await cache.put(root.href, response)
-      const urls = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)=["']([^"']+)["']/gi)]
-        .map((match) => new URL(match[1], root))
-        .filter((url) => url.origin === root.origin && /^\/assets\/.+\.(?:js|css)$/i.test(url.pathname))
-      await Promise.allSettled([...new Set(urls.map((url) => url.href))].map(async (url) => {
-        const asset = await fetch(new Request(url, { cache: 'reload' }))
-        if (asset.ok) await cache.put(url, asset)
-      }))
-    } catch (error) {
-      console.warn('SHADOW_OFFLINE_SHELL_INSTALL_FAILED', error)
-    }
+    await self.skipWaiting()
+
+    await Promise.allSettled([
+      precacheSplashAssets(),
+      (async () => {
+        const root = new URL('/', self.location.origin)
+        const response = await fetch(new Request(root.href, { cache: 'reload' }))
+
+        if (
+          !response.ok ||
+          !String(response.headers.get('content-type') || '').includes('text/html')
+        ) {
+          return
+        }
+
+        const html = await response.clone().text()
+        const cache = await caches.open(OFFLINE_SHELL_NAME)
+
+        await cache.put(root.href, response)
+
+        const localAssets = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)=["']([^"']+)["']/gi)]
+          .map((match) => new URL(match[1], root))
+          .filter((asset) =>
+            asset.origin === root.origin &&
+            /^\/assets\/.+\.(?:js|css)$/i.test(asset.pathname)
+          )
+          .map((asset) => asset.href)
+
+        await Promise.allSettled(
+          [...new Set(localAssets)].map(async (assetUrl) => {
+            const asset = await fetch(new Request(assetUrl, { cache: 'reload' }))
+            if (asset.ok) await cache.put(assetUrl, asset)
+          })
+        )
+
+        await Promise.allSettled(
+          EXTERNAL_SHELL_ASSETS.map(async (assetUrl) => {
+            const request = new Request(assetUrl, {
+              mode: 'no-cors',
+              cache: 'reload',
+            })
+            const asset = await fetch(request)
+
+            if (asset.ok || asset.type === 'opaque') {
+              await cache.put(request, asset)
+            }
+          })
+        )
+      })(),
+    ])
   })())
 })
 
@@ -1710,7 +1768,6 @@ self.addEventListener(
       return
     }
 
-        const offlineShellName = 'shadow-offline-shell-v1'
     const isLocalShellAsset = url.origin === self.location.origin &&
       /^\/assets\/.+\.(?:js|css)$/i.test(url.pathname)
     const isExternalShellAsset = [
@@ -1718,17 +1775,48 @@ self.addEventListener(
       'fonts.googleapis.com', 'fonts.gstatic.com',
     ].includes(url.hostname) && ['script', 'style', 'font'].includes(request.destination)
 
-    if (isLocalShellAsset || isExternalShellAsset) {
+    if (isLocalShellAsset) {
+      const cachePromise = caches.open(OFFLINE_SHELL_NAME).catch(() => null)
+      const networkPromise = fetch(request)
+        .then(async (response) => {
+          const cache = await cachePromise
+
+          if (cache && response.ok) {
+            await cache.put(request, response.clone()).catch(() => {})
+          }
+
+          return response
+        })
+        .catch(() => null)
+
+      event.waitUntil(networkPromise)
+
       event.respondWith((async () => {
-        const cache = await caches.open(offlineShellName).catch(() => null)
+        const cache = await cachePromise
+        const cached = cache &&
+          await cache.match(request, { ignoreSearch: true }).catch(() => null)
+
+        return cached || (await networkPromise) || Response.error()
+      })())
+      return
+    }
+
+    if (isExternalShellAsset) {
+      event.respondWith((async () => {
+        const cache = await caches.open(OFFLINE_SHELL_NAME).catch(() => null)
+
         try {
-          const response = await fetch(request)
+          const response = await fetchWithTimeout(request, 2500)
+
           if (cache && (response.ok || response.type === 'opaque')) {
             await cache.put(request, response.clone()).catch(() => {})
           }
+
           return response
         } catch {
-          const cached = cache && await cache.match(request, { ignoreSearch: true }).catch(() => null)
+          const cached = cache &&
+            await cache.match(request, { ignoreSearch: true }).catch(() => null)
+
           return cached || Response.error()
         }
       })())
@@ -1739,17 +1827,52 @@ self.addEventListener(
       '/', '/me', '/library', '/library/manage', '/library/manage/offline-downloads',
     ])
     const route = url.pathname.replace(/\/+$/, '') || '/'
-    if (request.mode === 'navigate' && url.origin === self.location.origin && (offlineShellRoutes.has(route) || /^\/story\/[^/]+\/episode\/[^/]+$/.test(route))) {
+
+    if (
+      request.mode === 'navigate' &&
+      url.origin === self.location.origin &&
+      (
+        offlineShellRoutes.has(route) ||
+        /^\/story\/[^/]+\/episode\/[^/]+$/.test(route)
+      )
+    ) {
       event.respondWith((async () => {
+        if (url.searchParams.get(OFFLINE_MARKER) === '1') {
+          const cached = await getOfflineShell()
+          if (cached) return cached
+        }
+
+        if (self.navigator.onLine === false) {
+          const cached = await getOfflineShell()
+
+          if (cached) {
+            const offlineUrl = new URL('/library', self.location.origin)
+            offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
+            return Response.redirect(offlineUrl.href, 302)
+          }
+        }
+
         try {
-          return await fetch(request)
+          return await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS)
         } catch {
-          const cache = await caches.open(offlineShellName).catch(() => null)
-          const cached = cache && await cache.match(new URL('/', self.location.origin).href).catch(() => null)
-          return cached || new Response('Shadow offline shell has not been saved yet. Open Shadow once with internet.', {
-            status: 503,
-            headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
-          })
+          const cached = await getOfflineShell()
+
+          if (cached) {
+            const offlineUrl = new URL('/library', self.location.origin)
+            offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
+            return Response.redirect(offlineUrl.href, 302)
+          }
+
+          return new Response(
+            'Shadow offline shell has not been saved yet. Open Shadow once with internet.',
+            {
+              status: 503,
+              headers: {
+                'Content-Type': 'text/plain; charset=utf-8',
+                'Cache-Control': 'no-store',
+              },
+            }
+          )
         }
       })())
       return
@@ -1807,14 +1930,24 @@ self.addEventListener(
       return new Response(html, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Shadow-Error-Code': code } })
     }
     try {
-      const response = await fetch(request)
-      return response.status >= 500 ? renderFailure('server', response.status) : response
+      const response = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS)
+      return response.status >= 500
+        ? renderFailure('server', response.status)
+        : response
     } catch {
-  return Response.redirect(
-    new URL('/library', self.location.origin).href,
-    302
-  )
-}
+      const cached = await getOfflineShell()
+
+      if (!cached) {
+        return renderFailure(
+          self.navigator.onLine === false ? 'offline' : 'unknown'
+        )
+      }
+
+      const offlineUrl = new URL('/library', self.location.origin)
+      offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
+
+      return Response.redirect(offlineUrl.href, 302)
+    }
   })())
   return
 }
