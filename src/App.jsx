@@ -115,6 +115,7 @@ const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesda
 const AuthorDaily50EventPage = lazy(() => import('./pages/Event/AuthorDaily50EventPage'))
 const Author49DayEventPage = lazy(() => import('./pages/Event/Author49DayEventPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
+const ShortCompletedPage = lazy(() => import('./pages/ShortCompletedPage'))
 const MusicPage = lazy(() => import('./pages/MusicPage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
@@ -927,6 +928,10 @@ const shouldShowOpeningAds =
 />
           <Route path="/apps/pic-to-art/creations" element={
   <LazyPage><AppAccessGuard appKey="pic-to-art"><PicToArtCreationsPage /></AppAccessGuard></LazyPage>
+} />
+
+          <Route path="/short-completed" element={
+  <LazyPage><ShortCompletedPage /></LazyPage>
 } />
 
         <Route
