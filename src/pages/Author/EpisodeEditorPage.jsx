@@ -3851,6 +3851,7 @@ export default function EpisodeEditorPage() {
   const editorRef = useRef(null)
   const imageInputRef = useRef(null)
   const savedSelectionRef = useRef(null)
+  const isComposingRef = useRef(false)
   const undoHistoryRef = useRef([])
   const redoHistoryRef = useRef([])
   const lastHistoryInputRef = useRef({ type: '', at: 0 })
@@ -4548,7 +4549,7 @@ return true
   }
 
   useEffect(() => {
-    if (!editorRef.current) return
+    if (!editorRef.current || isComposingRef.current) return
     const safeHtml = normalizeEpisodeHtml(content)
     if (editorRef.current.innerHTML !== safeHtml) {
       editorRef.current.innerHTML = safeHtml
@@ -4619,10 +4620,22 @@ return true
   }
 
   const handleEditorInput = (event) => {
-    setContent(event.currentTarget.innerHTML)
-    markUnsaved()
-    saveEditorSelection()
-  }
+  if (event.nativeEvent?.isComposing || isComposingRef.current) return
+  setContent(event.currentTarget.innerHTML)
+  markUnsaved()
+  saveEditorSelection()
+}
+
+  const handleEditorCompositionStart = () => {
+  isComposingRef.current = true
+}
+
+const handleEditorCompositionEnd = (event) => {
+  isComposingRef.current = false
+  setContent(event.currentTarget.innerHTML)
+  markUnsaved()
+  saveEditorSelection()
+}
 
   const runEditorCommand = (command, value = null) => {
     recordEditorSnapshot()
