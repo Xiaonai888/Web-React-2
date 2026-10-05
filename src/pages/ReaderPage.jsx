@@ -7061,59 +7061,19 @@ if (!episodesResponse.ok || episodesData.ok === false) {
   }, [])
 
   
-  useEffect(() => {
-  if (offlineMode || !storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted || !getReaderToken()) {
-    return undefined
+    return () => {
+    window.clearInterval(timer)
   }
-
-  const timer = window.setInterval(async () => {
-    if (
-      readingHeartbeatBusyRef.current ||
-      document.visibilityState !== 'visible'
-    ) {
-      return
-    }
-
-    const recentlyActive =
-      Date.now() - lastReadingActivityRef.current <=
-      READING_ACTIVITY_GRACE_MS
-
-    if (!recentlyActive && !autoScrollEnabled) return
-
-    const currentEpisodeId = String(episodeId)
-    const weeklyTracked =
-      weeklyReadingTrackedEpisodeRef.current ===
-      currentEpisodeId
-    const shouldAttemptWeekly =
-      !weeklyTracked &&
-      readingProgressRef.current >= 80
-    const targetKnownEmpty =
-      readingTargetLoadedRef.current &&
-      !activeReadingTargetRef.current
-    const idleState =
-      readingSessionIdleUntilRef.current
-
-    if (
-      targetKnownEmpty &&
-      !shouldAttemptWeekly &&
-      idleState.episodeId === currentEpisodeId &&
-      Date.now() < Number(idleState.until || 0)
-    ) {
-      return
-    }
-
-    if (
-      targetKnownEmpty &&
-      !shouldAttemptWeekly
-    ) {
-      readingSessionIdleUntilRef.current = {
-        episodeId: currentEpisodeId,
-        until:
-          Date.now() +
-          READING_SESSION_IDLE_RECHECK_MS,
-      }
-      return
-    }
+}, [
+  adultAccepted,
+  autoScrollEnabled,
+  episode,
+  episodeId,
+  loading,
+  lockedEpisode,
+  offlineMode,
+  storyId,
+])
 
     readingHeartbeatBusyRef.current = true
 
