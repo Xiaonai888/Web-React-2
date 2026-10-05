@@ -2185,7 +2185,7 @@ function startSmartRefreshCycle() {
       : false
 
     if (!hasClaimableReward) {
-      navigate('/')
+      navigate('/discover')
       return
     }
 
@@ -2819,7 +2819,7 @@ navigate(targetPath, {
             <WeeklyReadingCard
               weeklyReading={weeklyReading}
               claiming={weeklyReadingClaiming}
-              onRead={() => navigate('/')}
+              onRead={() => navigate('/discover')}
               onClaim={claimWeeklyReadingReward}
             />
 
@@ -2847,7 +2847,7 @@ navigate(targetPath, {
             <ReadingRewardCard
               readingReward={readingReward}
               claiming={readingClaiming}
-              onRead={() => navigate('/')}
+              onRead={() => navigate('/discover')}
               onClaim={claimReadingReward}
             />
           </div>
