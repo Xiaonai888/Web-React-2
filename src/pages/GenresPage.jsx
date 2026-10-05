@@ -706,8 +706,15 @@ export default function GenresPage() {
       return {}
     }
   })
-  const [query, setQuery] = useState('')
-  const [searchOpen, setSearchOpen] = useState(false)
+  const canResume = Boolean(
+    savedState.returningFromStory &&
+      Array.isArray(savedState.books)
+  )
+  const resumePendingRef = useRef(canResume)
+  const [query, setQuery] = useState(canResume ? savedState.query || '' : '')
+  const [searchOpen, setSearchOpen] = useState(
+    canResume ? Boolean(savedState.searchOpen) : false
+  )
   const [genresExpanded, setGenresExpanded] = useState(Boolean(savedState.genresExpanded))
   const [activeGenre, setActiveGenre] = useState(
     genres.some((item) => item.label === savedState.activeGenre) ? savedState.activeGenre : 'All'
@@ -725,23 +732,90 @@ export default function GenresPage() {
   const [progress, setProgress] = useState(
     progressFilters.some((item) => item.value === savedState.progress) ? savedState.progress : 'all'
   )
-  const [books, setBooks] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [books, setBooks] = useState(canResume ? savedState.books : [])
+  const [loading, setLoading] = useState(!canResume)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
-  const [nextCursor, setNextCursor] = useState(null)
+  const [hasMore, setHasMore] = useState(
+    canResume ? Boolean(savedState.hasMore) : false
+  )
+  const [nextCursor, setNextCursor] = useState(
+    canResume ? savedState.nextCursor || null : null
+  )
   const [message, setMessage] = useState('')
   const [loadMoreError, setLoadMoreError] = useState('')
   const loadMoreControllerRef = useRef(null)
 
   useEffect(() => {
     try {
+      const current = JSON.parse(
+        sessionStorage.getItem('shadow:genres-page:v1') || '{}'
+      )
+
       sessionStorage.setItem(
         'shadow:genres-page:v1',
-        JSON.stringify({ activeGenre, activeQuickFilter, access, type, progress, genresExpanded })
+        JSON.stringify({
+          ...current,
+          activeGenre,
+          activeQuickFilter,
+          access,
+          type,
+          progress,
+          genresExpanded,
+          query,
+          searchOpen,
+        })
       )
     } catch {}
-  }, [activeGenre, activeQuickFilter, access, type, progress, genresExpanded])
+  }, [
+    activeGenre,
+    activeQuickFilter,
+    access,
+    type,
+    progress,
+    genresExpanded,
+    query,
+    searchOpen,
+  ])
+
+  useEffect(() => {
+    if (!canResume) return
+
+    try {
+      const current = JSON.parse(
+        sessionStorage.getItem('shadow:genres-page:v1') || '{}'
+      )
+
+      sessionStorage.setItem(
+        'shadow:genres-page:v1',
+        JSON.stringify({
+          ...current,
+          returningFromStory: false,
+        })
+      )
+    } catch {}
+
+    const targetScroll = Math.max(
+      0,
+      Number(savedState.scrollY || 0)
+    )
+    let secondFrame = 0
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        window.scrollTo({
+          top: targetScroll,
+          left: 0,
+          behavior: 'auto',
+        })
+      })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      if (secondFrame) {
+        window.cancelAnimationFrame(secondFrame)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (filtersOpen) {
@@ -756,6 +830,11 @@ export default function GenresPage() {
   }, [filtersOpen])
 
   useEffect(() => {
+    if (resumePendingRef.current) {
+      resumePendingRef.current = false
+      return
+    }
+
     const controller = new AbortController()
     let ignore = false
 
@@ -796,10 +875,6 @@ export default function GenresPage() {
         setHasMore(Boolean(cachedPagination?.has_more))
         setNextCursor(cachedPagination?.next_cursor || null)
         setLoading(false)
-      }
-
-      if (cached?.isFresh && cachedBooks) {
-        return
       }
 
       try {
@@ -939,8 +1014,7 @@ export default function GenresPage() {
         const seen = new Set(
           current.map((book) => String(book.id))
         )
-
-        return [
+        const mergedBooks = [
           ...current,
           ...nextBooks.filter((book) => {
             const id = String(book.id)
@@ -949,6 +1023,8 @@ export default function GenresPage() {
             return true
           }),
         ]
+
+        return mergedBooks
       })
 
       setHasMore(Boolean(data.pagination?.has_more))
@@ -1003,7 +1079,30 @@ export default function GenresPage() {
   }
 
   const openBook = (book) => {
-    if (book.id) navigate(`/story/${book.id}`)
+    if (!book.id) return
+
+    try {
+      sessionStorage.setItem(
+        'shadow:genres-page:v1',
+        JSON.stringify({
+          activeGenre,
+          activeQuickFilter,
+          access,
+          type,
+          progress,
+          genresExpanded,
+          query,
+          searchOpen,
+          books,
+          hasMore,
+          nextCursor,
+          scrollY: window.scrollY,
+          returningFromStory: true,
+        })
+      )
+    } catch {}
+
+    navigate(`/story/${book.id}`)
   }
 
   return (
