@@ -30,6 +30,126 @@ const API_URL =
 const SHOW_BLOCKING_LOADING_SCREEN = false
 const SHADOW_LOGO_URL = '/assets/Icons/Logo Shadow 2.svg'
 const BRAND_TEXT = 'STORIES LIVE IN THE SHADOWS.'
+const ADVERTISEMENT_CACHE_MS = 60 * 1000
+const ADVERTISEMENT_CACHE_LIMIT = 20
+const advertisementCache = new Map()
+const advertisementPending = new Map()
+
+function pruneAdvertisementCache(now = Date.now()) {
+  for (const [key, entry] of advertisementCache) {
+    if (Number(entry?.expiresAt || 0) <= now) {
+      advertisementCache.delete(key)
+    }
+  }
+
+  while (advertisementCache.size > ADVERTISEMENT_CACHE_LIMIT) {
+    advertisementCache.delete(
+      advertisementCache.keys().next().value
+    )
+  }
+}
+
+function readAdvertisementCache(placement) {
+  const key = String(placement || 'opening')
+  const now = Date.now()
+  const entry = advertisementCache.get(key)
+
+  if (!entry || Number(entry.expiresAt || 0) <= now) {
+    if (entry) advertisementCache.delete(key)
+    return null
+  }
+
+  return entry.data
+}
+
+function writeAdvertisementCache(placement, data) {
+  const key = String(placement || 'opening')
+
+  advertisementCache.delete(key)
+  advertisementCache.set(key, {
+    data,
+    expiresAt: Date.now() + ADVERTISEMENT_CACHE_MS,
+  })
+
+  pruneAdvertisementCache()
+}
+
+async function fetchAdvertisementData(placement, debug = false) {
+  const key = String(placement || 'opening')
+  const url = `${API_URL}/api/advertisements/public?placement=${encodeURIComponent(key)}`
+
+  if (!debug) {
+    const cached = readAdvertisementCache(key)
+
+    if (cached) {
+      return {
+        data: cached,
+        source: 'cache',
+        url,
+      }
+    }
+
+    const pending = advertisementPending.get(key)
+
+    if (pending) {
+      const data = await pending
+
+      return {
+        data,
+        source: 'wait',
+        url,
+      }
+    }
+  }
+
+  const request = (async () => {
+    const response = await fetch(url, {
+      cache: debug ? 'no-store' : 'default',
+    })
+
+    const data = await response
+      .json()
+      .catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      const error = new Error(
+        data?.message ||
+          `Advertisement request failed (${response.status})`
+      )
+
+      error.status = response.status
+      error.data = data
+      throw error
+    }
+
+    if (!debug) {
+      writeAdvertisementCache(key, data)
+    }
+
+    return data
+  })()
+
+  if (!debug) {
+    advertisementPending.set(key, request)
+  }
+
+  try {
+    const data = await request
+
+    return {
+      data,
+      source: debug ? 'network-debug' : 'network',
+      url,
+    }
+  } finally {
+    if (
+      !debug &&
+      advertisementPending.get(key) === request
+    ) {
+      advertisementPending.delete(key)
+    }
+  }
+}
 
 function getSearchFlag(name) {
   return new URLSearchParams(window.location.search).get(name) === '1'
@@ -173,7 +293,6 @@ export default function AdvertisementPopup({
 
   useEffect(() => {
     let cancelled = false
-    const controller = new AbortController()
 
     async function loadAdvertisement() {
       const debug = getSearchFlag('addebug') || getSearchFlag('adtest')
@@ -201,25 +320,22 @@ export default function AdvertisementPopup({
           return
         }
 
-        const url = `${API_URL}/api/advertisements/public?placement=${placement}`
+        const {
+          data,
+          source,
+          url,
+        } = await fetchAdvertisementData(
+          placement,
+          debug,
+        )
 
-        if (debug) setDebugMessage(`Loading: ${url}`)
-
-        const response = await fetch(url, {
-          cache: 'no-store',
-          signal: controller.signal,
-        })
-        const data = await response.json().catch(() => ({}))
         if (cancelled) return
 
         if (debug) {
           console.log('Advertisement response:', data)
-          setDebugMessage(JSON.stringify(data))
-        }
-
-        if (!response.ok || data.ok === false) {
-          finishAd()
-          return
+          setDebugMessage(
+            `${source}: ${url}\n${JSON.stringify(data)}`,
+          )
         }
 
         if (!data.advertisement?.image_url) {
@@ -232,13 +348,13 @@ export default function AdvertisementPopup({
           return
         }
 
-        if (cancelled) return
-
         const nextAdvertisement = data.advertisement
         const waitSeconds = Math.max(
           0,
           Number(nextAdvertisement.close_after_seconds ?? 3),
         )
+
+        if (cancelled) return
 
         setLoadingAd(false)
         setAdvertisement(nextAdvertisement)
@@ -247,10 +363,16 @@ export default function AdvertisementPopup({
         setSkipCountdown(waitSeconds)
         markShown(nextAdvertisement)
       } catch (error) {
-        if (cancelled || error?.name === 'AbortError') return
+        if (cancelled) return
+
         console.error('Advertisement load error:', error)
 
-        if (debug) setDebugMessage(error.message || 'Advertisement load error')
+        if (debug) {
+          setDebugMessage(
+            error?.message || 'Advertisement load error',
+          )
+        }
+
         finishAd()
       }
     }
@@ -259,7 +381,6 @@ export default function AdvertisementPopup({
 
     return () => {
       cancelled = true
-      controller.abort()
     }
   }, [placement, advertisementOverride])
 
