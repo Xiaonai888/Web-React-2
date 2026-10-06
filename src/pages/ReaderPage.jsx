@@ -8400,10 +8400,10 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
   showAutoHint={unlockAutoHintOpen}
   setShowAutoHint={setUnlockAutoHintOpen}
   unlocking={unlockingEpisode}
-onPurchase={handleOpenPurchasePage}
-onUnlock={handleLockedDiamondUnlock}
-  onCoinUnlock={handleLockedCoinUnlock}
-  onVoucherUnlock={handleLockedVoucherUnlock}
+  onPurchase={handleOpenPurchasePage}
+  onUnlock={handleLockedDiamondUnlock}
+  onCoinUnlock={() => handleLockedCoinUnlock(episodeId)}
+  onVoucherUnlock={() => handleLockedVoucherUnlock(episodeId)}
     onRewardedUnlock={() =>
   handleLockedRewardedUnlock(episodeId)
 }
