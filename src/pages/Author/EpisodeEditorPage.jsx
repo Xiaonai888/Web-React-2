@@ -1,3 +1,4 @@
+import { useStoryPublishAgreementGate } from '../../components/author/StoryPublishAgreementModal'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { SuccessModal } from './PublishEpisodePage'
@@ -3914,6 +3915,13 @@ export default function EpisodeEditorPage() {
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
   const [settingsSaving, setSettingsSaving] = useState(false)
+  const { requireAgreement, agreementModal } = useStoryPublishAgreementGate({
+  storyId,
+  apiBaseUrl: API_BASE_URL,
+  getAuthToken,
+  navigate,
+  onError: setMessage,
+})
   const [episodeDetailsOpen, setEpisodeDetailsOpen] = useState(false)
   const [draftEpisodeTitle, setDraftEpisodeTitle] = useState('')
   const [draftEpisodeCover, setDraftEpisodeCover] = useState('')
@@ -4113,6 +4121,10 @@ return true
   }
 
   const processMangaPages = async (entries) => {
+    if (isFirstEpisode && releaseOption !== 'draft') {
+  const accepted = await requireAgreement()
+  if (!accepted) return
+}
   const token = getAuthToken()
 
   if (!token) {
@@ -5591,7 +5603,7 @@ setSuccessOpen(true)
     }, 0)
   }}
 />
-
+{agreementModal}
       <PublishSettingsSheet
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
