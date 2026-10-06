@@ -797,7 +797,7 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
    )
 }
 
-function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
+function DailyVoteRewardCard({ reward, claiming = false, onRead, onClaim }) {
   const { t } = useDisplayTranslation()
 
   if (!reward) return null
@@ -832,11 +832,13 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
       ? t('taskCenterPage.done')
       : claimable
         ? t('taskCenterPage.claim')
-        : t('taskCenterPage.notReady')
+        : t('taskCenterPage.readNow')
 
-  const buttonTone = claimed || !claimable
+  const buttonTone = claimed
     ? 'soft'
-    : 'gold'
+    : claimable
+      ? 'gold'
+      : 'outline'
 
   return (
     <div className="flex gap-3 border-b border-[var(--shadow-border)] py-5">
@@ -873,8 +875,8 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
 
           <RewardButton
             tone={buttonTone}
-            disabled={claiming || claimed || !claimable}
-            onClick={onClaim}
+            disabled={claiming || claimed}
+            onClick={claimable ? onClaim : onRead}
           >
             {buttonText}
           </RewardButton>
@@ -1361,6 +1363,7 @@ export default function TaskCenterPage() {
   const [weeklyReading, setWeeklyReading] = useState(null)
   const [weeklyReadingClaiming, setWeeklyReadingClaiming] = useState(false)
   const [dailyVoteReward, setDailyVoteReward] = useState(null)
+  const [dailyStoryAssignment, setDailyStoryAssignment] = useState(null)
   const [voteClaiming, setVoteClaiming] = useState(false)
   const [chestTick, setChestTick] = useState(Date.now())
   const [reminderEnabled, setReminderEnabled] = useState(false)
@@ -1519,6 +1522,7 @@ export default function TaskCenterPage() {
     setWeeklyReading(null)
     setReadingMissions([])
     setDailyVoteReward(null)
+    setDailyStoryAssignment(null)
     return
   }
 
@@ -1707,6 +1711,9 @@ export default function TaskCenterPage() {
     )
     setDailyVoteReward(
       data.daily_vote_reward || null
+    )
+    setDailyStoryAssignment(
+      data.daily_story_assignment || null
     )
   } catch (error) {
     console.error(
@@ -2812,6 +2819,12 @@ navigate(targetPath, {
 <DailyVoteRewardCard
   reward={dailyVoteReward}
   claiming={voteClaiming}
+  onRead={() =>
+    navigate(
+      dailyStoryAssignment?.new_story_link ||
+        '/discover'
+    )
+  }
   onClaim={claimDailyVoteReward}
 />
 
@@ -2847,7 +2860,12 @@ navigate(targetPath, {
             <ReadingRewardCard
               readingReward={readingReward}
               claiming={readingClaiming}
-              onRead={() => navigate('/discover')}
+              onRead={() =>
+                navigate(
+                  dailyStoryAssignment?.completed_story_link ||
+                    '/discover'
+                )
+              }
               onClaim={claimReadingReward}
             />
           </div>
