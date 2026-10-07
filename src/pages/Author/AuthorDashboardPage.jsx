@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 import Author49DayDashboardCard from '../../components/events/Author49DayDashboardCard'
 import AuthorDaily50DashboardCard from '../../components/events/AuthorDaily50DashboardCard'
+import AuthorDaily80DashboardCard from '../../components/events/AuthorDaily80DashboardCard'
 import AuthorManagedEventsSection from '../../components/events/AuthorManagedEventsSection'
 import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
@@ -1223,7 +1224,7 @@ return {
               : handleCreateStory('novel')
           }
         />
-
+<AuthorDaily80DashboardCard />
     <AuthorDaily50DashboardCard
   onStartWriting={() =>
     latestStory
