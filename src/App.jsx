@@ -261,7 +261,7 @@ const AuthorChatInfoPage = lazy(() => import('./pages/AuthorChat/AuthorChatInfoP
 const AuthorPostCommentFocusPage = lazy(() => import('./pages/AuthorChat/AuthorPostCommentFocusPage'))
 const AuthorPostActivityPage = lazy(() => import('./pages/Author/AuthorPostActivityPage'))
 const PicToArtCreationsPage = lazy(() => import('./pages/PicToArt/PicToArtCreationsPage'))
-
+const InstallPage = lazy(() => import('./pages/Install/InstallPage'))
 
 function ComingSoon({ titleKey }) {
   const { t } = useDisplayTranslation()
@@ -907,6 +907,10 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+
+          <Route path="/install" element={
+  <LazyPage><InstallPage /></LazyPage>
+} />
 
 <Route
   path="/echoes/received"
