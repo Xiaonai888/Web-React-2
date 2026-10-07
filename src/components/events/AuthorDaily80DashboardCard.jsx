@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { requestAuthor49DayEvent } from '../../services/author49DayEventClientCache'
 import { requestAuthorDaily80Event } from '../../services/authorDaily80EventClientCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -59,12 +60,14 @@ export default function AuthorDaily80DashboardCard() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [event, setEvent] = useState(null)
+  const [day49Event, setDay49Event] = useState(null)
   const [serverOffsetMs, setServerOffsetMs] = useState(0)
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
     let ignore = false
-    let releaseRequest = () => {}
+    let release80Request = () => {}
+    let release49Request = () => {}
     let lastRefreshAt = 0
 
     async function loadEvent(force = false) {
@@ -72,20 +75,31 @@ export default function AuthorDaily80DashboardCard() {
       if (!token) return
 
       lastRefreshAt = Date.now()
-      releaseRequest()
+      release80Request()
+      release49Request()
 
-      const request = requestAuthorDaily80Event(
+      const event80Request = requestAuthorDaily80Event(
+        token,
+        { force }
+      )
+      const event49Request = requestAuthor49DayEvent(
         token,
         { force }
       )
 
-      releaseRequest = request.release
+      release80Request = event80Request.release
+      release49Request = event49Request.release
 
       try {
-        const nextEvent = await request.promise
+        const [nextEvent, next49Event] =
+          await Promise.all([
+            event80Request.promise,
+            event49Request.promise,
+          ])
 
         if (!ignore) {
           setEvent(nextEvent)
+          setDay49Event(next49Event)
 
           const serverNow = new Date(
             nextEvent?.server_now || ''
@@ -103,10 +117,13 @@ export default function AuthorDaily80DashboardCard() {
           !ignore
         ) {
           setEvent(null)
+          setDay49Event(null)
         }
       } finally {
-        releaseRequest()
-        releaseRequest = () => {}
+        release80Request()
+        release49Request()
+        release80Request = () => {}
+        release49Request = () => {}
       }
     }
 
@@ -130,7 +147,8 @@ export default function AuthorDaily80DashboardCard() {
 
     return () => {
       ignore = true
-      releaseRequest()
+      release80Request()
+      release49Request()
       window.removeEventListener('focus', refreshOnFocus)
       document.removeEventListener('visibilitychange', refreshOnFocus)
       window.clearInterval(refreshId)
@@ -167,6 +185,8 @@ export default function AuthorDaily80DashboardCard() {
 
   if (
     !event ||
+    !day49Event ||
+    day49Event.status !== 'finished' ||
     !event.visible ||
     event.status === 'finished'
   ) {
@@ -191,7 +211,7 @@ export default function AuthorDaily80DashboardCard() {
     >
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-violet-50 dark:bg-[#120A1D]">
         <img
-          src="/assets/Icons/Event/Event80%_One_Year.webp"
+          src="/assets/Icons/Event/Event80%25_One_Year.webp"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           draggable="false"
