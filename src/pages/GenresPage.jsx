@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getStoryLanguageId, getStoryLanguageLabel } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -50,6 +50,7 @@ registerTranslationNamespace('genresPage', {
     ongoing: 'Ongoing',
     closeFilters: 'Close filters',
     refineStories: 'Refine Stories',
+    storySetting: 'Story Setting',
     storyAccess: 'Story Access',
     storyType: 'Story Type',
     progress: 'Progress',
@@ -116,6 +117,7 @@ registerTranslationNamespace('genresPage', {
     ongoing: 'កំពុងបន្ត',
     closeFilters: 'បិទ Filter',
     refineStories: 'កំណត់រឿងឱ្យច្បាស់',
+    storySetting: 'បរិបទសាច់រឿង',
     storyAccess: 'ការចូលអានរឿង',
     storyType: 'ប្រភេទស្នាដៃ',
     progress: 'ស្ថានភាពរឿង',
@@ -182,6 +184,7 @@ registerTranslationNamespace('genresPage', {
     ongoing: '连载中',
     closeFilters: '关闭筛选',
     refineStories: '筛选故事',
+    storySetting: '故事背景',
     storyAccess: '阅读方式',
     storyType: '故事类型',
     progress: '进度',
@@ -248,6 +251,7 @@ registerTranslationNamespace('genresPage', {
     ongoing: '連載中',
     closeFilters: 'フィルターを閉じる',
     refineStories: 'ストーリーを絞り込む',
+    storySetting: 'ストーリー設定',
     storyAccess: '閲覧方法',
     storyType: 'ストーリータイプ',
     progress: '進行状況',
@@ -314,6 +318,7 @@ registerTranslationNamespace('genresPage', {
     ongoing: '연재 중',
     closeFilters: '필터 닫기',
     refineStories: '스토리 상세 필터',
+    storySetting: '스토리 설정',
     storyAccess: '읽기 방식',
     storyType: '스토리 유형',
     progress: '진행 상태',
@@ -418,6 +423,16 @@ const quickFilters = [
   { label: 'Wait Free', value: 'wait_free' },
   { label: 'Free Ep', value: 'free' },
   { label: 'Completed', value: 'completed' },
+]
+
+const storySettingFilters = [
+  { label: 'All', value: 'all' },
+  { label: 'Khmer', value: 'Khmer' },
+  { label: 'Chinese', value: 'Chinese' },
+  { label: 'Korean', value: 'Korean' },
+  { label: 'Japanese', value: 'Japanese' },
+  { label: 'Western', value: 'Western' },
+  { label: 'Other', value: 'Other' },
 ]
 
 const accessFilters = [
@@ -553,6 +568,8 @@ function FilterChip({ active, children, onClick }) {
 function FilterSheet({
   open,
   onClose,
+  storySetting,
+  setStorySetting,
   access,
   setAccess,
   type,
@@ -590,6 +607,23 @@ function FilterSheet({
           </div>
 
           <div className="space-y-6">
+            <section>
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
+                {t('genresPage.storySetting')}
+              </h3>
+              <div className="flex flex-wrap gap-2.5">
+                {storySettingFilters.map((item) => (
+                  <FilterChip
+                    key={item.value}
+                    active={storySetting === item.value}
+                    onClick={() => setStorySetting(item.value)}
+                  >
+                    {item.label === 'All' ? t('genresPage.all') : item.label}
+                  </FilterChip>
+                ))}
+              </div>
+            </section>
+
             <section>
               <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
                 {t('genresPage.storyAccess')}
@@ -634,6 +668,7 @@ function FilterSheet({
             <button
               type="button"
               onClick={() => {
+                setStorySetting('all')
                 setAccess('all')
                 setType('all')
                 setProgress('all')
@@ -723,6 +758,11 @@ export default function GenresPage() {
     quickFilters.some((item) => item.value === savedState.activeQuickFilter) ? savedState.activeQuickFilter : ''
   )
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [storySetting, setStorySetting] = useState(
+    storySettingFilters.some((item) => item.value === savedState.storySetting)
+      ? savedState.storySetting
+      : 'all'
+  )
   const [access, setAccess] = useState(
     accessFilters.some((item) => item.value === savedState.access) ? savedState.access : 'all'
   )
@@ -757,6 +797,7 @@ export default function GenresPage() {
           ...current,
           activeGenre,
           activeQuickFilter,
+          storySetting,
           access,
           type,
           progress,
@@ -769,6 +810,7 @@ export default function GenresPage() {
   }, [
     activeGenre,
     activeQuickFilter,
+    storySetting,
     access,
     type,
     progress,
@@ -845,9 +887,10 @@ export default function GenresPage() {
         params: {
           page: 'genres',
           genre: activeGenre,
+          story_setting: storySetting,
           sort: 'updated',
           limit: 20,
-          schema: 3,
+          schema: 4,
         },
       })
 
@@ -888,10 +931,14 @@ export default function GenresPage() {
           params.set('genre', activeGenre)
         }
 
+        params.set('language', getStoryLanguageLabel())
+
+        if (storySetting !== 'all') {
+          params.set('story_setting', storySetting)
+        }
+
         const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?${params.toString()}`
-          ),
+          `${API_BASE_URL}/api/public/stories?${params.toString()}`,
           { signal: controller.signal }
         )
 
@@ -956,7 +1003,7 @@ export default function GenresPage() {
       controller.abort()
       loadMoreControllerRef.current?.abort()
     }
-  }, [activeGenre])
+  }, [activeGenre, storySetting])
 
   const loadMoreBooks = async () => {
     if (
@@ -987,10 +1034,14 @@ export default function GenresPage() {
         params.set('genre', activeGenre)
       }
 
+      params.set('language', getStoryLanguageLabel())
+
+      if (storySetting !== 'all') {
+        params.set('story_setting', storySetting)
+      }
+
       const response = await fetch(
-        addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?${params.toString()}`
-        ),
+        `${API_BASE_URL}/api/public/stories?${params.toString()}`,
         { signal: controller.signal }
       )
 
@@ -1087,6 +1138,7 @@ export default function GenresPage() {
         JSON.stringify({
           activeGenre,
           activeQuickFilter,
+          storySetting,
           access,
           type,
           progress,
@@ -1316,6 +1368,8 @@ export default function GenresPage() {
       <FilterSheet
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
+        storySetting={storySetting}
+        setStorySetting={setStorySetting}
         access={access}
         setAccess={setAccess}
         type={type}
