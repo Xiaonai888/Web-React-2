@@ -5447,6 +5447,10 @@ await cleanupTemporaryMangaPages(
       storyPayload.story_settings = storySettings
     }
 
+    if (isFirstEpisode || !legacyStorySettingsBlank || storySettings.length > 0) {
+  storyPayload.story_settings = storySettings
+}
+
     const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
       method: 'PUT',
       headers: {
@@ -5477,6 +5481,11 @@ await cleanupTemporaryMangaPages(
       setMessage(getDisplayText('episodeEditor.missingEpisodeId'))
       return
     }
+
+    if (isFirstEpisode && !storySettings.length) {
+  setMessage(getDisplayText('storySettingSheet.required'))
+  return
+}
 
     if (releaseOption === 'schedule' && (!scheduleDate || !scheduleTime)) {
       setMessage(getDisplayText('episodeEditor.chooseSchedule'))
@@ -5699,7 +5708,7 @@ setSuccessOpen(true)
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
         showStorySettings={isFirstEpisode}
-        storySettingRequired={!legacyStorySettingsBlank}
+        storySettingRequired={isFirstEpisode}
         genreOptions={genreOptions}
         storyLanguage={storyLanguage}
         onStoryLanguageChange={setStoryLanguage}
