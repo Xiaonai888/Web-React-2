@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import { getStorySettingFilterValue } from '../../utils/storySettingFilter'
 
 registerTranslationNamespace('recommendationSection', {
   en: {
@@ -174,7 +173,7 @@ function rememberRecommendationFailure(key) {
   }
 }
 
-async function getRecommendations(key, storyId, authorId, genre, storySetting, readerToken) {
+async function getRecommendations(key, storyId, authorId, genre, readerToken) {
   const cached = readRecommendationsCache(key)
 
   if (cached) return cached
@@ -199,7 +198,6 @@ async function getRecommendations(key, storyId, authorId, genre, storySetting, r
 
       if (authorId) params.set('authorId', authorId)
       if (genre) params.set('genre', genre)
-      if (storySetting) params.set('story_setting', storySetting)
 
       const response = await fetch(
         `${API_BASE_URL}/api/public/stories/${encodeURIComponent(
@@ -332,9 +330,8 @@ export default function RecommendationSection({ story }) {
   const storyId = String(story?.id || '')
   const authorId = String(story?.author_id || '')
   const genre = String(story?.main_genre || '')
-  const [storySetting, setStorySetting] = useState(() => getStorySettingFilterValue())
   const { token: readerToken, scope: readerScope } = getReaderSession()
-  const requestKey = JSON.stringify([storyId, authorId, genre, storySetting, readerScope])
+  const requestKey = JSON.stringify([storyId, authorId, genre, readerScope])
   const [intersection, setIntersection] = useState({ key: '', visible: false })
   const [refreshTick, setRefreshTick] = useState(0)
   const [result, setResult] = useState({
@@ -386,20 +383,6 @@ export default function RecommendationSection({ story }) {
       observer.disconnect()
     }
   }, [requestKey, storyId])
-
-  useEffect(() => {
-    const syncStorySetting = () => {
-      setStorySetting(getStorySettingFilterValue())
-    }
-
-    window.addEventListener('shadow-story-setting-filter-change', syncStorySetting)
-    window.addEventListener('storage', syncStorySetting)
-
-    return () => {
-      window.removeEventListener('shadow-story-setting-filter-change', syncStorySetting)
-      window.removeEventListener('storage', syncStorySetting)
-    }
-  }, [])
 
   useEffect(() => {
     const wake = () => {
@@ -466,7 +449,7 @@ export default function RecommendationSection({ story }) {
       data: null,
     })
 
-    getRecommendations(requestKey, storyId, authorId, genre, storySetting, readerToken)
+    getRecommendations(requestKey, storyId, authorId, genre, readerToken)
       .then((data) => {
         if (ignore || getReaderSession().token !== readerToken) return
 
@@ -494,7 +477,6 @@ export default function RecommendationSection({ story }) {
     storyId,
     authorId,
     genre,
-    storySetting,
     readerToken,
     inView,
     refreshTick,
