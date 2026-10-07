@@ -6,6 +6,8 @@ import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLan
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import OfflinePdfSaveButton from '../components/library/OfflinePdfSaveButton'
 import LibraryDownloadsSections from '../components/library/LibraryDownloadsSections'
+import { getOfflineReaderAccountId } from '../utils/offlineReaderContent'
+import { listOfflineEpisodes } from '../utils/offlineReadingStorage'
 
 registerTranslationNamespace('libraryPage', {
   en: {
@@ -63,6 +65,8 @@ registerTranslationNamespace('libraryPage', {
     noDownloadsText: 'Purchased PDFs will appear here after payment.',
     noSavedStoriesText: 'Tap the bookmark button on a story to add it to your library.',
     browseStories: 'Browse Stories',
+    offlineAvailable: 'Offline • {{count}} Ep',
+    internetRequired: 'Internet required',
   },
   km: {
     recents: 'ថ្មីៗ',
@@ -119,6 +123,8 @@ registerTranslationNamespace('libraryPage', {
     noDownloadsText: 'PDF ដែលបានទិញនឹងបង្ហាញនៅទីនេះបន្ទាប់ពីការទូទាត់។',
     noSavedStoriesText: 'ចុចប៊ូតុង Bookmark លើរឿង ដើម្បីបន្ថែមទៅ Library។',
     browseStories: 'រកមើលរឿង',
+    offlineAvailable: 'Offline • {{count}} ភាគ',
+    internetRequired: 'ត្រូវការអ៊ីនធឺណិត',
   },
   zh: {
     recents: '最近',
@@ -175,6 +181,8 @@ registerTranslationNamespace('libraryPage', {
     noDownloadsText: '购买的 PDF 会在付款后显示在这里。',
     noSavedStoriesText: '点击故事上的书签按钮即可添加到 Library。',
     browseStories: '浏览故事',
+    offlineAvailable: '离线 • {{count}} 章',
+    internetRequired: '需要互联网',
   },
   ja: {
     recents: '最近',
@@ -231,6 +239,8 @@ registerTranslationNamespace('libraryPage', {
     noDownloadsText: '購入した PDF は支払い後にここへ表示されます。',
     noSavedStoriesText: 'ストーリーのブックマークボタンを押して Library に追加できます。',
     browseStories: 'ストーリーを見る',
+    offlineAvailable: 'オフライン • {{count}} 話',
+    internetRequired: 'インターネットが必要です',
   },
   ko: {
     recents: '최근',
@@ -287,6 +297,8 @@ registerTranslationNamespace('libraryPage', {
     noDownloadsText: '구매한 PDF는 결제 후 여기에 표시됩니다.',
     noSavedStoriesText: '스토리의 북마크 버튼을 눌러 Library에 추가하세요.',
     browseStories: '스토리 둘러보기',
+    offlineAvailable: '오프라인 • {{count}}화',
+    internetRequired: '인터넷 연결 필요',
   },
 })
 
@@ -436,6 +448,90 @@ function formatDownloadItems(downloads) {
   }))
 }
 
+const LIBRARY_SNAPSHOT_PREFIX = 'shadow_library_snapshot_v1'
+
+function librarySnapshotKey(accountId, tab) {
+  return `${LIBRARY_SNAPSHOT_PREFIX}:${accountId}:${tab.toLowerCase()}`
+}
+
+function compactLibraryItems(items) {
+  if (!Array.isArray(items)) return []
+
+  return items
+    .filter((item) => item?.story)
+    .map((item) => ({
+      id: item.id,
+      story_id: item.story_id || item.story?.id,
+      kind: item.kind,
+      story: {
+        id: item.story?.id,
+        title: item.story?.title,
+        description: item.story?.description,
+        cover_url: item.story?.cover_url,
+        main_genre: item.story?.main_genre,
+        total_episodes: item.story?.total_episodes,
+        status: item.story?.status,
+        updated_at: item.story?.updated_at,
+      },
+    }))
+}
+
+function readLibrarySnapshot(accountId, tab) {
+  if (!accountId || !['Recents', 'Subscribed'].includes(tab)) return []
+
+  try {
+    const value = JSON.parse(
+      localStorage.getItem(librarySnapshotKey(accountId, tab)) || 'null'
+    )
+
+    return Array.isArray(value?.items) ? value.items : []
+  } catch {
+    return []
+  }
+}
+
+function writeLibrarySnapshot(accountId, tab, items) {
+  if (!accountId || !['Recents', 'Subscribed'].includes(tab)) return
+
+  try {
+    localStorage.setItem(
+      librarySnapshotKey(accountId, tab),
+      JSON.stringify({
+        items: compactLibraryItems(items),
+        savedAt: Date.now(),
+      })
+    )
+  } catch {
+  }
+}
+
+function buildOfflineStoryIndex(records) {
+  const index = {}
+
+  for (const record of Array.isArray(records) ? records : []) {
+    const storyId = String(record?.storyId || '').trim()
+    const episodeId = String(record?.episodeId || '').trim()
+    if (!storyId || !episodeId) continue
+
+    if (!index[storyId]) {
+      index[storyId] = {
+        episodeId,
+        count: 0,
+        savedAt: Number(record.savedAt || 0),
+      }
+    }
+
+    index[storyId].count += 1
+
+    if (Number(record.savedAt || 0) > index[storyId].savedAt) {
+      index[storyId].episodeId = episodeId
+      index[storyId].savedAt = Number(record.savedAt || 0)
+    }
+  }
+
+  return index
+}
+
 function EmptyState({ title, text, actionText, onAction }) {
   return (
     <div
@@ -578,7 +674,13 @@ function PdfActionButtons({ story, compact = false }) {
   )
 }
 
-function LibraryBookCard({ item, tab }) {
+function LibraryBookCard({
+  item,
+  tab,
+  offlineMode = false,
+  offlineInfo = null,
+  onOfflineUnavailable,
+}) {
   const { t } = useDisplayTranslation()
   const story = item.story
   if (!story) return null
@@ -626,8 +728,21 @@ function LibraryBookCard({ item, tab }) {
     )
   }
 
+  const offlineTarget = offlineInfo?.episodeId
+    ? `/story/${encodeURIComponent(story.id)}/episode/${encodeURIComponent(offlineInfo.episodeId)}?_shadow_offline=1`
+    : `/story/${story.id}`
+
   return (
-    <Link to={`/story/${story.id}`} className="group block min-w-0">
+    <Link
+      to={offlineMode ? offlineTarget : `/story/${story.id}`}
+      onClick={(event) => {
+        if (offlineMode && !offlineInfo?.episodeId) {
+          event.preventDefault()
+          onOfflineUnavailable?.()
+        }
+      }}
+      className="group block min-w-0"
+    >
       <div
         className="relative overflow-hidden rounded-2xl shadow-sm"
         style={{ background: 'var(--shadow-bg-soft)' }}
@@ -637,6 +752,13 @@ function LibraryBookCard({ item, tab }) {
         </div>
 
         {story.status === 'completed' ? <EndBadge /> : null}
+        {offlineMode && offlineInfo?.count ? (
+          <div className="absolute right-2 top-2 rounded-full bg-black/80 px-2 py-1 text-[9px] font-extrabold text-white shadow-sm">
+            {t('libraryPage.offlineAvailable', {
+              count: formatDisplayNumber(offlineInfo.count),
+            })}
+          </div>
+        ) : null}
       </div>
 
       <div className="pt-2.5">
@@ -650,14 +772,26 @@ function LibraryBookCard({ item, tab }) {
           className="mt-1 text-[10px] font-medium sm:text-[11px]"
           style={{ color: 'var(--shadow-text-secondary)' }}
         >
-          {formatInfo(tab, story, t)}
+          {offlineMode
+            ? offlineInfo?.count
+              ? t('libraryPage.offlineAvailable', {
+                  count: formatDisplayNumber(offlineInfo.count),
+                })
+              : t('libraryPage.internetRequired')
+            : formatInfo(tab, story, t)}
         </p>
       </div>
     </Link>
   )
 }
 
-function ContextCard({ item, tab }) {
+function ContextCard({
+  item,
+  tab,
+  offlineMode = false,
+  offlineInfo = null,
+  onOfflineUnavailable,
+}) {
   const { t } = useDisplayTranslation()
   const story = item?.story
   if (!story) return null
@@ -741,7 +875,17 @@ function ContextCard({ item, tab }) {
   return (
     <section className="pt-5">
       <Link
-        to={`/story/${story.id}`}
+        to={
+          offlineMode && offlineInfo?.episodeId
+            ? `/story/${encodeURIComponent(story.id)}/episode/${encodeURIComponent(offlineInfo.episodeId)}?_shadow_offline=1`
+            : `/story/${story.id}`
+        }
+        onClick={(event) => {
+          if (offlineMode && !offlineInfo?.episodeId) {
+            event.preventDefault()
+            onOfflineUnavailable?.()
+          }
+        }}
         className="group block rounded-[24px] border p-4 transition"
         style={{
           background: 'var(--shadow-bg-elevated)',
@@ -796,7 +940,13 @@ function ContextCard({ item, tab }) {
               className="mt-2 text-[11px] font-extrabold sm:text-[12px]"
               style={{ color: 'var(--shadow-text-primary)' }}
             >
-              {formatInfo(tab, story, t)}
+              {offlineMode
+                ? offlineInfo?.count
+                  ? t('libraryPage.offlineAvailable', {
+                      count: formatDisplayNumber(offlineInfo.count),
+                    })
+                  : t('libraryPage.internetRequired')
+                : formatInfo(tab, story, t)}
             </p>
           </div>
 
@@ -830,22 +980,42 @@ export default function Library() {
   const [message, setMessage] = useState('')
   const [clearing, setClearing] = useState(false)
   const [offline, setOffline] = useState(() => !navigator.onLine)
+  const [offlineStoryIndex, setOfflineStoryIndex] = useState({})
 
   const isLoggedIn = Boolean(getReaderToken())
+  const accountId = getOfflineReaderAccountId()
   const loadedTabsRef = useRef(new Set())
   const inFlightTabsRef = useRef(new Set())
   const activeTabRef = useRef(activeTab)
   const clearInProgressRef = useRef(false)
 
+  const hydrateLocalTab = (tab) => {
+    if (!accountId) return false
+
+    const items = readLibrarySnapshot(accountId, tab)
+    if (!items.length) return false
+
+    if (tab === 'Subscribed') {
+      setSubscriptionItems(items)
+    } else if (tab === 'Recents') {
+      setLibraryItems(items)
+    }
+
+    return true
+  }
+
   const loadLibrary = async (
     tab = activeTab,
-    { force = false } = {}
+    { force = false, background = false } = {}
   ) => {
-    if (offlineRequested || offline || !navigator.onLine) {
+    if (offlineRequested || !navigator.onLine) {
+      hydrateLocalTab(tab)
+
       if (activeTabRef.current === tab) {
         setLoading(false)
         setMessage('')
       }
+
       return
     }
 
@@ -880,7 +1050,7 @@ export default function Library() {
     inFlightTabsRef.current.add(tab)
 
     if (activeTabRef.current === tab) {
-      setLoading(true)
+      if (!background) setLoading(true)
       setMessage('')
     }
 
@@ -904,11 +1074,12 @@ export default function Library() {
           )
         }
 
-        setSubscriptionItems(
-          Array.isArray(data.items)
-            ? data.items
-            : []
-        )
+        const items = Array.isArray(data.items)
+          ? data.items
+          : []
+
+        setSubscriptionItems(items)
+        writeLibrarySnapshot(accountId, 'Subscribed', items)
       } else if (tab === 'Downloads') {
         const response = await fetch(
           `${API_BASE_URL}/api/author-store/downloads/my`,
@@ -952,11 +1123,12 @@ export default function Library() {
           )
         }
 
-        setLibraryItems(
-          Array.isArray(data.items)
-            ? data.items
-            : []
-        )
+        const items = Array.isArray(data.items)
+          ? data.items
+          : []
+
+        setLibraryItems(items)
+        writeLibrarySnapshot(accountId, 'Recents', items)
       }
 
       loadedTabsRef.current.add(tab)
@@ -995,9 +1167,7 @@ export default function Library() {
 
             params.set('_shadow_offline', '1')
             setOffline(true)
-            activeTabRef.current = 'Downloads'
-            setActiveTab('Downloads')
-            setActiveType('All')
+            hydrateLocalTab(tab)
             setMessage('')
 
             navigate(
@@ -1033,10 +1203,9 @@ export default function Library() {
 
     const handleOffline = () => {
       if (!active) return
+
       setOffline(true)
-      activeTabRef.current = 'Downloads'
-      setActiveTab('Downloads')
-      setActiveType('All')
+      hydrateLocalTab(activeTabRef.current)
       setLoading(false)
       setMessage('')
     }
@@ -1086,7 +1255,15 @@ export default function Library() {
     } else {
       setOffline(false)
       activeTabRef.current = activeTab
-      loadLibrary(activeTab)
+      const hasLocalSnapshot = hydrateLocalTab(activeTab)
+      if (hasLocalSnapshot) setLoading(false)
+      loadLibrary(activeTab, { background: hasLocalSnapshot })
+
+      for (const tab of ['Subscribed', 'Recents']) {
+        if (tab !== activeTab) {
+          loadLibrary(tab, { background: true })
+        }
+      }
     }
 
     window.addEventListener('online', handleOnline)
@@ -1099,6 +1276,39 @@ export default function Library() {
       window.removeEventListener('offline', handleOffline)
     }
   }, [activeTab, isLoggedIn, offlineRequested, location.pathname, location.search, location.hash, navigate])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadOfflineIndex() {
+      if (!accountId) {
+        if (active) setOfflineStoryIndex({})
+        return
+      }
+
+      try {
+        const records = await listOfflineEpisodes({ accountId })
+        if (active) setOfflineStoryIndex(buildOfflineStoryIndex(records))
+      } catch {
+        if (active) setOfflineStoryIndex({})
+      }
+    }
+
+    void loadOfflineIndex()
+
+    const refresh = () => {
+      void loadOfflineIndex()
+    }
+
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+
+    return () => {
+      active = false
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
+    }
+  }, [accountId])
 
   const currentItems = useMemo(() => {
     if (activeTab === 'Subscribed') return subscriptionItems
@@ -1154,6 +1364,7 @@ export default function Library() {
         throw new Error('LIBRARY_REFRESH_FAILED')
       }
       setLibraryItems(data.items)
+      writeLibrarySnapshot(accountId, 'Recents', data.items)
       loadedTabsRef.current.add('Recents')
       if (data.items.length) failed = true
     } catch {
@@ -1192,21 +1403,19 @@ export default function Library() {
               <div className="flex min-w-0 items-end gap-5 overflow-x-auto no-scrollbar">
                 {topTabs.map((tab) => {
                   const active = tab === activeTab
-                  const disabled = offline && tab !== 'Downloads'
 
                   return (
                     <button
                       key={tab}
                       type="button"
-                      disabled={disabled}
                       onClick={() => {
-                        if (disabled) return
                         setActiveTab(tab)
                         setActiveType('All')
+                        setMessage('')
                       }}
                       className={`relative shrink-0 pb-3 text-[13px] font-bold transition-colors sm:text-[14px] ${
                         active ? 'tab-active-lib' : ''
-                      } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
+                      }`}
                       style={{
                         color: active
                           ? 'var(--shadow-text-primary)'
@@ -1222,8 +1431,8 @@ export default function Library() {
               {activeTab !== 'Downloads' ? <button
                 type="button"
                 onClick={activeTab === 'Subscribed' ? () => navigate(meLibrarySource ? '/library/manage?source=me' : '/library/manage') : handleAction}
-                disabled={clearing}
-                className="shrink-0 pb-3 text-[13px] font-semibold transition"
+                disabled={clearing || offline}
+                className={`shrink-0 pb-3 text-[13px] font-semibold transition ${offline ? 'cursor-not-allowed opacity-40' : ''}`}
                 style={{ color: 'var(--shadow-text-secondary)' }}
               >
                 {actionText}
@@ -1309,7 +1518,13 @@ export default function Library() {
             </div>
           ) : filteredItems.length ? (
             <>
-              <ContextCard item={firstItem} tab={activeTab} />
+              <ContextCard
+                item={firstItem}
+                tab={activeTab}
+                offlineMode={offline}
+                offlineInfo={offlineStoryIndex[String(firstItem?.story?.id || '')] || null}
+                onOfflineUnavailable={() => setMessage(t('libraryPage.internetRequired'))}
+              />
 
               <section className="pt-7">
                 <div className="mb-4 flex items-center justify-between">
@@ -1340,6 +1555,9 @@ export default function Library() {
                       key={item.id || item.story_id}
                       item={item}
                       tab={activeTab}
+                      offlineMode={offline}
+                      offlineInfo={offlineStoryIndex[String(item?.story?.id || '')] || null}
+                      onOfflineUnavailable={() => setMessage(t('libraryPage.internetRequired'))}
                     />
                   ))}
                 </div>
@@ -1362,14 +1580,16 @@ export default function Library() {
                       ? t('libraryPage.noDownloadsText')
                       : t('libraryPage.noSavedStoriesText')
                 }
-                actionText={t('libraryPage.browseStories')}
-                onAction={() => navigate('/')}
+                actionText={offline ? '' : t('libraryPage.browseStories')}
+                onAction={() => {
+                  if (!offline) navigate('/')
+                }}
               />
             </div>
           )}
         </main>
 
-        {activeTab === 'Subscribed' && subscriptionItems.length ? (
+        {activeTab === 'Subscribed' && subscriptionItems.length && !offline ? (
           <SubscriptionsSection items={subscriptionItems} />
         ) : null}
       </div>
