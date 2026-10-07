@@ -17,6 +17,7 @@ import {
 import RichFindReplacePanel from '../../components/Author/RichFindReplacePanel'
 import SmartFindReplacePanel from '../../components/Author/SmartFindReplacePanel'
 import YouTubeVideoSheet from '../../components/author/YouTubeVideoSheet'
+import StorySettingSheet from '../../components/author/StorySettingSheet'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
@@ -3238,6 +3239,8 @@ export function PublishSettingsSheet({
   onStoryLanguageChange,
   mainGenre,
   onMainGenreChange,
+  storySettings = [],
+  onStorySettingsChange,
   storyTags,
   onStoryTagsChange,
   updateDays,
@@ -3266,6 +3269,7 @@ export function PublishSettingsSheet({
   const [dragY, setDragY] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [genreOpen, setGenreOpen] = useState(false)
+  const [storySettingOpen, setStorySettingOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
   const dragStartY = useRef(0)
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false)
@@ -3293,6 +3297,7 @@ export function PublishSettingsSheet({
     setDragY(0)
     setDragging(false)
     setGenreOpen(false)
+    setStorySettingOpen(false)
     setTagOpen(false)
     setLanguagePickerOpen(false)
     setActiveHint('')
@@ -3337,6 +3342,20 @@ export function PublishSettingsSheet({
     )
   }
 
+  if (storySettingOpen) {
+    return (
+      <StorySettingSheet
+        open
+        value={storySettings}
+        onClose={() => setStorySettingOpen(false)}
+        onSave={(settings) => {
+          onStorySettingsChange(settings)
+          setStorySettingOpen(false)
+        }}
+      />
+    )
+  }
+
   if (tagOpen) {
     return (
       <TagSheet
@@ -3356,6 +3375,8 @@ export function PublishSettingsSheet({
   Boolean(
     storyLanguage?.trim() &&
     mainGenre?.trim() &&
+    Array.isArray(storySettings) &&
+    storySettings.length > 0 &&
     Array.isArray(storyTags) &&
     storyTags.length > 0
   )
@@ -3368,6 +3389,10 @@ const canSave =
   storyDetailsValid &&
   releaseOptionValid &&
   !saving
+
+  const storySettingSummary = storySettings.length
+    ? storySettings.join(', ')
+    : getDisplayText('storySettingSheet.choose')
 
   const tagSummary = storyTags.length
     ? storyTags.join(', ')
@@ -3504,6 +3529,29 @@ const canSave =
                       {mainGenre || getDisplayText('episodeEditor.chooseGenre')}
                     </span>
                     <i className="fa-solid fa-chevron-right mr-1 shrink-0 text-[10px] text-[var(--shadow-text-tertiary)]" />
+                  </button>
+                </div>
+
+                <div className="mt-4">
+                  <span className="mb-2 block text-[12px] font-semibold text-[var(--shadow-text-primary)]">
+                    <span className="mr-1 text-[#e5484d]">*</span>{getDisplayText('storySettingSheet.title')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setStorySettingOpen(true)}
+                    className="flex min-h-11 w-full items-center rounded-[10px] bg-[var(--shadow-bg-soft)] px-3 py-2.5 text-left active:bg-[var(--shadow-bg-soft)]"
+                  >
+                    <span
+                      className={`min-w-0 flex-1 truncate text-[12px] ${
+                        storySettings.length ? 'text-[var(--shadow-text-primary)]' : 'text-[var(--shadow-text-tertiary)]'
+                      }`}
+                    >
+                      {storySettingSummary}
+                    </span>
+                    <span className="ml-3 shrink-0 text-[10.5px] text-[var(--shadow-text-tertiary)]">
+                      {storySettings.length}/6
+                    </span>
+                    <i className="fa-solid fa-chevron-right ml-2 mr-1 shrink-0 text-[10px] text-[var(--shadow-text-tertiary)]" />
                   </button>
                 </div>
 
@@ -3904,6 +3952,7 @@ export default function EpisodeEditorPage() {
   const [successOpen, setSuccessOpen] = useState(false)
   const [storyLanguage, setStoryLanguage] = useState('Khmer')
   const [mainGenre, setMainGenre] = useState('Romance')
+  const [storySettings, setStorySettings] = useState([])
   const [storyTags, setStoryTags] = useState([])
   const [tagDraft, setTagDraft] = useState('')
   const [storyUpdateDays, setStoryUpdateDays] = useState([])
@@ -4253,6 +4302,7 @@ return true
           setStoryType(resolvedType)
           setStoryLanguage(loadedStory.story_language || 'Khmer')
           setMainGenre(loadedStory.main_genre || 'Romance')
+          setStorySettings(Array.isArray(loadedStory.story_settings) ? loadedStory.story_settings.slice(0, 6) : [])
           setStoryTags(Array.isArray(loadedStory.tags) ? loadedStory.tags.slice(0, 6) : [])
           setStoryUpdateDays(Array.isArray(loadedStory.update_days) ? loadedStory.update_days : [])
           setStoryStatus(loadedStory.story_status || 'New')
@@ -5383,6 +5433,7 @@ await cleanupTemporaryMangaPages(
         story_type: storyRecord.story_type || storyType,
         story_language: storyLanguage,
         main_genre: mainGenre,
+        story_settings: storySettings,
         story_status: storyStatus,
         tags: storyTags,
         update_days: storyUpdateDays,
@@ -5613,6 +5664,8 @@ setSuccessOpen(true)
         onStoryLanguageChange={setStoryLanguage}
         mainGenre={mainGenre}
         onMainGenreChange={setMainGenre}
+        storySettings={storySettings}
+        onStorySettingsChange={setStorySettings}
         storyTags={storyTags}
         onStoryTagsChange={setStoryTags}
         updateDays={storyUpdateDays}
