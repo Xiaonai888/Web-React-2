@@ -4,6 +4,10 @@ import { getDisplayLanguageId, setDisplayLanguageId, useDisplayTranslation } fro
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import {
+  getStorySettingFilter,
+  setStorySettingFilter as saveStorySettingFilter,
+} from '../../utils/storySettingFilter'
 
 registerTranslationNamespace('mePage', {
   en: {
@@ -206,7 +210,7 @@ registerTranslationNamespace('mePage', {
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const THEME_STORAGE_KEY = 'shadow_theme'
 const STORY_LANGUAGE_STORAGE_KEY = 'shadow_story_language'
-const STORY_SETTING_FILTER_STORAGE_KEY = 'shadow_story_setting_filter'
+
 
 const STORY_SETTING_OPTIONS = [
   { value: 'all', labelKey: 'storySettingAll' },
@@ -273,8 +277,7 @@ function getStoredStoryLanguage() {
 }
 
 function getStoredStorySettingFilter() {
-  const stored = localStorage.getItem(STORY_SETTING_FILTER_STORAGE_KEY) || 'all'
-  return STORY_SETTING_OPTIONS.some((item) => item.value === stored) ? stored : 'all'
+  return getStorySettingFilter()
 }
 
 function getStorySettingLabel(value, tx) {
@@ -751,14 +754,9 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
   }, [darkMode])
 
   const handleStorySettingChange = (value) => {
-    localStorage.setItem(STORY_SETTING_FILTER_STORAGE_KEY, value)
-    setStorySettingFilter(value)
-    window.dispatchEvent(
-      new CustomEvent('shadow-story-setting-filter-change', {
-        detail: { value },
-      })
-    )
-  }
+  const nextValue = saveStorySettingFilter(value)
+  setStorySettingFilter(nextValue)
+}
 
   const handleStoryLanguageChange = (languageId) => {
     localStorage.setItem(STORY_LANGUAGE_STORAGE_KEY, languageId)
