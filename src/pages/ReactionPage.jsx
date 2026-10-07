@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import {
+  getPendingStoryReaction,
+  initializeStoryReactionQueue,
+  queueStoryReaction,
+} from '../services/storyReactionQueue'
 
 registerTranslationNamespace('reactionPage', {
   en: {
@@ -240,7 +245,8 @@ export default function ReactionPage() {
 
   const baseCount = useMemo(() => {
     return Number(
-      story?.like_count ||
+      story?.total_likes ||
+        story?.like_count ||
         story?.likes_count ||
         story?.reaction_count ||
         0
@@ -252,14 +258,47 @@ export default function ReactionPage() {
     REACTIONS.find((item) => item.type === selectedReaction) || null
 
   useEffect(() => {
-    const saved = readReaction(storyId)
+    let cancelled = false
 
-    if (saved?.reaction_type) {
-      setSelectedReaction(saved.reaction_type)
-      setLocalCount(1)
-    } else {
-      setSelectedReaction(null)
-      setLocalCount(0)
+    async function restoreReactionState() {
+      await initializeStoryReactionQueue()
+
+      if (cancelled) return
+
+      const pending =
+        getPendingStoryReaction(storyId)
+
+      if (pending) {
+        if (pending.liked) {
+          setSelectedReaction(
+            pending.reaction_type || 'love'
+          )
+          setLocalCount(1)
+        } else {
+          setSelectedReaction(null)
+          setLocalCount(0)
+        }
+
+        return
+      }
+
+      const saved = readReaction(storyId)
+
+      if (saved?.reaction_type) {
+        setSelectedReaction(
+          saved.reaction_type
+        )
+        setLocalCount(1)
+      } else {
+        setSelectedReaction(null)
+        setLocalCount(0)
+      }
+    }
+
+    void restoreReactionState()
+
+    return () => {
+      cancelled = true
     }
   }, [storyId])
 
@@ -307,6 +346,13 @@ export default function ReactionPage() {
       setSelectedReaction(null)
       setLocalCount(0)
       setActivePop('')
+
+      void queueStoryReaction({
+        storyId,
+        liked: false,
+        reactionType: reaction.type,
+      })
+
       return
     }
 
@@ -314,12 +360,17 @@ export default function ReactionPage() {
       reaction_type: reaction.type,
       reaction_label: reaction.label,
       story_id: storyId,
-      created_at: new Date().toISOString(),
     })
 
     setSelectedReaction(reaction.type)
     setLocalCount(1)
     setActivePop(reaction.type)
+
+    void queueStoryReaction({
+      storyId,
+      liked: true,
+      reactionType: reaction.type,
+    })
 
     window.setTimeout(() => {
       setActivePop('')
