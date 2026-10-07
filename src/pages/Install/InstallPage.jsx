@@ -280,12 +280,16 @@ function getEnvironment() {
     (window.navigator.platform === 'MacIntel' &&
       window.navigator.maxTouchPoints > 1)
   const android = /Android/i.test(ua)
+  const inAppBrowser =
+    /FBAN|FBAV|FB_IAB|Instagram|Messenger|Telegram|Line\/|TikTok|BytedanceWebview|Twitter/i.test(ua)
   const safari =
     ios &&
+    !inAppBrowser &&
     /Safari/i.test(ua) &&
     !/CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo/i.test(ua)
   const chrome =
     android &&
+    !inAppBrowser &&
     /Chrome\/\d+/i.test(ua) &&
     !/;\s?wv\)|Version\/4\.0|SamsungBrowser|EdgA|OPR|DuckDuckGo/i.test(ua)
 
@@ -403,13 +407,20 @@ export default function InstallPage() {
     target.hash = ''
 
     await copyText(target.href)
-    setSafariFallback(true)
 
     const safariUrl = target.href.replace(/^https?:\/\//i, 'x-safari-https://')
 
+    window.setTimeout(() => {
+      if (document.visibilityState === 'visible') {
+        setSafariFallback(true)
+      }
+    }, 900)
+
     try {
-      window.location.href = safariUrl
-    } catch {}
+      window.location.assign(safariUrl)
+    } catch {
+      setSafariFallback(true)
+    }
   }
 
   const openChrome = () => {
@@ -456,9 +467,6 @@ export default function InstallPage() {
   }
 
   const isIOS = environment === 'ios-browser' || environment === 'ios-safari'
-  const isAndroid =
-    environment === 'android-browser' || environment === 'android-chrome'
-
   const subtitle = isIOS
     ? t('installPage.subtitleIOS')
     : t('installPage.subtitleAndroid')
@@ -748,7 +756,7 @@ export default function InstallPage() {
                 disabled={installing || (!promptReady && !promptWaitDone)}
                 className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] bg-[var(--shadow-text-primary)] px-4 text-[14px] font-extrabold text-[var(--shadow-bg-page)] active:scale-[0.99] disabled:opacity-60"
               >
-                <i className="fa-solid fa-arrow-down-to-line text-[13px]" />
+                <i className="fa-solid fa-download text-[13px]" />
                 <span>
                   {installing
                     ? t('installPage.installing')
