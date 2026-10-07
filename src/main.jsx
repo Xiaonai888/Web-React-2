@@ -16,6 +16,10 @@ import {
   hasPendingStoryReactions,
   initializeStoryReactionQueue,
 } from './services/storyReactionQueue'
+import {
+  hasPendingComments,
+  initializeCommentQueue,
+} from './services/commentQueue'
 
 
 installApiAuthFetch()
@@ -29,6 +33,10 @@ installMangaImageCacheControl()
 installTemporaryCacheManagement()
 if (hasPendingStoryReactions()) {
   void initializeStoryReactionQueue()
+}
+
+if (hasPendingComments()) {
+  void initializeCommentQueue()
 }
 
 
