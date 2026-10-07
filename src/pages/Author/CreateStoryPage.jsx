@@ -692,7 +692,7 @@ export default function CreateStoryPage() {
   }, [editStoryId, navigate])
 
   const descriptionCount = description.length
-  const basicInfoComplete = Boolean(coverPreview && title.trim() && description.trim())
+  const basicInfoComplete = Boolean(coverPreview && title.trim() && description.trim() && storySettings.length > 0)
   const canSave = isEditMode
     ? title.trim() &&
       genre &&
@@ -926,7 +926,7 @@ if (cropMode === 'slide') {
       return
     }
 
-    if (isEditMode && !storySettings.length) {
+    if (!storySettings.length) {
       setMessage(t('createStory.storySettingRequired'))
       return
     }
@@ -967,7 +967,7 @@ if (cropMode === 'slide') {
             story_type: storyType,
             story_language: language,
             main_genre: genre,
-            ...(isEditMode ? { story_settings: storySettings } : {}),
+            story_settings: storySettings,
             story_status: storyStatus,
             tags,
             update_days: updateDays,
