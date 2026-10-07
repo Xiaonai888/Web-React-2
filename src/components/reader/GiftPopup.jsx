@@ -32,7 +32,7 @@ registerTranslationNamespace('giftPopup', {
     "confirmInsufficient": "Not enough Diamonds",
     "retryPending": "Gift status is uncertain. Retry this same gift; you will not be charged twice.",
     "resolvePrevious": "A previous gift is unresolved. Return to that story and retry it before sending another.",
-    "storageUnavailable": "Secure gift retry is unavailable in this browser. Please enable session storage.",
+    "storageUnavailable": "Secure gift retry is unavailable in this browser. Please enable browser storage.",
     "retrying": "Retry the same gift"
   },
   "km": {
@@ -63,7 +63,7 @@ registerTranslationNamespace('giftPopup', {
     "confirmInsufficient": "ពេជ្រមិនគ្រប់គ្រាន់",
     "retryPending": "មិនទាន់ដឹងលទ្ធផលអំណោយ។ សូមសាកផ្ញើអំណោយដដែលឡើងវិញ ដោយមិនកាត់លុយស្ទួន។",
     "resolvePrevious": "អំណោយមុនមិនទាន់បានបញ្ជាក់លទ្ធផល។ សូមត្រឡប់ទៅរឿងមុន ហើយសាកអំណោយដដែលឡើងវិញ។",
-    "storageUnavailable": "មិនអាចរក្សាទុកលេខប្រតិបត្តិការអំណោយបានទេ។ សូមបើក Session Storage។",
+    "storageUnavailable": "មិនអាចរក្សាទុកលេខប្រតិបត្តិការអំណោយបានទេ។ សូមបើក Browser Storage។",
     "retrying": "សាកអំណោយដដែលឡើងវិញ"
   },
   "zh": {
@@ -94,7 +94,7 @@ registerTranslationNamespace('giftPopup', {
     "confirmInsufficient": "钻石不足",
     "retryPending": "Gift status is uncertain. Retry this same gift without a duplicate charge.",
     "resolvePrevious": "A previous gift is unresolved. Return to that story and retry it first.",
-    "storageUnavailable": "Secure gift retry is unavailable. Please enable session storage.",
+    "storageUnavailable": "Secure gift retry is unavailable. Please enable browser storage.",
     "retrying": "Retry the same gift"
   },
   "ja": {
@@ -125,7 +125,7 @@ registerTranslationNamespace('giftPopup', {
     "confirmInsufficient": "ダイヤが足りません",
     "retryPending": "Gift status is uncertain. Retry this same gift without a duplicate charge.",
     "resolvePrevious": "A previous gift is unresolved. Return to that story and retry it first.",
-    "storageUnavailable": "Secure gift retry is unavailable. Please enable session storage.",
+    "storageUnavailable": "Secure gift retry is unavailable. Please enable browser storage.",
     "retrying": "Retry the same gift"
   },
   "ko": {
@@ -156,15 +156,17 @@ registerTranslationNamespace('giftPopup', {
     "confirmInsufficient": "다이아가 부족합니다",
     "retryPending": "Gift status is uncertain. Retry this same gift without a duplicate charge.",
     "resolvePrevious": "A previous gift is unresolved. Return to that story and retry it first.",
-    "storageUnavailable": "Secure gift retry is unavailable. Please enable session storage.",
+    "storageUnavailable": "Secure gift retry is unavailable. Please enable browser storage.",
     "retrying": "Retry the same gift"
   }
 })
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const GIFT_ITEMS = [
   { key: 'candy', nameKey: 'candy', currency: 'coin', price: 10, points: 1, image: '/assets/Gift/Candy.png' },
@@ -191,15 +193,111 @@ function formatNumber(value) {
 }
 
 const PENDING_GIFT_STORAGE_KEY = 'shadow_pending_story_gift_v1'
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-function giftStorageKey(token) {
+function decodeJwtPayload(token) {
   try {
     const encoded = String(token || '').split('.')[1]
-    const payload = JSON.parse(atob(encoded.replace(/-/g, '+').replace(/_/g, '/')))
-    const userId = String(payload.user_id || '').toLowerCase()
-    return /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(userId)
-      ? `${PENDING_GIFT_STORAGE_KEY}:${userId}`
-      : null
+    if (!encoded) return null
+
+    const normalized = encoded
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(
+        Math.ceil(encoded.length / 4) * 4,
+        '='
+      )
+
+    return JSON.parse(atob(normalized))
+  } catch {
+    return null
+  }
+}
+
+function giftStorageKey(token) {
+  const payload = decodeJwtPayload(token)
+  const userId = String(
+    payload?.user_id ||
+    payload?.id ||
+    ''
+  ).toLowerCase()
+
+  return UUID_PATTERN.test(userId)
+    ? `${PENDING_GIFT_STORAGE_KEY}:${userId}`
+    : null
+}
+
+function normalizePendingGift(value) {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const requestId = String(
+    value.requestId || ''
+  ).trim()
+
+  const storyId = String(
+    value.storyId || ''
+  ).trim()
+
+  const giftKey = String(
+    value.giftKey || ''
+  ).trim().toLowerCase()
+
+  const quantity = Number(
+    value.quantity
+  )
+
+  const attempts = Math.max(
+    0,
+    Math.floor(
+      Number(value.attempts || 0)
+    )
+  )
+
+  const createdAt =
+    Number.isFinite(
+      Date.parse(
+        String(value.createdAt || '')
+      )
+    )
+      ? String(value.createdAt)
+      : new Date().toISOString()
+
+  if (
+    !UUID_PATTERN.test(requestId) ||
+    !UUID_PATTERN.test(storyId) ||
+    !GIFT_ITEMS.some(
+      (gift) =>
+        gift.key === giftKey
+    ) ||
+    !Number.isInteger(quantity) ||
+    quantity < 1 ||
+    quantity > 100
+  ) {
+    return null
+  }
+
+  return {
+    requestId,
+    storyId,
+    giftKey,
+    quantity,
+    attempts,
+    createdAt,
+  }
+}
+
+function readStorageJson(
+  storage,
+  key
+) {
+  try {
+    return JSON.parse(
+      storage.getItem(key) ||
+      'null'
+    )
   } catch {
     return null
   }
@@ -208,21 +306,70 @@ function giftStorageKey(token) {
 function readPendingGift(token) {
   const key = giftStorageKey(token)
   if (!key) return null
+
+  const durable =
+    normalizePendingGift(
+      readStorageJson(
+        localStorage,
+        key
+      )
+    )
+
+  if (durable) {
+    try {
+      sessionStorage.removeItem(key)
+    } catch {}
+    return durable
+  }
+
   try {
-    const pending = JSON.parse(sessionStorage.getItem(key) || 'null')
-    return pending && typeof pending.requestId === 'string' &&
-      typeof pending.storyId === 'string' && typeof pending.giftKey === 'string' &&
-      Number.isInteger(pending.quantity) ? pending : null
-  } catch {
+    localStorage.removeItem(key)
+  } catch {}
+
+  const legacy =
+    normalizePendingGift(
+      readStorageJson(
+        sessionStorage,
+        key
+      )
+    )
+
+  if (!legacy) {
+    try {
+      sessionStorage.removeItem(key)
+    } catch {}
     return null
   }
+
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify(legacy)
+    )
+    sessionStorage.removeItem(key)
+  } catch {}
+
+  return legacy
 }
 
-function storePendingGift(token, pending) {
+function storePendingGift(
+  token,
+  pending
+) {
   const key = giftStorageKey(token)
-  if (!key) return false
+  const safePending =
+    normalizePendingGift(pending)
+
+  if (!key || !safePending) {
+    return false
+  }
+
   try {
-    sessionStorage.setItem(key, JSON.stringify(pending))
+    localStorage.setItem(
+      key,
+      JSON.stringify(safePending)
+    )
+    sessionStorage.removeItem(key)
     return true
   } catch {
     return false
@@ -232,11 +379,14 @@ function storePendingGift(token, pending) {
 function clearPendingGift(token) {
   const key = giftStorageKey(token)
   if (!key) return
+
+  try {
+    localStorage.removeItem(key)
+  } catch {}
+
   try {
     sessionStorage.removeItem(key)
-  } catch {
-    return
-  }
+  } catch {}
 }
 
 export default function GiftPopup({
@@ -373,6 +523,7 @@ export default function GiftPopup({
   }, [open])
 
   const beginDrag = (event) => {
+    if (sending) return
     if (event.pointerType === 'mouse' && event.button !== 0) return
     if (event.target.closest('button, a, input, select, textarea')) return
 
@@ -464,6 +615,7 @@ export default function GiftPopup({
       giftKey: selectedGift.key,
       quantity,
       attempts: 0,
+      createdAt: new Date().toISOString(),
     }
 
     if (!storePendingGift(token, pending)) {
@@ -494,31 +646,80 @@ export default function GiftPopup({
 
       const data = await response.json().catch(() => null)
       if (response.status === 429) {
-        if (!previous) {
-          clearPendingGift(token)
-          setPendingGift(null)
+        const retry = {
+          ...pending,
+          attempts:
+            pending.attempts + 1,
         }
+
+        storePendingGift(
+          token,
+          retry
+        )
+        setPendingGift(retry)
         setConfirmOpen(false)
-        setFeedback('')
-        const retryAfter = Number(data?.retry_after_seconds || response.headers.get('Retry-After') || 3)
-        showGiftWaitToast(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.ceil(retryAfter) : 3, getDisplayLanguageId())
+        setFeedback(
+          t('giftPopup.retryPending')
+        )
+
+        const retryAfter = Number(
+          data?.retry_after_seconds ||
+          response.headers.get(
+            'Retry-After'
+          ) ||
+          3
+        )
+
+        showGiftWaitToast(
+          Number.isFinite(
+            retryAfter
+          ) &&
+          retryAfter > 0
+            ? Math.ceil(
+                retryAfter
+              )
+            : 3,
+          getDisplayLanguageId()
+        )
         return
       }
 
 
-      if (!response.ok || data?.ok !== true || !data?.gift?.id) {
-        const definitiveFailure = !response.ok && response.status >= 400 && response.status < 500 &&
-          ![408, 409, 425, 429].includes(response.status)
-        if (definitiveFailure) {
+      if (
+        !response.ok ||
+        data?.ok !== true ||
+        !data?.gift?.id
+      ) {
+        const retryableStatus =
+          [408, 425, 429].includes(
+            response.status
+          ) ||
+          response.status >= 500
+
+        if (!retryableStatus) {
           clearPendingGift(token)
           setPendingGift(null)
-          setFeedback(data?.message || t('giftPopup.failedSend'))
+          setFeedback(
+            data?.message ||
+            t('giftPopup.failedSend')
+          )
         } else {
-          const retry = { ...pending, attempts: pending.attempts + 1 }
-          storePendingGift(token, retry)
+          const retry = {
+            ...pending,
+            attempts:
+              pending.attempts + 1,
+          }
+
+          storePendingGift(
+            token,
+            retry
+          )
           setPendingGift(retry)
-          setFeedback(t('giftPopup.retryPending'))
+          setFeedback(
+            t('giftPopup.retryPending')
+          )
         }
+
         setConfirmOpen(false)
         return
       }
@@ -558,10 +759,26 @@ export default function GiftPopup({
         }
       }
     } catch {
-      const retry = { ...pending, attempts: pending.attempts + 1 }
-      storePendingGift(token, retry)
+      const retry = {
+        ...pending,
+        attempts:
+          pending.attempts + 1,
+      }
+
+      const stored =
+        storePendingGift(
+          token,
+          retry
+        )
+
       setPendingGift(retry)
-      setFeedback(t('giftPopup.retryPending'))
+      setFeedback(
+        stored
+          ? t('giftPopup.retryPending')
+          : t(
+              'giftPopup.storageUnavailable'
+            )
+      )
       setConfirmOpen(false)
     } finally {
       sendLockRef.current = false
