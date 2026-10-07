@@ -2380,25 +2380,49 @@ function LockedEpisodeCard({
   const [showAutoHint, setShowAutoHint] = useState(false)
   const [activeTab, setActiveTab] = useState('instant')
   const [freeAccessView, setFreeAccessView] = useState('wallet')
-  const [waitNotice, setWaitNotice] = useState(false)
-const showWaitNotice = () => {
-  setWaitNotice(true)
-  window.setTimeout(() => setWaitNotice(false), 2500)
+const [waitTick, setWaitTick] = useState(Date.now())
+
+useEffect(() => {
+  const timer = window.setInterval(() => setWaitTick(Date.now()), 1000)
+  return () => window.clearInterval(timer)
+}, [])
+
+const remainingWait = (access) => {
+  const availableAt = new Date(access?.available_at || '').getTime()
+  if (Number.isFinite(availableAt)) {
+    return Math.max(0, Math.ceil((availableAt - waitTick) / 1000))
+  }
+  return Math.max(0, Number(access?.wait_seconds || 0))
 }
-  const backgroundImage = episode?.cover_url || story?.cover_url || ''
-  const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
-  const voucherBalance = Number(wallet?.voucher_balance || 0)
-  const walletLoaded = Boolean(wallet)
-  const coinRequired = Number(coinAccess?.amount || 0)
-  const voucherRequired = Number(voucherAccess?.amount || 0)
-  const coinCanAccess = Boolean(coinAccess?.available) && (coinRequired <= 0 || coinBalance >= coinRequired)
-  const voucherCanAccess = Boolean(voucherAccess?.available) && (voucherRequired <= 0 || voucherBalance >= voucherRequired)
-  const coinWaitRequired = Number(coinAccess?.wait_seconds || 0) > 0
-  const voucherWaitRequired = Number(voucherAccess?.wait_seconds || 0) > 0
-  const adDailyLimit = Math.max(1, Number(adAccess?.daily_limit || 5))
-  const adUsedToday = Math.max(0, Number(adAccess?.used_today || 0))
-  const adRemainingToday = Math.max(0, Number(adAccess?.remaining_today ?? adDailyLimit - adUsedToday))
-  const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRemainingToday > 0
+
+const formatCountdown = (seconds) => {
+  const total = Math.max(0, Math.ceil(Number(seconds || 0)))
+  const days = Math.floor(total / 86400)
+  const hours = Math.floor((total % 86400) / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const secs = total % 60
+  return `${days ? `${days}d ` : ''}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+const backgroundImage = episode?.cover_url || story?.cover_url || ''
+const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
+const voucherBalance = Number(wallet?.voucher_balance || 0)
+const walletLoaded = Boolean(wallet)
+const coinRequired = Number(coinAccess?.amount || 0)
+const voucherRequired = Number(voucherAccess?.amount || 0)
+const coinWaitSeconds = remainingWait(coinAccess)
+const voucherWaitSeconds = remainingWait(voucherAccess)
+const coinWaitRequired = coinWaitSeconds > 0
+const voucherWaitRequired = voucherWaitSeconds > 0
+const coinLimitAllowed =
+  coinAccess?.limit_status?.daily?.allowed !== false &&
+  coinAccess?.limit_status?.monthly_story?.allowed !== false
+const coinCanAccess = !coinWaitRequired && coinLimitAllowed && (coinRequired <= 0 || coinBalance >= coinRequired)
+const voucherCanAccess = !voucherWaitRequired && (voucherRequired <= 0 || voucherBalance >= voucherRequired)
+const adDailyLimit = Math.max(1, Number(adAccess?.daily_limit || 5))
+const adUsedToday = Math.max(0, Number(adAccess?.used_today || 0))
+const adRemainingToday = Math.max(0, Number(adAccess?.remaining_today ?? adDailyLimit - adUsedToday))
+const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRemainingToday > 0
 
   const singleOption =
     packageOptions.find((option) => option.key === 'single') || {
@@ -2706,28 +2730,40 @@ const showWaitNotice = () => {
               </>
             ) : (
        <div className="space-y-2.5 px-3 py-4">
-         {waitNotice ? (
-  <div className="fixed bottom-6 left-1/2 z-[120] -translate-x-1/2 rounded-full bg-[#111827] px-4 py-2 text-[11px] font-bold text-white shadow-xl">
-    {t('readerPage.freeUnlockWait')}
-  </div>
-) : null}
   {freeAccessView === 'wallet' ? (
     <>
       <FreeAccessOption
         icon={
-  <img
-    src="/assets/Icons/Shadow Coin.svg"
-    alt=""
-    className="mx-auto h-7 w-7 object-contain"
-    loading="lazy"
-    decoding="async"
-  />
-}
+          <img
+            src="/assets/Icons/Shadow Coin.svg"
+            alt=""
+            className="mx-auto h-7 w-7 object-contain"
+            loading="lazy"
+            decoding="async"
+          />
+        }
         title={walletLoaded ? t('readerPage.coinsRemaining', { count: formatNumber(coinBalance) }) : t('readerPage.coinsUnavailable')}
-        subtitle={t('readerPage.accessDays', { count: formatNumber(Number(coinAccess?.access_days || 7)) })}
-        buttonText={coinWaitRequired ? t('readerPage.availableLater') : coinCanAccess ? t('readerPage.access') : t('readerPage.notEnough')}
-        disabled={unlocking || (!coinWaitRequired && !coinCanAccess)}
-        onClick={coinWaitRequired ? showWaitNotice : onCoinUnlock}
+        subtitle={coinWaitRequired ? `${t('readerPage.freeUnlockWait')} ${formatUnlockDateTime(coinAccess?.available_at)}` : t('readerPage.accessDays', { count: formatNumber(Number(coinAccess?.access_days || 7)) })}
+        buttonText={coinWaitRequired ? formatCountdown(coinWaitSeconds) : coinCanAccess ? t('readerPage.access') : t('readerPage.notEnough')}
+        disabled={unlocking || coinWaitRequired || !coinCanAccess}
+        onClick={onCoinUnlock}
+      />
+
+      <FreeAccessOption
+        icon={
+          <img
+            src="/assets/Icons/Voucher.svg"
+            alt=""
+            className="h-7 w-7 object-contain"
+            loading="lazy"
+            decoding="async"
+          />
+        }
+        title={walletLoaded ? t('readerPage.vouchersRemaining', { count: formatNumber(voucherBalance) }) : t('readerPage.vouchersUnavailable')}
+        subtitle={voucherWaitRequired ? `${t('readerPage.freeUnlockWait')} ${formatUnlockDateTime(voucherAccess?.available_at)}` : t('readerPage.permanentUnlockEpisode')}
+        buttonText={voucherWaitRequired ? formatCountdown(voucherWaitSeconds) : voucherCanAccess ? t('readerPage.access') : t('readerPage.notEnough')}
+        disabled={unlocking || voucherWaitRequired || !voucherCanAccess}
+        onClick={onVoucherUnlock}
       />
 
       <FreeAccessOption
