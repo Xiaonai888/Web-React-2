@@ -5510,24 +5510,50 @@ await cleanupTemporaryMangaPages(
           ? new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString()
           : null
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/stories/${storyId}/episodes/${currentEpisodeId}/status`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-  status,
-  scheduled_at: scheduledAt,
-  is_adult: episodeAdult,
-  is_free_published: episodeFree,
-}),
-        }
-      )
+      const shouldRequireAgreement =
+        status !== 'draft' &&
+        Number(currentEpisodeNumber || 0) === 1
 
-      const data = await response.json().catch(() => ({}))
+      if (shouldRequireAgreement) {
+        const accepted = await requireAgreement()
+        if (!accepted) return
+      }
+
+      const publishEpisodeStatus = async () => {
+        const response = await fetch(
+          `${API_BASE_URL}/api/stories/${storyId}/episodes/${currentEpisodeId}/status`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              status,
+              scheduled_at: scheduledAt,
+              is_adult: episodeAdult,
+              is_free_published: episodeFree,
+            }),
+          }
+        )
+
+        const data = await response.json().catch(() => ({}))
+        return { response, data }
+      }
+
+      let { response, data } = await publishEpisodeStatus()
+
+      if (
+        status !== 'draft' &&
+        response.status === 409 &&
+        data.code === 'PUBLISH_AGREEMENT_REQUIRED'
+      ) {
+        const accepted = await requireAgreement()
+        if (!accepted) return
+        const retryResult = await publishEpisodeStatus()
+        response = retryResult.response
+        data = retryResult.data
+      }
 
       if (!response.ok || data.ok === false) {
         const blockedWords =
