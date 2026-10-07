@@ -113,6 +113,7 @@ const LibraryCollectionPage = lazy(() => import('./pages/LibraryCollectionPage')
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesdayEventPage'))
 const AuthorDaily50EventPage = lazy(() => import('./pages/Event/AuthorDaily50EventPage'))
+const AuthorDaily80EventPage = lazy(() => import('./pages/Event/AuthorDaily80EventPage'))
 const Author49DayEventPage = lazy(() => import('./pages/Event/Author49DayEventPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const ShortCompletedPage = lazy(() => import('./pages/ShortCompletedPage'))
@@ -325,6 +326,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/event',
     '/event/writer-wednesday',
     '/event/daily-author-boost',
+    '/event/daily-author-80-boost',
     '/author/create',
     '/author/dashboard',
     '/author/profile',
@@ -1412,6 +1414,11 @@ const shouldShowOpeningAds =
   path="/event/daily-author-boost"
   element={<LazyPage><AuthorDaily50EventPage /></LazyPage>}
 />
+          <Route
+  path="/event/daily-author-80-boost"
+  element={<LazyPage><AuthorDaily80EventPage /></LazyPage>}
+/>
+
           
 <Route
   path="/event/author-49-day"
