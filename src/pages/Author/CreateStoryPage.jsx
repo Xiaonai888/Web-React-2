@@ -515,6 +515,7 @@ export default function CreateStoryPage() {
   const [genreOptions, setGenreOptions] = useState(fallbackGenres)
   const [genresLoading, setGenresLoading] = useState(false)
   const [storySettings, setStorySettings] = useState([])
+  const [legacyStorySettingsBlank, setLegacyStorySettingsBlank] = useState(false)
   const [tags, setTags] = useState([])
   const [updateDays, setUpdateDays] = useState([])
   const [description, setDescription] = useState('')
@@ -647,7 +648,11 @@ export default function CreateStoryPage() {
         setTitle(story.title || '')
         setLanguage(story.story_language || 'Khmer')
         setGenre(story.main_genre || 'Romance')
-        setStorySettings(Array.isArray(story.story_settings) ? story.story_settings.slice(0, 6) : [])
+        const loadedStorySettings = Array.isArray(story.story_settings)
+          ? story.story_settings.slice(0, 6)
+          : []
+        setStorySettings(loadedStorySettings)
+        setLegacyStorySettingsBlank(loadedStorySettings.length === 0)
         const loadedStoryStatus = story.story_status || 'New'
         setStoryStatus(loadedStoryStatus)
         setUnfinishedStoryStatus(
@@ -692,11 +697,12 @@ export default function CreateStoryPage() {
   }, [editStoryId, navigate])
 
   const descriptionCount = description.length
+  const storySettingRequired = !isEditMode || !legacyStorySettingsBlank
   const basicInfoComplete = Boolean(coverPreview && title.trim() && description.trim() && storySettings.length > 0)
   const canSave = isEditMode
     ? title.trim() &&
       genre &&
-      storySettings.length > 0 &&
+      (!storySettingRequired || storySettings.length > 0) &&
       originalAccepted &&
       agreementAccepted &&
       descriptionCount <= 5000 &&
@@ -926,7 +932,7 @@ if (cropMode === 'slide') {
       return
     }
 
-    if (!storySettings.length) {
+    if (storySettingRequired && !storySettings.length) {
       setMessage(t('createStory.storySettingRequired'))
       return
     }
@@ -954,6 +960,25 @@ if (cropMode === 'slide') {
 
       const { coverUrl, landscapeThumbnailUrl, uploadedSlides } = await uploadStoryImages(token)
 
+      const storyPayload = {
+        title: title.trim(),
+        story_type: storyType,
+        story_language: language,
+        main_genre: genre,
+        story_status: storyStatus,
+        tags,
+        update_days: updateDays,
+        description: description.trim() || null,
+        is_adult: isAdult,
+        cover_url: coverUrl,
+        landscape_thumbnail_url: landscapeThumbnailUrl,
+        slides: uploadedSlides,
+      }
+
+      if (!isEditMode || !legacyStorySettingsBlank || storySettings.length > 0) {
+        storyPayload.story_settings = storySettings
+      }
+
       const response = await fetch(
         isEditMode ? `${API_BASE_URL}/api/stories/${editStoryId}` : `${API_BASE_URL}/api/stories/create`,
         {
@@ -962,21 +987,7 @@ if (cropMode === 'slide') {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            title: title.trim(),
-            story_type: storyType,
-            story_language: language,
-            main_genre: genre,
-            story_settings: storySettings,
-            story_status: storyStatus,
-            tags,
-            update_days: updateDays,
-            description: description.trim() || null,
-            is_adult: isAdult,
-            cover_url: coverUrl,
-            landscape_thumbnail_url: landscapeThumbnailUrl,
-            slides: uploadedSlides,
-          }),
+          body: JSON.stringify(storyPayload),
         }
       )
 
