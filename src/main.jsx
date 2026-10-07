@@ -13,11 +13,9 @@ import { loadReaderEpisodeCache } from './utils/readerEpisodeCache'
 import { installMangaImageCacheControl } from './utils/mangaImageCacheControl'
 import { installTemporaryCacheManagement } from './utils/temporaryCacheManager'
 import {
-  hasPendingStoryReactions,
   initializeStoryReactionQueue,
 } from './services/storyReactionQueue'
 import {
-  hasPendingComments,
   initializeCommentQueue,
 } from './services/commentQueue'
 
@@ -31,13 +29,8 @@ if (!isIOS) installReaderEpisodeCacheFetch()
 installReaderPresenceTracking()
 installMangaImageCacheControl()
 installTemporaryCacheManagement()
-if (hasPendingStoryReactions()) {
-  void initializeStoryReactionQueue()
-}
-
-if (hasPendingComments()) {
-  void initializeCommentQueue()
-}
+void initializeStoryReactionQueue()
+void initializeCommentQueue()
 
 
 window.addEventListener('beforeinstallprompt', (event) => {
