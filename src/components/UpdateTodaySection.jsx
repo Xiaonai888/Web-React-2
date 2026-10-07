@@ -278,10 +278,6 @@ export default function UpdateTodaySection({
     return <LoadingSkeleton t={t} />
   }
 
-  if (!updateBooks.length) {
-    return null
-  }
-
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
