@@ -1,3 +1,5 @@
+import { addStorySettingParam } from './storySettingFilter'
+
 const STORY_LANGUAGE_STORAGE_KEY = 'shadow_story_language'
 
 const STORY_LANGUAGE_LABELS = {
@@ -23,6 +25,7 @@ export function getStoryLanguageLabel() {
 export function addStoryLanguageParam(url) {
   const selectedLanguage = getStoryLanguageLabel()
   const separator = url.includes('?') ? '&' : '?'
+  const languageUrl = `${url}${separator}language=${encodeURIComponent(selectedLanguage)}`
 
-  return `${url}${separator}language=${encodeURIComponent(selectedLanguage)}`
+  return addStorySettingParam(languageUrl)
 }
