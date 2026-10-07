@@ -1843,9 +1843,16 @@ self.addEventListener(
     const offlineShellRoutes = new Set([
       '/', '/me', '/library', '/library/manage', '/library/manage/offline-downloads',
     ])
+    const localFirstShellRoutes = new Set([
+      '/library',
+      '/library/manage/offline-downloads',
+    ])
     const route = url.pathname.replace(/\/+$/, '') || '/'
     const isOfflineEpisodeRoute =
       /^\/story\/[^/]+\/episode\/[^/]+$/.test(route)
+    const localFirstNavigation =
+      localFirstShellRoutes.has(route) ||
+      isOfflineEpisodeRoute
 
     if (
       request.mode === 'navigate' &&
@@ -1856,30 +1863,39 @@ self.addEventListener(
       )
     ) {
       event.respondWith((async () => {
-        if (url.searchParams.get(OFFLINE_MARKER) === '1') {
-          const cached = await getOfflineShell()
-          if (cached) return cached
+        const cached = await getOfflineShell()
+
+        if (localFirstNavigation && cached) {
+          return cached
+        }
+
+        if (
+          url.searchParams.get(OFFLINE_MARKER) === '1' &&
+          cached
+        ) {
+          return cached
         }
 
         const offlineRedirect = () => {
-          const offlineUrl = isOfflineEpisodeRoute
-            ? new URL(request.url)
-            : new URL('/library', self.location.origin)
+          const offlineUrl = new URL(
+            '/library',
+            self.location.origin
+          )
 
           offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
           return Response.redirect(offlineUrl.href, 302)
         }
 
-        if (self.navigator.onLine === false) {
-          const cached = await getOfflineShell()
-          if (cached) return offlineRedirect()
+        if (self.navigator.onLine === false && cached) {
+          return offlineRedirect()
         }
 
         try {
-          return await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS)
+          return await fetchWithTimeout(
+            request,
+            NAVIGATION_TIMEOUT_MS
+          )
         } catch {
-          const cached = await getOfflineShell()
-
           if (cached) {
             return offlineRedirect()
           }
