@@ -7,6 +7,8 @@ registerTranslationNamespace('storyManager', {
   "en": {
     "published": "Published",
     "scheduled": "Scheduled",
+    "unscheduled": "Unscheduled",
+    "overdue": "Overdue",
     "ready": "Ready",
     "draft": "Draft",
     "completed": "Completed",
@@ -72,6 +74,8 @@ registerTranslationNamespace('storyManager', {
   "km": {
     "published": "បានបោះផ្សាយ",
     "scheduled": "បានកំណត់ពេល",
+    "unscheduled": "មិនទាន់កំណត់ពេល",
+    "overdue": "ហួសពេល",
     "ready": "រួចរាល់",
     "draft": "ព្រាង",
     "completed": "បានបញ្ចប់",
@@ -137,6 +141,8 @@ registerTranslationNamespace('storyManager', {
   "zh": {
     "published": "已发布",
     "scheduled": "已定时",
+    "unscheduled": "未定时",
+    "overdue": "已逾期",
     "ready": "就绪",
     "draft": "草稿",
     "completed": "已完结",
@@ -202,6 +208,8 @@ registerTranslationNamespace('storyManager', {
   "ja": {
     "published": "公開済み",
     "scheduled": "予約済み",
+    "unscheduled": "未予約",
+    "overdue": "期限超過",
     "ready": "準備完了",
     "draft": "下書き",
     "completed": "完結",
@@ -267,6 +275,8 @@ registerTranslationNamespace('storyManager', {
   "ko": {
     "published": "게시됨",
     "scheduled": "예약됨",
+    "unscheduled": "미예약",
+    "overdue": "기한 초과",
     "ready": "준비됨",
     "draft": "초안",
     "completed": "완결",
@@ -531,13 +541,46 @@ function EpisodeMetric({ icon, value }) {
   )
 }
 
-function EpisodeRow({ episode, last, onOpen, onMore }) {
+function getScheduleTime(episode) {
+  if (String(episode?.status || '').toLowerCase() !== 'scheduled' || !episode?.scheduled_at) return null
+
+  const time = new Date(episode.scheduled_at).getTime()
+  return Number.isFinite(time) ? time : null
+}
+
+function isScheduledEpisode(episode) {
+  return getScheduleTime(episode) !== null
+}
+
+function getScheduleCountdown(episode, now) {
+  const scheduledTime = getScheduleTime(episode)
+  if (scheduledTime === null) return ''
+
+  const diff = scheduledTime - Number(now || Date.now())
+  if (diff <= 0) return getDisplayText('storyManager.overdue')
+
+  const day = 86400000
+  const hour = 3600000
+  const minute = 60000
+  const days = Math.floor(diff / day)
+  const hours = Math.floor((diff % day) / hour)
+  const minutes = Math.floor((diff % hour) / minute)
+
+  if (days > 0) return `${days}d${hours > 0 ? ` ${hours}h` : ''}`
+  if (hours > 0) return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`
+  return `${Math.max(1, minutes)}m`
+}
+
+function EpisodeRow({ episode, last, onOpen, onMore, now }) {
   const views = episode.total_views || episode.views || 0
   const likes = episode.total_likes || episode.likes || 0
   const comments = episode.total_comments || episode.comments || 0
   const earnings = Number(episode.total_earnings_usd || 0)
   const wordCount = Number(episode.word_count || 0)
   const isFree = Boolean(episode.is_free_published)
+  const isScheduled = isScheduledEpisode(episode)
+  const countdown = isScheduled ? getScheduleCountdown(episode, now) : ''
+  const isOverdue = countdown === getDisplayText('storyManager.overdue')
 
   return (
     <div className="relative flex min-h-[96px] items-center gap-3 bg-[var(--shadow-bg-surface)] px-4 py-4">
@@ -547,12 +590,13 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
         className="flex min-w-0 flex-1 items-center text-left active:opacity-70"
       >
         <div className="min-w-0">
-          {isFree || episode.is_adult ? (
-  <div className="mb-1 flex items-center gap-1.5">
-    {isFree ? <span className="inline-flex h-[18px] items-center rounded-full bg-[#FE526E] px-2 text-[9px] font-normal leading-none text-white">{getDisplayText('storyManager.free')}</span> : null}
-    {episode.is_adult ? <span className="inline-flex h-[18px] items-center rounded-full bg-[#111827] px-2 text-[9px] font-normal leading-none text-white">18+</span> : null}
-  </div>
-) : null}
+          {isFree || isScheduled || episode.is_adult ? (
+            <div className="mb-1 flex items-center gap-1.5">
+              {isFree ? <span className="inline-flex h-[18px] items-center rounded-full bg-[#FE526E] px-2 text-[9px] font-normal leading-none text-white">{getDisplayText('storyManager.free')}</span> : null}
+              {isScheduled ? <span className={`inline-flex h-[18px] items-center rounded-full px-2 text-[9px] font-normal leading-none text-white ${isOverdue ? 'bg-[#E5484D]' : 'bg-[#D97706]'}`}>{countdown}</span> : null}
+              {episode.is_adult ? <span className="inline-flex h-[18px] items-center rounded-full bg-[#111827] px-2 text-[9px] font-normal leading-none text-white">18+</span> : null}
+            </div>
+          ) : null}
 
           <div className="line-clamp-1 text-[14px] font-semibold leading-5 text-[var(--shadow-text-primary)]">
             {episode.title || getDisplayText('storyManager.untitledEpisode')}
@@ -571,9 +615,9 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
         <EpisodeMetric icon="fa-regular fa-heart" value={likes} />
         <EpisodeMetric icon="fa-regular fa-comment" value={comments} />
         <span className="hidden min-w-[58px] items-center justify-center gap-1 text-[11px] text-[var(--shadow-text-secondary)] lg:inline-flex">
-  <i className="fa-solid fa-dollar-sign text-[11px] text-[var(--shadow-text-primary)]" />
-  {earnings.toFixed(2)}
-</span>
+          <i className="fa-solid fa-dollar-sign text-[11px] text-[var(--shadow-text-primary)]" />
+          {earnings.toFixed(2)}
+        </span>
       </div>
 
       <button
@@ -683,10 +727,40 @@ const [currentPage, setCurrentPage] = useState(Math.max(1, Number(initialView.cu
     [episodes]
   )
 
-  const draftEpisodes = useMemo(
-    () => episodes.filter((episode) => String(episode.status).toLowerCase() !== 'published'),
-    [episodes]
+  const draftEpisodes = useMemo(() => {
+    const drafts = episodes.filter((episode) => String(episode.status).toLowerCase() !== 'published')
+
+    return drafts.sort((first, second) => {
+      const firstScheduled = isScheduledEpisode(first)
+      const secondScheduled = isScheduledEpisode(second)
+
+      if (firstScheduled && !secondScheduled) return -1
+      if (!firstScheduled && secondScheduled) return 1
+
+      if (firstScheduled && secondScheduled) {
+        return getScheduleTime(first) - getScheduleTime(second)
+      }
+
+      const firstUpdated = new Date(first.updated_at || first.created_at || 0).getTime() || 0
+      const secondUpdated = new Date(second.updated_at || second.created_at || 0).getTime() || 0
+      return secondUpdated - firstUpdated
+    })
+  }, [episodes])
+
+  const scheduledDraftCount = useMemo(
+    () => draftEpisodes.filter(isScheduledEpisode).length,
+    [draftEpisodes]
   )
+  const unscheduledDraftCount = draftEpisodes.length - scheduledDraftCount
+  const [countdownNow, setCountdownNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!scheduledDraftCount) return undefined
+
+    setCountdownNow(Date.now())
+    const timer = window.setInterval(() => setCountdownNow(Date.now()), 30000)
+    return () => window.clearInterval(timer)
+  }, [scheduledDraftCount])
 
   const visibleEpisodes = activeTab === 'published' ? publishedEpisodes : draftEpisodes
   const totalPages = Math.max(1, Math.ceil(visibleEpisodes.length / pageSize))
@@ -1303,6 +1377,14 @@ const handleSavePublishSettings = async () => {
                     <span>•</span>
                     <span>{storyUpdatedLabel}</span>
                   </div>
+
+                  {draftEpisodes.length ? (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-normal text-[var(--shadow-text-tertiary)]">
+                      {scheduledDraftCount > 0 ? <span>{getDisplayText('storyManager.scheduled')} {formatDisplayNumber(scheduledDraftCount)}</span> : null}
+                      {scheduledDraftCount > 0 && unscheduledDraftCount > 0 ? <span>•</span> : null}
+                      {unscheduledDraftCount > 0 ? <span>{getDisplayText('storyManager.unscheduled')} {formatDisplayNumber(unscheduledDraftCount)}</span> : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -1367,6 +1449,7 @@ const handleSavePublishSettings = async () => {
                         last={index === paginatedEpisodes.length - 1}
                         onOpen={handleEditEpisode}
                         onMore={setSelectedEpisode}
+                        now={countdownNow}
                       />
                     ))}
                   </div>
