@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PageShell } from '../../components/common/PagePrimitives'
+import DisplayLanguageMenu from '../../components/common/DisplayLanguageMenu'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -473,8 +474,12 @@ export default function InstallPage() {
 
   if (installed) {
     return (
-      <PageShell className="px-4 py-8">
-        <main className="mx-auto flex min-h-[calc(100vh-64px)] max-w-[430px] items-center">
+      <PageShell className="px-4 py-6">
+        <main className="mx-auto max-w-[430px]">
+          <div className="mb-4 flex justify-end">
+            <DisplayLanguageMenu />
+          </div>
+          <div className="flex min-h-[calc(100vh-116px)] items-center">
           <section className="app-card w-full rounded-[28px] border p-6 text-center shadow-[var(--shadow-shadow)]">
             <img
               src="/assets/Icons/Shadow%20Logo.svg"
@@ -501,6 +506,7 @@ export default function InstallPage() {
               {t('installPage.openShadow')}
             </button>
           </section>
+          </div>
         </main>
       </PageShell>
     )
@@ -508,8 +514,12 @@ export default function InstallPage() {
 
   if (environment === 'desktop') {
     return (
-      <PageShell className="px-4 py-8">
-        <main className="mx-auto flex min-h-[calc(100vh-64px)] max-w-[430px] items-center">
+      <PageShell className="px-4 py-6">
+        <main className="mx-auto max-w-[430px]">
+          <div className="mb-4 flex justify-end">
+            <DisplayLanguageMenu />
+          </div>
+          <div className="flex min-h-[calc(100vh-116px)] items-center">
           <section className="app-card w-full rounded-[28px] border p-6 text-center shadow-[var(--shadow-shadow)]">
             <img
               src="/assets/Icons/Shadow%20Logo.svg"
@@ -530,6 +540,7 @@ export default function InstallPage() {
               {t('installPage.close')}
             </button>
           </section>
+          </div>
         </main>
       </PageShell>
     )
@@ -538,6 +549,10 @@ export default function InstallPage() {
   return (
     <PageShell className="overflow-hidden px-4 pb-8 pt-6">
       <main className="mx-auto max-w-[430px]">
+        <div className="mb-3 flex justify-end">
+          <DisplayLanguageMenu />
+        </div>
+
         <header className="text-center">
           <img
             src="/assets/Icons/Shadow%20Logo.svg"
