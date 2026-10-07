@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { requestAuthor49DayEvent } from '../../services/author49DayEventClientCache'
+import { requestAuthorDaily80Event } from '../../services/authorDaily80EventClientCache'
 import { requestAuthorDaily50Event } from '../../services/authorDaily50EventClientCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -59,12 +61,16 @@ export default function AuthorDaily50DashboardCard() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [event, setEvent] = useState(null)
+  const [day49Event, setDay49Event] = useState(null)
+  const [day180Event, setDay180Event] = useState(null)
   const [serverOffsetMs, setServerOffsetMs] = useState(0)
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
     let ignore = false
-    let releaseRequest = () => {}
+    let release49Request = () => {}
+    let release180Request = () => {}
+    let release50Request = () => {}
     let lastRefreshAt = 0
 
     async function loadEvent(force = false) {
@@ -72,23 +78,45 @@ export default function AuthorDaily50DashboardCard() {
       if (!token) return
 
       lastRefreshAt = Date.now()
-      releaseRequest()
+      release49Request()
+      release180Request()
+      release50Request()
 
-      const request = requestAuthorDaily50Event(
+      const request49 = requestAuthor49DayEvent(
+        token,
+        { force }
+      )
+      const request180 = requestAuthorDaily80Event(
+        token,
+        { force }
+      )
+      const request50 = requestAuthorDaily50Event(
         token,
         { force }
       )
 
-      releaseRequest = request.release
+      release49Request = request49.release
+      release180Request = request180.release
+      release50Request = request50.release
 
       try {
-        const nextEvent = await request.promise
+        const [
+          next49Event,
+          next180Event,
+          next50Event,
+        ] = await Promise.all([
+          request49.promise,
+          request180.promise,
+          request50.promise,
+        ])
 
         if (!ignore) {
-          setEvent(nextEvent)
+          setDay49Event(next49Event)
+          setDay180Event(next180Event)
+          setEvent(next50Event)
 
           const serverNow = new Date(
-            nextEvent?.server_now || ''
+            next50Event?.server_now || ''
           ).getTime()
 
           setServerOffsetMs(
@@ -102,11 +130,17 @@ export default function AuthorDaily50DashboardCard() {
           error?.name !== 'AbortError' &&
           !ignore
         ) {
+          setDay49Event(null)
+          setDay180Event(null)
           setEvent(null)
         }
       } finally {
-        releaseRequest()
-        releaseRequest = () => {}
+        release49Request()
+        release180Request()
+        release50Request()
+        release49Request = () => {}
+        release180Request = () => {}
+        release50Request = () => {}
       }
     }
 
@@ -130,7 +164,9 @@ export default function AuthorDaily50DashboardCard() {
 
     return () => {
       ignore = true
-      releaseRequest()
+      release49Request()
+      release180Request()
+      release50Request()
       window.removeEventListener('focus', refreshOnFocus)
       document.removeEventListener('visibilitychange', refreshOnFocus)
       window.clearInterval(refreshId)
@@ -167,6 +203,10 @@ export default function AuthorDaily50DashboardCard() {
 
   if (
     !event ||
+    !day49Event ||
+    !day180Event ||
+    day49Event.status !== 'finished' ||
+    day180Event.status !== 'finished' ||
     !event.visible ||
     event.status === 'finished'
   ) {
