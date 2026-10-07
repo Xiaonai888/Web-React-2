@@ -3234,6 +3234,7 @@ export function PublishSettingsSheet({
   episodeTitle,
   showStorySettings,
   storySettingRequired = true,
+  requireStoryDetails = true,
   genreOptions,
   genresLoading = false,
   storyLanguage,
@@ -3373,13 +3374,17 @@ export function PublishSettingsSheet({
 
   const storyDetailsValid =
   !showStorySettings ||
+  releaseOption === 'draft' ||
   Boolean(
-    storyLanguage?.trim() &&
-    mainGenre?.trim() &&
     (!storySettingRequired ||
       (Array.isArray(storySettings) && storySettings.length > 0)) &&
-    Array.isArray(storyTags) &&
-    storyTags.length > 0
+    (!requireStoryDetails ||
+      Boolean(
+        storyLanguage?.trim() &&
+        mainGenre?.trim() &&
+        Array.isArray(storyTags) &&
+        storyTags.length > 0
+      ))
   )
 
 const releaseOptionValid =
@@ -5442,13 +5447,9 @@ await cleanupTemporaryMangaPages(
       slides,
     }
 
-    if (!legacyStorySettingsBlank || storySettings.length > 0) {
+    if (legacyStorySettingsBlank || storySettings.length > 0) {
       storyPayload.story_settings = storySettings
     }
-
-    if (isFirstEpisode || !legacyStorySettingsBlank || storySettings.length > 0) {
-  storyPayload.story_settings = storySettings
-}
 
     const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
       method: 'PUT',
@@ -5481,10 +5482,21 @@ await cleanupTemporaryMangaPages(
       return
     }
 
-    if (isFirstEpisode && !storySettings.length) {
-  setMessage(getDisplayText('storySettingSheet.required'))
-  return
-}
+    const status =
+      releaseOption === 'schedule'
+        ? 'scheduled'
+        : releaseOption === 'draft'
+          ? 'draft'
+          : 'published'
+
+    if (
+      status !== 'draft' &&
+      legacyStorySettingsBlank &&
+      !storySettings.length
+    ) {
+      setMessage(getDisplayText('storySettingSheet.required'))
+      return
+    }
 
     if (releaseOption === 'schedule' && (!scheduleDate || !scheduleTime)) {
       setMessage(getDisplayText('episodeEditor.chooseSchedule'))
@@ -5502,16 +5514,9 @@ await cleanupTemporaryMangaPages(
       setSettingsSaving(true)
       setMessage('')
 
-      if (isFirstEpisode) {
-  await saveStorySettings(token)
-}
-
-      const status =
-        releaseOption === 'schedule'
-          ? 'scheduled'
-          : releaseOption === 'draft'
-            ? 'draft'
-            : 'published'
+      if (legacyStorySettingsBlank && storySettings.length > 0) {
+        await saveStorySettings(token)
+      }
 
       const scheduledAt =
         releaseOption === 'schedule'
@@ -5706,8 +5711,9 @@ setSuccessOpen(true)
       <PublishSettingsSheet
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
-        showStorySettings={isFirstEpisode}
-        storySettingRequired={isFirstEpisode}
+        showStorySettings={legacyStorySettingsBlank}
+        storySettingRequired={legacyStorySettingsBlank}
+        requireStoryDetails={isFirstEpisode}
         genreOptions={genreOptions}
         storyLanguage={storyLanguage}
         onStoryLanguageChange={setStoryLanguage}
