@@ -3233,6 +3233,7 @@ export function PublishSettingsSheet({
   open,
   episodeTitle,
   showStorySettings,
+  storySettingRequired = true,
   genreOptions,
   genresLoading = false,
   storyLanguage,
@@ -3375,8 +3376,8 @@ export function PublishSettingsSheet({
   Boolean(
     storyLanguage?.trim() &&
     mainGenre?.trim() &&
-    Array.isArray(storySettings) &&
-    storySettings.length > 0 &&
+    (!storySettingRequired ||
+      (Array.isArray(storySettings) && storySettings.length > 0)) &&
     Array.isArray(storyTags) &&
     storyTags.length > 0
   )
@@ -3534,7 +3535,7 @@ const canSave =
 
                 <div className="mt-4">
                   <span className="mb-2 block text-[12px] font-semibold text-[var(--shadow-text-primary)]">
-                    <span className="mr-1 text-[#e5484d]">*</span>{getDisplayText('storySettingSheet.title')}
+                    {storySettingRequired ? <span className="mr-1 text-[#e5484d]">*</span> : null}{getDisplayText('storySettingSheet.title')}
                   </span>
                   <button
                     type="button"
@@ -3953,6 +3954,7 @@ export default function EpisodeEditorPage() {
   const [storyLanguage, setStoryLanguage] = useState('Khmer')
   const [mainGenre, setMainGenre] = useState('Romance')
   const [storySettings, setStorySettings] = useState([])
+  const [legacyStorySettingsBlank, setLegacyStorySettingsBlank] = useState(false)
   const [storyTags, setStoryTags] = useState([])
   const [tagDraft, setTagDraft] = useState('')
   const [storyUpdateDays, setStoryUpdateDays] = useState([])
@@ -4302,7 +4304,11 @@ return true
           setStoryType(resolvedType)
           setStoryLanguage(loadedStory.story_language || 'Khmer')
           setMainGenre(loadedStory.main_genre || 'Romance')
-          setStorySettings(Array.isArray(loadedStory.story_settings) ? loadedStory.story_settings.slice(0, 6) : [])
+          const loadedStorySettings = Array.isArray(loadedStory.story_settings)
+            ? loadedStory.story_settings.slice(0, 6)
+            : []
+          setStorySettings(loadedStorySettings)
+          setLegacyStorySettingsBlank(loadedStorySettings.length === 0)
           setStoryTags(Array.isArray(loadedStory.tags) ? loadedStory.tags.slice(0, 6) : [])
           setStoryUpdateDays(Array.isArray(loadedStory.update_days) ? loadedStory.update_days : [])
           setStoryStatus(loadedStory.story_status || 'New')
@@ -5422,27 +5428,32 @@ await cleanupTemporaryMangaPages(
       is_active: slide.is_active !== false,
     }))
 
+    const storyPayload = {
+      title: storyRecord.title,
+      story_type: storyRecord.story_type || storyType,
+      story_language: storyLanguage,
+      main_genre: mainGenre,
+      story_status: storyStatus,
+      tags: storyTags,
+      update_days: storyUpdateDays,
+      description: storyRecord.description || null,
+      is_adult: storyAdult,
+      cover_url: storyRecord.cover_url || null,
+      landscape_thumbnail_url: storyRecord.landscape_thumbnail_url || null,
+      slides,
+    }
+
+    if (!legacyStorySettingsBlank || storySettings.length > 0) {
+      storyPayload.story_settings = storySettings
+    }
+
     const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        title: storyRecord.title,
-        story_type: storyRecord.story_type || storyType,
-        story_language: storyLanguage,
-        main_genre: mainGenre,
-        story_settings: storySettings,
-        story_status: storyStatus,
-        tags: storyTags,
-        update_days: storyUpdateDays,
-        description: storyRecord.description || null,
-        is_adult: storyAdult,
-        cover_url: storyRecord.cover_url || null,
-        landscape_thumbnail_url: storyRecord.landscape_thumbnail_url || null,
-        slides,
-      }),
+      body: JSON.stringify(storyPayload),
     })
 
     const data = await response.json().catch(() => ({}))
@@ -5454,6 +5465,9 @@ await cleanupTemporaryMangaPages(
     }
 
     setStoryRecord(data.story || storyRecord)
+    if (storySettings.length > 0) {
+      setLegacyStorySettingsBlank(false)
+    }
   }
 
   const handleSavePublishSettings = async () => {
@@ -5659,6 +5673,7 @@ setSuccessOpen(true)
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
         showStorySettings={isFirstEpisode}
+        storySettingRequired={!legacyStorySettingsBlank}
         genreOptions={genreOptions}
         storyLanguage={storyLanguage}
         onStoryLanguageChange={setStoryLanguage}
