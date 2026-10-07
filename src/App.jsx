@@ -393,6 +393,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/library/manage',
     '/apps/pic-to-art',
     '/apps/pic-to-art/creations',
+    '/install',
   ]
 
   const isMeLibrary = location.pathname === '/library' &&
@@ -428,6 +429,7 @@ const shouldShowOpeningAds =
   location.pathname !== '/register' &&
   location.pathname !== '/forgot-password' &&
   location.pathname !== '/reset-password'
+  location.pathname !== '/install' &&
 
   const shouldShowMeAd =
   location.pathname === '/me' &&
