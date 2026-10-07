@@ -9,7 +9,7 @@ import {
 } from '../services/discoverSearchAnalytics'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
-import { addStorySettingParam } from '../utils/storySettingFilter'
+
 
 registerTranslationNamespace('discoverSearchPage', {
   en: {
@@ -870,9 +870,7 @@ export default function DiscoverSearchPage() {
           })
         const token = getReaderToken()
         const response = await fetch(
-  addStorySettingParam(
-    `${API_BASE_URL}/api/discover-search?${params.toString()}`
-  ),
+  `${API_BASE_URL}/api/discover-search?${params.toString()}`,
   {
             headers: token
               ? {
