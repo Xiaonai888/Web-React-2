@@ -1,5 +1,3 @@
-import { getStorySettingFilter } from './storySettingFilter'
-
 const DB_NAME = 'shadow_home_cache'
 const DB_VERSION = 1
 const STORE_NAME = 'home_data'
@@ -245,15 +243,7 @@ export function getHomeCacheKey({
     normalizeText(language) || 'all'
   const safeScope =
     normalizeText(scope) || 'public'
-  const cacheParams =
-    safeSection === 'stories' ||
-    safeSection === 'daily-picks'
-      ? {
-          ...params,
-          story_setting:
-            getStorySettingFilter(),
-        }
-      : params
+  
   const query = stableParams(cacheParams)
 
   return [
