@@ -448,7 +448,7 @@ async function flushQueueInternal(
     }
   }
 
-  let queue =
+  const queue =
     readQueue()
 
   if (!queue.length) {
@@ -467,28 +467,35 @@ async function flushQueueInternal(
       MAX_FLUSH_COUNT
     )
 
+  const results =
+    await Promise.all(
+      batch.map(
+        async (event) => ({
+          event,
+          result:
+            await sendEvent(
+              event,
+              token,
+              keepalive
+            ),
+        })
+      )
+    )
+
   const sent = []
   const rejected = []
   let shouldRetry = false
 
-  for (const event of batch) {
-    const result =
-      await sendEvent(
-        event,
-        token,
-        keepalive
-      )
-
+  for (
+    const {
+      event,
+      result,
+    } of results
+  ) {
     if (
       result.outcome ===
       'sent'
     ) {
-      queue =
-        removeEvent(
-          queue,
-          event.client_event_id
-        )
-
       sent.push({
         event,
         data:
@@ -502,12 +509,6 @@ async function flushQueueInternal(
       result.outcome ===
       'rejected'
     ) {
-      queue =
-        removeEvent(
-          queue,
-          event.client_event_id
-        )
-
       rejected.push({
         event,
         data:
@@ -518,10 +519,34 @@ async function flushQueueInternal(
     }
 
     shouldRetry = true
-    break
   }
 
-  writeQueue(queue)
+  let latestQueue =
+    readQueue()
+
+  const completedIds =
+    new Set(
+      [
+        ...sent,
+        ...rejected,
+      ].map(
+        (item) =>
+          item.event
+            .client_event_id
+      )
+    )
+
+  latestQueue =
+    latestQueue.filter(
+      (item) =>
+        !completedIds.has(
+          item.client_event_id
+        )
+    )
+
+  writeQueue(
+    latestQueue
+  )
 
   if (
     sent.length ||
@@ -545,7 +570,9 @@ async function flushQueueInternal(
   } else {
     retryAttempt = 0
 
-    if (queue.length) {
+    if (
+      latestQueue.length
+    ) {
       scheduleFlush(0)
     }
   }
