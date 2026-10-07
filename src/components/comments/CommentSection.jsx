@@ -3,6 +3,11 @@ import ReportModal from '../ReportModal'
 import ReactionAction from '../social/reactions/ReactionAction'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import {
+  getPendingCommentEvents,
+  initializeCommentQueue,
+  queueCommentEvent,
+} from '../../services/commentQueue'
 
 registerTranslationNamespace('commentSection', {
   "en": {
@@ -735,6 +740,11 @@ function normalizeApiComment(comment) {
     reply_has_more: Boolean(
       comment?.reply_has_more
     ),
+    client_event_id:
+      comment?.client_event_id || null,
+    _pending: Boolean(
+      comment?._pending
+    ),
     replies: Array.isArray(
       comment?.replies
     )
@@ -959,6 +969,98 @@ function removeCommentTree(
         commentId
       ),
     }))
+}
+
+function replaceCommentTree(
+  comments,
+  commentId,
+  replacement
+) {
+  return comments.map((comment) => {
+    if (
+      String(comment.id) ===
+      String(commentId)
+    ) {
+      return {
+        ...replacement,
+        replies:
+          comment.replies?.length
+            ? comment.replies
+            : replacement.replies || [],
+        reply_total: Math.max(
+          Number(
+            replacement.reply_total || 0
+          ),
+          Number(
+            comment.reply_total || 0
+          ),
+          comment.replies?.length || 0
+        ),
+      }
+    }
+
+    return {
+      ...comment,
+      replies: replaceCommentTree(
+        comment.replies || [],
+        commentId,
+        replacement
+      ),
+    }
+  })
+}
+
+function removeCommentTreeAndAdjust(
+  comments,
+  commentId
+) {
+  return comments.flatMap(
+    (comment) => {
+      if (
+        String(comment.id) ===
+        String(commentId)
+      ) {
+        return []
+      }
+
+      const currentReplies =
+        comment.replies || []
+
+      const nextReplies =
+        removeCommentTreeAndAdjust(
+          currentReplies,
+          commentId
+        )
+
+      const removedCount =
+        Math.max(
+          0,
+          countCommentTree(
+            currentReplies
+          ) -
+          countCommentTree(
+            nextReplies
+          )
+        )
+
+      return [
+        {
+          ...comment,
+          replies: nextReplies,
+          reply_total:
+            removedCount > 0
+              ? Math.max(
+                  nextReplies.length,
+                  Number(
+                    comment.reply_total ||
+                    0
+                  ) - removedCount
+                )
+              : comment.reply_total,
+        },
+      ]
+    }
+  )
 }
 
 function applyDeletedCommentTree(
@@ -1464,6 +1566,9 @@ function ReplyItem({
   const [menuOpen, setMenuOpen] =
     useState(false)
   const currentUser = getCurrentUser()
+  const pending = Boolean(
+    reply?._pending
+  )
   const displayUser =
     getCommentDisplayUser(reply, story)
   const ownsReply = Boolean(
@@ -1487,6 +1592,7 @@ function ReplyItem({
   }
 
   const startReply = () => {
+    if (pending) return
     onStartReply?.(displayUser.name)
   }
 
@@ -1504,9 +1610,11 @@ function ReplyItem({
       <div className="relative min-w-0 flex-1 pr-8">
         <button
           type="button"
-          onClick={() =>
-            setMenuOpen(true)
-          }
+          onClick={() => {
+            if (!pending) {
+              setMenuOpen(true)
+            }
+          }}
           className="inline-block max-w-full rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-2 text-left active:bg-[var(--shadow-bg-hover)]"
         >
           <div className="flex items-center gap-2">
@@ -1529,18 +1637,21 @@ function ReplyItem({
           </p>
         </button>
 
-        <button
-          type="button"
-          onClick={() =>
-            setMenuOpen(true)
-          }
-          className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
-          aria-label="Reply options"
-        >
-          <i className="fa-solid fa-ellipsis text-[13px]" />
-        </button>
+        {!pending ? (
+          <button
+            type="button"
+            onClick={() =>
+              setMenuOpen(true)
+            }
+            className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
+            aria-label="Reply options"
+          >
+            <i className="fa-solid fa-ellipsis text-[13px]" />
+          </button>
+        ) : null}
 
-        <div className="mt-1 flex items-center gap-4 pl-3 text-[11.5px] font-normal text-[var(--shadow-text-tertiary)]">
+        {!pending ? (
+          <div className="mt-1 flex items-center gap-4 pl-3 text-[11.5px] font-normal text-[var(--shadow-text-tertiary)]">
                     <ReactionAction
             reactionType={
               reply.reaction_type ||
@@ -1570,9 +1681,11 @@ function ReplyItem({
           >
             {t('commentSection.reply')}
           </button>
-        </div>
+          </div>
+        ) : null}
 
-        <CommentMenu
+        {!pending ? (
+          <CommentMenu
           isOpen={menuOpen}
           allowReply
           targetType={targetType}
@@ -1606,6 +1719,7 @@ function ReplyItem({
             setMenuOpen(false)
           }
         />
+        ) : null}
       </div>
     </div>
   )
@@ -1669,6 +1783,9 @@ const [repliesShown, setRepliesShown] =
     Number(comment.reply_total || 0)
   )
   const currentUser = getCurrentUser()
+  const pending = Boolean(
+    comment?._pending
+  )
   const displayUser =
     getCommentDisplayUser(
       comment,
@@ -1727,6 +1844,8 @@ const [repliesShown, setRepliesShown] =
   const handleMenuPressStart = (
     event
   ) => {
+    if (pending) return
+
     if (
       event.pointerType === 'mouse' &&
       event.button !== 0
@@ -1746,6 +1865,8 @@ const [repliesShown, setRepliesShown] =
   const handleCommentTap = () => {
     clearMenuPress()
 
+    if (pending) return
+
     if (ignoreNextTapRef.current) {
       ignoreNextTapRef.current = false
       return
@@ -1757,6 +1878,8 @@ const [repliesShown, setRepliesShown] =
   const openReplyComposer = (
     name
   ) => {
+    if (pending) return
+
     setRepliesShown(true)
     onStartReply?.(
       comment.id,
@@ -1894,6 +2017,8 @@ const [repliesShown, setRepliesShown] =
               }
               onClick={handleCommentTap}
               onKeyDown={(event) => {
+                if (pending) return
+
                 if (
                   event.key === 'Enter' ||
                   event.key === ' '
@@ -1905,7 +2030,10 @@ const [repliesShown, setRepliesShown] =
               onContextMenu={(event) => {
                 event.preventDefault()
                 clearMenuPress()
-                setMenuOpen(true)
+
+                if (!pending) {
+                  setMenuOpen(true)
+                }
               }}
               className="inline-block max-w-full cursor-pointer select-none rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 outline-none active:bg-[var(--shadow-bg-hover)]"
               style={{
@@ -1961,18 +2089,21 @@ const [repliesShown, setRepliesShown] =
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                setMenuOpen(true)
-              }
-              className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
-              aria-label="Comment options"
-            >
-              <i className="fa-solid fa-ellipsis text-[14px]" />
-            </button>
+            {!pending ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setMenuOpen(true)
+                }
+                className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
+                aria-label="Comment options"
+              >
+                <i className="fa-solid fa-ellipsis text-[14px]" />
+              </button>
+            ) : null}
 
-            <CommentMenu
+            {!pending ? (
+              <CommentMenu
               isOpen={menuOpen}
               targetType={targetType}
               permissions={permissions}
@@ -2019,9 +2150,11 @@ const [repliesShown, setRepliesShown] =
                 setMenuOpen(false)
               }
             />
+            ) : null}
           </div>
 
-          <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
+          {!pending ? (
+            <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
             <ReactionAction
               reactionType={
                 comment.reaction_type ||
@@ -2074,7 +2207,8 @@ const [repliesShown, setRepliesShown] =
                      }))}
               </button>
             ) : null}
-          </div>
+            </div>
+          ) : null}
 
           {repliesShown &&
           replies.length ? (
@@ -2606,6 +2740,145 @@ const [toast, setToast] = useState('')
     () => getReaderToken(),
     []
   )
+  const commentsRef = useRef([])
+  const totalCommentsRef = useRef(0)
+  const queueEnabled =
+    targetType === 'story' ||
+    targetType === 'episode'
+
+  const buildPendingComment = (
+    event
+  ) => {
+    const composerUser =
+      getReplyComposerUser(story)
+
+    return {
+      id:
+        `pending:${event.client_event_id}`,
+      client_event_id:
+        event.client_event_id,
+      story_id:
+        targetType === 'story'
+          ? targetId
+          : story?.id || null,
+      episode_id:
+        targetType === 'episode'
+          ? targetId
+          : null,
+      user_id:
+        currentUser.id,
+      parent_id:
+        event.parent_id || null,
+      text:
+        event.text,
+      is_deleted: false,
+      type: 'text',
+      likes: 0,
+      liked: false,
+      reaction_type: null,
+      is_pinned: false,
+      is_hidden: false,
+      is_spoiler: false,
+      created_at:
+        event.occurred_at,
+      updated_at:
+        event.occurred_at,
+      name:
+        composerUser.name,
+      avatar_url:
+        composerUser.avatar_url,
+      reply_total: 0,
+      reply_page: 0,
+      reply_has_more: false,
+      replies: [],
+      _pending: true,
+    }
+  }
+
+  const mergePendingComments = (
+    baseComments
+  ) => {
+    if (!queueEnabled) {
+      return baseComments
+    }
+
+    const pendingEvents =
+      getPendingCommentEvents({
+        targetType,
+        targetId,
+      })
+
+    let next = [
+      ...baseComments,
+    ]
+
+    for (
+      const event of pendingEvents
+    ) {
+      const pendingId =
+        `pending:${event.client_event_id}`
+
+      const alreadyExists =
+        next.some(
+          (comment) =>
+            String(comment.id) ===
+              pendingId ||
+            (comment.replies || []).some(
+              (reply) =>
+                String(reply.id) ===
+                pendingId
+            )
+        )
+
+      if (alreadyExists) {
+        continue
+      }
+
+      const pendingComment =
+        buildPendingComment(event)
+
+      if (event.parent_id) {
+        next = next.map(
+          (comment) => {
+            if (
+              String(comment.id) !==
+              String(event.parent_id)
+            ) {
+              return comment
+            }
+
+            const replies =
+              comment.replies || []
+
+            return {
+              ...comment,
+              replies: [
+                ...replies,
+                pendingComment,
+              ],
+              reply_total:
+                Math.max(
+                  replies.length,
+                  Number(
+                    comment.reply_total ||
+                    0
+                  )
+                ) + 1,
+            }
+          }
+        )
+
+        continue
+      }
+
+      next = [
+        pendingComment,
+        ...next,
+      ]
+    }
+
+    return next
+  }
 
   const selectedSort =
     COMMENT_SORT_OPTIONS.find(
@@ -2633,6 +2906,8 @@ const [toast, setToast] = useState('')
   const updateComments = (
     nextComments
   ) => {
+    commentsRef.current =
+      nextComments
     setComments(nextComments)
     onCommentsChange?.(nextComments)
   }
@@ -2642,6 +2917,8 @@ const [toast, setToast] = useState('')
       0,
       Number(value || 0)
     )
+    totalCommentsRef.current =
+      nextTotal
     setTotalComments(nextTotal)
     onCommentTotalChange?.(
       nextTotal
@@ -2667,6 +2944,16 @@ const [toast, setToast] = useState('')
       )
     }
   }, [])
+
+  useEffect(() => {
+    commentsRef.current =
+      comments
+  }, [comments])
+
+  useEffect(() => {
+    totalCommentsRef.current =
+      totalComments
+  }, [totalComments])
 
   useEffect(() => {
   setReplyTarget(null)
@@ -2697,20 +2984,30 @@ async function fetchComments(
           )
         )
 
-      const nextComments = [
-        normalizedThread,
-      ]
+      const nextComments =
+        mergePendingComments([
+          normalizedThread,
+        ])
 
-      setComments(nextComments)
+      updateComments(
+        nextComments
+      )
       setPage(1)
       setHasMore(false)
+
+      const pendingTotal =
+        queueEnabled
+          ? getPendingCommentEvents({
+              targetType,
+              targetId,
+            }).length
+          : 0
+
       updateTotal(
-        countCommentTree(
-          nextComments
-        )
-      )
-      onCommentsChange?.(
-        nextComments
+        countCommentTree([
+          normalizedThread,
+        ]) +
+          pendingTotal
       )
       return
     }
@@ -2787,34 +3084,54 @@ async function fetchComments(
           : []
 
       const baseComments = append
-  ? [...comments, ...normalized]
-  : normalized
+        ? [
+            ...commentsRef.current,
+            ...normalized,
+          ]
+        : normalized
 
-const nextComments =
-  targetType === 'author_post'
-    ? mergeFocusedAuthorPostComment(
-        baseComments,
-        focusComment,
-        focusParentComment
+      const focusedComments =
+        targetType === 'author_post'
+          ? mergeFocusedAuthorPostComment(
+              baseComments,
+              focusComment,
+              focusParentComment
+            )
+          : baseComments
+
+      const nextComments =
+        mergePendingComments(
+          focusedComments
+        )
+
+      updateComments(
+        nextComments
       )
-    : baseComments
-
-      setComments(nextComments)
       setPage(
         Number(data.page || nextPage)
       )
       setHasMore(
         Boolean(data.has_more)
       )
-      const nextTotal = Number(
-        data.total ??
-          countCommentTree(
-            nextComments
-          )
-      )
-      updateTotal(nextTotal)
-      onCommentsChange?.(
-        nextComments
+      const pendingTotal =
+        queueEnabled
+          ? getPendingCommentEvents({
+              targetType,
+              targetId,
+            }).length
+          : 0
+
+      const nextTotal =
+        Number(
+          data.total ??
+            countCommentTree(
+              focusedComments
+            )
+        ) +
+        pendingTotal
+
+      updateTotal(
+        nextTotal
       )
       requestSucceeded = true
     } catch (error) {
@@ -2843,6 +3160,8 @@ const nextComments =
   }
 
   useEffect(() => {
+  commentsRef.current = []
+  totalCommentsRef.current = 0
   setComments([])
   setPage(1)
   setHasMore(false)
@@ -2912,6 +3231,233 @@ const nextComments =
     data?.code ===
       'READER_COMMENT_BLOCKED'
 
+  useEffect(() => {
+    if (!queueEnabled) {
+      return undefined
+    }
+
+    const handleQueueResult = (
+      event
+    ) => {
+      const sent =
+        Array.isArray(
+          event.detail?.sent
+        )
+          ? event.detail.sent
+          : []
+
+      const rejected =
+        Array.isArray(
+          event.detail?.rejected
+        )
+          ? event.detail.rejected
+          : []
+
+      const isCurrentTarget = (
+        item
+      ) =>
+        item?.event?.target_type ===
+          targetType &&
+        String(
+          item?.event?.target_id ||
+          ''
+        ) === String(
+          targetId || ''
+        )
+
+      const currentSent =
+        sent.filter(
+          isCurrentTarget
+        )
+
+      const currentRejected =
+        rejected.filter(
+          isCurrentTarget
+        )
+
+      if (
+        !currentSent.length &&
+        !currentRejected.length
+      ) {
+        return
+      }
+
+      let nextComments =
+        commentsRef.current
+
+      let nextTotal =
+        totalCommentsRef.current
+      let hasAuthoritativeTotal =
+        false
+
+      for (
+        const item of currentSent
+      ) {
+        const pendingId =
+          `pending:${item.event.client_event_id}`
+
+        const data =
+          item.data || {}
+
+        if (
+          isCommentWarning(data) ||
+          !data.comment
+        ) {
+          nextComments =
+            removeCommentTreeAndAdjust(
+              nextComments,
+              pendingId
+            )
+        } else {
+          nextComments =
+            replaceCommentTree(
+              nextComments,
+              pendingId,
+              normalizeApiComment(
+                data.comment
+              )
+            )
+        }
+
+        const serverCount =
+          Number(
+            data.comment_count
+          )
+
+        if (
+          Number.isFinite(
+            serverCount
+          )
+        ) {
+          const remainingPending =
+            getPendingCommentEvents({
+              targetType,
+              targetId,
+            }).length
+
+          nextTotal =
+            Math.max(
+              0,
+              serverCount +
+              remainingPending
+            )
+          hasAuthoritativeTotal =
+            true
+        } else if (
+          isCommentWarning(data)
+        ) {
+          nextTotal =
+            Math.max(
+              0,
+              nextTotal - 1
+            )
+        }
+
+        if (
+          isCommentWarning(data)
+        ) {
+          openCommentWarning(
+            data
+          )
+        }
+      }
+
+      for (
+        const item of currentRejected
+      ) {
+        const pendingId =
+          `pending:${item.event.client_event_id}`
+
+        nextComments =
+          removeCommentTreeAndAdjust(
+            nextComments,
+            pendingId
+          )
+
+        const data =
+          item.data || {}
+
+        const serverCount =
+          Number(
+            data.comment_count
+          )
+
+        if (
+          Number.isFinite(
+            serverCount
+          )
+        ) {
+          const remainingPending =
+            getPendingCommentEvents({
+              targetType,
+              targetId,
+            }).length
+
+          nextTotal =
+            Math.max(
+              0,
+              serverCount +
+              remainingPending
+            )
+
+          hasAuthoritativeTotal =
+            true
+        } else if (
+          !hasAuthoritativeTotal
+        ) {
+          nextTotal =
+            Math.max(
+              0,
+              nextTotal - 1
+            )
+        }
+
+        if (
+          isCommentWarning(data)
+        ) {
+          openCommentWarning(
+            data
+          )
+        } else {
+          showToast(
+            data.message ||
+            t(
+              item.event.parent_id
+                ? 'commentSection.failedCreateReplyPeriod'
+                : 'commentSection.failedCreateCommentPeriod'
+            )
+          )
+        }
+      }
+
+      updateComments(
+        nextComments
+      )
+
+      updateTotal(
+        nextTotal
+      )
+    }
+
+    window.addEventListener(
+      'shadow-comment-queue-result',
+      handleQueueResult
+    )
+
+    void initializeCommentQueue()
+
+    return () => {
+      window.removeEventListener(
+        'shadow-comment-queue-result',
+        handleQueueResult
+      )
+    }
+  }, [
+    queueEnabled,
+    targetType,
+    targetId,
+  ])
+
   const handleStartReply = (
   commentId,
   name
@@ -2930,43 +3476,102 @@ setReplyTarget({
 }
 
   const handleSend = async () => {
-   const activeText = replyTarget
-  ? replyText
-  : text
+    const activeText =
+      replyTarget
+        ? replyText
+        : text
 
-if (!activeText.trim() || sending) {
-  return
-}
-
-if (!token) {
-  showToast(
-    replyTarget
-      ? t('commentSection.pleaseLoginReply')
-      : t('commentSection.pleaseLoginComment')
-  )
-  return
-}
-
-if (replyTarget) {
-  try {
-    setSending(true)
-
-    const success = await handleReply(
-      replyTarget.parentId,
-      replyText.trim(),
-      replyTarget.name
-    )
-
-    if (success) {
-      setReplyText('')
-      setReplyTarget(null)
+    if (
+      !activeText.trim() ||
+      sending
+    ) {
+      return
     }
-  } finally {
-    setSending(false)
-  }
 
-  return
-}
+    if (!token) {
+      showToast(
+        replyTarget
+          ? t(
+              'commentSection.pleaseLoginReply'
+            )
+          : t(
+              'commentSection.pleaseLoginComment'
+            )
+      )
+      return
+    }
+
+    if (replyTarget) {
+      try {
+        setSending(true)
+
+        const success =
+          await handleReply(
+            replyTarget.parentId,
+            replyText.trim(),
+            replyTarget.name
+          )
+
+        if (success) {
+          setReplyText('')
+          setReplyTarget(null)
+        }
+      } finally {
+        setSending(false)
+      }
+
+      return
+    }
+
+    if (queueEnabled) {
+      try {
+        setSending(true)
+
+        const queued =
+          await queueCommentEvent({
+            targetType,
+            targetId,
+            text:
+              text.trim(),
+          })
+
+        if (!queued.ok) {
+          throw new Error(
+            t(
+              'commentSection.failedCreateComment'
+            )
+          )
+        }
+
+        const pending =
+          buildPendingComment(
+            queued.event
+          )
+
+        updateComments([
+          pending,
+          ...commentsRef.current,
+        ])
+
+        updateTotal(
+          totalCommentsRef.current +
+          1
+        )
+
+        setText('')
+      } catch (error) {
+        showToast(
+          error.message ||
+          t(
+            'commentSection.failedCreateCommentPeriod'
+          )
+        )
+      } finally {
+        setSending(false)
+      }
+
+      return
+    }
 
     try {
       setSending(true)
@@ -2994,7 +3599,9 @@ if (replyTarget) {
         .json()
         .catch(() => ({}))
 
-      if (isCommentWarning(data)) {
+      if (
+        isCommentWarning(data)
+      ) {
         openCommentWarning(data)
 
         if (
@@ -3013,7 +3620,9 @@ if (replyTarget) {
       ) {
         throw new Error(
           data.message ||
-            t('commentSection.failedCreateComment')
+          t(
+            'commentSection.failedCreateComment'
+          )
         )
       }
 
@@ -3021,21 +3630,25 @@ if (replyTarget) {
         normalizeApiComment(
           data.comment
         )
-      const nextComments = [
-        newComment,
-        ...comments,
-      ]
 
-      updateComments(nextComments)
+      updateComments([
+        newComment,
+        ...commentsRef.current,
+      ])
+
       updateTotal(
         data.comment_count ??
-          totalComments + 1
+        totalCommentsRef.current +
+          1
       )
+
       setText('')
     } catch (error) {
       showToast(
         error.message ||
-          t('commentSection.failedCreateCommentPeriod')
+        t(
+          'commentSection.failedCreateCommentPeriod'
+        )
       )
     } finally {
       setSending(false)
@@ -3067,7 +3680,12 @@ if (replyTarget) {
           String(commentId)
       )
 
-    if (!targetComment) return
+    if (
+      !targetComment ||
+      targetComment._pending
+    ) {
+      return
+    }
 
     const nextReactionType = String(
       reactionType || 'love'
@@ -3204,6 +3822,9 @@ if (replyTarget) {
   const handleLoadMoreReplies = async (commentId) => {
     if (
       !commentId ||
+      String(commentId).startsWith(
+        'pending:'
+      ) ||
       loadingRepliesId
     ) {
       return
@@ -3359,81 +3980,183 @@ const nextPage =
 
 const handleReply = async (
   commentId,
-    replyText,
-    mentionName = ''
-  ) => {
-    if (!token) {
-      showToast(
-        t('commentSection.pleaseLoginReply')
+  replyText,
+  mentionName = ''
+) => {
+  if (!token) {
+    showToast(
+      t(
+        'commentSection.pleaseLoginReply'
       )
-      return false
-    }
+    )
+    return false
+  }
 
-    const cleanReplyText = String(
+  if (
+    String(
+      commentId || ''
+    ).startsWith(
+      'pending:'
+    )
+  ) {
+    return false
+  }
+
+  const cleanReplyText =
+    String(
       replyText || ''
     ).trim()
-    const cleanMentionName = String(
+
+  const cleanMentionName =
+    String(
       mentionName || ''
     ).trim()
-    const finalReplyText =
-      cleanMentionName
-        ? `@${cleanMentionName} ${cleanReplyText}`
-        : cleanReplyText
 
-    if (!finalReplyText) {
-      return false
-    }
+  const finalReplyText =
+    cleanMentionName
+      ? `@${cleanMentionName} ${cleanReplyText}`
+      : cleanReplyText
 
+  if (!finalReplyText) {
+    return false
+  }
+
+  if (queueEnabled) {
     try {
-      const response = await fetch(
-        buildCommentCreateUrl(
+      const queued =
+        await queueCommentEvent({
           targetType,
-          targetId
-        ),
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type':
-              'application/json',
-            Authorization:
-              `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            text: finalReplyText,
-            parent_id: commentId,
-          }),
-        }
+          targetId,
+          text:
+            finalReplyText,
+          parentId:
+            commentId,
+        })
+
+      if (!queued.ok) {
+        throw new Error(
+          t(
+            'commentSection.failedCreateReply'
+          )
+        )
+      }
+
+      const pending =
+        buildPendingComment(
+          queued.event
+        )
+
+      const nextComments =
+        commentsRef.current.map(
+          (comment) => {
+            if (
+              String(comment.id) !==
+              String(commentId)
+            ) {
+              return comment
+            }
+
+            const replies =
+              comment.replies || []
+
+            return {
+              ...comment,
+              replies: [
+                ...replies,
+                pending,
+              ],
+              reply_total:
+                Math.max(
+                  replies.length,
+                  Number(
+                    comment.reply_total ||
+                    0
+                  )
+                ) + 1,
+            }
+          }
+        )
+
+      updateComments(
+        nextComments
       )
 
-      const data = await response
-        .json()
-        .catch(() => ({}))
+      updateTotal(
+        totalCommentsRef.current +
+        1
+      )
 
-      if (isCommentWarning(data)) {
-        openCommentWarning(data)
-
-        return (
-          data.code !==
-          'READER_COMMENT_BLOCKED'
+      return true
+    } catch (error) {
+      showToast(
+        error.message ||
+        t(
+          'commentSection.failedCreateReplyPeriod'
         )
+      )
+
+      return false
+    }
+  }
+
+  try {
+    const response = await fetch(
+      buildCommentCreateUrl(
+        targetType,
+        targetId
+      ),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'application/json',
+          Authorization:
+            `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text:
+            finalReplyText,
+          parent_id:
+            commentId,
+        }),
       }
+    )
 
-      if (
-        !response.ok ||
-        data.ok === false
-      ) {
-        throw new Error(
-          data.message ||
-            t('commentSection.failedCreateReply')
-        )
-      }
+    const data = await response
+      .json()
+      .catch(() => ({}))
 
-      const newReply =
-        normalizeApiComment(
-          data.comment
+    if (
+      isCommentWarning(data)
+    ) {
+      openCommentWarning(data)
+
+      return (
+        data.code !==
+        'READER_COMMENT_BLOCKED'
+      )
+    }
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.message ||
+        t(
+          'commentSection.failedCreateReply'
         )
-      const nextComments =
-        comments.map((comment) => {
+      )
+    }
+
+    const newReply =
+      normalizeApiComment(
+        data.comment
+      )
+
+    const nextComments =
+      commentsRef.current.map(
+        (comment) => {
           if (
             String(comment.id) !==
             String(commentId)
@@ -3443,10 +4166,15 @@ const handleReply = async (
 
           const currentReplies =
             comment.replies || []
-          const currentReplyTotal = Math.max(
-            currentReplies.length,
-            Number(comment.reply_total || 0)
-          )
+
+          const currentReplyTotal =
+            Math.max(
+              currentReplies.length,
+              Number(
+                comment.reply_total ||
+                0
+              )
+            )
 
           return {
             ...comment,
@@ -3457,24 +4185,37 @@ const handleReply = async (
             reply_total:
               currentReplyTotal + 1,
           }
-        })
+        }
+      )
 
-      updateComments(nextComments)
-      updateTotal(
-        data.comment_count ??
-          totalComments + 1
+    updateComments(
+      nextComments
+    )
+
+    updateTotal(
+      data.comment_count ??
+      totalCommentsRef.current +
+        1
+    )
+
+    return true
+  } catch (error) {
+    showToast(
+      error.message ||
+      t(
+        'commentSection.failedCreateReplyPeriod'
       )
-      return true
-    } catch (error) {
-      showToast(
-        error.message ||
-          t('commentSection.failedCreateReplyPeriod')
-      )
-      return false
-    }
+    )
+
+    return false
   }
+}
 
   const handleEdit = (comment) => {
+    if (comment?._pending) {
+      return
+    }
+
     setEditComment(comment)
     setEditText(comment.text || '')
   }
@@ -3648,6 +4389,10 @@ updateComments(
 
   const handleDeleteComment =
     async (comment) => {
+      if (comment?._pending) {
+        return
+      }
+
       if (!token) {
         showToast(
           t('commentSection.pleaseLoginAgain')
@@ -3817,6 +4562,10 @@ updateComments(
     comment,
     action
   ) => {
+    if (comment?._pending) {
+      return
+    }
+
     if (!token) {
       showToast(
         t('commentSection.pleaseLoginAgain')
@@ -3910,6 +4659,10 @@ updateComments(
   const handleHideForReader = (
     comment
   ) => {
+    if (comment?._pending) {
+      return
+    }
+
     updateComments(
       removeCommentTree(
         comments,
