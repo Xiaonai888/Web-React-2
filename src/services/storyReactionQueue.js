@@ -226,6 +226,60 @@ function getServerNowIso() {
   ).toISOString()
 }
 
+const STORY_REACTION_EVENT_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+function createStoryReactionEventId() {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
+    return crypto.randomUUID()
+  }
+
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    .replace(
+      /[xy]/g,
+      (character) => {
+        const random =
+          Math.floor(
+            Math.random() * 16
+          )
+
+        const value =
+          character === 'x'
+            ? random
+            : (random & 0x3) | 0x8
+
+        return value.toString(16)
+      }
+    )
+}
+
+function ensureStoryReactionEventIds(queue) {
+  let changed = false
+
+  for (const event of Object.values(queue)) {
+    if (
+      STORY_REACTION_EVENT_ID_PATTERN.test(
+        String(event?.event_id || '')
+      )
+    ) {
+      continue
+    }
+
+    event.event_id =
+      createStoryReactionEventId()
+    changed = true
+  }
+
+  if (changed) {
+    writeQueue(queue)
+  }
+
+  return queue
+}
+
 function clearFlushTimer() {
   if (flushTimer) {
     window.clearTimeout(
@@ -273,6 +327,8 @@ function sameQueuedEvent(
   return (
     current?.story_id ===
       sent?.story_id &&
+    current?.event_id ===
+      sent?.event_id &&
     current?.liked ===
       sent?.liked &&
     current?.reaction_type ===
@@ -289,7 +345,10 @@ async function flushQueueInternal(
 
   if (!token) return null
 
-  const queue = readQueue()
+  const queue =
+    ensureStoryReactionEventIds(
+      readQueue()
+    )
   const events =
     Object.values(queue)
       .slice(
@@ -420,10 +479,15 @@ export async function queueStoryReaction({
 
   await syncServerClock()
 
-  const queue = readQueue()
+  const queue =
+    ensureStoryReactionEventIds(
+      readQueue()
+    )
 
   queue[safeStoryId] = {
     story_id: safeStoryId,
+    event_id:
+      createStoryReactionEventId(),
     liked:
       liked === true,
     reaction_type:
