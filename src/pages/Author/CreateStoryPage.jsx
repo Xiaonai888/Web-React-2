@@ -698,7 +698,7 @@ export default function CreateStoryPage() {
 
   const descriptionCount = description.length
   const storySettingRequired =
-  !isEditMode || !legacyStorySettingsBlank
+  isEditMode && !legacyStorySettingsBlank
 
 const basicInfoComplete = Boolean(
   coverPreview &&
@@ -716,8 +716,7 @@ const canSave = isEditMode
     !loading &&
     !pageLoading
   : basicInfoComplete &&
-    storySettings.length > 0 &&
-    descriptionCount <= 5000 &&
+  descriptionCount <= 5000 &&
     !loading &&
     !pageLoading
 
