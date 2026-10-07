@@ -12,7 +12,7 @@ registerTranslationNamespace('offlineDownloadsPanel', {
   en: { login: 'Sign in to the account that saved these episodes.', empty: 'No offline episodes yet. Download an episode from the Reader menu.', open: 'Read offline', remove: 'Delete episode', removeStory: 'Delete entire story', removeConfirm: 'Delete this downloaded episode from this device?', removeStoryConfirm: 'Delete all downloaded episodes of this story from this device?', loading: 'Loading downloads…', error: 'Unable to open this offline episode.', expired: 'Offline reading access has expired.', back: 'Back to downloads', count: '{{count}} episodes', storage: 'Stored on this device', refresh: 'Refresh', notFound: 'The downloaded episode is no longer available.', episode: 'Episode {{number}}', allDownloads: 'All downloads', savedPdfs: 'Saved PDFs', removePdf: 'Delete PDF', removePdfConfirm: 'Delete this saved PDF from this device?', },
   km: { login: 'សូមចូលគណនីដែលបានទាញយកភាគរឿងទាំងនេះ។', empty: 'មិនទាន់មានរឿង Offline ទេ។ សូមទាញយកភាគពី Menu ក្នុង Reader។', open: 'អាន Offline', remove: 'លុបភាគនេះ', removeStory: 'លុបរឿងទាំងមូល', removeConfirm: 'លុបភាគដែលបានទាញយកនេះចេញពីឧបករណ៍?', removeStoryConfirm: 'លុបភាគទាំងអស់នៃរឿងនេះចេញពីឧបករណ៍?', loading: 'កំពុងបង្ហាញរឿងដែលបានទាញយក…', error: 'មិនអាចបើកភាគ Offline នេះបានទេ។', expired: 'សិទ្ធិអាន Offline បានផុតកំណត់។', back: 'ត្រឡប់ទៅបញ្ជីទាញយក', count: '{{count}} ភាគ', storage: 'រក្សាទុកក្នុងឧបករណ៍នេះ', refresh: 'ផ្ទុកឡើងវិញ', notFound: 'រកមិនឃើញភាគដែលបានទាញយកទុកទៀតទេ។', episode: 'ភាគទី {{number}}', allDownloads: 'ការទាញយកទាំងអស់', savedPdfs: 'PDF ដែលបានរក្សាទុក', removePdf: 'លុប PDF', removePdfConfirm: 'លុប PDF នេះចេញពីឧបករណ៍?', },
   zh: { login: '请登录保存这些章节的账号。', empty: '暂无离线章节。请从阅读器菜单下载章节。', open: '离线阅读', remove: '删除章节', removeStory: '删除整本书', removeConfirm: '从此设备删除该离线章节？', removeStoryConfirm: '从此设备删除这本书的所有离线章节？', loading: '正在加载下载内容…', error: '无法打开离线章节。', expired: '离线阅读权限已过期。', back: '返回下载列表', count: '{{count}} 章', storage: '已保存在此设备', refresh: '刷新', notFound: '找不到下载的章节。', episode: '第 {{number}} 章', allDownloads: '全部下载', savedPdfs: '已保存的 PDF', removePdf: '删除 PDF', removePdfConfirm: '从设备中删除此 PDF？', },
-  ja: { login: 'ダウンロードしたアカウントにログインしてください。', empty: 'オフラインの話はありません。リーダーのメニューからダウンロードしてください。', open: 'オフラインで読む', remove: '話を削除', removeStory: '作品全体を削除', removeConfirm: 'この端末からこの話を削除しますか？', removeStoryConfirm: 'この端末から作品のすべての話を削除しますか？', loading: 'ダウンロードを読み込み中…', error: 'オフラインの話を開けません。', expired: 'オフライン閲覧権限が期限切れです。', back: 'ダウンロード一覧へ', count: '{{count}} 話', storage: 'この端末に保存済み', refresh: '更新', notFound: 'ダウンロードした話が見つかりません。', episode: '第 {{number}} 話', allDownloads: 'すべてのダウンロード', savedPdfs: '保存済み PDF', removePdf: 'PDF を削除', removePdfConfirm: 'この端末からこの PDF を削除しますか？', },
+  ja: { login: 'ダウンロードしたアカウントにログインしてください。', empty: 'オフラインの話はありません。リーダーのメニューからダウンロードしてください。', open: 'オフラインで読む', remove: '話を削除', removeStory: '作品全体を削除', removeConfirm: 'この端末からこの話を削除しますか？', removeStoryConfirm: 'この端末から作品のすべての話を削除しますか？', loading: 'ダウンロードを読み込み中…', error: 'オフラインの話を開けません。', expired: 'オフライン閲覧権限が期限切れです。', back: 'ダウンロード一覧へ', count: '{{count}} 話', storage: 'この端末に保存済み', refresh: '更新', notFound: 'ダウンロードした話が見つかりません。', episode: '第 {{number}} 話', allDownloads: 'すべてのダウンロード', savedPdfs: '保存済み PDF', removePdf: 'PDF 削除', removePdfConfirm: 'この端末からこの PDF を削除しますか？', },
   ko: { login: '다운로드한 계정으로 로그인해 주세요.', empty: '오프라인 회차가 없습니다. 리더 메뉴에서 회차를 다운로드하세요.', open: '오프라인 읽기', remove: '회차 삭제', removeStory: '전체 작품 삭제', removeConfirm: '이 기기에서 이 회차를 삭제할까요?', removeStoryConfirm: '이 기기에서 이 작품의 모든 회차를 삭제할까요?', loading: '다운로드 불러오는 중…', error: '오프라인 회차를 열 수 없습니다.', expired: '오프라인 열람 기간이 만료되었습니다.', back: '다운로드 목록으로', count: '{{count}} 회차', storage: '이 기기에 저장됨', refresh: '새로 고침', notFound: '다운로드한 회차를 찾을 수 없습니다.', episode: '{{number}}화', allDownloads: '모든 다운로드', savedPdfs: '저장된 PDF', removePdf: 'PDF 삭제', removePdfConfirm: '이 기기에서 이 PDF를 삭제하시겠습니까?', },
 })
 
@@ -53,19 +53,36 @@ function OfflineManga({ pages = [] }) {
   })}</div>
 }
 
+function metadataItem(item, t) {
+  return {
+    ...item,
+    storyTitle: item.storyTitle || item.storyId,
+    episodeTitle:
+      item.episodeTitle ||
+      t('offlineDownloadsPanel.episode', {
+        number: item.episodeNumber || '?',
+      }),
+    episodeNumber: Number(item.episodeNumber || 0),
+  }
+}
+
 export default function OfflineDownloadsPanel() {
   const { t } = useDisplayTranslation()
   const location = useLocation()
-  const requestedStoryId = new URLSearchParams(location.search).get('storyId') || ''
-  const source = new URLSearchParams(location.search).get('source') === 'me' ? '?source=me' : ''
+  const params = new URLSearchParams(location.search)
+  const requestedStoryId = params.get('storyId') || ''
+  const sourceIsMe = params.get('source') === 'me'
+  const offlineRequested = params.get('_shadow_offline') === '1'
   const [items, setItems] = useState([])
   const [pdfItems, setPdfItems] = useState([])
   const [selectedPdf, setSelectedPdf] = useState('')
   const [selected, setSelected] = useState(null)
   const [busy, setBusy] = useState(true)
+  const [pdfLoading, setPdfLoading] = useState(true)
   const [error, setError] = useState('')
   const activeRef = useRef(null)
   const requestRef = useRef(0)
+  const refreshRef = useRef(0)
   const mountedRef = useRef(true)
   const accountId = getOfflineReaderAccountId()
 
@@ -77,38 +94,160 @@ export default function OfflineDownloadsPanel() {
     setSelectedPdf('')
   }
 
+  async function enrichLegacyMetadata(metadata, refreshId) {
+    const missing = metadata.filter((item) =>
+      !item.storyTitle ||
+      !item.episodeTitle ||
+      !Number(item.episodeNumber || 0)
+    )
+
+    if (!missing.length) return
+
+    const enriched = new Map()
+
+    for (let index = 0; index < missing.length; index += 3) {
+      const batch = missing.slice(index, index + 3)
+      const results = await Promise.allSettled(
+        batch.map(async (item) => {
+          const full = await loadOfflineEpisode({
+            accountId,
+            storyId: item.storyId,
+            episodeId: item.episodeId,
+          })
+
+          if (!full) return null
+
+          return {
+            ...item,
+            storyTitle:
+              full.storyTitle ||
+              full.payload?.story?.title ||
+              item.storyId,
+            episodeTitle:
+              full.episodeTitle ||
+              full.payload?.episode?.title ||
+              t('offlineDownloadsPanel.episode', {
+                number:
+                  full.episodeNumber ||
+                  full.payload?.episode?.episode_number ||
+                  '?',
+              }),
+            episodeNumber: Number(
+              full.episodeNumber ||
+              full.payload?.episode?.episode_number ||
+              0
+            ),
+          }
+        })
+      )
+
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          enriched.set(result.value.key, result.value)
+        }
+      }
+
+      if (
+        !mountedRef.current ||
+        refreshRef.current !== refreshId
+      ) {
+        return
+      }
+
+      if (enriched.size) {
+        setItems((current) =>
+          current.map((item) =>
+            enriched.get(item.key) || item
+          )
+        )
+      }
+    }
+  }
+
   async function refresh() {
+    const refreshId = ++refreshRef.current
     setBusy(true)
+    setPdfLoading(true)
     setError('')
+
     if (!accountId) {
       setItems([])
       setPdfItems([])
       setBusy(false)
+      setPdfLoading(false)
       return
     }
+
+    let metadata = []
+
     try {
-      const [metadata, pdfs] = await Promise.all([listOfflineEpisodes({ accountId }), listOfflinePdfs()])
-      const records = await Promise.all(metadata.map(async (item) => {
-        const full = await loadOfflineEpisode({ accountId, storyId: item.storyId, episodeId: item.episodeId })
-        if (!full) return null
-        return { ...item, storyTitle: full.payload?.story?.title || item.storyId, episodeTitle: full.payload?.episode?.title || t('offlineDownloadsPanel.episode', { number: full.payload?.episode?.episode_number || '?' }), episodeNumber: Number(full.payload?.episode?.episode_number || 0) }
-      }))
-      if (mountedRef.current) {
-        setItems(records.filter(Boolean))
-        setPdfItems(pdfs)
+      metadata = await listOfflineEpisodes({ accountId })
+
+      if (
+        mountedRef.current &&
+        refreshRef.current === refreshId
+      ) {
+        setItems(
+          metadata.map((item) => metadataItem(item, t))
+        )
+        setBusy(false)
       }
     } catch (reason) {
-      if (mountedRef.current) setError(reason.message || t('offlineDownloadsPanel.error'))
-    } finally {
-      if (mountedRef.current) setBusy(false)
+      if (
+        mountedRef.current &&
+        refreshRef.current === refreshId
+      ) {
+        setItems([])
+        setBusy(false)
+        setError(
+          reason.message ||
+          t('offlineDownloadsPanel.error')
+        )
+      }
+    }
+
+    void listOfflinePdfs()
+      .then((pdfs) => {
+        if (
+          mountedRef.current &&
+          refreshRef.current === refreshId
+        ) {
+          setPdfItems(pdfs)
+        }
+      })
+      .catch((reason) => {
+        if (
+          mountedRef.current &&
+          refreshRef.current === refreshId &&
+          !metadata.length
+        ) {
+          setError(
+            reason.message ||
+            t('offlineDownloadsPanel.error')
+          )
+        }
+      })
+      .finally(() => {
+        if (
+          mountedRef.current &&
+          refreshRef.current === refreshId
+        ) {
+          setPdfLoading(false)
+        }
+      })
+
+    if (metadata.length) {
+      void enrichLegacyMetadata(metadata, refreshId)
     }
   }
 
   useEffect(() => {
     mountedRef.current = true
-    refresh()
+    void refresh()
+
     return () => {
       mountedRef.current = false
+      refreshRef.current += 1
       requestRef.current += 1
       activeRef.current?.release()
       activeRef.current = null
@@ -117,13 +256,15 @@ export default function OfflineDownloadsPanel() {
 
   useEffect(() => {
     if (selected?.expiresAt == null) return undefined
+
     const timer = setInterval(() => {
       if (Date.now() >= selected.expiresAt) {
         closeReader()
         setError(t('offlineDownloadsPanel.expired'))
-        refresh()
+        void refresh()
       }
     }, 1000)
+
     return () => clearInterval(timer)
   }, [selected?.expiresAt])
 
@@ -135,92 +276,378 @@ export default function OfflineDownloadsPanel() {
     setSelectedPdf('')
     setError('')
     setBusy(true)
+
     try {
-      const result = await openOfflineReaderEpisode({ storyId: item.storyId, episodeId: item.episodeId })
-      if (!result) throw new Error(t('offlineDownloadsPanel.notFound'))
-      if (!mountedRef.current || requestId !== requestRef.current) {
+      const result = await openOfflineReaderEpisode({
+        storyId: item.storyId,
+        episodeId: item.episodeId,
+      })
+
+      if (!result) {
+        throw new Error(
+          t('offlineDownloadsPanel.notFound')
+        )
+      }
+
+      if (
+        !mountedRef.current ||
+        requestId !== requestRef.current
+      ) {
         result.release()
         return
       }
+
       activeRef.current = result
-      setSelected({ ...result, storyId: item.storyId, episodeId: item.episodeId })
+      setSelected({
+        ...result,
+        storyId: item.storyId,
+        episodeId: item.episodeId,
+      })
     } catch (reason) {
-      if (mountedRef.current && requestId === requestRef.current) setError(reason.message || t('offlineDownloadsPanel.error'))
+      if (
+        mountedRef.current &&
+        requestId === requestRef.current
+      ) {
+        setError(
+          reason.message ||
+          t('offlineDownloadsPanel.error')
+        )
+      }
     } finally {
-      if (mountedRef.current && requestId === requestRef.current) setBusy(false)
+      if (
+        mountedRef.current &&
+        requestId === requestRef.current
+      ) {
+        setBusy(false)
+      }
     }
   }
 
   async function removeEpisode(item) {
-    if (!window.confirm(t('offlineDownloadsPanel.removeConfirm'))) return
-    if (selected?.storyId === item.storyId && selected?.episodeId === item.episodeId) closeReader()
+    if (!window.confirm(t('offlineDownloadsPanel.removeConfirm'))) {
+      return
+    }
+
+    if (
+      selected?.storyId === item.storyId &&
+      selected?.episodeId === item.episodeId
+    ) {
+      closeReader()
+    }
+
     try {
-      await deleteOfflineEpisode({ accountId, storyId: item.storyId, episodeId: item.episodeId })
+      await deleteOfflineEpisode({
+        accountId,
+        storyId: item.storyId,
+        episodeId: item.episodeId,
+      })
       await refresh()
     } catch (reason) {
-      setError(reason.message || t('offlineDownloadsPanel.error'))
+      setError(
+        reason.message ||
+        t('offlineDownloadsPanel.error')
+      )
     }
   }
 
   async function removePdf(item) {
-    if (!window.confirm(t('offlineDownloadsPanel.removePdfConfirm'))) return
-    if (selectedPdf === item.pdfId) setSelectedPdf('')
+    if (!window.confirm(t('offlineDownloadsPanel.removePdfConfirm'))) {
+      return
+    }
+
+    if (selectedPdf === item.pdfId) {
+      setSelectedPdf('')
+    }
+
     try {
       await deleteOfflinePdf(item.pdfId)
       await refresh()
     } catch (reason) {
-      setError(reason.message || t('offlineDownloadsPanel.error'))
+      setError(
+        reason.message ||
+        t('offlineDownloadsPanel.error')
+      )
     }
   }
 
   async function removeStory(storyId) {
-    if (!window.confirm(t('offlineDownloadsPanel.removeStoryConfirm'))) return
-    if (selected?.storyId === storyId) closeReader()
+    if (!window.confirm(t('offlineDownloadsPanel.removeStoryConfirm'))) {
+      return
+    }
+
+    if (selected?.storyId === storyId) {
+      closeReader()
+    }
+
     try {
-      await deleteOfflineStory({ accountId, storyId })
+      await deleteOfflineStory({
+        accountId,
+        storyId,
+      })
       await refresh()
     } catch (reason) {
-      setError(reason.message || t('offlineDownloadsPanel.error'))
+      setError(
+        reason.message ||
+        t('offlineDownloadsPanel.error')
+      )
     }
   }
 
   const groups = useMemo(() => {
     const map = new Map()
+
     for (const item of items) {
-      if (!map.has(item.storyId)) map.set(item.storyId, { storyId: item.storyId, title: item.storyTitle, episodes: [] })
+      if (!map.has(item.storyId)) {
+        map.set(item.storyId, {
+          storyId: item.storyId,
+          title: item.storyTitle,
+          episodes: [],
+        })
+      }
+
       map.get(item.storyId).episodes.push(item)
     }
-    for (const group of map.values()) group.episodes.sort((a, b) => a.episodeNumber - b.episodeNumber)
+
+    for (const group of map.values()) {
+      group.episodes.sort(
+        (first, second) =>
+          first.episodeNumber - second.episodeNumber
+      )
+    }
+
     return [...map.values()]
   }, [items])
 
-  const visibleGroups = useMemo(() => requestedStoryId
-    ? groups.filter((group) => String(group.storyId) === requestedStoryId)
-    : groups, [groups, requestedStoryId])
+  const visibleGroups = useMemo(
+    () =>
+      requestedStoryId
+        ? groups.filter(
+            (group) =>
+              String(group.storyId) === requestedStoryId
+          )
+        : groups,
+    [groups, requestedStoryId]
+  )
 
-  if (!accountId) return <p className="rounded-xl border border-[var(--shadow-border)] p-5 text-sm text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.login')}</p>
+  const backParams = new URLSearchParams()
 
-  return <section className="space-y-4">
-    {selectedPdf ? <OfflinePdfReader pdfId={selectedPdf} onBack={() => { setSelectedPdf(''); setError('') }} /> : selected ? <>
-      <button type="button" onClick={() => { closeReader(); setError('') }} className="rounded-xl border border-[var(--shadow-border)] px-4 py-2 text-sm font-semibold text-[var(--shadow-text-primary)]">← {t('offlineDownloadsPanel.back')}</button>
-      <div className="overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-page)]">
-        <div className="border-b border-[var(--shadow-border)] p-4 text-[var(--shadow-text-primary)]"><h2 className="font-extrabold">{selected.payload.story?.title}</h2><p className="mt-1 text-sm">{selected.payload.episode?.title}</p></div>
-        {selected.storyType === 'manga' ? <OfflineManga pages={selected.payload.episode?.pages} /> : selected.storyType === 'chat_story' ? <ChatStoryReader key={selected.episodeId} content={selected.payload.episode?.content} readMode="manual" /> : <OfflineNovel content={selected.payload.episode?.content} />}
-      </div>
-    </> : <>
-      {requestedStoryId ? <Link to={`/library/collection/downloads${source}`} className="inline-flex rounded-xl border border-[var(--shadow-border)] px-4 py-2 text-sm font-semibold text-[var(--shadow-text-primary)]">← {t('offlineDownloadsPanel.allDownloads')}</Link> : null}
-      <div className="flex items-center justify-between gap-3"><p className="text-xs text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.storage')}</p><button type="button" onClick={refresh} className="rounded-xl border border-[var(--shadow-border)] px-3 py-2 text-xs font-semibold text-[var(--shadow-text-primary)]">{t('offlineDownloadsPanel.refresh')}</button></div>
-      {!requestedStoryId && pdfItems.length > 0 ? <div className="overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)]">
-        <h2 className="border-b border-[var(--shadow-border)] p-4 font-bold text-[var(--shadow-text-primary)]">{t('offlineDownloadsPanel.savedPdfs')}</h2>
-        {pdfItems.map((item) => <div key={item.key} className="flex items-center gap-2 border-b border-[var(--shadow-border)] px-3 py-3 last:border-0"><button type="button" onClick={() => { closeReader(); setError(''); setSelectedPdf(item.pdfId) }} className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-[var(--shadow-text-primary)]">{item.title}</button><button type="button" onClick={() => removePdf(item)} className="shrink-0 rounded-lg border border-[var(--shadow-border)] px-2 py-2 text-xs text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.removePdf')}</button></div>)}
-      </div> : null}
-      {visibleGroups.map((group) => <div key={group.storyId} className="overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)]">
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--shadow-border)] p-4"><div className="min-w-0"><h2 className="font-bold text-[var(--shadow-text-primary)]">{group.title}</h2><p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.count', { count: group.episodes.length })}</p></div><button type="button" onClick={() => removeStory(group.storyId)} className="shrink-0 rounded-lg border border-[var(--shadow-border)] px-2 py-2 text-xs text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.removeStory')}</button></div>
-        {group.episodes.map((item) => <div key={item.key} className="flex items-center gap-2 border-b border-[var(--shadow-border)] px-3 py-3 last:border-0"><button type="button" onClick={() => openEpisode(item)} className="min-w-0 flex-1 text-left"><span className="block truncate text-sm font-semibold text-[var(--shadow-text-primary)]">{item.episodeTitle}</span><span className="mt-1 block text-xs text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.open')}</span></button><button type="button" onClick={() => removeEpisode(item)} className="shrink-0 rounded-lg border border-[var(--shadow-border)] px-2 py-2 text-xs text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.remove')}</button></div>)}
-      </div>)}
-      {!busy && !visibleGroups.length && (!pdfItems.length || Boolean(requestedStoryId)) ? <p className="rounded-xl border border-[var(--shadow-border)] p-5 text-sm text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.empty')}</p> : null}
-    </>}
-    {busy ? <p role="status" className="text-sm text-[var(--shadow-text-secondary)]">{t('offlineDownloadsPanel.loading')}</p> : null}
-    {error ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
-  </section>
+  if (sourceIsMe) {
+    backParams.set('source', 'me')
+  }
+
+  if (offlineRequested) {
+    backParams.set('_shadow_offline', '1')
+  }
+
+  const backQuery = backParams.toString()
+  const allDownloadsPath = offlineRequested
+    ? '/library/manage/offline-downloads'
+    : '/library/collection/downloads'
+  const allDownloadsUrl =
+    `${allDownloadsPath}${backQuery ? `?${backQuery}` : ''}`
+
+  if (!accountId) {
+    return (
+      <p className="rounded-xl border border-[var(--shadow-border)] p-5 text-sm text-[var(--shadow-text-secondary)]">
+        {t('offlineDownloadsPanel.login')}
+      </p>
+    )
+  }
+
+  return (
+    <section className="space-y-4">
+      {selectedPdf ? (
+        <OfflinePdfReader
+          pdfId={selectedPdf}
+          onBack={() => {
+            setSelectedPdf('')
+            setError('')
+          }}
+        />
+      ) : selected ? (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              closeReader()
+              setError('')
+            }}
+            className="rounded-xl border border-[var(--shadow-border)] px-4 py-2 text-sm font-semibold text-[var(--shadow-text-primary)]"
+          >
+            ← {t('offlineDownloadsPanel.back')}
+          </button>
+
+          <div className="overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-page)]">
+            <div className="border-b border-[var(--shadow-border)] p-4 text-[var(--shadow-text-primary)]">
+              <h2 className="font-extrabold">
+                {selected.payload.story?.title}
+              </h2>
+              <p className="mt-1 text-sm">
+                {selected.payload.episode?.title}
+              </p>
+            </div>
+
+            {selected.storyType === 'manga' ? (
+              <OfflineManga
+                pages={selected.payload.episode?.pages}
+              />
+            ) : selected.storyType === 'chat_story' ? (
+              <ChatStoryReader
+                key={selected.episodeId}
+                content={selected.payload.episode?.content}
+                readMode="manual"
+              />
+            ) : (
+              <OfflineNovel
+                content={selected.payload.episode?.content}
+              />
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {requestedStoryId ? (
+            <Link
+              to={allDownloadsUrl}
+              className="inline-flex rounded-xl border border-[var(--shadow-border)] px-4 py-2 text-sm font-semibold text-[var(--shadow-text-primary)]"
+            >
+              ← {t('offlineDownloadsPanel.allDownloads')}
+            </Link>
+          ) : null}
+
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-[var(--shadow-text-secondary)]">
+              {t('offlineDownloadsPanel.storage')}
+            </p>
+
+            <button
+              type="button"
+              onClick={refresh}
+              className="rounded-xl border border-[var(--shadow-border)] px-3 py-2 text-xs font-semibold text-[var(--shadow-text-primary)]"
+            >
+              {t('offlineDownloadsPanel.refresh')}
+            </button>
+          </div>
+
+          {!requestedStoryId && pdfItems.length > 0 ? (
+            <div className="overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)]">
+              <h2 className="border-b border-[var(--shadow-border)] p-4 font-bold text-[var(--shadow-text-primary)]">
+                {t('offlineDownloadsPanel.savedPdfs')}
+              </h2>
+
+              {pdfItems.map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center gap-2 border-b border-[var(--shadow-border)] px-3 py-3 last:border-0"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeReader()
+                      setError('')
+                      setSelectedPdf(item.pdfId)
+                    }}
+                    className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-[var(--shadow-text-primary)]"
+                  >
+                    {item.title}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => removePdf(item)}
+                    className="shrink-0 rounded-lg border border-[var(--shadow-border)] px-2 py-2 text-xs text-[var(--shadow-text-secondary)]"
+                  >
+                    {t('offlineDownloadsPanel.removePdf')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {visibleGroups.map((group) => (
+            <div
+              key={group.storyId}
+              className="overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)]"
+            >
+              <div className="flex items-center justify-between gap-2 border-b border-[var(--shadow-border)] p-4">
+                <div className="min-w-0">
+                  <h2 className="font-bold text-[var(--shadow-text-primary)]">
+                    {group.title}
+                  </h2>
+                  <p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">
+                    {t('offlineDownloadsPanel.count', {
+                      count: group.episodes.length,
+                    })}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => removeStory(group.storyId)}
+                  className="shrink-0 rounded-lg border border-[var(--shadow-border)] px-2 py-2 text-xs text-[var(--shadow-text-secondary)]"
+                >
+                  {t('offlineDownloadsPanel.removeStory')}
+                </button>
+              </div>
+
+              {group.episodes.map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center gap-2 border-b border-[var(--shadow-border)] px-3 py-3 last:border-0"
+                >
+                  <button
+                    type="button"
+                    onClick={() => openEpisode(item)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <span className="block truncate text-sm font-semibold text-[var(--shadow-text-primary)]">
+                      {item.episodeTitle}
+                    </span>
+                    <span className="mt-1 block text-xs text-[var(--shadow-text-secondary)]">
+                      {t('offlineDownloadsPanel.open')}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => removeEpisode(item)}
+                    className="shrink-0 rounded-lg border border-[var(--shadow-border)] px-2 py-2 text-xs text-[var(--shadow-text-secondary)]"
+                  >
+                    {t('offlineDownloadsPanel.remove')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {!busy &&
+          !pdfLoading &&
+          !visibleGroups.length &&
+          (!pdfItems.length || Boolean(requestedStoryId)) ? (
+            <p className="rounded-xl border border-[var(--shadow-border)] p-5 text-sm text-[var(--shadow-text-secondary)]">
+              {t('offlineDownloadsPanel.empty')}
+            </p>
+          ) : null}
+        </>
+      )}
+
+      {busy ? (
+        <p
+          role="status"
+          className="text-sm text-[var(--shadow-text-secondary)]"
+        >
+          {t('offlineDownloadsPanel.loading')}
+        </p>
+      ) : null}
+
+      {error ? (
+        <p
+          role="alert"
+          className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
+        >
+          {error}
+        </p>
+      ) : null}
+    </section>
+  )
 }
