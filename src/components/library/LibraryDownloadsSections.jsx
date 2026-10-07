@@ -23,13 +23,31 @@ function accessRights(value) {
 
 function typeOfStory(value) {
   const valueText = String(value || '').toLowerCase().replace(/[- ]/g, '_')
-  return valueText.includes('chat') ? 'chat' : /manga|comic|manhwa/.test(valueText) ? 'manga' : 'novel'
+  return valueText.includes('chat')
+    ? 'chat'
+    : /manga|comic|manhwa/.test(valueText)
+      ? 'manga'
+      : 'novel'
 }
 
 function BookCover({ title, url, children }) {
   return (
     <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-[var(--shadow-bg-soft)] shadow-sm">
-      {url ? <img src={url} alt={title} loading="lazy" className="h-full w-full object-cover" onError={(event) => { event.currentTarget.style.display = 'none' }} /> : <div className="flex h-full items-center justify-center text-[var(--shadow-text-tertiary)]"><BookOpen size={26} /></div>}
+      {url ? (
+        <img
+          src={url}
+          alt={title}
+          loading="lazy"
+          className="h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = 'none'
+          }}
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center text-[var(--shadow-text-tertiary)]">
+          <BookOpen size={26} />
+        </div>
+      )}
       {children}
     </div>
   )
@@ -48,32 +66,77 @@ function PurchasedBook({ item, t, onRead }) {
 
   async function downloadPrivatePdf() {
     if (!productId || busy || !rights.download) return
-    const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+
+    const token =
+      sessionStorage.getItem('shadow_reader_token') ||
+      localStorage.getItem('shadow_reader_token') ||
+      ''
+
     if (!token) {
       setError(t('librarySections.pdfDownloadFailed'))
       return
     }
+
     setBusy(true)
     setError('')
+
     try {
-      const api = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
-      const response = await fetch(`${api}/api/author-store/downloads/${encodeURIComponent(productId)}/pdf?mode=download`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+      const api =
+        import.meta.env.VITE_API_URL ||
+        (
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://shadow-backend-kucw.onrender.com'
+        )
+
+      const response = await fetch(
+        `${api}/api/author-store/downloads/${encodeURIComponent(productId)}/pdf?mode=download`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        throw new Error(data.message || t('librarySections.pdfDownloadFailed'))
+        throw new Error(
+          data.message ||
+          t('librarySections.pdfDownloadFailed')
+        )
       }
+
       const pdf = await response.blob()
-      if (!pdf.size || !pdf.type.toLowerCase().startsWith('application/pdf')) throw new Error(t('librarySections.pdfUnavailable'))
+
+      if (
+        !pdf.size ||
+        !pdf.type.toLowerCase().startsWith('application/pdf')
+      ) {
+        throw new Error(t('librarySections.pdfUnavailable'))
+      }
+
       const blobUrl = URL.createObjectURL(pdf)
       const anchor = document.createElement('a')
       anchor.href = blobUrl
-      anchor.download = String(story.pdf_file_name || `${title}.pdf`).split(/[\\/]/).pop()
+      anchor.download = String(
+        story.pdf_file_name ||
+        `${title}.pdf`
+      ).split(/[\\/]/).pop()
       document.body.appendChild(anchor)
       anchor.click()
       anchor.remove()
-      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000)
+
+      window.setTimeout(
+        () => URL.revokeObjectURL(blobUrl),
+        30000
+      )
     } catch (reason) {
-      setError(reason?.message || t('librarySections.pdfDownloadFailed'))
+      setError(
+        reason?.message ||
+        t('librarySections.pdfDownloadFailed')
+      )
     } finally {
       setBusy(false)
     }
@@ -82,25 +145,87 @@ function PurchasedBook({ item, t, onRead }) {
   return (
     <article className="min-w-0">
       <BookCover title={title} url={story.cover_url}>
-        {productId ? <button type="button" onClick={() => onRead(productId)} aria-label={`${t('librarySections.read')}: ${title}`} className={`${iconClass} top-1.5`}><BookOpen size={16} /></button> : null}
-        {rights.download && url ? <a href={url} target="_blank" rel="noreferrer" download={story.pdf_file_name || `${title}.pdf`} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></a> : null}
-        {rights.download && !url && productId ? <button type="button" disabled={busy} onClick={downloadPrivatePdf} aria-label={`${t('librarySections.download')}: ${title}`} className={`${iconClass} bottom-1.5`}><Download size={16} /></button> : null}
+        {productId ? (
+          <button
+            type="button"
+            onClick={() => onRead(productId)}
+            aria-label={`${t('librarySections.read')}: ${title}`}
+            className={`${iconClass} top-1.5`}
+          >
+            <BookOpen size={16} />
+          </button>
+        ) : null}
+
+        {rights.download && url ? (
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            download={story.pdf_file_name || `${title}.pdf`}
+            aria-label={`${t('librarySections.download')}: ${title}`}
+            className={`${iconClass} bottom-1.5`}
+          >
+            <Download size={16} />
+          </a>
+        ) : null}
+
+        {rights.download && !url && productId ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={downloadPrivatePdf}
+            aria-label={`${t('librarySections.download')}: ${title}`}
+            className={`${iconClass} bottom-1.5`}
+          >
+            <Download size={16} />
+          </button>
+        ) : null}
       </BookCover>
-      <h3 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">{title}</h3>
-      <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{rights.download ? 'PDF' : 'eBook'}</p>
-      {error ? <p role="alert" className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]">{error}</p> : null}
+
+      <h3 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">
+        {title}
+      </h3>
+
+      <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">
+        {rights.download ? 'PDF' : 'eBook'}
+      </p>
+
+      {error ? (
+        <p
+          role="alert"
+          className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]"
+        >
+          {error}
+        </p>
+      ) : null}
     </article>
   )
 }
 
 function DownloadedStory({ item, t, onOpen }) {
   return (
-    <button type="button" onClick={onOpen} aria-label={`${t('librarySections.open')}: ${item.title}`} className="group min-w-0 text-left">
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`${t('librarySections.open')}: ${item.title}`}
+      className="group min-w-0 text-left"
+    >
       <BookCover title={item.title} url={item.cover}>
-        <span className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm"><BookOpen size={15} /></span>
+        <span className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm">
+          <BookOpen size={15} />
+        </span>
       </BookCover>
-      <h3 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">{item.title}</h3>
-      <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{t(`librarySections.${item.type}`)} · {t('librarySections.episodes', { count: item.count })}</p>
+
+      <h3 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">
+        {item.title}
+      </h3>
+
+      <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">
+        {t(`librarySections.${item.type}`)} ·{' '}
+        {t('librarySections.episodes', {
+          count: item.count,
+        })}
+      </p>
     </button>
   )
 }
@@ -109,69 +234,215 @@ function Section({ title, subtitle, url, children, t }) {
   return (
     <section className="pt-6">
       <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0"><h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">{title}</h2><p className="mt-1 text-[11px] text-[var(--shadow-text-secondary)]">{subtitle}</p></div>
-        <Link to={url} className="flex shrink-0 items-center gap-1 pt-1 text-[11px] font-bold text-[var(--shadow-text-primary)]">{t('librarySections.viewAll')}<ChevronRight size={14} /></Link>
+        <div className="min-w-0">
+          <h2 className="text-[16px] font-bold text-[var(--shadow-text-primary)]">
+            {title}
+          </h2>
+          <p className="mt-1 text-[11px] text-[var(--shadow-text-secondary)]">
+            {subtitle}
+          </p>
+        </div>
+
+        <Link
+          to={url}
+          className="flex shrink-0 items-center gap-1 pt-1 text-[11px] font-bold text-[var(--shadow-text-primary)]"
+        >
+          {t('librarySections.viewAll')}
+          <ChevronRight size={14} />
+        </Link>
       </div>
+
       {children}
     </section>
   )
 }
 
-export default function LibraryDownloadsSections({ purchases = [], loading = false, isLoggedIn = false, offlineMode = false }) {
+export default function LibraryDownloadsSections({
+  purchases = [],
+  loading = false,
+  isLoggedIn = false,
+  offlineMode = false,
+}) {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const source = new URLSearchParams(location.search).get('source') === 'me' ? 'source=me&' : ''
+  const sourceIsMe =
+    new URLSearchParams(location.search).get('source') === 'me'
   const accountId = getOfflineReaderAccountId()
   const [savedStories, setSavedStories] = useState([])
   const [loadingSaved, setLoadingSaved] = useState(true)
   const [savedError, setSavedError] = useState('')
-  const [browserOffline, setBrowserOffline] = useState(() => !navigator.onLine)
+  const [browserOffline, setBrowserOffline] = useState(
+    () => !navigator.onLine
+  )
   const offline = offlineMode || browserOffline
 
   useEffect(() => {
-    const updateConnectionState = () => setBrowserOffline(!navigator.onLine)
+    const updateConnectionState = () => {
+      setBrowserOffline(!navigator.onLine)
+    }
+
     window.addEventListener('online', updateConnectionState)
     window.addEventListener('offline', updateConnectionState)
+
     return () => {
-      window.removeEventListener('online', updateConnectionState)
-      window.removeEventListener('offline', updateConnectionState)
+      window.removeEventListener(
+        'online',
+        updateConnectionState
+      )
+      window.removeEventListener(
+        'offline',
+        updateConnectionState
+      )
     }
   }, [])
 
   useEffect(() => {
     let active = true
+
     setSavedStories([])
     setSavedError('')
     setLoadingSaved(true)
+
     async function load() {
       try {
         if (!accountId) return
-        const metadata = await listOfflineEpisodes({ accountId })
+
+        const metadata = await listOfflineEpisodes({
+          accountId,
+        })
         const grouped = new Map()
+
         for (const item of metadata) {
-          if (!grouped.has(item.storyId)) grouped.set(item.storyId, [])
+          if (!grouped.has(item.storyId)) {
+            grouped.set(item.storyId, [])
+          }
+
           grouped.get(item.storyId).push(item)
         }
-        const stories = await Promise.all([...grouped.entries()].map(async ([storyId, episodes]) => {
-          const record = await loadOfflineEpisode({ accountId, storyId, episodeId: episodes[0].episodeId })
-          return { id: storyId, title: record?.payload?.story?.title || storyId, cover: record?.payload?.story?.cover_url || record?.payload?.story?.image_url || '', type: typeOfStory(record?.storyType || episodes[0].storyType), count: episodes.length, savedAt: episodes[0].savedAt }
-        }))
-        if (active) setSavedStories(stories.sort((a, b) => b.savedAt - a.savedAt).slice(0, 6))
+
+        const stories = await Promise.all(
+          [...grouped.entries()].map(
+            async ([storyId, episodes]) => {
+              const sortedEpisodes = [...episodes].sort(
+                (first, second) =>
+                  Number(second.savedAt || 0) -
+                  Number(first.savedAt || 0)
+              )
+              const latest = sortedEpisodes[0]
+              let title = latest?.storyTitle || ''
+              let cover = latest?.storyCover || ''
+              let storyType = latest?.storyType || ''
+
+              if (!title) {
+                const record = await loadOfflineEpisode({
+                  accountId,
+                  storyId,
+                  episodeId: latest.episodeId,
+                })
+
+                title =
+                  record?.storyTitle ||
+                  record?.payload?.story?.title ||
+                  storyId
+                cover =
+                  record?.storyCover ||
+                  record?.payload?.story?.cover_url ||
+                  record?.payload?.story?.image_url ||
+                  ''
+                storyType =
+                  record?.storyType ||
+                  latest?.storyType ||
+                  ''
+              }
+
+              return {
+                id: storyId,
+                title: title || storyId,
+                cover,
+                type: typeOfStory(storyType),
+                count: episodes.length,
+                savedAt: Number(latest?.savedAt || 0),
+              }
+            }
+          )
+        )
+
+        if (active) {
+          setSavedStories(
+            stories
+              .sort(
+                (first, second) =>
+                  second.savedAt - first.savedAt
+              )
+              .slice(0, 6)
+          )
+        }
       } catch (error) {
-        if (active) setSavedError(error.message || t('librarySections.failed'))
+        if (active) {
+          setSavedError(
+            error.message ||
+            t('librarySections.failed')
+          )
+        }
       } finally {
         if (active) setLoadingSaved(false)
       }
     }
-    load()
-    return () => { active = false }
-  }, [accountId])
 
-  if (!isLoggedIn) return <div className="mt-5 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-6 text-center text-sm text-[var(--shadow-text-secondary)]">{t('librarySections.login')}</div>
+    void load()
 
-  const offlineDownloadsUrl = `/library/manage/offline-downloads${source ? '?source=me' : ''}`
-  const downloadsUrl = offline ? offlineDownloadsUrl : `/library/collection/downloads${source ? `?${source.slice(0, -1)}` : ''}`
+    return () => {
+      active = false
+    }
+  }, [accountId, t])
+
+  if (!isLoggedIn) {
+    return (
+      <div className="mt-5 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-6 text-center text-sm text-[var(--shadow-text-secondary)]">
+        {t('librarySections.login')}
+      </div>
+    )
+  }
+
+  const offlineParams = new URLSearchParams()
+
+  if (sourceIsMe) {
+    offlineParams.set('source', 'me')
+  }
+
+  if (offline) {
+    offlineParams.set('_shadow_offline', '1')
+  }
+
+  const offlineQuery = offlineParams.toString()
+  const offlineDownloadsUrl =
+    `/library/manage/offline-downloads${
+      offlineQuery ? `?${offlineQuery}` : ''
+    }`
+
+  const downloadsUrl = offline
+    ? offlineDownloadsUrl
+    : `/library/collection/downloads${
+        sourceIsMe ? '?source=me' : ''
+      }`
+
+  const openDownloadedStory = (storyId) => {
+    const params = new URLSearchParams()
+    params.set('storyId', storyId)
+
+    if (sourceIsMe) {
+      params.set('source', 'me')
+    }
+
+    if (offline) {
+      params.set('_shadow_offline', '1')
+    }
+
+    navigate(
+      `/library/manage/offline-downloads?${params.toString()}`
+    )
+  }
 
   return (
     <>
@@ -181,12 +452,28 @@ export default function LibraryDownloadsSections({ purchases = [], loading = fal
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)]">
               <WifiOff size={17} aria-hidden="true" />
             </span>
+
             <div className="min-w-0 flex-1">
-              <h2 className="text-[14px] font-bold text-[var(--shadow-text-primary)]">{t('librarySections.offlineTitle')}</h2>
-              <p className="mt-1 text-[11px] leading-5 text-[var(--shadow-text-secondary)]">{t('librarySections.offlineInfo')}</p>
-              <p className="mt-2 text-[11px] font-semibold leading-5 text-[var(--shadow-text-primary)]">{t('librarySections.offlineTypes')}</p>
-              <p className="mt-1 text-[10px] leading-4 text-[var(--shadow-text-tertiary)]">{t('librarySections.internetRequired')}</p>
-              <Link to={offlineDownloadsUrl} className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-3 py-2 text-[11px] font-bold text-[var(--shadow-text-primary)]">
+              <h2 className="text-[14px] font-bold text-[var(--shadow-text-primary)]">
+                {t('librarySections.offlineTitle')}
+              </h2>
+
+              <p className="mt-1 text-[11px] leading-5 text-[var(--shadow-text-secondary)]">
+                {t('librarySections.offlineInfo')}
+              </p>
+
+              <p className="mt-2 text-[11px] font-semibold leading-5 text-[var(--shadow-text-primary)]">
+                {t('librarySections.offlineTypes')}
+              </p>
+
+              <p className="mt-1 text-[10px] leading-4 text-[var(--shadow-text-tertiary)]">
+                {t('librarySections.internetRequired')}
+              </p>
+
+              <Link
+                to={offlineDownloadsUrl}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-3 py-2 text-[11px] font-bold text-[var(--shadow-text-primary)]"
+              >
                 {t('librarySections.open')}
                 <ChevronRight size={13} aria-hidden="true" />
               </Link>
@@ -196,13 +483,80 @@ export default function LibraryDownloadsSections({ purchases = [], loading = fal
       ) : null}
 
       {!offline ? (
-        <Section title={t('librarySections.purchased')} subtitle={t('librarySections.purchasedInfo')} url={`/library/collection/purchased${source ? `?${source.slice(0, -1)}` : ''}`} t={t}>
-          {loading ? <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">{t('librarySections.loading')}</p> : purchases.length ? <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">{purchases.slice(0, 6).map((item) => <PurchasedBook key={item.id || item.story_id} item={item} t={t} onRead={(id) => navigate(`/library/collection/purchased?${source}read=${encodeURIComponent(id)}`)} />)}</div> : <div className="flex items-center gap-2 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]"><FolderOpen size={18}/>{t('librarySections.noPurchases')}</div>}
+        <Section
+          title={t('librarySections.purchased')}
+          subtitle={t('librarySections.purchasedInfo')}
+          url={`/library/collection/purchased${
+            sourceIsMe ? '?source=me' : ''
+          }`}
+          t={t}
+        >
+          {loading ? (
+            <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">
+              {t('librarySections.loading')}
+            </p>
+          ) : purchases.length ? (
+            <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+              {purchases.slice(0, 6).map((item) => (
+                <PurchasedBook
+                  key={item.id || item.story_id}
+                  item={item}
+                  t={t}
+                  onRead={(id) =>
+                    navigate(
+                      `/library/collection/purchased?${
+                        sourceIsMe ? 'source=me&' : ''
+                      }read=${encodeURIComponent(id)}`
+                    )
+                  }
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]">
+              <FolderOpen size={18} />
+              {t('librarySections.noPurchases')}
+            </div>
+          )}
         </Section>
       ) : null}
 
-      <Section title={t('librarySections.downloads')} subtitle={t('librarySections.downloadsInfo')} url={downloadsUrl} t={t}>
-        {loadingSaved ? <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">{t('librarySections.loading')}</p> : savedError ? <p role="alert" className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]">{savedError}</p> : savedStories.length ? <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">{savedStories.map((item) => <DownloadedStory key={item.id} item={item} t={t} onOpen={() => navigate(`/library/manage/offline-downloads?storyId=${encodeURIComponent(item.id)}${source ? '&source=me' : ''}`)} />)}</div> : <div className="flex items-center gap-2 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]"><FolderOpen size={18}/>{t('librarySections.noDownloads')}</div>}
+      <Section
+        title={t('librarySections.downloads')}
+        subtitle={t('librarySections.downloadsInfo')}
+        url={downloadsUrl}
+        t={t}
+      >
+        {loadingSaved ? (
+          <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">
+            {t('librarySections.loading')}
+          </p>
+        ) : savedError ? (
+          <p
+            role="alert"
+            className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]"
+          >
+            {savedError}
+          </p>
+        ) : savedStories.length ? (
+          <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+            {savedStories.map((item) => (
+              <DownloadedStory
+                key={item.id}
+                item={item}
+                t={t}
+                onOpen={() =>
+                  openDownloadedStory(item.id)
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-5 text-sm text-[var(--shadow-text-secondary)]">
+            <FolderOpen size={18} />
+            {t('librarySections.noDownloads')}
+          </div>
+        )}
       </Section>
     </>
   )
