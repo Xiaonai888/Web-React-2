@@ -244,7 +244,7 @@ export function getHomeCacheKey({
   const safeScope =
     normalizeText(scope) || 'public'
   
-  const query = stableParams(cacheParams)
+  const query = stableParams(params)
 
   return [
     safeScope,
