@@ -365,7 +365,7 @@ export default function AuthorDaily80EventPage() {
         <section className="overflow-hidden rounded-[24px] border border-violet-300 bg-[var(--shadow-bg-surface)] shadow-[0_14px_36px_rgba(139,92,246,0.14)] dark:border-violet-700">
           <div className="relative aspect-[16/9] overflow-hidden bg-violet-50 dark:bg-[#120A1D]">
             <img
-              src="/assets/Icons/Event/Event80%_One_Year.webp"
+              src="/assets/Icons/Event/Event80%25_One_Year.webp"
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
               draggable="false"
