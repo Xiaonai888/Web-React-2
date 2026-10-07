@@ -722,8 +722,12 @@ export default function InstallPage() {
                 </span>
               </div>
 
-              <div className="mx-auto mt-6 flex h-24 w-24 items-center justify-center rounded-[28px] bg-violet-500/10 text-[44px] shadow-sm">
-                <i className="fa-brands fa-chrome" />
+              <div className="mx-auto mt-6 flex h-24 w-24 items-center justify-center rounded-[28px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
+                <img
+                  src="/assets/Icons/shadow-icon-192.png"
+                  alt="Shadow"
+                  className="h-full w-full rounded-[22px] object-cover"
+                />
               </div>
 
               <h2 className="app-title mt-5 text-center text-[24px] font-extrabold">
