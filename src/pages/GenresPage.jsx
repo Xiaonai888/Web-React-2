@@ -570,6 +570,7 @@ function FilterSheet({
   onClose,
   storySetting,
   setStorySetting,
+  onOpenOther,
   access,
   setAccess,
   type,
@@ -616,11 +617,28 @@ function FilterSheet({
                   <FilterChip
                     key={item.value}
                     active={storySetting === item.value}
-                    onClick={() => setStorySetting(item.value)}
+                    onClick={() => {
+                      if (item.value === 'Other') {
+                        onOpenOther()
+                        return
+                      }
+
+                      setStorySetting(item.value)
+                    }}
                   >
-                    {item.label === 'All' ? t('genresPage.all') : item.label}
+                    {item.label === 'All'
+                      ? t('genresPage.all')
+                      : item.value === 'Other'
+                        ? `${item.label} ›`
+                        : item.label}
                   </FilterChip>
                 ))}
+                {storySetting !== 'all' &&
+                !storySettingFilters.some((item) => item.value === storySetting) ? (
+                  <FilterChip active onClick={onOpenOther}>
+                    {storySetting}
+                  </FilterChip>
+                ) : null}
               </div>
             </section>
 
@@ -758,11 +776,22 @@ export default function GenresPage() {
     quickFilters.some((item) => item.value === savedState.activeQuickFilter) ? savedState.activeQuickFilter : ''
   )
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [storySetting, setStorySetting] = useState(
-    storySettingFilters.some((item) => item.value === savedState.storySetting)
-      ? savedState.storySetting
-      : 'all'
-  )
+  const [storySetting, setStorySetting] = useState(() => {
+    try {
+      const picked = String(
+        sessionStorage.getItem('shadow:genres-story-setting-pick:v1') || ''
+      ).trim()
+
+      if (picked) {
+        sessionStorage.removeItem('shadow:genres-story-setting-pick:v1')
+        return picked
+      }
+    } catch {}
+
+    const saved = String(savedState.storySetting || '').trim()
+
+    return saved && saved !== 'Other' ? saved : 'all'
+  })
   const [access, setAccess] = useState(
     accessFilters.some((item) => item.value === savedState.access) ? savedState.access : 'all'
   )
@@ -1129,6 +1158,11 @@ export default function GenresPage() {
     setActiveGenre(genre.label)
   }
 
+  const openOtherStorySettings = () => {
+    setFiltersOpen(false)
+    navigate('/genres/story-setting')
+  }
+
   const openBook = (book) => {
     if (!book.id) return
 
@@ -1370,6 +1404,7 @@ export default function GenresPage() {
         onClose={() => setFiltersOpen(false)}
         storySetting={storySetting}
         setStorySetting={setStorySetting}
+        onOpenOther={openOtherStorySettings}
         access={access}
         setAccess={setAccess}
         type={type}
