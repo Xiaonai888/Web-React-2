@@ -12,6 +12,11 @@ import { installReaderPresenceTracking } from './utils/installReaderPresenceTrac
 import { loadReaderEpisodeCache } from './utils/readerEpisodeCache'
 import { installMangaImageCacheControl } from './utils/mangaImageCacheControl'
 import { installTemporaryCacheManagement } from './utils/temporaryCacheManager'
+import {
+  hasPendingStoryReactions,
+  initializeStoryReactionQueue,
+} from './services/storyReactionQueue'
+
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
@@ -22,6 +27,10 @@ if (!isIOS) installReaderEpisodeCacheFetch()
 installReaderPresenceTracking()
 installMangaImageCacheControl()
 installTemporaryCacheManagement()
+if (hasPendingStoryReactions()) {
+  void initializeStoryReactionQueue()
+}
+
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault()
