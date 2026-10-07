@@ -8,7 +8,7 @@ registerTranslationNamespace('authorDaily50EventPage', {
   en: {
     title: 'Daily Author Boost',
     heading: 'Keep publishing. Keep at least 50%.',
-    description: 'After your 80% for 49 Days event ends, publish a genuinely new episode to activate or extend this boost.',
+    description: 'After your 80% for 180 Days event is completed, publish a genuinely new episode to activate or extend this boost. If you already had 50% progress before the 180-day event, its remaining time resumes after the 180-day event finishes.',
     activeBoost: 'Active Boost',
     available: 'Ready to activate',
     startToday: 'Publish 1 new EP to activate +24h',
@@ -43,7 +43,7 @@ registerTranslationNamespace('authorDaily50EventPage', {
   km: {
     title: 'Daily Author Boost',
     heading: 'បន្ត Update ទទួលចំណែកយ៉ាងតិច 50%',
-    description: 'បន្ទាប់ពី Event 80% រយៈពេល 49 ថ្ងៃរបស់អ្នកចប់ សូមបង្ហោះភាគថ្មីពិតប្រាកដ ដើម្បីបើក ឬបន្ថែមពេលវេលា Boost នេះ។',
+    description: 'បន្ទាប់ពី Event 80% / 180 ថ្ងៃរបស់អ្នកបញ្ចប់ សូមបង្ហោះភាគថ្មីពិតប្រាកដ ដើម្បីបើក ឬបន្ថែម Boost 50% នេះ។ បើអ្នកមាន Progress 50% ចាស់មុន Event 180 ថ្ងៃ វានឹង Pause តែពេល Event 180 ថ្ងៃ Activate ពិតប្រាកដ ហើយ Resume ពេល Event 180 ថ្ងៃចប់។',
     activeBoost: 'Boost កំពុងដំណើរការ',
     available: 'ត្រៀមបើក Boost',
     startToday: 'បង្ហោះភាគថ្មី 1 ភាគ ដើម្បីបើក +24h',
@@ -78,7 +78,7 @@ registerTranslationNamespace('authorDaily50EventPage', {
   zh: {
     title: '每日作者加成',
     heading: '持续更新，至少获得 50% 分成',
-    description: '49 天 80% 活动结束后，发布真正的新章节即可激活或延长此加成。',
+    description: '完成 180 天 80% 活动后，发布真正的新章节即可激活或延长此 50% 加成。如果你在 180 天活动前已有 50% 进度，它只会在 180 天活动真正激活时暂停，并在该活动完成后继续。',
     activeBoost: '加成生效中',
     available: '可激活',
     startToday: '发布 1 个新章节以激活 +24h',
@@ -113,7 +113,7 @@ registerTranslationNamespace('authorDaily50EventPage', {
   ja: {
     title: 'デイリー作者ブースト',
     heading: '更新を続けて、最低 50% の分配率',
-    description: '49日間 80% イベント終了後、本当に新しいエピソードを公開するとこのブーストを有効化または延長できます。',
+    description: '80%・180日イベント完了後、本当に新しいエピソードを公開するとこの50%ブーストを有効化または延長できます。180日イベント前に50%の進行があった場合、その残り時間は180日イベントが実際に開始した時だけ一時停止し、完了後に再開します。',
     activeBoost: 'ブースト有効',
     available: '有効化可能',
     startToday: '新しい話を1話公開して +24h を有効化',
@@ -148,7 +148,7 @@ registerTranslationNamespace('authorDaily50EventPage', {
   ko: {
     title: '데일리 작가 부스트',
     heading: '꾸준히 업데이트하고 최소 50% 수익 배분',
-    description: '49일간 80% 이벤트가 끝난 뒤 실제 새 에피소드를 게시하면 이 부스트를 활성화하거나 연장할 수 있습니다.',
+    description: '80% / 180일 이벤트가 완료된 뒤 실제 새 에피소드를 게시하면 이 50% 부스트를 활성화하거나 연장할 수 있습니다. 180일 이벤트 전에 50% 진행이 있었다면 남은 시간은 180일 이벤트가 실제로 시작할 때만 일시 정지되고 완료 후 다시 이어집니다.',
     activeBoost: '부스트 활성',
     available: '활성화 가능',
     startToday: '새 에피소드 1개를 게시해 +24h 활성화',
