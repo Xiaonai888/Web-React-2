@@ -11,6 +11,17 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const CHECK_TIMEOUT_MS = 4000
+const BACKGROUND_CHECK_PATTERNS = [
+  '/library',
+  '/library/manage/offline-downloads',
+  '/story/:id/episode/:id',
+]
+
+function usesBackgroundMaintenanceCheck(pathname) {
+  return BACKGROUND_CHECK_PATTERNS.some((pattern) =>
+    pathMatches(pattern, pathname)
+  )
+}
 
 function normalizePath(value) {
   const raw = String(value || '/').split('?')[0] || '/'
@@ -69,9 +80,15 @@ export default function WorkMaintenanceGuard({ children }) {
   const location = useLocation()
   const offlineRequested =
     new URLSearchParams(location.search).get('_shadow_offline') === '1'
-  const [checking, setChecking] = useState(() => !offlineRequested)
+  const backgroundCheck =
+    usesBackgroundMaintenanceCheck(location.pathname)
+  const [checking, setChecking] = useState(
+    () => !offlineRequested && !backgroundCheck
+  )
   const [checkedPath, setCheckedPath] = useState(() =>
-    offlineRequested ? location.pathname : ''
+    offlineRequested || backgroundCheck
+      ? location.pathname
+      : ''
   )
   const [maintenance, setMaintenance] = useState(null)
 
@@ -90,8 +107,12 @@ export default function WorkMaintenanceGuard({ children }) {
       CHECK_TIMEOUT_MS
     )
 
-    setChecking(true)
+    setChecking(!backgroundCheck)
     setMaintenance(null)
+
+    if (backgroundCheck) {
+      setCheckedPath(location.pathname)
+    }
 
     async function checkPageMaintenance() {
       try {
@@ -139,7 +160,7 @@ export default function WorkMaintenanceGuard({ children }) {
       clearTimeout(timeout)
       controller.abort()
     }
-  }, [location.pathname, offlineRequested])
+  }, [location.pathname, offlineRequested, backgroundCheck])
 
   useEffect(() => {
     if (offlineRequested) return undefined
@@ -191,7 +212,10 @@ export default function WorkMaintenanceGuard({ children }) {
     )
   }
 
-  if (checking || checkedPath !== location.pathname) {
+  if (
+    !backgroundCheck &&
+    (checking || checkedPath !== location.pathname)
+  ) {
     return (
       <div className="app-page flex min-h-screen items-center justify-center">
         <div className="h-9 w-9 animate-spin rounded-full border-4 border-[var(--shadow-border)] border-t-[var(--shadow-text-primary)]" />
