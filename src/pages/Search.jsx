@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
-import { addStorySettingParam } from '../utils/storySettingFilter'
 
 registerTranslationNamespace('searchPage', {
   en: {
@@ -211,7 +210,7 @@ export default function Search() {
         }
 
         const response = await fetch(
-  addStorySettingParam(`${API_BASE_URL}/api/public/stories?${params.toString()}`)
+  `${API_BASE_URL}/api/public/stories?${params.toString()}`
 )
         const data = await response.json().catch(() => ({}))
 
