@@ -4,10 +4,6 @@ import { getDisplayLanguageId, setDisplayLanguageId, useDisplayTranslation } fro
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import {
-  getStorySettingFilter,
-  setStorySettingFilter as saveStorySettingFilter,
-} from '../../utils/storySettingFilter'
 
 registerTranslationNamespace('mePage', {
   en: {
@@ -37,17 +33,6 @@ registerTranslationNamespace('mePage', {
     app: 'App',
     savedPosts: 'Saved Posts',
     authorDashboardShortcut: 'Author Dashboard shortcut',
-    storySettingFilter: 'Story Setting',
-    storySettingFilterSub: 'Choose which story setting you want to see.',
-    storySettingHelp: 'Show stories that include this setting. Choose All Stories to turn the filter off.',
-    closeStorySetting: 'Close Story Setting',
-    storySettingAll: 'All Stories',
-    storySettingKhmer: 'Khmer',
-    storySettingChinese: 'Chinese',
-    storySettingKorean: 'Korean',
-    storySettingJapanese: 'Japanese',
-    storySettingWestern: 'Western',
-    storySettingOther: 'Other',
   },
   km: {
     khmerLanguage: 'ខ្មែរ',
@@ -76,17 +61,6 @@ registerTranslationNamespace('mePage', {
     app: 'កម្មវិធី',
     savedPosts: 'Post ដែលបានរក្សាទុក',
     authorDashboardShortcut: 'ផ្លូវកាត់ Author Dashboard',
-    storySettingFilter: 'បរិបទសាច់រឿង',
-    storySettingFilterSub: 'ជ្រើសបរិបទសាច់រឿងដែលអ្នកចង់ឃើញ។',
-    storySettingHelp: 'បង្ហាញរឿងដែលមានបរិបទដែលអ្នកជ្រើស។ ជ្រើស រឿងទាំងអស់ ដើម្បីបិទ Filter។',
-    closeStorySetting: 'បិទបរិបទសាច់រឿង',
-    storySettingAll: 'រឿងទាំងអស់',
-    storySettingKhmer: 'ខ្មែរ',
-    storySettingChinese: 'ចិន',
-    storySettingKorean: 'កូរ៉េ',
-    storySettingJapanese: 'ជប៉ុន',
-    storySettingWestern: 'បែបបស្ចិមប្រទេស',
-    storySettingOther: 'ផ្សេងទៀត',
   },
   zh: {
     khmerLanguage: '高棉语',
@@ -115,17 +89,6 @@ registerTranslationNamespace('mePage', {
     app: '应用',
     savedPosts: '已保存帖子',
     authorDashboardShortcut: '作者控制台快捷方式',
-    storySettingFilter: '故事背景',
-    storySettingFilterSub: '选择你想看到的故事背景。',
-    storySettingHelp: '显示包含所选背景的故事。选择“全部故事”可关闭筛选。',
-    closeStorySetting: '关闭故事背景',
-    storySettingAll: '全部故事',
-    storySettingKhmer: '高棉',
-    storySettingChinese: '中国',
-    storySettingKorean: '韩国',
-    storySettingJapanese: '日本',
-    storySettingWestern: '西方',
-    storySettingOther: '其他',
   },
   ja: {
     khmerLanguage: 'クメール語',
@@ -154,17 +117,6 @@ registerTranslationNamespace('mePage', {
     app: 'アプリ',
     savedPosts: '保存した投稿',
     authorDashboardShortcut: '作者ダッシュボードのショートカット',
-    storySettingFilter: 'ストーリー設定',
-    storySettingFilterSub: '表示したいストーリー設定を選択します。',
-    storySettingHelp: '選択した設定を含む作品を表示します。「すべての作品」でフィルターを解除できます。',
-    closeStorySetting: 'ストーリー設定を閉じる',
-    storySettingAll: 'すべての作品',
-    storySettingKhmer: 'クメール',
-    storySettingChinese: '中国',
-    storySettingKorean: '韓国',
-    storySettingJapanese: '日本',
-    storySettingWestern: '西洋',
-    storySettingOther: 'その他',
   },
   ko: {
     khmerLanguage: '크메르어',
@@ -193,17 +145,6 @@ registerTranslationNamespace('mePage', {
     app: '앱',
     savedPosts: '저장한 게시물',
     authorDashboardShortcut: '작가 대시보드 바로가기',
-    storySettingFilter: '스토리 설정',
-    storySettingFilterSub: '보고 싶은 스토리 설정을 선택하세요.',
-    storySettingHelp: '선택한 설정이 포함된 스토리를 표시합니다. 전체 스토리를 선택하면 필터가 해제됩니다.',
-    closeStorySetting: '스토리 설정 닫기',
-    storySettingAll: '전체 스토리',
-    storySettingKhmer: '크메르',
-    storySettingChinese: '중국',
-    storySettingKorean: '한국',
-    storySettingJapanese: '일본',
-    storySettingWestern: '서양',
-    storySettingOther: '기타',
   },
 })
 
@@ -211,16 +152,6 @@ const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const THEME_STORAGE_KEY = 'shadow_theme'
 const STORY_LANGUAGE_STORAGE_KEY = 'shadow_story_language'
 
-
-const STORY_SETTING_OPTIONS = [
-  { value: 'all', labelKey: 'storySettingAll' },
-  { value: 'Khmer', labelKey: 'storySettingKhmer' },
-  { value: 'Chinese', labelKey: 'storySettingChinese' },
-  { value: 'Korean', labelKey: 'storySettingKorean' },
-  { value: 'Japanese', labelKey: 'storySettingJapanese' },
-  { value: 'Western', labelKey: 'storySettingWestern' },
-  { value: 'Other', labelKey: 'storySettingOther' },
-]
 
 const LANGUAGES = [
   { id: 'km', label: 'Khmer', flagCode: 'kh' },
@@ -274,15 +205,6 @@ function getStoredTheme() {
 
 function getStoredStoryLanguage() {
   return localStorage.getItem(STORY_LANGUAGE_STORAGE_KEY) || 'km'
-}
-
-function getStoredStorySettingFilter() {
-  return getStorySettingFilter()
-}
-
-function getStorySettingLabel(value, tx) {
-  const option = STORY_SETTING_OPTIONS.find((item) => item.value === value)
-  return tx(`mePage.${option?.labelKey || 'storySettingAll'}`)
 }
 
 function getLanguageLabel(languageId, tx) {
@@ -491,90 +413,6 @@ function ThemeSwitchRow({ darkMode, onChange, tx }) {
   )
 }
 
-function StorySettingSummaryRow({ value, onClick, tx }) {
-  return (
-    <button type="button" onClick={onClick} className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:scale-[0.99]">
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#eef8f1] text-[#23864a] dark:bg-[#173222] dark:text-[#70d899]">
-          <i className="fa-solid fa-earth-asia text-[14px]" />
-        </div>
-        <div className="min-w-0">
-          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">
-            {tx('mePage.storySettingFilter')}
-          </div>
-          <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
-            {getStorySettingLabel(value, tx)}
-          </div>
-        </div>
-      </div>
-      <i className="fa-solid fa-chevron-right text-[11px] text-[#c6c9d1] dark:text-white/35" />
-    </button>
-  )
-}
-
-function StorySettingFilterSheet({ open, value, onChange, onClose, tx }) {
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-[140]">
-      <button
-        type="button"
-        aria-label={tx('mePage.closeStorySetting')}
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40"
-      />
-
-      <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[340px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
-
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <div className="text-[17px] font-extrabold text-[#111827] dark:text-white">
-              {tx('mePage.storySettingFilter')}
-            </div>
-            <div className="mt-0.5 text-[12px] text-[#8d94a1] dark:text-white/50">
-              {tx('mePage.storySettingFilterSub')}
-            </div>
-          </div>
-          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] dark:bg-white/10">
-            <i className="fa-solid fa-times text-[13px] text-[#555] dark:text-white/70" />
-          </button>
-        </div>
-
-        <div className="mb-3 rounded-[18px] bg-[#f8f8fb] px-3.5 py-3 text-[12px] leading-5 text-[#6b7280] dark:bg-white/5 dark:text-white/60">
-          {tx('mePage.storySettingHelp')}
-        </div>
-
-        <div className="max-h-[52vh] space-y-2 overflow-y-auto pb-1">
-          {STORY_SETTING_OPTIONS.map((option) => {
-            const selected = value === option.value
-
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => onChange(option.value)}
-                className={`flex w-full items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-left transition active:scale-[0.99] ${
-                  selected
-                    ? 'bg-[#eef8f1] ring-1 ring-[#3ba55d]/35 dark:bg-[#173222] dark:ring-[#70d899]/30'
-                    : 'bg-[#f8f8fb] ring-1 ring-transparent dark:bg-white/5'
-                }`}
-              >
-                <span className={`text-[13.5px] font-extrabold ${
-                  selected ? 'text-[#23864a] dark:text-[#70d899]' : 'text-[#111827] dark:text-white'
-                }`}>
-                  {tx(`mePage.${option.labelKey}`)}
-                </span>
-                {selected ? <i className="fa-solid fa-check text-[13px] text-[#23864a] dark:text-[#70d899]" /> : null}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function LanguageSummaryRow({ storyLanguage, displayLanguage, onClick, tx }) {
   return (
     <button type="button" onClick={onClick} className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:scale-[0.99]">
@@ -743,20 +581,13 @@ function LanguageSheet({
 
 function SettingsSheet({ open, onClose, isLoggedIn }) {
   const [darkMode, setDarkMode] = useState(() => getStoredTheme() === 'dark')
-  const [storySettingOpen, setStorySettingOpen] = useState(false)
   const [languageOpen, setLanguageOpen] = useState(false)
-  const [storySettingFilter, setStorySettingFilter] = useState(() => getStoredStorySettingFilter())
   const [storyLanguage, setStoryLanguage] = useState(() => getStoredStoryLanguage())
   const { t: tx, language: displayLanguage } = useDisplayTranslation()
 
   useEffect(() => {
     applyTheme(darkMode ? 'dark' : 'light')
   }, [darkMode])
-
-  const handleStorySettingChange = (value) => {
-  const nextValue = saveStorySettingFilter(value)
-  setStorySettingFilter(nextValue)
-}
 
   const handleStoryLanguageChange = (languageId) => {
     localStorage.setItem(STORY_LANGUAGE_STORAGE_KEY, languageId)
@@ -772,14 +603,6 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
   return (
     <div className="fixed inset-0 z-[120]">
       <button type="button" aria-label={tx('mePage.closeSettings')} onClick={onClose} className="absolute inset-0 bg-black/35" />
-
-      <StorySettingFilterSheet
-        open={storySettingOpen}
-        value={storySettingFilter}
-        onChange={handleStorySettingChange}
-        onClose={() => setStorySettingOpen(false)}
-        tx={tx}
-      />
 
       <LanguageSheet
         open={languageOpen}
@@ -810,11 +633,6 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
               <MenuRow to={isLoggedIn ? '/profile/edit?from=me-settings' : '/login'} icon="far fa-user" title={tx('editProfile')} subtitle={tx('editProfileSub')} />
               <MenuRow to={isLoggedIn ? '/profile/settings?from=me-settings' : '/login'} icon="fa-solid fa-shield-alt" title={tx('accountSettings')} subtitle={tx('accountSettingsSub')} />
               <ThemeSwitchRow darkMode={darkMode} onChange={() => setDarkMode((value) => !value)} tx={tx} />
-              <StorySettingSummaryRow
-                value={storySettingFilter}
-                onClick={() => setStorySettingOpen(true)}
-                tx={tx}
-              />
               <LanguageSummaryRow
                 storyLanguage={storyLanguage}
                 displayLanguage={displayLanguage}
