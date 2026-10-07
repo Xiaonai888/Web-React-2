@@ -461,6 +461,7 @@ export async function queueStoryReaction({
   liked,
   reactionType = 'love',
 }) {
+  startStoryReactionQueueListeners()
   const safeStoryId =
     String(storyId || '').trim()
   const token = getReaderToken()
@@ -549,18 +550,26 @@ export function hasPendingStoryReactions() {
 export async function initializeStoryReactionQueue() {
   startStoryReactionQueueListeners()
 
+  if (!hasPendingStoryReactions()) {
+    return {
+      server_time: null,
+      pending: 0,
+    }
+  }
+
   await syncServerClock()
 
-  if (
-    hasPendingStoryReactions() &&
-    navigator.onLine
-  ) {
+  if (navigator.onLine) {
     scheduleFlush(500)
   }
 
   return {
     server_time:
       getServerNowIso(),
+    pending:
+      Object.keys(
+        readQueue()
+      ).length,
   }
 }
 
