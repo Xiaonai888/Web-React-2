@@ -642,6 +642,39 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const CHAT_STORY_GENRES = [
+  'Romance',
+  'Fantasy',
+  'Action',
+  'Adventure',
+  'Comedy',
+  'Drama',
+  'School Life',
+  'Historical',
+  'Mystery',
+  'Horror',
+  'Thriller',
+  'Sci-Fi',
+  'System',
+  'Isekai',
+  'Supernatural',
+  'Martial Arts',
+  'Revenge',
+  'CEO',
+  'Slow Burn',
+  'Enemies to Lovers',
+  'Time Travel',
+  'Strong Female Lead',
+  'Hidden Identity',
+  'Royalty',
+  'Magic',
+  'Second Chance',
+  'Cold Male Lead',
+  'BL',
+  'GL',
+  'LGBTQ+',
+]
+
 
 function formatDisplayNumber(value) {
   return new Intl.NumberFormat(getDisplayLanguageId()).format(Number(value || 0))
@@ -2271,6 +2304,16 @@ export default function ChatStoryEditorPage() {
   const [draftHydrated, setDraftHydrated] = useState(false)
   const [publishSettingsOpen, setPublishSettingsOpen] = useState(false)
   const [settingsSaving, setSettingsSaving] = useState(false)
+  const [storyRecord, setStoryRecord] = useState(null)
+  const [storyInfoLoading, setStoryInfoLoading] = useState(true)
+  const [storyLanguage, setStoryLanguage] = useState('Khmer')
+  const [mainGenre, setMainGenre] = useState('Other')
+  const [storySettings, setStorySettings] = useState([])
+  const [legacyStorySettingsBlank, setLegacyStorySettingsBlank] = useState(true)
+  const [storyTags, setStoryTags] = useState([])
+  const [storyUpdateDays, setStoryUpdateDays] = useState([])
+  const [storyStatus, setStoryStatus] = useState('New')
+  const [storyAdult, setStoryAdult] = useState(false)
   const [releaseOption, setReleaseOption] = useState('publish')
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
@@ -2315,6 +2358,102 @@ const gallerySnapshotKey =
   `chat_story_editor_gallery_snapshot_${storyId || 'unknown'}_${draftScope}`
   const castStorageKey =
   `chat_story_episode_cast_${storyId || 'unknown'}_new`
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadStoryInfo() {
+      const token = getAuthToken()
+
+      if (!token) {
+        setStoryInfoLoading(false)
+        return
+      }
+
+      try {
+        setStoryInfoLoading(true)
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/stories/${storyId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(
+            data.message || getDisplayText('episodeEditor.storyLoading')
+          )
+        }
+
+        if (ignore) return
+
+        const story = data.story || {}
+        const settings = (
+          Array.isArray(story.story_settings)
+            ? story.story_settings
+            : []
+        )
+          .map((item) => String(item || '').trim())
+          .filter(Boolean)
+          .slice(0, 6)
+
+        const tags = (
+          Array.isArray(story.tags)
+            ? story.tags
+            : []
+        )
+          .map((item) => String(item || '').trim())
+          .filter(Boolean)
+          .slice(0, 6)
+
+        const updateDays = (
+          Array.isArray(story.update_days)
+            ? story.update_days
+            : []
+        )
+          .map((item) => String(item || '').trim())
+          .filter(Boolean)
+
+        setStoryRecord(story)
+        setStoryLanguage(story.story_language || 'Khmer')
+        setMainGenre(story.main_genre || 'Other')
+        setStorySettings(settings)
+        setLegacyStorySettingsBlank(settings.length === 0)
+        setStoryTags(tags)
+        setStoryUpdateDays(updateDays)
+        setStoryStatus(story.story_status || 'New')
+        setStoryAdult(Boolean(story.is_adult))
+      } catch (error) {
+        if (!ignore) {
+          showToast(
+            error.message === 'Failed to fetch'
+              ? getDisplayText('chatStoryEditor.cannotConnectBackend')
+              : error.message || getDisplayText('episodeEditor.storyLoading')
+          )
+        }
+      } finally {
+        if (!ignore) {
+          setStoryInfoLoading(false)
+        }
+      }
+    }
+
+    if (storyId) {
+      loadStoryInfo()
+    } else {
+      setStoryInfoLoading(false)
+    }
+
+    return () => {
+      ignore = true
+    }
+  }, [storyId])
+
   useEffect(() => {
   if (loading || titlePopupOpen) return
 
@@ -4183,8 +4322,96 @@ const handleAddConfirm = async () => {
   }
 }
 
+  const toggleStoryUpdateDay = (day) => {
+    setStoryUpdateDays((current) =>
+      current.includes(day)
+        ? current.filter((item) => item !== day)
+        : [...current, day]
+    )
+  }
+
+  const saveStorySettings = async (token) => {
+    if (!storyRecord) {
+      throw new Error(getDisplayText('episodeEditor.storyLoading'))
+    }
+
+    const slides = (storyRecord.slides || []).map((slide, index) => ({
+      image_url: slide.image_url,
+      sort_order: Number(slide.sort_order ?? index),
+      is_active: slide.is_active !== false,
+    }))
+
+    const storyPayload = {
+      title: storyRecord.title,
+      story_type: storyRecord.story_type || 'chat_story',
+      story_language: storyLanguage,
+      main_genre: mainGenre,
+      story_status: storyStatus,
+      story_settings: storySettings,
+      tags: storyTags,
+      update_days: storyUpdateDays,
+      description: storyRecord.description || null,
+      is_adult: storyAdult,
+      cover_url: storyRecord.cover_url || null,
+      landscape_thumbnail_url: storyRecord.landscape_thumbnail_url || null,
+      slides,
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/${storyId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(storyPayload),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.error ||
+          data.message ||
+          getDisplayText('episodeEditor.failedUpdateStoryInfo')
+      )
+    }
+
+    setStoryRecord(data.story || storyRecord)
+
+    if (storySettings.length > 0) {
+      setLegacyStorySettingsBlank(false)
+    }
+  }
+
   const handleSavePublishSettings = async () => {
   if (!episodeId || settingsSaving) return
+
+  const status =
+    releaseOption === 'schedule'
+      ? 'scheduled'
+      : releaseOption === 'draft'
+        ? 'draft'
+        : 'published'
+
+  if (
+    status !== 'draft' &&
+    (storyInfoLoading || !storyRecord)
+  ) {
+    showToast(getDisplayText('episodeEditor.storyLoading'))
+    return
+  }
+
+  if (
+    status !== 'draft' &&
+    legacyStorySettingsBlank &&
+    !storySettings.length
+  ) {
+    showToast(getDisplayText('storySettingSheet.required'))
+    return
+  }
 
   if (
     releaseOption === 'schedule' &&
@@ -4201,13 +4428,6 @@ const handleAddConfirm = async () => {
     return
   }
 
-  const status =
-    releaseOption === 'schedule'
-      ? 'scheduled'
-      : releaseOption === 'draft'
-        ? 'draft'
-        : 'published'
-
   const scheduledAt =
     releaseOption === 'schedule'
       ? new Date(
@@ -4217,6 +4437,13 @@ const handleAddConfirm = async () => {
 
   try {
     setSettingsSaving(true)
+
+    if (
+      legacyStorySettingsBlank &&
+      storySettings.length > 0
+    ) {
+      await saveStorySettings(token)
+    }
 
     const response = await fetch(
       `${API_BASE_URL}/api/stories/${storyId}/chat/episodes/${episodeId}/status`,
@@ -4263,6 +4490,11 @@ const handleAddConfirm = async () => {
 
   const saveAndContinue = async () => {
     const cleanTitle = episodeTitle.trim()
+
+    if (storyInfoLoading || !storyRecord) {
+      showToast(getDisplayText('episodeEditor.storyLoading'))
+      return
+    }
 
     if (!cleanTitle) {
       showToast(getDisplayText('chatStoryEditor.enterEpisodeTitleRequired'))
@@ -4451,20 +4683,24 @@ setPublishSettingsOpen(true)
       <PublishSettingsSheet
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
-        showStorySettings={false}
-        genreOptions={[]}
-        storyLanguage=""
-        onStoryLanguageChange={() => {}}
-        mainGenre=""
-        onMainGenreChange={() => {}}
-        storyTags={[]}
-        onStoryTagsChange={() => {}}
-        updateDays={[]}
-        onToggleUpdateDay={() => {}}
-        storyStatus="ongoing"
-        onStoryStatusChange={() => {}}
-        storyAdult={false}
-        onStoryAdultChange={() => {}}
+        showStorySettings={legacyStorySettingsBlank}
+        storySettingRequired={legacyStorySettingsBlank}
+        requireStoryDetails={publishedIsFirstEpisode}
+        genreOptions={CHAT_STORY_GENRES}
+        storyLanguage={storyLanguage}
+        onStoryLanguageChange={setStoryLanguage}
+        mainGenre={mainGenre}
+        onMainGenreChange={setMainGenre}
+        storySettings={storySettings}
+        onStorySettingsChange={setStorySettings}
+        storyTags={storyTags}
+        onStoryTagsChange={setStoryTags}
+        updateDays={storyUpdateDays}
+        onToggleUpdateDay={toggleStoryUpdateDay}
+        storyStatus={storyStatus}
+        onStoryStatusChange={setStoryStatus}
+        storyAdult={storyAdult}
+        onStoryAdultChange={setStoryAdult}
         episodeAdult={episodeAdult}
         onEpisodeAdultChange={setEpisodeAdult}
         episodeFree={episodeFree}
