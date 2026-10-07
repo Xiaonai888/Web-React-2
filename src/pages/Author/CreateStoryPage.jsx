@@ -697,18 +697,29 @@ export default function CreateStoryPage() {
   }, [editStoryId, navigate])
 
   const descriptionCount = description.length
-  const storySettingRequired = isEditMode && !legacyStorySettingsBlank
-const basicInfoComplete = Boolean(coverPreview && title.trim() && description.trim())
-  const canSave = isEditMode
-    ? title.trim() &&
-      genre &&
-      (!storySettingRequired || storySettings.length > 0) &&
-      originalAccepted &&
-      agreementAccepted &&
-      descriptionCount <= 5000 &&
-      !loading &&
-      !pageLoading
-    : basicInfoComplete && descriptionCount <= 5000 && !loading && !pageLoading
+  const storySettingRequired =
+  !isEditMode || !legacyStorySettingsBlank
+
+const basicInfoComplete = Boolean(
+  coverPreview &&
+  title.trim() &&
+  description.trim()
+)
+
+const canSave = isEditMode
+  ? title.trim() &&
+    genre &&
+    (!storySettingRequired || storySettings.length > 0) &&
+    originalAccepted &&
+    agreementAccepted &&
+    descriptionCount <= 5000 &&
+    !loading &&
+    !pageLoading
+  : basicInfoComplete &&
+    storySettings.length > 0 &&
+    descriptionCount <= 5000 &&
+    !loading &&
+    !pageLoading
 
   const showToast = (text) => {
     setToast(text)
