@@ -580,6 +580,21 @@ function FilterSheet({
 }) {
   const { t } = useDisplayTranslation()
 
+  useEffect(() => {
+    if (!open) return undefined
+
+    const bodyOverflow = document.body.style.overflow
+    const htmlOverflow = document.documentElement.style.overflow
+
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      document.documentElement.style.overflow = htmlOverflow
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
@@ -594,7 +609,7 @@ function FilterSheet({
       <section className="absolute bottom-0 left-0 right-0 max-h-[calc(100vh-72px)] overflow-hidden rounded-t-[30px] bg-white shadow-2xl dark:bg-[var(--shadow-bg-surface)] sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[520px] sm:-translate-x-1/2 sm:rounded-[30px]">
         <div className="max-h-[calc(100vh-72px)] overflow-y-auto px-5 pb-5 pt-5">
           <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-[22px] font-black text-[#111827] dark:text-[var(--shadow-text-primary)]">
+            <h2 className="text-[22px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('genresPage.refineStories')}
             </h2>
             <button
@@ -1225,7 +1240,7 @@ export default function GenresPage() {
               />
             </div>
           ) : (
-            <h1 className="text-[22px] font-black tracking-tight text-[#111827] dark:text-[var(--shadow-text-primary)]">
+            <h1 className="text-[22px] font-bold tracking-tight text-[#111827] dark:text-[var(--shadow-text-primary)]">
               {t('genresPage.genres')}
             </h1>
           )}
