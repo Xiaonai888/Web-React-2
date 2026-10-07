@@ -119,6 +119,7 @@ const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const ShortCompletedPage = lazy(() => import('./pages/ShortCompletedPage'))
 const MusicPage = lazy(() => import('./pages/MusicPage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
+const ReaderStorySettingPage = lazy(() => import('./pages/ReaderStorySettingPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
 const GenreStoriesPage = lazy(() => import('./pages/Genre/GenreStoriesPage'))
 const FantasyGenrePage = lazy(() => import('./pages/Genre/FantasyGenrePage'))
@@ -893,6 +894,16 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+
+          <Route
+  path="/genres/story-setting"
+  element={
+    <LazyPage>
+      <ReaderStorySettingPage />
+    </LazyPage>
+  }
+/>
+
 
         <Route
   path="/top-novel"
