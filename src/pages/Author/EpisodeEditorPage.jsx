@@ -4617,12 +4617,11 @@ return true
   }
 
   useEffect(() => {
-    if (!editorRef.current || isComposingRef.current) return
-    const safeHtml = normalizeEpisodeHtml(content)
-    if (editorRef.current.innerHTML !== safeHtml) {
-      editorRef.current.innerHTML = safeHtml
-    }
-  }, [content, pageLoading])
+  const editor = editorRef.current
+  if (!editor || isComposingRef.current || editor.contains(document.activeElement)) return
+  const safeHtml = normalizeEpisodeHtml(content)
+  if (editor.innerHTML !== safeHtml) editor.innerHTML = safeHtml
+}, [content, pageLoading])
 
   const updateFormattingState = useCallback(() => {
     if (!editorRef.current || !editorRef.current.contains(document.activeElement)) return
