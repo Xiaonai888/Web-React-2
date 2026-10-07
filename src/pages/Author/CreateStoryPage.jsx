@@ -697,8 +697,8 @@ export default function CreateStoryPage() {
   }, [editStoryId, navigate])
 
   const descriptionCount = description.length
-  const storySettingRequired = !isEditMode || !legacyStorySettingsBlank
-  const basicInfoComplete = Boolean(coverPreview && title.trim() && description.trim() && storySettings.length > 0)
+  const storySettingRequired = isEditMode && !legacyStorySettingsBlank
+const basicInfoComplete = Boolean(coverPreview && title.trim() && description.trim())
   const canSave = isEditMode
     ? title.trim() &&
       genre &&
