@@ -300,6 +300,22 @@ function getEnvironment() {
   return 'desktop'
 }
 
+function isAlternativeAndroidBrowser() {
+  const ua = window.navigator.userAgent || ''
+  if (!/Android/i.test(ua)) return false
+
+  if (/DuckDuckGo|SamsungBrowser|EdgA|OPR|Firefox|Vivaldi|HuaweiBrowser|MiuiBrowser/i.test(ua)) {
+    return true
+  }
+
+  const brands = window.navigator.userAgentData?.brands || []
+  if (!brands.length) return false
+
+  return !brands.some(({ brand }) =>
+    String(brand || '').toLowerCase().includes('google chrome')
+  )
+}
+
 function copyText(value) {
   if (navigator.clipboard?.writeText) {
     return navigator.clipboard.writeText(value).catch(() => fallbackCopy(value))
@@ -471,6 +487,13 @@ export default function InstallPage() {
   const subtitle = isIOS
     ? t('installPage.subtitleIOS')
     : t('installPage.subtitleAndroid')
+
+  const showChromeEscape =
+    environment === 'android-chrome' &&
+    (
+      manualChromeHelp ||
+      (promptWaitDone && !promptReady && isAlternativeAndroidBrowser())
+    )
 
   if (installed) {
     return (
@@ -786,6 +809,17 @@ export default function InstallPage() {
                   ? t('installPage.manualBody')
                   : t('installPage.promptNote')}
               </p>
+
+              {showChromeEscape ? (
+                <button
+                  type="button"
+                  onClick={openChrome}
+                  className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 text-[13px] font-extrabold text-[var(--shadow-text-primary)] active:scale-[0.99]"
+                >
+                  <i className="fa-brands fa-chrome text-[14px]" />
+                  <span>{t('installPage.openChrome')}</span>
+                </button>
+              ) : null}
             </section>
 
             <section className="mt-4 flex gap-4 rounded-[22px] bg-violet-500/10 p-4">
