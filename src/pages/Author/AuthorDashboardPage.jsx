@@ -1238,10 +1238,7 @@ return {
         {latestStory ? (
           <section className="mt-5">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eee7ff] text-[#7c4dea]">
-                  <i className="fa-solid fa-sparkles text-[11px]" />
-                </span>
+              <div className="flex items-center">
                 <h2 className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{t('authorDashboard.continueWriting')}</h2>
               </div>
 
