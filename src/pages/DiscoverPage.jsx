@@ -382,7 +382,7 @@ function getDiscoverRecommendationScore(
     isFollowing ? 0 : 2
 
   const ownerBoost =
-    post.is_owner ? 1 : 0
+    post.is_owner ? -12 : 0
 
   return (
   engagementScore +
@@ -405,7 +405,7 @@ function buildDiscoverTimeline(
       ? readerPosts
       : []),
   ]
-    .filter(Boolean)
+    .filter((post) => post && !post.is_owner)
     .sort(
       (left, right) =>
         new Date(
@@ -3195,6 +3195,7 @@ export default function DiscoverPage() {
   }
 
   async function retryDiscoverFeed() {
+    setOwnPostHighlightKey('')
     await Promise.allSettled([
       retryRealPosts(),
       retryReaderPosts(),
@@ -3203,14 +3204,75 @@ export default function DiscoverPage() {
 
 
 
-  const discoverTimeline = useMemo(
-    () =>
-      buildDiscoverTimeline(
-        realPosts,
-        readerPosts
-      ),
-    [realPosts, readerPosts]
-  )
+  const [ownPostHighlightKey, setOwnPostHighlightKey] = useState('')
+
+  useEffect(() => {
+    if (!token || realPostsLoading || readerPostsLoading) return
+
+    const now = Date.now()
+    const recentOwnPosts = [
+      ...realPosts.map((post) => ({ kind: 'author_post', post })),
+      ...readerPosts.map((post) => ({ kind: 'reader_post', post })),
+    ]
+      .filter(({ post }) => {
+        if (!post?.id || !post.is_owner) return false
+        const postedAt = new Date(post.publish_at || post.created_at || 0).getTime()
+        return Number.isFinite(postedAt) && postedAt > 0 && postedAt <= now + 60000 && now - postedAt <= 60 * 60 * 1000
+      })
+      .sort((left, right) =>
+        new Date(right.post.publish_at || right.post.created_at || 0).getTime() -
+        new Date(left.post.publish_at || left.post.created_at || 0).getTime()
+      )
+
+    if (!recentOwnPosts.length) return
+
+    const latest = recentOwnPosts[0]
+    const latestKey = `${latest.kind}:${latest.post.id}`
+    const ownerId = String(latest.post.user_id || getDiscoverFeedScope(token))
+    const storageKey = `shadow_discover_own_once_v1:${ownerId}`
+    let seenKeys = []
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKey) || '[]')
+      if (Array.isArray(stored)) seenKeys = stored.filter((key) => typeof key === 'string')
+    } catch {}
+
+    if (seenKeys.includes(latestKey)) return
+
+    const nextSeenKeys = [...new Set([
+      ...seenKeys,
+      ...recentOwnPosts.map(({ kind, post }) => `${kind}:${post.id}`),
+    ])].slice(-80)
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(nextSeenKeys))
+    } catch {}
+
+    setOwnPostHighlightKey(latestKey)
+  }, [token, realPosts, readerPosts, realPostsLoading, readerPostsLoading])
+
+  const discoverTimeline = useMemo(() => {
+    const timeline = buildDiscoverTimeline(realPosts, readerPosts)
+    if (!ownPostHighlightKey) return timeline
+
+    const highlightedIndex = timeline.findIndex(
+      ({ kind, post }) => post.is_owner && `${kind}:${post.id}` === ownPostHighlightKey
+    )
+
+    if (highlightedIndex <= 0) return timeline
+
+    const reordered = [
+      timeline[highlightedIndex],
+      ...timeline.filter((_, index) => index !== highlightedIndex),
+    ]
+    let authorIndex = -1
+
+    return reordered.map((entry, index) => ({
+      ...entry,
+      timelineIndex: index,
+      authorIndex: entry.kind === 'author_post' ? ++authorIndex : null,
+    }))
+  }, [realPosts, readerPosts, ownPostHighlightKey])
 
   const firstReaderPostIndex =
   discoverTimeline.findIndex(
