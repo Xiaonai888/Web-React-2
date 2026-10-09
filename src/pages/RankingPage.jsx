@@ -324,6 +324,7 @@ const rankingGenres = [
   'Magic',
   'Second Chance',
   'Cold Male Lead',
+  'BG',
   'BL',
   'GL',
   'LGBTQ+',
