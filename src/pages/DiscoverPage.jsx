@@ -68,6 +68,47 @@ const DISCOVER_CACHE_WRITE_DELAY_MS = 120
 
 const discoverFeedInflightRequests =
   new Map()
+const DISCOVER_VERSION_CHECK_INTERVAL_MS = 20 * 1000
+let discoverFeedVersion = null
+let discoverFeedVersionCheckedAt = 0
+let discoverFeedVersionRequest = null
+
+async function fetchDiscoverFeedVersion() {
+  if (discoverFeedVersionRequest) return discoverFeedVersionRequest
+
+  if (Date.now() - discoverFeedVersionCheckedAt < DISCOVER_VERSION_CHECK_INTERVAL_MS) {
+    return discoverFeedVersion
+  }
+
+  const request = runDiscoverFeedRequest(
+    'discover-content-version',
+    async () => {
+      const response = await fetch(
+        `${API_BASE_URL}/api/public/content-versions?keys=discover`,
+        { cache: 'no-store' }
+      )
+      if (!response.ok) throw new Error('Version request failed')
+      const data = await response.json()
+      if (data?.ok === false) throw new Error('Version request failed')
+      const version = Number(data?.versions?.discover?.version)
+      if (!Number.isSafeInteger(version) || version < 1) return null
+      return version
+    }
+  ).catch(() => null)
+
+  discoverFeedVersionRequest = request
+
+  try {
+    const version = await request
+    discoverFeedVersion = version
+    discoverFeedVersionCheckedAt = Date.now()
+    return version
+  } finally {
+    if (discoverFeedVersionRequest === request) {
+      discoverFeedVersionRequest = null
+    }
+  }
+}
 
 function getDiscoverFeedScope(token) {
   if (!token) return 'anon'
@@ -2318,6 +2359,7 @@ function DeferredDiscoverSection({
 
 export default function DiscoverPage() {
   useDisplayTranslation()
+  const discoverLocationKey = useLocation().key
   const [barsHidden, setBarsHidden] = useState(false)
   const lastScrollYRef = useRef(0)
   const token = useMemo(() => getAuthToken(), [])
@@ -2338,6 +2380,8 @@ export default function DiscoverPage() {
   const readerFeedCacheReadyRef = useRef(false)
   const authorFeedCacheSignatureRef = useRef('')
   const readerFeedCacheSignatureRef = useRef('')
+  const authorFeedVersionRef = useRef(null)
+  const readerFeedVersionRef = useRef(null)
   const authorPostOverridesRef =
     useRef(new Map())
   const authorFollowOverridesRef =
@@ -2628,6 +2672,12 @@ export default function DiscoverPage() {
           )
         ) {
           hasCachedPayload = true
+          const cachedVersion = Number(cached.data.discover_version)
+          readerFeedVersionRef.current =
+            cached.data.discover_version != null &&
+            Number.isSafeInteger(cachedVersion) && cachedVersion > 0
+              ? cachedVersion
+              : null
           const cachedPosts =
             applyReaderPostLocalState(
               cached.data.posts,
@@ -2638,6 +2688,7 @@ export default function DiscoverPage() {
 
           const cachedPayload = {
             posts: cachedPosts,
+            discover_version: cached.data.discover_version ?? null,
           }
           readerFeedCacheReadyRef.current =
             true
@@ -2653,7 +2704,12 @@ export default function DiscoverPage() {
           setReaderPostsError('')
 
           if (cached.isFresh) {
-            return
+            const currentVersion = await fetchDiscoverFeedVersion()
+            if (!alive) return
+            if (
+              currentVersion === null ||
+              readerFeedVersionRef.current === currentVersion
+            ) return
           }
         }
 
@@ -2682,8 +2738,12 @@ export default function DiscoverPage() {
         setReaderPosts(nextPosts)
         setReaderPostsError('')
 
+        const discoverVersion = await fetchDiscoverFeedVersion()
+        if (!alive) return
+        readerFeedVersionRef.current = discoverVersion
         const nextPayload = {
           posts: nextPosts,
+          discover_version: discoverVersion,
         }
 
         await saveHomeCache(
@@ -2723,7 +2783,7 @@ export default function DiscoverPage() {
     return () => {
       alive = false
     }
-  }, [token])
+  }, [token, discoverLocationKey])
 
     useEffect(() => {
     let alive = true
@@ -2766,6 +2826,12 @@ export default function DiscoverPage() {
           )
         ) {
           hasCachedPayload = true
+          const cachedVersion = Number(cached.data.discover_version)
+          authorFeedVersionRef.current =
+            cached.data.discover_version != null &&
+            Number.isSafeInteger(cachedVersion) && cachedVersion > 0
+              ? cachedVersion
+              : null
           const cachedPosts =
             applyAuthorPostLocalState(
               cached.data.posts,
@@ -2774,6 +2840,7 @@ export default function DiscoverPage() {
             )
           const cachedPayload = {
             posts: cachedPosts,
+            discover_version: cached.data.discover_version ?? null,
             next_cursor:
               cached.data.next_cursor || null,
             has_more: Boolean(
@@ -2806,7 +2873,12 @@ export default function DiscoverPage() {
           setRealPostsError('')
 
           if (cached.isFresh) {
-            return
+            const currentVersion = await fetchDiscoverFeedVersion()
+            if (!alive) return
+            if (
+              currentVersion === null ||
+              authorFeedVersionRef.current === currentVersion
+            ) return
           }
         }
 
@@ -2852,8 +2924,12 @@ export default function DiscoverPage() {
 
         setRealPostsError('')
 
+        const discoverVersion = await fetchDiscoverFeedVersion()
+        if (!alive) return
+        authorFeedVersionRef.current = discoverVersion
         const nextPayload = {
           posts: nextPosts,
+          discover_version: discoverVersion,
           next_cursor: nextCursor,
           has_more: nextHasMore,
         }
@@ -2897,7 +2973,7 @@ export default function DiscoverPage() {
     return () => {
       alive = false
     }
-  }, [token])
+  }, [token, discoverLocationKey])
 
   useEffect(() => {
     if (
@@ -2909,6 +2985,7 @@ export default function DiscoverPage() {
 
     const payload = {
       posts: readerPosts,
+      discover_version: readerFeedVersionRef.current,
     }
     const signature =
       createDiscoverCacheSignature(payload)
@@ -2959,6 +3036,7 @@ export default function DiscoverPage() {
 
     const payload = {
       posts: realPosts,
+      discover_version: authorFeedVersionRef.current,
       next_cursor: realPostsCursor,
       has_more: Boolean(
         realPostsHasMore &&
@@ -3101,6 +3179,7 @@ export default function DiscoverPage() {
       )
       const payload = {
         posts: nextPosts,
+        discover_version: authorFeedVersionRef.current,
         next_cursor: nextCursor,
         has_more: nextHasMore,
       }
@@ -3166,6 +3245,7 @@ export default function DiscoverPage() {
 
       const payload = {
         posts: nextPosts,
+        discover_version: readerFeedVersionRef.current,
       }
 
       setReaderPosts(nextPosts)
