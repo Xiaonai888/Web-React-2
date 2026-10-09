@@ -22,6 +22,7 @@ const VALID_SECTIONS = new Set([
   'new_arrivals',
   'ranking',
   'you_might_like',
+  'short_completed',
 ])
 
 function createTrackingId() {
