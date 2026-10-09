@@ -569,6 +569,100 @@ if (right.post?.id === newestPostId) return 1
   })
 }
 
+function getDiscoverRotationPostTime(entry) {
+  const post = entry?.post || {}
+  const timestamp = entry?.kind === 'reader_post'
+    ? post.publish_at || post.created_at
+    : post.created_at || post.published_at
+
+  const time = new Date(timestamp || 0).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
+function getDiscoverRotationAuthorKey(entry) {
+  const post = entry?.post || {}
+  const actorId = entry?.kind === 'author_post'
+    ? post.author_page_id || post.user_id
+    : post.user_id
+
+  return `${entry?.kind}:${String(actorId || post.id || '')}`
+}
+
+function rotateDiscoverTimeline(timeline, rotationIndex) {
+  if (!Array.isArray(timeline) || timeline.length < 2) {
+    return timeline
+  }
+
+  const promoted = timeline.filter(
+    (entry) => Number(entry.post?.feed_priority || 0) > 0 && !entry.post?.is_owner
+  )
+  const normal = timeline.filter(
+    (entry) => Number(entry.post?.feed_priority || 0) <= 0 || entry.post?.is_owner
+  )
+  const recentCutoff = Date.now() - 72 * 60 * 60 * 1000
+  const recent = normal
+    .filter((entry) => !entry.post?.is_owner && getDiscoverRotationPostTime(entry) >= recentCutoff)
+    .sort((first, second) => getDiscoverRotationPostTime(second) - getDiscoverRotationPostTime(first))
+  const older = normal.filter(
+    (entry) => !entry.post?.is_owner && getDiscoverRotationPostTime(entry) < recentCutoff
+  )
+  const own = normal.filter((entry) => Boolean(entry.post?.is_owner))
+
+  function rotatePool(entries) {
+    if (entries.length < 2) return [...entries]
+    const offset = rotationIndex % entries.length
+    return [...entries.slice(offset), ...entries.slice(0, offset)]
+  }
+
+  const newest = recent.shift() || null
+  const pools = {
+    recent: rotatePool(recent),
+    older: rotatePool(older),
+    own: rotatePool(own),
+  }
+  const ordered = [...promoted]
+
+  if (newest) ordered.push(newest)
+
+  let normalIndex = newest ? 1 : 0
+
+  while (pools.recent.length || pools.older.length || pools.own.length) {
+    const showOwn = pools.own.length && (
+      normalIndex % 10 === 9 || (!pools.recent.length && !pools.older.length)
+    )
+    const showOlder = pools.older.length && (
+      normalIndex % 5 === 4 || !pools.recent.length
+    )
+    const pool = showOwn
+      ? pools.own
+      : showOlder
+        ? pools.older
+        : pools.recent.length
+          ? pools.recent
+          : pools.older.length
+            ? pools.older
+            : pools.own
+
+    const previousActor = ordered.length
+      ? getDiscoverRotationAuthorKey(ordered[ordered.length - 1])
+      : ''
+    const differentActorIndex = pool.findIndex(
+      (entry) => getDiscoverRotationAuthorKey(entry) !== previousActor
+    )
+    const nextIndex = differentActorIndex >= 0 ? differentActorIndex : 0
+    const [next] = pool.splice(nextIndex, 1)
+    ordered.push(next)
+    normalIndex += 1
+  }
+
+  let authorIndex = -1
+  return ordered.map((entry, index) => ({
+    ...entry,
+    timelineIndex: index,
+    authorIndex: entry.kind === 'author_post' ? ++authorIndex : null,
+  }))
+}
+
 async function fetchShadowMallPromotions(
   limit = 100
 ) {
@@ -3286,6 +3380,28 @@ export default function DiscoverPage() {
 
 
   const [ownPostHighlightKey, setOwnPostHighlightKey] = useState('')
+  const [feedRotationIndex, setFeedRotationIndex] = useState(0)
+
+  useEffect(() => {
+    if (!token) return
+
+    const storageKey = `shadow_discover_rotation_v1:${getDiscoverFeedScope(token)}`
+    let nextIndex = 0
+
+    try {
+      const stored = sessionStorage.getItem(storageKey)
+      const previous = stored === null ? -1 : Number(stored)
+      nextIndex = Number.isSafeInteger(previous) && previous >= 0
+        ? (previous + 1) % 100000
+        : 0
+      sessionStorage.setItem(storageKey, String(nextIndex))
+    } catch {
+      nextIndex = Date.now() % 100000
+    }
+
+    setFeedRotationIndex(nextIndex)
+    setOwnPostHighlightKey('')
+  }, [discoverLocationKey, token])
 
   useEffect(() => {
     if (!token || realPostsLoading || readerPostsLoading) return
@@ -3333,7 +3449,10 @@ export default function DiscoverPage() {
   }, [token, realPosts, readerPosts, realPostsLoading, readerPostsLoading])
 
   const discoverTimeline = useMemo(() => {
-    const timeline = buildDiscoverTimeline(realPosts, readerPosts)
+    const timeline = rotateDiscoverTimeline(
+      buildDiscoverTimeline(realPosts, readerPosts),
+      feedRotationIndex
+    )
     if (!ownPostHighlightKey) return timeline
 
     const highlightedIndex = timeline.findIndex(
@@ -3353,7 +3472,7 @@ export default function DiscoverPage() {
       timelineIndex: index,
       authorIndex: entry.kind === 'author_post' ? ++authorIndex : null,
     }))
-  }, [realPosts, readerPosts, ownPostHighlightKey])
+  }, [realPosts, readerPosts, ownPostHighlightKey, feedRotationIndex])
 
   const firstReaderPostIndex =
   discoverTimeline.findIndex(
