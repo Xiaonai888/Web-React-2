@@ -12,6 +12,7 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
+import DiscoverSpecialPromotionSection from '../components/discover/DiscoverSpecialPromotionSection'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import DiscoverTrendingStoriesSection from '../components/discover/DiscoverTrendingStoriesSection'
 import DiscoverAuthorsYouMayLikeSection from '../components/discover/DiscoverAuthorsYouMayLikeSection'
@@ -3799,6 +3800,7 @@ export default function DiscoverPage() {
           </div>
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
+          <DiscoverSpecialPromotionSection />
             {realPostsLoading ||
             readerPostsLoading ? (
               <>
