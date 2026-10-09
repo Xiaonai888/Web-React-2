@@ -65,6 +65,7 @@ const DISCOVER_SHADOW_MALL_SALE_STATUS_CACHE_MAX_AGE_MS =
 const DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS =
   2 * 60 * 1000
 const DISCOVER_CACHE_WRITE_DELAY_MS = 120
+const DISCOVER_AUTHOR_FEED_INITIAL_LIMIT = 30
 
 const discoverFeedInflightRequests =
   new Map()
@@ -72,11 +73,17 @@ const DISCOVER_VERSION_CHECK_INTERVAL_MS = 20 * 1000
 let discoverFeedVersion = null
 let discoverFeedVersionCheckedAt = 0
 let discoverFeedVersionRequest = null
+let discoverFeedVersionEntryKey = null
 
-async function fetchDiscoverFeedVersion() {
+async function fetchDiscoverFeedVersion(entryKey = '') {
   if (discoverFeedVersionRequest) return discoverFeedVersionRequest
 
-  if (Date.now() - discoverFeedVersionCheckedAt < DISCOVER_VERSION_CHECK_INTERVAL_MS) {
+  const sameEntry =
+    entryKey && entryKey === discoverFeedVersionEntryKey
+  if (
+    sameEntry &&
+    Date.now() - discoverFeedVersionCheckedAt < DISCOVER_VERSION_CHECK_INTERVAL_MS
+  ) {
     return discoverFeedVersion
   }
 
@@ -102,6 +109,7 @@ async function fetchDiscoverFeedVersion() {
     const version = await request
     discoverFeedVersion = version
     discoverFeedVersionCheckedAt = Date.now()
+    discoverFeedVersionEntryKey = entryKey
     return version
   } finally {
     if (discoverFeedVersionRequest === request) {
@@ -289,7 +297,7 @@ function mergeUniquePosts(current, incoming) {
 }
 
 async function fetchFollowedPosts(token, cursor = '') {
-  const params = new URLSearchParams({ limit: '10' })
+  const params = new URLSearchParams({ limit: String(DISCOVER_AUTHOR_FEED_INITIAL_LIMIT) })
 
   if (cursor) {
     params.set('cursor', cursor)
@@ -581,11 +589,13 @@ function getDiscoverRotationPostTime(entry) {
 
 function getDiscoverRotationAuthorKey(entry) {
   const post = entry?.post || {}
-  const actorId = entry?.kind === 'author_post'
-    ? post.author_page_id || post.user_id
-    : post.user_id
+  const actorId =
+    post.user_id ||
+    post.author_page?.user_id ||
+    post.author_page_id ||
+    post.id
 
-  return `${entry?.kind}:${String(actorId || post.id || '')}`
+  return String(actorId || '')
 }
 
 function rotateDiscoverTimeline(timeline, rotationIndex) {
@@ -593,45 +603,102 @@ function rotateDiscoverTimeline(timeline, rotationIndex) {
     return timeline
   }
 
-  const promoted = timeline.filter(
-    (entry) => Number(entry.post?.feed_priority || 0) > 0 && !entry.post?.is_owner
+  const featured = timeline.filter(
+    (entry) =>
+      Number(entry.post?.feed_priority || 0) > 0 &&
+      !entry.post?.is_owner
   )
-  const normal = timeline.filter(
-    (entry) => Number(entry.post?.feed_priority || 0) <= 0 || entry.post?.is_owner
+  const ordinary = timeline.filter(
+    (entry) =>
+      Number(entry.post?.feed_priority || 0) <= 0 ||
+      entry.post?.is_owner
   )
   const recentCutoff = Date.now() - 72 * 60 * 60 * 1000
-  const recent = normal
-    .filter((entry) => !entry.post?.is_owner && getDiscoverRotationPostTime(entry) >= recentCutoff)
-    .sort((first, second) => getDiscoverRotationPostTime(second) - getDiscoverRotationPostTime(first))
-  const older = normal.filter(
-    (entry) => !entry.post?.is_owner && getDiscoverRotationPostTime(entry) < recentCutoff
+  const recent = ordinary
+    .filter(
+      (entry) =>
+        !entry.post?.is_owner &&
+        getDiscoverRotationPostTime(entry) >= recentCutoff
+    )
+    .sort(
+      (first, second) =>
+        getDiscoverRotationPostTime(second) -
+        getDiscoverRotationPostTime(first)
+    )
+  const older = ordinary.filter(
+    (entry) =>
+      !entry.post?.is_owner &&
+      getDiscoverRotationPostTime(entry) < recentCutoff
   )
-  const own = normal.filter((entry) => Boolean(entry.post?.is_owner))
+  const own = ordinary.filter(
+    (entry) => Boolean(entry.post?.is_owner)
+  )
 
   function rotatePool(entries) {
     if (entries.length < 2) return [...entries]
     const offset = rotationIndex % entries.length
-    return [...entries.slice(offset), ...entries.slice(0, offset)]
+    return [
+      ...entries.slice(offset),
+      ...entries.slice(0, offset),
+    ]
   }
 
-  const newest = recent.shift() || null
   const pools = {
     recent: rotatePool(recent),
     older: rotatePool(older),
     own: rotatePool(own),
+    featured: [...featured],
   }
-  const ordered = [...promoted]
+  const result = []
+  const newest = pools.recent.shift() || null
+  let normalCount = 0
+  let nextFeaturedAfter = 2
 
-  if (newest) ordered.push(newest)
-
-  let normalIndex = newest ? 1 : 0
-
-  while (pools.recent.length || pools.older.length || pools.own.length) {
-    const showOwn = pools.own.length && (
-      normalIndex % 10 === 9 || (!pools.recent.length && !pools.older.length)
+  function addFromPool(pool) {
+    const last = result[result.length - 1]
+    const lastActor = last
+      ? getDiscoverRotationAuthorKey(last)
+      : ''
+    const alternateIndex = pool.findIndex(
+      (entry) => getDiscoverRotationAuthorKey(entry) !== lastActor
     )
-    const showOlder = pools.older.length && (
-      normalIndex % 5 === 4 || !pools.recent.length
+    const index = alternateIndex < 0 ? 0 : alternateIndex
+    const [entry] = pool.splice(index, 1)
+    result.push(entry)
+  }
+
+  if (newest) {
+    result.push(newest)
+    normalCount += 1
+  }
+
+  while (
+    pools.recent.length ||
+    pools.older.length ||
+    pools.own.length ||
+    pools.featured.length
+  ) {
+    const hasNormal = Boolean(
+      pools.recent.length || pools.older.length || pools.own.length
+    )
+
+    if (
+      pools.featured.length &&
+      (normalCount >= nextFeaturedAfter || !hasNormal)
+    ) {
+      addFromPool(pools.featured)
+      nextFeaturedAfter += 5
+      continue
+    }
+
+    const showOwn = Boolean(
+      pools.own.length &&
+      (normalCount % 10 === 9 ||
+        (!pools.recent.length && !pools.older.length))
+    )
+    const showOlder = Boolean(
+      pools.older.length &&
+      (normalCount % 5 === 4 || !pools.recent.length)
     )
     const pool = showOwn
       ? pools.own
@@ -643,23 +710,16 @@ function rotateDiscoverTimeline(timeline, rotationIndex) {
             ? pools.older
             : pools.own
 
-    const previousActor = ordered.length
-      ? getDiscoverRotationAuthorKey(ordered[ordered.length - 1])
-      : ''
-    const differentActorIndex = pool.findIndex(
-      (entry) => getDiscoverRotationAuthorKey(entry) !== previousActor
-    )
-    const nextIndex = differentActorIndex >= 0 ? differentActorIndex : 0
-    const [next] = pool.splice(nextIndex, 1)
-    ordered.push(next)
-    normalIndex += 1
+    addFromPool(pool)
+    normalCount += 1
   }
 
   let authorIndex = -1
-  return ordered.map((entry, index) => ({
+  return result.map((entry, index) => ({
     ...entry,
     timelineIndex: index,
-    authorIndex: entry.kind === 'author_post' ? ++authorIndex : null,
+    authorIndex:
+      entry.kind === 'author_post' ? ++authorIndex : null,
   }))
 }
 
@@ -2798,7 +2858,7 @@ export default function DiscoverPage() {
           setReaderPostsError('')
 
           if (cached.isFresh) {
-            const currentVersion = await fetchDiscoverFeedVersion()
+            const currentVersion = await fetchDiscoverFeedVersion(discoverLocationKey)
             if (!alive) return
             if (
               currentVersion === null ||
@@ -2832,7 +2892,7 @@ export default function DiscoverPage() {
         setReaderPosts(nextPosts)
         setReaderPostsError('')
 
-        const discoverVersion = await fetchDiscoverFeedVersion()
+        const discoverVersion = await fetchDiscoverFeedVersion(discoverLocationKey)
         if (!alive) return
         readerFeedVersionRef.current = discoverVersion
         const nextPayload = {
@@ -2899,7 +2959,7 @@ export default function DiscoverPage() {
         getDiscoverFeedCacheKey(
           token,
           'discover-author-feed',
-          10
+          DISCOVER_AUTHOR_FEED_INITIAL_LIMIT
         )
 
       let hasCachedPayload = false
@@ -2967,7 +3027,7 @@ export default function DiscoverPage() {
           setRealPostsError('')
 
           if (cached.isFresh) {
-            const currentVersion = await fetchDiscoverFeedVersion()
+            const currentVersion = await fetchDiscoverFeedVersion(discoverLocationKey)
             if (!alive) return
             if (
               currentVersion === null ||
@@ -3018,7 +3078,7 @@ export default function DiscoverPage() {
 
         setRealPostsError('')
 
-        const discoverVersion = await fetchDiscoverFeedVersion()
+        const discoverVersion = await fetchDiscoverFeedVersion(discoverLocationKey)
         if (!alive) return
         authorFeedVersionRef.current = discoverVersion
         const nextPayload = {
@@ -3154,7 +3214,7 @@ export default function DiscoverPage() {
           getDiscoverFeedCacheKey(
             token,
             'discover-author-feed',
-            10
+            DISCOVER_AUTHOR_FEED_INITIAL_LIMIT
           )
 
         saveHomeCache(
@@ -3198,7 +3258,7 @@ export default function DiscoverPage() {
         getDiscoverFeedCacheKey(
           token,
           'discover-author-feed',
-          10
+          DISCOVER_AUTHOR_FEED_INITIAL_LIMIT
         )
 
       const data =
@@ -3243,7 +3303,7 @@ export default function DiscoverPage() {
       getDiscoverFeedCacheKey(
         token,
         'discover-author-feed',
-        10
+        DISCOVER_AUTHOR_FEED_INITIAL_LIMIT
       )
 
     try {
