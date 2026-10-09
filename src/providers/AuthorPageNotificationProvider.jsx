@@ -115,6 +115,14 @@ export function AuthorPageNotificationProvider({ children }) {
   const [online, setOnline] = useState(() => navigator.onLine)
   const unreadRequestRef = useRef(null)
   const lastVisibleSyncAtRef = useRef(0)
+  const storyStatsListenersRef = useRef(new Set())
+
+  const subscribeAuthorStoryStats = useCallback((listener) => {
+    if (typeof listener !== 'function') return () => {}
+    const listeners = storyStatsListenersRef.current
+    listeners.add(listener)
+    return () => listeners.delete(listener)
+  }, [])
 
   const setAuthorUnreadCount = useCallback((value) => {
     setAuthorUnreadCountState(Math.max(0, Number(value || 0)))
@@ -248,13 +256,28 @@ export function AuthorPageNotificationProvider({ children }) {
     })
 
     const handleSseEvent = (name, rawData) => {
-      if (cancelled || name !== 'author-page-notification') return
+      if (cancelled || !['author-page-notification', 'author-story-stats'].includes(name)) return
       let payload
       try {
         payload = JSON.parse(rawData || '{}')
       } catch {
         return
       }
+
+      if (name === 'author-story-stats') {
+        const storyId = String(payload?.story_id || '').trim()
+        const stat = String(payload?.stat || '').trim()
+        const delta = Number(payload?.delta)
+        if (!storyId || !['views', 'likes'].includes(stat) || ![1, -1].includes(delta)) return
+        if (stat === 'views' && delta !== 1) return
+        for (const listener of storyStatsListenersRef.current) {
+          try {
+            listener({ story_id: storyId, stat, delta })
+          } catch {}
+        }
+        return
+      }
+
       if (payload?.action !== 'created') return
       const delta = Number(payload.unread_delta ?? 1)
       setAuthorUnreadCountState((current) =>
@@ -344,6 +367,7 @@ export function AuthorPageNotificationProvider({ children }) {
     setAuthorUnreadCount,
     adjustAuthorUnreadCount,
     syncAuthorUnreadCount,
+    subscribeAuthorStoryStats,
   }), [
     authorUnreadCount,
     connectionState,
@@ -351,6 +375,7 @@ export function AuthorPageNotificationProvider({ children }) {
     setAuthorUnreadCount,
     adjustAuthorUnreadCount,
     syncAuthorUnreadCount,
+    subscribeAuthorStoryStats,
   ])
 
   return (
