@@ -7117,6 +7117,15 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     if (!recentlyActive && !autoScrollEnabled) return
 
     const currentEpisodeId = String(episodeId)
+    const idleSession = readingSessionIdleUntilRef.current
+
+    if (
+      idleSession.episodeId === currentEpisodeId &&
+      idleSession.until > Date.now()
+    ) {
+      return
+    }
+
     const weeklyTracked =
       weeklyReadingTrackedEpisodeRef.current ===
       currentEpisodeId
@@ -7258,6 +7267,24 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           (value) => value + 1
         )
         return
+      }
+
+      const finishedMissions =
+        Array.isArray(progressData.missions) &&
+        progressData.missions.every(
+          (mission) => mission.completed === true || mission.claimed === true
+        )
+      const finishedSession =
+        progressData.reading_reward?.done_today === true &&
+        finishedMissions &&
+        weeklyReadingTrackedEpisodeRef.current === currentEpisodeId &&
+        dailyCoins === 0 &&
+        missionIds.length === 0 &&
+        !needsReload
+
+      readingSessionIdleUntilRef.current = {
+        episodeId: finishedSession ? currentEpisodeId : '',
+        until: finishedSession ? Date.now() + 2 * 60 * 1000 : 0,
       }
 
       const nextTarget = resolveReadingTarget({
