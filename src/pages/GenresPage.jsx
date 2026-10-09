@@ -4,6 +4,7 @@ import { getStoryLanguageId, getStoryLanguageLabel } from '../utils/storyLanguag
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import useGenreAutoLoad from '../hooks/useGenreAutoLoad'
 
 registerTranslationNamespace('genresPage', {
   en: {
@@ -828,6 +829,7 @@ export default function GenresPage() {
   const [message, setMessage] = useState('')
   const [loadMoreError, setLoadMoreError] = useState('')
   const loadMoreControllerRef = useRef(null)
+  const serverStoryStatus = activeQuickFilter === 'completed' || progress === 'completed' ? 'Completed' : ''
 
   useEffect(() => {
     try {
@@ -933,8 +935,9 @@ export default function GenresPage() {
           genre: activeGenre,
           story_setting: storySetting,
           sort: 'updated',
-          limit: 20,
-          schema: 5,
+          limit: 9,
+          story_status: serverStoryStatus,
+          schema: 6,
         },
       })
 
@@ -962,11 +965,12 @@ export default function GenresPage() {
         setHasMore(Boolean(cachedPagination?.has_more))
         setNextCursor(cachedPagination?.next_cursor || null)
         setLoading(false)
+        if (cached?.isFresh) return
       }
 
       try {
         const params = new URLSearchParams({
-          limit: '20',
+          limit: '9',
           sort: 'updated',
           genre_pagination: '1',
         })
@@ -980,6 +984,8 @@ export default function GenresPage() {
         if (storySetting !== 'all') {
           params.set('story_setting', storySetting)
         }
+
+        if (serverStoryStatus) params.set('story_status', serverStoryStatus)
 
         const response = await fetch(
           `${API_BASE_URL}/api/public/stories?${params.toString()}`,
@@ -1047,7 +1053,7 @@ export default function GenresPage() {
       controller.abort()
       loadMoreControllerRef.current?.abort()
     }
-  }, [activeGenre, storySetting])
+  }, [activeGenre, storySetting, serverStoryStatus])
 
   const loadMoreBooks = async () => {
     if (
@@ -1068,7 +1074,7 @@ export default function GenresPage() {
       setLoadMoreError('')
 
       const params = new URLSearchParams({
-        limit: '20',
+        limit: '9',
         sort: 'updated',
         genre_pagination: '1',
         cursor: nextCursor,
@@ -1083,6 +1089,8 @@ export default function GenresPage() {
       if (storySetting !== 'all') {
         params.set('story_setting', storySetting)
       }
+
+      if (serverStoryStatus) params.set('story_status', serverStoryStatus)
 
       const response = await fetch(
         `${API_BASE_URL}/api/public/stories?${params.toString()}`,
@@ -1103,7 +1111,7 @@ export default function GenresPage() {
         .map(normalizeBook)
         .filter((book) => book.id)
 
-      if (controller.signal.aborted) return
+      if (controller.signal.aborted) return false
 
       setBooks((current) => {
         const seen = new Set(
@@ -1124,14 +1132,35 @@ export default function GenresPage() {
 
       setHasMore(Boolean(data.pagination?.has_more))
       setNextCursor(data.pagination?.next_cursor || null)
+
+      const seen = new Set(books.map((book) => String(book.id)))
+      const mergedBooks = [...books, ...nextBooks.filter((book) => !seen.has(String(book.id)))]
+      const cacheKey = getHomeCacheKey({
+        section: 'stories',
+        language: getStoryLanguageId(),
+        params: {
+          page: 'genres',
+          genre: activeGenre,
+          story_setting: storySetting,
+          sort: 'updated',
+          limit: 9,
+          story_status: serverStoryStatus,
+          schema: 6,
+        },
+      })
+      await saveHomeCache(cacheKey, { books: mergedBooks, pagination: data.pagination || {} }, {
+        maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
+      }).catch(() => {})
+      return true
     } catch (error) {
-      if (error?.name === 'AbortError') return
+      if (error?.name === 'AbortError') return false
 
       setLoadMoreError(
         error.message === 'Failed to fetch'
           ? t('genresPage.cannotConnect')
           : error.message || t('genresPage.loadMoreFailed')
       )
+      return false
     } finally {
       if (loadMoreControllerRef.current === controller) {
         loadMoreControllerRef.current = null
@@ -1142,6 +1171,14 @@ export default function GenresPage() {
       }
     }
   }
+
+  const { sentinelRef, showManualLoad } = useGenreAutoLoad({
+    resetKey: [activeGenre, storySetting, serverStoryStatus, activeQuickFilter, access, type, progress].join('|'),
+    hasMore,
+    loading,
+    loadingMore,
+    loadMore: loadMoreBooks,
+  })
 
   const filteredGenres = useMemo(() => {
     const keyword = query.trim().toLowerCase()
@@ -1352,7 +1389,7 @@ export default function GenresPage() {
         <section className="pt-4">
           {loading ? (
             <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
-              {Array.from({ length: 20 }).map((_, index) => (
+              {Array.from({ length: 9 }).map((_, index) => (
                 <div key={index}>
                   <div className="aspect-[2/3] animate-pulse rounded-[16px] bg-[#eef0f4] dark:bg-[var(--shadow-bg-elevated)]" />
                   <div className="mt-2 h-4 animate-pulse rounded-full bg-[#eef0f4] dark:bg-[var(--shadow-bg-elevated)]" />
@@ -1392,13 +1429,14 @@ export default function GenresPage() {
 
           {!loading && !message && hasMore ? (
             <div className="mt-8 flex flex-col items-center gap-3">
+              <div ref={sentinelRef} className="h-px w-full" aria-hidden="true" />
               {loadMoreError ? (
                 <p className="text-center text-[12px] font-semibold text-[#e5484d] dark:text-red-300">
                   {loadMoreError}
                 </p>
               ) : null}
 
-              <button
+              {(showManualLoad || loadMoreError) ? <button
                 type="button"
                 onClick={loadMoreBooks}
                 disabled={loadingMore}
@@ -1407,7 +1445,7 @@ export default function GenresPage() {
                 {loadingMore
                   ? t('genresPage.loadingMore')
                   : t('genresPage.loadMore')}
-              </button>
+              </button> : null}
             </div>
           ) : null}
         </section>
