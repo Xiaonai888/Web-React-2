@@ -102,8 +102,7 @@ const rankingTabs = [
   {
     label: 'LGBTQ+',
     labelKey: 'lgbtq',
-    endpoint: '/api/public/stories?limit=48&sort=popular',
-    filter: isLgbtqStory,
+    endpoint: '/api/public/stories?limit=6&sort=popular&genre=LGBTQ%2B',
   },
   {
     label: 'Completed',
@@ -115,28 +114,6 @@ const rankingTabs = [
 
 function isCompletedStory(story) {
   return String(story?.story_status || '').trim().toLowerCase() === 'completed'
-}
-
-function isLgbtqStory(story) {
-  const tags = Array.isArray(story?.tags) ? story.tags : []
-  const text = [story?.main_genre, story?.description, ...tags]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
-
-  return [
-    'lgbtq',
-    'lgbt',
-    'bl',
-    'gl',
-    'boys love',
-    'girls love',
-    'boy love',
-    'girl love',
-    'queer',
-    'yaoi',
-    'yuri',
-  ].some((keyword) => text.includes(keyword))
 }
 
 function getActiveTabConfig(label) {
@@ -184,7 +161,7 @@ async function fetchRankingItems(
       home_section: 'ranking',
       category: categoryLabel,
       story_type: normalizedStoryType || 'all',
-      schema: 1,
+      schema: tab.labelKey === 'lgbtq' ? 2 : 1,
     },
   })
 
