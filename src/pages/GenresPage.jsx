@@ -934,7 +934,7 @@ export default function GenresPage() {
           story_setting: storySetting,
           sort: 'updated',
           limit: 20,
-          schema: 4,
+          schema: 5,
         },
       })
 
@@ -1164,10 +1164,9 @@ export default function GenresPage() {
 
   const filteredBooks = useMemo(() => {
     return books
-      .filter((book) => isSameGenre(book, selectedGenreSlug))
       .filter((book) => isBookMatchedQuickFilter(book, activeQuickFilter))
       .filter((book) => isBookMatchedAdvancedFilters(book, access, type, progress))
-  }, [access, activeQuickFilter, books, progress, selectedGenreSlug, type])
+  }, [access, activeQuickFilter, books, progress, type])
 
   const openGenre = (genre) => {
     setActiveGenre(genre.label)
