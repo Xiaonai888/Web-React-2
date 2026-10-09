@@ -925,23 +925,23 @@ const stopStoriesDrag = () => {
     }
   }
 
-  async function fetchMyStories({ signal } = {}) {
+  async function fetchMyStories({ signal, background = false } = {}) {
     if (AUTHOR_PREVIEW_ENABLED) {
       setMessage('')
       setStories(MOCK_STORIES.map(normalizeStory))
       setLoading(false)
-      return
+      return true
     }
 
     const token = getAuthToken()
 
     if (!token) {
       navigate('/login')
-      return
+      return false
     }
 
     try {
-      setLoading(true)
+      if (!background) setLoading(true)
       setMessage('')
 
       const response = await fetch(
@@ -957,24 +957,27 @@ const stopStoriesDrag = () => {
 
       const data = await response.json().catch(() => ({}))
 
-      if (!response.ok || data.ok === false) {
+      if (!response.ok || data.ok !== true || !Array.isArray(data.stories)) {
         throw new Error(
           data.message || t('authorDashboard.loadStoriesFailed')
         )
       }
 
+      if (signal?.aborted) return null
+
       setStories(
         (data.stories || []).map(normalizeStory)
       )
+      return true
     } catch (error) {
-      if (error?.name === 'AbortError') return
+      if (error?.name === 'AbortError' || signal?.aborted) return null
 
-      setStories([])
       setMessage(
         error.message === 'Failed to fetch'
           ? t('authorDashboard.cannotConnect')
           : error.message || t('authorDashboard.loadStoriesFailed')
       )
+      return false
     } finally {
       if (!signal?.aborted) {
         setLoading(false)
@@ -985,45 +988,89 @@ const stopStoriesDrag = () => {
   useEffect(() => {
     const controller = new AbortController()
     const { signal } = controller
+    let needsReconnect = !navigator.onLine
+    let storiesRequestInFlight = false
+    let reconnectQueued = false
+
+    const reloadStories = async (background = false) => {
+      if (signal.aborted) return
+      if (storiesRequestInFlight) {
+        reconnectQueued = true
+        return
+      }
+
+      storiesRequestInFlight = true
+      try {
+        const success = await fetchMyStories({ signal, background })
+        if (!signal.aborted && success !== null) {
+          needsReconnect = success !== true || !navigator.onLine
+        }
+      } finally {
+        storiesRequestInFlight = false
+        if (
+          reconnectQueued &&
+          needsReconnect &&
+          navigator.onLine &&
+          document.visibilityState === 'visible' &&
+          !signal.aborted
+        ) {
+          reconnectQueued = false
+          void reloadStories(true)
+        } else {
+          reconnectQueued = false
+        }
+      }
+    }
 
     const refreshBadges = () => {
       fetchDashboardBadges({ signal })
     }
 
+    const refreshStoriesOnReconnect = () => {
+      if (
+        signal.aborted ||
+        !needsReconnect ||
+        !navigator.onLine ||
+        document.visibilityState !== 'visible'
+      ) return
+
+      void reloadStories(true)
+    }
+
+    const handleFocus = () => {
+      refreshBadges()
+      refreshStoriesOnReconnect()
+    }
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refreshBadges()
+        handleFocus()
       }
     }
 
+    const handleOffline = () => {
+      needsReconnect = true
+    }
+
     fetchMyAuthorPage({ signal })
-    fetchMyStories({ signal })
+    void reloadStories()
     fetchDashboardBadges({
       force: true,
       signal,
     })
 
-    window.addEventListener(
-      'focus',
-      refreshBadges
-    )
-    document.addEventListener(
-      'visibilitychange',
-      handleVisibilityChange
-    )
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', refreshStoriesOnReconnect)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       controller.abort()
-      window.removeEventListener(
-        'focus',
-        refreshBadges
-      )
-      document.removeEventListener(
-        'visibilitychange',
-        handleVisibilityChange
-      )
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', refreshStoriesOnReconnect)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const stats = useMemo(() => {
