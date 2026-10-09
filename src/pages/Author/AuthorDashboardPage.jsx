@@ -6,6 +6,7 @@ import AuthorDaily50DashboardCard from '../../components/events/AuthorDaily50Das
 import AuthorDaily80DashboardCard from '../../components/events/AuthorDaily80DashboardCard'
 import AuthorManagedEventsSection from '../../components/events/AuthorManagedEventsSection'
 import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
+import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -762,6 +763,7 @@ function AuthorInboxButton({
 
 
 export default function AuthorDashboardPage() {
+  const { connectionState, subscribeAuthorStoryStats } = useAuthorPageNotifications()
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const location = useLocation()
@@ -775,6 +777,9 @@ export default function AuthorDashboardPage() {
   const [unreadMails, setUnreadMails] = useState(0)
   const badgeRequestInFlightRef = useRef(false)
   const lastBadgeRequestAtRef = useRef(0)
+  const storyReconnectRef = useRef(null)
+  const previousStoryStreamStateRef = useRef(connectionState)
+  const hasConnectedStoryStreamRef = useRef(connectionState === 'connected')
   const storiesScrollRef = useRef(null)
   const storiesDragRef = useRef({
   active: false,
@@ -991,6 +996,9 @@ const stopStoriesDrag = () => {
     let needsReconnect = !navigator.onLine
     let storiesRequestInFlight = false
     let reconnectQueued = false
+    let eventDuringRequest = false
+    let collisionRepairTimer = null
+    let lastCollisionRepairAt = 0
 
     const reloadStories = async (background = false) => {
       if (signal.aborted) return
@@ -1007,6 +1015,11 @@ const stopStoriesDrag = () => {
         }
       } finally {
         storiesRequestInFlight = false
+        if (eventDuringRequest && !signal.aborted) {
+          eventDuringRequest = false
+          needsReconnect = true
+          scheduleCollisionRepair()
+        }
         if (
           reconnectQueued &&
           needsReconnect &&
@@ -1020,6 +1033,17 @@ const stopStoriesDrag = () => {
           reconnectQueued = false
         }
       }
+    }
+
+    const scheduleCollisionRepair = () => {
+      if (collisionRepairTimer !== null || signal.aborted) return
+      const now = Date.now()
+      if (now - lastCollisionRepairAt < 30000) return
+      lastCollisionRepairAt = now
+      collisionRepairTimer = window.setTimeout(() => {
+        collisionRepairTimer = null
+        refreshStoriesOnReconnect()
+      }, 1500)
     }
 
     const refreshBadges = () => {
@@ -1052,6 +1076,27 @@ const stopStoriesDrag = () => {
       needsReconnect = true
     }
 
+    const unsubscribeStoryStats = subscribeAuthorStoryStats(({ story_id, stat, delta }) => {
+      if (signal.aborted || AUTHOR_PREVIEW_ENABLED) return
+      if (storiesRequestInFlight) eventDuringRequest = true
+      setStories((current) => {
+        let updated = false
+        const storiesWithStats = current.map((story) => {
+          if (String(story.id) !== story_id) return story
+          const rawKey = stat === 'views' ? 'rawViews' : 'rawLikes'
+          const next = Math.max(0, Number(story[rawKey] || 0) + delta)
+          updated = true
+          return { ...story, [rawKey]: next, [stat]: formatCompactNumber(next) }
+        })
+        return updated ? storiesWithStats : current
+      })
+    })
+
+    storyReconnectRef.current = (force = false) => {
+      if (force) needsReconnect = true
+      refreshStoriesOnReconnect()
+    }
+
     fetchMyAuthorPage({ signal })
     void reloadStories()
     fetchDashboardBadges({
@@ -1066,12 +1111,25 @@ const stopStoriesDrag = () => {
 
     return () => {
       controller.abort()
+      unsubscribeStoryStats()
+      storyReconnectRef.current = null
+      if (collisionRepairTimer !== null) window.clearTimeout(collisionRepairTimer)
       window.removeEventListener('focus', handleFocus)
       window.removeEventListener('offline', handleOffline)
       window.removeEventListener('online', refreshStoriesOnReconnect)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [subscribeAuthorStoryStats])
+
+  useEffect(() => {
+    const wasConnected = hasConnectedStoryStreamRef.current
+    const previouslyConnected = previousStoryStreamStateRef.current === 'connected'
+    if (connectionState === 'connected') {
+      if (!previouslyConnected) storyReconnectRef.current?.(wasConnected)
+      hasConnectedStoryStreamRef.current = true
+    }
+    previousStoryStreamStateRef.current = connectionState
+  }, [connectionState])
 
   const stats = useMemo(() => {
     const published = stories.filter((story) => story.rawStatus === 'published').length
