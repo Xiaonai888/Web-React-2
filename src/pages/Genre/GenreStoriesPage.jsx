@@ -4,6 +4,7 @@ import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLang
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import useGenreAutoLoad from '../../hooks/useGenreAutoLoad'
 
 registerTranslationNamespace('genreStoriesPage', {
   en: {
@@ -470,7 +471,7 @@ function StoryCover({ story, completed }) {
 function LoadingGrid() {
   return (
     <div className="grid grid-cols-2 gap-x-2 gap-y-5 px-4 pt-5 md:grid-cols-4 lg:grid-cols-6">
-      {Array.from({ length: 20 }).map(
+      {Array.from({ length: 9 }).map(
         (_, index) => (
           <div key={index}>
             <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[var(--shadow-bg-elevated)]" />
@@ -521,8 +522,8 @@ export default function GenreStoriesPage({
           genre: normalizedGenreSlug,
           sort: tabConfig.sort,
           story_status: tabConfig.storyStatus,
-          limit: 20,
-          schema: 2,
+          limit: 9,
+          schema: 3,
         },
       }),
     [
@@ -584,7 +585,7 @@ export default function GenreStoriesPage({
 
         const params = new URLSearchParams({
           genre: fallbackGenreName,
-          limit: '20',
+          limit: '9',
           sort: tabConfig.sort,
           genre_pagination: '1',
         })
@@ -673,12 +674,11 @@ export default function GenreStoriesPage({
       loading ||
       loadingMore ||
       !hasMore ||
-      !nextCursor
+      !nextCursor ||
+      (loadMoreControllerRef.current && !loadMoreControllerRef.current.signal.aborted)
     ) {
-      return
+      return false
     }
-
-    loadMoreControllerRef.current?.abort()
     const controller = new AbortController()
     loadMoreControllerRef.current = controller
 
@@ -688,7 +688,7 @@ export default function GenreStoriesPage({
 
       const params = new URLSearchParams({
         genre: fallbackGenreName,
-        limit: '20',
+        limit: '9',
         sort: tabConfig.sort,
         genre_pagination: '1',
         cursor: nextCursor,
@@ -717,7 +717,7 @@ export default function GenreStoriesPage({
         Array.isArray(data.stories) ? data.stories : []
       ).map(normalizeStory)
 
-      if (controller.signal.aborted) return
+      if (controller.signal.aborted) return false
 
       const mergedStories = deduplicateStories([
         ...stories,
@@ -742,14 +742,16 @@ export default function GenreStoriesPage({
           maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
         }
       )
+      return true
     } catch (error) {
-      if (error?.name === 'AbortError') return
+      if (error?.name === 'AbortError') return false
 
       setLoadMoreError(
         error.message === 'Failed to fetch'
           ? getDisplayText('genreStoriesPage.cannotConnect')
           : error.message || t('genreStoriesPage.loadMoreFailed')
       )
+      return false
     } finally {
       if (loadMoreControllerRef.current === controller) {
         loadMoreControllerRef.current = null
@@ -760,6 +762,14 @@ export default function GenreStoriesPage({
       }
     }
   }
+
+  const { sentinelRef, showManualLoad } = useGenreAutoLoad({
+    resetKey: cacheKey,
+    hasMore,
+    loading,
+    loadingMore,
+    loadMore: loadMoreStories,
+  })
 
   const visibleStories = useMemo(() => {
     const filtered =
@@ -922,22 +932,25 @@ export default function GenreStoriesPage({
 
             {hasMore ? (
               <div className="flex flex-col items-center gap-3 px-4 py-8">
+                <div ref={sentinelRef} className="h-px w-full" aria-hidden="true" />
                 {loadMoreError ? (
                   <p className="text-center text-[12px] font-medium text-[var(--shadow-danger)]">
                     {loadMoreError}
                   </p>
                 ) : null}
 
-                <button
-                  type="button"
-                  onClick={loadMoreStories}
-                  disabled={loadingMore}
-                  className="min-w-[140px] rounded-full bg-[var(--shadow-text-primary)] px-5 py-3 text-[13px] font-bold text-[var(--shadow-bg-surface)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {loadingMore
-                    ? t('genreStoriesPage.loadingMore')
-                    : t('genreStoriesPage.loadMore')}
-                </button>
+                {showManualLoad || loadMoreError ? (
+                  <button
+                    type="button"
+                    onClick={loadMoreStories}
+                    disabled={loadingMore}
+                    className="min-w-[140px] rounded-full bg-[var(--shadow-text-primary)] px-5 py-3 text-[13px] font-bold text-[var(--shadow-bg-surface)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loadingMore
+                      ? t('genreStoriesPage.loadingMore')
+                      : t('genreStoriesPage.loadMore')}
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </>
