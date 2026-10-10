@@ -1,12 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
 
+function hasReaderAccount() {
+  try {
+    for (const storage of [sessionStorage, localStorage]) {
+      const token = storage.getItem('shadow_reader_token')
+      if (!token) continue
+      const part = token.split('.')[1]
+      if (!part) continue
+      const value = part.replace(/-/g, '+').replace(/_/g, '/')
+      const payload = JSON.parse(atob(value.padEnd(Math.ceil(value.length / 4) * 4, '=')))
+      if (
+        payload.type === 'reader' &&
+        payload.session_id &&
+        payload.device_id &&
+        payload.jwt_id &&
+        Number(payload.exp) * 1000 > Date.now()
+      ) return true
+    }
+  } catch {
+    return false
+  }
+  return false
+}
+
 export default function useGenreAutoLoad({
   resetKey,
   hasMore,
   loading,
   loadingMore,
   loadMore,
-  maxAutoLoads = 3,
+  loadedCount = 0,
+  maxAutoLoads = 2,
 }) {
   const sentinelRef = useRef(null)
   const loadMoreRef = useRef(loadMore)
@@ -16,6 +40,21 @@ export default function useGenreAutoLoad({
   const handledGestureRef = useRef(0)
   const touchYRef = useRef(null)
   const [autoLoads, setAutoLoads] = useState(0)
+  const [hasAccount, setHasAccount] = useState(hasReaderAccount)
+
+  useEffect(() => {
+    const updateAccount = () => setHasAccount(hasReaderAccount())
+    window.addEventListener('storage', updateAccount)
+    window.addEventListener('focus', updateAccount)
+    window.addEventListener('pageshow', updateAccount)
+    document.addEventListener('visibilitychange', updateAccount)
+    return () => {
+      window.removeEventListener('storage', updateAccount)
+      window.removeEventListener('focus', updateAccount)
+      window.removeEventListener('pageshow', updateAccount)
+      document.removeEventListener('visibilitychange', updateAccount)
+    }
+  }, [])
 
   loadMoreRef.current = loadMore
   resetKeyRef.current = resetKey
@@ -28,7 +67,7 @@ export default function useGenreAutoLoad({
   }, [resetKey])
 
   useEffect(() => {
-    if (!hasMore || loading || loadingMore || autoLoads >= maxAutoLoads) return undefined
+    if (!hasAccount || !hasMore || loading || loadingMore || autoLoads >= maxAutoLoads || loadedCount >= 27) return undefined
 
     const expectedResetKey = resetKey
 
@@ -96,7 +135,7 @@ export default function useGenreAutoLoad({
       window.removeEventListener('keydown', onKeyDown)
       document.removeEventListener('scroll', check, true)
     }
-  }, [hasMore, loading, loadingMore, autoLoads, maxAutoLoads, resetKey])
+  }, [hasAccount, hasMore, loading, loadingMore, autoLoads, maxAutoLoads, loadedCount, resetKey])
 
-  return { sentinelRef, autoLoads, showManualLoad: autoLoads >= maxAutoLoads }
+  return { sentinelRef, autoLoads, hasAccount, showManualLoad: hasAccount && (autoLoads >= maxAutoLoads || loadedCount >= 27) }
 }
