@@ -2356,6 +2356,145 @@ function ReaderEndPanel({
   )
 }
 
+function UnlockAccessTab({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative h-11 flex-1 text-[13px] font-semibold transition ${
+        active ? 'text-[#111827]' : 'text-[#A7ADBA]'
+      }`}
+    >
+      {children}
+      {active ? (
+        <span className="absolute bottom-0 left-1/2 h-[2px] w-[76%] -translate-x-1/2 rounded-full bg-[#D6A300]" />
+      ) : null}
+    </button>
+  )
+}
+
+function UnlockPremiumRow({ onPurchase, t }) {
+  return (
+    <button
+      type="button"
+      onClick={onPurchase}
+      className="flex min-h-[54px] w-full items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 text-left active:scale-[0.995]"
+    >
+      <span className="flex h-7 shrink-0 items-center gap-1.5 rounded-tl-[11px] rounded-br-[11px] bg-[#111827] px-2.5 text-[11px] font-black italic text-white shadow-sm">
+        <img
+          src="/assets/Icons/Crown.svg"
+          alt=""
+          className="h-3.5 w-3.5 object-contain"
+          loading="lazy"
+          decoding="async"
+        />
+        {t('readerPage.premium')}
+      </span>
+
+      <span className="min-w-0 flex-1 text-[12px] font-semibold leading-4 text-[#8D94A1]">
+        {t('readerPage.premiumDiscount')}
+      </span>
+
+      <i className="fa-solid fa-chevron-right text-[12px] text-[#9CA3AF]" />
+    </button>
+  )
+}
+
+function UnlockFreeAccessOption({ icon, title, subtitle, buttonText, disabled, onClick }) {
+  return (
+    <div className="flex min-h-[72px] items-center gap-3 rounded-[16px] border border-[#E5E7EB] bg-white px-3 py-3">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+  {icon}
+</span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] font-semibold text-[#111827]">{title}</span>
+        <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-[#667085]">{subtitle}</span>
+      </span>
+
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className="h-8 shrink-0 rounded-full bg-[#111827] px-4 text-[11px] font-black text-white disabled:bg-[#D1D5DB] disabled:text-white"
+      >
+        {buttonText}
+      </button>
+    </div>
+  )
+}
+
+function UnlockPackageButton({ option, primary = false, unlocking, diamondBalance, onPackageClick, t }) {
+    if (!option) return null
+
+    const price = Number(option.price || 0)
+    const originalPrice = Number(option.original_price || 0)
+    const discount = Number(
+  option.total_discount_percent ??
+    option.discount_percent ??
+    0
+)
+    const requestedCount = Number(option.requested_count || 0)
+    const isMultiPackage =
+      requestedCount >= 10 ||
+      ['next10', 'next30', 'next50', 'all_released'].includes(option.key)
+    const needsTopUp = isMultiPackage && diamondBalance < price
+
+    if (primary) {
+      return (
+        <button
+  type="button"
+  onClick={() => onPackageClick(option)}
+  disabled={unlocking || !option.enabled}
+          className="flex min-h-[78px] w-full items-center justify-center bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
+        >
+          <span className="flex items-center justify-center gap-2 text-[16px] font-medium text-[#4B5563]">
+            <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
+            <span className="font-semibold text-[#111827]">
+  {formatNumber(price)}
+</span>
+
+{originalPrice > price ? (
+  <span className="text-[12px] text-[#A0A6B0] line-through">
+    {formatNumber(originalPrice)}
+  </span>
+) : null}
+
+<span>{t('readerPage.unlockThisEpisode')}</span>
+          </span>
+        </button>
+      )
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={() => onPackageClick(option)}
+        disabled={unlocking || !option.enabled}
+        className="relative flex min-h-[86px] w-full items-center justify-center overflow-hidden border-t border-[#E5E7EB] bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
+      >
+        {discount > 0 ? (
+          <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
+            {t('readerPage.discountOff', { count: formatNumber(discount) })}
+          </span>
+        ) : null}
+
+        <span className="flex items-center justify-center gap-1.5 text-[16px] font-medium text-[#4B5563]">
+          <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
+          <span className="text-[#111827]">{formatNumber(price)}</span>
+          {originalPrice > price ? (
+            <span className="ml-1 text-[12px] text-[#A0A6B0] line-through">
+              {formatNumber(originalPrice)}
+            </span>
+          ) : null}
+          <span>{requestedCount > 0 ? t('readerPage.unlockEpisodes', { count: formatNumber(requestedCount) }) : t('readerPage.unlockAllEpisodes')}</span>
+        </span>
+      </button>
+    )
+  }
+
+
+
 function LockedEpisodeCard({
   story,
   episode,
@@ -2381,11 +2520,17 @@ function LockedEpisodeCard({
   const [activeTab, setActiveTab] = useState('instant')
   const [freeAccessView, setFreeAccessView] = useState('wallet')
 const [waitTick, setWaitTick] = useState(Date.now())
+const freeCountdownActive = activeTab === 'free' && freeAccessView === 'wallet' &&
+  [coinAccess, voucherAccess].some((access) => {
+    const availableAt = Date.parse(access?.available_at || '')
+    return Number.isFinite(availableAt) && availableAt > waitTick
+  })
 
 useEffect(() => {
+  if (!freeCountdownActive) return undefined
   const timer = window.setInterval(() => setWaitTick(Date.now()), 1000)
   return () => window.clearInterval(timer)
-}, [])
+}, [freeCountdownActive])
 
 const remainingWait = (access) => {
   const availableAt = new Date(access?.available_at || '').getTime()
@@ -2465,137 +2610,6 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
     onUnlock(option.key)
   }
 
-  const AccessTab = ({ active, children, onClick }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`relative h-11 flex-1 text-[13px] font-semibold transition ${
-        active ? 'text-[#111827]' : 'text-[#A7ADBA]'
-      }`}
-    >
-      {children}
-      {active ? (
-        <span className="absolute bottom-0 left-1/2 h-[2px] w-[76%] -translate-x-1/2 rounded-full bg-[#D6A300]" />
-      ) : null}
-    </button>
-  )
-
-  const PremiumRow = () => (
-    <button
-      type="button"
-      onClick={goPurchase}
-      className="flex min-h-[54px] w-full items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 text-left active:scale-[0.995]"
-    >
-      <span className="flex h-7 shrink-0 items-center gap-1.5 rounded-tl-[11px] rounded-br-[11px] bg-[#111827] px-2.5 text-[11px] font-black italic text-white shadow-sm">
-        <img
-          src="/assets/Icons/Crown.svg"
-          alt=""
-          className="h-3.5 w-3.5 object-contain"
-          loading="lazy"
-          decoding="async"
-        />
-        {t('readerPage.premium')}
-      </span>
-
-      <span className="min-w-0 flex-1 text-[12px] font-semibold leading-4 text-[#8D94A1]">
-        {t('readerPage.premiumDiscount')}
-      </span>
-
-      <i className="fa-solid fa-chevron-right text-[12px] text-[#9CA3AF]" />
-    </button>
-  )
-
-  const FreeAccessOption = ({ icon, title, subtitle, buttonText, disabled, onClick }) => (
-    <div className="flex min-h-[72px] items-center gap-3 rounded-[16px] border border-[#E5E7EB] bg-white px-3 py-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center">
-  {icon}
-</span>
-
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-semibold text-[#111827]">{title}</span>
-        <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-[#667085]">{subtitle}</span>
-      </span>
-
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onClick}
-        className="h-8 shrink-0 rounded-full bg-[#111827] px-4 text-[11px] font-black text-white disabled:bg-[#D1D5DB] disabled:text-white"
-      >
-        {buttonText}
-      </button>
-    </div>
-  )
-
-  const PackageButton = ({ option, primary = false }) => {
-    if (!option) return null
-
-    const price = Number(option.price || 0)
-    const originalPrice = Number(option.original_price || 0)
-    const discount = Number(
-  option.total_discount_percent ??
-    option.discount_percent ??
-    0
-)
-    const requestedCount = Number(option.requested_count || 0)
-    const isMultiPackage =
-      requestedCount >= 10 ||
-      ['next10', 'next30', 'next50', 'all_released'].includes(option.key)
-    const needsTopUp = isMultiPackage && diamondBalance < price
-
-    if (primary) {
-      return (
-        <button
-  type="button"
-  onClick={() => handlePackageClick(option)}
-  disabled={unlocking || !option.enabled}
-          className="flex min-h-[78px] w-full items-center justify-center bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
-        >
-          <span className="flex items-center justify-center gap-2 text-[16px] font-medium text-[#4B5563]">
-            <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-            <span className="font-semibold text-[#111827]">
-  {formatNumber(price)}
-</span>
-
-{originalPrice > price ? (
-  <span className="text-[12px] text-[#A0A6B0] line-through">
-    {formatNumber(originalPrice)}
-  </span>
-) : null}
-
-<span>{t('readerPage.unlockThisEpisode')}</span>
-          </span>
-        </button>
-      )
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => handlePackageClick(option)}
-        disabled={unlocking || !option.enabled}
-        className="relative flex min-h-[86px] w-full items-center justify-center overflow-hidden border-t border-[#E5E7EB] bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
-      >
-        {discount > 0 ? (
-          <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
-            {t('readerPage.discountOff', { count: formatNumber(discount) })}
-          </span>
-        ) : null}
-
-        <span className="flex items-center justify-center gap-1.5 text-[16px] font-medium text-[#4B5563]">
-          <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-          <span className="text-[#111827]">{formatNumber(price)}</span>
-          {originalPrice > price ? (
-            <span className="ml-1 text-[12px] text-[#A0A6B0] line-through">
-              {formatNumber(originalPrice)}
-            </span>
-          ) : null}
-          <span>{requestedCount > 0 ? t('readerPage.unlockEpisodes', { count: formatNumber(requestedCount) }) : t('readerPage.unlockAllEpisodes')}</span>
-        </span>
-      </button>
-    )
-  }
-
   return (
     <div
       className={
@@ -2655,23 +2669,23 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
           >
             <div className="border-b border-[#E5E7EB] px-4 pt-2">
               <div className="flex">
-                <AccessTab active={activeTab === 'instant'} onClick={() => setActiveTab('instant')}>
+                <UnlockAccessTab active={activeTab === 'instant'} onClick={() => setActiveTab('instant')}>
                   {t('readerPage.instantAccess')}
-                </AccessTab>
+                </UnlockAccessTab>
 
-                <AccessTab active={activeTab === 'free'} onClick={() => setActiveTab('free')}>
+                <UnlockAccessTab active={activeTab === 'free'} onClick={() => { setWaitTick(Date.now()); setActiveTab('free') }}>
                   {t('readerPage.freeAccess')}
-                </AccessTab>
+                </UnlockAccessTab>
               </div>
             </div>
 
             {activeTab === 'instant' ? (
               <>
-                <PremiumRow />
+                <UnlockPremiumRow onPurchase={goPurchase} t={t} />
 
                 <div className="overflow-hidden border-b border-[#E5E7EB]">
-                  <PackageButton option={singleOption} primary />
-                  <PackageButton option={displayMultiOption} />
+                  <UnlockPackageButton option={singleOption} primary unlocking={unlocking} diamondBalance={diamondBalance} onPackageClick={handlePackageClick} t={t} />
+                  <UnlockPackageButton option={displayMultiOption} unlocking={unlocking} diamondBalance={diamondBalance} onPackageClick={handlePackageClick} t={t} />
                 </div>
 
                 <div className="mt-4 flex items-center justify-between gap-3 px-5">
@@ -2732,7 +2746,7 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
        <div className="space-y-2.5 px-3 py-4">
   {freeAccessView === 'wallet' ? (
     <>
-      <FreeAccessOption
+      <UnlockFreeAccessOption
         icon={
           <img
             src="/assets/Icons/Shadow Coin.svg"
@@ -2749,7 +2763,7 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
         onClick={onCoinUnlock}
       />
 
-      <FreeAccessOption
+      <UnlockFreeAccessOption
         icon={
           <img
             src="/assets/Icons/Voucher.svg"
@@ -2766,22 +2780,7 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
         onClick={onVoucherUnlock}
       />
 
-      <FreeAccessOption
-        icon={
-  <img
-    src="/assets/Icons/Voucher.svg"
-    alt=""
-    className="h-7 w-7 object-contain"
-    loading="lazy"
-    decoding="async"
-  />
-}
-        title={walletLoaded ? t('readerPage.vouchersRemaining', { count: formatNumber(voucherBalance) }) : t('readerPage.vouchersUnavailable')}
-        subtitle={t('readerPage.permanentUnlockEpisode')}
-        buttonText={voucherWaitRequired ? t('readerPage.availableLater') : voucherCanAccess ? t('readerPage.access') : t('readerPage.notEnough')}
-        disabled={unlocking || (!voucherWaitRequired && !voucherCanAccess)}
-        onClick={voucherWaitRequired ? showWaitNotice : onVoucherUnlock}
-      />
+
 
       <button
         type="button"
@@ -2795,7 +2794,7 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
   ) : (
     <>
       {rewardedAdsEnabled ? (
-  <FreeAccessOption
+  <UnlockFreeAccessOption
     icon={<i className="fa-solid fa-play text-[15px] text-[#0B5CFF]" />}
     title={t('readerPage.watchAdUnlock')}
     subtitle={t('readerPage.adUsage', { used: formatNumber(adUsedToday), limit: formatNumber(adDailyLimit) })}
@@ -2805,7 +2804,7 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
   />
 ) : null}
 
-      <FreeAccessOption
+      <UnlockFreeAccessOption
         icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
         title={t('readerPage.storyCardComing')}
         subtitle={t('readerPage.sameStoryPermanent')}
@@ -2815,7 +2814,7 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
 
       <button
         type="button"
-        onClick={() => setFreeAccessView('wallet')}
+        onClick={() => { setWaitTick(Date.now()); setFreeAccessView('wallet') }}
         className="mx-auto flex items-center gap-1 px-2 pt-1 text-[12px] font-normal text-[#8D94A1] active:text-[#111827]"
       >
         <span>{t('readerPage.coinsVouchers')}</span>
