@@ -328,6 +328,7 @@ const TAB_CONFIG = {
 }
 
 const FALLBACK_GENRE_NAMES = {
+  bg: 'BG',
   bl: 'BL',
   ceo: 'CEO',
   gl: 'GL',
