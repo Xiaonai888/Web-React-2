@@ -937,7 +937,7 @@ export default function GenresPage() {
           sort: 'updated',
           limit: 9,
           story_status: serverStoryStatus,
-          schema: 6,
+          schema: 7,
         },
       })
 
@@ -1056,6 +1056,7 @@ export default function GenresPage() {
   }, [activeGenre, storySetting, serverStoryStatus])
 
   const loadMoreBooks = async () => {
+    if (!hasAccount) return false
     if (
       loading ||
       loadingMore ||
@@ -1145,7 +1146,7 @@ export default function GenresPage() {
           sort: 'updated',
           limit: 9,
           story_status: serverStoryStatus,
-          schema: 6,
+          schema: 7,
         },
       })
       await saveHomeCache(cacheKey, { books: mergedBooks, pagination: data.pagination || {} }, {
@@ -1172,12 +1173,13 @@ export default function GenresPage() {
     }
   }
 
-  const { sentinelRef, showManualLoad } = useGenreAutoLoad({
+  const { sentinelRef, showManualLoad, hasAccount } = useGenreAutoLoad({
     resetKey: [activeGenre, storySetting, serverStoryStatus, activeQuickFilter, access, type, progress].join('|'),
     hasMore,
     loading,
     loadingMore,
     loadMore: loadMoreBooks,
+    loadedCount: books.length,
   })
 
   const filteredGenres = useMemo(() => {
@@ -1200,10 +1202,10 @@ export default function GenresPage() {
   }, [activeGenre])
 
   const filteredBooks = useMemo(() => {
-    return books
+    return (hasAccount ? books : books.slice(0, 9))
       .filter((book) => isBookMatchedQuickFilter(book, activeQuickFilter))
       .filter((book) => isBookMatchedAdvancedFilters(book, access, type, progress))
-  }, [access, activeQuickFilter, books, progress, type])
+  }, [access, activeQuickFilter, books, hasAccount, progress, type])
 
   const openGenre = (genre) => {
     setActiveGenre(genre.label)
@@ -1427,7 +1429,7 @@ export default function GenresPage() {
             </div>
           ) : null}
 
-          {!loading && !message && hasMore ? (
+          {!loading && !message && hasAccount && hasMore ? (
             <div className="mt-8 flex flex-col items-center gap-3">
               <div ref={sentinelRef} className="h-px w-full" aria-hidden="true" />
               {loadMoreError ? (
