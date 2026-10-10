@@ -524,7 +524,7 @@ export default function GenreStoriesPage({
           sort: tabConfig.sort,
           story_status: tabConfig.storyStatus,
           limit: 9,
-          schema: 3,
+          schema: 4,
         },
       }),
     [
@@ -671,6 +671,7 @@ export default function GenreStoriesPage({
   ])
 
   const loadMoreStories = async () => {
+    if (!hasAccount) return false
     if (
       loading ||
       loadingMore ||
@@ -764,12 +765,13 @@ export default function GenreStoriesPage({
     }
   }
 
-  const { sentinelRef, showManualLoad } = useGenreAutoLoad({
+  const { sentinelRef, showManualLoad, hasAccount } = useGenreAutoLoad({
     resetKey: cacheKey,
     hasMore,
     loading,
     loadingMore,
     loadMore: loadMoreStories,
+    loadedCount: stories.length,
   })
 
   const visibleStories = useMemo(() => {
@@ -785,12 +787,12 @@ export default function GenreStoriesPage({
         ? 'createdAt'
         : 'updatedAt'
 
-    return [...filtered].sort(
+    return [...(hasAccount ? filtered : filtered.slice(0, 9))].sort(
       (first, second) =>
         getTime(second[dateKey]) -
         getTime(first[dateKey])
     )
-  }, [activeTab, stories])
+  }, [activeTab, hasAccount, stories])
 
   const genreReturnPath =
     location.state?.returnTo ||
@@ -931,7 +933,7 @@ export default function GenreStoriesPage({
               ))}
             </div>
 
-            {hasMore ? (
+            {hasAccount && hasMore ? (
               <div className="flex flex-col items-center gap-3 px-4 py-8">
                 <div ref={sentinelRef} className="h-px w-full" aria-hidden="true" />
                 {loadMoreError ? (
