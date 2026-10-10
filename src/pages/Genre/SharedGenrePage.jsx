@@ -318,6 +318,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onr
 const SHARED_GENRE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const FALLBACK_GENRE_NAMES = {
+  bg: 'BG',
   bl: 'BL',
   ceo: 'CEO',
   gl: 'GL',
