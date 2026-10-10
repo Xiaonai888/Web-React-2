@@ -4,6 +4,7 @@ import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLang
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import useGenreAutoLoad from '../../hooks/useGenreAutoLoad'
 
 registerTranslationNamespace('sharedGenrePage', {
   en: {
@@ -770,8 +771,8 @@ export default function SharedGenrePage({
           page: 'shared-genre',
           genre: normalizedGenreSlug,
           sort: 'latest',
-          limit: 20,
-          schema: 2,
+          limit: 9,
+          schema: 3,
         },
       })
 
@@ -889,7 +890,7 @@ export default function SharedGenrePage({
 
               const params = new URLSearchParams({
                 genre: resolvedGenreName,
-                limit: '20',
+                limit: '9',
                 sort: 'latest',
                 genre_pagination: '1',
               })
@@ -1031,12 +1032,11 @@ export default function SharedGenrePage({
       loading ||
       loadingMore ||
       !hasMore ||
-      !nextCursor
+      !nextCursor ||
+      (loadMoreControllerRef.current && !loadMoreControllerRef.current.signal.aborted)
     ) {
-      return
+      return false
     }
-
-    loadMoreControllerRef.current?.abort()
     const controller = new AbortController()
     loadMoreControllerRef.current = controller
 
@@ -1049,7 +1049,7 @@ export default function SharedGenrePage({
 
       const params = new URLSearchParams({
         genre: resolvedGenreName,
-        limit: '20',
+        limit: '9',
         sort: 'latest',
         genre_pagination: '1',
         cursor: nextCursor,
@@ -1079,7 +1079,7 @@ export default function SharedGenrePage({
           : []
       ).map(normalizeStory)
 
-      if (controller.signal.aborted) return
+      if (controller.signal.aborted) return false
 
       const mergedStories = deduplicateStories([
         ...stories,
@@ -1105,8 +1105,8 @@ export default function SharedGenrePage({
           page: 'shared-genre',
           genre: normalizedGenreSlug,
           sort: 'latest',
-          limit: 20,
-          schema: 2,
+          limit: 9,
+          schema: 3,
         },
       })
 
@@ -1121,8 +1121,9 @@ export default function SharedGenrePage({
             SHARED_GENRE_CACHE_MAX_AGE_MS,
         }
       )
+      return true
     } catch (error) {
-      if (error?.name === 'AbortError') return
+      if (error?.name === 'AbortError') return false
 
       setLoadMoreError(
         error.message === 'Failed to fetch'
@@ -1130,6 +1131,7 @@ export default function SharedGenrePage({
           : error.message ||
               getDisplayText('sharedGenrePage.loadMoreFailed')
       )
+      return false
     } finally {
       if (loadMoreControllerRef.current === controller) {
         loadMoreControllerRef.current = null
@@ -1141,6 +1143,14 @@ export default function SharedGenrePage({
     }
   }
 
+
+  const { sentinelRef, showManualLoad } = useGenreAutoLoad({
+    resetKey: `${normalizedGenreSlug}:${getStoryLanguageId()}`,
+    hasMore,
+    loading,
+    loadingMore,
+    loadMore: loadMoreStories,
+  })
 
   const quickButtons = useMemo(
     () => [
@@ -1473,22 +1483,25 @@ export default function SharedGenrePage({
 
               {hasMore ? (
                 <div className="mt-8 flex flex-col items-center gap-3 px-4">
+                  <div ref={sentinelRef} className="h-px w-full" aria-hidden="true" />
                   {loadMoreError ? (
                     <p className="text-center text-[12px] font-semibold text-[var(--shadow-danger)]">
                       {loadMoreError}
                     </p>
                   ) : null}
 
-                  <button
-                    type="button"
-                    onClick={loadMoreStories}
-                    disabled={loadingMore}
-                    className="min-w-[140px] rounded-full bg-[var(--shadow-text-primary)] px-5 py-3 text-[13px] font-semibold text-[var(--shadow-bg-surface)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {loadingMore
-                      ? t('sharedGenrePage.loadingMore')
-                      : t('sharedGenrePage.loadMore')}
-                  </button>
+                  {showManualLoad || loadMoreError ? (
+                    <button
+                      type="button"
+                      onClick={loadMoreStories}
+                      disabled={loadingMore}
+                      className="min-w-[140px] rounded-full bg-[var(--shadow-text-primary)] px-5 py-3 text-[13px] font-semibold text-[var(--shadow-bg-surface)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {loadingMore
+                        ? t('sharedGenrePage.loadingMore')
+                        : t('sharedGenrePage.loadMore')}
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </section>
