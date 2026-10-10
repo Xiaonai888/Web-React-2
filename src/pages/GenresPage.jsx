@@ -1055,18 +1055,18 @@ export default function GenresPage() {
     }
   }, [activeGenre, storySetting, serverStoryStatus])
 
-  const loadMoreBooks = async () => {
-    if (!hasAccount) return false
+    const loadMoreBooks = async () => {
     if (
+      !hasAccount ||
       loading ||
       loadingMore ||
       !hasMore ||
-      !nextCursor
+      !nextCursor ||
+      (loadMoreControllerRef.current && !loadMoreControllerRef.current.signal.aborted)
     ) {
-      return
+      return false
     }
 
-    loadMoreControllerRef.current?.abort()
     const controller = new AbortController()
     loadMoreControllerRef.current = controller
 
@@ -1106,36 +1106,31 @@ export default function GenresPage() {
         )
       }
 
+      if (controller.signal.aborted) return false
+
       const nextBooks = (
         Array.isArray(data.stories) ? data.stories : []
       )
         .map(normalizeBook)
         .filter((book) => book.id)
 
-      if (controller.signal.aborted) return false
-
-      setBooks((current) => {
-        const seen = new Set(
-          current.map((book) => String(book.id))
-        )
-        const mergedBooks = [
-          ...current,
-          ...nextBooks.filter((book) => {
-            const id = String(book.id)
-            if (!id || seen.has(id)) return false
-            seen.add(id)
-            return true
-          }),
-        ]
-
-        return mergedBooks
+      const seen = new Set()
+      const mergedBooks = [...books, ...nextBooks].filter((book) => {
+        const id = String(book?.id || '')
+        if (!id || seen.has(id)) return false
+        seen.add(id)
+        return true
       })
 
-      setHasMore(Boolean(data.pagination?.has_more))
-      setNextCursor(data.pagination?.next_cursor || null)
+      const pagination = {
+        has_more: Boolean(data.pagination?.has_more),
+        next_cursor: data.pagination?.next_cursor || null,
+      }
 
-      const seen = new Set(books.map((book) => String(book.id)))
-      const mergedBooks = [...books, ...nextBooks.filter((book) => !seen.has(String(book.id)))]
+      setBooks(mergedBooks)
+      setHasMore(pagination.has_more)
+      setNextCursor(pagination.next_cursor)
+
       const cacheKey = getHomeCacheKey({
         section: 'stories',
         language: getStoryLanguageId(),
@@ -1149,12 +1144,18 @@ export default function GenresPage() {
           schema: 7,
         },
       })
-      await saveHomeCache(cacheKey, { books: mergedBooks, pagination: data.pagination || {} }, {
-        maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
-      }).catch(() => {})
+
+      await saveHomeCache(
+        cacheKey,
+        { books: mergedBooks, pagination },
+        { maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS }
+      ).catch(() => {})
+
       return true
     } catch (error) {
-      if (error?.name === 'AbortError') return false
+      if (error?.name === 'AbortError' || controller.signal.aborted) {
+        return false
+      }
 
       setLoadMoreError(
         error.message === 'Failed to fetch'
@@ -1165,13 +1166,11 @@ export default function GenresPage() {
     } finally {
       if (loadMoreControllerRef.current === controller) {
         loadMoreControllerRef.current = null
-      }
-
-      if (!controller.signal.aborted) {
         setLoadingMore(false)
       }
     }
   }
+
 
   const { sentinelRef, showManualLoad, hasAccount } = useGenreAutoLoad({
     resetKey: [activeGenre, storySetting, serverStoryStatus, activeQuickFilter, access, type, progress].join('|'),
