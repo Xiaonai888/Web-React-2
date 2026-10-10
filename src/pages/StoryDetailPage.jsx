@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import StoryHeroSection from '../components/story-detail/StoryHeroSection'
 import StoryStatsSection from '../components/story-detail/StoryStatsSection'
 import StoryInfoSection from '../components/story-detail/StoryInfoSection'
@@ -173,6 +173,69 @@ function authHeaders() {
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
+const STORY_DETAIL_STATUS_CACHE_MS = 12 * 1000
+const STORY_DETAIL_STATUS_CACHE_LIMIT = 80
+const storyDetailStatusCache = new Map()
+
+function storyDetailStatusKey(storyId, token) {
+  return `${token}:${storyId}`
+}
+
+function invalidateStoryDetailStatus(storyId, token) {
+  storyDetailStatusCache.delete(storyDetailStatusKey(storyId, token))
+}
+
+async function loadStoryDetailStatus(storyId, token) {
+  const key = storyDetailStatusKey(storyId, token)
+  const cached = storyDetailStatusCache.get(key)
+
+  if (cached?.pending) return cached.pending
+  if (cached?.expiresAt > Date.now()) return cached.value
+
+  const pending = (async () => {
+    const response = await fetch(
+      `${API_BASE_URL}/api/reader/story-detail-status/${storyId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to load story status')
+    }
+
+    return data
+  })()
+
+  storyDetailStatusCache.set(key, { pending })
+
+  while (storyDetailStatusCache.size > STORY_DETAIL_STATUS_CACHE_LIMIT) {
+    storyDetailStatusCache.delete(storyDetailStatusCache.keys().next().value)
+  }
+
+  try {
+    const data = await pending
+
+    if (storyDetailStatusCache.get(key)?.pending === pending) {
+      storyDetailStatusCache.set(key, {
+        value: data,
+        expiresAt: Date.now() + STORY_DETAIL_STATUS_CACHE_MS,
+      })
+    }
+
+    return data
+  } catch (error) {
+    if (storyDetailStatusCache.get(key)?.pending === pending) {
+      storyDetailStatusCache.delete(key)
+    }
+
+    throw error
   }
 }
 
@@ -466,6 +529,7 @@ export default function StoryDetailPage() {
   const [authorFollowerCount, setAuthorFollowerCount] = useState(0)
   const [authorFollowLoading, setAuthorFollowLoading] = useState(false)
   const [authorIsOwnerPage, setAuthorIsOwnerPage] = useState(false)
+  const storyStatusRevisionRef = useRef(0)
   const [giftTopFans, setGiftTopFans] = useState([])
   const [echoShareOpen, setEchoShareOpen] = useState(false)
 
@@ -661,30 +725,12 @@ useEffect(() => {
       return
     }
 
+    const revision = storyStatusRevisionRef.current
+
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/reader/story-detail-status/${realStoryId}`,
-        {
-          headers: authHeaders(),
-          cache: 'no-store',
-        }
-      )
+      const data = await loadStoryDetailStatus(realStoryId, token)
 
-      const data = await response
-        .json()
-        .catch(() => ({}))
-
-      if (
-        !response.ok ||
-        data.ok === false
-      ) {
-        throw new Error(
-          data.message ||
-            'Failed to load story status'
-        )
-      }
-
-      if (ignore) return
+      if (ignore || revision !== storyStatusRevisionRef.current) return
 
       setBookmarked(
         Boolean(data.bookmarked)
@@ -707,7 +753,7 @@ useEffect(() => {
         )
       }
     } catch {
-      if (ignore) return
+      if (ignore || revision !== storyStatusRevisionRef.current) return
 
       setBookmarked(false)
       setSubscribed(false)
@@ -777,6 +823,9 @@ useEffect(() => {
 
     if (savingCollection) return
 
+    storyStatusRevisionRef.current += 1
+    invalidateStoryDetailStatus(realStoryId, token)
+
     const next = !bookmarked
     setBookmarked(next)
     setSavingCollection(true)
@@ -795,6 +844,7 @@ useEffect(() => {
     } catch {
       setBookmarked(!next)
     } finally {
+      invalidateStoryDetailStatus(realStoryId, token)
       setSavingCollection(false)
     }
   }
@@ -808,6 +858,9 @@ useEffect(() => {
     }
 
     if (savingCollection) return
+
+    storyStatusRevisionRef.current += 1
+    invalidateStoryDetailStatus(realStoryId, token)
 
     const next = !subscribed
     setSubscribed(next)
@@ -827,6 +880,7 @@ useEffect(() => {
     } catch {
       setSubscribed(!next)
     } finally {
+      invalidateStoryDetailStatus(realStoryId, token)
       setSavingCollection(false)
     }
   }
@@ -841,6 +895,9 @@ useEffect(() => {
     }
 
     if (!pageUsername || authorFollowLoading) return
+
+    storyStatusRevisionRef.current += 1
+    invalidateStoryDetailStatus(realStoryId, token)
 
     const nextFollowing = !authorFollowing
     const previousFollowing = authorFollowing
@@ -870,6 +927,7 @@ useEffect(() => {
       setAuthorFollowing(previousFollowing)
       setAuthorFollowerCount(previousCount)
     } finally {
+      invalidateStoryDetailStatus(realStoryId, token)
       setAuthorFollowLoading(false)
     }
   }
