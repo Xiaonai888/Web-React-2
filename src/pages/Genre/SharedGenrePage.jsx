@@ -773,7 +773,7 @@ export default function SharedGenrePage({
           genre: normalizedGenreSlug,
           sort: 'latest',
           limit: 9,
-          schema: 3,
+          schema: 4,
         },
       })
 
@@ -1029,6 +1029,7 @@ export default function SharedGenrePage({
   }, [fallbackGenreName, normalizedGenreSlug])
 
   const loadMoreStories = async () => {
+    if (!hasAccount) return false
     if (
       loading ||
       loadingMore ||
@@ -1107,7 +1108,7 @@ export default function SharedGenrePage({
           genre: normalizedGenreSlug,
           sort: 'latest',
           limit: 9,
-          schema: 3,
+          schema: 4,
         },
       })
 
@@ -1145,12 +1146,13 @@ export default function SharedGenrePage({
   }
 
 
-  const { sentinelRef, showManualLoad } = useGenreAutoLoad({
+  const { sentinelRef, showManualLoad, hasAccount } = useGenreAutoLoad({
     resetKey: `${normalizedGenreSlug}:${getStoryLanguageId()}`,
     hasMore,
     loading,
     loadingMore,
     loadMore: loadMoreStories,
+    loadedCount: stories.length,
   })
 
   const quickButtons = useMemo(
@@ -1174,19 +1176,21 @@ export default function SharedGenrePage({
     [normalizedGenreSlug]
   )
 
+  const accessibleStories = useMemo(() => hasAccount ? stories : stories.slice(0, 9), [hasAccount, stories])
+
   const topStories = useMemo(
-    () => sortByTop(stories).slice(0, 6),
-    [stories]
+    () => sortByTop(accessibleStories).slice(0, 6),
+    [accessibleStories]
   )
   const trendingStories = useMemo(
-    () => sortByTrending(stories).slice(0, 6),
-    [stories]
+    () => sortByTrending(accessibleStories).slice(0, 6),
+    [accessibleStories]
   )
   const latestStories = useMemo(
-    () => sortByLatest(stories).slice(0, 6),
-    [stories]
+    () => sortByLatest(accessibleStories).slice(0, 6),
+    [accessibleStories]
   )
-  const allStories = useMemo(() => stories, [stories])
+  const allStories = accessibleStories
 
   const heroImage = useMemo(() => {
     const found = topStories.find(
@@ -1393,6 +1397,8 @@ export default function SharedGenrePage({
 
         {!loading && !message ? (
           <div className="pt-7">
+            {hasAccount ? (
+              <>
             <section>
               <SectionTitle
                 icon="🏆"
@@ -1451,6 +1457,9 @@ export default function SharedGenrePage({
               </div>
             </section>
 
+              </>
+            ) : null}
+
             <section className="mt-8">
               <SectionTitle
                 icon="📖"
@@ -1482,7 +1491,7 @@ export default function SharedGenrePage({
                 </div>
               )}
 
-              {hasMore ? (
+              {hasAccount && hasMore ? (
                 <div className="mt-8 flex flex-col items-center gap-3 px-4">
                   <div ref={sentinelRef} className="h-px w-full" aria-hidden="true" />
                   {loadMoreError ? (
