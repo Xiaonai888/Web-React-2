@@ -948,7 +948,7 @@ export default function RankingPage() {
         sort: activeConfig.sort,
         limit: RANKING_LIMIT,
         ranking: 1,
-        schema: 1,
+        schema: 2,
       },
     })
 
