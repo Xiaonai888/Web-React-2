@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import DiscoverPromotionExpiryNotice, { hasExpiredDiscoverPromotion, isExpiredDiscoverPromotion, useDiscoverPromotionExpiry } from '../../components/discover/DiscoverPromotionExpiryNotice'
+
 registerTranslationNamespace('authorCart', {
   en: {
     myCart: 'My Cart',
@@ -155,6 +157,7 @@ export default function AuthorCartPage() {
   const { t } = useDisplayTranslation()
   const [authorItems, setAuthorItems] = useState(getAuthorCartItems)
   const items = authorItems
+  const promotionExpired = useDiscoverPromotionExpiry(items)
   const totalCartCount = items.length
 
   const subtotal = useMemo(
@@ -224,6 +227,9 @@ export default function AuthorCartPage() {
       </header>
 
       <main className="mx-auto max-w-[980px] px-4 py-4">
+        <DiscoverPromotionExpiryNotice expired={promotionExpired} />
+
+        
         
 
         <section className="rounded-[24px] bg-[var(--shadow-bg-surface)] px-4 py-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
