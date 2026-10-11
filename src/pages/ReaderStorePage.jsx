@@ -677,7 +677,7 @@ function ReaderStoreShelf({ title, subtitle, books, t, layout = 'row', badgeType
       t={t}
       onOpen={() => onOpen(book)}
       badgeType={badgeType}
-      rank={badgeType === 'best' ? index + 1 : 0}
+      rank={badgeType === 'best' ? book.bestSellerRank : 0}
       className={layout === 'grid' ? 'min-w-0' : large ? 'w-[155px] shrink-0' : 'w-[118px] shrink-0'}
     />
   ))
@@ -869,9 +869,9 @@ export default function ReaderStorePage() {
 
   const explorePager = useStoreBooksPager('you_might_like', sections.you_might_like, !browseKey && !loading && !loadError, true)
   const browsePager = useStoreBooksPager(browseKey, EMPTY_SECTIONS.you_might_like, Boolean(browseKey), false)
-  const visibleSection = (key) => (sections[key] || []).filter((book) =>
-    matchesFilter(book) && (key !== 'discount_books' || book.discountPercent > 0)
-  )
+  const visibleSection = (key) => (sections[key] || [])
+  .map((book, index) => key === 'best_sellers' ? { ...book, bestSellerRank: index + 1 } : book)
+  .filter((book) => matchesFilter(book) && (key !== 'discount_books' || book.discountPercent > 0))
   const openBrowse = (key) => navigate(`/store?browse=${key}`)
   const browseTitles = {
     from_author_stores: t('readerStore.fromAuthors'),
@@ -1026,7 +1026,7 @@ export default function ReaderStorePage() {
                     t={t}
                     onOpen={() => openProduct(book)}
                     badgeType={browseKey === 'best_sellers' ? 'best' : browseKey === 'discount_books' ? 'discount' : browseKey === 'new_books' ? 'new' : ''}
-                    rank={browseKey === 'best_sellers' ? index + 1 : 0}
+                    rank={browseKey === 'best_sellers' ? browsePager.items.findIndex((item) => item.id === book.id) + 1 : 0}
                     className="min-w-0"
                   />
                 ))}
