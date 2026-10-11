@@ -39,7 +39,7 @@ registerTranslationNamespace('authorIncomeOld', {
     howIncomeWorks: 'How income works',
     quickGuide: 'Quick guide for author earnings',
     tip1: 'Your income is shown as money, but the system records earnings from Diamond unlocks.',
-    tip2: 'Your share depends on your Quest stage.',
+    tip2: 'Your share follows your Quest stage and any eligible events or loyalty protection.',
     tip3: 'When eligible Story Unlock earnings reach $10, Shadow reviews and transfers the payout manually. No withdrawal request is needed; there is no guaranteed transfer date.',
     tip4: 'Free unlocks, Gems, Vouchers, Story Cards, and Episodes 1–5 do not count as paid income.',
     viewBenefits: 'View Author Benefits',
@@ -70,7 +70,7 @@ registerTranslationNamespace('authorIncomeOld', {
     noMonthlyEarningsBody: 'Monthly summaries will appear after readers use paid Diamonds to unlock your stories.',
     viewAll: 'View all',
     incomeRules: 'Income Rules',
-    incomeRulesBody: 'Income is calculated from net Diamond unlock revenue after package discounts. Your current share comes from Quest progress. Free unlocks, Gems, Vouchers, Story Cards, and Episodes 1–5 do not count as paid income.',
+    incomeRulesBody: 'Income is calculated from net Diamond unlock revenue after package discounts. Your current share comes from Quest progress and eligible events or loyalty protection. Free unlocks, Gems, Vouchers, Story Cards, and Episodes 1–5 do not count as paid income.',
   },
   km: {
     notScheduled: 'មិនទាន់កំណត់កាលវិភាគ',
@@ -102,7 +102,7 @@ registerTranslationNamespace('authorIncomeOld', {
     howIncomeWorks: 'របៀបដំណើរការចំណូល',
     quickGuide: 'ការណែនាំខ្លីសម្រាប់ចំណូលអ្នកនិពន្ធ',
     tip1: 'ចំណូលរបស់អ្នកបង្ហាញជាប្រាក់ ប៉ុន្តែប្រព័ន្ធកត់ត្រាចំណូលពីការដោះសោដោយ Diamond។',
-    tip2: 'ភាគរយចំណែករបស់អ្នកអាស្រ័យលើកម្រិត Quest។',
+    tip2: 'ភាគរយចំណែករបស់អ្នកគិតតាម Stage និង Event ឬការការពារចំណូលដែលមានសិទ្ធិ។',
     tip3: 'ពេលចំណូលពីការដោះសោរឿងដែលគ្រប់លក្ខខណ្ឌឈានដល់ $10 Shadow នឹងពិនិត្យ និងផ្ទេរប្រាក់ដោយផ្ទាល់។ អ្នកមិនចាំបាច់ស្នើដកប្រាក់ទេ ហើយមិនមានការធានាថានឹងផ្ទេរនៅថ្ងៃណាមួយជាក់លាក់ទេ។',
     tip4: 'ការដោះសោឥតគិតថ្លៃ Gems, Vouchers, Story Cards និងភាគ 1–5 មិនរាប់ជាចំណូលបង់ប្រាក់ទេ។',
     viewBenefits: 'មើលអត្ថប្រយោជន៍អ្នកនិពន្ធ',
@@ -133,7 +133,7 @@ registerTranslationNamespace('authorIncomeOld', {
     noMonthlyEarningsBody: 'សង្ខេបចំណូលប្រចាំខែនឹងបង្ហាញនៅទីនេះ បន្ទាប់ពីអ្នកអានប្រើ Diamond បង់ប្រាក់ដើម្បីដោះសោរឿងរបស់អ្នក។',
     viewAll: 'មើលទាំងអស់',
     incomeRules: 'ច្បាប់ចំណូល',
-    incomeRulesBody: 'ចំណូលគណនាពីចំណូលសុទ្ធនៃការដោះសោ Diamond បន្ទាប់ពីបញ្ចុះតម្លៃកញ្ចប់។ ចំណែកបច្ចុប្បន្នអាស្រ័យលើវឌ្ឍនភាព Quest។ ការដោះសោឥតគិតថ្លៃ Gems, Vouchers, Story Cards និងភាគ 1–5 មិនរាប់ជាចំណូលបង់ប្រាក់ទេ។',
+    incomeRulesBody: 'ចំណូលគណនាពីចំណូលសុទ្ធនៃការដោះសោ Diamond បន្ទាប់ពីបញ្ចុះតម្លៃកញ្ចប់។ ចំណែកបច្ចុប្បន្នគិតតាម Quest និង Event ឬការការពារចំណូលដែលមានសិទ្ធិ។ ការដោះសោឥតគិតថ្លៃ Gems, Vouchers, Story Cards និងភាគ 1–5 មិនរាប់ជាចំណូលបង់ប្រាក់ទេ។',
   },
   zh: {
     notScheduled: '尚未安排',
@@ -165,7 +165,7 @@ registerTranslationNamespace('authorIncomeOld', {
     howIncomeWorks: '收入如何计算',
     quickGuide: '作者收入快速指南',
     tip1: '你的收入以金额显示，但系统实际记录的是 Diamond 解锁产生的收入。',
-    tip2: '你的分成比例取决于 Quest 阶段。',
+    tip2: '你的分成比例取决于 Quest 阶段、符合条件的活动或忠诚保障。',
     tip3: '当符合条件的故事解锁收入达到 $10 时，Shadow 会审核并手动转账。无需申请提现，也不保证具体转账日期。',
     tip4: '免费解锁、Gems、Vouchers、Story Cards 以及第 1–5 章不计入付费收入。',
     viewBenefits: '查看作者福利',
@@ -196,7 +196,7 @@ registerTranslationNamespace('authorIncomeOld', {
     noMonthlyEarningsBody: '读者使用付费 Diamond 解锁你的作品后，月度收益汇总会显示在这里。',
     viewAll: '查看全部',
     incomeRules: '收入规则',
-    incomeRulesBody: '收入按套餐折扣后的 Diamond 解锁净收入计算。当前分成来自 Quest 进度。免费解锁、Gems、Vouchers、Story Cards 以及第 1–5 章不计入付费收入。',
+    incomeRulesBody: '收入按套餐折扣后的 Diamond 解锁净收入计算。当前分成来自 Quest 进度、符合条件的活动或忠诚保障。免费解锁、Gems、Vouchers、Story Cards 以及第 1–5 章不计入付费收入。',
   },
   ja: {
     notScheduled: 'まだ予定されていません',
@@ -228,7 +228,7 @@ registerTranslationNamespace('authorIncomeOld', {
     howIncomeWorks: '収益の仕組み',
     quickGuide: '作者収益のクイックガイド',
     tip1: '収益は金額で表示されますが、システムでは Diamond 解放からの収益を記録しています。',
-    tip2: '分配率は Quest のステージによって決まります。',
+    tip2: '分配率は Quest の段階、対象イベント、ロイヤルティ保障に基づきます。',
     tip3: '対象となるストーリー解放収益が $10 に達すると、Shadow が確認して手動で送金します。出金申請は不要ですが、送金日は保証されません。',
     tip4: '無料解放、Gems、Vouchers、Story Cards、エピソード1〜5は有料収益に含まれません。',
     viewBenefits: '作者特典を見る',
@@ -259,7 +259,7 @@ registerTranslationNamespace('authorIncomeOld', {
     noMonthlyEarningsBody: '読者が有料 Diamond で作品を解放すると、月間収益の集計がここに表示されます。',
     viewAll: 'すべて表示',
     incomeRules: '収益ルール',
-    incomeRulesBody: '収益はパッケージ割引後の Diamond 解放純収入から計算されます。現在の分配率は Quest の進捗で決まります。無料解放、Gems、Vouchers、Story Cards、エピソード1〜5は有料収益に含まれません。',
+    incomeRulesBody: '収益はパッケージ割引後の Diamond 解放純収入から計算されます。現在の分配率は Quest の進捗、対象イベント、ロイヤルティ保障で決まります。無料解放、Gems、Vouchers、Story Cards、エピソード1〜5は有料収益に含まれません。',
   },
   ko: {
     notScheduled: '아직 예정되지 않음',
@@ -291,7 +291,7 @@ registerTranslationNamespace('authorIncomeOld', {
     howIncomeWorks: '수입 계산 방식',
     quickGuide: '작가 수입 빠른 안내',
     tip1: '수입은 금액으로 표시되지만 시스템은 Diamond 잠금 해제에서 발생한 수입을 기록합니다.',
-    tip2: '수익 지분은 Quest 단계에 따라 달라집니다.',
+    tip2: '수익 지분은 Quest 단계, 적용 이벤트 및 로열티 보호에 따라 결정됩니다.',
     tip3: '지급 대상 스토리 잠금 해제 수익이 $10에 도달하면 Shadow가 검토한 뒤 수동으로 송금합니다. 출금 신청은 필요하지 않으며 특정 송금일은 보장되지 않습니다.',
     tip4: '무료 잠금 해제, Gems, Vouchers, Story Cards 및 에피소드 1~5는 유료 수입에 포함되지 않습니다.',
     viewBenefits: '작가 혜택 보기',
@@ -322,10 +322,83 @@ registerTranslationNamespace('authorIncomeOld', {
     noMonthlyEarningsBody: '독자가 유료 Diamond로 작품을 잠금 해제하면 월간 수입 요약이 여기에 표시됩니다.',
     viewAll: '모두 보기',
     incomeRules: '수입 규칙',
-    incomeRulesBody: '수입은 패키지 할인 후 Diamond 잠금 해제 순수익을 기준으로 계산됩니다. 현재 지분은 Quest 진행도에 따라 결정됩니다. 무료 잠금 해제, Gems, Vouchers, Story Cards 및 에피소드 1~5는 유료 수입에 포함되지 않습니다.',
+    incomeRulesBody: '수입은 패키지 할인 후 Diamond 잠금 해제 순수익을 기준으로 계산됩니다. 현재 지분은 Quest 진행도, 적용 이벤트 및 로열티 보호에 따라 결정됩니다. 무료 잠금 해제, Gems, Vouchers, Story Cards 및 에피소드 1~5는 유료 수입에 포함되지 않습니다.',
   },
 })
 
+
+registerTranslationNamespace('authorLoyaltyIncome', {
+  en: {
+    title: 'Author Loyalty Reward',
+    statusActive: 'Protected',
+    statusWaiting: 'Upcoming',
+    statusPaused: 'Paused',
+    statusEnded: 'Ended',
+    statusUnavailable: 'Unavailable',
+    active: 'Your paid Diamond unlock income has a minimum 50% share while you keep publishing at least once every 365 days.',
+    waiting: 'Available to every author after publishing 20 episodes and starting the 180-day event. Protection lasts 3 years from that start date.',
+    paused: 'Your minimum 50% protection is paused. Publish a genuine new episode to restore it during the remaining protection period.',
+    ended: 'Your 3-year protection has ended. Your share now follows your Quest stage or any other eligible event.',
+    unavailable: 'The protection status is temporarily unavailable. Other income information remains accessible.',
+    until: 'Protection ends {{date}}',
+  },
+  km: {
+    title: 'Author Loyalty Reward',
+    statusActive: 'កំពុងការពារ',
+    statusWaiting: 'មិនទាន់ចាប់ផ្តើម',
+    statusPaused: 'បានផ្អាក',
+    statusEnded: 'បានបញ្ចប់',
+    statusUnavailable: 'មិនអាចពិនិត្យបាន',
+    active: 'ចំណូលពីការដោះសោដោយ Diamond របស់អ្នកមានចំណែកអប្បបរមា 50% ដរាបណាបានបង្ហោះភាគថ្មីយ៉ាងតិចម្តងក្នុង 365 ថ្ងៃ។',
+    waiting: 'អ្នកនិពន្ធគ្រប់រូបអាចទទួលបានក្រោយមាន 20 ភាគ និងចាប់ផ្តើម Event 180 ថ្ងៃ។ ការការពារមានរយៈពេល 3 ឆ្នាំគិតពីថ្ងៃនោះ។',
+    paused: 'សិទ្ធិធានា 50% របស់អ្នកត្រូវបានផ្អាក។ បង្ហោះភាគថ្មីពិតប្រាកដ ដើម្បីទទួលបានវិញក្នុងរយៈពេលការពារដែលនៅសល់។',
+    ended: 'ការការពារ 3 ឆ្នាំបានបញ្ចប់។ ចំណែកចំណូលបន្តគិតតាម Stage ឬ Event ផ្សេងដែលមានសិទ្ធិ។',
+    unavailable: 'មិនអាចពិនិត្យស្ថានភាពការពារបានបណ្ដោះអាសន្នទេ។ ព័ត៌មានចំណូលផ្សេងនៅតែអាចមើលបាន។',
+    until: 'ការការពារបញ្ចប់នៅ {{date}}',
+  },
+  zh: {
+    title: '作者忠诚奖励',
+    statusActive: '保障中',
+    statusWaiting: '尚未开始',
+    statusPaused: '已暂停',
+    statusEnded: '已结束',
+    statusUnavailable: '暂不可用',
+    active: '只要每365天至少发布一个新章节，付费 Diamond 解锁收入的作者分成便不低于50%。',
+    waiting: '所有作者在发布20个章节并启动180天活动后均可参与。保护从活动启动之日起持续3年。',
+    paused: '最低50%分成保障已暂停。在剩余保障期内发布真正的新章节即可恢复。',
+    ended: '三年保障期已结束。分成按照 Quest 阶段或其他符合条件的活动计算。',
+    unavailable: '暂时无法获取保障状态。其他收入信息仍可查看。',
+    until: '保障截止：{{date}}',
+  },
+  ja: {
+    title: '作者ロイヤルティ報酬',
+    statusActive: '保障中',
+    statusWaiting: '開始前',
+    statusPaused: '一時停止',
+    statusEnded: '終了',
+    statusUnavailable: '取得不可',
+    active: '365日以内に新しいエピソードを公開し続ける間、有料Diamond解放の分配率は最低50%です。',
+    waiting: '全作者が20エピソードを公開し180日イベントを開始すると対象になります。開始日から3年間保障されます。',
+    paused: '最低50%の保障は一時停止中です。残りの保障期間中に新しいエピソードを公開すると再開します。',
+    ended: '3年間の保障が終了しました。今後はQuestの段階や対象イベントに応じた分配率となります。',
+    unavailable: '保障状況を一時的に取得できません。その他の収益情報は表示できます。',
+    until: '保障終了：{{date}}',
+  },
+  ko: {
+    title: '작가 로열티 보상',
+    statusActive: '보호 중',
+    statusWaiting: '시작 전',
+    statusPaused: '일시 중지',
+    statusEnded: '종료',
+    statusUnavailable: '확인 불가',
+    active: '365일 안에 새 에피소드를 한 번 이상 게시하는 동안 유료 Diamond 잠금 해제 수익의 최소 50% 지분이 보장됩니다.',
+    waiting: '모든 작가는 에피소드 20개를 공개하고 180일 이벤트를 시작하면 참여할 수 있습니다. 보호 기간은 시작일부터 3년입니다.',
+    paused: '최소 50% 보호가 일시 중지되었습니다. 남은 보호 기간에 새 에피소드를 공개하면 복구됩니다.',
+    ended: '3년 보호 기간이 종료되었습니다. 수익 지분은 Quest 단계 또는 적용 가능한 다른 이벤트를 따릅니다.',
+    unavailable: '보호 상태를 일시적으로 확인할 수 없습니다. 다른 수익 정보는 계속 이용할 수 있습니다.',
+    until: '보호 종료일 {{date}}',
+  },
+})
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -929,6 +1002,14 @@ export default function AuthorIncomePage() {
 
   const paymentMethod = data?.payment_method?.primary || null
   const paymentComplete = Boolean(data?.payment_method?.complete)
+  const loyaltyStatus = data?.loyalty_reward?.status || 'waiting'
+  const loyaltyStatusKey = {
+    active: 'statusActive',
+    waiting: 'statusWaiting',
+    paused: 'statusPaused',
+    ended: 'statusEnded',
+    unavailable: 'statusUnavailable',
+  }[loyaltyStatus] || 'statusWaiting'
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-10">
@@ -1114,6 +1195,28 @@ export default function AuthorIncomePage() {
                   />
                 </div>
               </div>
+            </section>
+
+            <section className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <i className="fa-solid fa-shield-heart text-[15px]" />
+                </div>
+                <div className="min-w-0 flex-1 text-[12px] font-black text-[var(--shadow-text-primary)]">
+                  {t('authorLoyaltyIncome.title')}
+                </div>
+                <span className="shrink-0 rounded-full bg-[var(--shadow-bg-soft)] px-2.5 py-1 text-[9px] font-bold text-[var(--shadow-text-secondary)]">
+                  {t(`authorLoyaltyIncome.${loyaltyStatusKey}`)}
+                </span>
+              </div>
+              <p className="mt-2 text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
+                {t(`authorLoyaltyIncome.${loyaltyStatus}`)}
+              </p>
+              {data.loyalty_reward?.ends_at && loyaltyStatus !== 'ended' ? (
+                <p className="mt-1.5 text-[10px] font-bold text-[var(--shadow-text-tertiary)]">
+                  {t('authorLoyaltyIncome.until', { date: dateText(data.loyalty_reward.ends_at) })}
+                </p>
+              ) : null}
             </section>
 
             <PaperCard
