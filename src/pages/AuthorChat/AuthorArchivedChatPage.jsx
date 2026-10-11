@@ -10,15 +10,16 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   deleteAuthorChatConversation,
-  getAuthorChatConversations,
   hasAuthorChatSession,
   unarchiveAuthorChatConversation,
 } from '../../services/authorChatApi'
+import { getArchivedChatPage } from '../../services/chatArchivedPageApi'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -35,7 +36,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "restore": "Restore",
     "delete": "Delete",
     "noArchivedMessages": "No archived messages",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "loadMore": "Load more",
   },
   "km": {
     "shadowReader": "អ្នកអាន Shadow",
@@ -49,7 +51,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "restore": "ស្ដារ",
     "delete": "លុប",
     "noArchivedMessages": "មិនមានសារដែលបានទុកក្នុងបណ្ណសារ",
-    "refresh": "ផ្ទុកឡើងវិញ"
+    "refresh": "ផ្ទុកឡើងវិញ",
+    "loadMore": "មើលបន្ថែម",
   },
   "zh": {
     "shadowReader": "Shadow 读者",
@@ -63,7 +66,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "restore": "恢复",
     "delete": "删除",
     "noArchivedMessages": "暂无已归档消息",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "loadMore": "加载更多",
   },
   "ja": {
     "shadowReader": "Shadow 読者",
@@ -77,7 +81,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "restore": "復元",
     "delete": "削除",
     "noArchivedMessages": "アーカイブ済みメッセージはありません",
-    "refresh": "更新"
+    "refresh": "更新",
+    "loadMore": "さらに読み込む",
   },
   "ko": {
     "shadowReader": "Shadow 독자",
@@ -91,7 +96,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "restore": "복원",
     "delete": "삭제",
     "noArchivedMessages": "보관된 메시지가 없습니다",
-    "refresh": "새로고침"
+    "refresh": "새로고침",
+    "loadMore": "더 보기",
   }
 })
 
@@ -127,30 +133,45 @@ export default function AuthorArchivedChatPage() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState('')
   const [error, setError] = useState('')
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const nextPageRef = useRef(1)
+  const inFlightRef = useRef(false)
 
   const loadArchived = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!silent) setLoading(true)
+    async ({ silent = false, append = false } = {}) => {
+      if (inFlightRef.current) return
+      inFlightRef.current = true
+      if (append) setLoadingMore(true)
+      else if (!silent) setLoading(true)
 
       try {
-        const data = await getAuthorChatConversations({
-          view: 'archived',
+        const data = await getArchivedChatPage({
+          role: 'author',
+          page: append ? nextPageRef.current : 1,
         })
+        const records = Array.isArray(data.conversations)
+          ? data.conversations.filter((conversation) => conversation.viewer_role === 'author')
+          : []
 
-        setConversations(data.conversations || [])
+        setConversations((previous) => {
+          if (!append) return records
+          const seen = new Set(previous.map((item) => String(item.id)))
+          return [...previous, ...records.filter((item) => !seen.has(String(item.id)))]
+        })
+        setHasMore(data.pagination?.has_more === true)
+        nextPageRef.current = data.pagination?.next_page || 1
         setError('')
       } catch (loadError) {
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
           return
         }
-
-        setError(
-          loadError.message ||
-            getDisplayText('authorArchivedChat.failedLoadArchived')
-        )
+        setError(loadError.message || getDisplayText('authorArchivedChat.failedLoadArchived'))
       } finally {
-        if (!silent) setLoading(false)
+        inFlightRef.current = false
+        if (append) setLoadingMore(false)
+        else if (!silent) setLoading(false)
       }
     },
     [navigate]
@@ -162,23 +183,7 @@ export default function AuthorArchivedChatPage() {
       return undefined
     }
 
-    loadArchived()
-
-    let lastRefreshedAt = Date.now()
-    const refreshWhenActive = () => {
-      if (document.visibilityState !== 'visible') return
-      if (Date.now() - lastRefreshedAt < 60 * 1000) return
-      lastRefreshedAt = Date.now()
-      void loadArchived({ silent: true })
-    }
-
-    window.addEventListener('focus', refreshWhenActive)
-    document.addEventListener('visibilitychange', refreshWhenActive)
-
-    return () => {
-      window.removeEventListener('focus', refreshWhenActive)
-      document.removeEventListener('visibilitychange', refreshWhenActive)
-    }
+    void loadArchived()
   }, [loadArchived, navigate])
 
   const visible = useMemo(() => {
@@ -407,6 +412,16 @@ export default function AuthorArchivedChatPage() {
             </h2>
           </div>
         )}
+        {hasMore && !loading ? (
+          <button
+            type="button"
+            disabled={loadingMore}
+            onClick={() => void loadArchived({ append: true })}
+            className="mt-4 flex w-full items-center justify-center rounded-[14px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[13px] font-bold text-[var(--shadow-text-primary)] disabled:opacity-50"
+          >
+            {loadingMore ? <LoaderCircle size={18} className="animate-spin" /> : getDisplayText('authorArchivedChat.loadMore')}
+          </button>
+        ) : null}
       </main>
     </div>
   )
