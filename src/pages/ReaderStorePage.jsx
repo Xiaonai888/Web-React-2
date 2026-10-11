@@ -16,7 +16,17 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const FILTERS = ['all', 'book', 'pdf']
+const FILTERS = ['all', 'book', 'pdf', 'under3']
+const EMPTY_SECTIONS = {
+  from_author_stores: [],
+  editors_picks: [],
+  best_sellers: [],
+  discount_books: [],
+  new_books: [],
+  sold_out: [],
+  you_might_like: [],
+}
+const BROWSE_KEYS = new Set(['from_author_stores', 'best_sellers', 'discount_books', 'new_books'])
 
 registerTranslationNamespace('readerStore', {
   en: {
@@ -207,6 +217,14 @@ function formatDisplayNumber(value) {
   return new Intl.NumberFormat(displayLocale()).format(Number.isFinite(number) ? number : 0)
 }
 
+registerTranslationNamespace('readerStoreShelves', {
+  en: { under3: 'Under $3', bestSellers: 'Best Seller', discounts: 'Discount Books', newBooks: 'New Books', soldOut: 'Sold Out', discover: 'Explore More Books', loadMore: 'Load 9 more', loadingMore: 'Loading...', fromAuthors: 'From Author Stores', backStore: 'Back to Store', empty: 'No books found', retry: 'Try again' },
+  km: { under3: 'ក្រោម $3', bestSellers: 'លក់ដាច់បំផុត', discounts: 'សៀវភៅបញ្ចុះតម្លៃ', newBooks: 'សៀវភៅថ្មី', soldOut: 'អស់ស្តុក', discover: 'ស្វែងរកសៀវភៅបន្ថែម', loadMore: 'បង្ហាញ ៩ ក្បាលទៀត', loadingMore: 'កំពុងទាញយក...', fromAuthors: 'ពីហាងអ្នកនិពន្ធ', backStore: 'ត្រឡប់ទៅហាង', empty: 'មិនមានសៀវភៅ', retry: 'សាកម្ដងទៀត' },
+  zh: { under3: '低于 $3', bestSellers: '畅销书', discounts: '折扣图书', newBooks: '新书', soldOut: '售罄', discover: '探索更多图书', loadMore: '再加载9本', loadingMore: '加载中...', fromAuthors: '作者商店', backStore: '返回商店', empty: '未找到图书', retry: '重试' },
+  ja: { under3: '$3未満', bestSellers: 'ベストセラー', discounts: '割引本', newBooks: '新刊', soldOut: '売り切れ', discover: 'もっと本を探す', loadMore: 'さらに9冊', loadingMore: '読み込み中...', fromAuthors: '作家ストア', backStore: 'ストアに戻る', empty: '本がありません', retry: '再試行' },
+  ko: { under3: '$3 미만', bestSellers: '베스트셀러', discounts: '할인 도서', newBooks: '신간', soldOut: '품절', discover: '더 많은 도서', loadMore: '9권 더 보기', loadingMore: '불러오는 중...', fromAuthors: '작가 스토어', backStore: '스토어로 돌아가기', empty: '도서가 없습니다', retry: '다시 시도' },
+})
+
 function formatMoney(value) {
   const number = Number(value || 0)
   return new Intl.NumberFormat(displayLocale(), {
@@ -247,6 +265,10 @@ function normalizeProduct(product) {
         : 0,
     type,
     badge: product.best_seller ? 'trending' : 'new',
+    soldQuantity: Math.max(0, Number(product.sold_quantity || 0)),
+    discountPercent: salePrice > 0 && originalPrice > salePrice
+      ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
+      : 0,
     stockStatus: product.stock_status || (type === 'pdf' ? 'digital' : 'in_stock'),
     preOrder: Boolean(product.pre_order),
   }
@@ -260,12 +282,31 @@ async function fetchReaderStoreHome(fallbackMessage) {
     throw new Error(data.message || fallbackMessage)
   }
 
+  const sections = data.sections || {}
+  const mapped = Object.fromEntries(
+    Object.keys(EMPTY_SECTIONS).map((key) => [
+      key,
+      (Array.isArray(sections[key]) ? sections[key] : []).map(normalizeProduct),
+    ])
+  )
   return {
     products: Array.isArray(data.products) ? data.products.map(normalizeProduct) : [],
     featuredAuthors: Array.isArray(data.featured_authors) ? data.featured_authors : [],
     editorsPicks: Array.isArray(data.editors_picks)
       ? data.editors_picks.map(normalizeProduct)
       : [],
+    sections: mapped,
+  }
+}
+
+async function fetchReaderShelf(section, page) {
+  const params = new URLSearchParams({ browse: '1', section, page: String(page), limit: '9' })
+  const response = await fetch(`${API_BASE_URL}/api/author-store/store/home?${params.toString()}`)
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load books')
+  return {
+    products: (Array.isArray(data.products) ? data.products : []).map(normalizeProduct),
+    hasMore: Boolean(data.has_more),
   }
 }
 
@@ -392,25 +433,21 @@ function HorizontalScrollRow({ children, className = '' }) {
 
 function SectionHeader({ title, subtitle, action, onAction }) {
   return (
-    <div className="flex items-end justify-between gap-3">
+    <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-[17px] font-extrabold text-[var(--shadow-text-primary)]">
-          {title}
-        </h2>
+        <h2 className="text-[17px] font-extrabold text-[var(--shadow-text-primary)]">{title}</h2>
         {subtitle ? (
-          <p className="mt-0.5 line-clamp-1 text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">
-            {subtitle}
-          </p>
+          <p className="mt-0.5 line-clamp-1 text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{subtitle}</p>
         ) : null}
       </div>
-
       {action ? (
         <button
           type="button"
+          aria-label={action}
           onClick={onAction}
-          className="shrink-0 text-[12px] font-extrabold text-[#7c3aed] active:opacity-70"
+          className="-mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)] active:opacity-70"
         >
-          {action} <span aria-hidden="true">›</span>
+          <i className="fa-solid fa-chevron-right text-[19px]" aria-hidden="true" />
         </button>
       ) : null}
     </div>
@@ -484,10 +521,6 @@ function WaitlistHeartButton({ book, t, compact = false }) {
 }
 
 function StoreBookCard({ book, t, onOpen }) {
-  const badgeLabel =
-    book.badge === 'trending'
-      ? t('readerStore.trendingLabel')
-      : t('readerStore.newLabel')
   const typeLabel =
     book.type === 'pdf' ? t('readerStore.pdf') : t('readerStore.book')
   const soldOut = book.stockStatus === 'sold_out'
@@ -515,17 +548,11 @@ function StoreBookCard({ book, t, onOpen }) {
           />
         </button>
 
-        <span
-          className={`pointer-events-none absolute left-2 top-2 rounded-full px-2.5 py-1 text-[9px] font-extrabold shadow-sm ${
-            soldOut
-              ? 'bg-[#f1f5f9] text-[#64748b]'
-              : book.badge === 'trending'
-                ? 'bg-[#dff7f3] text-[#0f766e]'
-                : 'bg-[#ede9fe] text-[#6d28d9]'
-          }`}
-        >
-          {soldOut ? t('readerStore.soldOut') : badgeLabel}
-        </span>
+        {soldOut ? (
+          <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-[#f1f5f9] px-2 py-1 text-[9px] font-extrabold text-[#64748b]">
+            {t('readerStore.soldOut')}
+          </span>
+        ) : null}
 
         <WaitlistHeartButton book={book} t={t} />
       </div>
@@ -585,24 +612,31 @@ function StoreBookCard({ book, t, onOpen }) {
   )
 }
 
-function EditorPickCard({ book, t, onOpen }) {
+function EditorPickCard({ book, t, onOpen, badgeType = '', rank = 0, className = 'w-[118px] shrink-0' }) {
   const soldOut = book.stockStatus === 'sold_out'
   const displayTitle = book.title || t('readerStore.untitledBook')
   const badgeLabel =
-    soldOut
-      ? t('readerStore.soldOut')
-      : book.badge === 'trending'
-        ? t('readerStore.trendingLabel')
-        : t('readerStore.newLabel')
+    badgeType === 'best' && rank > 0 && rank <= 3
+      ? `TOP ${rank}`
+      : badgeType === 'discount' && book.discountPercent > 0
+        ? `−${Math.round(book.discountPercent)}%`
+        : badgeType === 'new'
+          ? t('readerStore.newLabel')
+          : badgeType === 'sold'
+            ? t('readerStore.soldOut')
+            : ''
+  const badgeColor = badgeType === 'best'
+    ? 'bg-[#fef3c7] text-[#92400e]'
+    : badgeType === 'discount'
+      ? 'bg-[#fee2e2] text-[#b91c1c]'
+      : badgeType === 'new'
+        ? 'bg-[#dbeafe] text-[#1d4ed8]'
+        : 'bg-[#f1f5f9] text-[#64748b]'
 
   return (
-    <article className="w-[118px] shrink-0">
+    <article className={className}>
       <div className="relative aspect-[3/4] overflow-hidden rounded-[10px] bg-[var(--shadow-bg-soft)] shadow-sm ring-1 ring-[var(--shadow-border)]">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="block h-full w-full text-left transition active:scale-[0.98]"
-        >
+        <button type="button" onClick={onOpen} className="block h-full w-full text-left transition active:scale-[0.98]">
           <ResilientImage
             src={book.cover}
             alt={displayTitle}
@@ -614,35 +648,136 @@ function EditorPickCard({ book, t, onOpen }) {
             }
           />
         </button>
-
-        <span
-          className={`pointer-events-none absolute left-2 top-2 rounded-full px-2 py-1 text-[8px] font-extrabold shadow-sm ${
-            soldOut
-              ? 'bg-[#f1f5f9] text-[#64748b]'
-              : book.badge === 'trending'
-                ? 'bg-[#dff7f3] text-[#0f766e]'
-                : 'bg-[#ede9fe] text-[#6d28d9]'
-          }`}
-        >
-          {badgeLabel}
-        </span>
-
+        {badgeLabel ? (
+          <span className={`pointer-events-none absolute left-1.5 top-1.5 rounded-full px-2 py-1 text-[9px] font-extrabold shadow-sm ${badgeColor}`}>
+            {badgeLabel}
+          </span>
+        ) : null}
         <WaitlistHeartButton book={book} t={t} compact />
       </div>
-
-      <button
-        type="button"
-        onClick={onOpen}
-        className="block w-full text-left transition active:scale-[0.98]"
-      >
-        <h3 className="mt-2 line-clamp-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">
-          {displayTitle}
-        </h3>
-        <div className="mt-0.5 text-[10.5px] font-extrabold text-[#7c3aed]">
-          {formatMoney(book.priceValue)}
+      <button type="button" onClick={onOpen} className="block w-full text-left transition active:scale-[0.98]">
+        <h3 className="mt-2 line-clamp-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">{displayTitle}</h3>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px] font-extrabold text-[#7c3aed]">
+          <span>{formatMoney(book.priceValue)}</span>
+          {badgeType === 'discount' && book.oldPriceValue > book.priceValue ? (
+            <span className="text-[9px] font-medium text-[var(--shadow-text-tertiary)] line-through">{formatMoney(book.oldPriceValue)}</span>
+          ) : null}
         </div>
       </button>
     </article>
+  )
+}
+
+function ReaderStoreShelf({ title, subtitle, books, t, layout = 'row', badgeType = '', onOpen, onMore, large = false }) {
+  if (!books.length) return null
+  const cards = books.map((book, index) => (
+    <EditorPickCard
+      key={book.id}
+      book={book}
+      t={t}
+      onOpen={() => onOpen(book)}
+      badgeType={badgeType}
+      rank={badgeType === 'best' ? index + 1 : 0}
+      className={layout === 'grid' ? 'min-w-0' : large ? 'w-[155px] shrink-0' : 'w-[118px] shrink-0'}
+    />
+  ))
+  return (
+    <section className="mt-6 space-y-3">
+      <SectionHeader title={title} subtitle={subtitle} action={onMore ? t('readerStore.seeMore') : ''} onAction={onMore} />
+      {layout === 'grid' ? (
+        <div className="grid grid-cols-3 gap-x-3 gap-y-5">{cards}</div>
+      ) : (
+        <HorizontalScrollRow className="-mx-1 flex gap-3 px-1 pb-2">{cards}</HorizontalScrollRow>
+      )}
+    </section>
+  )
+}
+
+function useStoreBooksPager(section, seed, enabled, fromHome) {
+  const [state, setState] = useState({ items: [], page: 0, hasMore: false, loading: false, error: '' })
+  const pending = useRef(false)
+  const generation = useRef(0)
+  const autoCount = useRef(0)
+  const sentinel = useRef(null)
+
+  useEffect(() => {
+    generation.current += 1
+    const id = generation.current
+    pending.current = false
+    autoCount.current = 0
+    if (!enabled || !section) {
+      setState({ items: [], page: 0, hasMore: false, loading: false, error: '' })
+      return
+    }
+    if (fromHome) {
+      setState({ items: seed, page: seed.length ? 1 : 0, hasMore: seed.length === 9, loading: false, error: '' })
+      return
+    }
+    pending.current = true
+    setState({ items: [], page: 0, hasMore: true, loading: true, error: '' })
+    fetchReaderShelf(section, 1)
+      .then((result) => {
+        if (generation.current !== id) return
+        setState({ items: result.products, page: 1, hasMore: result.hasMore, loading: false, error: '' })
+      })
+      .catch((error) => {
+        if (generation.current !== id) return
+        setState({ items: [], page: 0, hasMore: true, loading: false, error: error.message })
+      })
+      .finally(() => {
+        if (generation.current === id) pending.current = false
+      })
+    return () => { generation.current += 1 }
+  }, [section, enabled, fromHome, seed])
+
+  const loadNext = async (automatic = false) => {
+    if (!enabled || pending.current || !state.hasMore || (automatic && autoCount.current >= 2)) return
+    const id = generation.current
+    const next = state.page + 1
+    pending.current = true
+    setState((current) => ({ ...current, loading: true, error: '' }))
+    try {
+      const result = await fetchReaderShelf(section, next)
+      if (generation.current !== id) return
+      setState((current) => {
+        const seen = new Set(current.items.map((item) => String(item.id)))
+        const appended = result.products.filter((item) => !seen.has(String(item.id)))
+        return { items: [...current.items, ...appended], page: next, hasMore: result.hasMore, loading: false, error: '' }
+      })
+      if (automatic) autoCount.current += 1
+    } catch (error) {
+      if (generation.current === id) setState((current) => ({ ...current, loading: false, error: error.message }))
+    } finally {
+      if (generation.current === id) pending.current = false
+    }
+  }
+
+  useEffect(() => {
+    if (!enabled || state.page < 1 || !state.hasMore || state.loading || autoCount.current >= 2) return
+    const target = sentinel.current
+    if (!target || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) loadNext(true)
+    }, { rootMargin: '220px' })
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [enabled, state.page, state.hasMore, state.loading, section])
+
+  return { ...state, sentinel, loadNext, manualReady: autoCount.current >= 2 }
+}
+
+function StorePaginationFooter({ pager, t }) {
+  return (
+    <div className="mt-5 flex flex-col items-center gap-3 pb-5">
+      {pager.error ? <div className="text-[12px] text-[#e5484d]">{pager.error}</div> : null}
+      {pager.loading ? <div className="text-[12px] font-semibold text-[var(--shadow-text-secondary)]">{t('readerStoreShelves.loadingMore')}</div> : null}
+      {pager.hasMore && !pager.loading && (pager.manualReady || pager.error) ? (
+        <button type="button" onClick={() => pager.loadNext(false)} className="rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-5 py-2.5 text-[12px] font-extrabold text-[var(--shadow-text-primary)]">
+          {pager.error ? t('readerStoreShelves.retry') : t('readerStoreShelves.loadMore')}
+        </button>
+      ) : null}
+      <div ref={pager.sentinel} className="h-px w-full" aria-hidden="true" />
+    </div>
   )
 }
 
@@ -650,19 +785,24 @@ export default function ReaderStorePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useDisplayTranslation()
-  const [products, setProducts] = useState([])
-  const [featuredAuthors, setFeaturedAuthors] = useState([])
-  const [editorsPicks, setEditorsPicks] = useState([])
-  const [activeFilter, setActiveFilter] = useState('all')
+  const requestedBrowseKey = new URLSearchParams(location.search).get('browse') || ''
+  const browseKey = BROWSE_KEYS.has(requestedBrowseKey) ? requestedBrowseKey : ''
+    const [featuredAuthors, setFeaturedAuthors] = useState([])
+    const [activeFilter, setActiveFilter] = useState('all')
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [showAllProducts, setShowAllProducts] = useState(false)
+  const [sections, setSections] = useState(EMPTY_SECTIONS)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [retryKey, setRetryKey] = useState(0)
   const [waitlistOpen, setWaitlistOpen] = useState(false)
 
   useEffect(() => {
+    if (browseKey) {
+      setLoading(false)
+      setLoadError('')
+      return
+    }
     let ignore = false
 
     async function loadStore() {
@@ -672,15 +812,13 @@ export default function ReaderStorePage() {
         const data = await fetchReaderStoreHome(t('readerStore.loadFailed'))
 
         if (!ignore) {
-          setProducts(data.products)
           setFeaturedAuthors(data.featuredAuthors)
-          setEditorsPicks(data.editorsPicks)
+          setSections(data.sections)
         }
       } catch (error) {
         if (!ignore) {
-          setProducts([])
           setFeaturedAuthors([])
-          setEditorsPicks([])
+          setSections(EMPTY_SECTIONS)
           setLoadError(error.message || t('readerStore.loadFailed'))
         }
       } finally {
@@ -693,13 +831,14 @@ export default function ReaderStorePage() {
     return () => {
       ignore = true
     }
-  }, [retryKey])
+  }, [retryKey, browseKey])
 
   const keyword = searchQuery.trim().toLowerCase()
 
   const matchesFilter = (book) => {
     if (activeFilter === 'book' && book.type !== 'book') return false
     if (activeFilter === 'pdf' && book.type !== 'pdf') return false
+    if (activeFilter === 'under3' && book.priceValue >= 3) return false
 
     if (!keyword) return true
 
@@ -718,16 +857,6 @@ export default function ReaderStorePage() {
     return searchText.includes(keyword)
   }
 
-  const filteredProducts = useMemo(
-    () => products.filter(matchesFilter),
-    [products, activeFilter, keyword]
-  )
-
-  const filteredEditorsPicks = useMemo(
-    () => editorsPicks.filter(matchesFilter).slice(0, 8),
-    [editorsPicks, activeFilter, keyword]
-  )
-
   const visibleAuthors = useMemo(() => {
     if (!keyword) return featuredAuthors
 
@@ -738,9 +867,18 @@ export default function ReaderStorePage() {
     )
   }, [featuredAuthors, keyword])
 
-  const visibleProducts = showAllProducts
-    ? filteredProducts
-    : filteredProducts.slice(0, 4)
+  const explorePager = useStoreBooksPager('you_might_like', sections.you_might_like, !browseKey && !loading && !loadError, true)
+  const browsePager = useStoreBooksPager(browseKey, EMPTY_SECTIONS.you_might_like, Boolean(browseKey), false)
+  const visibleSection = (key) => (sections[key] || []).filter((book) =>
+    matchesFilter(book) && (key !== 'discount_books' || book.discountPercent > 0)
+  )
+  const openBrowse = (key) => navigate(`/store?browse=${key}`)
+  const browseTitles = {
+    from_author_stores: t('readerStore.fromAuthors'),
+    best_sellers: t('readerStoreShelves.bestSellers'),
+    discount_books: t('readerStoreShelves.discounts'),
+    new_books: t('readerStoreShelves.newBooks'),
+  }
 
   const openProduct = (book) => {
   if (!book.pageUsername) return
@@ -750,7 +888,7 @@ export default function ReaderStorePage() {
   })
 }
 
-  const filterLabel = (filter) => t(`readerStore.${filter}`)
+  const filterLabel = (filter) => filter === 'under3' ? t('readerStoreShelves.under3') : t(`readerStore.${filter}`)
 
   if (waitlistOpen) {
     return <ReaderMallWishlistPage onBack={() => setWaitlistOpen(false)} />
@@ -762,7 +900,7 @@ export default function ReaderStorePage() {
         <div className="mx-auto flex h-14 w-full max-w-[560px] items-center gap-2 px-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => browseKey ? navigate('/store') : navigate(-1)}
             aria-label={t('readerStore.goBack')}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
           >
@@ -770,7 +908,7 @@ export default function ReaderStorePage() {
           </button>
 
           <h1 className="text-[19px] font-extrabold tracking-tight">
-            {t('readerStore.store')}
+            {browseKey ? browseTitles[browseKey] : t('readerStore.store')}
           </h1>
 
           <div className="ml-auto flex items-center gap-1">
@@ -830,7 +968,7 @@ export default function ReaderStorePage() {
       </header>
 
       <main className="mx-auto w-full max-w-[560px] px-4 pt-4">
-  <ShadowMallSection sliderOnly />
+  {!browseKey ? <ShadowMallSection sliderOnly /> : null}
 
   <HorizontalScrollRow className="-mx-1 mt-5 flex gap-2 px-1 pb-2">
           {FILTERS.map((filter) => {
@@ -853,7 +991,7 @@ export default function ReaderStorePage() {
           })}
         </HorizontalScrollRow>
 
-        {loading ? (
+        {!browseKey && loading ? (
           <div className="mt-5 rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-8 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
             <div className="mx-auto h-7 w-7 animate-spin rounded-full border-[3px] border-[var(--shadow-border)] border-t-[#7c3aed]" />
             <div className="mt-3 text-[12px] font-extrabold text-[var(--shadow-text-secondary)]">
@@ -862,7 +1000,7 @@ export default function ReaderStorePage() {
           </div>
         ) : null}
 
-        {!loading && loadError ? (
+        {!browseKey && !loading && loadError ? (
           <section className="mt-5 rounded-[22px] bg-[var(--shadow-bg-surface)] p-5 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
             <div className="text-[13px] font-extrabold text-[#e5484d]">
               {t('readerStore.loadFailed')}
@@ -877,7 +1015,28 @@ export default function ReaderStorePage() {
           </section>
         ) : null}
 
-        {!loading && !loadError ? (
+        {browseKey ? (
+          <section className="mt-5">
+            {browsePager.items.filter(matchesFilter).length ? (
+              <div className="grid grid-cols-3 gap-x-3 gap-y-5">
+                {browsePager.items.filter(matchesFilter).map((book, index) => (
+                  <EditorPickCard
+                    key={book.id}
+                    book={book}
+                    t={t}
+                    onOpen={() => openProduct(book)}
+                    badgeType={browseKey === 'best_sellers' ? 'best' : browseKey === 'discount_books' ? 'discount' : browseKey === 'new_books' ? 'new' : ''}
+                    rank={browseKey === 'best_sellers' ? index + 1 : 0}
+                    className="min-w-0"
+                  />
+                ))}
+              </div>
+            ) : !browsePager.loading && !browsePager.error ? (
+              <div className="py-8 text-center text-[12px] text-[var(--shadow-text-tertiary)]">{t('readerStoreShelves.empty')}</div>
+            ) : null}
+            <StorePaginationFooter pager={browsePager} t={t} />
+          </section>
+        ) : !loading && !loadError ? (
           <>
             {visibleAuthors.length ? (
               <section className="mt-5 space-y-3">
@@ -927,56 +1086,37 @@ export default function ReaderStorePage() {
               </section>
             ) : null}
 
-            <section className="mt-6 space-y-3">
-              <SectionHeader
-                title={t('readerStore.fromAuthors')}
-                subtitle={t('readerStore.fromAuthorsSubtitle')}
-                action={
-                  filteredProducts.length > 4
-                    ? showAllProducts
-                      ? t('readerStore.seeLess')
-                      : t('readerStore.seeMore')
-                    : ''
-                }
-                onAction={() => setShowAllProducts((value) => !value)}
-              />
-
-              {visibleProducts.length ? (
+            {visibleSection('from_author_stores').length ? (
+              <section className="mt-6 space-y-3">
+                <SectionHeader
+                  title={t('readerStore.fromAuthors')}
+                  subtitle={t('readerStore.fromAuthorsSubtitle')}
+                  action={t('readerStore.seeMore')}
+                  onAction={() => openBrowse('from_author_stores')}
+                />
                 <HorizontalScrollRow className="-mx-1 flex gap-3 px-1 pb-2">
-                  {visibleProducts.map((book) => (
-                    <div key={`author-${book.id}`} className="w-[155px] shrink-0">
-                      <StoreBookCard
-                        book={book}
-                        t={t}
-                        onOpen={() => openProduct(book)}
-                      />
+                  {visibleSection('from_author_stores').map((book) => (
+                    <div key={book.id} className="w-[155px] shrink-0">
+                      <StoreBookCard book={book} t={t} onOpen={() => openProduct(book)} />
                     </div>
                   ))}
                 </HorizontalScrollRow>
-              ) : (
-                <div className="rounded-[22px] bg-[var(--shadow-bg-surface)] px-4 py-7 text-center text-[12px] font-extrabold text-[var(--shadow-text-tertiary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
-                  {t('readerStore.noProducts')}
-                </div>
-              )}
-            </section>
-
-            {filteredEditorsPicks.length ? (
+              </section>
+            ) : null}
+            <ReaderStoreShelf title={t('readerStore.editorsPicks')} subtitle={t('readerStore.editorsPicksSubtitle')} books={visibleSection('editors_picks')} t={t} layout="grid" onOpen={openProduct} />
+            <ReaderStoreShelf title={t('readerStoreShelves.bestSellers')} books={visibleSection('best_sellers')} t={t} layout="grid" badgeType="best" onOpen={openProduct} onMore={() => openBrowse('best_sellers')} />
+            <ReaderStoreShelf title={t('readerStoreShelves.discounts')} books={visibleSection('discount_books')} t={t} badgeType="discount" onOpen={openProduct} onMore={() => openBrowse('discount_books')} />
+            <ReaderStoreShelf title={t('readerStoreShelves.newBooks')} books={visibleSection('new_books')} t={t} badgeType="new" onOpen={openProduct} onMore={() => openBrowse('new_books')} />
+            <ReaderStoreShelf title={t('readerStoreShelves.soldOut')} books={visibleSection('sold_out')} t={t} badgeType="sold" onOpen={openProduct} />
+            {explorePager.items.length ? (
               <section className="mt-6 space-y-3 pb-5">
-                <SectionHeader
-                  title={t('readerStore.editorsPicks')}
-                  subtitle={t('readerStore.editorsPicksSubtitle')}
-                />
-
-                <HorizontalScrollRow className="-mx-1 flex gap-3 px-1 pb-2">
-                  {filteredEditorsPicks.map((book) => (
-                    <EditorPickCard
-                      key={`editor-${book.id}`}
-                      book={book}
-                      t={t}
-                      onOpen={() => openProduct(book)}
-                    />
+                <SectionHeader title={t('readerStoreShelves.discover')} />
+                <div className="grid grid-cols-3 gap-x-3 gap-y-5">
+                  {explorePager.items.filter(matchesFilter).map((book) => (
+                    <EditorPickCard key={book.id} book={book} t={t} onOpen={() => openProduct(book)} className="min-w-0" />
                   ))}
-                </HorizontalScrollRow>
+                </div>
+                <StorePaginationFooter pager={explorePager} t={t} />
               </section>
             ) : null}
           </>
