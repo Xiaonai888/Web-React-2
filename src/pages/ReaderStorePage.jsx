@@ -299,8 +299,8 @@ async function fetchReaderStoreHome(fallbackMessage) {
   }
 }
 
-async function fetchReaderShelf(section, page) {
-  const params = new URLSearchParams({ browse: '1', section, page: String(page), limit: '9' })
+async function fetchReaderShelf(section, page, filter = 'all') {
+  const params = new URLSearchParams({ browse: '1', section, page: String(page), limit: '9', filter })
   const response = await fetch(`${API_BASE_URL}/api/author-store/store/home?${params.toString()}`)
   const data = await response.json().catch(() => ({}))
   if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load books')
@@ -693,7 +693,7 @@ function ReaderStoreShelf({ title, subtitle, books, t, layout = 'row', badgeType
   )
 }
 
-function useStoreBooksPager(section, seed, enabled, fromHome) {
+function useStoreBooksPager(section, seed, enabled, fromHome, filter = 'all') {
   const [state, setState] = useState({ items: [], page: 0, hasMore: false, loading: false, error: '' })
   const pending = useRef(false)
   const generation = useRef(0)
@@ -709,13 +709,13 @@ function useStoreBooksPager(section, seed, enabled, fromHome) {
       setState({ items: [], page: 0, hasMore: false, loading: false, error: '' })
       return
     }
-    if (fromHome) {
+    if (fromHome && filter === 'all') {
       setState({ items: seed, page: seed.length ? 1 : 0, hasMore: seed.length === 9, loading: false, error: '' })
       return
     }
     pending.current = true
     setState({ items: [], page: 0, hasMore: true, loading: true, error: '' })
-    fetchReaderShelf(section, 1)
+    fetchReaderShelf(section, 1, filter)
       .then((result) => {
         if (generation.current !== id) return
         setState({ items: result.products, page: 1, hasMore: result.hasMore, loading: false, error: '' })
@@ -728,7 +728,7 @@ function useStoreBooksPager(section, seed, enabled, fromHome) {
         if (generation.current === id) pending.current = false
       })
     return () => { generation.current += 1 }
-  }, [section, enabled, fromHome, seed])
+  }, [section, enabled, fromHome, seed, filter])
 
   const loadNext = async (automatic = false) => {
     if (!enabled || pending.current || !state.hasMore || (automatic && autoCount.current >= 2)) return
@@ -737,7 +737,7 @@ function useStoreBooksPager(section, seed, enabled, fromHome) {
     pending.current = true
     setState((current) => ({ ...current, loading: true, error: '' }))
     try {
-      const result = await fetchReaderShelf(section, next)
+      const result = await fetchReaderShelf(section, next, filter)
       if (generation.current !== id) return
       setState((current) => {
         const seen = new Set(current.items.map((item) => String(item.id)))
@@ -761,7 +761,7 @@ function useStoreBooksPager(section, seed, enabled, fromHome) {
     }, { rootMargin: '220px' })
     observer.observe(target)
     return () => observer.disconnect()
-  }, [enabled, state.page, state.hasMore, state.loading, section])
+  }, [enabled, state.page, state.hasMore, state.loading, section, filter])
 
   return { ...state, sentinel, loadNext, manualReady: autoCount.current >= 2 }
 }
@@ -867,8 +867,8 @@ export default function ReaderStorePage() {
     )
   }, [featuredAuthors, keyword])
 
-  const explorePager = useStoreBooksPager('you_might_like', sections.you_might_like, !browseKey && !loading && !loadError, true)
-  const browsePager = useStoreBooksPager(browseKey, EMPTY_SECTIONS.you_might_like, Boolean(browseKey), false)
+  const explorePager = useStoreBooksPager('you_might_like', sections.you_might_like, !browseKey && !loading && !loadError, true, activeFilter)
+  const browsePager = useStoreBooksPager(browseKey, EMPTY_SECTIONS.you_might_like, Boolean(browseKey), false, activeFilter)
   const visibleSection = (key) => (sections[key] || [])
   .map((book, index) => key === 'best_sellers' ? { ...book, bestSellerRank: index + 1 } : book)
   .filter((book) => matchesFilter(book) && (key !== 'discount_books' || book.discountPercent > 0))
