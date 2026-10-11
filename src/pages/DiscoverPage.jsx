@@ -4061,7 +4061,6 @@ export default function DiscoverPage() {
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
           <DiscoverSpecialPromotionSection />
-          <DiscoverAuthorStorePromotionSection />
             {realPostsLoading ||
             readerPostsLoading ? (
               <>
@@ -4135,6 +4134,10 @@ export default function DiscoverPage() {
   onMore={setOptionsPost}
 />
                 )}
+
+                {entry.timelineIndex === 0 ? (
+  <DiscoverAuthorStorePromotionSection />
+) : null}
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 0 ? (
