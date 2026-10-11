@@ -2060,7 +2060,7 @@ export default function ChatRoomPage() {
         const data = await getChatMessages(
           conversationId,
           {
-            limit: silent ? 20 : 50,
+            limit: 10,
             signal,
           }
         )
@@ -2511,7 +2511,7 @@ export default function ChatRoomPage() {
       while (!node && cursor && pages < 20) {
         const data = await getChatMessages(conversationId, {
           before: cursor,
-          limit: 50,
+          limit: 10,
         })
 
         const older = Array.isArray(data.messages)
@@ -2629,7 +2629,7 @@ export default function ChatRoomPage() {
         conversationId,
         {
           before: nextBefore,
-          limit: 50,
+          limit: 10,
         }
       )
 
