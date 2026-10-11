@@ -5,6 +5,9 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+export const GOOGLE_ADS_AVAILABLE =
+  import.meta.env.VITE_GOOGLE_ADS_ENABLED === 'true'
+
 const CACHE_MS = 60 * 1000
 
 const OFF_SETTINGS = Object.freeze({
@@ -45,7 +48,7 @@ export function getGoogleAdsPlacementEnabled(
   settings,
   placement
 ) {
-  if (!settings) return false
+  if (!GOOGLE_ADS_AVAILABLE || !settings) return false
 
   if (placement === 'home') {
     return Boolean(settings.homeEffective)
@@ -69,6 +72,10 @@ export function getGoogleAdsPlacementEnabled(
 export async function getPublicGoogleAdsSettings({
   force = false,
 } = {}) {
+  if (!GOOGLE_ADS_AVAILABLE) {
+    return OFF_SETTINGS
+  }
+
   const now = Date.now()
 
   if (
