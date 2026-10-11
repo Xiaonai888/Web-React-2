@@ -153,6 +153,7 @@ registerTranslationNamespace('blackSundayEventTab', {
 
 const CAMBODIA_TIME_ZONE = 'Asia/Phnom_Penh'
 const CAMBODIA_OFFSET_MS = 7 * 60 * 60 * 1000
+const BLACK_SUNDAY_IMAGE = '/Black%20Sunday.webp'
 
 function getCambodiaDate(value = new Date()) {
   return new Date(
@@ -277,47 +278,24 @@ function LiveEventCard({ now, onExplore }) {
 
   return (
     <section className="overflow-hidden rounded-[26px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_18px_45px_rgba(41,29,76,0.12)]">
-      <div className="relative min-h-[350px] overflow-hidden bg-[linear-gradient(135deg,#19172E_0%,#22163E_58%,#060608_100%)] px-5 pb-6 pt-5 text-white">
-        <div
-          className="absolute right-0 top-0 h-full w-[45%] bg-black"
-          aria-label={t('blackSundayEventTab.coinArtworkPlaceholder')}
+      <div className="relative aspect-square w-full overflow-hidden bg-[#19172E] text-white">
+        <img
+          src={BLACK_SUNDAY_IMAGE}
+          alt={t('blackSundayEventTab.blackSunday')}
+          className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute -right-12 top-16 h-48 w-48 rounded-full bg-[#7C3AED]/35 blur-3xl" />
-        <div className="absolute right-[8%] top-[43%] h-28 w-28 rounded-full border border-white/10 bg-white/[0.03]" />
-        <div className="absolute right-[14%] top-[49%] h-16 w-16 rounded-full border border-[#A855F7]/30 bg-black" />
 
-        <div className="absolute right-4 top-5 z-20 flex h-[76px] w-[76px] rotate-6 items-center justify-center rounded-full bg-[linear-gradient(145deg,#A855F7,#6D28D9)] text-center shadow-[0_12px_30px_rgba(124,58,237,0.42)] ring-2 ring-white/55">
-          <span className="text-[20px] font-black leading-[20px]">
-            10%
-            <span className="block text-[13px]">{t('blackSundayEventTab.off')}</span>
-          </span>
-        </div>
-
-        <div className="relative z-10 max-w-[68%]">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#F0E7FF] px-3 py-2 text-[11px] font-black text-[#7C3AED]">
-            <i className="fa-solid fa-bolt text-[10px]" />
-            {t('blackSundayEventTab.happeningNow')}
+        <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-[#0B0617]/95 via-[#0B0617]/65 to-transparent px-4 pb-4 pt-16 sm:px-5 sm:pb-5">
+          <div className="mb-3 text-[13px] font-semibold text-white/85">
+            {t('blackSundayEventTab.endsIn')}
           </div>
 
-          <h2 className="mt-6 text-[34px] font-black leading-[1.04] tracking-[-0.04em]">
-            {t('blackSundayEventTab.blackSunday')}
-          </h2>
-
-          <p className="mt-5 text-[18px] font-bold leading-7 text-white">
-            <span className="text-[#B56CFF]">10%</span> {t('blackSundayEventTab.discountOn')}
-            <span className="block">{t('blackSundayEventTab.diamondCoinUnlocks')}</span>
-          </p>
-
-          <div className="mt-7">
-            <div className="mb-3 text-[13px] font-semibold text-white/65">{t('blackSundayEventTab.endsIn')}</div>
-
-            <div className="flex items-start gap-2">
-              <CountdownBox value={countdown.hours} label={t('blackSundayEventTab.hoursShort')} />
-              <span className="pt-3 text-[20px] font-black text-white/45">:</span>
-              <CountdownBox value={countdown.minutes} label={t('blackSundayEventTab.minutesShort')} />
-              <span className="pt-3 text-[20px] font-black text-white/45">:</span>
-              <CountdownBox value={countdown.seconds} label={t('blackSundayEventTab.secondsShort')} />
-            </div>
+          <div className="flex items-start gap-1.5 sm:gap-2">
+            <CountdownBox value={countdown.hours} label={t('blackSundayEventTab.hoursShort')} />
+            <span className="pt-3 text-[20px] font-black text-white/55">:</span>
+            <CountdownBox value={countdown.minutes} label={t('blackSundayEventTab.minutesShort')} />
+            <span className="pt-3 text-[20px] font-black text-white/55">:</span>
+            <CountdownBox value={countdown.seconds} label={t('blackSundayEventTab.secondsShort')} />
           </div>
         </div>
       </div>
@@ -380,13 +358,12 @@ function UpcomingEventCard({ eventDate, countdown }) {
   return (
     <section className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]">
       <div className="flex items-center gap-4">
-        <div className="flex h-[112px] w-[112px] shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(145deg,#F5EFFF,#FFF8F0)]">
-          <div className="relative flex h-[78px] w-[70px] flex-col items-center rounded-[17px] bg-[var(--shadow-bg-surface)] pt-5 shadow-[0_10px_22px_rgba(124,58,237,0.16)] ring-1 ring-[var(--shadow-border)]">
-            <span className="absolute -top-2 left-3 h-4 w-2 rounded-full bg-[#7C3AED]" />
-            <span className="absolute -top-2 right-3 h-4 w-2 rounded-full bg-[#7C3AED]" />
-            <i className="fa-solid fa-star text-[27px] text-[#8B5CF6]" />
-          </div>
-        </div>
+        <img
+          src={BLACK_SUNDAY_IMAGE}
+          alt={t('blackSundayEventTab.blackSunday')}
+          loading="lazy"
+          className="h-[112px] w-[112px] shrink-0 rounded-[22px] object-cover"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="inline-flex rounded-full bg-[#F1EAFE] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300">
