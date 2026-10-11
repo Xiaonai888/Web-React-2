@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Pin,
   Search,
+  RotateCcw,
   SquarePen,
   Trash2,
   UsersRound,
@@ -32,6 +33,7 @@ import ChatNewMessageSheet from '../../components/chat/ChatNewMessageSheet'
 import ChatGroupCreateSheet from '../../components/chat/ChatGroupCreateSheet'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderMessageRequestModal'
+import { getLightweightChatInbox } from '../../services/chatInboxLightweightApi'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -139,6 +141,8 @@ registerTranslationNamespace('chatInboxPage', {
     createNewFolder: "Create new folder",
     archivedChats: "Archived chats",
     archivedCount: "{{count}} archived",
+    loadMoreConversations: 'Load 10 more',
+    refreshInbox: 'Refresh inbox',
     viewMoreRequests: "View {{count}} more requests",
     conversations: "Conversations",
     searchMinChars: "Enter at least 2 characters to search all readers and authors by name or username.",
@@ -247,6 +251,8 @@ registerTranslationNamespace('chatInboxPage', {
     createNewFolder: "បង្កើតថតថ្មី",
     archivedChats: "Chat ក្នុងប័ណ្ណសារ",
     archivedCount: "ក្នុងប័ណ្ណសារ {{count}}",
+    loadMoreConversations: 'បង្ហាញការសន្ទនា ១០ ទៀត',
+    refreshInbox: 'ផ្ទុកប្រអប់សារឡើងវិញ',
     viewMoreRequests: "មើលសំណើបន្ថែម {{count}}",
     conversations: "ការសន្ទនា",
     searchMinChars: "បញ្ចូលយ៉ាងហោចណាស់ 2 តួអក្សរ ដើម្បីស្វែងរកអ្នកអាន និងអ្នកនិពន្ធតាមឈ្មោះ ឬ username។",
@@ -355,6 +361,8 @@ registerTranslationNamespace('chatInboxPage', {
     createNewFolder: "新建文件夹",
     archivedChats: "已归档聊天",
     archivedCount: "已归档 {{count}}",
+    loadMoreConversations: '再加载 10 个会话',
+    refreshInbox: '刷新收件箱',
     viewMoreRequests: "查看另外 {{count}} 个请求",
     conversations: "聊天",
     searchMinChars: "至少输入 2 个字符，以按姓名或用户名搜索所有读者和作者。",
@@ -463,6 +471,8 @@ registerTranslationNamespace('chatInboxPage', {
     createNewFolder: "新しいフォルダーを作成",
     archivedChats: "アーカイブ済みチャット",
     archivedCount: "アーカイブ {{count}}",
+    loadMoreConversations: 'さらに10件のチャットを表示',
+    refreshInbox: '受信箱を更新',
     viewMoreRequests: "さらに{{count}}件のリクエストを表示",
     conversations: "会話",
     searchMinChars: "名前またはユーザー名で読者と作者を検索するには、2文字以上入力してください。",
@@ -571,6 +581,8 @@ registerTranslationNamespace('chatInboxPage', {
     createNewFolder: "새 폴더 만들기",
     archivedChats: "보관된 채팅",
     archivedCount: "보관됨 {{count}}",
+    loadMoreConversations: '대화 10개 더 보기',
+    refreshInbox: '받은편지함 새로고침',
     viewMoreRequests: "요청 {{count}}개 더 보기",
     conversations: "대화",
     searchMinChars: "모든 독자와 작가를 이름 또는 사용자 이름으로 검색하려면 2자 이상 입력하세요.",
@@ -584,9 +596,7 @@ import {
   createChatFolder,
   decideChatRequest,
   deleteChatConversation,
-  getChatConversations,
   getChatQuickContacts,
-  getManagedChatConversations,
   getChatFolders,
   getChatSoundSettings,
   hasReaderSession,
@@ -1219,7 +1229,12 @@ export default function ChatInboxPage() {
   const hideReaderFooter = location.state?.hideReaderFooter === true
   const searchRequestRef = useRef(0)
   const [conversations, setConversations] = useState([])
-  const [archivedCount, setArchivedCount] = useState(0)
+  const [hasMoreConversations, setHasMoreConversations] = useState(false)
+  const [loadingMoreConversations, setLoadingMoreConversations] = useState(false)
+  const nextConversationPageRef = useRef(1)
+  const conversationRequestRef = useRef(0)
+  const loadingMoreRef = useRef(false)
+  const contactsLoadedRef = useRef(false)
   const [quickContacts, setQuickContacts] = useState([])
   const [activeFilter, setActiveFilter] = useState('all')
   const [query, setQuery] = useState('')
@@ -1262,7 +1277,7 @@ const [soundSettings, setSoundSettings] =
     async ({ signal } = {}) => {
       try {
         const data = await getChatQuickContacts(
-          12,
+          10,
           { signal }
         )
 
@@ -1283,74 +1298,72 @@ const [soundSettings, setSoundSettings] =
   const loadConversations = useCallback(
     async ({
       silent = false,
-      includeArchived = true,
+      append = false,
       signal,
     } = {}) => {
-      if (!silent) {
+      if (append && loadingMoreRef.current) return null
+
+      if (append) {
+        loadingMoreRef.current = true
+        setLoadingMoreConversations(true)
+      } else if (!silent) {
         setLoading(true)
       }
 
+      const requestId = append
+        ? conversationRequestRef.current
+        : ++conversationRequestRef.current
+
       try {
-        const [data, archivedData] =
-          await Promise.all([
-            getChatConversations(
-              'all',
-              { signal }
-            ),
-            includeArchived
-              ? getManagedChatConversations({
-                  view: 'archived',
-                  signal,
-                })
-              : Promise.resolve(null),
-          ])
+        const data = await getLightweightChatInbox({
+          role: 'reader',
+          status: activeFilter === 'pending' ? 'pending' : 'all',
+          page: append ? nextConversationPageRef.current : 1,
+          signal,
+        })
 
-        const readerConversations =
-          Array.isArray(data.conversations)
-            ? data.conversations.filter(
-                (item) =>
-                  item.viewer_role !== 'author'
-              )
-            : []
-
-        setConversations(readerConversations)
-
-        if (includeArchived) {
-          setArchivedCount(
-            Array.isArray(
-              archivedData?.conversations
-            )
-              ? archivedData.conversations.filter(
-                  (item) =>
-                    item.viewer_role !== 'author'
-                ).length
-              : 0
-          )
-        }
-
-        setError('')
-        return readerConversations.length
-      } catch (loadError) {
-        if (loadError?.name === 'AbortError') {
+        if (signal?.aborted || requestId !== conversationRequestRef.current) {
           return null
         }
 
+        const records = Array.isArray(data.conversations)
+          ? data.conversations.filter((item) => item.viewer_role === 'reader')
+          : []
+
+        setConversations((previous) => {
+          if (!append) return records
+          const seen = new Set(previous.map((item) => String(item.id)))
+          return [...previous, ...records.filter((item) => !seen.has(String(item.id)))]
+        })
+        setHasMoreConversations(data.pagination?.has_more === true)
+        nextConversationPageRef.current = data.pagination?.next_page || 1
+        setError('')
+
+        if (!append && records.length > 0 &&
+            activeFilter === 'all' && !contactsLoadedRef.current) {
+          contactsLoadedRef.current = true
+          void loadQuickContacts({ signal })
+        }
+
+        return records.length
+      } catch (loadError) {
+        if (loadError?.name === 'AbortError' || signal?.aborted) return null
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
           return null
         }
-
-        setError(
-          loadError.message || t('chatInboxPage.failedLoadMessages')
-        )
+        setError(loadError.message || t('chatInboxPage.failedLoadMessages'))
         return null
       } finally {
-        if (!silent && !signal?.aborted) {
+        if (append) {
+          loadingMoreRef.current = false
+          setLoadingMoreConversations(false)
+        } else if (!silent && !signal?.aborted) {
           setLoading(false)
         }
       }
     },
-    [navigate, t]
+    [activeFilter, loadQuickContacts, navigate, t]
   )
 
   useEffect(() => {
@@ -1359,112 +1372,10 @@ const [soundSettings, setSoundSettings] =
       return undefined
     }
 
-    let active = true
-    let refreshInFlight = false
-    let lastRefreshAt = 0
-    let lastArchivedRefreshAt = 0
-    let lastQuickContactsAt = 0
     const controller = new AbortController()
-
-    const refreshInbox = async ({
-      initial = false,
-      force = false,
-    } = {}) => {
-      if (
-        refreshInFlight ||
-        controller.signal.aborted
-      ) {
-        return
-      }
-
-      const now = Date.now()
-
-      if (
-        !force &&
-        lastRefreshAt &&
-        now - lastRefreshAt < 30000
-      ) {
-        return
-      }
-
-      refreshInFlight = true
-      lastRefreshAt = now
-
-      const shouldRefreshArchived =
-        initial ||
-        !lastArchivedRefreshAt ||
-        now - lastArchivedRefreshAt >= 5 * 60 * 1000
-      const shouldRefreshQuickContacts =
-        initial ||
-        !lastQuickContactsAt ||
-        now - lastQuickContactsAt >= 2 * 60 * 1000
-
-      try {
-        const conversationCount =
-          await loadConversations({
-            silent: !initial,
-            includeArchived: shouldRefreshArchived,
-            signal: controller.signal,
-          })
-
-        if (
-          shouldRefreshArchived &&
-          conversationCount !== null
-        ) {
-          lastArchivedRefreshAt = Date.now()
-        }
-
-        if (
-          active &&
-          Number(conversationCount) > 0 &&
-          shouldRefreshQuickContacts
-        ) {
-          await loadQuickContacts({
-            signal: controller.signal,
-          })
-          lastQuickContactsAt = Date.now()
-        }
-      } finally {
-        refreshInFlight = false
-      }
-    }
-
-    refreshInbox({
-      initial: true,
-      force: true,
-    })
-
-    const handleFocus = () => {
-      if (!document.hidden) {
-        refreshInbox()
-      }
-    }
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refreshInbox()
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener(
-      'visibilitychange',
-      handleVisibilityChange
-    )
-
-    return () => {
-      active = false
-      controller.abort()
-      window.removeEventListener(
-        'focus',
-        handleFocus
-      )
-      document.removeEventListener(
-        'visibilitychange',
-        handleVisibilityChange
-      )
-    }
-  }, [loadConversations, loadQuickContacts, navigate])
+    void loadConversations({ signal: controller.signal })
+    return () => controller.abort()
+  }, [loadConversations, navigate])
 
   const normalizedQuery = useMemo(
     () => normalizeSearchValue(query),
@@ -2907,11 +2818,20 @@ const [soundSettings, setSoundSettings] =
 
                   <div className="mt-1 flex items-center gap-2 text-[11px] font-bold text-[#8a8792]">
                     <span className="h-2 w-2 rounded-full bg-[#7c3aed]" />
-                    {t('chatInboxPage.unreadCount', { count: unreadTotal.toLocaleString(getDisplayLanguageId()) })}
+                    {t('chatInboxPage.unreadCount', { count: `${unreadTotal.toLocaleString(getDisplayLanguageId())}${hasMoreConversations ? '+' : ''}` })}
                   </div>
                 </div>
 
-                <button
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => loadConversations({ silent: true })}
+                    aria-label={t('chatInboxPage.refreshInbox')}
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-[#7c3aed] active:bg-[#f4f1fb]"
+                  >
+                    <RotateCcw size={21} strokeWidth={2.1} />
+                  </button>
+                  <button
                   type="button"
                   onClick={() =>
                     setNewMessageOpen(true)
@@ -2924,6 +2844,7 @@ const [soundSettings, setSoundSettings] =
                     strokeWidth={2.2}
                   />
                 </button>
+                </div>
               </div>
 
               <div className="relative mt-4">
@@ -3396,9 +3317,6 @@ activeFilter === 'all' ? (
       <strong className="block text-[14px] font-semibold text-[#111827]">
         {t('chatInboxPage.archivedChats')}
       </strong>
-      <span className="mt-0.5 block text-[11px] text-[#85888e]">
-        {t('chatInboxPage.archivedCount', { count: archivedCount.toLocaleString(getDisplayLanguageId()) })}
-      </span>
     </span>
   </button>
 ) : null}
@@ -3534,6 +3452,20 @@ activeFilter === 'all' ? (
         ) : (
           <EmptyInbox />
         )}
+
+        {!selectionMode && !hasSearch && !loading && hasMoreConversations ? (
+          <div className="flex justify-center px-4 py-4">
+            <button
+              type="button"
+              disabled={loadingMoreConversations}
+              onClick={() => loadConversations({ silent: true, append: true })}
+              className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#f4f1fb] px-6 text-[13px] font-semibold text-[#7c3aed] disabled:opacity-50"
+            >
+              {loadingMoreConversations ? <LoaderCircle size={17} className="animate-spin" /> : null}
+              {t('chatInboxPage.loadMoreConversations')}
+            </button>
+          </div>
+        ) : null}
 
         {!selectionMode &&
         !hasSearch &&
