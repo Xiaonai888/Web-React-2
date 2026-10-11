@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import DiscoverPromotionExpiryNotice, { discoverPromotionExpiryMessage, hasExpiredDiscoverPromotion, isExpiredDiscoverPromotion, useDiscoverPromotionExpiry } from '../../components/discover/DiscoverPromotionExpiryNotice'
 
 registerTranslationNamespace('authorCheckout', {
   "en": {
@@ -415,6 +416,7 @@ export default function AuthorCheckoutPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const [items, setItems] = useState(getCartItems)
+  const promotionExpired = useDiscoverPromotionExpiry(items)
   const [buyerProfile, setBuyerProfile] = useState(getBuyerProfile)
   const [buyerOpen, setBuyerOpen] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState(DELIVERY_COMPANIES[0].id)
@@ -449,6 +451,10 @@ export default function AuthorCheckoutPage() {
   }
 
  async function handleContinuePayment() {
+  if (hasExpiredDiscoverPromotion(items)) {
+    setMessage(discoverPromotionExpiryMessage())
+    return
+  }
   const token = getReaderToken()
 
   if (!token) {
@@ -505,6 +511,8 @@ export default function AuthorCheckoutPage() {
   saveBuyerProfile(savedProfile)
   setBuyerProfile(savedProfile)
 }
+
+    if (hasExpiredDiscoverPromotion(items)) throw new Error(discoverPromotionExpiryMessage())
 
     const orderResponse = await fetch(`${API_URL}/api/author-store/orders/create-payment`, {
       method: 'POST',
@@ -578,6 +586,7 @@ export default function AuthorCheckoutPage() {
       </header>
 
       <main className="mx-auto max-w-[980px] px-4 py-4">
+        <DiscoverPromotionExpiryNotice expired={promotionExpired} />
         {message ? (
           <button type="button" onClick={() => setMessage('')} className="mb-3 w-full rounded-[18px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold text-[#e5484d]">
             {message}
@@ -672,7 +681,7 @@ export default function AuthorCheckoutPage() {
                   </div>
 
                   <div className="mt-5 flex items-end justify-between gap-3">
-                    <div className="text-[14px] font-black text-[#e5484d]">{money(Number(item.price_value || 0) * Number(item.quantity || 1))}</div>
+                    <div className="text-[14px] font-black text-[#e5484d]">{isExpiredDiscoverPromotion(item) ? '—' : money(Number(item.price_value || 0) * Number(item.quantity || 1))}</div>
                     <div className="flex items-center gap-2">
                       <button type="button" aria-label={t('authorCheckout.decreaseQuantity')} onClick={() => updateQuantity(item.id, Number(item.quantity || 1) - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
                         <i className="fa-solid fa-minus text-[11px]" />
@@ -712,7 +721,7 @@ export default function AuthorCheckoutPage() {
             <div className="border-t border-[var(--shadow-border)] pt-3">
               <div className="flex justify-between text-[14px] font-black text-[var(--shadow-text-primary)]">
                 <span>{t('authorCheckout.total')}</span>
-                <span className="text-[#e5484d]">{money(total)}</span>
+                <span className="text-[#e5484d]">{promotionExpired ? '—' : money(total)}</span>
               </div>
             </div>
           </div>
@@ -723,13 +732,13 @@ export default function AuthorCheckoutPage() {
         <div className="mx-auto flex h-[82px] max-w-[980px] items-center justify-between px-4">
           <div>
             <div className="text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{t('authorCheckout.total')}</div>
-            <div className="mt-1 text-[17px] font-black text-[#e5484d]">{money(total)}</div>
+            <div className="mt-1 text-[17px] font-black text-[#e5484d]">{promotionExpired ? '—' : money(total)}</div>
           </div>
           
         <button
   type="button"
   onClick={handleContinuePayment}
-  disabled={saving}
+  disabled={saving || promotionExpired || !items.length}
   className="h-12 rounded-full bg-[var(--shadow-text-primary)] px-8 text-[13px] font-black text-[var(--shadow-bg-surface)] shadow-xl active:scale-95 disabled:bg-[var(--shadow-text-disabled)]"
 >
   {saving ? t('authorCheckout.creatingPayment') : t('authorCheckout.continuePayment')}
