@@ -163,8 +163,14 @@ export default function VisitorTracker() {
   const location = useLocation()
   const [debugState, setDebugState] = useState(null)
   const debugEnabled = new URLSearchParams(location.search).get('visitorDebug') === '1'
+  const chatPresenceActive =
+    location.pathname === '/inbox' ||
+    location.pathname === '/chat' ||
+    location.pathname.startsWith('/chat/') ||
+    location.pathname === '/author/page/chat' ||
+    location.pathname.startsWith('/author/page/chat/')
   useEffect(() => {
-    if (!hasReaderAccount()) {
+    if (!chatPresenceActive || !hasReaderAccount()) {
       return undefined
     }
 
@@ -224,7 +230,7 @@ export default function VisitorTracker() {
         handleVisibilityChange
       )
     }
-  }, [])
+  }, [chatPresenceActive])
 
 
   useEffect(() => {
