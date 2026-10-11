@@ -1063,7 +1063,6 @@ function ActiveEventPicker({
   selectedId,
   onSelect,
 }) {
-  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
 
   if (events.length <= 1) return null
@@ -1086,11 +1085,7 @@ function ActiveEventPicker({
             <button
               key={event.id}
               type="button"
-              onClick={() =>
-                event.href
-                  ? navigate(event.href)
-                  : onSelect(event.id)
-              }
+              onClick={() => onSelect(event.id)}
               className={`w-[68%] shrink-0 snap-start overflow-hidden rounded-[18px] border bg-[var(--shadow-bg-surface)] p-3 text-left shadow-sm transition active:scale-[0.98] ${
                 selected
                   ? 'border-[#F6B800] ring-2 ring-[#F6B800]/20'
@@ -1248,11 +1243,21 @@ function UpcomingEventsSection({ events, now }) {
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-[22px] ${event.iconBg}`}
+                    className={`flex h-[92px] w-[92px] shrink-0 items-center justify-center overflow-hidden rounded-[22px] ${event.iconBg}`}
                   >
-                    <i
-                      className={`fa-solid ${event.icon} text-[30px] ${event.iconColor}`}
-                    />
+                    {event.image ? (
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <i
+                        className={`fa-solid ${event.icon} text-[30px] ${event.iconColor}`}
+                      />
+                    )}
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -1305,6 +1310,12 @@ export default function EventPage() {
   const [followLoadingId, setFollowLoadingId] = useState('')
   const [author49Available, setAuthor49Available] =
     useState(() => !getReaderToken())
+  const [author49EndsAt, setAuthor49EndsAt] = useState(null)
+  const [continuationRefreshVersion, setContinuationRefreshVersion] = useState(0)
+  const lastExpiryRefreshRef = useRef('')
+  const lastForcedContinuationRefreshRef = useRef(0)
+  const eventSwipeStartRef = useRef(null)
+  const eventSwipeClickBlockedRef = useRef(false)
   const [daily80Event, setDaily80Event] = useState(null)
   const [daily80Available, setDaily80Available] = useState(false)
   const [daily50Available, setDaily50Available] =
@@ -1416,6 +1427,8 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
   }, [activeTab])
 
   useEffect(() => {
+    if (activeTab !== 'event') return undefined
+
     let ignore = false
     let releaseAuthor49Request = () => {}
     let releaseWriterRequest = () => {}
@@ -1462,6 +1475,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
       if (!token) {
         if (!ignore) {
           setAuthor49Available(true)
+          setAuthor49EndsAt(null)
         }
         refreshInFlight = false
         return
@@ -1478,12 +1492,22 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
         const event = await request.promise
 
         if (!ignore) {
-          setAuthor49Available(
-            Boolean(
-              event?.visible &&
-              event.status !== 'finished'
-            )
-          )
+          const expiresAt = event?.status === 'active'
+            ? new Date(event.ends_at || '').getTime()
+            : NaN
+          setAuthor49EndsAt(Number.isFinite(expiresAt) ? expiresAt : null)
+          setAuthor49Available(Boolean(
+            event?.visible &&
+            event.status !== 'finished' &&
+            (!Number.isFinite(expiresAt) || expiresAt > Date.now())
+          ))
+          if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) {
+            const expiryKey = `49:${expiresAt}`
+            if (lastExpiryRefreshRef.current !== expiryKey) {
+              lastExpiryRefreshRef.current = expiryKey
+              setContinuationRefreshVersion((current) => current + 1)
+            }
+          }
         }
       } catch (error) {
         if (
@@ -1491,6 +1515,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
           !ignore
         ) {
           setAuthor49Available(false)
+          setAuthor49EndsAt(null)
         }
       } finally {
         releaseAuthor49Request()
@@ -1517,7 +1542,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
         refreshOnFocus
       )
     }
-  }, [])
+  }, [activeTab])
 
   useEffect(() => {
     if (activeTab !== 'event') return undefined
@@ -1540,10 +1565,15 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
       }
 
       inFlight = true
+      const forceRefresh = continuationRefreshVersion > 0 &&
+        lastForcedContinuationRefreshRef.current !== continuationRefreshVersion
+      if (forceRefresh) {
+        lastForcedContinuationRefreshRef.current = continuationRefreshVersion
+      }
 
       try {
         release80Request()
-        const daily80Request = requestAuthorDaily80Event(token)
+        const daily80Request = requestAuthorDaily80Event(token, { force: forceRefresh })
         release80Request = daily80Request.release
         const daily80 = await daily80Request.promise
 
@@ -1562,14 +1592,20 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
         }
 
         release50Request()
-        const daily50Request = requestAuthorDaily50Event(token)
-        release50Request = daily50Request.release
-        const daily50 = await daily50Request.promise
+        try {
+          const daily50Request = requestAuthorDaily50Event(token, { force: forceRefresh })
+          release50Request = daily50Request.release
+          const daily50 = await daily50Request.promise
 
-        if (!ignore) {
-          setDaily50Available(Boolean(
-            daily50?.visible && daily50.status !== 'finished'
-          ))
+          if (!ignore) {
+            setDaily50Available(Boolean(
+              daily50?.visible && daily50.status !== 'finished'
+            ))
+          }
+        } catch (error) {
+          if (!ignore && error?.name !== 'AbortError') {
+            setDaily50Available(false)
+          }
         }
       } catch (error) {
         if (ignore || error?.name === 'AbortError') return
@@ -1600,7 +1636,28 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
       release50Request()
       window.removeEventListener('focus', refreshOnFocus)
     }
-  }, [activeTab])
+  }, [activeTab, continuationRefreshVersion])
+
+  useEffect(() => {
+    if (activeTab !== 'event') return
+
+    const expired49 = author49Available &&
+      author49EndsAt !== null &&
+      Number.isFinite(author49EndsAt) &&
+      author49EndsAt <= eventNow.getTime()
+    const ends80 = daily80Event?.status === 'active'
+      ? new Date(daily80Event.ends_at || '').getTime()
+      : NaN
+    const expired80 = Number.isFinite(ends80) && ends80 <= eventNow.getTime()
+    if (!expired49 && !expired80) return
+
+    const expiryKey = expired49 ? `49:${author49EndsAt}` : `80:${ends80}`
+    if (lastExpiryRefreshRef.current === expiryKey) return
+
+    lastExpiryRefreshRef.current = expiryKey
+    if (expired49) setAuthor49Available(false)
+    setContinuationRefreshVersion((current) => current + 1)
+  }, [activeTab, author49Available, author49EndsAt, daily80Event, eventNow])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -1634,6 +1691,7 @@ const upcomingEvents = [
         id: 'black-sunday',
         title: t('eventPage.blackSunday'),
         startsAt: getNextWeeklyStart(eventNow, 0),
+        image: '/Black%20Sunday.webp',
         icon: 'fa-star',
         iconBg: 'bg-[#F5EFFF] dark:bg-violet-500/15',
         iconColor: 'text-[#8B5CF6]',
@@ -1679,6 +1737,7 @@ const activeEvents = [
           id: 'black-sunday',
           title: t('eventPage.blackSunday'),
           label: t('eventPage.weeklyEvent'),
+          image: '/Black%20Sunday.webp',
           icon: 'fa-bolt',
           iconBg: 'bg-[#1A1730]',
           iconColor: 'text-[#C084FC]',
@@ -1733,6 +1792,39 @@ const activeEvents = [
   const activeEventIds = activeEvents
     .map((event) => event.id)
     .join('|')
+
+  const handleEventTouchStart = (event) => {
+    const touch = event.touches?.[0]
+    if (!touch) return
+    eventSwipeClickBlockedRef.current = false
+    eventSwipeStartRef.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  const handleEventTouchEnd = (event) => {
+    const start = eventSwipeStartRef.current
+    eventSwipeStartRef.current = null
+    const touch = event.changedTouches?.[0]
+    if (!start || !touch) return
+
+    const deltaX = touch.clientX - start.x
+    const deltaY = touch.clientY - start.y
+    if (Math.abs(deltaX) < 55 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return
+
+    const ids = activeEventIds ? activeEventIds.split('|') : []
+    if (ids.length <= 1) return
+
+    const index = Math.max(0, ids.indexOf(selectedActiveEvent))
+    const next = (index + (deltaX < 0 ? 1 : -1) + ids.length) % ids.length
+    eventSwipeClickBlockedRef.current = true
+    setSelectedActiveEvent(ids[next])
+  }
+
+  const handleEventSwipeClickCapture = (event) => {
+    if (!eventSwipeClickBlockedRef.current) return
+    eventSwipeClickBlockedRef.current = false
+    event.preventDefault()
+    event.stopPropagation()
+  }
 
   useEffect(() => {
     if (managedEventsLoading) return
@@ -2236,6 +2328,12 @@ const activeEvents = [
           <MonthlyVoteTab />
         ) : (
   <>
+  <div
+    onTouchStart={handleEventTouchStart}
+    onTouchEnd={handleEventTouchEnd}
+    onTouchCancel={() => { eventSwipeStartRef.current = null }}
+    onClickCapture={handleEventSwipeClickCapture}
+  >
   {selectedManagedEvent ? (
   <ManagedEventHeroCard event={selectedManagedEvent} />
 ) : null}
@@ -2264,6 +2362,7 @@ const activeEvents = [
 {selectedActiveEvent === 'author-daily-50' ? (
   <AuthorDaily50CoverCard />
 ) : null}
+  </div>
 
 {!managedEventsLoading && activeEvents.length === 0 ? (
   <div className="mt-4 flex aspect-square w-full items-center justify-center rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] text-[14px] font-bold text-[var(--shadow-text-secondary)]">
