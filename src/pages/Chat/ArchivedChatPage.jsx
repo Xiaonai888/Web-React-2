@@ -10,6 +10,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -17,10 +18,10 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
   deleteChatConversation,
-  getManagedChatConversations,
   hasReaderSession,
   unarchiveChatConversation,
 } from '../../services/chatApi'
+import { getArchivedChatPage } from '../../services/chatArchivedPageApi'
 
 
 registerTranslationNamespace('archivedChatPage', {
@@ -36,6 +37,8 @@ registerTranslationNamespace('archivedChatPage', {
     restore: 'Restore',
     delete: 'Delete',
     noArchivedMessages: 'No archived messages',
+    loadMore: 'Load more',
+    refresh: 'Refresh',
   },
   km: {
     shadowUser: 'អ្នកប្រើ Shadow',
@@ -49,6 +52,8 @@ registerTranslationNamespace('archivedChatPage', {
     restore: 'ស្ដារ',
     delete: 'លុប',
     noArchivedMessages: 'មិនមានការសន្ទនាដែលបានដាក់ក្នុងប័ណ្ណសារទេ',
+    loadMore: 'មើលបន្ថែម',
+    refresh: 'ផ្ទុកឡើងវិញ',
   },
   zh: {
     shadowUser: 'Shadow 用户',
@@ -62,6 +67,8 @@ registerTranslationNamespace('archivedChatPage', {
     restore: '恢复',
     delete: '删除',
     noArchivedMessages: '暂无已归档聊天',
+    loadMore: '加载更多',
+    refresh: '刷新',
   },
   ja: {
     shadowUser: 'Shadow ユーザー',
@@ -75,6 +82,8 @@ registerTranslationNamespace('archivedChatPage', {
     restore: '復元',
     delete: '削除',
     noArchivedMessages: 'アーカイブ済みチャットはありません',
+    loadMore: 'さらに読み込む',
+    refresh: '更新',
   },
   ko: {
     shadowUser: 'Shadow 사용자',
@@ -88,6 +97,8 @@ registerTranslationNamespace('archivedChatPage', {
     restore: '복원',
     delete: '삭제',
     noArchivedMessages: '보관된 채팅이 없습니다',
+    loadMore: '더 보기',
+    refresh: '새로고침',
   },
 })
 
@@ -123,37 +134,45 @@ export default function ArchivedChatPage() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState('')
   const [error, setError] = useState('')
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const nextPageRef = useRef(1)
+  const inFlightRef = useRef(false)
 
   const loadArchived = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!silent) setLoading(true)
+    async ({ silent = false, append = false } = {}) => {
+      if (inFlightRef.current) return
+      inFlightRef.current = true
+      if (append) setLoadingMore(true)
+      else if (!silent) setLoading(true)
 
       try {
-        const data = await getManagedChatConversations({
-          view: 'archived',
+        const data = await getArchivedChatPage({
+          role: 'reader',
+          page: append ? nextPageRef.current : 1,
         })
+        const records = Array.isArray(data.conversations)
+          ? data.conversations.filter((conversation) => conversation.viewer_role === 'reader')
+          : []
 
-        setConversations(
-          Array.isArray(data.conversations)
-            ? data.conversations.filter(
-                (conversation) =>
-                  conversation.viewer_role === 'reader'
-              )
-            : []
-        )
+        setConversations((previous) => {
+          if (!append) return records
+          const seen = new Set(previous.map((item) => String(item.id)))
+          return [...previous, ...records.filter((item) => !seen.has(String(item.id)))]
+        })
+        setHasMore(data.pagination?.has_more === true)
+        nextPageRef.current = data.pagination?.next_page || 1
         setError('')
       } catch (loadError) {
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
           return
         }
-
-        setError(
-          loadError.message ||
-            t('archivedChatPage.failedLoadArchivedMessages')
-        )
+        setError(loadError.message || t('archivedChatPage.failedLoadArchivedMessages'))
       } finally {
-        if (!silent) setLoading(false)
+        inFlightRef.current = false
+        if (append) setLoadingMore(false)
+        else if (!silent) setLoading(false)
       }
     },
     [navigate, t]
@@ -165,14 +184,7 @@ export default function ArchivedChatPage() {
       return undefined
     }
 
-    loadArchived()
-
-    const intervalId = window.setInterval(
-      () => loadArchived({ silent: true }),
-      8000
-    )
-
-    return () => window.clearInterval(intervalId)
+    void loadArchived()
   }, [loadArchived, navigate])
 
   const visible = useMemo(() => {
@@ -289,6 +301,14 @@ export default function ArchivedChatPage() {
 
                 <button
                   type="button"
+                  onClick={() => loadArchived({ silent: true })}
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f2f2f3] dark:text-[var(--shadow-text-primary)] dark:active:bg-[var(--shadow-bg-hover)]"
+                  aria-label={t('archivedChatPage.refresh')}
+                >
+                  <RotateCcw size={21} strokeWidth={2.1} />
+                </button>
+                <button
+                  type="button"
                   onClick={() => setSearchOpen(true)}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f2f2f3] dark:text-[var(--shadow-text-primary)] dark:active:bg-[var(--shadow-bg-hover)]"
                   aria-label={t('archivedChatPage.searchArchivedChats')}
@@ -398,6 +418,16 @@ export default function ArchivedChatPage() {
             </h2>
           </div>
         )}
+        {hasMore && !loading ? (
+          <button
+            type="button"
+            disabled={loadingMore}
+            onClick={() => void loadArchived({ append: true })}
+            className="mt-4 flex w-full items-center justify-center rounded-[14px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[13px] font-bold text-[var(--shadow-text-primary)] disabled:opacity-50"
+          >
+            {loadingMore ? <LoaderCircle size={18} className="animate-spin" /> : t('archivedChatPage.loadMore')}
+          </button>
+        ) : null}
       </main>
     </div>
   )
