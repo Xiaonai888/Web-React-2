@@ -5,21 +5,23 @@ import {
   LoaderCircle,
   MessageCircle,
   Search,
+  RotateCcw,
   X,
 } from 'lucide-react'
 import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  getAuthorChatConversations,
   getAuthorInboxComments,
   getAuthorInboxProfile,
   hasAuthorChatSession,
 } from '../../services/authorChatApi'
+import { getLightweightChatInbox } from '../../services/chatInboxLightweightApi'
 import { resolveAuthorPostActivityRoute } from '../../utils/authorPostActivityRoute'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -68,7 +70,9 @@ registerTranslationNamespace('authorChatInbox', {
     "moreToolsLater": "More Inbox tools will be added later.",
     "comments": "Comments",
     "archivedChats": "Archived chats",
-    "archivedCount": "{{count}} archived"
+    "archivedCount": "{{count}} archived",
+    "refreshInbox": 'Refresh inbox',
+    "loadMoreConversations": 'Load 10 more'
   },
   "km": {
     "unread": "មិនទាន់អាន",
@@ -113,7 +117,9 @@ registerTranslationNamespace('authorChatInbox', {
     "moreToolsLater": "ឧបករណ៍ Inbox បន្ថែមនឹងមកនៅពេលក្រោយ។",
     "comments": "មតិយោបល់",
     "archivedChats": "ការសន្ទនាដែលបានទុកក្នុងបណ្ណសារ",
-    "archivedCount": "បានទុក {{count}}"
+    "archivedCount": "បានទុក {{count}}",
+    "refreshInbox": 'ផ្ទុកប្រអប់សារឡើងវិញ',
+    "loadMoreConversations": 'បង្ហាញការសន្ទនា ១០ ទៀត'
   },
   "zh": {
     "unread": "未读",
@@ -158,7 +164,9 @@ registerTranslationNamespace('authorChatInbox', {
     "moreToolsLater": "更多收件箱工具稍后推出。",
     "comments": "评论",
     "archivedChats": "已归档聊天",
-    "archivedCount": "已归档 {{count}} 个"
+    "archivedCount": "已归档 {{count}} 个",
+    "refreshInbox": '刷新收件箱',
+    "loadMoreConversations": '再加载 10 个会话'
   },
   "ja": {
     "unread": "未読",
@@ -203,7 +211,9 @@ registerTranslationNamespace('authorChatInbox', {
     "moreToolsLater": "その他の受信トレイツールは後で追加されます。",
     "comments": "コメント",
     "archivedChats": "アーカイブ済みチャット",
-    "archivedCount": "{{count}}件をアーカイブ"
+    "archivedCount": "{{count}}件をアーカイブ",
+    "refreshInbox": '受信箱を更新',
+    "loadMoreConversations": 'さらに10件のチャットを表示'
   },
   "ko": {
     "unread": "읽지 않음",
@@ -248,7 +258,9 @@ registerTranslationNamespace('authorChatInbox', {
     "moreToolsLater": "추가 받은편지함 도구는 나중에 제공됩니다.",
     "comments": "댓글",
     "archivedChats": "보관된 채팅",
-    "archivedCount": "{{count}}개 보관됨"
+    "archivedCount": "{{count}}개 보관됨",
+    "refreshInbox": '받은편지함 새로고침',
+    "loadMoreConversations": '대화 10개 더 보기'
   }
 })
 
@@ -667,8 +679,15 @@ export default function AuthorChatInboxPage() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [conversations, setConversations] = useState([])
-  const [archivedCount, setArchivedCount] = useState(0)
   const [comments, setComments] = useState([])
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const nextPageRef = useRef(1)
+  const requestIdRef = useRef(0)
+  const moreInFlightRef = useRef(false)
+  const commentsInFlightRef = useRef(false)
+  const commentsLoadedRef = useRef(false)
   const [tab, setTab] = useState('messages')
   const [query, setQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -678,57 +697,51 @@ export default function AuthorChatInboxPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const loadInbox = useCallback(
-    async ({ signal } = {}) => {
-      setLoading(true)
-
+  const loadConversations = useCallback(
+    async ({ signal, silent = false, append = false } = {}) => {
+      if (append && moreInFlightRef.current) return
+      if (append) {
+        moreInFlightRef.current = true
+        setLoadingMore(true)
+      } else if (!silent) {
+        setLoading(true)
+      }
+      const requestId = append
+        ? requestIdRef.current
+        : ++requestIdRef.current
       try {
-        const [
-          chatData,
-          archivedData,
-          profileData,
-          commentData,
-        ] = await Promise.all([
-          getAuthorChatConversations({
-            view: 'active',
-            signal,
-          }),
-          getAuthorChatConversations({
-            view: 'archived',
-            signal,
-          }),
-          getAuthorInboxProfile({ signal }),
-          getAuthorInboxComments(
-            50,
-            { signal }
-          ),
-        ])
-
-        setConversations(
-          chatData.conversations || []
+        const data = await getLightweightChatInbox({
+          role: 'author',
+          page: append ? nextPageRef.current : 1,
+          signal,
+        })
+        if (signal?.aborted || requestId !== requestIdRef.current) return
+        const records = (data.conversations || []).filter(
+          (item) => item.viewer_role === 'author'
         )
-        setArchivedCount(
-          (archivedData.conversations || []).length
-        )
-        setProfile(profileData || null)
-        setComments(commentData || [])
+        setConversations((previous) => {
+          if (!append) return records
+          const ids = new Set(previous.map((item) => String(item.id)))
+          return [
+            ...previous,
+            ...records.filter((item) => !ids.has(String(item.id))),
+          ]
+        })
+        setHasMore(data.pagination?.has_more === true)
+        nextPageRef.current = data.pagination?.next_page || 1
         setError('')
       } catch (loadError) {
-        if (loadError?.name === 'AbortError') {
-          return
-        }
-
+        if (loadError?.name === 'AbortError' || signal?.aborted) return
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
           return
         }
-
-        setError(
-          loadError.message ||
-            getDisplayText('authorChatInbox.failedLoadInbox')
-        )
+        setError(loadError.message || getDisplayText('authorChatInbox.failedLoadInbox'))
       } finally {
-        if (!signal?.aborted) {
+        if (append) {
+          moreInFlightRef.current = false
+          setLoadingMore(false)
+        } else if (!signal?.aborted && !silent) {
           setLoading(false)
         }
       }
@@ -736,43 +749,30 @@ export default function AuthorChatInboxPage() {
     [navigate]
   )
 
-  const refreshCurrentTab = useCallback(
+  const loadComments = useCallback(
     async ({ signal } = {}) => {
-      if (document.hidden) return
-
+      if (commentsInFlightRef.current) return
+      commentsInFlightRef.current = true
+      setCommentsLoading(true)
       try {
-        if (tab === 'comments') {
-          const commentData =
-            await getAuthorInboxComments(
-              50,
-              { signal }
-            )
-
-          setComments(commentData || [])
-        } else {
-          const chatData =
-            await getAuthorChatConversations({
-              view: 'active',
-              signal,
-            })
-
-          setConversations(
-            chatData.conversations || []
-          )
-        }
-
+        const data = await getAuthorInboxComments(50, { signal })
+        if (signal?.aborted) return
+        setComments(data || [])
+        commentsLoadedRef.current = true
         setError('')
       } catch (loadError) {
-        if (loadError?.name === 'AbortError') {
-          return
-        }
-
+        if (loadError?.name === 'AbortError' || signal?.aborted) return
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
+          return
         }
+        setError(loadError.message || getDisplayText('authorChatInbox.failedLoadInbox'))
+      } finally {
+        commentsInFlightRef.current = false
+        if (!signal?.aborted) setCommentsLoading(false)
       }
     },
-    [navigate, tab]
+    [navigate]
   )
 
   useEffect(() => {
@@ -780,84 +780,30 @@ export default function AuthorChatInboxPage() {
       navigate('/login', { replace: true })
       return undefined
     }
-
     const controller = new AbortController()
-
-    loadInbox({
-      signal: controller.signal,
-    })
-
-    return () => {
-      controller.abort()
-    }
-  }, [loadInbox, navigate])
+    void loadConversations({ signal: controller.signal })
+    void getAuthorInboxProfile({ signal: controller.signal })
+      .then((profileData) => {
+        if (!controller.signal.aborted) setProfile(profileData || null)
+      })
+      .catch(() => null)
+    return () => controller.abort()
+  }, [loadConversations, navigate])
 
   useEffect(() => {
-    if (!hasAuthorChatSession()) return undefined
-
-    let refreshInFlight = false
-    let lastRefreshAt = Date.now()
+    if (tab !== 'comments' || commentsLoadedRef.current) return undefined
     const controller = new AbortController()
+    void loadComments({ signal: controller.signal })
+    return () => controller.abort()
+  }, [tab, loadComments])
 
-    const refreshIfStale = async () => {
-      if (
-        refreshInFlight ||
-        controller.signal.aborted ||
-        document.visibilityState !== 'visible'
-      ) {
-        return
-      }
-
-      const now = Date.now()
-
-      if (
-        lastRefreshAt &&
-        now - lastRefreshAt < 30000
-      ) {
-        return
-      }
-
-      refreshInFlight = true
-      lastRefreshAt = now
-
-      try {
-        await refreshCurrentTab({
-          signal: controller.signal,
-        })
-      } finally {
-        refreshInFlight = false
-      }
+  const refreshCurrentTab = useCallback(() => {
+    if (tab === 'comments') {
+      void loadComments()
+    } else {
+      void loadConversations({ silent: true })
     }
-
-    const handleVisible = () => {
-      if (
-        document.visibilityState === 'visible'
-      ) {
-        refreshIfStale()
-      }
-    }
-
-    window.addEventListener(
-      'focus',
-      refreshIfStale
-    )
-    document.addEventListener(
-      'visibilitychange',
-      handleVisible
-    )
-
-    return () => {
-      controller.abort()
-      window.removeEventListener(
-        'focus',
-        refreshIfStale
-      )
-      document.removeEventListener(
-        'visibilitychange',
-        handleVisible
-      )
-    }
-  }, [refreshCurrentTab, tab])
+  }, [tab, loadComments, loadConversations])
 
   const normalizedQuery = useMemo(
     () => normalizeSearch(query),
@@ -870,8 +816,8 @@ export default function AuthorChatInboxPage() {
       const latest = conversation.latest_message || {}
 
       if (!matchesConversationFilters(conversation, filters)) {
-  return false
-}
+        return false
+      }
 
       if (!normalizedQuery) return true
 
@@ -979,6 +925,15 @@ export default function AuthorChatInboxPage() {
                 <h1 className="min-w-0 flex-1 text-[20px] font-bold leading-none">
                   {getDisplayText('authorChatInbox.inbox')}
                 </h1>
+
+                <button
+                  type="button"
+                  onClick={refreshCurrentTab}
+                  className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
+                  aria-label={getDisplayText('authorChatInbox.refreshInbox')}
+                >
+                  <RotateCcw size={20} strokeWidth={2.1} />
+                </button>
 
                 <button
                   type="button"
@@ -1135,14 +1090,11 @@ export default function AuthorChatInboxPage() {
       <strong className="block text-[14px] font-semibold text-[var(--shadow-text-primary)]">
         {getDisplayText('authorChatInbox.archivedChats')}
       </strong>
-      <span className="mt-0.5 block text-[11px] text-[var(--shadow-text-tertiary)]">
-        {getDisplayText('authorChatInbox.archivedCount', { count: archivedCount })}
-      </span>
     </span>
   </button>
 ) : null}
 
-        {loading ? (
+        {(tab === 'comments' ? commentsLoading : loading) ? (
           <div className="flex min-h-[320px] items-center justify-center text-[#1877f2]">
             <LoaderCircle
               size={27}
@@ -1184,6 +1136,19 @@ export default function AuthorChatInboxPage() {
         ) : (
           <EmptyState tab="comments" />
         )}
+        {tab === 'messages' && !loading && hasMore ? (
+          <div className="flex justify-center px-4 py-4">
+            <button
+              type="button"
+              disabled={loadingMore}
+              onClick={() => loadConversations({ silent: true, append: true })}
+              className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-6 text-[13px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-50"
+            >
+              {loadingMore ? <LoaderCircle size={17} className="animate-spin" /> : null}
+              {getDisplayText('authorChatInbox.loadMoreConversations')}
+            </button>
+          </div>
+        ) : null}
       </main>
 
       <FilterSheet
