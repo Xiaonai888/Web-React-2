@@ -368,10 +368,10 @@ export default function WalletPage() {
             <button
               type="button"
               onClick={() =>
-                navigate('/shop/mall/purchase', {
-                  state: { returnTo: '/wallet' },
-                })
-              }
+  navigate('/shop', {
+    state: { activeTab: 'Purchase', returnTo: '/wallet' },
+  })
+}
               className="app-card flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[13px] font-semibold active:scale-[0.98]"
             >
               <TopUpIcon />
