@@ -2205,7 +2205,7 @@ function ReaderEndPanel({
     ? hotCommentTotal
     : fallbackCommentCount
   const replies = Array.isArray(hotComment?.replies) ? hotComment.replies : []
-  const replyCount = replies.length
+  const replyCount = Math.max(0, Number(hotComment?.reply_count ?? replies.length))
   const hotLikes = Number(hotComment?.likes || hotComment?.like_count || 0)
   const hotUser = hotComment?.user || {}
   const hotName = hotUser.name || hotComment?.name || t('readerPage.reader')
@@ -5793,7 +5793,7 @@ useEffect(() => {
         if (!pending) {
           pending = (async () => {
             const response = await fetch(
-              `${API_BASE_URL}/api/comments/episode/${targetEpisodeId}?page=1&limit=20&sort=top`,
+              `${API_BASE_URL}/api/comments/episode/${targetEpisodeId}/hot-summary`,
               {
                 headers: readerAuthHeaders(),
               }
@@ -5810,9 +5810,9 @@ useEffect(() => {
               return null
             }
 
-            const comments = Array.isArray(data.comments)
-              ? data.comments
-              : []
+            const comments = data.hot_comment
+  ? [data.hot_comment]
+  : []
 
             const sorted = [...comments].sort(
               (first, second) => {
