@@ -4,6 +4,7 @@ import {
   useState,
 } from 'react'
 import {
+  GOOGLE_ADS_AVAILABLE,
   getGoogleAdsPlacementEnabled,
   getPublicGoogleAdsSettings,
 } from '../../services/googleAdsSettings'
@@ -17,6 +18,48 @@ const ADSENSE_CLIENT =
 
 const LOAD_ROOT_MARGIN = '400px 0px'
 const LOAD_DWELL_MS = 700
+let adsenseScriptPromise = null
+
+function loadAdsenseScript() {
+  if (adsenseScriptPromise) {
+    return adsenseScriptPromise
+  }
+
+  adsenseScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector(
+      'script[data-shadow-adsense="true"]'
+    )
+
+    if (existing?.dataset.loaded === 'true') {
+      resolve()
+      return
+    }
+
+    const script = existing || document.createElement('script')
+
+    script.addEventListener('load', () => {
+      script.dataset.loaded = 'true'
+      resolve()
+    }, { once: true })
+
+    script.addEventListener('error', () => {
+      adsenseScriptPromise = null
+      script.remove()
+      reject(new Error('Google AdSense script failed to load'))
+    }, { once: true })
+
+    if (!existing) {
+      script.async = true
+      script.crossOrigin = 'anonymous'
+      script.dataset.shadowAdsense = 'true'
+      script.src =
+        `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`
+      document.head.appendChild(script)
+    }
+  })
+
+  return adsenseScriptPromise
+}
 
 export default function GoogleAdBanner({
   slot,
@@ -28,12 +71,17 @@ export default function GoogleAdBanner({
   const pushedRef = useRef(false)
 
   const [enabled, setEnabled] =
-    useState(!placement)
+    useState(GOOGLE_ADS_AVAILABLE && !placement)
   const [readyToLoad, setReadyToLoad] =
     useState(false)
 
   useEffect(() => {
     let active = true
+
+    if (!GOOGLE_ADS_AVAILABLE || !slot) {
+      setEnabled(false)
+      return undefined
+    }
 
     if (!placement) {
       setEnabled(true)
@@ -61,7 +109,7 @@ export default function GoogleAdBanner({
     return () => {
       active = false
     }
-  }, [placement])
+  }, [placement, slot])
 
   useEffect(() => {
     const node = containerRef.current
@@ -132,6 +180,7 @@ export default function GoogleAdBanner({
 
   useEffect(() => {
     if (
+      !GOOGLE_ADS_AVAILABLE ||
       !enabled ||
       !slot ||
       !readyToLoad ||
@@ -139,21 +188,37 @@ export default function GoogleAdBanner({
       typeof window === 'undefined' ||
       document.visibilityState !== 'visible'
     ) {
-      return
+      return undefined
     }
 
     if (!canRequestDisplayAd()) {
-      return
+      return undefined
     }
 
-    pushedRef.current = true
-    markDisplayAdRequest()
+    let cancelled = false
 
-    try {
-      ;(window.adsbygoogle =
-        window.adsbygoogle || []).push({})
-    } catch {
-      pushedRef.current = false
+    loadAdsenseScript().then(() => {
+      if (
+        cancelled ||
+        pushedRef.current ||
+        document.visibilityState !== 'visible' ||
+        !canRequestDisplayAd()
+      ) {
+        return
+      }
+
+      try {
+        ;(window.adsbygoogle =
+          window.adsbygoogle || []).push({})
+        pushedRef.current = true
+        markDisplayAdRequest()
+      } catch {
+        pushedRef.current = false
+      }
+    }).catch(() => {})
+
+    return () => {
+      cancelled = true
     }
   }, [
     enabled,
@@ -161,7 +226,7 @@ export default function GoogleAdBanner({
     slot,
   ])
 
-  if (!slot || !enabled) return null
+  if (!GOOGLE_ADS_AVAILABLE || !slot || !enabled) return null
 
   return (
     <div
