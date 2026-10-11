@@ -193,7 +193,7 @@ export default function AuthorCartPage() {
 }
 
   function openCheckout() {
-  if (!items.length) return
+  if (!items.length || hasExpiredDiscoverPromotion(items)) return
 
   navigate('/author/checkout', {
     state: { from: location.pathname + location.search + location.hash },
@@ -281,7 +281,7 @@ export default function AuthorCartPage() {
                     </div>
 
                     <div className="mt-5 flex items-end justify-between gap-3">
-                      <div className="text-[14px] font-black text-[#e5484d]">{money(itemTotal)}</div>
+                      <div className="text-[14px] font-black text-[#e5484d]">{isExpiredDiscoverPromotion(item) ? '—' : money(itemTotal)}</div>
                       <div className="flex items-center gap-2">
                         <button type="button" aria-label={t('authorCart.decreaseQuantity')} onClick={() => updateQuantity(item.id, Number(item.quantity || 1) - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
                           <i className="fa-solid fa-minus text-[11px]" />
@@ -312,7 +312,7 @@ export default function AuthorCartPage() {
           <div className="mt-4 space-y-3 text-[12px] font-semibold">
             <div className="flex justify-between text-[var(--shadow-text-secondary)]">
               <span>{t('authorCart.subtotal')}</span>
-              <span className="font-black text-[var(--shadow-text-primary)]">{money(subtotal)}</span>
+              <span className="font-black text-[var(--shadow-text-primary)]">{promotionExpired ? '—' : money(subtotal)}</span>
             </div>
             <div className="flex justify-between text-[var(--shadow-text-secondary)]">
               <span>{t('authorCart.deliveryFee')}</span>
@@ -321,7 +321,7 @@ export default function AuthorCartPage() {
             <div className="border-t border-[var(--shadow-border)] pt-3">
               <div className="flex justify-between text-[14px] font-black text-[var(--shadow-text-primary)]">
                 <span>{t('authorCart.total')}</span>
-                <span className="text-[#e5484d]">{money(subtotal)}</span>
+                <span className="text-[#e5484d]">{promotionExpired ? '—' : money(subtotal)}</span>
               </div>
               <p className="mt-1 text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{t('authorCart.deliveryFeeHelp')}</p>
             </div>
@@ -333,9 +333,9 @@ export default function AuthorCartPage() {
         <div className="mx-auto flex h-[82px] max-w-[980px] items-center justify-between px-4">
           <div>
             <div className="text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{t('authorCart.total')}</div>
-            <div className="mt-1 text-[17px] font-black text-[#e5484d]">{money(subtotal)}</div>
+            <div className="mt-1 text-[17px] font-black text-[#e5484d]">{promotionExpired ? '—' : money(subtotal)}</div>
           </div>
-          <button type="button" disabled={!items.length} onClick={openCheckout} className="h-12 rounded-full bg-[var(--shadow-text-primary)] px-10 text-[13px] font-black text-[var(--shadow-bg-surface)] shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-45">
+          <button type="button" disabled={!items.length || promotionExpired} onClick={openCheckout} className="h-12 rounded-full bg-[var(--shadow-text-primary)] px-10 text-[13px] font-black text-[var(--shadow-bg-surface)] shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-45">
             {t('authorCart.checkout')}
           </button>
         </div>
