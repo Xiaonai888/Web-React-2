@@ -34,7 +34,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "openConversation": "Open this conversation",
     "restore": "Restore",
     "delete": "Delete",
-    "noArchivedMessages": "No archived messages"
+    "noArchivedMessages": "No archived messages",
+    "refresh": "Refresh"
   },
   "km": {
     "shadowReader": "អ្នកអាន Shadow",
@@ -47,7 +48,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "openConversation": "បើកការសន្ទនានេះ",
     "restore": "ស្ដារ",
     "delete": "លុប",
-    "noArchivedMessages": "មិនមានសារដែលបានទុកក្នុងបណ្ណសារ"
+    "noArchivedMessages": "មិនមានសារដែលបានទុកក្នុងបណ្ណសារ",
+    "refresh": "ផ្ទុកឡើងវិញ"
   },
   "zh": {
     "shadowReader": "Shadow 读者",
@@ -60,7 +62,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "openConversation": "打开此对话",
     "restore": "恢复",
     "delete": "删除",
-    "noArchivedMessages": "暂无已归档消息"
+    "noArchivedMessages": "暂无已归档消息",
+    "refresh": "刷新"
   },
   "ja": {
     "shadowReader": "Shadow 読者",
@@ -73,7 +76,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "openConversation": "この会話を開く",
     "restore": "復元",
     "delete": "削除",
-    "noArchivedMessages": "アーカイブ済みメッセージはありません"
+    "noArchivedMessages": "アーカイブ済みメッセージはありません",
+    "refresh": "更新"
   },
   "ko": {
     "shadowReader": "Shadow 독자",
@@ -86,7 +90,8 @@ registerTranslationNamespace('authorArchivedChat', {
     "openConversation": "이 대화 열기",
     "restore": "복원",
     "delete": "삭제",
-    "noArchivedMessages": "보관된 메시지가 없습니다"
+    "noArchivedMessages": "보관된 메시지가 없습니다",
+    "refresh": "새로고침"
   }
 })
 
@@ -159,12 +164,21 @@ export default function AuthorArchivedChatPage() {
 
     loadArchived()
 
-    const intervalId = window.setInterval(
-      () => loadArchived({ silent: true }),
-      8000
-    )
+    let lastRefreshedAt = Date.now()
+    const refreshWhenActive = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastRefreshedAt < 60 * 1000) return
+      lastRefreshedAt = Date.now()
+      void loadArchived({ silent: true })
+    }
 
-    return () => window.clearInterval(intervalId)
+    window.addEventListener('focus', refreshWhenActive)
+    document.addEventListener('visibilitychange', refreshWhenActive)
+
+    return () => {
+      window.removeEventListener('focus', refreshWhenActive)
+      document.removeEventListener('visibilitychange', refreshWhenActive)
+    }
   }, [loadArchived, navigate])
 
   const visible = useMemo(() => {
@@ -272,6 +286,14 @@ export default function AuthorArchivedChatPage() {
             {getDisplayText('authorArchivedChat.archivedChats')}
           </h1>
 
+          <button
+            type="button"
+            onClick={() => loadArchived({ silent: true })}
+            className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
+            aria-label={getDisplayText('authorArchivedChat.refresh')}
+          >
+            <RotateCcw size={21} strokeWidth={2.1} />
+          </button>
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
