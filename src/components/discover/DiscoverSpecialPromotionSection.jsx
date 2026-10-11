@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Gem, LockKeyhole, X } from 'lucide-react'
+import { LockKeyhole, X } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import DiscoverSpecialPromotionCard from './DiscoverSpecialPromotionCard'
@@ -22,6 +22,7 @@ registerTranslationNamespace('discoverSpecialPromotionCheckout', {
     purchased: 'Episodes unlocked successfully!',
     alreadyOwned: 'You already have all these episodes unlocked.',
     readStory: 'Read Story',
+    slide: 'Promotion {{count}}',
   },
   km: {
     confirmTitle: 'បញ្ជាក់ការទិញការផ្ដល់ជូនពិសេស',
@@ -39,6 +40,7 @@ registerTranslationNamespace('discoverSpecialPromotionCheckout', {
     purchased: 'បានដោះសោភាគដោយជោគជ័យ!',
     alreadyOwned: 'អ្នកបានដោះសោភាគទាំងនេះរួចហើយ។',
     readStory: 'អានរឿង',
+    slide: 'រឿងទី {{count}}',
   },
   zh: {
     confirmTitle: '确认特别优惠购买',
@@ -56,6 +58,7 @@ registerTranslationNamespace('discoverSpecialPromotionCheckout', {
     purchased: '章节解锁成功！',
     alreadyOwned: '您已经解锁了这些章节。',
     readStory: '阅读故事',
+    slide: '第 {{count}} 本',
   },
   ja: {
     confirmTitle: '特別キャンペーンの購入確認',
@@ -73,6 +76,7 @@ registerTranslationNamespace('discoverSpecialPromotionCheckout', {
     purchased: 'エピソードを解放しました！',
     alreadyOwned: 'すべてのエピソードを解放済みです。',
     readStory: 'ストーリーを読む',
+    slide: '作品 {{count}}',
   },
   ko: {
     confirmTitle: '특별 프로모션 구매 확인',
@@ -90,6 +94,7 @@ registerTranslationNamespace('discoverSpecialPromotionCheckout', {
     purchased: '에피소드를 해제했습니다!',
     alreadyOwned: '이미 모든 에피소드를 해제했습니다.',
     readStory: '스토리 읽기',
+    slide: '이야기 {{count}}',
   },
 })
 
@@ -97,11 +102,14 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
-const CACHE_DURATION_MS = 5 * 60 * 1000
+const ROTATION_STORAGE_KEY = 'shadow_discover_special_promotion_rotation_v2'
+const VISIT_STORAGE_KEY = 'shadow_discover_special_promotion_slide_v2'
+const RETRY_DELAY_MS = 30 * 1000
+const DIAMOND_ICON_URL = '/assets/Icons/Diamond.svg'
 
-let cachedPromotion = null
-let lastRequestAt = 0
+let cachedRotation = null
 let pendingRequest = null
+let retryAfter = 0
 
 function getReaderToken() {
   return (
@@ -117,11 +125,71 @@ function formatDiamonds(value) {
   })
 }
 
-async function loadActivePromotion(force = false) {
-  if (!force && Date.now() - lastRequestAt < CACHE_DURATION_MS) {
-    return cachedPromotion
-  }
+function normalizeRotation(payload) {
+  if (!payload || payload.ok === false) return null
 
+  const expiresAt = new Date(payload.expires_at || 0).getTime()
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null
+
+  const source = Array.isArray(payload.promotions)
+    ? payload.promotions
+    : payload.promotion
+      ? [payload.promotion]
+      : []
+  const seen = new Set()
+  const promotions = source.filter((item) => {
+    const id = String(item?.story_id || '').trim()
+    if (!id || seen.has(id)) return false
+    if (!Number.isInteger(Number(item?.locked_episode_count)) || Number(item.locked_episode_count) < 5) return false
+    if (!Number.isSafeInteger(Number(item?.discounted_price_diamonds)) || Number(item.discounted_price_diamonds) < 1) return false
+    seen.add(id)
+    return true
+  }).slice(0, 3)
+
+  return {
+    promotions,
+    promotion: promotions[0] || null,
+    rotationKey: String(payload.rotation_key || payload.slot_start_at || expiresAt),
+    expires_at: new Date(expiresAt).toISOString(),
+    expiresAt,
+  }
+}
+
+function readCachedRotation() {
+  if (cachedRotation?.expiresAt > Date.now()) return cachedRotation
+  cachedRotation = null
+
+  try {
+    const raw = localStorage.getItem(ROTATION_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    const rotation = normalizeRotation(parsed)
+    if (!rotation) {
+      localStorage.removeItem(ROTATION_STORAGE_KEY)
+      return null
+    }
+    cachedRotation = rotation
+    return rotation
+  } catch {
+    return null
+  }
+}
+
+function saveCachedRotation(rotation) {
+  cachedRotation = rotation
+  try {
+    localStorage.setItem(ROTATION_STORAGE_KEY, JSON.stringify({
+      promotions: rotation.promotions,
+      rotation_key: rotation.rotationKey,
+      expires_at: rotation.expires_at,
+    }))
+  } catch {}
+}
+
+async function loadActivePromotions(force = false) {
+  const cached = readCachedRotation()
+  if (!force && cached) return cached
+  if (!force && Date.now() < retryAfter) return null
   if (pendingRequest) return pendingRequest
 
   pendingRequest = (async () => {
@@ -130,27 +198,19 @@ async function loadActivePromotion(force = false) {
         `${API_BASE_URL}/api/public/discover-special-promotion/active`,
         { headers: { Accept: 'application/json' }, cache: 'no-store' }
       )
-
-      if (!response.ok) {
-        throw new Error('Promotion unavailable')
+      if (!response.ok) throw new Error('Promotion unavailable')
+      const result = await response.json()
+      const rotation = normalizeRotation(result)
+      if (!rotation) {
+        retryAfter = Date.now() + RETRY_DELAY_MS
+        return null
       }
-
-      const payload = await response.json()
-
-      if (payload?.ok === false) {
-        throw new Error('Promotion unavailable')
-      }
-
-      cachedPromotion =
-        payload?.promotion && typeof payload.promotion === 'object'
-          ? payload.promotion
-          : null
-
-      lastRequestAt = Date.now()
-      return cachedPromotion
+      saveCachedRotation(rotation)
+      retryAfter = 0
+      return rotation
     } catch {
-      lastRequestAt = Date.now()
-      return cachedPromotion
+      retryAfter = Date.now() + RETRY_DELAY_MS
+      return readCachedRotation()
     } finally {
       pendingRequest = null
     }
@@ -159,16 +219,34 @@ async function loadActivePromotion(force = false) {
   return pendingRequest
 }
 
+function nextInitialSlide(rotationKey, count) {
+  if (!count) return 0
+  let currentIndex = 0
+
+  try {
+    const prior = JSON.parse(localStorage.getItem(VISIT_STORAGE_KEY) || '{}')
+    if (prior.rotationKey === rotationKey && Number.isInteger(prior.nextIndex)) {
+      currentIndex = ((prior.nextIndex % count) + count) % count
+    }
+    localStorage.setItem(VISIT_STORAGE_KEY, JSON.stringify({
+      rotationKey,
+      nextIndex: (currentIndex + 1) % count,
+    }))
+  } catch {}
+
+  return currentIndex
+}
+
 export default function DiscoverSpecialPromotionSection() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const purchaseInFlightRef = useRef(false)
-  const [promotion, setPromotion] = useState(
-    () =>
-      Date.now() - lastRequestAt < CACHE_DURATION_MS
-        ? cachedPromotion
-        : null
-  )
+  const touchStartRef = useRef(null)
+  const initializedRotationRef = useRef('')
+  const expiryReloadRef = useRef(0)
+  const [rotation, setRotation] = useState(() => readCachedRotation())
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [now, setNow] = useState(Date.now())
   const [quote, setQuote] = useState(null)
   const [purchaseBusy, setPurchaseBusy] = useState(false)
   const [purchaseError, setPurchaseError] = useState('')
@@ -179,14 +257,53 @@ export default function DiscoverSpecialPromotionSection() {
   useEffect(() => {
     let mounted = true
 
-    loadActivePromotion().then((result) => {
-      if (mounted) setPromotion(result)
+    loadActivePromotions().then((result) => {
+      if (mounted) setRotation(result)
     })
 
     return () => {
       mounted = false
     }
   }, [])
+
+  const rotationKey = rotation?.rotationKey || ''
+  const promotionCount = rotation?.promotions?.length || 0
+
+  useEffect(() => {
+    if (!rotationKey || !promotionCount || initializedRotationRef.current === rotationKey) return
+    initializedRotationRef.current = rotationKey
+    setActiveIndex(nextInitialSlide(rotationKey, promotionCount))
+    setPurchasedStoryId('')
+  }, [rotationKey, promotionCount])
+
+  useEffect(() => {
+    let mounted = true
+
+    function tick() {
+      const currentTime = Date.now()
+      if (!mounted) return
+      setNow(currentTime)
+
+      if (
+        rotation?.expiresAt &&
+        currentTime >= rotation.expiresAt &&
+        currentTime - expiryReloadRef.current >= RETRY_DELAY_MS
+      ) {
+        expiryReloadRef.current = currentTime
+        loadActivePromotions(true).then((updated) => {
+          if (mounted && updated?.expiresAt > Date.now()) setRotation(updated)
+        })
+      }
+    }
+
+    const interval = window.setInterval(tick, 1000)
+    document.addEventListener('visibilitychange', tick)
+    return () => {
+      mounted = false
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', tick)
+    }
+  }, [rotation?.expiresAt])
 
   useEffect(() => {
     if (!quote) return undefined
@@ -215,7 +332,7 @@ export default function DiscoverSpecialPromotionSection() {
       return
     }
 
-    if (purchaseInFlightRef.current) return
+    if (purchaseInFlightRef.current || !rotation || rotation.expiresAt <= Date.now()) return
 
     const storyId = offer?.story_id || offer?.story?.id
     const price = Number(offer?.discounted_price_diamonds)
@@ -316,8 +433,8 @@ export default function DiscoverSpecialPromotionSection() {
       ].includes(result.code)) {
         setQuote(null)
         setNotice(t('discoverSpecialPromotionCheckout.expired'))
-        const updatedPromotion = await loadActivePromotion(true)
-        setPromotion(updatedPromotion)
+        const updatedRotation = await loadActivePromotions(true)
+        setRotation(updatedRotation)
         return
       }
 
@@ -335,9 +452,7 @@ export default function DiscoverSpecialPromotionSection() {
             : 'discoverSpecialPromotionCheckout.purchased'
         )
       )
-      cachedPromotion = null
-      lastRequestAt = Date.now()
-      setPromotion(null)
+      setActiveIndex(0)
 
       if (result.wallet) {
         window.dispatchEvent(
@@ -352,23 +467,70 @@ export default function DiscoverSpecialPromotionSection() {
     }
   }
 
+  const promotions = (rotation?.promotions || []).filter(
+    (item) => String(item?.story_id || '') !== String(purchasedStoryId || '__none__')
+  )
+  const visibleIndex = promotions.length ? activeIndex % promotions.length : 0
+  const promotion = promotions[visibleIndex] || null
   const storyId = promotion?.story_id || promotion?.story?.id
+  const remainingSeconds = rotation?.expiresAt
+    ? Math.max(0, Math.ceil((rotation.expiresAt - now) / 1000))
+    : 0
+
+  function changeSlide(direction) {
+    if (promotions.length < 2 || purchaseInFlightRef.current || quote) return
+    setActiveIndex((index) => (index + direction + promotions.length) % promotions.length)
+  }
+
+  function handleTouchStart(event) {
+    const touch = event.touches?.[0]
+    if (touch) touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  function handleTouchEnd(event) {
+    const start = touchStartRef.current
+    touchStartRef.current = null
+    const touch = event.changedTouches?.[0]
+    if (!start || !touch) return
+    const deltaX = touch.clientX - start.x
+    const deltaY = touch.clientY - start.y
+    if (Math.abs(deltaX) < 38 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return
+    changeSlide(deltaX < 0 ? 1 : -1)
+  }
 
   if (!promotion && !notice) return null
 
   return (
     <>
       {promotion ? (
-        <DiscoverSpecialPromotionCard
-          promotion={promotion}
-          purchasing={purchaseBusy}
-          onBuy={startPurchase}
-          onOpen={
-            storyId
-              ? () => navigate(`/story/${encodeURIComponent(storyId)}`)
-              : undefined
-          }
-        />
+        <div className="min-w-0" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ touchAction: 'pan-y' }}>
+          <DiscoverSpecialPromotionCard
+            key={storyId}
+            promotion={promotion}
+            purchasing={purchaseBusy || remainingSeconds <= 0}
+            remainingSeconds={remainingSeconds}
+            onBuy={startPurchase}
+            onOpen={
+              storyId
+                ? () => navigate(`/story/${encodeURIComponent(storyId)}`)
+                : undefined
+            }
+          />
+          {promotions.length > 1 ? (
+            <div className="flex items-center justify-center gap-1.5 py-3" role="group" aria-label="Special Promotion">
+              {promotions.map((item, index) => (
+                <button
+                  type="button"
+                  key={item.story_id}
+                  onClick={() => setActiveIndex(index)}
+                  aria-label={t('discoverSpecialPromotionCheckout.slide', { count: index + 1 })}
+                  aria-current={index === visibleIndex ? 'true' : undefined}
+                  className={`h-2.5 rounded-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7882d] ${index === visibleIndex ? 'w-6 bg-[#c99b3e]' : 'w-2.5 bg-gray-300 dark:bg-white/30'}`}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {notice ? (
@@ -425,7 +587,7 @@ export default function DiscoverSpecialPromotionSection() {
             <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
               <div className="flex items-center justify-between gap-3">
                 <span className="inline-flex items-center gap-1 text-[12px] text-gray-400 line-through dark:text-white/40">
-                  <Gem size={13} aria-hidden="true" />
+                  <img src={DIAMOND_ICON_URL} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain opacity-70" />
                   {formatDiamonds(quote.originalPrice)}
                 </span>
                 <span className="rounded-lg bg-red-600 px-2 py-1 text-[11px] font-extrabold text-white">
@@ -433,7 +595,7 @@ export default function DiscoverSpecialPromotionSection() {
                 </span>
               </div>
               <div className="mt-2 flex items-center gap-2 text-[22px] font-black">
-                <Gem size={20} className="text-[#38aadb]" aria-hidden="true" />
+                <img src={DIAMOND_ICON_URL} alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
                 {formatDiamonds(quote.price)}
                 <span className="ml-auto text-[11px] font-semibold text-gray-500 dark:text-white/60">
                   <LockKeyhole size={12} className="mr-1 inline" aria-hidden="true" />
