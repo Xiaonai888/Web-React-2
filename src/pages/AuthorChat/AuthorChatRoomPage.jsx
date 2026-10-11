@@ -41,7 +41,9 @@ registerTranslationNamespace('authorChatRoom', {
     "accept": "Accept",
     "noMessages": "No messages yet.",
     "messagePlaceholder": "Message...",
-    "acceptToReply": "Accept the request to reply"
+    "acceptToReply": "Accept the request to reply",
+    "loadOlder": "Load 10 older messages",
+    "failedLoadOlder": "Failed to load older messages"
   },
   "km": {
     "shadowReader": "អ្នកអាន Shadow",
@@ -56,7 +58,9 @@ registerTranslationNamespace('authorChatRoom', {
     "accept": "ទទួលយក",
     "noMessages": "មិនទាន់មានសារ។",
     "messagePlaceholder": "សារ...",
-    "acceptToReply": "ទទួលយកសំណើដើម្បីឆ្លើយតប"
+    "acceptToReply": "ទទួលយកសំណើដើម្បីឆ្លើយតប",
+    "loadOlder": "ផ្ទុកសារចាស់ ១០ ទៀត",
+    "failedLoadOlder": "មិនអាចផ្ទុកសារចាស់បានទេ"
   },
   "zh": {
     "shadowReader": "Shadow 读者",
@@ -71,7 +75,9 @@ registerTranslationNamespace('authorChatRoom', {
     "accept": "接受",
     "noMessages": "暂无消息。",
     "messagePlaceholder": "消息...",
-    "acceptToReply": "接受请求后即可回复"
+    "acceptToReply": "接受请求后即可回复",
+    "loadOlder": "加载更早的10条消息",
+    "failedLoadOlder": "无法加载更早的消息"
   },
   "ja": {
     "shadowReader": "Shadow 読者",
@@ -86,7 +92,9 @@ registerTranslationNamespace('authorChatRoom', {
     "accept": "承認",
     "noMessages": "メッセージはまだありません。",
     "messagePlaceholder": "メッセージ...",
-    "acceptToReply": "返信するにはリクエストを承認してください"
+    "acceptToReply": "返信するにはリクエストを承認してください",
+    "loadOlder": "過去のメッセージを10件読み込む",
+    "failedLoadOlder": "過去のメッセージを読み込めませんでした"
   },
   "ko": {
     "shadowReader": "Shadow 독자",
@@ -101,7 +109,9 @@ registerTranslationNamespace('authorChatRoom', {
     "accept": "수락",
     "noMessages": "아직 메시지가 없습니다.",
     "messagePlaceholder": "메시지...",
-    "acceptToReply": "답장하려면 요청을 수락하세요"
+    "acceptToReply": "답장하려면 요청을 수락하세요",
+    "loadOlder": "이전 메시지 10개 불러오기",
+    "failedLoadOlder": "이전 메시지를 불러오지 못했습니다"
   }
 })
 
@@ -189,12 +199,15 @@ export default function AuthorChatRoomPage() {
   const { conversationId } = useParams()
   const navigate = useNavigate()
   const bottomRef = useRef(null)
+  const scrollRestoreRef = useRef(null)
   const knownMessageIdsRef = useRef(new Set())
   const pollCursorRef = useRef('')
   const incrementalLoadingRef = useRef(false)
   const lastVisibilityRefreshAtRef = useRef(0)
   const [conversation, setConversation] = useState(null)
   const [messages, setMessages] = useState([])
+  const [nextBefore, setNextBefore] = useState(null)
+  const [loadingOlder, setLoadingOlder] = useState(false)
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
@@ -213,7 +226,7 @@ export default function AuthorChatRoomPage() {
         const data = await getAuthorChatMessages(
           conversationId,
           {
-            limit: silent ? 20 : 50,
+            limit: 10,
             signal,
           }
         )
@@ -260,6 +273,7 @@ export default function AuthorChatRoomPage() {
           )
         } else {
           setMessages(incomingMessages)
+          setNextBefore(data.next_before || null)
         }
 
         setError('')
@@ -404,6 +418,39 @@ export default function AuthorChatRoomPage() {
     ]
   )
 
+  const loadOlderMessages = useCallback(async () => {
+    if (!conversationId || !nextBefore || loadingOlder) return
+
+    setLoadingOlder(true)
+
+    try {
+      const data = await getAuthorChatMessages(conversationId, {
+        before: nextBefore,
+        limit: 10,
+      })
+      const older = Array.isArray(data.messages) ? data.messages : []
+      const present = new Set(messages.map((item) => String(item.id)))
+      if (older.some((item) => !present.has(String(item.id)))) {
+        scrollRestoreRef.current = {
+          height: document.documentElement.scrollHeight,
+          top: window.scrollY,
+        }
+        setMessages((current) => mergeMessages(current, older))
+      }
+      setNextBefore(data.next_before || null)
+      setError('')
+    } catch (loadError) {
+      scrollRestoreRef.current = null
+      if (loadError.status === 401) {
+        navigate('/login', { replace: true })
+      } else {
+        setError(loadError.message || getDisplayText('authorChatRoom.failedLoadOlder'))
+      }
+    } finally {
+      setLoadingOlder(false)
+    }
+  }, [conversationId, loadingOlder, messages, navigate, nextBefore])
+
   useEffect(() => {
     if (!hasAuthorChatSession()) {
       navigate('/login', { replace: true })
@@ -412,6 +459,8 @@ export default function AuthorChatRoomPage() {
 
     const controller = new AbortController()
 
+    scrollRestoreRef.current = null
+    setNextBefore(null)
     knownMessageIdsRef.current = new Set()
     pollCursorRef.current = ''
     incrementalLoadingRef.current = false
@@ -488,6 +537,15 @@ export default function AuthorChatRoomPage() {
   ])
 
   useEffect(() => {
+    const restore = scrollRestoreRef.current
+    if (restore) {
+      scrollRestoreRef.current = null
+      window.scrollTo({
+        top: restore.top + document.documentElement.scrollHeight - restore.height,
+        behavior: 'auto',
+      })
+      return
+    }
     bottomRef.current?.scrollIntoView({
       behavior: 'smooth',
       block: 'end',
@@ -690,6 +748,19 @@ export default function AuthorChatRoomPage() {
       ) : null}
 
       <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-3 pb-28 pt-4">
+        {!loading && nextBefore ? (
+          <div className="mb-4 flex justify-center">
+            <button
+              type="button"
+              onClick={loadOlderMessages}
+              disabled={loadingOlder}
+              className="flex min-h-10 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-5 text-[12px] font-semibold text-[var(--shadow-text-primary)] disabled:opacity-60"
+            >
+              {loadingOlder ? <LoaderCircle size={15} className="animate-spin" /> : null}
+              {getDisplayText('authorChatRoom.loadOlder')}
+            </button>
+          </div>
+        ) : null}
         {loading ? (
           <div className="flex flex-1 items-center justify-center py-20 text-[#7c3aed]">
             <LoaderCircle
