@@ -39,6 +39,7 @@ import {
 } from '../components/common/ProfessionalPostContent'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import DiscoverAuthorStorePromotionSection from '../components/discover/DiscoverAuthorStorePromotionSection'
 
 registerTranslationNamespace('discoverPage', {
   en: { justNow: 'Just now', minutesAgo: '{{count}}m', hoursAgo: '{{count}}h', daysAgo: '{{count}}d', author: 'Author', authorPost: '{{author}} post', music: 'Music', search: 'Search', chat: 'Chat', openAuthor: 'Open {{name}}', failedAuthorPosts: 'Failed to load author posts', failedReaderPosts: 'Failed to load reader posts', loginFirst: 'Please login first', failedReaction: 'Failed to update reaction', failedFollow: 'Failed to follow author', following: 'Following...', follow: 'Follow', more: 'More', comments: '{{count}} comments', echoes: '{{count}} echoes', like: 'Like', comment: 'Comment', noPosts: 'No posts yet', noPostsText: 'Follow authors to see their latest posts here.', findAuthors: 'Find authors', couldNotLoad: 'Could not load posts', connectionRetry: 'Check your connection and try again.', retry: 'Retry', failedPromotions: 'Failed to load Shadow Mall promotions', failedSaleStatus: 'Failed to load story sale statuses', failedSocialStatus: 'Failed to load promotion social statuses', failedPurchaseStatus: 'Failed to check purchase status', failedPurchase: 'Failed to purchase story', alreadyOwned: 'You already own this story.', purchaseSuccess: 'Story purchased successfully.', ad: 'Ad', sponsoredOptions: 'More sponsored options', hidePromotion: 'Hide sponsored promotion', promotionAlt: 'Shadow Mall promotion', moreCaption: 'more', off: 'OFF', checking: 'Checking...', readStory: 'Read Story', topUp: 'Top up', buyNow: 'Buy now', shopNow: 'Shop now', confirmStoryPurchase: 'Confirm story purchase', closePurchase: 'Close purchase confirmation', confirmPurchase: 'Confirm purchase', thisStory: 'this story', purchasePrefix: 'Purchase', purchaseSuffix: 'and permanently unlock all current and future episodes.', price: 'Price', balance: 'Your balance', cancel: 'Cancel', purchasing: 'Purchasing...', confirm: 'Confirm', loading: 'Loading', loadMorePosts: 'Load more posts', authorPostComments: 'Author post comments' },
@@ -4060,6 +4061,7 @@ export default function DiscoverPage() {
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
           <DiscoverSpecialPromotionSection />
+          <DiscoverAuthorStorePromotionSection />
             {realPostsLoading ||
             readerPostsLoading ? (
               <>
