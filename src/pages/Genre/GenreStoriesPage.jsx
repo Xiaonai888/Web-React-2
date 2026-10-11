@@ -391,7 +391,7 @@ function getTime(value) {
 
 function isCompletedStory(story) {
   return (
-    Boolean(story?.is_completed) ||
+    Boolean(story?.completed || story?.isCompleted || story?.is_completed) ||
     String(story?.story_status || story?.status || '')
       .trim()
       .toLowerCase() === 'completed'
@@ -403,18 +403,21 @@ function normalizeStory(story) {
     id: story.id || story.story_id,
     title: story.title || 'Untitled Story',
     cover:
+      story.cover ||
       story.cover_url ||
       story.coverUrl ||
       story.image_url ||
       '',
     totalEpisodes: Number(
-      story.total_episodes ||
-        story.episodes_count ||
-        story.episode_count ||
+      story.totalEpisodes ??
+        story.total_episodes ??
+        story.episodes_count ??
+        story.episode_count ??
         0
     ),
-    createdAt: story.created_at || '',
+    createdAt: story.createdAt || story.created_at || '',
     updatedAt:
+      story.updatedAt ||
       story.updated_at ||
       story.published_at ||
       story.created_at ||
@@ -511,12 +514,13 @@ export default function GenreStoriesPage({
   const [loadMoreError, setLoadMoreError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
   const loadMoreControllerRef = useRef(null)
+  const storyLanguageId = getStoryLanguageId()
 
   const cacheKey = useMemo(
     () =>
       getHomeCacheKey({
         section: 'stories',
-        language: getStoryLanguageId(),
+        language: storyLanguageId,
         params: {
           page: 'genre-stories',
           tab: activeTab,
@@ -530,6 +534,7 @@ export default function GenreStoriesPage({
     [
       activeTab,
       normalizedGenreSlug,
+      storyLanguageId,
       tabConfig.sort,
       tabConfig.storyStatus,
     ]
@@ -553,28 +558,75 @@ export default function GenreStoriesPage({
       let cachedPagination = null
 
       if (reloadKey === 0) {
-        const cached = await loadHomeCache(cacheKey, {
+        const ownCache = await loadHomeCache(cacheKey, {
           maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
           allowExpired: true,
         })
 
         if (ignore || controller.signal.aborted) return
 
-        if (Array.isArray(cached?.data?.stories)) {
-          cachedStories = cached.data.stories
-          cachedPagination = cached.data.pagination || null
-        } else if (Array.isArray(cached?.data)) {
-          cachedStories = cached.data
+        let cached = ownCache
+        const ownPagination = ownCache?.data?.pagination
+        const ownCacheReady =
+          ownCache?.isFresh &&
+          Array.isArray(ownCache?.data?.stories) &&
+          typeof ownPagination?.has_more === 'boolean' &&
+          (!ownPagination.has_more || Boolean(ownPagination.next_cursor))
+
+        if (activeTab === 'latest' && !ownCacheReady) {
+          const sharedCacheKey = getHomeCacheKey({
+            section: 'stories',
+            language: storyLanguageId,
+            params: {
+              page: 'shared-genre',
+              genre: normalizedGenreSlug,
+              sort: 'latest',
+              limit: 9,
+              schema: 4,
+            },
+          })
+
+          const sharedCache = await loadHomeCache(sharedCacheKey, {
+            maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
+            allowExpired: true,
+          })
+
+          if (ignore || controller.signal.aborted) return
+
+          if (
+            sharedCache?.isFresh &&
+            Array.isArray(sharedCache?.data?.stories) &&
+            typeof sharedCache?.data?.pagination?.has_more === 'boolean' &&
+            (!sharedCache.data.pagination.has_more ||
+              Boolean(sharedCache.data.pagination.next_cursor))
+          ) {
+            cached = sharedCache
+          }
         }
 
-        if (cachedStories) {
+        const cachedList = Array.isArray(cached?.data?.stories)
+          ? cached.data.stories
+          : Array.isArray(cached?.data)
+            ? cached.data
+            : null
+
+        if (cachedList) {
+          cachedStories = deduplicateStories(
+            cachedList.map(normalizeStory)
+          )
+          cachedPagination = cached?.data?.pagination || null
           setStories(cachedStories)
           setHasMore(Boolean(cachedPagination?.has_more))
           setNextCursor(cachedPagination?.next_cursor || null)
           setLoading(false)
         }
 
-        if (cached?.isFresh && cachedStories) {
+        if (
+          cached?.isFresh &&
+          cachedStories &&
+          typeof cachedPagination?.has_more === 'boolean' &&
+          (!cachedPagination.has_more || Boolean(cachedPagination.next_cursor))
+        ) {
           return
         }
       }
@@ -612,8 +664,9 @@ export default function GenreStoriesPage({
         }
 
         const nextStories = deduplicateStories(
-          Array.isArray(data.stories) ? data.stories : []
-        ).map(normalizeStory)
+          (Array.isArray(data.stories) ? data.stories : [])
+            .map(normalizeStory)
+        )
 
         if (ignore || controller.signal.aborted) return
 
@@ -635,7 +688,7 @@ export default function GenreStoriesPage({
           {
             maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
           }
-        )
+        ).catch(() => {})
       } catch (error) {
         if (error?.name === 'AbortError') return
 
@@ -716,18 +769,27 @@ export default function GenreStoriesPage({
       }
 
       const nextStories = deduplicateStories(
-        Array.isArray(data.stories) ? data.stories : []
-      ).map(normalizeStory)
+        (Array.isArray(data.stories) ? data.stories : [])
+          .map(normalizeStory)
+      )
 
-      if (controller.signal.aborted) return false
+      if (
+        controller.signal.aborted ||
+        loadMoreControllerRef.current !== controller
+      ) return false
 
       const mergedStories = deduplicateStories([
         ...stories,
         ...nextStories,
       ])
+      const nextPageCursor = data.pagination?.next_cursor || null
       const pagination = {
-        has_more: Boolean(data.pagination?.has_more),
-        next_cursor: data.pagination?.next_cursor || null,
+        has_more: Boolean(
+          data.pagination?.has_more &&
+          nextPageCursor &&
+          nextPageCursor !== nextCursor
+        ),
+        next_cursor: nextPageCursor !== nextCursor ? nextPageCursor : null,
       }
 
       setStories(mergedStories)
@@ -743,7 +805,7 @@ export default function GenreStoriesPage({
         {
           maxAgeMs: GENRE_STORIES_CACHE_MAX_AGE_MS,
         }
-      )
+      ).catch(() => {})
       return true
     } catch (error) {
       if (error?.name === 'AbortError') return false
@@ -775,12 +837,13 @@ export default function GenreStoriesPage({
   })
 
   const visibleStories = useMemo(() => {
+    const uniqueStories = deduplicateStories(stories)
     const filtered =
       activeTab === 'completed'
-        ? stories.filter(
+        ? uniqueStories.filter(
             (story) => story.completed
           )
-        : stories
+        : uniqueStories
 
     const dateKey =
       activeTab === 'latest'
