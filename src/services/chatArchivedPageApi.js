@@ -17,7 +17,7 @@ export async function getArchivedChatPage({ role, page = 1, signal } = {}) {
   const query = new URLSearchParams({
     role: role === 'author' ? 'author' : 'reader',
     page: String(page),
-    limit: '20',
+    limit: '10',
   })
   const response = await fetch(
     `${API_BASE_URL}/api/chat/conversations/archived-page?${query.toString()}`,
