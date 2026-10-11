@@ -266,6 +266,7 @@ function normalizeProduct(product) {
     type,
     badge: product.best_seller ? 'trending' : 'new',
     soldQuantity: Math.max(0, Number(product.sold_quantity || 0)),
+    bestSellerRank: Math.max(0, Number(product.best_seller_rank || 0)),
     discountPercent: salePrice > 0 && originalPrice > salePrice
       ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
       : 0,
@@ -296,11 +297,15 @@ async function fetchReaderStoreHome(fallbackMessage) {
       ? data.editors_picks.map(normalizeProduct)
       : [],
     sections: mapped,
+    exploreHasMore: typeof data.sections_has_more?.you_might_like === 'boolean'
+      ? data.sections_has_more.you_might_like
+      : mapped.you_might_like.length === 9,
   }
 }
 
-async function fetchReaderShelf(section, page, filter = 'all') {
+async function fetchReaderShelf(section, page, filter = 'all', search = '') {
   const params = new URLSearchParams({ browse: '1', section, page: String(page), limit: '9', filter })
+  if (search.trim()) params.set('search', search.trim().slice(0, 100))
   const response = await fetch(`${API_BASE_URL}/api/author-store/store/home?${params.toString()}`)
   const data = await response.json().catch(() => ({}))
   if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load books')
@@ -693,7 +698,7 @@ function ReaderStoreShelf({ title, subtitle, books, t, layout = 'row', badgeType
   )
 }
 
-function useStoreBooksPager(section, seed, enabled, fromHome, filter = 'all') {
+function useStoreBooksPager(section, seed, enabled, fromHome, filter = 'all', search = '', seedHasMore = false) {
   const [state, setState] = useState({ items: [], page: 0, hasMore: false, loading: false, error: '' })
   const pending = useRef(false)
   const generation = useRef(0)
@@ -709,13 +714,13 @@ function useStoreBooksPager(section, seed, enabled, fromHome, filter = 'all') {
       setState({ items: [], page: 0, hasMore: false, loading: false, error: '' })
       return
     }
-    if (fromHome && filter === 'all') {
-      setState({ items: seed, page: seed.length ? 1 : 0, hasMore: seed.length === 9, loading: false, error: '' })
+    if (fromHome && filter === 'all' && !search) {
+      setState({ items: seed, page: seed.length ? 1 : 0, hasMore: seedHasMore, loading: false, error: '' })
       return
     }
     pending.current = true
     setState({ items: [], page: 0, hasMore: true, loading: true, error: '' })
-    fetchReaderShelf(section, 1, filter)
+    fetchReaderShelf(section, 1, filter, search)
       .then((result) => {
         if (generation.current !== id) return
         setState({ items: result.products, page: 1, hasMore: result.hasMore, loading: false, error: '' })
@@ -728,7 +733,7 @@ function useStoreBooksPager(section, seed, enabled, fromHome, filter = 'all') {
         if (generation.current === id) pending.current = false
       })
     return () => { generation.current += 1 }
-  }, [section, enabled, fromHome, seed, filter])
+  }, [section, enabled, fromHome, seed, filter, search, seedHasMore])
 
   const loadNext = async (automatic = false) => {
     if (!enabled || pending.current || !state.hasMore || (automatic && autoCount.current >= 2)) return
@@ -737,7 +742,7 @@ function useStoreBooksPager(section, seed, enabled, fromHome, filter = 'all') {
     pending.current = true
     setState((current) => ({ ...current, loading: true, error: '' }))
     try {
-      const result = await fetchReaderShelf(section, next, filter)
+      const result = await fetchReaderShelf(section, next, filter, search)
       if (generation.current !== id) return
       setState((current) => {
         const seen = new Set(current.items.map((item) => String(item.id)))
@@ -761,9 +766,9 @@ function useStoreBooksPager(section, seed, enabled, fromHome, filter = 'all') {
     }, { rootMargin: '220px' })
     observer.observe(target)
     return () => observer.disconnect()
-  }, [enabled, state.page, state.hasMore, state.loading, section, filter])
+  }, [enabled, state.page, state.hasMore, state.loading, section, filter, search])
 
-  return { ...state, sentinel, loadNext, manualReady: autoCount.current >= 2 }
+  return { ...state, sentinel, loadNext, manualReady: autoCount.current >= 2 || typeof IntersectionObserver === 'undefined' }
 }
 
 function StorePaginationFooter({ pager, t }) {
@@ -791,11 +796,23 @@ export default function ReaderStorePage() {
     const [activeFilter, setActiveFilter] = useState('all')
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [sections, setSections] = useState(EMPTY_SECTIONS)
+  const [exploreHasMore, setExploreHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [retryKey, setRetryKey] = useState(0)
   const [waitlistOpen, setWaitlistOpen] = useState(false)
+
+  useEffect(() => {
+    const nextSearch = searchQuery.trim().slice(0, 100)
+    if (!nextSearch) {
+      setDebouncedSearch('')
+      return
+    }
+    const timer = window.setTimeout(() => setDebouncedSearch(nextSearch), 350)
+    return () => window.clearTimeout(timer)
+  }, [searchQuery])
 
   useEffect(() => {
     if (browseKey) {
@@ -814,11 +831,13 @@ export default function ReaderStorePage() {
         if (!ignore) {
           setFeaturedAuthors(data.featuredAuthors)
           setSections(data.sections)
+          setExploreHasMore(data.exploreHasMore)
         }
       } catch (error) {
         if (!ignore) {
           setFeaturedAuthors([])
           setSections(EMPTY_SECTIONS)
+          setExploreHasMore(false)
           setLoadError(error.message || t('readerStore.loadFailed'))
         }
       } finally {
@@ -833,7 +852,7 @@ export default function ReaderStorePage() {
     }
   }, [retryKey, browseKey])
 
-  const keyword = searchQuery.trim().toLowerCase()
+  const keyword = searchQuery.trim().slice(0, 100).toLowerCase()
 
   const matchesFilter = (book) => {
     if (activeFilter === 'book' && book.type !== 'book') return false
@@ -867,10 +886,11 @@ export default function ReaderStorePage() {
     )
   }, [featuredAuthors, keyword])
 
-  const explorePager = useStoreBooksPager('you_might_like', sections.you_might_like, !browseKey && !loading && !loadError, true, activeFilter)
-  const browsePager = useStoreBooksPager(browseKey, EMPTY_SECTIONS.you_might_like, Boolean(browseKey), false, activeFilter)
+  const searchReady = searchQuery.trim().slice(0, 100) === debouncedSearch
+  const explorePager = useStoreBooksPager('you_might_like', sections.you_might_like, !browseKey && !loading && !loadError && searchReady, true, activeFilter, debouncedSearch, exploreHasMore)
+  const browsePager = useStoreBooksPager(browseKey, EMPTY_SECTIONS.you_might_like, Boolean(browseKey) && searchReady, false, activeFilter, debouncedSearch)
   const visibleSection = (key) => (sections[key] || [])
-  .map((book, index) => key === 'best_sellers' ? { ...book, bestSellerRank: index + 1 } : book)
+  .map((book, index) => key === 'best_sellers' ? { ...book, bestSellerRank: book.bestSellerRank || index + 1 } : book)
   .filter((book) => matchesFilter(book) && (key !== 'discount_books' || book.discountPercent > 0))
   const openBrowse = (key) => navigate(`/store?browse=${key}`)
   const browseTitles = {
@@ -1026,14 +1046,15 @@ export default function ReaderStorePage() {
                     t={t}
                     onOpen={() => openProduct(book)}
                     badgeType={browseKey === 'best_sellers' ? 'best' : browseKey === 'discount_books' ? 'discount' : browseKey === 'new_books' ? 'new' : ''}
-                    rank={browseKey === 'best_sellers' ? browsePager.items.findIndex((item) => item.id === book.id) + 1 : 0}
+                    rank={browseKey === 'best_sellers' ? book.bestSellerRank || browsePager.items.findIndex((item) => item.id === book.id) + 1 : 0}
                     className="min-w-0"
                   />
                 ))}
               </div>
-            ) : !browsePager.loading && !browsePager.error ? (
+            ) : !browsePager.loading && !browsePager.error && searchReady ? (
               <div className="py-8 text-center text-[12px] text-[var(--shadow-text-tertiary)]">{t('readerStoreShelves.empty')}</div>
             ) : null}
+            {!searchReady ? <div className="py-6 text-center text-[12px] text-[var(--shadow-text-secondary)]">{t('readerStoreShelves.loadingMore')}</div> : null}
             <StorePaginationFooter pager={browsePager} t={t} />
           </section>
         ) : !loading && !loadError ? (
@@ -1108,17 +1129,20 @@ export default function ReaderStorePage() {
             <ReaderStoreShelf title={t('readerStoreShelves.discounts')} books={visibleSection('discount_books')} t={t} badgeType="discount" onOpen={openProduct} onMore={() => openBrowse('discount_books')} />
             <ReaderStoreShelf title={t('readerStoreShelves.newBooks')} books={visibleSection('new_books')} t={t} badgeType="new" onOpen={openProduct} onMore={() => openBrowse('new_books')} />
             <ReaderStoreShelf title={t('readerStoreShelves.soldOut')} books={visibleSection('sold_out')} t={t} badgeType="sold" onOpen={openProduct} />
-            {explorePager.items.length ? (
-              <section className="mt-6 space-y-3 pb-5">
-                <SectionHeader title={t('readerStoreShelves.discover')} />
+            <section className="mt-6 space-y-3 pb-5">
+              <SectionHeader title={t('readerStoreShelves.discover')} />
+              {explorePager.items.filter(matchesFilter).length ? (
                 <div className="grid grid-cols-3 gap-x-3 gap-y-5">
                   {explorePager.items.filter(matchesFilter).map((book) => (
                     <EditorPickCard key={book.id} book={book} t={t} onOpen={() => openProduct(book)} className="min-w-0" />
                   ))}
                 </div>
-                <StorePaginationFooter pager={explorePager} t={t} />
-              </section>
-            ) : null}
+              ) : !explorePager.loading && !explorePager.error && searchReady ? (
+                <div className="py-8 text-center text-[12px] text-[var(--shadow-text-tertiary)]">{t('readerStoreShelves.empty')}</div>
+              ) : null}
+              {!searchReady ? <div className="py-6 text-center text-[12px] text-[var(--shadow-text-secondary)]">{t('readerStoreShelves.loadingMore')}</div> : null}
+              <StorePaginationFooter pager={explorePager} t={t} />
+            </section>
           </>
         ) : null}
       </main>
