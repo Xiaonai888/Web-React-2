@@ -7281,10 +7281,15 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         missionIds.length === 0 &&
         !needsReload
 
-      readingSessionIdleUntilRef.current = {
-        episodeId: finishedSession ? currentEpisodeId : '',
-        until: finishedSession ? Date.now() + 2 * 60 * 1000 : 0,
-      }
+      const now = Date.now()
+const dayMs = 24 * 60 * 60 * 1000
+const cambodiaOffset = 7 * 60 * 60 * 1000
+const nextReset = (Math.floor((now + cambodiaOffset) / dayMs) + 1) * dayMs - cambodiaOffset
+
+readingSessionIdleUntilRef.current = {
+  episodeId: finishedSession ? currentEpisodeId : '',
+  until: finishedSession ? Math.min(now + 10 * 60 * 1000, nextReset) : 0,
+}
 
       const nextTarget = resolveReadingTarget({
         missions: progressData.missions || [],
