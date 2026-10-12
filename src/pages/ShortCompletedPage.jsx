@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
@@ -85,6 +85,8 @@ function LoadingGrid() {
 
 export default function ShortCompletedPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const storyType = String(searchParams.get('story_type') || '').trim().toLowerCase() === 'manga' ? 'manga' : 'novel'
   const { t } = useDisplayTranslation()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -99,7 +101,7 @@ export default function ShortCompletedPage() {
         params: {
           page: 'short-completed',
           story_status: 'Completed',
-          story_type: 'novel',
+          story_type: storyType,
           max_episodes: 20,
           sort: 'episode_updated',
           limit: 100,
@@ -124,7 +126,7 @@ export default function ShortCompletedPage() {
       try {
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated&story_status=Completed&story_type=novel&max_episodes=20`
+            `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated&story_status=Completed&story_type=${storyType}&max_episodes=20`
           )
         )
 
@@ -136,7 +138,7 @@ export default function ShortCompletedPage() {
 
         const nextStories = (Array.isArray(data.stories) ? data.stories : [])
           .filter((story) => String(story.story_status || '').trim().toLowerCase() === 'completed')
-          .filter((story) => String(story.story_type || '').trim().toLowerCase() === 'novel')
+          .filter((story) => String(story.story_type || '').trim().toLowerCase() === storyType)
           .filter((story) => Number(story.total_episodes || 0) > 0 && Number(story.total_episodes || 0) <= 20)
           .filter((story) => Boolean(String(story.cover_url || '').trim()))
           .map(normalizeStory)
@@ -161,7 +163,7 @@ export default function ShortCompletedPage() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [storyType])
 
   return (
     <div className="app-page min-h-screen bg-white pb-28 dark:bg-[var(--shadow-bg-page)]">
