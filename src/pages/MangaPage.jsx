@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Grid2X2, Search } from 'lucide-react'
+import { Bell, Search } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import MangaFeedSections from '../components/MangaFeedSections'
 import ShadowSpotlight from '../components/ShadowSpotlight'
@@ -619,7 +619,23 @@ export default function MangaPage() {
               className="flex h-6 w-6 items-center justify-center"
               aria-label={t('mangaPage.genres')}
             >
-              <Grid2X2 size={20} strokeWidth={1.8} />
+              <svg
+  viewBox="0 0 24 24"
+  width="20"
+  height="20"
+  fill="none"
+  className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
+  stroke="currentColor"
+  strokeWidth="1.8"
+  strokeLinejoin="round"
+  aria-hidden="true"
+>
+  <rect x="4" y="4" width="6" height="6" rx="1" />
+  <rect x="14" y="4" width="6" height="6" rx="1" />
+  <rect x="4" y="14" width="6" height="6" rx="1" />
+  <rect x="14" y="14" width="6" height="6" rx="1" />
+</svg>
+
             </Link>
             <Link
               to="/search"
