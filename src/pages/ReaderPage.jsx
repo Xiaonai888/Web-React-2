@@ -5572,8 +5572,18 @@ const [adultWarningOpen, setAdultWarningOpen] =
   const [readingRewardReloadKey, setReadingRewardReloadKey] = useState(0)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
-  const [commentsOpen, setCommentsOpen] = useState(false)
-  const [commentEpisode, setCommentEpisode] = useState(null)
+  const sharedCommentId = useMemo(
+  () => new URLSearchParams(location.search).get('comment') || '',
+  [location.search]
+)
+const [commentsOpen, setCommentsOpen] = useState(() => Boolean(sharedCommentId) && !offlineMode)
+const [commentEpisode, setCommentEpisode] = useState(null)
+
+useEffect(() => {
+  if (!sharedCommentId || offlineMode) return
+  setCommentEpisode(null)
+  setCommentsOpen(true)
+}, [sharedCommentId, offlineMode])
   const [giftPopupOpen, setGiftPopupOpen] = useState(false)
   const [chatStoryComplete, setChatStoryComplete] = useState(false)
 
@@ -8171,6 +8181,7 @@ autoScrollEnabled ? (
 />
       <CommentsModal
   open={commentsOpen}
+  focusCommentId={sharedCommentId}
   story={story}
   targetType="episode"
   targetId={activeCommentsEpisode?.id || episodeId}
