@@ -88,12 +88,13 @@ let retryAfter = 0
 
 const visualStyles = `
   @keyframes dasp-gold-spin { to { transform: rotate(360deg); } }
-  .dasp-gold-frame, .dasp-buy-frame { position: relative; isolation: isolate; padding: 2px; overflow: hidden; background: #ba872f; }
-  .dasp-gold-frame::before, .dasp-buy-frame::before { content: ''; position: absolute; z-index: 0; inset: -110%; background: conic-gradient(#a96f16, #f8df8a, #fff8d7, #c58c2a, #a96f16, #ffe6a4, #fffdf1, #a96f16); animation: dasp-gold-spin 8s linear infinite; pointer-events: none; }
-  .dasp-gold-inside, .dasp-buy-inside { display: block; position: relative; z-index: 1; width: 100%; height: 100%; overflow: hidden; }
-  .dasp-gold-frame { border-radius: 17px; }
-  .dasp-gold-inside { border-radius: 14px; }
+  .dasp-gold-frame, .dasp-buy-frame { position: relative; isolation: isolate; padding: 2.5px; overflow: hidden; background: #ba872f; }
+  .dasp-gold-frame::before, .dasp-buy-frame::before { content: ''; position: absolute; z-index: 0; inset: -110%; background: conic-gradient(#a96f16, #f8df8a, #fff8d7, #c58c2a, #a96f16, #ffe6a4, #fffdf1, #a96f16); animation: dasp-gold-spin 6.8s linear infinite; pointer-events: none; }
+  .dasp-gold-inside, .dasp-buy-inside { position: relative; z-index: 1; width: 100%; height: 100%; overflow: hidden; }
+  .dasp-gold-inside { display: block; border-radius: 14px; }
+  .dasp-gold-frame { border-radius: 17px; box-shadow: 0 0 0 1px rgba(196, 146, 33, .24), 0 5px 14px rgba(171, 119, 31, .12); }
   .dasp-buy-frame, .dasp-buy-inside { border-radius: 9999px; }
+  .dasp-buy-inside { display: flex; align-items: center; justify-content: center; min-height: 32px; }
   @media (prefers-reduced-motion: reduce) { .dasp-gold-frame::before, .dasp-buy-frame::before { animation: none; } }
 `
 
@@ -352,7 +353,7 @@ export default function DiscoverAuthorStorePromotionSection() {
     <>
       <style>{visualStyles}</style>
       <section className="min-w-0" aria-label={t('discoverAuthorStorePromotion.heading')}>
-        <div onTouchStart={touchStart} onTouchEnd={touchEnd} style={{ touchAction: 'pan-y' }}>
+        <article className="overflow-hidden border border-[#e5d9ee] bg-white dark:border-white/10 dark:bg-[var(--shadow-bg-surface)] sm:rounded-2xl">
           <div
             role="button"
             tabIndex={0}
@@ -363,70 +364,75 @@ export default function DiscoverAuthorStorePromotionSection() {
                 buyProduct(offer)
               }
             }}
-            className="cursor-pointer overflow-hidden border border-[#e5d9ee] bg-white transition active:scale-[0.997] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b7882d] dark:border-white/10 dark:bg-[var(--shadow-bg-surface)] sm:rounded-2xl"
+            onTouchStart={touchStart}
+            onTouchEnd={touchEnd}
+            style={{ touchAction: 'pan-y' }}
+            className="cursor-pointer transition-transform active:scale-[0.997] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b7882d]"
           >
-            <div className="flex items-center gap-2.5 px-3 pb-2 pt-3 sm:px-4">
-              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-[#d6a33e] bg-[#e5d7b0]">
+            <div className="flex items-center gap-2 px-3 pb-1 pt-2 sm:px-4">
+              <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full border-2 border-[#d6a33e] bg-[#e5d7b0]">
                 {offer.cover_url ? <img src={offer.cover_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
               </div>
-              <h2 className="min-w-0 flex-1 text-[13px] font-extrabold text-[#25142f] dark:text-white">
+              <h2 className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-[#25142f] dark:text-white">
                 {t('discoverAuthorStorePromotion.heading')}
               </h2>
-              <span className="rounded-full border border-[#d3a34a] bg-[#fff8e5] px-2 py-1 text-[10px] font-bold text-[#875d17] dark:bg-[#513b19] dark:text-[#ffe09b]">
+              <span className="shrink-0 rounded-full border border-[#d3a34a] bg-[#fff8e5] px-2 py-0.5 text-[10px] font-bold text-[#875d17] dark:bg-[#513b19] dark:text-[#ffe09b]">
                 {t(`discoverAuthorStorePromotion.${offer.product_type}`)}
               </span>
             </div>
-            <div className="flex items-start gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
-              <div className="dasp-gold-frame h-[155px] w-[105px] shrink-0 sm:h-[170px] sm:w-[115px]">
+            <div className="flex items-start gap-2.5 px-2 pb-1.5 sm:px-3 sm:pb-2">
+              <div className="dasp-gold-frame h-[162px] w-[114px] shrink-0 min-[390px]:h-[170px] min-[390px]:w-[120px]">
                 <div className="dasp-gold-inside bg-[#fff7e5] dark:bg-[#281f2c]">
                   {offer.cover_url
                     ? <img src={offer.cover_url} alt={offer.title} className="h-full w-full object-cover" loading="lazy" />
                     : <div className="flex h-full items-center justify-center text-xs">{t('discoverAuthorStorePromotion.cover')}</div>}
                 </div>
               </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-1">
-                <h3 className="line-clamp-2 text-[14px] font-extrabold leading-[1.4] text-[#25142f] dark:text-white sm:text-[15px]">{offer.title}</h3>
-                <p className="line-clamp-1 text-[11px] font-semibold text-[#84788a] dark:text-white/60">{offer.page_name || offer.author_name}</p>
-                {offer.description ? <p className="line-clamp-2 text-[11px] leading-[1.5] text-[#807486] dark:text-white/60">{offer.description}</p> : null}
+              <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
+                <h3 className="line-clamp-2 text-[13px] font-extrabold leading-[1.3] text-[#25142f] dark:text-white min-[390px]:text-[14px]">{offer.title}</h3>
+                <p className="truncate text-[10px] font-semibold text-[#84788a] dark:text-white/60">{offer.page_name || offer.author_name}</p>
+                {offer.description ? <p className="line-clamp-2 text-[10px] leading-[1.35] text-[#807486] dark:text-white/60">{offer.description}</p> : null}
                 {offer.product_type === 'book' ? (
-                  <span className="self-start rounded-full bg-[#f5eddd] px-2 py-1 text-[10px] font-bold text-[#997129] dark:bg-[#4f3d27] dark:text-[#f6db9f]">
+                  <span className="self-start rounded-full bg-[#f5eddd] px-2 py-0.5 text-[10px] font-bold text-[#997129] dark:bg-[#4f3d27] dark:text-[#f6db9f]">
                     {t('discoverAuthorStorePromotion.stock', { count: offer.stock_quantity })}
                   </span>
                 ) : null}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] font-semibold text-[#84788a] dark:text-white/70" role="timer" aria-live="off">
-                  <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>{t('discoverAuthorStorePromotion.endsIn')}</span>
-                  <span className="font-black tabular-nums text-[#2f2339] dark:text-white">{countdown(remainingSeconds)}</span>
+                <div className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-[#84788a] dark:text-white/70" role="timer" aria-live="off">
+                  <Clock3 className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  <span className="shrink-0">{t('discoverAuthorStorePromotion.endsIn')}</span>
+                  <span className="min-w-0 font-black tabular-nums text-[#2f2339] dark:text-white">{countdown(remainingSeconds)}</span>
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  {original > sale ? <span className="text-[11px] font-medium text-[#99909d] line-through dark:text-white/50">{price(original)}</span> : null}
-                  <span className="text-[18px] font-black text-[#25142f] dark:text-white sm:text-[20px]">{price(sale)}</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  {original > sale ? <span className="text-[10px] font-medium text-[#99909d] line-through dark:text-white/50">{price(original)}</span> : null}
+                  <span className="text-[16px] font-black text-[#25142f] dark:text-white min-[390px]:text-[18px]">{price(sale)}</span>
                   {discount > 0 ? <span className="rounded-md bg-[#e02b32] px-1.5 py-0.5 text-[10px] font-extrabold text-white">-{discount}%</span> : null}
                 </div>
-                <div className="dasp-buy-frame mt-1.5 w-full rounded-full">
-                  <span className="dasp-buy-inside flex items-center justify-center gap-1.5 bg-[#111111] px-3 py-2.5 text-center text-[11px] font-extrabold text-white">
-                    <ShoppingCart className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                    {t('discoverAuthorStorePromotion.buy')}
+                <div className="dasp-buy-frame mt-1 w-full rounded-full">
+                  <span className="dasp-buy-inside bg-[#111111] px-2 py-1 text-center text-[11px] font-extrabold text-white">
+                    <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
+                      <ShoppingCart className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <span>{t('discoverAuthorStorePromotion.buy')}</span>
+                    </span>
                   </span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        {offers.length > 1 ? (
-          <div className="flex items-center justify-center gap-1.5 py-3" role="group" aria-label={t('discoverAuthorStorePromotion.heading')}>
-            {offers.map((item, position) => (
-              <button
-                key={item.product_id}
-                type="button"
-                onClick={() => setActiveIndex(position)}
-                aria-label={t('discoverAuthorStorePromotion.slide', { count: position + 1 })}
-                aria-current={index === position ? 'true' : undefined}
-                className={`h-2.5 rounded-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b7882d] ${index === position ? 'w-6 bg-[#c99b3e]' : 'w-2.5 bg-gray-300 dark:bg-white/30'}`}
-              />
-            ))}
-          </div>
-        ) : null}
+          {offers.length > 1 ? (
+            <div className="flex items-center justify-center gap-1.5 pb-1.5 pt-0.5" role="group" aria-label={t('discoverAuthorStorePromotion.heading')}>
+              {offers.map((item, position) => (
+                <button
+                  key={item.product_id}
+                  type="button"
+                  onClick={() => setActiveIndex(position)}
+                  aria-label={t('discoverAuthorStorePromotion.slide', { count: position + 1 })}
+                  aria-current={index === position ? 'true' : undefined}
+                  className={`h-1.5 rounded-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b7882d] ${index === position ? 'w-5 bg-[#c99b3e]' : 'w-1.5 bg-gray-300 dark:bg-white/30'}`}
+                />
+              ))}
+            </div>
+          ) : null}
+        </article>
         {error ? <p className="px-3 py-2 text-[12px] font-semibold text-red-600" role="alert">{error}</p> : null}
       </section>
       {conflict ? (
