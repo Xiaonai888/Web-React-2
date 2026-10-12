@@ -509,6 +509,11 @@ export default function DiscoverSpecialPromotionSection() {
             promotion={promotion}
             purchasing={purchaseBusy || remainingSeconds <= 0}
             remainingSeconds={remainingSeconds}
+            slideCount={promotions.length}
+            activeSlide={visibleIndex}
+            onSelectSlide={(index) => {
+              if (!purchaseInFlightRef.current && !quote) setActiveIndex(index)
+            }}
             onBuy={startPurchase}
             onOpen={
               storyId
@@ -516,20 +521,6 @@ export default function DiscoverSpecialPromotionSection() {
                 : undefined
             }
           />
-          {promotions.length > 1 ? (
-            <div className="flex items-center justify-center gap-1.5 py-3" role="group" aria-label="Special Promotion">
-              {promotions.map((item, index) => (
-                <button
-                  type="button"
-                  key={item.story_id}
-                  onClick={() => setActiveIndex(index)}
-                  aria-label={t('discoverSpecialPromotionCheckout.slide', { count: index + 1 })}
-                  aria-current={index === visibleIndex ? 'true' : undefined}
-                  className={`h-2.5 rounded-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7882d] ${index === visibleIndex ? 'w-6 bg-[#c99b3e]' : 'w-2.5 bg-gray-300 dark:bg-white/30'}`}
-                />
-              ))}
-            </div>
-          ) : null}
         </div>
       ) : null}
 
