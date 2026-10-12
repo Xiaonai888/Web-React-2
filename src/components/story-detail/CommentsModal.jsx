@@ -66,6 +66,7 @@ export default function CommentsModal({
   story,
   targetType = 'story',
   targetId,
+  focusCommentId = '',
   episodes = EMPTY_EPISODES,
   title,
   onClose,
@@ -74,6 +75,26 @@ export default function CommentsModal({
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const sheetRef = useRef(null)
+  useEffect(() => {
+    if (!open || !focusCommentId) return undefined
+    const sheet = sheetRef.current
+    if (!sheet) return undefined
+    let observer
+    const scrollToComment = () => {
+      const comment = document.getElementById(`comment-${focusCommentId}`)
+      if (!comment || !sheet.contains(comment)) return
+      comment.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      observer?.disconnect()
+    }
+    observer = new MutationObserver(scrollToComment)
+    observer.observe(sheet, { childList: true, subtree: true })
+    const timeout = window.setTimeout(() => observer.disconnect(), 6000)
+    scrollToComment()
+    return () => {
+      window.clearTimeout(timeout)
+      observer.disconnect()
+    }
+  }, [open, focusCommentId])
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
   const draggingRef = useRef(false)
@@ -492,7 +513,7 @@ export default function CommentsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[200000] flex items-end justify-center sm:items-center sm:px-4">
+    <div className="fixed inset-0 z-[400] flex items-end justify-center sm:items-center sm:px-4">
       <button
         type="button"
         onClick={onClose}
@@ -582,6 +603,7 @@ export default function CommentsModal({
           <CommentSection
             targetType={targetType}
             targetId={activeEpisodeId || story?.id}
+            focusCommentId={focusCommentId}
             story={story}
             variant="modal"
             onCommentsChange={onCommentChanged}
