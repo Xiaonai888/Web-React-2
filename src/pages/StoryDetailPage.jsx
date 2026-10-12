@@ -517,7 +517,16 @@ export default function StoryDetailPage() {
   const [episodeListOpen, setEpisodeListOpen] = useState(
     () => Boolean(location.state?.reopenEpisodeList)
   )
-  const [commentsOpen, setCommentsOpen] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(
+    () => Boolean(new URLSearchParams(location.search).get('comment'))
+  )
+  const sharedCommentId = useMemo(
+    () => new URLSearchParams(location.search).get('comment') || '',
+    [location.search]
+  )
+  useEffect(() => {
+    if (sharedCommentId) setCommentsOpen(true)
+  }, [sharedCommentId])
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [lockedEpisode, setLockedEpisode] = useState(null)
   const [signUpRequiredOpen, setSignUpRequiredOpen] = useState(false)
@@ -1091,6 +1100,7 @@ if (message || !story) {
 
       <CommentsModal
         open={commentsOpen}
+        focusCommentId={sharedCommentId}
         story={story}
         onClose={() => setCommentsOpen(false)}
         onCommentChanged={handleCommentChanged}
