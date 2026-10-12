@@ -63,9 +63,9 @@ function rawHourlySelection(stories, slot) {
   return Array.from({ length: DISPLAY_SIZE }, (_, index) => pool[(start + index) % pool.length])
 }
 
-function readPreviousIds(slot) {
+function readPreviousIds(slot, historyKey) {
   try {
-    const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}')
+    const saved = JSON.parse(localStorage.getItem(historyKey) || '{}')
     return Number(saved.slot) === slot - 1 && Array.isArray(saved.ids) ? saved.ids : []
   } catch {
     return []
@@ -99,10 +99,10 @@ function avoidSamePositions(items, previousIds) {
   return place(0) ? result : items
 }
 
-function buildHourlySelection(stories, slot) {
+function buildHourlySelection(stories, slot, historyKey) {
   return avoidSamePositions(
     rawHourlySelection(stories, slot),
-    readPreviousIds(slot)
+    readPreviousIds(slot, historyKey)
   )
 }
 
@@ -163,8 +163,10 @@ function LoadingGrid({ t }) {
   )
 }
 
-export default function ShortCompletedSection() {
+export default function ShortCompletedSection({ storyType = 'novel' }) {
   const { t } = useDisplayTranslation()
+  const normalizedStoryType = String(storyType || '').trim().toLowerCase() === 'manga' ? 'manga' : 'novel'
+  const historyKey = normalizedStoryType === 'manga' ? `${HISTORY_KEY}_manga` : HISTORY_KEY
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [rotationSlot, setRotationSlot] = useState(getRotationSlot)
@@ -187,7 +189,7 @@ export default function ShortCompletedSection() {
         params: {
           home_section: 'short-completed',
           story_status: 'Completed',
-          story_type: 'novel',
+          story_type: normalizedStoryType,
           max_episodes: 20,
           sort: 'discover_more',
           limit: POOL_SIZE,
@@ -212,7 +214,7 @@ export default function ShortCompletedSection() {
       try {
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=${POOL_SIZE}&sort=discover_more&story_status=Completed&story_type=novel&max_episodes=20`
+            `${API_BASE_URL}/api/public/stories?limit=${POOL_SIZE}&sort=discover_more&story_status=Completed&story_type=${normalizedStoryType}&max_episodes=20`
           )
         )
 
@@ -224,7 +226,7 @@ export default function ShortCompletedSection() {
 
         const nextStories = (Array.isArray(data.stories) ? data.stories : [])
           .filter((story) => String(story.story_status || '').trim().toLowerCase() === 'completed')
-          .filter((story) => String(story.story_type || '').trim().toLowerCase() === 'novel')
+          .filter((story) => String(story.story_type || '').trim().toLowerCase() === normalizedStoryType)
           .filter((story) => Number(story.total_episodes || 0) > 0 && Number(story.total_episodes || 0) <= 20)
           .filter((story) => Boolean(String(story.cover_url || '').trim()))
           .map(normalizeStory)
@@ -248,11 +250,11 @@ export default function ShortCompletedSection() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [normalizedStoryType])
 
   const visibleStories = useMemo(
-    () => buildHourlySelection(stories, rotationSlot),
-    [stories, rotationSlot]
+    () => buildHourlySelection(stories, rotationSlot, historyKey),
+    [stories, rotationSlot, historyKey]
   )
 
   useEffect(() => {
@@ -260,14 +262,14 @@ export default function ShortCompletedSection() {
 
     try {
       localStorage.setItem(
-        HISTORY_KEY,
+        historyKey,
         JSON.stringify({
           slot: rotationSlot,
           ids: visibleStories.map((story) => String(story.id)),
         })
       )
     } catch {}
-  }, [rotationSlot, visibleStories])
+  }, [historyKey, rotationSlot, visibleStories])
 
   if (loading) return <LoadingGrid t={t} />
   if (!visibleStories.length) return null
@@ -284,7 +286,7 @@ export default function ShortCompletedSection() {
           </div>
 
           <Link
-            to="/short-completed"
+            to={normalizedStoryType === 'manga' ? '/short-completed?story_type=manga' : '/short-completed'}
             className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]"
             aria-label={t('shortCompletedSection.viewAll')}
           >
