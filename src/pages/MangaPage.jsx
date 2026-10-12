@@ -12,6 +12,7 @@ import NewArrivalsSection from '../components/NewArrivalsSection'
 import TopNovelSection from '../components/TopNovelSection'
 import EventPerksHubSection from '../components/EventPerksHubSection'
 import YouMightLikeSection from '../components/YouMightLikeSection'
+import ShortCompletedSection from '../components/ShortCompletedSection'
 import StoriesDailyCheckIn from '../components/StoriesDailyCheckIn'
 import NotificationPage from './NotificationPage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
@@ -856,9 +857,13 @@ export default function MangaPage() {
               <EventPerksHubSection />
             </div>
 
-            <div className="my-6">
-              <YouMightLikeSection storyType="manga" />
-            </div>
+            <div className="my-6" data-home-section="short-completed">
+  <ShortCompletedSection />
+</div>
+
+<div className="my-6">
+  <YouMightLikeSection storyType="manga" />
+</div>
           </>
         ) : (
           <MangaFeedSections genre={activeGenre} />
