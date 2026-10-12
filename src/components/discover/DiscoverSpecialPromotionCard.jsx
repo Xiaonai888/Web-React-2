@@ -73,9 +73,9 @@ const motionStyles = `
     isolation: isolate;
     overflow: hidden;
     border-radius: 18px;
-    padding: 2.5px;
+    padding: 3px;
     background: linear-gradient(135deg, #b37b1d 0%, #f8e39c 40%, #d39f39 70%, #9d6716 100%);
-    box-shadow: 0 0 0 1px rgba(196, 146, 33, 0.28), 0 10px 22px rgba(171, 119, 31, 0.16);
+    box-shadow: 0 0 0 1px rgba(196, 146, 33, 0.36), 0 5px 14px rgba(171, 119, 31, 0.13);
   }
 
   .dsp-gold-frame::before {
@@ -95,7 +95,7 @@ const motionStyles = `
       rgba(255, 246, 209, 1) 286deg,
       rgba(166, 110, 33, 0.98) 360deg
     );
-    animation: dsp-gold-rotate 7.5s linear infinite;
+    animation: dsp-gold-rotate 6.8s linear infinite;
     pointer-events: none;
   }
 
@@ -261,6 +261,9 @@ export default function DiscoverSpecialPromotionCard({
   onMore,
   purchasing = false,
   remainingSeconds = null,
+  slideCount = 0,
+  activeSlide = 0,
+  onSelectSlide,
 }) {
   const { t } = useDisplayTranslation()
 
@@ -288,8 +291,8 @@ export default function DiscoverSpecialPromotionCard({
       <style>{motionStyles}</style>
 
       <article className="overflow-hidden border border-[#e5d9ee] bg-white dark:border-white/10 dark:bg-[var(--shadow-bg-surface)] sm:rounded-2xl">
-        <div className="flex items-center gap-2 px-3 pb-1.5 pt-3 sm:px-4">
-          <div className="dsp-avatar-ring h-8 w-8 shrink-0">
+        <div className="flex items-center gap-2 px-3 pb-1 pt-2 sm:px-4">
+          <div className="dsp-avatar-ring h-7 w-7 shrink-0">
             <div className="dsp-avatar-ring__inside">
               {avatarUrl ? (
                 <img
@@ -324,12 +327,12 @@ export default function DiscoverSpecialPromotionCard({
           ) : null}
         </div>
 
-        <div className="px-3 pb-3 sm:px-4 sm:pb-4">
-          <div className="flex items-start gap-3">
+        <div className="px-2 pb-1.5 sm:px-3 sm:pb-2">
+          <div className="flex items-start gap-2.5">
             <button
               type="button"
               onClick={() => onOpen?.(promotion)}
-              className="dsp-gold-frame h-[150px] w-[104px] shrink-0 text-left transition-transform active:scale-[0.99]"
+              className="dsp-gold-frame h-[162px] w-[114px] shrink-0 text-left transition-transform active:scale-[0.99] min-[390px]:h-[170px] min-[390px]:w-[120px]"
             >
               <div className="dsp-gold-frame__inside bg-[#fff7e5] dark:bg-[#201522]">
                 {coverUrl ? (
@@ -347,11 +350,11 @@ export default function DiscoverSpecialPromotionCard({
               </div>
             </button>
 
-            <div className="min-w-0 flex-1 pt-1">
+            <div className="flex min-w-0 flex-1 flex-col pt-0.5">
               <button
                 type="button"
                 onClick={() => onOpen?.(promotion)}
-                className="block text-left"
+                className="block min-w-0 text-left"
               >
                 <h3 className="line-clamp-2 text-[14px] font-extrabold leading-[1.3] text-[#25142f] dark:text-white">
                   {title}
@@ -359,29 +362,29 @@ export default function DiscoverSpecialPromotionCard({
               </button>
 
               {description ? (
-                <p className="mt-1.5 line-clamp-3 text-[11px] leading-[1.55] text-[#7f7587] dark:text-white/60">
+                <p className="mt-1 line-clamp-2 text-[10px] leading-[1.35] text-[#7f7587] dark:text-white/60">
                   {description}
                 </p>
               ) : null}
 
-              <div className="mt-2.5 inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#c89430] bg-[#d8a536] px-2.5 py-1 text-[11px] font-bold text-white shadow-[inset_0_1px_0_rgba(255,248,214,0.28)]">
-                <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
+              <div className="mt-1.5 inline-flex max-w-full self-start items-center gap-1 rounded-full border border-[#c89430] bg-[#d8a536] px-2 py-0.5 text-[10px] font-bold text-white shadow-[inset_0_1px_0_rgba(255,248,214,0.28)]">
+                <LockKeyhole className="h-3 w-3 shrink-0" aria-hidden="true" />
                 <span className="truncate">{t('discoverSpecialPromotion.episodes', { count: lockedCount })}</span>
               </div>
 
               {hasCountdown ? (
-                <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-medium text-[#766978] dark:text-white/70" role="timer" aria-live="off">
-                  <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span>{t(offerExpired ? 'discoverSpecialPromotion.expired' : 'discoverSpecialPromotion.endsIn')}</span>
+                <div className="mt-1 flex min-w-0 items-center gap-1 text-[10px] font-medium text-[#766978] dark:text-white/70" role="timer" aria-live="off">
+                  <Clock3 className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 truncate">{t(offerExpired ? 'discoverSpecialPromotion.expired' : 'discoverSpecialPromotion.endsIn')}</span>
                   {!offerExpired ? (
-                    <span className="font-bold tabular-nums text-[#322437] dark:text-white">
+                    <span className="shrink-0 font-bold tabular-nums text-[#322437] dark:text-white">
                       {formatCountdown(remainingSeconds)}
                     </span>
                   ) : null}
                 </div>
               ) : null}
 
-              <div className="mt-3 flex items-center gap-2.5">
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
                 {originalPrice !== null ? (
                   <DiamondPrice amount={originalPrice} old />
                 ) : null}
@@ -395,13 +398,13 @@ export default function DiscoverSpecialPromotionCard({
                 </span>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-1.5">
                 <div className="dsp-buy-shell">
                   <button
                     type="button"
                     disabled={!hasPrice || offerExpired || purchasing || typeof onBuy !== 'function'}
                     onClick={() => onBuy(promotion)}
-                    className="dsp-buy-button px-4 py-3 text-[11px] font-extrabold tracking-[0.01em]"
+                    className="dsp-buy-button px-1.5 py-1.5 text-[9px] font-extrabold tracking-[-0.01em] min-[390px]:text-[10px]"
                   >
                     {t('discoverSpecialPromotion.buy')}
                   </button>
@@ -410,6 +413,20 @@ export default function DiscoverSpecialPromotionCard({
             </div>
           </div>
         </div>
+        {slideCount > 1 ? (
+          <div className="flex items-center justify-center gap-1.5 pb-1.5 pt-0.5" role="group" aria-label={t('discoverSpecialPromotion.heading')}>
+            {Array.from({ length: slideCount }, (_, index) => (
+              <button
+                type="button"
+                key={index}
+                onClick={() => onSelectSlide?.(index)}
+                aria-label={`${t('discoverSpecialPromotion.heading')} ${index + 1}`}
+                aria-current={index === activeSlide ? 'true' : undefined}
+                className={`h-1.5 rounded-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7882d] ${index === activeSlide ? 'w-5 bg-[#c99b3e]' : 'w-1.5 bg-gray-300 dark:bg-white/30'}`}
+              />
+            ))}
+          </div>
+        ) : null}
       </article>
     </>
   )
