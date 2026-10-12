@@ -1645,6 +1645,30 @@ self.addEventListener(
 
 const OFFLINE_SHELL_NAME = 'shadow-offline-shell-v1'
 const OFFLINE_MARKER = '_shadow_offline'
+const readerForceOnlineClients = new Map()
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'SHADOW_READER_OFFLINE_CONTROL') return
+  const id = event.source?.id
+  if (!id) return
+  if (readerForceOnlineClients.size >= 300) {
+    readerForceOnlineClients.delete(readerForceOnlineClients.keys().next().value)
+  }
+  readerForceOnlineClients.set(id, {
+    active: event.data.force_online === true,
+    until: Date.now() + 24 * 60 * 60 * 1000,
+  })
+})
+
+function isReaderForceOnlineClient(clientId) {
+  const value = readerForceOnlineClients.get(clientId)
+  if (!value) return false
+  if (value.until <= Date.now()) {
+    readerForceOnlineClients.delete(clientId)
+    return false
+  }
+  return value.active
+} 
 const NAVIGATION_TIMEOUT_MS = 5000
 const EXTERNAL_SHELL_ASSETS = [
   'https://cdn.tailwindcss.com',
@@ -1873,7 +1897,7 @@ self.addEventListener(
         const cached = cache &&
           await cache.match(request, { ignoreSearch: true }).catch(() => null)
 
-        if (offlineClient && cached) {
+        if (offlineClient && cached && self.navigator.onLine === false && !isReaderForceOnlineClient(event.clientId)) {
           return cached
         }
 
@@ -1896,65 +1920,27 @@ self.addEventListener(
       '/', '/me', '/library', '/library/manage', '/library/manage/offline-downloads',
     ])
     const localFirstShellRoutes = new Set([
-      '/library',
-      '/library/manage/offline-downloads',
+      '/library', '/library/manage', '/library/manage/offline-downloads',
     ])
     const route = url.pathname.replace(/\/+$/, '') || '/'
-    const isOfflineEpisodeRoute =
-      /^\/story\/[^/]+\/episode\/[^/]+$/.test(route)
-    const localFirstNavigation =
-      localFirstShellRoutes.has(route) ||
-      isOfflineEpisodeRoute
+    const isOfflineEpisodeRoute = /^\/story\/[^/]+\/episode\/[^/]+$/.test(route)
+    const localFirstNavigation = localFirstShellRoutes.has(route) || isOfflineEpisodeRoute
 
     if (
       request.mode === 'navigate' &&
       url.origin === self.location.origin &&
-      (
-        offlineShellRoutes.has(route) ||
-        isOfflineEpisodeRoute
-      )
+      (offlineShellRoutes.has(route) || isOfflineEpisodeRoute)
     ) {
       event.respondWith((async () => {
         const cached = await getOfflineShell()
-
-        if (localFirstNavigation && cached) {
-          return cached
-        }
-
-        if (
-          url.searchParams.get(OFFLINE_MARKER) === '1' &&
-          cached
-        ) {
-          return cached
-        }
-
-        const offlineRedirect = () => {
-          const offlineUrl = new URL(
-            '/library',
-            self.location.origin
-          )
-
-          offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
-          return Response.redirect(offlineUrl.href, 302)
-        }
-
-        if (self.navigator.onLine === false && cached) {
-          return offlineRedirect()
-        }
-
+        const forceOnline = isReaderForceOnlineClient(event.clientId)
         try {
-          const response = await fetchWithTimeout(
-            request,
-            NAVIGATION_TIMEOUT_MS
-          )
+          const response = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS)
           return response.status >= 500
             ? renderNavigationFailure(request, 'server', response.status)
             : response
         } catch {
-          if (self.navigator.onLine === false && cached) {
-            return offlineRedirect()
-          }
-
+          if (localFirstNavigation && cached && !forceOnline) return cached
           return renderNavigationFailure(
             request,
             self.navigator.onLine === false ? 'offline' : 'unknown'
@@ -1964,34 +1950,22 @@ self.addEventListener(
       return
     }
 
-
     if (request.mode === 'navigate' && url.origin === self.location.origin) {
-  event.respondWith((async () => {
-    try {
-      const response = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS)
-      return response.status >= 500
-        ? renderNavigationFailure(request, 'server', response.status)
-        : response
-    } catch {
-      if (self.navigator.onLine !== false) {
-        return renderNavigationFailure(request, 'unknown')
-      }
-
-      const cached = await getOfflineShell()
-
-      if (!cached) {
-        return renderNavigationFailure(request, 'offline')
-      }
-
-      const offlineUrl = new URL('/library', self.location.origin)
-      offlineUrl.searchParams.set(OFFLINE_MARKER, '1')
-
-      return Response.redirect(offlineUrl.href, 302)
+      event.respondWith((async () => {
+        try {
+          const response = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS)
+          return response.status >= 500
+            ? renderNavigationFailure(request, 'server', response.status)
+            : response
+        } catch {
+          return renderNavigationFailure(
+            request,
+            self.navigator.onLine === false ? 'offline' : 'unknown'
+          )
+        }
+      })())
+      return
     }
-  })())
-  return
-}
-
 
     if (isSplashAssetRequest(url)) {
   const cachePromise = caches.open(SPLASH_CACHE_NAME).catch(() => null)
