@@ -291,7 +291,7 @@ export default function DiscoverSpecialPromotionCard({
       <style>{motionStyles}</style>
 
       <article className="overflow-hidden border border-[#e5d9ee] bg-white dark:border-white/10 dark:bg-[var(--shadow-bg-surface)] sm:rounded-2xl">
-        <div className="flex items-center gap-2 px-3 pb-1 pt-2 sm:px-4">
+        <div className="flex items-center gap-2 px-3 pb-3 pt-3 sm:px-4">
           <div className="dsp-avatar-ring h-7 w-7 shrink-0">
             <div className="dsp-avatar-ring__inside">
               {avatarUrl ? (
@@ -332,7 +332,7 @@ export default function DiscoverSpecialPromotionCard({
             <button
               type="button"
               onClick={() => onOpen?.(promotion)}
-              className="dsp-gold-frame h-[162px] w-[114px] shrink-0 text-left transition-transform active:scale-[0.99] min-[390px]:h-[170px] min-[390px]:w-[120px]"
+              className="dsp-gold-frame h-[190px] w-[134px] shrink-0 text-left transition-transform active:scale-[0.99] min-[390px]:h-[200px] min-[390px]:w-[140px]"
             >
               <div className="dsp-gold-frame__inside bg-[#fff7e5] dark:bg-[#201522]">
                 {coverUrl ? (
@@ -350,7 +350,7 @@ export default function DiscoverSpecialPromotionCard({
               </div>
             </button>
 
-            <div className="flex min-w-0 flex-1 flex-col pt-0.5">
+            <div className="flex h-[190px] min-w-0 flex-1 flex-col pt-0.5 min-[390px]:h-[200px]">
               <button
                 type="button"
                 onClick={() => onOpen?.(promotion)}
@@ -398,7 +398,7 @@ export default function DiscoverSpecialPromotionCard({
                 </span>
               </div>
 
-              <div className="mt-1.5">
+              <div className="mt-auto pt-1.5">
                 <div className="dsp-buy-shell">
                   <button
                     type="button"
