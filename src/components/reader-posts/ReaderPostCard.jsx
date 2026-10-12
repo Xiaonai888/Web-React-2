@@ -971,12 +971,15 @@ function ReaderPostImages({
 }) {
   const [failedImageUrls, setFailedImageUrls] = useState(() => new Set())
   const isDiscoverView = window.location.pathname === '/discover'
-  const images = Array.isArray(imageUrls)
+  const sourceImages = Array.isArray(imageUrls)
     ? imageUrls
         .filter((url) => typeof url === 'string' && url.trim())
-        .filter((url) => !isDiscoverView || !failedImageUrls.has(url))
         .slice(0, 5)
     : []
+  const visibleImages = sourceImages
+    .map((url, originalIndex) => ({ url, originalIndex }))
+    .filter(({ url }) => !isDiscoverView || !failedImageUrls.has(url))
+  const images = visibleImages.map(({ url }) => url)
 
   function hideFailedImage(url) {
     if (!isDiscoverView || !url) return
@@ -1002,29 +1005,33 @@ function ReaderPostImages({
     return String(item?.alt_text ?? item?.alt ?? '')
   }
 
-  const safeSelectedIndex = Math.min(
-    images.length - 1,
-    Math.max(
-      0,
-      Number.isFinite(Number(selectedPhotoIndex))
-        ? Math.floor(Number(selectedPhotoIndex))
-        : 0
-    )
+  const selectedIndex = Math.max(
+    0,
+    Number.isFinite(Number(selectedPhotoIndex))
+      ? Math.floor(Number(selectedPhotoIndex))
+      : 0
   )
+  const matchingIndex = visibleImages.findIndex(
+    ({ originalIndex }) => originalIndex === selectedIndex
+  )
+  const safeSelectedIndex = matchingIndex >= 0
+    ? matchingIndex
+    : Math.min(images.length - 1, selectedIndex)
 
   if (photoPostView) {
     const selectedImage = images[safeSelectedIndex]
+    const originalIndex = visibleImages[safeSelectedIndex].originalIndex
 
     return (
       <button
         type="button"
-        onClick={() => onImageClick?.(safeSelectedIndex)}
+        onClick={() => onImageClick?.(originalIndex)}
         className="block w-full bg-[#f3f4f6] dark:bg-[#202331]"
         aria-label={getDisplayText('readerPostCard.openPhotoFullscreen')}
       >
         <img
           src={selectedImage}
-          alt={getPhotoAltText(selectedImage, safeSelectedIndex)}
+          alt={getPhotoAltText(selectedImage, originalIndex)}
           loading="eager"
           decoding="async"
           className="max-h-[72dvh] min-h-[260px] w-full object-contain"
@@ -1034,16 +1041,17 @@ function ReaderPostImages({
   }
 
   if (images.length === 1) {
+    const entry = visibleImages[0]
     const image = (
       <ProfessionalSinglePostImage
-        src={images[0]}
-        alt={getPhotoAltText(images[0], 0)}
-        onClick={onImageClick ? () => onImageClick(0) : undefined}
+        src={entry.url}
+        alt={getPhotoAltText(entry.url, entry.originalIndex)}
+        onClick={onImageClick ? () => onImageClick(entry.originalIndex) : undefined}
       />
     )
 
     return isDiscoverView ? (
-      <div onErrorCapture={() => hideFailedImage(images[0])}>
+      <div onErrorCapture={() => hideFailedImage(entry.url)}>
         {image}
       </div>
     ) : image
@@ -1051,27 +1059,30 @@ function ReaderPostImages({
 
   return (
     <div className="grid grid-cols-2 gap-1 overflow-hidden bg-white dark:bg-[#171923]">
-      {images.map((imageUrl, index) => {
-        const isWideLastImage = images.length % 2 === 1 && index === images.length - 1
+      {visibleImages.map(({ url, originalIndex }, index) => {
+        const isWideLastImage =
+          visibleImages.length % 2 === 1 && index === visibleImages.length - 1
 
         return (
           <button
             type="button"
-            key={`${imageUrl}-${index}`}
-            onClick={() => onImageClick?.(index)}
+            key={`${url}-${originalIndex}`}
+            onClick={() => onImageClick?.(originalIndex)}
             className={
               isWideLastImage
                 ? 'col-span-2 aspect-[2/1] bg-[#f3f4f6] dark:bg-[#202331]'
                 : 'aspect-square bg-[#f3f4f6] dark:bg-[#202331]'
             }
-            aria-label={getDisplayText('readerPostCard.openPhotoNumber', { count: index + 1 })}
+            aria-label={getDisplayText('readerPostCard.openPhotoNumber', {
+              count: originalIndex + 1,
+            })}
           >
             <img
-              src={imageUrl}
-              alt={getPhotoAltText(imageUrl, index)}
+              src={url}
+              alt={getPhotoAltText(url, originalIndex)}
               loading="lazy"
               decoding="async"
-              onError={() => hideFailedImage(imageUrl)}
+              onError={() => hideFailedImage(url)}
               className="h-full w-full object-cover"
             />
           </button>
@@ -1080,6 +1091,7 @@ function ReaderPostImages({
     </div>
   )
 }
+
 
 function EchoPostPreviewImages({
   imageUrls,
@@ -1382,6 +1394,7 @@ function ReaderEchoSourceBlock({ post }) {
   const navigate = useNavigate()
   const location = useLocation()
   useDisplayTranslation()
+  const [failedPreviewUrls, setFailedPreviewUrls] = useState(() => new Set())
   const source = post?.source || {}
   const story = post?.source_story || {}
   const episode = post?.source_episode || {}
@@ -1697,13 +1710,37 @@ function ReaderEchoSourceBlock({ post }) {
             ? [source.image_url]
             : []
 
+  const isDiscoverPreview = window.location.pathname === '/discover'
+  const visiblePreviewImages = Array.isArray(previewImages)
+    ? previewImages
+        .filter((url) => typeof url === 'string' && url.trim())
+        .filter((url) => !isDiscoverPreview || !failedPreviewUrls.has(url))
+        .slice(0, 5)
+    : []
+  const isDiscoverTextOnlyPreview = isDiscoverPreview && visiblePreviewImages.length === 0
+
+  function handlePreviewImageError(event) {
+    if (!isDiscoverPreview) return
+    const failedUrl = event.target?.getAttribute?.('src')
+    if (!failedUrl || !visiblePreviewImages.includes(failedUrl)) return
+    setFailedPreviewUrls((previous) => {
+      if (previous.has(failedUrl)) return previous
+      const next = new Set(previous)
+      next.add(failedUrl)
+      return next
+    })
+  }
+
   return (
     <div
       role="button"
       tabIndex={sourceUrl ? 0 : -1}
       onClick={openSource}
       onKeyDown={handleKeyDown}
-      className="mx-4 mb-4 grid aspect-square w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[10px] border border-[#e5e7eb] dark:border-white/10 bg-white dark:bg-[#171923] text-left active:scale-[0.995]"
+      onErrorCapture={handlePreviewImageError}
+      className={`mx-4 mb-4 w-[calc(100%-2rem)] overflow-hidden rounded-[10px] border border-[#e5e7eb] dark:border-white/10 bg-white dark:bg-[#171923] text-left active:scale-[0.995] ${
+        isDiscoverTextOnlyPreview ? '' : 'grid aspect-square grid-rows-[auto_minmax(0,1fr)]'
+      }`}
     >
       <div className="min-w-0 bg-white dark:bg-[#171923]">
         <div className="flex items-start gap-2.5 px-3.5 pb-2.5 pt-3.5">
@@ -1737,10 +1774,12 @@ function ReaderEchoSourceBlock({ post }) {
         ) : null}
       </div>
 
-      <EchoPostPreviewImages
-        imageUrls={previewImages}
-        alt={previewUser.name || getDisplayText('readerPostCard.post')}
-      />
+      {!isDiscoverTextOnlyPreview ? (
+        <EchoPostPreviewImages
+          imageUrls={visiblePreviewImages}
+          alt={previewUser.name || getDisplayText('readerPostCard.post')}
+        />
+      ) : null}
     </div>
   )
 }
