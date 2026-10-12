@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ReportModal from '../ReportModal'
+import { createPortal } from 'react-dom'
+import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import ReactionAction from '../social/reactions/ReactionAction'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -26,6 +28,7 @@ registerTranslationNamespace('commentSection', {
     "noCommentsYet": "No comments yet",
     "noCommentsDesc": "Start the conversation. Share what you feel, ask a question, or cheer for this story.",
     "writeCommentAction": "Write a comment",
+    "shareComment": "Share Comment",
     "reply": "Reply",
     "copy": "Copy",
     "delete": "Delete",
@@ -118,6 +121,7 @@ registerTranslationNamespace('commentSection', {
     "noCommentsYet": "មិនទាន់មានមតិយោបល់",
     "noCommentsDesc": "ចាប់ផ្តើមការសន្ទនា។ ចែករំលែកអារម្មណ៍ សួរសំណួរ ឬលើកទឹកចិត្តរឿងនេះ។",
     "writeCommentAction": "សរសេរមតិយោបល់",
+    "shareComment": "ចែករំលែកមតិយោបល់",
     "reply": "ឆ្លើយតប",
     "copy": "ចម្លង",
     "delete": "លុប",
@@ -210,6 +214,7 @@ registerTranslationNamespace('commentSection', {
     "noCommentsYet": "暂无评论",
     "noCommentsDesc": "开始对话，分享感受、提出问题或为这个故事加油。",
     "writeCommentAction": "写评论",
+    "shareComment": "分享评论",
     "reply": "回复",
     "copy": "复制",
     "delete": "删除",
@@ -302,6 +307,7 @@ registerTranslationNamespace('commentSection', {
     "noCommentsYet": "まだコメントはありません",
     "noCommentsDesc": "会話を始めて、感想や質問、この作品への応援を共有しましょう。",
     "writeCommentAction": "コメントを書く",
+    "shareComment": "コメントを共有",
     "reply": "返信",
     "copy": "コピー",
     "delete": "削除",
@@ -394,6 +400,7 @@ registerTranslationNamespace('commentSection', {
     "noCommentsYet": "아직 댓글이 없습니다",
     "noCommentsDesc": "대화를 시작하고 느낌, 질문 또는 이 이야기에 대한 응원을 공유해 보세요.",
     "writeCommentAction": "댓글 작성",
+    "shareComment": "댓글 공유",
     "reply": "답글",
     "copy": "복사",
     "delete": "삭제",
@@ -1197,12 +1204,32 @@ function MenuButton({
   )
 }
 
+function getCommentShareLink(comment, targetType, targetId, story) {
+  const commentId = String(comment?.id || '').trim()
+  const storyId = String(story?.id || comment?.story_id || (targetType === 'story' ? targetId : '') || '').trim()
+  const postId = String(targetId || comment?.post_id || '').trim()
+  let path = window.location.pathname
+
+  if (targetType === 'story' && storyId) {
+    path = `/story/${encodeURIComponent(storyId)}`
+  } else if (targetType === 'episode' && storyId && targetId) {
+    path = `/story/${encodeURIComponent(storyId)}/episode/${encodeURIComponent(targetId)}`
+  } else if (targetType === 'author_post' && postId) {
+    path = `/author/post/${encodeURIComponent(postId)}`
+  }
+
+  const url = new URL(path, window.location.origin)
+  url.searchParams.set('comment', commentId)
+  return url.toString()
+}
+
 function CommentMenu({
   isOpen,
   allowReply = true,
   targetType,
   permissions,
   comment,
+  onShare,
   onReply,
   onCopy,
   onEdit,
@@ -1242,6 +1269,12 @@ function CommentMenu({
 
       <section className="relative w-full max-w-3xl rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-2 pb-[max(18px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
         <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+
+        <MenuButton
+          icon="fa-solid fa-share-nodes"
+          label={t('commentSection.shareComment')}
+          onClick={() => runAction(onShare)}
+        />
 
         {allowReply ? (
           <MenuButton
@@ -1550,6 +1583,7 @@ function ReplyItem({
   mentionCandidates,
   onLike,
   onStartReply,
+  onShare,
   onCopy,
   onEdit,
   onDelete,
@@ -1565,6 +1599,22 @@ function ReplyItem({
   const { t } = useDisplayTranslation()
   const [menuOpen, setMenuOpen] =
     useState(false)
+  const pressTimerRef = useRef(null)
+  const longPressedRef = useRef(false)
+  useEffect(() => () => window.clearTimeout(pressTimerRef.current), [])
+  const clearPress = () => {
+    window.clearTimeout(pressTimerRef.current)
+    pressTimerRef.current = null
+  }
+  const startPress = (event) => {
+    if (pending || (event.pointerType === 'mouse' && event.button !== 0)) return
+    clearPress()
+    longPressedRef.current = false
+    pressTimerRef.current = window.setTimeout(() => {
+      longPressedRef.current = true
+      setMenuOpen(true)
+    }, 420)
+  }
   const currentUser = getCurrentUser()
   const pending = Boolean(
     reply?._pending
@@ -1607,15 +1657,28 @@ function ReplyItem({
         textSize="text-[11px]"
       />
 
-      <div className="relative min-w-0 flex-1 pr-8">
+      <div className="min-w-0 flex-1">
+        <div className="relative pr-8">
         <button
           type="button"
-          onClick={() => {
-            if (!pending) {
-              setMenuOpen(true)
-            }
+          onPointerDown={startPress}
+          onPointerUp={clearPress}
+          onPointerCancel={clearPress}
+          onPointerLeave={clearPress}
+          onContextMenu={(event) => {
+            event.preventDefault()
+            clearPress()
+            if (!pending) setMenuOpen(true)
           }}
-          className="inline-block max-w-full rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-2 text-left active:bg-[var(--shadow-bg-hover)]"
+          onClick={() => {
+            if (pending) return
+            if (longPressedRef.current) {
+              longPressedRef.current = false
+              return
+            }
+            setMenuOpen(true)
+          }}
+          className="block max-w-full select-none py-0.5 text-left active:opacity-75"
         >
           <div className="flex items-center gap-2">
             <span className="text-[12px] font-semibold text-[var(--shadow-text-primary)]">
@@ -1643,15 +1706,16 @@ function ReplyItem({
             onClick={() =>
               setMenuOpen(true)
             }
-            className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
+            className="absolute right-0 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
             aria-label="Reply options"
           >
-            <i className="fa-solid fa-ellipsis text-[13px]" />
+            <i className="fa-solid fa-ellipsis-vertical text-[14px]" />
           </button>
         ) : null}
+        </div>
 
         {!pending ? (
-          <div className="mt-1 flex items-center gap-4 pl-3 text-[11.5px] font-normal text-[var(--shadow-text-tertiary)]">
+          <div className="mt-1 flex items-center gap-4 pl-0 text-[11.5px] font-normal text-[var(--shadow-text-tertiary)]">
                     <ReactionAction
             reactionType={
               reply.reaction_type ||
@@ -1692,6 +1756,7 @@ function ReplyItem({
           permissions={permissions}
           comment={reply}
           onReply={startReply}
+          onShare={() => onShare?.(reply)}
           onCopy={() => onCopy(reply)}
           onEdit={() => onEdit(reply)}
           onDelete={() =>
@@ -1734,6 +1799,7 @@ function CommentItem({
   onStartReply,
   onLoadMoreReplies,
   loadingReplies,
+  onShare,
   onCopy,
   onEdit,
   onDelete,
@@ -1890,16 +1956,16 @@ const [repliesShown, setRepliesShown] =
   if (comment.is_deleted) {
     return (
       <article
-        className="px-4 py-4"
+        className="px-4 py-2"
         id={`comment-${comment.id}`}
       >
-        <div className="flex gap-3">
+        <div className="flex gap-2.5">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
             <i className="fa-regular fa-comment-dots text-[15px]" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="inline-flex min-h-12 items-center rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3">
+            <div className="inline-flex min-h-10 items-center py-1">
               <span className="text-[13px] italic text-[var(--shadow-text-tertiary)]">
                 {t('commentSection.commentDeleted')}
               </span>
@@ -1921,7 +1987,7 @@ const [repliesShown, setRepliesShown] =
 
             {repliesShown &&
             replies.length ? (
-              <div className="mt-3 space-y-3 border-l-2 border-[var(--shadow-border)] pl-3">
+              <div className="mt-2 space-y-2 border-l-2 border-[var(--shadow-border)] pl-3">
                 {replies.map((reply) => (
                   <ReplyItem
                     key={reply.id}
@@ -1937,6 +2003,7 @@ const [repliesShown, setRepliesShown] =
                     onStartReply={
                       openReplyComposer
                     }
+                    onShare={onShare}
                     onCopy={onCopy}
                     onEdit={onEdit}
                     onDelete={onDelete}
@@ -1985,14 +2052,14 @@ const [repliesShown, setRepliesShown] =
 
   return (
     <article
-      className={`px-4 py-4 ${
+      className={`px-4 py-2 ${
         comment.is_hidden
           ? 'opacity-60'
           : ''
       }`}
       id={`comment-${comment.id}`}
     >
-      <div className="flex gap-3">
+      <div className="flex gap-2.5">
         <Avatar
           user={{
             name: displayName,
@@ -2035,7 +2102,7 @@ const [repliesShown, setRepliesShown] =
                   setMenuOpen(true)
                 }
               }}
-              className="inline-block max-w-full cursor-pointer select-none rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 outline-none active:bg-[var(--shadow-bg-hover)]"
+              className="block w-full cursor-pointer select-none py-0.5 text-left outline-none active:opacity-75"
               style={{
                 touchAction:
                   'manipulation',
@@ -2095,10 +2162,10 @@ const [repliesShown, setRepliesShown] =
                 onClick={() =>
                   setMenuOpen(true)
                 }
-                className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
+                className="absolute right-0 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
                 aria-label="Comment options"
               >
-                <i className="fa-solid fa-ellipsis text-[14px]" />
+                <i className="fa-solid fa-ellipsis-vertical text-[15px]" />
               </button>
             ) : null}
 
@@ -2113,6 +2180,7 @@ const [repliesShown, setRepliesShown] =
                   displayName
                 )
               }
+              onShare={() => onShare?.(comment)}
               onCopy={() =>
                 onCopy(comment)
               }
@@ -2154,7 +2222,7 @@ const [repliesShown, setRepliesShown] =
           </div>
 
           {!pending ? (
-            <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
+            <div className="mt-1 flex items-center gap-4 pl-0 text-[12px] font-normal text-[var(--shadow-text-tertiary)]">
             <ReactionAction
               reactionType={
                 comment.reaction_type ||
@@ -2212,7 +2280,7 @@ const [repliesShown, setRepliesShown] =
 
           {repliesShown &&
           replies.length ? (
-            <div className="mt-3 space-y-3 border-l-2 border-[var(--shadow-border)] pl-3">
+            <div className="mt-2 space-y-2 border-l-2 border-[var(--shadow-border)] pl-3">
               {replies.map((reply) => (
                 <ReplyItem
                   key={reply.id}
@@ -2228,6 +2296,7 @@ const [repliesShown, setRepliesShown] =
                   onStartReply={
                     openReplyComposer
                   }
+                  onShare={onShare}
                   onCopy={onCopy}
                   onEdit={onEdit}
                   onDelete={onDelete}
@@ -2709,6 +2778,7 @@ const [toast, setToast] = useState('')
     useState(false)
   const [loadingMore, setLoadingMore] =
     useState(false)
+  const [shareComment, setShareComment] = useState(null)
   const [loadingRepliesId, setLoadingRepliesId] =
     useState(null)
   const [sending, setSending] =
@@ -4849,6 +4919,7 @@ updateComments(
                       String(loadingRepliesId) ===
                       String(comment.id)
                     }
+                    onShare={setShareComment}
                     onCopy={
                       handleCopyComment
                     }
@@ -5106,6 +5177,19 @@ onSpoiler={(
           isBanned={isBanned}
           sending={sending}
         />
+      ) : null}
+
+      {shareComment ? createPortal(
+        <AuthorPageShareSheet
+          open
+          pageName={story?.title || 'Shadow'}
+          pageLink={getCommentShareLink(shareComment, targetType, targetId, story)}
+          sheetTitle={t('commentSection.shareComment')}
+          shareText={String(shareComment.text || '').slice(0, 180)}
+          zClassName="z-[500]"
+          onClose={() => setShareComment(null)}
+        />,
+        document.body
       ) : null}
 
       <EditCommentSheet
