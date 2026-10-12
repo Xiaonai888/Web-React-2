@@ -1192,7 +1192,7 @@ export default function Library() {
     }
 
     const handleOffline = () => {
-      if (!active) return
+      if (!active || !isReaderOffline()) return
 
       offlineStateRef.current = true
       setOffline(true)
