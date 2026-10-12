@@ -4,7 +4,9 @@ import {
   useRef,
   useState,
 } from 'react'
+import { createPortal } from 'react-dom'
 import ReportModal from '../ReportModal'
+import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import ReactionAction from '../social/reactions/ReactionAction'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -22,6 +24,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "hoursAgo": "{{count}}h",
     "daysAgo": "{{count}}d",
     "reader": "Reader",
+    "shareComment": "Share Comment",
     "reply": "Reply",
     "copy": "Copy",
     "edit": "Edit",
@@ -85,6 +88,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "hoursAgo": "{{count}} ម៉ោង",
     "daysAgo": "{{count}} ថ្ងៃ",
     "reader": "អ្នកអាន",
+    "shareComment": "ចែករំលែកមតិយោបល់",
     "reply": "ឆ្លើយតប",
     "copy": "ចម្លង",
     "edit": "កែ",
@@ -148,6 +152,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "hoursAgo": "{{count}}小时",
     "daysAgo": "{{count}}天",
     "reader": "读者",
+    "shareComment": "分享评论",
     "reply": "回复",
     "copy": "复制",
     "edit": "编辑",
@@ -211,6 +216,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "hoursAgo": "{{count}}時間",
     "daysAgo": "{{count}}日",
     "reader": "読者",
+    "shareComment": "コメントを共有",
     "reply": "返信",
     "copy": "コピー",
     "edit": "編集",
@@ -274,6 +280,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "hoursAgo": "{{count}}시간",
     "daysAgo": "{{count}}일",
     "reader": "독자",
+    "shareComment": "댓글 공유",
     "reply": "답글",
     "copy": "복사",
     "edit": "수정",
@@ -491,10 +498,59 @@ function MenuRow({
   )
 }
 
+function useCommentMenuPress(openMenu) {
+  const timer = useRef(null)
+  const wasLongPressed = useRef(false)
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  const cancelPress = () => {
+    window.clearTimeout(timer.current)
+    timer.current = null
+  }
+
+  return {
+    onPointerDown: (event) => {
+      if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return
+      cancelPress()
+      wasLongPressed.current = false
+      timer.current = window.setTimeout(() => {
+        wasLongPressed.current = true
+        openMenu()
+      }, 450)
+    },
+    onPointerUp: cancelPress,
+    onPointerCancel: cancelPress,
+    onPointerLeave: cancelPress,
+    onContextMenu: (event) => {
+      event.preventDefault()
+      cancelPress()
+      wasLongPressed.current = true
+      openMenu()
+    },
+    onClick: () => {
+      if (wasLongPressed.current) {
+        wasLongPressed.current = false
+        return
+      }
+      openMenu()
+    },
+  }
+}
+
+function makeCommentShareUrl(postId, comment) {
+  const id = String(postId || comment?.post_id || '').trim()
+  const commentId = String(comment?.id || '').trim()
+  const url = new URL(`/reader/post/${encodeURIComponent(id)}`, window.location.origin)
+  url.searchParams.set('comment', commentId)
+  return url.toString()
+}
+
 function CommentOptionsSheet({
   comment,
   currentUserId,
   onClose,
+  onShare,
   onReply,
   onCopy,
   onEdit,
@@ -526,6 +582,12 @@ function CommentOptionsSheet({
 
       <section className="relative w-full max-w-3xl rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
         <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+
+        <MenuRow
+          icon="fa-solid fa-share-nodes"
+          label={t('readerPostCommentsSection.shareComment')}
+          onClick={() => runAction(onShare)}
+        />
 
         <MenuRow
           icon="fa-regular fa-comment"
@@ -588,36 +650,65 @@ function CommentOptionsSheet({
 
 function ReplyItem({
   reply,
+  rootCommentId,
+  currentUserId,
+  focusCommentId,
   onLike,
+  onStartReply,
+  onShare,
+  onCopy,
+  onEdit,
+  onDelete,
+  onHide,
+  onReport,
 }) {
   const { t } = useDisplayTranslation()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuPress = useCommentMenuPress(() => setMenuOpen(true))
+
+  useEffect(() => {
+    if (String(focusCommentId || '') !== String(reply.id)) return
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`reader-post-comment-${reply.id}`)?.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth',
+      })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [focusCommentId, reply.id])
+
   return (
-    <div className="flex gap-2">
-      <Avatar
-        user={reply.user}
-        small
-      />
+    <div id={`reader-post-comment-${reply.id}`} className="flex gap-2">
+      <Avatar user={reply.user} small />
 
       <div className="min-w-0 flex-1">
-        <div className="inline-block max-w-full rounded-[16px] bg-[var(--shadow-bg-soft)] px-3 py-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[12px] font-semibold text-[var(--shadow-text-primary)]">
-              {reply.user?.name ||
-                getDisplayText('readerPostCommentsSection.reader')}
-            </span>
-
-            <span className="text-[10px] font-normal text-[var(--shadow-text-tertiary)]">
-              {formatTime(
-                reply.created_at
-              )}
-            </span>
-          </div>
-
-          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
-            {reply.text}
-          </p>
+        <div className="relative pr-8">
+          <button
+            type="button"
+            {...menuPress}
+            className="block w-full select-none py-0.5 text-left active:opacity-75"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[12px] font-semibold text-[var(--shadow-text-primary)]">
+                {reply.user?.name || getDisplayText('readerPostCommentsSection.reader')}
+              </span>
+              <span className="text-[10px] font-normal text-[var(--shadow-text-tertiary)]">
+                {formatTime(reply.created_at)}
+              </span>
+            </div>
+            <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
+              {reply.text}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            className="absolute right-0 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
+            aria-label="Reply options"
+          >
+            <i className="fa-solid fa-ellipsis-vertical text-[14px]" />
+          </button>
         </div>
-
                 <ReactionAction
           reactionType={
             reply.reaction_type ||
@@ -636,12 +727,25 @@ function ReplyItem({
             )
           }
           idleLabel={t('readerPostCommentsSection.like')}
-          className="ml-3 mt-1"
+          className="mt-1"
           buttonClassName="text-[11px] font-semibold"
           countClassName="text-[11px] font-semibold"
           pickerAlign="left"
         />
       </div>
+
+      <CommentOptionsSheet
+        comment={menuOpen ? reply : null}
+        currentUserId={currentUserId}
+        onClose={() => setMenuOpen(false)}
+        onShare={() => onShare?.(reply)}
+        onReply={() => onStartReply?.(rootCommentId, reply.user?.name || getDisplayText('readerPostCommentsSection.reader'))}
+        onCopy={() => onCopy?.(reply)}
+        onEdit={() => onEdit?.(reply)}
+        onDelete={() => onDelete?.(reply)}
+        onHide={() => onHide?.(reply)}
+        onReport={() => onReport?.(reply)}
+      />
     </div>
   )
 }
@@ -651,6 +755,8 @@ function CommentItem({
   currentUserId,
   onLike,
   onStartReply,
+  focusCommentId,
+  onShare,
   onCopy,
   onEdit,
   onDelete,
@@ -662,6 +768,7 @@ function CommentItem({
   const { t } = useDisplayTranslation()
   const [menuOpen, setMenuOpen] =
     useState(false)
+  const menuPress = useCommentMenuPress(() => setMenuOpen(true))
   const [
     repliesShown,
     setRepliesShown,
@@ -672,6 +779,12 @@ function CommentItem({
   )
     ? comment.replies
     : []
+  useEffect(() => {
+    if (focusCommentId && replies.some((reply) => String(reply.id) === String(focusCommentId))) {
+      setRepliesShown(true)
+    }
+  }, [focusCommentId, replies])
+
   const replyTotal = Math.max(
     replies.length,
     Number(comment.reply_total || 0)
@@ -698,18 +811,16 @@ function CommentItem({
   }
 
   return (
-    <article className="px-4 py-4">
-      <div className="flex gap-3">
+    <article id={`reader-post-comment-${comment.id}`} className="px-4 py-2">
+      <div className="flex gap-2.5">
         <Avatar user={comment.user} />
 
         <div className="min-w-0 flex-1">
           <div className="relative pr-8">
             <button
               type="button"
-              onClick={() =>
-                setMenuOpen(true)
-              }
-              className="inline-block max-w-full rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-left active:bg-[var(--shadow-bg-hover)]"
+              {...menuPress}
+              className="block w-full select-none py-0.5 text-left active:opacity-75"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[13px] font-semibold text-[var(--shadow-text-primary)]">
@@ -734,14 +845,14 @@ function CommentItem({
               onClick={() =>
                 setMenuOpen(true)
               }
-              className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full text-[var(--shadow-text-tertiary)] active:scale-95"
+              className="absolute right-0 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-[var(--shadow-text-tertiary)] active:scale-95"
               aria-label="Comment options"
             >
-              <i className="fa-solid fa-ellipsis text-[14px]" />
+              <i className="fa-solid fa-ellipsis-vertical text-[15px]" />
             </button>
           </div>
 
-          <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">
+          <div className="mt-1 flex items-center gap-4 pl-0 text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">
                         <ReactionAction
               reactionType={
                 comment.reaction_type ||
@@ -804,16 +915,27 @@ function CommentItem({
           {repliesShown &&
           (replies.length ||
             loadingReplies) ? (
-            <div className="mt-3 space-y-3 border-l-2 border-[var(--shadow-border)] pl-3">
+            <div className="mt-2 space-y-2 border-l-2 border-[var(--shadow-border)] pl-3">
               {replies.map(
                 (reply) => (
-                  <ReplyItem
-                    key={reply.id}
-                    reply={reply}
-                    onLike={
-                      onLike
-                    }
-                  />
+<ReplyItem
+                  key={reply.id}
+                  reply={reply}
+                  rootCommentId={comment.id}
+                  currentUserId={currentUserId}
+                  focusCommentId={focusCommentId}
+                  onLike={onLike}
+                  onStartReply={(parentId, name) => {
+                    setRepliesShown(true)
+                    onStartReply?.(parentId, name)
+                  }}
+                  onShare={onShare}
+                  onCopy={onCopy}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onHide={onHide}
+                  onReport={onReport}
+                />
                 )
               )}
 
@@ -854,6 +976,7 @@ function CommentItem({
           setMenuOpen(false)
         }
         onReply={openReplyComposer}
+        onShare={() => onShare?.(comment)}
         onCopy={() =>
           onCopy(comment)
         }
@@ -1027,6 +1150,30 @@ export default function ReaderPostCommentsSection({
 
   const [comments, setComments] =
     useState([])
+  const [shareComment, setShareComment] = useState(null)
+  const focusCommentId = useMemo(() => {
+    const path = `/reader/post/${encodeURIComponent(String(postId || ''))}`
+    if (window.location.pathname !== path) return ''
+    return new URLSearchParams(window.location.search).get('comment') || ''
+  }, [postId])
+
+  useEffect(() => {
+    if (!focusCommentId) return
+    const target = comments.find((item) =>
+      String(item.id) === String(focusCommentId) ||
+      (item.replies || []).some((reply) => String(reply.id) === String(focusCommentId))
+    )
+    if (!target) return
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`reader-post-comment-${focusCommentId}`)?.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth',
+      })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [comments, focusCommentId])
+
+
   const [sort, setSort] =
     useState('top')
   const [sortOpen, setSortOpen] =
@@ -2001,6 +2148,8 @@ export default function ReaderPostCommentsSection({
                 onStartReply={
                   handleStartReply
                 }
+                focusCommentId={focusCommentId}
+                onShare={setShareComment}
                 onCopy={
                   copyComment
                 }
@@ -2194,6 +2343,19 @@ export default function ReaderPostCommentsSection({
           setSortOpen(false)
         }
       />
+
+      {shareComment ? createPortal(
+        <AuthorPageShareSheet
+          open
+          pageName="Reader Post"
+          pageLink={makeCommentShareUrl(postId, shareComment)}
+          sheetTitle={t('readerPostCommentsSection.shareComment')}
+          shareText={String(shareComment.text || '').slice(0, 180)}
+          zClassName="z-[210000]"
+          onClose={() => setShareComment(null)}
+        />,
+        document.body
+      ) : null}
 
       <EditCommentSheet
         comment={
