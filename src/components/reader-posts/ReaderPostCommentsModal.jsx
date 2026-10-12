@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ReportModal from '../ReportModal'
 import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import ReactionAction from '../social/reactions/ReactionAction'
@@ -457,6 +457,63 @@ function normalizeComment(comment) {
   }
 }
 
+function mergeFocusedReaderPostComment(comments, response) {
+  const focus = response?.focus_comment?.id
+    ? normalizeComment(response.focus_comment)
+    : null
+
+  if (!focus) return comments
+
+  const parent = response?.focus_parent_comment?.id
+    ? normalizeComment(response.focus_parent_comment)
+    : null
+  const isReply = Boolean(focus.parent_id)
+
+  if (
+    isReply &&
+    (!parent || String(parent.id) !== String(focus.parent_id))
+  ) {
+    return comments
+  }
+
+  const root = isReply ? parent : focus
+  const index = comments.findIndex(
+    (comment) => String(comment.id) === String(root.id)
+  )
+
+  if (!isReply) {
+    return index >= 0 ? comments : [root, ...comments]
+  }
+
+  const existing = index >= 0 ? comments[index] : root
+  const repliesById = new Map(
+    [...(existing.replies || []), focus].map((reply) => [
+      String(reply.id),
+      reply,
+    ])
+  )
+  const replies = [...repliesById.values()].sort(
+    (first, second) =>
+      new Date(first.created_at || 0).getTime() -
+      new Date(second.created_at || 0).getTime()
+  )
+  const mergedRoot = {
+    ...existing,
+    replies,
+    reply_total: Math.max(
+      Number(existing.reply_total || 0),
+      Number(parent.reply_total || 0),
+      replies.length
+    ),
+  }
+
+  if (index < 0) return [mergedRoot, ...comments]
+
+  return comments.map((comment, position) =>
+    position === index ? mergedRoot : comment
+  )
+}
+
 function Avatar({ user, small = false }) {
   const name = user?.name || getDisplayText('readerPostCommentsModal.reader')
   const size = small
@@ -738,6 +795,7 @@ function ReplyItem({
 
 function CommentItem({
   comment,
+  focusCommentId = '',
   currentUserId,
   onLike,
   onStartReply,
@@ -763,6 +821,17 @@ function CommentItem({
   )
     ? comment.replies
     : []
+  useEffect(() => {
+    if (
+      focusCommentId &&
+      replies.some((reply) =>
+        String(reply.id) === String(focusCommentId)
+      )
+    ) {
+      setRepliesShown(true)
+    }
+  }, [focusCommentId, replies])
+
   const replyTotal = Math.max(
     replies.length,
     Number(comment.reply_total || 0)
@@ -1010,6 +1079,7 @@ function EditCommentSheet({
 export default function ReaderPostCommentsModal({
   open,
   postId,
+  focusCommentId: requestedFocusCommentId = '',
   postName = 'Reader Post',
   echoSourceType = 'reader_post',
   echoSourceId,
@@ -1024,6 +1094,13 @@ export default function ReaderPostCommentsModal({
 }) {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
+  const focusCommentId = useMemo(() => {
+    if (requestedFocusCommentId) return String(requestedFocusCommentId)
+    const path = `/reader/post/${encodeURIComponent(String(postId || ''))}`
+    if (location.pathname !== path) return ''
+    return new URLSearchParams(location.search).get('comment') || ''
+  }, [requestedFocusCommentId, postId, location.pathname, location.search])
   const sheetRef = useRef(null)
   const composerRef = useRef(null)
   const dragStartYRef = useRef(0)
@@ -1101,6 +1178,33 @@ export default function ReaderPostCommentsModal({
     [comments, hiddenIds]
   )
 
+  useEffect(() => {
+    if (!open || !focusCommentId) return undefined
+    const sheet = sheetRef.current
+    if (!sheet) return undefined
+
+    const scrollToFocusedComment = () => {
+      const target = document.getElementById(
+        `reader-post-comment-${focusCommentId}`
+      )
+      if (!target || !sheet.contains(target)) return false
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      return true
+    }
+
+    if (scrollToFocusedComment()) return undefined
+    const observer = new MutationObserver(() => {
+      if (scrollToFocusedComment()) observer.disconnect()
+    })
+    observer.observe(sheet, { childList: true, subtree: true })
+    const timeout = window.setTimeout(() => observer.disconnect(), 6000)
+
+    return () => {
+      observer.disconnect()
+      window.clearTimeout(timeout)
+    }
+  }, [open, focusCommentId, comments])
+
   const commentingDisabled =
     commentsPermission === 'no_one' &&
     String(currentUserId) !==
@@ -1156,7 +1260,11 @@ export default function ReaderPostCommentsModal({
     const sortValue =
       sort === 'all' ? 'newest' : sort
 
-    return `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(postId)}/comments?page=${nextPage}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}&reply_limit=${REPLY_PAGE_SIZE}`
+    const url = `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(postId)}/comments?page=${nextPage}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}&reply_limit=${REPLY_PAGE_SIZE}`
+
+    return nextPage === 1 && focusCommentId
+      ? `${url}&focus_comment_id=${encodeURIComponent(focusCommentId)}`
+      : url
   }
 
   async function fetchComments(
@@ -1207,11 +1315,24 @@ export default function ReaderPostCommentsModal({
           )
         : []
 
-      setComments((current) =>
-        append
-          ? [...current, ...normalized]
+      setComments((current) => {
+        const nextComments = append
+          ? [
+              ...current,
+              ...normalized.filter(
+                (incoming) =>
+                  !current.some(
+                    (existing) =>
+                      String(existing.id) === String(incoming.id)
+                  )
+              ),
+            ]
           : normalized
-      )
+
+        return append
+          ? nextComments
+          : mergeFocusedReaderPostComment(nextComments, data)
+      })
       setPage(Number(data.page || nextPage))
       setHasMore(Boolean(data.has_more))
       applyTotal(
@@ -1239,7 +1360,7 @@ export default function ReaderPostCommentsModal({
     setReplyTarget(null)
     setReplyText('')
     fetchComments(1, false)
-  }, [open, postId, sort])
+  }, [open, postId, sort, focusCommentId])
 
   const updateCommentLocal = (
     commentId,
@@ -2043,6 +2164,7 @@ export default function ReaderPostCommentsModal({
                   <CommentItem
                     key={comment.id}
                     comment={comment}
+                    focusCommentId={focusCommentId}
                     currentUserId={
                       currentUserId
                     }
