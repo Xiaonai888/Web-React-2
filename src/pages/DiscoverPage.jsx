@@ -2514,9 +2514,14 @@ function DeferredDiscoverSection({
 
 export default function DiscoverPage() {
   useDisplayTranslation()
-  const discoverLocationKey = useLocation().key
+  const location = useLocation()
+  const discoverLocationKey = location.state?.backgroundLocation?.pathname === '/discover'
+    ? location.state.backgroundLocation.key || location.key
+    : location.key
   const [barsHidden, setBarsHidden] = useState(false)
   const lastScrollYRef = useRef(0)
+  const discoverScrollYRef = useRef(0)
+  const discoverRestoringScrollRef = useRef(false)
   const token = useMemo(() => getAuthToken(), [])
 
   const [realPosts, setRealPosts] = useState([])
@@ -4001,8 +4006,15 @@ export default function DiscoverPage() {
   }, [token])
 
   useEffect(() => {
+    let restoreFrame = 0
+    let settleFrame = 0
+    let settleTimer = 0
+
     function handleScroll() {
       const currentScrollY = window.scrollY
+      if (window.location.pathname !== '/discover' || discoverRestoringScrollRef.current) return
+
+      discoverScrollYRef.current = currentScrollY
       const previousScrollY = lastScrollYRef.current
       const difference = currentScrollY - previousScrollY
 
@@ -4020,10 +4032,40 @@ export default function DiscoverPage() {
       lastScrollYRef.current = currentScrollY
     }
 
+    function restoreDiscoverScroll() {
+      if (window.location.pathname !== '/discover') return
+      const savedY = discoverScrollYRef.current
+      if (savedY <= 0) return
+
+      discoverRestoringScrollRef.current = true
+      window.cancelAnimationFrame(restoreFrame)
+      window.cancelAnimationFrame(settleFrame)
+      window.clearTimeout(settleTimer)
+      restoreFrame = window.requestAnimationFrame(() => {
+        window.scrollTo(0, savedY)
+        settleFrame = window.requestAnimationFrame(() => {
+          window.scrollTo(0, savedY)
+          settleTimer = window.setTimeout(() => {
+            discoverRestoringScrollRef.current = false
+            discoverScrollYRef.current = window.scrollY
+            lastScrollYRef.current = window.scrollY
+          }, 100)
+        })
+      })
+    }
+
+    discoverScrollYRef.current = window.scrollY
+    lastScrollYRef.current = window.scrollY
     window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('popstate', restoreDiscoverScroll)
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('popstate', restoreDiscoverScroll)
+      window.cancelAnimationFrame(restoreFrame)
+      window.cancelAnimationFrame(settleFrame)
+      window.clearTimeout(settleTimer)
+      discoverRestoringScrollRef.current = false
       document.body.classList.remove('discover-bars-hidden')
     }
   }, [])
