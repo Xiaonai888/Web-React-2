@@ -969,83 +969,62 @@ function ReaderPostImages({
   photoPostView = false,
   selectedPhotoIndex = 0,
 }) {
-  const images = Array.isArray(
-    imageUrls
-  )
+  const [failedImageUrls, setFailedImageUrls] = useState(() => new Set())
+  const isDiscoverView = window.location.pathname === '/discover'
+  const images = Array.isArray(imageUrls)
     ? imageUrls
-        .filter(
-          (url) =>
-            typeof url === 'string' &&
-            url.trim()
-        )
+        .filter((url) => typeof url === 'string' && url.trim())
+        .filter((url) => !isDiscoverView || !failedImageUrls.has(url))
         .slice(0, 5)
     : []
 
-  if (!images.length) {
-    return null
+  function hideFailedImage(url) {
+    if (!isDiscoverView || !url) return
+
+    setFailedImageUrls((previous) => {
+      if (previous.has(url)) return previous
+      const next = new Set(previous)
+      next.add(url)
+      return next
+    })
   }
 
-  const metadata = Array.isArray(
-    photoMetadata
-  )
-    ? photoMetadata
-    : []
+  if (!images.length) return null
 
-  function getPhotoAltText(
-    imageUrl,
-    index
-  ) {
+  const metadata = Array.isArray(photoMetadata) ? photoMetadata : []
+
+  function getPhotoAltText(imageUrl, index) {
     const item =
-      metadata.find(
-        (entry) =>
-          String(entry?.url || '') ===
-          String(imageUrl || '')
-      ) ||
+      metadata.find((entry) => String(entry?.url || '') === String(imageUrl || '')) ||
       metadata[index] ||
       {}
 
-    return String(
-      item?.alt_text ??
-        item?.alt ??
-        ''
-    )
+    return String(item?.alt_text ?? item?.alt ?? '')
   }
 
   const safeSelectedIndex = Math.min(
     images.length - 1,
     Math.max(
       0,
-      Number.isFinite(
-        Number(selectedPhotoIndex)
-      )
-        ? Math.floor(
-            Number(selectedPhotoIndex)
-          )
+      Number.isFinite(Number(selectedPhotoIndex))
+        ? Math.floor(Number(selectedPhotoIndex))
         : 0
     )
   )
 
   if (photoPostView) {
-    const selectedImage =
-      images[safeSelectedIndex]
+    const selectedImage = images[safeSelectedIndex]
 
     return (
       <button
         type="button"
-        onClick={() =>
-          onImageClick?.(
-            safeSelectedIndex
-          )
-        }
+        onClick={() => onImageClick?.(safeSelectedIndex)}
         className="block w-full bg-[#f3f4f6] dark:bg-[#202331]"
         aria-label={getDisplayText('readerPostCard.openPhotoFullscreen')}
       >
         <img
           src={selectedImage}
-          alt={getPhotoAltText(
-            selectedImage,
-            safeSelectedIndex
-          )}
+          alt={getPhotoAltText(selectedImage, safeSelectedIndex)}
           loading="eager"
           decoding="async"
           className="max-h-[72dvh] min-h-[260px] w-full object-contain"
@@ -1055,62 +1034,49 @@ function ReaderPostImages({
   }
 
   if (images.length === 1) {
-    return (
+    const image = (
       <ProfessionalSinglePostImage
         src={images[0]}
-        alt={getPhotoAltText(
-          images[0],
-          0
-        )}
-        onClick={
-          onImageClick
-            ? () => onImageClick(0)
-            : undefined
-        }
+        alt={getPhotoAltText(images[0], 0)}
+        onClick={onImageClick ? () => onImageClick(0) : undefined}
       />
     )
+
+    return isDiscoverView ? (
+      <div onErrorCapture={() => hideFailedImage(images[0])}>
+        {image}
+      </div>
+    ) : image
   }
 
   return (
     <div className="grid grid-cols-2 gap-1 overflow-hidden bg-white dark:bg-[#171923]">
-      {images.map(
-        (imageUrl, index) => {
-          const isWideLastImage =
-            images.length % 2 === 1 &&
-            index ===
-              images.length - 1
+      {images.map((imageUrl, index) => {
+        const isWideLastImage = images.length % 2 === 1 && index === images.length - 1
 
-          return (
-            <button
-              type="button"
-              key={`${imageUrl}-${index}`}
-              onClick={() =>
-                onImageClick?.(index)
-              }
-              className={
-                isWideLastImage
-                  ? 'col-span-2 aspect-[2/1] bg-[#f3f4f6] dark:bg-[#202331]'
-                  : 'aspect-square bg-[#f3f4f6] dark:bg-[#202331]'
-              }
-              aria-label={getDisplayText(
-                'readerPostCard.openPhotoNumber',
-                { count: index + 1 }
-              )}
-            >
-              <img
-                src={imageUrl}
-                alt={getPhotoAltText(
-                  imageUrl,
-                  index
-                )}
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-cover"
-              />
-            </button>
-          )
-        }
-      )}
+        return (
+          <button
+            type="button"
+            key={`${imageUrl}-${index}`}
+            onClick={() => onImageClick?.(index)}
+            className={
+              isWideLastImage
+                ? 'col-span-2 aspect-[2/1] bg-[#f3f4f6] dark:bg-[#202331]'
+                : 'aspect-square bg-[#f3f4f6] dark:bg-[#202331]'
+            }
+            aria-label={getDisplayText('readerPostCard.openPhotoNumber', { count: index + 1 })}
+          >
+            <img
+              src={imageUrl}
+              alt={getPhotoAltText(imageUrl, index)}
+              loading="lazy"
+              decoding="async"
+              onError={() => hideFailedImage(imageUrl)}
+              className="h-full w-full object-cover"
+            />
+          </button>
+        )
+      })}
     </div>
   )
 }
