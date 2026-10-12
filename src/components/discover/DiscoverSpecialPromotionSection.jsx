@@ -242,6 +242,8 @@ export default function DiscoverSpecialPromotionSection() {
   const { t } = useDisplayTranslation()
   const purchaseInFlightRef = useRef(false)
   const touchStartRef = useRef(null)
+  const mouseDragRef = useRef(null)
+  const suppressMouseClickUntilRef = useRef(0)
   const initializedRotationRef = useRef('')
   const expiryReloadRef = useRef(0)
   const [rotation, setRotation] = useState(() => readCachedRotation())
@@ -498,12 +500,84 @@ export default function DiscoverSpecialPromotionSection() {
     changeSlide(deltaX < 0 ? 1 : -1)
   }
 
+  function handleMousePointerDown(event) {
+    if (
+      event.pointerType !== 'mouse' ||
+      event.button !== 0 ||
+      promotions.length < 2 ||
+      purchaseInFlightRef.current ||
+      quote
+    ) return
+
+    mouseDragRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      captured: false,
+    }
+  }
+
+  function handleMousePointerMove(event) {
+    const start = mouseDragRef.current
+    if (!start || start.pointerId !== event.pointerId || !(event.buttons & 1)) return
+
+    const dx = event.clientX - start.x
+    const dy = event.clientY - start.y
+    if (!start.captured && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId)
+        start.captured = true
+      } catch {}
+    }
+  }
+
+  function handleMousePointerUp(event) {
+    const start = mouseDragRef.current
+    if (!start || start.pointerId !== event.pointerId) return
+    mouseDragRef.current = null
+
+    const dx = event.clientX - start.x
+    const dy = event.clientY - start.y
+    const didSwipe = Math.abs(dx) >= 38 && Math.abs(dx) > Math.abs(dy) * 1.2
+
+    if (didSwipe) {
+      suppressMouseClickUntilRef.current = Date.now() + 450
+      changeSlide(dx < 0 ? 1 : -1)
+    }
+
+    if (start.captured) {
+      try {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId)
+        }
+      } catch {}
+    }
+  }
+
+  function handleMouseClickCapture(event) {
+    if (Date.now() >= suppressMouseClickUntilRef.current) return
+    suppressMouseClickUntilRef.current = 0
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
   if (!promotion && !notice) return null
 
   return (
     <>
       {promotion ? (
-        <div className="min-w-0" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ touchAction: 'pan-y' }}>
+        <div
+          className="min-w-0 cursor-grab active:cursor-grabbing"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onPointerDown={handleMousePointerDown}
+          onPointerMove={handleMousePointerMove}
+          onPointerUp={handleMousePointerUp}
+          onPointerCancel={() => { mouseDragRef.current = null }}
+          onClickCapture={handleMouseClickCapture}
+          onDragStart={(event) => event.preventDefault()}
+          style={{ touchAction: 'pan-y', userSelect: 'none' }}
+        >
           <DiscoverSpecialPromotionCard
             key={storyId}
             promotion={promotion}
