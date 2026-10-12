@@ -67,6 +67,7 @@ registerTranslationNamespace('libraryPage', {
     browseStories: 'Browse Stories',
     offlineAvailable: 'Offline • {{count}} Ep',
     internetRequired: 'Internet required',
+    retry: 'Try again',
   },
   km: {
     recents: 'ថ្មីៗ',
@@ -125,6 +126,7 @@ registerTranslationNamespace('libraryPage', {
     browseStories: 'រកមើលរឿង',
     offlineAvailable: 'Offline • {{count}} ភាគ',
     internetRequired: 'ត្រូវការអ៊ីនធឺណិត',
+    retry: 'ព្យាយាមម្តងទៀត',
   },
   zh: {
     recents: '最近',
@@ -183,6 +185,7 @@ registerTranslationNamespace('libraryPage', {
     browseStories: '浏览故事',
     offlineAvailable: '离线 • {{count}} 章',
     internetRequired: '需要互联网',
+    retry: '重试',
   },
   ja: {
     recents: '最近',
@@ -241,6 +244,7 @@ registerTranslationNamespace('libraryPage', {
     browseStories: 'ストーリーを見る',
     offlineAvailable: 'オフライン • {{count}} 話',
     internetRequired: 'インターネットが必要です',
+    retry: '再試行',
   },
   ko: {
     recents: '최근',
@@ -299,6 +303,7 @@ registerTranslationNamespace('libraryPage', {
     browseStories: '스토리 둘러보기',
     offlineAvailable: '오프라인 • {{count}}화',
     internetRequired: '인터넷 연결 필요',
+    retry: '다시 시도',
   },
 })
 
@@ -987,6 +992,7 @@ export default function Library() {
   const loadedTabsRef = useRef(new Set())
   const inFlightTabsRef = useRef(new Set())
   const activeTabRef = useRef(activeTab)
+  const offlineStateRef = useRef(!navigator.onLine)
   const clearInProgressRef = useRef(false)
 
   const hydrateLocalTab = (tab) => {
@@ -1008,7 +1014,9 @@ export default function Library() {
     tab = activeTab,
     { force = false, background = false } = {}
   ) => {
-    if (offlineRequested || !navigator.onLine) {
+    if (!navigator.onLine) {
+      offlineStateRef.current = true
+      setOffline(true)
       hydrateLocalTab(tab)
 
       if (activeTabRef.current === tab) {
@@ -1133,59 +1141,28 @@ export default function Library() {
 
       loadedTabsRef.current.add(tab)
     } catch (error) {
-      const networkFailure =
-        !navigator.onLine ||
-        error?.name === 'TypeError' ||
-        /failed to fetch|networkerror|load failed/i.test(
-          String(error?.message || '')
-        )
+      loadedTabsRef.current.delete(tab)
 
-      if (networkFailure) {
-        const controller = new AbortController()
-        const timer = window.setTimeout(
-          () => controller.abort(),
-          1500
-        )
+      if (!navigator.onLine) {
+        offlineStateRef.current = true
+        setOffline(true)
+        hydrateLocalTab(tab)
 
-        try {
-          const response = await fetch(
-            `/app-version.json?t=${Date.now()}`,
-            {
-              cache: 'no-store',
-              signal: controller.signal,
-            }
+        if (activeTabRef.current === tab) {
+          setMessage('')
+        }
+      } else if (activeTabRef.current === tab) {
+        setOffline(false)
+        const networkFailure =
+          error?.name === 'TypeError' ||
+          /failed to fetch|networkerror|load failed/i.test(
+            String(error?.message || '')
           )
 
-          if (!response.ok) {
-            throw new Error('FRONTEND_UNREACHABLE')
-          }
-        } catch {
-          if (activeTabRef.current === tab) {
-            const params = new URLSearchParams(
-              location.search
-            )
-
-            params.set('_shadow_offline', '1')
-            setOffline(true)
-            hydrateLocalTab(tab)
-            setMessage('')
-
-            navigate(
-              `${location.pathname}?${params.toString()}${location.hash || ''}`,
-              { replace: true }
-            )
-          }
-
-          return
-        } finally {
-          window.clearTimeout(timer)
-        }
-      }
-
-      if (activeTabRef.current === tab) {
         setMessage(
-          error.message ||
-            t('libraryPage.loadLibraryFailed')
+          networkFailure
+            ? t('libraryPage.loadLibraryFailed')
+            : error?.message || t('libraryPage.loadLibraryFailed')
         )
       }
     } finally {
@@ -1199,81 +1176,114 @@ export default function Library() {
 
   useEffect(() => {
     let active = true
-    let controller = null
+    activeTabRef.current = activeTab
+
+    const clearOfflineMarker = () => {
+      if (!offlineRequested) return
+
+      const params = new URLSearchParams(location.search)
+      params.delete('_shadow_offline')
+      const search = params.toString()
+      navigate(
+        `${location.pathname}${search ? `?${search}` : ''}${location.hash || ''}`,
+        { replace: true }
+      )
+    }
 
     const handleOffline = () => {
       if (!active) return
 
+      offlineStateRef.current = true
       setOffline(true)
       hydrateLocalTab(activeTabRef.current)
       setLoading(false)
       setMessage('')
     }
 
-    const clearOfflineMarker = () => {
-      const params = new URLSearchParams(location.search)
-      params.delete('_shadow_offline')
-      const search = params.toString()
-      navigate(`${location.pathname}${search ? `?${search}` : ''}${location.hash || ''}`, { replace: true })
-    }
+    const handleOnline = () => {
+      if (!active || !navigator.onLine) return
 
-    const confirmOnline = async () => {
-      controller?.abort()
-      controller = new AbortController()
-      const timer = window.setTimeout(() => controller?.abort(), 1500)
+      const wasOffline = offlineStateRef.current
+      offlineStateRef.current = false
+      setOffline(false)
 
-      try {
-        const response = await fetch(`/app-version.json?t=${Date.now()}`, {
-          cache: 'no-store',
-          signal: controller.signal,
+      if (offlineRequested) {
+        clearOfflineMarker()
+        return
+      }
+
+      if (wasOffline) {
+        loadedTabsRef.current.clear()
+        const hasLocalSnapshot = hydrateLocalTab(activeTabRef.current)
+        if (hasLocalSnapshot) setLoading(false)
+        void loadLibrary(activeTabRef.current, {
+          force: true,
+          background: hasLocalSnapshot,
         })
 
-        if (!active || !response.ok) return
-        setOffline(false)
-
-        if (offlineRequested) {
-          clearOfflineMarker()
-          return
+        for (const tab of ['Subscribed', 'Recents']) {
+          if (tab !== activeTabRef.current) {
+            void loadLibrary(tab, { background: true })
+          }
         }
-
-        activeTabRef.current = activeTab
-        loadLibrary(activeTab, { force: true })
-      } catch {
-        handleOffline()
-      } finally {
-        window.clearTimeout(timer)
       }
     }
 
-    const handleOnline = () => {
-      void confirmOnline()
+    const handleResume = () => {
+      if (!active || document.visibilityState === 'hidden') return
+
+      if (!navigator.onLine) {
+        handleOffline()
+        return
+      }
+
+      if (offlineRequested || offlineStateRef.current) {
+        handleOnline()
+        return
+      }
+
+      if (
+        isLoggedIn &&
+        !loadedTabsRef.current.has(activeTabRef.current) &&
+        !inFlightTabsRef.current.has(activeTabRef.current)
+      ) {
+        const hasLocalSnapshot = hydrateLocalTab(activeTabRef.current)
+        if (hasLocalSnapshot) setLoading(false)
+        void loadLibrary(activeTabRef.current, {
+          background: hasLocalSnapshot,
+        })
+      }
     }
 
-    if (offlineRequested || !navigator.onLine) {
+    if (!navigator.onLine) {
       handleOffline()
-      if (offlineRequested && navigator.onLine) void confirmOnline()
+    } else if (offlineRequested) {
+      handleOnline()
     } else {
+      offlineStateRef.current = false
       setOffline(false)
-      activeTabRef.current = activeTab
       const hasLocalSnapshot = hydrateLocalTab(activeTab)
       if (hasLocalSnapshot) setLoading(false)
-      loadLibrary(activeTab, { background: hasLocalSnapshot })
+      void loadLibrary(activeTab, { background: hasLocalSnapshot })
 
       for (const tab of ['Subscribed', 'Recents']) {
         if (tab !== activeTab) {
-          loadLibrary(tab, { background: true })
+          void loadLibrary(tab, { background: true })
         }
       }
     }
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
+    window.addEventListener('focus', handleResume)
+    document.addEventListener('visibilitychange', handleResume)
 
     return () => {
       active = false
-      controller?.abort()
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('focus', handleResume)
+      document.removeEventListener('visibilitychange', handleResume)
     }
   }, [activeTab, isLoggedIn, offlineRequested, location.pathname, location.search, location.hash, navigate])
 
@@ -1488,7 +1498,19 @@ export default function Library() {
                 color: 'var(--shadow-danger)',
               }}
             >
-              {message}
+              <div className="flex items-center justify-between gap-3">
+                <span className="min-w-0">{message}</span>
+                {!offline ? (
+                  <button
+                    type="button"
+                    onClick={() => void loadLibrary(activeTab, { force: true })}
+                    className="shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-extrabold"
+                    style={{ borderColor: 'var(--shadow-danger)', color: 'var(--shadow-danger)' }}
+                  >
+                    {t('libraryPage.retry')}
+                  </button>
+                ) : null}
+              </div>
             </div>
           ) : null}
 
