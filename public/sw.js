@@ -1933,14 +1933,13 @@ self.addEventListener(
     ) {
       event.respondWith((async () => {
         const cached = await getOfflineShell()
-        const forceOnline = isReaderForceOnlineClient(event.clientId)
         try {
           const response = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS)
           return response.status >= 500
             ? renderNavigationFailure(request, 'server', response.status)
             : response
         } catch {
-          if (localFirstNavigation && cached && !forceOnline) return cached
+          if (localFirstNavigation && cached) return cached
           return renderNavigationFailure(
             request,
             self.navigator.onLine === false ? 'offline' : 'unknown'
