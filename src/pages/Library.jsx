@@ -6,6 +6,7 @@ import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLan
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import OfflinePdfSaveButton from '../components/library/OfflinePdfSaveButton'
 import LibraryDownloadsSections from '../components/library/LibraryDownloadsSections'
+import { isReaderOffline } from '../utils/readerOfflineControl'
 import { getOfflineReaderAccountId } from '../utils/offlineReaderContent'
 import { listOfflineEpisodes } from '../utils/offlineReadingStorage'
 
@@ -973,7 +974,7 @@ export default function Library() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState(() =>
-    offlineRequested || !navigator.onLine || new URLSearchParams(window.location.search).get('tab') === 'downloads'
+    offlineRequested || isReaderOffline() || new URLSearchParams(window.location.search).get('tab') === 'downloads'
       ? 'Downloads'
       : 'Subscribed'
   )
@@ -984,7 +985,7 @@ export default function Library() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [clearing, setClearing] = useState(false)
-  const [offline, setOffline] = useState(() => !navigator.onLine)
+  const [offline, setOffline] = useState(() => isReaderOffline())
   const [offlineStoryIndex, setOfflineStoryIndex] = useState({})
 
   const isLoggedIn = Boolean(getReaderToken())
@@ -992,7 +993,7 @@ export default function Library() {
   const loadedTabsRef = useRef(new Set())
   const inFlightTabsRef = useRef(new Set())
   const activeTabRef = useRef(activeTab)
-  const offlineStateRef = useRef(!navigator.onLine)
+  const offlineStateRef = useRef(isReaderOffline())
   const clearInProgressRef = useRef(false)
 
   const hydrateLocalTab = (tab) => {
@@ -1014,7 +1015,7 @@ export default function Library() {
     tab = activeTab,
     { force = false, background = false } = {}
   ) => {
-    if (!navigator.onLine) {
+    if (isReaderOffline()) {
       offlineStateRef.current = true
       setOffline(true)
       hydrateLocalTab(tab)
@@ -1143,7 +1144,7 @@ export default function Library() {
     } catch (error) {
       loadedTabsRef.current.delete(tab)
 
-      if (!navigator.onLine) {
+      if (isReaderOffline()) {
         offlineStateRef.current = true
         setOffline(true)
         hydrateLocalTab(tab)
@@ -1201,7 +1202,7 @@ export default function Library() {
     }
 
     const handleOnline = () => {
-      if (!active || !navigator.onLine) return
+      if (!active || isReaderOffline()) return
 
       const wasOffline = offlineStateRef.current
       offlineStateRef.current = false
@@ -1232,7 +1233,7 @@ export default function Library() {
     const handleResume = () => {
       if (!active || document.visibilityState === 'hidden') return
 
-      if (!navigator.onLine) {
+      if (isReaderOffline()) {
         handleOffline()
         return
       }
@@ -1255,7 +1256,7 @@ export default function Library() {
       }
     }
 
-    if (!navigator.onLine) {
+    if (isReaderOffline()) {
       handleOffline()
     } else if (offlineRequested) {
       handleOnline()
@@ -1275,6 +1276,7 @@ export default function Library() {
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
+    window.addEventListener('shadow-offline-control-change', handleResume)
     window.addEventListener('focus', handleResume)
     document.addEventListener('visibilitychange', handleResume)
 
@@ -1282,6 +1284,7 @@ export default function Library() {
       active = false
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('shadow-offline-control-change', handleResume)
       window.removeEventListener('focus', handleResume)
       document.removeEventListener('visibilitychange', handleResume)
     }
