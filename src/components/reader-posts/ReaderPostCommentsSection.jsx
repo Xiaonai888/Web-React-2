@@ -5,6 +5,7 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation } from 'react-router-dom'
 import ReportModal from '../ReportModal'
 import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import ReactionAction from '../social/reactions/ReactionAction'
@@ -434,6 +435,63 @@ function normalizeComment(comment) {
         )
       : [],
   }
+}
+
+function mergeFocusedReaderPostComment(comments, response) {
+  const focus = response?.focus_comment?.id
+    ? normalizeComment(response.focus_comment)
+    : null
+
+  if (!focus) return comments
+
+  const parent = response?.focus_parent_comment?.id
+    ? normalizeComment(response.focus_parent_comment)
+    : null
+  const isReply = Boolean(focus.parent_id)
+
+  if (
+    isReply &&
+    (!parent || String(parent.id) !== String(focus.parent_id))
+  ) {
+    return comments
+  }
+
+  const root = isReply ? parent : focus
+  const index = comments.findIndex(
+    (comment) => String(comment.id) === String(root.id)
+  )
+
+  if (!isReply) {
+    return index >= 0 ? comments : [root, ...comments]
+  }
+
+  const existing = index >= 0 ? comments[index] : root
+  const repliesById = new Map(
+    [...(existing.replies || []), focus].map((reply) => [
+      String(reply.id),
+      reply,
+    ])
+  )
+  const replies = [...repliesById.values()].sort(
+    (first, second) =>
+      new Date(first.created_at || 0).getTime() -
+      new Date(second.created_at || 0).getTime()
+  )
+  const mergedRoot = {
+    ...existing,
+    replies,
+    reply_total: Math.max(
+      Number(existing.reply_total || 0),
+      Number(parent.reply_total || 0),
+      replies.length
+    ),
+  }
+
+  if (index < 0) return [mergedRoot, ...comments]
+
+  return comments.map((comment, position) =>
+    position === index ? mergedRoot : comment
+  )
 }
 
 function Avatar({
@@ -1135,6 +1193,7 @@ export default function ReaderPostCommentsSection({
   onTotalChange,
 }) {
   const { t } = useDisplayTranslation()
+  const location = useLocation()
   const composerRef =
     useRef(null)
 
@@ -1153,9 +1212,9 @@ export default function ReaderPostCommentsSection({
   const [shareComment, setShareComment] = useState(null)
   const focusCommentId = useMemo(() => {
     const path = `/reader/post/${encodeURIComponent(String(postId || ''))}`
-    if (window.location.pathname !== path) return ''
-    return new URLSearchParams(window.location.search).get('comment') || ''
-  }, [postId])
+    if (location.pathname !== path) return ''
+    return new URLSearchParams(location.search).get('comment') || ''
+  }, [postId, location.pathname, location.search])
 
   useEffect(() => {
     if (!focusCommentId) return
@@ -1299,9 +1358,13 @@ export default function ReaderPostCommentsSection({
         ? 'newest'
         : sort
 
-    return `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(
+    const url = `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(
       postId
     )}/comments?page=${nextPage}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}&reply_limit=${REPLY_PAGE_SIZE}`
+
+    return nextPage === 1 && focusCommentId
+      ? `${url}&focus_comment_id=${encodeURIComponent(focusCommentId)}`
+      : url
   }
 
   async function fetchComments(
@@ -1358,15 +1421,24 @@ export default function ReaderPostCommentsSection({
             )
           : []
 
-      setComments(
-        (current) =>
-          append
-            ? [
-                ...current,
-                ...normalized,
-              ]
-            : normalized
-      )
+      setComments((current) => {
+        const nextComments = append
+          ? [
+              ...current,
+              ...normalized.filter(
+                (incoming) =>
+                  !current.some(
+                    (existing) =>
+                      String(existing.id) === String(incoming.id)
+                  )
+              ),
+            ]
+          : normalized
+
+        return append
+          ? nextComments
+          : mergeFocusedReaderPostComment(nextComments, data)
+      })
 
       setPage(
         Number(
@@ -1405,7 +1477,7 @@ export default function ReaderPostCommentsSection({
     setReplyTarget(null)
     setReplyText('')
     fetchComments(1, false)
-  }, [postId, sort])
+  }, [postId, sort, focusCommentId])
 
   const updateCommentLocal = (
     commentId,
