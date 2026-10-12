@@ -199,7 +199,7 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
       <button
         type="button"
         onClick={onOpenComments}
-        className="flex w-full gap-3 rounded-[13px] bg-[var(--shadow-bg-soft)] p-4 text-left active:scale-[0.995]"
+        className="flex w-full gap-2.5 py-2 text-left active:opacity-80"
       >
         <div className="min-w-0 flex-1">
           {hasComment ? (
@@ -217,7 +217,7 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
                 </div>
               </div>
 
-              <p className="mt-2 line-clamp-2 text-[13px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
+              <p className="ml-10 mt-1.5 line-clamp-2 text-[13px] font-medium leading-5 text-[var(--shadow-text-primary)]">
                 {latestComment.text || t('latestCommentSection.stickerComment')}
               </p>
             </>
