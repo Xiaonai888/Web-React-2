@@ -5,6 +5,7 @@ import { getOfflineReaderAccountId } from '../../utils/offlineReaderContent'
 import { listOfflineEpisodes, loadOfflineEpisode } from '../../utils/offlineReadingStorage'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { isReaderForceOnline } from '../../utils/readerOfflineControl'
 
 registerTranslationNamespace('librarySections', {
   en: { purchased: 'Purchased', downloads: 'Downloads', purchasedInfo: 'Your purchased PDF and eBooks', downloadsInfo: 'Stories saved on this device', viewAll: 'View All', noPurchases: 'No purchased books yet', noDownloads: 'No downloaded stories yet', login: 'Sign in to view your purchases and downloads.', loading: 'Loading downloads…', failed: 'Unable to load downloaded stories', novel: 'Novel', manga: 'Manga', chat: 'Chat Story', episodes: '{{count}} episodes', read: 'Read online', download: 'Download file', open: 'Open offline downloads', offlineTitle: 'Offline mode', offlineInfo: 'Only content saved on this device can be opened without internet.', offlineTypes: 'Novel, Manga, Chat Story and saved PDF are available offline.', internetRequired: 'Purchased items that were not saved offline and other Shadow pages require internet.', pdfDownloadFailed: 'Unable to download this PDF', pdfUnavailable: 'PDF is unavailable' },
@@ -275,7 +276,7 @@ export default function LibraryDownloadsSections({
   const [browserOffline, setBrowserOffline] = useState(
     () => !navigator.onLine
   )
-  const offline = offlineMode || browserOffline
+  const offline = (offlineMode || browserOffline) && !isReaderForceOnline()
 
   useEffect(() => {
     const updateConnectionState = () => {
