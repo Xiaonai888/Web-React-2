@@ -419,6 +419,8 @@ const { t } = useDisplayTranslation()
 const location = useLocation()
 const { postId } = useParams()
 const [searchParams] = useSearchParams()
+const sharedCommentId = String(searchParams.get('comment') || '').trim()
+const [sharedCommentData, setSharedCommentData] = useState(null)
 const postSource =
   searchParams.get('source') || 'direct'
 
@@ -516,6 +518,87 @@ const [photoAltSaving, setPhotoAltSaving] = useState(false)
     serverCount: Number(post.comment_count || 0),
   }
 }, [post?.id])
+
+  useEffect(() => {
+    if (!postId || !sharedCommentId) {
+      setSharedCommentData(null)
+      return undefined
+    }
+
+    const controller = new AbortController()
+    let active = true
+    setSharedCommentData(null)
+
+    async function loadSharedComment() {
+      try {
+        const token = getAuthToken()
+        const response = await fetch(
+          `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(sharedCommentId)}`,
+          {
+            headers: token
+              ? { Authorization: `Bearer ${token}` }
+              : {},
+            signal: controller.signal,
+          }
+        )
+        if (!response.ok) return
+
+        const data = await response.json().catch(() => ({}))
+        if (!active || data.ok === false || !data.comment) return
+
+        setSharedCommentData({
+          id: sharedCommentId,
+          comment: data.comment,
+          parentComment: data.parent_comment || null,
+        })
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+      }
+    }
+
+    void loadSharedComment()
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [postId, sharedCommentId])
+
+  useEffect(() => {
+    if (
+      !sharedCommentId ||
+      !post?.id ||
+      String(post.id) !== String(postId) ||
+      sharedCommentData?.id !== sharedCommentId
+    ) {
+      return undefined
+    }
+
+    let completed = false
+    let observer
+    let timeout
+
+    const scrollToSharedComment = () => {
+      if (completed) return
+      const element = document.getElementById(`comment-${sharedCommentId}`)
+      if (!element) return
+
+      completed = true
+      observer?.disconnect()
+      window.clearTimeout(timeout)
+      element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }
+
+    observer = new MutationObserver(scrollToSharedComment)
+    observer.observe(document.body, { childList: true, subtree: true })
+    timeout = window.setTimeout(() => observer.disconnect(), 10000)
+    scrollToSharedComment()
+
+    return () => {
+      observer.disconnect()
+      window.clearTimeout(timeout)
+    }
+  }, [post?.id, postId, sharedCommentId, sharedCommentData])
 
   useEffect(() => {
     const controller =
@@ -1582,6 +1665,9 @@ likeCount={
         targetType="author_post"
         targetId={post.id}
         variant="page"
+        focusCommentId={sharedCommentId}
+        focusComment={sharedCommentData?.comment || null}
+        focusParentComment={sharedCommentData?.parentComment || null}
         story={{
           ...post,
           author_page: {
@@ -2295,6 +2381,7 @@ likeCount={
         }
         targetType="author_post"
         targetId={post?.id}
+        focusCommentId={sharedCommentId}
         title={t('authorPostDetailPage.authorPostComments')}
         story={
           post
