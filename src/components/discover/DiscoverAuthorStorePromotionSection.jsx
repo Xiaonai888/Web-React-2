@@ -219,6 +219,7 @@ export default function DiscoverAuthorStorePromotionSection() {
   const initializedRef = useRef('')
   const lastRefreshRef = useRef(0)
   const touchStartRef = useRef(null)
+  const pointerStartRef = useRef(null)
   const suppressClickRef = useRef(0)
 
   useEffect(() => {
@@ -286,6 +287,33 @@ export default function DiscoverAuthorStorePromotionSection() {
     const dy = end.clientY - start.y
     if (Math.abs(dx) < 38 || Math.abs(dx) <= Math.abs(dy) * 1.2) return
     suppressClickRef.current = Date.now() + 400
+    switchSlide(dx < 0 ? 1 : -1)
+  }
+
+  function handlePointerDown(event) {
+    if (event.pointerType !== 'mouse' || event.button !== 0 || offers.length < 2 || conflict) return
+    pointerStartRef.current = { x: event.clientX, y: event.clientY, id: event.pointerId, captured: false }
+  }
+
+  function handlePointerMove(event) {
+    const start = pointerStartRef.current
+    if (!start || start.id !== event.pointerId || start.captured) return
+    const dx = event.clientX - start.x
+    const dy = event.clientY - start.y
+    if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) {
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+      start.captured = true
+    }
+  }
+
+  function handlePointerUp(event) {
+    const start = pointerStartRef.current
+    pointerStartRef.current = null
+    if (!start || start.id !== event.pointerId) return
+    const dx = event.clientX - start.x
+    const dy = event.clientY - start.y
+    if (Math.abs(dx) < 38 || Math.abs(dx) <= Math.abs(dy) * 1.2) return
+    suppressClickRef.current = Date.now() + 500
     switchSlide(dx < 0 ? 1 : -1)
   }
 
@@ -366,7 +394,18 @@ export default function DiscoverAuthorStorePromotionSection() {
             }}
             onTouchStart={touchStart}
             onTouchEnd={touchEnd}
-            style={{ touchAction: 'pan-y' }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={() => { pointerStartRef.current = null }}
+            onClickCapture={(event) => {
+              if (Date.now() < suppressClickRef.current) {
+                event.preventDefault()
+                event.stopPropagation()
+              }
+            }}
+            onDragStart={(event) => event.preventDefault()}
+            style={{ touchAction: 'pan-y', userSelect: 'none' }}
             className="cursor-pointer transition-transform active:scale-[0.997] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b7882d]"
           >
             <div className="flex items-center gap-2 px-3 pb-1 pt-2 sm:px-4">
@@ -388,32 +427,36 @@ export default function DiscoverAuthorStorePromotionSection() {
                     : <div className="flex h-full items-center justify-center text-xs">{t('discoverAuthorStorePromotion.cover')}</div>}
                 </div>
               </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
-                <h3 className="line-clamp-2 text-[13px] font-extrabold leading-[1.3] text-[#25142f] dark:text-white min-[390px]:text-[14px]">{offer.title}</h3>
-                <p className="truncate text-[10px] font-semibold text-[#84788a] dark:text-white/60">{offer.page_name || offer.author_name}</p>
-                {offer.description ? <p className="line-clamp-2 text-[10px] leading-[1.35] text-[#807486] dark:text-white/60">{offer.description}</p> : null}
-                {offer.product_type === 'book' ? (
-                  <span className="self-start rounded-full bg-[#f5eddd] px-2 py-0.5 text-[10px] font-bold text-[#997129] dark:bg-[#4f3d27] dark:text-[#f6db9f]">
-                    {t('discoverAuthorStorePromotion.stock', { count: offer.stock_quantity })}
-                  </span>
-                ) : null}
-                <div className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-[#84788a] dark:text-white/70" role="timer" aria-live="off">
-                  <Clock3 className="h-3 w-3 shrink-0" aria-hidden="true" />
-                  <span className="shrink-0">{t('discoverAuthorStorePromotion.endsIn')}</span>
-                  <span className="min-w-0 font-black tabular-nums text-[#2f2339] dark:text-white">{countdown(remainingSeconds)}</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  {original > sale ? <span className="text-[10px] font-medium text-[#99909d] line-through dark:text-white/50">{price(original)}</span> : null}
-                  <span className="text-[16px] font-black text-[#25142f] dark:text-white min-[390px]:text-[18px]">{price(sale)}</span>
-                  {discount > 0 ? <span className="rounded-md bg-[#e02b32] px-1.5 py-0.5 text-[10px] font-extrabold text-white">-{discount}%</span> : null}
-                </div>
-                <div className="dasp-buy-frame mt-1 w-full rounded-full">
-                  <span className="dasp-buy-inside bg-[#111111] px-2 py-1 text-center text-[11px] font-extrabold text-white">
-                    <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
-                      <ShoppingCart className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                      <span>{t('discoverAuthorStorePromotion.buy')}</span>
+              <div className="flex h-[162px] min-w-0 flex-1 flex-col gap-1 pt-0.5 min-[390px]:h-[170px]">
+                <div className="flex min-w-0 items-start gap-1.5">
+                  <h3 className="min-w-0 flex-1 line-clamp-2 text-[13px] font-extrabold leading-[1.3] text-[#25142f] dark:text-white min-[390px]:text-[14px]">{offer.title}</h3>
+                  {offer.product_type === 'book' ? (
+                    <span className="shrink-0 whitespace-nowrap rounded-full bg-[#f5eddd] px-1.5 py-0.5 text-[9px] font-bold text-[#997129] dark:bg-[#4f3d27] dark:text-[#f6db9f]">
+                      {t('discoverAuthorStorePromotion.stock', { count: offer.stock_quantity })}
                     </span>
-                  </span>
+                  ) : null}
+                </div>
+                <p className="truncate text-[10px] font-semibold text-[#84788a] dark:text-white/60">{offer.page_name || offer.author_name}</p>
+                <p className="line-clamp-2 min-h-[25px] text-[10px] leading-[1.35] text-[#807486] dark:text-white/60">{offer.description || ''}</p>
+                <div className="mt-auto flex flex-col gap-1">
+                  <div className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-[#84788a] dark:text-white/70" role="timer" aria-live="off">
+                    <Clock3 className="h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span className="shrink-0">{t('discoverAuthorStorePromotion.endsIn')}</span>
+                    <span className="min-w-0 font-black tabular-nums text-[#2f2339] dark:text-white">{countdown(remainingSeconds)}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    {original > sale ? <span className="text-[10px] font-medium text-[#99909d] line-through dark:text-white/50">{price(original)}</span> : null}
+                    <span className="text-[16px] font-black text-[#25142f] dark:text-white min-[390px]:text-[18px]">{price(sale)}</span>
+                    {discount > 0 ? <span className="rounded-md bg-[#e02b32] px-1.5 py-0.5 text-[10px] font-extrabold text-white">-{discount}%</span> : null}
+                  </div>
+                  <div className="dasp-buy-frame w-full rounded-full">
+                    <span className="dasp-buy-inside bg-[#111111] px-2 py-1 text-center text-[11px] font-extrabold text-white">
+                      <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
+                        <ShoppingCart className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span>{t('discoverAuthorStorePromotion.buy')}</span>
+                      </span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
