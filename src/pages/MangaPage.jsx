@@ -858,7 +858,7 @@ export default function MangaPage() {
             </div>
 
             <div className="my-6" data-home-section="short-completed">
-  <ShortCompletedSection />
+  <ShortCompletedSection storyType="manga" />
 </div>
 
 <div className="my-6">
