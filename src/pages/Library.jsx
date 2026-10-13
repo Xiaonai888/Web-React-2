@@ -995,6 +995,7 @@ export default function Library() {
   const [offlineStoryIndex, setOfflineStoryIndex] = useState({})
   const [downloadRevision, setDownloadRevision] = useState(0)
   const downloadedRef = useRef(false)
+  const downloadAccountRef = useRef('')
   const clearInProgressRef = useRef(false)
   const lastRestoredScrollKeyRef = useRef('')
   const isLoggedIn = Boolean(getReaderToken())
@@ -1036,6 +1037,15 @@ export default function Library() {
   }, [offlineRequested, location.pathname, location.search, location.hash, navigate])
 
   useEffect(() => {
+    if (downloadAccountRef.current === accountId) return
+
+    downloadAccountRef.current = accountId
+    downloadedRef.current = false
+    setDownloadItems([])
+    setDownloadLoading(false)
+  }, [accountId])
+
+  useEffect(() => {
     if (activeTab !== 'Downloads' || offline || !isLoggedIn || downloadedRef.current) return undefined
     const controller = new AbortController()
     let active = true
@@ -1071,7 +1081,7 @@ export default function Library() {
       active = false
       controller.abort()
     }
-  }, [activeTab, offline, isLoggedIn, downloadRevision])
+  }, [activeTab, offline, isLoggedIn, accountId, downloadRevision])
 
   useEffect(() => {
     let active = true
@@ -1203,57 +1213,51 @@ export default function Library() {
       navigate('/login')
       return
     }
-    if (activeTab !== 'Recents' || clearInProgressRef.current || offline) return
+
+    if (
+      activeTab !== 'Recents' ||
+      clearInProgressRef.current ||
+      offline
+    ) {
+      return
+    }
+
     if (!window.confirm(t('libraryPage.clearConfirm'))) return
 
     clearInProgressRef.current = true
     setClearing(true)
     setMessage('')
-    let failed = false
+
     try {
-      const headers = getHeaders()
-      const response = await fetch(`${API_BASE_URL}/api/reader/library`, {
-        headers,
-        cache: 'no-store',
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.ok !== true || !Array.isArray(data.items)) {
-        throw new Error('LIBRARY_LIST_FAILED')
-      }
-      const ids = [...new Set(
-        data.items.map((item) => item.story_id).filter(Boolean)
-      )]
-      for (let i = 0; i < ids.length; i += 4) {
-        const results = await Promise.allSettled(
-          ids.slice(i, i + 4).map(async (storyId) => {
-            const removal = await fetch(
-              `${API_BASE_URL}/api/reader/library/${encodeURIComponent(storyId)}`,
-              {
-                method: 'DELETE',
-                headers,
-              }
-            )
-            const value = await removal.json().catch(() => ({}))
-            if (!removal.ok || value.ok !== true) {
-              throw new Error('LIBRARY_REMOVE_FAILED')
-            }
-          })
-        )
-        if (results.some((result) => result.status === 'rejected')) {
-          failed = true
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader/library/clear`,
+        {
+          method: 'DELETE',
+          headers: getHeaders(),
+          cache: 'no-store',
         }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok !== true) {
+        throw new Error(data.message || 'LIBRARY_CLEAR_FAILED')
       }
-    } catch {
-      failed = true
-    } finally {
-      clearInProgressRef.current = false
-      setClearing(false)
-      invalidateReaderLibraryFeedCache({ accountId, tab: 'recents' })
+
+      invalidateReaderLibraryFeedCache({
+        accountId,
+        tab: 'recents',
+      })
+
       try {
         localStorage.removeItem(librarySnapshotKey(accountId, 'Recents'))
       } catch {}
+    } catch {
+      setMessage(t('libraryPage.clearFailed'))
+    } finally {
+      clearInProgressRef.current = false
+      setClearing(false)
     }
-    if (failed) setMessage(t('libraryPage.clearFailed'))
   }
 
   return (
