@@ -104,6 +104,7 @@ const API_BASE_URL =
 
 const ROTATION_STORAGE_KEY = 'shadow_discover_special_promotion_rotation_v2'
 const VISIT_STORAGE_KEY = 'shadow_discover_special_promotion_slide_v2'
+const PURCHASED_STORAGE_PREFIX = 'shadow_discover_special_promotion_purchased_v1'
 const RETRY_DELAY_MS = 30 * 1000
 const DIAMOND_ICON_URL = '/assets/Icons/Diamond.svg'
 
@@ -117,6 +118,35 @@ function getReaderToken() {
     sessionStorage.getItem('shadow_reader_token') ||
     ''
   )
+}
+
+function getPurchasedStorageKey(rotationKey) {
+  const token = getReaderToken()
+  if (!rotationKey || !token) return ''
+  let hash = 2166136261
+  for (let index = 0; index < token.length; index += 1) {
+    hash = Math.imul(hash ^ token.charCodeAt(index), 16777619)
+  }
+  return `${PURCHASED_STORAGE_PREFIX}:${rotationKey}:${(hash >>> 0).toString(36)}`
+}
+
+function readPurchasedPromotionIds(rotationKey) {
+  const key = getPurchasedStorageKey(rotationKey)
+  if (!key) return new Set()
+  try {
+    const values = JSON.parse(sessionStorage.getItem(key) || '[]')
+    return new Set(Array.isArray(values) ? values.map(String) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function savePurchasedPromotionIds(rotationKey, ids) {
+  const key = getPurchasedStorageKey(rotationKey)
+  if (!key) return
+  try {
+    sessionStorage.setItem(key, JSON.stringify([...ids]))
+  } catch {}
 }
 
 function formatDiamonds(value) {
@@ -255,6 +285,7 @@ export default function DiscoverSpecialPromotionSection() {
   const [needsTopUp, setNeedsTopUp] = useState(false)
   const [notice, setNotice] = useState('')
   const [purchasedStoryId, setPurchasedStoryId] = useState('')
+  const [purchasedStoryIds, setPurchasedStoryIds] = useState(() => readPurchasedPromotionIds(readCachedRotation()?.rotationKey))
 
   useEffect(() => {
     let mounted = true
@@ -276,6 +307,7 @@ export default function DiscoverSpecialPromotionSection() {
     initializedRotationRef.current = rotationKey
     setActiveIndex(nextInitialSlide(rotationKey, promotionCount))
     setPurchasedStoryId('')
+    setPurchasedStoryIds(readPurchasedPromotionIds(rotationKey))
   }, [rotationKey, promotionCount])
 
   useEffect(() => {
@@ -447,6 +479,10 @@ export default function DiscoverSpecialPromotionSection() {
 
       setQuote(null)
       setPurchasedStoryId(quote.storyId)
+      const nextPurchasedStoryIds = new Set(purchasedStoryIds)
+      nextPurchasedStoryIds.add(String(quote.storyId))
+      setPurchasedStoryIds(nextPurchasedStoryIds)
+      savePurchasedPromotionIds(rotationKey, nextPurchasedStoryIds)
       setNotice(
         t(
           result.already_owned
@@ -454,7 +490,6 @@ export default function DiscoverSpecialPromotionSection() {
             : 'discoverSpecialPromotionCheckout.purchased'
         )
       )
-      setActiveIndex(0)
 
       if (result.wallet) {
         window.dispatchEvent(
@@ -469,9 +504,7 @@ export default function DiscoverSpecialPromotionSection() {
     }
   }
 
-  const promotions = (rotation?.promotions || []).filter(
-    (item) => String(item?.story_id || '') !== String(purchasedStoryId || '__none__')
-  )
+  const promotions = rotation?.promotions || []
   const visibleIndex = promotions.length ? activeIndex % promotions.length : 0
   const promotion = promotions[visibleIndex] || null
   const storyId = promotion?.story_id || promotion?.story?.id
@@ -589,6 +622,8 @@ export default function DiscoverSpecialPromotionSection() {
               if (!purchaseInFlightRef.current && !quote) setActiveIndex(index)
             }}
             onBuy={startPurchase}
+            isPurchased={purchasedStoryIds.has(String(storyId || ''))}
+            onRead={() => storyId && navigate(`/story/${encodeURIComponent(storyId)}`)}
             onOpen={
               storyId
                 ? () => navigate(`/story/${encodeURIComponent(storyId)}`)
