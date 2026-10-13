@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Shadow · Connection Check</title>
+  <style>
+    :root{color-scheme:light dark;font-family:system-ui,-apple-system,sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;background:#f7f8fc;color:#17233b;padding:20px}
+    main{max-width:720px;margin:24px auto;display:grid;gap:16px}
+    header,section{background:#fff;border:1px solid #e2e5f0;border-radius:18px;padding:22px}
+    h1{font-size:23px;margin:0 0 9px}h2{font-size:16px;margin:0 0 12px}
+    p{color:#66728b;line-height:1.6;margin:0}small{color:#66728b}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+    button{font:inherit;font-weight:700;border-radius:11px;border:1px solid #d6dbeb;padding:10px 16px;cursor:pointer;background:#fff;color:#3e44a2}
+    button.primary{background:#4f46e5;color:#fff;border-color:#4f46e5}
+    button:disabled{opacity:.5;cursor:wait}
+    dl{margin:0;display:grid;gap:0}
+    .entry{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid #edf0f6}
+    dt{font-size:13px;color:#66728b;flex:1}
+    dd{font-size:13px;font-weight:700;text-align:right;overflow-wrap:anywhere;margin:0;flex:1}
+    #result{display:none}#status{margin-top:12px;min-height:20px}
+    @media(prefers-color-scheme:dark){body{background:#11141d;color:#f2f4fb}header,section{background:#1b2030;border-color:#343c52}p,small,dt{color:#b9c3d8}.entry{border-color:#343c52}button{background:#242d41;color:#d6d7ff;border-color:#434b60}button.primary{background:#6760f4}}
+    @media(max-width:420px){body{padding:12px}header,section{padding:16px}.entry{gap:8px}}
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1 id="title"></h1>
+      <p id="description"></p>
+      <div class="actions">
+        <button id="check" class="primary" type="button"></button>
+        <button id="copy" type="button" disabled></button>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </header>
+    <section id="result">
+      <h2 id="results-title"></h2>
+      <dl id="details"></dl>
+      <small id="privacy"></small>
+    </section>
+  </main>
+  <script>
+    const translations = {
+      km: {title:'ពិនិត្យការភ្ជាប់ Shadow',description:'ចុចពិនិត្យម្តង ដើម្បីផ្ទៀងផ្ទាត់ App Version, Service Worker និង Force Online។ វាមិនលុប Cache ឬ Offline Downloads ទេ។',check:'ពិនិត្យឥឡូវ',copy:'ចម្លងលទ្ធផល',checking:'កំពុងពិនិត្យ…',done:'ពិនិត្យរួច។ ផ្ញើ Screenshot ឬលទ្ធផលទៅ Admin។',copied:'បានចម្លងលទ្ធផល',copyError:'មិនអាចចម្លងបាន សូមថត Screenshot។',results:'លទ្ធផលពិនិត្យ',privacy:'មិនបង្ហាញ Password, Login Token ឬ Device ID ពេញលេញ។',time:'ម៉ោងពិនិត្យ',browser:'Browser រាយការណ៍ Online',serverVersion:'Version នៅ Server',workerVersion:'Version របស់ Service Worker',workerActive:'Service Worker Active',versionMatch:'Worker Version ត្រូវ Server',liveShell:'HTML App ថ្មី',cachedShell:'HTML App ក្នុង Cache',shellMatch:'Cached HTML ត្រូវ Server',account:'Account ID (ខ្លី)',device:'Device ID (ខ្លី)',api:'Force Online API',mode:'ការកំណត់ Device',global:'Global Pause',effective:'Force Online មានប្រសិទ្ធភាព',yes:'បាទ/ចាស',no:'ទេ',unknown:'មិនអាចបញ្ជាក់',missing:'មិនមាន',notLogged:'មិនទាន់ Login',unavailable:'មិនអាចទាក់ទង',same:'ដូចគ្នា',different:'ខុសគ្នា'},
+      en: {title:'Shadow connection check',description:'Run a one-time check of app version, service worker and Force Online. No cache or offline downloads are deleted.',check:'Check now',copy:'Copy report',checking:'Checking…',done:'Check complete. Send a screenshot or report to Admin.',copied:'Report copied',copyError:'Copy failed. Please take a screenshot.',results:'Check results',privacy:'Passwords, login tokens and full device IDs are never displayed.',time:'Checked at',browser:'Browser says online',serverVersion:'Server app version',workerVersion:'Service worker version',workerActive:'Active service worker',versionMatch:'Worker version matches server',liveShell:'Live app HTML',cachedShell:'Cached app HTML',shellMatch:'Cached HTML matches server',account:'Account ID (short)',device:'Device ID (short)',api:'Force Online API',mode:'Device policy',global:'Global pause',effective:'Effective Force Online',yes:'Yes',no:'No',unknown:'Unknown',missing:'Not available',notLogged:'Not signed in',unavailable:'Connection failed',same:'Matches',different:'Different'},
+      zh: {title:'Shadow 连接检查',description:'仅在点击时检查应用版本、Service Worker 和强制在线。不会删除缓存或离线下载。',check:'立即检查',copy:'复制报告',checking:'正在检查…',done:'检查完成，请将截图或报告发送给管理员。',copied:'已复制报告',copyError:'复制失败，请截图。',results:'检查结果',privacy:'不显示密码、登录令牌或完整设备 ID。',time:'检查时间',browser:'浏览器报告在线',serverVersion:'服务器版本',workerVersion:'Service Worker 版本',workerActive:'Service Worker 已启用',versionMatch:'版本一致',liveShell:'服务器 HTML',cachedShell:'缓存 HTML',shellMatch:'HTML 一致',account:'账户 ID（简写）',device:'设备 ID（简写）',api:'强制在线 API',mode:'设备设置',global:'全局暂停',effective:'强制在线生效',yes:'是',no:'否',unknown:'未知',missing:'无',notLogged:'未登录',unavailable:'连接失败',same:'相同',different:'不同'},
+      ja: {title:'Shadow 接続チェック',description:'アプリの版、Service Worker、強制オンラインを一度だけ確認します。オフラインデータは削除しません。',check:'確認する',copy:'結果をコピー',checking:'確認中…',done:'確認完了。スクリーンショットを管理者に送ってください。',copied:'コピーしました',copyError:'コピーできません。画面を撮影してください。',results:'確認結果',privacy:'パスワード、トークン、完全な端末 ID は表示しません。',time:'確認日時',browser:'ブラウザーのオンライン表示',serverVersion:'サーバー版',workerVersion:'Service Worker 版',workerActive:'Service Worker 有効',versionMatch:'版の一致',liveShell:'サーバー HTML',cachedShell:'キャッシュ HTML',shellMatch:'HTML の一致',account:'アカウント ID（短縮）',device:'端末 ID（短縮）',api:'強制オンライン API',mode:'端末設定',global:'全体一時停止',effective:'強制オンライン有効',yes:'はい',no:'いいえ',unknown:'不明',missing:'なし',notLogged:'未ログイン',unavailable:'接続失敗',same:'一致',different:'不一致'},
+      ko: {title:'Shadow 연결 점검',description:'앱 버전, 서비스 워커, 강제 온라인을 한 번 점검합니다. 오프라인 다운로드는 삭제하지 않습니다.',check:'지금 점검',copy:'결과 복사',checking:'확인 중…',done:'점검 완료. 화면이나 결과를 관리자에게 보내세요.',copied:'복사 완료',copyError:'복사할 수 없습니다. 화면을 캡처하세요.',results:'점검 결과',privacy:'비밀번호, 로그인 토큰 및 전체 기기 ID를 표시하지 않습니다.',time:'점검 시각',browser:'브라우저 온라인 표시',serverVersion:'서버 버전',workerVersion:'서비스 워커 버전',workerActive:'서비스 워커 활성화',versionMatch:'버전 일치',liveShell:'서버 HTML',cachedShell:'캐시 HTML',shellMatch:'HTML 일치',account:'계정 ID (일부)',device:'기기 ID (일부)',api:'강제 온라인 API',mode:'기기 설정',global:'전체 일시 중지',effective:'강제 온라인 적용',yes:'예',no:'아니요',unknown:'알 수 없음',missing:'없음',notLogged:'로그인 안 됨',unavailable:'연결 실패',same:'일치',different:'다름'}
+    }
+    let language = 'km'
+    try {
+      const saved = localStorage.getItem('shadow_display_language')
+      const browser = navigator.language.slice(0,2)
+      language = translations[saved] ? saved : translations[browser] ? browser : 'km'
+    } catch {}
+    document.documentElement.lang = language
+    const t = translations[language]
+    for (const id of ['title','description','privacy']) document.getElementById(id).textContent = t[id]
+    document.getElementById('check').textContent = t.check
+    document.getElementById('copy').textContent = t.copy
+    document.getElementById('results-title').textContent = t.results
+    const $ = (id) => document.getElementById(id)
+    const value = (v) => v === true ? t.yes : v === false ? t.no : v == null ? t.unknown : String(v)
+    const suffix = (id) => id ? `…${String(id).slice(-8)}` : t.missing
+    const cleanVersion = (v) => /^\d{10,20}$/.test(String(v || '')) ? String(v) : null
+    function readReaderIdentity() {
+      try {
+        const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token')
+        if (!token) return null
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))
+        return payload?.type === 'reader' && payload.user_id && payload.device_id ? {token,userId:payload.user_id,deviceId:payload.device_id} : null
+      } catch { return null }
+    }
+    async function fetchLimited(url, options = {}) {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 8000)
+      try { return await fetch(url, {...options, cache:'no-store', signal:controller.signal}) }
+      finally { clearTimeout(timer) }
+    }
+    const scriptName = (html) => {
+      const doc = new DOMParser().parseFromString(html, 'text/html')
+      return doc.querySelector('script[type="module"][src*="/assets/"]')?.getAttribute('src') || null
+    }
+    async function check() {
+      $('check').disabled = true
+      $('copy').disabled = true
+      $('status').textContent = t.checking
+      $('result').style.display = 'none'
+      const rows = []
+      const add = (label, detail) => rows.push([label, value(detail)])
+      add(t.time, new Date().toLocaleString())
+      add(t.browser, navigator.onLine)
+      const identity = readReaderIdentity()
+      add(t.account, identity ? suffix(identity.userId) : t.notLogged)
+      add(t.device, identity ? suffix(identity.deviceId) : t.notLogged)
+      const [versionResult, shellResult, cacheResult, workerResult] = await Promise.allSettled([
+        fetchLimited(`/app-version.json?diagnostic=${Date.now()}`).then(async r => r.ok ? cleanVersion((await r.json()).version) : null),
+        fetchLimited(`/?diagnostic=${Date.now()}`, {headers:{Accept:'text/html'}}).then(async r => r.ok ? scriptName(await r.text()) : null),
+        'caches' in window ? caches.open('shadow-offline-shell-v1').then(c => c.match(new URL('/',location.origin).href)).then(r => r ? r.text() : null).then(h => h ? scriptName(h) : null) : Promise.resolve(null),
+        'serviceWorker' in navigator ? navigator.serviceWorker.getRegistration('/').then(r => ({active:r?.active?.scriptURL || null, controlled:!!navigator.serviceWorker.controller})) : Promise.resolve({active:null,controlled:false})
+      ])
+      const resolved = (r) => r.status === 'fulfilled' ? r.value : null
+      const serverVersion = resolved(versionResult)
+      const liveShell = resolved(shellResult)
+      const cachedShell = resolved(cacheResult)
+      const worker = resolved(workerResult)
+      const workerVersion = worker?.active ? cleanVersion(new URL(worker.active).searchParams.get('v')) : null
+      add(t.serverVersion, serverVersion || t.unavailable)
+      add(t.workerVersion, workerVersion || t.missing)
+      add(t.workerActive, worker?.controlled ?? null)
+      add(t.versionMatch, serverVersion && workerVersion ? serverVersion === workerVersion : null)
+      add(t.liveShell, liveShell || t.unavailable)
+      add(t.cachedShell, cachedShell || t.missing)
+      add(t.shellMatch, liveShell && cachedShell ? liveShell === cachedShell : null)
+      if (identity) {
+        try {
+          const response = await fetchLimited('https://shadow-backend-kucw.onrender.com/api/reader/offline-control', {headers:{Authorization:`Bearer ${identity.token}`}})
+          add(t.api, response.status)
+          if (response.ok) {
+            const body = await response.json()
+            const control = body.ok === true && body.control
+            add(t.mode, control?.mode || t.unknown)
+            add(t.global, control ? control.global_paused === true : null)
+            const expires = Date.parse(control?.pause_until || '')
+            const paused = control?.global_paused === true && (!Number.isFinite(expires) || expires > Date.now())
+            add(t.effective, control ? paused || control.mode === 'force_online' : null)
+          }
+        } catch { add(t.api, t.unavailable) }
+      } else {
+        add(t.api, t.notLogged)
+      }
+      const details = $('details')
+      details.replaceChildren()
+      for (const [name, detail] of rows) {
+        const line = document.createElement('div')
+        line.className = 'entry'
+        const label = document.createElement('dt')
+        label.textContent = name
+        const data = document.createElement('dd')
+        data.textContent = detail
+        line.append(label,data)
+        details.appendChild(line)
+      }
+      window.shadowOfflineDiagnosticReport = rows.map(([a,b]) => `${a}: ${b}`).join('\n')
+      $('result').style.display = 'block'
+      $('status').textContent = t.done
+      $('check').disabled = false
+      $('copy').disabled = false
+    }
+    $('check').addEventListener('click', () => { void check().catch(() => { $('check').disabled=false; $('status').textContent=t.unavailable }) })
+    $('copy').addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(window.shadowOfflineDiagnosticReport || ''); $('status').textContent = t.copied }
+      catch { $('status').textContent = t.copyError }
+    })
+  </script>
+</body>
+</html>
