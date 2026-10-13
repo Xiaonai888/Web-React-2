@@ -7,6 +7,7 @@ registerTranslationNamespace('discoverSpecialPromotion', {
     heading: 'Special Promotion',
     episodes: '{{count}} Locked Episodes',
     buy: 'Buy All Unlocked Episodes',
+    readNow: 'Read Now',
     story: 'Story',
     cover: 'No Cover',
     more: 'More options',
@@ -17,6 +18,7 @@ registerTranslationNamespace('discoverSpecialPromotion', {
     heading: 'ការផ្ដល់ជូនពិសេស',
     episodes: '{{count}} ភាគចាក់សោ',
     buy: 'Buy All Unlocked Episodes',
+    readNow: 'Read Now',
     story: 'រឿង',
     cover: 'គ្មានក្រប',
     more: 'ជម្រើសបន្ថែម',
@@ -27,6 +29,7 @@ registerTranslationNamespace('discoverSpecialPromotion', {
     heading: '特别优惠',
     episodes: '{{count}} 章已锁定',
     buy: 'Buy All Unlocked Episodes',
+    readNow: 'Read Now',
     story: '故事',
     cover: '暂无封面',
     more: '更多选项',
@@ -37,6 +40,7 @@ registerTranslationNamespace('discoverSpecialPromotion', {
     heading: '特別キャンペーン',
     episodes: 'ロック中のエピソード {{count}} 話',
     buy: 'Buy All Unlocked Episodes',
+    readNow: 'Read Now',
     story: 'ストーリー',
     cover: '表紙なし',
     more: 'その他',
@@ -47,6 +51,7 @@ registerTranslationNamespace('discoverSpecialPromotion', {
     heading: '특별 프로모션',
     episodes: '잠긴 에피소드 {{count}}개',
     buy: 'Buy All Unlocked Episodes',
+    readNow: 'Read Now',
     story: '스토리',
     cover: '표지 없음',
     more: '더 보기',
@@ -258,7 +263,9 @@ export default function DiscoverSpecialPromotionCard({
   promotion,
   onBuy,
   onOpen,
+  onRead,
   onMore,
+  isPurchased = false,
   purchasing = false,
   remainingSeconds = null,
   slideCount = 0,
@@ -292,28 +299,32 @@ export default function DiscoverSpecialPromotionCard({
 
       <article className="overflow-hidden border border-[#e5d9ee] bg-white dark:border-white/10 dark:bg-[var(--shadow-bg-surface)] sm:rounded-2xl">
         <div className="flex items-center gap-2 px-3 pb-6 pt-3 sm:px-4">
-          <div className="dsp-avatar-ring h-7 w-7 shrink-0">
-            <div className="dsp-avatar-ring__inside">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt=""
-                  className="h-full w-full rounded-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-[11px] font-semibold text-[#8f6f2b] dark:text-[#efd78b]">
-                  SP
-                </div>
-              )}
+          <button
+            type="button"
+            onClick={() => onOpen?.(promotion)}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+            aria-label={t('discoverSpecialPromotion.heading')}
+          >
+            <div className="dsp-avatar-ring h-10 w-10 shrink-0">
+              <div className="dsp-avatar-ring__inside">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    className="h-full w-full rounded-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[11px] font-semibold text-[#8f6f2b] dark:text-[#efd78b]">
+                    SP
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[13px] font-extrabold text-[#25142f] dark:text-white">
+            <h2 className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-[#25142f] dark:text-white">
               {t('discoverSpecialPromotion.heading')}
             </h2>
-          </div>
+          </button>
 
           {typeof onMore === 'function' ? (
             <button
@@ -332,7 +343,7 @@ export default function DiscoverSpecialPromotionCard({
             <button
               type="button"
               onClick={() => onOpen?.(promotion)}
-              className="dsp-gold-frame h-[240px] w-[134px] shrink-0 text-left transition-transform active:scale-[0.99] min-[390px]:h-[250px] min-[390px]:w-[140px]"
+              className="dsp-gold-frame h-[162px] w-[114px] shrink-0 text-left transition-transform active:scale-[0.99] min-[390px]:h-[170px] min-[390px]:w-[120px]"
             >
               <div className="dsp-gold-frame__inside bg-[#fff7e5] dark:bg-[#201522]">
                 {coverUrl ? (
@@ -350,7 +361,7 @@ export default function DiscoverSpecialPromotionCard({
               </div>
             </button>
 
-            <div className="flex h-[240px] min-w-0 flex-1 flex-col pt-0.5 min-[390px]:h-[250px]">
+            <div className="flex h-[162px] min-w-0 flex-1 flex-col pt-0.5 min-[390px]:h-[170px]">
               <button
                 type="button"
                 onClick={() => onOpen?.(promotion)}
@@ -402,11 +413,18 @@ export default function DiscoverSpecialPromotionCard({
                 <div className="dsp-buy-shell">
                   <button
                     type="button"
-                    disabled={!hasPrice || offerExpired || purchasing || typeof onBuy !== 'function'}
-                    onClick={() => onBuy(promotion)}
+                    disabled={isPurchased ? typeof onRead !== 'function' && typeof onOpen !== 'function' : !hasPrice || offerExpired || purchasing || typeof onBuy !== 'function'}
+                    onClick={() => {
+                      if (isPurchased) {
+                        if (typeof onRead === 'function') onRead(promotion)
+                        else onOpen?.(promotion)
+                      } else {
+                        onBuy?.(promotion)
+                      }
+                    }}
                     className="dsp-buy-button px-1.5 py-1.5 text-[9px] font-extrabold tracking-[-0.01em] min-[390px]:text-[10px]"
                   >
-                    {t('discoverSpecialPromotion.buy')}
+                    {t(isPurchased ? 'discoverSpecialPromotion.readNow' : 'discoverSpecialPromotion.buy')}
                   </button>
                 </div>
               </div>
@@ -414,7 +432,7 @@ export default function DiscoverSpecialPromotionCard({
           </div>
         </div>
         {slideCount > 1 ? (
-          <div className="flex items-center justify-center gap-1.5 pb-1.5 pt-0.5" role="group" aria-label={t('discoverSpecialPromotion.heading')}>
+          <div className="flex items-center justify-center gap-1.5 pb-3 pt-4" role="group" aria-label={t('discoverSpecialPromotion.heading')}>
             {Array.from({ length: slideCount }, (_, index) => (
               <button
                 type="button"
