@@ -753,6 +753,47 @@ export default function Me() {
   })
 
   const token = getReaderToken()
+  const [libraryUnreadCount, setLibraryUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (!token) {
+      setLibraryUnreadCount(0)
+      return
+    }
+
+    const controller = new AbortController()
+    let active = true
+
+    async function loadLibraryUnreadCount() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/reader/subscriptions/unread-today-count`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
+
+        if (!response.ok) return
+        const data = await response.json()
+
+        if (active && data.ok !== false) {
+          setLibraryUnreadCount(
+            Math.max(0, Math.floor(Number(data.unread_count) || 0))
+          )
+        }
+      } catch {}
+    }
+
+    loadLibraryUnreadCount()
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [token])
+
   const isLoggedIn = Boolean(token)
   const isPremium = false
 
@@ -1283,7 +1324,23 @@ const handleOpenProfileSwitcher = (event) => {
   }
   divider
 />
-            <MenuRow to="/library?source=me" customIcon={<img src="/assets/Icons/Library.svg" alt="" className="h-[16px] w-[16px] object-contain" />} title={tx('mePage.library')} divider />
+            <MenuRow
+  to="/library?source=me"
+  customIcon={
+    <img
+      src="/assets/Icons/Library.svg"
+      alt=""
+      className="h-[16px] w-[16px] object-contain"
+    />
+  }
+  title={tx('mePage.library')}
+  extra={libraryUnreadCount > 0 ? (
+    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ef4444] px-1.5 text-[10px] font-extrabold leading-none text-white">
+      {libraryUnreadCount > 99 ? '99+' : formatDisplayNumber(libraryUnreadCount)}
+    </span>
+  ) : null}
+  divider
+/>
             <MenuRow
   to="/game"
   icon="fa-solid fa-gamepad"
