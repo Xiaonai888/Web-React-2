@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import SubscriptionsSection from '../components/library/SubscriptionsSection'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -9,6 +8,9 @@ import LibraryDownloadsSections from '../components/library/LibraryDownloadsSect
 import { isReaderOffline } from '../utils/readerOfflineControl'
 import { getOfflineReaderAccountId } from '../utils/offlineReaderContent'
 import { listOfflineEpisodes } from '../utils/offlineReadingStorage'
+import useReaderLibraryFeed from '../hooks/useReaderLibraryFeed'
+import ReaderSubscriptionBadge from '../components/library/ReaderSubscriptionBadge'
+import { loadReaderLibraryFeedCache, invalidateReaderLibraryFeedCache } from '../utils/readerLibraryFeedCache'
 
 registerTranslationNamespace('libraryPage', {
   en: {
@@ -384,12 +386,15 @@ function canSavePdfOffline(story) {
 }
 
 function getStoryType(story) {
-  const genre = String(story?.main_genre || '').toLowerCase()
+  const type = String(story?.story_type || '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  if (type === 'chat_story' || type === 'chatstory') return 'Chat Story'
+  if (type === 'manga') return 'Manga'
+  if (type === 'novel') return 'Novel'
 
+  const genre = String(story?.main_genre || '').toLowerCase()
   if (genre.includes('pdf')) return 'PDF'
   if (genre.includes('chat')) return 'Chat Story'
   if (genre.includes('manga') || genre.includes('comic') || genre.includes('manhwa')) return 'Manga'
-
   return 'Novel'
 }
 
@@ -408,7 +413,7 @@ function getSubtitle(tab, t) {
 function formatInfo(tab, story, t) {
   if (tab === 'Subscribed') {
     return t('libraryPage.newEpisode', {
-      count: formatDisplayNumber(story?.total_episodes || 0),
+      count: formatDisplayNumber(story?.unread_episode_count || 0),
     })
   }
 
@@ -614,6 +619,8 @@ function StoryCover({ story, className = '' }) {
           src={story.cover_url}
           alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+          loading="lazy"
+          decoding="async"
           onError={(event) => {
             event.currentTarget.style.display = 'none'
           }}
@@ -757,7 +764,7 @@ function LibraryBookCard({
           <StoryCover story={story} className="h-full w-full" />
         </div>
 
-        {story.status === 'completed' ? <EndBadge /> : null}
+        {story.status === 'completed' && !(tab === 'Subscribed' && Number(item.unread_episode_count || 0) > 0) ? <EndBadge /> : null}
         {offlineMode && offlineInfo?.count ? (
           <div className="absolute right-2 top-2 rounded-full bg-black/80 px-2 py-1 text-[9px] font-extrabold text-white shadow-sm">
             {t('libraryPage.offlineAvailable', {
@@ -974,331 +981,90 @@ export default function Library() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState(() =>
-    offlineRequested || isReaderOffline() || new URLSearchParams(window.location.search).get('tab') === 'downloads'
+    offlineRequested || isReaderOffline() || locationParams.get('tab') === 'downloads'
       ? 'Downloads'
       : 'Subscribed'
   )
   const [activeType, setActiveType] = useState('All')
-  const [libraryItems, setLibraryItems] = useState([])
-  const [subscriptionItems, setSubscriptionItems] = useState([])
   const [downloadItems, setDownloadItems] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [downloadLoading, setDownloadLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [clearing, setClearing] = useState(false)
   const [offline, setOffline] = useState(() => isReaderOffline())
   const [offlineStoryIndex, setOfflineStoryIndex] = useState({})
-
+  const [downloadRevision, setDownloadRevision] = useState(0)
+  const downloadedRef = useRef(false)
+  const clearInProgressRef = useRef(false)
   const isLoggedIn = Boolean(getReaderToken())
   const accountId = getOfflineReaderAccountId()
-  const loadedTabsRef = useRef(new Set())
-  const inFlightTabsRef = useRef(new Set())
-  const activeTabRef = useRef(activeTab)
-  const offlineStateRef = useRef(isReaderOffline())
-  const clearInProgressRef = useRef(false)
-
-  const hydrateLocalTab = (tab) => {
-    if (!accountId) return false
-
-    const items = readLibrarySnapshot(accountId, tab)
-    if (!items.length) return false
-
-    if (tab === 'Subscribed') {
-      setSubscriptionItems(items)
-    } else if (tab === 'Recents') {
-      setLibraryItems(items)
-    }
-
-    return true
-  }
-
-  const loadLibrary = async (
-    tab = activeTab,
-    { force = false, background = false } = {}
-  ) => {
-    if (isReaderOffline()) {
-      offlineStateRef.current = true
-      setOffline(true)
-      hydrateLocalTab(tab)
-
-      if (activeTabRef.current === tab) {
-        setLoading(false)
-        setMessage('')
-      }
-
-      return
-    }
-
-    if (!isLoggedIn) {
-      loadedTabsRef.current.clear()
-      inFlightTabsRef.current.clear()
-      setLibraryItems([])
-      setSubscriptionItems([])
-      setDownloadItems([])
-      setLoading(false)
-      setMessage('')
-      return
-    }
-
-    if (
-      !force &&
-      loadedTabsRef.current.has(tab)
-    ) {
-      if (activeTabRef.current === tab) {
-        setLoading(false)
-        setMessage('')
-      }
-      return
-    }
-
-    if (
-      inFlightTabsRef.current.has(tab)
-    ) {
-      return
-    }
-
-    inFlightTabsRef.current.add(tab)
-
-    if (activeTabRef.current === tab) {
-      if (!background) setLoading(true)
-      setMessage('')
-    }
-
-    try {
-      if (tab === 'Subscribed') {
-        const response = await fetch(
-          `${API_BASE_URL}/api/reader/subscriptions`,
-          { headers: getHeaders() }
-        )
-        const data = await response
-          .json()
-          .catch(() => ({}))
-
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              t('libraryPage.loadSubscriptionsFailed')
-          )
-        }
-
-        const items = Array.isArray(data.items)
-          ? data.items
-          : []
-
-        setSubscriptionItems(items)
-        writeLibrarySnapshot(accountId, 'Subscribed', items)
-      } else if (tab === 'Downloads') {
-        const response = await fetch(
-          `${API_BASE_URL}/api/author-store/downloads/my`,
-          { headers: getHeaders() }
-        )
-        const data = await response
-          .json()
-          .catch(() => ({}))
-
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              t('libraryPage.loadDownloadsFailed')
-          )
-        }
-
-        setDownloadItems(
-          formatDownloadItems(
-            data.downloads
-          )
-        )
-      } else {
-        const response = await fetch(
-          `${API_BASE_URL}/api/reader/library`,
-          { headers: getHeaders() }
-        )
-        const data = await response
-          .json()
-          .catch(() => ({}))
-
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              t('libraryPage.loadLibraryFailed')
-          )
-        }
-
-        const items = Array.isArray(data.items)
-          ? data.items
-          : []
-
-        setLibraryItems(items)
-        writeLibrarySnapshot(accountId, 'Recents', items)
-      }
-
-      loadedTabsRef.current.add(tab)
-    } catch (error) {
-      loadedTabsRef.current.delete(tab)
-
-      if (isReaderOffline()) {
-        offlineStateRef.current = true
-        setOffline(true)
-        hydrateLocalTab(tab)
-
-        if (activeTabRef.current === tab) {
-          setMessage('')
-        }
-      } else if (activeTabRef.current === tab) {
-        setOffline(false)
-        const networkFailure =
-          error?.name === 'TypeError' ||
-          /failed to fetch|networkerror|load failed/i.test(
-            String(error?.message || '')
-          )
-
-        setMessage(
-          networkFailure
-            ? t('libraryPage.loadLibraryFailed')
-            : error?.message || t('libraryPage.loadLibraryFailed')
-        )
-      }
-    } finally {
-      inFlightTabsRef.current.delete(tab)
-
-      if (activeTabRef.current === tab) {
-        setLoading(false)
-      }
-    }
-  }
+  const feedType = activeType === 'Chat Story' ? 'chat_story' : activeType.toLowerCase()
+  const feedTab = activeTab === 'Recents' ? 'recents' : 'subscribed'
+  const feed = useReaderLibraryFeed({
+    accountId,
+    tab: feedTab,
+    type: feedType,
+    enabled: isLoggedIn && !offline && activeTab !== 'Downloads',
+  })
 
   useEffect(() => {
+    const syncConnection = () => {
+      const nextOffline = isReaderOffline()
+      setOffline(nextOffline)
+      if (nextOffline) downloadedRef.current = false
+      if (!nextOffline && offlineRequested) {
+        const params = new URLSearchParams(location.search)
+        params.delete('_shadow_offline')
+        const search = params.toString()
+        navigate(`${location.pathname}${search ? `?${search}` : ''}${location.hash || ''}`, { replace: true })
+      }
+    }
+    syncConnection()
+    window.addEventListener('online', syncConnection)
+    window.addEventListener('offline', syncConnection)
+    window.addEventListener('shadow-offline-control-change', syncConnection)
+    return () => {
+      window.removeEventListener('online', syncConnection)
+      window.removeEventListener('offline', syncConnection)
+      window.removeEventListener('shadow-offline-control-change', syncConnection)
+    }
+  }, [offlineRequested, location.pathname, location.search, location.hash, navigate])
+
+  useEffect(() => {
+    if (activeTab !== 'Downloads' || offline || !isLoggedIn || downloadedRef.current) return undefined
+    const controller = new AbortController()
     let active = true
-    activeTabRef.current = activeTab
-
-    const clearOfflineMarker = () => {
-      if (!offlineRequested) return
-
-      const params = new URLSearchParams(location.search)
-      params.delete('_shadow_offline')
-      const search = params.toString()
-      navigate(
-        `${location.pathname}${search ? `?${search}` : ''}${location.hash || ''}`,
-        { replace: true }
-      )
-    }
-
-    const handleOffline = () => {
-      if (!active || !isReaderOffline()) return
-
-      offlineStateRef.current = true
-      setOffline(true)
-      hydrateLocalTab(activeTabRef.current)
-      setLoading(false)
-      setMessage('')
-    }
-
-    const handleOnline = () => {
-      if (!active || isReaderOffline()) return
-
-      const wasOffline = offlineStateRef.current
-      offlineStateRef.current = false
-      setOffline(false)
-
-      if (offlineRequested) {
-        clearOfflineMarker()
-        return
-      }
-
-      if (wasOffline) {
-        loadedTabsRef.current.clear()
-        const hasLocalSnapshot = hydrateLocalTab(activeTabRef.current)
-        if (hasLocalSnapshot) setLoading(false)
-        void loadLibrary(activeTabRef.current, {
-          force: true,
-          background: hasLocalSnapshot,
+    setDownloadLoading(true)
+    async function loadDownloads() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/my`, {
+          headers: getHeaders(),
+          signal: controller.signal,
         })
-
-        for (const tab of ['Subscribed', 'Recents']) {
-          if (tab !== activeTabRef.current) {
-            void loadLibrary(tab, { background: true })
-          }
-        }
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok === false) throw new Error(data.message || t('libraryPage.loadDownloadsFailed'))
+        if (!active) return
+        setDownloadItems(formatDownloadItems(data.downloads))
+        downloadedRef.current = true
+      } catch (error) {
+        if (active) setMessage(error?.message || t('libraryPage.loadDownloadsFailed'))
+      } finally {
+        if (active) setDownloadLoading(false)
       }
     }
-
-    const handleResume = () => {
-      if (!active || document.visibilityState === 'hidden') return
-
-      if (isReaderOffline()) {
-        handleOffline()
-        return
-      }
-
-      if (offlineRequested || offlineStateRef.current) {
-        handleOnline()
-        return
-      }
-
-      if (
-        isLoggedIn &&
-        !loadedTabsRef.current.has(activeTabRef.current) &&
-        !inFlightTabsRef.current.has(activeTabRef.current)
-      ) {
-        const hasLocalSnapshot = hydrateLocalTab(activeTabRef.current)
-        if (hasLocalSnapshot) setLoading(false)
-        void loadLibrary(activeTabRef.current, {
-          background: hasLocalSnapshot,
-        })
-      }
-    }
-
-    if (isReaderOffline()) {
-      handleOffline()
-    } else if (offlineRequested) {
-      handleOnline()
-    } else {
-      offlineStateRef.current = false
-      setOffline(false)
-      const hasLocalSnapshot = hydrateLocalTab(activeTab)
-      if (hasLocalSnapshot) setLoading(false)
-      void loadLibrary(activeTab, { background: hasLocalSnapshot })
-
-      for (const tab of ['Subscribed', 'Recents']) {
-        if (tab !== activeTab) {
-          void loadLibrary(tab, { background: true })
-        }
-      }
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    window.addEventListener('shadow-offline-control-change', handleResume)
-    window.addEventListener('focus', handleResume)
-    document.addEventListener('visibilitychange', handleResume)
-
+    void loadDownloads()
     return () => {
       active = false
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-      window.removeEventListener('shadow-offline-control-change', handleResume)
-      window.removeEventListener('focus', handleResume)
-      document.removeEventListener('visibilitychange', handleResume)
+      controller.abort()
     }
-  }, [activeTab, isLoggedIn, offlineRequested, location.pathname, location.search, location.hash, navigate])
+  }, [activeTab, offline, isLoggedIn, downloadRevision])
 
   useEffect(() => {
     let active = true
-
     async function loadOfflineIndex() {
       if (!accountId) {
         if (active) setOfflineStoryIndex({})
         return
       }
-
       try {
         const records = await listOfflineEpisodes({ accountId })
         if (active) setOfflineStoryIndex(buildOfflineStoryIndex(records))
@@ -1306,16 +1072,10 @@ export default function Library() {
         if (active) setOfflineStoryIndex({})
       }
     }
-
     void loadOfflineIndex()
-
-    const refresh = () => {
-      void loadOfflineIndex()
-    }
-
+    const refresh = () => { if (document.visibilityState !== 'hidden') void loadOfflineIndex() }
     window.addEventListener('focus', refresh)
     document.addEventListener('visibilitychange', refresh)
-
     return () => {
       active = false
       window.removeEventListener('focus', refresh)
@@ -1323,71 +1083,70 @@ export default function Library() {
     }
   }, [accountId])
 
-  const currentItems = useMemo(() => {
-    if (activeTab === 'Subscribed') return subscriptionItems
-    if (activeTab === 'Downloads') return downloadItems
-    return libraryItems
-  }, [activeTab, libraryItems, subscriptionItems, downloadItems])
+  const offlineItems = useMemo(() => {
+    if (!offline || !accountId || activeTab === 'Downloads') return []
+    const tab = activeTab === 'Recents' ? 'recents' : 'subscribed'
+    const cache = loadReaderLibraryFeedCache({ accountId, tab, type: feedType })
+    if (cache) return cache.items
+    const snapshot = readLibrarySnapshot(accountId, activeTab)
+    if (activeType === 'All') return snapshot
+    return snapshot.filter((item) => getStoryType(item.story) === activeType)
+  }, [offline, accountId, activeTab, activeType, feedType])
 
-
-  const filteredItems = useMemo(() => {
-    if (activeType === 'All') return currentItems
-    return currentItems.filter((item) => getStoryType(item.story) === activeType)
-  }, [currentItems, activeType])
-
+  const filteredItems = activeTab === 'Downloads'
+    ? downloadItems
+    : offline ? offlineItems : feed.items
+  const loadingCurrent = activeTab === 'Downloads'
+    ? downloadLoading
+    : !offline && feed.loading && feed.items.length === 0
+  const firstItem = filteredItems[0] || null
   const actionText = getActionText(activeTab, t)
   const subtitle = getSubtitle(activeTab, t)
-  const firstItem = filteredItems[0] || null
+  const moreLabel = { en: 'Load 9 More', km: 'បង្ហាញ ៩ រឿងទៀត', zh: '再加载9本', ja: 'さらに9作品を読み込む', ko: '9개 더 불러오기' }[getDisplayLanguageId()] || 'Load 9 More'
+  const unreadCounts = feed.unreadStoryCounts ||
+    loadReaderLibraryFeedCache({ accountId, tab: 'subscribed', type: 'all' })?.unreadStoryCounts || null
+  const displayError = message || (activeTab === 'Downloads' || offline ? '' : feed.error)
 
-  const handleAction = async () => {
+  const handleClear = async () => {
     if (!isLoggedIn) {
       navigate('/login')
       return
     }
-
-    if (activeTab !== 'Recents' || !libraryItems.length || clearInProgressRef.current) return
+    if (activeTab !== 'Recents' || clearInProgressRef.current || offline) return
     if (!window.confirm(t('libraryPage.clearConfirm'))) return
 
     clearInProgressRef.current = true
     setClearing(true)
     setMessage('')
     let failed = false
-
     try {
       const headers = getHeaders()
-      const ids = [...new Set(libraryItems.map((item) => item.story_id).filter(Boolean))]
-      for (let i = 0; i < ids.length; i += 4) {
-        const results = await Promise.allSettled(ids.slice(i, i + 4).map(async (storyId) => {
-          const response = await fetch(`${API_BASE_URL}/api/reader/library/${encodeURIComponent(storyId)}`, {
-            method: 'DELETE',
-            headers,
-          })
-          const data = await response.json().catch(() => ({}))
-          if (!response.ok || data.ok !== true) throw new Error('LIBRARY_REMOVE_FAILED')
-        }))
-        if (results.some((result) => result.status === 'rejected')) failed = true
-      }
-
       const response = await fetch(`${API_BASE_URL}/api/reader/library`, {
         headers,
         cache: 'no-store',
       })
       const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.ok !== true || !Array.isArray(data.items)) {
-        throw new Error('LIBRARY_REFRESH_FAILED')
+      if (!response.ok || data.ok !== true || !Array.isArray(data.items)) throw new Error('LIBRARY_LIST_FAILED')
+      const ids = [...new Set(data.items.map((item) => item.story_id).filter(Boolean))]
+      for (let i = 0; i < ids.length; i += 4) {
+        const results = await Promise.allSettled(ids.slice(i, i + 4).map(async (storyId) => {
+          const removal = await fetch(`${API_BASE_URL}/api/reader/library/${encodeURIComponent(storyId)}`, {
+            method: 'DELETE',
+            headers,
+          })
+          const value = await removal.json().catch(() => ({}))
+          if (!removal.ok || value.ok !== true) throw new Error('LIBRARY_REMOVE_FAILED')
+        }))
+        if (results.some((result) => result.status === 'rejected')) failed = true
       }
-      setLibraryItems(data.items)
-      writeLibrarySnapshot(accountId, 'Recents', data.items)
-      loadedTabsRef.current.add('Recents')
-      if (data.items.length) failed = true
     } catch {
-      loadedTabsRef.current.delete('Recents')
       failed = true
     } finally {
       clearInProgressRef.current = false
       setClearing(false)
+      invalidateReaderLibraryFeedCache({ accountId, tab: 'recents' })
+      try { localStorage.removeItem(librarySnapshotKey(accountId, 'Recents')) } catch {}
     }
-
     if (failed) setMessage(t('libraryPage.clearFailed'))
   }
 
@@ -1414,85 +1173,78 @@ export default function Library() {
           <div className="px-4 pt-5 sm:px-5">
             <div className="flex items-end justify-between gap-4">
               <div className="flex min-w-0 items-end gap-5 overflow-x-auto no-scrollbar">
-                {topTabs.map((tab) => {
-                  const active = tab === activeTab
+                {topTabs.map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(tab)
+                      setActiveType('All')
+                      setMessage('')
+                    }}
+                    className={`relative shrink-0 pb-3 text-[13px] font-bold transition-colors sm:text-[14px] ${tab === activeTab ? 'tab-active-lib' : ''}`}
+                    style={{ color: tab === activeTab ? 'var(--shadow-text-primary)' : 'var(--shadow-text-tertiary)' }}
+                  >
+                    {t(`libraryPage.${TOP_TAB_LABEL_KEYS[tab]}`)}
+                  </button>
+                ))}
+              </div>
 
+              {activeTab !== 'Downloads' ? (
+                <button
+                  type="button"
+                  onClick={activeTab === 'Subscribed'
+                    ? () => navigate(meLibrarySource ? '/library/manage?source=me' : '/library/manage')
+                    : handleClear}
+                  disabled={clearing || offline}
+                  className={`shrink-0 pb-3 text-[13px] font-semibold transition ${offline ? 'cursor-not-allowed opacity-40' : ''}`}
+                  style={{ color: 'var(--shadow-text-secondary)' }}
+                >
+                  {actionText}
+                </button>
+              ) : null}
+            </div>
+
+            <p className="pb-4 pt-2 text-[12px] sm:text-[13px]" style={{ color: 'var(--shadow-text-secondary)' }}>
+              {subtitle}
+            </p>
+
+            {activeTab !== 'Downloads' ? (
+              <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+                {storyTypeTabs.map((type) => {
+                  const selected = type === activeType
+                  const key = type === 'Chat Story' ? 'chat_story' : type.toLowerCase()
+                  const count = activeTab === 'Subscribed' && unreadCounts
+                    ? Math.max(0, Number(unreadCounts[key] || 0)) : null
                   return (
                     <button
-                      key={tab}
+                      key={type}
                       type="button"
-                      onClick={() => {
-                        setActiveTab(tab)
-                        setActiveType('All')
-                        setMessage('')
-                      }}
-                      className={`relative shrink-0 pb-3 text-[13px] font-bold transition-colors sm:text-[14px] ${
-                        active ? 'tab-active-lib' : ''
-                      }`}
+                      onClick={() => setActiveType(type)}
+                      className="shrink-0 rounded-full border px-4 py-1.5 text-[12px] font-bold transition-colors"
                       style={{
-                        color: active
-                          ? 'var(--shadow-text-primary)'
-                          : 'var(--shadow-text-tertiary)',
+                        background: selected ? 'var(--shadow-text-primary)' : 'var(--shadow-bg-soft)',
+                        borderColor: selected ? 'var(--shadow-text-primary)' : 'var(--shadow-border)',
+                        color: selected ? 'var(--shadow-bg-page)' : 'var(--shadow-text-secondary)',
+                        boxShadow: selected ? 'var(--shadow-shadow)' : 'none',
                       }}
                     >
-                      {t(`libraryPage.${TOP_TAB_LABEL_KEYS[tab]}`)}
+                      {t(`libraryPage.${TYPE_LABEL_KEYS[type]}`)}
+                      {count !== null && count > 0 ? (
+                        <span className="ml-1.5 rounded-full bg-[#ef4444] px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white">
+                          {count > 99 ? '99+' : formatDisplayNumber(count)}
+                        </span>
+                      ) : null}
                     </button>
                   )
                 })}
               </div>
-
-              {activeTab !== 'Downloads' ? <button
-                type="button"
-                onClick={activeTab === 'Subscribed' ? () => navigate(meLibrarySource ? '/library/manage?source=me' : '/library/manage') : handleAction}
-                disabled={clearing || offline}
-                className={`shrink-0 pb-3 text-[13px] font-semibold transition ${offline ? 'cursor-not-allowed opacity-40' : ''}`}
-                style={{ color: 'var(--shadow-text-secondary)' }}
-              >
-                {actionText}
-              </button> : null}
-            </div>
-
-            <p
-              className="pb-4 pt-2 text-[12px] sm:text-[13px]"
-              style={{ color: 'var(--shadow-text-secondary)' }}
-            >
-              {subtitle}
-            </p>
-
-            {activeTab !== 'Downloads' ? <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-              {storyTypeTabs.map((type) => {
-                const active = type === activeType
-
-                return (
-                  <button
-                    key={type}
-                    onClick={() => setActiveType(type)}
-                    className="shrink-0 rounded-full border px-4 py-1.5 text-[12px] font-bold transition-colors"
-                    style={{
-                      background: active
-                        ? 'var(--shadow-text-primary)'
-                        : 'var(--shadow-bg-soft)',
-                      borderColor: active
-                        ? 'var(--shadow-text-primary)'
-                        : 'var(--shadow-border)',
-                      color: active
-                        ? 'var(--shadow-bg-page)'
-                        : 'var(--shadow-text-secondary)',
-                      boxShadow: active
-                        ? 'var(--shadow-shadow)'
-                        : 'none',
-                    }}
-                  >
-                    {t(`libraryPage.${TYPE_LABEL_KEYS[type]}`)}
-                  </button>
-                )
-              })}
-            </div> : null}
+            ) : null}
           </div>
         </header>
 
         <main className="px-4 sm:px-5">
-          {message ? (
+          {displayError ? (
             <div
               className="mt-4 rounded-[18px] border px-4 py-3 text-[12px] font-bold"
               style={{
@@ -1502,11 +1254,21 @@ export default function Library() {
               }}
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="min-w-0">{message}</span>
+                <span className="min-w-0">{displayError}</span>
                 {!offline ? (
                   <button
                     type="button"
-                    onClick={() => void loadLibrary(activeTab, { force: true })}
+                    onClick={() => {
+                      setMessage('')
+                      if (activeTab === 'Downloads') {
+                        downloadedRef.current = false
+                        setDownloadRevision((value) => value + 1)
+                      } else if (feed.items.length && feed.hasMore) {
+                        void feed.loadMore()
+                      } else {
+                        void feed.refresh()
+                      }
+                    }}
                     className="shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-extrabold"
                     style={{ borderColor: 'var(--shadow-danger)', color: 'var(--shadow-danger)' }}
                   >
@@ -1518,8 +1280,13 @@ export default function Library() {
           ) : null}
 
           {activeTab === 'Downloads' ? (
-            <LibraryDownloadsSections purchases={downloadItems} loading={loading} isLoggedIn={isLoggedIn} offlineMode={offline} />
-          ) : loading ? (
+            <LibraryDownloadsSections
+              purchases={downloadItems}
+              loading={downloadLoading}
+              isLoggedIn={isLoggedIn}
+              offlineMode={offline}
+            />
+          ) : loadingCurrent ? (
             <div className="pt-5">
               <div
                 className="rounded-[24px] border px-5 py-10 text-center text-[13px] font-bold"
@@ -1553,70 +1320,61 @@ export default function Library() {
 
               <section className="pt-7">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2
-                    className="text-[20px] font-extrabold tracking-tight"
-                    style={{ color: 'var(--shadow-text-primary)' }}
-                  >
-                    {activeTab === 'Subscribed'
-                      ? t('libraryPage.yourSubscriptions')
-                      : activeTab === 'Downloads'
-                        ? t('libraryPage.yourDownloads')
-                        : t('libraryPage.yourLibrary')}
+                  <h2 className="text-[20px] font-extrabold tracking-tight" style={{ color: 'var(--shadow-text-primary)' }}>
+                    {activeTab === 'Subscribed' ? t('libraryPage.yourSubscriptions') : t('libraryPage.yourLibrary')}
                   </h2>
-
-                  {activeTab === 'Subscribed' ? (
-                    <button
-                      className="text-[11px] font-extrabold uppercase tracking-[0.12em]"
-                      style={{ color: 'var(--shadow-text-primary)' }}
-                    >
-                      {t('libraryPage.seeAll')}
-                    </button>
-                  ) : null}
                 </div>
 
                 <div className="grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                   {filteredItems.map((item) => (
-                    <LibraryBookCard
-                      key={item.id || item.story_id}
-                      item={item}
-                      tab={activeTab}
-                      offlineMode={offline}
-                      offlineInfo={offlineStoryIndex[String(item?.story?.id || '')] || null}
-                      onOfflineUnavailable={() => setMessage(t('libraryPage.internetRequired'))}
-                    />
+                    <div key={item.id || item.story_id} className="relative min-w-0">
+                      <LibraryBookCard
+                        item={item}
+                        tab={activeTab}
+                        offlineMode={offline}
+                        offlineInfo={offlineStoryIndex[String(item?.story?.id || '')] || null}
+                        onOfflineUnavailable={() => setMessage(t('libraryPage.internetRequired'))}
+                      />
+                      {activeTab === 'Subscribed' && !offline && Number(item.unread_episode_count || 0) > 0 ? (
+                        <div className="pointer-events-none absolute left-0 top-0 aspect-[2/3] w-full">
+                          <ReaderSubscriptionBadge unreadCount={item.unread_episode_count} />
+                        </div>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               </section>
             </>
-          ) : (
+          ) : !displayError ? (
             <div className="pt-5">
               <EmptyState
-                title={
-                  activeTab === 'Subscribed'
-                    ? t('libraryPage.noSubscriptions')
-                    : activeTab === 'Downloads'
-                      ? t('libraryPage.noDownloads')
-                      : t('libraryPage.noSavedStories')
-                }
-                text={
-                  activeTab === 'Subscribed'
-                    ? t('libraryPage.noSubscriptionsText')
-                    : activeTab === 'Downloads'
-                      ? t('libraryPage.noDownloadsText')
-                      : t('libraryPage.noSavedStoriesText')
-                }
+                title={activeTab === 'Subscribed' ? t('libraryPage.noSubscriptions') : t('libraryPage.noSavedStories')}
+                text={activeTab === 'Subscribed' ? t('libraryPage.noSubscriptionsText') : t('libraryPage.noSavedStoriesText')}
                 actionText={offline ? '' : t('libraryPage.browseStories')}
-                onAction={() => {
-                  if (!offline) navigate('/')
-                }}
+                onAction={() => { if (!offline) navigate('/') }}
               />
             </div>
-          )}
-        </main>
+          ) : null}
 
-        {activeTab === 'Subscribed' && subscriptionItems.length && !offline ? (
-          <SubscriptionsSection items={subscriptionItems} />
-        ) : null}
+          {!offline && activeTab !== 'Downloads' && feed.hasMore ? (
+            <div className="flex justify-center py-7" ref={feed.sentinelRef}>
+              {feed.loadingMore ? (
+                <span className="text-[12px] font-semibold" style={{ color: 'var(--shadow-text-secondary)' }}>
+                  {t('libraryPage.loadingLibrary')}
+                </span>
+              ) : feed.showManualLoad || feed.error ? (
+                <button
+                  type="button"
+                  onClick={() => void feed.loadMore()}
+                  className="rounded-full border px-5 py-2.5 text-[12px] font-extrabold"
+                  style={{ background: 'var(--shadow-bg-elevated)', borderColor: 'var(--shadow-border)', color: 'var(--shadow-text-primary)' }}
+                >
+                  {moreLabel}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </main>
       </div>
 
       {!meLibrarySource && !offline && <ReaderProfileFooter />}
