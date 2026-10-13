@@ -458,7 +458,7 @@ export default function AuthorProfilePage() {
                 <HeaderIcon
                   label={t('authorProfile.settings')}
                   icon="fa-solid fa-gear"
-                  onClick={() => navigate('/author/page-settings')}
+                  onClick={() => navigate('/author/profile-settings')}
                 />
               </div>
 
