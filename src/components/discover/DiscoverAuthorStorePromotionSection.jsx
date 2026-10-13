@@ -409,25 +409,36 @@ export default function DiscoverAuthorStorePromotionSection() {
             className="cursor-pointer transition-transform active:scale-[0.997] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b7882d]"
           >
             <div className="flex items-center gap-2 px-3 pb-6 pt-3 sm:px-4">
-              <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full border-2 border-[#d6a33e] bg-[#e5d7b0]">
-                {offer.cover_url ? <img src={offer.cover_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
-              </div>
-              <h2 className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-[#25142f] dark:text-white">
-                {t('discoverAuthorStorePromotion.heading')}
-              </h2>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  navigate('/store')
+                }}
+                onKeyDown={(event) => event.stopPropagation()}
+                aria-label={t('discoverAuthorStorePromotion.heading')}
+                className="flex min-w-0 flex-1 items-center gap-2 text-left"
+              >
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-[#d6a33e] bg-[#e5d7b0]">
+                  {offer.cover_url ? <img src={offer.cover_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
+                </div>
+                <h2 className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-[#25142f] dark:text-white">
+                  {t('discoverAuthorStorePromotion.heading')}
+                </h2>
+              </button>
               <span className="shrink-0 rounded-full border border-[#d3a34a] bg-[#fff8e5] px-2 py-0.5 text-[10px] font-bold text-[#875d17] dark:bg-[#513b19] dark:text-[#ffe09b]">
                 {t(`discoverAuthorStorePromotion.${offer.product_type}`)}
               </span>
             </div>
             <div className="flex items-start gap-2.5 px-2 pb-1.5 sm:px-3 sm:pb-2">
-              <div className="dasp-gold-frame h-[240px] w-[134px] shrink-0 min-[390px]:h-[250px] min-[390px]:w-[140px]">
+              <div className="dasp-gold-frame h-[162px] w-[114px] shrink-0 min-[390px]:h-[170px] min-[390px]:w-[120px]">
                 <div className="dasp-gold-inside bg-[#fff7e5] dark:bg-[#281f2c]">
                   {offer.cover_url
                     ? <img src={offer.cover_url} alt={offer.title} className="h-full w-full object-cover" loading="lazy" />
                     : <div className="flex h-full items-center justify-center text-xs">{t('discoverAuthorStorePromotion.cover')}</div>}
                 </div>
               </div>
-              <div className="flex h-[240px] min-w-0 flex-1 flex-col gap-1 pt-0.5 min-[390px]:h-[250px]">
+              <div className="flex h-[162px] min-w-0 flex-1 flex-col gap-1 pt-0.5 min-[390px]:h-[170px]">
                 <div className="flex min-w-0 items-start gap-1.5">
                   <h3 className="min-w-0 flex-1 line-clamp-2 text-[13px] font-extrabold leading-[1.3] text-[#25142f] dark:text-white min-[390px]:text-[14px]">{offer.title}</h3>
                   {offer.product_type === 'book' ? (
@@ -462,7 +473,7 @@ export default function DiscoverAuthorStorePromotionSection() {
             </div>
           </div>
           {offers.length > 1 ? (
-            <div className="flex items-center justify-center gap-1.5 pb-1.5 pt-0.5" role="group" aria-label={t('discoverAuthorStorePromotion.heading')}>
+            <div className="flex items-center justify-center gap-1.5 pb-3 pt-4" role="group" aria-label={t('discoverAuthorStorePromotion.heading')}>
               {offers.map((item, position) => (
                 <button
                   key={item.product_id}
