@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import AuthorStoryPushCard from '../../components/Author/AuthorStoryPushCard'
 import Author49DayDashboardCard from '../../components/events/Author49DayDashboardCard'
 import AuthorDaily50DashboardCard from '../../components/events/AuthorDaily50DashboardCard'
 import AuthorDaily80DashboardCard from '../../components/events/AuthorDaily80DashboardCard'
@@ -1321,7 +1322,7 @@ return {
   label={t('authorDashboard.likes')}
 />
                 </div>
-
+    <AuthorStoryPushCard />
         <Author49DayDashboardCard
           onStartWriting={() =>
             latestStory
