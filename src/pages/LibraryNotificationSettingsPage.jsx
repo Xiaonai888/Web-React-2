@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Bell, BookOpen, MessagesSquare, Images } from 'lucide-react'
 import { PageShell, PageHeader, SurfaceCard } from '../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { getOfflineReaderAccountId } from '../utils/offlineReaderContent'
+import { isReaderOffline } from '../utils/readerOfflineControl'
 
 registerTranslationNamespace('libraryEpisodeNotificationSettings', {
   en: {
@@ -20,6 +21,12 @@ registerTranslationNamespace('libraryEpisodeNotificationSettings', {
     manga: 'Manga',
     mangaDescription: 'New episodes from subscribed manga.',
     disabledDescription: 'Turn on All Notifications to manage each story type.',
+    loading: 'Loading settings...',
+    loadFailed: 'Could not load notification settings. Try again.',
+    saveFailed: 'Could not save your changes. Please try again.',
+    signIn: 'Log in to manage notifications.',
+    offline: 'Internet connection required to change these settings.',
+    retry: 'Try again',
   },
   km: {
     title: 'ការជូនដំណឹង',
@@ -34,6 +41,12 @@ registerTranslationNamespace('libraryEpisodeNotificationSettings', {
     manga: 'Manga',
     mangaDescription: 'ភាគថ្មីពី Manga ដែលបានតាមដាន។',
     disabledDescription: 'បើកការជូនដំណឹងទាំងអស់ ដើម្បីកំណត់តាមប្រភេទរឿង។',
+    loading: 'កំពុងផ្ទុកការកំណត់...',
+    loadFailed: 'មិនអាចផ្ទុកការកំណត់បានទេ។ សូមព្យាយាមម្ដងទៀត។',
+    saveFailed: 'មិនអាចរក្សាទុកការកែប្រែបានទេ។ សូមព្យាយាមម្ដងទៀត។',
+    signIn: 'សូមចូលគណនីដើម្បីគ្រប់គ្រងការជូនដំណឹង។',
+    offline: 'ត្រូវការអ៊ីនធឺណិតដើម្បីកែការកំណត់នេះ។',
+    retry: 'ព្យាយាមម្ដងទៀត',
   },
   zh: {
     title: '通知',
@@ -48,6 +61,12 @@ registerTranslationNamespace('libraryEpisodeNotificationSettings', {
     manga: 'Manga',
     mangaDescription: '接收已订阅漫画的新章节通知。',
     disabledDescription: '开启所有通知后才能设置各类型。',
+    loading: '正在加载设置...',
+    loadFailed: '无法加载通知设置，请重试。',
+    saveFailed: '无法保存更改，请重试。',
+    signIn: '请登录以管理通知。',
+    offline: '需要连接互联网才能更改设置。',
+    retry: '重试',
   },
   ja: {
     title: '通知',
@@ -62,6 +81,12 @@ registerTranslationNamespace('libraryEpisodeNotificationSettings', {
     manga: 'Manga',
     mangaDescription: '購読中のマンガの新着エピソードを通知します。',
     disabledDescription: '種類別の設定にはすべての通知を有効にしてください。',
+    loading: '設定を読み込み中...',
+    loadFailed: '通知設定を読み込めませんでした。再試行してください。',
+    saveFailed: '変更を保存できませんでした。再試行してください。',
+    signIn: '通知を管理するにはログインしてください。',
+    offline: '設定の変更にはインターネット接続が必要です。',
+    retry: '再試行',
   },
   ko: {
     title: '알림',
@@ -76,8 +101,27 @@ registerTranslationNamespace('libraryEpisodeNotificationSettings', {
     manga: 'Manga',
     mangaDescription: '구독 중인 만화의 새 에피소드 알림.',
     disabledDescription: '유형별 설정을 사용하려면 모든 알림을 켜세요.',
+    loading: '설정을 불러오는 중...',
+    loadFailed: '알림 설정을 불러올 수 없습니다. 다시 시도하세요.',
+    saveFailed: '변경 사항을 저장할 수 없습니다. 다시 시도하세요.',
+    signIn: '알림을 관리하려면 로그인하세요.',
+    offline: '설정을 변경하려면 인터넷 연결이 필요합니다.',
+    retry: '다시 시도',
   },
 })
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const SETTINGS_URL = `${API_BASE_URL}/api/reader/library/notification-settings`
+
+function getReaderToken() {
+  return localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') || ''
+}
 
 const STORAGE_PREFIX = 'shadow_reader_library_episode_notifications_v1'
 const DEFAULT_PREFERENCES = {
@@ -139,6 +183,28 @@ function readPreferences(accountId) {
   }
 }
 
+function normalizePreferences(value) {
+  return {
+    master: value?.master !== false,
+    novel: value?.novel !== false,
+    chat_story: value?.chat_story !== false,
+    manga: value?.manga !== false,
+  }
+}
+
+function validatePreferences(value) {
+  return Boolean(value && typeof value === 'object' &&
+    Object.keys(DEFAULT_PREFERENCES).every((key) => typeof value[key] === 'boolean'))
+}
+
+function writePreferences(accountId, preferences) {
+  const key = storageKey(accountId)
+  if (!key) return
+  try {
+    localStorage.setItem(key, JSON.stringify(preferences))
+  } catch {}
+}
+
 function NotificationSwitch({ checked, disabled = false, label, onChange }) {
   return (
     <button
@@ -176,31 +242,175 @@ export default function LibraryNotificationSettingsPage() {
     ? '?source=me'
     : ''
 
+  const [reloadVersion, setReloadVersion] = useState(0)
   const [stored, setStored] = useState(() => ({
     accountId,
     preferences: readPreferences(accountId),
+    loading: true,
+    saving: false,
+    loadError: '',
+    saveError: '',
   }))
+  const savingRef = useRef(false)
+  const saveAbortRef = useRef(null)
+  const activeAccountRef = useRef(accountId)
+  activeAccountRef.current = accountId
 
-  const preferences = stored.accountId === accountId
+  const currentAccount = stored.accountId === accountId
+  const preferences = currentAccount
     ? stored.preferences
     : readPreferences(accountId)
+  const loading = !currentAccount || stored.loading
+  const saving = currentAccount && stored.saving
+  const loadError = currentAccount ? stored.loadError : ''
+  const saveError = currentAccount ? stored.saveError : ''
+  const controlsDisabled = loading || saving || Boolean(loadError) || !accountId
 
-  const updatePreference = (preference) => {
+  useEffect(() => {
+    let active = true
+    const controller = new AbortController()
+    saveAbortRef.current?.abort()
+    saveAbortRef.current = null
+    savingRef.current = false
+
+    setStored({
+      accountId,
+      preferences: readPreferences(accountId),
+      loading: true,
+      saving: false,
+      loadError: '',
+      saveError: '',
+    })
+
+    async function loadPreferences() {
+      const token = getReaderToken()
+      const initialError = !accountId || !token
+        ? 'signIn'
+        : isReaderOffline()
+          ? 'offline'
+          : ''
+
+      if (initialError) {
+        if (active) {
+          setStored((state) => ({
+            ...state,
+            loading: false,
+            loadError: initialError,
+          }))
+        }
+        return
+      }
+
+      try {
+        const response = await fetch(SETTINGS_URL, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok !== true || !validatePreferences(data.preferences)) {
+          throw new Error('loadFailed')
+        }
+        if (!active || activeAccountRef.current !== accountId) return
+
+        const loaded = normalizePreferences(data.preferences)
+        writePreferences(accountId, loaded)
+        setStored({
+          accountId,
+          preferences: loaded,
+          loading: false,
+          saving: false,
+          loadError: '',
+          saveError: '',
+        })
+      } catch {
+        if (!active || controller.signal.aborted || activeAccountRef.current !== accountId) return
+        setStored((state) => ({
+          ...state,
+          loading: false,
+          loadError: 'loadFailed',
+        }))
+      }
+    }
+
+    void loadPreferences()
+    return () => {
+      active = false
+      controller.abort()
+      saveAbortRef.current?.abort()
+      saveAbortRef.current = null
+    }
+  }, [accountId, reloadVersion])
+
+  const updatePreference = async (preference) => {
+    if (!Object.hasOwn(DEFAULT_PREFERENCES, preference)) return
+    if (controlsDisabled || savingRef.current) return
     if (preference !== 'master' && !preferences.master) return
 
+    const token = getReaderToken()
+    if (!token || isReaderOffline()) {
+      setStored((state) => ({
+        ...state,
+        saveError: token ? 'offline' : 'signIn',
+      }))
+      return
+    }
+
+    const previous = { ...preferences }
     const next = {
-      ...preferences,
-      [preference]: !preferences[preference],
+      ...previous,
+      [preference]: !previous[preference],
     }
+    const controller = new AbortController()
+    saveAbortRef.current = controller
+    savingRef.current = true
+    setStored((state) => ({
+      ...state,
+      preferences: next,
+      saving: true,
+      saveError: '',
+    }))
 
-    const key = storageKey(accountId)
-    if (key) {
-      try {
-        localStorage.setItem(key, JSON.stringify(next))
-      } catch {}
+    try {
+      const response = await fetch(SETTINGS_URL, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(next),
+        cache: 'no-store',
+        signal: controller.signal,
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok !== true || !validatePreferences(data.preferences)) {
+        throw new Error('saveFailed')
+      }
+      if (controller.signal.aborted || activeAccountRef.current !== accountId) return
+
+      const saved = normalizePreferences(data.preferences)
+      writePreferences(accountId, saved)
+      setStored((state) => ({
+        ...state,
+        preferences: saved,
+        saving: false,
+        saveError: '',
+      }))
+    } catch {
+      if (controller.signal.aborted || activeAccountRef.current !== accountId) return
+      setStored((state) => ({
+        ...state,
+        preferences: previous,
+        saving: false,
+        saveError: 'saveFailed',
+      }))
+    } finally {
+      if (saveAbortRef.current === controller) {
+        saveAbortRef.current = null
+        savingRef.current = false
+      }
     }
-
-    setStored({ accountId, preferences: next })
   }
 
   return (
@@ -228,6 +438,7 @@ export default function LibraryNotificationSettingsPage() {
 
           <NotificationSwitch
             checked={preferences.master}
+            disabled={controlsDisabled}
             label={t('libraryEpisodeNotificationSettings.all')}
             onChange={() => updatePreference('master')}
           />
@@ -258,7 +469,7 @@ export default function LibraryNotificationSettingsPage() {
 
               <NotificationSwitch
                 checked={preferences[key]}
-                disabled={!preferences.master}
+                disabled={controlsDisabled || !preferences.master}
                 label={t(`libraryEpisodeNotificationSettings.${label}`)}
                 onChange={() => updatePreference(key)}
               />
@@ -270,6 +481,32 @@ export default function LibraryNotificationSettingsPage() {
           <p className="mt-3 px-1 text-[11px] leading-5 text-[var(--shadow-text-secondary)]">
             {t('libraryEpisodeNotificationSettings.disabledDescription')}
           </p>
+        ) : null}
+
+        {loading ? (
+          <p className="mt-4 px-1 text-[12px] text-[var(--shadow-text-secondary)]">
+            {t('libraryEpisodeNotificationSettings.loading')}
+          </p>
+        ) : null}
+
+        {loadError || saveError ? (
+          <div
+            role="alert"
+            className="mt-4 flex items-center justify-between gap-3 rounded-[16px] border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900 dark:bg-red-950/20"
+          >
+            <p className="min-w-0 text-[12px] leading-5 text-red-600 dark:text-red-300">
+              {t(`libraryEpisodeNotificationSettings.${loadError || saveError}`)}
+            </p>
+            {loadError ? (
+              <button
+                type="button"
+                onClick={() => setReloadVersion((value) => value + 1)}
+                className="shrink-0 rounded-full border border-red-300 px-3 py-1.5 text-[11px] font-semibold text-red-700 dark:border-red-700 dark:text-red-300"
+              >
+                {t('libraryEpisodeNotificationSettings.retry')}
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </main>
     </PageShell>
