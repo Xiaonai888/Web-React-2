@@ -46,7 +46,10 @@ registerTranslationNamespace('authorCheckout', {
     "orderSuccessMessage": "Your book order has been placed successfully. Please wait while we prepare and ship your order.",
     "viewOrder": "View Order",
     "backToDiscover": "Back to Discover",
-    "backToStore": "Back to Store"
+    "backToStore": "Back to Store",
+    "pdfPurchaseSuccessful": "Purchase Successful!",
+    "pdfPurchaseSuccessMessage": "Your PDF is unlocked and ready to read.",
+    "readNow": "Read Now"
   },
   "km": {
     "buyerProfile": "ព័ត៌មានអ្នកទិញ",
@@ -89,7 +92,10 @@ registerTranslationNamespace('authorCheckout', {
     "orderSuccessMessage": "អ្នកបានបញ្ជាទិញសៀវភៅដោយជោគជ័យ។ សូមរង់ចាំយើងរៀបចំ និងដឹកជញ្ជូនការបញ្ជាទិញរបស់អ្នក។",
     "viewOrder": "មើលការបញ្ជាទិញ",
     "backToDiscover": "ត្រឡប់ទៅ Discover",
-    "backToStore": "ត្រឡប់ទៅហាង"
+    "backToStore": "ត្រឡប់ទៅហាង",
+    "pdfPurchaseSuccessful": "ការទិញបានជោគជ័យ!",
+    "pdfPurchaseSuccessMessage": "PDF របស់អ្នកបានដោះសោ និងអាចអានបានហើយ។",
+    "readNow": "អានឥឡូវនេះ"
   },
   "zh": {
     "buyerProfile": "买家资料",
@@ -132,7 +138,10 @@ registerTranslationNamespace('authorCheckout', {
     "orderSuccessMessage": "您的图书订单已成功提交。请等待我们安排备货和配送。",
     "viewOrder": "查看订单",
     "backToDiscover": "返回 Discover",
-    "backToStore": "返回商店"
+    "backToStore": "返回商店",
+    "pdfPurchaseSuccessful": "购买成功！",
+    "pdfPurchaseSuccessMessage": "您的 PDF 已解锁，可以立即阅读。",
+    "readNow": "立即阅读"
   },
   "ja": {
     "buyerProfile": "購入者情報",
@@ -175,7 +184,10 @@ registerTranslationNamespace('authorCheckout', {
     "orderSuccessMessage": "書籍のご注文が正常に受け付けられました。発送の準備が整うまでお待ちください。",
     "viewOrder": "注文を見る",
     "backToDiscover": "Discover に戻る",
-    "backToStore": "ストアに戻る"
+    "backToStore": "ストアに戻る",
+    "pdfPurchaseSuccessful": "購入が完了しました！",
+    "pdfPurchaseSuccessMessage": "PDF のロックが解除され、すぐに読めます。",
+    "readNow": "今すぐ読む"
   },
   "ko": {
     "buyerProfile": "구매자 정보",
@@ -218,7 +230,10 @@ registerTranslationNamespace('authorCheckout', {
     "orderSuccessMessage": "도서 주문이 성공적으로 접수되었습니다. 준비 및 배송까지 잠시 기다려 주세요.",
     "viewOrder": "주문 보기",
     "backToDiscover": "Discover로 돌아가기",
-    "backToStore": "스토어로 돌아가기"
+    "backToStore": "스토어로 돌아가기",
+    "pdfPurchaseSuccessful": "구매가 완료되었습니다!",
+    "pdfPurchaseSuccessMessage": "PDF 잠금이 해제되어 바로 읽을 수 있습니다.",
+    "readNow": "지금 읽기"
   }
 })
 
@@ -452,6 +467,7 @@ export default function AuthorCheckoutPage() {
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [paidBookOrder, setPaidBookOrder] = useState(null)
+  const [paidPdfOrder, setPaidPdfOrder] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -493,8 +509,22 @@ export default function AuthorCheckoutPage() {
         if (!active || data.ok === false || String(order?.order_id || '') !== orderId) return
         if (String(order.payment_status || '').toLowerCase() !== 'paid') return
 
-        const orderItems = Array.isArray(order.items) ? order.items : saved.order.items || []
-        if (!orderItems.some((item) => String(item.product_type || item.type || '').toLowerCase() === 'book')) return
+        const orderItems = Array.isArray(order.items) && order.items.length
+          ? order.items
+          : Array.isArray(saved.order?.items) ? saved.order.items : []
+        const hasBook = orderItems.some((item) => String(item.product_type || item.type || '').toLowerCase() === 'book')
+        const pdfOnly = orderItems.length > 0 && orderItems.every((item) => String(item.product_type || item.type || '').toLowerCase() === 'pdf')
+        const discoverPdfPurchase = saved.return_path === '/discover' && pdfOnly
+        if (!hasBook && !discoverPdfPurchase) return
+
+        let pdfItem = null
+        let pdfProductId = ''
+        if (discoverPdfPurchase) {
+          if (String(order.pdf_unlock_status || '').toLowerCase() !== 'unlocked') return
+          pdfItem = orderItems[0]
+          pdfProductId = String(pdfItem.product_id || '').trim()
+          if (!pdfProductId) return
+        }
 
         const purchasedItems = Array.isArray(saved.checkout_items) ? saved.checkout_items : []
         if (purchasedItems.length) {
@@ -506,10 +536,18 @@ export default function AuthorCheckoutPage() {
         }
 
         verifiedOrderId = orderId
-        setPaidBookOrder({
-          orderId,
-          returnPath: saved.return_path === '/discover' ? '/discover' : '/store',
-        })
+        if (discoverPdfPurchase) {
+          setPaidPdfOrder({
+            orderId,
+            productId: pdfProductId,
+            title: String(pdfItem.product_title || pdfItem.title || '').trim() || 'PDF',
+          })
+        } else {
+          setPaidBookOrder({
+            orderId,
+            returnPath: saved.return_path === '/discover' ? '/discover' : '/store',
+          })
+        }
       } catch (error) {
         if (error.name === 'AbortError') return
       } finally {
@@ -539,6 +577,19 @@ export default function AuthorCheckoutPage() {
     localStorage.setItem(PAYMENT_SUCCESS_SEEN_KEY, paidBookOrder.orderId)
     setPaidBookOrder(null)
     navigate(path)
+  }
+
+  function closePdfSuccess(readNow) {
+    if (!paidPdfOrder) return
+    localStorage.setItem(PAYMENT_SUCCESS_SEEN_KEY, paidPdfOrder.orderId)
+    const productId = paidPdfOrder.productId
+    const title = paidPdfOrder.title
+    setPaidPdfOrder(null)
+    if (readNow) {
+      navigate(`/discover/pdf/${encodeURIComponent(productId)}`, { state: { title } })
+    } else {
+      navigate('/discover')
+    }
   }
 
   const selectedCompany = DELIVERY_COMPANIES.find((company) => company.id === selectedCompanyId) || DELIVERY_COMPANIES[0]
@@ -897,6 +948,43 @@ export default function AuthorCheckoutPage() {
                 className="h-12 w-full rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-medium text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
               >
                 {t(paidBookOrder.returnPath === '/discover' ? 'authorCheckout.backToDiscover' : 'authorCheckout.backToStore')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {paidPdfOrder ? (
+        <div
+          className="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 px-5"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="author-pdf-purchase-success-title"
+        >
+          <div className="w-full max-w-[380px] rounded-[26px] bg-[var(--shadow-bg-surface)] px-6 pb-6 pt-7 text-center shadow-2xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f2] text-[#FE526E]">
+              <i className="fa-solid fa-check text-[26px]" aria-hidden="true" />
+            </div>
+            <h2 id="author-pdf-purchase-success-title" className="mt-4 text-[20px] font-bold text-[var(--shadow-text-primary)]">
+              {t('authorCheckout.pdfPurchaseSuccessful')}
+            </h2>
+            <p className="mt-3 text-[13px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
+              {t('authorCheckout.pdfPurchaseSuccessMessage')}
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => closePdfSuccess(true)}
+                className="h-12 w-full rounded-full bg-[#FE526E] text-[14px] font-medium text-white transition active:scale-[0.98]"
+              >
+                {t('authorCheckout.readNow')}
+              </button>
+              <button
+                type="button"
+                onClick={() => closePdfSuccess(false)}
+                className="h-12 w-full rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-medium text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
+              >
+                {t('authorCheckout.backToDiscover')}
               </button>
             </div>
           </div>
