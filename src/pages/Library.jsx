@@ -460,6 +460,7 @@ function formatDownloadItems(downloads) {
 }
 
 const LIBRARY_SNAPSHOT_PREFIX = 'shadow_library_snapshot_v1'
+const LIBRARY_SCROLL_PREFIX = 'shadow_reader_library_scroll_v1'
 
 function librarySnapshotKey(accountId, tab) {
   return `${LIBRARY_SNAPSHOT_PREFIX}:${accountId}:${tab.toLowerCase()}`
@@ -764,7 +765,7 @@ function LibraryBookCard({
           <StoryCover story={story} className="h-full w-full" />
         </div>
 
-        {story.status === 'completed' && !(tab === 'Subscribed' && Number(item.unread_episode_count || 0) > 0) ? <EndBadge /> : null}
+        {story.status === 'completed' ? <EndBadge /> : null}
         {offlineMode && offlineInfo?.count ? (
           <div className="absolute right-2 top-2 rounded-full bg-black/80 px-2 py-1 text-[9px] font-extrabold text-white shadow-sm">
             {t('libraryPage.offlineAvailable', {
@@ -995,10 +996,15 @@ export default function Library() {
   const [downloadRevision, setDownloadRevision] = useState(0)
   const downloadedRef = useRef(false)
   const clearInProgressRef = useRef(false)
+  const lastRestoredScrollKeyRef = useRef('')
   const isLoggedIn = Boolean(getReaderToken())
   const accountId = getOfflineReaderAccountId()
-  const feedType = activeType === 'Chat Story' ? 'chat_story' : activeType.toLowerCase()
-  const feedTab = activeTab === 'Recents' ? 'recents' : 'subscribed'
+  const feedType = activeType === 'Chat Story'
+    ? 'chat_story'
+    : activeType.toLowerCase()
+  const feedTab = activeTab === 'Recents'
+    ? 'recents'
+    : 'subscribed'
   const feed = useReaderLibraryFeed({
     accountId,
     tab: feedTab,
@@ -1036,17 +1042,26 @@ export default function Library() {
     setDownloadLoading(true)
     async function loadDownloads() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/my`, {
-          headers: getHeaders(),
-          signal: controller.signal,
-        })
+        const response = await fetch(
+          `${API_BASE_URL}/api/author-store/downloads/my`,
+          {
+            headers: getHeaders(),
+            signal: controller.signal,
+          }
+        )
         const data = await response.json().catch(() => ({}))
-        if (!response.ok || data.ok === false) throw new Error(data.message || t('libraryPage.loadDownloadsFailed'))
+        if (!response.ok || data.ok === false) {
+          throw new Error(
+            data.message || t('libraryPage.loadDownloadsFailed')
+          )
+        }
         if (!active) return
         setDownloadItems(formatDownloadItems(data.downloads))
         downloadedRef.current = true
       } catch (error) {
-        if (active) setMessage(error?.message || t('libraryPage.loadDownloadsFailed'))
+        if (active) {
+          setMessage(error?.message || t('libraryPage.loadDownloadsFailed'))
+        }
       } finally {
         if (active) setDownloadLoading(false)
       }
@@ -1073,7 +1088,11 @@ export default function Library() {
       }
     }
     void loadOfflineIndex()
-    const refresh = () => { if (document.visibilityState !== 'hidden') void loadOfflineIndex() }
+    const refresh = () => {
+      if (document.visibilityState !== 'hidden') {
+        void loadOfflineIndex()
+      }
+    }
     window.addEventListener('focus', refresh)
     document.addEventListener('visibilitychange', refresh)
     return () => {
@@ -1085,27 +1104,99 @@ export default function Library() {
 
   const offlineItems = useMemo(() => {
     if (!offline || !accountId || activeTab === 'Downloads') return []
+
     const tab = activeTab === 'Recents' ? 'recents' : 'subscribed'
     const cache = loadReaderLibraryFeedCache({ accountId, tab, type: feedType })
     if (cache) return cache.items
+
     const snapshot = readLibrarySnapshot(accountId, activeTab)
     if (activeType === 'All') return snapshot
+
     return snapshot.filter((item) => getStoryType(item.story) === activeType)
   }, [offline, accountId, activeTab, activeType, feedType])
 
   const filteredItems = activeTab === 'Downloads'
     ? downloadItems
-    : offline ? offlineItems : feed.items
+    : offline
+      ? offlineItems
+      : feed.items
   const loadingCurrent = activeTab === 'Downloads'
     ? downloadLoading
     : !offline && feed.loading && feed.items.length === 0
   const firstItem = filteredItems[0] || null
   const actionText = getActionText(activeTab, t)
   const subtitle = getSubtitle(activeTab, t)
-  const moreLabel = { en: 'Load 9 More', km: 'បង្ហាញ ៩ រឿងទៀត', zh: '再加载9本', ja: 'さらに9作品を読み込む', ko: '9개 더 불러오기' }[getDisplayLanguageId()] || 'Load 9 More'
+  const moreLabels = {
+    en: 'Load 9 More',
+    km: 'បង្ហាញ ៩ រឿងទៀត',
+    zh: '再加载9本',
+    ja: 'さらに9作品を読み込む',
+    ko: '9개 더 불러오기',
+  }
+  const moreLabel = moreLabels[getDisplayLanguageId()] || moreLabels.en
   const unreadCounts = feed.unreadStoryCounts ||
-    loadReaderLibraryFeedCache({ accountId, tab: 'subscribed', type: 'all' })?.unreadStoryCounts || null
-  const displayError = message || (activeTab === 'Downloads' || offline ? '' : feed.error)
+    loadReaderLibraryFeedCache({
+      accountId,
+      tab: 'subscribed',
+      type: 'all',
+    })?.unreadStoryCounts || null
+  const displayError = message || (
+    activeTab === 'Downloads' || offline ? '' : feed.error
+  )
+  const scrollKey = `${LIBRARY_SCROLL_PREFIX}:${accountId}:${activeTab}:${feedType}`
+
+  useEffect(() => {
+    if (!accountId) return undefined
+
+    let saveTimeout = null
+    const savePosition = () => {
+      if (saveTimeout !== null) return
+      saveTimeout = window.setTimeout(() => {
+        saveTimeout = null
+        try {
+          sessionStorage.setItem(scrollKey, String(window.scrollY))
+        } catch {}
+      }, 200)
+    }
+
+    window.addEventListener('scroll', savePosition, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', savePosition)
+      if (saveTimeout !== null) window.clearTimeout(saveTimeout)
+      try {
+        sessionStorage.setItem(scrollKey, String(window.scrollY))
+      } catch {}
+    }
+  }, [accountId, scrollKey])
+
+  useEffect(() => {
+    lastRestoredScrollKeyRef.current = ''
+  }, [scrollKey])
+
+  useEffect(() => {
+    if (!accountId || loadingCurrent || !filteredItems.length) return undefined
+    if (lastRestoredScrollKeyRef.current === scrollKey) return undefined
+    lastRestoredScrollKeyRef.current = scrollKey
+
+    let value = null
+    try {
+      value = sessionStorage.getItem(scrollKey)
+    } catch {}
+    const savedPosition = Number(value)
+    if (value === null || !Number.isFinite(savedPosition) || savedPosition <= 0) return undefined
+
+    let secondFrame = null
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        window.scrollTo({ top: savedPosition, behavior: 'auto' })
+      })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      if (secondFrame !== null) window.cancelAnimationFrame(secondFrame)
+    }
+  }, [accountId, scrollKey, loadingCurrent, filteredItems.length])
 
   const handleClear = async () => {
     if (!isLoggedIn) {
@@ -1126,18 +1217,31 @@ export default function Library() {
         cache: 'no-store',
       })
       const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.ok !== true || !Array.isArray(data.items)) throw new Error('LIBRARY_LIST_FAILED')
-      const ids = [...new Set(data.items.map((item) => item.story_id).filter(Boolean))]
+      if (!response.ok || data.ok !== true || !Array.isArray(data.items)) {
+        throw new Error('LIBRARY_LIST_FAILED')
+      }
+      const ids = [...new Set(
+        data.items.map((item) => item.story_id).filter(Boolean)
+      )]
       for (let i = 0; i < ids.length; i += 4) {
-        const results = await Promise.allSettled(ids.slice(i, i + 4).map(async (storyId) => {
-          const removal = await fetch(`${API_BASE_URL}/api/reader/library/${encodeURIComponent(storyId)}`, {
-            method: 'DELETE',
-            headers,
+        const results = await Promise.allSettled(
+          ids.slice(i, i + 4).map(async (storyId) => {
+            const removal = await fetch(
+              `${API_BASE_URL}/api/reader/library/${encodeURIComponent(storyId)}`,
+              {
+                method: 'DELETE',
+                headers,
+              }
+            )
+            const value = await removal.json().catch(() => ({}))
+            if (!removal.ok || value.ok !== true) {
+              throw new Error('LIBRARY_REMOVE_FAILED')
+            }
           })
-          const value = await removal.json().catch(() => ({}))
-          if (!removal.ok || value.ok !== true) throw new Error('LIBRARY_REMOVE_FAILED')
-        }))
-        if (results.some((result) => result.status === 'rejected')) failed = true
+        )
+        if (results.some((result) => result.status === 'rejected')) {
+          failed = true
+        }
       }
     } catch {
       failed = true
@@ -1145,7 +1249,9 @@ export default function Library() {
       clearInProgressRef.current = false
       setClearing(false)
       invalidateReaderLibraryFeedCache({ accountId, tab: 'recents' })
-      try { localStorage.removeItem(librarySnapshotKey(accountId, 'Recents')) } catch {}
+      try {
+        localStorage.removeItem(librarySnapshotKey(accountId, 'Recents'))
+      } catch {}
     }
     if (failed) setMessage(t('libraryPage.clearFailed'))
   }
@@ -1182,8 +1288,14 @@ export default function Library() {
                       setActiveType('All')
                       setMessage('')
                     }}
-                    className={`relative shrink-0 pb-3 text-[13px] font-bold transition-colors sm:text-[14px] ${tab === activeTab ? 'tab-active-lib' : ''}`}
-                    style={{ color: tab === activeTab ? 'var(--shadow-text-primary)' : 'var(--shadow-text-tertiary)' }}
+                    className={`relative shrink-0 pb-3 text-[13px] font-bold transition-colors sm:text-[14px] ${
+                      tab === activeTab ? 'tab-active-lib' : ''
+                    }`}
+                    style={{
+                      color: tab === activeTab
+                        ? 'var(--shadow-text-primary)'
+                        : 'var(--shadow-text-tertiary)',
+                    }}
                   >
                     {t(`libraryPage.${TOP_TAB_LABEL_KEYS[tab]}`)}
                   </button>
@@ -1194,7 +1306,11 @@ export default function Library() {
                 <button
                   type="button"
                   onClick={activeTab === 'Subscribed'
-                    ? () => navigate(meLibrarySource ? '/library/manage?source=me' : '/library/manage')
+                    ? () => navigate(
+                      meLibrarySource
+                        ? '/library/manage?source=me'
+                        : '/library/manage'
+                    )
                     : handleClear}
                   disabled={clearing || offline}
                   className={`shrink-0 pb-3 text-[13px] font-semibold transition ${offline ? 'cursor-not-allowed opacity-40' : ''}`}
@@ -1205,7 +1321,10 @@ export default function Library() {
               ) : null}
             </div>
 
-            <p className="pb-4 pt-2 text-[12px] sm:text-[13px]" style={{ color: 'var(--shadow-text-secondary)' }}>
+            <p
+              className="pb-4 pt-2 text-[12px] sm:text-[13px]"
+              style={{ color: 'var(--shadow-text-secondary)' }}
+            >
               {subtitle}
             </p>
 
@@ -1215,7 +1334,8 @@ export default function Library() {
                   const selected = type === activeType
                   const key = type === 'Chat Story' ? 'chat_story' : type.toLowerCase()
                   const count = activeTab === 'Subscribed' && unreadCounts
-                    ? Math.max(0, Number(unreadCounts[key] || 0)) : null
+                    ? Math.max(0, Number(unreadCounts[key] || 0))
+                    : null
                   return (
                     <button
                       key={type}
@@ -1223,10 +1343,18 @@ export default function Library() {
                       onClick={() => setActiveType(type)}
                       className="shrink-0 rounded-full border px-4 py-1.5 text-[12px] font-bold transition-colors"
                       style={{
-                        background: selected ? 'var(--shadow-text-primary)' : 'var(--shadow-bg-soft)',
-                        borderColor: selected ? 'var(--shadow-text-primary)' : 'var(--shadow-border)',
-                        color: selected ? 'var(--shadow-bg-page)' : 'var(--shadow-text-secondary)',
-                        boxShadow: selected ? 'var(--shadow-shadow)' : 'none',
+                        background: selected
+                          ? 'var(--shadow-text-primary)'
+                          : 'var(--shadow-bg-soft)',
+                        borderColor: selected
+                          ? 'var(--shadow-text-primary)'
+                          : 'var(--shadow-border)',
+                        color: selected
+                          ? 'var(--shadow-bg-page)'
+                          : 'var(--shadow-text-secondary)',
+                        boxShadow: selected
+                          ? 'var(--shadow-shadow)'
+                          : 'none',
                       }}
                     >
                       {t(`libraryPage.${TYPE_LABEL_KEYS[type]}`)}
@@ -1270,7 +1398,10 @@ export default function Library() {
                       }
                     }}
                     className="shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-extrabold"
-                    style={{ borderColor: 'var(--shadow-danger)', color: 'var(--shadow-danger)' }}
+                    style={{
+                      borderColor: 'var(--shadow-danger)',
+                      color: 'var(--shadow-danger)',
+                    }}
                   >
                     {t('libraryPage.retry')}
                   </button>
@@ -1320,8 +1451,13 @@ export default function Library() {
 
               <section className="pt-7">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-[20px] font-extrabold tracking-tight" style={{ color: 'var(--shadow-text-primary)' }}>
-                    {activeTab === 'Subscribed' ? t('libraryPage.yourSubscriptions') : t('libraryPage.yourLibrary')}
+                  <h2
+                    className="text-[20px] font-extrabold tracking-tight"
+                    style={{ color: 'var(--shadow-text-primary)' }}
+                  >
+                    {activeTab === 'Subscribed'
+                      ? t('libraryPage.yourSubscriptions')
+                      : t('libraryPage.yourLibrary')}
                   </h2>
                 </div>
 
@@ -1335,9 +1471,14 @@ export default function Library() {
                         offlineInfo={offlineStoryIndex[String(item?.story?.id || '')] || null}
                         onOfflineUnavailable={() => setMessage(t('libraryPage.internetRequired'))}
                       />
-                      {activeTab === 'Subscribed' && !offline && Number(item.unread_episode_count || 0) > 0 ? (
+                      {activeTab === 'Subscribed' &&
+                      !offline &&
+                      Number(item.unread_episode_count || 0) > 0 ? (
                         <div className="pointer-events-none absolute left-0 top-0 aspect-[2/3] w-full">
-                          <ReaderSubscriptionBadge unreadCount={item.unread_episode_count} />
+                          <ReaderSubscriptionBadge
+                            unreadCount={item.unread_episode_count}
+                            showUpdateLabel={item.story?.status !== 'completed'}
+                          />
                         </div>
                       ) : null}
                     </div>
@@ -1351,7 +1492,9 @@ export default function Library() {
                 title={activeTab === 'Subscribed' ? t('libraryPage.noSubscriptions') : t('libraryPage.noSavedStories')}
                 text={activeTab === 'Subscribed' ? t('libraryPage.noSubscriptionsText') : t('libraryPage.noSavedStoriesText')}
                 actionText={offline ? '' : t('libraryPage.browseStories')}
-                onAction={() => { if (!offline) navigate('/') }}
+                  onAction={() => {
+                    if (!offline) navigate('/')
+                  }}
               />
             </div>
           ) : null}
@@ -1367,7 +1510,11 @@ export default function Library() {
                   type="button"
                   onClick={() => void feed.loadMore()}
                   className="rounded-full border px-5 py-2.5 text-[12px] font-extrabold"
-                  style={{ background: 'var(--shadow-bg-elevated)', borderColor: 'var(--shadow-border)', color: 'var(--shadow-text-primary)' }}
+                  style={{
+                    background: 'var(--shadow-bg-elevated)',
+                    borderColor: 'var(--shadow-border)',
+                    color: 'var(--shadow-text-primary)',
+                  }}
                 >
                   {moreLabel}
                 </button>
