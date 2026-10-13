@@ -80,6 +80,7 @@ import AuthorStoryPayoutStatusPage from './pages/Author/AuthorStoryPayoutStatusP
 import AuthorRecentEarningsPage from './pages/Author/AuthorRecentEarningsPage'
 import AuthorTopSupportersPage from './pages/Author/AuthorTopSupportersPage'
 import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
+import { syncReaderOneSignalIdentity } from './services/readerOneSignal.service'
 
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
@@ -303,6 +304,13 @@ function LazyPage({ children }) {
 
 function AppShell() {
   const location = useLocation()
+    useEffect(() => {
+    const sync = () => { void syncReaderOneSignalIdentity().catch(() => {}) }
+    sync()
+    window.addEventListener('focus', sync)
+    window.addEventListener('storage', sync)
+    return () => ['focus', 'storage'].forEach(name => window.removeEventListener(name, sync))
+  }, [location.pathname])
   const backgroundLocation =
     location.state?.backgroundLocation?.pathname === '/discover'
       ? location.state.backgroundLocation
