@@ -31,6 +31,14 @@ function hasPushDevice() {
   }
 }
 
+function hasGrantedPushPermission() {
+  try {
+    return typeof Notification !== 'undefined' && Notification.permission === 'granted'
+  } catch {
+    return false
+  }
+}
+
 async function loadReaderOneSignal() {
   const appId = String(import.meta.env.VITE_ONESIGNAL_APP_ID || '').trim()
   if (!appId || !window.isSecureContext) return null
@@ -104,12 +112,15 @@ async function matchReaderIdentity(oneSignal, userId) {
 }
 
 export async function syncReaderOneSignalIdentity() {
-  if (!hasPushDevice() && !window.__shadowOneSignalReadyPromise) return false
+  if (!hasPushDevice() && !window.__shadowOneSignalReadyPromise && !hasGrantedPushPermission()) return false
 
   const oneSignal = await loadReaderOneSignal()
   if (!oneSignal) return false
 
   await matchReaderIdentity(oneSignal, getReaderId())
+  if (getReaderId() && oneSignal.Notifications.permission && oneSignal.User.PushSubscription.optedIn) {
+    rememberPushDevice()
+  }
   return true
 }
 
