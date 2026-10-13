@@ -5394,7 +5394,8 @@ export default function ReaderPage() {
   const unlockStatusCacheRef = useRef(new Map())
   const unlockStatusRequestRef = useRef(new Map())
   const [unlockRefreshKey, setUnlockRefreshKey] = useState(0)
-‌  const finishUnlock = (targetEpisodeId) => {
+  const finishUnlock = (targetEpisodeId) => {
+‌
   unlockStatusCacheRef.current.clear()
   unlockStatusRequestRef.current.clear()
   navigate(`/story/${storyId}/episode/${targetEpisodeId}`, {
@@ -5428,7 +5429,12 @@ export default function ReaderPage() {
         params.delete('_shadow_offline')
         const search = params.toString()
 
-        finishUnlock(targetEpisodeId)
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`
+        )
+        window.location.reload()
       } catch {
       } finally {
         window.clearTimeout(timer)
