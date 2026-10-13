@@ -5,13 +5,13 @@
   },
   "rewrites": [
     {
-      "source": "/((?!assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$).*)",
+      "source": "/((?!assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$|offline-diagnostic\\.html$).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/((?!assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$).*)",
+      "source": "/((?!assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$|offline-diagnostic\\.html$).*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -39,6 +39,15 @@
     },
     {
       "source": "/app-version.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/offline-diagnostic.html",
       "headers": [
         {
           "key": "Cache-Control",
