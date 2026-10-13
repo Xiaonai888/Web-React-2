@@ -5395,15 +5395,14 @@ export default function ReaderPage() {
   const unlockStatusRequestRef = useRef(new Map())
   const [unlockRefreshKey, setUnlockRefreshKey] = useState(0)
   const finishUnlock = (targetEpisodeId) => {
-‌
-  unlockStatusCacheRef.current.clear()
-  unlockStatusRequestRef.current.clear()
-  navigate(`/story/${storyId}/episode/${targetEpisodeId}`, {
-    replace: true,
-    state: null,
-  })
-  setUnlockRefreshKey((value) => value + 1)
-}
+    unlockStatusCacheRef.current.clear()
+    unlockStatusRequestRef.current.clear()
+    navigate(`/story/${storyId}/episode/${targetEpisodeId}`, {
+      replace: true,
+      state: null,
+    })
+    setUnlockRefreshKey((value) => value + 1)
+  }
 
 
   useEffect(() => {
