@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -41,7 +41,12 @@ registerTranslationNamespace('authorCheckout', {
     "decreaseQuantity": "Decrease quantity",
     "increaseQuantity": "Increase quantity",
     "openBuyerProfile": "Open buyer profile",
-    "goBack": "Go back"
+    "goBack": "Go back",
+    "orderSuccessful": "Order Successful!",
+    "orderSuccessMessage": "Your book order has been placed successfully. Please wait while we prepare and ship your order.",
+    "viewOrder": "View Order",
+    "backToDiscover": "Back to Discover",
+    "backToStore": "Back to Store"
   },
   "km": {
     "buyerProfile": "ព័ត៌មានអ្នកទិញ",
@@ -79,7 +84,12 @@ registerTranslationNamespace('authorCheckout', {
     "decreaseQuantity": "បន្ថយចំនួន",
     "increaseQuantity": "បង្កើនចំនួន",
     "openBuyerProfile": "បើកព័ត៌មានអ្នកទិញ",
-    "goBack": "ត្រឡប់ក្រោយ"
+    "goBack": "ត្រឡប់ក្រោយ",
+    "orderSuccessful": "ការបញ្ជាទិញបានជោគជ័យ!",
+    "orderSuccessMessage": "អ្នកបានបញ្ជាទិញសៀវភៅដោយជោគជ័យ។ សូមរង់ចាំយើងរៀបចំ និងដឹកជញ្ជូនការបញ្ជាទិញរបស់អ្នក។",
+    "viewOrder": "មើលការបញ្ជាទិញ",
+    "backToDiscover": "ត្រឡប់ទៅ Discover",
+    "backToStore": "ត្រឡប់ទៅហាង"
   },
   "zh": {
     "buyerProfile": "买家资料",
@@ -117,7 +127,12 @@ registerTranslationNamespace('authorCheckout', {
     "decreaseQuantity": "减少数量",
     "increaseQuantity": "增加数量",
     "openBuyerProfile": "打开买家资料",
-    "goBack": "返回"
+    "goBack": "返回",
+    "orderSuccessful": "订单成功！",
+    "orderSuccessMessage": "您的图书订单已成功提交。请等待我们安排备货和配送。",
+    "viewOrder": "查看订单",
+    "backToDiscover": "返回 Discover",
+    "backToStore": "返回商店"
   },
   "ja": {
     "buyerProfile": "購入者情報",
@@ -155,7 +170,12 @@ registerTranslationNamespace('authorCheckout', {
     "decreaseQuantity": "数量を減らす",
     "increaseQuantity": "数量を増やす",
     "openBuyerProfile": "購入者情報を開く",
-    "goBack": "戻る"
+    "goBack": "戻る",
+    "orderSuccessful": "ご注文が完了しました！",
+    "orderSuccessMessage": "書籍のご注文が正常に受け付けられました。発送の準備が整うまでお待ちください。",
+    "viewOrder": "注文を見る",
+    "backToDiscover": "Discover に戻る",
+    "backToStore": "ストアに戻る"
   },
   "ko": {
     "buyerProfile": "구매자 정보",
@@ -193,7 +213,12 @@ registerTranslationNamespace('authorCheckout', {
     "decreaseQuantity": "수량 줄이기",
     "increaseQuantity": "수량 늘리기",
     "openBuyerProfile": "구매자 정보 열기",
-    "goBack": "뒤로"
+    "goBack": "뒤로",
+    "orderSuccessful": "주문이 완료되었습니다!",
+    "orderSuccessMessage": "도서 주문이 성공적으로 접수되었습니다. 준비 및 배송까지 잠시 기다려 주세요.",
+    "viewOrder": "주문 보기",
+    "backToDiscover": "Discover로 돌아가기",
+    "backToStore": "스토어로 돌아가기"
   }
 })
 
@@ -205,6 +230,9 @@ const API_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
+const PAYMENT_SUCCESS_SEEN_KEY = 'shadow_author_checkout_success_seen_v1'
+const PAYMENT_CHECK_MIN_INTERVAL_MS = 15000
+const PAYMENT_CHECK_MAX_AGE_MS = 24 * 60 * 60 * 1000
 
 function getReaderToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
@@ -423,6 +451,95 @@ export default function AuthorCheckoutPage() {
   const [deliveryNote, setDeliveryNote] = useState(() => getBuyerProfile().delivery_note || '')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const [paidBookOrder, setPaidBookOrder] = useState(null)
+
+  useEffect(() => {
+    let active = true
+    let lastCheckedAt = 0
+    let requestPending = false
+    let verifiedOrderId = ''
+    const controller = new AbortController()
+
+    async function checkPayment() {
+      if (!active || requestPending || document.visibilityState === 'hidden') return
+      if (Date.now() - lastCheckedAt < PAYMENT_CHECK_MIN_INTERVAL_MS) return
+
+      let saved
+      try {
+        saved = JSON.parse(localStorage.getItem('shadow_author_current_order_payment') || 'null')
+      } catch {
+        return
+      }
+
+      const orderId = String(saved?.order?.order_id || '').trim()
+      if (verifiedOrderId === orderId) return
+      const createdAt = Date.parse(saved?.created_at || '')
+      const token = getReaderToken()
+      if (!orderId || !token || !Number.isFinite(createdAt) || Date.now() - createdAt > PAYMENT_CHECK_MAX_AGE_MS) return
+      if (localStorage.getItem(PAYMENT_SUCCESS_SEEN_KEY) === orderId) return
+
+      lastCheckedAt = Date.now()
+      requestPending = true
+
+      try {
+        const response = await fetch(`${API_URL}/api/author-store/orders/status/${encodeURIComponent(orderId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        })
+        if (!response.ok) return
+
+        const data = await response.json().catch(() => ({}))
+        const order = data.order
+        if (!active || data.ok === false || String(order?.order_id || '') !== orderId) return
+        if (String(order.payment_status || '').toLowerCase() !== 'paid') return
+
+        const orderItems = Array.isArray(order.items) ? order.items : saved.order.items || []
+        if (!orderItems.some((item) => String(item.product_type || item.type || '').toLowerCase() === 'book')) return
+
+        const purchasedItems = Array.isArray(saved.checkout_items) ? saved.checkout_items : []
+        if (purchasedItems.length) {
+          const currentItems = getCartItems()
+          const remainingItems = currentItems.filter((item) => !purchasedItems.some((purchased) =>
+            String(purchased.id) === String(item.id) && Number(purchased.quantity) === Number(item.quantity)
+          ))
+          if (remainingItems.length !== currentItems.length) saveCartItems(remainingItems)
+        }
+
+        verifiedOrderId = orderId
+        setPaidBookOrder({
+          orderId,
+          returnPath: saved.return_path === '/discover' ? '/discover' : '/store',
+        })
+      } catch (error) {
+        if (error.name === 'AbortError') return
+      } finally {
+        requestPending = false
+      }
+    }
+
+    function checkVisiblePayment() {
+      if (document.visibilityState === 'visible') void checkPayment()
+    }
+
+    void checkPayment()
+    window.addEventListener('focus', checkVisiblePayment)
+    window.addEventListener('pageshow', checkVisiblePayment)
+    document.addEventListener('visibilitychange', checkVisiblePayment)
+    return () => {
+      active = false
+      controller.abort()
+      window.removeEventListener('focus', checkVisiblePayment)
+      window.removeEventListener('pageshow', checkVisiblePayment)
+      document.removeEventListener('visibilitychange', checkVisiblePayment)
+    }
+  }, [])
+
+  function closeOrderSuccess(path) {
+    if (!paidBookOrder) return
+    localStorage.setItem(PAYMENT_SUCCESS_SEEN_KEY, paidBookOrder.orderId)
+    setPaidBookOrder(null)
+    navigate(path)
+  }
 
   const selectedCompany = DELIVERY_COMPANIES.find((company) => company.id === selectedCompanyId) || DELIVERY_COMPANIES[0]
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + Number(item.price_value || 0) * Number(item.quantity || 1), 0), [items])
@@ -548,6 +665,8 @@ export default function AuthorCheckoutPage() {
       JSON.stringify({
         order: orderData.order,
         created_at: new Date().toISOString(),
+        return_path: items.some((item) => item.discover_promotion_rotation_key) ? '/discover' : '/store',
+        checkout_items: items.map((item) => ({ id: item.id, quantity: item.quantity || 1 })),
       })
     )
 
@@ -556,7 +675,7 @@ export default function AuthorCheckoutPage() {
       orderData.order.deeplink ||
       FALLBACK_PAYWAY_LINK
 
-    window.location.replace(paywayUrl)
+    window.location.assign(paywayUrl)
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
   } finally {
@@ -746,6 +865,43 @@ export default function AuthorCheckoutPage() {
           
         </div>
       </footer>
+
+      {paidBookOrder ? (
+        <div
+          className="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 px-5"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="author-order-success-title"
+        >
+          <div className="w-full max-w-[380px] rounded-[26px] bg-[var(--shadow-bg-surface)] px-6 pb-6 pt-7 text-center shadow-2xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f2] text-[#FE526E]">
+              <i className="fa-solid fa-check text-[26px]" aria-hidden="true" />
+            </div>
+            <h2 id="author-order-success-title" className="mt-4 text-[20px] font-bold text-[var(--shadow-text-primary)]">
+              {t('authorCheckout.orderSuccessful')}
+            </h2>
+            <p className="mt-3 text-[13px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
+              {t('authorCheckout.orderSuccessMessage')}
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => closeOrderSuccess('/author/orders')}
+                className="h-12 w-full rounded-full bg-[#FE526E] text-[14px] font-medium text-white transition active:scale-[0.98]"
+              >
+                {t('authorCheckout.viewOrder')}
+              </button>
+              <button
+                type="button"
+                onClick={() => closeOrderSuccess(paidBookOrder.returnPath)}
+                className="h-12 w-full rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-medium text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
+              >
+                {t(paidBookOrder.returnPath === '/discover' ? 'authorCheckout.backToDiscover' : 'authorCheckout.backToStore')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <BuyerProfileSheet
         open={buyerOpen}
