@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ReportModal from '../ReportModal'
 import { createPortal } from 'react-dom'
+import { Share2 } from 'lucide-react'
 import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import ReactionAction from '../social/reactions/ReactionAction'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
@@ -1184,19 +1185,23 @@ function MenuButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-12 w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left transition-colors active:bg-[var(--shadow-bg-soft)] ${
+      className={`flex min-h-12 w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left font-normal transition-colors active:bg-[var(--shadow-bg-soft)] ${
         danger
           ? 'text-[#dc2626]'
           : 'text-[var(--shadow-text-primary)]'
       }`}
     >
-      <i
-        className={`${icon} w-5 shrink-0 text-center text-[17px] ${
-          danger
-            ? 'text-[#dc2626]'
-            : 'text-[var(--shadow-text-secondary)]'
-        }`}
-      />
+      {icon === 'discover-share-outline' ? (
+        <Share2 size={19} strokeWidth={2.2} className="w-5 shrink-0 text-[var(--shadow-text-secondary)]" />
+      ) : (
+        <i
+          className={`${icon} w-5 shrink-0 text-center text-[17px] ${
+            danger
+              ? 'text-[#dc2626]'
+              : 'text-[var(--shadow-text-secondary)]'
+          }`}
+        />
+      )}
       <span className="text-[15px] font-normal">
         {label}
       </span>
@@ -1258,8 +1263,8 @@ function CommentMenu({
     action?.()
   }
 
-  return (
-    <div className="fixed inset-0 z-[260] flex items-end justify-center">
+  const menu = (
+    <div className={`fixed inset-0 ${isAuthorPost ? 'z-[100000]' : 'z-[260]'} flex items-end justify-center`}>
       <button
         type="button"
         aria-label="Close comment options"
@@ -1271,7 +1276,7 @@ function CommentMenu({
         <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
         <MenuButton
-          icon="fa-solid fa-share-nodes"
+          icon={isAuthorPost ? 'discover-share-outline' : 'fa-solid fa-share-nodes'}
           label={t('commentSection.shareComment')}
           onClick={() => runAction(onShare)}
         />
@@ -1473,6 +1478,7 @@ permissions.isAuthor ? (
       </section>
     </div>
   )
+  return isAuthorPost ? createPortal(menu, document.body) : menu
 }
 
 
@@ -5186,7 +5192,7 @@ onSpoiler={(
           pageLink={getCommentShareLink(shareComment, targetType, targetId, story)}
           sheetTitle={t('commentSection.shareComment')}
           shareText={String(shareComment.text || '').slice(0, 180)}
-          zClassName="z-[500]"
+          zClassName={targetType === 'author_post' ? 'z-[100001]' : 'z-[500]'}
           onClose={() => setShareComment(null)}
         />,
         document.body
