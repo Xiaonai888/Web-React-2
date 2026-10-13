@@ -16,6 +16,7 @@ import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLan
 import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import GoogleAdBanner from '../components/ads/GoogleAdBanner'
+import { enableReaderStoryPush } from '../services/readerOneSignal.service'
 
 registerTranslationNamespace('storyDetailPage', {
   en: {
@@ -874,6 +875,9 @@ useEffect(() => {
     const next = !subscribed
     setSubscribed(next)
     setSavingCollection(true)
+    if (next) {
+      void enableReaderStoryPush().catch(() => {})
+    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/reader/subscriptions/${realStoryId}`, {
