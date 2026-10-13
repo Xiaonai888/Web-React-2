@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useGenreAutoLoad from './useGenreAutoLoad'
+import { isReaderOffline } from '../utils/readerOfflineControl'
 import {
   loadReaderLibraryFeedCache,
   saveReaderLibraryFeedCache,
@@ -40,6 +41,20 @@ function mergeUnique(previous, added) {
   })
 }
 
+function normalizeItem(item) {
+  const count = Math.max(0, Math.floor(Number(item?.unread_episode_count) || 0))
+  return {
+    ...item,
+    unread_episode_count: count,
+    story: { ...(item?.story || {}), unread_episode_count: count },
+  }
+}
+
+function cachedCounts(params) {
+  if (params.tab !== 'subscribed') return null
+  return loadReaderLibraryFeedCache({ ...params, type: 'all' })?.unreadStoryCounts || null
+}
+
 export default function useReaderLibraryFeed({
   accountId,
   tab = 'subscribed',
@@ -65,9 +80,9 @@ export default function useReaderLibraryFeed({
   }, [])
 
   const loadPage = useCallback(async ({ append = false, background = false } = {}) => {
-    if (!enabled || !params.accountId || requestRef.current) return false
+    if (!enabled || !params.accountId || requestRef.current || isReaderOffline()) return false
     const token = getToken()
-    if (!token || (typeof navigator !== 'undefined' && !navigator.onLine)) return false
+    if (!token) return false
     const current = feedRef.current
     const cursor = append ? current.nextCursor : null
     if (append && (!current.hasMore || !cursor)) return false
@@ -88,7 +103,8 @@ export default function useReaderLibraryFeed({
       if (!append && normalizedTab === 'subscribed' && normalizedType === 'all') {
         query.set('include_counts', '1')
       }
-      const response = await fetch(`${API_BASE_URL}/api/reader/library-feed?${query}`, {
+
+      const response = await fetch(`${API_BASE_URL}/api/reader/library/feed?${query.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
         signal: controller.signal,
@@ -99,13 +115,14 @@ export default function useReaderLibraryFeed({
       }
       if (controller.signal.aborted || activeKeyRef.current !== requestKey) return false
 
-      const newItems = Array.isArray(data.items) ? data.items : []
-      const last = feedRef.current
+      const received = Array.isArray(data.items) ? data.items.slice(0, 9).map(normalizeItem) : []
+      const previous = feedRef.current
+      const nextCursor = data.pagination?.next_cursor || null
       const next = {
-        items: append ? mergeUnique(last.items, newItems) : newItems,
-        hasMore: Boolean(data.pagination?.has_more),
-        nextCursor: data.pagination?.next_cursor || null,
-        unreadStoryCounts: data.unread_story_counts || last.unreadStoryCounts || null,
+        items: append ? mergeUnique(previous.items, received) : received,
+        hasMore: Boolean(data.pagination?.has_more && nextCursor && nextCursor !== cursor),
+        nextCursor: nextCursor && nextCursor !== cursor ? nextCursor : null,
+        unreadStoryCounts: data.unread_story_counts || previous.unreadStoryCounts || cachedCounts(params),
         loading: false,
         loadingMore: false,
         error: '',
@@ -131,23 +148,22 @@ export default function useReaderLibraryFeed({
     activeKeyRef.current = key
     requestRef.current?.abort()
     requestRef.current = null
-    if (!enabled || !params.accountId) {
-      publish(EMPTY)
-      return undefined
-    }
 
-    const cached = loadReaderLibraryFeedCache(params)
+    const cached = params.accountId ? loadReaderLibraryFeedCache(params) : null
     const next = cached ? {
-      items: cached.items,
+      items: cached.items.map(normalizeItem),
       hasMore: cached.hasMore,
       nextCursor: cached.nextCursor,
-      unreadStoryCounts: cached.unreadStoryCounts || null,
+      unreadStoryCounts: cached.unreadStoryCounts || cachedCounts(params),
       loading: false,
       loadingMore: false,
       error: '',
-    } : EMPTY
+    } : { ...EMPTY, unreadStoryCounts: cachedCounts(params) }
     publish(next)
-    if (!cached?.isFresh) void loadPage({ background: Boolean(cached) })
+
+    if (enabled && params.accountId && !cached?.isFresh && !isReaderOffline()) {
+      void loadPage({ background: Boolean(cached) })
+    }
 
     return () => {
       requestRef.current?.abort()
@@ -163,6 +179,7 @@ export default function useReaderLibraryFeed({
   }, [loadPage])
 
   useEffect(() => {
+    if (!enabled) return undefined
     const onInvalidated = (event) => {
       if (String(event.detail?.accountId || '') !== params.accountId) return
       if (event.detail?.tab && event.detail.tab !== normalizedTab) return
@@ -170,11 +187,11 @@ export default function useReaderLibraryFeed({
     }
     window.addEventListener('shadow-reader-library-feed-invalidated', onInvalidated)
     return () => window.removeEventListener('shadow-reader-library-feed-invalidated', onInvalidated)
-  }, [params.accountId, normalizedTab, refresh])
+  }, [enabled, params.accountId, normalizedTab, refresh])
 
   const { sentinelRef, showManualLoad } = useGenreAutoLoad({
     resetKey: key,
-    hasMore: feed.hasMore,
+    hasMore: enabled && feed.hasMore,
     loading: feed.loading,
     loadingMore: feed.loadingMore,
     loadMore,
