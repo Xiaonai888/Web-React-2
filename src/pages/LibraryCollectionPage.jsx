@@ -9,7 +9,7 @@ import WebPdfReader from '../components/library/WebPdfReader'
 
 registerTranslationNamespace('libraryCollection', {
   en: {
-    back: 'Back to Library', purchased: 'Purchased', downloads: 'Downloads',
+    back: 'Back to Library', backToDiscover: 'Back to Discover', purchased: 'Purchased', downloads: 'Downloads',
     purchasedSubtitle: 'Your purchased PDF and eBooks', downloadsSubtitle: 'Stories saved on this device',
     all: 'All', download: 'Download', readOnline: 'Read Online', both: 'Both',
     novel: 'Novel', manga: 'Manga', chatStory: 'Chat Story',
@@ -20,7 +20,7 @@ registerTranslationNamespace('libraryCollection', {
     read: 'Read online', downloadFile: 'Download file',
   },
   km: {
-    back: 'ត្រឡប់ទៅ Library', purchased: 'បានទិញ', downloads: 'បានទាញយក',
+    back: 'ត្រឡប់ទៅ Library', backToDiscover: 'ត្រឡប់ទៅ Discover', purchased: 'បានទិញ', downloads: 'បានទាញយក',
     purchasedSubtitle: 'PDF និង eBook ដែលអ្នកបានទិញ', downloadsSubtitle: 'រឿងដែលបានរក្សាទុកលើឧបករណ៍នេះ',
     all: 'ទាំងអស់', download: 'ទាញយក', readOnline: 'អាន Online', both: 'ទាំងពីរ',
     novel: 'ប្រលោមលោក', manga: 'Manga', chatStory: 'Chat Story',
@@ -31,7 +31,7 @@ registerTranslationNamespace('libraryCollection', {
     read: 'អាន Online', downloadFile: 'ទាញយកឯកសារ',
   },
   zh: {
-    back: '返回书库', purchased: '已购买', downloads: '已下载',
+    back: '返回书库', backToDiscover: '返回发现', purchased: '已购买', downloads: '已下载',
     purchasedSubtitle: '您购买的 PDF 和电子书', downloadsSubtitle: '保存在此设备上的作品',
     all: '全部', download: '下载', readOnline: '在线阅读', both: '两者皆可',
     novel: '小说', manga: '漫画', chatStory: '聊天故事',
@@ -42,7 +42,7 @@ registerTranslationNamespace('libraryCollection', {
     read: '在线阅读', downloadFile: '下载文件',
   },
   ja: {
-    back: 'ライブラリに戻る', purchased: '購入済み', downloads: 'ダウンロード',
+    back: 'ライブラリに戻る', backToDiscover: 'Discoverに戻る', purchased: '購入済み', downloads: 'ダウンロード',
     purchasedSubtitle: '購入した PDF と電子書籍', downloadsSubtitle: 'この端末に保存した作品',
     all: 'すべて', download: 'ダウンロード', readOnline: 'オンラインで読む', both: '両方',
     novel: '小説', manga: 'マンガ', chatStory: 'チャットストーリー',
@@ -53,7 +53,7 @@ registerTranslationNamespace('libraryCollection', {
     read: 'オンラインで読む', downloadFile: 'ファイルをダウンロード',
   },
   ko: {
-    back: '라이브러리로 돌아가기', purchased: '구매 내역', downloads: '다운로드',
+    back: '라이브러리로 돌아가기', backToDiscover: 'Discover로 돌아가기', purchased: '구매 내역', downloads: '다운로드',
     purchasedSubtitle: '구매한 PDF 및 전자책', downloadsSubtitle: '이 기기에 저장된 작품',
     all: '전체', download: '다운로드', readOnline: '온라인 읽기', both: '둘 다',
     novel: '소설', manga: '만화', chatStory: '채팅 스토리',
@@ -297,6 +297,80 @@ export default function LibraryCollectionPage() {
             {filtered.map((item) => purchased ? <PurchaseCard key={item.id} item={item} t={t} token={token} onRead={(id) => navigate(`/library/collection/purchased?${source}read=${encodeURIComponent(id)}`)} /> : <DownloadCard key={item.id} item={item} t={t} onOpen={() => navigate(`/library/manage/offline-downloads?storyId=${encodeURIComponent(item.id)}`)} />)}
           </div> : <div className="mt-5 flex flex-col items-center rounded-3xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] px-5 py-10 text-center text-[var(--shadow-text-secondary)]"><FolderOpen size={28} /><p className="mt-3 text-sm font-semibold">{t(`libraryCollection.${purchased ? 'noPurchases' : 'noDownloads'}`)}</p></div>}
         </>}
+      </main>
+    </div>
+  )
+}
+
+export function DiscoverPdfReaderPage() {
+  const { productId } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { t } = useDisplayTranslation()
+  const title = typeof location.state?.title === 'string' && location.state.title.trim()
+    ? location.state.title.trim()
+    : 'PDF'
+  const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+  const [reader, setReader] = useState({ loading: true, blob: null, error: '' })
+
+  useEffect(() => {
+    const controller = new AbortController()
+    let active = true
+    setReader({ loading: true, blob: null, error: '' })
+
+    if (!productId || !token) {
+      setReader({ loading: false, blob: null, error: token ? 'fileNotReady' : 'signIn' })
+      return () => { controller.abort() }
+    }
+
+    async function openPdf() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/${encodeURIComponent(productId)}/pdf?mode=read`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        if (!response.ok) throw new Error('fileNotReady')
+        const pdf = await response.blob()
+        if (!pdf.size || !pdf.type.toLowerCase().startsWith('application/pdf')) throw new Error('fileNotReady')
+        if (active) setReader({ loading: false, blob: pdf, error: '' })
+      } catch (reason) {
+        if (active && reason.name !== 'AbortError') {
+          setReader({ loading: false, blob: null, error: 'fileNotReady' })
+        }
+      }
+    }
+
+    void openPdf()
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [productId, token])
+
+  return (
+    <div className="app-page min-h-screen pb-[88px]">
+      <header className="app-nav sticky top-0 z-40 border-b border-[var(--shadow-border)]">
+        <div className="flex h-14 items-center gap-3 px-4">
+          <button
+            type="button"
+            onClick={() => navigate('/discover', { replace: true })}
+            aria-label={t('libraryCollection.backToDiscover')}
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <h1 className="min-w-0 flex-1 truncate text-[16px] font-bold text-[var(--shadow-text-primary)]">{title}</h1>
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-[900px] px-4 pb-8 pt-5 sm:px-5">
+        {reader.loading ? (
+          <p role="status" className="text-sm text-[var(--shadow-text-secondary)]">{t('libraryCollection.loading')}</p>
+        ) : reader.error ? (
+          <p role="alert" className="text-sm text-[var(--shadow-warning)]">{t(`libraryCollection.${reader.error}`)}</p>
+        ) : reader.blob ? (
+          <WebPdfReader blob={reader.blob} title={title} />
+        ) : null}
       </main>
     </div>
   )
