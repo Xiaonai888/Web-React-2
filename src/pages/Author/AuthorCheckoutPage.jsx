@@ -49,7 +49,19 @@ registerTranslationNamespace('authorCheckout', {
     "backToStore": "Back to Store",
     "pdfPurchaseSuccessful": "Purchase Successful!",
     "pdfPurchaseSuccessMessage": "Your PDF is unlocked and ready to read.",
-    "readNow": "Read Now"
+    "readNow": "Read Now",
+    "paymentTitle": "Pay with ABA PayWay",
+    "paymentHelp": "Scan the QR code with your bank app, or open ABA on your phone. After paying, return here and check your payment status.",
+    "openABA": "Open ABA Pay",
+    "checkPayment": "I Paid · Check Payment",
+    "checkingPayment": "Checking payment...",
+    "paymentPending": "Payment has not been confirmed yet. Please try again after paying.",
+    "paymentUnavailable": "ABA payment is not available for this order. Please try again later.",
+    "paymentExpired": "The payment QR has expired. Check your payment first, then close this window to create a new order.",
+    "paymentClose": "Close payment window",
+    "paymentExpires": "Payment time left",
+    "paymentOrderId": "Order ID",
+    "pdfUnlockFailed": "PDF payment was received, but the file is not unlocked yet. Please contact support if this continues."
   },
   "km": {
     "buyerProfile": "ព័ត៌មានអ្នកទិញ",
@@ -95,7 +107,19 @@ registerTranslationNamespace('authorCheckout', {
     "backToStore": "ត្រឡប់ទៅហាង",
     "pdfPurchaseSuccessful": "ការទិញបានជោគជ័យ!",
     "pdfPurchaseSuccessMessage": "PDF របស់អ្នកបានដោះសោ និងអាចអានបានហើយ។",
-    "readNow": "អានឥឡូវនេះ"
+    "readNow": "អានឥឡូវនេះ",
+    "paymentTitle": "ទូទាត់តាម ABA PayWay",
+    "paymentHelp": "ស្កេន QR ដោយកម្មវិធីធនាគារ ឬបើក ABA លើទូរស័ព្ទ។ បន្ទាប់ពីទូទាត់ សូមត្រឡប់មកពិនិត្យស្ថានភាព។",
+    "openABA": "បើក ABA Pay",
+    "checkPayment": "បានបង់ហើយ · ពិនិត្យការទូទាត់",
+    "checkingPayment": "កំពុងផ្ទៀងផ្ទាត់...",
+    "paymentPending": "មិនទាន់មានការបញ្ជាក់ការទូទាត់ទេ។ សូមពិនិត្យម្ដងទៀតក្រោយបង់ប្រាក់។",
+    "paymentUnavailable": "មិនអាចបើកការទូទាត់ ABA បានទេ។ សូមសាកល្បងពេលក្រោយ។",
+    "paymentExpired": "QR ទូទាត់ផុតកំណត់។ សូមពិនិត្យការទូទាត់សិន រួចបិទផ្ទាំងនេះដើម្បីបង្កើត Order ថ្មី។",
+    "paymentClose": "បិទផ្ទាំងទូទាត់",
+    "paymentExpires": "ពេលនៅសល់",
+    "paymentOrderId": "លេខបញ្ជាទិញ",
+    "pdfUnlockFailed": "បានទទួលការទូទាត់ PDF ប៉ុន្តែឯកសារមិនទាន់ដោះសោទេ។ ប្រសិនបើបញ្ហានៅបន្ត សូមទាក់ទងផ្នែកជំនួយ។"
   },
   "zh": {
     "buyerProfile": "买家资料",
@@ -141,7 +165,19 @@ registerTranslationNamespace('authorCheckout', {
     "backToStore": "返回商店",
     "pdfPurchaseSuccessful": "购买成功！",
     "pdfPurchaseSuccessMessage": "您的 PDF 已解锁，可以立即阅读。",
-    "readNow": "立即阅读"
+    "readNow": "立即阅读",
+    "paymentTitle": "使用 ABA PayWay 付款",
+    "paymentHelp": "使用银行应用扫描二维码，或在手机上打开 ABA。付款后返回此页面检查付款状态。",
+    "openABA": "打开 ABA Pay",
+    "checkPayment": "已付款 · 检查状态",
+    "checkingPayment": "正在检查付款...",
+    "paymentPending": "尚未确认付款，请在付款后重试。",
+    "paymentUnavailable": "当前订单无法使用 ABA 付款，请稍后重试。",
+    "paymentExpired": "付款二维码已过期。请先检查付款，再关闭此窗口创建新订单。",
+    "paymentClose": "关闭付款窗口",
+    "paymentExpires": "剩余付款时间",
+    "paymentOrderId": "订单号",
+    "pdfUnlockFailed": "已收到 PDF 付款，但文件尚未解锁。如果问题持续，请联系客服。"
   },
   "ja": {
     "buyerProfile": "購入者情報",
@@ -187,7 +223,19 @@ registerTranslationNamespace('authorCheckout', {
     "backToStore": "ストアに戻る",
     "pdfPurchaseSuccessful": "購入が完了しました！",
     "pdfPurchaseSuccessMessage": "PDF のロックが解除され、すぐに読めます。",
-    "readNow": "今すぐ読む"
+    "readNow": "今すぐ読む",
+    "paymentTitle": "ABA PayWay で支払う",
+    "paymentHelp": "銀行アプリで QR コードを読み取るか、スマートフォンで ABA を開きます。支払い後、この画面に戻り状況をご確認ください。",
+    "openABA": "ABA Pay を開く",
+    "checkPayment": "支払済み · 状況確認",
+    "checkingPayment": "支払いを確認中...",
+    "paymentPending": "まだ支払いを確認できません。お支払い後にもう一度お試しください。",
+    "paymentUnavailable": "この注文では ABA 決済を利用できません。後ほどお試しください。",
+    "paymentExpired": "決済 QR の有効期限が切れました。支払いを確認し、この画面を閉じて新しい注文を作成してください。",
+    "paymentClose": "支払い画面を閉じる",
+    "paymentExpires": "残り時間",
+    "paymentOrderId": "注文番号",
+    "pdfUnlockFailed": "PDF のお支払いは確認されましたが、ファイルはまだ解放されていません。解決しない場合はサポートにお問い合わせください。"
   },
   "ko": {
     "buyerProfile": "구매자 정보",
@@ -233,7 +281,19 @@ registerTranslationNamespace('authorCheckout', {
     "backToStore": "스토어로 돌아가기",
     "pdfPurchaseSuccessful": "구매가 완료되었습니다!",
     "pdfPurchaseSuccessMessage": "PDF 잠금이 해제되어 바로 읽을 수 있습니다.",
-    "readNow": "지금 읽기"
+    "readNow": "지금 읽기",
+    "paymentTitle": "ABA PayWay 결제",
+    "paymentHelp": "은행 앱으로 QR 코드를 스캔하거나 휴대폰에서 ABA를 실행하세요. 결제 후 돌아와 결제 상태를 확인하세요.",
+    "openABA": "ABA Pay 열기",
+    "checkPayment": "결제 완료 · 상태 확인",
+    "checkingPayment": "결제 확인 중...",
+    "paymentPending": "아직 결제가 확인되지 않았습니다. 결제 후 다시 시도하세요.",
+    "paymentUnavailable": "이 주문은 현재 ABA 결제를 사용할 수 없습니다. 나중에 다시 시도하세요.",
+    "paymentExpired": "결제 QR이 만료되었습니다. 결제 상태를 확인하고 창을 닫아 새 주문을 만드세요.",
+    "paymentClose": "결제 창 닫기",
+    "paymentExpires": "남은 결제 시간",
+    "paymentOrderId": "주문 번호",
+    "pdfUnlockFailed": "PDF 결제는 확인되었지만 아직 파일이 잠금 해제되지 않았습니다. 문제가 계속되면 고객 지원에 문의하세요."
   }
 })
 
@@ -244,10 +304,31 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
 const PAYMENT_SUCCESS_SEEN_KEY = 'shadow_author_checkout_success_seen_v1'
 const PAYMENT_CHECK_MIN_INTERVAL_MS = 15000
 const PAYMENT_CHECK_MAX_AGE_MS = 24 * 60 * 60 * 1000
+
+function currentPendingAuthorPayment() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('shadow_author_current_order_payment') || 'null')
+    const order = saved?.order
+    const expiresAt = Date.parse(order?.expires_at || '')
+    if (!order?.order_id || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null
+    if (localStorage.getItem(PAYMENT_SUCCESS_SEEN_KEY) === String(order.order_id)) return null
+    if (String(order.payment_status || '').toLowerCase() === 'paid') return null
+    return order.qr_image || order.checkout_url || order.deeplink ? order : null
+  } catch {
+    return null
+  }
+}
+
+function getPaymentQrImage(order) {
+  const raw = String(order?.qr_image || '').trim()
+  if (!raw) return ''
+  if (/^data:image\/png;base64,/i.test(raw) || /^https:\/\//i.test(raw)) return raw
+  if (/^[A-Za-z0-9+/=\s]+$/.test(raw)) return `data:image/png;base64,${raw.replace(/\s/g, '')}`
+  return ''
+}
 
 function getReaderToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
@@ -468,6 +549,21 @@ export default function AuthorCheckoutPage() {
   const [saving, setSaving] = useState(false)
   const [paidBookOrder, setPaidBookOrder] = useState(null)
   const [paidPdfOrder, setPaidPdfOrder] = useState(null)
+  const [paymentModal, setPaymentModal] = useState(currentPendingAuthorPayment)
+  const [checkingPayment, setCheckingPayment] = useState(false)
+  const [paymentMessage, setPaymentMessage] = useState('')
+  const [paymentClock, setPaymentClock] = useState(Date.now())
+
+  useEffect(() => {
+    if (!paymentModal) return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const timer = window.setInterval(() => setPaymentClock(Date.now()), 1000)
+    return () => {
+      window.clearInterval(timer)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [paymentModal?.order_id])
 
   useEffect(() => {
     let active = true
@@ -476,9 +572,10 @@ export default function AuthorCheckoutPage() {
     let verifiedOrderId = ''
     const controller = new AbortController()
 
-    async function checkPayment() {
+    async function checkPayment(force = false) {
+      const manual = force === true
       if (!active || requestPending || document.visibilityState === 'hidden') return
-      if (Date.now() - lastCheckedAt < PAYMENT_CHECK_MIN_INTERVAL_MS) return
+      if (Date.now() - lastCheckedAt < (manual ? 2500 : PAYMENT_CHECK_MIN_INTERVAL_MS)) return
 
       let saved
       try {
@@ -496,18 +593,32 @@ export default function AuthorCheckoutPage() {
 
       lastCheckedAt = Date.now()
       requestPending = true
+      if (manual) {
+        setCheckingPayment(true)
+        setPaymentMessage('')
+      }
 
       try {
         const response = await fetch(`${API_URL}/api/author-store/orders/status/${encodeURIComponent(orderId)}`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
         })
-        if (!response.ok) return
+        if (!response.ok) {
+          if (manual) setPaymentMessage(t('authorCheckout.paymentUnavailable'))
+          return
+        }
 
         const data = await response.json().catch(() => ({}))
         const order = data.order
-        if (!active || data.ok === false || String(order?.order_id || '') !== orderId) return
-        if (String(order.payment_status || '').toLowerCase() !== 'paid') return
+        if (!active) return
+        if (data.ok === false || String(order?.order_id || '') !== orderId) {
+          if (manual) setPaymentMessage(t('authorCheckout.paymentUnavailable'))
+          return
+        }
+        if (String(order.payment_status || '').toLowerCase() !== 'paid') {
+          if (manual) setPaymentMessage(t('authorCheckout.paymentPending'))
+          return
+        }
 
         const orderItems = Array.isArray(order.items) && order.items.length
           ? order.items
@@ -520,7 +631,10 @@ export default function AuthorCheckoutPage() {
         let pdfItem = null
         let pdfProductId = ''
         if (discoverPdfPurchase) {
-          if (String(order.pdf_unlock_status || '').toLowerCase() !== 'unlocked') return
+          if (String(order.pdf_unlock_status || '').toLowerCase() !== 'unlocked') {
+            if (manual) setPaymentMessage(t(String(order.pdf_unlock_status || '').toLowerCase() === 'failed' ? 'authorCheckout.pdfUnlockFailed' : 'authorCheckout.paymentPending'))
+            return
+          }
           pdfItem = orderItems[0]
           pdfProductId = String(pdfItem.product_id || '').trim()
           if (!pdfProductId) return
@@ -536,6 +650,8 @@ export default function AuthorCheckoutPage() {
         }
 
         verifiedOrderId = orderId
+        setPaymentModal(null)
+        setPaymentMessage('')
         if (discoverPdfPurchase) {
           setPaidPdfOrder({
             orderId,
@@ -550,9 +666,15 @@ export default function AuthorCheckoutPage() {
         }
       } catch (error) {
         if (error.name === 'AbortError') return
+        if (manual) setPaymentMessage(t('authorCheckout.paymentUnavailable'))
       } finally {
         requestPending = false
+        if (manual) setCheckingPayment(false)
       }
+    }
+
+    function requestPaymentCheck() {
+      void checkPayment(true)
     }
 
     function checkVisiblePayment() {
@@ -562,12 +684,14 @@ export default function AuthorCheckoutPage() {
     void checkPayment()
     window.addEventListener('focus', checkVisiblePayment)
     window.addEventListener('pageshow', checkVisiblePayment)
+    window.addEventListener('shadow-author-payment-check', requestPaymentCheck)
     document.addEventListener('visibilitychange', checkVisiblePayment)
     return () => {
       active = false
       controller.abort()
       window.removeEventListener('focus', checkVisiblePayment)
       window.removeEventListener('pageshow', checkVisiblePayment)
+      window.removeEventListener('shadow-author-payment-check', requestPaymentCheck)
       document.removeEventListener('visibilitychange', checkVisiblePayment)
     }
   }, [])
@@ -711,22 +835,24 @@ export default function AuthorCheckoutPage() {
       throw new Error(t('authorCheckout.paymentNotCreated'))
     }
 
+    const nextOrder = orderData.order
+    if (orderData.configured === false || (!nextOrder.qr_image && !nextOrder.checkout_url && !nextOrder.deeplink)) {
+      throw new Error(t('authorCheckout.paymentUnavailable'))
+    }
+
     localStorage.setItem(
       'shadow_author_current_order_payment',
       JSON.stringify({
-        order: orderData.order,
+        order: nextOrder,
         created_at: new Date().toISOString(),
         return_path: items.some((item) => item.discover_promotion_rotation_key) ? '/discover' : '/store',
         checkout_items: items.map((item) => ({ id: item.id, quantity: item.quantity || 1 })),
       })
     )
 
-    const paywayUrl =
-      orderData.order.checkout_url ||
-      orderData.order.deeplink ||
-      FALLBACK_PAYWAY_LINK
-
-    window.location.assign(paywayUrl)
+    setPaymentMessage('')
+    setPaymentModal(nextOrder)
+    setPaymentClock(Date.now())
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
   } finally {
@@ -916,6 +1042,65 @@ export default function AuthorCheckoutPage() {
           
         </div>
       </footer>
+
+
+      {paymentModal && !paidBookOrder && !paidPdfOrder ? (
+        <div className="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 px-4" role="dialog" aria-modal="true" aria-labelledby="author-payment-qr-title">
+          <div className="max-h-[92vh] w-full max-w-[410px] overflow-y-auto rounded-[26px] bg-[var(--shadow-bg-surface)] px-5 pb-6 pt-5 text-center shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="author-payment-qr-title" className="text-[18px] font-black text-[var(--shadow-text-primary)]">{t('authorCheckout.paymentTitle')}</h2>
+              <button type="button" onClick={() => setPaymentModal(null)} aria-label={t('authorCheckout.paymentClose')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]">
+                <i className="fa-solid fa-xmark text-[14px]" aria-hidden="true" />
+              </button>
+            </div>
+            <p className="mt-3 text-left text-[12px] leading-relaxed text-[var(--shadow-text-secondary)]">{t('authorCheckout.paymentHelp')}</p>
+            {getPaymentQrImage(paymentModal) ? (
+              <div className="mx-auto mt-4 flex w-fit max-w-full justify-center rounded-2xl bg-white p-3">
+                <img src={getPaymentQrImage(paymentModal)} alt={t('authorCheckout.paymentTitle')} className="max-h-[260px] max-w-[260px] object-contain" />
+              </div>
+            ) : null}
+            <p className="mt-3 break-all text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
+              {t('authorCheckout.paymentOrderId')}: {paymentModal.order_id}
+            </p>
+            {Number.isFinite(Date.parse(paymentModal.expires_at || '')) ? (
+              <p className="mt-1 text-[12px] font-bold text-[var(--shadow-text-primary)]">
+                {t('authorCheckout.paymentExpires')}: {Math.floor(Math.max(0, Math.ceil((Date.parse(paymentModal.expires_at) - paymentClock) / 1000)) / 60).toString().padStart(2, '0')}:{(Math.max(0, Math.ceil((Date.parse(paymentModal.expires_at) - paymentClock) / 1000)) % 60).toString().padStart(2, '0')}
+              </p>
+            ) : null}
+            {Date.parse(paymentModal.expires_at || '') <= paymentClock ? (
+              <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-left text-[12px] text-amber-900">{t('authorCheckout.paymentExpired')}</p>
+            ) : null}
+            {paymentMessage ? <p role="status" className="mt-3 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-left text-[12px] text-[var(--shadow-text-primary)]">{paymentMessage}</p> : null}
+            <div className="mt-5 flex flex-col gap-2.5">
+              {paymentModal.deeplink || /^https:\/\//i.test(String(paymentModal.checkout_url || '')) ? (
+                <button
+                  type="button"
+                  disabled={Date.parse(paymentModal.expires_at || '') <= paymentClock}
+                  onClick={() => {
+                    const link = String(paymentModal.deeplink || paymentModal.checkout_url || '').trim()
+                    if (/^https:\/\//i.test(link)) window.open(link, '_blank', 'noopener,noreferrer')
+                    else if (/^abamobilebank:\/\//i.test(link)) window.location.assign(link)
+                  }}
+                  className="h-12 w-full rounded-full bg-[#FE526E] text-[13px] font-black text-white disabled:opacity-40"
+                >
+                  {t('authorCheckout.openABA')}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                disabled={checkingPayment}
+                onClick={() => window.dispatchEvent(new Event('shadow-author-payment-check'))}
+                className="h-12 w-full rounded-full border border-[#FE526E] bg-[var(--shadow-bg-surface)] text-[13px] font-black text-[#FE526E] disabled:opacity-50"
+              >
+                {t(checkingPayment ? 'authorCheckout.checkingPayment' : 'authorCheckout.checkPayment')}
+              </button>
+              <button type="button" onClick={() => setPaymentModal(null)} className="h-11 w-full rounded-full border border-[var(--shadow-border)] text-[12px] font-bold text-[var(--shadow-text-secondary)]">
+                {t('authorCheckout.paymentClose')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {paidBookOrder ? (
         <div
