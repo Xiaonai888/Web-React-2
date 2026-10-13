@@ -5393,6 +5393,17 @@ export default function ReaderPage() {
   const [unlockPackageOptions, setUnlockPackageOptions] = useState([])
   const unlockStatusCacheRef = useRef(new Map())
   const unlockStatusRequestRef = useRef(new Map())
+  const [unlockRefreshKey, setUnlockRefreshKey] = useState(0)
+‌  const finishUnlock = (targetEpisodeId) => {
+  unlockStatusCacheRef.current.clear()
+  unlockStatusRequestRef.current.clear()
+  navigate(`/story/${storyId}/episode/${targetEpisodeId}`, {
+    replace: true,
+    state: null,
+  })
+  setUnlockRefreshKey((value) => value + 1)
+}
+
 
   useEffect(() => {
     let active = true
@@ -5417,12 +5428,7 @@ export default function ReaderPage() {
         params.delete('_shadow_offline')
         const search = params.toString()
 
-        window.history.replaceState(
-          window.history.state,
-          '',
-          `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`
-        )
-        window.location.reload()
+        finishUnlock(targetEpisodeId)
       } catch {
       } finally {
         window.clearTimeout(timer)
@@ -6741,7 +6747,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       }
     }
 
-    loadReader()
+        loadReader()
 
     return () => {
       ignore = true
@@ -6757,6 +6763,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     navigate,
     routeEpisodeId,
     storyId,
+    unlockRefreshKey,
   ])
 
   useEffect(() => {
@@ -7656,12 +7663,7 @@ async function handleLockedCoinUnlock(
       )
     }
 
-    window.history.replaceState(
-      window.history.state,
-      '',
-      `/story/${storyId}/episode/${targetEpisodeId}`
-    )
-    window.location.reload()
+    finishUnlock(targetEpisodeId)
   } catch (error) {
     setMessage(
       error.message === 'Failed to fetch'
@@ -7714,12 +7716,7 @@ async function handleLockedVoucherUnlock(
       )
     }
 
-    window.history.replaceState(
-      window.history.state,
-      '',
-      `/story/${storyId}/episode/${targetEpisodeId}`
-    )
-    window.location.reload()
+    finishUnlock(targetEpisodeId)
   } catch (error) {
     setMessage(
       error.message === 'Failed to fetch'
@@ -7752,12 +7749,7 @@ async function handleLockedRewardedUnlock(
       episodeId: targetEpisodeId,
     })
 
-    window.history.replaceState(
-      window.history.state,
-      '',
-      `/story/${storyId}/episode/${targetEpisodeId}`
-    )
-    window.location.reload()
+    finishUnlock(targetEpisodeId)
   } catch (error) {
     if (error?.code === 'AD_DAILY_LIMIT_REACHED') {
       await loadLockedUnlockStatus(
@@ -7835,12 +7827,7 @@ async function handleLockedDiamondUnlock(
       )
     }
 
-    window.history.replaceState(
-      window.history.state,
-      '',
-      `/story/${storyId}/episode/${targetEpisodeId}`
-    )
-    window.location.reload()
+    finishUnlock(targetEpisodeId)
   } catch (error) {
     setMessage(
       error.message === 'Failed to fetch'
