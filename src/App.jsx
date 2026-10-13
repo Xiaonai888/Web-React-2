@@ -111,6 +111,7 @@ const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMall
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const StoryBulkDownloadPage = lazy(() => import('./pages/StoryBulkDownloadPage'))
 const LibraryCollectionPage = lazy(() => import('./pages/LibraryCollectionPage'))
+const DiscoverPdfReaderPage = lazy(() => import('./pages/LibraryCollectionPage').then((module) => ({ default: module.DiscoverPdfReaderPage })))
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesdayEventPage'))
 const AuthorDaily50EventPage = lazy(() => import('./pages/Event/AuthorDaily50EventPage'))
@@ -161,6 +162,8 @@ const AuthorPostsContentLibraryPage = lazy(() =>
 )
 const AuthorPageNotificationsPage = lazy(() => import('./pages/Author/AuthorPageNotificationsPage'))
 const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
+const AuthorProfileSettingsPage = lazy(() => import('./pages/Author/AuthorProfileSettingsPage'))
+const AuthorProfileNotificationSettingsPage = lazy(() => import('./pages/Author/AuthorProfileNotificationSettingsPage'))
 const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
 const ReaderMallCartPage = lazy(() => import('./pages/ReaderMallCartPage'))
 const AuthorCheckoutPage = lazy(() => import('./pages/Author/AuthorCheckoutPage'))
@@ -378,6 +381,8 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/author/comment-protection/blocked-readers',
     '/author/comment-protection/moderation-history',
     '/author/page-settings',
+    '/author/profile-settings',
+    '/author/profile-settings/notifications',
     '/author/page-options',
     '/author/page/edit',
     '/author/page/posts',
@@ -1476,6 +1481,7 @@ const shouldShowOpeningAds =
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/library" element={<Library />} />
         <Route path="/library/collection/:section" element={<LazyPage><LibraryCollectionPage /></LazyPage>} />
+        <Route path="/discover/pdf/:productId" element={<LazyPage><DiscoverPdfReaderPage /></LazyPage>} />
         <Route path="/library/manage" element={<ManageLibraryPage />} />
         <Route path="/library/manage/:section" element={<ManageLibraryPage />} />
         <Route path="/profile/edit" element={<EditProfilePage />} />
@@ -1493,6 +1499,8 @@ const shouldShowOpeningAds =
         <Route path="/author/create" element={<CreateAuthorPage />} />
         <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
         <Route path="/author/profile" element={<AuthorProfilePage />} />
+        <Route path="/author/profile-settings" element={<LazyPage><AuthorProfileSettingsPage /></LazyPage>} />
+        <Route path="/author/profile-settings/notifications" element={<LazyPage><AuthorProfileNotificationSettingsPage /></LazyPage>} />
         <Route path="/author/insights" element={<AuthorInsightsPage />} />
         <Route path="/author/create-story" element={<CreateStoryPage />} />
         <Route path="/author/story/:storyId/chat/characters" element={<ChatStoryCharactersPage />} />
