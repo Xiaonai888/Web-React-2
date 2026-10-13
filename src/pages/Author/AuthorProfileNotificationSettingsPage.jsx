@@ -14,11 +14,9 @@ function NotificationSwitch({ checked, disabled, label, onChange }) {
       className="shrink-0 rounded-full disabled:cursor-not-allowed disabled:opacity-50"
     >
       <span className={`relative block h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
-        checked
-          ? 'bg-[#111827] shadow-[0_6px_16px_rgba(17,24,39,0.28)]'
-          : 'bg-[#D1D6DE] shadow-inner'
+        checked ? 'bg-[#111827]' : 'bg-[#D1D6DE]'
       }`}>
-        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_3px_8px_rgba(0,0,0,0.22)] transition-all duration-300 ${
+        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-all duration-300 ${
           checked ? 'left-[26px]' : 'left-1'
         }`} />
       </span>
