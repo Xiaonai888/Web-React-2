@@ -67,6 +67,7 @@ function formatDate(value, locale) {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'Asia/Phnom_Penh',
   }).format(date)
 }
 
@@ -75,7 +76,7 @@ function EpisodeRow({ episode, story, onOpenEpisode }) {
   const displayLanguage = getDisplayLanguageId() || 'en'
   const cover = episode.cover_url || story?.cover_url || ''
   const locked = episode.is_locked && Number(episode.episode_number || 0) > 5
-  const date = formatDate(episode.created_at || episode.published_at || episode.updated_at, displayLanguage)
+  const date = formatDate(episode.published_at || episode.created_at || episode.updated_at, displayLanguage)
   const likes = formatShortNumber(episode.total_likes || episode.likes_count || episode.likes || 0)
   const comments = formatShortNumber(episode.total_comments || episode.comments_count || episode.comments || 0)
 
