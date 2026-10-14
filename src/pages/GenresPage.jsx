@@ -1048,14 +1048,15 @@ export default function GenresPage() {
     }
 
     loadMoreControllerRef.current?.abort()
-        const searchTimer = setTimeout(loadBooks, query.trim() ? 450 : 0)
+    const searchTimer = setTimeout(loadBooks, query.trim() ? 450 : 0)
 
     return () => {
+      clearTimeout(searchTimer)
       ignore = true
       controller.abort()
       loadMoreControllerRef.current?.abort()
     }
-  }, [activeGenre, storySetting, serverStoryStatus])
+  }, [activeGenre, storySetting, serverStoryStatus, query])
 
     const loadMoreBooks = async () => {
     if (
@@ -1177,7 +1178,7 @@ export default function GenresPage() {
 
 
   const { sentinelRef, showManualLoad, hasAccount } = useGenreAutoLoad({
-    resetKey: [activeGenre, storySetting, serverStoryStatus, activeQuickFilter, access, type, progress].join('|'),
+    resetKey: [activeGenre, storySetting, serverStoryStatus, query.trim(), activeQuickFilter, access, type, progress].join('|'),
     hasMore,
     loading,
     loadingMore,
@@ -1329,7 +1330,7 @@ export default function GenresPage() {
             ) : null}
           </div>
 
-          {!filteredGenres.length ? (
+          {!filteredGenres.length && !loading && !filteredBooks.length ? (
             <div className="py-10 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                 <i className="fa-solid fa-layer-group text-[22px]" />
