@@ -1,4 +1,4 @@
-const PREFIX = 'shadow_reader_library_feed_v2'
+const PREFIX = 'shadow_reader_library_feed_v3'
 const MAX_ENTRIES = 20
 const MAX_PERSISTED_ITEMS = 108
 const MAX_STALE_MS = 24 * 60 * 60 * 1000
@@ -11,7 +11,7 @@ const memory = new Map()
 
 function cacheKey({ accountId, tab, type = 'all' }) {
   if (!accountId || !['recents', 'subscribed'].includes(tab)) return ''
-  if (!['all', 'novel', 'manga', 'chat_story'].includes(type)) return ''
+  if (!['all', 'novel', 'manga', 'chat_story', 'completed'].includes(type)) return ''
   return `${PREFIX}:${encodeURIComponent(String(accountId))}:${tab}:${type}`
 }
 
@@ -75,6 +75,7 @@ export function saveReaderLibraryFeedCache(params, snapshot) {
     hasMore: Boolean(snapshot.hasMore),
     nextCursor: snapshot.nextCursor || null,
     unreadStoryCounts: snapshot.unreadStoryCounts || null,
+    ongoingSubscriptionCount: Number(snapshot.ongoingSubscriptionCount || 0),
     savedAt: Date.now(),
   }
   memory.delete(key)
