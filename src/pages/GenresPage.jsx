@@ -933,6 +933,7 @@ export default function GenresPage() {
         params: {
           page: 'genres',
           genre: activeGenre,
+          search: query.trim(),
           story_setting: storySetting,
           sort: 'updated',
           limit: 9,
