@@ -17,6 +17,7 @@ const EMPTY = {
   hasMore: false,
   nextCursor: null,
   unreadStoryCounts: null,
+  ongoingSubscriptionCount: 0,
   loading: false,
   loadingMore: false,
   error: '',
@@ -28,7 +29,7 @@ function getToken() {
 
 function typeKey(value) {
   const normalized = String(value || 'all').trim().toLowerCase().replace(/[\s-]+/g, '_')
-  return ['all', 'novel', 'manga', 'chat_story'].includes(normalized) ? normalized : 'all'
+  return ['all', 'novel', 'manga', 'chat_story', 'completed'].includes(normalized) ? normalized : 'all'
 }
 
 function mergeUnique(previous, added) {
@@ -123,6 +124,9 @@ export default function useReaderLibraryFeed({
         hasMore: Boolean(data.pagination?.has_more && nextCursor && nextCursor !== cursor),
         nextCursor: nextCursor && nextCursor !== cursor ? nextCursor : null,
         unreadStoryCounts: data.unread_story_counts || previous.unreadStoryCounts || cachedCounts(params),
+        ongoingSubscriptionCount: typeof data.ongoing_subscription_count === 'number'
+          ? data.ongoing_subscription_count
+          : previous.ongoingSubscriptionCount || loadReaderLibraryFeedCache({ ...params, type: 'all' })?.ongoingSubscriptionCount || 0,
         loading: false,
         loadingMore: false,
         error: '',
@@ -155,10 +159,12 @@ export default function useReaderLibraryFeed({
       hasMore: cached.hasMore,
       nextCursor: cached.nextCursor,
       unreadStoryCounts: cached.unreadStoryCounts || cachedCounts(params),
+      ongoingSubscriptionCount: cached.ongoingSubscriptionCount || 0,
       loading: false,
       loadingMore: false,
       error: '',
-    } : { ...EMPTY, unreadStoryCounts: cachedCounts(params) }
+    } : { ...EMPTY, unreadStoryCounts: cachedCounts(params),
+      ongoingSubscriptionCount: loadReaderLibraryFeedCache({ ...params, type: 'all' })?.ongoingSubscriptionCount || 0 }
     publish(next)
 
     if (enabled && params.accountId && !cached?.isFresh && !isReaderOffline()) {
