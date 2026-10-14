@@ -987,6 +987,7 @@ export default function GenresPage() {
         }
 
         if (serverStoryStatus) params.set('story_status', serverStoryStatus)
+        if (query.trim()) params.set('search', query.trim())
 
         const response = await fetch(
           `${API_BASE_URL}/api/public/stories?${params.toString()}`,
@@ -1047,7 +1048,7 @@ export default function GenresPage() {
     }
 
     loadMoreControllerRef.current?.abort()
-    loadBooks()
+        const searchTimer = setTimeout(loadBooks, query.trim() ? 450 : 0)
 
     return () => {
       ignore = true
@@ -1093,6 +1094,7 @@ export default function GenresPage() {
       }
 
       if (serverStoryStatus) params.set('story_status', serverStoryStatus)
+      if (query.trim()) params.set('search', query.trim())
 
       const response = await fetch(
         `${API_BASE_URL}/api/public/stories?${params.toString()}`,
@@ -1138,6 +1140,7 @@ export default function GenresPage() {
         params: {
           page: 'genres',
           genre: activeGenre,
+          search: query.trim(),
           story_setting: storySetting,
           sort: 'updated',
           limit: 9,
