@@ -14,7 +14,7 @@ export default function ReaderSubscriptionBadge({
         </span>
       ) : null}
       <span
-        className="pointer-events-none absolute bottom-[5px] right-[5px] z-20 w-[42px]"
+        className="pointer-events-none absolute bottom-[-5px] right-[5px] z-20 w-[42px]"
         style={{ transform: 'rotate(7deg)' }}
         aria-label={`${label}: ${count}`}
         role="img"
