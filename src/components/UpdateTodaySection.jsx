@@ -158,7 +158,7 @@ function LoadingSkeleton({ t, storyType }) {
           </div>
 
           <Link
-            to={`/update-today?story_type=${encodeURIComponent(storyType || 'novel')}`}
+            to={storyType === 'manga' ? '/update-today?story_type=manga' : '/update-today'}
             className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('updateTodaySection.viewAll')}
           >
@@ -298,7 +298,7 @@ export default function UpdateTodaySection({
           </div>
 
           <Link
-            to={`/update-today?story_type=${encodeURIComponent(storyType || 'novel')}`}
+            to={storyType === 'manga' ? '/update-today?story_type=manga' : '/update-today'}
             className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]"
             aria-label={t('updateTodaySection.viewAll')}
           >
