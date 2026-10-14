@@ -145,7 +145,7 @@ function SmallBookCard({ book, t }) {
   )
 }
 
-function LoadingSkeleton({ t }) {
+function LoadingSkeleton({ t, storyType }) {
   return (
     <section className="px-4 pb-8 pt-0 sm:px-5 lg:px-6">
       <div>
@@ -158,7 +158,7 @@ function LoadingSkeleton({ t }) {
           </div>
 
           <Link
-            to="/update-today"
+            to={`/update-today?story_type=${encodeURIComponent(storyType || 'novel')}`}
             className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('updateTodaySection.viewAll')}
           >
@@ -275,8 +275,8 @@ export default function UpdateTodaySection({
     [stories]
   )
 
-  if (loading) {
-    return <LoadingSkeleton t={t} />
+   if (loading) {
+    return <LoadingSkeleton t={t} storyType={normalizedStoryType} />
   }
 
   if (!updateBooks.length) {
@@ -298,7 +298,7 @@ export default function UpdateTodaySection({
           </div>
 
           <Link
-            to="/update-today"
+            to={`/update-today?story_type=${encodeURIComponent(storyType || 'novel')}`}
             className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-[var(--shadow-bg-soft)]"
             aria-label={t('updateTodaySection.viewAll')}
           >
