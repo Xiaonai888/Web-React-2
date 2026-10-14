@@ -1594,7 +1594,7 @@ useEffect(() => {
             </div>
 
            <div className="my-6" data-home-section="update-today">
-  <UpdateTodaySection />
+  <UpdateTodaySection storyType="novel" />
 </div>
 
 <div className="my-6" data-home-section="editor-weekly-picks">
