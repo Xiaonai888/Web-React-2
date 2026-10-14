@@ -226,8 +226,9 @@ export default function UpdateTodaySection({
         const nextStories = (Array.isArray(data.stories) ? data.stories : [])
           .filter(
             (story) =>
-              !today ||
-              String(story?.update_date || '').trim() === today
+              Boolean(today) &&
+              String(story?.update_date || '').trim() === today &&
+              Number(story?.daily_update_count || 0) > 0
           )
           .sort(
             (a, b) =>
@@ -276,6 +277,10 @@ export default function UpdateTodaySection({
 
   if (loading) {
     return <LoadingSkeleton t={t} />
+  }
+
+  if (!updateBooks.length) {
+    return null
   }
 
   return (
