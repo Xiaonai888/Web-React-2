@@ -218,10 +218,10 @@ function NotificationSwitch({ checked, disabled = false, label, onChange }) {
     >
       <span
         className={`relative block h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
-          checked
-            ? 'bg-[#111827] 
-            : 'bg-[#D1D6DE] 
-        }`}
+  checked
+    ? 'bg-[#111827]'
+    : 'bg-[#D1D6DE]'
+}`}
       >
         <span
           className={`absolute top-1 h-6 w-6 rounded-full bg-white  transition-all duration-300 ${
