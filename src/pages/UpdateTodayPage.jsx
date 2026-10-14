@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useNavigationType, useSearchParams } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 import { getStoryBadge } from '../utils/storyBadge'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -192,32 +192,10 @@ function normalizeStory(story, index = 0) {
   }
 }
 
-function getBestAvailableDay(stories, preferredDay) {
-  const availableDays = new Set(
-    stories
-      .map((story) => story.dayKey)
-      .filter((day) => day !== null)
-  )
-
-  if (availableDays.has(preferredDay)) {
-    return preferredDay
-  }
-
-  const startDay =
-    Number.isInteger(preferredDay)
-      ? preferredDay
-      : 0
-
-  for (let offset = 0; offset < 7; offset += 1) {
-    const day =
-      (startDay - offset + 7) % 7
-
-    if (availableDays.has(day)) {
-      return day
-    }
-  }
-
-  return preferredDay
+function getCambodiaTodayDateKey() {
+  return new Date(Date.now() + 7 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10)
 }
 
 const updateMarkerUI = {
@@ -352,11 +330,16 @@ function LoadingGrid() {
 
 export default function UpdateTodayPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const navigationType = useNavigationType()
+  const storyType = searchParams.get('story_type') === 'manga' ? 'manga' : ''
   const { t } = useDisplayTranslation()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
-  const [activeDay, setActiveDay] = useState(null)
+  const [activeDay, setActiveDay] = useState(
+    () => getDayKeyFromDateKey(getCambodiaTodayDateKey())
+  )
   const [requestVersion, setRequestVersion] = useState(0)
 
   useEffect(() => {
@@ -374,27 +357,29 @@ export default function UpdateTodayPage() {
         return
       }
 
+      const todayKey = /^\d{4}-\d{2}-\d{2}$/.test(String(todayDateKey || ''))
+        ? String(todayDateKey)
+        : getCambodiaTodayDateKey()
+      const todayTimestamp = Date.parse(`${todayKey}T00:00:00Z`)
       const normalizedStories = (
         Array.isArray(sourceStories)
           ? sourceStories
           : []
-      ).map(normalizeStory)
-
-      const serverTodayDay =
-        getDayKeyFromDateKey(
-          todayDateKey
-        )
+      )
+        .filter((story) => {
+          const updateDate = String(story?.update_date || '').trim()
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(updateDate)) return false
+          const updateTimestamp = Date.parse(`${updateDate}T00:00:00Z`)
+          const dayAge = (todayTimestamp - updateTimestamp) / 86400000
+          return Number.isInteger(dayAge) &&
+            dayAge >= 0 &&
+            dayAge < 7 &&
+            Number(story?.daily_update_count || 0) > 0
+        })
+        .map(normalizeStory)
 
       setStories(normalizedStories)
-
-      setActiveDay((currentDay) =>
-        getBestAvailableDay(
-          normalizedStories,
-          serverTodayDay ??
-            currentDay ??
-            0
-        )
-      )
+      setActiveDay(getDayKeyFromDateKey(todayKey))
     }
 
     async function fetchStories() {
@@ -402,9 +387,10 @@ export default function UpdateTodayPage() {
       setErrorMessage('')
 
       try {
+        const storyTypeQuery = storyType === 'manga' ? '&story_type=manga' : ''
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/story-updates?days=7&limit_per_day=100`
+            `${API_BASE_URL}/api/public/story-updates?days=7&limit_per_day=100${storyTypeQuery}`
           ),
           {
             signal: controller.signal,
@@ -467,7 +453,7 @@ export default function UpdateTodayPage() {
       ignore = true
       controller.abort()
     }
-  }, [requestVersion])
+  }, [requestVersion, storyType])
 
   const filteredStories = useMemo(() => {
     return stories
@@ -488,11 +474,13 @@ export default function UpdateTodayPage() {
       })
   }, [activeDay, stories])
 
-    const updateTodayReturnKey = 'shadow_update_today_return_v1'
+  const updateTodayReturnKey = 'shadow_update_today_return_v1'
   const [returnPosition] = useState(() => {
+    if (navigationType !== 'POP') return null
     try {
       const saved = JSON.parse(sessionStorage.getItem(updateTodayReturnKey) || 'null')
       if (!saved || Date.now() - Number(saved.savedAt) > 30 * 60 * 1000) return null
+      if (String(saved.storyType || 'all') !== (storyType || 'all')) return null
       if (!Number.isFinite(Number(saved.scrollY)) || Number(saved.scrollY) < 0) return null
       return saved
     } catch {
@@ -508,6 +496,7 @@ export default function UpdateTodayPage() {
       try {
         sessionStorage.setItem(updateTodayReturnKey, JSON.stringify({
           day: activeDay,
+          storyType: storyType || 'all',
           scrollY: window.scrollY,
           savedAt: Date.now(),
         }))
@@ -518,7 +507,7 @@ export default function UpdateTodayPage() {
 
     document.addEventListener('click', rememberStoryPosition, true)
     return () => document.removeEventListener('click', rememberStoryPosition, true)
-  }, [activeDay])
+  }, [activeDay, storyType])
 
   useEffect(() => {
     if (!returnPosition || loading) return undefined
