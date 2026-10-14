@@ -10,6 +10,7 @@ import { getOfflineReaderAccountId } from '../utils/offlineReaderContent'
 import { listOfflineEpisodes } from '../utils/offlineReadingStorage'
 import useReaderLibraryFeed from '../hooks/useReaderLibraryFeed'
 import ReaderSubscriptionBadge from '../components/library/ReaderSubscriptionBadge'
+import { getStoryBadge } from '../utils/storyBadge'
 import { loadReaderLibraryFeedCache, invalidateReaderLibraryFeedCache } from '../utils/readerLibraryFeedCache'
 
 registerTranslationNamespace('libraryPage', {
@@ -25,7 +26,12 @@ registerTranslationNamespace('libraryPage', {
     clear: 'Clear',
     manage: 'Manage',
     edit: 'Edit',
-    recentsSubtitle: 'Stories you added to your library.',
+    recentsSubtitle: "Stories you've recently read appear here.",
+    endEpisode: 'End Ep. {{count}}',
+    recentEpisode: 'Ep. {{count}}',
+    completed: 'Completed',
+    new: 'NEW',
+    up: 'UP',
     subscribedSubtitle: 'Follow the latest updates from stories you love.',
     downloadsSubtitle: 'Your purchased books and saved stories.',
     newEpisode: 'New Ep. {{count}}',
@@ -51,7 +57,7 @@ registerTranslationNamespace('libraryPage', {
     loadSubscriptionsFailed: 'Failed to load subscriptions',
     loadDownloadsFailed: 'Failed to load downloads',
     loadLibraryFailed: 'Failed to load library',
-    clearConfirm: 'Clear all saved stories from your library?',
+    clearConfirm: 'Clear your recently read list? Your reading progress and bookmarks will be kept.',
     clearFailed: 'Failed to clear library',
     loadingLibrary: 'Loading library...',
     loginLibrary: 'Login to use your library',
@@ -63,10 +69,10 @@ registerTranslationNamespace('libraryPage', {
     seeAll: 'See All',
     noSubscriptions: 'No subscriptions yet',
     noDownloads: 'No downloads yet',
-    noSavedStories: 'No saved stories yet',
+    noSavedStories: 'No recently read stories yet',
     noSubscriptionsText: 'Tap the heart button on a story to follow its updates.',
     noDownloadsText: 'Purchased PDFs will appear here after payment.',
-    noSavedStoriesText: 'Tap the bookmark button on a story to add it to your library.',
+    noSavedStoriesText: 'Stories you start reading will appear here.',
     browseStories: 'Browse Stories',
     offlineAvailable: 'Offline • {{count}} Ep',
     internetRequired: 'Internet required',
@@ -84,7 +90,12 @@ registerTranslationNamespace('libraryPage', {
     clear: 'សម្អាត',
     manage: 'គ្រប់គ្រង',
     edit: 'កែសម្រួល',
-    recentsSubtitle: 'រឿងដែលអ្នកបានបន្ថែមទៅ Library។',
+    recentsSubtitle: 'រឿងដែលអ្នកបានអានថ្មីៗ នឹងបង្ហាញនៅទីនេះ។',
+    endEpisode: 'ចប់ Ep. {{count}}',
+    recentEpisode: 'Ep. {{count}}',
+    completed: 'រឿងចប់',
+    new: 'ថ្មី',
+    up: 'អាប់ដេត',
     subscribedSubtitle: 'តាមដាន Update ថ្មីៗពីរឿងដែលអ្នកចូលចិត្ត។',
     downloadsSubtitle: 'សៀវភៅដែលបានទិញ និងរឿងដែលបានទាញយករបស់អ្នក។',
     newEpisode: 'ភាគថ្មី {{count}}',
@@ -110,7 +121,7 @@ registerTranslationNamespace('libraryPage', {
     loadSubscriptionsFailed: 'មិនអាចផ្ទុកការតាមដានបានទេ',
     loadDownloadsFailed: 'មិនអាចផ្ទុកការទាញយកបានទេ',
     loadLibraryFailed: 'មិនអាចផ្ទុក Library បានទេ',
-    clearConfirm: 'លុបរឿងដែលបានរក្សាទុកទាំងអស់ចេញពី Library?',
+    clearConfirm: 'សម្អាតបញ្ជីរឿងដែលបានអានថ្មីៗ? Reading Progress និង Bookmark នឹងរក្សាទុកដដែល។',
     clearFailed: 'មិនអាចសម្អាត Library បានទេ',
     loadingLibrary: 'កំពុងផ្ទុក Library...',
     loginLibrary: 'Login ដើម្បីប្រើ Library',
@@ -122,10 +133,10 @@ registerTranslationNamespace('libraryPage', {
     seeAll: 'មើលទាំងអស់',
     noSubscriptions: 'មិនទាន់មានការតាមដាន',
     noDownloads: 'មិនទាន់មានការទាញយក',
-    noSavedStories: 'មិនទាន់មានរឿងដែលបានរក្សាទុក',
+    noSavedStories: 'មិនទាន់មានរឿងដែលបានអាន',
     noSubscriptionsText: 'ចុចប៊ូតុងបេះដូងលើរឿង ដើម្បីតាមដាន Update។',
     noDownloadsText: 'PDF ដែលបានទិញនឹងបង្ហាញនៅទីនេះបន្ទាប់ពីការទូទាត់។',
-    noSavedStoriesText: 'ចុចប៊ូតុង Bookmark លើរឿង ដើម្បីបន្ថែមទៅ Library។',
+    noSavedStoriesText: 'រឿងដែលអ្នកចាប់ផ្តើមអាន នឹងបង្ហាញនៅទីនេះ។',
     browseStories: 'រកមើលរឿង',
     offlineAvailable: 'Offline • {{count}} ភាគ',
     internetRequired: 'ត្រូវការអ៊ីនធឺណិត',
@@ -143,7 +154,12 @@ registerTranslationNamespace('libraryPage', {
     clear: '清除',
     manage: '管理',
     edit: '编辑',
-    recentsSubtitle: '你添加到 Library 的故事。',
+    recentsSubtitle: '你最近阅读过的作品会显示在这里。',
+    endEpisode: '完结 Ep. {{count}}',
+    recentEpisode: 'Ep. {{count}}',
+    completed: '已完结',
+    new: '新',
+    up: '更新',
     subscribedSubtitle: '关注你喜欢的故事的最新更新。',
     downloadsSubtitle: '您购买的图书和保存的作品。',
     newEpisode: '新章节 {{count}}',
@@ -169,7 +185,7 @@ registerTranslationNamespace('libraryPage', {
     loadSubscriptionsFailed: '无法加载订阅',
     loadDownloadsFailed: '无法加载下载内容',
     loadLibraryFailed: '无法加载 Library',
-    clearConfirm: '清除 Library 中所有已保存的故事？',
+    clearConfirm: '清除最近阅读记录？阅读进度和书签将保留。',
     clearFailed: '无法清除 Library',
     loadingLibrary: '正在加载 Library...',
     loginLibrary: '登录后使用 Library',
@@ -181,10 +197,10 @@ registerTranslationNamespace('libraryPage', {
     seeAll: '查看全部',
     noSubscriptions: '暂无订阅',
     noDownloads: '暂无下载',
-    noSavedStories: '暂无已保存故事',
+    noSavedStories: '暂无最近阅读的作品',
     noSubscriptionsText: '点击故事上的心形按钮即可关注更新。',
     noDownloadsText: '购买的 PDF 会在付款后显示在这里。',
-    noSavedStoriesText: '点击故事上的书签按钮即可添加到 Library。',
+    noSavedStoriesText: '开始阅读的作品会显示在这里。',
     browseStories: '浏览故事',
     offlineAvailable: '离线 • {{count}} 章',
     internetRequired: '需要互联网',
@@ -202,7 +218,12 @@ registerTranslationNamespace('libraryPage', {
     clear: 'クリア',
     manage: '管理',
     edit: '編集',
-    recentsSubtitle: 'Library に追加したストーリーです。',
+    recentsSubtitle: '最近読んだ作品がここに表示されます。',
+    endEpisode: '完結 Ep. {{count}}',
+    recentEpisode: 'Ep. {{count}}',
+    completed: '完結',
+    new: '新着',
+    up: '更新',
     subscribedSubtitle: 'お気に入りのストーリーの最新更新をフォローします。',
     downloadsSubtitle: '購入した本と保存した作品です。',
     newEpisode: '新着 Ep. {{count}}',
@@ -228,7 +249,7 @@ registerTranslationNamespace('libraryPage', {
     loadSubscriptionsFailed: '購読を読み込めませんでした',
     loadDownloadsFailed: 'ダウンロードを読み込めませんでした',
     loadLibraryFailed: 'Library を読み込めませんでした',
-    clearConfirm: 'Library の保存済みストーリーをすべて削除しますか？',
+    clearConfirm: '最近読んだ作品の一覧を消去しますか？読書の進捗とブックマークは保持されます。',
     clearFailed: 'Library をクリアできませんでした',
     loadingLibrary: 'Library を読み込み中...',
     loginLibrary: 'ログインして Library を利用',
@@ -240,10 +261,10 @@ registerTranslationNamespace('libraryPage', {
     seeAll: 'すべて見る',
     noSubscriptions: '購読はまだありません',
     noDownloads: 'ダウンロードはまだありません',
-    noSavedStories: '保存済みストーリーはまだありません',
+    noSavedStories: '最近読んだ作品はありません',
     noSubscriptionsText: 'ストーリーのハートボタンを押して更新をフォローできます。',
     noDownloadsText: '購入した PDF は支払い後にここへ表示されます。',
-    noSavedStoriesText: 'ストーリーのブックマークボタンを押して Library に追加できます。',
+    noSavedStoriesText: '読み始めた作品がここに表示されます。',
     browseStories: 'ストーリーを見る',
     offlineAvailable: 'オフライン • {{count}} 話',
     internetRequired: 'インターネットが必要です',
@@ -261,7 +282,12 @@ registerTranslationNamespace('libraryPage', {
     clear: '지우기',
     manage: '관리',
     edit: '편집',
-    recentsSubtitle: 'Library에 추가한 스토리입니다.',
+    recentsSubtitle: '최근 읽은 작품이 여기에 표시됩니다.',
+    endEpisode: '완결 Ep. {{count}}',
+    recentEpisode: 'Ep. {{count}}',
+    completed: '완결',
+    new: '신규',
+    up: '업데이트',
     subscribedSubtitle: '좋아하는 스토리의 최신 업데이트를 확인하세요.',
     downloadsSubtitle: '구매한 도서와 저장한 작품입니다.',
     newEpisode: '신규 Ep. {{count}}',
@@ -287,7 +313,7 @@ registerTranslationNamespace('libraryPage', {
     loadSubscriptionsFailed: '구독을 불러오지 못했습니다',
     loadDownloadsFailed: '다운로드를 불러오지 못했습니다',
     loadLibraryFailed: 'Library를 불러오지 못했습니다',
-    clearConfirm: 'Library에 저장된 모든 스토리를 지울까요?',
+    clearConfirm: '최근 읽은 목록을 지울까요? 읽기 진행 상황과 북마크는 유지됩니다.',
     clearFailed: 'Library를 지우지 못했습니다',
     loadingLibrary: 'Library를 불러오는 중...',
     loginLibrary: '로그인하여 Library 사용',
@@ -299,10 +325,10 @@ registerTranslationNamespace('libraryPage', {
     seeAll: '전체 보기',
     noSubscriptions: '아직 구독이 없습니다',
     noDownloads: '아직 다운로드가 없습니다',
-    noSavedStories: '아직 저장된 스토리가 없습니다',
+    noSavedStories: '최근 읽은 작품이 없습니다',
     noSubscriptionsText: '스토리의 하트 버튼을 눌러 업데이트를 구독하세요.',
     noDownloadsText: '구매한 PDF는 결제 후 여기에 표시됩니다.',
-    noSavedStoriesText: '스토리의 북마크 버튼을 눌러 Library에 추가하세요.',
+    noSavedStoriesText: '읽기 시작한 작품이 여기에 표시됩니다.',
     browseStories: '스토리 둘러보기',
     offlineAvailable: '오프라인 • {{count}}화',
     internetRequired: '인터넷 연결 필요',
@@ -333,6 +359,12 @@ const API_BASE_URL =
 const topTabs = ['Recents', 'Subscribed', 'Downloads']
 const storyTypeTabs = ['All', 'Novel', 'Chat Story', 'Manga']
 
+const storyBadgeClass = {
+  new: 'bg-[#FF4D6D] text-white',
+  up: 'bg-[#F6B800] text-[#111827]',
+  end: 'bg-[#16A34A] text-white',
+}
+
 const TOP_TAB_LABEL_KEYS = {
   Recents: 'recents',
   Subscribed: 'subscribed',
@@ -344,6 +376,7 @@ const TYPE_LABEL_KEYS = {
   Novel: 'novel',
   'Chat Story': 'chatStory',
   Manga: 'manga',
+  Completed: 'completed',
   PDF: 'pdf',
 }
 
@@ -412,8 +445,8 @@ function getSubtitle(tab, t) {
 
 function formatInfo(tab, story, t) {
   if (tab === 'Subscribed') {
-    return t('libraryPage.newEpisode', {
-      count: formatDisplayNumber(story?.unread_episode_count || 0),
+    return t(story?.status === 'completed' ? 'libraryPage.endEpisode' : 'libraryPage.newEpisode', {
+      count: formatDisplayNumber(story?.total_episodes || 0),
     })
   }
 
@@ -430,8 +463,8 @@ function formatInfo(tab, story, t) {
     return t('libraryPage.downloadOnly', { file: fileName })
   }
 
-  return t('libraryPage.savedEpisode', {
-    count: formatDisplayNumber(story?.total_episodes || 0),
+  return t('libraryPage.recentEpisode', {
+    count: formatDisplayNumber(story?.last_read_episode_number || 0),
   })
 }
 
@@ -459,7 +492,7 @@ function formatDownloadItems(downloads) {
   }))
 }
 
-const LIBRARY_SNAPSHOT_PREFIX = 'shadow_library_snapshot_v1'
+const LIBRARY_SNAPSHOT_PREFIX = 'shadow_library_snapshot_v2'
 const LIBRARY_SCROLL_PREFIX = 'shadow_reader_library_scroll_v1'
 
 function librarySnapshotKey(accountId, tab) {
@@ -482,6 +515,8 @@ function compactLibraryItems(items) {
         cover_url: item.story?.cover_url,
         main_genre: item.story?.main_genre,
         total_episodes: item.story?.total_episodes,
+        last_read_episode_number: item.story?.last_read_episode_number,
+        story_type: item.story?.story_type,
         status: item.story?.status,
         updated_at: item.story?.updated_at,
       },
@@ -758,14 +793,26 @@ function LibraryBookCard({
       className="group block min-w-0"
     >
       <div
-        className="relative overflow-hidden rounded-2xl shadow-sm"
+        className="relative overflow-hidden rounded-[8px]"
         style={{ background: 'var(--shadow-bg-soft)' }}
       >
         <div className="aspect-[2/3] overflow-hidden">
           <StoryCover story={story} className="h-full w-full" />
         </div>
 
-        {story.status === 'completed' ? <EndBadge /> : null}
+        {getStoryBadge(story) ? (
+          <span
+            className={`pointer-events-none absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${storyBadgeClass[getStoryBadge(story)]}`}
+          >
+            {t(`libraryPage.${getStoryBadge(story)}`)}
+          </span>
+        ) : null}
+        {tab === 'Subscribed' && !offlineMode && Number(item.unread_episode_count || 0) > 0 ? (
+          <ReaderSubscriptionBadge
+            unreadCount={item.unread_episode_count}
+            showUpdateLabel={false}
+          />
+        ) : null}
         {offlineMode && offlineInfo?.count ? (
           <div className="absolute right-2 top-2 rounded-full bg-black/80 px-2 py-1 text-[9px] font-extrabold text-white shadow-sm">
             {t('libraryPage.offlineAvailable', {
@@ -1133,7 +1180,6 @@ export default function Library() {
   const loadingCurrent = activeTab === 'Downloads'
     ? downloadLoading
     : !offline && feed.loading && feed.items.length === 0
-  const firstItem = filteredItems[0] || null
   const actionText = getActionText(activeTab, t)
   const subtitle = getSubtitle(activeTab, t)
   const moreLabels = {
@@ -1144,6 +1190,11 @@ export default function Library() {
     ko: '9개 더 불러오기',
   }
   const moreLabel = moreLabels[getDisplayLanguageId()] || moreLabels.en
+  const ongoingSubscriptionCount = feed.ongoingSubscriptionCount ||
+    loadReaderLibraryFeedCache({ accountId, tab: 'subscribed', type: 'all' })?.ongoingSubscriptionCount || 0
+  const visibleTypeTabs = activeTab === 'Subscribed' && ongoingSubscriptionCount >= 27
+    ? [...storyTypeTabs, 'Completed']
+    : storyTypeTabs
   const unreadCounts = feed.unreadStoryCounts ||
     loadReaderLibraryFeedCache({
       accountId,
@@ -1230,7 +1281,7 @@ export default function Library() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/reader/library/clear`,
+        `${API_BASE_URL}/api/reader/library/recents/clear`,
         {
           method: 'DELETE',
           headers: getHeaders(),
@@ -1278,7 +1329,7 @@ export default function Library() {
         }
       `}</style>
 
-      <div className="app-page min-h-screen pb-[88px]">
+      <div className="app-page min-h-screen bg-[var(--shadow-bg-surface)] pb-[88px]">
         <header className="app-nav sticky top-0 z-[60] border-b backdrop-blur-sm">
           <div className="px-4 pt-5 sm:px-5">
             <div className="flex items-end justify-between gap-4">
@@ -1334,7 +1385,7 @@ export default function Library() {
 
             {activeTab !== 'Downloads' ? (
               <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-                {storyTypeTabs.map((type) => {
+                {visibleTypeTabs.map((type) => {
                   const selected = type === activeType
                   const key = type === 'Chat Story' ? 'chat_story' : type.toLowerCase()
                   const count = activeTab === 'Subscribed' && unreadCounts
@@ -1345,21 +1396,9 @@ export default function Library() {
                       key={type}
                       type="button"
                       onClick={() => setActiveType(type)}
-                      className="shrink-0 rounded-full border px-4 py-1.5 text-[12px] font-bold transition-colors"
-                      style={{
-                        background: selected
-                          ? 'var(--shadow-text-primary)'
-                          : 'var(--shadow-bg-soft)',
-                        borderColor: selected
-                          ? 'var(--shadow-text-primary)'
-                          : 'var(--shadow-border)',
-                        color: selected
-                          ? 'var(--shadow-bg-page)'
-                          : 'var(--shadow-text-secondary)',
-                        boxShadow: selected
-                          ? 'var(--shadow-shadow)'
-                          : 'none',
-                      }}
+                      className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-medium transition-colors hover:bg-[var(--shadow-bg-soft)] ${
+                        selected ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]' : 'bg-transparent text-[var(--shadow-text-tertiary)]'
+                      }`}
                     >
                       {t(`libraryPage.${TYPE_LABEL_KEYS[type]}`)}
                       {count !== null && count > 0 ? (
@@ -1426,7 +1465,7 @@ export default function Library() {
               <div
                 className="rounded-[24px] border px-5 py-10 text-center text-[13px] font-bold"
                 style={{
-                  background: 'var(--shadow-bg-elevated)',
+                  background: 'var(--shadow-bg-surface)',
                   borderColor: 'var(--shadow-border)',
                   color: 'var(--shadow-text-secondary)',
                 }}
@@ -1444,52 +1483,21 @@ export default function Library() {
               />
             </div>
           ) : filteredItems.length ? (
-            <>
-              <ContextCard
-                item={firstItem}
-                tab={activeTab}
-                offlineMode={offline}
-                offlineInfo={offlineStoryIndex[String(firstItem?.story?.id || '')] || null}
-                onOfflineUnavailable={() => setMessage(t('libraryPage.internetRequired'))}
-              />
-
-              <section className="pt-7">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2
-                    className="text-[20px] font-extrabold tracking-tight"
-                    style={{ color: 'var(--shadow-text-primary)' }}
-                  >
-                    {activeTab === 'Subscribed'
-                      ? t('libraryPage.yourSubscriptions')
-                      : t('libraryPage.yourLibrary')}
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-                  {filteredItems.map((item) => (
-                    <div key={item.id || item.story_id} className="relative min-w-0">
-                      <LibraryBookCard
-                        item={item}
-                        tab={activeTab}
-                        offlineMode={offline}
-                        offlineInfo={offlineStoryIndex[String(item?.story?.id || '')] || null}
-                        onOfflineUnavailable={() => setMessage(t('libraryPage.internetRequired'))}
-                      />
-                      {activeTab === 'Subscribed' &&
-                      !offline &&
-                      Number(item.unread_episode_count || 0) > 0 ? (
-                        <div className="pointer-events-none absolute left-0 top-0 aspect-[2/3] w-full">
-                          <ReaderSubscriptionBadge
-                            unreadCount={item.unread_episode_count}
-                            showUpdateLabel={item.story?.status !== 'completed'}
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </>
+            <section className="pt-4">
+              <div className="grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                {filteredItems.map((item) => (
+                  <div key={item.id || item.story_id} className="relative min-w-0">
+                    <LibraryBookCard
+                      item={item}
+                      tab={activeTab}
+                      offlineMode={offline}
+                      offlineInfo={offlineStoryIndex[String(item?.story?.id || '')] || null}
+                      onOfflineUnavailable={() => setMessage(t('libraryPage.internetRequired'))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
           ) : !displayError ? (
             <div className="pt-5">
               <EmptyState
@@ -1515,7 +1523,7 @@ export default function Library() {
                   onClick={() => void feed.loadMore()}
                   className="rounded-full border px-5 py-2.5 text-[12px] font-extrabold"
                   style={{
-                    background: 'var(--shadow-bg-elevated)',
+                    background: 'var(--shadow-bg-surface)',
                     borderColor: 'var(--shadow-border)',
                     color: 'var(--shadow-text-primary)',
                   }}
