@@ -13,17 +13,34 @@ export default function ReaderSubscriptionBadge({
           UP
         </span>
       ) : null}
-      <span
-        className="pointer-events-none absolute bottom-[-5px] right-[5px] z-20 w-[42px]"
-        style={{ transform: 'rotate(7deg)' }}
+      <div
+        className="pointer-events-none absolute z-20"
+        style={{
+          width: 'min(42px, 25%)',
+          right: '3%',
+          bottom: '-2%',
+          transform: 'rotate(7deg)',
+        }}
         aria-label={`${label}: ${count}`}
         role="img"
       >
-        <img src="/assets/Icons/Arrow.webp" alt="" className="block h-auto w-full" />
-        <span className="absolute left-[68%] top-[43%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[12px] font-black leading-none text-[#ff3b30]">
+        <img
+          src="/assets/Icons/Arrow.webp"
+          alt=""
+          className="block h-auto w-full"
+        />
+        <span
+          className="absolute whitespace-nowrap font-black leading-none text-[#ff3b30]"
+          style={{
+            left: '68%',
+            top: '43%',
+            fontSize: 'clamp(8px, 1.6vw, 12px)',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
           {count >= 10 ? '9+' : `+${count}`}
         </span>
-      </span>
+      </div>
     </>
   )
 }
