@@ -79,16 +79,9 @@ function rememberRecentSave(key, signature, percent, savedAt) {
 }
 
 function enqueueProgress(pendingByStory, storyKey, current, priority = false) {
-  const pending = pendingByStory.get(storyKey) || []
-  const existingIndex = pending.findIndex((item) => item.key === current.key)
-  if (existingIndex >= 0) {
-    if (!priority) pending[existingIndex] = current
-  } else if (priority) {
-    pending.unshift(current)
-  } else {
-    pending.push(current)
-  }
-  pendingByStory.set(storyKey, pending)
+  const pending = pendingByStory.get(storyKey)
+  if (priority && pending?.length) return
+  pendingByStory.set(storyKey, [current])
 }
 
 function dequeueProgress(pendingByStory, storyKey) {
