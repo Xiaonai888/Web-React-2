@@ -279,6 +279,12 @@ registerTranslationNamespace('authorStoreManager', {
     "stockNonNegative": "Stock quantity cannot be negative.",
     "qualityRange": "Book quality must be between 1% and 100%.",
     "pdfUploadTryAgain": "PDF upload failed. Please try again.",
+    "pdfUploadedReady": "PDF uploaded successfully. Ready to create product.",
+    "pdfUploadingWait": "Wait until the PDF upload finishes.",
+    "pdfRetryUpload": "Retry PDF upload",
+    "pdfInvalidContents": "The selected file is not a valid PDF.",
+    "pdfEmptyFile": "The PDF file is empty.",
+    "pdfAttachNotConfirmed": "PDF could not be verified on the product. Please try again.",
     "saveTryAgain": "Save failed. Please try again.",
     "loadProductsUiFailed": "Failed to load products",
     "loadCategoriesUiFailed": "Failed to load categories",
@@ -565,6 +571,12 @@ registerTranslationNamespace('authorStoreManager', {
     "stockNonNegative": "ចំនួនស្តុកមិនអាចអវិជ្ជមានបានទេ។",
     "qualityRange": "គុណភាពសៀវភៅត្រូវនៅចន្លោះ 1% ដល់ 100%។",
     "pdfUploadTryAgain": "ការបង្ហោះ PDF បរាជ័យ។ សូមសាកម្តងទៀត។",
+    "pdfUploadedReady": "បង្ហោះ PDF ជោគជ័យ។ អាចបង្កើតផលិតផលបានហើយ។",
+    "pdfUploadingWait": "សូមរង់ចាំរហូតដល់ PDF បង្ហោះចប់។",
+    "pdfRetryUpload": "សាកបង្ហោះ PDF ម្តងទៀត",
+    "pdfInvalidContents": "ឯកសារដែលបានជ្រើសមិនមែនជា PDF ត្រឹមត្រូវទេ។",
+    "pdfEmptyFile": "ឯកសារ PDF ទទេ។",
+    "pdfAttachNotConfirmed": "មិនអាចផ្ទៀងផ្ទាត់ PDF ក្នុងផលិតផលបានទេ។ សូមសាកម្តងទៀត។",
     "saveTryAgain": "ការរក្សាទុកបរាជ័យ។ សូមសាកម្តងទៀត។",
     "loadProductsUiFailed": "មិនអាចផ្ទុកផលិតផលបានទេ",
     "loadCategoriesUiFailed": "មិនអាចផ្ទុកប្រភេទបានទេ",
@@ -851,6 +863,12 @@ registerTranslationNamespace('authorStoreManager', {
     "stockNonNegative": "库存数量不能为负数。",
     "qualityRange": "图书质量必须在 1% 到 100% 之间。",
     "pdfUploadTryAgain": "PDF 上传失败，请重试。",
+    "pdfUploadedReady": "PDF 上传成功，可以创建商品。",
+    "pdfUploadingWait": "请等待 PDF 上传完成。",
+    "pdfRetryUpload": "重试 PDF 上传",
+    "pdfInvalidContents": "所选文件不是有效的 PDF。",
+    "pdfEmptyFile": "PDF 文件为空。",
+    "pdfAttachNotConfirmed": "无法确认 PDF 已关联商品，请重试。",
     "saveTryAgain": "保存失败，请重试。",
     "loadProductsUiFailed": "无法加载商品",
     "loadCategoriesUiFailed": "无法加载分类",
@@ -1137,6 +1155,12 @@ registerTranslationNamespace('authorStoreManager', {
     "stockNonNegative": "在庫数をマイナスにはできません。",
     "qualityRange": "書籍品質は1%〜100%で指定してください。",
     "pdfUploadTryAgain": "PDFのアップロードに失敗しました。もう一度お試しください。",
+    "pdfUploadedReady": "PDFのアップロードが完了しました。商品を作成できます。",
+    "pdfUploadingWait": "PDFのアップロード完了までお待ちください。",
+    "pdfRetryUpload": "PDFを再アップロード",
+    "pdfInvalidContents": "選択したファイルは有効なPDFではありません。",
+    "pdfEmptyFile": "PDFファイルが空です。",
+    "pdfAttachNotConfirmed": "商品へのPDF紐付けを確認できません。もう一度お試しください。",
     "saveTryAgain": "保存に失敗しました。もう一度お試しください。",
     "loadProductsUiFailed": "商品を読み込めませんでした",
     "loadCategoriesUiFailed": "カテゴリを読み込めませんでした",
@@ -1423,6 +1447,12 @@ registerTranslationNamespace('authorStoreManager', {
     "stockNonNegative": "재고 수량은 음수가 될 수 없습니다.",
     "qualityRange": "도서 품질은 1%~100% 사이여야 합니다.",
     "pdfUploadTryAgain": "PDF 업로드에 실패했습니다. 다시 시도해 주세요.",
+    "pdfUploadedReady": "PDF 업로드가 완료되었습니다. 상품을 만들 수 있습니다.",
+    "pdfUploadingWait": "PDF 업로드가 완료될 때까지 기다려 주세요.",
+    "pdfRetryUpload": "PDF 업로드 다시 시도",
+    "pdfInvalidContents": "선택한 파일이 유효한 PDF가 아닙니다.",
+    "pdfEmptyFile": "PDF 파일이 비어 있습니다.",
+    "pdfAttachNotConfirmed": "상품에 PDF가 연결되었는지 확인할 수 없습니다. 다시 시도해 주세요.",
     "saveTryAgain": "저장에 실패했습니다. 다시 시도해 주세요.",
     "loadProductsUiFailed": "상품을 불러오지 못했습니다",
     "loadCategoriesUiFailed": "카테고리를 불러오지 못했습니다",
@@ -1685,6 +1715,25 @@ function uploadPrivatePdfFile(file, onProgress) {
     request.ontimeout = () => reject(new Error(`${storeText('uploadPdfFailed')} (Timeout)`))
     request.send(formData)
   })
+}
+
+async function discardTemporaryAuthorPdf(pdf) {
+  if (!pdf?.storage_key) return
+  const token = getAuthToken()
+  if (!token) return
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/pdfs/temporary`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ storage_key: pdf.storage_key }),
+  })
+  if (!response.ok && response.status !== 404 && response.status !== 409) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || storeText('uploadPdfFailed'))
+  }
 }
 
 async function attachPrivatePdfToProduct(productId, pdf) {
@@ -3992,6 +4041,69 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
     uploadId: 0,
     fileName: '',
   })
+  const [uploadedPdf, setUploadedPdf] = useState(null)
+  const [pdfUploadError, setPdfUploadError] = useState('')
+  const uploadedPdfRef = useRef(null)
+  const uploadSequenceRef = useRef(0)
+  const pdfFormMountedRef = useRef(true)
+  const pdfProductSavingRef = useRef(false)
+  const pdfUploading = ['uploading', 'processing', 'saving', 'verifying'].includes(pdfUploadProgress.stage)
+  const needsPdfUpload = type === 'PDF' && Boolean(pdfFile)
+  const pdfReady = Boolean(uploadedPdf?.storage_key) || Boolean(!pdfFile && productToEdit?.id && (pdfFileName || pdfFileUrl))
+
+  useEffect(() => {
+    pdfFormMountedRef.current = true
+    return () => {
+      pdfFormMountedRef.current = false
+      if (!pdfProductSavingRef.current && uploadedPdfRef.current) {
+        void discardTemporaryAuthorPdf(uploadedPdfRef.current).catch(console.error)
+      }
+    }
+  }, [])
+
+  const beginPdfUpload = async (file) => {
+    const currentUpload = ++uploadSequenceRef.current
+    const previousPdf = uploadedPdfRef.current
+    uploadedPdfRef.current = null
+    setUploadedPdf(null)
+    setPdfFile(file)
+    setPdfFileName(file.name)
+    setPdfUploadError('')
+    setPdfUploadProgress((current) => ({
+      stage: 'uploading',
+      percent: 0,
+      uploadId: current.uploadId + 1,
+      fileName: file.name,
+    }))
+    if (previousPdf) void discardTemporaryAuthorPdf(previousPdf).catch(console.error)
+
+    try {
+      if (!file.size) throw new Error(storeText('pdfEmptyFile'))
+      const header = new Uint8Array(await file.slice(0, 1024).arrayBuffer())
+      const validPdf = new TextDecoder('latin1').decode(header).includes('%PDF-')
+      if (!validPdf) throw new Error(storeText('pdfInvalidContents'))
+
+      const uploaded = await uploadPrivatePdfFile(file, (percent) => {
+        if (currentUpload !== uploadSequenceRef.current || !pdfFormMountedRef.current) return
+        setPdfUploadProgress((current) => ({ ...current, stage: percent >= 100 ? 'processing' : 'uploading', percent }))
+      })
+
+      if (!pdfFormMountedRef.current || currentUpload !== uploadSequenceRef.current) {
+        await discardTemporaryAuthorPdf(uploaded).catch(console.error)
+        return
+      }
+      uploadedPdfRef.current = uploaded
+      setUploadedPdf(uploaded)
+      setPdfUploadProgress((current) => ({ ...current, stage: 'idle', percent: 100 }))
+      onNotify?.(storeText('pdfUploadedReady'))
+    } catch (error) {
+      if (!pdfFormMountedRef.current || currentUpload !== uploadSequenceRef.current) return
+      const message = error?.message || storeText('uploadPdfFailed')
+      setPdfUploadError(message)
+      setPdfUploadProgress((current) => ({ ...current, stage: 'idle', percent: 0 }))
+      onNotify?.(message, 'error')
+    }
+  }
 
   const selectCover = (file) => {
     if (!file) return
@@ -4109,6 +4221,14 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
 const stockNumber = Number(stock || 0)
 
     if (saving) return
+    if (type === 'PDF' && !pdfReady) {
+      onNotify?.(pdfUploadError || (pdfUploading ? storeText('pdfUploadingWait') : storeText('pdfFileRequired')), 'error')
+      return
+    }
+    if (type === 'PDF' && pdfUploading) {
+      onNotify?.(storeText('pdfUploadingWait'), 'error')
+      return
+    }
 
     if (!title.trim()) {
   onNotify?.(storeText('bookTitleRequired'), 'error')
@@ -4146,28 +4266,24 @@ if (!salePrice || Number(salePrice) <= 0) {
 
     try {
       setSaving(true)
-      if (type === 'PDF' && pdfFile) {
-        setPdfUploadProgress((current) => ({
-          stage: 'saving',
-          percent: 0,
-          uploadId: current.uploadId + 1,
-          fileName: pdfFile.name,
-        }))
+      pdfProductSavingRef.current = true
+      if (type === 'PDF' && uploadedPdf?.storage_key) {
+        setPdfUploadProgress((current) => ({ ...current, stage: 'saving', percent: 100 }))
       }
 
 const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
 
 const nextGalleryImages = await uploadBookGalleryImages()
 
-const hasExistingPdf = Boolean(pdfFileUrl || pdfFileName)
+const hasExistingPdf = Boolean(productToEdit?.id && (pdfFileUrl || productToEdit?.pdfFileName))
 
-if (type === 'PDF' && !pdfFile && !hasExistingPdf) {
+if (type === 'PDF' && !uploadedPdf?.storage_key && !hasExistingPdf) {
   onNotify?.(storeText('pdfFileRequired'), 'error')
   setSaving(false)
   return
 }
 
-      await onSave({
+      const createdProduct = await onSave({
         type,
         title: title.trim(),
         authorName: authorName.trim(),
@@ -4192,20 +4308,24 @@ stock,
         deliveryNote,
         preOrder,
         pdfFile,
+        uploadedPdf,
         pdfFileName,
 pdfFileUrl,
 pageCount,
 accessRule,
       }, (stage, percent) => {
+        if (stage === 'verifying') uploadedPdfRef.current = null
         setPdfUploadProgress((current) => ({
           ...current,
           stage,
           percent: Math.max(0, Math.min(100, Number(percent) || 0)),
         }))
       })
+      if (createdProduct?.id) uploadedPdfRef.current = null
     } catch (error) {
       onNotify?.(error?.message || (type === 'PDF' && pdfFile ? storeText('pdfUploadTryAgain') : storeText('saveTryAgain')), 'error')
     } finally {
+      pdfProductSavingRef.current = false
       setSaving(false)
       setPdfUploadProgress((current) => ({ ...current, stage: 'idle' }))
     }
@@ -4460,7 +4580,9 @@ accessRule,
                 <input
                   ref={pdfInputRef}
                   type="file"
-                  accept="application/pdf"
+                  accept="application/pdf,.pdf"
+                  disabled={saving || pdfUploading}
+                  onClick={(event) => { event.currentTarget.value = '' }}
                   onChange={(event) => {
                     const file = event.target.files?.[0]
 
@@ -4473,34 +4595,41 @@ accessRule,
                       file.type === 'application/pdf' ||
                       file.name.toLowerCase().endsWith('.pdf')
 
-                    if (!isPdf) {
+                    if (!isPdf || !file.name.toLowerCase().endsWith('.pdf')) {
                       onNotify?.(storeText('validPdf'), 'error')
-                      setPdfFile(null)
                       event.target.value = ''
                       return
                     }
 
                     if (file.size > 50 * 1024 * 1024) {
                       onNotify?.(storeText('pdfSizeLimit'), 'error')
-                      setPdfFile(null)
                       event.target.value = ''
                       return
                     }
 
-                    setPdfFile(file)
-                    setPdfFileName(file.name)
+                    void beginPdfUpload(file)
                   }}
                   className="hidden"
                 />
                 <button
                   type="button"
                   onClick={() => pdfInputRef.current?.click()}
-                  className="h-11 w-full rounded-2xl border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] px-3.5 text-[12px] font-black text-[var(--shadow-text-primary)] active:scale-[0.98]"
+                  disabled={saving || pdfUploading}
+                  className="h-11 w-full rounded-2xl border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] px-3.5 text-[12px] font-black text-[var(--shadow-text-primary)] active:scale-[0.98] disabled:opacity-50"
                 >
                   {pdfFile ? storeText('replacePdf') : pdfFileName ? storeText('replaceAttachedPdf') : storeText('choosePdf')}
                 </button>
-                {pdfFile ? (
-                  <div className="mt-2 text-[11px] font-bold text-[#027a48]">{storeText('pdfSelected')}</div>
+                {uploadedPdf?.storage_key ? (
+                  <div className="mt-2 text-[11px] font-bold text-[#027a48]">{storeText('pdfUploadedReady')}</div>
+                ) : pdfUploading ? (
+                  <div className="mt-2 text-[11px] font-bold text-[var(--shadow-text-secondary)]">{storeText('pdfUploadingWait')}</div>
+                ) : pdfUploadError && pdfFile ? (
+                  <button
+                    type="button"
+                    onClick={() => void beginPdfUpload(pdfFile)}
+                    disabled={saving || pdfUploading}
+                    className="mt-2 rounded-lg px-2 py-1 text-[11px] font-bold text-[#b42318] ring-1 ring-[#fecaca] disabled:opacity-50"
+                  >{storeText('pdfRetryUpload')}</button>
                 ) : pdfFileName ? (
                   <div className="mt-2 text-[11px] font-bold text-[var(--shadow-text-secondary)]">{storeText('pdfAttached')}</div>
                 ) : null}
@@ -4562,7 +4691,7 @@ accessRule,
   <button
     type="button"
     onClick={saveProduct}
-    disabled={saving}
+    disabled={saving || (type === 'PDF' && (!pdfReady || pdfUploading))}
     className="h-12 rounded-2xl bg-[var(--shadow-text-primary)] text-[13px] font-black text-[var(--shadow-bg-surface)] active:scale-[0.98] disabled:opacity-60"
   >
     {saving ? (
@@ -4973,8 +5102,9 @@ const saveCategoryOrder = async () => {
 
   const saveProduct = async (product, onPdfUploadProgress) => {
     const isEditing = Boolean(editingProduct?.id)
-    const hasNewPrivatePdf = product.type === 'PDF' && Boolean(product.pdfFile)
+    const hasNewPrivatePdf = product.type === 'PDF' && Boolean(product.uploadedPdf?.storage_key)
     let savedProduct = null
+    let pdfAttached = false
 
     try {
       if (isEditing) {
@@ -5006,13 +5136,16 @@ const saveCategoryOrder = async () => {
       }
 
       if (hasNewPrivatePdf) {
-        onPdfUploadProgress?.('uploading', 0)
-        const privatePdf = await uploadPrivatePdfFile(product.pdfFile, (percent) => {
-          onPdfUploadProgress?.('uploading', percent)
-        })
-
         onPdfUploadProgress?.('processing', 100)
-        await attachPrivatePdfToProduct(savedProduct.id, privatePdf)
+        const attached = await attachPrivatePdfToProduct(savedProduct.id, product.uploadedPdf)
+        if (
+          String(attached?.id || '') !== String(savedProduct.id) ||
+          attached?.pdf_storage_provider !== 'r2' ||
+          attached?.pdf_file_name !== product.uploadedPdf.file_name
+        ) {
+          throw new Error(storeText('pdfAttachNotConfirmed'))
+        }
+        pdfAttached = true
         onPdfUploadProgress?.('verifying', 100)
 
         if (!isEditing && product.status !== 'Draft') {
@@ -5020,16 +5153,17 @@ const saveCategoryOrder = async () => {
             ...product,
             pdfFile: null,
             pdfFileUrl: '',
-            pdfFileName: privatePdf.file_name,
+            pdfFileName: product.uploadedPdf.file_name,
             accessRule: product.accessRule,
           })
         }
       }
 
       const nextProducts = await fetchMyProducts()
-      const finalProduct =
-        nextProducts.find((item) => item.id === savedProduct.id) ||
-        savedProduct
+      const finalProduct = nextProducts.find((item) => item.id === savedProduct.id)
+      if (!finalProduct || (hasNewPrivatePdf && finalProduct.pdfFileName !== product.uploadedPdf.file_name)) {
+        throw new Error(storeText('pdfAttachNotConfirmed'))
+      }
 
       setProducts(nextProducts)
 
@@ -5044,7 +5178,7 @@ const saveCategoryOrder = async () => {
 
       return finalProduct
     } catch (error) {
-      if (!isEditing && savedProduct?.id && hasNewPrivatePdf) {
+      if (!isEditing && savedProduct?.id && hasNewPrivatePdf && !pdfAttached) {
         try {
           await deleteStoreProduct(savedProduct.id)
         } catch {
