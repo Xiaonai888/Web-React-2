@@ -12,6 +12,8 @@ const VISITOR_ID_KEY = 'shadow_anonymous_visitor_id'
 const SESSION_ID_KEY = 'shadow_anonymous_session_id'
 const LAST_TRACK_KEY = 'shadow_anonymous_last_track'
 const EVENT_HISTORY_KEY = 'shadow_anonymous_event_history'
+const TRACK_DEDUP_MS = 30_000
+const pendingVisitorTracks = new Set()
 
 function createTrackingId(prefix) {
   const randomValue =
@@ -47,29 +49,40 @@ function hasReaderAccount() {
   }
 }
 
-function wasRecentlyTracked(path) {
+function readTrackedPaths() {
   try {
     const saved = JSON.parse(sessionStorage.getItem(LAST_TRACK_KEY) || 'null')
-
-    return Boolean(
-      saved &&
-        saved.path === path &&
-        Date.now() - Number(saved.tracked_at || 0) < 30_000
-    )
+    if (Array.isArray(saved)) return saved
+    return saved?.path ? [saved] : []
   } catch {
-    return false
+    return []
   }
+}
+
+function wasRecentlyTracked(path) {
+  const now = Date.now()
+  return readTrackedPaths().some(
+    (item) =>
+      item?.path === path &&
+      now - Number(item.tracked_at || 0) >= 0 &&
+      now - Number(item.tracked_at || 0) < TRACK_DEDUP_MS
+  )
 }
 
 function rememberTrackedPath(path) {
   try {
-    sessionStorage.setItem(
-      LAST_TRACK_KEY,
-      JSON.stringify({
-        path,
-        tracked_at: Date.now(),
-      })
-    )
+    const now = Date.now()
+    const recentPaths = readTrackedPaths()
+      .filter(
+        (item) =>
+          item?.path !== path &&
+          now - Number(item?.tracked_at || 0) >= 0 &&
+          now - Number(item?.tracked_at || 0) < TRACK_DEDUP_MS
+      )
+      .slice(-49)
+
+    recentPaths.push({ path, tracked_at: now })
+    sessionStorage.setItem(LAST_TRACK_KEY, JSON.stringify(recentPaths))
   } catch {
     return
   }
@@ -232,7 +245,6 @@ export default function VisitorTracker() {
     }
   }, [chatPresenceActive])
 
-
   useEffect(() => {
     if (!debugEnabled) setDebugState(null)
 
@@ -256,7 +268,8 @@ export default function VisitorTracker() {
 
     const visitorId = readOrCreateId(localStorage, VISITOR_ID_KEY, 'visitor')
     const sessionId = readOrCreateId(sessionStorage, SESSION_ID_KEY, 'session')
-    const controller = new AbortController()
+    const pendingKey = `${sessionId}:${path}`
+    let active = true
 
     if (debugEnabled) {
       setDebugState({
@@ -268,6 +281,19 @@ export default function VisitorTracker() {
 
     const timer = window.setTimeout(async () => {
       if (hasReaderAccount()) return
+      if (pendingVisitorTracks.has(pendingKey)) {
+        if (debugEnabled && active) {
+          setDebugState({
+            ok: false,
+            title: 'Visitor tracking already in progress',
+            message: `${API_URL}/api/visitors/track`,
+          })
+        }
+        return
+      }
+      if (!debugEnabled && wasRecentlyTracked(path)) return
+
+      pendingVisitorTracks.add(pendingKey)
 
       try {
         const response = await fetch(`${API_URL}/api/visitors/track`, {
@@ -285,7 +311,6 @@ export default function VisitorTracker() {
             debug: debugEnabled,
           }),
           keepalive: true,
-          signal: controller.signal,
         })
 
         const data = await readResponse(response)
@@ -305,7 +330,7 @@ export default function VisitorTracker() {
 
         rememberTrackedPath(path)
 
-        if (debugEnabled) {
+        if (debugEnabled && active) {
           setDebugState({
             ok: true,
             title: 'Visitor tracking succeeded',
@@ -313,23 +338,23 @@ export default function VisitorTracker() {
           })
         }
       } catch (error) {
-        if (error?.name === 'AbortError') return
-
         console.error('VISITOR TRACKING FAILED:', error)
 
-        if (debugEnabled) {
+        if (debugEnabled && active) {
           setDebugState({
             ok: false,
             title: 'Visitor tracking failed',
             message: error?.message || 'Unknown tracking error',
           })
         }
+      } finally {
+        pendingVisitorTracks.delete(pendingKey)
       }
     }, 800)
 
     return () => {
+      active = false
       window.clearTimeout(timer)
-      controller.abort()
     }
   }, [location.pathname, debugEnabled])
 
