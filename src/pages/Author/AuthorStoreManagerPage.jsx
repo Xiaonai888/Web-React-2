@@ -6,6 +6,7 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
+import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
 
 registerTranslationNamespace('authorStoreManager', {
   "en": {
@@ -1640,30 +1641,50 @@ async function uploadGalleryImage(file) {
 }
 
 
-async function uploadPrivatePdfFile(file) {
+function uploadPrivatePdfFile(file, onProgress) {
   const token = getAuthToken()
 
-  if (!token) throw new Error(storeText('pleaseLogin'))
-  if (!file) throw new Error(storeText('pdfRequired'))
+  if (!token) return Promise.reject(new Error(storeText('pleaseLogin')))
+  if (!file) return Promise.reject(new Error(storeText('pdfRequired')))
 
-  const formData = new FormData()
-  formData.append('pdf', file)
+  return new Promise((resolve, reject) => {
+    const formData = new FormData()
+    formData.append('pdf', file)
 
-  const response = await fetch(`${API_BASE_URL}/api/author-store/me/pdfs/upload-private`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
+    const request = new XMLHttpRequest()
+    request.open('POST', `${API_BASE_URL}/api/author-store/me/pdfs/upload-private`)
+    request.setRequestHeader('Authorization', `Bearer ${token}`)
+
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable || !event.total) return
+      onProgress?.(Math.min(100, Math.round(event.loaded / event.total * 100)))
+    }
+
+    request.onload = () => {
+      let data = {}
+      try {
+        data = JSON.parse(request.responseText || '{}')
+      } catch {
+        data = {}
+      }
+
+      if (request.status < 200 || request.status >= 300 || data.ok === false || !data.pdf?.storage_key) {
+        const fallback = request.status === 413
+          ? storeText('pdfSizeLimit')
+          : `${storeText('uploadPdfFailed')} (HTTP ${request.status})`
+        reject(new Error(data.message || fallback))
+        return
+      }
+
+      onProgress?.(100)
+      resolve(data.pdf)
+    }
+
+    request.onerror = () => reject(new Error(`${storeText('uploadPdfFailed')} (Network)`))
+    request.onabort = () => reject(new Error(`${storeText('uploadPdfFailed')} (Aborted)`))
+    request.ontimeout = () => reject(new Error(`${storeText('uploadPdfFailed')} (Timeout)`))
+    request.send(formData)
   })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false || !data.pdf?.storage_key) {
-    throw new Error(data.message || storeText('uploadPdfFailed'))
-  }
-
-  return data.pdf
 }
 
 async function attachPrivatePdfToProduct(productId, pdf) {
@@ -3965,6 +3986,12 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const [pageCount, setPageCount] = useState(productToEdit?.pageCount || '')
   const [accessRule, setAccessRule] = useState(productToEdit?.accessRule || 'Read online only')
   const [saving, setSaving] = useState(false)
+  const [pdfUploadProgress, setPdfUploadProgress] = useState({
+    stage: 'idle',
+    percent: 0,
+    uploadId: 0,
+    fileName: '',
+  })
 
   const selectCover = (file) => {
     if (!file) return
@@ -4119,6 +4146,14 @@ if (!salePrice || Number(salePrice) <= 0) {
 
     try {
       setSaving(true)
+      if (type === 'PDF' && pdfFile) {
+        setPdfUploadProgress((current) => ({
+          stage: 'saving',
+          percent: 0,
+          uploadId: current.uploadId + 1,
+          fileName: pdfFile.name,
+        }))
+      }
 
 const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
 
@@ -4161,11 +4196,18 @@ stock,
 pdfFileUrl,
 pageCount,
 accessRule,
+      }, (stage, percent) => {
+        setPdfUploadProgress((current) => ({
+          ...current,
+          stage,
+          percent: Math.max(0, Math.min(100, Number(percent) || 0)),
+        }))
       })
-    } catch {
-      onNotify?.(type === 'PDF' && pdfFile ? storeText('pdfUploadTryAgain') : storeText('saveTryAgain'), 'error')
+    } catch (error) {
+      onNotify?.(error?.message || (type === 'PDF' && pdfFile ? storeText('pdfUploadTryAgain') : storeText('saveTryAgain')), 'error')
     } finally {
       setSaving(false)
+      setPdfUploadProgress((current) => ({ ...current, stage: 'idle' }))
     }
   }
 
@@ -4408,7 +4450,13 @@ accessRule,
 ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <FieldLabel>{storeText('pdfFile')}</FieldLabel>
+                <AuthorPdfUploadProgress
+                  label={storeText('pdfFile')}
+                  fileName={pdfUploadProgress.fileName}
+                  stage={pdfUploadProgress.stage}
+                  percent={pdfUploadProgress.percent}
+                  uploadId={pdfUploadProgress.uploadId}
+                />
                 <input
                   ref={pdfInputRef}
                   type="file"
@@ -4923,7 +4971,7 @@ const saveCategoryOrder = async () => {
   }
 }
 
-  const saveProduct = async (product) => {
+  const saveProduct = async (product, onPdfUploadProgress) => {
     const isEditing = Boolean(editingProduct?.id)
     const hasNewPrivatePdf = product.type === 'PDF' && Boolean(product.pdfFile)
     let savedProduct = null
@@ -4958,9 +5006,14 @@ const saveCategoryOrder = async () => {
       }
 
       if (hasNewPrivatePdf) {
-        const privatePdf = await uploadPrivatePdfFile(product.pdfFile)
+        onPdfUploadProgress?.('uploading', 0)
+        const privatePdf = await uploadPrivatePdfFile(product.pdfFile, (percent) => {
+          onPdfUploadProgress?.('uploading', percent)
+        })
 
+        onPdfUploadProgress?.('processing', 100)
         await attachPrivatePdfToProduct(savedProduct.id, privatePdf)
+        onPdfUploadProgress?.('verifying', 100)
 
         if (!isEditing && product.status !== 'Draft') {
           savedProduct = await updateStoreProduct(savedProduct.id, {
