@@ -304,6 +304,7 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
 const PAYMENT_SUCCESS_SEEN_KEY = 'shadow_author_checkout_success_seen_v1'
 const PAYMENT_CHECK_MIN_INTERVAL_MS = 15000
 const PAYMENT_CHECK_MAX_AGE_MS = 24 * 60 * 60 * 1000
@@ -836,9 +837,6 @@ export default function AuthorCheckoutPage() {
     }
 
     const nextOrder = orderData.order
-    if (orderData.configured === false || (!nextOrder.qr_image && !nextOrder.checkout_url && !nextOrder.deeplink)) {
-      throw new Error(t('authorCheckout.paymentUnavailable'))
-    }
 
     localStorage.setItem(
       'shadow_author_current_order_payment',
@@ -850,9 +848,8 @@ export default function AuthorCheckoutPage() {
       })
     )
 
-    setPaymentMessage('')
-    setPaymentModal(nextOrder)
-    setPaymentClock(Date.now())
+    const paywayUrl = nextOrder.checkout_url || nextOrder.deeplink || FALLBACK_PAYWAY_LINK
+    window.location.assign(paywayUrl)
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
   } finally {
