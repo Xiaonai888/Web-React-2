@@ -29,6 +29,7 @@ registerTranslationNamespace('newArrivalsPage', {
     loadMore: 'Load 9 More',
     loadingMore: 'Loading...',
     minuteLimit: 'You reached the 100-book limit for this minute. Please wait and try again.',
+    retryIn: 'Try again in {{seconds}}s',
   },
   km: {
     fresh: 'ថ្មីបំផុត',
@@ -52,6 +53,7 @@ registerTranslationNamespace('newArrivalsPage', {
     loadMore: 'បង្ហាញ ៩ រឿងទៀត',
     loadingMore: 'កំពុងផ្ទុក...',
     minuteLimit: 'អ្នកបានដល់កំណត់ ១០០ រឿងក្នុងមួយនាទី។ សូមរង់ចាំហើយព្យាយាមម្ដងទៀត។',
+    retryIn: 'សូមរង់ចាំ {{seconds}} វិនាទី',
   },
   zh: {
     fresh: '最新',
@@ -75,6 +77,7 @@ registerTranslationNamespace('newArrivalsPage', {
     loadMore: '再加载9本',
     loadingMore: '加载中...',
     minuteLimit: '本分钟已达到100本上限，请稍后重试。',
+    retryIn: '请在{{seconds}}秒后重试',
   },
   ja: {
     fresh: '新着',
@@ -98,6 +101,7 @@ registerTranslationNamespace('newArrivalsPage', {
     loadMore: 'さらに9作品',
     loadingMore: '読み込み中...',
     minuteLimit: '1分間の上限100作品に達しました。少し待ってから再試行してください。',
+    retryIn: '{{seconds}}秒後に再試行',
   },
   ko: {
     fresh: '최신',
@@ -121,6 +125,7 @@ registerTranslationNamespace('newArrivalsPage', {
     loadMore: '9개 더 보기',
     loadingMore: '불러오는 중...',
     minuteLimit: '1분 동안 최대 100권에 도달했습니다. 잠시 후 다시 시도하세요.',
+    retryIn: '{{seconds}}초 후 다시 시도',
   },
 })
 
@@ -133,7 +138,6 @@ const API_BASE_URL =
 const NEW_ARRIVALS_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 const NEW_ARRIVALS_PAGE_SIZE = 9
 const NEW_ARRIVALS_AUTO_LIMIT = 27
-const NEW_ARRIVALS_MAX_LIMIT = 100
 
 const NEW_ARRIVALS_TAB_CONFIG = {
   Fresh: { sort: 'latest' },
@@ -298,10 +302,22 @@ export default function NewArrivalsPage() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [message, setMessage] = useState('')
+  const [cooldownUntil, setCooldownUntil] = useState(0)
+  const [secondsLeft, setSecondsLeft] = useState(0)
   const [pageStates, setPageStates] = useState({})
   const pageStatesRef = useRef({})
   const requestRef = useRef(null)
   const sentinelRef = useRef(null)
+
+  useEffect(() => {
+    if (!cooldownUntil) return
+    const update = () => {
+      setSecondsLeft(Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000)))
+    }
+    update()
+    const interval = window.setInterval(update, 1000)
+    return () => window.clearInterval(interval)
+  }, [cooldownUntil])
 
   function updatePageState(tab, nextState) {
     const previous = pageStatesRef.current[tab] || {
@@ -321,13 +337,13 @@ export default function NewArrivalsPage() {
 
   async function fetchNewArrivalsPageData(tab, { reset = false, force = false } = {}) {
     const config = NEW_ARRIVALS_TAB_CONFIG[tab]
-    if (!config || requestRef.current) return
+    if (!config || requestRef.current || Date.now() < cooldownUntil) return
 
     const previous = pageStatesRef.current[tab]
     const offset = reset ? 0 : previous?.nextOffset || 0
-    if (offset >= NEW_ARRIVALS_MAX_LIMIT || (!reset && !previous?.hasMore)) return
+    if (!reset && !previous?.hasMore) return
 
-    const limit = Math.min(NEW_ARRIVALS_PAGE_SIZE, NEW_ARRIVALS_MAX_LIMIT - offset)
+    const limit = NEW_ARRIVALS_PAGE_SIZE
     const controller = new AbortController()
     const request = { tab, controller }
     requestRef.current = request
@@ -386,6 +402,10 @@ export default function NewArrivalsPage() {
         const data = await response.json().catch(() => ({}))
 
         if (response.status === 429 && data.code === 'NEW_ARRIVALS_MINUTE_LIMIT') {
+          const retryAfter = Number(
+            response.headers.get('Retry-After') || data.retry_after_seconds || 60
+          )
+          setCooldownUntil(Date.now() + Math.max(1, Math.min(120, retryAfter)) * 1000)
           throw new Error(t('newArrivalsPage.minuteLimit'))
         }
 
@@ -407,10 +427,10 @@ export default function NewArrivalsPage() {
             ? sourceBooks.filter((story) => getStoryBadge(story) === 'end')
             : sourceBooks
 
-        const nextOffset = Math.min(
-          NEW_ARRIVALS_MAX_LIMIT,
-          offset + sourceBooks.length
-        )
+        const nextOffset = Number.isSafeInteger(Number(data.pagination.next_offset)) &&
+          data.pagination.next_offset !== null
+          ? Number(data.pagination.next_offset)
+          : offset + sourceBooks.length
 
         payload = {
           books: nextBooks.map((story, index) => normalizeStory(story, offset + index)),
@@ -418,7 +438,7 @@ export default function NewArrivalsPage() {
           hasMore:
             Boolean(data.pagination.has_more) &&
             sourceBooks.length > 0 &&
-            nextOffset < NEW_ARRIVALS_MAX_LIMIT,
+            nextOffset > offset,
         }
 
         if (controller.signal.aborted) return
@@ -440,7 +460,7 @@ export default function NewArrivalsPage() {
       })
 
       updatePageState(tab, {
-        books: [...existing, ...appended].slice(0, NEW_ARRIVALS_MAX_LIMIT),
+        books: [...existing, ...appended],
         nextOffset: payload.nextOffset,
         hasMore: payload.hasMore,
         loaded: true,
@@ -466,13 +486,14 @@ export default function NewArrivalsPage() {
   }
 
   useEffect(() => {
-    setMessage('')
+    setMessage(Date.now() < cooldownUntil ? t('newArrivalsPage.minuteLimit') : '')
     const tabState = pageStatesRef.current[activeTab]
     setLoading(!tabState?.loaded && !tabState?.books?.length)
     setLoadingMore(false)
 
     if (!tabState?.loaded) {
-      fetchNewArrivalsPageData(activeTab, { reset: true })
+      if (Date.now() < cooldownUntil) setLoading(false)
+      else fetchNewArrivalsPageData(activeTab, { reset: true })
     }
 
     return () => {
@@ -499,7 +520,7 @@ export default function NewArrivalsPage() {
     activePage.hasMore &&
     books.length > 0 &&
     books.length < NEW_ARRIVALS_AUTO_LIMIT &&
-    activePage.nextOffset < NEW_ARRIVALS_MAX_LIMIT
+    secondsLeft === 0
 
   useEffect(() => {
     if (!autoAvailable || !sentinelRef.current) return
@@ -528,7 +549,6 @@ export default function NewArrivalsPage() {
     !loading &&
     !loadingMore &&
     activePage.hasMore &&
-    activePage.nextOffset < NEW_ARRIVALS_MAX_LIMIT &&
     books.length > 0 &&
     (books.length >= NEW_ARRIVALS_AUTO_LIMIT || activePage.error)
 
@@ -614,9 +634,12 @@ export default function NewArrivalsPage() {
                 <button
                   type="button"
                   onClick={() => fetchNewArrivalsPageData(activeTab)}
-                  className="rounded-full border border-neutral-300 bg-white px-6 py-3 text-[13px] font-medium text-neutral-900 transition hover:bg-neutral-50 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
+                  disabled={secondsLeft > 0}
+                  className="rounded-full border border-neutral-300 bg-white px-6 py-3 text-[13px] font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
                 >
-                  {t('newArrivalsPage.loadMore')}
+                  {secondsLeft > 0
+                    ? t('newArrivalsPage.retryIn', { seconds: secondsLeft })
+                    : t('newArrivalsPage.loadMore')}
                 </button>
               </div>
             ) : null}
@@ -627,6 +650,10 @@ export default function NewArrivalsPage() {
               </p>
             ) : null}
           </>
+        ) : activePage.error && secondsLeft > 0 ? (
+          <p className="py-12 text-center text-[13px] text-gray-500 dark:text-[var(--shadow-text-secondary)]">
+            {t('newArrivalsPage.retryIn', { seconds: secondsLeft })}
+          </p>
         ) : (
           <EmptyState
             onRefresh={() =>
