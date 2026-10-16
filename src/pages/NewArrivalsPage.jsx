@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getStoryBadge } from '../utils/storyBadge'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
@@ -26,6 +26,8 @@ registerTranslationNamespace('newArrivalsPage', {
     serverUnavailable: 'Cannot connect to server. Please try again later.',
     goBack: 'Go back',
     title: 'New Arrivals',
+    loadMore: 'Load 9 More',
+    loadingMore: 'Loading...',
   },
   km: {
     fresh: 'ថ្មីបំផុត',
@@ -46,6 +48,8 @@ registerTranslationNamespace('newArrivalsPage', {
     serverUnavailable: 'មិនអាចភ្ជាប់ទៅ Server បានទេ។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។',
     goBack: 'ត្រឡប់ក្រោយ',
     title: 'រឿងថ្មី',
+    loadMore: 'បង្ហាញ ៩ រឿងទៀត',
+    loadingMore: 'កំពុងផ្ទុក...',
   },
   zh: {
     fresh: '最新',
@@ -66,6 +70,8 @@ registerTranslationNamespace('newArrivalsPage', {
     serverUnavailable: '无法连接服务器，请稍后再试。',
     goBack: '返回',
     title: '新作品',
+    loadMore: '再加载9本',
+    loadingMore: '加载中...',
   },
   ja: {
     fresh: '新着',
@@ -86,6 +92,8 @@ registerTranslationNamespace('newArrivalsPage', {
     serverUnavailable: 'サーバーに接続できません。しばらくしてからもう一度お試しください。',
     goBack: '戻る',
     title: '新着作品',
+    loadMore: 'さらに9作品',
+    loadingMore: '読み込み中...',
   },
   ko: {
     fresh: '최신',
@@ -106,6 +114,8 @@ registerTranslationNamespace('newArrivalsPage', {
     serverUnavailable: '서버에 연결할 수 없습니다. 나중에 다시 시도해 주세요.',
     goBack: '뒤로 가기',
     title: '신작',
+    loadMore: '9개 더 보기',
+    loadingMore: '불러오는 중...',
   },
 })
 
@@ -116,6 +126,9 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const NEW_ARRIVALS_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
+const NEW_ARRIVALS_PAGE_SIZE = 9
+const NEW_ARRIVALS_AUTO_LIMIT = 27
+const NEW_ARRIVALS_MAX_LIMIT = 100
 
 const NEW_ARRIVALS_TAB_CONFIG = {
   Fresh: { sort: 'latest' },
@@ -141,20 +154,6 @@ const TAB_LABEL_KEYS = {
   Fantasy: 'fantasy',
 }
 
-function formatCompactNumber(value) {
-  const number = Number(value || 0)
-
-  if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) {
-    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  }
-  if (number >= 1000) {
-    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
-  }
-
-  return String(number)
-}
-
 function normalizeStory(story, index = 0) {
   const badge = getStoryBadge(story)
   const badgeColor =
@@ -169,12 +168,8 @@ function normalizeStory(story, index = 0) {
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
-    author: story.author_page?.page_name || story.author_name || 'Shadow Author',
     badge: badge ? badge.toUpperCase() : '',
     badgeColor,
-    likes: formatCompactNumber(story.total_likes),
-    views: formatCompactNumber(story.total_views),
-    episodes: `Ep ${Number(story.total_episodes || 0)}`,
     cover:
       story.cover_url ||
       `/assets/New Arrival/New Arrival ${Math.min(index + 1, 18)}.jpg`,
@@ -183,11 +178,6 @@ function normalizeStory(story, index = 0) {
     isAdult: Boolean(story.is_adult),
     isFallback: false,
   }
-}
-
-function getEpisodeCount(value) {
-  const match = String(value || '').match(/\d+/)
-  return match ? Number(match[0]) : 0
 }
 
 function getBadgeLabel(value, t) {
@@ -206,10 +196,6 @@ function BookCard({ book }) {
     !book.title || book.title === 'Untitled Story'
       ? t('newArrivalsPage.untitledStory')
       : book.title
-  const author =
-    !book.author || book.author === 'Shadow Author'
-      ? t('newArrivalsPage.shadowAuthor')
-      : book.author
 
   return (
     <Link to={book.link} className="group block">
@@ -245,29 +231,13 @@ function BookCard({ book }) {
             {title}
           </h3>
 
-          <p className="mt-1 line-clamp-1 text-[13px] font-medium text-gray-500 dark:text-[var(--shadow-text-secondary)]">
-            {author}
-          </p>
-
           {book.genre ? (
             <div className="mt-2">
-              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-bold text-gray-500 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
+              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-normal text-gray-500 dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                 {book.genre}
               </span>
             </div>
           ) : null}
-
-          <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
-            <span className="flex items-center gap-1">
-              <i className="fas fa-heart text-[10px] text-red-500" /> {book.likes}
-            </span>
-            <span className="flex items-center gap-1">
-              <i className="fas fa-list text-[10px]" />{' '}
-              {t('newArrivalsPage.episodeCount', {
-                count: getEpisodeCount(book.episodes),
-              })}
-            </span>
-          </div>
         </div>
       </div>
     </Link>
@@ -277,7 +247,7 @@ function BookCard({ book }) {
 function LoadingGrid() {
   return (
     <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
-      {Array.from({ length: 18 }).map((_, index) => (
+      {Array.from({ length: NEW_ARRIVALS_PAGE_SIZE }).map((_, index) => (
         <div key={index}>
           <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
           <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100 dark:bg-[var(--shadow-bg-elevated)]" />
@@ -321,6 +291,7 @@ export default function NewArrivalsPage() {
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState('Fresh')
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [message, setMessage] = useState('')
   const [realBooks, setRealBooks] = useState({
     Fresh: [],
@@ -329,14 +300,20 @@ export default function NewArrivalsPage() {
     Romance: [],
     Fantasy: [],
   })
+  const [visibleByTab, setVisibleByTab] = useState({})
+  const [fetchedLimitByTab, setFetchedLimitByTab] = useState({})
+  const [hasMoreByTab, setHasMoreByTab] = useState({})
+  const sentinelRef = useRef(null)
+  const manualControllerRef = useRef(null)
+  const loadingMoreRef = useRef(false)
 
   async function fetchNewArrivalsPageData(
     tab = activeTab,
-    { force = false, signal } = {}
+    { force = false, signal, limit = NEW_ARRIVALS_AUTO_LIMIT, expand = false } = {}
   ) {
     const config = NEW_ARRIVALS_TAB_CONFIG[tab]
 
-    if (!config) return
+    if (!config) return null
 
     const cacheKey = getHomeCacheKey({
       section: 'stories',
@@ -344,15 +321,30 @@ export default function NewArrivalsPage() {
       params: {
         page: 'new-arrivals',
         tab,
-        limit: 48,
+        limit,
         sort: config.sort,
         genre: config.genre || '',
         story_status: config.storyStatus || '',
-        schema: 1,
+        schema: 2,
       },
     })
 
     let hasCachedBooks = false
+
+    function applyPageResult(payload) {
+      setRealBooks((current) => ({
+        ...current,
+        [tab]: payload.books,
+      }))
+      setFetchedLimitByTab((current) => ({
+        ...current,
+        [tab]: limit,
+      }))
+      setHasMoreByTab((current) => ({
+        ...current,
+        [tab]: Boolean(payload.hasMore),
+      }))
+    }
 
     if (!force) {
       const cached = await loadHomeCache(cacheKey, {
@@ -360,42 +352,32 @@ export default function NewArrivalsPage() {
         allowExpired: true,
       })
 
-      if (signal?.aborted) return
+      if (signal?.aborted) return null
 
-      hasCachedBooks = Array.isArray(cached?.data)
+      const cachedPayload = cached?.data
+      hasCachedBooks = Array.isArray(cachedPayload?.books)
 
       if (hasCachedBooks) {
-        setRealBooks((current) => ({
-          ...current,
-          [tab]: cached.data,
-        }))
-        setLoading(false)
+        applyPageResult(cachedPayload)
+        if (!expand) setLoading(false)
       }
 
       if (cached?.isFresh && hasCachedBooks) {
-        return
+        return cachedPayload.books
       }
     }
 
     try {
-      if (!hasCachedBooks) {
-        setLoading(true)
-      }
-
+      if (!hasCachedBooks && !expand) setLoading(true)
       setMessage('')
 
       const params = new URLSearchParams({
-        limit: '48',
+        limit: String(limit),
         sort: config.sort,
       })
 
-      if (config.genre) {
-        params.set('genre', config.genre)
-      }
-
-      if (config.storyStatus) {
-        params.set('story_status', config.storyStatus)
-      }
+      if (config.genre) params.set('genre', config.genre)
+      if (config.storyStatus) params.set('story_status', config.storyStatus)
 
       const response = await fetch(
         addStoryLanguageParam(
@@ -403,18 +385,14 @@ export default function NewArrivalsPage() {
         ),
         { signal }
       )
-
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(
-          data.message || t('newArrivalsPage.loadFailed')
-        )
+        throw new Error(data.message || t('newArrivalsPage.loadFailed'))
       }
 
-      let nextBooks = (
-        Array.isArray(data.stories) ? data.stories : []
-      )
+      const sourceStories = Array.isArray(data.stories) ? data.stories : []
+      let nextBooks = sourceStories
 
       if (tab === 'Recent Complete') {
         nextBooks = nextBooks.filter(
@@ -422,30 +400,31 @@ export default function NewArrivalsPage() {
         )
       }
 
-      nextBooks = nextBooks.map((story, index) =>
-        normalizeStory(story, index)
-      )
+      nextBooks = nextBooks
+        .slice(0, NEW_ARRIVALS_MAX_LIMIT)
+        .map((story, index) => normalizeStory(story, index))
 
-      if (signal?.aborted) return
+      if (signal?.aborted) return null
 
-      setRealBooks((current) => ({
-        ...current,
-        [tab]: nextBooks,
-      }))
+      const payload = {
+        books: nextBooks,
+        hasMore: sourceStories.length >= limit && limit < NEW_ARRIVALS_MAX_LIMIT,
+      }
 
-      await saveHomeCache(cacheKey, nextBooks, {
+      applyPageResult(payload)
+
+      await saveHomeCache(cacheKey, payload, {
         maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
       })
+
+      return nextBooks
     } catch (error) {
-      if (error?.name === 'AbortError') return
+      if (error?.name === 'AbortError' || signal?.aborted) return null
 
       console.error('NewArrivalsPage fetch error:', error)
 
-      if (!hasCachedBooks) {
-        setRealBooks((current) => ({
-          ...current,
-          [tab]: [],
-        }))
+      if (!hasCachedBooks && !expand) {
+        setRealBooks((current) => ({ ...current, [tab]: [] }))
       }
 
       setMessage(
@@ -453,29 +432,132 @@ export default function NewArrivalsPage() {
           ? t('newArrivalsPage.serverUnavailable')
           : error.message || t('newArrivalsPage.loadFailed')
       )
+      return hasCachedBooks ? realBooks[tab] || null : null
     } finally {
-      if (!signal?.aborted) {
-        setLoading(false)
-      }
+      if (!signal?.aborted && !expand) setLoading(false)
     }
   }
 
   useEffect(() => {
     const controller = new AbortController()
 
-    fetchNewArrivalsPageData(activeTab, {
-      signal: controller.signal,
-    })
+    if (manualControllerRef.current) {
+      manualControllerRef.current.abort()
+      manualControllerRef.current = null
+    }
+    loadingMoreRef.current = false
+    setLoadingMore(false)
+
+    if ((fetchedLimitByTab[activeTab] || 0) === NEW_ARRIVALS_MAX_LIMIT) {
+      setLoading(false)
+    } else {
+      fetchNewArrivalsPageData(activeTab, { signal: controller.signal })
+    }
 
     return () => {
       controller.abort()
+      if (manualControllerRef.current) {
+        manualControllerRef.current.abort()
+        manualControllerRef.current = null
+      }
+      loadingMoreRef.current = false
     }
   }, [activeTab])
 
-  const books = useMemo(
+  const allBooks = useMemo(
     () => realBooks[activeTab] || [],
     [activeTab, realBooks]
   )
+  const visibleCount = Math.min(
+    visibleByTab[activeTab] || NEW_ARRIVALS_PAGE_SIZE,
+    NEW_ARRIVALS_MAX_LIMIT
+  )
+  const books = useMemo(
+    () => allBooks.slice(0, visibleCount),
+    [allBooks, visibleCount]
+  )
+  const autoAvailable =
+    !loading &&
+    visibleCount < NEW_ARRIVALS_AUTO_LIMIT &&
+    visibleCount < allBooks.length
+
+  useEffect(() => {
+    if (!autoAvailable || !sentinelRef.current) return
+
+    const tab = activeTab
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return
+        observer.disconnect()
+        setVisibleByTab((current) => ({
+          ...current,
+          [tab]: Math.min(
+            (current[tab] || NEW_ARRIVALS_PAGE_SIZE) + NEW_ARRIVALS_PAGE_SIZE,
+            NEW_ARRIVALS_AUTO_LIMIT,
+            allBooks.length
+          ),
+        }))
+      },
+      { rootMargin: '200px 0px' }
+    )
+
+    observer.observe(sentinelRef.current)
+    return () => observer.disconnect()
+  }, [activeTab, autoAvailable, allBooks.length, visibleCount])
+
+  const canLoadMore =
+    !loading &&
+    visibleCount < NEW_ARRIVALS_MAX_LIMIT &&
+    (visibleCount < allBooks.length ||
+      (Boolean(hasMoreByTab[activeTab]) &&
+        (fetchedLimitByTab[activeTab] || 0) < NEW_ARRIVALS_MAX_LIMIT))
+
+  async function handleLoadMore() {
+    if (loadingMoreRef.current || !canLoadMore || autoAvailable) return
+
+    const tab = activeTab
+
+    if (visibleCount < allBooks.length) {
+      setVisibleByTab((current) => ({
+        ...current,
+        [tab]: Math.min(
+          (current[tab] || NEW_ARRIVALS_PAGE_SIZE) + NEW_ARRIVALS_PAGE_SIZE,
+          NEW_ARRIVALS_MAX_LIMIT
+        ),
+      }))
+      return
+    }
+
+    if ((fetchedLimitByTab[tab] || 0) >= NEW_ARRIVALS_MAX_LIMIT) return
+
+    const controller = new AbortController()
+    manualControllerRef.current = controller
+    loadingMoreRef.current = true
+    setLoadingMore(true)
+
+    try {
+      const result = await fetchNewArrivalsPageData(tab, {
+        limit: NEW_ARRIVALS_MAX_LIMIT,
+        expand: true,
+        signal: controller.signal,
+      })
+      if (!controller.signal.aborted && Array.isArray(result)) {
+        setVisibleByTab((current) => ({
+          ...current,
+          [tab]: Math.min(
+            (current[tab] || NEW_ARRIVALS_PAGE_SIZE) + NEW_ARRIVALS_PAGE_SIZE,
+            NEW_ARRIVALS_MAX_LIMIT
+          ),
+        }))
+      }
+    } finally {
+      if (manualControllerRef.current === controller) {
+        manualControllerRef.current = null
+        loadingMoreRef.current = false
+        setLoadingMore(false)
+      }
+    }
+  }
 
   return (
     <div className="app-page min-h-screen bg-white pb-32 dark:bg-[var(--shadow-bg-page)]">
@@ -532,17 +614,40 @@ export default function NewArrivalsPage() {
 
         {loading ? (
           <LoadingGrid />
-        ) : books.length ? (
-          <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
-            {books.map((book) => (
-              <BookCard key={book.id} book={book} />
-            ))}
-          </div>
+        ) : allBooks.length ? (
+          <>
+            <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
+              {books.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))}
+            </div>
+
+            {autoAvailable ? (
+              <div ref={sentinelRef} className="h-2 w-full" aria-hidden="true" />
+            ) : null}
+
+            {canLoadMore && !autoAvailable ? (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="rounded-full border border-neutral-300 bg-white px-6 py-3 text-[13px] font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:opacity-60 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
+                >
+                  {t(loadingMore ? 'newArrivalsPage.loadingMore' : 'newArrivalsPage.loadMore')}
+                </button>
+              </div>
+            ) : null}
+          </>
         ) : (
           <EmptyState
-            onRefresh={() =>
+            onRefresh={() => {
+              setVisibleByTab((current) => ({
+                ...current,
+                [activeTab]: NEW_ARRIVALS_PAGE_SIZE,
+              }))
               fetchNewArrivalsPageData(activeTab, { force: true })
-            }
+            }}
           />
         )}
       </main>
