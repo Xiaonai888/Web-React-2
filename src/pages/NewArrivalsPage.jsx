@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getStoryBadge } from '../utils/storyBadge'
 import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
@@ -28,6 +28,7 @@ registerTranslationNamespace('newArrivalsPage', {
     title: 'New Arrivals',
     loadMore: 'Load 9 More',
     loadingMore: 'Loading...',
+    minuteLimit: 'You reached the 100-book limit for this minute. Please wait and try again.',
   },
   km: {
     fresh: 'ថ្មីបំផុត',
@@ -50,6 +51,7 @@ registerTranslationNamespace('newArrivalsPage', {
     title: 'រឿងថ្មី',
     loadMore: 'បង្ហាញ ៩ រឿងទៀត',
     loadingMore: 'កំពុងផ្ទុក...',
+    minuteLimit: 'អ្នកបានដល់កំណត់ ១០០ រឿងក្នុងមួយនាទី។ សូមរង់ចាំហើយព្យាយាមម្ដងទៀត។',
   },
   zh: {
     fresh: '最新',
@@ -72,6 +74,7 @@ registerTranslationNamespace('newArrivalsPage', {
     title: '新作品',
     loadMore: '再加载9本',
     loadingMore: '加载中...',
+    minuteLimit: '本分钟已达到100本上限，请稍后重试。',
   },
   ja: {
     fresh: '新着',
@@ -94,6 +97,7 @@ registerTranslationNamespace('newArrivalsPage', {
     title: '新着作品',
     loadMore: 'さらに9作品',
     loadingMore: '読み込み中...',
+    minuteLimit: '1分間の上限100作品に達しました。少し待ってから再試行してください。',
   },
   ko: {
     fresh: '최신',
@@ -116,6 +120,7 @@ registerTranslationNamespace('newArrivalsPage', {
     title: '신작',
     loadMore: '9개 더 보기',
     loadingMore: '불러오는 중...',
+    minuteLimit: '1분 동안 최대 100권에 도달했습니다. 잠시 후 다시 시도하세요.',
   },
 })
 
@@ -293,27 +298,43 @@ export default function NewArrivalsPage() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [message, setMessage] = useState('')
-  const [realBooks, setRealBooks] = useState({
-    Fresh: [],
-    Popular: [],
-    'Recent Complete': [],
-    Romance: [],
-    Fantasy: [],
-  })
-  const [visibleByTab, setVisibleByTab] = useState({})
-  const [fetchedLimitByTab, setFetchedLimitByTab] = useState({})
-  const [hasMoreByTab, setHasMoreByTab] = useState({})
+  const [pageStates, setPageStates] = useState({})
+  const pageStatesRef = useRef({})
+  const requestRef = useRef(null)
   const sentinelRef = useRef(null)
-  const manualControllerRef = useRef(null)
-  const loadingMoreRef = useRef(false)
 
-  async function fetchNewArrivalsPageData(
-    tab = activeTab,
-    { force = false, signal, limit = NEW_ARRIVALS_AUTO_LIMIT, expand = false } = {}
-  ) {
+  function updatePageState(tab, nextState) {
+    const previous = pageStatesRef.current[tab] || {
+      books: [],
+      nextOffset: 0,
+      hasMore: true,
+      loaded: false,
+      error: false,
+    }
+    const updated = { ...previous, ...nextState }
+    pageStatesRef.current = {
+      ...pageStatesRef.current,
+      [tab]: updated,
+    }
+    setPageStates((current) => ({ ...current, [tab]: updated }))
+  }
+
+  async function fetchNewArrivalsPageData(tab, { reset = false, force = false } = {}) {
     const config = NEW_ARRIVALS_TAB_CONFIG[tab]
+    if (!config || requestRef.current) return
 
-    if (!config) return null
+    const previous = pageStatesRef.current[tab]
+    const offset = reset ? 0 : previous?.nextOffset || 0
+    if (offset >= NEW_ARRIVALS_MAX_LIMIT || (!reset && !previous?.hasMore)) return
+
+    const limit = Math.min(NEW_ARRIVALS_PAGE_SIZE, NEW_ARRIVALS_MAX_LIMIT - offset)
+    const controller = new AbortController()
+    const request = { tab, controller }
+    requestRef.current = request
+
+    if (offset === 0) setLoading(true)
+    else setLoadingMore(true)
+    setMessage('')
 
     const cacheKey = getHomeCacheKey({
       section: 'stories',
@@ -321,165 +342,164 @@ export default function NewArrivalsPage() {
       params: {
         page: 'new-arrivals',
         tab,
+        offset,
         limit,
         sort: config.sort,
         genre: config.genre || '',
         story_status: config.storyStatus || '',
-        schema: 2,
+        schema: 3,
       },
     })
 
-    let hasCachedBooks = false
-
-    function applyPageResult(payload) {
-      setRealBooks((current) => ({
-        ...current,
-        [tab]: payload.books,
-      }))
-      setFetchedLimitByTab((current) => ({
-        ...current,
-        [tab]: limit,
-      }))
-      setHasMoreByTab((current) => ({
-        ...current,
-        [tab]: Boolean(payload.hasMore),
-      }))
-    }
-
-    if (!force) {
-      const cached = await loadHomeCache(cacheKey, {
-        maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
-        allowExpired: true,
-      })
-
-      if (signal?.aborted) return null
-
-      const cachedPayload = cached?.data
-      hasCachedBooks = Array.isArray(cachedPayload?.books)
-
-      if (hasCachedBooks) {
-        applyPageResult(cachedPayload)
-        if (!expand) setLoading(false)
-      }
-
-      if (cached?.isFresh && hasCachedBooks) {
-        return cachedPayload.books
-      }
-    }
-
     try {
-      if (!hasCachedBooks && !expand) setLoading(true)
-      setMessage('')
+      let payload = null
 
-      const params = new URLSearchParams({
-        limit: String(limit),
-        sort: config.sort,
-      })
+      if (!force) {
+        const cached = await loadHomeCache(cacheKey, {
+          maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
+          allowExpired: false,
+        })
 
-      if (config.genre) params.set('genre', config.genre)
-      if (config.storyStatus) params.set('story_status', config.storyStatus)
-
-      const response = await fetch(
-        addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?${params.toString()}`
-        ),
-        { signal }
-      )
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || t('newArrivalsPage.loadFailed'))
+        if (controller.signal.aborted) return
+        if (cached?.isFresh && Array.isArray(cached?.data?.books)) {
+          payload = cached.data
+        }
       }
 
-      const sourceStories = Array.isArray(data.stories) ? data.stories : []
-      let nextBooks = sourceStories
+      if (!payload) {
+        const params = new URLSearchParams({
+          new_arrivals_pagination: '1',
+          limit: String(limit),
+          offset: String(offset),
+          sort: config.sort,
+        })
 
-      if (tab === 'Recent Complete') {
-        nextBooks = nextBooks.filter(
-          (story) => getStoryBadge(story) === 'end'
+        if (config.genre) params.set('genre', config.genre)
+        if (config.storyStatus) params.set('story_status', config.storyStatus)
+
+        const response = await fetch(
+          addStoryLanguageParam(
+            `${API_BASE_URL}/api/public/stories?${params.toString()}`
+          ),
+          { signal: controller.signal }
         )
+        const data = await response.json().catch(() => ({}))
+
+        if (response.status === 429 && data.code === 'NEW_ARRIVALS_MINUTE_LIMIT') {
+          throw new Error(t('newArrivalsPage.minuteLimit'))
+        }
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || t('newArrivalsPage.loadFailed'))
+        }
+
+        if (
+          !data.pagination ||
+          Number(data.pagination.offset) !== offset ||
+          !Array.isArray(data.stories)
+        ) {
+          throw new Error(t('newArrivalsPage.loadFailed'))
+        }
+
+        const sourceBooks = data.stories
+        const nextBooks =
+          tab === 'Recent Complete'
+            ? sourceBooks.filter((story) => getStoryBadge(story) === 'end')
+            : sourceBooks
+
+        const nextOffset = Math.min(
+          NEW_ARRIVALS_MAX_LIMIT,
+          offset + sourceBooks.length
+        )
+
+        payload = {
+          books: nextBooks.map((story, index) => normalizeStory(story, offset + index)),
+          nextOffset,
+          hasMore:
+            Boolean(data.pagination.has_more) &&
+            sourceBooks.length > 0 &&
+            nextOffset < NEW_ARRIVALS_MAX_LIMIT,
+        }
+
+        if (controller.signal.aborted) return
+
+        await saveHomeCache(cacheKey, payload, {
+          maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
+        })
       }
 
-      nextBooks = nextBooks
-        .slice(0, NEW_ARRIVALS_MAX_LIMIT)
-        .map((story, index) => normalizeStory(story, index))
+      if (controller.signal.aborted) return
 
-      if (signal?.aborted) return null
-
-      const payload = {
-        books: nextBooks,
-        hasMore: sourceStories.length >= limit && limit < NEW_ARRIVALS_MAX_LIMIT,
-      }
-
-      applyPageResult(payload)
-
-      await saveHomeCache(cacheKey, payload, {
-        maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
+      const existing = reset ? [] : pageStatesRef.current[tab]?.books || []
+      const seen = new Set(existing.map((book) => String(book.id)))
+      const appended = payload.books.filter((book) => {
+        const id = String(book.id)
+        if (seen.has(id)) return false
+        seen.add(id)
+        return true
       })
 
-      return nextBooks
+      updatePageState(tab, {
+        books: [...existing, ...appended].slice(0, NEW_ARRIVALS_MAX_LIMIT),
+        nextOffset: payload.nextOffset,
+        hasMore: payload.hasMore,
+        loaded: true,
+        error: false,
+      })
     } catch (error) {
-      if (error?.name === 'AbortError' || signal?.aborted) return null
+      if (controller.signal.aborted || error?.name === 'AbortError') return
 
       console.error('NewArrivalsPage fetch error:', error)
-
-      if (!hasCachedBooks && !expand) {
-        setRealBooks((current) => ({ ...current, [tab]: [] }))
-      }
-
+      updatePageState(tab, { error: true })
       setMessage(
         error.message === 'Failed to fetch'
           ? t('newArrivalsPage.serverUnavailable')
           : error.message || t('newArrivalsPage.loadFailed')
       )
-      return hasCachedBooks ? realBooks[tab] || null : null
     } finally {
-      if (!signal?.aborted && !expand) setLoading(false)
+      if (requestRef.current === request) {
+        requestRef.current = null
+        setLoading(false)
+        setLoadingMore(false)
+      }
     }
   }
 
   useEffect(() => {
-    const controller = new AbortController()
-
-    if (manualControllerRef.current) {
-      manualControllerRef.current.abort()
-      manualControllerRef.current = null
-    }
-    loadingMoreRef.current = false
+    setMessage('')
+    const tabState = pageStatesRef.current[activeTab]
+    setLoading(!tabState?.loaded && !tabState?.books?.length)
     setLoadingMore(false)
 
-    if ((fetchedLimitByTab[activeTab] || 0) === NEW_ARRIVALS_MAX_LIMIT) {
-      setLoading(false)
-    } else {
-      fetchNewArrivalsPageData(activeTab, { signal: controller.signal })
+    if (!tabState?.loaded) {
+      fetchNewArrivalsPageData(activeTab, { reset: true })
     }
 
     return () => {
-      controller.abort()
-      if (manualControllerRef.current) {
-        manualControllerRef.current.abort()
-        manualControllerRef.current = null
+      const current = requestRef.current
+      if (current?.tab === activeTab) {
+        current.controller.abort()
+        requestRef.current = null
       }
-      loadingMoreRef.current = false
     }
   }, [activeTab])
 
-  const allBooks = useMemo(
-    () => realBooks[activeTab] || [],
-    [activeTab, realBooks]
-  )
-  const visibleCount = Math.min(
-    visibleByTab[activeTab] || NEW_ARRIVALS_PAGE_SIZE,
-    NEW_ARRIVALS_MAX_LIMIT
-  )
-  const books = useMemo(
-    () => allBooks.slice(0, visibleCount),
-    [allBooks, visibleCount]
-  )
+  const activePage = pageStates[activeTab] || {
+    books: [],
+    nextOffset: 0,
+    hasMore: true,
+    loaded: false,
+    error: false,
+  }
+  const books = activePage.books
   const autoAvailable =
     !loading &&
-    visibleCount < NEW_ARRIVALS_AUTO_LIMIT &&
-    visibleCount < allBooks.length
+    !loadingMore &&
+    !activePage.error &&
+    activePage.hasMore &&
+    books.length > 0 &&
+    books.length < NEW_ARRIVALS_AUTO_LIMIT &&
+    activePage.nextOffset < NEW_ARRIVALS_MAX_LIMIT
 
   useEffect(() => {
     if (!autoAvailable || !sentinelRef.current) return
@@ -489,75 +509,28 @@ export default function NewArrivalsPage() {
       (entries) => {
         if (!entries[0]?.isIntersecting) return
         observer.disconnect()
-        setVisibleByTab((current) => ({
-          ...current,
-          [tab]: Math.min(
-            (current[tab] || NEW_ARRIVALS_PAGE_SIZE) + NEW_ARRIVALS_PAGE_SIZE,
-            NEW_ARRIVALS_AUTO_LIMIT,
-            allBooks.length
-          ),
-        }))
+        fetchNewArrivalsPageData(tab)
       },
       { rootMargin: '200px 0px' }
     )
 
     observer.observe(sentinelRef.current)
     return () => observer.disconnect()
-  }, [activeTab, autoAvailable, allBooks.length, visibleCount])
+  }, [
+    activeTab,
+    autoAvailable,
+    books.length,
+    activePage.nextOffset,
+    activePage.hasMore,
+  ])
 
   const canLoadMore =
     !loading &&
-    visibleCount < NEW_ARRIVALS_MAX_LIMIT &&
-    (visibleCount < allBooks.length ||
-      (Boolean(hasMoreByTab[activeTab]) &&
-        (fetchedLimitByTab[activeTab] || 0) < NEW_ARRIVALS_MAX_LIMIT))
-
-  async function handleLoadMore() {
-    if (loadingMoreRef.current || !canLoadMore || autoAvailable) return
-
-    const tab = activeTab
-
-    if (visibleCount < allBooks.length) {
-      setVisibleByTab((current) => ({
-        ...current,
-        [tab]: Math.min(
-          (current[tab] || NEW_ARRIVALS_PAGE_SIZE) + NEW_ARRIVALS_PAGE_SIZE,
-          NEW_ARRIVALS_MAX_LIMIT
-        ),
-      }))
-      return
-    }
-
-    if ((fetchedLimitByTab[tab] || 0) >= NEW_ARRIVALS_MAX_LIMIT) return
-
-    const controller = new AbortController()
-    manualControllerRef.current = controller
-    loadingMoreRef.current = true
-    setLoadingMore(true)
-
-    try {
-      const result = await fetchNewArrivalsPageData(tab, {
-        limit: NEW_ARRIVALS_MAX_LIMIT,
-        expand: true,
-        signal: controller.signal,
-      })
-      if (!controller.signal.aborted && Array.isArray(result)) {
-        setVisibleByTab((current) => ({
-          ...current,
-          [tab]: Math.min(
-            (current[tab] || NEW_ARRIVALS_PAGE_SIZE) + NEW_ARRIVALS_PAGE_SIZE,
-            NEW_ARRIVALS_MAX_LIMIT
-          ),
-        }))
-      }
-    } finally {
-      if (manualControllerRef.current === controller) {
-        manualControllerRef.current = null
-        loadingMoreRef.current = false
-        setLoadingMore(false)
-      }
-    }
-  }
+    !loadingMore &&
+    activePage.hasMore &&
+    activePage.nextOffset < NEW_ARRIVALS_MAX_LIMIT &&
+    books.length > 0 &&
+    (books.length >= NEW_ARRIVALS_AUTO_LIMIT || activePage.error)
 
   return (
     <div className="app-page min-h-screen bg-white pb-32 dark:bg-[var(--shadow-bg-page)]">
@@ -589,7 +562,11 @@ export default function NewArrivalsPage() {
               <button
                 key={tab}
                 type="button"
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab)
+                  setMessage('')
+                  if (!pageStatesRef.current[tab]?.loaded) setLoading(true)
+                }}
                 className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
                   isActive
                     ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-[#111827]'
@@ -614,7 +591,7 @@ export default function NewArrivalsPage() {
 
         {loading ? (
           <LoadingGrid />
-        ) : allBooks.length ? (
+        ) : books.length ? (
           <>
             <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
               {books.map((book) => (
@@ -626,28 +603,35 @@ export default function NewArrivalsPage() {
               <div ref={sentinelRef} className="h-2 w-full" aria-hidden="true" />
             ) : null}
 
-            {canLoadMore && !autoAvailable ? (
+            {loadingMore && books.length < NEW_ARRIVALS_AUTO_LIMIT ? (
+              <p className="mt-6 text-center text-[13px] text-gray-500 dark:text-[var(--shadow-text-secondary)]">
+                {t('newArrivalsPage.loadingMore')}
+              </p>
+            ) : null}
+
+            {canLoadMore ? (
               <div className="mt-8 flex justify-center">
                 <button
                   type="button"
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="rounded-full border border-neutral-300 bg-white px-6 py-3 text-[13px] font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:opacity-60 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
+                  onClick={() => fetchNewArrivalsPageData(activeTab)}
+                  className="rounded-full border border-neutral-300 bg-white px-6 py-3 text-[13px] font-medium text-neutral-900 transition hover:bg-neutral-50 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:hover:bg-[var(--shadow-bg-hover)]"
                 >
-                  {t(loadingMore ? 'newArrivalsPage.loadingMore' : 'newArrivalsPage.loadMore')}
+                  {t('newArrivalsPage.loadMore')}
                 </button>
               </div>
+            ) : null}
+
+            {loadingMore && books.length >= NEW_ARRIVALS_AUTO_LIMIT ? (
+              <p className="mt-6 text-center text-[13px] text-gray-500 dark:text-[var(--shadow-text-secondary)]">
+                {t('newArrivalsPage.loadingMore')}
+              </p>
             ) : null}
           </>
         ) : (
           <EmptyState
-            onRefresh={() => {
-              setVisibleByTab((current) => ({
-                ...current,
-                [activeTab]: NEW_ARRIVALS_PAGE_SIZE,
-              }))
-              fetchNewArrivalsPageData(activeTab, { force: true })
-            }}
+            onRefresh={() =>
+              fetchNewArrivalsPageData(activeTab, { reset: true, force: true })
+            }
           />
         )}
       </main>
