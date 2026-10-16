@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import AuthorIncomeReportDownloads from './AuthorIncomeReportDownloads'
 
 registerTranslationNamespace('authorRecentEarningsPage', {
   en: {
@@ -486,6 +487,7 @@ export default function AuthorRecentEarningsPage() {
       </header>
 
       <main className="mx-auto max-w-[720px] space-y-4 px-3 pt-4 sm:px-4">
+  <AuthorIncomeReportDownloads />
         <section className="rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 shadow-[0_9px_24px_rgba(85,59,117,0.06)]">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <RangeButton
