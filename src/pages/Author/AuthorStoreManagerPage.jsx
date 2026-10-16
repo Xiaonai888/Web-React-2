@@ -1673,23 +1673,172 @@ async function uploadGalleryImage(file) {
 
 function uploadPrivatePdfFile(file, onProgress) {
   const token = getAuthToken()
-
   if (!token) return Promise.reject(new Error(storeText('pleaseLogin')))
   if (!file) return Promise.reject(new Error(storeText('pdfRequired')))
+  if (!file.size) return Promise.reject(new Error(storeText('pdfEmptyFile')))
+  if (file.size > 50 * 1024 * 1024) return Promise.reject(new Error(storeText('pdfSizeLimit')))
+
+  const messages = {
+    en: {
+      offline: 'Your device is offline. Reconnect and retry.',
+      unreachable: 'The API could not be reached from this device. The cause could be a network, DNS, CORS, or server outage.',
+      before: 'The API is reachable, but the PDF request failed before transfer. Check CORS, upload security rules, and the server logs.',
+      during: 'The PDF transfer stopped at {{percent}}%. The mobile connection, proxy, or server may have interrupted it.',
+      after: 'The PDF was sent, but the server response was not received. Check the upload trace in Render logs.',
+      timeout: 'The PDF upload timed out before the server confirmed it.',
+      aborted: 'The browser or device interrupted the PDF request.',
+      server: 'The server failed to process the PDF.',
+      forbidden: 'The account is not permitted to upload this PDF.',
+      unauthorized: 'Your login session expired. Sign in and retry.',
+      limited: 'Too many upload attempts. Wait and try again.',
+      unavailable: 'The server or upload gateway is temporarily unavailable.',
+      invalid: 'The server rejected the PDF or its metadata.',
+      response: 'The server returned an invalid PDF upload response.',
+    },
+    km: {
+      offline: 'ទូរស័ព្ទគ្មានអ៊ីនធឺណិត។ សូមភ្ជាប់បណ្ដាញហើយសាកម្តងទៀត។',
+      unreachable: 'ទូរស័ព្ទមិនអាចទាក់ទង API បាន។ អាចបណ្ដាលពីបណ្ដាញ DNS CORS ឬ Server។',
+      before: 'API អាចទាក់ទងបាន ប៉ុន្តែការផ្ញើ PDF ត្រូវបានរារាំងមុនផ្ទេរ។ សូមពិនិត្យ CORS ប្រព័ន្ធការពារ និង Render Logs។',
+      during: 'ការផ្ញើ PDF ដាច់ត្រឹម {{percent}}%។ អាចបណ្ដាលពីបណ្ដាញទូរស័ព្ទ Proxy ឬ Server ផ្តាច់ការតភ្ជាប់។',
+      after: 'PDF ត្រូវបានផ្ញើរួច ប៉ុន្តែមិនទទួលបានចម្លើយពី Server។ សូមឆែក Trace នៅ Render Logs។',
+      timeout: 'ការបង្ហោះ PDF ផុតពេល មុន Server បញ្ជាក់ជោគជ័យ។',
+      aborted: 'Browser ឬទូរស័ព្ទបានផ្ដាច់ការផ្ញើ PDF។',
+      server: 'Server មិនអាចដំណើរការ PDF បាន។',
+      forbidden: 'គណនីនេះមិនមានសិទ្ធិបង្ហោះ PDF ទេ។',
+      unauthorized: 'ការចូលគណនីផុតសុពលភាព។ សូមចូលម្ដងទៀត។',
+      limited: 'ព្យាយាមបង្ហោះច្រើនដងពេក។ សូមរង់ចាំហើយសាកវិញ។',
+      unavailable: 'Server ឬ Upload Gateway មិនអាចប្រើបានបណ្ដោះអាសន្ន។',
+      invalid: 'Server បានបដិសេធឯកសារ PDF ឬព័ត៌មានឯកសារ។',
+      response: 'Server ផ្ញើចម្លើយ PDF Upload មិនត្រឹមត្រូវ។',
+    },
+    zh: {
+      offline: '设备已离线，请联网后重试。',
+      unreachable: '设备无法连接 API；可能是网络、DNS、CORS 或服务器故障。',
+      before: 'API 可访问，但上传请求在传输前失败；请检查 CORS、安全规则及服务器日志。',
+      during: 'PDF 传输在 {{percent}}% 中断；可能是网络、代理或服务器连接问题。',
+      after: 'PDF 已发送，但未收到服务器响应；请在 Render 日志中查询追踪编号。',
+      timeout: '服务器确认前上传超时。',
+      aborted: '浏览器或设备中断了 PDF 上传。',
+      server: '服务器处理 PDF 失败。',
+      forbidden: '当前账户无权上传此 PDF。',
+      unauthorized: '登录已过期，请重新登录。',
+      limited: '上传尝试过于频繁，请稍后重试。',
+      unavailable: '服务器或上传网关暂时不可用。',
+      invalid: '服务器拒绝了 PDF 文件或其元数据。',
+      response: '服务器返回了无效的上传响应。',
+    },
+    ja: {
+      offline: '端末がオフラインです。接続して再試行してください。',
+      unreachable: 'API に接続できません。回線、DNS、CORS、サーバー障害の可能性があります。',
+      before: 'API は稼働していますが、転送前に失敗しました。CORS、保護設定、ログを確認してください。',
+      during: 'PDF 転送が {{percent}}% で停止しました。回線、プロキシ、サーバーの可能性があります。',
+      after: 'PDF を送信しましたが応答がありません。Render ログで追跡番号を確認してください。',
+      timeout: 'サーバー確認前にアップロードがタイムアウトしました。',
+      aborted: 'ブラウザーまたは端末がアップロードを中断しました。',
+      server: 'サーバーで PDF の処理に失敗しました。',
+      forbidden: 'このアカウントには PDF アップロード権限がありません。',
+      unauthorized: 'ログイン期限が切れました。再度ログインしてください。',
+      limited: '試行回数が多すぎます。しばらくして再試行してください。',
+      unavailable: 'サーバーまたはアップロードゲートウェイが一時的に利用できません。',
+      invalid: 'サーバーが PDF またはファイル情報を拒否しました。',
+      response: 'サーバーから不正な応答がありました。',
+    },
+    ko: {
+      offline: '기기가 오프라인입니다. 연결한 후 다시 시도하세요.',
+      unreachable: 'API에 연결할 수 없습니다. 네트워크, DNS, CORS 또는 서버 문제일 수 있습니다.',
+      before: 'API는 연결되지만 전송 전에 업로드가 실패했습니다. CORS, 보안 규칙, 로그를 확인하세요.',
+      during: 'PDF 전송이 {{percent}}%에서 중단되었습니다. 연결, 프록시 또는 서버 문제일 수 있습니다.',
+      after: 'PDF를 전송했으나 서버 응답이 없습니다. Render 로그에서 추적 번호를 확인하세요.',
+      timeout: '서버 확인 전에 업로드 시간이 초과되었습니다.',
+      aborted: '브라우저 또는 기기가 업로드를 중단했습니다.',
+      server: '서버에서 PDF 처리에 실패했습니다.',
+      forbidden: '이 계정은 PDF 업로드 권한이 없습니다.',
+      unauthorized: '로그인 세션이 만료되었습니다. 다시 로그인하세요.',
+      limited: '업로드 시도가 너무 많습니다. 잠시 기다렸다가 재시도하세요.',
+      unavailable: '서버 또는 업로드 게이트웨이를 일시적으로 사용할 수 없습니다.',
+      invalid: '서버에서 PDF 또는 파일 정보를 거부했습니다.',
+      response: '서버가 올바르지 않은 업로드 응답을 보냈습니다.',
+    },
+  }
+  const localized = messages[getDisplayLanguageId()] || messages.en
+  const trace = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+  const requestUrl = `${API_BASE_URL}/api/author-store/me/pdfs/upload-private?trace=${encodeURIComponent(trace)}`
+  const startedAt = Date.now()
 
   return new Promise((resolve, reject) => {
     const formData = new FormData()
     formData.append('pdf', file)
-
     const request = new XMLHttpRequest()
-    request.open('POST', `${API_BASE_URL}/api/author-store/me/pdfs/upload-private`)
-    request.setRequestHeader('Authorization', `Bearer ${token}`)
+    let loadedBytes = 0
+    let uploadCompleted = false
+    let settled = false
 
-    request.upload.onprogress = (event) => {
-      if (!event.lengthComputable || !event.total) return
-      onProgress?.(Math.min(100, Math.round(event.loaded / event.total * 100)))
+    const diagnostic = (kind, status = request.status) => {
+      const entry = {
+        trace,
+        kind,
+        status,
+        file_bytes: file.size,
+        sent_bytes: loadedBytes,
+        transfer_complete: uploadCompleted,
+        duration_ms: Date.now() - startedAt,
+        browser_online: navigator.onLine,
+      }
+      console.error('AUTHOR_STORE_PDF_UPLOAD_DIAGNOSTIC', entry)
     }
 
+    const fail = (kind, message) => {
+      if (settled) return
+      settled = true
+      diagnostic(kind)
+      reject(new Error(`${message} [PDF ${trace}]`))
+    }
+
+    const probe = async () => {
+      if (navigator.onLine === false) return 'offline'
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), 5000)
+      try {
+        const response = await fetch(`${API_BASE_URL}/health/maintenance`, {
+          method: 'GET',
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        return response.status >= 500 ? 'unavailable' : 'reachable'
+      } catch {
+        return 'unreachable'
+      } finally {
+        window.clearTimeout(timeoutId)
+      }
+    }
+
+    const transportFailure = async () => {
+      if (settled) return
+      const connection = await probe()
+      if (settled) return
+      const percent = Math.min(100, Math.round((loadedBytes / file.size) * 100))
+      const stage = connection === 'offline' ? 'offline'
+        : connection === 'unavailable' ? 'unavailable'
+          : connection === 'unreachable' ? 'unreachable'
+            : uploadCompleted || percent === 100 ? 'after'
+              : loadedBytes > 0 ? 'during' : 'before'
+      fail(stage, localized[stage].replace('{{percent}}', String(percent)))
+    }
+
+    request.open('POST', requestUrl)
+    request.setRequestHeader('Authorization', `Bearer ${token}`)
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable || !event.total) return
+      loadedBytes = event.loaded
+      const percent = Math.min(100, Math.round((event.loaded / event.total) * 100))
+      onProgress?.(percent)
+    }
+    request.upload.onload = () => {
+      uploadCompleted = true
+      loadedBytes = file.size
+    }
     request.onload = () => {
       let data = {}
       try {
@@ -1697,23 +1846,35 @@ function uploadPrivatePdfFile(file, onProgress) {
       } catch {
         data = {}
       }
-
-      if (request.status < 200 || request.status >= 300 || data.ok === false || !data.pdf?.storage_key) {
-        const fallback = request.status === 413
+      if (request.status < 200 || request.status >= 300 || data.ok === false) {
+        const key = request.status === 401 ? 'unauthorized'
+          : request.status === 403 ? 'forbidden'
+            : request.status === 413 ? null
+              : request.status === 429 ? 'limited'
+                : request.status >= 500 ? 'server' : 'invalid'
+        const message = request.status === 413
           ? storeText('pdfSizeLimit')
-          : `${storeText('uploadPdfFailed')} (HTTP ${request.status})`
-        reject(new Error(data.message || fallback))
+          : data.message || (key ? localized[key] : localized.invalid)
+        fail(`HTTP_${request.status}_${String(data.code || 'ERROR').slice(0, 64)}`, message)
         return
       }
-
+      if (!data.pdf?.storage_key) {
+        fail('INVALID_SERVER_RESPONSE', localized.response)
+        return
+      }
+      if (settled) return
+      settled = true
       onProgress?.(100)
       resolve(data.pdf)
     }
-
-    request.onerror = () => reject(new Error(`${storeText('uploadPdfFailed')} (Network)`))
-    request.onabort = () => reject(new Error(`${storeText('uploadPdfFailed')} (Aborted)`))
-    request.ontimeout = () => reject(new Error(`${storeText('uploadPdfFailed')} (Timeout)`))
-    request.send(formData)
+    request.onerror = () => { void transportFailure() }
+    request.onabort = () => fail('BROWSER_ABORTED', localized.aborted)
+    request.ontimeout = () => fail('REQUEST_TIMEOUT', localized.timeout)
+    try {
+      request.send(formData)
+    } catch (error) {
+      fail('BROWSER_SEND_ERROR', error?.message || localized.before)
+    }
   })
 }
 
