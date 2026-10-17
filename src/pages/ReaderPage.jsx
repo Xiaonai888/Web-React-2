@@ -6209,16 +6209,18 @@ async function loadReaderAdStatus(targetEpisodeId = episodeId) {
   { headers: readerAuthHeaders(), cache: 'no-store' }
 )
 const data = await response.json().catch(() => ({}))
-if (!response.ok || data.ok === false) throw new Error(data.message)
+if (!response.ok || data.ok === false) throw Object.assign(new Error(data.message || 'Read gate failed'), { status: response.status, code: data.code || null })
     return {
       ad_policy: data?.ad_policy || null,
       advertisement: data?.advertisement || null,
     }
-  } catch {
-    return {
-      ad_policy: null,
-      advertisement: null,
-    }
+    } catch (error) {
+    console.warn('READ_GATE_ERROR', {
+      status: error?.status || 0,
+      code: error?.code || null,
+      message: String(error?.message || 'Read gate failed').slice(0, 160),
+    })
+    throw error
   }
 }
 
