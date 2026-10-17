@@ -119,7 +119,7 @@ export default function WorkMaintenanceGuard({ children }) {
         const response = await fetch(
           `${API_BASE_URL}/health/maintenance`,
           {
-            cache: 'no-store',
+            cache: 'default',
             signal: controller.signal,
           }
         )
