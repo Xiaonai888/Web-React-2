@@ -166,6 +166,13 @@ export default function useReadingProgressSync({
 
       const data = await response.json().catch(() => ({}))
       if (!response.ok || data.ok === false) {
+        if (!retryByStoryRef.current.has(storyKey)) {
+          console.warn('READING_PROGRESS_HTTP_ERROR', {
+            status: response.status,
+            code: data?.code || null,
+            message: data?.message || 'Request rejected',
+          })
+        }
         permanentFailure =
           response.status >= 400 &&
           response.status < 500 &&
@@ -202,7 +209,10 @@ export default function useReadingProgressSync({
       retryByStoryRef.current.delete(storyKey)
       saved = true
       return true
-    } catch {
+        } catch (error) {
+      if (!retryByStoryRef.current.has(storyKey)) {
+        console.warn('READING_PROGRESS_NETWORK_ERROR', error?.message || 'Fetch failed')
+      }
       return false
     } finally {
       if (!saved && !permanentFailure) {
