@@ -5365,6 +5365,7 @@ export default function ReaderPage() {
   const rewardAnimationTimerRef = useRef(null)
   const offlineReaderReleaseRef = useRef(null)
   const pendingViewedEpisodeRef = useRef(new Map())
+  const readGateInFlightRef = useRef(new Map())
   const offlineMode =
     offlineRequested ||
     navigator.onLine === false ||
@@ -6195,34 +6196,52 @@ useEffect(() => {
 }
 
 async function loadReaderAdStatus(targetEpisodeId = episodeId) {
-  if (offlineMode) {
+  if (offlineMode || !isUsableRouteId(storyId) || !isUsableRouteId(targetEpisodeId)) {
     return { ad_policy: null, advertisement: null }
   }
 
-  if (!isUsableRouteId(storyId) || !isUsableRouteId(targetEpisodeId)) {
-    return { ad_policy: null, advertisement: null }
-  }
+  const requestKey = `${storyId}:${targetEpisodeId}`
+  const token = getReaderToken()
+  const existing = readGateInFlightRef.current.get(requestKey)
+  if (existing?.token === token) return existing.promise
 
-  try {
-    const response = await fetch(
-  `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/read-gate`,
-  { headers: readerAuthHeaders(), cache: 'no-store' }
-)
-const data = await response.json().catch(() => ({}))
-if (!response.ok || data.ok === false) throw Object.assign(new Error(data.message || 'Read gate failed'), { status: response.status, code: data.code || null })
-    return {
-      ad_policy: data?.ad_policy || null,
-      advertisement: data?.advertisement || null,
-    }
+  const request = (async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/read-gate`,
+        { headers: readerAuthHeaders(), cache: 'no-store' }
+      )
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) {
+        throw Object.assign(
+          new Error(data.message || 'Read gate failed'),
+          { status: response.status, code: data.code || null }
+        )
+      }
+      return {
+        ad_policy: data?.ad_policy || null,
+        advertisement: data?.advertisement || null,
+      }
     } catch (error) {
-    console.warn('READ_GATE_ERROR', {
-      status: error?.status || 0,
-      code: error?.code || null,
-      message: String(error?.message || 'Read gate failed').slice(0, 160),
-    })
-    throw error
+      console.warn('READ_GATE_ERROR', {
+        status: error?.status || 0,
+        code: error?.code || null,
+        message: String(error?.message || 'Read gate failed').slice(0, 160),
+      })
+      throw error
+    }
+  })()
+
+  readGateInFlightRef.current.set(requestKey, { token, promise: request })
+  try {
+    return await request
+  } finally {
+    if (readGateInFlightRef.current.get(requestKey)?.promise === request) {
+      readGateInFlightRef.current.delete(requestKey)
+    }
   }
 }
+
 
 async function loadContinuousEpisode(targetEpisode) {
   if (offlineMode) return null
