@@ -168,7 +168,31 @@ export default function WorkMaintenanceGuard({ children }) {
     const originalFetch = window.fetch.bind(window)
 
     const guardedFetch = async (...args) => {
-      const response = await originalFetch(...args)
+      let requestArgs = args
+      try {
+        const [input, init] = args
+        const requestUrl = new URL(
+          input instanceof Request ? input.url : String(input),
+          window.location.origin
+        )
+        if (requestUrl.origin === new URL(API_BASE_URL).origin && requestUrl.pathname.startsWith('/api/')) {
+          const headers = new Headers(
+            init?.headers || (input instanceof Request ? input.headers : undefined)
+          )
+          if (headers.has('Authorization') && !headers.has('X-Shadow-Page')) {
+            const page = window.location.pathname.toLowerCase()
+              .replace(/\/[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}(?=\/|$)/g, '/:id')
+              .replace(/\/\d+(?=\/|$)/g, '/:id')
+              .replace(/[^/a-z0-9_:.-]/g, '_')
+              .slice(0, 160)
+            headers.set('X-Shadow-Page', `WEB:${page || '/'}`)
+            requestArgs = [input, { ...init, headers }]
+          }
+        }
+      } catch {
+      }
+
+      const response = await originalFetch(...requestArgs)
 
       if (response.status !== 503) {
         return response
