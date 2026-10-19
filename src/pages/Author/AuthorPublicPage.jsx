@@ -11,6 +11,7 @@ import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import AuthorPageTransparencyPopup from '../../components/AuthorPageTransparencyPopup'
 
 registerTranslationNamespace('authorPublicPage', {
@@ -878,22 +879,32 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
     throw new Error(getDisplayText('authorPublicPage.failedUploadImage'))
   }
 
-  const formData = new FormData()
+  const legacyUpload = async ({ signal } = {}) => {
+    const formData = new FormData()
+    formData.append('image', optimized.file)
+    formData.append('folder', folder)
 
-  formData.append('image', optimized.file)
-  formData.append('folder', folder)
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+      signal,
+    })
 
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || getDisplayText('authorPublicPage.failedUploadImage'))
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || getDisplayText('authorPublicPage.failedUploadImage'))
+    }
+    return data
   }
+
+  const data = await uploadMediaWithFallback({
+    file: optimized.file,
+    category: folder,
+    token,
+    apiBaseUrl: API_BASE_URL,
+    legacyUpload,
+  })
 
   return data.image_url || data.imageUrl
 }
