@@ -13,6 +13,7 @@ import CompletedStoryConfirmModal from '../../components/author/CompletedStoryCo
 import StorySettingSheet from '../../components/author/StorySettingSheet'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('createStory', {
@@ -98,25 +99,12 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
         ? 'banner'
         : 'default'
   const optimized = await optimizeImageForUpload(file, { preset })
-  const formData = new FormData()
-
-  formData.append('image', optimized.file)
-  formData.append('folder', folder)
-
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
+    const data = await uploadMediaWithFallback({
+    file: optimized.file,
+    category: folder,
+    token,
+    apiBaseUrl: API_BASE_URL,
   })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || getDisplayText('createStory.failedUploadImage'))
-  }
-
   return data.image_url || data.imageUrl
 }
 
