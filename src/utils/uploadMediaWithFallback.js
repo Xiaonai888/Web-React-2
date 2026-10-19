@@ -63,6 +63,7 @@ function allowLegacyFallback(error, stage) {
       error?.code === 'DIRECT_UPLOAD_NETWORK_ERROR' ||
       error?.status === 404 ||
       error?.status === 405 ||
+      error?.status === 408 ||
       error?.status >= 500
   }
 
@@ -73,7 +74,17 @@ function allowLegacyFallback(error, stage) {
       error?.status >= 500
   }
 
-  return stage === 'finalize' && error?.code === 'DIRECT_UPLOAD_NOT_ENABLED'
+  if (stage === 'finalize') {
+    return error?.code === 'DIRECT_UPLOAD_NOT_ENABLED' ||
+      error?.code === 'DIRECT_UPLOAD_UNAVAILABLE' ||
+      error?.code === 'DIRECT_UPLOAD_NETWORK_ERROR' ||
+      error?.code === 'DIRECT_UPLOAD_NOT_FOUND' ||
+      error?.status === 404 ||
+      error?.status === 408 ||
+      error?.status >= 500
+  }
+
+  return false
 }
 
 async function postJson(url, token, data, signal) {
@@ -165,12 +176,18 @@ async function uploadThroughRender({ file, category, token, apiBaseUrl, legacyUp
   const formData = new FormData()
   formData.append('image', file)
   formData.append('folder', category)
-  const response = await fetch(`${apiBaseUrl}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-    signal,
-  })
+  let response
+  try {
+    response = await fetch(`${apiBaseUrl}/api/story-media/upload-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+      signal,
+    })
+  } catch (error) {
+    if (isCanceled(error, signal)) throw error
+    throw uploadError('Cannot reach the existing Render upload service. Check backend availability and retry.', 0, 'LEGACY_UPLOAD_NETWORK_ERROR')
+  }
   const result = await response.json().catch(() => ({}))
   if (!response.ok || result.ok === false) {
     throw uploadError(result.message || 'Image upload failed', response.status, result.code || '')
@@ -238,9 +255,7 @@ export async function uploadMediaWithFallback({
   } catch (error) {
     if (isCanceled(error, signal) || error?.code === 'DIRECT_UPLOAD_CANCELED') throw error
     if (!allowLegacyFallback(error, stage)) throw error
-    if (stage === 'init' && error?.code === 'DIRECT_UPLOAD_NOT_ENABLED') {
-      temporarilyUnavailableUntil = Date.now() + 60000
-    }
+    temporarilyUnavailableUntil = Date.now() + 60000
     return uploadLegacy()
   }
 }
