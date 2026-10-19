@@ -707,72 +707,31 @@ async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
     return imageDataUrl || null
   }
 
-  const formData = new FormData()
-
-  formData.append(
-    'image',
-    dataUrlToFile(
-      imageDataUrl,
-      `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
-    )
+  const file = dataUrlToFile(
+    imageDataUrl,
+    `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
   )
-
-  formData.append('folder', 'chat_story_character')
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/story-media/upload-image`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    }
-  )
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || getDisplayText('chatStoryEditor.failedUploadCharacterImage'))
-  }
+  const data = await uploadMediaWithFallback({
+    file,
+    category: 'chat_story_character',
+    token,
+    apiBaseUrl: API_BASE_URL,
+  })
 
   return data.image_url || data.imageUrl || null
 }
 
 async function uploadEpisodeImage(token, file) {
-  const formData = new FormData()
+  const data = await uploadMediaWithFallback({
+    file,
+    category: 'chat_story_episode',
+    token,
+    apiBaseUrl: API_BASE_URL,
+  })
 
-  formData.append('image', file)
-  formData.append('folder', 'chat_story_episode')
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/story-media/upload-image`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    }
-  )
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.message || getDisplayText('chatStoryEditor.failedUploadChatImage')
-    )
-  }
-
-  const imageUrl =
-    data.image_url ||
-    data.imageUrl ||
-    ''
-
+  const imageUrl = data.image_url || data.imageUrl || ''
   if (!imageUrl) {
-    throw new Error(
-      getDisplayText('chatStoryEditor.missingImageUrl')
-    )
+    throw new Error(getDisplayText('chatStoryEditor.missingImageUrl'))
   }
 
   return imageUrl
