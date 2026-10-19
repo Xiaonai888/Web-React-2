@@ -40,6 +40,7 @@ import {
   validateMangaFile,
 } from '../../utils/mangaImageUtils'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 
 registerTranslationNamespace('episodeEditor', {
   en: {
@@ -1654,57 +1655,68 @@ async function uploadEpisodeInlineImage({ token, file }) {
     throw new Error(getDisplayText('episodeEditor.imageTooLarge'))
   }
 
-  let response
-let bytes
+  const legacyUpload = async ({ signal } = {}) => {
+    let bytes
+    try {
+      bytes = await file.arrayBuffer()
+    } catch {
+      throw new Error(getDisplayText('episodeEditor.selectedReadFailed'))
+    }
+    if (!bytes.byteLength) {
+      throw new Error(getDisplayText('episodeEditor.selectedEmpty'))
+    }
 
-try {
-  bytes = await file.arrayBuffer()
-} catch {
-  throw new Error(getDisplayText('episodeEditor.selectedReadFailed'))
-}
-
-if (!bytes.byteLength) {
-  throw new Error(getDisplayText('episodeEditor.selectedEmpty'))
-}
-
-try {
-  response = await fetch(
-      `${API_BASE_URL}/api/story-media/upload-novel-image`,
-      {
+    let response
+    try {
+      response = await fetch(`${API_BASE_URL}/api/story-media/upload-novel-image`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': file.type || 'application/octet-stream',
         },
         body: bytes,
-      }
-    )
-  } catch {
-    throw new Error(
-      getDisplayText('episodeEditor.networkImageFailed')
-    )
+        signal,
+      })
+    } catch (error) {
+      if (signal?.aborted || error?.name === 'AbortError') throw error
+      throw new Error(getDisplayText('episodeEditor.networkImageFailed'))
+    }
+
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) {
+      const stage = String(data.stage || 'upload')
+      const code = String(data.code || `HTTP_${response.status}`)
+      const message = data.message || getDisplayText('episodeEditor.novelUploadFailed')
+      throw new Error(`${message} [${stage}: ${code}]`)
+    }
+    return data
   }
 
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    const stage = String(data.stage || 'upload')
-    const code = String(data.code || `HTTP_${response.status}`)
-    const message = data.message || getDisplayText('episodeEditor.novelUploadFailed')
-    throw new Error(`${message} [${stage}: ${code}]`)
+  let directFile = null
+  if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    try {
+      directFile = await optimizeNovelEpisodeImage(file)
+    } catch {
+      directFile = null
+    }
   }
+
+  const data = directFile
+    ? await uploadMediaWithFallback({
+        file: directFile,
+        category: 'episode_content',
+        token,
+        apiBaseUrl: API_BASE_URL,
+        legacyUpload,
+      })
+    : await legacyUpload()
 
   const imageUrl = data.image_url || data.imageUrl
-
   if (!imageUrl) {
-    throw new Error(
-      getDisplayText('episodeEditor.imageUrlMissingServer')
-    )
+    throw new Error(getDisplayText('episodeEditor.imageUrlMissingServer'))
   }
-
   return imageUrl
 }
-
 
 
 function isDialogueOrSpecialLine(line) {
