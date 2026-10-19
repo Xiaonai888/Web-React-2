@@ -1184,26 +1184,19 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
     preset: folder === 'episode_cover' ? 'banner' : 'default',
     maxSourceBytes: 5 * 1024 * 1024,
   })
-  const formData = new FormData()
-
-  formData.append('image', optimized.file)
-  formData.append('folder', folder)
-
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
+  const data = await uploadMediaWithFallback({
+    file: optimized.file,
+    category: folder,
+    token,
+    apiBaseUrl: API_BASE_URL,
   })
 
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || getDisplayText('episodeEditor.failedUploadImage'))
+  const imageUrl = data.image_url || data.imageUrl
+  if (!imageUrl) {
+    throw new Error(getDisplayText('episodeEditor.imageUrlMissingServer'))
   }
 
-  return data.image_url || data.imageUrl
+  return imageUrl
 }
 
 function escapeEpisodeHtml(value) {
