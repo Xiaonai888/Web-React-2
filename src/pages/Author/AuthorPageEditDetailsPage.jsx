@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 
 registerTranslationNamespace('authorPageEditDetails', {
   "en": {
@@ -102,8 +104,10 @@ registerTranslationNamespace('authorPageEditDetails', {
     "loginAgain": "Please login again before saving contact info.",
     "saveContactFailed": "Failed to save contact info",
     "saved": "Saved.",
-    "coverPreviewUpdated": "Cover updated for preview. Backend image save can be connected later.",
-    "logoPreviewUpdated": "Logo updated for preview. Backend image save can be connected later.",
+    "coverPreviewUpdated": "Cover image saved successfully.",
+    "imageUploading": "Saving image...",
+    "imageTooLargeToUpload": "Image is too large. Please select a smaller photo.",
+    "logoPreviewUpdated": "Logo image saved successfully.",
     "facebookImageUpdated": "Facebook Page image updated.",
     "pageNameTooShort": "Page name must be at least 2 characters.",
     "pageUsernameTooShort": "Page username must be at least 3 characters.",
@@ -251,8 +255,10 @@ registerTranslationNamespace('authorPageEditDetails', {
     "loginAgain": "សូមចូលគណនីម្តងទៀត មុនរក្សាទុកព័ត៌មានទំនាក់ទំនង។",
     "saveContactFailed": "មិនអាចរក្សាទុកព័ត៌មានទំនាក់ទំនងបានទេ",
     "saved": "បានរក្សាទុក។",
-    "coverPreviewUpdated": "បានកែ Cover សម្រាប់ Preview។ ការរក្សាទុករូបទៅ Backend អាចភ្ជាប់នៅពេលក្រោយ។",
-    "logoPreviewUpdated": "បានកែ Logo សម្រាប់ Preview។ ការរក្សាទុករូបទៅ Backend អាចភ្ជាប់នៅពេលក្រោយ។",
+    "coverPreviewUpdated": "បានរក្សាទុករូប Cover ជោគជ័យ។",
+    "imageUploading": "កំពុងបង្ហោះ និងរក្សាទុករូបភាព...",
+    "imageTooLargeToUpload": "រូបភាពធំពេក។ សូមជ្រើសរូបតូចជាងនេះ។",
+    "logoPreviewUpdated": "បានរក្សាទុករូប Logo ជោគជ័យ។",
     "facebookImageUpdated": "បានកែរូប Facebook Page។",
     "pageNameTooShort": "ឈ្មោះទំព័រត្រូវមានយ៉ាងហោចណាស់ 2 តួអក្សរ។",
     "pageUsernameTooShort": "ឈ្មោះអ្នកប្រើទំព័រត្រូវមានយ៉ាងហោចណាស់ 3 តួអក្សរ។",
@@ -400,8 +406,10 @@ registerTranslationNamespace('authorPageEditDetails', {
     "loginAgain": "保存联系信息前请重新登录。",
     "saveContactFailed": "无法保存联系信息",
     "saved": "已保存。",
-    "coverPreviewUpdated": "封面预览已更新。后端图片保存可稍后连接。",
-    "logoPreviewUpdated": "Logo 预览已更新。后端图片保存可稍后连接。",
+    "coverPreviewUpdated": "封面图片已保存。",
+    "imageUploading": "正在上传并保存图片...",
+    "imageTooLargeToUpload": "图片过大，请选择更小的图片。",
+    "logoPreviewUpdated": "Logo 图片已保存。",
     "facebookImageUpdated": "Facebook 页面图片已更新。",
     "pageNameTooShort": "页面名称至少需要 2 个字符。",
     "pageUsernameTooShort": "页面用户名至少需要 3 个字符。",
@@ -549,8 +557,10 @@ registerTranslationNamespace('authorPageEditDetails', {
     "loginAgain": "連絡先情報を保存する前に再度ログインしてください。",
     "saveContactFailed": "連絡先情報を保存できませんでした",
     "saved": "保存しました。",
-    "coverPreviewUpdated": "カバーのプレビューを更新しました。バックエンド保存は後で接続できます。",
-    "logoPreviewUpdated": "ロゴのプレビューを更新しました。バックエンド保存は後で接続できます。",
+    "coverPreviewUpdated": "カバー画像を保存しました。",
+    "imageUploading": "画像をアップロードして保存しています...",
+    "imageTooLargeToUpload": "画像が大きすぎます。より小さい画像を選択してください。",
+    "logoPreviewUpdated": "ロゴ画像を保存しました。",
     "facebookImageUpdated": "Facebook ページ画像を更新しました。",
     "pageNameTooShort": "ページ名は2文字以上にしてください。",
     "pageUsernameTooShort": "ページユーザー名は3文字以上にしてください。",
@@ -698,8 +708,10 @@ registerTranslationNamespace('authorPageEditDetails', {
     "loginAgain": "연락처 정보를 저장하기 전에 다시 로그인해 주세요.",
     "saveContactFailed": "연락처 정보를 저장하지 못했습니다",
     "saved": "저장되었습니다.",
-    "coverPreviewUpdated": "커버 미리보기가 업데이트되었습니다. 백엔드 이미지 저장은 나중에 연결할 수 있습니다.",
-    "logoPreviewUpdated": "로고 미리보기가 업데이트되었습니다. 백엔드 이미지 저장은 나중에 연결할 수 있습니다.",
+    "coverPreviewUpdated": "커버 이미지를 저장했습니다.",
+    "imageUploading": "이미지를 업로드하고 저장하는 중...",
+    "imageTooLargeToUpload": "이미지가 너무 큽니다. 더 작은 이미지를 선택하세요.",
+    "logoPreviewUpdated": "로고 이미지를 저장했습니다.",
     "facebookImageUpdated": "Facebook 페이지 이미지가 업데이트되었습니다.",
     "pageNameTooShort": "페이지 이름은 2자 이상이어야 합니다.",
     "pageUsernameTooShort": "페이지 사용자 이름은 3자 이상이어야 합니다.",
@@ -795,6 +807,46 @@ function getAuthToken() {
     sessionStorage.getItem('shadow_reader_token') ||
     ''
   )
+}
+
+async function uploadAuthorPageEditImage(file, token, category) {
+  const maxBytes = category === 'author_page_cover' ? 5 * 1024 * 1024 : 2 * 1024 * 1024
+  const optimized = await optimizeImageForUpload(file, {
+    preset: category === 'author_page_cover' ? 'banner' : 'avatar',
+    maxSourceBytes: 5 * 1024 * 1024,
+  })
+  if (optimized.file.size > maxBytes) {
+    throw new Error(detailsText('imageTooLargeToUpload'))
+  }
+
+  const legacyUpload = async ({ signal } = {}) => {
+    const formData = new FormData()
+    formData.append('image', optimized.file)
+    formData.append('folder', category)
+
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+      signal,
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || detailsText('saveContactFailed'))
+    }
+    return data
+  }
+
+  const data = await uploadMediaWithFallback({
+    file: optimized.file,
+    category,
+    token,
+    apiBaseUrl: API_BASE_URL,
+    legacyUpload,
+  })
+  const imageUrl = data.image_url || data.imageUrl || ''
+  if (!imageUrl) throw new Error(detailsText('saveContactFailed'))
+  return imageUrl
 }
 
 function readStoredDetails() {
@@ -2553,6 +2605,7 @@ useEffect(() => {
 
 const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingImage, setSavingImage] = useState(false)
   const [message, setMessage] = useState('')
   const [pageName, setPageName] = useState('')
   const [pageUsername, setPageUsername] = useState('')
@@ -2733,44 +2786,67 @@ async function updateDetails(patch) {
 
 
   function openImagePicker(mode) {
+    if (savingImage) return
     setImageMode(mode)
     fileInputRef.current?.click()
   }
 
-  function handleImageFile(event) {
+  async function handleImageFile(event) {
     const file = event.target.files?.[0]
     event.target.value = ''
+    if (!file || !file.type.startsWith('image/') || savingImage) return
 
-    if (!file || !file.type.startsWith('image/')) return
-
-    const reader = new FileReader()
-
-    reader.onload = () => {
-      const imageUrl = String(reader.result || '')
-
-      if (imageMode === 'cover') {
-        setCoverUrl(imageUrl)
-        const currentPage = JSON.parse(localStorage.getItem('shadow_author_page') || '{}')
-        localStorage.setItem('shadow_author_page', JSON.stringify({ ...currentPage, cover_url: imageUrl }))
-        setMessage(detailsText('coverPreviewUpdated'))
-      }
-
-      if (imageMode === 'avatar') {
-        setAvatarUrl(imageUrl)
-        const currentPage = JSON.parse(localStorage.getItem('shadow_author_page') || '{}')
-        localStorage.setItem('shadow_author_page', JSON.stringify({ ...currentPage, avatar_url: imageUrl }))
-        setMessage(detailsText('logoPreviewUpdated'))
-      }
-
-      if (imageMode === 'facebook') {
-        updateDetails({ facebook_page_image_url: imageUrl })
-        setMessage(detailsText('facebookImageUpdated'))
-      }
-
-      setImageMode('')
+    const token = getAuthToken()
+    if (!token) {
+      setMessage(detailsText('loginAgain'))
+      return
     }
 
-    reader.readAsDataURL(file)
+    const mode = imageMode
+    const category = mode === 'cover' ? 'author_page_cover' : 'author_page_avatar'
+
+    try {
+      setSavingImage(true)
+      setMessage(detailsText('imageUploading'))
+      const imageUrl = await uploadAuthorPageEditImage(file, token, category)
+
+      if (mode === 'facebook') {
+        const saved = await updateDetails({ facebook_page_image_url: imageUrl })
+        if (saved) setMessage(detailsText('facebookImageUpdated'))
+        return
+      }
+
+      if (mode !== 'cover' && mode !== 'avatar') return
+
+      const response = await fetch(`${API_BASE_URL}/api/authors/profile-images`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(mode === 'cover'
+          ? { cover_url: imageUrl }
+          : { avatar_url: imageUrl }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false || !data.author_page) {
+        throw new Error(data.message || detailsText('saveContactFailed'))
+      }
+
+      if (mode === 'cover') {
+        setCoverUrl(data.author_page.cover_url || imageUrl)
+      } else {
+        setAvatarUrl(data.author_page.avatar_url || imageUrl)
+      }
+      localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+      invalidateMyAuthorPageClientCache()
+      setMessage(detailsText(mode === 'cover' ? 'coverPreviewUpdated' : 'logoPreviewUpdated'))
+    } catch (error) {
+      setMessage(error?.message || detailsText('saveContactFailed'))
+    } finally {
+      setSavingImage(false)
+      setImageMode('')
+    }
   }
 
   async function handleSaveMainPage() {
@@ -2866,7 +2942,7 @@ profile_details: details,
       </header>
 
       <main className="mx-auto max-w-[720px] px-4 pb-10">
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+        <input ref={fileInputRef} type="file" accept="image/*" disabled={savingImage} className="hidden" onChange={handleImageFile} />
 
         {message ? (
           <button
