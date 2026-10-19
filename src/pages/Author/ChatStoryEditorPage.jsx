@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 
 registerTranslationNamespace('chatStoryEditor', {
   "en": {
@@ -636,6 +635,7 @@ import { ImageSourceSheet } from './ChatStoryCharactersPage'
 import { PublishSettingsSheet } from './EpisodeEditorPage'
 import { SuccessModal } from './PublishEpisodePage'
 import ChatStoryEditorGuide from '../../components/chat-story/ChatStoryEditorGuide'
+import { useStoryPublishAgreementGate } from '../../components/author/StoryPublishAgreementModal'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -707,31 +707,72 @@ async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
     return imageDataUrl || null
   }
 
-  const file = dataUrlToFile(
-    imageDataUrl,
-    `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
+  const formData = new FormData()
+
+  formData.append(
+    'image',
+    dataUrlToFile(
+      imageDataUrl,
+      `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
+    )
   )
-  const data = await uploadMediaWithFallback({
-    file,
-    category: 'chat_story_character',
-    token,
-    apiBaseUrl: API_BASE_URL,
-  })
+
+  formData.append('folder', 'chat_story_character')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/story-media/upload-image`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || getDisplayText('chatStoryEditor.failedUploadCharacterImage'))
+  }
 
   return data.image_url || data.imageUrl || null
 }
 
 async function uploadEpisodeImage(token, file) {
-  const data = await uploadMediaWithFallback({
-    file,
-    category: 'chat_story_episode',
-    token,
-    apiBaseUrl: API_BASE_URL,
-  })
+  const formData = new FormData()
 
-  const imageUrl = data.image_url || data.imageUrl || ''
+  formData.append('image', file)
+  formData.append('folder', 'chat_story_episode')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/story-media/upload-image`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(
+      data.message || getDisplayText('chatStoryEditor.failedUploadChatImage')
+    )
+  }
+
+  const imageUrl =
+    data.image_url ||
+    data.imageUrl ||
+    ''
+
   if (!imageUrl) {
-    throw new Error(getDisplayText('chatStoryEditor.missingImageUrl'))
+    throw new Error(
+      getDisplayText('chatStoryEditor.missingImageUrl')
+    )
   }
 
   return imageUrl
@@ -2649,6 +2690,14 @@ useEffect(() => {
     window.setTimeout(() => setToast(''), 2300)
   }
 
+  const { requireAgreement, agreementModal } = useStoryPublishAgreementGate({
+    storyId,
+    apiBaseUrl: API_BASE_URL,
+    getAuthToken,
+    navigate,
+    onError: showToast,
+  })
+
   const openTitlePopup = () => {
   setTitleDraft(episodeTitle)
   setTitlePopupOpen(true)
@@ -4405,24 +4454,47 @@ const handleAddConfirm = async () => {
       await saveStorySettings(token)
     }
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/stories/${storyId}/chat/episodes/${episodeId}/status`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          status,
-          scheduled_at: scheduledAt,
-          is_adult: episodeAdult,
-          is_free_published: episodeFree,
-        }),
-      }
-    )
+    if (status !== 'draft' && publishedIsFirstEpisode) {
+      const accepted = await requireAgreement()
+      if (!accepted) return
+    }
 
-    const data = await response.json().catch(() => ({}))
+    const publishEpisodeStatus = async () => {
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/${storyId}/chat/episodes/${episodeId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status,
+            scheduled_at: scheduledAt,
+            is_adult: episodeAdult,
+            is_free_published: episodeFree,
+          }),
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+      return { response, data }
+    }
+
+    let { response, data } = await publishEpisodeStatus()
+
+    if (
+      status !== 'draft' &&
+      response.status === 409 &&
+      data.code === 'PUBLISH_AGREEMENT_REQUIRED'
+    ) {
+      const accepted = await requireAgreement()
+      if (!accepted) return
+
+      const retried = await publishEpisodeStatus()
+      response = retried.response
+      data = retried.data
+    }
 
     if (!response.ok || data.ok === false) {
       throw new Error(
@@ -4640,6 +4712,7 @@ setPublishSettingsOpen(true)
         },
       ]}
     />
+      {agreementModal}
       <PublishSettingsSheet
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
