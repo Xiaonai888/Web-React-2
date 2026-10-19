@@ -119,7 +119,7 @@ export default function AuthorStoryPayoutStatusPage() {
     <div className="min-h-screen bg-[linear-gradient(180deg,#fbf8ff_0%,#f7f2fb_46%,#fbf8ff_100%)] pb-20">
       <header className="sticky top-0 z-30 border-b border-[#eadff1] bg-[#fffdfb]/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-[760px] items-center justify-between gap-3">
-          <button type="button" onClick={() => navigate('/author/income')} aria-label={t('authorStoryPayoutStatus.back')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#e3d5ed] bg-white text-[#7b59a7] shadow-[0_4px_12px_rgba(87,62,116,0.08)] active:scale-95">
+          <button type="button" onClick={() => navigate('/author/profile')} aria-label={t('authorStoryPayoutStatus.back')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#e3d5ed] bg-white text-[#7b59a7] shadow-[0_4px_12px_rgba(87,62,116,0.08)] active:scale-95">
             <i className="fa-solid fa-chevron-left text-[12px]" />
           </button>
           <div className="min-w-0 flex-1 text-center">
