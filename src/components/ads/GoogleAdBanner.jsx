@@ -93,18 +93,23 @@ export default function GoogleAdBanner({
 
     setEnabled(false)
 
-    getPublicGoogleAdsSettings().then(
-      (settings) => {
-        if (!active) return
-
-        setEnabled(
-          getGoogleAdsPlacementEnabled(
-            settings,
-            placement
-          )
-        )
+    getPublicGoogleAdsSettings().then(async (settings) => {
+      if (!active) return
+      const placementEnabled = getGoogleAdsPlacementEnabled(settings, placement)
+      if (!placementEnabled) {
+        setEnabled(false)
+        return
       }
-    )
+      if (placement === 'readerEnd') {
+        const isAdFree = await import('../../services/premiumAdVisibility')
+          .then(({ hasPremiumAdFree }) => hasPremiumAdFree())
+          .catch(() => false)
+        if (!active) return
+        setEnabled(!isAdFree)
+        return
+      }
+      setEnabled(true)
+    })
 
     return () => {
       active = false
