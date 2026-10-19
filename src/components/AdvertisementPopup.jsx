@@ -298,6 +298,17 @@ export default function AdvertisementPopup({
       const debug = getSearchFlag('addebug') || getSearchFlag('adtest')
 
       try {
+        if (['splash', 'opening', 'freeUnlock', 'me'].includes(placement)) {
+          const isAdFree = await import('../services/premiumAdVisibility')
+            .then(({ hasPremiumAdFree }) => hasPremiumAdFree())
+            .catch(() => false)
+          if (cancelled) return
+          if (isAdFree) {
+            finishAd()
+            return
+          }
+        }
+
         if (advertisementOverride?.image_url && placement !== 'freeUnlock') {
           if (!shouldShowByFrequency(advertisementOverride)) {
             finishAd()
