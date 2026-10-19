@@ -30,6 +30,7 @@ import ShadowMallAdOptionsSheet, {
 import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
 import ShadowMallPromotionSocial from '../components/discover/ShadowMallPromotionSocial'
+import DiscoverInsightsTracker from '../components/discover/DiscoverInsightsTracker'
 import AuthorPostEchoAction from '../components/author-posts/AuthorPostEchoAction'
 import ReactionAction from '../components/social/reactions/ReactionAction'
 import ReactionSummary from '../components/social/reactions/ReactionSummary'
@@ -2172,12 +2173,13 @@ const [saleStatus, setSaleStatus] =
                 </div>
 
                 <button
-                  type="button"
-                  disabled={
-                    statusLoading ||
-                    purchaseBusy
-                  }
-                  onClick={handleStoryAction}
+  type="button"
+  data-discover-promotion-action="true"
+  disabled={
+    statusLoading ||
+    purchaseBusy
+  }
+  onClick={handleStoryAction}
                   className="flex h-9 shrink-0 items-center justify-center rounded-[8px] bg-[#111827] px-3.5 text-[12px] font-bold text-white active:bg-black disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {statusLoading
@@ -4072,7 +4074,8 @@ export default function DiscoverPage() {
 
   return (
     <div className="app-page discover-page min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[var(--shadow-bg-page)]">
-      <style>{`
+  <DiscoverInsightsTracker />
+  <style>{`
         body.discover-bars-hidden footer {
           transform: translateY(110%);
         }
