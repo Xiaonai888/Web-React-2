@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import ImageDropZone from '../../components/common/ImageDropZone'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import {
   clearReaderPostDraft,
   readReaderPostDraft,
@@ -412,79 +413,51 @@ async function compressImageFile(file) {
   )
 }
 
-async function uploadReaderPostImage(
-  file
-) {
+async function uploadReaderPostImage(file) {
   const token = getAuthToken()
 
   if (!token) {
-    throw new Error(
-      getDisplayText(
-        'readerPostCreatePage.pleaseLoginFirst'
-      )
-    )
+    throw new Error(getDisplayText('readerPostCreatePage.pleaseLoginFirst'))
   }
 
-  const formData = new FormData()
-  formData.append('image', file)
-  formData.append(
-    'folder',
-    'reader_post_image'
-  )
+  const legacyUpload = async ({ signal } = {}) => {
+    const formData = new FormData()
+    formData.append('image', file)
+    formData.append('folder', 'reader_post_image')
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/story-media/upload-image`,
-    {
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
       method: 'POST',
       headers: {
-        Authorization:
-          `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
-    }
-  )
+      signal,
+    })
 
-  const data = await response
-    .json()
-    .catch(() => ({}))
-
-  if (
-    !response.ok ||
-    data.ok === false
-  ) {
-    const missingEnvText =
-      Array.isArray(
-        data.missing_env
-      ) &&
-      data.missing_env.length
-        ? getDisplayText(
-            'readerPostCreatePage.missingEnv',
-            {
-              values: data.missing_env.join(
-                ', '
-              ),
-            }
-          )
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) {
+      const missingEnvText = Array.isArray(data.missing_env) && data.missing_env.length
+        ? getDisplayText('readerPostCreatePage.missingEnv', {
+            values: data.missing_env.join(', '),
+          })
         : ''
+      throw new Error(`${data.message || getDisplayText('readerPostCreatePage.failedUploadPhoto')}${missingEnvText}`)
+    }
 
-    throw new Error(
-      `${data.message || getDisplayText(
-        'readerPostCreatePage.failedUploadPhoto'
-      )}${missingEnvText}`
-    )
+    return data
   }
 
-  const imageUrl =
-    data.image_url ||
-    data.imageUrl ||
-    ''
+  const data = await uploadMediaWithFallback({
+    file,
+    category: 'reader_post_image',
+    token,
+    apiBaseUrl: API_BASE_URL,
+    legacyUpload,
+  })
 
+  const imageUrl = data.image_url || data.imageUrl || ''
   if (!imageUrl) {
-    throw new Error(
-      getDisplayText(
-        'readerPostCreatePage.uploadNoImageUrl'
-      )
-    )
+    throw new Error(getDisplayText('readerPostCreatePage.uploadNoImageUrl'))
   }
 
   return imageUrl
