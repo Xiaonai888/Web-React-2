@@ -893,9 +893,12 @@ function readerAuthHeaders() {
 
 const IOS_READER = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-const IOS_MANIFEST_PREFIX = 'shadow_reader_episode_manifest_v2:'
+const IOS_MANIFEST_PREFIX = 'shadow_ios_reader_episode_manifest_v3:'
 const IOS_MANIFEST_TTL_MS = 10 * 60 * 1000
+const IOS_MANIFEST_MAX_STORIES = 10
 const iosEpisodeRequests = new Map()
+const iosManifestRequests = new Map()
+const iosManifestMemory = new Map()
 
 function iosPrivateScope() {
   const token = getReaderToken()
@@ -909,7 +912,7 @@ function iosPrivateScope() {
 }
 
 function iosManifestKey(storyId) {
-  return `${IOS_MANIFEST_PREFIX}${encodeURIComponent(String(storyId))}`
+  return `${IOS_MANIFEST_PREFIX}${iosPrivateScope() || 'anon'}:${encodeURIComponent(String(storyId))}`
 }
 
 function iosEligibleManifest(data) {
@@ -917,22 +920,92 @@ function iosEligibleManifest(data) {
     Array.isArray(data.episodes) && !data.episodes.some((item) => item?.is_adult)
 }
 
+function iosFreshManifest(entry) {
+  const age = Date.now() - Number(entry?.savedAt || 0)
+  return age >= 0 && age <= IOS_MANIFEST_TTL_MS && iosEligibleManifest(entry?.data)
+}
+
+function clearIOSManifest(storyId) {
+  if (!IOS_READER) return
+  const key = iosManifestKey(storyId)
+  iosManifestMemory.delete(key)
+  try {
+    sessionStorage.removeItem(key)
+  } catch {}
+}
+
 function readIOSManifest(storyId) {
   if (!IOS_READER) return null
+  const key = iosManifestKey(storyId)
+  let entry = iosManifestMemory.get(key)
+  if (!entry) {
+    try {
+      entry = JSON.parse(sessionStorage.getItem(key) || 'null')
+    } catch {}
+  }
+  if (iosFreshManifest(entry)) {
+    iosManifestMemory.set(key, entry)
+    return entry.data
+  }
+  clearIOSManifest(storyId)
+  return null
+}
+
+function pruneIOSManifests() {
+  const entries = new Map(iosManifestMemory)
   try {
-    const entry = JSON.parse(sessionStorage.getItem(iosManifestKey(storyId)) || 'null')
-    if (entry?.savedAt > 0 && Date.now() - entry.savedAt <= IOS_MANIFEST_TTL_MS && iosEligibleManifest(entry.data)) {
-      return entry.data
+    for (let index = sessionStorage.length - 1; index >= 0; index -= 1) {
+      const key = sessionStorage.key(index)
+      if (key?.startsWith('shadow_reader_episode_manifest_v2:')) {
+        sessionStorage.removeItem(key)
+        continue
+      }
+      if (!key?.startsWith(IOS_MANIFEST_PREFIX)) continue
+      try {
+        entries.set(key, JSON.parse(sessionStorage.getItem(key) || 'null'))
+      } catch {
+        entries.set(key, null)
+      }
     }
   } catch {}
-  return null
+  const orderedKeys = [...entries]
+    .filter(([, entry]) => iosFreshManifest(entry))
+    .sort((a, b) => Number(b[1].savedAt) - Number(a[1].savedAt))
+    .map(([key]) => key)
+  const keep = new Set(orderedKeys.slice(0, IOS_MANIFEST_MAX_STORIES))
+  for (const key of entries.keys()) {
+    if (keep.has(key)) continue
+    iosManifestMemory.delete(key)
+    try {
+      sessionStorage.removeItem(key)
+    } catch {}
+  }
 }
 
 function saveIOSManifest(storyId, data) {
   if (!IOS_READER || !iosEligibleManifest(data)) return
+  const key = iosManifestKey(storyId)
+  const entry = { data, savedAt: Date.now() }
+  iosManifestMemory.set(key, entry)
   try {
-    sessionStorage.setItem(iosManifestKey(storyId), JSON.stringify({ data, savedAt: Date.now() }))
+    sessionStorage.setItem(key, JSON.stringify(entry))
   } catch {}
+  pruneIOSManifests()
+}
+
+async function fetchIOSManifest(storyId, nativeFetch) {
+  const requestKey = iosManifestKey(storyId)
+  const existingRequest = iosManifestRequests.get(requestKey)
+  if (existingRequest) return (await existingRequest).clone()
+  const request = Promise.resolve().then(nativeFetch)
+  iosManifestRequests.set(requestKey, request)
+  try {
+    return (await request).clone()
+  } finally {
+    if (iosManifestRequests.get(requestKey) === request) {
+      iosManifestRequests.delete(requestKey)
+    }
+  }
 }
 
 function iosCacheResponse(data, cacheState) {
@@ -5398,6 +5471,7 @@ export default function ReaderPage() {
   const finishUnlock = (targetEpisodeId) => {
     unlockStatusCacheRef.current.clear()
     unlockStatusRequestRef.current.clear()
+    clearIOSManifest(storyId)
     navigate(`/story/${storyId}/episode/${targetEpisodeId}`, {
       replace: true,
       state: null,
@@ -6510,7 +6584,9 @@ useEffect(() => {
             ? iosCacheResponse(iosManifest, 'MANIFEST-HIT')
             : iosManifest && name === 'episode'
               ? await fetchIOSEpisode(storyId, routeEpisodeId, iosManifest, nativeFetch)
-              : await nativeFetch()
+              : IOS_READER && name === 'list'
+                ? await fetchIOSManifest(storyId, nativeFetch)
+                : await nativeFetch()
           readTrace.requests[name] = {
             outcome: 'HTTP_RESPONSE_RECEIVED',
             status: response.status,
