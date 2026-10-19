@@ -5,6 +5,7 @@ import { SalesReportsSettingsMenuItem, SalesReportsSettingsPage } from './SalesR
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
 
@@ -1609,65 +1610,58 @@ function formatGalleryImagesForUi(images) {
     .slice(0, 5)
 }
 
-async function uploadCoverImage(file) {
+async function uploadStoreProductImage(file, category, preset, errorKey) {
   const token = getAuthToken()
 
   if (!token) throw new Error(storeText('pleaseLogin'))
 
   const optimized = await optimizeImageForUpload(file, {
-    preset: 'cover',
+    preset,
     maxSourceBytes: STORE_IMAGE_MAX_BYTES,
   })
-  const formData = new FormData()
-  formData.append('image', optimized.file)
-  formData.append('folder', 'author_store_cover')
 
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  })
+  const legacyUpload = async ({ signal } = {}) => {
+    const formData = new FormData()
+    formData.append('image', optimized.file)
+    formData.append('folder', category)
 
-  const data = await response.json().catch(() => ({}))
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+      signal,
+    })
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || storeText('uploadCoverFailed'))
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || storeText(errorKey))
+    }
+
+    return data
   }
 
-  return data.image_url || data.imageUrl
+  const data = await uploadMediaWithFallback({
+    file: optimized.file,
+    category,
+    token,
+    apiBaseUrl: API_BASE_URL,
+    legacyUpload,
+  })
+
+  const imageUrl = data.image_url || data.imageUrl || ''
+  if (!imageUrl) throw new Error(storeText(errorKey))
+  return imageUrl
 }
 
+async function uploadCoverImage(file) {
+  return uploadStoreProductImage(file, 'author_store_cover', 'cover', 'uploadCoverFailed')
+}
 
 async function uploadGalleryImage(file) {
-  const token = getAuthToken()
-
-  if (!token) throw new Error(storeText('pleaseLogin'))
-
-  const optimized = await optimizeImageForUpload(file, {
-    preset: 'gallery',
-    maxSourceBytes: STORE_IMAGE_MAX_BYTES,
-  })
-  const formData = new FormData()
-  formData.append('image', optimized.file)
-  formData.append('folder', 'author_store_gallery')
-
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || storeText('uploadGalleryFailed'))
-  }
-
-  return data.image_url || data.imageUrl || ''
+  return uploadStoreProductImage(file, 'author_store_gallery', 'gallery', 'uploadGalleryFailed')
 }
 
 
