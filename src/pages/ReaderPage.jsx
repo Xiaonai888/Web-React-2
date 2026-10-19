@@ -6567,7 +6567,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
         const nextEpisodes = episodesData.episodes || []
         if (IOS_READER) {
-          saveIOSManifest(storyId, episodesData)
+          if (!iosManifest) saveIOSManifest(storyId, episodesData)
           if (!iosManifest && episodeResponse.ok && episodeData.ok === true) {
             saveIOSEpisode(storyId, routeEpisodeId, episodeData, episodesData).catch(() => {})
           }
