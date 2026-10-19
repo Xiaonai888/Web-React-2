@@ -10,6 +10,7 @@ import ReaderReaderMessageRequestModal from '../components/chat/ReaderReaderMess
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
+import { uploadMediaWithFallback } from '../utils/uploadMediaWithFallback'
 
 registerTranslationNamespace('profilePage', {
   en: {
@@ -498,24 +499,39 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
     preset: 'avatar',
     maxSourceBytes: PROFILE_AVATAR_MAX_BYTES,
   })
-  const formData = new FormData()
 
-  formData.append('image', optimized.file)
-  formData.append('folder', folder)
+  const legacyUpload = async ({ signal } = {}) => {
+    const formData = new FormData()
+    formData.append('image', optimized.file)
+    formData.append('folder', folder)
 
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  })
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+      signal,
+    })
 
-  const data = await response.json().catch(() => ({}))
+    const data = await response.json().catch(() => ({}))
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || getDisplayText('profilePage.uploadImageFailed'))
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || getDisplayText('profilePage.uploadImageFailed'))
+    }
+
+    return data
   }
+
+  const data = optimized.file.size > 2 * 1024 * 1024
+    ? await legacyUpload()
+    : await uploadMediaWithFallback({
+        file: optimized.file,
+        category: 'reader_avatar',
+        token,
+        apiBaseUrl: API_BASE_URL,
+        legacyUpload,
+      })
 
   return data.image_url || data.imageUrl
 }
