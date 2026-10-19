@@ -4,6 +4,7 @@ import AuthorHashtagSuggestions from './author-posts/AuthorHashtagSuggestions'
 import AuthorPostSchedulePicker from './author-posts/AuthorPostSchedulePicker'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { uploadMediaWithFallback } from '../utils/uploadMediaWithFallback'
 registerTranslationNamespace('authorPostComposerSheet', {
   en: {
     author: 'Author',
@@ -482,29 +483,42 @@ async function uploadAuthorPostImage(file, t) {
     throw new Error(t('authorPostComposerSheet.loginFirst'))
   }
 
-  const formData = new FormData()
-  formData.append('image', file)
-  formData.append('folder', 'author_post_image')
+  const legacyUpload = async ({ signal } = {}) => {
+    const formData = new FormData()
+    formData.append('image', file)
+    formData.append('folder', 'author_post_image')
 
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+      signal,
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      const missingEnvText = Array.isArray(data.missing_env) && data.missing_env.length
+        ? t('authorPostComposerSheet.missingEnv', { value: data.missing_env.join(', ') })
+        : ''
+
+      throw new Error(`${data.message || t('authorPostComposerSheet.failedUploadPhoto')}${missingEnvText}`)
+    }
+
+    return data
+  }
+
+  const data = await uploadMediaWithFallback({
+    file,
+    category: 'author_post_image',
+    token,
+    apiBaseUrl: API_BASE_URL,
+    legacyUpload,
   })
 
-  const data = await response.json().catch(() => ({}))
-
- if (!response.ok || data.ok === false) {
-  const missingEnvText = Array.isArray(data.missing_env) && data.missing_env.length
-    ? t('authorPostComposerSheet.missingEnv', { value: data.missing_env.join(', ') })
-    : ''
-
-  throw new Error(`${data.message || t('authorPostComposerSheet.failedUploadPhoto')}${missingEnvText}`)
-}
-
-  return data.image_url || data.imageUrl
+  return data.image_url || data.imageUrl || null
 }
 
 function SelectedImagePreview({ images, onRemove, removable = true, t }) {
