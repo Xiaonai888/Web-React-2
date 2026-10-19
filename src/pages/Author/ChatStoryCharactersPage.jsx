@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 
 registerTranslationNamespace('chatStoryCharacters', {
   "en": {
@@ -490,31 +491,48 @@ function dataUrlToFile(dataUrl, fileName) {
 async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
   if (!String(imageDataUrl || '').startsWith('data:image/')) return imageDataUrl || null
 
-  const formData = new FormData()
-  formData.append('image', dataUrlToFile(imageDataUrl, `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`))
-  formData.append('folder', 'chat_story_character')
-
-  const response = await fetchWithTimeout(
-    `${API_BASE_URL}/api/story-media/upload-image`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    },
-    60000
+  const file = dataUrlToFile(
+    imageDataUrl,
+    `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
   )
 
-  const { data, rawText } = await readResponsePayload(response)
+  const legacyUpload = async () => {
+    const formData = new FormData()
+    formData.append('image', file)
+    formData.append('folder', 'chat_story_character')
 
-  if (!response.ok || data.ok === false) {
-    const serverMessage =
-      data.message ||
-      data.error ||
-      rawText.slice(0, 500) ||
-      getDisplayText('chatStoryCharacters.failedUploadCharacterImage')
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/story-media/upload-image`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      },
+      60000
+    )
 
-    throw new Error(`Image upload failed (${response.status}): ${serverMessage}`)
+    const { data, rawText } = await readResponsePayload(response)
+
+    if (!response.ok || data.ok === false) {
+      const serverMessage =
+        data.message ||
+        data.error ||
+        rawText.slice(0, 500) ||
+        getDisplayText('chatStoryCharacters.failedUploadCharacterImage')
+
+      throw new Error(`Image upload failed (${response.status}): ${serverMessage}`)
+    }
+
+    return data
   }
+
+  const data = await uploadMediaWithFallback({
+    file,
+    category: 'chat_story_character',
+    token,
+    apiBaseUrl: API_BASE_URL,
+    legacyUpload,
+  })
 
   return data.image_url || data.imageUrl || null
 }
