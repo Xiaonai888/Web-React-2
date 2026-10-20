@@ -4,6 +4,7 @@ import { getDisplayLanguageId, setDisplayLanguageId, useDisplayTranslation } fro
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import MeSupportButton from '../../components/Me/MeSupportButton'
 
 registerTranslationNamespace('mePage', {
   en: {
@@ -1138,6 +1139,7 @@ const handleOpenProfileSwitcher = (event) => {
       <main className="mx-auto max-w-5xl px-4 pt-4">
         <section className="px-3 pb-4 pt-1">
           <div className="flex justify-end gap-2">
+  <MeSupportButton />
   <HeaderIcon
     to="/inbox"
     label={tx('mePage.inbox')}
