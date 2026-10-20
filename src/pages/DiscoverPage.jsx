@@ -5,7 +5,7 @@ import {
   saveHomeCache,
 } from '../utils/homeDataCache'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Search } from 'lucide-react'
 import {
   Link,
   useLocation,
