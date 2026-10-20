@@ -125,10 +125,10 @@ function getReaderToken() {
 
 const STORAGE_PREFIX = 'shadow_reader_library_episode_notifications_v1'
 const DEFAULT_PREFERENCES = {
-  master: true,
-  novel: true,
-  chat_story: true,
-  manga: true,
+  master: false,
+  novel: false,
+  chat_story: false,
+  manga: false,
 }
 
 const STORY_TYPES = [
@@ -173,11 +173,11 @@ function readPreferences(accountId) {
     if (!saved || typeof saved !== 'object') return { ...DEFAULT_PREFERENCES }
 
     return {
-      master: typeof saved.master === 'boolean' ? saved.master : true,
-      novel: typeof saved.novel === 'boolean' ? saved.novel : true,
-      chat_story: typeof saved.chat_story === 'boolean' ? saved.chat_story : true,
-      manga: typeof saved.manga === 'boolean' ? saved.manga : true,
-    }
+  master: typeof saved.master === 'boolean' ? saved.master : false,
+  novel: typeof saved.novel === 'boolean' ? saved.novel : false,
+  chat_story: typeof saved.chat_story === 'boolean' ? saved.chat_story : false,
+  manga: typeof saved.manga === 'boolean' ? saved.manga : false,
+}
   } catch {
     return { ...DEFAULT_PREFERENCES }
   }
@@ -185,10 +185,10 @@ function readPreferences(accountId) {
 
 function normalizePreferences(value) {
   return {
-    master: value?.master !== false,
-    novel: value?.novel !== false,
-    chat_story: value?.chat_story !== false,
-    manga: value?.manga !== false,
+    master: value?.master === true,
+    novel: value?.novel === true,
+    chat_story: value?.chat_story === true,
+    manga: value?.manga === true,
   }
 }
 
