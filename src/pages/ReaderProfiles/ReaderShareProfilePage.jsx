@@ -5,6 +5,7 @@ import ReaderQrScannerSheet from '../../components/reader-profile/ReaderQrScanne
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { Share2, Link2, Download } from 'lucide-react'
 
 registerTranslationNamespace('readerShareProfilePage', {
   en: {
@@ -914,7 +915,7 @@ export default function ReaderShareProfilePage() {
               className="flex min-w-0 flex-col items-center gap-2 rounded-[18px] px-1 py-2 active:bg-[#f7f7fb]"
             >
               <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#e5e7eb] text-[#111827]">
-                <i className="fa-solid fa-share-nodes text-[18px]" />
+                <Share2 size={18} strokeWidth={1.6} />
               </span>
               <span className="line-clamp-1 text-[12px] font-normal text-[#111827]">
                 {t('readerShareProfilePage.shareProfile')}
@@ -927,7 +928,7 @@ export default function ReaderShareProfilePage() {
               className="flex min-w-0 flex-col items-center gap-2 rounded-[18px] px-1 py-2 active:bg-[#f7f7fb]"
             >
               <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#e5e7eb] text-[#111827]">
-                <i className="fa-solid fa-link text-[18px]" />
+                <Link2 size={18} strokeWidth={1.6} />
               </span>
               <span className="line-clamp-1 text-[12px] font-normal text-[#111827]">
                 {t('readerShareProfilePage.copyLink')}
@@ -940,7 +941,7 @@ export default function ReaderShareProfilePage() {
               className="flex min-w-0 flex-col items-center gap-2 rounded-[18px] px-1 py-2 active:bg-[#f7f7fb]"
             >
               <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#e5e7eb] text-[#111827]">
-                <i className="fa-solid fa-download text-[18px]" />
+                <Download size={18} strokeWidth={1.6} />
               </span>
               <span className="line-clamp-1 text-[12px] font-normal text-[#111827]">
                 {t('readerShareProfilePage.download')}
