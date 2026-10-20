@@ -1,5 +1,6 @@
+import StoriesHeader from '../components/common/StoriesHeader'
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import DailyPicksSection from '../components/DailyPicksSection'
@@ -332,66 +333,6 @@ function getGenreDisplayLabel(tab, t) {
 function getStorySectionTitle(title, t) {
   const key = STORY_SECTION_TITLE_KEYS[title]
   return key ? t(`forYouPage.${key}`) : title
-}
-
-function GridHeaderIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      fill="none"
-      className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="4" y="4" width="6" height="6" rx="1" />
-      <rect x="14" y="4" width="6" height="6" rx="1" />
-      <rect x="4" y="14" width="6" height="6" rx="1" />
-      <rect x="14" y="14" width="6" height="6" rx="1" />
-    </svg>
-  )
-}
-
-function SearchHeaderIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      fill="none"
-      className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <circle cx="10.5" cy="10.5" r="6.5" />
-      <path d="m15.5 15.5 4 4" />
-    </svg>
-  )
-}
-
-function BellHeaderIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      fill="none"
-      className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6.5 9a5.5 5.5 0 0 1 11 0v3.2c0 1.4.5 2.7 1.5 3.8H5c1-1.1 1.5-2.4 1.5-3.8V9Z" />
-      <path d="M10 19h4" />
-    </svg>
-  )
 }
 
 function ComingSoonPanel({ title }) {
@@ -1285,52 +1226,10 @@ useEffect(() => {
           className="for-you-top-bars"
           style={{ transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)' }}
         >
-          <header className="flex items-center justify-between bg-white px-4 py-3 text-[var(--shadow-text-primary)] dark:bg-[var(--shadow-nav-bg)]">
-            <div className="flex items-center space-x-2">
-             <div className="flex h-9 w-[92px] items-center overflow-visible">
-  <img
-    src="/assets/Icons/Logo Shadow 2.svg"
-    alt="Shadow"
-    className="h-full w-full object-contain object-left"
-    loading="eager"
-    decoding="async"
-  />
-</div>
-            </div>
-
-            <div className="flex items-center gap-5">
-  <Link
-    to="/genres"
-    className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
-    aria-label={t('forYouPage.genres')}
-  >
-    <GridHeaderIcon />
-  </Link>
-
-  <Link
-    to="/search"
-    className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
-    aria-label={t('forYouPage.search')}
-  >
-    <SearchHeaderIcon />
-  </Link>
-
-  <button
-    type="button"
-    onClick={() => setShowNotificationPopup(true)}
-    className="relative flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
-    aria-label={t('forYouPage.notifications')}
-  >
-    <BellHeaderIcon />
-
-    {notificationUnreadCount > 0 ? (
-      <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-medium leading-none text-[#111827] shadow-sm">
-        {notificationUnreadCount > 99 ? `${formatDisplayNumber(99)}+` : formatDisplayNumber(notificationUnreadCount)}
-      </span>
-    ) : null}
-  </button>
-</div>
-          </header>
+          <StoriesHeader
+            notificationUnreadCount={notificationUnreadCount}
+            onOpenNotifications={() => setShowNotificationPopup(true)}
+          />
 
           {SHOW_STORY_TYPE_TABS ? (
   <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white pt-2 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
