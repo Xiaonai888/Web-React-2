@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { Share2, MessageCircle, Copy, SquarePen, Trash2, Flag, EyeOff } from 'lucide-react'
 import ReportModal from '../ReportModal'
 import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import ReactionAction from '../social/reactions/ReactionAction'
@@ -535,12 +536,24 @@ function Avatar({ user, small = false }) {
   )
 }
 
+const READER_POST_COMMENT_MENU_ICONS = {
+  'fa-solid fa-share-nodes': Share2,
+  'fa-regular fa-comment': MessageCircle,
+  'fa-regular fa-copy': Copy,
+  'fa-regular fa-pen-to-square': SquarePen,
+  'fa-regular fa-trash-can': Trash2,
+  'fa-regular fa-flag': Flag,
+  'fa-regular fa-eye-slash': EyeOff,
+}
+
 function MenuRow({
   icon,
   label,
   danger = false,
   onClick,
 }) {
+  const Icon = READER_POST_COMMENT_MENU_ICONS[icon]
+
   return (
     <button
       type="button"
@@ -558,7 +571,7 @@ function MenuRow({
             : 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
         }`}
       >
-        <i className={`${icon} text-[17px]`} />
+        {Icon ? <Icon size={19} strokeWidth={1.7} /> : <i className={`${icon} text-[17px]`} />}
       </span>
       <span className="text-[16px] font-normal">
         {label}
@@ -566,6 +579,7 @@ function MenuRow({
     </button>
   )
 }
+
 
 function useCommentMenuPress(openMenu) {
   const timer = useRef(null)
