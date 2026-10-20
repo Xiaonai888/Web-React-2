@@ -168,6 +168,8 @@ export default function AuthorPagePhotoViewer({
   const [commentBusy, setCommentBusy] = useState(false)
   const [commentError, setCommentError] = useState('')
   const inputRef = useRef(null)
+  const activeViewRef = useRef('')
+  const commentListRequestRef = useRef(0)
   const resolvedUsername = String(pageUsername || window.location.pathname.match(/^\/author\/page\/([a-z0-9_]+)/i)?.[1] || '').trim().replace(/^@+/, '').toLowerCase()
   const photoApi = resolvedUsername
     ? `/api/authors/page/${encodeURIComponent(resolvedUsername)}/photos/${kind === 'profile' ? 'profile' : 'cover'}`
@@ -177,7 +179,12 @@ export default function AuthorPagePhotoViewer({
 
 
   useEffect(() => {
+    activeViewRef.current = open ? `${photoApi}\n${src}` : ''
+    commentListRequestRef.current += 1
     if (!open) return undefined
+    setCommentsLoading(false)
+    setReactionBusy(false)
+    setCommentBusy(false)
     setControlsVisible(true)
     setMenuOpen(false)
     setActionMessage('')
@@ -190,7 +197,7 @@ export default function AuthorPagePhotoViewer({
     setReplies({})
     setRepliesOpen({})
     setCommentError('')
-  }, [open, src, kind])
+  }, [open, src, kind, photoApi])
 
   useEffect(() => {
     if (!open) return undefined
@@ -198,8 +205,11 @@ export default function AuthorPagePhotoViewer({
     document.body.style.overflow = 'hidden'
     const onKeyDown = (event) => {
       if (event.key === 'Escape') {
-        if (commentsOpen) setCommentsOpen(false)
-        else if (menuOpen) setMenuOpen(false)
+        if (commentsOpen) {
+          commentListRequestRef.current += 1
+          setCommentsLoading(false)
+          setCommentsOpen(false)
+        } else if (menuOpen) setMenuOpen(false)
         else if (reactionsOpen) setReactionsOpen(false)
         else onClose?.()
       }
@@ -236,37 +246,44 @@ export default function AuthorPagePhotoViewer({
       return
     }
     setReactionBusy(true)
+    const viewKey = activeViewRef.current
     try {
       const desired = summary.my_reaction === type ? null : type
       const result = await photoRequest(`${photoApi}/react`, {
         method: 'POST',
         body: { photo_key: summary.photo_key, desired_reaction_type: desired },
       })
+      if (viewKey !== activeViewRef.current) return
       setSummary((current) => ({ ...current, my_reaction: result.my_reaction, reaction_count: result.reaction_count }))
       setReactionsOpen(false)
     } catch (error) {
-      setActionMessage(error.status === 409 ? t('authorPagePhotoViewer.photoChanged') : error.message)
+      if (viewKey === activeViewRef.current) setActionMessage(error.status === 409 ? t('authorPagePhotoViewer.photoChanged') : error.message)
     } finally {
-      setReactionBusy(false)
+      if (viewKey === activeViewRef.current) setReactionBusy(false)
     }
   }
 
   async function loadComments(offset = 0) {
-    if (!photoApi || commentsLoading) return
+    if (!photoApi || (commentsLoading && offset > 0)) return
+    const requestId = ++commentListRequestRef.current
+    const viewKey = activeViewRef.current
     setCommentsLoading(true)
     setCommentError('')
     try {
       const result = await photoRequest(`${photoApi}/comments?limit=20&offset=${offset}`)
+      if (requestId !== commentListRequestRef.current || viewKey !== activeViewRef.current) return
       setComments((current) => offset ? [...current, ...(result.comments || []).filter((item) => !current.some((existing) => existing.id === item.id))] : result.comments || [])
       setCommentsHasMore(Boolean(result.has_more))
     } catch (error) {
-      setCommentError(error.message || t('authorPagePhotoViewer.failedComments'))
+      if (requestId === commentListRequestRef.current && viewKey === activeViewRef.current) setCommentError(error.message || t('authorPagePhotoViewer.failedComments'))
     } finally {
-      setCommentsLoading(false)
+      if (requestId === commentListRequestRef.current && viewKey === activeViewRef.current) setCommentsLoading(false)
     }
   }
 
   function showComments() {
+    commentListRequestRef.current += 1
+    setCommentsLoading(false)
     setCommentsOpen(true)
     setControlsVisible(true)
     setReactionsOpen(false)
@@ -285,11 +302,12 @@ export default function AuthorPagePhotoViewer({
     }
     setRepliesOpen((current) => ({ ...current, [commentId]: true }))
     if (replies[commentId]) return
+    const viewKey = activeViewRef.current
     try {
       const result = await photoRequest(`${photoApi}/comments?parent_id=${encodeURIComponent(commentId)}&limit=50`)
-      setReplies((current) => ({ ...current, [commentId]: result.comments || [] }))
+      if (viewKey === activeViewRef.current) setReplies((current) => ({ ...current, [commentId]: result.comments || [] }))
     } catch (error) {
-      setCommentError(error.message || t('authorPagePhotoViewer.failedComments'))
+      if (viewKey === activeViewRef.current) setCommentError(error.message || t('authorPagePhotoViewer.failedComments'))
     }
   }
 
@@ -308,11 +326,13 @@ export default function AuthorPagePhotoViewer({
     if (!getReaderToken()) { setCommentError(t('authorPagePhotoViewer.login')); return }
     setCommentBusy(true)
     setCommentError('')
+    const viewKey = activeViewRef.current
     try {
       const result = await photoRequest(`${photoApi}/comments`, {
         method: 'POST',
         body: { photo_key: summary.photo_key, text, ...(replyTo ? { parent_id: replyTo.id } : {}) },
       })
+      if (viewKey !== activeViewRef.current) return
       if (replyTo) {
         const parentId = replyTo.id
         setReplies((current) => ({ ...current, [parentId]: [result.comment, ...(current[parentId] || [])] }))
@@ -324,9 +344,9 @@ export default function AuthorPagePhotoViewer({
       setDraft('')
       setReplyTo(null)
     } catch (error) {
-      setCommentError(error.status === 409 ? t('authorPagePhotoViewer.photoChanged') : error.message || t('authorPagePhotoViewer.failedSave'))
+      if (viewKey === activeViewRef.current) setCommentError(error.status === 409 ? t('authorPagePhotoViewer.photoChanged') : error.message || t('authorPagePhotoViewer.failedSave'))
     } finally {
-      setCommentBusy(false)
+      if (viewKey === activeViewRef.current) setCommentBusy(false)
     }
   }
 
@@ -335,29 +355,33 @@ export default function AuthorPagePhotoViewer({
     if (!text || commentBusy) return
     if (text.length > 1000) { setCommentError(t('authorPagePhotoViewer.tooLong')); return }
     setCommentBusy(true)
+    const viewKey = activeViewRef.current
     try {
       const result = await photoRequest(`${photoApi}/comments/${encodeURIComponent(comment.id)}`, {
         method: 'PATCH', body: { photo_key: summary.photo_key, text },
       })
+      if (viewKey !== activeViewRef.current) return
       const update = (current) => current.map((item) => item.id === comment.id ? result.comment : item)
       setComments(update)
       setReplies((current) => Object.fromEntries(Object.entries(current).map(([id, items]) => [id, update(items)])))
       setEditingId('')
       setCommentError('')
     } catch (error) {
-      setCommentError(error.message || t('authorPagePhotoViewer.failedSave'))
+      if (viewKey === activeViewRef.current) setCommentError(error.message || t('authorPagePhotoViewer.failedSave'))
     } finally {
-      setCommentBusy(false)
+      if (viewKey === activeViewRef.current) setCommentBusy(false)
     }
   }
 
   async function deleteComment(comment) {
     if (commentBusy || !window.confirm(t('authorPagePhotoViewer.confirmDelete'))) return
     setCommentBusy(true)
+    const viewKey = activeViewRef.current
     try {
       const result = await photoRequest(`${photoApi}/comments/${encodeURIComponent(comment.id)}`, {
         method: 'DELETE', body: { photo_key: summary.photo_key },
       })
+      if (viewKey !== activeViewRef.current) return
       if (comment.parent_id) {
         setReplies((current) => ({ ...current, [comment.parent_id]: (current[comment.parent_id] || []).filter((item) => item.id !== comment.id) }))
       } else {
@@ -367,9 +391,9 @@ export default function AuthorPagePhotoViewer({
       setSummary((current) => ({ ...current, comment_count: result.comment_count }))
       setCommentError('')
     } catch (error) {
-      setCommentError(error.message || t('authorPagePhotoViewer.failedSave'))
+      if (viewKey === activeViewRef.current) setCommentError(error.message || t('authorPagePhotoViewer.failedSave'))
     } finally {
-      setCommentBusy(false)
+      if (viewKey === activeViewRef.current) setCommentBusy(false)
     }
   }
 
@@ -543,7 +567,7 @@ export default function AuthorPagePhotoViewer({
       {commentsOpen ? (
         <div className="absolute inset-0 z-50 flex flex-col bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)]" onClick={(event) => event.stopPropagation()}>
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--shadow-border)] px-3">
-            <button type="button" onClick={() => { setCommentsOpen(false); setReplyTo(null) }} className="flex h-10 w-10 items-center justify-center" aria-label={t('authorPagePhotoViewer.cancel')}><i className="fa-solid fa-chevron-left text-[18px]" /></button>
+            <button type="button" onClick={() => { commentListRequestRef.current += 1; setCommentsLoading(false); setCommentsOpen(false); setReplyTo(null) }} className="flex h-10 w-10 items-center justify-center" aria-label={t('authorPagePhotoViewer.cancel')}><i className="fa-solid fa-chevron-left text-[18px]" /></button>
             <span className="text-[15px] font-semibold">{t('authorPagePhotoViewer.comments')} · {amount(summary.comment_count)}</span>
             <span className="w-10" />
           </header>
