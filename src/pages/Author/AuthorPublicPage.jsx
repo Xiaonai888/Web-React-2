@@ -2898,6 +2898,7 @@ onOpenStoreSetting={() => {
         kind={photoView?.kind || 'cover'}
         authorName={displayAuthor.page_name}
         avatarUrl={displayAuthor.avatar_url}
+        pageUsername={displayAuthor.page_username}
         onClose={() => setPhotoView(null)}
       />
 
