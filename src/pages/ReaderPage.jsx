@@ -8635,6 +8635,15 @@ adultAccepted &&
       className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}
     >
       <ChatStoryReader
+          key={episode.id}
+  storyTitle={story?.title || ''}
+  coverUrl={episode?.cover_url || story?.cover_url || ''}
+  onReadModeChange={setChatStoryReadMode}
+  phoneTheme={themeName}
+  phoneFontFamily={activeFont.family}
+  phoneFontSize={fontSizePx}
+  phoneLineHeight={lineSpacing === 'compact' ? 1.3 : lineSpacing === 'normal' ? 1.5 : 1.8}
+  brightnessOpacity={brightnessOpacity}
   content={episode.content}
   readMode={chatStoryReadMode}
   autoTapDelay={
