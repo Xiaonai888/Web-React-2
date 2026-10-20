@@ -1,5 +1,12 @@
+import ChatStoryPhoneView, {
+  chatCharacterId,
+  createChatTiming,
+} from './ChatStoryPhoneView'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import {
+  getDisplayText,
+  useDisplayTranslation,
+} from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('chatStoryReader', {
@@ -54,10 +61,7 @@ const CHAT_STORY_FORMAT = 'shadow_chat_story_v1'
 
 function parseChatStoryContent(content) {
   try {
-    const parsed =
-      typeof content === 'string'
-        ? JSON.parse(content)
-        : content
+    const parsed = typeof content === 'string' ? JSON.parse(content) : content
 
     if (
       !parsed ||
@@ -75,8 +79,7 @@ function parseChatStoryContent(content) {
     const characters = Array.isArray(parsed.characters)
       ? [...parsed.characters].sort(
           (first, second) =>
-            Number(first?.sort_order || 0) -
-            Number(second?.sort_order || 0)
+            Number(first?.sort_order || 0) - Number(second?.sort_order || 0)
         )
       : []
 
@@ -84,31 +87,22 @@ function parseChatStoryContent(content) {
       .filter((message) => {
         if (!message) return false
 
-        if (message.type === 'image') {
-          return Boolean(
-            message.image_url ||
-              message.imageUrl
-          )
+        if (message.type === 'image' || message.type === 'sticker') {
+          return Boolean(message.image_url || message.imageUrl)
         }
 
-        return Boolean(
-          String(message.text || '').trim()
-        )
+        return Boolean(String(message.text || '').trim())
       })
       .sort(
         (first, second) =>
-          Number(first?.sort_order || 0) -
-          Number(second?.sort_order || 0)
+          Number(first?.sort_order || 0) - Number(second?.sort_order || 0)
       )
 
     return {
       errorKey: '',
       characters,
       messages,
-      leadCharacterId:
-        parsed.lead_character_id ||
-        parsed.leadCharacterId ||
-        '',
+      leadCharacterId: parsed.lead_character_id || parsed.leadCharacterId || '',
     }
   } catch {
     return {
@@ -129,25 +123,20 @@ function getEmojiOnlyCount(value) {
     /(?:\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3|\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*)/gu
 
   const emojis = text.match(emojiPattern) || []
-  const remainingText = text
-    .replace(emojiPattern, '')
-    .replace(/\s/g, '')
+  const remainingText = text.replace(emojiPattern, '').replace(/\s/g, '')
 
   return remainingText ? 0 : emojis.length
 }
 
 function getCharacterId(message) {
-  return String(
-    message?.character_id ||
-      message?.characterId ||
-      ''
-  )
+  return String(message?.character_id || message?.characterId || '')
 }
 
 function isCharacterMessage(message) {
   if (
     message?.type !== 'chat' &&
-    message?.type !== 'image'
+    message?.type !== 'image' &&
+    message?.type !== 'sticker'
   ) {
     return false
   }
@@ -156,27 +145,16 @@ function isCharacterMessage(message) {
 }
 
 function isSameCharacterGroup(first, second) {
-  if (
-    !isCharacterMessage(first) ||
-    !isCharacterMessage(second)
-  ) {
+  if (!isCharacterMessage(first) || !isCharacterMessage(second)) {
     return false
   }
 
-  return (
-    getCharacterId(first) ===
-    getCharacterId(second)
-  )
+  return getCharacterId(first) === getCharacterId(second)
 }
 
-function isRightMessage(
-  message,
-  character,
-  leadCharacterId
-) {
+function isRightMessage(message, character, leadCharacterId) {
   return (
-    getCharacterId(message) ===
-      String(leadCharacterId || '') ||
+    getCharacterId(message) === String(leadCharacterId || '') ||
     character?.is_lead === true ||
     character?.chat_side === 'right'
   )
@@ -188,10 +166,7 @@ function CharacterAvatar({ character }) {
       {character?.avatar_url ? (
         <img
           src={character.avatar_url}
-          alt={
-            character.nickname ||
-            'Character'
-          }
+          alt={character.nickname || 'Character'}
           loading="lazy"
           decoding="async"
           className="h-full w-full object-cover"
@@ -203,37 +178,21 @@ function CharacterAvatar({ character }) {
   )
 }
 
-function AvatarSlot({
-  character,
-  visible,
-}) {
+function AvatarSlot({ character, visible }) {
   if (visible) {
-    return (
-      <CharacterAvatar character={character} />
-    )
+    return <CharacterAvatar character={character} />
   }
 
-  return (
-    <div
-      className="h-11 w-11 shrink-0"
-      aria-hidden="true"
-    />
-  )
+  return <div className="h-11 w-11 shrink-0" aria-hidden="true" />
 }
 
-function CharacterName({
-  character,
-  isRight,
-  visible,
-}) {
+function CharacterName({ character, isRight, visible }) {
   if (!visible) return null
 
   return (
     <div
       className={`mb-1 px-1 text-[11px] font-medium ${
-        isRight
-          ? 'text-[#8c78b5]'
-          : 'text-[var(--shadow-text-secondary)]'
+        isRight ? 'text-[#8c78b5]' : 'text-[var(--shadow-text-secondary)]'
       }`}
     >
       {character?.nickname || getDisplayText('chatStoryReader.unknown')}
@@ -267,10 +226,7 @@ function AuthorNoteMessage({ message }) {
 
 function CenterImageMessage({ message }) {
   const [failed, setFailed] = useState(false)
-  const imageUrl =
-    message.image_url ||
-    message.imageUrl ||
-    ''
+  const imageUrl = message.image_url || message.imageUrl || ''
 
   useEffect(() => {
     setFailed(false)
@@ -306,15 +262,8 @@ function CharacterImageMessage({
   groupedAfter,
 }) {
   const [failed, setFailed] = useState(false)
-  const imageUrl =
-    message.image_url ||
-    message.imageUrl ||
-    ''
-  const isRight = isRightMessage(
-    message,
-    character,
-    leadCharacterId
-  )
+  const imageUrl = message.image_url || message.imageUrl || ''
+  const isRight = isRightMessage(message, character, leadCharacterId)
 
   useEffect(() => {
     setFailed(false)
@@ -322,9 +271,7 @@ function CharacterImageMessage({
 
   const messageBody = (
     <div
-      className={`min-w-0 max-w-[76%] ${
-        isRight ? 'text-right' : 'text-left'
-      }`}
+      className={`min-w-0 max-w-[76%] ${isRight ? 'text-right' : 'text-left'}`}
     >
       <CharacterName
         character={character}
@@ -340,10 +287,7 @@ function CharacterImageMessage({
         ) : (
           <img
             src={imageUrl}
-            alt={
-              character?.nickname ||
-              'Chat Story'
-            }
+            alt={character?.nickname || 'Chat Story'}
             loading="lazy"
             decoding="async"
             onError={() => setFailed(true)}
@@ -356,30 +300,18 @@ function CharacterImageMessage({
 
   return (
     <div
-      className={`flex items-end gap-2 ${
-        groupedBefore ? 'pt-0.5' : 'pt-2'
-      } ${
+      className={`flex items-end gap-2 ${groupedBefore ? 'pt-0.5' : 'pt-2'} ${
         groupedAfter ? 'pb-0.5' : 'pb-2'
-      } ${
-        isRight
-          ? 'justify-end'
-          : 'justify-start'
-      }`}
+      } ${isRight ? 'justify-end' : 'justify-start'}`}
     >
       {isRight ? (
         <>
           {messageBody}
-          <AvatarSlot
-            character={character}
-            visible={showAvatar}
-          />
+          <AvatarSlot character={character} visible={showAvatar} />
         </>
       ) : (
         <>
-          <AvatarSlot
-            character={character}
-            visible={showAvatar}
-          />
+          <AvatarSlot character={character} visible={showAvatar} />
           {messageBody}
         </>
       )}
@@ -396,20 +328,13 @@ function ChatMessage({
   groupedBefore,
   groupedAfter,
 }) {
-  const isRight = isRightMessage(
-    message,
-    character,
-    leadCharacterId
-  )
-  const emojiCount =
-    getEmojiOnlyCount(message.text)
+  const isRight = isRightMessage(message, character, leadCharacterId)
+  const emojiCount = getEmojiOnlyCount(message.text)
   const emojiOnly = emojiCount > 0
 
   const messageBody = (
     <div
-      className={`min-w-0 max-w-[76%] ${
-        isRight ? 'text-right' : 'text-left'
-      }`}
+      className={`min-w-0 max-w-[76%] ${isRight ? 'text-right' : 'text-left'}`}
     >
       <CharacterName
         character={character}
@@ -420,9 +345,7 @@ function ChatMessage({
       {emojiOnly ? (
         <div
           className={`px-2 py-2 ${
-            emojiCount === 1
-              ? 'text-[88px]'
-              : 'text-[44px]'
+            emojiCount === 1 ? 'text-[88px]' : 'text-[44px]'
           } leading-none`}
         >
           {message.text}
@@ -443,30 +366,18 @@ function ChatMessage({
 
   return (
     <div
-      className={`flex items-end gap-2 ${
-        groupedBefore ? 'pt-0.5' : 'pt-2'
-      } ${
+      className={`flex items-end gap-2 ${groupedBefore ? 'pt-0.5' : 'pt-2'} ${
         groupedAfter ? 'pb-0.5' : 'pb-2'
-      } ${
-        isRight
-          ? 'justify-end'
-          : 'justify-start'
-      }`}
+      } ${isRight ? 'justify-end' : 'justify-start'}`}
     >
       {isRight ? (
         <>
           {messageBody}
-          <AvatarSlot
-            character={character}
-            visible={showAvatar}
-          />
+          <AvatarSlot character={character} visible={showAvatar} />
         </>
       ) : (
         <>
-          <AvatarSlot
-            character={character}
-            visible={showAvatar}
-          />
+          <AvatarSlot character={character} visible={showAvatar} />
           {messageBody}
         </>
       )}
@@ -488,16 +399,12 @@ function ChatStoryMessage({
   }
 
   if (message.type === 'author_note') {
-    return (
-      <AuthorNoteMessage message={message} />
-    )
+    return <AuthorNoteMessage message={message} />
   }
 
-  if (message.type === 'image') {
+  if (message.type === 'image' || message.type === 'sticker') {
     if (!getCharacterId(message)) {
-      return (
-        <CenterImageMessage message={message} />
-      )
+      return <CenterImageMessage message={message} />
     }
 
     return (
@@ -533,223 +440,254 @@ export default function ChatStoryReader({
   autoTapPaused = false,
   onProgress,
   onComplete,
+  storyTitle = '',
+  coverUrl = '',
+  onReadModeChange,
+  phoneTheme,
+  phoneFontFamily,
+  phoneFontSize = 15,
+  phoneLineHeight = 1.8,
+  brightnessOpacity = 0,
 }) {
   const { t } = useDisplayTranslation()
-  const parsedContent = useMemo(
-    () => parseChatStoryContent(content),
-    [content]
-  )
-
-  const [visibleCount, setVisibleCount] =
-  useState(
-    parsedContent.messages.length ? 1 : 0
-  )
-
-const [pageVisible, setPageVisible] =
-  useState(
+  const parsedContent = useMemo(() => parseChatStoryContent(content), [content])
+  const initialCount = parsedContent.messages.length ? 1 : 0
+  const [reading, setReading] = useState(() => ({
+    content,
+    count: initialCount,
+  }))
+  const visibleCount =
+    reading.content === content ? reading.count : initialCount
+  const [userPaused, setUserPaused] = useState(false)
+  const [finishedSource, setFinishedSource] = useState(null)
+  const [pageVisible, setPageVisible] = useState(
     () =>
-      typeof document === 'undefined' ||
-      document.visibilityState ===
-        'visible'
+      typeof document === 'undefined' || document.visibilityState === 'visible'
   )
-
-const lastMessageRef = useRef(null)
-  const completionSentRef = useRef(false)
-  useEffect(() => {
-  const handleVisibilityChange = () => {
-    setPageVisible(
-      document.visibilityState ===
-        'visible'
-    )
-  }
-
-  document.addEventListener(
-    'visibilitychange',
-    handleVisibilityChange
-  )
-
-  return () => {
-    document.removeEventListener(
-      'visibilitychange',
-      handleVisibilityChange
-    )
-  }
-}, [])
+  const [clock, setClock] = useState({ source: null, index: -1, elapsed: 0 })
+  const cycleRef = useRef({ source: null, index: -1, elapsed: 0, done: false })
+  const lastMessageRef = useRef(null)
+  const completionSentRef = useRef(null)
+  const onProgressRef = useRef(onProgress)
+  const onCompleteRef = useRef(onComplete)
+  onProgressRef.current = onProgress
+  onCompleteRef.current = onComplete
 
   const characterMap = useMemo(
     () =>
       new Map(
-        parsedContent.characters.map(
-          (character) => [
-            String(character.id),
-            character,
-          ]
-        )
+        parsedContent.characters.map((character) => [
+          String(character.id),
+          character,
+        ])
       ),
     [parsedContent.characters]
   )
 
   const leadCharacterId = useMemo(() => {
-    if (parsedContent.leadCharacterId) {
-      return parsedContent.leadCharacterId
-    }
-
-    const leadCharacter =
+    const explicit = String(parsedContent.leadCharacterId || '')
+    if (explicit && characterMap.has(explicit)) return explicit
+    const lead =
       parsedContent.characters.find(
-        (character) =>
-          character.is_lead === true
+        (character) => character.is_lead === true
       ) ||
       parsedContent.characters.find(
-        (character) =>
-          character.chat_side === 'right'
-      )
+        (character) => character.chat_side === 'right'
+      ) ||
+      parsedContent.characters[0]
+    return String(lead?.id ?? '')
+  }, [parsedContent, characterMap])
 
-    return leadCharacter?.id || ''
-  }, [
-    parsedContent.characters,
-    parsedContent.leadCharacterId,
-  ])
-
-  const visibleMessages =
-    parsedContent.messages.slice(
-      0,
-      visibleCount
-    )
-
+  const visibleMessages = useMemo(
+    () => parsedContent.messages.slice(0, visibleCount),
+    [parsedContent, visibleCount]
+  )
+  const nextMessage = parsedContent.messages[visibleCount]
   const completed =
     parsedContent.messages.length > 0 &&
-    visibleCount >=
-      parsedContent.messages.length
-
-  useEffect(() => {
-    setVisibleCount(
-      parsedContent.messages.length ? 1 : 0
+    visibleCount >= parsedContent.messages.length
+  const active =
+    readMode === 'auto' &&
+    !userPaused &&
+    !autoTapPaused &&
+    pageVisible &&
+    (!completed || finishedSource !== parsedContent) &&
+    !parsedContent.errorKey &&
+    parsedContent.messages.length > 0
+  const timing = useMemo(
+    () =>
+      createChatTiming(
+        parsedContent.messages[visibleCount - 1],
+        nextMessage,
+        autoTapDelay
+      ),
+    [parsedContent, visibleCount, nextMessage, autoTapDelay]
+  )
+  const elapsed =
+    clock.source === parsedContent && clock.index === visibleCount
+      ? clock.elapsed
+      : 0
+  const typingElapsed = Math.max(0, elapsed - timing.reading)
+  const typingMessage =
+    active && timing.typing > 0 && elapsed >= timing.reading
+      ? nextMessage
+      : null
+  const draft = useMemo(() => {
+    if (!typingMessage || chatCharacterId(typingMessage) !== leadCharacterId)
+      return ''
+    const fraction = Math.min(
+      1,
+      typingElapsed / Math.max(1, timing.typing - 160)
     )
-    completionSentRef.current = false
-  }, [
-    content,
-    parsedContent.messages.length,
-  ])
-
-  useEffect(() => {
-    const total =
-      parsedContent.messages.length
-
-    if (!total) {
-      onProgress?.(0)
-      return
-    }
-
-    onProgress?.(
-      Math.round(
-        (visibleCount / total) * 100
-      )
+    let length = 0
+    while (
+      length < timing.thresholds.length &&
+      timing.thresholds[length] <= fraction
     )
-
-    if (
-      visibleCount >= total &&
-      !completionSentRef.current
-    ) {
-      completionSentRef.current = true
-      onComplete?.()
-    }
-  }, [
-    onComplete,
-    onProgress,
-    parsedContent.messages.length,
-    visibleCount,
-  ])
+      length += 1
+    return timing.graphemes.slice(0, length).join('')
+  }, [typingMessage, typingElapsed, timing, leadCharacterId])
 
   useEffect(() => {
-    if (visibleCount <= 1) {
-      return undefined
-    }
-
-    const frame =
-      window.requestAnimationFrame(() => {
-        lastMessageRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end',
-        })
-      })
-
+    const handleVisibilityChange = () =>
+      setPageVisible(document.visibilityState === 'visible')
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     return () =>
-      window.cancelAnimationFrame(frame)
-  }, [visibleCount])
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
+  useEffect(() => {
+    setUserPaused(false)
+  }, [content])
+
+  useEffect(() => {
+    if (readMode === 'auto') setUserPaused(false)
+  }, [readMode])
+
+  useEffect(() => {
+    const total = parsedContent.messages.length
+    onProgressRef.current?.(
+      total ? Math.round((visibleCount / total) * 100) : 0
+    )
+    if (completed && completionSentRef.current !== parsedContent) {
+      completionSentRef.current = parsedContent
+      onCompleteRef.current?.()
+    }
+  }, [parsedContent, visibleCount, completed])
+
+  useEffect(() => {
+    if (!active) return undefined
+    if (
+      cycleRef.current.source !== parsedContent ||
+      cycleRef.current.index !== visibleCount
+    ) {
+      cycleRef.current = {
+        source: parsedContent,
+        index: visibleCount,
+        elapsed: 0,
+        done: false,
+      }
+    }
+    const cycle = cycleRef.current
+    let previousTime = performance.now()
+    let timer
+    let stopped = false
+    const advance = () => {
+      if (stopped || cycle.done || document.visibilityState !== 'visible')
+        return
+      const now = performance.now()
+      cycle.elapsed += now - previousTime
+      previousTime = now
+      setClock({
+        source: parsedContent,
+        index: visibleCount,
+        elapsed: cycle.elapsed,
+      })
+      if (cycle.elapsed >= timing.reading + timing.typing) {
+        cycle.done = true
+        if (completed) {
+          setFinishedSource(parsedContent)
+          return
+        }
+        setReading((current) => ({
+          content,
+          count: Math.min(
+            (current.content === content ? current.count : initialCount) + 1,
+            parsedContent.messages.length
+          ),
+        }))
+        return
+      }
+      timer = window.setTimeout(advance, 40)
+    }
+    setClock({
+      source: parsedContent,
+      index: visibleCount,
+      elapsed: cycle.elapsed,
+    })
+    timer = window.setTimeout(advance, 40)
+    return () => {
+      stopped = true
+      window.clearTimeout(timer)
+      if (!cycle.done && document.visibilityState === 'visible') {
+        cycle.elapsed += Math.max(0, performance.now() - previousTime)
+      }
+    }
+  }, [
+    active,
+    parsedContent,
+    visibleCount,
+    timing,
+    content,
+    initialCount,
+    completed,
+  ])
+
+  useEffect(() => {
+    if (active || visibleCount <= 1) return undefined
+    const frame = window.requestAnimationFrame(() => {
+      lastMessageRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [visibleCount, active])
 
   const revealNextMessage = () => {
     if (completed) return
-
-    setVisibleCount((current) =>
-      Math.min(
-        current + 1,
+    setReading((current) => ({
+      content,
+      count: Math.min(
+        (current.content === content ? current.count : initialCount) + 1,
         parsedContent.messages.length
-      )
-    )
+      ),
+    }))
   }
 
-useEffect(() => {
-  if (
-    readMode !== 'auto' ||
-    autoTapPaused ||
-    !pageVisible ||
-    completed ||
-    !parsedContent.messages.length
-  ) {
-    return undefined
+  const pausePhone = () => {
+    setUserPaused(true)
+    onReadModeChange?.('manual')
   }
 
-  const timer = window.setTimeout(
-    () => {
-      setVisibleCount((current) =>
-        Math.min(
-          current + 1,
-          parsedContent.messages.length
-        )
-      )
-    },
-    Math.max(
-      700,
-      Number(autoTapDelay) || 2000
-    )
-  )
+  const resumePhone = () => {
+    setUserPaused(false)
+    onReadModeChange?.('auto')
+  }
 
-  return () =>
-    window.clearTimeout(timer)
-}, [
-  autoTapDelay,
-  autoTapPaused,
-  completed,
-  pageVisible,
-  parsedContent.messages.length,
-  readMode,
-  visibleCount,
-])
-  
   const handleReaderClick = (event) => {
-    if (readMode !== 'manual') return
-
+    if (readMode !== 'manual' && !userPaused) return
     if (
-      event.target.closest(
-        'button, a, input, textarea, select, audio, video'
-      )
-    ) {
+      event.target.closest('button, a, input, textarea, select, audio, video')
+    )
       return
-    }
-
     revealNextMessage()
   }
 
   const handleReaderKeyDown = (event) => {
-    if (readMode !== 'manual') return
-
-    if (
-      event.key !== 'Enter' &&
-      event.key !== ' '
-    ) {
-      return
-    }
-
+    if (event.target !== event.currentTarget) return
+    if (readMode !== 'manual' && !userPaused) return
+    if (event.key !== 'Enter' && event.key !== ' ') return
     event.preventDefault()
     revealNextMessage()
   }
@@ -771,115 +709,92 @@ useEffect(() => {
   }
 
   return (
-    <section
-  role={
-    readMode === 'manual'
-      ? 'button'
-      : undefined
-  }
-  tabIndex={
-    readMode === 'manual' ? 0 : -1
-  }
-  aria-label={
-    readMode === 'manual'
-      ? 'Tap to show the next Chat Story message'
-      : 'Chat Story Auto Tap reader'
-  }
-  onClick={handleReaderClick}
-  onKeyDown={handleReaderKeyDown}
-  className={`min-h-[70vh] bg-[var(--shadow-bg-page)] px-4 pb-12 pt-5 text-[var(--shadow-text-primary)] outline-none sm:px-8 ${
-    readMode === 'manual'
-      ? 'cursor-pointer'
-      : 'cursor-default'
-  }`}
->
-      <div className="mx-auto max-w-[680px]">
-        {visibleMessages.map(
-          (message, index) => {
-            const previousMessage =
-              visibleMessages[index - 1]
-            const nextMessage =
-              visibleMessages[index + 1]
-            const groupedBefore =
-              isSameCharacterGroup(
-                previousMessage,
+    <>
+      {!active ? (
+        <section
+          role={readMode === 'manual' || userPaused ? 'button' : undefined}
+          tabIndex={readMode === 'manual' || userPaused ? 0 : -1}
+          aria-label={t('chatStoryReader.tapToContinue')}
+          onClick={handleReaderClick}
+          onKeyDown={handleReaderKeyDown}
+          className={`min-h-[70vh] bg-[var(--shadow-bg-page)] px-4 pb-12 pt-5 text-[var(--shadow-text-primary)] outline-none sm:px-8 ${readMode === 'manual' || userPaused ? 'cursor-pointer' : 'cursor-default'}`}
+        >
+          <div className="mx-auto max-w-[680px]">
+            {visibleMessages.map((message, index) => {
+              const groupedBefore = isSameCharacterGroup(
+                visibleMessages[index - 1],
                 message
               )
-            const groupedAfter =
-              isSameCharacterGroup(
+              const groupedAfter = isSameCharacterGroup(
                 message,
-                nextMessage
+                visibleMessages[index + 1]
               )
-            const character =
-              characterMap.get(
-                getCharacterId(message)
+              const character = characterMap.get(getCharacterId(message))
+              return (
+                <div
+                  key={`${message.id || message.type || 'message'}-${index}`}
+                  ref={
+                    index === visibleMessages.length - 1 ? lastMessageRef : null
+                  }
+                  className="animate-[fadeIn_180ms_ease-out]"
+                >
+                  <ChatStoryMessage
+                    message={message}
+                    character={character}
+                    leadCharacterId={leadCharacterId}
+                    showName={isCharacterMessage(message) && !groupedBefore}
+                    showAvatar={isCharacterMessage(message) && !groupedAfter}
+                    groupedBefore={groupedBefore}
+                    groupedAfter={groupedAfter}
+                  />
+                </div>
               )
-
-            return (
-              <div
-                key={
-                  message.id ||
-                  `${
-                    message.type ||
-                    'message'
-                  }-${index}`
-                }
-                ref={
-                  index ===
-                  visibleMessages.length - 1
-                    ? lastMessageRef
-                    : null
-                }
-                className="animate-[fadeIn_180ms_ease-out]"
-              >
-                <ChatStoryMessage
-                  message={message}
-                  character={character}
-                  leadCharacterId={
-                    leadCharacterId
-                  }
-                  showName={
-                    isCharacterMessage(
-                      message
-                    ) &&
-                    !groupedBefore
-                  }
-                  showAvatar={
-                    isCharacterMessage(
-                      message
-                    ) &&
-                    !groupedAfter
-                  }
-                  groupedBefore={
-                    groupedBefore
-                  }
-                  groupedAfter={
-                    groupedAfter
-                  }
+            })}
+            {!completed && (readMode === 'manual' || userPaused) ? (
+              <div className="flex flex-col items-center justify-center pb-6 pt-10 text-[#a98bd7]">
+                {userPaused ? (
+                  <button
+                    type="button"
+                    onClick={resumePhone}
+                    className="mb-5 rounded-full bg-[#7c3aed] px-5 py-2.5 text-[13px] font-medium text-white"
+                  >
+                    {t('chatStoryPhone.resume')}
+                  </button>
+                ) : null}
+                <span className="pointer-events-none text-[14px] font-medium">
+                  {t('chatStoryReader.tapToContinue')}
+                </span>
+                <img
+                  src="/assets/Icons/Hand.svg"
+                  alt={t('chatStoryReader.tapToContinue')}
+                  className="pointer-events-none mt-3 h-[108px] w-[108px] motion-safe:animate-bounce object-contain opacity-95"
+                  style={{
+                    filter:
+                      'brightness(0) saturate(100%) invert(76%) sepia(18%) saturate(1047%) hue-rotate(214deg) brightness(102%) contrast(101%)',
+                  }}
                 />
               </div>
-            )
-          }
-        )}
-
-        {!completed &&
-readMode === 'manual' ? (
-          <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#c4a8ff]">
-            <span className="text-[14px] font-medium">
-              {t('chatStoryReader.tapToContinue')}
-            </span>
-            <img
-              src="/assets/Icons/Hand.svg"
-              alt="Tap to continue"
-              className="mt-3 h-[108px] w-[108px] animate-bounce object-contain opacity-95"
-              style={{
-                filter:
-                  'brightness(0) saturate(100%) invert(76%) sepia(18%) saturate(1047%) hue-rotate(214deg) brightness(102%) contrast(101%)',
-              }}
-            />
+            ) : null}
           </div>
-        ) : null}
-      </div>
-    </section>
+        </section>
+      ) : null}
+      {active ? (
+        <ChatStoryPhoneView
+          storyTitle={storyTitle}
+          coverUrl={coverUrl}
+          characters={parsedContent.characters}
+          messages={visibleMessages}
+          leadCharacterId={leadCharacterId}
+          typingMessage={typingMessage}
+          draft={draft}
+          onPause={pausePhone}
+          themeName={phoneTheme}
+          fontFamily={phoneFontFamily}
+          fontSize={phoneFontSize}
+          lineHeight={phoneLineHeight}
+          brightnessOpacity={brightnessOpacity}
+        />
+      ) : null}
+    </>
   )
 }
