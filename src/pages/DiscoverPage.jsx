@@ -1077,7 +1077,7 @@ function Header({ hidden }) {
             className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95 dark:text-[var(--shadow-text-primary)]"
             aria-label={discoverText('search')}
           >
-            <SearchHeaderIcon />
+            <Search size={20} strokeWidth={1.8} aria-hidden="true" />
           </Link>
 
           <Link
