@@ -52,6 +52,7 @@ registerTranslationNamespace('authorPublicPage', {
     switchingTo: 'Switching to',
     closeCoverOptions: 'Close cover options',
     seeCover: 'See cover',
+    seeProfilePhoto: 'View profile photo',
     uploadCover: 'Upload cover',
     chooseCover: 'Choose cover',
     noBio: 'This author has not added a bio yet.',
@@ -202,6 +203,7 @@ registerTranslationNamespace('authorPublicPage', {
     switchingTo: 'កំពុងប្តូរទៅ',
     closeCoverOptions: 'បិទជម្រើស Cover',
     seeCover: 'មើល Cover',
+    seeProfilePhoto: 'មើលរូប Profile',
     uploadCover: 'Upload Cover',
     chooseCover: 'ជ្រើស Cover',
     noBio: 'អ្នកនិពន្ធនេះមិនទាន់បន្ថែម Bio ទេ។',
@@ -352,6 +354,7 @@ registerTranslationNamespace('authorPublicPage', {
     switchingTo: '正在切换到',
     closeCoverOptions: '关闭封面选项',
     seeCover: '查看封面',
+    seeProfilePhoto: '查看头像',
     uploadCover: '上传封面',
     chooseCover: '选择封面',
     noBio: '该作者尚未添加简介。',
@@ -502,6 +505,7 @@ registerTranslationNamespace('authorPublicPage', {
     switchingTo: '切り替え中',
     closeCoverOptions: 'カバーオプションを閉じる',
     seeCover: 'カバーを見る',
+    seeProfilePhoto: 'プロフィール写真を見る',
     uploadCover: 'カバーをアップロード',
     chooseCover: 'カバーを選択',
     noBio: 'この作者はまだ紹介文を追加していません。',
@@ -652,6 +656,7 @@ registerTranslationNamespace('authorPublicPage', {
     switchingTo: '전환 중',
     closeCoverOptions: '커버 옵션 닫기',
     seeCover: '커버 보기',
+    seeProfilePhoto: '프로필 사진 보기',
     uploadCover: '커버 업로드',
     chooseCover: '커버 선택',
     noBio: '이 작가는 아직 소개를 추가하지 않았습니다.',
@@ -2887,6 +2892,15 @@ onOpenStoreSetting={() => {
 }}
 />
 
+      <AuthorPagePhotoViewer
+        open={Boolean(photoView)}
+        src={photoView?.src || ''}
+        kind={photoView?.kind || 'cover'}
+        authorName={displayAuthor.page_name}
+        avatarUrl={displayAuthor.avatar_url}
+        onClose={() => setPhotoView(null)}
+      />
+
       {reviewSettingsOpen ? (
   <div className="fixed inset-0 z-[290] bg-[var(--shadow-bg-surface)]">
     <header className="flex h-[52px] items-center justify-center border-b border-[var(--shadow-border)] px-4">
@@ -3573,14 +3587,16 @@ onOpenStoreSetting={() => {
           <div
   role="button"
   tabIndex={0}
+  aria-label={t('authorPublicPage.seeCover')}
   onClick={() => {
     if (displayAuthor.is_owner) setCoverOptionsOpen(true)
-else if (displayAuthor.cover_url) setPhotoView({ src: displayAuthor.cover_url, kind: 'cover' })
+    else if (displayAuthor.cover_url) setPhotoView({ src: displayAuthor.cover_url, kind: 'cover' })
   }}
   onKeyDown={(event) => {
-    if (displayAuthor.is_owner && (event.key === 'Enter' || event.key === ' ')) {
-      setCoverOptionsOpen(true)
-    }
+    if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return
+    event.preventDefault()
+    if (displayAuthor.is_owner) setCoverOptionsOpen(true)
+    else if (displayAuthor.cover_url) setPhotoView({ src: displayAuthor.cover_url, kind: 'cover' })
   }}
   ref={coverRef}
 className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
@@ -3659,11 +3675,18 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
               <div className="flex items-start gap-4">
                 <div className="relative -mt-[42px] h-[92px] w-[92px] shrink-0 rounded-full border-[3px] border-white bg-[var(--shadow-bg-soft)] shadow-sm sm:-mt-[52px] sm:h-[112px] sm:w-[112px]">
                   {displayAuthor.avatar_url ? (
-                    <img
-                      src={displayAuthor.avatar_url}
-                      alt={displayAuthor.page_name}
-                      className="h-full w-full rounded-full object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoView({ src: displayAuthor.avatar_url, kind: 'profile' })}
+                      aria-label={t('authorPublicPage.seeProfilePhoto')}
+                      className="h-full w-full overflow-hidden rounded-full"
+                    >
+                      <img
+                        src={displayAuthor.avatar_url}
+                        alt={displayAuthor.page_name}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    </button>
                   ) : (
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[42px] font-black text-[var(--shadow-text-tertiary)]">
                       {displayAuthor.page_name.slice(0, 1).toUpperCase()}
