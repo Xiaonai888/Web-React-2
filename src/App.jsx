@@ -1518,7 +1518,7 @@ const shouldShowOpeningAds =
         <Route path="/chat/archived" element={<LazyPage><ArchivedChatPage /></LazyPage>} />
         <Route path="/chat/:conversationId/info" element={<LazyPage><ChatInfoPage /></LazyPage>} />
         <Route path="/chat/:conversationId" element={<LazyPage><ChatRoomPage /></LazyPage>} />
-        <Route path="/notifications" element={<NotificationPage />} />
+        <Route path="/notifications" element={<NotificationPage mode="page" />} />
         <Route path="/feedback" element={<LazyPage><FeedbackSupportPage /></LazyPage>} />
         <Route path="/help" element={<LazyPage><HelpCenterPage /></LazyPage>} />
         <Route path="/settings" element={<ComingSoon title="Settings" />} />
