@@ -2244,6 +2244,59 @@ function AudioUploadSheet({
   )
 }
 
+registerTranslationNamespace('chatDraftSave', {
+  "en": {
+    "local": "Saved locally",
+    "server": "Saved to server",
+    "saving": "Saving to server…",
+    "failed": "Save failed — draft kept on this device",
+    "unsaved": "Unsaved changes",
+    "conflict": "A newer server version exists. Your local draft is kept. Reload and review before saving.",
+    "tabConflict": "Another tab changed this draft. Reload and review before saving.",
+    "restoreQuestion": "A newer server version exists. Restore the local draft instead?"
+  },
+  "km": {
+    "local": "បានរក្សាទុកក្នុងឧបករណ៍",
+    "server": "បានរក្សាទុកទៅ Server",
+    "saving": "កំពុងរក្សាទុកទៅ Server…",
+    "failed": "រក្សាទុកបរាជ័យ — ព្រាងនៅក្នុងឧបករណ៍",
+    "unsaved": "មានការកែមិនទាន់រក្សាទុក",
+    "conflict": "Server មានកំណែថ្មីជាង។ ព្រាងក្នុងឧបករណ៍នៅដដែល។ សូម Reload ហើយពិនិត្យមុនរក្សាទុក។",
+    "tabConflict": "Tab ផ្សេងបានកែព្រាងនេះ។ សូម Reload ហើយពិនិត្យមុនរក្សាទុក។",
+    "restoreQuestion": "Server មានកំណែថ្មីជាង។ តើចង់ស្ដារព្រាងក្នុងឧបករណ៍ជំនួសឬទេ?"
+  },
+  "zh": {
+    "local": "已保存在本机",
+    "server": "已保存到服务器",
+    "saving": "正在保存到服务器…",
+    "failed": "保存失败，草稿仍在本机",
+    "unsaved": "有未保存的更改",
+    "conflict": "服务器上有更新版本。本机草稿已保留，请重新加载并检查。",
+    "tabConflict": "其他标签页更改了草稿，请重新加载并检查。",
+    "restoreQuestion": "服务器上有更新版本。仍要恢复本机草稿吗？"
+  },
+  "ja": {
+    "local": "端末に保存済み",
+    "server": "サーバーに保存済み",
+    "saving": "サーバーに保存中…",
+    "failed": "保存に失敗しました。下書きは端末に残っています",
+    "unsaved": "未保存の変更",
+    "conflict": "サーバーに新しい版があります。端末の下書きは保持されています。再読み込みして確認してください。",
+    "tabConflict": "別のタブで下書きが変更されました。再読み込みして確認してください。",
+    "restoreQuestion": "サーバーに新しい版があります。端末の下書きを復元しますか？"
+  },
+  "ko": {
+    "local": "기기에 저장됨",
+    "server": "서버에 저장됨",
+    "saving": "서버에 저장 중…",
+    "failed": "저장 실패 — 초안은 기기에 남아 있습니다",
+    "unsaved": "저장되지 않은 변경사항",
+    "conflict": "서버에 새 버전이 있습니다. 기기의 초안은 유지됩니다. 새로고침 후 확인하세요.",
+    "tabConflict": "다른 탭에서 초안이 변경되었습니다. 새로고침 후 확인하세요.",
+    "restoreQuestion": "서버에 새 버전이 있습니다. 기기의 초안을 복원할까요?"
+  }
+})
+
 export default function ChatStoryEditorPage() {
   useDisplayTranslation()
   const navigate = useNavigate()
@@ -2302,6 +2355,20 @@ export default function ChatStoryEditorPage() {
   const [messageEditMode, setMessageEditMode] = useState(null)
   const [episodeLeadCharacterId, setEpisodeLeadCharacterId] = useState('')
   const [savedSeconds, setSavedSeconds] = useState(0)
+  const [draftSaveStatus, setDraftSaveStatus] = useState('local')
+  const draftSnapshotRef = useRef(null)
+  const localSignatureRef = useRef('')
+  const serverSignatureRef = useRef('')
+  const serverVersionRef = useRef(null)
+  const serverEpisodeIdRef = useRef('')
+  const serverBusyRef = useRef(null)
+  const serverDueRef = useRef(0)
+  const saveConflictRef = useRef(false)
+  const tabConflictRef = useRef(false)
+  const hydrationRef = useRef(false)
+  const writerIdRef = useRef(globalThis.crypto?.randomUUID?.() || makeId())
+  const createEpisodeIdRef = useRef(globalThis.crypto?.randomUUID?.() || '')
+  const publishedDraftRef = useRef(false)
   const [draftHydrated, setDraftHydrated] = useState(false)
   const [publishSettingsOpen, setPublishSettingsOpen] = useState(false)
   const [settingsSaving, setSettingsSaving] = useState(false)
@@ -2774,11 +2841,32 @@ const handleRedo = () => {
 
   useEffect(() => {
   setDraftHydrated(false)
+  hydrationRef.current = false
+  draftSnapshotRef.current = null
+  localSignatureRef.current = ''
+  serverSignatureRef.current = ''
+  serverDueRef.current = 0
+  serverVersionRef.current = null
+  serverEpisodeIdRef.current = requestedEpisodeId || ''
+  saveConflictRef.current = false
+  tabConflictRef.current = false
+  publishedDraftRef.current = false
 
     restoredEditorDraftRef.current = false
 restoredDraftCharactersRef.current = false
 
   const restoreDraft = (parsed) => {
+  draftSnapshotRef.current = parsed
+  serverVersionRef.current = parsed.serverUpdatedAt || null
+  serverSignatureRef.current = parsed.serverSignature || ''
+  if (parsed.clientEpisodeId) createEpisodeIdRef.current = parsed.clientEpisodeId
+  if (parsed.episodeId) serverEpisodeIdRef.current = parsed.episodeId
+  setDraft(String(parsed.draft || ''))
+  setSelectedCharacterId(parsed.selectedCharacterId || null)
+  setComposerMode(parsed.composerMode || 'message')
+  setMessageEditMode(parsed.messageEditMode || null)
+  setAuthorNoteDraft(String(parsed.authorNoteDraft || ''))
+  setTitleDraft(String(parsed.titleDraft || ''))
   const restoredMessages =
     Array.isArray(parsed.messages)
       ? parsed.messages
@@ -2807,6 +2895,7 @@ restoredDraftCharactersRef.current = false
       restoredMessages.length ||
         restoredCharacters.length ||
         savedTitle ||
+        parsed.draft ||
         parsed.episodeId
     )
 
@@ -2866,20 +2955,6 @@ restoredDraftCharactersRef.current = false
     }
   }
 
-  if (startNewEpisode) {
-    localStorage.removeItem(storageKey)
-
-    messagesRef.current = []
-    setMessages([])
-    setEpisodeTitle('')
-    setEpisodeId('')
-    setEpisodeLeadCharacterId('')
-    setActiveMessageId('')
-    setMessageEditMode(null)
-    setDraftHydrated(true)
-    return
-  }
-
   const saved =
     localStorage.getItem(storageKey)
 
@@ -2898,43 +2973,196 @@ restoredDraftCharactersRef.current = false
   storageKey,
 ])
 
+  const getServerSignature = (snapshot) => JSON.stringify({
+    episodeTitle: snapshot.episodeTitle,
+    leadCharacterId: snapshot.leadCharacterId,
+    characters: snapshot.characters.map((character) => character.id),
+    messages: snapshot.messages,
+  })
+
+  const flushLocalDraft = () => {
+    const snapshot = draftSnapshotRef.current
+    if (!snapshot || !hydrationRef.current || publishedDraftRef.current || tabConflictRef.current) return false
+    const payload = {
+      ...snapshot,
+      episodeId: serverEpisodeIdRef.current || snapshot.episodeId,
+      serverUpdatedAt: serverVersionRef.current,
+      serverSignature: serverSignatureRef.current,
+      clientEpisodeId: createEpisodeIdRef.current,
+      writerId: writerIdRef.current,
+    }
+    const serialized = JSON.stringify(payload)
+    if (serialized === localSignatureRef.current) return true
+    try {
+      localStorage.setItem(storageKey, serialized)
+      localSignatureRef.current = serialized
+      setSavedSeconds(0)
+      setDraftSaveStatus((current) => current === 'saving' ? current : 'local')
+      return true
+    } catch {
+      setDraftSaveStatus('failed')
+      return false
+    }
+  }
+
+  const persistServerDraft = async (checkpoint = false) => {
+    if (serverBusyRef.current) {
+      await serverBusyRef.current
+      if (checkpoint) return null
+    }
+    if (tabConflictRef.current || saveConflictRef.current) {
+      throw new Error(getDisplayText('chatDraftSave.conflict'))
+    }
+    const snapshot = draftSnapshotRef.current
+    const targetId = serverEpisodeIdRef.current || requestedEpisodeId
+    if (!snapshot || (checkpoint && !targetId)) return null
+    const signature = getServerSignature(snapshot)
+    if (checkpoint && signature === serverSignatureRef.current) return null
+    const token = getAuthToken()
+    if (!token || navigator.onLine === false) return null
+    if (!snapshot.episodeTitle.trim() || !snapshot.messages.some((item) => item.type !== 'author_note')) return null
+    flushLocalDraft()
+    const task = (async () => {
+      const controller = new AbortController()
+      const timeout = window.setTimeout(() => controller.abort(), 45000)
+      setDraftSaveStatus('saving')
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/chat/episodes/save`, {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            episode_id: targetId || null,
+            client_episode_id: targetId ? null : createEpisodeIdRef.current,
+            expected_updated_at: serverVersionRef.current,
+            checkpoint,
+            title: snapshot.episodeTitle.trim(),
+            lead_character_id: snapshot.leadCharacterId || null,
+            character_ids: snapshot.characters.map((character) => character.id),
+            messages: snapshot.messages.map((message) => ({
+              id: message.id,
+              type: message.type,
+              character_id: message.characterId || null,
+              text: message.text || '',
+              image_url: message.type === 'image' ? message.imageUrl || message.image_url || null : null,
+              created_at: message.createdAt || null,
+            })),
+          }),
+        })
+        const data = await response.json().catch(() => ({}))
+        if (response.status === 409) {
+          saveConflictRef.current = true
+          setDraftSaveStatus('conflict')
+          throw new Error(getDisplayText('chatDraftSave.conflict'))
+        }
+        if (!response.ok || data.ok === false || !data.episode?.id) {
+          throw new Error(data.message || getDisplayText('chatStoryEditor.failedSaveEpisode'))
+        }
+        serverVersionRef.current = data.episode.updated_at
+        serverEpisodeIdRef.current = data.episode.id
+        serverSignatureRef.current = signature
+        setEpisodeId(data.episode.id)
+        flushLocalDraft()
+        setDraftSaveStatus(getServerSignature(draftSnapshotRef.current) === signature ? 'server' : 'local')
+        return data
+      } catch (error) {
+        setDraftSaveStatus(saveConflictRef.current ? 'conflict' : 'failed')
+        throw error
+      } finally {
+        window.clearTimeout(timeout)
+        serverDueRef.current = Date.now() + 10 * 60 * 1000
+      }
+    })()
+    serverBusyRef.current = task
+    try {
+      return await task
+    } finally {
+      if (serverBusyRef.current === task) serverBusyRef.current = null
+    }
+  }
+
   useEffect(() => {
-  if (!draftHydrated) return
+    if (!draftHydrated || loading) return
+    const previous = draftSnapshotRef.current
+    draftSnapshotRef.current = {
+      episodeTitle,
+      episodeId,
+      leadCharacterId: effectiveLeadCharacterId,
+      characters,
+      messages,
+      draft,
+      selectedCharacterId,
+      composerMode,
+      messageEditMode,
+      authorNoteDraft,
+      titleDraft,
+      updatedAt: new Date().toISOString(),
+    }
+    hydrationRef.current = true
+    if (!serverSignatureRef.current && requestedEpisodeId && !restoredEditorDraftRef.current) {
+      serverSignatureRef.current = getServerSignature(draftSnapshotRef.current)
+    }
+    if (!serverDueRef.current) serverDueRef.current = Date.now() + 10 * 60 * 1000
+    if (previous) setDraftSaveStatus('unsaved')
+  }, [draftHydrated, loading, episodeTitle, episodeId, effectiveLeadCharacterId, characters, messages, draft, selectedCharacterId, composerMode, messageEditMode, authorNoteDraft, titleDraft])
 
-  const payload = JSON.stringify({
-  episodeTitle,
-  episodeId,
-  leadCharacterId:
-    effectiveLeadCharacterId,
-  characters,
-  messages,
-  updatedAt:
-    new Date().toISOString(),
-})
+  const draftActionsRef = useRef({})
+  draftActionsRef.current = { flushLocalDraft, persistServerDraft, canCheckpoint: !saving && !settingsSaving && !imageUploading && !loading && !publishSettingsOpen }
 
-  localStorage.setItem(
-    storageKey,
-    payload
-  )
+  useEffect(() => () => {
+    draftActionsRef.current.flushLocalDraft()
+  }, [])
 
-  setSavedSeconds(0)
-}, [
-  characters, 
-  draftHydrated,
-  effectiveLeadCharacterId,
-  episodeId,
-  episodeTitle,
-  messages,
-  storageKey,
-])
+  useEffect(() => {
+    const localTimer = window.setInterval(() => draftActionsRef.current.flushLocalDraft(), 10000)
+    const serverTimer = window.setInterval(() => {
+      if (!draftActionsRef.current.canCheckpoint || !hydrationRef.current || document.visibilityState !== 'visible' || navigator.onLine === false || serverBusyRef.current || saveConflictRef.current || tabConflictRef.current || publishedDraftRef.current) return
+      if (serverDueRef.current && Date.now() >= serverDueRef.current) {
+        serverDueRef.current = Date.now() + 10 * 60 * 1000
+        void draftActionsRef.current.persistServerDraft(true).catch(() => {})
+      }
+    }, 15000)
+    const flush = () => draftActionsRef.current.flushLocalDraft()
+    const beforeLeave = (event) => {
+      if (!flush()) {
+        event.preventDefault()
+        event.returnValue = ''
+      }
+    }
+    const onStorage = (event) => {
+      if (event.key !== storageKey || !event.newValue) return
+      try {
+        const incoming = JSON.parse(event.newValue)
+        if (incoming.writerId && incoming.writerId !== writerIdRef.current) {
+          tabConflictRef.current = true
+          setDraftSaveStatus('tabConflict')
+        }
+      } catch {}
+    }
+    document.addEventListener('visibilitychange', flush)
+    window.addEventListener('pagehide', flush)
+    window.addEventListener('beforeunload', beforeLeave)
+    window.addEventListener('storage', onStorage)
+    const onNavigation = () => draftActionsRef.current.flushLocalDraft()
+    window.addEventListener('popstate', onNavigation)
+    return () => {
+      window.clearInterval(localTimer)
+      window.clearInterval(serverTimer)
+      document.removeEventListener('visibilitychange', flush)
+      window.removeEventListener('pagehide', flush)
+      window.removeEventListener('beforeunload', beforeLeave)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('popstate', onNavigation)
+    }
+  }, [storageKey])
 
-useEffect(() => {
-  const timer = window.setInterval(() => {
-    setSavedSeconds((current) => current + 1)
-  }, 1000)
-
-  return () => window.clearInterval(timer)
-}, [])
+  useEffect(() => {
+    const timer = window.setInterval(() => setSavedSeconds((current) => current + 1), 1000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
   if (!storyId) return
@@ -3100,7 +3328,7 @@ if (
   }
 }
 
-setCharacters(nextCharacters)
+if (!restoredDraftCharactersRef.current) setCharacters(nextCharacters)
     } catch (error) {
       showToast(
         error.message === 'Failed to fetch'
@@ -3143,6 +3371,25 @@ setCharacters(nextCharacters)
           throw new Error(data.message || getDisplayText('chatStoryEditor.failedLoadEpisode'))
         }
 
+        const localDraft = draftSnapshotRef.current
+        if (restoredEditorDraftRef.current && localDraft) {
+          const localTime = Date.parse(localDraft.updatedAt || '') || 0
+          const serverTime = Date.parse(data.episode?.updated_at || '') || 0
+          const serverChanged = localDraft.serverUpdatedAt
+            ? localDraft.serverUpdatedAt !== data.episode?.updated_at
+            : serverTime > localTime
+          if (serverChanged && !window.confirm(getDisplayText('chatDraftSave.restoreQuestion'))) {
+            restoredEditorDraftRef.current = false
+            restoredDraftCharactersRef.current = false
+            setDraft('')
+            setMessageEditMode(null)
+            setAuthorNoteDraft('')
+            setTitleDraft('')
+            serverSignatureRef.current = ''
+          }
+        }
+        serverVersionRef.current = data.episode?.updated_at || null
+        serverEpisodeIdRef.current = data.episode?.id || requestedEpisodeId
         const parsed = JSON.parse(String(data.episode?.content || ''))
         if (parsed?.format !== 'shadow_chat_story_v1') {
           throw new Error(getDisplayText('chatStoryEditor.notChatStoryEpisode'))
@@ -4502,9 +4749,12 @@ const handleAddConfirm = async () => {
       )
     }
 
+    serverVersionRef.current = data.episode?.updated_at || serverVersionRef.current
+    flushLocalDraft()
     setPublishSettingsOpen(false)
 
     if (releaseOption === 'publish') {
+      publishedDraftRef.current = true
       localStorage.removeItem(storageKey)
     }
 
@@ -4548,52 +4798,8 @@ const handleAddConfirm = async () => {
     try {
       setSaving(true)
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/stories/${storyId}/chat/episodes/save`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            episode_id: startNewEpisode
-  ? null
-  : episodeId ||
-    requestedEpisodeId ||
-    null,
-            title: cleanTitle,
-            lead_character_id:
-              effectiveLeadCharacterId ||
-              null,
-            character_ids: characters.map(
-              (character) => character.id
-            ),
-            messages: messages.map((message) => ({
-              id: message.id,
-              type: message.type,
-              character_id:
-                message.characterId || null,
-              text:
-                message.text || '',
-              image_url:
-                message.type === 'image'
-                  ? message.imageUrl ||
-                    message.image_url ||
-                    null
-                  : null,
-              created_at:
-                message.createdAt || null,
-            })),
-            is_locked: true,
-          }),
-        }
-      )
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || getDisplayText('chatStoryEditor.failedSaveEpisode'))
-      }
+      const data = await persistServerDraft(false)
+      if (!data) throw new Error(getDisplayText('chatStoryEditor.cannotConnectBackend'))
 
       const savedEpisode = data.episode || {}
       const savedEpisodeId = savedEpisode.id
@@ -4628,19 +4834,19 @@ setPublishedEpisodeNumber(
 const savedDraftKey =
   `chat_story_editor_draft_${storyId || 'unknown'}_episode_${savedEpisodeId}`
 
-localStorage.setItem(
-  savedDraftKey,
-  JSON.stringify({
-    episodeTitle: cleanTitle,
+flushLocalDraft()
+try {
+  localStorage.setItem(savedDraftKey, JSON.stringify({
+    ...draftSnapshotRef.current,
     episodeId: savedEpisodeId,
-    leadCharacterId:
-      effectiveLeadCharacterId,
-    characters,
-    messages,
-    updatedAt:
-      new Date().toISOString(),
-  })
-)
+    serverUpdatedAt: serverVersionRef.current,
+    serverSignature: serverSignatureRef.current,
+    clientEpisodeId: createEpisodeIdRef.current,
+    writerId: writerIdRef.current,
+  }))
+} catch {
+  setDraftSaveStatus('failed')
+}
 
 if (startNewEpisode) {
   localStorage.removeItem(storageKey)
@@ -4768,6 +4974,7 @@ setPublishSettingsOpen(true)
         }}
         onAddEpisode={() => {
   setSuccessOpen(false)
+  publishedDraftRef.current = true
   localStorage.removeItem(storageKey)
 
   const params = new URLSearchParams({
@@ -4959,6 +5166,7 @@ setPublishSettingsOpen(true)
     <button
       type="button"
       onClick={() => {
+  flushLocalDraft()
   const params = new URLSearchParams({ returnTo })
   if (startNewEpisode) params.set('new', '1')
   navigate(`/author/story/${storyId}/chat/characters?${params.toString()}`, {
@@ -4990,7 +5198,7 @@ setPublishSettingsOpen(true)
       <div className="mt-0.5 truncate text-[8.5px] font-medium text-[var(--shadow-text-tertiary)]">
         {getDisplayText(messages.length === 1 ? 'chatStoryEditor.messageCount' : 'chatStoryEditor.messagesCount', { count: formatDisplayNumber(messages.length) })} ·{' '}
         {getDisplayText(wordCount === 1 ? 'chatStoryEditor.wordCount' : 'chatStoryEditor.wordsCount', { count: formatDisplayNumber(wordCount) })} |{' '}
-        {getDisplayText('chatStoryEditor.savedIn', { time: savedSeconds < 60 ? `${formatDisplayNumber(savedSeconds)}s` : `${formatDisplayNumber(Math.floor(savedSeconds / 60))}m` })}
+        <span title={getDisplayText(`chatDraftSave.${draftSaveStatus}`)}>{getDisplayText(`chatDraftSave.${draftSaveStatus}`)}</span>
       </div>
     </div>
 
