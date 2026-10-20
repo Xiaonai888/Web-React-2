@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Search } from 'lucide-react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import StoriesHeader from '../components/common/StoriesHeader'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import MangaFeedSections from '../components/MangaFeedSections'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ContinueReadingSection from '../components/ContinueReadingSection'
@@ -605,61 +605,10 @@ export default function MangaPage() {
         className="app-nav fixed left-0 right-0 top-0 z-[100000] transition-transform duration-200"
         style={{ transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)' }}
       >
-        <header className="flex items-center justify-between px-4 py-3">
-          <div className="flex h-9 w-[92px] items-center">
-            <img
-              src="/assets/Icons/Logo Shadow 2.svg"
-              alt="Shadow"
-              className="h-full w-full object-contain object-left"
-            />
-          </div>
-
-          <div className="flex items-center gap-5" style={{ color: 'var(--shadow-icon)' }}>
-            <Link
-              to="/genres"
-              className="flex h-6 w-6 items-center justify-center"
-              aria-label={t('mangaPage.genres')}
-            >
-              <svg
-  viewBox="0 0 24 24"
-  width="20"
-  height="20"
-  fill="none"
-  className="text-[#111827] dark:text-[var(--shadow-text-primary)]"
-  stroke="currentColor"
-  strokeWidth="1.8"
-  strokeLinejoin="round"
-  aria-hidden="true"
->
-  <rect x="4" y="4" width="6" height="6" rx="1" />
-  <rect x="14" y="4" width="6" height="6" rx="1" />
-  <rect x="4" y="14" width="6" height="6" rx="1" />
-  <rect x="14" y="14" width="6" height="6" rx="1" />
-</svg>
-
-            </Link>
-            <Link
-              to="/search"
-              className="flex h-6 w-6 items-center justify-center"
-              aria-label={t('mangaPage.search')}
-            >
-              <Search size={20} strokeWidth={1.8} />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setShowNotificationPopup(true)}
-              className="relative flex h-6 w-6 items-center justify-center"
-              aria-label={t('mangaPage.notifications')}
-            >
-              <Bell size={20} strokeWidth={1.8} />
-              {notificationUnreadCount > 0 ? (
-                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-medium leading-none text-[#111827] shadow-sm">
-                  {notificationUnreadCount > 99 ? `${formatDisplayNumber(99)}+` : formatDisplayNumber(notificationUnreadCount)}
-                </span>
-              ) : null}
-            </button>
-          </div>
-        </header>
+        <StoriesHeader
+  notificationUnreadCount={notificationUnreadCount}
+  onOpenNotifications={() => setShowNotificationPopup(true)}
+/>
 
         <nav
           className="manga-no-scrollbar flex gap-1.5 overflow-x-auto border-t px-4 pb-2"
