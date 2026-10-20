@@ -11,6 +11,15 @@
   ],
   "headers": [
     {
+      "source": "/assets/Share(.*)Profile/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
       "source": "/((?!assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$|offline-diagnostic\\.html$).*)",
       "headers": [
         {
