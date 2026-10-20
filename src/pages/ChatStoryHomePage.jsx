@@ -8,6 +8,7 @@ import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguag
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { Search } from 'lucide-react'
 
 registerTranslationNamespace('chatStoryHomePage', {
   en: {
@@ -734,7 +735,7 @@ export default function ChatStoryHomePage() {
               style={{ color: 'var(--shadow-icon)' }}
               aria-label={t('chatStoryHomePage.search')}
             >
-              <i className="fa-solid fa-magnifying-glass text-[19px]" />
+              <Search size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
 
             <button
@@ -745,8 +746,8 @@ export default function ChatStoryHomePage() {
               aria-label={t('chatStoryHomePage.genres')}
             >
               <svg
-                width="19"
-                height="19"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
