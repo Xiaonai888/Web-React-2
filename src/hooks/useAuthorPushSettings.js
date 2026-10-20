@@ -90,7 +90,7 @@ const TAGS = {
   gift: 'author_story_push_gift',
   comment: 'author_story_push_comment',
 }
-const DEFAULT_PREFERENCES = { master: true, unlock: true, gift: true, comment: true }
+const DEFAULT_PREFERENCES = { master: false, unlock: false, gift: false, comment: false }
 
 function getSignedInUserId() {
   const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token')
@@ -169,7 +169,7 @@ async function getOneSignal() {
 }
 
 function readTag(tags, key) {
-  return String(tags?.[key] || '').toLowerCase() !== 'false'
+  return String(tags?.[key] || '').toLowerCase() === 'true'
 }
 
 function getBrowserStatus(sdk) {
