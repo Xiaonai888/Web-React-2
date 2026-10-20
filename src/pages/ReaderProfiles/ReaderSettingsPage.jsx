@@ -501,6 +501,13 @@ const SETTINGS_GROUPS = [
     title: 'Your activity',
     items: [
       {
+        key: 'activity-history',
+        title: 'Activity History',
+        subtitle: 'Review your important activities from the past year.',
+        icon: 'fa-regular fa-clock',
+        route: '/profile/settings/activity-history',
+      },
+      {
         key: 'saved-posts',
         title: 'Saved posts',
         subtitle: 'View posts you saved for later.',
@@ -659,6 +666,15 @@ function ReaderSettingsIcon({ name }) {
         <svg {...commonProps}>
           <circle cx="12" cy="12" r="9" />
           <path d="m5.7 5.7 12.6 12.6" />
+        </svg>
+      )
+
+    case 'activity-history':
+      return (
+        <svg {...commonProps}>
+          <path d="M4 4v5h5" />
+          <path d="M4.6 9a8.5 8.5 0 1 1-.5 4" />
+          <path d="M12 7.5v5l3.5 2" />
         </svg>
       )
 
