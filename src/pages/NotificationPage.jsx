@@ -450,6 +450,54 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
   }, [activeTab])
 
   useEffect(() => {
+    if (!isOpen) return undefined
+    let cancelled = false
+
+    async function refreshVisibleNotifications() {
+      if (document.visibilityState !== 'visible' || !getReaderToken()) return
+      const requestId = requestIdRef.current
+      const params = new URLSearchParams({
+        type: activeTab,
+        page: '1',
+        limit: String(NOTIFICATION_PAGE_SIZE),
+        include_counts: '1',
+      })
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/notifications?${params.toString()}`, {
+          headers: getHeaders(),
+        })
+        if (!response.ok) return
+        const data = await response.json().catch(() => ({}))
+        if (cancelled || requestId !== requestIdRef.current || !data.ok) return
+        if (data.counts) setCounts(data.counts)
+
+        const latest = (data.notifications || []).map(mapNotification)
+        setNotifications((current) => {
+          const seen = new Set(latest.map((item) => String(item.id)))
+          return [...latest, ...current.filter((item) => !seen.has(String(item.id)))]
+        })
+      } catch {
+      }
+    }
+
+    function refreshOnVisibility() {
+      if (document.visibilityState === 'visible') refreshVisibleNotifications()
+    }
+
+    const refreshInterval = window.setInterval(refreshVisibleNotifications, 120000)
+    document.addEventListener('visibilitychange', refreshOnVisibility)
+    window.addEventListener('focus', refreshOnVisibility)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(refreshInterval)
+      document.removeEventListener('visibilitychange', refreshOnVisibility)
+      window.removeEventListener('focus', refreshOnVisibility)
+    }
+  }, [activeTab, isOpen])
+
+  useEffect(() => {
     if (isFullPage || !isOpen) return undefined
     const scrollY = window.scrollY
     const previousPosition = document.body.style.position
