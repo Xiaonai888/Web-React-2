@@ -648,8 +648,12 @@ useEffect(() => {
 
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('focus', handleFocus)
+    const badgeInterval = window.setInterval(() => {
+  if (document.visibilityState === 'visible') refreshIfNeeded()
+}, 120000)
 
   return () => {
+    window.clearInterval(badgeInterval)
     document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.removeEventListener('focus', handleFocus)
   }
