@@ -2524,7 +2524,7 @@ function EditCommentSheet({
 
         <textarea
           value={value}
-          maxLength={composerMaxLength}
+          maxLength={COMMENT_LIMIT}
           onChange={(event) =>
             onChange(event.target.value)
           }
