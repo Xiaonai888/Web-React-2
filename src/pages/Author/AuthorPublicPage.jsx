@@ -13,6 +13,7 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import AuthorPageTransparencyPopup from '../../components/AuthorPageTransparencyPopup'
+import AuthorPagePhotoViewer from '../../components/AuthorPagePhotoViewer'
 
 registerTranslationNamespace('authorPublicPage', {
   en: {
@@ -1881,6 +1882,7 @@ export default function AuthorPublicPage() {
   const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
   const [coverOptionsOpen, setCoverOptionsOpen] = useState(false)
+  const [photoView, setPhotoView] = useState(null)
   const [readerHeaderSolid, setReaderHeaderSolid] = useState(false)
   const [readerHeaderTitle, setReaderHeaderTitle] = useState(false)
   const coverRef = useRef(null)
@@ -2870,7 +2872,7 @@ onOpenStoreSetting={() => {
   onSeeCover={() => {
     setCoverOptionsOpen(false)
     if (displayAuthor.cover_url) {
-      window.open(displayAuthor.cover_url, '_blank', 'noopener,noreferrer')
+      setPhotoView({ src: displayAuthor.cover_url, kind: 'cover' })
     } else {
       setMessage(getDisplayText('authorPublicPage.noCoverPhoto'))
     }
@@ -3573,6 +3575,7 @@ onOpenStoreSetting={() => {
   tabIndex={0}
   onClick={() => {
     if (displayAuthor.is_owner) setCoverOptionsOpen(true)
+else if (displayAuthor.cover_url) setPhotoView({ src: displayAuthor.cover_url, kind: 'cover' })
   }}
   onKeyDown={(event) => {
     if (displayAuthor.is_owner && (event.key === 'Enter' || event.key === ' ')) {
