@@ -8,6 +8,7 @@ registerTranslationNamespace('notificationPage', {
     all: 'All',
     unread: 'Unread',
     comments: 'Comments',
+    updates: 'Updates',
     announcements: 'Announcements',
     notification: 'Notification',
     older: 'OLDER',
@@ -27,6 +28,7 @@ registerTranslationNamespace('notificationPage', {
     all: 'ទាំងអស់',
     unread: 'មិនទាន់អាន',
     comments: 'មតិយោបល់',
+    updates: 'ភាគថ្មី',
     announcements: 'សេចក្តីប្រកាស',
     notification: 'ការជូនដំណឹង',
     older: 'ចាស់ជាងនេះ',
@@ -46,6 +48,7 @@ registerTranslationNamespace('notificationPage', {
     all: '全部',
     unread: '未读',
     comments: '评论',
+    updates: '更新',
     announcements: '公告',
     notification: '通知',
     older: '更早',
@@ -65,6 +68,7 @@ registerTranslationNamespace('notificationPage', {
     all: 'すべて',
     unread: '未読',
     comments: 'コメント',
+    updates: '更新',
     announcements: 'お知らせ',
     notification: '通知',
     older: '以前',
@@ -84,6 +88,7 @@ registerTranslationNamespace('notificationPage', {
     all: '전체',
     unread: '읽지 않음',
     comments: '댓글',
+    updates: '새 회차',
     announcements: '공지',
     notification: '알림',
     older: '이전',
@@ -113,6 +118,7 @@ const TABS = [
   { key: 'all', label: 'All' },
   { key: 'unread', label: 'Unread' },
   { key: 'community', label: 'Comments' },
+  { key: 'updates', label: 'Updates' },
   { key: 'announcements', label: 'Announcements' },
 ]
 
@@ -120,6 +126,7 @@ const TAB_LABEL_KEYS = {
   all: 'all',
   unread: 'unread',
   community: 'comments',
+  updates: 'updates',
   announcements: 'announcements',
 }
 
@@ -142,21 +149,25 @@ function getHeaders() {
 
 function getNotificationIcon(type) {
   if (type === 'community') return 'fas fa-comments'
+  if (type === 'updates') return 'fas fa-book-open'
   return 'fas fa-bullhorn'
 }
 
 function getNotificationColor(type) {
   if (type === 'community') return 'bg-[#F1F0FF] text-[#4F46E5] dark:bg-[#4F46E5]/15 dark:text-[#9f9aff]'
+  if (type === 'updates') return 'bg-[#E5F6ED] text-[#168451] dark:bg-[#168451]/15 dark:text-[#76d7a3]'
   return 'bg-[#FFF7D6] text-[#B77900] dark:bg-[#f59e0b]/15 dark:text-[#fbbf24]'
 }
 
 function getNotificationTypeLabel(type) {
   if (type === 'community') return 'Comments'
+  if (type === 'updates') return 'Updates'
   return 'Announcements'
 }
 
 function getDisplayNotificationTypeLabel(type, t) {
   if (type === 'community') return t('notificationPage.comments')
+  if (type === 'updates') return t('notificationPage.updates')
   return t('notificationPage.announcements')
 }
 
@@ -250,6 +261,7 @@ function emptyCounts() {
     all: 0,
     unread: 0,
     community: 0,
+    updates: 0,
     announcements: 0,
   }
 }
@@ -264,6 +276,10 @@ function decreaseUnreadCounts(current, notification) {
       notification.type === 'community'
         ? Math.max(0, Number(current.community || 0) - 1)
         : Number(current.community || 0),
+    updates:
+      notification.type === 'updates'
+        ? Math.max(0, Number(current.updates || 0) - 1)
+        : Number(current.updates || 0),
     announcements:
       notification.type === 'announcements'
         ? Math.max(0, Number(current.announcements || 0) - 1)
@@ -308,7 +324,8 @@ function getDisplayGroupLabel(group, language, t) {
   return group?.label || ''
 }
 
-export default function NotificationPage({ isOpen = true, onClose }) {
+export default function NotificationPage({ isOpen = true, onClose, mode = 'popup' }) {
+  const isFullPage = mode === 'page'
   const navigate = useNavigate()
   const { language, t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState('all')
@@ -324,13 +341,11 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   const dragStartYRef = useRef(null)
   const sheetDragYRef = useRef(0)
   const requestIdRef = useRef(0)
-  const countsLoadedRef = useRef(false)
-
-  if (!isOpen) return null
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'unread') return notifications.filter((item) => !item.isRead)
     if (activeTab === 'community') return notifications.filter((item) => item.type === 'community')
+    if (activeTab === 'updates') return notifications.filter((item) => item.type === 'updates')
     if (activeTab === 'announcements') return notifications.filter((item) => item.type === 'announcements')
     return notifications
   }, [activeTab, notifications])
@@ -361,8 +376,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
         type: activeTab,
         page: String(requestedPage),
         limit: String(NOTIFICATION_PAGE_SIZE),
-        include_counts:
-          append || countsLoadedRef.current ? '0' : '1',
+        include_counts: append ? '0' : '1',
       })
 
       const response = await fetch(
@@ -402,7 +416,6 @@ export default function NotificationPage({ isOpen = true, onClose }) {
 
       if (data.counts) {
         setCounts(data.counts)
-        countsLoadedRef.current = true
       }
 
       setPage(Number(data.page || requestedPage))
@@ -437,6 +450,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   }, [activeTab])
 
   useEffect(() => {
+    if (isFullPage || !isOpen) return undefined
     const scrollY = window.scrollY
     const previousPosition = document.body.style.position
     const previousTop = document.body.style.top
@@ -457,7 +471,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
       document.body.style.overflow = previousOverflow
       window.scrollTo(0, scrollY)
     }
-  }, [])
+  }, [isFullPage, isOpen])
 
   async function markAllAsRead() {
     setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
@@ -469,6 +483,7 @@ export default function NotificationPage({ isOpen = true, onClose }) {
       unread: 0,
       community: 0,
       announcements: 0,
+      updates: 0,
     }))
 
     try {
@@ -545,10 +560,12 @@ export default function NotificationPage({ isOpen = true, onClose }) {
     sheetDragYRef.current = 0
     setSheetDragY(0)
 
-    if (shouldClose) {
+    if (shouldClose && !isFullPage) {
       onClose?.()
     }
   }
+
+  if (!isOpen) return null
 
   const freezeForYouHeaderStyle = `
   body.shadow-notification-open .for-you-top-bars {
@@ -566,21 +583,25 @@ export default function NotificationPage({ isOpen = true, onClose }) {
 
   return (
     <>
-      <style>{freezeForYouHeaderStyle}</style>
+      {!isFullPage ? <style>{freezeForYouHeaderStyle}</style> : null}
 
       <div
-        className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/45"
-        onClick={onClose}
+        className={isFullPage
+          ? 'flex h-[100dvh] min-h-0 w-full items-start justify-center bg-[#F6F7FB] dark:bg-[var(--shadow-bg-page)]'
+          : 'fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/45'}
+        onClick={isFullPage ? undefined : onClose}
       >
         <div
-          className="flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl dark:bg-[var(--shadow-bg-page)]"
-          style={{
+          className={isFullPage
+            ? 'flex h-full w-full max-w-[720px] flex-col overflow-hidden bg-[#F6F7FB] dark:bg-[var(--shadow-bg-page)]'
+            : 'flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl dark:bg-[var(--shadow-bg-page)]'}
+          style={isFullPage ? undefined : {
             transform: `translateY(${sheetDragY}px)`,
             transition: dragStartYRef.current === null ? 'transform 0.18s ease-out' : 'none',
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <button
+          {!isFullPage ? <button
             type="button"
             aria-label={t('notificationPage.dragToClose')}
             className="flex w-full shrink-0 cursor-grab touch-none justify-center pb-1 pt-2 active:cursor-grabbing"
@@ -590,10 +611,20 @@ export default function NotificationPage({ isOpen = true, onClose }) {
             onPointerCancel={handleSheetDragEnd}
           >
             <span className="h-1.5 w-12 rounded-full bg-[#B8BDC7] dark:bg-[var(--shadow-border-strong)]" />
-          </button>
+          </button> : null}
 
           <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5 dark:bg-[var(--shadow-bg-page)]">
             <div className="flex items-center justify-between gap-3">
+              {isFullPage ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/profile/settings')}
+                  aria-label={t('notificationPage.backToNotifications')}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111111] dark:text-[var(--shadow-text-primary)]"
+                >
+                  <i className="fa-solid fa-chevron-left text-[16px]" />
+                </button>
+              ) : null}
               <div className="min-w-0 flex-1">
                 <h1 className="truncate text-[24px] font-black leading-7 text-[#111111] dark:text-[var(--shadow-text-primary)]">
                   {t('notificationPage.title')}
@@ -616,8 +647,8 @@ export default function NotificationPage({ isOpen = true, onClose }) {
             <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key
-                const count = counts[tab.key] || 0
-                const showCount = tab.key !== 'all' && count > 0
+                const count = Number(tab.key === 'all' ? counts.unread : counts[tab.key]) || 0
+                const showCount = count > 0
 
                 return (
                   <button
