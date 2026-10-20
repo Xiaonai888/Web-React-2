@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ReportModal from '../ReportModal'
 import { createPortal } from 'react-dom'
-import { Share2 } from 'lucide-react'
+import { Share2, MessageCircle, Copy, Trash2, SquarePen, Flag, EyeOff, Eye, Pin, Ban, AlertTriangle } from 'lucide-react'
 import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import ReactionAction from '../social/reactions/ReactionAction'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
@@ -1175,32 +1175,42 @@ function EmptyComments({ onFocus }) {
   )
 }
 
+const COMMENT_MENU_ICONS = {
+  'discover-share-outline': Share2,
+  'fa-solid fa-share-nodes': Share2,
+  'fa-regular fa-comment': MessageCircle,
+  'fa-regular fa-copy': Copy,
+  'fa-regular fa-trash-can': Trash2,
+  'fa-regular fa-pen-to-square': SquarePen,
+  'fa-regular fa-flag': Flag,
+  'fa-regular fa-eye-slash': EyeOff,
+  'fa-regular fa-eye': Eye,
+  'fa-solid fa-thumbtack': Pin,
+  'fa-solid fa-ban': Ban,
+  'fa-solid fa-triangle-exclamation': AlertTriangle,
+}
+
 function MenuButton({
   icon,
   label,
   danger = false,
   onClick,
 }) {
+  const Icon = COMMENT_MENU_ICONS[icon]
+  const iconColor = danger ? 'text-[#dc2626]' : 'text-[var(--shadow-text-secondary)]'
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={`flex min-h-12 w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left font-normal transition-colors active:bg-[var(--shadow-bg-soft)] ${
-        danger
-          ? 'text-[#dc2626]'
-          : 'text-[var(--shadow-text-primary)]'
+        danger ? 'text-[#dc2626]' : 'text-[var(--shadow-text-primary)]'
       }`}
     >
-      {icon === 'discover-share-outline' ? (
-        <Share2 size={19} strokeWidth={2.2} className="w-5 shrink-0 text-[var(--shadow-text-secondary)]" />
+      {Icon ? (
+        <Icon size={19} strokeWidth={1.7} className={`w-5 shrink-0 ${iconColor}`} />
       ) : (
-        <i
-          className={`${icon} w-5 shrink-0 text-center text-[17px] ${
-            danger
-              ? 'text-[#dc2626]'
-              : 'text-[var(--shadow-text-secondary)]'
-          }`}
-        />
+        <i className={`${icon} w-5 shrink-0 text-center text-[17px] ${iconColor}`} />
       )}
       <span className="text-[15px] font-normal">
         {label}
