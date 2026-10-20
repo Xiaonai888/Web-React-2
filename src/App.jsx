@@ -203,6 +203,10 @@ const ReaderSettingsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderSettingsPage')
 )
 
+const ReaderActivityHistoryPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderActivityHistoryPage')
+)
+
 const ReaderAccountSecurityPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderAccountSecurityPage')
 )
@@ -959,6 +963,12 @@ const shouldShowOpeningAds =
   path="/profile/settings/account-security/login-security"
   element={<LazyPage><ReaderSecuritySettingsPage /></LazyPage>}
 />
+
+          <Route
+  path="/profile/settings/activity-history"
+  element={<LazyPage><ReaderActivityHistoryPage /></LazyPage>}
+/>
+          
           <Route path="/apps/pic-to-art/creations" element={
   <LazyPage><AppAccessGuard appKey="pic-to-art"><PicToArtCreationsPage /></AppAccessGuard></LazyPage>
 } />
