@@ -457,6 +457,13 @@ registerTranslationNamespace('readerSettings', {
 })
 
 const GROUP_KEYS = ['account', 'activity', 'interaction', 'appSupport']
+registerTranslationNamespace('readerSettings', {
+  en: { items: { 'activity-history': { title: 'Activity History', subtitle: 'Review your important activities from the past year.' } } },
+  km: { items: { 'activity-history': { title: 'ប្រវត្តិសកម្មភាព', subtitle: 'ពិនិត្យសកម្មភាពសំខាន់ៗរបស់អ្នកក្នុងរយៈពេលមួយឆ្នាំ។' } } },
+  zh: { items: { 'activity-history': { title: '活动记录', subtitle: '查看过去一年中的重要活动。' } } },
+  ja: { items: { 'activity-history': { title: 'アクティビティ履歴', subtitle: '過去1年間の重要なアクティビティを確認します。' } } },
+  ko: { items: { 'activity-history': { title: '활동 기록', subtitle: '지난 1년간의 주요 활동을 확인하세요.' } } },
+})
 
 const SETTINGS_GROUPS = [
   {
