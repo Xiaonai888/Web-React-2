@@ -22,6 +22,11 @@ import ReactionSummary from '../../components/social/reactions/ReactionSummary'
 import { ProfessionalSinglePostImage } from '../../components/common/ProfessionalPostContent'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import HiddenWordsSpoilerText from '../../components/common/HiddenWordsSpoilerText'
+import {
+  getReaderHiddenWords,
+  subscribeReaderHiddenWords,
+} from '../../services/readerHiddenWordsApi'
 
 registerTranslationNamespace('authorPostDetailPage', {
   en: {
@@ -118,7 +123,7 @@ function formatPhotoViewerDateTime(value) {
   }).format(date)
 }
 
-function renderPostTextWithLinks(text, postId) {
+function renderPostTextWithLinks(text, postId, hiddenWords = []) {
   return String(text || '')
     .split(POST_TOKEN_PATTERN)
     .map((part, index) => {
@@ -157,7 +162,15 @@ className="break-all text-[#1877f2]"
         )
       }
 
-      return part
+            if (!hiddenWords.length) return part
+      return (
+        <HiddenWordsSpoilerText
+          key={`text-${index}`}
+          text={part}
+          words={hiddenWords}
+          sourceType="author_post"
+        />
+      )
     })
 }
 
@@ -440,8 +453,33 @@ const selectedPhotoIndex = Math.max(
       )
     : 0
 )
-  const [post, setPost] =
+    const [post, setPost] =
     useState(null)
+  const [hiddenWords, setHiddenWords] = useState([])
+
+  useEffect(() => {
+    let active = true
+
+    if (!getAuthToken()) return () => { active = false }
+
+    const refresh = () => {
+      getReaderHiddenWords()
+        .then((words) => {
+          if (active) setHiddenWords(words)
+        })
+        .catch(() => {
+          if (active) setHiddenWords([])
+        })
+    }
+
+    refresh()
+    const unsubscribe = subscribeReaderHiddenWords(refresh)
+
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
   const [loading, setLoading] =
     useState(true)
   const [error, setError] =
@@ -1579,7 +1617,8 @@ const selectedPhotoAltText = String(
       <span>
         {renderPostTextWithLinks(
   post.content,
-  post.id
+  post.id,
+  hiddenWords
 )}
       </span>
     ) : null
@@ -1997,8 +2036,12 @@ likeCount={
     !photoDeleteConfirmOpen ? (
       <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+92px)] left-0 right-0 z-20 px-5 text-center">
         <p className="mx-auto max-w-[720px] whitespace-pre-wrap break-words text-[13px] leading-5 text-white">
-          {selectedPhotoCaption}
-        </p>
+  <HiddenWordsSpoilerText
+    text={selectedPhotoCaption}
+    words={hiddenWords}
+    sourceType="author_post"
+  />
+</p>
       </div>
     ) : null}
 
