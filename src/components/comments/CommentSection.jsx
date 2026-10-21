@@ -2511,54 +2511,63 @@ function EditCommentSheet({
         type="button"
         onClick={onCancel}
         className="absolute inset-0"
-        aria-label="Close edit comment"
+        aria-label={t('commentSection.cancel')}
       />
 
-      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-bg-soft)]" />
+      <section className="relative flex h-[100dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:h-[min(90dvh,760px)] sm:rounded-[28px]">
+        <div className="mx-auto mb-3 h-1.5 w-12 shrink-0 rounded-full bg-[var(--shadow-bg-soft)]" />
 
-        <div className="flex items-center justify-between">
-          <h3 className="text-[17px] font-normal text-[var(--shadow-text-primary)]">
-            {t('commentSection.editComment')}
-          </h3>
-
+        <div className="relative flex h-12 shrink-0 items-center justify-center border-b border-[var(--shadow-border-strong)]">
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-9 w-9 items-center justify-center text-[var(--shadow-text-secondary)] transition-colors active:bg-[var(--shadow-bg-soft)]"
-            aria-label="Close edit comment"
+            className="absolute left-0 flex h-11 w-11 items-center justify-center text-[var(--shadow-text-primary)]"
+            aria-label={t('commentSection.cancel')}
           >
-            <i className="fa-solid fa-xmark text-[16px]" />
+            <i className="fa-solid fa-chevron-left text-[19px]" />
           </button>
+
+          <h3 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">
+            {t('commentSection.editComment')}
+          </h3>
         </div>
 
-        <textarea
-          value={value}
-          maxLength={COMMENT_LIMIT}
-          onChange={(event) =>
-            onChange(event.target.value)
-          }
-          rows={5}
-          autoFocus
-          className="mt-4 min-h-[150px] w-full resize-none rounded-[18px] bg-[var(--shadow-input-bg)] px-4 py-3 text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none ring-1 ring-transparent transition focus:bg-[var(--shadow-bg-surface)] focus:ring-[var(--shadow-border-strong)]"
-        />
+        <div className="min-h-0 flex-1 overflow-y-auto pt-4">
+          <textarea
+            value={value}
+            maxLength={COMMENT_LIMIT}
+            onChange={(event) => onChange(event.target.value)}
+            rows={5}
+            autoFocus
+            className="min-h-[150px] w-full resize-none rounded-[18px] bg-[var(--shadow-input-bg)] px-4 py-3 text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none ring-1 ring-transparent transition focus:bg-[var(--shadow-bg-surface)] focus:ring-[var(--shadow-border-strong)]"
+          />
 
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={
-            !value.trim() || saving
-          }
-          className="mt-4 h-11 w-full rounded-full bg-[var(--shadow-text-primary)] text-[14px] font-normal text-[var(--shadow-bg-surface)] transition active:scale-[0.99] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
-        >
-          {saving
-            ? t('commentSection.saving')
-            : t('commentSection.saveComment')}
-        </button>
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="h-10 rounded-[12px] bg-[var(--shadow-bg-soft)] px-5 text-[14px] text-[var(--shadow-text-primary)]"
+            >
+              {t('commentSection.cancel')}
+            </button>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!value.trim() || saving}
+              className="h-10 min-w-[90px] rounded-[12px] bg-[var(--shadow-text-primary)] px-5 text-[14px] font-semibold text-[var(--shadow-bg-surface)] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
+            >
+              {saving
+                ? t('commentSection.saving')
+                : t('commentSection.saveComment')}
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   )
 }
+
 
 function SortSheet({
   open,
