@@ -1212,9 +1212,8 @@ html.shadow-skip-animations .shadowChestOpen,
 html.shadow-skip-animations .shadowRewardPop,
 html.shadow-skip-animations .dailyGiftRewardPop,
 html.shadow-skip-animations .dailyGiftOpen,
-html.shadow-skip-animations .animate-ping,
-html.shadow-skip-animations .animate-bounce,
-html.shadow-skip-animations .animate-pulse {
+html.shadow-skip-animations .fixed.inset-0:has(.shadowChestOpen) :is(.animate-ping, .animate-bounce, .animate-pulse),
+html.shadow-skip-animations .fixed.inset-0:has(.dailyGiftOpen) :is(.animate-ping, .animate-bounce, .animate-pulse) {
   animation: none !important;
 }
 
