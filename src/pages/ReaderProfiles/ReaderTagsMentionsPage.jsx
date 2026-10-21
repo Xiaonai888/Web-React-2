@@ -82,6 +82,14 @@ registerTranslationNamespace('readerTagsMentions', {
   },
 })
 
+registerTranslationNamespace('readerTagReviewButton', {
+  en: { label: 'Review pending tags' },
+  km: { label: 'ពិនិត្យ Tags ដែលរង់ចាំ' },
+  zh: { label: '审核待处理标签' },
+  ja: { label: '承認待ちのタグを確認' },
+  ko: { label: '대기 중인 태그 검토' },
+})
+
 const API_BASE_URL = import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -280,7 +288,15 @@ export default function ReaderTagsMentionsPage() {
             <ReviewSwitch checked={preferences.reviewTags} onChange={() => updatePreference('reviewTags', !preferences.reviewTags)} disabled={!ready || loading || saving} label={tr('reviewTitle')} />
           </div>
           <p className="mt-3 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('reviewHelp')}</p>
-        </section>
+               </section>
+        <button
+          type="button"
+          onClick={() => navigate(`/profile/settings/tags-mentions/pending${fromMeSettings ? '?from=me-settings' : ''}`)}
+          className="flex min-h-[52px] w-full items-center justify-between rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 text-left text-[14px] font-medium active:bg-[var(--shadow-bg-hover)]"
+        >
+          <span>{t('readerTagReviewButton.label')}</span>
+          <span aria-hidden="true">›</span>
+        </button>
         <p className="px-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('blocked')}</p>
         <p role="status" className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('draft')}</p>
         {loading && <p role="status" className="px-1 text-[12px] text-[var(--shadow-text-secondary)]">{tr('loading')}</p>}
