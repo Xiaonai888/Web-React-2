@@ -11,6 +11,7 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../utils/uploadMediaWithFallback'
+import ReaderProfileBlockAction from '../components/reader-profile/ReaderProfileBlockAction'
 
 registerTranslationNamespace('profilePage', {
   en: {
@@ -1070,6 +1071,7 @@ export default function ProfilePage() {
       : null
   }, [isOwnProfile, location.state, requestedUsername])
   const [profileOptionsOpen, setProfileOptionsOpen] = useState(false)
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false)
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [readerPostCount, setReaderPostCount] = useState(0)
   const [profileTabMessage, setProfileTabMessage] = useState('')
@@ -1156,6 +1158,7 @@ export default function ProfilePage() {
 
     setReaderPostCount(0)
     setProfileOptionsOpen(false)
+    setBlockDialogOpen(false)
     setMessageRequestOpen(false)
     setDiscoverPeopleOpen(false)
     setProfileTabMessage('')
@@ -1898,6 +1901,13 @@ async function handleOtherProfileOption(action) {
   onCountChange={setReaderPostCount}
 />
 
+        <ReaderProfileBlockAction
+  open={!isOwnProfile && blockDialogOpen}
+  target={viewedUser}
+  onClose={() => setBlockDialogOpen(false)}
+  onBlocked={() => navigate('/discover', { replace: true })}
+/>
+
 <ReaderProfileOptionsSheet
   open={
     !isOwnProfile &&
@@ -1905,6 +1915,15 @@ async function handleOtherProfileOption(action) {
   }
   onClose={() =>
     setProfileOptionsOpen(false)
+    if (action === 'block') {
+  if (!getAuthToken()) { navigate('/login'); return }
+  if (!viewedUser?.id || String(viewedUser.username || '').toLowerCase() !== requestedUsername.toLowerCase()) {
+    setProfileTabMessage(t('profilePage.profileStillLoading'))
+    return
+  }
+  setBlockDialogOpen(true)
+  return
+}
   }
   onSelect={
     handleOtherProfileOption
