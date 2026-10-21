@@ -17,6 +17,11 @@ import { recordAuthorHashtagInterest } from '../services/authorHashtagsApi'
 import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
 import AuthorDiscoverPostText from './author-posts/AuthorDiscoverPostText'
+import HiddenWordsSpoilerText from './common/HiddenWordsSpoilerText'
+import {
+  getReaderHiddenWords,
+  subscribeReaderHiddenWords,
+} from '../services/readerHiddenWordsApi'
 import {
   ProfessionalSinglePostImage,
 } from './common/ProfessionalPostContent'
@@ -646,7 +651,7 @@ const POST_TOKEN_PATTERN = /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
 const POST_URL_ONLY_PATTERN = /^https?:\/\/[^\s]+$/i
 const POST_HASHTAG_ONLY_PATTERN = /^#[\p{L}\p{N}\p{M}_]+$/u
 
-function renderPostTextWithLinks(text, postId) {
+function renderPostTextWithLinks(text, postId, hiddenWords = []) {
   return String(text || '').split(POST_TOKEN_PATTERN).map((part, index) => {
     if (POST_URL_ONLY_PATTERN.test(part)) {
       return (
@@ -687,7 +692,14 @@ function renderPostTextWithLinks(text, postId) {
       )
     }
 
-    return part
+        return (
+      <HiddenWordsSpoilerText
+        key={`text-${index}`}
+        text={part}
+        words={hiddenWords}
+        sourceType="author_post"
+      />
+    )
   })
 }
 
@@ -1239,7 +1251,7 @@ function PostImageGrid({ images, onView }) {
   )
 }
 
-function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onViewImage, onMessage }) {
+function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onViewImage, onMessage, hiddenWords = [] }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const avatarUrl = author?.avatar_url || ''
@@ -1393,7 +1405,7 @@ useEffect(() => {
           <AuthorDiscoverPostText
   text={postText}
   renderText={(value) =>
-  renderPostTextWithLinks(value, post.id)
+  renderPostTextWithLinks(value, post.id, hiddenWords)
 }
   className="text-[16px] font-normal leading-7 text-[var(--shadow-text-primary)]"
 />
@@ -1922,7 +1934,18 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     { state: { fromAuthorPage: true } }
   )
 }
-  const [posts, setPosts] = useState([])
+    const [posts, setPosts] = useState([])
+  const [hiddenWords, setHiddenWords] = useState([])
+
+  useEffect(() => {
+    let active = true
+    const refresh = () => getReaderHiddenWords()
+      .then((words) => { if (active) setHiddenWords(words) })
+      .catch(() => { if (active) setHiddenWords([]) })
+    refresh()
+    const unsubscribe = subscribeReaderHiddenWords(refresh)
+    return () => { active = false; unsubscribe() }
+  }, [])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
@@ -2559,6 +2582,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
               key={post.id}
               post={post}
               author={author}
+              hiddenWords={hiddenWords}
               isOwner={Boolean(author?.is_owner)}
               reactionBusyId={reactionBusyId}
               onOpenMenu={setSelectedPost}
