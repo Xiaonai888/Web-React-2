@@ -555,12 +555,6 @@ const SETTINGS_GROUPS = [
         subtitle: 'Find stories and episodes you viewed.',
         icon: 'fa-solid fa-clock-rotate-left',
       },
-      {
-        key: 'echo-sharing',
-        title: 'Echo and sharing',
-        subtitle: 'Manage echoed posts and sharing activity.',
-        icon: 'fa-solid fa-arrows-rotate',
-      },
     ],
   },
   {
