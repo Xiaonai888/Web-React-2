@@ -1,0 +1,341 @@
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ArrowLeft, ChevronRight, MessageCircle } from 'lucide-react'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+
+registerTranslationNamespace('readerCommentSettings', {
+  en: {
+    title: 'Comment settings',
+    back: 'Back to settings',
+    heading: 'Manage comments on your posts',
+    description: 'Choose how readers can interact with your Reader posts.',
+    audience: 'Who can comment on your posts?',
+    audienceHelp: 'Choose who can leave comments when comments are enabled.',
+    everyone: 'Everyone',
+    followers: 'Followers only',
+    following: 'People you follow',
+    allow: 'Allow Comments',
+    allowHelp: 'Let readers leave new comments on your posts. Existing comments are kept.',
+    spam: 'Filter Spam',
+    spamHelp: 'Filter suspicious links and spam comments.',
+    approval: 'Comment Approval',
+    approvalHelp: 'Review comments before they appear publicly.',
+    manage: 'Manage Comments',
+    manageHelp: 'Open your profile to review comments on each post.',
+    deviceOnly: 'Settings are saved on this device only. Comment restrictions will take effect after server support is connected.',
+    saved: 'Preference saved on this device.',
+    storageError: 'Could not save this preference on your device.',
+    accountError: 'Please sign in again to save your settings.',
+  },
+  km: {
+    title: 'ការកំណត់មតិយោបល់',
+    back: 'ត្រឡប់ទៅការកំណត់',
+    heading: 'គ្រប់គ្រងមតិយោបល់លើ Posts របស់អ្នក',
+    description: 'ជ្រើសរើសរបៀបដែលអ្នកអានអាច Comment លើ Reader posts របស់អ្នក។',
+    audience: 'អ្នកណាអាច Comment លើ Posts របស់អ្នក?',
+    audienceHelp: 'ជ្រើសរើសអ្នកដែលអាច Comment នៅពេលអ្នកបើកមតិយោបល់។',
+    everyone: 'គ្រប់គ្នា',
+    followers: 'អ្នកដែល Follow អ្នក',
+    following: 'អ្នកដែលអ្នកបាន Follow',
+    allow: 'អនុញ្ញាតឱ្យ Comment',
+    allowHelp: 'អនុញ្ញាតឱ្យអ្នកអានសរសេរ Comment ថ្មី។ Comment ចាស់នៅរក្សាទុកដដែល។',
+    spam: 'តម្រង Spam',
+    spamHelp: 'ត្រង Link សង្ស័យ និង Comment Spam។',
+    approval: 'អនុម័ត Comment',
+    approvalHelp: 'ពិនិត្យ Comment មុនពេលបង្ហាញជាសាធារណៈ។',
+    manage: 'គ្រប់គ្រង Comment',
+    manageHelp: 'បើក Profile របស់អ្នកដើម្បីពិនិត្យ Comment លើ Post នីមួយៗ។',
+    deviceOnly: 'បច្ចុប្បន្នការកំណត់រក្សាទុកតែលើឧបករណ៍នេះ។ ការកំណត់សិទ្ធិ Comment នឹងដំណើរការក្រោយពេលភ្ជាប់ Server។',
+    saved: 'បានរក្សាទុកលើឧបករណ៍នេះ។',
+    storageError: 'មិនអាចរក្សាទុកការកំណត់លើឧបករណ៍នេះបានទេ។',
+    accountError: 'សូមចូលគណនីឡើងវិញដើម្បីរក្សាទុកការកំណត់។',
+  },
+  zh: {
+    title: '评论设置',
+    back: '返回设置',
+    heading: '管理帖子评论',
+    description: '选择其他读者如何与你的帖子互动。',
+    audience: '谁可以评论你的帖子？',
+    audienceHelp: '开启评论后，选择可以评论的用户。',
+    everyone: '所有人',
+    followers: '仅关注你的人',
+    following: '你关注的人',
+    allow: '允许评论',
+    allowHelp: '允许新评论，已有评论不会被删除。',
+    spam: '过滤垃圾评论',
+    spamHelp: '过滤可疑链接和垃圾评论。',
+    approval: '评论审核',
+    approvalHelp: '评论公开显示前需要你的审核。',
+    manage: '管理评论',
+    manageHelp: '打开个人主页，查看每篇帖子的评论。',
+    deviceOnly: '设置目前仅保存在此设备上。连接服务器后，评论限制才会生效。',
+    saved: '已保存在此设备。',
+    storageError: '无法在此设备保存设置。',
+    accountError: '请重新登录以保存设置。',
+  },
+  ja: {
+    title: 'コメント設定',
+    back: '設定に戻る',
+    heading: '投稿へのコメントを管理',
+    description: '読者があなたの投稿にコメントできる条件を設定します。',
+    audience: '誰がコメントできますか？',
+    audienceHelp: 'コメントを許可した場合の対象を選択します。',
+    everyone: 'すべての人',
+    followers: 'フォロワーのみ',
+    following: '自分がフォロー中の人',
+    allow: 'コメントを許可',
+    allowHelp: '新しいコメントを許可します。既存のコメントは残ります。',
+    spam: 'スパムをフィルター',
+    spamHelp: '不審なリンクやスパムコメントを検出します。',
+    approval: 'コメントの承認',
+    approvalHelp: '公開前にコメントを確認します。',
+    manage: 'コメントを管理',
+    manageHelp: 'プロフィールから投稿ごとのコメントを確認します。',
+    deviceOnly: '現在はこの端末にのみ保存されます。サーバー連携後にコメント制限が有効になります。',
+    saved: 'この端末に保存しました。',
+    storageError: 'この端末に設定を保存できませんでした。',
+    accountError: '再度ログインして設定を保存してください。',
+  },
+  ko: {
+    title: '댓글 설정',
+    back: '설정으로 돌아가기',
+    heading: '내 게시물의 댓글 관리',
+    description: '독자가 내 게시물에 댓글을 남기는 방식을 설정하세요.',
+    audience: '누가 댓글을 달 수 있나요?',
+    audienceHelp: '댓글을 허용했을 때 댓글을 남길 수 있는 사람을 선택하세요.',
+    everyone: '모든 사람',
+    followers: '내 팔로워만',
+    following: '내가 팔로우하는 사람',
+    allow: '댓글 허용',
+    allowHelp: '새 댓글을 허용합니다. 기존 댓글은 유지됩니다.',
+    spam: '스팸 필터',
+    spamHelp: '의심스러운 링크와 스팸 댓글을 필터링합니다.',
+    approval: '댓글 승인',
+    approvalHelp: '댓글이 공개되기 전에 검토합니다.',
+    manage: '댓글 관리',
+    manageHelp: '프로필에서 각 게시물의 댓글을 확인하세요.',
+    deviceOnly: '설정은 현재 이 기기에만 저장됩니다. 서버 연결 후 댓글 제한이 적용됩니다.',
+    saved: '이 기기에 저장되었습니다.',
+    storageError: '이 기기에 설정을 저장하지 못했습니다.',
+    accountError: '설정을 저장하려면 다시 로그인해 주세요.',
+  },
+})
+
+const DEFAULT_SETTINGS = {
+  audience: 'everyone',
+  allowComments: true,
+  filterSpam: true,
+  commentApproval: false,
+}
+
+const AUDIENCES = ['everyone', 'followers', 'following']
+
+function getReaderId() {
+  try {
+    const user = JSON.parse(
+      localStorage.getItem('shadow_reader_user') ||
+      sessionStorage.getItem('shadow_reader_user') ||
+      'null'
+    )
+    return String(user?.id || user?.user_id || user?.reader?.id || '').trim()
+  } catch {
+    return ''
+  }
+}
+
+function getReaderToken() {
+  return localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') || ''
+}
+
+function readSettings(storageKey) {
+  if (!storageKey) return { ...DEFAULT_SETTINGS }
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null')
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) {
+      return { ...DEFAULT_SETTINGS }
+    }
+    return {
+      audience: AUDIENCES.includes(saved.audience) ? saved.audience : DEFAULT_SETTINGS.audience,
+      allowComments: typeof saved.allowComments === 'boolean' ? saved.allowComments : DEFAULT_SETTINGS.allowComments,
+      filterSpam: typeof saved.filterSpam === 'boolean' ? saved.filterSpam : DEFAULT_SETTINGS.filterSpam,
+      commentApproval: typeof saved.commentApproval === 'boolean' ? saved.commentApproval : DEFAULT_SETTINGS.commentApproval,
+    }
+  } catch {
+    return { ...DEFAULT_SETTINGS }
+  }
+}
+
+function CommentSwitch({ checked, disabled, label, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onChange}
+      className="shrink-0 rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <span className={`relative block h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
+        checked ? 'bg-[#111827]' : 'bg-[#D1D6DE]'
+      }`}>
+        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-all duration-300 ${
+          checked ? 'left-[26px]' : 'left-1'
+        }`} />
+      </span>
+    </button>
+  )
+}
+
+function SettingSwitchRow({ title, description, checked, disabled, onChange }) {
+  return (
+    <div className="flex items-center gap-4 py-4">
+      <div className="min-w-0 flex-1">
+        <h3 className="text-[14px] font-medium text-[var(--shadow-text-primary)]">{title}</h3>
+        <p className="mt-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{description}</p>
+      </div>
+      <CommentSwitch checked={checked} disabled={disabled} label={title} onChange={onChange} />
+    </div>
+  )
+}
+
+export default function ReaderCommentSettingsPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { t } = useDisplayTranslation()
+  const tr = (key) => t(`readerCommentSettings.${key}`)
+  const fromMeSettings = new URLSearchParams(location.search).get('from') === 'me-settings'
+  const backPath = fromMeSettings ? '/profile/settings?from=me-settings' : '/profile/settings'
+  const readerId = getReaderId()
+  const storageKey = readerId ? `shadow_reader_comment_settings_draft_v1:${readerId}` : ''
+  const [settings, setSettings] = useState(() => readSettings(storageKey))
+  const [feedback, setFeedback] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!getReaderToken()) navigate('/login', { replace: true })
+  }, [navigate])
+
+  useEffect(() => {
+    setSettings(readSettings(storageKey))
+    const onStorage = (event) => {
+      if (event.key === storageKey) setSettings(readSettings(storageKey))
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [storageKey])
+
+  function updateSettings(key, value) {
+    setFeedback('')
+    if (!storageKey) {
+      setError(tr('accountError'))
+      return
+    }
+    const next = { ...settings, [key]: value }
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next))
+      setSettings(next)
+      setError('')
+      setFeedback(tr('saved'))
+    } catch {
+      setError(tr('storageError'))
+    }
+  }
+
+  return (
+    <main className="app-page min-h-screen bg-[var(--shadow-bg-page)] pb-[calc(32px+env(safe-area-inset-bottom))] text-[var(--shadow-text-primary)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
+        <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
+          <button
+            type="button"
+            onClick={() => navigate(backPath)}
+            aria-label={tr('back')}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
+          >
+            <ArrowLeft size={20} strokeWidth={1.8} />
+          </button>
+          <h1 className="text-[18px] font-semibold">{tr('title')}</h1>
+        </div>
+      </header>
+
+      <div className="mx-auto w-full max-w-[560px] space-y-4 px-4 pt-5">
+        <section className="px-1">
+          <h2 className="text-[17px] font-semibold">{tr('heading')}</h2>
+          <p className="mt-2 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">{tr('description')}</p>
+        </section>
+
+        <section className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 shadow-none">
+          <div className="py-5">
+            <h3 className="text-[14px] font-medium">{tr('audience')}</h3>
+            <p className="mt-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('audienceHelp')}</p>
+            <div role="radiogroup" aria-label={tr('audience')} className="mt-4 space-y-4">
+              {AUDIENCES.map((choice) => (
+                <label key={choice} className={`flex items-center gap-3 text-[13px] ${!settings.allowComments ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                  <input
+                    type="radio"
+                    name="reader-comment-audience"
+                    value={choice}
+                    checked={settings.audience === choice}
+                    disabled={!settings.allowComments || !storageKey}
+                    onChange={() => updateSettings('audience', choice)}
+                    className="h-[18px] w-[18px] shrink-0 accent-[#111827]"
+                  />
+                  <span>{tr(choice)}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-[var(--shadow-border)]">
+            <SettingSwitchRow
+              title={tr('allow')}
+              description={tr('allowHelp')}
+              checked={settings.allowComments}
+              disabled={!storageKey}
+              onChange={() => updateSettings('allowComments', !settings.allowComments)}
+            />
+          </div>
+          <div className="border-t border-[var(--shadow-border)]">
+            <SettingSwitchRow
+              title={tr('spam')}
+              description={tr('spamHelp')}
+              checked={settings.filterSpam}
+              disabled={!storageKey}
+              onChange={() => updateSettings('filterSpam', !settings.filterSpam)}
+            />
+          </div>
+          <div className="border-t border-[var(--shadow-border)]">
+            <SettingSwitchRow
+              title={tr('approval')}
+              description={tr('approvalHelp')}
+              checked={settings.commentApproval}
+              disabled={!storageKey}
+              onChange={() => updateSettings('commentApproval', !settings.commentApproval)}
+            />
+          </div>
+        </section>
+
+        <button
+          type="button"
+          onClick={() => navigate('/profile')}
+          className="flex w-full items-center gap-3 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--shadow-bg-soft)]">
+            <MessageCircle size={20} strokeWidth={1.7} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-medium">{tr('manage')}</span>
+            <span className="mt-1 block text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('manageHelp')}</span>
+          </span>
+          <ChevronRight size={17} strokeWidth={1.8} className="shrink-0 text-[var(--shadow-text-secondary)]" />
+        </button>
+
+        <p className="px-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('deviceOnly')}</p>
+        {feedback ? <p role="status" className="px-1 text-[12px] text-[var(--shadow-text-secondary)]">{feedback}</p> : null}
+        {error ? <p role="alert" className="px-1 text-[12px] text-red-500">{error}</p> : null}
+      </div>
+    </main>
+  )
+}
