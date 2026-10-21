@@ -1345,6 +1345,24 @@ async function handleOtherProfileOption(action) {
 
   setProfileOptionsOpen(false)
 
+  if (action === 'block') {
+    if (!getAuthToken()) {
+      navigate('/login')
+      return
+    }
+
+    const targetUsername = String(viewedUser?.username || '').trim().replace(/^@+/, '').toLowerCase()
+    if (!viewedUser?.id || targetUsername !== requestedUsername.trim().replace(/^@+/, '').toLowerCase()) {
+      setProfileTabMessage(t('profilePage.profileStillLoading'))
+      window.setTimeout(() => setProfileTabMessage(''), 2200)
+      return
+    }
+
+    setProfileTabMessage('')
+    setBlockDialogOpen(true)
+    return
+  }
+
   if (action === 'copy-link') {
     try {
       await navigator.clipboard.writeText(profileUrl)
@@ -1909,25 +1927,9 @@ async function handleOtherProfileOption(action) {
 />
 
 <ReaderProfileOptionsSheet
-  open={
-    !isOwnProfile &&
-    profileOptionsOpen
-  }
-  onClose={() =>
-    setProfileOptionsOpen(false)
-    if (action === 'block') {
-  if (!getAuthToken()) { navigate('/login'); return }
-  if (!viewedUser?.id || String(viewedUser.username || '').toLowerCase() !== requestedUsername.toLowerCase()) {
-    setProfileTabMessage(t('profilePage.profileStillLoading'))
-    return
-  }
-  setBlockDialogOpen(true)
-  return
-}
-  }
-  onSelect={
-    handleOtherProfileOption
-  }
+  open={!isOwnProfile && profileOptionsOpen}
+  onClose={() => setProfileOptionsOpen(false)}
+  onSelect={handleOtherProfileOption}
 />
 </main>
       {isOwnProfile ? (
