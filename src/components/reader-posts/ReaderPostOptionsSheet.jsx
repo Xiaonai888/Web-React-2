@@ -338,15 +338,14 @@ export default function ReaderPostOptionsSheet({
                 title={t('readerPostOptions.reportPost')}
                 description={t('readerPostOptions.reportDescription')}
                 onClick={reportPost}
+              />
 
-                <ReaderPostBlockAction
-  post={post}
-  onBlocked={() => {
-    onHide?.()
-    onClose?.()
-  }}
-/>
-              
+              <ReaderPostBlockAction
+                post={post}
+                onBlocked={() => {
+                  onHide?.()
+                  onClose?.()
+                }}
               />
             </>
           )}
