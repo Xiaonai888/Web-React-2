@@ -202,6 +202,9 @@ const ReaderShareProfilePage = lazy(() =>
 const ReaderSettingsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderSettingsPage')
 )
+const ReaderLanguagePage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderLanguagePage')
+)
 
 const ReaderActivityHistoryPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderActivityHistoryPage')
@@ -967,6 +970,11 @@ const shouldShowOpeningAds =
           <Route
   path="/profile/settings/activity-history"
   element={<LazyPage><ReaderActivityHistoryPage /></LazyPage>}
+/>
+
+          <Route
+  path="/profile/settings/language"
+  element={<LazyPage><ReaderLanguagePage /></LazyPage>}
 />
           
           <Route path="/apps/pic-to-art/creations" element={
