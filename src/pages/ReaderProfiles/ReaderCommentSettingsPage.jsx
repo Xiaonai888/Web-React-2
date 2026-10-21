@@ -379,7 +379,7 @@ export default function ReaderCommentSettingsPage() {
 
         <button
           type="button"
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate(`/profile/settings/comment-settings/manage${fromMeSettings ? '?from=me-settings' : ''}`)}
           className="flex w-full items-center gap-3 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--shadow-bg-soft)]">
