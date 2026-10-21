@@ -922,6 +922,11 @@ const filteredGroups = groups.map((group, index) => ({
     navigate(`/profile/settings/privacy${fromMeSettings ? '?from=me-settings' : ''}`)
     return
   }
+
+    if (item.key === 'hidden-words') {
+  navigate(`/profile/settings/hidden-words${fromMeSettings ? '?from=me-settings' : ''}`)
+  return
+}
   if (item.key === 'shadow-account') {
       navigate(`${settingsPath}${fromMeSettings ? '&' : '?'}account=shadow`)
       return
