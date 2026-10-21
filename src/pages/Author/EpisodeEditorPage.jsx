@@ -4810,7 +4810,12 @@ const handleEditorCompositionEnd = (event) => {
       insertHtmlAtSelection(
         `<p>⏳ ${escapeEpisodeHtml(getDisplayText('episodeEditor.uploading'))} ${novelImageUploadMarker(queued.id)}</p><p><br></p>`
       )
-      const saved = await saveCurrentLocalDraft()
+      if (localSavePromiseRef.current) {
+        await localSavePromiseRef.current.catch(() => {})
+      }
+      const saved = localDraftRevisionRef.current === localSavedRevisionRef.current
+        ? true
+        : await saveCurrentLocalDraft()
       if (!saved) {
         showToast(getDisplayText('episodeEditor.failedSaveDraft'))
       } else {
@@ -5144,14 +5149,16 @@ await cleanupTemporaryMangaPages(
 } = {}) => {
     setMessage('')
 
-    if (!isManga && (inlineImageUploading ||
-      countPendingNovelImageMarkers(editorRef.current?.innerHTML || content))) {
-      setMessage(getDisplayText('episodeEditor.pagesStillUploading'))
-      return null
-    }
-
     if (localSavePromiseRef.current) {
       await localSavePromiseRef.current.catch(() => {})
+    }
+
+    const currentNovelHtml = editorRef.current?.innerHTML || content
+    if (!isManga && (inlineImageUploading ||
+      countPendingNovelImageMarkers(currentNovelHtml) ||
+      countPendingNovelImageMarkers(content))) {
+      setMessage(getDisplayText('episodeEditor.pagesStillUploading'))
+      return null
     }
 
     if (!episodeTitle.trim()) {
@@ -5238,7 +5245,7 @@ await cleanupTemporaryMangaPages(
         body: JSON.stringify({
           title: episodeTitle.trim(),
           cover_url: episodeCoverUrl,
-          content: isManga ? '' : sanitizeEpisodeHtml(content),
+          content: isManga ? '' : sanitizeEpisodeHtml(currentNovelHtml),
           youtube_url: isManga ? '' : youtubeVideo.url,
           youtube_title: isManga ? '' : youtubeVideo.title,
           pages: isManga ? pagesPayload : undefined,
@@ -5327,7 +5334,10 @@ await cleanupTemporaryMangaPages(
       loading ||
       pageLoading ||
       !episodeTitle.trim() ||
-      mangaUploadPending
+      mangaUploadPending ||
+      (!isManga && (inlineImageUploading ||
+        countPendingNovelImageMarkers(editorRef.current?.innerHTML || content) ||
+        countPendingNovelImageMarkers(content)))
     ) {
       setServerCheckpointMinutes(SERVER_CHECKPOINT_MINUTES)
       return
@@ -5337,12 +5347,12 @@ await cleanupTemporaryMangaPages(
       setServerCheckpointSaving(true)
       setSaveStatus('Backing up to server...')
 
-      await handleSaveEpisode({
+      const saved = await handleSaveEpisode({
         forceDraft: false,
         stayOnPage: true,
       })
 
-      setSaveStatus('Saved')
+      setSaveStatus(saved ? 'Saved' : 'Saved locally')
     } catch {
       setSaveStatus('Saved locally')
     } finally {
