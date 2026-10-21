@@ -4067,7 +4067,10 @@ export default function EpisodeEditorPage() {
         completedMangaPages.length <= MANGA_MAX_PAGES &&
         !mangaUploadPending &&
         mangaErrorCount === 0
-      : characterCount >= MIN_CHARACTERS && characterCount <= MAX_CHARACTERS)
+      : characterCount >= MIN_CHARACTERS &&
+        characterCount <= MAX_CHARACTERS &&
+        !inlineImageUploading &&
+        countPendingNovelImageMarkers(content) === 0)
 
   const showToast = (text, duration = 2800) => {
     setToast(text)
@@ -4188,7 +4191,13 @@ return true
     editorRef, getToken: getAuthToken,
     upload: uploadEpisodeInlineImage,
     onContentChange: (html) => { setContent(html); markUnsaved() },
-    onLocalSave: saveCurrentLocalDraft,
+    onLocalSave: async () => {
+      if (localSavePromiseRef.current) {
+        await localSavePromiseRef.current.catch(() => {})
+      }
+      if (localSavedRevisionRef.current === localDraftRevisionRef.current) return true
+      return saveCurrentLocalDraft()
+    },
     onFailed: () => showToast(getDisplayText('episodeEditor.failedUploadImage')),
   })
 
@@ -4775,31 +4784,42 @@ const handleEditorCompositionEnd = (event) => {
 
     try {
       const currentHtml = editorRef.current?.innerHTML || content
-
-      if (countEpisodeImages(currentHtml) >= NOVEL_IMAGE_MAX_COUNT) {
+      if (countEpisodeImages(currentHtml) + countPendingNovelImageMarkers(currentHtml) >= NOVEL_IMAGE_MAX_COUNT) {
         throw new Error(getDisplayText('episodeEditor.onlyTwoImages'))
       }
-
-      const token = getAuthToken()
-      if (!token) {
+      if (!isNovelImageFile(file) || file.size > NOVEL_IMAGE_INPUT_MAX_BYTES) {
+        throw new Error(getDisplayText('episodeEditor.imageTooLarge'))
+      }
+      if (!getAuthToken()) {
         navigate('/login')
         return
       }
 
       setInlineImageUploading(true)
-      const uploadFile = isNovelHeicFile(file)
+      const selected = isNovelHeicFile(file)
         ? await convertNovelHeicForUpload(file)
         : file
+      let prepared = selected
+      try {
+        prepared = await optimizeNovelEpisodeImage(selected)
+      } catch {
+        prepared = selected
+      }
 
-      const imageUrl = await uploadEpisodeInlineImage({ token, file: uploadFile })
-      if (!imageUrl) throw new Error(getDisplayText('episodeEditor.imageUrlMissing'))
-
+      const queued = await novelImageQueue.enqueue(prepared)
       insertHtmlAtSelection(
-        `<p><img src="${escapeEpisodeHtml(imageUrl)}" alt="Episode image"></p><p><br></p>`
+        `<p>⏳ ${escapeEpisodeHtml(getDisplayText('episodeEditor.uploading'))} ${novelImageUploadMarker(queued.id)}</p><p><br></p>`
       )
-      showToast(getDisplayText('episodeEditor.imageAdded'))
+      const saved = await saveCurrentLocalDraft()
+      if (!saved) {
+        showToast(getDisplayText('episodeEditor.failedSaveDraft'))
+      } else {
+        setSaveStatus('Saved locally')
+        showToast(getDisplayText('episodeEditor.uploading'))
+      }
+      await novelImageQueue.reconcile()
     } catch (error) {
-      showToast(error.message || getDisplayText('episodeEditor.couldNotAddImage'))
+      showToast(error?.message || getDisplayText('episodeEditor.couldNotAddImage'))
     } finally {
       setInlineImageUploading(false)
       if (imageInputRef.current) imageInputRef.current.value = ''
@@ -5123,6 +5143,12 @@ await cleanupTemporaryMangaPages(
   stayOnPage = false,
 } = {}) => {
     setMessage('')
+
+    if (!isManga && (inlineImageUploading ||
+      countPendingNovelImageMarkers(editorRef.current?.innerHTML || content))) {
+      setMessage(getDisplayText('episodeEditor.pagesStillUploading'))
+      return null
+    }
 
     if (localSavePromiseRef.current) {
       await localSavePromiseRef.current.catch(() => {})
