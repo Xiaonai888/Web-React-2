@@ -202,6 +202,9 @@ const ReaderShareProfilePage = lazy(() =>
 const ReaderSettingsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderSettingsPage')
 )
+const ReaderMessagesRepliesSettingsPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderMessagesRepliesSettingsPage')
+)
 
 const ReaderCommentSettingsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderCommentSettingsPage')
@@ -1471,7 +1474,11 @@ const shouldShowOpeningAds =
   }
 />
 
-     <Route
+    <Route
+  path="/profile/settings/messages-replies"
+  element={<LazyPage><ReaderMessagesRepliesSettingsPage /></LazyPage>}
+/>
+<Route
   path="/profile/settings/hidden-words"
   element={<LazyPage><ReaderHiddenWordsPage /></LazyPage>}
 />
