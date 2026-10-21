@@ -36,6 +36,11 @@ import AuthorPostEchoAction from '../components/author-posts/AuthorPostEchoActio
 import ReactionAction from '../components/social/reactions/ReactionAction'
 import ReactionSummary from '../components/social/reactions/ReactionSummary'
 import AuthorDiscoverPostText from '../components/author-posts/AuthorDiscoverPostText'
+import HiddenWordsSpoilerText from '../components/common/HiddenWordsSpoilerText'
+import {
+  getReaderHiddenWords,
+  subscribeReaderHiddenWords,
+} from '../services/readerHiddenWordsApi'
 import {
   ProfessionalSinglePostImage,
 } from '../components/common/ProfessionalPostContent'
@@ -333,11 +338,19 @@ function getAuthToken() {
 const POST_TOKEN_PATTERN = /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
 const POST_URL_ONLY_PATTERN = /^https?:\/\/[^\s]+$/i
 const POST_HASHTAG_ONLY_PATTERN = /^#[\p{L}\p{N}\p{M}_]+$/u
-function renderPostTextWithLinks(text, postId) {
+function renderPostTextWithLinks(text, postId, hiddenWords = []) {
   return String(text || '').split(POST_TOKEN_PATTERN).map((part, index) => {
     if (POST_URL_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={part} target="_blank" rel="noopener noreferrer" onClick={(event) => { event.stopPropagation(); void recordAuthorPostClick(postId, part) }} className="break-all text-[#1877f2]">{part}</a>
     if (POST_HASHTAG_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={`/discover/search?q=${encodeURIComponent(part)}&type=posts`} onClick={(e) => e.stopPropagation()} className="text-[#1877f2]">{part}</a>
-    return part
+        if (!hiddenWords.length) return part
+    return (
+      <HiddenWordsSpoilerText
+        key={`text-${index}`}
+        text={part}
+        words={hiddenWords}
+        sourceType="author_post"
+      />
+    )
   })
 }
 
@@ -1319,6 +1332,7 @@ function RealFollowedPostCard({
   onFollowChanged,
   onComment,
   onMore,
+  hiddenWords = [],
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -1549,7 +1563,7 @@ const isOwner = Boolean(
     <AuthorDiscoverPostText
       text={post.content}
       renderText={(value) =>
-  renderPostTextWithLinks(value, post.id)
+  renderPostTextWithLinks(value, post.id, hiddenWords)
 }
       className="text-[14px] font-normal leading-6 text-[#111827] dark:text-[var(--shadow-text-primary)]"
     />
@@ -2673,7 +2687,33 @@ export default function DiscoverPage() {
   const lastScrollYRef = useRef(0)
   const discoverScrollYRef = useRef(0)
   const discoverRestoringScrollRef = useRef(false)
-  const [token, setToken] = useState(getAuthToken)
+    const [token, setToken] = useState(getAuthToken)
+  const [hiddenWords, setHiddenWords] = useState([])
+
+  useEffect(() => {
+    let active = true
+    setHiddenWords([])
+
+    if (!token) return () => { active = false }
+
+    const refresh = () => {
+      getReaderHiddenWords()
+        .then((words) => {
+          if (active) setHiddenWords(words)
+        })
+        .catch(() => {
+          if (active) setHiddenWords([])
+        })
+    }
+
+    refresh()
+    const unsubscribe = subscribeReaderHiddenWords(refresh)
+
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [token])
 
   useEffect(() => {
     const updateToken = () => {
@@ -4398,6 +4438,7 @@ export default function DiscoverPage() {
                   <RealFollowedPostCard
   post={entry.post}
   token={token}
+  hiddenWords={hiddenWords}
   onReactionUpdated={
     handleRealPostReactionUpdated
   }
