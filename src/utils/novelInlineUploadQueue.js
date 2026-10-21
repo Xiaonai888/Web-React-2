@@ -9,7 +9,7 @@ function readUserId(token) {
     const middle = String(token || '').split('.')[1]
     if (!middle) return ''
     const payload = JSON.parse(atob(middle.replace(/-/g, '+').replace(/_/g, '/')))
-    return String(payload.user_id || '').trim()
+    return String(payload.user_id || payload.sub || '').trim()
   } catch {
     return ''
   }
@@ -77,6 +77,7 @@ export function useNovelInlineUploadQueue({
   const worker = useRef(null)
   const reconciling = useRef(false)
   const rerunRequested = useRef(false)
+  const latestReconcile = useRef(null)
   const [pendingCount, setPendingCount] = useState(0)
   current.current = { editorRef, getToken, upload, onContentChange, onLocalSave, onFailed }
 
@@ -88,47 +89,66 @@ export function useNovelInlineUploadQueue({
       return
     }
     reconciling.current = true
+    const isCurrent = () => worker.current === queue
     try {
       const tasks = (await queue.list()).filter((task) =>
-      task.category === 'episode_content' &&
-      task.context?.storyId === String(storyId) &&
-      task.context?.episodeKey === String(episodeKey)
-    )
-    setPendingCount(tasks.length)
+        task.category === 'episode_content' &&
+        task.context?.storyId === String(storyId) &&
+        task.context?.episodeKey === String(episodeKey)
+      )
+      if (!isCurrent()) return
+      setPendingCount(tasks.length)
 
-    const editor = current.current.editorRef.current
-    if (!editor) return
+      const editor = current.current.editorRef?.current
+      if (!editor) return
 
-    for (const task of tasks) {
-      if (task.status !== 'uploaded') continue
-      const imageUrl = typeof task.result === 'string'
-        ? task.result
-        : task.result?.image_url || task.result?.imageUrl || task.result?.url || ''
-      try {
-        const url = new URL(imageUrl)
-        if (!['http:', 'https:'].includes(url.protocol)) continue
-      } catch {
-        continue
+      for (const task of tasks) {
+        if (!isCurrent() || current.current.editorRef?.current !== editor) return
+        if (task.status !== 'uploaded') continue
+        const imageUrl = typeof task.result === 'string'
+          ? task.result
+          : task.result?.image_url || task.result?.imageUrl || task.result?.url || ''
+        try {
+          const url = new URL(imageUrl)
+          if (!['http:', 'https:'].includes(url.protocol)) continue
+        } catch {
+          continue
+        }
+
+        const marker = novelImageUploadMarker(task.id)
+        const paragraph = Array.from(editor.querySelectorAll('p'))
+          .find((element) => element.textContent?.includes(marker))
+        if (paragraph) {
+          if (!replaceUploadMarker(paragraph, marker, imageUrl)) continue
+          current.current.onContentChange?.(editor.innerHTML)
+        } else {
+          const imageExists = Array.from(editor.querySelectorAll('img'))
+            .some((image) => image.getAttribute('src') === imageUrl)
+          if (!imageExists) continue
+        }
+
+        let saved = false
+        try {
+          saved = await current.current.onLocalSave?.() === true
+        } catch {
+          saved = false
+        }
+        if (saved && isCurrent()) await queue.remove(task.id)
       }
-
-      const marker = novelImageUploadMarker(task.id)
-      const paragraph = Array.from(editor.querySelectorAll('p'))
-        .find((element) => element.textContent?.includes(marker))
-      if (!paragraph || !replaceUploadMarker(paragraph, marker, imageUrl)) continue
-      current.current.onContentChange(editor.innerHTML)
-      const saved = await current.current.onLocalSave()
-      if (saved) await queue.remove(task.id)
-    }
     } finally {
       reconciling.current = false
       if (rerunRequested.current) {
         rerunRequested.current = false
-        queueMicrotask(() => { void reconcile().catch(() => {}) })
+        queueMicrotask(() => {
+          void latestReconcile.current?.().catch(() => {})
+        })
       }
     }
   }, [storyId, episodeKey])
+  latestReconcile.current = reconcile
 
   useEffect(() => {
+    setPendingCount(0)
     if (!active) return undefined
     const token = current.current.getToken()
     const userId = readUserId(token)
@@ -146,9 +166,10 @@ export function useNovelInlineUploadQueue({
         return current.current.upload({ token: sessionToken, file, signal, onProgress })
       },
       onChange: ({ type, task }) => {
+        if (worker.current !== manager) return
         if (type === 'failed' && task?.context?.storyId === String(storyId) &&
           task?.context?.episodeKey === String(episodeKey)) {
-          current.current.onFailed(task)
+          current.current.onFailed?.(task)
         }
         if (['uploaded', 'queued', 'failed', 'removed'].includes(type)) {
           void reconcile().catch(() => {})
@@ -186,5 +207,15 @@ export function useNovelInlineUploadQueue({
     return task
   }, [storyId, episodeKey])
 
-  return { enqueue, reconcile, pendingCount }
+  const retry = useCallback(async (taskId) => {
+    const queue = worker.current
+    if (!queue) return null
+    const task = await queue.get(taskId)
+    if (!task || task.category !== 'episode_content' ||
+      task.context?.storyId !== String(storyId) ||
+      task.context?.episodeKey !== String(episodeKey)) return null
+    return queue.retry(taskId)
+  }, [storyId, episodeKey])
+
+  return { enqueue, reconcile, retry, pendingCount }
 }
