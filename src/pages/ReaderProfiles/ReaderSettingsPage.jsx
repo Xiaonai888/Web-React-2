@@ -917,7 +917,11 @@ const filteredGroups = groups.map((group, index) => ({
   }
 
   function handleOpen(item) {
-    if (item.key === 'shadow-account') {
+  if (item.key === 'privacy') {
+    navigate(`/profile/settings/privacy${fromMeSettings ? '?from=me-settings' : ''}`)
+    return
+  }
+  if (item.key === 'shadow-account') {
       navigate(`${settingsPath}${fromMeSettings ? '&' : '?'}account=shadow`)
       return
     }
