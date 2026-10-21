@@ -1231,12 +1231,12 @@ export default function ProfilePage() {
       posts: viewedUser ? String(readerPostCount) : '0',
       followers: String(viewedUser?.followers_count || 0),
       following: String(viewedUser?.following_count || 0),
-      bioTitle: viewedUser?.work || t('profilePage.addWorkJob'),
-      bio: viewedUser?.bio || t('profilePage.addBio'),
-      location: viewedUser?.location || t('profilePage.addLocation'),
+      bioTitle: String(viewedUser?.work || '').trim(),
+      bio: String(viewedUser?.bio || '').trim(),
+      location: String(viewedUser?.location || '').trim(),
       isPremium: Boolean(viewedUser?.is_premium),
       socialLinks: Array.isArray(viewedUser?.social_links)
-        ? viewedUser.social_links.filter((item) => item?.url).slice(0, 5)
+        ? viewedUser.social_links.filter((item) => String(item?.url || '').trim()).slice(0, 5)
         : [],
     }
   }, [
@@ -1768,11 +1768,13 @@ async function handleOtherProfileOption(action) {
               </div>
             </div>
 
-            <div className="mt-4 text-[12px] leading-5 text-[var(--shadow-text-primary)]">
-              <div className="font-bold">{profile.bioTitle}</div>
-              <div>{profile.bio}</div>
-              <div>{profile.location}</div>
-            </div>
+            {profile.bioTitle || profile.bio || profile.location ? (
+  <div className="mt-4 text-[12px] leading-5 text-[var(--shadow-text-primary)]">
+    {profile.bioTitle ? <div className="font-bold">{profile.bioTitle}</div> : null}
+    {profile.bio ? <div>{profile.bio}</div> : null}
+    {profile.location ? <div>{profile.location}</div> : null}
+  </div>
+) : null}
 
             {profile.socialLinks.length ? (
   <div className="mt-3 flex items-center gap-2 text-[var(--shadow-text-primary)]">
