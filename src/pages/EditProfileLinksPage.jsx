@@ -306,7 +306,7 @@ export default function EditProfileLinksPage() {
 
       saveStoredUser(data.user)
       if (data.token) saveAuthToken(data.token)
-      navigate('/profile/edit')
+      navigate(-1)
     } catch (error) {
       setMessage(
         error.message || t('editProfileLinksPage.saveFailed')
@@ -331,7 +331,7 @@ export default function EditProfileLinksPage() {
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => navigate('/profile/edit')}
+              onClick={() => navigate(-1)}
               className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
               aria-label={t('editProfileLinksPage.backToEditProfile')}
             >
