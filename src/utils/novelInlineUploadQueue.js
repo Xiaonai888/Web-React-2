@@ -24,18 +24,6 @@ export function countPendingNovelImageMarkers(html) {
 }
 
 function replaceUploadMarker(paragraph, marker, imageUrl) {
-  const image = document.createElement('img')
-  image.src = imageUrl
-  image.alt = 'Episode image'
-
-  const originalPlaceholder = `⏳ ${getDisplayText('episodeEditor.uploading')} ${marker}`
-  if (paragraph.childNodes.length === 1 &&
-    paragraph.firstChild?.nodeType === Node.TEXT_NODE &&
-    paragraph.textContent.trim() === originalPlaceholder) {
-    paragraph.replaceChildren(image)
-    return true
-  }
-
   const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT)
   const nodes = []
   let text = ''
@@ -46,13 +34,26 @@ function replaceUploadMarker(paragraph, marker, imageUrl) {
     text += value
   }
 
-  const start = text.indexOf(marker)
-  if (start < 0) return false
-  const end = start + marker.length
+  const markerStart = text.indexOf(marker)
+  if (markerStart < 0) return false
+  const prefixCandidates = [
+    getDisplayText('episodeEditor.uploading'),
+    'Uploading',
+    'កំពុងអាប់ឡូដ',
+    '上传中',
+    'アップロード中',
+    '업로드 중',
+  ].map((label) => `⏳ ${label} `)
+  const prefix = prefixCandidates.find((value) => text.slice(0, markerStart).endsWith(value))
+  const start = prefix ? markerStart - prefix.length : markerStart
+  const end = markerStart + marker.length
   const first = nodes.find((item) => item.start <= start && item.end > start)
   const last = nodes.find((item) => item.start < end && item.end >= end)
   if (!first || !last) return false
 
+  const image = document.createElement('img')
+  image.src = imageUrl
+  image.alt = 'Episode image'
   const range = document.createRange()
   range.setStart(first.node, start - first.start)
   range.setEnd(last.node, end - last.start)
