@@ -395,7 +395,7 @@ export default function ReaderAccountSecurityPage() {
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
-            onClick={() => navigate('/profile/settings')}
+            onClick={() => navigate('/profile/settings?account=shadow')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('readerAccountSecurityPage.backToSettings')}
           >
