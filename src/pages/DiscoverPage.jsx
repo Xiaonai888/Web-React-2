@@ -61,7 +61,11 @@ const API_BASE_URL =
 const DISCOVER_MAIN_FEED_CACHE_MAX_AGE_MS =
   5 * 60 * 1000
 const DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS =
+  365 * 24 * 60 * 60 * 1000
+const DISCOVER_SHADOW_MALL_FALLBACK_MAX_AGE_MS =
   15 * 60 * 1000
+const DISCOVER_SHADOW_MALL_REVISION_INTERVAL_MS =
+  30 * 1000
 const DISCOVER_SHADOW_MALL_SALE_STATUS_CACHE_MAX_AGE_MS =
   60 * 1000
 const DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS =
@@ -228,7 +232,7 @@ function getShadowMallPromotionsCacheKey() {
     scope: 'public',
     params: {
       limit: 'all-pages',
-      schema: 2,
+      schema: 3,
     },
   })
 }
@@ -793,6 +797,18 @@ function rotateDiscoverTimeline(timeline, rotationIndex) {
     authorIndex:
       entry.kind === 'author_post' ? ++authorIndex : null,
   }))
+}
+
+async function fetchShadowMallPromotionsRevision() {
+  const response = await fetch(
+    `${API_BASE_URL}/api/shadow-mall/promotions?meta=1`,
+    { cache: 'no-store' }
+  )
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data.ok === false || typeof data.revision !== 'string') {
+    throw new Error('Failed to check Shadow Mall promotions revision')
+  }
+  return data.revision
 }
 
 async function fetchShadowMallPromotions() {
@@ -2740,8 +2756,13 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     let alive = true
+    let loading = false
+    let lastCheckAt = 0
+    let activeRevision = null
 
     async function loadShadowMallPromotions() {
+      if (loading || !alive) return
+      loading = true
       const cacheKey =
         getShadowMallPromotionsCacheKey()
 
@@ -2749,43 +2770,56 @@ export default function DiscoverPage() {
         const cached = await loadHomeCache(
           cacheKey,
           {
-            maxAgeMs:
-              DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS,
+            maxAgeMs: DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS,
             allowExpired: true,
           }
         )
 
-        let promotions = Array.isArray(
-          cached?.data
-        )
-          ? cached.data
+        const cachedPayload = cached?.data
+        let promotions = Array.isArray(cachedPayload?.promotions)
+          ? cachedPayload.promotions
           : null
+        const cachedRevision = typeof cachedPayload?.revision === 'string'
+          ? cachedPayload.revision
+          : ''
 
-        if (
-          !cached?.isFresh ||
-          !Array.isArray(promotions)
-        ) {
+        let revision = null
+        try {
+          revision = await runDiscoverFeedRequest(
+            'shadow-mall-public-revision',
+            fetchShadowMallPromotionsRevision
+          )
+        } catch {
+          revision = null
+        }
+
+        if (!alive) return
+        if (revision && revision === activeRevision) return
+
+        const cacheIsValid = Array.isArray(promotions) && cached?.isFresh && (
+          revision
+            ? revision === cachedRevision
+            : cached.ageMs <= DISCOVER_SHADOW_MALL_FALLBACK_MAX_AGE_MS
+        )
+
+        if (!cacheIsValid) {
           try {
-            promotions =
-  await runDiscoverFeedRequest(
-    `shadow-mall-public:${cacheKey}`,
-    () => fetchShadowMallPromotions()
-  )
-
+            promotions = await runDiscoverFeedRequest(
+              `shadow-mall-public:${cacheKey}:${revision || 'fallback'}`,
+              fetchShadowMallPromotions
+            )
             await saveHomeCache(
               cacheKey,
-              promotions,
-              {
-                maxAgeMs:
-                  DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS,
-              }
+              { revision: revision || '', promotions },
+              { maxAgeMs: DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS }
             )
           } catch (error) {
-            if (!Array.isArray(promotions)) {
-              throw error
-            }
+            if (revision && revision !== cachedRevision) throw error
+            if (!Array.isArray(promotions)) throw error
           }
         }
+
+        if (!alive) return
 
         const visiblePromotions =
           (promotions || []).filter(
@@ -2918,22 +2952,42 @@ export default function DiscoverPage() {
             }
           )
 
+        activeRevision = revision
         shadowMallPromotionsRef.current =
           nextPromotions
         setShadowMallPromotions(
           nextPromotions
         )
       } catch {
-        if (alive) {
+        if (alive && !shadowMallPromotionsRef.current.length) {
           setShadowMallPromotions([])
         }
+      } finally {
+        loading = false
       }
     }
 
-    loadShadowMallPromotions()
+    function checkForUpdates() {
+      if (!alive || document.hidden) return
+      const now = Date.now()
+      if (now - lastCheckAt < 5000) return
+      lastCheckAt = now
+      loadShadowMallPromotions()
+    }
+
+    checkForUpdates()
+    const timer = window.setInterval(
+      checkForUpdates,
+      DISCOVER_SHADOW_MALL_REVISION_INTERVAL_MS
+    )
+    document.addEventListener('visibilitychange', checkForUpdates)
+    window.addEventListener('focus', checkForUpdates)
 
     return () => {
       alive = false
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', checkForUpdates)
+      window.removeEventListener('focus', checkForUpdates)
     }
   }, [token])
 
