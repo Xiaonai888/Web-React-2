@@ -869,8 +869,6 @@ function SettingsRow({ item, onOpen, t }) {
 
 export default function ReaderSettingsPage() {
   const navigate = useNavigate()
-  const from = new URLSearchParams(window.location.search).get('from')
-  const backPath = from === 'reader-settings' ? '/profile/settings' : from === 'me-settings' ? '/me?settings=1' : '/profile'
   const { t } = useDisplayTranslation()
   const [message, setMessage] = useState('')
   const groups = useMemo(() => SETTINGS_GROUPS, [])
@@ -899,7 +897,11 @@ const filteredGroups = groups.map((group, index) => ({
 
   function handleOpen(item) {
     if (item.route) {
-      navigate(item.route)
+      if (item.key === 'edit-profile' && new URLSearchParams(window.location.search).get('from') === 'me-settings') {
+        navigate(`${item.route}&settingsFrom=me-settings`)
+      } else {
+        navigate(item.route)
+      }
       return
     }
 
