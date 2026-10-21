@@ -919,6 +919,11 @@ const filteredGroups = groups.map((group, index) => ({
   }
 
   function handleOpen(item) {
+
+    if (item.key === 'comment-settings') {
+  navigate(`/profile/settings/comment-settings${fromMeSettings ? '?from=me-settings' : ''}`)
+  return
+}
   if (item.key === 'privacy') {
     navigate(`/profile/settings/privacy${fromMeSettings ? '?from=me-settings' : ''}`)
     return
