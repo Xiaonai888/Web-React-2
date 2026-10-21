@@ -34,7 +34,7 @@ function canRetry(error) {
   const status = errorStatus(error)
   if ([408, 425, 429].includes(status) || status >= 500) return true
   if (status >= 400) return false
-  return error?.name !== 'AbortError'
+  return true
 }
 
 function isTemporaryOutage(error) {
@@ -89,28 +89,30 @@ export function createUploadQueueManager({ ownerId, upload, onChange, maxAttempt
         await failMediaUpload(task.id, workerId)
         return
       }
+      controller = new AbortController()
+      const signal = controller.signal
+      lastProgressAt = 0
+      lastPercent = -1
+      leaseTimer = setInterval(() => {
+        renewMediaUploadLease(task.id, workerId, LEASE_DURATION_MS).catch(() => {})
+      }, LEASE_RENEW_INTERVAL_MS)
       notify('uploading', task)
       const file = await readMediaUploadFile(task.id, owner)
+      if (signal.aborted || !running) throw new DOMException('Upload interrupted', 'AbortError')
       if (!file) {
         const missing = new Error('The locally saved media file is missing')
         missing.permanent = true
         throw missing
       }
 
-      controller = new AbortController()
-      lastProgressAt = 0
-      lastPercent = -1
-      leaseTimer = setInterval(() => {
-        renewMediaUploadLease(task.id, workerId, LEASE_DURATION_MS).catch(() => {})
-      }, LEASE_RENEW_INTERVAL_MS)
-
       const result = await upload({
         task,
         file,
-        signal: controller.signal,
+        signal,
         onProgress: (progress) => {
+          if (signal.aborted || !running) return
           const value = typeof progress === 'number' ? progress : progress?.percent
-          if (!Number.isFinite(Number(value))) return
+          if (value === null || value === undefined || !Number.isFinite(Number(value))) return
           const percent = Math.max(0, Math.min(99, Math.round(Number(value))))
           const now = Date.now()
           if (percent <= lastPercent || (now - lastProgressAt < 600 && percent < lastPercent + 5)) return
@@ -121,12 +123,12 @@ export function createUploadQueueManager({ ownerId, upload, onChange, maxAttempt
         },
       })
 
-      if (controller.signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
+      if (signal.aborted || !running) throw new DOMException('Upload interrupted', 'AbortError')
       const completed = await finishMediaUpload(task.id, workerId, result)
       if (completed) notify('uploaded', completed)
     } catch (error) {
       if (task) {
-        const interrupted = controller?.signal.aborted || error?.name === 'AbortError'
+        const interrupted = controller?.signal.aborted || !running
         const recoverable = interrupted || canRetry(error)
         const permanent = !interrupted && (error?.permanent || !recoverable || (task.attempts >= maxAttempts && !isTemporaryOutage(error)))
         const nextRetryAt = interrupted ? 0 : permanent ? 0 : Date.now() + retryDelay(task.attempts, error)
