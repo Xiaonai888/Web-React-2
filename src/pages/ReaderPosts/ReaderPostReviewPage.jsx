@@ -3,6 +3,7 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ReaderPostTagPeopleSelector from './ReaderPostTagPeopleSelector'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
@@ -521,6 +522,9 @@ export default function ReaderPostReviewPage() {
               draft.content?.trim() ||
               '',
             image_urls: imageUrls,
+            tagged_user_ids: (Array.isArray(draft.tagged_users) ? draft.tagged_users : [])
+              .map((person) => person.id)
+              .filter(Boolean),
             visibility:
               draft.visibility,
             comments_permission:
@@ -738,7 +742,12 @@ export default function ReaderPostReviewPage() {
           </div>
         ) : null}
 
-        <div className="space-y-1">
+        <ReaderPostTagPeopleSelector
+          selected={Array.isArray(draft.tagged_users) ? draft.tagged_users : []}
+          onChange={(people) => updateDraft({ tagged_users: people })}
+          disabled={saving}
+        />
+        <div className="mt-4 space-y-1">
           <ReviewOption
             icon="fa-solid fa-earth-americas"
             title={t('readerPostReviewPage.whoCanSeeThis')}
