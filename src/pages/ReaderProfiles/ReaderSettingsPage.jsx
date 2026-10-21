@@ -937,6 +937,12 @@ const filteredGroups = groups.map((group, index) => ({
   navigate(`/profile/settings/hidden-words${fromMeSettings ? '?from=me-settings' : ''}`)
   return
 }
+
+      if (item.key === 'restricted-readers') {
+    navigate(`/profile/settings/restricted-readers${fromMeSettings ? '?from=me-settings' : ''}`)
+    return
+  }
+    
   if (item.key === 'shadow-account') {
       navigate(`${settingsPath}${fromMeSettings ? '&' : '?'}account=shadow`)
       return
