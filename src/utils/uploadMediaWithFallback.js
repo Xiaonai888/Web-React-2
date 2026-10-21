@@ -51,11 +51,36 @@ function uploadError(message, status = 0, code = '') {
 }
 
 function reportProgress(onProgress, percent, stage) {
-  if (typeof onProgress === 'function') onProgress(percent, stage)
+  if (typeof onProgress === 'function') {
+    try { onProgress(percent, stage) } catch {}
+  }
 }
 
 function isCanceled(error, signal) {
-  return signal?.aborted || error?.name === 'AbortError'
+  return signal?.aborted || error?.name === 'AbortError' || error?.code === 'DIRECT_UPLOAD_CANCELED'
+}
+
+async function withRequestTimeout(operation, signal, timeoutMs, name, code) {
+  if (signal?.aborted) throw uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED')
+  const controller = new AbortController()
+  let timedOut = false
+  const abort = () => controller.abort()
+  signal?.addEventListener('abort', abort, { once: true })
+  if (signal?.aborted) controller.abort()
+  const timer = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, timeoutMs)
+  try {
+    return await operation(controller.signal)
+  } catch (error) {
+    if (signal?.aborted) throw uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED')
+    if (timedOut) throw uploadError(`${name} timed out`, 408, code)
+    throw error
+  } finally {
+    clearTimeout(timer)
+    signal?.removeEventListener('abort', abort)
+  }
 }
 
 function allowLegacyFallback(error, stage) {
@@ -90,39 +115,40 @@ function allowLegacyFallback(error, stage) {
 }
 
 async function postJson(url, token, data, signal) {
-  let response
   try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-      signal,
-    })
+    return await withRequestTimeout(async (requestSignal) => {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        signal: requestSignal,
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok || result.ok === false) {
+        throw uploadError(result.message || 'Direct upload failed', response.status || 503, result.code || '')
+      }
+      return result
+    }, signal, 60000, 'Direct upload server', 'DIRECT_UPLOAD_TIMEOUT')
   } catch (error) {
-    if (isCanceled(error, signal)) throw error
+    if (isCanceled(error, signal) || error?.status) throw error
     throw uploadError('Direct upload server could not be reached', 0, 'DIRECT_UPLOAD_NETWORK_ERROR')
   }
-
-  const result = await response.json().catch(() => ({}))
-  if (!response.ok || result.ok === false) {
-    throw uploadError(result.message || 'Direct upload failed', response.status, result.code || '')
-  }
-  return result
 }
 
 function putFile(url, file, onProgress, signal) {
   if (typeof XMLHttpRequest === 'undefined') {
-    return fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': file.type },
-      body: file,
-      signal,
-    }).then((response) => {
+    return withRequestTimeout(async (requestSignal) => {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+        signal: requestSignal,
+      })
       if (!response.ok) throw uploadError('Cloudflare R2 rejected the upload', response.status)
-    }).catch((error) => {
+    }, signal, 180000, 'Cloudflare R2 upload', 'DIRECT_UPLOAD_TIMEOUT').catch((error) => {
       if (isCanceled(error, signal) || error?.status) throw error
       throw uploadError('Cloudflare R2 could not be reached', 0, 'DIRECT_UPLOAD_NETWORK_ERROR')
     })
@@ -146,27 +172,36 @@ function putFile(url, file, onProgress, signal) {
       return
     }
 
-    request.open('PUT', url)
-    request.setRequestHeader('Content-Type', file.type)
-    request.timeout = 180000
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable && event.total > 0) {
-        reportProgress(onProgress, Math.min(94, Math.round(event.loaded / event.total * 94)), 'uploading')
+    try {
+      request.open('PUT', url)
+      request.setRequestHeader('Content-Type', file.type)
+      request.timeout = 180000
+      request.upload.onprogress = (event) => {
+        if (event.lengthComputable && event.total > 0) {
+          reportProgress(onProgress, Math.min(94, Math.round(event.loaded / event.total * 94)), 'uploading')
+        }
       }
+      request.onload = () => {
+        if (request.status >= 200 && request.status < 300) finish()
+        else finish(uploadError('Cloudflare R2 rejected the upload', request.status))
+      }
+      request.onerror = () => finish(uploadError('Cloudflare R2 could not be reached', 0, 'DIRECT_UPLOAD_NETWORK_ERROR'))
+      request.ontimeout = () => finish(uploadError('Cloudflare R2 upload timed out', 408))
+      request.onabort = () => finish(uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED'))
+      signal?.addEventListener('abort', abort, { once: true })
+      if (signal?.aborted) {
+        abort()
+        return
+      }
+      request.send(file)
+    } catch {
+      finish(uploadError('Cloudflare R2 could not be reached', 0, 'DIRECT_UPLOAD_NETWORK_ERROR'))
     }
-    request.onload = () => {
-      if (request.status >= 200 && request.status < 300) finish()
-      else finish(uploadError('Cloudflare R2 rejected the upload', request.status))
-    }
-    request.onerror = () => finish(uploadError('Cloudflare R2 could not be reached', 0, 'DIRECT_UPLOAD_NETWORK_ERROR'))
-    request.ontimeout = () => finish(uploadError('Cloudflare R2 upload timed out', 408))
-    request.onabort = () => finish(uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED'))
-    signal?.addEventListener('abort', abort, { once: true })
-    request.send(file)
   })
 }
 
 async function uploadThroughRender({ file, category, token, apiBaseUrl, legacyUpload, signal, onProgress }) {
+  if (signal?.aborted) throw uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED')
   reportProgress(onProgress, 0, 'fallback')
   if (typeof legacyUpload === 'function') {
     return legacyUpload({ file, category, token, signal, onProgress })
@@ -178,24 +213,26 @@ async function uploadThroughRender({ file, category, token, apiBaseUrl, legacyUp
   const formData = new FormData()
   formData.append('image', file)
   formData.append('folder', category)
-  let response
   try {
-    response = await fetch(`${apiBaseUrl}/api/story-media/upload-image`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-      signal,
-    })
+    const result = await withRequestTimeout(async (requestSignal) => {
+      const response = await fetch(`${apiBaseUrl}/api/story-media/upload-image`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+        signal: requestSignal,
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || payload.ok === false) {
+        throw uploadError(payload.message || 'Image upload failed', response.status || 503, payload.code || '')
+      }
+      return payload
+    }, signal, 180000, 'Render image upload', 'LEGACY_UPLOAD_TIMEOUT')
+    reportProgress(onProgress, 100, 'complete')
+    return result
   } catch (error) {
-    if (isCanceled(error, signal)) throw error
+    if (isCanceled(error, signal) || error?.status) throw error
     throw uploadError('Cannot reach the existing Render upload service. Check backend availability and retry.', 0, 'LEGACY_UPLOAD_NETWORK_ERROR')
   }
-  const result = await response.json().catch(() => ({}))
-  if (!response.ok || result.ok === false) {
-    throw uploadError(result.message || 'Image upload failed', response.status, result.code || '')
-  }
-  reportProgress(onProgress, 100, 'complete')
-  return result
 }
 
 export async function uploadMediaWithFallback({
@@ -211,6 +248,7 @@ export async function uploadMediaWithFallback({
     throw uploadError('Please select a valid image file')
   }
   if (!token) throw uploadError('Please sign in before uploading', 401)
+  if (signal?.aborted) throw uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED')
 
   const uploadLegacy = () => uploadThroughRender({
     file,
@@ -228,7 +266,6 @@ export async function uploadMediaWithFallback({
   if (file.size < 16 || file.size > DIRECT_IMAGE_LIMITS[category]) {
     throw uploadError('Image size is invalid or exceeds its limit', 413, 'DIRECT_UPLOAD_SIZE_INVALID')
   }
-  if (signal?.aborted) throw uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED')
   if (Date.now() < temporarilyUnavailableUntil) return uploadLegacy()
 
   const base = String(apiBaseUrl).replace(/\/+$/, '')
@@ -252,6 +289,9 @@ export async function uploadMediaWithFallback({
     const result = await postJson(`${base}/api/media-direct/user/finalize`, token, {
       upload_token: init.upload_token,
     }, signal)
+    if (!/^https?:\/\//i.test(String(result.image_url || result.imageUrl || ''))) {
+      throw uploadError('Direct upload response did not include an image URL', 422, 'DIRECT_UPLOAD_RESULT_INVALID')
+    }
     reportProgress(onProgress, 100, 'complete')
     return result
   } catch (error) {
