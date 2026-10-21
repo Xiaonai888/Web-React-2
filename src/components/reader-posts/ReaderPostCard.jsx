@@ -818,7 +818,7 @@ function renderPostTextWithLinks(text, hiddenWords = [], sourceType = 'reader_po
   return String(text || '').split(POST_TOKEN_PATTERN).map((part, index) => {
     if (POST_URL_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={part} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="break-all text-[#1877f2]">{part}</a>
     if (POST_HASHTAG_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={`/discover/search?q=${encodeURIComponent(part)}&type=posts`} onClick={(e) => e.stopPropagation()} className="text-[#1877f2]">{part}</a>
-        return (
+    return (
       <HiddenWordsSpoilerText
         key={`text-${index}`}
         text={part}
@@ -1460,6 +1460,7 @@ function ReaderEchoSourceBlock({ post, hiddenWords = [] }) {
   }
 
   function handleKeyDown(event) {
+    if (event.target !== event.currentTarget) return
     if (
       event.key === 'Enter' ||
       event.key === ' '
@@ -3727,6 +3728,7 @@ const safeSelectedPhotoIndex =
       isEchoPost ? (
         <ReaderEchoSourceBlock
           post={post}
+          hiddenWords={hiddenWords}
         />
       ) : null
     }
@@ -4021,23 +4023,19 @@ likeCount={reactionCount}
             {photoPostView ? (
               <ReaderDiscoverPostText
                 text={postText}
-                renderText={
-                  renderPostTextWithLinks
-                }
+                renderText={renderReaderPostWithSpoilers}
                 className="text-[14px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc]"
               />
             ) : fullPostView ? (
               <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc]">
-                {renderPostTextWithLinks(
+                {renderReaderPostWithSpoilers(
                   postText
                 )}
               </p>
             ) : isDiscoverView ? (
               <ReaderDiscoverPostText
                 text={postText}
-                renderText={
-                  renderPostTextWithLinks
-                }
+                renderText={renderReaderPostWithSpoilers}
                 className="text-[14px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc]"
               />
             ) : (
@@ -4052,6 +4050,7 @@ likeCount={reactionCount}
         {isEchoPost ? (
           <ReaderEchoSourceBlock
             post={post}
+            hiddenWords={hiddenWords}
           />
         ) : null}
 
@@ -4468,7 +4467,11 @@ likeCount={reactionCount}
           !photoDeleteConfirmOpen ? (
             <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+92px)] left-0 right-0 z-20 px-5 text-center">
               <p className="mx-auto max-w-[720px] whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                {selectedPhotoCaption}
+                <HiddenWordsSpoilerText
+                  text={selectedPhotoCaption}
+                  words={hiddenWords}
+                  sourceType="reader_post"
+                />
               </p>
             </div>
           ) : null}
@@ -5186,12 +5189,47 @@ likeCount={reactionCount}
 }
 
 
-export default function ReaderPostCard(
-  props
-) {
+export default function ReaderPostCard(props) {
+  const [hiddenWords, setHiddenWords] = useState([])
+
+  useEffect(() => {
+    let active = true
+    let requestId = 0
+
+    const refresh = () => {
+      const currentRequest = ++requestId
+
+      if (!getAuthToken()) {
+        if (active) setHiddenWords([])
+        return
+      }
+
+      getReaderHiddenWords()
+        .then((words) => {
+          if (active && currentRequest === requestId) {
+            setHiddenWords(Array.isArray(words) ? words : [])
+          }
+        })
+        .catch(() => {
+          if (active && currentRequest === requestId) {
+            setHiddenWords([])
+          }
+        })
+    }
+
+    refresh()
+    const unsubscribe = subscribeReaderHiddenWords(refresh)
+
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
+
   return (
     <StandardReaderPostCard
       {...props}
+      hiddenWords={hiddenWords}
     />
   )
 }
