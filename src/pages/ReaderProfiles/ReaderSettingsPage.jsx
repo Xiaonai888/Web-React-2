@@ -613,11 +613,12 @@ const SETTINGS_GROUPS = [
     title: 'App and support',
     items: [
       {
-        key: 'language',
-        title: 'Language',
-        subtitle: 'Choose your app and reading language.',
-        icon: 'fa-solid fa-language',
-      },
+  key: 'language',
+  title: 'Language',
+  subtitle: 'Choose your app and reading language.',
+  icon: 'fa-solid fa-language',
+  route: '/profile/settings/language',
+},
       {
         key: 'accessibility',
         title: 'Accessibility',
