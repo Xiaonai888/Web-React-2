@@ -212,6 +212,9 @@ const ReaderBlockedAccountsPage = lazy(() =>
 const ReaderHiddenWordsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderHiddenWordsPage')
 )
+const ReaderTagsMentionsPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderTagsMentionsPage')
+)
 const ReaderAccountPrivacyPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderAccountPrivacyPage')
 )
@@ -1454,10 +1457,14 @@ const shouldShowOpeningAds =
   }
 />
 
-      <Route
+     <Route
   path="/profile/settings/hidden-words"
   element={<LazyPage><ReaderHiddenWordsPage /></LazyPage>}
-/>    
+/>
+<Route
+  path="/profile/settings/tags-mentions"
+  element={<LazyPage><ReaderTagsMentionsPage /></LazyPage>}
+/>
 
           <Route
   path="/profile/settings/comment-settings"
