@@ -6,7 +6,7 @@ import {
 } from '../utils/homeDataCache'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Send, Search } from 'lucide-react'
-import { getChatConversations, hasReaderSession } from '../services/chatApi'
+import { useUnreadSenderCount } from '../services/chatUnreadSenderCount'
 import {
   Link,
   useLocation,
@@ -1135,8 +1135,21 @@ function SearchHeaderIcon() {
 }
 
 function ChatHeaderIcon() {
+  const { count: unreadSenders } = useUnreadSenderCount()
+
   return (
-    <Send size={20} strokeWidth={2.1} aria-hidden="true" />
+    <span className="relative inline-flex h-6 w-6 items-center justify-center">
+      <Send size={20} strokeWidth={2.1} aria-hidden="true" />
+      {unreadSenders > 0 ? (
+        <span
+          className="pointer-events-none absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 bg-[#ef4444] px-1 text-[8px] font-bold leading-none text-white"
+          style={{ borderColor: 'var(--shadow-nav-bg)' }}
+          aria-hidden="true"
+        >
+          {unreadSenders > 99 ? '99+' : unreadSenders}
+        </span>
+      ) : null}
+    </span>
   )
 }
 
