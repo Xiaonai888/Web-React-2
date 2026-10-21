@@ -173,6 +173,7 @@ function normalizeStory(story, index = 0) {
     author:
       story.author_name ||
       'Shadow Author',
+    storyType: String(story.story_type || 'novel').trim().toLowerCase(),
     cover:
       story.cover_url ||
       `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
@@ -209,7 +210,7 @@ const updateMarkerUI = {
   numberSize: 12,
 }
 
-function BookCard({ book }) {
+function BookCard({ book, showStoryTypeBadge = false }) {
   const { t } = useDisplayTranslation()
 
   const badgeText =
@@ -265,6 +266,18 @@ function BookCard({ book }) {
             >
               {badgeText}
             </div>
+          ) : null}
+
+          {showStoryTypeBadge && ['manga', 'chat_story', 'chat'].includes(book.storyType) ? (
+            <span
+              className="pointer-events-none absolute bottom-[6px] left-[6px] z-10 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/30 text-white/90"
+              aria-label={book.storyType === 'manga' ? 'Manga' : 'Chat Story'}
+            >
+              <i
+                className={book.storyType === 'manga' ? 'fas fa-book-open text-[13px]' : 'fas fa-comment-dots text-[13px]'}
+                aria-hidden="true"
+              />
+            </span>
           ) : null}
 
           {updateCount >= 2 ? (
@@ -390,7 +403,7 @@ export default function UpdateTodayPage() {
         const storyTypeQuery = storyType === 'manga' ? '&story_type=manga' : ''
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/story-updates?days=7&limit_per_day=100${storyTypeQuery}`
+            `${API_BASE_URL}/api/public/story-updates?days=7&limit_per_day=100${storyTypeQuery}${storyType ? '' : '&include_story_type=1'}`
           ),
           {
             signal: controller.signal,
@@ -664,6 +677,7 @@ export default function UpdateTodayPage() {
                 <BookCard
                   key={book.id}
                   book={book}
+                  showStoryTypeBadge={storyType !== 'manga'}
                 />
               )
             )}
