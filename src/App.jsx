@@ -216,6 +216,11 @@ const ReaderHiddenWordsPage = lazy(() =>
 const ReaderRestrictedReadersPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderRestrictedReadersPage')
 )
+
+const ReaderManageRestrictedPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderManageRestrictedPage')
+)
+
 const ReaderTagsMentionsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderTagsMentionsPage')
 )
@@ -1469,6 +1474,11 @@ const shouldShowOpeningAds =
           <Route
   path="/profile/settings/restricted-readers"
   element={<LazyPage><ReaderRestrictedReadersPage /></LazyPage>}
+/>
+
+          <Route
+  path="/profile/settings/restricted-readers/manage"
+  element={<LazyPage><ReaderManageRestrictedPage /></LazyPage>}
 />
           
 <Route
