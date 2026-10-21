@@ -231,8 +231,8 @@ function getShadowMallPromotionsCacheKey() {
     section: 'discover-promotions',
     scope: 'public',
     params: {
-      limit: 'all-pages',
-      schema: 3,
+      limit: SHADOW_MALL_AD_PAGE_SIZE,
+      schema: 4,
     },
   })
 }
@@ -811,37 +811,21 @@ async function fetchShadowMallPromotionsRevision() {
   return data.revision
 }
 
-async function fetchShadowMallPromotions() {
-  const promotions = []
-  const loadedIds = new Set()
-  let page = 1
-
-  while (true) {
-    const response = await fetch(
-      `${API_BASE_URL}/api/shadow-mall/promotions?page=${page}&limit=${SHADOW_MALL_AD_PAGE_SIZE}`,
-      { cache: 'no-store' }
-    )
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || discoverText('failedPromotions'))
-    }
-
-    const batch = Array.isArray(data.promotions) ? data.promotions : []
-    let added = 0
-    for (const promotion of batch) {
-      const id = String(promotion?.id ?? '').trim()
-      if (!id || loadedIds.has(id)) continue
-      loadedIds.add(id)
-      promotions.push(promotion)
-      added += 1
-    }
-
-    if (!data.has_next || !added) break
-    page += 1
+async function fetchShadowMallPromotionsPage(page = 1) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/shadow-mall/promotions?page=${page}&limit=${SHADOW_MALL_AD_PAGE_SIZE}`,
+    { cache: 'no-store' }
+  )
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || discoverText('failedPromotions'))
   }
-
-  return promotions
+  const promotions = Array.isArray(data.promotions) ? data.promotions : []
+  return {
+    promotions,
+    nextPage: page + 1,
+    hasNext: Boolean(data.has_next) && promotions.length > 0,
+  }
 }
 
 async function fetchShadowMallStorySaleStatuses(
@@ -2657,6 +2641,27 @@ function DeferredDiscoverSection({
   )
 }
 
+function ShadowMallAdsLoadTrigger({ enabled, count, onLoadMore }) {
+  const elementRef = useRef(null)
+  const callbackRef = useRef(onLoadMore)
+  callbackRef.current = onLoadMore
+
+  useEffect(() => {
+    const element = elementRef.current
+    if (!enabled || !element) return undefined
+    if (typeof IntersectionObserver === 'undefined') return undefined
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        callbackRef.current?.()
+      }
+    }, { rootMargin: '400px 0px', threshold: 0 })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [enabled, count])
+
+  return enabled ? <div ref={elementRef} className="h-px w-full" /> : null
+}
+
 export default function DiscoverPage() {
   useDisplayTranslation()
   const location = useLocation()
@@ -2667,7 +2672,26 @@ export default function DiscoverPage() {
   const lastScrollYRef = useRef(0)
   const discoverScrollYRef = useRef(0)
   const discoverRestoringScrollRef = useRef(false)
-  const token = useMemo(() => getAuthToken(), [])
+  const [token, setToken] = useState(getAuthToken)
+
+  useEffect(() => {
+    const updateToken = () => {
+      const next = getAuthToken()
+      setToken((previous) => previous === next ? previous : next)
+    }
+    window.addEventListener('storage', updateToken)
+    window.addEventListener('focus', updateToken)
+    window.addEventListener('pageshow', updateToken)
+    window.addEventListener('shadow:auth-changed', updateToken)
+    document.addEventListener('visibilitychange', updateToken)
+    return () => {
+      window.removeEventListener('storage', updateToken)
+      window.removeEventListener('focus', updateToken)
+      window.removeEventListener('pageshow', updateToken)
+      window.removeEventListener('shadow:auth-changed', updateToken)
+      document.removeEventListener('visibilitychange', updateToken)
+    }
+  }, [])
 
   const [realPosts, setRealPosts] = useState([])
   const [realPostsCursor, setRealPostsCursor] = useState(null)
@@ -2682,9 +2706,17 @@ export default function DiscoverPage() {
   const shadowMallPromotionsRef =
     useRef([])
   const shadowMallAdHistoryRef = useRef(null)
+  const shadowMallAdIdentityRef = useRef(token)
   const shadowMallAdsSeenThisVisitRef = useRef(new Set())
-  if (shadowMallAdHistoryRef.current === null) {
+  const shadowMallAdLoadMoreRef = useRef(null)
+  const [shadowMallAdPagination, setShadowMallAdPagination] = useState({
+    hasNext: false,
+    nextPage: 1,
+  })
+  if (shadowMallAdHistoryRef.current === null || shadowMallAdIdentityRef.current !== token) {
+    shadowMallAdIdentityRef.current = token
     shadowMallAdHistoryRef.current = readShadowMallAdRotationHistory(token)
+    shadowMallAdsSeenThisVisitRef.current = new Set()
   }
 
   function handleShadowMallAdImpression(promotion) {
@@ -2732,7 +2764,7 @@ export default function DiscoverPage() {
       return true
     })
 
-    return rotateShadowMallAds(unique, shadowMallAdHistoryRef.current)
+    return unique
   }, [shadowMallPromotions])
 
   const firstShadowMallPromotion =
@@ -2757,31 +2789,131 @@ export default function DiscoverPage() {
   useEffect(() => {
     let alive = true
     let loading = false
+    let loadingMore = false
     let lastCheckAt = 0
     let activeRevision = null
+    let publicPromotions = []
+    let nextPage = 1
+    let hasNext = false
+    const cacheKey = getShadowMallPromotionsCacheKey()
+
+    const isVisibleAd = (promotion) =>
+      promotion?.is_active !== false && !isShadowMallAdHidden(promotion)
+
+    function combinePromotions(existing, incoming) {
+      const seen = new Set(existing.map((item) => String(item.id)))
+      const combined = [...existing]
+      for (const item of incoming) {
+        const id = String(item?.id ?? '')
+        if (!id || seen.has(id)) continue
+        seen.add(id)
+        combined.push(item)
+      }
+      return combined
+    }
+
+    function updatePagination() {
+      if (alive) setShadowMallAdPagination({ hasNext, nextPage })
+    }
+
+    async function cachePublicPromotions(revision) {
+      await saveHomeCache(
+        cacheKey,
+        { revision: revision || '', promotions: publicPromotions, nextPage, hasNext },
+        { maxAgeMs: DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS }
+      )
+    }
+
+    async function enrichPromotions(promotions) {
+      const visiblePromotions = promotions.filter(isVisibleAd)
+      if (!token || !visiblePromotions.length) return visiblePromotions
+
+      const enriched = []
+      for (let index = 0; index < visiblePromotions.length; index += 100) {
+        const batch = visiblePromotions.slice(index, index + 100)
+        const [storyResult, socialResult] = await Promise.allSettled([
+          loadShadowMallPrivateStatuses({
+            token,
+            promotions: batch,
+            section: 'discover-promotion-story-sale-statuses',
+            maxAgeMs: DISCOVER_SHADOW_MALL_SALE_STATUS_CACHE_MAX_AGE_MS,
+            fetcher: fetchShadowMallStorySaleStatuses,
+          }),
+          loadShadowMallPrivateStatuses({
+            token,
+            promotions: batch,
+            section: 'discover-promotion-social-statuses',
+            maxAgeMs: DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS,
+            fetcher: fetchShadowMallPromotionSocialStatuses,
+          }),
+        ])
+        const storyState = storyResult.status === 'fulfilled'
+          ? storyResult.value : { statuses: null, loaded: false }
+        const socialState = socialResult.status === 'fulfilled'
+          ? socialResult.value : { statuses: null, loaded: false }
+        for (const promotion of batch) {
+          const id = String(promotion.id)
+          const isStorySale = promotion.promotion_type === 'story_sale' && Boolean(promotion.story_id)
+          const hasStoryStatus = storyState.statuses && Object.prototype.hasOwnProperty.call(storyState.statuses, id)
+          const hasSocialStatus = socialState.statuses && Object.prototype.hasOwnProperty.call(socialState.statuses, id)
+          enriched.push({
+            ...promotion,
+            ...(hasStoryStatus ? { story_sale_status: storyState.statuses[id] } : {}),
+            ...(isStorySale && storyState.loaded ? { story_sale_status_loaded: true } : {}),
+            ...(hasSocialStatus ? socialState.statuses[id] : {}),
+            ...(socialState.loaded ? { reaction_state_loaded: true, echo_state_loaded: true } : {}),
+          })
+        }
+      }
+      return enriched
+    }
+
+    async function loadMoreShadowMallPromotions() {
+      if (!alive || loadingMore || loading || !hasNext) return
+      loadingMore = true
+      const expectedRevision = activeRevision
+      const currentPage = nextPage
+      try {
+        const result = await runDiscoverFeedRequest(
+          `shadow-mall-page:${cacheKey}:${expectedRevision || 'fallback'}:${currentPage}`,
+          () => fetchShadowMallPromotionsPage(currentPage)
+        )
+        if (!alive || activeRevision !== expectedRevision) return
+        const previousIds = new Set(publicPromotions.map((item) => String(item.id)))
+        const extra = result.promotions.filter((item) => !previousIds.has(String(item.id)))
+        const extraEnriched = await enrichPromotions(extra)
+        if (!alive || activeRevision !== expectedRevision) return
+
+        publicPromotions = combinePromotions(publicPromotions, extra)
+        nextPage = result.nextPage
+        hasNext = result.hasNext && extra.length > 0
+        const next = combinePromotions(shadowMallPromotionsRef.current, extraEnriched)
+        shadowMallPromotionsRef.current = next
+        setShadowMallPromotions(next)
+        updatePagination()
+        await cachePublicPromotions(expectedRevision)
+      } catch {
+        return
+      } finally {
+        loadingMore = false
+      }
+    }
+
+    shadowMallAdLoadMoreRef.current = loadMoreShadowMallPromotions
 
     async function loadShadowMallPromotions() {
       if (loading || !alive) return
       loading = true
-      const cacheKey =
-        getShadowMallPromotionsCacheKey()
-
       try {
-        const cached = await loadHomeCache(
-          cacheKey,
-          {
-            maxAgeMs: DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS,
-            allowExpired: true,
-          }
-        )
-
+        const cached = await loadHomeCache(cacheKey, {
+          maxAgeMs: DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS,
+          allowExpired: true,
+        })
         const cachedPayload = cached?.data
         let promotions = Array.isArray(cachedPayload?.promotions)
-          ? cachedPayload.promotions
-          : null
+          ? cachedPayload.promotions : null
         const cachedRevision = typeof cachedPayload?.revision === 'string'
-          ? cachedPayload.revision
-          : ''
+          ? cachedPayload.revision : ''
 
         let revision = null
         try {
@@ -2793,171 +2925,67 @@ export default function DiscoverPage() {
           revision = null
         }
 
-        if (!alive) return
-        if (revision && revision === activeRevision) return
+        if (!alive || (revision && revision === activeRevision)) return
 
         const cacheIsValid = Array.isArray(promotions) && cached?.isFresh && (
-          revision
-            ? revision === cachedRevision
+          revision ? revision === cachedRevision
             : cached.ageMs <= DISCOVER_SHADOW_MALL_FALLBACK_MAX_AGE_MS
         )
-
-        if (!cacheIsValid) {
+        let shouldSaveCache = false
+        let fetchedPage = null
+        if (cacheIsValid) {
+          nextPage = Math.max(1, Number(cachedPayload.nextPage) || 1)
+          hasNext = Boolean(cachedPayload.hasNext)
+        } else {
           try {
-            promotions = await runDiscoverFeedRequest(
-              `shadow-mall-public:${cacheKey}:${revision || 'fallback'}`,
-              fetchShadowMallPromotions
+            fetchedPage = await runDiscoverFeedRequest(
+              `shadow-mall-public:${cacheKey}:${revision || 'fallback'}:1`,
+              () => fetchShadowMallPromotionsPage(1)
             )
-            await saveHomeCache(
-              cacheKey,
-              { revision: revision || '', promotions },
-              { maxAgeMs: DISCOVER_SHADOW_MALL_CACHE_MAX_AGE_MS }
-            )
+            promotions = fetchedPage.promotions
+            nextPage = fetchedPage.nextPage
+            hasNext = fetchedPage.hasNext
+            shouldSaveCache = true
           } catch (error) {
-            if (revision && revision !== cachedRevision) throw error
-            if (!Array.isArray(promotions)) throw error
+            if (!Array.isArray(promotions) || (revision && revision !== cachedRevision)) throw error
+            nextPage = Math.max(1, Number(cachedPayload.nextPage) || 1)
+            hasNext = Boolean(cachedPayload.hasNext)
           }
         }
 
-        if (!alive) return
-
-        const visiblePromotions =
-          (promotions || []).filter(
-            (promotion) =>
-              promotion?.is_active !== false &&
-              !isShadowMallAdHidden(
-                promotion
-              )
-          )
-
-        let storyStatusState = {
-          statuses: null,
-          loaded: false,
-        }
-        let socialStatusState = {
-          statuses: null,
-          loaded: false,
-        }
-
-        if (token) {
-          const [
-            storyResult,
-            socialResult,
-          ] = await Promise.allSettled([
-            loadShadowMallPrivateStatuses({
-              token,
-              promotions:
-                visiblePromotions,
-              section:
-                'discover-promotion-story-sale-statuses',
-              maxAgeMs:
-                DISCOVER_SHADOW_MALL_SALE_STATUS_CACHE_MAX_AGE_MS,
-              fetcher:
-                fetchShadowMallStorySaleStatuses,
-            }),
-            loadShadowMallPrivateStatuses({
-              token,
-              promotions:
-                visiblePromotions,
-              section:
-                'discover-promotion-social-statuses',
-              maxAgeMs:
-                DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS,
-              fetcher:
-                fetchShadowMallPromotionSocialStatuses,
-            }),
-          ])
-
-          if (
-            storyResult.status ===
-            'fulfilled'
-          ) {
-            storyStatusState =
-              storyResult.value
-          }
-
-          if (
-            socialResult.status ===
-            'fulfilled'
-          ) {
-            socialStatusState =
-              socialResult.value
-          }
-        }
-
-        if (!alive) return
-
-        const statuses =
-          storyStatusState.statuses
-        const socialStatuses =
-          socialStatusState.statuses
-
-        const nextPromotions =
-          visiblePromotions.map(
-            (promotion) => {
-              const key = String(
-                promotion?.id || ''
-              )
-
-              const isStorySale =
-                promotion?.promotion_type ===
-                  'story_sale' &&
-                Boolean(
-                  promotion?.story_id
-                )
-
-              const hasStatus =
-                statuses &&
-                Object.prototype.hasOwnProperty.call(
-                  statuses,
-                  key
-                )
-
-              const hasSocialStatus =
-                socialStatuses &&
-                Object.prototype.hasOwnProperty.call(
-                  socialStatuses,
-                  key
-                )
-
-              return {
-                ...promotion,
-                ...(hasStatus
-                  ? {
-                      story_sale_status:
-                        statuses[key],
-                    }
-                  : {}),
-                ...(token &&
-                isStorySale &&
-                storyStatusState.loaded
-                  ? {
-                      story_sale_status_loaded:
-                        true,
-                    }
-                  : {}),
-                ...(hasSocialStatus
-                  ? socialStatuses[key]
-                  : {}),
-                ...(token &&
-                socialStatusState.loaded
-                  ? {
-                      reaction_state_loaded:
-                        true,
-                      echo_state_loaded:
-                        true,
-                    }
-                  : {}),
-              }
-            }
-          )
-
-        activeRevision = revision
-        shadowMallPromotionsRef.current =
-          nextPromotions
-        setShadowMallPromotions(
-          nextPromotions
+        const seenHistory = new Set(readShadowMallAdRotationHistory(token))
+        const hasUnseen = (entries) => entries.some((promotion) =>
+          isVisibleAd(promotion) && !seenHistory.has(getShadowMallAdRotationId(promotion))
         )
+
+        while (alive && hasNext && !hasUnseen(promotions)) {
+          let page
+          try {
+            page = await runDiscoverFeedRequest(
+              `shadow-mall-public:${cacheKey}:${revision || 'fallback'}:${nextPage}`,
+              () => fetchShadowMallPromotionsPage(nextPage)
+            )
+          } catch {
+            break
+          }
+          const previousCount = promotions.length
+          promotions = combinePromotions(promotions, page.promotions)
+          nextPage = page.nextPage
+          hasNext = page.hasNext && promotions.length > previousCount
+          shouldSaveCache = true
+        }
+        if (!alive) return
+
+        const visible = rotateShadowMallAds(promotions.filter(isVisibleAd), [...seenHistory])
+        const enriched = await enrichPromotions(visible)
+        if (!alive) return
+
+        publicPromotions = promotions
+        activeRevision = revision
+        shadowMallPromotionsRef.current = enriched
+        setShadowMallPromotions(enriched)
+        updatePagination()
+        if (shouldSaveCache) await cachePublicPromotions(revision)
       } catch {
         if (alive && !shadowMallPromotionsRef.current.length) {
           setShadowMallPromotions([])
@@ -2975,11 +3003,11 @@ export default function DiscoverPage() {
       loadShadowMallPromotions()
     }
 
+    shadowMallPromotionsRef.current = []
+    setShadowMallPromotions([])
+    setShadowMallAdPagination({ hasNext: false, nextPage: 1 })
     checkForUpdates()
-    const timer = window.setInterval(
-      checkForUpdates,
-      DISCOVER_SHADOW_MALL_REVISION_INTERVAL_MS
-    )
+    const timer = window.setInterval(checkForUpdates, DISCOVER_SHADOW_MALL_REVISION_INTERVAL_MS)
     document.addEventListener('visibilitychange', checkForUpdates)
     window.addEventListener('focus', checkForUpdates)
 
@@ -2988,6 +3016,9 @@ export default function DiscoverPage() {
       window.clearInterval(timer)
       document.removeEventListener('visibilitychange', checkForUpdates)
       window.removeEventListener('focus', checkForUpdates)
+      if (shadowMallAdLoadMoreRef.current === loadMoreShadowMallPromotions) {
+        shadowMallAdLoadMoreRef.current = null
+      }
     }
   }, [token])
 
@@ -4480,6 +4511,13 @@ discoverTimeline.length < 4 ? (
                   )
                 )
               : null}
+
+            <ShadowMallAdsLoadTrigger
+              enabled={shadowMallAdPagination.hasNext && !realPostsLoading && !readerPostsLoading &&
+                (discoverTimeline.length ? !realPostsHasMore : !realPostsError && !readerPostsError)}
+              count={shadowMallPromotions.length}
+              onLoadMore={() => shadowMallAdLoadMoreRef.current?.()}
+            />
 
             {readerPostsError &&
             discoverTimeline.length ? (
