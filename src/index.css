@@ -1206,3 +1206,23 @@ html.dark #root :where(
 ) [class~="border-[#eee4ff]"] {
   border-color: rgba(167, 139, 250, 0.24) !important;
 }
+
+html.shadow-skip-animations .shadowChestReady,
+html.shadow-skip-animations .shadowChestOpen,
+html.shadow-skip-animations .shadowRewardPop,
+html.shadow-skip-animations .dailyGiftRewardPop,
+html.shadow-skip-animations .dailyGiftOpen,
+html.shadow-skip-animations .animate-ping,
+html.shadow-skip-animations .animate-bounce,
+html.shadow-skip-animations .animate-pulse {
+  animation: none !important;
+}
+
+html.shadow-skip-animations .shadowCoinBurst,
+html.shadow-skip-animations .shadowPopupGlow,
+html.shadow-skip-animations .dailyGiftFirework,
+html.shadow-skip-animations .dailyGiftCoinOne,
+html.shadow-skip-animations .dailyGiftCoinTwo,
+html.shadow-skip-animations .dailyGiftGlow {
+  display: none !important;
+}
