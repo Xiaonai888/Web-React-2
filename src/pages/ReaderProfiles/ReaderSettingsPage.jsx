@@ -876,7 +876,7 @@ export default function ReaderSettingsPage() {
   }
 
   return (
-    <main className="app-page min-h-screen pb-[calc(28px+env(safe-area-inset-bottom))] text-[var(--shadow-text-primary)]">
+    <main className="app-page min-h-screen pb-[calc(28px+env(safe-area-inset-bottom))] text-[var(--shadow-text-primary)]" style={{ background: 'var(--shadow-bg-surface)' }}>
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
