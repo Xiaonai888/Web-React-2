@@ -184,7 +184,8 @@ export default function Search() {
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const isChatStorySearch = searchParams.get('story_type') === 'chat_story'
+  const requestedStoryType = searchParams.get('story_type')
+const filteredStoryType = ['chat_story', 'manga'].includes(requestedStoryType) ? requestedStoryType : ''
 
   const activeTabConfig = useMemo(() => {
     return TABS.find((tab) => tab.label === activeTab) || TABS[0]
@@ -207,7 +208,7 @@ export default function Search() {
           sort: activeTabConfig.sort,
         })
 
-        if (isChatStorySearch) params.set('story_type', 'chat_story')
+        if (filteredStoryType) params.set('story_type', filteredStoryType)
 
         if (activeSearch.trim()) {
           params.set('search', activeSearch.trim())
@@ -240,7 +241,7 @@ export default function Search() {
     return () => {
       ignore = true
     }
-  }, [activeTabConfig.sort, activeSearch, isChatStorySearch])
+  }, [activeTabConfig.sort, activeSearch, filteredStoryType])
 
   const handleSearchSubmit = (event) => {
     event.preventDefault()
