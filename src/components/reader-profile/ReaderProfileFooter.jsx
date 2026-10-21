@@ -17,6 +17,7 @@ import {
 import {
   getChatConversations,
   hasReaderSession,
+  getReaderToken,
 } from '../../services/chatApi'
 import {
   playChatNotificationTone,
@@ -180,6 +181,14 @@ const NAV_ITEMS = [
   { key: 'library', labelKey: 'library' },
   { key: 'me', labelKey: 'me' },
 ]
+
+const CHAT_SETTINGS_URL = `${
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+}/api/users/me/messages-replies`
 
 const CHAT_BADGE_REFRESH_MS = 10000
 const CHAT_BADGE_RATE_LIMIT_BACKOFF_MS = 30000
@@ -355,7 +364,27 @@ export default function ReaderProfileFooter({
     if (!chatSnapshotReadyRef.current) {
       chatSnapshotReadyRef.current = true
     } else if (toneToPlay) {
-      playChatNotificationTone(toneToPlay)
+      const token = getReaderToken()
+
+      if (token) {
+        const response = await fetch(CHAT_SETTINGS_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        })
+
+        if (response.ok) {
+          const result = await response.json().catch(() => ({}))
+
+          if (
+            mountedRef.current &&
+            getReaderToken() === token &&
+            result.ok === true &&
+            result.settings?.messageNotifications === true
+          ) {
+            void playChatNotificationTone(toneToPlay)
+          }
+        }
+      }
     }
   } catch {
     return
