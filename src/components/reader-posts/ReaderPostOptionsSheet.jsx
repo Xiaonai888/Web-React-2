@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import ReaderPostBlockAction from './ReaderPostBlockAction'
 
 registerTranslationNamespace('readerPostOptions', {
   en: {
@@ -337,6 +338,15 @@ export default function ReaderPostOptionsSheet({
                 title={t('readerPostOptions.reportPost')}
                 description={t('readerPostOptions.reportDescription')}
                 onClick={reportPost}
+
+                <ReaderPostBlockAction
+  post={post}
+  onBlocked={() => {
+    onHide?.()
+    onClose?.()
+  }}
+/>
+              
               />
             </>
           )}
