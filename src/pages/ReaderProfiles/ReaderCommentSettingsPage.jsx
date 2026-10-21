@@ -23,9 +23,13 @@ registerTranslationNamespace('readerCommentSettings', {
     approvalHelp: 'Review comments before they appear publicly.',
     manage: 'Manage Comments',
     manageHelp: 'Open your profile to review comments on each post.',
-    deviceOnly: 'Settings are saved on this device only. Comment restrictions will take effect after server support is connected.',
-    saved: 'Preference saved on this device.',
-    storageError: 'Could not save this preference on your device.',
+    deviceOnly: 'Settings are saved to your account. Comment restrictions will take effect after the comment system is connected.',
+    saved: 'Saved to your account.',
+    loading: 'Loading comment settings...',
+    saving: 'Saving...',
+    loadError: 'Could not load comment settings. Please try again.',
+    saveError: 'Could not save comment settings. Please try again.',
+    retry: 'Try again',
     accountError: 'Please sign in again to save your settings.',
   },
   km: {
@@ -46,9 +50,13 @@ registerTranslationNamespace('readerCommentSettings', {
     approvalHelp: 'ពិនិត្យ Comment មុនពេលបង្ហាញជាសាធារណៈ។',
     manage: 'គ្រប់គ្រង Comment',
     manageHelp: 'បើក Profile របស់អ្នកដើម្បីពិនិត្យ Comment លើ Post នីមួយៗ។',
-    deviceOnly: 'បច្ចុប្បន្នការកំណត់រក្សាទុកតែលើឧបករណ៍នេះ។ ការកំណត់សិទ្ធិ Comment នឹងដំណើរការក្រោយពេលភ្ជាប់ Server។',
-    saved: 'បានរក្សាទុកលើឧបករណ៍នេះ។',
-    storageError: 'មិនអាចរក្សាទុកការកំណត់លើឧបករណ៍នេះបានទេ។',
+    deviceOnly: 'ការកំណត់រក្សាទុកក្នុងគណនីរបស់អ្នក។ ការកំណត់សិទ្ធិ Comment នឹងមានប្រសិទ្ធភាពក្រោយពេលភ្ជាប់ប្រព័ន្ធ Comment។',
+    saved: 'បានរក្សាទុកក្នុងគណនីរបស់អ្នក។',
+    loading: 'កំពុងផ្ទុកការកំណត់ Comment...',
+    saving: 'កំពុងរក្សាទុក...',
+    loadError: 'មិនអាចផ្ទុកការកំណត់ Comment បានទេ។ សូមព្យាយាមម្ដងទៀត។',
+    saveError: 'មិនអាចរក្សាទុកការកំណត់ Comment បានទេ។ សូមព្យាយាមម្ដងទៀត។',
+    retry: 'ព្យាយាមម្ដងទៀត',
     accountError: 'សូមចូលគណនីឡើងវិញដើម្បីរក្សាទុកការកំណត់។',
   },
   zh: {
@@ -69,9 +77,13 @@ registerTranslationNamespace('readerCommentSettings', {
     approvalHelp: '评论公开显示前需要你的审核。',
     manage: '管理评论',
     manageHelp: '打开个人主页，查看每篇帖子的评论。',
-    deviceOnly: '设置目前仅保存在此设备上。连接服务器后，评论限制才会生效。',
-    saved: '已保存在此设备。',
-    storageError: '无法在此设备保存设置。',
+    deviceOnly: '设置已关联你的账号。评论系统完成连接后，评论限制才会生效。',
+    saved: '已保存至你的账号。',
+    loading: '正在加载评论设置...',
+    saving: '正在保存...',
+    loadError: '无法加载评论设置，请重试。',
+    saveError: '无法保存评论设置，请重试。',
+    retry: '重试',
     accountError: '请重新登录以保存设置。',
   },
   ja: {
@@ -92,9 +104,13 @@ registerTranslationNamespace('readerCommentSettings', {
     approvalHelp: '公開前にコメントを確認します。',
     manage: 'コメントを管理',
     manageHelp: 'プロフィールから投稿ごとのコメントを確認します。',
-    deviceOnly: '現在はこの端末にのみ保存されます。サーバー連携後にコメント制限が有効になります。',
-    saved: 'この端末に保存しました。',
-    storageError: 'この端末に設定を保存できませんでした。',
+    deviceOnly: '設定はアカウントに保存されます。コメント機能との連携後に制限が有効になります。',
+    saved: 'アカウントに保存しました。',
+    loading: 'コメント設定を読み込み中...',
+    saving: '保存中...',
+    loadError: 'コメント設定を読み込めませんでした。再試行してください。',
+    saveError: 'コメント設定を保存できませんでした。再試行してください。',
+    retry: '再試行',
     accountError: '再度ログインして設定を保存してください。',
   },
   ko: {
@@ -115,9 +131,13 @@ registerTranslationNamespace('readerCommentSettings', {
     approvalHelp: '댓글이 공개되기 전에 검토합니다.',
     manage: '댓글 관리',
     manageHelp: '프로필에서 각 게시물의 댓글을 확인하세요.',
-    deviceOnly: '설정은 현재 이 기기에만 저장됩니다. 서버 연결 후 댓글 제한이 적용됩니다.',
-    saved: '이 기기에 저장되었습니다.',
-    storageError: '이 기기에 설정을 저장하지 못했습니다.',
+    deviceOnly: '설정이 계정에 저장됩니다. 댓글 시스템 연결 후 댓글 제한이 적용됩니다.',
+    saved: '계정에 저장되었습니다.',
+    loading: '댓글 설정 불러오는 중...',
+    saving: '저장 중...',
+    loadError: '댓글 설정을 불러오지 못했습니다. 다시 시도해 주세요.',
+    saveError: '댓글 설정을 저장하지 못했습니다. 다시 시도해 주세요.',
+    retry: '다시 시도',
     accountError: '설정을 저장하려면 다시 로그인해 주세요.',
   },
 })
@@ -131,39 +151,24 @@ const DEFAULT_SETTINGS = {
 
 const AUDIENCES = ['everyone', 'followers', 'following']
 
-function getReaderId() {
-  try {
-    const user = JSON.parse(
-      localStorage.getItem('shadow_reader_user') ||
-      sessionStorage.getItem('shadow_reader_user') ||
-      'null'
-    )
-    return String(user?.id || user?.user_id || user?.reader?.id || '').trim()
-  } catch {
-    return ''
-  }
-}
+const API_BASE_URL = import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const SETTINGS_URL = `${API_BASE_URL}/api/users/me/comment-settings`
 
 function getReaderToken() {
   return localStorage.getItem('shadow_reader_token') ||
     sessionStorage.getItem('shadow_reader_token') || ''
 }
 
-function readSettings(storageKey) {
-  if (!storageKey) return { ...DEFAULT_SETTINGS }
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null')
-    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) {
-      return { ...DEFAULT_SETTINGS }
-    }
-    return {
-      audience: AUDIENCES.includes(saved.audience) ? saved.audience : DEFAULT_SETTINGS.audience,
-      allowComments: typeof saved.allowComments === 'boolean' ? saved.allowComments : DEFAULT_SETTINGS.allowComments,
-      filterSpam: typeof saved.filterSpam === 'boolean' ? saved.filterSpam : DEFAULT_SETTINGS.filterSpam,
-      commentApproval: typeof saved.commentApproval === 'boolean' ? saved.commentApproval : DEFAULT_SETTINGS.commentApproval,
-    }
-  } catch {
-    return { ...DEFAULT_SETTINGS }
+function normalizeSettings(saved) {
+  return {
+    audience: AUDIENCES.includes(saved?.audience) ? saved.audience : DEFAULT_SETTINGS.audience,
+    allowComments: typeof saved?.allowComments === 'boolean' ? saved.allowComments : DEFAULT_SETTINGS.allowComments,
+    filterSpam: typeof saved?.filterSpam === 'boolean' ? saved.filterSpam : DEFAULT_SETTINGS.filterSpam,
+    commentApproval: typeof saved?.commentApproval === 'boolean' ? saved.commentApproval : DEFAULT_SETTINGS.commentApproval,
   }
 }
 
@@ -208,39 +213,94 @@ export default function ReaderCommentSettingsPage() {
   const tr = (key) => t(`readerCommentSettings.${key}`)
   const fromMeSettings = new URLSearchParams(location.search).get('from') === 'me-settings'
   const backPath = fromMeSettings ? '/profile/settings?from=me-settings' : '/profile/settings'
-  const readerId = getReaderId()
-  const storageKey = readerId ? `shadow_reader_comment_settings_draft_v1:${readerId}` : ''
-  const [settings, setSettings] = useState(() => readSettings(storageKey))
+  const [settings, setSettings] = useState(() => ({ ...DEFAULT_SETTINGS }))
   const [feedback, setFeedback] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [ready, setReady] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
-    if (!getReaderToken()) navigate('/login', { replace: true })
-  }, [navigate])
-
-  useEffect(() => {
-    setSettings(readSettings(storageKey))
-    const onStorage = (event) => {
-      if (event.key === storageKey) setSettings(readSettings(storageKey))
-    }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
-  }, [storageKey])
-
-  function updateSettings(key, value) {
-    setFeedback('')
-    if (!storageKey) {
-      setError(tr('accountError'))
+    const token = getReaderToken()
+    if (!token) {
+      navigate('/login', { replace: true })
       return
     }
+
+    const controller = new AbortController()
+    setReady(false)
+    setLoading(true)
+    setError('')
+    setFeedback('')
+
+    const load = async () => {
+      try {
+        const response = await fetch(SETTINGS_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+          cache: 'no-store',
+        })
+        if (response.status === 401) {
+          navigate('/login', { replace: true })
+          return
+        }
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok !== true || !data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) {
+          throw new Error('loadError')
+        }
+        if (!controller.signal.aborted) {
+          setSettings(normalizeSettings(data.settings))
+          setReady(true)
+        }
+      } catch {
+        if (!controller.signal.aborted) setError('loadError')
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+
+    load()
+    return () => controller.abort()
+  }, [navigate, reloadKey])
+
+  async function updateSettings(key, value) {
+    if (!ready || loading || saving) return
+    const token = getReaderToken()
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
+    }
+
     const next = { ...settings, [key]: value }
+    setSaving(true)
+    setFeedback('')
+    setError('')
+
     try {
-      localStorage.setItem(storageKey, JSON.stringify(next))
-      setSettings(next)
-      setError('')
+      const response = await fetch(SETTINGS_URL, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(next),
+        cache: 'no-store',
+      })
+      if (response.status === 401) {
+        navigate('/login', { replace: true })
+        return
+      }
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok !== true || !data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) {
+        throw new Error('saveError')
+      }
+      setSettings(normalizeSettings(data.settings))
       setFeedback(tr('saved'))
     } catch {
-      setError(tr('storageError'))
+      setError('saveError')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -278,7 +338,7 @@ export default function ReaderCommentSettingsPage() {
                     name="reader-comment-audience"
                     value={choice}
                     checked={settings.audience === choice}
-                    disabled={!settings.allowComments || !storageKey}
+                    disabled={!settings.allowComments || !ready || loading || saving}
                     onChange={() => updateSettings('audience', choice)}
                     className="h-[18px] w-[18px] shrink-0 accent-[#111827]"
                   />
@@ -293,7 +353,7 @@ export default function ReaderCommentSettingsPage() {
               title={tr('allow')}
               description={tr('allowHelp')}
               checked={settings.allowComments}
-              disabled={!storageKey}
+              disabled={!ready || loading || saving}
               onChange={() => updateSettings('allowComments', !settings.allowComments)}
             />
           </div>
@@ -302,7 +362,7 @@ export default function ReaderCommentSettingsPage() {
               title={tr('spam')}
               description={tr('spamHelp')}
               checked={settings.filterSpam}
-              disabled={!storageKey}
+              disabled={!ready || loading || saving}
               onChange={() => updateSettings('filterSpam', !settings.filterSpam)}
             />
           </div>
@@ -311,7 +371,7 @@ export default function ReaderCommentSettingsPage() {
               title={tr('approval')}
               description={tr('approvalHelp')}
               checked={settings.commentApproval}
-              disabled={!storageKey}
+              disabled={!ready || loading || saving}
               onChange={() => updateSettings('commentApproval', !settings.commentApproval)}
             />
           </div>
@@ -333,8 +393,17 @@ export default function ReaderCommentSettingsPage() {
         </button>
 
         <p className="px-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('deviceOnly')}</p>
+        {loading ? <p role="status" className="px-1 text-[12px] text-[var(--shadow-text-secondary)]">{tr('loading')}</p> : null}
+        {saving ? <p role="status" className="px-1 text-[12px] text-[var(--shadow-text-secondary)]">{tr('saving')}</p> : null}
         {feedback ? <p role="status" className="px-1 text-[12px] text-[var(--shadow-text-secondary)]">{feedback}</p> : null}
-        {error ? <p role="alert" className="px-1 text-[12px] text-red-500">{error}</p> : null}
+        {error ? (
+          <div role="alert" className="px-1 text-[12px] text-red-500">
+            <p>{tr(error)}</p>
+            {error === 'loadError' && !loading ? (
+              <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="mt-2 font-semibold underline">{tr('retry')}</button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </main>
   )
