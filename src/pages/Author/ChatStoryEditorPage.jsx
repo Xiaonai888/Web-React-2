@@ -4,6 +4,7 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
+import { createChatStoryInlineUploadQueue, chatStoryPendingImageCount } from '../../utils/chatStoryInlineUploadQueue'
 
 registerTranslationNamespace('chatStoryEditor', {
   "en": {
