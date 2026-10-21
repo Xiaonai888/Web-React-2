@@ -1058,6 +1058,7 @@ function EditorImageMessage({
   active,
   onEdit,
   onElementRef,
+  onRetry,
 }) {
   const imageUrl =
     message.imageUrl ||
@@ -1072,11 +1073,33 @@ function EditorImageMessage({
           : 'ring-1 ring-[var(--shadow-border)]'
       }`}
     >
-      <img
-        src={imageUrl}
-        alt={getDisplayText('chatStoryEditor.chatStory')}
-        className="block max-h-[360px] w-full object-contain"
-      />
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={getDisplayText('chatStoryEditor.chatStory')}
+          className="block max-h-[360px] w-full object-contain"
+        />
+      ) : (
+        <div className="flex h-28 items-center justify-center text-[var(--shadow-text-secondary)]">
+          <i className="fa-regular fa-image text-[24px]" />
+        </div>
+      )}
+      {message.uploadTaskId ? (
+        <div className="flex items-center justify-between gap-2 px-3 py-2 text-[11px] text-[var(--shadow-text-secondary)]">
+          <span>{message.uploadState === 'failed'
+            ? getDisplayText('chatStoryEditor.failedUploadImage')
+            : `⏳ ${Math.max(0, Math.min(100, Math.round(Number(message.uploadProgress || 0))))}%`}</span>
+          {message.uploadState === 'failed' ? (
+            <button
+              type="button"
+              onClick={() => onRetry?.(message.uploadTaskId)}
+              className="font-semibold text-[#7c3aed]"
+            >
+              {({ en: 'Retry', km: 'ព្យាយាមម្ដងទៀត', zh: '重试', ja: '再試行', ko: '다시 시도' })[getDisplayLanguageId()] || 'Retry'}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 
@@ -2337,6 +2360,8 @@ export default function ChatStoryEditorPage() {
   const [episodeId, setEpisodeId] = useState('')
   const [saving, setSaving] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
+  const chatImageQueueRef = useRef(null)
+  const chatImageReconcileRef = useRef(null)
   const [composerFocused, setComposerFocused] = useState(false)
   const [addPopupOpen, setAddPopupOpen] = useState(false)
   const [imageSourceOpen, setImageSourceOpen] = useState(false)
@@ -2876,7 +2901,10 @@ restoredDraftCharactersRef.current = false
   setTitleDraft(String(parsed.titleDraft || ''))
   const restoredMessages =
     Array.isArray(parsed.messages)
-      ? parsed.messages
+      ? parsed.messages.map((message) => message?.type === 'image' &&
+          message.uploadTaskId && /^blob:/i.test(String(message.imageUrl || ''))
+        ? { ...message, imageUrl: '' }
+        : message)
       : []
 
   const restoredCharacters =
@@ -2992,6 +3020,12 @@ restoredDraftCharactersRef.current = false
     if (!snapshot || !hydrationRef.current || publishedDraftRef.current || tabConflictRef.current) return false
     const payload = {
       ...snapshot,
+      messages: (snapshot.messages || []).map((message) =>
+        message?.type === 'image' && message.uploadTaskId &&
+        /^blob:/i.test(String(message.imageUrl || ''))
+          ? { ...message, imageUrl: '' }
+          : message
+      ),
       episodeId: serverEpisodeIdRef.current || snapshot.episodeId,
       serverUpdatedAt: serverVersionRef.current,
       serverSignature: serverSignatureRef.current,
@@ -3012,6 +3046,133 @@ restoredDraftCharactersRef.current = false
     }
   }
 
+
+  const chatHasPendingImages = chatStoryPendingImageCount(messages) > 0
+
+  useEffect(() => {
+    if (!draftHydrated || loading || !storyId) return undefined
+    let queue
+    try {
+      queue = createChatStoryInlineUploadQueue({
+        storyId,
+        draftKey: storageKey,
+        getToken: getAuthToken,
+        apiBaseUrl: API_BASE_URL,
+        onChange: () => { void chatImageReconcileRef.current?.() },
+      })
+    } catch (error) {
+      if (chatStoryPendingImageCount(messagesRef.current)) {
+        showToast(error.message || getDisplayText('chatStoryEditor.failedUploadImage'))
+      }
+      return undefined
+    }
+    let disposed = false
+    let reconciling = false
+    let rerun = false
+    chatImageQueueRef.current = queue
+
+    const reconcile = async () => {
+      if (disposed || publishedDraftRef.current) return
+      if (reconciling) {
+        rerun = true
+        return
+      }
+      reconciling = true
+      try {
+        const before = messagesRef.current
+        const { messages: resolved, finishedIds } = await queue.resolve(before)
+        if (disposed || chatImageQueueRef.current !== queue) return
+        if (messagesRef.current !== before) {
+          rerun = true
+          return
+        }
+        let next = resolved
+        let canAcknowledge = false
+        if (finishedIds.length && draftSnapshotRef.current) {
+          const previousSnapshot = draftSnapshotRef.current
+          draftSnapshotRef.current = {
+            ...previousSnapshot,
+            messages: resolved,
+            updatedAt: new Date().toISOString(),
+          }
+          canAcknowledge = flushLocalDraft()
+          if (!canAcknowledge) draftSnapshotRef.current = previousSnapshot
+        }
+        if (finishedIds.length && !canAcknowledge) {
+          const previousById = new Map(before.map((message) => [message.id, message]))
+          next = resolved.map((message) => {
+            const previous = previousById.get(message.id)
+            return previous?.uploadTaskId && !message.uploadTaskId
+              ? { ...message, uploadTaskId: previous.uploadTaskId, uploadState: 'uploaded', uploadProgress: 100 }
+              : message
+          })
+        }
+        const changed = next.length !== before.length || next.some((message, index) =>
+          message.imageUrl !== before[index]?.imageUrl ||
+          message.uploadTaskId !== before[index]?.uploadTaskId ||
+          message.uploadState !== before[index]?.uploadState ||
+          message.uploadProgress !== before[index]?.uploadProgress
+        )
+        if (changed) {
+          messagesRef.current = next
+          setMessages(next)
+          if (draftSnapshotRef.current) {
+            draftSnapshotRef.current = {
+              ...draftSnapshotRef.current,
+              messages: next,
+              updatedAt: new Date().toISOString(),
+            }
+          }
+        }
+        if (canAcknowledge) {
+          const completedById = new Map(resolved.filter((message) =>
+            before.some((old) => old.id === message.id && old.uploadTaskId && !message.uploadTaskId)
+          ).map((message) => [message.id, message]))
+          const updateHistory = (stack) => stack.map((history) => history.map((message) =>
+            completedById.has(message.id) ? completedById.get(message.id) : message
+          ))
+          undoStackRef.current = updateHistory(undoStackRef.current)
+          redoStackRef.current = updateHistory(redoStackRef.current)
+          await queue.acknowledge(finishedIds)
+        }
+      } catch (error) {
+        if (!disposed && /storage|quota|indexeddb/i.test(String(error?.message || ''))) {
+          setDraftSaveStatus('failed')
+        }
+      } finally {
+        reconciling = false
+        if (rerun && !disposed) {
+          rerun = false
+          queueMicrotask(() => { void reconcile() })
+        }
+      }
+    }
+
+    chatImageReconcileRef.current = reconcile
+    queue.start()
+    void reconcile()
+    const timer = window.setInterval(() => { void reconcile() }, 8000)
+    return () => {
+      disposed = true
+      window.clearInterval(timer)
+      if (chatImageQueueRef.current === queue) chatImageQueueRef.current = null
+      if (chatImageReconcileRef.current === reconcile) chatImageReconcileRef.current = null
+      queue.stop()
+    }
+  }, [draftHydrated, loading, storyId, storageKey])
+
+  const retryChatImage = async (taskId) => {
+    try {
+      const queue = chatImageQueueRef.current
+      if (!queue) throw new Error('Local image queue is not ready')
+      const retried = await queue.retry(taskId)
+      if (!retried) throw new Error('This local image is no longer available')
+      void chatImageReconcileRef.current?.()
+    } catch (error) {
+      showToast(error.message || getDisplayText('chatStoryEditor.failedUploadImage'))
+    }
+  }
+
   const persistServerDraft = async (checkpoint = false) => {
     if (serverBusyRef.current) {
       await serverBusyRef.current
@@ -3021,6 +3182,11 @@ restoredDraftCharactersRef.current = false
       throw new Error(getDisplayText('chatDraftSave.conflict'))
     }
     const snapshot = draftSnapshotRef.current
+    if (snapshot?.messages?.some((message) => message?.type === 'image' &&
+      (message.uploadTaskId || !/^https?:\/\//i.test(String(message.imageUrl || message.image_url || ''))))) {
+      if (checkpoint) return null
+      throw new Error('Chat images are still uploading. Wait for completion or retry failed images.')
+    }
     const targetId = serverEpisodeIdRef.current || requestedEpisodeId
     if (!snapshot || (checkpoint && !targetId)) return null
     const signature = getServerSignature(snapshot)
@@ -3117,7 +3283,7 @@ restoredDraftCharactersRef.current = false
   }, [draftHydrated, loading, episodeTitle, episodeId, effectiveLeadCharacterId, characters, messages, draft, selectedCharacterId, composerMode, messageEditMode, authorNoteDraft, titleDraft])
 
   const draftActionsRef = useRef({})
-  draftActionsRef.current = { flushLocalDraft, persistServerDraft, canCheckpoint: !saving && !settingsSaving && !imageUploading && !loading && !publishSettingsOpen }
+  draftActionsRef.current = { flushLocalDraft, persistServerDraft, canCheckpoint: !saving && !settingsSaving && !imageUploading && !chatHasPendingImages && !loading && !publishSettingsOpen }
 
   useEffect(() => () => {
     draftActionsRef.current.flushLocalDraft()
@@ -4492,19 +4658,22 @@ const handleAddConfirm = async () => {
   try {
     setImageUploading(true)
 
-    const imageUrl =
-      await uploadEpisodeImage(
-        token,
-        file
-      )
+    const queue = chatImageQueueRef.current
+    if (!queue) throw new Error('Local image queue is not ready. Reopen this editor and try again.')
+    const messageId = makeId()
+    const task = await queue.enqueue(file, messageId)
+    const imageUrl = await queue.preview(task.id)
 
     const nextMessage = {
-      id: makeId(),
+      id: messageId,
       type: 'image',
       characterId:
         selectedCharacter?.id || null,
       text: '',
       imageUrl,
+      uploadTaskId: task.id,
+      uploadState: 'queued',
+      uploadProgress: 0,
       createdAt:
         new Date().toISOString(),
     }
@@ -4572,6 +4741,17 @@ const handleAddConfirm = async () => {
     setActiveMessageId('')
     setSymbolPanelOpen(false)
 
+    if (draftSnapshotRef.current) {
+      draftSnapshotRef.current = {
+        ...draftSnapshotRef.current,
+        messages: messagesRef.current,
+        updatedAt: new Date().toISOString(),
+      }
+      if (!flushLocalDraft()) {
+        showToast('Image queued, but the local draft could not be saved.')
+      }
+    }
+    void chatImageReconcileRef.current?.()
     showToast(getDisplayText('chatStoryEditor.imageAdded'))
   } catch (error) {
     showToast(
@@ -4651,6 +4831,10 @@ const handleAddConfirm = async () => {
 
   const handleSavePublishSettings = async () => {
   if (!episodeId || settingsSaving) return
+  if (imageUploading || chatStoryPendingImageCount(messagesRef.current)) {
+    showToast('Chat images are still uploading. Wait for completion or retry failed images.')
+    return
+  }
 
   const status =
     releaseOption === 'schedule'
@@ -4794,6 +4978,10 @@ const handleAddConfirm = async () => {
   showToast(getDisplayText('chatStoryEditor.addOneMessage'))
   return
 }
+    if (imageUploading || chatStoryPendingImageCount(messagesRef.current)) {
+      showToast('Chat images are still uploading. Wait for completion or retry failed images.')
+      return
+    }
 
     const token = getAuthToken()
 
@@ -5217,6 +5405,7 @@ setPublishSettingsOpen(true)
   saving ||
   loading ||
   imageUploading ||
+  chatHasPendingImages ||
   !messages.some(
     (message) =>
       message.type !== 'author_note'
@@ -5296,6 +5485,7 @@ setPublishSettingsOpen(true)
       onElementRef={
         registerMessageElement
       }
+      onRetry={retryChatImage}
     />
   ) : message.type === 'aside' ? (
     <AsideMessage
