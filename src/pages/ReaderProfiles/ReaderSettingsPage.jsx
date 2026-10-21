@@ -490,7 +490,7 @@ const SETTINGS_GROUPS = [
         title: 'Edit profile',
         subtitle: 'Update your name, photo, bio, and profile links.',
         icon: 'fa-regular fa-user',
-        route: '/profile/edit',
+        route: '/profile/edit?from=reader-settings',
       },
       {
         key: 'account-security',
@@ -869,6 +869,8 @@ function SettingsRow({ item, onOpen, t }) {
 
 export default function ReaderSettingsPage() {
   const navigate = useNavigate()
+  const from = new URLSearchParams(window.location.search).get('from')
+  const backPath = from === 'reader-settings' ? '/profile/settings' : from === 'me-settings' ? '/me?settings=1' : '/profile'
   const { t } = useDisplayTranslation()
   const [message, setMessage] = useState('')
   const groups = useMemo(() => SETTINGS_GROUPS, [])
