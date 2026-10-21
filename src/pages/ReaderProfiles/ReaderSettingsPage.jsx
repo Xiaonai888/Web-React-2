@@ -620,11 +620,12 @@ const SETTINGS_GROUPS = [
   route: '/profile/settings/language',
 },
       {
-        key: 'accessibility',
-        title: 'Accessibility',
-        subtitle: 'Adjust reading and display assistance.',
-        icon: 'fa-solid fa-universal-access',
-      },
+  key: 'accessibility',
+  title: 'Accessibility',
+  subtitle: 'Adjust reading and display assistance.',
+  icon: 'fa-solid fa-universal-access',
+  route: '/profile/settings/accessibility',
+},
       {
         key: 'help-center',
         title: 'Help Center',
