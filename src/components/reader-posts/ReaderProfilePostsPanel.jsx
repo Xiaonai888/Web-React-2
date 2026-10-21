@@ -291,7 +291,7 @@ function ReaderProfileSetupSection({
   )
 }
 
-export default function ReaderProfilePostsPanel({
+function ReaderProfileOwnPostsPanel({
   username = '',
   isOwnProfile = true,
   profileUser = null,
@@ -522,6 +522,129 @@ export default function ReaderProfilePostsPanel({
           }
         />
       ) : null}
+    </>
+  )
+}
+
+registerTranslationNamespace('readerProfileTagged', {
+  en: { posts: 'Posts', tagged: 'Tagged posts', empty: 'No approved tagged posts yet.', loading: 'Loading tagged posts...', error: 'Could not load tagged posts.', more: 'Load more', retry: 'Try again', open: 'View post', photo: 'Photo post' },
+  km: { posts: 'Post', tagged: 'Post ដែលគេ Tag អ្នក', empty: 'មិនទាន់មាន Post ដែលបានអនុម័ត Tag ទេ។', loading: 'កំពុងផ្ទុក Post ដែលបាន Tag...', error: 'មិនអាចផ្ទុក Post ដែលបាន Tag បានទេ។', more: 'បង្ហាញបន្ថែម', retry: 'ព្យាយាមម្តងទៀត', open: 'មើល Post', photo: 'Post រូបភាព' },
+  zh: { posts: '帖子', tagged: '被标记的帖子', empty: '暂无已批准的标记帖子。', loading: '正在加载标记帖子...', error: '无法加载标记帖子。', more: '加载更多', retry: '重试', open: '查看帖子', photo: '图片帖子' },
+  ja: { posts: '投稿', tagged: 'タグ付けされた投稿', empty: '承認済みのタグ付き投稿はありません。', loading: 'タグ付き投稿を読み込み中...', error: 'タグ付き投稿を読み込めません。', more: 'さらに表示', retry: '再試行', open: '投稿を見る', photo: '写真の投稿' },
+  ko: { posts: '게시물', tagged: '태그된 게시물', empty: '승인된 태그 게시물이 없습니다.', loading: '태그된 게시물을 불러오는 중...', error: '태그된 게시물을 불러올 수 없습니다.', more: '더 보기', retry: '다시 시도', open: '게시물 보기', photo: '사진 게시물' },
+})
+
+function ReaderProfileTaggedPostsPanel() {
+  const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
+  const tr = (key) => t(`readerProfileTagged.${key}`)
+  const [posts, setPosts] = useState([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState('')
+  const [retryKey, setRetryKey] = useState(0)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    async function loadFirstPage() {
+      setLoading(true)
+      setError('')
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/me/tags-mentions/approved?page=1`, {
+          headers: { Authorization: `Bearer ${getAuthToken()}` },
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        if (response.status === 401) {
+          navigate('/login', { replace: true })
+          return
+        }
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok !== true || !Array.isArray(data.posts)) throw new Error('LOAD_FAILED')
+        if (!controller.signal.aborted) {
+          setPosts(data.posts)
+          setHasMore(Boolean(data.has_more))
+          setPage(1)
+        }
+      } catch {
+        if (!controller.signal.aborted) setError(tr('error'))
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+    loadFirstPage()
+    return () => controller.abort()
+  }, [retryKey, navigate])
+
+  async function loadMore() {
+    if (loading || loadingMore || !hasMore) return
+    setLoadingMore(true)
+    setError('')
+    try {
+      const nextPage = page + 1
+      const response = await fetch(`${API_BASE_URL}/api/users/me/tags-mentions/approved?page=${nextPage}`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+        cache: 'no-store',
+      })
+      if (response.status === 401) {
+        navigate('/login', { replace: true })
+        return
+      }
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok !== true || !Array.isArray(data.posts)) throw new Error('LOAD_FAILED')
+      setPosts((current) => {
+        const existing = new Set(current.map((post) => post.id))
+        return [...current, ...data.posts.filter((post) => !existing.has(post.id))]
+      })
+      setPage(nextPage)
+      setHasMore(Boolean(data.has_more))
+    } catch {
+      setError(tr('error'))
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
+  return (
+    <section className="mt-2 space-y-3 px-4 py-4 sm:px-0" aria-label={tr('tagged')}>
+      {loading && <p role="status" className="text-center text-[13px] text-[var(--shadow-text-secondary)]">{tr('loading')}</p>}
+      {error && <div role="alert" className="rounded-xl bg-[var(--shadow-bg-surface)] p-4 text-[13px] text-[var(--shadow-text-primary)]"><p>{error}</p><button type="button" onClick={() => setRetryKey((current) => current + 1)} className="mt-2 font-semibold underline">{tr('retry')}</button></div>}
+      {!loading && !error && !posts.length && <p className="rounded-xl bg-[var(--shadow-bg-surface)] p-6 text-center text-[13px] text-[var(--shadow-text-secondary)]">{tr('empty')}</p>}
+      {posts.map((post) => (
+        <article key={post.id} className="rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 text-[var(--shadow-text-primary)]">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)]">
+              {post.user?.avatar_url ? <img src={post.user.avatar_url} alt="" className="h-full w-full object-cover" /> : <span>{String(post.user?.name || '?').charAt(0)}</span>}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-semibold">{post.user?.name || post.user?.username || ''}</p>
+              {post.user?.username && <p className="truncate text-[12px] text-[var(--shadow-text-secondary)]">@{post.user.username}</p>}
+            </div>
+          </div>
+          <p className="mt-3 whitespace-pre-wrap break-words text-[13px] leading-6">{post.content || tr('photo')}</p>
+          {post.image_url && <img src={post.image_url} alt="" loading="lazy" className="mt-3 max-h-[280px] w-full rounded-xl object-contain" />}
+          <button type="button" onClick={() => navigate(`/reader/post/${encodeURIComponent(post.id)}`)} className="mt-3 min-h-10 w-full rounded-xl bg-[var(--shadow-bg-soft)] px-4 text-[13px] font-medium active:bg-[var(--shadow-bg-hover)]">{tr('open')}</button>
+        </article>
+      ))}
+      {hasMore && !loading && <button type="button" onClick={loadMore} disabled={loadingMore} className="w-full rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[13px] font-semibold disabled:opacity-50">{loadingMore ? tr('loading') : tr('more')}</button>}
+    </section>
+  )
+}
+
+export default function ReaderProfilePostsPanel(props) {
+  const { t } = useDisplayTranslation()
+  const [tab, setTab] = useState('posts')
+  if (props.isOwnProfile === false) return <ReaderProfileOwnPostsPanel {...props} />
+
+  return (
+    <>
+      <div role="tablist" className="mt-3 flex gap-2 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-2">
+        <button type="button" role="tab" aria-selected={tab === 'posts'} onClick={() => setTab('posts')} className={`min-h-10 flex-1 rounded-xl px-3 text-[13px] font-semibold ${tab === 'posts' ? 'bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]' : 'text-[var(--shadow-text-secondary)]'}`}>{t('readerProfileTagged.posts')}</button>
+        <button type="button" role="tab" aria-selected={tab === 'tagged'} onClick={() => setTab('tagged')} className={`min-h-10 flex-1 rounded-xl px-3 text-[13px] font-semibold ${tab === 'tagged' ? 'bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]' : 'text-[var(--shadow-text-secondary)]'}`}>{t('readerProfileTagged.tagged')}</button>
+      </div>
+      {tab === 'posts' ? <ReaderProfileOwnPostsPanel {...props} /> : <ReaderProfileTaggedPostsPanel />}
     </>
   )
 }
