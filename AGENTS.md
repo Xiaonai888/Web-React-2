@@ -288,3 +288,16 @@ A new page is NOT complete if:
 - it unnecessarily duplicates an existing page primitive,
 - the strict page-standard audit reports errors,
 - or the production build fails.
+
+## Supabase Public Table Access Standard (Effective 2026-10-30)
+
+- For any new `public` table used by the Reader Website, do not assume the Supabase Data API automatically grants access. Existing tables retain their current grants.
+- Before implementing a feature that needs a new table, inspect the related SQL migration, Supabase client role, backend routes, RLS policies, and existing feature access patterns.
+- Coordinate with `Xiaonai888/Shadow-Backend` so the migration explicitly grants only required operations to the required roles (`anon`, `authenticated`, and/or `service_role`). Do not add broad grants from frontend code.
+- `GRANT` controls which operations a database role can perform; RLS policies separately control which rows the role may access. Both must be reviewed before exposing a table.
+- Never grant public/anonymous access to private reader data, Diamonds, purchases, payments, income, admin records, or other sensitive information without an explicitly validated use case.
+- Never expose `service_role` credentials in browser code; keep privileged database actions on the backend.
+- Verify create/read/update/delete behavior for each intended client role and expected denial for unauthorized roles before marking the feature complete.
+- The October 30 change affects newly created tables in existing projects, not grants already held by existing tables. Schema recreations, preview projects, and `supabase db reset` still require explicit grants where Data API access is needed.
+- Supabase source: https://github.com/orgs/supabase/discussions/45329
+
