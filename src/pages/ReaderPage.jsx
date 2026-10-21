@@ -6938,13 +6938,34 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       return undefined
     }
 
-    qualifiedViewSentRef.current = true
+      const viewEpisodeId = String(episode?.id || episode?.episode_id || '')
+  const viewCharacterCount = Number(
+    episode?.character_count || episode?.content?.length || 0
+  )
 
-    const characterCount = Number(
-      episode.character_count || episode.content?.length || 0
-    )
+  useEffect(() => {
+    const token = getReaderToken()
+    if (
+      !storyId ||
+      !episodeId ||
+      viewEpisodeId !== String(episodeId) ||
+      loading ||
+      lockedEpisode ||
+      !adultAccepted ||
+      !token ||
+      offlineMode
+    ) {
+      return undefined
+    }
+
+    const viewKey = `${storyId}:${episodeId}:${token}`
+    if (qualifiedViewSentRef.current === viewKey) {
+      return undefined
+    }
+    qualifiedViewSentRef.current = viewKey
+
     const isShortEpisode =
-      characterCount > 0 && characterCount < 3000
+      viewCharacterCount > 0 && viewCharacterCount < 3000
     const requiredSeconds = isShortEpisode ? 10 : 20
     const requiredProgress = isShortEpisode ? 60 : 20
 
@@ -6952,6 +6973,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     let qualifiedTimer = null
     let qualifiedRequestBusy = false
     let cancelled = false
+    let finished = false
 
     async function requestView(mode) {
       const response = await fetch(
@@ -6967,13 +6989,14 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       )
 
       const data = await response.json().catch(() => ({}))
-
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to count view')
+        throw Object.assign(
+          new Error(data.message || 'Failed to count view'),
+          { status: response.status, code: data.code || null }
+        )
       }
 
       console.log('VIEW FLOW:', mode, data.view)
-
       return data.view || {}
     }
 
@@ -6988,7 +7011,6 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         }
 
         activeSeconds += 1
-
         if (
           activeSeconds < requiredSeconds ||
           readingProgressRef.current < requiredProgress
@@ -7006,6 +7028,8 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           if (!cancelled) {
             console.error('VIEW FLOW ERROR:', error)
           }
+        } finally {
+          finished = true
         }
       }, 1000)
     }
@@ -7013,13 +7037,13 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     async function beginViewFlow() {
       try {
         const result = await requestView('fast')
-
         if (cancelled) return
 
         if (
           result.counted ||
           result.reason === 'fast_cooldown'
         ) {
+          finished = true
           return
         }
 
@@ -7030,30 +7054,36 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           startQualifiedViewRule()
           return
         }
+
+        finished = true
       } catch (error) {
         if (!cancelled) {
           console.error('VIEW FLOW ERROR:', error)
         }
+        finished = true
       }
     }
 
-    beginViewFlow()
+    void beginViewFlow()
 
     return () => {
       cancelled = true
-
       if (qualifiedTimer) {
         window.clearInterval(qualifiedTimer)
+      }
+      if (!finished && qualifiedViewSentRef.current === viewKey) {
+        qualifiedViewSentRef.current = false
       }
     }
   }, [
     adultAccepted,
-    episode,
     episodeId,
     loading,
     lockedEpisode,
     offlineMode,
     storyId,
+    viewEpisodeId,
+    viewCharacterCount,
   ])
 
 
