@@ -83,6 +83,13 @@ registerTranslationNamespace('readerRestrictedReaders', {
     loadError: '설정을 불러올 수 없습니다.', saveError: '설정을 저장할 수 없습니다.', retry: '다시 시도',
   },
 })
+registerTranslationNamespace('readerRestrictedManageLink', {
+  en: { title: 'Manage Restricted Readers' },
+  km: { title: 'គ្រប់គ្រងអ្នកអានដែលបាន Restrict' },
+  zh: { title: '管理受限读者' },
+  ja: { title: '制限した読者を管理' },
+  ko: { title: '제한된 독자 관리' },
+})
 
 const PREFERENCES = [
   { key: 'hide_comments', Icon: MessageCircleOff },
@@ -211,6 +218,15 @@ export default function ReaderRestrictedReadersPage() {
             </div>
           ))}
         </section>
+
+        <button
+  type="button"
+  onClick={() => navigate(`/profile/settings/restricted-readers/manage${fromMeSettings ? '?from=me-settings' : ''}`)}
+  className="flex w-full items-center justify-between rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-4 text-left text-[13px] font-semibold"
+>
+  {t('readerRestrictedManageLink.title')}
+  <span aria-hidden="true">›</span>
+</button>
 
         <p className="px-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('note')}</p>
         <p className="px-1 text-[11px] leading-5 text-[var(--shadow-text-tertiary)]">{tr('pending')}</p>
