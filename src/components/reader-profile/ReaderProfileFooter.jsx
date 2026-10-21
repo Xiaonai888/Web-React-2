@@ -22,6 +22,7 @@ import {
   playChatNotificationTone,
   primeChatNotificationSound,
 } from '../../services/chatNotificationSound'
+import { useUnreadSenderCount } from '../../services/chatUnreadSenderCount'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -243,8 +244,8 @@ export default function ReaderProfileFooter({
     () => getStoredUser()
   )
   const [message, setMessage] = useState('')
-  const [chatBadgeCount, setChatBadgeCount] =
-    useState(0)
+  const { count: chatBadgeCount } =
+  useUnreadSenderCount()
 
   const finalAvatarUrl =
     avatarUrl ||
@@ -278,112 +279,88 @@ export default function ReaderProfileFooter({
   }, [])
 
   const loadChatBadge = useCallback(async () => {
-    if (!hasReaderSession()) {
-      if (mountedRef.current) {
-        setChatBadgeCount(0)
-      }
-      chatSnapshotRef.current = new Map()
-      chatSnapshotReadyRef.current = false
-      return
-    }
+  if (!hasReaderSession()) {
+    chatSnapshotRef.current = new Map()
+    chatSnapshotReadyRef.current = false
+    return
+  }
 
-    try {
-      const data = await getChatBadgeData()
+  try {
+    const data = await getChatBadgeData()
+    if (!data || !mountedRef.current) return
 
-      if (!data || !mountedRef.current) {
-        return
-      }
+    const conversations = Array.isArray(data.conversations)
+      ? data.conversations
+      : []
 
-      const conversations =
-        Array.isArray(data.conversations)
-          ? data.conversations
-          : []
-      const nextSnapshot = new Map()
-      let toneToPlay = ''
+    const nextSnapshot = new Map()
+    let toneToPlay = ''
 
-      const countedSenders = new Set()
-      const total = conversations.reduce(
-        (sum, item) => {
-          if (
-            item.request_status === 'declined' ||
-            item.request_status === 'blocked'
-          ) {
-            return sum
-          }
+    conversations.forEach((item) => {
+      if (
+        item.request_status === 'declined' ||
+        item.request_status === 'blocked'
+      ) return
 
-          const unread = Math.max(
-            0,
-            Number(item.unread_count || 0)
-          )
-          const incomingRequest =
-            item.can_decide === true &&
-            item.request_status === 'pending'
-          const effectiveUnread =
-            incomingRequest
-              ? Math.max(1, unread)
-              : unread
-          const conversationId =
-            String(item.id || '')
-          const latestKey = String(
-            item.latest_message?.id ||
-              item.latest_message?.created_at ||
-              item.last_message_at ||
-              ''
-          )
-          const previous =
-            chatSnapshotRef.current.get(
-              conversationId
-            )
-
-          nextSnapshot.set(
-            conversationId,
-            {
-              latestKey,
-              unread: effectiveUnread,
-            }
-          )
-
-          if (
-            chatSnapshotReadyRef.current &&
-            !toneToPlay &&
-            latestKey &&
-            effectiveUnread > 0 &&
-            (!previous ||
-              (latestKey !==
-                previous.latestKey &&
-                effectiveUnread >
-                  previous.unread)) &&
-            !item.is_muted &&
-            item.notification_sound_enabled !== false
-          ) {
-            toneToPlay =
-              item.notification_tone || 'default'
-          }
-
-          if (effectiveUnread <= 0) return sum
-const senderKey = String(item.counterpart?.user_id || conversationId)
-if (countedSenders.has(senderKey)) return sum
-countedSenders.add(senderKey)
-return sum + 1
-        },
-        0
+      const unread = Math.max(
+        0,
+        Number(item.unread_count || 0)
       )
 
-      chatSnapshotRef.current = nextSnapshot
+      const incomingRequest =
+        item.can_decide === true &&
+        item.request_status === 'pending'
 
-      if (!chatSnapshotReadyRef.current) {
-        chatSnapshotReadyRef.current = true
-      } else if (toneToPlay) {
-        playChatNotificationTone(toneToPlay)
-      }
+      const effectiveUnread = incomingRequest
+        ? Math.max(1, unread)
+        : unread
 
-      if (mountedRef.current) {
-        setChatBadgeCount(total)
+      const conversationId = String(item.id || '')
+      const latestKey = String(
+        item.latest_message?.id ||
+        item.latest_message?.created_at ||
+        item.last_message_at ||
+        ''
+      )
+
+      const previous =
+        chatSnapshotRef.current.get(conversationId)
+
+      nextSnapshot.set(conversationId, {
+        latestKey,
+        unread: effectiveUnread,
+      })
+
+      if (
+        chatSnapshotReadyRef.current &&
+        !toneToPlay &&
+        latestKey &&
+        effectiveUnread > 0 &&
+        (
+          !previous ||
+          (
+            latestKey !== previous.latestKey &&
+            effectiveUnread > previous.unread
+          )
+        ) &&
+        !item.is_muted &&
+        item.notification_sound_enabled !== false
+      ) {
+        toneToPlay = item.notification_tone || 'default'
       }
-    } catch {
-      return
+    })
+
+    chatSnapshotRef.current = nextSnapshot
+
+    if (!chatSnapshotReadyRef.current) {
+      chatSnapshotReadyRef.current = true
+    } else if (toneToPlay) {
+      playChatNotificationTone(toneToPlay)
     }
-  }, [])
+  } catch {
+    return
+  }
+}, [])
 
   useEffect(() => {
     const primeSound = () => {
