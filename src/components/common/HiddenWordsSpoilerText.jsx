@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { getReaderHiddenWords, subscribeReaderHiddenWords } from '../../services/readerHiddenWordsApi'
 
 registerTranslationNamespace('hiddenWordsSpoilerText', {
   en: { reveal: 'Reveal hidden word', conceal: 'Hide word again' },
@@ -26,11 +27,16 @@ export function splitHiddenWords(text, words) {
 
   const matcher = new RegExp(candidates.map((word) => escapeRegExp(word).replace(/ /g, '\\s+')).join('|'), 'giu')
   const segments = []
+  const protectedTokens = Array.from(content.matchAll(/https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+/giu), (match) => ({
+    start: match.index,
+    end: match.index + match[0].length,
+  }))
   let cursor = 0
 
   for (const match of content.matchAll(matcher)) {
     const start = match.index
     const end = start + match[0].length
+    if (protectedTokens.some((token) => start < token.end && end > token.start)) continue
     const asciiStart = /^[a-z0-9]/i.test(match[0])
     const asciiEnd = /[a-z0-9]$/i.test(match[0])
     const previous = start ? content[start - 1] : ''
@@ -70,16 +76,41 @@ function SpoilerWord({ text, labelReveal, labelConceal }) {
 
 export default function HiddenWordsSpoilerText({
   text,
-  words = [],
+  words,
   sourceType,
+  renderText,
   className = '',
 }) {
   const { t } = useDisplayTranslation()
+  const [accountWords, setAccountWords] = useState([])
+  const isPost = sourceType === 'reader_post' || sourceType === 'author_post'
+
+  useEffect(() => {
+    if (!isPost || words !== undefined) return undefined
+
+    let active = true
+    const reload = () => {
+      void getReaderHiddenWords()
+        .then((result) => {
+          if (active) setAccountWords(result)
+        })
+        .catch(() => {})
+    }
+
+    reload()
+    const unsubscribe = subscribeReaderHiddenWords(reload)
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [isPost, words])
+
+  const selectedWords = words === undefined ? accountWords : words
   const segments = useMemo(() => (
-    sourceType === 'reader_post' || sourceType === 'author_post'
-      ? splitHiddenWords(text, words)
+    isPost
+      ? splitHiddenWords(text, selectedWords)
       : [{ text: String(text ?? ''), hidden: false, offset: 0 }]
-  ), [text, words, sourceType])
+  ), [text, selectedWords, isPost])
 
   return (
     <span className={className}>
@@ -91,7 +122,7 @@ export default function HiddenWordsSpoilerText({
           labelConceal={t('hiddenWordsSpoilerText.conceal')}
         />
       ) : (
-        <span key={`${segment.offset}:plain`}>{segment.text}</span>
+        <span key={`${segment.offset}:plain`}>{typeof renderText === 'function' ? renderText(segment.text) : segment.text}</span>
       ))}
     </span>
   )
