@@ -301,6 +301,7 @@ export default function ReaderProfileFooter({
       const nextSnapshot = new Map()
       let toneToPlay = ''
 
+      const countedSenders = new Set()
       const total = conversations.reduce(
         (sum, item) => {
           if (
@@ -359,7 +360,11 @@ export default function ReaderProfileFooter({
               item.notification_tone || 'default'
           }
 
-          return sum + effectiveUnread
+          if (effectiveUnread <= 0) return sum
+const senderKey = String(item.counterpart?.user_id || conversationId)
+if (countedSenders.has(senderKey)) return sum
+countedSenders.add(senderKey)
+return sum + 1
         },
         0
       )
