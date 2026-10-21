@@ -730,7 +730,7 @@ export default function ChatStoryHomePage() {
           >
             <button
               type="button"
-              onClick={() => navigate('/search')}
+              onClick={() => navigate('/search?story_type=chat_story')}
               className="flex h-10 w-10 items-center justify-center rounded-full active:scale-95"
               style={{ color: 'var(--shadow-icon)' }}
               aria-label={t('chatStoryHomePage.search')}
