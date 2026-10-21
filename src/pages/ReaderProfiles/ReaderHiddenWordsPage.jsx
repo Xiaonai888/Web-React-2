@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { addReaderHiddenWord, deleteReaderHiddenWord, getReaderHiddenWords } from '../../services/readerHiddenWordsApi'
 
 registerTranslationNamespace('readerHiddenWords', {
   en: {
@@ -20,7 +21,8 @@ registerTranslationNamespace('readerHiddenWords', {
     sampleBefore: 'This post mentions', sampleAfter: 'today.', sampleWord: 'a hidden word',
     reveal: 'Reveal hidden word', hideAgain: 'Blur word again',
     signIn: 'Sign in to manage hidden words.', missingAccount: 'Your reader account could not be identified. Please sign in again.',
-    storageError: 'Could not save changes on this device.', deviceOnly: 'Currently saved on this device only. Account sync and post blurring will be connected next.'
+    storageError: 'Could not save your changes.', accountSync: 'Your hidden words are saved to your account and applied to Reader and Author posts you view.',
+    loading: 'Loading your hidden words...', retry: 'Try again', apiError: 'Could not connect. Please try again.', saving: 'Saving...', removing: 'Removing...'
   },
   km: {
     title: 'ពាក្យដែលបានលាក់', back: 'ត្រឡប់ទៅការកំណត់', eyebrow: 'ការអានតាមចំណូលចិត្ត',
@@ -38,7 +40,8 @@ registerTranslationNamespace('readerHiddenWords', {
     sampleBefore: 'Post នេះនិយាយពី', sampleAfter: 'នៅថ្ងៃនេះ។', sampleWord: 'ពាក្យលាក់',
     reveal: 'បង្ហាញពាក្យ', hideAgain: 'ព្រាលពាក្យម្តងទៀត',
     signIn: 'សូមចូលគណនីដើម្បីគ្រប់គ្រងពាក្យ។', missingAccount: 'មិនអាចសម្គាល់គណនីអ្នកអានបានទេ។ សូមចូលគណនីឡើងវិញ។',
-    storageError: 'មិនអាចរក្សាទុកនៅលើឧបករណ៍នេះបានទេ។', deviceOnly: 'បច្ចុប្បន្នរក្សាទុកតែនៅលើឧបករណ៍នេះ។ ការភ្ជាប់គណនី និងការព្រាលលើ Post នឹងធ្វើនៅជំហានបន្ទាប់។'
+    storageError: 'មិនអាចរក្សាទុកការផ្លាស់ប្តូរបានទេ។', accountSync: 'ពាក្យដែលបានលាក់ត្រូវរក្សាទុកតាមគណនី ហើយអនុវត្តលើ Reader Post និង Author Post ដែលអ្នកមើល។',
+    loading: 'កំពុងផ្ទុកពាក្យដែលបានលាក់...', retry: 'ព្យាយាមម្តងទៀត', apiError: 'មិនអាចភ្ជាប់បានទេ។ សូមព្យាយាមម្តងទៀត។', saving: 'កំពុងរក្សាទុក...', removing: 'កំពុងលុប...'
   },
   zh: {
     title: '隐藏词语', back: '返回设置', eyebrow: '舒适阅读', heading: '选择需要模糊的内容',
@@ -52,7 +55,8 @@ registerTranslationNamespace('readerHiddenWords', {
     sampleTitle: '模糊预览', sampleHelp: '点击模糊文字查看。预览不会修改帖子。', sampleBefore: '这篇帖子提到', sampleAfter: '。', sampleWord: '隐藏词语',
     reveal: '显示隐藏词语', hideAgain: '再次模糊', signIn: '请先登录。',
     missingAccount: '无法识别你的账号，请重新登录。', storageError: '无法在此设备保存更改。',
-    deviceOnly: '目前仅保存在本设备。账号同步和帖子模糊将在下一步连接。'
+    accountSync: '隐藏词语已保存到账号，并适用于你查看的读者和作者帖子。',
+    loading: '正在加载隐藏词语...', retry: '重试', apiError: '无法连接，请重试。', saving: '正在保存...', removing: '正在删除...'
   },
   ja: {
     title: '非表示ワード', back: '設定に戻る', eyebrow: '快適な閲覧', heading: 'ぼかす言葉を選択',
@@ -66,7 +70,8 @@ registerTranslationNamespace('readerHiddenWords', {
     sampleTitle: 'ぼかしプレビュー', sampleHelp: 'ぼかした言葉をタップすると表示します。投稿は変更されません。', sampleBefore: 'この投稿では', sampleAfter: 'について話しています。', sampleWord: '非表示ワード',
     reveal: 'ワードを表示', hideAgain: '再びぼかす', signIn: 'ログインしてください。',
     missingAccount: 'アカウントを確認できません。再ログインしてください。', storageError: 'この端末に保存できませんでした。',
-    deviceOnly: '現在はこの端末にのみ保存されます。アカウント同期と投稿のぼかし表示は次の段階で接続します。'
+    accountSync: '非表示ワードはアカウントに保存され、閲覧する読者・作者の投稿に適用されます。',
+    loading: '非表示ワードを読み込み中...', retry: '再試行', apiError: '接続できません。もう一度お試しください。', saving: '保存中...', removing: '削除中...'
   },
   ko: {
     title: '숨김 단어', back: '설정으로 돌아가기', eyebrow: '편안한 읽기', heading: '흐리게 표시할 단어 선택',
@@ -80,33 +85,14 @@ registerTranslationNamespace('readerHiddenWords', {
     sampleTitle: '흐림 미리보기', sampleHelp: '흐린 단어를 누르면 표시됩니다. 게시물은 변경되지 않습니다.', sampleBefore: '이 게시물은', sampleAfter: '에 관한 글입니다.', sampleWord: '숨김 단어',
     reveal: '단어 보기', hideAgain: '다시 흐리게', signIn: '먼저 로그인하세요.',
     missingAccount: '계정을 확인할 수 없습니다. 다시 로그인하세요.', storageError: '이 기기에 변경 사항을 저장할 수 없습니다.',
-    deviceOnly: '현재 이 기기에만 저장됩니다. 계정 동기화와 게시물 흐림 처리는 다음 단계에서 연결됩니다.'
+    accountSync: '숨김 단어는 계정에 저장되며, 내가 보는 독자 및 작가 게시물에 적용됩니다.',
+    loading: '숨김 단어 불러오는 중...', retry: '다시 시도', apiError: '연결할 수 없습니다. 다시 시도하세요.', saving: '저장 중...', removing: '삭제 중...'
   }
 })
 
 const LIMIT = 200
 const normalize = (value) => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ')
 const compareWord = (value) => normalize(value).toLocaleLowerCase()
-
-function readerId() {
-  try {
-    const user = JSON.parse(localStorage.getItem('shadow_reader_user') || sessionStorage.getItem('shadow_reader_user') || 'null')
-    return String(user?.id || user?.user_id || user?.reader?.id || '').trim()
-  } catch {
-    return ''
-  }
-}
-
-function readWords(key) {
-  if (!key) return []
-  try {
-    const data = JSON.parse(localStorage.getItem(key) || '[]')
-    if (!Array.isArray(data)) return []
-    return data.filter((item) => item && typeof item.word === 'string').slice(0, LIMIT)
-  } catch {
-    return []
-  }
-}
 
 export default function ReaderHiddenWordsPage() {
   const { t } = useDisplayTranslation()
@@ -115,36 +101,60 @@ export default function ReaderHiddenWordsPage() {
   const fromMeSettings = new URLSearchParams(location.search).get('from') === 'me-settings'
   const backPath = fromMeSettings ? '/profile/settings?from=me-settings' : '/profile/settings'
   const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token')
-  const accountId = readerId()
-  const storageKey = accountId ? `shadow_reader_hidden_words_draft_v1:${accountId}` : ''
-  const [words, setWords] = useState(() => readWords(storageKey))
+  const [words, setWords] = useState([])
   const [input, setInput] = useState('')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('newest')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [deletingId, setDeletingId] = useState('')
+  const [reload, setReload] = useState(0)
   const [revealed, setRevealed] = useState(false)
+  const operationRef = useRef(false)
 
   useEffect(() => {
-    if (!token) navigate('/login', { replace: true })
-  }, [token, navigate])
-
-  useEffect(() => {
-    setWords(readWords(storageKey))
-    const onStorage = (event) => {
-      if (event.key === storageKey) setWords(readWords(storageKey))
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
     }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
-  }, [storageKey])
+
+    let active = true
+    setLoading(true)
+    setLoadFailed(false)
+    setError('')
+    getReaderHiddenWords({ force: true })
+      .then((result) => {
+        if (!active) return
+        setWords(Array.isArray(result) ? result : [])
+        setLoading(false)
+        setRevealed(false)
+      })
+      .catch((reason) => {
+        if (!active) return
+        if (reason?.status === 401 || reason?.status === 403) {
+          navigate('/login', { replace: true })
+          return
+        }
+        setLoadFailed(true)
+        setError(t('readerHiddenWords.apiError'))
+        setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [token, navigate, reload, t])
 
   const shownWords = useMemo(() => {
     const query = compareWord(search)
     const filtered = words.filter((item) => compareWord(item.word).includes(query))
     return filtered.sort((a, b) => {
       if (sort === 'az') return a.word.localeCompare(b.word)
-      const first = Number(a.created_at || 0)
-      const second = Number(b.created_at || 0)
+      const first = new Date(a.created_at || 0).getTime() || 0
+      const second = new Date(b.created_at || 0).getTime() || 0
       return sort === 'oldest' ? first - second : second - first
     })
   }, [words, search, sort])
@@ -152,42 +162,68 @@ export default function ReaderHiddenWordsPage() {
   const duplicate = words.some((item) => compareWord(item.word) === compareWord(input))
   const previewWord = words[0]?.word || t('readerHiddenWords.sampleWord')
 
-  function persist(nextWords) {
-    try {
-      if (!storageKey) {
-        setError(t('readerHiddenWords.missingAccount'))
-        return false
-      }
-      localStorage.setItem(storageKey, JSON.stringify(nextWords))
-      setWords(nextWords)
-      setError('')
-      return true
-    } catch {
-      setError(t('readerHiddenWords.storageError'))
-      return false
+  function handleError(reason) {
+    if (reason?.status === 401 || reason?.status === 403) {
+      navigate('/login', { replace: true })
+      return
+    }
+    if (reason?.code === 'DUPLICATE_WORD') {
+      setError(t('readerHiddenWords.duplicate'))
+    } else if (reason?.code === 'WORD_LIMIT') {
+      setError(t('readerHiddenWords.full'))
+    } else if (reason?.code === 'INVALID_WORD') {
+      setError(t('readerHiddenWords.tooLong'))
+    } else {
+      setError(t('readerHiddenWords.apiError'))
     }
   }
 
-  function addWord(event) {
+  async function addWord(event) {
     event.preventDefault()
+    if (operationRef.current || loading || loadFailed || !token) return
     setMessage('')
+    setError('')
     const word = normalize(input)
     if (!word) return
     if (word.length > 120) return setError(t('readerHiddenWords.tooLong'))
     if (duplicate) return setError(t('readerHiddenWords.duplicate'))
     if (words.length >= LIMIT) return setError(t('readerHiddenWords.full'))
-    if (persist([{ id: crypto.randomUUID(), word, created_at: Date.now() }, ...words])) {
+
+    operationRef.current = true
+    setBusy(true)
+    try {
+      const created = await addReaderHiddenWord(word)
+      setWords((current) => [created, ...current.filter((item) => item.id !== created.id)])
       setInput('')
       setRevealed(false)
       setMessage(t('readerHiddenWords.saved'))
+    } catch (reason) {
+      handleError(reason)
+    } finally {
+      operationRef.current = false
+      setBusy(false)
     }
   }
 
-  function removeWord(item) {
+  async function removeWord(item) {
+    if (operationRef.current || loading || loadFailed || !token) return
     if (!window.confirm(t('readerHiddenWords.confirmRemove', { word: item.word }))) return
-    if (persist(words.filter((entry) => entry.id !== item.id))) {
+    operationRef.current = true
+    setBusy(true)
+    setDeletingId(String(item.id))
+    setError('')
+    setMessage('')
+    try {
+      await deleteReaderHiddenWord(item.id)
+      setWords((current) => current.filter((entry) => entry.id !== item.id))
       setMessage(t('readerHiddenWords.removed'))
       setRevealed(false)
+    } catch (reason) {
+      handleError(reason)
+    } finally {
+      operationRef.current = false
+      setBusy(false)
+      setDeletingId('')
     }
   }
 
@@ -225,12 +261,13 @@ export default function ReaderHiddenWordsPage() {
           <label htmlFor="reader-hidden-word-input" className="text-[15px] font-semibold">{t('readerHiddenWords.addTitle')}</label>
           <p className="mb-3 mt-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{t('readerHiddenWords.addHelp')}</p>
           <div className="flex gap-2">
-            <input id="reader-hidden-word-input" value={input} onChange={(event) => { setInput(event.target.value); setError(''); setMessage('') }} maxLength={121} disabled={!storageKey || words.length >= LIMIT} placeholder={t('readerHiddenWords.placeholder')} className="h-11 min-w-0 flex-1 rounded-[13px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 text-[13px] text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-text-tertiary)] focus:border-[var(--shadow-text-secondary)] disabled:opacity-50" />
-            <button type="submit" disabled={!normalize(input) || !storageKey || words.length >= LIMIT} className="h-11 shrink-0 rounded-[13px] bg-[var(--shadow-text-primary)] px-4 text-[12px] font-semibold text-[var(--shadow-bg-surface)] disabled:opacity-40">{t('readerHiddenWords.add')}</button>
+            <input id="reader-hidden-word-input" value={input} onChange={(event) => { setInput(event.target.value); setError(''); setMessage('') }} maxLength={121} disabled={busy || loading || loadFailed || !token || words.length >= LIMIT} placeholder={t('readerHiddenWords.placeholder')} className="h-11 min-w-0 flex-1 rounded-[13px] border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 text-[13px] text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-text-tertiary)] focus:border-[var(--shadow-text-secondary)] disabled:opacity-50" />
+            <button type="submit" disabled={!normalize(input) || busy || loading || loadFailed || !token || words.length >= LIMIT} className="h-11 shrink-0 rounded-[13px] bg-[var(--shadow-text-primary)] px-4 text-[12px] font-semibold text-[var(--shadow-bg-surface)] disabled:opacity-40">{t(busy && !deletingId ? 'readerHiddenWords.saving' : 'readerHiddenWords.add')}</button>
           </div>
           {error ? <p role="alert" className="mt-3 text-[12px] text-red-500">{error}</p> : null}
           {message ? <p role="status" className="mt-3 text-[12px] text-emerald-600">{message}</p> : null}
-          {!storageKey ? <p role="alert" className="mt-3 text-[12px] text-red-500">{t('readerHiddenWords.missingAccount')}</p> : null}
+          {loading ? <p role="status" className="mt-3 text-[12px] text-[var(--shadow-text-secondary)]">{t('readerHiddenWords.loading')}</p> : null}
+          {loadFailed ? <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 rounded-[12px] border border-[var(--shadow-border)] px-3 py-2 text-[12px] font-semibold text-[var(--shadow-text-primary)]">{t('readerHiddenWords.retry')}</button> : null}
         </form>
 
         <section className="rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 sm:p-5">
@@ -262,14 +299,14 @@ export default function ReaderHiddenWordsPage() {
             </select>
           </div>
           <div className="mt-3 overflow-hidden rounded-[19px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
-            {shownWords.length ? shownWords.map((item) => (
+            {loading ? <p role="status" className="px-4 py-6 text-[12px] text-[var(--shadow-text-secondary)]">{t('readerHiddenWords.loading')}</p> : loadFailed ? <p role="alert" className="px-4 py-6 text-[12px] text-[var(--shadow-text-secondary)]">{t('readerHiddenWords.apiError')}</p> : shownWords.length ? shownWords.map((item) => (
               <div key={item.id} className="flex items-center gap-3 border-b border-[var(--shadow-border)] px-3.5 py-3 last:border-b-0">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]">
                   <i className="fa-regular fa-eye-slash text-[13px]" aria-hidden="true" />
                 </div>
                 <span className="min-w-0 flex-1 break-words text-[13px] font-medium">{item.word}</span>
-                <button type="button" onClick={() => removeWord(item)} aria-label={t('readerHiddenWords.remove', { word: item.word })} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-soft)]">
-                  <i className="fa-regular fa-trash-can text-[13px]" aria-hidden="true" />
+                <button type="button" onClick={() => removeWord(item)} disabled={busy || loading || loadFailed} aria-label={t('readerHiddenWords.remove', { word: item.word })} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] text-[var(--shadow-text-secondary)] active:bg-[var(--shadow-bg-soft)]">
+                  <i className={deletingId === String(item.id) ? 'fa-solid fa-spinner animate-spin text-[13px]' : 'fa-regular fa-trash-can text-[13px]'} aria-hidden="true" />
                 </button>
               </div>
             )) : (
@@ -281,7 +318,7 @@ export default function ReaderHiddenWordsPage() {
             )}
           </div>
         </section>
-        <p className="px-1 text-[11px] leading-5 text-[var(--shadow-text-tertiary)]">{t('readerHiddenWords.deviceOnly')}</p>
+        <p className="px-1 text-[11px] leading-5 text-[var(--shadow-text-tertiary)]">{t('readerHiddenWords.accountSync')}</p>
       </main>
     </div>
   )
