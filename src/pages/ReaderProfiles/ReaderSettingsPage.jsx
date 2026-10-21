@@ -456,7 +456,7 @@ registerTranslationNamespace('readerSettings', {
   }
 })
 
-const GROUP_KEYS = ['account', 'activity', 'interaction', 'appSupport']
+const GROUP_KEYS = ['account', 'activity', 'visibility', 'interaction', 'appSupport']
 registerTranslationNamespace('readerSettings', {
   en: { items: { 'activity-history': { title: 'Activity History', subtitle: 'Review your important activities from the past year.' } } },
   km: { items: { 'activity-history': { title: 'ប្រវត្តិសកម្មភាព', subtitle: 'ពិនិត្យសកម្មភាពសំខាន់ៗរបស់អ្នកក្នុងរយៈពេលមួយឆ្នាំ។' } } },
@@ -471,6 +471,14 @@ registerTranslationNamespace('readerSettings', {
   zh: { search: '搜索' },
   ja: { search: '検索' },
   ko: { search: '검색' },
+})
+
+registerTranslationNamespace('readerSettings', {
+  en: { groups: { visibility: 'Who can see your content' }, items: { privacy: { title: 'Account Privacy' } } },
+  km: { groups: { visibility: 'អ្នកដែលអាចមើលឃើញមាតិការបស់អ្នក' }, items: { privacy: { title: 'ឯកជនភាពគណនី' } } },
+  zh: { groups: { visibility: '谁可以查看你的内容' }, items: { privacy: { title: '账户隐私' } } },
+  ja: { groups: { visibility: 'あなたのコンテンツを閲覧できる人' }, items: { privacy: { title: 'アカウントのプライバシー' } } },
+  ko: { groups: { visibility: '내 콘텐츠를 볼 수 있는 사람' }, items: { privacy: { title: '계정 개인정보 보호' } } },
 })
 
 const SETTINGS_GROUPS = [
@@ -490,18 +498,6 @@ const SETTINGS_GROUPS = [
         subtitle: 'Password, email, and account access.',
         icon: 'fa-solid fa-shield-halved',
         route: '/profile/settings/account-security',
-      },
-      {
-        key: 'privacy',
-        title: 'Privacy',
-        subtitle: 'Control who can see your reader space.',
-        icon: 'fa-solid fa-lock',
-      },
-      {
-        key: 'blocked-readers',
-        title: 'Blocked readers',
-        subtitle: 'Review readers you have blocked.',
-        icon: 'fa-solid fa-ban',
       },
     ],
   },
@@ -547,6 +543,23 @@ const SETTINGS_GROUPS = [
         title: 'Echo and sharing',
         subtitle: 'Manage echoed posts and sharing activity.',
         icon: 'fa-solid fa-arrows-rotate',
+      },
+    ],
+  },
+  {
+    title: 'Who can see your content',
+    items: [
+      {
+        key: 'privacy',
+        title: 'Account Privacy',
+        subtitle: 'Control who can see your reader space.',
+        icon: 'fa-solid fa-lock',
+      },
+      {
+        key: 'blocked-readers',
+        title: 'Blocked readers',
+        subtitle: 'Review readers you have blocked.',
+        icon: 'fa-solid fa-ban',
       },
     ],
   },
