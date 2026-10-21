@@ -567,11 +567,12 @@ const SETTINGS_GROUPS = [
         icon: 'fa-solid fa-lock',
       },
       {
-        key: 'blocked-readers',
-        title: 'Blocked readers',
-        subtitle: 'Review readers you have blocked.',
-        icon: 'fa-solid fa-ban',
-      },
+  key: 'blocked-readers',
+  title: 'Blocked readers',
+  subtitle: 'Review readers you have blocked.',
+  icon: 'fa-solid fa-ban',
+  route: '/profile/settings/blocked-readers',
+},
     ],
   },
   {
