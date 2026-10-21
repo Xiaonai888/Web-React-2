@@ -41,6 +41,11 @@ import {
 } from '../../utils/mangaImageUtils'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
+import {
+  useNovelInlineUploadQueue,
+  novelImageUploadMarker,
+  countPendingNovelImageMarkers,
+} from '../../utils/novelInlineUploadQueue'
 
 registerTranslationNamespace('episodeEditor', {
   en: {
@@ -1639,7 +1644,7 @@ async function optimizeNovelEpisodeImage(file) {
   }
 }
 
-async function uploadEpisodeInlineImage({ token, file }) {
+async function uploadEpisodeInlineImage({ token, file, signal, onProgress }) {
   if (!file) throw new Error(getDisplayText('episodeEditor.chooseImageFirst'))
   if (!isNovelImageFile(file)) {
     throw new Error(getDisplayText('episodeEditor.chooseImageFile'))
@@ -1696,13 +1701,15 @@ async function uploadEpisodeInlineImage({ token, file }) {
 
   const data = directFile
     ? await uploadMediaWithFallback({
+        signal,
+        onProgress,
         file: directFile,
         category: 'episode_content',
         token,
         apiBaseUrl: API_BASE_URL,
         legacyUpload,
       })
-    : await legacyUpload()
+    : await legacyUpload({ signal })
 
   const imageUrl = data.image_url || data.imageUrl
   if (!imageUrl) {
@@ -4174,6 +4181,16 @@ return true
       }
     }
   }, [])
+
+    const novelImageQueue = useNovelInlineUploadQueue({
+    active: !pageLoading && !isManga && !localRecoveryOpen,
+    storyId, episodeKey: editEpisodeId || 'new',
+    editorRef, getToken: getAuthToken,
+    upload: uploadEpisodeInlineImage,
+    onContentChange: (html) => { setContent(html); markUnsaved() },
+    onLocalSave: saveCurrentLocalDraft,
+    onFailed: () => showToast(getDisplayText('episodeEditor.failedUploadImage')),
+  })
 
   const updateMangaPage = (pageId, patch) => {
     setMangaPages((current) =>
