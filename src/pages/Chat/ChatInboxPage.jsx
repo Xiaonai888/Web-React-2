@@ -34,6 +34,7 @@ import ChatGroupCreateSheet from '../../components/chat/ChatGroupCreateSheet'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderMessageRequestModal'
 import { getLightweightChatInbox } from '../../services/chatInboxLightweightApi'
+import { useUnreadSenderCount } from '../../services/chatUnreadSenderCount'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -1444,32 +1445,8 @@ const [soundSettings, setSoundSettings] =
     }
   }, [navigate, normalizedQuery, t])
 
-  const unreadTotal = useMemo(() => {
-    const unreadSenders = new Set()
-
-    for (const item of conversations) {
-      if (
-        item.request_status === 'declined' ||
-        item.request_status === 'blocked'
-      ) {
-        continue
-      }
-
-      const unread = Math.max(0, Number(item.unread_count || 0))
-      const incomingRequest =
-        item.can_decide === true &&
-        item.request_status === 'pending'
-
-      if (unread === 0 && !incomingRequest) continue
-
-      const senderKey = String(
-        item.counterpart?.user_id || item.id
-      )
-      unreadSenders.add(senderKey)
-    }
-
-    return unreadSenders.size
-  }, [conversations])
+  const { count: unreadTotal, refresh: refreshUnreadSenderCount } =
+    useUnreadSenderCount()
 
   const pendingConversations = useMemo(
     () =>
@@ -2817,14 +2794,17 @@ const [soundSettings, setSoundSettings] =
 
                   <div className="mt-1 flex items-center gap-2 text-[11px] font-bold text-[#8a8792]">
                     <span className="h-2 w-2 rounded-full bg-[#7c3aed]" />
-                    {t('chatInboxPage.unreadCount', { count: `${unreadTotal.toLocaleString(getDisplayLanguageId())}${hasMoreConversations ? '+' : ''}` })}
+                    {t('chatInboxPage.unreadCount', { count: unreadTotal.toLocaleString(getDisplayLanguageId()) })}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => loadConversations({ silent: true })}
+                    onClick={() => {
+                        void loadConversations({ silent: true })
+                        void refreshUnreadSenderCount(true)
+                      }}
                     aria-label={t('chatInboxPage.refreshInbox')}
                     className="flex h-11 w-11 items-center justify-center rounded-full text-[#7c3aed] active:bg-[#f4f1fb]"
                   >
