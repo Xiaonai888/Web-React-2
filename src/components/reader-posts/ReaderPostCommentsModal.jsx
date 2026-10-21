@@ -39,7 +39,7 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "viewReply": "View {{count}} reply",
     "editComment": "Edit comment",
     "saving": "Saving...",
-    "saveComment": "Save comment",
+    "saveComment": "Update",
     "failedLoadComments": "Failed to load comments",
     "failedLoadCommentsPeriod": "Failed to load comments.",
     "pleaseLoginComment": "Please login to comment.",
@@ -103,7 +103,7 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "viewReply": "មើលការឆ្លើយតប {{count}}",
     "editComment": "កែមតិយោបល់",
     "saving": "កំពុងរក្សាទុក...",
-    "saveComment": "រក្សាទុកមតិយោបល់",
+    "saveComment": "អាប់ដេត",
     "failedLoadComments": "មិនអាចផ្ទុកមតិយោបល់បានទេ",
     "failedLoadCommentsPeriod": "មិនអាចផ្ទុកមតិយោបល់បានទេ។",
     "pleaseLoginComment": "សូមចូលគណនីដើម្បីសរសេរមតិយោបល់។",
@@ -167,7 +167,7 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "viewReply": "查看 {{count}} 条回复",
     "editComment": "编辑评论",
     "saving": "保存中...",
-    "saveComment": "保存评论",
+    "saveComment": "更新",
     "failedLoadComments": "无法加载评论",
     "failedLoadCommentsPeriod": "无法加载评论。",
     "pleaseLoginComment": "请先登录再评论。",
@@ -231,7 +231,7 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "viewReply": "返信 {{count}}件を表示",
     "editComment": "コメントを編集",
     "saving": "保存中...",
-    "saveComment": "コメントを保存",
+    "saveComment": "更新",
     "failedLoadComments": "コメントを読み込めませんでした",
     "failedLoadCommentsPeriod": "コメントを読み込めませんでした。",
     "pleaseLoginComment": "コメントするにはログインしてください。",
@@ -295,7 +295,7 @@ registerTranslationNamespace('readerPostCommentsModal', {
     "viewReply": "답글 {{count}}개 보기",
     "editComment": "댓글 수정",
     "saving": "저장 중...",
-    "saveComment": "댓글 저장",
+    "saveComment": "업데이트",
     "failedLoadComments": "댓글을 불러오지 못했습니다",
     "failedLoadCommentsPeriod": "댓글을 불러오지 못했습니다.",
     "pleaseLoginComment": "댓글을 작성하려면 로그인하세요.",
@@ -549,7 +549,6 @@ const READER_POST_COMMENT_MENU_ICONS = {
 function MenuRow({
   icon,
   label,
-  danger = false,
   onClick,
 }) {
   const Icon = READER_POST_COMMENT_MENU_ICONS[icon]
@@ -558,19 +557,9 @@ function MenuRow({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left active:bg-[var(--shadow-bg-soft)] ${
-        danger
-          ? 'text-[#dc2626]'
-          : 'text-[var(--shadow-text-primary)]'
-      }`}
+      className="flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
     >
-      <span
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-          danger
-            ? 'bg-[#fff1f2] text-[#dc2626] dark:bg-[#dc2626]/10'
-            : 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
-        }`}
-      >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
         {Icon ? <Icon size={19} strokeWidth={1.7} /> : <i className={`${icon} text-[17px]`} />}
       </span>
       <span className="text-[16px] font-normal">
@@ -579,7 +568,6 @@ function MenuRow({
     </button>
   )
 }
-
 
 function useCommentMenuPress(openMenu) {
   const timer = useRef(null)
@@ -693,7 +681,6 @@ function CommentOptionsSheet({
             <MenuRow
               icon="fa-regular fa-trash-can"
               label={t('readerPostCommentsModal.delete')}
-              danger
               onClick={() => runAction(onDelete)}
             />
           </>
@@ -1047,44 +1034,52 @@ function EditCommentSheet({
   if (!comment) return null
 
   return (
-    <div className="absolute inset-0 z-[100] flex items-end justify-center bg-black/35 px-4">
-      <section className="w-full max-w-xl rounded-t-[26px] bg-[var(--shadow-bg-surface)] px-5 pb-6 pt-4 shadow-2xl sm:mb-6 sm:rounded-[26px]">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-bg-soft)]" />
-
-        <div className="flex items-center justify-between">
-          <h3 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">
-            {t('readerPostCommentsModal.editComment')}
-          </h3>
+    <div className="absolute inset-0 z-[130] flex items-stretch justify-center bg-[var(--shadow-bg-surface)]">
+      <section className="relative flex h-full w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-[calc(16px+env(safe-area-inset-bottom))] pt-[max(12px,env(safe-area-inset-top))] shadow-2xl sm:rounded-[28px]">
+        <header className="relative flex h-12 shrink-0 items-center justify-center border-b border-[var(--shadow-border)]">
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]"
-            aria-label="Close edit comment"
+            className="absolute left-0 flex h-11 w-11 items-center justify-center text-[var(--shadow-text-primary)]"
+            aria-label={t('readerPostCommentsModal.cancel')}
           >
-            <i className="fa-solid fa-xmark text-[13px]" />
+            <i className="fa-solid fa-chevron-left text-[19px]" />
           </button>
+          <h3 className="text-[17px] font-semibold text-[var(--shadow-text-primary)]">
+            {t('readerPostCommentsModal.editComment')}
+          </h3>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto pt-4">
+          <textarea
+            value={value}
+            maxLength={COMMENT_LIMIT}
+            onChange={(event) => onChange(event.target.value)}
+            rows={5}
+            autoFocus
+            className="min-h-[150px] w-full resize-none rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none focus:ring-2 focus:ring-[var(--shadow-border-strong)]"
+          />
+
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 rounded-[12px] bg-[var(--shadow-bg-soft)] px-5 text-[14px] font-normal text-[var(--shadow-text-primary)]"
+            >
+              {t('readerPostCommentsModal.cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!value.trim() || saving}
+              className="h-10 min-w-[90px] rounded-[12px] bg-[var(--shadow-text-primary)] px-5 text-[14px] font-semibold text-[var(--shadow-bg-surface)] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
+            >
+              {saving
+                ? t('readerPostCommentsModal.saving')
+                : t('readerPostCommentsModal.saveComment')}
+            </button>
+          </div>
         </div>
-
-        <textarea
-          value={value}
-          maxLength={COMMENT_LIMIT}
-          onChange={(event) =>
-            onChange(event.target.value)
-          }
-          rows={5}
-          className="mt-4 w-full resize-none rounded-[18px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[14px] font-normal leading-6 outline-none focus:ring-2 focus:ring-[#111827]/10"
-        />
-
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!value.trim() || saving}
-          className="mt-4 h-11 w-full rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-semibold text-[var(--shadow-bg-surface)] disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
-        >
-          {saving
-            ? t('readerPostCommentsModal.saving')
-            : t('readerPostCommentsModal.saveComment')}
-        </button>
       </section>
     </div>
   )
