@@ -26,6 +26,11 @@ import {
   ProfessionalSinglePostImage,
 } from '../common/ProfessionalPostContent'
 import ReaderDiscoverPostText from './ReaderDiscoverPostText'
+import HiddenWordsSpoilerText from '../common/HiddenWordsSpoilerText'
+import {
+  getReaderHiddenWords,
+  subscribeReaderHiddenWords,
+} from '../../services/readerHiddenWordsApi'
 import {
   deleteSavedPostBySource,
   fetchSavedPostStatus,
@@ -809,11 +814,18 @@ async function uploadReaderPostImage(
 const POST_TOKEN_PATTERN = /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
 const POST_URL_ONLY_PATTERN = /^https?:\/\/[^\s]+$/i
 const POST_HASHTAG_ONLY_PATTERN = /^#[\p{L}\p{N}\p{M}_]+$/u
-function renderPostTextWithLinks(text) {
+function renderPostTextWithLinks(text, hiddenWords = [], sourceType = 'reader_post') {
   return String(text || '').split(POST_TOKEN_PATTERN).map((part, index) => {
     if (POST_URL_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={part} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="break-all text-[#1877f2]">{part}</a>
     if (POST_HASHTAG_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={`/discover/search?q=${encodeURIComponent(part)}&type=posts`} onClick={(e) => e.stopPropagation()} className="text-[#1877f2]">{part}</a>
-    return part
+        return (
+      <HiddenWordsSpoilerText
+        key={`text-${index}`}
+        text={part}
+        words={hiddenWords}
+        sourceType={sourceType}
+      />
+    )
   })
 }
 
@@ -1390,7 +1402,7 @@ function resolveReaderPostEchoSource(
   }
 }
 
-function ReaderEchoSourceBlock({ post }) {
+function ReaderEchoSourceBlock({ post, hiddenWords = [] }) {
   const navigate = useNavigate()
   const location = useLocation()
   useDisplayTranslation()
@@ -1767,8 +1779,10 @@ function ReaderEchoSourceBlock({ post }) {
           <div className="px-3.5 pb-3">
             <p className="line-clamp-3 whitespace-pre-wrap break-words text-[14px] font-normal leading-5 text-[#111827] dark:text-[#f8fafc]">
               {renderPostTextWithLinks(
-                previewText
-              )}
+  previewText,
+  hiddenWords,
+  sourceType
+)}
             </p>
           </div>
         ) : null}
@@ -1882,6 +1896,7 @@ function StandardReaderPostCard({
   fullPostView = false,
   photoPostView = false,
   selectedPhotoIndex = 0,
+  hiddenWords = [],
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -2045,6 +2060,8 @@ const echoStateLoaded =
   const postText = String(
     post?.content || ''
   )
+  const renderReaderPostWithSpoilers = (value) =>
+    renderPostTextWithLinks(value, hiddenWords, 'reader_post')
   const imageUrls =
     Array.isArray(
       post?.image_urls
@@ -3700,9 +3717,9 @@ const safeSelectedPhotoIndex =
     content={
       postText ? (
         <span>
-          {renderPostTextWithLinks(
-            postText
-          )}
+          {renderReaderPostWithSpoilers(
+  postText
+)}
         </span>
       ) : null
     }
@@ -4026,7 +4043,7 @@ likeCount={reactionCount}
             ) : (
               <ReaderDiscoverPostText
   text={postText}
-  renderText={renderPostTextWithLinks}
+  renderText={renderReaderPostWithSpoilers}
   className="text-[14px] font-normal leading-6 text-[#111827] dark:text-[#f8fafc]"
 />
             )}
