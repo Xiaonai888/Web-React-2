@@ -13,7 +13,7 @@ export function chatStoryQueueUserId(token) {
     const part = String(token || '').split('.')[1]
     if (!part) return ''
     const payload = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')))
-    return String(payload.user_id || '').trim()
+    return String(payload.user_id || payload.sub || '').trim()
   } catch {
     return ''
   }
