@@ -202,6 +202,9 @@ const ReaderShareProfilePage = lazy(() =>
 const ReaderSettingsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderSettingsPage')
 )
+const ReaderHiddenWordsPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderHiddenWordsPage')
+)
 const ReaderAccountPrivacyPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderAccountPrivacyPage')
 )
@@ -1443,6 +1446,11 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+
+      <Route
+  path="/profile/settings/hidden-words"
+  element={<LazyPage><ReaderHiddenWordsPage /></LazyPage>}
+/>    
 
           <Route
   path="/profile/settings/privacy"
