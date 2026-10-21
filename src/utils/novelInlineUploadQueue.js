@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createUploadQueueManager } from './uploadQueueManager'
+import { getDisplayText } from './displayLanguage'
 
 const MARKER_PREFIX = '[[shadow-upload:'
 
@@ -20,6 +21,44 @@ export function novelImageUploadMarker(id) {
 
 export function countPendingNovelImageMarkers(html) {
   return (String(html || '').match(/\[\[shadow-upload:[a-z\d-]+\]\]/gi) || []).length
+}
+
+function replaceUploadMarker(paragraph, marker, imageUrl) {
+  const image = document.createElement('img')
+  image.src = imageUrl
+  image.alt = 'Episode image'
+
+  const originalPlaceholder = `⏳ ${getDisplayText('episodeEditor.uploading')} ${marker}`
+  if (paragraph.childNodes.length === 1 &&
+    paragraph.firstChild?.nodeType === Node.TEXT_NODE &&
+    paragraph.textContent.trim() === originalPlaceholder) {
+    paragraph.replaceChildren(image)
+    return true
+  }
+
+  const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT)
+  const nodes = []
+  let text = ''
+  let node
+  while ((node = walker.nextNode())) {
+    const value = node.nodeValue || ''
+    nodes.push({ node, start: text.length, end: text.length + value.length })
+    text += value
+  }
+
+  const start = text.indexOf(marker)
+  if (start < 0) return false
+  const end = start + marker.length
+  const first = nodes.find((item) => item.start <= start && item.end > start)
+  const last = nodes.find((item) => item.start < end && item.end >= end)
+  if (!first || !last) return false
+
+  const range = document.createRange()
+  range.setStart(first.node, start - first.start)
+  range.setEnd(last.node, end - last.start)
+  range.deleteContents()
+  range.insertNode(image)
+  return true
 }
 
 export function useNovelInlineUploadQueue({
@@ -54,7 +93,7 @@ export function useNovelInlineUploadQueue({
       task.context?.storyId === String(storyId) &&
       task.context?.episodeKey === String(episodeKey)
     )
-    setPendingCount(tasks.filter((task) => !['uploaded'].includes(task.status)).length)
+    setPendingCount(tasks.length)
 
     const editor = current.current.editorRef.current
     if (!editor) return
@@ -74,12 +113,7 @@ export function useNovelInlineUploadQueue({
       const marker = novelImageUploadMarker(task.id)
       const paragraph = Array.from(editor.querySelectorAll('p'))
         .find((element) => element.textContent?.includes(marker))
-      if (!paragraph) continue
-
-      const image = document.createElement('img')
-      image.src = imageUrl
-      image.alt = 'Episode image'
-      paragraph.replaceChildren(image)
+      if (!paragraph || !replaceUploadMarker(paragraph, marker, imageUrl)) continue
       current.current.onContentChange(editor.innerHTML)
       const saved = await current.current.onLocalSave()
       if (saved) await queue.remove(task.id)
