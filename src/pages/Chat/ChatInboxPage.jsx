@@ -1444,33 +1444,32 @@ const [soundSettings, setSoundSettings] =
     }
   }, [navigate, normalizedQuery, t])
 
-  const unreadTotal = useMemo(
-    () =>
-      conversations.reduce((total, item) => {
-        if (
-          item.request_status === 'declined' ||
-          item.request_status === 'blocked'
-        ) {
-          return total
-        }
+  const unreadTotal = useMemo(() => {
+    const unreadSenders = new Set()
 
-        const unread = Math.max(
-          0,
-          Number(item.unread_count || 0)
-        )
-        const incomingRequest =
-          item.can_decide === true &&
-          item.request_status === 'pending'
+    for (const item of conversations) {
+      if (
+        item.request_status === 'declined' ||
+        item.request_status === 'blocked'
+      ) {
+        continue
+      }
 
-        return (
-          total +
-          (incomingRequest
-            ? Math.max(1, unread)
-            : unread)
-        )
-      }, 0),
-    [conversations]
-  )
+      const unread = Math.max(0, Number(item.unread_count || 0))
+      const incomingRequest =
+        item.can_decide === true &&
+        item.request_status === 'pending'
+
+      if (unread === 0 && !incomingRequest) continue
+
+      const senderKey = String(
+        item.counterpart?.user_id || item.id
+      )
+      unreadSenders.add(senderKey)
+    }
+
+    return unreadSenders.size
+  }, [conversations])
 
   const pendingConversations = useMemo(
     () =>
