@@ -13,6 +13,7 @@ import {
 } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import ImageDropZone from '../common/ImageDropZone'
+import ReaderPostTagPeopleSelector from '../../pages/ReaderPosts/ReaderPostTagPeopleSelector'
 import ReaderPostOptionsSheet, {
   ReaderPostDeleteConfirmSheet,
 } from './ReaderPostOptionsSheet'
@@ -37,6 +38,14 @@ import {
   saveSavedPost,
 } from '../../services/savedPostsApi'
 
+
+registerTranslationNamespace('readerPostEditTagStatus', {
+  en: { loading: 'Loading existing tags...', loadError: 'Could not load existing tags. Your current tags will remain unchanged if you save without editing tags.', retry: 'Try again' },
+  km: { loading: 'កំពុងផ្ទុក Tag ចាស់...', loadError: 'មិនអាចផ្ទុក Tag ចាស់បានទេ។ Tag ចាស់នឹងរក្សាដដែល បើអ្នក Save ដោយមិនកែ Tag។', retry: 'ព្យាយាមម្ដងទៀត' },
+  zh: { loading: '正在加载现有标签...', loadError: '无法加载现有标签。若未编辑标签直接保存，原标签将保持不变。', retry: '重试' },
+  ja: { loading: '既存のタグを読み込み中...', loadError: '既存のタグを読み込めません。タグを変更せず保存しても元のタグは維持されます。', retry: '再試行' },
+  ko: { loading: '기존 태그를 불러오는 중...', loadError: '기존 태그를 불러올 수 없습니다. 태그를 수정하지 않고 저장하면 기존 태그가 유지됩니다.', retry: '다시 시도' },
+})
 
 registerTranslationNamespace('readerPostCard', {
   "en": {
@@ -1926,6 +1935,12 @@ function StandardReaderPostCard({
     useState(false)
   const [content, setContent] =
     useState(post?.content || '')
+  const [editTaggedUsers, setEditTaggedUsers] = useState([])
+  const [editTagsLoading, setEditTagsLoading] = useState(false)
+  const [editTagsReady, setEditTagsReady] = useState(false)
+  const [editTagsError, setEditTagsError] = useState(false)
+  const [editTagsDirty, setEditTagsDirty] = useState(false)
+  const [editTagsRetryKey, setEditTagsRetryKey] = useState(0)
   const [
     editImageUrls,
     setEditImageUrls,
@@ -2156,6 +2171,48 @@ const safeSelectedPhotoIndex =
       content.trim() ||
       editImageUrls.length
   )
+
+  useEffect(() => {
+    if (!editorOpen || !post?.id || !isOwner || isLegacyEcho) return
+    const controller = new AbortController()
+    let active = true
+    setEditTagsLoading(true)
+    setEditTagsReady(false)
+    setEditTagsError(false)
+    setEditTagsDirty(false)
+    setEditTaggedUsers([])
+
+    async function loadTags() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/reader-posts/me/${encodeURIComponent(post.id)}/tags`,
+          {
+            headers: { Authorization: `Bearer ${getAuthToken()}` },
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok !== true || !Array.isArray(data.tagged_users)) {
+          throw new Error('LOAD_TAGS_FAILED')
+        }
+        if (!active) return
+        setEditTaggedUsers(data.tagged_users.filter((reader) => reader?.id).slice(0, 20))
+        setEditTagsReady(true)
+      } catch {
+        if (!active || controller.signal.aborted) return
+        setEditTagsError(true)
+      } finally {
+        if (active) setEditTagsLoading(false)
+      }
+    }
+
+    loadTags()
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [editorOpen, post?.id, isOwner, isLegacyEcho, editTagsRetryKey])
 
   useEffect(() => {
     setReactionCount(
@@ -2785,6 +2842,9 @@ const safeSelectedPhotoIndex =
             content: text,
             image_urls:
               editImageUrls,
+            ...(editTagsReady && editTagsDirty ? {
+              tagged_user_ids: editTaggedUsers.map((person) => person.id).filter(Boolean),
+            } : {}),
           }),
         }
       )
@@ -5104,6 +5164,30 @@ likeCount={reactionCount}
                     removeEditImage
                   }
                 />
+
+                <div className="mt-4">
+                  {editTagsLoading && (
+                    <p role="status" className="mb-2 text-[12px] text-[var(--shadow-text-secondary)]">
+                      {t('readerPostEditTagStatus.loading')}
+                    </p>
+                  )}
+                  {editTagsError && (
+                    <div role="alert" className="mb-3 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-3 py-3 text-[12px] text-[var(--shadow-text-primary)]">
+                      <p>{t('readerPostEditTagStatus.loadError')}</p>
+                      <button type="button" onClick={() => setEditTagsRetryKey((key) => key + 1)} className="mt-2 font-semibold underline">
+                        {t('readerPostEditTagStatus.retry')}
+                      </button>
+                    </div>
+                  )}
+                  <ReaderPostTagPeopleSelector
+                    selected={editTaggedUsers}
+                    onChange={(people) => {
+                      setEditTaggedUsers(people)
+                      setEditTagsDirty(true)
+                    }}
+                    disabled={saving || uploadingImages || !editTagsReady}
+                  />
+                </div>
 
                 {message ? (
                   <div className="mt-3 rounded-[12px] bg-[#fff7ed] dark:bg-amber-500/10 px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412] dark:text-amber-300">
