@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 
 registerTranslationNamespace('chatStoryEditor', {
   "en": {
