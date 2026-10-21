@@ -37,6 +37,15 @@ function canRetry(error) {
   return error?.name !== 'AbortError'
 }
 
+function isTemporaryOutage(error) {
+  const status = errorStatus(error)
+  if ([408, 425, 429].includes(status) || status >= 500) return true
+  if (status !== 0) return false
+  const code = String(error?.code || '').toUpperCase()
+  if (['DIRECT_UPLOAD_NETWORK_ERROR', 'LEGACY_UPLOAD_NETWORK_ERROR'].includes(code)) return true
+  return /network|offline|failed to fetch|cannot connect|could not (?:be )?reach|timed? ?out/i.test(String(error?.message || ''))
+}
+
 function retryDelay(attempts, error) {
   const suggested = Number(error?.retryAfterMs || 0)
   if (suggested > 0) return Math.min(MAX_RETRY_DELAY_MS, Math.max(1000, suggested))
@@ -119,7 +128,7 @@ export function createUploadQueueManager({ ownerId, upload, onChange, maxAttempt
       if (task) {
         const interrupted = controller?.signal.aborted || error?.name === 'AbortError'
         const recoverable = interrupted || canRetry(error)
-        const permanent = !interrupted && (error?.permanent || !recoverable || task.attempts >= maxAttempts)
+        const permanent = !interrupted && (error?.permanent || !recoverable || (task.attempts >= maxAttempts && !isTemporaryOutage(error)))
         const nextRetryAt = interrupted ? 0 : permanent ? 0 : Date.now() + retryDelay(task.attempts, error)
         try {
           const failed = await failMediaUpload(task.id, workerId, {
