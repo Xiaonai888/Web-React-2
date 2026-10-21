@@ -1193,24 +1193,20 @@ const COMMENT_MENU_ICONS = {
 function MenuButton({
   icon,
   label,
-  danger = false,
   onClick,
 }) {
   const Icon = COMMENT_MENU_ICONS[icon]
-  const iconColor = danger ? 'text-[#dc2626]' : 'text-[var(--shadow-text-secondary)]'
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-12 w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left font-normal transition-colors active:bg-[var(--shadow-bg-soft)] ${
-        danger ? 'text-[#dc2626]' : 'text-[var(--shadow-text-primary)]'
-      }`}
+      className="flex min-h-12 w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left font-normal text-[var(--shadow-text-primary)] transition-colors active:bg-[var(--shadow-bg-soft)]"
     >
       {Icon ? (
-        <Icon size={19} strokeWidth={1.7} className={`w-5 shrink-0 ${iconColor}`} />
+        <Icon size={19} strokeWidth={1.7} className="w-5 shrink-0 text-[var(--shadow-text-primary)]" />
       ) : (
-        <i className={`${icon} w-5 shrink-0 text-center text-[17px] ${iconColor}`} />
+        <i className={`${icon} w-5 shrink-0 text-center text-[17px] text-[var(--shadow-text-primary)]`} />
       )}
       <span className="text-[15px] font-normal">
         {label}
@@ -1218,6 +1214,7 @@ function MenuButton({
     </button>
   )
 }
+
 
 function getCommentShareLink(comment, targetType, targetId, story) {
   const commentId = String(comment?.id || '').trim()
