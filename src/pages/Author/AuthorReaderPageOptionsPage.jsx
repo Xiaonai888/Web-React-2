@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthorPageShareSheet from '../../components/AuthorPageShareSheet'
+import ReaderBlockConfirmModal from '../../components/reader-profile/ReaderBlockConfirmModal'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -32,8 +33,8 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "closeConfirmation": "Close block confirmation",
     "unblockTitle": "Unblock {{name}}?",
     "blockTitle": "Block {{name}}?",
-    "unblockDescription": "This will unblock both the Author Page and its Reader account.",
-    "blockDescription": "This will block both the Author Page and its Reader account, including direct messages between both accounts.",
+    "unblockDescription": "This will unblock only this Author Page. Its Reader account and direct messages will remain unchanged.",
+    "blockDescription": "This will block only this Author Page. Its Reader account and direct messages will remain unchanged.",
     "cancel": "Cancel",
     "pleaseWait": "Please wait..."
   },
@@ -64,8 +65,8 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "closeConfirmation": "បិទការបញ្ជាក់ Block",
     "unblockTitle": "Unblock {{name}}?",
     "blockTitle": "Block {{name}}?",
-    "unblockDescription": "វានឹង Unblock ទាំងទំព័រអ្នកនិពន្ធ និងគណនីអ្នកអានរបស់គេ។",
-    "blockDescription": "វានឹង Block ទាំងទំព័រអ្នកនិពន្ធ និងគណនីអ្នកអាន រួមទាំងសារផ្ទាល់រវាងគណនីទាំងពីរ។",
+    "unblockDescription": "វានឹង Unblock តែទំព័រអ្នកនិពន្ធនេះប៉ុណ្ណោះ។ គណនីអ្នកអាន និងសារផ្ទាល់នឹងនៅដដែល។",
+    "blockDescription": "វានឹង Block តែទំព័រអ្នកនិពន្ធនេះប៉ុណ្ណោះ។ គណនីអ្នកអាន និងសារផ្ទាល់នឹងនៅដដែល។",
     "cancel": "បោះបង់",
     "pleaseWait": "សូមរង់ចាំ..."
   },
@@ -96,8 +97,8 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "closeConfirmation": "关闭屏蔽确认",
     "unblockTitle": "取消屏蔽 {{name}}？",
     "blockTitle": "屏蔽 {{name}}？",
-    "unblockDescription": "这将同时取消屏蔽作者主页及其读者账号。",
-    "blockDescription": "这将同时屏蔽作者主页及其读者账号，包括两个账号之间的私信。",
+    "unblockDescription": "这只会取消屏蔽此作者主页，不会更改其读者账号或私信状态。",
+    "blockDescription": "这只会屏蔽此作者主页，不会屏蔽其读者账号或私信。",
     "cancel": "取消",
     "pleaseWait": "请稍候..."
   },
@@ -128,8 +129,8 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "closeConfirmation": "ブロック確認を閉じる",
     "unblockTitle": "{{name}} のブロックを解除しますか？",
     "blockTitle": "{{name}} をブロックしますか？",
-    "unblockDescription": "著者ページとその読者アカウントの両方をブロック解除します。",
-    "blockDescription": "著者ページと読者アカウントの両方をブロックし、両アカウント間のダイレクトメッセージも対象になります。",
+    "unblockDescription": "この著者ページのみブロック解除します。読者アカウントとダイレクトメッセージの状態は変わりません。",
+    "blockDescription": "この著者ページのみブロックします。読者アカウントとダイレクトメッセージの状態は変わりません。",
     "cancel": "キャンセル",
     "pleaseWait": "お待ちください..."
   },
@@ -160,8 +161,8 @@ registerTranslationNamespace('authorReaderPageOptions', {
     "closeConfirmation": "차단 확인 닫기",
     "unblockTitle": "{{name}} 차단을 해제할까요?",
     "blockTitle": "{{name}}을(를) 차단할까요?",
-    "unblockDescription": "작가 페이지와 해당 독자 계정의 차단을 모두 해제합니다.",
-    "blockDescription": "작가 페이지와 독자 계정을 모두 차단하며 두 계정 간의 다이렉트 메시지도 포함됩니다.",
+    "unblockDescription": "이 작가 페이지만 차단 해제합니다. 독자 계정과 다이렉트 메시지는 변경되지 않습니다.",
+    "blockDescription": "이 작가 페이지만 차단합니다. 독자 계정과 다이렉트 메시지는 변경되지 않습니다.",
     "cancel": "취소",
     "pleaseWait": "잠시 기다려 주세요..."
   }
@@ -216,6 +217,21 @@ export default function AuthorReaderPageOptionsPage() {
 
   const pageName = authorPage?.page_name || authorPage?.name || t('authorReaderPageOptions.authorPage')
   const pageId = authorPage?.id || ''
+  const blockTarget = {
+    name: pageName,
+    page_username: authorPage?.page_username || pageUsername || '',
+    avatar_url: authorPage?.avatar_url || null,
+  }
+
+  function translatePageBlockDialog(key, values) {
+    const field = key.split('.').pop()
+    const fields = {
+      blockQuestion: 'blockDescription',
+      unblockQuestion: 'unblockDescription',
+      saving: 'pleaseWait',
+    }
+    return t(`authorReaderPageOptions.${fields[field] || field}`, values)
+  }
   const publicPath = pageUsername ? `/author/page/${pageUsername}` : '/author/page'
   const pageLink = useMemo(() => `${window.location.origin}${publicPath}`, [publicPath])
 
@@ -231,6 +247,8 @@ export default function AuthorReaderPageOptionsPage() {
       try {
         setLoading(true)
         setMessage('')
+        setBlocked(false)
+        setBlockConfirmOpen(false)
 
         const token = getAuthToken()
         const response = await fetch(
@@ -317,6 +335,7 @@ export default function AuthorReaderPageOptionsPage() {
   }
 
   function openBlockConfirmation() {
+    if (!authorPage || loading || blockStatusLoading || blockLoading) return
     const token = getAuthToken()
 
     if (!token) {
@@ -423,7 +442,7 @@ export default function AuthorReaderPageOptionsPage() {
             icon={blocked ? 'fa-solid fa-user-check' : 'fa-solid fa-user-slash'}
             label={blockStatusLoading ? t('authorReaderPageOptions.checking') : blocked ? t('authorReaderPageOptions.unblock') : t('authorReaderPageOptions.block')}
             onClick={openBlockConfirmation}
-            disabled={blockStatusLoading}
+            disabled={loading || !authorPage || blockStatusLoading || blockLoading}
           />
           <ActionRow
             icon="fa-solid fa-magnifying-glass"
@@ -477,54 +496,16 @@ export default function AuthorReaderPageOptionsPage() {
         onCopied={(value) => setMessage(value || t('authorReaderPageOptions.pageLinkCopied'))}
       />
 
-      {blockConfirmOpen ? (
-        <div className="fixed inset-0 z-[270] flex items-end justify-center bg-black/45 md:items-center md:px-4">
-          <button
-            type="button"
-            aria-label={t('authorReaderPageOptions.closeConfirmation')}
-            onClick={() => {
-              if (!blockLoading) setBlockConfirmOpen(false)
-            }}
-            className="absolute inset-0"
-          />
-
-          <section className="relative w-full rounded-t-[24px] bg-[var(--shadow-bg-surface)] px-5 pb-6 pt-5 shadow-2xl md:max-w-[420px] md:rounded-[24px]">
-            <h2 className="text-center text-[18px] font-bold text-[var(--shadow-text-primary)]">
-              {blocked ? t('authorReaderPageOptions.unblockTitle', { name: pageName }) : t('authorReaderPageOptions.blockTitle', { name: pageName })}
-            </h2>
-            <p className="mt-2 text-center text-[13px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
-              {blocked
-                ? t('authorReaderPageOptions.unblockDescription')
-                : t('authorReaderPageOptions.blockDescription')}
-            </p>
-
-            {blockError ? (
-              <div className="mt-4 rounded-[10px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[12px] font-normal leading-5 text-[var(--shadow-text-primary)]">
-                {blockError}
-              </div>
-            ) : null}
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setBlockConfirmOpen(false)}
-                disabled={blockLoading}
-                className="h-11 rounded-[10px] bg-[var(--shadow-bg-page)] text-[14px] font-medium text-[var(--shadow-text-primary)] disabled:opacity-60"
-              >
-                {t('authorReaderPageOptions.cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={handleBlockAction}
-                disabled={blockLoading}
-                className="h-11 rounded-[10px] bg-[#111827] text-[14px] font-medium text-white disabled:opacity-60"
-              >
-                {blockLoading ? t('authorReaderPageOptions.pleaseWait') : blocked ? t('authorReaderPageOptions.unblock') : t('authorReaderPageOptions.block')}
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
+      <ReaderBlockConfirmModal
+        open={blockConfirmOpen && Boolean(authorPage)}
+        target={blockTarget}
+        shouldBlock={!blocked}
+        onConfirm={handleBlockAction}
+        onCancel={() => { if (!blockLoading) setBlockConfirmOpen(false) }}
+        busy={blockLoading}
+        error={blockError}
+        t={translatePageBlockDialog}
+      />
     </div>
   )
 }
