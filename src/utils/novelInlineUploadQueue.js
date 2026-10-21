@@ -130,6 +130,14 @@ export function useNovelInlineUploadQueue({
     }
   }, [active, storyId, episodeKey, reconcile])
 
+  useEffect(() => {
+    if (!active || pendingCount === 0) return undefined
+    const timer = window.setInterval(() => {
+      void reconcile().catch(() => {})
+    }, 8000)
+    return () => window.clearInterval(timer)
+  }, [active, pendingCount, reconcile])
+
   const enqueue = useCallback(async (file) => {
     const queue = worker.current
     if (!queue) throw new Error('Local image queue is not ready. Reopen this episode and try again.')
