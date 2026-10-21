@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AuthorPostBlockAction from './AuthorPostBlockAction'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -538,6 +539,16 @@ function cancelDrag() {
                 subtitle="Tell Shadow about a problem"
                 onClick={openReport}
               />
+
+              <div className="mx-4 h-px bg-black/[0.06]" />
+<AuthorPostBlockAction
+  post={post}
+  onBlocked={(pageId) => {
+    onHideAuthorPosts?.(pageId)
+    onClose?.()
+  }}
+/>
+              
             </div>
 
             <div className="rounded-[16px] bg-[#f3f4f7]">
