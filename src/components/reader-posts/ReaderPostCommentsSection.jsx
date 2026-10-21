@@ -56,6 +56,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "pleaseLoginAgain": "Please login again.",
     "failedUpdateComment": "Failed to update comment",
     "commentUpdated": "Comment updated.",
+    "pendingApproval": "Sent for approval. The post owner must approve it before it appears.",
     "failedUpdateCommentPeriod": "Failed to update comment.",
     "failedDeleteComment": "Failed to delete comment",
     "commentDeleted": "Comment deleted.",
@@ -120,6 +121,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "pleaseLoginAgain": "សូមចូលគណនីឡើងវិញ។",
     "failedUpdateComment": "មិនអាចកែមតិយោបល់បានទេ",
     "commentUpdated": "បានកែមតិយោបល់។",
+    "pendingApproval": "បានផ្ញើរួច។ Comment នឹងបង្ហាញក្រោយម្ចាស់ Post អនុម័ត។",
     "failedUpdateCommentPeriod": "មិនអាចកែមតិយោបល់បានទេ។",
     "failedDeleteComment": "មិនអាចលុបមតិយោបល់បានទេ",
     "commentDeleted": "បានលុបមតិយោបល់។",
@@ -184,6 +186,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "pleaseLoginAgain": "请重新登录。",
     "failedUpdateComment": "无法更新评论",
     "commentUpdated": "评论已更新。",
+    "pendingApproval": "已提交审核，帖子作者批准后才会显示。",
     "failedUpdateCommentPeriod": "无法更新评论。",
     "failedDeleteComment": "无法删除评论",
     "commentDeleted": "评论已删除。",
@@ -248,6 +251,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "pleaseLoginAgain": "もう一度ログインしてください。",
     "failedUpdateComment": "コメントを更新できませんでした",
     "commentUpdated": "コメントを更新しました。",
+    "pendingApproval": "承認待ちです。投稿者の承認後に表示されます。",
     "failedUpdateCommentPeriod": "コメントを更新できませんでした。",
     "failedDeleteComment": "コメントを削除できませんでした",
     "commentDeleted": "コメントを削除しました。",
@@ -312,6 +316,7 @@ registerTranslationNamespace('readerPostCommentsSection', {
     "pleaseLoginAgain": "다시 로그인하세요.",
     "failedUpdateComment": "댓글을 수정하지 못했습니다",
     "commentUpdated": "댓글을 수정했습니다.",
+    "pendingApproval": "승인 대기 중입니다. 게시물 작성자가 승인하면 표시됩니다.",
     "failedUpdateCommentPeriod": "댓글을 수정하지 못했습니다.",
     "failedDeleteComment": "댓글을 삭제하지 못했습니다",
     "commentDeleted": "댓글을 삭제했습니다.",
@@ -1328,7 +1333,7 @@ export default function ReaderPostCommentsSection({
     )
   }, [commentCount])
 
-  const showToast = (value) => {
+  const showToast = (value, duration = 1700) => {
     setToast(value)
     window.clearTimeout(
       showToast.timer
@@ -1336,7 +1341,7 @@ export default function ReaderPostCommentsSection({
     showToast.timer =
       window.setTimeout(
         () => setToast(''),
-        1700
+        duration
       )
   }
 
@@ -1726,21 +1731,26 @@ export default function ReaderPostCommentsSection({
         )
       }
 
-      setComments(
-        (current) => [
-          normalizeComment(
-            data.comment
-          ),
-          ...current,
-        ]
-      )
+      const pending = data.pending === true || data.comment?.is_hidden === true
+      if (!pending) {
+        setComments(
+          (current) => [
+            normalizeComment(data.comment),
+            ...current,
+          ]
+        )
+      }
 
       setText('')
 
       applyTotal(
         data.comment_count ??
-          total + 1
+          (pending ? total : total + 1)
       )
+
+      if (pending) {
+        showToast(t('readerPostCommentsSection.pendingApproval'), 4000)
+      }
     } catch (error) {
       showToast(
         error.message ||
@@ -1804,47 +1814,46 @@ export default function ReaderPostCommentsSection({
         )
       }
 
-      const createdReply =
-        normalizeComment(
-          data.comment
-        )
+      const pending = data.pending === true || data.comment?.is_hidden === true
+      if (!pending) {
+        const createdReply = normalizeComment(data.comment)
 
-      setComments(
-        (current) =>
-          current.map(
-            (comment) =>
-              comment.id ===
-              parentId
-                ? {
-                    ...comment,
-                    replies: [
-                      ...(comment.replies ||
-                        []),
-                      createdReply,
-                    ],
-                    reply_total:
-                      Number(
-                        comment.reply_total ??
-                          comment.replies?.length ??
-                          0
-                      ) + 1,
-                    reply_page:
-                      Math.max(
-                        1,
+        setComments(
+          (current) =>
+            current.map(
+              (comment) =>
+                comment.id === parentId
+                  ? {
+                      ...comment,
+                      replies: [
+                        ...(comment.replies || []),
+                        createdReply,
+                      ],
+                      reply_total:
                         Number(
-                          comment.reply_page ||
+                          comment.reply_total ??
+                            comment.replies?.length ??
                             0
-                        )
-                      ),
-                  }
-                : comment
-          )
-      )
+                        ) + 1,
+                      reply_page:
+                        Math.max(
+                          1,
+                          Number(comment.reply_page || 0)
+                        ),
+                    }
+                  : comment
+            )
+        )
+      }
 
       applyTotal(
         data.comment_count ??
-          total + 1
+          (pending ? total : total + 1)
       )
+
+      if (pending) {
+        showToast(t('readerPostCommentsSection.pendingApproval'), 4000)
+      }
 
       return true
     } catch (error) {
@@ -2013,17 +2022,48 @@ export default function ReaderPostCommentsSection({
         )
       }
 
-      updateCommentLocal(
-        editComment.id,
-        normalizeComment(
-          data.comment
+      const pending = data.pending === true || data.comment?.is_hidden === true
+
+      if (pending) {
+        setComments((current) =>
+          current
+            .filter((comment) => String(comment.id) !== String(editComment.id))
+            .map((comment) => {
+              const replies = comment.replies || []
+              const removedReply = replies.some(
+                (reply) => String(reply.id) === String(editComment.id)
+              )
+              if (!removedReply) return comment
+              const visibleReplies = replies.filter(
+                (reply) => String(reply.id) !== String(editComment.id)
+              )
+              return {
+                ...comment,
+                replies: visibleReplies,
+                reply_total: Math.max(
+                  visibleReplies.length,
+                  Number(comment.reply_total ?? replies.length) - 1
+                ),
+              }
+            })
         )
-      )
+        if (data.comment_count !== undefined) {
+          applyTotal(data.comment_count)
+        }
+      } else {
+        updateCommentLocal(
+          editComment.id,
+          normalizeComment(data.comment)
+        )
+      }
 
       setEditComment(null)
       setEditText('')
       showToast(
-        t('readerPostCommentsSection.commentUpdated')
+        t(pending
+          ? 'readerPostCommentsSection.pendingApproval'
+          : 'readerPostCommentsSection.commentUpdated'),
+        pending ? 4000 : 1700
       )
     } catch (error) {
       showToast(
