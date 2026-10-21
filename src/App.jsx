@@ -206,6 +206,11 @@ const ReaderSettingsPage = lazy(() =>
 const ReaderCommentSettingsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderCommentSettingsPage')
 )
+
+const ReaderManageCommentsPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderManageCommentsPage')
+)
+
 const ReaderBlockedAccountsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderBlockedAccountsPage')
 )
@@ -1489,6 +1494,11 @@ const shouldShowOpeningAds =
           <Route
   path="/profile/settings/comment-settings"
   element={<LazyPage><ReaderCommentSettingsPage /></LazyPage>}
+/>
+
+          <Route
+  path="/profile/settings/comment-settings/manage"
+  element={<LazyPage><ReaderManageCommentsPage /></LazyPage>}
 />
           
           <Route
