@@ -14,6 +14,13 @@ import StorySettingSheet from '../../components/author/StorySettingSheet'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
+import {
+  deleteStoryMediaSnapshot,
+  restoreStoryMediaSnapshot,
+  saveStoryMediaSnapshot,
+  storyMediaDraftKey,
+} from '../../utils/storyMediaDraftAssets'
+import { createStoryMediaUploadQueue } from '../../utils/storyMediaUploadQueue'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('createStory', {
@@ -106,6 +113,56 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
     apiBaseUrl: API_BASE_URL,
   })
   return data.image_url || data.imageUrl
+}
+
+function storyTokenUserId(token) {
+  try {
+    const payload = JSON.parse(atob(String(token || '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return String(payload.user_id || '').trim()
+  } catch {
+    return ''
+  }
+}
+
+async function storyMediaFile(source, slot) {
+  if (!source || /^https?:\/\//i.test(source)) return null
+  const response = await fetch(source)
+  if (!response.ok) throw new Error('Could not read a locally selected story image')
+  const blob = await response.blob()
+  if (!blob.size || !blob.type.startsWith('image/')) throw new Error('Invalid story image in local media storage')
+  const bytes = new Uint8Array(await blob.arrayBuffer())
+  let signature = ''
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))
+    signature = Array.from(digest, (value) => value.toString(16).padStart(2, '0')).join('')
+  } else {
+    let hash = 2166136261
+    for (const byte of bytes) hash = Math.imul(hash ^ byte, 16777619)
+    signature = `${(hash >>> 0).toString(16)}-${bytes.length}`
+  }
+  return {
+    imageId: signature,
+    file: new File([blob], `${slot}-${signature.slice(0, 20)}.${blob.type.includes('png') ? 'png' : blob.type.includes('webp') ? 'webp' : 'jpg'}`, { type: blob.type }),
+  }
+}
+
+async function waitForStoryMediaUpload(queue, taskId) {
+  const deadline = Date.now() + 120000
+  while (Date.now() < deadline) {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      throw new Error('Story images are saved locally. Upload will resume after reconnecting to the internet.')
+    }
+    const task = await queue.get(taskId)
+    if (!task) throw new Error('A pending story image is no longer in the local upload queue')
+    if (task.status === 'uploaded') {
+      const imageUrl = task.result?.image_url || task.result?.imageUrl || ''
+      if (/^https?:\/\//i.test(imageUrl)) return imageUrl
+      throw new Error('The uploaded story image has no valid URL')
+    }
+    if (task.status === 'failed') throw new Error(task.lastError || 'Could not upload this story image')
+    await new Promise((resolve) => window.setTimeout(resolve, 750))
+  }
+  throw new Error('Story images are saved locally and still uploading. Retry Save after the upload finishes.')
 }
 
 function createImage(url) {
@@ -531,6 +588,13 @@ export default function CreateStoryPage() {
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(false)
+  const [storyFetchComplete, setStoryFetchComplete] = useState(!isEditMode)
+  const [storyMediaReady, setStoryMediaReady] = useState(false)
+  const [storyMediaTouched, setStoryMediaTouched] = useState(false)
+  const [storyUploadState, setStoryUploadState] = useState('')
+  const storyMediaKeyRef = useRef('')
+  const storyQueueRef = useRef(null)
+  const storyMediaWriteRef = useRef(Promise.resolve())
   const [mediaOpen, setMediaOpen] = useState(false)
   const [titleOpen, setTitleOpen] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
@@ -550,7 +614,8 @@ export default function CreateStoryPage() {
 
     const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
 
-    if (!saved || saved.storyType !== requestedStoryType) {
+    if (!saved || saved.storyType !== requestedStoryType ||
+      (saved.ownerId && saved.ownerId !== storyTokenUserId(getAuthToken()))) {
       localStorage.removeItem('create_story_draft')
       setStoryType(requestedStoryType)
       return
@@ -564,6 +629,8 @@ export default function CreateStoryPage() {
     setStoryStatus(savedStoryStatus)
     setUnfinishedStoryStatus(savedStoryStatus === 'Completed' ? 'New' : savedStoryStatus)
     setTags(saved.tags || [])
+    setStorySettings(Array.isArray(saved.storySettings) ? saved.storySettings : [])
+    setUpdateDays(Array.isArray(saved.updateDays) ? saved.updateDays : [])
     setDescription(saved.description || '')
     setIsAdult(!!saved.isAdult)
     setOriginalAccepted(!!saved.originalAccepted)
@@ -678,11 +745,127 @@ export default function CreateStoryPage() {
         setMessage(error.message || getDisplayText('createStory.failedLoadStory'))
       } finally {
         setPageLoading(false)
+        setStoryFetchComplete(true)
       }
     }
 
     loadEditStory()
   }, [editStoryId, navigate])
+
+  useEffect(() => {
+    if (!storyFetchComplete || pageLoading) return undefined
+    const userId = storyTokenUserId(getAuthToken())
+    if (!userId) return undefined
+    const draftKey = storyMediaDraftKey({ userId, storyType, storyId: editStoryId || '' })
+    const queue = createStoryMediaUploadQueue({
+      userId,
+      getToken: getAuthToken,
+      onChange: ({ task }) => {
+        if (task?.context?.draftKey !== draftKey) return
+        void queue.listForDraft(draftKey).then((tasks) => {
+          const pending = tasks.filter((item) => !['uploaded', 'failed'].includes(item.status))
+          if (pending.length) {
+            const progress = Math.round(pending.reduce((total, item) => total + (item.progress || 0), 0) / pending.length)
+            setStoryUploadState(`${getDisplayText('createStory.uploadingCreatingStory')} ${pending.length} · ${progress}%`)
+          } else if (tasks.some((item) => item.status === 'failed')) {
+            setStoryUploadState(getDisplayText('createStory.failedUploadImage'))
+          } else {
+            setStoryUploadState('')
+          }
+        }).catch(() => {})
+      },
+    })
+    let canceled = false
+    let recovered = null
+    storyQueueRef.current = queue
+    storyMediaKeyRef.current = draftKey
+    setStoryMediaReady(false)
+    queue.start()
+    const restore = async () => {
+      try {
+        recovered = await restoreStoryMediaSnapshot(draftKey)
+        if (canceled) return
+        if (recovered) {
+          setCoverOriginal(recovered.media.cover.original)
+          setCoverPreview(recovered.media.cover.preview)
+          setLandscapeOriginal(recovered.media.landscape.original)
+          setLandscapePreview(recovered.media.landscape.preview)
+          setSlides(recovered.media.slides)
+          setCoverChanged(Boolean(recovered.media.cover.preview && !/^https?:\/\//i.test(recovered.media.cover.preview)))
+          setLandscapeChanged(Boolean(recovered.media.landscape.preview && !/^https?:\/\//i.test(recovered.media.landscape.preview)))
+          setStoryMediaTouched(true)
+        }
+        setStoryMediaReady(true)
+      } catch (error) {
+        if (!canceled) {
+          setStoryUploadState(error?.message || 'Local story media restore failed')
+          setStoryMediaReady(true)
+        }
+      }
+    }
+    void restore()
+    return () => {
+      canceled = true
+      queue.stop()
+      if (storyQueueRef.current === queue) storyQueueRef.current = null
+      if (storyMediaKeyRef.current === draftKey) storyMediaKeyRef.current = ''
+      if (recovered) recovered.revoke()
+    }
+  }, [storyFetchComplete, pageLoading, storyType, editStoryId])
+
+  const storyMediaSnapshot = () => ({
+    cover: { original: coverOriginal, preview: coverPreview },
+    landscape: { original: landscapeOriginal, preview: landscapePreview },
+    slides,
+  })
+
+  const queueStoryAsset = async ({ source, slot, imageId = '' }) => {
+    const queue = storyQueueRef.current
+    const draftKey = storyMediaKeyRef.current
+    const prepared = await storyMediaFile(source, slot)
+    if (!prepared || !queue || !draftKey) return null
+    const identity = imageId ? `${imageId}:${prepared.imageId}` : prepared.imageId
+    const tasks = await queue.listForDraft(draftKey)
+    const found = tasks.find((item) =>
+      item.context?.slot === slot && item.context?.imageId === identity
+    )
+    if (found) return found
+    return queue.enqueue({ file: prepared.file, draftKey, slot, imageId: identity })
+  }
+
+  useEffect(() => {
+    if (!storyMediaReady || !storyMediaTouched || !storyMediaKeyRef.current) return
+    const draftKey = storyMediaKeyRef.current
+    const snapshot = storyMediaSnapshot()
+    const operation = storyMediaWriteRef.current.catch(() => {}).then(async () => {
+      await saveStoryMediaSnapshot(draftKey, snapshot)
+      const tasks = []
+      if (coverChanged) tasks.push({ source: snapshot.cover.preview, slot: 'cover' })
+      if (landscapeChanged) tasks.push({ source: snapshot.landscape.preview, slot: 'landscape' })
+      for (const slide of snapshot.slides) {
+        if (slide.changed) tasks.push({ source: slide.cropped, slot: 'slide', imageId: String(slide.id) })
+      }
+      for (const asset of tasks) await queueStoryAsset(asset)
+    })
+    storyMediaWriteRef.current = operation
+    operation.catch((error) => setStoryUploadState(error?.message || 'Could not save story media on this device'))
+  }, [storyMediaReady, storyMediaTouched, coverOriginal, coverPreview, coverChanged, landscapeOriginal, landscapePreview, landscapeChanged, slides])
+
+  useEffect(() => {
+    if (isEditMode || !storyMediaReady) return
+    const ownerId = storyTokenUserId(getAuthToken())
+    if (!ownerId) return
+    const draft = {
+      ownerId, storyType, title, language, genre, storyStatus, storySettings,
+      tags, updateDays, description, isAdult, originalAccepted, agreementAccepted,
+    }
+    try {
+      localStorage.setItem('create_story_draft', JSON.stringify(draft))
+    } catch {
+      setStoryUploadState('This device could not save the story details locally')
+    }
+  }, [isEditMode, storyMediaReady, storyType, title, language, genre, storyStatus, storySettings,
+    tags, updateDays, description, isAdult, originalAccepted, agreementAccepted])
 
   const descriptionCount = description.length
   const storySettingRequired =
@@ -702,11 +885,13 @@ const canSave = isEditMode
     agreementAccepted &&
     descriptionCount <= 5000 &&
     !loading &&
-    !pageLoading
+    !pageLoading &&
+    storyMediaReady
   : basicInfoComplete &&
   descriptionCount <= 5000 &&
     !loading &&
-    !pageLoading
+    !pageLoading &&
+    storyMediaReady
 
   const showToast = (text) => {
     setToast(text)
@@ -732,6 +917,7 @@ const canSave = isEditMode
 
     const imageUrl = URL.createObjectURL(file)
     setCoverOriginal(imageUrl)
+    setStoryMediaTouched(true)
     setCoverChanged(true)
     openCropper({
       mode: 'cover',
@@ -754,6 +940,7 @@ const handleLandscapeChange = (file) => {
   const imageUrl = URL.createObjectURL(file)
 
   setLandscapeOriginal(imageUrl)
+  setStoryMediaTouched(true)
   setLandscapeChanged(true)
 
   openCropper({
@@ -773,6 +960,7 @@ const handleEditLandscapeCrop = () => {
 
 const handleAddSlide = (file) => {
     if (!file) return
+    setStoryMediaTouched(true)
 
     if (slides.length >= 5) {
       showToast(t('createStory.maxSlides'))
@@ -806,6 +994,7 @@ const handleAddSlide = (file) => {
 
     try {
       const croppedImage = await getCroppedImage(tempImage, croppedAreaPixels)
+      setStoryMediaTouched(true)
 
       if (cropMode === 'cover') {
   setCoverPreview(croppedImage)
@@ -856,60 +1045,57 @@ if (cropMode === 'slide') {
   }
 
   const handleDeleteSlide = (index) => {
+    setStoryMediaTouched(true)
     setSlides((current) => current.filter((_, itemIndex) => itemIndex !== index))
   }
 
   const handleToggleSlide = (index) => {
+    setStoryMediaTouched(true)
     setSlides((current) =>
       current.map((slide, itemIndex) => (itemIndex === index ? { ...slide, active: !slide.active } : slide))
     )
   }
 
   const uploadStoryImages = async (token) => {
-    const coverUrl = coverPreview
-      ? await uploadImageToStorage({
-          token,
-          imageDataUrl: coverChanged ? coverPreview : coverPreview,
-          folder: 'story_cover',
-          fileName: `story-cover-${Date.now()}.jpg`,
-        })
-      : null
+    if (!storyMediaReady) throw new Error('Local story media is still being restored')
+    const draftKey = storyMediaKeyRef.current
+    const queue = storyQueueRef.current
+    if (storyMediaTouched && draftKey) {
+      await storyMediaWriteRef.current
+      await saveStoryMediaSnapshot(draftKey, storyMediaSnapshot())
+    }
 
-    const landscapeThumbnailUrl = landscapePreview
-      ? await uploadImageToStorage({
-          token,
-          imageDataUrl: landscapeChanged ? landscapePreview : landscapePreview,
-          folder: 'story_landscape_thumbnail',
-          fileName: `story-landscape-${Date.now()}.jpg`,
+    const resolveImage = async (source, slot, fileName, imageId = '') => {
+      if (!source) return null
+      if (/^https?:\/\//i.test(source)) return source
+      if (!queue || !draftKey) {
+        const local = await storyMediaFile(source, slot)
+        if (!local) throw new Error('Story image file is missing')
+        const optimized = await optimizeImageForUpload(local.file, {
+          preset: slot === 'cover' ? 'cover' : slot === 'landscape' ? 'thumbnail' : 'banner',
         })
-      : null
+        const result = await uploadMediaWithFallback({
+          file: optimized.file, category: slot === 'cover' ? 'story_cover' : slot === 'landscape' ? 'story_landscape_thumbnail' : 'story_slide', token, apiBaseUrl: API_BASE_URL,
+        })
+        return result.image_url || result.imageUrl
+      }
+      const task = await queueStoryAsset({ source, slot, imageId })
+      if (!task) throw new Error('Could not start story media upload')
+      if (task.status === 'failed') await queue.retry(task.id)
+      return waitForStoryMediaUpload(queue, task.id)
+    }
 
+    const coverUrl = await resolveImage(coverPreview, 'cover', `story-cover-${Date.now()}.jpg`)
+    const landscapeThumbnailUrl = await resolveImage(landscapePreview, 'landscape', `story-landscape-${Date.now()}.jpg`)
     const uploadedSlides = []
-
     for (let index = 0; index < slides.length; index += 1) {
       const slide = slides[index]
-
       const imageUrl = slide.changed
-        ? await uploadImageToStorage({
-            token,
-            imageDataUrl: slide.cropped,
-            folder: 'story_slide',
-            fileName: `story-slide-${index + 1}-${Date.now()}.jpg`,
-          })
+        ? await resolveImage(slide.cropped, 'slide', `story-slide-${index + 1}-${Date.now()}.jpg`, String(slide.id))
         : slide.cropped
-
-      uploadedSlides.push({
-        image_url: imageUrl,
-        sort_order: index,
-        is_active: slide.active,
-      })
+      uploadedSlides.push({ image_url: imageUrl, sort_order: index, is_active: slide.active })
     }
-
-    return {
-      coverUrl,
-      landscapeThumbnailUrl,
-      uploadedSlides,
-    }
+    return { coverUrl, landscapeThumbnailUrl, uploadedSlides }
   }
 
   const handleSaveStory = async () => {
@@ -999,6 +1185,15 @@ if (cropMode === 'slide') {
 
       if (!storyId) {
         throw new Error(t(isEditMode ? 'createStory.updatedMissingId' : 'createStory.createdMissingId'))
+      }
+
+      if (storyMediaKeyRef.current) {
+        try {
+          await storyMediaWriteRef.current.catch(() => {})
+          await deleteStoryMediaSnapshot(storyMediaKeyRef.current)
+          const pending = await storyQueueRef.current?.listForDraft(storyMediaKeyRef.current) || []
+          for (const task of pending) await storyQueueRef.current?.remove(task.id)
+        } catch {}
       }
 
       if (!isEditMode) {
@@ -1896,6 +2091,9 @@ backgroundImage: isEditMode
                   : 'mt-5 pb-8'
               }
             >
+              {storyUploadState ? (
+                <p className="mb-2 text-center text-[12px] text-[var(--shadow-text-secondary)]" role="status">{storyUploadState}</p>
+              ) : null}
               <button
                 type="button"
                 onClick={handleSaveStory}
