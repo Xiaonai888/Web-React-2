@@ -465,6 +465,14 @@ registerTranslationNamespace('readerSettings', {
   ko: { items: { 'activity-history': { title: '활동 기록', subtitle: '지난 1년간의 주요 활동을 확인하세요.' } } },
 })
 
+registerTranslationNamespace('readerSettings', {
+  en: { search: 'Search' },
+  km: { search: 'ស្វែងរក' },
+  zh: { search: '搜索' },
+  ja: { search: '検索' },
+  ko: { search: '검색' },
+})
+
 const SETTINGS_GROUPS = [
   {
     title: 'Your account',
@@ -852,6 +860,19 @@ export default function ReaderSettingsPage() {
   const [message, setMessage] = useState('')
   const groups = useMemo(() => SETTINGS_GROUPS, [])
 
+  const [searchQuery, setSearchQuery] = useState('')
+const filteredGroups = groups.map((group, index) => ({
+  ...group,
+  originalIndex: index,
+  items: group.items.filter((item) =>
+    [
+      t(`readerSettings.groups.${GROUP_KEYS[index]}`, { defaultValue: group.title }),
+      t(`readerSettings.items.${item.key}.title`, { defaultValue: item.title }),
+      t(`readerSettings.items.${item.key}.subtitle`, { defaultValue: item.subtitle }),
+    ].join(' ').toLocaleLowerCase().includes(searchQuery.trim().toLocaleLowerCase())
+  ),
+})).filter((group) => group.items.length)
+
   function showComingSoon(item) {
   const title = t(`readerSettings.items.${item.key}.title`, { defaultValue: item.title })
   setMessage(t('readerSettings.comingSoon', { title, defaultValue: `${title} is coming soon.` }))
@@ -895,13 +916,26 @@ export default function ReaderSettingsPage() {
       </header>
 
       <div className="mx-auto w-full max-w-[560px]">
-        {groups.map((group, groupIndex) => (
+        <div className="px-4 pb-2 pt-4">
+  <label className="flex h-[52px] items-center gap-3 rounded-[18px] bg-[var(--shadow-bg-hover)] px-4">
+    <i className="fa-solid fa-magnifying-glass text-[20px] text-[var(--shadow-text-tertiary)]" aria-hidden="true" />
+    <input
+      type="search"
+      value={searchQuery}
+      onChange={(event) => setSearchQuery(event.target.value)}
+      placeholder={t('readerSettings.search', { defaultValue: 'Search' })}
+      aria-label={t('readerSettings.search', { defaultValue: 'Search' })}
+      className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-text-tertiary)] dark:bg-transparent"
+    />
+  </label>
+</div>
+        {filteredGroups.map((group, groupIndex) => (
           <section
-            key={t(`readerSettings.groups.${GROUP_KEYS[groupIndex]}`, { defaultValue: group.title })}
+            key={t(`readerSettings.groups.${GROUP_KEYS[group.originalIndex]}`, { defaultValue: group.title })}
             className={groupIndex ? 'border-t-[8px] border-[var(--shadow-border)]' : ''}
           >
             <div className="px-5 pb-2 pt-5 text-[12.5px] font-medium text-[var(--shadow-text-secondary)]">
-  {t(`readerSettings.groups.${GROUP_KEYS[groupIndex]}`, { defaultValue: group.title })}
+  {t(`readerSettings.groups.${GROUP_KEYS[group.originalIndex]}`, { defaultValue: group.title })}
 </div>
 
             <div>
