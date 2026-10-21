@@ -232,6 +232,10 @@ const ReaderManageRestrictedPage = lazy(() =>
 const ReaderTagsMentionsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderTagsMentionsPage')
 )
+const ReaderPendingTagsPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderPendingTagsPage')
+)
+
 const ReaderAccountPrivacyPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderAccountPrivacyPage')
 )
@@ -1496,6 +1500,10 @@ const shouldShowOpeningAds =
 <Route
   path="/profile/settings/tags-mentions"
   element={<LazyPage><ReaderTagsMentionsPage /></LazyPage>}
+/>
+<Route
+  path="/profile/settings/tags-mentions/pending"
+  element={<LazyPage><ReaderPendingTagsPage /></LazyPage>}
 />
 
           <Route
