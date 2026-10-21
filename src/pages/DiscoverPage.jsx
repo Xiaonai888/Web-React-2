@@ -68,6 +68,8 @@ const DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS =
   2 * 60 * 1000
 const DISCOVER_CACHE_WRITE_DELAY_MS = 120
 const DISCOVER_AUTHOR_FEED_INITIAL_LIMIT = 30
+const SHADOW_MALL_AD_PAGE_SIZE = 20
+const SHADOW_MALL_AD_ROTATION_HISTORY_LIMIT = 5000
 
 const discoverFeedInflightRequests =
   new Map()
@@ -152,13 +154,81 @@ function getDiscoverFeedCacheKey(
   })
 }
 
+function getShadowMallAdRotationId(promotion) {
+  const id = String(promotion?.id ?? '').trim()
+  if (!id) return ''
+  return `${id}:${Math.max(1, Number(promotion?.visibility_version) || 1)}`
+}
+
+function getShadowMallAdRotationStorageKey(token) {
+  let identity = token
+  if (token) {
+    try {
+      const payload = token.split('.')[1]
+      const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+      identity = String(decoded.sub || decoded.user_id || decoded.id || token)
+    } catch {
+      identity = token
+    }
+  }
+  return `shadow_discover_ad_rotation_v1:${getDiscoverFeedScope(identity)}`
+}
+
+function readShadowMallAdRotationHistory(token) {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(getShadowMallAdRotationStorageKey(token)) || '[]'
+    )
+    return Array.isArray(stored)
+      ? stored.filter((id) => typeof id === 'string').slice(-SHADOW_MALL_AD_ROTATION_HISTORY_LIMIT)
+      : []
+  } catch {
+    return []
+  }
+}
+
+function markShadowMallAdViewed(token, promotion) {
+  const id = getShadowMallAdRotationId(promotion)
+  if (!id) return
+
+  try {
+    const history = readShadowMallAdRotationHistory(token)
+    const next = [...history.filter((previous) => previous !== id), id]
+      .slice(-SHADOW_MALL_AD_ROTATION_HISTORY_LIMIT)
+    localStorage.setItem(
+      getShadowMallAdRotationStorageKey(token),
+      JSON.stringify(next)
+    )
+  } catch {
+    return
+  }
+}
+
+function rotateShadowMallAds(promotions, history) {
+  const viewedOrder = new Map(history.map((id, index) => [id, index]))
+  return promotions
+    .map((promotion, index) => ({ promotion, index }))
+    .sort((left, right) => {
+      const leftViewed = viewedOrder.get(getShadowMallAdRotationId(left.promotion))
+      const rightViewed = viewedOrder.get(getShadowMallAdRotationId(right.promotion))
+      if (leftViewed === undefined && rightViewed !== undefined) return -1
+      if (leftViewed !== undefined && rightViewed === undefined) return 1
+      if (leftViewed !== undefined && rightViewed !== undefined) {
+        return leftViewed - rightViewed
+      }
+      const pinDifference = Number(Boolean(right.promotion.is_pinned)) - Number(Boolean(left.promotion.is_pinned))
+      return pinDifference || left.index - right.index
+    })
+    .map(({ promotion }) => promotion)
+}
+
 function getShadowMallPromotionsCacheKey() {
   return getHomeCacheKey({
     section: 'discover-promotions',
     scope: 'public',
     params: {
-      limit: 100,
-      schema: 1,
+      limit: 'all-pages',
+      schema: 2,
     },
   })
 }
@@ -725,27 +795,37 @@ function rotateDiscoverTimeline(timeline, rotationIndex) {
   }))
 }
 
-async function fetchShadowMallPromotions(
-  limit = 100
-) {
-  const response = await fetch(
-    `${API_BASE_URL}/api/shadow-mall/promotions?limit=${encodeURIComponent(limit)}`,
-    {
-      cache: 'no-store',
-    }
-  )
+async function fetchShadowMallPromotions() {
+  const promotions = []
+  const loadedIds = new Set()
+  let page = 1
 
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.message || discoverText('failedPromotions')
+  while (true) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/shadow-mall/promotions?page=${page}&limit=${SHADOW_MALL_AD_PAGE_SIZE}`,
+      { cache: 'no-store' }
     )
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || discoverText('failedPromotions'))
+    }
+
+    const batch = Array.isArray(data.promotions) ? data.promotions : []
+    let added = 0
+    for (const promotion of batch) {
+      const id = String(promotion?.id ?? '').trim()
+      if (!id || loadedIds.has(id)) continue
+      loadedIds.add(id)
+      promotions.push(promotion)
+      added += 1
+    }
+
+    if (!data.has_next || !added) break
+    page += 1
   }
 
-  return Array.isArray(data.promotions)
-    ? data.promotions
-    : []
+  return promotions
 }
 
 async function fetchShadowMallStorySaleStatuses(
@@ -1691,9 +1771,55 @@ function AdsCard({
   onMore,
   onHide,
   onStorySaleStatusChanged,
+  onImpression,
 }) {
   const navigate = useNavigate()
   const token = getAuthToken()
+  const adElementRef = useRef(null)
+  const onImpressionRef = useRef(onImpression)
+  onImpressionRef.current = onImpression
+
+  useEffect(() => {
+    const element = adElementRef.current
+    if (!element || !item?.id || typeof IntersectionObserver === 'undefined') return undefined
+
+    let exposureTimer = null
+    let recorded = false
+    let inViewport = false
+    const clearExposureTimer = () => {
+      if (exposureTimer !== null) window.clearTimeout(exposureTimer)
+      exposureTimer = null
+    }
+    const scheduleExposure = () => {
+      if (recorded || !inViewport || document.visibilityState !== 'visible' || exposureTimer !== null) return
+      exposureTimer = window.setTimeout(() => {
+        exposureTimer = null
+        if (!inViewport || document.visibilityState !== 'visible') return
+        recorded = true
+        onImpressionRef.current?.(item)
+        observer.disconnect()
+      }, 900)
+    }
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0]
+      inViewport = Boolean(entry?.isIntersecting && entry.intersectionRatio >= 0.35)
+      if (!inViewport) clearExposureTimer()
+      else scheduleExposure()
+    }, { threshold: [0, 0.35, 0.75] })
+
+    observer.observe(element)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') clearExposureTimer()
+      else scheduleExposure()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      clearExposureTimer()
+      observer.disconnect()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [item?.id, item?.visibility_version])
+
   const isStorySale =
     item?.promotion_type === 'story_sale' &&
     Boolean(item?.story_id)
@@ -2006,6 +2132,7 @@ const [saleStatus, setSaleStatus] =
   return (
     <>
       <article
+        ref={adElementRef}
         id={`shadow-mall-promotion-${item.id}`}
         className="overflow-hidden bg-white dark:bg-[var(--shadow-bg-surface)] ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[12px]"
       >
@@ -2538,6 +2665,19 @@ export default function DiscoverPage() {
   const [shadowMallPromotions, setShadowMallPromotions] = useState([])
   const shadowMallPromotionsRef =
     useRef([])
+  const shadowMallAdHistoryRef = useRef(null)
+  const shadowMallAdsSeenThisVisitRef = useRef(new Set())
+  if (shadowMallAdHistoryRef.current === null) {
+    shadowMallAdHistoryRef.current = readShadowMallAdRotationHistory(token)
+  }
+
+  function handleShadowMallAdImpression(promotion) {
+    const id = getShadowMallAdRotationId(promotion)
+    if (!id || shadowMallAdsSeenThisVisitRef.current.has(id)) return
+    shadowMallAdsSeenThisVisitRef.current.add(id)
+    markShadowMallAdViewed(token, promotion)
+  }
+
   const authorFeedCacheReadyRef = useRef(false)
   const readerFeedCacheReadyRef = useRef(false)
   const authorFeedCacheSignatureRef = useRef('')
@@ -2563,7 +2703,7 @@ export default function DiscoverPage() {
   const uniqueShadowMallPromotions = useMemo(() => {
     const seenIds = new Set()
 
-    return shadowMallPromotions.filter((promotion) => {
+    const unique = shadowMallPromotions.filter((promotion) => {
       const promotionId = String(
         promotion?.id ?? ''
       ).trim()
@@ -2575,6 +2715,8 @@ export default function DiscoverPage() {
       seenIds.add(promotionId)
       return true
     })
+
+    return rotateShadowMallAds(unique, shadowMallAdHistoryRef.current)
   }, [shadowMallPromotions])
 
   const firstShadowMallPromotion =
@@ -2627,7 +2769,7 @@ export default function DiscoverPage() {
             promotions =
   await runDiscoverFeedRequest(
     `shadow-mall-public:${cacheKey}`,
-    () => fetchShadowMallPromotions(100)
+    () => fetchShadowMallPromotions()
   )
 
             await saveHomeCache(
@@ -4143,6 +4285,7 @@ export default function DiscoverPage() {
         item={promotion}
         onMore={setAdOptionsItem}
         onHide={hideShadowMallPromotion}
+        onImpression={handleShadowMallAdImpression}
         onStorySaleStatusChanged={
           handleShadowMallStorySaleStatusChanged
         }
@@ -4225,6 +4368,7 @@ export default function DiscoverPage() {
         item={firstShadowMallPromotion}
         onMore={setAdOptionsItem}
         onHide={hideShadowMallPromotion}
+        onImpression={handleShadowMallAdImpression}
         onStorySaleStatusChanged={
           handleShadowMallStorySaleStatusChanged
         }
@@ -4255,6 +4399,7 @@ discoverTimeline.length < 4 ? (
         item={firstShadowMallPromotion}
         onMore={setAdOptionsItem}
         onHide={hideShadowMallPromotion}
+        onImpression={handleShadowMallAdImpression}
         onStorySaleStatusChanged={
           handleShadowMallStorySaleStatusChanged
         }
@@ -4273,6 +4418,7 @@ discoverTimeline.length < 4 ? (
                       item={promotion}
                       onMore={setAdOptionsItem}
                       onHide={hideShadowMallPromotion}
+                      onImpression={handleShadowMallAdImpression}
                       onStorySaleStatusChanged={
                         handleShadowMallStorySaleStatusChanged
                       }
