@@ -742,43 +742,47 @@ async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
 }
 
 async function uploadEpisodeImage(token, file) {
-  const formData = new FormData()
+  let selected = file
+  try {
+    selected = (await optimizeImageForUpload(file, { preset: 'post' })).file
+  } catch (error) {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw error
+  }
 
-  formData.append('image', file)
-  formData.append('folder', 'chat_story_episode')
+  const legacyUpload = async ({ signal } = {}) => {
+    const formData = new FormData()
+    formData.append('image', selected)
+    formData.append('folder', 'chat_story_episode')
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/story-media/upload-image`,
-    {
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
       body: formData,
+      signal,
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) {
+      const error = new Error(data.message || getDisplayText('chatStoryEditor.failedUploadChatImage'))
+      error.status = response.status
+      throw error
     }
-  )
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.message || getDisplayText('chatStoryEditor.failedUploadChatImage')
-    )
+    return data
   }
 
-  const imageUrl =
-    data.image_url ||
-    data.imageUrl ||
-    ''
-
-  if (!imageUrl) {
-    throw new Error(
-      getDisplayText('chatStoryEditor.missingImageUrl')
-    )
+  const data = await uploadMediaWithFallback({
+    file: selected,
+    category: 'chat_story_episode',
+    token,
+    apiBaseUrl: API_BASE_URL,
+    legacyUpload,
+  })
+  const imageUrl = data.image_url || data.imageUrl || ''
+  if (!/^https?:\/\//i.test(imageUrl)) {
+    throw new Error(getDisplayText('chatStoryEditor.missingImageUrl'))
   }
-
   return imageUrl
 }
+
 
 function mapCharacter(character) {
   const group = character.role_group || 'background'
