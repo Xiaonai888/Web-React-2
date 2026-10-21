@@ -314,6 +314,10 @@ function getUsernameError(value, t) {
 
 export default function EditProfilePage() {
   const navigate = useNavigate()
+  const params = new URLSearchParams(window.location.search)
+const backPath = params.get('from') === 'reader-settings'
+  ? `/profile/settings?${params.get('settingsFrom') === 'me-settings' ? 'from=me-settings&' : ''}account=shadow`
+  : params.get('from') === 'me-settings' ? '/me?settings=1' : '/profile'
   const { t } = useDisplayTranslation()
   const [user, setUser] = useState(getStoredUser())
   const [form, setForm] = useState(() => emptyForm(getStoredUser()))
@@ -455,8 +459,8 @@ export default function EditProfilePage() {
       }
 
       saveStoredUser(data.user)
-      if (data.token) saveAuthToken(data.token)
-      navigate('/profile')
+if (data.token) saveAuthToken(data.token)
+navigate(backPath)
     } catch (error) {
       setMessage(
         error.message || t('editProfilePage.updateFailed')
@@ -473,14 +477,7 @@ export default function EditProfilePage() {
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() =>
-                navigate(
-                  new URLSearchParams(window.location.search).get('from') ===
-                    'me-settings'
-                    ? '/me?settings=1'
-                    : '/profile'
-                )
-              }
+              onClick={() => navigate(backPath)}
               className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-primary)] transition active:scale-95 active:bg-[var(--shadow-bg-hover)]"
               aria-label={t('editProfilePage.backToProfile')}
             >
