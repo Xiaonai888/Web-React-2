@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -481,23 +481,40 @@ registerTranslationNamespace('readerSettings', {
   ko: { groups: { visibility: '내 콘텐츠를 볼 수 있는 사람' }, items: { privacy: { title: '계정 개인정보 보호' } } },
 })
 
+registerTranslationNamespace('readerSettings', {
+  en: { items: { 'shadow-account': { title: 'Shadow Account', subtitle: 'Manage your profile, password, email, and account security.' } } },
+  km: { items: { 'shadow-account': { title: 'គណនី Shadow', subtitle: 'គ្រប់គ្រងប្រវត្តិរូប ពាក្យសម្ងាត់ អ៊ីមែល និងសុវត្ថិភាពគណនី។' } } },
+  zh: { items: { 'shadow-account': { title: 'Shadow 账户', subtitle: '管理个人资料、密码、邮箱和账户安全。' } } },
+  ja: { items: { 'shadow-account': { title: 'Shadow アカウント', subtitle: 'プロフィール、パスワード、メール、アカウントのセキュリティを管理します。' } } },
+  ko: { items: { 'shadow-account': { title: 'Shadow 계정', subtitle: '프로필, 비밀번호, 이메일 및 계정 보안을 관리하세요.' } } },
+})
+
+const SHADOW_ACCOUNT_ITEMS = [
+  {
+    key: 'edit-profile',
+    title: 'Edit profile',
+    subtitle: 'Update your name, photo, bio, and profile links.',
+    icon: 'fa-regular fa-user',
+    route: '/profile/edit?from=reader-settings',
+  },
+  {
+    key: 'account-security',
+    title: 'Account & security',
+    subtitle: 'Password, email, and account access.',
+    icon: 'fa-solid fa-shield-halved',
+    route: '/profile/settings/account-security',
+  },
+]
+
 const SETTINGS_GROUPS = [
   {
     title: 'Your account',
     items: [
       {
-        key: 'edit-profile',
-        title: 'Edit profile',
-        subtitle: 'Update your name, photo, bio, and profile links.',
-        icon: 'fa-regular fa-user',
-        route: '/profile/edit?from=reader-settings',
-      },
-      {
-        key: 'account-security',
-        title: 'Account & security',
-        subtitle: 'Password, email, and account access.',
+        key: 'shadow-account',
+        title: 'Shadow Account',
+        subtitle: 'Manage your profile, password, email, and account security.',
         icon: 'fa-solid fa-shield-halved',
-        route: '/profile/settings/account-security',
       },
     ],
   },
@@ -666,6 +683,7 @@ function ReaderSettingsIcon({ name }) {
         </svg>
       )
 
+    case 'shadow-account':
     case 'account-security':
       return (
         <svg {...commonProps}>
@@ -869,7 +887,12 @@ function SettingsRow({ item, onOpen, t }) {
 
 export default function ReaderSettingsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
+  const query = new URLSearchParams(location.search)
+  const shadowAccountOpen = query.get('account') === 'shadow'
+  const fromMeSettings = query.get('from') === 'me-settings'
+  const settingsPath = fromMeSettings ? '/profile/settings?from=me-settings' : '/profile/settings'
   const [message, setMessage] = useState('')
   const groups = useMemo(() => SETTINGS_GROUPS, [])
 
@@ -882,6 +905,9 @@ const filteredGroups = groups.map((group, index) => ({
       t(`readerSettings.groups.${GROUP_KEYS[index]}`, { defaultValue: group.title }),
       t(`readerSettings.items.${item.key}.title`, { defaultValue: item.title }),
       t(`readerSettings.items.${item.key}.subtitle`, { defaultValue: item.subtitle }),
+      item.key === 'shadow-account'
+        ? SHADOW_ACCOUNT_ITEMS.map((child) => t(`readerSettings.items.${child.key}.title`, { defaultValue: child.title })).join(' ')
+        : '',
     ].join(' ').toLocaleLowerCase().includes(searchQuery.trim().toLocaleLowerCase())
   ),
 })).filter((group) => group.items.length)
@@ -896,8 +922,13 @@ const filteredGroups = groups.map((group, index) => ({
   }
 
   function handleOpen(item) {
+    if (item.key === 'shadow-account') {
+      navigate(`${settingsPath}${fromMeSettings ? '&' : '?'}account=shadow`)
+      return
+    }
+
     if (item.route) {
-      if (item.key === 'edit-profile' && new URLSearchParams(window.location.search).get('from') === 'me-settings') {
+      if (item.key === 'edit-profile' && fromMeSettings) {
         navigate(`${item.route}&settingsFrom=me-settings`)
       } else {
         navigate(item.route)
@@ -919,7 +950,7 @@ const filteredGroups = groups.map((group, index) => ({
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
-            onClick={() => navigate(new URLSearchParams(window.location.search).get('from') === 'me-settings' ? '/me?settings=1' : '/profile', { replace: true })}
+            onClick={() => navigate(shadowAccountOpen ? settingsPath : fromMeSettings ? '/me?settings=1' : '/profile', { replace: true })}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('readerSettings.backToProfile')}
           >
@@ -927,12 +958,20 @@ const filteredGroups = groups.map((group, index) => ({
           </button>
 
           <h1 className="min-w-0 flex-1 truncate text-[18px] font-semibold">
-  {t('readerSettings.title')}
+  {shadowAccountOpen ? t('readerSettings.items.shadow-account.title', { defaultValue: 'Shadow Account' }) : t('readerSettings.title')}
 </h1>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-[560px]">
+        {shadowAccountOpen ? (
+          <section className="pt-3">
+            {SHADOW_ACCOUNT_ITEMS.map((item) => (
+              <SettingsRow key={item.key} item={item} onOpen={handleOpen} t={t} />
+            ))}
+          </section>
+        ) : (
+          <>
         <div className="px-4 pb-2 pt-4">
   <label className="flex h-[52px] items-center gap-3 rounded-[18px] bg-[var(--shadow-bg-hover)] px-4">
     <i className="fa-solid fa-magnifying-glass text-[20px] text-[var(--shadow-text-tertiary)]" aria-hidden="true" />
@@ -983,6 +1022,8 @@ const filteredGroups = groups.map((group, index) => ({
             </span>
           </button>
         </section>
+          </>
+        )}
       </div>
 
       {message ? (
