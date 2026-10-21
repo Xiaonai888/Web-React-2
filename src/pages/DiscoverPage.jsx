@@ -6,6 +6,7 @@ import {
 } from '../utils/homeDataCache'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Send, Search } from 'lucide-react'
+import { getChatConversations, hasReaderSession } from '../services/chatApi'
 import {
   Link,
   useLocation,
