@@ -1,5 +1,5 @@
 import { Bell, Search } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -24,6 +24,7 @@ export default function StoriesHeader({
   onOpenNotifications,
 }) {
   const { t } = useDisplayTranslation()
+  const { pathname } = useLocation()
   const rawCount = Number(notificationUnreadCount)
   const unreadCount = Number.isFinite(rawCount) ? Math.max(0, Math.floor(rawCount)) : 0
   const locale = DISPLAY_LOCALES[getDisplayLanguageId()] || DISPLAY_LOCALES.en
@@ -65,7 +66,7 @@ export default function StoriesHeader({
         </Link>
 
         <Link
-          to="/search"
+          to={pathname === '/manga' ? '/search?story_type=manga' : '/search'}
           className="flex h-6 w-6 items-center justify-center"
           aria-label={t('storiesHeader.search')}
         >
