@@ -6923,21 +6923,6 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     episodeId,
   ])
 
-    useEffect(() => {
-    if (
-      !storyId ||
-      !episodeId ||
-      !episode ||
-      loading ||
-      lockedEpisode ||
-      !adultAccepted ||
-      !getReaderToken() ||
-      offlineMode ||
-      qualifiedViewSentRef.current
-    ) {
-      return undefined
-    }
-
       const viewEpisodeId = String(episode?.id || episode?.episode_id || '')
   const viewCharacterCount = Number(
     episode?.character_count || episode?.content?.length || 0
