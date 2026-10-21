@@ -344,6 +344,15 @@ window.setInterval(() => {
   }
 }, APP_UPDATE_POLL_INTERVAL_MS)
 
+try {
+  document.documentElement.classList.toggle(
+    'shadow-skip-animations',
+    localStorage.getItem('shadow_skip_animation') === '1'
+  )
+} catch {
+  document.documentElement.classList.remove('shadow-skip-animations')
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AppErrorBoundary>
