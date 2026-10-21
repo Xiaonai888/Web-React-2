@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -183,6 +183,8 @@ export default function Search() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isChatStorySearch = searchParams.get('story_type') === 'chat_story'
 
   const activeTabConfig = useMemo(() => {
     return TABS.find((tab) => tab.label === activeTab) || TABS[0]
@@ -204,6 +206,8 @@ export default function Search() {
           limit: '10',
           sort: activeTabConfig.sort,
         })
+
+        if (isChatStorySearch) params.set('story_type', 'chat_story')
 
         if (activeSearch.trim()) {
           params.set('search', activeSearch.trim())
@@ -236,7 +240,7 @@ export default function Search() {
     return () => {
       ignore = true
     }
-  }, [activeTabConfig.sort, activeSearch])
+  }, [activeTabConfig.sort, activeSearch, isChatStorySearch])
 
   const handleSearchSubmit = (event) => {
     event.preventDefault()
