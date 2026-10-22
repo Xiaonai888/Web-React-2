@@ -34,9 +34,6 @@ import {
   MANGA_MAX_PAGES,
   MANGA_MIN_PUBLISH_PAGES,
   formatFileSize,
-  optimizeMangaImage,
-  runWithConcurrency,
-  uploadMangaPageFile,
   validateMangaFile,
 } from '../../utils/mangaImageUtils'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
@@ -3909,7 +3906,7 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
           <button
             type="button"
             onClick={() => onRetry(page.id)}
-            if (!page?.sourceFile && !page?.uploadTaskId) {
+            disabled={(!page.sourceFile && !page.uploadTaskId) || disabled}
             className="mt-2 h-9 w-full rounded-[12px] bg-[var(--shadow-text-primary)] text-[11px] font-extrabold text-[var(--shadow-bg-surface)] disabled:bg-[var(--shadow-bg-soft)]"
           >
             {getDisplayText('episodeEditor.retryUpload')}
@@ -3945,7 +3942,13 @@ export default function EpisodeEditorPage() {
   const [content, setContent] = useState('')
   const [mangaPages, setMangaPages] = useState([])
   const [mangaUploadBatchIds, setMangaUploadBatchIds] = useState([])
-  const mangaUploadAbortRef = useRef(null)
+  const mangaQueuePausedRef = useRef(false)
+  const mangaPauseAfterCurrentRef = useRef(false)
+  const mangaQueueReadyRef = useRef(null)
+  const mangaPendingCleanupRef = useRef([])
+  const mangaRemovedPageIdsRef = useRef(new Set())
+  const mangaLocalPreviewUrlsRef = useRef(new Map())
+  const [mangaQueuePreparing, setMangaQueuePreparing] = useState(false)
   const editorRef = useRef(null)
   const imageInputRef = useRef(null)
   const savedSelectionRef = useRef(null)
@@ -4033,7 +4036,7 @@ export default function EpisodeEditorPage() {
   const characterCount = plainContent.length
   const completedMangaPages = mangaPages.filter((page) => page.status === 'done')
   const mangaErrorCount = mangaPages.filter((page) => page.status === 'error').length
-  const mangaUploadPending = mangaPages.some((page) => ['queued', 'processing', 'uploading'].includes(page.status))
+  const mangaUploadPending = mangaQueuePreparing || mangaPages.some((page) => ['queued', 'processing', 'uploading'].includes(page.status))
   const pageTitle = isEditMode
     ? getDisplayText('episodeEditor.editEpisode')
     : isFirstEpisode
@@ -4235,7 +4238,30 @@ return true
   })
 
 
-      const mangaPageQueueRef = useRef(null)
+  const mangaPageQueueRef = useRef(null)
+
+  useEffect(() => () => {
+    for (const url of mangaLocalPreviewUrlsRef.current.values()) URL.revokeObjectURL(url)
+    mangaLocalPreviewUrlsRef.current.clear()
+  }, [])
+
+  const releaseLocalMangaPreview = (pageId) => {
+    const url = mangaLocalPreviewUrlsRef.current.get(String(pageId))
+    if (url) URL.revokeObjectURL(url)
+    mangaLocalPreviewUrlsRef.current.delete(String(pageId))
+  }
+
+  const pauseMangaQueueNow = () => {
+    mangaQueuePausedRef.current = true
+    mangaPauseAfterCurrentRef.current = false
+    mangaPageQueueRef.current?.stop()
+    setMangaPages((current) => current.map((page) =>
+      ['queued', 'uploading', 'processing'].includes(page.status)
+        ? { ...page, status: 'error', progress: 0, error: 'Upload paused. Tap Retry to resume.' }
+        : page
+    ))
+    setMangaUploadBatchIds([])
+  }
 
   useEffect(() => {
     if (pageLoading || !isManga || localRecoveryOpen || !getAuthToken()) return undefined
@@ -4243,17 +4269,18 @@ return true
     let cancelled = false
     let queue = null
 
-    const syncTask = ({ task }) => {
+    const syncTask = ({ task, type }) => {
       if (cancelled || !task?.context?.pageId) return
       const pageId = String(task.context.pageId)
+      if (mangaRemovedPageIdsRef.current.has(pageId)) return
       const result = task.result || {}
       const completed = task.status === 'uploaded' && /^https:\/\//i.test(String(result.imageUrl || ''))
+      if (mangaQueuePausedRef.current && !completed) return
 
       setMangaPages((current) => current.map((page) => {
         if (String(page.id) !== pageId) return page
         if (page.uploadTaskId && page.uploadTaskId !== task.id) return page
         if (page.revisionId && page.revisionId !== task.context.revisionId) return page
-
         return {
           ...page,
           uploadTaskId: task.id,
@@ -4275,7 +4302,16 @@ return true
           error: task.status === 'failed' ? String(task.lastError || 'Upload failed') : '',
         }
       }))
-      if (completed) markUnsaved()
+      if (completed) {
+        releaseLocalMangaPreview(pageId)
+        markUnsaved()
+      }
+      if (mangaPauseAfterCurrentRef.current && (
+        type === 'uploaded' || type === 'failed' ||
+        (type === 'queued' && task.status === 'retry_wait')
+      )) {
+        pauseMangaQueueNow()
+      }
     }
 
     const restoreMangaQueue = async () => {
@@ -4295,7 +4331,8 @@ return true
 
       const latest = new Map()
       for (const task of [...tasks].sort((a, b) => a.createdAt - b.createdAt)) {
-        if (task.context?.pageId) latest.set(String(task.context.pageId), task)
+        const id = String(task.context?.pageId || '')
+        if (id && !mangaRemovedPageIdsRef.current.has(id)) latest.set(id, task)
       }
 
       const restored = [...latest.values()].sort((a, b) =>
@@ -4326,21 +4363,26 @@ return true
       })
 
       setMangaPages((current) => {
-        const result = [...current]
+        const next = [...current]
         for (const page of restored) {
-          const index = result.findIndex((item) => String(item.id) === page.id)
-          if (index === -1) result.push(page)
-          else if (result[index].uploadTaskId === page.uploadTaskId) result[index] = { ...result[index], ...page }
+          if (mangaRemovedPageIdsRef.current.has(page.id)) continue
+          const index = next.findIndex((item) => String(item.id) === page.id)
+          if (index === -1) next.push(page)
+          else if (!next[index].uploadTaskId || next[index].uploadTaskId === page.uploadTaskId) {
+            next[index] = { ...next[index], ...page }
+          }
         }
-        return result
+        return next
       })
       setMangaUploadBatchIds((current) => [
         ...new Set([...current, ...restored.filter((page) => page.status !== 'done' && page.status !== 'error').map((page) => page.id)]),
       ])
-      queue.start()
+      if (!mangaQueuePausedRef.current) queue.start()
     }
 
-    void restoreMangaQueue().catch((error) => {
+    const ready = restoreMangaQueue()
+    mangaQueueReadyRef.current = ready
+    void ready.catch((error) => {
       if (cancelled) return
       queue?.stop()
       if (mangaPageQueueRef.current === queue) mangaPageQueueRef.current = null
@@ -4351,8 +4393,15 @@ return true
       cancelled = true
       queue?.stop()
       if (mangaPageQueueRef.current === queue) mangaPageQueueRef.current = null
+      if (mangaQueueReadyRef.current === ready) mangaQueueReadyRef.current = null
     }
   }, [pageLoading, isManga, localRecoveryOpen, storyId, editEpisodeId])
+
+  const getReadyMangaQueue = async () => {
+    if (mangaPageQueueRef.current) return mangaPageQueueRef.current
+    if (mangaQueueReadyRef.current) await mangaQueueReadyRef.current
+    return mangaPageQueueRef.current
+  }
 
   const updateMangaPage = (pageId, patch) => {
     setMangaPages((current) =>
@@ -4365,13 +4414,17 @@ return true
       const accepted = await requireAgreement()
       if (!accepted) return
     }
-
     if (!getAuthToken()) {
       navigate('/login')
       return
     }
 
-    const queue = mangaPageQueueRef.current
+    let queue
+    try {
+      queue = await getReadyMangaQueue()
+    } catch (error) {
+      setMessage(error.message || 'Cannot open local Manga queue')
+    }
     if (!queue) {
       for (const entry of entries) {
         updateMangaPage(entry.id, {
@@ -4382,12 +4435,26 @@ return true
       return
     }
 
-    setMangaUploadBatchIds(entries.map((entry) => entry.id))
+    mangaQueuePausedRef.current = false
+    mangaPauseAfterCurrentRef.current = false
+    setMangaUploadBatchIds((current) => [...new Set([...current, ...entries.map((entry) => entry.id)])])
     for (const entry of entries) {
       try {
         const existing = entry.uploadTaskId ? await queue.get(entry.uploadTaskId) : null
         if (existing) {
-          if (existing.status === 'failed') await queue.retry(existing.id)
+          if (['failed', 'retry_wait'].includes(existing.status)) await queue.retry(existing.id)
+          if (existing.status === 'uploaded') {
+            const result = existing.result || {}
+            updateMangaPage(entry.id, {
+              status: 'done', progress: 100, imageUrl: result.imageUrl,
+              previewUrl: result.imageUrl, storagePath: result.storagePath,
+              width: result.width, height: result.height,
+              fileSize: result.fileSize, mimeType: result.mimeType,
+              parts: Array.isArray(result.parts) ? result.parts : [], error: '',
+            })
+          } else {
+            updateMangaPage(entry.id, { status: 'queued', progress: 0, error: '' })
+          }
           queue.start()
           continue
         }
@@ -4406,16 +4473,16 @@ return true
         updateMangaPage(entry.id, {
           uploadTaskId: task.id,
           revisionId: task.context.revisionId,
-          status: task.status === 'uploaded' ? 'done' : 'queued',
+          status: mangaQueuePausedRef.current ? 'error' : task.status === 'uploaded' ? 'done' : 'queued',
           progress: Number(task.progress || 0),
           sourceFile: null,
           fileSize: task.size,
           mimeType: task.mimeType,
           width: task.context.width || null,
           height: task.context.height || null,
-          error: '',
+          error: mangaQueuePausedRef.current ? 'Upload paused. Tap Retry to resume.' : '',
         })
-        queue.start()
+        if (!mangaQueuePausedRef.current) queue.start()
       } catch (error) {
         updateMangaPage(entry.id, {
           status: 'error',
@@ -4426,6 +4493,15 @@ return true
     }
   }
 
+  const handlePauseMangaUpload = () => {
+    if (mangaPages.some((page) => page.status === 'uploading')) {
+      mangaPauseAfterCurrentRef.current = true
+      showToast('The queue will pause after the current Manga page finishes.')
+      return
+    }
+    pauseMangaQueueNow()
+    showToast(getDisplayText('episodeEditor.uploadCanceled'))
+  }
 
     useEffect(() => {
     let cancelled = false
@@ -4680,11 +4756,27 @@ return true
         await localSavePromiseRef.current.catch(() => {})
       }
       localSavedRevisionRef.current = localDraftRevisionRef.current
-      await cleanupTemporaryMangaPages(
-        draft.storyType === 'manga'
-          ? draft.mangaPages || []
-          : []
-      )
+      if (draft.storyType === 'manga' && getAuthToken()) {
+        const { createMangaPageUploadQueue } = await import('../../utils/mangaPageUploadQueue')
+        const queue = createMangaPageUploadQueue({
+          storyId,
+          draftKey: getEpisodeLocalDraftKey(storyId, editEpisodeId || ''),
+          getToken: getAuthToken,
+        })
+        try {
+          const tasks = await queue.list()
+          for (const task of tasks) {
+            let removed = false
+            for (let attempt = 0; attempt < 8 && !removed; attempt += 1) {
+              removed = await queue.remove(task.id)
+              if (!removed) await new Promise((resolve) => setTimeout(resolve, 250))
+            }
+            if (!removed) throw new Error('A Manga upload is still active. Retry discarding after it stops.')
+          }
+        } finally {
+          queue.stop()
+        }
+      }
       await deleteEpisodeLocalDraft(localDraftKeyRef.current)
       setLocalRecoveryOpen(false)
       setLocalRecoveryDraft(null)
@@ -5172,6 +5264,7 @@ const handleEditorCompositionEnd = (event) => {
       error: '',
     }))
 
+    for (const entry of entries) mangaLocalPreviewUrlsRef.current.set(String(entry.id), entry.previewUrl)
     setMangaPages((current) => [...current, ...entries])
     markUnsaved()
     await processMangaPages(entries)
@@ -5180,47 +5273,64 @@ const handleEditorCompositionEnd = (event) => {
   const handleReplaceMangaPage = async (pageId, file) => {
     if (!file) return
     const validationError = validateMangaFile(file)
-
     if (validationError) {
       showToast(validationError)
       return
     }
 
-    const previousPage = mangaPages.find(
-  (page) => page.id === pageId
-)
+    const previous = mangaPages.find((page) => page.id === pageId)
+    if (!previous || ['queued', 'processing', 'uploading'].includes(previous.status)) return
 
-await cleanupTemporaryMangaPages(
-  previousPage ? [previousPage] : []
-)
-
-    const entry = {
-      id: pageId,
-      previewUrl: URL.createObjectURL(file),
-      sourceFile: file,
-    }
-
-    setMangaPages((current) =>
-      current.map((page) => {
-        if (page.id !== pageId) return page
-        if (String(page.previewUrl || '').startsWith('blob:')) URL.revokeObjectURL(page.previewUrl)
-        return {
-          ...page,
-          ...entry,
-          imageUrl: '',
-          storagePath: null,
-          parts: [],
-          fileSize: file.size,
-          mimeType: file.type,
-          status: 'queued',
-          progress: 5,
-          error: '',
-        }
+    setMangaQueuePreparing(true)
+    try {
+      const queue = await getReadyMangaQueue()
+      if (!queue) throw new Error('Local Manga queue is not ready. Please retry.')
+      const revisionId = makeLocalId()
+      const task = await queue.enqueue({
+        file,
+        pageId,
+        revisionId,
+        position: mangaPages.findIndex((page) => page.id === pageId),
       })
-    )
+      if (previous.uploadTaskId) {
+        const removed = await queue.remove(previous.uploadTaskId)
+        if (!removed) {
+          await queue.remove(task.id)
+          throw new Error('The previous Manga upload is still active. Pause it before replacing.')
+        }
+      }
 
-    markUnsaved()
-    await processMangaPages([{ ...entry, status: 'queued' }])
+      const previewUrl = URL.createObjectURL(file)
+      releaseLocalMangaPreview(pageId)
+      mangaLocalPreviewUrlsRef.current.set(String(pageId), previewUrl)
+      mangaPendingCleanupRef.current.push(previous)
+      setMangaPages((current) => current.map((page) => page.id === pageId ? {
+        ...page,
+        previewUrl,
+        imageUrl: '',
+        storagePath: null,
+        parts: [],
+        sourceFile: null,
+        uploadTaskId: task.id,
+        revisionId,
+        width: task.context.width || null,
+        height: task.context.height || null,
+        fileSize: task.size,
+        mimeType: task.mimeType,
+        status: task.status === 'uploaded' ? 'done' : 'queued',
+        progress: Number(task.progress || 0),
+        error: '',
+      } : page))
+      markUnsaved()
+      mangaQueuePausedRef.current = false
+      mangaPauseAfterCurrentRef.current = false
+      setMangaUploadBatchIds((current) => [...new Set([...current, pageId])])
+      queue.start()
+    } catch (error) {
+      showToast(error.message || 'Could not replace Manga page')
+    } finally {
+      setMangaQueuePreparing(false)
+    }
   }
 
   const handleRetryMangaPage = async (pageId) => {
@@ -5229,25 +5339,34 @@ await cleanupTemporaryMangaPages(
       showToast(getDisplayText('episodeEditor.chooseReplacementImage'))
       return
     }
-
-    updateMangaPage(pageId, { status: 'queued', progress: 5, error: '' })
+    updateMangaPage(pageId, { status: 'queued', progress: 0, error: '' })
     await processMangaPages([page])
   }
 
   const handleDeleteMangaPage = async (pageId) => {
-  const page = mangaPages.find((item) => item.id === pageId)
+    const page = mangaPages.find((item) => item.id === pageId)
+    if (!page || ['queued', 'processing', 'uploading'].includes(page.status)) return
 
-  setMangaPages((current) => {
-    if (String(page?.previewUrl || '').startsWith('blob:')) {
-      URL.revokeObjectURL(page.previewUrl)
+    setMangaQueuePreparing(true)
+    try {
+      if (page.uploadTaskId) {
+        const queue = await getReadyMangaQueue()
+        if (!queue || !(await queue.remove(page.uploadTaskId))) {
+          throw new Error('Manga upload is still active. Pause the upload before deleting this page.')
+        }
+      }
+      mangaRemovedPageIdsRef.current.add(String(pageId))
+      mangaPendingCleanupRef.current.push(page)
+      releaseLocalMangaPreview(pageId)
+      setMangaPages((current) => current.filter((item) => item.id !== pageId))
+      setMangaUploadBatchIds((current) => current.filter((id) => id !== pageId))
+      markUnsaved()
+    } catch (error) {
+      showToast(error.message || 'Could not delete Manga page')
+    } finally {
+      setMangaQueuePreparing(false)
     }
-
-    return current.filter((item) => item.id !== pageId)
-  })
-
-  markUnsaved()
-  await cleanupTemporaryMangaPages(page ? [page] : [])
-}
+  }
 
   const handleMoveMangaPage = (fromIndex, toIndex) => {
     if (toIndex < 0 || toIndex >= mangaPages.length || fromIndex === toIndex) return
@@ -5402,6 +5521,26 @@ await cleanupTemporaryMangaPages(
     setHasUnsavedChanges(false)
     localSavedRevisionRef.current = savingRevision
     await deleteEpisodeLocalDraft(localDraftKeyRef.current)
+
+    if (isManga) {
+      const queue = mangaPageQueueRef.current
+      if (queue) {
+        try {
+          await queue.acknowledge(mangaPages.map((page) => page.uploadTaskId).filter(Boolean))
+        } catch {
+          setMessage('Episode saved. Some local Manga files may be cleaned up after reopening the editor.')
+        }
+      }
+      const unusedPages = mangaPendingCleanupRef.current
+      mangaPendingCleanupRef.current = []
+      await cleanupTemporaryMangaPages(unusedPages)
+      for (const page of mangaPages) releaseLocalMangaPreview(page.id)
+      setMangaPages((current) => current.map((page) => ({
+        ...page,
+        uploadTaskId: null,
+        revisionId: null,
+      })))
+    }
 
     if (!goToPublish && !stayOnPage) {
   navigate(`/author/story/${storyId}/manage`)
@@ -5572,7 +5711,25 @@ await cleanupTemporaryMangaPages(
     }
 
     localSavedRevisionRef.current = localDraftRevisionRef.current
-    await cleanupTemporaryMangaPages(mangaPages)
+    if (isManga) {
+      const queue = mangaPageQueueRef.current
+      queue?.stop()
+      if (queue) {
+        for (const task of await queue.list()) {
+          let removed = false
+          for (let attempt = 0; attempt < 8 && !removed; attempt += 1) {
+            removed = await queue.remove(task.id)
+            if (!removed) await new Promise((resolve) => setTimeout(resolve, 250))
+          }
+          if (!removed) {
+            setMessage('Local Manga upload is still stopping. Please try discarding again.')
+            return
+          }
+        }
+      }
+      await cleanupTemporaryMangaPages(mangaPages.filter((page) => page.uploadTaskId))
+      mangaPendingCleanupRef.current = []
+    }
     await deleteEpisodeLocalDraft(localDraftKeyRef.current)
 
     if (searchParams.get('fromPublishSuccess') === '1' || searchParams.get('fromPublishWarning') === '1') {
@@ -5817,7 +5974,7 @@ setSuccessOpen(true)
     {isManga && mangaUploadPending ? (
   <MangaUploadProgressModal
     pages={mangaPages.filter((page) => mangaUploadBatchIds.includes(page.id))}
-    onCancel={() => mangaUploadAbortRef.current?.abort()}
+    onCancel={handlePauseMangaUpload}
   />
 ) : null}
     
