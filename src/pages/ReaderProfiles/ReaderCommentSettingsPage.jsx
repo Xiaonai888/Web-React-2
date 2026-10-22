@@ -181,7 +181,7 @@ function CommentSwitch({ checked, disabled, label, onChange }) {
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className="shrink-0 rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+      className="shrink-0 rounded-full disabled:cursor-not-allowed"
     >
       <span className={`relative block h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
         checked ? 'bg-[#111827]' : 'bg-[#D1D6DE]'
