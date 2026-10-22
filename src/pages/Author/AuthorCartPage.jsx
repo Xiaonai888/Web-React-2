@@ -144,7 +144,28 @@ function getItemPrice(item) {
 }
 
 function getItemCover(item) {
-  return item.cover_url || ''
+  const source = String(item?.cover_url || '').trim()
+  if (!source) return ''
+
+  if (/^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(source)) {
+    return source
+  }
+
+  try {
+    const url = new URL(source, window.location.origin)
+
+    if (url.protocol === 'https:' || url.protocol === 'http:') {
+      return url.href
+    }
+
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) {
+      return url.href
+    }
+  } catch {
+    return ''
+  }
+
+  return ''
 }
 
 function getItemType(item, t) {
