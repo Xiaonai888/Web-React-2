@@ -2130,6 +2130,24 @@ function CropCoverModal({
   )
 }
 
+function safeEpisodePreviewUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return ''
+  if (/^data:image\/(?:png|jpe?g|gif|webp|avif);base64,[a-z0-9+/=]+$/i.test(source)) return source
+  try {
+    const url = new URL(source, window.location.origin)
+    if (['http:', 'https:'].includes(url.protocol)) return url.href
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {}
+  return ''
+}
+
+function setSafeEpisodePreview(node, value) {
+  if (!node) return
+  const source = safeEpisodePreviewUrl(value)
+  if (source) node.src = source
+  else node.removeAttribute('src')
+}
 
 function EpisodeDetailsSheet({
   open,
@@ -2243,7 +2261,7 @@ function EpisodeDetailsSheet({
                 <div className="mt-3 overflow-hidden rounded-[12px] bg-[var(--shadow-bg-soft)]">
                   <div className="aspect-video w-full overflow-hidden sm:h-[340px] sm:aspect-auto">
                     <img
-                      src={cover}
+                      ref={(node) => setSafeEpisodePreview(node, cover)}
                       alt={getDisplayText('episodeEditor.episodeCover')}
                       className="h-full w-full object-cover"
                     />
@@ -3815,7 +3833,7 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
     >
       <div className="overflow-hidden rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-sm">
         <div className="relative aspect-[2/3] overflow-hidden bg-[var(--shadow-bg-soft)]">
-        <img src={page.previewUrl || page.imageUrl} alt={getDisplayText('episodeEditor.mangaPageAlt', { number: index + 1 })} className="h-full w-full object-contain" />
+        <img ref={(node) => setSafeEpisodePreview(node, page.previewUrl || page.imageUrl)} alt={getDisplayText('episodeEditor.mangaPageAlt', { number: index + 1 })} className="h-full w-full object-contain" />
         {page.status === 'processing' && page.serverProcessing ? (
   <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10">
     <i className="fa-solid fa-spinner animate-spin text-[28px] text-white drop-shadow-lg" />
@@ -6014,7 +6032,7 @@ releaseOption={releaseOption}
 
           {episodeCover ? (
             <img
-              src={episodeCover}
+              ref={(node) => setSafeEpisodePreview(node, episodeCover)}
               alt=""
               className="h-9 w-16 shrink-0 rounded-[8px] object-cover"
             />
