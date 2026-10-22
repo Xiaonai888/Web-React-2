@@ -162,15 +162,26 @@ function getReaderToken() {
   )
 }
 
+function formatDate(value, language) {
+  if (!value) return ''
+
+  return new Date(value).toLocaleDateString(
+    language === 'en' ? 'en-GB' : LANGUAGE_LOCALES[language] || 'en-GB',
+    {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }
+  ).toLocaleUpperCase()
+}
+
 function formatTime(value, language) {
   if (!value) return ''
 
-  return new Date(value).toLocaleString(
+  return new Date(value).toLocaleTimeString(
     LANGUAGE_LOCALES[language] || 'en-US',
     {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
     }
   )
@@ -680,9 +691,9 @@ export default function MeCommentsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pt-4">
+      <main className="mx-auto max-w-3xl px-0 pt-0 sm:px-4 sm:pt-4">
         {activeTab === 'story' ? (
-          <div className="mb-4 flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mb-3 flex gap-2 overflow-x-auto px-3 pt-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mb-4 sm:px-0 sm:pt-0">
             {STORY_FILTERS.map(
               (filter) => {
                 const active =
@@ -721,7 +732,7 @@ export default function MeCommentsPage() {
         ) : null}
 
         {loading ? (
-          <div className="overflow-hidden rounded-[18px] bg-white ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
+          <div className="overflow-hidden rounded-none bg-white ring-0 dark:bg-[#171923] dark:ring-white/10 sm:rounded-[18px] sm:ring-1">
             {Array.from({
               length: 6,
             }).map(
@@ -741,9 +752,9 @@ export default function MeCommentsPage() {
             )}
           </div>
         ) : visibleItems.length ? (
-          <div className="overflow-hidden rounded-[18px] bg-white ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
+          <div className="overflow-hidden rounded-none bg-white ring-0 dark:bg-[#171923] dark:ring-white/10 sm:rounded-[18px] sm:ring-1">
             {visibleItems.map(
-              (item) => {
+              (item, index) => {
                 const isStory =
                   activeTab === 'story'
                 const actorName =
@@ -755,84 +766,84 @@ export default function MeCommentsPage() {
                   getActivityStoryTitle(
                     item
                   )
+                const dateLabel = formatDate(item.created_at, language)
+                const previousDateLabel = index > 0
+                  ? formatDate(visibleItems[index - 1].created_at, language)
+                  : ''
 
                 return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() =>
-                      openItem(item)
-                    }
-                    className={`relative flex w-full items-start gap-3 border-b border-[#f0f0f3] px-4 py-4 text-left transition last:border-b-0 active:bg-[#f8f8fa] dark:border-white/10 dark:active:bg-white/5 ${
-                      isStory &&
-                      !item.is_read
-                        ? 'bg-[#fffdf4] dark:bg-[#f6b800]/[0.06]'
-                        : ''
-                    }`}
-                  >
-                    <ActivityAvatar
-                      item={item}
-                      t={t}
-                    />
+                  <div key={item.id}>
+                    {dateLabel && dateLabel !== previousDateLabel ? (
+                      <div className="bg-[#f7f7f9] px-4 py-3 text-[12px] font-extrabold tracking-[0.025em] text-[#4b5563] dark:bg-[#111318] dark:text-white/75">
+                        {dateLabel}
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => openItem(item)}
+                      className={`relative flex h-[120px] w-full items-start gap-3 overflow-hidden border-b border-[#f0f0f3] px-4 py-3 text-left transition active:bg-[#f8f8fa] dark:border-white/10 dark:active:bg-white/5 ${
+                        isStory && !item.is_read
+                          ? 'bg-[#fffdf4] dark:bg-[#f6b800]/[0.06]'
+                          : ''
+                      }`}
+                    >
+                      <ActivityAvatar
+                        item={item}
+                        t={t}
+                      />
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="min-w-0 truncate text-[14px] font-extrabold text-[#17191d] dark:text-white">
-                          {isStory
-                            ? actorName
-                            : getActivityTitle(
-                                item,
-                                t
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="min-w-0 flex-1 truncate text-[14px] font-extrabold text-[#17191d] dark:text-white">
+                            {isStory
+                              ? actorName
+                              : getActivityTitle(
+                                  item,
+                                  t
+                                )}
+                          </span>
+
+                          {isStory ? (
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-extrabold ${
+                                item.is_own_comment
+                                  ? 'bg-[#ede9fe] text-[#6d28d9] dark:bg-violet-500/15 dark:text-violet-300'
+                                  : 'bg-[#eaf4ff] text-[#2673c9] dark:bg-blue-500/15 dark:text-blue-300'
+                              }`}
+                            >
+                              {t(
+                                item.is_own_comment
+                                  ? 'meCommentsPage.author'
+                                  : 'meCommentsPage.reader'
                               )}
-                        </span>
-
-                        {isStory ? (
-                          <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-extrabold ${
-                              item.is_own_comment
-                                ? 'bg-[#ede9fe] text-[#6d28d9] dark:bg-violet-500/15 dark:text-violet-300'
-                                : 'bg-[#eaf4ff] text-[#2673c9] dark:bg-blue-500/15 dark:text-blue-300'
-                            }`}
-                          >
-                            {t(
-                              item.is_own_comment
-                                ? 'meCommentsPage.author'
-                                : 'meCommentsPage.reader'
-                            )}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {storyTitle ? (
-                        <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11.5px] font-semibold text-[#8a9099] dark:text-white/45">
-                          <i className="fa-regular fa-bookmark shrink-0 text-[10px]" />
-                          <span className="truncate">
-                            {storyTitle}
-                          </span>
+                            </span>
+                          ) : null}
+                          <time dateTime={item.created_at || undefined} className="ml-auto shrink-0 whitespace-nowrap text-[10px] font-semibold text-[#8a9099] dark:text-white/50">
+                            {formatTime(item.created_at, language)}
+                          </time>
                         </div>
-                      ) : null}
 
-                      <p className="mt-2 line-clamp-3 text-[13px] font-medium leading-5.5 text-[#4f555f] dark:text-white/70">
-                        {getActivityText(
-                          item
-                        )}
-                      </p>
+                        {storyTitle ? (
+                          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11.5px] font-semibold text-[#8a9099] dark:text-white/45">
+                            <i className="fa-regular fa-bookmark shrink-0 text-[10px]" />
+                            <span className="truncate">
+                              {storyTitle}
+                            </span>
+                          </div>
+                        ) : null}
 
-                      <div className="mt-2 text-[10.5px] font-semibold text-[#a0a5ad] dark:text-white/35">
-                        {formatTime(
-                          item.created_at,
-                          language
-                        )}
+                        <p className="mt-2 line-clamp-2 break-words text-[13px] font-medium leading-5.5 text-[#4f555f] dark:text-white/70">
+                          {getActivityText(
+                            item
+                          )}
+                        </p>
                       </div>
-                    </div>
 
-                    {isStory &&
-                    !item.is_read ? (
-                      <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[#f6b800]" />
-                    ) : (
-                      <i className="fa-solid fa-chevron-right mt-1.5 shrink-0 text-[9px] text-[#c2c6cc] dark:text-white/25" />
-                    )}
-                  </button>
+                      {isStory && !item.is_read ? (
+                        <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[#f6b800]" />
+                      ) : null}
+                    </button>
+                  </div>
                 )
               }
             )}
