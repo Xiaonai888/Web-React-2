@@ -95,11 +95,11 @@ export default function AuthorProfileNotificationSettingsPage() {
                 <p className="mt-1 text-[11px] leading-4 text-[var(--shadow-text-secondary)]">{t(`authorPushSettings.${item.key}Help`)}</p>
               </div>
               <NotificationSwitch
-                checked={preferences[item.key]}
-                disabled={loading || Boolean(busy)}
-                onChange={() => updatePreference(item.key, !preferences[item.key])}
-                label={t(`authorPushSettings.${item.key}`)}
-              />
+  checked={preferences[item.key]}
+  disabled={loading || Boolean(busy) || !preferences.master}
+  onChange={() => updatePreference(item.key, !preferences[item.key])}
+  label={t(`authorPushSettings.${item.key}`)}
+/>
             </div>
           ))}
         </section>
