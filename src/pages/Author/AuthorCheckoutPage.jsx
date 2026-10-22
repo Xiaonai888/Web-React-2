@@ -352,6 +352,25 @@ const DELIVERY_COMPANIES = [
   },
 ]
 
+function safeCheckoutCoverUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return ''
+
+  if (/^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(source)) {
+    return source
+  }
+
+  try {
+    const url = new URL(source, window.location.origin)
+    if (url.protocol === 'https:' || url.protocol === 'http:') return url.href
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {
+    return ''
+  }
+
+  return ''
+}
+
 function getCartItems() {
   try {
     const raw = localStorage.getItem('shadow_author_cart_items') || '[]'
@@ -1004,8 +1023,8 @@ export default function AuthorCheckoutPage() {
             {items.length ? items.map((item) => (
               <article key={item.id} className="flex gap-3 rounded-[18px] bg-[var(--shadow-bg-surface)] py-2">
                 <div className="h-[92px] w-[68px] shrink-0 overflow-hidden rounded-[14px] bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
-                  {item.cover_url ? (
-                    <img src={item.cover_url} alt={item.title} className="h-full w-full object-cover" />
+                  {safeCheckoutCoverUrl(item.cover_url) ? (
+                    <img src={safeCheckoutCoverUrl(item.cover_url)} alt={item.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
                       <i className="fa-regular fa-image text-[18px]" />
