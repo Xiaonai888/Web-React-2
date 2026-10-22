@@ -10,6 +10,13 @@ import { encryptChatGalleryDraft, decryptChatGalleryDraft } from '../../utils/se
 
 registerTranslationNamespace('chatStoryEditor', {
   "en": {
+    "sendVoice": "Send voice",
+    "uploadingVoice": "Uploading voice…",
+    "voiceUploadFailed": "Voice upload failed. Your file is kept; try again.",
+    "voiceBackendNeeded": "Voice upload needs the backend update.",
+    "voiceCharacterRequired": "Choose a character before sending voice.",
+    "voiceMessage": "Voice message",
+
     "failedUploadCharacterImage": "Failed to upload character image",
     "failedUploadChatImage": "Failed to upload Chat Story image",
     "missingImageUrl": "Image uploaded but image URL was missing",
@@ -136,6 +143,13 @@ registerTranslationNamespace('chatStoryEditor', {
     "addImage": "Add image"
   },
   "km": {
+    "sendVoice": "ផ្ញើសំឡេង",
+    "uploadingVoice": "កំពុងផ្ទុកសំឡេង…",
+    "voiceUploadFailed": "ផ្ទុកសំឡេងបរាជ័យ។ ឯកសារនៅដដែល សូមព្យាយាមម្ដងទៀត។",
+    "voiceBackendNeeded": "មុខងារ Upload សំឡេងត្រូវការ Update Backend ជាមុន។",
+    "voiceCharacterRequired": "សូមជ្រើសតួអង្គមុនផ្ញើសំឡេង។",
+    "voiceMessage": "សារសំឡេង",
+
     "failedUploadCharacterImage": "មិនអាច Upload រូបតួអង្គបានទេ",
     "failedUploadChatImage": "មិនអាច Upload រូប Chat Story បានទេ",
     "missingImageUrl": "បាន Upload រូប ប៉ុន្តែមិនទទួលបាន Image URL",
@@ -262,6 +276,13 @@ registerTranslationNamespace('chatStoryEditor', {
     "addImage": "បន្ថែមរូបភាព"
   },
   "zh": {
+    "sendVoice": "发送语音",
+    "uploadingVoice": "正在上传语音…",
+    "voiceUploadFailed": "语音上传失败，文件已保留，请重试。",
+    "voiceBackendNeeded": "语音上传需要更新后端。",
+    "voiceCharacterRequired": "发送语音前请选择角色。",
+    "voiceMessage": "语音消息",
+
     "failedUploadCharacterImage": "无法上传角色图片",
     "failedUploadChatImage": "无法上传 Chat Story 图片",
     "missingImageUrl": "图片已上传，但未返回图片 URL",
@@ -388,6 +409,13 @@ registerTranslationNamespace('chatStoryEditor', {
     "addImage": "添加图片"
   },
   "ja": {
+    "sendVoice": "音声を送信",
+    "uploadingVoice": "音声をアップロード中…",
+    "voiceUploadFailed": "音声を保持しています。アップロードを再試行してください。",
+    "voiceBackendNeeded": "音声アップロードにはバックエンドの更新が必要です。",
+    "voiceCharacterRequired": "音声を送信する前にキャラクターを選択してください。",
+    "voiceMessage": "音声メッセージ",
+
     "failedUploadCharacterImage": "キャラクター画像をアップロードできませんでした",
     "failedUploadChatImage": "Chat Story 画像をアップロードできませんでした",
     "missingImageUrl": "画像はアップロードされましたが、画像 URL がありません",
@@ -514,6 +542,13 @@ registerTranslationNamespace('chatStoryEditor', {
     "addImage": "画像を追加"
   },
   "ko": {
+    "sendVoice": "음성 보내기",
+    "uploadingVoice": "음성 업로드 중…",
+    "voiceUploadFailed": "파일이 유지됩니다. 음성 업로드를 다시 시도하세요.",
+    "voiceBackendNeeded": "음성 업로드에는 백엔드 업데이트가 필요합니다.",
+    "voiceCharacterRequired": "음성을 보내기 전에 캐릭터를 선택하세요.",
+    "voiceMessage": "음성 메시지",
+
     "failedUploadCharacterImage": "캐릭터 이미지를 업로드하지 못했습니다",
     "failedUploadChatImage": "Chat Story 이미지를 업로드하지 못했습니다",
     "missingImageUrl": "이미지는 업로드되었지만 이미지 URL이 없습니다",
@@ -810,9 +845,9 @@ async function uploadEpisodeImage(token, file) {
 
 function safeChatStoryAudioUrl(value) {
   const source = String(value || '').trim()
-  if (!source.startsWith('blob:')) return ''
   try {
     const url = new URL(source)
+    if (url.protocol === 'https:' && !url.username && !url.password) return url.href
     if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
   } catch {}
   return ''
@@ -1102,6 +1137,77 @@ function AsideMessage({
         }`}
         aria-label={getDisplayText('chatStoryEditor.editAside')}
       >
+        <ToolbarIcon name="modify" className="h-[12px] w-[12px]" />
+      </button>
+    </div>
+  )
+}
+
+async function uploadChatStoryVoice(file, token, storyId, duration, signal, onProgress) {
+  const mimeByExtension = { mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', webm: 'audio/webm' }
+  const extension = String(file.name || '').split('.').pop().toLowerCase()
+  const mime = mimeByExtension[extension] || String(file.type || '').split(';')[0]
+  if (!Object.values(mimeByExtension).includes(mime) || !file.size || file.size > MAX_AUDIO_SIZE_BYTES || duration < 1 || duration > 60)
+    throw new Error(getDisplayText('chatStoryEditor.audioDuration'))
+  const request = async (path, body) => {
+    const response = await fetch(`${API_BASE_URL}/api/media-direct/user/${path}`, {
+      method: 'POST', signal,
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) {
+      const unsupported = ['DIRECT_UPLOAD_CATEGORY_DENIED', 'DIRECT_UPLOAD_MIME_INVALID', 'DIRECT_UPLOAD_NOT_ENABLED'].includes(data.code) || response.status === 404
+      throw new Error(getDisplayText(unsupported ? 'chatStoryEditor.voiceBackendNeeded' : 'chatStoryEditor.voiceUploadFailed'))
+    }
+    return data
+  }
+  const init = await request('init', { category: 'chat_story_audio', story_id: storyId, mime_type: mime, file_size: file.size, duration_seconds: duration })
+  const destination = new URL(init.upload_url)
+  if (destination.protocol !== 'https:' || destination.username || destination.password || !init.upload_token)
+    throw new Error(getDisplayText('chatStoryEditor.voiceUploadFailed'))
+  await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    let settled = false
+    const finish = (error) => {
+      if (settled) return
+      settled = true
+      signal.removeEventListener('abort', abort)
+      error ? reject(error) : resolve()
+    }
+    const abort = () => xhr.abort()
+    xhr.open('PUT', destination.href)
+    xhr.setRequestHeader('Content-Type', mime)
+    xhr.timeout = 180000
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.round(event.loaded / event.total * 90))
+    }
+    xhr.onload = () => finish(xhr.status >= 200 && xhr.status < 300 ? null : new Error(getDisplayText('chatStoryEditor.voiceUploadFailed')))
+    xhr.onerror = xhr.ontimeout = () => finish(new Error(getDisplayText('chatStoryEditor.voiceUploadFailed')))
+    xhr.onabort = () => finish(new DOMException('Aborted', 'AbortError'))
+    signal.addEventListener('abort', abort, { once: true })
+    if (signal.aborted) finish(new DOMException('Aborted', 'AbortError'))
+    else xhr.send(file)
+  })
+  onProgress(95)
+  const result = await request('finalize', { upload_token: init.upload_token })
+  const url = safeChatStoryAudioUrl(result.audio_url || result.audioUrl)
+  if (!url || !url.startsWith('https:')) throw new Error(getDisplayText('chatStoryEditor.voiceUploadFailed'))
+  onProgress(100)
+  return { audioUrl: url, audioDuration: duration }
+}
+
+function EditorVoiceMessage({ message, character, right, active, onEdit, onElementRef }) {
+  return (
+    <div ref={(node) => onElementRef(message.id, node)} data-message-id={message.id}
+      className={`flex items-end gap-2 py-2 ${right ? 'justify-end' : 'justify-start'}`}>
+      <div className={`max-w-[76%] rounded-[18px] bg-[var(--shadow-bg-soft)] px-3 py-3 ${active ? 'ring-2 ring-[#f59e0b]' : 'ring-1 ring-[var(--shadow-border)]'}`}>
+        <div className="mb-2 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">{character?.nickname || getDisplayText('chatStoryEditor.character')}</div>
+        <audio controls preload="none" ref={(node) => setSafeChatStoryAudio(node, message.audioUrl || message.audio_url)}
+          aria-label={getDisplayText('chatStoryEditor.voiceMessage')} className="h-10 max-w-full" />
+      </div>
+      <button type="button" onClick={() => onEdit(message.id)} aria-label={getDisplayText('chatStoryEditor.editMessage')}
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-secondary)]">
         <ToolbarIcon name="modify" className="h-[12px] w-[12px]" />
       </button>
     </div>
@@ -1608,7 +1714,7 @@ function MessageEditToolbar({
           onClick={onBelow}
         />
 
-        {message.type !== 'image' ? (
+        {!['image', 'audio', 'voice'].includes(message.type) ? (
   <MessageToolbarAction
     icon="modify"
     label={getDisplayText('chatStoryEditor.modify')}
@@ -2084,6 +2190,9 @@ function AudioUploadSheet({
   onDropFile,
   onClose,
   onClear,
+  onSend,
+  uploading = false,
+  progress = 0,
 }) {
   const [dragY, setDragY] = useState(0)
   const [dropActive, setDropActive] = useState(false)
@@ -2321,10 +2430,11 @@ function AudioUploadSheet({
 
         <button
           type="button"
-          onClick={onClose}
+          disabled={uploading}
+          onClick={file ? onSend : onClose}
           className="mt-3 h-12 w-full rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[13px] font-medium text-white"
         >
-          {getDisplayText('chatStoryEditor.done')}
+          {uploading ? `${getDisplayText('chatStoryEditor.uploadingVoice')} ${progress}%` : getDisplayText(file ? 'chatStoryEditor.sendVoice' : 'chatStoryEditor.done')}
         </button>
       </section>
     </div>
@@ -2443,6 +2553,17 @@ export default function ChatStoryEditorPage() {
   const [audioFile, setAudioFile] = useState(null)
   const [audioPreviewUrl, setAudioPreviewUrl] = useState('')
   const [audioDuration, setAudioDuration] = useState(0)
+  const [audioUploading, setAudioUploading] = useState(false)
+  const [audioUploadProgress, setAudioUploadProgress] = useState(0)
+  const audioUploadBusyRef = useRef(false)
+  const audioUploadControllerRef = useRef(null)
+  const audioUploadCacheRef = useRef(new WeakMap())
+  const audioPreviewRef = useRef('')
+  audioPreviewRef.current = audioPreviewUrl
+  useEffect(() => () => {
+    audioUploadControllerRef.current?.abort()
+    if (audioPreviewRef.current) URL.revokeObjectURL(audioPreviewRef.current)
+  }, [])
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false)
   const [composerMode, setComposerMode] = useState('message')
   const [activeMessageId, setActiveMessageId] = useState('')
@@ -3429,6 +3550,10 @@ restoredDraftCharactersRef.current = false
               character_id: message.characterId || null,
               text: message.text || '',
               image_url: message.type === 'image' ? message.imageUrl || message.image_url || null : null,
+              ...(['audio', 'voice'].includes(message.type) ? {
+                audio_url: message.audioUrl || message.audio_url || null,
+                audio_duration: Number(message.audioDuration || message.audio_duration || 0),
+              } : {}),
               created_at: message.createdAt || null,
             })),
           }),
@@ -3802,7 +3927,9 @@ if (!restoredDraftCharactersRef.current) setCharacters(nextCharacters)
               id:
                 message.id || makeId(),
               type:
-                message.type === 'chat'
+                ['audio', 'voice'].includes(message.type)
+                  ? 'audio'
+                  : message.type === 'chat'
                   ? 'chat'
                   : message.type ===
                       'author_note'
@@ -3820,6 +3947,8 @@ if (!restoredDraftCharactersRef.current) setCharacters(nextCharacters)
                 message.image_url ||
                 message.imageUrl ||
                 '',
+              audioUrl: message.audio_url || message.audioUrl || '',
+              audioDuration: Number(message.audio_duration || message.audioDuration || 0),
               createdAt:
                 message.created_at ||
                 new Date().toISOString(),
@@ -4002,7 +4131,7 @@ const beginInsertMessage = (position) => {
 
   setSelectedCharacterId(
     activeMessage.type === 'chat' ||
-    activeMessage.type === 'image'
+    ['image', 'audio', 'voice'].includes(activeMessage.type)
       ? activeMessage.characterId
       : null
   )
@@ -4714,6 +4843,7 @@ const handleAddConfirm = async () => {
   }
 
   const clearSelectedAudio = () => {
+    if (audioUploadBusyRef.current) return
     if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl)
     setAudioFile(null)
     setAudioPreviewUrl('')
@@ -4726,11 +4856,70 @@ const handleAddConfirm = async () => {
   }
 
   const closeAudioSheet = () => {
+    if (audioUploadBusyRef.current) return
     setAudioSheetOpen(false)
     setMorePopupOpen(true)
   }
 
+  const sendAudioMessage = async () => {
+    if (audioUploadBusyRef.current || !audioFile) return
+    if (!selectedCharacter?.id) {
+      showToast(getDisplayText('chatStoryEditor.voiceCharacterRequired'))
+      return
+    }
+    const token = getAuthToken()
+    if (!token) { navigate('/login'); return }
+    const file = audioFile
+    const characterId = selectedCharacter.id
+    const insertMode = messageEditMode
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 240000)
+    audioUploadControllerRef.current = controller
+    audioUploadBusyRef.current = true
+    setAudioUploading(true)
+    setAudioUploadProgress(0)
+    try {
+      let uploaded = audioUploadCacheRef.current.get(file)
+      if (!uploaded) {
+        uploaded = await uploadChatStoryVoice(file, token, storyId, audioDuration, controller.signal, setAudioUploadProgress)
+        audioUploadCacheRef.current.set(file, uploaded)
+      }
+      if (controller.signal.aborted) return
+      if (getAuthToken() !== token) throw new Error(getDisplayText('chatStoryEditor.voiceUploadFailed'))
+      const nextMessage = { id: makeId(), type: 'audio', characterId, text: '', ...uploaded, createdAt: new Date().toISOString() }
+      const inserting = ['insert_above', 'insert_below'].includes(insertMode?.type)
+      if (!inserting) shouldScrollToEndRef.current = true
+      commitMessages((current) => {
+        const note = current.find((item) => item.type === 'author_note')
+        const storyMessages = current.filter((item) => item.type !== 'author_note')
+        const target = inserting ? storyMessages.findIndex((item) => item.id === insertMode.targetId) : -1
+        const index = target < 0 ? storyMessages.length : target + (insertMode.type === 'insert_below' ? 1 : 0)
+        storyMessages.splice(index, 0, nextMessage)
+        return note ? [...storyMessages, note] : storyMessages
+      })
+      setMessageEditMode(null)
+      setActiveMessageId('')
+      setAudioSheetOpen(false)
+      setMorePopupOpen(false)
+      URL.revokeObjectURL(audioPreviewUrl)
+      setAudioFile(null)
+      setAudioPreviewUrl('')
+      setAudioDuration(0)
+    } catch (error) {
+      if (!controller.signal.aborted) showToast(error.message || getDisplayText('chatStoryEditor.voiceUploadFailed'))
+      else if (audioUploadControllerRef.current === controller) showToast(getDisplayText('chatStoryEditor.voiceUploadFailed'))
+    } finally {
+      window.clearTimeout(timeout)
+      if (audioUploadControllerRef.current === controller) {
+        audioUploadControllerRef.current = null
+        audioUploadBusyRef.current = false
+        setAudioUploading(false)
+      }
+    }
+  }
+
   const selectAudioFile = (file) => {
+    if (audioUploadBusyRef.current) return
     if (!file) return
 
     const allowedAudio =
@@ -5505,10 +5694,13 @@ setPublishSettingsOpen(true)
         file={audioFile}
         previewUrl={audioPreviewUrl}
         duration={audioDuration}
-        onChoose={() => audioInputRef.current?.click()}
+        onChoose={() => { if (!audioUploadBusyRef.current) audioInputRef.current?.click() }}
         onDropFile={selectAudioFile}
         onClose={closeAudioSheet}
         onClear={clearSelectedAudio}
+        onSend={sendAudioMessage}
+        uploading={audioUploading}
+        progress={audioUploadProgress}
       />
 
       {titlePopupOpen ? (
@@ -5672,6 +5864,10 @@ setPublishSettingsOpen(true)
       message={message}
       onDelete={deleteMessage}
     />
+  ) : ['audio', 'voice'].includes(message.type) ? (
+    <EditorVoiceMessage key={message.id} message={message}
+      character={characterMap[message.characterId]} right={message.characterId === effectiveLeadCharacterId}
+      active={activeMessageId === message.id} onEdit={openMessageToolbar} onElementRef={registerMessageElement} />
   ) : message.type === 'image' ? (
     <EditorImageMessage
       key={message.id}
