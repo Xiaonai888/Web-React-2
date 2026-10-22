@@ -27,6 +27,26 @@ const INITIAL_CONTROLS = { strength: 70, detail: 60, contrast: 50, lineArt: 80 }
 const SETTINGS_KEY = 'pic-to-art-settings-v1'
 const STYLE_KEYS = new Set(STYLE_ITEMS.map(item => item.key))
 
+function safePicToArtPreviewUrl(value) {
+  const source = String(value || '').trim()
+  if (!source.startsWith('blob:')) return ''
+  try {
+    const url = new URL(source)
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {}
+  return ''
+}
+
+function setSafePicToArtPreview(node, value) {
+  if (!node) return
+  const safeUrl = safePicToArtPreviewUrl(value)
+  if (!safeUrl) {
+    node.removeAttribute('src')
+    return
+  }
+  if (node.getAttribute('src') !== safeUrl) node.src = safeUrl
+}
+
 function readSettings() {
   try {
     const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null')
@@ -300,7 +320,7 @@ export default function PicToArtPage() {
           <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
           {photoUrl ? (
             <div className="relative overflow-hidden rounded-[22px] bg-[var(--shadow-bg-soft)]">
-              <img src={photoUrl} alt="" className="max-h-[480px] w-full object-contain" />
+              <img ref={(node) => setSafePicToArtPreview(node, photoUrl)} alt="" className="max-h-[480px] w-full object-contain" />
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/65 to-transparent p-3 pt-12">
                 <button type="button" onClick={removePhoto} className="flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur" aria-label={t('picToArt.removePhoto')}>
                   <i className="fa-solid fa-trash text-[13px]" />
@@ -386,7 +406,7 @@ export default function PicToArtPage() {
             </div>
 
             <div className="overflow-hidden rounded-[20px] bg-[var(--shadow-bg-soft)]">
-              <img src={showOriginal ? photoUrl : resultUrl} alt="" className="max-h-[620px] w-full object-contain" />
+              <img ref={(node) => setSafePicToArtPreview(node, showOriginal ? photoUrl : resultUrl)} alt="" className="max-h-[620px] w-full object-contain" />
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2">
