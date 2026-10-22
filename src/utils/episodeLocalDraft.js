@@ -11,6 +11,7 @@ function openDraftDatabase() {
     }
 
     const request = indexedDB.open(DB_NAME, DB_VERSION)
+    let blocked = false
 
     request.onupgradeneeded = () => {
       const database = request.result
@@ -19,26 +20,47 @@ function openDraftDatabase() {
       }
     }
 
-    request.onsuccess = () => resolve(request.result)
+    request.onsuccess = () => {
+      const database = request.result
+      if (blocked) {
+        database.close()
+        return
+      }
+      database.onversionchange = () => database.close()
+      resolve(database)
+    }
     request.onerror = () => reject(request.error || new Error('Could not open local draft storage'))
+    request.onblocked = () => {
+      blocked = true
+      reject(new Error('Close other Shadow tabs and retry local draft storage'))
+    }
   })
 }
 
-function runDraftTransaction(mode, action) {
-  return openDraftDatabase().then(
-    (database) =>
-      new Promise((resolve, reject) => {
-        const transaction = database.transaction(STORE_NAME, mode)
-        const store = transaction.objectStore(STORE_NAME)
-        const request = action(store)
+async function runDraftTransaction(mode, action) {
+  const database = await openDraftDatabase()
+  return new Promise((resolve, reject) => {
+    let settled = false
+    let result
+    const finish = (error) => {
+      if (settled) return
+      settled = true
+      database.close()
+      if (error) reject(error)
+      else resolve(result)
+    }
 
-        request.onsuccess = () => resolve(request.result)
-        request.onerror = () => reject(request.error || new Error('Local draft operation failed'))
-        transaction.oncomplete = () => database.close()
-        transaction.onerror = () => database.close()
-        transaction.onabort = () => database.close()
-      })
-  )
+    try {
+      const transaction = database.transaction(STORE_NAME, mode)
+      transaction.oncomplete = () => finish(null)
+      transaction.onabort = () => finish(transaction.error || new Error('Local draft operation failed'))
+      transaction.onerror = () => {}
+      const request = action(transaction.objectStore(STORE_NAME))
+      request.onsuccess = () => { result = request.result }
+    } catch (error) {
+      finish(error)
+    }
+  })
 }
 
 function fallbackKey(key) {
@@ -91,7 +113,10 @@ export async function saveEpisodeLocalDraft(key, draft) {
 export async function loadEpisodeLocalDraft(key) {
   try {
     const value = await runDraftTransaction('readonly', (store) => store.get(key))
-    return value || loadFallbackDraft(key)
+    const fallback = loadFallbackDraft(key)
+    return fallback && Number(fallback.updatedAt || 0) > Number(value?.updatedAt || 0)
+      ? fallback
+      : value || fallback
   } catch {
     return loadFallbackDraft(key)
   }
