@@ -2394,6 +2394,7 @@ export default function ChatStoryEditorPage() {
   const [addCharacterSaving, setAddCharacterSaving] = useState(false)
   const addCharacterSavingRef = useRef(false)
   const characterAvatarUploadRef = useRef(null)
+  const characterSaveAttemptRef = useRef(null)
   const [morePopupOpen, setMorePopupOpen] = useState(false)
   const [authorNoteOpen, setAuthorNoteOpen] = useState(false)
   const [authorNoteDraft, setAuthorNoteDraft] = useState('')
@@ -4064,6 +4065,7 @@ const deleteMessage = (messageId) => {
 
   const openAddCharacterPopup = () => {
   characterAvatarUploadRef.current = null
+  characterSaveAttemptRef.current = null
   setNewCharacterName('')
   setNewCharacterImage('')
   setNewCharacterAvatarSource('device')
