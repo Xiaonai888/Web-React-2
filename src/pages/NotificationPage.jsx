@@ -11,6 +11,13 @@ registerTranslationNamespace('notificationPage', {
     updates: 'Updates',
     announcements: 'Announcements',
     notification: 'Notification',
+    tagReviewTitle: 'Review a new tag',
+    tagReviewMessage: 'Someone tagged you in a post. Approve it before it appears on your profile.',
+    taggedTitle: 'You were tagged in a post',
+    taggedMessage: 'Someone tagged you in a post.',
+    mentionedTitle: 'You were mentioned',
+    mentionedPostMessage: 'Someone mentioned you in a post.',
+    mentionedCommentMessage: 'Someone mentioned you in a comment.',
     older: 'OLDER',
     loadFailed: 'Failed to load notifications',
     dragToClose: 'Drag down to close notifications',
@@ -31,6 +38,13 @@ registerTranslationNamespace('notificationPage', {
     updates: 'ភាគថ្មី',
     announcements: 'សេចក្តីប្រកាស',
     notification: 'ការជូនដំណឹង',
+    tagReviewTitle: 'មាន Tag ថ្មីកំពុងរង់ចាំ',
+    tagReviewMessage: 'មានអ្នក Tag អ្នកក្នុង Post មួយ។ សូមអនុម័តមុនពេលបង្ហាញលើ Profile របស់អ្នក។',
+    taggedTitle: 'មានអ្នក Tag អ្នកក្នុង Post',
+    taggedMessage: 'មានអ្នក Tag អ្នកក្នុង Post មួយ។',
+    mentionedTitle: 'មានអ្នក Mention អ្នក',
+    mentionedPostMessage: 'មានអ្នក Mention អ្នកក្នុង Post មួយ។',
+    mentionedCommentMessage: 'មានអ្នក Mention អ្នកក្នុង Comment មួយ។',
     older: 'ចាស់ជាងនេះ',
     loadFailed: 'មិនអាចផ្ទុកការជូនដំណឹងបានទេ',
     dragToClose: 'អូសចុះក្រោមដើម្បីបិទការជូនដំណឹង',
@@ -51,6 +65,13 @@ registerTranslationNamespace('notificationPage', {
     updates: '更新',
     announcements: '公告',
     notification: '通知',
+    tagReviewTitle: '有新的标记待审核',
+    tagReviewMessage: '有人在帖子中标记了你。批准后才会显示在你的个人主页上。',
+    taggedTitle: '你在帖子中被标记了',
+    taggedMessage: '有人在帖子中标记了你。',
+    mentionedTitle: '有人提及了你',
+    mentionedPostMessage: '有人在帖子中提及了你。',
+    mentionedCommentMessage: '有人在评论中提及了你。',
     older: '更早',
     loadFailed: '无法加载通知',
     dragToClose: '向下拖动以关闭通知',
@@ -71,6 +92,13 @@ registerTranslationNamespace('notificationPage', {
     updates: '更新',
     announcements: 'お知らせ',
     notification: '通知',
+    tagReviewTitle: '確認待ちのタグがあります',
+    tagReviewMessage: '投稿でタグ付けされました。プロフィールに表示するには承認してください。',
+    taggedTitle: '投稿でタグ付けされました',
+    taggedMessage: '誰かが投稿であなたをタグ付けしました。',
+    mentionedTitle: 'あなたへのメンションがあります',
+    mentionedPostMessage: '誰かが投稿であなたをメンションしました。',
+    mentionedCommentMessage: '誰かがコメントであなたをメンションしました。',
     older: '以前',
     loadFailed: '通知を読み込めませんでした',
     dragToClose: '下にドラッグして通知を閉じる',
@@ -91,6 +119,13 @@ registerTranslationNamespace('notificationPage', {
     updates: '새 회차',
     announcements: '공지',
     notification: '알림',
+    tagReviewTitle: '검토할 새 태그가 있습니다',
+    tagReviewMessage: '누군가 게시물에 회원님을 태그했습니다. 프로필에 표시하려면 승인하세요.',
+    taggedTitle: '게시물에 태그되었습니다',
+    taggedMessage: '누군가 게시물에 회원님을 태그했습니다.',
+    mentionedTitle: '회원님이 언급되었습니다',
+    mentionedPostMessage: '누군가 게시물에서 회원님을 언급했습니다.',
+    mentionedCommentMessage: '누군가 댓글에서 회원님을 언급했습니다.',
     older: '이전',
     loadFailed: '알림을 불러오지 못했습니다',
     dragToClose: '아래로 드래그하여 알림 닫기',
@@ -246,6 +281,7 @@ function mapNotification(item) {
     type: item.type || 'announcements',
     title: item.title || 'Notification',
     message: item.message || '',
+    referenceId: item.reference_id || '',
     time: formatNotificationTime(item.created_at),
     dateGroup: formatDateGroup(item.created_at),
     link: item.link || '',
@@ -306,12 +342,38 @@ function groupNotificationsByDate(items) {
   return groups
 }
 
-function getDisplayNotificationTitle(notification, t) {
-  if (!notification?.hasTitle) {
-    return t('notificationPage.notification')
+function getReaderTagMentionKind(notification) {
+  if (notification?.type !== 'community') return ''
+  const reference = String(notification?.referenceId || '')
+  if (reference.startsWith('tag:')) {
+    return String(notification?.link || '').startsWith('/profile/settings/tags-mentions/pending')
+      ? 'tagReview'
+      : 'tagged'
   }
+  if (reference.startsWith('mention:')) {
+    return notification?.message === 'Someone mentioned you in a comment.'
+      ? 'mentionedComment'
+      : 'mentionedPost'
+  }
+  return ''
+}
 
+function getDisplayNotificationTitle(notification, t) {
+  const kind = getReaderTagMentionKind(notification)
+  if (kind === 'tagReview') return t('notificationPage.tagReviewTitle')
+  if (kind === 'tagged') return t('notificationPage.taggedTitle')
+  if (kind.startsWith('mentioned')) return t('notificationPage.mentionedTitle')
+  if (!notification?.hasTitle) return t('notificationPage.notification')
   return notification.title
+}
+
+function getDisplayNotificationMessage(notification, t) {
+  const kind = getReaderTagMentionKind(notification)
+  if (kind === 'tagReview') return t('notificationPage.tagReviewMessage')
+  if (kind === 'tagged') return t('notificationPage.taggedMessage')
+  if (kind === 'mentionedComment') return t('notificationPage.mentionedCommentMessage')
+  if (kind === 'mentionedPost') return t('notificationPage.mentionedPostMessage')
+  return notification?.message || ''
 }
 
 function getDisplayGroupLabel(group, language, t) {
@@ -793,7 +855,7 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
                                   </div>
 
                                   <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773] dark:text-[var(--shadow-text-secondary)]">
-                                    {notification.message}
+                                    {getDisplayNotificationMessage(notification, t)}
                                   </p>
 
                                   {showTypePill ? (
@@ -886,7 +948,7 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
               </h1>
 
               <p className="mt-6 whitespace-pre-wrap text-[16px] font-semibold leading-8 text-[#4B5563] dark:text-[var(--shadow-text-secondary)]">
-                {selectedAnnouncement.message}
+                {getDisplayNotificationMessage(selectedAnnouncement, t)}
               </p>
 
               {selectedAnnouncement.link ? (
