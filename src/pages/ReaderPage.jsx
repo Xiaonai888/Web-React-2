@@ -13,6 +13,8 @@ import GiftPopup from '../components/reader/GiftPopup'
 import { loadOfflineReaderFallback } from '../utils/offlineReaderFallback'
 import { rememberViewedEpisode } from '../utils/offlineViewedEpisode'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
+import ChatStoryThemePage from './ChatStoryThemePage'
+import { DEFAULT_CHAT_THEMES, saveChatTheme, useChatStoryTheme } from '../services/chatStoryThemes'
 import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisodeListDrawer'
 import StoryTranslateButton from '../components/reader/StoryTranslateButton'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
@@ -4424,6 +4426,9 @@ function ReaderSettingsDrawer({
   const lineSpacingIndex = Math.max(0, lineSpacingOrder.indexOf(lineSpacing))
   const lineSpacingValue = lineSpacingValues[lineSpacing] || lineSpacingValues.comfort
   const [moreSettingsOpen, setMoreSettingsOpen] = useState(false)
+  const [chatThemePageOpen, setChatThemePageOpen] = useState(false)
+  const [chatThemeError, setChatThemeError] = useState(false)
+  const chatTheme = useChatStoryTheme()
 
   const decreaseFont = () => {
     setFontSizeIndex((current) => Math.max(0, current - 1))
@@ -4472,6 +4477,10 @@ const handleDragEnd = () => {
 
   if (!open) return null
 
+  if (isChatStory && chatThemePageOpen) {
+    return <ChatStoryThemePage onBack={() => setChatThemePageOpen(false)} onApply={() => setChatThemePageOpen(false)} />
+  }
+
   if (moreSettingsOpen) {
     return (
       <div className={`fixed inset-0 z-[146] ${readerTheme.page}`}>
@@ -4497,7 +4506,30 @@ const handleDragEnd = () => {
 </button>
         </div>
 
-        <div className="mx-auto max-w-[520px] px-4 py-5">
+        <div className="mx-auto max-w-[520px] max-h-[calc(100dvh-56px)] overflow-y-auto px-4 py-5">
+          {isChatStory ? (
+          <SettingSection title={t('readerPage.pageColor')} theme={readerTheme}>
+<div className="grid grid-cols-4 gap-2">
+  {Object.entries(READER_THEMES).map(([key, item]) => (
+    <button
+      key={key}
+      type="button"
+      onClick={() => setThemeName(key)}
+      className="flex items-center justify-center rounded-[12px] bg-transparent p-0 active:scale-[0.98]"
+      aria-label={t(`readerPage.${key}`)}
+    >
+      <span
+        className={`block h-9 w-full rounded-[12px] ${item.swatch} ${
+          themeName === key
+            ? 'ring-2 ring-[#f6c343]'
+            : 'ring-0'
+        }`}
+      />
+    </button>
+  ))}
+</div>
+          </SettingSection>
+          ) : null}
           {isChatStory ? (
             <ChatStoryReadingPreferences
               readMode={chatStoryReadMode}
@@ -4714,6 +4746,32 @@ const handleDragEnd = () => {
             </div>
           </SettingSection>
 
+          {isChatStory ? (
+            <SettingSection title={t('chatStoryThemes.title')} theme={readerTheme}>
+              <button type="button" onClick={() => setChatThemePageOpen(true)}
+                className={`mb-3 flex h-10 w-full items-center justify-between bg-transparent ${readerTheme.text}`}
+                aria-label={t('chatStoryThemes.title')}>
+                <span>{t('chatStoryThemes.title')}</span>
+                <i className="fa-solid fa-chevron-right text-[12px]" aria-hidden="true" />
+              </button>
+              <div className="grid grid-cols-4 gap-2">
+                {DEFAULT_CHAT_THEMES.map((item) => (
+                  <button key={item.id} type="button"
+                    aria-label={t(item.nameKey)}
+                    aria-pressed={chatTheme.selection.source === 'preset' && chatTheme.selection.id === item.id}
+                    className="h-10 rounded-[12px] border-2"
+                    style={{ background: item.background, borderColor: chatTheme.selection.source === 'preset' && chatTheme.selection.id === item.id ? '#111827' : 'transparent' }}
+                    onClick={() => {
+                      try {
+                        saveChatTheme({ source: 'preset', id: item.id, paletteId: item.id }, chatTheme.account)
+                        setChatThemeError(false)
+                      } catch { setChatThemeError(true) }
+                    }} />
+                ))}
+              </div>
+              {chatThemeError ? <p role="alert">{t('chatStoryThemes.saveFailed')}</p> : null}
+            </SettingSection>
+          ) : (
           <SettingSection title={t('readerPage.pageColor')} theme={readerTheme}>
 <div className="grid grid-cols-4 gap-2">
   {Object.entries(READER_THEMES).map(([key, item]) => (
@@ -4735,6 +4793,7 @@ const handleDragEnd = () => {
   ))}
 </div>
           </SettingSection>
+          )}
 
           <SettingSection title={t('readerPage.fontStyle')} theme={readerTheme}>
             <button
@@ -4855,6 +4914,7 @@ const handleDragEnd = () => {
     </div>
   )
 }
+
 
 function WebcomicReadingMissionCoin({
   visible,
