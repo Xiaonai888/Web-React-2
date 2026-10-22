@@ -6,6 +6,7 @@ import { useDisplayTranslation } from './utils/displayLanguage'
 import './i18n/appTranslations'
 import Footer from './components/Footer'
 import WorkMaintenanceGuard from './components/common/WorkMaintenanceGuard'
+import AuthorPageFooterShell from './components/AuthorPageFooterShell'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
 import ChatStoryHomePage from './pages/ChatStoryHomePage'
@@ -1749,8 +1750,10 @@ export default function App() {
   <AuthorPageNotificationProvider>
     <SmartRefreshProvider>
   <WorkMaintenanceGuard>
+  <AuthorPageFooterShell>
     <AppShell />
-  </WorkMaintenanceGuard>
+  </AuthorPageFooterShell>
+</WorkMaintenanceGuard>
 </SmartRefreshProvider>
   </AuthorPageNotificationProvider>
 </Router>
