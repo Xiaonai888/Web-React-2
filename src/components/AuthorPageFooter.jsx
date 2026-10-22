@@ -101,6 +101,7 @@ function AuthorPageFooter() {
     '/author/page/notifications': 'Notifications',
   }[location.pathname.replace(/\/+$/, '')] || 'Page'
   const { t } = useDisplayTranslation()
+  const { hasAuthorUnread } = useAuthorPageNotifications()
 
   const items = [
     {
