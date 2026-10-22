@@ -2347,10 +2347,35 @@ async function deleteStoreProduct(productId) {
   return data
 }
 
+function safeCoverPreviewUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return ''
+
+  if (/^data:image\/(?:png|jpe?g|gif|webp);base64,/i.test(source)) {
+    return source
+  }
+
+  try {
+    const url = new URL(source, window.location.origin)
+
+    if (url.protocol === 'https:' || url.protocol === 'http:') {
+      return url.href
+    }
+
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) {
+      return url.href
+    }
+  } catch {
+    return ''
+  }
+
+  return ''
+}
+
 function FieldLabel({ children }) {
   const label = String(children || '')
   const hasRequiredMark = label.includes('*')
-  const cleanLabel = label.replace('*', '').trim()
+  const cleanLabel = label.replace(/\*/g, '').trim()
 
   return (
     <div className="mb-1.5 text-[12px] font-medium tracking-normal text-[var(--shadow-text-secondary)]">
@@ -4162,7 +4187,9 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const [salePrice, setSalePrice] = useState(productToEdit?.salePrice || '')
   const [active, setActive] = useState(productToEdit ? productToEdit.status === 'Active' : true)
   const [coverFile, setCoverFile] = useState(null)
-  const [coverPreview, setCoverPreview] = useState(productToEdit?.coverUrl || '')
+  const [coverPreview, setCoverPreview] = useState(
+  () => safeCoverPreviewUrl(productToEdit?.coverUrl || '')
+)
   const [galleryImages, setGalleryImages] = useState(() => {
   const savedImages = Array.isArray(productToEdit?.galleryImages)
     ? productToEdit.galleryImages.slice(0, 5).map((image) => ({
@@ -4535,7 +4562,7 @@ accessRule,
   className="relative aspect-[2/3] w-[200px] cursor-pointer overflow-hidden rounded-[24px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-soft)] shadow-inner"
 >
   {coverPreview ? (
-    <img src={coverPreview} alt={storeText('coverPreview')} className="h-full w-full object-cover" />
+    <img src={safeCoverPreviewUrl(coverPreview)} alt={storeText('coverPreview')} className="h-full w-full object-cover" />
   ) : (
     <div className="flex h-full w-full flex-col items-center justify-center px-5 text-center text-[var(--shadow-text-tertiary)]">
       <i className="fa-regular fa-image mb-3 text-[28px]" />
