@@ -16,11 +16,10 @@ const TRACK_DEDUP_MS = 30_000
 const pendingVisitorTracks = new Set()
 
 function createTrackingId(prefix) {
-  const randomValue =
-    globalThis.crypto?.randomUUID?.() ||
-    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
-
-  return `${prefix}-${randomValue}`
+  if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`
+  const bytes = new Uint8Array(16)
+  globalThis.crypto.getRandomValues(bytes)
+  return `${prefix}-${Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')}`
 }
 
 function readOrCreateId(storage, key, prefix) {
