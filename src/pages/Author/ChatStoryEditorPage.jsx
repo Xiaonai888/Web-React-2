@@ -4,7 +4,8 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
-import { createChatStoryInlineUploadQueue, chatStoryPendingImageCount } from '../../utils/chatStoryInlineUploadQueue'
+import { createChatStoryInlineUploadQueue, chatStoryPendingImageCount, chatStoryQueueUserId } from '../../utils/chatStoryInlineUploadQueue'
+import { createUploadQueueManager } from '../../utils/uploadQueueManager'
 import { encryptChatGalleryDraft, decryptChatGalleryDraft } from '../../utils/secureChatGalleryDraft'
 
 registerTranslationNamespace('chatStoryEditor', {
@@ -711,20 +712,19 @@ function dataUrlToFile(dataUrl, fileName) {
   return new File([bytes], fileName, { type: mime })
 }
 
-async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
-  if (!String(imageDataUrl || '').startsWith('data:image/')) {
+async function uploadCharacterImage(token, imageDataUrl, storyId, index, options = {}) {
+  if (!options.file && !String(imageDataUrl || '').startsWith('data:image/')) {
     return imageDataUrl || null
   }
 
-  const sourceFile = dataUrlToFile(
+  const file = options.file || (await optimizeImageForUpload(dataUrlToFile(
     imageDataUrl,
     `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
-  )
-  const optimized = await optimizeImageForUpload(sourceFile, {
+  ), {
     preset: 'avatar',
     maxSourceBytes: 2 * 1024 * 1024,
-  })
-  const file = optimized.file
+    signal: options.signal,
+  })).file
   if (!file?.size || file.size > 2 * 1024 * 1024) {
     throw new Error(getDisplayText('chatStoryEditor.profileImageTooLarge'))
   }
@@ -755,6 +755,8 @@ async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
     token,
     apiBaseUrl: API_BASE_URL,
     legacyUpload,
+    signal: options.signal,
+    onProgress: options.onProgress,
   })
   const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
   if (!/^https?:\/\//i.test(imageUrl)) {
@@ -2430,6 +2432,10 @@ export default function ChatStoryEditorPage() {
   const addCharacterSavingRef = useRef(false)
   const characterAvatarUploadRef = useRef(null)
   const characterSaveAttemptRef = useRef(null)
+  const characterImageQueueRef = useRef(null)
+  const [characterQueueTasks, setCharacterQueueTasks] = useState([])
+  const [characterQueueIssue, setCharacterQueueIssue] = useState('')
+  const characterQueueRetryRef = useRef(null)
   const [morePopupOpen, setMorePopupOpen] = useState(false)
   const [authorNoteOpen, setAuthorNoteOpen] = useState(false)
   const [authorNoteDraft, setAuthorNoteDraft] = useState('')
@@ -3230,6 +3236,150 @@ restoredDraftCharactersRef.current = false
       showToast(error.message || getDisplayText('chatStoryEditor.failedUploadImage'))
     }
   }
+
+  useEffect(() => {
+    if (!storyId || loading) return undefined
+    const initialToken = getAuthToken()
+    const accountId = chatStoryQueueUserId(initialToken)
+    if (!accountId) return undefined
+    const ownerId = `${accountId}:chat-character:${storyId}`
+    let disposed = false
+    let savingTask = false
+    const savingIds = new Set()
+    const blockedIds = new Set()
+    let queue = null
+    const belongs = (task) => task?.category === 'chat_story_character' &&
+      String(task.context?.storyId) === String(storyId)
+
+    const refreshTasks = async () => {
+      if (!queue || disposed) return []
+      const tasks = (await queue.list()).filter(belongs)
+      if (!disposed) setCharacterQueueTasks(tasks)
+      return tasks
+    }
+
+    const persistCharacter = async (task) => {
+      if (disposed || savingIds.has(task.id) || blockedIds.has(task.id) || task.status !== 'uploaded') return
+      const imageUrl = String(task.result?.image_url || '')
+      if (!/^https?:\/\//i.test(imageUrl)) return
+      const context = task.context || {}
+      savingIds.add(task.id)
+      savingTask = true
+      try {
+        const token = getAuthToken()
+        if (chatStoryQueueUserId(token) !== accountId) {
+          throw new Error(getDisplayText('chatStoryEditor.sessionChanged'))
+        }
+        const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/chat/characters`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ characters: [{
+            id: context.characterId,
+            role_group: 'background',
+            nickname: context.name,
+            avatar_url: imageUrl,
+            avatar_source: 'device',
+            is_lead: false,
+            chat_side: 'left',
+            gender: context.gender === 'female' ? 'Female' : context.gender === 'male' ? 'Male' : context.gender || null,
+            birthday: null,
+            height_cm: null,
+            occupation: null,
+            personality: null,
+            relationship: null,
+            bio: null,
+          }] }),
+        })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok === false) {
+          const error = new Error(data.message || getDisplayText('chatStoryEditor.failedAddCharacter'))
+          error.status = response.status
+          throw error
+        }
+        if (chatStoryQueueUserId(getAuthToken()) !== accountId) throw new Error(getDisplayText('chatStoryEditor.sessionChanged'))
+        const row = (data.characters || []).find((item) => String(item.id) === String(context.characterId)) ||
+          (data.characters || []).find((item) => item.role_group === 'background' &&
+            String(item.nickname || '') === String(context.name || '') &&
+            String(item.avatar_url || '') === imageUrl)
+        if (!row?.id) throw new Error(getDisplayText('chatStoryEditor.characterSavedMissing'))
+        const saved = mapCharacter(row)
+        if (!disposed) {
+          setCharacters((current) => current.some((character) => String(character.id) === String(saved.id))
+            ? current.map((character) => String(character.id) === String(saved.id) ? saved : character)
+            : [...current, saved])
+          setSelectedCharacterId((current) => current || saved.id)
+          setCharacterQueueIssue('')
+          showToast(getDisplayText('chatStoryEditor.characterAdded'))
+        }
+        const raw = sessionStorage.getItem(castStorageKey)
+        let cast = {}
+        try { cast = JSON.parse(raw || '{}') || {} } catch {}
+        sessionStorage.setItem(castStorageKey, JSON.stringify({
+          ...cast,
+          characterIds: [...new Set([...(Array.isArray(cast.characterIds) ? cast.characterIds : []), String(saved.id)])],
+          updatedAt: new Date().toISOString(),
+        }))
+        await queue.remove(task.id)
+      } catch (error) {
+        blockedIds.add(task.id)
+        if (!disposed) setCharacterQueueIssue(error?.message || getDisplayText('chatStoryEditor.failedAddCharacter'))
+      } finally {
+        savingIds.delete(task.id)
+        savingTask = false
+        if (!disposed) void refreshTasks().catch(() => {})
+      }
+    }
+
+    const reconcile = async () => {
+      if (disposed || !queue) return
+      const tasks = await refreshTasks()
+      if (!savingTask) {
+        for (const task of tasks) {
+          if (task.status === 'uploaded') {
+            void persistCharacter(task)
+            break
+          }
+        }
+      }
+    }
+
+    queue = createUploadQueueManager({
+      ownerId,
+      upload: async ({ task, file, signal, onProgress }) => {
+        const token = getAuthToken()
+        if (chatStoryQueueUserId(token) !== accountId || !belongs(task)) {
+          const error = new Error(getDisplayText('chatStoryEditor.sessionChanged'))
+          error.status = 401
+          throw error
+        }
+        const imageUrl = await uploadCharacterImage(token, '', storyId, 0, { file, signal, onProgress })
+        return { image_url: imageUrl }
+      },
+      onChange: ({ task }) => {
+        if (belongs(task) && !disposed) void reconcile().catch(() => {})
+      },
+    })
+    characterImageQueueRef.current = queue
+    characterQueueRetryRef.current = async () => {
+      blockedIds.clear()
+      const tasks = await refreshTasks()
+      for (const task of tasks) {
+        if (task.status === 'failed' || task.status === 'retry_wait') await queue.retry(task.id)
+      }
+      setCharacterQueueIssue('')
+      await reconcile()
+    }
+    queue.start()
+    void reconcile().catch((error) => { if (!disposed) setCharacterQueueIssue(error.message || 'Local character queue failed') })
+    const timer = window.setInterval(() => { void reconcile().catch(() => {}) }, 10000)
+    return () => {
+      disposed = true
+      window.clearInterval(timer)
+      if (characterImageQueueRef.current === queue) characterImageQueueRef.current = null
+      characterQueueRetryRef.current = null
+      queue.stop()
+    }
+  }, [storyId, loading, castStorageKey])
 
   const persistServerDraft = async (checkpoint = false) => {
     if (serverBusyRef.current) {
@@ -4278,6 +4428,48 @@ const handleAddConfirm = async () => {
   if (addCharacterSavingRef.current) return
   addCharacterSavingRef.current = true
 
+  if (newCharacterAvatarSource === 'device' && /^data:image\//i.test(newCharacterImage)) {
+    setAddCharacterSaving(true)
+    try {
+      const queue = characterImageQueueRef.current
+      if (!queue) throw new Error('Local character upload queue is not ready')
+      const source = dataUrlToFile(newCharacterImage, `chat-character-${storyId}-${Date.now()}.jpg`)
+      const optimized = await optimizeImageForUpload(source, {
+        preset: 'avatar',
+        maxSourceBytes: 2 * 1024 * 1024,
+      })
+      if (!optimized.file?.size || optimized.file.size > 2 * 1024 * 1024) {
+        throw new Error(getDisplayText('chatStoryEditor.profileImageTooLarge'))
+      }
+      if (getAuthToken() !== token) throw new Error(getDisplayText('chatStoryEditor.sessionChanged'))
+      await queue.enqueue({
+        file: optimized.file,
+        category: 'chat_story_character',
+        kind: 'image',
+        context: {
+          storyId: String(storyId),
+          characterId: globalThis.crypto?.randomUUID?.() || makeId(),
+          name: cleanName,
+          gender: newCharacterGender,
+        },
+      })
+      setAddPopupOpen(false)
+      setNewCharacterName('')
+      setNewCharacterImage('')
+      setNewCharacterAvatarSource('device')
+      setNewCharacterGender('')
+      characterAvatarUploadRef.current = null
+      characterSaveAttemptRef.current = null
+      showToast('បានរក្សាទុករូបតួអង្គក្នុងឧបករណ៍។ កំពុង Upload ដោយស្វ័យប្រវត្តិ។')
+    } catch (error) {
+      showToast(error?.message || getDisplayText('chatStoryEditor.failedUploadCharacterImage'))
+    } finally {
+      addCharacterSavingRef.current = false
+      setAddCharacterSaving(false)
+    }
+    return
+  }
+
   const previousAttempt = characterSaveAttemptRef.current
   const sameAttempt =
     previousAttempt?.token === token &&
@@ -5195,6 +5387,18 @@ setPublishSettingsOpen(true)
 }}
       />
 
+      {characterQueueTasks.length > 0 ? (
+        <div className="fixed bottom-4 left-4 right-4 z-[240] mx-auto max-w-[440px] rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[12px] text-[var(--shadow-text-primary)] shadow-xl">
+          <div className="flex items-center justify-between gap-3">
+            <span className="min-w-0 flex-1">
+              Character images · {characterQueueTasks.length} pending
+              {characterQueueTasks.some((task) => task.status === 'uploading') ? ` · ${Math.round(Math.max(...characterQueueTasks.map((task) => Number(task.progress || 0))))}%` : ''}
+            </span>
+            <button type="button" className="font-semibold underline" onClick={() => { void characterQueueRetryRef.current?.() }}>Retry</button>
+          </div>
+          {characterQueueIssue ? <p className="mt-1 text-red-600">{characterQueueIssue}</p> : null}
+        </div>
+      ) : null}
       <input
         ref={audioInputRef}
         type="file"
