@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -890,6 +890,14 @@ export default function ReaderSettingsPage() {
   const shadowAccountOpen = query.get('account') === 'shadow'
   const fromMeSettings = query.get('from') === 'me-settings'
   const settingsPath = fromMeSettings ? '/profile/settings?from=me-settings' : '/profile/settings'
+    useLayoutEffect(() => {
+    const saved = sessionStorage.getItem('readerSettingsScroll')
+    if (saved === null) return
+    sessionStorage.removeItem('readerSettingsScroll')
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: Number(saved), behavior: 'instant' })
+    })
+  }, [])
   const [message, setMessage] = useState('')
   const groups = useMemo(() => SETTINGS_GROUPS, [])
 
@@ -919,6 +927,7 @@ const filteredGroups = groups.map((group, index) => ({
   }
 
   function handleOpen(item) {
+  sessionStorage.setItem('readerSettingsScroll', String(window.scrollY))
   if (item.key === 'messages-replies') {
     navigate(`/profile/settings/messages-replies${fromMeSettings ? '?from=me-settings' : ''}`)
     return
