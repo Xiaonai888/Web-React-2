@@ -379,6 +379,19 @@ function RequestsModal({
   )
 }
 
+function safeScreenshotPreviewUrl(value) {
+  try {
+    const url = new URL(String(value || ''))
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) {
+      return url.href
+    }
+  } catch {
+    return ''
+  }
+
+  return ''
+}
+
 export default function FeedbackSupportPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
@@ -435,7 +448,7 @@ export default function FeedbackSupportPage() {
     setMessage('')
 
     if (!file) return
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
       setMessage(getDisplayText('feedbackSupportPage.chooseImage'))
       return
     }
@@ -732,7 +745,7 @@ export default function FeedbackSupportPage() {
                   <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
                   {screenshotPreview ? (
                     <div className="relative mt-2 overflow-hidden rounded-[14px] bg-[#f7f5fb] p-2 shadow-[0_5px_16px_rgba(56,42,98,0.08)] dark:bg-white/5">
-                      <img src={screenshotPreview} alt={t('feedbackSupportPage.screenshotPreview')} className="max-h-52 w-full rounded-[10px] object-contain" />
+                      <img src={safeScreenshotPreviewUrl(screenshotPreview)} alt={t('feedbackSupportPage.screenshotPreview')} className="max-h-52 w-full rounded-[10px] object-contain" />
                       <button type="button" onClick={removeScreenshot} aria-label={t('feedbackSupportPage.removeScreenshot')} className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/65 text-white active:scale-95">
                         <X className="h-4 w-4" />
                       </button>
@@ -778,7 +791,7 @@ export default function FeedbackSupportPage() {
                 <div className="rounded-[14px] bg-[#faf9fd] px-4 py-3.5 dark:bg-white/5">
                   <div className="text-[10px] font-black uppercase tracking-[0.06em] text-[#9a96a1]">{t('feedbackSupportPage.description')}</div>
                   <p className="mt-1 whitespace-pre-line text-[12.5px] leading-6 text-[#5f5b69] dark:text-white/65">{description.trim()}</p>
-                  {screenshotPreview ? <img src={screenshotPreview} alt={t('feedbackSupportPage.attachedScreenshot')} className="mt-3 max-h-56 w-full rounded-[12px] object-contain shadow-[0_5px_16px_rgba(56,42,98,0.08)]" /> : null}
+                  {screenshotPreview ? <img src={safeScreenshotPreviewUrl(screenshotPreview)} alt={t('feedbackSupportPage.attachedScreenshot')} className="mt-3 max-h-56 w-full rounded-[12px] object-contain shadow-[0_5px_16px_rgba(56,42,98,0.08)]" /> : null}
                 </div>
               </div>
 
