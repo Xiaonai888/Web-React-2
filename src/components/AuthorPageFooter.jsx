@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthorPageNotifications } from '../providers/AuthorPageNotificationProvider'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -91,10 +91,16 @@ function NotificationIcon({ active }) {
   )
 }
 
-function AuthorPageFooter({ active = 'Page' }) {
+function AuthorPageFooter() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const active = {
+    '/author/page': 'Page',
+    '/author/page/dashboard': 'Dashboard',
+    '/author/page/store': 'Store',
+    '/author/page/notifications': 'Notifications',
+  }[location.pathname.replace(/\/+$/, '')] || 'Page'
   const { t } = useDisplayTranslation()
-  const { hasAuthorUnread } = useAuthorPageNotifications()
 
   const items = [
     {
