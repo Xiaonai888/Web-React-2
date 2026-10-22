@@ -184,6 +184,10 @@ function loadImageFile(file, signal) {
       finish(new Error('Could not read this image on this device.'))
 
     signal?.addEventListener('abort', onAbort, { once: true })
+    if (signal?.aborted) {
+      onAbort()
+      return
+    }
     image.src = url
   })
 }
@@ -250,7 +254,7 @@ export function validateImageUploadFile(
 ) {
   if (!file) return 'Image file is missing.'
 
-  if (!cleanType(file).startsWith('image/') && !isSupportedRasterFile(file) && !isGifFile(file)) {
+  if (!isSupportedRasterFile(file) && !isGifFile(file)) {
     return 'Selected file is not an image.'
   }
 
@@ -296,10 +300,30 @@ export async function optimizeImageForUpload(
 
   const selectedPreset = getPreset(preset)
   const sourceFile = isHeicFile(file) ? await decodeHeic(file) : file
+  if (signal?.aborted) {
+    throw new DOMException('Image optimization canceled.', 'AbortError')
+  }
   const loaded = await loadImageFile(sourceFile, signal)
+  const preserveSupportedSource = (reason) => {
+    if (sourceFile === file) {
+      return originalResult(file, { width: loaded.width, height: loaded.height, preset, reason })
+    }
+    return {
+      ...originalResult(sourceFile, { width: loaded.width, height: loaded.height, preset, reason }),
+      originalFile: file,
+      originalBytes: file.size,
+      savedBytes: Math.max(0, file.size - sourceFile.size),
+      savingsPercent: Math.max(0, Math.round((file.size - sourceFile.size) / file.size * 100)),
+      optimized: true,
+      reason: 'heic-converted',
+    }
+  }
 
   try {
     const pixelCount = loaded.width * loaded.height
+    if (!Number.isFinite(pixelCount) || loaded.width <= 0 || loaded.height <= 0) {
+      throw new Error('The image dimensions are invalid.')
+    }
 
     if (
       loaded.width > maxDimension ||
@@ -342,12 +366,8 @@ export async function optimizeImageForUpload(
       const context = canvas.getContext('2d', { alpha: true })
 
       if (!context) {
-        return originalResult(file, {
-          width: loaded.width,
-          height: loaded.height,
-          preset,
-          reason: 'canvas-unavailable',
-        })
+        if (best) break
+        return preserveSupportedSource('canvas-unavailable')
       }
 
       try {
@@ -363,7 +383,9 @@ export async function optimizeImageForUpload(
 
         for (const quality of selectedPreset.qualities) {
           const blob = await canvasToWebp(canvas, quality)
-
+          if (signal?.aborted) {
+            throw new DOMException('Image optimization canceled.', 'AbortError')
+          }
           if (!blob?.size) continue
 
           const candidate = {
@@ -402,13 +424,12 @@ export async function optimizeImageForUpload(
             break
           }
         }
-      } catch {
-        return originalResult(file, {
-          width: loaded.width,
-          height: loaded.height,
-          preset,
-          reason: 'browser-encoding-failed',
-        })
+      } catch (error) {
+        if (signal?.aborted || error?.name === 'AbortError') {
+          throw new DOMException('Image optimization canceled.', 'AbortError')
+        }
+        if (best) break
+        return preserveSupportedSource('browser-encoding-failed')
       } finally {
         canvas.width = 0
         canvas.height = 0
@@ -427,14 +448,12 @@ export async function optimizeImageForUpload(
     }
 
     if (!best || best.finalBytes >= minimumUsefulBytes) {
-      return originalResult(file, {
-        width: loaded.width,
-        height: loaded.height,
-        preset,
-        reason: 'insufficient-savings',
-      })
+      return preserveSupportedSource('insufficient-savings')
     }
 
+    if (signal?.aborted) {
+      throw new DOMException('Image optimization canceled.', 'AbortError')
+    }
     return best
   } finally {
     URL.revokeObjectURL(loaded.url)
