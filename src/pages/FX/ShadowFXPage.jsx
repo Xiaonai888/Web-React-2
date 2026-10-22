@@ -455,21 +455,24 @@ const CROP_RATIOS = [
 
 const MAX_FILE_BYTES = 40 * 1024 * 1024
 const SUPPORTED_IMAGE_TYPES = new Set([
-  function setSafeShadowFXImage(node, value) {
-  if (!node) return
-  const source = String(value || '')
-  try {
-    const url = new URL(source)
-    if (url.protocol !== 'blob:' || url.origin !== window.location.origin) throw new Error()
-    if (node.getAttribute('src') !== source) node.src = source
-  } catch { node.removeAttribute('src') }
-}
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
   'image/avif',
 ])
+
+function setSafeShadowFXImage(node, value) {
+  if (!node) return
+  const source = String(value || '').trim()
+  try {
+    const url = new URL(source)
+    if (url.protocol !== 'blob:' || url.origin !== window.location.origin) throw new Error()
+    if (node.getAttribute('src') !== source) node.src = source
+  } catch {
+    node.removeAttribute('src')
+  }
+}
 
 function clamp(value) {
   return Math.max(0, Math.min(255, value))
