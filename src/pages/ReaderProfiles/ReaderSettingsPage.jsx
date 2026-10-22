@@ -890,14 +890,15 @@ export default function ReaderSettingsPage() {
   const shadowAccountOpen = query.get('account') === 'shadow'
   const fromMeSettings = query.get('from') === 'me-settings'
   const settingsPath = fromMeSettings ? '/profile/settings?from=me-settings' : '/profile/settings'
-    useLayoutEffect(() => {
+      useLayoutEffect(() => {
+    if (shadowAccountOpen) return
     const saved = sessionStorage.getItem('readerSettingsScroll')
     if (saved === null) return
     sessionStorage.removeItem('readerSettingsScroll')
     requestAnimationFrame(() => {
       window.scrollTo({ top: Number(saved), behavior: 'instant' })
     })
-  }, [])
+  }, [shadowAccountOpen])
   const [message, setMessage] = useState('')
   const groups = useMemo(() => SETTINGS_GROUPS, [])
 
@@ -927,7 +928,7 @@ const filteredGroups = groups.map((group, index) => ({
   }
 
   function handleOpen(item) {
-  sessionStorage.setItem('readerSettingsScroll', String(window.scrollY))
+  if (!shadowAccountOpen) sessionStorage.setItem('readerSettingsScroll', String(window.scrollY))
   if (item.key === 'messages-replies') {
     navigate(`/profile/settings/messages-replies${fromMeSettings ? '?from=me-settings' : ''}`)
     return
