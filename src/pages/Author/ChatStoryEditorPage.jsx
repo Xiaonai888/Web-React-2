@@ -806,6 +806,26 @@ async function uploadEpisodeImage(token, file) {
 }
 
 
+function safeChatStoryAudioUrl(value) {
+  const source = String(value || '').trim()
+  if (!source.startsWith('blob:')) return ''
+  try {
+    const url = new URL(source)
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {}
+  return ''
+}
+
+function setSafeChatStoryAudio(node, value) {
+  if (!node) return
+  const source = safeChatStoryAudioUrl(value)
+  if (!source) {
+    node.removeAttribute('src')
+    return
+  }
+  if (node.getAttribute('src') !== source) node.src = source
+}
+
 function safeChatCharacterImageUrl(value) {
   const source = String(value || '').trim()
   if (!source) return ''
@@ -2253,7 +2273,7 @@ function AudioUploadSheet({
             <audio
               controls
               preload="metadata"
-              src={previewUrl}
+              ref={(node) => setSafeChatStoryAudio(node, previewUrl)}
               className="mt-4 h-10 w-full"
             />
           </div>
@@ -4603,7 +4623,7 @@ const handleAddConfirm = async () => {
     audio.addEventListener('durationchange', readDuration)
     audio.addEventListener('canplay', readDuration)
     audio.addEventListener('error', handleReadError)
-    audio.src = objectUrl
+    setSafeChatStoryAudio(audio, objectUrl)
     audio.load()
 
     timeoutId = window.setTimeout(() => {
