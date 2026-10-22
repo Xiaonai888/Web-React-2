@@ -4747,13 +4747,13 @@ const handleDragEnd = () => {
           </SettingSection>
 
           {isChatStory ? (
-            <SettingSection title={t('chatStoryThemes.title')} theme={readerTheme}>
-              <button type="button" onClick={() => setChatThemePageOpen(true)}
-                className={`mb-3 flex h-10 w-full items-center justify-between bg-transparent ${readerTheme.text}`}
-                aria-label={t('chatStoryThemes.title')}>
-                <span>{t('chatStoryThemes.title')}</span>
-                <i className="fa-solid fa-chevron-right text-[12px]" aria-hidden="true" />
-              </button>
+            <SettingSection theme={readerTheme} title={
+  <button type="button" onClick={() => setChatThemePageOpen(true)}
+    className="flex w-full items-center justify-between bg-transparent text-left font-bold">
+    <span>{t('chatStoryThemes.title')}</span>
+    <i className="fa-solid fa-chevron-right text-[12px]" aria-hidden="true" />
+  </button>
+}>
               <div className="grid grid-cols-4 gap-2">
                 {DEFAULT_CHAT_THEMES.map((item) => (
                   <button key={item.id} type="button"
@@ -5705,12 +5705,19 @@ const [adultWarningOpen, setAdultWarningOpen] =
   const [adultConsentGranted, setAdultConsentGranted] = useState(false)
   const adultConsentGrantedRef = useRef(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const chatStoryTheme = useChatStoryTheme()
   const [readerMoreOpen, setReaderMoreOpen] = useState(false)
   const [readerShareOpen, setReaderShareOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [fontSelectOpen, setFontSelectOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
+  useEffect(() => {
+  if (settingsOpen || episodeListOpen) {
+    setReaderShareOpen(false)
+    setReaderMoreOpen(false)
+  }
+}, [settingsOpen, episodeListOpen])
   const [echoShareOpen, setEchoShareOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
   const [activeReadingTarget, setActiveReadingTarget] = useState(null)
@@ -8171,7 +8178,7 @@ const readerControlsVisible =
 
 
 return (
-  <div className={`reader-page min-h-screen ${theme.page} pb-[110px]`}>
+  <div className={`reader-page min-h-screen ${theme.page} pb-[110px]`} style={isChatStory ? { ...chatStoryTheme.style, backgroundAttachment: 'fixed' } : undefined}>
     {brightnessOpacity > 0 ? (
       <div className="pointer-events-none fixed inset-0 z-[140] bg-black"
         style={{ opacity: brightnessOpacity }} />
@@ -8617,7 +8624,7 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
 
       <main
   onClick={isChatStory ? undefined : handleReaderDoubleTap}
-  className={`mx-auto max-w-3xl ${theme.card} px-0 pb-[92px] pt-[50px] sm:px-4`}
+  className={`mx-auto max-w-3xl ${isChatStory ? 'bg-transparent' : theme.card} px-0 pb-[92px] pt-[50px] sm:px-4`}
 >
         {loading ? <LoadingCard theme={theme} /> : null}
 
@@ -8707,7 +8714,7 @@ adultAccepted &&
 !shouldBlockReaderContent ? (
   <>
     <section
-      className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}
+      className="overflow-hidden rounded-none bg-transparent shadow-none ring-0"
     >
       <ChatStoryReader
           key={episode.id}
