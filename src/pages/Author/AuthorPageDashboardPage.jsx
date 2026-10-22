@@ -508,27 +508,77 @@ const PERIOD_QUERY = {
   Today: 'today',
 }
 
+const DASHBOARD_CLIENT_CACHE_TTL_MS = 120000
+const dashboardClientCache = new Map()
+const dashboardInFlight = new Map()
+
+function readDashboardCache(periodLabel = '28 Days') {
+  const token = getAuthToken()
+  if (!token) return null
+
+  const key = `${token}:${PERIOD_QUERY[periodLabel] || '28d'}`
+  const entry = dashboardClientCache.get(key)
+
+  if (!entry || entry.expiresAt <= Date.now()) {
+    dashboardClientCache.delete(key)
+    return null
+  }
+
+  return entry.data
+}
+
 async function fetchMyAuthorDashboard(periodLabel = '28 Days') {
   const token = getAuthToken()
-
   if (!token) return null
 
   const period = PERIOD_QUERY[periodLabel] || '28d'
-  const response = await fetch(
-    `${API_BASE_URL}/api/authors/me/dashboard?period=${encodeURIComponent(period)}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const cacheKey = `${token}:${period}`
+  const cached = readDashboardCache(periodLabel)
+  if (cached) return cached
+
+  const pending = dashboardInFlight.get(cacheKey)
+  if (pending) return pending
+
+  const request = (async () => {
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/me/dashboard?period=${encodeURIComponent(period)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || dashText('failedLoadDashboard'))
     }
-  )
-  const data = await response.json().catch(() => ({}))
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || dashText('failedLoadDashboard'))
+    if (data?.author_page) {
+      dashboardClientCache.delete(cacheKey)
+      dashboardClientCache.set(cacheKey, {
+        data,
+        expiresAt: Date.now() + DASHBOARD_CLIENT_CACHE_TTL_MS,
+      })
+
+      if (dashboardClientCache.size > 12) {
+        dashboardClientCache.delete(dashboardClientCache.keys().next().value)
+      }
+    }
+
+    return data
+  })()
+
+  dashboardInFlight.set(cacheKey, request)
+
+  try {
+    return await request
+  } finally {
+    if (dashboardInFlight.get(cacheKey) === request) {
+      dashboardInFlight.delete(cacheKey)
+    }
   }
-
-  return data
 }
 
 function DashboardTab({ label, icon, active, onClick }) {
@@ -902,14 +952,15 @@ export default function AuthorPageDashboardPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState('Overview')
-  const [dashboardData, setDashboardData] = useState(null)
-  const [authorPage, setAuthorPage] = useState(null)
-  const [posts, setPosts] = useState([])
-  const [recentComments, setRecentComments] = useState([])
-  const [notifications, setNotifications] = useState([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const initialDashboard = useMemo(() => readDashboardCache('28 Days'), [])
+  const [dashboardData, setDashboardData] = useState(initialDashboard)
+  const [authorPage, setAuthorPage] = useState(initialDashboard?.author_page || null)
+  const [posts, setPosts] = useState(initialDashboard?.latest_post ? [initialDashboard.latest_post] : [])
+  const [recentComments, setRecentComments] = useState(initialDashboard?.recent_comments || [])
+  const [notifications, setNotifications] = useState(initialDashboard?.notifications || [])
+  const [unreadCount, setUnreadCount] = useState(Number(initialDashboard?.unread_updates || 0))
   const [analyticsPeriod, setAnalyticsPeriod] = useState('28 Days')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialDashboard)
   const [message, setMessage] = useState('')
   const requestIdRef = useRef(0)
   const lastRefreshAtRef = useRef(0)
