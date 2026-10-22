@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
@@ -911,6 +911,8 @@ export default function AuthorPageDashboardPage() {
   const [analyticsPeriod, setAnalyticsPeriod] = useState('28 Days')
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const requestIdRef = useRef(0)
+  const lastRefreshAtRef = useRef(0)
   
   useAuthorPageFooterVisibility(loading || Boolean(authorPage))
 
@@ -922,11 +924,15 @@ export default function AuthorPageDashboardPage() {
       return
     }
 
-    try {
-      if (!silent) setLoading(true)
+    const requestId = ++requestIdRef.current
+lastRefreshAtRef.current = Date.now()
+
+try {
+  if (!silent) setLoading(true)
       setMessage('')
 
       const data = await fetchMyAuthorDashboard(analyticsPeriod)
+      if (requestId !== requestIdRef.current) return
 
       if (!data?.author_page) {
         throw new Error(t('authorPageDashboard.authorPageNotFound'))
@@ -939,10 +945,12 @@ export default function AuthorPageDashboardPage() {
       setNotifications(Array.isArray(data.notifications) ? data.notifications : [])
       setUnreadCount(Number(data.unread_updates || 0))
     } catch (error) {
-      setMessage(error.message || t('authorPageDashboard.failedPageDashboard'))
-    } finally {
-      setLoading(false)
-    }
+  if (requestId === requestIdRef.current) {
+    setMessage(error.message || t('authorPageDashboard.failedPageDashboard'))
+  }
+} finally {
+  if (requestId === requestIdRef.current) setLoading(false)
+}
   }, [analyticsPeriod, navigate, t])
 
   useEffect(() => {
@@ -952,8 +960,9 @@ export default function AuthorPageDashboardPage() {
   useEffect(() => {
     function refreshDashboard() {
       if (document.visibilityState === 'visible') {
-        loadDashboard({ silent: true })
-      }
+  if (Date.now() - lastRefreshAtRef.current < 120000) return
+  loadDashboard({ silent: true })
+}
     }
 
     window.addEventListener('focus', refreshDashboard)
