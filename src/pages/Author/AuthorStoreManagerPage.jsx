@@ -6,6 +6,8 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
+import { createUploadQueueManager } from '../../utils/uploadQueueManager'
+import { readMediaUploadFile, requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
 
@@ -1610,7 +1612,7 @@ function formatGalleryImagesForUi(images) {
     .slice(0, 5)
 }
 
-async function uploadStoreProductImage(file, category, preset, errorKey) {
+async function uploadStoreProductImage(file, category, preset, errorKey, { signal, onProgress } = {}) {
   const token = getAuthToken()
 
   if (!token) throw new Error(storeText('pleaseLogin'))
@@ -1649,6 +1651,8 @@ async function uploadStoreProductImage(file, category, preset, errorKey) {
     token,
     apiBaseUrl: API_BASE_URL,
     legacyUpload,
+    signal,
+    onProgress,
   })
 
   const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
@@ -1664,6 +1668,59 @@ async function uploadGalleryImage(file) {
   return uploadStoreProductImage(file, 'author_store_gallery', 'gallery', 'uploadGalleryFailed')
 }
 
+function storeImageAccountId() {
+  try {
+    const segment = String(getAuthToken()).split('.')[1]
+    const payload = JSON.parse(atob(segment.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(segment.length / 4) * 4, '=')))
+    return String(payload.user_id || payload.sub || '').trim()
+  } catch {
+    return ''
+  }
+}
+
+function createStoreImageUploadQueue({ productKey, onChange }) {
+  const accountId = storeImageAccountId()
+  if (!accountId) throw new Error(storeText('pleaseLogin'))
+  const ownerId = `${accountId}:author-store-images:${String(productKey || 'new')}`
+  const manager = createUploadQueueManager({
+    ownerId,
+    upload: async ({ task, file, signal, onProgress }) => {
+      if (storeImageAccountId() !== accountId) throw new Error(storeText('pleaseLogin'))
+      const category = task.context?.slot === 'cover' ? 'author_store_cover' : 'author_store_gallery'
+      const imageUrl = await uploadStoreProductImage(
+        file,
+        category,
+        category === 'author_store_cover' ? 'cover' : 'gallery',
+        category === 'author_store_cover' ? 'uploadCoverFailed' : 'uploadGalleryFailed',
+        { signal, onProgress }
+      )
+      if (storeImageAccountId() !== accountId) throw new Error(storeText('pleaseLogin'))
+      return { imageUrl }
+    },
+    onChange: (event) => {
+      if (storeImageAccountId() === accountId) onChange?.(event)
+    },
+  })
+  return {
+    ...manager,
+    ownerId,
+    async enqueueImage(file, slot) {
+      if (storeImageAccountId() !== accountId) throw new Error(storeText('pleaseLogin'))
+      const category = slot === 'cover' ? 'author_store_cover' : 'author_store_gallery'
+      void requestUploadStoragePersistence()
+      return manager.enqueue({
+        file,
+        category,
+        kind: 'image',
+        context: { slot, accountId, productKey: String(productKey || 'new') },
+      })
+    },
+    async file(taskId) {
+      if (storeImageAccountId() !== accountId) throw new Error(storeText('pleaseLogin'))
+      return readMediaUploadFile(taskId, ownerId)
+    },
+  }
+}
 
 function uploadPrivatePdfFile(file, onProgress) {
   const token = getAuthToken()
@@ -2370,13 +2427,6 @@ function safeCoverPreviewUrl(value) {
   }
 
   return ''
-}
-
-function setSafeAuthorCoverPreview(node, value) {
-  if (!node) return
-  const source = safeCoverPreviewUrl(value)
-  if (!source) return void node.removeAttribute('src')
-  if (node.getAttribute('src') !== source) node.src = source
 }
 
 function FieldLabel({ children }) {
@@ -4236,6 +4286,11 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const localCoverPreviewRef = useRef('')
   const localGalleryPreviewsRef = useRef(new Set())
   const uploadedPdfRef = useRef(null)
+  const imageQueueRef = useRef(null)
+  const imageQueueInitRef = useRef(null)
+  const imageTaskIdsRef = useRef({})
+  const [imageTasks, setImageTasks] = useState({})
+  const [imageQueueMessage, setImageQueueMessage] = useState('')
   const imageUploadCacheRef = useRef(new WeakMap())
   const uploadSequenceRef = useRef(0)
   const pdfFormMountedRef = useRef(true)
@@ -4256,6 +4311,205 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
       }
     }
   }, [])
+
+  const reflectImageTask = (task) => {
+    const slot = String(task?.context?.slot || '')
+    if (!slot || imageTaskIdsRef.current[slot] !== task.id) return
+    setImageTasks((current) => ({ ...current, [slot]: task }))
+    const uploaded = task.status === 'uploaded' && /^https?:\/\//i.test(String(task.result?.imageUrl || ''))
+    if (!uploaded) return
+    const url = task.result.imageUrl
+    if (slot === 'cover') {
+      if (localCoverPreviewRef.current) URL.revokeObjectURL(localCoverPreviewRef.current)
+      localCoverPreviewRef.current = ''
+      setCoverFile(null)
+      setCoverPreview(url)
+    } else if (/^gallery:[0-4]$/.test(slot)) {
+      const index = Number(slot.slice(8))
+      setGalleryImages((current) => {
+        const next = [...current]
+        const image = next[index]
+        if (!image || image.uploadTaskId !== task.id) return current
+        if (image.local && String(image.url || '').startsWith('blob:')) {
+          URL.revokeObjectURL(image.url)
+          localGalleryPreviewsRef.current.delete(image.url)
+        }
+        next[index] = { ...image, url, file: null, local: false }
+        return next
+      })
+    }
+  }
+
+  const ensureImageQueue = async () => {
+    if (imageQueueRef.current) return imageQueueRef.current
+    if (imageQueueInitRef.current) return imageQueueInitRef.current
+    const promise = (async () => {
+      const queue = createStoreImageUploadQueue({
+        productKey: productToEdit?.id || 'new',
+        onChange: ({ task }) => {
+          if (pdfFormMountedRef.current && task?.context?.slot) reflectImageTask(task)
+        },
+      })
+      imageQueueRef.current = queue
+      const tasks = (await queue.list()).filter((task) =>
+        task.context?.slot === 'cover' || /^gallery:[0-4]$/.test(String(task.context?.slot || ''))
+      )
+      const latest = new Map()
+      tasks.sort((a, b) => a.createdAt - b.createdAt).forEach((task) => latest.set(task.context.slot, task))
+      for (const [slot, task] of latest) {
+        if (!pdfFormMountedRef.current) break
+        if (imageTaskIdsRef.current[slot]) continue
+        imageTaskIdsRef.current[slot] = task.id
+        setImageTasks((current) => ({ ...current, [slot]: task }))
+        const uploaded = task.status === 'uploaded' && /^https?:\/\//i.test(String(task.result?.imageUrl || ''))
+        const saved = uploaded ? null : await queue.file(task.id)
+        const preview = uploaded ? task.result.imageUrl : saved ? URL.createObjectURL(saved) : ''
+        if (slot === 'cover' && preview) {
+          if (!uploaded) localCoverPreviewRef.current = preview
+          setCoverFile(null)
+          setCoverPreview(preview)
+        } else if (/^gallery:[0-4]$/.test(slot) && preview) {
+          const index = Number(slot.slice(8))
+          if (!uploaded) localGalleryPreviewsRef.current.add(preview)
+          setGalleryImages((current) => {
+            const next = [...current]
+            next[index] = {
+              url: preview,
+              name: String(saved?.name || `Gallery image ${index + 1}`),
+              file: null,
+              local: !uploaded,
+              uploadTaskId: task.id,
+            }
+            return next
+          })
+        }
+      }
+      if (pdfFormMountedRef.current) queue.start()
+      return queue
+    })()
+    imageQueueInitRef.current = promise
+    try {
+      return await promise
+    } catch (error) {
+      imageQueueRef.current?.stop()
+      imageQueueRef.current = null
+      setImageQueueMessage(String(error.message || 'Local image storage unavailable'))
+      throw error
+    } finally {
+      imageQueueInitRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    void ensureImageQueue().catch(() => {})
+    return () => {
+      imageQueueRef.current?.stop()
+      imageQueueRef.current = null
+    }
+  }, [])
+
+  const removeQueuedImage = async (slot) => {
+    const id = imageTaskIdsRef.current[slot]
+    if (!id) return
+    const queue = await ensureImageQueue()
+    let task = await queue.get(id)
+    if (task?.status === 'uploading') {
+      queue.stop()
+      for (let attempt = 0; attempt < 35; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        task = await queue.get(id)
+        if (!task || task.status !== 'uploading') break
+      }
+    }
+    const removed = !task || await queue.remove(id)
+    queue.start()
+    if (!removed) throw new Error('Image upload is still stopping. Please retry.')
+    delete imageTaskIdsRef.current[slot]
+    setImageTasks((current) => {
+      const next = { ...current }
+      delete next[slot]
+      return next
+    })
+  }
+
+  const selectQueuedImage = async (slot, file) => {
+    if (!file || saving) return
+    if (!file.type.startsWith('image/')) {
+      onNotify?.(storeText(slot === 'cover' ? 'validCoverImage' : 'validGalleryImage'), 'error')
+      return
+    }
+    if (!file.size || file.size > STORE_IMAGE_MAX_BYTES) {
+      onNotify?.(storeText('imageTooLarge'), 'error')
+      return
+    }
+    try {
+      setImageQueueMessage('')
+      await removeQueuedImage(slot)
+      const queue = await ensureImageQueue()
+      const task = await queue.enqueueImage(file, slot)
+      imageTaskIdsRef.current[slot] = task.id
+      setImageTasks((current) => ({ ...current, [slot]: task }))
+      const preview = URL.createObjectURL(file)
+      if (slot === 'cover') {
+        if (localCoverPreviewRef.current) URL.revokeObjectURL(localCoverPreviewRef.current)
+        localCoverPreviewRef.current = preview
+        setCoverFile(null)
+        setCoverPreview(preview)
+      } else {
+        const index = Number(slot.slice(8))
+        setGalleryImages((current) => {
+          const next = [...current]
+          if (next[index]?.local && next[index]?.url) {
+            URL.revokeObjectURL(next[index].url)
+            localGalleryPreviewsRef.current.delete(next[index].url)
+          }
+          next[index] = { url: preview, name: file.name, file: null, local: true, uploadTaskId: task.id }
+          return next
+        })
+        localGalleryPreviewsRef.current.add(preview)
+      }
+      queue.start()
+      const latest = await queue.get(task.id)
+      if (latest) reflectImageTask(latest)
+    } catch (error) {
+      const message = error.message || 'Could not save image to local queue'
+      setImageQueueMessage(message)
+      onNotify?.(message, 'error')
+    }
+  }
+
+  const retryQueuedImage = async (slot) => {
+    const id = imageTaskIdsRef.current[slot]
+    if (!id) return
+    try {
+      const queue = await ensureImageQueue()
+      const task = await queue.retry(id)
+      if (task) reflectImageTask(task)
+      queue.start()
+    } catch (error) {
+      onNotify?.(error.message || 'Cannot retry image upload', 'error')
+    }
+  }
+
+  const waitForQueuedImage = async (slot) => {
+    const id = imageTaskIdsRef.current[slot]
+    if (!id) return ''
+    const queue = await ensureImageQueue()
+    const deadline = Date.now() + 180000
+    queue.start()
+    while (Date.now() < deadline) {
+      const task = await queue.get(id)
+      if (!task) throw new Error('Local image was removed. Choose the image again.')
+      if (task.status === 'uploaded') {
+        const url = String(task.result?.imageUrl || '')
+        if (!/^https?:\/\//i.test(url)) throw new Error('Uploaded image URL is missing')
+        return url
+      }
+      if (task.status === 'failed') throw new Error(task.lastError || 'Image upload failed. Retry the image.')
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    }
+    throw new Error('Image is still uploading. Please try Save again when it completes.')
+  }
 
   const beginPdfUpload = async (file) => {
     const currentUpload = ++uploadSequenceRef.current
@@ -4302,89 +4556,45 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   }
 
   const selectCover = (file) => {
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      onNotify?.(storeText('validCoverImage'), 'error')
-      return
-    }
-
-    if (file.size > STORE_IMAGE_MAX_BYTES) {
-      onNotify?.(storeText('imageTooLarge'), 'error')
-      return
-    }
-
-    if (localCoverPreviewRef.current) URL.revokeObjectURL(localCoverPreviewRef.current)
-    const localPreview = URL.createObjectURL(file)
-    localCoverPreviewRef.current = localPreview
-    setCoverFile(file)
-    setCoverPreview(localPreview)
+    void selectQueuedImage('cover', file)
   }
 
-  const removeCover = () => {
-    if (localCoverPreviewRef.current) URL.revokeObjectURL(localCoverPreviewRef.current)
-    localCoverPreviewRef.current = ''
-
-    setCoverFile(null)
-    setCoverPreview('')
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+  const removeCover = async () => {
+    if (saving) return
+    try {
+      await removeQueuedImage('cover')
+      if (localCoverPreviewRef.current) URL.revokeObjectURL(localCoverPreviewRef.current)
+      localCoverPreviewRef.current = ''
+      setCoverFile(null)
+      setCoverPreview('')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    } catch (error) {
+      onNotify?.(error.message || 'Cannot remove image', 'error')
     }
   }
 
- const selectGalleryImage = (index, file) => {
-  if (!file) return
-
-  if (!file.type.startsWith('image/')) {
-    onNotify?.(storeText('validGalleryImage'), 'error')
-    return
+  const selectGalleryImage = (index, file) => {
+    void selectQueuedImage(`gallery:${index}`, file)
   }
 
-  if (file.size > STORE_IMAGE_MAX_BYTES) {
-    onNotify?.(storeText('imageTooLarge'), 'error')
-    return
+  const removeGalleryImage = async (index) => {
+    if (saving) return
+    try {
+      await removeQueuedImage(`gallery:${index}`)
+      setGalleryImages((current) => {
+        const next = [...current]
+        if (next[index]?.local && next[index]?.url) {
+          URL.revokeObjectURL(next[index].url)
+          localGalleryPreviewsRef.current.delete(next[index].url)
+        }
+        next[index] = null
+        return next
+      })
+      if (galleryInputRefs.current[index]) galleryInputRefs.current[index].value = ''
+    } catch (error) {
+      onNotify?.(error.message || 'Cannot remove image', 'error')
+    }
   }
-
-  setGalleryImages((current) => {
-    const next = [...current]
-
-    if (next[index]?.local && next[index]?.url) {
-      URL.revokeObjectURL(next[index].url)
-      localGalleryPreviewsRef.current.delete(next[index].url)
-    }
-
-    const preview = URL.createObjectURL(file)
-    localGalleryPreviewsRef.current.add(preview)
-    next[index] = {
-      url: preview,
-      name: file.name,
-      file,
-      local: true,
-    }
-
-    return next
-  })
-
-}
-
-  const removeGalleryImage = (index) => {
-  setGalleryImages((current) => {
-    const next = [...current]
-
-    if (next[index]?.local && next[index]?.url) {
-      URL.revokeObjectURL(next[index].url)
-      localGalleryPreviewsRef.current.delete(next[index].url)
-    }
-
-    next[index] = null
-    return next
-  })
-
-  if (galleryInputRefs.current[index]) {
-    galleryInputRefs.current[index].value = ''
-  }
-}
 
   const uploadCachedProductImage = async (file, kind) => {
     const token = getAuthToken()
@@ -4411,16 +4621,17 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
     for (let index = 0; index < galleryImages.length; index += 1) {
       const image = galleryImages[index]
 
-      if (!image?.url && !image?.file) continue
+      if (!image?.url && !image?.file && !imageTaskIdsRef.current[`gallery:${index}`]) continue
 
-      if (image.file) {
-        const imageUrl = await uploadCachedProductImage(image.file, 'gallery')
-
+      if (imageTaskIdsRef.current[`gallery:${index}`]) {
+        const imageUrl = await waitForQueuedImage(`gallery:${index}`)
         uploadedImages.push({
           url: imageUrl,
-          name: image.name || image.file.name || `Gallery image ${index + 1}`,
+          name: image.name || `Gallery image ${index + 1}`,
         })
-      } else if (image.url) {
+      } else if (image.file) {
+        throw new Error('Gallery image is not saved in the local queue. Choose it again.')
+      } else if (image.url && /^https?:\/\//i.test(image.url)) {
         uploadedImages.push({
           url: image.url,
           name: image.name || '',
@@ -4486,7 +4697,7 @@ if (!salePrice || Number(salePrice) <= 0) {
         setPdfUploadProgress((current) => ({ ...current, stage: 'saving', percent: 100 }))
       }
 
-const coverUrl = coverFile ? await uploadCachedProductImage(coverFile, 'cover') : coverPreview
+const coverUrl = imageTaskIdsRef.current.cover ? await waitForQueuedImage('cover') : coverFile ? await uploadCachedProductImage(coverFile, 'cover') : coverPreview
 
 const nextGalleryImages = await uploadBookGalleryImages()
 
@@ -4536,7 +4747,19 @@ accessRule,
           percent: Math.max(0, Math.min(100, Number(percent) || 0)),
         }))
       })
-      if (createdProduct?.id) uploadedPdfRef.current = null
+      if (createdProduct?.id) {
+        uploadedPdfRef.current = null
+        const queue = imageQueueRef.current
+        if (queue) {
+          queue.stop()
+          for (const id of Object.values(imageTaskIdsRef.current)) {
+            const task = await queue.get(id).catch(() => null)
+            if (task?.status === 'uploaded') await queue.remove(id).catch(() => {})
+          }
+          imageTaskIdsRef.current = {}
+          setImageTasks({})
+        }
+      }
     } catch (error) {
       onNotify?.(error?.message || (type === 'PDF' && pdfFile ? storeText('pdfUploadTryAgain') : storeText('saveTryAgain')), 'error')
     } finally {
@@ -4569,7 +4792,7 @@ accessRule,
   className="relative aspect-[2/3] w-[200px] cursor-pointer overflow-hidden rounded-[24px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-soft)] shadow-inner"
 >
   {coverPreview ? (
-    <img ref={(node) => setSafeAuthorCoverPreview(node, coverPreview)} alt={storeText('coverPreview')} className="h-full w-full object-cover" />
+    <img src={safeCoverPreviewUrl(coverPreview)} alt={storeText('coverPreview')} className="h-full w-full object-cover" />
   ) : (
     <div className="flex h-full w-full flex-col items-center justify-center px-5 text-center text-[var(--shadow-text-tertiary)]">
       <i className="fa-regular fa-image mb-3 text-[28px]" />
@@ -4591,6 +4814,13 @@ accessRule,
   className="hidden"
 />
 
+            {imageTasks.cover && imageTasks.cover.status !== 'uploaded' ? (
+              <div className="mt-2 flex w-full items-center justify-between gap-2 text-[11px] text-[var(--shadow-text-secondary)]">
+                <span>{imageTasks.cover.status === 'failed' ? String(imageTasks.cover.lastError || 'Upload failed') : `Upload ${Math.round(imageTasks.cover.progress || 0)}%`}</span>
+                {imageTasks.cover.status === 'failed' ? <button type="button" onClick={() => retryQueuedImage('cover')} className="font-bold underline">Retry</button> : null}
+              </div>
+            ) : null}
+            {imageQueueMessage ? <p className="mt-2 text-[11px] text-red-600">{imageQueueMessage}</p> : null}
             {coverPreview ? (
               <button
                 type="button"
@@ -4622,10 +4852,16 @@ accessRule,
                 <GallerySlot
   image={image}
   index={index}
-  onChoose={() => galleryInputRefs.current[index]?.click()}
+  onChoose={() => !saving && galleryInputRefs.current[index]?.click()}
   onDrop={(file) => selectGalleryImage(index, file)}
   onRemove={() => removeGalleryImage(index)}
 />
+                {imageTasks[`gallery:${index}`] && imageTasks[`gallery:${index}`].status !== 'uploaded' ? (
+                  <div className="mt-1 flex items-center justify-between gap-1 text-[10px] text-[var(--shadow-text-secondary)]">
+                    <span>{imageTasks[`gallery:${index}`].status === 'failed' ? 'Upload failed' : `Upload ${Math.round(imageTasks[`gallery:${index}`].progress || 0)}%`}</span>
+                    {imageTasks[`gallery:${index}`].status === 'failed' ? <button type="button" onClick={() => retryQueuedImage(`gallery:${index}`)} className="font-bold underline">Retry</button> : null}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
