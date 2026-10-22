@@ -21,13 +21,14 @@ function getReaderToken() {
 }
 
 function createSessionId() {
-  if (window.crypto?.randomUUID) {
-    return window.crypto.randomUUID()
-  }
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID()
 
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`
+  const bytes = new Uint8Array(16)
+  window.crypto.getRandomValues(bytes)
+
+  return Array.from(bytes, byte =>
+    byte.toString(16).padStart(2, '0')
+  ).join('')
 }
 
 function getSessionId() {
