@@ -45,8 +45,8 @@ registerTranslationNamespace('readerSettings', {
         "subtitle": "See updates from readers, authors, and stories."
       },
       "reading-history": {
-        "title": "Reading history",
-        "subtitle": "Find stories and episodes you viewed."
+        "title": "Reading Summary",
+        "subtitle": "Your daily reading totals."
       },
       "echo-sharing": {
         "title": "Echo and sharing",
@@ -135,8 +135,8 @@ registerTranslationNamespace('readerSettings', {
         "subtitle": "មើល Update ពីអ្នកអាន អ្នកនិពន្ធ និងរឿង។"
       },
       "reading-history": {
-        "title": "ប្រវត្តិការអាន",
-        "subtitle": "រករឿង និងភាគដែលអ្នកបានមើល។"
+        "title": "សង្ខេបការអាន",
+        "subtitle": "មើលចំនួនរឿង និងភាគដែលបានអានប្រចាំថ្ងៃ។"
       },
       "echo-sharing": {
         "title": "Echo និងការចែករំលែក",
@@ -225,8 +225,8 @@ registerTranslationNamespace('readerSettings', {
         "subtitle": "查看来自读者、作者和故事的更新。"
       },
       "reading-history": {
-        "title": "阅读历史",
-        "subtitle": "查找你浏览过的故事和章节。"
+        "title": "阅读汇总",
+        "subtitle": "查看每日阅读数量。"
       },
       "echo-sharing": {
         "title": "Echo 与分享",
@@ -315,8 +315,8 @@ registerTranslationNamespace('readerSettings', {
         "subtitle": "読者、作者、ストーリーからの更新を確認します。"
       },
       "reading-history": {
-        "title": "閲覧履歴",
-        "subtitle": "閲覧したストーリーやエピソードを探します。"
+        "title": "読書サマリー",
+        "subtitle": "日別の読書数を確認します。"
       },
       "echo-sharing": {
         "title": "Echo と共有",
@@ -405,8 +405,8 @@ registerTranslationNamespace('readerSettings', {
         "subtitle": "독자, 작가 및 스토리의 업데이트를 확인합니다."
       },
       "reading-history": {
-        "title": "읽기 기록",
-        "subtitle": "본 스토리와 에피소드를 찾아봅니다."
+        "title": "독서 요약",
+        "subtitle": "일별 독서 현황을 확인합니다."
       },
       "echo-sharing": {
         "title": "Echo 및 공유",
