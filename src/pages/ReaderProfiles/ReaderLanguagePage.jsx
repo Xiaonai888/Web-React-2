@@ -184,9 +184,13 @@ export default function ReaderLanguagePage() {
                       aria-pressed={selected}
                       className={`flex min-h-[66px] w-full items-center gap-3 px-4 py-3 text-left active:bg-[var(--shadow-bg-hover)] ${selected ? 'bg-[var(--shadow-bg-soft)]' : ''}`}
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[11px] font-semibold">
-                        {item.code}
-                      </span>
+                      <span className="flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-black/5">
+  <img
+    src={`https://flagcdn.com/w40/${({ km: 'kh', en: 'us', zh: 'cn', ja: 'jp', ko: 'kr' })[item.id]}.png`}
+    alt=""
+    className="h-full w-full object-cover"
+  />
+</span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[14px] font-medium">{item.label}</span>
                         <span className="block text-[11px] text-[var(--shadow-text-secondary)]">{selected ? tr('selected') : item.subtitle}</span>
