@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AuthorPageFooter from '../../components/AuthorPageFooter'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import AuthorDashboardContentTab from '../../components/Author/AuthorDashboardContentTab'
@@ -866,38 +867,7 @@ function ToolCard({ icon, title, text, onClick }) {
   )
 }
 
-function DashboardFooter({ navigate }) {
-  const items = [
-    { id: 'Page', labelKey: 'page', icon: 'fa-regular fa-flag', path: '/author/page' },
-    { id: 'Dashboard', labelKey: 'dashboard', icon: 'fa-solid fa-chart-simple', path: '/author/page/dashboard' },
-    { id: 'Store', labelKey: 'store', icon: 'fa-solid fa-bag-shopping', path: '/author/page/store' },
-    { id: 'Notifications', labelKey: 'notifications', icon: 'fa-regular fa-bell', path: '/author/page/notifications' },
-  ]
 
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[80] border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-[0_-10px_30px_rgba(91,72,140,0.08)] backdrop-blur">
-      <div className="mx-auto grid h-[68px] max-w-[980px] grid-cols-4">
-        {items.map((item) => {
-          const active = item.id === 'Dashboard'
-
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition active:scale-95 ${
-                active ? 'text-[#8b5cf6]' : 'text-[var(--shadow-text-tertiary)]'
-              }`}
-            >
-              <i className={`${item.icon} text-[18px]`} />
-              <span>{dashText(item.labelKey)}</span>
-            </button>
-          )
-        })}
-      </div>
-    </nav>
-  )
-}
 
 function LoadingDashboard({ navigate }) {
   return (
@@ -923,7 +893,7 @@ function LoadingDashboard({ navigate }) {
         </div>
       </main>
 
-      <DashboardFooter navigate={navigate} />
+      <AuthorPageFooter active="Dashboard" />
     </div>
   )
 }
@@ -1468,7 +1438,7 @@ onClick={() => setActiveTab(tab.id)}
 ) : null}
 
 
-      <DashboardFooter navigate={navigate} />
+      <AuthorPageFooter active="Dashboard" />
     </div>
   )
 }
