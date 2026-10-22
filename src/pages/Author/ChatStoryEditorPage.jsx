@@ -4256,18 +4256,14 @@ const pickRandomCharacterAvatar = async (gender) => {
 }
 
 const handleAddConfirm = async () => {
-  const cleanName =
-    newCharacterName.trim()
+  const cleanName = newCharacterName.trim()
 
   if (!cleanName) {
-    showToast(
-      getDisplayText('chatStoryEditor.enterCharacterRequired')
-    )
+    showToast(getDisplayText('chatStoryEditor.enterCharacterRequired'))
     return
   }
 
   const token = getAuthToken()
-
   if (!token) {
     navigate('/login')
     return
@@ -4276,16 +4272,39 @@ const handleAddConfirm = async () => {
   if (addCharacterSavingRef.current) return
   addCharacterSavingRef.current = true
 
-  const newCharacterId =
-    makeId()
+  const previousAttempt = characterSaveAttemptRef.current
+  const sameAttempt =
+    previousAttempt?.token === token &&
+    previousAttempt?.storyId === String(storyId) &&
+    previousAttempt?.name === cleanName &&
+    previousAttempt?.image === newCharacterImage &&
+    previousAttempt?.avatarSource === newCharacterAvatarSource &&
+    previousAttempt?.gender === newCharacterGender
+
+  const newCharacterId = sameAttempt
+    ? previousAttempt.id
+    : (globalThis.crypto?.randomUUID?.() ||
+        'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (part) => {
+          const random = Math.floor(Math.random() * 16)
+          return (part === 'x' ? random : (random & 3) | 8).toString(16)
+        }))
+
+  characterSaveAttemptRef.current = {
+    id: newCharacterId,
+    token,
+    storyId: String(storyId),
+    name: cleanName,
+    image: newCharacterImage,
+    avatarSource: newCharacterAvatarSource,
+    gender: newCharacterGender,
+  }
 
   const newCharacter = {
     id: newCharacterId,
     nickname: cleanName,
     image: newCharacterImage,
     group: 'background',
-    avatarSource:
-      newCharacterAvatarSource,
+    avatarSource: newCharacterAvatarSource,
     isLead: false,
     chatSide: 'left',
     gender: newCharacterGender,
@@ -4310,6 +4329,7 @@ const handleAddConfirm = async () => {
     if (getAuthToken() !== token) {
       throw new Error(getDisplayText('chatStoryEditor.sessionChanged'))
     }
+
     if (String(newCharacter.image || '').startsWith('data:image/')) {
       characterAvatarUploadRef.current = {
         token,
@@ -4326,26 +4346,17 @@ const handleAddConfirm = async () => {
       {
         method: 'PUT',
         headers: {
-          'Content-Type':
-            'application/json',
-          Authorization:
-            `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           characters: [
             {
-              id:
-                newCharacter.id,
-              role_group:
-                newCharacter.group,
-              nickname:
-                newCharacter.nickname ||
-                null,
-              avatar_url:
-                avatarUrl,
-              avatar_source:
-                newCharacter.avatarSource ||
-                'device',
+              id: newCharacter.id,
+              role_group: newCharacter.group,
+              nickname: newCharacter.nickname || null,
+              avatar_url: avatarUrl,
+              avatar_source: newCharacter.avatarSource || 'device',
               is_lead: false,
               chat_side: 'left',
               gender:
@@ -4353,8 +4364,7 @@ const handleAddConfirm = async () => {
                   ? 'Female'
                   : newCharacter.gender === 'male'
                     ? 'Male'
-                    : newCharacter.gender ||
-                      null,
+                    : newCharacter.gender || null,
               birthday: null,
               height_cm: null,
               occupation: null,
@@ -4367,152 +4377,102 @@ const handleAddConfirm = async () => {
       }
     )
 
-    const data =
-      await response
-        .json()
-        .catch(() => ({}))
+    const data = await response.json().catch(() => ({}))
 
-    if (
-      !response.ok ||
-      data.ok === false
-    ) {
+    if (getAuthToken() !== token) {
+      throw new Error(getDisplayText('chatStoryEditor.sessionChanged'))
+    }
+
+    if (!response.ok || data.ok === false) {
       throw new Error(
-        data.message ||
-          getDisplayText('chatStoryEditor.failedAddCharacter')
+        data.message || getDisplayText('chatStoryEditor.failedAddCharacter')
       )
     }
 
-    const savedCharacterRows =
-      (data.characters || [])
-        .filter(
-          (character) =>
-            character.role_group ===
-              'background' &&
-            String(
-              character.nickname || ''
-            ) === cleanName &&
-            String(
-              character.avatar_url || ''
-            ) === String(
-              avatarUrl || ''
-            )
-        )
-        .sort(
-          (first, second) =>
-            new Date(
-              second.created_at || 0
-            ).getTime() -
-            new Date(
-              first.created_at || 0
-            ).getTime()
-        )
+    const savedCharacterRows = (data.characters || [])
+      .filter((character) =>
+        character.role_group === 'background' &&
+        String(character.nickname || '') === cleanName &&
+        String(character.avatar_url || '') === String(avatarUrl || '')
+      )
+      .sort(
+        (first, second) =>
+          new Date(second.created_at || 0).getTime() -
+          new Date(first.created_at || 0).getTime()
+      )
 
     const savedCharacterRow =
-      savedCharacterRows[0] ||
-      null
+      (data.characters || []).find(
+        (character) => String(character.id) === String(newCharacter.id)
+      ) || savedCharacterRows[0] || null
 
-    const savedCharacter =
-      savedCharacterRow
-        ? mapCharacter(
-            savedCharacterRow
-          )
-        : null
+    const savedCharacter = savedCharacterRow
+      ? mapCharacter(savedCharacterRow)
+      : null
 
     if (!savedCharacter) {
-      throw new Error(
-        getDisplayText('chatStoryEditor.characterSavedMissing')
-      )
+      throw new Error(getDisplayText('chatStoryEditor.characterSavedMissing'))
     }
 
     setCharacters((current) => {
-      const alreadyExists =
-        current.some(
-          (character) =>
-            String(character.id) ===
-            String(savedCharacter.id)
-        )
+      const alreadyExists = current.some(
+        (character) => String(character.id) === String(savedCharacter.id)
+      )
 
       if (alreadyExists) {
-        return current.map(
-          (character) =>
-            String(character.id) ===
-            String(savedCharacter.id)
-              ? savedCharacter
-              : character
+        return current.map((character) =>
+          String(character.id) === String(savedCharacter.id)
+            ? savedCharacter
+            : character
         )
       }
 
-      return [
-        ...current,
-        savedCharacter,
-      ]
+      return [...current, savedCharacter]
     })
 
-    if (
-      startNewEpisode ||
-      !requestedEpisodeId
-    ) {
+    if (startNewEpisode || !requestedEpisodeId) {
       const nextCharacterIds = [
         ...new Set([
-          ...characters.map(
-            (character) =>
-              String(character.id)
-          ),
-          String(
-            savedCharacter.id
-          ),
+          ...characters.map((character) => String(character.id)),
+          String(savedCharacter.id),
         ]),
       ]
 
       sessionStorage.setItem(
         castStorageKey,
         JSON.stringify({
-          characterIds:
-            nextCharacterIds,
-          updatedAt:
-            new Date().toISOString(),
+          characterIds: nextCharacterIds,
+          updatedAt: new Date().toISOString(),
         })
       )
     }
 
     characterAvatarUploadRef.current = null
+    characterSaveAttemptRef.current = null
     setAddPopupOpen(false)
-
-    setSelectedCharacterId(
-      savedCharacter.id
-    )
-
+    setSelectedCharacterId(savedCharacter.id)
     setComposerMode('message')
-
     setNewCharacterName('')
     setNewCharacterImage('')
-
-    setNewCharacterAvatarSource(
-      'device'
-    )
-
+    setNewCharacterAvatarSource('device')
     setNewCharacterGender('')
-
-    showToast(
-      getDisplayText('chatStoryEditor.characterAdded')
-    )
+    showToast(getDisplayText('chatStoryEditor.characterAdded'))
 
     window.setTimeout(() => {
       composerRef.current?.focus()
     }, 50)
   } catch (error) {
     showToast(
-      error.message ===
-        'Failed to fetch'
+      error.message === 'Failed to fetch'
         ? getDisplayText('chatStoryEditor.cannotConnectBackend')
-        : error.message ||
-            getDisplayText('chatStoryEditor.failedAddCharacter')
+        : error.message || getDisplayText('chatStoryEditor.failedAddCharacter')
     )
   } finally {
     addCharacterSavingRef.current = false
     setAddCharacterSaving(false)
   }
 }
+
 
   const handleAuthorNote = () => {
     const existingNote = messages.find(
