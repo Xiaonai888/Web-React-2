@@ -542,12 +542,47 @@ useEffect(() => {
       ) : null}
 
       {!loading && !loadError && !visibleSections.length ? (
-        <section className="rounded-[22px] bg-[var(--shadow-bg-surface)] p-6 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
-            <i className="fa-regular fa-store text-[18px]" />
-          </div>
-          <h3 className="text-[15px] font-black text-[var(--shadow-text-primary)]">{t('authorStoreTab.noProducts')}</h3>
-          <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-tertiary)]">
+        <section className="relative isolate overflow-hidden rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-5 pb-8 pt-6 text-center shadow-[0_8px_28px_rgba(15,23,42,0.035)] sm:px-10 sm:pb-10 sm:pt-8">
+          <div className="pointer-events-none absolute left-1/2 top-4 h-40 w-60 -translate-x-1/2 rounded-full bg-gradient-to-b from-[#f5edff] via-[#fff4ec] to-transparent opacity-80 blur-2xl dark:opacity-10" />
+          <svg
+            viewBox="0 0 320 214"
+            className="relative mx-auto h-[180px] w-full max-w-[300px] sm:h-[210px]"
+            fill="none"
+            role="img"
+            aria-label={t('authorStoreTab.noProducts')}
+          >
+            <ellipse cx="159" cy="190" rx="105" ry="11" fill="#C4B5D6" fillOpacity="0.17" />
+            <path d="M64 112C61 65 104 26 153 23C208 18 256 54 256 108C256 148 225 183 162 183C105 183 66 162 64 112Z" fill="#F4F0FF" />
+            <path d="M84 173C63 167 53 151 52 140C74 145 87 155 84 173Z" fill="#B8CFB6" />
+            <path d="M84 172C91 152 101 144 115 143C109 162 97 172 84 172Z" fill="#98BDA6" />
+            <path d="M84 177V151" stroke="#86A995" strokeWidth="2.5" strokeLinecap="round" />
+            <rect x="113" y="58" width="33" height="77" rx="5" transform="rotate(-13 113 58)" fill="#F2AAB6" />
+            <path d="M121 60L139 56L155 127L137 131Z" fill="#F7C6CB" />
+            <path d="M124 73L138 70" stroke="#FFF5F4" strokeWidth="3" strokeLinecap="round" />
+            <rect x="145" y="46" width="34" height="87" rx="5" transform="rotate(5 145 46)" fill="#8279C8" />
+            <path d="M156 48L166 49L158 134L148 133Z" fill="#A9A2E5" />
+            <path d="M158 60L168 61" stroke="#DED9FF" strokeWidth="3" strokeLinecap="round" />
+            <rect x="180" y="65" width="32" height="69" rx="5" transform="rotate(15 180 65)" fill="#E7BE88" />
+            <path d="M189 68L200 71L182 136L171 133Z" fill="#F4D6A9" />
+            <path d="M192 80L200 82" stroke="#FFF7E8" strokeWidth="3" strokeLinecap="round" />
+            <path d="M90 111L159 92L229 111L160 134L90 111Z" fill="#F3D8E6" />
+            <path d="M90 111L160 134V178L90 155V111Z" fill="#F6D3E0" />
+            <path d="M160 134L229 111V155L160 178V134Z" fill="#DDB9D4" />
+            <path d="M90 111L160 134L141 153L69 128L90 111Z" fill="#FFE4EE" />
+            <path d="M160 134L229 111L251 131L179 155L160 134Z" fill="#F7D3E5" />
+            <path d="M160 134V177" stroke="#D1A9C8" strokeWidth="2" strokeOpacity="0.55" />
+            <path d="M204 38L207 46L215 49L207 52L204 60L201 52L193 49L201 46L204 38Z" fill="#E8AE62" />
+            <path d="M241 71L243 76L248 78L243 80L241 85L239 80L234 78L239 76L241 71Z" fill="#B9A6E8" />
+            <circle cx="88" cy="68" r="3" fill="#EABBA3" />
+            <circle cx="236" cy="160" r="3" fill="#EABBA3" />
+            <path d="M236 49L264 37L255 67L248 55L236 49Z" fill="#ACA4E8" />
+            <path d="M248 55L264 37L244 55" fill="#D4CEFF" />
+            <path d="M233 78C220 89 232 97 241 95" stroke="#C5B8E9" strokeWidth="2.5" strokeDasharray="4 6" strokeLinecap="round" />
+          </svg>
+          <h3 className="relative mt-1 text-[17px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] sm:text-[19px]">
+            {t('authorStoreTab.noProducts')}
+          </h3>
+          <p className="relative mx-auto mt-2 max-w-[320px] text-[12px] font-medium leading-[21px] text-[var(--shadow-text-tertiary)] sm:text-[13px]">
             {t('authorStoreTab.emptyStore')}
           </p>
         </section>
