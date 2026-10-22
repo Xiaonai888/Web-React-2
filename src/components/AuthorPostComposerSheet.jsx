@@ -537,6 +537,15 @@ async function uploadAuthorPostImage(file, t) {
   return imageUrl
 }
 
+function safePostPreviewUrl(value) {
+  try {
+    const url = new URL(String(value || ''), window.location.origin)
+    if (['http:', 'https:'].includes(url.protocol)) return url.href
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {}
+  return ''
+}
+
 function SelectedImagePreview({ images, onRemove, removable = true, t }) {
   if (!images.length) return null
 
@@ -544,7 +553,16 @@ function SelectedImagePreview({ images, onRemove, removable = true, t }) {
   return (
     <div className="mx-[-16px] mt-4 bg-[var(--shadow-bg-surface)]">
       <div className="relative flex min-h-[260px] items-center justify-center bg-[var(--shadow-bg-surface)]">
-        <img src={images[0].url} alt="" className="max-h-[560px] w-full object-contain" />
+        <img
+  ref={(node) => {
+    if (!node) return
+    const src = safePostPreviewUrl(images[0].url)
+    if (src) node.src = src
+    else node.removeAttribute('src')
+  }}
+  alt=""
+  className="max-h-[560px] w-full object-contain"
+/>
 
         {removable ? (
           <button
@@ -564,8 +582,16 @@ function SelectedImagePreview({ images, onRemove, removable = true, t }) {
     <div className="mt-4 grid grid-cols-2 gap-1 overflow-hidden rounded-[16px]">
       {images.map((image) => (
         <div key={image.id} className="relative aspect-square bg-[var(--shadow-bg-soft)]">
-          <img src={image.url} alt="" className="h-full w-full object-cover" />
-
+          <img
+  ref={(node) => {
+    if (!node) return
+    const src = safePostPreviewUrl(image.url)
+    if (src) node.src = src
+    else node.removeAttribute('src')
+  }}
+  alt=""
+  className="h-full w-full object-cover"
+/>
           {removable ? (
             <button
               type="button"
