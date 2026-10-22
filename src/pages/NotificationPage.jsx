@@ -736,7 +736,7 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
                 </button>
               ) : null}
               <div className="min-w-0 flex-1">
-                <h1 className="truncate text-[24px] font-black leading-7 text-[#111111] dark:text-[var(--shadow-text-primary)]">
+                <h1 className={`truncate ${isFullPage ? 'text-[16px] font-extrabold leading-6' : 'text-[24px] font-black leading-7'} text-[#111111] dark:text-[var(--shadow-text-primary)]`}>
                   {t('notificationPage.title')}
                 </h1>
               </div>
@@ -801,7 +801,7 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
               <div className="space-y-6">
                 {groupedNotifications.map((group) => (
                   <section key={group.label}>
-                    <h2 className="mb-3 text-[15px] font-black tracking-wide text-[#111827] dark:text-[var(--shadow-text-primary)]">
+                    <h2 className={`mb-3 ${isFullPage ? 'text-[11px] font-extrabold' : 'text-[15px] font-black'} tracking-wide text-[#111827] dark:text-[var(--shadow-text-primary)]`}>
                       {getDisplayGroupLabel(group, language, t)}
                     </h2>
 
@@ -841,7 +841,7 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
 
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-start justify-between gap-3">
-                                    <h3 className="text-[14px] font-black text-[#111111] dark:text-[var(--shadow-text-primary)]">
+                                    <h3 className={`${isFullPage ? 'text-[13px] font-extrabold' : 'text-[14px] font-black'} text-[#111111] dark:text-[var(--shadow-text-primary)]`}>
                                       {getDisplayNotificationTitle(notification, t)}
                                     </h3>
                                     <div className="flex shrink-0 items-center gap-2">
@@ -854,7 +854,7 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
                                     </div>
                                   </div>
 
-                                  <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773] dark:text-[var(--shadow-text-secondary)]">
+                                  <p className={`mt-1 line-clamp-2 ${isFullPage ? 'text-[11px] leading-4' : 'text-[13px] font-semibold leading-5'} text-[#606773] dark:text-[var(--shadow-text-secondary)]`}>
                                     {getDisplayNotificationMessage(notification, t)}
                                   </p>
 
