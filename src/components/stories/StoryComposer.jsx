@@ -224,6 +224,26 @@ function getAuthToken() {
   )
 }
 
+function safeStoryComposerMediaUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return ''
+  try {
+    const url = new URL(source)
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {}
+  return ''
+}
+
+function setSafeStoryComposerMedia(node, value) {
+  if (!node) return
+  const safeUrl = safeStoryComposerMediaUrl(value)
+  if (!safeUrl) {
+    node.removeAttribute('src')
+    return
+  }
+  if (node.getAttribute('src') !== safeUrl) node.src = safeUrl
+}
+
 function readVideoDuration(file) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video')
@@ -256,7 +276,7 @@ function readVideoDuration(file) {
       reject(new Error(getDisplayText('storyComposer.readVideo')))
     }
 
-    video.src = objectUrl
+    setSafeStoryComposerMedia(video, objectUrl)
   })
 }
 
@@ -811,7 +831,7 @@ export default function StoryComposer({ mode }) {
       <div className="absolute inset-0">
         {isVideo ? (
           <video
-            src={previewUrl}
+            ref={(node) => setSafeStoryComposerMedia(node, previewUrl)}
             autoPlay
             loop
             muted
@@ -820,7 +840,7 @@ export default function StoryComposer({ mode }) {
             className="h-full w-full object-contain"
           />
         ) : (
-          <img src={previewUrl} alt={altText} className="h-full w-full object-contain" />
+          <img ref={(node) => setSafeStoryComposerMedia(node, previewUrl)} alt={altText} className="h-full w-full object-contain" />
         )}
       </div>
 
