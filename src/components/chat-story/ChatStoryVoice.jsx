@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
+
+export const ChatVoiceSessionContext = createContext(null)
 
 export function getChatVoiceUrl(message) {
   const value = message?.audio_url || message?.audioUrl || message?.voice_url || message?.voiceUrl || ''
@@ -45,6 +47,7 @@ export function ChatStoryRecording({ elapsed = 0, label = 'Recording voice…' }
 }
 
 export default function ChatStoryVoice({ message, autoPlay = false, paused = false, onEnded, onBlocked, onError, label = 'Voice message', retryLabel = 'Tap Play to listen', errorLabel = 'Voice could not be loaded' }) {
+  const session = useContext(ChatVoiceSessionContext)
   const audioRef = useRef(null)
   const callbacks = useRef({ onEnded, onBlocked, onError })
   callbacks.current = { onEnded, onBlocked, onError }
@@ -66,6 +69,13 @@ export default function ChatStoryVoice({ message, autoPlay = false, paused = fal
       audio.pause()
       return undefined
     }
+    const restore = () => {
+      const position = session?.positions.get(message)
+      if (Number.isFinite(position) && position > 0 && Number.isFinite(audio.duration))
+        audio.currentTime = Math.min(position, Math.max(0, audio.duration - 0.01))
+    }
+    audio.addEventListener('loadedmetadata', restore)
+    if (audio.readyState >= 1) restore()
     const play = async () => {
       try {
         await audio.play()
@@ -78,26 +88,29 @@ export default function ChatStoryVoice({ message, autoPlay = false, paused = fal
           callbacks.current.onBlocked?.()
         } else {
           setFailed(true)
-          callbacks.current.onError?.(error)
+          callbacks.current.onError?.(error, message)
         }
       }
     }
     play()
     return () => {
       attemptRef.current += 1
+      if (session && Number.isFinite(audio.currentTime)) session.positions.set(message, audio.currentTime)
+      audio.removeEventListener('loadedmetadata', restore)
       audio.pause()
     }
-  }, [source, autoPlay, paused])
+  }, [source, message, autoPlay, paused, session])
 
   if (!source) return null
 
   return (
     <div style={{ width: 'min(280px, 65vw)', maxWidth: '100%', padding: '9px 12px', borderRadius: 18, background: 'var(--cs-soft, #f1eef8)', color: 'var(--cs-text, #24201b)' }} onClick={(event) => event.stopPropagation()}>
-      <audio ref={audioRef} src={source} controls preload="metadata" aria-label={label} style={{ display: 'block', width: '100%', height: 40 }} onPlay={() => setBlocked(false)} onEnded={() => callbacks.current.onEnded?.()} onError={() => {
+      <audio ref={audioRef} src={source} controls preload="metadata" aria-label={label} style={{ display: 'block', width: '100%', height: 40 }} onPlay={() => setBlocked(false)} onEnded={() => callbacks.current.onEnded?.(message)} onError={() => {
         setFailed(true)
-        callbacks.current.onError?.(new Error('VOICE_LOAD_FAILED'))
+        callbacks.current.onError?.(new Error('VOICE_LOAD_FAILED'), message)
       }} />
       {blocked || failed ? <p role="status" style={{ margin: '6px 0 0', fontSize: 12 }}>{failed ? errorLabel : retryLabel}</p> : null}
     </div>
   )
 }
+
