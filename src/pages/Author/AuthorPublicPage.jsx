@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import AuthorPageFooter from '../../components/AuthorPageFooter'
+import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
@@ -1829,6 +1829,7 @@ export default function AuthorPublicPage() {
   const [loading, setLoading] = useState(true)
   const [ownerResolved, setOwnerResolved] = useState(false)
   const [pageError, setPageError] = useState('')
+  useAuthorPageFooterVisibility(ownerResolved && Boolean(author?.is_owner) && !pageError)
   const [message, setMessage] = useState('')
   const [messageVisible, setMessageVisible] = useState(false)
   const [reviewSummary, setReviewSummary] = useState({
@@ -1944,9 +1945,7 @@ const socialPreview = socialBase ? `${socialBase}${socialCount > 1 ? ` + ${socia
   }, 800)
 }
 
-  function handleAuthorFooterComingSoon(label) {
-  setMessage(getDisplayText('authorPublicPage.comingSoon', { label }))
-}
+  
   useEffect(() => {
   if (!followSettingsOpen) return undefined
 
@@ -4141,9 +4140,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         onClose={() => setPageTransparencyOpen(false)}
       />
 
-      {ownerResolved && displayAuthor.is_owner ? (
-        <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} />
-      ) : null}
+      
     </div>
   )
 }
