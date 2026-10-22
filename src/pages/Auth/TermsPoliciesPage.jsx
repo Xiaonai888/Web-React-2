@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import DisplayLanguageMenu from '../../components/common/DisplayLanguageMenu'
 
 registerTranslationNamespace('termsPoliciesPage', {
   en: {
@@ -259,23 +260,25 @@ export default function TermsPoliciesPage() {
       className="app-page min-h-screen overflow-x-hidden bg-white pb-10 text-[#141414] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]"
       style={{ fontFamily: "'Roboto', Arial, sans-serif" }}
     >
-      <header className="sticky top-0 z-50 bg-[#ff2b2b] px-4 py-3 text-white shadow-sm sm:py-4">
-        <div className="relative mx-auto flex max-w-3xl items-center justify-center">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="absolute left-0 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25 active:scale-95"
-            aria-label={t('termsPoliciesPage.goBack')}
-          >
-            <i className="fas fa-chevron-left text-[13px]" />
-          </button>
+      <header className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-white px-4 py-3 text-[#111827]">
+  <div className="mx-auto grid max-w-3xl grid-cols-[88px_minmax(0,1fr)_88px] items-center gap-2">
+    <button
+      type="button"
+      onClick={() => navigate(-1)}
+      className="flex h-10 w-9 items-center justify-start bg-transparent text-[#111827] transition active:scale-95"
+      aria-label={t('termsPoliciesPage.goBack')}
+    >
+      <i className="fas fa-chevron-left text-[16px]" />
+    </button>
+    <h1 className="min-w-0 truncate text-center text-[14px] font-bold tracking-tight sm:text-[20px]">
+      {t('termsPoliciesPage.title')}
+    </h1>
+    <div className="flex justify-end">
+      <DisplayLanguageMenu />
+    </div>
+  </div>
+</header>
 
-          <h1 className="px-12 text-center text-[15px] font-[700] tracking-tight sm:text-[22px]">
-            <span className="mr-2">📜</span>
-            {t('termsPoliciesPage.title')}
-          </h1>
-        </div>
-      </header>
 
       <main className="mx-auto w-full max-w-3xl px-4 py-5 sm:px-6 sm:py-10">
         <article className="w-full max-w-full break-words text-[13px] leading-6 sm:text-[18px] sm:leading-8">
