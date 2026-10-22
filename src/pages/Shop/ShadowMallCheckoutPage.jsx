@@ -59,19 +59,23 @@ function saveCart(items) {
   window.dispatchEvent(new Event('shadow-mall-cart-change'))
 }
 
-function saveBuyerProfileLocal(profile) {
-  localStorage.setItem(BUYER_PROFILE_KEY, JSON.stringify(profile))
+function saveBuyerProfileLocal() {
+  try {
+    localStorage.removeItem(BUYER_PROFILE_KEY)
+  } catch {}
 }
 
 function readBuyerProfileLocal() {
-  return readJson(BUYER_PROFILE_KEY, {
+  saveBuyerProfileLocal()
+
+  return {
     phone_number: '',
     province_city: DEFAULT_PROVINCE_CITY,
     delivery_address: '',
     delivery_note: '',
     telegram_username: '',
     facebook_link: '',
-  })
+  }
 }
 
 function readReaderUser() {
