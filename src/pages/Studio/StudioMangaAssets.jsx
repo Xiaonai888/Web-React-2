@@ -40,7 +40,6 @@ function toPng(asset) {
     const image = new Image()
     image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('image')) }
     image.onload = () => {
-      URL.revokeObjectURL(objectUrl)
       try {
         const canvas = document.createElement('canvas')
         canvas.width = canvas.height = 512
@@ -48,7 +47,7 @@ function toPng(asset) {
         if (!context) throw new Error('canvas')
         context.drawImage(image, 0, 0)
         canvas.toBlob((blob) => blob ? resolve(new File([blob], `${asset.id}.png`, { type: 'image/png' })) : reject(new Error('png')), 'image/png')
-      } catch (error) { reject(error) }
+      } catch (error) { reject(error) } finally { URL.revokeObjectURL(objectUrl) }
     }
     image.src = objectUrl
   })
@@ -59,28 +58,45 @@ export default function StudioMangaAssets({ onInsert, disabled = false }) {
   const t = WORDS[language] || WORDS.en
   const uploadText = UPLOAD_LABELS[language] || UPLOAD_LABELS.en
   const fileRef = useRef(null)
+  const insertingRef = useRef(false)
   const [group, setGroup] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   async function insert(asset) {
-    if (busy || disabled || !onInsert) return
+    if (insertingRef.current || disabled || typeof onInsert !== 'function') return
+    insertingRef.current = true
     setBusy(true)
     setError('')
-    try { await onInsert(await toPng(asset)) } catch { setError(t[6]) } finally { setBusy(false) }
+    try {
+      await onInsert(await toPng(asset))
+    } catch {
+      setError(t[6])
+    } finally {
+      insertingRef.current = false
+      setBusy(false)
+    }
   }
 
   async function uploadImage(event) {
     const file = event.target.files?.[0]
     event.target.value = ''
-    if (!file || busy || disabled || !onInsert) return
-    if (file.size > 12 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+    if (!file || insertingRef.current || disabled || typeof onInsert !== 'function') return
+    if (!file.size || file.size > 12 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
       setError(uploadText[1])
       return
     }
+    insertingRef.current = true
     setBusy(true)
     setError('')
-    try { await onInsert(file) } catch { setError(t[6]) } finally { setBusy(false) }
+    try {
+      await onInsert(file)
+    } catch {
+      setError(t[6])
+    } finally {
+      insertingRef.current = false
+      setBusy(false)
+    }
   }
 
   return (
