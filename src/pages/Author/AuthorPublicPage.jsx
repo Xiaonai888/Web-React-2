@@ -1903,7 +1903,13 @@ const socialLinks = Array.isArray(profileDetails.social_links) ? profileDetails.
 const legacySocialUrls = String(profileDetails.social_media || '').match(/https?:\/\/[^\s]+/gi) || []
 const firstSocial = socialLinks[0]
 const firstValue = String(firstSocial?.display_name || firstSocial?.value || '').trim()
-const socialBase = firstSocial ? (!/^https?:\/\//i.test(firstValue) ? firstValue.replace(/^@/, '') : String(firstSocial.platform || t('authorPublicPage.socialMedia')).replace(/^./, (c) => c.toUpperCase())) : legacySocialUrls[0]?.includes('facebook.com') ? 'Facebook' : legacySocialUrls.length ? t('authorPublicPage.socialMedia') : ''
+const isLegacyFacebook = (() => {
+  try {
+    const host = new URL(legacySocialUrls[0]).hostname.toLowerCase()
+    return host === 'facebook.com' || host.endsWith('.facebook.com')
+  } catch { return false }
+})()
+const socialBase = firstSocial ? (!/^https?:\/\//i.test(firstValue) ? firstValue.replace(/^@/, '') : String(firstSocial.platform || t('authorPublicPage.socialMedia')).replace(/^./, (c) => c.toUpperCase())) : isLegacyFacebook ? 'Facebook' : legacySocialUrls.length ? t('authorPublicPage.socialMedia') : ''
 const socialCount = socialLinks.length || legacySocialUrls.length
 const socialPreview = socialBase ? `${socialBase}${socialCount > 1 ? ` + ${socialCount - 1}` : ''}` : ''
 
