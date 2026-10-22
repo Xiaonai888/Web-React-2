@@ -64,7 +64,10 @@ export default function AuthorPdfUploadProgress({
   }, [uploadId])
 
   const active = ['uploading', 'processing', 'saving', 'verifying'].includes(stage)
-  const uploadPercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)))
+  const numericPercent = Number(percent)
+  const uploadPercent = Number.isFinite(numericPercent)
+    ? Math.max(0, Math.min(100, Math.round(numericPercent)))
+    : 0
   const stageText = active ? translate(stage) : ''
 
   return (
@@ -75,7 +78,7 @@ export default function AuthorPdfUploadProgress({
         </span>
         {active ? (
           <span className="text-[11px] font-bold text-[#2563eb]" role="status" aria-live="polite">
-            {stage === 'uploading' ? `${uploadPercent}%` : `${stageText}${uploadPercent >= 100 ? ' · 100%' : ''}`}
+            {stage === 'uploading' ? `${uploadPercent}%` : stageText}
           </span>
         ) : null}
       </div>
@@ -103,6 +106,7 @@ export default function AuthorPdfUploadProgress({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={stage === 'uploading' ? uploadPercent : undefined}
+            aria-valuetext={stage === 'uploading' ? `${uploadPercent}%` : stageText}
           >
             <div
               className={`h-full rounded-full bg-[#2563eb] transition-[width] duration-150 ${stage !== 'uploading' ? 'animate-pulse' : ''}`}
