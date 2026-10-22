@@ -7,7 +7,6 @@ import {
   LockKeyhole,
   MoreVertical,
   Play,
-  Plus,
   Search,
   UserRound,
   Video,
@@ -320,18 +319,11 @@ export default function FastStudioPage() {
             />
           </form>
 
-          <button
-            type="button"
-            onClick={() => navigate('/fast/studio/create')}
-            className="ml-auto flex h-10 items-center gap-2 rounded-full bg-[#7443e5] px-4 text-[12px] font-extrabold text-white shadow-[0_10px_24px_rgba(116,67,229,0.23)] transition hover:bg-[#6538d2] active:scale-95 md:ml-0"
-          >
-            <Plus size={17} />
-            {t('fastStudioPage.create')}
-          </button>
+         
 
           <div
             ref={profileMenuRef}
-            className="relative shrink-0"
+            className="relative ml-auto shrink-0 md:ml-0"
           >
             <button
               type="button"
