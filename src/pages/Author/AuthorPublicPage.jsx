@@ -12,6 +12,8 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
+import { createUploadQueueManager } from '../../utils/uploadQueueManager'
+import { requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 import AuthorPageTransparencyPopup from '../../components/AuthorPageTransparencyPopup'
 import AuthorPagePhotoViewer from '../../components/AuthorPagePhotoViewer'
 
@@ -94,6 +96,8 @@ registerTranslationNamespace('authorPublicPage', {
     failedSaveImage: 'Failed to save image',
     uploadingSlide: 'Uploading slide to Cloudflare...',
     slideUploaded: 'Slide uploaded.',
+    avatarUploaded: 'Profile photo saved successfully.',
+    coverUploaded: 'Cover photo saved successfully.',
     failedUploadSlide: 'Failed to upload slide',
     noCoverPhoto: 'No cover photo yet.',
     reviews: 'Reviews',
@@ -245,6 +249,8 @@ registerTranslationNamespace('authorPublicPage', {
     failedSaveImage: 'មិនអាចរក្សាទុករូបបាន',
     uploadingSlide: 'កំពុង Upload Slide ទៅ Cloudflare...',
     slideUploaded: 'បាន Upload Slide។',
+    avatarUploaded: 'បានរក្សាទុករូប Profile ដោយជោគជ័យ។',
+    coverUploaded: 'បានរក្សាទុករូប Cover ដោយជោគជ័យ។',
     failedUploadSlide: 'មិនអាច Upload Slide បាន',
     noCoverPhoto: 'មិនទាន់មានរូប Cover ទេ។',
     reviews: 'Review',
@@ -396,6 +402,8 @@ registerTranslationNamespace('authorPublicPage', {
     failedSaveImage: '保存图片失败',
     uploadingSlide: '正在上传幻灯片到 Cloudflare...',
     slideUploaded: '幻灯片已上传。',
+    avatarUploaded: '头像已保存。',
+    coverUploaded: '封面图片已保存。',
     failedUploadSlide: '上传幻灯片失败',
     noCoverPhoto: '暂无封面图片。',
     reviews: '评价',
@@ -547,6 +555,8 @@ registerTranslationNamespace('authorPublicPage', {
     failedSaveImage: '画像を保存できませんでした',
     uploadingSlide: 'スライドを Cloudflare にアップロード中...',
     slideUploaded: 'スライドをアップロードしました。',
+    avatarUploaded: 'プロフィール画像を保存しました。',
+    coverUploaded: 'カバー画像を保存しました。',
     failedUploadSlide: 'スライドをアップロードできませんでした',
     noCoverPhoto: 'カバー写真はまだありません。',
     reviews: 'レビュー',
@@ -698,6 +708,8 @@ registerTranslationNamespace('authorPublicPage', {
     failedSaveImage: '이미지를 저장하지 못했습니다',
     uploadingSlide: '슬라이드를 Cloudflare에 업로드 중...',
     slideUploaded: '슬라이드를 업로드했습니다.',
+    avatarUploaded: '프로필 사진을 저장했습니다.',
+    coverUploaded: '커버 사진을 저장했습니다.',
     failedUploadSlide: '슬라이드를 업로드하지 못했습니다',
     noCoverPhoto: '커버 사진이 아직 없습니다.',
     reviews: '리뷰',
@@ -790,6 +802,18 @@ function getAuthToken() {
   )
 }
 
+function getAuthorPublicQueueAccount(token) {
+  try {
+    const encoded = String(token || '').split('.')[1]
+    if (!encoded) return ''
+    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
+    const data = JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')))
+    return String(data.user_id || data.sub || '').trim()
+  } catch {
+    return ''
+  }
+}
+
 function getStoredReaderUser() {
   try {
     return JSON.parse(
@@ -871,35 +895,30 @@ async function getCroppedImage(imageSrc, pixelCrop) {
   return canvas.toDataURL('image/jpeg', 0.92)
 }
 
-async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
-  const file = dataUrlToFile(imageDataUrl, fileName)
-  const preset =
-    folder === 'author_page_avatar'
-      ? 'avatar'
-      : folder === 'author_page_cover' || folder === 'author_page_slide'
-        ? 'banner'
-        : 'default'
-  const optimized = await optimizeImageForUpload(file, { preset })
+async function uploadImageToStorage({ token, imageDataUrl, file: queuedFile, folder, fileName, signal, onProgress }) {
+  const file = queuedFile || dataUrlToFile(imageDataUrl, fileName)
+  const preset = folder === 'author_page_avatar' ? 'avatar' : 'banner'
+  const optimized = queuedFile ? { file } : await optimizeImageForUpload(file, { preset, signal })
 
-  if (optimized.file.size > AUTHOR_PAGE_IMAGE_MAX_BYTES) {
+  if (!optimized?.file?.size || optimized.file.size > AUTHOR_PAGE_IMAGE_MAX_BYTES) {
     throw new Error(getDisplayText('authorPublicPage.failedUploadImage'))
   }
 
-  const legacyUpload = async ({ signal } = {}) => {
+  const legacyUpload = async ({ signal: uploadSignal } = {}) => {
     const formData = new FormData()
     formData.append('image', optimized.file)
     formData.append('folder', folder)
-
     const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
-      signal,
+      signal: uploadSignal,
     })
-
     const data = await response.json().catch(() => ({}))
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || getDisplayText('authorPublicPage.failedUploadImage'))
+      const error = new Error(data.message || getDisplayText('authorPublicPage.failedUploadImage'))
+      error.status = response.status
+      throw error
     }
     return data
   }
@@ -910,12 +929,15 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
     token,
     apiBaseUrl: API_BASE_URL,
     legacyUpload,
+    signal,
+    onProgress,
   })
-
-  return data.image_url || data.imageUrl
+  const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
+  if (!/^https:\/\//i.test(imageUrl)) throw new Error(getDisplayText('authorPublicPage.failedUploadImage'))
+  return imageUrl
 }
 
-async function saveAuthorProfileImages({ token, avatarUrl = '', coverUrl = '', slideUrls = null }) {
+async function saveAuthorProfileImages({ token, avatarUrl = '', coverUrl = '', slideUrls = null, signal }) {
   const body = {
     avatar_url: avatarUrl,
     cover_url: coverUrl,
@@ -932,12 +954,15 @@ async function saveAuthorProfileImages({ token, avatarUrl = '', coverUrl = '', s
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(body),
+    signal,
   })
 
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || getDisplayText('authorPublicPage.failedSaveProfileImage'))
+    const error = new Error(data.message || getDisplayText('authorPublicPage.failedSaveProfileImage'))
+    error.status = response.status
+    throw error
   }
 
   return data.author_page || null
@@ -1873,6 +1898,10 @@ export default function AuthorPublicPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [savingImage, setSavingImage] = useState(false)
   const [savingSlide, setSavingSlide] = useState(false)
+  const mediaQueueRef = useRef(null)
+  const mediaQueueIdentityRef = useRef('')
+  const [mediaQueueReady, setMediaQueueReady] = useState(false)
+  const [mediaQueueTasks, setMediaQueueTasks] = useState([])
   const [followLoading, setFollowLoading] = useState(false)
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
@@ -2097,6 +2126,173 @@ useEffect(() => {
   authorMenuOpen,
 ])
 
+
+  useEffect(() => {
+    if (!ownerResolved || !author?.is_owner || !author?.id) return undefined
+    const token = getAuthToken()
+    const accountId = getAuthorPublicQueueAccount(token)
+    if (!accountId) return undefined
+
+    let active = true
+    const pageId = String(author.id)
+    const ownerId = `author-public-media:${accountId}:${pageId}`
+    const queue = createUploadQueueManager({
+      ownerId,
+      upload: async ({ task, file, signal, onProgress }) => {
+        const authToken = getAuthToken()
+        if (getAuthorPublicQueueAccount(authToken) !== accountId) {
+          const error = new Error('Sign in to the original account before uploading')
+          error.permanent = true
+          throw error
+        }
+        const mode = task.context?.mode
+        if (!['avatar', 'cover', 'slide'].includes(mode)) {
+          const error = new Error('Unknown author page image type')
+          error.permanent = true
+          throw error
+        }
+        const isSuperseded = async () => {
+          if (mode === 'slide') return false
+          const tasks = await queue.list()
+          return tasks.some((item) => item.id !== task.id && item.context?.mode === mode &&
+            (item.createdAt > task.createdAt || (item.createdAt === task.createdAt && item.id > task.id)))
+        }
+        if (await isSuperseded()) return { skipped: true }
+        const category = `author_page_${mode}`
+        const imageUrl = await uploadImageToStorage({
+          token: authToken,
+          file,
+          folder: category,
+          signal,
+          onProgress,
+        })
+        if (signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
+        if (await isSuperseded()) return { skipped: true }
+        if (getAuthorPublicQueueAccount(getAuthToken()) !== accountId) {
+          const error = new Error('Account changed during upload')
+          error.permanent = true
+          throw error
+        }
+        const latestPage = await fetchMyAuthorPage()
+        if (String(latestPage?.id || '') !== pageId) {
+          const error = new Error('The author page is no longer available for this account')
+          error.permanent = true
+          throw error
+        }
+        const currentSlides = Array.isArray(latestPage.slide_urls) ? latestPage.slide_urls : []
+        const updatedPage = await saveAuthorProfileImages({
+          token: authToken,
+          avatarUrl: mode === 'avatar' ? imageUrl : latestPage.avatar_url || latestPage.profile_image_url || '',
+          coverUrl: mode === 'cover' ? imageUrl : latestPage.cover_url || latestPage.banner_url || '',
+          slideUrls: mode === 'slide' ? [imageUrl, ...currentSlides].filter(Boolean).slice(0, 5) : null,
+          signal,
+        })
+        return { imageUrl, authorPage: updatedPage || await fetchMyAuthorPage() }
+      },
+      onChange: ({ type, task }) => {
+        if (!active) return
+        if (type === 'storage-error') {
+          setMessage(task?.message || 'Local image storage failed')
+          return
+        }
+        if (!task?.id) return
+        if (type === 'removed') {
+          setMediaQueueTasks((items) => items.filter((item) => item.id !== task.id))
+          return
+        }
+        setMediaQueueTasks((items) => [...items.filter((item) => item.id !== task.id), task]
+          .sort((a, b) => a.createdAt - b.createdAt))
+        if (type === 'uploaded') {
+          if (task.result?.authorPage && !task.result.skipped) {
+            localStorage.setItem('shadow_author_page', JSON.stringify(task.result.authorPage))
+            setAuthor((current) => {
+              if (String(current?.id || '') !== pageId) return current
+              return normalizeAuthor(task.result.authorPage, current.page_username, task.result.authorPage, true)
+            })
+            setMessage(task.context?.mode === 'slide'
+              ? getDisplayText('authorPublicPage.slideUploaded')
+              : getDisplayText(task.context?.mode === 'avatar' ? 'authorPublicPage.avatarUploaded' : 'authorPublicPage.coverUploaded'))
+          }
+          void queue.remove(task.id).catch(() => {})
+        }
+        if (type === 'failed' && !task.result?.skipped) {
+          setMessage(task.lastError || getDisplayText('authorPublicPage.failedUploadImage'))
+        }
+      },
+    })
+    mediaQueueRef.current = queue
+    mediaQueueIdentityRef.current = `${accountId}:${pageId}`
+    setMediaQueueReady(false)
+    const begin = async () => {
+      await requestUploadStoragePersistence()
+      const tasks = await queue.list()
+      if (!active) return
+      setMediaQueueTasks(tasks)
+      for (const task of tasks.filter((item) => item.status === 'uploaded')) {
+        await queue.remove(task.id)
+      }
+      if (!active) return
+      setMediaQueueReady(true)
+      queue.start()
+    }
+    void begin().catch((error) => {
+      if (active) setMessage(error.message || 'Local image storage failed')
+    })
+    return () => {
+      active = false
+      queue.stop()
+      if (mediaQueueRef.current === queue) {
+        mediaQueueRef.current = null
+        mediaQueueIdentityRef.current = ''
+      }
+      setMediaQueueReady(false)
+      setMediaQueueTasks([])
+    }
+  }, [ownerResolved, author?.is_owner, author?.id])
+
+  const queueAuthorPublicImage = async (file, mode) => {
+    const queue = mediaQueueRef.current
+    if (!queue || !mediaQueueReady) throw new Error('Local image queue is not ready. Try again.')
+    if (mediaQueueIdentityRef.current !== `${getAuthorPublicQueueAccount(getAuthToken())}:${String(author?.id || '')}`) {
+      throw new Error('Author page or account changed. Reopen the page before uploading.')
+    }
+    if (!file?.size) throw new Error(getDisplayText('authorPublicPage.selectImage'))
+    const optimized = await optimizeImageForUpload(file, {
+      preset: mode === 'avatar' ? 'avatar' : 'banner',
+      maxSourceBytes: AUTHOR_PAGE_IMAGE_MAX_BYTES,
+    })
+    if (!optimized?.file?.size || optimized.file.size > AUTHOR_PAGE_IMAGE_MAX_BYTES) {
+      throw new Error(getDisplayText('authorPublicPage.failedUploadImage'))
+    }
+    const task = await queue.enqueue({
+      file: optimized.file,
+      category: `author_page_${mode}`,
+      context: { mode, pageId: String(author.id) },
+    })
+    queue.start()
+    return task
+  }
+
+  const retryAuthorPublicMedia = async (task) => {
+    const queue = mediaQueueRef.current
+    if (!queue) return
+    try {
+      await queue.retry(task.id)
+    } catch (error) {
+      setMessage(error.message || getDisplayText('authorPublicPage.failedUploadImage'))
+    }
+  }
+
+  const removeAuthorPublicMedia = async (task) => {
+    const queue = mediaQueueRef.current
+    if (!queue) return
+    try {
+      const removed = await queue.remove(task.id)
+      if (!removed) setMessage('Pause the active upload before removing it.')
+    } catch (error) {
+      setMessage(error.message || 'Unable to remove local image')
+    }
+  }
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
@@ -2571,121 +2767,62 @@ function handleOpenMessage() {
   }
 
   async function handleSaveCrop(pixels) {
-    const token = getAuthToken()
-
-    if (!token) {
+    if (!getAuthToken()) {
       navigate('/login')
       return
     }
-
     if (!rawImage || !pixels) {
       setMessage(getDisplayText('authorPublicPage.adjustPhoto'))
       return
     }
-
     try {
       setSavingImage(true)
-      setMessage('')
-
       const croppedImage = await getCroppedImage(rawImage, pixels)
-      const imageUrl = await uploadImageToStorage({
-  token,
-  imageDataUrl: croppedImage,
-  folder: cropMode === 'avatar' ? 'author_page_avatar' : 'author_page_cover',
-  fileName: `author-${cropMode}-${Date.now()}.jpg`,
-})
-
-      const updatedAuthorPage = await saveAuthorProfileImages({
-        token,
-        avatarUrl: cropMode === 'avatar' ? imageUrl : '',
-        coverUrl: cropMode === 'cover' ? imageUrl : '',
-      })
-
-      if (updatedAuthorPage) {
-        localStorage.setItem('shadow_author_page', JSON.stringify(updatedAuthorPage))
-        setAuthor((current) => normalizeAuthor(updatedAuthorPage, current?.page_username || pageUsername, updatedAuthorPage, true))
-      }
-
+      const file = dataUrlToFile(croppedImage, `author-${cropMode}-${Date.now()}.jpg`)
+      await queueAuthorPublicImage(file, cropMode === 'avatar' ? 'avatar' : 'cover')
       setCropModalOpen(false)
       setRawImage('')
       setCroppedAreaPixels(null)
+      setMessage('Image saved locally. Uploading in the background.')
     } catch (error) {
-      setMessage(error.message || getDisplayText('authorPublicPage.failedSaveImage'))
+      setMessage(error?.message || getDisplayText('authorPublicPage.failedSaveImage'))
     } finally {
       setSavingImage(false)
     }
   }
 
   function handleUploadSlide() {
-  const token = getAuthToken()
-
-  if (!token) {
-    navigate('/login')
-    return
-  }
-
-  if (savingSlide) return
-
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = 'image/*'
-
-  input.onchange = () => {
-    const file = input.files?.[0]
-
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      setMessage(getDisplayText('authorPublicPage.selectImage'))
+    if (!getAuthToken()) {
+      navigate('/login')
       return
     }
-
-    if (file.size > AUTHOR_PAGE_IMAGE_MAX_BYTES) {
-      setMessage(getDisplayText('authorPublicPage.failedUploadImage'))
-      return
-    }
-
-    const reader = new FileReader()
-
-    reader.onload = async () => {
+    if (savingSlide) return
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async () => {
+      const file = input.files?.[0]
+      if (!file) return
+      if (!file.type.startsWith('image/')) {
+        setMessage(getDisplayText('authorPublicPage.selectImage'))
+        return
+      }
+      if (file.size > AUTHOR_PAGE_IMAGE_MAX_BYTES) {
+        setMessage(getDisplayText('authorPublicPage.failedUploadImage'))
+        return
+      }
       try {
         setSavingSlide(true)
-        setMessage(getDisplayText('authorPublicPage.uploadingSlide'))
-
-        const imageUrl = await uploadImageToStorage({
-          token,
-          imageDataUrl: String(reader.result || ''),
-          folder: 'author_page_slide',
-          fileName: `author-slide-${Date.now()}.jpg`,
-        })
-
-        const currentSlides = Array.isArray(author?.slide_urls) ? author.slide_urls : []
-        const nextSlides = [imageUrl, ...currentSlides].filter(Boolean).slice(0, 5)
-
-        const updatedAuthorPage = await saveAuthorProfileImages({
-          token,
-          slideUrls: nextSlides,
-        })
-
-        if (updatedAuthorPage) {
-          localStorage.setItem('shadow_author_page', JSON.stringify(updatedAuthorPage))
-          setAuthor((current) => normalizeAuthor(updatedAuthorPage, current?.page_username || pageUsername, updatedAuthorPage, true))
-        }
-
-        setMessage(getDisplayText('authorPublicPage.slideUploaded'))
+        await queueAuthorPublicImage(file, 'slide')
+        setMessage('Slide saved locally. Uploading in the background.')
       } catch (error) {
-        setMessage(error.message || getDisplayText('authorPublicPage.failedUploadSlide'))
+        setMessage(error?.message || getDisplayText('authorPublicPage.failedUploadSlide'))
       } finally {
         setSavingSlide(false)
       }
     }
-
-    reader.readAsDataURL(file)
+    input.click()
   }
-
-  input.click()
-}
-
 
   function handleReaderBack() {
     if (window.history.length > 1) {
@@ -3585,6 +3722,31 @@ onOpenStoreSetting={() => {
           >
             <div className="rounded-[16px] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[13px] font-medium leading-5 text-[var(--shadow-text-primary)] shadow-[0_8px_30px_rgba(15,23,42,0.18)] ring-1 ring-[var(--shadow-border)]">
               {message}
+            </div>
+          </div>
+        ) : null}
+
+        {displayAuthor.is_owner && mediaQueueTasks.some((task) => task.status !== 'uploaded') ? (
+          <div className="border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3">
+            <div className="mx-auto max-w-[980px] space-y-2">
+              {mediaQueueTasks.filter((task) => task.status !== 'uploaded').map((task) => (
+                <div key={task.id} className="flex items-center gap-3 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-[12px] text-[var(--shadow-text-primary)]">
+                  <span className="min-w-0 flex-1 truncate">
+                    {task.context?.mode === 'slide' ? 'Slide' : task.context?.mode === 'avatar' ? 'Avatar' : 'Cover'} · {task.status === 'failed' ? task.lastError || 'Upload failed' : `${task.status === 'retry_wait' ? 'Retrying' : task.status === 'uploading' ? 'Uploading' : 'Queued'} ${Math.round(Number(task.progress) || 0)}%`}
+                  </span>
+                  {task.status === 'failed' || task.status === 'retry_wait' ? (
+                    <button type="button" onClick={() => retryAuthorPublicMedia(task)} className="font-semibold underline">Retry</button>
+                  ) : null}
+                  {task.status === 'uploading' ? (
+                    <button type="button" onClick={() => mediaQueueRef.current?.stop()} className="font-semibold underline">Pause</button>
+                  ) : (
+                    <button type="button" onClick={() => removeAuthorPublicMedia(task)} className="font-semibold underline">Remove</button>
+                  )}
+                  {task.status === 'queued' && !mediaQueueRef.current?.isRunning() ? (
+                    <button type="button" onClick={() => mediaQueueRef.current?.start()} className="font-semibold underline">Resume</button>
+                  ) : null}
+                </div>
+              ))}
             </div>
           </div>
         ) : null}
