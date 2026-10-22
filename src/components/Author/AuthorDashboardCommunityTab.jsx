@@ -422,15 +422,15 @@ export default function AuthorDashboardCommunityTab({
 }) {
   const { t } = useDisplayTranslation()
   const [reviews, setReviews] = useState(
-  () => getCommunityReviewCache(pageUsername)?.reviews || []
-)
+    () => getCommunityReviewCache(pageUsername)?.reviews || []
+  )
   const [reviewSummary, setReviewSummary] = useState(
-  () => getCommunityReviewCache(pageUsername)?.summary || {
-    total_count: 0,
-    recommend_count: 0,
-    recommend_percent: 0,
-  }
-)
+    () => getCommunityReviewCache(pageUsername)?.summary || {
+      total_count: 0,
+      recommend_count: 0,
+      recommend_percent: 0,
+    }
+  )
   const [loadingReviews, setLoadingReviews] = useState(false)
   const [reviewError, setReviewError] = useState('')
 
@@ -445,19 +445,35 @@ export default function AuthorDashboardCommunityTab({
           recommend_count: 0,
           recommend_percent: 0,
         })
+        setLoadingReviews(false)
+        setReviewError('')
         return
       }
 
       const cached = getCommunityReviewCache(pageUsername)
 
-if (cached) {
-  setReviews(cached.reviews)
-  setReviewSummary(cached.summary)
-  setLoadingReviews(false)
-  setReviewError('')
-  return
-}
-        const data = await fetchAuthorReviews(pageUsername, t('authorDashboardCommunity.loadReviewsFailed'))
+      if (cached) {
+        setReviews(cached.reviews)
+        setReviewSummary(cached.summary)
+        setLoadingReviews(false)
+        setReviewError('')
+        return
+      }
+
+      setLoadingReviews(true)
+      setReviewError('')
+      setReviews([])
+      setReviewSummary({
+        total_count: 0,
+        recommend_count: 0,
+        recommend_percent: 0,
+      })
+
+      try {
+        const data = await fetchAuthorReviews(
+          pageUsername,
+          t('authorDashboardCommunity.loadReviewsFailed')
+        )
 
         if (ignore) return
 
@@ -472,7 +488,7 @@ if (cached) {
       }
     }
 
-    loadReviews()
+    void loadReviews()
 
     return () => {
       ignore = true
