@@ -22,7 +22,60 @@ export function episodeContentToPlainText(value) {
   if (!isRichEpisodeContent(source)) return source
 
   if (typeof DOMParser === 'undefined') {
-    return source
+    const entities = {
+      amp: '&',
+      lt: '<',
+      gt: '>',
+      nbsp: ' ',
+      quot: '"',
+      apos: "'",
+    }
+
+    let result = ''
+    let i = 0
+
+    while (i < source.length) {
+      if (source[i] === '<') {
+        const end = source.indexOf('>', i + 1)
+
+        if (end !== -1) {
+          const tag = source.slice(i + 1, end).trim().toLowerCase()
+          const content = tag.startsWith('/') ? tag.slice(1) : tag
+          const name = content.split(/[\s/]/)[0]
+
+          if (
+            name === 'br' ||
+            (tag.startsWith('/') && (name === 'p' || name === 'div'))
+          ) {
+            result += '\n'
+          } else if (name === 'img') {
+            result += ' '
+          }
+
+          i = end + 1
+          continue
+        }
+      }
+
+      if (source[i] === '&') {
+        const end = source.indexOf(';', i + 1)
+
+        if (end !== -1 && end - i <= 10) {
+          const entity = source.slice(i + 1, end).toLowerCase()
+
+          if (Object.prototype.hasOwnProperty.call(entities, entity)) {
+            result += entities[entity]
+            i = end + 1
+            continue
+          }
+        }
+      }
+
+      result += source[i]
+      i += 1
+    }
+
+    return result.replace(/\n{3,}/g, '\n\n').trim()
   }
 
   const documentValue = new DOMParser().parseFromString(`<div>${source}</div>`, 'text/html')
