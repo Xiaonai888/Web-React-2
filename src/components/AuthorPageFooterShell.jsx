@@ -42,10 +42,10 @@ export default function AuthorPageFooterShell({ children }) {
     }
   }, [])
 
-  const showFooter = MAIN_PATHS.has(pathname) && (
-    pathname === '/author/page/dashboard' ||
-    (visibility.routeKey === routeKey && visibility.visible)
-  )
+  const showFooter =
+  MAIN_PATHS.has(pathname) &&
+  visibility.routeKey === routeKey &&
+  visibility.visible
 
   return (
     <FooterVisibilityContext.Provider value={registerVisibility}>
