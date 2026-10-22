@@ -1651,8 +1651,8 @@ async function uploadStoreProductImage(file, category, preset, errorKey) {
     legacyUpload,
   })
 
-  const imageUrl = data.image_url || data.imageUrl || ''
-  if (!imageUrl) throw new Error(storeText(errorKey))
+  const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
+  if (!/^https?:\/\//i.test(imageUrl)) throw new Error(storeText(errorKey))
   return imageUrl
 }
 
@@ -1822,6 +1822,7 @@ function uploadPrivatePdfFile(file, onProgress) {
     }
 
     request.open('POST', requestUrl)
+    request.timeout = 600000
     request.setRequestHeader('Authorization', `Bearer ${token}`)
     request.upload.onprogress = (event) => {
       if (!event.lengthComputable || !event.total) return
@@ -4198,6 +4199,8 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   })
   const [uploadedPdf, setUploadedPdf] = useState(null)
   const [pdfUploadError, setPdfUploadError] = useState('')
+  const localCoverPreviewRef = useRef('')
+  const localGalleryPreviewsRef = useRef(new Set())
   const uploadedPdfRef = useRef(null)
   const uploadSequenceRef = useRef(0)
   const pdfFormMountedRef = useRef(true)
@@ -4209,6 +4212,9 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   useEffect(() => {
     pdfFormMountedRef.current = true
     return () => {
+      if (localCoverPreviewRef.current) URL.revokeObjectURL(localCoverPreviewRef.current)
+      for (const url of localGalleryPreviewsRef.current) URL.revokeObjectURL(url)
+      localGalleryPreviewsRef.current.clear()
       pdfFormMountedRef.current = false
       if (!pdfProductSavingRef.current && uploadedPdfRef.current) {
         void discardTemporaryAuthorPdf(uploadedPdfRef.current).catch(console.error)
@@ -4273,18 +4279,16 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
       return
     }
 
-    if (coverPreview) {
-      URL.revokeObjectURL(coverPreview)
-    }
-
+    if (localCoverPreviewRef.current) URL.revokeObjectURL(localCoverPreviewRef.current)
+    const localPreview = URL.createObjectURL(file)
+    localCoverPreviewRef.current = localPreview
     setCoverFile(file)
-    setCoverPreview(URL.createObjectURL(file))
+    setCoverPreview(localPreview)
   }
 
   const removeCover = () => {
-    if (coverPreview) {
-      URL.revokeObjectURL(coverPreview)
-    }
+    if (localCoverPreviewRef.current) URL.revokeObjectURL(localCoverPreviewRef.current)
+    localCoverPreviewRef.current = ''
 
     setCoverFile(null)
     setCoverPreview('')
@@ -4312,10 +4316,13 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
 
     if (next[index]?.local && next[index]?.url) {
       URL.revokeObjectURL(next[index].url)
+      localGalleryPreviewsRef.current.delete(next[index].url)
     }
 
+    const preview = URL.createObjectURL(file)
+    localGalleryPreviewsRef.current.add(preview)
     next[index] = {
-      url: URL.createObjectURL(file),
+      url: preview,
       name: file.name,
       file,
       local: true,
@@ -4332,6 +4339,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
 
     if (next[index]?.local && next[index]?.url) {
       URL.revokeObjectURL(next[index].url)
+      localGalleryPreviewsRef.current.delete(next[index].url)
     }
 
     next[index] = null
