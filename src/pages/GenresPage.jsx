@@ -726,6 +726,23 @@ function FilterSheet({
   )
 }
 
+function safeGenresCoverUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return ''
+  try {
+    const url = new URL(source, window.location.origin)
+    if (url.protocol === 'http:' || url.protocol === 'https:') return url.href
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {}
+  return ''
+}
+
+function setSafeGenresCover(node, value) {
+  if (!node) return
+  const source = safeGenresCoverUrl(value) || '/assets/Update Today/Update Today 1.jpg'
+  if (node.getAttribute('src') !== source) node.src = source
+}
+
 function BookCard({ book, onOpen }) {
   const { t } = useDisplayTranslation()
   const title =
@@ -742,7 +759,7 @@ function BookCard({ book, onOpen }) {
       <div className="overflow-hidden rounded-[8px] bg-[#1e1e22] shadow-sm">
         <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
-            src={book.cover}
+            ref={(node) => setSafeGenresCover(node, book.cover)}
             alt={title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             onError={(event) => {
