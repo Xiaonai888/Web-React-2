@@ -540,6 +540,13 @@ export default function ReaderPostReviewPage() {
         .json()
         .catch(() => ({}))
 
+      if (data.post_saved === true) {
+        clearReaderPostDraft()
+        window.alert(data.message || t('readerPostReviewPage.failedPublishPost'))
+        navigate('/discover', { replace: true })
+        return
+      }
+
       if (
         !response.ok ||
         data.ok === false
