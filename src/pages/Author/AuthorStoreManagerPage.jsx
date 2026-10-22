@@ -5573,8 +5573,6 @@ const saveCategoryOrder = async () => {
           orderActionLoadingId={orderActionLoadingId}
         />
       )}
-
-      {mode === 'manager' ? <AuthorPageFooter active="Store" /> : null}
     </div>
   )
 }
