@@ -3909,7 +3909,7 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
           <button
             type="button"
             onClick={() => onRetry(page.id)}
-            disabled={(!page.sourceFile && !page.uploadTaskId) || disabled}
+            if (!page?.sourceFile && !page?.uploadTaskId) {
             className="mt-2 h-9 w-full rounded-[12px] bg-[var(--shadow-text-primary)] text-[11px] font-extrabold text-[var(--shadow-bg-surface)] disabled:bg-[var(--shadow-bg-soft)]"
           >
             {getDisplayText('episodeEditor.retryUpload')}
@@ -5225,7 +5225,7 @@ await cleanupTemporaryMangaPages(
 
   const handleRetryMangaPage = async (pageId) => {
     const page = mangaPages.find((item) => item.id === pageId)
-    disabled={(!page.sourceFile && !page.uploadTaskId) || disabled}
+    if (!page?.sourceFile && !page?.uploadTaskId) {
       showToast(getDisplayText('episodeEditor.chooseReplacementImage'))
       return
     }
