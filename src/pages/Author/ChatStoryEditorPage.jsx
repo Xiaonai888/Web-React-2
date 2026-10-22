@@ -5,6 +5,7 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import { createChatStoryInlineUploadQueue, chatStoryPendingImageCount } from '../../utils/chatStoryInlineUploadQueue'
+import { encryptChatGalleryDraft, decryptChatGalleryDraft } from '../../utils/secureChatGalleryDraft'
 
 registerTranslationNamespace('chatStoryEditor', {
   "en": {
@@ -4085,65 +4086,41 @@ const chooseNewCharacterDeviceImage = () => {
   characterImageInputRef.current?.click()
 }
 
-const openNewCharacterShadowGallery = () => {
+const openNewCharacterShadowGallery = async () => {
   if (!storyId) return
 
   const origin = 'chat-editor'
-  const returnUrl =
-    new URL(window.location.href)
+  const returnUrl = new URL(window.location.href)
+  const returnPath = returnUrl.pathname + returnUrl.search + returnUrl.hash
 
-  const returnPath =
-    returnUrl.pathname +
-    returnUrl.search +
-    returnUrl.hash
-
-  const editorSnapshot = {
-  episodeTitle,
-  episodeId,
-  leadCharacterId:
-    effectiveLeadCharacterId,
-  characters,
-  messages: messagesRef.current,
-  updatedAt:
-    new Date().toISOString(),
-}
-
-  localStorage.setItem(
-    storageKey,
-    JSON.stringify(editorSnapshot)
-  )
-
-  sessionStorage.setItem(
-    gallerySnapshotKey,
-    JSON.stringify(editorSnapshot)
-  )
-
-  sessionStorage.removeItem(
-    'shadow_gallery_selected_image'
-  )
-
-  sessionStorage.setItem(
-    `shadow_gallery_chat_editor_draft_${storyId}`,
-    JSON.stringify({
+  try {
+    const securedCharacterDraft = await encryptChatGalleryDraft({
       origin,
       returnPath,
       name: newCharacterName,
       image: newCharacterImage,
-      avatarSource:
-        newCharacterAvatarSource,
+      avatarSource: newCharacterAvatarSource,
       gender: newCharacterGender,
       createdAt: Date.now(),
     })
-  )
+
+    if (!flushLocalDraft()) throw new Error(getDisplayText('chatStoryEditor.failedSaveEpisode'))
+    sessionStorage.removeItem(gallerySnapshotKey)
+    sessionStorage.removeItem('shadow_gallery_selected_image')
+    sessionStorage.setItem(`shadow_gallery_chat_editor_draft_${storyId}`, securedCharacterDraft)
+  } catch (error) {
+    showToast(error?.message || getDisplayText('chatStoryEditor.failedSaveEpisode'))
+    return
+  }
 
   setImageSourceOpen(false)
-
   navigate(
     `/author/story/${storyId}/chat/shadow-gallery` +
       `?origin=${encodeURIComponent(origin)}` +
       `&return=${encodeURIComponent(returnPath)}`
   )
 }
+
 
 const handleNewCharacterImageChange = (event) => {
   const file = event.target.files?.[0]
