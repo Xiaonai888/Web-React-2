@@ -1,3 +1,4 @@
+import { useChatStoryTheme } from '../../services/chatStoryThemes'
 import ChatStoryPhoneView, {
   chatCharacterId,
   createChatTiming,
@@ -192,7 +193,7 @@ function CharacterName({ character, isRight, visible }) {
   return (
     <div
       className={`mb-1 px-1 text-[11px] font-medium ${
-        isRight ? 'text-[#8c78b5]' : 'text-[var(--shadow-text-secondary)]'
+        isRight ? 'text-[var(--cs-accent)]' : 'text-[var(--shadow-text-secondary)]'
       }`}
     >
       {character?.nickname || getDisplayText('chatStoryReader.unknown')}
@@ -354,7 +355,7 @@ function ChatMessage({
         <div
           className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-[20px] px-4 py-3 text-left text-[15px] leading-7 ${
             isRight
-              ? 'rounded-br-[6px] bg-[#7c3aed] text-white'
+              ? 'rounded-br-[6px] bg-[var(--cs-outgoing)] text-white'
               : 'rounded-bl-[6px] bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
           }`}
         >
@@ -450,6 +451,7 @@ export default function ChatStoryReader({
   brightnessOpacity = 0,
 }) {
   const { t } = useDisplayTranslation()
+  const chatTheme = useChatStoryTheme()
   const parsedContent = useMemo(() => parseChatStoryContent(content), [content])
   const initialCount = parsedContent.messages.length ? 1 : 0
   const [reading, setReading] = useState(() => ({
@@ -712,6 +714,15 @@ export default function ChatStoryReader({
     <>
       {!active ? (
         <section
+          style={{
+            ...chatTheme.style,
+            '--shadow-bg-page': chatTheme.theme.background,
+            '--shadow-bg-soft': chatTheme.theme.incoming,
+            '--shadow-text-primary': chatTheme.theme.text,
+            '--shadow-text-secondary': chatTheme.theme.muted,
+            '--shadow-text-tertiary': chatTheme.theme.muted,
+            '--shadow-border': chatTheme.theme.border,
+          }}
           role={readMode === 'manual' || userPaused ? 'button' : undefined}
           tabIndex={readMode === 'manual' || userPaused ? 0 : -1}
           aria-label={t('chatStoryReader.tapToContinue')}
@@ -756,7 +767,7 @@ export default function ChatStoryReader({
                   <button
                     type="button"
                     onClick={resumePhone}
-                    className="mb-5 rounded-full bg-[#7c3aed] px-5 py-2.5 text-[13px] font-medium text-white"
+                    className="mb-5 rounded-full bg-[var(--cs-outgoing)] px-5 py-2.5 text-[13px] font-medium text-white"
                   >
                     {t('chatStoryPhone.resume')}
                   </button>
@@ -798,3 +809,4 @@ export default function ChatStoryReader({
     </>
   )
 }
+
