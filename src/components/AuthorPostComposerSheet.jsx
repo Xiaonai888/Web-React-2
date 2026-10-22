@@ -745,6 +745,7 @@ export default function AuthorPostComposerSheet({
 
 
   const selectedImagesRef = useRef([])
+  const uploadedImageUrlsRef = useRef(new Map())
   const initialDraftRef = useRef('')
   const initialImageUrlsRef = useRef([])
   const editorKeyRef = useRef('')
@@ -812,6 +813,7 @@ export default function AuthorPostComposerSheet({
     if (editorKeyRef.current === editorKey) return
 
     selectedImagesRef.current.forEach(revokeImagePreview)
+    uploadedImageUrlsRef.current.clear()
 
     const initialDraft = isEditing
       ? String(editingPost?.content || '').slice(0, MAX_POST_LENGTH)
@@ -847,6 +849,7 @@ export default function AuthorPostComposerSheet({
 
   function clearImages() {
     selectedImages.forEach(revokeImagePreview)
+    uploadedImageUrlsRef.current.clear()
     setSelectedImages([])
   }
 
@@ -979,7 +982,8 @@ export default function AuthorPostComposerSheet({
     setSelectedImages((current) => {
       const imageToRemove = current.find((image) => image.id === imageId)
 
-      if (imageToRemove) URL.revokeObjectURL(imageToRemove.url)
+      if (imageToRemove) revokeImagePreview(imageToRemove)
+      uploadedImageUrlsRef.current.delete(imageId)
 
       return current.filter((image) => image.id !== imageId)
     })
@@ -996,9 +1000,14 @@ export default function AuthorPostComposerSheet({
       const imageUrls = []
 
       for (const image of selectedImages) {
-        const imageUrl = image.file
-          ? await uploadAuthorPostImage(image.file, t)
+        let imageUrl = image.file
+          ? uploadedImageUrlsRef.current.get(image.id) || ''
           : String(image.url || '').trim()
+
+        if (!imageUrl && image.file) {
+          imageUrl = await uploadAuthorPostImage(image.file, t)
+          uploadedImageUrlsRef.current.set(image.id, imageUrl)
+        }
 
         if (!imageUrl) {
           throw new Error(t('authorPostComposerSheet.uploadMissingUrl'))
