@@ -42,8 +42,9 @@ export default function AuthorPageFooterShell({ children }) {
     }
   }, [])
 
-  const showFooter =
-  MAIN_PATHS.has(pathname) &&
+  const isPublicAuthorPage = /^\/author\/page\/[^/]+$/.test(pathname)
+const showFooter =
+  (MAIN_PATHS.has(pathname) || isPublicAuthorPage) &&
   visibility.routeKey === routeKey &&
   visibility.visible
 
