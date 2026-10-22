@@ -211,7 +211,7 @@ export default function AppAccessGuard({ appKey, children }) {
 
         <button
           type="button"
-          onClick={() => navigate('/app')}
+          onClick={() => navigate('/app', { replace: true })}
           className="rounded-xl border border-[#ded8e9] px-5 py-3 text-sm font-semibold dark:border-white/20"
         >
           {t('appAccessGuard.back')}
