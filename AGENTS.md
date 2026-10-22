@@ -302,4 +302,15 @@ A new page is NOT complete if:
 - Supabase source: https://github.com/orgs/supabase/discussions/45329
 
 
+## Security & CodeQL Rules — 2026-10-22
+
+- Read the current `AGENTS.md` and current relevant source files before writing changes. Preserve all existing code and business behavior unless the user explicitly requests a change.
+- Treat all API responses, URL parameters, storage, file names, and user-authored content as untrusted.
+- Render plain text through JSX text content or `textContent`. Never feed untrusted text directly to `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`, or `dangerouslySetInnerHTML`. Only use vetted sanitization if the feature genuinely requires rich HTML.
+- Validate dynamic `src`, `href`, navigation, download, audio, video, and image URLs with narrow scheme/origin/type rules. Do not allow `javascript:` or untrusted `data:` URLs. Preserve legitimate HTTPS assets and safe same-origin locally created `blob:` previews when necessary.
+- Never weaken authentication, ownership checks, permissions, media upload limits, rate limits, or security controls to silence a warning.
+- Do not enable disabled features, alter feature flags, remove guards, or restore disabled routes without the user's explicit instruction.
+- Fix the real data flow behind a CodeQL alert. Do not disable queries, suppress/dismiss genuine alerts, or swap one unsafe HTML/URL sink for another simply to get zero Open.
+- Compare the complete old/new diff, keep existing functions intact, and run available build and relevant tests. Confirm the latest CodeQL analysis has run against the new commit before declaring the issue closed.
+- CodeQL's 0 Open status does not mean that every possible vulnerability has been found. Retain automated scanning and periodically review dependencies and access controls.
 
