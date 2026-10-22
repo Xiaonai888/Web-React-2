@@ -773,9 +773,10 @@ import {
 } from '../../services/myAuthorPageClientCache.js'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const DETAILS_STORAGE_KEY = 'shadow_author_page_profile_details'
 
@@ -809,13 +810,14 @@ function getAuthToken() {
   )
 }
 
-async function uploadAuthorPageEditImage(file, token, category) {
+async function uploadAuthorPageEditImage(file, token, category, signal) {
   const maxBytes = category === 'author_page_cover' ? 5 * 1024 * 1024 : 2 * 1024 * 1024
   const optimized = await optimizeImageForUpload(file, {
     preset: category === 'author_page_cover' ? 'banner' : 'avatar',
     maxSourceBytes: 5 * 1024 * 1024,
+    signal,
   })
-  if (optimized.file.size > maxBytes) {
+  if (!optimized?.file?.size || optimized.file.size > maxBytes) {
     throw new Error(detailsText('imageTooLargeToUpload'))
   }
 
@@ -843,9 +845,15 @@ async function uploadAuthorPageEditImage(file, token, category) {
     token,
     apiBaseUrl: API_BASE_URL,
     legacyUpload,
+    signal,
   })
-  const imageUrl = data.image_url || data.imageUrl || ''
-  if (!imageUrl) throw new Error(detailsText('saveContactFailed'))
+  const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
+  try {
+    const url = new URL(imageUrl)
+    if (!['https:', 'http:'].includes(url.protocol)) throw new Error()
+  } catch {
+    throw new Error(detailsText('saveContactFailed'))
+  }
   return imageUrl
 }
 
@@ -2583,12 +2591,16 @@ export default function AuthorPageEditDetailsPage() {
   const sectionFromUrl = useMemo(() => getSearchSection(location.search), [location.search])
   const modalFromUrl = useMemo(() => new URLSearchParams(location.search).get('modal') || '', [location.search])
   const fileInputRef = useRef(null)
+  const imageUploadControllerRef = useRef(null)
+  const imageUploadBusyRef = useRef(false)
   const coverRef = useRef(null)
   const introRef = useRef(null)
   const detailsRef = useRef(null)
   const linksRef = useRef(null)
   const facebookRef = useRef(null)
 const contactRef = useRef(null)
+
+useEffect(() => () => imageUploadControllerRef.current?.abort(), [])
 
 useEffect(() => {
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
@@ -2777,7 +2789,7 @@ async function updateDetails(patch) {
 
 
   function openImagePicker(mode) {
-    if (savingImage) return
+    if (savingImage || imageUploadBusyRef.current) return
     setImageMode(mode)
     fileInputRef.current?.click()
   }
@@ -2785,7 +2797,7 @@ async function updateDetails(patch) {
   async function handleImageFile(event) {
     const file = event.target.files?.[0]
     event.target.value = ''
-    if (!file || !file.type.startsWith('image/') || savingImage) return
+    if (!file || !file.type.startsWith('image/') || savingImage || imageUploadBusyRef.current) return
 
     const token = getAuthToken()
     if (!token) {
@@ -2796,10 +2808,15 @@ async function updateDetails(patch) {
     const mode = imageMode
     const category = mode === 'cover' ? 'author_page_cover' : 'author_page_avatar'
 
+    const controller = new AbortController()
+    imageUploadControllerRef.current = controller
+    imageUploadBusyRef.current = true
     try {
       setSavingImage(true)
       setMessage(detailsText('imageUploading'))
-      const imageUrl = await uploadAuthorPageEditImage(file, token, category)
+      const imageUrl = await uploadAuthorPageEditImage(file, token, category, controller.signal)
+      if (controller.signal.aborted) return
+      if (getAuthToken() !== token) throw new Error(detailsText('loginAgain'))
 
       if (mode === 'facebook') {
         const saved = await updateDetails({ facebook_page_image_url: imageUrl })
@@ -2818,6 +2835,7 @@ async function updateDetails(patch) {
         body: JSON.stringify(mode === 'cover'
           ? { cover_url: imageUrl }
           : { avatar_url: imageUrl }),
+        signal: controller.signal,
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || data.ok === false || !data.author_page) {
@@ -2833,10 +2851,16 @@ async function updateDetails(patch) {
       invalidateMyAuthorPageClientCache()
       setMessage(detailsText(mode === 'cover' ? 'coverPreviewUpdated' : 'logoPreviewUpdated'))
     } catch (error) {
-      setMessage(error?.message || detailsText('saveContactFailed'))
+      if (!controller.signal.aborted) {
+        setMessage(error?.message || detailsText('saveContactFailed'))
+      }
     } finally {
-      setSavingImage(false)
-      setImageMode('')
+      if (imageUploadControllerRef.current === controller) imageUploadControllerRef.current = null
+      imageUploadBusyRef.current = false
+      if (!controller.signal.aborted) {
+        setSavingImage(false)
+        setImageMode('')
+      }
     }
   }
 
