@@ -963,6 +963,27 @@ function formatDate(value) {
   return date.toLocaleString(getDisplayLocale())
 }
 
+function safeSpinImageUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return ''
+
+  try {
+    const url = new URL(source, window.location.origin)
+
+    if (url.protocol === 'https:' || url.protocol === 'http:') {
+      return url.href
+    }
+
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) {
+      return url.href
+    }
+  } catch {
+    return ''
+  }
+
+  return ''
+}
+
 function validateImage(file, t) {
   if (!file) return ''
 
@@ -1615,7 +1636,7 @@ function Wheel({
       style={
         backgroundUrl
           ? {
-              backgroundImage: `linear-gradient(rgba(45,20,75,.32),rgba(45,20,75,.22)), url("${backgroundUrl}")`,
+              backgroundImage: `linear-gradient(rgba(45,20,75,.32),rgba(45,20,75,.22)), url("${safeSpinImageUrl(backgroundUrl)}")`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }
@@ -2914,7 +2935,7 @@ export default function SpinPage() {
               {backgroundUrl ? (
                 <div className="mt-3 overflow-hidden rounded-[15px] border border-[var(--shadow-border)]">
                   <img
-                    src={backgroundUrl}
+                    src={safeSpinImageUrl(backgroundUrl)}
                     alt=""
                     className="h-28 w-full object-cover"
                   />
@@ -3148,7 +3169,7 @@ export default function SpinPage() {
                     {giftPreview ? (
                       <div className="mt-2 aspect-[1.8/1] overflow-hidden rounded-[12px] border border-[var(--shadow-border)]">
                         <img
-                          src={giftPreview}
+                          src={safeSpinImageUrl(giftPreview)}
                           alt=""
                           className="h-full w-full object-cover"
                         />
