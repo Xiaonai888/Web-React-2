@@ -1,3 +1,4 @@
+import ChatStoryVoice, { ChatStoryRecording, isChatVoiceMessage } from './ChatStoryVoice'
 import { useChatStoryTheme } from '../../services/chatStoryThemes'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -6,6 +7,12 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('chatStoryPhone', {
   en: {
+    recording: "{{name}} is recording voice…",
+    recordingVoice: "Recording voice…",
+    voice: "Voice message",
+    voiceRetry: "Tap Play to listen",
+    voiceFailed: "Voice could not be loaded.",
+
     typing: '{{name}} is typing…',
     members: '{{count}} members',
     you: 'You',
@@ -20,6 +27,12 @@ registerTranslationNamespace('chatStoryPhone', {
     automatic: 'Messages are sent automatically',
   },
   km: {
+    recording: "{{name}} កំពុងថតសំឡេង…",
+    recordingVoice: "កំពុងថតសំឡេង…",
+    voice: "សារសំឡេង",
+    voiceRetry: "ចុច Play ដើម្បីស្ដាប់",
+    voiceFailed: "មិនអាចផ្ទុកសំឡេងបានទេ។",
+
     typing: '{{name}} កំពុងវាយ…',
     members: 'សមាជិក {{count}} នាក់',
     you: 'អ្នក',
@@ -34,6 +47,12 @@ registerTranslationNamespace('chatStoryPhone', {
     automatic: 'សារត្រូវបានផ្ញើដោយស្វ័យប្រវត្តិ',
   },
   zh: {
+    recording: "{{name}}正在录音…",
+    recordingVoice: "正在录音…",
+    voice: "语音消息",
+    voiceRetry: "点击播放收听",
+    voiceFailed: "无法加载语音。",
+
     typing: '{{name}}正在输入…',
     members: '{{count}}位成员',
     you: '你',
@@ -48,6 +67,12 @@ registerTranslationNamespace('chatStoryPhone', {
     automatic: '消息自动发送',
   },
   ja: {
+    recording: "{{name}}が音声を録音中…",
+    recordingVoice: "音声を録音中…",
+    voice: "音声メッセージ",
+    voiceRetry: "再生を押して聴く",
+    voiceFailed: "音声を読み込めませんでした。",
+
     typing: '{{name}}が入力中…',
     members: 'メンバー{{count}}人',
     you: 'あなた',
@@ -62,6 +87,12 @@ registerTranslationNamespace('chatStoryPhone', {
     automatic: 'メッセージは自動送信されます',
   },
   ko: {
+    recording: "{{name}} 음성 녹음 중…",
+    recordingVoice: "음성 녹음 중…",
+    voice: "음성 메시지",
+    voiceRetry: "재생을 눌러 들으세요",
+    voiceFailed: "음성을 불러올 수 없습니다.",
+
     typing: '{{name}} 입력 중…',
     members: '멤버 {{count}}명',
     you: '나',
@@ -256,13 +287,18 @@ function PhoneMessage({
   color,
   t,
   typing = false,
+  voiceAutoPlay = false,
+  voicePaused = false,
+  onVoiceEnded,
+  onVoiceBlocked,
+  onVoiceError,
 }) {
   const id = chatCharacterId(message)
   const right = Boolean(leadCharacterId) && id === String(leadCharacterId)
   const grouped =
     Boolean(id) &&
     id === chatCharacterId(previous) &&
-    ['chat', 'image', 'sticker'].includes(previous?.type)
+    ['chat', 'image', 'sticker', 'audio', 'voice'].includes(previous?.type)
   if (message.type === 'aside' || message.type === 'author_note') {
     return (
       <div
@@ -275,6 +311,7 @@ function PhoneMessage({
       </div>
     )
   }
+  const voice = isChatVoiceMessage(message)
   const image = message.type === 'image' || message.type === 'sticker'
   if (image && !id)
     return (
@@ -304,7 +341,7 @@ function PhoneMessage({
           className={
             typing
               ? 'cs-phone-bubble cs-phone-typing'
-              : image
+              : image || voice
                 ? 'cs-phone-media'
                 : emoji
                   ? `cs-phone-emoji ${emoji === 1 ? 'cs-phone-single-emoji' : ''}`
@@ -313,6 +350,10 @@ function PhoneMessage({
         >
           {typing ? (
             <Dots />
+          ) : voice ? (
+            <ChatStoryVoice message={message} autoPlay={voiceAutoPlay} paused={voicePaused}
+              onEnded={onVoiceEnded} onBlocked={onVoiceBlocked} onError={onVoiceError}
+              label={t('chatStoryPhone.voice')} retryLabel={t('chatStoryPhone.voiceRetry')} errorLabel={t('chatStoryPhone.voiceFailed')} />
           ) : image ? (
             <MessageImage message={message} t={t} />
           ) : (
@@ -447,6 +488,13 @@ export default function ChatStoryPhoneView({
   leadCharacterId,
   typingMessage,
   draft,
+  recordingMessage = null,
+  recordingElapsed = 0,
+  voicePlaybackIndex = -1,
+  voicePaused = false,
+  onVoiceEnded,
+  onVoiceBlocked,
+  onVoiceError,
   onPause,
   themeName,
   fontFamily,
@@ -469,8 +517,9 @@ export default function ChatStoryPhoneView({
     [characters]
   )
   const lead = characterMap.get(String(leadCharacterId))
-  const typingCharacter = typingMessage
-    ? characterMap.get(chatCharacterId(typingMessage))
+  const activeMessage = recordingMessage || typingMessage
+  const typingCharacter = activeMessage
+    ? characterMap.get(chatCharacterId(activeMessage))
     : null
   const displayName = typingCharacter?.nickname || t('chatStoryPhone.unknown')
   const leadName = lead?.nickname || t('chatStoryPhone.you')
@@ -494,6 +543,11 @@ export default function ChatStoryPhoneView({
           <PhoneMessage
             key={`${message.id || 'message'}-${index}`}
             message={message}
+            voiceAutoPlay={index === voicePlaybackIndex}
+            voicePaused={voicePaused}
+            onVoiceEnded={onVoiceEnded}
+            onVoiceBlocked={onVoiceBlocked}
+            onVoiceError={onVoiceError}
             previous={messages[index - 1]}
             character={characterMap.get(id)}
             leadCharacterId={leadCharacterId}
@@ -502,7 +556,7 @@ export default function ChatStoryPhoneView({
           />
         )
       }),
-    [messages, characters, characterMap, leadCharacterId, colors, t]
+    [messages, characters, characterMap, leadCharacterId, colors, t, voicePlaybackIndex, voicePaused, onVoiceEnded, onVoiceBlocked, onVoiceError]
   )
 
   useEffect(() => {
@@ -648,11 +702,13 @@ export default function ChatStoryPhoneView({
           <div className="cs-phone-heading">
             <h2>{storyTitle || t('chatStoryPhone.title')}</h2>
             <div
-              className={`cs-phone-status ${typingMessage ? 'cs-phone-status-active' : ''}`}
+              className={`cs-phone-status ${activeMessage ? 'cs-phone-status-active' : ''}`}
             >
-              {typingMessage ? <Dots /> : null}
+              {recordingMessage ? <i className="fa-solid fa-microphone" aria-hidden="true" /> : typingMessage ? <Dots /> : null}
               <span>
-                {typingMessage
+                {recordingMessage
+                  ? t('chatStoryPhone.recording', { name: displayName })
+                  : typingMessage
                   ? t('chatStoryPhone.typing', { name: displayName })
                   : t('chatStoryPhone.members', { count: characters.length })}
               </span>
@@ -704,7 +760,7 @@ export default function ChatStoryPhoneView({
       >
         <div ref={messagesRef} className="cs-phone-messages">
           {messageRows}
-          {typingMessage ? (
+          {typingMessage && !recordingMessage ? (
             <PhoneMessage
               message={typingMessage}
               previous={messages[messages.length - 1]}
@@ -735,6 +791,10 @@ export default function ChatStoryPhoneView({
         <div className="cs-phone-composer-inner">
           <Portrait character={lead} />
           <div className="cs-phone-input">
+            {recordingMessage && chatCharacterId(recordingMessage) === String(leadCharacterId) ? (
+              <ChatStoryRecording elapsed={recordingElapsed} label={t('chatStoryPhone.recordingVoice')} />
+            ) : (
+            <>
             <div
               ref={draftRef}
               className={
@@ -755,6 +815,8 @@ export default function ChatStoryPhoneView({
                 <path d="m3 3 19 9-19 9 4-8 9-1-9-1z" />
               </svg>
             </span>
+            </>
+            )}
           </div>
         </div>
       </div>
@@ -768,4 +830,5 @@ export default function ChatStoryPhoneView({
     document.body
   )
 }
+
 
