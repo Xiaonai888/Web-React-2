@@ -455,6 +455,15 @@ const CROP_RATIOS = [
 
 const MAX_FILE_BYTES = 40 * 1024 * 1024
 const SUPPORTED_IMAGE_TYPES = new Set([
+  function setSafeShadowFXImage(node, value) {
+  if (!node) return
+  const source = String(value || '')
+  try {
+    const url = new URL(source)
+    if (url.protocol !== 'blob:' || url.origin !== window.location.origin) throw new Error()
+    if (node.getAttribute('src') !== source) node.src = source
+  } catch { node.removeAttribute('src') }
+}
   'image/jpeg',
   'image/png',
   'image/webp',
@@ -1274,7 +1283,7 @@ export default function ShadowFXPage() {
               } : undefined}
             >
               <img
-                src={sourceUrl}
+                ref={(node) => setSafeShadowFXImage(node, sourceUrl)}
                 alt=""
                 className={cropRatio ? 'h-full w-full select-none object-cover' : 'max-h-[72vh] max-w-full select-none object-contain'}
                 draggable="false"
@@ -1299,7 +1308,7 @@ export default function ShadowFXPage() {
 
               {!compare && values.glow > 0 ? (
                 <img
-                  src={sourceUrl}
+                  ref={(node) => setSafeShadowFXImage(node, sourceUrl)}
                   alt=""
                   className={cropRatio ? 'pointer-events-none absolute inset-0 h-full w-full object-cover' : 'pointer-events-none absolute inset-0 h-full w-full object-contain'}
                   style={{
