@@ -475,6 +475,31 @@ async function readResponsePayload(response) {
   }
 }
 
+function safeCharacterImageUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return ''
+
+  if (/^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|heic|heif);base64,[a-z0-9+/=]+$/i.test(source)) {
+    return source
+  }
+
+  try {
+    const url = new URL(source, window.location.origin)
+
+    if (url.protocol === 'https:' || url.protocol === 'http:') {
+      return url.href
+    }
+
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) {
+      return url.href
+    }
+  } catch {
+    return ''
+  }
+
+  return ''
+}
+
 function dataUrlToFile(dataUrl, fileName) {
   const [header, base64] = String(dataUrl).split(',')
   const mime = header.match(/data:(.*?);base64/)?.[1] || 'image/jpeg'
@@ -489,7 +514,9 @@ function dataUrlToFile(dataUrl, fileName) {
 }
 
 async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
-  if (!String(imageDataUrl || '').startsWith('data:image/')) return imageDataUrl || null
+  const safeImage = safeCharacterImageUrl(imageDataUrl)
+if (!safeImage) return null
+if (!safeImage.startsWith('data:image/')) return safeImage
 
   const file = dataUrlToFile(
     imageDataUrl,
@@ -1866,7 +1893,7 @@ const selectedMainCharacters =
       return
     }
 
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
       showToast(getDisplayText('chatStoryCharacters.chooseImageFile'))
       if (editingId || nickname) setEditorOpen(true)
       return
