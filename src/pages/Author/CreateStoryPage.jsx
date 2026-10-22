@@ -117,8 +117,11 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
 
 function storyTokenUserId(token) {
   try {
-    const payload = JSON.parse(atob(String(token || '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-    return String(payload.user_id || '').trim()
+    const part = String(token || '').split('.')[1]
+    if (!part) return ''
+    const encoded = part.replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=')))
+    return String(payload.user_id || payload.sub || '').trim()
   } catch {
     return ''
   }
@@ -612,7 +615,12 @@ export default function CreateStoryPage() {
   useEffect(() => {
     if (isEditMode) return
 
-    const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
+    let saved = null
+    try {
+      saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
+    } catch {
+      localStorage.removeItem('create_story_draft')
+    }
 
     if (!saved || saved.storyType !== requestedStoryType ||
       (saved.ownerId && saved.ownerId !== storyTokenUserId(getAuthToken()))) {
