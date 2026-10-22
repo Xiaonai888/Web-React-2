@@ -288,7 +288,7 @@ const StoryTopFansPage = lazy(() => import('./pages/StoryTopFansPage'))
 const TopFansGuidePage = lazy(() => import('./pages/TopFansGuidePage'))
 const EpisodeReactionsPage = lazy(() => import('./pages/EpisodeReactionsPage'))
 const FastStudioPage = lazy(() => import('./pages/FastStudioPage'))
-const FastCreateVideoPage = lazy(() => import('./pages/FastCreateVideoPage'))
+
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
 const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
@@ -1667,7 +1667,7 @@ const shouldShowOpeningAds =
         <Route path="/author/comment-protection/hidden-comments" element={<AuthorHiddenCommentsPage />} />
         <Route path="/author/comment-protection/blocked-readers" element={<AuthorBlockedReadersPage />} />
         <Route path="/author/comment-protection/moderation-history" element={<AuthorModerationHistoryPage />} />
-        <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
+        
         <Route path="/author/stories" element={<AuthorStoriesPage />} />
         <Route path="/author/notifications" element={<StoryNotificationsPage />} />
         <Route path="/genre/:genreSlug/latest" element={<LazyPage><GenreStoriesPage tab="latest" /></LazyPage>} />
