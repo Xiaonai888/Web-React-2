@@ -75,6 +75,7 @@ registerTranslationNamespace('chatStoryEditor', {
     "female": "Female",
     "male": "Male",
     "failedAddCharacter": "Failed to add character",
+    "sessionChanged": "Your login changed. Please sign in again.",
     "characterSavedMissing": "Character was saved but could not be loaded",
     "characterAdded": "Character added.",
     "authorNoteUpdated": "Author’s Note updated.",
@@ -200,6 +201,7 @@ registerTranslationNamespace('chatStoryEditor', {
     "female": "ស្រី",
     "male": "ប្រុស",
     "failedAddCharacter": "មិនអាចបន្ថែមតួអង្គបានទេ",
+    "sessionChanged": "គណនីបានផ្លាស់ប្តូរ។ សូមចូលគណនីឡើងវិញ។",
     "characterSavedMissing": "បានរក្សាទុកតួអង្គ ប៉ុន្តែមិនអាចផ្ទុកវាបានទេ",
     "characterAdded": "បានបន្ថែមតួអង្គ។",
     "authorNoteUpdated": "បានកែកំណត់ចំណាំអ្នកនិពន្ធ។",
@@ -325,6 +327,7 @@ registerTranslationNamespace('chatStoryEditor', {
     "female": "女性",
     "male": "男性",
     "failedAddCharacter": "无法添加角色",
+    "sessionChanged": "登录账号已变更，请重新登录。",
     "characterSavedMissing": "角色已保存，但无法重新加载",
     "characterAdded": "角色已添加。",
     "authorNoteUpdated": "作者的话已更新。",
@@ -450,6 +453,7 @@ registerTranslationNamespace('chatStoryEditor', {
     "female": "女性",
     "male": "男性",
     "failedAddCharacter": "キャラクターを追加できませんでした",
+    "sessionChanged": "ログインアカウントが変更されました。再度ログインしてください。",
     "characterSavedMissing": "キャラクターは保存されましたが読み込めませんでした",
     "characterAdded": "キャラクターを追加しました。",
     "authorNoteUpdated": "作者ノートを更新しました。",
@@ -575,6 +579,7 @@ registerTranslationNamespace('chatStoryEditor', {
     "female": "여성",
     "male": "남성",
     "failedAddCharacter": "캐릭터를 추가하지 못했습니다",
+    "sessionChanged": "로그인 계정이 변경되었습니다. 다시 로그인해 주세요.",
     "characterSavedMissing": "캐릭터는 저장되었지만 불러오지 못했습니다",
     "characterAdded": "캐릭터가 추가되었습니다.",
     "authorNoteUpdated": "작가 노트가 업데이트되었습니다.",
@@ -710,36 +715,51 @@ async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
     return imageDataUrl || null
   }
 
-  const formData = new FormData()
-
-  formData.append(
-    'image',
-    dataUrlToFile(
-      imageDataUrl,
-      `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
-    )
+  const sourceFile = dataUrlToFile(
+    imageDataUrl,
+    `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
   )
-
-  formData.append('folder', 'chat_story_character')
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/story-media/upload-image`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    }
-  )
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || getDisplayText('chatStoryEditor.failedUploadCharacterImage'))
+  const optimized = await optimizeImageForUpload(sourceFile, {
+    preset: 'avatar',
+    maxSourceBytes: 2 * 1024 * 1024,
+  })
+  const file = optimized.file
+  if (!file?.size || file.size > 2 * 1024 * 1024) {
+    throw new Error(getDisplayText('chatStoryEditor.profileImageTooLarge'))
   }
 
-  return data.image_url || data.imageUrl || null
+  const legacyUpload = async ({ signal } = {}) => {
+    const formData = new FormData()
+    formData.append('image', file)
+    formData.append('folder', 'chat_story_character')
+
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+      signal,
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) {
+      const error = new Error(data.message || getDisplayText('chatStoryEditor.failedUploadCharacterImage'))
+      error.status = response.status
+      throw error
+    }
+    return data
+  }
+
+  const data = await uploadMediaWithFallback({
+    file,
+    category: 'chat_story_character',
+    token,
+    apiBaseUrl: API_BASE_URL,
+    legacyUpload,
+  })
+  const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
+  if (!/^https?:\/\//i.test(imageUrl)) {
+    throw new Error(getDisplayText('chatStoryEditor.missingImageUrl'))
+  }
+  return imageUrl
 }
 
 async function uploadEpisodeImage(token, file) {
@@ -2372,6 +2392,8 @@ export default function ChatStoryEditorPage() {
   const [newCharacterGender, setNewCharacterGender] = useState('')
   const [randomAvatarLoading, setRandomAvatarLoading] = useState(false)
   const [addCharacterSaving, setAddCharacterSaving] = useState(false)
+  const addCharacterSavingRef = useRef(false)
+  const characterAvatarUploadRef = useRef(null)
   const [morePopupOpen, setMorePopupOpen] = useState(false)
   const [authorNoteOpen, setAuthorNoteOpen] = useState(false)
   const [authorNoteDraft, setAuthorNoteDraft] = useState('')
@@ -4041,6 +4063,7 @@ const deleteMessage = (messageId) => {
   }
 
   const openAddCharacterPopup = () => {
+  characterAvatarUploadRef.current = null
   setNewCharacterName('')
   setNewCharacterImage('')
   setNewCharacterAvatarSource('device')
@@ -4142,6 +4165,7 @@ const handleNewCharacterImageChange = (event) => {
   const reader = new FileReader()
 
   reader.onload = () => {
+  characterAvatarUploadRef.current = null
   setNewCharacterImage(String(reader.result || ''))
   setNewCharacterAvatarSource('device')
   setImageSourceOpen(false)
@@ -4214,6 +4238,7 @@ const pickRandomCharacterAvatar = async (gender) => {
     const randomItem =
       candidates[Math.floor(Math.random() * candidates.length)]
 
+    characterAvatarUploadRef.current = null
     setNewCharacterImage(randomItem.image_url || '')
     setNewCharacterAvatarSource('shadow_gallery')
     setNewCharacterGender(gender)
@@ -4246,6 +4271,9 @@ const handleAddConfirm = async () => {
     return
   }
 
+  if (addCharacterSavingRef.current) return
+  addCharacterSavingRef.current = true
+
   const newCharacterId =
     makeId()
 
@@ -4270,13 +4298,26 @@ const handleAddConfirm = async () => {
   try {
     setAddCharacterSaving(true)
 
-    const avatarUrl =
-      await uploadCharacterImage(
+    const previousUpload = characterAvatarUploadRef.current
+    const avatarUrl = previousUpload?.token === token &&
+      previousUpload?.storyId === String(storyId) &&
+      previousUpload?.source === newCharacter.image
+        ? previousUpload.url
+        : await uploadCharacterImage(token, newCharacter.image, storyId, 0)
+
+    if (getAuthToken() !== token) {
+      throw new Error(getDisplayText('chatStoryEditor.sessionChanged'))
+    }
+    if (String(newCharacter.image || '').startsWith('data:image/')) {
+      characterAvatarUploadRef.current = {
         token,
-        newCharacter.image,
-        storyId,
-        0
-      )
+        storyId: String(storyId),
+        source: newCharacter.image,
+        url: avatarUrl,
+      }
+    } else {
+      characterAvatarUploadRef.current = null
+    }
 
     const response = await fetch(
       `${API_BASE_URL}/api/stories/${storyId}/chat/characters`,
@@ -4432,6 +4473,7 @@ const handleAddConfirm = async () => {
       )
     }
 
+    characterAvatarUploadRef.current = null
     setAddPopupOpen(false)
 
     setSelectedCharacterId(
@@ -4465,6 +4507,7 @@ const handleAddConfirm = async () => {
             getDisplayText('chatStoryEditor.failedAddCharacter')
     )
   } finally {
+    addCharacterSavingRef.current = false
     setAddCharacterSaving(false)
   }
 }
