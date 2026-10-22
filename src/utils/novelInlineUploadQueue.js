@@ -75,6 +75,7 @@ export function useNovelInlineUploadQueue({
 }) {
   const current = useRef(null)
   const worker = useRef(null)
+  const workerUserId = useRef('')
   const reconciling = useRef(false)
   const rerunRequested = useRef(false)
   const latestReconcile = useRef(null)
@@ -89,14 +90,18 @@ export function useNovelInlineUploadQueue({
       return
     }
     reconciling.current = true
-    const isCurrent = () => worker.current === queue
+    const isCurrent = () => worker.current === queue &&
+      readUserId(current.current.getToken?.()) === workerUserId.current
     try {
       const tasks = (await queue.list()).filter((task) =>
         task.category === 'episode_content' &&
         task.context?.storyId === String(storyId) &&
         task.context?.episodeKey === String(episodeKey)
       )
-      if (!isCurrent()) return
+      if (!isCurrent()) {
+        if (worker.current === queue) setPendingCount(0)
+        return
+      }
       setPendingCount(tasks.length)
 
       const editor = current.current.editorRef?.current
@@ -133,7 +138,9 @@ export function useNovelInlineUploadQueue({
         } catch {
           saved = false
         }
-        if (saved && isCurrent()) await queue.remove(task.id)
+        if (saved && isCurrent() && current.current.editorRef?.current === editor) {
+          await queue.remove(task.id)
+        }
       }
     } finally {
       reconciling.current = false
@@ -166,7 +173,7 @@ export function useNovelInlineUploadQueue({
         return current.current.upload({ token: sessionToken, file, signal, onProgress })
       },
       onChange: ({ type, task }) => {
-        if (worker.current !== manager) return
+        if (worker.current !== manager || readUserId(current.current.getToken?.()) !== userId) return
         if (type === 'failed' && task?.context?.storyId === String(storyId) &&
           task?.context?.episodeKey === String(episodeKey)) {
           current.current.onFailed?.(task)
@@ -177,12 +184,16 @@ export function useNovelInlineUploadQueue({
       },
     })
     worker.current = manager
+    workerUserId.current = userId
     manager.start()
     void reconcile().catch(() => {})
 
     return () => {
       manager.stop()
-      if (worker.current === manager) worker.current = null
+      if (worker.current === manager) {
+        worker.current = null
+        workerUserId.current = ''
+      }
     }
   }, [active, storyId, episodeKey, reconcile])
 
@@ -197,23 +208,27 @@ export function useNovelInlineUploadQueue({
   const enqueue = useCallback(async (file) => {
     const queue = worker.current
     if (!queue) throw new Error('Local image queue is not ready. Reopen this episode and try again.')
+    if (readUserId(current.current.getToken?.()) !== workerUserId.current) {
+      throw new Error('Your login changed. Reopen this episode before uploading.')
+    }
     const task = await queue.enqueue({
       file,
       category: 'episode_content',
       kind: 'image',
       context: { storyId: String(storyId), episodeKey: String(episodeKey) },
     })
-    setPendingCount((count) => count + 1)
+    if (worker.current === queue) void reconcile().catch(() => {})
     return task
-  }, [storyId, episodeKey])
+  }, [storyId, episodeKey, reconcile])
 
   const retry = useCallback(async (taskId) => {
     const queue = worker.current
-    if (!queue) return null
+    if (!queue || readUserId(current.current.getToken?.()) !== workerUserId.current) return null
     const task = await queue.get(taskId)
     if (!task || task.category !== 'episode_content' ||
       task.context?.storyId !== String(storyId) ||
-      task.context?.episodeKey !== String(episodeKey)) return null
+      task.context?.episodeKey !== String(episodeKey) ||
+      worker.current !== queue) return null
     return queue.retry(taskId)
   }, [storyId, episodeKey])
 
