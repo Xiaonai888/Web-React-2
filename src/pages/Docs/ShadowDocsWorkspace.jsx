@@ -409,7 +409,7 @@ export default function ShadowDocsWorkspace() {
   return <div className="sd-app sd-shadow-black">
     <header className="sd-header sd-minimal-header">
       <div className="sd-header-inner">
-        <button type="button" onClick={() => navigate('/app')} aria-label="Back" className="sd-icon-button sd-header-back">
+        <button type="button" onClick={() => navigate('/app', { replace: true })} aria-label="Back" className="sd-icon-button sd-header-back">
           <ArrowLeft size={20} />
         </button>
         <strong className="sd-minimal-title">Shadow Docs</strong>
