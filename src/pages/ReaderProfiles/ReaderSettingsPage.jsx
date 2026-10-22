@@ -862,7 +862,7 @@ function SettingsRow({ item, onOpen, t }) {
     <button
       type="button"
       onClick={() => onOpen(item)}
-      className="flex min-h-0 w-full items-center gap-4 px-4 py-1 text-left transition active:bg-[var(--shadow-bg-hover)]"
+      className="flex min-h-[72px] w-full items-center gap-4 px-4 py-3 text-left transition active:bg-[var(--shadow-bg-hover)]"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
   <ReaderSettingsIcon name={item.key} />
@@ -1015,7 +1015,7 @@ const filteredGroups = groups.map((group, index) => ({
             key={t(`readerSettings.groups.${GROUP_KEYS[group.originalIndex]}`, { defaultValue: group.title })}
             className={groupIndex ? 'border-t-[4px] border-[var(--shadow-border)]' : ''}
           >
-            <div className="px-5 py-1 text-[12.5px] font-medium text-[var(--shadow-text-secondary)]">
+            <div className="px-5 pb-2 pt-5 text-[12.5px] font-medium text-[var(--shadow-text-secondary)]">
   {t(`readerSettings.groups.${GROUP_KEYS[group.originalIndex]}`, { defaultValue: group.title })}
 </div>
 
