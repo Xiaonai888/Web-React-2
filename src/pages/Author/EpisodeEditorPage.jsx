@@ -4234,6 +4234,72 @@ return true
     onFailed: () => showToast(getDisplayText('episodeEditor.failedUploadImage')),
   })
 
+
+    const mangaPageQueueRef = useRef(null)
+
+  useEffect(() => {
+    if (pageLoading || !isManga || localRecoveryOpen || !getAuthToken()) return undefined
+
+    let cancelled = false
+    let queue = null
+
+    const restoreMangaQueue = async () => {
+      const { createMangaPageUploadQueue } = await import('../../utils/mangaPageUploadQueue')
+      if (cancelled) return
+
+      queue = createMangaPageUploadQueue({
+        storyId,
+        draftKey: getEpisodeLocalDraftKey(storyId, editEpisodeId || ''),
+        getToken: getAuthToken,
+      })
+      mangaPageQueueRef.current = queue
+      const tasks = await queue.restore()
+      if (cancelled) return
+
+      setMangaPages((current) => {
+        const existing = new Set(current.map((page) => String(page.id)))
+        const missing = tasks
+          .filter((task) => task.context?.pageId && !existing.has(String(task.context.pageId)))
+          .sort((a, b) => (a.context?.position ?? Number.MAX_SAFE_INTEGER) - (b.context?.position ?? Number.MAX_SAFE_INTEGER))
+          .map((task) => {
+            const result = task.result || {}
+            const imageUrl = String(result.imageUrl || '')
+            const completed = task.status === 'uploaded' && /^https:\/\//i.test(imageUrl)
+            return {
+              id: String(task.context.pageId),
+              uploadTaskId: task.id,
+              revisionId: task.context.revisionId,
+              previewUrl: completed ? imageUrl : task.previewUrl,
+              imageUrl: completed ? imageUrl : '',
+              storagePath: completed ? result.storagePath || null : null,
+              width: result.width || task.context.width || null,
+              height: result.height || task.context.height || null,
+              fileSize: result.fileSize || task.size || null,
+              mimeType: result.mimeType || task.mimeType || 'image/webp',
+              parts: completed && Array.isArray(result.parts) ? result.parts : [],
+              sourceFile: null,
+              status: completed ? 'done' : task.status === 'failed' ? 'error' : 'queued',
+              progress: completed ? 100 : Number(task.progress || 0),
+              error: String(task.lastError || ''),
+            }
+          })
+        return missing.length ? [...current, ...missing] : current
+      })
+    }
+
+    void restoreMangaQueue().catch((error) => {
+      if (!cancelled) setMessage(error.message || 'Cannot restore local Manga uploads')
+    })
+
+    return () => {
+      cancelled = true
+      queue?.stop()
+      if (mangaPageQueueRef.current === queue) mangaPageQueueRef.current = null
+    }
+  }, [pageLoading, isManga, localRecoveryOpen, storyId, editEpisodeId])
+
+
+  
   const updateMangaPage = (pageId, patch) => {
     setMangaPages((current) =>
       current.map((page) => (page.id === pageId ? { ...page, ...patch } : page))
