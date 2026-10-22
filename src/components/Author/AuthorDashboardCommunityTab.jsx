@@ -228,7 +228,7 @@ function getPeriodText(value, t) {
   return t('authorDashboardCommunity.last28Days')
 }
 
-async function fetchAuthorReviews(pageUsername, fallbackError) {
+async function fetchAuthorReviewsUncached(pageUsername, fallbackError) {
   if (!pageUsername) {
     return {
       reviews: [],
@@ -265,6 +265,46 @@ async function fetchAuthorReviews(pageUsername, fallbackError) {
       recommend_percent: 0,
     },
   }
+}
+
+const COMMUNITY_REVIEW_TTL = 120000
+const communityReviewCache = new Map()
+const communityReviewPending = new Map()
+
+function getCommunityReviewKey(username) {
+  return JSON.stringify([getAuthToken(), String(username || '').trim().toLowerCase()])
+}
+
+function getCommunityReviewCache(username) {
+  if (!username) return null
+  const item = communityReviewCache.get(getCommunityReviewKey(username))
+  return item?.expiresAt > Date.now() ? item.data : null
+}
+
+async function fetchAuthorReviews(username, fallbackError) {
+  if (!username) return fetchAuthorReviewsUncached(username, fallbackError)
+
+  const cached = getCommunityReviewCache(username)
+  if (cached) return cached
+
+  const key = getCommunityReviewKey(username)
+  if (communityReviewPending.has(key)) return communityReviewPending.get(key)
+
+  const request = fetchAuthorReviewsUncached(username, fallbackError)
+    .then((data) => {
+      communityReviewCache.set(key, {
+        data,
+        expiresAt: Date.now() + COMMUNITY_REVIEW_TTL,
+      })
+      if (communityReviewCache.size > 20) {
+        communityReviewCache.delete(communityReviewCache.keys().next().value)
+      }
+      return data
+    })
+    .finally(() => communityReviewPending.delete(key))
+
+  communityReviewPending.set(key, request)
+  return request
 }
 
 function CommunityMetric({ icon, label, value, note }) {
@@ -381,12 +421,16 @@ export default function AuthorDashboardCommunityTab({
   onViewAllDiscussions,
 }) {
   const { t } = useDisplayTranslation()
-  const [reviews, setReviews] = useState([])
-  const [reviewSummary, setReviewSummary] = useState({
+  const [reviews, setReviews] = useState(
+  () => getCommunityReviewCache(pageUsername)?.reviews || []
+)
+  const [reviewSummary, setReviewSummary] = useState(
+  () => getCommunityReviewCache(pageUsername)?.summary || {
     total_count: 0,
     recommend_count: 0,
     recommend_percent: 0,
-  })
+  }
+)
   const [loadingReviews, setLoadingReviews] = useState(false)
   const [reviewError, setReviewError] = useState('')
 
@@ -404,9 +448,15 @@ export default function AuthorDashboardCommunityTab({
         return
       }
 
-      try {
-        setLoadingReviews(true)
-        setReviewError('')
+      const cached = getCommunityReviewCache(pageUsername)
+
+if (cached) {
+  setReviews(cached.reviews)
+  setReviewSummary(cached.summary)
+  setLoadingReviews(false)
+  setReviewError('')
+  return
+}
         const data = await fetchAuthorReviews(pageUsername, t('authorDashboardCommunity.loadReviewsFailed'))
 
         if (ignore) return
