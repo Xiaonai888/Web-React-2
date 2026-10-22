@@ -299,6 +299,20 @@ function formatDisplayNumber(value) {
   return new Intl.NumberFormat(locale).format(Number(value || 0))
 }
 
+function setSafeFastThumbnailImage(node, value) {
+  if (!node) return
+  const source = String(value || '').trim()
+  try {
+    const url = new URL(source)
+    const localBlob = url.protocol === 'blob:' && url.origin === window.location.origin
+    const youtubeImage = url.origin === 'https://img.youtube.com' && /^\/vi\/[a-zA-Z0-9_-]{11}\/maxresdefault\.jpg$/.test(url.pathname) && !url.search && !url.hash && !url.username && !url.password
+    if (!localBlob && !youtubeImage) throw new Error('Invalid thumbnail URL')
+    if (node.getAttribute('src') !== url.href) node.src = url.href
+  } catch {
+    node.removeAttribute('src')
+  }
+}
+
 function extractYouTubeId(value) {
   const input = String(value || '').trim()
 
@@ -742,7 +756,7 @@ export default function FastCreateVideoPage() {
             <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-[#3d246f] via-[#7443e5] to-[#e887a5]">
               {previewThumbnail ? (
                 <img
-                  src={previewThumbnail}
+                  ref={(node) => setSafeFastThumbnailImage(node, previewThumbnail)}
                   alt={t('fastCreateVideoPage.previewAlt')}
                   className="absolute inset-0 h-full w-full object-cover"
                 />
