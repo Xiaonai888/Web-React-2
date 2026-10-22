@@ -377,6 +377,8 @@ useEffect(() => {
 }, [showShadowSplash])
 const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
   const hideFooterPaths = [
+    '/terms',
+    '/author/agreement',
     '/login',
     '/register',
     '/shop',
