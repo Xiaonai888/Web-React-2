@@ -650,7 +650,37 @@ export async function uploadMangaPageFile({
         : 'https://shadow-backend-kucw.onrender.com'
     )
 
+    if (useV2 && import.meta.env.VITE_MANGA_DIRECT_UPLOAD_ENABLED === 'true') {
+    const {
+      stageMangaDirectUpload,
+      isMangaDirectFallbackSafe,
+    } = await import('./mangaDirectUploadClient')
+
+    try {
+      const staged = await stageMangaDirectUpload({
+        token,
+        file,
+        apiBaseUrl,
+        signal,
+        onProgress,
+      })
+
+      return await waitForMangaV2Job({
+        apiBaseUrl,
+        token,
+        jobId: staged.job_id,
+        statusUrl: staged.status_url,
+        signal,
+      })
+    } catch (error) {
+      if (signal?.aborted || !isMangaDirectFallbackSafe(error)) {
+        throw error
+      }
+    }
+  }
+
   let bytes
+
 
   try {
     bytes = await file.arrayBuffer()
