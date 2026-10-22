@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 const MAX_RECEIPT_BYTES = 2 * 1024 * 1024
 const ALLOWED_RECEIPT_TYPES = ['image/png', 'image/jpeg', 'image/webp']
@@ -13,7 +13,7 @@ export default function AdminStoryPayoutConfirmModal({
   onPaid,
 }) {
   const [file, setFile] = useState(null)
-  const [preview, setPreview] = useState('')
+  const receiptCanvasRef = useRef(null)
   const [receiptPath, setReceiptPath] = useState('')
   const [pin, setPin] = useState('')
   const [reference, setReference] = useState('')
@@ -31,13 +31,30 @@ export default function AdminStoryPayoutConfirmModal({
   }, [payout?.id])
 
   useEffect(() => {
-    if (!file) {
-      setPreview('')
-      return
+    if (!file || !receiptCanvasRef.current) return undefined
+    let cancelled = false
+    const canvas = receiptCanvasRef.current
+
+    async function drawPreview() {
+      try {
+        const bitmap = await createImageBitmap(file)
+        if (cancelled) {
+          bitmap.close()
+          return
+        }
+        const scale = Math.min(1, 480 / bitmap.width, 230 / bitmap.height)
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale))
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+        const context = canvas.getContext('2d')
+        if (context) context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+        bitmap.close()
+      } catch {
+        if (!cancelled) setError('Unable to preview this image. Choose a valid PNG, JPG, or WEBP receipt.')
+      }
     }
-    const url = URL.createObjectURL(file)
-    setPreview(url)
-    return () => URL.revokeObjectURL(url)
+
+    void drawPreview()
+    return () => { cancelled = true }
   }, [file])
 
   if (!payout) return null
@@ -151,7 +168,7 @@ export default function AdminStoryPayoutConfirmModal({
           <p className="story-payout-muted">Send the money in your banking app first. Then attach the actual transfer receipt and enter your owner Passkey.</p>
           <label className="story-payout-label" htmlFor="story-payout-receipt">Bank transfer receipt · required</label>
           <input id="story-payout-receipt" className="story-payout-input" type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={(event) => chooseFile(event.target.files?.[0] || null)} />
-          {preview ? <img src={preview} alt="Selected bank transfer receipt" style={{ marginTop: 10, maxWidth: '100%', maxHeight: 230, objectFit: 'contain', borderRadius: 10 }} /> : null}
+          {file ? <canvas ref={receiptCanvasRef} role="img" aria-label="Selected bank transfer receipt" style={{ display: 'block', marginTop: 10, maxWidth: '100%', maxHeight: 230, objectFit: 'contain', borderRadius: 10 }} /> : null}
           {receiptPath ? <div className="story-payout-muted" style={{ color: '#047857', marginTop: 8 }}>Receipt saved. Enter your Passkey to finish.</div> : null}
           <label className="story-payout-label" htmlFor="story-payout-reference">Transaction reference · optional</label>
           <input id="story-payout-reference" className="story-payout-input" maxLength={120} value={reference} disabled={busy} onChange={(event) => setReference(event.target.value)} placeholder="Bank transaction ID or note" />
