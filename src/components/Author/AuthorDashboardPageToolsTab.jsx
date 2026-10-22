@@ -234,6 +234,22 @@ async function fetchPinnedPostCount(pageUsername) {
   }
 }
 
+function ToolMetric({ icon, value, label }) {
+  return (
+    <div className="rounded-[16px] bg-white/10 p-3 ring-1 ring-white/15">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#6d28d9]">
+          <i className={`${icon} text-[16px]`} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[24px] font-black leading-none text-white">{value}</span>
+          <span className="mt-1.5 block text-[8.5px] font-semibold text-white/75">{label}</span>
+        </span>
+      </div>
+    </div>
+  )
+}
+
 
 function QuickTool({ icon, label, onClick }) {
   return (
