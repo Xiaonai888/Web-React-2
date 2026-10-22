@@ -29,7 +29,7 @@ export function parseShadowDocsPlainText(text, fileName = 'Imported manuscript',
     if (html.length > MAX_CHAPTER_HTML) throw new Error(`Chapter ${index + 1} exceeds the maximum length. Split the text into smaller chapters.`)
     return { id: createShadowDocsId(), title: section.title || `Chapter ${index + 1}`, html }
   })
-  if (!chapters.some(chapter => chapter.html.replace(/<[^>]*>/g, '').trim())) throw new Error('The text file has no readable content.')
+  if (!sections.some(section => section.lines.some(line => line.trim()))) throw new Error('The text file has no readable content.')
   return { chapters, chapterCount: chapters.length }
 }
 
