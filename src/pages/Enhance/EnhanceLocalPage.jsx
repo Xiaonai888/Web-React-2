@@ -275,6 +275,18 @@ function loadAiRuntime(scale) {
   return runtimePromises.get(modelScale)
 }
 
+function setSafeEnhancePreview(node, value) {
+  if (!node) return
+  const source = String(value || '').trim()
+  try {
+    const url = new URL(source)
+    if (url.protocol !== 'blob:' || url.origin !== window.location.origin) throw new Error()
+    if (node.getAttribute('src') !== source) node.src = source
+  } catch {
+    node.removeAttribute('src')
+  }
+}
+
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const image = new Image()
@@ -699,14 +711,14 @@ export default function EnhanceLocalPage() {
           {sourceUrl ? (
             <>
               <img
-                src={sourceUrl}
+                ref={(node) => setSafeEnhancePreview(node, sourceUrl)}
                 alt=""
                 className="absolute inset-0 h-full w-full object-contain"
               />
 
               {resultUrl ? (
                 <img
-                  src={resultUrl}
+                  ref={(node) => setSafeEnhancePreview(node, resultUrl)}
                   alt=""
                   className="absolute inset-0 h-full w-full object-contain"
                   style={{ clipPath: `inset(0 ${100 - compare}% 0 0)` }}
