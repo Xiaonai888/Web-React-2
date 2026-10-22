@@ -910,6 +910,7 @@ export default function AuthorPageDashboardPage() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [analyticsPeriod, setAnalyticsPeriod] = useState('28 Days')
   const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
   
   useAuthorPageFooterVisibility(loading || Boolean(authorPage))
 
