@@ -550,11 +550,12 @@ const SETTINGS_GROUPS = [
         route: '/notifications',
       },
       {
-        key: 'reading-history',
-        title: 'Reading history',
-        subtitle: 'Find stories and episodes you viewed.',
-        icon: 'fa-solid fa-clock-rotate-left',
-      },
+  key: 'reading-history',
+  title: 'Reading Summary',
+  subtitle: 'Daily totals of stories and episodes read.',
+  icon: 'fa-solid fa-clock-rotate-left',
+  route: '/profile/settings/reading-summary',
+},
     ],
   },
   {
@@ -961,6 +962,11 @@ const filteredGroups = groups.map((group, index) => ({
       navigate(`${settingsPath}${fromMeSettings ? '&' : '?'}account=shadow`)
       return
     }
+
+    if (item.key === 'reading-history' && fromMeSettings) {
+  navigate(`${item.route}?from=me-settings`)
+  return
+}
 
     if (item.route) {
       if (item.key === 'edit-profile' && fromMeSettings) {
