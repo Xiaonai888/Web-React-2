@@ -199,6 +199,17 @@ const MOBILE_TEXT = {
 
 const MOBILE_MEDIA = '@media all'
 
+function setSafeStudioReferenceImage(node, value) {
+  if (!node) return
+  try {
+    const url = new URL(String(value || ''))
+    if (url.protocol !== 'blob:' || url.origin !== window.location.origin) throw Error()
+    if (node.getAttribute('src') !== url.href) node.src = url.href
+  } catch {
+    node.removeAttribute('src')
+  }
+}
+
 const STUDIO_AD_API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -1497,7 +1508,7 @@ export default function StudioMobileWorkspace({
 
       {referenceOpen && referenceImage ? (
         <aside className="ss-mobile-reference" aria-label={text.reference}>
-          <img src={referenceImage} alt="" />
+          <img ref={(node) => setSafeStudioReferenceImage(node, referenceImage)} alt="" />
           <div className="ss-mobile-reference-actions">
             <button type="button" onClick={() => referenceInputRef.current?.click()}>{text.replaceReference}</button>
             <button type="button" onClick={() => setReferenceOpen(false)} aria-label={text.closeReference}>×</button>
