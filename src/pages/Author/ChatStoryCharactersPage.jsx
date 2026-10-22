@@ -7,6 +7,9 @@ import {
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { createUploadQueueManager } from '../../utils/uploadQueueManager'
+import { readMediaUploadFile, requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 
 registerTranslationNamespace('chatStoryCharacters', {
   "en": {
@@ -23,6 +26,10 @@ registerTranslationNamespace('chatStoryCharacters', {
     "background": "Background",
     "backgroundDescription": "Occasional or unnamed roles such as guards, staff, doctors or classmates.",
     "failedUploadCharacterImage": "Failed to upload character image",
+    "localUploadWait": "Uploading character image... Please keep this page open until it is ready.",
+    "localUploadFailed": "Character image upload failed. Retry to continue.",
+    "retryImage": "Retry image upload",
+    "finishCharacterFirst": "Confirm the character before saving the cast.",
     "dragDownToClose": "Drag down to close",
     "gotIt": "Got it",
     "chooseLeadCharacter": "Choose Lead Character",
@@ -99,6 +106,10 @@ registerTranslationNamespace('chatStoryCharacters', {
     "background": "ផ្ទៃខាងក្រោយ",
     "backgroundDescription": "តួនាទីម្តងម្កាល ឬគ្មានឈ្មោះ ដូចជា អ្នកយាម បុគ្គលិក ពេទ្យ ឬមិត្តរួមថ្នាក់។",
     "failedUploadCharacterImage": "មិនអាច Upload រូបតួអង្គបានទេ",
+    "localUploadWait": "កំពុង Upload រូបតួអង្គ... រូបត្រូវបានរក្សាទុកក្នុងឧបករណ៍ហើយ។",
+    "localUploadFailed": "Upload រូបតួអង្គបរាជ័យ។ សូមចុច Retry។",
+    "retryImage": "សាក Upload រូបម្តងទៀត",
+    "finishCharacterFirst": "សូម Confirm តួអង្គនេះជាមុន មុនរក្សាទុកក្រុមតួអង្គ។",
     "dragDownToClose": "អូសចុះក្រោមដើម្បីបិទ",
     "gotIt": "យល់ហើយ",
     "chooseLeadCharacter": "ជ្រើសតួឯក",
@@ -424,6 +435,18 @@ function formatDisplayNumber(value) {
   return new Intl.NumberFormat(getDisplayLanguageId()).format(Number(value || 0))
 }
 
+function getCharacterQueueUserId(token) {
+  try {
+    const segment = String(token || '').split('.')[1]
+    if (!segment) return ''
+    const value = segment.replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(value.padEnd(Math.ceil(value.length / 4) * 4, '=')))
+    return String(payload.user_id || payload.sub || '').trim()
+  } catch {
+    return ''
+  }
+}
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -434,6 +457,10 @@ function getAuthToken() {
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
   const controller = new AbortController()
+  const externalSignal = options.signal
+  const onExternalAbort = () => controller.abort()
+  if (externalSignal?.aborted) controller.abort()
+  externalSignal?.addEventListener('abort', onExternalAbort, { once: true })
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
@@ -449,6 +476,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
     throw error
   } finally {
     window.clearTimeout(timeoutId)
+    externalSignal?.removeEventListener('abort', onExternalAbort)
   }
 }
 
@@ -513,43 +541,36 @@ function dataUrlToFile(dataUrl, fileName) {
   return new File([bytes], fileName, { type: mime })
 }
 
-async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
-  const safeImage = safeCharacterImageUrl(imageDataUrl)
-if (!safeImage) return null
-if (!safeImage.startsWith('data:image/')) return safeImage
+async function uploadCharacterImage(token, imageDataUrl, storyId, index, options = {}) {
+  const safeImage = options.file ? '' : safeCharacterImageUrl(imageDataUrl)
+  if (!options.file && !safeImage) return null
+  if (!options.file && !safeImage.startsWith('data:image/')) return safeImage
 
-  const file = dataUrlToFile(
+  const file = options.file || dataUrlToFile(
     imageDataUrl,
     `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
   )
 
-  const legacyUpload = async () => {
+  const legacyUpload = async ({ signal } = {}) => {
     const formData = new FormData()
     formData.append('image', file)
     formData.append('folder', 'chat_story_character')
-
     const response = await fetchWithTimeout(
       `${API_BASE_URL}/api/story-media/upload-image`,
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
+        signal,
       },
       60000
     )
-
     const { data, rawText } = await readResponsePayload(response)
-
     if (!response.ok || data.ok === false) {
-      const serverMessage =
-        data.message ||
-        data.error ||
-        rawText.slice(0, 500) ||
-        getDisplayText('chatStoryCharacters.failedUploadCharacterImage')
-
-      throw new Error(`Image upload failed (${response.status}): ${serverMessage}`)
+      const error = new Error(`Image upload failed (${response.status}): ${data.message || data.error || rawText.slice(0, 500) || getDisplayText('chatStoryCharacters.failedUploadCharacterImage')}`)
+      error.status = response.status
+      throw error
     }
-
     return data
   }
 
@@ -559,11 +580,16 @@ if (!safeImage.startsWith('data:image/')) return safeImage
     token,
     apiBaseUrl: API_BASE_URL,
     legacyUpload,
+    signal: options.signal,
+    onProgress: options.onProgress,
   })
 
-  return data.image_url || data.imageUrl || null
+  const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
+  if (!/^https?:\/\//i.test(imageUrl)) {
+    throw new Error(getDisplayText('chatStoryCharacters.failedUploadCharacterImage'))
+  }
+  return imageUrl
 }
-
 
 const ROLE_GROUPS = [
   {
@@ -1127,6 +1153,9 @@ function CharacterEditor({
   onClose,
   saving,
   onSave,
+  imageUploadState,
+  imageUploadProgress,
+  onRetryImage,
 }) {
   useEffect(() => {
     if (!open) return undefined
@@ -1178,6 +1207,15 @@ function CharacterEditor({
           </button>
         </div>
 
+        {imageUploadState ? (
+          <div className="mt-3 text-center text-[11px] font-medium text-[var(--shadow-text-secondary)]">
+            {imageUploadState === 'uploaded'
+              ? <span className="text-green-700">100% ✓</span>
+              : imageUploadState === 'failed'
+                ? <button type="button" onClick={onRetryImage} className="font-bold text-red-600 underline">{getDisplayText('chatStoryCharacters.retryImage')}</button>
+                : <span>{getDisplayText('chatStoryCharacters.localUploadWait')} {Math.round(imageUploadProgress || 0)}%</span>}
+          </div>
+        ) : null}
         <div className="relative mt-7">
           <input
             value={nickname}
@@ -1484,6 +1522,187 @@ const [
   const [galleryCategories, setGalleryCategories] = useState([])
   const [leadSheetOpen, setLeadSheetOpen] = useState(false)
   const [leadDraftId, setLeadDraftId] = useState('')
+  const characterQueueRef = useRef(null)
+  const pendingAvatarIdRef = useRef('')
+  const pendingAvatarPreviewRef = useRef('')
+  const orphanAvatarIdsRef = useRef(new Set())
+  const newCharacterAttemptIdRef = useRef('')
+  const galleryRestoreRef = useRef(false)
+  const [pendingAvatarId, setPendingAvatarId] = useState('')
+  const [avatarQueueState, setAvatarQueueState] = useState('')
+  const [avatarQueuePercent, setAvatarQueuePercent] = useState(0)
+  const [imagePreparing, setImagePreparing] = useState(false)
+  const [avatarQueueReady, setAvatarQueueReady] = useState(false)
+  const accountId = getCharacterQueueUserId(getAuthToken())
+  const queueOwnerId = accountId && storyId ? `${accountId}:chat-cast-character:${storyId}` : ''
+  const avatarDraftStorageKey = queueOwnerId ? `shadow_chat_cast_avatar_draft:${queueOwnerId}` : ''
+
+  useEffect(() => {
+    if (!queueOwnerId || !storyId) return undefined
+    let disposed = false
+    const matches = (task) => task?.category === 'chat_story_character' &&
+      String(task.context?.storyId || '') === String(storyId) &&
+      task.context?.editor === 'cast'
+    const queue = createUploadQueueManager({
+      ownerId: queueOwnerId,
+      upload: async ({ task, file, signal, onProgress }) => {
+        const token = getAuthToken()
+        if (!matches(task) || getCharacterQueueUserId(token) !== accountId) {
+          const error = new Error('Sign in to the original account to resume character uploads')
+          error.status = 401
+          throw error
+        }
+        const imageUrl = await uploadCharacterImage(token, '', storyId, 0, { file, signal, onProgress })
+        return { image_url: imageUrl }
+      },
+      onChange: ({ type, task }) => {
+        if (disposed || !matches(task)) return
+        if (orphanAvatarIdsRef.current.has(task.id) && (type === 'uploaded' || type === 'failed')) {
+          orphanAvatarIdsRef.current.delete(task.id)
+          void queue.remove(task.id)
+          return
+        }
+        if (pendingAvatarIdRef.current !== task.id) return
+        if (type === 'removed') return
+        setAvatarQueueState(task.status || type)
+        setAvatarQueuePercent(Number(task.progress || 0))
+        if (type === 'uploaded' && /^https?:\/\//i.test(String(task.result?.image_url || ''))) {
+          setSelectedImage(task.result.image_url)
+        }
+      },
+    })
+    characterQueueRef.current = queue
+    queue.start()
+    void requestUploadStoragePersistence()
+    const restore = async () => {
+      try {
+        const raw = localStorage.getItem(avatarDraftStorageKey)
+        const draft = raw ? JSON.parse(raw) : null
+        const available = (await queue.list()).filter(matches)
+        const keepId = galleryRestoreRef.current ? '' : String(draft?.taskId || '')
+        for (const task of available) {
+          if (task.id === keepId) continue
+          const removed = await queue.remove(task.id).catch(() => false)
+          if (!removed) orphanAvatarIdsRef.current.add(task.id)
+        }
+        if (galleryRestoreRef.current) {
+          localStorage.removeItem(avatarDraftStorageKey)
+          return
+        }
+        if (!draft?.taskId || Date.now() - Number(draft.updatedAt || 0) > 7 * 86400000) {
+          if (raw) localStorage.removeItem(avatarDraftStorageKey)
+          return
+        }
+        const task = await queue.get(draft.taskId)
+        if (!matches(task)) {
+          localStorage.removeItem(avatarDraftStorageKey)
+          return
+        }
+        if (disposed || galleryRestoreRef.current) return
+        const file = task.status === 'uploaded' ? null : await readMediaUploadFile(task.id, queueOwnerId)
+        if (!file && task.status !== 'uploaded') throw new Error('Saved local avatar file is unavailable')
+        let image = String(task.result?.image_url || '')
+        if (!image && file) {
+          image = URL.createObjectURL(file)
+          pendingAvatarPreviewRef.current = image
+        }
+        pendingAvatarIdRef.current = task.id
+        setPendingAvatarId(task.id)
+        setSelectedImage(image)
+        setAvatarQueueState(task.status)
+        setAvatarQueuePercent(Number(task.progress || 0))
+        setEditingId(String(draft.editingId || ''))
+        newCharacterAttemptIdRef.current = String(draft.attemptId || '')
+        setCharacterGroup(draft.group || 'main')
+        setActiveGroupKey(draft.group || 'main')
+        setNickname(String(draft.nickname || ''))
+        setChatSide(draft.chatSide || 'left')
+        setAvatarSource('device')
+        setSourceOpen(false)
+        setEditorOpen(true)
+      } catch (error) {
+        if (!disposed) setToast(error.message || 'Cannot restore the local character image')
+      } finally {
+        if (!disposed) setAvatarQueueReady(true)
+      }
+    }
+    void restore()
+    return () => {
+      disposed = true
+      queue.stop()
+      if (characterQueueRef.current === queue) characterQueueRef.current = null
+      if (pendingAvatarPreviewRef.current) URL.revokeObjectURL(pendingAvatarPreviewRef.current)
+      pendingAvatarPreviewRef.current = ''
+    }
+  }, [accountId, avatarDraftStorageKey, queueOwnerId, storyId])
+
+  useEffect(() => {
+    if (!pendingAvatarId || !avatarDraftStorageKey || !avatarQueueReady) return
+    localStorage.setItem(avatarDraftStorageKey, JSON.stringify({
+      taskId: pendingAvatarId,
+      editingId,
+      attemptId: newCharacterAttemptIdRef.current,
+      group: characterGroup,
+      nickname,
+      chatSide,
+      updatedAt: Date.now(),
+    }))
+  }, [pendingAvatarId, avatarDraftStorageKey, avatarQueueReady, editingId, characterGroup, nickname, chatSide])
+
+  const clearPendingAvatar = async () => {
+    const id = pendingAvatarIdRef.current
+    pendingAvatarIdRef.current = ''
+    setPendingAvatarId('')
+    setAvatarQueueState('')
+    setAvatarQueuePercent(0)
+    if (avatarDraftStorageKey) localStorage.removeItem(avatarDraftStorageKey)
+    if (pendingAvatarPreviewRef.current) URL.revokeObjectURL(pendingAvatarPreviewRef.current)
+    pendingAvatarPreviewRef.current = ''
+    if (!id) return
+    const queue = characterQueueRef.current
+    if (!queue) return
+    const removed = await queue.remove(id).catch(() => false)
+    if (!removed) orphanAvatarIdsRef.current.add(id)
+  }
+
+  const resolveCharacterAvatar = async (token, image, index) => {
+    if (pendingAvatarIdRef.current && (image === selectedImage || image === pendingAvatarPreviewRef.current)) {
+      const queue = characterQueueRef.current
+      if (!queue) throw new Error('Local character upload queue is unavailable')
+      const taskId = pendingAvatarIdRef.current
+      const limit = Date.now() + 120000
+      while (Date.now() < limit) {
+        if (getCharacterQueueUserId(getAuthToken()) !== accountId) {
+          throw new Error('Account changed. Sign in to the original account to save this image')
+        }
+        const task = await queue.get(taskId)
+        if (!task) throw new Error('Local character image has been removed')
+        if (task.status === 'uploaded') {
+          const url = String(task.result?.image_url || '')
+          if (!/^https?:\/\//i.test(url)) throw new Error('Uploaded image URL is missing')
+          return url
+        }
+        if (task.status === 'failed') throw new Error(getDisplayText('chatStoryCharacters.localUploadFailed'))
+        await new Promise((resolve) => window.setTimeout(resolve, 400))
+      }
+      throw new Error(getDisplayText('chatStoryCharacters.localUploadWait'))
+    }
+    return uploadCharacterImage(token, image, storyId, index)
+  }
+
+  const retryPendingAvatar = async () => {
+    const queue = characterQueueRef.current
+    if (!queue || !pendingAvatarIdRef.current) return
+    try {
+      const task = await queue.retry(pendingAvatarIdRef.current)
+      if (task) {
+        setAvatarQueueState('queued')
+        setAvatarQueuePercent(0)
+      }
+    } catch (error) {
+      showToast(error?.message || getDisplayText('chatStoryCharacters.localUploadFailed'))
+    }
+  }
 
   useEffect(() => {
     async function loadCharacters() {
@@ -1662,6 +1881,7 @@ setSelectedCharacterIds(
       (restoredGroup === 'main' ? 'right' : 'left')
     )
     if (selected?.imageUrl) {
+  galleryRestoreRef.current = true
   setSourceOpen(false)
   setEditorOpen(true)
 } else if (draft.origin === 'cast-photo') {
@@ -1853,6 +2073,8 @@ const selectedMainCharacters =
   }
 
   const openAddCharacter = (groupKey) => {
+    newCharacterAttemptIdRef.current = ''
+    void clearPendingAvatar()
     setActiveGroupKey(groupKey)
     setCharacterGroup(groupKey)
     setEditingId('')
@@ -1864,6 +2086,8 @@ const selectedMainCharacters =
   }
 
   const openEditCharacter = (character) => {
+    newCharacterAttemptIdRef.current = ''
+    void clearPendingAvatar()
     setActiveGroupKey(character.group)
     setCharacterGroup(character.group)
     setEditingId(character.id)
@@ -1885,33 +2109,77 @@ const selectedMainCharacters =
     fileInputRef.current?.click()
   }
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) {
       if (editingId || nickname) setEditorOpen(true)
       return
     }
-
     if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
       showToast(getDisplayText('chatStoryCharacters.chooseImageFile'))
-      if (editingId || nickname) setEditorOpen(true)
+      setEditorOpen(true)
       return
     }
-
-    if (file.size > 2 * 1024 * 1024) {
-  showToast(getDisplayText('chatStoryCharacters.profileImageTooLarge'))
-  if (editingId || nickname) setEditorOpen(true)
-  return
-}
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      setSelectedImage(String(reader.result || ''))
-      setAvatarSource('device')
+    if (file.size > 2 * 1024 * 1024 || !file.size) {
+      showToast(getDisplayText('chatStoryCharacters.profileImageTooLarge'))
       setEditorOpen(true)
+      return
     }
-    reader.readAsDataURL(file)
+    if (imagePreparing) return
+    setImagePreparing(true)
+    try {
+      const queue = characterQueueRef.current
+      if (!queue || !avatarQueueReady) throw new Error('The local character image queue is not ready')
+      const optimized = await optimizeImageForUpload(file, {
+        preset: 'avatar',
+        maxSourceBytes: 2 * 1024 * 1024,
+      })
+      if (!optimized.file?.size || optimized.file.size > 2 * 1024 * 1024) {
+        throw new Error(getDisplayText('chatStoryCharacters.profileImageTooLarge'))
+      }
+      const task = await queue.enqueue({
+        file: optimized.file,
+        category: 'chat_story_character',
+        kind: 'image',
+        context: { storyId: String(storyId), editor: 'cast' },
+      })
+      await clearPendingAvatar()
+      pendingAvatarIdRef.current = task.id
+      setPendingAvatarId(task.id)
+      setAvatarQueueState('queued')
+      setAvatarQueuePercent(0)
+      const url = URL.createObjectURL(optimized.file)
+      pendingAvatarPreviewRef.current = url
+      setSelectedImage(url)
+      setAvatarSource('device')
+      localStorage.setItem(avatarDraftStorageKey, JSON.stringify({
+        taskId: task.id,
+        editingId,
+        attemptId: !editingId
+          ? (newCharacterAttemptIdRef.current || (newCharacterAttemptIdRef.current = makeId()))
+          : '',
+        group: characterGroup,
+        nickname,
+        chatSide,
+        updatedAt: Date.now(),
+      }))
+      setSourceOpen(false)
+      setEditorOpen(true)
+      const latest = await queue.get(task.id)
+      if (latest && pendingAvatarIdRef.current === latest.id) {
+        setAvatarQueueState(latest.status)
+        setAvatarQueuePercent(Number(latest.progress || 0))
+        if (latest.status === 'uploaded' && /^https?:\/\//i.test(String(latest.result?.image_url || ''))) {
+          setSelectedImage(latest.result.image_url)
+        }
+      }
+    } catch (error) {
+      showToast(error?.message || getDisplayText('chatStoryCharacters.failedUploadCharacterImage'))
+      setEditorOpen(true)
+    } finally {
+      setImagePreparing(false)
+    }
   }
 
   const loadShadowGallery = async () => {
@@ -1984,6 +2252,7 @@ const returnPath =
 }
 
   const selectGalleryImage = (item) => {
+    void clearPendingAvatar()
     setSelectedImage(item.image_url || '')
     setAvatarSource('shadow_gallery')
     setGalleryOpen(false)
@@ -2002,10 +2271,12 @@ const returnPath =
     )
     setEditorOpen(false)
     setEditingId('')
+    void clearPendingAvatar()
     showToast(getDisplayText('chatStoryCharacters.characterDeleted'))
   }
 
   const saveCharacter = async () => {
+  if (saving || imagePreparing) return
   const selectedGroup = ROLE_GROUPS.find((group) => group.key === characterGroup)
   if (!selectedGroup) return
 
@@ -2042,7 +2313,7 @@ const returnPath =
     : [
         ...characters,
         {
-          id: makeId(),
+          id: newCharacterAttemptIdRef.current || (newCharacterAttemptIdRef.current = makeId()),
           isLead: false,
           ...nextCharacter,
         },
@@ -2056,12 +2327,7 @@ const returnPath =
 
     for (let index = 0; index < nextCharacters.length; index += 1) {
       const character = nextCharacters[index]
-      const avatarUrl = await uploadCharacterImage(
-        token,
-        character.image,
-        storyId,
-        index
-      )
+      const avatarUrl = await resolveCharacterAvatar(token, character.image, index)
 
       uploadedCharacters.push({
         id: character.id,
@@ -2170,6 +2436,8 @@ setSelectedCharacterIds(
 setActiveGroupKey(characterGroup)
 setEditorOpen(false)
 setEditingId('')
+newCharacterAttemptIdRef.current = ''
+await clearPendingAvatar()
 showToast(
   wasEditing
     ? getDisplayText('chatStoryCharacters.characterUpdated')
@@ -2187,7 +2455,11 @@ showToast(
 }
 
   const handleSavePage = async () => {
-    if (saving || pageLoading) return
+    if (saving || pageLoading || imagePreparing) return
+    if (editorOpen && pendingAvatarIdRef.current) {
+      showToast(getDisplayText('chatStoryCharacters.finishCharacterFirst') || 'Confirm the character first')
+      return
+    }
 
     if (selectedCharacters.length < 2) {
   showToast(
@@ -2227,12 +2499,7 @@ if (
       ) {
         const character = normalizedCharacters[index]
 
-        const avatarUrl = await uploadCharacterImage(
-          token,
-          character.image,
-          storyId,
-          index
-        )
+        const avatarUrl = await resolveCharacterAvatar(token, character.image, index)
 
         uploadedCharacters.push({
           id: character.id,
@@ -2332,6 +2599,7 @@ setCharacters(savedCharacters)
 setSelectedCharacterIds(
   nextSelectedIds
 )
+await clearPendingAvatar()
 
 sessionStorage.setItem(
   castStorageKey,
@@ -2441,8 +2709,11 @@ navigate(
 )
         }}
         onDelete={deleteCharacter}
-        onClose={() => setEditorOpen(false)}
-        saving={saving}
+        onClose={() => { setEditorOpen(false); void clearPendingAvatar() }}
+        saving={saving || imagePreparing}
+        imageUploadState={avatarQueueState}
+        imageUploadProgress={avatarQueuePercent}
+        onRetryImage={retryPendingAvatar}
         onSave={saveCharacter}
       />
 
