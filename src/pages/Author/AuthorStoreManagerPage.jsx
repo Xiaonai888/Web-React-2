@@ -2372,6 +2372,13 @@ function safeCoverPreviewUrl(value) {
   return ''
 }
 
+function setSafeAuthorCoverPreview(node, value) {
+  if (!node) return
+  const source = safeCoverPreviewUrl(value)
+  if (!source) return void node.removeAttribute('src')
+  if (node.getAttribute('src') !== source) node.src = source
+}
+
 function FieldLabel({ children }) {
   const label = String(children || '')
   const hasRequiredMark = label.includes('*')
@@ -4562,7 +4569,7 @@ accessRule,
   className="relative aspect-[2/3] w-[200px] cursor-pointer overflow-hidden rounded-[24px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-soft)] shadow-inner"
 >
   {coverPreview ? (
-    <img src={safeCoverPreviewUrl(coverPreview)} alt={storeText('coverPreview')} className="h-full w-full object-cover" />
+    <img ref={(node) => setSafeAuthorCoverPreview(node, coverPreview)} alt={storeText('coverPreview')} className="h-full w-full object-cover" />
   ) : (
     <div className="flex h-full w-full flex-col items-center justify-center px-5 text-center text-[var(--shadow-text-tertiary)]">
       <i className="fa-regular fa-image mb-3 text-[28px]" />
