@@ -504,6 +504,25 @@ function toggleUpdateDay(currentDays, day) {
   return [...currentDays, day]
 }
 
+function safeCreateStoryImageUrl(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^data:image\/(?:png|jpe?g|gif|webp|avif);base64,[a-z0-9+/=]+$/i.test(raw)) return raw
+  try {
+    const url = new URL(raw, window.location.origin)
+    if (['http:', 'https:'].includes(url.protocol)) return url.href
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {}
+  return ''
+}
+
+function setSafeCreateStoryImage(node, value) {
+  if (!node) return
+  const src = safeCreateStoryImageUrl(value)
+  if (src && node.getAttribute('src') !== src) node.src = src
+  else node.removeAttribute('src')
+}
+
 function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
   const { t } = useDisplayTranslation()
 
@@ -515,7 +534,7 @@ function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
         className="flex h-16 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#111827]"
       >
         <img
-          src={slide.cropped}
+          ref={(node) => setSafeCreateStoryImage(node, slide.cropped)}
           alt={`Slide ${index + 1}`}
           className="h-full w-full object-cover"
           draggable="false"
@@ -1485,7 +1504,7 @@ backgroundImage: isEditMode
                             className="block aspect-[2/3] w-full overflow-hidden bg-[var(--shadow-input-bg)]"
                           >
                             <img
-                              src={coverPreview}
+                              ref={(node) => setSafeCreateStoryImage(node, coverPreview)}
                               alt={t(isManga ? 'createStory.portraitMangaCover' : 'createStory.portraitBookCover')}
                               className="h-full w-full object-cover"
                               draggable="false"
@@ -1550,7 +1569,7 @@ backgroundImage: isEditMode
                             className="block aspect-video w-full overflow-hidden bg-[var(--shadow-input-bg)]"
                           >
                             <img
-                              src={landscapePreview}
+                              ref={(node) => setSafeCreateStoryImage(node, landscapePreview)}
                               alt={t('createStory.landscapeThumbnailAlt')}
                               className="h-full w-full object-cover"
                               draggable="false"
@@ -1772,7 +1791,7 @@ backgroundImage: isEditMode
 
                     {coverPreview ? (
                       <img
-                        src={coverPreview}
+                        ref={(node) => setSafeCreateStoryImage(node, coverPreview)}
                         alt={t(isManga ? 'createStory.mangaCover' : 'createStory.bookCover')}
                         className="h-[96px] w-[64px] shrink-0 rounded-[8px] object-cover"
                       />
@@ -2017,7 +2036,7 @@ backgroundImage: isEditMode
 
                   {coverPreview ? (
                     <img
-                      src={coverPreview}
+                      ref={(node) => setSafeCreateStoryImage(node, coverPreview)}
                       alt={t(isManga ? 'createStory.mangaCover' : 'createStory.bookCover')}
                       className="h-[108px] w-[72px] shrink-0 rounded-[10px] object-cover shadow-sm"
                     />
