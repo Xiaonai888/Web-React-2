@@ -9,7 +9,8 @@ function isObject(value) {
 function mergeDeep(target, source) {
   if (!isObject(source)) return target
 
-  for (const [key, value] of Object.entries(source)) {
+    for (const [key, value] of Object.entries(source)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue
     if (isObject(value)) {
       if (!isObject(target[key])) {
         target[key] = {}
