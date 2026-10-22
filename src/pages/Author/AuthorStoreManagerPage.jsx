@@ -4202,6 +4202,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const localCoverPreviewRef = useRef('')
   const localGalleryPreviewsRef = useRef(new Set())
   const uploadedPdfRef = useRef(null)
+  const imageUploadCacheRef = useRef(new WeakMap())
   const uploadSequenceRef = useRef(0)
   const pdfFormMountedRef = useRef(true)
   const pdfProductSavingRef = useRef(false)
@@ -4351,6 +4352,23 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   }
 }
 
+  const uploadCachedProductImage = async (file, kind) => {
+    const token = getAuthToken()
+    const cached = imageUploadCacheRef.current.get(file)
+    if (cached?.token === token && cached.kind === kind) return cached.promise
+
+    const promise = kind === 'cover' ? uploadCoverImage(file) : uploadGalleryImage(file)
+    imageUploadCacheRef.current.set(file, { token, kind, promise })
+    try {
+      return await promise
+    } catch (error) {
+      if (imageUploadCacheRef.current.get(file)?.promise === promise) {
+        imageUploadCacheRef.current.delete(file)
+      }
+      throw error
+    }
+  }
+
   const uploadBookGalleryImages = async () => {
     if (type !== 'Book') return []
 
@@ -4362,7 +4380,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
       if (!image?.url && !image?.file) continue
 
       if (image.file) {
-        const imageUrl = await uploadGalleryImage(image.file)
+        const imageUrl = await uploadCachedProductImage(image.file, 'gallery')
 
         uploadedImages.push({
           url: imageUrl,
@@ -4434,7 +4452,7 @@ if (!salePrice || Number(salePrice) <= 0) {
         setPdfUploadProgress((current) => ({ ...current, stage: 'saving', percent: 100 }))
       }
 
-const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
+const coverUrl = coverFile ? await uploadCachedProductImage(coverFile, 'cover') : coverPreview
 
 const nextGalleryImages = await uploadBookGalleryImages()
 
