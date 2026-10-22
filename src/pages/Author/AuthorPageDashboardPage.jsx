@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AuthorPageFooter from '../../components/AuthorPageFooter'
+import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import AuthorDashboardContentTab from '../../components/Author/AuthorDashboardContentTab'
@@ -910,7 +910,8 @@ export default function AuthorPageDashboardPage() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [analyticsPeriod, setAnalyticsPeriod] = useState('28 Days')
   const [loading, setLoading] = useState(true)
-  const [message, setMessage] = useState('')
+  
+  useAuthorPageFooterVisibility(loading || Boolean(authorPage))
 
   const loadDashboard = useCallback(async ({ silent = false } = {}) => {
     const token = getAuthToken()
