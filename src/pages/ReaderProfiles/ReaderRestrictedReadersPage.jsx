@@ -107,7 +107,7 @@ function RestrictionSwitch({ checked, disabled, label, onChange }) {
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed"
     >
       <span className={`relative block h-8 w-[54px] rounded-full p-1 transition-colors duration-200 ${checked ? 'bg-[#111827]' : 'bg-[#D1D6DE]'}`}>
         <span className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-[left] duration-200 ${checked ? 'left-[26px]' : 'left-1'}`} />
