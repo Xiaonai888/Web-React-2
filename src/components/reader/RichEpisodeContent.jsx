@@ -23,16 +23,6 @@ export function episodeContentToPlainText(value) {
 
   if (typeof DOMParser === 'undefined') {
     return source
-      .replace(/<img\b[^>]*>/gi, ' ')
-      .replace(/<br\s*\/?\s*>/gi, '\n')
-      .replace(/<\/(?:p|div)>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/&amp;/gi, '&')
-      .replace(/&lt;/gi, '<')
-      .replace(/&gt;/gi, '>')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim()
   }
 
   const documentValue = new DOMParser().parseFromString(`<div>${source}</div>`, 'text/html')
