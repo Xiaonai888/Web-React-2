@@ -6,6 +6,8 @@ import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { uploadMediaWithFallback } from '../utils/uploadMediaWithFallback'
 import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
+import { createUploadQueueManager } from '../utils/uploadQueueManager'
+import { readMediaUploadFile, requestUploadStoragePersistence } from '../utils/uploadQueueDB'
 registerTranslationNamespace('authorPostComposerSheet', {
   en: {
     author: 'Author',
@@ -271,6 +273,18 @@ function getAuthToken() {
   )
 }
 
+function tokenUserId(token) {
+  try {
+    const middle = String(token || '').split('.')[1]
+    if (!middle) return ''
+    const data = middle.replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(data.padEnd(Math.ceil(data.length / 4) * 4, '=')))
+    return String(payload.user_id || payload.sub || '').trim()
+  } catch {
+    return ''
+  }
+}
+
 function formatBytes(bytes) {
   const value = Number(bytes || 0)
 
@@ -304,7 +318,7 @@ function canvasToBlob(canvas, type, quality) {
 }
 
 async function compressImageFile(file, t) {
-  if (!file?.type?.startsWith('image/')) return null
+  if (!file?.type?.startsWith('image/') && !/\.hei[cf]$/i.test(file?.name || '')) return null
   const converted = /image\/hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name || '')
     ? (await optimizeImageForUpload(file, { preset: 'post' })).file
     : file
@@ -324,18 +338,15 @@ async function compressImageFile(file, t) {
       if (!context) throw new Error(t('authorPostComposerSheet.couldNotPreparePhotos'))
       context.drawImage(image, 0, 0, width, height)
       const blob = await canvasToBlob(canvas, 'image/webp', quality)
-      if (blob?.type === 'image/webp' && blob.size > 0 && (!best || blob.size < best.size)) {
-        best = blob
-      }
+      if (blob?.type === 'image/webp' && blob.size > 0 && (!best || blob.size < best.size)) best = blob
       if (best && best.size <= TARGET_IMAGE_BYTES) break
       if (blob && blob.size <= HARD_MAX_IMAGE_BYTES && quality <= 0.68) break
     } finally {
       canvas.width = 0
       canvas.height = 0
     }
-    if (quality > 0.62) {
-      quality = Math.max(0.62, quality - 0.07)
-    } else {
+    if (quality > 0.62) quality = Math.max(0.62, quality - 0.07)
+    else {
       width = Math.max(1, Math.round(width * 0.9))
       height = Math.max(1, Math.round(height * 0.9))
     }
@@ -349,7 +360,6 @@ async function compressImageFile(file, t) {
       limit: formatBytes(HARD_MAX_IMAGE_BYTES),
     }))
   }
-
   return new File([best], (file.name || 'image').replace(/\.[^.]+$/, '') + '.webp', {
     type: 'image/webp',
     lastModified: Date.now(),
@@ -357,7 +367,7 @@ async function compressImageFile(file, t) {
 }
 
 function getSelectedImageSize(images) {
-  return images.reduce((sum, image) => sum + Number(image.file?.size || 0), 0)
+  return images.reduce((sum, image) => sum + Number(image.file?.size || image.sizeBytes || 0), 0)
 }
 
 function revokeImagePreview(image) {
@@ -484,7 +494,7 @@ function renderComposerDraft(text, ranges) {
   return parts
 }
 
-async function uploadAuthorPostImage(file, t) {
+async function uploadAuthorPostImage(file, t, options = {}) {
   const token = getAuthToken()
 
   if (!token) {
@@ -524,6 +534,8 @@ async function uploadAuthorPostImage(file, t) {
     token,
     apiBaseUrl: API_BASE_URL,
     legacyUpload,
+    signal: options.signal,
+    onProgress: options.onProgress,
   })
 
   if (getAuthToken() !== token) throw new Error(t('authorPostComposerSheet.loginFirst'))
@@ -546,24 +558,21 @@ function safePostPreviewUrl(value) {
   return ''
 }
 
-function SelectedImagePreview({ images, onRemove, removable = true, t }) {
+function SelectedImagePreview({ images, onRemove, onRetry, removable = true, t }) {
   if (!images.length) return null
 
   if (images.length === 1) {
   return (
     <div className="mx-[-16px] mt-4 bg-[var(--shadow-bg-surface)]">
       <div className="relative flex min-h-[260px] items-center justify-center bg-[var(--shadow-bg-surface)]">
-        <img
-  ref={(node) => {
-    if (!node) return
-    const src = safePostPreviewUrl(images[0].url)
-    if (src) node.src = src
-    else node.removeAttribute('src')
-  }}
-  alt=""
-  className="max-h-[560px] w-full object-contain"
-/>
+        <img src={safePostPreviewUrl(images[0].url)} alt="" className="max-h-[560px] w-full object-contain" />
 
+        {images[0].taskId && !['uploaded', 'failed'].includes(images[0].uploadStatus) ? (
+          <div className="absolute bottom-3 left-3 rounded-full bg-black/75 px-3 py-1.5 text-xs font-semibold text-white">Uploading {Number(images[0].uploadProgress || 0)}%</div>
+        ) : null}
+        {images[0].uploadStatus === 'failed' && onRetry ? (
+          <button type="button" onClick={() => onRetry(images[0].id)} className="absolute bottom-3 left-3 rounded-full bg-black/75 px-3 py-2 text-xs font-semibold text-white">Retry upload</button>
+        ) : null}
         {removable ? (
           <button
             type="button"
@@ -582,16 +591,14 @@ function SelectedImagePreview({ images, onRemove, removable = true, t }) {
     <div className="mt-4 grid grid-cols-2 gap-1 overflow-hidden rounded-[16px]">
       {images.map((image) => (
         <div key={image.id} className="relative aspect-square bg-[var(--shadow-bg-soft)]">
-          <img
-  ref={(node) => {
-    if (!node) return
-    const src = safePostPreviewUrl(image.url)
-    if (src) node.src = src
-    else node.removeAttribute('src')
-  }}
-  alt=""
-  className="h-full w-full object-cover"
-/>
+          <img src={safePostPreviewUrl(image.url)} alt="" className="h-full w-full object-cover" />
+
+          {image.taskId && !['uploaded', 'failed'].includes(image.uploadStatus) ? (
+            <span className="absolute bottom-1 left-1 rounded-full bg-black/75 px-2 py-1 text-[10px] font-semibold text-white">{Number(image.uploadProgress || 0)}%</span>
+          ) : null}
+          {image.uploadStatus === 'failed' && onRetry ? (
+            <button type="button" onClick={() => onRetry(image.id)} className="absolute bottom-1 left-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">Retry</button>
+          ) : null}
           {removable ? (
             <button
               type="button"
@@ -772,6 +779,11 @@ export default function AuthorPostComposerSheet({
 
   const selectedImagesRef = useRef([])
   const uploadedImageUrlsRef = useRef(new Map())
+  const queueRef = useRef(null)
+  const cancelTaskIdsRef = useRef(new Set())
+  const restoredScopeRef = useRef('')
+  const [queueReady, setQueueReady] = useState(false)
+  const [queueVersion, setQueueVersion] = useState(0)
   const initialDraftRef = useRef('')
   const initialImageUrlsRef = useRef([])
   const editorKeyRef = useRef('')
@@ -799,13 +811,17 @@ export default function AuthorPostComposerSheet({
   const pageName = author?.page_name || t('authorPostComposerSheet.author')
   const isEditing = Boolean(editingPost?.id)
   const editorKey = isEditing ? `edit:${editingPost.id}` : 'create'
+  const authorId = String(author?.id || '').trim()
+  const accountId = tokenUserId(getAuthToken())
+  const scopeId = accountId && authorId ? `${accountId}:author-post:${authorId}:${editorKey}` : ''
+  const storageKey = scopeId ? `shadow_author_post_draft:${scopeId}` : ''
   const currentImageUrls = getImageUrls(selectedImages)
   const hasContent = Boolean(draft.trim() || selectedImages.length)
   const hasChanges =
     draft !== initialDraftRef.current ||
     currentImageUrls.join('\n') !== initialImageUrlsRef.current.join('\n')
-  const canReview = hasContent && !uploading && !preparingImages && (!isEditing || hasChanges)
-  const canPublish = hasContent && !saving && !uploading && !preparingImages && (!isEditing || hasChanges)
+  const canReview = hasContent && !uploading && !preparingImages && queueReady && (!isEditing || hasChanges)
+  const canPublish = hasContent && !saving && !uploading && !preparingImages && queueReady && (!isEditing || hasChanges)
 
   useEffect(() => {
     if (!open) return undefined
@@ -840,6 +856,7 @@ export default function AuthorPostComposerSheet({
 
     selectedImagesRef.current.forEach(revokeImagePreview)
     uploadedImageUrlsRef.current.clear()
+    setQueueReady(false)
 
     const initialDraft = isEditing
       ? String(editingPost?.content || '').slice(0, MAX_POST_LENGTH)
@@ -866,6 +883,154 @@ export default function AuthorPostComposerSheet({
   }, [selectedImages])
 
   useEffect(() => {
+    if (!open || !scopeId || !storageKey) {
+      queueRef.current?.manager.stop()
+      queueRef.current = null
+      setQueueReady(false)
+      restoredScopeRef.current = ''
+      return undefined
+    }
+    let closed = false
+    const owner = scopeId
+    let manager = null
+    const onChange = ({ task }) => {
+      if (closed || !task || task.ownerId !== owner || task.category !== 'author_post_image') return
+      if (cancelTaskIdsRef.current.has(task.id)) {
+        if (task.status !== 'uploading') void manager?.remove(task.id).then((removed) => {
+          if (removed) cancelTaskIdsRef.current.delete(task.id)
+        }).catch(() => {})
+        return
+      }
+      setSelectedImages((current) => current.map((image) => {
+        if (image.taskId !== task.id) return image
+        const success = task.status === 'uploaded' && /^https?:\/\//i.test(String(task.result?.image_url || ''))
+        const nextUrl = success ? task.result.image_url : image.url
+        if (success && image.file && String(image.url).startsWith('blob:')) URL.revokeObjectURL(image.url)
+        return {
+          ...image,
+          file: success ? null : image.file,
+          url: nextUrl,
+          uploadStatus: success ? 'uploaded' : task.status,
+          uploadProgress: success ? 100 : Number(task.progress || 0),
+          sizeBytes: task.size,
+        }
+      }))
+      setQueueVersion((version) => version + 1)
+    }
+    manager = createUploadQueueManager({
+      ownerId: owner,
+      onChange,
+      upload: async ({ file, signal, onProgress }) => {
+        if (tokenUserId(getAuthToken()) !== accountId) {
+          const error = new Error('Sign in to the original account to resume images')
+          error.status = 401
+          throw error
+        }
+        const url = await uploadAuthorPostImage(file, t, { signal, onProgress })
+        if (tokenUserId(getAuthToken()) !== accountId) {
+          const error = new Error('Account changed during image upload')
+          error.status = 401
+          throw error
+        }
+        return { image_url: url }
+      },
+    })
+    const scope = { manager, owner, storageKey }
+    queueRef.current = scope
+
+    void (async () => {
+      const pending = (await manager.list()).filter((task) =>
+        task.category === 'author_post_image' && task.context?.editorKey === editorKey && task.context?.authorId === authorId
+      )
+      if (closed || queueRef.current !== scope) return
+      let saved = null
+      try {
+        const raw = localStorage.getItem(storageKey)
+        if (raw) saved = JSON.parse(raw)
+      } catch {}
+      const taskMap = new Map(pending.map((task) => [task.id, task]))
+      const restored = []
+      const ordered = Array.isArray(saved?.images) ? saved.images : []
+      for (const entry of ordered) {
+        if (!entry?.taskId) {
+          if (/^https?:\/\//i.test(String(entry?.url || ''))) restored.push({ id: entry.id, file: null, url: entry.url })
+          continue
+        }
+        const task = taskMap.get(entry.taskId)
+        if (!task) continue
+        const success = task.status === 'uploaded' && /^https?:\/\//i.test(String(task.result?.image_url || ''))
+        const file = success ? null : await readMediaUploadFile(task.id, owner)
+        if (!success && !file) continue
+        restored.push({
+          id: entry.id || task.context.imageId,
+          taskId: task.id,
+          file,
+          url: success ? task.result.image_url : URL.createObjectURL(file),
+          uploadStatus: success ? 'uploaded' : task.status === 'failed' ? 'failed' : 'queued',
+          uploadProgress: success ? 100 : Number(task.progress || 0),
+          sizeBytes: task.size,
+        })
+        taskMap.delete(task.id)
+      }
+      for (const task of taskMap.values()) {
+        const success = task.status === 'uploaded' && /^https?:\/\//i.test(String(task.result?.image_url || ''))
+        const file = success ? null : await readMediaUploadFile(task.id, owner)
+        if (!success && !file) continue
+        restored.push({
+          id: task.context.imageId || task.id,
+          taskId: task.id,
+          file,
+          url: success ? task.result.image_url : URL.createObjectURL(file),
+          uploadStatus: success ? 'uploaded' : task.status === 'failed' ? 'failed' : 'queued',
+          uploadProgress: success ? 100 : Number(task.progress || 0),
+          sizeBytes: task.size,
+        })
+      }
+      if (closed || queueRef.current !== scope) {
+        restored.forEach(revokeImagePreview)
+        return
+      }
+      if (saved && !isEditing) {
+        setDraft(String(saved.draft || '').slice(0, MAX_POST_LENGTH))
+        setPublishMode(saved.publishMode === 'schedule' ? 'schedule' : 'now')
+        setScheduleDate(String(saved.scheduleDate || ''))
+        setScheduleTime(String(saved.scheduleTime || ''))
+      }
+      if (restored.length) {
+        setSelectedImages((current) => {
+          const existing = new Set(restored.map((image) => image.id))
+          return [...current.filter((image) => !existing.has(image.id)), ...restored].slice(0, MAX_POST_PHOTOS)
+        })
+      }
+      restoredScopeRef.current = scopeId
+      setQueueReady(true)
+      manager.start()
+    })().catch((error) => {
+      if (closed) return
+      setImageError(error.message || 'Could not restore saved post images')
+      setQueueReady(false)
+    })
+
+    return () => {
+      closed = true
+      manager.stop()
+      if (queueRef.current === scope) queueRef.current = null
+    }
+  }, [open, scopeId, editorKey, authorId, accountId, storageKey, isEditing])
+
+  useEffect(() => {
+    if (!open || !queueReady || restoredScopeRef.current !== scopeId || !storageKey) return
+    const snapshot = {
+      draft,
+      images: selectedImages.map((image) => ({ id: image.id, taskId: image.taskId || null, url: image.taskId ? '' : (image.file ? '' : image.url) })),
+      publishMode,
+      scheduleDate,
+      scheduleTime,
+    }
+    try { localStorage.setItem(storageKey, JSON.stringify(snapshot)) } catch { setImageError('Local post draft storage is full') }
+  }, [open, queueReady, scopeId, storageKey, draft, selectedImages, publishMode, scheduleDate, scheduleTime, queueVersion])
+
+  useEffect(() => {
     return () => {
       selectedImagesRef.current.forEach(revokeImagePreview)
     }
@@ -879,7 +1044,27 @@ export default function AuthorPostComposerSheet({
     setSelectedImages([])
   }
 
-  function discardPost() {
+  async function removeQueuedTasks() {
+    const scope = queueRef.current
+    if (!scope) return
+    scope.manager.stop()
+    const tasks = await scope.manager.list()
+    for (const task of tasks) {
+      cancelTaskIdsRef.current.add(task.id)
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        if (await scope.manager.remove(task.id)) {
+          cancelTaskIdsRef.current.delete(task.id)
+          break
+        }
+        await new Promise((resolve) => setTimeout(resolve, 150))
+      }
+    }
+  }
+
+  async function discardPost() {
+    const key = storageKey
+    if (key) localStorage.removeItem(key)
+    await removeQueuedTasks()
     clearImages()
     setDraft('')
     setSelectedHashtags([])
@@ -895,6 +1080,14 @@ export default function AuthorPostComposerSheet({
 
   function saveForLater() {
     if (isEditing) return
+    if (storageKey) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({
+          draft, publishMode, scheduleDate, scheduleTime,
+          images: selectedImages.map((image) => ({ id: image.id, taskId: image.taskId || null, url: image.taskId ? '' : image.url })),
+        }))
+      } catch { setImageError('Local post draft storage is full'); return }
+    }
 
     setLeaveSheetOpen(false)
     setScreen('compose')
@@ -955,7 +1148,7 @@ export default function AuthorPostComposerSheet({
   }
 
   async function handlePickImages(fileList) {
-    if (preparingImagesRef.current || uploading || saving) return
+    if (preparingImagesRef.current || uploading || saving || !queueReady) return
     const files = Array.from(fileList || [])
     const imageFiles = files.filter((file) => file.type.startsWith('image/'))
 
@@ -973,8 +1166,8 @@ export default function AuthorPostComposerSheet({
       setImageError(t('authorPostComposerSheet.preparingPhotos'))
 
       const compressedFiles = await Promise.all(imageFiles.map((file) => compressImageFile(file, t)))
-      if (editorKeyRef.current !== startedEditorKey) return
 
+      if (editorKeyRef.current !== startedEditorKey) return
       const nextImages = compressedFiles
         .filter(Boolean)
         .map((file) => ({
@@ -992,7 +1185,27 @@ export default function AuthorPostComposerSheet({
         return
       }
 
-      setSelectedImages(nextSelectedImages)
+      const scope = queueRef.current
+      if (!scope || scope.owner !== scopeId) throw new Error('Local image queue is not ready')
+      void requestUploadStoragePersistence()
+      const persisted = []
+      try {
+        for (const image of nextImages) {
+          const task = await scope.manager.enqueue({
+            file: image.file,
+            category: 'author_post_image',
+            context: { imageId: image.id, editorKey, authorId },
+          })
+          const queuedImage = { ...image, taskId: task.id, sizeBytes: image.file.size, uploadStatus: task.status, uploadProgress: 0 }
+          persisted.push(queuedImage)
+          setSelectedImages((current) => [...current, queuedImage].slice(0, MAX_POST_PHOTOS))
+        }
+      } catch (error) {
+        for (const image of nextImages) {
+          if (!persisted.some((item) => item.id === image.id)) revokeImagePreview(image)
+        }
+        throw error
+      }
       setImageError('')
     } catch (error) {
       if (editorKeyRef.current === startedEditorKey) {
@@ -1005,15 +1218,39 @@ export default function AuthorPostComposerSheet({
   }
 
   function removeImage(imageId) {
-    setSelectedImages((current) => {
-      const imageToRemove = current.find((image) => image.id === imageId)
-
-      if (imageToRemove) revokeImagePreview(imageToRemove)
-      uploadedImageUrlsRef.current.delete(imageId)
-
-      return current.filter((image) => image.id !== imageId)
-    })
+    const image = selectedImagesRef.current.find((item) => item.id === imageId)
+    if (image?.taskId) {
+      cancelTaskIdsRef.current.add(image.taskId)
+      const scope = queueRef.current
+      if (scope) {
+        scope.manager.stop()
+        void (async () => {
+          for (let attempt = 0; attempt < 30; attempt += 1) {
+            if (await scope.manager.remove(image.taskId)) {
+              cancelTaskIdsRef.current.delete(image.taskId)
+              break
+            }
+            await new Promise((resolve) => setTimeout(resolve, 150))
+          }
+          if (queueRef.current === scope) scope.manager.start()
+        })().catch(() => { if (queueRef.current === scope) scope.manager.start() })
+      }
+    }
+    setSelectedImages((current) => current.filter((item) => item.id !== imageId))
+    if (image) revokeImagePreview(image)
+    uploadedImageUrlsRef.current.delete(imageId)
     setImageError('')
+  }
+
+  async function retryImage(imageId) {
+    const scope = queueRef.current
+    const image = selectedImagesRef.current.find((item) => item.id === imageId)
+    if (!scope || !image?.taskId) return
+    try {
+      await scope.manager.retry(image.taskId)
+      scope.manager.start()
+      setImageError('')
+    } catch (error) { setImageError(error.message || 'Could not retry image') }
   }
 
   async function publishPost() {
@@ -1025,22 +1262,24 @@ export default function AuthorPostComposerSheet({
 
       const imageUrls = []
 
+      const scope = queueRef.current
       for (const image of selectedImages) {
-        let imageUrl = image.file
-          ? uploadedImageUrlsRef.current.get(image.id) || ''
-          : String(image.url || '').trim()
-
-        if (!imageUrl && image.file) {
-          imageUrl = await uploadAuthorPostImage(image.file, t)
-          uploadedImageUrlsRef.current.set(image.id, imageUrl)
+        let imageUrl = String(image.url || '').trim()
+        if (image.taskId) {
+          if (!scope) throw new Error('Local post queue is unavailable')
+          const task = await scope.manager.get(image.taskId)
+          if (task?.status === 'failed') {
+            await scope.manager.retry(task.id)
+            scope.manager.start()
+            throw new Error('Retrying a photo. Publish after all photos finish uploading.')
+          }
+          if (task?.status !== 'uploaded') throw new Error('Wait until all photos finish uploading before publishing.')
+          imageUrl = String(task.result?.image_url || '').trim()
         }
-
-        if (!imageUrl) {
-          throw new Error(t('authorPostComposerSheet.uploadMissingUrl'))
-        }
-
+        if (!/^https?:\/\//i.test(imageUrl)) throw new Error(t('authorPostComposerSheet.uploadMissingUrl'))
         imageUrls.push(imageUrl)
       }
+      if (tokenUserId(getAuthToken()) !== accountId) throw new Error(t('authorPostComposerSheet.loginFirst'))
 
       const ok = isEditing
         ? await onUpdatePost?.(
@@ -1064,6 +1303,9 @@ export default function AuthorPostComposerSheet({
   )
 
       if (ok) {
+        if (storageKey) localStorage.removeItem(storageKey)
+        await removeQueuedTasks()
+        setQueueReady(false)
         clearImages()
         setDraft('')
         setSelectedHashtags([])
@@ -1101,7 +1343,7 @@ export default function AuthorPostComposerSheet({
         <ImageDropZone
           onFiles={handlePickImages}
           onRejectedFiles={() => setImageError(t('authorPostComposerSheet.imageFilesOnly'))}
-          disabled={screen !== 'compose' || uploading || preparingImages || selectedImages.length >= MAX_POST_PHOTOS}
+          disabled={screen !== 'compose' || uploading || preparingImages || !queueReady || selectedImages.length >= MAX_POST_PHOTOS}
           multiple
           accept="image/*"
           className="min-h-screen"
@@ -1192,7 +1434,7 @@ export default function AuthorPostComposerSheet({
                   maxLength={MAX_POST_LENGTH}
                 />
 
-                <SelectedImagePreview images={selectedImages} onRemove={removeImage} t={t} />
+                <SelectedImagePreview images={selectedImages} onRemove={removeImage} onRetry={retryImage} t={t} />
 
                 {imageError ? (
                   <div className="mt-3 rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412] dark:bg-orange-400/10 dark:text-orange-300">
