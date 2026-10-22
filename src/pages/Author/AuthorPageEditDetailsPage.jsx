@@ -4,10 +4,13 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
+import { createUploadQueueManager } from '../../utils/uploadQueueManager'
+import { requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 
 registerTranslationNamespace('authorPageEditDetails', {
   "en": {
     "close": "Close",
+    "retryUpload": "Retry upload",
     "back": "Back",
     "save": "Save",
     "book": "Book",
@@ -159,6 +162,7 @@ registerTranslationNamespace('authorPageEditDetails', {
   },
   "km": {
     "close": "បិទ",
+    "retryUpload": "ព្យាយាមបង្ហោះម្ដងទៀត",
     "back": "ត្រឡប់ក្រោយ",
     "save": "រក្សាទុក",
     "book": "សៀវភៅ",
@@ -310,6 +314,7 @@ registerTranslationNamespace('authorPageEditDetails', {
   },
   "zh": {
     "close": "关闭",
+    "retryUpload": "重试上传",
     "back": "返回",
     "save": "保存",
     "book": "书籍",
@@ -461,6 +466,7 @@ registerTranslationNamespace('authorPageEditDetails', {
   },
   "ja": {
     "close": "閉じる",
+    "retryUpload": "アップロードを再試行",
     "back": "戻る",
     "save": "保存",
     "book": "本",
@@ -612,6 +618,7 @@ registerTranslationNamespace('authorPageEditDetails', {
   },
   "ko": {
     "close": "닫기",
+    "retryUpload": "업로드 다시 시도",
     "back": "뒤로",
     "save": "저장",
     "book": "책",
@@ -810,7 +817,7 @@ function getAuthToken() {
   )
 }
 
-async function uploadAuthorPageEditImage(file, token, category, signal) {
+async function uploadAuthorPageEditImage(file, token, category, signal, onProgress) {
   const maxBytes = category === 'author_page_cover' ? 5 * 1024 * 1024 : 2 * 1024 * 1024
   const optimized = await optimizeImageForUpload(file, {
     preset: category === 'author_page_cover' ? 'banner' : 'avatar',
@@ -846,6 +853,7 @@ async function uploadAuthorPageEditImage(file, token, category, signal) {
     apiBaseUrl: API_BASE_URL,
     legacyUpload,
     signal,
+    onProgress,
   })
   const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
   try {
@@ -855,6 +863,18 @@ async function uploadAuthorPageEditImage(file, token, category, signal) {
     throw new Error(detailsText('saveContactFailed'))
   }
   return imageUrl
+}
+
+function authorPageUploadAccountId(token = getAuthToken()) {
+  try {
+    const segment = String(token || '').split('.')[1]
+    if (!segment) return ''
+    const padded = segment.replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(padded.padEnd(Math.ceil(padded.length / 4) * 4, '=')))
+    return String(payload.user_id || payload.sub || '').trim()
+  } catch {
+    return ''
+  }
 }
 
 function readStoredDetails() {
@@ -2614,7 +2634,8 @@ export default function AuthorPageEditDetailsPage() {
   const sectionFromUrl = useMemo(() => getSearchSection(location.search), [location.search])
   const modalFromUrl = useMemo(() => new URLSearchParams(location.search).get('modal') || '', [location.search])
   const fileInputRef = useRef(null)
-  const imageUploadControllerRef = useRef(null)
+  const imageUploadQueueRef = useRef(null)
+  const imageUploadCommitRef = useRef(null)
   const imageUploadBusyRef = useRef(false)
   const coverRef = useRef(null)
   const introRef = useRef(null)
@@ -2623,8 +2644,6 @@ export default function AuthorPageEditDetailsPage() {
   const facebookRef = useRef(null)
 const contactRef = useRef(null)
 
-useEffect(() => () => imageUploadControllerRef.current?.abort(), [])
-
 useEffect(() => {
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
 }, [])
@@ -2632,6 +2651,7 @@ useEffect(() => {
 const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savingImage, setSavingImage] = useState(false)
+  const [failedImageTaskId, setFailedImageTaskId] = useState('')
   const [message, setMessage] = useState('')
   const [pageName, setPageName] = useState('')
   const [pageUsername, setPageUsername] = useState('')
@@ -2811,6 +2831,187 @@ async function updateDetails(patch) {
 }
 
 
+  imageUploadCommitRef.current = async (task, scope) => {
+    if (!task || scope.closed || imageUploadQueueRef.current !== scope) return
+    const mode = task.context?.mode
+    if (!['cover', 'avatar', 'facebook'].includes(mode)) return
+    if (scope.latest[mode] !== task.id || scope.committing.has(task.id)) return
+    if (authorPageUploadAccountId() !== scope.accountId) return
+    const imageUrl = String(task.result?.imageUrl || '')
+    if (!/^https:\/\//i.test(imageUrl)) {
+      setMessage(detailsText('saveContactFailed'))
+      setFailedImageTaskId(task.id)
+      setSavingImage(false)
+      imageUploadBusyRef.current = false
+      return
+    }
+    scope.committing.add(task.id)
+    try {
+      const token = getAuthToken()
+      if (authorPageUploadAccountId(token) !== scope.accountId) throw new Error(detailsText('loginAgain'))
+      if (mode === 'facebook') {
+        const saved = await updateDetails({ facebook_page_image_url: imageUrl })
+        if (!saved) throw new Error(detailsText('saveContactFailed'))
+        if (imageUploadQueueRef.current === scope) setMessage(detailsText('facebookImageUpdated'))
+      } else {
+        const response = await fetch(`${API_BASE_URL}/api/authors/profile-images`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(mode === 'cover' ? { cover_url: imageUrl } : { avatar_url: imageUrl }),
+        })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok === false || !data.author_page) {
+          throw new Error(data.message || detailsText('saveContactFailed'))
+        }
+        if (authorPageUploadAccountId() !== scope.accountId || scope.closed) return
+        if (mode === 'cover') setCoverUrl(data.author_page.cover_url || imageUrl)
+        else setAvatarUrl(data.author_page.avatar_url || imageUrl)
+        localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+        invalidateMyAuthorPageClientCache()
+        setMessage(detailsText(mode === 'cover' ? 'coverPreviewUpdated' : 'logoPreviewUpdated'))
+      }
+      if (scope.latest[mode] === task.id) delete scope.latest[mode]
+      await scope.manager.remove(task.id)
+      if (!scope.closed && imageUploadQueueRef.current === scope) {
+        setFailedImageTaskId('')
+        setSavingImage(false)
+        setImageMode('')
+        imageUploadBusyRef.current = false
+      }
+    } catch (error) {
+      if (!scope.closed && imageUploadQueueRef.current === scope) {
+        setMessage(error?.message || detailsText('saveContactFailed'))
+        setFailedImageTaskId(task.id)
+        setSavingImage(false)
+        imageUploadBusyRef.current = false
+      }
+    } finally {
+      scope.committing.delete(task.id)
+    }
+  }
+
+  useEffect(() => {
+    if (loading) return undefined
+    const accountId = authorPageUploadAccountId()
+    if (!accountId) return undefined
+    const scope = {
+      accountId,
+      closed: false,
+      committing: new Set(),
+      latest: {},
+      acceptingMode: '',
+      manager: null,
+    }
+    const manager = createUploadQueueManager({
+      ownerId: `${accountId}:author-page-edit-images`,
+      upload: async ({ task, file, signal, onProgress }) => {
+        const token = getAuthToken()
+        if (authorPageUploadAccountId(token) !== accountId) {
+          const error = new Error(detailsText('loginAgain'))
+          error.status = 401
+          throw error
+        }
+        const imageUrl = await uploadAuthorPageEditImage(file, token, task.category, signal, onProgress)
+        if (authorPageUploadAccountId() !== accountId) {
+          const error = new Error(detailsText('loginAgain'))
+          error.status = 401
+          throw error
+        }
+        return { imageUrl }
+      },
+      onChange: ({ task }) => {
+        if (scope.closed || !task || imageUploadQueueRef.current !== scope) return
+        const mode = task.context?.mode
+        if (!['cover', 'avatar', 'facebook'].includes(mode)) return
+        if (task.status === 'queued' && scope.acceptingMode === mode) scope.latest[mode] = task.id
+        if (scope.latest[mode] !== task.id) {
+          if (task.status !== 'uploading') void manager.remove(task.id).catch(() => {})
+          return
+        }
+        if (task.status === 'uploaded') {
+          void imageUploadCommitRef.current?.(task, scope)
+        } else if (task.status === 'failed') {
+          setFailedImageTaskId(task.id)
+          setMessage(task.lastError || detailsText('saveContactFailed'))
+          setSavingImage(false)
+          imageUploadBusyRef.current = false
+        } else {
+          setSavingImage(true)
+          imageUploadBusyRef.current = true
+          const percent = Math.max(0, Math.min(99, Number(task.progress || 0)))
+          setMessage(`${detailsText('imageUploading')} ${percent}%`)
+        }
+      },
+    })
+    scope.manager = manager
+    imageUploadQueueRef.current = scope
+    void (async () => {
+      const tasks = (await manager.list()).filter((task) =>
+        ['author_page_avatar', 'author_page_cover'].includes(task.category) &&
+        ['cover', 'avatar', 'facebook'].includes(task.context?.mode)
+      ).sort((a, b) => a.createdAt - b.createdAt)
+      if (scope.closed || imageUploadQueueRef.current !== scope) return
+      for (const task of tasks) scope.latest[task.context.mode] = task.id
+      for (const task of tasks) {
+        if (scope.latest[task.context.mode] !== task.id) {
+          if (task.status !== 'uploading') await manager.remove(task.id)
+        }
+      }
+      if (scope.closed || imageUploadQueueRef.current !== scope) return
+      for (const mode of Object.keys(scope.latest)) {
+        const task = tasks.find((item) => item.id === scope.latest[mode])
+        if (!task) continue
+        if (task.status === 'uploaded') {
+          void imageUploadCommitRef.current?.(task, scope)
+        } else if (task.status === 'failed') {
+          setFailedImageTaskId(task.id)
+          setMessage(task.lastError || detailsText('saveContactFailed'))
+        } else {
+          setSavingImage(true)
+          imageUploadBusyRef.current = true
+          setMessage(detailsText('imageUploading'))
+        }
+      }
+      manager.start()
+    })().catch((error) => {
+      if (!scope.closed) {
+        setMessage(error.message || detailsText('saveContactFailed'))
+        imageUploadBusyRef.current = false
+        setSavingImage(false)
+      }
+    })
+    return () => {
+      scope.closed = true
+      manager.stop()
+      if (imageUploadQueueRef.current === scope) imageUploadQueueRef.current = null
+      imageUploadBusyRef.current = false
+    }
+  }, [loading])
+
+  const retryImageUpload = async () => {
+    const scope = imageUploadQueueRef.current
+    const id = failedImageTaskId
+    if (!scope || !id || authorPageUploadAccountId() !== scope.accountId) return
+    try {
+      const task = await scope.manager.get(id)
+      if (!task) throw new Error(detailsText('saveContactFailed'))
+      setFailedImageTaskId('')
+      setSavingImage(true)
+      imageUploadBusyRef.current = true
+      setMessage(detailsText('imageUploading'))
+      if (task.status === 'uploaded') await imageUploadCommitRef.current?.(task, scope)
+      else {
+        if (task.status === 'failed' || task.status === 'retry_wait') await scope.manager.retry(id)
+        scope.manager.start()
+      }
+    } catch (error) {
+      setMessage(error.message || detailsText('saveContactFailed'))
+      setFailedImageTaskId(id)
+      setSavingImage(false)
+      imageUploadBusyRef.current = false
+    }
+  }
+
   function openImagePicker(mode) {
     if (savingImage || imageUploadBusyRef.current) return
     setImageMode(mode)
@@ -2821,69 +3022,41 @@ async function updateDetails(patch) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file || !file.type.startsWith('image/') || savingImage || imageUploadBusyRef.current) return
-
     const token = getAuthToken()
-    if (!token) {
+    const scope = imageUploadQueueRef.current
+    if (!token || !scope || authorPageUploadAccountId(token) !== scope.accountId) {
       setMessage(detailsText('loginAgain'))
       return
     }
-
+    if (!file.size || file.size > 5 * 1024 * 1024) {
+      setMessage(detailsText('imageTooLargeToUpload'))
+      return
+    }
     const mode = imageMode
+    if (!['cover', 'avatar', 'facebook'].includes(mode)) return
     const category = mode === 'cover' ? 'author_page_cover' : 'author_page_avatar'
-
-    const controller = new AbortController()
-    imageUploadControllerRef.current = controller
     imageUploadBusyRef.current = true
+    setSavingImage(true)
+    setFailedImageTaskId('')
+    setMessage(detailsText('imageUploading'))
     try {
-      setSavingImage(true)
-      setMessage(detailsText('imageUploading'))
-      const imageUrl = await uploadAuthorPageEditImage(file, token, category, controller.signal)
-      if (controller.signal.aborted) return
-      if (getAuthToken() !== token) throw new Error(detailsText('loginAgain'))
-
-      if (mode === 'facebook') {
-        const saved = await updateDetails({ facebook_page_image_url: imageUrl })
-        if (saved) setMessage(detailsText('facebookImageUpdated'))
-        return
-      }
-
-      if (mode !== 'cover' && mode !== 'avatar') return
-
-      const response = await fetch(`${API_BASE_URL}/api/authors/profile-images`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(mode === 'cover'
-          ? { cover_url: imageUrl }
-          : { avatar_url: imageUrl }),
-        signal: controller.signal,
+      void requestUploadStoragePersistence()
+      scope.acceptingMode = mode
+      const task = await scope.manager.enqueue({
+        file,
+        category,
+        kind: 'image',
+        context: { mode, accountId: scope.accountId },
       })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.ok === false || !data.author_page) {
-        throw new Error(data.message || detailsText('saveContactFailed'))
-      }
-
-      if (mode === 'cover') {
-        setCoverUrl(data.author_page.cover_url || imageUrl)
-      } else {
-        setAvatarUrl(data.author_page.avatar_url || imageUrl)
-      }
-      localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
-      invalidateMyAuthorPageClientCache()
-      setMessage(detailsText(mode === 'cover' ? 'coverPreviewUpdated' : 'logoPreviewUpdated'))
+      if (scope.closed || imageUploadQueueRef.current !== scope) return
+      scope.latest[mode] = task.id
+      scope.manager.start()
     } catch (error) {
-      if (!controller.signal.aborted) {
-        setMessage(error?.message || detailsText('saveContactFailed'))
-      }
-    } finally {
-      if (imageUploadControllerRef.current === controller) imageUploadControllerRef.current = null
+      setMessage(error.message || detailsText('saveContactFailed'))
       imageUploadBusyRef.current = false
-      if (!controller.signal.aborted) {
-        setSavingImage(false)
-        setImageMode('')
-      }
+      setSavingImage(false)
+    } finally {
+      if (scope.acceptingMode === mode) scope.acceptingMode = ''
     }
   }
 
@@ -2989,6 +3162,18 @@ profile_details: details,
             className="mb-4 w-full rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-left text-[13px] font-normal text-[var(--shadow-text-primary)]"
           >
             {message}
+          </button>
+        ) : null}
+
+        {failedImageTaskId ? (
+          <button
+            type="button"
+            onClick={retryImageUpload}
+            disabled={savingImage}
+            className="mb-4 rounded-xl bg-[var(--shadow-text-primary)] px-4 py-2 text-[13px] font-semibold text-[var(--shadow-bg-surface)] disabled:opacity-50"
+          >
+            <i className="fa-solid fa-rotate-right mr-2" />
+            {detailsText('retryUpload')}
           </button>
         ) : null}
 
