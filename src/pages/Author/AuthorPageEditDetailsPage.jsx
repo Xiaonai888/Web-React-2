@@ -1535,12 +1535,35 @@ function buildSocialUrl(platform, value) {
 
 function detectSocialPlatform(url) {
   let host = ''
-  try { host = new URL(String(url || '').trim()).hostname.toLowerCase() } catch { return 'facebook' }
-  const domains = {
-    facebook: ['facebook.com', 'fb.com'], instagram: ['instagram.com'], tiktok: ['tiktok.com'], youtube: ['youtube.com', 'youtu.be'], threads: ['threads.net'], x: ['x.com', 'twitter.com'], snapchat: ['snapchat.com'],
-    twitch: ['twitch.tv'], line: ['line.me'], wechat: ['wechat.com', 'weixin.qq.com'], kik: ['kik.me'], pinterest: ['pinterest.com', 'pin.it'], tumblr: ['tumblr.com'], soundcloud: ['soundcloud.com'],
+
+  try {
+    host = new URL(String(url || '').trim()).hostname.toLowerCase()
+  } catch {
+    return 'facebook'
   }
-  return Object.entries(domains).find(([, list]) => list.some(domain => host === domain || host.endsWith(`.${domain}`)))?.[0] || 'facebook'
+
+  const domains = {
+    facebook: ['facebook.com', 'fb.com'],
+    instagram: ['instagram.com'],
+    tiktok: ['tiktok.com'],
+    youtube: ['youtube.com', 'youtu.be'],
+    threads: ['threads.net'],
+    x: ['x.com', 'twitter.com'],
+    snapchat: ['snapchat.com'],
+    twitch: ['twitch.tv'],
+    line: ['line.me'],
+    wechat: ['wechat.com', 'weixin.qq.com'],
+    kik: ['kik.me'],
+    pinterest: ['pinterest.com', 'pin.it'],
+    tumblr: ['tumblr.com'],
+    soundcloud: ['soundcloud.com'],
+  }
+
+  return Object.entries(domains).find(([, list]) =>
+    list.some(domain =>
+      host === domain || host.endsWith(`.${domain}`)
+    )
+  )?.[0] || 'facebook'
 }
 
 function normalizeSocialLinks(value) {
