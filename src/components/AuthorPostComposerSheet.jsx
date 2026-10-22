@@ -5,6 +5,7 @@ import AuthorPostSchedulePicker from './author-posts/AuthorPostSchedulePicker'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { uploadMediaWithFallback } from '../utils/uploadMediaWithFallback'
+import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
 registerTranslationNamespace('authorPostComposerSheet', {
   en: {
     author: 'Author',
@@ -249,9 +250,10 @@ registerTranslationNamespace('authorPostComposerSheet', {
 })
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const MAX_POST_PHOTOS = 5
 const MAX_POST_LENGTH = 10000
@@ -303,27 +305,34 @@ function canvasToBlob(canvas, type, quality) {
 
 async function compressImageFile(file, t) {
   if (!file?.type?.startsWith('image/')) return null
-
-  const image = await loadImageFromFile(file, t)
+  const converted = /image\/hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name || '')
+    ? (await optimizeImageForUpload(file, { preset: 'post' })).file
+    : file
+  const image = await loadImageFromFile(converted, t)
   let scale = Math.min(1, MAX_IMAGE_WIDTH / image.width, MAX_IMAGE_HEIGHT / image.height)
   let width = Math.max(1, Math.round(image.width * scale))
   let height = Math.max(1, Math.round(image.height * scale))
   let quality = 0.82
-  let blob = null
+  let best = null
 
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
-
-    const context = canvas.getContext('2d')
-    context.drawImage(image, 0, 0, width, height)
-
-    blob = await canvasToBlob(canvas, 'image/webp', quality)
-
-    if (blob && blob.size <= TARGET_IMAGE_BYTES) break
-    if (blob && blob.size <= HARD_MAX_IMAGE_BYTES && quality <= 0.68) break
-
+    try {
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error(t('authorPostComposerSheet.couldNotPreparePhotos'))
+      context.drawImage(image, 0, 0, width, height)
+      const blob = await canvasToBlob(canvas, 'image/webp', quality)
+      if (blob?.type === 'image/webp' && blob.size > 0 && (!best || blob.size < best.size)) {
+        best = blob
+      }
+      if (best && best.size <= TARGET_IMAGE_BYTES) break
+      if (blob && blob.size <= HARD_MAX_IMAGE_BYTES && quality <= 0.68) break
+    } finally {
+      canvas.width = 0
+      canvas.height = 0
+    }
     if (quality > 0.62) {
       quality = Math.max(0.62, quality - 0.07)
     } else {
@@ -332,20 +341,19 @@ async function compressImageFile(file, t) {
     }
   }
 
-  if (!blob) return file
-
-  if (blob.size > HARD_MAX_IMAGE_BYTES) {
-    throw new Error(t('authorPostComposerSheet.photoStillTooLarge', { selected: formatBytes(blob.size), limit: formatBytes(HARD_MAX_IMAGE_BYTES) }))
+  if (!best && converted.size <= HARD_MAX_IMAGE_BYTES &&
+    ['image/jpeg', 'image/png', 'image/webp'].includes(converted.type)) return converted
+  if (!best || best.size > HARD_MAX_IMAGE_BYTES) {
+    throw new Error(t('authorPostComposerSheet.photoStillTooLarge', {
+      selected: formatBytes(best?.size || converted.size),
+      limit: formatBytes(HARD_MAX_IMAGE_BYTES),
+    }))
   }
 
-  return new File(
-    [blob],
-    file.name.replace(/\.[^.]+$/, '.webp'),
-    {
-      type: 'image/webp',
-      lastModified: Date.now(),
-    }
-  )
+  return new File([best], (file.name || 'image').replace(/\.[^.]+$/, '') + '.webp', {
+    type: 'image/webp',
+    lastModified: Date.now(),
+  })
 }
 
 function getSelectedImageSize(images) {
@@ -518,7 +526,15 @@ async function uploadAuthorPostImage(file, t) {
     legacyUpload,
   })
 
-  return data.image_url || data.imageUrl || null
+  if (getAuthToken() !== token) throw new Error(t('authorPostComposerSheet.loginFirst'))
+  const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
+  try {
+    const url = new URL(imageUrl)
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error()
+  } catch {
+    throw new Error(t('authorPostComposerSheet.uploadMissingUrl'))
+  }
+  return imageUrl
 }
 
 function SelectedImagePreview({ images, onRemove, removable = true, t }) {
@@ -724,6 +740,7 @@ export default function AuthorPostComposerSheet({
 }) {
   const { t } = useDisplayTranslation()
   const fileInputRef = useRef(null)
+  const preparingImagesRef = useRef(false)
   const textareaRef = useRef(null)
 
 
@@ -738,6 +755,7 @@ export default function AuthorPostComposerSheet({
   const [imageError, setImageError] = useState('')
   const [leaveSheetOpen, setLeaveSheetOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [preparingImages, setPreparingImages] = useState(false)
   const [publishMode, setPublishMode] = useState('now')
   const [publishTimeOpen, setPublishTimeOpen] = useState(false)
   const [schedulePickerOpen, setSchedulePickerOpen] = useState(false)
@@ -759,8 +777,8 @@ export default function AuthorPostComposerSheet({
   const hasChanges =
     draft !== initialDraftRef.current ||
     currentImageUrls.join('\n') !== initialImageUrlsRef.current.join('\n')
-  const canReview = hasContent && !uploading && (!isEditing || hasChanges)
-  const canPublish = hasContent && !saving && !uploading && (!isEditing || hasChanges)
+  const canReview = hasContent && !uploading && !preparingImages && (!isEditing || hasChanges)
+  const canPublish = hasContent && !saving && !uploading && !preparingImages && (!isEditing || hasChanges)
 
   useEffect(() => {
     if (!open) return undefined
@@ -908,6 +926,7 @@ export default function AuthorPostComposerSheet({
   }
 
   async function handlePickImages(fileList) {
+    if (preparingImagesRef.current || uploading || saving) return
     const files = Array.from(fileList || [])
     const imageFiles = files.filter((file) => file.type.startsWith('image/'))
 
@@ -918,10 +937,14 @@ export default function AuthorPostComposerSheet({
       return
     }
 
+    const startedEditorKey = editorKey
+    preparingImagesRef.current = true
+    setPreparingImages(true)
     try {
       setImageError(t('authorPostComposerSheet.preparingPhotos'))
 
       const compressedFiles = await Promise.all(imageFiles.map((file) => compressImageFile(file, t)))
+      if (editorKeyRef.current !== startedEditorKey) return
 
       const nextImages = compressedFiles
         .filter(Boolean)
@@ -943,7 +966,12 @@ export default function AuthorPostComposerSheet({
       setSelectedImages(nextSelectedImages)
       setImageError('')
     } catch (error) {
-      setImageError(error.message || t('authorPostComposerSheet.couldNotPreparePhotos'))
+      if (editorKeyRef.current === startedEditorKey) {
+        setImageError(error.message || t('authorPostComposerSheet.couldNotPreparePhotos'))
+      }
+    } finally {
+      preparingImagesRef.current = false
+      setPreparingImages(false)
     }
   }
 
@@ -1038,7 +1066,7 @@ export default function AuthorPostComposerSheet({
         <ImageDropZone
           onFiles={handlePickImages}
           onRejectedFiles={() => setImageError(t('authorPostComposerSheet.imageFilesOnly'))}
-          disabled={screen !== 'compose' || uploading || selectedImages.length >= MAX_POST_PHOTOS}
+          disabled={screen !== 'compose' || uploading || preparingImages || selectedImages.length >= MAX_POST_PHOTOS}
           multiple
           accept="image/*"
           className="min-h-screen"
