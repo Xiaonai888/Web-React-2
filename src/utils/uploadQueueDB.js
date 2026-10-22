@@ -4,6 +4,7 @@ const TASK_STORE = 'tasks'
 const FILE_STORE = 'files'
 const DEFAULT_LEASE_MS = 120000
 let databasePromise = null
+let activeDatabase = null
 
 function required(value, label) {
   const clean = String(value || '').trim()
@@ -22,6 +23,7 @@ function openDatabase() {
 
   databasePromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION)
+    let blocked = false
     request.onupgradeneeded = () => {
       const database = request.result
       if (!database.objectStoreNames.contains(TASK_STORE)) {
@@ -34,14 +36,28 @@ function openDatabase() {
     }
     request.onsuccess = () => {
       const database = request.result
-      database.onversionchange = () => {
+      if (blocked) {
         database.close()
+        return
+      }
+      activeDatabase = database
+      const reset = () => {
+        if (activeDatabase !== database) return
+        activeDatabase = null
         databasePromise = null
       }
+      database.onversionchange = () => {
+        database.close()
+        reset()
+      }
+      database.onclose = reset
       resolve(database)
     }
     request.onerror = () => reject(request.error || new Error('Cannot open local media storage'))
-    request.onblocked = () => reject(new Error('Close other Shadow tabs and retry local media storage'))
+    request.onblocked = () => {
+      blocked = true
+      reject(new Error('Close other Shadow tabs and retry local media storage'))
+    }
   }).catch((error) => {
     databasePromise = null
     throw error
@@ -50,22 +66,32 @@ function openDatabase() {
   return databasePromise
 }
 
-async function transaction(storeNames, mode, operate) {
+async function transaction(storeNames, mode, operate, attempt = 0) {
   const database = await openDatabase()
-  return new Promise((resolve, reject) => {
-    const tx = database.transaction(storeNames, mode)
-    let result = null
-    tx.oncomplete = () => resolve(result)
-    tx.onabort = () => reject(tx.error || new Error('Local media storage transaction failed'))
-    tx.onerror = () => {}
-    const setResult = (value) => { result = value }
-    try {
-      operate(tx, setResult)
-    } catch (error) {
-      tx.abort()
-      reject(error)
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = database.transaction(storeNames, mode)
+      let result = null
+      tx.oncomplete = () => resolve(result)
+      tx.onabort = () => reject(tx.error || new Error('Local media storage transaction failed'))
+      tx.onerror = () => {}
+      const setResult = (value) => { result = value }
+      try {
+        operate(tx, setResult)
+      } catch (error) {
+        tx.abort()
+        reject(error)
+      }
+    })
+  } catch (error) {
+    if (attempt > 0 || error?.name !== 'InvalidStateError') throw error
+    if (activeDatabase === database) {
+      database.close()
+      activeDatabase = null
+      databasePromise = null
     }
-  })
+    return transaction(storeNames, mode, operate, 1)
+  }
 }
 
 function ownerRange(ownerId) {
