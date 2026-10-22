@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import ReaderAccountPrivacyConfirmModal from '../../components/reader-profile/ReaderAccountPrivacyConfirmModal'
 
 registerTranslationNamespace('readerAccountPrivacy', {
   en: {
@@ -122,6 +123,7 @@ export default function ReaderAccountPrivacyPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -162,8 +164,21 @@ export default function ReaderAccountPrivacyPage() {
     return () => controller.abort()
   }, [reloadKey, navigate, t])
 
-  async function updatePrivateAccount() {
+  function openPrivateAccountConfirm() {
     if (!ready || loading || saving) return
+    setError('')
+    setMessage('')
+    setConfirmOpen(true)
+  }
+
+  function cancelPrivateAccountConfirm() {
+    if (saving) return
+    setConfirmOpen(false)
+    setError('')
+  }
+
+  async function updatePrivateAccount() {
+    if (!confirmOpen || !ready || loading || saving) return
     const token = getReaderToken()
     if (!token) {
       navigate('/login', { replace: true })
@@ -191,6 +206,7 @@ export default function ReaderAccountPrivacyPage() {
         throw new Error(t('readerAccountPrivacy.saveError'))
       }
       setPrivateAccount(data.private)
+      setConfirmOpen(false)
       setMessage(t('readerAccountPrivacy.saved'))
     } catch (reason) {
       setError(reason.message || t('readerAccountPrivacy.saveError'))
@@ -228,7 +244,7 @@ export default function ReaderAccountPrivacyPage() {
             <PrivacySwitch
               checked={privateAccount}
               disabled={!ready || loading || saving}
-              onChange={updatePrivateAccount}
+              onChange={openPrivateAccountConfirm}
               label={t('readerAccountPrivacy.privateAccount')}
             />
           </div>
@@ -240,7 +256,7 @@ export default function ReaderAccountPrivacyPage() {
         {loading && <p role="status" className="px-1 text-[12px] text-[var(--shadow-text-secondary)]">{t('readerAccountPrivacy.loading')}</p>}
         {saving && <p role="status" className="px-1 text-[12px] text-[var(--shadow-text-secondary)]">{t('readerAccountPrivacy.saving')}</p>}
         {message && <p role="status" className="px-1 text-[12px] text-[var(--shadow-text-secondary)]">{message}</p>}
-        {error && (
+        {error && !confirmOpen && (
           <div role="alert" className="rounded-xl border border-[var(--shadow-border)] px-3 py-3 text-[12px]">
             <p>{error}</p>
             {!ready && !loading && (
@@ -251,6 +267,16 @@ export default function ReaderAccountPrivacyPage() {
           </div>
         )}
       </div>
+
+      <ReaderAccountPrivacyConfirmModal
+        open={confirmOpen}
+        enablePrivate={!privateAccount}
+        onConfirm={updatePrivateAccount}
+        onCancel={cancelPrivateAccountConfirm}
+        busy={saving}
+        error={error}
+        t={t}
+      />
     </main>
   )
 }
