@@ -3362,76 +3362,71 @@ restoredDraftCharactersRef.current = false
   }, [])
 
   useEffect(() => {
-  if (!storyId) return
+  if (!storyId) return undefined
 
-  const draftKey =
-    `shadow_gallery_chat_editor_draft_${storyId}`
-
+  const draftKey = `shadow_gallery_chat_editor_draft_${storyId}`
   const draftRaw = sessionStorage.getItem(draftKey)
+  if (!draftRaw) return undefined
 
-  if (!draftRaw) return
+  let active = true
 
-  try {
-    const draft = JSON.parse(draftRaw)
+  async function restoreGalleryDraft() {
+    try {
+      const stored = JSON.parse(draftRaw)
+      const draft = stored?.version === 1
+        ? await decryptChatGalleryDraft(draftRaw)
+        : stored
 
-    const expired =
-      !draft.createdAt ||
-      Date.now() - Number(draft.createdAt) >
-        30 * 60 * 1000
+      if (!active) return
 
-    if (expired) {
-      sessionStorage.removeItem(draftKey)
-      return
-    }
+      const expired =
+        !draft.createdAt ||
+        Date.now() - Number(draft.createdAt) > 30 * 60 * 1000
 
-    const selectedRaw = sessionStorage.getItem(
-      'shadow_gallery_selected_image'
-    )
-
-    let selected = null
-
-    if (selectedRaw) {
-      const parsedSelected = JSON.parse(selectedRaw)
-
-      if (
-        String(parsedSelected.storyId || '') ===
-          String(storyId) &&
-        parsedSelected.origin === 'chat-editor'
-      ) {
-        selected = parsedSelected
+      if (expired) {
+        sessionStorage.removeItem(draftKey)
+        return
       }
+
+      const selectedRaw = sessionStorage.getItem('shadow_gallery_selected_image')
+      let selected = null
+
+      if (selectedRaw) {
+        const parsedSelected = JSON.parse(selectedRaw)
+        if (
+          String(parsedSelected.storyId || '') === String(storyId) &&
+          parsedSelected.origin === 'chat-editor'
+        ) {
+          selected = parsedSelected
+        }
+      }
+
+      setNewCharacterName(draft.name || '')
+      setNewCharacterGender(draft.gender || '')
+
+      if (selected?.imageUrl) {
+        setNewCharacterImage(selected.imageUrl)
+        setNewCharacterAvatarSource('shadow_gallery')
+        setImageSourceOpen(false)
+        setAddPopupOpen(true)
+      } else {
+        setNewCharacterImage(draft.image || '')
+        setNewCharacterAvatarSource(draft.avatarSource || 'device')
+        setAddPopupOpen(false)
+        setImageSourceOpen(true)
+      }
+
+      sessionStorage.removeItem(draftKey)
+      if (selected) sessionStorage.removeItem('shadow_gallery_selected_image')
+    } catch {
+      if (!active) return
+      sessionStorage.removeItem(draftKey)
+      sessionStorage.removeItem('shadow_gallery_selected_image')
     }
-
-    setNewCharacterName(draft.name || '')
-    setNewCharacterGender(draft.gender || '')
-
-    if (selected?.imageUrl) {
-      setNewCharacterImage(selected.imageUrl)
-      setNewCharacterAvatarSource('shadow_gallery')
-      setImageSourceOpen(false)
-      setAddPopupOpen(true)
-    } else {
-      setNewCharacterImage(draft.image || '')
-      setNewCharacterAvatarSource(
-        draft.avatarSource || 'device'
-      )
-      setAddPopupOpen(false)
-      setImageSourceOpen(true)
-    }
-
-    sessionStorage.removeItem(draftKey)
-
-    if (selected) {
-      sessionStorage.removeItem(
-        'shadow_gallery_selected_image'
-      )
-    }
-  } catch {
-    sessionStorage.removeItem(draftKey)
-    sessionStorage.removeItem(
-      'shadow_gallery_selected_image'
-    )
   }
+
+  void restoreGalleryDraft()
+  return () => { active = false }
 }, [storyId])
 
 useEffect(() => {
