@@ -193,6 +193,16 @@ function LoadingProfile() {
   )
 }
 
+function safeProfileImageUrl(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^data:image\/(?:png|jpe?g|gif|webp|avif);base64,[a-z0-9+/=]+$/i.test(raw)) return raw
+  try {
+    const url = new URL(raw, window.location.origin)
+    return ['https:', 'http:'].includes(url.protocol) || (url.protocol === 'blob:' && url.origin === window.location.origin) ? url.href : ''
+  } catch { return '' }
+}
+
 function ProfileSwitcherSheet({
   open,
   onClose,
@@ -234,7 +244,12 @@ function ProfileSwitcherSheet({
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                  <img ref={(node) => {
+  if (!node) return
+  const src = safeProfileImageUrl(avatarUrl)
+  if (src) node.src = src
+  else node.removeAttribute('src')
+}} alt={displayName} className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-[18px] font-extrabold">{avatarLetter}</span>
                 )}
@@ -254,7 +269,12 @@ function ProfileSwitcherSheet({
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
                 {pageLogo ? (
-                  <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
+                  <img ref={(node) => {
+  if (!node) return
+  const src = safeProfileImageUrl(pageLogo)
+  if (src) node.src = src
+  else node.removeAttribute('src')
+}} alt={pageName} className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-[18px] font-extrabold">{pageLetter}</span>
                 )}
@@ -469,7 +489,12 @@ export default function AuthorProfilePage() {
                   className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white active:scale-[0.99]"
                 >
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt={authorName} className="h-full w-full object-cover" />
+                    <img ref={(node) => {
+  if (!node) return
+  const src = safeProfileImageUrl(avatarUrl)
+  if (src) node.src = src
+  else node.removeAttribute('src')
+}} alt={authorName} className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-[26px] font-extrabold">{avatarLetter}</span>
                   )}
