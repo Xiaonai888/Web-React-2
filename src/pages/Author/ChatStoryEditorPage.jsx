@@ -806,6 +806,20 @@ async function uploadEpisodeImage(token, file) {
 }
 
 
+function safeChatCharacterImageUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return ''
+  if (/^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|heic|heif);base64,[a-z0-9+/=\s]+$/i.test(source)) return source
+  try {
+    const url = new URL(source, window.location.origin)
+    if (url.protocol === 'http:' || url.protocol === 'https:') return url.href
+    if (url.protocol === 'blob:' && url.origin === window.location.origin) return url.href
+  } catch {
+    return ''
+  }
+  return ''
+}
+
 function mapCharacter(character) {
   const group = character.role_group || 'background'
 
@@ -896,7 +910,7 @@ function CharacterAvatar({ character, selected, onClick }) {
       >
         {character.image ? (
           <img
-            src={character.image}
+            src={safeChatCharacterImageUrl(character.image)}
             alt={character.nickname || getDisplayText('chatStoryEditor.character')}
             className="h-full w-full object-cover"
           />
@@ -945,7 +959,7 @@ function CharacterQuickPopup({
             <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
               {character.image ? (
                 <img
-                  src={character.image}
+                  src={safeChatCharacterImageUrl(character.image)}
                   alt={character.nickname || getDisplayText('chatStoryEditor.character')}
                   className="h-full w-full object-cover"
                 />
@@ -1096,7 +1110,7 @@ function EditorImageMessage({
     >
       {imageUrl ? (
         <img
-          src={imageUrl}
+          src={safeChatCharacterImageUrl(imageUrl)}
           alt={getDisplayText('chatStoryEditor.chatStory')}
           className="block max-h-[360px] w-full object-contain"
         />
@@ -1158,7 +1172,7 @@ function EditorImageMessage({
     <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
       {character?.image ? (
         <img
-          src={character.image}
+          src={safeChatCharacterImageUrl(character.image)}
           alt={
             character.nickname ||
             getDisplayText('chatStoryEditor.character')
@@ -1312,7 +1326,7 @@ const bubbleClass = singleEmoji
         <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
           {character?.image ? (
             <img
-              src={character.image}
+              src={safeChatCharacterImageUrl(character.image)}
               alt={character.nickname || getDisplayText('chatStoryEditor.character')}
               className="h-full w-full object-cover"
             />
@@ -1360,7 +1374,7 @@ const bubbleClass = singleEmoji
         <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
           {character?.image ? (
             <img
-              src={character.image}
+              src={safeChatCharacterImageUrl(character.image)}
               alt={character.nickname || getDisplayText('chatStoryEditor.character')}
               className="h-full w-full object-cover"
             />
@@ -1660,7 +1674,7 @@ function AddCharacterPopup({
             <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
               {image ? (
                 <img
-                  src={image}
+                  src={safeChatCharacterImageUrl(image)}
                   alt={name || getDisplayText('chatStoryEditor.newCharacter')}
                   className="h-full w-full object-cover"
                 />
