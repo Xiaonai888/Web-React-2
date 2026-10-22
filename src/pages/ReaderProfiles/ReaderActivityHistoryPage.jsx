@@ -395,7 +395,7 @@ export default function ReaderActivityHistoryPage() {
               <button type="button" key={tab} role="tab" aria-selected={selected}
                 onClick={() => setCategory(tab)}
                 className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[12px] font-semibold transition ${selected
-                  ? 'bg-[#6d4aff] text-white'
+                  ? 'bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-white shadow-[0_8px_20px_rgba(124,91,255,0.25)]'
                   : 'border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-secondary)]'}`}>
                 <TabIcon className="h-[15px] w-[15px]" strokeWidth={1.8} />
                 {t(`readerActivityHistory.${tab}`)}
