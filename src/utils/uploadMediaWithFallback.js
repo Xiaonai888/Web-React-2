@@ -72,7 +72,10 @@ async function withRequestTimeout(operation, signal, timeoutMs, name, code) {
     controller.abort()
   }, timeoutMs)
   try {
-    return await operation(controller.signal)
+    const result = await operation(controller.signal)
+    if (signal?.aborted) throw uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED')
+    if (timedOut) throw uploadError(`${name} timed out`, 408, code)
+    return result
   } catch (error) {
     if (signal?.aborted) throw uploadError('Upload was canceled', 0, 'DIRECT_UPLOAD_CANCELED')
     if (timedOut) throw uploadError(`${name} timed out`, 408, code)
@@ -282,6 +285,17 @@ export async function uploadMediaWithFallback({
       throw uploadError('Direct upload response is incomplete', 503, 'DIRECT_UPLOAD_UNAVAILABLE')
     }
 
+    let destination
+    try {
+      destination = new URL(init.upload_url)
+    } catch {
+      throw uploadError('Direct upload destination is invalid', 503, 'DIRECT_UPLOAD_UNAVAILABLE')
+    }
+    if (destination.protocol !== 'https:' &&
+      !(destination.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(destination.hostname))) {
+      throw uploadError('Direct upload destination is invalid', 503, 'DIRECT_UPLOAD_UNAVAILABLE')
+    }
+
     stage = 'transfer'
     await putFile(init.upload_url, file, onProgress, signal)
     stage = 'finalize'
@@ -297,7 +311,7 @@ export async function uploadMediaWithFallback({
   } catch (error) {
     if (isCanceled(error, signal) || error?.code === 'DIRECT_UPLOAD_CANCELED') throw error
     if (!allowLegacyFallback(error, stage)) throw error
-    temporarilyUnavailableUntil = Date.now() + 60000
+    if (stage === 'init') temporarilyUnavailableUntil = Date.now() + 60000
     return uploadLegacy()
   }
 }
