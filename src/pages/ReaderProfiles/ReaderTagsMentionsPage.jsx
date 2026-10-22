@@ -162,7 +162,7 @@ function ReviewSwitch({ checked, onChange, disabled, label }) {
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className="shrink-0 rounded-full shadow-none disabled:cursor-not-allowed disabled:opacity-50"
+      className="shrink-0 rounded-full shadow-none disabled:cursor-not-allowed"
     >
       <span className={`relative block h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${checked ? 'bg-[#111827]' : 'bg-[#D1D6DE]'}`}>
         <span className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-all duration-300 ${checked ? 'left-[26px]' : 'left-1'}`} />
