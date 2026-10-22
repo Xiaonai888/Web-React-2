@@ -133,7 +133,7 @@ export default function AppPage() {
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0d0f16]">
       <header className="sticky top-0 z-20 border-b border-[#eeeeee] bg-white dark:border-white/10 dark:bg-[#171923]">
         <div className="mx-auto grid h-14 max-w-5xl grid-cols-[40px_1fr_40px] items-center px-3">
-          <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 dark:text-white" aria-label={t('appPage.back')}>
+          <button type="button" onClick={() => navigate('/me', { replace: true })} className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 dark:text-white" aria-label={t('appPage.back')}>
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
           <h1 className="text-center text-[16px] font-semibold text-[#111827] dark:text-white">{t('appPage.app')}</h1>
