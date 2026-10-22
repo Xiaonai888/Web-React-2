@@ -249,6 +249,9 @@ const ReaderAccessibilityPage = lazy(() =>
 const ReaderActivityHistoryPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderActivityHistoryPage')
 )
+const ReaderReadingSummaryPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderReadingSummaryPage')
+)
 
 const ReaderAccountSecurityPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderAccountSecurityPage')
@@ -1007,11 +1010,14 @@ const shouldShowOpeningAds =
   element={<LazyPage><ReaderSecuritySettingsPage /></LazyPage>}
 />
 
-          <Route
+         <Route
   path="/profile/settings/activity-history"
   element={<LazyPage><ReaderActivityHistoryPage /></LazyPage>}
 />
-
+<Route
+  path="/profile/settings/reading-summary"
+  element={<LazyPage><ReaderReadingSummaryPage /></LazyPage>}
+/>
           <Route
   path="/profile/settings/language"
   element={<LazyPage><ReaderLanguagePage /></LazyPage>}
