@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import AuthorPageFooter from '../../components/AuthorPageFooter'
+import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { SalesReportsSettingsMenuItem, SalesReportsSettingsPage } from './SalesReportsSettings'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -4920,6 +4920,7 @@ export default function AuthorStoreManagerPage() {
   const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
   const navigate = useNavigate()
   const [mode, setMode] = useState('manager')
+  useAuthorPageFooterVisibility(mode === 'manager')
   const [editingProduct, setEditingProduct] = useState(null)
   const [activeTab, setActiveTab] = useState('Records')
   const [activeType, setActiveType] = useState('All')
