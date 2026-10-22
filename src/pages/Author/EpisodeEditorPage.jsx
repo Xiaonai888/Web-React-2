@@ -1182,9 +1182,22 @@ function dataUrlToFile(dataUrl, fileName) {
 
 async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   if (!imageDataUrl) return null
-  if (String(imageDataUrl).startsWith('http')) return imageDataUrl
+  if (/^https?:\/\//i.test(String(imageDataUrl))) return imageDataUrl
 
-  const file = dataUrlToFile(imageDataUrl, fileName)
+  let file
+  if (String(imageDataUrl).startsWith('blob:')) {
+    const response = await fetch(imageDataUrl)
+    if (!response.ok) throw new Error(getDisplayText('episodeEditor.selectedReadFailed'))
+    const blob = await response.blob()
+    if (!blob.size || !blob.type.startsWith('image/')) {
+      throw new Error(getDisplayText('episodeEditor.selectedReadFailed'))
+    }
+    file = new File([blob], fileName, { type: blob.type })
+  } else if (/^data:image\//i.test(String(imageDataUrl))) {
+    file = dataUrlToFile(imageDataUrl, fileName)
+  } else {
+    throw new Error(getDisplayText('episodeEditor.selectedReadFailed'))
+  }
   const optimized = await optimizeImageForUpload(file, {
     preset: folder === 'episode_cover' ? 'banner' : 'default',
     maxSourceBytes: 5 * 1024 * 1024,
@@ -4117,6 +4130,7 @@ export default function EpisodeEditorPage() {
     if (!draft) return false
 
     const revision = localDraftRevisionRef.current
+    const draftKey = localDraftKeyRef.current
     const localMangaPages =
       draft.storyType === 'manga'
         ? draft.mangaPages
@@ -4136,7 +4150,7 @@ export default function EpisodeEditorPage() {
     localSaveInFlightRef.current = true
     setSaveStatus('Saving locally...')
 
-    const savePromise = saveEpisodeLocalDraft(localDraftKeyRef.current, {
+    const savePromise = saveEpisodeLocalDraft(draftKey, {
       storyId: draft.storyId,
       episodeId: draft.episodeId,
       storyType: draft.storyType,
@@ -4162,6 +4176,7 @@ export default function EpisodeEditorPage() {
 
     try {
       await savePromise
+      if (localDraftKeyRef.current !== draftKey) return false
       localSavedRevisionRef.current = Math.max(
   localSavedRevisionRef.current,
   revision
@@ -5153,6 +5168,7 @@ await cleanupTemporaryMangaPages(
       await localSavePromiseRef.current.catch(() => {})
     }
 
+    const savingRevision = localDraftRevisionRef.current
     const currentNovelHtml = editorRef.current?.innerHTML || content
     if (!isManga && (inlineImageUploading ||
       countPendingNovelImageMarkers(currentNovelHtml) ||
@@ -5270,9 +5286,17 @@ await cleanupTemporaryMangaPages(
 
     setCurrentEpisodeId(episodeId)
     setCurrentEpisodeNumber(Number(data.episode?.episode_number || currentEpisodeNumber || 1))
+    if (localSavePromiseRef.current) await localSavePromiseRef.current.catch(() => {})
+    if (localDraftRevisionRef.current !== savingRevision) {
+      setSaveStatus('Unsaved')
+      setHasUnsavedChanges(true)
+      await saveCurrentLocalDraft()
+      setMessage('New changes were made while saving. Save this episode again.')
+      return null
+    }
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
-    localSavedRevisionRef.current = localDraftRevisionRef.current
+    localSavedRevisionRef.current = savingRevision
     await deleteEpisodeLocalDraft(localDraftKeyRef.current)
 
     if (!goToPublish && !stayOnPage) {
