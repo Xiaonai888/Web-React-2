@@ -2853,6 +2853,12 @@ const safeSelectedPhotoIndex =
         .json()
         .catch(() => ({}))
 
+      if (data.post_saved === true) {
+        if (data.post) onUpdated?.(data.post)
+        setMessage(data.message || t('readerPostCard.failedUpdatePost'))
+        return
+      }
+
       if (
         !response.ok ||
         data.ok === false
