@@ -1526,22 +1526,13 @@ function buildSocialUrl(platform, value) {
 }
 
 function detectSocialPlatform(url) {
-  const value = String(url || '').toLowerCase()
-  if (value.includes('facebook.com') || value.includes('fb.com')) return 'facebook'
-  if (value.includes('instagram.com')) return 'instagram'
-  if (value.includes('tiktok.com')) return 'tiktok'
-  if (value.includes('youtube.com') || value.includes('youtu.be')) return 'youtube'
-  if (value.includes('threads.net')) return 'threads'
-  if (value.includes('x.com') || value.includes('twitter.com')) return 'x'
-  if (value.includes('snapchat.com')) return 'snapchat'
-  if (value.includes('twitch.tv')) return 'twitch'
-  if (value.includes('line.me')) return 'line'
-  if (value.includes('wechat.com') || value.includes('weixin.qq.com')) return 'wechat'
-  if (value.includes('kik.me')) return 'kik'
-  if (value.includes('pinterest.com') || value.includes('pin.it')) return 'pinterest'
-  if (value.includes('tumblr.com')) return 'tumblr'
-  if (value.includes('soundcloud.com')) return 'soundcloud'
-  return 'facebook'
+  let host = ''
+  try { host = new URL(String(url || '').trim()).hostname.toLowerCase() } catch { return 'facebook' }
+  const domains = {
+    facebook: ['facebook.com', 'fb.com'], instagram: ['instagram.com'], tiktok: ['tiktok.com'], youtube: ['youtube.com', 'youtu.be'], threads: ['threads.net'], x: ['x.com', 'twitter.com'], snapchat: ['snapchat.com'],
+    twitch: ['twitch.tv'], line: ['line.me'], wechat: ['wechat.com', 'weixin.qq.com'], kik: ['kik.me'], pinterest: ['pinterest.com', 'pin.it'], tumblr: ['tumblr.com'], soundcloud: ['soundcloud.com'],
+  }
+  return Object.entries(domains).find(([, list]) => list.some(domain => host === domain || host.endsWith(`.${domain}`)))?.[0] || 'facebook'
 }
 
 function normalizeSocialLinks(value) {
