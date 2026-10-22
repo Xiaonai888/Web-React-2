@@ -830,7 +830,7 @@ function LeadCharacterSheet({
                 <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)]">
                   {character.image ? (
                     <img
-                      src={character.image}
+                      src={safeCharacterImageUrl(character.image)}
                       alt={character.nickname || getDisplayText('chatStoryCharacters.character')}
                       className="h-full w-full object-cover"
                     />
@@ -885,7 +885,7 @@ function LeadCharacterPanel({ character, onChange }) {
         <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)]">
           {character.image ? (
             <img
-              src={character.image}
+              src={safeCharacterImageUrl(character.image)}
               alt={character.nickname || getDisplayText('chatStoryCharacters.leadCharacter')}
               className="h-full w-full object-cover"
             />
@@ -1086,7 +1086,7 @@ function GallerySheet({
                 >
                   <div className="aspect-square overflow-hidden bg-[var(--shadow-bg-soft)]">
                     <img
-                      src={item.image_url}
+                      src={safeCharacterImageUrl(item.image_url)}
                       alt={item.alt_text || item.title || getDisplayText('chatStoryCharacters.characterAvatar')}
                       className="h-full w-full object-cover"
                       loading="lazy"
@@ -1163,7 +1163,7 @@ function CharacterEditor({
             >
               {image ? (
                 <img
-                  src={image}
+                  src={safeCharacterImageUrl(image)}
                   alt={nickname || getDisplayText('chatStoryCharacters.character')}
                   className="h-full w-full object-cover"
                 />
@@ -1266,7 +1266,7 @@ function CharacterCard({
         >
           {character.image ? (
             <img
-              src={character.image}
+              src={safeCharacterImageUrl(character.image)}
               alt={
                 character.nickname ||
                 getRoleGroupShortTitle(group)
