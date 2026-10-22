@@ -368,28 +368,49 @@ function saveCartItems(items) {
 }
 
 function getBuyerProfile() {
+  let legacy = {}
+
   try {
-    const raw = localStorage.getItem('shadow_mall_buyer_profile') || '{}'
-    const parsed = JSON.parse(raw)
+    const saved = JSON.parse(localStorage.getItem('shadow_mall_buyer_profile') || 'null')
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) legacy = saved
+  } catch {}
 
-    if (!parsed || typeof parsed !== 'object') return {}
+  const reader = getReaderUser()
 
-    return {
-      name: parsed.name || '',
-      phone_number: parsed.phone_number || parsed.phone || '',
-      telegram_username: parsed.telegram_username || parsed.telegram || '',
-      facebook_link: parsed.facebook_link || parsed.facebook || '',
-      delivery_address: parsed.delivery_address || parsed.address || '',
-      delivery_note: parsed.delivery_note || '',
-      province_city: parsed.province_city || 'Phnom Penh',
-    }
-  } catch {
-    return {}
+  return {
+    name: legacy.name || reader?.name || reader?.full_name || reader?.display_name || '',
+    phone_number: legacy.phone_number || legacy.phone || '',
+    telegram_username: legacy.telegram_username || legacy.telegram || '',
+    facebook_link: legacy.facebook_link || legacy.facebook || '',
+    delivery_address: legacy.delivery_address || legacy.address || '',
+    delivery_note: legacy.delivery_note || '',
+    province_city: legacy.province_city || 'Phnom Penh',
   }
 }
 
-function saveBuyerProfile(profile) {
-  localStorage.setItem('shadow_mall_buyer_profile', JSON.stringify(profile))
+async function saveBuyerProfile(profile) {
+  const token = getReaderToken()
+  if (!token) throw new Error('Reader login is required')
+
+  const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(profile),
+  })
+
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to save buyer profile')
+  }
+
+  try {
+    localStorage.removeItem('shadow_mall_buyer_profile')
+  } catch {}
+
+  return { ...profile, ...(data.profile || {}) }
 }
 function getReaderUser() {
   try {
@@ -458,10 +479,20 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
   const [facebook, setFacebook] = useState(profile.facebook_link || '')
  const [address, setAddress] = useState(profile.delivery_address || profile.address || '')
   const [error, setError] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setName(profile.name || readerUser?.name || '')
+    setPhone(profile.phone_number || '')
+    setTelegram(profile.telegram_username || '')
+    setFacebook(profile.facebook_link || '')
+    setAddress(profile.delivery_address || profile.address || '')
+  }, [open, profile])
 
   if (!open) return null
 
-  function handleSave() {
+  async function handleSave() {
     if (!name.trim() || !phone.trim() || !address.trim()) {
       setError(t('authorCheckout.requiredFields'))
       return
@@ -477,8 +508,16 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
   province_city: profile.province_city || 'Phnom Penh',
 }
 
-    saveBuyerProfile(nextProfile)
-    onSave(nextProfile)
+    try {
+      setError('')
+      setSavingProfile(true)
+      const savedProfile = await saveBuyerProfile(nextProfile)
+      onSave(savedProfile)
+    } catch (error) {
+      setError(error.message || t('authorCheckout.failedSaveProfile'))
+    } finally {
+      setSavingProfile(false)
+    }
   }
 
   return (
@@ -527,7 +566,7 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
             <textarea value={address} onChange={(event) => setAddress(event.target.value)} className="min-h-[96px] w-full rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-4 py-3 text-[13px] font-bold leading-6 text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-border-strong)]" />
           </div>
 
-          <button type="button" onClick={handleSave} className="h-12 w-full rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-black text-[var(--shadow-bg-surface)] shadow-xl active:scale-[0.98]">
+          <button type="button" onClick={handleSave} disabled={savingProfile} className="h-12 w-full rounded-full bg-[var(--shadow-text-primary)] text-[13px] font-black text-[var(--shadow-bg-surface)] shadow-xl active:scale-[0.98] disabled:opacity-50">
             {t('authorCheckout.saveInformation')}
           </button>
         </div>
@@ -554,6 +593,39 @@ export default function AuthorCheckoutPage() {
   const [checkingPayment, setCheckingPayment] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState('')
   const [paymentClock, setPaymentClock] = useState(Date.now())
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem('shadow_mall_buyer_profile')
+    } catch {}
+
+    const token = getReaderToken()
+    if (!token) return undefined
+
+    const controller = new AbortController()
+
+    async function loadBuyerProfile() {
+      try {
+        const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        })
+
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok === false || !data.profile || controller.signal.aborted) return
+
+        setBuyerProfile(current => ({ ...current, ...data.profile }))
+        setDeliveryNote(data.profile.delivery_note || '')
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Failed to load buyer profile:', error)
+        }
+      }
+    }
+
+    void loadBuyerProfile()
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     if (!paymentModal) return undefined
@@ -780,30 +852,9 @@ export default function AuthorCheckoutPage() {
     setMessage('')
 
     if (needsDelivery) {
-  const profileResponse = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(profile),
-  })
-
-  const profileData = await profileResponse.json().catch(() => ({}))
-
-  if (!profileResponse.ok || profileData.ok === false) {
-    throw new Error(profileData.message || t('authorCheckout.failedSaveProfile'))
-  }
-
-  const savedProfile = {
-    ...buyerProfile,
-    ...profile,
-    ...(profileData.profile || {}),
-  }
-
-  saveBuyerProfile(savedProfile)
-  setBuyerProfile(savedProfile)
-}
+      const savedProfile = await saveBuyerProfile(profile)
+      setBuyerProfile(current => ({ ...current, ...savedProfile }))
+    }
 
     if (hasExpiredDiscoverPromotion(items)) throw new Error(discoverPromotionExpiryMessage())
 
