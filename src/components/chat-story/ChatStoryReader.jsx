@@ -716,6 +716,8 @@ export default function ChatStoryReader({
         <section
           style={{
             ...chatTheme.style,
+            backgroundColor: 'transparent',
+            backgroundImage: 'none',
             '--shadow-bg-page': chatTheme.theme.background,
             '--shadow-bg-soft': chatTheme.theme.incoming,
             '--shadow-text-primary': chatTheme.theme.text,
