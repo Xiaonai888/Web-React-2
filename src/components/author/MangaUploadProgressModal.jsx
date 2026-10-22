@@ -1,25 +1,30 @@
 import { formatFileSize } from '../../utils/mangaImageUtils'
 
+function safeBytes(value) {
+  const number = Number(value)
+  return Number.isFinite(number) ? Math.max(0, number) : 0
+}
+
+function totalForPage(page) {
+  return safeBytes(page.uploadTotalBytes || page.fileSize || page.sourceFile?.size || 0)
+}
+
 export default function MangaUploadProgressModal({ pages, onCancel }) {
   const items = Array.isArray(pages) ? pages : []
   if (!items.length) return null
 
-  const totalBytes = items.reduce(
-    (sum, page) => sum + Number(page.uploadTotalBytes || page.fileSize || page.sourceFile?.size || 0),
-    0
-  )
+  const totalBytes = items.reduce((sum, page) => sum + totalForPage(page), 0)
 
   const uploadedBytes = items.reduce((sum, page) => {
-    const total = Number(page.uploadTotalBytes || page.fileSize || page.sourceFile?.size || 0)
+    const total = totalForPage(page)
     if (page.status === 'done') return sum + total
-    return sum + Math.min(Number(page.uploadedBytes || 0), total)
+    return sum + Math.min(safeBytes(page.uploadedBytes), total)
   }, 0)
 
   const overallPercent = totalBytes > 0
     ? Math.min(100, Math.round((uploadedBytes / totalBytes) * 100))
     : 0
 
-  const completedCount = items.filter((page) => page.status === 'done').length
   const current =
     items.find((page) => page.status === 'uploading') ||
     items.find((page) => page.status === 'processing') ||
@@ -40,22 +45,17 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
 
   const canCancel = !serverProcessing
 
-  const currentTotal = Number(
-    current?.uploadTotalBytes || current?.fileSize || current?.sourceFile?.size || 0
-  )
+  const currentTotal = totalForPage(current)
 
   const currentLoaded = current?.status === 'done'
     ? currentTotal
-    : Math.min(Number(current?.uploadedBytes || 0), currentTotal)
+    : Math.min(safeBytes(current?.uploadedBytes), currentTotal)
 
   const currentPercent = currentTotal > 0
     ? Math.min(100, Math.round((currentLoaded / currentTotal) * 100))
     : 0
 
-  const speed = items.reduce(
-    (sum, page) => sum + Number(page.uploadSpeed || 0),
-    0
-  )
+  const speed = items.reduce((sum, page) => sum + safeBytes(page.uploadSpeed), 0)
 
   const currentName = current?.sourceFile?.name || 'Manga page'
 
@@ -63,7 +63,11 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     ? 'Processing'
     : current?.status === 'processing'
       ? 'Preparing'
-      : 'Uploading'
+      : current?.status === 'error'
+        ? 'Upload failed'
+        : current?.status === 'done'
+          ? 'Ready'
+          : 'Uploading'
 
   if (batchAccepted) return null
 
@@ -85,7 +89,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
                 Uploading Manga Pages
               </h2>
               <p className="mt-1 text-[11px] font-medium text-[#8d94a1]">
-                Uploading {Math.min(completedCount + 1, items.length)} of {items.length} images
+                Uploading {Math.max(1, items.indexOf(current) + 1)} of {items.length} images
               </p>
             </div>
           </div>
