@@ -186,37 +186,54 @@ function countCustomLinks(details = {}) {
   return values.filter((value) => String(value || '').trim()).length
 }
 
+const PINNED_COUNT_TTL_MS = 60000
+const pinnedCountCache = new Map()
+const pinnedCountPending = new Map()
+
 async function fetchPinnedPostCount(pageUsername) {
-  if (!pageUsername) return 0
+  const username = String(pageUsername || '').trim()
+  if (!username) return 0
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?limit=30`
-  )
-  const data = await response.json().catch(() => ({}))
+  const key = username.toLowerCase()
+  const cached = pinnedCountCache.get(key)
+  if (cached && cached.expiresAt > Date.now()) return cached.count
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load pinned posts')
+  const pending = pinnedCountPending.get(key)
+  if (pending) return pending
+
+  const request = (async () => {
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/posts?limit=3`
+    )
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to load pinned posts')
+    }
+
+    const posts = Array.isArray(data.posts) ? data.posts : []
+    const count = posts.filter((post) => post?.is_pinned).length
+    pinnedCountCache.delete(key)
+    pinnedCountCache.set(key, {
+      count,
+      expiresAt: Date.now() + PINNED_COUNT_TTL_MS,
+    })
+    if (pinnedCountCache.size > 20) {
+      pinnedCountCache.delete(pinnedCountCache.keys().next().value)
+    }
+    return count
+  })()
+
+  pinnedCountPending.set(key, request)
+  try {
+    return await request
+  } finally {
+    if (pinnedCountPending.get(key) === request) {
+      pinnedCountPending.delete(key)
+    }
   }
-
-  const posts = Array.isArray(data.posts) ? data.posts : []
-  return posts.filter((post) => post?.is_pinned).length
 }
 
-function ToolMetric({ icon, value, label }) {
-  return (
-    <div className="rounded-[16px] bg-white/10 p-3 ring-1 ring-white/15">
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#6d28d9]">
-          <i className={`${icon} text-[16px]`} />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[24px] font-black leading-none text-white">{value}</span>
-          <span className="mt-1.5 block text-[8.5px] font-semibold text-white/75">{label}</span>
-        </span>
-      </div>
-    </div>
-  )
-}
 
 function QuickTool({ icon, label, onClick }) {
   return (
