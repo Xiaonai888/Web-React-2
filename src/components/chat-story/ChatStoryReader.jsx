@@ -1,3 +1,4 @@
+import ChatStoryVoice, { ChatVoiceSessionContext, getChatRecordingDelay, isChatVoiceMessage } from './ChatStoryVoice'
 import { useChatStoryTheme } from '../../services/chatStoryThemes'
 import ChatStoryPhoneView, {
   chatCharacterId,
@@ -88,6 +89,8 @@ function parseChatStoryContent(content) {
       .filter((message) => {
         if (!message) return false
 
+        if (message.type === 'audio' || message.type === 'voice') return isChatVoiceMessage(message)
+
         if (message.type === 'image' || message.type === 'sticker') {
           return Boolean(message.image_url || message.imageUrl)
         }
@@ -135,6 +138,8 @@ function getCharacterId(message) {
 
 function isCharacterMessage(message) {
   if (
+    message?.type !== 'audio' &&
+    message?.type !== 'voice' &&
     message?.type !== 'chat' &&
     message?.type !== 'image' &&
     message?.type !== 'sticker'
@@ -395,6 +400,23 @@ function ChatStoryMessage({
   groupedBefore,
   groupedAfter,
 }) {
+  if (isChatVoiceMessage(message)) {
+    const right = isRightMessage(message, character, leadCharacterId)
+    return (
+      <div className={`flex items-end gap-2 py-2 ${right ? 'justify-end' : 'justify-start'}`}>
+        {!right ? <AvatarSlot character={character} visible={showAvatar} /> : null}
+        <div className="min-w-0 max-w-[76%]">
+          <CharacterName character={character} isRight={right} visible={showName} />
+          <ChatStoryVoice message={message}
+            label={getDisplayText('chatStoryPhone.voice')}
+            retryLabel={getDisplayText('chatStoryPhone.voiceRetry')}
+            errorLabel={getDisplayText('chatStoryPhone.voiceFailed')} />
+        </div>
+        {right ? <AvatarSlot character={character} visible={showAvatar} /> : null}
+      </div>
+    )
+  }
+
   if (message.type === 'aside') {
     return <AsideMessage message={message} />
   }
@@ -453,13 +475,15 @@ export default function ChatStoryReader({
   const { t } = useDisplayTranslation()
   const chatTheme = useChatStoryTheme()
   const parsedContent = useMemo(() => parseChatStoryContent(content), [content])
-  const initialCount = parsedContent.messages.length ? 1 : 0
+  const initialCount = parsedContent.messages.length && !isChatVoiceMessage(parsedContent.messages[0]) ? 1 : 0
   const [reading, setReading] = useState(() => ({
     content,
     count: initialCount,
   }))
   const visibleCount =
     reading.content === content ? reading.count : initialCount
+  const voiceSession = useMemo(() => ({ positions: new WeakMap() }), [parsedContent])
+  const [voiceSettled, setVoiceSettled] = useState({ source: null, index: -1 })
   const [userPaused, setUserPaused] = useState(false)
   const [finishedSource, setFinishedSource] = useState(null)
   const [pageVisible, setPageVisible] = useState(
@@ -505,6 +529,14 @@ export default function ChatStoryReader({
     [parsedContent, visibleCount]
   )
   const nextMessage = parsedContent.messages[visibleCount]
+  const currentMessage = parsedContent.messages[visibleCount - 1]
+  const voiceFinished = voiceSettled.source === parsedContent && voiceSettled.index === visibleCount - 1
+  const voiceWaiting = isChatVoiceMessage(currentMessage) && !voiceFinished
+  const finishVoice = (message) => {
+    if (message !== currentMessage) return
+    setVoiceSettled({ source: parsedContent, index: visibleCount - 1 })
+  }
+  const failVoice = (error, message) => finishVoice(message)
   const completed =
     parsedContent.messages.length > 0 &&
     visibleCount >= parsedContent.messages.length
@@ -516,24 +548,25 @@ export default function ChatStoryReader({
     (!completed || finishedSource !== parsedContent) &&
     !parsedContent.errorKey &&
     parsedContent.messages.length > 0
-  const timing = useMemo(
-    () =>
-      createChatTiming(
-        parsedContent.messages[visibleCount - 1],
-        nextMessage,
-        autoTapDelay
-      ),
-    [parsedContent, visibleCount, nextMessage, autoTapDelay]
-  )
+  const timing = useMemo(() => {
+    const base = createChatTiming(currentMessage, nextMessage, autoTapDelay)
+    const recording = isChatVoiceMessage(nextMessage)
+    return {
+      ...base,
+      reading: !currentMessage || isChatVoiceMessage(currentMessage) ? 0 : base.reading,
+      typing: recording ? getChatRecordingDelay(nextMessage) : base.typing,
+    }
+  }, [currentMessage, nextMessage, autoTapDelay])
   const elapsed =
     clock.source === parsedContent && clock.index === visibleCount
       ? clock.elapsed
       : 0
   const typingElapsed = Math.max(0, elapsed - timing.reading)
   const typingMessage =
-    active && timing.typing > 0 && elapsed >= timing.reading
+    active && !voiceWaiting && !isChatVoiceMessage(nextMessage) && timing.typing > 0 && elapsed >= timing.reading
       ? nextMessage
       : null
+  const recordingMessage = active && !voiceWaiting && isChatVoiceMessage(nextMessage) && elapsed >= timing.reading ? nextMessage : null
   const draft = useMemo(() => {
     if (!typingMessage || chatCharacterId(typingMessage) !== leadCharacterId)
       return ''
@@ -571,14 +604,14 @@ export default function ChatStoryReader({
     onProgressRef.current?.(
       total ? Math.round((visibleCount / total) * 100) : 0
     )
-    if (completed && completionSentRef.current !== parsedContent) {
+    if (completed && (!voiceWaiting || (readMode !== 'auto' && !userPaused)) && completionSentRef.current !== parsedContent) {
       completionSentRef.current = parsedContent
       onCompleteRef.current?.()
     }
-  }, [parsedContent, visibleCount, completed])
+  }, [parsedContent, visibleCount, completed, voiceWaiting, readMode, userPaused])
 
   useEffect(() => {
-    if (!active) return undefined
+    if (!active || voiceWaiting) return undefined
     if (
       cycleRef.current.source !== parsedContent ||
       cycleRef.current.index !== visibleCount
@@ -637,6 +670,7 @@ export default function ChatStoryReader({
     }
   }, [
     active,
+    voiceWaiting,
     parsedContent,
     visibleCount,
     timing,
@@ -711,7 +745,7 @@ export default function ChatStoryReader({
   }
 
   return (
-    <>
+    <ChatVoiceSessionContext.Provider value={voiceSession}>
       {!active ? (
         <section
           style={{
@@ -800,6 +834,11 @@ export default function ChatStoryReader({
           leadCharacterId={leadCharacterId}
           typingMessage={typingMessage}
           draft={draft}
+          recordingMessage={recordingMessage}
+          recordingElapsed={typingElapsed}
+          voicePlaybackIndex={voiceWaiting ? visibleCount - 1 : -1}
+          onVoiceEnded={finishVoice}
+          onVoiceError={failVoice}
           onPause={pausePhone}
           themeName={phoneTheme}
           fontFamily={phoneFontFamily}
@@ -808,7 +847,8 @@ export default function ChatStoryReader({
           brightnessOpacity={brightnessOpacity}
         />
       ) : null}
-    </>
+    </ChatVoiceSessionContext.Provider>
   )
 }
+
 
