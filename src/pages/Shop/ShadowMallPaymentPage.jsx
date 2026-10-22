@@ -80,17 +80,21 @@ function readCart() {
   return Array.isArray(value) ? value : []
 }
 
-function saveBuyerProfileLocal(profile) {
-  localStorage.setItem(BUYER_PROFILE_KEY, JSON.stringify(profile))
+function saveBuyerProfileLocal() {
+  try {
+    localStorage.removeItem(BUYER_PROFILE_KEY)
+  } catch {}
 }
 
 function readBuyerProfileLocal() {
-  return readJson(BUYER_PROFILE_KEY, {
+  saveBuyerProfileLocal()
+
+  return {
     phone_number: '',
     province_city: 'Phnom Penh',
     delivery_address: '',
     delivery_note: '',
-  })
+  }
 }
 
 function readReaderUser() {
