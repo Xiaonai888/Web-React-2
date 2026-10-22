@@ -1,3 +1,4 @@
+import { useChatStoryTheme } from '../../services/chatStoryThemes'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
@@ -375,38 +376,38 @@ const PHONE_CSS = `
 }
 .cs-phone *, .cs-phone *::before, .cs-phone *::after { box-sizing: border-box; }
 .cs-phone button { font: inherit; cursor: pointer; }
-.cs-phone button:focus-visible { outline: 2px solid #9670e8; outline-offset: 3px; }
+.cs-phone button:focus-visible { outline: 2px solid var(--cs-accent); outline-offset: 3px; }
 .cs-phone-header {
   flex: none; background: var(--cs-surface); border-bottom: 1px solid var(--cs-border);
   padding-top: env(safe-area-inset-top, 0px);
 }
 .cs-phone-header-inner { display: flex; align-items: center; gap: 11px; min-height: 72px; padding: 10px 14px; max-width: 760px; margin: auto; }
-.cs-phone-icon { border: 0; padding: 0; background: transparent; color: #9270d3; width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 50%; }
+.cs-phone-icon { border: 0; padding: 0; background: transparent; color: var(--cs-accent); width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 50%; }
 .cs-phone-icon svg { width: 23px; height: 23px; }
 .cs-phone-pause { border: 1px solid var(--cs-border); margin-left: auto; }
 .cs-phone-group { width: 42px; height: 42px; border-radius: 50%; display: flex; overflow: hidden; flex: none; background: var(--cs-soft); }
 .cs-phone-group img { min-width: 0; flex: 1 1 0; width: 0; height: 100%; object-fit: cover; border-right: 1px solid var(--cs-surface); }
 .cs-phone-group img:last-child { border-right: 0; }
-.cs-phone-group-fallback { margin: auto; color: #9270d3; font-size: 24px; }
+.cs-phone-group-fallback { margin: auto; color: var(--cs-accent); font-size: 24px; }
 .cs-phone-heading { min-width: 0; flex: 1; }
 .cs-phone-heading h2 { margin: 0; font: 650 16px/1.55 'Noto Sans Khmer', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cs-phone-status { height: 21px; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--cs-muted); min-width: 0; }
 .cs-phone-status span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cs-phone-status-active { color: #a07be6; }
+.cs-phone-status-active { color: var(--cs-accent); }
 .cs-phone-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; overflow-anchor: none; }
 .cs-phone-messages { max-width: 720px; margin: 0 auto; padding: 20px 16px 24px; }
 .cs-phone-message { display: flex; align-items: flex-start; gap: 8px; margin-top: 17px; }
 .cs-phone-message:first-child { margin-top: 0; }
 .cs-phone-grouped { margin-top: 4px; }
 .cs-phone-right { justify-content: flex-end; }
-.cs-phone-portrait { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: var(--cs-soft); color: #a78bd9; font-size: 14px; }
+.cs-phone-portrait { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: var(--cs-soft); color: var(--cs-accent); font-size: 14px; }
 .cs-phone-portrait img { width: 100%; height: 100%; object-fit: cover; }
 .cs-phone-avatar-space { width: 34px; flex: none; }
 .cs-phone-message-body { min-width: 0; max-width: 79%; }
 .cs-phone-right .cs-phone-message-body { max-width: 82%; }
 .cs-phone-name { font-size: 11px; font-weight: 600; margin: 0 3px 4px; line-height: 1.6; }
 .cs-phone-bubble { display: inline-block; background: var(--cs-soft); border-radius: 17px 17px 17px 5px; padding: 9px 13px; font-size: var(--cs-font-size, 15px); line-height: var(--cs-line-height, 1.8); white-space: pre-wrap; overflow-wrap: anywhere; }
-.cs-phone-right .cs-phone-bubble { background: linear-gradient(125deg, #9656dc, #7050dc); color: white; border-radius: 17px 17px 5px 17px; }
+.cs-phone-right .cs-phone-bubble { background: linear-gradient(125deg, var(--cs-outgoing), var(--cs-outgoing-end)); color: white; border-radius: 17px 17px 5px 17px; }
 .cs-phone-media { overflow: hidden; border-radius: 15px; }
 .cs-phone-image { display: block; width: auto; max-width: 100%; max-height: 52dvh; object-fit: contain; border-radius: 15px; }
 .cs-phone-sticker { display: block; width: auto; max-width: 160px; max-height: 180px; object-fit: contain; }
@@ -427,8 +428,8 @@ const PHONE_CSS = `
 .cs-phone-input { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px; background: var(--cs-soft); border-radius: 24px; padding: 9px 10px 9px 15px; }
 .cs-phone-draft { flex: 1; min-width: 0; max-height: 68px; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.6; }
 .cs-phone-placeholder { color: var(--cs-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
-.cs-phone-caret { display: inline-block; width: 2px; height: 1.1em; vertical-align: -0.15em; margin-left: 2px; background: #9670e8; animation: cs-phone-caret 1s steps(2) infinite; }
-.cs-phone-send { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%; background: #8b5cdb; color: #fff; opacity: 0.35; }
+.cs-phone-caret { display: inline-block; width: 2px; height: 1.1em; vertical-align: -0.15em; margin-left: 2px; background: var(--cs-accent); animation: cs-phone-caret 1s steps(2) infinite; }
+.cs-phone-send { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--cs-outgoing); color: #fff; opacity: 0.35; }
 .cs-phone-send-active { opacity: 1; }
 .cs-phone-send svg { width: 17px; height: 17px; }
 .cs-phone-dimmer { position: absolute; inset: 0; z-index: 2; background: black; pointer-events: none; }
@@ -454,6 +455,7 @@ export default function ChatStoryPhoneView({
   brightnessOpacity = 0,
 }) {
   const { t } = useDisplayTranslation()
+  const chatTheme = useChatStoryTheme()
   const rootRef = useRef(null)
   const scrollRef = useRef(null)
   const messagesRef = useRef(null)
@@ -474,10 +476,10 @@ export default function ChatStoryPhoneView({
   const leadName = lead?.nickname || t('chatStoryPhone.you')
   const colors = useMemo(
     () =>
-      themeName === 'dark'
+      chatTheme.theme.group === 'dark'
         ? ['#c2a1ff', '#79cfc5', '#edbf80', '#f0a3bd', '#9dbafa']
         : ['#7952b3', '#237f7b', '#956321', '#b4466d', '#3c65b0'],
-    [themeName]
+    [chatTheme.theme.group]
   )
 
   const messageRows = useMemo(
@@ -612,6 +614,8 @@ export default function ChatStoryPhoneView({
       onClick={(event) => event.stopPropagation()}
       style={{
         ...PHONE_THEMES[themeName],
+        ...chatTheme.style,
+        backgroundImage: 'none',
         fontFamily,
         '--cs-font-size': `${fontSize}px`,
         '--cs-line-height': lineHeight,
@@ -675,6 +679,13 @@ export default function ChatStoryPhoneView({
       <div
         ref={scrollRef}
         className="cs-phone-scroll"
+        style={{
+          backgroundColor: chatTheme.theme.background,
+          backgroundImage: chatTheme.style.backgroundImage,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
         onWheel={(event) => {
           if (event.deltaY < -5) onPauseRef.current?.()
         }}
@@ -757,3 +768,4 @@ export default function ChatStoryPhoneView({
     document.body
   )
 }
+
