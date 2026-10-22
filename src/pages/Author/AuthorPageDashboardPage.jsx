@@ -893,7 +893,7 @@ function LoadingDashboard({ navigate }) {
         </div>
       </main>
 
-      <AuthorPageFooter active="Dashboard" />
+      
     </div>
   )
 }
@@ -1439,7 +1439,7 @@ onClick={() => setActiveTab(tab.id)}
 ) : null}
 
 
-      <AuthorPageFooter active="Dashboard" />
+      
     </div>
   )
 }
