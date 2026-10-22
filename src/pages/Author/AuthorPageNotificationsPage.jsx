@@ -231,7 +231,7 @@ function pageNotificationText(key, options) {
   return getDisplayText(`authorPageNotifications.${key}`, options)
 }
 
-import AuthorPageFooter from '../../components/AuthorPageFooter'
+import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import { resolveAuthorPostActivityRoute } from '../../utils/authorPostActivityRoute'
 
@@ -1190,6 +1190,7 @@ export default function AuthorPageNotificationsPage() {
     selectedNotification,
     setSelectedNotification,
   ] = useState(null)
+  useAuthorPageFooterVisibility(!selectedNotification)
   const [
     optionsLoading,
     setOptionsLoading,
@@ -1840,16 +1841,6 @@ export default function AuthorPageNotificationsPage() {
           />
         )}
       </main>
-
-      <div
-        className={
-          selectedNotification
-            ? 'invisible'
-            : ''
-        }
-      >
-        <AuthorPageFooter active="Notifications" />
-      </div>
 
       <OptionsSheet
         notification={
