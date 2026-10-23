@@ -117,15 +117,13 @@ export function AuthorPageNotificationProvider({ children }) {
   const storyStatsListenersRef = useRef(new Set())
 
   const subscribeAuthorStoryStats = useCallback((listener) => {
-    const getAuthorNotificationRevision = useCallback(
-  () => notificationRevisionRef.current,
-  []
-)
     if (typeof listener !== 'function') return () => {}
     const listeners = storyStatsListenersRef.current
     listeners.add(listener)
     return () => listeners.delete(listener)
   }, [])
+
+  const getAuthorNotificationRevision = useCallback(() => notificationRevisionRef.current, [])
 
   const setAuthorUnreadCount = useCallback((value) => {
     setAuthorUnreadCountState(Math.max(0, Number(value || 0)))
@@ -174,12 +172,17 @@ export function AuthorPageNotificationProvider({ children }) {
     }
     refreshToken()
     window.addEventListener('storage', refreshToken)
-    return () => window.removeEventListener('storage', refreshToken)
+    window.addEventListener('focus', refreshToken)
+    return () => {
+      window.removeEventListener('storage', refreshToken)
+      window.removeEventListener('focus', refreshToken)
+    }
   }, [location.pathname])
 
   useEffect(() => {
+    notificationRevisionRef.current = 0
+    setAuthorUnreadCountState(0)
     if (!sessionToken) {
-      setAuthorUnreadCountState(0)
       setHasAuthorPage(false)
       setLastCreatedNotification(null)
       setConnectionState('idle')
@@ -189,7 +192,6 @@ export function AuthorPageNotificationProvider({ children }) {
     setLastCreatedNotification(null)
     setConnectionState('idle')
     if (visible && online) {
-      lastVisibleSyncAtRef.current = Date.now()
       void syncAuthorUnreadCount()
     }
   }, [sessionToken, syncAuthorUnreadCount])
@@ -208,35 +210,10 @@ export function AuthorPageNotificationProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    let previousVisibility = document.visibilityState
-    let previousOnline = navigator.onLine
-
-    const handleVisible = () => {
-      const nextToken = getReaderToken()
-      const visibleNow = document.visibilityState === 'visible'
-      const onlineNow = navigator.onLine
-      const resumed = previousVisibility !== 'visible' || !previousOnline
-      previousVisibility = document.visibilityState
-      previousOnline = onlineNow
-      setSessionToken((current) => current === nextToken ? current : nextToken)
-      if (!visibleNow || !onlineNow || !nextToken) return
-      const now = Date.now()
-      if (!resumed && now - lastVisibleSyncAtRef.current < VISIBLE_SYNC_INTERVAL_MS) return
-      lastVisibleSyncAtRef.current = now
-      void syncAuthorUnreadCount()
+    if (sessionToken && (!visible || !online)) {
+      notificationRevisionRef.current += 1
     }
-
-    window.addEventListener('focus', handleVisible)
-    document.addEventListener('visibilitychange', handleVisible)
-    window.addEventListener('online', handleVisible)
-    window.addEventListener('offline', handleVisible)
-    return () => {
-      window.removeEventListener('focus', handleVisible)
-      document.removeEventListener('visibilitychange', handleVisible)
-      window.removeEventListener('online', handleVisible)
-      window.removeEventListener('offline', handleVisible)
-    }
-  }, [syncAuthorUnreadCount])
+  }, [sessionToken, visible, online])
 
   useEffect(() => {
     if (!sessionToken || !hasAuthorPage || !visible || !online) {
@@ -281,12 +258,9 @@ export function AuthorPageNotificationProvider({ children }) {
         return
       }
 
-      if (payload?.action !== 'created') return
-      const delta = Number(payload.unread_delta ?? 1)
-      setAuthorUnreadCountState((current) =>
-        Math.max(0, current + (Number.isFinite(delta) ? delta : 1))
-      )
-      if (payload.notification) setLastCreatedNotification(payload.notification)
+      if (payload?.action === 'created') {
+        notificationRevisionRef.current += 1
+      }
     }
 
     const run = async () => {
@@ -294,20 +268,7 @@ export function AuthorPageNotificationProvider({ children }) {
       let reconcile = false
       while (!cancelled && getReaderToken() === sessionToken) {
         if (reconcile) {
-          const result = await requestUnreadCount(sessionToken)
-          if (cancelled) return
-          if (result.authError || !result.hasAuthorPage && result.ok) {
-            setConnectionState('idle')
-            if (result.ok) setHasAuthorPage(false)
-            return
-          }
-          if (!result.ok) {
-            setConnectionState('disconnected')
-            failures += 1
-            await delay(Math.min(MAX_RECONNECT_MS, MIN_RECONNECT_MS * 2 ** Math.min(failures - 1, 4)))
-            continue
-          }
-          setAuthorUnreadCountState(result.count)
+          notificationRevisionRef.current += 1
           reconcile = false
         }
 
@@ -370,6 +331,7 @@ export function AuthorPageNotificationProvider({ children }) {
     setAuthorUnreadCount,
     adjustAuthorUnreadCount,
     syncAuthorUnreadCount,
+    getAuthorNotificationRevision,
     subscribeAuthorStoryStats,
   }), [
     authorUnreadCount,
@@ -378,6 +340,7 @@ export function AuthorPageNotificationProvider({ children }) {
     setAuthorUnreadCount,
     adjustAuthorUnreadCount,
     syncAuthorUnreadCount,
+    getAuthorNotificationRevision,
     subscribeAuthorStoryStats,
   ])
 
