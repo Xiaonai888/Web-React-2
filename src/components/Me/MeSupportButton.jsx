@@ -14,8 +14,11 @@ registerTranslationNamespace('meSupport', {
 export default function MeSupportButton() {
   const { t } = useDisplayTranslation()
   const [open, setOpen] = useState(false)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [dragging, setDragging] = useState(false)
   const triggerRef = useRef(null)
   const dialogRef = useRef(null)
+  const swipeRef = useRef(null)
   const titleId = useId()
   const dialogId = useId()
 
@@ -23,9 +26,10 @@ export default function MeSupportButton() {
     if (!open) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    document.body.classList.add('me-support-sheet-open')
     const dialog = dialogRef.current
     const focusable = () => Array.from(dialog.querySelectorAll('a[href], button:not([disabled])'))
-    focusable()[0]?.focus()
+    focusable()[0]?.focus({ preventScroll: true })
 
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
@@ -48,10 +52,48 @@ export default function MeSupportButton() {
     document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.body.style.overflow = previousOverflow
+      document.body.classList.remove('me-support-sheet-open')
       document.removeEventListener('keydown', handleKeyDown)
+      swipeRef.current = null
+      setDragOffset(0)
+      setDragging(false)
       triggerRef.current?.focus({ preventScroll: true })
     }
   }, [open])
+
+  const onSwipeStart = (event) => {
+    if (event.touches.length !== 1 || dialogRef.current?.scrollTop > 0) {
+      swipeRef.current = null
+      return
+    }
+    swipeRef.current = { startY: event.touches[0].clientY, startTime: Date.now(), offset: 0 }
+  }
+
+  const onSwipeMove = (event) => {
+    if (!swipeRef.current || event.touches.length !== 1) return
+    if (dialogRef.current?.scrollTop > 0) {
+      swipeRef.current = null
+      setDragOffset(0)
+      setDragging(false)
+      return
+    }
+    const offset = Math.max(0, event.touches[0].clientY - swipeRef.current.startY)
+    swipeRef.current.offset = offset
+    if (offset > 4) {
+      setDragging(true)
+      setDragOffset(offset)
+    }
+  }
+
+  const onSwipeEnd = () => {
+    const swipe = swipeRef.current
+    swipeRef.current = null
+    setDragging(false)
+    setDragOffset(0)
+    if (swipe && (swipe.offset >= 90 || (swipe.offset >= 45 && Date.now() - swipe.startTime < 250))) {
+      setOpen(false)
+    }
+  }
 
   const contacts = [
     { name: 'ប្រលោមលោកស្នេហា', label: t('meSupport.facebook'), href: 'https://web.facebook.com/AlphaCentauri12226/', icon: 'fa-brands fa-facebook-f', color: '#1877F2' },
@@ -80,7 +122,8 @@ export default function MeSupportButton() {
       </button>
 
       {open && createPortal(
-        <div className="fixed inset-0 z-[10000] flex items-end justify-center">
+        <div className="fixed inset-0 z-[100010] flex items-end justify-center">
+          <style>{'body.me-support-sheet-open footer.app-nav { visibility: hidden !important; }'}</style>
           <div className="absolute inset-0 bg-[var(--shadow-overlay)]" onClick={() => setOpen(false)} aria-hidden="true" />
           <section
             ref={dialogRef}
@@ -88,17 +131,21 @@ export default function MeSupportButton() {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
+            onTouchStart={onSwipeStart}
+            onTouchMove={onSwipeMove}
+            onTouchEnd={onSwipeEnd}
+            onTouchCancel={onSwipeEnd}
             className="relative max-h-[85dvh] w-full max-w-[560px] overflow-y-auto rounded-t-[26px] border border-b-0 border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-5 pt-3 text-[var(--shadow-text-primary)]"
-            style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+            style={{
+              paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+              transform: `translateY(${dragOffset}px)`,
+              transition: dragging ? 'none' : 'transform 180ms ease-out',
+              overscrollBehavior: 'contain',
+            }}
           >
             <div className="mx-auto h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" aria-hidden="true" />
             <div className="mb-4 mt-3 flex items-center justify-between gap-3">
               <h2 id={titleId} className="text-[18px] font-bold">{t('meSupport.title')}</h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label={t('meSupport.close')} className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] hover:bg-[var(--shadow-bg-hover)] active:scale-95">
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-                  <path d="m6 6 12 12M18 6 6 18" />
-                </svg>
-              </button>
             </div>
             <div className="overflow-hidden rounded-[20px] border border-[var(--shadow-border)]">
               {contacts.map((contact, index) => (
