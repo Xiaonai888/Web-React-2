@@ -1172,7 +1172,11 @@ function syncCachedNotificationMutation(path, method, response) {
   for (const [key, entry] of notificationPageCache) {
     if (!key.startsWith(`${token}:`)) continue
     let notifications = entry.notifications
-    let hasMore = entry.hasMore
+    if (nextUnread === true && key === notificationCacheKey(token, 'unread') && !notifications.some((item) => String(item.id) === id)) {
+  notificationPageCache.delete(key)
+  continue
+}
+let hasMore = entry.hasMore
     let nextCursor = entry.nextCursor
     let preferences = entry.preferences
     if (markAll) {
