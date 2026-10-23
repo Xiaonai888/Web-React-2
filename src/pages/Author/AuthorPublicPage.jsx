@@ -170,6 +170,8 @@ registerTranslationNamespace('authorPublicPage', {
     store: 'Store',
     noWorksYet: 'No works yet',
     noWorksText: 'Published novels, chat stories, and manga will appear here.',
+    loadMoreReviews: 'Load 10 more reviews',
+    tryAgain: 'Try again',
     reviewSettingsSaved: 'Review settings saved.',
   },
   km: {
@@ -323,6 +325,8 @@ registerTranslationNamespace('authorPublicPage', {
     store: 'Store',
     noWorksYet: 'មិនទាន់មានស្នាដៃ',
     noWorksText: 'Novel, Chat Story និង Manga ដែលបាន Publish នឹងបង្ហាញនៅទីនេះ។',
+    loadMoreReviews: 'ផ្ទុក Review ១០ ទៀត',
+    tryAgain: 'ព្យាយាមម្តងទៀត',
     reviewSettingsSaved: 'បានរក្សាទុកការកំណត់ Review។',
   },
   zh: {
@@ -476,6 +480,8 @@ registerTranslationNamespace('authorPublicPage', {
     store: '商店',
     noWorksYet: '暂无作品',
     noWorksText: '已发布的小说、Chat Story 和 Manga 会显示在这里。',
+    loadMoreReviews: '再加载 10 条评价',
+    tryAgain: '重试',
     reviewSettingsSaved: '评价设置已保存。',
   },
   ja: {
@@ -629,6 +635,8 @@ registerTranslationNamespace('authorPublicPage', {
     store: 'ストア',
     noWorksYet: '作品はまだありません',
     noWorksText: '公開した小説、Chat Story、Manga がここに表示されます。',
+    loadMoreReviews: 'レビューをさらに10件表示',
+    tryAgain: '再試行',
     reviewSettingsSaved: 'レビュー設定を保存しました。',
   },
   ko: {
@@ -782,6 +790,8 @@ registerTranslationNamespace('authorPublicPage', {
     store: '스토어',
     noWorksYet: '아직 작품이 없습니다',
     noWorksText: '게시된 소설, Chat Story, Manga가 여기에 표시됩니다.',
+    loadMoreReviews: '리뷰 10개 더 보기',
+    tryAgain: '다시 시도',
     reviewSettingsSaved: '리뷰 설정을 저장했습니다.',
   },
 })
@@ -795,6 +805,47 @@ const AUTHOR_PAGE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 const tabs = ['Posts', 'Works', 'Store']
 const AUTHOR_OWNER_CACHE = new Map()
+const AUTHOR_REVIEW_CACHE = new Map()
+const AUTHOR_REVIEW_PENDING = new Map()
+const AUTHOR_REVIEW_CACHE_TTL_MS = 10 * 60 * 1000
+const AUTHOR_REVIEW_PAGE_SIZE = 10
+
+function getAuthorReviewCacheKey(username) {
+  const viewer = getAuthorPublicQueueAccount(getAuthToken()) || 'guest'
+  return `${viewer}:${String(username || '').trim().toLowerCase()}`
+}
+
+function saveAuthorReviewCache(key, snapshot) {
+  AUTHOR_REVIEW_CACHE.delete(key)
+  AUTHOR_REVIEW_CACHE.set(key, { ...snapshot, cachedAt: Date.now() })
+  while (AUTHOR_REVIEW_CACHE.size > 50) {
+    AUTHOR_REVIEW_CACHE.delete(AUTHOR_REVIEW_CACHE.keys().next().value)
+  }
+}
+
+async function fetchAuthorReviewsPage(username, offset = 0) {
+  const token = getAuthToken()
+  const params = new URLSearchParams({
+    limit: String(AUTHOR_REVIEW_PAGE_SIZE),
+    offset: String(offset),
+  })
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews?${params.toString()}`,
+    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+  )
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || getDisplayText('authorPublicPage.failedLoadReviews'))
+  }
+  const reviews = Array.isArray(data.reviews) ? data.reviews : []
+  return {
+    reviews,
+    summary: data.summary || { total_count: 0, recommend_count: 0, recommend_percent: 0 },
+    myReview: data.my_review || null,
+    hasMore: Boolean(data.has_more),
+    nextOffset: data.has_more ? Number(data.next_offset ?? offset + reviews.length) : null,
+  }
+}
 
 function getAuthToken() {
   return (
@@ -1871,6 +1922,13 @@ export default function AuthorPublicPage() {
   const [myReview, setMyReview] = useState(null)
   const [reviewLoading, setReviewLoading] = useState(false)
   const [reviewItems, setReviewItems] = useState([])
+  const [reviewsHasMore, setReviewsHasMore] = useState(false)
+  const [reviewsNextOffset, setReviewsNextOffset] = useState(null)
+  const [reviewLoadingMore, setReviewLoadingMore] = useState(false)
+  const [reviewLoadError, setReviewLoadError] = useState('')
+  const [reviewErrorMode, setReviewErrorMode] = useState('first')
+  const reviewRequestIdRef = useRef(0)
+  const reviewLoadMoreRef = useRef(false)
   const [reviewsOverviewOpen, setReviewsOverviewOpen] = useState(false)
   const reviewsOverviewDragStartRef = useRef(null)
   const reviewsOverviewDragCurrentRef = useRef(0)
@@ -2372,48 +2430,111 @@ useEffect(() => {
   }
 
 
-  async function loadAuthorReviews(username) {
-  if (!username) return
+  async function loadAuthorReviews(username, { force = false } = {}) {
+    if (!username) return
+    const key = getAuthorReviewCacheKey(username)
+    const requestId = ++reviewRequestIdRef.current
+    if (force) AUTHOR_REVIEW_CACHE.delete(key)
+    const cached = AUTHOR_REVIEW_CACHE.get(key)
+    setReviewLoadError('')
+    setReviewErrorMode('first')
+    setReviewLoadingMore(false)
+    reviewLoadMoreRef.current = false
 
-  try {
-    setReviewLoading(true)
-    const token = getAuthToken()
-    const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || getDisplayText('authorPublicPage.failedLoadReviews'))
+    const applyPage = (page) => {
+      setReviewSummary(page.summary)
+      setMyReview(page.myReview)
+      setReviewItems(page.reviews)
+      setReviewsHasMore(page.hasMore)
+      setReviewsNextOffset(page.nextOffset)
     }
 
-    setReviewSummary(data.summary || {
-      total_count: 0,
-      recommend_count: 0,
-      recommend_percent: 0,
-    })
-    setMyReview(data.my_review || null)
-    setReviewItems(Array.isArray(data.reviews) ? data.reviews : [])
-  } catch {
-    setReviewSummary({
-      total_count: 0,
-      recommend_count: 0,
-      recommend_percent: 0,
-    })
-    setMyReview(null)
-    setReviewItems([])
-  } finally {
-    setReviewLoading(false)
-  }
-}
+    if (!force && cached && Date.now() - cached.cachedAt < AUTHOR_REVIEW_CACHE_TTL_MS) {
+      applyPage(cached)
+      setReviewLoading(false)
+      return
+    }
 
+    if (cached && !force) {
+      applyPage(cached)
+    } else {
+      setReviewSummary({ total_count: 0, recommend_count: 0, recommend_percent: 0 })
+      setMyReview(null)
+      setReviewItems([])
+      setReviewsHasMore(false)
+      setReviewsNextOffset(null)
+    }
+
+    setReviewLoading(true)
+    let request = !force ? AUTHOR_REVIEW_PENDING.get(key) : null
+    if (!request) {
+      request = fetchAuthorReviewsPage(username)
+      AUTHOR_REVIEW_PENDING.set(key, request)
+      request.then(
+        () => { if (AUTHOR_REVIEW_PENDING.get(key) === request) AUTHOR_REVIEW_PENDING.delete(key) },
+        () => { if (AUTHOR_REVIEW_PENDING.get(key) === request) AUTHOR_REVIEW_PENDING.delete(key) }
+      )
+    }
+
+    try {
+      const page = await request
+      if (reviewRequestIdRef.current !== requestId) return
+      saveAuthorReviewCache(key, page)
+      applyPage(page)
+    } catch {
+      if (reviewRequestIdRef.current === requestId) {
+        setReviewErrorMode('first')
+        setReviewLoadError(getDisplayText('authorPublicPage.failedLoadReviews'))
+      }
+    } finally {
+      if (reviewRequestIdRef.current === requestId) setReviewLoading(false)
+    }
+  }
+
+  async function loadMoreAuthorReviews() {
+    const username = pageUsername || author?.page_username
+    if (!username || !reviewsHasMore || reviewsNextOffset == null || reviewLoadingMoreRef.current || reviewLoading) return
+    const requestId = reviewRequestIdRef.current
+    const key = getAuthorReviewCacheKey(username)
+    reviewLoadMoreRef.current = true
+    setReviewLoadingMore(true)
+    setReviewLoadError('')
+    setReviewErrorMode('more')
+
+    try {
+      const page = await fetchAuthorReviewsPage(username, reviewsNextOffset)
+      if (reviewRequestIdRef.current !== requestId) return
+      const seen = new Set(reviewItems.map((review) => String(review.id)))
+      const nextReviews = [...reviewItems, ...page.reviews.filter((review) => !seen.has(String(review.id)))]
+      setReviewItems(nextReviews)
+      setReviewSummary(page.summary)
+      setMyReview(page.myReview)
+      setReviewsHasMore(page.hasMore)
+      setReviewsNextOffset(page.nextOffset)
+      saveAuthorReviewCache(key, {
+        reviews: nextReviews,
+        summary: page.summary,
+        myReview: page.myReview,
+        hasMore: page.hasMore,
+        nextOffset: page.nextOffset,
+      })
+    } catch {
+      if (reviewRequestIdRef.current === requestId) {
+        setReviewLoadError(getDisplayText('authorPublicPage.failedLoadReviews'))
+      }
+    } finally {
+      if (reviewRequestIdRef.current === requestId) {
+        reviewLoadMoreRef.current = false
+        setReviewLoadingMore(false)
+      }
+    }
+  }
 
   useEffect(() => {
-    const username = author?.page_username || pageUsername
-
+    const username = pageUsername || author?.page_username
     if (!username || loading) return
-
     loadAuthorReviews(username)
+    return () => { reviewRequestIdRef.current += 1 }
   }, [author?.page_username, pageUsername, loading])
 
     useEffect(() => {
@@ -2554,7 +2675,7 @@ async function handleSaveReview() {
       throw new Error(data.message || getDisplayText('authorPublicPage.failedSaveReview'))
     }
 
-    await loadAuthorReviews(username)
+    await loadAuthorReviews(username, { force: true })
     setReviewOptionsOpen(false)
     setSelectedReviewOption(null)
     setReviewSheetOpen(false)
@@ -2604,7 +2725,7 @@ async function handleRemoveReview() {
       throw new Error(data.message || getDisplayText('authorPublicPage.failedRemoveReview'))
     }
 
-    await loadAuthorReviews(username)
+    await loadAuthorReviews(username, { force: true })
     setReviewSheetOpen(false)
     setReviewDraftText('')
     setReviewDraftError('')
@@ -3142,7 +3263,7 @@ onOpenStoreSetting={() => {
 ) : null}
 
       {reviewsListOpen ? (
-  <div className="fixed inset-0 z-[280] bg-[var(--shadow-bg-soft)]">
+  <div className="fixed inset-0 z-[280] overflow-y-auto bg-[var(--shadow-bg-soft)]">
     <header className="sticky top-0 z-10 flex h-[54px] items-center border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3">
       <button
         type="button"
@@ -3300,10 +3421,36 @@ onOpenStoreSetting={() => {
           })
         ) : (
           <div className="bg-[var(--shadow-bg-surface)] px-4 py-8 text-[14px] font-medium text-[var(--shadow-text-secondary)]">
-            {t('authorPublicPage.noReviewsYet')}
+            {reviewLoading ? t('authorPublicPage.loadingReviews') : reviewLoadError ? '' : t('authorPublicPage.noReviewsYet')}
           </div>
         )}
       </div>
+
+      {reviewLoadError ? (
+        <div className="bg-[var(--shadow-bg-surface)] px-4 py-5 text-center">
+          <p className="mb-3 text-sm text-[var(--shadow-text-secondary)]">{reviewLoadError}</p>
+          <button
+            type="button"
+            onClick={() => reviewErrorMode === 'more' ? loadMoreAuthorReviews() : loadAuthorReviews(pageUsername || author?.page_username, { force: true })}
+            disabled={reviewLoading || reviewLoadingMore}
+            className="rounded-xl border border-[var(--shadow-border)] px-5 py-2.5 text-sm font-medium text-[var(--shadow-text-primary)] disabled:opacity-50"
+          >
+            {t('authorPublicPage.tryAgain')}
+          </button>
+        </div>
+      ) : null}
+      {reviewsHasMore && reviewsNextOffset != null && !reviewLoadError ? (
+        <div className="bg-[var(--shadow-bg-surface)] px-4 py-5 text-center">
+          <button
+            type="button"
+            onClick={loadMoreAuthorReviews}
+            disabled={reviewLoading || reviewLoadingMore}
+            className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-6 py-3 text-sm font-medium text-[var(--shadow-text-primary)] disabled:opacity-50"
+          >
+            {reviewLoadingMore ? t('authorPublicPage.loadingReviews') : t('authorPublicPage.loadMoreReviews')}
+          </button>
+        </div>
+      ) : null}
     </main>
 
     {reviewInfoOpen ? (
