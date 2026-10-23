@@ -9,7 +9,7 @@ import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguag
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
-import { Search } from 'lucide-react'
+import { Search, ChevronRight } from 'lucide-react'
 
 registerTranslationNamespace('chatStoryHomePage', {
   en: {
@@ -44,7 +44,7 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature2Title: 'Chat Story Creator Week',
     feature2Subtitle: 'Join the challenge',
     romance: 'Romance',
-    lgbt: 'LGBT',
+    lgbt: 'LGBTQ',
     cpIdol: 'CP Idol',
     modernRomance: 'Modern Romance',
     fantasyRomance: 'Fantasy Romance',
@@ -525,7 +525,7 @@ function SectionHeader({ icon, title, onMore }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3 px-4">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="text-[17px] leading-none">{icon}</span>
+        <span className="shrink-0 border-0 bg-transparent text-[17px] leading-none shadow-none outline-none ring-0">{icon}</span>
         <h2
           className="truncate text-[16px] font-bold leading-5"
           style={{ color: 'var(--shadow-text-primary)' }}
@@ -533,19 +533,21 @@ function SectionHeader({ icon, title, onMore }) {
           {title}
         </h2>
       </div>
-
-      <button
-        type="button"
-        onClick={onMore}
-        className="shrink-0 text-[11px] font-bold active:text-[#6d42db]"
-        style={{ color: 'var(--shadow-text-secondary)' }}
-      >
-        {t('chatStoryHomePage.seeAll')}{' '}
-        <i className="fa-solid fa-chevron-right ml-1 text-[8px]" />
-      </button>
+      {onMore ? (
+        <button
+          type="button"
+          onClick={onMore}
+          className="flex h-8 w-8 shrink-0 items-center justify-end border-0 bg-transparent p-0 shadow-none outline-none ring-0 active:scale-95"
+          style={{ color: 'var(--shadow-text-primary)' }}
+          aria-label={`${t('chatStoryHomePage.seeAll')} ${title}`}
+        >
+          <ChevronRight size={20} strokeWidth={2} aria-hidden="true" />
+        </button>
+      ) : null}
     </div>
   )
 }
+
 
 export default function ChatStoryHomePage() {
   const navigate = useNavigate()
@@ -743,8 +745,9 @@ export default function ChatStoryHomePage() {
   }
 
   return (
-    <div className="app-page min-h-screen pb-[110px]">
+    <div className="app-page chat-story-home-page min-h-screen pb-[110px]" style={{ backgroundColor: 'var(--shadow-bg-surface)' }}>
       <style>{`
+      body:has(.chat-story-home-page) { background: var(--shadow-bg-surface); }
         body.chat-story-home-bars-hidden footer { transform: translateY(110%); }
       `}</style>
       <header
@@ -807,7 +810,7 @@ export default function ChatStoryHomePage() {
           <SectionHeader
             icon="💎"
             title={t('chatStoryHomePage.hotPicks')}
-            onMore={() => openCollection('hot-picks')}
+            
           />
 
           <div className="flex gap-3 overflow-x-auto px-4 pb-2">
@@ -882,7 +885,11 @@ export default function ChatStoryHomePage() {
             <SectionHeader
               icon={section.icon}
               title={t(`chatStoryHomePage.${section.titleKey}`)}
-              onMore={() => openCollection(section.key)}
+              onMore={() => {
+  if (section.key === 'romance') return navigate('/genre/romance?story_type=chat_story')
+  if (section.key === 'lgbt') return navigate('/genre/bl?story_type=chat_story')
+  return openCollection(section.key)
+}}
             />
 
             <div className="flex gap-3 overflow-x-auto px-4 pb-2">
