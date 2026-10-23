@@ -850,8 +850,12 @@ export default function GenresPage() {
   const [message, setMessage] = useState('')
   const [loadMoreError, setLoadMoreError] = useState('')
   const loadMoreControllerRef = useRef(null)
-  const serverStoryStatus = activeQuickFilter === 'completed' || progress === 'completed' ? 'Completed' : ''
+    const serverStoryStatus = activeQuickFilter === 'completed' || progress === 'completed' ? 'Completed' : ''
 
+  useEffect(() => {
+    document.body.classList.add('genres-page-active')
+    return () => document.body.classList.remove('genres-page-active')
+  }, [])
   useEffect(() => {
     document.body.classList.add('genres-page-active')
     return () => document.body.classList.remove('genres-page-active')
