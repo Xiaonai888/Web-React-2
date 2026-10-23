@@ -620,40 +620,74 @@ function ThemeColorPicker({ value, title, hexLabel, onChange, onClose }) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    const pixels = context.createImageData(240, 240);
-    for (let y = 0; y < 240; y += 1) {
-      for (let x = 0; x < 240; x += 1) {
-        const dx = x - 120, dy = y - 120, distance = Math.hypot(dx, dy);
-        let rgb = null;
-        if (94 <= distance && distance <= 116) {
-          rgb = pickerRgb((Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360, 1, 1);
-        } else if (Math.abs(dx) + Math.abs(dy) <= 81) {
-          rgb = pickerRgb(hsv.h, (dx + dy) / 162 + 0.5, 1 - ((dy - dx) / 162 + 0.5));
-        }
-        if (rgb) {
-          const offset = (y * 240 + x) * 4;
-          pixels.data.set([...rgb, 255], offset);
-        }
+    if (!canvas) return undefined;
+    const context = canvas.getContext('2d', { alpha: true });
+    if (!context) return undefined;
+
+    const draw = () => {
+      const scale = Math.min(4, Math.max(2, window.devicePixelRatio || 1));
+      const dimension = Math.round(240 * scale);
+      if (canvas.width !== dimension || canvas.height !== dimension) {
+        canvas.width = dimension;
+        canvas.height = dimension;
       }
-    }
-    context.putImageData(pixels, 0, 0);
-    const marker = (x, y, color) => {
+      context.setTransform(dimension / 240, 0, 0, dimension / 240, 0, 0);
+      context.clearRect(0, 0, 240, 240);
+
+      const wheel = context.createConicGradient(Math.PI / 2, 120, 120);
+      for (let index = 0; index <= 6; index += 1) {
+        wheel.addColorStop(index / 6, `hsl(${index * 60}, 100%, 50%)`);
+      }
       context.beginPath();
-      context.arc(x, y, 7, 0, Math.PI * 2);
-      context.fillStyle = color;
-      context.fill();
-      context.lineWidth = 3;
-      context.strokeStyle = '#fff';
-      context.stroke();
-      context.lineWidth = 1;
-      context.strokeStyle = '#344054';
-      context.stroke();
+      context.arc(120, 120, 116, 0, Math.PI * 2);
+      context.arc(120, 120, 94, 0, Math.PI * 2, true);
+      context.fillStyle = wheel;
+      context.fill('evenodd');
+
+      context.save();
+      context.beginPath();
+      context.moveTo(120, 39);
+      context.lineTo(201, 120);
+      context.lineTo(120, 201);
+      context.lineTo(39, 120);
+      context.closePath();
+      context.clip();
+      context.fillStyle = pickerHex({ h: hsv.h, s: 1, v: 1 });
+      context.fillRect(39, 39, 162, 162);
+
+      const white = context.createLinearGradient(79.5, 79.5, 160.5, 160.5);
+      white.addColorStop(0, '#ffffff');
+      white.addColorStop(1, 'rgba(255,255,255,0)');
+      context.fillStyle = white;
+      context.fillRect(39, 39, 162, 162);
+
+      const black = context.createLinearGradient(79.5, 160.5, 160.5, 79.5);
+      black.addColorStop(0, '#000000');
+      black.addColorStop(1, 'rgba(0,0,0,0)');
+      context.fillStyle = black;
+      context.fillRect(39, 39, 162, 162);
+      context.restore();
+
+      const marker = (x, y, color) => {
+        context.beginPath();
+        context.arc(x, y, 7, 0, Math.PI * 2);
+        context.fillStyle = color;
+        context.fill();
+        context.lineWidth = 3;
+        context.strokeStyle = '#ffffff';
+        context.stroke();
+        context.lineWidth = 1;
+        context.strokeStyle = '#344054';
+        context.stroke();
+      };
+      marker(120 + Math.cos(hsv.h * Math.PI / 180) * 105, 120 + Math.sin(hsv.h * Math.PI / 180) * 105, pickerHex({ h: hsv.h, s: 1, v: 1 }));
+      const u = hsv.s - 0.5, w = 0.5 - hsv.v;
+      marker(120 + 81 * (u - w), 120 + 81 * (u + w), selected);
     };
-    marker(120 + Math.cos(hsv.h * Math.PI / 180) * 105, 120 + Math.sin(hsv.h * Math.PI / 180) * 105, pickerHex({ h: hsv.h, s: 1, v: 1 }));
-    const u = hsv.s - 0.5, w = 0.5 - hsv.v;
-    marker(120 + 81 * (u - w), 120 + 81 * (u + w), selected);
+
+    draw();
+    window.addEventListener('resize', draw);
+    return () => window.removeEventListener('resize', draw);
   }, [hsv, selected]);
 
   const update = (next) => {
