@@ -14,6 +14,7 @@ import { loadOfflineReaderFallback } from '../utils/offlineReaderFallback'
 import { rememberViewedEpisode } from '../utils/offlineViewedEpisode'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
 import ChatStoryThemePage from './ChatStoryThemePage'
+import ChatStoryTapIndicatorPage from './ChatStoryTapIndicatorPage'
 import { DEFAULT_CHAT_THEMES, saveChatTheme, useChatStoryTheme } from '../services/chatStoryThemes'
 import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisodeListDrawer'
 import StoryTranslateButton from '../components/reader/StoryTranslateButton'
@@ -4427,6 +4428,7 @@ function ReaderSettingsDrawer({
   const lineSpacingValue = lineSpacingValues[lineSpacing] || lineSpacingValues.comfort
   const [moreSettingsOpen, setMoreSettingsOpen] = useState(false)
   const [chatThemePageOpen, setChatThemePageOpen] = useState(false)
+  const [chatTapIndicatorPageOpen, setChatTapIndicatorPageOpen] = useState(false)
   const [chatThemeError, setChatThemeError] = useState(false)
   const chatTheme = useChatStoryTheme()
 
@@ -4481,6 +4483,15 @@ const handleDragEnd = () => {
     return <ChatStoryThemePage onBack={() => setChatThemePageOpen(false)} onApply={() => setChatThemePageOpen(false)} />
   }
 
+  if (isChatStory && chatTapIndicatorPageOpen) {
+  return (
+    <ChatStoryTapIndicatorPage
+      onBack={() => setChatTapIndicatorPageOpen(false)}
+      onApply={() => setChatTapIndicatorPageOpen(false)}
+    />
+  )
+}
+
   if (moreSettingsOpen) {
     return (
       <div className={`fixed inset-0 z-[146] ${readerTheme.page}`}>
@@ -4509,6 +4520,16 @@ const handleDragEnd = () => {
         <div className="mx-auto max-w-[520px] max-h-[calc(100dvh-56px)] overflow-y-auto px-4 py-5">
           {isChatStory ? (
           <SettingSection title={t('readerPage.pageColor')} theme={readerTheme}>
+            {isChatStory ? (
+  <button
+    type="button"
+    onClick={() => setChatTapIndicatorPageOpen(true)}
+    className={`mb-4 flex w-full items-center justify-between rounded-[16px] px-4 py-4 text-left text-[13px] font-semibold ${readerTheme.soft} ${readerTheme.text} active:scale-[0.98]`}
+  >
+    <span>{t('chatTapIndicatorPage.title')}</span>
+    <i className="fa-solid fa-chevron-right text-[12px]" aria-hidden="true" />
+  </button>
+) : null}
 <div className="grid grid-cols-4 gap-2">
   {Object.entries(READER_THEMES).map(([key, item]) => (
     <button
