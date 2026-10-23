@@ -1,41 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Heart, Sparkles, Bird, Flower2, Cat, PawPrint, Leaf, Cloud,
-  Gem, Flame, Snowflake, Music2, Crown, Feather, Ghost, Orbit,
-} from 'lucide-react'
 import { PageHeader, PageShell } from '../components/common/PagePrimitives'
-import ChatStoryTapIndicator, { normalizeTapIndicatorSettings } from '../components/chat-story/ChatStoryTapIndicator'
+import ChatStoryTapIndicator, {
+  TAP_INDICATOR_ALL_STYLES,
+  normalizeTapIndicatorSettings,
+} from '../components/chat-story/ChatStoryTapIndicator'
 import ChatStoryIndicatorColorsPage from './ChatStoryIndicatorColorsPage'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
-const STYLES = Object.freeze([
-  { id: 'hand', key: 'hand', native: true },
-  { id: 'sword', key: 'sword', native: true },
-  { id: 'starfish', key: 'starfish', native: true },
-  { id: 'moon', key: 'moon', native: true },
-  { id: 'heart', key: 'heart', Icon: Heart },
-  { id: 'sparkles', key: 'sparkles', Icon: Sparkles },
-  { id: 'bird', key: 'bird', Icon: Bird },
-  { id: 'flower', key: 'flower', Icon: Flower2 },
-  { id: 'cat', key: 'cat', Icon: Cat },
-  { id: 'paw', key: 'paw', Icon: PawPrint },
-  { id: 'leaf', key: 'leaf', Icon: Leaf },
-  { id: 'cloud', key: 'cloud', Icon: Cloud },
-  { id: 'diamond', key: 'diamond', Icon: Gem },
-  { id: 'fire', key: 'fire', Icon: Flame },
-  { id: 'snow', key: 'snow', Icon: Snowflake },
-  { id: 'music', key: 'music', Icon: Music2 },
-  { id: 'crown', key: 'crown', Icon: Crown },
-  { id: 'wing', key: 'wing', Icon: Feather },
-  { id: 'ghost', key: 'ghost', Icon: Ghost },
-  { id: 'planet', key: 'planet', Icon: Orbit },
-])
-
+const STYLES = TAP_INDICATOR_ALL_STYLES
 const COLORS = Object.freeze([
-  '#8b5cf6', '#237d94', '#bd513e', '#486b51',
-  '#a8476e', '#8054aa', '#26745c', '#376cba',
+  '#8b5cf6', '#237d94', '#bd513e', '#486b51', '#a8476e',
+  '#8054aa', '#26745c', '#376cba', '#92631c', '#80583f',
+  '#a94265', '#7e50a7', '#b14d47', '#246f75', '#426a94',
+  '#7751b5', '#3f795e', '#98537f', '#337c9d', '#626a86',
 ])
 
 registerTranslationNamespace('chatIndicatorStyles', {
@@ -83,7 +62,7 @@ const PAGE_CSS = `
 .cs-styles-inner{max-width:760px;margin:0 auto;padding:20px 14px 28px}
 .cs-styles-heading{margin:0 0 16px;font-size:14px;font-weight:700}
 .cs-styles-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 10px}
-.cs-styles-item{min-width:0;min-height:108px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--shadow-border);border-radius:15px;padding:10px 3px 8px;background:var(--shadow-bg-surface);color:var(--shadow-text-primary);cursor:pointer;transition:border-color .15s}
+.cs-styles-item{min-width:0;min-height:108px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px solid transparent;border-radius:15px;padding:10px 3px 8px;background:var(--shadow-bg-surface);color:var(--shadow-text-primary);cursor:pointer;transition:border-color .15s}
 .cs-styles-item[aria-pressed=true]{border:2px solid #f6c343}
 .cs-styles-item:focus-visible,.cs-styles-swatch:focus-visible,.cs-styles-custom:focus-visible{outline:2px solid #f6c343;outline-offset:3px}
 .cs-styles-icon{height:57px;display:flex;align-items:center;justify-content:center}
@@ -102,11 +81,11 @@ const PAGE_CSS = `
 `
 
 function StyleIcon({ style, settings }) {
-  if (style.native) {
-    return <ChatStoryTapIndicator settings={{ ...settings, source: 'shadow', imageUrl: '', styleId: style.id }} animate={false} size={52} />
-  }
-  const Icon = style.Icon
-  return <Icon size={49} strokeWidth={2.3} color={settings.colors[0]} aria-hidden="true" />
+  return <ChatStoryTapIndicator
+    settings={{ ...settings, source: 'shadow', imageUrl: '', styleId: style.id }}
+    animate={false}
+    size={52}
+  />
 }
 
 export default function ChatStoryIndicatorStylesPage({ settings, onChange, onBack, skipAnimation = false }) {
@@ -114,10 +93,7 @@ export default function ChatStoryIndicatorStylesPage({ settings, onChange, onBac
   const { t } = useDisplayTranslation()
   const [draft, setDraft] = useState(() => settings || {})
   const [showColors, setShowColors] = useState(false)
-  const current = useMemo(() => {
-    const normalized = normalizeTapIndicatorSettings(draft)
-    return { ...normalized, styleId: STYLES.some((item) => item.id === draft.styleId) ? draft.styleId : normalized.styleId }
-  }, [draft])
+  const current = useMemo(() => normalizeTapIndicatorSettings(draft), [draft])
 
   useEffect(() => {
     if (settings) setDraft(settings)
@@ -155,12 +131,12 @@ export default function ChatStoryIndicatorStylesPage({ settings, onChange, onBac
                 key={style.id}
                 type="button"
                 className="cs-styles-item"
-                aria-label={text(style.key)}
+                aria-label={text(style.labelKey)}
                 aria-pressed={selected}
                 onClick={() => select(style.id)}
               >
                 <span className="cs-styles-icon"><StyleIcon style={style} settings={current} /></span>
-                <span className="cs-styles-name">{text(style.key)}</span>
+                <span className="cs-styles-name">{text(style.labelKey)}</span>
               </button>
             })}
           </div>
