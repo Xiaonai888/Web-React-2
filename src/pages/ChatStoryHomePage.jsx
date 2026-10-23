@@ -778,7 +778,7 @@ export default function ChatStoryHomePage() {
 
             <button
               type="button"
-              onClick={() => navigate('/chat-stories/categories')}
+              onClick={() => navigate('/genres?story_type=chat_story')}
               className="flex h-10 w-10 items-center justify-center rounded-full active:scale-95"
               style={{ color: 'var(--shadow-icon)' }}
               aria-label={t('chatStoryHomePage.genres')}
@@ -902,7 +902,7 @@ export default function ChatStoryHomePage() {
           <SectionHeader
             icon="💖"
             title={t('chatStoryHomePage.featuredCategories')}
-            onMore={() => navigate('/chat-stories/categories')}
+            onMore={() => navigate('/genres?story_type=chat_story')}
           />
 
           <div className="grid grid-cols-2 gap-3">
