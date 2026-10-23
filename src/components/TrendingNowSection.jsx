@@ -139,7 +139,7 @@ function LoadingGrid() {
   return (
     <section className="px-3 pb-2 pt-0 md:px-4 md:pt-0">
       <div className="flex items-center gap-2">
-        <span className="text-[24px] leading-none">🔥</span>
+        <span className="text-[24px] leading-none text-[#FF6A00]"><i className="fa-solid fa-fire" aria-hidden="true" /></span>
         <div className="h-6 w-36 animate-pulse rounded-full bg-[var(--shadow-bg-soft)]" />
       </div>
 
@@ -342,9 +342,9 @@ export default function TrendingNowSection({
   return (
     <section className="px-3 pb-2 pt-0 md:px-4 md:pt-0">
       <div className="flex items-center gap-2">
-        <span className="text-[24px] leading-none">
-          🔥
-        </span>
+        <span className="text-[24px] leading-none text-[#FF6A00]">
+  <i className="fa-solid fa-fire" aria-hidden="true" />
+</span>
 
         <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
           {t('trendingNowSection.title')}
