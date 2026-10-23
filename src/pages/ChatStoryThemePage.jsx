@@ -634,7 +634,7 @@ function ThemeColorPicker({ value, title, hexLabel, onChange, onClose }) {
       context.setTransform(dimension / 240, 0, 0, dimension / 240, 0, 0);
       context.clearRect(0, 0, 240, 240);
 
-      const wheel = context.createConicGradient(Math.PI / 2, 120, 120);
+      const wheel = context.createConicGradient(0, 120, 120);
       for (let index = 0; index <= 6; index += 1) {
         wheel.addColorStop(index / 6, `hsl(${index * 60}, 100%, 50%)`);
       }
