@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -33,6 +33,9 @@ registerTranslationNamespace('authorStoreCategory', {
     "emptyHelp": "This category does not have public products right now.",
     "goBack": "Go back",
     "specialEdition": "Special Edition",
+    "loadMore": "Load 9 more",
+    "loadingMore": "Loading more...",
+    "retry": "Retry",
     "newRelease": "New Release"
   },
   "km": {
@@ -64,6 +67,9 @@ registerTranslationNamespace('authorStoreCategory', {
     "emptyHelp": "ប្រភេទនេះមិនមានទំនិញសាធារណៈនៅពេលនេះទេ។",
     "goBack": "ត្រឡប់ក្រោយ",
     "specialEdition": "បោះពុម្ពពិសេស",
+    "loadMore": "មើល ៩ ទៀត",
+    "loadingMore": "កំពុងផ្ទុកបន្ថែម...",
+    "retry": "សាកល្បងម្តងទៀត",
     "newRelease": "ចេញថ្មី"
   },
   "zh": {
@@ -95,6 +101,9 @@ registerTranslationNamespace('authorStoreCategory', {
     "emptyHelp": "此分类目前没有公开商品。",
     "goBack": "返回",
     "specialEdition": "特别版",
+    "loadMore": "再加载 9 个",
+    "loadingMore": "正在加载更多...",
+    "retry": "重试",
     "newRelease": "最新发行"
   },
   "ja": {
@@ -126,6 +135,9 @@ registerTranslationNamespace('authorStoreCategory', {
     "emptyHelp": "このカテゴリには現在公開商品がありません。",
     "goBack": "戻る",
     "specialEdition": "特別版",
+    "loadMore": "さらに9件表示",
+    "loadingMore": "さらに読み込み中...",
+    "retry": "再試行",
     "newRelease": "新刊"
   },
   "ko": {
@@ -157,6 +169,9 @@ registerTranslationNamespace('authorStoreCategory', {
     "emptyHelp": "이 카테고리에는 현재 공개 상품이 없습니다.",
     "goBack": "뒤로",
     "specialEdition": "특별판",
+    "loadMore": "9개 더 보기",
+    "loadingMore": "더 불러오는 중...",
+    "retry": "다시 시도",
     "newRelease": "신간"
   }
 })
@@ -290,15 +305,39 @@ function normalizeProduct(product) {
   }
 }
 
-async function fetchPublicAuthorStoreProducts(pageUsername) {
-  const response = await fetch(`${API_BASE_URL}/api/author-store/page/${encodeURIComponent(pageUsername)}/products`)
+const CATEGORY_PAGE_LIMIT = 9
+const CATEGORY_CACHE_TTL_MS = 3 * 60 * 1000
+const categoryCache = new Map()
+const categoryScroll = new Map()
+
+function cachedCategory(key) {
+  const entry = categoryCache.get(key)
+  return entry && Date.now() - entry.savedAt < CATEGORY_CACHE_TTL_MS ? entry : null
+}
+
+function saveCategoryCache(key, value) {
+  categoryCache.delete(key)
+  categoryCache.set(key, { ...value, savedAt: Date.now() })
+  while (categoryCache.size > 24) categoryCache.delete(categoryCache.keys().next().value)
+}
+
+async function fetchPublicAuthorStoreProducts(pageUsername, categoryKey, page, signal) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(CATEGORY_PAGE_LIMIT),
+    category_key: categoryKey,
+  })
+  const response = await fetch(`${API_BASE_URL}/api/author-store/page/${encodeURIComponent(pageUsername)}/products?${params}`, { signal })
   const data = await response.json().catch(() => ({}))
 
-  if (!response.ok || data.ok === false) {
+  if (!response.ok || data.ok === false || !Array.isArray(data.products) || !data.pagination) {
     throw new Error(data.message || getDisplayText('authorStoreCategory.failedLoad'))
   }
 
-  return Array.isArray(data.products) ? data.products.map(normalizeProduct) : []
+  return {
+    products: data.products.map(normalizeProduct),
+    pagination: data.pagination,
+  }
 }
 
 function categoryMatchesProduct(category, product) {
@@ -321,7 +360,7 @@ function ProductCard({ item, onOpen, onAddToCart }) {
         className="relative block aspect-[3/4] w-full overflow-hidden bg-[var(--shadow-bg-soft)] text-left"
       >
         {item.cover_url ? (
-          <img src={item.cover_url} alt={displayStoreValue(item.title)} className="h-full w-full object-cover" />
+          <img src={item.cover_url} alt={displayStoreValue(item.title)} loading="lazy" decoding="async" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[var(--shadow-text-tertiary)]">
             <i className="fa-regular fa-bookmark text-[26px]" />
@@ -378,47 +417,124 @@ export default function AuthorStoreCategoryPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const { pageUsername, categoryKey } = useParams()
-  const category = CATEGORY_CONFIG[categoryKey] || CATEGORY_CONFIG['new-books']
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [loadError, setLoadError] = useState('')
+  const resolvedCategoryKey = CATEGORY_CONFIG[categoryKey] ? categoryKey : 'new-books'
+  const category = CATEGORY_CONFIG[resolvedCategoryKey]
+  const viewKey = `${String(pageUsername || '').toLowerCase()}:${resolvedCategoryKey}`
+  const [snapshot, setSnapshot] = useState(() => {
+    const cached = cachedCategory(viewKey)
+    return cached
+      ? { ...cached, key: viewKey, loading: false, loadingMore: false, error: '' }
+      : { key: viewKey, products: [], page: 0, hasNext: true, loading: true, loadingMore: false, error: '' }
+  })
+  const requestRef = useRef(null)
+  const generationRef = useRef(0)
+  const sentinelRef = useRef(null)
+  const restoredScrollRef = useRef('')
+
+  const loadPage = useCallback(async (page) => {
+    if (!pageUsername || requestRef.current) return
+    const generation = generationRef.current
+    const controller = new AbortController()
+    requestRef.current = controller
+    setSnapshot((current) => {
+      const base = current.key === viewKey
+        ? current
+        : { key: viewKey, products: [], page: 0, hasNext: true }
+      return {
+        ...base,
+        key: viewKey,
+        loading: page === 1 && base.products.length === 0,
+        loadingMore: page > 1,
+        error: '',
+      }
+    })
+
+    try {
+      const result = await fetchPublicAuthorStoreProducts(pageUsername, resolvedCategoryKey, page, controller.signal)
+      if (controller.signal.aborted || generation !== generationRef.current) return
+      setSnapshot((current) => {
+        const seen = new Set()
+        const products = (page === 1 ? result.products : [...current.products, ...result.products]).filter((product) => {
+          if (!product.id || seen.has(product.id)) return false
+          seen.add(product.id)
+          return true
+        })
+        const next = {
+          key: viewKey,
+          products,
+          page,
+          hasNext: result.pagination.has_next === true,
+          loading: false,
+          loadingMore: false,
+          error: '',
+        }
+        saveCategoryCache(viewKey, next)
+        return next
+      })
+    } catch (error) {
+      if (!controller.signal.aborted && generation === generationRef.current) {
+        setSnapshot((current) => ({
+          ...current,
+          loading: false,
+          loadingMore: false,
+          error: error.message || getDisplayText('authorStoreCategory.failedLoad'),
+        }))
+      }
+    } finally {
+      if (requestRef.current === controller) requestRef.current = null
+    }
+  }, [pageUsername, resolvedCategoryKey, viewKey])
 
   useEffect(() => {
-    let ignore = false
-
-    async function loadProducts() {
-      if (!pageUsername) return
-
-      try {
-        setLoading(true)
-        setLoadError('')
-        const nextProducts = await fetchPublicAuthorStoreProducts(pageUsername)
-
-        if (!ignore) setProducts(nextProducts)
-      } catch (error) {
-        if (!ignore) {
-          setProducts([])
-          setLoadError(error.message || t('authorStoreCategory.failedLoad'))
-        }
-      } finally {
-        if (!ignore) setLoading(false)
-      }
+    generationRef.current += 1
+    requestRef.current?.abort()
+    requestRef.current = null
+    restoredScrollRef.current = ''
+    const cached = cachedCategory(viewKey)
+    if (cached) {
+      setSnapshot({ ...cached, key: viewKey, loading: false, loadingMore: false, error: '' })
+    } else {
+      setSnapshot({ key: viewKey, products: [], page: 0, hasNext: true, loading: true, loadingMore: false, error: '' })
+      void loadPage(1)
     }
-
-    loadProducts()
-
     return () => {
-      ignore = true
+      generationRef.current += 1
+      requestRef.current?.abort()
+      requestRef.current = null
     }
-  }, [pageUsername, t])
+  }, [viewKey, loadPage])
 
-  const visibleProducts = useMemo(() => {
-    return products.filter((product) => categoryMatchesProduct(category, product))
-  }, [category, products])
+  const active = snapshot.key === viewKey
+    ? snapshot
+    : { key: viewKey, products: [], page: 0, hasNext: true, loading: true, loadingMore: false, error: '' }
+  const visibleProducts = useMemo(() => active.products.filter((product) => categoryMatchesProduct(category, product)), [active.products, category])
+
+  useEffect(() => {
+    if (!active.page || active.loading || active.loadingMore || !active.hasNext || active.page >= 3 || active.error) return undefined
+    if (typeof IntersectionObserver === 'undefined') return undefined
+    const sentinel = sentinelRef.current
+    if (!sentinel) return undefined
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void loadPage(active.page + 1)
+    }, { rootMargin: '450px' })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [active.page, active.hasNext, active.loading, active.loadingMore, active.error, loadPage])
+
+  useEffect(() => {
+    if (restoredScrollRef.current === viewKey || !visibleProducts.length) return
+    restoredScrollRef.current = viewKey
+    const scrollY = categoryScroll.get(viewKey)
+    if (Number.isFinite(scrollY) && scrollY > 0) {
+      const frame = window.requestAnimationFrame(() => window.scrollTo(0, scrollY))
+      return () => window.cancelAnimationFrame(frame)
+    }
+  }, [viewKey, visibleProducts.length])
 
   function addToCart(item) {
     const rawCart = localStorage.getItem('shadow_author_cart_items') || '[]'
-    const cartItems = JSON.parse(rawCart)
+    let cartItems
+    try { cartItems = JSON.parse(rawCart) } catch { cartItems = [] }
     const safeCartItems = Array.isArray(cartItems) ? cartItems : []
     const existingItem = safeCartItems.find((cartItem) => cartItem.id === item.id)
 
@@ -475,40 +591,53 @@ export default function AuthorStoreCategoryPage() {
       </header>
 
       <main className="mx-auto max-w-[980px] px-4 pt-4">
-        {loading ? (
+        {active.loading ? (
           <div className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-8 text-center text-[13px] font-bold text-[var(--shadow-text-tertiary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
             {t('authorStoreCategory.loading')}
           </div>
         ) : null}
 
-        {loadError ? (
+        {active.error ? (
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => { void loadPage(active.page > 0 ? active.page + 1 : 1) }}
             className="w-full rounded-[18px] bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold text-[#9a3412]"
           >
-            {loadError}
+            {active.error} · {t('authorStoreCategory.retry')}
           </button>
         ) : null}
 
-        {!loading && !loadError && visibleProducts.length ? (
+        {!active.loading && visibleProducts.length ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {visibleProducts.map((item) => (
               <ProductCard
                 key={item.id}
                 item={item}
-                onOpen={() =>
-  navigate(`/author/page/${pageUsername}/store/product/${item.id}`, {
-    state: { from: location.pathname + location.search + location.hash },
-  })
-}
+                onOpen={() => {
+                  categoryScroll.set(viewKey, window.scrollY)
+                  navigate(`/author/page/${pageUsername}/store/product/${item.id}`, {
+                    state: { from: location.pathname + location.search + location.hash },
+                  })
+                }}
                 onAddToCart={addToCart}
               />
             ))}
           </div>
         ) : null}
 
-        {!loading && !loadError && !visibleProducts.length ? (
+        {!active.loading && active.hasNext ? (
+          <div className="mt-5 flex flex-col items-center gap-3">
+            {active.loadingMore ? <p role="status" className="text-[12px] font-semibold text-[var(--shadow-text-secondary)]">{t('authorStoreCategory.loadingMore')}</p> : null}
+            {(active.page >= 3 || typeof IntersectionObserver === 'undefined') && !active.loadingMore && !active.error ? (
+              <button type="button" onClick={() => { void loadPage(active.page + 1) }} className="rounded-full bg-[var(--shadow-text-primary)] px-6 py-3 text-[12px] font-black text-[var(--shadow-bg-surface)]">
+                {t('authorStoreCategory.loadMore')}
+              </button>
+            ) : null}
+            {active.page < 3 ? <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" /> : null}
+          </div>
+        ) : null}
+
+        {!active.loading && !active.error && !visibleProducts.length ? (
           <section className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-8 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]">
               <i className="fa-regular fa-folder-open text-[18px]" />
