@@ -1145,12 +1145,12 @@ async function fetchPublicAuthorPage(pageUsername) {
     : null
 }
 
-async function fetchMyAuthorPage() {
+async function fetchMyAuthorPage(includeWorks = true) {
   const token = getAuthToken()
 
   if (!token) return null
 
-  const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
+  const response = await fetch(`${API_BASE_URL}/api/authors/me${includeWorks ? '' : '?include_works=0'}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -1848,12 +1848,12 @@ export default function AuthorPublicPage() {
 
   const [author, setAuthor] = useState(null)
   const [activeTab, setActiveTab] = useState(
+    tabs.includes(location.state?.activeTab) ? location.state.activeTab : 'Posts'
+  )
   const [worksVisitedKey, setWorksVisitedKey] = useState('')
-useEffect(() => {
-  if (activeTab === 'Works') setWorksVisitedKey(pageUsername || 'owner')
-}, [activeTab, pageUsername])
-  tabs.includes(location.state?.activeTab) ? location.state.activeTab : 'Posts'
-)
+  useEffect(() => {
+    if (activeTab === 'Works') setWorksVisitedKey(pageUsername || 'owner')
+  }, [activeTab, pageUsername])
   const [tabsFrozen, setTabsFrozen] = useState(false)
   const [readerCartCount, setReaderCartCount] = useState(() => getAuthorCartCount())
   const [readerNotificationCount, setReaderNotificationCount] = useState(0)
@@ -2313,7 +2313,7 @@ useEffect(() => {
       const cached = AUTHOR_OWNER_CACHE.get(token)
       if (cached && Date.now() - cached.at < 2 * 60 * 1000) return cached.promise
 
-      const promise = fetchMyAuthorPage()
+      const promise = fetchMyAuthorPage(false)
       const entry = { at: Date.now(), promise }
       AUTHOR_OWNER_CACHE.set(token, entry)
       promise.then(
