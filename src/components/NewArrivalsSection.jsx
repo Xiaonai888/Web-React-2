@@ -352,8 +352,8 @@ export default function NewArrivalsSection({
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-[20px] lg:text-[21px]">
-            🚀
-          </span>
+  <i className="fa-solid fa-rocket text-[#3B82F6]" aria-hidden="true" />
+</span>
 
           <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
             {t('newArrivalsSection.title')}
