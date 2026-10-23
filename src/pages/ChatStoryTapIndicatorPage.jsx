@@ -468,13 +468,7 @@ export default function ChatStoryTapIndicatorPage({ onBack, onApply, skipAnimati
               })}
             </div>
           </section>
-          {!isCustom ? <section className="cip-section" aria-label={label('colors')}>
-            <h2 className="cip-label">{label('colors')}</h2>
-            <button type="button" className="cip-color-button cip-row" onClick={() => setShowColors(true)}>
-              <span className="cip-row" style={{ justifyContent: 'flex-start' }}><span className="cip-color-dot" style={{ background: colorSwatch }} /><span>{label('chooseColors')}</span></span>
-              <span className="cip-chevron" aria-hidden="true">›</span>
-            </button>
-          </section> : <p className="cip-hint cip-section">{label('originalColors')}</p>}
+          
           <section className="cip-section" aria-label={label('myImage')}>
             <h2 className="cip-label">{label('myImage')}</h2>
             <p className="cip-hint">{label('uploadHelp')}</p>
