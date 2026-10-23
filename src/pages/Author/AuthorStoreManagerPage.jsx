@@ -154,8 +154,10 @@ registerTranslationNamespace('authorStoreManager', {
     "loading": "Loading...",
     "connectTelegramGroup": "Connect Telegram Group",
     "orderHistory": "Order history",
+    "refreshOrders": "Refresh orders",
     "orderHistoryHelp": "Orders checked by admin from your author store.",
     "searchOrders": "Search order, buyer, product...",
+    "searchOrderAction": "Search",
     "filterOrders": "Filter orders",
     "closeOrderFilter": "Close order filter",
     "allOrders": "All",
@@ -446,8 +448,10 @@ registerTranslationNamespace('authorStoreManager', {
     "loading": "កំពុងផ្ទុក...",
     "connectTelegramGroup": "ភ្ជាប់ក្រុម Telegram",
     "orderHistory": "ប្រវត្តិបញ្ជាទិញ",
+    "refreshOrders": "ផ្ទុកការបញ្ជាទិញឡើងវិញ",
     "orderHistoryHelp": "ការបញ្ជាទិញពីហាងអ្នកនិពន្ធដែល Admin បានពិនិត្យ។",
     "searchOrders": "ស្វែងរកការបញ្ជាទិញ អ្នកទិញ ឬផលិតផល...",
+    "searchOrderAction": "ស្វែងរក",
     "filterOrders": "តម្រងការបញ្ជាទិញ",
     "closeOrderFilter": "បិទតម្រងការបញ្ជាទិញ",
     "allOrders": "ទាំងអស់",
@@ -738,8 +742,10 @@ registerTranslationNamespace('authorStoreManager', {
     "loading": "加载中...",
     "connectTelegramGroup": "连接 Telegram 群组",
     "orderHistory": "订单历史",
+    "refreshOrders": "刷新订单",
     "orderHistoryHelp": "这里显示管理员已确认的作者商店订单。",
     "searchOrders": "搜索订单、买家、商品...",
+    "searchOrderAction": "搜索",
     "filterOrders": "筛选订单",
     "closeOrderFilter": "关闭订单筛选",
     "allOrders": "全部",
@@ -1030,8 +1036,10 @@ registerTranslationNamespace('authorStoreManager', {
     "loading": "読み込み中...",
     "connectTelegramGroup": "Telegramグループを接続",
     "orderHistory": "注文履歴",
+    "refreshOrders": "注文を更新",
     "orderHistoryHelp": "管理者が確認した作者ストアの注文です。",
     "searchOrders": "注文、購入者、商品を検索...",
+    "searchOrderAction": "検索",
     "filterOrders": "注文を絞り込む",
     "closeOrderFilter": "注文フィルターを閉じる",
     "allOrders": "すべて",
@@ -1322,8 +1330,10 @@ registerTranslationNamespace('authorStoreManager', {
     "loading": "불러오는 중...",
     "connectTelegramGroup": "Telegram 그룹 연결",
     "orderHistory": "주문 내역",
+    "refreshOrders": "주문 새로고침",
     "orderHistoryHelp": "관리자가 확인한 작가 스토어 주문입니다.",
     "searchOrders": "주문, 구매자, 상품 검색...",
+    "searchOrderAction": "검색",
     "filterOrders": "주문 필터",
     "closeOrderFilter": "주문 필터 닫기",
     "allOrders": "전체",
@@ -4046,12 +4056,20 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   <section className="mt-4 space-y-3">
     <div className="mx-4 overflow-visible rounded-[10px] bg-[linear-gradient(135deg,#fbfaff_0%,#f3efff_55%,#ffffff_100%)] px-4 py-4 shadow-[0_16px_38px_rgba(124,91,255,0.10)] ring-1 ring-[var(--shadow-border)] sm:mx-0">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 className="text-[18px] font-black text-[var(--shadow-text-primary)]">{storeText('orderHistory')}</h2>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">{storeText('orderHistoryHelp')}</p>
         </div>
-
-        
+        <button
+          type="button"
+          onClick={onRefreshOrders}
+          disabled={orderLoading}
+          aria-label={storeText('refreshOrders')}
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[10px] bg-[var(--shadow-bg-surface)] px-3 text-[12px] font-bold text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)] transition active:scale-[0.97] disabled:opacity-50"
+        >
+          <i className="fa-solid fa-rotate-right text-[12px]" aria-hidden="true" />
+          <span className="hidden sm:inline">{storeText('refreshOrders')}</span>
+        </button>
       </div>
 
       <form
@@ -4134,7 +4152,15 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
             </>
           ) : null}
         </div>
-        
+        <button
+          type="submit"
+          disabled={orderLoading}
+          aria-label={storeText('searchOrderAction')}
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[var(--shadow-text-primary)] px-3 text-[12px] font-bold text-[var(--shadow-bg-surface)] transition active:scale-[0.97] disabled:opacity-50"
+        >
+          <i className="fa-solid fa-magnifying-glass text-[12px]" aria-hidden="true" />
+          <span className="hidden sm:inline">{storeText('searchOrderAction')}</span>
+        </button>
       </form>
 
       <div className="mt-3 flex gap-1.5">
