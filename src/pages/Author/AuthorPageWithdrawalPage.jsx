@@ -34,6 +34,8 @@ registerTranslationNamespace('authorPageWithdrawal', {
     "addPaymentMethod": "Add payment method first",
     "noPaymentMethod": "No payment method",
     "bankTransfer": "Bank Transfer",
+    "bankQr": "Bank QR",
+    "phonePayout": "Phone Number",
     "inReview": "In Review",
     "approved": "Approved",
     "paid": "Paid",
@@ -74,6 +76,8 @@ registerTranslationNamespace('authorPageWithdrawal', {
     "addPaymentMethod": "សូមបន្ថែមវិធីទទួលប្រាក់ជាមុន",
     "noPaymentMethod": "មិនមានវិធីទទួលប្រាក់",
     "bankTransfer": "ផ្ទេរតាមធនាគារ",
+    "bankQr": "Bank QR",
+    "phonePayout": "លេខទូរស័ព្ទ",
     "inReview": "កំពុងពិនិត្យ",
     "approved": "បានអនុម័ត",
     "paid": "បានបង់",
@@ -114,6 +118,8 @@ registerTranslationNamespace('authorPageWithdrawal', {
     "addPaymentMethod": "请先添加收款方式",
     "noPaymentMethod": "无收款方式",
     "bankTransfer": "银行转账",
+    "bankQr": "银行二维码",
+    "phonePayout": "手机号",
     "inReview": "审核中",
     "approved": "已批准",
     "paid": "已支付",
@@ -154,6 +160,8 @@ registerTranslationNamespace('authorPageWithdrawal', {
     "addPaymentMethod": "先に受取方法を追加してください",
     "noPaymentMethod": "受取方法なし",
     "bankTransfer": "銀行振込",
+    "bankQr": "銀行QR",
+    "phonePayout": "電話番号",
     "inReview": "審査中",
     "approved": "承認済み",
     "paid": "支払済み",
@@ -194,6 +202,8 @@ registerTranslationNamespace('authorPageWithdrawal', {
     "addPaymentMethod": "먼저 지급 방법을 추가하세요",
     "noPaymentMethod": "지급 방법 없음",
     "bankTransfer": "은행 이체",
+    "bankQr": "은행 QR",
+    "phonePayout": "전화번호",
     "inReview": "검토 중",
     "approved": "승인됨",
     "paid": "지급됨",
@@ -295,7 +305,9 @@ function getReadablePaymentMethod(method) {
   const value = String(method || '').toLowerCase()
 
   if (value === 'aba') return 'ABA Bank'
+  if (value === 'bank_qr') return getDisplayText('authorPageWithdrawal.bankQr')
   if (value === 'paypal') return 'PayPal'
+  if (value === 'phone') return getDisplayText('authorPageWithdrawal.phonePayout')
   if (value === 'bank') return getDisplayText('authorPageWithdrawal.bankTransfer')
   if (value === 'wing') return 'Wing'
   if (value === 'truemoney') return 'TrueMoney'
@@ -350,7 +362,7 @@ function normalizeIncomePayload(data) {
 function getPaymentLabel(paymentMethod) {
   if (!paymentMethod) return getDisplayText('authorPageWithdrawal.addPaymentMethod')
 
-  const method = getReadablePaymentMethod(paymentMethod.method || paymentMethod.type || paymentMethod.provider)
+  const method = getReadablePaymentMethod(paymentMethod.method_type || paymentMethod.method || paymentMethod.type || paymentMethod.provider)
 
   const accountName =
     paymentMethod.account_name ||
@@ -363,6 +375,9 @@ function getPaymentLabel(paymentMethod) {
   const accountNumber =
     paymentMethod.account_number ||
     paymentMethod.accountNumber ||
+    paymentMethod.paypal_email ||
+    paymentMethod.phone_number ||
+    paymentMethod.bank_name ||
     paymentMethod.email ||
     paymentMethod.phone ||
     paymentMethod.wallet_id ||
