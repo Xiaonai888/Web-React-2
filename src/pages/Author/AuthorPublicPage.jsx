@@ -793,6 +793,7 @@ const API_BASE_URL =
 const AUTHOR_PAGE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 const tabs = ['Posts', 'Works', 'Store']
+const AUTHOR_OWNER_CACHE = new Map()
 
 function getAuthToken() {
   return (
@@ -2298,7 +2299,31 @@ useEffect(() => {
     setCroppedAreaPixels(croppedPixels)
   }, [])
 
-  async function loadAuthor() {
+    async function loadAuthor(isCurrent) {
+    const loadMyPage = () => {
+      const token = getAuthToken()
+      if (!token) return Promise.resolve(null)
+
+      const cached = AUTHOR_OWNER_CACHE.get(token)
+      if (cached && Date.now() - cached.at < 2 * 60 * 1000) return cached.promise
+
+      const promise = fetchMyAuthorPage()
+      const entry = { at: Date.now(), promise }
+      AUTHOR_OWNER_CACHE.set(token, entry)
+      promise.then(
+        (page) => {
+          if (!page && AUTHOR_OWNER_CACHE.get(token) === entry) AUTHOR_OWNER_CACHE.delete(token)
+        },
+        () => {
+          if (AUTHOR_OWNER_CACHE.get(token) === entry) AUTHOR_OWNER_CACHE.delete(token)
+        }
+      )
+      while (AUTHOR_OWNER_CACHE.size > 10) {
+        AUTHOR_OWNER_CACHE.delete(AUTHOR_OWNER_CACHE.keys().next().value)
+      }
+      return promise
+    }
+
     try {
       setLoading(true)
       setOwnerResolved(false)
@@ -2306,11 +2331,9 @@ useEffect(() => {
       setAuthor(null)
 
       if (!pageUsername) {
-        const myPage = await fetchMyAuthorPage()
-
-        if (!myPage) {
-          throw new Error(getDisplayText('authorPublicPage.authorPageNotFound'))
-        }
+        const myPage = await loadMyPage()
+        if (!isCurrent()) return
+        if (!myPage) throw new Error(getDisplayText('authorPublicPage.authorPageNotFound'))
 
         setAuthor(normalizeAuthor(myPage, myPage.page_username, myPage, true))
         localStorage.setItem('shadow_author_page', JSON.stringify(myPage))
@@ -2320,19 +2343,28 @@ useEffect(() => {
       }
 
       const publicPage = await fetchPublicAuthorPage(pageUsername)
+      if (!isCurrent()) return
+      if (!publicPage) throw new Error(getDisplayText('authorPublicPage.authorPageNotFound'))
+
       setAuthor(normalizeAuthor(publicPage, pageUsername, null, false))
       setLoading(false)
 
-      const myPage = await fetchMyAuthorPage().catch(() => null)
-      setAuthor(normalizeAuthor(publicPage, pageUsername, myPage))
+      const viewerId = getAuthorPublicQueueAccount(getAuthToken())
+      if (viewerId && String(viewerId) === String(publicPage.user_id || '')) {
+        const myPage = await loadMyPage().catch(() => null)
+        if (!isCurrent()) return
+        setAuthor(normalizeAuthor(publicPage, pageUsername, myPage))
+      }
       setOwnerResolved(true)
     } catch (loadError) {
+      if (!isCurrent()) return
       setAuthor(null)
       setOwnerResolved(true)
       setPageError(loadError.message || getDisplayText('authorPublicPage.authorPageNotFound'))
       setLoading(false)
     }
   }
+
 
   async function loadAuthorReviews(username) {
   if (!username) return
