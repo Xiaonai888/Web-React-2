@@ -373,8 +373,9 @@ export default function WeeklyUpdateSection() {
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4">
         <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
-          🤪 {t('weeklyUpdateSection.title')}
-        </h2>
+  <i className="fa-solid fa-face-grin-wink text-[#F59E0B]" aria-hidden="true" />{' '}
+  {t('weeklyUpdateSection.title')}
+</h2>
       </div>
 
       <div
