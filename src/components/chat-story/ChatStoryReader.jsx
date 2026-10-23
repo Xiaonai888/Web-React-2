@@ -494,6 +494,8 @@ export default function ChatStoryReader({
   const [clock, setClock] = useState({ source: null, index: -1, elapsed: 0 })
   const cycleRef = useRef({ source: null, index: -1, elapsed: 0, done: false })
   const lastMessageRef = useRef(null)
+  const manualTapRef = useRef({ timer: null, at: 0, y: 0 })
+  const followNextMessageRef = useRef(false)
   const completionSentRef = useRef(null)
   const onProgressRef = useRef(onProgress)
   const onCompleteRef = useRef(onComplete)
@@ -681,7 +683,8 @@ export default function ChatStoryReader({
   ])
 
   useEffect(() => {
-    if (active || visibleCount <= 1) return undefined
+    if (active || visibleCount <= 1 || !followNextMessageRef.current) return undefined
+    followNextMessageRef.current = false
     const frame = window.requestAnimationFrame(() => {
       lastMessageRef.current?.scrollIntoView({
         behavior: 'smooth',
@@ -712,13 +715,50 @@ export default function ChatStoryReader({
     onReadModeChange?.('auto')
   }
 
+  useEffect(() => {
+    const cancelPendingTap = () => {
+      window.clearTimeout(manualTapRef.current.timer)
+      manualTapRef.current.timer = null
+      manualTapRef.current.at = 0
+      followNextMessageRef.current = false
+    }
+    const cancelOnScroll = () => {
+      if (Math.abs(window.scrollY - manualTapRef.current.y) > 8) cancelPendingTap()
+    }
+    window.addEventListener('scroll', cancelOnScroll, { passive: true })
+    window.addEventListener('touchmove', cancelPendingTap, { passive: true })
+    window.addEventListener('wheel', cancelPendingTap, { passive: true })
+    return () => {
+      cancelPendingTap()
+      window.removeEventListener('scroll', cancelOnScroll)
+      window.removeEventListener('touchmove', cancelPendingTap)
+      window.removeEventListener('wheel', cancelPendingTap)
+    }
+  }, [content, active, readMode, userPaused])
+
   const handleReaderClick = (event) => {
     if (readMode !== 'manual' && !userPaused) return
-    if (
-      event.target.closest('button, a, input, textarea, select, audio, video')
-    )
+    if (event.target.closest('button, a, input, textarea, select, audio, video, [data-ignore-reader-tap="true"]')) return
+    const now = Date.now()
+    const tap = manualTapRef.current
+    if (tap.timer !== null && now - tap.at < 320) {
+      window.clearTimeout(tap.timer)
+      tap.timer = null
+      tap.at = 0
+      followNextMessageRef.current = false
       return
-    revealNextMessage()
+    }
+    window.clearTimeout(tap.timer)
+    tap.at = now
+    tap.y = window.scrollY
+    const lastBottom = lastMessageRef.current?.getBoundingClientRect().bottom
+    const follow = lastBottom == null || lastBottom <= window.innerHeight + 80
+    tap.timer = window.setTimeout(() => {
+      tap.timer = null
+      tap.at = 0
+      followNextMessageRef.current = follow
+      revealNextMessage()
+    }, 340)
   }
 
   const handleReaderKeyDown = (event) => {
@@ -726,6 +766,9 @@ export default function ChatStoryReader({
     if (readMode !== 'manual' && !userPaused) return
     if (event.key !== 'Enter' && event.key !== ' ') return
     event.preventDefault()
+    window.clearTimeout(manualTapRef.current.timer)
+    manualTapRef.current.timer = null
+    followNextMessageRef.current = (lastMessageRef.current?.getBoundingClientRect().bottom ?? 0) <= window.innerHeight + 80
     revealNextMessage()
   }
 
@@ -851,6 +894,7 @@ export default function ChatStoryReader({
     </ChatVoiceSessionContext.Provider>
   )
 }
+
 
 
 
