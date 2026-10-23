@@ -13,6 +13,8 @@ import { registerTranslationNamespace } from "../i18n/registerTranslations";
 import {
   CHAT_STORY_THEMES,
   CHAT_THEME_STYLES,
+  CHAT_THEME_STYLE_TRANSLATIONS,
+  CHAT_THEME_STYLE_CSS,
   CHAT_THEME_ACCENTS,
   CHAT_THEME_PHOTO_LIMIT,
   DEFAULT_CHAT_THEME,
@@ -462,6 +464,17 @@ registerTranslationNamespace("chatStoryThemes", {
   },
 });
 
+const styleListCopy = {
+  en: { hexCode: "HEX", loadMoreStyles: "Load 9 more", allStylesLoaded: "All 50 styles loaded" },
+  km: { hexCode: "កូដ HEX", loadMoreStyles: "បង្ហាញ៩ Style បន្ថែម", allStylesLoaded: "បានបង្ហាញគ្រប់៥០ Style" },
+  zh: { hexCode: "HEX 颜色代码", loadMoreStyles: "再显示9种样式", allStylesLoaded: "已显示全部50种样式" },
+  ja: { hexCode: "HEXカラーコード", loadMoreStyles: "スタイルをさらに9件表示", allStylesLoaded: "全50種類のスタイルを表示しました" },
+  ko: { hexCode: "HEX 색상 코드", loadMoreStyles: "스타일 9개 더 보기", allStylesLoaded: "스타일 50개를 모두 표시했습니다" },
+};
+registerTranslationNamespace("chatStoryThemes", Object.fromEntries(
+  Object.entries(CHAT_THEME_STYLE_TRANSLATIONS).map(([language, styles]) => [language, { styles, ...styleListCopy[language] }]),
+));
+
 const ERROR_KEYS = new Set([
   "signIn",
   "unavailable",
@@ -507,24 +520,27 @@ function Preview({ selection, compact = false, t }) {
   const theme = resolveChatTheme(selection);
   return (
     <div
-      className={`ct-preview theme-preserve ${compact ? "ct-preview-small" : ""}`}
-      style={chatThemeStyle(theme)}
+      className={`ct-preview theme-preserve ${theme.extendedStyle ? "ct-preview-extended" : ""} ${compact ? "ct-preview-small" : ""}`}
+      data-chat-style={theme.styleId}
+      style={{ ...chatThemeStyle(theme), ...(theme.extendedStyle && theme.pattern.startsWith("url(") && !theme.image_url ? { backgroundSize: "100% 100%" } : {}) }}
       aria-hidden={compact ? "true" : undefined}
     >
       <div className="ct-preview-content">
         {!compact ? (
-          <div className="ct-preview-name" style={{ color: theme.muted }}>
+          <div className="ct-preview-name cs-style-name" style={{ color: theme.muted }}>
             {t("chatStoryThemes.previewName")}
           </div>
         ) : null}
         <div
-          className="ct-preview-in"
+          className="ct-preview-in cs-style-bubble"
+          data-side="left"
           style={{ backgroundColor: theme.incoming, color: theme.text, borderRadius: 'var(--cs-radius) var(--cs-radius) var(--cs-radius) var(--cs-corner)', border: 'var(--cs-bubble-border)', boxShadow: 'var(--cs-bubble-shadow)' }}
         >
-          {t("chatStoryThemes.previewIncoming")}
+          {theme.extendedStyle ? <span className="cs-style-copy">{t("chatStoryThemes.previewIncoming")}</span> : t("chatStoryThemes.previewIncoming")}
         </div>
         <div
-          className="ct-preview-out"
+          className="ct-preview-out cs-style-bubble"
+          data-side="right"
           style={{
             background: `linear-gradient(120deg, ${theme.outgoing}, ${theme.outgoingEnd})`,
             color: "var(--cs-outgoing-text)",
@@ -533,7 +549,7 @@ function Preview({ selection, compact = false, t }) {
             boxShadow: "var(--cs-bubble-shadow)",
           }}
         >
-          {t("chatStoryThemes.previewOutgoing")}
+          {theme.extendedStyle ? <span className="cs-style-copy">{t("chatStoryThemes.previewOutgoing")}</span> : t("chatStoryThemes.previewOutgoing")}
         </div>
       </div>
     </div>
@@ -576,7 +592,7 @@ function pickerHex(hsv) {
   return '#' + pickerRgb(hsv.h, hsv.s, hsv.v).map((value) => value.toString(16).padStart(2, '0')).join('');
 }
 
-function ThemeColorPicker({ value, title, onChange, onClose }) {
+function ThemeColorPicker({ value, title, hexLabel, onChange, onClose }) {
   const dialogRef = useRef(null);
   const canvasRef = useRef(null);
   const dragRef = useRef(null);
@@ -603,7 +619,7 @@ function ThemeColorPicker({ value, title, onChange, onClose }) {
       for (let x = 0; x < 240; x += 1) {
         const dx = x - 120, dy = y - 120, distance = Math.hypot(dx, dy);
         let rgb = null;
-        if (distance >= 94 && distance <= 116) {
+        if (94 <= distance && distance <= 116) {
           rgb = pickerRgb((Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360, 1, 1);
         } else if (Math.abs(dx) + Math.abs(dy) <= 81) {
           rgb = pickerRgb(hsv.h, (dx + dy) / 162 + 0.5, 1 - ((dy - dx) / 162 + 0.5));
@@ -646,7 +662,7 @@ function ThemeColorPicker({ value, title, onChange, onClose }) {
     const dy = (event.clientY - bounds.top) * 240 / bounds.height - 120;
     if (start) {
       const distance = Math.hypot(dx, dy);
-      dragRef.current = distance >= 88 && distance <= 120 ? 'hue' : Math.abs(dx) + Math.abs(dy) <= 86 ? 'diamond' : null;
+      dragRef.current = 88 <= distance && distance <= 120 ? 'hue' : Math.abs(dx) + Math.abs(dy) <= 86 ? 'diamond' : null;
       if (dragRef.current) event.currentTarget.setPointerCapture(event.pointerId);
     }
     if (dragRef.current === 'hue') update({ ...hsv, h: (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360 });
@@ -659,14 +675,14 @@ function ThemeColorPicker({ value, title, onChange, onClose }) {
       onClick={(event) => {
         if (event.target !== event.currentTarget) return;
         const bounds = event.currentTarget.getBoundingClientRect();
-        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onClose();
+        if (event.clientX < bounds.left || bounds.right < event.clientX || event.clientY < bounds.top || bounds.bottom < event.clientY) onClose();
       }}>
       <h2>{title}</h2>
       <canvas ref={canvasRef} width="240" height="240" className="ct-picker-wheel" aria-label={title}
         onPointerDown={(event) => pick(event, true)} onPointerMove={(event) => { if (dragRef.current) pick(event, false); }}
         onPointerUp={() => { dragRef.current = null; }} onPointerCancel={() => { dragRef.current = null; }} />
       <div className="ct-picker-hex"><span style={{ background: selected }} />
-        <input aria-label="HEX" value={hexText} maxLength={7} spellCheck={false} autoComplete="off"
+        <input aria-label={hexLabel} value={hexText} maxLength={7} spellCheck={false} autoComplete="off"
           onChange={(event) => {
             const text = event.target.value;
             setHexText(text);
@@ -720,6 +736,9 @@ const PAGE_CSS = `
 .ct-preview-in { align-self: flex-start; border-bottom-left-radius: 5px; }
 .ct-preview-out { align-self: flex-end; border-bottom-right-radius: 5px; }
 .ct-preview-small { min-height: 0; aspect-ratio: 1.45; padding: 12px 9px; border-radius: 16px; display: flex; align-items: center; }
+.ct-preview-extended .cs-style-bubble { --cs-style-padding:10px 15px; }
+.ct-preview-small.ct-preview-extended .cs-style-bubble { --cs-style-padding:6px 8px;display:block;overflow:visible;max-width:90%; }
+.ct-preview-small.ct-preview-extended .cs-style-copy { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
 .ct-preview-small .ct-preview-content { width: 100%; gap: 8px; }
 .ct-preview-small .ct-preview-in, .ct-preview-small .ct-preview-out { font-size: 9px; line-height: 1.6; padding: 6px 8px; max-width: 94%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .ct-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 17px 0 14px; border-bottom: 1px solid var(--shadow-border); }
@@ -821,6 +840,7 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
   const accountRef = useRef(saved.account);
   const [selection, setSelection] = useState(saved.selection);
   const [tab, setTab] = useState("colors");
+  const [styleLimit, setStyleLimit] = useState(9);
   const [colorPageOpen, setColorPageOpen] = useState(false);
   const [colorPickerIndex, setColorPickerIndex] = useState(null);
   const [colorMode, setColorMode] = useState('solid');
@@ -852,7 +872,7 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
   const dirty = !sameTheme(selection, saved.selection);
   const errorText = (code) =>
     t(`chatStoryThemes.${ERROR_KEYS.has(code) ? code : "requestFailed"}`);
-  const visibleColors = CHAT_THEME_STYLES.map((style) => ({ ...selection, source: 'preset', id: selectedTheme.paletteId, paletteId: selectedTheme.paletteId, styleId: style.id, styleOption: true }));
+  const visibleColors = CHAT_THEME_STYLES.slice(0, styleLimit).map((style) => ({ ...selection, source: 'preset', id: selectedTheme.paletteId, paletteId: selectedTheme.paletteId, styleId: style.id, styleOption: true }));
   const colorDraft = { ...selection, source: 'preset', id: selectedTheme.paletteId, paletteId: selectedTheme.paletteId, accentColor: customColors[0], gradientColors: colorMode === 'gradient' ? customColors : undefined, gradientAngle: customAngle };
   const openColorPage = () => {
     setCustomColors(selection.gradientColors || [selection.accentColor || selectedTheme.outgoing, '#287de0']);
@@ -986,6 +1006,10 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
 
   const autoLoadOnScroll = (event) => {
     const node = event.currentTarget;
+    if (tab === "colors" && styleLimit < 27 && 0 < node.scrollTop && node.scrollHeight - node.clientHeight - node.scrollTop < 180) {
+      setStyleLimit((current) => Math.max(current, Math.min(styleLimit + 9, 27, CHAT_THEME_STYLES.length)));
+      return;
+    }
     if (
       tab === "shadow" &&
       backgrounds.loaded &&
@@ -1079,9 +1103,10 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
     }
   };
 
-  if (colorPageOpen) return (
+  if (colorPageOpen) {
+    return (
     <PageShell className={`chat-theme-page ${onBack ? 'chat-theme-overlay' : ''}`}>
-      <style>{PAGE_CSS}</style>
+      <style>{PAGE_CSS + CHAT_THEME_STYLE_CSS}</style>
       <PageHeader title={<span style={{ fontWeight: 700 }}>{t('chatStoryThemes.chooseColors')}</span>} onBack={() => setColorPageOpen(false)} backLabel={t('chatStoryThemes.back')}
         right={<button type="button" className="ct-apply-text" onClick={() => { setSelection(colorDraft); setApplied(false); setColorPageOpen(false); }}>{t('chatStoryThemes.doneColor')}</button>} />
       <main className="ct-main"><div className="ct-inner">
@@ -1091,7 +1116,7 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
           ['#8b5cf6', '#38bdf8'], ['#ec4899', '#fb923c'], ['#14b8a6', '#3b82f6'], ['#f97316', '#facc15', '#ec4899'], ['#6366f1', '#a855f7', '#ec4899'], ['#065f46', '#34d399']
         ].map((colors) => <button type="button" key={colors.join('')} style={{ background: `linear-gradient(135deg, ${colors.join(',')})` }} aria-label={colors.join(' → ')} aria-pressed={JSON.stringify(customColors) === JSON.stringify(colors)} onClick={() => setCustomColors(colors)} />)}</div> : null}
         <div className="ct-custom-colors">{(colorMode === 'solid' ? customColors.slice(0, 1) : customColors).map((color, index) => <div key={index} className="ct-color-control"><span>{t('chatStoryThemes.customColor')} {index + 1}</span><button type="button" className="ct-open-color" aria-label={t('chatStoryThemes.customColor') + ' ' + (index + 1)} onClick={() => setColorPickerIndex(index)}><span style={{ background: color }} /></button><span>{color.toUpperCase()}</span></div>)}</div>
-        {colorPickerIndex !== null ? <ThemeColorPicker key={colorPickerIndex} value={customColors[colorPickerIndex]} title={t('chatStoryThemes.customColor') + ' ' + (colorPickerIndex + 1)} onClose={() => setColorPickerIndex(null)} onChange={(color) => setCustomColors((current) => current.map((value, index) => index === colorPickerIndex ? color : value))} /> : null}
+        {colorPickerIndex !== null ? <ThemeColorPicker hexLabel={t("chatStoryThemes.hexCode")} key={colorPickerIndex} value={customColors[colorPickerIndex]} title={t('chatStoryThemes.customColor') + ' ' + (colorPickerIndex + 1)} onClose={() => setColorPickerIndex(null)} onChange={(color) => setCustomColors((current) => current.map((value, index) => index === colorPickerIndex ? color : value))} /> : null}
         {colorMode === 'gradient' ? <>
           <button type="button" className="ct-secondary" onClick={() => setCustomColors((current) => current.length === 2 ? [...current, '#ec4899'] : current.slice(0, 2))}>{t(customColors.length === 2 ? 'chatStoryThemes.addColor' : 'chatStoryThemes.removeColor')}</button>
           <label className="ct-angle"><span>{t('chatStoryThemes.direction')} · {customAngle}°</span><input type="range" min="0" max="360" step="15" value={customAngle} onChange={(event) => setCustomAngle(Number(event.target.value))} /></label>
@@ -1099,6 +1124,8 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
       </div></main>
     </PageShell>
   );
+
+  }
 
   const tabKeys = ["colors", "shadow", "photos"];
   const items =
@@ -1111,7 +1138,7 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
     <PageShell
       className={`chat-theme-page ${onBack ? "chat-theme-overlay" : ""}`}
     >
-      <style>{PAGE_CSS}</style>
+      <style>{PAGE_CSS + CHAT_THEME_STYLE_CSS}</style>
       <PageHeader
         title={<span style={{ fontWeight: 700 }}>{t("chatStoryThemes.title")}</span>}
         onBack={handleBack}
@@ -1365,6 +1392,15 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
                     </article>
                   );
                 })}
+              </div>
+            ) : null}
+            {tab === "colors" ? (
+              <div className="ct-more">
+                {styleLimit < CHAT_THEME_STYLES.length ? (
+                  <button type="button" className="ct-secondary ct-style-more" onClick={() => setStyleLimit((current) => Math.min(current + 9, CHAT_THEME_STYLES.length))}>
+                    {t("chatStoryThemes.loadMoreStyles")}
+                  </button>
+                ) : <p className="ct-end" role="status">{t("chatStoryThemes.allStylesLoaded")}</p>}
               </div>
             ) : null}
             {tab === "shadow" && backgrounds.items.length ? (
