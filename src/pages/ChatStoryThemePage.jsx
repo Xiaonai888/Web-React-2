@@ -475,6 +475,14 @@ registerTranslationNamespace("chatStoryThemes", Object.fromEntries(
   Object.entries(CHAT_THEME_STYLE_TRANSLATIONS).map(([language, styles]) => [language, { styles, ...styleListCopy[language] }]),
 ));
 
+registerTranslationNamespace("chatStoryThemes", {
+  en: { dropUpload: "Drop a photo here or click Upload" },
+  km: { dropUpload: "ទម្លាក់រូបនៅទីនេះ ឬ ចុចបញ្ចូលរូប" },
+  zh: { dropUpload: "拖放照片到这里，或点击上传" },
+  ja: { dropUpload: "ここに写真をドロップ、またはアップロード" },
+  ko: { dropUpload: "여기에 사진을 놓거나 업로드하세요" },
+});
+
 const ERROR_KEYS = new Set([
   "signIn",
   "unavailable",
@@ -708,6 +716,9 @@ function ThemeColorPicker({ value, title, hexLabel, onChange, onClose }) {
 }
 
 const PAGE_CSS = `
+.ct-photo-drop { padding:14px;border:1.5px dashed var(--shadow-border);border-radius:16px;background:var(--shadow-bg-soft);min-height:112px; }
+.ct-photo-drop[data-dragging="true"] { border-color:var(--shadow-text-primary);background:var(--shadow-bg-elevated,var(--shadow-bg-soft)); }
+.ct-photo-drop-message { flex:1 0 100%;text-align:center;font-size:12px;color:var(--shadow-text-secondary); }
 .ct-picker-modal { box-sizing:border-box;width:min(320px,calc(100vw - 64px));max-width:calc(100vw - 64px);max-height:calc(100vh - 80px);max-height:calc(100dvh - 80px);margin:auto;padding:18px;border:1px solid rgba(255,255,255,.65);border-radius:20px;background:rgba(245,246,248,.97);color:#111827;box-shadow:0 16px 60px rgba(17,24,39,.16);overflow-y:auto;overscroll-behavior:contain; }
 .ct-picker-modal::backdrop { background:rgba(107,114,128,.24); }
 .ct-picker-modal h2 { font-size:16px;font-weight:700;margin:0 0 12px; }
@@ -859,6 +870,8 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
   const [retry, setRetry] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [percent, setPercent] = useState(0);
+  const [photoDragging, setPhotoDragging] = useState(false);
+  const dragDepthRef = useRef(0);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [applied, setApplied] = useState(false);
@@ -1024,7 +1037,8 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
       loadMore();
   };
 
-  const upload = async (event) => {
+  const uploadFile = async (file) => {
+  if (!file || operationRef.current || !photos.loaded) return;
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || operationRef.current || !photos.loaded) return;
@@ -1064,6 +1078,29 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
     }
   };
 
+  const upload = (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  void uploadFile(file);
+};
+
+const dropPhoto = (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  dragDepthRef.current = 0;
+  setPhotoDragging(false);
+
+  if (!photos.loaded || uploading || deleting || !chatThemeToken()) return;
+
+  const files = Array.from(event.dataTransfer?.files || []);
+  if (files.length !== 1) {
+    setMutationError("invalidType");
+    return;
+  }
+
+  void uploadFile(files[0]);
+};
+  
   const confirmDelete = async () => {
     if (!pendingDelete || operationRef.current) return;
     const id = pendingDelete.id;
@@ -1215,7 +1252,32 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
             {tab === 'colors' ? <h2 className="ct-style-heading">{t('chatStoryThemes.chooseStyle')}</h2> : null}
             {tab === "photos" ? (
               <>
-                <div className="ct-upload-bar">
+                <div
+  className="ct-upload-bar ct-photo-drop"
+  data-dragging={photoDragging}
+  onDragEnter={(event) => {
+    event.preventDefault();
+    dragDepthRef.current += 1;
+    setPhotoDragging(true);
+  }}
+  onDragOver={(event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect =
+      !photos.loaded ||
+      uploading ||
+      deleting ||
+      photos.items.length >= CHAT_THEME_PHOTO_LIMIT ||
+      !chatThemeToken()
+        ? "none"
+        : "copy";
+  }}
+  onDragLeave={(event) => {
+    event.preventDefault();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (!dragDepthRef.current) setPhotoDragging(false);
+  }}
+  onDrop={dropPhoto}
+>
                   <div>
                     <span className="ct-counter">
                       {t("chatStoryThemes.photoCount", {
@@ -1247,8 +1309,11 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
                     hidden
                     onChange={upload}
                     aria-label={t("chatStoryThemes.upload")}
-                  />
-                </div>
+/>
+<div className="ct-photo-drop-message">
+  {t("chatStoryThemes.dropUpload")}
+</div>
+</div>
                 {uploading ? (
                   <div role="status">
                     <div className="ct-progress-info">
