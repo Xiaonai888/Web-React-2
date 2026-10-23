@@ -4,6 +4,7 @@ import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooter
 import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
+import AuthorWorksTab from '../../components/AuthorWorksTab'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPopup'
 import AuthorPageAboutPopup from '../../components/AuthorPageAboutPopup'
@@ -1847,6 +1848,10 @@ export default function AuthorPublicPage() {
 
   const [author, setAuthor] = useState(null)
   const [activeTab, setActiveTab] = useState(
+  const [worksVisitedKey, setWorksVisitedKey] = useState('')
+useEffect(() => {
+  if (activeTab === 'Works') setWorksVisitedKey(pageUsername || 'owner')
+}, [activeTab, pageUsername])
   tabs.includes(location.state?.activeTab) ? location.state.activeTab : 'Posts'
 )
   const [tabsFrozen, setTabsFrozen] = useState(false)
@@ -4289,24 +4294,26 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   </div>
 ) : null}
 
-          {activeTab === 'Works' ? (
-            authorWorks.length ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {authorWorks.map((work) => (
-                  <AuthorWorkCard
-                    key={work.id}
-                    work={work}
-                    onOpen={() => navigate(`/story/${work.id}`)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyPanel
-                title={t('authorPublicPage.noWorksYet')}
-                text={t('authorPublicPage.noWorksText')}
-              />
-            )
-          ) : null}
+          {worksVisitedKey === (pageUsername || 'owner') && author ? (
+  <div className={activeTab === 'Works' ? '' : 'hidden'}>
+    <AuthorWorksTab
+      author={author}
+      renderWork={(work) => (
+        <AuthorWorkCard
+          work={work}
+          onOpen={() => navigate(`/story/${work.id}`)}
+        />
+      )}
+      renderEmpty={() => (
+        <EmptyPanel
+          title={t('authorPublicPage.noWorksYet')}
+          text={t('authorPublicPage.noWorksText')}
+        />
+      )}
+    />
+  </div>
+) : null}
+
 
         {activeTab === 'Store' ? (
   <AuthorStoreTab
