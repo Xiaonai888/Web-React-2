@@ -85,6 +85,17 @@ function getAuthToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
 }
 
+function safeBannerSrc(value, objectUrl) {
+  if (typeof value !== 'string') return ''
+  if (value === objectUrl && value.startsWith('blob:')) return value
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' ? url.href : ''
+  } catch {
+    return ''
+  }
+}
+
 export default function AuthorStoreBannerSettings({ onBack }) {
   const { t } = useDisplayTranslation()
   const fileInputRef = useRef(null)
@@ -315,7 +326,7 @@ export default function AuthorStoreBannerSettings({ onBack }) {
   ) : previewUrl ? (
     <>
       <img
-        src={previewUrl}
+        src={safeBannerSrc(previewUrl, previewObjectRef.current)}
         alt={t('authorStoreBannerSettings.preview')}
         className="h-full w-full object-cover"
       />
