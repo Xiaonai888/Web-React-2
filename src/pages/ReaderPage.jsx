@@ -8629,8 +8629,7 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
 </header>
 
       <main
-  onClickCapture={isChatStory ? handleReaderDoubleTap : undefined}
-  onClick={isChatStory ? undefined : handleReaderDoubleTap}
+  onClick={handleReaderDoubleTap}
   className={`mx-auto max-w-3xl ${isChatStory ? 'bg-transparent pt-0' : `${theme.card} pt-[50px]`} px-0 pb-[92px] sm:px-4`}
 >
         {loading ? <LoadingCard theme={theme} /> : null}
