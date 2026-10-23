@@ -11,9 +11,17 @@ import { readMediaUploadFile, requestUploadStoragePersistence } from '../../util
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
 import {
+  AUTHOR_STORE_PRODUCT_PAGE_SIZE,
+  fetchAuthorStoreProductPage,
+  readAuthorStoreProductCache,
+  rememberAuthorStoreProductView,
+  invalidateAuthorStoreProductCache,
+} from '../../utils/authorStoreProductsCache'
+import {
   fetchAuthorStoreResource,
   readAuthorStoreResourceCache,
   invalidateAuthorStoreResourceCache,
+  writeAuthorStoreResourceCache,
 } from '../../utils/authorStoreResourceCache'
 
 registerTranslationNamespace('authorStoreManager', {
@@ -1515,8 +1523,6 @@ const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cov
 const BOOK_CONDITIONS = ['New', 'Second Hand']
 const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Download and read online']
 const ORDER_REPORT_LIMIT = 20
-const ORDER_REFRESH_INTERVAL_MS = 60000
-const ORDER_MAX_AUTO_REFRESHES = 10
 const STORE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 
@@ -1988,25 +1994,6 @@ async function attachPrivatePdfToProduct(productId, pdf) {
 }
 
 
-async function fetchMyProducts() {
-  const token = getAuthToken()
-
-  if (!token) throw new Error(storeText('pleaseLogin'))
-
-  const response = await fetch(`${API_BASE_URL}/api/author-store/me/products`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || storeText('loadProductsFailed'))
-  }
-
-  return Array.isArray(data.products) ? data.products.map(formatProductForUi) : []
-}
 
 async function fetchMyStorePromotion() {
   const token = getAuthToken()
@@ -2922,6 +2909,48 @@ function readStoredJson(key) {
   }
 }
 
+function getAuthorStoreAccountId() {
+  const reader = readStoredJson('shadow_reader_user') || {}
+  const author = readStoredJson('shadow_author_page') || {}
+  const userId = String(reader.user_id || reader.id || author.user_id || '').trim()
+  const pageId = String(author.author_page_id || author.id || '').trim()
+  if (userId) return `${userId}:${pageId}`
+  if (pageId) return `author-page:${pageId}`
+  const token = getAuthToken()
+  if (!token) return ''
+  let first = 2166136261
+  let second = 5381
+  for (let i = 0; i < token.length; i += 1) {
+    first = Math.imul(first ^ token.charCodeAt(i), 16777619)
+    second = Math.imul(second ^ token.charCodeAt(i), 33)
+  }
+  return `session:${(first >>> 0).toString(36)}:${(second >>> 0).toString(36)}:${token.length}`
+}
+
+function getStoredProductViewOptions() {
+  const accountId = getAuthorStoreAccountId()
+  try {
+    const saved = accountId ? JSON.parse(sessionStorage.getItem(`shadow_author_store_product_options_v1:${encodeURIComponent(accountId)}`) || 'null') : null
+    return {
+      type: ['All', 'Book', 'PDF', 'Active', 'Draft'].includes(saved?.type) ? saved.type : 'All',
+      sort: ['newest', 'oldest', 'recently_updated', 'low_stock', 'sold_out'].includes(saved?.sort) ? saved.sort : 'newest',
+      q: String(saved?.q || '').slice(0, 100),
+    }
+  } catch {
+    return { type: 'All', sort: 'newest', q: '' }
+  }
+}
+
+function getStoreLoadTenLabel() {
+  return ({
+    en: 'Load 10 More',
+    km: 'បង្ហាញ ១០ ទៀត',
+    zh: '再加载 10 件商品',
+    ja: 'さらに10件表示',
+    ko: '상품 10개 더 보기',
+  })[getDisplayLanguageId()] || 'Load 10 More'
+}
+
 function getAuthorMenuProfile() {
   const authorPage = readStoredJson('shadow_author_page') || {}
   const readerUser = readStoredJson('shadow_reader_user') || {}
@@ -3031,6 +3060,18 @@ function StoreManagerHome({
   setActiveType,
   filteredProducts,
   products,
+  recordQuery,
+  setRecordQuery,
+  recordFilter,
+  setRecordFilter,
+  recordSearch,
+  productTotal,
+  productHasNext,
+  productLoadingMore,
+  productRefreshing,
+  onLoadMoreProducts,
+  onLoadCategories,
+  storeAccountId,
   categories,
   storeCategories,
   newCategory,
@@ -3070,10 +3111,8 @@ function StoreManagerHome({
   onMarkOrderPreparing,
   orderActionLoadingId,
 }) {
-const [recordQuery, setRecordQuery] = useState('')
 const navigate = useNavigate()
 const [recordFilterOpen, setRecordFilterOpen] = useState(false)
-const [recordFilter, setRecordFilter] = useState('newest')
 const [orderFilterOpen, setOrderFilterOpen] = useState(false)
 const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
 const [searchParams] = useSearchParams()
@@ -3097,60 +3136,92 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
   const canCreateCustomCategory = customCategoryCount < 5
   useEffect(() => {
-    let ignore = false
-
-    async function loadDeliverySettings() {
+    if (activeTab !== 'Settings' || settingsView !== 'delivery') return undefined
+    let cancelled = false
+    const apply = (settings) => {
+      if (cancelled || !Array.isArray(settings)) return
+      const jnt = settings.find((item) => item.company_key === 'jnt')
+      const vet = settings.find((item) => item.company_key === 'vet')
+      setJtDeliveryFee(String(jnt?.fee_usd ?? 2))
+      setVetDeliveryFee(String(vet?.fee_usd ?? 2))
+    }
+    const cached = storeAccountId
+      ? readAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'delivery' })
+      : null
+    if (cached?.exists) apply(cached.data)
+    if (cached?.fresh) return () => { cancelled = true }
+    setDeliveryLoading(!cached?.exists)
+    void (async () => {
       try {
-        setDeliveryLoading(true)
-
-        const settings = await fetchDeliverySettings()
-        const jnt = settings.find((item) => item.company_key === 'jnt')
-        const vet = settings.find((item) => item.company_key === 'vet')
-
-        if (!ignore) {
-          setJtDeliveryFee(String(jnt?.fee_usd ?? 2))
-          setVetDeliveryFee(String(vet?.fee_usd ?? 2))
-        }
+        const result = storeAccountId
+          ? await fetchAuthorStoreResource({ accountId: storeAccountId, resource: 'delivery', fetcher: fetchDeliverySettings })
+          : { data: await fetchDeliverySettings() }
+        if (!result.obsolete) apply(result.data)
       } catch {
       } finally {
-        if (!ignore) setDeliveryLoading(false)
+        if (!cancelled) setDeliveryLoading(false)
       }
-    }
-
-    loadDeliverySettings()
-
-    return () => {
-      ignore = true
-    }
-  }, [])
+    })()
+    return () => { cancelled = true }
+  }, [activeTab, settingsView, storeAccountId])
 
   useEffect(() => {
-    let ignore = false
-
-    async function loadTelegramSettings() {
+    if (activeTab !== 'Settings' || settingsView !== 'telegram') return undefined
+    let cancelled = false
+    const apply = (settings) => {
+      if (cancelled || !settings) return
+      setTelegramBotUsername(settings.bot_username || '')
+      setTelegramChatId(settings.chat_id || '')
+      setTelegramChatTitle(settings.chat_title || '')
+      setTelegramLinkedAt(settings.linked_at || '')
+    }
+    const cached = storeAccountId
+      ? readAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'telegram' })
+      : null
+    if (cached?.exists) apply(cached.data)
+    if (cached?.fresh) return () => { cancelled = true }
+    setTelegramLoading(!cached?.exists)
+    void (async () => {
       try {
-        setTelegramLoading(true)
-
-        const settings = await fetchTelegramSettings()
-
-        if (!ignore) {
-          setTelegramBotUsername(settings.bot_username || '')
-          setTelegramChatId(settings.chat_id || '')
-          setTelegramChatTitle(settings.chat_title || '')
-          setTelegramLinkedAt(settings.linked_at || '')
-        }
+        const result = storeAccountId
+          ? await fetchAuthorStoreResource({ accountId: storeAccountId, resource: 'telegram', fetcher: fetchTelegramSettings })
+          : { data: await fetchTelegramSettings() }
+        if (!result.obsolete) apply(result.data)
       } catch {
       } finally {
-        if (!ignore) setTelegramLoading(false)
+        if (!cancelled) setTelegramLoading(false)
       }
-    }
+    })()
+    return () => { cancelled = true }
+  }, [activeTab, settingsView, storeAccountId])
 
-    loadTelegramSettings()
+  const loadSalesReportSettingsCached = useCallback(async () => {
+    if (!storeAccountId) return fetchSalesReportsSettings()
+    const result = await fetchAuthorStoreResource({
+      accountId: storeAccountId,
+      resource: 'salesReports',
+      fetcher: fetchSalesReportsSettings,
+    })
+    return result.data
+  }, [storeAccountId])
 
-    return () => {
-      ignore = true
-    }
-  }, [])
+  const connectSalesReportsCached = useCallback(async (...args) => {
+    const result = await connectSalesReports(...args)
+    if (storeAccountId) invalidateAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'salesReports' })
+    return result
+  }, [storeAccountId])
+
+  const syncSalesReportsCached = useCallback(async (...args) => {
+    const result = await syncSalesReports(...args)
+    if (storeAccountId) invalidateAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'salesReports' })
+    return result
+  }, [storeAccountId])
+
+  const disconnectSalesReportsCached = useCallback(async (...args) => {
+    const result = await disconnectSalesReports(...args)
+    if (storeAccountId) invalidateAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'salesReports' })
+    return result
+  }, [storeAccountId])
 
   const handleSaveDeliveryFees = async () => {
   try {
@@ -3167,6 +3238,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
 
     setJtDeliveryFee(String(jnt?.fee_usd ?? jtDeliveryFee))
     setVetDeliveryFee(String(vet?.fee_usd ?? vetDeliveryFee))
+    if (storeAccountId) writeAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'delivery', data: settings })
     setDeliveryMessage(storeText('deliveryFeesSaved'))
   } catch (error) {
     setDeliveryMessage(error.message || storeText('saveDeliveryFailed'))
@@ -3188,6 +3260,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
     setTelegramChatId(settings.chat_id || telegramChatId)
     setTelegramChatTitle(settings.chat_title || telegramChatTitle)
     setTelegramLinkedAt(settings.linked_at || telegramLinkedAt)
+    if (storeAccountId) invalidateAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'telegram' })
 
     if (connectUrl) {
       window.location.href = connectUrl
@@ -3213,6 +3286,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
     setTelegramChatId(settings.chat_id || '')
     setTelegramChatTitle(settings.chat_title || '')
     setTelegramLinkedAt(settings.linked_at || '')
+    if (storeAccountId) writeAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'telegram', data: settings })
     setTelegramMessage(storeText('telegramUnlinked'))
   } catch (error) {
     setTelegramMessage(error.message || storeText('unlinkTelegramFailedUi'))
@@ -3221,67 +3295,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   }
 }
 
- const visibleRecords = useMemo(() => {
-  const query = recordQuery.trim().toLowerCase()
-
-  let records = filteredProducts.filter((product) => {
-    if (activeType === 'Active') return product.status === 'Active'
-    if (activeType === 'Draft') return product.status === 'Draft'
-    return true
-  })
-
-  if (query) {
-    records = records.filter((product) => {
-      return (
-        String(product.title || '').toLowerCase().includes(query) ||
-        String(product.id || '').toLowerCase().includes(query) ||
-        String(product.category || '').toLowerCase().includes(query) ||
-        String(product.status || '').toLowerCase().includes(query) ||
-        String(product.type || '').toLowerCase().includes(query)
-      )
-    })
-  }
-
-  if (recordFilter === 'low_stock') {
-    records = records.filter((product) => {
-      const stock = Number(product.stock || 0)
-
-      return product.type === 'Book' && stock > 0 && stock <= 5
-    })
-  }
-
-  if (recordFilter === 'sold_out') {
-    records = records.filter((product) => {
-      return product.type === 'Book' && Number(product.stock || 0) <= 0
-    })
-  }
-
-  const getTime = (value) => {
-    const time = new Date(value || 0).getTime()
-    return Number.isFinite(time) ? time : 0
-  }
-
-  return [...records].sort((firstProduct, secondProduct) => {
-    if (recordFilter === 'oldest') {
-      return (
-        getTime(firstProduct.createdAt) -
-        getTime(secondProduct.createdAt)
-      )
-    }
-
-    if (recordFilter === 'recently_updated') {
-      return (
-        getTime(secondProduct.updatedAt) -
-        getTime(firstProduct.updatedAt)
-      )
-    }
-
-    return (
-      getTime(secondProduct.createdAt) -
-      getTime(firstProduct.createdAt)
-    )
-  })
-}, [filteredProducts, recordQuery, activeType, recordFilter])
+ const visibleRecords = filteredProducts
 
   return (
     <main className="mx-auto max-w-[980px] px-0 py-0 sm:px-4 sm:py-4">
@@ -3406,7 +3420,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
         </div>
 
         <span className="shrink-0 rounded-[10px] bg-[var(--shadow-bg-surface)] px-3 py-1.5 text-[11px] font-black text-[#6f5cff] shadow-[0_8px_20px_rgba(124,91,255,0.10)] ring-1 ring-[var(--shadow-border)]">
-          {storeText('productsCount', { count: products.length })}
+          {storeText('productsCount', { count: productTotal })}
         </span>
       </div>
 
@@ -3520,9 +3534,9 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
     </div>
 
           <div className="bg-[var(--shadow-bg-surface)] px-4 py-2">
-  {loading ? (
+  {loading && !visibleRecords.length ? (
   <div className="rounded-[18px] bg-[var(--shadow-bg-soft)] p-8 text-center text-[13px] font-bold text-[var(--shadow-text-tertiary)] ring-1 ring-[var(--shadow-border)]">{storeText('loadingProducts')}</div>
-) : products.length === 0 ? (
+) : productTotal === 0 && activeType === 'All' && !recordSearch && recordFilter === 'newest' && !localError ? (
   <EmptyState onAddProduct={onAddProduct} />
 ) : visibleRecords.length ? (
   <div className="overflow-visible bg-[var(--shadow-bg-surface)]">
@@ -3534,6 +3548,16 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
         onDelete={onDeleteProduct}
       />
     ))}
+    {productHasNext ? (
+      <button
+        type="button"
+        onClick={onLoadMoreProducts}
+        disabled={productLoadingMore || productRefreshing}
+        className="mt-3 w-full rounded-xl bg-[var(--shadow-bg-soft)] px-4 py-3 text-[13px] font-bold text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)] disabled:opacity-50"
+      >
+        {productLoadingMore ? storeText('loadingProducts') : getStoreLoadTenLabel()}
+      </button>
+    ) : null}
   </div>
 ) : (
   <div className="rounded-[18px] bg-[var(--shadow-bg-surface)] px-4 py-10 text-center ring-1 ring-[var(--shadow-border)]">
@@ -3559,7 +3583,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
 
     <button
       type="button"
-      onClick={() => setSettingsView('categories')}
+      onClick={() => { setSettingsView('categories'); onLoadCategories() }}
       className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[var(--shadow-bg-soft)]"
     >
       <span className="min-w-0">
@@ -3913,10 +3937,10 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
     <SalesReportsSettingsPage
   open={settingsView === 'sales-reports'}
   onBack={() => setSettingsView('home')}
-  fetchSettings={fetchSalesReportsSettings}
-  connectSheet={connectSalesReports}
-  syncSheet={syncSalesReports}
-  disconnectSheet={disconnectSalesReports}
+  fetchSettings={loadSalesReportSettingsCached}
+  connectSheet={connectSalesReportsCached}
+  syncSheet={syncSalesReportsCached}
+  disconnectSheet={disconnectSalesReportsCached}
 />
 
   {settingsView === 'telegram' ? (
@@ -5171,7 +5195,17 @@ export default function AuthorStoreManagerPage() {
   useAuthorPageFooterVisibility(mode === 'manager')
   const [editingProduct, setEditingProduct] = useState(null)
   const [activeTab, setActiveTab] = useState('Records')
-  const [activeType, setActiveType] = useState('All')
+  const recordDefaults = useMemo(getStoredProductViewOptions, [])
+  const [activeType, setActiveType] = useState(recordDefaults.type)
+  const [recordQuery, setRecordQuery] = useState(recordDefaults.q)
+  const [recordFilter, setRecordFilter] = useState(recordDefaults.sort)
+  const [recordSearch, setRecordSearch] = useState(recordDefaults.q.trim())
+  const [productTotal, setProductTotal] = useState(0)
+  const [productHasNext, setProductHasNext] = useState(false)
+  const [productLoadingMore, setProductLoadingMore] = useState(false)
+  const [productRefreshing, setProductRefreshing] = useState(false)
+  const productRequestIdRef = useRef(0)
+  const productLoadMoreRef = useRef(false)
   const [newCategory, setNewCategory] = useState('')
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const [storeCategories, setStoreCategories] = useState([])
@@ -5233,15 +5267,10 @@ export default function AuthorStoreManagerPage() {
   const [orderSearchDraft, setOrderSearchDraft] = useState('')
   const [orderSearchQuery, setOrderSearchQuery] = useState('')
   const [orderActionLoadingId, setOrderActionLoadingId] = useState('')
-  const orderAutoRefreshCountRef = useRef(0)
   const lastOrderReportLoadAtRef = useRef(0)
 
     const storeAccountId = useMemo(() => {
-    const reader = readStoredJson('shadow_reader_user') || {}
-    const author = readStoredJson('shadow_author_page') || {}
-    const userId = String(reader.user_id || reader.id || author.user_id || '').trim()
-    const pageId = String(author.author_page_id || author.id || '').trim()
-    return userId ? `${userId}:${pageId}` : pageId ? `author-page:${pageId}` : ''
+    return getAuthorStoreAccountId()
   }, [])
   const orderRequestIdRef = useRef(0)
 
@@ -5328,34 +5357,158 @@ export default function AuthorStoreManagerPage() {
     setOrderPage(1)
   }, [orderType, orderPrepareFilter, orderSearchQuery])
 
-  const filteredProducts = useMemo(() => {
-    if (activeType === 'All' || activeType === 'Active' || activeType === 'Draft') return products
-    return products.filter((product) => product.type === activeType)
-  }, [activeType, products])
+  const filteredProducts = products
 
   useEffect(() => {
-    let ignore = false
+    if (recordQuery.trim() === recordSearch) return undefined
+    const timer = window.setTimeout(() => setRecordSearch(recordQuery.trim()), 400)
+    return () => window.clearTimeout(timer)
+  }, [recordQuery, recordSearch])
 
-    async function loadProducts() {
-      try {
-        setLoading(true)
-        setLocalError('')
-        const nextProducts = await fetchMyProducts()
-        if (!ignore) {
-          setProducts(nextProducts)
-          const productCategories = nextProducts.map((item) => item.category).filter(Boolean)
-          setCategories((current) => Array.from(new Set([...current, ...productCategories])))
-        }
-      } catch (error) {
-        if (!ignore) setLocalError(error.message || storeText('loadProductsUiFailed'))
-      } finally {
-        if (!ignore) setLoading(false)
-      }
+  useEffect(() => {
+    if (!storeAccountId) return
+    try {
+      sessionStorage.setItem(
+        `shadow_author_store_product_options_v1:${encodeURIComponent(storeAccountId)}`,
+        JSON.stringify({ type: activeType, sort: recordFilter, q: recordQuery })
+      )
+    } catch {
+    }
+  }, [storeAccountId, activeType, recordFilter, recordQuery])
+
+  const productView = useMemo(() => ({
+    type: activeType.toLowerCase(),
+    sort: recordFilter,
+    q: recordSearch,
+  }), [activeType, recordFilter, recordSearch])
+  const productViewKey = JSON.stringify(productView)
+
+  useEffect(() => {
+    if (mode !== 'manager' || activeTab !== 'Records') return undefined
+    const requestId = ++productRequestIdRef.current
+    let cancelled = false
+    let scrollPosition = window.scrollY
+    const onScroll = () => { scrollPosition = window.scrollY }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    productLoadMoreRef.current = false
+    setProductLoadingMore(false)
+    setLocalError('')
+
+    if (!storeAccountId) {
+      setProducts([])
+      setProductTotal(0)
+      setProductHasNext(false)
+      setLoading(false)
+      setProductRefreshing(false)
+      setLocalError(storeText('pleaseLogin'))
+      return () => { window.removeEventListener('scroll', onScroll) }
     }
 
-    loadProducts()
-    return () => { ignore = true }
-  }, [])
+    const cached = readAuthorStoreProductCache(storeAccountId, productView)
+    const applyCache = () => {
+      if (cancelled || requestId !== productRequestIdRef.current) return
+      const next = readAuthorStoreProductCache(storeAccountId, productView)
+      const items = next.products.slice(0, next.total).map(formatProductForUi)
+      setProducts(items)
+      setProductTotal(next.total)
+      setProductHasNext(next.hasNext && items.length < next.total)
+      setCategories((current) => Array.from(new Set([
+        ...current,
+        ...items.map((item) => item.category).filter(Boolean),
+      ])))
+    }
+    applyCache()
+    setLoading(cached.loadedPages === 0)
+    setProductRefreshing(!cached.fresh && cached.loadedPages > 0)
+
+    if (!cached.fresh) {
+      void (async () => {
+        try {
+          const first = await fetchAuthorStoreProductPage({
+            accountId: storeAccountId,
+            apiBaseUrl: API_BASE_URL,
+            token: getAuthToken(),
+            view: productView,
+            page: 1,
+            force: true,
+          })
+          if (cancelled || requestId !== productRequestIdRef.current) return
+          const availablePages = Math.max(1, Math.ceil(Number(first.pagination.total || 0) / AUTHOR_STORE_PRODUCT_PAGE_SIZE))
+          const keepPages = Math.min(Math.max(1, cached.loadedPages), availablePages)
+          for (let page = 2; page <= keepPages; page += 1) {
+            if (cancelled || requestId !== productRequestIdRef.current) return
+            await fetchAuthorStoreProductPage({
+              accountId: storeAccountId,
+              apiBaseUrl: API_BASE_URL,
+              token: getAuthToken(),
+              view: productView,
+              page,
+              force: true,
+            })
+          }
+          applyCache()
+        } catch (error) {
+          if (!cancelled && requestId === productRequestIdRef.current) {
+            setLocalError(error.message || storeText('loadProductsUiFailed'))
+          }
+        } finally {
+          if (!cancelled && requestId === productRequestIdRef.current) {
+            setLoading(false)
+            setProductRefreshing(false)
+          }
+        }
+      })()
+    } else {
+      setLoading(false)
+      setProductRefreshing(false)
+    }
+
+    let nextScrollFrame = 0
+    const scrollFrame = window.requestAnimationFrame(() => {
+      nextScrollFrame = window.requestAnimationFrame(() => {
+        if (!cancelled) window.scrollTo(0, cached.scrollY || 0)
+      })
+    })
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('scroll', onScroll)
+      window.cancelAnimationFrame(scrollFrame)
+      window.cancelAnimationFrame(nextScrollFrame)
+      rememberAuthorStoreProductView(storeAccountId, productView, scrollPosition)
+      if (productRequestIdRef.current === requestId) productRequestIdRef.current += 1
+    }
+  }, [activeTab, mode, storeAccountId, productViewKey])
+
+  const loadMoreProducts = useCallback(async () => {
+    if (!storeAccountId || productLoadMoreRef.current || productRefreshing || loading || mode !== 'manager' || activeTab !== 'Records') return
+    const before = readAuthorStoreProductCache(storeAccountId, productView)
+    if (!before.hasNext || !before.loadedPages) return
+    const requestId = productRequestIdRef.current
+    productLoadMoreRef.current = true
+    setProductLoadingMore(true)
+    try {
+      await fetchAuthorStoreProductPage({
+        accountId: storeAccountId,
+        apiBaseUrl: API_BASE_URL,
+        token: getAuthToken(),
+        view: productView,
+        page: before.loadedPages + 1,
+      })
+      if (requestId !== productRequestIdRef.current) return
+      const updated = readAuthorStoreProductCache(storeAccountId, productView)
+      const items = updated.products.slice(0, updated.total).map(formatProductForUi)
+      setProducts(items)
+      setProductTotal(updated.total)
+      setProductHasNext(updated.hasNext && items.length < updated.total)
+      setCategories((current) => Array.from(new Set([...current, ...items.map((item) => item.category).filter(Boolean)])))
+    } catch (error) {
+      if (requestId === productRequestIdRef.current) setLocalError(error.message || storeText('loadProductsUiFailed'))
+    } finally {
+      productLoadMoreRef.current = false
+      if (requestId === productRequestIdRef.current) setProductLoadingMore(false)
+    }
+  }, [activeTab, loading, mode, productRefreshing, productViewKey, storeAccountId])
 
   useEffect(() => {
     if (activeTab === 'Records') void loadPromotion()
@@ -5370,34 +5523,38 @@ export default function AuthorStoreManagerPage() {
     return () => { orderRequestIdRef.current += 1 }
   }, [activeTab, loadOrderReport])
 
+  const loadCategories = useCallback(async () => {
+    const apply = (nextCategories) => {
+      if (!Array.isArray(nextCategories)) return
+      setStoreCategories(nextCategories)
+      setCategories((current) => {
+        const names = nextCategories.map((item) => item.name).filter(Boolean)
+        return Array.from(new Set([...current, ...names]))
+      })
+    }
+    const cached = storeAccountId
+      ? readAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'categories' })
+      : null
+    if (cached?.exists) apply(cached.data)
+    if (cached?.fresh) return
+    try {
+      setCategoryError('')
+      const result = storeAccountId
+        ? await fetchAuthorStoreResource({ accountId: storeAccountId, resource: 'categories', fetcher: fetchMyCategories })
+        : { data: await fetchMyCategories() }
+      if (!result.obsolete) apply(result.data)
+    } catch (error) {
+      setCategoryError(error.message || storeText('loadCategoriesUiFailed'))
+    }
+  }, [storeAccountId])
+
   useEffect(() => {
-    let ignore = false
+    if (mode === 'form') void loadCategories()
+  }, [mode, loadCategories])
 
-    async function loadCategories() {
-      try {
-        setCategoryError('')
-        const nextCategories = await fetchMyCategories()
-
-        if (!ignore) {
-          setStoreCategories(nextCategories)
-          setCategories((current) => {
-            const names = nextCategories.map((item) => item.name).filter(Boolean)
-            return Array.from(new Set([...current, ...names]))
-          })
-        }
-      } catch (error) {
-        if (!ignore) {
-          setCategoryError(error.message || storeText('loadCategoriesUiFailed'))
-        }
-      }
-    }
-
-    loadCategories()
-
-    return () => {
-      ignore = true
-    }
-  }, [])
+  const invalidateCategories = () => {
+    if (storeAccountId) invalidateAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'categories' })
+  }
 
   const addCategory = async () => {
   const name = newCategory.trim()
@@ -5418,6 +5575,7 @@ export default function AuthorStoreManagerPage() {
     if (createdCategory) {
       setStoreCategories((current) => [...current, createdCategory])
       setCategories((current) => Array.from(new Set([...current, createdCategory.name])))
+      invalidateCategories()
     }
 
     setNewCategory('')
@@ -5455,6 +5613,7 @@ const saveEditCategory = async (category) => {
         current.map((item) => (item.id === updatedCategory.id ? updatedCategory : item))
       )
       setCategories((current) => Array.from(new Set([...current, updatedCategory.name])))
+      invalidateCategories()
     }
 
     cancelEditCategory()
@@ -5478,6 +5637,7 @@ const handleDeleteCategory = async (category) => {
 
     await deleteStoreCategory(category.id)
     setStoreCategories((current) => current.filter((item) => item.id !== category.id))
+    invalidateCategories()
   } catch (error) {
     setCategoryError(error.message || storeText('deleteCategoryUiFailed'))
   } finally {
@@ -5495,6 +5655,7 @@ const handleDeleteCategory = async (category) => {
     const updatedCategory = await updateStoreCategory(category.id, {
       is_hidden: !category.isHidden,
     })
+    invalidateCategories()
 
     if (updatedCategory) {
       setStoreCategories((current) =>
@@ -5533,6 +5694,7 @@ const saveCategoryOrder = async () => {
 
     const savedCategories = await reorderStoreCategories(storeCategories.map((item) => item.id))
     setStoreCategories(savedCategories)
+    invalidateCategories()
   } catch (error) {
     setCategoryError(error.message || storeText('saveCategoryOrderUiFailed'))
   } finally {
@@ -5586,6 +5748,7 @@ const saveCategoryOrder = async () => {
           throw new Error(storeText('pdfAttachNotConfirmed'))
         }
         pdfAttached = true
+        savedProduct = { ...savedProduct, pdfFileName: attached.pdf_file_name, pdfFileUrl: '' }
         onPdfUploadProgress?.('verifying', 100)
 
         if (!isEditing && product.status !== 'Draft') {
@@ -5599,13 +5762,16 @@ const saveCategoryOrder = async () => {
         }
       }
 
-      const nextProducts = await fetchMyProducts()
-      const finalProduct = nextProducts.find((item) => item.id === savedProduct.id)
-      if (!finalProduct || (hasNewPrivatePdf && finalProduct.pdfFileName !== product.uploadedPdf.file_name)) {
+      const finalProduct = savedProduct
+      if (!finalProduct?.id || (hasNewPrivatePdf && finalProduct.pdfFileName !== product.uploadedPdf.file_name)) {
         throw new Error(storeText('pdfAttachNotConfirmed'))
       }
 
-      setProducts(nextProducts)
+      if (storeAccountId) invalidateAuthorStoreProductCache(storeAccountId)
+      setProducts((current) => isEditing
+        ? current.map((item) => item.id === finalProduct.id ? finalProduct : item)
+        : [finalProduct, ...current])
+      if (!isEditing) setProductTotal((count) => count + 1)
 
       if (finalProduct.category && !categories.includes(finalProduct.category)) {
         setCategories((current) => [...current, finalProduct.category])
@@ -5666,6 +5832,8 @@ await loadOrderReport({ silent: true, force: true })
       setLocalError('')
       await deleteStoreProduct(product.id)
       setProducts((current) => current.filter((item) => item.id !== product.id))
+      setProductTotal((count) => Math.max(0, count - 1))
+      if (storeAccountId) invalidateAuthorStoreProductCache(storeAccountId)
     } catch (error) {
       setLocalError(error.message || storeText('deleteProductFailed'))
     }
@@ -5767,6 +5935,18 @@ await loadOrderReport({ silent: true, force: true })
           setActiveType={setActiveType}
           filteredProducts={filteredProducts}
           products={products}
+          recordQuery={recordQuery}
+          setRecordQuery={setRecordQuery}
+          recordFilter={recordFilter}
+          setRecordFilter={setRecordFilter}
+          recordSearch={recordSearch}
+          productTotal={productTotal}
+          productHasNext={productHasNext}
+          productLoadingMore={productLoadingMore}
+          productRefreshing={productRefreshing}
+          onLoadMoreProducts={loadMoreProducts}
+          onLoadCategories={loadCategories}
+          storeAccountId={storeAccountId}
           categories={categories}
           newCategory={newCategory}
           setNewCategory={setNewCategory}
