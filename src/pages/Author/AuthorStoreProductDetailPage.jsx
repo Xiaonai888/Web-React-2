@@ -388,8 +388,32 @@ function normalizeProduct(product, pageUsername) {
   }
 }
 
-async function fetchAuthorStoreProduct(pageUsername, productId) {
-  const response = await fetch(`${API_BASE_URL}/api/author-store/page/${encodeURIComponent(pageUsername)}/products`)
+const PRODUCT_DETAIL_CACHE_TTL_MS = 3 * 60 * 1000
+
+function getProductDetailCacheKey(pageUsername, productId) {
+  return `shadow_author_store_public_detail_v1:${encodeURIComponent(String(pageUsername || '').trim().toLowerCase())}:${encodeURIComponent(String(productId || '').trim())}`
+}
+
+function readProductDetailCache(pageUsername, productId) {
+  try {
+    const record = JSON.parse(sessionStorage.getItem(getProductDetailCacheKey(pageUsername, productId)) || 'null')
+    if (!record || Date.now() - Number(record.savedAt) >= PRODUCT_DETAIL_CACHE_TTL_MS || !record.product || String(record.product.id) !== String(productId)) return null
+    return record.product
+  } catch {
+    return null
+  }
+}
+
+function writeProductDetailCache(pageUsername, productId, product) {
+  try {
+    sessionStorage.setItem(getProductDetailCacheKey(pageUsername, productId), JSON.stringify({ savedAt: Date.now(), product }))
+  } catch {
+  }
+}
+
+async function fetchAuthorStoreProduct(pageUsername, productId, signal) {
+  const url = `${API_BASE_URL}/api/author-store/page/${encodeURIComponent(pageUsername)}/products?product_id=${encodeURIComponent(productId)}`
+  const response = await fetch(url, { signal })
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
@@ -398,10 +422,10 @@ async function fetchAuthorStoreProduct(pageUsername, productId) {
 
   const products = Array.isArray(data.products) ? data.products : []
   const product = products.find((item) => String(item.id) === String(productId))
-
   if (!product) throw new Error(getDisplayText('authorStoreProductDetail.bookNotFound'))
-
-  return normalizeProduct(product, pageUsername)
+  const normalized = normalizeProduct(product, pageUsername)
+  writeProductDetailCache(pageUsername, productId, normalized)
+  return normalized
 }
 
 function DetailItem({ label, value }) {
@@ -573,13 +597,15 @@ function ImageSlider({ images, title }) {
 
 function addToAuthorCart(product, quantity) {
   const current = getCartItems()
+  const maxQuantity = product.type === 'PDF' ? 99 : product.preOrder ? 99 : Math.max(1, Math.min(99, product.stockQuantity))
+  const safeQuantity = Math.min(Math.max(1, quantity), maxQuantity)
   const item = {
     id: product.id,
     title: product.title,
     type: product.type,
     cover_url: product.cover_url,
     price_value: Number(product.price || 0),
-    quantity,
+    quantity: safeQuantity,
     author_page_id: product.author_page_id || '',
     author_page_name: product.author || '',
     author_page_username: product.author_page_username || '',
@@ -589,7 +615,7 @@ function addToAuthorCart(product, quantity) {
   const next = existing
     ? current.map((cartItem) => (
         String(cartItem.id) === String(product.id)
-          ? { ...cartItem, quantity: Number(cartItem.quantity || 1) + quantity }
+          ? { ...cartItem, quantity: Math.min(maxQuantity, Number(cartItem.quantity || 1) + safeQuantity) }
           : cartItem
       ))
     : [...current, item]
@@ -610,29 +636,45 @@ export default function AuthorStoreProductDetailPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    const controller = new AbortController()
     let ignore = false
+    setQuantity(1)
+    setDetailsOpen(false)
+    setError('')
+    setProduct(null)
 
+    if (!pageUsername || !productId) {
+      setLoading(false)
+      setError(t('authorStoreProductDetail.bookNotFound'))
+      return () => controller.abort()
+    }
+
+    const cached = readProductDetailCache(pageUsername, productId)
+    if (cached) {
+      setProduct(cached)
+      setLoading(false)
+      return () => controller.abort()
+    }
+
+    setLoading(true)
     async function loadProduct() {
       try {
-        setLoading(true)
-        setError('')
-        const nextProduct = await fetchAuthorStoreProduct(pageUsername, productId)
-
-        if (!ignore) setProduct(nextProduct)
+        const nextProduct = await fetchAuthorStoreProduct(pageUsername, productId, controller.signal)
+        if (!ignore && !controller.signal.aborted) setProduct(nextProduct)
       } catch (loadError) {
-        if (!ignore) {
+        if (!ignore && !controller.signal.aborted) {
           setError(loadError.message || t('authorStoreProductDetail.bookNotFound'))
           setProduct(null)
         }
       } finally {
-        if (!ignore) setLoading(false)
+        if (!ignore && !controller.signal.aborted) setLoading(false)
       }
     }
 
-    loadProduct()
-
+    void loadProduct()
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [pageUsername, productId, t])
 
@@ -677,7 +719,8 @@ export default function AuthorStoreProductDetailPage() {
 
   const hasDiscount = product.salePrice && product.originalPrice && product.salePrice !== product.originalPrice
   const isSoldOut = product.stockStatus === 'OUT OF STOCK'
-  const increaseQuantity = () => setQuantity((value) => Math.min(value + 1, 99))
+  const maxQuantity = product.type === 'PDF' ? 99 : product.preOrder ? 99 : Math.max(1, Math.min(99, product.stockQuantity))
+  const increaseQuantity = () => setQuantity((value) => Math.min(value + 1, maxQuantity))
   const decreaseQuantity = () => setQuantity((value) => Math.max(value - 1, 1))
 
   const handleAddToCart = () => {
@@ -795,11 +838,11 @@ export default function AuthorStoreProductDetailPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button type="button" aria-label={t('authorStoreProductDetail.decreaseQuantity')} onClick={decreaseQuantity} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)] active:scale-95">
+                    <button type="button" aria-label={t('authorStoreProductDetail.decreaseQuantity')} onClick={decreaseQuantity} disabled={quantity <= 1} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)] active:scale-95 disabled:opacity-40">
                       <i className="fa-solid fa-minus text-[11px]" />
                     </button>
                     <div className="min-w-[22px] text-center text-[14px] font-black text-[var(--shadow-text-primary)]">{formatNumber(quantity)}</div>
-                    <button type="button" aria-label={t('authorStoreProductDetail.increaseQuantity')} onClick={increaseQuantity} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] shadow-sm active:scale-95">
+                    <button type="button" aria-label={t('authorStoreProductDetail.increaseQuantity')} onClick={increaseQuantity} disabled={isSoldOut || quantity >= maxQuantity} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] shadow-sm active:scale-95 disabled:opacity-40">
                       <i className="fa-solid fa-plus text-[11px]" />
                     </button>
                   </div>
