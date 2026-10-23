@@ -1039,9 +1039,6 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
 
   const uploadFile = async (file) => {
   if (!file || operationRef.current || !photos.loaded) return;
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file || operationRef.current || !photos.loaded) return;
     if (photos.items.length >= CHAT_THEME_PHOTO_LIMIT) {
       setMutationError("limitReached");
       return;
