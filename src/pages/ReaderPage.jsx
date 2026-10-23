@@ -15,6 +15,8 @@ import { rememberViewedEpisode } from '../utils/offlineViewedEpisode'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
 import ChatStoryThemePage from './ChatStoryThemePage'
 import ChatStoryTapIndicatorPage from './ChatStoryTapIndicatorPage'
+import ChatStoryTapIndicator, { TAP_INDICATOR_STYLES } from '../components/chat-story/ChatStoryTapIndicator'
+import { saveChatTapIndicator, useChatTapIndicator } from '../services/chatStoryTapIndicator'
 import { DEFAULT_CHAT_THEMES, saveChatTheme, useChatStoryTheme } from '../services/chatStoryThemes'
 import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisodeListDrawer'
 import StoryTranslateButton from '../components/reader/StoryTranslateButton'
@@ -4431,6 +4433,8 @@ function ReaderSettingsDrawer({
   const [chatTapIndicatorPageOpen, setChatTapIndicatorPageOpen] = useState(false)
   const [chatThemeError, setChatThemeError] = useState(false)
   const chatTheme = useChatStoryTheme()
+  const tapIndicator = useChatTapIndicator()
+  const [tapIndicatorError, setTapIndicatorError] = useState(false)
 
   const decreaseFont = () => {
     setFontSizeIndex((current) => Math.max(0, current - 1))
@@ -4519,38 +4523,99 @@ const handleDragEnd = () => {
 
         <div className="mx-auto max-w-[520px] max-h-[calc(100dvh-56px)] overflow-y-auto px-4 py-5">
           {isChatStory ? (
-          <SettingSection title={t('readerPage.pageColor')} theme={readerTheme}>
-            {isChatStory ? (
-  <button
-    type="button"
-    onClick={() => setChatTapIndicatorPageOpen(true)}
-    className={`mb-4 flex w-full items-center justify-between rounded-[16px] px-4 py-4 text-left text-[13px] font-semibold ${readerTheme.soft} ${readerTheme.text} active:scale-[0.98]`}
-  >
-    <span>{t('chatTapIndicatorPage.title')}</span>
-    <i className="fa-solid fa-chevron-right text-[12px]" aria-hidden="true" />
-  </button>
-) : null}
-<div className="grid grid-cols-4 gap-2">
-  {Object.entries(READER_THEMES).map(([key, item]) => (
-    <button
-      key={key}
-      type="button"
-      onClick={() => setThemeName(key)}
-      className="flex items-center justify-center rounded-[12px] bg-transparent p-0 active:scale-[0.98]"
-      aria-label={t(`readerPage.${key}`)}
+  <>
+    <SettingSection
+      theme={readerTheme}
+      title={
+        <button
+          type="button"
+          onClick={() => setChatTapIndicatorPageOpen(true)}
+          className={`flex w-full items-center justify-between bg-transparent text-left ${readerTheme.text}`}
+        >
+          <span>{t('chatTapIndicatorPage.title')}</span>
+          <i className="fa-solid fa-chevron-right text-[12px]" />
+        </button>
+      }
     >
-      <span
-        className={`block h-9 w-full rounded-[12px] ${item.swatch} ${
-          themeName === key
-            ? 'ring-2 ring-[#f6c343]'
-            : 'ring-0'
-        }`}
-      />
-    </button>
-  ))}
-</div>
-          </SettingSection>
-          ) : null}
+      <div className="grid grid-cols-4 gap-2">
+        {TAP_INDICATOR_STYLES.map((style) => {
+          const selected =
+            tapIndicator.settings.source === 'shadow' &&
+            tapIndicator.settings.styleId === style.id
+
+          return (
+            <button
+              key={style.id}
+              type="button"
+              aria-label={t(`chatTapIndicatorPage.${style.labelKey}`)}
+              aria-pressed={selected}
+              className={`flex h-10 w-full items-center justify-center rounded-[12px] bg-transparent p-0 active:scale-[0.98] ${
+                selected ? 'ring-2 ring-[#f6c343]' : 'ring-0'
+              }`}
+              onClick={() => {
+                try {
+                  saveChatTapIndicator(
+                    {
+                      ...tapIndicator.settings,
+                      source: 'shadow',
+                      styleId: style.id,
+                      imageUrl: '',
+                    },
+                    tapIndicator.account
+                  )
+                  setTapIndicatorError(false)
+                } catch {
+                  setTapIndicatorError(true)
+                }
+              }}
+            >
+              <ChatStoryTapIndicator
+                settings={{
+                  ...tapIndicator.settings,
+                  source: 'shadow',
+                  styleId: style.id,
+                  imageUrl: '',
+                }}
+                size={30}
+                animate={false}
+              />
+            </button>
+          )
+        })}
+      </div>
+      {tapIndicatorError ? (
+        <p role="alert" className="mt-2 text-xs text-red-500">
+          {t('chatTapIndicatorPage.saveFailed')}
+        </p>
+      ) : null}
+    </SettingSection>
+
+    <SettingSection
+      title={t('readerPage.pageColor')}
+      theme={readerTheme}
+    >
+      <div className="grid grid-cols-4 gap-2">
+        {Object.entries(READER_THEMES).map(([key, item]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setThemeName(key)}
+            className="flex items-center justify-center rounded-[12px] bg-transparent p-0 active:scale-[0.98]"
+            aria-label={t(`readerPage.${key}`)}
+          >
+            <span
+              className={`block h-9 w-full rounded-[12px] ${item.swatch} ${
+                themeName === key
+                  ? 'ring-2 ring-[#f6c343]'
+                  : 'ring-0'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+    </SettingSection>
+  </>
+) : null}
           {isChatStory ? (
             <ChatStoryReadingPreferences
               readMode={chatStoryReadMode}
