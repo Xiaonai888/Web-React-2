@@ -1,10 +1,34 @@
 import { useId, useState } from 'react'
+import {
+  Heart, Sparkles, Bird, Flower2, Cat, PawPrint, Leaf, Cloud,
+  Gem, Flame, Snowflake, Music2, Crown, Feather, Ghost, Orbit,
+} from 'lucide-react'
 
 export const TAP_INDICATOR_STYLES = Object.freeze([
   Object.freeze({ id: 'hand', labelKey: 'hand' }),
   Object.freeze({ id: 'sword', labelKey: 'sword' }),
   Object.freeze({ id: 'starfish', labelKey: 'starfish' }),
   Object.freeze({ id: 'moon', labelKey: 'moon' }),
+])
+
+export const TAP_INDICATOR_ALL_STYLES = Object.freeze([
+  ...TAP_INDICATOR_STYLES,
+  Object.freeze({ id: 'heart', labelKey: 'heart' }),
+  Object.freeze({ id: 'sparkles', labelKey: 'sparkles' }),
+  Object.freeze({ id: 'bird', labelKey: 'bird' }),
+  Object.freeze({ id: 'flower', labelKey: 'flower' }),
+  Object.freeze({ id: 'cat', labelKey: 'cat' }),
+  Object.freeze({ id: 'paw', labelKey: 'paw' }),
+  Object.freeze({ id: 'leaf', labelKey: 'leaf' }),
+  Object.freeze({ id: 'cloud', labelKey: 'cloud' }),
+  Object.freeze({ id: 'diamond', labelKey: 'diamond' }),
+  Object.freeze({ id: 'fire', labelKey: 'fire' }),
+  Object.freeze({ id: 'snow', labelKey: 'snow' }),
+  Object.freeze({ id: 'music', labelKey: 'music' }),
+  Object.freeze({ id: 'crown', labelKey: 'crown' }),
+  Object.freeze({ id: 'wing', labelKey: 'wing' }),
+  Object.freeze({ id: 'ghost', labelKey: 'ghost' }),
+  Object.freeze({ id: 'planet', labelKey: 'planet' }),
 ])
 
 export const TAP_INDICATOR_ANIMATIONS = Object.freeze(['bounce', 'pulse', 'still'])
@@ -21,7 +45,25 @@ export const DEFAULT_TAP_INDICATOR = Object.freeze({
 
 const HAND_URL = '/assets/Icons/Hand.svg'
 const HEX_COLOR = /^#[0-9a-f]{6}$/i
-const STYLE_IDS = new Set(TAP_INDICATOR_STYLES.map((item) => item.id))
+const STYLE_IDS = new Set(TAP_INDICATOR_ALL_STYLES.map((item) => item.id))
+const EXTENDED_STYLE_ICONS = Object.freeze({
+  heart: Heart,
+  sparkles: Sparkles,
+  bird: Bird,
+  flower: Flower2,
+  cat: Cat,
+  paw: PawPrint,
+  leaf: Leaf,
+  cloud: Cloud,
+  diamond: Gem,
+  fire: Flame,
+  snow: Snowflake,
+  music: Music2,
+  crown: Crown,
+  wing: Feather,
+  ghost: Ghost,
+  planet: Orbit,
+})
 
 const INDICATOR_CSS = `
 .cs-tap-indicator{display:inline-grid;place-items:center;flex-shrink:0;pointer-events:none;vertical-align:middle;isolation:isolate}
@@ -83,6 +125,21 @@ function IndicatorVector({ id, colors, gradient, dx, dy }) {
   </>
 }
 
+function ExtendedIndicatorVector({ id, colors, gradient, dx, dy }) {
+  const gradientId = `cs-tap-icon-${useId().replace(/[^a-z0-9_-]/gi, '')}`
+  const Icon = EXTENDED_STYLE_ICONS[id]
+  if (!Icon) return null
+  return <Icon
+    size="100%"
+    strokeWidth={2.3}
+    stroke={gradient ? `url(#${gradientId})` : colors[0]}
+    fill="none"
+    aria-hidden="true"
+  >
+    {gradient ? <defs><linearGradient id={gradientId} x1={`${50 - dx}%`} y1={`${50 - dy}%`} x2={`${50 + dx}%`} y2={`${50 + dy}%`}>{colors.map((color, index) => <stop key={index} offset={`${index * 100 / (colors.length - 1)}%`} stopColor={color} />)}</linearGradient></defs> : null}
+  </Icon>
+}
+
 export default function ChatStoryTapIndicator({
   settings = DEFAULT_TAP_INDICATOR,
   size = 108,
@@ -127,6 +184,8 @@ export default function ChatStoryTapIndicator({
             maskRepeat: 'no-repeat',
             WebkitMaskRepeat: 'no-repeat',
           }} />
+        ) : EXTENDED_STYLE_ICONS[selected.styleId] ? (
+          <ExtendedIndicatorVector id={selected.styleId} colors={colors} gradient={gradient} dx={dx} dy={dy} />
         ) : (
           <svg viewBox="0 0 100 100" focusable="false">
             <IndicatorVector id={selected.styleId} colors={colors} gradient={gradient} dx={dx} dy={dy} />
