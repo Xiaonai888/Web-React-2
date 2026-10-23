@@ -928,7 +928,7 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
   if (colorPageOpen) return (
     <PageShell className={`chat-theme-page ${onBack ? 'chat-theme-overlay' : ''}`}>
       <style>{PAGE_CSS}</style>
-      <PageHeader title={t('chatStoryThemes.chooseColors')} onBack={() => setColorPageOpen(false)} backLabel={t('chatStoryThemes.back')}
+      <PageHeader title={<span style={{ fontWeight: 700 }}>{t('chatStoryThemes.chooseColors')}</span>} onBack={() => setColorPageOpen(false)} backLabel={t('chatStoryThemes.back')}
         right={<button type="button" className="ct-apply-text" onClick={() => { setSelection(colorDraft); setApplied(false); setColorPageOpen(false); }}>{t('chatStoryThemes.doneColor')}</button>} />
       <main className="ct-main"><div className="ct-inner">
         <Preview selection={colorDraft} t={t} />
