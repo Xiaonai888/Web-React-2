@@ -282,8 +282,9 @@ export default function EditorWeeklyPicksSection() {
     <div className="w-full overflow-hidden">
       <div className="mb-3 px-4">
         <h2 className="text-[18px] font-bold tracking-tight text-[var(--shadow-text-primary)]">
-          💥 {t('editorWeeklyPicksSection.title')}
-        </h2>
+  <i className="fa-solid fa-bolt text-[#FF9F1C]" aria-hidden="true" />{' '}
+  {t('editorWeeklyPicksSection.title')}
+</h2>
       </div>
 
       <div
