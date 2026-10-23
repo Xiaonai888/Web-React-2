@@ -42,6 +42,8 @@
     let lastDisplayedSignature = ''
     let lastDisplayedAt = 0
     let popup = null
+    let passiveNotice = null
+    const trackedFetchFailures = new WeakSet()
 
     const scrub = (value, max = 1200) => String(value ?? '')
       .replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+/gi, 'Bearer [REDACTED]')
@@ -80,7 +82,7 @@
     }
 
     const safeContext = (context) => {
-      const allowed = ['stage', 'action', 'operation', 'status', 'method', 'fileType', 'fileSize', 'imageWidth', 'imageHeight', 'outputWidth', 'outputHeight', 'imageSource', 'attempt']
+      const allowed = ['stage', 'action', 'operation', 'status', 'method', 'fileType', 'fileSize', 'imageWidth', 'imageHeight', 'outputWidth', 'outputHeight', 'imageSource', 'attempt', 'requestHost', 'requestPath']
       const result = {}
       if (!context || typeof context !== 'object') return result
       for (const key of allowed) {
@@ -114,6 +116,7 @@
       if (/SecurityError|tainted canvas|cross.origin.*canvas|cross.origin.*data/i.test(value)) return { code: 'CANVAS_SECURITY', possibleCause: 'The browser blocked canvas access, potentially due to cross-origin image data or security restrictions.', confidence: 'Browser-reported restriction; exact source requires inspection' }
       if (/out of memory|allocation failed|memory exhausted|not enough memory/i.test(value)) return { code: 'MEMORY', possibleCause: 'The browser reported a memory or allocation failure.', confidence: 'Browser-reported error' }
       if (/AbortError|aborted|cancelled|canceled/i.test(value)) return { code: 'ABORTED', possibleCause: 'The operation was cancelled or aborted.', confidence: 'Browser-reported error' }
+      if (/IMAGE_DECODE_FAILED|IMAGE_EMPTY_DIMENSIONS/i.test(value)) return { code: 'IMAGE_DECODE', possibleCause: 'The browser could not decode or reopen the image. The underlying file format, image bytes, temporary URL, or memory limit must be checked.', confidence: 'Image load/decode failure observed; exact cause not yet confirmed' }
       if (/NotSupportedError|not supported|unsupported|HEIC|HEIF|AVIF/i.test(value)) return { code: 'UNSUPPORTED_FORMAT', possibleCause: 'The browser or decoder may not support this file format or API.', confidence: 'Likely; verify media type and browser support' }
       if (/Failed to fetch|Load failed|NetworkError|Network request failed/i.test(value)) return { code: 'NETWORK', possibleCause: 'The request failed before an HTTP response was available. DNS, connectivity, CORS, TLS, or server availability are possible causes.', confidence: 'Network failure observed; exact network cause not exposed by browser' }
       if (/ChunkLoadError|dynamically imported module|module script|preload CSS/i.test(value)) return { code: 'APP_ASSET', possibleCause: 'A website JavaScript or CSS asset failed to load. Check deployment version, cache and network.', confidence: 'Likely from error message' }
@@ -166,6 +169,7 @@
         return
       }
       if (popup) popup.remove()
+      if (passiveNotice) { passiveNotice.remove(); passiveNotice = null }
       const panel = document.createElement('section')
       popup = panel
       panel.id = 'shadow-global-error-diagnostic'
@@ -173,6 +177,7 @@
       panel.style.cssText = 'position:fixed;z-index:2147483647;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(460px,calc(100vw - 20px));max-height:min(70vh,520px);overflow:auto;box-sizing:border-box;padding:15px;border:1px solid #d1d5db;border-left:4px solid #dc2626;border-radius:15px;background:white;color:#111827;box-shadow:0 10px 35px #0005;font:12px/1.5 system-ui,sans-serif;overflow-wrap:anywhere;text-align:left'
       addText(panel, 'Shadow • Error Diagnostic', 'font-size:15px;font-weight:700;margin-bottom:5px')
       addText(panel, `${report.code} • ${report.kind} • ${report.context.stage || 'unknown stage'}`, 'font-size:11px;color:#9f1239;font-weight:600;margin-bottom:8px')
+      if (report.context.requestPath) addText(panel, `Request: ${report.context.method || 'GET'} ${report.context.requestHost || ''}${report.context.requestPath}`, 'font-size:11px;font-weight:600;margin-bottom:8px;white-space:pre-wrap')
       addText(panel, `Observed: ${report.error.name}: ${report.error.message}`, 'font-weight:600;margin-bottom:8px;white-space:pre-wrap')
       addText(panel, `Explanation: ${report.analysis.possibleCause}`, 'margin-bottom:6px')
       addText(panel, `Certainty: ${report.analysis.confidence}`, 'color:#4b5563;margin-bottom:10px')
@@ -214,6 +219,35 @@
       document.body.appendChild(panel)
     }
 
+    const showPassive = (report) => {
+      if (!document.body) {
+        document.addEventListener('DOMContentLoaded', () => showPassive(report), { once: true })
+        return
+      }
+      if (popup) return
+      if (passiveNotice) passiveNotice.remove()
+      const panel = document.createElement('div')
+      panel.id = 'shadow-network-diagnostic-notice'
+      panel.style.cssText = 'position:fixed;z-index:2147483646;bottom:calc(12px + env(safe-area-inset-bottom,0px));right:10px;max-width:min(350px,calc(100vw - 20px));display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;color:#111827;box-shadow:0 5px 20px #0003;font:600 12px system-ui,sans-serif'
+      const open = document.createElement('button')
+      open.type = 'button'
+      open.textContent = `Network issue · ${report.context.requestPath || 'Details'}`
+      open.style.cssText = 'max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:0;background:transparent;color:#111827;padding:5px 9px;font:inherit;cursor:pointer'
+      open.addEventListener('click', () => display(report))
+      const close = document.createElement('button')
+      close.type = 'button'
+      close.textContent = '×'
+      close.setAttribute('aria-label', 'Dismiss network diagnostic')
+      close.style.cssText = 'border:0;border-radius:100%;background:#e5e7eb;color:#111827;width:26px;height:26px;font:600 17px system-ui,sans-serif;cursor:pointer'
+      close.addEventListener('click', () => {
+        panel.remove()
+        if (passiveNotice === panel) passiveNotice = null
+      })
+      panel.append(open, close)
+      document.body.appendChild(panel)
+      passiveNotice = panel
+    }
+
     const record = (error, context = {}) => {
       const options = context && typeof context === 'object' ? context : {}
       const name = scrub(error?.name || 'Error', 90)
@@ -222,7 +256,7 @@
       const kind = scrub(options.kind || 'operation', 40)
       const safe = safeContext(options)
       const analysis = classify(name, message, kind, safe)
-      const signature = `${kind}|${safe.stage || ''}|${name}|${message}|${safe.status || ''}`
+      const signature = `${kind}|${safe.stage || ''}|${name}|${message}|${safe.status || ''}|${safe.requestHost || ''}|${safe.requestPath || ''}|${location.pathname}`
       const now = Date.now()
       const report = {
         code: `SHD-${analysis.code}-${makeCode(signature)}`,
@@ -240,7 +274,8 @@
       if (options.show !== false && (signature !== lastDisplayedSignature || now - lastDisplayedAt > 15000)) {
         lastDisplayedSignature = signature
         lastDisplayedAt = now
-        display(report)
+        if (options.show === 'passive') showPassive(report)
+        else display(report)
       }
       return report
     }
@@ -350,6 +385,7 @@
 
     window.addEventListener('unhandledrejection', (event) => {
       const error = event.reason instanceof Error ? event.reason : new Error(scrub(event.reason || 'Unhandled promise rejection'))
+      if (trackedFetchFailures.has(error)) return
       record(error, { kind: 'promise', stage: 'unhandled-promise' })
     })
 
@@ -376,19 +412,22 @@
         try {
           pending = originalFetch.apply(this, args)
         } catch (error) {
-          if (monitor) record(error, { kind: 'network', stage: 'fetch-call', method })
+          if (monitor) record(error, { kind: 'network', stage: 'fetch-call', method, requestHost: url?.hostname || '', requestPath: url ? safePath(url) : '', show: method === 'GET' ? 'passive' : true })
           throw error
         }
         if (!monitor || !pending || typeof pending.then !== 'function') return pending
         return pending.then((response) => {
           if ([408, 413, 415, 422, 429].includes(response.status) || response.status >= 500) {
             record(new Error(`HTTP ${response.status} ${response.statusText || ''} on ${method} ${safePath(url)}`), {
-              kind: 'http', stage: 'http-response', method, status: response.status,
+              kind: 'http', stage: 'http-response', method, status: response.status, requestHost: url.hostname, requestPath: safePath(url), show: method === 'GET' ? 'passive' : true,
             })
           }
           return response
         }, (error) => {
-          if (error?.name !== 'AbortError') record(error, { kind: 'network', stage: 'fetch-request', method })
+          if (error?.name !== 'AbortError') {
+            if (error && typeof error === 'object') trackedFetchFailures.add(error)
+            record(error, { kind: 'network', stage: 'fetch-request', method, requestHost: url.hostname, requestPath: safePath(url), show: method === 'GET' ? 'passive' : true })
+          }
           throw error
         })
       }
