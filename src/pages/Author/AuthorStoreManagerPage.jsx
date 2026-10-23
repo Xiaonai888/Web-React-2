@@ -5263,7 +5263,7 @@ export default function AuthorStoreManagerPage() {
     }
   }, [storeAccountId])
 
-  const loadOrderReport = useCallback(async ({ silent = false, force = false } = {}) => {
+    const loadOrderReport = useCallback(async ({ silent = false, force = false } = {}) => {
     const requestId = ++orderRequestIdRef.current
     const params = {
       page: orderPage,
@@ -5271,21 +5271,12 @@ export default function AuthorStoreManagerPage() {
       prepareStatus: orderPrepareFilter,
       q: orderSearchQuery,
     }
-    try {
-      if (!silent) setOrderLoading(true)
-      const result = storeAccountId
-        ? await fetchAuthorStoreResource({
-            accountId: storeAccountId,
-            resource: 'orders',
-            params,
-            fetcher: () => fetchMyOrderReport({ ...params, limit: ORDER_REPORT_LIMIT }),
-            force,
-          })
-        : { data: await fetchMyOrderReport({ ...params, limit: ORDER_REPORT_LIMIT }) }
-      if (requestId !== orderRequestIdRef.current || result.obsolete || !result.data) return
-      const report = result.data
+    const cached = storeAccountId
+      ? readAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'orders', params })
+      : null
+    const applyReport = (report) => {
+      if (!report || requestId !== orderRequestIdRef.current) return
       const summary = report.summary || {}
-      lastOrderReportLoadAtRef.current = Date.now()
       setOrderSummary({
         orders_count: Number(summary.orders_count || summary.total_orders || 0),
         revenue: Number(summary.revenue || summary.author_income || 0),
@@ -5300,31 +5291,38 @@ export default function AuthorStoreManagerPage() {
         total: 0,
         total_pages: 1,
       })
-    } catch {
-      if (requestId === orderRequestIdRef.current && storeAccountId) {
-        const cached = readAuthorStoreResourceCache({
-          accountId: storeAccountId,
-          resource: 'orders',
-          params,
-        })
-        if (cached.exists && cached.data) {
-          const report = cached.data
-          const summary = report.summary || {}
-          setOrderSummary({
-            orders_count: Number(summary.orders_count || summary.total_orders || 0),
-            revenue: Number(summary.revenue || summary.author_income || 0),
-            gross_revenue: Number(summary.gross_revenue || 0),
-            platform_fee: Number(summary.platform_fee || 0),
-            author_income: Number(summary.author_income || summary.revenue || 0),
+    }
+
+    if (!force && cached?.exists && cached.data) {
+      applyReport(cached.data)
+      setOrderLoading(false)
+    } else if (!silent) {
+      setOrders([])
+      setOrderLoading(true)
+    }
+
+    try {
+      const result = storeAccountId
+        ? await fetchAuthorStoreResource({
+            accountId: storeAccountId,
+            resource: 'orders',
+            params,
+            fetcher: () => fetchMyOrderReport({ ...params, limit: ORDER_REPORT_LIMIT }),
+            force,
           })
-          setOrders(report.orders || [])
-          setOrderPagination(report.pagination || { page: orderPage, limit: ORDER_REPORT_LIMIT, total: 0, total_pages: 1 })
-        }
+        : { data: await fetchMyOrderReport({ ...params, limit: ORDER_REPORT_LIMIT }) }
+      if (requestId !== orderRequestIdRef.current || result.obsolete || !result.data) return
+      applyReport(result.data)
+      lastOrderReportLoadAtRef.current = Date.now()
+    } catch (error) {
+      if (requestId === orderRequestIdRef.current && !cached?.exists && !silent) {
+        setLocalError(error.message || storeText('loadOrdersFailed'))
       }
     } finally {
       if (requestId === orderRequestIdRef.current) setOrderLoading(false)
     }
   }, [storeAccountId, orderPage, orderType, orderPrepareFilter, orderSearchQuery])
+
 
   useEffect(() => {
     setOrderPage(1)
