@@ -171,36 +171,68 @@ async function waitForStoryMediaUpload(queue, taskId) {
 function createImage(url) {
   return new Promise((resolve, reject) => {
     const image = new Image()
-    image.addEventListener('load', () => resolve(image))
-    image.addEventListener('error', (error) => reject(error))
+    image.addEventListener('load', () => {
+      if (!image.naturalWidth || !image.naturalHeight) {
+        reject(new Error('IMAGE_EMPTY_DIMENSIONS: The browser loaded an image without valid pixel dimensions.'))
+        return
+      }
+      resolve(image)
+    })
+    image.addEventListener('error', () => reject(new Error('IMAGE_DECODE_FAILED: The browser could not load or decode the selected image. The format, file content, or image URL may be unsupported.')))
     image.setAttribute('crossOrigin', 'anonymous')
     image.src = url
   })
 }
 
 async function getCroppedImage(imageSrc, pixelCrop) {
-  const image = await createImage(imageSrc)
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-
-  if (!ctx) return imageSrc
-
-  canvas.width = pixelCrop.width
-  canvas.height = pixelCrop.height
-
-  ctx.drawImage(
-    image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height
-  )
-
-  return canvas.toDataURL('image/jpeg', 0.9)
+  let stage = 'image-decode'
+  let image = null
+  let canvas = null
+  const sourceKind = /^blob:/i.test(imageSrc) ? 'local-file' : /^data:/i.test(imageSrc) ? 'data-url' : /^https?:/i.test(imageSrc) ? 'remote-image' : 'other'
+  try {
+    image = await createImage(imageSrc)
+    stage = 'crop-validation'
+    const { x, y, width, height } = pixelCrop || {}
+    if (![x, y, width, height].every(Number.isFinite) || width <= 0 || height <= 0 || x < 0 || y < 0 || x + width > image.naturalWidth + 1 || y + height > image.naturalHeight + 1) {
+      throw new RangeError(`INVALID_CROP_BOUNDS: crop=${JSON.stringify({ x, y, width, height })}, image=${image.naturalWidth}x${image.naturalHeight}`)
+    }
+    stage = 'canvas-context'
+    canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('CANVAS_CONTEXT_UNAVAILABLE: The browser returned no 2D canvas context.')
+    stage = 'canvas-allocation'
+    canvas.width = width
+    canvas.height = height
+    if (!canvas.width || !canvas.height) throw new Error(`CANVAS_ALLOCATION_FAILED: Requested ${width}x${height}.`)
+    stage = 'canvas-draw'
+    ctx.drawImage(image, x, y, width, height, 0, 0, width, height)
+    stage = 'canvas-export'
+    const result = canvas.toDataURL('image/jpeg', 0.9)
+    if (!result || result === 'data:,' || !result.startsWith('data:image/jpeg;base64,')) {
+      throw new Error('CANVAS_EXPORT_FAILED: The browser returned an empty or invalid JPEG. Canvas size or device memory may be limited.')
+    }
+    return result
+  } catch (error) {
+    const reason = error instanceof Error ? error : new Error(String(error || 'Unknown browser error'))
+    const details = {
+      kind: 'image',
+      action: 'save-crop',
+      stage,
+      imageSource: sourceKind,
+      imageWidth: image?.naturalWidth || 0,
+      imageHeight: image?.naturalHeight || 0,
+      outputWidth: Number(pixelCrop?.width || 0),
+      outputHeight: Number(pixelCrop?.height || 0),
+    }
+    console.error('SHADOW_STORY_CROP_FAILED', { reason, ...details })
+    window.ShadowDiagnostics?.report(reason, details)
+    throw reason
+  } finally {
+    if (canvas) {
+      canvas.width = 0
+      canvas.height = 0
+    }
+  }
 }
 
 function Step({ number, title, active }) {
