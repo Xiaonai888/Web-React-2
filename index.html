@@ -260,6 +260,89 @@
       },
     })
 
+    const instrumentCanvas = () => {
+      const attach = (prototype, method, stage) => {
+        const original = prototype?.[method]
+        if (typeof original !== 'function') return
+        try {
+          prototype[method] = function (...args) {
+            try {
+              const output = original.apply(this, args)
+              if (method === 'toDataURL' && (!output || output === 'data:,')) {
+                record(new Error('Canvas export returned an empty data URL. The canvas may exceed browser limits or have invalid dimensions.'), {
+                  kind: 'image', stage, outputWidth: this.width, outputHeight: this.height,
+                })
+              }
+              if (method === 'getContext' && args[0] === '2d' && output === null) {
+                record(new Error('Canvas 2D context is unavailable. The browser may have exhausted available graphics resources.'), {
+                  kind: 'image', stage: 'canvas-context', outputWidth: this.width, outputHeight: this.height,
+                })
+              }
+              return output
+            } catch (error) {
+              record(error, {
+                kind: 'image', stage,
+                outputWidth: Number(this?.canvas?.width || this?.width || 0),
+                outputHeight: Number(this?.canvas?.height || this?.height || 0),
+              })
+              throw error
+            }
+          }
+        } catch {}
+      }
+
+      if (typeof HTMLCanvasElement !== 'undefined') {
+        attach(HTMLCanvasElement.prototype, 'toDataURL', 'canvas-export')
+        attach(HTMLCanvasElement.prototype, 'getContext', 'canvas-context')
+        const originalToBlob = HTMLCanvasElement.prototype.toBlob
+        if (typeof originalToBlob === 'function') {
+          try {
+            HTMLCanvasElement.prototype.toBlob = function (callback, ...options) {
+              try {
+                return originalToBlob.call(this, (blob) => {
+                  if (!blob) record(new Error('Canvas toBlob returned null. The browser could not encode the image.'), {
+                    kind: 'image', stage: 'canvas-blob-export',
+                    outputWidth: this.width, outputHeight: this.height,
+                  })
+                  if (typeof callback === 'function') callback(blob)
+                }, ...options)
+              } catch (error) {
+                record(error, {
+                  kind: 'image', stage: 'canvas-blob-export',
+                  outputWidth: this.width, outputHeight: this.height,
+                })
+                throw error
+              }
+            }
+          } catch {}
+        }
+      }
+
+      if (typeof CanvasRenderingContext2D !== 'undefined') {
+        attach(CanvasRenderingContext2D.prototype, 'drawImage', 'canvas-draw')
+      }
+      if (typeof OffscreenCanvas !== 'undefined') {
+        attach(OffscreenCanvas.prototype, 'convertToBlob', 'offscreen-canvas-export')
+      }
+    }
+
+    instrumentCanvas()
+
+    document.addEventListener('error', (event) => {
+      const image = event.target
+      if (image?.tagName !== 'IMG') return
+      const classes = typeof image.className === 'string' ? image.className : ''
+      if (!/reactEasyCrop/i.test(classes)) return
+      let source = 'unknown'
+      try {
+        source = new URL(image.currentSrc || image.src).protocol.replace(':', '')
+      } catch {}
+      record(new Error('Image preview failed to load or decode. Check file type, damaged image data, browser support and memory limits.'), {
+        kind: 'image', stage: 'crop-image-load', imageSource: source,
+        imageWidth: Number(image.naturalWidth || 0), imageHeight: Number(image.naturalHeight || 0),
+      })
+    }, true)
+
     window.addEventListener('error', (event) => {
       if (event.target && event.target !== window) return
       record(event.error || new Error(event.message || 'Unknown runtime error'), { kind: 'javascript', stage: 'runtime' })
