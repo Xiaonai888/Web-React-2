@@ -2059,6 +2059,20 @@ async function fetchMyOrderReport({ page = 1, limit = 20, type = 'book', prepare
   }
 }
 
+async function fetchMyOrderSummary() {
+  const token = getAuthToken()
+  if (!token) throw new Error(storeText('pleaseLogin'))
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/orders?summary_only=1`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data.ok === false || !data.summary || !Number.isFinite(Number(data.summary.orders_count ?? data.summary.total_orders))) {
+    throw new Error(data.message || storeText('loadOrdersFailed'))
+  }
+  return data.summary
+}
+
 async function markMyAuthorStoreOrderPreparing(orderId) {
   const token = getAuthToken()
 
@@ -5267,12 +5281,41 @@ export default function AuthorStoreManagerPage() {
   const [orderSearchDraft, setOrderSearchDraft] = useState('')
   const [orderSearchQuery, setOrderSearchQuery] = useState('')
   const [orderActionLoadingId, setOrderActionLoadingId] = useState('')
-  const lastOrderReportLoadAtRef = useRef(0)
-
-    const storeAccountId = useMemo(() => {
-    return getAuthorStoreAccountId()
-  }, [])
+  const storeAccountId = useMemo(() => getAuthorStoreAccountId(), [])
   const orderRequestIdRef = useRef(0)
+  const orderSummaryRequestIdRef = useRef(0)
+
+  const applyOrderSummary = useCallback((summary) => {
+    if (!summary) return
+    setOrderSummary({
+      orders_count: Number(summary.orders_count ?? summary.total_orders ?? 0),
+      revenue: Number(summary.revenue ?? summary.author_income ?? 0),
+      gross_revenue: Number(summary.gross_revenue ?? 0),
+      platform_fee: Number(summary.platform_fee ?? 0),
+      author_income: Number(summary.author_income ?? summary.revenue ?? 0),
+    })
+  }, [])
+
+  const loadOrderSummary = useCallback(async () => {
+    const requestId = ++orderSummaryRequestIdRef.current
+    const cached = storeAccountId
+      ? readAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'orderSummary' })
+      : null
+    if (cached?.exists) applyOrderSummary(cached.data)
+    try {
+      const result = storeAccountId
+        ? await fetchAuthorStoreResource({
+            accountId: storeAccountId,
+            resource: 'orderSummary',
+            fetcher: fetchMyOrderSummary,
+          })
+        : { data: await fetchMyOrderSummary(), obsolete: false }
+      if (requestId === orderSummaryRequestIdRef.current && !result.obsolete) {
+        applyOrderSummary(result.data)
+      }
+    } catch {
+    }
+  }, [storeAccountId, applyOrderSummary])
 
   const loadPromotion = useCallback(async () => {
     try {
@@ -5305,14 +5348,7 @@ export default function AuthorStoreManagerPage() {
       : null
     const applyReport = (report) => {
       if (!report || requestId !== orderRequestIdRef.current) return
-      const summary = report.summary || {}
-      setOrderSummary({
-        orders_count: Number(summary.orders_count || summary.total_orders || 0),
-        revenue: Number(summary.revenue || summary.author_income || 0),
-        gross_revenue: Number(summary.gross_revenue || 0),
-        platform_fee: Number(summary.platform_fee || 0),
-        author_income: Number(summary.author_income || summary.revenue || 0),
-      })
+      applyOrderSummary(report.summary)
       setOrders(report.orders || [])
       setOrderPagination(report.pagination || {
         page: orderPage,
@@ -5342,7 +5378,13 @@ export default function AuthorStoreManagerPage() {
         : { data: await fetchMyOrderReport({ ...params, limit: ORDER_REPORT_LIMIT }) }
       if (requestId !== orderRequestIdRef.current || result.obsolete || !result.data) return
       applyReport(result.data)
-      lastOrderReportLoadAtRef.current = Date.now()
+      if (storeAccountId && !result.fromCache && result.data.summary) {
+        writeAuthorStoreResourceCache({
+          accountId: storeAccountId,
+          resource: 'orderSummary',
+          data: result.data.summary,
+        })
+      }
     } catch (error) {
       if (requestId === orderRequestIdRef.current && !cached?.exists && !silent) {
         setLocalError(error.message || storeText('loadOrdersFailed'))
@@ -5350,7 +5392,7 @@ export default function AuthorStoreManagerPage() {
     } finally {
       if (requestId === orderRequestIdRef.current) setOrderLoading(false)
     }
-  }, [storeAccountId, orderPage, orderType, orderPrepareFilter, orderSearchQuery])
+  }, [storeAccountId, orderPage, orderType, orderPrepareFilter, orderSearchQuery, applyOrderSummary])
 
 
   useEffect(() => {
@@ -5517,11 +5559,14 @@ export default function AuthorStoreManagerPage() {
   useEffect(() => {
     if (activeTab === 'Orders') {
       void loadOrderReport({ silent: false })
-    } else if (!lastOrderReportLoadAtRef.current) {
-      void loadOrderReport({ silent: true })
+    } else if (activeTab === 'Records') {
+      void loadOrderSummary()
     }
-    return () => { orderRequestIdRef.current += 1 }
-  }, [activeTab, loadOrderReport])
+    return () => {
+      orderRequestIdRef.current += 1
+      orderSummaryRequestIdRef.current += 1
+    }
+  }, [activeTab, loadOrderReport, loadOrderSummary])
 
   const loadCategories = useCallback(async () => {
     const apply = (nextCategories) => {
@@ -5975,7 +6020,7 @@ await loadOrderReport({ silent: true, force: true })
           setOrderPage={setOrderPage}
           orderLoading={orderLoading}
           orderPagination={orderPagination}
-          onRefreshOrders={() => loadOrderReport({ silent: false })}
+          onRefreshOrders={() => loadOrderReport({ silent: false, force: true })}
           orderType={orderType}
           setOrderType={setOrderType}
           orderPrepareFilter={orderPrepareFilter}
