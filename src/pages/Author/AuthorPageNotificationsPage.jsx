@@ -241,7 +241,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const PAGE_SIZE = 30
+const PAGE_SIZE = 10
 
 const filters = [
   { value: 'all', labelKey: 'all' },
@@ -525,44 +525,28 @@ async function apiRequest(
     )
   }
 
-  return data
+  syncCachedNotificationMutation(path, options.method, data)
+return data
 }
 
-async function fetchPageNotifications(
-  before = ''
-) {
+async function fetchPageNotifications(before = '', filter = 'all', includeMeta = true) {
   const params = new URLSearchParams({
     limit: String(PAGE_SIZE),
+    type: filter,
+    include_meta: String(includeMeta),
   })
-
-  if (before) {
-    params.set('before', before)
-  }
-
-  const data = await apiRequest(
-    `/api/authors/me/page-notifications?${params.toString()}`
-  )
-
+  if (before) params.set('before', before)
+  const data = await apiRequest(`/api/authors/me/page-notifications?${params.toString()}`)
   return {
-    notifications: Array.isArray(
-      data.notifications
-    )
-      ? data.notifications.map(
-          normalizeNotification
-        )
+    notifications: Array.isArray(data.notifications)
+      ? data.notifications.map(normalizeNotification)
       : [],
-    unreadCount: Number(
-      data.unread_count || 0
-    ),
-    preferences:
-      data.preferences &&
-      typeof data.preferences ===
-        'object'
-        ? data.preferences
-        : {},
+    unreadCount: includeMeta ? Math.max(0, Number(data.unread_count || 0)) : null,
+    preferences: includeMeta && data.preferences && typeof data.preferences === 'object'
+      ? data.preferences
+      : null,
     hasMore: Boolean(data.has_more),
-    nextCursor:
-      data.next_cursor || '',
+    nextCursor: data.next_cursor || '',
   }
 }
 
@@ -1151,212 +1135,250 @@ function OptionsSheet({
   )
 }
 
+const NOTIFICATION_CACHE_TTL = 2 * 60 * 1000
+const notificationPageCache = new Map()
+const notificationRequests = new Map()
+const notificationPageViews = new Map()
+
+function notificationCacheKey(token, filter) {
+  return `${token}:${filter}`
+}
+
+function readNotificationCache(token, filter) {
+  if (!token) return null
+  return notificationPageCache.get(notificationCacheKey(token, filter)) || null
+}
+
+function writeNotificationCache(key, data) {
+  notificationPageCache.delete(key)
+  notificationPageCache.set(key, data)
+  while (notificationPageCache.size > 18) {
+    notificationPageCache.delete(notificationPageCache.keys().next().value)
+  }
+}
+
+function syncCachedNotificationMutation(path, method, response) {
+  const token = getAuthToken()
+  if (!token || !method || method === 'GET') return
+  const base = '/api/authors/me/page-notifications'
+  const isPreference = path.startsWith('/api/authors/me/page-notification-preferences/')
+  if (!path.startsWith(base) && !isPreference) return
+  const markAll = path === `${base}/read-all`
+  const match = path.match(/^\/api\/authors\/me\/page-notifications\/([^/]+)(?:\/(read|unread))?$/)
+  const id = match ? decodeURIComponent(match[1]) : ''
+  const nextUnread = match && match[2] ? match[2] === 'unread' : null
+  const deleted = method === 'DELETE' && Boolean(id)
+
+  for (const [key, entry] of notificationPageCache) {
+    if (!key.startsWith(`${token}:`)) continue
+    let notifications = entry.notifications
+    let hasMore = entry.hasMore
+    let nextCursor = entry.nextCursor
+    let preferences = entry.preferences
+    if (markAll) {
+      notifications = notifications.map((item) => item.unread ? { ...item, unread: false } : item)
+      if (key === notificationCacheKey(token, 'unread')) {
+        notifications = []
+        hasMore = false
+        nextCursor = ''
+      }
+    } else if (deleted) {
+      notifications = notifications.filter((item) => String(item.id) !== id)
+    } else if (nextUnread !== null) {
+      notifications = notifications.map((item) => String(item.id) === id ? { ...item, unread: nextUnread } : item)
+      if (!nextUnread && key === notificationCacheKey(token, 'unread')) {
+        notifications = notifications.filter((item) => String(item.id) !== id)
+      }
+    }
+    if (isPreference && response?.preference?.type) {
+      preferences = {
+        ...preferences,
+        [response.preference.type]: {
+          is_enabled: response.preference.is_enabled !== false,
+          frequency_level: response.preference.frequency_level || 'normal',
+        },
+      }
+    }
+    writeNotificationCache(key, { ...entry, notifications, hasMore, nextCursor, preferences })
+  }
+}
+
+async function requestNotificationPage(token, filter, cursor = '', includeMeta = true) {
+  const key = `${notificationCacheKey(token, filter)}:${cursor}:${includeMeta}`
+  if (notificationRequests.has(key)) return notificationRequests.get(key)
+  const task = fetchPageNotifications(cursor, filter, includeMeta)
+  notificationRequests.set(key, task)
+  try {
+    return await task
+  } finally {
+    if (notificationRequests.get(key) === task) notificationRequests.delete(key)
+  }
+}
+
 export default function AuthorPageNotificationsPage() {
   useDisplayTranslation()
   const navigate = useNavigate()
   const {
-  authorUnreadCount: unreadCount,
-  setAuthorUnreadCount,
-  adjustAuthorUnreadCount,
-  syncAuthorUnreadCount,
-  lastCreatedNotification,
-} = useAuthorPageNotifications()
-  const [activeFilter, setActiveFilter] =
-    useState('all')
-  const [message, setMessage] =
-    useState('')
-  const [
-    notifications,
-    setNotifications,
-  ] = useState([])
-  const [
-    preferences,
-    setPreferences,
-  ] = useState({})
-  const [loading, setLoading] =
-    useState(true)
-  const [
-    loadingMore,
-    setLoadingMore,
-  ] = useState(false)
-  const [hasMore, setHasMore] =
-    useState(false)
-  const [
-    nextCursor,
-    setNextCursor,
-  ] = useState('')
- 
-  const [
-    selectedNotification,
-    setSelectedNotification,
-  ] = useState(null)
+    authorUnreadCount: unreadCount,
+    setAuthorUnreadCount,
+    adjustAuthorUnreadCount,
+    syncAuthorUnreadCount,
+    getAuthorNotificationRevision,
+  } = useAuthorPageNotifications()
+
+  const token = getAuthToken()
+  const mountRevisionRef = useRef(getAuthorNotificationRevision())
+  const entryFilterRef = useRef(notificationPageViews.get(token)?.filter || 'all')
+  const initialSnapshotRef = useRef(readNotificationCache(token, entryFilterRef.current))
+  const [activeFilter, setActiveFilter] = useState(entryFilterRef.current)
+  const [viewKey, setViewKey] = useState(notificationCacheKey(token, entryFilterRef.current))
+  const [message, setMessage] = useState('')
+  const [notifications, setNotifications] = useState(initialSnapshotRef.current?.notifications || [])
+  const [preferences, setPreferences] = useState(initialSnapshotRef.current?.preferences || {})
+  const [loading, setLoading] = useState(!initialSnapshotRef.current)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(Boolean(initialSnapshotRef.current?.hasMore))
+  const [nextCursor, setNextCursor] = useState(initialSnapshotRef.current?.nextCursor || '')
+  const [selectedNotification, setSelectedNotification] = useState(null)
+  const [optionsLoading, setOptionsLoading] = useState(false)
+  const sequenceRef = useRef(0)
+  const activeRef = useRef(true)
+  const cacheReadyRef = useRef(Boolean(initialSnapshotRef.current))
+  const firstEntryRef = useRef(true)
+  const latestFilterRef = useRef(activeFilter)
+  const viewKeyRef = useRef(viewKey)
+
   useAuthorPageFooterVisibility(!selectedNotification)
-  const [
-    optionsLoading,
-    setOptionsLoading,
-  ] = useState(false)
+  latestFilterRef.current = activeFilter
+  viewKeyRef.current = viewKey
 
-  const loadNotifications =
-    useCallback(
-      async ({
-        append = false,
-        cursor = '',
-      } = {}) => {
-        try {
-          if (append) {
-            setLoadingMore(true)
-          } else {
-            setLoading(true)
-            setMessage('')
-          }
+  const loadNotifications = useCallback(async ({ append = false, cursor = '', filter = 'all', silent = false } = {}) => {
+    const requestToken = getAuthToken()
+    if (!requestToken) return
+    const key = notificationCacheKey(requestToken, filter)
+    const sequence = ++sequenceRef.current
+    const cached = readNotificationCache(requestToken, filter)
+    const includeMeta = !append
 
-          const data =
-            await fetchPageNotifications(
-              cursor
-            )
-
-          setNotifications(
-            (current) => {
-              if (!append) {
-  const incomingIds = new Set(
-    data.notifications.map((item) => item.id)
-  )
-
-  const liveItems = current.filter(
-    (item) => !incomingIds.has(item.id)
-  )
-
-  return [
-    ...liveItems,
-    ...data.notifications,
-  ]
-}
-              const currentIds =
-                new Set(
-                  current.map(
-                    (item) => item.id
-                  )
-                )
-
-              return [
-                ...current,
-                ...data.notifications.filter(
-                  (item) =>
-                    !currentIds.has(
-                      item.id
-                    )
-                ),
-              ]
-            }
-          )
-
-          
-          setPreferences(
-            data.preferences
-          )
-          setHasMore(data.hasMore)
-          setNextCursor(
-            data.nextCursor
-          )
-        } catch (error) {
-          if (!append) {
-            setNotifications([])
-            setPreferences({})
-
-            setHasMore(false)
-            setNextCursor('')
-          }
-
-          setMessage(
-            error.message ||
-              pageNotificationText('loadFailed')
-          )
-        } finally {
-          if (append) {
-            setLoadingMore(false)
-          } else {
-            setLoading(false)
-          }
-        }
-            },
-      []
-    )
-
-  useEffect(() => {
-    loadNotifications()
-  }, [loadNotifications])
-
-  useEffect(() => {
-  if (!lastCreatedNotification?.id) return
-
-  const notification =
-    normalizeNotification(
-      lastCreatedNotification
-    )
-
-  setNotifications((current) => {
-    if (
-      current.some(
-        (item) =>
-          item.id === notification.id
-      )
-    ) {
-      return current
+    if (append) {
+      setLoadingMore(true)
+    } else if (!silent && !cached) {
+      setLoading(true)
     }
+    if (!append) setMessage('')
 
-    return [
-      notification,
-      ...current,
-    ]
-  })
-}, [lastCreatedNotification])
+    try {
+      const data = await requestNotificationPage(requestToken, filter, cursor, includeMeta)
+      if (!activeRef.current || sequence !== sequenceRef.current || requestToken !== getAuthToken() || filter !== latestFilterRef.current) return
 
-  const filteredNotifications =
-    useMemo(() => {
-      if (activeFilter === 'all') {
-        return notifications
+      const existing = readNotificationCache(requestToken, filter)
+      let rows
+      if (append) {
+        const seen = new Set((existing?.notifications || []).map((item) => item.id))
+        rows = [...(existing?.notifications || []), ...data.notifications.filter((item) => !seen.has(item.id))]
+      } else if (silent && existing && existing.notifications.length > PAGE_SIZE) {
+        const seen = new Set(data.notifications.map((item) => item.id))
+        rows = [...data.notifications, ...existing.notifications.filter((item) => !seen.has(item.id))]
+      } else {
+        rows = data.notifications
       }
 
-      if (
-        activeFilter === 'unread'
-      ) {
-        return notifications.filter(
-          (item) => item.unread
-        )
+      const revised = {
+        notifications: rows,
+        preferences: data.preferences || existing?.preferences || {},
+        hasMore: silent && existing?.notifications.length > PAGE_SIZE
+          ? existing.hasMore
+          : data.hasMore,
+        nextCursor: silent && existing?.notifications.length > PAGE_SIZE
+          ? existing.nextCursor
+          : data.nextCursor,
+        fetchedAt: Date.now(),
+        revision: mountRevisionRef.current,
       }
+      writeNotificationCache(key, revised)
+      cacheReadyRef.current = true
+      setViewKey(key)
+      setNotifications(revised.notifications)
+      setPreferences(revised.preferences)
+      setHasMore(revised.hasMore)
+      setNextCursor(revised.nextCursor)
+      if (data.unreadCount !== null) setAuthorUnreadCount(data.unreadCount)
+    } catch (error) {
+      if (!activeRef.current || sequence !== sequenceRef.current || filter !== latestFilterRef.current) return
+      setMessage(error.message || pageNotificationText('loadFailed'))
+      if (!append && !readNotificationCache(requestToken, filter)) {
+        cacheReadyRef.current = false
+        setHasMore(false)
+        setNextCursor('')
+      }
+    } finally {
+      if (activeRef.current && sequence === sequenceRef.current) {
+        if (append) setLoadingMore(false)
+        else setLoading(false)
+      }
+    }
+  }, [setAuthorUnreadCount])
 
-      return notifications.filter(
-        (item) =>
-          item.typeKey ===
-          activeFilter
-      )
-    }, [
-      activeFilter,
-      notifications,
-    ])
+  useEffect(() => {
+    activeRef.current = true
+    return () => { activeRef.current = false; sequenceRef.current += 1 }
+  }, [])
 
-  const newNotifications =
-    filteredNotifications.filter(
-      (item) => item.unread
+  useEffect(() => {
+    const key = notificationCacheKey(token, activeFilter)
+    const cached = readNotificationCache(token, activeFilter)
+    sequenceRef.current += 1
+    cacheReadyRef.current = Boolean(cached)
+    setViewKey(key)
+    setNotifications(cached?.notifications || [])
+    setPreferences(cached?.preferences || {})
+    setHasMore(Boolean(cached?.hasMore))
+    setNextCursor(cached?.nextCursor || '')
+    setLoadingMore(false)
+    setMessage('')
+    setLoading(!cached)
+
+    const entry = firstEntryRef.current
+    firstEntryRef.current = false
+    const refresh = entry && cached && (
+      cached.revision !== mountRevisionRef.current ||
+      Date.now() - cached.fetchedAt >= NOTIFICATION_CACHE_TTL
     )
+    if (!cached || refresh) {
+      void loadNotifications({ filter: activeFilter, silent: Boolean(cached) })
+    }
+  }, [token, activeFilter, loadNotifications])
 
-  const earlierNotifications =
-    filteredNotifications.filter(
-      (item) => !item.unread
-    )
+  useEffect(() => {
+    if (!cacheReadyRef.current || !token || viewKey !== notificationCacheKey(token, activeFilter)) return
+    const existing = notificationPageCache.get(viewKey)
+    if (!existing) return
+    if (existing.notifications === notifications && existing.preferences === preferences && existing.hasMore === hasMore && existing.nextCursor === nextCursor) return
+    writeNotificationCache(viewKey, { ...existing, notifications, preferences, hasMore, nextCursor })
+  }, [token, activeFilter, viewKey, notifications, preferences, hasMore, nextCursor])
 
-  const selectedPreference =
-    selectedNotification
-      ? preferences[
-          selectedNotification.type
-        ] || {
-          is_enabled: true,
-          frequency_level: 'normal',
-        }
-      : {
-          is_enabled: true,
-          frequency_level: 'normal',
-        }
+  useEffect(() => {
+    const storedY = notificationPageViews.get(token)?.scrollY
+    if (typeof storedY !== 'number') return
+    const frame = window.requestAnimationFrame(() => window.scrollTo(0, storedY))
+    return () => window.cancelAnimationFrame(frame)
+  }, [token])
+
+  useEffect(() => () => {
+    notificationPageViews.set(token, { filter: latestFilterRef.current, scrollY: window.scrollY })
+    while (notificationPageViews.size > 3) {
+      notificationPageViews.delete(notificationPageViews.keys().next().value)
+    }
+  }, [token])
+
+  const filteredNotifications = activeFilter === 'unread'
+    ? notifications.filter((item) => item.unread)
+    : notifications
+  const newNotifications = filteredNotifications.filter((item) => item.unread)
+  const earlierNotifications = filteredNotifications.filter((item) => !item.unread)
+  const selectedPreference = selectedNotification
+    ? preferences[selectedNotification.type] || { is_enabled: true, frequency_level: 'normal' }
+    : { is_enabled: true, frequency_level: 'normal' }
 
   async function handleOpen(
   notification
@@ -1666,6 +1688,10 @@ export default function AuthorPageNotificationsPage() {
       )
 
       setAuthorUnreadCount(0)
+      if (activeFilter === 'unread') {
+  setHasMore(false)
+  setNextCursor('')
+}
     } catch (error) {
       setMessage(
         error.message ||
@@ -1686,6 +1712,7 @@ export default function AuthorPageNotificationsPage() {
     loadNotifications({
       append: true,
       cursor: nextCursor,
+      filter: activeFilter,
     })
   }
 
@@ -1792,7 +1819,7 @@ export default function AuthorPageNotificationsPage() {
 
         {loading ? (
           <LoadingState />
-        ) : filteredNotifications.length ? (
+        ) : filteredNotifications.length || hasMore ? (
           <div className="bg-[var(--shadow-bg-surface)]">
             <NotificationGroup
               title={pageNotificationText('new')}
