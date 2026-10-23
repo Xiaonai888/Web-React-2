@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -371,11 +371,21 @@ function safeCheckoutCoverUrl(value) {
   return ''
 }
 
+function validCheckoutQuantity(value) {
+  const quantity = Number(value)
+  return Number.isFinite(quantity) ? Math.max(1, Math.min(99, Math.trunc(quantity))) : 1
+}
+
 function getCartItems() {
   try {
     const raw = localStorage.getItem('shadow_author_cart_items') || '[]'
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
+    return Array.isArray(parsed)
+      ? parsed.filter((item) => item && typeof item === 'object' && item.id !== null && item.id !== undefined && String(item.id).trim()).map((item) => ({
+          ...item,
+          quantity: validCheckoutQuantity(item.quantity),
+        }))
+      : []
   } catch {
     return []
   }
@@ -499,6 +509,7 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
  const [address, setAddress] = useState(profile.delivery_address || profile.address || '')
   const [error, setError] = useState('')
   const [savingProfile, setSavingProfile] = useState(false)
+  const saveProfileRef = useRef(false)
 
   useEffect(() => {
     if (!open) return
@@ -512,6 +523,7 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
   if (!open) return null
 
   async function handleSave() {
+    if (saveProfileRef.current) return
     if (!name.trim() || !phone.trim() || !address.trim()) {
       setError(t('authorCheckout.requiredFields'))
       return
@@ -528,6 +540,7 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
 }
 
     try {
+      saveProfileRef.current = true
       setError('')
       setSavingProfile(true)
       const savedProfile = await saveBuyerProfile(nextProfile)
@@ -535,6 +548,7 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
     } catch (error) {
       setError(error.message || t('authorCheckout.failedSaveProfile'))
     } finally {
+      saveProfileRef.current = false
       setSavingProfile(false)
     }
   }
@@ -606,12 +620,38 @@ export default function AuthorCheckoutPage() {
   const [deliveryNote, setDeliveryNote] = useState(() => getBuyerProfile().delivery_note || '')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const paymentSubmissionRef = useRef(false)
   const [paidBookOrder, setPaidBookOrder] = useState(null)
   const [paidPdfOrder, setPaidPdfOrder] = useState(null)
   const [paymentModal, setPaymentModal] = useState(currentPendingAuthorPayment)
   const [checkingPayment, setCheckingPayment] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState('')
   const [paymentClock, setPaymentClock] = useState(Date.now())
+
+  useEffect(() => {
+    const syncCart = () => {
+      const latest = getCartItems()
+      setItems((current) => JSON.stringify(current) === JSON.stringify(latest) ? current : latest)
+    }
+    const onStorage = (event) => {
+      if (event.key === 'shadow_author_cart_items' || event.key === null) syncCart()
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncCart()
+    }
+    window.addEventListener('shadow-author-cart-updated', syncCart)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('pageshow', syncCart)
+    window.addEventListener('focus', syncCart)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('shadow-author-cart-updated', syncCart)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('pageshow', syncCart)
+      window.removeEventListener('focus', syncCart)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [])
 
   useEffect(() => {
     try {
@@ -809,11 +849,14 @@ export default function AuthorCheckoutPage() {
   }
 
   const selectedCompany = DELIVERY_COMPANIES.find((company) => company.id === selectedCompanyId) || DELIVERY_COMPANIES[0]
-  const subtotal = useMemo(() => items.reduce((sum, item) => sum + Number(item.price_value || 0) * Number(item.quantity || 1), 0), [items])
+  const subtotal = useMemo(() => items.reduce((sum, item) => {
+    const price = Number(item.price_value)
+    return sum + (Number.isFinite(price) && price >= 0 ? price : 0) * validCheckoutQuantity(item.quantity)
+  }, 0), [items])
   const needsDelivery = items.some((item) => String(item.type || item.product_type || '').toLowerCase() === 'book')
   const deliveryFee = needsDelivery ? Number(selectedCompany.fee || 0) : 0
   const total = subtotal + deliveryFee
-  const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 1), 0)
+  const itemCount = items.reduce((sum, item) => sum + validCheckoutQuantity(item.quantity), 0)
   const hasBuyerProfile = Boolean(
   (buyerProfile.name || '').trim() &&
   (buyerProfile.phone_number || buyerProfile.phone || '').trim() &&
@@ -821,21 +864,29 @@ export default function AuthorCheckoutPage() {
 )
 
   function updateQuantity(id, nextQuantity) {
-    const nextItems = items.map((item) => (
-      item.id === id ? { ...item, quantity: Math.max(1, nextQuantity) } : item
+    if (paymentSubmissionRef.current) return
+    const nextItems = getCartItems().map((item) => (
+      String(item.id) === String(id) ? { ...item, quantity: validCheckoutQuantity(nextQuantity) } : item
     ))
     setItems(nextItems)
     saveCartItems(nextItems)
   }
 
   function removeItem(id) {
-    const nextItems = items.filter((item) => item.id !== id)
+    if (paymentSubmissionRef.current) return
+    const nextItems = getCartItems().filter((item) => String(item.id) !== String(id))
     setItems(nextItems)
     saveCartItems(nextItems)
   }
 
  async function handleContinuePayment() {
-  if (hasExpiredDiscoverPromotion(items)) {
+  if (paymentSubmissionRef.current) return
+  const latestItems = getCartItems()
+  if (JSON.stringify(latestItems) !== JSON.stringify(items)) {
+    setItems(latestItems)
+    return
+  }
+  if (hasExpiredDiscoverPromotion(latestItems)) {
     setMessage(discoverPromotionExpiryMessage())
     return
   }
@@ -866,7 +917,9 @@ export default function AuthorCheckoutPage() {
     facebook_link: buyerProfile.facebook_link || '',
   }
 
+  let navigationStarted = false
   try {
+    paymentSubmissionRef.current = true
     setSaving(true)
     setMessage('')
 
@@ -875,7 +928,12 @@ export default function AuthorCheckoutPage() {
       setBuyerProfile(current => ({ ...current, ...savedProfile }))
     }
 
-    if (hasExpiredDiscoverPromotion(items)) throw new Error(discoverPromotionExpiryMessage())
+    const verifiedItems = getCartItems()
+    if (JSON.stringify(verifiedItems) !== JSON.stringify(latestItems)) {
+      setItems(verifiedItems)
+      return
+    }
+    if (hasExpiredDiscoverPromotion(verifiedItems)) throw new Error(discoverPromotionExpiryMessage())
 
     const orderResponse = await fetch(`${API_URL}/api/author-store/orders/create-payment`, {
       method: 'POST',
@@ -920,10 +978,14 @@ export default function AuthorCheckoutPage() {
 
     const paywayUrl = nextOrder.checkout_url || nextOrder.deeplink || FALLBACK_PAYWAY_LINK
     window.location.assign(paywayUrl)
+    navigationStarted = true
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
   } finally {
-    setSaving(false)
+    if (!navigationStarted) {
+      paymentSubmissionRef.current = false
+      setSaving(false)
+    }
   }
 }
 
