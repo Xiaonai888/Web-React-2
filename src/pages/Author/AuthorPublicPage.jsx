@@ -1110,7 +1110,7 @@ works_count: Number(author.total_stories || author.works_count || 0),
 
 async function fetchPublicAuthorPage(pageUsername) {
   const token = getAuthToken()
-  const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}`, {
+  const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}?include_works=0`, {
     headers: token
       ? {
           Authorization: `Bearer ${token}`,
