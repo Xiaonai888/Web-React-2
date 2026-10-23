@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useDisplayTranslation } from '../../utils/displayLanguage'
@@ -700,16 +700,20 @@ function CurrentMethodCard({ method, onView }) {
   )
 }
 
-function ImageUpload({ value, onChange, onFileChange, onError }) {
+function ImageUpload({ value, onChange, onError, onBusyChange }) {
   const { t } = useDisplayTranslation()
 
   async function handleFile(event) {
     const file = event.target.files?.[0]
-
+    event.target.value = ''
     if (!file) return
 
+    onBusyChange?.(true)
     try {
       onError?.('')
+      if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
+        throw new Error(t('authorPaymentMethod.chooseImage'))
+      }
 
       const optimized = await optimizeImageForUpload(file, {
         preset: 'default',
@@ -717,25 +721,24 @@ function ImageUpload({ value, onChange, onFileChange, onError }) {
       })
       const uploadFile = optimized.file
 
-      if (!uploadFile || uploadFile.size > 2 * 1024 * 1024) {
-        throw new Error('QR image must be 2 MB or smaller after compression.')
+      if (!uploadFile || uploadFile.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(uploadFile.type)) {
+        throw new Error('QR image must be PNG, JPG, WEBP or GIF and 2 MB or smaller.')
       }
 
       const reader = new FileReader()
-
-      reader.onload = () => {
-        onChange(String(reader.result || ''))
-        onFileChange?.(uploadFile)
+      const preview = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(String(reader.result || ''))
+        reader.onerror = () => reject(new Error(t('authorPaymentMethod.chooseImage')))
+        reader.readAsDataURL(uploadFile)
+      })
+      if (!/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(preview)) {
+        throw new Error(t('authorPaymentMethod.chooseImage'))
       }
-
-      reader.onerror = () => {
-        onError?.(t('authorPaymentMethod.chooseImage'))
-      }
-
-      reader.readAsDataURL(uploadFile)
+      onChange(preview)
     } catch (error) {
-      onFileChange?.(null)
       onError?.(error?.message || t('authorPaymentMethod.chooseImage'))
+    } finally {
+      onBusyChange?.(false)
     }
   }
 
@@ -780,7 +783,7 @@ function ImageUpload({ value, onChange, onFileChange, onError }) {
           </>
         )}
 
-        <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
+        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleFile} className="hidden" />
       </label>
 
       {value ? (
@@ -788,8 +791,7 @@ function ImageUpload({ value, onChange, onFileChange, onError }) {
           type="button"
           onClick={() => {
             onChange('')
-            onFileChange?.(null)
-          }}
+                }}
           className="mt-2 inline-flex items-center gap-1.5 text-[10.5px] font-black text-[#d25882]"
         >
           <i className="fa-solid fa-trash-can text-[9px]" />
@@ -978,7 +980,8 @@ export default function AuthorPaymentMethodPage() {
   const [bankName, setBankName] = useState('')
   const [accountName, setAccountName] = useState('')
   const [qrImageUrl, setQrImageUrl] = useState('')
-  const [qrImageFile, setQrImageFile] = useState(null)
+  const [qrProcessing, setQrProcessing] = useState(false)
+  const savingRef = useRef(false)
   const [paypalName, setPaypalName] = useState('')
   const [paypalEmail, setPaypalEmail] = useState('')
   const [phoneProvider, setPhoneProvider] = useState('')
@@ -987,7 +990,7 @@ export default function AuthorPaymentMethodPage() {
   const primaryMethod = useMemo(() => {
     return (
       methods.find((method) => method.is_primary && method.status === 'active') ||
-      methods[0] ||
+      methods.find((method) => method.status === 'active') ||
       null
     )
   }, [methods])
@@ -998,6 +1001,7 @@ export default function AuthorPaymentMethodPage() {
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadMethods() {
       try {
@@ -1017,6 +1021,7 @@ export default function AuthorPaymentMethodPage() {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            signal: controller.signal,
           }
         )
 
@@ -1027,11 +1032,11 @@ export default function AuthorPaymentMethodPage() {
         }
 
         if (!ignore) {
-          const list = result.payment_methods || []
+          const list = Array.isArray(result.payment_methods) ? result.payment_methods : []
           setMethods(list)
         }
       } catch (err) {
-        if (!ignore) {
+        if (!ignore && err?.name !== 'AbortError') {
           setError(err.message || t('authorPaymentMethod.loadFailed'))
         }
       } finally {
@@ -1045,10 +1050,12 @@ export default function AuthorPaymentMethodPage() {
 
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [navigate, t])
 
   function openMethod(methodType) {
+    if (savingRef.current || qrProcessing) return
     const old = methods.find(
       (method) =>
         method.method_type === methodType && method.status === 'active'
@@ -1058,7 +1065,6 @@ export default function AuthorPaymentMethodPage() {
     setViewMode('form')
     setError('')
     setSuccess('')
-    setQrImageFile(null)
 
     if (!old) {
       setBankName('')
@@ -1081,109 +1087,92 @@ export default function AuthorPaymentMethodPage() {
   }
 
   function backToMethods() {
+    if (savingRef.current || qrProcessing) return
     setViewMode('list')
     setSelectedMethod('')
-    setQrImageFile(null)
     setError('')
     setSuccess('')
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
+    if (savingRef.current || qrProcessing) return
+
+    const token = getAuthToken()
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    const account = accountName.trim()
+    const bank = bankName.trim()
+    const email = paypalEmail.trim()
+    const paypal = paypalName.trim()
+    const provider = phoneProvider.trim()
+    const phone = phoneNumber.trim()
+    const qr = qrImageUrl.trim()
+
+    if (
+      !selectedOption ||
+      (selectedMethod === 'bank_qr' && (!account || !bank || !qr)) ||
+      (selectedMethod === 'paypal' && (!paypal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) ||
+      (selectedMethod === 'phone' && (!account || !provider || !phone))
+    ) {
+      setError(t('authorPaymentMethod.fillDetails'))
+      return
+    }
+
+    savingRef.current = true
+    setSaving(true)
+    setError('')
+    setSuccess('')
 
     try {
-      setSaving(true)
-      setError('')
-      setSuccess('')
-
-      const token = getAuthToken()
-
-      if (!token) {
-        navigate('/login', { replace: true })
-        return
-      }
-
-      let paymentQrUrl = qrImageUrl
-
-      if (selectedMethod === 'bank_qr' && qrImageFile) {
-        const uploadBody = new FormData()
-        uploadBody.append('image', qrImageFile)
-        uploadBody.append('folder', 'author_payment_qr')
-
-        const uploadResponse = await fetch(
-          `${API_BASE_URL}/api/story-media/upload-image`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: uploadBody,
-          }
-        )
-
-        const uploadResult = await uploadResponse.json().catch(() => ({}))
-
-        if (!uploadResponse.ok || uploadResult.ok === false) {
-          throw new Error(uploadResult.message || t('authorPaymentMethod.saveFailed'))
-        }
-
-        paymentQrUrl = uploadResult.image_url || uploadResult.imageUrl || ''
-
-        if (!paymentQrUrl) {
-          throw new Error(t('authorPaymentMethod.saveFailed'))
-        }
-
-        setQrImageUrl(paymentQrUrl)
-        setQrImageFile(null)
-      }
-
       const body = {
         method_type: selectedMethod,
-        display_name: selectedOption?.title || 'Payment Method',
-        account_name: accountName,
-        bank_name: bankName,
-        qr_image_url: selectedMethod === 'bank_qr' ? paymentQrUrl : '',
-        paypal_name: paypalName,
-        paypal_email: paypalEmail,
-        phone_provider: phoneProvider,
-        phone_number: phoneNumber,
+        display_name: selectedOption.title,
+        account_name: selectedMethod === 'bank_qr' || selectedMethod === 'phone' ? account : '',
+        bank_name: selectedMethod === 'bank_qr' ? bank : '',
+        qr_image_url: selectedMethod === 'bank_qr' ? qr : '',
+        paypal_name: selectedMethod === 'paypal' ? paypal : '',
+        paypal_email: selectedMethod === 'paypal' ? email : '',
+        phone_provider: selectedMethod === 'phone' ? provider : '',
+        phone_number: selectedMethod === 'phone' ? phone : '',
       }
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/authors/me/payment-methods`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        }
-      )
-
+      const response = await fetch(`${API_BASE_URL}/api/authors/me/payment-methods`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
       const result = await response.json().catch(() => ({}))
 
-      if (!response.ok || result.ok === false) {
+      if (!response.ok || result.ok === false || !result.payment_method) {
         throw new Error(result.message || t('authorPaymentMethod.saveFailed'))
       }
 
+      const savedMethod = result.payment_method
       setMethods((old) => [
-        result.payment_method,
-        ...old.map((method) => ({
+        savedMethod,
+        ...old.filter((method) => String(method.id) !== String(savedMethod.id)).map((method) => ({
           ...method,
           is_primary: false,
         })),
       ])
-      setSuccess(t('authorPaymentMethod.saved'))
+      setQrImageUrl(savedMethod.qr_image_url || '')
+        setSuccess(t('authorPaymentMethod.saved'))
       setViewMode('list')
       setSelectedMethod('')
       if (backPath === '/author/payout-status') {
-  navigate(backPath, { replace: true })
-  return
-}
+        navigate(backPath, { replace: true })
+      }
     } catch (err) {
       setError(err.message || t('authorPaymentMethod.saveFailed'))
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
   }
@@ -1196,6 +1185,7 @@ export default function AuthorPaymentMethodPage() {
             icon="fa-solid fa-chevron-left"
             label={t('authorPaymentMethod.back')}
             onClick={() => {
+              if (saving || qrProcessing) return
               if (viewMode === 'form') {
                 backToMethods()
                 return
@@ -1316,7 +1306,7 @@ export default function AuthorPaymentMethodPage() {
                   <ImageUpload
                     value={qrImageUrl}
                     onChange={setQrImageUrl}
-                    onFileChange={setQrImageFile}
+                    onBusyChange={setQrProcessing}
                     onError={setError}
                   />
 
@@ -1408,7 +1398,7 @@ export default function AuthorPaymentMethodPage() {
 
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || qrProcessing}
                 className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full border border-[#7f55b4] bg-[linear-gradient(90deg,#8058b8_0%,#a568d0_100%)] text-[13px] font-black text-white shadow-[0_9px_20px_rgba(109,72,155,0.22)] transition active:scale-[0.99] disabled:opacity-60"
               >
                 {saving ? (
@@ -1427,6 +1417,7 @@ export default function AuthorPaymentMethodPage() {
               <button
                 type="button"
                 onClick={backToMethods}
+                disabled={saving || qrProcessing}
                 className="flex h-10 w-full items-center justify-center gap-2 rounded-full text-[10.5px] font-black text-[#8263a0] active:scale-[0.99]"
               >
                 <i className="fa-solid fa-chevron-left text-[8px]" />
