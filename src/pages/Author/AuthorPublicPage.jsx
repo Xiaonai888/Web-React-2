@@ -2493,7 +2493,7 @@ useEffect(() => {
 
   async function loadMoreAuthorReviews() {
     const username = pageUsername || author?.page_username
-    if (!username || !reviewsHasMore || reviewsNextOffset == null || reviewLoadingMoreRef.current || reviewLoading) return
+    if (!username || !reviewsHasMore || reviewsNextOffset == null || reviewLoadMoreRef.current || reviewLoading) return
     const requestId = reviewRequestIdRef.current
     const key = getAuthorReviewCacheKey(username)
     reviewLoadMoreRef.current = true
