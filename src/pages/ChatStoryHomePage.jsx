@@ -821,7 +821,7 @@ export default function ChatStoryHomePage() {
               aria-current={activeHomeTab === 'chat' ? 'page' : undefined}
             >
               {t('chatStoryHomePage.chat')}
-              {activeHomeTab === 'chat' ? <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-black" /> : null}
+              {activeHomeTab === 'chat' ? <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-[#F6B800]" /> : null}
             </button>
             <button
               type="button"
@@ -830,7 +830,7 @@ export default function ChatStoryHomePage() {
               aria-current={activeHomeTab === 'event' ? 'page' : undefined}
             >
               Event
-              {activeHomeTab === 'event' ? <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-black" /> : null}
+              {activeHomeTab === 'event' ? <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-[#F6B800]" /> : null}
             </button>
           </nav>
 
