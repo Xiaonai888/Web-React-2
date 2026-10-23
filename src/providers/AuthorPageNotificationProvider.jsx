@@ -17,12 +17,11 @@ const API_BASE_URL =
 
 const MIN_RECONNECT_MS = 10 * 1000
 const MAX_RECONNECT_MS = 2 * 60 * 1000
-const VISIBLE_SYNC_INTERVAL_MS = 60 * 1000
 const AuthorPageNotificationContext = createContext(null)
 
 function getReaderToken() {
-  return sessionStorage.getItem('shadow_reader_token') ||
-    localStorage.getItem('shadow_reader_token') || ''
+  return localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') || ''
 }
 
 function parseSseBlock(block) {
@@ -114,10 +113,14 @@ export function AuthorPageNotificationProvider({ children }) {
   const [visible, setVisible] = useState(() => document.visibilityState === 'visible')
   const [online, setOnline] = useState(() => navigator.onLine)
   const unreadRequestRef = useRef(null)
-  const lastVisibleSyncAtRef = useRef(0)
+  const notificationRevisionRef = useRef(0)
   const storyStatsListenersRef = useRef(new Set())
 
   const subscribeAuthorStoryStats = useCallback((listener) => {
+    const getAuthorNotificationRevision = useCallback(
+  () => notificationRevisionRef.current,
+  []
+)
     if (typeof listener !== 'function') return () => {}
     const listeners = storyStatsListenersRef.current
     listeners.add(listener)
