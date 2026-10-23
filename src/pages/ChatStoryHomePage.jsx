@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -552,6 +553,36 @@ export default function ChatStoryHomePage() {
   const [chatStories, setChatStories] = useState([])
   const [loadingStories, setLoadingStories] = useState(true)
   const [storiesError, setStoriesError] = useState('')
+  const [barsHidden, setBarsHidden] = useState(false)
+  const lastScrollYRef = useRef(0)
+
+  useEffect(() => {
+    function handleScroll() {
+      const currentScrollY = Math.max(0, window.scrollY)
+      const difference = currentScrollY - lastScrollYRef.current
+
+      if (currentScrollY < 20) {
+        setBarsHidden(false)
+        document.body.classList.remove('chat-story-home-bars-hidden')
+      } else if (difference > 8) {
+        setBarsHidden(true)
+        document.body.classList.add('chat-story-home-bars-hidden')
+      } else if (difference < -8) {
+        setBarsHidden(false)
+        document.body.classList.remove('chat-story-home-bars-hidden')
+      }
+
+      lastScrollYRef.current = currentScrollY
+    }
+
+    lastScrollYRef.current = Math.max(0, window.scrollY)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      document.body.classList.remove('chat-story-home-bars-hidden')
+    }
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -713,8 +744,15 @@ export default function ChatStoryHomePage() {
 
   return (
     <div className="app-page min-h-screen pb-[110px]">
+      <style>{`
+        body.chat-story-home-bars-hidden footer { transform: translateY(110%); }
+      `}</style>
       <header
-        className="app-nav sticky top-0 z-40 px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] backdrop-blur"
+        className="app-nav fixed inset-x-0 top-0 z-[100000] px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] transition-transform duration-200 ease-out"
+        style={{
+          backgroundColor: 'var(--shadow-bg-surface)',
+          transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)',
+        }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <h1
@@ -762,6 +800,7 @@ export default function ChatStoryHomePage() {
           </div>
         </div>
       </header>
+      <div className="h-[calc(64px+env(safe-area-inset-top))]" aria-hidden="true" />
 
       <main className="mx-auto max-w-6xl">
         <section className="pt-2">
