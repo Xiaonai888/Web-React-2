@@ -168,20 +168,72 @@ async function waitForStoryMediaUpload(queue, taskId) {
   throw new Error('Story images are saved locally and still uploading. Retry Save after the upload finishes.')
 }
 
-function createImage(url) {
+function loadCropImage(url, useCors = true) {
   return new Promise((resolve, reject) => {
     const image = new Image()
-    image.addEventListener('load', () => {
+    image.onload = () => {
       if (!image.naturalWidth || !image.naturalHeight) {
-        reject(new Error('IMAGE_EMPTY_DIMENSIONS: The browser loaded an image without valid pixel dimensions.'))
-        return
+        reject(new Error('IMAGE_EMPTY_DIMENSIONS: Loaded image has no valid pixel dimensions.'))
+      } else {
+        resolve(image)
       }
-      resolve(image)
-    })
-    image.addEventListener('error', () => reject(new Error('IMAGE_DECODE_FAILED: The browser could not load or decode the selected image. The format, file content, or image URL may be unsupported.')))
-    image.setAttribute('crossOrigin', 'anonymous')
+    }
+    image.onerror = () => reject(new Error('IMAGE_DECODE_FAILED: The browser failed to decode the image.'))
+    if (useCors && /^https?:\/\//i.test(url)) image.crossOrigin = 'anonymous'
     image.src = url
   })
+}
+
+async function createImage(url) {
+  let initialError
+  try {
+    return await loadCropImage(url)
+  } catch (error) {
+    initialError = error
+  }
+  if (!/^(blob:|data:)/i.test(url)) throw initialError
+  let blob
+  try {
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`IMAGE_BLOB_UNAVAILABLE: HTTP ${response.status}`)
+    blob = await response.blob()
+    if (!blob.size) throw new Error('IMAGE_BLOB_EMPTY: The original image is empty.')
+  } catch (error) {
+    throw new Error(`IMAGE_SOURCE_UNAVAILABLE: ${error?.message || initialError?.message || 'Could not reopen the original image.'}`)
+  }
+  if (/image\/(heic|heif)/i.test(blob.type)) {
+    try {
+      const { heicTo } = await import('heic-to')
+      const jpeg = await heicTo({ blob, type: 'image/jpeg', quality: 0.88 })
+      const jpegUrl = URL.createObjectURL(jpeg)
+      try {
+        const converted = await loadCropImage(jpegUrl, false)
+        converted.__shadowCropObjectUrl = jpegUrl
+        return converted
+      } catch (error) {
+        URL.revokeObjectURL(jpegUrl)
+        throw error
+      }
+    } catch (error) {
+      throw new Error(`HEIC_CONVERSION_FAILED: ${error?.message || 'This HEIC/HEIF image could not be converted.'}`)
+    }
+  }
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(blob)
+      if (bitmap.width && bitmap.height) return bitmap
+      bitmap.close?.()
+    } catch {}
+  }
+  const retryUrl = URL.createObjectURL(blob)
+  try {
+    const retried = await loadCropImage(retryUrl, false)
+    retried.__shadowCropObjectUrl = retryUrl
+    return retried
+  } catch (error) {
+    URL.revokeObjectURL(retryUrl)
+    throw new Error(`IMAGE_RETRY_DECODE_FAILED: ${error?.message || initialError?.message || 'This image could not be decoded.'}`)
+  }
 }
 
 async function getCroppedImage(imageSrc, pixelCrop) {
@@ -191,26 +243,49 @@ async function getCroppedImage(imageSrc, pixelCrop) {
   const sourceKind = /^blob:/i.test(imageSrc) ? 'local-file' : /^data:/i.test(imageSrc) ? 'data-url' : /^https?:/i.test(imageSrc) ? 'remote-image' : 'other'
   try {
     image = await createImage(imageSrc)
+    const imageWidth = image.naturalWidth || image.width || 0
+    const imageHeight = image.naturalHeight || image.height || 0
     stage = 'crop-validation'
     const { x, y, width, height } = pixelCrop || {}
-    if (![x, y, width, height].every(Number.isFinite) || width <= 0 || height <= 0 || x < 0 || y < 0 || x + width > image.naturalWidth + 1 || y + height > image.naturalHeight + 1) {
-      throw new RangeError(`INVALID_CROP_BOUNDS: crop=${JSON.stringify({ x, y, width, height })}, image=${image.naturalWidth}x${image.naturalHeight}`)
+    if (![x, y, width, height].every(Number.isFinite) || width <= 0 || height <= 0 || imageWidth <= 0 || imageHeight <= 0) {
+      throw new RangeError('INVALID_CROP_BOUNDS: The selected crop rectangle or image dimensions are invalid.')
     }
+    const sx = Math.max(0, Math.min(imageWidth - 1, Math.floor(x)))
+    const sy = Math.max(0, Math.min(imageHeight - 1, Math.floor(y)))
+    const sw = Math.min(imageWidth - sx, Math.round(width))
+    const sh = Math.min(imageHeight - sy, Math.round(height))
+    if (!sw || !sh) throw new RangeError('INVALID_CROP_BOUNDS: The selected crop rectangle is outside the image.')
+    const ratio = Math.min(1, 2400 / Math.max(sw, sh))
+    const outputWidth = Math.max(1, Math.round(sw * ratio))
+    const outputHeight = Math.max(1, Math.round(sh * ratio))
     stage = 'canvas-context'
     canvas = document.createElement('canvas')
+    canvas.width = outputWidth
+    canvas.height = outputHeight
     const ctx = canvas.getContext('2d')
-    if (!ctx) throw new Error('CANVAS_CONTEXT_UNAVAILABLE: The browser returned no 2D canvas context.')
-    stage = 'canvas-allocation'
-    canvas.width = width
-    canvas.height = height
-    if (!canvas.width || !canvas.height) throw new Error(`CANVAS_ALLOCATION_FAILED: Requested ${width}x${height}.`)
+    if (!ctx) throw new Error('CANVAS_CONTEXT_UNAVAILABLE: A 2D canvas could not be allocated.')
     stage = 'canvas-draw'
-    ctx.drawImage(image, x, y, width, height, 0, 0, width, height)
+    ctx.drawImage(image, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight)
     stage = 'canvas-export'
-    const result = canvas.toDataURL('image/jpeg', 0.9)
-    if (!result || result === 'data:,' || !result.startsWith('data:image/jpeg;base64,')) {
-      throw new Error('CANVAS_EXPORT_FAILED: The browser returned an empty or invalid JPEG. Canvas size or device memory may be limited.')
+    let result = ''
+    if (typeof canvas.toBlob === 'function') {
+      try {
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((value) => value ? resolve(value) : reject(new Error('CANVAS_BLOB_EMPTY')), 'image/jpeg', 0.88)
+        })
+        result = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(String(reader.result || ''))
+          reader.onerror = () => reject(reader.error || new Error('IMAGE_FILE_READER_FAILED'))
+          reader.readAsDataURL(blob)
+        })
+      } catch {
+        result = canvas.toDataURL('image/jpeg', 0.88)
+      }
+    } else {
+      result = canvas.toDataURL('image/jpeg', 0.88)
     }
+    if (!result.startsWith('data:image/jpeg;base64,')) throw new Error('CANVAS_EXPORT_FAILED: JPEG export returned no valid image.')
     return result
   } catch (error) {
     const reason = error instanceof Error ? error : new Error(String(error || 'Unknown browser error'))
@@ -219,8 +294,8 @@ async function getCroppedImage(imageSrc, pixelCrop) {
       action: 'save-crop',
       stage,
       imageSource: sourceKind,
-      imageWidth: image?.naturalWidth || 0,
-      imageHeight: image?.naturalHeight || 0,
+      imageWidth: image?.naturalWidth || image?.width || 0,
+      imageHeight: image?.naturalHeight || image?.height || 0,
       outputWidth: Number(pixelCrop?.width || 0),
       outputHeight: Number(pixelCrop?.height || 0),
     }
@@ -228,12 +303,15 @@ async function getCroppedImage(imageSrc, pixelCrop) {
     window.ShadowDiagnostics?.report(reason, details)
     throw reason
   } finally {
+    if (image?.__shadowCropObjectUrl) URL.revokeObjectURL(image.__shadowCropObjectUrl)
+    if (image && typeof image.close === 'function') image.close()
     if (canvas) {
       canvas.width = 0
       canvas.height = 0
     }
   }
 }
+
 
 function Step({ number, title, active }) {
   return (
