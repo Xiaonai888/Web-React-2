@@ -887,7 +887,7 @@ export default function ChatStoryHomePage() {
               title={t(`chatStoryHomePage.${section.titleKey}`)}
               onMore={() => {
   if (section.key === 'romance') return navigate('/genre/romance?story_type=chat_story')
-  if (section.key === 'lgbt') return navigate('/genre/bl?story_type=chat_story')
+  if (section.key === 'lgbt') return navigate('/genre/lgbtq?story_type=chat_story')
   return openCollection(section.key)
 }}
             />
