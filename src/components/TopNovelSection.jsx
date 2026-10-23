@@ -306,7 +306,9 @@ function LoadingRanking() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[20px] lg:text-[21px]">🏆</span>
+            <span className="text-[20px] lg:text-[21px]">
+  <i className="fa-solid fa-trophy text-[#F59E0B]" aria-hidden="true" />
+</span>
             <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
               {t('topNovelSection.title')}
             </h2>
@@ -461,8 +463,8 @@ export default function TopNovelSection({
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[20px] lg:text-[21px]">
-              🏆
-            </span>
+  <i className="fa-solid fa-trophy text-[#F59E0B]" aria-hidden="true" />
+</span>
 
             <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
               {t('topNovelSection.title')}
