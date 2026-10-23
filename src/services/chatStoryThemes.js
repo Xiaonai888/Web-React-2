@@ -1,5 +1,6 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { optimizeImageForUpload } from "../utils/imageUploadOptimizer";
+import { prepareChatReaderImage } from "../utils/chatStoryReaderImage";
 
 export const CHAT_THEME_PHOTO_LIMIT = 10;
 export const CHAT_THEME_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
@@ -1277,7 +1278,12 @@ export async function uploadChatThemePhoto(file, { signal, onProgress } = {}) {
     throw themeError("invalidImage");
   }
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-  const ready = optimized.file;
+  const ready = (
+  await prepareChatReaderImage(optimized.file, {
+    kind: "theme",
+    signal,
+  })
+).file;
   if (!["image/jpeg", "image/png", "image/webp"].includes(ready.type))
     throw themeError("invalidImage");
   if (account !== chatThemeAccount() || token !== chatThemeToken())
