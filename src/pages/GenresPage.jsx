@@ -858,7 +858,7 @@ export default function GenresPage() {
       )
 
       sessionStorage.setItem(
-        page: isChatStoryMode ? 'genres-chat-story' : 'genres',
+        genresStorageKey,
         JSON.stringify({
           ...current,
           activeGenre,
@@ -894,7 +894,7 @@ export default function GenresPage() {
       )
 
       sessionStorage.setItem(
-        page: isChatStoryMode ? 'genres-chat-story' : 'genres',
+        genresStorageKey,
         JSON.stringify({
           ...current,
           returningFromStory: false,
@@ -951,7 +951,7 @@ export default function GenresPage() {
         section: 'stories',
         language: getStoryLanguageId(),
         params: {
-          page: 'genres',
+          page: isChatStoryMode ? 'genres-chat-story' : 'genres',
           genre: activeGenre,
           search: query.trim(),
           story_setting: storySetting,
@@ -1001,7 +1001,7 @@ export default function GenresPage() {
         }
 
         params.set('language', getStoryLanguageLabel())
-if (isChatStoryMode) params.set('story_type', 'chat_story')
+        if (isChatStoryMode) params.set('story_type', 'chat_story')
 
         if (storySetting !== 'all') {
           params.set('story_setting', storySetting)
@@ -1027,7 +1027,7 @@ if (isChatStoryMode) params.set('story_type', 'chat_story')
           Array.isArray(data.stories) ? data.stories : []
         )
           .map(normalizeBook)
-          .filter((book) => book.id)
+          .filter((book) => book.id && (!isChatStoryMode || String(book.type || '').toLowerCase() === 'chat_story'))
 
         if (ignore || controller.signal.aborted) return
 
@@ -1110,7 +1110,7 @@ if (isChatStoryMode) params.set('story_type', 'chat_story')
       }
 
       params.set('language', getStoryLanguageLabel())
-if (isChatStoryMode) params.set('story_type', 'chat_story')
+      if (isChatStoryMode) params.set('story_type', 'chat_story')
 
       if (storySetting !== 'all') {
         params.set('story_setting', storySetting)
@@ -1161,7 +1161,7 @@ if (isChatStoryMode) params.set('story_type', 'chat_story')
         section: 'stories',
         language: getStoryLanguageId(),
         params: {
-          page: 'genres',
+          page: isChatStoryMode ? 'genres-chat-story' : 'genres',
           genre: activeGenre,
           search: query.trim(),
           story_setting: storySetting,
@@ -1247,7 +1247,7 @@ if (isChatStoryMode) params.set('story_type', 'chat_story')
 
     try {
       sessionStorage.setItem(
-        'shadow:genres-page:v1',
+        genresStorageKey,
         JSON.stringify({
           activeGenre,
           activeQuickFilter,
