@@ -44,7 +44,7 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature2Title: 'Chat Story Creator Week',
     feature2Subtitle: 'Join the challenge',
     romance: 'Romance',
-    lgbt: 'LGBTQ',
+    lgbt: 'LGBTQ+',
     cpIdol: 'CP Idol',
     modernRomance: 'Modern Romance',
     fantasyRomance: 'Fantasy Romance',
@@ -83,7 +83,7 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature2Title: 'សប្តាហ៍អ្នកបង្កើត Chat Story',
     feature2Subtitle: 'ចូលរួមការប្រកួតប្រជែង',
     romance: 'មនោសញ្ចេតនា',
-    lgbt: 'LGBT',
+    lgbt: 'LGBTQ+',
     cpIdol: 'CP Idol',
     modernRomance: 'មនោសញ្ចេតនាសម័យទំនើប',
     fantasyRomance: 'មនោសញ្ចេតនា Fantasy',
@@ -122,7 +122,7 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature2Title: 'Chat Story 创作者周',
     feature2Subtitle: '加入挑战',
     romance: '爱情',
-    lgbt: 'LGBT',
+    lgbt: 'LGBTQ+',
     cpIdol: 'CP Idol',
     modernRomance: '现代爱情',
     fantasyRomance: '奇幻爱情',
@@ -161,7 +161,7 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature2Title: 'Chat Story クリエイターウィーク',
     feature2Subtitle: 'チャレンジに参加',
     romance: 'ロマンス',
-    lgbt: 'LGBT',
+    lgbt: 'LGBTQ+',
     cpIdol: 'CP Idol',
     modernRomance: '現代ロマンス',
     fantasyRomance: 'ファンタジーロマンス',
@@ -200,7 +200,7 @@ registerTranslationNamespace('chatStoryHomePage', {
     feature2Title: 'Chat Story 크리에이터 위크',
     feature2Subtitle: '챌린지 참여하기',
     romance: '로맨스',
-    lgbt: 'LGBT',
+    lgbt: 'LGBTQ+',
     cpIdol: 'CP Idol',
     modernRomance: '현대 로맨스',
     fantasyRomance: '판타지 로맨스',
@@ -221,7 +221,7 @@ const SHOW_DEMO_STORIES = false
 const hotPicks = [
   { id: '1', title: 'Not Just a Marriage of Convenience', cover: '/assets/chat-story/hot-1.jpg', views: '2.34M', genre: 'Fantasy Romance', badge: 'HOT' },
   { id: '2', title: 'From Chaos to Love: My Husband', cover: '/assets/chat-story/hot-2.jpg', views: '206.4K', genre: 'Modern Romance', badge: 'NEW' },
-  { id: '3', title: 'Quietly Obsessed With You', cover: '/assets/chat-story/hot-3.jpg', views: '96.3K', genre: 'LGBT', badge: 'HOT' },
+  { id: '3', title: 'Quietly Obsessed With You', cover: '/assets/chat-story/hot-3.jpg', views: '96.3K', genre: 'LGBTQ+', badge: 'HOT' },
   { id: '4', title: 'Devil’s Badass Wife', cover: '/assets/chat-story/hot-4.jpg', views: '1.56M', genre: 'Modern Romance', badge: 'END' },
 ]
 
@@ -263,7 +263,7 @@ const sections = [
 
 const categories = [
   { title: 'Modern Romance', labelKey: 'modernRomance', icon: '🥂', className: 'from-[#ff8cb9] to-[#f6b7e6]' },
-  { title: 'LGBT', labelKey: 'lgbt', icon: '🌈', className: 'from-[#5b7cff] to-[#d083ee]' },
+  { title: 'LGBTQ+', labelKey: 'lgbt', icon: '🌈', className: 'from-[#5b7cff] to-[#d083ee]' },
   { title: 'CP Idol', labelKey: 'cpIdol', icon: '🎤', className: 'from-[#ffa4bf] to-[#a9eff6]' },
   { title: 'Fantasy Romance', labelKey: 'fantasyRomance', icon: '👑', className: 'from-[#ffd777] to-[#a8efae]' },
   { title: 'Fanfic Anime / Game / Film', labelKey: 'fanficAnimeGameFilm', icon: '🎮', className: 'from-[#f6aa8d] to-[#a9eff6]' },
@@ -420,6 +420,8 @@ const STORY_GENRE_LABEL_KEYS = {
   'Modern Romance': 'modernRomance',
   'Fantasy Romance': 'fantasyRomance',
   LGBT: 'lgbt',
+  LGBTQ: 'lgbt',
+  'LGBTQ+': 'lgbt',
   'CP Idol': 'cpIdol',
 }
 
@@ -524,7 +526,12 @@ function SectionHeader({ icon, title, onMore }) {
 
   return (
     <div className="mb-3 flex items-center justify-between gap-3 px-4">
-      <div className="flex min-w-0 items-center gap-2">
+      <button
+        type="button"
+        onClick={onMore}
+        disabled={!onMore}
+        className="flex min-w-0 items-center gap-2 border-0 bg-transparent p-0 text-left shadow-none outline-none ring-0 disabled:cursor-default"
+      >
         <span className="shrink-0 border-0 bg-transparent text-[17px] leading-none shadow-none outline-none ring-0">{icon}</span>
         <h2
           className="truncate text-[16px] font-bold leading-5"
@@ -532,7 +539,7 @@ function SectionHeader({ icon, title, onMore }) {
         >
           {title}
         </h2>
-      </div>
+      </button>
       {onMore ? (
         <button
           type="button"
@@ -541,7 +548,7 @@ function SectionHeader({ icon, title, onMore }) {
           style={{ color: 'var(--shadow-text-primary)' }}
           aria-label={`${t('chatStoryHomePage.seeAll')} ${title}`}
         >
-          <ChevronRight size={20} strokeWidth={2} aria-hidden="true" />
+          <ChevronRight size={24} strokeWidth={2} aria-hidden="true" />
         </button>
       ) : null}
     </div>
@@ -745,15 +752,15 @@ export default function ChatStoryHomePage() {
   }
 
   return (
-    <div className="app-page chat-story-home-page min-h-screen pb-[110px]" style={{ backgroundColor: 'var(--shadow-bg-surface)' }}>
+    <div className="app-page chat-story-home-page min-h-screen bg-white pb-[110px]" style={{ backgroundColor: '#ffffff' }}>
       <style>{`
-      body:has(.chat-story-home-page) { background: var(--shadow-bg-surface); }
+      body:has(.chat-story-home-page) { background: #ffffff; }
         body.chat-story-home-bars-hidden footer { transform: translateY(110%); }
       `}</style>
       <header
         className="app-nav fixed inset-x-0 top-0 z-[100000] px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] transition-transform duration-200 ease-out"
         style={{
-          backgroundColor: 'var(--shadow-bg-surface)',
+          backgroundColor: '#ffffff',
           transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)',
         }}
       >
@@ -886,10 +893,10 @@ export default function ChatStoryHomePage() {
               icon={section.icon}
               title={t(`chatStoryHomePage.${section.titleKey}`)}
               onMore={() => {
-  if (section.key === 'romance') return navigate('/genre/romance?story_type=chat_story')
-  if (section.key === 'lgbt') return navigate('/genre/lgbtq?story_type=chat_story')
-  return openCollection(section.key)
-}}
+                if (section.key === 'romance') return navigate('/genre/romance?story_type=chat_story')
+                if (section.key === 'lgbt') return navigate('/genre/lgbtq?story_type=chat_story')
+                return openCollection(section.key)
+              }}
             />
 
             <div className="flex gap-3 overflow-x-auto px-4 pb-2">
@@ -917,9 +924,11 @@ export default function ChatStoryHomePage() {
               <button
                 key={category.title}
                 type="button"
-                onClick={() =>
-                  navigate(`/chat-stories?category=${encodeURIComponent(category.title)}`)
-                }
+                onClick={() => {
+                  if (category.title === 'LGBTQ+') return navigate('/genre/lgbtq?story_type=chat_story')
+                  if (category.title === 'Modern Romance') return navigate('/genre/romance?story_type=chat_story')
+                  return navigate(`/chat-stories?category=${encodeURIComponent(category.title)}`)
+                }}
                 className={`relative min-h-[82px] overflow-hidden rounded-[16px] bg-gradient-to-r ${category.className} px-4 py-3 text-left shadow-[0_5px_16px_rgba(17,24,39,0.06)] active:scale-[0.98]`}
               >
                 <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-[34px] drop-shadow-sm">
