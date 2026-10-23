@@ -8762,26 +8762,26 @@ adultAccepted &&
     </section>
 
     {chatStoryComplete ? (
-      <>
-        {shouldShowToBeContinued(story, episodes, episode) ? (
-          <ToBeContinued theme={theme} />
-        ) : null}
-
-        {!offlineMode ? (
-          <ReaderEndPanel
-            story={story}
-            episode={episode}
-            commentSummary={activeCommentSummary}
-            onOpenComments={() => {
-              setCommentEpisode(episode)
-              setCommentsOpen(true)
-            }}
-            onOpenGift={() => setGiftPopupOpen(true)}
-            theme={theme}
-          />
-        ) : null}
-      </>
+  <div className="min-h-screen bg-white text-black">
+    {shouldShowToBeContinued(story, episodes, episode) ? (
+      <ToBeContinued theme={theme} />
     ) : null}
+
+    {!offlineMode ? (
+      <ReaderEndPanel
+        story={story}
+        episode={episode}
+        commentSummary={activeCommentSummary}
+        onOpenComments={() => {
+          setCommentEpisode(episode)
+          setCommentsOpen(true)
+        }}
+        onOpenGift={() => setGiftPopupOpen(true)}
+        theme={theme}
+      />
+    ) : null}
+  </div>
+) : null}
   </>
 ) : null}
 
