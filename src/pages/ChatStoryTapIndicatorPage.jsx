@@ -8,6 +8,7 @@ import ChatStoryTapIndicator, {
   normalizeTapIndicatorSettings,
 } from '../components/chat-story/ChatStoryTapIndicator'
 import ChatStoryIndicatorColorsPage from './ChatStoryIndicatorColorsPage'
+import ChatStoryIndicatorStylesPage from './ChatStoryIndicatorStylesPage'
 import { useChatStoryTheme, chatThemeAccount, chatThemeToken } from '../services/chatStoryThemes'
 import { useChatTapIndicator, saveChatTapIndicator } from '../services/chatStoryTapIndicator'
 import {
@@ -110,6 +111,13 @@ const ERROR_KEYS = new Set([
   'accountChanged', 'saveFailed', 'deleteFailed',
 ])
 
+const INDICATOR_PALETTE_COLORS = Object.freeze([
+  '#8b5cf6', '#237d94', '#bd513e', '#486b51', '#a8476e',
+  '#8054aa', '#26745c', '#376cba', '#92631c', '#80583f',
+  '#a94265', '#7e50a7', '#b14d47', '#246f75', '#426a94',
+  '#7751b5', '#3f795e', '#98537f', '#337c9d', '#626a86',
+])
+
 const PAGE_CSS = `
 .chat-indicator-page{position:fixed;inset:0;z-index:148;display:flex;flex-direction:column;min-height:0;height:100vh;height:100dvh;overflow:hidden;background:var(--shadow-bg-surface);color:var(--shadow-text-primary)}
 .chat-indicator-page>header{flex:none;padding-top:env(safe-area-inset-top,0px)}
@@ -121,15 +129,15 @@ const PAGE_CSS = `
 .cip-preview{min-height:185px;border-radius:20px;padding:18px;box-sizing:border-box;display:flex;flex-direction:column;gap:11px;align-items:center;justify-content:center;overflow:hidden}
 .cip-preview-caption{margin:0;font-size:12px;color:var(--cs-muted,var(--shadow-text-secondary))}
 .cip-swiper{display:flex;gap:12px;overflow-x:auto;padding:3px 2px 12px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
-.cip-style-card{flex:0 0 104px;display:flex;align-items:center;flex-direction:column;gap:9px;min-width:0;scroll-snap-align:start;padding:11px 7px 9px;border:2px solid var(--shadow-border);border-radius:17px;background:var(--shadow-bg-soft);color:var(--shadow-text-primary);font-size:12px;cursor:pointer}
-.cip-style-card[aria-pressed=true]{border-color:var(--shadow-text-primary);background:var(--shadow-bg-elevated,var(--shadow-bg-soft))}
+.cip-style-card{flex:0 0 104px;display:flex;align-items:center;flex-direction:column;gap:9px;min-width:0;scroll-snap-align:start;padding:11px 7px 9px;border:2px solid transparent;border-radius:17px;background:transparent;color:var(--shadow-text-primary);font-size:12px;cursor:pointer}
+.cip-style-card[aria-pressed=true]{border-color:#f6c343;background:transparent}
 .cip-style-art{width:76px;height:76px;display:grid;place-items:center}
 .cip-style-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .cip-row{display:flex;align-items:center;justify-content:space-between;gap:15px;width:100%}
-.cip-color-button{display:flex;align-items:center;gap:9px;border:1px solid var(--shadow-border);border-radius:14px;padding:10px 12px;background:var(--shadow-bg-soft);color:var(--shadow-text-primary);font-size:12px;cursor:pointer}
+.cip-color-button{display:flex;align-items:center;gap:9px;border:1px solid var(--shadow-border);border-radius:14px;padding:10px 12px;background:var(--shadow-bg-surface);color:var(--shadow-text-primary);font-size:12px;cursor:pointer}
 .cip-color-dot{width:24px;height:24px;flex:none;border-radius:50%;border:1px solid #00000018}
 .cip-chevron{font-size:21px;line-height:1;color:var(--shadow-text-secondary)}
-.cip-drop{min-height:127px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:15px;border:1.5px dashed var(--shadow-border);border-radius:18px;background:var(--shadow-bg-soft);text-align:center;outline-offset:3px}
+.cip-drop{min-height:127px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:15px;border:1.5px dashed var(--shadow-border);border-radius:18px;background:var(--shadow-bg-surface);text-align:center;outline-offset:3px}
 .cip-drop[data-dragging=true]{border-color:var(--shadow-text-primary);background:var(--shadow-bg-elevated,var(--shadow-bg-soft))}
 .cip-drop-label{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 15px;background:var(--shadow-text-primary);color:var(--shadow-bg-surface);font-size:12px;border-radius:12px;cursor:pointer;font-weight:600}
 .cip-drop-label[aria-disabled=true]{opacity:.5;cursor:not-allowed}
@@ -140,13 +148,26 @@ const PAGE_CSS = `
 .cip-image-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
 .cip-quiet{border:0;background:none;color:var(--shadow-text-secondary);font-size:12px;text-decoration:underline;cursor:pointer;padding:6px}
 .cip-options{display:flex;flex-wrap:wrap;gap:9px}
-.cip-option{padding:9px 15px;background:var(--shadow-bg-soft);color:var(--shadow-text-primary);border:1px solid var(--shadow-border);border-radius:999px;font-size:12px;cursor:pointer}
-.cip-option[aria-pressed=true]{background:#111827;border-color:#111827;color:#fff}
+.cip-option{padding:9px 15px;background:var(--shadow-bg-surface);color:var(--shadow-text-primary);border:2px solid transparent;border-radius:999px;font-size:12px;cursor:pointer}
+.cip-option[aria-pressed=true]{background:var(--shadow-bg-surface);border-color:#f6c343;color:var(--shadow-text-primary)}
 .cip-apply{border:0;background:#111827;color:#fff;border-radius:9px;padding:8px 15px;font-size:13px;cursor:pointer}
 .cip-apply:disabled{opacity:.45;cursor:default}
-.cip-footer{flex:none;border-top:1px solid var(--shadow-border);padding:11px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--shadow-bg-surface)}
-.cip-footer-inner{max-width:760px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.cip-footer-status{font-size:12px;color:var(--shadow-text-secondary)}
+.cip-styles-heading{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;border:0;background:transparent;padding:0;margin:0;color:var(--shadow-text-primary);font-size:14px;font-weight:700;text-align:left;cursor:pointer}
+.cip-styles-heading:disabled{opacity:.45;cursor:default}
+.cip-styles-heading .cip-chevron{font-size:20px}
+.cip-footer{flex:none;border-top:1px solid var(--shadow-border);padding:10px 0 calc(12px + env(safe-area-inset-bottom,0px));background:var(--shadow-bg-surface)}
+.cip-footer-title{max-width:760px;margin:0 auto;padding:0 16px 5px;font-size:12px;color:var(--shadow-text-secondary)}
+.cip-footer-inner{max-width:760px;margin:auto;display:flex;align-items:center;gap:12px;padding:0 16px}
+.cip-color-scroll{display:flex;min-width:0;flex:1;align-items:center;gap:11px;overflow-x:auto;padding:4px 2px;scrollbar-width:none;overscroll-behavior-x:contain}
+.cip-color-scroll::-webkit-scrollbar{display:none}
+.cip-color-swatch{flex:none;width:34px;height:34px;padding:3px;border:2px solid transparent;border-radius:50%;background:transparent;cursor:pointer}
+.cip-color-swatch[aria-pressed=true]{border-color:#f6c343}
+.cip-color-swatch span{display:block;width:100%;height:100%;border-radius:50%}
+.cip-gradient-picker{flex:none;width:46px;height:42px;display:grid;place-items:center;padding:4px 0 4px 12px;border:0;border-left:1px solid var(--shadow-border);background:transparent;cursor:pointer}
+.cip-gradient-picker span{display:block;width:32px;height:32px;border-radius:50%;background:conic-gradient(#ff4b70,#ffd438,#42df85,#27bcec,#8f5bff,#ff4b70)}
+.cip-gradient-picker[aria-pressed=true] span{outline:2px solid #f6c343;outline-offset:3px}
+.cip-color-swatch:focus-visible,.cip-gradient-picker:focus-visible,.cip-styles-heading:focus-visible{outline:2px solid #f6c343;outline-offset:3px}
+.cip-footer-original{max-width:760px;margin:auto;padding:4px 16px 2px;color:var(--shadow-text-secondary);font-size:12px}
 .cip-error{font-size:12px;line-height:1.65;color:var(--shadow-danger,#cf3341);margin:10px 0 0}
 .cip-success{font-size:12px;line-height:1.65;color:var(--shadow-text-secondary);margin:10px 0 0}
 .cip-confirm{margin-top:11px;padding:14px;border:1px solid var(--shadow-border);border-radius:15px;background:var(--shadow-bg-soft)}
@@ -179,6 +200,7 @@ export default function ChatStoryTapIndicatorPage({ onBack, onApply, skipAnimati
   const [progress, setProgress] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [showColors, setShowColors] = useState(false)
+  const [showStyles, setShowStyles] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -211,6 +233,7 @@ export default function ChatStoryTapIndicatorPage({ onBack, onApply, skipAnimati
     setDraft(normalizeTapIndicatorSettings(saved.settings))
     setImage(peekChatIndicatorImage(account).item)
     setShowColors(false)
+    setShowStyles(false)
     setConfirmDelete(false)
     setUploading(false)
     setDeleting(false)
@@ -328,6 +351,7 @@ export default function ChatStoryTapIndicatorPage({ onBack, onApply, skipAnimati
 
   const handleBack = () => {
     if (showColors) { setShowColors(false); return }
+    if (showStyles) { setShowStyles(false); return }
     if (confirmDelete) { setConfirmDelete(false); return }
     readRef.current?.abort()
     operationRef.current?.abort()
@@ -370,6 +394,29 @@ export default function ChatStoryTapIndicatorPage({ onBack, onApply, skipAnimati
     }
   }
 
+  const choosePaletteColor = (color) => {
+    if (busy || isCustom) return
+    setDraft((old) => normalizeTapIndicatorSettings({
+      ...old, colorMode: 'solid', colors: [color, ...old.colors.slice(1)],
+    }))
+    setNotice('')
+    setError('')
+  }
+
+  if (showStyles) {
+    return <ChatStoryIndicatorStylesPage
+      settings={currentSettings}
+      onBack={() => setShowStyles(false)}
+      onChange={(settings) => {
+        if (busy) return
+        setDraft(normalizeTapIndicatorSettings(settings))
+        setNotice('')
+        setError('')
+      }}
+      skipAnimation={skipAnimation}
+    />
+  }
+
   if (showColors) {
     return <ChatStoryIndicatorColorsPage
       settings={currentSettings}
@@ -398,8 +445,12 @@ export default function ChatStoryTapIndicatorPage({ onBack, onApply, skipAnimati
             </div>
           </section>
           <section className="cip-section" aria-label={label('styles')}>
-            <h2 className="cip-label">{label('styles')}</h2>
-            <p className="cip-hint">{label('styleHint')}</p>
+            <h2 className="cip-label">
+              <button type="button" className="cip-styles-heading" disabled={busy} onClick={() => setShowStyles(true)}>
+                <span>{label('styles')}</span>
+                <span className="cip-chevron" aria-hidden="true">›</span>
+              </button>
+            </h2>
             <div className="cip-swiper">
               {TAP_INDICATOR_STYLES.map((style) => {
                 const chosen = !isCustom && currentSettings.styleId === style.id
@@ -483,10 +534,38 @@ export default function ChatStoryTapIndicatorPage({ onBack, onApply, skipAnimati
         </div>
       </main>
       <footer className="cip-footer">
-        <div className="cip-footer-inner">
-          <span className="cip-footer-status">{dirty ? label('preview') : label('applied')}</span>
-          <button className="cip-apply" type="button" disabled={busy || !dirty} onClick={apply}>{dirty ? label('apply') : label('applied')}</button>
-        </div>
+        <div className="cip-footer-title">{label('colors')}</div>
+        {isCustom ? (
+          <p className="cip-footer-original">{label('originalColors')}</p>
+        ) : (
+          <div className="cip-footer-inner">
+            <div className="cip-color-scroll" role="group" aria-label={label('colors')}>
+              {INDICATOR_PALETTE_COLORS.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  className="cip-color-swatch"
+                  aria-label={color}
+                  aria-pressed={currentSettings.colorMode === 'solid' && currentSettings.colors[0].toLowerCase() === color}
+                  disabled={busy}
+                  onClick={() => choosePaletteColor(color)}
+                >
+                  <span style={{ background: color }} />
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="cip-gradient-picker"
+              aria-label={label('chooseColors')}
+              aria-pressed={currentSettings.colorMode === 'gradient'}
+              disabled={busy}
+              onClick={() => setShowColors(true)}
+            >
+              <span />
+            </button>
+          </div>
+        )}
       </footer>
     </PageShell>
   )
