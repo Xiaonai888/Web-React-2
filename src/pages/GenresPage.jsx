@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getStoryLanguageId, getStoryLanguageLabel } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -784,10 +784,13 @@ function BookCard({ book, onOpen }) {
 
 export default function GenresPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
+  const isChatStoryMode = new URLSearchParams(location.search).get('story_type') === 'chat_story'
+  const genresStorageKey = isChatStoryMode ? 'shadow:genres-page:chat-story:v1' : 'shadow:genres-page:v1'
   const [savedState] = useState(() => {
     try {
-      return JSON.parse(sessionStorage.getItem('shadow:genres-page:v1') || '{}')
+      return JSON.parse(sessionStorage.getItem(genresStorageKey) || '{}')
     } catch {
       return {}
     }
@@ -851,11 +854,11 @@ export default function GenresPage() {
   useEffect(() => {
     try {
       const current = JSON.parse(
-        sessionStorage.getItem('shadow:genres-page:v1') || '{}'
+        sessionStorage.getItem(genresStorageKey) || '{}'
       )
 
       sessionStorage.setItem(
-        'shadow:genres-page:v1',
+        page: isChatStoryMode ? 'genres-chat-story' : 'genres',
         JSON.stringify({
           ...current,
           activeGenre,
@@ -887,11 +890,11 @@ export default function GenresPage() {
 
     try {
       const current = JSON.parse(
-        sessionStorage.getItem('shadow:genres-page:v1') || '{}'
+        sessionStorage.getItem(genresStorageKey) || '{}'
       )
 
       sessionStorage.setItem(
-        'shadow:genres-page:v1',
+        page: isChatStoryMode ? 'genres-chat-story' : 'genres',
         JSON.stringify({
           ...current,
           returningFromStory: false,
@@ -998,6 +1001,7 @@ export default function GenresPage() {
         }
 
         params.set('language', getStoryLanguageLabel())
+if (isChatStoryMode) params.set('story_type', 'chat_story')
 
         if (storySetting !== 'all') {
           params.set('story_setting', storySetting)
@@ -1073,7 +1077,7 @@ export default function GenresPage() {
       controller.abort()
       loadMoreControllerRef.current?.abort()
     }
-  }, [activeGenre, storySetting, serverStoryStatus, query])
+  }, [activeGenre, storySetting, serverStoryStatus, query, isChatStoryMode])
 
     const loadMoreBooks = async () => {
     if (
@@ -1106,6 +1110,7 @@ export default function GenresPage() {
       }
 
       params.set('language', getStoryLanguageLabel())
+if (isChatStoryMode) params.set('story_type', 'chat_story')
 
       if (storySetting !== 'all') {
         params.set('story_setting', storySetting)
@@ -1133,7 +1138,7 @@ export default function GenresPage() {
         Array.isArray(data.stories) ? data.stories : []
       )
         .map(normalizeBook)
-        .filter((book) => book.id)
+        .filter((book) => book.id && (!isChatStoryMode || String(book.type || '').toLowerCase() === 'chat_story'))
 
       const seen = new Set()
       const mergedBooks = [...books, ...nextBooks].filter((book) => {
@@ -1195,7 +1200,7 @@ export default function GenresPage() {
 
 
   const { sentinelRef, showManualLoad, hasAccount } = useGenreAutoLoad({
-    resetKey: [activeGenre, storySetting, serverStoryStatus, query.trim(), activeQuickFilter, access, type, progress].join('|'),
+    resetKey: [isChatStoryMode, activeGenre, storySetting, serverStoryStatus, query.trim(), activeQuickFilter, access, type, progress].join('|'),
     hasMore,
     loading,
     loadingMore,
