@@ -152,7 +152,7 @@ function LoadingSkeleton({ t, storyType }) {
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[20px] lg:text-[21px]">
-  {window.location.pathname === '/' ? <i className="fa-solid fa-gift text-[#FFB020]" aria-hidden="true" /> : '🎉'}
+  <i className="fa-solid fa-gift text-[#FFB020]" aria-hidden="true" />
 </span>
             <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
               {t('updateTodaySection.title')}
@@ -291,7 +291,7 @@ export default function UpdateTodaySection({
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[20px] lg:text-[21px]">
-  {window.location.pathname === '/' ? <i className="fa-solid fa-gift text-[#FFB020]" aria-hidden="true" /> : '🎉'}
+  <i className="fa-solid fa-gift text-[#FFB020]" aria-hidden="true" />
 </span>
 
             <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
