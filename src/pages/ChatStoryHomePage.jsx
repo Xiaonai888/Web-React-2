@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -10,6 +12,8 @@ import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeData
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { Search, ChevronRight } from 'lucide-react'
+
+const EventPage = lazy(() => import('./EventPage'))
 
 registerTranslationNamespace('chatStoryHomePage', {
   en: {
@@ -559,6 +563,12 @@ function SectionHeader({ icon, title, onMore }) {
 export default function ChatStoryHomePage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
+  const [activeHomeTab, setActiveHomeTab] = useState('chat')
+  const [eventMounted, setEventMounted] = useState(false)
+  const [eventReady, setEventReady] = useState(false)
+  const eventHostRef = useRef(null)
+  const didSwitchRef = useRef(false)
+  const savedScrollRef = useRef({ chat: 0, event: 0 })
   const [chatStories, setChatStories] = useState([])
   const [loadingStories, setLoadingStories] = useState(true)
   const [storiesError, setStoriesError] = useState('')
@@ -743,6 +753,44 @@ export default function ChatStoryHomePage() {
     newUpdatedStories[0] ||
     null
 
+  const switchHomeTab = (nextTab) => {
+    if (nextTab === activeHomeTab) return
+    savedScrollRef.current[activeHomeTab] = Math.max(window.scrollY, 0)
+    didSwitchRef.current = true
+    if (nextTab === 'event') setEventMounted(true)
+    setBarsHidden(false)
+    document.body.classList.remove('chat-story-home-bars-hidden')
+    setActiveHomeTab(nextTab)
+  }
+
+  useEffect(() => {
+    if (!didSwitchRef.current) return undefined
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo(0, savedScrollRef.current[activeHomeTab] || 0)
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [activeHomeTab])
+
+  useEffect(() => {
+    if (!eventMounted || !eventHostRef.current) return undefined
+    const host = eventHostRef.current
+    let finished = false
+    const activateEvent = () => {
+      if (finished) return
+      const tabRow = host.querySelector('.app-page > main > section:first-child')
+      const eventButton = tabRow?.querySelectorAll('button')?.[1]
+      if (!eventButton) return
+      finished = true
+      observer.disconnect()
+      eventButton.click()
+      setEventReady(true)
+    }
+    const observer = new MutationObserver(activateEvent)
+    observer.observe(host, { childList: true, subtree: true })
+    activateEvent()
+    return () => observer.disconnect()
+  }, [eventMounted])
+
   const openStory = (story) => {
     navigate(`/story/${story.id}`)
   }
@@ -765,12 +813,26 @@ export default function ChatStoryHomePage() {
         }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <h1
-            className="text-[17px] font-bold tracking-[-0.01em]"
-            style={{ color: 'var(--shadow-text-primary)' }}
-          >
-            {t('chatStoryHomePage.chat')}
-          </h1>
+          <nav className="flex h-10 items-center gap-6" aria-label="Chat Story tabs">
+            <button
+              type="button"
+              onClick={() => switchHomeTab('chat')}
+              className={`relative h-full text-[17px] font-bold tracking-[-0.01em] ${activeHomeTab === 'chat' ? 'text-black' : 'text-neutral-400'}`}
+              aria-current={activeHomeTab === 'chat' ? 'page' : undefined}
+            >
+              {t('chatStoryHomePage.chat')}
+              {activeHomeTab === 'chat' ? <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-black" /> : null}
+            </button>
+            <button
+              type="button"
+              onClick={() => switchHomeTab('event')}
+              className={`relative h-full text-[17px] font-bold tracking-[-0.01em] ${activeHomeTab === 'event' ? 'text-black' : 'text-neutral-400'}`}
+              aria-current={activeHomeTab === 'event' ? 'page' : undefined}
+            >
+              Event
+              {activeHomeTab === 'event' ? <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-black" /> : null}
+            </button>
+          </nav>
 
           <div
             className="flex items-center gap-1"
@@ -812,7 +874,7 @@ export default function ChatStoryHomePage() {
       </header>
       <div className="h-[calc(64px+env(safe-area-inset-top))]" aria-hidden="true" />
 
-      <main className="mx-auto max-w-6xl">
+      <main className={`mx-auto max-w-6xl ${activeHomeTab === 'chat' ? '' : 'hidden'}`}>
         <section className="pt-2">
           <SectionHeader
             icon="💎"
@@ -1082,6 +1144,22 @@ export default function ChatStoryHomePage() {
           </section>
         ) : null}
       </main>
+      {eventMounted ? (
+        <div className={activeHomeTab === 'event' ? '' : 'hidden'}>
+          <style>{`
+            .chat-story-event-content > .app-page > header { display: none !important; }
+            .chat-story-event-content > .app-page > main > section:first-child { display: none !important; }
+            .chat-story-event-content > .app-page { padding-bottom: 16px; }
+            .chat-story-event-content > .app-page > main { padding-top: 10px; }
+          `}</style>
+          {!eventReady ? <div className="px-4 py-8 text-center text-sm text-neutral-500">Loading events...</div> : null}
+          <div ref={eventHostRef} className={`chat-story-event-content ${eventReady ? '' : 'hidden'}`}>
+            <Suspense fallback={null}>
+              <EventPage />
+            </Suspense>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
