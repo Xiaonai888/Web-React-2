@@ -271,7 +271,7 @@
       reports.push(report)
       if (reports.length > 35) reports.shift()
       console.error('SHADOW_ERROR_DIAGNOSTIC', report)
-      if (options.show !== false && (signature !== lastDisplayedSignature || now - lastDisplayedAt > 15000)) {
+      if (options.action === 'save-crop' && options.show !== false && (signature !== lastDisplayedSignature || now - lastDisplayedAt > 15000)) {
         lastDisplayedSignature = signature
         lastDisplayedAt = now
         if (options.show === 'passive') showPassive(report)
