@@ -1,5 +1,5 @@
 import ChatStoryVoice, { ChatStoryRecording, isChatVoiceMessage } from './ChatStoryVoice'
-import { useChatStoryTheme } from '../../services/chatStoryThemes'
+import { useChatStoryTheme, CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
@@ -196,7 +196,7 @@ function Portrait({ character, className = '' }) {
   const url = character?.avatar_url || ''
   useEffect(() => setFailed(false), [url])
   return (
-    <span className={`cs-phone-portrait ${className}`} aria-hidden="true">
+    <span className={`cs-phone-portrait cs-style-avatar ${className}`} aria-hidden="true">
       {url && !failed ? (
         <img
           src={url}
@@ -322,7 +322,8 @@ function PhoneMessage({
   const emoji = !typing && chatEmojiCount(message.text)
   return (
     <div
-      className={`cs-phone-message ${right ? 'cs-phone-right' : ''} ${grouped ? 'cs-phone-grouped' : ''}`}
+      data-grouped={grouped ? 'true' : 'false'}
+      className={`cs-phone-message cs-style-row ${right ? 'cs-phone-right' : ''} ${grouped ? 'cs-phone-grouped' : ''}`}
     >
       {!right ? (
         grouped ? (
@@ -333,19 +334,20 @@ function PhoneMessage({
       ) : null}
       <div className="cs-phone-message-body">
         {!right && !grouped ? (
-          <div className="cs-phone-name" style={{ color }}>
+          <div className="cs-phone-name cs-style-name" style={{ color }}>
             {character?.nickname || t('chatStoryPhone.unknown')}
           </div>
         ) : null}
         <div
+          data-side={right ? 'right' : 'left'}
           className={
             typing
-              ? 'cs-phone-bubble cs-phone-typing'
+              ? 'cs-phone-bubble cs-style-bubble cs-phone-typing'
               : image || voice
                 ? 'cs-phone-media'
                 : emoji
                   ? `cs-phone-emoji ${emoji === 1 ? 'cs-phone-single-emoji' : ''}`
-                  : 'cs-phone-bubble'
+                  : 'cs-phone-bubble cs-style-bubble'
           }
         >
           {typing ? (
@@ -661,6 +663,7 @@ export default function ChatStoryPhoneView({
     <section
       ref={rootRef}
       className="cs-phone reader-page theme-preserve"
+      data-chat-style={chatTheme.theme.styleId}
       role="dialog"
       aria-modal="true"
       aria-label={storyTitle || t('chatStoryPhone.title')}
@@ -675,7 +678,7 @@ export default function ChatStoryPhoneView({
         '--cs-line-height': lineHeight,
       }}
     >
-      <style>{PHONE_CSS}</style>
+      <style>{PHONE_CSS + CHAT_THEME_STYLE_CSS}</style>
       <header className="cs-phone-header">
         <div className="cs-phone-header-inner">
           <button
