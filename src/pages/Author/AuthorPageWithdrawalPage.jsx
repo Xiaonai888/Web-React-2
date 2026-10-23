@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { writeAuthorStoreResourceCache } from '../../utils/authorStoreResourceCache'
 
 registerTranslationNamespace('authorPageWithdrawal', {
   "en": {
@@ -220,6 +221,21 @@ function getAuthToken() {
     sessionStorage.getItem('shadow_reader_token') ||
     ''
   )
+}
+
+function getWithdrawalStoreAccountId() {
+  const read = (key) => {
+    try {
+      return JSON.parse(localStorage.getItem(key) || sessionStorage.getItem(key) || 'null') || {}
+    } catch {
+      return {}
+    }
+  }
+  const reader = read('shadow_reader_user')
+  const author = read('shadow_author_page')
+  const userId = String(reader.user_id || reader.id || author.user_id || '').trim()
+  const pageId = String(author.author_page_id || author.id || '').trim()
+  return userId ? `${userId}:${pageId}` : pageId ? `author-page:${pageId}` : ''
 }
 
 function formatMoney(value) {
@@ -478,6 +494,8 @@ const backPath = backMode === 'income'
 const paymentBackPath = `/author/page/finance/withdrawal${backMode ? `?back=${encodeURIComponent(backMode)}` : ''}`
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const submitLockedRef = useRef(false)
+  const dataRequestIdRef = useRef(0)
   const [message, setMessage] = useState('')
   const [amount, setAmount] = useState('')
   const [income, setIncome] = useState({
@@ -496,124 +514,53 @@ const paymentBackPath = `/author/page/finance/withdrawal${backMode ? `?back=${en
   const recentRequests = useMemo(() => income.requests.slice(0, 20), [income.requests])
 
   async function loadWithdrawalData(options = {}) {
-  const silent = options?.silent === true
-  const token = getAuthToken()
+    const silent = options?.silent === true
+    const requestId = ++dataRequestIdRef.current
+    const token = getAuthToken()
 
-  if (!token) {
-    navigate('/login')
-    return null
-  }
+    if (!token) {
+      navigate('/login')
+      return null
+    }
 
-  try {
     if (!silent) {
       setLoading(true)
       setMessage('')
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || getDisplayText('authorPageWithdrawal.loadFailed'))
-    }
-
-    const updatedIncome = normalizeIncomePayload(data)
-    setIncome(updatedIncome)
-    return updatedIncome
-  } catch (error) {
-    if (!silent) setMessage(error.message || getDisplayText('authorPageWithdrawal.loadFailed'))
-    return null
-  } finally {
-    if (!silent) setLoading(false)
-  }
-}
-
-async function submitWithdrawal() {
-  const token = getAuthToken()
-
-  if (!token) {
-    navigate('/login')
-    return
-  }
-
-  if (!validAmount) {
-    setMessage(getDisplayText('authorPageWithdrawal.invalidAmount', {
-      min: formatMoney(MIN_WITHDRAWAL_AMOUNT),
-      max: formatMoney(availableBalance),
-    }))
-    return
-  }
-
-  if (!income.paymentMethod) {
-    setMessage(getDisplayText('authorPageWithdrawal.addPaymentFirst'))
-    return
-  }
-
-  try {
-    setSaving(true)
-    setMessage('')
-
-    const response = await fetch(`${API_BASE_URL}/api/author-store/me/withdrawals`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ amount: requestedAmount }),
-    })
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false || !data.withdrawal?.id) {
-      throw new Error(data.message || getDisplayText('authorPageWithdrawal.requestFailed'))
-    }
-
-    setIncome((current) => ({
-      ...current,
-      availableBalance: Math.max(0, Number((current.availableBalance - requestedAmount).toFixed(2))),
-      pendingBalance: Number((current.pendingBalance + requestedAmount).toFixed(2)),
-      requests: [data.withdrawal, ...current.requests.filter((item) => item.id !== data.withdrawal.id)],
-    }))
-    setAmount('')
-
-    const verifiedIncome = await loadWithdrawalData({ silent: true })
-
     try {
-      const read = (key) => {
-        try {
-          return JSON.parse(localStorage.getItem(key) || sessionStorage.getItem(key) || 'null') || {}
-        } catch {
-          return {}
-        }
+      const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false || data.summary?.available_balance == null || !Number.isFinite(Number(data.summary.available_balance))) {
+        throw new Error(data.message || getDisplayText('authorPageWithdrawal.loadFailed'))
       }
-      const reader = read('shadow_reader_user')
-      const author = read('shadow_author_page')
-      const userId = String(reader.user_id || reader.id || author.user_id || '').trim()
-      const pageId = String(author.author_page_id || author.id || '').trim()
-      const accountId = userId ? `${userId}:${pageId}` : pageId ? `author-page:${pageId}` : ''
+
+      if (requestId !== dataRequestIdRef.current) return null
+      const updatedIncome = normalizeIncomePayload(data)
+      setIncome(updatedIncome)
+      const accountId = getWithdrawalStoreAccountId()
       if (accountId) {
-        const cache = await import('../../utils/authorStoreResourceCache')
-        if (verifiedIncome && Number.isFinite(verifiedIncome.availableBalance)) {
-          cache.writeAuthorStoreResourceCache({ accountId, resource: 'withdrawal', data: verifiedIncome.availableBalance })
-        } else {
-          cache.invalidateAuthorStoreResourceCache({ accountId, resource: 'withdrawal' })
+        try {
+          writeAuthorStoreResourceCache({ accountId, resource: 'withdrawal', data: updatedIncome.availableBalance })
+        } catch {
         }
       }
-    } catch (cacheError) {
-      console.error('AUTHOR STORE WITHDRAWAL CACHE UPDATE ERROR:', cacheError)
+      return updatedIncome
+    } catch (error) {
+      if (requestId === dataRequestIdRef.current && !silent) {
+        setMessage(error.message || getDisplayText('authorPageWithdrawal.loadFailed'))
+      }
+      return null
+    } finally {
+      if (requestId === dataRequestIdRef.current && !silent) setLoading(false)
     }
-
-    setMessage(getDisplayText('authorPageWithdrawal.submitted'))
-  } catch (error) {
-    setMessage(error.message || getDisplayText('authorPageWithdrawal.requestFailed'))
-  } finally {
-    setSaving(false)
   }
-}
-
 
   async function submitWithdrawal() {
+    if (submitLockedRef.current || saving || loading) return
     const token = getAuthToken()
 
     if (!token) {
@@ -622,7 +569,10 @@ async function submitWithdrawal() {
     }
 
     if (!validAmount) {
-      setMessage(getDisplayText('authorPageWithdrawal.invalidAmount', { min: formatMoney(MIN_WITHDRAWAL_AMOUNT), max: formatMoney(availableBalance) }))
+      setMessage(getDisplayText('authorPageWithdrawal.invalidAmount', {
+        min: formatMoney(MIN_WITHDRAWAL_AMOUNT),
+        max: formatMoney(availableBalance),
+      }))
       return
     }
 
@@ -631,39 +581,58 @@ async function submitWithdrawal() {
       return
     }
 
-    try {
-      setSaving(true)
-      setMessage('')
+    submitLockedRef.current = true
+    setSaving(true)
+    setMessage('')
 
+    try {
       const response = await fetch(`${API_BASE_URL}/api/author-store/me/withdrawals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          amount: requestedAmount,
-        }),
+        body: JSON.stringify({ amount: requestedAmount }),
       })
-
       const data = await response.json().catch(() => ({}))
 
-      if (!response.ok || data.ok === false) {
+      if (!response.ok || data.ok === false || !data.withdrawal?.id) {
         throw new Error(data.message || getDisplayText('authorPageWithdrawal.requestFailed'))
       }
 
+      dataRequestIdRef.current += 1
+      const confirmedAmount = Number(data.withdrawal.amount_usd)
+      const deducted = Number.isFinite(confirmedAmount) && confirmedAmount > 0 ? confirmedAmount : requestedAmount
+      const optimisticAvailable = Math.max(0, Number((availableBalance - deducted).toFixed(2)))
+      setIncome((current) => ({
+        ...current,
+        availableBalance: Math.max(0, Number((current.availableBalance - deducted).toFixed(2))),
+        pendingBalance: Number((current.pendingBalance + deducted).toFixed(2)),
+        requests: [data.withdrawal, ...current.requests.filter((item) => item.id !== data.withdrawal.id)],
+      }))
       setAmount('')
       setMessage(getDisplayText('authorPageWithdrawal.submitted'))
-      await loadWithdrawalData()
+
+      const accountId = getWithdrawalStoreAccountId()
+      if (accountId) {
+        try {
+          writeAuthorStoreResourceCache({ accountId, resource: 'withdrawal', data: optimisticAvailable })
+        } catch {
+        }
+      }
+
+      await loadWithdrawalData({ silent: true })
     } catch (error) {
       setMessage(error.message || getDisplayText('authorPageWithdrawal.requestFailed'))
     } finally {
+      submitLockedRef.current = false
       setSaving(false)
     }
   }
 
   useEffect(() => {
-    loadWithdrawalData()
+    void loadWithdrawalData()
+    return () => { dataRequestIdRef.current += 1 }
   }, [])
 
   return (
@@ -683,7 +652,8 @@ async function submitWithdrawal() {
 
           <button
             type="button"
-            onClick={loadWithdrawalData}
+            onClick={() => { void loadWithdrawalData() }}
+            disabled={saving || loading}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
             aria-label={t('authorPageWithdrawal.refresh')}
           >
