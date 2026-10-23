@@ -862,7 +862,7 @@ export default function ChatStoryReader({
             })}
             {!completed && (readMode === 'manual' || userPaused) ? (
               <div ref={tapHintRef} className="flex flex-col items-center justify-center pb-6 pt-10 text-[#a98bd7]" style={{ minHeight: 220 }}>
-                {userPaused ? (
+                {userPaused && readMode === 'auto' ? (
                   <button
                     type="button"
                     onClick={resumePhone}
