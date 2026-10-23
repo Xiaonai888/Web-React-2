@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { fetchAuthorStoreResource, readAuthorStoreResourceCache } from '../../utils/authorStoreResourceCache'
 
 registerTranslationNamespace('authorStoreWithdrawalDetails', {
   en: { title: 'Withdrawal Details', available: 'Available for Withdrawal', minimum: 'Minimum withdrawal: $10.00', request: 'Request Withdrawal', all: 'All', book: 'Book', pdf: 'PDF', history: 'Earnings history', empty: 'No earnings to display yet.', pending: 'Loading verified balance...', failed: 'Could not load your balance. Please try again.', price: 'Product price', shipping: 'Delivery fee', company: 'Delivery company', fee: 'Service fee', amount: 'Amount credited', order: 'Order', loadMore: 'Load more', loadingEarnings: 'Loading earnings...', earningsFailed: 'Could not load earnings. Please retry.', retry: 'Retry', back: 'Back' },
@@ -20,6 +21,28 @@ function money(value) {
   return Number.isFinite(number) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(number) : '—'
 }
 
+function readStoredJson(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || sessionStorage.getItem(key) || 'null') || {}
+  } catch {
+    return {}
+  }
+}
+
+function getStoreAccountId() {
+  const reader = readStoredJson('shadow_reader_user')
+  const author = readStoredJson('shadow_author_page')
+  const userId = String(reader.user_id || reader.id || author.user_id || '').trim()
+  const pageId = String(author.author_page_id || author.id || '').trim()
+  return userId ? `${userId}:${pageId}` : pageId ? `author-page:${pageId}` : ''
+}
+
+function validBalance(value) {
+  if (value === null || value === undefined || value === '') return null
+  const amount = Number(value)
+  return Number.isFinite(amount) && amount >= 0 ? amount : null
+}
+
 function DetailRow({ label, value }) {
   return <div className="flex items-center justify-between gap-3 py-1 text-[12px]"><span className="text-[var(--shadow-text-secondary)]">{label}</span><span className="text-right font-semibold text-[var(--shadow-text-primary)]">{value}</span></div>
 }
@@ -28,8 +51,11 @@ export default function AuthorStoreWithdrawalDetailsPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [filter, setFilter] = useState('all')
-  const [balance, setBalance] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+  const accountId = getStoreAccountId()
+  const cached = accountId && token ? readAuthorStoreResourceCache({ accountId, resource: 'withdrawal' }) : null
+  const [balance, setBalance] = useState(() => cached?.exists ? validBalance(cached.data) : null)
+  const [loading, setLoading] = useState(() => !(cached?.fresh && validBalance(cached.data) !== null))
   const [loadError, setLoadError] = useState(false)
   const [earnings, setEarnings] = useState([])
   const [earningsPage, setEarningsPage] = useState(1)
@@ -40,35 +66,60 @@ export default function AuthorStoreWithdrawalDetailsPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token')
     if (!token) {
       navigate('/login', { replace: true })
       return () => controller.abort()
     }
+
+    let disposed = false
+    const currentCache = accountId ? readAuthorStoreResourceCache({ accountId, resource: 'withdrawal' }) : null
+    const oldBalance = currentCache?.exists ? validBalance(currentCache.data) : null
+    if (oldBalance !== null) setBalance(oldBalance)
+
+    if (currentCache?.fresh && oldBalance !== null) {
+      setLoadError(false)
+      setLoading(false)
+      return () => { disposed = true; controller.abort() }
+    }
+
+    setLoading(true)
+    setLoadError(false)
+    const fetcher = async () => {
+      const response = await fetch(`${API_BASE_URL}/api/author-store/me/income?summary_only=1`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load balance')
+      const amount = validBalance(data.summary?.available_balance)
+      if (amount === null) throw new Error('Invalid withdrawal balance')
+      return amount
+    }
+
     async function loadBalance() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        })
-        const data = await response.json()
-        if (!response.ok || data.ok === false || !Number.isFinite(Number(data.summary?.available_balance))) {
-          throw new Error('Invalid withdrawal balance')
+        const result = accountId
+          ? await fetchAuthorStoreResource({ accountId, resource: 'withdrawal', fetcher })
+          : { data: await fetcher(), obsolete: false }
+        if (!disposed && !controller.signal.aborted && !result.obsolete) {
+          const amount = validBalance(result.data)
+          if (amount === null) throw new Error('Invalid withdrawal balance')
+          setBalance(amount)
+          setLoadError(false)
         }
-        if (!controller.signal.aborted) setBalance(Number(data.summary.available_balance))
       } catch {
-        if (!controller.signal.aborted) setLoadError(true)
+        if (!disposed && !controller.signal.aborted) setLoadError(true)
       } finally {
-        if (!controller.signal.aborted) setLoading(false)
+        if (!disposed && !controller.signal.aborted) setLoading(false)
       }
     }
-    loadBalance()
-    return () => controller.abort()
-  }, [navigate])
+
+    void loadBalance()
+    return () => { disposed = true; controller.abort() }
+  }, [navigate, accountId, token])
 
   useEffect(() => {
     const controller = new AbortController()
-    const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token')
     if (!token) return () => controller.abort()
 
     async function loadEarnings() {
@@ -93,9 +144,9 @@ export default function AuthorStoreWithdrawalDetailsPage() {
       }
     }
 
-    loadEarnings()
+    void loadEarnings()
     return () => controller.abort()
-  }, [earningsPage, earningsRetry])
+  }, [earningsPage, earningsRetry, token])
 
   const translate = (key) => t(`authorStoreWithdrawalDetails.${key}`)
   const list = useMemo(() => earnings.filter((item) => (filter === 'all' || item.type === filter) && (item.type === 'book' || item.type === 'pdf')), [earnings, filter])
