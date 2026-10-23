@@ -8464,7 +8464,7 @@ autoScrollEnabled ? (
 />
 
       <header
-  className={`${isChatStory || readerHeaderVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b px-4 py-3 transition-transform duration-300 ease-out ${
+  className={`${readerHeaderVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b px-4 py-3 transition-transform duration-300 ease-out ${
     lockedHeaderActive
   ? 'border-[#111111] bg-[#111111]'
   : `${theme.border} ${theme.card}`
@@ -8623,7 +8623,7 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
 </header>
 
       <main
-  onClick={isChatStory ? undefined : handleReaderDoubleTap}
+  onClick={handleReaderDoubleTap}
   className={`mx-auto max-w-3xl ${isChatStory ? 'bg-transparent' : theme.card} px-0 pb-[92px] pt-[50px] sm:px-4`}
 >
         {loading ? <LoadingCard theme={theme} /> : null}
