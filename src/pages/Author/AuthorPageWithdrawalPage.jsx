@@ -495,37 +495,123 @@ const paymentBackPath = `/author/page/finance/withdrawal${backMode ? `?back=${en
   const paymentLabel = getPaymentLabel(income.paymentMethod)
   const recentRequests = useMemo(() => income.requests.slice(0, 20), [income.requests])
 
-  async function loadWithdrawalData() {
-    const token = getAuthToken()
+  async function loadWithdrawalData(options = {}) {
+  const silent = options?.silent === true
+  const token = getAuthToken()
 
-    if (!token) {
-      navigate('/login')
-      return
-    }
+  if (!token) {
+    navigate('/login')
+    return null
+  }
 
-    try {
+  try {
+    if (!silent) {
       setLoading(true)
       setMessage('')
-
-      const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || getDisplayText('authorPageWithdrawal.loadFailed'))
-      }
-
-      setIncome(normalizeIncomePayload(data))
-    } catch (error) {
-      setMessage(error.message || getDisplayText('authorPageWithdrawal.loadFailed'))
-    } finally {
-      setLoading(false)
     }
+
+    const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || getDisplayText('authorPageWithdrawal.loadFailed'))
+    }
+
+    const updatedIncome = normalizeIncomePayload(data)
+    setIncome(updatedIncome)
+    return updatedIncome
+  } catch (error) {
+    if (!silent) setMessage(error.message || getDisplayText('authorPageWithdrawal.loadFailed'))
+    return null
+  } finally {
+    if (!silent) setLoading(false)
   }
+}
+
+async function submitWithdrawal() {
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  if (!validAmount) {
+    setMessage(getDisplayText('authorPageWithdrawal.invalidAmount', {
+      min: formatMoney(MIN_WITHDRAWAL_AMOUNT),
+      max: formatMoney(availableBalance),
+    }))
+    return
+  }
+
+  if (!income.paymentMethod) {
+    setMessage(getDisplayText('authorPageWithdrawal.addPaymentFirst'))
+    return
+  }
+
+  try {
+    setSaving(true)
+    setMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/api/author-store/me/withdrawals`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ amount: requestedAmount }),
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false || !data.withdrawal?.id) {
+      throw new Error(data.message || getDisplayText('authorPageWithdrawal.requestFailed'))
+    }
+
+    setIncome((current) => ({
+      ...current,
+      availableBalance: Math.max(0, Number((current.availableBalance - requestedAmount).toFixed(2))),
+      pendingBalance: Number((current.pendingBalance + requestedAmount).toFixed(2)),
+      requests: [data.withdrawal, ...current.requests.filter((item) => item.id !== data.withdrawal.id)],
+    }))
+    setAmount('')
+
+    const verifiedIncome = await loadWithdrawalData({ silent: true })
+
+    try {
+      const read = (key) => {
+        try {
+          return JSON.parse(localStorage.getItem(key) || sessionStorage.getItem(key) || 'null') || {}
+        } catch {
+          return {}
+        }
+      }
+      const reader = read('shadow_reader_user')
+      const author = read('shadow_author_page')
+      const userId = String(reader.user_id || reader.id || author.user_id || '').trim()
+      const pageId = String(author.author_page_id || author.id || '').trim()
+      const accountId = userId ? `${userId}:${pageId}` : pageId ? `author-page:${pageId}` : ''
+      if (accountId) {
+        const cache = await import('../../utils/authorStoreResourceCache')
+        if (verifiedIncome && Number.isFinite(verifiedIncome.availableBalance)) {
+          cache.writeAuthorStoreResourceCache({ accountId, resource: 'withdrawal', data: verifiedIncome.availableBalance })
+        } else {
+          cache.invalidateAuthorStoreResourceCache({ accountId, resource: 'withdrawal' })
+        }
+      }
+    } catch (cacheError) {
+      console.error('AUTHOR STORE WITHDRAWAL CACHE UPDATE ERROR:', cacheError)
+    }
+
+    setMessage(getDisplayText('authorPageWithdrawal.submitted'))
+  } catch (error) {
+    setMessage(error.message || getDisplayText('authorPageWithdrawal.requestFailed'))
+  } finally {
+    setSaving(false)
+  }
+}
+
 
   async function submitWithdrawal() {
     const token = getAuthToken()
