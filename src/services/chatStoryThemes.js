@@ -314,77 +314,79 @@ function safeImageUrl(value) {
   }
 }
 
+export const CHAT_THEME_STYLES = Object.freeze(['classic', 'soft', 'gradient', 'night', 'paper', 'outline', 'minimal', 'neon'].map((id) => ({ id, nameKey: `chatStoryThemes.styles.${id}` })));
+export const CHAT_THEME_ACCENTS = Object.freeze(CHAT_STORY_THEMES.map((theme) => ({ id: theme.id, color: theme.outgoing, nameKey: theme.nameKey })));
+
+const hexColor = (value) => /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value).toLowerCase() : null;
+function mixColor(first, second, amount) {
+  const read = (hex, index) => parseInt(hex.slice(index, index + 2), 16);
+  return '#' + [1, 3, 5].map((index) => Math.round(read(first, index) * (1 - amount) + read(second, index) * amount).toString(16).padStart(2, '0')).join('');
+}
+function luminance(hex) {
+  return [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255).map((v) => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, v, index) => sum + v * [.2126, .7152, .0722][index], 0);
+}
+function readableAccent(hex) {
+  let result = hex;
+  for (let index = 0; index < 30 && 1.05 / (luminance(result) + .05) < 4.5; index += 1) result = mixColor(result, '#000000', .08);
+  return result;
+}
 export function normalizeChatTheme(value) {
-  if (!value || !["preset", "shadow", "photo"].includes(value.source))
-    return {
-      source: "preset",
-      id: DEFAULT_CHAT_THEME.id,
-      paletteId: DEFAULT_CHAT_THEME.id,
-    };
-  const paletteId = CHAT_STORY_THEMES.some(
-    (theme) => theme.id === value.paletteId,
-  )
-    ? value.paletteId
-    : DEFAULT_CHAT_THEME.id;
-  if (value.source === "preset") {
-    const preset = CHAT_STORY_THEMES.find((theme) => theme.id === value.id);
-    return {
-      source: "preset",
-      id: preset?.id || DEFAULT_CHAT_THEME.id,
-      paletteId: preset?.id || DEFAULT_CHAT_THEME.id,
-    };
+  const valid = value && ['preset', 'shadow', 'photo'].includes(value.source);
+  const input = valid ? value : {};
+  const preset = CHAT_STORY_THEMES.find((theme) => theme.id === (input.source === 'preset' ? input.id : input.paletteId)) || DEFAULT_CHAT_THEME;
+  const extras = {};
+  if (CHAT_THEME_STYLES.some((style) => style.id === input.styleId)) extras.styleId = input.styleId;
+  const accent = hexColor(input.accentColor);
+  if (accent) extras.accentColor = accent;
+  if (Array.isArray(input.gradientColors) && [2, 3].includes(input.gradientColors.length) && input.gradientColors.every(hexColor)) {
+    extras.gradientColors = input.gradientColors.map(hexColor);
+    extras.gradientAngle = Number.isFinite(Number(input.gradientAngle)) ? Math.max(0, Math.min(360, Math.round(Number(input.gradientAngle)))) : 135;
   }
-  const id = String(value.id || "");
-  const imageUrl = safeImageUrl(value.image_url);
-  if (!/^[a-zA-Z0-9_-]{1,128}$/.test(id) || !imageUrl)
-    return {
-      source: "preset",
-      id: DEFAULT_CHAT_THEME.id,
-      paletteId: DEFAULT_CHAT_THEME.id,
-    };
-  return {
-    source: value.source,
-    id,
-    image_url: imageUrl,
-    title: String(value.title || "").slice(0, 100),
-    paletteId,
-  };
+  if (valid && input.source !== 'preset') {
+    const imageUrl = safeImageUrl(input.image_url);
+    const id = String(input.id || '');
+    if (/^[a-zA-Z0-9_-]{1,128}$/.test(id) && imageUrl) return { source: input.source, id, image_url: imageUrl, title: String(input.title || '').slice(0, 100), paletteId: preset.id, ...extras };
+  }
+  return { source: 'preset', id: preset.id, paletteId: preset.id, ...extras };
 }
 
 export function resolveChatTheme(selection) {
   const selected = normalizeChatTheme(selection);
-  const palette =
-    CHAT_STORY_THEMES.find((theme) => theme.id === selected.paletteId) ||
-    DEFAULT_CHAT_THEME;
-  return { ...palette, ...selected };
+  const palette = CHAT_STORY_THEMES.find((theme) => theme.id === selected.paletteId) || DEFAULT_CHAT_THEME;
+  const styleId = selected.styleId || (palette.group === 'dark' ? 'night' : 'classic');
+  const accent = selected.accentColor || palette.outgoing;
+  const outgoing = readableAccent(accent);
+  const dark = ['night', 'neon'].includes(styleId);
+  const bg = dark ? mixColor(accent, '#080c18', .93) : mixColor(accent, '#ffffff', .92);
+  const theme = { ...palette, ...selected, styleId, group: dark ? 'dark' : 'soft', background: bg, incoming: dark ? '#263043' : '#ffffff', text: dark ? '#f4f6ff' : '#202333', muted: dark ? '#bfc8de' : '#62687a', outgoing, outgoingEnd: readableAccent(mixColor(accent, '#37205f', .28)), accent: dark ? mixColor(accent, '#ffffff', .5) : outgoing, surface: dark ? '#101725' : '#ffffff', border: dark ? '#ffffff26' : '#00000016', radius: '18px', corner: '5px', bubbleBorder: 'none', bubbleShadow: 'none', outgoingText: '#ffffff' };
+  theme.pattern = palette.pattern;
+  if (styleId === 'classic') theme.pattern = `radial-gradient(ellipse at 110% -20%, ${accent}20 0 35%, transparent 35.5%), radial-gradient(ellipse at -10% 120%, ${accent}14 0 40%, transparent 40.5%)`;
+  if (styleId === 'soft') { theme.radius = '26px'; theme.corner = '22px'; theme.bubbleShadow = `0 5px 16px ${accent}20`; theme.pattern = `radial-gradient(ellipse at 15% 20%, ${accent}35, transparent 65%), radial-gradient(ellipse at 90% 90%, ${accent}22, transparent 60%)`; }
+  if (styleId === 'gradient') { theme.radius = '20px'; theme.pattern = `linear-gradient(145deg, ${mixColor(accent, '#ffffff', .84)}, ${mixColor(accent, '#bde9fa', .72)}, ${mixColor(accent, '#ffffff', .95)})`; }
+  if (styleId === 'night') { theme.radius = '16px'; theme.pattern = `radial-gradient(circle, ${accent}30 1px, transparent 1.5px)`; theme.backgroundSize = '28px 28px'; }
+  if (styleId === 'paper') { theme.radius = '5px'; theme.corner = '2px'; theme.background = '#faf6ed'; theme.incoming = '#fffdf7'; theme.text = '#302c26'; theme.muted = '#716a5f'; theme.bubbleBorder = '1px solid #40352422'; theme.bubbleShadow = '2px 3px 0 #40352412'; theme.pattern = 'repeating-linear-gradient(0deg, transparent 0 27px, #806d4520 27px 28px)'; }
+  if (styleId === 'outline') { theme.radius = '14px'; theme.background = mixColor(accent, '#ffffff', .97); theme.bubbleBorder = `1.5px solid ${outgoing}`; theme.outgoingText = outgoing; theme.outgoing = '#ffffff'; theme.outgoingEnd = '#ffffff'; theme.pattern = `radial-gradient(circle, ${accent}25 1px, transparent 1px)`; theme.backgroundSize = '18px 18px'; }
+  if (styleId === 'minimal') { theme.radius = '9px'; theme.corner = '9px'; theme.background = '#f7f8fa'; theme.incoming = '#e9ecf1'; theme.pattern = 'none'; }
+  if (styleId === 'neon') { theme.radius = '22px'; theme.corner = '8px'; theme.bubbleBorder = `1px solid ${theme.accent}88`; theme.bubbleShadow = `0 0 14px ${accent}44`; theme.pattern = `linear-gradient(${accent}12 1px, transparent 1px), linear-gradient(90deg, ${accent}12 1px, transparent 1px)`; theme.backgroundSize = '32px 32px'; }
+  if (selected.gradientColors) {
+    theme.pattern = `linear-gradient(${selected.gradientAngle}deg, ${selected.gradientColors.map((color) => mixColor(color, dark ? '#080c18' : '#ffffff', dark ? .82 : .8)).join(', ')})`;
+    if (styleId !== 'outline') { theme.outgoing = readableAccent(selected.gradientColors[0]); theme.outgoingEnd = readableAccent(selected.gradientColors.at(-1)); }
+    theme.backgroundSize = 'cover';
+  }
+  return theme;
 }
 
 export function chatThemeStyle(selection) {
   const theme = resolveChatTheme(selection);
-  const image = theme.image_url
-    ? `linear-gradient(#00000012, #00000012), url(${JSON.stringify(theme.image_url)})`
-    : theme.pattern;
+  const image = theme.image_url ? `linear-gradient(#00000012, #00000012), url(${JSON.stringify(theme.image_url)})` : theme.pattern;
   return {
-    "--cs-bg": theme.background,
-    "--cs-surface": theme.surface,
-    "--cs-soft": theme.incoming,
-    "--cs-text": theme.text,
-    "--cs-muted": theme.muted,
-    "--cs-border": theme.border,
-    "--cs-outgoing": theme.outgoing,
-    "--cs-outgoing-end": theme.outgoingEnd,
-    "--cs-accent": theme.accent,
-    "--chat-theme-background": theme.background,
-    "--chat-theme-incoming": theme.incoming,
-    "--chat-theme-text": theme.text,
-    "--chat-theme-outgoing": theme.outgoing,
-    "--chat-theme-outgoing-end": theme.outgoingEnd,
-    "--chat-theme-background-image": image,
-    backgroundColor: theme.background,
-    backgroundImage: image,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
+    '--cs-bg': theme.background, '--cs-surface': theme.surface, '--cs-soft': theme.incoming, '--cs-text': theme.text,
+    '--cs-muted': theme.muted, '--cs-border': theme.border, '--cs-outgoing': theme.outgoing, '--cs-outgoing-end': theme.outgoingEnd,
+    '--cs-outgoing-text': theme.outgoingText, '--cs-accent': theme.accent, '--cs-radius': theme.radius, '--cs-corner': theme.corner,
+    '--cs-bubble-border': theme.bubbleBorder, '--cs-bubble-shadow': theme.bubbleShadow,
+    '--chat-theme-background': theme.background, '--chat-theme-incoming': theme.incoming, '--chat-theme-text': theme.text,
+    '--chat-theme-outgoing': theme.outgoing, '--chat-theme-outgoing-end': theme.outgoingEnd, '--chat-theme-background-image': image,
+    backgroundColor: theme.background, backgroundImage: image, backgroundSize: theme.image_url ? 'cover' : theme.backgroundSize || 'cover', backgroundPosition: 'center', backgroundRepeat: theme.image_url ? 'no-repeat' : theme.backgroundSize ? 'repeat' : 'no-repeat',
   };
 }
 
