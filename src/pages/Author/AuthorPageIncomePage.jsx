@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { writeAuthorStoreResourceCache } from '../../utils/authorStoreResourceCache'
 
 registerTranslationNamespace('authorPageIncome', {
   "en": {
@@ -28,6 +29,8 @@ registerTranslationNamespace('authorPageIncome', {
     "approved": "Approved",
     "paid": "Paid",
     "rejected": "Rejected",
+    "retry": "Retry",
+    "unavailable": "Unable to load income. Try refreshing.",
     "cancelled": "Cancelled"
   },
   "km": {
@@ -54,6 +57,8 @@ registerTranslationNamespace('authorPageIncome', {
     "approved": "បានអនុម័ត",
     "paid": "បានបង់",
     "rejected": "បានបដិសេធ",
+    "retry": "សាកល្បងម្ដងទៀត",
+    "unavailable": "មិនអាចផ្ទុកចំណូលបានទេ។ សូមផ្ទុកឡើងវិញ។",
     "cancelled": "បានបោះបង់"
   },
   "zh": {
@@ -80,6 +85,8 @@ registerTranslationNamespace('authorPageIncome', {
     "approved": "已批准",
     "paid": "已支付",
     "rejected": "已拒绝",
+    "retry": "重试",
+    "unavailable": "无法加载收入，请重新刷新。",
     "cancelled": "已取消"
   },
   "ja": {
@@ -106,6 +113,8 @@ registerTranslationNamespace('authorPageIncome', {
     "approved": "承認済み",
     "paid": "支払済み",
     "rejected": "却下",
+    "retry": "再試行",
+    "unavailable": "収入を読み込めません。更新してください。",
     "cancelled": "キャンセル済み"
   },
   "ko": {
@@ -132,6 +141,8 @@ registerTranslationNamespace('authorPageIncome', {
     "approved": "승인됨",
     "paid": "지급됨",
     "rejected": "거절됨",
+    "retry": "다시 시도",
+    "unavailable": "수입을 불러올 수 없습니다. 새로고침하세요.",
     "cancelled": "취소됨"
   }
 })
@@ -177,72 +188,50 @@ function formatDate(value) {
   })
 }
 
+function getWithdrawalStoreAccountId() {
+  const read = (key) => {
+    try {
+      return JSON.parse(localStorage.getItem(key) || sessionStorage.getItem(key) || 'null') || {}
+    } catch {
+      return {}
+    }
+  }
+  const reader = read('shadow_reader_user')
+  const author = read('shadow_author_page')
+  const userId = String(reader.user_id || reader.id || author.user_id || '').trim()
+  const pageId = String(author.author_page_id || author.id || '').trim()
+  return userId ? `${userId}:${pageId}` : pageId ? `author-page:${pageId}` : ''
+}
+
+function validNonNegativeNumber(value) {
+  const amount = Number(value)
+  if (value === undefined || value === null || value === '' || !Number.isFinite(amount) || amount < 0) {
+    throw new Error(getDisplayText('authorPageIncome.loadFailed'))
+  }
+  return amount
+}
+
 function normalizeIncomePayload(data) {
-  const summary = data.summary || data.income || data.wallet || data.balance || {}
-  const withdrawals = Array.isArray(data.withdrawals)
-    ? data.withdrawals
-    : Array.isArray(data.requests)
-      ? data.requests
-      : Array.isArray(data.withdrawal_requests)
-        ? data.withdrawal_requests
-        : []
-
-  const availableBalance = Number(
-    summary.available_balance ??
-      summary.availableBalance ??
-      data.available_balance ??
-      data.availableBalance ??
-      0
-  )
-
-  const pendingBalance = Number(
-    summary.pending_balance ??
-      summary.pendingBalance ??
-      data.pending_balance ??
-      data.pendingBalance ??
-      0
-  )
-
-  const grossSales = Number(
-    summary.gross_sales ??
-      summary.grossSales ??
-      data.gross_sales ??
-      data.grossSales ??
-      0
-  )
-
-  const platformFee = Number(
-    summary.platform_fee ??
-      summary.platformFee ??
-      data.platform_fee ??
-      data.platformFee ??
-      0
-  )
-
-  const paidOut = Number(
-    summary.paid_out ??
-      summary.paidOut ??
-      data.paid_out ??
-      data.paidOut ??
-      0
-  )
-
-  const totalOrders = Number(
-    summary.total_orders ??
-      summary.totalOrders ??
-      data.total_orders ??
-      data.totalOrders ??
-      0
-  )
+  if (!data || typeof data !== 'object' || !data.summary || typeof data.summary !== 'object') {
+    throw new Error(getDisplayText('authorPageIncome.loadFailed'))
+  }
+  const summary = data.summary
+  const withdrawals = Array.isArray(data.withdrawals) ? data.withdrawals : []
 
   return {
-    availableBalance: Number.isFinite(availableBalance) ? availableBalance : 0,
-    pendingBalance: Number.isFinite(pendingBalance) ? pendingBalance : 0,
-    grossSales: Number.isFinite(grossSales) ? grossSales : 0,
-    platformFee: Number.isFinite(platformFee) ? platformFee : 0,
-    paidOut: Number.isFinite(paidOut) ? paidOut : 0,
-    totalOrders: Number.isFinite(totalOrders) ? totalOrders : 0,
-    withdrawals,
+    availableBalance: validNonNegativeNumber(summary.available_balance),
+    pendingBalance: validNonNegativeNumber(summary.pending_balance),
+    grossSales: validNonNegativeNumber(summary.gross_sales),
+    platformFee: validNonNegativeNumber(summary.platform_fee),
+    paidOut: validNonNegativeNumber(summary.paid_out),
+    totalOrders: Math.floor(validNonNegativeNumber(summary.total_orders)),
+    withdrawals: withdrawals
+      .filter((request) => request && !request.deleted_at)
+      .sort((a, b) => {
+        const first = Date.parse(a.created_at || a.requested_at || '') || 0
+        const second = Date.parse(b.created_at || b.requested_at || '') || 0
+        return second - first
+      }),
   }
 }
 
@@ -267,19 +256,29 @@ function StatCard({ label, value, icon, hint }) {
   )
 }
 
+function getWithdrawalStatusClass(status) {
+  const value = String(status || 'in_review').toLowerCase()
+  if (value === 'paid') return 'bg-[#ecfdf5] text-[#047857]'
+  if (value === 'approved') return 'bg-[#eff6ff] text-[#1d4ed8]'
+  if (value === 'rejected') return 'bg-[#fff1f2] text-[#be123c]'
+  if (value === 'cancelled') return 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]'
+  return 'bg-[#fff7ed] text-[#c2410c]'
+}
+
 function WithdrawalRow({ request }) {
-  const amount = Number(request.amount || request.requested_amount || request.net_amount || 0)
+  const amount = Number(request.amount_usd ?? request.amount ?? request.requested_amount ?? request.net_amount ?? 0)
   const status = String(request.status || request.state || 'in_review').toLowerCase()
   const requestedAt = request.created_at || request.requested_at || request.date
+  const statusKey = ['approved', 'paid', 'rejected', 'cancelled'].includes(status) ? status : 'inReview'
 
   return (
     <div className="flex items-center justify-between gap-4 border-b border-[var(--shadow-border)] py-4 last:border-b-0">
       <div className="min-w-0">
-        <div className="text-[14px] font-black text-[var(--shadow-text-primary)]">{formatMoney(amount)}</div>
+        <div className="text-[14px] font-bold text-[var(--shadow-text-primary)]">{formatMoney(amount)}</div>
         <div className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">{formatDate(requestedAt)}</div>
       </div>
-      <span className="shrink-0 rounded-full bg-[#fff7ed] px-3 py-1 text-[11px] font-black text-[#c2410c]">
-        {getDisplayText(`authorPageIncome.${['approved', 'paid', 'rejected', 'cancelled'].includes(status) ? status : 'inReview'}`)}
+      <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold ${getWithdrawalStatusClass(status)}`}>
+        {getDisplayText(`authorPageIncome.${statusKey}`)}
       </span>
     </div>
   )
@@ -290,6 +289,8 @@ export default function AuthorPageIncomePage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [message, setMessage] = useState('')
   const [income, setIncome] = useState({
     availableBalance: 0,
@@ -300,44 +301,76 @@ export default function AuthorPageIncomePage() {
     totalOrders: 0,
     withdrawals: [],
   })
+  const hasLoadedRef = useRef(false)
+  const requestIdRef = useRef(0)
+  const requestControllerRef = useRef(null)
+  const requestPendingRef = useRef(false)
 
   const recentWithdrawals = useMemo(() => income.withdrawals.slice(0, 5), [income.withdrawals])
+  const displayMoney = (value) => hasLoaded ? formatMoney(value) : loading ? '...' : '—'
+  const displayCount = (value) => hasLoaded ? value : loading ? '...' : '—'
 
-  async function loadIncome() {
+  const loadIncome = useCallback(async ({ manual = false } = {}) => {
+    if (manual && requestPendingRef.current) return
     const token = getAuthToken()
-
     if (!token) {
-      navigate('/login')
+      navigate('/login', { replace: true })
       return
     }
 
+    requestControllerRef.current?.abort()
+    const controller = new AbortController()
+    requestControllerRef.current = controller
+    const requestId = ++requestIdRef.current
+    requestPendingRef.current = true
+    if (hasLoadedRef.current) setRefreshing(true)
+    else setLoading(true)
+    setMessage('')
+
     try {
-      setLoading(true)
-      setMessage('')
-
       const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       })
-
       const data = await response.json().catch(() => ({}))
-
       if (!response.ok || data.ok === false) {
         throw new Error(data.message || getDisplayText('authorPageIncome.loadFailed'))
       }
-
-      setIncome(normalizeIncomePayload(data))
+      const result = normalizeIncomePayload(data)
+      if (controller.signal.aborted || requestId !== requestIdRef.current) return
+      setIncome(result)
+      hasLoadedRef.current = true
+      setHasLoaded(true)
+      const accountId = getWithdrawalStoreAccountId()
+      if (accountId) {
+        try {
+          writeAuthorStoreResourceCache({ accountId, resource: 'withdrawal', data: result.availableBalance })
+        } catch {
+        }
+      }
     } catch (error) {
-      setMessage(error.message || getDisplayText('authorPageIncome.loadFailed'))
+      if (!controller.signal.aborted && requestId === requestIdRef.current) {
+        setMessage(error?.message || getDisplayText('authorPageIncome.loadFailed'))
+      }
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) {
+        requestPendingRef.current = false
+        requestControllerRef.current = null
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
-  }
+  }, [navigate])
 
   useEffect(() => {
-    loadIncome()
-  }, [])
+    void loadIncome()
+    return () => {
+      requestIdRef.current += 1
+      requestControllerRef.current?.abort()
+      requestControllerRef.current = null
+      requestPendingRef.current = false
+    }
+  }, [loadIncome])
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-10">
@@ -358,11 +391,12 @@ export default function AuthorPageIncomePage() {
 
           <button
             type="button"
-            onClick={loadIncome}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95"
+            onClick={() => { void loadIncome({ manual: true }) }}
+            disabled={loading || refreshing}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95 disabled:opacity-50"
             aria-label={t('authorPageIncome.refresh')}
           >
-            <i className="fa-solid fa-rotate-right text-[13px]" />
+            <i className={`fa-solid fa-rotate-right text-[13px] ${refreshing ? 'fa-spin' : ''}`} />
           </button>
         </div>
       </header>
@@ -390,27 +424,27 @@ export default function AuthorPageIncomePage() {
           <div className="grid grid-cols-2 border-t border-white/10 sm:grid-cols-4">
             <div className="p-4">
               <div className="text-[11px] font-bold text-white/45">{t('authorPageIncome.available')}</div>
-              <div className="mt-1 text-[20px] font-black">{loading ? '...' : formatMoney(income.availableBalance)}</div>
+              <div className="mt-1 text-[20px] font-black">{displayMoney(income.availableBalance)}</div>
             </div>
             <div className="p-4">
               <div className="text-[11px] font-bold text-white/45">{t('authorPageIncome.pending')}</div>
-              <div className="mt-1 text-[20px] font-black">{loading ? '...' : formatMoney(income.pendingBalance)}</div>
+              <div className="mt-1 text-[20px] font-black">{displayMoney(income.pendingBalance)}</div>
             </div>
             <div className="p-4">
               <div className="text-[11px] font-bold text-white/45">{t('authorPageIncome.grossSales')}</div>
-              <div className="mt-1 text-[20px] font-black">{loading ? '...' : formatMoney(income.grossSales)}</div>
+              <div className="mt-1 text-[20px] font-black">{displayMoney(income.grossSales)}</div>
             </div>
             <div className="p-4">
               <div className="text-[11px] font-bold text-white/45">{t('authorPageIncome.orders')}</div>
-              <div className="mt-1 text-[20px] font-black">{loading ? '...' : income.totalOrders}</div>
+              <div className="mt-1 text-[20px] font-black">{displayCount(income.totalOrders)}</div>
             </div>
           </div>
         </section>
 
         <section className="grid gap-3 sm:grid-cols-3">
-          <StatCard label={t('authorPageIncome.platformFee')} value={loading ? '...' : formatMoney(income.platformFee)} icon="fa-percent" />
-          <StatCard label={t('authorPageIncome.paidOut')} value={loading ? '...' : formatMoney(income.paidOut)} icon="fa-circle-check" />
-          <StatCard label={t('authorPageIncome.pendingReview')} value={loading ? '...' : formatMoney(income.pendingBalance)} icon="fa-clock" />
+          <StatCard label={t('authorPageIncome.platformFee')} value={displayMoney(income.platformFee)} icon="fa-percent" />
+          <StatCard label={t('authorPageIncome.paidOut')} value={displayMoney(income.paidOut)} icon="fa-circle-check" />
+          <StatCard label={t('authorPageIncome.pendingReview')} value={displayMoney(income.pendingBalance)} icon="fa-clock" />
         </section>
 
         <Card>
@@ -425,7 +459,8 @@ export default function AuthorPageIncomePage() {
             <button
               type="button"
               onClick={() => navigate('/author/page/finance/withdrawal?back=income')}
-              className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-black text-white active:scale-95"
+              disabled={!hasLoaded || loading || refreshing}
+              className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white active:scale-95 disabled:opacity-50"
             >
               {t('authorPageIncome.withdraw')}
             </button>
@@ -444,7 +479,9 @@ export default function AuthorPageIncomePage() {
             </button>
           </div>
 
-          {recentWithdrawals.length > 0 ? (
+          {loading && !hasLoaded ? (
+            <div className="py-5 text-center text-[var(--shadow-text-tertiary)]">...</div>
+          ) : recentWithdrawals.length > 0 ? (
             <div className="mt-2">
               {recentWithdrawals.map((request, index) => (
                 <WithdrawalRow key={request.id || index} request={request} />
@@ -452,7 +489,12 @@ export default function AuthorPageIncomePage() {
             </div>
           ) : (
             <div className="rounded-[22px] bg-[var(--shadow-bg-soft)] px-4 py-6 text-center text-[13px] font-semibold text-[var(--shadow-text-tertiary)]">
-              {t('authorPageIncome.noHistory')}
+              {hasLoaded ? t('authorPageIncome.noHistory') : t('authorPageIncome.unavailable')}
+              {!hasLoaded && !loading ? (
+                <button type="button" onClick={() => { void loadIncome({ manual: true }) }} className="mt-3 block w-full text-center text-[12px] font-bold text-[var(--shadow-text-primary)]">
+                  {t('authorPageIncome.retry')}
+                </button>
+              ) : null}
             </div>
           )}
         </Card>
