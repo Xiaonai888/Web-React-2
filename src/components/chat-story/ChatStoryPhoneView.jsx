@@ -447,8 +447,8 @@ const PHONE_CSS = `
 .cs-phone-message-body { min-width: 0; max-width: 79%; }
 .cs-phone-right .cs-phone-message-body { max-width: 82%; }
 .cs-phone-name { font-size: 11px; font-weight: 600; margin: 0 3px 4px; line-height: 1.6; }
-.cs-phone-bubble { display: inline-block; background: var(--cs-soft); border-radius: 17px 17px 17px 5px; padding: 9px 13px; font-size: var(--cs-font-size, 15px); line-height: var(--cs-line-height, 1.8); white-space: pre-wrap; overflow-wrap: anywhere; }
-.cs-phone-right .cs-phone-bubble { background: linear-gradient(125deg, var(--cs-outgoing), var(--cs-outgoing-end)); color: white; border-radius: 17px 17px 5px 17px; }
+.cs-phone-bubble { display: inline-block; background: var(--cs-soft); border-radius: var(--cs-radius) var(--cs-radius) var(--cs-radius) var(--cs-corner); border: var(--cs-bubble-border); box-shadow: var(--cs-bubble-shadow); padding: 9px 13px; font-size: var(--cs-font-size, 15px); line-height: var(--cs-line-height, 1.8); white-space: pre-wrap; overflow-wrap: anywhere; }
+.cs-phone-right .cs-phone-bubble { background: linear-gradient(125deg, var(--cs-outgoing), var(--cs-outgoing-end)); color: var(--cs-outgoing-text, white); border-radius: var(--cs-radius) var(--cs-radius) var(--cs-corner) var(--cs-radius); }
 .cs-phone-media { overflow: hidden; border-radius: 15px; }
 .cs-phone-image { display: block; width: auto; max-width: 100%; max-height: 52dvh; object-fit: contain; border-radius: 15px; }
 .cs-phone-sticker { display: block; width: auto; max-width: 160px; max-height: 180px; object-fit: contain; }
@@ -738,9 +738,9 @@ export default function ChatStoryPhoneView({
         style={{
           backgroundColor: chatTheme.theme.background,
           backgroundImage: chatTheme.style.backgroundImage,
-          backgroundSize: 'cover',
+          backgroundSize: chatTheme.style.backgroundSize,
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
+          backgroundRepeat: chatTheme.style.backgroundRepeat,
         }}
         onWheel={(event) => {
           if (event.deltaY < -5) onPauseRef.current?.()
@@ -830,5 +830,6 @@ export default function ChatStoryPhoneView({
     document.body
   )
 }
+
 
 
