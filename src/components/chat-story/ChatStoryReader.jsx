@@ -1,5 +1,5 @@
 import ChatStoryVoice, { ChatVoiceSessionContext, getChatRecordingDelay, isChatVoiceMessage } from './ChatStoryVoice'
-import { useChatStoryTheme } from '../../services/chatStoryThemes'
+import { useChatStoryTheme, CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
 import ChatStoryPhoneView, {
   chatCharacterId,
   createChatTiming,
@@ -168,7 +168,7 @@ function isRightMessage(message, character, leadCharacterId) {
 
 function CharacterAvatar({ character }) {
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
+    <div className="cs-style-avatar flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
       {character?.avatar_url ? (
         <img
           src={character.avatar_url}
@@ -197,7 +197,7 @@ function CharacterName({ character, isRight, visible }) {
 
   return (
     <div
-      className={`mb-1 px-1 text-[11px] font-medium ${
+      className={`cs-style-name mb-1 px-1 text-[11px] font-medium ${
         isRight ? 'text-[var(--cs-accent)]' : 'text-[var(--shadow-text-secondary)]'
       }`}
     >
@@ -359,7 +359,8 @@ function ChatMessage({
       ) : (
         <div
           style={{ borderRadius: isRight ? 'var(--cs-radius) var(--cs-radius) var(--cs-corner) var(--cs-radius)' : 'var(--cs-radius) var(--cs-radius) var(--cs-radius) var(--cs-corner)', border: 'var(--cs-bubble-border)', boxShadow: 'var(--cs-bubble-shadow)', background: isRight ? 'linear-gradient(125deg, var(--cs-outgoing), var(--cs-outgoing-end))' : 'var(--cs-soft)', color: isRight ? 'var(--cs-outgoing-text)' : 'var(--cs-text)' }}
-          className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-[20px] px-4 py-3 text-left text-[15px] leading-7 ${
+          data-side={isRight ? 'right' : 'left'}
+          className={`cs-style-bubble inline-block max-w-full whitespace-pre-wrap break-words rounded-[20px] px-4 py-3 text-left text-[15px] leading-7 ${
             isRight
               ? 'rounded-br-[6px] bg-[var(--cs-outgoing)] text-white'
               : 'rounded-bl-[6px] bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
@@ -790,8 +791,10 @@ export default function ChatStoryReader({
 
   return (
     <ChatVoiceSessionContext.Provider value={voiceSession}>
+      <style>{CHAT_THEME_STYLE_CSS}</style>
       {!active ? (
         <section
+          data-chat-style={chatTheme.theme.styleId}
           style={{
             ...chatTheme.style,
             backgroundColor: 'transparent',
@@ -827,7 +830,8 @@ export default function ChatStoryReader({
                   ref={
                     index === visibleMessages.length - 1 ? lastMessageRef : null
                   }
-                  className="animate-[fadeIn_180ms_ease-out]"
+                  data-grouped={groupedBefore ? 'true' : 'false'}
+                  className="cs-style-row animate-[fadeIn_180ms_ease-out]"
                 >
                   <ChatStoryMessage
                     message={message}
