@@ -10,6 +10,11 @@ import { createUploadQueueManager } from '../../utils/uploadQueueManager'
 import { readMediaUploadFile, requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
+import {
+  fetchAuthorStoreResource,
+  readAuthorStoreResourceCache,
+  invalidateAuthorStoreResourceCache,
+} from '../../utils/authorStoreResourceCache'
 
 registerTranslationNamespace('authorStoreManager', {
   "en": {
@@ -5231,30 +5236,56 @@ export default function AuthorStoreManagerPage() {
   const orderAutoRefreshCountRef = useRef(0)
   const lastOrderReportLoadAtRef = useRef(0)
 
+    const storeAccountId = useMemo(() => {
+    const reader = readStoredJson('shadow_reader_user') || {}
+    const author = readStoredJson('shadow_author_page') || {}
+    const userId = String(reader.user_id || reader.id || author.user_id || '').trim()
+    const pageId = String(author.author_page_id || author.id || '').trim()
+    return userId ? `${userId}:${pageId}` : pageId ? `author-page:${pageId}` : ''
+  }, [])
+  const orderRequestIdRef = useRef(0)
+
   const loadPromotion = useCallback(async () => {
     try {
-      const nextPromotion = await fetchMyStorePromotion()
-      setPromotion(nextPromotion)
+      const result = storeAccountId
+        ? await fetchAuthorStoreResource({
+            accountId: storeAccountId,
+            resource: 'promotion',
+            fetcher: fetchMyStorePromotion,
+          })
+        : { data: await fetchMyStorePromotion() }
+      if (!result.obsolete) setPromotion(result.data || null)
     } catch {
-      setPromotion(null)
+      if (storeAccountId) {
+        const cached = readAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'promotion' })
+        if (cached.exists) setPromotion(cached.data)
+      }
     }
-  }, [])
+  }, [storeAccountId])
 
-  const loadOrderReport = useCallback(async ({ silent = false } = {}) => {
+  const loadOrderReport = useCallback(async ({ silent = false, force = false } = {}) => {
+    const requestId = ++orderRequestIdRef.current
+    const params = {
+      page: orderPage,
+      type: orderType,
+      prepareStatus: orderPrepareFilter,
+      q: orderSearchQuery,
+    }
     try {
       if (!silent) setOrderLoading(true)
-
-      const report = await fetchMyOrderReport({
-        page: orderPage,
-        limit: ORDER_REPORT_LIMIT,
-        type: orderType,
-        prepareStatus: orderPrepareFilter,
-        q: orderSearchQuery,
-      })
+      const result = storeAccountId
+        ? await fetchAuthorStoreResource({
+            accountId: storeAccountId,
+            resource: 'orders',
+            params,
+            fetcher: () => fetchMyOrderReport({ ...params, limit: ORDER_REPORT_LIMIT }),
+            force,
+          })
+        : { data: await fetchMyOrderReport({ ...params, limit: ORDER_REPORT_LIMIT }) }
+      if (requestId !== orderRequestIdRef.current || result.obsolete || !result.data) return
+      const report = result.data
       const summary = report.summary || {}
-
       lastOrderReportLoadAtRef.current = Date.now()
-
       setOrderSummary({
         orders_count: Number(summary.orders_count || summary.total_orders || 0),
         revenue: Number(summary.revenue || summary.author_income || 0),
@@ -5262,7 +5293,6 @@ export default function AuthorStoreManagerPage() {
         platform_fee: Number(summary.platform_fee || 0),
         author_income: Number(summary.author_income || summary.revenue || 0),
       })
-
       setOrders(report.orders || [])
       setOrderPagination(report.pagination || {
         page: orderPage,
@@ -5270,23 +5300,41 @@ export default function AuthorStoreManagerPage() {
         total: 0,
         total_pages: 1,
       })
-      await loadPromotion()
     } catch {
-      setOrders([])
+      if (requestId === orderRequestIdRef.current && storeAccountId) {
+        const cached = readAuthorStoreResourceCache({
+          accountId: storeAccountId,
+          resource: 'orders',
+          params,
+        })
+        if (cached.exists && cached.data) {
+          const report = cached.data
+          const summary = report.summary || {}
+          setOrderSummary({
+            orders_count: Number(summary.orders_count || summary.total_orders || 0),
+            revenue: Number(summary.revenue || summary.author_income || 0),
+            gross_revenue: Number(summary.gross_revenue || 0),
+            platform_fee: Number(summary.platform_fee || 0),
+            author_income: Number(summary.author_income || summary.revenue || 0),
+          })
+          setOrders(report.orders || [])
+          setOrderPagination(report.pagination || { page: orderPage, limit: ORDER_REPORT_LIMIT, total: 0, total_pages: 1 })
+        }
+      }
     } finally {
-      setOrderLoading(false)
+      if (requestId === orderRequestIdRef.current) setOrderLoading(false)
     }
-  }, [orderPage, orderType, orderPrepareFilter, orderSearchQuery, loadPromotion])
+  }, [storeAccountId, orderPage, orderType, orderPrepareFilter, orderSearchQuery])
 
   useEffect(() => {
     setOrderPage(1)
   }, [orderType, orderPrepareFilter, orderSearchQuery])
 
   const filteredProducts = useMemo(() => {
-  if (activeType === 'All' || activeType === 'Active' || activeType === 'Draft') return products
-  return products.filter((product) => product.type === activeType)
-}, [activeType, products])
-  
+    if (activeType === 'All' || activeType === 'Active' || activeType === 'Draft') return products
+    return products.filter((product) => product.type === activeType)
+  }, [activeType, products])
+
   useEffect(() => {
     let ignore = false
 
@@ -5294,94 +5342,36 @@ export default function AuthorStoreManagerPage() {
       try {
         setLoading(true)
         setLocalError('')
-
         const nextProducts = await fetchMyProducts()
-
         if (!ignore) {
           setProducts(nextProducts)
           const productCategories = nextProducts.map((item) => item.category).filter(Boolean)
           setCategories((current) => Array.from(new Set([...current, ...productCategories])))
         }
       } catch (error) {
-        if (!ignore) {
-          setLocalError(error.message || storeText('loadProductsUiFailed'))
-        }
+        if (!ignore) setLocalError(error.message || storeText('loadProductsUiFailed'))
       } finally {
         if (!ignore) setLoading(false)
       }
     }
 
     loadProducts()
-
-    return () => {
-      ignore = true
-    }
+    return () => { ignore = true }
   }, [])
 
   useEffect(() => {
-    loadPromotion()
-  }, [loadPromotion])
+    if (activeTab === 'Records') void loadPromotion()
+  }, [activeTab, loadPromotion])
 
   useEffect(() => {
-    const refreshPromotion = () => {
-      if (document.visibilityState === 'visible') loadPromotion()
+    if (activeTab === 'Orders') {
+      void loadOrderReport({ silent: false })
+    } else if (!lastOrderReportLoadAtRef.current) {
+      void loadOrderReport({ silent: true })
     }
-
-    window.addEventListener('focus', refreshPromotion)
-    document.addEventListener('visibilitychange', refreshPromotion)
-
-    return () => {
-      window.removeEventListener('focus', refreshPromotion)
-      document.removeEventListener('visibilitychange', refreshPromotion)
-    }
-  }, [loadPromotion])
-  
-  useEffect(() => {
-    let timer = null
-
-    if (activeTab !== 'Orders') {
-      if (!lastOrderReportLoadAtRef.current) {
-        loadOrderReport({ silent: true })
-      }
-
-      return () => {
-        if (timer) window.clearInterval(timer)
-      }
-    }
-
-    orderAutoRefreshCountRef.current = 0
-    loadOrderReport({ silent: false })
-
-    timer = window.setInterval(() => {
-      if (document.visibilityState !== 'visible') return
-
-      if (orderAutoRefreshCountRef.current >= ORDER_MAX_AUTO_REFRESHES) {
-        window.clearInterval(timer)
-        return
-      }
-
-      orderAutoRefreshCountRef.current += 1
-      loadOrderReport({ silent: true })
-    }, ORDER_REFRESH_INTERVAL_MS)
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return
-
-      const lastLoadedAt = lastOrderReportLoadAtRef.current
-      const isStale = !lastLoadedAt || Date.now() - lastLoadedAt >= ORDER_REFRESH_INTERVAL_MS
-
-      if (isStale) {
-        loadOrderReport({ silent: true })
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      if (timer) window.clearInterval(timer)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
+    return () => { orderRequestIdRef.current += 1 }
   }, [activeTab, loadOrderReport])
+
   useEffect(() => {
     let ignore = false
 
@@ -5657,7 +5647,10 @@ const saveCategoryOrder = async () => {
         )
       }
 
-      await loadOrderReport({ silent: true })
+      if (storeAccountId) {
+  invalidateAuthorStoreResourceCache({ accountId: storeAccountId, resource: 'orders' })
+}
+await loadOrderReport({ silent: true, force: true })
     } catch {
     } finally {
       setOrderActionLoadingId('')
