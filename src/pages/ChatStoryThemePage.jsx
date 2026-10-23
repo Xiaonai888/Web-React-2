@@ -610,7 +610,7 @@ const PAGE_CSS = `
 .ct-preview-heading { display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:9px; }
 .ct-preview-heading .ct-label { margin:0;flex:none; }
 .ct-selected-name { color:var(--shadow-text-primary);font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right; }
-.ct-apply-text { border:0;background:transparent;color:var(--shadow-text-primary);font-size:14px;font-weight:700;padding:10px 0 10px 12px;cursor:pointer; }
+.ct-apply-text { border:0;background:#111827;color:#fff;font-size:14px;font-weight:700;padding:9px 18px;border-radius:10px;cursor:pointer; }
 .ct-apply-text:disabled { opacity:.4; }
 .ct-style-heading { font-size:14px;font-weight:700;color:var(--shadow-text-primary);margin:4px 0 14px; }
 .ct-footer { padding-top:10px; }
@@ -958,7 +958,7 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
     >
       <style>{PAGE_CSS}</style>
       <PageHeader
-        title={t("chatStoryThemes.title")}
+        title={<span style={{ fontWeight: 700 }}>{t("chatStoryThemes.title")}</span>}
         onBack={handleBack}
         backLabel={t("chatStoryThemes.back")}
         right={<button type="button" className="ct-apply-text" onClick={apply} disabled={uploading || deleting}>{t('chatStoryThemes.applyShort')}</button>}
