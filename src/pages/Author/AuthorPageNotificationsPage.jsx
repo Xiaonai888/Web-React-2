@@ -1280,22 +1280,23 @@ export default function AuthorPageNotificationsPage() {
       if (append) {
         const seen = new Set((existing?.notifications || []).map((item) => item.id))
         rows = [...(existing?.notifications || []), ...data.notifications.filter((item) => !seen.has(item.id))]
-      } else if (silent && existing && existing.notifications.length > PAGE_SIZE) {
+      } else if (silent && existing && existing.notifications.length > PAGE_SIZE && filter !== 'unread') {
         const seen = new Set(data.notifications.map((item) => item.id))
         rows = [...data.notifications, ...existing.notifications.filter((item) => !seen.has(item.id))]
       } else {
         rows = data.notifications
       }
 
+      const preserveCursor = silent && existing?.notifications.length > PAGE_SIZE &&
+  data.notifications.length === PAGE_SIZE &&
+  data.notifications.every((item, i) => item.id === existing.notifications[i]?.id)
+rows.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || String(b.id).localeCompare(String(a.id)))
+
       const revised = {
         notifications: rows,
         preferences: data.preferences || existing?.preferences || {},
-        hasMore: silent && existing?.notifications.length > PAGE_SIZE
-          ? existing.hasMore
-          : data.hasMore,
-        nextCursor: silent && existing?.notifications.length > PAGE_SIZE
-          ? existing.nextCursor
-          : data.nextCursor,
+        hasMore: preserveCursor ? existing.hasMore : data.hasMore,
+nextCursor: preserveCursor ? existing.nextCursor : data.nextCursor,
         fetchedAt: Date.now(),
         revision: mountRevisionRef.current,
       }
