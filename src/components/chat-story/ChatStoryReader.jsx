@@ -10,6 +10,8 @@ import {
   useDisplayTranslation,
 } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import ChatStoryTapIndicator from './ChatStoryTapIndicator'
+import { useChatTapIndicator } from '../../services/chatStoryTapIndicator'
 
 registerTranslationNamespace('chatStoryReader', {
   en: {
@@ -476,6 +478,7 @@ export default function ChatStoryReader({
 }) {
   const { t } = useDisplayTranslation()
   const chatTheme = useChatStoryTheme()
+  const { settings: tapIndicatorSettings } = useChatTapIndicator()
   const parsedContent = useMemo(() => parseChatStoryContent(content), [content])
   const initialCount = parsedContent.messages.length && !isChatVoiceMessage(parsedContent.messages[0]) ? 1 : 0
   const [reading, setReading] = useState(() => ({
@@ -874,15 +877,11 @@ export default function ChatStoryReader({
                 <span className="pointer-events-none text-[14px] font-medium">
                   {t('chatStoryReader.tapToContinue')}
                 </span>
-                <img
-                  src="/assets/Icons/Hand.svg"
-                  alt={t('chatStoryReader.tapToContinue')}
-                  className="pointer-events-none mt-3 h-[108px] w-[108px] motion-safe:animate-bounce object-contain opacity-95"
-                  style={{
-                    filter:
-                      'brightness(0) saturate(100%) invert(76%) sepia(18%) saturate(1047%) hue-rotate(214deg) brightness(102%) contrast(101%)',
-                  }}
-                />
+                <ChatStoryTapIndicator
+  settings={tapIndicatorSettings}
+  size={108}
+  className="mt-3 opacity-95"
+/>
               </div>
             ) : null}
           </div>
