@@ -12,6 +12,8 @@ import { useDisplayTranslation } from "../utils/displayLanguage";
 import { registerTranslationNamespace } from "../i18n/registerTranslations";
 import {
   CHAT_STORY_THEMES,
+  CHAT_THEME_STYLES,
+  CHAT_THEME_ACCENTS,
   CHAT_THEME_PHOTO_LIMIT,
   DEFAULT_CHAT_THEME,
   chatThemeToken,
@@ -27,6 +29,19 @@ import {
 
 registerTranslationNamespace("chatStoryThemes", {
   en: {
+    applyShort: "Apply",
+    chooseStyle: "Choose a style",
+    accentColor: "Accent color",
+    customColor: "Custom color",
+    solidColor: "Solid",
+    gradientColor: "Gradient",
+    doneColor: "Done",
+    addColor: "Add color",
+    removeColor: "Remove color",
+    direction: "Direction",
+    chooseColors: "Choose colors",
+    styles: {"classic": "Classic", "soft": "Soft", "gradient": "Gradient", "night": "Night", "paper": "Paper", "outline": "Outline", "minimal": "Minimal", "neon": "Neon"},
+
     title: "Chat Theme",
     back: "Back",
     preview: "Live preview",
@@ -101,6 +116,19 @@ registerTranslationNamespace("chatStoryThemes", {
     },
   },
   km: {
+    applyShort: "អនុវត្ត",
+    chooseStyle: "ជ្រើសរចនាប័ទ្ម",
+    accentColor: "ពណ៌ចម្បង",
+    customColor: "ពណ៌ផ្ទាល់ខ្លួន",
+    solidColor: "ពណ៌តែមួយ",
+    gradientColor: "ពណ៌ចម្រុះ",
+    doneColor: "រួចរាល់",
+    addColor: "បន្ថែមពណ៌",
+    removeColor: "ដកពណ៌",
+    direction: "ទិសពណ៌",
+    chooseColors: "ជ្រើសពណ៌",
+    styles: {"classic": "បុរាណ", "soft": "ទន់ភ្លន់", "gradient": "ពណ៌ចម្រុះ", "night": "រាត្រី", "paper": "ក្រដាស", "outline": "ស៊ុម", "minimal": "សាមញ្ញ", "neon": "នីអុង"},
+
     title: "Theme ឆាត",
     back: "ត្រឡប់ក្រោយ",
     preview: "មើលគំរូ",
@@ -174,6 +202,19 @@ registerTranslationNamespace("chatStoryThemes", {
     },
   },
   zh: {
+    applyShort: "应用",
+    chooseStyle: "选择样式",
+    accentColor: "主题颜色",
+    customColor: "自定义颜色",
+    solidColor: "纯色",
+    gradientColor: "渐变",
+    doneColor: "完成",
+    addColor: "添加颜色",
+    removeColor: "移除颜色",
+    direction: "方向",
+    chooseColors: "选择颜色",
+    styles: {"classic": "经典", "soft": "柔和", "gradient": "渐变", "night": "夜间", "paper": "纸张", "outline": "描边", "minimal": "极简", "neon": "霓虹"},
+
     title: "聊天主题",
     back: "返回",
     preview: "实时预览",
@@ -247,6 +288,19 @@ registerTranslationNamespace("chatStoryThemes", {
     },
   },
   ja: {
+    applyShort: "適用",
+    chooseStyle: "スタイルを選択",
+    accentColor: "アクセントカラー",
+    customColor: "カスタムカラー",
+    solidColor: "単色",
+    gradientColor: "グラデーション",
+    doneColor: "完了",
+    addColor: "色を追加",
+    removeColor: "色を削除",
+    direction: "方向",
+    chooseColors: "色を選択",
+    styles: {"classic": "クラシック", "soft": "ソフト", "gradient": "グラデーション", "night": "ナイト", "paper": "ペーパー", "outline": "アウトライン", "minimal": "ミニマル", "neon": "ネオン"},
+
     title: "チャットテーマ",
     back: "戻る",
     preview: "プレビュー",
@@ -320,6 +374,19 @@ registerTranslationNamespace("chatStoryThemes", {
     },
   },
   ko: {
+    applyShort: "적용",
+    chooseStyle: "스타일 선택",
+    accentColor: "강조 색상",
+    customColor: "사용자 색상",
+    solidColor: "단색",
+    gradientColor: "그라데이션",
+    doneColor: "완료",
+    addColor: "색상 추가",
+    removeColor: "색상 제거",
+    direction: "방향",
+    chooseColors: "색상 선택",
+    styles: {"classic": "클래식", "soft": "소프트", "gradient": "그라데이션", "night": "나이트", "paper": "종이", "outline": "윤곽선", "minimal": "미니멀", "neon": "네온"},
+
     title: "채팅 테마",
     back: "뒤로",
     preview: "미리보기",
@@ -452,7 +519,7 @@ function Preview({ selection, compact = false, t }) {
         ) : null}
         <div
           className="ct-preview-in"
-          style={{ backgroundColor: theme.incoming, color: theme.text }}
+          style={{ backgroundColor: theme.incoming, color: theme.text, borderRadius: 'var(--cs-radius) var(--cs-radius) var(--cs-radius) var(--cs-corner)', border: 'var(--cs-bubble-border)', boxShadow: 'var(--cs-bubble-shadow)' }}
         >
           {t("chatStoryThemes.previewIncoming")}
         </div>
@@ -460,7 +527,10 @@ function Preview({ selection, compact = false, t }) {
           className="ct-preview-out"
           style={{
             background: `linear-gradient(120deg, ${theme.outgoing}, ${theme.outgoingEnd})`,
-            color: "#ffffff",
+            color: "var(--cs-outgoing-text)",
+            borderRadius: "var(--cs-radius) var(--cs-radius) var(--cs-corner) var(--cs-radius)",
+            border: "var(--cs-bubble-border)",
+            boxShadow: "var(--cs-bubble-shadow)",
           }}
         >
           {t("chatStoryThemes.previewOutgoing")}
@@ -472,17 +542,15 @@ function Preview({ selection, compact = false, t }) {
 
 function themeName(selection, index, t) {
   const theme = resolveChatTheme(selection);
+  if (theme.source === 'preset' && theme.gradientColors) return t('chatStoryThemes.gradientColor');
+  if (theme.source === 'preset' && theme.accentColor && !CHAT_THEME_ACCENTS.some((accent) => accent.color.toLowerCase() === theme.accentColor.toLowerCase())) return theme.accentColor.toUpperCase();
   return theme.source === "preset"
     ? t(theme.nameKey)
     : theme.title || t("chatStoryThemes.background", { number: index + 1 });
 }
 
 function sameTheme(first, second) {
-  return (
-    first.source === second.source &&
-    first.id === second.id &&
-    first.paletteId === second.paletteId
-  );
+  return JSON.stringify(first) === JSON.stringify(second);
 }
 
 const PAGE_CSS = `
@@ -538,6 +606,34 @@ const PAGE_CSS = `
 .ct-progress span { display: block; height: 100%; background: var(--shadow-text-primary); transition: width .15s; }
 .ct-progress-info { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--shadow-text-secondary); font-size: 12px; }
 .chat-theme-page button:focus-visible { outline: 2px solid var(--shadow-text-primary); outline-offset: 3px; }
+
+.ct-preview-heading { display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:9px; }
+.ct-preview-heading .ct-label { margin:0;flex:none; }
+.ct-selected-name { color:var(--shadow-text-primary);font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right; }
+.ct-apply-text { border:0;background:transparent;color:var(--shadow-text-primary);font-size:14px;font-weight:700;padding:10px 0 10px 12px;cursor:pointer; }
+.ct-apply-text:disabled { opacity:.4; }
+.ct-style-heading { font-size:14px;font-weight:700;color:var(--shadow-text-primary);margin:4px 0 14px; }
+.ct-footer { padding-top:10px; }
+.ct-color-label { max-width:900px;margin:auto;padding:0 16px;color:var(--shadow-text-secondary);font-size:12px; }
+.ct-color-dock { max-width:900px;margin:auto;display:flex;align-items:center;gap:12px;padding:8px 16px 12px; }
+.ct-color-scroll { display:flex;align-items:center;gap:11px;overflow-x:auto;min-width:0;flex:1;padding:4px 2px;scrollbar-width:none;overscroll-behavior-x:contain; }
+.ct-color-scroll::-webkit-scrollbar { display:none; }
+.ct-color-swatch { flex:none;width:34px;height:34px;border:2px solid transparent;padding:3px;border-radius:50%;background:transparent; }
+.ct-color-swatch[aria-pressed="true"] { border-color:var(--shadow-text-primary); }
+.ct-color-swatch span { display:block;width:100%;height:100%;border-radius:50%; }
+.ct-gradient-picker { flex:none;width:46px;height:42px;padding:4px 0 4px 12px;border:0;border-left:1px solid var(--shadow-border);background:transparent; }
+.ct-gradient-picker span { display:block;width:32px;height:32px;border-radius:50%;background:conic-gradient(#ff4b70,#ffd438,#42df85,#27bcec,#8f5bff,#ff4b70); }
+.ct-color-modes { display:flex;gap:10px;margin:22px 0 18px; }
+.ct-gradient-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px; }
+.ct-gradient-grid button { height:76px;border-radius:14px;border:2px solid transparent; }
+.ct-gradient-grid button[aria-pressed="true"] { outline:2px solid var(--shadow-text-primary);outline-offset:3px; }
+.ct-custom-colors { display:grid;gap:12px;margin:18px 0; }
+.ct-color-control { display:flex;align-items:center;gap:12px;font-size:12px;color:var(--shadow-text-primary); }
+.ct-color-control span:first-child { flex:1; }
+.ct-color-control input { width:48px;height:40px;padding:2px;border:1px solid var(--shadow-border);border-radius:8px;background:var(--shadow-bg-surface); }
+.ct-angle { display:flex;flex-direction:column;gap:14px;margin:24px 0;color:var(--shadow-text-primary);font-size:13px; }
+.ct-angle input { width:100%;accent-color:var(--shadow-text-primary); }
+
 @media (min-width: 640px) { .ct-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 16px; } .ct-preview { min-height: 180px; } .ct-preview-small { min-height: 0; } }
 @media (min-width: 960px) { .ct-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 350px) { .ct-inner { padding-left: 11px; padding-right: 11px; } .ct-tab { gap: 4px; font-size: 11px; } .ct-preview-small .ct-preview-in, .ct-preview-small .ct-preview-out { font-size: 8px; } }
@@ -572,7 +668,10 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
   const accountRef = useRef(saved.account);
   const [selection, setSelection] = useState(saved.selection);
   const [tab, setTab] = useState("colors");
-  const [filter, setFilter] = useState("all");
+  const [colorPageOpen, setColorPageOpen] = useState(false);
+  const [colorMode, setColorMode] = useState('solid');
+  const [customColors, setCustomColors] = useState(['#8b5cf6', '#287de0']);
+  const [customAngle, setCustomAngle] = useState(135);
   const [backgrounds, setBackgrounds] = useState({
     items: [],
     cursor: "",
@@ -599,14 +698,14 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
   const dirty = !sameTheme(selection, saved.selection);
   const errorText = (code) =>
     t(`chatStoryThemes.${ERROR_KEYS.has(code) ? code : "requestFailed"}`);
-  const visibleColors = useMemo(
-    () =>
-      CHAT_STORY_THEMES.filter(
-        (theme) => filter === "all" || theme.group === filter,
-      ),
-    [filter],
-  );
-
+  const visibleColors = CHAT_THEME_STYLES.map((style) => ({ ...selection, source: 'preset', id: selectedTheme.paletteId, paletteId: selectedTheme.paletteId, styleId: style.id, styleOption: true }));
+  const colorDraft = { ...selection, source: 'preset', id: selectedTheme.paletteId, paletteId: selectedTheme.paletteId, accentColor: customColors[0], gradientColors: colorMode === 'gradient' ? customColors : undefined, gradientAngle: customAngle };
+  const openColorPage = () => {
+    setCustomColors(selection.gradientColors || [selection.accentColor || selectedTheme.outgoing, '#287de0']);
+    setCustomAngle(selection.gradientAngle ?? 135);
+    setColorMode(selection.gradientColors ? 'gradient' : 'solid');
+    setColorPageOpen(true);
+  };
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -624,6 +723,7 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
     setBackgrounds({ items: [], cursor: "", loaded: false });
     setPhotos({ items: [], loaded: false });
     setSelection(saved.selection);
+    setColorPageOpen(false);
     setUploading(false);
     setDeleting(false);
     setPendingDelete(null);
@@ -679,13 +779,11 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
   };
 
   const choose = (next) => {
-    setSelection(
-      next.source === "preset"
-        ? { source: "preset", id: next.id, paletteId: next.id }
-        : { ...next, paletteId: selectedTheme.paletteId },
-    );
+    setSelection((current) => next.styleOption
+      ? { ...current, source: 'preset', id: selectedTheme.paletteId, paletteId: selectedTheme.paletteId, image_url: undefined, title: undefined, styleId: next.styleId }
+      : { ...current, ...next, styleId: current.styleId || selectedTheme.styleId, paletteId: selectedTheme.paletteId });
     setApplied(false);
-    setMutationError("");
+    setMutationError('');
   };
 
   const apply = () => {
@@ -827,6 +925,26 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
     }
   };
 
+  if (colorPageOpen) return (
+    <PageShell className={`chat-theme-page ${onBack ? 'chat-theme-overlay' : ''}`}>
+      <style>{PAGE_CSS}</style>
+      <PageHeader title={t('chatStoryThemes.chooseColors')} onBack={() => setColorPageOpen(false)} backLabel={t('chatStoryThemes.back')}
+        right={<button type="button" className="ct-apply-text" onClick={() => { setSelection(colorDraft); setApplied(false); setColorPageOpen(false); }}>{t('chatStoryThemes.doneColor')}</button>} />
+      <main className="ct-main"><div className="ct-inner">
+        <Preview selection={colorDraft} t={t} />
+        <div className="ct-color-modes">{['solid', 'gradient'].map((mode) => <FilterChip key={mode} selected={colorMode === mode} onClick={() => setColorMode(mode)} aria-pressed={colorMode === mode}>{t(mode === 'solid' ? 'chatStoryThemes.solidColor' : 'chatStoryThemes.gradientColor')}</FilterChip>)}</div>
+        {colorMode === 'gradient' ? <div className="ct-gradient-grid">{[
+          ['#8b5cf6', '#38bdf8'], ['#ec4899', '#fb923c'], ['#14b8a6', '#3b82f6'], ['#f97316', '#facc15', '#ec4899'], ['#6366f1', '#a855f7', '#ec4899'], ['#065f46', '#34d399']
+        ].map((colors) => <button type="button" key={colors.join('')} style={{ background: `linear-gradient(135deg, ${colors.join(',')})` }} aria-label={colors.join(' → ')} aria-pressed={JSON.stringify(customColors) === JSON.stringify(colors)} onClick={() => setCustomColors(colors)} />)}</div> : null}
+        <div className="ct-custom-colors">{(colorMode === 'solid' ? customColors.slice(0, 1) : customColors).map((color, index) => <label key={index} className="ct-color-control"><span>{t('chatStoryThemes.customColor')} {index + 1}</span><input type="color" value={color} onChange={(event) => setCustomColors((current) => current.map((value, i) => i === index ? event.target.value : value))} /><span>{color.toUpperCase()}</span></label>)}</div>
+        {colorMode === 'gradient' ? <>
+          <button type="button" className="ct-secondary" onClick={() => setCustomColors((current) => current.length === 2 ? [...current, '#ec4899'] : current.slice(0, 2))}>{t(customColors.length === 2 ? 'chatStoryThemes.addColor' : 'chatStoryThemes.removeColor')}</button>
+          <label className="ct-angle"><span>{t('chatStoryThemes.direction')} · {customAngle}°</span><input type="range" min="0" max="360" step="15" value={customAngle} onChange={(event) => setCustomAngle(Number(event.target.value))} /></label>
+        </> : null}
+      </div></main>
+    </PageShell>
+  );
+
   const tabKeys = ["colors", "shadow", "photos"];
   const items =
     tab === "colors"
@@ -843,11 +961,12 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
         title={t("chatStoryThemes.title")}
         onBack={handleBack}
         backLabel={t("chatStoryThemes.back")}
+        right={<button type="button" className="ct-apply-text" onClick={apply} disabled={uploading || deleting}>{t('chatStoryThemes.applyShort')}</button>}
       />
       <main className="ct-main" onScroll={autoLoadOnScroll}>
         <div className="ct-inner">
           <section aria-label={t("chatStoryThemes.preview")}>
-            <span className="ct-label">{t("chatStoryThemes.preview")}</span>
+            <div className="ct-preview-heading"><span className="ct-label">{t("chatStoryThemes.preview")}</span><span className="ct-selected-name" aria-live="polite">{themeTitle}</span></div>
             <Preview selection={selection} t={t} />
           </section>
           <div
@@ -911,47 +1030,7 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
             aria-labelledby={`ct-tab-${tab}`}
             aria-busy={loading || uploading || deleting}
           >
-            {tab === "colors" ? (
-              <div className="ct-filters">
-                {["all", "soft", "gradient", "dark"].map((key) => (
-                  <FilterChip
-                    key={key}
-                    selected={filter === key}
-                    onClick={() => setFilter(key)}
-                    aria-pressed={filter === key}
-                  >
-                    {t(`chatStoryThemes.${key}`)}
-                  </FilterChip>
-                ))}
-              </div>
-            ) : null}
-            {selection.source !== "preset" ? (
-              <section aria-label={t("chatStoryThemes.choosePalette")}>
-                <span className="ct-label">
-                  {t("chatStoryThemes.choosePalette")}
-                </span>
-                <div className="ct-palette-row">
-                  {CHAT_STORY_THEMES.map((theme) => (
-                    <button
-                      key={theme.id}
-                      type="button"
-                      className="ct-palette-option"
-                      aria-label={t(theme.nameKey)}
-                      aria-pressed={selection.paletteId === theme.id}
-                      onClick={() => {
-                        setSelection((current) => ({
-                          ...current,
-                          paletteId: theme.id,
-                        }));
-                        setApplied(false);
-                      }}
-                    >
-                      <span style={{ backgroundColor: theme.outgoing }} />
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ) : null}
+            {tab === 'colors' ? <h2 className="ct-style-heading">{t('chatStoryThemes.chooseStyle')}</h2> : null}
             {tab === "photos" ? (
               <>
                 <div className="ct-upload-bar">
@@ -1080,13 +1159,12 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
             {!loading && items.length ? (
               <div className="ct-grid">
                 {items.map((item, index) => {
-                  const name = themeName(item, index, t);
+                  const name = tab === 'colors' ? t(`chatStoryThemes.styles.${item.styleId}`) : themeName(item, index, t);
                   const selected =
-                    item.source === selection.source &&
-                    item.id === selection.id;
+                    tab === 'colors' ? selection.source === 'preset' && item.styleId === selectedTheme.styleId : item.source === selection.source && item.id === selection.id;
                   return (
                     <article
-                      key={`${item.source}-${item.id}`}
+                      key={tab === "colors" ? item.styleId : `${item.source}-${item.id}`}
                       className="ct-card"
                     >
                       <button
@@ -1167,25 +1245,23 @@ export default function ChatStoryThemePage({ onBack, onApply } = {}) {
           ) : null}
         </div>
       </main>
-      <div className="ct-footer">
-        <div className="ct-footer-inner">
-          <span className="ct-footer-name" aria-live="polite">
-            {themeTitle}
-          </span>
-          <button
-            type="button"
-            className="ct-primary"
-            disabled={uploading || deleting || (!dirty && applied)}
-            onClick={apply}
-          >
-            {t(
-              applied && !dirty
-                ? "chatStoryThemes.applied"
-                : "chatStoryThemes.apply",
-            )}
-          </button>
-        </div>
-      </div>
+      {tab === 'colors' ? (
+        <footer className="ct-footer">
+          <div className="ct-color-label">{t('chatStoryThemes.accentColor')}</div>
+          <div className="ct-color-dock">
+            <div className="ct-color-scroll" role="group" aria-label={t('chatStoryThemes.accentColor')}>
+              {CHAT_THEME_ACCENTS.map((accent) => (
+                <button type="button" key={accent.id} className="ct-color-swatch" aria-label={t(accent.nameKey)}
+                  aria-pressed={!selection.gradientColors && (selection.accentColor || selectedTheme.outgoing).toLowerCase() === accent.color.toLowerCase()}
+                  onClick={() => { setSelection((current) => ({ ...current, source: 'preset', id: accent.id, paletteId: accent.id, image_url: undefined, title: undefined, styleId: selectedTheme.styleId, accentColor: accent.color, gradientColors: undefined, gradientAngle: undefined })); setApplied(false); }}>
+                  <span style={{ background: accent.color }} />
+                </button>
+              ))}
+            </div>
+            <button type="button" className="ct-gradient-picker" aria-label={t('chatStoryThemes.customColor')} onClick={openColorPage}><span /></button>
+          </div>
+        </footer>
+      ) : null}
     </PageShell>
   );
 }
