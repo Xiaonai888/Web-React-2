@@ -2205,7 +2205,8 @@ useEffect(() => {
           .sort((a, b) => a.createdAt - b.createdAt))
         if (type === 'uploaded') {
           if (task.result?.authorPage && !task.result.skipped) {
-            localStorage.setItem('shadow_author_page', JSON.stringify(task.result.authorPage))
+  AUTHOR_OWNER_CACHE.delete(getAuthToken())
+  localStorage.setItem('shadow_author_page', JSON.stringify(task.result.authorPage))
             setAuthor((current) => {
               if (String(current?.id || '') !== pageId) return current
               return normalizeAuthor(task.result.authorPage, current.page_username, task.result.authorPage, true)
@@ -2410,8 +2411,12 @@ useEffect(() => {
     loadAuthorReviews(username)
   }, [author?.page_username, pageUsername, loading])
 
-  useEffect(() => {
-    loadAuthor()
+    useEffect(() => {
+    let active = true
+    loadAuthor(() => active)
+    return () => {
+      active = false
+    }
   }, [pageUsername])
 
 
