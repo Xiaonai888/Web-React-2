@@ -8521,7 +8521,7 @@ autoScrollEnabled ? (
 />
       
      <ReaderBottomActionBar
-  visible={bottomActionsVisible && !lockedEpisode && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
+  visible={!isChatStory && bottomActionsVisible && !lockedEpisode && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
   theme={theme}
   subscribed={subscribed}
   onSubscribe={handleSubscribe}
