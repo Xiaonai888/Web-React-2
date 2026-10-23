@@ -5788,6 +5788,7 @@ const [savingSubscribe, setSavingSubscribe] = useState(false)
   const [readerGateReady, setReaderGateReady] = useState(false)
   const lastScrollYRef = useRef(0)
   const lastReaderTapRef = useRef(0)
+  const readerControlsHoldUntilRef = useRef(0)
 
   useEffect(() => {
     activeReadingTargetRef.current = activeReadingTarget
@@ -6207,6 +6208,10 @@ useEffect(() => {
     const difference = now - lastReaderTapRef.current
 
     if (difference > 0 && difference < 320) {
+      if (isChatStory) {
+  event.stopPropagation()
+  readerControlsHoldUntilRef.current = Date.now() + 1200
+}
       const nextVisible = !bottomActionsVisible
 
       setReaderHeaderVisible(nextVisible)
@@ -7543,6 +7548,7 @@ useEffect(() => {
   setReaderHeaderVisible(true)
   return
 }
+    if (Date.now() < readerControlsHoldUntilRef.current) return
   const currentScrollY = window.scrollY || document.documentElement.scrollTop
   const previousScrollY = lastScrollYRef.current
   const difference = currentScrollY - previousScrollY
@@ -8623,8 +8629,9 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
 </header>
 
       <main
-  onClick={handleReaderDoubleTap}
-  className={`mx-auto max-w-3xl ${isChatStory ? 'bg-transparent' : theme.card} px-0 pb-[92px] pt-[50px] sm:px-4`}
+  onClickCapture={isChatStory ? handleReaderDoubleTap : undefined}
+  onClick={isChatStory ? undefined : handleReaderDoubleTap}
+  className={`mx-auto max-w-3xl ${isChatStory ? 'bg-transparent pt-0' : `${theme.card} pt-[50px]`} px-0 pb-[92px] sm:px-4`}
 >
         {loading ? <LoadingCard theme={theme} /> : null}
 
