@@ -143,7 +143,9 @@ function LoadingGrid({ t }) {
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center gap-2">
-          <span className="text-[20px]">📘</span>
+          <span className="text-[20px]">
+  <i className="fa-solid fa-book text-[#3B82F6]" aria-hidden="true" />
+</span>
           <h2 className="text-[18px] font-extrabold text-[var(--shadow-text-primary)]">
             {t('shortCompletedSection.title')}
           </h2>
@@ -279,7 +281,9 @@ export default function ShortCompletedSection({ storyType = 'novel' }) {
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[20px]">📘</span>
+            <span className="text-[20px]">
+  <i className="fa-solid fa-book text-[#3B82F6]" aria-hidden="true" />
+</span>
             <h2 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)] lg:text-[19px]">
               {t('shortCompletedSection.title')}
             </h2>
