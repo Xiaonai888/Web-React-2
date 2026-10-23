@@ -87,6 +87,8 @@ registerTranslationNamespace('authorPostsSection', {
     blockComingSoon: 'Block author is coming soon.',
     loadingPosts: 'Loading posts...',
     loadingPostsBody: 'Please wait while author posts load.',
+    loadMorePosts: 'Load 10 more',
+    loadingMorePosts: 'Loading more...',
     noPosts: 'No posts yet',
     noPostsBody: 'Updates, notes, and announcements will appear here.',
     postUpdated: 'Post updated.',
@@ -155,6 +157,8 @@ registerTranslationNamespace('authorPostsSection', {
     blockComingSoon: 'មុខងារប្លុកអ្នកនិពន្ធនឹងមកដល់ឆាប់ៗ។',
     loadingPosts: 'កំពុងផ្ទុកប្រកាស...',
     loadingPostsBody: 'សូមរង់ចាំខណៈពេលកំពុងផ្ទុកប្រកាសអ្នកនិពន្ធ។',
+    loadMorePosts: 'ផ្ទុក ១០ ប្រកាសទៀត',
+    loadingMorePosts: 'កំពុងផ្ទុកបន្ថែម...',
     noPosts: 'មិនទាន់មានប្រកាសទេ',
     noPostsBody: 'បច្ចុប្បន្នភាព កំណត់ចំណាំ និងសេចក្តីជូនដំណឹងនឹងបង្ហាញនៅទីនេះ។',
     postUpdated: 'បានកែប្រែប្រកាស។',
@@ -223,6 +227,8 @@ registerTranslationNamespace('authorPostsSection', {
     blockComingSoon: '屏蔽作者功能即将推出。',
     loadingPosts: '正在加载帖子...',
     loadingPostsBody: '正在加载作者帖子，请稍候。',
+    loadMorePosts: '再加载 10 条',
+    loadingMorePosts: '正在加载更多...',
     noPosts: '暂无帖子',
     noPostsBody: '动态、笔记和公告会显示在这里。',
     postUpdated: '帖子已更新。',
@@ -291,6 +297,8 @@ registerTranslationNamespace('authorPostsSection', {
     blockComingSoon: '作者ブロック機能は近日公開です。',
     loadingPosts: '投稿を読み込み中...',
     loadingPostsBody: '作者の投稿を読み込んでいます。',
+    loadMorePosts: 'さらに10件読み込む',
+    loadingMorePosts: 'さらに読み込み中...',
     noPosts: '投稿はまだありません',
     noPostsBody: '更新、メモ、お知らせがここに表示されます。',
     postUpdated: '投稿を更新しました。',
@@ -359,6 +367,8 @@ registerTranslationNamespace('authorPostsSection', {
     blockComingSoon: '작가 차단 기능이 곧 제공됩니다.',
     loadingPosts: '게시물을 불러오는 중...',
     loadingPostsBody: '작가 게시물을 불러오는 동안 기다려 주세요.',
+    loadMorePosts: '게시물 10개 더 보기',
+    loadingMorePosts: '더 불러오는 중...',
     noPosts: '아직 게시물이 없습니다',
     noPostsBody: '업데이트, 메모, 공지가 여기에 표시됩니다.',
     postUpdated: '게시물을 업데이트했습니다.',
@@ -753,6 +763,7 @@ function sortAuthorPosts(posts) {
 }
 
 const AUTHOR_POSTS_CACHE_MAX_ENTRIES = 100
+const AUTHOR_POSTS_CACHE_TTL_MS = 10 * 60 * 1000
 const authorPostsListCache = new Map()
 const authorPostsListInFlight = new Map()
 const authorPostsListCacheVersionByPage = new Map()
@@ -761,199 +772,128 @@ function normalizeAuthorPostsCachePage(pageUsername) {
   return String(pageUsername || '').trim().toLowerCase()
 }
 
-function getAuthorPostsListCacheKey(pageUsername, before = '') {
-  const page = normalizeAuthorPostsCachePage(pageUsername)
-  const filter = String(before || '').trim()
-
+function getAuthorPostsListCacheKey(pageUsername, before = '', beforeId = '', includeTotal = false) {
   return JSON.stringify({
     scope: getAuthorPostViewCacheScope(),
-    page,
-    filter,
+    page: normalizeAuthorPostsCachePage(pageUsername),
+    filter: String(before || '').trim(),
+    cursor: String(beforeId || '').trim(),
+    total: Boolean(includeTotal),
   })
 }
 
 function getAuthorPostsListCacheVersion(pageUsername) {
-  const page = normalizeAuthorPostsCachePage(pageUsername)
-
-  return Number(
-    authorPostsListCacheVersionByPage.get(page) || 0
-  )
+  return Number(authorPostsListCacheVersionByPage.get(normalizeAuthorPostsCachePage(pageUsername)) || 0)
 }
 
-function setAuthorPostsListCache(
-  cacheKey,
-  pageUsername,
-  posts
-) {
+function setAuthorPostsListCache(cacheKey, pageUsername, result) {
   const page = normalizeAuthorPostsCachePage(pageUsername)
-
-  if (authorPostsListCache.has(cacheKey)) {
-    authorPostsListCache.delete(cacheKey)
-  }
-
-  authorPostsListCache.set(cacheKey, {
-    page,
-    posts,
-  })
-
-  while (
-    authorPostsListCache.size >
-    AUTHOR_POSTS_CACHE_MAX_ENTRIES
-  ) {
-    const oldestKey =
-      authorPostsListCache.keys().next().value
-
+  authorPostsListCache.delete(cacheKey)
+  authorPostsListCache.set(cacheKey, { page, result, at: Date.now() })
+  while (authorPostsListCache.size > AUTHOR_POSTS_CACHE_MAX_ENTRIES) {
+    const oldestKey = authorPostsListCache.keys().next().value
     if (!oldestKey) break
-
     authorPostsListCache.delete(oldestKey)
   }
 }
 
 function clearAuthorPostsListCache(pageUsername = '') {
   const page = normalizeAuthorPostsCachePage(pageUsername)
-
   if (!page) {
     authorPostsListCache.clear()
     authorPostsListCacheVersionByPage.clear()
     return
   }
-
-  for (
-    const [cacheKey, cached] of
-    authorPostsListCache.entries()
-  ) {
-    if (cached?.page === page) {
-      authorPostsListCache.delete(cacheKey)
-    }
+  for (const [key, cached] of authorPostsListCache.entries()) {
+    if (cached?.page === page) authorPostsListCache.delete(key)
   }
-
-  authorPostsListCacheVersionByPage.set(
-    page,
-    getAuthorPostsListCacheVersion(page) + 1
-  )
+  for (const key of authorPostsListInFlight.keys()) {
+    try {
+      if (JSON.parse(key)?.page === page) authorPostsListInFlight.delete(key)
+    } catch {}
+  }
+  authorPostsListCacheVersionByPage.set(page, getAuthorPostsListCacheVersion(page) + 1)
 }
 
-async function fetchAuthorPosts(pageUsername, before = '') {
-  if (!pageUsername) return []
+function getAuthorPostsViewSnapshot(pageUsername, filter = '') {
+  const key = getAuthorPostsListCacheKey(pageUsername, filter, 'snapshot')
+  const cached = authorPostsListCache.get(key)
+  if (!cached) return null
+  return { ...cached.result, isFresh: Date.now() - cached.at < AUTHOR_POSTS_CACHE_TTL_MS }
+}
 
-  const page =
-  normalizeAuthorPostsCachePage(pageUsername)
+function saveAuthorPostsViewSnapshot(pageUsername, filter, result) {
+  if (!pageUsername) return
+  setAuthorPostsListCache(getAuthorPostsListCacheKey(pageUsername, filter, 'snapshot'), pageUsername, result)
+}
 
-let refreshAfterEcho = false
+function hasAuthorPostsEchoRefresh(pageUsername) {
+  try {
+    const marker = JSON.parse(sessionStorage.getItem('shadow_author_page_echo_refresh') || 'null')
+    return normalizeAuthorPostsCachePage(marker?.pageUsername) === normalizeAuthorPostsCachePage(pageUsername)
+  } catch {
+    return false
+  }
+}
 
-try {
-  const marker = JSON.parse(
-    sessionStorage.getItem('shadow_author_page_echo_refresh') || 'null'
-  )
+async function fetchAuthorPosts(pageUsername, filter = '', beforeId = '', includeTotal = false) {
+  if (!pageUsername) return { posts: [], hasMore: false, nextBeforeId: null, totalCount: 0 }
 
-  refreshAfterEcho =
-    normalizeAuthorPostsCachePage(marker?.pageUsername) === page
-
+  const page = normalizeAuthorPostsCachePage(pageUsername)
+  const refreshAfterEcho = hasAuthorPostsEchoRefresh(pageUsername)
+  const cacheKey = getAuthorPostsListCacheKey(pageUsername, filter, beforeId, includeTotal)
   if (refreshAfterEcho) {
     sessionStorage.removeItem('shadow_author_page_echo_refresh')
+    clearAuthorPostsListCache(page)
+    authorPostsListInFlight.delete(cacheKey)
   }
-} catch {}
 
-const cacheKey =
-  getAuthorPostsListCacheKey(pageUsername, before)
-
-if (refreshAfterEcho) {
-  clearAuthorPostsListCache(page)
-  authorPostsListInFlight.delete(cacheKey)
-}
-
-const cached =
-  authorPostsListCache.get(cacheKey)
-
-  if (cached) {
+  const cached = authorPostsListCache.get(cacheKey)
+  if (cached && Date.now() - cached.at < AUTHOR_POSTS_CACHE_TTL_MS) {
     authorPostsListCache.delete(cacheKey)
     authorPostsListCache.set(cacheKey, cached)
-    return cached.posts
+    return cached.result
   }
 
-  const inFlight =
-    authorPostsListInFlight.get(cacheKey)
+  const inFlight = authorPostsListInFlight.get(cacheKey)
+  if (inFlight) return inFlight
 
-  if (inFlight) {
-    return inFlight
-  }
-
-  const cacheVersion =
-    getAuthorPostsListCacheVersion(page)
-
+  const cacheVersion = getAuthorPostsListCacheVersion(page)
   const request = (async () => {
     const token = getAuthToken()
-    const params =
-      new URLSearchParams({ limit: '30' })
-
-    if (before) {
-      params.set('before', before)
-    }
+    const params = new URLSearchParams({ limit: '10' })
+    if (beforeId) params.set('before_id', beforeId)
+    else if (filter) params.set('before', filter)
+    if (includeTotal) params.set('include_total', '1')
 
     const response = await fetch(
       `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`,
-      {
-        headers: token
-          ? {
-              Authorization:
-                `Bearer ${token}`,
-            }
-          : {},
-      }
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} }
     )
-
-    const data = await response
-      .json()
-      .catch(() => ({}))
-
-    if (
-      !response.ok ||
-      data.ok === false
-    ) {
-      throw new Error(
-        data.message ||
-          getDisplayText(
-            'authorPostsSection.failedLoadPosts'
-          )
-      )
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || getDisplayText('authorPostsSection.failedLoadPosts'))
     }
 
-    const posts =
-      Array.isArray(data.posts)
-        ? data.posts
-        : []
-
-    if (
-      cacheVersion ===
-      getAuthorPostsListCacheVersion(page)
-    ) {
-      setAuthorPostsListCache(
-        cacheKey,
-        page,
-        posts
-      )
+    const result = {
+      posts: Array.isArray(data.posts) ? data.posts : [],
+      hasMore: Boolean(data.has_more),
+      nextBeforeId: data.next_before_id || null,
+      totalCount: data.total_count == null ? null : Math.max(0, Number(data.total_count) || 0),
     }
-
-    return posts
+    if (cacheVersion === getAuthorPostsListCacheVersion(page)) {
+      setAuthorPostsListCache(cacheKey, page, result)
+    }
+    return result
   })()
 
-  authorPostsListInFlight.set(
-    cacheKey,
-    request
-  )
-
+  authorPostsListInFlight.set(cacheKey, request)
   try {
     return await request
   } finally {
-    if (
-      authorPostsListInFlight.get(cacheKey) ===
-      request
-    ) {
-      authorPostsListInFlight.delete(cacheKey)
-    }
+    if (authorPostsListInFlight.get(cacheKey) === request) authorPostsListInFlight.delete(cacheKey)
   }
 }
-
 
 async function createAuthorPost(
   content,
@@ -1935,6 +1875,13 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   )
 }
     const [posts, setPosts] = useState([])
+    const [postsHasMore, setPostsHasMore] = useState(false)
+    const [nextPostsCursor, setNextPostsCursor] = useState(null)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const loadingMoreRef = useRef(false)
+    const totalPostsRef = useRef(null)
+    const currentPostsScopeRef = useRef('')
+    const currentPostsRef = useRef([])
   const [hiddenWords, setHiddenWords] = useState([])
 
   useEffect(() => {
@@ -2049,42 +1996,117 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
   useEffect(() => {
     let ignore = false
+    const username = author?.page_username || ''
+    const scope = `${getAuthorPostViewCacheScope()}:${normalizeAuthorPostsCachePage(username)}:${postFilterDate}`
+    currentPostsScopeRef.current = scope
+    loadingMoreRef.current = false
+    setLoadingMore(false)
+
+    if (!username) {
+      setPosts([])
+      setPostsHasMore(false)
+      setNextPostsCursor(null)
+      totalPostsRef.current = null
+      onCountChange?.(0)
+      return () => { ignore = true; if (currentPostsScopeRef.current === scope) currentPostsScopeRef.current = '' }
+    }
+
+    const snapshot = getAuthorPostsViewSnapshot(username, postFilterDate)
+    const needsRefresh = hasAuthorPostsEchoRefresh(username)
+    if (!snapshot || needsRefresh) {
+      setPosts([])
+      setPostsHasMore(false)
+      setNextPostsCursor(null)
+      totalPostsRef.current = null
+    }
+
+    const applyResult = (result, storeSnapshot = false) => {
+      if (ignore || currentPostsScopeRef.current !== scope) return
+      const nextPosts = sortAuthorPosts(result.posts || [])
+      setPosts(nextPosts)
+      setPostsHasMore(Boolean(result.hasMore))
+      setNextPostsCursor(result.nextBeforeId || null)
+      totalPostsRef.current = result.totalCount == null ? nextPosts.length : result.totalCount
+      onCountChange?.(totalPostsRef.current)
+      if (storeSnapshot) saveAuthorPostsViewSnapshot(username, postFilterDate, { ...result, posts: nextPosts })
+    }
+
+    if (snapshot && !needsRefresh) {
+      applyResult(snapshot)
+      setLoading(false)
+    }
+    if (snapshot?.isFresh && !needsRefresh) return () => { ignore = true; if (currentPostsScopeRef.current === scope) currentPostsScopeRef.current = '' }
 
     async function loadPosts() {
-      if (!author?.page_username) {
-        setPosts([])
-        onCountChange?.(0)
-        return
-      }
-
       try {
-        setLoading(true)
+        if (!snapshot || needsRefresh) setLoading(true)
         setLocalError('')
-
-        const nextPosts = await fetchAuthorPosts(author.page_username, postFilterDate)
-
-        if (!ignore) {
-          const sortedPosts = sortAuthorPosts(nextPosts)
-          setPosts(sortedPosts)
-          onCountChange?.(sortedPosts.length)
-        }
+        const result = await fetchAuthorPosts(username, postFilterDate, '', true)
+        applyResult(result, true)
       } catch (error) {
-        if (!ignore) {
-          setPosts([])
-          onCountChange?.(0)
-          setLocalError(error.message || t('authorPostsSection.failedLoadPosts'))
+        if (!ignore && currentPostsScopeRef.current === scope) {
+          if (!snapshot || needsRefresh) {
+            setPosts([])
+            setPostsHasMore(false)
+            setNextPostsCursor(null)
+            totalPostsRef.current = null
+            onCountChange?.(0)
+          }
+          setLocalError(error.message || getDisplayText('authorPostsSection.failedLoadPosts'))
         }
       } finally {
-        if (!ignore) setLoading(false)
+        if (!ignore && currentPostsScopeRef.current === scope) setLoading(false)
       }
     }
 
-    loadPosts()
-
+    void loadPosts()
     return () => {
       ignore = true
+      if (currentPostsScopeRef.current === scope) currentPostsScopeRef.current = ''
     }
   }, [author?.page_username, onCountChange, postFilterDate])
+
+  useEffect(() => {
+    currentPostsRef.current = posts
+  }, [posts])
+
+  async function handleLoadMorePosts() {
+    if (loading || loadingMoreRef.current || !postsHasMore || !nextPostsCursor || !author?.page_username) return
+    loadingMoreRef.current = true
+    const username = author.page_username
+    const scope = currentPostsScopeRef.current
+    const cursor = nextPostsCursor
+    setLoadingMore(true)
+    setLocalError('')
+    try {
+      const result = await fetchAuthorPosts(username, postFilterDate, cursor)
+      if (currentPostsScopeRef.current !== scope) return
+      const previous = currentPostsRef.current
+      const seen = new Set(previous.map((post) => String(post.id)))
+      const additional = result.posts.filter((post) => !seen.has(String(post.id)))
+      const combined = sortAuthorPosts([...previous, ...additional])
+      const more = Boolean(result.hasMore && result.nextBeforeId && result.nextBeforeId !== cursor)
+      currentPostsRef.current = combined
+      setPosts(combined)
+      setPostsHasMore(more)
+      setNextPostsCursor(result.nextBeforeId || null)
+      saveAuthorPostsViewSnapshot(username, postFilterDate, {
+        posts: combined,
+        hasMore: more,
+        nextBeforeId: result.nextBeforeId || null,
+        totalCount: totalPostsRef.current,
+      })
+    } catch (error) {
+      if (currentPostsScopeRef.current === scope) {
+        setLocalError(error.message || getDisplayText('authorPostsSection.failedLoadPosts'))
+      }
+    } finally {
+      if (currentPostsScopeRef.current === scope) {
+        loadingMoreRef.current = false
+        setLoadingMore(false)
+      }
+    }
+  }
 
   async function handleCreatePost(
   content,
@@ -2107,10 +2129,11 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 )
       if (post) {
         clearAuthorPostsListCache(author?.page_username || '')
+        if (post.status === 'active' && totalPostsRef.current != null) totalPostsRef.current += 1
         if (post.status === 'active') {
   setPosts((current) => {
     const nextPosts = sortAuthorPosts([post, ...current])
-    onCountChange?.(nextPosts.length)
+    onCountChange?.(Math.max(nextPosts.length, totalPostsRef.current ?? 0))
     return nextPosts
   })
 }
@@ -2290,13 +2313,14 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
       await moveAuthorPostToTrash(post.id)
       clearAuthorPostsListCache(author?.page_username || '')
+      if (totalPostsRef.current != null) totalPostsRef.current = Math.max(0, totalPostsRef.current - 1)
 
       setPosts((current) => {
         const nextPosts = current.filter(
           (item) => item.id !== post.id
         )
 
-        onCountChange?.(nextPosts.length)
+        onCountChange?.(Math.max(nextPosts.length, totalPostsRef.current ?? 0))
         return nextPosts
       })
 
@@ -2373,7 +2397,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       }
 
       const sortedPosts = sortAuthorPosts(nextPosts)
-      onCountChange?.(sortedPosts.length)
+      onCountChange?.(Math.max(sortedPosts.length, totalPostsRef.current ?? 0))
       return sortedPosts
     })
 
@@ -2573,7 +2597,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
 
       
 
-      {loading ? (
+      {loading && !posts.length ? (
         <PostsEmpty title={t('authorPostsSection.loadingPosts')} text={t('authorPostsSection.loadingPostsBody')} />
       ) : posts.length ? (
         <div className="space-y-2 bg-[var(--shadow-bg-soft)]">
@@ -2594,6 +2618,16 @@ function handleAuthorPostCommentChanged(nextComments = []) {
               onComment={setCommentPost}
             />
           ))}
+          {postsHasMore && nextPostsCursor ? (
+            <button
+              type="button"
+              onClick={handleLoadMorePosts}
+              disabled={loadingMore}
+              className="mx-auto my-4 block rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-6 py-3 text-sm font-medium text-[var(--shadow-text-primary)] disabled:opacity-50"
+            >
+              {loadingMore ? t('authorPostsSection.loadingMorePosts') : t('authorPostsSection.loadMorePosts')}
+            </button>
+          ) : null}
         </div>
       ) : (
         <PostsEmpty
