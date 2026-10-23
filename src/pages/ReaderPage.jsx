@@ -4433,6 +4433,17 @@ function ReaderSettingsDrawer({
   const [chatTapIndicatorPageOpen, setChatTapIndicatorPageOpen] = useState(false)
   const [chatThemeError, setChatThemeError] = useState(false)
   const chatTheme = useChatStoryTheme()
+  useEffect(() => {
+  if (!open) return
+  const body = document.body, html = document.documentElement, y = window.scrollY
+  const old = [body.style.position, body.style.top, body.style.width, html.style.overflow]
+  Object.assign(body.style, { position: 'fixed', top: `-${y}px`, width: '100%' })
+  html.style.overflow = 'hidden'
+  return () => {
+    [body.style.position, body.style.top, body.style.width, html.style.overflow] = old
+    window.scrollTo(0, y)
+  }
+}, [open])
   const tapIndicator = useChatTapIndicator()
   const [tapIndicatorError, setTapIndicatorError] = useState(false)
 
