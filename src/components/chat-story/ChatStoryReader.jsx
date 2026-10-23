@@ -358,6 +358,7 @@ function ChatMessage({
         </div>
       ) : (
         <div
+          style={{ borderRadius: isRight ? 'var(--cs-radius) var(--cs-radius) var(--cs-corner) var(--cs-radius)' : 'var(--cs-radius) var(--cs-radius) var(--cs-radius) var(--cs-corner)', border: 'var(--cs-bubble-border)', boxShadow: 'var(--cs-bubble-shadow)', background: isRight ? 'linear-gradient(125deg, var(--cs-outgoing), var(--cs-outgoing-end))' : 'var(--cs-soft)', color: isRight ? 'var(--cs-outgoing-text)' : 'var(--cs-text)' }}
           className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-[20px] px-4 py-3 text-left text-[15px] leading-7 ${
             isRight
               ? 'rounded-br-[6px] bg-[var(--cs-outgoing)] text-white'
@@ -850,5 +851,6 @@ export default function ChatStoryReader({
     </ChatVoiceSessionContext.Provider>
   )
 }
+
 
 
