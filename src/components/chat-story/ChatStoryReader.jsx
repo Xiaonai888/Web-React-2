@@ -4,7 +4,7 @@ import ChatStoryPhoneView, {
   chatCharacterId,
   createChatTiming,
 } from './ChatStoryPhoneView'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   getDisplayText,
   useDisplayTranslation,
@@ -496,7 +496,8 @@ export default function ChatStoryReader({
   const cycleRef = useRef({ source: null, index: -1, elapsed: 0, done: false })
   const lastMessageRef = useRef(null)
   const manualTapRef = useRef({ timer: null, at: 0, y: 0 })
-  const followNextMessageRef = useRef(false)
+  const tapHintRef = useRef(null)
+  const pendingPositionRef = useRef(null)
   const completionSentRef = useRef(null)
   const onProgressRef = useRef(onProgress)
   const onCompleteRef = useRef(onComplete)
@@ -683,17 +684,29 @@ export default function ChatStoryReader({
     completed,
   ])
 
-  useEffect(() => {
-    if (active || visibleCount <= 1 || !followNextMessageRef.current) return undefined
-    followNextMessageRef.current = false
-    const frame = window.requestAnimationFrame(() => {
-      lastMessageRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
-      })
-    })
-    return () => window.cancelAnimationFrame(frame)
+  useLayoutEffect(() => {
+    const position = pendingPositionRef.current
+    pendingPositionRef.current = null
+    if (active || !position) return
+    if (!position.follow) {
+      window.scrollTo({ top: position.y, behavior: 'instant' })
+      return
+    }
+    const anchor = tapHintRef.current || lastMessageRef.current
+    if (!anchor) return
+    const bottom = anchor.getBoundingClientRect().bottom
+    const target = Math.max(position.y, window.scrollY + bottom + 48 - window.innerHeight)
+    window.scrollTo({ top: target, behavior: 'smooth' })
   }, [visibleCount, active])
+
+  const rememberPosition = () => {
+    const anchor = tapHintRef.current || lastMessageRef.current
+    const bottom = anchor?.getBoundingClientRect().bottom
+    pendingPositionRef.current = {
+      y: window.scrollY,
+      follow: bottom != null && bottom <= window.innerHeight + 56,
+    }
+  }
 
   const revealNextMessage = () => {
     if (completed) return
@@ -721,19 +734,22 @@ export default function ChatStoryReader({
       window.clearTimeout(manualTapRef.current.timer)
       manualTapRef.current.timer = null
       manualTapRef.current.at = 0
-      followNextMessageRef.current = false
     }
     const cancelOnScroll = () => {
       if (Math.abs(window.scrollY - manualTapRef.current.y) > 8) cancelPendingTap()
     }
+    const cancelOnInteraction = () => {
+      cancelPendingTap()
+      window.scrollTo({ top: window.scrollY, behavior: 'instant' })
+    }
     window.addEventListener('scroll', cancelOnScroll, { passive: true })
-    window.addEventListener('touchmove', cancelPendingTap, { passive: true })
-    window.addEventListener('wheel', cancelPendingTap, { passive: true })
+    window.addEventListener('touchmove', cancelOnInteraction, { passive: true })
+    window.addEventListener('wheel', cancelOnInteraction, { passive: true })
     return () => {
       cancelPendingTap()
       window.removeEventListener('scroll', cancelOnScroll)
-      window.removeEventListener('touchmove', cancelPendingTap)
-      window.removeEventListener('wheel', cancelPendingTap)
+      window.removeEventListener('touchmove', cancelOnInteraction)
+      window.removeEventListener('wheel', cancelOnInteraction)
     }
   }, [content, active, readMode, userPaused])
 
@@ -746,18 +762,16 @@ export default function ChatStoryReader({
       window.clearTimeout(tap.timer)
       tap.timer = null
       tap.at = 0
-      followNextMessageRef.current = false
       return
     }
     window.clearTimeout(tap.timer)
     tap.at = now
     tap.y = window.scrollY
-    const lastBottom = lastMessageRef.current?.getBoundingClientRect().bottom
-    const follow = lastBottom == null || lastBottom <= window.innerHeight + 80
+
     tap.timer = window.setTimeout(() => {
       tap.timer = null
       tap.at = 0
-      followNextMessageRef.current = follow
+      rememberPosition()
       revealNextMessage()
     }, 340)
   }
@@ -769,7 +783,7 @@ export default function ChatStoryReader({
     event.preventDefault()
     window.clearTimeout(manualTapRef.current.timer)
     manualTapRef.current.timer = null
-    followNextMessageRef.current = (lastMessageRef.current?.getBoundingClientRect().bottom ?? 0) <= window.innerHeight + 80
+    rememberPosition()
     revealNextMessage()
   }
 
@@ -797,6 +811,7 @@ export default function ChatStoryReader({
           data-chat-style={chatTheme.theme.styleId}
           style={{
             ...chatTheme.style,
+            overflowAnchor: 'none',
             backgroundColor: 'transparent',
             backgroundImage: 'none',
             '--shadow-bg-page': chatTheme.theme.background,
@@ -846,7 +861,7 @@ export default function ChatStoryReader({
               )
             })}
             {!completed && (readMode === 'manual' || userPaused) ? (
-              <div className="flex flex-col items-center justify-center pb-6 pt-10 text-[#a98bd7]">
+              <div ref={tapHintRef} className="flex flex-col items-center justify-center pb-6 pt-10 text-[#a98bd7]" style={{ minHeight: 220 }}>
                 {userPaused ? (
                   <button
                     type="button"
