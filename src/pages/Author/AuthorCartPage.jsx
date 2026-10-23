@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -112,10 +112,20 @@ registerTranslationNamespace('authorCart', {
   },
 })
 
+function validCartQuantity(value) {
+  const quantity = Number(value)
+  return Number.isFinite(quantity) ? Math.max(1, Math.min(99, Math.trunc(quantity))) : 1
+}
+
 function getAuthorCartItems() {
   try {
     const items = JSON.parse(localStorage.getItem('shadow_author_cart_items') || '[]')
-    return Array.isArray(items) ? items : []
+    return Array.isArray(items)
+      ? items.filter((item) => item && typeof item === 'object' && item.id !== null && item.id !== undefined && String(item.id).trim()).map((item) => ({
+          ...item,
+          quantity: validCartQuantity(item.quantity),
+        }))
+      : []
   } catch {
     return []
   }
@@ -140,7 +150,8 @@ function number(value) {
 }
 
 function getItemPrice(item) {
-  return Number(item.price_value || 0)
+  const price = Number(item?.price_value)
+  return Number.isFinite(price) && price >= 0 ? price : 0
 }
 
 function getItemCover(item) {
@@ -177,6 +188,30 @@ export default function AuthorCartPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const [authorItems, setAuthorItems] = useState(getAuthorCartItems)
+
+  useEffect(() => {
+    const syncCart = () => setAuthorItems(getAuthorCartItems())
+    const onStorage = (event) => {
+      if (event.key === 'shadow_author_cart_items' || event.key === null) syncCart()
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') syncCart()
+    }
+
+    window.addEventListener('shadow-author-cart-updated', syncCart)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('pageshow', syncCart)
+    window.addEventListener('focus', syncCart)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.removeEventListener('shadow-author-cart-updated', syncCart)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('pageshow', syncCart)
+      window.removeEventListener('focus', syncCart)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [])
+
   const items = authorItems
   const promotionExpired = useDiscoverPromotionExpiry(items)
   const totalCartCount = items.length
@@ -185,24 +220,22 @@ export default function AuthorCartPage() {
     () =>
       items.reduce(
         (sum, item) =>
-          sum + getItemPrice(item) * Math.max(1, Number(item.quantity || 1)),
+          sum + getItemPrice(item) * validCartQuantity(item.quantity),
         0
       ),
     [items]
   )
 
   function updateQuantity(id, nextQuantity) {
-    const quantity = Math.max(1, Math.min(99, Number(nextQuantity || 1)))
-    const nextItems = authorItems.map((item) =>
-      String(item.id) === String(id) ? { ...item, quantity } : item
+    const nextItems = getAuthorCartItems().map((item) =>
+      String(item.id) === String(id) ? { ...item, quantity: validCartQuantity(nextQuantity) } : item
     )
-
     setAuthorItems(nextItems)
     saveAuthorCartItems(nextItems)
   }
 
   function removeItem(id) {
-    const nextItems = authorItems.filter((item) => String(item.id) !== String(id))
+    const nextItems = getAuthorCartItems().filter((item) => String(item.id) !== String(id))
     setAuthorItems(nextItems)
     saveAuthorCartItems(nextItems)
   }
@@ -214,12 +247,16 @@ export default function AuthorCartPage() {
 }
 
   function openCheckout() {
-  if (!items.length || hasExpiredDiscoverPromotion(items)) return
-
-  navigate('/author/checkout', {
-    state: { from: location.pathname + location.search + location.hash },
-  })
-}
+    const latestItems = getAuthorCartItems()
+    if (!latestItems.length || hasExpiredDiscoverPromotion(latestItems)) {
+      setAuthorItems(latestItems)
+      return
+    }
+    saveAuthorCartItems(latestItems)
+    navigate('/author/checkout', {
+      state: { from: location.pathname + location.search + location.hash },
+    })
+  }
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px]">
@@ -275,7 +312,7 @@ export default function AuthorCartPage() {
           {items.length ? items.map((item) => {
             const cover = getItemCover(item)
             const itemType = getItemType(item, t)
-            const itemTotal = getItemPrice(item) * Math.max(1, Number(item.quantity || 1))
+            const itemTotal = getItemPrice(item) * validCartQuantity(item.quantity)
 
             return (
               <article key={item.id} className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)]">
@@ -304,11 +341,11 @@ export default function AuthorCartPage() {
                     <div className="mt-5 flex items-end justify-between gap-3">
                       <div className="text-[14px] font-black text-[#e5484d]">{isExpiredDiscoverPromotion(item) ? '—' : money(itemTotal)}</div>
                       <div className="flex items-center gap-2">
-                        <button type="button" aria-label={t('authorCart.decreaseQuantity')} onClick={() => updateQuantity(item.id, Number(item.quantity || 1) - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
+                        <button type="button" aria-label={t('authorCart.decreaseQuantity')} onClick={() => updateQuantity(item.id, validCartQuantity(item.quantity) - 1)} disabled={validCartQuantity(item.quantity) <= 1} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
                           <i className="fa-solid fa-minus text-[11px]" />
                         </button>
-                        <span className="w-5 text-center text-[13px] font-black text-[var(--shadow-text-primary)]">{number(item.quantity || 1)}</span>
-                        <button type="button" aria-label={t('authorCart.increaseQuantity')} onClick={() => updateQuantity(item.id, Number(item.quantity || 1) + 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]">
+                        <span className="w-5 text-center text-[13px] font-black text-[var(--shadow-text-primary)]">{number(validCartQuantity(item.quantity))}</span>
+                        <button type="button" aria-label={t('authorCart.increaseQuantity')} onClick={() => updateQuantity(item.id, validCartQuantity(item.quantity) + 1)} disabled={validCartQuantity(item.quantity) >= 99} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]">
                           <i className="fa-solid fa-plus text-[11px]" />
                         </button>
                       </div>
