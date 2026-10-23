@@ -260,7 +260,8 @@ export default function EventPerksHubSection() {
     <div className="w-full overflow-hidden">
       <div className="mb-3 px-4">
         <h2 className="text-[18px] font-bold tracking-tight text-[var(--shadow-text-primary)]">
-  🎉 {t('eventPerksHubSection.title')}
+  <i className="fa-solid fa-gift text-[#EC4899]" aria-hidden="true" />{' '}
+  {t('eventPerksHubSection.title')}
 </h2>
       </div>
 
