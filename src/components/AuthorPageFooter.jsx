@@ -8,37 +8,42 @@ registerTranslationNamespace('authorPageFooter', {
     page: 'Page',
     dashboard: 'Dashboard',
     store: 'Store',
+    boost: 'Boost',
     notifications: 'Notifications',
   },
   km: {
     page: 'ទំព័រ',
     dashboard: 'ផ្ទាំងគ្រប់គ្រង',
     store: 'ហាង',
+    boost: 'Boost',
     notifications: 'ការជូនដំណឹង',
   },
   zh: {
     page: '主页',
     dashboard: '仪表板',
     store: '商店',
+    boost: '推广',
     notifications: '通知',
   },
   ja: {
     page: 'ページ',
     dashboard: 'ダッシュボード',
     store: 'ストア',
+    boost: 'ブースト',
     notifications: '通知',
   },
   ko: {
     page: '페이지',
     dashboard: '대시보드',
     store: '스토어',
+    boost: '부스트',
     notifications: '알림',
   },
 })
 
 function PageIcon({ active }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" aria-hidden="true">
       <path d="M5 21V4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <path
         d="M5 5h11l-1.8 3L16 11H5V5Z"
@@ -53,7 +58,7 @@ function PageIcon({ active }) {
 
 function DashboardIcon({ active }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" aria-hidden="true">
       <rect x="4" y="12" width="3.5" height="7" rx="1" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" />
       <rect x="10.25" y="5" width="3.5" height="14" rx="1" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" />
       <rect x="16.5" y="9" width="3.5" height="10" rx="1" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" />
@@ -61,9 +66,24 @@ function DashboardIcon({ active }) {
   )
 }
 
+function BoostIcon({ active }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" aria-hidden="true">
+      <path
+        d="M4 10.5v3a2 2 0 0 0 2 2h2l1.4 4h2.4l-1.3-4H13l6.5 3V5.5L13 8.5H6a2 2 0 0 0-2 2Z"
+        fill={active ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M21 10v4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function StoreIcon({ active }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" aria-hidden="true">
       <path
         d="M5.5 8.5h13l1 11H4.5l1-11Z"
         fill={active ? 'currentColor' : 'none'}
@@ -78,7 +98,7 @@ function StoreIcon({ active }) {
 
 function NotificationIcon({ active }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" aria-hidden="true">
       <path
         d="M6.5 10a5.5 5.5 0 0 1 11 0v4.2l1.5 2.3H5l1.5-2.3V10Z"
         fill={active ? 'currentColor' : 'none'}
@@ -97,6 +117,7 @@ function AuthorPageFooter() {
   const active = {
     '/author/page': 'Page',
     '/author/page/dashboard': 'Dashboard',
+    '/author/page/ads': 'Boost',
     '/author/page/store': 'Store',
     '/author/page/notifications': 'Notifications',
   }[location.pathname.replace(/\/+$/, '')] || 'Page'
@@ -117,6 +138,12 @@ function AuthorPageFooter() {
       action: () => navigate('/author/page/dashboard'),
     },
     {
+      key: 'Boost',
+      label: t('authorPageFooter.boost'),
+      Icon: BoostIcon,
+      action: () => navigate('/author/page/ads'),
+    },
+    {
       key: 'Store',
       label: t('authorPageFooter.store'),
       Icon: StoreIcon,
@@ -132,31 +159,32 @@ function AuthorPageFooter() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[80] border-t border-[#eef0f4] bg-white/95 shadow-[0_-8px_24px_rgba(17,24,39,0.06)] backdrop-blur dark:border-white/10 dark:bg-[#0d0f16]/95">
-      <div className="mx-auto grid h-[66px] max-w-5xl grid-cols-4">
+      <div className="mx-auto grid h-[70px] max-w-5xl grid-cols-5">
         {items.map((item) => {
           const isActive = active === item.key
           const Icon = item.Icon
+          const isBoost = item.key === 'Boost'
 
           return (
             <button
               key={item.key}
               type="button"
               onClick={item.action}
-              className={`flex flex-col items-center justify-center gap-1 text-[10px] font-extrabold transition active:scale-95 ${
-                isActive
-                  ? 'text-[#8b5cf6] dark:text-[#a78bfa]'
-                  : 'text-[#9aa1ad] dark:text-white/45'
+              className={`flex min-w-0 flex-col items-center justify-center gap-1 font-extrabold transition active:scale-95 ${
+                isBoost
+                  ? 'text-[#c08b00] dark:text-[#f6b800]'
+                  : isActive
+                    ? 'text-[#8b5cf6] dark:text-[#a78bfa]'
+                    : 'text-[#9aa1ad] dark:text-white/45'
               }`}
             >
               <span className="relative flex">
-  <Icon active={isActive} />
-
-  {item.key === 'Notifications' &&
-  hasAuthorUnread ? (
-    <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#ef4444] ring-2 ring-white dark:ring-[#0d0f16]" />
-  ) : null}
-</span>
-              <span>{item.label}</span>
+                <Icon active={isActive} />
+                {item.key === 'Notifications' && hasAuthorUnread ? (
+                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#ef4444] ring-2 ring-white dark:ring-[#0d0f16]" />
+                ) : null}
+              </span>
+              <span className="w-full truncate px-1 text-center text-[9px] sm:text-[10px]">{item.label}</span>
             </button>
           )
         })}
