@@ -4,7 +4,7 @@ import { ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, Image as ImageIcon
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import { createAuthorAdDraft, deleteAuthorAdDraft, listAuthorAdCampaigns, submitAuthorAdForReview, updateAuthorAdDraft } from '../../services/authorAdsApi'
+import { createAuthorAdDraft, deleteAuthorAdDraft, listAuthorAdCampaigns, submitAuthorAdForReview, transitionAuthorAdCampaign, updateAuthorAdDraft } from '../../services/authorAdsApi'
 
 registerTranslationNamespace('authorAds', {
   en: {
@@ -112,6 +112,94 @@ registerTranslationNamespace('authorAds', {
     boostBudget: '예산', boostFunded: '충전됨', boostSpent: '실제 지출',
     boostAvailable: '사용 가능 금액', boostRefunded: '환불됨',
     budgetProgress: '예산 사용률', boostGoal: '목표', boostAudience: '대상 독자',
+  },
+})
+
+registerTranslationNamespace('authorAds', {
+  en: {
+    startCampaign: "Start campaign",
+    pauseCampaign: "Pause campaign",
+    resumeCampaign: "Resume campaign",
+    confirmStart: "Start this campaign now? Its delivery countdown begins immediately.",
+    confirmPause: "Pause this campaign? Its end date will not change.",
+    paymentRequired: "Verified payment must cover the full budget before this campaign can start.",
+    deliveryNotReady: "Ad delivery is not available yet. The campaign was not started.",
+    lifecycleBlocked: "Status change was refused. Check approval, funding, content and dates.",
+    lifecycleError: "Unable to change campaign status. Please retry.",
+    lifecycleRateLimited: "Too many requests. Please try again shortly.",
+    lifecycleStarted: "Campaign started.",
+    lifecyclePaused: "Campaign paused. Its end date is unchanged.",
+    lifecycleResumed: "Campaign resumed.",
+    pauseClockWarning: "Pausing stops delivery but does not extend the campaign end date.",
+    deliveryExpired: "The campaign delivery period has ended.",
+  },
+  km: {
+    startCampaign: "ចាប់ផ្តើមផ្សាយ",
+    pauseCampaign: "ផ្អាកផ្សាយ",
+    resumeCampaign: "បន្តផ្សាយ",
+    confirmStart: "ចាប់ផ្តើម Campaign នេះឥឡូវមែនទេ? ពេលវេលាផ្សាយនឹងចាប់រាប់ភ្លាមៗ។",
+    confirmPause: "ផ្អាក Campaign នេះមែនទេ? ថ្ងៃបញ្ចប់នឹងមិនផ្លាស់ប្តូរទេ។",
+    paymentRequired: "ត្រូវបង់ប្រាក់ដែលបានផ្ទៀងផ្ទាត់ឱ្យគ្រប់ថវិកា មុនចាប់ផ្តើមផ្សាយ។",
+    deliveryNotReady: "ប្រព័ន្ធផ្សាយ Ads មិនទាន់បើកទេ។ Campaign មិនទាន់ចាប់ផ្តើមឡើយ។",
+    lifecycleBlocked: "មិនអាចប្ដូរស្ថានភាពបាន។ សូមពិនិត្យការអនុម័ត ថវិកា មាតិកា និងកាលបរិច្ឆេទ។",
+    lifecycleError: "មិនអាចប្ដូរស្ថានភាព Campaign បាន។ សូមសាកម្ដងទៀត។",
+    lifecycleRateLimited: "ស្នើសុំច្រើនពេក។ សូមរង់ចាំបន្តិច។",
+    lifecycleStarted: "បានចាប់ផ្តើម Campaign។",
+    lifecyclePaused: "បានផ្អាក Campaign។ ថ្ងៃបញ្ចប់នៅដដែល។",
+    lifecycleResumed: "បានបន្ត Campaign។",
+    pauseClockWarning: "ការផ្អាកឈប់បង្ហាញ Ads ប៉ុន្តែមិនពន្យារថ្ងៃបញ្ចប់ Campaign ទេ។",
+    deliveryExpired: "រយៈពេលផ្សាយ Campaign នេះបានផុតកំណត់។",
+  },
+  zh: {
+    startCampaign: "开始投放",
+    pauseCampaign: "暂停投放",
+    resumeCampaign: "恢复投放",
+    confirmStart: "立即开始此活动吗？投放倒计时将立即开始。",
+    confirmPause: "暂停此活动吗？结束日期不会改变。",
+    paymentRequired: "必须完成覆盖全部预算的已验证付款，才能开始投放。",
+    deliveryNotReady: "广告投放尚未启用，活动尚未开始。",
+    lifecycleBlocked: "无法更改状态，请检查审核、资金、内容和日期。",
+    lifecycleError: "无法更新活动状态，请重试。",
+    lifecycleRateLimited: "请求过多，请稍后再试。",
+    lifecycleStarted: "活动已开始。",
+    lifecyclePaused: "活动已暂停，结束日期不变。",
+    lifecycleResumed: "活动已恢复。",
+    pauseClockWarning: "暂停会停止投放，但不会延长活动结束日期。",
+    deliveryExpired: "活动投放时间已结束。",
+  },
+  ja: {
+    startCampaign: "配信開始",
+    pauseCampaign: "一時停止",
+    resumeCampaign: "配信再開",
+    confirmStart: "今すぐ開始しますか？配信期間のカウントがすぐに始まります。",
+    confirmPause: "一時停止しますか？終了日は変わりません。",
+    paymentRequired: "配信開始には予算全額の確認済み入金が必要です。",
+    deliveryNotReady: "広告配信はまだ利用できません。キャンペーンは開始されていません。",
+    lifecycleBlocked: "状態を変更できません。承認・入金・コンテンツ・日付を確認してください。",
+    lifecycleError: "状態を更新できません。再試行してください。",
+    lifecycleRateLimited: "リクエストが多すぎます。しばらくしてからお試しください。",
+    lifecycleStarted: "配信を開始しました。",
+    lifecyclePaused: "一時停止しました。終了日は変わりません。",
+    lifecycleResumed: "配信を再開しました。",
+    pauseClockWarning: "一時停止してもキャンペーン終了日は延長されません。",
+    deliveryExpired: "キャンペーンの配信期間が終了しました。",
+  },
+  ko: {
+    startCampaign: "게재 시작",
+    pauseCampaign: "게재 일시정지",
+    resumeCampaign: "게재 재개",
+    confirmStart: "지금 시작할까요? 게재 기간이 즉시 시작됩니다.",
+    confirmPause: "일시정지할까요? 종료일은 변경되지 않습니다.",
+    paymentRequired: "게재를 시작하려면 전체 예산에 대한 확인된 결제가 필요합니다.",
+    deliveryNotReady: "광고 게재가 아직 활성화되지 않았습니다. 캠페인은 시작되지 않았습니다.",
+    lifecycleBlocked: "상태를 변경할 수 없습니다. 승인, 결제, 콘텐츠 및 날짜를 확인하세요.",
+    lifecycleError: "캠페인 상태를 변경하지 못했습니다. 다시 시도하세요.",
+    lifecycleRateLimited: "요청이 너무 많습니다. 잠시 후 다시 시도하세요.",
+    lifecycleStarted: "캠페인이 시작되었습니다.",
+    lifecyclePaused: "캠페인이 일시정지되었습니다. 종료일은 변경되지 않습니다.",
+    lifecycleResumed: "캠페인이 재개되었습니다.",
+    pauseClockWarning: "일시정지는 게재만 중단하며 캠페인 종료일은 연장되지 않습니다.",
+    deliveryExpired: "캠페인 게재 기간이 종료되었습니다.",
   },
 })
 
@@ -625,6 +713,36 @@ export default function AuthorAdsPage() {
     }
   }
 
+  const changeCampaignStatus = async (campaign, action) => {
+    if (processingId || !['start', 'pause', 'resume'].includes(action)) return
+    if (action === 'start' && !window.confirm(t('authorAds.confirmStart'))) return
+    if (action === 'pause' && !window.confirm(t('authorAds.confirmPause'))) return
+    setProcessingId(campaign.id)
+    setCampaignsError('')
+    setMessage('')
+    try {
+      const result = await transitionAuthorAdCampaign(campaign.id, action)
+      setCampaigns(current => current.map(item => item.id === campaign.id ? result.campaign : item))
+      setMessage(t('authorAds.' + ({
+        start: 'lifecycleStarted',
+        pause: 'lifecyclePaused',
+        resume: 'lifecycleResumed',
+      }[action])))
+    } catch (cause) {
+      const code = cause?.code
+      const key = code === 'AUTHOR_ADS_DELIVERY_NOT_READY' || code === 'AUTHOR_AD_LIFECYCLE_SQL_REQUIRED'
+        ? 'deliveryNotReady'
+        : code === 'AUTHOR_AD_TRANSITION_DENIED'
+          ? 'lifecycleBlocked'
+          : ['AUTHOR_ADS_LIFECYCLE_IP_RATE_LIMITED', 'AUTHOR_ADS_LIFECYCLE_ACCOUNT_RATE_LIMITED', 'AUTHOR_ADS_RATE_LIMITED', 'AUTHOR_ADS_IP_RATE_LIMITED'].includes(code)
+            ? 'lifecycleRateLimited'
+            : 'lifecycleError'
+      setCampaignsError(t('authorAds.' + key))
+    } finally {
+      setProcessingId('')
+    }
+  }
+
   const previewAction = kind === 'post' ? t('authorAds.viewPost') : selectedItem?.type === 'pdf' || selectedItem?.type === 'book' ? t('authorAds.buyNow') : t('authorAds.readNow')
 
   return (
@@ -750,6 +868,13 @@ export default function AuthorAdsPage() {
                    const refunded = Math.max(0, Number(campaign.refundedUsd) || 0)
                    const available = Math.max(0, funded - spent - refunded)
                    const usedPercent = budget > 0 ? Math.min(100, Math.round(spent / budget * 10000) / 100) : 0
+                   const isFullyFunded = budget > 0 && Math.round((funded - refunded) * 100) >= Math.round(budget * 100)
+                   const deliveryEndsAt = campaign.endAt ? Date.parse(campaign.endAt) : NaN
+                   const hasActiveWindow = Number.isFinite(deliveryEndsAt) && Date.now() < deliveryEndsAt
+                   const deliveryExpired = ['active', 'paused'].includes(campaign.status) && Number.isFinite(deliveryEndsAt) && !hasActiveWindow
+                   const canStart = campaign.status === 'approved' && isFullyFunded
+                   const canPause = campaign.status === 'active' && hasActiveWindow
+                   const canResume = campaign.status === 'paused' && isFullyFunded && hasActiveWindow
                    const audience = campaign.audience || {}
                    const selectedAudience = audience.mode === 'manual'
                      ? [audience.genre, audience.language?.toUpperCase(), audience.country].filter(Boolean).join(' · ')
@@ -799,6 +924,22 @@ export default function AuthorAdsPage() {
                         <button type="button" disabled={Boolean(processingId)} onClick={() => editDraft(campaign)} className="flex items-center gap-1 text-xs font-medium text-[#8061df] disabled:opacity-50">{t('authorAds.editDraft')}<ChevronRight size={14} /></button>
                         <button type="button" disabled={Boolean(processingId)} onClick={() => submitCampaign(campaign.id)} className="rounded-lg bg-[#171717] px-3 py-2 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black">{t('authorAds.submitForReview')}</button>
                       </div>}
+                      {['approved', 'paused'].includes(campaign.status) && !isFullyFunded && (
+                        <p className="mt-3 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.paymentRequired')}</p>
+                      )}
+                      {['active', 'paused'].includes(campaign.status) && !deliveryExpired && (
+                        <p className="mt-3 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.pauseClockWarning')}</p>
+                      )}
+                      {deliveryExpired && (
+                        <p className="mt-3 text-xs text-[#b44822] dark:text-[#ffb49a]">{t('authorAds.deliveryExpired')}</p>
+                      )}
+                      {(canStart || canPause || canResume) && (
+                        <div className="mt-3 flex flex-wrap justify-end gap-2">
+                          {canStart && <button type="button" disabled={Boolean(processingId)} onClick={() => changeCampaignStatus(campaign, 'start')} className="rounded-lg bg-[#171717] px-4 py-2 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black">{t('authorAds.startCampaign')}</button>}
+                          {canPause && <button type="button" disabled={Boolean(processingId)} onClick={() => changeCampaignStatus(campaign, 'pause')} className="rounded-lg border border-[var(--shadow-border)] px-4 py-2 text-xs font-medium disabled:opacity-50">{t('authorAds.pauseCampaign')}</button>}
+                          {canResume && <button type="button" disabled={Boolean(processingId)} onClick={() => changeCampaignStatus(campaign, 'resume')} className="rounded-lg bg-[#171717] px-4 py-2 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black">{t('authorAds.resumeCampaign')}</button>}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -842,4 +983,3 @@ export default function AuthorAdsPage() {
     </main>
   )
 }
-
