@@ -24,6 +24,8 @@ registerTranslationNamespace('purchaseSection', {
     paymentMethodDescription: 'After payment, your Diamonds will be added automatically when payment confirms it.',
     openingPayment: 'Opening payment...',
     payExactly: 'Pay exactly {{amount}}',
+    binanceFee: 'An additional 1 USDT applies to every purchase.',
+    binanceBonus: 'Bonus: +100 Vouchers',
     nonRefundable: 'Completed payments are non-refundable.',
     cancel: 'Cancel',
     close: 'Close',
@@ -82,6 +84,8 @@ registerTranslationNamespace('purchaseSection', {
     paymentMethodDescription: 'បន្ទាប់ពីទូទាត់ Diamonds របស់អ្នកនឹងត្រូវបញ្ចូលដោយស្វ័យប្រវត្តិ នៅពេលការទូទាត់ត្រូវបានបញ្ជាក់។',
     openingPayment: 'កំពុងបើកការទូទាត់...',
     payExactly: 'ទូទាត់ចំនួន {{amount}}',
+    binanceFee: 'រាល់ការទិញត្រូវបូកបន្ថែម 1 USDT។',
+    binanceBonus: 'រង្វាន់បន្ថែម៖ +100 Vouchers',
     nonRefundable: 'ការទូទាត់ដែលបានបញ្ចប់ មិនអាចសងប្រាក់វិញបានទេ។',
     cancel: 'បោះបង់',
     close: 'បិទ',
@@ -140,6 +144,8 @@ registerTranslationNamespace('purchaseSection', {
     paymentMethodDescription: '付款确认后，Diamonds 将自动添加到您的账户。',
     openingPayment: '正在打开付款...',
     payExactly: '支付 {{amount}}',
+    binanceFee: '每笔购买均需额外支付 1 USDT。',
+    binanceBonus: '额外奖励：+100 Vouchers',
     nonRefundable: '已完成的付款不可退款。',
     cancel: '取消',
     close: '关闭',
@@ -198,6 +204,8 @@ registerTranslationNamespace('purchaseSection', {
     paymentMethodDescription: '支払いが確認されると、Diamonds は自動的に追加されます。',
     openingPayment: '支払いを開いています...',
     payExactly: '{{amount}} を支払う',
+    binanceFee: '購入ごとに 1 USDT が追加されます。',
+    binanceBonus: '特典：+100 Vouchers',
     nonRefundable: '完了した支払いは返金できません。',
     cancel: 'キャンセル',
     close: '閉じる',
@@ -256,6 +264,8 @@ registerTranslationNamespace('purchaseSection', {
     paymentMethodDescription: '결제가 확인되면 Diamonds가 자동으로 추가됩니다.',
     openingPayment: '결제를 여는 중...',
     payExactly: '{{amount}} 결제',
+    binanceFee: '구매할 때마다 1 USDT가 추가됩니다.',
+    binanceBonus: '보너스: +100 Vouchers',
     nonRefundable: '완료된 결제는 환불되지 않습니다.',
     cancel: '취소',
     close: '닫기',
@@ -457,7 +467,7 @@ function PackageCard({ item, onPurchase, t }) {
   )
 }
 
-function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManualPayment, t }) {
+function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManualPayment, onOpenBinancePage, t }) {
   useEffect(() => {
     const bodyOverflow = document.body.style.overflow
     const htmlOverflow = document.documentElement.style.overflow
@@ -473,7 +483,7 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 sm:items-center sm:px-4">
-      <div className="w-full rounded-t-[28px] bg-[var(--shadow-bg-elevated)] p-5 text-[var(--shadow-text-primary)] shadow-2xl sm:max-w-[430px] sm:rounded-[28px]">
+      <div className="max-h-[calc(100dvh-12px)] w-full overflow-y-auto overscroll-contain rounded-t-[28px] bg-[var(--shadow-bg-elevated)] p-5 text-[var(--shadow-text-primary)] shadow-2xl sm:max-w-[430px] sm:rounded-[28px]">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h3 className="text-[20px] font-black text-[var(--shadow-text-primary)]">{t('purchaseSection.paymentMethod')}</h3>
@@ -493,7 +503,7 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
           className="flex w-full items-center justify-between rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 text-left active:scale-[0.99] disabled:opacity-60"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#E91D2D] text-[13px] font-black text-white">KHQR</div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E91D2D] text-[12px] font-black text-white">KHQR</div>
             <div>
               <p className="text-[14px] font-black text-[var(--shadow-text-primary)]">PayWay</p>
               <p className="mt-1 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
@@ -504,6 +514,37 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
             </div>
           </div>
           <i className="fas fa-chevron-right text-[14px] text-[var(--shadow-text-primary)]" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenBinancePage}
+          disabled={creating}
+          className="mt-3 flex w-full items-center justify-between gap-3 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 text-left active:scale-[0.99] disabled:opacity-60"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#111111]">
+              <svg viewBox="0 0 64 64" className="h-9 w-9" aria-hidden="true" focusable="false">
+                <g fill="#F3BA2F">
+                  <polygon points="32,7 51,26 44,33 32,21 20,33 13,26" />
+                  <polygon points="6,32 14,24 22,32 14,40" />
+                  <polygon points="42,32 50,24 58,32 50,40" />
+                  <polygon points="32,24 40,32 32,40 24,32" />
+                  <polygon points="13,39 20,32 32,44 44,32 51,39 32,58" />
+                </g>
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[14px] font-black text-[var(--shadow-text-primary)]">Binance Pay</p>
+              <p className="mt-1 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">
+                {t('purchaseSection.binanceFee')}
+              </p>
+              <p className="mt-1 text-[11px] font-bold text-[#B56A00] dark:text-amber-300">
+                {t('purchaseSection.binanceBonus')}
+              </p>
+            </div>
+          </div>
+          <i className="fas fa-chevron-right shrink-0 text-[14px] text-[var(--shadow-text-primary)]" />
         </button>
 
         <p className="mb-2 mt-3 text-center text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
@@ -1089,6 +1130,15 @@ export default function PurchaseSection() {
         creating={creatingPayment}
         onClose={() => setShowPaymentMethods(false)}
         onCreateManualPayment={createManualPayment}
+        onOpenBinancePage={() => {
+          setShowPaymentMethods(false)
+          navigate('/shop/mall/purchase/binance', {
+            state: {
+              packageUsd: selectedPackage?.package_usd,
+              diamonds: selectedPackage?.diamonds,
+            },
+          })
+        }}
         t={t}
       />
     ) : null}
