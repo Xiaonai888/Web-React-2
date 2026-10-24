@@ -4,7 +4,7 @@ import { ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, Image as ImageIcon
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import { AUTHOR_ADS_PAGE_SIZE, createAuthorAdDraft, deleteAuthorAdDraft, listAuthorAdCampaigns, submitAuthorAdForReview, updateAuthorAdDraft } from '../../services/authorAdsApi'
+import { createAuthorAdDraft, deleteAuthorAdDraft, listAuthorAdCampaigns, submitAuthorAdForReview, updateAuthorAdDraft } from '../../services/authorAdsApi'
 
 registerTranslationNamespace('authorAds', {
   en: {
@@ -87,6 +87,34 @@ registerTranslationNamespace('authorAds', {
   },
 })
 
+registerTranslationNamespace('authorAds', {
+  en: {
+    boostBudget: 'Budget', boostFunded: 'Funded', boostSpent: 'Actual spent',
+    boostAvailable: 'Available funds', boostRefunded: 'Refunded',
+    budgetProgress: 'Budget used', boostGoal: 'Goal', boostAudience: 'Audience',
+  },
+  km: {
+    boostBudget: 'ថវិកាសរុប', boostFunded: 'បានបង់', boostSpent: 'ចំណាយពិត',
+    boostAvailable: 'ថវិកានៅសល់', boostRefunded: 'បានសងវិញ',
+    budgetProgress: 'បានប្រើថវិកា', boostGoal: 'គោលដៅ', boostAudience: 'អ្នកអានគោលដៅ',
+  },
+  zh: {
+    boostBudget: '预算', boostFunded: '已充值', boostSpent: '实际花费',
+    boostAvailable: '可用资金', boostRefunded: '已退款',
+    budgetProgress: '预算使用率', boostGoal: '目标', boostAudience: '受众',
+  },
+  ja: {
+    boostBudget: '予算', boostFunded: '入金済み', boostSpent: '実際の支出',
+    boostAvailable: '利用可能額', boostRefunded: '返金済み',
+    budgetProgress: '予算使用率', boostGoal: '目標', boostAudience: '対象ユーザー',
+  },
+  ko: {
+    boostBudget: '예산', boostFunded: '충전됨', boostSpent: '실제 지출',
+    boostAvailable: '사용 가능 금액', boostRefunded: '환불됨',
+    budgetProgress: '예산 사용률', boostGoal: '목표', boostAudience: '대상 독자',
+  },
+})
+
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
   : 'https://shadow-backend-kucw.onrender.com'
@@ -94,11 +122,16 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
 const LANGUAGES = ['km', 'en', 'zh', 'ko', 'ja']
 const GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Horror', 'Mystery', 'Drama', 'Comedy', 'Historical', 'Sci-Fi', 'LGBTQ+']
 const DURATION_OPTIONS = [1, 3, 7, 14]
+const CAMPAIGNS_PER_PAGE = 10
 const INPUT_CLASS = 'w-full rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-3 text-sm text-[var(--shadow-text-primary)] outline-none focus:border-[#9b83e9]'
 const STATUS_LABELS = {
   draft: 'draft', pending_review: 'pendingReview', approved: 'approved',
   scheduled: 'scheduled', active: 'active', paused: 'paused',
   completed: 'completed', rejected: 'rejected', cancelled: 'cancelled',
+}
+const GOAL_LABELS = {
+  views: 'moreViews', visits: 'moreVisits', readers: 'moreReaders',
+  followers: 'moreFollowers', unlocks: 'moreUnlocks', sales: 'moreSales',
 }
 
 function safeImageSrc(value) {
@@ -309,7 +342,7 @@ export default function AuthorAdsPage() {
     const controller = new AbortController()
     setCampaignsLoading(true)
     setCampaignsError('')
-    listAuthorAdCampaigns({ page: 1, limit: AUTHOR_ADS_PAGE_SIZE, signal: controller.signal, refresh: true })
+    listAuthorAdCampaigns({ page: 1, limit: CAMPAIGNS_PER_PAGE, signal: controller.signal, refresh: true })
       .then(result => {
         if (!active) return
         setCampaigns(result.campaigns)
@@ -343,7 +376,7 @@ export default function AuthorAdsPage() {
     setCampaignsLoadingMore(true)
     setCampaignsError('')
     try {
-      const result = await listAuthorAdCampaigns({ page: campaignsPage + 1, limit: AUTHOR_ADS_PAGE_SIZE })
+      const result = await listAuthorAdCampaigns({ page: campaignsPage + 1, limit: CAMPAIGNS_PER_PAGE })
       setCampaigns(current => {
         const next = new Map(current.map(item => [item.id, item]))
         result.campaigns.forEach(item => next.set(item.id, item))
@@ -711,6 +744,16 @@ export default function AuthorAdsPage() {
                 <h2 className="text-sm font-semibold">{t('authorAds.cloudCampaigns')}</h2>
                 {campaigns.map(campaign => {
                   const editable = campaign.status === 'draft' && campaign.reviewStatus === 'not_submitted'
+                   const budget = Math.max(0, Number(campaign.budgetUsd) || 0)
+                   const funded = Math.max(0, Number(campaign.fundedUsd) || 0)
+                   const spent = Math.max(0, Number(campaign.spentUsd) || 0)
+                   const refunded = Math.max(0, Number(campaign.refundedUsd) || 0)
+                   const available = Math.max(0, funded - spent - refunded)
+                   const usedPercent = budget > 0 ? Math.min(100, Math.round(spent / budget * 10000) / 100) : 0
+                   const audience = campaign.audience || {}
+                   const selectedAudience = audience.mode === 'manual'
+                     ? [audience.genre, audience.language?.toUpperCase(), audience.country].filter(Boolean).join(' · ')
+                     : ''
                   return (
                     <div key={campaign.id} className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4">
                       <div className="flex gap-3">
@@ -723,6 +766,33 @@ export default function AuthorAdsPage() {
                           <p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{'$' + Number(campaign.budgetUsd || 0).toFixed(2)} · {t('authorAds.days', { count: campaign.durationDays })}</p>
                         </div>
                       </div>
+                       <div className="mt-3 space-y-1 text-xs text-[var(--shadow-text-secondary)]">
+                         <p><span className="font-medium text-[var(--shadow-text-primary)]">{t('authorAds.' + (campaign.kind === 'post' ? 'boostPost' : 'boostBook'))}</span> · {t('authorAds.boostGoal')}: {t('authorAds.' + (GOAL_LABELS[campaign.goal] || 'chooseGoal'))}</p>
+                         <p>{t('authorAds.boostAudience')}: {t('authorAds.' + (audience.mode === 'manual' ? 'manual' : 'automatic'))}{selectedAudience ? ' · ' + selectedAudience : ''}</p>
+                       </div>
+                       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                         {[
+                           ['boostBudget', budget],
+                           ['boostFunded', funded],
+                           ['boostSpent', spent],
+                           ['boostAvailable', available],
+                         ].map(([key, value]) => (
+                           <div key={key} className="min-w-0 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2">
+                             <p className="text-[11px] text-[var(--shadow-text-secondary)]">{t('authorAds.' + key)}</p>
+                             <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--shadow-text-primary)]">{'$' + value.toFixed(2)}</p>
+                           </div>
+                         ))}
+                       </div>
+                       {refunded > 0 && <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.boostRefunded')}: {'$' + refunded.toFixed(2)}</p>}
+                       <div className="mt-3">
+                         <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+                           <span className="text-[var(--shadow-text-secondary)]">{t('authorAds.budgetProgress')}</span>
+                           <span className="font-semibold tabular-nums">{usedPercent.toFixed(2)}%</span>
+                         </div>
+                         <div className="h-2 overflow-hidden rounded-full bg-[var(--shadow-bg-soft)]" role="progressbar" aria-label={t('authorAds.budgetProgress')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={usedPercent}>
+                           <div className="h-full rounded-full bg-[#9b83e9]" style={{ width: `${usedPercent}%` }} />
+                         </div>
+                       </div>
                       {campaign.reviewReason && <p className="mt-3 rounded-lg bg-[var(--shadow-bg-soft)] p-2 text-xs text-[var(--shadow-text-secondary)]">{campaign.reviewReason}</p>}
                       {editable && <div className="mt-3 flex flex-wrap justify-end gap-3">
                         <button type="button" disabled={Boolean(processingId)} onClick={() => deleteCampaign(campaign.id)} className="text-xs text-[#cf4a52] disabled:opacity-50">{t('authorAds.deleteDraft')}</button>
@@ -772,3 +842,4 @@ export default function AuthorAdsPage() {
     </main>
   )
 }
+
