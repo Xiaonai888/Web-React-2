@@ -649,7 +649,18 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
   )
 }
 
-function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLetter, authorPage, authorNotificationCount, onOwnAccount, onAuthorPage, onManageAccount }) {
+function MeReaderAvatar({ avatarUrl, avatarLetter, displayName, frameUrl, loggedIn = true, compact = false }) {
+  return (
+    <span className="relative block h-full w-full">
+      <span className={`absolute ${frameUrl ? 'inset-[17%]' : 'inset-0'} flex items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white`}>
+        {loggedIn && avatarUrl ? <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" /> : loggedIn ? <span className={`${compact ? 'text-[18px]' : 'text-[26px]'} font-extrabold`}>{avatarLetter}</span> : <i className="far fa-user text-[26px]" />}
+      </span>
+      {frameUrl ? <img src={frameUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" /> : null}
+    </span>
+  )
+}
+
+function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLetter, frameUrl, authorPage, authorNotificationCount, onOwnAccount, onAuthorPage, onManageAccount }) {
   const { t: tx } = useDisplayTranslation()
 
   if (!open) return null
@@ -670,13 +681,7 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
         <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
           <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{avatarLetter}</span>
-                )}
-              </div>
+              <div className="h-12 w-12 shrink-0"><MeReaderAvatar avatarUrl={avatarUrl} avatarLetter={avatarLetter} displayName={displayName} frameUrl={frameUrl} compact /></div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827] dark:text-white">{displayName}</div>
 
@@ -758,6 +763,22 @@ export default function Me() {
   const [libraryUnreadCount, setLibraryUnreadCount] = useState(0)
   const [diamondCreditNotice, setDiamondCreditNotice] = useState(null)
   const diamondCreditNoticeAckRef = useRef(null)
+  const [activeProfileFrame, setActiveProfileFrame] = useState(null)
+
+  useEffect(() => {
+    if (!token) { setActiveProfileFrame(null); return undefined }
+    const controller = new AbortController()
+    fetch(`${API_BASE_URL}/api/profile-frames/selection`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+      signal: controller.signal,
+    }).then(response => response.ok ? response.json() : null).then(data => {
+      if (!controller.signal.aborted) setActiveProfileFrame(data?.ok === true ? data.frame || null : null)
+    }).catch(() => {
+      if (!controller.signal.aborted) setActiveProfileFrame(null)
+    })
+    return () => controller.abort()
+  }, [token])
 
   useEffect(() => {
     if (!token) {
@@ -845,6 +866,12 @@ export default function Me() {
   const displayName = storedUser?.name || (isLoggedIn ? tx('mePage.reader') : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
   const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+  const profileFrameUrl = (() => {
+    try {
+      const url = new URL(activeProfileFrame?.image_url)
+      return url.protocol === 'https:' ? url.href : ''
+    } catch { return '' }
+  })()
   const authorPageName = authorPage?.page_name || authorPage?.name || tx('mePage.authorPage')
   const authorPageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || authorPage?.logo_url || ''
   const hasAuthorPage = Boolean(authorPage?.page_username)
@@ -1213,6 +1240,7 @@ const handleOpenProfileSwitcher = (event) => {
         displayName={displayName}
         avatarUrl={avatarUrl}
         avatarLetter={avatarLetter}
+        frameUrl={profileFrameUrl}
         authorPage={authorPage}
         authorNotificationCount={authorPageNotificationCount}
         onOwnAccount={handleOwnAccount}
@@ -1270,15 +1298,9 @@ const handleOpenProfileSwitcher = (event) => {
   <button
     type="button"
     onClick={handleOpenProfileArea}
-    className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white active:scale-[0.99]"
+    className="h-[72px] w-[72px] shrink-0 active:scale-[0.99]"
   >
-    {isLoggedIn && avatarUrl ? (
-      <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-    ) : isLoggedIn ? (
-      <span className="text-[26px] font-extrabold">{avatarLetter}</span>
-    ) : (
-      <i className="far fa-user text-[26px]" />
-    )}
+    <MeReaderAvatar avatarUrl={avatarUrl} avatarLetter={avatarLetter} displayName={displayName} frameUrl={profileFrameUrl} loggedIn={isLoggedIn} />
   </button>
 
   <div className="min-w-0 flex-1 pt-1.5">
