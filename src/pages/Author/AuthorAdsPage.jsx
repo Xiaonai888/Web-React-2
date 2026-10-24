@@ -4,6 +4,7 @@ import { ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, Image as ImageIcon
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { AUTHOR_ADS_PAGE_SIZE, createAuthorAdDraft, deleteAuthorAdDraft, listAuthorAdCampaigns, submitAuthorAdForReview, updateAuthorAdDraft } from '../../services/authorAdsApi'
 
 registerTranslationNamespace('authorAds', {
   en: {
@@ -23,6 +24,69 @@ registerTranslationNamespace('authorAds', {
   }
 })
 
+registerTranslationNamespace('authorAds', {
+  en: {
+    cloudSaved: 'Draft saved to your Shadow account. It is not live or paid.',
+    cloudCampaigns: 'Saved to Shadow', localCampaigns: 'Saved on this device', loadMoreBooks: 'Load more books',
+    loadingCampaigns: 'Loading campaigns...', loadMoreCampaigns: 'Load more campaigns',
+    campaignLoadFailed: 'Unable to load campaigns. Please retry.',
+    submitForReview: 'Submit for review', submittedForReview: 'Campaign submitted for review. It is not live or paid.',
+    confirmSubmit: 'Submit this campaign for admin review?',
+    pendingReview: 'Pending review', approved: 'Approved', scheduled: 'Scheduled',
+    paused: 'Paused', completed: 'Completed', rejected: 'Rejected', cancelled: 'Cancelled',
+    serverOffline: 'Campaign server is not ready. Your existing device drafts are still available.',
+    saveFailed: 'Unable to save this campaign. Please retry.', back: 'Back',
+  },
+  km: {
+    cloudSaved: 'បានរក្សាទុក Draft លើគណនី Shadow។ មិនទាន់ផ្សាយ ឬបង់ប្រាក់ទេ។',
+    cloudCampaigns: 'រក្សាទុកលើ Shadow', localCampaigns: 'រក្សាទុកលើឧបករណ៍នេះ', loadMoreBooks: 'ផ្ទុកសៀវភៅបន្ថែម',
+    loadingCampaigns: 'កំពុងផ្ទុក Campaign...', loadMoreCampaigns: 'ផ្ទុក Campaign បន្ថែម',
+    campaignLoadFailed: 'មិនអាចផ្ទុក Campaign បាន។ សូមសាកម្តងទៀត។',
+    submitForReview: 'ផ្ញើឱ្យ Admin ពិនិត្យ', submittedForReview: 'បានផ្ញើ Campaign ឱ្យពិនិត្យ។ មិនទាន់ផ្សាយ ឬបង់ប្រាក់ទេ។',
+    confirmSubmit: 'ផ្ញើ Campaign នេះទៅ Admin ដើម្បីពិនិត្យមែនទេ?',
+    pendingReview: 'កំពុងរង់ចាំពិនិត្យ', approved: 'បានអនុម័ត', scheduled: 'បានកំណត់ពេល',
+    paused: 'បានផ្អាក', completed: 'បានបញ្ចប់', rejected: 'មិនបានអនុម័ត', cancelled: 'បានបោះបង់',
+    serverOffline: 'Server Campaign មិនទាន់រួចរាល់។ Draft ចាស់លើឧបករណ៍នៅតែមាន។',
+    saveFailed: 'មិនអាចរក្សាទុក Campaign បាន។ សូមសាកម្តងទៀត។', back: 'ត្រឡប់',
+  },
+  zh: {
+    cloudSaved: '草稿已保存到 Shadow 账户，尚未投放或付款。',
+    cloudCampaigns: '保存在 Shadow', localCampaigns: '保存在此设备', loadMoreBooks: '加载更多书籍',
+    loadingCampaigns: '正在加载活动...', loadMoreCampaigns: '加载更多活动',
+    campaignLoadFailed: '无法加载活动，请重试。',
+    submitForReview: '提交审核', submittedForReview: '已提交审核，尚未投放或付款。',
+    confirmSubmit: '将此活动提交管理员审核？',
+    pendingReview: '等待审核', approved: '已批准', scheduled: '已排期',
+    paused: '已暂停', completed: '已完成', rejected: '已拒绝', cancelled: '已取消',
+    serverOffline: '活动服务器尚未就绪，本设备草稿仍然保留。',
+    saveFailed: '无法保存活动，请重试。', back: '返回',
+  },
+  ja: {
+    cloudSaved: 'Shadow アカウントに下書きを保存しました。配信・決済はまだです。',
+    cloudCampaigns: 'Shadow に保存', localCampaigns: 'この端末に保存', loadMoreBooks: '作品をさらに表示',
+    loadingCampaigns: 'キャンペーンを読み込み中...', loadMoreCampaigns: 'さらに読み込む',
+    campaignLoadFailed: 'キャンペーンを読み込めません。再試行してください。',
+    submitForReview: '審査に提出', submittedForReview: '審査に提出しました。配信・決済はまだです。',
+    confirmSubmit: 'このキャンペーンを管理者の審査に提出しますか？',
+    pendingReview: '審査待ち', approved: '承認済み', scheduled: '予約済み',
+    paused: '一時停止', completed: '完了', rejected: '却下', cancelled: 'キャンセル済み',
+    serverOffline: 'キャンペーンサーバーは準備中です。端末の下書きは保持されます。',
+    saveFailed: '保存できません。再試行してください。', back: '戻る',
+  },
+  ko: {
+    cloudSaved: 'Shadow 계정에 초안을 저장했습니다. 아직 게재되거나 결제되지 않았습니다.',
+    cloudCampaigns: 'Shadow에 저장', localCampaigns: '이 기기에 저장', loadMoreBooks: '도서 더 보기',
+    loadingCampaigns: '캠페인 불러오는 중...', loadMoreCampaigns: '캠페인 더 보기',
+    campaignLoadFailed: '캠페인을 불러올 수 없습니다. 다시 시도하세요.',
+    submitForReview: '검토 요청', submittedForReview: '검토를 요청했습니다. 아직 게재되거나 결제되지 않았습니다.',
+    confirmSubmit: '이 캠페인을 관리자 검토로 제출할까요?',
+    pendingReview: '검토 대기', approved: '승인됨', scheduled: '예약됨',
+    paused: '일시정지', completed: '완료됨', rejected: '거절됨', cancelled: '취소됨',
+    serverOffline: '캠페인 서버가 아직 준비되지 않았습니다. 기기 초안은 유지됩니다.',
+    saveFailed: '캠페인을 저장할 수 없습니다. 다시 시도하세요.', back: '뒤로',
+  },
+})
+
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
   : 'https://shadow-backend-kucw.onrender.com'
@@ -31,6 +95,20 @@ const LANGUAGES = ['km', 'en', 'zh', 'ko', 'ja']
 const GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Horror', 'Mystery', 'Drama', 'Comedy', 'Historical', 'Sci-Fi', 'LGBTQ+']
 const DURATION_OPTIONS = [1, 3, 7, 14]
 const INPUT_CLASS = 'w-full rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-3 text-sm text-[var(--shadow-text-primary)] outline-none focus:border-[#9b83e9]'
+const STATUS_LABELS = {
+  draft: 'draft', pending_review: 'pendingReview', approved: 'approved',
+  scheduled: 'scheduled', active: 'active', paused: 'paused',
+  completed: 'completed', rejected: 'rejected', cancelled: 'cancelled',
+}
+
+function safeImageSrc(value) {
+  const url = String(value || '').trim()
+  if (!url) return ''
+  if (/^https:\/\//i.test(url) || /^\/(?!\/)/.test(url)) return url
+  if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+      /^http:\/\/localhost(?::\d+)?\//i.test(url)) return url
+  return ''
+}
 
 function getToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
@@ -52,10 +130,10 @@ function normalizeStory(item) {
     key: `story:${item.id}`,
     id: String(item.id),
     sourceType: 'story',
-    type: item.story_type === 'manga' || item.story_type === 'chat_story' ? item.story_type : 'novel',
+    type: item.story_type === 'manga' || item.story_type === 'chat_story' ? item.story_type : 'story',
     title: String(item.title || ''),
     image: item.cover_url || '',
-    genre: String(item.genre || ''),
+    genre: String(item.main_genre || item.genre || ''),
     status: item.status
   }
 }
@@ -116,11 +194,11 @@ function Section({ title, children, aside }) {
 function ContentCard({ item, selected, onClick, t }) {
   const type = item.sourceType === 'post' ? t('authorAds.post') : item.sourceType === 'product'
     ? (item.type === 'pdf' ? t('authorAds.pdfType') : t('authorAds.bookType'))
-    : (item.type === 'manga' ? t('authorAds.manga') : item.type === 'chat_story' ? t('authorAds.chatStory') : t('authorAds.novel'))
+    : (item.type === 'manga' ? t('authorAds.manga') : item.type === 'chat_story' ? t('authorAds.chatStory') : item.type === 'story' ? t('authorAds.story') : t('authorAds.novel'))
   return (
     <button type="button" onClick={onClick} aria-pressed={selected} className={`flex w-full items-center gap-3 rounded-xl border p-2 text-left transition ${selected ? 'border-[#8061df] bg-[#f5f0ff] dark:bg-[#30224b]' : 'border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]'}`}>
       <div className="flex h-[70px] w-[58px] shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--shadow-bg-soft)]">
-        {item.image ? <img src={item.image} alt="" className="h-full w-full object-cover" loading="lazy" /> : <BookOpen size={23} className="text-[var(--shadow-text-tertiary)]" />}
+        {safeImageSrc(item.image) ? <img src={safeImageSrc(item.image)} alt="" className="h-full w-full object-cover" loading="lazy" /> : <BookOpen size={23} className="text-[var(--shadow-text-tertiary)]" />}
       </div>
       <div className="min-w-0 flex-1">
         <p className="line-clamp-2 text-sm font-medium text-[var(--shadow-text-primary)]">{item.title}</p>
@@ -154,8 +232,22 @@ export default function AuthorAdsPage() {
   const [duration, setDuration] = useState(3)
   const [drafts, setDrafts] = useState([])
   const [editingId, setEditingId] = useState('')
+  const [campaigns, setCampaigns] = useState([])
+  const [campaignsLoaded, setCampaignsLoaded] = useState(false)
+  const [campaignsLoading, setCampaignsLoading] = useState(false)
+  const [campaignsLoadingMore, setCampaignsLoadingMore] = useState(false)
+  const [campaignsHasMore, setCampaignsHasMore] = useState(false)
+  const [campaignsPage, setCampaignsPage] = useState(0)
+  const [campaignsError, setCampaignsError] = useState('')
+  const [backendAvailable, setBackendAvailable] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [processingId, setProcessingId] = useState('')
   const [postCursor, setPostCursor] = useState('')
   const [hasMorePosts, setHasMorePosts] = useState(false)
+  const [storyCursor, setStoryCursor] = useState('')
+  const [hasMoreStories, setHasMoreStories] = useState(false)
+  const [productPage, setProductPage] = useState(1)
+  const [hasMoreProducts, setHasMoreProducts] = useState(false)
   const [moreLoading, setMoreLoading] = useState(false)
 
   const loadContent = useCallback(async (signal) => {
@@ -171,15 +263,17 @@ export default function AuthorAdsPage() {
       const pageUsername = String(account.author_page?.page_username || '').trim()
       if (!pageUsername) throw new Error(t('authorAds.authorRequired'))
       const result = await Promise.allSettled([
-        requestJson('/api/stories/my', token, signal),
+        requestJson(`/api/authors/page/${encodeURIComponent(pageUsername)}/works?limit=10`, token, signal),
         requestJson(`/api/authors/page/${encodeURIComponent(pageUsername)}/posts?limit=20&content_library=1&status=active`, token, signal),
-        requestJson(`/api/author-store/page/${encodeURIComponent(pageUsername)}/products`, token, signal)
+        requestJson(`/api/author-store/page/${encodeURIComponent(pageUsername)}/products?page=1&limit=10`, token, signal)
       ])
       if (signal?.aborted) return
       const [storyResult, postResult, productResult] = result
-      const stories = storyResult.status === 'fulfilled' ? storyResult.value.stories || [] : []
+      const storyData = storyResult.status === 'fulfilled' ? storyResult.value : {}
       const postData = postResult.status === 'fulfilled' ? postResult.value : {}
-      const products = productResult.status === 'fulfilled' ? productResult.value.products || [] : []
+      const productData = productResult.status === 'fulfilled' ? productResult.value : {}
+      const stories = storyData.works || []
+      const products = productData.products || []
       setBooks([
         ...stories.filter(item => item.status === 'published').map(normalizeStory),
         ...products.filter(item => item.status === 'active').map(normalizeProduct)
@@ -187,8 +281,13 @@ export default function AuthorAdsPage() {
       setPosts((postData.posts || []).filter(item => Array.isArray(item.image_urls) && item.image_urls.length).map(normalizePost))
       setHasMorePosts(Boolean(postData.has_more))
       setPostCursor(postData.next_before || '')
+      setHasMoreStories(Boolean(storyData.has_more))
+      setStoryCursor(storyData.next_before_id || '')
+      setHasMoreProducts(Boolean(productData.pagination?.has_next))
+      setProductPage(1)
       setUsername(pageUsername)
       setDrafts(readDrafts(pageUsername))
+      setCampaignsLoaded(false)
       if (result.some(item => item.status === 'rejected')) setError(t('authorAds.loadFailed'))
     } catch (cause) {
       if (signal?.aborted) return
@@ -203,6 +302,61 @@ export default function AuthorAdsPage() {
     loadContent(controller.signal)
     return () => controller.abort()
   }, [loadContent])
+
+  useEffect(() => {
+    if (section !== 'campaigns' || !username || campaignsLoaded) return
+    let active = true
+    const controller = new AbortController()
+    setCampaignsLoading(true)
+    setCampaignsError('')
+    listAuthorAdCampaigns({ page: 1, limit: AUTHOR_ADS_PAGE_SIZE, signal: controller.signal, refresh: true })
+      .then(result => {
+        if (!active) return
+        setCampaigns(result.campaigns)
+        setCampaignsPage(1)
+        setCampaignsHasMore(result.has_more)
+        setBackendAvailable(true)
+        setCampaignsLoaded(true)
+      })
+      .catch(cause => {
+        if (!active || controller.signal.aborted) return
+        setCampaigns([])
+        setCampaignsPage(0)
+        setCampaignsHasMore(false)
+        setBackendAvailable(false)
+        setCampaignsLoaded(true)
+        if (cause?.code !== 'AUTHOR_ADS_NOT_CONFIGURED') {
+          setCampaignsError(t('authorAds.campaignLoadFailed'))
+        }
+      })
+      .finally(() => {
+        if (active) setCampaignsLoading(false)
+      })
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [campaignsLoaded, section, t, username])
+
+  const loadMoreCampaigns = async () => {
+    if (!backendAvailable || !campaignsHasMore || campaignsLoadingMore || campaignsLoading) return
+    setCampaignsLoadingMore(true)
+    setCampaignsError('')
+    try {
+      const result = await listAuthorAdCampaigns({ page: campaignsPage + 1, limit: AUTHOR_ADS_PAGE_SIZE })
+      setCampaigns(current => {
+        const next = new Map(current.map(item => [item.id, item]))
+        result.campaigns.forEach(item => next.set(item.id, item))
+        return [...next.values()]
+      })
+      setCampaignsPage(result.page)
+      setCampaignsHasMore(result.has_more)
+    } catch {
+      setCampaignsError(t('authorAds.campaignLoadFailed'))
+    } finally {
+      setCampaignsLoadingMore(false)
+    }
+  }
 
   const loadMorePosts = async () => {
     if (!username || !postCursor || !hasMorePosts || moreLoading) return
@@ -224,9 +378,79 @@ export default function AuthorAdsPage() {
     }
   }
 
+  const loadMoreBooks = async () => {
+    if (!username || moreLoading || (!hasMoreStories && !hasMoreProducts)) return
+    setMoreLoading(true)
+    const token = getToken()
+    const pageUsername = encodeURIComponent(username)
+    const requests = []
+    if (hasMoreStories && storyCursor) {
+      requests.push({
+        type: 'story',
+        promise: requestJson(`/api/authors/page/${pageUsername}/works?limit=10&before_id=${encodeURIComponent(storyCursor)}`, token),
+      })
+    }
+    if (hasMoreProducts) {
+      requests.push({
+        type: 'product',
+        promise: requestJson(`/api/author-store/page/${pageUsername}/products?page=${productPage + 1}&limit=10`, token),
+      })
+    }
+    if (!requests.length) {
+      setMoreLoading(false)
+      return
+    }
+    try {
+      const results = await Promise.allSettled(requests.map(item => item.promise))
+      const items = []
+      results.forEach((result, index) => {
+        if (result.status !== 'fulfilled') {
+          setMessage(t('authorAds.loadFailed'))
+          return
+        }
+        const data = result.value
+        if (requests[index].type === 'story') {
+          items.push(...(data.works || []).filter(item => item.status === 'published').map(normalizeStory))
+          setHasMoreStories(Boolean(data.has_more))
+          setStoryCursor(data.next_before_id || '')
+        } else {
+          items.push(...(data.products || []).filter(item => item.status === 'active').map(normalizeProduct))
+          setHasMoreProducts(Boolean(data.pagination?.has_next))
+          setProductPage(data.pagination?.page || productPage + 1)
+        }
+      })
+      if (items.length) {
+        setBooks(current => {
+          const next = new Map(current.map(item => [item.key, item]))
+          items.forEach(item => next.set(item.key, item))
+          return [...next.values()]
+        })
+      }
+    } finally {
+      setMoreLoading(false)
+    }
+  }
+
   const contents = kind === 'post' ? posts : books
-  const visibleItems = useMemo(() => contents.filter(item => item.title.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())), [contents, search])
-  const selectedItem = contents.find(item => item.key === selectedKey) || null
+  const editingCampaign = campaigns.find(item => item.id === editingId) || drafts.find(item => item.id === editingId)
+  const savedSelection = useMemo(() => {
+    if (!editingCampaign || editingCampaign.contentKey !== selectedKey || !selectedKey) return null
+    return {
+      key: selectedKey,
+      id: editingCampaign.contentId,
+      sourceType: editingCampaign.contentType,
+      type: editingCampaign.contentType === 'product' ? 'book' : editingCampaign.contentType === 'story' ? 'story' : 'post',
+      title: editingCampaign.contentTitle || '',
+      image: editingCampaign.contentImage || '',
+    }
+  }, [editingCampaign, selectedKey])
+  const selectedItem = contents.find(item => item.key === selectedKey) || savedSelection || null
+  const visibleItems = useMemo(() => {
+    const items = savedSelection && !contents.some(item => item.key === savedSelection.key)
+      ? [savedSelection, ...contents]
+      : contents
+    return items.filter(item => item.title.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
+  }, [contents, savedSelection, search])
   const goals = kind === 'post' ? [
     ['views', 'moreViews'], ['visits', 'moreVisits'], ['followers', 'moreFollowers']
   ] : selectedItem?.sourceType === 'product' ? [
@@ -245,14 +469,31 @@ export default function AuthorAdsPage() {
     setEditingId('')
   }
 
-  const saveDraft = () => {
+  const saveLocalDraft = draft => {
+    const nextDrafts = [draft, ...drafts.filter(item => item.id !== draft.id)]
+    try {
+      writeDrafts(username, nextDrafts)
+      setDrafts(nextDrafts)
+      setEditingId(draft.id)
+      setMessage(t('authorAds.draftSaved'))
+    } catch {
+      setMessage(t('authorAds.localSaveFailed'))
+    }
+  }
+
+  const saveDraft = async () => {
+    if (saving) return
     if (!username) return setMessage(t('authorAds.authorRequired'))
     if (!selectedItem) return setMessage(t('authorAds.selectFirst'))
     const numericBudget = Number(budget)
-    if (!Number.isFinite(numericBudget) || numericBudget < 1) return setMessage(t('authorAds.invalidBudget'))
+    if (!Number.isFinite(numericBudget) || numericBudget < 1 || numericBudget > 10000 ||
+        Math.round(numericBudget * 100) / 100 !== numericBudget) {
+      return setMessage(t('authorAds.invalidBudget'))
+    }
     const now = new Date().toISOString()
+    const localEditing = drafts.some(item => item.id === editingId)
     const draft = {
-      id: editingId || (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`),
+      id: localEditing ? editingId : (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`),
       status: 'draft',
       kind,
       contentKey: selectedItem.key,
@@ -266,16 +507,28 @@ export default function AuthorAdsPage() {
       budgetUsd: numericBudget,
       durationDays: duration,
       updatedAt: now,
-      createdAt: drafts.find(item => item.id === editingId)?.createdAt || now
+      createdAt: drafts.find(item => item.id === editingId)?.createdAt || now,
     }
-    const nextDrafts = [draft, ...drafts.filter(item => item.id !== draft.id)]
+    if (localEditing) return saveLocalDraft(draft)
+    setSaving(true)
+    setMessage('')
     try {
-      writeDrafts(username, nextDrafts)
-      setDrafts(nextDrafts)
-      setEditingId(draft.id)
-      setMessage(t('authorAds.draftSaved'))
-    } catch {
-      setMessage(t('authorAds.localSaveFailed'))
+      const result = editingId
+        ? await updateAuthorAdDraft(editingId, draft)
+        : await createAuthorAdDraft(draft)
+      setEditingId(result.id)
+      setBackendAvailable(true)
+      setCampaignsLoaded(false)
+      setMessage(t('authorAds.cloudSaved'))
+    } catch (cause) {
+      if (!editingId && cause?.code === 'AUTHOR_ADS_NOT_CONFIGURED') {
+        saveLocalDraft(draft)
+        setBackendAvailable(false)
+      } else {
+        setMessage(cause?.code === 'CONTENT_UNAVAILABLE' ? t('authorAds.contentUnavailable') : t('authorAds.saveFailed'))
+      }
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -307,13 +560,45 @@ export default function AuthorAdsPage() {
     }
   }
 
+  const deleteCampaign = async id => {
+    if (processingId || !window.confirm(t('authorAds.confirmDelete'))) return
+    setProcessingId(id)
+    setCampaignsError('')
+    try {
+      await deleteAuthorAdDraft(id)
+      setCampaigns(current => current.filter(item => item.id !== id))
+      setCampaignsLoaded(false)
+      if (editingId === id) setEditingId('')
+    } catch {
+      setCampaignsError(t('authorAds.saveFailed'))
+    } finally {
+      setProcessingId('')
+    }
+  }
+
+  const submitCampaign = async id => {
+    if (processingId || !window.confirm(t('authorAds.confirmSubmit'))) return
+    setProcessingId(id)
+    setCampaignsError('')
+    try {
+      const updated = await submitAuthorAdForReview(id)
+      setCampaigns(current => current.map(item => item.id === id ? updated : item))
+      setCampaignsLoaded(false)
+      setMessage(t('authorAds.submittedForReview'))
+    } catch {
+      setCampaignsError(t('authorAds.saveFailed'))
+    } finally {
+      setProcessingId('')
+    }
+  }
+
   const previewAction = kind === 'post' ? t('authorAds.viewPost') : selectedItem?.type === 'pdf' || selectedItem?.type === 'book' ? t('authorAds.buyNow') : t('authorAds.readNow')
 
   return (
     <main className="min-h-screen bg-[var(--shadow-bg-page)] pb-28 text-[var(--shadow-text-primary)]">
       <div className="mx-auto max-w-3xl px-4 pt-4 sm:px-6">
         <header className="mb-5 flex items-center gap-3">
-          <button type="button" aria-label="Back" onClick={() => navigate('/author/page')} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)]"><ArrowLeft size={20} /></button>
+          <button type="button" aria-label={t('authorAds.back')} onClick={() => navigate('/author/page')} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)]"><ArrowLeft size={20} /></button>
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-semibold">{t('authorAds.title')}</h1>
             <p className="text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.subtitle')}</p>
@@ -356,6 +641,7 @@ export default function AuthorAdsPage() {
                 </div>
               ) : <p className="py-8 text-center text-sm text-[var(--shadow-text-secondary)]">{t('authorAds.noContent')}</p>}
               {kind === 'post' && hasMorePosts && <button type="button" disabled={moreLoading} onClick={loadMorePosts} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--shadow-border)] py-2.5 text-xs font-medium"><RefreshCw size={14} className={moreLoading ? 'animate-spin' : ''} />{t('authorAds.loadMore')}</button>}
+              {kind === 'book' && (hasMoreStories || hasMoreProducts) && <button type="button" disabled={moreLoading} onClick={loadMoreBooks} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--shadow-border)] py-2.5 text-xs font-medium"><RefreshCw size={14} className={moreLoading ? 'animate-spin' : ''} />{t('authorAds.loadMoreBooks')}</button>}
               {error && <button type="button" onClick={() => { const controller = new AbortController(); loadContent(controller.signal) }} className="mt-3 text-xs text-[#7650d8]">{t('authorAds.retry')}</button>}
             </Section>
 
@@ -398,21 +684,86 @@ export default function AuthorAdsPage() {
             <Section title={t('authorAds.preview')}>
               <div className="mx-auto max-w-sm overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
                 <div className="flex items-center gap-2 p-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eee8ff] text-[#6847c7]"><Megaphone size={17} /></span><div><p className="text-xs font-medium">Shadow</p><p className="text-[11px] text-[var(--shadow-text-secondary)]">{t('authorAds.sponsored')}</p></div></div>
-                <div className="flex aspect-[16/10] items-center justify-center bg-[var(--shadow-bg-soft)]">{selectedItem?.image ? <img className="h-full w-full object-contain" src={selectedItem.image} alt="" /> : kind === 'post' ? <ImageIcon size={37} className="text-[var(--shadow-text-tertiary)]" /> : <BookOpen size={37} className="text-[var(--shadow-text-tertiary)]" />}</div>
+                <div className="flex aspect-[16/10] items-center justify-center bg-[var(--shadow-bg-soft)]">{safeImageSrc(selectedItem?.image) ? <img className="h-full w-full object-contain" src={safeImageSrc(selectedItem.image)} alt="" /> : kind === 'post' ? <ImageIcon size={37} className="text-[var(--shadow-text-tertiary)]" /> : <BookOpen size={37} className="text-[var(--shadow-text-tertiary)]" />}</div>
                 <div className="flex items-center justify-between gap-3 p-3"><p className="line-clamp-2 min-w-0 text-sm font-medium">{selectedItem?.title || t('authorAds.selectContent')}</p><span className="shrink-0 rounded-lg bg-[#f2cb55] px-3 py-2 text-xs font-medium text-black">{previewAction}</span></div>
               </div>
             </Section>
 
             {message && <p role="status" className="rounded-xl bg-[#f3edff] p-3 text-sm text-[#6246b7] dark:bg-[#30224b] dark:text-[#dbcaff]">{message}</p>}
             <div className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 text-xs leading-5 text-[var(--shadow-text-secondary)]"><Info size={16} className="mr-2 inline" />{t('authorAds.draftOnly')}</div>
-            <button type="button" disabled={!username || loading} onClick={saveDraft} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#171717] px-4 py-3.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"><Check size={17} />{t('authorAds.saveDraft')}</button>
+            <button type="button" disabled={!username || loading || saving} onClick={saveDraft} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#171717] px-4 py-3.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"><Check size={17} />{t(saving ? 'authorAds.saving' : 'authorAds.saveDraft')}</button>
           </div>
         )}
 
-        {section === 'campaigns' && <div className="space-y-3">
-          <p className="text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.savedOnDevice')}</p>
-          {!drafts.length ? <div className="rounded-2xl bg-[var(--shadow-bg-surface)] p-12 text-center"><Megaphone className="mx-auto mb-3 text-[var(--shadow-text-tertiary)]" size={34} /><h2 className="text-base font-medium">{t('authorAds.noCampaigns')}</h2><p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.noCampaignsHint')}</p><button type="button" onClick={() => setSection('create')} className="mt-5 rounded-lg bg-[#171717] px-5 py-2 text-sm text-white dark:bg-white dark:text-black">{t('authorAds.create')}</button></div> : drafts.map(draft => <div key={draft.id} className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4"><div className="flex gap-3"><div className="flex h-20 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--shadow-bg-soft)]">{draft.contentImage ? <img src={draft.contentImage} className="h-full w-full object-cover" alt="" /> : <BookOpen size={21} />}</div><div className="min-w-0 flex-1"><span className="rounded-full bg-[#f0eaff] px-2 py-1 text-[10px] font-medium text-[#6c45d0] dark:bg-[#30224b] dark:text-[#d4c1ff]">{t('authorAds.draft')} · {t('authorAds.notLive')}</span><h2 className="mt-2 line-clamp-2 text-sm font-medium">{draft.contentTitle}</h2><p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">${Number(draft.budgetUsd).toFixed(2)} · {t('authorAds.days', { count: draft.durationDays })}</p></div></div><div className="mt-3 flex justify-end gap-3"><button type="button" onClick={() => deleteDraft(draft.id)} className="text-xs text-[#cf4a52]">{t('authorAds.deleteDraft')}</button><button type="button" onClick={() => editDraft(draft)} className="flex items-center gap-1 text-xs font-medium text-[#8061df]">{t('authorAds.editDraft')}<ChevronRight size={14} /></button></div></div>)}
-        </div>}
+        {section === 'campaigns' && (
+          <div className="space-y-3">
+            {message && <p role="status" className="rounded-xl bg-[#f3edff] p-3 text-sm text-[#6246b7] dark:bg-[#30224b] dark:text-[#dbcaff]">{message}</p>}
+            {campaignsError && <p role="alert" className="rounded-xl bg-[#fff4ef] p-3 text-xs text-[#b44822] dark:bg-[#4c2b22] dark:text-[#ffb49a]">{campaignsError}</p>}
+            {campaignsLoading && <p className="py-6 text-center text-sm text-[var(--shadow-text-secondary)]">{t('authorAds.loadingCampaigns')}</p>}
+            {!campaignsLoading && !backendAvailable && (
+              <p className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.serverOffline')}</p>
+            )}
+            {!campaignsLoading && (!backendAvailable || campaignsError) && (
+              <button type="button" onClick={() => { setCampaignsError(''); setCampaignsLoaded(false) }} className="flex items-center gap-2 text-xs font-medium text-[#7650d8]"><RefreshCw size={14} />{t('authorAds.retry')}</button>
+            )}
+            {backendAvailable && (
+              <div className="space-y-3">
+                <h2 className="text-sm font-semibold">{t('authorAds.cloudCampaigns')}</h2>
+                {campaigns.map(campaign => {
+                  const editable = campaign.status === 'draft' && campaign.reviewStatus === 'not_submitted'
+                  return (
+                    <div key={campaign.id} className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4">
+                      <div className="flex gap-3">
+                        <div className="flex h-20 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--shadow-bg-soft)]">
+                          {safeImageSrc(campaign.contentImage) ? <img src={safeImageSrc(campaign.contentImage)} className="h-full w-full object-cover" alt="" /> : <BookOpen size={21} />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="rounded-full bg-[#f0eaff] px-2 py-1 text-[10px] font-medium text-[#6c45d0] dark:bg-[#30224b] dark:text-[#d4c1ff]">{t('authorAds.' + (STATUS_LABELS[campaign.status] || 'draft'))}</span>
+                          <h3 className="mt-2 line-clamp-2 text-sm font-medium">{campaign.contentTitle}</h3>
+                          <p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{'$' + Number(campaign.budgetUsd || 0).toFixed(2)} · {t('authorAds.days', { count: campaign.durationDays })}</p>
+                        </div>
+                      </div>
+                      {campaign.reviewReason && <p className="mt-3 rounded-lg bg-[var(--shadow-bg-soft)] p-2 text-xs text-[var(--shadow-text-secondary)]">{campaign.reviewReason}</p>}
+                      {editable && <div className="mt-3 flex flex-wrap justify-end gap-3">
+                        <button type="button" disabled={Boolean(processingId)} onClick={() => deleteCampaign(campaign.id)} className="text-xs text-[#cf4a52] disabled:opacity-50">{t('authorAds.deleteDraft')}</button>
+                        <button type="button" disabled={Boolean(processingId)} onClick={() => editDraft(campaign)} className="flex items-center gap-1 text-xs font-medium text-[#8061df] disabled:opacity-50">{t('authorAds.editDraft')}<ChevronRight size={14} /></button>
+                        <button type="button" disabled={Boolean(processingId)} onClick={() => submitCampaign(campaign.id)} className="rounded-lg bg-[#171717] px-3 py-2 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black">{t('authorAds.submitForReview')}</button>
+                      </div>}
+                    </div>
+                  )
+                })}
+                {campaignsHasMore && <button type="button" disabled={campaignsLoadingMore} onClick={loadMoreCampaigns} className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--shadow-border)] py-3 text-xs font-medium disabled:opacity-50"><RefreshCw size={14} className={campaignsLoadingMore ? 'animate-spin' : ''} />{t('authorAds.loadMoreCampaigns')}</button>}
+              </div>
+            )}
+            {drafts.length > 0 && <div className="space-y-3">
+              <h2 className="text-sm font-semibold">{t('authorAds.localCampaigns')}</h2>
+              {drafts.map(draft => (
+                <div key={draft.id} className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4">
+                  <div className="flex gap-3">
+                    <div className="flex h-20 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--shadow-bg-soft)]">{safeImageSrc(draft.contentImage) ? <img src={safeImageSrc(draft.contentImage)} className="h-full w-full object-cover" alt="" /> : <BookOpen size={21} />}</div>
+                    <div className="min-w-0 flex-1">
+                      <span className="rounded-full bg-[#f0eaff] px-2 py-1 text-[10px] font-medium text-[#6c45d0] dark:bg-[#30224b] dark:text-[#d4c1ff]">{t('authorAds.draft')} · {t('authorAds.notLive')}</span>
+                      <h3 className="mt-2 line-clamp-2 text-sm font-medium">{draft.contentTitle}</h3>
+                      <p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{'$' + Number(draft.budgetUsd || 0).toFixed(2)} · {t('authorAds.days', { count: draft.durationDays })}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex justify-end gap-3">
+                    <button type="button" onClick={() => deleteDraft(draft.id)} className="text-xs text-[#cf4a52]">{t('authorAds.deleteDraft')}</button>
+                    <button type="button" onClick={() => editDraft(draft)} className="flex items-center gap-1 text-xs font-medium text-[#8061df]">{t('authorAds.editDraft')}<ChevronRight size={14} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>}
+            {!campaignsLoading && !campaigns.length && !drafts.length && (
+              <div className="rounded-2xl bg-[var(--shadow-bg-surface)] p-12 text-center">
+                <Megaphone className="mx-auto mb-3 text-[var(--shadow-text-tertiary)]" size={34} />
+                <h2 className="text-base font-medium">{t('authorAds.noCampaigns')}</h2>
+                <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.noCampaignsHint')}</p>
+                <button type="button" onClick={() => setSection('create')} className="mt-5 rounded-lg bg-[#171717] px-5 py-2 text-sm text-white dark:bg-white dark:text-black">{t('authorAds.create')}</button>
+              </div>
+            )}
+          </div>
+        )}
 
         {section === 'insights' && <div className="rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-5"><div className="grid grid-cols-2 gap-3">{['totalReach', 'postClicks', 'totalSpend', 'results'].map(key => <div key={key} className="rounded-xl bg-[var(--shadow-bg-soft)] p-4"><p className="text-2xl font-medium">—</p><p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{t(`authorAds.${key}`)}</p></div>)}</div><div className="mt-5 flex flex-col items-center py-8 text-center"><BarChart3 size={34} className="text-[var(--shadow-text-tertiary)]" /><h2 className="mt-3 text-sm font-medium">{t('authorAds.noInsights')}</h2><p className="mt-2 max-w-sm text-xs leading-5 text-[var(--shadow-text-secondary)]">{t('authorAds.insightsSoon')}</p></div></div>}
 
