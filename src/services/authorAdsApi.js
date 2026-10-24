@@ -246,3 +246,27 @@ export async function submitAuthorAdForReview(id, { signal } = {}) {
   invalidateCampaignCache()
   return result.campaign
 }
+
+export async function transitionAuthorAdCampaign(id, action, { signal } = {}) {
+  if (typeof action !== 'string' || !['start', 'pause', 'resume'].includes(action)) {
+    const error = new Error('Choose start, pause or resume')
+    error.code = 'INVALID_CAMPAIGN_ACTION'
+    throw error
+  }
+  const result = await authorAdRequest(`${BASE_PATH}/${encodeURIComponent(campaignId(id))}/transition`, {
+    method: 'POST', data: { action }, signal,
+  })
+  if (!result.campaign || typeof result.campaign !== 'object' || Array.isArray(result.campaign)) {
+    const error = new Error('Invalid campaign transition response')
+    error.code = 'INVALID_CAMPAIGN_RESPONSE'
+    throw error
+  }
+  invalidateCampaignCache()
+  return {
+    campaign: result.campaign,
+    changed: Boolean(result.changed),
+    paymentRequired: Boolean(result.payment_required),
+    deliveryActive: Boolean(result.delivery_active),
+  }
+}
+
