@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import PaymentProfileModal from '../Wallet/PaymentProfileModal'
+import DiamondPurchaseSuccessModal from './DiamondPurchaseSuccessModal'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -562,6 +563,7 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
 
 function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, onRefresh, t }) {
   useEffect(() => {
+    if (String(payment?.status || '').toLowerCase() === 'success') return undefined
     const bodyOverflow = document.body.style.overflow
     const htmlOverflow = document.documentElement.style.overflow
     document.body.style.overflow = 'hidden'
@@ -570,7 +572,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, 
       document.body.style.overflow = bodyOverflow
       document.documentElement.style.overflow = htmlOverflow
     }
-  }, [])
+  }, [payment?.status])
 
   if (!payment) return null
 
@@ -578,6 +580,20 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, 
   const isSuccess = status === 'success'
   const isReview = status === 'pending_review'
   const isWaiting = status === 'waiting_payment'
+
+  if (isSuccess) {
+    return (
+      <DiamondPurchaseSuccessModal
+        open
+        confirmed
+        diamonds={payment.diamonds}
+        bonusCoins={payment.bonus_gems ?? payment.bonus_coins ?? 0}
+        bonusVouchers={payment.bonus_vouchers ?? 0}
+        paymentMethod={payment.payment_method || 'payway'}
+        onClose={onClose}
+      />
+    )
+  }
 
   return createPortal(
   <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 px-4 pb-4 sm:items-center sm:pb-0">
