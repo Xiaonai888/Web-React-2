@@ -409,7 +409,17 @@ function PackageCard({ item, onPurchase, t }) {
 
   return (
     <div
-      className="relative flex min-h-[107px] items-start gap-3 overflow-hidden rounded-[12px] bg-[var(--shadow-bg-surface)] px-4 pb-3 ring-1 ring-[var(--shadow-border)]"
+      role="button"
+      tabIndex={0}
+      onClick={onPurchase}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onPurchase()
+        }
+      }}
+      aria-label={`${formatNumber(item.diamonds)} ${t('purchaseSection.diamonds')}, ${t('purchaseSection.payExactly', { amount: formatMoney(item.package_usd) })}`}
+      className="relative flex min-h-[107px] cursor-pointer items-start gap-3 overflow-hidden rounded-[12px] bg-[var(--shadow-bg-surface)] px-4 pb-3 text-left ring-1 ring-[var(--shadow-border)] transition-transform active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD400]"
       style={{ paddingTop: isBestValue ? '32px' : '16px' }}
     >
       {isBestValue ? (
@@ -440,13 +450,9 @@ function PackageCard({ item, onPurchase, t }) {
   </div>
 </div>
 
-      <button
-        type="button"
-        onClick={onPurchase}
-        className="min-w-[84px] shrink-0 self-center rounded-full bg-[#FFD400] px-3 py-2 text-[14px] font-[600] text-[#111111] active:scale-95"
-      >
+      <span className="min-w-[84px] shrink-0 self-center rounded-full bg-[#FFD400] px-3 py-2 text-center text-[14px] font-[600] text-[#111111]">
         {formatMoney(item.package_usd)}
-      </button>
+      </span>
     </div>
   )
 }
