@@ -85,6 +85,7 @@ import { syncReaderOneSignalIdentity } from './services/readerOneSignal.service'
 
 
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
+const MyFramePage = lazy(() => import('./pages/MyFramePage'))
 const AppPage = lazy(() => import('./pages/Me/AppPage'))
 const AppAccessGuard = lazy(() => import('./pages/Me/AppAccessGuard'))
 const ShadowStudioPage = lazy(() => import('./pages/Studio/ShadowStudioPage'))
@@ -424,6 +425,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/comments',
     '/saved-posts',
     '/game',
+    '/my-frame',
     '/app',
     '/apps/shadow-studio',
     '/apps/shadow-docs',
@@ -1696,6 +1698,7 @@ const shouldShowOpeningAds =
         <Route path="/author/page/:pageUsername/help" element={<LazyPage><AuthorPageHelpPage /></LazyPage>} />
         <Route path="/store" element={<ReaderStorePage />} />
         <Route path="/me" element={<Me />} />
+        <Route path="/my-frame" element={<LazyPage><MyFramePage /></LazyPage>} />
         <Route path="/music" element={<LazyPage><MusicPage /></LazyPage>} />
         <Route path="/author/top-supporters" element={<AuthorTopSupportersPage />} />
         <Route path="/author/monthly-earnings" element={<AuthorMonthlyEarningsPage />} />
