@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, setDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import MeSupportButton from '../../components/Me/MeSupportButton'
+import DiamondPurchaseSuccessModal from '../../components/Shop/DiamondPurchaseSuccessModal'
 
 registerTranslationNamespace('mePage', {
   en: {
@@ -755,6 +756,8 @@ export default function Me() {
 
   const token = getReaderToken()
   const [libraryUnreadCount, setLibraryUnreadCount] = useState(0)
+  const [diamondCreditNotice, setDiamondCreditNotice] = useState(null)
+  const diamondCreditNoticeAckRef = useRef(null)
 
   useEffect(() => {
     if (!token) {
@@ -788,6 +791,47 @@ export default function Me() {
     }
 
     loadLibraryUnreadCount()
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [token])
+
+  useEffect(() => {
+    if (!token) {
+      setDiamondCreditNotice(null)
+      return
+    }
+
+    const controller = new AbortController()
+    let active = true
+
+    async function loadDiamondCreditNotice() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/purchase/credit-notices/next`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
+        if (!response.ok) return
+
+        const data = await response.json().catch(() => ({}))
+        if (
+          active &&
+          data.ok === true &&
+          data.notice?.id &&
+          Number(data.notice.diamonds) > 0
+        ) {
+          setDiamondCreditNotice(data.notice)
+        }
+      } catch {}
+    }
+
+    loadDiamondCreditNotice()
 
     return () => {
       active = false
@@ -981,6 +1025,36 @@ export default function Me() {
   }
 }, [token, hasAuthorPage])
 
+  const handleDismissDiamondCreditNotice = () => {
+    if (!diamondCreditNotice || diamondCreditNoticeAckRef.current) return
+
+    const noticeId = diamondCreditNotice.id
+    const currentToken = getReaderToken()
+    diamondCreditNoticeAckRef.current = noticeId
+    setDiamondCreditNotice(null)
+
+    if (!currentToken) {
+      diamondCreditNoticeAckRef.current = null
+      return
+    }
+
+    fetch(
+      `${API_BASE_URL}/api/purchase/credit-notices/${encodeURIComponent(noticeId)}/seen`,
+      {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${currentToken}` },
+        cache: 'no-store',
+        keepalive: true,
+      }
+    )
+      .catch(() => {})
+      .finally(() => {
+        if (diamondCreditNoticeAckRef.current === noticeId) {
+          diamondCreditNoticeAckRef.current = null
+        }
+      })
+  }
+
   const handleLogout = () => {
     clearReaderSession()
     navigate('/login', { replace: true })
@@ -1094,6 +1168,16 @@ const handleOpenProfileSwitcher = (event) => {
   return (
     <div className="min-h-screen bg-[#fafafa] pb-[100px] dark:bg-[#0d0f16]">
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} isLoggedIn={isLoggedIn} />
+      <DiamondPurchaseSuccessModal
+        open={Boolean(diamondCreditNotice) && !settingsOpen && !profileSwitcherOpen && !switchingProfile}
+        confirmed={Boolean(diamondCreditNotice)}
+        diamonds={diamondCreditNotice?.diamonds || 0}
+        bonusCoins={diamondCreditNotice?.bonus_coins || 0}
+        bonusVouchers={diamondCreditNotice?.bonus_vouchers || 0}
+        paymentMethod={diamondCreditNotice?.payment_method || 'payway'}
+        delayed
+        onClose={handleDismissDiamondCreditNotice}
+      />
       {switchingProfile ? (
   <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white px-6 text-center dark:bg-[#0d0f16]">
     <div className="relative flex h-[86px] w-[86px] items-center justify-center">
