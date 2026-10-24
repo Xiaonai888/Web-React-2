@@ -83,6 +83,9 @@ const SHADOW_MALL_AD_ROTATION_HISTORY_LIMIT = 5000
 
 const discoverFeedInflightRequests =
   new Map()
+const discoverBoostSessionCache = new Map()
+const DISCOVER_BOOST_RECEIPT_CACHE_MS = 75 * 1000
+const DISCOVER_BOOST_EMPTY_RECHECK_MS = 5 * 60 * 1000
 const DISCOVER_VERSION_CHECK_INTERVAL_MS = 20 * 1000
 let discoverFeedVersion = null
 let discoverFeedVersionCheckedAt = 0
@@ -147,6 +150,37 @@ function getDiscoverFeedScope(token) {
   }
 
   return `reader-${(hash >>> 0).toString(36)}`
+}
+
+
+function getDiscoverBoostSession(token) {
+  if (!token) return null
+  const key = getDiscoverFeedScope(token)
+  const cached = discoverBoostSessionCache.get(key)
+  if (!cached) return null
+
+  const ttl = cached.posts.length || cached.books.length
+    ? DISCOVER_BOOST_RECEIPT_CACHE_MS
+    : DISCOVER_BOOST_EMPTY_RECHECK_MS
+  if (Date.now() - cached.savedAt >= ttl) {
+    discoverBoostSessionCache.delete(key)
+    return null
+  }
+
+  return cached
+}
+
+function saveDiscoverBoostSession(token, posts, books) {
+  if (!token) return
+  const key = getDiscoverFeedScope(token)
+  if (!discoverBoostSessionCache.has(key) && discoverBoostSessionCache.size >= 8) {
+    discoverBoostSessionCache.delete(discoverBoostSessionCache.keys().next().value)
+  }
+  discoverBoostSessionCache.set(key, {
+    posts: Array.isArray(posts) ? posts : [],
+    books: Array.isArray(books) ? books : [],
+    savedAt: Date.now(),
+  })
 }
 
 function getDiscoverFeedCacheKey(
@@ -1346,6 +1380,7 @@ function RealFollowedPostCard({
   onComment,
   onMore,
   hiddenWords = [],
+  onSponsoredClick,
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -1360,6 +1395,7 @@ function RealFollowedPostCard({
 
   function openFullPost() {
   if (!post?.id) return
+  onSponsoredClick?.()
 
   navigate(
     `/author/post/${encodeURIComponent(
@@ -1375,6 +1411,7 @@ function RealFollowedPostCard({
 
 function openPhotoPost(index) {
   if (!post?.id) return
+  onSponsoredClick?.()
 
   navigate(
     `/author/post/${encodeURIComponent(
@@ -1496,9 +1533,10 @@ const isOwner = Boolean(
 >
         <Link
   to={pageUrl}
-  onClick={(event) =>
+  onClick={(event) => {
     event.stopPropagation()
-  }
+    onSponsoredClick?.()
+  }}
   className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
           aria-label={discoverText('openAuthor', { name: authorName })}
         >
@@ -1521,9 +1559,10 @@ const isOwner = Boolean(
   <div className="min-w-0 text-[14px] leading-5">
     <Link
   to={pageUrl}
-  onClick={(event) =>
+  onClick={(event) => {
     event.stopPropagation()
-  }
+    onSponsoredClick?.()
+  }}
   className="break-words font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]"
 >
       {authorName}
@@ -1551,6 +1590,14 @@ const isOwner = Boolean(
 
   <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
     <span>{formatPostTime(post.created_at)}</span>
+    {post.sponsored ? (
+      <>
+        <span>·</span>
+        <span className="rounded-full bg-[#f6b800]/15 px-1.5 py-0.5 font-semibold text-[#9a6b00] dark:text-[#facc15]">
+          {discoverText('ad')}
+        </span>
+      </>
+    ) : null}
     <span>·</span>
     <i className="fa-solid fa-earth-americas text-[10px]" />
   </div>
@@ -1662,6 +1709,165 @@ const isOwner = Boolean(
     {followError || reactionError}
   </div>
 ) : null}
+    </article>
+  )
+}
+
+
+async function reportDiscoverBoostEngagement(token, post, eventType, details = {}) {
+  if (!token || !post?.id || !post?.boost_receipt) return
+  if (eventType !== 'impression' && eventType !== 'click') return
+
+  const payload = {
+    receipt: post.boost_receipt,
+    post_id: post.id,
+    event_type: eventType,
+  }
+
+  if (eventType === 'impression') {
+    const visibleMs = Number(details.visibleMs)
+    const visibleRatio = Number(details.visibleRatio)
+    if (!Number.isFinite(visibleMs) || visibleMs < 1000 || !Number.isFinite(visibleRatio) || visibleRatio < 0.5) return
+    payload.visible_ms = Math.min(120000, Math.floor(visibleMs))
+    payload.visible_ratio = Math.min(1, visibleRatio)
+  }
+
+  try {
+    await fetch(`${API_BASE_URL}/api/authors/discover/posts/boost-engagement`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+      keepalive: true,
+      cache: 'no-store',
+    })
+  } catch {}
+}
+
+function DiscoverBoostPostCard({
+  post,
+  token,
+  hiddenWords,
+  onReactionUpdated,
+  onFollowChanged,
+  onComment,
+  onMore,
+}) {
+  const containerRef = useRef(null)
+  const clickedReceiptRef = useRef('')
+
+  useEffect(() => {
+    const element = containerRef.current
+    if (!element || !token || !post?.boost_receipt || typeof IntersectionObserver === 'undefined') return undefined
+
+    let intersectionRatio = 0
+    let visibleSince = 0
+    let impressionReported = false
+    let timer = null
+
+    const stopTimer = () => {
+      if (timer !== null) window.clearTimeout(timer)
+      timer = null
+      visibleSince = 0
+    }
+
+    const checkVisibility = () => {
+      if (impressionReported || intersectionRatio < 0.5 || document.hidden) {
+        stopTimer()
+        return
+      }
+
+      if (!visibleSince) visibleSince = Date.now()
+      if (timer !== null) return
+
+      const remaining = Math.max(0, 1000 - (Date.now() - visibleSince))
+      timer = window.setTimeout(() => {
+        timer = null
+        if (intersectionRatio < 0.5 || document.hidden || impressionReported) {
+          stopTimer()
+          return
+        }
+
+        const visibleMs = Date.now() - visibleSince
+        if (visibleMs < 1000) {
+          checkVisibility()
+          return
+        }
+
+        impressionReported = true
+        void reportDiscoverBoostEngagement(token, post, 'impression', {
+          visibleMs,
+          visibleRatio: intersectionRatio,
+        })
+      }, remaining + 30)
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        intersectionRatio = entries[0]?.intersectionRatio || 0
+        checkVisibility()
+      },
+      { threshold: [0, 0.5, 1] }
+    )
+
+    observer.observe(element)
+    document.addEventListener('visibilitychange', checkVisibility)
+
+    return () => {
+      observer.disconnect()
+      document.removeEventListener('visibilitychange', checkVisibility)
+      stopTimer()
+    }
+  }, [post?.id, post?.boost_receipt, token])
+
+  function handleSponsoredClick() {
+    if (!post?.boost_receipt || clickedReceiptRef.current === post.boost_receipt) return
+    clickedReceiptRef.current = post.boost_receipt
+    void reportDiscoverBoostEngagement(token, post, 'click')
+  }
+
+  return (
+    <div ref={containerRef}>
+      <RealFollowedPostCard
+        post={post}
+        token={token}
+        hiddenWords={hiddenWords}
+        onReactionUpdated={onReactionUpdated}
+        onFollowChanged={onFollowChanged}
+        onComment={onComment}
+        onMore={onMore}
+        onSponsoredClick={handleSponsoredClick}
+      />
+    </div>
+  )
+}
+
+function DiscoverBoostBookCard({ book }) {
+  const username = String(book?.author_page?.page_username || '').trim()
+  const target = book.content_type === 'story'
+    ? `/story/${encodeURIComponent(book.id)}`
+    : username
+      ? `/author/page/${encodeURIComponent(username)}/store/product/${encodeURIComponent(book.id)}`
+      : ''
+  if (!target) return null
+
+  return (
+    <article className="overflow-hidden bg-white dark:bg-[var(--shadow-bg-surface)] ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[12px]">
+      <Link to={target} className="flex gap-4 p-4">
+        <img src={book.cover_url} alt={book.title} loading="lazy" decoding="async" className="h-36 w-24 shrink-0 rounded-[8px] object-cover" />
+        <div className="flex min-w-0 flex-1 flex-col justify-between">
+          <div>
+            <div className="mb-2 text-[11px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">{discoverText('ad')}</div>
+            <div className="line-clamp-3 text-[16px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">{book.title}</div>
+            <div className="mt-2 truncate text-[12px] text-gray-500 dark:text-[var(--shadow-text-secondary)]">{book.author_page?.page_name || ''}</div>
+          </div>
+          <span className="mt-3 self-start rounded-[8px] bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]">
+            {book.content_type === 'story' ? discoverText('readStory') : discoverText('shopNow')}
+          </span>
+        </div>
+      </Link>
     </article>
   )
 }
@@ -2748,6 +2954,8 @@ export default function DiscoverPage() {
   }, [])
 
   const [realPosts, setRealPosts] = useState([])
+  const [boostPosts, setBoostPosts] = useState([])
+  const [boostBooks, setBoostBooks] = useState([])
   const [realPostsCursor, setRealPostsCursor] = useState(null)
   const [realPostsHasMore, setRealPostsHasMore] = useState(false)
   const [realPostsLoading, setRealPostsLoading] = useState(true)
@@ -3232,6 +3440,13 @@ export default function DiscoverPage() {
     let alive = true
 
     async function loadInitialPosts() {
+      const sessionBoost = getDiscoverBoostSession(token)
+      setBoostPosts(
+        sessionBoost
+          ? applyAuthorPostLocalState(sessionBoost.posts, authorPostOverridesRef.current, authorFollowOverridesRef.current)
+          : []
+      )
+      setBoostBooks(sessionBoost?.books || [])
       if (!token) {
         if (alive) {
           setRealPosts([])
@@ -3319,8 +3534,9 @@ export default function DiscoverPage() {
             const currentVersion = await fetchDiscoverFeedVersion(discoverLocationKey)
             if (!alive) return
             if (
-              currentVersion === null ||
-              authorFeedVersionRef.current === currentVersion
+              (currentVersion === null ||
+                authorFeedVersionRef.current === currentVersion) &&
+              sessionBoost !== null
             ) return
           }
         }
@@ -3355,7 +3571,18 @@ export default function DiscoverPage() {
             data.next_cursor
         )
 
+        const incomingBoostPosts = applyAuthorPostLocalState(
+          Array.isArray(data.boost_posts) ? data.boost_posts : [],
+          authorPostOverridesRef.current,
+          authorFollowOverridesRef.current
+        ).filter((post) => post.sponsored && post.boost_receipt).slice(0, 3)
+        const incomingBoostBooks = (Array.isArray(data.boost_books) ? data.boost_books : [])
+          .filter((book) => book?.id && book.sponsored && book.boost_receipt && book.boost_delivery_ready === true)
+          .slice(0, 3)
         setRealPosts(nextPosts)
+        setBoostPosts(incomingBoostPosts)
+        setBoostBooks(incomingBoostBooks)
+        saveDiscoverBoostSession(token, incomingBoostPosts, incomingBoostBooks)
 
         setRealPostsCursor(
           nextCursor
@@ -3627,7 +3854,18 @@ export default function DiscoverPage() {
         has_more: nextHasMore,
       }
 
+      const incomingBoostPosts = applyAuthorPostLocalState(
+        Array.isArray(data.boost_posts) ? data.boost_posts : [],
+        authorPostOverridesRef.current,
+        authorFollowOverridesRef.current
+      ).filter((post) => post.sponsored && post.boost_receipt).slice(0, 3)
+      const incomingBoostBooks = (Array.isArray(data.boost_books) ? data.boost_books : [])
+        .filter((book) => book?.id && book.sponsored && book.boost_receipt && book.boost_delivery_ready === true)
+        .slice(0, 3)
       setRealPosts(nextPosts)
+      setBoostPosts(incomingBoostPosts)
+      setBoostBooks(incomingBoostBooks)
+      saveDiscoverBoostSession(token, incomingBoostPosts, incomingBoostBooks)
       setRealPostsCursor(nextCursor)
       setRealPostsHasMore(nextHasMore)
 
@@ -3823,6 +4061,22 @@ export default function DiscoverPage() {
     }))
   }, [realPosts, readerPosts, ownPostHighlightKey, feedRotationIndex])
 
+  const visibleBoostPosts = useMemo(() => {
+    const organicIds = new Set(realPosts.map((post) => String(post?.id || '')))
+    return boostPosts.filter((post) => post?.id && post.sponsored && post.boost_receipt && !organicIds.has(String(post.id))).slice(0, 3)
+  }, [boostPosts, realPosts])
+
+  const visibleBoostBooks = useMemo(() => {
+    const seen = new Set()
+    return boostBooks.filter((book) => {
+      if (!book?.id || !book.cover_url || !book.boost_receipt || book.boost_delivery_ready !== true) return false
+      const key = `${book.content_type}:${book.id}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    }).slice(0, 3)
+  }, [boostBooks])
+
   const firstReaderPostIndex =
   discoverTimeline.findIndex(
     (entry) =>
@@ -4016,6 +4270,10 @@ export default function DiscoverPage() {
       )
     )
 
+    setBoostPosts((current) => current.map((post) =>
+      post.id === activePostId ? { ...post, comment_count: nextCount } : post
+    ))
+
     setCommentPost((current) =>
       current?.id === activePostId
         ? {
@@ -4087,6 +4345,18 @@ export default function DiscoverPage() {
         return nextPost
       })
     )
+    setBoostPosts((current) => current.map((post) => {
+      if (String(post.id) !== id) return post
+      const updatedPost = data.post || {}
+      return {
+        ...post,
+        ...updatedPost,
+        author_page: { ...post.author_page, ...(updatedPost.author_page || {}) },
+        my_reaction: data.reaction_type || null,
+        like_count: Number(data.like_count ?? updatedPost.like_count ?? post.like_count ?? 0),
+        reaction_summary: Array.isArray(data.reaction_summary) ? data.reaction_summary : post.reaction_summary,
+      }
+    }))
   }
 
   function handleShadowMallStorySaleStatusChanged(
@@ -4160,6 +4430,7 @@ export default function DiscoverPage() {
     setRealPosts((current) =>
       current.filter((post) => post.id !== postId)
     )
+    setBoostPosts((current) => current.filter((post) => post.id !== postId))
     setOptionsPost(null)
   }
 
@@ -4169,6 +4440,7 @@ export default function DiscoverPage() {
         (post) => post.author_page?.id !== authorId
       )
     )
+    setBoostPosts((current) => current.filter((post) => post.author_page?.id !== authorId))
     setOptionsPost(null)
   }
 
@@ -4205,6 +4477,11 @@ export default function DiscoverPage() {
           : post
       )
     )
+    setBoostPosts((current) => current.map((post) =>
+      String(post.author_page?.id || '') === id
+        ? { ...post, is_following: Boolean(isFollowing), author_page: { ...post.author_page, is_following: Boolean(isFollowing) } }
+        : post
+    ))
   }
 
   useEffect(() => {
@@ -4353,6 +4630,26 @@ export default function DiscoverPage() {
     }
   }, [])
 
+
+  function renderBoostPost(post) {
+    return (
+      <DiscoverBoostPostCard
+        key={`discover-boost-${post.boost_campaign_id || post.id}`}
+        post={post}
+        token={token}
+        hiddenWords={hiddenWords}
+        onReactionUpdated={handleRealPostReactionUpdated}
+        onFollowChanged={updateAuthorFollowState}
+        onComment={openPostComments}
+        onMore={setOptionsPost}
+      />
+    )
+  }
+
+  function renderBoostBook(book) {
+    return <DiscoverBoostBookCard key={`discover-boost-book-${book.boost_campaign_id || book.id}`} book={book} />
+  }
+
   return (
     <div className="app-page discover-page min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[var(--shadow-bg-page)]">
   <DiscoverInsightsTracker />
@@ -4463,6 +4760,9 @@ export default function DiscoverPage() {
 />
                 )}
 
+                {visibleBoostPosts.filter((_, index) => [0, 3, 6][index] === entry.timelineIndex).map(renderBoostPost)}
+                {visibleBoostBooks.filter((_, index) => [1, 4, 7][index] === entry.timelineIndex).map(renderBoostBook)}
+
                 {entry.timelineIndex === 0 ? (
   <DiscoverAuthorStorePromotionSection />
 ) : null}
@@ -4526,6 +4826,9 @@ export default function DiscoverPage() {
                 ) : null}
               </Fragment>
             ))}
+
+            {visibleBoostPosts.filter((_, index) => [0, 3, 6][index] >= discoverTimeline.length).map(renderBoostPost)}
+            {visibleBoostBooks.filter((_, index) => [1, 4, 7][index] >= discoverTimeline.length).map(renderBoostBook)}
 
             {discoverTimeline.length > 0 &&
 discoverTimeline.length < 4 ? (
