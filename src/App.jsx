@@ -175,6 +175,7 @@ const AuthorPageFinancePage = lazy(() => import('./pages/Author/AuthorPageFinanc
 const AuthorPageIncomePage = lazy(() => import('./pages/Author/AuthorPageIncomePage'))
 const AuthorPageWithdrawalPage = lazy(() => import('./pages/Author/AuthorPageWithdrawalPage'))
 const ShadowMallPurchasePage = lazy(() => import('./pages/Shop/ShadowMallPurchasePage'))
+const BinancePayPage = lazy(() => import('./pages/BinancePayPage'))
 const ReaderAdminMailPage = lazy(() => import('./pages/Shop/ReaderAdminMailPage'))
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
 const ReaderPostCreatePage = lazy(() =>
@@ -1254,6 +1255,11 @@ const shouldShowOpeningAds =
       <ShadowMallPurchasePage />
     </LazyPage>
   }
+/>
+
+          <Route
+  path="/shop/mall/purchase/binance"
+  element={<LazyPage><BinancePayPage /></LazyPage>}
 />
           
 <Route
