@@ -158,6 +158,7 @@ const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreMana
 const AuthorStoreWithdrawalDetailsPage = lazy(() => import('./pages/Author/AuthorStoreWithdrawalDetailsPage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
+const AuthorAdsPage = lazy(() => import('./pages/Author/AuthorAdsPage'))
 const AuthorPostsContentLibraryPage = lazy(() =>
   import('./pages/Author/AuthorPostsContentLibraryPage')
 )
@@ -1075,6 +1076,11 @@ const shouldShowOpeningAds =
       <AuthorStoreManagerPage />
     </LazyPage>
   }
+/>
+
+          <Route
+  path="/author/page/ads"
+  element={<LazyPage><AuthorAdsPage /></LazyPage>}
 />
           
 <Route
