@@ -58,6 +58,11 @@ registerTranslationNamespace('purchaseSection', {
     noteDiamonds: 'Diamonds are used to unlock premium episodes and support creators.',
     noteBonusCoins: 'Bonus Coins are added automatically after payment is confirmed.',
     noteRefund: 'Completed purchases are non-refundable.',
+    noteCambodianAudience: 'For Cambodian readers only:',
+    noteCambodianContact: 'If Diamonds are not credited within 1 minute after purchase, please contact',
+    noteGlobalAudience: 'For Global readers:',
+    noteGlobalContact: 'If Diamonds are not credited within 1 minute after purchase, please contact us via',
+    noteContactOr: 'or',
   },
   km: {
     diamond: 'Diamond',
@@ -111,6 +116,11 @@ registerTranslationNamespace('purchaseSection', {
     noteDiamonds: 'Diamonds ប្រើសម្រាប់ដោះសោភាគ Premium និងគាំទ្រអ្នកបង្កើត។',
     noteBonusCoins: 'Bonus Coins នឹងត្រូវបញ្ចូលដោយស្វ័យប្រវត្តិ បន្ទាប់ពីការទូទាត់ត្រូវបានបញ្ជាក់។',
     noteRefund: 'ការទិញដែលបានបញ្ចប់ មិនអាចសងប្រាក់វិញបានទេ។',
+    noteCambodianAudience: 'សម្រាប់អ្នកអាននៅកម្ពុជាប៉ុណ្ណោះ៖',
+    noteCambodianContact: 'បើ Diamonds មិនទាន់ចូលកាបូបក្នុងរយៈពេល ១ នាទីក្រោយទិញ សូមទាក់ទង',
+    noteGlobalAudience: 'សម្រាប់អ្នកអានទូទាំងពិភពលោក៖',
+    noteGlobalContact: 'បើ Diamonds មិនទាន់ចូលកាបូបក្នុងរយៈពេល ១ នាទីក្រោយទិញ សូមទាក់ទងតាម',
+    noteContactOr: 'ឬ',
   },
   zh: {
     diamond: 'Diamond',
@@ -164,6 +174,11 @@ registerTranslationNamespace('purchaseSection', {
     noteDiamonds: 'Diamonds 用于解锁 Premium 章节并支持创作者。',
     noteBonusCoins: '付款确认后，额外 Coins 将自动添加。',
     noteRefund: '已完成的购买不可退款。',
+    noteCambodianAudience: '仅限柬埔寨读者：',
+    noteCambodianContact: '如果购买后 1 分钟内 Diamonds 仍未到账，请联系',
+    noteGlobalAudience: '面向全球读者：',
+    noteGlobalContact: '如果购买后 1 分钟内 Diamonds 仍未到账，请通过以下方式联系我们：',
+    noteContactOr: '或',
   },
   ja: {
     diamond: 'Diamond',
@@ -217,6 +232,11 @@ registerTranslationNamespace('purchaseSection', {
     noteDiamonds: 'Diamonds は Premium エピソードの解除とクリエイターの支援に使用されます。',
     noteBonusCoins: '支払い確認後、ボーナス Coins が自動的に追加されます。',
     noteRefund: '完了した購入は返金できません。',
+    noteCambodianAudience: 'カンボジアの読者限定：',
+    noteCambodianContact: '購入後 1 分以内に Diamonds が反映されない場合は、こちらにご連絡ください：',
+    noteGlobalAudience: '世界中の読者へ：',
+    noteGlobalContact: '購入後 1 分以内に Diamonds が反映されない場合は、こちらからお問い合わせください：',
+    noteContactOr: 'または',
   },
   ko: {
     diamond: 'Diamond',
@@ -270,6 +290,11 @@ registerTranslationNamespace('purchaseSection', {
     noteDiamonds: 'Diamonds는 Premium 에피소드 잠금 해제와 창작자 지원에 사용됩니다.',
     noteBonusCoins: '결제가 확인되면 보너스 Coins가 자동으로 추가됩니다.',
     noteRefund: '완료된 구매는 환불되지 않습니다.',
+    noteCambodianAudience: '캄보디아 독자 전용:',
+    noteCambodianContact: '구매 후 1분 이내에 Diamonds가 지급되지 않으면 다음으로 문의하세요:',
+    noteGlobalAudience: '전 세계 독자 대상:',
+    noteGlobalContact: '구매 후 1분 이내에 Diamonds가 지급되지 않으면 다음을 통해 문의하세요:',
+    noteContactOr: '또는',
   },
 })
 
@@ -1023,6 +1048,20 @@ export default function PurchaseSection() {
     <li>{t('purchaseSection.noteDiamonds')}</li>
     <li>{t('purchaseSection.noteBonusCoins')}</li>
     <li>{t('purchaseSection.noteRefund')}</li>
+    <li>
+      <strong className="font-bold text-[var(--shadow-text-primary)]">{t('purchaseSection.noteCambodianAudience')}</strong>{' '}
+      {t('purchaseSection.noteCambodianContact')}{' '}
+      <a href="https://web.facebook.com/AlphaCentauri12226/" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1877F2] underline underline-offset-2">“ប្រលោមលោកស្នេហា”</a>{' '}
+      {t('purchaseSection.noteContactOr')}{' '}
+      <a href="https://t.me/Shadow12226" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#229ED9] underline underline-offset-2">“Shadow Admin”</a>.
+    </li>
+    <li>
+      <strong className="font-bold text-[var(--shadow-text-primary)]">{t('purchaseSection.noteGlobalAudience')}</strong>{' '}
+      {t('purchaseSection.noteGlobalContact')}{' '}
+      <a href="https://web.facebook.com/profile.php?id=61595012230891" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1877F2] underline underline-offset-2">“Shadow”</a>{' '}
+      {t('purchaseSection.noteContactOr')}{' '}
+      <button type="button" onClick={() => navigate('/shop/mall/support-mail')} className="inline font-semibold text-[#1877F2] underline underline-offset-2">“Mail”</button>.
+    </li>
   </ol>
 </div>
 
@@ -1063,3 +1102,4 @@ export default function PurchaseSection() {
 )
 
 }
+
