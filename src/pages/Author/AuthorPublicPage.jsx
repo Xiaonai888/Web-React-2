@@ -2841,10 +2841,7 @@ function handleOpenMessage() {
         label: t('authorPublicPage.advertise'),
         icon: 'fa-bullhorn',
         type: 'secondary',
-        onClick: () =>
-          setMessage(
-            getDisplayText('authorPublicPage.comingSoon', { label: t('authorPublicPage.advertise') })
-          ),
+        onClick: () => navigate('/author/page/ads'),
       },
     ]
   }
