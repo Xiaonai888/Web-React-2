@@ -11,7 +11,7 @@ import {
 } from './EpisodeEditorPage'
 import CompletedStoryConfirmModal from '../../components/author/CompletedStoryConfirmModal'
 import StorySettingSheet from '../../components/author/StorySettingSheet'
-import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import {
@@ -21,6 +21,12 @@ import {
   storyMediaDraftKey,
 } from '../../utils/storyMediaDraftAssets'
 import { createStoryMediaUploadQueue } from '../../utils/storyMediaUploadQueue'
+import {
+  clearCompletedStoryCreation,
+  listStoryCreationJobs,
+  queueStoryCreation,
+  startStoryCreationSync,
+} from '../../utils/storyCreationSyncQueue'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('createStory', {
@@ -46,6 +52,69 @@ const API_BASE_URL =
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
+const STORY_SYNC_LABELS = {
+  en: {
+    saved: 'Story saved on this device',
+    waiting: 'Your images and story details are saved locally. Cloudflare uploads and server sync are continuing. You can edit the first episode when the server confirms the Story ID.',
+    preparing: 'Saving the story locally...',
+    submitting: 'The server is creating your story. Do not submit it again.',
+    needsReview: 'Story sync needs verification',
+    needsReviewHelp: 'The server result could not be confirmed. Check Author Dashboard before trying to create this story again.',
+    error: 'Background upload needs attention:',
+    retry: 'Retry failed uploads',
+    check: 'Check sync',
+    dashboard: 'Author Dashboard',
+  },
+  km: {
+    saved: 'រឿងបានរក្សាទុកក្នុងឧបករណ៍នេះ',
+    waiting: 'ព័ត៌មានរឿង និងរូបភាពបានរក្សាទុកក្នុង Local។ Cloudflare និង Server កំពុង Sync នៅ Background។ អ្នកអាចកែភាគដំបូងនៅពេល Server បញ្ជាក់ Story ID។',
+    preparing: 'កំពុងរក្សាទុករឿងក្នុង Local...',
+    submitting: 'Server កំពុងបង្កើតរឿង។ សូមកុំចុចបង្កើតស្ទួន។',
+    needsReview: 'ត្រូវពិនិត្យការបញ្ជូនរឿង',
+    needsReviewHelp: 'មិនទាន់បញ្ជាក់លទ្ធផលពី Server បានទេ។ សូមពិនិត្យ Author Dashboard មុនបង្កើតរឿងនេះសារជាថ្មី។',
+    error: 'Background Upload មានបញ្ហា៖',
+    retry: 'សាក Upload ដែលបរាជ័យម្ដងទៀត',
+    check: 'ពិនិត្យ Sync',
+    dashboard: 'Author Dashboard',
+  },
+  zh: {
+    saved: '作品已保存在本机',
+    waiting: '作品信息和图片已保存在本机。Cloudflare 上传和服务器同步会在后台继续。确认作品 ID 后即可编辑第一章。',
+    preparing: '正在本地保存作品...',
+    submitting: '服务器正在创建作品，请勿重复提交。',
+    needsReview: '作品同步需要核实',
+    needsReviewHelp: '服务器结果未能确认。再次创建前请检查作者控制台。',
+    error: '后台上传需要处理：',
+    retry: '重试失败的上传',
+    check: '检查同步',
+    dashboard: '作者控制台',
+  },
+  ja: {
+    saved: '作品を端末に保存しました',
+    waiting: '作品情報と画像は端末に保存されています。Cloudflareへのアップロードとサーバー同期はバックグラウンドで続きます。作品IDの確認後、最初のエピソードを編集できます。',
+    preparing: '端末に保存中...',
+    submitting: 'サーバーで作品を作成しています。重複送信しないでください。',
+    needsReview: '作品の同期確認が必要です',
+    needsReviewHelp: 'サーバーの結果を確認できません。再作成する前に作家ダッシュボードをご確認ください。',
+    error: 'バックグラウンドアップロードに問題があります：',
+    retry: '失敗したアップロードを再試行',
+    check: '同期を確認',
+    dashboard: '作家ダッシュボード',
+  },
+  ko: {
+    saved: '작품을 기기에 저장했습니다',
+    waiting: '작품 정보와 이미지가 기기에 저장되었습니다. Cloudflare 업로드 및 서버 동기화는 백그라운드에서 계속됩니다. 작품 ID가 확인되면 첫 화를 편집할 수 있습니다.',
+    preparing: '기기에 저장 중...',
+    submitting: '서버에서 작품을 만들고 있습니다. 중복 제출하지 마세요.',
+    needsReview: '작품 동기화 확인이 필요합니다',
+    needsReviewHelp: '서버 결과를 확인하지 못했습니다. 다시 만들기 전에 작가 대시보드를 확인하세요.',
+    error: '백그라운드 업로드 확인이 필요합니다:',
+    retry: '실패한 업로드 재시도',
+    check: '동기화 확인',
+    dashboard: '작가 대시보드',
+  },
+}
 
 const languages = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 const fallbackGenres = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama', 'School Life', 'Historical', 'Mystery', 'Horror', 'Thriller', 'Sci-Fi', 'System', 'Isekai', 'Supernatural', 'Martial Arts', 'Revenge', 'CEO', 'Slow Burn', 'Enemies to Lovers', 'Time Travel', 'Strong Female Lead', 'Hidden Identity', 'Royalty', 'Magic', 'Second Chance', 'Cold Male Lead', 'BL', 'GL', 'LGBTQ+']
@@ -1193,6 +1262,161 @@ if (cropMode === 'slide') {
     )
   }
 
+  const [pendingStoryCreation, setPendingStoryCreation] = useState(null)
+  const storyCreationSavingRef = useRef(false)
+  const completedStoryHandlingRef = useRef('')
+  const storyCreationRefreshRef = useRef(null)
+
+  useEffect(() => {
+    if (isEditMode) return undefined
+    const userId = storyTokenUserId(getAuthToken())
+    if (!userId) return undefined
+    const draftKey = storyMediaDraftKey({ userId, storyType })
+    let cancelled = false
+
+    const refresh = async () => {
+      try {
+        const jobs = await listStoryCreationJobs(userId)
+        if (cancelled) return
+        const job = jobs.find((item) => item.draftKey === draftKey)
+        if (!job) return
+        if (job.state !== 'created' || !job.storyId) {
+          setPendingStoryCreation(job)
+          if (['pending', 'waiting_upload'].includes(job.state)) {
+            startStoryCreationSync({ userId, getToken: getAuthToken, apiBaseUrl: API_BASE_URL })
+          }
+          return
+        }
+        if (completedStoryHandlingRef.current === job.id) return
+        completedStoryHandlingRef.current = job.id
+        try {
+          const cleared = await clearCompletedStoryCreation(job.id, userId)
+          if (!cleared) throw new Error('The completed story sync could not be cleared')
+          if (cancelled) return
+          try {
+            await deleteStoryMediaSnapshot(job.draftKey)
+            const queue = storyQueueRef.current
+            if (queue) {
+              const tasks = await queue.listForDraft(job.draftKey)
+              for (const task of tasks) {
+                if (task.status === 'uploaded') await queue.remove(task.id)
+              }
+            }
+          } catch {}
+          try {
+            const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
+            if (saved?.ownerId === userId && saved.storyType === storyType) {
+              localStorage.removeItem('create_story_draft')
+            }
+          } catch {}
+          const destination = storyType === 'chat_story'
+            ? `/author/story/${job.storyId}/chat/characters`
+            : `/author/story/${job.storyId}/episode/create?type=${storyType}`
+          navigate(destination, { replace: true })
+        } catch (error) {
+          completedStoryHandlingRef.current = ''
+          if (!cancelled) {
+            setPendingStoryCreation(job)
+            setMessage(error?.message || 'Could not complete story sync')
+          }
+        }
+      } catch (error) {
+        if (!cancelled) setMessage(error?.message || 'Could not restore story creation sync')
+      }
+    }
+
+    storyCreationRefreshRef.current = refresh
+    const onSync = (event) => {
+      if (event.detail?.ownerId === userId) void refresh()
+    }
+    window.addEventListener('shadow-story-create-sync', onSync)
+    void refresh()
+    return () => {
+      cancelled = true
+      storyCreationRefreshRef.current = null
+      window.removeEventListener('shadow-story-create-sync', onSync)
+    }
+  }, [isEditMode, storyType, navigate])
+
+  const handleLocalFirstCreate = async (token) => {
+    if (!storyMediaReady || !storyMediaKeyRef.current || !storyQueueRef.current) {
+      throw new Error('Local story media is not ready yet')
+    }
+    const userId = storyTokenUserId(token)
+    if (!userId) throw new Error('Please sign in to save this story')
+    const draftKey = storyMediaKeyRef.current
+    await storyMediaWriteRef.current
+    await saveStoryMediaSnapshot(draftKey, storyMediaSnapshot())
+    const mediaRef = async (source, slot, imageId = '') => {
+      if (!source) return null
+      if (/^https?:\/\//i.test(source)) return { url: source }
+      const task = await queueStoryAsset({ source, slot, imageId })
+      if (!task) throw new Error('Could not store the selected story image in the local upload queue')
+      if (task.status === 'failed') await storyQueueRef.current.retry(task.id)
+      return { taskId: task.id }
+    }
+    const media = {
+      cover: await mediaRef(coverPreview, 'cover'),
+      landscape: await mediaRef(landscapePreview, 'landscape'),
+      slides: [],
+    }
+    for (const slide of slides) {
+      media.slides.push({
+        image: await mediaRef(slide.cropped, 'slide', String(slide.id)),
+        active: Boolean(slide.active),
+      })
+    }
+    const payload = {
+      title: title.trim(),
+      story_type: storyType,
+      story_language: language,
+      main_genre: genre,
+      story_status: storyStatus,
+      tags,
+      update_days: updateDays,
+      description: description.trim() || null,
+      is_adult: isAdult,
+      story_settings: storySettings,
+    }
+    const job = await queueStoryCreation({
+      userId,
+      draftKey,
+      payload,
+      media,
+      getToken: getAuthToken,
+      apiBaseUrl: API_BASE_URL,
+    })
+    setPendingStoryCreation(job)
+    setStoryUploadState(STORY_SYNC_LABELS[getDisplayLanguageId()]?.saved || STORY_SYNC_LABELS.en.saved)
+    void storyCreationRefreshRef.current?.()
+  }
+
+  const retryPendingStoryUploads = async () => {
+    if (!pendingStoryCreation) return
+    const queue = storyQueueRef.current
+    if (!queue) return
+    try {
+      const references = [
+        pendingStoryCreation.media?.cover,
+        pendingStoryCreation.media?.landscape,
+        ...(pendingStoryCreation.media?.slides || []).map((item) => item.image),
+      ]
+      const taskIds = [...new Set(references.map((item) => item?.taskId).filter(Boolean))]
+      for (const taskId of taskIds) {
+        const task = await queue.get(taskId)
+        if (task?.status === 'failed') await queue.retry(taskId)
+      }
+      startStoryCreationSync({
+        userId: pendingStoryCreation.ownerId,
+        getToken: getAuthToken,
+        apiBaseUrl: API_BASE_URL,
+      })
+      void storyCreationRefreshRef.current?.()
+    } catch (error) {
+      setMessage(error?.message || 'Failed to retry local story uploads')
+    }
+  }
+
   const uploadStoryImages = async (token) => {
     if (!storyMediaReady) throw new Error('Local story media is still being restored')
     const draftKey = storyMediaKeyRef.current
@@ -1273,6 +1497,21 @@ if (cropMode === 'slide') {
     if (!token) {
       setMessage(t('createStory.loginFirst'))
       navigate('/login')
+      return
+    }
+
+    if (!isEditMode) {
+      if (storyCreationSavingRef.current || pendingStoryCreation) return
+      storyCreationSavingRef.current = true
+      try {
+        setLoading(true)
+        await handleLocalFirstCreate(token)
+      } catch (error) {
+        setMessage(error?.message || t('createStory.createFailed'))
+      } finally {
+        storyCreationSavingRef.current = false
+        setLoading(false)
+      }
       return
     }
 
@@ -1388,6 +1627,43 @@ const storyAccentColor = isManga
   : isChatStory
     ? '#7C4DEA'
     : '#111827'
+
+if (!isEditMode && pendingStoryCreation) {
+  const pending = pendingStoryCreation
+  const labels = STORY_SYNC_LABELS[getDisplayLanguageId()] || STORY_SYNC_LABELS.en
+  const review = pending.state === 'needs_review' || pending.state === 'submitting'
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--shadow-bg-page)] px-6 py-12 text-center text-[var(--shadow-text-primary)]">
+      <h1 className="text-xl font-bold">{review ? labels.needsReview : labels.saved}</h1>
+      <p className="max-w-md text-sm leading-6 text-[var(--shadow-text-secondary)]" role="status">
+        {pending.state === 'needs_review'
+          ? labels.needsReviewHelp
+          : pending.state === 'submitting'
+            ? labels.submitting
+            : pending.error
+              ? `${labels.error} ${pending.error}`
+              : labels.waiting}
+      </p>
+      {message ? <p className="max-w-md text-xs text-red-600" role="alert">{message}</p> : null}
+      {!review ? (
+        <button
+          type="button"
+          className="rounded-full bg-[var(--shadow-text-primary)] px-6 py-3 text-sm font-semibold text-[var(--shadow-bg-surface)]"
+          onClick={retryPendingStoryUploads}
+        >
+          {pending.error ? labels.retry : labels.check}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        className="rounded-full border border-[var(--shadow-border)] px-6 py-3 text-sm font-semibold"
+        onClick={() => navigate('/author/dashboard')}
+      >
+        {labels.dashboard}
+      </button>
+    </div>
+  )
+}
 
 return (
   <div
