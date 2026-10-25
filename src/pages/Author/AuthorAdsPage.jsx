@@ -203,6 +203,49 @@ registerTranslationNamespace('authorAds', {
   },
 })
 
+registerTranslationNamespace('authorAds', {
+  en: {
+    diamondReserveHint: 'No Diamonds are deducted while drafting. Starting an approved campaign reserves the full budget from your Reader wallet.',
+    confirmDiamondStart: 'Reserve {{count}} Diamonds from your Reader wallet and start this campaign now?',
+    diamondStartDenied: 'Could not start. Check your Reader Diamonds balance, campaign approval, and content.',
+    fundingUnverified: 'Funding information is unavailable. Reload the campaign before starting.',
+    boostBudgetHint: '100 Diamonds = $1. Estimated reach is not guaranteed. Diamonds are reserved only when Start succeeds.',
+    boostDraftHint: 'Drafts are not live. After approval, Start will reserve Diamonds from your Reader wallet when delivery is enabled.'
+  },
+  km: {
+    diamondReserveHint: 'រក្សាទុក Draft មិនដកពេជ្រទេ។ ពេលចុច Start លើ Campaign ដែលអនុម័ត ប្រព័ន្ធនឹងកក់ពេជ្រពេញថវិកាពីគណនីអ្នកអាន។',
+    confirmDiamondStart: 'យល់ព្រមកក់ {{count}} ពេជ្រ ពីគណនីអ្នកអាន ហើយចាប់ផ្ដើម Campaign ឥឡូវ?',
+    diamondStartDenied: 'មិនអាចចាប់ផ្ដើមបាន។ សូមពិនិត្យពេជ្រក្នុងគណនីអ្នកអាន ការអនុម័ត និងមាតិកា។',
+    fundingUnverified: 'មិនអាចផ្ទៀងផ្ទាត់ថវិកាបាន។ សូមទាញ Campaign សាថ្មីមុនចាប់ផ្ដើម។',
+    boostBudgetHint: '100 ពេជ្រ = $1។ Reach ជាការប៉ាន់ស្មាន មិនធានាលទ្ធផលទេ។ ពេជ្រត្រូវបានកក់តែពេល Start ជោគជ័យ។',
+    boostDraftHint: 'Draft មិនទាន់ផ្សាយទេ។ ក្រោយអនុម័ត ពេលបើកការផ្សាយ ចុច Start ទើបកក់ពេជ្រពីគណនីអ្នកអាន។'
+  },
+  zh: {
+    diamondReserveHint: '保存草稿不会扣钻石。获批后点击开始，将从读者钱包预留全部预算。',
+    confirmDiamondStart: '从读者钱包预留 {{count}} 钻石并立即开始投放？',
+    diamondStartDenied: '无法开始。请检查读者钱包的钻石余额、审核状态及推广内容。',
+    fundingUnverified: '无法核实资金状态，请刷新活动后再开始。',
+    boostBudgetHint: '100 钻石 = 1 美元，预计覆盖人数不保证。仅在成功开始时预留钻石。',
+    boostDraftHint: '草稿不会投放。审核通过后，启用投放并点击开始才会预留钻石。'
+  },
+  ja: {
+    diamondReserveHint: '下書き保存ではダイヤを消費しません。承認後に開始すると、読者ウォレットから予算全額を確保します。',
+    confirmDiamondStart: '読者ウォレットから {{count}} ダイヤを確保して配信を開始しますか？',
+    diamondStartDenied: '開始できませんでした。ダイヤ残高、承認状況、コンテンツを確認してください。',
+    fundingUnverified: '資金状態を確認できません。キャンペーンを再読み込みしてください。',
+    boostBudgetHint: '100 ダイヤ = 1 USD。推定リーチは保証されません。開始成功時にのみダイヤを確保します。',
+    boostDraftHint: '下書きは配信されません。承認後、配信有効時に開始するとダイヤを確保します。'
+  },
+  ko: {
+    diamondReserveHint: '초안을 저장해도 다이아는 차감되지 않습니다. 승인 후 시작하면 독자 지갑에서 전체 예산을 예약합니다.',
+    confirmDiamondStart: '독자 지갑에서 다이아 {{count}}개를 예약하고 캠페인을 시작할까요?',
+    diamondStartDenied: '시작할 수 없습니다. 다이아 잔액, 승인 상태, 콘텐츠를 확인하세요.',
+    fundingUnverified: '자금 상태를 확인할 수 없습니다. 캠페인을 새로고침하세요.',
+    boostBudgetHint: '다이아 100개 = $1. 예상 도달은 보장되지 않습니다. 시작 성공 시에만 다이아를 예약합니다.',
+    boostDraftHint: '초안은 게시되지 않습니다. 승인 후 게재를 활성화하고 시작해야 다이아를 예약합니다.'
+  }
+})
+
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
   : 'https://shadow-backend-kucw.onrender.com'
@@ -714,7 +757,9 @@ export default function AuthorAdsPage() {
 
   const changeCampaignStatus = async (campaign, action) => {
     if (processingId || !['start', 'pause', 'resume'].includes(action)) return
-    if (action === 'start' && !window.confirm(t('authorAds.confirmStart'))) return
+    if (action === 'start' && !window.confirm(campaign.fundingType === 'unfunded'
+      ? t('authorAds.confirmDiamondStart', { count: Number(campaign.budgetDiamonds || 0).toLocaleString() })
+      : t('authorAds.confirmStart'))) return
     if (action === 'pause' && !window.confirm(t('authorAds.confirmPause'))) return
     setProcessingId(campaign.id)
     setCampaignsError('')
@@ -729,13 +774,16 @@ export default function AuthorAdsPage() {
       }[action])))
     } catch (cause) {
       const code = cause?.code
-      const key = code === 'AUTHOR_ADS_DELIVERY_NOT_READY' || code === 'AUTHOR_AD_LIFECYCLE_SQL_REQUIRED'
+      const key = ['AUTHOR_ADS_DELIVERY_NOT_READY', 'AUTHOR_ADS_BOOK_DELIVERY_NOT_READY',
+        'AUTHOR_AD_LIFECYCLE_SQL_REQUIRED', 'AUTHOR_AD_DIAMOND_START_SQL_REQUIRED'].includes(code)
         ? 'deliveryNotReady'
-        : code === 'AUTHOR_AD_TRANSITION_DENIED'
-          ? 'lifecycleBlocked'
-          : ['AUTHOR_ADS_LIFECYCLE_IP_RATE_LIMITED', 'AUTHOR_ADS_LIFECYCLE_ACCOUNT_RATE_LIMITED', 'AUTHOR_ADS_RATE_LIMITED', 'AUTHOR_ADS_IP_RATE_LIMITED'].includes(code)
-            ? 'lifecycleRateLimited'
-            : 'lifecycleError'
+        : code === 'AUTHOR_AD_DIAMOND_START_DENIED'
+          ? 'diamondStartDenied'
+          : code === 'AUTHOR_AD_TRANSITION_DENIED'
+            ? 'lifecycleBlocked'
+            : ['AUTHOR_ADS_LIFECYCLE_IP_RATE_LIMITED', 'AUTHOR_ADS_LIFECYCLE_ACCOUNT_RATE_LIMITED', 'AUTHOR_ADS_RATE_LIMITED', 'AUTHOR_ADS_IP_RATE_LIMITED'].includes(code)
+              ? 'lifecycleRateLimited'
+              : 'lifecycleError'
       setCampaignsError(t('authorAds.' + key))
     } finally {
       setProcessingId('')
@@ -826,7 +874,7 @@ export default function AuthorAdsPage() {
 
             <Section title={t('authorAds.budget')}>
               <div className="flex items-center gap-2"><span className="text-sm font-medium">💎</span><input type="number" min="100" max="1000000" step="1" inputMode="numeric" value={budget} onChange={event => setBudget(event.target.value)} className={INPUT_CLASS} /><span className="text-sm text-[var(--shadow-text-secondary)]">Diamonds</span></div>
-              <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.budgetHint')}</p>
+              <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.boostBudgetHint')}</p>
                <p className="mt-1 text-xs font-medium text-[#7851cc] dark:text-[#ceb5ff]">{t('authorAds.estimatedReach', { count: Math.max(0, Math.round(Number(budget) || 0)).toLocaleString() })}</p>
               <h3 className="mb-2 mt-4 text-sm font-medium">{t('authorAds.duration')}</h3>
               <div className="grid grid-cols-4 gap-2">{DURATION_OPTIONS.map(value => <button key={value} type="button" onClick={() => setDuration(value)} className={`rounded-lg border px-1 py-2.5 text-xs ${duration === value ? 'border-[#8061df] bg-[#f5f0ff] text-[#6042ba] dark:bg-[#30224b] dark:text-[#cbb6ff]' : 'border-[var(--shadow-border)]'}`}>{t('authorAds.days', { count: value })}</button>)}</div>
@@ -841,7 +889,7 @@ export default function AuthorAdsPage() {
             </Section>
 
             {message && <p role="status" className="rounded-xl bg-[#f3edff] p-3 text-sm text-[#6246b7] dark:bg-[#30224b] dark:text-[#dbcaff]">{message}</p>}
-            <div className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 text-xs leading-5 text-[var(--shadow-text-secondary)]"><Info size={16} className="mr-2 inline" />{t('authorAds.draftOnly')}</div>
+            <div className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 text-xs leading-5 text-[var(--shadow-text-secondary)]"><Info size={16} className="mr-2 inline" />{t('authorAds.boostDraftHint')}</div>
             <button type="button" disabled={!username || loading || saving} onClick={saveDraft} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#171717] px-4 py-3.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"><Check size={17} />{t(saving ? 'authorAds.saving' : 'authorAds.saveDraft')}</button>
           </div>
         )}
@@ -862,19 +910,26 @@ export default function AuthorAdsPage() {
                 <h2 className="text-sm font-semibold">{t('authorAds.cloudCampaigns')}</h2>
                 {campaigns.map(campaign => {
                   const editable = campaign.status === 'draft' && campaign.reviewStatus === 'not_submitted'
-                   const budget = Math.max(0, Number(campaign.budgetUsd) || 0)
-                   const funded = Math.max(0, Number(campaign.fundedUsd) || 0)
-                   const spent = Math.max(0, Number(campaign.spentUsd) || 0)
-                   const refunded = Math.max(0, Number(campaign.refundedUsd) || 0)
-                   const available = Math.max(0, funded - spent - refunded)
+                   const fundingType = ['diamonds', 'usd', 'unfunded'].includes(campaign.fundingType) ? campaign.fundingType : 'unverified'
+                   const legacyUsd = fundingType === 'usd'
+                   const asAmount = value => Math.max(0, Number(value) || 0)
+                   const formatAmount = value => legacyUsd
+                     ? '$' + asAmount(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                     : Math.round(asAmount(value)).toLocaleString() + ' 💎'
+                   const budget = legacyUsd ? asAmount(campaign.budgetUsd) : asAmount(campaign.budgetDiamonds ?? Number(campaign.budgetUsd || 0) * 100)
+                   const funded = legacyUsd ? asAmount(campaign.fundedUsd) : asAmount(campaign.fundedDiamonds)
+                   const spent = legacyUsd ? asAmount(campaign.spentUsd) : asAmount(campaign.spentDiamonds)
+                   const refunded = legacyUsd ? asAmount(campaign.refundedUsd) : asAmount(campaign.refundedDiamonds)
+                   const available = legacyUsd ? Math.max(0, funded - spent - refunded) : asAmount(campaign.remainingDiamonds)
                    const usedPercent = budget > 0 ? Math.min(100, Math.round(spent / budget * 10000) / 100) : 0
-                   const isFullyFunded = budget > 0 && Math.round((funded - refunded) * 100) >= Math.round(budget * 100)
+                   const paymentRequired = campaign.paymentRequired !== false
+                   const hasFunds = !paymentRequired && available > 0
                    const deliveryEndsAt = campaign.endAt ? Date.parse(campaign.endAt) : NaN
                    const hasActiveWindow = Number.isFinite(deliveryEndsAt) && Date.now() < deliveryEndsAt
                    const deliveryExpired = ['active', 'paused'].includes(campaign.status) && Number.isFinite(deliveryEndsAt) && !hasActiveWindow
-                   const canStart = campaign.status === 'approved' && isFullyFunded
+                   const canStart = campaign.status === 'approved' && (fundingType === 'unfunded' || (fundingType !== 'unverified' && hasFunds))
                    const canPause = campaign.status === 'active' && hasActiveWindow
-                   const canResume = campaign.status === 'paused' && isFullyFunded && hasActiveWindow
+                   const canResume = campaign.status === 'paused' && hasFunds && hasActiveWindow
                    const audience = campaign.audience || {}
                    const selectedAudience = audience.mode === 'manual'
                      ? [audience.genre, audience.language?.toUpperCase(), audience.country].filter(Boolean).join(' · ')
@@ -888,7 +943,7 @@ export default function AuthorAdsPage() {
                         <div className="min-w-0 flex-1">
                           <span className="rounded-full bg-[#f0eaff] px-2 py-1 text-[10px] font-medium text-[#6c45d0] dark:bg-[#30224b] dark:text-[#d4c1ff]">{t('authorAds.' + (STATUS_LABELS[campaign.status] || 'draft'))}</span>
                           <h3 className="mt-2 line-clamp-2 text-sm font-medium">{campaign.contentTitle}</h3>
-                          <p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{Math.round(Number(campaign.budgetUsd || 0) * 100).toLocaleString() + ' 💎'} · {t('authorAds.days', { count: campaign.durationDays })}</p>
+                          <p className="mt-1 text-xs text-[var(--shadow-text-secondary)]">{formatAmount(budget)} · {t('authorAds.days', { count: campaign.durationDays })}</p>
                         </div>
                       </div>
                        <div className="mt-3 space-y-1 text-xs text-[var(--shadow-text-secondary)]">
@@ -904,11 +959,11 @@ export default function AuthorAdsPage() {
                          ].map(([key, value]) => (
                            <div key={key} className="min-w-0 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2">
                              <p className="text-[11px] text-[var(--shadow-text-secondary)]">{t('authorAds.' + key)}</p>
-                             <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--shadow-text-primary)]">{Math.round(value * 100).toLocaleString() + ' 💎'}</p>
+                             <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--shadow-text-primary)]">{formatAmount(value)}</p>
                            </div>
                          ))}
                        </div>
-                       {refunded > 0 && <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.boostRefunded')}: {Math.round(refunded * 100).toLocaleString() + ' 💎'}</p>}
+                       {refunded > 0 && <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.boostRefunded')}: {formatAmount(refunded)}</p>}
                        <div className="mt-3">
                          <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                            <span className="text-[var(--shadow-text-secondary)]">{t('authorAds.budgetProgress')}</span>
@@ -924,7 +979,13 @@ export default function AuthorAdsPage() {
                         <button type="button" disabled={Boolean(processingId)} onClick={() => editDraft(campaign)} className="flex items-center gap-1 text-xs font-medium text-[#8061df] disabled:opacity-50">{t('authorAds.editDraft')}<ChevronRight size={14} /></button>
                         <button type="button" disabled={Boolean(processingId)} onClick={() => submitCampaign(campaign.id)} className="rounded-lg bg-[#171717] px-3 py-2 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black">{t('authorAds.submitForReview')}</button>
                       </div>}
-                      {['approved', 'paused'].includes(campaign.status) && !isFullyFunded && (
+                      {campaign.status === 'approved' && fundingType === 'unfunded' && (
+                        <p className="mt-3 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.diamondReserveHint')}</p>
+                      )}
+                      {['approved', 'paused'].includes(campaign.status) && fundingType === 'unverified' && (
+                        <p className="mt-3 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.fundingUnverified')}</p>
+                      )}
+                      {['approved', 'paused'].includes(campaign.status) && fundingType === 'usd' && paymentRequired && (
                         <p className="mt-3 text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.paymentRequired')}</p>
                       )}
                       {['active', 'paused'].includes(campaign.status) && !deliveryExpired && (
