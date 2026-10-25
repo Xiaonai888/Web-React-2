@@ -2,7 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import { AuthorPageNotificationProvider } from './providers/AuthorPageNotificationProvider'
-import { useDisplayTranslation } from './utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from './utils/displayLanguage'
+import { getCountryFeature, loadCountrySettings } from './utils/countrySettings'
 import './i18n/appTranslations'
 import Footer from './components/Footer'
 import WorkMaintenanceGuard from './components/common/WorkMaintenanceGuard'
@@ -360,6 +361,49 @@ function PageLoading() {
 
 function LazyPage({ children }) {
   return <Suspense fallback={<PageLoading />}>{children}</Suspense>
+}
+
+function CountryLocalAppGuard({ children }) {
+  const [status, setStatus] = useState('checking')
+  const [retry, setRetry] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    setStatus('checking')
+    loadCountrySettings({ force: retry > 0 }).then(settings => {
+      if (!active) return
+      const allowed = getCountryFeature(settings, 'app', null)
+      setStatus(allowed === true ? 'allowed' : allowed === false ? 'blocked' : 'unavailable')
+    })
+    return () => { active = false }
+  }, [retry])
+
+  if (status === 'allowed') return children
+
+  const messages = {
+    km: ['កំពុងពិនិត្យសិទ្ធិចូល App…', 'App មិនអាចប្រើក្នុងប្រទេសរបស់អ្នកបានទេ។', 'មិនអាចពិនិត្យសិទ្ធិចូល App បានទេ។', 'ព្យាយាមម្ដងទៀត', 'ត្រឡប់ទៅ Me'],
+    en: ['Checking app access…', 'App is unavailable in your country.', 'Cannot check app access.', 'Retry', 'Back to Me'],
+    zh: ['正在检查应用访问权限…', '此应用在您所在的国家不可用。', '无法检查应用访问权限。', '重试', '返回个人页面'],
+    ja: ['アプリのアクセス権を確認中…', 'この国ではアプリを利用できません。', 'アクセス権を確認できません。', '再試行', 'マイページに戻る'],
+    ko: ['앱 접근 권한 확인 중…', '이 국가에서는 앱을 사용할 수 없습니다.', '앱 접근 권한을 확인할 수 없습니다.', '다시 시도', '내 페이지로 돌아가기'],
+  }
+  const labels = messages[getDisplayLanguageId()] || messages.en
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#fafafa] px-5 text-center text-[#111827] dark:bg-[#0d0f16] dark:text-white">
+      <p role="status" className="text-sm">
+        {status === 'checking' ? labels[0] : status === 'blocked' ? labels[1] : labels[2]}
+      </p>
+      {status === 'unavailable' && (
+        <button type="button" onClick={() => setRetry(value => value + 1)} className="rounded-xl bg-[#4f46e5] px-5 py-3 text-sm font-semibold text-white">
+          {labels[3]}
+        </button>
+      )}
+      <a href="/me" className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-semibold">
+        {labels[4]}
+      </a>
+    </div>
+  )
 }
 
 function AppShell() {
@@ -1615,9 +1659,15 @@ const shouldShowOpeningAds =
   <LazyPage><AppAccessGuard appKey="enhance-local"><EnhanceLocalPage /></AppAccessGuard></LazyPage>
 } />
 
-          <Route
+         <Route
   path="/apps/cv-builder"
-  element={<LazyPage><CVBuilderPage /></LazyPage>}
+  element={
+    <LazyPage>
+      <CountryLocalAppGuard>
+        <CVBuilderPage />
+      </CountryLocalAppGuard>
+    </LazyPage>
+  }
 />
 
 
