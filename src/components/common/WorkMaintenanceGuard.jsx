@@ -11,11 +11,60 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const CHECK_TIMEOUT_MS = 4000
+const MAINTENANCE_CACHE_MS = 15 * 1000
 const BACKGROUND_CHECK_PATTERNS = [
   '/library',
   '/library/manage/offline-downloads',
   '/story/:id/episode/:id',
 ]
+
+let maintenanceCache = { switches: null, expiresAt: 0 }
+let maintenanceRequest = null
+
+function loadMaintenanceSwitches() {
+  const now = Date.now()
+
+  if (
+    Array.isArray(maintenanceCache.switches) &&
+    now < maintenanceCache.expiresAt
+  ) {
+    return Promise.resolve(maintenanceCache.switches)
+  }
+
+  if (maintenanceRequest) return maintenanceRequest
+
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS)
+
+  maintenanceRequest = (async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/health/maintenance`, {
+        cache: 'no-store',
+        signal: controller.signal,
+      })
+
+      if (!response.ok) return null
+
+      const data = await response.json().catch(() => null)
+      if (data?.ok !== true || !Array.isArray(data.switches)) return null
+
+      maintenanceCache = {
+        switches: data.switches,
+        expiresAt: now + MAINTENANCE_CACHE_MS,
+      }
+
+      return data.switches
+    } catch {
+      return null
+    } finally {
+      window.clearTimeout(timeout)
+    }
+  })().finally(() => {
+    maintenanceRequest = null
+  })
+
+  return maintenanceRequest
+}
 
 function usesBackgroundMaintenanceCheck(pathname) {
   return BACKGROUND_CHECK_PATTERNS.some((pattern) =>
@@ -101,11 +150,6 @@ export default function WorkMaintenanceGuard({ children }) {
     }
 
     let active = true
-    const controller = new AbortController()
-    const timeout = setTimeout(
-      () => controller.abort(),
-      CHECK_TIMEOUT_MS
-    )
 
     setChecking(!backgroundCheck)
     setMaintenance(null)
@@ -116,36 +160,21 @@ export default function WorkMaintenanceGuard({ children }) {
 
     async function checkPageMaintenance() {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/health/maintenance`,
-          {
-            cache: 'default',
-            signal: controller.signal,
-          }
-        )
-
-        if (!response.ok) return
-
-        const data = await response.json().catch(() => ({}))
-        const switches = Array.isArray(data.switches)
-          ? data.switches
-          : []
+        const switches = await loadMaintenanceSwitches()
+        if (!active || !Array.isArray(switches)) return
 
         const matched = switches.find((record) =>
           pathMatches(record?.path, location.pathname)
         )
 
-        if (!active || !matched) return
+        if (!matched) return
 
         setMaintenance({
           retryAfterSeconds: retrySecondsFromExpiry(
             matched.expires_at
           ),
         })
-      } catch {
       } finally {
-        clearTimeout(timeout)
-
         if (active) {
           setCheckedPath(location.pathname)
           setChecking(false)
@@ -157,8 +186,6 @@ export default function WorkMaintenanceGuard({ children }) {
 
     return () => {
       active = false
-      clearTimeout(timeout)
-      controller.abort()
     }
   }, [location.pathname, offlineRequested, backgroundCheck])
 
