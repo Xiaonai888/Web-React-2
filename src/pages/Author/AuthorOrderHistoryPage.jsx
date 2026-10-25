@@ -246,6 +246,7 @@ function normalizeOrder(order) {
     order_id: String(order.order_id || order.order_number || order.id || ''),
     transaction_id: String(order.aba_transaction_id || order.transaction_id || ''),
     status: normalizeStatus(order),
+    payment_status: String(order.payment_status || '').toLowerCase(),
     created_at: order.created_at || order.paid_at || '',
     author_page_name: order.author_page_name || '',
     author_page_username: order.author_page_username || '',
@@ -320,6 +321,81 @@ function formatDate(value) {
     return value
   }
 }
+
+registerTranslationNamespace('authorOrderConfirmReceived', {
+  en: { button: 'Confirm Received', title: 'Confirm book received?', warning: 'Only confirm after you have physically received the book. This will release the book payment to the author.', cancel: 'Not yet', submit: 'Yes, I received it', saving: 'Confirming...', confirmed: 'Receipt confirmed · Payment released', failed: 'Could not confirm receipt. Please retry.', unavailable: 'This order is not eligible for receipt confirmation yet.', missing: 'This order does not have a pending book payment hold.' },
+  km: { button: 'បញ្ជាក់បានទទួល', title: 'បញ្ជាក់ថាបានទទួលសៀវភៅ?', warning: 'សូមបញ្ជាក់តែក្រោយពេលអ្នកបានទទួលសៀវភៅពិតប្រាកដ។ ការបញ្ជាក់នេះនឹងដោះលែងប្រាក់ឱ្យអ្នកនិពន្ធ។', cancel: 'មិនទាន់ទទួល', submit: 'បាទ/ចាស បានទទួលហើយ', saving: 'កំពុងបញ្ជាក់...', confirmed: 'បានបញ្ជាក់ទទួល · បានដោះលែងប្រាក់', failed: 'មិនអាចបញ្ជាក់បានទេ។ សូមសាកល្បងម្តងទៀត។', unavailable: 'Order នេះមិនទាន់អាចបញ្ជាក់ទទួលបានទេ។', missing: 'Order នេះមិនមានប្រាក់បង្កកសៀវភៅកំពុងរង់ចាំទេ។' },
+  zh: { button: '确认收货', title: '确认已收到纸质书？', warning: '请仅在实际收到纸质书后确认。确认后将向作者释放这笔书款。', cancel: '尚未收到', submit: '是的，我已收到', saving: '正在确认...', confirmed: '已确认收货 · 款项已释放', failed: '确认失败，请重试。', unavailable: '此订单暂不能确认收货。', missing: '此订单没有待释放的书款。' },
+  ja: { button: '受取を確認', title: '書籍を受け取りましたか？', warning: '紙の書籍を実際に受け取った場合のみ確認してください。確認すると著者への支払いが解放されます。', cancel: 'まだ受け取っていない', submit: 'はい、受け取りました', saving: '確認中...', confirmed: '受取確認済み · 支払い解放済み', failed: '確認できませんでした。再度お試しください。', unavailable: 'この注文はまだ受取確認できません。', missing: 'この注文には保留中の書籍代金がありません。' },
+  ko: { button: '수령 확인', title: '책을 받으셨나요?', warning: '실물 책을 받은 후에만 확인하세요. 확인하면 저자에게 책 판매금이 지급 가능 상태로 전환됩니다.', cancel: '아직 받지 못함', submit: '네, 받았습니다', saving: '확인 중...', confirmed: '수령 확인 완료 · 결제금 해제', failed: '수령 확인에 실패했습니다. 다시 시도해 주세요.', unavailable: '이 주문은 아직 수령 확인할 수 없습니다.', missing: '이 주문에는 보류 중인 책 판매금이 없습니다.' },
+})
+
+function ReaderConfirmReceived({ order, localOnly }) {
+  const { t } = useDisplayTranslation()
+  const tr = (key) => t(`authorOrderConfirmReceived.${key}`)
+  const [open, setOpen] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
+  const [error, setError] = useState('')
+  const busyRef = useRef(false)
+  const uuidPattern = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i
+  const isPhysicalBook = (order.items || []).some((item) => String(item.product_type || '').toLowerCase() === 'book')
+  const eligible = !localOnly && uuidPattern.test(order.id) && order.payment_status === 'paid' && ['shipped', 'completed'].includes(order.status) && isPhysicalBook
+
+  if (!eligible) return null
+
+  async function submit() {
+    if (busyRef.current || confirmed) return
+    busyRef.current = true
+    setSending(true)
+    setError('')
+    try {
+      const token = getReaderToken()
+      if (!token) throw new Error('AUTH')
+      const response = await fetch(`${API_BASE_URL}/api/author-store/orders/${encodeURIComponent(order.id)}/confirm-received`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok !== true || data.status !== 'released') {
+        const code = response.status === 404 ? 'missing' : response.status === 409 ? 'unavailable' : 'failed'
+        throw new Error(code)
+      }
+      setConfirmed(true)
+      setOpen(false)
+    } catch (cause) {
+      const key = ['missing', 'unavailable'].includes(cause.message) ? cause.message : 'failed'
+      setError(tr(key))
+    } finally {
+      busyRef.current = false
+      setSending(false)
+    }
+  }
+
+  if (confirmed) return <p role="status" className="mt-3 rounded-[14px] bg-emerald-500/10 px-3 py-3 text-center text-[12px] font-bold text-emerald-600">{tr('confirmed')}</p>
+
+  return (
+    <>
+      <button type="button" onClick={() => { setError(''); setOpen(true) }} className="mt-3 w-full rounded-[14px] bg-violet-600 px-4 py-3 text-[12px] font-bold text-white">
+        {tr('button')}
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="confirm-book-received-title" className="w-full max-w-sm rounded-[24px] bg-[var(--shadow-bg-surface)] p-5 text-[var(--shadow-text-primary)] shadow-2xl">
+            <h2 id="confirm-book-received-title" className="text-[17px] font-black">{tr('title')}</h2>
+            <p className="mt-3 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">{tr('warning')}</p>
+            {error && <p role="alert" className="mt-3 text-[12px] font-semibold text-red-600">{error}</p>}
+            <div className="mt-5 flex gap-2">
+              <button type="button" disabled={sending} onClick={() => setOpen(false)} className="flex-1 rounded-[14px] border border-[var(--shadow-border)] px-3 py-3 text-[12px] font-bold disabled:opacity-50">{tr('cancel')}</button>
+              <button type="button" disabled={sending} onClick={() => void submit()} className="flex-1 rounded-[14px] bg-violet-600 px-3 py-3 text-[12px] font-bold text-white disabled:opacity-50">{sending ? tr('saving') : tr('submit')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 
 export default function AuthorOrderHistoryPage() {
   const navigate = useNavigate()
@@ -547,6 +623,7 @@ export default function AuthorOrderHistoryPage() {
                   <span className="text-[12px] font-semibold text-[var(--shadow-text-secondary)]">{t('authorOrderHistory.delivery')}</span>
                   <span className="text-[12px] font-black text-[var(--shadow-text-primary)]">{order.delivery || (order.delivery_fee > 0 ? money(order.delivery_fee) : t('authorOrderHistory.calculateLater'))}</span>
                 </div>
+              <ReaderConfirmReceived order={order} localOnly={localOnly} />
               </article>
             )
           }) : (
