@@ -59,6 +59,8 @@ import {
 } from '../../services/chatApi'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import BookOrderChatBridge from '../../components/book-order-chat/BookOrderChatBridge'
+import BookOrderChatNoticeBell from '../../components/book-order-chat/BookOrderChatNoticeBell'
 
 registerTranslationNamespace('chatRoomPage', {
   en: {
@@ -2000,6 +2002,7 @@ export default function ChatRoomPage() {
   const location = useLocation()
   const { conversationId } = useParams()
   const bottomRef = useRef(null)
+  const bookOrdersRef = useRef(null)
   const textareaRef = useRef(null)
   const shouldScrollBottomRef = useRef(true)
   const scrollRestoreRef = useRef(null)
@@ -3509,6 +3512,13 @@ export default function ChatRoomPage() {
                 </p>
               </button>
 
+              {conversation?.conversation_type === 'reader_author' && conversation?.request_status === 'accepted' ? (
+                <BookOrderChatNoticeBell
+                  conversationId={conversationId}
+                  onSelectOrder={() => bookOrdersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                />
+              ) : null}
+
               <button
                 type="button"
                 onClick={() =>
@@ -3546,6 +3556,12 @@ export default function ChatRoomPage() {
           )}
         </div>
       </header>
+
+      {conversation?.conversation_type === 'reader_author' && conversation?.request_status === 'accepted' ? (
+        <div ref={bookOrdersRef} className="mx-auto w-full max-w-[620px] scroll-mt-[76px]">
+          <BookOrderChatBridge conversationId={conversationId} />
+        </div>
+      ) : null}
 
       <PinnedBanner
         pin={pins[0]}
