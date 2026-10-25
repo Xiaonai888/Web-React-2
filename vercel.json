@@ -5,7 +5,7 @@
   },
   "rewrites": [
     {
-      "source": "/((?!assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$|offline-diagnostic\\.html$).*)",
+      "source": "/((?!api/|assets/|onesignal/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$|offline-diagnostic\\.html$).*)",
       "destination": "/index.html"
     }
   ],
