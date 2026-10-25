@@ -31,6 +31,7 @@ registerTranslationNamespace('mePage', {
     go: 'Go',
     shadowMall: 'Shadow Mall',
     library: 'Library',
+    myFrame: 'My Frame',
     game: 'Game',
     app: 'App',
     savedPosts: 'Saved Posts',
@@ -59,6 +60,7 @@ registerTranslationNamespace('mePage', {
     go: 'ទៅ',
     shadowMall: 'Shadow Mall',
     library: 'បណ្ណាល័យ',
+    myFrame: 'ស៊ុមរបស់ខ្ញុំ',
     game: 'ហ្គេម',
     app: 'កម្មវិធី',
     savedPosts: 'Post ដែលបានរក្សាទុក',
@@ -87,6 +89,7 @@ registerTranslationNamespace('mePage', {
     go: '前往',
     shadowMall: 'Shadow Mall',
     library: '书库',
+    myFrame: '我的头像框',
     game: '游戏',
     app: '应用',
     savedPosts: '已保存帖子',
@@ -115,6 +118,7 @@ registerTranslationNamespace('mePage', {
     go: '開く',
     shadowMall: 'Shadow Mall',
     library: 'ライブラリ',
+    myFrame: 'マイフレーム',
     game: 'ゲーム',
     app: 'アプリ',
     savedPosts: '保存した投稿',
@@ -143,6 +147,7 @@ registerTranslationNamespace('mePage', {
     go: '이동',
     shadowMall: 'Shadow Mall',
     library: '라이브러리',
+    myFrame: '내 프레임',
     game: '게임',
     app: '앱',
     savedPosts: '저장한 게시물',
@@ -1447,6 +1452,12 @@ const handleOpenProfileSwitcher = (event) => {
       {libraryUnreadCount > 99 ? '99+' : formatDisplayNumber(libraryUnreadCount)}
     </span>
   ) : null}
+  divider
+/>
+            <MenuRow
+  to="/my-frame"
+  icon="fa-regular fa-image"
+  title={tx('mePage.myFrame')}
   divider
 />
             <MenuRow
