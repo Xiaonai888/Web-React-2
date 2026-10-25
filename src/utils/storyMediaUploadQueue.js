@@ -9,6 +9,7 @@ const CATEGORIES = Object.freeze({
 })
 const DIRECT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_DIRECT_BYTES = 5 * 1024 * 1024
+const activeRuntimes = new Map()
 
 function tokenUserId(token) {
   try {
@@ -22,22 +23,49 @@ function tokenUserId(token) {
   }
 }
 
-export function createStoryMediaUploadQueue({ userId, getToken, onChange } = {}) {
-  const owner = String(userId || '').trim()
-  if (!owner) throw new Error('Signed-in user ID is required')
-  if (typeof getToken !== 'function') throw new Error('An authentication provider is required')
-
-  const ownerId = `${owner}:story-media`
-  const scopePrefix = `${ownerId}:`
+function createRuntime(ownerId, owner, getToken) {
+  const listeners = new Set()
   const categories = Object.values(CATEGORIES)
-  const pendingEnqueues = new Map()
+  const scopePrefix = `${ownerId}:`
+  const runtime = {
+    clients: 0,
+    processingEnqueues: 0,
+    version: 0,
+    getToken,
+    listeners,
+    pendingEnqueues: new Map(),
+    manager: null,
+    stopWhenIdle: null,
+  }
   const validDraftKey = (value) => String(value || '').trim().startsWith(scopePrefix)
 
-  const manager = createUploadQueueManager({
+  runtime.stopWhenIdle = async () => {
+    if (runtime.clients !== 0 || runtime.processingEnqueues !== 0) return
+    const version = runtime.version
+    let tasks
+    try {
+      tasks = await runtime.manager.list()
+    } catch {
+      return
+    }
+    if (runtime.clients !== 0 || runtime.processingEnqueues !== 0 || runtime.version !== version) return
+    if (tasks.some((task) => !['uploaded', 'failed'].includes(task.status))) return
+    runtime.manager.stop()
+    if (activeRuntimes.get(ownerId) === runtime) activeRuntimes.delete(ownerId)
+  }
+
+  runtime.manager = createUploadQueueManager({
     ownerId,
-    onChange,
+    onChange: (event) => {
+      for (const listener of listeners) {
+        try { listener(event) } catch {}
+      }
+      if (runtime.clients === 0 && ['uploaded', 'failed', 'removed'].includes(event.type)) {
+        void runtime.stopWhenIdle()
+      }
+    },
     upload: async ({ task, file, signal, onProgress }) => {
-      const token = getToken()
+      const token = runtime.getToken()
       if (!token || tokenUserId(token) !== owner) {
         const error = new Error('Sign in to the correct account to resume uploading')
         error.status = 401
@@ -65,18 +93,61 @@ export function createStoryMediaUploadQueue({ userId, getToken, onChange } = {})
     },
   })
 
-  async function enqueue({ file, draftKey, slot, imageId = '' }) {
+  runtime.validDraftKey = validDraftKey
+  return runtime
+}
+
+export function createStoryMediaUploadQueue({ userId, getToken, onChange } = {}) {
+  const owner = String(userId || '').trim()
+  if (!owner) throw new Error('Signed-in user ID is required')
+  if (typeof getToken !== 'function') throw new Error('An authentication provider is required')
+
+  const ownerId = `${owner}:story-media`
+  let runtime = activeRuntimes.get(ownerId)
+  if (!runtime) {
+    runtime = createRuntime(ownerId, owner, getToken)
+    activeRuntimes.set(ownerId, runtime)
+  }
+  runtime.getToken = getToken
+  const manager = runtime.manager
+  let active = false
+
+  const start = () => {
+    if (!active) {
+      active = true
+      runtime.clients += 1
+      if (typeof onChange === 'function') runtime.listeners.add(onChange)
+    }
+    runtime.version += 1
+    manager.start()
+  }
+
+  const stop = () => {
+    if (!active) return
+    active = false
+    runtime.clients = Math.max(0, runtime.clients - 1)
+    if (typeof onChange === 'function') runtime.listeners.delete(onChange)
+    runtime.version += 1
+    void runtime.stopWhenIdle()
+  }
+
+  const enqueue = async ({ file, draftKey, slot, imageId = '' }) => {
     const category = CATEGORIES[slot]
     if (!category) throw new Error('Invalid story media slot')
     const scope = String(draftKey || '').trim()
-    if (!validDraftKey(scope)) throw new Error('Story media draft belongs to a different account')
+    if (!runtime.validDraftKey(scope)) throw new Error('Story media draft belongs to a different account')
     if (!(file instanceof Blob) || !file.size || !String(file.type).startsWith('image/')) {
       throw new Error('A valid story image is required')
     }
     const identity = String(imageId || '').trim()
     const dedupeKey = identity ? JSON.stringify([scope, slot, identity]) : ''
-    if (dedupeKey && pendingEnqueues.has(dedupeKey)) return pendingEnqueues.get(dedupeKey)
+    if (dedupeKey && runtime.pendingEnqueues.has(dedupeKey)) {
+      return runtime.pendingEnqueues.get(dedupeKey)
+    }
 
+    runtime.version += 1
+    runtime.processingEnqueues += 1
+    manager.start()
     const operation = (async () => {
       if (identity) {
         const existing = (await manager.list()).find((task) =>
@@ -105,26 +176,38 @@ export function createStoryMediaUploadQueue({ userId, getToken, onChange } = {})
       })
     })()
 
-    if (dedupeKey) pendingEnqueues.set(dedupeKey, operation)
+    if (dedupeKey) runtime.pendingEnqueues.set(dedupeKey, operation)
     try {
       return await operation
     } finally {
-      if (dedupeKey && pendingEnqueues.get(dedupeKey) === operation) pendingEnqueues.delete(dedupeKey)
+      runtime.processingEnqueues -= 1
+      if (dedupeKey && runtime.pendingEnqueues.get(dedupeKey) === operation) {
+        runtime.pendingEnqueues.delete(dedupeKey)
+      }
+      if (runtime.clients === 0) void runtime.stopWhenIdle()
     }
   }
 
   return {
-    start: manager.start,
-    stop: manager.stop,
+    start,
+    stop,
     enqueue,
-    retry: manager.retry,
-    remove: manager.remove,
+    retry: async (id) => {
+      runtime.version += 1
+      manager.start()
+      return manager.retry(id)
+    },
+    remove: async (id) => {
+      const removed = await manager.remove(id)
+      if (runtime.clients === 0) void runtime.stopWhenIdle()
+      return removed
+    },
     get: manager.get,
     listForDraft: async (draftKey) => {
       const scope = String(draftKey || '').trim()
-      if (!validDraftKey(scope)) return []
+      if (!runtime.validDraftKey(scope)) return []
       return (await manager.list()).filter((task) =>
-        task.context?.draftKey === scope && categories.includes(task.category)
+        task.context?.draftKey === scope && Object.values(CATEGORIES).includes(task.category)
       )
     },
   }
